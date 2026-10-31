@@ -325,6 +325,6 @@ test('AUDIT PRE-MERGE 0928 N8: every canvas the port makes to read pixels back a
   }
   // the paperdoll tool's skin (a THREE page, not drivable here): its two read-back canvases ask at their FIRST context
   const skin = read('src/tools/paperdoll/skin.js');
-  assert.match(skin, /const g2 = c\.getContext\('2d', \{ willReadFrequently: true \}\); g2\.drawImage\(img, 0, 0\);/);
+  assert.match(skin, /const g2 = c\.getContext\('2d', \{ willReadFrequently: true \}\);\n\s*g2\.drawImage\(img, 0, 0\);/);
   assert.match(skin, /\n\s*bc\.getContext\('2d', \{ willReadFrequently: true \}\)\.drawImage\(bi, 0, 0\);/);
 });

@@ -1,128 +1,1140 @@
 [
-  {"name": "CSA-J-rx-wind-shared", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'GetWind': callBack?.('GetWind', [...state.windVectorCurrent]); break;", "new": "case 'GetWind': callBack?.('GetWind', state.windVectorCurrent); break;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-current-is-wind", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'GetCurrent': callBack?.('GetCurrent', [...state.currentVector]); break;", "new": "case 'GetCurrent': callBack?.('GetCurrent', [...state.windVectorCurrent]); break;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-wind-to-current", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'OnUpdateWind': if (typeof data === 'function') events.OnUpdateWind.push(data); break;", "new": "case 'OnUpdateWind': if (typeof data === 'function') events.OnUpdateCurrent.push(data); break;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-sailing-any-data", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'OnUpdateSailing': if (typeof data === 'function') events.OnUpdateSailing.push(data); break;", "new": "case 'OnUpdateSailing': events.OnUpdateSailing.push(data); break;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-reset-silent", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'ResetTimeScale': ResetTimeScale(); break;", "new": "case 'ResetTimeScale': ResetTimeScale(false); break;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-stop-at-once", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'StopSailing': StopSailingDelayed(); break;", "new": "case 'StopSailing': StopSailing(); break;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-sailing-by-boat", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'IsPlayerSailing': callBack?.('IsPlayerSailing', isSailing()); break;", "new": "case 'IsPlayerSailing': callBack?.('IsPlayerSailing', state.CurrentBoat != null); break;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-root-is-mesh", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'GetBoatGameObject': callBack?.('GetBoatGameObject', state.CurrentBoat.GameObject); break;", "new": "case 'GetBoatGameObject': callBack?.('GetBoatGameObject', state.CurrentBoat.MeshObject); break;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-mesh-read-unguarded", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "case 'GetBoatMeshObject': callBack?.('GetBoatMeshObject', state.CurrentBoat.MeshObject); break;", "new": "case 'GetBoatMeshObject': { const o = state.CurrentBoat.MeshObject; callBack?.('GetBoatMeshObject', o); break; }", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-error-text", "file": "src/systems/comeSailAway/comeSailAway.js", "old": ": unknown message received (${message}).`", "new": ": unknown message (${message}).`", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-error-level", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "default: (deps.logError ?? deps.log)?.(", "new": "default: deps.log?.(", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-object-name", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "export const MOD_OBJECT_NAME = 'Come Sail Away (ComeSailAwayMod.ComeSailAway)';", "new": "export const MOD_OBJECT_NAME = 'Come Sail Away (ComeSailAway)';", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-events-on-restore", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    raise('OnUpdateWind', [...state.windVectorCurrent]);\n    state.currentVectorPrevious = [0, 0, 0];", "new": "    state.currentVectorPrevious = [0, 0, 0];", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-rx-raise-one-copy", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "fn(Array.isArray(v) ? [...v] : v)", "new": "fn(v)", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-aw-read", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "const animatedWaterWaves = () => ANIMATED_WATER != null && !!setting('Compatibility.AnimatedWaterVertexWaves', false);", "new": "const animatedWaterWaves = () => !!setting('Compatibility.AnimatedWaterVertexWaves', false);", "tests": ["test/systems/comeSailAway/csa_close.test.js", "test/systems/comeSailAway/csa_waves.test.js"]},
-  {"name": "CSA-J-wod-level", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "export const WATER_LEVEL = WOD_TERRAIN != null ? 100 : 34;", "new": "export const WATER_LEVEL = WOD_TERRAIN == null ? 100 : 34;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-aw-particles", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "const DisableParticles = () => animatedWaterWaves();", "new": "const DisableParticles = () => !animatedWaterWaves();", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-aw-current-gate", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (!waveOn() || animatedWaterWaves()) return;   // (5147) the same gate as Update's", "new": "    if (!waveOn() || !animatedWaterWaves()) return;   // (5147) the same gate as Update's", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-aw-frame-gate", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (!waveOn() || animatedWaterWaves()) return;   // (4769)", "new": "    if (!waveOn() || !animatedWaterWaves()) return;   // (4769)", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-aw-mesh-gate", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    if (!waveOn() || animatedWaterWaves() || deps.isPlayerInside()", "new": "    if (!waveOn() || !animatedWaterWaves() || deps.isPlayerInside()", "tests": ["test/systems/comeSailAway/csa_waves.test.js"]},
-  {"name": "CSA-J-eotb-sailing-stuck", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "    isSailing = !!sailing;\n", "new": "    isSailing = true;\n", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-stop-log", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "log?.('EYE OF THE BEHOLDER - WE HAVE STOPPED SAILING!'); return;", "new": "return;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-start-log", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "    log?.('EYE OF THE BEHOLDER - WE ARE NOW SAILING!');\n", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-flag-kept", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "    boatFlagObject = null;\n    boatDriveObject = null;\n    ComeSailAway.send(", "new": "    ComeSailAway.send(", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-centre-world", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "boatMeshObjectCenter = boatMeshObject.inverseTransformVector([bounds.center[0] - p[0], bounds.center[1] - p[1], bounds.center[2] - p[2]]);", "new": "boatMeshObjectCenter = [bounds.center[0] - p[0], bounds.center[1] - p[1], bounds.center[2] - p[2]];", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-extent-signed", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "boatMeshObjectExtent = Math.max(Math.max(Math.abs(e[0]), Math.abs(e[1])), Math.abs(e[2]));", "new": "boatMeshObjectExtent = Math.max(Math.max(e[0], e[1]), e[2]);", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-walk-no-break", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "      if (boatFlagObject != null && boatDriveObject != null) break;\n", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-no-flag-fallback", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "    if (boatFlagObject == null) boatFlagObject = boatMeshObject;\n", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-offset-host-word", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "if (o.Boat.enabled && isSailing) return", "new": "if (o.Boat.enabled && state.sailing) return", "tests": ["test/systems/eotb_camera.test.js", "test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-target-swapped", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "posTarget = cfg.boatTarget === 1 ? add(boatFlagObject.position, reach)", "new": "posTarget = cfg.boatTarget === 0 ? add(boatFlagObject.position, reach)", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-extent-unscaled", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "const reach = eyeVector([off[0] * boatMeshObjectExtent, off[1] * boatMeshObjectExtent, off[2] * boatMeshObjectExtent], yaw, pitch);", "new": "const reach = eyeVector(off, yaw, pitch);", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-no-centre", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": ": add(add(boatMeshObject.position, boatMeshObjectCenter), reach);", "new": ": add(boatMeshObject.position, reach);", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-override-ignored", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "if (isSailing && cfg.overrides.Boat.enabled) {", "new": "if (isSailing) {", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-start-no-send", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "      if (ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null);   // CSA-J: ModCompatibilityChecking", "new": "      // CSA-J: ModCompatibilityChecking", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-reboot-keeps", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "      isSailing = false;\n      boatMeshObject = null;", "new": "      boatMeshObject = null;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-eotb-reboot-no-send", "file": "src/player/eyeOfTheBeholder/eotbCamera.js", "old": "      if (started && ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null);", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-bb-boat-ignored", "file": "src/player/eyeOfTheBeholder/eotbBillboard.js", "old": "  if (boatForward) facing = boatForward;", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-bb-helm-second", "file": "src/player/eyeOfTheBeholder/eotbBillboard.js", "old": "(isSailing ? (boatDriveObject != null ? boatDriveObject.forward : boatMeshObject.forward) : null)", "new": "(isSailing ? boatMeshObject.forward : null)", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-body-no-boat", "file": "src/player/eyeOfTheBeholder/eotbBody.js", "old": "      boatForward: boatForwardOf(eotbCamera.sailing()),", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-seam-dropped", "file": "src/player/mwView.js", "old": "  eotbCamera.setComeSailAway(mod);\n", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-no-handoff", "file": "src/scenes/world.js", "old": "  setEotbComeSailAway(csaRuntime ? { send: csaRuntime.MessageReceiver,", "new": "  setEotbComeSailAway(false ? { send: csaRuntime.MessageReceiver,", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-bounds-inactive-kids", "file": "src/systems/comeSailAway/comeSailAwayBoat.js", "old": "      if (!ch.activeSelf) continue;\n      const found = first(ch);", "new": "      const found = first(ch);", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-bounds-box-size", "file": "src/systems/comeSailAway/comeSailAwayBoat.js", "old": "extent: [s.x / 2, s.y / 2, s.z / 2]", "new": "extent: [s.x, s.y, s.z]", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-bounds-inactive-root", "file": "src/systems/comeSailAway/comeSailAwayBoat.js", "old": "  if (!node?.activeInHierarchy) return null;\n  const first", "new": "  if (!node) return null;\n  const first", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-wire-no-round", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "b.push([v.hull, v.variant | 0, r2(p[0]), r2(p[1]), r2(p[2]),", "new": "b.push([v.hull, v.variant | 0, r4(p[0]), r2(p[1]), r2(p[2]),", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-wire-nine", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "    if (b.length >= CSA_WIRE_BOATS_MAX) break;", "new": "    if (b.length > CSA_WIRE_BOATS_MAX) break;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-wire-any-hull", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "    if (!v || !int(v.hull, 0, HULL_NAMES.length - 1) || !finite3(v.position)", "new": "    if (!v || !finite3(v.position)", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-count", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "  if ((raw.b.length < 1 && raw.cabin !== 1) || raw.b.length > CSA_WIRE_BOATS_MAX) return null;", "new": "  if (raw.b.length > CSA_WIRE_BOATS_MAX + 1) return null;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-fields", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "if (!Array.isArray(w) || w.length !== 12 || !w.every(Number.isFinite)) return null;", "new": "if (!Array.isArray(w) || w.length < 11 || !w.every(Number.isFinite)) return null;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-hull", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;", "new": "if (!int(w[0], 0, HULL_NAMES.length) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-variant", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "!int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;", "new": "!int(w[1], -1, CSA_WIRE_VARIANTS)) return null;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-bounds", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "    if (!inBounds(p)) return null;\n    const q = [w[5]", "new": "    const q = [w[5]", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-quat", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "    if (!(len > 0.5 && len < 2)) return null;", "new": "    if (!(len > 0)) return null;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-normalize", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "rotation: q.map((v) => v / len)", "new": "rotation: q", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-bits", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "    if (!int(w[9], 0, (1 << CSA_WIRE_SAILS_MAX) - 1)) return null;", "new": "    if (!Number.isInteger(w[9])) return null;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-flags", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "    if ((w[10] !== 0 && w[10] !== 1) || (w[11] !== 0 && w[11] !== 1)) return null;", "new": "    if (w[10] !== 0 && w[10] !== 1) return null;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-valid-all-or-none", "file": "src/systems/comeSailAway/comeSailAwayWire.js", "old": "  for (const w of raw.b) {\n    if (!Array.isArray(w) || w.length !== 12", "new": "  for (const w of raw.b) {\n    if (!Array.isArray(w)) continue;\n    if (w.length !== 12", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-self", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;", "new": "if (typeof owner !== 'string' || !owner) return false;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-bad-kept", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "    if (!r) { live.delete(owner); drop(owner); return raw == null; }", "new": "    if (!r) return raw == null;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-snap", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "const position = !jumped && ledWay > 0 ? glideToward(/** @type {number[]} */ (shown), target, step, ledWay) : easeToward(shown, target, dt, undefined, snap);", "new": "const position = target;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-sails-inverted", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "      const stowed = !((w.sails >> k) & 1);", "new": "      const stowed = !!((w.sails >> k) & 1);", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-helm", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "if (s.helm !== w.helm) { s.helm = w.helm; s.boat.IdleObject?.setActive(!w.helm); s.boat.ActiveObject?.setActive(w.helm); }", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-light", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "if (s.light !== w.light) { s.light = w.light; setLights(s.boat, w.light); }", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-rebuild", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "    for (const [, , i, j] of pairs) if (!next[i] && !taken.has(j)) { next[i] = had[j]; taken.add(j); }", "new": "    for (const [, , i, j] of pairs) if (false && !next[i] && !taken.has(j)) { next[i] = had[j]; taken.add(j); }", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-hull-kept", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "if (had[j].hull !== l.boats[i].hull) continue;", "new": "/* mutant: reuse any hull */", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-variant-unset", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "      if (s.variant !== w.variant) { pool.setVariant(s.boat, w.variant); s.variant = w.variant; }", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-stale", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "if (alive?.has?.(owner) && !(staleMs > 0 && nowMs - l.at > staleMs)) continue;", "new": "if (alive?.has?.(owner)) continue;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-rebase", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "for (const list of shown.values()) for (const s of list) if (s?.shown) s.shown = [s.shown[0] + offset[0], s.shown[1] + offset[1], s.shown[2] + offset[2]];", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-off-kept", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "function setEnabled(v) { enabled = !!v; if (!enabled) clearPeers(); }", "new": "function setEnabled(v) { enabled = !!v; }", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-off-lands", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "    if (!enabled) return false;\n", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-not-ready", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "    if (!pool.ready?.()) return;\n", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-peer-resync", "file": "src/scenes/comeSailAway/comeSailAwayPeers.js", "old": "    buildOne();\n    for (const [owner, l] of [...live]) {", "new": "    for (const [owner, l] of [...live]) {", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-pool-peers-undrawn", "file": "src/scenes/comeSailAway/comeSailAwayPool.js", "old": "const drawn = () => (peerBoats.length || seaBoats.length ? boats.concat(peerBoats, seaBoats) : boats);", "new": "const drawn = () => (seaBoats.length ? boats.concat(seaBoats) : boats);", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-pool-peer-mine", "file": "src/scenes/comeSailAway/comeSailAwayPool.js", "old": "    peerBoats.push(boat);\n    return boat;", "new": "    boats.push(boat);\n    return boat;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-pool-peer-unremoved", "file": "src/scenes/comeSailAway/comeSailAwayPool.js", "old": "    const list = boats.includes(boat) ? boats : peerBoats.includes(boat) ? peerBoats : seaBoats;", "new": "    const list = boats.includes(boat) ? boats : seaBoats;", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-pool-teardown-mine", "file": "src/scenes/comeSailAway/comeSailAwayPool.js", "old": "function destroyAll() { for (const b of [...boats, ...peerBoats, ...seaBoats]) remove(b); }", "new": "function destroyAll() { for (const b of [...boats, ...seaBoats]) remove(b); }", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-host-word-changes-only", "file": "src/scenes/world.js", "old": "    if (!full && key === _csaWordKey) return false;", "new": "    if (key === _csaWordKey) return false;", "tests": ["test/systems/comeSailAway/csa_online.test.js", "test/scenes/audit0928_online.test.js"]},
-  {"name": "CSA-J-host-no-word", "file": "src/scenes/world.js", "old": "if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full);", "new": "if (cell) duelRingWord(frame, full);", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-host-no-land", "file": "src/scenes/world.js", "old": "    exteriorFoes.setOnCsa((from, sa, at) => csaPeers.applyOwner(from, sa, campToScene, at), () => csaPeers.clearPeers());", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-host-no-sweep", "file": "src/scenes/world.js", "old": "if (ids) csaPeers.sweepOwners(ids, now, FOES_STALE_MS); }", "new": "}", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-host-no-rebase", "file": "src/scenes/world.js", "old": "      csaPeers.rebase(r.offset);", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-host-no-frame", "file": "src/scenes/world.js", "old": "    if (csaOn()) csaPeers.frame(dt);\n    const boat = csaAboard.frame({", "new": "    const boat = csaAboard.frame({", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-foes-no-land", "file": "src/scenes/exteriorFoes.js", "old": "    if (data.sa !== undefined) _onCsa?.(from, data.sa, _now());", "new": "", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-foes-room-no-clear", "file": "src/scenes/exteriorFoes.js", "old": "    _onDuelClear?.();   // DUEL1: and their rings\n    _onCsaClear?.();", "new": "    _onDuelClear?.();   // DUEL1: and their rings\n", "tests": ["test/systems/comeSailAway/csa_online.test.js"]},
-  {"name": "CSA-J-post-travel-noisy", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "  function OnPostFastTravel() {\n    ResetTimeScale(false);", "new": "  function OnPostFastTravel() {\n    ResetTimeScale();", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-post-dropped", "file": "src/scenes/world.js", "old": "      if (csaRuntime) csaCall(() => csaRuntime.OnPostFastTravel());", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-transport-window-first", "file": "src/scenes/world.js", "old": "openTransport: () => { if (csaRuntime?.isSailing() && !gamePaused()) csaCall(() => csaRuntime.StopSailingDelayed()); mountRig.open(); },", "new": "openTransport: () => { mountRig.open(); },", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-death-hook-empty", "file": "src/scenes/world.js", "old": "csaOnPlayerDeath: () => { if (csaRuntime) csaCall(() => csaRuntime.OnPlayerDeath()); },", "new": "csaOnPlayerDeath: () => {},", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-fatigue-street", "file": "src/scenes/world.js", "old": "decreaseFatigue: (n) => { if (!modes?.drainPlayerFatigue?.(n)) playerTicker.sinks.drainFatigue(n); surfacePlayer(); },", "new": "decreaseFatigue: (n) => { playerTicker.sinks.drainFatigue(n); surfacePlayer(); },", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-axes-paralysis", "file": "src/scenes/world.js", "old": "_csaAxes = { h: axes.strafe, v: axes.forward };", "new": "_csaAxes = { h: paralyzed ? 0 : axes.strafe, v: paralyzed ? 0 : axes.forward };", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-lazy-pictures", "file": "src/scenes/world.js", "old": "  if (csaRender) { csaWaveFrames(); csaParticleTextures(); }", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modes-exhaust-no-hook", "file": "src/scenes/worldModes.js", "old": "      host.csaOnPlayerDeath?.();   // CSA-J (the audit): PlayerEntity.OnExhausted", "new": "      // CSA-J (the audit): PlayerEntity.OnExhausted", "tests": ["test/systems/comeSailAway/csa_close.test.js"], "note": "Re-aimed by content at FIELD BUGS 2026-10-13e SPENT-ASHORE: the hook moved below the spent arm, into the try."},
-  {"name": "CSA-J-modes-death-no-hook", "file": "src/scenes/worldModes.js", "old": "  const presentInteriorDeath = () => {\n    host.csaOnPlayerDeath?.();", "new": "  const presentInteriorDeath = () => {", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modes-dungeon-no-hook", "file": "src/scenes/worldModes.js", "old": "          csaOnPlayerDeath: () => host.csaOnPlayerDeath?.(),", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modes-fatigue-dungeon", "file": "src/scenes/worldModes.js", "old": "      if (mode === 'dungeon' && dungeonCtx?.drainPlayerFatigue) { dungeonCtx.drainPlayerFatigue(n); return true; }", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modes-fatigue-interior", "file": "src/scenes/worldModes.js", "old": "      if (mode === 'interior') { drainInteriorFatigue(n); return true; }", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-dungeon-death-no-hook", "file": "src/scenes/dungeonContext.js", "old": "  const _prevDeathPresenter = setDeathPresenter(() => {\n    opts.csaOnPlayerDeath?.();", "new": "  const _prevDeathPresenter = setDeathPresenter(() => {", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-dungeon-exhaust-no-hook", "file": "src/scenes/dungeonContext.js", "old": "    opts.csaOnPlayerDeath?.();   // CSA-J (the audit): PlayerEntity.OnExhausted", "new": "    // CSA-J (the audit): PlayerEntity.OnExhausted", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-dungeon-fatigue", "file": "src/scenes/dungeonContext.js", "old": "    drainPlayerFatigue: (n) => drainFatigue(n),", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modes-frame-dropped", "file": "src/scenes/worldModes.js", "old": "    host.csaFrame?.(dt, { h: axes.strafe, v: axes.forward });\n", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-frame-axes-stale", "file": "src/scenes/world.js", "old": "csaFrame: (dt, axes) => { _csaAxes = axes; csaFrame(dt); },", "new": "csaFrame: (dt) => { csaFrame(dt); },", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-start-after-player", "file": "src/scenes/world.js", "old": "      if (csaRuntime) csaCall(() => csaRuntime.OnStartLoad());   // CSA-D: ComeSailAway.OnStartLoad - the riders dropped, the helm left; CSA-J (the audit): AHEAD", "new": "      // CSA-J: AHEAD", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-quickload-start-empty", "file": "src/scenes/world.js", "old": "    modStartLoad: () => { crewAshore.clear(); clearSworn(); if (csaRuntime) csaCall(() => csaRuntime.OnStartLoad()); },", "new": "    modStartLoad: () => { crewAshore.clear(); },", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-quickload-onload-empty", "file": "src/scenes/world.js", "old": "    modLoaded: () => { if (csaRuntime) csaCall(() => csaRuntime.OnLoad()); },", "new": "    modLoaded: () => {},", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-dungeon-start-dropped", "file": "src/scenes/dungeonContext.js", "old": "      opts.modStartLoad?.();   // CSA-J (the audit): SaveLoadManager.OnStartLoad ahead of the save's player (:1378)\n", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-dungeon-onload-dropped", "file": "src/scenes/dungeonContext.js", "old": "      opts.modLoaded?.();   // CSA-J (the audit): SaveLoadManager.OnLoad once the load has landed (:1554)\n", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modes-start-unforwarded", "file": "src/scenes/worldModes.js", "old": "          modStartLoad: () => host.modStartLoad?.(),", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modes-onload-unforwarded", "file": "src/scenes/worldModes.js", "old": "          modLoaded: () => host.modLoaded?.(),", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-elsewhere-ignored", "file": "src/scenes/world.js", "old": "      if (csaElsewhere) extras.modData = csaHelmLeft(extras.modData);", "new": "      if (false) extras.modData = csaHelmLeft(extras.modData);", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-helm-kept", "file": "src/scenes/world.js", "old": "{ ...modData, [COME_SAIL_AWAY_VENDOR]: { ...rec, currentBoat: -1 } }", "new": "{ ...modData, [COME_SAIL_AWAY_VENDOR]: { ...rec } }", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-wake-not-elsewhere", "file": "src/scenes/world.js", "old": "          townTalk.say(undergroundWakeText(wake.kind));\n          csaElsewhere = true;", "new": "          townTalk.say(undergroundWakeText(wake.kind));", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-lost-not-elsewhere", "file": "src/scenes/world.js", "old": "        csaElsewhere = !pixel;", "new": "        csaElsewhere = false;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-no-door-not-elsewhere", "file": "src/scenes/world.js", "old": "          if (!entered) csaElsewhere = true;", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-preload-skipped", "file": "src/scenes/world.js", "old": "      if (csaRuntime) await csa.preload();   // CSA-J (the audit)", "new": "      // CSA-J (the audit)", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-loading-runs", "file": "src/scenes/world.js", "old": "const paused = gamePaused() || _loading || _partyArrivalPending || _etherCrossing;", "new": "const paused = gamePaused() || _partyArrivalPending || _etherCrossing;", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-switch-live", "file": "src/scenes/world.js", "old": "  const csaOn = () => _csaOnAtLoad;", "new": "  const csaOn = () => { try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; } };", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-rider-rootless", "file": "src/scenes/world.js", "old": "root: csaRuntime?.state?.parentedObjects?.get(f.ai)?.boat?.GameObject ?? null });", "new": "root: null });", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-host-terrain-unclamped", "file": "src/scenes/world.js", "old": "return terrainSampleHeightAt(p.samples, c(q[0] - o[0]), c(q[2] - o[2]), p._stride ?? 1);", "new": "return terrainSampleHeightAt(p.samples, q[0] - o[0], q[2] - o[2], p._stride ?? 1);", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-newgame-restores", "file": "src/systems/comeSailAway/comeSailAway.js", "old": "    newGame() {},\n", "new": "", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modsave-newgame-ignored", "file": "src/systems/modSaveData.js", "old": "    if (m.newGame) m.newGame();\n    else m.restoreSaveData(m.newSaveData());", "new": "    m.restoreSaveData(m.newSaveData());", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-pool-ghost-unstood", "file": "src/scenes/comeSailAway/comeSailAwayPool.js", "old": "    boats.push(boat); mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built", "new": "    mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-materials-in-place", "file": "src/systems/comeSailAway/comeSailAwayModels.js", "old": "    if (inRange) { renderer.materials = materials; written += n; }", "new": "    renderer.materials = materials; written += n;", "tests": ["test/systems/comeSailAway/csa_boats.test.js"]},
-  {"name": "CSA-J-host-bed-offers", "file": "src/scenes/world.js", "old": "{ _restFromBed = true; try { toggleRest(); } finally { _restFromBed = false; } } else modes?.restFromBed?.(); }", "new": "{ toggleRest(); } else modes?.restFromBed?.(); }", "tests": ["test/systems/comeSailAway/csa_time_audio.test.js"]},
-  {"name": "CSA-J-host-bed-rung-kept", "file": "src/scenes/world.js", "old": "      giveOffer,\n      ...(_restFromBed ? { giveOffer: null } : null),\n      racialOverrideBlocks: !!rb,\n    });\n    if (d.kind !== 'rest') {\n      // DFU raises", "new": "      giveOffer,\n      racialOverrideBlocks: !!rb,\n    });\n    if (d.kind !== 'rest') {\n      // DFU raises", "tests": ["test/systems/comeSailAway/csa_close.test.js"]},
-  {"name": "CSA-J-modes-bed-offers", "file": "src/scenes/worldModes.js", "old": "const restFromInteriorBed = () => { _restFromBed = true; try { interiorKeyCtx.toggleRest({ ignoreAllocatedBed: true }); } finally { _restFromBed = false; } };", "new": "const restFromInteriorBed = () => { interiorKeyCtx.toggleRest({ ignoreAllocatedBed: true }); };", "tests": ["test/systems/comeSailAway/csa_time_audio.test.js"]},
-  {"name": "CSA-J-dungeon-bed-offers", "file": "src/scenes/dungeonContext.js", "old": "restFromBed() { _restFromBed = true; try { this.toggleRest(); } finally { _restFromBed = false; } },", "new": "restFromBed() { this.toggleRest(); },", "tests": ["test/systems/comeSailAway/csa_close.test.js"]}
+  {
+    "name": "CSA-J-rx-wind-shared",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'GetWind': callBack?.('GetWind', [...state.windVectorCurrent]); break;",
+    "new": "case 'GetWind': callBack?.('GetWind', state.windVectorCurrent); break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-current-is-wind",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'GetCurrent': callBack?.('GetCurrent', [...state.currentVector]); break;",
+    "new": "case 'GetCurrent': callBack?.('GetCurrent', [...state.windVectorCurrent]); break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-wind-to-current",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'OnUpdateWind': if (typeof data === 'function') events.OnUpdateWind.push(data); break;",
+    "new": "case 'OnUpdateWind': if (typeof data === 'function') events.OnUpdateCurrent.push(data); break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-sailing-any-data",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'OnUpdateSailing': if (typeof data === 'function') events.OnUpdateSailing.push(data); break;",
+    "new": "case 'OnUpdateSailing': events.OnUpdateSailing.push(data); break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-reset-silent",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'ResetTimeScale': ResetTimeScale(); break;",
+    "new": "case 'ResetTimeScale': ResetTimeScale(false); break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-stop-at-once",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'StopSailing': StopSailingDelayed(); break;",
+    "new": "case 'StopSailing': StopSailing(); break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-sailing-by-boat",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'IsPlayerSailing': callBack?.('IsPlayerSailing', isSailing()); break;",
+    "new": "case 'IsPlayerSailing': callBack?.('IsPlayerSailing', state.CurrentBoat != null); break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-root-is-mesh",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'GetBoatGameObject': callBack?.('GetBoatGameObject', state.CurrentBoat.GameObject); break;",
+    "new": "case 'GetBoatGameObject': callBack?.('GetBoatGameObject', state.CurrentBoat.MeshObject); break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-mesh-read-unguarded",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "case 'GetBoatMeshObject': callBack?.('GetBoatMeshObject', state.CurrentBoat.MeshObject); break;",
+    "new": "case 'GetBoatMeshObject': { const o = state.CurrentBoat.MeshObject; callBack?.('GetBoatMeshObject', o); break; }",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-error-text",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": ": unknown message received (${message}).`",
+    "new": ": unknown message (${message}).`",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-error-level",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "default: (deps.logError ?? deps.log)?.(",
+    "new": "default: deps.log?.(",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-object-name",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "export const MOD_OBJECT_NAME = 'Come Sail Away (ComeSailAwayMod.ComeSailAway)';",
+    "new": "export const MOD_OBJECT_NAME = 'Come Sail Away (ComeSailAway)';",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-events-on-restore",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    raise('OnUpdateWind', [...state.windVectorCurrent]);\n    state.currentVectorPrevious = [0, 0, 0];",
+    "new": "    state.currentVectorPrevious = [0, 0, 0];",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-rx-raise-one-copy",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "fn(Array.isArray(v) ? [...v] : v)",
+    "new": "fn(v)",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-aw-read",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const animatedWaterWaves = () => ANIMATED_WATER != null && !!setting('Compatibility.AnimatedWaterVertexWaves', false);",
+    "new": "const animatedWaterWaves = () => !!setting('Compatibility.AnimatedWaterVertexWaves', false);",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js",
+      "test/systems/comeSailAway/csa_waves.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-wod-level",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "export const WATER_LEVEL = WOD_TERRAIN != null ? 100 : 34;",
+    "new": "export const WATER_LEVEL = WOD_TERRAIN == null ? 100 : 34;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-aw-particles",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const DisableParticles = () => animatedWaterWaves();",
+    "new": "const DisableParticles = () => !animatedWaterWaves();",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-aw-current-gate",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!waveOn() || animatedWaterWaves()) return;   // (5147) the same gate as Update's",
+    "new": "    if (!waveOn() || !animatedWaterWaves()) return;   // (5147) the same gate as Update's",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-aw-frame-gate",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!waveOn() || animatedWaterWaves()) return;   // (4769)",
+    "new": "    if (!waveOn() || !animatedWaterWaves()) return;   // (4769)",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-aw-mesh-gate",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!waveOn() || animatedWaterWaves() || deps.isPlayerInside()",
+    "new": "    if (!waveOn() || !animatedWaterWaves() || deps.isPlayerInside()",
+    "tests": [
+      "test/systems/comeSailAway/csa_waves.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-sailing-stuck",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "    isSailing = !!sailing;",
+    "new": "    isSailing = true;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-stop-log",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "      log?.('EYE OF THE BEHOLDER - WE HAVE STOPPED SAILING!');\n      return;",
+    "new": "      return;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-start-log",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "    log?.('EYE OF THE BEHOLDER - WE ARE NOW SAILING!');\n    boatFlagObject = null;",
+    "new": "    boatFlagObject = null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-flag-kept",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "    boatFlagObject = null;\n    boatDriveObject = null;\n    ComeSailAway.send('GetBoatMeshObject', null, (message, data) => {",
+    "new": "    ComeSailAway.send('GetBoatMeshObject', null, (message, data) => {",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-centre-world",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "    boatMeshObjectCenter = boatMeshObject.inverseTransformVector([\n      bounds.center[0] - p[0],\n      bounds.center[1] - p[1],\n      bounds.center[2] - p[2],\n    ]);",
+    "new": "    boatMeshObjectCenter = [bounds.center[0] - p[0], bounds.center[1] - p[1], bounds.center[2] - p[2]];",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-extent-signed",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "    boatMeshObjectExtent = Math.max(Math.max(Math.abs(e[0]), Math.abs(e[1])), Math.abs(e[2]));",
+    "new": "    boatMeshObjectExtent = Math.max(Math.max(e[0], e[1]), e[2]);",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-walk-no-break",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "      if (boatFlagObject != null && boatDriveObject != null) break;\n      const child = boatMeshObject.getChild(i);",
+    "new": "      const child = boatMeshObject.getChild(i);",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-no-flag-fallback",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "    if (boatFlagObject == null) boatFlagObject = boatMeshObject;\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-offset-host-word",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "    if (o.Boat.enabled && isSailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // CSA-J: the camera's own field, OnUpdateSailing's",
+    "new": "    if (o.Boat.enabled && state.sailing) return [m * o.Boat.x, o.Boat.y, o.Boat.z - offsetScroll]; // CSA-J: the camera's own field, OnUpdateSailing's",
+    "tests": [
+      "test/systems/eotb_camera.test.js",
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-target-swapped",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "          cfg.boatTarget === 1",
+    "new": "          cfg.boatTarget === 0",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-extent-unscaled",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "        const reach = eyeVector(\n          [off[0] * boatMeshObjectExtent, off[1] * boatMeshObjectExtent, off[2] * boatMeshObjectExtent],\n          yaw,\n          pitch,\n        );",
+    "new": "        const reach = eyeVector(off, yaw, pitch);",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-no-centre",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "        posTarget =\n          cfg.boatTarget === 1\n            ? add(boatFlagObject.position, reach)\n            : add(add(boatMeshObject.position, boatMeshObjectCenter), reach);",
+    "new": "        posTarget = cfg.boatTarget === 1 ? add(boatFlagObject.position, reach) : add(boatMeshObject.position, reach);",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-override-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "      if (isSailing && cfg.overrides.Boat.enabled) {",
+    "new": "      if (isSailing) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-start-no-send",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "      if (ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null); // CSA-J: ModCompatibilityChecking (IL_053d), Start's first call",
+    "new": "      // CSA-J: ModCompatibilityChecking (IL_053d), Start's first call",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-reboot-keeps",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "      isSailing = false;\n      boatMeshObject = null;",
+    "new": "      boatMeshObject = null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-eotb-reboot-no-send",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
+    "old": "      if (started && ComeSailAway) ComeSailAway.send('OnUpdateSailing', onUpdateSailing, null);\n    },",
+    "new": "    },",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-bb-boat-ignored",
+    "file": "src/player/eyeOfTheBeholder/eotbBillboard.js",
+    "old": "  if (boatForward) facing = boatForward; // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above",
+    "new": "  // CSA-J: `Instance.isSailing` - the boat's heading, over every arm above",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-bb-helm-second",
+    "file": "src/player/eyeOfTheBeholder/eotbBillboard.js",
+    "old": "  isSailing ? (boatDriveObject != null ? boatDriveObject.forward : boatMeshObject.forward) : null;",
+    "new": "  isSailing ? boatMeshObject.forward : null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-body-no-boat",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      boatForward: boatForwardOf(eotbCamera.sailing()),",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-seam-dropped",
+    "file": "src/player/mwView.js",
+    "old": "  eotbCamera.setComeSailAway(mod);\n  eotbCamera.setLog((text) => {",
+    "new": "  eotbCamera.setLog((text) => {",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-no-handoff",
+    "file": "src/scenes/world.js",
+    "old": "  setEotbComeSailAway(csaRuntime ? { send: csaRuntime.MessageReceiver,",
+    "new": "  setEotbComeSailAway(false ? { send: csaRuntime.MessageReceiver,",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-bounds-inactive-kids",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
+    "old": "      if (!ch.activeSelf) continue;\n      const found = first(ch);",
+    "new": "      const found = first(ch);",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-bounds-box-size",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
+    "old": "  return worldBounds(hit.n, { center: [c.x, c.y, c.z], extent: [s.x / 2, s.y / 2, s.z / 2] });",
+    "new": "  return worldBounds(hit.n, { center: [c.x, c.y, c.z], extent: [s.x, s.y, s.z] });",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-bounds-inactive-root",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
+    "old": "  if (!node?.activeInHierarchy) return null;",
+    "new": "  if (!node) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-wire-no-round",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "      r2(p[0]),",
+    "new": "      r4(p[0]),",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-wire-nine",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (b.length >= CSA_WIRE_BOATS_MAX) break;",
+    "new": "    if (b.length > CSA_WIRE_BOATS_MAX) break;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-wire-any-hull",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (\n      !v ||\n      !int(v.hull, 0, HULL_NAMES.length - 1) ||\n      !finite3(v.position) ||\n      !Array.isArray(v.rotation) ||\n      v.rotation.length !== 4\n    )\n      continue;",
+    "new": "    if (!v || !finite3(v.position) || !Array.isArray(v.rotation) || v.rotation.length !== 4) continue;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-count",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "  if ((raw.b.length < 1 && raw.cabin !== 1) || raw.b.length > CSA_WIRE_BOATS_MAX) return null;",
+    "new": "  if (raw.b.length > CSA_WIRE_BOATS_MAX + 1) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-fields",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (!Array.isArray(w) || w.length !== 12 || !w.every(Number.isFinite)) return null;",
+    "new": "    if (!Array.isArray(w) || w.length < 11 || !w.every(Number.isFinite)) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-hull",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
+    "new": "    if (!int(w[0], 0, HULL_NAMES.length) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-variant",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;",
+    "new": "    if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], -1, CSA_WIRE_VARIANTS)) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-bounds",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (!inBounds(p)) return null;\n    const q = [w[5], w[6], w[7], w[8]];",
+    "new": "    const q = [w[5], w[6], w[7], w[8]];",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-quat",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (!(len > 0.5 && len < 2)) return null;",
+    "new": "    if (!(len > 0)) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-normalize",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "      rotation: q.map((v) => v / len),",
+    "new": "      rotation: q,",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-bits",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (!int(w[9], 0, (1 << CSA_WIRE_SAILS_MAX) - 1)) return null;",
+    "new": "    if (!Number.isInteger(w[9])) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-flags",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if ((w[10] !== 0 && w[10] !== 1) || (w[11] !== 0 && w[11] !== 1)) return null;",
+    "new": "    if (w[10] !== 0 && w[10] !== 1) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-valid-all-or-none",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    if (!Array.isArray(w) || w.length !== 12 || !w.every(Number.isFinite)) return null;",
+    "new": "    if (!Array.isArray(w)) continue;\n    if (w.length !== 12 || !w.every(Number.isFinite)) return null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-self",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
+    "new": "    if (typeof owner !== 'string' || !owner) return false;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-bad-kept",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    if (!r) {\n      live.delete(owner);\n      drop(owner);\n      return raw == null;\n    }",
+    "new": "    if (!r) return raw == null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-snap",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    const position =\n      !jumped && ledWay > 0\n        ? glideToward(/** @type {number[]} */ (shown), target, step, ledWay)\n        : easeToward(shown, target, dt, undefined, snap);",
+    "new": "    const position = target;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-sails-inverted",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "      const stowed = !((w.sails >> k) & 1);",
+    "new": "      const stowed = !!((w.sails >> k) & 1);",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-helm",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    if (s.helm !== w.helm) {\n      s.helm = w.helm;\n      s.boat.IdleObject?.setActive(!w.helm);\n      s.boat.ActiveObject?.setActive(w.helm);\n    }",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-light",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    if (s.light !== w.light) {\n      s.light = w.light;\n      setLights(s.boat, w.light);\n    }",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-rebuild",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "      if (!next[i] && !taken.has(j)) {",
+    "new": "      if (false && !next[i] && !taken.has(j)) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-hull-kept",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "        if (had[j].hull !== l.boats[i].hull) continue;",
+    "new": "        /* mutant: reuse any hull */",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-variant-unset",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "      if (s.variant !== w.variant) {\n        pool.setVariant(s.boat, w.variant);\n        s.variant = w.variant;\n      }\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-stale",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "      if (alive?.has?.(owner) && !(staleMs > 0 && nowMs - l.at > staleMs)) continue;",
+    "new": "      if (alive?.has?.(owner)) continue;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-rebase",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    for (const list of shown.values())\n      for (const s of list)\n        if (s?.shown) s.shown = [s.shown[0] + offset[0], s.shown[1] + offset[1], s.shown[2] + offset[2]];\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-off-kept",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    if (!enabled) clearPeers();\n  }",
+    "new": "  }",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-off-lands",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    if (!enabled) return false;\n    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
+    "new": "    if (typeof owner !== 'string' || !owner || owner === (selfId?.() ?? null)) return false;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-not-ready",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    if (!pool.ready?.()) return;\n    const owners = [...live.keys()];",
+    "new": "    const owners = [...live.keys()];",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-peer-resync",
+    "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
+    "old": "    buildOne();\n    for (const [owner, l] of [...live]) {",
+    "new": "    for (const [owner, l] of [...live]) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-pool-peers-undrawn",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "const drawn = () => (peerBoats.length || seaBoats.length ? boats.concat(peerBoats, seaBoats) : boats);",
+    "new": "const drawn = () => (seaBoats.length ? boats.concat(seaBoats) : boats);",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-pool-peer-mine",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    peerBoats.push(boat);\n    return boat;",
+    "new": "    boats.push(boat);\n    return boat;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-pool-peer-unremoved",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    const list = boats.includes(boat) ? boats : peerBoats.includes(boat) ? peerBoats : seaBoats;",
+    "new": "    const list = boats.includes(boat) ? boats : seaBoats;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-pool-teardown-mine",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "function destroyAll() { for (const b of [...boats, ...peerBoats, ...seaBoats]) remove(b); }",
+    "new": "function destroyAll() { for (const b of [...boats, ...seaBoats]) remove(b); }",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-word-changes-only",
+    "file": "src/scenes/world.js",
+    "old": "    if (!full && key === _csaWordKey) return false;",
+    "new": "    if (key === _csaWordKey) return false;",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js",
+      "test/scenes/audit0928_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-no-word",
+    "file": "src/scenes/world.js",
+    "old": "if (cell) duelRingWord(frame, full); if (cell) csaWord(frame, full);",
+    "new": "if (cell) duelRingWord(frame, full);",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-no-land",
+    "file": "src/scenes/world.js",
+    "old": "    exteriorFoes.setOnCsa((from, sa, at) => csaPeers.applyOwner(from, sa, campToScene, at), () => csaPeers.clearPeers());",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-no-sweep",
+    "file": "src/scenes/world.js",
+    "old": "if (ids) csaPeers.sweepOwners(ids, now, FOES_STALE_MS); }",
+    "new": "}",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-no-rebase",
+    "file": "src/scenes/world.js",
+    "old": "      csaPeers.rebase(r.offset);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-no-frame",
+    "file": "src/scenes/world.js",
+    "old": "    if (csaOn()) csaPeers.frame(dt);\n    const boat = csaAboard.frame({",
+    "new": "    const boat = csaAboard.frame({",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-foes-no-land",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    if (data.sa !== undefined) _onCsa?.(from, data.sa, _now());",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-foes-room-no-clear",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    _onDuelClear?.();   // DUEL1: and their rings\n    _onCsaClear?.();",
+    "new": "    _onDuelClear?.();   // DUEL1: and their rings\n",
+    "tests": [
+      "test/systems/comeSailAway/csa_online.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-post-travel-noisy",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  function OnPostFastTravel() {\n    ResetTimeScale(false);",
+    "new": "  function OnPostFastTravel() {\n    ResetTimeScale();",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-post-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      if (csaRuntime) csaCall(() => csaRuntime.OnPostFastTravel());",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-transport-window-first",
+    "file": "src/scenes/world.js",
+    "old": "openTransport: () => { if (csaRuntime?.isSailing() && !gamePaused()) csaCall(() => csaRuntime.StopSailingDelayed()); mountRig.open(); },",
+    "new": "openTransport: () => { mountRig.open(); },",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-death-hook-empty",
+    "file": "src/scenes/world.js",
+    "old": "csaOnPlayerDeath: () => { if (csaRuntime) csaCall(() => csaRuntime.OnPlayerDeath()); },",
+    "new": "csaOnPlayerDeath: () => {},",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-fatigue-street",
+    "file": "src/scenes/world.js",
+    "old": "decreaseFatigue: (n) => { if (!modes?.drainPlayerFatigue?.(n)) playerTicker.sinks.drainFatigue(n); surfacePlayer(); },",
+    "new": "decreaseFatigue: (n) => { playerTicker.sinks.drainFatigue(n); surfacePlayer(); },",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-axes-paralysis",
+    "file": "src/scenes/world.js",
+    "old": "_csaAxes = { h: axes.strafe, v: axes.forward };",
+    "new": "_csaAxes = { h: paralyzed ? 0 : axes.strafe, v: paralyzed ? 0 : axes.forward };",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-lazy-pictures",
+    "file": "src/scenes/world.js",
+    "old": "  if (csaRender) { csaWaveFrames(); csaParticleTextures(); }",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modes-exhaust-no-hook",
+    "file": "src/scenes/worldModes.js",
+    "old": "      host.csaOnPlayerDeath?.();   // CSA-J (the audit): PlayerEntity.OnExhausted",
+    "new": "      // CSA-J (the audit): PlayerEntity.OnExhausted",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ],
+    "note": "Re-aimed by content at FIELD BUGS 2026-10-13e SPENT-ASHORE: the hook moved below the spent arm, into the try."
+  },
+  {
+    "name": "CSA-J-modes-death-no-hook",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const presentInteriorDeath = () => {\n    host.csaOnPlayerDeath?.();",
+    "new": "  const presentInteriorDeath = () => {",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modes-dungeon-no-hook",
+    "file": "src/scenes/worldModes.js",
+    "old": "          csaOnPlayerDeath: () => host.csaOnPlayerDeath?.(),",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modes-fatigue-dungeon",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (mode === 'dungeon' && dungeonCtx?.drainPlayerFatigue) { dungeonCtx.drainPlayerFatigue(n); return true; }",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modes-fatigue-interior",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (mode === 'interior') { drainInteriorFatigue(n); return true; }",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-dungeon-death-no-hook",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const _prevDeathPresenter = setDeathPresenter(() => {\n    opts.csaOnPlayerDeath?.();",
+    "new": "  const _prevDeathPresenter = setDeathPresenter(() => {",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-dungeon-exhaust-no-hook",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    opts.csaOnPlayerDeath?.();   // CSA-J (the audit): PlayerEntity.OnExhausted",
+    "new": "    // CSA-J (the audit): PlayerEntity.OnExhausted",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-dungeon-fatigue",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    drainPlayerFatigue: (n) => drainFatigue(n),",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modes-frame-dropped",
+    "file": "src/scenes/worldModes.js",
+    "old": "    host.csaFrame?.(dt, { h: axes.strafe, v: axes.forward });\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-frame-axes-stale",
+    "file": "src/scenes/world.js",
+    "old": "csaFrame: (dt, axes) => { _csaAxes = axes; csaFrame(dt); },",
+    "new": "csaFrame: (dt) => { csaFrame(dt); },",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-start-after-player",
+    "file": "src/scenes/world.js",
+    "old": "      if (csaRuntime) csaCall(() => csaRuntime.OnStartLoad());   // CSA-D: ComeSailAway.OnStartLoad - the riders dropped, the helm left; CSA-J (the audit): AHEAD",
+    "new": "      // CSA-J: AHEAD",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-quickload-start-empty",
+    "file": "src/scenes/world.js",
+    "old": "    modStartLoad: () => { crewAshore.clear(); clearSworn(); if (csaRuntime) csaCall(() => csaRuntime.OnStartLoad()); },",
+    "new": "    modStartLoad: () => { crewAshore.clear(); },",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-quickload-onload-empty",
+    "file": "src/scenes/world.js",
+    "old": "    modLoaded: () => { if (csaRuntime) csaCall(() => csaRuntime.OnLoad()); },",
+    "new": "    modLoaded: () => {},",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-dungeon-start-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      opts.modStartLoad?.();   // CSA-J (the audit): SaveLoadManager.OnStartLoad ahead of the save's player (:1378)\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-dungeon-onload-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      opts.modLoaded?.();   // CSA-J (the audit): SaveLoadManager.OnLoad once the load has landed (:1554)\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modes-start-unforwarded",
+    "file": "src/scenes/worldModes.js",
+    "old": "          modStartLoad: () => host.modStartLoad?.(),",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modes-onload-unforwarded",
+    "file": "src/scenes/worldModes.js",
+    "old": "          modLoaded: () => host.modLoaded?.(),",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-elsewhere-ignored",
+    "file": "src/scenes/world.js",
+    "old": "      if (csaElsewhere) extras.modData = csaHelmLeft(extras.modData);",
+    "new": "      if (false) extras.modData = csaHelmLeft(extras.modData);",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-helm-kept",
+    "file": "src/scenes/world.js",
+    "old": "{ ...modData, [COME_SAIL_AWAY_VENDOR]: { ...rec, currentBoat: -1 } }",
+    "new": "{ ...modData, [COME_SAIL_AWAY_VENDOR]: { ...rec } }",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-wake-not-elsewhere",
+    "file": "src/scenes/world.js",
+    "old": "          townTalk.say(undergroundWakeText(wake.kind));\n          csaElsewhere = true;",
+    "new": "          townTalk.say(undergroundWakeText(wake.kind));",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-lost-not-elsewhere",
+    "file": "src/scenes/world.js",
+    "old": "        csaElsewhere = !pixel;",
+    "new": "        csaElsewhere = false;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-no-door-not-elsewhere",
+    "file": "src/scenes/world.js",
+    "old": "          if (!entered) csaElsewhere = true;",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-preload-skipped",
+    "file": "src/scenes/world.js",
+    "old": "      if (csaRuntime) await csa.preload();   // CSA-J (the audit)",
+    "new": "      // CSA-J (the audit)",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-loading-runs",
+    "file": "src/scenes/world.js",
+    "old": "const paused = gamePaused() || _loading || _partyArrivalPending || _etherCrossing;",
+    "new": "const paused = gamePaused() || _partyArrivalPending || _etherCrossing;",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-switch-live",
+    "file": "src/scenes/world.js",
+    "old": "  const csaOn = () => _csaOnAtLoad;",
+    "new": "  const csaOn = () => { try { return modSetting('come-sail-away', 'Enabled') !== false; } catch { return false; } };",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-rider-rootless",
+    "file": "src/scenes/world.js",
+    "old": "root: csaRuntime?.state?.parentedObjects?.get(f.ai)?.boat?.GameObject ?? null });",
+    "new": "root: null });",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-terrain-unclamped",
+    "file": "src/scenes/world.js",
+    "old": "return terrainSampleHeightAt(p.samples, c(q[0] - o[0]), c(q[2] - o[2]), p._stride ?? 1);",
+    "new": "return terrainSampleHeightAt(p.samples, q[0] - o[0], q[2] - o[2], p._stride ?? 1);",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-newgame-restores",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    newGame() {},\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modsave-newgame-ignored",
+    "file": "src/systems/modSaveData.js",
+    "old": "    if (m.newGame) m.newGame();\n    else m.restoreSaveData(m.newSaveData());",
+    "new": "    m.restoreSaveData(m.newSaveData());",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-pool-ghost-unstood",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    boats.push(boat); mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built",
+    "new": "    mineBoats.add(boat);   // CSA-J (the audit): in the scene before it is built",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-materials-in-place",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
+    "old": "    if (inRange) {\n      renderer.materials = materials;\n      written += n;\n    } // meshRenderer.sharedMaterials = materials, past the loop",
+    "new": "    renderer.materials = materials;\n    written += n; // meshRenderer.sharedMaterials = materials, past the loop",
+    "tests": [
+      "test/systems/comeSailAway/csa_boats.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-bed-offers",
+    "file": "src/scenes/world.js",
+    "old": "{ _restFromBed = true; try { toggleRest(); } finally { _restFromBed = false; } } else modes?.restFromBed?.(); }",
+    "new": "{ toggleRest(); } else modes?.restFromBed?.(); }",
+    "tests": [
+      "test/systems/comeSailAway/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-host-bed-rung-kept",
+    "file": "src/scenes/world.js",
+    "old": "      giveOffer,\n      ...(_restFromBed ? { giveOffer: null } : null),\n      racialOverrideBlocks: !!rb,\n    });\n    if (d.kind !== 'rest') {\n      // DFU raises",
+    "new": "      giveOffer,\n      racialOverrideBlocks: !!rb,\n    });\n    if (d.kind !== 'rest') {\n      // DFU raises",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-modes-bed-offers",
+    "file": "src/scenes/worldModes.js",
+    "old": "const restFromInteriorBed = () => { _restFromBed = true; try { interiorKeyCtx.toggleRest({ ignoreAllocatedBed: true }); } finally { _restFromBed = false; } };",
+    "new": "const restFromInteriorBed = () => { interiorKeyCtx.toggleRest({ ignoreAllocatedBed: true }); };",
+    "tests": [
+      "test/systems/comeSailAway/csa_time_audio.test.js"
+    ]
+  },
+  {
+    "name": "CSA-J-dungeon-bed-offers",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "restFromBed() { _restFromBed = true; try { this.toggleRest(); } finally { _restFromBed = false; } },",
+    "new": "restFromBed() { this.toggleRest(); },",
+    "tests": [
+      "test/systems/comeSailAway/csa_close.test.js"
+    ]
+  }
 ]

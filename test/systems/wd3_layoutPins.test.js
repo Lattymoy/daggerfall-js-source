@@ -316,7 +316,7 @@ test('WD3 a questor met indoors is stamped with their town\'s layout (AUDIT WD3 
   assert.match(P, /this\.questorData = stampLayout\(\{ \.\.\.clicked \}, clicked\.buildingKey > 0 \? layoutStampOfMapId\(clicked\.mapID\) : ''\);/);
   assert.match(P, /questorData: \{ \.\.\.this\.questorData \},/, 'saved with the struct');
   assert.match(P, /this\.questorData = \{ \.\.\.ZERO_NPC_DATA, \.\.\.\(dataIn\.questorData \?\? \{\}\) \};/, 'and restored with it');
-  assert.match(src('src/systems/quest/machine.js'), /if \(resource\.isPerson && resource\.isQuestor && resource\.questorData\?\.buildingKey > 0\) out\.push\(resource\.questorData\);/);
+  assert.match(src('src/systems/quest/machine.js'), /if \(resource\.isPerson && resource\.isQuestor && resource\.questorData\?\.buildingKey > 0\)\n\s*out\.push\(resource\.questorData\);/);
   assert.match(hostText('src/scenes/world.js'), /questors: questBridge\?\.machine\?\.getAllActiveQuestors\?\.\(\) \?\? \[\],/);
 });
 

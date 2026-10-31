@@ -137,7 +137,7 @@
   {
     "name": "AUDIT-IT1-G2-the-install-unguarded",
     "file": "src/scenes/modWorldData.js",
-    "old": "    try { installImmersiveTravelGates(immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate stand: ${e?.message ?? e}`); }",
+    "old": "    try {\n      installImmersiveTravelGates(immersiveTravelLoaded);\n    } catch (e) {\n      console.error(`[worlddata] immersive travel's gate stand: ${e?.message ?? e}`);\n    }",
     "new": "    installImmersiveTravelGates(immersiveTravelLoaded);",
     "tests": [
       "test/systems/auditit1.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-IT1-G3-the-gates-read-the-switch",
     "file": "src/scenes/modWorldData.js",
-    "old": "installImmersiveTravelGates(immersiveTravelLoaded);",
-    "new": "installImmersiveTravelGates(() => modSetting('immersive-travel', 'Enabled') === true);",
+    "old": "      installImmersiveTravelGates(immersiveTravelLoaded);",
+    "new": "      installImmersiveTravelGates(() => modSetting('immersive-travel', 'Enabled') === true);",
     "tests": [
       "test/systems/auditit1.test.js"
     ],
@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-IT1-W4-no-latch",
     "file": "src/systems/immersiveTravel.js",
-    "old": "export const immersiveTravelLoaded = () => modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
-    "new": "export const immersiveTravelLoaded = () => (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
+    "old": "export const immersiveTravelLoaded = () =>\n  modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true;",
+    "new": "export const immersiveTravelLoaded = () => modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true;",
     "tests": [
       "test/systems/auditit1.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-IT1-W1-the-sell-label",
     "file": "src/ui/merchant/merchantServiceDoor.js",
-    "old": "          { label: hooks.label ?? merchantServiceLabel(hooks.service), onClick:",
-    "new": "          { label: merchantServiceLabel(hooks.service), onClick:",
+    "old": "            label: hooks.label ?? merchantServiceLabel(hooks.service),",
+    "new": "            label: merchantServiceLabel(hooks.service),",
     "tests": [
       "test/systems/auditit1.test.js"
     ]

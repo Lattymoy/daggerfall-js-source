@@ -44,9 +44,9 @@ import { POSE_BOUND, POSE_Y_BOUND, POSE_ABOARD_SLOTS } from '../../net/wire.js';
 import { HULL_NAMES, HULL_VARIANT_COUNTS } from './comeSailAwayBoat.js';
 import { shipNameVerdict, SHIP_NAME_MAX } from '../fleet.js';
 import { flagCode, flagOfCode } from '../naval/shipFlag.js';
-import { liveryCode, liveryOfCode } from '../naval/shipLivery.js';   // SHIP-LIVERY: her paint
-import { fittingsCode, fittingsOfCode } from '../naval/deckFittings.js';   // DECK-PROPS: her fittings
-import { figureheadOfCode } from '../naval/figurehead.js';   // FIGUREHEAD: `h`, each boat's carving (0 none) while one is carved - an older build reads no key it does not know, and draws her stem bare
+import { liveryCode, liveryOfCode } from '../naval/shipLivery.js'; // SHIP-LIVERY: her paint
+import { fittingsCode, fittingsOfCode } from '../naval/deckFittings.js'; // DECK-PROPS: her fittings
+import { figureheadOfCode } from '../naval/figurehead.js'; // FIGUREHEAD: `h`, each boat's carving (0 none) while one is carved - an older build reads no key it does not know, and draws her stem bare
 
 /** The boats one word carries - a player's shore holds few, and a frame's size is the room's. DECK-POSE: the pose's place
  *  aboard names one of them, so the count's one home is the pose's door (net/wire.js POSE_ABOARD_SLOTS). */
@@ -82,46 +82,94 @@ const int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
  */
 export function csaWireRecord(view, toWire = (p) => p) {
   if (!Array.isArray(view)) return null;
-  const b = [], m = [], n = [], u = [], f = [], l = [], d = [], pl = [], h = [];
-  let underWay = false, named = false, flagged = false, painted = false, fitted = false, boarded = false, carved = false;
+  const b = [],
+    m = [],
+    n = [],
+    u = [],
+    f = [],
+    l = [],
+    d = [],
+    pl = [],
+    h = [];
+  let underWay = false,
+    named = false,
+    flagged = false,
+    painted = false,
+    fitted = false,
+    boarded = false,
+    carved = false;
   for (const v of view) {
     if (b.length >= CSA_WIRE_BOATS_MAX) break;
-    if (!v || !int(v.hull, 0, HULL_NAMES.length - 1) || !finite3(v.position) || !Array.isArray(v.rotation) || v.rotation.length !== 4) continue;
+    if (
+      !v ||
+      !int(v.hull, 0, HULL_NAMES.length - 1) ||
+      !finite3(v.position) ||
+      !Array.isArray(v.rotation) ||
+      v.rotation.length !== 4
+    )
+      continue;
     const p = toWire(v.position);
     const q = v.rotation;
-    b.push([v.hull, v.variant | 0, r2(p[0]), r2(p[1]), r2(p[2]), r4(q[0]), r4(q[1]), r4(q[2]), r4(q[3]), (v.sails | 0) & ((1 << CSA_WIRE_SAILS_MAX) - 1), v.helm ? 1 : 0, v.light ? 1 : 0]);
+    b.push([
+      v.hull,
+      v.variant | 0,
+      r2(p[0]),
+      r2(p[1]),
+      r2(p[2]),
+      r4(q[0]),
+      r4(q[1]),
+      r4(q[2]),
+      r4(q[3]),
+      (v.sails | 0) & ((1 << CSA_WIRE_SAILS_MAX) - 1),
+      v.helm ? 1 : 0,
+      v.light ? 1 : 0,
+    ]);
     // CSA-K: the way in the wire frame - the point a second on, converted, less the point (the frame is affine)
     const vel = finite3(v.velocity) ? v.velocity : null;
     const at = vel ? toWire([v.position[0] + vel[0], v.position[1] + vel[1], v.position[2] + vel[2]]) : p;
     const way = [r2(at[0] - p[0]), r2(at[2] - p[2]), Number.isFinite(v.turn) ? r2(v.turn) : 0];
     // AUDIT 2 XA6: held to the door's bounds, her way's bearing kept - a word past them every reader drops whole
     const sp = Math.hypot(way[0], way[1]);
-    if (sp > CSA_WIRE_SPEED_MAX) { const k = (CSA_WIRE_SPEED_MAX * 0.999) / sp; way[0] = r2(way[0] * k); way[1] = r2(way[1] * k); }
+    if (sp > CSA_WIRE_SPEED_MAX) {
+      const k = (CSA_WIRE_SPEED_MAX * 0.999) / sp;
+      way[0] = r2(way[0] * k);
+      way[1] = r2(way[1] * k);
+    }
     way[2] = Math.max(-CSA_WIRE_TURN_MAX, Math.min(CSA_WIRE_TURN_MAX, way[2]));
     if (way[0] || way[1] || way[2]) underWay = true;
     m.push(way);
-    const name = typeof v.name === 'string' ? shipNameVerdict(v.name) : null;   // HOLDINGS: her name, as the ledger keeps it
+    const name = typeof v.name === 'string' ? shipNameVerdict(v.name) : null; // HOLDINGS: her name, as the ledger keeps it
     n.push(name?.ok ? name.name : '');
     if (name?.ok && name.name) named = true;
     u.push(Number.isSafeInteger(v.uid) && v.uid > 0 ? v.uid : 0);
-    const code = flagCode(v.flag);   // SHIP-COLOURS: her flag, or 0 - her pennant
+    const code = flagCode(v.flag); // SHIP-COLOURS: her flag, or 0 - her pennant
     f.push(code);
     if (code) flagged = true;
-    const paint = liveryCode(v.livery);   // SHIP-LIVERY: her paint, or 0 - as built
+    const paint = liveryCode(v.livery); // SHIP-LIVERY: her paint, or 0 - as built
     l.push(paint);
     if (paint) painted = true;
-    const fit = fittingsCode(v.fittings);   // DECK-PROPS: her fittings, or none
+    const fit = fittingsCode(v.fittings); // DECK-PROPS: her fittings, or none
     d.push(fit);
     if (fit.length) fitted = true;
-    const shows = v.plaque === true && !!(name?.ok && name.name);   // SHIP-PLAQUE: her name on her bows - a named boat's
+    const shows = v.plaque === true && !!(name?.ok && name.name); // SHIP-PLAQUE: her name on her bows - a named boat's
     pl.push(shows ? 1 : 0);
     if (shows) boarded = true;
-    const carving = figureheadOfCode(v.figurehead);   // FIGUREHEAD: her carving, or 0 - none
+    const carving = figureheadOfCode(v.figurehead); // FIGUREHEAD: her carving, or 0 - none
     h.push(carving);
     if (carving) carved = true;
   }
   if (!b.length) return null;
-  return { b, ...(underWay ? { m } : {}), ...(u.some(Boolean) ? { u } : {}), ...(named ? { n } : {}), ...(flagged ? { f } : {}), ...(painted ? { l } : {}), ...(fitted ? { d } : {}), ...(boarded ? { p: pl } : {}), ...(carved ? { h } : {}) };   // FIGUREHEAD: `h` while one is carved; SHIP-PLAQUE: `p` while one shows her name; HOLDINGS: `n` only while one is named; SHIP-COLOURS: `f` while one flies a flag; SHIP-LIVERY: `l` while one is painted
+  return {
+    b,
+    ...(underWay ? { m } : {}),
+    ...(u.some(Boolean) ? { u } : {}),
+    ...(named ? { n } : {}),
+    ...(flagged ? { f } : {}),
+    ...(painted ? { l } : {}),
+    ...(fitted ? { d } : {}),
+    ...(boarded ? { p: pl } : {}),
+    ...(carved ? { h } : {}),
+  }; // FIGUREHEAD: `h` while one is carved; SHIP-PLAQUE: `p` while one shows her name; HOLDINGS: `n` only while one is named; SHIP-COLOURS: `f` while one flies a flag; SHIP-LIVERY: `l` while one is painted
 }
 
 /**
@@ -132,7 +180,14 @@ export function csaWireRecord(view, toWire = (p) => p) {
 export function validCsaRecord(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !Array.isArray(raw.b)) return null;
   if ((raw.b.length < 1 && raw.cabin !== 1) || raw.b.length > CSA_WIRE_BOATS_MAX) return null;
-  if (raw.u !== undefined && (!Array.isArray(raw.u) || raw.u.length !== raw.b.length || raw.u.some((u) => !Number.isSafeInteger(u) || u < 0) || new Set(raw.u.filter(Boolean)).size !== raw.u.filter(Boolean).length)) return null;
+  if (
+    raw.u !== undefined &&
+    (!Array.isArray(raw.u) ||
+      raw.u.length !== raw.b.length ||
+      raw.u.some((u) => !Number.isSafeInteger(u) || u < 0) ||
+      new Set(raw.u.filter(Boolean)).size !== raw.u.filter(Boolean).length)
+  )
+    return null;
   // CSA-K: the way, when it is said, is a place for each boat - its two speeds and its turn, finite and a boat's
   const m = raw.m;
   if (m !== undefined) {
@@ -146,7 +201,7 @@ export function validCsaRecord(raw) {
   for (const w of raw.b) {
     if (!Array.isArray(w) || w.length !== 12 || !w.every(Number.isFinite)) return null;
     if (!int(w[0], 0, HULL_NAMES.length - 1) || !int(w[1], 0, CSA_WIRE_VARIANTS - 1)) return null;
-    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null;   // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other
+    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other
     const p = [w[2], w[3], w[4]];
     if (!inBounds(p)) return null;
     const q = [w[5], w[6], w[7], w[8]];
@@ -154,19 +209,31 @@ export function validCsaRecord(raw) {
     if (!(len > 0.5 && len < 2)) return null;
     if (!int(w[9], 0, (1 << CSA_WIRE_SAILS_MAX) - 1)) return null;
     if ((w[10] !== 0 && w[10] !== 1) || (w[11] !== 0 && w[11] !== 1)) return null;
-    const boat = { hull: w[0], variant: w[1], position: p, rotation: q.map((v) => v / len), sails: w[9], helm: w[10] === 1, light: w[11] === 1 };
-    if (m !== undefined) { const way = m[boats.length]; boat.velocity = [way[0], 0, way[1]]; boat.turn = way[2]; }   // CSA-K
-    const name = shipNameOf(raw.n, raw.b.length, boats.length);   // HOLDINGS: hers, where she has one - an unnamed boat's shape the older one
+    const boat = {
+      hull: w[0],
+      variant: w[1],
+      position: p,
+      rotation: q.map((v) => v / len),
+      sails: w[9],
+      helm: w[10] === 1,
+      light: w[11] === 1,
+    };
+    if (m !== undefined) {
+      const way = m[boats.length];
+      boat.velocity = [way[0], 0, way[1]];
+      boat.turn = way[2];
+    } // CSA-K
+    const name = shipNameOf(raw.n, raw.b.length, boats.length); // HOLDINGS: hers, where she has one - an unnamed boat's shape the older one
     if (name) boat.name = name;
     if (raw.u?.[boats.length]) boat.uid = raw.u[boats.length];
-    const flag = Array.isArray(raw.f) && raw.f.length === raw.b.length ? flagOfCode(raw.f[boats.length]) : null;   // SHIP-COLOURS: hers, where she flies one
+    const flag = Array.isArray(raw.f) && raw.f.length === raw.b.length ? flagOfCode(raw.f[boats.length]) : null; // SHIP-COLOURS: hers, where she flies one
     if (flag) boat.flag = flag;
-    const paint = Array.isArray(raw.l) && raw.l.length === raw.b.length ? liveryOfCode(raw.l[boats.length]) : null;   // SHIP-LIVERY: hers, where she is painted
+    const paint = Array.isArray(raw.l) && raw.l.length === raw.b.length ? liveryOfCode(raw.l[boats.length]) : null; // SHIP-LIVERY: hers, where she is painted
     if (paint) boat.livery = paint;
-    const fits = Array.isArray(raw.d) && raw.d.length === raw.b.length ? fittingsOfCode(raw.d[boats.length]) : [];   // DECK-PROPS: hers, where she is fitted
+    const fits = Array.isArray(raw.d) && raw.d.length === raw.b.length ? fittingsOfCode(raw.d[boats.length]) : []; // DECK-PROPS: hers, where she is fitted
     if (fits.length) boat.fittings = fits;
-    if (name && Array.isArray(raw.p) && raw.p.length === raw.b.length && raw.p[boats.length] === 1) boat.plaque = true;   // SHIP-PLAQUE: her name on her bows - never a reason to drop the word
-    const carving = Array.isArray(raw.h) && raw.h.length === raw.b.length ? figureheadOfCode(raw.h[boats.length]) : 0;   // FIGUREHEAD: hers, where she is carved - never a reason to drop the word
+    if (name && Array.isArray(raw.p) && raw.p.length === raw.b.length && raw.p[boats.length] === 1) boat.plaque = true; // SHIP-PLAQUE: her name on her bows - never a reason to drop the word
+    const carving = Array.isArray(raw.h) && raw.h.length === raw.b.length ? figureheadOfCode(raw.h[boats.length]) : 0; // FIGUREHEAD: hers, where she is carved - never a reason to drop the word
     if (carving) boat.figurehead = carving;
     boats.push(boat);
   }
@@ -187,4 +254,24 @@ function shipNameOf(n, count, i) {
 
 /** A change key, so a frame carries the record only when the word moved (the full frame always does). CSA-K: the way
  *  is in it, so a boat brought up short is said at once (its readers stop leading it). */
-export const csaRecordKey = (rec) => (rec ? JSON.stringify(rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.p || rec.h ? [rec.b, rec.m ?? null, rec.u ?? null, rec.cabin ?? null, rec.n ?? null, rec.f ?? null, rec.l ?? null, rec.d ?? null, rec.p ?? null, rec.h ?? null] : rec.m ? [rec.b, rec.m] : rec.b) : '');   // HOLDINGS: a renamed boat is said at once; SHIP-COLOURS: and a new flag; SHIP-LIVERY: and a new paint; AUDIT 2: and her name board shown or taken down (SHIP-PLAQUE's `p`); FIGUREHEAD: and her carving (`h`)
+export const csaRecordKey = (rec) =>
+  rec
+    ? JSON.stringify(
+        rec.u || rec.cabin || rec.n || rec.f || rec.l || rec.d || rec.p || rec.h
+          ? [
+              rec.b,
+              rec.m ?? null,
+              rec.u ?? null,
+              rec.cabin ?? null,
+              rec.n ?? null,
+              rec.f ?? null,
+              rec.l ?? null,
+              rec.d ?? null,
+              rec.p ?? null,
+              rec.h ?? null,
+            ]
+          : rec.m
+            ? [rec.b, rec.m]
+            : rec.b,
+      )
+    : ''; // HOLDINGS: a renamed boat is said at once; SHIP-COLOURS: and a new flag; SHIP-LIVERY: and a new paint; AUDIT 2: and her name board shown or taken down (SHIP-PLAQUE's `p`); FIGUREHEAD: and her carving (`h`)

@@ -341,7 +341,7 @@ test('SNOWFALL1 the hosts: world.js and exterior.js build the one runtime on the
   assert.match(w, /height: \(p, lx, lz\) => snowGroundHeight\(p, !!host\.deepWaters, lx, lz\),/, 'the floor drawn there, the bed carved under a shore');
   // PIN MOVED (BAY-LEFT-GROUND, D3): on the Bay Basic Roads' own network, or none; past the Bay TESA's own roads, by the
   // painter's word (test/render/bayleftground_snow.test.js)
-  assert.match(w, /const net = !inBay\(p\.px, p\.py\) \? snowfallNetworkBeyond\(p\.px, p\.py, p\.paths\) : raw\?\.source === 'basic-roads' \? snowfallNetwork\(raw, p\.px, p\.py\) : null;/, 'Basic Roads\' own network, or none');
+  assert.match(w, /const net = !inBay\(p\.px, p\.py\)\n\s*\? snowfallNetworkBeyond\(p\.px, p\.py, p\.paths\)\n\s*: raw\?\.source === 'basic-roads'\n\s*\? snowfallNetwork\(raw, p\.px, p\.py\)\n\s*: null;/, 'Basic Roads\' own network, or none');
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.doesNotMatch(read(host), /createSnowfallHost/, `${host}: none`);
 });
 

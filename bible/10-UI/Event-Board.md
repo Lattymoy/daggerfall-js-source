@@ -208,7 +208,7 @@ spared. With the board off, every line goes where it went before whatever its ki
 
 **ON THE PLATE** (`ui/eventBoard.js`). The chips are read every frame. A chip pressed has the source read again at once,
 so its rows leave with no wait for the next read; a line of it still waiting at the door is let go, and a news of it
-showing or waiting is taken down (`ui/eventBoard.js:"for (const k of hiddenKinds) toasts.drop(k);"`). Each of those
+showing or waiting is taken down (`ui/eventBoard.js:"for (const k of hiddenKinds)"`). Each of those
 lines is in the journal already, where the door filed it.
 
 **WHAT IT LEAVES.** The Timers window under the pause menu is the whole schedule, every kind, whatever the chips say.

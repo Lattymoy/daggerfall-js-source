@@ -2,8 +2,8 @@
   {
     "name": "PORTALBAY-teleport-law-the-journeys",
     "file": "src/systems/travel/pastBayTravel.js",
-    "old": "export function teleportJourney(_from, _to, _mask, _zone) {\n  return { ok: true, fee: 0 };",
-    "new": "export function teleportJourney(_from, _to, _mask, _zone) {\n  return pastBayJourney(_from, _to, _mask, _zone);",
+    "old": "  return { ok: true, fee: 0 }; // WILD-CITY-PORT: nor the zone's journey law (its in and out, its wait, its fare) - a teleport's is world.js wildTeleportRefused's",
+    "new": "  return pastBayJourney(_from, _to, _mask, _zone); // WILD-CITY-PORT: nor the zone's journey law (its in and out, its wait, its fare) - a teleport's is world.js wildTeleportRefused's",
     "tests": [
       "test/systems/portalbay_stone.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "PORTALANY-the-rings-read-no-level",
     "file": "src/player/enterExit.js",
-    "old": "      if (level && !levelGroundAt(collider, px, pz, h)) continue;",
-    "new": "      void level;",
+    "old": "      if (level && !levelGroundAt(collider, px, pz, h)) continue; // PORTAL-ANYWHERE: and, where asked, no cliff",
+    "new": "      void level; // PORTAL-ANYWHERE: and, where asked, no cliff",
     "tests": [
       "test/systems/portalbay_stone.test.js"
     ]

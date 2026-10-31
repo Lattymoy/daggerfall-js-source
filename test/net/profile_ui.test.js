@@ -109,7 +109,7 @@ test('PROFILE-UI the sheet: the card wider for what they wear, the name line bre
     /\.dfprofile-items \{ display: flex; flex-direction: column; min-width: 0; \}/,
   ]) assert.match(PROFILE_CSS, rule);
   const probe = src('tools/profileProbe.mjs');
-  assert.match(probe, /glyphs: \[\.\.\.GLYPHS\], lv: RENOWN_MAX, gt: 'WWWW'/, 'the widest name line a player can be shown');
+  assert.match(probe, /glyphs: \[\.\.\.GLYPHS\],\n\s*lv: RENOWN_MAX,\n\s*gt: 'WWWW'/, 'the widest name line a player can be shown');
   assert.match(probe, /the widest name stands on one line, its glyphs on a row of their own under it/);
   assert.match(probe, /&nointro'\);/, 'the front door\'s film kept out - it took Escape before the card');
 });

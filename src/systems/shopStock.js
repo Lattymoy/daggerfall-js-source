@@ -40,38 +40,66 @@
 // from being read as the bug it was.
 
 import { dice100 } from '../combat/formulas.js';
-import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
+import { rand } from '../formats/dfRandom.js'; // F209: StockHouseContainer's one classic-stream draw
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
-import { customItemsForGroup } from './item/itemTemplates.js';   // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287); FORAGE1: every mod's, from its one home
-import { createRandomBook, createShelfBook } from './books.js';   // B1; A2: CreateRandomBook whole, priced off the book FILE
+import {
+  groupTemplates,
+  GROUP_TEMPLATE_INDICES,
+  itemBaseValue,
+  ITEM_TEMPLATES,
+  mintCondition,
+  rollPaintingMessage,
+  setItemFields,
+  templateByIndex,
+  TRANSPORT_HORSE,
+  TRANSPORT_SMALL_CART,
+} from './item/itemTemplates.js'; // MAC-N1: SetItem's name + value, the one export
+import { customItemsForGroup } from './item/itemTemplates.js'; // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287); FORAGE1: every mod's, from its one home
+import { createRandomBook, createShelfBook } from './books.js'; // B1; A2: CreateRandomBook whole, priced off the book FILE
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
-import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
-import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE } from './iliac/iliacItems.js';   // AUDIT CARDS-5 C2: the collectible card, which no shop buys; CARDS9: nor its pack
-import { goodOfTemplate } from './naval/tradeGoods.js';   // AUDIT CAPTAIN'S SEA B2: the exchange's goods, which no shop buys
-import { landSold } from './stolenGoods.js';   // AUDIT UPDATE II B2: the sale's own door, for the counter's arrows
-import { OIL_TEMPLATE, ARROW_TEMPLATE, addItem } from './inventory.js';   // SHOP-ARROWS: the counter's quiver   // AUDIT-RR2 G10: the shelf's AddItem   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
-import { getBool } from './settings/settings.js';   // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
-import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
-import { findFactionByTypeAndRegion } from './talk/talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
-import { MERCHANTS_FACTION_ID } from './guild/guilds.js';               // S41: FactionIDs.The_Merchants, one home
-import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './region/regionConditions.js';   // S42: the store S41's flag was waiting on
-import { isOnlinePage } from './online/onlineLane.js';   // REALM P0.4: online, a shop pays at most half what it asks
-import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js';   // BAG1: the Materials Bag, at every General Store online
-import { BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAway/comeSailAwayItems.js';   // SHIPYARDS: a ship's parts and deed, which no shop buys - a port's shipyard does
+import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js'; // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
+import { SOUL_TRAP_TEMPLATE } from './mysticism.js'; // X6: one home for the template id (X5 put it there with fillEmptyTrap)
+import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE } from './iliac/iliacItems.js'; // AUDIT CARDS-5 C2: the collectible card, which no shop buys; CARDS9: nor its pack
+import { goodOfTemplate } from './naval/tradeGoods.js'; // AUDIT CAPTAIN'S SEA B2: the exchange's goods, which no shop buys
+import { landSold } from './stolenGoods.js'; // AUDIT UPDATE II B2: the sale's own door, for the counter's arrows
+import { OIL_TEMPLATE, ARROW_TEMPLATE, addItem } from './inventory.js'; // SHOP-ARROWS: the counter's quiver   // AUDIT-RR2 G10: the shelf's AddItem   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
+import { getBool } from './settings/settings.js'; // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
+import { FACTION_TYPES } from '../formats/factionFile.js'; // S41: UpdateRegionalPrices' type-7 region walk
+import { findFactionByTypeAndRegion } from './talk/talk.js'; // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
+import { MERCHANTS_FACTION_ID } from './guild/guilds.js'; // S41: FactionIDs.The_Merchants, one home
+import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './region/regionConditions.js'; // S42: the store S41's flag was waiting on
+import { isOnlinePage } from './online/onlineLane.js'; // REALM P0.4: online, a shop pays at most half what it asks
+import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js'; // BAG1: the Materials Bag, at every General Store online
+import { BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAway/comeSailAwayItems.js'; // SHIPYARDS: a ship's parts and deed, which no shop buys - a port's shipyard does
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
-  0: 'Drugs', 1: 'UselessItems1', 2: 'Armor', 3: 'Weapons', 4: 'MagicItems',
-  6: 'MensClothing', 7: 'Books', 8: 'Furniture', 9: 'UselessItems2',
-  10: 'ReligiousItems', 11: 'Maps', 12: 'WomensClothing', 13: 'Paintings',
-  14: 'Gems', 15: 'PlantIngredients1', 16: 'PlantIngredients2',
-  17: 'CreatureIngredients1', 18: 'CreatureIngredients2', 19: 'CreatureIngredients3',
-  20: 'MiscellaneousIngredients1', 21: 'MetalIngredients', 22: 'MiscellaneousIngredients2',
-  23: 'Transportation', 25: 'Jewellery',
+  0: 'Drugs',
+  1: 'UselessItems1',
+  2: 'Armor',
+  3: 'Weapons',
+  4: 'MagicItems',
+  6: 'MensClothing',
+  7: 'Books',
+  8: 'Furniture',
+  9: 'UselessItems2',
+  10: 'ReligiousItems',
+  11: 'Maps',
+  12: 'WomensClothing',
+  13: 'Paintings',
+  14: 'Gems',
+  15: 'PlantIngredients1',
+  16: 'PlantIngredients2',
+  17: 'CreatureIngredients1',
+  18: 'CreatureIngredients2',
+  19: 'CreatureIngredients3',
+  20: 'MiscellaneousIngredients1',
+  21: 'MetalIngredients',
+  22: 'MiscellaneousIngredients2',
+  23: 'Transportation',
+  25: 'Jewellery',
 });
 
 /**
@@ -90,14 +118,18 @@ export const ALCHEMIST_ALWAYS = Object.freeze([
 ]);
 // DaggerfallLootDataTables.itemGroups* - (groupId, chance) byte pairs.
 export const SHOP_ITEM_GROUPS = Object.freeze({
-  [BUILDING_TYPES.Alchemist]: [0x0E, 0x1E, 0x0F, 0x32, 0x10, 0x32, 0x11, 0x1E, 0x12, 0x14, 0x13, 0x14, 0x14, 0x3C, 0x15, 0x28, 0x16, 0x1E],
+  [BUILDING_TYPES.Alchemist]: [
+    0x0e, 0x1e, 0x0f, 0x32, 0x10, 0x32, 0x11, 0x1e, 0x12, 0x14, 0x13, 0x14, 0x14, 0x3c, 0x15, 0x28, 0x16, 0x1e,
+  ],
   [BUILDING_TYPES.Armorer]: [0x02, 0x50, 0x03, 0x14],
-  [BUILDING_TYPES.Bookseller]: [0x07, 0x28, 0x0B, 0x05],
-  [BUILDING_TYPES.ClothingStore]: [0x06, 0x32, 0x0C, 0x32],
-  [BUILDING_TYPES.GemStore]: [0x0E, 0x28, 0x19, 0x32],
-  [BUILDING_TYPES.GeneralStore]: [0x03, 0x14, 0x06, 0x0A, 0x07, 0x0A, 0x09, 0x32, 0x17, 0x00, 0x0C, 0x0A, 0x04, 0x00],
-  [BUILDING_TYPES.PawnShop]: [0x02, 0x0A, 0x03, 0x0A, 0x04, 0x0A, 0x07, 0x0A, 0x09, 0x14, 0x0D, 0x05, 0x0E, 0x0A, 0x19, 0x0A, 0x0A, 0x0A],
-  [BUILDING_TYPES.WeaponSmith]: [0x02, 0x1E, 0x03, 0x46],
+  [BUILDING_TYPES.Bookseller]: [0x07, 0x28, 0x0b, 0x05],
+  [BUILDING_TYPES.ClothingStore]: [0x06, 0x32, 0x0c, 0x32],
+  [BUILDING_TYPES.GemStore]: [0x0e, 0x28, 0x19, 0x32],
+  [BUILDING_TYPES.GeneralStore]: [0x03, 0x14, 0x06, 0x0a, 0x07, 0x0a, 0x09, 0x32, 0x17, 0x00, 0x0c, 0x0a, 0x04, 0x00],
+  [BUILDING_TYPES.PawnShop]: [
+    0x02, 0x0a, 0x03, 0x0a, 0x04, 0x0a, 0x07, 0x0a, 0x09, 0x14, 0x0d, 0x05, 0x0e, 0x0a, 0x19, 0x0a, 0x0a, 0x0a,
+  ],
+  [BUILDING_TYPES.WeaponSmith]: [0x02, 0x1e, 0x03, 0x46],
   // DECOR2b: THE FURNISHER. Daggerfall's Furniture Stores stand with empty shelves - DFU's stock loop skips the
   // Furniture group for every shop - and here they sell it, by the same law, at the port's own chance (a departure:
   // systems/decor/decorFurnish.js, delivered and never carried).
@@ -121,7 +153,7 @@ export function shopAmmoStack(buildingType, quality, max) {
   let chance = 0;
   for (let i = 0; i + 1 < pairs.length; i += 2) if (pairs[i] === WEAPONS_GROUP_ID) chance = pairs[i + 1];
   if (!(chance > 0)) return 0;
-  const most = SHOP_ITEM_GROUPS[BUILDING_TYPES.WeaponSmith][3];   // the Weapon Smith's own Weapons chance, 0x46
+  const most = SHOP_ITEM_GROUPS[BUILDING_TYPES.WeaponSmith][3]; // the Weapon Smith's own Weapons chance, 0x46
   const q = Math.max(1, Math.min(20, Math.trunc(Number(quality)) || 1));
   return Math.max(1, Math.round(max * (chance / most) * (0.5 + (0.5 * (q - 1)) / 19)));
 }
@@ -166,7 +198,9 @@ export function landSoldAt(shelfItems, item, buildingType = null) {
  *  filled or stood one, else 0. AUDIT UPDATE E1: the arrows the purchase took, never the whole - what a theft took
  *  stays gone. */
 function restockArrows(shelfItems, bought, buildingType) {
-  const took = (bought ?? []).filter(isShelfArrow).reduce((n, it) => n + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0);
+  const took = (bought ?? [])
+    .filter(isShelfArrow)
+    .reduce((n, it) => n + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0);
   if (!endlessArrowsAt(buildingType) || !(took > 0)) return 0;
   const stack = shelfItems.find(isShelfArrow);
   if (stack) {
@@ -182,7 +216,17 @@ function restockArrows(shelfItems, bought, buildingType) {
 // E3: DaggerfallTradeWindow.storeBuysItemType, verbatim - the item
 // groups each storefront BUYS from the player.
 export const SHOP_BUYS_GROUPS = Object.freeze({
-  [BUILDING_TYPES.Alchemist]: ['Gems', 'CreatureIngredients1', 'CreatureIngredients2', 'CreatureIngredients3', 'PlantIngredients1', 'PlantIngredients2', 'MiscellaneousIngredients1', 'MiscellaneousIngredients2', 'MetalIngredients'],
+  [BUILDING_TYPES.Alchemist]: [
+    'Gems',
+    'CreatureIngredients1',
+    'CreatureIngredients2',
+    'CreatureIngredients3',
+    'PlantIngredients1',
+    'PlantIngredients2',
+    'MiscellaneousIngredients1',
+    'MiscellaneousIngredients2',
+    'MetalIngredients',
+  ],
   [BUILDING_TYPES.Armorer]: ['Armor', 'Weapons'],
   [BUILDING_TYPES.Bookseller]: ['Books'],
   [BUILDING_TYPES.ClothingStore]: ['MensClothing', 'WomensClothing'],
@@ -190,48 +234,71 @@ export const SHOP_BUYS_GROUPS = Object.freeze({
   [BUILDING_TYPES.GemStore]: ['Gems', 'Jewellery'],
   // MERCHANT-YARDS: and it no longer buys them - DFU's Transportation is out of its list; the yards buy them back
   [BUILDING_TYPES.GeneralStore]: ['Books', 'MensClothing', 'WomensClothing', 'Jewellery', 'Weapons', 'UselessItems2'],
-  [BUILDING_TYPES.PawnShop]: ['Armor', 'Books', 'MensClothing', 'WomensClothing', 'Gems', 'Jewellery', 'ReligiousItems', 'Weapons', 'UselessItems2', 'Paintings'],
+  [BUILDING_TYPES.PawnShop]: [
+    'Armor',
+    'Books',
+    'MensClothing',
+    'WomensClothing',
+    'Gems',
+    'Jewellery',
+    'ReligiousItems',
+    'Weapons',
+    'UselessItems2',
+    'Paintings',
+  ],
   [BUILDING_TYPES.WeaponSmith]: ['Armor', 'Weapons'],
 });
-export const shopBuysItem = (buildingType, item) => (SHOP_BUYS_GROUPS[buildingType] ?? []).includes(item.group)
+export const shopBuysItem = (buildingType, item) =>
+  (SHOP_BUYS_GROUPS[buildingType] ?? []).includes(item.group) &&
   // AUDIT CARDS-5 C2: no shop buys a collectible card - every character is given thirty, and a shelf is no card's market
-  && item.templateIndex !== ILIAC_CARD_TEMPLATE
+  item.templateIndex !== ILIAC_CARD_TEMPLATE &&
   // CARDS9: nor a sealed pack - the tavern sells it at its counter's price, and no shelf buys it back (a pack bought
   // well and sold dear was the gold-for-nothing ENDLESS-STOCK shut)
-  && item.templateIndex !== CARD_PACK_TEMPLATE
+  item.templateIndex !== CARD_PACK_TEMPLATE &&
   // AUDIT CAPTAIN'S SEA B2: nor the exchange's goods - the exchange alone deals in them (a General Store paid more for a
   // tusk of ivory than the quay where it is made asked: a money loop without a voyage)
-  && !goodOfTemplate(item.templateIndex)
+  !goodOfTemplate(item.templateIndex) &&
   // SHIPYARDS (2026-10-11, Mac: "Shipyard only"): nor a boat's parts or deed - a port town's shipyard buys a ship back
   // (systems/shipyards.js), as the Stable and the Wagon Yard took the horse and the cart (Come Sail Away's rows are on no
   // shelf now - comeSailAwayItems.js)
-  && item.templateIndex !== BOAT_PARTS_TEMPLATE && item.templateIndex !== BOAT_DEED_TEMPLATE
+  item.templateIndex !== BOAT_PARTS_TEMPLATE &&
+  item.templateIndex !== BOAT_DEED_TEMPLATE &&
   // AUDIT ENDLESS-STOCK F1/F2: online no shop buys back what never sells out - bought at a cheap shop and sold at a dear one
   // (the online asking price is halved, the buy-back cap is not) it was gold for nothing, and a sold one made any shelf endless
-  && !(isOnlinePage() && isEndlessStock(item));
+  !(isOnlinePage() && isEndlessStock(item));
 
 /** RMBLayout.IsShop, verbatim (the nine stocked storefronts). */
 export function isShop(buildingType) {
-  return buildingType === BUILDING_TYPES.Alchemist || buildingType === BUILDING_TYPES.Armorer
-    || buildingType === BUILDING_TYPES.Bookseller || buildingType === BUILDING_TYPES.ClothingStore
-    || buildingType === BUILDING_TYPES.FurnitureStore || buildingType === BUILDING_TYPES.GemStore
-    || buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop
-    || buildingType === BUILDING_TYPES.WeaponSmith;
+  return (
+    buildingType === BUILDING_TYPES.Alchemist ||
+    buildingType === BUILDING_TYPES.Armorer ||
+    buildingType === BUILDING_TYPES.Bookseller ||
+    buildingType === BUILDING_TYPES.ClothingStore ||
+    buildingType === BUILDING_TYPES.FurnitureStore ||
+    buildingType === BUILDING_TYPES.GemStore ||
+    buildingType === BUILDING_TYPES.GeneralStore ||
+    buildingType === BUILDING_TYPES.PawnShop ||
+    buildingType === BUILDING_TYPES.WeaponSmith
+  );
 }
 
 /** RMBLayout.IsRepairShop (:787-797). The three shops that will mend
  *  your gear; PlayerActivate routes their merchant to the repair
  *  popup instead of the sell one. */
 export function isRepairShop(buildingType) {
-  return buildingType === BUILDING_TYPES.Armorer
-    || buildingType === BUILDING_TYPES.GeneralStore
-    || buildingType === BUILDING_TYPES.WeaponSmith;
+  return (
+    buildingType === BUILDING_TYPES.Armorer ||
+    buildingType === BUILDING_TYPES.GeneralStore ||
+    buildingType === BUILDING_TYPES.WeaponSmith
+  );
 }
 
 // DaggerfallInterior: interior models 41000+i with i in this set are
 // shop shelves (loot containers when the building IsShop).
 export const CONTAINER_MODEL_OFFSET = 41000;
-export const SHOP_SHELF_MODEL_INDICES = Object.freeze(new Set([5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19, 26, 28, 29, 31, 35, 36, 37, 40, 41, 42, 44, 46, 47, 48, 49, 808]));
+export const SHOP_SHELF_MODEL_INDICES = Object.freeze(
+  new Set([5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19, 26, 28, 29, 31, 35, 36, 37, 40, 41, 42, 44, 46, 47, 48, 49, 808]),
+);
 export const isShopShelfModel = (modelId) => SHOP_SHELF_MODEL_INDICES.has(modelId - CONTAINER_MODEL_OFFSET);
 
 // DISC24-B: the two transport templates' one home is itemTemplates.js now (its item picture reads them, and it
@@ -244,15 +311,33 @@ export { TRANSPORT_HORSE, TRANSPORT_SMALL_CART };
 export const MAGIC_ITEMS_ENUM_TEMPLATE = 0;
 // AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
 // constant, declared here and in loot.js.
-import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates, createRandomWeapon, createRandomArmor, createRandomClothing } from './loot/loot.js';   // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
-import { SPELLBOOK_TEMPLATE_INDEX } from './spell/spellMaker.js';   // G4: one home for MiscItems 132
-import { restItemsStock } from './rest/restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood and the draughts
-import { isLockpick, ensureEndlessLockpicks, restockLockpicks } from './lockpick/lockpickItem.js';   // LOCKPICK: the counter's endless picks
-import { provisionsStock, campfireStock, createSurvivalItem, isSurvivalItem, isCampfireKit, TEMPLATE as SURVIVAL_TEMPLATE, ensureEndlessProvisions, ENDLESS_RATIONS_STACK } from './survival/items.js';   // SURV2: the general store's provisions shelf   // REST2: and online the Campfire alone, the arc Off
+import {
+  BOOK_TEMPLATE,
+  createRegularMagicItem,
+  createRandomPotion,
+  randomlyAddPotionRecipe,
+  getMagicItemTemplates,
+  createRandomWeapon,
+  createRandomArmor,
+  createRandomClothing,
+} from './loot/loot.js'; // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
+import { SPELLBOOK_TEMPLATE_INDEX } from './spell/spellMaker.js'; // G4: one home for MiscItems 132
+import { restItemsStock } from './rest/restItems.js'; // REST6: the Bedroll, the Ember Jar, Firewood and the draughts
+import { isLockpick, ensureEndlessLockpicks, restockLockpicks } from './lockpick/lockpickItem.js'; // LOCKPICK: the counter's endless picks
+import {
+  provisionsStock,
+  campfireStock,
+  createSurvivalItem,
+  isSurvivalItem,
+  isCampfireKit,
+  TEMPLATE as SURVIVAL_TEMPLATE,
+  ensureEndlessProvisions,
+  ENDLESS_RATIONS_STACK,
+} from './survival/items.js'; // SURV2: the general store's provisions shelf   // REST2: and online the Campfire alone, the arc Off
 import { sharedClockOn } from './worldTick.js';
-import { healingShelfCount, mintHealingPotion } from './healingSupply.js';   // POTION-COMMON: the shelf's Potions of Healing
-import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
-import { conditionBasedPricesOn, conditionCostBase } from './roleplayRealismItems/rriRealism.js';   // RRI2: the CalculateCost override's condition arm
+import { healingShelfCount, mintHealingPotion } from './healingSupply.js'; // POTION-COMMON: the shelf's Potions of Healing
+import { survivalOn } from './survival/switch.js'; // SURV2: the one switch
+import { conditionBasedPricesOn, conditionCostBase } from './roleplayRealismItems/rriRealism.js'; // RRI2: the CalculateCost override's condition arm
 
 export { BOOK_TEMPLATE };
 
@@ -269,16 +354,17 @@ export { BOOK_TEMPLATE };
  *  template's variant count, so SetVariant's out-of-range early-out
  *  can never fire here. */
 export function randomizeArmorVariant(templateIndex, material, rolls = Math.random) {
-  const range = (lo, hi) => lo + Math.floor(rolls() * (hi - lo));   // UnityEngine.Random.Range(int, int)
-  if (templateIndex === 102 && isPlate(material)) return range(1, 4);                    // Cuirass
-  if (templateIndex === 104) {                                                           // Greaves
+  const range = (lo, hi) => lo + Math.floor(rolls() * (hi - lo)); // UnityEngine.Random.Range(int, int)
+  if (templateIndex === 102 && isPlate(material)) return range(1, 4); // Cuirass
+  if (templateIndex === 104) {
+    // Greaves
     if (isLeather(material)) return range(0, 2);
     if (isPlate(material)) return range(2, 6);
     return 0;
   }
-  if ((templateIndex === 105 || templateIndex === 106) && isPlate(material)) return range(1, 4);   // Pauldrons
-  if (templateIndex === 108 && isPlate(material)) return range(1, 3);                    // Boots
-  if (templateIndex === 107) return range(0, ITEM_TEMPLATES[107]?.variants ?? 0);        // Helm
+  if ((templateIndex === 105 || templateIndex === 106) && isPlate(material)) return range(1, 4); // Pauldrons
+  if (templateIndex === 108 && isPlate(material)) return range(1, 3); // Boots
+  if (templateIndex === 107) return range(0, ITEM_TEMPLATES[107]?.variants ?? 0); // Helm
   return 0;
 }
 
@@ -303,7 +389,7 @@ export function randomizeArmorVariant(templateIndex, material, rolls = Math.rand
  * real date is still ABOVE the zero that means "never stocked", which
  * is what SerializableLootContainer.ShouldSave tests (:225-226).
  */
-export const createStockedDate = (date) => ((date?.year ?? 0) * 1000) + dayOfYear(date ?? { month: 0, day: 0 });
+export const createStockedDate = (date) => (date?.year ?? 0) * 1000 + dayOfYear(date ?? { month: 0, day: 0 });
 
 /** PlayerActivate's own comparison (:882, :911), spelled once so the
  *  three activation arms in the host cannot drift apart. */
@@ -312,14 +398,18 @@ export const needsRestock = (container, today) => (container?.stockedDate ?? 0) 
  *  have open lids"): this character has looked at THIS stock - opened (`openedOn`, stamped with the stock's own day
  *  when the window opens) and neither rolled again since nor due to be. The day's restock closes the lid again, as it
  *  refills the drawer: a searched container is only ever the stock the player saw. */
-export const stockSearched = (container, today) => Number.isFinite(container?.openedOn) && container.openedOn > 0
-  && container.openedOn === container.stockedDate && !needsRestock(container, today);
+export const stockSearched = (container, today) =>
+  Number.isFinite(container?.openedOn) &&
+  container.openedOn > 0 &&
+  container.openedOn === container.stockedDate &&
+  !needsRestock(container, today);
 
 /** ENDLESS-STOCK (2026-10-04, Mac: "I want the gathering bag to be unlimited purchases in stores. It shouldnt run out,
  *  same with campfires"): the rows a shop never sells out of - the Materials Bag and the Campfire. ENDLESS PROVISIONS
  *  (2026-10-04, Mac: "rations should be available in stores where it makes sense and unlimited as well"): and Rations. */
 const isRations = (item) => isSurvivalItem(item) && item.templateIndex === SURVIVAL_TEMPLATE.Rations;
-export const isEndlessStock = (item) => isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item);   // LOCKPICK: and the counter's picks
+export const isEndlessStock = (item) =>
+  isBagItem(item) || (isSurvivalItem(item) && isCampfireKit(item)) || isRations(item) || isLockpick(item); // LOCKPICK: and the counter's picks
 /** ENDLESS-STOCK: a purchase's endless rows put back on the shelf they were bought from - a fresh one for each (neither
  *  stacks), minted as the shelf mints it (worldModes.js commitTrade's Buy). Only a purchase restocks: a row taken from a
  *  closed shop's shelf is stolen, and stays gone. Online alone; and online no shop buys one back (shopBuysItem), so the only
@@ -330,21 +420,37 @@ export function restockEndless(shelfItems, bought, buildingType = null) {
   let n = restockArrows(shelfItems, bought, buildingType);
   // AUDIT ENDLESS-STOCK F4: online alone, as the bag is - offline a shelf sells out as Daggerfall's does
   if (!isOnlinePage()) return n;
-  n += restockLockpicks(shelfItems, (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0));   // AUDIT LOCKPICK B4: what the purchase took
+  n += restockLockpicks(
+    shelfItems,
+    (bought ?? []).filter(isLockpick).reduce((k, it) => k + Math.max(1, Math.trunc(it.stackCount ?? 1)), 0),
+  ); // AUDIT LOCKPICK B4: what the purchase took
   for (const it of bought ?? []) {
     if (!isEndlessStock(it)) continue;
     if (isRations(it)) {
       // ENDLESS PROVISIONS: Rations stack - the shelf's stack is filled back to its whole, or stood again if the lot took it
       const stack = shelfItems.find(isRations);
-      if (stack) { if ((stack.stackCount ?? 1) < ENDLESS_RATIONS_STACK) { stack.stackCount = ENDLESS_RATIONS_STACK; n++; } }
-      else { const r = createSurvivalItem(SURVIVAL_TEMPLATE.Rations, { stackCount: ENDLESS_RATIONS_STACK }); if (r) { addItem(shelfItems, r); n++; } }
+      if (stack) {
+        if ((stack.stackCount ?? 1) < ENDLESS_RATIONS_STACK) {
+          stack.stackCount = ENDLESS_RATIONS_STACK;
+          n++;
+        }
+      } else {
+        const r = createSurvivalItem(SURVIVAL_TEMPLATE.Rations, { stackCount: ENDLESS_RATIONS_STACK });
+        if (r) {
+          addItem(shelfItems, r);
+          n++;
+        }
+      }
       continue;
     }
-    if (isLockpick(it)) continue;   // LOCKPICK: stood back above, by what the purchase took
+    if (isLockpick(it)) continue; // LOCKPICK: stood back above, by what the purchase took
     const fresh = isBagItem(it)
       ? mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: BAG_TEMPLATE }))
       : createSurvivalItem(SURVIVAL_TEMPLATE.Campfire);
-    if (fresh) { addItem(shelfItems, fresh); n++; }
+    if (fresh) {
+      addItem(shelfItems, fresh);
+      n++;
+    }
   }
   return n;
 }
@@ -358,20 +464,24 @@ export function restockEndless(shelfItems, bought, buildingType = null) {
  *  the DEFAULT is a point-of-use store read - a parameter with a
  *  `false` default would have been a switch every caller can forget -
  *  and an explicit argument still overrides it (the tests do). */
-export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { rolls = Math.random, torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems'), shelfIndex = 0 } = {}) {
+export function stockShopShelf(
+  { buildingType, quality },
+  playerEntity = {},
+  { rolls = Math.random, torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems'), shelfIndex = 0 } = {},
+) {
   const items = [];
   // DaggerfallUnityItem.ItemName is the TEMPLATE's name for every
   // plain item; AUDIT 18: the shelf minted rows with none, so the
   // dungeon-style item list labelled a bought Oil "UselessItems2".
   const add = (item) => {
-    const it = mintCondition(setItemFields(item));   // AUDIT 23 (items-5); MAC-N1: SetItem's name + value through the one export
+    const it = mintCondition(setItemFields(item)); // AUDIT 23 (items-5); MAC-N1: SetItem's name + value through the one export
     // SetItem's other draw (DaggerfallUnityItem.cs:571) - a Paintings
     // item is born with its message, and a pawn shop is where the
     // player meets one (group 13 rides the PawnShop pair table). The
     // shelf minted them with none, so every painting seeded
     // InitPaintingInfo from 0 and they were all the same picture.
     if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
-    addItem(items, it);   // AUDIT-RR2 G10: `items.AddItem(item)` (DaggerfallLoot.cs:250) MERGES a stackable into its stack (ItemCollection.cs:224-228) - one bandage row for RRI's OnLootSpawned to size, arrows and ingredients as one pile
+    addItem(items, it); // AUDIT-RR2 G10: `items.AddItem(item)` (DaggerfallLoot.cs:250) MERGES a stackable into its stack (ItemCollection.cs:224-228) - one bandage row for RRI's OnLootSpawned to size, arrows and ingredients as one pile
   };
   const pairs = SHOP_ITEM_GROUPS[buildingType] ?? [0];
   if (buildingType === BUILDING_TYPES.Alchemist) {
@@ -407,17 +517,18 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     // AUDIT REST II H8: the Campfires on the counter's shelf alone (as the rest supplies and the healing supply below) - every
     // shelf model is its own container stocked whole, so a store of four shelves sold sixteen, not "two to four"
     if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })) items.push(it);
-    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls)) items.push(it);   // REST2: online the Campfire is the rest's, the arc on or off
+    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls)) items.push(it); // REST2: online the Campfire is the rest's, the arc on or off
   }
   const level = playerEntity.level ?? 1;
   const female = playerEntity.gender === 'female';
   for (let i = 0; i + 1 < pairs.length; i += 2) {
     let group = GROUP_NAMES[pairs[i]];
     const chanceMod = pairs[i + 1];
-    if (!group) continue;   // Maps/etc. groups outside the stocked set resolve to nothing
+    if (!group) continue; // Maps/etc. groups outside the stocked set resolve to nothing
     if (group === 'MensClothing' && female) group = 'WomensClothing';
     if (group === 'WomensClothing' && !female) group = 'MensClothing';
-    if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1') continue;   // DECOR2b: the furnisher's own
+    if ((group === 'Furniture' && buildingType !== BUILDING_TYPES.FurnitureStore) || group === 'UselessItems1')
+      continue; // DECOR2b: the furnisher's own
     if (group === 'MagicItems') {
       // AUDIT 26 F130: StockShopShelf creates ONE random magic item
       // for the MagicItems group (DaggerfallLoot.cs:240-243 -
@@ -442,7 +553,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       // which is why the index is spelled here.
       const t = ITEM_TEMPLATES[MAGIC_ITEMS_ENUM_TEMPLATE];
       if (t.rarity > quality) continue;
-      if (!dice100(Math.trunc(chanceMod * 5 * (21 - t.rarity) / 100), rolls())) continue;
+      if (!dice100(Math.trunc((chanceMod * 5 * (21 - t.rarity)) / 100), rolls())) continue;
       const templates = getMagicItemTemplates();
       if (templates) add(createRegularMagicItem(templates, level, playerEntity.gender ?? 0, rolls));
       continue;
@@ -466,7 +577,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
     for (let j = 0; j < metas.length; ++j) {
       const t = metas[j];
       if (t.rarity > quality) continue;
-      const stockChance = Math.trunc(chanceMod * 5 * (21 - t.rarity) / 100);
+      const stockChance = Math.trunc((chanceMod * 5 * (21 - t.rarity)) / 100);
       if (!dice100(stockChance, rolls())) continue;
       if (group === 'Weapons') {
         // A2: `CreateWeapon(j + Weapons.Dagger, RandomMaterial(level))`
@@ -485,14 +596,19 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
         // draws the material roll for an arrow too and throws it away
         // - one extra draw per shelved arrow, in DFU's stream.
         const templateIndex = GROUP_TEMPLATE_INDICES.Weapons[j];
-        const material = randomMaterial(level, rolls);   // the ARGUMENT, drawn before the call - arrows included
+        const material = randomMaterial(level, rolls); // the ARGUMENT, drawn before the call - arrows included
         add(createWeapon(templateIndex, material, rolls));
       } else if (group === 'Armor') {
         // CreateArmor(gender, race, piece, RandomArmorMaterial(level))
         // - the material roll, THEN RandomizeArmorVariant's roll.
         const templateIndex = GROUP_TEMPLATE_INDICES.Armor[j];
         const material = randomArmorMaterial(level, rolls);
-        add({ group: 'Armor', templateIndex, material, variant: randomizeArmorVariant(templateIndex, material, rolls) });
+        add({
+          group: 'Armor',
+          templateIndex,
+          material,
+          variant: randomizeArmorVariant(templateIndex, material, rolls),
+        });
       } else if (group === 'MensClothing' || group === 'WomensClothing') {
         // CreateMensClothing/CreateWomensClothing roll the VARIANT
         // over the template's own count (Range(0, variants)); the
@@ -518,7 +634,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
         // own short-circuit: with the setting off the day-seeded
         // stream is untouched.
         if (torchesFromItems && group === 'UselessItems2' && templateIndex === OIL_TEMPLATE)
-          it.stackCount = 5 + Math.floor(rolls() * 16);   // UnityEngine.Random.Range(5, 20 + 1) - 5..20 inclusive
+          it.stackCount = 5 + Math.floor(rolls() * 16); // UnityEngine.Random.Range(5, 20 + 1) - 5..20 inclusive
         add(it);
       }
     }
@@ -533,7 +649,7 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
       for (const templateIndex of customs) {
         const t = templateByIndex(templateIndex);
         if (!t || t.rarity > quality) continue;
-        const stockChance = Math.trunc(customChanceMod * 5 * (21 - t.rarity) / 100);
+        const stockChance = Math.trunc((customChanceMod * 5 * (21 - t.rarity)) / 100);
         if (!dice100(stockChance, rolls())) continue;
         if (group === 'Weapons') add({ group, templateIndex, material: randomMaterial(level, rolls), flags: 0 });
         else if (group === 'Armor') add({ group, templateIndex, material: randomArmorMaterial(level, rolls) });
@@ -544,21 +660,32 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
   // REST6 (Rest-Arc.md section 6): a General Store's and an Alchemist's rest supplies, on the first shelf, after every
   // draw of DFU's (unmoved) and before the healing supply, which stays the shelf's last act; offline with Climates & Calories, online once REST_ITEMS_ONLINE is on
   if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.Alchemist)) {
-    for (const it of restItemsStock(buildingType === BUILDING_TYPES.GeneralStore ? 'GeneralStore' : 'Alchemist', quality, rolls)) addItem(items, it);
+    for (const it of restItemsStock(
+      buildingType === BUILDING_TYPES.GeneralStore ? 'GeneralStore' : 'Alchemist',
+      quality,
+      rolls,
+    ))
+      addItem(items, it);
   }
-  if (shelfIndex === 0 && buildingType === BUILDING_TYPES.PawnShop && sharedClockOn()) for (const it of campfireStock(rolls, 0, 2)) addItem(items, it);   // AUDIT REST: REST2's Pawn Shop, 0-2 online
+  if (shelfIndex === 0 && buildingType === BUILDING_TYPES.PawnShop && sharedClockOn())
+    for (const it of campfireStock(rolls, 0, 2)) addItem(items, it); // AUDIT REST: REST2's Pawn Shop, 0-2 online
   // ENDLESS PROVISIONS: a General Store's and a Pawn Shop's counter shelf has a Campfire Kit and a full stack of Rations in
   // every tier, Climates & Calories Off and offline too - after DFU's draws, from no roll. Online a purchase stands them
   // again (restockEndless); offline they sell out until the day's restock, as the rest of the shelf does (ENDLESS-STOCK F4)
-  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop)) ensureEndlessProvisions(items);
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop))
+    ensureEndlessProvisions(items);
   // LOCKPICK (bible/06-Systems/Lockpicking.md section 2): and a stack of lockpicks - a lock needs one - from no roll, so DFU's
   // draws above stand as they were; online a purchase stands it whole again (restockEndless), offline it sells out until the
   // day's restock
-  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop)) ensureEndlessLockpicks(items);
+  if (shelfIndex === 0 && (buildingType === BUILDING_TYPES.GeneralStore || buildingType === BUILDING_TYPES.PawnShop))
+    ensureEndlessLockpicks(items);
   // SHOP-ARROWS (above): a quiver on the counter of every shop that sells weapons - after DFU's draws, from no roll; minted
   // as the shelf mints its own (CreateWeapon's arrow arm, its stack roll answered by a constant), so the two are one stack
   // ENDLESS-ARROWS: a General Store's a full quiver at any quality (merged into DFU's drawn arrows as SHOP-ARROWS' is)
-  if (shelfIndex === 0) { const n = endlessArrowsAt(buildingType) ? GENERAL_STORE_ARROWS : shopArrowStack(buildingType, quality); if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }
+  if (shelfIndex === 0) {
+    const n = endlessArrowsAt(buildingType) ? GENERAL_STORE_ARROWS : shopArrowStack(buildingType, quality);
+    if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n });
+  }
   // POTION-COMMON (2026-10-01, the field: "make health potions more common"): an alchemist's and a general store's day of
   // Potions of Healing (healingSupply.js) - at the shelf's end and from no roll, so DFU's own draws above are the same.
   // AUDIT ECON P1: on the shop's FIRST shelf alone, the one its counter sells from (worldModes.js openMerchantSell) -
@@ -576,47 +703,134 @@ export function stockShopShelf({ buildingType, quality }, playerEntity = {}, { r
 // the shop pair-tables above, these are FLAT lists - one group is
 // drawn per container, not walked pairwise.
 export const PRIVATE_PROPERTY_MODELS_0_TO_1 = Object.freeze([
-  [0x06, 0x0C], [0x06, 0x0C], [0x02, 0x06, 0x0C], [0x06, 0x0C],
-  [0x02, 0x06, 0x0C], [0x06, 0x0C], [0x06, 0x0C], [0x06, 0x0C],
-  [0x06, 0x0C], [0x06, 0x0C], [0x06, 0x0C], [0x02, 0x06, 0x0C],
-  [0x02, 0x06, 0x0C], [0x02, 0x06, 0x0C], [0x06, 0x0C], [0x06, 0x0C],
-  [0x02, 0x06, 0x0C], [0x02, 0x06, 0x0C], [0x06, 0x0C], [0x06, 0x0C],
-  [0x06, 0x0C], [0x06, 0x0C], [0x06, 0x0C], [0x06, 0x0C],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x02, 0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
+  [0x06, 0x0c],
 ]);
 export const PRIVATE_PROPERTY_MODELS_2_TO_3 = Object.freeze([
-  [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C], [0x03, 0x06, 0x09, 0x0C], [0x07, 0x09, 0x0B],
-  [0x09, 0x0A, 0x0B, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x19], [0x07, 0x09, 0x0B],
-  [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C], [0x09, 0x0B, 0x0E, 0x19], [0x09, 0x0A],
-  [0x09, 0x0B], [0x03, 0x09, 0x0A, 0x0B], [0x03, 0x09, 0x0B], [0x03, 0x09],
-  [0x07, 0x09, 0x0A, 0x0B, 0x0E], [0x03, 0x09, 0x0A], [0x03, 0x09, 0x0A, 0x0B, 0x19],
-  [0x03, 0x09, 0x0A, 0x0B], [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C],
-  [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x03, 0x06, 0x09, 0x0c],
+  [0x07, 0x09, 0x0b],
+  [0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x19],
+  [0x07, 0x09, 0x0b],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x09, 0x0b, 0x0e, 0x19],
+  [0x09, 0x0a],
+  [0x09, 0x0b],
+  [0x03, 0x09, 0x0a, 0x0b],
+  [0x03, 0x09, 0x0b],
+  [0x03, 0x09],
+  [0x07, 0x09, 0x0a, 0x0b, 0x0e],
+  [0x03, 0x09, 0x0a],
+  [0x03, 0x09, 0x0a, 0x0b, 0x19],
+  [0x03, 0x09, 0x0a, 0x0b],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
 ]);
 export const PRIVATE_PROPERTY_MODELS_4_TO_10 = Object.freeze([
-  [0x07, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x15], [0x09, 0x15], [0x09, 0x15], [0x07, 0x19],
-  [0x09, 0x0A, 0x0B, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x14], [0x07, 0x09, 0x0A, 0x0B],
-  [0x06, 0x09, 0x0A, 0x0C, 0x0F, 0x10], [0x09], [0x07, 0x09, 0x0A, 0x15], [0x09],
-  [0x09, 0x0D], [0x09, 0x0A, 0x0D], [0x09, 0x0A], [0x09, 0x0A, 0x15],
-  [0x04, 0x09, 0x0A, 0x14], [0x09, 0x0F, 0x10], [0x07, 0x09, 0x0D, 0x14],
-  [0x07, 0x09, 0x0D, 0x14], [0x09, 0x0A], [0x09, 0x0A], [0x09, 0x0A],
-  [0x09, 0x0A], [0x09, 0x0A], [0x09, 0x0A],
+  [0x07, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x15],
+  [0x09, 0x15],
+  [0x09, 0x15],
+  [0x07, 0x19],
+  [0x09, 0x0a, 0x0b, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14],
+  [0x07, 0x09, 0x0a, 0x0b],
+  [0x06, 0x09, 0x0a, 0x0c, 0x0f, 0x10],
+  [0x09],
+  [0x07, 0x09, 0x0a, 0x15],
+  [0x09],
+  [0x09, 0x0d],
+  [0x09, 0x0a, 0x0d],
+  [0x09, 0x0a],
+  [0x09, 0x0a, 0x15],
+  [0x04, 0x09, 0x0a, 0x14],
+  [0x09, 0x0f, 0x10],
+  [0x07, 0x09, 0x0d, 0x14],
+  [0x07, 0x09, 0x0d, 0x14],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
+  [0x09, 0x0a],
 ]);
 export const PRIVATE_PROPERTY_MODELS_11_TO_14 = Object.freeze([
-  [0x07, 0x09, 0x14], [0x07, 0x09, 0x14], [0x03, 0x06, 0x09, 0x0C], [0x09, 0x0D, 0x0E],
-  [0x02, 0x03, 0x09], [0x07, 0x09], [0x06, 0x09, 0x0C], [0x09],
-  [0x03, 0x09, 0x15, 0x0E], [0x09, 0x0A], [0x09], [0x09, 0x03, 0x0E],
-  [0x09, 0x0D, 0x19], [0x03, 0x09, 0x0A, 0x15], [0x07, 0x09, 0x0A], [0x06, 0x09, 0x0C],
-  [0x04, 0x07, 0x09, 0x0D, 0x19], [0x07, 0x09, 0x0D, 0x19], [0x03, 0x09], [0x03, 0x09],
-  [0x03, 0x09], [0x03, 0x09], [0x03, 0x09], [0x03, 0x09],
+  [0x07, 0x09, 0x14],
+  [0x07, 0x09, 0x14],
+  [0x03, 0x06, 0x09, 0x0c],
+  [0x09, 0x0d, 0x0e],
+  [0x02, 0x03, 0x09],
+  [0x07, 0x09],
+  [0x06, 0x09, 0x0c],
+  [0x09],
+  [0x03, 0x09, 0x15, 0x0e],
+  [0x09, 0x0a],
+  [0x09],
+  [0x09, 0x03, 0x0e],
+  [0x09, 0x0d, 0x19],
+  [0x03, 0x09, 0x0a, 0x15],
+  [0x07, 0x09, 0x0a],
+  [0x06, 0x09, 0x0c],
+  [0x04, 0x07, 0x09, 0x0d, 0x19],
+  [0x07, 0x09, 0x0d, 0x19],
+  [0x03, 0x09],
+  [0x03, 0x09],
+  [0x03, 0x09],
+  [0x03, 0x09],
+  [0x03, 0x09],
+  [0x03, 0x09],
 ]);
 export const PRIVATE_PROPERTY_MODELS_15_AND_UP = Object.freeze([
-  [0x0F, 0x10, 0x11, 0x12, 0x13, 0x15], [0x02, 0x15], [0x02, 0x15], [0x0D, 0x19],
-  [0x02, 0x03, 0x04, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12, 0x13, 0x15], [0x07, 0x0D],
-  [0x06, 0x09, 0x0C, 0x0F, 0x10], [0x09, 0x0D], [0x09, 0x15], [0x09],
-  [0x09, 0x0D], [0x02, 0x09, 0x0D], [0x02, 0x03, 0x09], [0x03, 0x09, 0x15],
-  [0x09, 0x0A, 0x0D], [0x09, 0x0F, 0x10], [0x09, 0x0D, 0x19], [0x09, 0x0D, 0x19],
-  [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C],
-  [0x06, 0x09, 0x0C], [0x06, 0x09, 0x0C],
+  [0x0f, 0x10, 0x11, 0x12, 0x13, 0x15],
+  [0x02, 0x15],
+  [0x02, 0x15],
+  [0x0d, 0x19],
+  [0x02, 0x03, 0x04, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x15],
+  [0x07, 0x0d],
+  [0x06, 0x09, 0x0c, 0x0f, 0x10],
+  [0x09, 0x0d],
+  [0x09, 0x15],
+  [0x09],
+  [0x09, 0x0d],
+  [0x02, 0x09, 0x0d],
+  [0x02, 0x03, 0x09],
+  [0x03, 0x09, 0x15],
+  [0x09, 0x0a, 0x0d],
+  [0x09, 0x0f, 0x10],
+  [0x09, 0x0d, 0x19],
+  [0x09, 0x0d, 0x19],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
+  [0x06, 0x09, 0x0c],
 ]);
 
 /** DaggerfallLoot.StockHouseContainer (:291-375) - AUDIT 26 F209: the
@@ -649,25 +863,36 @@ export const PRIVATE_PROPERTY_FALLBACK_ROWS = Object.freeze([
   Object.freeze({ text: 'still want to look through it?', center: true }),
 ]);
 export function privatePropertyRows(rows) {
-  const out = (rows ?? []).map((r) => (typeof r === 'string' ? { text: r, center: true } : { text: String(r?.text ?? ''), center: r?.center !== false }));
+  const out = (rows ?? []).map((r) =>
+    typeof r === 'string' ? { text: r, center: true } : { text: String(r?.text ?? ''), center: r?.center !== false },
+  );
   return out.some((r) => r.text.trim() !== '') ? out : PRIVATE_PROPERTY_FALLBACK_ROWS.map((r) => ({ ...r }));
 }
 
-export function stockHouseContainer({ buildingType, record }, playerEntity = {}, { rolls = Math.random, contRand = rand } = {}) {
+export function stockHouseContainer(
+  { buildingType, record },
+  playerEntity = {},
+  { rolls = Math.random, contRand = rand } = {},
+) {
   const items = [];
   if (buildingType == null || buildingType > BUILDING_TYPES.Town23) return items;
   const modelIndex = record ?? 0;
-  const table = modelIndex >= 15 ? PRIVATE_PROPERTY_MODELS_15_AND_UP
-    : modelIndex >= 11 ? PRIVATE_PROPERTY_MODELS_11_TO_14
-      : modelIndex >= 4 ? PRIVATE_PROPERTY_MODELS_4_TO_10
-        : modelIndex >= 2 ? PRIVATE_PROPERTY_MODELS_2_TO_3
-          : PRIVATE_PROPERTY_MODELS_0_TO_1;
+  const table =
+    modelIndex >= 15
+      ? PRIVATE_PROPERTY_MODELS_15_AND_UP
+      : modelIndex >= 11
+        ? PRIVATE_PROPERTY_MODELS_11_TO_14
+        : modelIndex >= 4
+          ? PRIVATE_PROPERTY_MODELS_4_TO_10
+          : modelIndex >= 2
+            ? PRIVATE_PROPERTY_MODELS_2_TO_3
+            : PRIVATE_PROPERTY_MODELS_0_TO_1;
   const list = table[buildingType];
   if (!list) return items;
   // the shelf's add() shape: name/value/condition off the template,
   // a Paintings mint born with its message (SetItem's other draw).
   const add = (item) => {
-    const it = mintCondition(setItemFields(item));   // MAC-N1: SetItem's name + value through the one export
+    const it = mintCondition(setItemFields(item)); // MAC-N1: SetItem's name + value through the one export
     if (it.group === 'Paintings' && it.message == null) it.message = rollPaintingMessage(rolls);
     items.push(it);
   };
@@ -684,7 +909,7 @@ export function stockHouseContainer({ buildingType, record }, playerEntity = {},
         const templates = getMagicItemTemplates();
         if (templates) item = createRegularMagicItem(templates, level, playerEntity.gender ?? 0, rolls);
       } else if (group === 'Books') {
-        item = createRandomBook(rolls);   // A2: the book FILE's price, same member as the shelf
+        item = createRandomBook(rolls); // A2: the book FILE's price, same member as the shelf
       } else if (group === 'Weapons') {
         item = createRandomWeapon(level, rolls);
       } else if (group === 'Armor') {
@@ -714,12 +939,17 @@ export const initialRegionPrice = (roll01) => 750 + Math.floor(roll01 * 501);
 // economy for its own world.
 let _worldPrice = null;
 /** ECON1: install (a function of a region index answering the world's index) or remove (null) the world's price source. */
-export function setWorldPriceSource(fn) { _worldPrice = typeof fn === 'function' ? fn : null; }
+export function setWorldPriceSource(fn) {
+  _worldPrice = typeof fn === 'function' ? fn : null;
+}
 export const worldPriceSourceOn = () => _worldPrice !== null;
 /** RandomizeInitialRegionalPrices: 750..1250 per region, lazily. ECON1: the world's, when the shared clock stands -
  *  no lazy draw then (a neighbour's day must not move this player's dice, AUDIT WORLD6b B14's law) and no write. */
 export function regionPriceAdjustment(playerEntity, regionIndex, rolls = Math.random) {
-  if (_worldPrice) { const p = _worldPrice(regionIndex); if (Number.isFinite(p)) return p; }
+  if (_worldPrice) {
+    const p = _worldPrice(regionIndex);
+    if (Number.isFinite(p)) return p;
+  }
   playerEntity.regionPrices ??= {};
   playerEntity.regionPrices[regionIndex] ??= initialRegionPrice(rolls());
   return playerEntity.regionPrices[regionIndex];
@@ -750,7 +980,7 @@ export function priceWalkStep(adj, powerBias, roll01) {
   const chanceOfPriceRise = (powerBias | 0) + 50 - Math.trunc((adj - 1000) / 25);
   // Dice100.FailedRoll(chance) is !SuccessRoll(chance), and dice100() here IS SuccessRoll - one roll drawn either
   // way, which is why the negation is on the RESULT and not a second draw.
-  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc(51 * adj / 50) : Math.trunc(49 * adj / 50);
+  const next = dice100(chanceOfPriceRise, roll01) ? Math.trunc((51 * adj) / 50) : Math.trunc((49 * adj) / 50);
   return Math.min(PRICE_ADJUSTMENT_MAX, Math.max(PRICE_ADJUSTMENT_MIN, next));
 }
 /** UpdateRegionalPrices' condition half (:2075-2087), verbatim including the nesting: at or under 2000 and at or over
@@ -841,7 +1071,7 @@ export const PRICE_ADJUSTMENT_MAX = 4000;
  */
 export function updateRegionalPrices(playerEntity, factionDict, times, rolls = Math.random, conditions = null) {
   if (!factionDict || !(times > 0)) return;
-  playerEntity.regionPrices ??= {};   // AUDIT ALL E2: the table is this walk's own to stand - it leaned on regionPriceAdjustment's lazy init, which the world's source (ECON1) skips
+  playerEntity.regionPrices ??= {}; // AUDIT ALL E2: the table is this walk's own to stand - it leaned on regionPriceAdjustment's lazy init, which the world's source (ECON1) skips
   // GetFactionData(The_Merchants) - `if (!...) return`, so a missing
   // merchants faction stops the WHOLE walk, not just one region.
   const merchants = factionDict.get(MERCHANTS_FACTION_ID);
@@ -851,9 +1081,9 @@ export function updateRegionalPrices(playerEntity, factionDict, times, rolls = M
     if (!regionFaction) continue;
     for (let j = 0; j < times; j++) {
       const adj = regionPriceAdjustment(playerEntity, i, rolls);
-      const adjusted = priceWalkStep(adj, Math.trunc((merchants.power - regionFaction.power) / 5), rolls());   // ECON1: one home for the step
+      const adjusted = priceWalkStep(adj, Math.trunc((merchants.power - regionFaction.power) / 5), rolls()); // ECON1: one home for the step
       playerEntity.regionPrices[i] = adjusted;
-      applyPriceConditionFlags(conditions, i, adjusted, rolls);   // :2075-2087, one home for the flag half
+      applyPriceConditionFlags(conditions, i, adjusted, rolls); // :2075-2087, one home for the flag half
     }
   }
 }
@@ -867,9 +1097,9 @@ export function updateRegionalPrices(playerEntity, factionDict, times, rolls = M
 export function calculateCost(baseValue, shopQuality, priceAdjustment = 1000, conditionPercentage = -1) {
   let cost = conditionBasedPricesOn() ? conditionCostBase(baseValue, conditionPercentage) : baseValue;
   if (cost < 1) cost = 1;
-  cost = Math.trunc(cost * priceAdjustment / 1000);   // ApplyRegionalPriceAdjustment
+  cost = Math.trunc((cost * priceAdjustment) / 1000); // ApplyRegionalPriceAdjustment
   if (cost < 1) cost = 1;
-  cost = 2 * (Math.trunc(cost * (shopQuality - 10) / 100) + cost);
+  cost = 2 * (Math.trunc((cost * (shopQuality - 10)) / 100) + cost);
   return cost;
 }
 
@@ -946,33 +1176,42 @@ export const ONLINE_SALE_SKILL_WEIGHT = 0.5;
  *  cost wrapped, and a sale of a few dozen Daedric pieces paid about
  *  -8,400,000 gold into the purse (a purchase as large paid the buyer).
  *  It divides now: the same number for every lot that never wrapped. */
-export function calculateTradePrice(cost, shopQuality, { mercantile = 0, personality = 50 } = {}, selling = false, { online = isOnlinePage() } = {}) {
-  if (online) {   // MERC-CAP: the haggle's own range
+export function calculateTradePrice(
+  cost,
+  shopQuality,
+  { mercantile = 0, personality = 50 } = {},
+  selling = false,
+  { online = isOnlinePage() } = {},
+) {
+  if (online) {
+    // MERC-CAP: the haggle's own range
     mercantile = Math.min(Math.max(mercantile, 0), ONLINE_HAGGLE_MAX);
     personality = Math.min(Math.max(personality, 0), ONLINE_HAGGLE_MAX);
   }
-  const merchantLevel = 5 * (shopQuality - 10) + 50;   // mercantile and personality alike
+  const merchantLevel = 5 * (shopQuality - 10) + 50; // mercantile and personality alike
   let dm, dp;
   if (selling) {
     dm = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((mercantile << 8) / 200) + 128)) >> 8;
     dp = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((personality << 8) / 200) + 128)) >> 8;
-    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);   // TRADE-WRAP: never int32's wrap
+    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256); // TRADE-WRAP: never int32's wrap
     if (!online) return sale;
-    const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX };   // MERC-RISE: the best haggler this counter can meet
-    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE);   // REALM P0.4; MERC-RISE: half the least it asks
+    const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX }; // MERC-RISE: the best haggler this counter can meet
+    const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE); // REALM P0.4; MERC-RISE: half the least it asks
     // MERC-SLOPE: under the half, where this seller's own offer stands against the best haggler's - at its weight
     const top = calculateTradePrice(cost, shopQuality, best, true, { online: false });
     if (!(top > 0)) return Math.min(sale, half);
-    const slope = Math.floor(half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top));
+    const slope = Math.floor(
+      half * (1 - ONLINE_SALE_SKILL_WEIGHT + (ONLINE_SALE_SKILL_WEIGHT * Math.min(sale, top)) / top),
+    );
     // MERC-SLOPE's audit: the floor took a half of 1 to nothing for every seller but the best - a lot Daggerfall pays for,
     // and MERC-RISE paid a gold for, handed over for none. A gold at least, where the half and the offer both reach one.
     return Math.max(slope, Math.min(sale, half, 1));
   }
   dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
-  dp = (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;
-  return Math.floor(((((192 * dm) >> 8) + (dp >> 8)) * cost) / 256);   // TRADE-WRAP: never int32's wrap
+  dp =
+    (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;
+  return Math.floor(((((192 * dm) >> 8) + (dp >> 8)) * cost) / 256); // TRADE-WRAP: never int32's wrap
 }
-
 
 // ── X6: THE SOUL GEM STOCK (the Mages Guild's Buy Soulgems service) ──
 //
@@ -1010,11 +1249,13 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
 
 /** A deterministic [0,1) stream for one game day. */
 export function dailyStockRolls(dayIndex) {
-  let s = ((dayIndex >>> 0) || 1) >>> 0;
+  let s = (dayIndex >>> 0 || 1) >>> 0;
   return () => {
-    s ^= s << 13; s >>>= 0;
+    s ^= s << 13;
+    s >>>= 0;
     s ^= s >>> 17;
-    s ^= s << 5; s >>>= 0;
+    s ^= s << 5;
+    s >>>= 0;
     return s / 0x100000000;
   };
 }
@@ -1037,7 +1278,7 @@ export const stockDayIndex = (gameMinutes) => Math.floor((gameMinutes ?? 0) / MI
  *  0 - exactly what an EMPTY trap is worth. That is DFU behaviour,
  *  not an oversight here. */
 export const SOUL_TRAP_BASE_VALUE = 5000;
-const SOULLESS_DRAWS = new Set([34, 39]);   // Dragonling, Horse_Invalid
+const SOULLESS_DRAWS = new Set([34, 39]); // Dragonling, Horse_Invalid
 
 export function createRandomlyFilledSoulTrap(rolls = Math.random, soulPointsOf = null) {
   let soul = -1;
@@ -1049,7 +1290,7 @@ export function createRandomlyFilledSoulTrap(rolls = Math.random, soulPointsOf =
     const draw = Math.floor(rolls() * 43);
     if (!SOULLESS_DRAWS.has(draw)) soul = draw;
   }
-  if (soul < 0) soul = 0;   // Rat: the first valid draw, so a dead stream still mints a legal gem
+  if (soul < 0) soul = 0; // Rat: the first valid draw, so a dead stream still mints a legal gem
   const pts = soulPointsOf ? (soulPointsOf(soul) ?? 0) : 0;
   return mintCondition({
     group: 'MiscItems',
@@ -1094,13 +1335,16 @@ export function createEmptySoulTrap() {
  * asked for: a guild that sells gems sells them ON the magic shelf
  * too, with a SPELLBOOK between the two runs.
  */
-export function stockGuildMagicItems({ quality = 0, gameMinutes = 0, sellsSoulGems = false, onlySoulGems = false } = {},
-  { magicItemTemplates = null, playerLevel = 1, gender = 0, soulPointsOf = null } = {}) {
+export function stockGuildMagicItems(
+  { quality = 0, gameMinutes = 0, sellsSoulGems = false, onlySoulGems = false } = {},
+  { magicItemTemplates = null, playerLevel = 1, gender = 0, soulPointsOf = null } = {},
+) {
   const rolls = dailyStockRolls(stockDayIndex(gameMinutes));
   const numOfItems = Math.trunc(quality / 2) + 1;
   const out = [];
   if (!onlySoulGems) {
-    for (let i = 0; i <= numOfItems; i++) {   // INCLUSIVE
+    for (let i = 0; i <= numOfItems; i++) {
+      // INCLUSIVE
       // A shop's magic item arrives ALREADY IDENTIFIED (:242), which
       // is why the Identify service never has anything to do with the
       // stock of the guild that sells it.
@@ -1112,15 +1356,22 @@ export function stockGuildMagicItems({ quality = 0, gameMinutes = 0, sellsSoulGe
     // F103: CreateItem runs SetItem, which writes the template's
     // basePrice into value (DaggerfallUnityItem.cs:563). Without it
     // the guild's spellbook cost the buyer nothing at all.
-    out.push(mintCondition({ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX, value: itemBaseValue({ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }) }));
+    out.push(
+      mintCondition({
+        group: 'MiscItems',
+        templateIndex: SPELLBOOK_TEMPLATE_INDEX,
+        value: itemBaseValue({ group: 'MiscItems', templateIndex: SPELLBOOK_TEMPLATE_INDEX }),
+      }),
+    );
   }
   if (sellsSoulGems) {
-    for (let i = 0; i <= numOfItems; i++) {   // INCLUSIVE - numOfItems + 1 gems
+    for (let i = 0; i <= numOfItems; i++) {
+      // INCLUSIVE - numOfItems + 1 gems
       // Dice100.FailedRoll(25): Random.Range(0,100) >= 25, true 75% of
       // the time, and the true branch is the EMPTY gem.
-      out.push(Math.floor(rolls() * 100) >= 25
-        ? createEmptySoulTrap()
-        : createRandomlyFilledSoulTrap(rolls, soulPointsOf));
+      out.push(
+        Math.floor(rolls() * 100) >= 25 ? createEmptySoulTrap() : createRandomlyFilledSoulTrap(rolls, soulPointsOf),
+      );
     }
   }
   return out;
@@ -1141,7 +1392,8 @@ export function dayShelf(store, service, gameMinutes, mint) {
   const today = stockDayIndex(gameMinutes);
   const kept = store?.[service];
   if (shelfStands(kept, today)) return kept;
-  if (store) for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k];   // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it
+  if (store)
+    for (const k of Object.keys(store)) if (store[k]?.day !== today && !shelfStands(store[k], today)) delete store[k]; // AUDIT GUILD-SHELF A10: a past day's shelf is never shown again - it goes, and the save with it
   const shelf = { day: today, items: mint() };
   _mintedThisSession.add(shelf);
   if (store) store[service] = shelf;
@@ -1154,8 +1406,10 @@ export function dayShelf(store, service, gameMinutes, mint) {
  *  and five on the shelf again. A shelf THIS session minted for a later day stands while the reading is behind it; one
  *  a save carried (a copy's, dated on another clock) is re-minted as ever, and offline nothing reads differently. */
 const _mintedThisSession = new WeakSet();
-const shelfStands = (kept, today) => !!kept && Array.isArray(kept.items)
-  && (kept.day === today || (isOnlinePage() && kept.day > today && _mintedThisSession.has(kept)));
+const shelfStands = (kept, today) =>
+  !!kept &&
+  Array.isArray(kept.items) &&
+  (kept.day === today || (isOnlinePage() && kept.day > today && _mintedThisSession.has(kept)));
 
 /**
  * GetMerchantPotions (:273-280). `n = quality; while (n-- >= 0)` is
@@ -1177,8 +1431,9 @@ const shelfStands = (kept, today) => !!kept && Array.isArray(kept.items)
 export function stockGuildPotions({ quality = 0, gameMinutes = 0 } = {}) {
   const rolls = dailyStockRolls(stockDayIndex(gameMinutes));
   const out = [];
-  for (let n = quality; n >= 0; n--) {   // quality + 1 potions
-    rolls();                              // Range(1, 5) - drawn, discarded, still counted
+  for (let n = quality; n >= 0; n--) {
+    // quality + 1 potions
+    rolls(); // Range(1, 5) - drawn, discarded, still counted
     out.push(createRandomPotion(rolls));
   }
   return out;

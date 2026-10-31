@@ -273,8 +273,8 @@
   {
     "name": "TESA14-the-worker-throws",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": "      if (!inputs) throw new Error('no inputs');\n",
-    "new": "      if (!inputs) return;\n",
+    "old": "      if (!inputs) throw new Error('no inputs');",
+    "new": "      if (!inputs) return;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -282,8 +282,8 @@
   {
     "name": "TESA14-the-cache-unread",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "          if (hit?.layer?.keys) landing.push(",
-    "new": "          if (false) landing.push(",
+    "old": "          if (hit?.layer?.keys) landing.push({ region, hit });",
+    "new": "          if (false) landing.push({ region, hit });",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "TESA14-the-cache-unfilled",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "  function keep(asked, m) {\n    if (!cache) return;\n",
-    "new": "  function keep(asked, m) {\n    return;\n",
+    "old": "    if (!cache) return;",
+    "new": "    return;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "TESA14-no-inputs-posted",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "      if (slot.run !== live.run) { slot.w.postMessage({ t: 'init', ...live.inputs }); slot.run = live.run; }",
-    "new": "      if (slot.run !== live.run) { slot.run = live.run; }",
+    "old": "        slot.w.postMessage({ t: 'init', ...live.inputs });\n        slot.run = live.run;",
+    "new": "        slot.run = live.run;",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "TESA14-a-superseded-start-lands",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "        if (live !== me) return;\n",
-    "new": "",
+    "old": "        if (live !== me) return;\n        for (const { region, hit } of answers) {",
+    "new": "        for (const { region, hit } of answers) {",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "TESA14-a-death-keeps-its-region",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "    if (busy && live && busy.run === live.run) queue.unshift(busy.region);",
-    "new": "    void busy;",
+    "old": "    if (busy && live && busy.run === live.run) queue.unshift(busy.region); // R8: given back only to the build it was of",
+    "new": "    void busy; // R8: given back only to the build it was of",
     "tests": [
       "test/tesa14_roads.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "TESA14-a-stale-answer-lands",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "&& slot.run === live.run && asked.id === m.id)",
-    "new": ")",
+    "old": "    if (m.t === 'region' && asked && live && slot.run === live.run && asked.id === m.id) landed(asked, m);",
+    "new": "    if (m.t === 'region' && asked && live) landed(asked, m);",
     "tests": [
       "test/tesa14_roads.test.js"
     ]

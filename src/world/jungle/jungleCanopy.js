@@ -62,7 +62,8 @@ export const canopyShare = (depth) => smoothstep(-JUNGLE_CANOPY.edge.out, JUNGLE
 
 /** How much of the canopy an eye `h` metres over its ground stands under: 1 under the crowns' underside, 0
  *  JUNGLE_CANOPY.above over it, at their tops (a height not known - the ground not yet built - is under it). */
-export const canopyUnder = (h) => (Number.isFinite(h) ? 1 - smoothstep(JUNGLE_CANOPY.height, JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 1);
+export const canopyUnder = (h) =>
+  Number.isFinite(h) ? 1 - smoothstep(JUNGLE_CANOPY.height, JUNGLE_CANOPY.height + JUNGLE_CANOPY.above, h) : 1;
 
 /** A canopy's live state, eased frame to frame (stepCanopy). */
 export function createCanopyState() {
@@ -79,8 +80,10 @@ export function stepCanopy(s, { dt, eye, target }) {
   const t = clamp01(target);
   s.w = jumped ? t : s.w + (t - s.w) * (1 - Math.exp(-Math.max(0, dt) / JUNGLE_CANOPY.lag));
   if (s.w < 1e-4) s.w = 0;
-  const e = (s.eye ??= [0, 0, 0]);   // the state's own, never a frame's allocation
-  e[0] = eye[0]; e[1] = eye[1]; e[2] = eye[2];
+  const e = (s.eye ??= [0, 0, 0]); // the state's own, never a frame's allocation
+  e[0] = eye[0];
+  e[1] = eye[1];
+  e[2] = eye[2];
   s.primed = true;
   return s;
 }
@@ -104,7 +107,8 @@ export function canopyMoon(moon, w) {
 
 /** The frame's fog colour under a canopy of weight `w`, into `out` (the air under the leaves lit by what comes through). */
 export function canopyFog(color, w, out = new Float32Array(3)) {
-  const k = clamp01(w || 0), t = JUNGLE_CANOPY.tint;
+  const k = clamp01(w || 0),
+    t = JUNGLE_CANOPY.tint;
   for (let c = 0; c < 3; c++) out[c] = color[c] * (1 - JUNGLE_CANOPY.fog * k) * (1 + (t[c] - 1) * k);
   return out;
 }
@@ -128,5 +132,8 @@ export function canopyWaterSky(sky, u) {
   const w = u ? u[3] : 0;
   if (!sky || !(w > 0)) return sky;
   const lerp = (a, b) => [0, 1, 2].map((i) => a[i] + (b[i] - a[i]) * w);
-  return { zenith: lerp(sky.zenith, [u[0], u[1], u[2]]), horizon: lerp(sky.horizon, [u[0] * 1.6, u[1] * 1.6, u[2] * 1.6]) };
+  return {
+    zenith: lerp(sky.zenith, [u[0], u[1], u[2]]),
+    horizon: lerp(sky.horizon, [u[0] * 1.6, u[1] * 1.6, u[2] * 1.6]),
+  };
 }

@@ -22,7 +22,7 @@
 // enum, so this module imports none of the systems it feeds (no cycle,
 // no TDZ - the lesson of DW3's install).
 import { modSetting } from '../modSettings.js';
-import { ARMOR_MATERIAL, FIRST_FEMALE_ARCHIVE } from '../armorMaterials.js';   // MERGE 2026-09-23: one home for the female archive base (audit24 wave24's ratchet)
+import { ARMOR_MATERIAL, FIRST_FEMALE_ARCHIVE } from '../armorMaterials.js'; // MERGE 2026-09-23: one home for the female archive base (audit24 wave24's ratchet)
 import { DYE_COLORS, DYE_NAMES } from '../../characters/dyes.js';
 import { RRI_SPRITES } from './rriIndex.js';
 
@@ -53,40 +53,321 @@ export const RRI_ROW_RULE = Object.freeze({
 });
 /** Each row's set and the classic template it answers to. */
 export const RRI_ROW_FROM = Object.freeze({
-  513: ['weapon', 127], 514: ['weapon', 125],
-  515: ['chain', 102], 516: ['chain', 104], 517: ['chain', 105], 518: ['chain', 106], 519: ['chain', 108],
-  520: ['light', 102], 521: ['light', 104], 522: ['light', 107], 523: ['light', 108], 524: ['light', 103], 525: ['light', 105], 526: ['light', 106],
+  513: ['weapon', 127],
+  514: ['weapon', 125],
+  515: ['chain', 102],
+  516: ['chain', 104],
+  517: ['chain', 105],
+  518: ['chain', 106],
+  519: ['chain', 108],
+  520: ['light', 102],
+  521: ['light', 104],
+  522: ['light', 107],
+  523: ['light', 108],
+  524: ['light', 103],
+  525: ['light', 105],
+  526: ['light', 106],
 });
 /** The fourteen rows (indices 513-526), by RRI_ROW_RULE. */
-export const RRI_TEMPLATES = Object.freeze([
-  { index: 513, name: 'Hatchet', baseWeight: 3, hitPoints: 600, capacityOrTarget: 0, basePrice: 15, enchantmentPoints: 473, rarity: 1, variants: 0, drawOrderOrEffect: 100, isBluntWeapon: false, isLiquid: false, isOneHanded: true, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 4, playerTextureArchive: 513, playerTextureRecord: 0 },
-  { index: 514, name: 'Short Flail', baseWeight: 3.5, hitPoints: 500, capacityOrTarget: 0, basePrice: 11, enchantmentPoints: 405, rarity: 1, variants: 0, drawOrderOrEffect: 100, isBluntWeapon: true, isLiquid: false, isOneHanded: true, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 6, playerTextureArchive: 514, playerTextureRecord: 0 },
-  { index: 515, name: 'Coat', baseWeight: 9.4, hitPoints: 2458, capacityOrTarget: 0, basePrice: 70, enchantmentPoints: 340, rarity: 3, variants: 1, drawOrderOrEffect: 50, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 11, playerTextureArchive: 245, playerTextureRecord: 3 },
-  { index: 516, name: 'Leggings', baseWeight: 1.9, hitPoints: 1843, capacityOrTarget: 0, basePrice: 56, enchantmentPoints: 43, rarity: 3, variants: 1, drawOrderOrEffect: 30, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 13, playerTextureArchive: 245, playerTextureRecord: 10 },
-  { index: 517, name: 'Left Sleeve', baseWeight: 1.5, hitPoints: 1229, capacityOrTarget: 0, basePrice: 42, enchantmentPoints: 34, rarity: 3, variants: 1, drawOrderOrEffect: 60, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 13, playerTextureArchive: 245, playerTextureRecord: 17 },
-  { index: 518, name: 'Right Sleeve', baseWeight: 1.5, hitPoints: 1229, capacityOrTarget: 0, basePrice: 42, enchantmentPoints: 34, rarity: 3, variants: 1, drawOrderOrEffect: 60, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 13, playerTextureArchive: 245, playerTextureRecord: 22 },
-  { index: 519, name: 'Footguards', baseWeight: 1.5, hitPoints: 1536, capacityOrTarget: 0, basePrice: 35, enchantmentPoints: 149, rarity: 3, variants: 1, drawOrderOrEffect: 20, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 204, worldTextureRecord: 1, playerTextureArchive: 245, playerTextureRecord: 0 },
-  { index: 520, name: 'Jacket', baseWeight: 6.25, hitPoints: 1638, capacityOrTarget: 0, basePrice: 55, enchantmentPoints: 280, rarity: 2, variants: 1, drawOrderOrEffect: 50, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 11, playerTextureArchive: 245, playerTextureRecord: 3 },
-  { index: 521, name: 'Trousers', baseWeight: 1.25, hitPoints: 1229, capacityOrTarget: 0, basePrice: 44, enchantmentPoints: 35, rarity: 2, variants: 1, drawOrderOrEffect: 30, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 13, playerTextureArchive: 245, playerTextureRecord: 10 },
-  { index: 522, name: 'Cap', baseWeight: 1.25, hitPoints: 1024, capacityOrTarget: 0, basePrice: 44, enchantmentPoints: 630, rarity: 2, variants: 1, drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 12, playerTextureArchive: 245, playerTextureRecord: 27 },
-  { index: 523, name: 'Half-boots', baseWeight: 1, hitPoints: 1024, capacityOrTarget: 0, basePrice: 28, enchantmentPoints: 122, rarity: 2, variants: 1, drawOrderOrEffect: 20, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 204, worldTextureRecord: 1, playerTextureArchive: 245, playerTextureRecord: 0 },
-  { index: 524, name: 'Gloves', baseWeight: 0.65, hitPoints: 819, capacityOrTarget: 0, basePrice: 28, enchantmentPoints: 280, rarity: 2, variants: 1, drawOrderOrEffect: 70, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 13, playerTextureArchive: 245, playerTextureRecord: 8 },
-  { index: 525, name: 'Left Armguard', baseWeight: 1, hitPoints: 819, capacityOrTarget: 0, basePrice: 33, enchantmentPoints: 28, rarity: 2, variants: 1, drawOrderOrEffect: 60, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 13, playerTextureArchive: 245, playerTextureRecord: 17 },
-  { index: 526, name: 'Right Armguard', baseWeight: 1, hitPoints: 819, capacityOrTarget: 0, basePrice: 33, enchantmentPoints: 28, rarity: 2, variants: 1, drawOrderOrEffect: 60, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false, worldTextureArchive: 207, worldTextureRecord: 13, playerTextureArchive: 245, playerTextureRecord: 22 },
-].map(Object.freeze));
+export const RRI_TEMPLATES = Object.freeze(
+  [
+    {
+      index: 513,
+      name: 'Hatchet',
+      baseWeight: 3,
+      hitPoints: 600,
+      capacityOrTarget: 0,
+      basePrice: 15,
+      enchantmentPoints: 473,
+      rarity: 1,
+      variants: 0,
+      drawOrderOrEffect: 100,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: true,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 4,
+      playerTextureArchive: 513,
+      playerTextureRecord: 0,
+    },
+    {
+      index: 514,
+      name: 'Short Flail',
+      baseWeight: 3.5,
+      hitPoints: 500,
+      capacityOrTarget: 0,
+      basePrice: 11,
+      enchantmentPoints: 405,
+      rarity: 1,
+      variants: 0,
+      drawOrderOrEffect: 100,
+      isBluntWeapon: true,
+      isLiquid: false,
+      isOneHanded: true,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 6,
+      playerTextureArchive: 514,
+      playerTextureRecord: 0,
+    },
+    {
+      index: 515,
+      name: 'Coat',
+      baseWeight: 9.4,
+      hitPoints: 2458,
+      capacityOrTarget: 0,
+      basePrice: 70,
+      enchantmentPoints: 340,
+      rarity: 3,
+      variants: 1,
+      drawOrderOrEffect: 50,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 11,
+      playerTextureArchive: 245,
+      playerTextureRecord: 3,
+    },
+    {
+      index: 516,
+      name: 'Leggings',
+      baseWeight: 1.9,
+      hitPoints: 1843,
+      capacityOrTarget: 0,
+      basePrice: 56,
+      enchantmentPoints: 43,
+      rarity: 3,
+      variants: 1,
+      drawOrderOrEffect: 30,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 13,
+      playerTextureArchive: 245,
+      playerTextureRecord: 10,
+    },
+    {
+      index: 517,
+      name: 'Left Sleeve',
+      baseWeight: 1.5,
+      hitPoints: 1229,
+      capacityOrTarget: 0,
+      basePrice: 42,
+      enchantmentPoints: 34,
+      rarity: 3,
+      variants: 1,
+      drawOrderOrEffect: 60,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 13,
+      playerTextureArchive: 245,
+      playerTextureRecord: 17,
+    },
+    {
+      index: 518,
+      name: 'Right Sleeve',
+      baseWeight: 1.5,
+      hitPoints: 1229,
+      capacityOrTarget: 0,
+      basePrice: 42,
+      enchantmentPoints: 34,
+      rarity: 3,
+      variants: 1,
+      drawOrderOrEffect: 60,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 13,
+      playerTextureArchive: 245,
+      playerTextureRecord: 22,
+    },
+    {
+      index: 519,
+      name: 'Footguards',
+      baseWeight: 1.5,
+      hitPoints: 1536,
+      capacityOrTarget: 0,
+      basePrice: 35,
+      enchantmentPoints: 149,
+      rarity: 3,
+      variants: 1,
+      drawOrderOrEffect: 20,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 204,
+      worldTextureRecord: 1,
+      playerTextureArchive: 245,
+      playerTextureRecord: 0,
+    },
+    {
+      index: 520,
+      name: 'Jacket',
+      baseWeight: 6.25,
+      hitPoints: 1638,
+      capacityOrTarget: 0,
+      basePrice: 55,
+      enchantmentPoints: 280,
+      rarity: 2,
+      variants: 1,
+      drawOrderOrEffect: 50,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 11,
+      playerTextureArchive: 245,
+      playerTextureRecord: 3,
+    },
+    {
+      index: 521,
+      name: 'Trousers',
+      baseWeight: 1.25,
+      hitPoints: 1229,
+      capacityOrTarget: 0,
+      basePrice: 44,
+      enchantmentPoints: 35,
+      rarity: 2,
+      variants: 1,
+      drawOrderOrEffect: 30,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 13,
+      playerTextureArchive: 245,
+      playerTextureRecord: 10,
+    },
+    {
+      index: 522,
+      name: 'Cap',
+      baseWeight: 1.25,
+      hitPoints: 1024,
+      capacityOrTarget: 0,
+      basePrice: 44,
+      enchantmentPoints: 630,
+      rarity: 2,
+      variants: 1,
+      drawOrderOrEffect: 0,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 12,
+      playerTextureArchive: 245,
+      playerTextureRecord: 27,
+    },
+    {
+      index: 523,
+      name: 'Half-boots',
+      baseWeight: 1,
+      hitPoints: 1024,
+      capacityOrTarget: 0,
+      basePrice: 28,
+      enchantmentPoints: 122,
+      rarity: 2,
+      variants: 1,
+      drawOrderOrEffect: 20,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 204,
+      worldTextureRecord: 1,
+      playerTextureArchive: 245,
+      playerTextureRecord: 0,
+    },
+    {
+      index: 524,
+      name: 'Gloves',
+      baseWeight: 0.65,
+      hitPoints: 819,
+      capacityOrTarget: 0,
+      basePrice: 28,
+      enchantmentPoints: 280,
+      rarity: 2,
+      variants: 1,
+      drawOrderOrEffect: 70,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 13,
+      playerTextureArchive: 245,
+      playerTextureRecord: 8,
+    },
+    {
+      index: 525,
+      name: 'Left Armguard',
+      baseWeight: 1,
+      hitPoints: 819,
+      capacityOrTarget: 0,
+      basePrice: 33,
+      enchantmentPoints: 28,
+      rarity: 2,
+      variants: 1,
+      drawOrderOrEffect: 60,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 13,
+      playerTextureArchive: 245,
+      playerTextureRecord: 17,
+    },
+    {
+      index: 526,
+      name: 'Right Armguard',
+      baseWeight: 1,
+      hitPoints: 819,
+      capacityOrTarget: 0,
+      basePrice: 33,
+      enchantmentPoints: 28,
+      rarity: 2,
+      variants: 1,
+      drawOrderOrEffect: 60,
+      isBluntWeapon: false,
+      isLiquid: false,
+      isOneHanded: false,
+      isIngredient: false,
+      worldTextureArchive: 207,
+      worldTextureRecord: 13,
+      playerTextureArchive: 245,
+      playerTextureRecord: 22,
+    },
+  ].map(Object.freeze),
+);
 
 /** OWN-WORK3: our patches to classic rows, merged by index while the mod is on at boot (ItemHelper.cs:1494
  *  TextAssetReader.Merge). One rule: what a player carries by the dozen weighs what it would - an arrow, paper, a
  *  bandage, oil and a torch. Every other classic row stands as Daggerfall's. */
-export const RRI_TEMPLATE_PATCHES = Object.freeze([
-  { index: 131, baseWeight: 0.05 },   // Arrow
-  { index: 247, baseWeight: 0.4 },    // Torch
-  { index: 249, baseWeight: 0.1 },    // Bandage
-  { index: 252, baseWeight: 0.2 },    // Oil
-  { index: 275, baseWeight: 0.05 },   // Letter of Credit
-  { index: 278, baseWeight: 0.05 },   // Potion Recipe
-  { index: 279, baseWeight: 0.05 },   // Parchment
-].map(Object.freeze));
+export const RRI_TEMPLATE_PATCHES = Object.freeze(
+  [
+    { index: 131, baseWeight: 0.05 }, // Arrow
+    { index: 247, baseWeight: 0.4 }, // Torch
+    { index: 249, baseWeight: 0.1 }, // Bandage
+    { index: 252, baseWeight: 0.2 }, // Oil
+    { index: 275, baseWeight: 0.05 }, // Letter of Credit
+    { index: 278, baseWeight: 0.05 }, // Potion Recipe
+    { index: 279, baseWeight: 0.05 }, // Parchment
+  ].map(Object.freeze),
+);
 
 // ---- the material tables ---------------------------------------------
 
@@ -95,18 +376,32 @@ export const RRI_TEMPLATE_PATCHES = Object.freeze([
 export function leatherMaterialArmorValue(material, message) {
   const M = ARMOR_MATERIAL;
   switch (material) {
-    case M.Leather: return message === 0 ? 3 : 5;   // Leather (0) / Fur (1)
-    case M.Chain: case M.Chain2: return 6;          // Chain (unused)
-    case M.Iron: return 5;                          // Brigandine
-    case M.Steel: case M.Silver: return 7;
-    case M.Elven: return 8;
-    case M.Dwarven: return 9;
-    case M.Mithril: return 11;
-    case M.Adamantium: return 11;
-    case M.Ebony: return 12;
-    case M.Orcish: return 13;
-    case M.Daedric: return 14;
-    default: return 0;
+    case M.Leather:
+      return message === 0 ? 3 : 5; // Leather (0) / Fur (1)
+    case M.Chain:
+    case M.Chain2:
+      return 6; // Chain (unused)
+    case M.Iron:
+      return 5; // Brigandine
+    case M.Steel:
+    case M.Silver:
+      return 7;
+    case M.Elven:
+      return 8;
+    case M.Dwarven:
+      return 9;
+    case M.Mithril:
+      return 11;
+    case M.Adamantium:
+      return 11;
+    case M.Ebony:
+      return 12;
+    case M.Orcish:
+      return 13;
+    case M.Daedric:
+      return 14;
+    default:
+      return 0;
   }
 }
 
@@ -114,17 +409,31 @@ export function leatherMaterialArmorValue(material, message) {
 export function chainmailMaterialArmorValue(material) {
   const M = ARMOR_MATERIAL;
   switch (material) {
-    case M.Leather: return 3;
-    case M.Chain: case M.Chain2: return 5;
-    case M.Iron: return 6;
-    case M.Steel: case M.Silver: return 8;
-    case M.Elven: return 9;
-    case M.Dwarven: return 11;
-    case M.Mithril: case M.Adamantium: return 13;
-    case M.Ebony: return 15;
-    case M.Orcish: return 17;
-    case M.Daedric: return 18;
-    default: return 0;
+    case M.Leather:
+      return 3;
+    case M.Chain:
+    case M.Chain2:
+      return 5;
+    case M.Iron:
+      return 6;
+    case M.Steel:
+    case M.Silver:
+      return 8;
+    case M.Elven:
+      return 9;
+    case M.Dwarven:
+      return 11;
+    case M.Mithril:
+    case M.Adamantium:
+      return 13;
+    case M.Ebony:
+      return 15;
+    case M.Orcish:
+      return 17;
+    case M.Daedric:
+      return 18;
+    default:
+      return 0;
   }
 }
 
@@ -137,8 +446,8 @@ export const RRI_TEXT = Object.freeze({ mail: 'Chain ', fur: 'Fur-lined ', brig:
 /** ItemBuilder.firstFemaleArchive - the base the classes measure
  *  PlayerTextureArchive against: 245 + morphology for a woman, 249 +
  *  morphology for a man, so `offset` is 0-3 for her and 4-7 for him. */
-export { FIRST_FEMALE_ARCHIVE };   // re-exported for the RRI suites; declared in armorMaterials.js
-const raw = (item) => item?.material ?? ARMOR_MATERIAL.Leather;   // the class's `nativeMaterialValue` field
+export { FIRST_FEMALE_ARCHIVE }; // re-exported for the RRI suites; declared in armorMaterials.js
+const raw = (item) => item?.material ?? ARMOR_MATERIAL.Leather; // the class's `nativeMaterialValue` field
 const msg = (item) => item?.message ?? 0;
 
 /** The light set's InventoryTextureRecord (ItemJerkin, ItemCuisse,
@@ -147,21 +456,38 @@ const msg = (item) => item?.message ?? 0;
  *  else the leather record. */
 function lightRecord(item, { playerTextureArchive }) {
   let offset = playerTextureArchive - FIRST_FEMALE_ARCHIVE;
-  offset = (offset < 4) ? 2 : 6;
+  offset = offset < 4 ? 2 : 6;
   if (raw(item) === ARMOR_MATERIAL.Leather && msg(item) === 1) return offset;
   if (raw(item) >= ARMOR_MATERIAL.Iron) return 8 + offset;
-  return (offset < 4) ? 16 : 17;
+  return offset < 4 ? 16 : 17;
 }
 /** ItemHelmet's own: four body rows. */
 function helmetRecord(item, { playerTextureArchive }) {
   let offset = playerTextureArchive - FIRST_FEMALE_ARCHIVE;
   let leather = 16;
   switch (offset) {
-    case 1: case 2: case 3: offset = 2; leather = 16; break;
-    case 4: case 6: offset = 6; leather = 17; break;
-    case 0: offset = 1; leather = 18; break;
-    case 5: case 7: offset = 5; leather = 19; break;
-    default: break;
+    case 1:
+    case 2:
+    case 3:
+      offset = 2;
+      leather = 16;
+      break;
+    case 4:
+    case 6:
+      offset = 6;
+      leather = 17;
+      break;
+    case 0:
+      offset = 1;
+      leather = 18;
+      break;
+    case 5:
+    case 7:
+      offset = 5;
+      leather = 19;
+      break;
+    default:
+      break;
   }
   if (raw(item) === ARMOR_MATERIAL.Leather && msg(item) === 1) return offset;
   if (raw(item) >= ARMOR_MATERIAL.Iron) return 8 + offset;
@@ -173,8 +499,12 @@ function helmetRecord(item, { playerTextureArchive }) {
  *  it (Leather with `message` 1), so the mint and every later read of the same piece agree. The chain set: a plate
  *  material is CHAIN. DISC29-B: one rule, because a rarity name is built again from the template's name
  *  (lootRarity.js rarityName) and has to carry the same word. */
-const lightWord = (item) => ((raw(item) === ARMOR_MATERIAL.Chain || (raw(item) === ARMOR_MATERIAL.Leather && msg(item) === 1))
-  ? RRI_TEXT.fur : raw(item) >= ARMOR_MATERIAL.Iron ? RRI_TEXT.brig : '');
+const lightWord = (item) =>
+  raw(item) === ARMOR_MATERIAL.Chain || (raw(item) === ARMOR_MATERIAL.Leather && msg(item) === 1)
+    ? RRI_TEXT.fur
+    : raw(item) >= ARMOR_MATERIAL.Iron
+      ? RRI_TEXT.brig
+      : '';
 const mailWord = (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? RRI_TEXT.mail : '');
 
 /** The light set's CurrentVariant setter: a plate material is
@@ -191,7 +521,9 @@ function lightVariant(item, { jerkin = false } = {}) {
     // AUDIT-RR F5: weightInKg is a stored field ApplyArmorMaterial left at the template's for Chain (ItemBuilder.cs:495-497:
     // only Leather halves it) and the fold does not touch; the jerkin alone takes 2 kg off (ItemJerkin.cs:43). Written
     // here so the port's derived read (which would halve a Leather piece) answers the stored number instead.
-    const stored = Number.isFinite(item.weightInKg) ? item.weightInKg : (RRI_TEMPLATES.find((t) => t.index === item.templateIndex)?.baseWeight ?? 0);   // the mod's own row - no reach into the registry this module feeds
+    const stored = Number.isFinite(item.weightInKg)
+      ? item.weightInKg
+      : (RRI_TEMPLATES.find((t) => t.index === item.templateIndex)?.baseWeight ?? 0); // the mod's own row - no reach into the registry this module feeds
     out.weightInKg = jerkin ? stored - 2 : stored;
   }
   if (name !== (item.name ?? '')) out.name = name;
@@ -210,57 +542,89 @@ function mailVariant(item) {
 const armorEnchant = (item, { enchantmentPoints, armorEnchantmentMultiplier }) =>
   enchantmentPoints + Math.floor(enchantmentPoints * armorEnchantmentMultiplier(raw(item)));
 
-const weaponClass = (index, groupIndex, { min, max, skill, type, magicType, equipSound }) => Object.freeze({
-  index, group: 'Weapons', groupIndex,
-  inventoryTextureArchive: index,
-  baseDamageMin: () => min, baseDamageMax: () => max,
-  weaponSkillUsed: skill,                     // DFCareer.ProficiencyFlags -> the site's SKILLS name
-  itemHands: 'Either',
-  weaponType: (enchanted) => (enchanted ? magicType : type),
-  equipSound, swingSound: 'SwingMediumPitch',
-});
-const chainClass = (index, slot, { leatherRecord, otherRecord, record = null }) => Object.freeze({
-  index, group: 'Armor', equipSlot: slot,
-  // the chain set keeps the template's archive (245: the body's) and
-  // answers a record by material alone
-  inventoryTextureArchive: null,
-  inventoryTextureRecord: (item) => (record ?? (raw(item) === ARMOR_MATERIAL.Leather ? leatherRecord : otherRecord)),
-  nativeMaterialValue: (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? raw(item) - 0x0100 : raw(item)),
-  materialArmorValue: (item) => chainmailMaterialArmorValue(raw(item)),
-  enchantmentPower: armorEnchant,
-  onVariantSet: mailVariant,
-  variantWord: mailWord,
-});
-const lightClass = (index, slot, { jerkin = false, helmet = false } = {}) => Object.freeze({
-  index, group: 'Armor', equipSlot: slot,
-  inventoryTextureArchive: index,
-  inventoryTextureRecord: helmet ? helmetRecord : lightRecord,
-  nativeMaterialValue: (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? raw(item) - 0x0200 : raw(item)),
-  materialArmorValue: (item) => leatherMaterialArmorValue(raw(item), msg(item)),
-  enchantmentPower: armorEnchant,
-  equipSound: 'EquipLeather',
-  onVariantSet: (item) => lightVariant(item, { jerkin }),
-  variantWord: lightWord,
-});
+const weaponClass = (index, groupIndex, { min, max, skill, type, magicType, equipSound }) =>
+  Object.freeze({
+    index,
+    group: 'Weapons',
+    groupIndex,
+    inventoryTextureArchive: index,
+    baseDamageMin: () => min,
+    baseDamageMax: () => max,
+    weaponSkillUsed: skill, // DFCareer.ProficiencyFlags -> the site's SKILLS name
+    itemHands: 'Either',
+    weaponType: (enchanted) => (enchanted ? magicType : type),
+    equipSound,
+    swingSound: 'SwingMediumPitch',
+  });
+const chainClass = (index, slot, { leatherRecord, otherRecord, record = null }) =>
+  Object.freeze({
+    index,
+    group: 'Armor',
+    equipSlot: slot,
+    // the chain set keeps the template's archive (245: the body's) and
+    // answers a record by material alone
+    inventoryTextureArchive: null,
+    inventoryTextureRecord: (item) => record ?? (raw(item) === ARMOR_MATERIAL.Leather ? leatherRecord : otherRecord),
+    nativeMaterialValue: (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? raw(item) - 0x0100 : raw(item)),
+    materialArmorValue: (item) => chainmailMaterialArmorValue(raw(item)),
+    enchantmentPower: armorEnchant,
+    onVariantSet: mailVariant,
+    variantWord: mailWord,
+  });
+const lightClass = (index, slot, { jerkin = false, helmet = false } = {}) =>
+  Object.freeze({
+    index,
+    group: 'Armor',
+    equipSlot: slot,
+    inventoryTextureArchive: index,
+    inventoryTextureRecord: helmet ? helmetRecord : lightRecord,
+    nativeMaterialValue: (item) => (raw(item) >= ARMOR_MATERIAL.Iron ? raw(item) - 0x0200 : raw(item)),
+    materialArmorValue: (item) => leatherMaterialArmorValue(raw(item), msg(item)),
+    enchantmentPower: armorEnchant,
+    equipSound: 'EquipLeather',
+    onVariantSet: (item) => lightVariant(item, { jerkin }),
+    variantWord: lightWord,
+  });
 
 /** The fourteen, by template index. */
 export const RRI_CLASSES = Object.freeze({
-  513: weaponClass(513, 3, { min: 2, max: 10, skill: 'Axe', type: 'Battleaxe', magicType: 'Battleaxe_Magic', equipSound: 'EquipAxe' }),          // ItemArchersAxe
-  514: weaponClass(514, 6, { min: 3, max: 10, skill: 'BluntWeapon', type: 'Flail', magicType: 'Flail_Magic', equipSound: 'EquipFlail' }),         // ItemLightFlail
-  515: chainClass(515, 'ChestArmor', { leatherRecord: 3, otherRecord: 7 }),      // ItemHauberk
-  516: Object.freeze({ ...chainClass(516, 'LegsArmor', { leatherRecord: 10, otherRecord: 16 }),
+  513: weaponClass(513, 3, {
+    min: 2,
+    max: 10,
+    skill: 'Axe',
+    type: 'Battleaxe',
+    magicType: 'Battleaxe_Magic',
+    equipSound: 'EquipAxe',
+  }), // ItemArchersAxe
+  514: weaponClass(514, 6, {
+    min: 3,
+    max: 10,
+    skill: 'BluntWeapon',
+    type: 'Flail',
+    magicType: 'Flail_Magic',
+    equipSound: 'EquipFlail',
+  }), // ItemLightFlail
+  515: chainClass(515, 'ChestArmor', { leatherRecord: 3, otherRecord: 7 }), // ItemHauberk
+  516: Object.freeze({
+    ...chainClass(516, 'LegsArmor', { leatherRecord: 10, otherRecord: 16 }),
     // ItemChausses alone has a middle arm: chain-family materials draw 11
-    inventoryTextureRecord: (item) => (raw(item) === ARMOR_MATERIAL.Leather ? 10 : (raw(item) >= ARMOR_MATERIAL.Chain && raw(item) < ARMOR_MATERIAL.Silver) ? 11 : 16) }),
-  517: chainClass(517, 'LeftArm', { leatherRecord: 17, otherRecord: 21 }),       // ItemLeftSpaulder
-  518: chainClass(518, 'RightArm', { leatherRecord: 22, otherRecord: 26 }),      // ItemRightSpaulder
-  519: chainClass(519, 'Feet', { record: 0 }),                                   // ItemSollerets
-  520: lightClass(520, 'ChestArmor', { jerkin: true }),                          // ItemJerkin
-  521: lightClass(521, 'LegsArmor'),                                             // ItemCuisse
-  522: lightClass(522, 'Head', { helmet: true }),                                // ItemHelmet
-  523: lightClass(523, 'Feet'),                                                  // ItemBoots
-  524: lightClass(524, 'Gloves'),                                                // ItemGloves
-  525: lightClass(525, 'LeftArm'),                                               // ItemLeftVambrace
-  526: lightClass(526, 'RightArm'),                                              // ItemRightVambrace
+    inventoryTextureRecord: (item) =>
+      raw(item) === ARMOR_MATERIAL.Leather
+        ? 10
+        : raw(item) >= ARMOR_MATERIAL.Chain && raw(item) < ARMOR_MATERIAL.Silver
+          ? 11
+          : 16,
+  }),
+  517: chainClass(517, 'LeftArm', { leatherRecord: 17, otherRecord: 21 }), // ItemLeftSpaulder
+  518: chainClass(518, 'RightArm', { leatherRecord: 22, otherRecord: 26 }), // ItemRightSpaulder
+  519: chainClass(519, 'Feet', { record: 0 }), // ItemSollerets
+  520: lightClass(520, 'ChestArmor', { jerkin: true }), // ItemJerkin
+  521: lightClass(521, 'LegsArmor'), // ItemCuisse
+  522: lightClass(522, 'Head', { helmet: true }), // ItemHelmet
+  523: lightClass(523, 'Feet'), // ItemBoots
+  524: lightClass(524, 'Gloves'), // ItemGloves
+  525: lightClass(525, 'LeftArm'), // ItemLeftVambrace
+  526: lightClass(526, 'RightArm'), // ItemRightVambrace
 });
 
 /** DFU's dispatch: the class for a template index, or null - and null
@@ -271,7 +635,7 @@ export const RRI_CLASSES = Object.freeze({
 export function customItemClass(templateIndex) {
   const cls = RRI_CLASSES[templateIndex];
   if (!cls) return null;
-  if (!rriModule(cls.group === 'Weapons' ? 'newWeapons' : 'newArmor')) return null;   // rriModule reads Enabled too
+  if (!rriModule(cls.group === 'Weapons' ? 'newWeapons' : 'newArmor')) return null; // rriModule reads Enabled too
   return cls;
 }
 
@@ -292,14 +656,16 @@ export function rriEquipSound(item) {
  *  its first provider - this module stays a leaf): the mod's registered custom template indices for a group, in
  *  registration order (the two weapons, the chain five then the leather seven), empty while off. */
 export function rriCustomItemsForGroup(group) {
-  return Object.values(RRI_CLASSES).filter((c) => c.group === group && customItemClass(c.index)).map((c) => c.index);
+  return Object.values(RRI_CLASSES)
+    .filter((c) => c.group === group && customItemClass(c.index))
+    .map((c) => c.index);
 }
 
 /** AUDIT-RR2 G7: the weight the fold STORED for a fur piece (message 1: the template's, the jerkin's 2 kg off -
  *  ItemJerkin.cs:43), for an item folded before the field was written; null for anything else. */
 export function rriStoredWeight(item) {
   const cls = customItemClass(item?.templateIndex);
-  if (!cls || item?.group !== 'Armor' || item?.message !== 1 || item.templateIndex < 520) return null;   // the light set alone (520-526) folds Chain to fur; the chain set's fold writes no weight
+  if (!cls || item?.group !== 'Armor' || item?.message !== 1 || item.templateIndex < 520) return null; // the light set alone (520-526) folds Chain to fur; the chain set's fold writes no weight
   const base = RRI_TEMPLATES.find((t) => t.index === item.templateIndex)?.baseWeight;
   if (base == null) return null;
   return item.templateIndex === 520 ? base - 2 : base;
@@ -335,10 +701,20 @@ export function rriSpriteEntries(sprites = RRI_SPRITES) {
     const m = /^(\d{3})_(\d+)-(\d+)(?:_(?!Mask)([A-Z][a-z]+))?(_Mask)?$/.exec(name);
     if (!m) continue;
     const dye = m[4] ? byName[m[4]] : null;
-    if (m[4] && dye === undefined) continue;   // a suffix that is not a dye
-    if (dye === DYE_COLORS.Unchanged) continue;   // never asked for (dyes.js DYE_NAMES)
+    if (m[4] && dye === undefined) continue; // a suffix that is not a dye
+    if (dye === DYE_COLORS.Unchanged) continue; // never asked for (dyes.js DYE_NAMES)
     const [width, height, x, y, w, h] = row;
-    out.push({ name, archive: Number(m[1]), record: Number(m[2]), frame: Number(m[3]), dye, map: m[5] ? 'Mask' : 'Albedo', width, height, rect: x === undefined ? null : { x, y, width: w, height: h } });
+    out.push({
+      name,
+      archive: Number(m[1]),
+      record: Number(m[2]),
+      frame: Number(m[3]),
+      dye,
+      map: m[5] ? 'Mask' : 'Albedo',
+      width,
+      height,
+      rect: x === undefined ? null : { x, y, width: w, height: h },
+    });
   }
   return out;
 }

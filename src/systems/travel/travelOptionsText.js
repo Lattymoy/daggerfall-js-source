@@ -3,7 +3,7 @@
 // its four keys nothing read (MsgFollow, MsgTimeFormatNoSDF, MsgNotVisited, HelpInfo). The `{0}` placeholders are C#
 // composite formatting, filled by `format` below. The compass letters and the three dungeon kinds are the classic
 // game's own words. HelpInfoSDF is the help the H key shows: its three keys are the bindings (travelOptions.js helpText).
-import { t } from '../textManager.js';   // L10N4: the port's own words below (TRAVEL_NAV_TEXT)
+import { t } from '../textManager.js'; // L10N4: the port's own words below (TRAVEL_NAV_TEXT)
 
 export const TRAVEL_OPTIONS_TEXT = Object.freeze({
   MsgArrived: 'You reach your destination.',
@@ -70,7 +70,9 @@ export const TRAVEL_NAV_TEXT = Object.freeze({
   MsgStuck: 'Your journey stops. You are making no headway.',
   // OW-TOWN-WALK: a walled city's way out behind its gates (DaggerfallCityGate's night, offline) - the port's newest words, read
   // in the player's language (L10N4)
-  get MsgGatesShut() { return t('travel.nav.gatesShut', 'Your journey stops. The city gates are shut for the night.'); },
+  get MsgGatesShut() {
+    return t('travel.nav.gatesShut', 'Your journey stops. The city gates are shut for the night.');
+  },
 });
 
 /** C#'s `string.Format` for the placeholders these strings use: `{0}`,
@@ -94,14 +96,23 @@ export function localize(key) {
  *  eight. */
 export function directionText(direction) {
   switch (direction) {
-    case 128: return TRAVEL_OPTIONS_TEXT.DirectionN;
-    case 64: return TRAVEL_OPTIONS_TEXT.DirectionNE;
-    case 32: return TRAVEL_OPTIONS_TEXT.DirectionE;
-    case 16: return TRAVEL_OPTIONS_TEXT.DirectionSE;
-    case 8: return TRAVEL_OPTIONS_TEXT.DirectionS;
-    case 4: return TRAVEL_OPTIONS_TEXT.DirectionSW;
-    case 2: return TRAVEL_OPTIONS_TEXT.DirectionW;
-    case 1: return TRAVEL_OPTIONS_TEXT.DirectionNW;
-    default: return TRAVEL_OPTIONS_TEXT.DirectionNone;
+    case 128:
+      return TRAVEL_OPTIONS_TEXT.DirectionN;
+    case 64:
+      return TRAVEL_OPTIONS_TEXT.DirectionNE;
+    case 32:
+      return TRAVEL_OPTIONS_TEXT.DirectionE;
+    case 16:
+      return TRAVEL_OPTIONS_TEXT.DirectionSE;
+    case 8:
+      return TRAVEL_OPTIONS_TEXT.DirectionS;
+    case 4:
+      return TRAVEL_OPTIONS_TEXT.DirectionSW;
+    case 2:
+      return TRAVEL_OPTIONS_TEXT.DirectionW;
+    case 1:
+      return TRAVEL_OPTIONS_TEXT.DirectionNW;
+    default:
+      return TRAVEL_OPTIONS_TEXT.DirectionNone;
   }
 }

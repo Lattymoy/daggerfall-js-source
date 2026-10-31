@@ -17,12 +17,29 @@
 // display face when one is wanted.
 
 import {
-  ACTIONS, getBinding, addRemovedPrimaryAction, addRemovedSecondaryAction, resetDefaults,
-  isCombo, getCombo, comboCode, actionLabel, actionLive, createBindings, serializeKeyBinds, loadKeyBinds,
-  MOD_ACTIONS, ACTION_GROUPS, codeForAction, actionsAt, shareBinding, dropBinding, clearBinding,
+  ACTIONS,
+  getBinding,
+  addRemovedPrimaryAction,
+  addRemovedSecondaryAction,
+  resetDefaults,
+  isCombo,
+  getCombo,
+  comboCode,
+  actionLabel,
+  actionLive,
+  createBindings,
+  serializeKeyBinds,
+  loadKeyBinds,
+  MOD_ACTIONS,
+  ACTION_GROUPS,
+  codeForAction,
+  actionsAt,
+  shareBinding,
+  dropBinding,
+  clearBinding,
 } from './inputActions.js';
-import { shortcutBinding, MOD } from './dialogShortcuts.js';   // UXB1-F: the keys this page names and cannot move
-import { localizedText, formatText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { shortcutBinding, MOD } from './dialogShortcuts.js'; // UXB1-F: the keys this page names and cannot move
+import { localizedText, formatText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
  *  inside the shown dict, the blue for one across the two. */
@@ -40,7 +57,8 @@ export const ELONGATED_TEXT = '...';
 /** ResetUnsavedKeybinds (:270-281): both dicts, every action, from
  *  the LIVE registry. Unbound stays null (DFU stores "None"). */
 export function createUnsavedKeybinds(store) {
-  const primary = new Map(), secondary = new Map();
+  const primary = new Map(),
+    secondary = new Map();
   for (const a of ACTIONS) {
     primary.set(a, getBinding(store, a, true));
     secondary.set(a, getBinding(store, a, false));
@@ -59,7 +77,8 @@ export function unsavedEdits(store, u) {
   if (!u) return out;
   for (const a of ACTIONS) {
     for (const primary of [true, false]) {
-      if (((primary ? u.primary : u.secondary).get(a) ?? null) !== (getBinding(store, a, primary) ?? null)) out.push({ action: a, primary });
+      if (((primary ? u.primary : u.secondary).get(a) ?? null) !== (getBinding(store, a, primary) ?? null))
+        out.push({ action: a, primary });
     }
   }
   return out;
@@ -89,7 +108,7 @@ export function setUnsavedBinding(u, action, code) {
 export function getDuplicates(codes) {
   const recorded = new Set();
   const dupes = new Set();
-  const modifiers = new Map();   // modifier code -> the combos it heads
+  const modifiers = new Map(); // modifier code -> the combos it heads
   const list = [...codes];
 
   // the key selector's pass (:152-174), in source order
@@ -104,10 +123,7 @@ export function getDuplicates(codes) {
     return true;
   });
   // OrderByDescending(bool): combos first, stable within each group
-  const sorted = [
-    ...list.filter((_, i) => isComboCode[i]),
-    ...list.filter((_, i) => !isComboCode[i]),
-  ];
+  const sorted = [...list.filter((_, i) => isComboCode[i]), ...list.filter((_, i) => !isComboCode[i])];
 
   // "Simple check for duplicates in the list" (:178-186)
   for (const c of sorted) {
@@ -128,14 +144,16 @@ export function getDuplicates(codes) {
     if (c == null || !isCombo(c)) continue;
     const [, key] = getCombo(c);
     const mods = modifiers.get(key);
-    if (mods) { for (const m of mods) dupes.add(m); dupes.add(c); }
+    if (mods) {
+      for (const m of mods) dupes.add(m);
+      dupes.add(c);
+    }
   }
   return dupes;
 }
 
 /** InternalDuplicateKeyCodesExist (:223-228). */
-export const internalDuplicatesExist = (u) =>
-  getDuplicates([...currentDict(u).values()]).size > 0;
+export const internalDuplicatesExist = (u) => getDuplicates([...currentDict(u).values()]).size > 0;
 
 /** CheckDuplicateKeyCodes (:230-267) as data: which codes clash
  *  INSIDE the shown dict (red), which clash ACROSS the two dicts
@@ -172,7 +190,8 @@ const distinct = (codes) => [...new Set([...codes].filter((c) => c != null))];
 export function sharedStagedCodes(u) {
   const by = new Map();
   for (const dict of [u.primary, u.secondary]) {
-    for (const [action, code] of dict) if (code != null) (by.get(code) ?? by.set(code, new Set()).get(code)).add(action);
+    for (const [action, code] of dict)
+      if (code != null) (by.get(code) ?? by.set(code, new Set()).get(code)).add(action);
   }
   return new Set([...by].filter(([, actions]) => actions.size > 1).map(([code]) => code));
 }
@@ -234,7 +253,8 @@ function yieldDuplicates(u, yielded) {
 export function applyUnsavedKeybinds(store, u) {
   const before = new Map();
   for (const primary of [true, false]) {
-    for (const action of (primary ? u.primary : u.secondary).keys()) before.set(`${primary}:${action}`, getBinding(store, action, primary));
+    for (const action of (primary ? u.primary : u.secondary).keys())
+      before.set(`${primary}:${action}`, getBinding(store, action, primary));
   }
   for (const primary of [true, false]) {
     const dict = primary ? u.primary : u.secondary;
@@ -242,8 +262,11 @@ export function applyUnsavedKeybinds(store, u) {
       const cur = before.get(`${primary}:${action}`);
       if (cur !== code) {
         if (primary && code == null) addRemovedPrimaryAction(store, action);
-        if (!primary && code == null) addRemovedSecondaryAction(store, action);   // PAD1: a cleared pad row stays cleared
-        if (code == null) { clearBinding(store, action, primary); continue; }
+        if (!primary && code == null) addRemovedSecondaryAction(store, action); // PAD1: a cleared pad row stays cleared
+        if (code == null) {
+          clearBinding(store, action, primary);
+          continue;
+        }
         // UXB1-S: SetBinding's steal, kept for everyone the staged picture does NOT keep on this key - a holder staged
         // elsewhere lets go of it here (whatever order the walk meets the two in), and one staged on it too keeps it:
         // that is a share, and the bind lands beside it rather than taking it.
@@ -285,15 +308,29 @@ export function stagedDefaults(store) {
 // FormatButtonText (:561-568): camel case split by spaces, and past
 // ten characters the '...' stand-in.
 const CLASSIC_NAMES = Object.freeze({
-  AltLeft: 'LALT', AltRight: 'RALT',
-  ControlLeft: 'LCTRL', ControlRight: 'RCTRL',
-  ShiftLeft: 'LSHIFT', ShiftRight: 'RSHIFT',
-  PageUp: 'PG UP', PageDown: 'PG DN',
-  Insert: 'INS', Delete: 'DEL',
-  Backspace: 'BCKSPC', CapsLock: 'CAPS',
-  Backquote: '`', Minus: '-', Equal: '=',
-  BracketLeft: '[', BracketRight: ']',
-  Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\',
+  AltLeft: 'LALT',
+  AltRight: 'RALT',
+  ControlLeft: 'LCTRL',
+  ControlRight: 'RCTRL',
+  ShiftLeft: 'LSHIFT',
+  ShiftRight: 'RSHIFT',
+  PageUp: 'PG UP',
+  PageDown: 'PG DN',
+  Insert: 'INS',
+  Delete: 'DEL',
+  Backspace: 'BCKSPC',
+  CapsLock: 'CAPS',
+  Backquote: '`',
+  Minus: '-',
+  Equal: '=',
+  BracketLeft: '[',
+  BracketRight: ']',
+  Semicolon: ';',
+  Quote: "'",
+  Comma: ',',
+  Period: '.',
+  Slash: '/',
+  Backslash: '\\',
 });
 
 /** SWING-LABEL (2026-09-22, Mac: "why some players arent able to
@@ -334,9 +371,12 @@ export function swingHint(code, mode, readyCode) {
   if (code == null) return 'Unbound. Nothing can swing your weapon.';
   const side = { Mouse0: 'left', Mouse1: 'right', Mouse2: 'middle' }[code];
   const btn = side ? `the ${side} mouse button` : buttonText(code, true);
-  const how = mode === 1 ? `Press ${btn} to swing.`
-    : mode === 2 ? `Press or hold ${btn} to swing.`
-      : `Hold ${btn} and move the mouse to swing. The direction you move picks the attack. Holding it without moving does nothing.`;
+  const how =
+    mode === 1
+      ? `Press ${btn} to swing.`
+      : mode === 2
+        ? `Press or hold ${btn} to swing.`
+        : `Hold ${btn} and move the mouse to swing. The direction you move picks the attack. Holding it without moving does nothing.`;
   return readyCode == null ? how : `${how} Draw your weapon first with ${buttonText(readyCode, true)} (Ready Weapon).`;
 }
 
@@ -372,7 +412,7 @@ export function sharedFloatNote(action, holders, usingPrimary = true) {
 /** GetButtonText + FormatButtonText. `full` skips the length cap
  *  (the tooltip/full-string arm). */
 export function buttonText(code, full = false) {
-  if (code == null) return 'NONE';   // KeyCode.None.ToString(), through the classic-font ToUpper tail (NT3 F082)
+  if (code == null) return 'NONE'; // KeyCode.None.ToString(), through the classic-font ToUpper tail (NT3 F082)
   // A8: the COMBO arm (:509-513). Each half goes through GetButtonText
   // ITSELF, at its DEFAULT fullString - so a combo reads in the classic
   // names, "LSHIFT + T" - and only the JOINED string meets
@@ -383,13 +423,15 @@ export function buttonText(code, full = false) {
     return formatButtonText(`${buttonText(mod)} + ${buttonText(key)}`, full);
   }
   if (CLASSIC_NAMES[code]) return CLASSIC_NAMES[code];
-  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0];   // SWING-LABEL: never "MOUSE1"
+  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0]; // SWING-LABEL: never "MOUSE1"
   let t = code;
   const digit = /^Digit(\d)$/.exec(code);
-  if (digit) t = `A${digit[1]}`;                   // Alpha0..Alpha9 -> A0..A9
+  if (digit) t = `A${digit[1]}`; // Alpha0..Alpha9 -> A0..A9
   const pad = /^Numpad(\w+)$/.exec(code);
-  if (pad) t = `KPAD${pad[1]}`;                    // Keypad0.. -> KPAD0..
-  else if (/^Key([A-Z])$/.test(code)) t = code.slice(3);   // KeyW -> W
+  if (pad)
+    t = `KPAD${pad[1]}`; // Keypad0.. -> KPAD0..
+  else if (/^Key([A-Z])$/.test(code))
+    t = code.slice(3); // KeyW -> W
   // NT3 (F082): the arrows fall past the classic table to the friendly
   // switch, which names them "Left"/"Right"/"Up"/"Down" (:468-479) -
   // not "Left Arrow" - and the classic-font tail UPPERCASES everything
@@ -404,7 +446,10 @@ export function buttonText(code, full = false) {
  *  (:521), which is where both arms of GetButtonText land. */
 function formatButtonText(text, full) {
   if (text.length <= MAX_BUTTON_TEXT || full) {
-    return text.replace(/([a-z])([A-Z])/g, '$1 $2').trim().toUpperCase();   // no lookbehind - see splitCamel below
+    return text
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .trim()
+      .toUpperCase(); // no lookbehind - see splitCamel below
   }
   return ELONGATED_TEXT;
 }
@@ -484,7 +529,8 @@ const clashes = (a, b) => a != null && b != null && getDuplicates([a, b]).size >
 export function bindingHolders(u, action, code) {
   if (code == null) return [];
   const out = [];
-  for (const [a, c] of currentDict(u)) if (a !== action && clashes(code, c)) out.push({ action: a, primary: u.usingPrimary });
+  for (const [a, c] of currentDict(u))
+    if (a !== action && clashes(code, c)) out.push({ action: a, primary: u.usingPrimary });
   const other = u.usingPrimary ? u.secondary : u.primary;
   for (const [a, c] of other) if (clashes(code, c)) out.push({ action: a, primary: !u.usingPrimary });
   return out;
@@ -501,10 +547,7 @@ export function replaceKeybindPromptRows(action, code, holders, usingPrimary = t
     ];
   }
   const who = holders.map((h) => `${actionLabel(h.action)}${h.primary ? '' : ' (secondary)'}`).join(' and ');
-  return [
-    `${key} is used by ${who}.`,
-    `Give it to ${actionLabel(action)} instead?`,
-  ];
+  return [`${key} is used by ${who}.`, `Give it to ${actionLabel(action)} instead?`];
 }
 
 /** Yes: every holder is staged unbound in the dict it holds the key in, and the bind lands in the shown one. */
@@ -517,8 +560,11 @@ export function stageReplace(u, action, code, holders) {
  *  own modifier is a clash no press resolves, still DFU's) and none of them is the action itself (its own other slot
  *  is the key moving, AUDIT KB1 F6). */
 export function canShareKey(u, action, code, holders) {
-  return code != null && holders.length > 0
-    && holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code);
+  return (
+    code != null &&
+    holders.length > 0 &&
+    holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code)
+  );
 }
 /** ...and its answer: the bind lands in the shown set, and every holder keeps the key. */
 export function stageShare(u, action, code) {
@@ -600,11 +646,15 @@ export function keybindCarryNotes(report, live = actionLive) {
   const holderText = (h) => (h ? actionLabel(h) : 'another key');
   for (const l of report?.lost ?? []) {
     if (!live(l.action)) continue;
-    out.push(`${actionLabel(l.action)} has no key: ${buttonText(l.code, true)} is ${holderText(l.holder)}'s. Set one in Controls.`);
+    out.push(
+      `${actionLabel(l.action)} has no key: ${buttonText(l.code, true)} is ${holderText(l.holder)}'s. Set one in Controls.`,
+    );
   }
   for (const k of report?.kept ?? []) {
     if (!live(k.action)) continue;
-    out.push(`${actionLabel(k.action)} stays on its new key: ${buttonText(k.code, true)} is ${holderText(k.holder)}'s. Change it in Controls.`);
+    out.push(
+      `${actionLabel(k.action)} stays on its new key: ${buttonText(k.code, true)} is ${holderText(k.holder)}'s. Change it in Controls.`,
+    );
   }
   return out;
 }

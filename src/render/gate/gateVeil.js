@@ -43,10 +43,11 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x));
  */
 export function veilAt(phase, s, from = VEIL_FRONT_IN) {
   const span = VEIL_FRONT_OUT - VEIL_FRONT_IN;
-  let front = VEIL_FRONT_OUT, heat = 0;
+  let front = VEIL_FRONT_OUT,
+    heat = 0;
   if (phase === 'closing') {
     const u = clamp01(s / VEIL_CLOSE_S);
-    front = VEIL_FRONT_OUT - span * u ** 1.6;   // the fire rushing in, faster as it closes
+    front = VEIL_FRONT_OUT - span * u ** 1.6; // the fire rushing in, faster as it closes
     heat = VEIL_HEAT * clamp01((u - 0.55) / 0.45);
   } else if (phase === 'shut') {
     front = VEIL_FRONT_IN;
@@ -54,7 +55,7 @@ export function veilAt(phase, s, from = VEIL_FRONT_IN) {
   } else if (phase === 'opening') {
     const u = clamp01(s / VEIL_OPEN_S);
     const f0 = Math.max(VEIL_FRONT_IN, Math.min(VEIL_FRONT_OUT, Number.isFinite(from) ? from : VEIL_FRONT_IN));
-    front = f0 + (VEIL_FRONT_OUT - f0) * (1 - (1 - u) ** 2.2);   // the eye widening, slowing as the fire leaves the edges
+    front = f0 + (VEIL_FRONT_OUT - f0) * (1 - (1 - u) ** 2.2); // the eye widening, slowing as the fire leaves the edges
     heat = VEIL_HEAT * (1 - u) ** 2;
   }
   return { front, cover: clamp01((VEIL_FRONT_OUT - front) / span), heat };
@@ -66,7 +67,9 @@ precision highp float;
 export const GATE_VEIL_VS = `#version 300 es
 layout(location = 0) in vec2 aPos;
 void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`;
-export const GATE_VEIL_FS = HEAD + `uniform vec2 uRes;      // the canvas, pixels
+export const GATE_VEIL_FS =
+  HEAD +
+  `uniform vec2 uRes;      // the canvas, pixels
 uniform float uTime;    // seconds since the veil began - the whirl's own clock
 uniform float uFront;   // the fire's inner edge, screen radii
 uniform float uCover;   // how much the fire has taken - the tint on what it has not
@@ -116,7 +119,9 @@ void main() {
 
 /** SHADER-STALL: the pass's one program, as its constructor builds it - what a host starts ahead of the build
  *  (render/glProgram.js startPrograms). */
-export const GATE_VEIL_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[GATE_VEIL_VS, GATE_VEIL_FS]]));
+export const GATE_VEIL_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([[GATE_VEIL_VS, GATE_VEIL_FS]])
+);
 
 /** The veil's pass: one triangle over a canvas of its own. `draw(w, h, t, v, theme)` - `v` a veilAt answer, `theme` 0
  *  the fire's, 1 the Hour's brass (AUDIT SD II, L6 F8). */
@@ -126,13 +131,15 @@ export class GateVeilRenderer {
     const [[vs, fs]] = GATE_VEIL_PROGRAMS;
     this.prog = buildProgram(gl, vs, fs, 'gate veil');
     this.u = {};
-    for (const n of ['uRes', 'uTime', 'uFront', 'uCover', 'uHeat', 'uTheme']) this.u[n] = gl.getUniformLocation(this.prog, n);
+    for (const n of ['uRes', 'uTime', 'uFront', 'uCover', 'uHeat', 'uTheme'])
+      this.u[n] = gl.getUniformLocation(this.prog, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
   }
 
@@ -155,6 +162,8 @@ export class GateVeilRenderer {
 
   destroy() {
     const gl = this.gl;
-    gl.deleteBuffer(this.vbo); gl.deleteVertexArray(this.vao); gl.deleteProgram(this.prog);
+    gl.deleteBuffer(this.vbo);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteProgram(this.prog);
   }
 }

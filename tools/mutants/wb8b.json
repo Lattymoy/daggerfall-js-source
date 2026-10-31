@@ -48,8 +48,8 @@
   {
     "name": "WB8b-a-trial-counted-twice",
     "file": "src/net/gate/gateMods.js",
-    "old": "if (t && !trials.includes(t)) trials.push(t);",
-    "new": "if (t) trials.push(t);",
+    "old": "    if (t && !trials.includes(t)) trials.push(t);",
+    "new": "    if (t) trials.push(t);",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "WB8b-the-wire-takes-two-aspects",
     "file": "src/net/gate/gateMods.js",
-    "old": "  if (md.filter((x) => ASPECT_BY_ID.has(x)).length > 1) return undefined;\n",
-    "new": "",
+    "old": "  if (md.filter((x) => ASPECT_BY_ID.has(x)).length > 1) return undefined;\n  return [...md];",
+    "new": "  return [...md];",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "WB8b-the-state-drops-the-marks",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    md: f.md ?? null,   // WB8b",
-    "new": "    md: null,   // WB8b",
+    "old": "    md: f.md ?? null, // WB8b: his marks - every screen fights the fight's own, whatever the day's draw would say",
+    "new": "    md: null, // WB8b: his marks - every screen fights the fight's own, whatever the day's draw would say",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "WB8b-colossal-share-unscaled",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1);",
-    "new": "  const share = BOSS_TTK_S * dpsRef(level) * (f.vg ? VG_SHARE_X : 1);",
+    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1); // WB8b: Colossal - each share a quarter more; AUDIT WB14 (PLAY-4): a Vanguard night's less its Vanguard's",
+    "new": "  const share = BOSS_TTK_S * dpsRef(level) * (f.vg ? VG_SHARE_X : 1); // WB8b: Colossal - each share a quarter more; AUDIT WB14 (PLAY-4): a Vanguard night's less its Vanguard's",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "WB8b-the-gap-from-the-old-body",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - P.bossR;",
-    "new": "  const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - BOSS_R;",
+    "old": "  const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - P.bossR; // WB8b: his body's own size (Colossal's is larger)",
+    "new": "  const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - BOSS_R; // WB8b: his body's own size (Colossal's is larger)",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "WB8b-unyielding-blow-whole",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const want = d * P.hitX * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
-    "new": "  const want = d * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
+    "old": "  const want = d * P.hitX * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1); // WB9c: a stunned Warden takes it heavier - AUDIT WB14 (LAW-1): whole (a kneeling Blade's stun is his alone: the Flame takes no more for it)",
+    "new": "  const want = d * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1); // WB9c: a stunned Warden takes it heavier - AUDIT WB14 (LAW-1): whole (a kneeling Blade's stun is his alone: the Flame takes no more for it)",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "WB8b-the-ward-counted-as-clipped",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  p.clipped += want - got;",
-    "new": "  p.clipped += d - got;",
+    "old": "  p.clipped += want - got; // the caps' clipping - what his ward took off is his, not a cap's",
+    "new": "  p.clipped += d - got; // the caps' clipping - what his ward took off is his, not a cap's",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "WB8b-fed-every-beat",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      p.fed = true;\n",
-    "new": "",
+    "old": "      p.fed = true;\n      f.feeds = (f.feeds ?? 0) + 1;",
+    "new": "      f.feeds = (f.feeds ?? 0) + 1;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "WB8b-the-feeding-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      out.push({ k: 'fed', ns, h: Math.round(f.hp), m: Math.round(f.max), at: now });\n",
-    "new": "",
+    "old": "      out.push({ k: 'fed', ns, h: Math.round(f.hp), m: Math.round(f.max), at: now });\n      f.lastHpSent = Math.round(f.hp);",
+    "new": "      f.lastHpSent = Math.round(f.hp);",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "WB8b-the-fed-and-its-hp-both",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      f.lastHpSent = Math.round(f.hp); f.lastHpAt = now;",
-    "new": "      f.lastHpAt = f.lastHpAt;",
+    "old": "      f.lastHpSent = Math.round(f.hp);\n      f.lastHpAt = now; // the word says the health: no `hp` beside it this beat",
+    "new": "      f.lastHpAt = f.lastHpAt; // the word says the health: no `hp` beside it this beat",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -203,7 +203,7 @@
   {
     "name": "WB8b-the-echo-forgets-its-fighter",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const who = entry.who ? bodies.find((b) => b.sub === entry.who && !b.dead && f.players[b.sub]) ?? null : null;",
+    "old": "  const who = entry.who ? (bodies.find((b) => b.sub === entry.who && !b.dead && f.players[b.sub]) ?? null) : null;",
     "new": "  const who = null;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "WB8b-the-echo-on-the-dead",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const who = entry.who ? bodies.find((b) => b.sub === entry.who && !b.dead && f.players[b.sub]) ?? null : null;",
-    "new": "  const who = entry.who ? bodies.find((b) => b.sub === entry.who && f.players[b.sub]) ?? null : null;",
+    "old": "  const who = entry.who ? (bodies.find((b) => b.sub === entry.who && !b.dead && f.players[b.sub]) ?? null) : null;",
+    "new": "  const who = entry.who ? (bodies.find((b) => b.sub === entry.who && f.players[b.sub]) ?? null) : null;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "WB8b-the-choice-reads-the-table-phase",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  const out = CHOSEN.filter((a) => P.atk[a.key].phase <= phase &&",
-    "new": "  const out = CHOSEN.filter((a) => a.phase <= phase &&",
+    "old": "      P.atk[a.key].phase <= phase &&",
+    "new": "      a.phase <= phase &&",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "WB8b-the-wrath-turned",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    const el = A.el === 'fire' && !isDagons(A) ? aspect.el : A.el;",
-    "new": "    const el = A.el === 'fire' ? aspect.el : A.el;",
+    "old": "    const el = A.el === 'fire' && !isDagons(A) ? aspect.el : A.el; // his fire is his aspect's; Dagon's Wrath and Reckoning are Dagon's",
+    "new": "    const el = A.el === 'fire' ? aspect.el : A.el; // his fire is his aspect's; Dagon's Wrath and Reckoning are Dagon's",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js",
       "test/net/gate/wb8c_gate_detail.test.js"
@@ -271,8 +271,8 @@
   {
     "name": "WB8b-the-ground-span-unscaled",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Object.freeze({ r: G.r, ms: Math.round(G.ms * groundMsX), pct: G.pct * dmgX, base: G.base * dmgX })",
-    "new": "Object.freeze({ r: G.r, ms: G.ms, pct: G.pct * dmgX, base: G.base * dmgX })",
+    "old": "  const ground = (G) =>\n    G ? Object.freeze({ r: G.r, ms: Math.round(G.ms * groundMsX), pct: G.pct * dmgX, base: G.base * dmgX }) : null;",
+    "new": "  const ground = (G) => (G ? Object.freeze({ r: G.r, ms: G.ms, pct: G.pct * dmgX, base: G.base * dmgX }) : null);",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js",
       "test/net/gate/wb8c_gate_detail.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "WB8b-vengeful-unread",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      pct: A.pct * dmgX, base: (A.base ?? 0) * dmgX,",
-    "new": "      pct: A.pct, base: A.base ?? 0,",
+    "old": "      pct: A.pct * dmgX,\n      base: (A.base ?? 0) * dmgX,",
+    "new": "      pct: A.pct,\n      base: A.base ?? 0,",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js",
       "test/net/gate/wb8c_gate_detail.test.js"

@@ -74,8 +74,8 @@
   {
     "name": "MW-DRAW-PACE-no-draw-schedule",
     "file": "src/characters/weaponStates.js",
-    "old": "  if (drawUp) return { seconds:",
-    "new": "  if (drawUp) return null; if (false) return { seconds:",
+    "old": "  if (drawUp)",
+    "new": "  if (drawUp) return null;\n  if (false)",
     "tests": [
       "test/combat/mwpace1.test.js"
     ]

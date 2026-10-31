@@ -2,23 +2,30 @@
   {
     "name": "SEACAP-the-mod-s-128-again",
     "file": "src/systems/modSettings.js",
-    "old": "      'General.MaxLiveEnemies': Object.freeze({ default: 32, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'The most deep-sea creatures near you at one time'); } }),",
-    "new": "      'General.MaxLiveEnemies': Object.freeze({ default: 128, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'The most deep-sea creatures near you at one time'); } }),",
-    "tests": ["test/systems/seacap.test.js"]
+    "old": "        default: 32,",
+    "new": "        default: 128,",
+    "tests": [
+      "test/systems/seacap.test.js"
+    ]
   },
   {
     "name": "SEACAP-the-room-forces-128",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'General.MaxLiveEnemies': 32,",
-    "new": "'General.MaxLiveEnemies': 128,",
-    "tests": ["test/systems/seacap.test.js", "test/systems/modsonline.test.js"]
+    "old": "    'General.MaxLiveEnemies': 32, // SEA-CAP: the port's default (modSettings.js), the room's too",
+    "new": "    'General.MaxLiveEnemies': 128, // SEA-CAP: the port's default (modSettings.js), the room's too",
+    "tests": [
+      "test/systems/seacap.test.js",
+      "test/systems/modsonline.test.js"
+    ]
   },
   {
     "name": "SEACAP-the-range-shut-at-the-default",
     "file": "src/systems/modSettings.js",
-    "old": "Object.freeze({ default: 32, min: 0, max: 256, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'The most deep-sea creatures near you at one time'); } })",
-    "new": "Object.freeze({ default: 32, min: 0, max: 32, get description() { return t('mods.iliacPuddleNoMore.General.MaxLiveEnemies.description', 'The most deep-sea creatures near you at one time'); } })",
-    "tests": ["test/systems/seacap.test.js"],
+    "old": "        default: 32,\n        min: 0,\n        max: 256,\n        get description() {",
+    "new": "        default: 32,\n        min: 0,\n        max: 32,\n        get description() {",
+    "tests": [
+      "test/systems/seacap.test.js"
+    ],
     "note": "A player offline keeps the mod's whole range."
   }
 ]

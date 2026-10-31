@@ -38,8 +38,8 @@
   {
     "name": "FBSEA-1-the-whole-height",
     "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
-    "old": "l[1] -= (Number.isFinite(height) && height > 0 ? height : 1.8) / 2;",
-    "new": "l[1] -= (Number.isFinite(height) && height > 0 ? height : 1.8);",
+    "old": "  l[1] -= (Number.isFinite(height) && height > 0 ? height : 1.8) / 2; // the feet, half a height under the pinned transform",
+    "new": "  l[1] -= Number.isFinite(height) && height > 0 ? height : 1.8; // the feet, half a height under the pinned transform",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FBSEA-1-the-pace-off-the-world-feet",
     "file": "src/net/peer/peerBodies.js",
-    "old": "const on = peer.shown.deckKey ?? null, at = on ? peer.shown.deck : f;",
-    "new": "const on = peer.shown.deckKey ?? null, at = f;",
+    "old": "      at = on ? peer.shown.deck : f;",
+    "new": "      at = f;",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FBSEA-1-the-deck-key-unasked",
     "file": "src/net/peer/peerBodies.js",
-    "old": "b.speed = stepPeerPace(b.speed, b.paceKey === on ? b.paceAt : null, at, dt);",
-    "new": "b.speed = stepPeerPace(b.speed, b.paceAt, at, dt);",
+    "old": "    b.speed = stepPeerPace(b.speed, b.paceKey === on ? b.paceAt : null, at, dt); // HT-WAIST-BACK: net/peer/peerPace.js, the one home",
+    "new": "    b.speed = stepPeerPace(b.speed, b.paceAt, at, dt); // HT-WAIST-BACK: net/peer/peerPace.js, the one home",
     "tests": [
       "test/net/peer/fbsea_deck.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "FBSEA-3-the-save-past-the-reference",
     "file": "src/player/mwCamera.js",
-    "old": "baseDistance: Math.min(baseDistance, MAX_DISTANCE) }; },",
-    "new": "baseDistance }; },",
+    "old": "      return { firstPerson, baseDistance: Math.min(baseDistance, MAX_DISTANCE) };",
+    "new": "      return { firstPerson, baseDistance };",
     "tests": [
       "test/player/fbsea_zoom.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "FBSEA-3-the-mods-far-end-at-sea",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "const far = seaReach > -MAX_Z && !(cfg.overrides.Boat.enabled && isSailing) ? -seaReach : MAX_Z;",
-    "new": "const far = MAX_Z;",
+    "old": "      const far = seaReach > -MAX_Z && !(cfg.overrides.Boat.enabled && isSailing) ? -seaReach : MAX_Z;",
+    "new": "      const far = MAX_Z;",
     "tests": [
       "test/player/fbsea_zoom.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "FBSEA-4-the-key-left-magenta",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "      frame[o] = snowMean[0]; frame[o + 1] = snowMean[1]; frame[o + 2] = snowMean[2]; frame[o + 3] = 255;",
-    "new": "      frame[o] = 255; frame[o + 1] = 0; frame[o + 2] = 255; frame[o + 3] = 255;",
+    "old": "      frame[o] = snowMean[0];\n      frame[o + 1] = snowMean[1];\n      frame[o + 2] = snowMean[2];",
+    "new": "      frame[o] = 255;\n      frame[o + 1] = 0;\n      frame[o + 2] = 255;",
     "tests": [
       "test/render/fbsea_water.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "FBSEA-4-level-0-composed",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "  levels[0] = { width: paint.width, height: paint.height, data: d };",
-    "new": "  levels[0] = { width: paint.width, height: paint.height, data: levels[0].data };",
+    "old": "  levels[0] = { width: paint.width, height: paint.height, data: d }; // the paint itself, its key kept: level 0 is the mod's read",
+    "new": "  levels[0] = { width: paint.width, height: paint.height, data: levels[0].data }; // the paint itself, its key kept: level 0 is the mod's read",
     "tests": [
       "test/render/fbsea_water.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "FBSEA-4-a-child-dropped",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "(src[a + c] + src[a + channels + c] + src[b + c] + src[b + channels + c]) * 0.25;",
-    "new": "(src[a + c] + src[a + channels + c] + src[b + c] + src[b + c]) * 0.25;",
+    "old": "            out[o + c] = (src[a + c] + src[a + channels + c] + src[b + c] + src[b + channels + c]) * 0.25;",
+    "new": "            out[o + c] = (src[a + c] + src[a + channels + c] + src[b + c] + src[b + c]) * 0.25;",
     "tests": [
       "test/render/fbsea_water.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "FBSEA-4-the-tail-unaligned",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "      while (E > 0 && !whole(E)) E--;\n",
-    "new": "",
+    "old": "      while (E > 0 && !whole(E)) E--;\n      const { data: src, w: ew, h: eh } = exact[E],",
+    "new": "      const { data: src, w: ew, h: eh } = exact[E],",
     "tests": [
       "test/render/fbsea_water.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "FBSEA-4-the-means-truncated",
     "file": "src/systems/comeSailAway/comeSailAwayWaves.js",
-    "old": "for (let i = 0; i < v.length; i++) o[i] = v[i] + 0.5; return o; };",
-    "new": "for (let i = 0; i < v.length; i++) o[i] = v[i]; return o; };",
+    "old": "    for (let i = 0; i < v.length; i++) o[i] = v[i] + 0.5;",
+    "new": "    for (let i = 0; i < v.length; i++) o[i] = v[i];",
     "tests": [
       "test/render/fbsea_water.test.js"
     ]

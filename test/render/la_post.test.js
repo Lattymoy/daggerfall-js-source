@@ -327,7 +327,7 @@ test('LA-POST3: the bloom\'s and the shafts\' images are half floats where the G
   assert.equal(Math.round(tail * 255) / 255, 0, 'the byte image held nothing of it');
   assert.ok(shown(tail * gain) >= 3, `the half float holds it: ${shown(tail * gain)} display levels where the byte image showed 0`);
   // by source: the four targets on the one test the glow already takes
-  assert.match(read('src/render/airPass.js'), /bloom: color\(bw, bh, f16\), bloomB: color\(bw, bh, f16\),\n\s+shaft: color\(bw, bh, f16\), shaftRaw: color\(bw, bh, f16\),/);
+  assert.match(read('src/render/airPass.js'), /bloom: color\(bw, bh, f16\),\n\s*bloomB: color\(bw, bh, f16\),\n\s*shaft: color\(bw, bh, f16\),\n\s*shaftRaw: color\(bw, bh, f16\),/);
 });
 
 // ═══ 4. THE EYE IN SIXTEEN BITS ══════════════════════════════════════════════════════════════════════════════════

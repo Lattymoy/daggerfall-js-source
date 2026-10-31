@@ -1611,7 +1611,7 @@ test('AUDIT-TO1 E1/E2/E3: the vendored art is UPLOADED before it is drawn, and t
 test('AUDIT-TO1 F1/L7: the junction disc outlives the bar on the enhanced lane, and a window over the HUD covers the panel', () => {
   const e = read('src/ui/enhanced/enhancedTravelControl.js');
   assert.match(e, /const junctionOnly = !state\.showing && !!state\.junction\?\.on;/);
-  assert.match(e, /if \(!state\.showing && !junctionOnly\) \{ hideEnhancedTravelControl\(\); return null; \}/, 'torn down only when BOTH are down');
+  assert.match(e, /if \(!state\.showing && !junctionOnly\) \{\n\s*hideEnhancedTravelControl\(\);\n\s*return null;\n\s*\}/, 'torn down only when BOTH are down');
   assert.match(e, /if \(state\.covered\) \{/);
   assert.match(e, /parts\.root\.style\.display = 'none';/);
   assert.match(e, /title="\$\{T\.TipMap\}"/, 'and the two tooltips the mod carries reach the DOM (H3)');

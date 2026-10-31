@@ -9,7 +9,7 @@
 import { mintCondition, setItemFields, templateByIndex, itemValueOf } from '../item/itemTemplates.js';
 import { addItem, addGoldPieces } from '../inventory.js';
 import { createWeapon } from '../../combat/enemyEquipment.js';
-import { createRandomPotion, createRandomOfGroup } from '../loot/loot.js';   // DW-E5: CreateRandomGem / CreateRandomIngredient(group), one home
+import { createRandomPotion, createRandomOfGroup } from '../loot/loot.js'; // DW-E5: CreateRandomGem / CreateRandomIngredient(group), one home
 import { createRandomBook } from '../books.js';
 import { randomizeArmorVariant } from '../shopStock.js';
 import { CLOTHING_DYES, DYE_COLORS } from '../../characters/dyes.js';
@@ -25,15 +25,22 @@ import { LOOT_CONTAINER_TYPES } from '../sceneCache.js';
 import { rriModule } from './rriItems.js';
 import { liveStat } from '../statMods.js';
 import { equipTableOf, equipItem } from '../equip.js';
-import { getItemHands, ITEM_HANDS } from '../../characters/equipTable.js';   // SWING-LAW: a two-hander's handling
-import { isQuestionsDagger, QUESTIONS_DAGGER_WEAR } from '../conditionRepair.js';   // DISC21-A: the questions' dagger, one home
-import { markFound } from '../item/foundMark.js';   // AUDIT MEND-THIRD L3-6: the kit handed over worn, marked
+import { getItemHands, ITEM_HANDS } from '../../characters/equipTable.js'; // SWING-LAW: a two-hander's handling
+import { isQuestionsDagger, QUESTIONS_DAGGER_WEAR } from '../conditionRepair.js'; // DISC21-A: the questions' dagger, one home
+import { markFound } from '../item/foundMark.js'; // AUDIT MEND-THIRD L3-6: the kit handed over worn, marked
 import { EQUIP_SLOTS } from '../../characters/paperdoll/paperdoll.js';
 import { WEAPON_TYPES } from '../../combat/fpsWeapon.js';
-import { techniqueFamily } from '../../combat/technique/techniqueRoster.js';   // BAL10: the family a weapon swings with (an RRI class's own)
+import { techniqueFamily } from '../../combat/technique/techniqueRoster.js'; // BAL10: the family a weapon swings with (an RRI class's own)
 import {
-  BANDAGE_TEMPLATE, bandageHeal, shelfBandageStack, storeQualityItemCondition, storeQualityOn,
-  alchemistPotionCount, alchemistPotionsOn, weaponBalanceOn, rriMeleeWeaponAnimTime,
+  BANDAGE_TEMPLATE,
+  bandageHeal,
+  shelfBandageStack,
+  storeQualityItemCondition,
+  storeQualityOn,
+  alchemistPotionCount,
+  alchemistPotionsOn,
+  weaponBalanceOn,
+  rriMeleeWeaponAnimTime,
 } from './rriRealism.js';
 
 // ---- GetMeleeWeaponAnimTime (:381-409), the registered override --------------
@@ -49,33 +56,60 @@ export function rriAnimTimeOverride(liveSpeed, ctx) {
   const weapon = slots?.[ctx.usingRightHand === false ? EQUIP_SLOTS.LeftHand : EQUIP_SLOTS.RightHand] ?? null;
   const melee = ctx.weaponType === WEAPON_TYPES.Melee || !weapon;
   return rriMeleeWeaponAnimTime({
-    liveSpeed, liveStrength: liveStat(ctx.entity, 'strength'),
-    weaponWeight: melee ? null : (templateByIndex(weapon.templateIndex)?.baseWeight ?? 0), melee,
-    weaponType: ctx.weaponType, twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both,   // SWING-LAW: the handling the port's law reads
-    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade',   // BAL10: a short blade handles as a dagger, whatever sprite draws it
+    liveSpeed,
+    liveStrength: liveStat(ctx.entity, 'strength'),
+    weaponWeight: melee ? null : (templateByIndex(weapon.templateIndex)?.baseWeight ?? 0),
+    melee,
+    weaponType: ctx.weaponType,
+    twoHanded: !melee && getItemHands(weapon) === ITEM_HANDS.Both, // SWING-LAW: the handling the port's law reads
+    shortBlade: !melee && techniqueFamily(weapon) === 'shortBlade', // BAL10: a short blade handles as a dagger, whatever sprite draws it
   });
 }
 
 // ---- ItemEnums.cs, the templates the kit names ---------------------------
 export const KIT = Object.freeze({
-  Spellbook: 132, Torch: 247, Candle: 253,
+  Spellbook: 132,
+  Torch: 247,
+  Candle: 253,
   // armor
-  Cuirass: 102, Gauntlets: 103, Greaves: 104, Right_Pauldron: 106, Helm: 107, Boots: 108,
+  Cuirass: 102,
+  Gauntlets: 103,
+  Greaves: 104,
+  Right_Pauldron: 106,
+  Helm: 107,
+  Boots: 108,
   // men's / women's clothing
-  MensShoes: 147, MensCasualPants: 151, MensCasualCloak: 154, MensKhajiitSuit: 156, MensFormalTunic: 159, MensLoincloth: 162, MensShortShirt: 165,
-  WomensShoes: 186, WomensCasualPants: 190, WomensCasualCloak: 191, WomensKhajiitSuit: 193, WomensEveningGown: 195, WomensLoincloth: 199, WomensShortShirtClosed: 206,
+  MensShoes: 147,
+  MensCasualPants: 151,
+  MensCasualCloak: 154,
+  MensKhajiitSuit: 156,
+  MensFormalTunic: 159,
+  MensLoincloth: 162,
+  MensShortShirt: 165,
+  WomensShoes: 186,
+  WomensCasualPants: 190,
+  WomensCasualCloak: 191,
+  WomensKhajiitSuit: 193,
+  WomensEveningGown: 195,
+  WomensLoincloth: 199,
+  WomensShortShirtClosed: 206,
 });
 
-const range = (rolls, lo, hi) => lo + Math.floor(rolls() * (hi - lo));   // UnityEngine.Random.Range(int, int)
-const dice100 = (chance, rolls) => 1 + Math.floor(rolls() * 100) <= chance;   // Dice100.SuccessRoll
+const range = (rolls, lo, hi) => lo + Math.floor(rolls() * (hi - lo)); // UnityEngine.Random.Range(int, int)
+const dice100 = (chance, rolls) => 1 + Math.floor(rolls() * 100) <= chance; // Dice100.SuccessRoll
 const mint = (item) => mintCondition(setItemFields(item));
 /** AddOrEquipWornItem (:501-511) over the player: the 30-75% condition
  *  on armor, weapons and garments; `equip` puts it on. */
 function addOrEquipWornItem(entity, item, equip, rolls) {
   addItem(entity.items, item);
-  if (item.group === 'Armor' || item.group === 'Weapons' || item.group === 'MensClothing' || item.group === 'WomensClothing') {
+  if (
+    item.group === 'Armor' ||
+    item.group === 'Weapons' ||
+    item.group === 'MensClothing' ||
+    item.group === 'WomensClothing'
+  ) {
     item.currentCondition = Math.trunc((0.3 + rolls() * (0.75 - 0.3)) * (item.maxCondition ?? 0));
-    markFound(item);   // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is
+    markFound(item); // AUDIT MEND-THIRD L3-6: a new character's kit is handed over worn - marked, as a found piece is
   }
   if (equip) equipItem(entity, item);
   return item;
@@ -84,13 +118,23 @@ function addOrEquipWornItem(entity, item, equip, rolls) {
  *  variant of -1 rolls `Range(0, variants)`, the dye defaults to Blue. */
 function clothing(female, templateIndex, rolls, { variant = -1, dye = DYE_COLORS.Blue } = {}) {
   const variants = templateByIndex(templateIndex)?.variants ?? 0;
-  return mint({ group: female ? 'WomensClothing' : 'MensClothing', templateIndex, variant: variant < 0 ? (variants > 0 ? range(rolls, 0, variants) : 0) : variant, dye });
+  return mint({
+    group: female ? 'WomensClothing' : 'MensClothing',
+    templateIndex,
+    variant: variant < 0 ? (variants > 0 ? range(rolls, 0, variants) : 0) : variant,
+    dye,
+  });
 }
 /** ItemBuilder.CreateArmor (:428): `variant = -1` by default, and -1
  *  takes RandomizeArmorVariant (:813-843) - the kit's calls
  *  (RoleplayRealismItemsMod.cs:834-859) pass none (AUDIT-RR2 G11). */
 function armor(templateIndex, material, rolls, variant = -1) {
-  return mint({ group: 'Armor', templateIndex, material, variant: variant < 0 ? randomizeArmorVariant(templateIndex, material, rolls) : variant });
+  return mint({
+    group: 'Armor',
+    templateIndex,
+    material,
+    variant: variant < 0 ? randomizeArmorVariant(templateIndex, material, rolls) : variant,
+  });
 }
 const pick = (list, rolls) => list[range(rolls, 0, list.length)];
 /** ItemBuilder.CreateRandomGem (:312-319) / CreateRandomIngredient(group)
@@ -101,8 +145,9 @@ const randomOf = (group, rolls) => mint(createRandomOfGroup(group, rolls));
  *  :667): `(flags & f) == f` over ForbiddenMaterials and ForbiddenArmors
  *  (`(WeaponArmorShieldsBitfield >> 6) & 0x07`, :605; Leather 1, Chain 2). */
 const materialForbidden = (career, bit) => ((career?.forbiddenMaterialsFlags ?? 0) & bit) === bit;
-const armorForbidden = (career, bit) => ((((career?.weaponArmorShieldsBitfield ?? 0) >>> 6) & 0x07) & bit) === bit;
-const ARMOR_FLAG_LEATHER = 1, ARMOR_FLAG_CHAIN = 2;
+const armorForbidden = (career, bit) => (((career?.weaponArmorShieldsBitfield ?? 0) >>> 6) & 0x07 & bit) === bit;
+const ARMOR_FLAG_LEATHER = 1,
+  ARMOR_FLAG_CHAIN = 2;
 
 // ---- AssignSkillItems (:812-897) -------------------------------------------
 export function assignSkillItems(entity, skill, rolls = Math.random) {
@@ -111,9 +156,11 @@ export function assignSkillItems(entity, skill, rolls = Math.random) {
   const luck = career.luck ?? 50;
   const upgrade = dice100(Math.trunc(luck / (luck < 56 ? 2 : 1)), rolls);
   let weaponMaterial = WEAPON_MATERIALS.Iron;
-  if ((upgrade && !materialForbidden(career, MATERIAL_BITS.steel)) || materialForbidden(career, MATERIAL_BITS.iron)) weaponMaterial = WEAPON_MATERIALS.Steel;
+  if ((upgrade && !materialForbidden(career, MATERIAL_BITS.steel)) || materialForbidden(career, MATERIAL_BITS.iron))
+    weaponMaterial = WEAPON_MATERIALS.Steel;
   let armorMaterial = ARMOR_MATERIAL.Leather;
-  if ((upgrade && !armorForbidden(career, ARMOR_FLAG_CHAIN)) || armorForbidden(career, ARMOR_FLAG_LEATHER)) armorMaterial = ARMOR_MATERIAL.Chain;
+  if ((upgrade && !armorForbidden(career, ARMOR_FLAG_CHAIN)) || armorForbidden(career, ARMOR_FLAG_LEATHER))
+    armorMaterial = ARMOR_MATERIAL.Chain;
   const worn = (item, equip = false) => addOrEquipWornItem(entity, item, equip, rolls);
   const items = entity.items;
   switch (skill) {
@@ -124,39 +171,105 @@ export function assignSkillItems(entity, skill, rolls = Math.random) {
       addItem(items, arrowPile);
       return;
     }
-    case SKILLS.Axe: worn(createWeapon(pick(rriModule('newWeapons') ? [WEAPONS.Battle_Axe, WEAPONS.War_Axe, 513] : [WEAPONS.Battle_Axe, WEAPONS.War_Axe], rolls), weaponMaterial, rolls)); return;
-    case SKILLS.Backstabbing: worn(armor(KIT.Right_Pauldron, armorMaterial, rolls)); return;
-    case SKILLS.BluntWeapon: worn(createWeapon(pick(rriModule('newWeapons') ? [WEAPONS.Mace, WEAPONS.Flail, WEAPONS.Warhammer, 514] : [WEAPONS.Mace, WEAPONS.Flail, WEAPONS.Warhammer], rolls), weaponMaterial, rolls)); return;
-    case SKILLS.Climbing: worn(armor(KIT.Helm, armorMaterial, rolls, -1)); return;
-    case SKILLS.CriticalStrike: worn(armor(KIT.Greaves, armorMaterial, rolls)); return;
-    case SKILLS.Dodging: worn(clothing(female, female ? KIT.WomensCasualCloak : KIT.MensCasualCloak, rolls)); return;
-    case SKILLS.Etiquette: worn(clothing(female, female ? KIT.WomensEveningGown : KIT.MensFormalTunic, rolls)); return;
-    case SKILLS.HandToHand: worn(armor(KIT.Gauntlets, armorMaterial, rolls)); return;
-    case SKILLS.Jumping: worn(armor(KIT.Boots, armorMaterial, rolls)); return;
-    case SKILLS.Lockpicking: addItem(items, createRandomPotion(rolls)); return;
-    case SKILLS.LongBlade: worn(createWeapon(dice100(50, rolls) ? WEAPONS.Saber : WEAPONS.Broadsword, weaponMaterial, rolls)); return;
+    case SKILLS.Axe:
+      worn(
+        createWeapon(
+          pick(
+            rriModule('newWeapons')
+              ? [WEAPONS.Battle_Axe, WEAPONS.War_Axe, 513]
+              : [WEAPONS.Battle_Axe, WEAPONS.War_Axe],
+            rolls,
+          ),
+          weaponMaterial,
+          rolls,
+        ),
+      );
+      return;
+    case SKILLS.Backstabbing:
+      worn(armor(KIT.Right_Pauldron, armorMaterial, rolls));
+      return;
+    case SKILLS.BluntWeapon:
+      worn(
+        createWeapon(
+          pick(
+            rriModule('newWeapons')
+              ? [WEAPONS.Mace, WEAPONS.Flail, WEAPONS.Warhammer, 514]
+              : [WEAPONS.Mace, WEAPONS.Flail, WEAPONS.Warhammer],
+            rolls,
+          ),
+          weaponMaterial,
+          rolls,
+        ),
+      );
+      return;
+    case SKILLS.Climbing:
+      worn(armor(KIT.Helm, armorMaterial, rolls, -1));
+      return;
+    case SKILLS.CriticalStrike:
+      worn(armor(KIT.Greaves, armorMaterial, rolls));
+      return;
+    case SKILLS.Dodging:
+      worn(clothing(female, female ? KIT.WomensCasualCloak : KIT.MensCasualCloak, rolls));
+      return;
+    case SKILLS.Etiquette:
+      worn(clothing(female, female ? KIT.WomensEveningGown : KIT.MensFormalTunic, rolls));
+      return;
+    case SKILLS.HandToHand:
+      worn(armor(KIT.Gauntlets, armorMaterial, rolls));
+      return;
+    case SKILLS.Jumping:
+      worn(armor(KIT.Boots, armorMaterial, rolls));
+      return;
+    case SKILLS.Lockpicking:
+      addItem(items, createRandomPotion(rolls));
+      return;
+    case SKILLS.LongBlade:
+      worn(createWeapon(dice100(50, rolls) ? WEAPONS.Saber : WEAPONS.Broadsword, weaponMaterial, rolls));
+      return;
     case SKILLS.Medical: {
       const bandages = mint({ group: 'UselessItems2', templateIndex: BANDAGE_TEMPLATE });
       bandages.stackCount = 4;
       addItem(items, bandages);
       return;
     }
-    case SKILLS.Mercantile: addGoldPieces(entity, range(rolls, luck, luck * 4)); return;
-    case SKILLS.Pickpocket: addItem(items, randomOf('Gems', rolls)); return;
-    case SKILLS.Running: worn(clothing(female, female ? KIT.WomensShoes : KIT.MensShoes, rolls)); return;
-    case SKILLS.ShortBlade: worn(createWeapon(dice100(50, rolls) ? WEAPONS.Shortsword : WEAPONS.Tanto, weaponMaterial, rolls)); return;
-    case SKILLS.Stealth: worn(clothing(female, female ? KIT.WomensKhajiitSuit : KIT.MensKhajiitSuit, rolls)); return;
-    case SKILLS.Streetwise: worn(armor(KIT.Cuirass, armorMaterial, rolls)); return;
-    case SKILLS.Swimming: addItem(items, clothing(female, female ? KIT.WomensLoincloth : KIT.MensLoincloth, rolls)); return;
-    case SKILLS.Daedric: case SKILLS.Dragonish: case SKILLS.Giantish: case SKILLS.Harpy: case SKILLS.Impish: case SKILLS.Orcish:
+    case SKILLS.Mercantile:
+      addGoldPieces(entity, range(rolls, luck, luck * 4));
+      return;
+    case SKILLS.Pickpocket:
+      addItem(items, randomOf('Gems', rolls));
+      return;
+    case SKILLS.Running:
+      worn(clothing(female, female ? KIT.WomensShoes : KIT.MensShoes, rolls));
+      return;
+    case SKILLS.ShortBlade:
+      worn(createWeapon(dice100(50, rolls) ? WEAPONS.Shortsword : WEAPONS.Tanto, weaponMaterial, rolls));
+      return;
+    case SKILLS.Stealth:
+      worn(clothing(female, female ? KIT.WomensKhajiitSuit : KIT.MensKhajiitSuit, rolls));
+      return;
+    case SKILLS.Streetwise:
+      worn(armor(KIT.Cuirass, armorMaterial, rolls));
+      return;
+    case SKILLS.Swimming:
+      addItem(items, clothing(female, female ? KIT.WomensLoincloth : KIT.MensLoincloth, rolls));
+      return;
+    case SKILLS.Daedric:
+    case SKILLS.Dragonish:
+    case SKILLS.Giantish:
+    case SKILLS.Harpy:
+    case SKILLS.Impish:
+    case SKILLS.Orcish:
       addItem(items, createRandomBook(rolls));
       for (let i = 0; i < 4; i++) addItem(items, randomOf('CreatureIngredients1', rolls));
       return;
-    case SKILLS.Centaurian: case SKILLS.Nymph: case SKILLS.Spriggan:
+    case SKILLS.Centaurian:
+    case SKILLS.Nymph:
+    case SKILLS.Spriggan:
       addItem(items, createRandomBook(rolls));
       for (let i = 0; i < 4; i++) addItem(items, randomOf('PlantIngredients1', rolls));
       return;
-    default: return;
+    default:
+      return;
   }
 }
 
@@ -173,7 +286,10 @@ export function assignSkillItems(entity, skill, rolls = Math.random) {
  *  dagger, and six torches and four candles under PlayerTorchFromItems.
  *  Answers the items added (newest last), the shape assignStartingGear
  *  answers. */
-export function assignSkillEquipment(entity, { rolls = Math.random, torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems') } = {}) {
+export function assignSkillEquipment(
+  entity,
+  { rolls = Math.random, torchesFromItems = getBool('Enhancements', 'PlayerTorchFromItems') } = {},
+) {
   entity.items = entity.items ?? [];
   const before = entity.items.length;
   const career = entity.career ?? {};
@@ -185,14 +301,17 @@ export function assignSkillEquipment(entity, { rolls = Math.random, torchesFromI
     if (isQuestionsDagger(dagger)) {
       mintCondition(dagger);
       dagger.currentCondition = Math.trunc(dagger.maxCondition * QUESTIONS_DAGGER_WEAR);
-      markFound(dagger);   // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)
+      markFound(dagger); // AUDIT MEND-THIRD L3-6: handed over worn - SELL-AS-FOUND's mark (item/foundMark.js)
     }
   }
   for (const skill of career.primarySkills ?? []) assignSkillItems(entity, skill, rolls);
   for (const skill of career.majorSkills ?? []) assignSkillItems(entity, skill, rolls);
   // "Starting clothes are gender-specific, randomise shirt dye and pants variant"
-  const shortShirt = clothing(female, female ? KIT.WomensShortShirtClosed : KIT.MensShortShirt, rolls, { variant: 0, dye: CLOTHING_DYES[range(rolls, 0, CLOTHING_DYES.length)] });
-  const casualPants = clothing(female, female ? KIT.WomensCasualPants : KIT.MensCasualPants, rolls);   // RandomizeClothingVariant is the -1 draw
+  const shortShirt = clothing(female, female ? KIT.WomensShortShirtClosed : KIT.MensShortShirt, rolls, {
+    variant: 0,
+    dye: CLOTHING_DYES[range(rolls, 0, CLOTHING_DYES.length)],
+  });
+  const casualPants = clothing(female, female ? KIT.WomensCasualPants : KIT.MensCasualPants, rolls); // RandomizeClothingVariant is the -1 draw
   addOrEquipWornItem(entity, shortShirt, true, rolls);
   addOrEquipWornItem(entity, casualPants, true, rolls);
   // "Add spellbook, all players start with one - also a little gold and a crappy iron dagger for those with no weapon skills."
@@ -204,7 +323,7 @@ export function assignSkillEquipment(entity, { rolls = Math.random, torchesFromI
     for (let i = 0; i < 4; i++) addItem(entity.items, mint({ group: 'UselessItems2', templateIndex: KIT.Candle }));
   }
   const added = entity.items.slice(before);
-  addSurvivalProvisions(entity, added);   // the port's own kit rides either assigner (AUDIT SURV E)
+  addSurvivalProvisions(entity, added); // the port's own kit rides either assigner (AUDIT SURV E)
   return added;
 }
 
@@ -222,44 +341,98 @@ export function assignSkillEquipment(entity, { rolls = Math.random, torchesFromI
 const TARGET = Object.freeze({ CasterOnly: 0, ByTouch: 1, SingleTargetAtRange: 2 });
 const ELEMENT = Object.freeze({ Shock: 3, Magic: 4 });
 const EFFECT_KEY = Object.freeze({
-  DamageHealth: [4, 0], Slowfall: [25, 255], LightNormal: [15, 255], CreateItem: [2, 255],
-  HealHealth: [10, 8], HealFatigue: [10, 9], Levitate: [14, 255], Open: [17, 255],
+  DamageHealth: [4, 0],
+  Slowfall: [25, 255],
+  LightNormal: [15, 255],
+  CreateItem: [2, 255],
+  HealHealth: [10, 8],
+  HealFatigue: [10, 9],
+  Levitate: [14, 255],
+  Open: [17, 255],
 });
-const UNUSED_EFFECT = Object.freeze({ type: -1, subType: -1, durationBase: 0, durationMod: 0, durationPerLevel: 0, chanceBase: 0, chanceMod: 0, chancePerLevel: 0, magnitudeBaseLow: 0, magnitudeBaseHigh: 0, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0 });
+const UNUSED_EFFECT = Object.freeze({
+  type: -1,
+  subType: -1,
+  durationBase: 0,
+  durationMod: 0,
+  durationPerLevel: 0,
+  chanceBase: 0,
+  chanceMod: 0,
+  chancePerLevel: 0,
+  magnitudeBaseLow: 0,
+  magnitudeBaseHigh: 0,
+  magnitudeLevelBase: 0,
+  magnitudeLevelHigh: 0,
+  magnitudePerLevel: 0,
+});
 const effect = (key, { duration = [0, 0, 0], chance = [0, 0, 0], magnitude = [0, 0, 0, 0, 0] } = {}) => ({
-  type: EFFECT_KEY[key][0], subType: EFFECT_KEY[key][1],
-  durationBase: duration[0], durationMod: duration[1], durationPerLevel: duration[2],
-  chanceBase: chance[0], chanceMod: chance[1], chancePerLevel: chance[2],
-  magnitudeBaseLow: magnitude[0], magnitudeBaseHigh: magnitude[1], magnitudeLevelBase: magnitude[2], magnitudeLevelHigh: magnitude[3], magnitudePerLevel: magnitude[4],
+  type: EFFECT_KEY[key][0],
+  subType: EFFECT_KEY[key][1],
+  durationBase: duration[0],
+  durationMod: duration[1],
+  durationPerLevel: duration[2],
+  chanceBase: chance[0],
+  chanceMod: chance[1],
+  chancePerLevel: chance[2],
+  magnitudeBaseLow: magnitude[0],
+  magnitudeBaseHigh: magnitude[1],
+  magnitudeLevelBase: magnitude[2],
+  magnitudeLevelHigh: magnitude[3],
+  magnitudePerLevel: magnitude[4],
 });
 /** The port's own indices for the nine, past every SPELLS.STD record. */
 export const RRI_SPELL_INDEX_BASE = 990;
 function spell(i, name, target, element, icon, effects) {
-  const rec = { effects: [...effects, UNUSED_EFFECT, UNUSED_EFFECT].slice(0, 3).map((e) => ({ ...e })), element, rangeType: target, name, icon, index: RRI_SPELL_INDEX_BASE + i, rri: true };
+  const rec = {
+    effects: [...effects, UNUSED_EFFECT, UNUSED_EFFECT].slice(0, 3).map((e) => ({ ...e })),
+    element,
+    rangeType: target,
+    name,
+    icon,
+    index: RRI_SPELL_INDEX_BASE + i,
+    rri: true,
+  };
   rec.cost = classicCastingCost(rec);
   return Object.freeze(rec);
 }
 /** OWN-WORK3: the nine spells' names, DFO's own - each says what the spell does. */
 export const RRI_SPELLS = Object.freeze({
-  minorShock: spell(0, 'Static Touch', TARGET.ByTouch, ELEMENT.Shock, 37, [effect('DamageHealth', { magnitude: [2, 10, 1, 2, 1] })]),           // "2-10 + 1-2 per 1 lev"
-  arcaneArrow: spell(1, 'Spell Dart', TARGET.SingleTargetAtRange, ELEMENT.Magic, 57, [effect('DamageHealth', { magnitude: [5, 6, 1, 1, 2] })]),
-  gentleFall: spell(2, 'Featherfall', TARGET.CasterOnly, ELEMENT.Magic, 31, [effect('Slowfall', { duration: [2, 1, 2] })]),
+  minorShock: spell(0, 'Static Touch', TARGET.ByTouch, ELEMENT.Shock, 37, [
+    effect('DamageHealth', { magnitude: [2, 10, 1, 2, 1] }),
+  ]), // "2-10 + 1-2 per 1 lev"
+  arcaneArrow: spell(1, 'Spell Dart', TARGET.SingleTargetAtRange, ELEMENT.Magic, 57, [
+    effect('DamageHealth', { magnitude: [5, 6, 1, 1, 2] }),
+  ]),
+  gentleFall: spell(2, 'Featherfall', TARGET.CasterOnly, ELEMENT.Magic, 31, [
+    effect('Slowfall', { duration: [2, 1, 2] }),
+  ]),
   candle: spell(3, 'Glimmer', TARGET.CasterOnly, ELEMENT.Magic, 22, [effect('LightNormal', { duration: [4, 4, 1] })]),
-  knickKnack: spell(4, 'Conjure Trinket', TARGET.CasterOnly, ELEMENT.Magic, 26, [effect('CreateItem', { duration: [4, 1, 2] })]),
-  salveBruise: spell(5, 'Mend Bruise', TARGET.CasterOnly, ELEMENT.Magic, 13, [effect('HealHealth', { magnitude: [3, 6, 0, 0, 1] })]),
-  smellingSalts: spell(6, 'Second Wind', TARGET.CasterOnly, ELEMENT.Magic, 10, [effect('HealFatigue', { magnitude: [3, 6, 0, 0, 1] })]),
+  knickKnack: spell(4, 'Conjure Trinket', TARGET.CasterOnly, ELEMENT.Magic, 26, [
+    effect('CreateItem', { duration: [4, 1, 2] }),
+  ]),
+  salveBruise: spell(5, 'Mend Bruise', TARGET.CasterOnly, ELEMENT.Magic, 13, [
+    effect('HealHealth', { magnitude: [3, 6, 0, 0, 1] }),
+  ]),
+  smellingSalts: spell(6, 'Second Wind', TARGET.CasterOnly, ELEMENT.Magic, 10, [
+    effect('HealFatigue', { magnitude: [3, 6, 0, 0, 1] }),
+  ]),
   rise: spell(7, 'Lift', TARGET.CasterOnly, ELEMENT.Magic, 13, [effect('Levitate', { duration: [1, 1, 2] })]),
-  knock: spell(8, 'Unbar', TARGET.CasterOnly, ELEMENT.Magic, 3, [effect('Open', { duration: [1, 1, 0], chance: [8, 0, 2] })]),
+  knock: spell(8, 'Unbar', TARGET.CasterOnly, ELEMENT.Magic, 3, [
+    effect('Open', { duration: [1, 1, 0], chance: [8, 0, 2] }),
+  ]),
 });
 
 // ---- AssignSkillSpells (:916-968) -------------------------------------------
 /** "Classic spell indexes are on https://en.uesp.net/wiki/Daggerfall:SPELLS.STD_indices" */
 export function assignSkillSpells(spells, skill, primary, spellsByIndex) {
-  const classic = (id) => { const sp = spellsByIndex?.get?.(id); if (sp) spells.push(sp); };
+  const classic = (id) => {
+    const sp = spellsByIndex?.get?.(id);
+    if (sp) spells.push(sp);
+  };
   switch (skill) {
     case SKILLS.Alteration:
       spells.push(RRI_SPELLS.gentleFall);
-      if (primary) classic(38);   // Jumping
+      if (primary) classic(38); // Jumping
       return;
     case SKILLS.Destruction:
       spells.push(RRI_SPELLS.arcaneArrow);
@@ -267,22 +440,29 @@ export function assignSkillSpells(spells, skill, primary, spellsByIndex) {
       return;
     case SKILLS.Illusion:
       spells.push(RRI_SPELLS.candle);
-      if (primary) classic(44);   // Chameleon
+      if (primary) classic(44); // Chameleon
       return;
     case SKILLS.Mysticism:
       spells.push(RRI_SPELLS.knock);
       spells.push(RRI_SPELLS.knickKnack);
-      if (primary) { classic(1); classic(94); }   // Fenrik's Door Jam, Recall!
+      if (primary) {
+        classic(1);
+        classic(94);
+      } // Fenrik's Door Jam, Recall!
       return;
     case SKILLS.Restoration:
       spells.push(RRI_SPELLS.salveBruise);
-      if (primary) { spells.push(RRI_SPELLS.smellingSalts); classic(97); }   // Balyna's Balm
+      if (primary) {
+        spells.push(RRI_SPELLS.smellingSalts);
+        classic(97);
+      } // Balyna's Balm
       return;
     case SKILLS.Thaumaturgy:
-      classic(2);   // Buoyancy
+      classic(2); // Buoyancy
       if (primary) spells.push(RRI_SPELLS.rise);
       return;
-    default: return;
+    default:
+      return;
   }
 }
 /** AssignSkillSpellbook (:900-914): StartGameBehaviour.AssignStartingSpells'
@@ -301,10 +481,14 @@ export function assignSkillSpellbook(career, spellsByIndex) {
  *  AddPotions (alchemistPotions) - each gated on `ContainerType ==
  *  ShopShelves`, the last on the Alchemist too. `items` is the shelf's
  *  freshly stocked list; answers it. */
-export function onShopShelfStocked(items, { buildingType, quality = 0, containerType = LOOT_CONTAINER_TYPES.ShopShelves } = {}, { rolls = Math.random, randomPotion = createRandomPotion } = {}) {
+export function onShopShelfStocked(
+  items,
+  { buildingType, quality = 0, containerType = LOOT_CONTAINER_TYPES.ShopShelves } = {},
+  { rolls = Math.random, randomPotion = createRandomPotion } = {},
+) {
   if (!Array.isArray(items) || containerType !== LOOT_CONTAINER_TYPES.ShopShelves) return items;
   if (rriModule('bandaging')) {
-    const bandage = items.find((it) => it?.group === 'UselessItems2' && it.templateIndex === BANDAGE_TEMPLATE);   // ItemCollection.GetItem: the first
+    const bandage = items.find((it) => it?.group === 'UselessItems2' && it.templateIndex === BANDAGE_TEMPLATE); // ItemCollection.GetItem: the first
     if (bandage) bandage.stackCount = shelfBandageStack(quality, rolls);
   }
   if (storeQualityOn()) storeQualityItemCondition(items, quality, rolls);
@@ -312,7 +496,7 @@ export function onShopShelfStocked(items, { buildingType, quality = 0, container
     let numPotions = alchemistPotionCount(quality, rolls);
     while (numPotions > 0) {
       const item = randomPotion(rolls);
-      item.value = itemValueOf(item) * 2;   // AUDIT 68 S27-wth-nan: JAN1's one value read - `??` let a NaN value through to be doubled
+      item.value = itemValueOf(item) * 2; // AUDIT 68 S27-wth-nan: JAN1's one value read - `??` let a NaN value through to be doubled
       items.push(item);
       numPotions--;
     }
@@ -327,13 +511,16 @@ export function onShopShelfStocked(items, { buildingType, quality = 0, container
  *  true either way - the click is consumed. The port's shape is the
  *  result useItem hands its window. */
 export function useBandage(item, collection, { entity = null } = {}) {
-  if (!rriModule('bandaging')) return null;   // the handler is registered only under bandaging (InitMod :93) - off, the ladder's turn
+  if (!rriModule('bandaging')) return null; // the handler is registered only under bandaging (InitMod :93) - off, the ladder's turn
   if (!collection || !entity) return { kind: 'bandaged', healed: 0 };
   const medical = skillValue(entity, SKILLS.Medical);
   const heal = bandageHeal(medical, entity.maxHealth ?? 0);
   const i = collection.indexOf(item);
-  if (i >= 0) { if ((item.stackCount ?? 1) > 1) item.stackCount--; else collection.splice(i, 1); }
-  entity.health = Math.min(entity.maxHealth ?? entity.health ?? 0, (entity.health ?? 0) + heal);   // PlayerEntity.IncreaseHealth
+  if (i >= 0) {
+    if ((item.stackCount ?? 1) > 1) item.stackCount--;
+    else collection.splice(i, 1);
+  }
+  entity.health = Math.min(entity.maxHealth ?? entity.health ?? 0, (entity.health ?? 0) + heal); // PlayerEntity.IncreaseHealth
   tallySkill(entity, SKILLS.Medical, 1);
   return { kind: 'bandaged', healed: heal };
 }

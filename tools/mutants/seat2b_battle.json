@@ -2,8 +2,8 @@
   {
     "name": "SEAT2b2b-crown-bare-no-gate",
     "file": "src/net/siege/siegeRef.js",
-    "old": "if (sx == null) return { walls: 0, gate: tier === 'crown' ? 0 : -1, rams: 0, siegewright: 0, barracks: 0 };",
-    "new": "if (sx == null) return { walls: 0, gate: -1, rams: 0, siegewright: 0, barracks: 0 };",
+    "old": "  if (sx == null) return { walls: 0, gate: tier === 'crown' ? 0 : -1, rams: 0, siegewright: 0, barracks: 0 };",
+    "new": "  if (sx == null) return { walls: 0, gate: -1, rams: 0, siegewright: 0, barracks: 0 };",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/seat2a_battle.test.js",
@@ -13,8 +13,8 @@
   {
     "name": "SEAT2b2b-crown-gateless-pass",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (tier === 'crown' && gate < 0) return null;   // a crown's Gatehouse always stands\n",
-    "new": "",
+    "old": "  if (tier === 'crown' && gate < 0) return null; // a crown's Gatehouse always stands\n  if (gate < 0 && rams > 0) return null; // a Ram strikes a Gatehouse or nothing (campSpent sends none to a seat without)",
+    "new": "  if (gate < 0 && rams > 0) return null; // a Ram strikes a Gatehouse or nothing (campSpent sends none to a seat without)",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -22,8 +22,8 @@
   {
     "name": "SEAT2b2b-rams-without-gate",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (gate < 0 && rams > 0) return null;",
-    "new": "",
+    "old": "  if (gate < 0 && rams > 0) return null; // a Ram strikes a Gatehouse or nothing (campSpent sends none to a seat without)",
+    "new": "  // a Ram strikes a Gatehouse or nothing (campSpent sends none to a seat without)",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "SEAT2b2b-tourney-carries-works",
     "file": "src/net/siege/siegeRef.js",
-    "old": "if (kind !== 'siege') return sx == null ? { walls: 0, gate: -1, rams: 0, siegewright: 0, barracks: 0 } : null;",
-    "new": "if (kind !== 'siege') return { walls: 0, gate: -1, rams: 0, siegewright: 0, barracks: 0 };",
+    "old": "  if (kind !== 'siege') return sx == null ? { walls: 0, gate: -1, rams: 0, siegewright: 0, barracks: 0 } : null;",
+    "new": "  if (kind !== 'siege') return { walls: 0, gate: -1, rams: 0, siegewright: 0, barracks: 0 };",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "SEAT2b2b-gate-blow-share",
     "file": "src/net/siege/siegeRef.js",
-    "old": "blowShare: 0.1, sizeM: 3 });",
-    "new": "blowShare: 0.2, sizeM: 3 });",
+    "old": "export const SIEGE_GATEHOUSE = Object.freeze({ vitality: 20000, perTier: 0.5, blowShare: 0.1, sizeM: 3 });",
+    "new": "export const SIEGE_GATEHOUSE = Object.freeze({ vitality: 20000, perTier: 0.5, blowShare: 0.2, sizeM: 3 });",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -50,8 +50,8 @@
   {
     "name": "SEAT2b2b-ram-damage",
     "file": "src/net/siege/siegeRef.js",
-    "old": "damage: 500, everyMs: 10000, crew: 2, crewM: 3, siegewright: 0.5, sizeM: 2 });",
-    "new": "damage: 400, everyMs: 10000, crew: 2, crewM: 3, siegewright: 0.5, sizeM: 2 });",
+    "old": "  damage: 500,",
+    "new": "  damage: 400,",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -70,8 +70,8 @@
   {
     "name": "SEAT2b2b-wave-attackers-walls",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (side !== 'defend') return base;\n  return Math.max(SIEGE_WALLS.minMs",
-    "new": "  if (side === 'defend') return base;\n  return Math.max(SIEGE_WALLS.minMs",
+    "old": "  if (side !== 'defend') return base;",
+    "new": "  if (side === 'defend') return base;",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js",
@@ -92,8 +92,8 @@
   {
     "name": "SEAT2b2b-work-shaft",
     "file": "src/net/siege/siegeRef.js",
-    "old": "if (!held || r !== SIEGE_HIT.Melee || siegeIsBow(held.w)) return { ok: false, dealt: 0, broke: false, why: 'weapon' };",
-    "new": "if (!held) return { ok: false, dealt: 0, broke: false, why: 'weapon' };",
+    "old": "  if (!held || r !== SIEGE_HIT.Melee || siegeIsBow(held.w)) return { ok: false, dealt: 0, broke: false, why: 'weapon' };",
+    "new": "  if (!held) return { ok: false, dealt: 0, broke: false, why: 'weapon' };",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "SEAT2b2b-work-size-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "if (!from || flat(from, point) > SIEGE_REACH.melee + SIEGE_REACH.slack + size)",
-    "new": "if (!from || flat(from, point) > SIEGE_REACH.melee + SIEGE_REACH.slack)",
+    "old": "  if (!from || flat(from, point) > SIEGE_REACH.melee + SIEGE_REACH.slack + size)",
+    "new": "  if (!from || flat(from, point) > SIEGE_REACH.melee + SIEGE_REACH.slack)",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "SEAT2b2b-work-reach-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "if (!from || flat(from, point) > SIEGE_REACH.melee + SIEGE_REACH.slack + size)",
-    "new": "if (!from || flat(from, point) > 1e9 + size)",
+    "old": "  if (!from || flat(from, point) > SIEGE_REACH.melee + SIEGE_REACH.slack + size)\n    return { ok: false, dealt: 0, broke: false, why: 'reach' };",
+    "new": "  if (!from || flat(from, point) > 1e9 + size) return { ok: false, dealt: 0, broke: false, why: 'reach' };",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -121,8 +121,8 @@
   {
     "name": "SEAT2b2b-work-ground-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "if (ground != null && Math.abs(from.y - ground)",
-    "new": "if (false && Math.abs(from.y - ground)",
+    "old": "  if (ground != null && Math.abs(from.y - ground) / SIEGE_UNITS_PER_M > SIEGE_HEIGHT_M)",
+    "new": "  if (false && Math.abs(from.y - ground) / SIEGE_UNITS_PER_M > SIEGE_HEIGHT_M)",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "SEAT2b2b-work-share-floor",
     "file": "src/net/siege/siegeRef.js",
-    "old": "const dealt = Math.min(work.hp, Math.max(1, Math.round(got * share)));",
-    "new": "const dealt = Math.min(work.hp, Math.round(got * share));",
+    "old": "  const dealt = Math.min(work.hp, Math.max(1, Math.round(got * share)));",
+    "new": "  const dealt = Math.min(work.hp, Math.round(got * share));",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "SEAT2b2b-work-unclipped",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa));\n  if (got <= 0)",
-    "new": "  const got = want;\n  if (got <= 0)",
+    "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa));",
+    "new": "  const got = want;",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "SEAT2b2b-crew-one",
     "file": "src/net/siege/siegeRef.js",
-    "old": "if (crewAt(fighters, b.field.throne, ground) >= SIEGE_RAM.crew) {",
-    "new": "if (crewAt(fighters, b.field.throne, ground) >= 1) {",
+    "old": "  if (crewAt(fighters, b.field.throne, ground) >= SIEGE_RAM.crew) {",
+    "new": "  if (crewAt(fighters, b.field.throne, ground) >= 1) {",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -176,8 +176,8 @@
   {
     "name": "SEAT2b2b-crew-any-side",
     "file": "src/net/siege/siegeRef.js",
-    "old": "    if (f.down || !f.pose || !f.here || f.side !== 'attack') continue;\n    if (flat(f.pose, point) > SIEGE_RAM.crewM) continue;",
-    "new": "    if (f.down || !f.pose || !f.here) continue;\n    if (flat(f.pose, point) > SIEGE_RAM.crewM) continue;",
+    "old": "    if (f.down || !f.pose || !f.here || f.side !== 'attack') continue;",
+    "new": "    if (f.down || !f.pose || !f.here) continue;",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "SEAT2b2b-crew-fallen",
     "file": "src/net/siege/siegeRef.js",
-    "old": "    if (f.down || !f.pose || !f.here || f.side !== 'attack') continue;\n    if (flat(f.pose, point) > SIEGE_RAM.crewM) continue;",
-    "new": "    if (!f.pose || f.side !== 'attack') continue;\n    if (flat(f.pose, point) > SIEGE_RAM.crewM) continue;",
+    "old": "    if (f.down || !f.pose || !f.here || f.side !== 'attack') continue;",
+    "new": "    if (!f.pose || f.side !== 'attack') continue;",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "SEAT2b2b-stroke-no-breach",
     "file": "src/net/siege/siegeRef.js",
-    "old": "      if (b.gate.hp <= 0) { b.breached = true; out.push({ k: 'breach' }); }",
-    "new": "      if (b.gate.hp <= 0) { out.push({ k: 'breach' }); }",
+    "old": "        b.breached = true;\n        out.push({ k: 'breach' });",
+    "new": "        out.push({ k: 'breach' });",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -213,8 +213,8 @@
   {
     "name": "SEAT2b2b-throne-ignores-gate",
     "file": "src/net/siege/siegeRef.js",
-    "old": "&& !siegeThroneBarred(b);",
-    "new": "",
+    "old": "    const open = b.banners.filter((bn) => bn.side === 'attack').length >= rule.banners && !siegeThroneBarred(b);",
+    "new": "    const open = b.banners.filter((bn) => bn.side === 'attack').length >= rule.banners;",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js",
@@ -234,8 +234,8 @@
   {
     "name": "SEAT2b2b-ram-late",
     "file": "src/net/siege/siegeRef.js",
-    "old": "if (!b.ram && b.ramsLeft > 0 && b.ramAt != null && nowMs >= b.ramAt) {",
-    "new": "if (!b.ram && b.ramsLeft > 0 && b.ramAt != null && nowMs >= b.ramAt + SIEGE_TICK_MS) {",
+    "old": "  if (!b.ram && b.ramsLeft > 0 && b.ramAt != null && nowMs >= b.ramAt) {",
+    "new": "  if (!b.ram && b.ramsLeft > 0 && b.ramAt != null && nowMs >= b.ramAt + SIEGE_TICK_MS) {",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -243,8 +243,8 @@
   {
     "name": "SEAT2b2b-first-ram-not-spent",
     "file": "src/net/siege/siegeRef.js",
-    "old": "ramsLeft: gate ? Math.max(0, w.rams - 1) : 0, ramAt: null,",
-    "new": "ramsLeft: gate ? w.rams : 0, ramAt: null,",
+    "old": "    ramsLeft: gate ? Math.max(0, w.rams - 1) : 0,",
+    "new": "    ramsLeft: gate ? w.rams : 0,",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -253,8 +253,8 @@
   {
     "name": "SEAT2b2b-siegewright-ram",
     "file": "src/net/siege/siegeRef.js",
-    "old": "Math.round(SIEGE_RAM.vitality * (siegewright ? 1 + SIEGE_RAM.siegewright : 1));",
-    "new": "Math.round(SIEGE_RAM.vitality);",
+    "old": "export const siegeRamVitality = (siegewright) =>\n  Math.round(SIEGE_RAM.vitality * (siegewright ? 1 + SIEGE_RAM.siegewright : 1));",
+    "new": "export const siegeRamVitality = (siegewright) => Math.round(SIEGE_RAM.vitality);",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -263,8 +263,8 @@
   {
     "name": "SEAT2b2b-return-attack-wave",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  f.upAt = siegeNextWave(now, siegeWaveMs(b, f.side));",
-    "new": "  f.upAt = siegeNextWave(now, siegeWaveMs(b, 'attack'));",
+    "old": "  f.upAt = siegeNextWave(now, siegeWaveMs(b, f.side)); // SEAT2b part two (b): a defender's wave the Walls' quicker",
+    "new": "  f.upAt = siegeNextWave(now, siegeWaveMs(b, 'attack')); // SEAT2b part two (b): a defender's wave the Walls' quicker",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SEAT2b2b-frame-no-gate",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  ...(b.gate ? { g: [b.gate.hp, b.gate.max] } : {}),\n",
-    "new": "",
+    "old": "  ...(b.gate ? { g: [b.gate.hp, b.gate.max] } : {}),\n  ...(b.gate && (b.ram || b.ramsLeft > 0)",
+    "new": "  ...(b.gate && (b.ram || b.ramsLeft > 0)",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "SEAT2b2b-frame-no-walls",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  ...(b.works?.walls > 0 ? { w: b.works.walls } : {}),\n",
-    "new": "",
+    "old": "  ...(b.works?.walls > 0 ? { w: b.works.walls } : {}),\n  ...(b.kind === 'revolt' ? { v: 1 } : {}),",
+    "new": "  ...(b.kind === 'revolt' ? { v: 1 } : {}),",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/siege/seat2b_battle_relay.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "SEAT2b2b-pass-works-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.sx !== undefined && (c.sn !== 'siege' || !worksOf(c.sx, c.st, c.sn))) return false;   // SEAT2b part two (b): a siege's works, well made\n",
-    "new": "",
+    "old": "  if (c.sx !== undefined && (c.sn !== 'siege' || !worksOf(c.sx, c.st, c.sn))) return false; // SEAT2b part two (b): a siege's works, well made\n  return siegeFieldValid(c.sf, c.st, c.sn);",
+    "new": "  return siegeFieldValid(c.sf, c.st, c.sn);",
     "tests": [
       "test/net/seat2b_battle_law.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "SEAT2b2b-pass-works-dropped",
     "file": "src/net/identityToken.js",
-    "old": "...(sx === undefined || sx === null ? {} : { sx }),",
-    "new": "",
+    "old": "  const claims = {\n    o: 'siege',\n    s,\n    sk,\n    sw,\n    sd,\n    st,\n    sn,\n    sb,\n    se,\n    sf,\n    ...(sx === undefined || sx === null ? {} : { sx }),\n    i: nowS,\n    e: nowS + ttlS,\n  };",
+    "new": "  const claims = { o: 'siege', s, sk, sw, sd, st, sn, sb, se, sf, i: nowS, e: nowS + ttlS };",
     "tests": [
       "test/net/seat2b_battle_law.test.js",
       "test/net/seat2b_battle_service.test.js",
@@ -466,8 +466,8 @@
   {
     "name": "SEAT2b2b-service-siegewright-side",
     "file": "server-account/src/seatForts.js",
-    "old": "WHERE r.week = ? AND r.key = ? AND r.side = 'attack' ORDER BY r.at, r.account",
-    "new": "WHERE r.week = ? AND r.key = ? AND r.side = 'defend' ORDER BY r.at, r.account",
+    "old": "    WHERE r.week = ? AND r.key = ? AND r.side = 'attack' ORDER BY r.at, r.account`,",
+    "new": "    WHERE r.week = ? AND r.key = ? AND r.side = 'defend' ORDER BY r.at, r.account`,",
     "tests": [
       "test/net/seat2b_battle_service.test.js"
     ]
@@ -475,8 +475,8 @@
   {
     "name": "SEAT2b2b-fold-gate-dropped",
     "file": "src/net/siege/siegeLink.js",
-    "old": "gate: g.g ?? null, ram: g.r ?? null, walls: g.w ?? 0,",
-    "new": "gate: null, ram: g.r ?? null, walls: g.w ?? 0,",
+    "old": "        gate: g.g ?? null,",
+    "new": "        gate: null,",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -484,8 +484,8 @@
   {
     "name": "SEAT2b2b-words-breach",
     "file": "src/net/siege/siegeLink.js",
-    "old": ": 'GATEHOUSE BREACHED');",
-    "new": ": 'GATEHOUSE 0');",
+    "old": "        : 'GATEHOUSE BREACHED',",
+    "new": "        : 'GATEHOUSE 0',",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -493,8 +493,8 @@
   {
     "name": "SEAT2b2b-bar-open-barred",
     "file": "src/net/siege/siegeLink.js",
-    "old": "${held >= rule.banners && !barred ? 'OPEN ' : ''}",
-    "new": "${held >= rule.banners ? 'OPEN ' : ''}",
+    "old": "    throne = `THRONE ${held >= rule.banners && !barred ? 'OPEN ' : ''}${pct}% (${rule.banners} of ${s.banners.length}${s.gate ? ' + the Gatehouse' : ''})`;",
+    "new": "    throne = `THRONE ${held >= rule.banners ? 'OPEN ' : ''}${pct}% (${rule.banners} of ${s.banners.length}${s.gate ? ' + the Gatehouse' : ''})`;",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -502,8 +502,8 @@
   {
     "name": "SEAT2b2b-bar-gate-unnamed",
     "file": "src/net/siege/siegeLink.js",
-    "old": "${s.gate ? ' + the Gatehouse' : ''}",
-    "new": "",
+    "old": "    throne = `THRONE ${held >= rule.banners && !barred ? 'OPEN ' : ''}${pct}% (${rule.banners} of ${s.banners.length}${s.gate ? ' + the Gatehouse' : ''})`;",
+    "new": "    throne = `THRONE ${held >= rule.banners && !barred ? 'OPEN ' : ''}${pct}% (${rule.banners} of ${s.banners.length})`;",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "SEAT2b2b-self-wave-walls",
     "file": "src/net/siege/siegeLink.js",
-    "old": "siegeWaveMs({ tier, works: { walls: s.walls } }, f.side)",
-    "new": "siegeWaveMs({ tier }, f.side)",
+    "old": "      `next wave in ${Math.max(0, Math.ceil((siegeNextWave(s.fellAt[me] ?? now, siegeWaveMs({ tier, works: { walls: s.walls } }, f.side)) - now) / 1000))} s`,",
+    "new": "      `next wave in ${Math.max(0, Math.ceil((siegeNextWave(s.fellAt[me] ?? now, siegeWaveMs({ tier }, f.side)) - now) / 1000))} s`,",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "SEAT2b2b-hud-works-hidden",
     "file": "src/ui/siegeHud.js",
-    "old": "parts.works.style.display = m.works ? '' : 'none';",
-    "new": "parts.works.style.display = 'none';",
+    "old": "      parts.works.style.display = m.works ? '' : 'none'; // SEAT2b part two (b)",
+    "new": "      parts.works.style.display = 'none'; // SEAT2b part two (b)",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "SEAT2b2b-session-breached-gate",
     "file": "src/net/siege/siegeSession.js",
-    "old": "if (!s || s.side === 'watch' || !s.state.gate || !(s.state.gate[0] > 0)) return null;",
-    "new": "if (!s || s.side === 'watch' || !s.state.gate) return null;",
+    "old": "      if (!s || s.side === 'watch' || !s.state.gate || !(s.state.gate[0] > 0)) return null;",
+    "new": "      if (!s || s.side === 'watch' || !s.state.gate) return null;",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "SEAT2b2b-session-ram-unstanding",
     "file": "src/net/siege/siegeSession.js",
-    "old": "return s.side === 'defend' && s.state.ram && s.state.ram[0] > 0 ? SIEGE_WORK_IDS.ram : null;",
-    "new": "return s.side === 'defend' ? SIEGE_WORK_IDS.ram : null;",
+    "old": "      return s.side === 'defend' && s.state.ram && s.state.ram[0] > 0 ? SIEGE_WORK_IDS.ram : null;",
+    "new": "      return s.side === 'defend' ? SIEGE_WORK_IDS.ram : null;",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "SEAT2b2b-session-blow-any-work",
     "file": "src/net/siege/siegeSession.js",
-    "old": "to != null && api.workTarget() === to &&",
-    "new": "to != null &&",
+    "old": "      return !!s && to != null && api.workTarget() === to && online.sendSiege({ k: 'blow', to, w, m, d, r });",
+    "new": "      return !!s && to != null && online.sendSiege({ k: 'blow', to, w, m, d, r });",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "SEAT2b2b-session-breach-unsaid",
     "file": "src/net/siege/siegeSession.js",
-    "old": "if (was.gate && was.gate[0] > 0 && s.state.gate && s.state.gate[0] === 0) say(SIEGE_SESSION_TEXT.breach(s.seat?.name ?? 'the town'));",
-    "new": "if (false) say(SIEGE_SESSION_TEXT.breach(s.seat?.name ?? 'the town'));",
+    "old": "        if (was.gate && was.gate[0] > 0 && s.state.gate && s.state.gate[0] === 0)\n          say(SIEGE_SESSION_TEXT.breach(s.seat?.name ?? 'the town'));",
+    "new": "        if (false) say(SIEGE_SESSION_TEXT.breach(s.seat?.name ?? 'the town'));",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -565,8 +565,8 @@
   {
     "name": "SEAT2b2b-session-ram-end-unsaid",
     "file": "src/net/siege/siegeSession.js",
-    "old": "!(s.state.ram && s.state.ram[1] > 0)) say(SIEGE_SESSION_TEXT.ramDown);",
-    "new": "!(s.state.ram && s.state.ram[1] > 0)) void 0;",
+    "old": "        else if (was.ram && was.ram[0] > 0 && s.state.gate?.[0] > 0 && !(s.state.ram && s.state.ram[1] > 0))\n          say(SIEGE_SESSION_TEXT.ramDown);",
+    "new": "        else if (was.ram && was.ram[0] > 0 && s.state.gate?.[0] > 0 && !(s.state.ram && s.state.ram[1] > 0)) void 0;",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]
@@ -574,8 +574,8 @@
   {
     "name": "SEAT2b2b-session-point-palace",
     "file": "src/net/siege/siegeSession.js",
-    "old": "fieldOf(s.field, s.battle?.tier ?? 'palace')?.throne",
-    "new": "fieldOf(s.field, 'palace')?.throne",
+    "old": "      return s ? (fieldOf(s.field, s.battle?.tier ?? 'palace')?.throne ?? null) : null;",
+    "new": "      return s ? (fieldOf(s.field, 'palace')?.throne ?? null) : null;",
     "tests": [
       "test/net/siege/seat2b_battle_client.test.js"
     ]

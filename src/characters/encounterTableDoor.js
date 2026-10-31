@@ -20,7 +20,8 @@ const _selectors = [];
 let _gen = 0;
 /** Register `{ table(index, place) => ids | null, choices(index) => ids[] | null }` - a mod's writes, read live. */
 export function registerEncounterTableSelector(selector) {
-  if (typeof selector?.table !== 'function' || typeof selector.choices !== 'function') throw new Error('registerEncounterTableSelector: { table(index, place), choices(index) }');
+  if (typeof selector?.table !== 'function' || typeof selector.choices !== 'function')
+    throw new Error('registerEncounterTableSelector: { table(index, place), choices(index) }');
   _selectors.push(selector);
   _gen++;
 }
@@ -29,7 +30,10 @@ export const hasEncounterTableSelector = (selector) => _selectors.includes(selec
 /** Moves when the selectors do - what a reader that keeps an answer keys it by. */
 export const encounterTableGeneration = () => _gen;
 /** The test seam. */
-export function _resetEncounterTableSelectors() { _selectors.length = 0; _gen++; }
+export function _resetEncounterTableSelectors() {
+  _selectors.length = 0;
+  _gen++;
+}
 
 /** The table a roll reads (null past the array, as ENCOUNTER_TABLES[index] reads undefined there): see the header. */
 export function encounterTable(index, place = null, rolls = null) {
@@ -42,7 +46,10 @@ export function encounterTable(index, place = null, rolls = null) {
   }
   const choices = encounterTableChoices(index);
   if (choices.length < 2) return choices[0] ?? null;
-  if (typeof rolls !== 'function') throw new Error(`encounterTable: table ${index} has ${choices.length} choices, and a roll every machine agrees on picks by its own die`);
+  if (typeof rolls !== 'function')
+    throw new Error(
+      `encounterTable: table ${index} has ${choices.length} choices, and a roll every machine agrees on picks by its own die`,
+    );
   return choices[Math.floor(rolls() * choices.length)];
 }
 

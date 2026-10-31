@@ -2,8 +2,8 @@
   {
     "name": "DUEL-RING-never-drawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (R) duelRing(R, t);",
-    "new": "",
+    "old": "      if (R) duelRing(R, t); // FB1018D DUEL-RING: and drawn - the keep alone stood, unseen",
+    "new": "      // FB1018D DUEL-RING: and drawn - the keep alone stood, unseen",
     "tests": [
       "test/scenes/eliteGates/fb1018d_duelring.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "DUEL-RING-band-shut",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "Math.max(0, R[2] - EG_DUEL_RING_HALF_M), R[2] + EG_DUEL_RING_HALF_M)",
-    "new": "Math.max(0, R[2] + EG_DUEL_RING_HALF_M), R[2] + EG_DUEL_RING_HALF_M)",
+    "old": "    if (!fillStamp(sh, shRing(R[0], R[1], Math.max(0, R[2] - EG_DUEL_RING_HALF_M), R[2] + EG_DUEL_RING_HALF_M))) return;",
+    "new": "    if (!fillStamp(sh, shRing(R[0], R[1], Math.max(0, R[2] + EG_DUEL_RING_HALF_M), R[2] + EG_DUEL_RING_HALF_M))) return;",
     "tests": [
       "test/scenes/eliteGates/fb1018d_duelring.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "DUEL-RING-not-on-the-plan",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    sh.since = (t % 60_000) / 1000; sh.span = 1; sh.after = -1; sh.court = 0;\n    _shapes.push(sh);\n  }\n  /** FB1018D WINCH-PLATES",
-    "new": "    sh.since = (t % 60_000) / 1000; sh.span = 1; sh.after = -1; sh.court = 0; sh.alpha = 0;\n    _shapes.push(sh);\n  }\n  /** FB1018D WINCH-PLATES",
+    "old": "    sh.court = 0;\n    _shapes.push(sh);\n  }",
+    "new": "    sh.court = 0;\n    sh.alpha = 0;\n    _shapes.push(sh);\n  }",
     "tests": [
       "test/scenes/eliteGates/fb1018d_duelring.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "DUEL-RING-lines-swapped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(w === EG_DUEL_OPEN ? t('eg.say.duelOpen',",
-    "new": "(w !== EG_DUEL_OPEN ? t('eg.say.duelOpen',",
+    "old": "    w === EG_DUEL_OPEN",
+    "new": "    w !== EG_DUEL_OPEN",
     "tests": [
       "test/scenes/eliteGates/fb1018d_duelring.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "DUEL-RING-ends-swapped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(w === EG_DUEL_OPEN ? t('eg.say.duelUnmet',",
-    "new": "(w !== EG_DUEL_OPEN ? t('eg.say.duelUnmet',",
+    "old": "  challengeend: (n, w) => (w === EG_DUEL_OPEN ? t('eg.say.duelUnmet', 'The challenge goes unmet.') : 'The ring falls.'),",
+    "new": "  challengeend: (n, w) => (w !== EG_DUEL_OPEN ? t('eg.say.duelUnmet', 'The challenge goes unmet.') : 'The ring falls.'),",
     "tests": [
       "test/scenes/eliteGates/fb1018d_duelring.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "DUEL-RING-witness-unseen",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (R) duelRing(R, t);",
-    "new": "      if (R && f) duelRing(R, t);",
+    "old": "      if (R) duelRing(R, t); // FB1018D DUEL-RING: and drawn - the keep alone stood, unseen",
+    "new": "      if (R && f) duelRing(R, t); // FB1018D DUEL-RING: and drawn - the keep alone stood, unseen",
     "tests": [
       "test/scenes/eliteGates/fb1018d_duelring.test.js"
     ],

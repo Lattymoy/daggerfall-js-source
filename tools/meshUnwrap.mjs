@@ -61,7 +61,10 @@ import { isMain } from './lib/isMain.mjs';
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const norm = (v) => { const l = Math.hypot(...v) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const norm = (v) => {
+  const l = Math.hypot(...v) || 1;
+  return [v[0] / l, v[1] / l, v[2] / l];
+};
 
 /**
  * IS THIS AN UNWRAP AT ALL? The measurement that condemned the FBX's
@@ -73,7 +76,8 @@ const norm = (v) => { const l = Math.hypot(...v) || 1; return [v[0] / l, v[1] / 
  * stacked on each other.
  */
 export function unwrapQuality(mesh) {
-  const U = mesh.uvs; const I = mesh.indices;
+  const U = mesh.uvs;
+  const I = mesh.indices;
   if (!U) return { hasUvs: false, coverage: 0, distinct: 0, verdict: 'no UVs at all' };
   let coverage = 0;
   for (let t = 0; t < I.length; t += 3) {
@@ -130,7 +134,8 @@ export function unwrapQuality(mesh) {
  * area, which is squashed and perfectly paintable.
  */
 export function islandsOf(mesh, angleDeg = 66) {
-  const P = mesh.positions; const I = mesh.indices;
+  const P = mesh.positions;
+  const I = mesh.indices;
   // WELD FIRST. Adjacency has to be about the SURFACE, and the surface
   // does not care that the exporter split a vertex for a normal.
   const key = new Map();
@@ -153,8 +158,9 @@ export function islandsOf(mesh, angleDeg = 66) {
   const edges = new Map();
   for (let f = 0; f < faces; f++) {
     for (let e = 0; e < 3; e++) {
-      const a = posId[I[f * 3 + e]]; const b = posId[I[f * 3 + ((e + 1) % 3)]];
-      if (a === b) continue;                                   // a degenerate edge joins nothing
+      const a = posId[I[f * 3 + e]];
+      const b = posId[I[f * 3 + ((e + 1) % 3)]];
+      if (a === b) continue; // a degenerate edge joins nothing
       const k = a < b ? `${a}_${b}` : `${b}_${a}`;
       if (!edges.has(k)) edges.set(k, []);
       edges.get(k).push(f);
@@ -163,7 +169,8 @@ export function islandsOf(mesh, angleDeg = 66) {
   const neighbours = (f) => {
     const out = [];
     for (let e = 0; e < 3; e++) {
-      const a = posId[I[f * 3 + e]]; const b = posId[I[f * 3 + ((e + 1) % 3)]];
+      const a = posId[I[f * 3 + e]];
+      const b = posId[I[f * 3 + ((e + 1) % 3)]];
       if (a === b) continue;
       const k = a < b ? `${a}_${b}` : `${b}_${a}`;
       for (const g of edges.get(k) ?? []) if (g !== f) out.push(g);
@@ -218,14 +225,22 @@ export function bestAngle(points, steps = 90) {
   let best = { angle: 0, area: Infinity, w: 0, h: 0 };
   for (let s = 0; s < steps; s++) {
     const a = (s / steps) * (Math.PI / 2);
-    const ca = Math.cos(a); const sa = Math.sin(a);
-    let x0 = Infinity; let x1 = -Infinity; let y0 = Infinity; let y1 = -Infinity;
+    const ca = Math.cos(a);
+    const sa = Math.sin(a);
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let y0 = Infinity;
+    let y1 = -Infinity;
     for (const p of points) {
-      const x = p[0] * ca - p[1] * sa; const y = p[0] * sa + p[1] * ca;
-      if (x < x0) x0 = x; if (x > x1) x1 = x;
-      if (y < y0) y0 = y; if (y > y1) y1 = y;
+      const x = p[0] * ca - p[1] * sa;
+      const y = p[0] * sa + p[1] * ca;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
     }
-    const w = x1 - x0; const h = y1 - y0;
+    const w = x1 - x0;
+    const h = y1 - y0;
     const area = w * h;
     if (area < best.area) best = { angle: a, area, w, h, x0, y0 };
   }
@@ -234,13 +249,20 @@ export function bestAngle(points, steps = 90) {
 
 /** Shelf packing, tallest first. Returns null when they do not fit. */
 function shelfPack(boxes, scale, margin) {
-  const order = boxes.map((b, i) => ({ i, w: b.w * scale + margin, h: b.h * scale + margin }))
+  const order = boxes
+    .map((b, i) => ({ i, w: b.w * scale + margin, h: b.h * scale + margin }))
     .sort((a, b) => b.h - a.h || b.w - a.w);
   const placed = new Array(boxes.length);
-  let shelfY = margin; let shelfH = 0; let x = margin;
+  let shelfY = margin;
+  let shelfH = 0;
+  let x = margin;
   for (const box of order) {
     if (box.w > 1 - margin || box.h > 1 - margin) return null;
-    if (x + box.w > 1 - margin) { shelfY += shelfH; shelfH = 0; x = margin; }
+    if (x + box.w > 1 - margin) {
+      shelfY += shelfH;
+      shelfH = 0;
+      x = margin;
+    }
     if (shelfY + box.h > 1 - margin) return null;
     placed[box.i] = { x, y: shelfY };
     x += box.w;
@@ -255,7 +277,9 @@ function shelfPack(boxes, scale, margin) {
  * two UVs and has to become two vertices.
  */
 export function unwrap(mesh, { angle = 66, margin = 4, size = 512 } = {}) {
-  const P = mesh.positions; const N = mesh.normals; const I = mesh.indices;
+  const P = mesh.positions;
+  const N = mesh.normals;
+  const I = mesh.indices;
   const { islands, faceNormal } = islandsOf(mesh, angle);
   const marginUv = margin / size;
 
@@ -265,7 +289,7 @@ export function unwrap(mesh, { angle = 66, margin = 4, size = 512 } = {}) {
     // times the unit normal, so summing them weights by area for free.
     let n = [0, 0, 0];
     for (const f of faces) n = [n[0] + faceNormal[f][0], n[1] + faceNormal[f][1], n[2] + faceNormal[f][2]];
-    if (Math.hypot(...n) < 1e-12) n = [0, 0, 1];               // a fully folded island: any plane will do
+    if (Math.hypot(...n) < 1e-12) n = [0, 0, 1]; // a fully folded island: any plane will do
     n = norm(n);
     // A stable tangent frame about n.
     const s = n[2] >= 0 ? 1 : -1;
@@ -281,7 +305,8 @@ export function unwrap(mesh, { angle = 66, margin = 4, size = 512 } = {}) {
       return [dot(p, tx), dot(p, ty)];
     });
     const fit = bestAngle(flat);
-    const ca = Math.cos(fit.angle); const sa = Math.sin(fit.angle);
+    const ca = Math.cos(fit.angle);
+    const sa = Math.sin(fit.angle);
     // LANDSCAPE, ALWAYS. A quarter turn costs an island nothing - it is
     // a rectangle either way - and shelf packing fills far better when
     // the heights are as small as they can be. Measured on this mesh:
@@ -309,18 +334,26 @@ export function unwrap(mesh, { angle = 66, margin = 4, size = 512 } = {}) {
   // bottom 40% of it. Sixty per cent of the texture was empty and the
   // gun was sampling a quarter of the texels it could have. So: double
   // until it does NOT fit, and only then bisect.
-  let lo = 0; let hi = 1;
-  while (shelfPack(projected, hi, marginUv) && hi < 1e6) { lo = hi; hi *= 2; }
+  let lo = 0;
+  let hi = 1;
+  while (shelfPack(projected, hi, marginUv) && hi < 1e6) {
+    lo = hi;
+    hi *= 2;
+  }
   for (let i = 0; i < 40; i++) {
     const mid = (lo + hi) / 2;
-    if (shelfPack(projected, mid, marginUv)) lo = mid; else hi = mid;
+    if (shelfPack(projected, mid, marginUv)) lo = mid;
+    else hi = mid;
   }
   const scale = lo;
   const places = shelfPack(projected, scale, marginUv);
   if (!places) throw new Error('nothing packs - the islands do not fit at any scale');
 
   // Rebuild the vertex buffer: one vertex per (original vertex, island).
-  const positions = []; const normals = []; const uvs = []; const indices = [];
+  const positions = [];
+  const normals = [];
+  const uvs = [];
+  const indices = [];
   const remap = new Map();
   projected.forEach((island, ii) => {
     const at = places[ii];

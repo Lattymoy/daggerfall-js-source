@@ -11,8 +11,8 @@
   {
     "name": "DFLOOK-index-0-a-colour",
     "file": "src/world/dfLook.js",
-    "old": "  for (let i = 1; i < 256; i++) {\n    const dl",
-    "new": "  for (let i = 0; i < 256; i++) {\n    const dl",
+    "old": "  for (let i = 1; i < 256; i++) {",
+    "new": "  for (let i = 0; i < 256; i++) {",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DFLOOK-a-clear-texel-snapped",
     "file": "src/world/dfLook.js",
-    "old": "    if (src[i + 3] === 0) { out[i] = src[i];",
-    "new": "    if (src[i + 3] === -1) { out[i] = src[i];",
+    "old": "    if (src[i + 3] === 0) {",
+    "new": "    if (src[i + 3] === -1) {",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DFLOOK-the-grain-the-picture's-alone",
     "file": "src/world/dfLook.js",
-    "old": "(texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1))",
-    "new": "(texelGrain(seed, 0, 0) + texelGrain(~seed, 0, 0))",
+    "old": "    const j = DF_GRAIN * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1));",
+    "new": "    const j = DF_GRAIN * 0.5 * (texelGrain(seed, 0, 0) + texelGrain(~seed, 0, 0));",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DFLOOK-the-clumps-dropped",
     "file": "src/world/dfLook.js",
-    "old": "texelGrain(~seed, x >> 1, y >> 1)",
-    "new": "texelGrain(~seed, x, y)",
+    "old": "    const j = DF_GRAIN * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x >> 1, y >> 1));",
+    "new": "    const j = DF_GRAIN * 0.5 * (texelGrain(seed, x, y) + texelGrain(~seed, x, y));",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -66,7 +66,7 @@
     "name": "DFLOOK-a-seed-off-the-clock",
     "file": "src/world/dfLook.js",
     "old": "export const lookSeed = (archive, record) => (Math.imul(archive | 0, 1000003) + (record | 0)) | 0;",
-    "new": "export const lookSeed = (archive, record) => (Math.imul(archive | 0, 1000003) + (record | 0) + ((performance.now() * 1e6) | 0)) | 0;",
+    "new": "export const lookSeed = (archive, record) =>\n  (Math.imul(archive | 0, 1000003) + (record | 0) + ((performance.now() * 1e6) | 0)) | 0;",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DFLOOK-the-hangings-painted",
     "file": "src/world/townPictures.js",
-    "old": "    build: async () => dfLook(await p.draw(), lookSeed(TOWN_PICTURE_ARCHIVE, record)),",
-    "new": "    build: async () => (void dfLook, void lookSeed, p.draw()),",
+    "old": "    build: async () => dfLook(await p.draw(), lookSeed(TOWN_PICTURE_ARCHIVE, record)), // DF-LOOK: in Daggerfall's colours",
+    "new": "    build: async () => (void dfLook, void lookSeed, p.draw()), // DF-LOOK: in Daggerfall's colours",
     "tests": [
       "test/world/dflook.test.js"
     ]

@@ -58,24 +58,24 @@ passes; one point more fails. Every failure names this page.
 AUDIT HORIZONTAL D3: a minted piece's rung is its own `rarity`, as its readers take it (`it.rarity === 'gilded'`). The
 walk asked `rarityOf`, which reads an unknown rung as Common or Magic, so a piece minted on an eighth rung passed it.
 
-Every number a Legendary, Gilded or set power carries (149 today, `tools/powerCeiling.mjs:"export function powerNumbers() {"`)
-has a role (`tools/powerCeiling.mjs:"export const FIELD_ROLES = Object.freeze({"`). A line's role is held to its band's
+Every number a Legendary, Gilded or set power carries (149 today, `tools/powerCeiling.mjs:"export function powerNumbers"`)
+has a role (`tools/powerCeiling.mjs:"export const FIELD_ROLES"`). A line's role is held to its band's
 top: a set's Strength at most 15, Ruhn's fire at most 50. Every other role is held to today's strongest of those
 powers: a blow's share 140 (Bound in Silk), a guard's 30, a heal 30, a chance 30, a splash 60, a recovery no shorter
 than 10 s, and so on (the table in the test). A number with no role, or a role the table does not know, fails until
 it is measured.
 
 AUDIT HORIZONTAL D8: that walk read no path and no star, and Prismatic Ward's chance of 40 already stood past its
-chance of 30. The paths' numbers (100 today, `tools/powerCeiling.mjs:"export function pathNumbers() {"`) have roles of
+chance of 30. The paths' numbers (100 today, `tools/powerCeiling.mjs:"export function pathNumbers"`) have roles of
 their own, their shares being fractions, each held to today's strongest path number: a blow 30 (Opening Strike), a
 guard 30, a chance 40 (Prismatic Ward), a heal 25, a recovery no shorter than 120 s. Every channel the sky can carry -
-its fixed ones, its families' and every key a star names (`tools/powerCeiling.mjs:"export function skyNumbers() {"`) -
+its fixed ones, its families' and every key a star names (`tools/powerCeiling.mjs:"export function skyNumbers"`) -
 is held at today's cap: a weapon channel 30, the blow's whole 50, a blow taken 15% lighter.
 
 ## 5. The composite ceilings
 
 `src/systems/powerCeiling.js` holds two products. Each registry asks it for its room, under its own name, before it
-adds its share, and the runners (`systems/entityMods.js:"export function weaponBlowMods(weapon, damage, attacker, target, info = NO_BLOW_INFO) {"`,
+adds its share, and the runners (`systems/entityMods.js:"export function weaponBlowMods"`,
 `characters/playerEntity.js:"export function playerDamageMods(entity, dmg) {"`) open the product for each blow and each
 hurt. Each registry is held at its own top, and each ceiling is the product of the tops, measured from the records and
 laws the code reads, so no blow or hurt today is cut.
@@ -97,10 +97,10 @@ under a name with no top, fails the source sweep.
 | mastery | +400% | the climb's own +80% (an axe or a hammer at a skill of 200, which reads as 140 effective: 2% an effective point past 100) and, WEAPON-GEAR, its gear's most, +320% (0.44% a point of gear on the skill), added |
 | the paths | +40% | a martial path's own cap (`MARTIAL_BLOW_MOST`) |
 
-Together, x119.95 - x43.18 before WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix"; `Martial-Specialisations.md` section 4) raised mastery's top (`systems/powerCeiling.js:"export const BLOW_MOST = Object.values(BLOW_TOPS).reduce((k, p) => k * (1 + p / 100), 1);"`).
+Together, x119.95 - x43.18 before WEAPON-GEAR (2026-10-27, mob: "Bow and weapon fix"; `Martial-Specialisations.md` section 4) raised mastery's top (`systems/powerCeiling.js:"export const BLOW_MOST"`).
 
 AUDIT HORIZONTAL D7: mastery's row read as 200%. The skill pays through the soft cap, so a raw 200 is 140 effective
-and pays 40 points (`tools/powerCeiling.mjs:"export const masteryBlowTop = () =>"`; a measure that read the raw skill
+and pays 40 points (`tools/powerCeiling.mjs:"export const masteryBlowTop"`; a measure that read the raw skill
 fails the measured tops).
 
 **The guards** - the share each registry's guards take off one hurt, at their strongest:
@@ -138,7 +138,7 @@ unaware - a spell cast first under True Invisibility gives it (reasoned, not pin
 
 A set's stage is still its lowest worn piece's. A piece below the highest stage that set has stood at for this
 character drinks three times the Renown XP until it reaches that stage, and never faster past it
-(`systems/sigil/setReach.js:"export const CATCH_UP_MULT = 3;"`). The set's card says so beside the piece holding it:
+(`systems/sigil/setReach.js:"export const CATCH_UP_MULT"`). The set's card says so beside the piece holding it:
 "Kindled: grow your Helm (3x XP to Radiant)". The record is `11-Multiplayer/Sigil-Sets.md` section 5 and its SET-CATCHUP
 section.
 

@@ -2,8 +2,8 @@
   {
     "name": "VENDOR-HOUSES-reread-every-open",
     "file": "src/systems/vendorHouses.js",
-    "old": "(!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S))",
-    "new": "(!had.busy && false)",
+    "old": "  if (\n    had &&\n    ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) ||\n      (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)))\n  )\n    return;",
+    "new": "  if (had && ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) || (!had.busy && false))) return;",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "VENDOR-HOUSES-version-still",
     "file": "src/systems/vendorHouses.js",
-    "old": "    if (!same) _version++;",
-    "new": "    if (!same) _version += 0;",
+    "old": "        if (!same) _version++;",
+    "new": "        if (!same) _version += 0;",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "VENDOR-HOUSES-flag-dropped-read",
     "file": "src/ui/town/townMapMarks.js",
-    "old": "    .map((r) => ({ buildingKey: r.buildingKey, own: r.own === true, ...(r.vendor === true ? { vendor: true } : {}), label: r.label }));",
+    "old": "    .map((r) => ({\n      buildingKey: r.buildingKey,\n      own: r.own === true,\n      ...(r.vendor === true ? { vendor: true } : {}),\n      label: r.label,\n    }));",
     "new": "    .map((r) => ({ buildingKey: r.buildingKey, own: r.own === true, label: r.label }));",
     "tests": [
       "test/ui/town/town_marks.test.js"
@@ -42,7 +42,7 @@
   {
     "name": "VENDOR-HOUSES-flag-dropped-rows",
     "file": "src/ui/town/townMapMarks.js",
-    "old": "    if (home) out.push({ buildingKey: key, own: home.own === true, ...(home.vendor === true ? { vendor: true } : {}), label: vendorTitle(home) });",
+    "old": "    if (home)\n      out.push({\n        buildingKey: key,\n        own: home.own === true,\n        ...(home.vendor === true ? { vendor: true } : {}),\n        label: vendorTitle(home),\n      });",
     "new": "    if (home) out.push({ buildingKey: key, own: home.own === true, label: vendorTitle(home) });",
     "tests": [
       "test/ui/town/town_marks.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "VENDOR-HOUSES-no-blue",
     "file": "src/ui/ink/inkTown.js",
-    "old": "    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo);",
-    "new": "    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : TOWN_PEN.halo);",
+    "old": "    own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo,",
+    "new": "    own ? TOWN_PEN.home : TOWN_PEN.halo,",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "VENDOR-HOUSES-blue-over-own",
     "file": "src/ui/ink/inkTown.js",
-    "old": "    [x + 7, y], [x + 5, y], [x + 5, y + t]], own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo);",
-    "new": "    [x + 7, y], [x + 5, y], [x + 5, y + t]], vendor ? TOWN_PEN.vendor : own ? TOWN_PEN.home : TOWN_PEN.halo);",
+    "old": "    own ? TOWN_PEN.home : vendor ? TOWN_PEN.vendor : TOWN_PEN.halo,",
+    "new": "    vendor ? TOWN_PEN.vendor : own ? TOWN_PEN.home : TOWN_PEN.halo,",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "VENDOR-HOUSES-unregistered",
     "file": "src/scenes/vendorHost.js",
-    "old": "  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null), { open: vendorMarketOpen });",
-    "new": "  registerVendorHouseReader(null);",
+    "old": "  registerVendorHouseReader((region) => (vendorMarketOpen() ? vendorReachable(region) : null), {\n    open: vendorMarketOpen,\n  }); // VENDOR-HOUSES: the houses the town map inks blue",
+    "new": "  registerVendorHouseReader(null); // VENDOR-HOUSES: the houses the town map inks blue",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F4-failure-waits-whole-read",
     "file": "src/systems/vendorHouses.js",
-    "old": "(had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)",
-    "new": "VENDOR_HOUSES_READ_S",
+    "old": "    ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) ||\n      (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)))",
+    "new": "    ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) || (!had.busy && nowS - had.at < VENDOR_HOUSES_READ_S))",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F4-shut-market-kept",
     "file": "src/systems/vendorHouses.js",
-    "old": "      if (r == null && entry.keys.size) { entry.keys = new Set(); _version++; }\n",
-    "new": "",
+    "old": "          if (r == null && entry.keys.size) {\n            entry.keys = new Set();\n            _version++;\n          }\n          return;",
+    "new": "          return;",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F4-hung-read-holds",
     "file": "src/systems/vendorHouses.js",
-    "old": "(had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S)",
-    "new": "had.busy",
+    "old": "  if (\n    had &&\n    ((had.busy && nowS - had.at < VENDOR_HOUSES_HUNG_S) ||\n      (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S)))\n  )",
+    "new": "  if (had && (had.busy || (!had.busy && nowS - had.at < (had.failed ? VENDOR_HOUSES_RETRY_S : VENDOR_HOUSES_READ_S))))",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F4-late-answer-taken",
     "file": "src/systems/vendorHouses.js",
-    "old": "    if (_regions.get(region) !== entry) return;   // a newer read took the region over\n",
-    "new": "",
+    "old": "        if (_regions.get(region) !== entry) return; // a newer read took the region over\n        if (!r?.ok) {",
+    "new": "        if (!r?.ok) {",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-F8-waypoint-twice",
     "file": "src/ui/town/townMapMarks.js",
-    "old": "home.vendor === true && home.waypoint !== true ?",
-    "new": "home.vendor === true ?",
+    "old": "  home.vendor === true && home.waypoint !== true\n    ? t('town.home.trader', '{home} - trader', { home: homeDoorTitle(home) })\n    : homeDoorTitle(home);",
+    "new": "  home.vendor === true ? t('town.home.trader', '{home} - trader', { home: homeDoorTitle(home) }) : homeDoorTitle(home);",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F4-rejection-a-success",
     "file": "src/systems/vendorHouses.js",
-    "old": "() => { if (_regions.get(region) === entry) entry.failed = true; }",
-    "new": "() => {}",
+    "old": "      () => {\n        if (_regions.get(region) === entry) entry.failed = true;\n      },",
+    "new": "      () => {},",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F4-throw-a-shut-market",
     "file": "src/systems/vendorHouses.js",
-    "old": "catch (e) { asked = Promise.reject(e); }",
-    "new": "catch { asked = null; }",
+    "old": "  } catch (e) {\n    asked = Promise.reject(e);",
+    "new": "  } catch {\n    asked = null;",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F5-load-remembered",
     "file": "src/systems/vendorHouses.js",
-    "old": "if (_loads != null && _regions.size) { _regions.clear(); _version++; }",
-    "new": "if (false) { _regions.clear(); _version++; }",
+    "old": "    if (_loads != null && _regions.size) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-TECH-FEEDBACK-II-F5-shut-market-marked",
     "file": "src/systems/vendorHouses.js",
-    "old": "  if (!_open()) return false;\n",
-    "new": "",
+    "old": "  if (!_open()) return false;\n  const k = keyOf(map, buildingKey);",
+    "new": "  const k = keyOf(map, buildingKey);",
     "tests": [
       "test/ui/town/town_marks.test.js"
     ],

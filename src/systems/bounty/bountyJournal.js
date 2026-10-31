@@ -11,7 +11,9 @@
 /** @type {{ abandon: (id:string) => boolean, share: (id:string) => boolean, canShare: (id:string) => boolean } | null} */
 let _journal = null;
 /** The world host's word: the bounty host's doors (null clears). */
-export function setBountyJournal(j) { _journal = j && typeof j === 'object' ? j : null; }
+export function setBountyJournal(j) {
+  _journal = j && typeof j === 'object' ? j : null;
+}
 
 /** The quest-log id prefix a bounty wears. */
 export const BOUNTY_QUEST_PREFIX = 'bounty:';
@@ -22,15 +24,27 @@ const bare = (id) => String(id).slice(BOUNTY_QUEST_PREFIX.length);
 /** Give the bounty up, from the journal. */
 export function abandonBountyQuest(id) {
   if (!isBountyQuestId(id) || !_journal) return false;
-  try { return !!_journal.abandon(bare(id)); } catch { return false; }
+  try {
+    return !!_journal.abandon(bare(id));
+  } catch {
+    return false;
+  }
 }
 /** Share it with the party, from the journal. */
 export function shareBountyQuest(id) {
   if (!isBountyQuestId(id) || !_journal) return false;
-  try { return !!_journal.share(bare(id)); } catch { return false; }
+  try {
+    return !!_journal.share(bare(id));
+  } catch {
+    return false;
+  }
 }
 /** May it be shared now (in a party, not shared already)? */
 export function bountyQuestShareable(id) {
   if (!isBountyQuestId(id) || !_journal) return false;
-  try { return !!_journal.canShare(bare(id)); } catch { return false; }
+  try {
+    return !!_journal.canShare(bare(id));
+  } catch {
+    return false;
+  }
 }

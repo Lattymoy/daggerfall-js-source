@@ -10,7 +10,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';
 import { registerOverlay } from './enhanced/enhancedOverlays.js';
 import { TavernWindow, preloadTavernArt, tavernArtLoaded } from './tavernWindow.js';
-import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 export { preloadTavernArt };
 
@@ -24,7 +24,7 @@ export function tavernDoorReady() {
 /** Build the panel this skin wears. `hooks` is tavernWindow.js's own
  *  hooks bag, unchanged. */
 export function createTavernWindow(hooks = {}) {
-  noteFirstUse('tavern');   // TUT1
+  noteFirstUse('tavern'); // TUT1
   if (isEnhanced() && typeof document !== 'undefined') {
     return enhancedTavernOverlay(hooks);
   }
@@ -50,7 +50,7 @@ function enhancedTavernOverlay(hooks) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
     // TavernWindow's own `_close` calls `hooks.onClose` (unlike the
     // trade window's inert one) - it is how the host clears
     // `interiorOverlay`, so the enhanced skin owes it the same call.
@@ -62,23 +62,45 @@ function enhancedTavernOverlay(hooks) {
   const overlay = {
     isChoiceWindow: true,
     hooks,
-    get done() { return fired; },
-    input() { /* the view's own capture keydown owns the keyboard */ },
-    click() { /* the view is a fixed opaque div; pointers never get here */ },
-    wheel() { /* the view has nothing to wheel */ },
-    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
-    tick() { /* nothing on this screen moves on a clock */ },
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the view's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* the view is a fixed opaque div; pointers never get here */
+    },
+    wheel() {
+      /* the view has nothing to wheel */
+    },
+    hover() {
+      /* the view has its own :hover, and no canvas to hit-test */
+    },
+    tick() {
+      /* nothing on this screen moves on a clock */
+    },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
   };
-  hooks.owner = overlay;   // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)
+  hooks.owner = overlay; // COVERED-KEYS: the window the panel's keys are gated on (ui/windowStack.js listenWindowKeys)
 
   mountEnhancedChunk({
     load: () => import('./enhanced/enhancedTavern.js'),
     mount: ({ mountEnhancedTavern }) => {
       view = mountEnhancedTavern(host, hooks);
     },
-    alive: () => !fired, host, onDismiss: () => { host.remove(); fired = true; }, label: 'tavern',
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      host.remove();
+      fired = true;
+    },
+    label: 'tavern',
   });
 
   return overlay;

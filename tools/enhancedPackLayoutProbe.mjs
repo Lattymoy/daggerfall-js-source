@@ -170,19 +170,22 @@ globalThis.__ready = true;
 const touch = { isMobile: true, hasTouch: true, deviceScaleFactor: 1 };
 const PHONES = [
   { name: 'phone-side-915x412', viewport: { width: 915, height: 412 } },
-  { name: 'phone-side-bars-915x340', viewport: { width: 915, height: 340 } },   // the same phone less Chrome's bars
+  { name: 'phone-side-bars-915x340', viewport: { width: 915, height: 340 } }, // the same phone less Chrome's bars
   { name: 'phone-side-740x360', viewport: { width: 740, height: 360 } },
   { name: 'phone-412x915', viewport: { width: 412, height: 915 } },
   { name: 'phone-bars-412x780', viewport: { width: 412, height: 780 } },
   { name: 'phone-small-360x640', viewport: { width: 360, height: 640 } },
 ];
-const FIGURES = [   // stacked, the figure kept and capped: a tablet upright, a narrow mouse window
+const FIGURES = [
+  // stacked, the figure kept and capped: a tablet upright, a narrow mouse window
   { name: 'tablet-768x1024', ctx: { viewport: { width: 768, height: 1024 }, ...touch } },
   { name: 'window-900x700', ctx: { viewport: { width: 900, height: 700 } } },
 ];
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
@@ -191,14 +194,20 @@ const check = (name, ok, detail = '') => {
   results.push({ name, ok, detail });
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
 };
-const settle = (page) => page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(res)))));
+const settle = (page) =>
+  page.evaluate(
+    () => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(res)))),
+  );
 
 async function open(ctxOpts, count, art) {
   const ctx = await browser.newContext(ctxOpts);
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', (err) => errors.push(err.message));
-  await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced${process.env.DRESS ? `&dress=${encodeURIComponent(process.env.DRESS)}` : ''}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await page.goto(
+    `http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced${process.env.DRESS ? `&dress=${encodeURIComponent(process.env.DRESS)}` : ''}`,
+    { waitUntil: 'domcontentloaded', timeout: 90000 },
+  );
   await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 90000 });
   await page.evaluate(([n, a]) => globalThis.__open(n, a), [count, art]);
   await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 30000 });
@@ -206,15 +215,24 @@ async function open(ctxOpts, count, art) {
   await settle(page);
   return { ctx, page, errors };
 }
-const fmt = (m) => `list ${Math.round(m.list)}px, first row ${m.firstRowReach}/${m.firstRow} reachable, doll ${m.doll?.shown ? `${Math.round(m.doll.w)}x${Math.round(m.doll.h)}` : 'hidden'}, panels ${Math.round(m.cellMinW)}px wide at least`;
+const fmt = (m) =>
+  `list ${Math.round(m.list)}px, first row ${m.firstRowReach}/${m.firstRow} reachable, doll ${m.doll?.shown ? `${Math.round(m.doll.w)}x${Math.round(m.doll.h)}` : 'hidden'}, panels ${Math.round(m.cellMinW)}px wide at least`;
 
 /** CAPE-TOGGLE's checks, on the page as it stands (the switch over the Cloaks panel, its two presses) */
 async function capeChecks(label, page) {
   const c = await page.evaluate(() => globalThis.__cape());
-  check(`${label}: the Cape switch stands in the Cloaks panel, pressable, over none of its words`, c.before.reach && c.before.inPanel && !c.before.overWords && c.before.pressed === 'true', JSON.stringify(c.before));
-  check(`${label}: pressed, it hides the capes - struck through, clear of the raised hood's chip and every word, still pressable`, c.off.pressed === 'false' && c.off.struck && c.off.hood && c.off.hoodBeside && c.off.reach && !c.off.overWords, JSON.stringify(c.off));
+  check(
+    `${label}: the Cape switch stands in the Cloaks panel, pressable, over none of its words`,
+    c.before.reach && c.before.inPanel && !c.before.overWords && c.before.pressed === 'true',
+    JSON.stringify(c.before),
+  );
+  check(
+    `${label}: pressed, it hides the capes - struck through, clear of the raised hood's chip and every word, still pressable`,
+    c.off.pressed === 'false' && c.off.struck && c.off.hood && c.off.hoodBeside && c.off.reach && !c.off.overWords,
+    JSON.stringify(c.off),
+  );
   check(`${label}: pressed again, it shows them`, c.on.pressed === 'true', JSON.stringify(c.on));
-  await page.evaluate(() => document.querySelector('#enhanced-inventory .worncape')?.click());   // the shot of it off, hood up
+  await page.evaluate(() => document.querySelector('#enhanced-inventory .worncape')?.click()); // the shot of it off, hood up
   await settle(page);
   await page.screenshot({ path: join(OUT, `packlayout-${label}-capeoff.png`) });
   await page.evaluate(() => document.querySelector('#enhanced-inventory .worncape')?.click());
@@ -229,23 +247,39 @@ async function desk(label, viewport) {
   // the region's bottom; as a column it shares the region's top and
   // starts at its right edge. This is the check the breakpoint owns,
   // and it is the one that dies when the breakpoint does.
-  check(`${label}: the dock is a COLUMN beside the character region`,
+  check(
+    `${label}: the dock is a COLUMN beside the character region`,
     m.dock.x >= m.main.r - 2 && Math.abs(m.dock.y - m.main.y) <= 4,
-    `dock x${Math.round(m.dock.x)} y${Math.round(m.dock.y)}, region right ${Math.round(m.main.r)} y${Math.round(m.main.y)}`);
+    `dock x${Math.round(m.dock.x)} y${Math.round(m.dock.y)}, region right ${Math.round(m.main.r)} y${Math.round(m.main.y)}`,
+  );
   // AND IT WAS WORTH DOING. 116 is the measured before and 483 is
   // what shipped; the floor sits between them, well clear of both,
   // so the pin holds a LAW rather than a font's rounding.
-  check(`${label}: the item list clears the dock's old ceiling`, m.list >= 380, `${Math.round(m.list)}px viewport (116 stacked)`);
+  check(
+    `${label}: the item list clears the dock's old ceiling`,
+    m.list >= 380,
+    `${Math.round(m.list)}px viewport (116 stacked)`,
+  );
   // THE REGION FILLS THE COLUMN IT WAS GIVEN - no dead glass under what
   // stands last in it (PLUS11: the accessory shelf, where PX21a's
   // transport strip stood when this was written).
-  check(`${label}: no dead glass under the accessory shelf`, m.charcol.b - m.shelf.b <= 40, `${Math.round(m.charcol.b - m.shelf.b)}px of slack`);
+  check(
+    `${label}: no dead glass under the accessory shelf`,
+    m.charcol.b - m.shelf.b <= 40,
+    `${Math.round(m.charcol.b - m.shelf.b)}px of slack`,
+  );
   // PX31's NINE PAGES, three by three, all inside the box.
-  check(`${label}: the tab strip is a 3x3 and stays in its box`,
-    m.tabs === 9 && m.tabRows === 3 && m.tabCols === 3 && m.tabsInside, `${m.tabs} tabs, ${m.tabRows}x${m.tabCols}, inside=${m.tabsInside}`);
+  check(
+    `${label}: the tab strip is a 3x3 and stays in its box`,
+    m.tabs === 9 && m.tabRows === 3 && m.tabCols === 3 && m.tabsInside,
+    `${m.tabs} tabs, ${m.tabRows}x${m.tabCols}, inside=${m.tabsInside}`,
+  );
   // PACK-PHONE: the desk keeps its figure whole (it is height-driven in rows of 1fr, never the phone's cap) and no Body
-  check(`${label}: the figure stands whole, no Body button`, m.doll.shown && m.doll.art && m.doll.h > 300 && !m.body?.shown,
-    `doll ${Math.round(m.doll.h)}px tall, body button ${m.body?.shown ? 'shown' : 'hidden'}`);
+  check(
+    `${label}: the figure stands whole, no Body button`,
+    m.doll.shown && m.doll.art && m.doll.h > 300 && !m.body?.shown,
+    `doll ${Math.round(m.doll.h)}px tall, body button ${m.body?.shown ? 'shown' : 'hidden'}`,
+  );
   await page.screenshot({ path: join(OUT, `packlayout-${label}.png`) });
   await capeChecks(label, page);
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
@@ -258,9 +292,17 @@ async function phone(label, ctxOpts) {
   let m = await page.evaluate(() => globalThis.__measure());
   console.log(`${label}: ${fmt(m)}`);
   check(`${label}: the list is a list - ${LIST_FLOOR}px at least`, m.list >= LIST_FLOOR, `${Math.round(m.list)}px`);
-  check(`${label}: every tile in its first row is a finger's`, m.firstRow > 0 && m.firstRowReach === m.firstRow, `${m.firstRowReach}/${m.firstRow}`);
+  check(
+    `${label}: every tile in its first row is a finger's`,
+    m.firstRow > 0 && m.firstRowReach === m.firstRow,
+    `${m.firstRowReach}/${m.firstRow}`,
+  );
   check(`${label}: Close is on the screen and pressable`, m.close);
-  check(`${label}: Body is on the screen and pressable`, !!m.body?.shown && m.body.reach && m.body.label === 'Body', JSON.stringify(m.body));
+  check(
+    `${label}: Body is on the screen and pressable`,
+    !!m.body?.shown && m.body.reach && m.body.label === 'Body',
+    JSON.stringify(m.body),
+  );
   check(`${label}: the body is hidden until Body`, m.doll && !m.doll.shown);
   check(`${label}: the worn panels keep their width`, m.cellMinW >= 100, `${Math.round(m.cellMinW)}px`);
   check(`${label}: nothing of the region runs past it sideways`, m.sideways <= 1, `${Math.round(m.sideways)}px`);
@@ -272,24 +314,42 @@ async function phone(label, ctxOpts) {
   await page.evaluate(() => globalThis.__open(5, true));
   await settle(page);
   const few = (await page.evaluate(() => globalThis.__measure())).main.h;
-  check(`${label}: the region is the same height with five items as with forty`, Math.abs(few - many) <= 1, `${Math.round(few)} / ${Math.round(many)}`);
+  check(
+    `${label}: the region is the same height with five items as with forty`,
+    Math.abs(few - many) <= 1,
+    `${Math.round(few)} / ${Math.round(many)}`,
+  );
   // Body shows it, capped; the list keeps its floor
   await page.evaluate(() => globalThis.__body());
   await settle(page);
   m = await page.evaluate(() => globalThis.__measure());
   console.log(`${label} (Body): ${fmt(m)}`);
-  check(`${label}: Body shows the figure`, m.doll?.shown && m.doll.art && m.body?.label === 'Hide body' && m.body.reach, JSON.stringify(m.body));
-  check(`${label}: the figure is capped at a third of the screen and 240px`, m.doll.h <= Math.min(vh * 0.34, 240) + 1, `${Math.round(m.doll.h)}px`);
-  check(`${label}: with the figure the panels keep a width and the list its floor`, m.cellMinW >= 60 && m.list >= LIST_FLOOR,
-    `${Math.round(m.cellMinW)}px panels, ${Math.round(m.list)}px list`);
+  check(
+    `${label}: Body shows the figure`,
+    m.doll?.shown && m.doll.art && m.body?.label === 'Hide body' && m.body.reach,
+    JSON.stringify(m.body),
+  );
+  check(
+    `${label}: the figure is capped at a third of the screen and 240px`,
+    m.doll.h <= Math.min(vh * 0.34, 240) + 1,
+    `${Math.round(m.doll.h)}px`,
+  );
+  check(
+    `${label}: with the figure the panels keep a width and the list its floor`,
+    m.cellMinW >= 60 && m.list >= LIST_FLOOR,
+    `${Math.round(m.cellMinW)}px panels, ${Math.round(m.list)}px list`,
+  );
   check(`${label}: and nothing of the region runs past it sideways`, m.sideways <= 1, `${Math.round(m.sideways)}px`);
   await page.screenshot({ path: join(OUT, `packlayout-${label}-body.png`) });
   // hidden again: a worn piece is still a tap from its card, and its Take off takes it off
   await page.evaluate(() => globalThis.__body());
   await settle(page);
   const t = await page.evaluate(() => globalThis.__wornTap());
-  check(`${label}: with the body hidden, the cloak's panel opens its card and Take off takes it off`,
-    t.panel && t.panelReach && t.off && t.offReach && !t.worn, JSON.stringify(t));
+  check(
+    `${label}: with the body hidden, the cloak's panel opens its card and Take off takes it off`,
+    t.panel && t.panelReach && t.off && t.offReach && !t.worn,
+    JSON.stringify(t),
+  );
   check(`${label}: no page errors`, errors.length === 0, errors.join(' | '));
   await ctx.close();
 }
@@ -299,10 +359,17 @@ async function figure(label, ctxOpts) {
   const m = await page.evaluate(() => globalThis.__measure());
   console.log(`${label}: ${fmt(m)}`);
   check(`${label}: the list is a list - ${LIST_FLOOR}px at least`, m.list >= LIST_FLOOR, `${Math.round(m.list)}px`);
-  check(`${label}: every tile in its first row is reachable`, m.firstRow > 0 && m.firstRowReach === m.firstRow, `${m.firstRowReach}/${m.firstRow}`);
+  check(
+    `${label}: every tile in its first row is reachable`,
+    m.firstRow > 0 && m.firstRowReach === m.firstRow,
+    `${m.firstRowReach}/${m.firstRow}`,
+  );
   check(`${label}: Close is on the screen and pressable`, m.close);
-  check(`${label}: the figure stands, capped at 240px, and no Body button`, m.doll?.shown && m.doll.art && m.doll.h <= 241 && !m.body?.shown,
-    `doll ${Math.round(m.doll?.h ?? 0)}px`);
+  check(
+    `${label}: the figure stands, capped at 240px, and no Body button`,
+    m.doll?.shown && m.doll.art && m.doll.h <= 241 && !m.body?.shown,
+    `doll ${Math.round(m.doll?.h ?? 0)}px`,
+  );
   check(`${label}: the worn panels keep their width`, m.cellMinW >= 100, `${Math.round(m.cellMinW)}px`);
   check(`${label}: nothing of the region runs past it sideways`, m.sideways <= 1, `${Math.round(m.sideways)}px`);
   await page.screenshot({ path: join(OUT, `packlayout-${label}.png`) });
@@ -319,7 +386,10 @@ try {
   await desk('1440x900', { width: 1440, height: 900 });
   await desk('1280x720', { width: 1280, height: 720 });
   // THE PHONE: PX31's Pixel 5 (it measured one with no doll), and the phones the report's screenshots are
-  for (const p of [{ name: 'pixel5', ctx: devices['Pixel 5'] }, ...PHONES.map((v) => ({ name: v.name, ctx: { viewport: v.viewport, ...touch } }))]) {
+  for (const p of [
+    { name: 'pixel5', ctx: devices['Pixel 5'] },
+    ...PHONES.map((v) => ({ name: v.name, ctx: { viewport: v.viewport, ...touch } })),
+  ]) {
     await phone(p.name, p.ctx);
   }
   for (const f of FIGURES) await figure(f.name, f.ctx);

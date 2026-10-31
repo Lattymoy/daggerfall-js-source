@@ -87,8 +87,8 @@
   {
     "name": "AUDITTESA2Z-Z6-the-mints-read-back-unread",
     "file": "src/scenes/grantHost.js",
-    "old": "if (a?.k === 'ok' && grantPixelReadBack(a.gr, worldOk())) {",
-    "new": "if (a?.k === 'ok') {",
+    "old": "        if (a?.k === 'ok' && grantPixelReadBack(a.gr, worldOk())) {",
+    "new": "        if (a?.k === 'ok') {",
     "tests": [
       "test/net/audittesa2z_worldwide.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "AUDITTESA2Z-Z6-the-renewals-filter-dropped",
     "file": "src/scenes/grantHost.js",
-    "old": "g.x - t <= GRANT_RENEW_LEAD_MS && grantPixelReadBack(g, worldOk())).slice(0, GRANT_RENEW_MAX);",
-    "new": "g.x - t <= GRANT_RENEW_LEAD_MS).slice(0, GRANT_RENEW_MAX);",
+    "old": "          .filter(\n            (g) => !g._dead && g.q === s.room && g.x - t <= GRANT_RENEW_LEAD_MS && grantPixelReadBack(g, worldOk()),\n          )",
+    "new": "          .filter((g) => !g._dead && g.q === s.room && g.x - t <= GRANT_RENEW_LEAD_MS)",
     "tests": [
       "test/net/audittesa2z_worldwide.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "AUDITTESA2Z-Z6-the-carrys-filter-dropped",
     "file": "src/scenes/grantHost.js",
-    "old": "g.q !== room && isCellRoom(g.q) && grantPixelReadBack(g, worldOk()));",
-    "new": "g.q !== room && isCellRoom(g.q));",
+    "old": "    const gs = [...live].filter((g) => !g._dead && g.q !== room && isCellRoom(g.q) && grantPixelReadBack(g, worldOk())); // AUDIT TESA II Z6: as the renewal",
+    "new": "    const gs = [...live].filter((g) => !g._dead && g.q !== room && isCellRoom(g.q)); // AUDIT TESA II Z6: as the renewal",
     "tests": [
       "test/net/audittesa2z_worldwide.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "AUDITTESA2Z-Z6-the-handovers-filter-dropped",
     "file": "src/scenes/grantHost.js",
-    "old": "if (gr && !gr._dead && grantPixelReadBack(gr, worldOk()) && typeof to === 'string' && to) post('heir',",
-    "new": "if (gr && !gr._dead && typeof to === 'string' && to) post('heir',",
+    "old": "    if (gr && !gr._dead && grantPixelReadBack(gr, worldOk()) && typeof to === 'string' && to)\n      post('heir', { gr: wireGrant(gr), i: f._grantI, to }); // AUDIT TESA II Z6: never to a relay that cannot read it back",
+    "new": "    if (gr && !gr._dead && typeof to === 'string' && to) post('heir', { gr: wireGrant(gr), i: f._grantI, to }); // AUDIT TESA II Z6: never to a relay that cannot read it back",
     "tests": [
       "test/net/audittesa2z_worldwide.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "AUDITTESA2Z-Z6-the-sessions-word-unread",
     "file": "src/scenes/grantHost.js",
-    "old": "const worldOk = () => !!session()?.gateLanesOk;",
-    "new": "const worldOk = () => true;",
+    "old": "  const worldOk = () => !!session()?.gateLanesOk;",
+    "new": "  const worldOk = () => true;",
     "tests": [
       "test/net/audittesa2z_worldwide.test.js"
     ]
@@ -162,8 +162,8 @@
   {
     "name": "AUDITTESA2Z-Z4-the-fill-unasked",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  if (x1 >= 0 && !exact) fillEnclosed(inside, width, height);",
-    "new": "  if (x1 < 0 && !exact) fillEnclosed(inside, width, height);",
+    "old": "  if (x1 >= 0 && !exact) fillEnclosed(inside, width, height); // AUDIT TESA II Z4: an enclosed cell lies within the box the zone's own make (ZONE-LINE: the bits filled at the pixel)",
+    "new": "  if (x1 < 0 && !exact) fillEnclosed(inside, width, height); // AUDIT TESA II Z4: an enclosed cell lies within the box the zone's own make (ZONE-LINE: the bits filled at the pixel)",
     "tests": [
       "test/systems/wild/audittesa2z_zone.test.js"
     ]
@@ -171,8 +171,8 @@
   {
     "name": "AUDITTESA2Z-Z4-the-corners-a-way-out",
     "file": "src/systems/wild/wildZone.js",
-    "old": "    if (i < (height - 1) * width) seed(i + width);\n",
-    "new": "    if (i < (height - 1) * width) seed(i + width);\n    if (x < width - 1 && i < (height - 1) * width) seed(i + width + 1);\n    if (x > 0 && i >= width) seed(i - width - 1);\n",
+    "old": "    if (i < (height - 1) * width) seed(i + width);\n  }",
+    "new": "    if (i < (height - 1) * width) seed(i + width);\n    if (x < width - 1 && i < (height - 1) * width) seed(i + width + 1);\n    if (x > 0 && i >= width) seed(i - width - 1);\n  }",
     "tests": [
       "test/systems/wild/audittesa2z_zone.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "AUDITTESA2Z-Z8-the-online-gate-unread",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "  if (isOnlinePage() && !tamrielTrace()) return null;",
-    "new": "  if (false && isOnlinePage() && !tamrielTrace()) return null;",
+    "old": "  if (isOnlinePage() && !tamrielTrace()) return null; // AUDIT TESA II Z8: no trace, no zone - never the authored rings' online",
+    "new": "  if (false && isOnlinePage() && !tamrielTrace()) return null; // AUDIT TESA II Z8: no trace, no zone - never the authored rings' online",
     "tests": [
       "test/systems/wild/audittesa2z_zone.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "AUDITTESA2Z-Z8-the-trace-unasked",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "  if (isOnlinePage() && !tamrielTrace()) return null;",
-    "new": "  if (isOnlinePage()) return null;",
+    "old": "  if (isOnlinePage() && !tamrielTrace()) return null; // AUDIT TESA II Z8: no trace, no zone - never the authored rings' online",
+    "new": "  if (isOnlinePage()) return null; // AUDIT TESA II Z8: no trace, no zone - never the authored rings' online",
     "tests": [
       "test/systems/wild/audittesa2z_zone.test.js"
     ]

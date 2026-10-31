@@ -29,10 +29,15 @@
 // ═══════════════════════════════════════════════════════════════════
 import { haulKey, parseNodeKey, schoolSpots, SCHOOLS_PER_PIXEL, SCHOOL_R, pixelKey } from '../net/nodeLaw.js';
 import { FISH_KEY, actBand, PEARL, storesFullIn, goneIn, fullWordsIn } from '../net/professionLaw.js';
-import { goodsWhere } from '../net/bagLaw.js';   // BAG1: where the haul went
+import { goodsWhere } from '../net/bagLaw.js'; // BAG1: where the haul went
 import { createFishAct } from '../systems/fishAct.js';
 import { FT, attributeAverage } from '../systems/foraging/foragingLaw.js';
-import { foragingActRefusal, actChecksRefusal, foragingToolIn, foragingHost } from '../systems/foraging/foragingInstall.js';
+import {
+  foragingActRefusal,
+  actChecksRefusal,
+  foragingToolIn,
+  foragingHost,
+} from '../systems/foraging/foragingInstall.js';
 import { materialCountLabel } from '../systems/professions/profItems.js';
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
@@ -42,9 +47,9 @@ import { groundAt } from '../world/terrain/terrainNature.js';
 import { isOutdoorWaterTile } from '../world/terrain/terrainSurface.js';
 import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
 import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
-import { sceneCompassWord } from '../systems/compassWords.js';   // AUDIT DELVE C8: the eight ways, one home
-import { noteGathered } from '../systems/hunt/gatheredLog.js';   // HUNTERS-MARK: the Collections page's Fish part
-import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
+import { sceneCompassWord } from '../systems/compassWords.js'; // AUDIT DELVE C8: the eight ways, one home
+import { noteGathered } from '../systems/hunt/gatheredLog.js'; // HUNTERS-MARK: the Collections page's Fish part
+import { noteAct } from '../systems/questlines/qlActs.js'; // QL11: the features' acts, heard by the running quests
 
 /** The cast stands this far ahead of the look (m), and is reached from this far. */
 export const CAST_AHEAD_M = 3;
@@ -66,7 +71,8 @@ export const CAST_RISE_M = 4.5;
 export const CAST_OVER_WATER_M = 5.5;
 /** HIGH-CAST: whether a cast's point stands too high over the water to be cast on - `surfaceY` the water's surface under
  *  it (the host's `waterY`); unknown (null, off the built ground) is not refused, as SHORE-CAST's. */
-export const castOverWater = (at, surfaceY) => surfaceY != null && Number.isFinite(surfaceY) && at[1] - surfaceY > CAST_OVER_WATER_M;
+export const castOverWater = (at, surfaceY) =>
+  surfaceY != null && Number.isFinite(surfaceY) && at[1] - surfaceY > CAST_OVER_WATER_M;
 /** The prompt says a school rises within this far of the angler (m). */
 export const SCHOOL_SAID_M = 40;
 /** A school's flats: three of its species' fish, small, a metre apart on the water. */
@@ -78,7 +84,10 @@ export const SCHOOL_MARK = Object.freeze({ w: 4.4, h: 0.8 });
  *  herb patch stands its plant's. FOUND: not Deep Waters' fish - the port draws those from the mod's own pictures, and
  *  their records in DFU's TEXTURE.216 are other things. */
 export const SCHOOL_PICTURE = Object.freeze([211, 9]);
-const schoolPicture = () => { const t = templateByIndex(FT.Fish); return t?.worldTextureArchive ? [t.worldTextureArchive, t.worldTextureRecord ?? 0] : SCHOOL_PICTURE; };
+const schoolPicture = () => {
+  const t = templateByIndex(FT.Fish);
+  return t?.worldTextureArchive ? [t.worldTextureArchive, t.worldTextureRecord ?? 0] : SCHOOL_PICTURE;
+};
 /** The net's own words where the cast stands but the ground refuses it (the prompt's; the act says Foraging's lines).
  *  ANY-HOUR (2026-10-01, Mac: "Remove the time limit for professions. Should be available at any time"): never the
  *  hour - the fish bite by night as by day (foragingInstall.js foragingActRefusal). */
@@ -108,7 +117,10 @@ export function haulId(rand = Math.random) {
 /** A seeded draw from a key: the same key, the same fish (mulberry32 over the key's FNV-1a). */
 export function keyRng(key) {
   let h = 2166136261;
-  for (let i = 0; i < key.length; i++) { h ^= key.charCodeAt(i); h = Math.imul(h, 16777619); }
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
   let a = h >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -120,19 +132,22 @@ export function keyRng(key) {
 }
 /** THE SPECIES a haul names: Deep Waters' draw for the pixel's water (its climate by climateToBiome), half-way down the
  *  water column, from the haul's own key. */
-export const speciesOfHaul = (key, climate) => pickSpecies(PASSIVE_FISH_SPECIES, Number(climate) || 0, 0.5, keyRng(String(key)));
+export const speciesOfHaul = (key, climate) =>
+  pickSpecies(PASSIVE_FISH_SPECIES, Number(climate) || 0, 0.5, keyRng(String(key)));
 
 /** A haul's goods in one line (GATHER-SAID): the species named, as Raw Fish - "+2 Rusttail Bass, as Raw Fish, a Pearl
  *  and Slaughterfish Scales to your Stores". */
 export function haulLine(d, species) {
   const n = Number(d.qty) || 1;
   // a fish's name is its plural too ("2 Rusttail Bass", "2 Grey Mackerel"), as Raw Fish's is
-  const fish = species ? `${n} ${species.itemName}, as ${materialCountLabel(FISH_KEY, n)}` : `${n} ${materialCountLabel(FISH_KEY, n)}`;
+  const fish = species
+    ? `${n} ${species.itemName}, as ${materialCountLabel(FISH_KEY, n)}`
+    : `${n} ${materialCountLabel(FISH_KEY, n)}`;
   const goods = [fish];
   if (d.gem) goods.push(d.gem === PEARL.key ? 'a Pearl' : `a ${materialCountLabel(d.gem, 1)}`);
   if (d.extra) goods.push(materialCountLabel(d.extra, Number(d.extraQty) || 1));
   const said = goods.length > 1 ? `${goods.slice(0, -1).join(', ')} and ${goods[goods.length - 1]}` : goods[0];
-  return `+${said} ${goodsWhere(d)}`;   // BAG1: the bag, the pack, or an older book's Stores
+  return `+${said} ${goodsWhere(d)}`; // BAG1: the bag, the pack, or an older book's Stores
 }
 
 /**
@@ -142,7 +157,8 @@ export function haulLine(d, species) {
  * @param {{ taken: boolean, counting: boolean, rank: number, storesFull: boolean, where?: string|null, school?: string,
  *   fullWords?: string }} o
  */
-export function fishPlan({ taken, counting, rank, storesFull, where = null, school = '', fullWords = 'Stores full' }) {   // BAG1: `fullWords` the book's (professionLaw fullWordsIn)
+export function fishPlan({ taken, counting, rank, storesFull, where = null, school = '', fullWords = 'Stores full' }) {
+  // BAG1: `fullWords` the book's (professionLaw fullWordsIn)
   const harvest = 'fish';
   const verb = 'Cast the net';
   if (taken || counting) return { harvest, verb, rest: 'being counted', ready: false };
@@ -155,7 +171,7 @@ export function fishPlan({ taken, counting, rank, storesFull, where = null, scho
  *  crosses there (held within CAST_RISE_M of the eye). @param {{ pos: ArrayLike<number>, dir: ArrayLike<number> }} eye */
 export function castAt({ pos, dir }) {
   const l = Math.hypot(dir[0], dir[2]);
-  if (!(l > 1e-6)) return [pos[0], pos[1] + (dir[1] > 0 ? CAST_RISE_M : -CAST_RISE_M), pos[2]];   // straight up or down: no bearing, on the look
+  if (!(l > 1e-6)) return [pos[0], pos[1] + (dir[1] > 0 ? CAST_RISE_M : -CAST_RISE_M), pos[2]]; // straight up or down: no bearing, on the look
   const rise = Math.max(-CAST_RISE_M, Math.min(CAST_RISE_M, (dir[1] / l) * CAST_AHEAD_M));
   return [pos[0] + (dir[0] / l) * CAST_AHEAD_M, pos[1] + rise, pos[2] + (dir[2] / l) * CAST_AHEAD_M];
 }
@@ -178,7 +194,8 @@ export function standSchools({ px, py, day, samples, tilemap }) {
       const tx = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(u * WORLD_MAP_TILE_DIM));
       const ty = Math.min(WORLD_MAP_TILE_DIM - 1, Math.floor(v * WORLD_MAP_TILE_DIM));
       if (!isOutdoorWaterTile(tilemap[ty * WORLD_MAP_TILE_DIM + tx])) continue;
-      const x = (tx + 0.5) * scale, z = (ty + 0.5) * scale;
+      const x = (tx + 0.5) * scale,
+        z = (ty + 0.5) * scale;
       out.push({ key: `school:${px}:${py}:${day}:${k}`, k, school: true, local: [x, groundAt(samples, x, z), z] });
       break;
     }
@@ -220,7 +237,14 @@ export function fishKind({ book, host }) {
     const px = host.pixel();
     const day = host.day();
     if (!px) return null;
-    if (!cast || cast.x !== px.x || cast.y !== px.y || cast.day !== day || book.taken(cast.key, 'fish') || book.counting(cast.key, 'fish')) {
+    if (
+      !cast ||
+      cast.x !== px.x ||
+      cast.y !== px.y ||
+      cast.day !== day ||
+      book.taken(cast.key, 'fish') ||
+      book.counting(cast.key, 'fish')
+    ) {
       const id = haulId(rand);
       cast = { key: haulKey({ x: px.x, y: px.y, day, id }), x: px.x, y: px.y, day };
     }
@@ -243,38 +267,64 @@ export function fishKind({ book, host }) {
     const { pos, dir } = host.eye();
     const l = Math.hypot(dir[0], dir[2]) || 1;
     const at = [pos[0] + (dir[0] / l) * m, pos[2] + (dir[2] / l) * m];
-    for (const s of schoolPlaces()) if (Math.hypot(s.x - at[0], s.z - at[1]) <= SCHOOL_R) return /** @type {0|1} */ (s.k);
+    for (const s of schoolPlaces())
+      if (Math.hypot(s.x - at[0], s.z - at[1]) <= SCHOOL_R) return /** @type {0|1} */ (s.k);
     return null;
   }
   /** Where a school rises near the angler, in words, or ''. */
   function schoolWords() {
     const f = host.feet();
-    let best = null, bestD = SCHOOL_SAID_M;
+    let best = null,
+      bestD = SCHOOL_SAID_M;
     for (const s of schoolPlaces()) {
       const d = Math.hypot(s.x - f[0], s.z - f[2]);
-      if (d <= bestD) { bestD = d; best = s; }
+      if (d <= bestD) {
+        bestD = d;
+        best = s;
+      }
     }
     return best ? `a school rises ${Math.round(bestD)} m ${bearingWord(best.x - f[0], best.z - f[2])}` : '';
   }
   /** The climate a haul was cast on (its key's pixel's, where this client did not cast it). */
-  const climateOf = (key) => climates.get(key) ?? (() => { const n = parseNodeKey(key); return n?.kind === 'haul' ? host.climateAt(n.x, n.y) : null; })();
+  const climateOf = (key) =>
+    climates.get(key) ??
+    (() => {
+      const n = parseNodeKey(key);
+      return n?.kind === 'haul' ? host.climateAt(n.x, n.y) : null;
+    })();
 
   return {
     id: 'haul',
     professions: Object.freeze(['fishing']),
     /** The day's schools: the fish's own flats, never a target (gone to the look, stood by goneFlatsOf). */
     nodesOf: ({ entry, px, py, day }) => standSchools({ px, py, day, samples: entry.samples, tilemap: entry.tilemap }),
-    stood(entry, nodes) { schools.set(pixelKey(entry.px, entry.py), { entry, nodes }); },
+    stood(entry, nodes) {
+      schools.set(pixelKey(entry.px, entry.py), { entry, nodes });
+    },
     /** MEM-AUDIT (2026-10-23): A PIXEL TORN DOWN, ITS SCHOOLS FORGOTTEN. Nothing let them go, and each held its pixel's
      *  whole entry - the ground's samples and normals, its tilemaps, flats and townsfolk, ~2 MB of heap a pixel - so online
      *  (the professions' book stands every built pixel, a bare one too) every pixel a journey streamed stood for the session:
      *  ~26 MB a map pixel travelled. schoolPlaces already passed one the gather host no longer stands. */
-    dropped(entry) { const k = pixelKey(entry.px, entry.py); if (schools.get(k)?.entry === entry) schools.delete(k); },
+    dropped(entry) {
+      const k = pixelKey(entry.px, entry.py);
+      if (schools.get(k)?.entry === entry) schools.delete(k);
+    },
     flatsOf: () => [],
-    goneFlatsOf: (n) => (n.school ? [{
-      archive: schoolPicture()[0], record: schoolPicture()[1], scale: SCHOOL_SCALE,
-      centers: Array.from({ length: SCHOOL_FLATS }, (_, i) => [n.local[0] + Math.cos(i * 2.1 + n.k) * i, n.local[1] + 0.3, n.local[2] + Math.sin(i * 2.1 + n.k) * i]),
-    }] : []),
+    goneFlatsOf: (n) =>
+      n.school
+        ? [
+            {
+              archive: schoolPicture()[0],
+              record: schoolPicture()[1],
+              scale: SCHOOL_SCALE,
+              centers: Array.from({ length: SCHOOL_FLATS }, (_, i) => [
+                n.local[0] + Math.cos(i * 2.1 + n.k) * i,
+                n.local[1] + 0.3,
+                n.local[2] + Math.sin(i * 2.1 + n.k) * i,
+              ]),
+            },
+          ]
+        : [],
     /** The cast: one, just ahead of the look, while the pack holds a net and the player stands in the net's water. */
     looseNodesOf: ({ entity, dungeon }) => {
       // HELM-NET (FIELD BUGS 2026-10-02, "New fishing context pop up clashes with come sail away!"): at sea the net's
@@ -301,7 +351,7 @@ export function fishKind({ book, host }) {
       return [{ key: c.key, at: () => castAt(host.eye()), lift: 0, reach: CAST_REACH_M, yields: true }];
     },
     /** A school is never a target; the cast is gone once its haul is asked (a new one stands). */
-    gone: (n) => !!n.school || goneIn(book, n.key, 'fish'),   // GATHER-SPEED: or being counted
+    gone: (n) => !!n.school || goneIn(book, n.key, 'fish'), // GATHER-SPEED: or being counted
     /** NODE-MARKS: the day's schools are Fishing's marks - where the fish are; the cast (the look itself) none. */
     mark: (n) => (n.school ? SCHOOL_MARK : null),
     /** TOOL-USE: the Fishing-Net's Use at the cast is E there - a tap of it: no wind held, the net flies its shortest,
@@ -309,14 +359,22 @@ export function fishKind({ book, host }) {
     tools: Object.freeze([FT.FishingNet]),
     frame(_dt, { translation: t }) {
       translation = t;
-      if (live && !live.act.state.done && tooTiredForTheWater(live.entity)) { live.act.cancel(); live = null; }   // FISH-TIRED
+      if (live && !live.act.state.done && tooTiredForTheWater(live.entity)) {
+        live.act.cancel();
+        live = null;
+      } // FISH-TIRED
     },
     /** PROF-MENU: the menu's title - the water the net is cast on. */
     nodeName: () => 'Open Water',
     plan(n, { rank, entity }) {
       const plan = fishPlan({
-        taken: book.taken(n.key, 'fish'), counting: book.counting(n.key, 'fish'),
-        rank: rank('fishing'), storesFull: storesFullIn(book, FISH_KEY) /* STORES-ROOM: every origin, as the service counts */, fullWords: fullWordsIn(book), where: actChecksRefusal(NET_WHERE, NET_WHERE_WORDS) ?? (tooTiredForTheWater(entity) ? NET_TIRED_WORDS : null), school: schoolWords(),
+        taken: book.taken(n.key, 'fish'),
+        counting: book.counting(n.key, 'fish'),
+        rank: rank('fishing'),
+        storesFull: storesFullIn(book, FISH_KEY) /* STORES-ROOM: every origin, as the service counts */,
+        fullWords: fullWordsIn(book),
+        where: actChecksRefusal(NET_WHERE, NET_WHERE_WORDS) ?? (tooTiredForTheWater(entity) ? NET_TIRED_WORDS : null),
+        school: schoolWords(),
       });
       return { ...plan, profession: 'fishing' };
     },
@@ -328,16 +386,24 @@ export function fishKind({ book, host }) {
       if (!g || parsed?.kind !== 'haul') return { refused: 'There is no water here to fish.' };
       climates.set(n.key, g.climate);
       const act = createFishAct({
-        rank: rank('fishing'), angler: specs('fishing')[50] === 'angler', hour: host.hour(), storm: host.storm(),
-        band: actBand(attributeAverage(liveStat(entity, 'intelligence'), liveStat(entity, 'agility'))),   // FORAGE0 14.4: the net's pair (fishingCount's)
-        gentle: getPref('gentleActs') === true, schoolAt, onTug: host.tug ?? null,
+        rank: rank('fishing'),
+        angler: specs('fishing')[50] === 'angler',
+        hour: host.hour(),
+        storm: host.storm(),
+        band: actBand(attributeAverage(liveStat(entity, 'intelligence'), liveStat(entity, 'agility'))), // FORAGE0 14.4: the net's pair (fishingCount's)
+        gentle: getPref('gentleActs') === true,
+        schoolAt,
+        onTug: host.tug ?? null,
       });
-      live = { act, entity };   // FISH-TIRED
+      live = { act, entity }; // FISH-TIRED
       return {
         act,
-        harvest: plan.harvest, tool: foragingToolIn(entity, FT.FishingNet), profession: 'fishing', label: keyLabel('Interact'),
-        ask: { climate: g.climate, region: g.region },   // the cast's own ground: a loose node names none (AUDIT 32 H9)
-        material: FISH_KEY,   // AUDIT BAG1 B4: a haul is fish, for the held count
+        harvest: plan.harvest,
+        tool: foragingToolIn(entity, FT.FishingNet),
+        profession: 'fishing',
+        label: keyLabel('Interact'),
+        ask: { climate: g.climate, region: g.region }, // the cast's own ground: a loose node names none (AUDIT 32 H9)
+        material: FISH_KEY, // AUDIT BAG1 B4: a haul is fish, for the held count
         hand: () => null,
       };
     },
@@ -354,15 +420,17 @@ export function fishKind({ book, host }) {
     },
     /** The goods, the species named. */
     storesLine: (d) => haulLine(d, speciesOfHaul(d.node, climateOf(d.node))),
-    haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null,   // HAUL-CARDS: the catch's species on its card, the Raw Fish its sub
+    haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null, // HAUL-CARDS: the catch's species on its card, the Raw Fish its sub
     /** A trophy: the species' own item, into the pack once (every answer to the haul says it). QL11: and every haul the
      *  service answered is a catch. */
     answered(d, toast) {
-      noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag
-      if (d?.node && !logged.has(d.node)) {   // HUNTERS-MARK: the species into the character's log, on the haul key's UTC day
+      noteAct('fish-caught'); // QL11: a fish caught - the net's haul, in the Stores or the bag
+      if (d?.node && !logged.has(d.node)) {
+        // HUNTERS-MARK: the species into the character's log, on the haul key's UTC day
         logged.add(d.node);
         const kind = speciesOfHaul(d.node, climateOf(d.node));
-        if (kind) noteGathered('fish', kind.templateIndex, parseNodeKey(d.node)?.day ?? Math.floor(Date.now() / 86_400_000));
+        if (kind)
+          noteGathered('fish', kind.templateIndex, parseNodeKey(d.node)?.day ?? Math.floor(Date.now() / 86_400_000));
       }
       if (!d?.trophy || trophied.has(d.node)) return;
       trophied.add(d.node);

@@ -8,13 +8,30 @@
 /** A tool lasts as many uses as a Standard tool the professions make (net/recipeLaw.js TOOL_LIFE) and the Skinning Knife. */
 export const FORAGING_TOOL_USES = 50;
 /** A shop shelves a row whose rarity is at most its quality; 100 is never. Fresh food is found, not sold. */
-const SHELVED = 10, NEVER_SHELVED = 100;
+const SHELVED = 10,
+  NEVER_SHELVED = 100;
 
-const row = (index, name, baseWeight, hitPoints, basePrice, rarity, picture) => Object.freeze({
-  index, name, baseWeight, hitPoints, capacityOrTarget: 0, basePrice, enchantmentPoints: 0, rarity, variants: 0,
-  drawOrderOrEffect: 0, isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false,
-  worldTextureArchive: picture[0], worldTextureRecord: picture[1], playerTextureArchive: 0, playerTextureRecord: 0,
-});
+const row = (index, name, baseWeight, hitPoints, basePrice, rarity, picture) =>
+  Object.freeze({
+    index,
+    name,
+    baseWeight,
+    hitPoints,
+    capacityOrTarget: 0,
+    basePrice,
+    enchantmentPoints: 0,
+    rarity,
+    variants: 0,
+    drawOrderOrEffect: 0,
+    isBluntWeapon: false,
+    isLiquid: false,
+    isOneHanded: false,
+    isIngredient: false,
+    worldTextureArchive: picture[0],
+    worldTextureRecord: picture[1],
+    playerTextureArchive: 0,
+    playerTextureRecord: 0,
+  });
 
 /** The twelve rows, in DFU's ItemTemplates columns. A tool costs about what the knife does (100 gold), the iron-heavy
  *  Pick-Axe most and the wicker Basket least. The Wood Bundle weighs ten arrows' wood (fletching.js weighs a piece in

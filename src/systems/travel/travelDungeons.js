@@ -22,13 +22,20 @@
 // spawn next door is not said), then its mark, named once the pixel entry has filed it in the store.
 // ═══════════════════════════════════════════════════════════════════
 import { LOCATION_TYPES, getPixelFromPixelID } from '../../formats/mapsFile.js';
-import { WORLD_PIXEL_SPAN } from '../../world/worldWide/worldGrid.js';   // TVD-WORLD: the found spawns read on the world's grid
+import { WORLD_PIXEL_SPAN } from '../../world/worldWide/worldGrid.js'; // TVD-WORLD: the found spawns read on the world's grid
 import { TV_FAR_RANGE } from './travelFarPlaces.js';
 import { ARRIVAL_BUFFER } from './travelAutopilot.js';
 
 /** The dungeons the Overworld speaks for - the travel map's own "dungeons" filter. */
-export const TV_DUNGEON_TYPES = Object.freeze(new Set([LOCATION_TYPES.DungeonLabyrinth, LOCATION_TYPES.DungeonKeep,
-  LOCATION_TYPES.DungeonRuin, LOCATION_TYPES.Graveyard, LOCATION_TYPES.Coven]));
+export const TV_DUNGEON_TYPES = Object.freeze(
+  new Set([
+    LOCATION_TYPES.DungeonLabyrinth,
+    LOCATION_TYPES.DungeonKeep,
+    LOCATION_TYPES.DungeonRuin,
+    LOCATION_TYPES.Graveyard,
+    LOCATION_TYPES.Coven,
+  ]),
+);
 /** The most dungeons marked at once, the nearest first. */
 export const TV_DUNGEON_MAX = 12;
 /** How near an undiscovered dungeon's middle the traveller comes to find it (metres). */
@@ -96,8 +103,19 @@ export function spawnedPixels(index) {
  *   isFound: (x:number, y:number) => boolean, spawns?: Array<{x:number,y:number,loc:any}>, spawnKnown?: (s:any) => boolean,
  *   spawnFound?: (s:any) => boolean, spawnGone?: (s:any) => boolean, grid?: number, range?: number, max?: number }} q
  */
-export function nearDungeons({ at, dungeons, locAt, isFound, spawns = [], spawnKnown = () => false, spawnFound = () => false,
-  spawnGone = () => false, grid = -1, range = TV_FAR_RANGE, max = TV_DUNGEON_MAX }) {
+export function nearDungeons({
+  at,
+  dungeons,
+  locAt,
+  isFound,
+  spawns = [],
+  spawnKnown = () => false,
+  spawnFound = () => false,
+  spawnGone = () => false,
+  grid = -1,
+  range = TV_FAR_RANGE,
+  max = TV_DUNGEON_MAX,
+}) {
   const out = [];
   for (const g of dungeons ?? []) {
     const d = Math.hypot(g.x - at.x, g.y - at.y);
@@ -111,14 +129,23 @@ export function nearDungeons({ at, dungeons, locAt, isFound, spawns = [], spawnK
   for (const s of spawns ?? []) {
     const d = Math.hypot(s.x - at.x, s.y - at.y);
     if (d > range || !s.loc?.name || !spawnKnown(s)) continue;
-    if (spawnGone(s)) continue;   // AUDIT OW4 D2: its time ran out - gone, whatever the index still holds
-    out.push({ key: `spawn:${s.loc.mapTableData?.mapId}`, x: s.x, y: s.y, loc: s.loc, row: null, d, found: !!spawnFound(s), spawn: true });
+    if (spawnGone(s)) continue; // AUDIT OW4 D2: its time ran out - gone, whatever the index still holds
+    out.push({
+      key: `spawn:${s.loc.mapTableData?.mapId}`,
+      x: s.x,
+      y: s.y,
+      loc: s.loc,
+      row: null,
+      d,
+      found: !!spawnFound(s),
+      spawn: true,
+    });
   }
   const nearer = (a, b) => a.d - b.d || a.x - b.x || a.y - b.y;
   // AUDIT OW5b D1; AUDIT FB1030 Z1: and a found spawn there - nothing else plates it (SPAWN-PLATE), so past the twelve it had none
   const inGrid = (g) => (!g.found || g.spawn) && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid;
   const rest = out.filter((g) => !inGrid(g));
-  rest.sort((a, b) => (b.found ? 1 : 0) - (a.found ? 1 : 0) || nearer(a, b));   // AUDIT OW4 D7: the found first
+  rest.sort((a, b) => (b.found ? 1 : 0) - (a.found ? 1 : 0) || nearer(a, b)); // AUDIT OW4 D7: the found first
   return [...out.filter(inGrid), ...rest.slice(0, max)].sort(nearer);
 }
 
@@ -136,7 +163,8 @@ export function nearDungeons({ at, dungeons, locAt, isFound, spawns = [], spawnK
  *   indexed: (x:number, y:number) => boolean, stand: (x:number, y:number) => any, range?: number }} q
  */
 export function filedSpawns({ at, rolls, filed, indexed, stand, range = TV_FAR_RANGE }) {
-  const out = [], r = Math.floor(range);
+  const out = [],
+    r = Math.floor(range);
   for (let y = Math.max(1 - WORLD_PIXEL_SPAN, at.y - r); y <= Math.min(WORLD_PIXEL_SPAN - 1, at.y + r); y++) {
     for (let x = Math.max(1 - WORLD_PIXEL_SPAN, at.x - r); x <= Math.min(WORLD_PIXEL_SPAN - 1, at.x + r); x++) {
       if (Math.hypot(x - at.x, y - at.y) > range || !rolls(x, y) || !filed(x, y) || indexed(x, y)) continue;
@@ -186,7 +214,8 @@ export function dungeonApproach(rect, feet, grow = ARRIVAL_BUFFER, within = null
 }
 /** AUDIT OW5 J4: a map pixel's own box (native), `inset` in from each edge. */
 export function pixelBox(px, py, inset = 256) {
-  const x0 = px * 32768, z0 = (499 - py) * 32768;
+  const x0 = px * 32768,
+    z0 = (499 - py) * 32768;
   return { minX: x0 + inset, maxX: x0 + 32768 - inset, minZ: z0 + inset, maxZ: z0 + 32768 - inset };
 }
 
@@ -197,13 +226,17 @@ export function pixelBox(px, py, inset = 256) {
  * @param {{ feet: {x:number,z:number}, list: Array<any>, mid: (g:any) => ({x:number,z:number}|null) }} q
  */
 export function dungeonToFind({ feet, list, mid }) {
-  let best = null, bestD = TV_DUNGEON_FIND_M * NATIVE_PER_M;
+  let best = null,
+    bestD = TV_DUNGEON_FIND_M * NATIVE_PER_M;
   for (const g of list ?? []) {
     if (g.found || g.spawn) continue;
     const m = mid(g);
     if (!m) continue;
     const d = Math.hypot(m.x - feet.x, m.z - feet.z);
-    if (d <= bestD) { best = g; bestD = d; }
+    if (d <= bestD) {
+      best = g;
+      bestD = d;
+    }
   }
   return best;
 }

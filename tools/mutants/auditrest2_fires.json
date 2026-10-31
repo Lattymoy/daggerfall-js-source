@@ -49,8 +49,8 @@
   {
     "name": "AUDITREST2-F2-a-palace-wing-gets-fires",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  if (isPalaceLayout(blocks)) return 0;\n",
-    "new": "",
+    "old": "  if (isPalaceLayout(blocks)) return 0;\n  return dungeonFireCount((blocks ?? []).filter((b) => !isBorderBlock(b?.name)).length, elite);",
+    "new": "  return dungeonFireCount((blocks ?? []).filter((b) => !isBorderBlock(b?.name)).length, elite);",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "AUDITREST2-F2-the-probe-counts-the-wings",
     "file": "tools/dungeonFireProbe.mjs",
-    "old": "wanted: layoutFireCount(blocks, elite)",
-    "new": "wanted: layoutFireCount(blocks.filter((b) => !b.layout.castleBlock), elite)",
+    "old": "    wanted: layoutFireCount(blocks, elite),",
+    "new": "    wanted: layoutFireCount(\n      blocks.filter((b) => !b.layout.castleBlock),\n      elite,\n    ),",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "AUDITREST2-F3-a-fire-on-its-marker",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "    if (!c?.marker) { out.push({ c, at: c.pos }); continue; }",
-    "new": "    { out.push({ c, at: c.pos }); continue; }",
+    "old": "    if (!c?.marker) {",
+    "new": "    {",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "AUDITREST2-F3-a-fire-beside-a-pile",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "    if (items.some((m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM) && Math.abs(m[1] - pos[1]) < DFIRE.storeyM)) continue;",
-    "new": "",
+    "old": "    if (\n      items.some(\n        (m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM) && Math.abs(m[1] - pos[1]) < DFIRE.storeyM,\n      )\n    )\n      continue; // AUDIT REST II F3: never on a pile, a quest's item or the way in",
+    "new": "    // AUDIT REST II F3: never on a pile, a quest's item or the way in",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "AUDITREST2-F3-a-pile-a-storey-up-clears-this-floor",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": " && Math.abs(m[1] - pos[1]) < DFIRE.storeyM)) continue;   // AUDIT REST II F3",
-    "new": ")) continue;   // AUDIT REST II F3",
+    "old": "    if (\n      items.some(\n        (m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM) && Math.abs(m[1] - pos[1]) < DFIRE.storeyM,\n      )\n    )\n      continue; // AUDIT REST II F3: never on a pile, a quest's item or the way in",
+    "new": "    if (items.some((m) => SQ(m[0] - pos[0]) + SQ(m[2] - pos[2]) < SQ(DFIRE.itemM))) continue; // AUDIT REST II F3: never on a pile, a quest's item or the way in",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "AUDITREST2-F3-the-clearance-shrinks",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  itemM: 1.5,",
-    "new": "  itemM: 1,",
+    "old": "  itemM: 1.5, // AUDIT REST II F3: never this near (across, on its storey) a start, enter, treasure, quest or fixed-treasure marker",
+    "new": "  itemM: 1, // AUDIT REST II F3: never this near (across, on its storey) a start, enter, treasure, quest or fixed-treasure marker",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "AUDITREST2-F3-the-ring-shrinks",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  ringM: 2,",
-    "new": "  ringM: 1.6,",
+    "old": "  ringM: 2, // AUDIT REST II F3: a marker's fire stands on a ring this far out from it, never on the marker",
+    "new": "  ringM: 1.6, // AUDIT REST II F3: a marker's fire stands on a ring this far out from it, never on the marker",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDITREST2-F3-every-spot-of-the-ring-kept",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "    if (c === landed) continue;\n",
-    "new": "",
+    "old": "    if (c === landed) continue;\n    const f = probe?.floor?.(at);",
+    "new": "    const f = probe?.floor?.(at);",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "AUDITREST2-F3-the-ring-in-another-order",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "return Object.freeze([[r, 0], [-r, 0], [0, r], [0, -r], [d, d]",
-    "new": "return Object.freeze([[-r, 0], [r, 0], [0, r], [0, -r], [d, d]",
+    "old": "      [r, 0],\n      [-r, 0],",
+    "new": "      [-r, 0],\n      [r, 0],",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "AUDITREST2-F4-a-roof-is-a-floor",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "hit.normal && !hit.back && hit.key === DUNGEON_BUCKET",
-    "new": "hit.normal && hit.key === DUNGEON_BUCKET",
+    "old": "      return Number.isFinite(hit?.dist) && hit.normal && !hit.back && hit.key === DUNGEON_BUCKET",
+    "new": "      return Number.isFinite(hit?.dist) && hit.normal && hit.key === DUNGEON_BUCKET",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "AUDITREST2-F4-the-second-ring-shrinks",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  reachR: 1.4,",
-    "new": "  reachR: 0.9,",
+    "old": "  reachR: 1.4, // AUDIT REST II F4: ...and the floor level on a second ring this far out (roomM - 0.1): no tabletop, plinth or ledge",
+    "new": "  reachR: 0.9, // AUDIT REST II F4: ...and the floor level on a second ring this far out (roomM - 0.1): no tabletop, plinth or ledge",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "AUDITREST2-F5-the-farther-brazier",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  return a < b || (a === b && (q[0] < best[0] ||",
-    "new": "  return a > b || (a === b && (q[0] < best[0] ||",
+    "old": "    return a < b ||",
+    "new": "    return a > b ||",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "AUDITREST2-F5-the-tie-to-the-list",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "  return a < b || (a === b && (q[0] < best[0] ||",
-    "new": "  return a < b || (false && (q[0] < best[0] ||",
+    "old": "      (a === b && (q[0] < best[0] || (q[0] === best[0] && (q[1] < best[1] || (q[1] === best[1] && q[2] < best[2])))))",
+    "new": "      (false && (q[0] < best[0] || (q[0] === best[0] && (q[1] < best[1] || (q[1] === best[1] && q[2] < best[2])))))",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "AUDITREST2-F6-the-probe-reads-raw",
     "file": "tools/dungeonFireProbe.mjs",
-    "old": "dfMeshToModel(patchSeams(id, arch.getMesh(index)),",
-    "new": "dfMeshToModel(arch.getMesh(index),",
+    "old": "      cache.set(\n        id,\n        index === -1 ? null : dfMeshToModel(patchSeams(id, arch.getMesh(index)), () => ({ width: 1, height: 1 })),\n      );",
+    "new": "      cache.set(id, index === -1 ? null : dfMeshToModel(arch.getMesh(index), () => ({ width: 1, height: 1 })));",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]
@@ -238,7 +238,7 @@
   {
     "name": "AUDITREST2-F7-the-door-at-its-origin",
     "file": "src/world/dungeon/dungeonFires.js",
-    "old": "    const p = d.centre ? transformPoint(d.matrix, d.centre.x, d.centre.y, d.centre.z) : [d.matrix[12], d.matrix[13], d.matrix[14]];",
+    "old": "    const p = d.centre\n      ? transformPoint(d.matrix, d.centre.x, d.centre.y, d.centre.z)\n      : [d.matrix[12], d.matrix[13], d.matrix[14]];",
     "new": "    const p = [d.matrix[12], d.matrix[13], d.matrix[14]];",
     "tests": [
       "test/world/auditrest2_fires.test.js"
@@ -314,7 +314,7 @@
     "name": "AUDITREST2-the-room-rays-by-sine",
     "file": "src/world/dungeon/dungeonFires.js",
     "old": "const ROOM_RAYS = ringOf(1);",
-    "new": "const ROOM_RAYS = Object.freeze(Array.from({ length: 8 }, (_, k) => [Math.sin((k * Math.PI) / 4), Math.cos((k * Math.PI) / 4)]));",
+    "new": "const ROOM_RAYS = Object.freeze(\n  Array.from({ length: 8 }, (_, k) => [Math.sin((k * Math.PI) / 4), Math.cos((k * Math.PI) / 4)]),\n);",
     "tests": [
       "test/world/auditrest2_fires.test.js"
     ]

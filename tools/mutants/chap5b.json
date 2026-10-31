@@ -20,8 +20,8 @@
   {
     "name": "CHAP5B-COUNT",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "return GUILD_DAY_OFFSETS.slice(0, days).some(",
-    "new": "return GUILD_DAY_OFFSETS.slice(0, 2).some(",
+    "old": "  return GUILD_DAY_OFFSETS.slice(0, days).some((o) => d === (w + o) % 7);",
+    "new": "  return GUILD_DAY_OFFSETS.slice(0, 2).some((o) => d === (w + o) % 7);",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CHAP5B-BAND-FAILING",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
-    "new": "Object.freeze({ failing: 2, steady: 2, thriving: 3, ascendant: 3 });",
+    "old": "export const GUILD_DAYS_BY_BAND = Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
+    "new": "export const GUILD_DAYS_BY_BAND = Object.freeze({ failing: 2, steady: 2, thriving: 3, ascendant: 3 });",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "CHAP5B-BAND-THRIVING",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
-    "new": "Object.freeze({ failing: 1, steady: 2, thriving: 2, ascendant: 3 });",
+    "old": "export const GUILD_DAYS_BY_BAND = Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
+    "new": "export const GUILD_DAYS_BY_BAND = Object.freeze({ failing: 1, steady: 2, thriving: 2, ascendant: 3 });",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CHAP5B-BAND-ASCENDANT",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
-    "new": "Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 2 });",
+    "old": "export const GUILD_DAYS_BY_BAND = Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
+    "new": "export const GUILD_DAYS_BY_BAND = Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 2 });",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CHAP5B-HALL-NO-SHEET",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (!bandOf || hall?.building == null) return GUILD_DAYS;",
-    "new": "if (hall?.building == null) return GUILD_DAYS;",
+    "old": "  if (!bandOf || hall?.building == null) return GUILD_DAYS;",
+    "new": "  if (hall?.building == null) return GUILD_DAYS;",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CHAP5B-HALL-NO-BUILDING",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (!bandOf || hall?.building == null) return GUILD_DAYS;",
-    "new": "if (!bandOf) return GUILD_DAYS;",
+    "old": "  if (!bandOf || hall?.building == null) return GUILD_DAYS;",
+    "new": "  if (!bandOf) return GUILD_DAYS;",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CHAP5B-HALL-FACTION",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "const band = bandOf(places.factions?.get(hall.building) ?? 0);",
-    "new": "const band = bandOf(hall.building);",
+    "old": "  const band = bandOf(places.factions?.get(hall.building) ?? 0);",
+    "new": "  const band = bandOf(hall.building);",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAP5B-HALL-UNKNOWN",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "(GUILD_DAYS_BY_BAND)[band ?? ''] ?? GUILD_DAYS;",
-    "new": "(GUILD_DAYS_BY_BAND)[band ?? ''] ?? 1;",
+    "old": "  return /** @type {Record<string, number>} */ (GUILD_DAYS_BY_BAND)[band ?? ''] ?? GUILD_DAYS;",
+    "new": "  return /** @type {Record<string, number>} */ (GUILD_DAYS_BY_BAND)[band ?? ''] ?? 1;",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAP5B-TRADES",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))",
-    "new": "if (fav.guild && job !== 'guildsman' && guildDay(res, day))",
+    "old": "      if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))\n        I('guild', fav.guild, h(18), rollInt(rng, 60, 120)); // CHAP5b: its chapter's days",
+    "new": "      if (fav.guild && job !== 'guildsman' && guildDay(res, day)) I('guild', fav.guild, h(18), rollInt(rng, 60, 120)); // CHAP5b: its chapter's days",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CHAP5B-COURT",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf))) I('guild', fav.guild, h(16.5)",
-    "new": "if (fav.guild && guildDay(res, day)) I('guild', fav.guild, h(16.5)",
+    "old": "      if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))\n        I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120)); // LW-ERRANDS: their order's hall; CHAP5b: its chapter's days",
+    "new": "      if (fav.guild && guildDay(res, day)) I('guild', fav.guild, h(16.5), rollInt(rng, 60, 120)); // LW-ERRANDS: their order's hall; CHAP5b: its chapter's days",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "CHAP5B-POOL",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  : item.chapter ? (/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)])   // CHAP5b: a chapter's standing; CHAP6c: its Season\n",
-    "new": "",
+    "old": "    : item.chapter\n      ? /** @type {Record<string, any>} */ (\n          CHAPTER_EVENT_NEWS[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)]\n        ) // CHAP5b: a chapter's standing; CHAP6c: its Season\n      : item.econ\n        ? townEconNews()[item.kind] // TOWN-ECON TE3: the town's trade\n        : item.kind === 'slain'\n          ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']\n          : item.kind === 'died'\n            ? DIED_NEWS\n            : item.kind === 'killed'\n              ? KILLED_NEWS[item.watch ? 'watch' : 'town']\n              : item.kind === 'home'\n                ? HOME_NEWS // LW6d: a keepsake carried home\n                : item.kind === 'routed'\n                  ? ROUTED_NEWS // LW12: a band the player routed\n                  : item.kind === 'held'\n                    ? HELD_NEWS // LW16: a party the player robbed\n                    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                      ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                      : item.sea\n                        ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words\n                        : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
+    "new": "    : item.econ\n      ? townEconNews()[item.kind] // TOWN-ECON TE3: the town's trade\n      : item.kind === 'slain'\n        ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']\n        : item.kind === 'died'\n          ? DIED_NEWS\n          : item.kind === 'killed'\n            ? KILLED_NEWS[item.watch ? 'watch' : 'town']\n            : item.kind === 'home'\n              ? HOME_NEWS // LW6d: a keepsake carried home\n              : item.kind === 'routed'\n                ? ROUTED_NEWS // LW12: a band the player routed\n                : item.kind === 'held'\n                  ? HELD_NEWS // LW16: a party the player robbed\n                  : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                    ? HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)]\n                    : item.sea\n                      ? SEA_NEWS[/** @type {keyof typeof SEA_NEWS} */ (item.kind)] // LW5b: the sea's own words\n                      : (item.dive ? DIVE_NEWS : ROAD_NEWS)[/** @type {keyof typeof ROAD_NEWS} */ (item.kind)];",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ],
@@ -285,8 +285,8 @@
   {
     "name": "CHAP5B-FALLBACK",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "hour: 'The hour', guild: 'the guild', from:",
-    "new": "hour: 'The hour', guild: 'a guild', from:",
+    "old": "  guild: 'the guild',",
+    "new": "  guild: 'a guild',",
     "tests": [
       "test/systems/livingWorld/chap5b_people.test.js"
     ],

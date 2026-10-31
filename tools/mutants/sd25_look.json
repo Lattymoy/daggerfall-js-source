@@ -29,8 +29,8 @@
   {
     "name": "SD25-the-escapement-unheld",
     "file": "src/world/superDungeon/sdLook.js",
-    "old": "  const s = Math.floor(t), e = Math.min(1, (t - s) / SD_TICK_EASE_S);",
-    "new": "  const s = Math.floor(t), e = t - s;",
+    "old": "    e = Math.min(1, (t - s) / SD_TICK_EASE_S);",
+    "new": "    e = t - s;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD25-a-joint-lit",
     "file": "src/world/superDungeon/sdRealmArt.js",
-    "old": "    if (fx < J || fy < J) { putTexel(albedo, x, y, step(B, 0)); continue; }",
-    "new": "    if (fx < J || fy < J) { putTexel(albedo, x, y, step(B, 0)); putTexel(emission, x, y, scale(step(Br, 3), 0.18)); continue; }",
+    "old": "      if (fx < J || fy < J) {\n        putTexel(albedo, x, y, step(B, 0));\n        continue;\n      }",
+    "new": "      if (fx < J || fy < J) {\n        putTexel(albedo, x, y, step(B, 0));\n        putTexel(emission, x, y, scale(step(Br, 3), 0.18));\n        continue;\n      }",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD25-brass-glowing-whole",
     "file": "src/world/superDungeon/sdRealmArt.js",
-    "old": "    putTexel(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y));",
-    "new": "    putTexel(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y)); putTexel(emission, x, y, scale(ramp(Br, 0.2 + 0.55 * g, x, y), 0.12));",
+    "old": "      putTexel(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y));\n    }",
+    "new": "      putTexel(albedo, x, y, ramp(Br, 0.2 + 0.55 * g, x, y));\n      putTexel(emission, x, y, scale(ramp(Br, 0.2 + 0.55 * g, x, y), 0.12));\n    }",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD25-the-street-off-its-palette",
     "file": "src/world/superDungeon/sdRealmArt.js",
-    "old": "  quantize(albedo, paletteOf(Co, Br));\n",
-    "new": "",
+    "old": "  quantize(albedo, paletteOf(Co, Br));\n  return { albedo, emission };",
+    "new": "  return { albedo, emission };",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ],
@@ -148,8 +148,8 @@
   {
     "name": "SD25-a-fold-turned",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "if (n.y < 0.0) p = (1.0 - abs(n.zx)) *",
-    "new": "if (n.y < 0.0) p = (1.0 - abs(n.xz)) *",
+    "old": "  if (n.y < 0.0) p = (1.0 - abs(n.zx)) * vec2(n.x >= 0.0 ? 1.0 : -1.0, n.z >= 0.0 ? 1.0 : -1.0);",
+    "new": "  if (n.y < 0.0) p = (1.0 - abs(n.xz)) * vec2(n.x >= 0.0 ? 1.0 : -1.0, n.z >= 0.0 ? 1.0 : -1.0);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "SD25-the-face-high-again",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "Object.freeze({ az: 0, elev: 0.2, r: 0.34,",
-    "new": "Object.freeze({ az: 0, elev: 0.38, r: 0.34,",
+    "old": "export const SD_CLOCK_FACE = Object.freeze({ az: 0, elev: 0.2, r: 0.34, hourTurns: 1, minuteTurns: 12 });",
+    "new": "export const SD_CLOCK_FACE = Object.freeze({ az: 0, elev: 0.38, r: 0.34, hourTurns: 1, minuteTurns: 12 });",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "SD25-a-glyph-row",
     "file": "src/world/superDungeon/sdSkyArt.js",
-    "old": "V: Object.freeze({ w: 5, rows: Object.freeze([17, 17, 17, 10, 10, 4, 4]) }),",
-    "new": "V: Object.freeze({ w: 5, rows: Object.freeze([4, 4, 10, 10, 17, 17, 17]) }),",
+    "old": "  V: Object.freeze({ w: 5, rows: Object.freeze([17, 17, 17, 10, 10, 4, 4]) }),",
+    "new": "  V: Object.freeze({ w: 5, rows: Object.freeze([4, 4, 10, 10, 17, 17, 17]) }),",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "SD25-a-numeral-misspelled",
     "file": "src/world/superDungeon/sdSkyArt.js",
-    "old": "'III', 'IV', 'V',",
-    "new": "'III', 'IIII', 'V',",
+    "old": "  'IV',",
+    "new": "  'IIII',",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "SD25-the-void-lifted",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "float k = e >= 0.0 ? 0.75 * exp(-e * 3.2) :",
-    "new": "float k = e >= 0.0 ? 0.95 :",
+    "old": "  float k = e >= 0.0 ? 0.75 * exp(-e * 3.2) : 0.75 * exp(e * 6.0) + 0.95 * smoothstep(${f4(SD_FURNACE.from)}, ${f4(SD_FURNACE.full)}, -e);",
+    "new": "  float k = e >= 0.0 ? 0.95 : 0.75 * exp(e * 6.0) + 0.95 * smoothstep(${f4(SD_FURNACE.from)}, ${f4(SD_FURNACE.full)}, -e);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "SD25-the-short-line",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "(reach[b] + reach[b + 4]) - (reach[a] + reach[a + 4]) || a - b",
-    "new": "(reach[a] + reach[a + 4]) - (reach[b] + reach[b + 4]) || a - b",
+    "old": "  const pairs = [0, 1, 2, 3].sort((a, b) => reach[b] + reach[b + 4] - (reach[a] + reach[a + 4]) || a - b);",
+    "new": "  const pairs = [0, 1, 2, 3].sort((a, b) => reach[a] + reach[a + 4] - (reach[b] + reach[b + 4]) || a - b);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "SD25-the-collapse-uncounted",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": ", lit = Math.ceil(left * 24), c = COLLAPSE_LOOK;",
-    "new": ", lit = 24, c = COLLAPSE_LOOK;",
+    "old": "      lit = Math.ceil(left * 24),",
+    "new": "      lit = 24,",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "SD25-a-newcomer-let-see-in",
     "file": "src/world/superDungeon/sdDungeon.js",
-    "old": "c.aperture = entered ? 1 / 3 + (2 / 3) * left : 0;",
-    "new": "c.aperture = 1 / 3 + (2 / 3) * left;",
+    "old": "    c.aperture = entered ? 1 / 3 + (2 / 3) * left : 0;",
+    "new": "    c.aperture = 1 / 3 + (2 / 3) * left;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "SD25-the-leaves-short-of-the-heart",
     "file": "src/world/superDungeon/sdRiftModel.js",
-    "old": "const ro = P.iris1 * R, rv = a * ro * 0.97;",
-    "new": "const ro = P.iris1 * R, rv = (0.1 + a) * ro * 0.88;",
+    "old": "    rv = a * ro * 0.97;",
+    "new": "    rv = (0.1 + a) * ro * 0.88;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "SD25-wide-leaves-in-the-window",
     "file": "src/world/superDungeon/sdRiftModel.js",
-    "old": "const ro = P.iris1 * R, rv = a * ro * 0.97;",
-    "new": "const ro = P.iris1 * R, rv = a * ro * 0.8;",
+    "old": "    rv = a * ro * 0.97;",
+    "new": "    rv = a * ro * 0.8;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "SD25-the-ring-forward",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "rift.ring0 = L.tickHz > 0 ? -((tolls - 1) + jolt) * (Math.PI / 6)",
-    "new": "rift.ring0 = L.tickHz > 0 ? ((tolls - 1) + jolt) * (Math.PI / 6)",
+    "old": "    rift.ring0 = L.tickHz > 0 ? -(tolls - 1 + jolt) * (Math.PI / 6) * rift.turn : rift.ring0;",
+    "new": "    rift.ring0 = L.tickHz > 0 ? (tolls - 1 + jolt) * (Math.PI / 6) * rift.turn : rift.ring0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "SD25-the-Break-at-once",
     "file": "src/render/superDungeon/sdVeil.js",
-    "old": "float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) :",
-    "new": "float w = mode < 0.5 ? 0.008 :",
+    "old": "  float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) : mode < 1.5 ? 0.008 : mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
+    "new": "  float w = mode < 0.5 ? 0.008 : mode < 1.5 ? 0.008 : mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "SD25-the-mend-unread",
     "file": "src/render/superDungeon/sdVeil.js",
-    "old": "mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
-    "new": "mode < 2.5 ? 0.008 : 0.012;",
+    "old": "  float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) : mode < 1.5 ? 0.008 : mode < 2.5 ? 0.008 * (1.0 - uMend) : 0.012;",
+    "new": "  float w = mode < 0.5 ? 0.008 * step(${f4(SD_VEIL_TURN_S)}, t) : mode < 1.5 ? 0.008 : mode < 2.5 ? 0.008 : 0.012;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "SD25-the-pieces-never-falling",
     "file": "src/render/superDungeon/sdVeil.js",
-    "old": "vec2 rel = uv - seed - vec2((h - 0.5) * 0.3 * tt, -2.4 * tt * tt);",
-    "new": "vec2 rel = uv - seed;",
+    "old": "        vec2 rel = uv - seed - vec2((h - 0.5) * 0.3 * tt, -2.4 * tt * tt);",
+    "new": "        vec2 rel = uv - seed;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "SD25-the-veil-smooth",
     "file": "src/render/superDungeon/sdVeil.js",
-    "old": "  c = floor(c * 6.0 + bayer4(gl_FragCoord.xy)) / 6.0;   // six levels",
-    "new": "  c = clamp(c, 0.0, 1.0);   // six levels",
+    "old": "  c = floor(c * 6.0 + bayer4(gl_FragCoord.xy)) / 6.0;   // six levels through the ordered dither - pixel art",
+    "new": "  c = clamp(c, 0.0, 1.0);   // six levels through the ordered dither - pixel art",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "SD25-the-hold-dropped",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? VEIL_EG_HOLD_S[egMode()] ?? 0);",
-    "new": "const held = true;",
+    "old": "      const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? VEIL_EG_HOLD_S[egMode()] ?? 0);",
+    "new": "      const held = true;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "SD25-one-ratchet",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "for (const want = Math.min(3, 1 + Math.floor((seconds(t) / VEIL_CLOSE_S) * 3)); ratchets < want; ratchets++)",
-    "new": "for (const want = 1; ratchets < want; ratchets++)",
+    "old": "      for (const want = Math.min(3, 1 + Math.floor((seconds(t) / VEIL_CLOSE_S) * 3)); ratchets < want; ratchets++)",
+    "new": "      for (const want = 1; ratchets < want; ratchets++)",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "SD25-the-quarters-mended-going-in",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const notes = m === SD_VEIL_MODE.home ? H.mended : H.quarters;",
-    "new": "const notes = H.mended;",
+    "old": "      const notes = m === SD_VEIL_MODE.home ? H.mended : H.quarters;",
+    "new": "      const notes = H.mended;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "SD25-the-centre-unclamped",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "centre = l > VEIL_CENTRE_MAX ? [(x / l) * VEIL_CENTRE_MAX, (y / l) * VEIL_CENTRE_MAX] : [x, y];",
-    "new": "centre = [x, y];",
+    "old": "    centre = l > VEIL_CENTRE_MAX ? [(x / l) * VEIL_CENTRE_MAX, (y / l) * VEIL_CENTRE_MAX] : [x, y];",
+    "new": "    centre = [x, y];",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "SD25-reduced-motion-never-asked",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "try { reduce = !!win.matchMedia?.(REDUCE_QUERY)?.matches; } catch { reduce = false; }",
-    "new": "reduce = false;",
+    "old": "    try {\n      reduce = !!win.matchMedia?.(REDUCE_QUERY)?.matches;\n    } catch {\n      reduce = false;\n    }",
+    "new": "    reduce = false;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "SD25-the-veil-drawn-smooth",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const px = hp ? 'pixelated' : '';",
-    "new": "const px = '';",
+    "old": "    const px = hp ? 'pixelated' : '';",
+    "new": "    const px = '';",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "SD25-the-veil-at-the-fire-scale",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const k = hp ? VEIL_HOUR_SCALE : VEIL_SCALE;",
-    "new": "const k = VEIL_SCALE;",
+    "old": "    const k = hp ? VEIL_HOUR_SCALE : VEIL_SCALE;",
+    "new": "    const k = VEIL_SCALE;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "SD25-the-flood-never-fading",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "memo.floodK = age < SD_FLOOD.front_s ? 1 : 1 - (age - SD_FLOOD.front_s) / SD_FLOOD.fade_s;",
-    "new": "memo.floodK = 1;",
+    "old": "    memo.floodK = age < SD_FLOOD.front_s ? 1 : 1 - (age - SD_FLOOD.front_s) / SD_FLOOD.fade_s;",
+    "new": "    memo.floodK = 1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "SD25-the-Pulse-not-kept",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "const age = (t - (memo.pulseAt ?? -Infinity)) / 1000;",
-    "new": "const age = (t - (clk?.a === PULSE.id ? clk.at : -Infinity)) / 1000;",
+    "old": "  const age = (t - (memo.pulseAt ?? -Infinity)) / 1000;",
+    "new": "  const age = (t - (clk?.a === PULSE.id ? clk.at : -Infinity)) / 1000;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "SD25-the-count-one-short",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "Math.floor(((t - called) / RESET.windup) * 12) + 1))",
-    "new": "Math.floor(((t - called) / RESET.windup) * 12)))",
+    "old": "    memo.reset = t >= atk.at ? 12 : Math.max(0, Math.min(12, Math.floor(((t - called) / RESET.windup) * 12) + 1));",
+    "new": "    memo.reset = t >= atk.at ? 12 : Math.max(0, Math.min(12, Math.floor(((t - called) / RESET.windup) * 12)));",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "SD25-the-stun-ignored",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (atk && atk.a === RESET.id && t < atk.at + RESET.active && !(s.su > t)) {",
-    "new": "if (atk && atk.a === RESET.id && t < atk.at + RESET.active) {",
+    "old": "  if (atk && atk.a === RESET.id && t < atk.at + RESET.active && !(s.su > t)) {",
+    "new": "  if (atk && atk.a === RESET.id && t < atk.at + RESET.active) {",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "SD25-the-End-unread",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (s.lost || (clk && clk.a === END.id) || (Number.isFinite(s.ends) && t >= s.ends - END.windup)) memo.end = 1;",
-    "new": "if (s.lost) memo.end = 1;",
+    "old": "  if (s.lost || (clk && clk.a === END.id) || (Number.isFinite(s.ends) && t >= s.ends - END.windup)) memo.end = 1;",
+    "new": "  if (s.lost) memo.end = 1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "SD25-the-sky-Reset-at-once",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "out[1] = Math.max(0, Math.min(1, (t - (atk.at - RESET.windup)) / RESET.windup)); }",
-    "new": "out[1] = 1; }",
+    "old": "    out[1] = Math.max(0, Math.min(1, (t - (atk.at - RESET.windup)) / RESET.windup));",
+    "new": "    out[1] = 1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "SD25-no-last-minute",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "out[2] = s.ends - t <= 60_000 ? 1 : 0; }",
-    "new": "out[2] = 0; }",
+    "old": "    out[2] = s.ends - t <= 60_000 ? 1 : 0;",
+    "new": "    out[2] = 0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "SD25-no-ember",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "g = order > ${12 - SD_RESET_EMBER} ? EMBER : SOUL;",
-    "new": "g = SOUL;",
+    "old": "      if (uReset >= 0.0 && float(order) <= uReset) g = order > ${12 - SD_RESET_EMBER} ? EMBER : SOUL;",
+    "new": "      if (uReset >= 0.0 && float(order) <= uReset) g = SOUL;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "SD25-the-front-ignored",
     "file": "src/render/superDungeon/sdArenaGlow.js",
-    "old": "if (uFlood.x >= 0.0 && r <= uFlood.x) {",
-    "new": "if (uFlood.x >= 0.0) {",
+    "old": "    if (uFlood.x >= 0.0 && r <= uFlood.x) {",
+    "new": "    if (uFlood.x >= 0.0) {",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "SD25-a-fallen-Echo-wall",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "if (ec[i].h > 0 && rolling(ec[i].atk, t, out[n])) n++;",
-    "new": "if (rolling(ec[i].atk, t, out[n])) n++;",
+    "old": "  for (let i = 0; i < ec.length && n < out.length; i++) if (ec[i].h > 0 && rolling(ec[i].atk, t, out[n])) n++;",
+    "new": "  for (let i = 0; i < ec.length && n < out.length; i++) if (rolling(ec[i].atk, t, out[n])) n++;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -527,8 +527,8 @@
   {
     "name": "SD25-the-wall-never-fading",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "w.k = u > 0.8 ? Math.max(0, (1 - u) / 0.2) : 1;",
-    "new": "w.k = 1;",
+    "old": "  w.k = u > 0.8 ? Math.max(0, (1 - u) / 0.2) : 1;",
+    "new": "  w.k = 1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "SD25-the-wall-lip-dropped",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "  if (v > 0.86) k = 1.25;\n",
-    "new": "",
+    "old": "  if (v > 0.86) k = 1.25;\n  // the beacon: brightest at its foot, falling off up it in the same four steps",
+    "new": "  // the beacon: brightest at its foot, falling off up it in the same four steps",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "SD25-the-wall-height-ignored",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "gl.uniform1f(U.uH, w.h ?? SD_STOMP_WALL.h);",
-    "new": "gl.uniform1f(U.uH, SD_STOMP_WALL.h);",
+    "old": "      gl.uniform1f(U.uH, w.h ?? SD_STOMP_WALL.h);",
+    "new": "      gl.uniform1f(U.uH, SD_STOMP_WALL.h);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "SD25-every-wall-in-brass",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "gl.uniform3fv(U.uColor, w.color ?? SD_STOMP_WALL.color);",
-    "new": "gl.uniform3fv(U.uColor, SD_STOMP_WALL.color);",
+    "old": "      gl.uniform3fv(U.uColor, w.color ?? SD_STOMP_WALL.color);",
+    "new": "      gl.uniform3fv(U.uColor, SD_STOMP_WALL.color);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "SD25-the-aim-never-read",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const c = opts?.centre ?? (fresh ? [aimX, aimY] : null),",
-    "new": "const c = opts?.centre,",
+    "old": "    const c = opts?.centre ?? (fresh ? [aimX, aimY] : null),",
+    "new": "    const c = opts?.centre,",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "SD25-a-stale-aim-kept",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const fresh = now() - aimAt < VEIL_AIM_MS && theme !== VEIL_THEMES.hourCast;",
-    "new": "const fresh = theme !== VEIL_THEMES.hourCast;",
+    "old": "    const fresh = now() - aimAt < VEIL_AIM_MS && theme !== VEIL_THEMES.hourCast;",
+    "new": "    const fresh = theme !== VEIL_THEMES.hourCast;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "SD25-the-forced-shatter-aimed",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const fresh = now() - aimAt < VEIL_AIM_MS && theme !== VEIL_THEMES.hourCast;",
-    "new": "const fresh = now() - aimAt < VEIL_AIM_MS;",
+    "old": "    const fresh = now() - aimAt < VEIL_AIM_MS && theme !== VEIL_THEMES.hourCast;",
+    "new": "    const fresh = now() - aimAt < VEIL_AIM_MS;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "SD25-the-blade-short-of-the-hand",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "[0, B.armBot], [-L.spadeW / 2,",
-    "new": "[0, B.armBot + 0.2], [-L.spadeW / 2,",
+    "old": "          [0, B.armBot],",
+    "new": "          [0, B.armBot + 0.2],",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -599,8 +599,8 @@
   {
     "name": "SD25-a-bell-past-the-body",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "bell: Object.freeze({ x: 1.8, top: 6.78, mouth: 5.85, r: 0.6 }),",
-    "new": "bell: Object.freeze({ x: 1.8, top: 6.78, mouth: 5.85, r: 0.75 }),",
+    "old": "  bell: Object.freeze({ x: 1.8, top: 6.78, mouth: 5.85, r: 0.6 }),",
+    "new": "  bell: Object.freeze({ x: 1.8, top: 6.78, mouth: 5.85, r: 0.75 }),",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "SD25-the-crown-under-the-law",
     "file": "src/world/superDungeon/sdRemnantModel.js",
-    "old": "tipY = k % 2 ? K.crown.y + 0.12 : SD_REM.h;",
-    "new": "tipY = k % 2 ? K.crown.y + 0.12 : SD_REM.h - 0.1;",
+    "old": "      tipY = k % 2 ? K.crown.y + 0.12 : SD_REM.h;",
+    "new": "      tipY = k % 2 ? K.crown.y + 0.12 : SD_REM.h - 0.1;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "SD25-the-beat-never-quickening",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "const h0 = SD_HEART_LIGHT.hz[0], h1 = SD_HEART_LIGHT.hz[1], T =",
-    "new": "const h0 = SD_HEART_LIGHT.hz[0], h1 = h0, T =",
+    "old": "    h1 = SD_HEART_LIGHT.hz[1],",
+    "new": "    h1 = h0,",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -626,8 +626,8 @@
   {
     "name": "SD25-the-flare-unread",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "!(s.su > t)) ? H.flare : 1;",
-    "new": "!(s.su > t)) ? 1 : 1;",
+    "old": "          ? H.flare",
+    "new": "          ? 1",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "SD25-the-Endings-light-unread",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "const heartColor = SD_ENDINGS.find((E) => E.id === ending)?.light ?? MANTELLA_LIGHT;",
-    "new": "const heartColor = MANTELLA_LIGHT;",
+    "old": "  const heartColor = SD_ENDINGS.find((E) => E.id === ending)?.light ?? MANTELLA_LIGHT;",
+    "new": "  const heartColor = MANTELLA_LIGHT;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -681,8 +681,8 @@
   {
     "name": "SD25-the-way-home-halves-never-swinging",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "a = (i === 2 ? 1 : -1) * A.swing * (1 - stage(k, A.arches)); }",
-    "new": "a = 0; }",
+    "old": "        a = (i === 2 ? 1 : -1) * A.swing * (1 - stage(k, A.arches));",
+    "new": "        a = 0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -690,8 +690,8 @@
   {
     "name": "SD25-the-way-home-keystone-never-dropping",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      else lift = A.drop * (1 - stage(k, A.key));",
-    "new": "      else lift = 0;",
+    "old": "      } else lift = A.drop * (1 - stage(k, A.key));",
+    "new": "      } else lift = 0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "SD25-the-way-home-hand-before-its-clock",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      ret.hand.hidden = !!ret.parts && k < SD_HOME_ASSEMBLY.key[1];",
-    "new": "      ret.hand.hidden = false;",
+    "old": "      ret.hand.hidden = !!ret.parts && k < SD_HOME_ASSEMBLY.key[1]; // SD-LOOK S6: with its clock, once it lands",
+    "new": "      ret.hand.hidden = false; // SD-LOOK S6: with its clock, once it lands",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -708,8 +708,8 @@
   {
     "name": "SD25-the-way-home-at-the-hollows-size",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "scale ?? (rift?.hollow ? SD_HOME_SCALE : 1)",
-    "new": "scale ?? 1",
+    "old": "        ...standRet(at, yaw, scale ?? (rift?.hollow ? SD_HOME_SCALE : 1), ago < SD_HOME_RISE_MS),",
+    "new": "        ...standRet(at, yaw, scale ?? 1, ago < SD_HOME_RISE_MS),",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -717,8 +717,8 @@
   {
     "name": "SD25-the-way-home-pressed-at-the-old-size",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "(SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale)",
-    "new": "SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h)",
+    "old": "        aabb: boxOf(ret.at, (SD_RETURN_SIZE.w / 2) * ret.scale, SD_RETURN_SIZE.h * ret.scale),",
+    "new": "        aabb: boxOf(ret.at, SD_RETURN_SIZE.w / 2, SD_RETURN_SIZE.h),",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -726,8 +726,8 @@
   {
     "name": "SD25-the-beacon-never-settling",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "out.h = B.tall + (B.low - B.tall) * e;",
-    "new": "out.h = B.tall;",
+    "old": "  out.h = B.tall + (B.low - B.tall) * e;",
+    "new": "  out.h = B.tall;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -735,8 +735,8 @@
   {
     "name": "SD25-the-beacon-across-its-window",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "out.y0 = foot; out.h",
-    "new": "out.y0 = 0; out.h",
+    "old": "  out.y0 = foot;",
+    "new": "  out.y0 = 0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -753,8 +753,8 @@
   {
     "name": "SD25-the-way-home-no-column",
     "file": "src/render/superDungeon/sdStompWall.js",
-    "old": "  if (age < 0) {\n",
-    "new": "  if (age < -Infinity) {\n",
+    "old": "  if (age < 0) {",
+    "new": "  if (age < -Infinity) {",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -762,8 +762,8 @@
   {
     "name": "SD25-the-way-home-column-unlit",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "up ? SD_RIFT_LIGHT.ret : SD_RIFT_LIGHT.column",
-    "new": "SD_RIFT_LIGHT.ret",
+    "old": "        tint(_ml.color, SD_LIGHT.moon, up ? SD_RIFT_LIGHT.ret : SD_RIFT_LIGHT.column);",
+    "new": "        tint(_ml.color, SD_LIGHT.moon, SD_RIFT_LIGHT.ret);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -780,8 +780,8 @@
   {
     "name": "SD25-the-plate-never-alight",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "if (key === SD_RETURN_KEY && ret) { ret.hoverAt = now(); return",
-    "new": "if (key === SD_RETURN_KEY && ret) { return",
+    "old": "        ret.hoverAt = now();\n        return { title: retTitle, subs: [retTo] };",
+    "new": "        return { title: retTitle, subs: [retTo] };",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -789,8 +789,8 @@
   {
     "name": "SD25-the-plate-alight-always",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "t - ret.hoverAt < SD_PLATE_HOLD_MS ? PLATE_LIT : null",
-    "new": "PLATE_LIT",
+    "old": "      ret.plate.texRemap = t - ret.hoverAt < SD_PLATE_HOLD_MS ? PLATE_LIT : null;",
+    "new": "      ret.plate.texRemap = PLATE_LIT;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "SD25-the-plate-record-all-alight",
     "file": "src/world/superDungeon/sdRiftArt.js",
-    "old": "putTexel(plate.emission, x, y, texelAt(lit.emission, x, y)); }",
-    "new": "putTexel(plate.emission, x, y, moon); }",
+    "old": "      putTexel(plate.emission, x, y, texelAt(lit.emission, x, y));",
+    "new": "      putTexel(plate.emission, x, y, moon);",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "SD25-the-plate-cast",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "plate: standMesh(buildReturnPlate(), true)",
-    "new": "plate: standMesh(buildReturnPlate(), false)",
+    "old": "      plate: standMesh(buildReturnPlate(), true),",
+    "new": "      plate: standMesh(buildReturnPlate(), false),",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -816,8 +816,8 @@
   {
     "name": "SD25-the-plate-shown-while-it-assembles",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "ret.plate.hidden = !!ret.parts && k < 1;",
-    "new": "ret.plate.hidden = false;",
+    "old": "      ret.plate.hidden = !!ret.parts && k < 1;",
+    "new": "      ret.plate.hidden = false;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -825,8 +825,8 @@
   {
     "name": "SD25-the-rift-cells-mirrored",
     "file": "src/world/superDungeon/sdRiftModel.js",
-    "old": "(c[1] + t * c[3]) / SD_RIFT_ATLAS.size]; };",
-    "new": "1 - (c[1] + t * c[3]) / SD_RIFT_ATLAS.size]; };",
+    "old": "  return [(c[0] + s * c[2]) / SD_RIFT_ATLAS.size, (c[1] + t * c[3]) / SD_RIFT_ATLAS.size];",
+    "new": "  return [(c[0] + s * c[2]) / SD_RIFT_ATLAS.size, 1 - (c[1] + t * c[3]) / SD_RIFT_ATLAS.size];",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -852,8 +852,8 @@
   {
     "name": "SD25-the-exhale-ring-still",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "rift.n[N_RING] = rift.ring0 - xe * Math.PI * 2 * rift.turn;",
-    "new": "rift.n[N_RING] = rift.ring0;",
+    "old": "    rift.n[N_RING] = rift.ring0 - xe * Math.PI * 2 * rift.turn;",
+    "new": "    rift.n[N_RING] = rift.ring0;",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -861,8 +861,8 @@
   {
     "name": "SD25-the-exhale-unheard",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "      if (kind === 'exhale') rift.exhaleAt = t;\n",
-    "new": "",
+    "old": "      if (kind === 'exhale') rift.exhaleAt = t;\n    },",
+    "new": "    },",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]

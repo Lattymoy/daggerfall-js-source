@@ -44,44 +44,99 @@ export function sameOnScreen(a, b) {
     const hidden = a.data[p + 3] === 0;
     if (hidden !== (b.data[p + 3] === 0)) return false;
     if (hidden) continue;
-    if (a.data[p] !== b.data[p] || a.data[p + 1] !== b.data[p + 1] || a.data[p + 2] !== b.data[p + 2] || a.data[p + 3] !== b.data[p + 3]) return false;
+    if (
+      a.data[p] !== b.data[p] ||
+      a.data[p + 1] !== b.data[p + 1] ||
+      a.data[p + 2] !== b.data[p + 2] ||
+      a.data[p + 3] !== b.data[p + 3]
+    )
+      return false;
   }
   return true;
 }
 
 if (isMain(import.meta.url)) {
   const src = process.argv[2];
-  if (!src) { console.error('usage: node tools/diverseWeaponsExtract.mjs "<diverse weapons.dfmod>"'); process.exit(2); }
+  if (!src) {
+    console.error('usage: node tools/diverseWeaponsExtract.mjs "<diverse weapons.dfmod>"');
+    process.exit(2);
+  }
   const t0 = Date.now();
   const bundle = readUnityBundle(new Uint8Array(readFileSync(src)));
-  const manifest = bundle.textAssets.map((t) => { try { return JSON.parse(t.text); } catch { return null; } }).find((m) => m?.GUID);
+  const manifest = bundle.textAssets
+    .map((t) => {
+      try {
+        return JSON.parse(t.text);
+      } catch {
+        return null;
+      }
+    })
+    .find((m) => m?.GUID);
   const vendored = JSON.parse(readFileSync(join(ROOT, MANIFEST), 'utf8'));
-  if (manifest?.GUID !== vendored.GUID) throw new Error(`the bundle is ${manifest?.ModTitle} (${manifest?.GUID}); the port carries ${vendored.ModTitle} (${vendored.GUID})`);
-  if (String(manifest.ModVersion) !== String(vendored.ModVersion)) console.warn(`the bundle is version ${manifest.ModVersion}; the vendored manifest is ${vendored.ModVersion} - vendor the new manifest and re-run tools/diverseWeaponsIndex.mjs`);
-  console.log(`opened ${manifest.ModTitle} ${manifest.ModVersion}: ${bundle.textures.length} textures in ${Date.now() - t0} ms`);
+  if (manifest?.GUID !== vendored.GUID)
+    throw new Error(
+      `the bundle is ${manifest?.ModTitle} (${manifest?.GUID}); the port carries ${vendored.ModTitle} (${vendored.GUID})`,
+    );
+  if (String(manifest.ModVersion) !== String(vendored.ModVersion))
+    console.warn(
+      `the bundle is version ${manifest.ModVersion}; the vendored manifest is ${vendored.ModVersion} - vendor the new manifest and re-run tools/diverseWeaponsIndex.mjs`,
+    );
+  console.log(
+    `opened ${manifest.ModTitle} ${manifest.ModVersion}: ${bundle.textures.length} textures in ${Date.now() - t0} ms`,
+  );
 
   const allowed = new Set(manifestSpriteNames(readFileSync(join(ROOT, MANIFEST), 'utf8')));
-  const derived = new Set(existsSync(join(ROOT, DERIVED)) ? derivedSpriteNames(readFileSync(join(ROOT, DERIVED), 'utf8')) : []);
+  const derived = new Set(
+    existsSync(join(ROOT, DERIVED)) ? derivedSpriteNames(readFileSync(join(ROOT, DERIVED), 'utf8')) : [],
+  );
   const out = join(ROOT, OUT_DIR);
   mkdirSync(out, { recursive: true });
-  for (const f of readdirSync(out)) if (/\.png$/i.test(f)) unlinkSync(join(out, f));   // a clean set: a name the new bundle lacks is gone
+  for (const f of readdirSync(out)) if (/\.png$/i.test(f)) unlinkSync(join(out, f)); // a clean set: a name the new bundle lacks is gone
 
   const written = new Set();
   const strangers = [];
-  let bytes = 0, raw = 0, dups = 0, indexed = 0, rebuilt = 0;
+  let bytes = 0,
+    raw = 0,
+    dups = 0,
+    indexed = 0,
+    rebuilt = 0;
   for (const t of bundle.textures) {
-    if (written.has(t.name)) { dups++; continue; }
-    if (!allowed.has(t.name)) { strangers.push(t.name); continue; }
-    if (derived.has(t.name)) { written.add(t.name); rebuilt++; continue; }   // its spec rebuilds it from the player's files
+    if (written.has(t.name)) {
+      dups++;
+      continue;
+    }
+    if (!allowed.has(t.name)) {
+      strangers.push(t.name);
+      continue;
+    }
+    if (derived.has(t.name)) {
+      written.add(t.name);
+      rebuilt++;
+      continue;
+    } // its spec rebuilds it from the player's files
     const img = t.rgba();
     const { png, indexed: isIndexed } = encodeSprite(img);
     if (!sameOnScreen(img, readPng(png))) throw new Error(`${t.name}: the PNG read back differs from the texel`);
     writeFileSync(join(out, `${t.name}.png`), png);
     written.add(t.name);
-    bytes += png.length; raw += img.data.length; indexed += isIndexed ? 1 : 0;
+    bytes += png.length;
+    raw += img.data.length;
+    indexed += isIndexed ? 1 : 0;
   }
   const missing = [...allowed].filter((n) => !written.has(n)).sort();
-  console.log(`wrote ${written.size - rebuilt} PNGs (${indexed} indexed, ${written.size - rebuilt - indexed} RGBA): ${(raw / 1e6).toFixed(0)} MB of texels as ${(bytes / 1e6).toFixed(1)} MB on disk; ${rebuilt} rebuilt from ARENA2 and not written; ${dups} duplicate names skipped; ${Date.now() - t0} ms`);
-  if (strangers.length) console.warn(`${strangers.length} textures the manifest does not name were NOT written:`, strangers.slice(0, 10).join(', '), strangers.length > 10 ? '...' : '');
-  if (missing.length) console.warn(`${missing.length} manifest names the bundle does not carry (the door will 404 once each if asked):`, missing.slice(0, 10).join(', '), missing.length > 10 ? '...' : '');
+  console.log(
+    `wrote ${written.size - rebuilt} PNGs (${indexed} indexed, ${written.size - rebuilt - indexed} RGBA): ${(raw / 1e6).toFixed(0)} MB of texels as ${(bytes / 1e6).toFixed(1)} MB on disk; ${rebuilt} rebuilt from ARENA2 and not written; ${dups} duplicate names skipped; ${Date.now() - t0} ms`,
+  );
+  if (strangers.length)
+    console.warn(
+      `${strangers.length} textures the manifest does not name were NOT written:`,
+      strangers.slice(0, 10).join(', '),
+      strangers.length > 10 ? '...' : '',
+    );
+  if (missing.length)
+    console.warn(
+      `${missing.length} manifest names the bundle does not carry (the door will 404 once each if asked):`,
+      missing.slice(0, 10).join(', '),
+      missing.length > 10 ? '...' : '',
+    );
 }

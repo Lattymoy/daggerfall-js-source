@@ -253,10 +253,10 @@ test('SHADER-STALL the wiring: the world\'s sea warm and the spells\' impact pas
   // PIN MOVED (AUDIT SHADER-STALL, 2026-10-20): and its `need` - a spell's draw built the pass first, the warm stands down
   assert.match(read('src/scenes/hostMagic.js'), /void warmPrograms\(\[\{ start: \(\) => startPrograms\(renderer\.gl, SPELL_IMPACT_PROGRAMS\), run: \(\) => \{ if \(!fxPass && !fxBroken\) fxPass = new SpellImpactPass\(renderer\.gl\); \}, need: \(\) => !fxPass && !fxBroken \}\]/);
   const eg = read('src/scenes/eliteGates/egFight.js');
-  assert.match(eg, /const telegraphDoor = \(\) => compiledPass\(gl, telegraphPrograms\(true\), \(\) => new GateTelegraphRenderer\(gl, \{ spire: true \}\)/);
-  assert.match(eg, /const crystalDoor = \(\) => compiledPass\(gl, CRYSTAL_PROGRAMS, \(\) => new CourtCrystalRenderer\(gl\)/);
-  assert.match(eg, /pass = null; crystalPass = null; telegraphOf = telegraphDoor\(\); crystalsOf = crystalDoor\(\);/);
-  assert.doesNotMatch(eg, /new GateTelegraphRenderer\(gl, \{ spire: true \}\); \}/, 'no build outside the door');
+  assert.match(eg, /const telegraphDoor = \(\) =>\n\s*compiledPass\(\n\s*gl,\n\s*telegraphPrograms\(true\),\n\s*\(\) => new GateTelegraphRenderer\(gl, \{ spire: true \}\)/);
+  assert.match(eg, /const crystalDoor = \(\) =>\n\s*compiledPass\(\n\s*gl,\n\s*CRYSTAL_PROGRAMS,\n\s*\(\) => new CourtCrystalRenderer\(gl\)/);
+  assert.match(eg, /pass = null;\n\s*crystalPass = null;\n\s*telegraphOf = telegraphDoor\(\);\n\s*crystalsOf = crystalDoor\(\);/);
+  assert.doesNotMatch(eg, /new GateTelegraphRenderer\(gl, \{ spire: true \}\);\s*\}/, 'no build outside the door');   // AUDIT LEGIBLE 3: either layout
 });
 
 // AURA-STALL (#1137) and AURA-SPLIT (#1143, bible/07-Rendering/Performance-Priority.md): the auras' one program was 81 KB

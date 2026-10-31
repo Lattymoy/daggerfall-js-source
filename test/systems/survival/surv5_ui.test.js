@@ -217,7 +217,7 @@ test('SURV5: by source - the four hosts chain the third box, the enhanced HUD ca
   assert.match(wm, /climateIndex: \(\) => host\.climateIndex\?\.\(\) \?\? 232,\s*\n\s*advanceMinutes: \(n\) => interiorTicker\.advance\(n\),\s*\n\s*endurance: \(\) => liveStat\(playerEntity, 'endurance'\),/);
   assert.match(read('src/scenes/world.js'), /climateIndex: \(\) => maps\.getClimateIndex\(playerTravelPixel\(\)\.x, playerTravelPixel\(\)\.y\),   \/\/ SURV5/);
   assert.match(read('src/scenes/exterior.js'), /climateIndex: \(\) => locClimateIndex,   \/\/ SURV5/);
-  assert.match(read('src/ui/tavernWindow.js'), /if \(survivalOn\(\) && typeof h\.climateIndex === 'function'\) \{ this\._survivalFood\(\); return; \}/);
+  assert.match(read('src/ui/tavernWindow.js'), /if \(survivalOn\(\) && typeof h\.climateIndex === 'function'\) \{\n\s*this\._survivalFood\(\);\n\s*return;\n\s*\}/);
   assert.match(read('src/systems/item/itemInfo.js'), /if \(isSurvivalItem\(item\)(?: \|\| isRestItem\(item\))?\) record = survivalInfoTokens\(item\);/);
   assert.match(read('src/systems/survival/needs.js'), /s\.felt = temp\.felt;/);
   for (const f of ['status', 'tavernMenu']) {

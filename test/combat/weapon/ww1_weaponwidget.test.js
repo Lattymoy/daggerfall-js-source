@@ -695,8 +695,8 @@ test('WW1: the rig runs the clone beside the machine - the late update after the
   assert.match(rd('src/scenes/hitEffects.js'), /entry\.size = \{ w: entry\.size\.w \* scale, h: entry\.size\.h \* scale \};/, 'DoClang/DoThud\'s localScale x2');
   assert.match(rd('src/scenes/hitEffects.js'), /scale = 2 \} = \{\}\)/, '...and a miss effect is scaled unless a caller says otherwise');
   const lf = rd('src/player/lookFilter.js');
-  assert.match(lf, /export function takeFrameLook\(\) \{ const v = \[_frameYaw, _framePitch\]; _frameYaw = 0; _framePitch = 0; return v; \}/);
-  assert.match(lf, /_frameYaw \+= dyaw; _framePitch \+= dpitch;/, 'latched where the look is applied');
+  assert.match(lf, /export function takeFrameLook\(\) \{\n\s*const v = \[_frameYaw, _framePitch\];\n\s*_frameYaw = 0;\n\s*_framePitch = 0;\n\s*return v;\n\s*\}/);
+  assert.match(lf, /_frameYaw \+= dyaw;\n\s*_framePitch \+= dpitch;/, 'latched where the look is applied');
   // the bundle door registered from the textures pick, beside the seasons'
   // PIN MOVED (AUDIT VE R2): one registration of the store - the boot seam reaches it, it no longer copies it
   assert.match(rd('src/scenes/shared.js'), /const textures = registerTextureStore\(\)/);

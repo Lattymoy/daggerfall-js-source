@@ -46,7 +46,7 @@ test('DISC22-B: with no document the classic grid stands (a node host draws the 
   assert.equal(typeof document, 'undefined');
   const win = openPauseFlow(() => {}, {});
   const src = rd('src/ui/pauseWindow.js');
-  assert.match(src, /openControls: hooks\.openSettings \?\? \(controlsArtLoaded\(\)/, 'the grid is the fallback, not the choice');
+  assert.match(src, /openControls:\n\s*hooks\.openSettings \?\?\n\s*\(controlsArtLoaded\(\)/, 'the grid is the fallback, not the choice');
   assert.equal(win.hooks.openSettings, null, 'no document, no settings screen to open');
   _resetForTests();
 });

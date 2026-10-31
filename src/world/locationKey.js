@@ -22,31 +22,54 @@
 // Pure: a building list in, a key out. Not a DFU member: DFU never writes the key (Ledger A, BAY-LEFT-B).
 // ═══════════════════════════════════════════════════════════════════
 import { BUILDING_TYPES as T } from './buildingNames.js';
-import { DIVINES, ORDERS, GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';   // a leaf: Temple.Divines, KnightlyOrder.Orders, the guilds' ids
+import { DIVINES, ORDERS, GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js'; // a leaf: Temple.Divines, KnightlyOrder.Orders, the guilds' ids
 
 /** A divine's faction (Temple.Divines) -> its temple's bit (byte 0). */
 export const DIVINE_KEY_BITS = Object.freeze({
-  [DIVINES.Akatosh]: 0, [DIVINES.Arkay]: 1, [DIVINES.Dibella]: 2, [DIVINES.Julianos]: 3,
-  [DIVINES.Kynareth]: 4, [DIVINES.Mara]: 5, [DIVINES.Stendarr]: 6, [DIVINES.Zenithar]: 7,
+  [DIVINES.Akatosh]: 0,
+  [DIVINES.Arkay]: 1,
+  [DIVINES.Dibella]: 2,
+  [DIVINES.Julianos]: 3,
+  [DIVINES.Kynareth]: 4,
+  [DIVINES.Mara]: 5,
+  [DIVINES.Stendarr]: 6,
+  [DIVINES.Zenithar]: 7,
 });
 /** The temple orders a temple's building may name instead of its divine - FACTION.TXT's children of the eight (the
  *  freeware's FACTION.TXT, pinned against it): the order's faction -> its divine. GuildManager.GetGuild walks a templar
  *  order to its divine by the faction's parent (guildVariants.js getDivine); a building's key is read with no faction
  *  table to hand, so the eight are named. */
 export const TEMPLE_ORDER_DIVINE = Object.freeze({
-  92: DIVINES.Akatosh, 82: DIVINES.Arkay, 98: DIVINES.Dibella, 94: DIVINES.Julianos,
-  36: DIVINES.Kynareth, 88: DIVINES.Mara, 106: DIVINES.Stendarr, 84: DIVINES.Zenithar,
+  92: DIVINES.Akatosh,
+  82: DIVINES.Arkay,
+  98: DIVINES.Dibella,
+  94: DIVINES.Julianos,
+  36: DIVINES.Kynareth,
+  88: DIVINES.Mara,
+  106: DIVINES.Stendarr,
+  84: DIVINES.Zenithar,
 });
 /** A shop's building type -> its bit (byte 1), and the guilds' byte's and byte 3's typed bits. */
 export const BUILDING_KEY_BITS = Object.freeze({
-  [T.Tavern]: 8, [T.WeaponSmith]: 9, [T.Armorer]: 10, [T.Alchemist]: 11, [T.Bank]: 12, [T.Bookseller]: 13, [T.ClothingStore]: 14, [T.GemStore]: 15,
-  [T.Library]: 16, [T.PawnShop]: 22, [T.Palace]: 23, [T.GeneralStore]: 24,
+  [T.Tavern]: 8,
+  [T.WeaponSmith]: 9,
+  [T.Armorer]: 10,
+  [T.Alchemist]: 11,
+  [T.Bank]: 12,
+  [T.Bookseller]: 13,
+  [T.ClothingStore]: 14,
+  [T.GemStore]: 15,
+  [T.Library]: 16,
+  [T.PawnShop]: 22,
+  [T.Palace]: 23,
+  [T.GeneralStore]: 24,
 });
 /** A guild hall's faction -> its bit (byte 2): the ten knightly orders (KnightlyOrder.Orders - one bit for all ten, as
  *  the reader asks it), the Mages Guild and the Fighters Guild. */
 export const GUILD_KEY_BITS = Object.freeze({
   ...Object.fromEntries(Object.values(ORDERS).map((id) => [id, 17])),
-  [GUILD_FACTION_IDS.MagesGuild]: 18, [GUILD_FACTION_IDS.FightersGuild]: 21,
+  [GUILD_FACTION_IDS.MagesGuild]: 18,
+  [GUILD_FACTION_IDS.FightersGuild]: 21,
 });
 
 /**
@@ -56,8 +79,14 @@ export const GUILD_KEY_BITS = Object.freeze({
 export function locationKeyOf(buildings) {
   let key = 0;
   for (const b of buildings ?? []) {
-    const type = b?.buildingType, f = b?.factionId ?? -1;
-    const bit = type === T.Temple ? DIVINE_KEY_BITS[TEMPLE_ORDER_DIVINE[f] ?? f] : type === T.GuildHall ? GUILD_KEY_BITS[f] : BUILDING_KEY_BITS[type];
+    const type = b?.buildingType,
+      f = b?.factionId ?? -1;
+    const bit =
+      type === T.Temple
+        ? DIVINE_KEY_BITS[TEMPLE_ORDER_DIVINE[f] ?? f]
+        : type === T.GuildHall
+          ? GUILD_KEY_BITS[f]
+          : BUILDING_KEY_BITS[type];
     if (bit != null) key |= 1 << bit;
   }
   return key >>> 0;

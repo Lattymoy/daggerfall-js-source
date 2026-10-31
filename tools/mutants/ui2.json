@@ -2,8 +2,8 @@
   {
     "name": "UI2-a-worn-piece-read-as-used",
     "file": "src/systems/quickslots.js",
-    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';   // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too\n",
-    "new": "",
+    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear'; // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too\n  return 'use';",
+    "new": "  return 'use';",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "UI2-an-item-refused",
     "file": "src/systems/quickslots.js",
-    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';   // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too\n  return 'use';",
-    "new": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';   // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too\n  return null;",
+    "old": "  return 'use';",
+    "new": "  return null;",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "UI2-the-saves-kinds-unwidened",
     "file": "src/systems/quickslots.js",
-    "old": "typeof e.key === 'string' && HOTBAR_KINDS.includes(e.kind)",
-    "new": "typeof e.key === 'string' && ['consumable', 'weapon', 'light', 'shield'].includes(e.kind)",
+    "old": "      else if (e.type === 'item' && typeof e.key === 'string' && HOTBAR_KINDS.includes(e.kind)) {",
+    "new": "      else if (\n        e.type === 'item' &&\n        typeof e.key === 'string' &&\n        ['consumable', 'weapon', 'light', 'shield'].includes(e.kind)\n      ) {",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "UI2-the-saved-icon-dropped",
     "file": "src/systems/quickslots.js",
-    "old": "hotbarSets.main[i] = { type: 'spell', index: e.index, name: e.name, ...iconOf(e) };",
-    "new": "hotbarSets.main[i] = { type: 'spell', index: e.index, name: e.name };",
+    "old": "        hotbarSets.main[i] = { type: 'spell', index: e.index, name: e.name, ...iconOf(e) }; // UI2: and its icon",
+    "new": "        hotbarSets.main[i] = { type: 'spell', index: e.index, name: e.name }; // UI2: and its icon",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "UI2-a-ghost-loses-its-icon",
     "file": "src/systems/quickslots.js",
-    "old": "icon: spell?.noIcon ? null : iconOf(spell).icon ?? e.icon ?? null,",
-    "new": "icon: spell?.noIcon ? null : iconOf(spell).icon ?? null,",
+    "old": "        icon: spell?.noIcon ? null : (iconOf(spell).icon ?? e.icon ?? null), // UI2: the book's icon, else the one it was slotted with (NO-ICON: none)",
+    "new": "        icon: spell?.noIcon ? null : (iconOf(spell).icon ?? null), // UI2: the book's icon, else the one it was slotted with (NO-ICON: none)",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "UI2-no-count-on-a-use-slot",
     "file": "src/systems/quickslots.js",
-    "old": "count: e.kind === 'consumable' ? count : (count > 1 ? count : null),",
-    "new": "count: e.kind === 'consumable' ? count : null,",
+    "old": "      count: e.kind === 'consumable' ? count : count > 1 ? count : null,",
+    "new": "      count: e.kind === 'consumable' ? count : null,",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "UI2-the-wear-on-every-piece",
     "file": "src/systems/quickslots.js",
-    "old": "condition: shown && showsWear(e.kind, shown) ? conditionPercentage(shown) : null,",
-    "new": "condition: shown && e.kind !== 'consumable' ? conditionPercentage(shown) : null,",
+    "old": "      condition: shown && showsWear(e.kind, shown) ? conditionPercentage(shown) : null,",
+    "new": "      condition: shown && e.kind !== 'consumable' ? conditionPercentage(shown) : null,",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "UI2-a-wear-slot-used-instead",
     "file": "src/systems/quickslots.js",
-    "old": "  if (e.kind === 'shield' || e.kind === 'wear') return (_performed = hotbarWear(entity, e, say));",
-    "new": "  if (e.kind === 'shield') return (_performed = hotbarWear(entity, e, say));",
+    "old": "  if (e.kind === 'shield' || e.kind === 'wear') return (_performed = hotbarWear(entity, e, say)); // UI2: any worn piece, the shield's way",
+    "new": "  if (e.kind === 'shield') return (_performed = hotbarWear(entity, e, say)); // UI2: any worn piece, the shield's way",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "UI2-the-lines-crossed",
     "file": "src/systems/quickslots.js",
-    "old": "say?.((shieldSlot ? HOTBAR_TEXT.shieldOn : HOTBAR_TEXT.wearOn)(itemLongName(piece)));",
-    "new": "say?.((shieldSlot ? HOTBAR_TEXT.wearOn : HOTBAR_TEXT.shieldOn)(itemLongName(piece)));",
+    "old": "  say?.((shieldSlot ? HOTBAR_TEXT.shieldOn : HOTBAR_TEXT.wearOn)(itemLongName(piece)));",
+    "new": "  say?.((shieldSlot ? HOTBAR_TEXT.wearOn : HOTBAR_TEXT.shieldOn)(itemLongName(piece)));",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "UI2-a-spell-icon-trimmed",
     "file": "src/ui/enhanced/enhancedArt.js",
-    "old": "{ box, dpr, trim: false, onReady }",
-    "new": "{ box, dpr, onReady }",
+    "old": "    trim: false,\n    onReady,",
+    "new": "    onReady,",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "UI2-a-waiter-not-heard",
     "file": "src/ui/enhanced/enhancedArt.js",
-    "old": "    if (onReady && wait && wait.size < CUT_WAKE_MAX) wait.add(onReady);\n",
-    "new": "",
+    "old": "    if (onReady && wait && wait.size < CUT_WAKE_MAX) wait.add(onReady);\n    return cuts.get(key);",
+    "new": "    return cuts.get(key);",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "UI2-the-untrimmed-fit-trimmed",
     "file": "src/ui/bitmapCanvas.js",
-    "old": "const b = trim ? opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA) : { x: 0, y: 0, w, h };",
-    "new": "const b = opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA);",
+    "old": "  const b = trim ? opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA) : { x: 0, y: 0, w, h };",
+    "new": "  const b = opaqueBounds(w, h, (x, y) => data[(y * w + x) * 4 + 3] > TRIM_ALPHA);",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "UI2-the-hint-says-four-kinds",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.';",
-    "new": "const HINT_DROP = 'Drag a weapon, shield, potion, torch or spell onto a slot. Drag a slot off the bar to clear it.';",
+    "old": "const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.'; // UI2: any item",
+    "new": "const HINT_DROP = 'Drag a weapon, shield, potion, torch or spell onto a slot. Drag a slot off the bar to clear it.'; // UI2: any item",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-UI-B1-a-quest-item-refused",
     "file": "src/systems/quickslots.js",
-    "old": " && !res.enchanted && !res.questItem) {",
-    "new": " && !res.enchanted) {",
+    "old": "  if (res?.kind === 'none' && !res.enchanted && !res.questItem) {",
+    "new": "  if (res?.kind === 'none' && !res.enchanted) {",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-UI-B4-a-refused-camp-used",
     "file": "src/systems/quickslots.js",
-    "old": "if (hooks.placeCamp(res.item ?? r.item, pack) === false) return { kind: 'refused', name: r.name, result: res };",
-    "new": "hooks.placeCamp(res.item ?? r.item, pack);",
+    "old": "    if (hooks.placeCamp(res.item ?? r.item, pack) === false) return { kind: 'refused', name: r.name, result: res };",
+    "new": "    hooks.placeCamp(res.item ?? r.item, pack);",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-UI-B6-the-wear-on-worn-pieces-alone",
     "file": "src/systems/quickslots.js",
-    "old": "  || item.group === 'Armor' || isEnchanted(item));",
-    "new": "  || (kind === 'wear' && (item.group === 'Armor' || isEnchanted(item))));",
+    "old": "  (kind === 'weapon' || kind === 'shield' || kind === 'light' || item.group === 'Armor' || isEnchanted(item)); // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)",
+    "new": "  (kind === 'weapon' ||\n    kind === 'shield' ||\n    kind === 'light' ||\n    (kind === 'wear' && (item.group === 'Armor' || isEnchanted(item)))); // AUDIT UI B6: anything enchanted - the Sanguine Rose spends its condition as a ring does (the pack's wearPct)",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-UI-B7-the-stand-in-silent",
     "file": "src/systems/quickslots.js",
-    "old": "    say?.(USE_PENDING[res.kind]);\n    return { kind: 'refused', name: r.name, result: res };\n",
-    "new": "",
+    "old": "    say?.(USE_PENDING[res.kind]);\n    return { kind: 'refused', name: r.name, result: res };\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-UI-B2-every-picture-at-slot-1-s-box",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "const s = slots.find((x) => x.face?.offsetWidth > 0 && !!x.node.classList?.contains('hb-spell') === spell);",
-    "new": "const s = slots.find((x) => x.face?.offsetWidth > 0);",
+    "old": "  const s = slots.find((x) => x.face?.offsetWidth > 0 && !!x.node.classList?.contains('hb-spell') === spell);",
+    "new": "  const s = slots.find((x) => x.face?.offsetWidth > 0);",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-UI-B2-a-spell-fitted-at-an-item-s-box",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "const fit = slotFit(!item && spellIcon != null);",
-    "new": "const fit = slotFit();",
+    "old": "  const fit = slotFit(!item && spellIcon != null);",
+    "new": "  const fit = slotFit();",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-UI-B3-the-ratio-off-a-slot",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "const barShown = barLayout > 0 ? (bar.getBoundingClientRect?.().width ?? barLayout) : 0;",
-    "new": "const barShown = barLayout > 0 ? (s?.face.getBoundingClientRect?.().width ?? barLayout) : 0;",
+    "old": "  const barShown = barLayout > 0 ? (bar.getBoundingClientRect?.().width ?? barLayout) : 0;",
+    "new": "  const barShown = barLayout > 0 ? (s?.face.getBoundingClientRect?.().width ?? barLayout) : 0;",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]

@@ -74,8 +74,8 @@
   {
     "name": "SD26-5-never-owed",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      owe(was, w);\n",
-    "new": "",
+    "old": "      owe(was, w);\n      if (w.k === 'ph' && was.fi)",
+    "new": "      if (w.k === 'ph' && was.fi)",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD26-5-driver-owes-nothing",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "      owedBlows(s, t, t0);   // AUDIT SD IV (5)",
-    "new": "      void owedBlows;   // AUDIT SD IV (5)",
+    "old": "      owedBlows(s, t, t0); // AUDIT SD IV (5): and before it too - a blow the state let go is owed all the same",
+    "new": "      void owedBlows; // AUDIT SD IV (5): and before it too - a blow the state let go is owed all the same",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD26-5-reset-not-owed",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      if (wholeArena(r) && !owed.some((o) => o.atk.i === r.i)) owed.push({ b: SD_BODY.remnant, atk: r });\n",
-    "new": "",
+    "old": "      if (wholeArena(r) && !owed.some((o) => o.atk.i === r.i)) owed.push({ b: SD_BODY.remnant, atk: r });\n      if (owed.length > SD_OWED_MAX) owed.shift();",
+    "new": "      if (owed.length > SD_OWED_MAX) owed.shift();",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD26-5-never-paid",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "      if (marks.get(o.atk.i)?.done) link.paid(o.atk.i);\n",
-    "new": "",
+    "old": "      if (marks.get(o.atk.i)?.done) link.paid(o.atk.i);\n    }",
+    "new": "    }",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SD26-5-stun-ignored",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "    const stun = state.su > 0 && state.su !== was.su ?",
-    "new": "    const stun = false ?",
+    "old": "    const stun = state.su > 0 && state.su !== was.su ? (w.k === 'stun' ? w.at : state.su - SD_STUN_MS) : Infinity; // an `st` alone after a reconnect says the stun by its end",
+    "new": "    const stun = false ? (w.k === 'stun' ? w.at : state.su - SD_STUN_MS) : Infinity; // an `st` alone after a reconnect says the stun by its end",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD26-5-stun-by-its-end-ignored",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "(w.k === 'stun' ? w.at : state.su - SD_STUN_MS)",
-    "new": "(w.k === 'stun' ? w.at : Infinity)",
+    "old": "    const stun = state.su > 0 && state.su !== was.su ? (w.k === 'stun' ? w.at : state.su - SD_STUN_MS) : Infinity; // an `st` alone after a reconnect says the stun by its end",
+    "new": "    const stun = state.su > 0 && state.su !== was.su ? (w.k === 'stun' ? w.at : Infinity) : Infinity; // an `st` alone after a reconnect says the stun by its end",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD26-5-end-ignored",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "    const end = state.ended > 0 && !was.ended ?",
-    "new": "    const end = false ?",
+    "old": "    const end = state.ended > 0 && !was.ended ? state.ended - SD_BLOWS.end.windup : Infinity; // the End said: the Remnant's blow called off",
+    "new": "    const end = false ? state.ended - SD_BLOWS.end.windup : Infinity; // the End said: the Remnant's blow called off",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SD26-5-fell-ignored",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "Math.min(state.fell ? state.fell.at : Infinity, state.lost || Infinity)",
-    "new": "Math.min(Infinity, state.lost || Infinity)",
+    "old": "    const cut = Math.min(state.fell ? state.fell.at : Infinity, state.lost || Infinity);",
+    "new": "    const cut = Math.min(Infinity, state.lost || Infinity);",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD26-5-lost-ignored",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "Math.min(state.fell ? state.fell.at : Infinity, state.lost || Infinity)",
-    "new": "Math.min(state.fell ? state.fell.at : Infinity, Infinity)",
+    "old": "    const cut = Math.min(state.fell ? state.fell.at : Infinity, state.lost || Infinity);",
+    "new": "    const cut = Math.min(state.fell ? state.fell.at : Infinity, Infinity);",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD26-5-uncounted-owed",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "    if (state.fi > 0 && mine === state.fi) {\n      const c = state.clk",
-    "new": "    if (state.fi > 0) {\n      const c = state.clk",
+    "old": "    if (state.fi > 0 && mine === state.fi) {",
+    "new": "    if (state.fi > 0) {",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD26-5-fight-carried",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "    if (state.fi !== was.fi) owed = [];\n",
-    "new": "",
+    "old": "    if (state.fi !== was.fi) owed = [];\n    if (state.fi > 0 && mine === state.fi) {",
+    "new": "    if (state.fi > 0 && mine === state.fi) {",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD26-5-unbounded",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "      if (owed.length > SD_OWED_MAX) owed.shift();\n",
-    "new": "",
+    "old": "      if (owed.length > SD_OWED_MAX) owed.shift();\n    }",
+    "new": "    }",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SD26-8-silence-ignored",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
-    "new": "(state.fell || state.ended || mine === state.fi)",
+    "old": "      if (state.fi > 0 && !state.lost && (state.fell || ((state.ended || mine === state.fi) && !silent))) return false;",
+    "new": "      if (state.fi > 0 && !state.lost && (state.fell || state.ended || mine === state.fi)) return false;",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD26-8-refusal-holds",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "refused.lost === state.lost && !silent))",
-    "new": "refused.lost === state.lost))",
+    "old": "      if (\n        refused &&\n        (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost && !silent))\n      )",
+    "new": "      if (refused && (FOR_GOOD.includes(refused.m) || (refused.fi === state.fi && refused.lost === state.lost)))",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD26-8-silent-before-any-fight",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "const silent = state.fi > 0 && t - state.heardAt",
-    "new": "const silent = t - state.heardAt",
+    "old": "      const silent = state.fi > 0 && t - state.heardAt >= SD_FIGHT_HEARD_MS;",
+    "new": "      const silent = t - state.heardAt >= SD_FIGHT_HEARD_MS;",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD26-8-ended-holds",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
-    "new": "(state.fell || state.ended || (mine === state.fi && !silent))",
+    "old": "      if (state.fi > 0 && !state.lost && (state.fell || ((state.ended || mine === state.fi) && !silent))) return false;",
+    "new": "      if (state.fi > 0 && !state.lost && (state.fell || state.ended || (mine === state.fi && !silent))) return false;",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD26-8-fallen-silent-due",
     "file": "src/net/superDungeon/sdFightLink.js",
-    "old": "(state.fell || ((state.ended || mine === state.fi) && !silent))",
-    "new": "(((state.ended || mine === state.fi) && !silent))",
+    "old": "      if (state.fi > 0 && !state.lost && (state.fell || ((state.ended || mine === state.fi) && !silent))) return false;",
+    "new": "      if (state.fi > 0 && !state.lost && (state.ended || mine === state.fi) && !silent) return false;",
     "tests": [
       "test/net/superDungeon/sd26_net.test.js"
     ]

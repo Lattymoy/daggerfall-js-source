@@ -12,8 +12,8 @@
   {
     "name": "SCALE4g-bookmark-unread",
     "file": "server-account/src/service.js",
-    "old": "  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) { try { return replicaDb(db, bookmark); } catch { /* a bookmark D1 refuses: as with none, below */ } }\n",
-    "new": "",
+    "old": "  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) {\n    try {\n      return replicaDb(db, bookmark);\n    } catch {\n      /* a bookmark D1 refuses: as with none, below */\n    }\n  }\n  return replicaDb(db, ANY_REPLICA_ROUTES.get(path) === method ? REPLICA_ANY : REPLICA_CONSTRAINT);",
+    "new": "  return replicaDb(db, ANY_REPLICA_ROUTES.get(path) === method ? REPLICA_ANY : REPLICA_CONSTRAINT);",
     "tests": [
       "test/server/scale4g.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SCALE4g-refusal-thrown",
     "file": "server-account/src/service.js",
-    "old": "try { return replicaDb(db, bookmark); } catch { /* a bookmark D1 refuses: as with none, below */ }",
-    "new": "return replicaDb(db, bookmark);",
+    "old": "    try {\n      return replicaDb(db, bookmark);\n    } catch {\n      /* a bookmark D1 refuses: as with none, below */\n    }",
+    "new": "    return replicaDb(db, bookmark);",
     "tests": [
       "test/server/scale4g.test.js"
     ],

@@ -32,10 +32,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { WATER_BIOME, climateToBiome } from './underwater/underwaterDecorations.js';
-import { rangeInt, rangeFloat } from '../systems/unleveledLoot.js';   // Random.Range(int, int) and (float, float)
-import { insideUnitSphere } from '../scenes/magicCandle.js';          // Random.insideUnitSphere
-import { roundToInt } from '../systems/mathf.js';                   // Mathf.RoundToInt
-import { FISH_NAMES } from '../systems/deepWater/deepWatersFishRows.js';   // OWN-WORK3: one name a fish, its item's and its species'
+import { rangeInt, rangeFloat } from '../systems/unleveledLoot.js'; // Random.Range(int, int) and (float, float)
+import { insideUnitSphere } from '../scenes/magicCandle.js'; // Random.insideUnitSphere
+import { roundToInt } from '../systems/mathf.js'; // Mathf.RoundToInt
+import { FISH_NAMES } from '../systems/deepWater/deepWatersFishRows.js'; // OWN-WORK3: one name a fish, its item's and its species'
 
 export { rangeInt, rangeFloat, insideUnitSphere };
 
@@ -44,8 +44,13 @@ const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
 
 /** The fish items' templates (PassiveFishSpeciesCatalog's *TemplateIndex). */
 export const FISH_TEMPLATE = Object.freeze({
-  LongnoseButterflyfish: 9001, LargemouthBass: 9002, CanaryRockfish: 9003, CrucianCarp: 9004,
-  Mackerel: 9005, WhiteZebraAngelfish: 9006, Finulon: 9007,
+  LongnoseButterflyfish: 9001,
+  LargemouthBass: 9002,
+  CanaryRockfish: 9003,
+  CrucianCarp: 9004,
+  Mackerel: 9005,
+  WhiteZebraAngelfish: 9006,
+  Finulon: 9007,
 });
 /** CustomItemTemplateIndices. */
 export const FISH_TEMPLATE_INDICES = Object.freeze([9001, 9002, 9003, 9004, 9005, 9006, 9007]);
@@ -62,19 +67,47 @@ export const FISH_TEXTURE_ARCHIVE = 216;
  * held at least 0.1 s; no biome is every biome; the depth band in order and
  * inside 0..1.
  */
-export function passiveFishSpecies(templateIndex, itemName, textureRecord, spawnWeight, billboardHeight, billboardAspect, textureName,
-  cruiseSpeedMultiplier, fleeSpeedMultiplier, minSchoolSize, maxSchoolSize, biomes, minDepthFraction, maxDepthFraction,
-  minHeightMultiplier = 1, maxHeightMultiplier = 1, fleeDartHoldMin = 1.6, fleeDartHoldMax = 2.8, textureArchive = FISH_TEXTURE_ARCHIVE) {
+export function passiveFishSpecies(
+  templateIndex,
+  itemName,
+  textureRecord,
+  spawnWeight,
+  billboardHeight,
+  billboardAspect,
+  textureName,
+  cruiseSpeedMultiplier,
+  fleeSpeedMultiplier,
+  minSchoolSize,
+  maxSchoolSize,
+  biomes,
+  minDepthFraction,
+  maxDepthFraction,
+  minHeightMultiplier = 1,
+  maxHeightMultiplier = 1,
+  fleeDartHoldMin = 1.6,
+  fleeDartHoldMax = 2.8,
+  textureArchive = FISH_TEXTURE_ARCHIVE,
+) {
   const minSchool = Math.max(1, minSchoolSize);
   const minH = Math.max(f32(0.05), f32(minHeightMultiplier));
   const dartMin = Math.max(f32(0.1), f32(fleeDartHoldMin));
   return Object.freeze({
-    templateIndex, itemName, textureArchive, textureRecord, spawnWeight,
-    billboardHeight: f32(billboardHeight), billboardAspect: f32(billboardAspect), textureName,
-    cruiseSpeedMultiplier: f32(cruiseSpeedMultiplier), fleeSpeedMultiplier: f32(fleeSpeedMultiplier),
-    minSchoolSize: minSchool, maxSchoolSize: Math.max(minSchool, maxSchoolSize),
-    minHeightMultiplier: minH, maxHeightMultiplier: Math.max(minH, f32(maxHeightMultiplier)),
-    fleeDartHoldMin: dartMin, fleeDartHoldMax: Math.max(dartMin, f32(fleeDartHoldMax)),
+    templateIndex,
+    itemName,
+    textureArchive,
+    textureRecord,
+    spawnWeight,
+    billboardHeight: f32(billboardHeight),
+    billboardAspect: f32(billboardAspect),
+    textureName,
+    cruiseSpeedMultiplier: f32(cruiseSpeedMultiplier),
+    fleeSpeedMultiplier: f32(fleeSpeedMultiplier),
+    minSchoolSize: minSchool,
+    maxSchoolSize: Math.max(minSchool, maxSchoolSize),
+    minHeightMultiplier: minH,
+    maxHeightMultiplier: Math.max(minH, f32(maxHeightMultiplier)),
+    fleeDartHoldMin: dartMin,
+    fleeDartHoldMax: Math.max(dartMin, f32(fleeDartHoldMax)),
     biomes: biomes === WATER_BIOME.None ? WATER_BIOME.Any : biomes,
     minDepthFraction: clamp01(Math.min(f32(minDepthFraction), f32(maxDepthFraction))),
     maxDepthFraction: clamp01(Math.max(f32(minDepthFraction), f32(maxDepthFraction))),
@@ -85,24 +118,161 @@ const B = WATER_BIOME;
 const species = passiveFishSpecies;
 /** PassiveFishSpeciesCatalog.All, in its order, under our own names (OWN-WORK3). */
 export const PASSIVE_FISH_SPECIES = Object.freeze([
-  species(9001, FISH_NAMES[9001], 42, 10, 0.5, 1.3958334, 'longnose_butterflyfish', 1, 1, 8, 16, B.Tropical, 0, 0.35, 0.85, 1.15, 1.1, 2.2),
-  species(9002, FISH_NAMES[9002], 43, 4, 1.2, 2.2962964, 'largemouth_bass', 1.3, 1.3, 1, 2, B.Temperate | B.Swamp | B.Desert, 0, 0.45, 0.9, 1.25, 1.8, 3.2),
-  species(9003, FISH_NAMES[9003], 44, 8, 0.5, 2.7333333, 'canary_rockfish', 1.2, 1.2, 2, 4, B.OpenOcean | B.Temperate | B.Cold | B.Desert, 0.35, 1, 0.85, 1.15, 1.3, 2.4),
-  species(9004, FISH_NAMES[9004], 45, 6, 1.2, 1.64, 'crucian_carp', 0.8, 0.8, 1, 3, B.Temperate | B.Swamp, 0, 0.4, 0.85, 1.2, 1.6, 3),
-  species(9005, FISH_NAMES[9005], 46, 15, 0.8, 2.2666667, 'mackerel', 1.1, 1.1, 5, 12, B.Any, 0.1, 1, 0.8, 1.2, 0.9, 1.8),
-  species(9006, FISH_NAMES[9006], 47, 2, 0.4, 0.625, 'white_zebra_angelfish', 1.3, 1.3, 1, 1, B.Tropical, 0, 0.35, 0.85, 1.15, 1.1, 2),
-  species(9007, FISH_NAMES[9007], 41, 5, 1.8, 1.7083334, 'finulon', 1.2, 1.2, 1, 1, B.OpenOcean | B.Cold, 0.6, 1, 0.8, 1.1, 1.4, 2.6),
+  species(
+    9001,
+    FISH_NAMES[9001],
+    42,
+    10,
+    0.5,
+    1.3958334,
+    'longnose_butterflyfish',
+    1,
+    1,
+    8,
+    16,
+    B.Tropical,
+    0,
+    0.35,
+    0.85,
+    1.15,
+    1.1,
+    2.2,
+  ),
+  species(
+    9002,
+    FISH_NAMES[9002],
+    43,
+    4,
+    1.2,
+    2.2962964,
+    'largemouth_bass',
+    1.3,
+    1.3,
+    1,
+    2,
+    B.Temperate | B.Swamp | B.Desert,
+    0,
+    0.45,
+    0.9,
+    1.25,
+    1.8,
+    3.2,
+  ),
+  species(
+    9003,
+    FISH_NAMES[9003],
+    44,
+    8,
+    0.5,
+    2.7333333,
+    'canary_rockfish',
+    1.2,
+    1.2,
+    2,
+    4,
+    B.OpenOcean | B.Temperate | B.Cold | B.Desert,
+    0.35,
+    1,
+    0.85,
+    1.15,
+    1.3,
+    2.4,
+  ),
+  species(
+    9004,
+    FISH_NAMES[9004],
+    45,
+    6,
+    1.2,
+    1.64,
+    'crucian_carp',
+    0.8,
+    0.8,
+    1,
+    3,
+    B.Temperate | B.Swamp,
+    0,
+    0.4,
+    0.85,
+    1.2,
+    1.6,
+    3,
+  ),
+  species(
+    9005,
+    FISH_NAMES[9005],
+    46,
+    15,
+    0.8,
+    2.2666667,
+    'mackerel',
+    1.1,
+    1.1,
+    5,
+    12,
+    B.Any,
+    0.1,
+    1,
+    0.8,
+    1.2,
+    0.9,
+    1.8,
+  ),
+  species(
+    9006,
+    FISH_NAMES[9006],
+    47,
+    2,
+    0.4,
+    0.625,
+    'white_zebra_angelfish',
+    1.3,
+    1.3,
+    1,
+    1,
+    B.Tropical,
+    0,
+    0.35,
+    0.85,
+    1.15,
+    1.1,
+    2,
+  ),
+  species(
+    9007,
+    FISH_NAMES[9007],
+    41,
+    5,
+    1.8,
+    1.7083334,
+    'finulon',
+    1.2,
+    1.2,
+    1,
+    1,
+    B.OpenOcean | B.Cold,
+    0.6,
+    1,
+    0.8,
+    1.1,
+    1.4,
+    2.6,
+  ),
 ]);
 
 /** A species by its item template, or null. */
-export const speciesOfTemplate = (templateIndex) => PASSIVE_FISH_SPECIES.find((s) => s.templateIndex === templateIndex) ?? null;
+export const speciesOfTemplate = (templateIndex) =>
+  PASSIVE_FISH_SPECIES.find((s) => s.templateIndex === templateIndex) ?? null;
 /** IsFishTemplateIndex. */
 export const isFishTemplateIndex = (templateIndex) => FISH_TEMPLATE_INDICES.includes(templateIndex);
 
 /** DepthWeight01: 1 inside the band, falling to 0 over DepthEdgeSoftness past either edge. */
 export function depthWeight01(s, depthFraction) {
   if (depthFraction >= s.minDepthFraction && depthFraction <= s.maxDepthFraction) return 1;
-  const off = depthFraction < s.minDepthFraction ? f32(s.minDepthFraction - depthFraction) : f32(depthFraction - s.maxDepthFraction);
+  const off =
+    depthFraction < s.minDepthFraction
+      ? f32(s.minDepthFraction - depthFraction)
+      : f32(depthFraction - s.maxDepthFraction);
   return clamp01(f32(1 - f32(off / f32(DEPTH_EDGE_SOFTNESS))));
 }
 
@@ -153,7 +323,8 @@ export function pickSpeciesByWeight(spawnable, roll) {
 /** Random.insideUnitCircle: a uniform point in the unit disc (rejection - the same distribution). */
 export function insideUnitCircle(roll) {
   for (let i = 0; i < 64; i++) {
-    const x = roll() * 2 - 1, y = roll() * 2 - 1;
+    const x = roll() * 2 - 1,
+      y = roll() * 2 - 1;
     if (x * x + y * y <= 1) return [x, y];
   }
   return [0, 0];
@@ -163,14 +334,17 @@ export function insideUnitCircle(roll) {
 const sqrMag = (v) => v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
 const normalized = (v) => {
   const m = Math.hypot(v[0], v[1], v[2]);
-  return m > 1e-5 ? [v[0] / m, v[1] / m, v[2] / m] : [0, 0, 0];   // Vector3.Normalize: zero under kEpsilon
+  return m > 1e-5 ? [v[0] / m, v[1] / m, v[2] / m] : [0, 0, 0]; // Vector3.Normalize: zero under kEpsilon
 };
 const dot3 = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const cross3 = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const lerp3 = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 /** Rodrigues: `v` turned `angle` radians about the unit `axis`. */
 function rotateAbout(v, axis, angle) {
-  const c = Math.cos(angle), s = Math.sin(angle), d = dot3(axis, v) * (1 - c), x = cross3(axis, v);
+  const c = Math.cos(angle),
+    s = Math.sin(angle),
+    d = dot3(axis, v) * (1 - c),
+    x = cross3(axis, v);
   return [v[0] * c + x[0] * s + axis[0] * d, v[1] * c + x[1] * s + axis[1] * d, v[2] * c + x[2] * s + axis[2] * d];
 }
 const K_EPSILON = 0.00001;
@@ -191,7 +365,8 @@ function orthoNormal(n) {
  */
 export function vector3Slerp(a, b, t) {
   t = clamp01(t);
-  const am = Math.hypot(a[0], a[1], a[2]), bm = Math.hypot(b[0], b[1], b[2]);
+  const am = Math.hypot(a[0], a[1], a[2]),
+    bm = Math.hypot(b[0], b[1], b[2]);
   if (am < K_EPSILON || bm < K_EPSILON) return lerp3(a, b, t);
   const len = am + (bm - am) * t;
   const d = dot3(a, b) / (am * bm);
@@ -203,7 +378,10 @@ export function vector3Slerp(a, b, t) {
   return [out[0] * len, out[1] * len, out[2] * len];
 }
 /** Vector3.Reflect. */
-export const reflect3 = (dir, n) => { const k = -2 * dot3(n, dir); return [dir[0] + n[0] * k, dir[1] + n[1] * k, dir[2] + n[2] * k]; };
+export const reflect3 = (dir, n) => {
+  const k = -2 * dot3(n, dir);
+  return [dir[0] + n[0] * k, dir[1] + n[1] * k, dir[2] + n[2] * k];
+};
 
 /**
  * The per-frame world a school and its fish read - the host fills it once
@@ -246,8 +424,12 @@ export class PassiveFishSchool {
     this.disruptedDirection = [...this.cruiseDirection];
   }
 
-  isDisrupted(time) { return time < this.disruptedUntil; }
-  currentDirection(time) { return this.isDisrupted(time) ? this.disruptedDirection : this.cruiseDirection; }
+  isDisrupted(time) {
+    return time < this.disruptedUntil;
+  }
+  currentDirection(time) {
+    return this.isDisrupted(time) ? this.disruptedDirection : this.cruiseDirection;
+  }
 
   /** ReportThreat: away from the player, flattened to a quarter of its climb, for three seconds. */
   reportThreat(awayFromPlayer, time) {
@@ -271,7 +453,9 @@ export class PassiveFishSchool {
     if (!this.isDisrupted(f.time) && f.time >= this.nextDirectionTime) this.pickCruiseDirection(f);
     const dir = this.currentDirection(f.time);
     if (sqrMag(dir) < 0.01) return;
-    const speed = this.isDisrupted(f.time) ? SCHOOL_DISRUPTED_SPEED * this.fleeSpeedMultiplier : SCHOOL_CRUISE_SPEED * this.cruiseSpeedMultiplier;
+    const speed = this.isDisrupted(f.time)
+      ? SCHOOL_DISRUPTED_SPEED * this.fleeSpeedMultiplier
+      : SCHOOL_CRUISE_SPEED * this.cruiseSpeedMultiplier;
     this.moveCenter(normalized(dir), speed, f);
   }
 
@@ -285,7 +469,11 @@ export class PassiveFishSchool {
 
   /** MoveCenter: out of the sea or into water under 2 m, both headings turn about; else the step, kept off the floor and the surface. @param {FishFrame} f */
   moveCenter(direction, speed, f) {
-    const next = [this.center[0] + direction[0] * speed * f.dt, this.center[1] + direction[1] * speed * f.dt, this.center[2] + direction[2] * speed * f.dt];
+    const next = [
+      this.center[0] + direction[0] * speed * f.dt,
+      this.center[1] + direction[1] * speed * f.dt,
+      this.center[2] + direction[2] * speed * f.dt,
+    ];
     const col = f.column(next[0], next[2]);
     if (!col || col.depth < MINIMUM_SWIM_DEPTH) {
       this.cruiseDirection = this.cruiseDirection.map((c) => -c);
@@ -372,7 +560,10 @@ export class PassiveFish {
    */
   managedUpdate(f) {
     if (this.destroyed) return false;
-    if (this.loot && this.loot.items.length === 0) { this.destroyed = true; return false; }
+    if (this.loot && this.loot.items.length === 0) {
+      this.destroyed = true;
+      return false;
+    }
     const away = this.position.map((c, i) => c - f.playerPos[i]);
     const sq = sqrMag(away);
     const distant = !this.updateDistanceVisibility(f) || sq > DISTANT_UPDATE_DISTANCE * DISTANT_UPDATE_DISTANCE;
@@ -411,7 +602,8 @@ export class PassiveFish {
 
   /** UpdateDistanceVisibility: drawn and clickable within the frame's reach, flat distance. @param {FishFrame} f */
   updateDistanceVisibility(f) {
-    const dx = this.position[0] - f.playerPos[0], dz = this.position[2] - f.playerPos[2];
+    const dx = this.position[0] - f.playerPos[0],
+      dz = this.position[2] - f.playerPos[2];
     this.visible = dx * dx + dz * dz <= f.visibleDistance * f.visibleDistance;
     return this.visible;
   }
@@ -422,7 +614,10 @@ export class PassiveFish {
     const d = this.position.map((c, i) => c - f.playerPos[i]);
     if (sqrMag(d) > OBSTACLE_PROBE_PLAYER_DISTANCE * OBSTACLE_PROBE_PLAYER_DISTANCE) return false;
     if ((f.frame + this.obstacleProbeFrameOffset) % OBSTACLE_PROBE_FRAME_INTERVAL !== 0) return false;
-    const reach = Math.max(COLLISION_PROBE_DISTANCE, Math.hypot(step[0], step[1], step[2]) * 5 + COLLISION_PROBE_MARGIN);
+    const reach = Math.max(
+      COLLISION_PROBE_DISTANCE,
+      Math.hypot(step[0], step[1], step[2]) * 5 + COLLISION_PROBE_MARGIN,
+    );
     const hit = f.raycast(this.position, this.swimDirection, reach);
     if (!hit) return false;
     let r = reflect3(this.swimDirection, hit.normal);
@@ -449,8 +644,16 @@ export class PassiveFish {
       if (f.time >= this.nextTurnTime) this.pickWanderDirection(f);
       return;
     }
-    const toPlace = [s.center[0] + this.schoolOffset[0] - this.position[0], (s.center[1] + this.schoolOffset[1] - this.position[1]) * 0.25, s.center[2] + this.schoolOffset[2] - this.position[2]];
-    const toCenter = [s.center[0] - this.position[0], (s.center[1] - this.position[1]) * 0.25, s.center[2] - this.position[2]];
+    const toPlace = [
+      s.center[0] + this.schoolOffset[0] - this.position[0],
+      (s.center[1] + this.schoolOffset[1] - this.position[1]) * 0.25,
+      s.center[2] + this.schoolOffset[2] - this.position[2],
+    ];
+    const toCenter = [
+      s.center[0] - this.position[0],
+      (s.center[1] - this.position[1]) * 0.25,
+      s.center[2] - this.position[2],
+    ];
     let dir = [...s.currentDirection(f.time)];
     dir[1] *= 0.5;
     if (sqrMag(dir) < 0.01) dir = sqrMag(this.swimDirection) > 0.01 ? [...this.swimDirection] : [0, 0, 1];
@@ -490,8 +693,13 @@ export class PassiveFish {
     }
     const lo = f.renderedSeafloorY(col, this.position[0], this.position[2]) + FISH_SEAFLOOR_CLEARANCE;
     const hi = col.oceanY - FISH_SURFACE_CLEARANCE;
-    if (this.position[1] < lo) { this.position[1] = lo; this.swimDirection[1] = Math.abs(this.swimDirection[1]); }
-    else if (this.position[1] > hi) { this.position[1] = hi; this.swimDirection[1] = -Math.abs(this.swimDirection[1]); }
+    if (this.position[1] < lo) {
+      this.position[1] = lo;
+      this.swimDirection[1] = Math.abs(this.swimDirection[1]);
+    } else if (this.position[1] > hi) {
+      this.position[1] = hi;
+      this.swimDirection[1] = -Math.abs(this.swimDirection[1]);
+    }
     this.lastSafePosition = [...this.position];
     this.hasLastSafePosition = true;
   }
@@ -506,7 +714,10 @@ export class PassiveFish {
 
   /** A recentre moved the world by `offset`: every world position the fish holds moves with it. */
   shift(offset) {
-    for (let i = 0; i < 3; i++) { this.position[i] += offset[i]; this.lastSafePosition[i] += offset[i]; }
+    for (let i = 0; i < 3; i++) {
+      this.position[i] += offset[i];
+      this.lastSafePosition[i] += offset[i];
+    }
     this.cachedColumn = null;
   }
 }
@@ -519,7 +730,7 @@ export const SPAWN_SEAFLOOR_CLEARANCE = 1.2;
 export const SPAWN_SURFACE_CLEARANCE = 1.4;
 export const SCHOOL_MEMBER_RADIUS = Object.freeze([1.2, 5]);
 export const SCHOOL_MEMBER_MIN_SEPARATION = 2.2;
-const SCHOOL_MEMBER_MIN_SEPARATION_SQ = f32(4.84);   // IsFarEnoughFromSchoolmates' literal
+const SCHOOL_MEMBER_MIN_SEPARATION_SQ = f32(4.84); // IsFarEnoughFromSchoolmates' literal
 export const SCHOOL_POSITION_ATTEMPTS = 24;
 export const DEEP_FISH_FLOOR_BIAS_START = 0.55;
 export const DEEP_FISH_FLOOR_BAND_METERS = 35;
@@ -529,7 +740,10 @@ export const MAX_LIVE_FISH_LIMIT = 1080;
 
 /** ScaledAttemptsPerPixel: 90 x the frequency over its midpoint's 3, in floats, rounded as Mathf.RoundToInt rounds. */
 export function scaledAttemptsPerPixel(frequency) {
-  return Math.max(0, roundToInt(f32(FISH_ATTEMPTS_PER_PIXEL * f32(f32(frequency) / PASSIVE_FISH_FREQUENCY_AT_MIDPOINT))));
+  return Math.max(
+    0,
+    roundToInt(f32(FISH_ATTEMPTS_PER_PIXEL * f32(f32(frequency) / PASSIVE_FISH_FREQUENCY_AT_MIDPOINT))),
+  );
 }
 
 /** GetSchoolRadius. */
@@ -575,7 +789,13 @@ export function pickFishY(minY, maxY, oceanY, s, waterDepth, roll) {
  */
 export function resolveFishPosition(f, x, z, s, waterDepth) {
   const half = 0.5 * s.billboardHeight * s.maxHeightMultiplier;
-  const r = resolveColumnRange(f, x, z, Math.max(SPAWN_SEAFLOOR_CLEARANCE, half), Math.max(SPAWN_SURFACE_CLEARANCE, half));
+  const r = resolveColumnRange(
+    f,
+    x,
+    z,
+    Math.max(SPAWN_SEAFLOOR_CLEARANCE, half),
+    Math.max(SPAWN_SURFACE_CLEARANCE, half),
+  );
   if (!r) return null;
   const y = pickFishY(r.minY, r.maxY, r.oceanY, s, waterDepth, f.roll);
   return y == null ? null : { pos: [x, y, z], column: r.column };
@@ -593,17 +813,20 @@ export function pickSchoolmatePosition(f, center, radius, existing) {
     if (c[0] * c[0] + c[1] * c[1] < 0.01) c = [1, 0];
     const m = Math.hypot(c[0], c[1]);
     const r = rangeFloat(SCHOOL_MEMBER_RADIUS[0], radius, f.roll);
-    const x = center[0] + (c[0] / m) * r, z = center[2] + (c[1] / m) * r;
+    const x = center[0] + (c[0] / m) * r,
+      z = center[2] + (c[1] / m) * r;
     const range = resolveColumnRange(f, x, z, SPAWN_SEAFLOOR_CLEARANCE, SPAWN_SURFACE_CLEARANCE);
     if (!range) continue;
     const pos = [x, rangeFloat(range.minY, range.maxY, f.roll), z];
     // ClampToSchoolDepth
     const col = f.column(x, z);
     if (col) {
-      const lo = f.renderedSeafloorY(col, x, z) + SPAWN_SEAFLOOR_CLEARANCE, hi = col.oceanY - SPAWN_SURFACE_CLEARANCE;
+      const lo = f.renderedSeafloorY(col, x, z) + SPAWN_SEAFLOOR_CLEARANCE,
+        hi = col.oceanY - SPAWN_SURFACE_CLEARANCE;
       pos[1] = Math.min(hi, Math.max(lo, center[1] + rangeFloat(-1, 1, f.roll)));
     }
-    if (!existing || existing.every((e) => sqrMag(pos.map((v, k) => v - e[k])) >= SCHOOL_MEMBER_MIN_SEPARATION_SQ)) return { pos, column: range.column };
+    if (!existing || existing.every((e) => sqrMag(pos.map((v, k) => v - e[k])) >= SCHOOL_MEMBER_MIN_SEPARATION_SQ))
+      return { pos, column: range.column };
   }
   return null;
 }
@@ -623,10 +846,14 @@ export function restoreIconAspect(src, aspect) {
   if (w === src.width) return src;
   const data = new Uint8Array(w * src.height * 4);
   for (let x = 0; x < w; x++) {
-    const sx = Math.min(src.width - 1, Math.floor(((x + 0.5) / w) * src.width));   // the Blit's point sample at the pixel's centre
+    const sx = Math.min(src.width - 1, Math.floor(((x + 0.5) / w) * src.width)); // the Blit's point sample at the pixel's centre
     for (let y = 0; y < src.height; y++) {
-      const i = (y * w + x) * 4, j = (y * src.width + sx) * 4;
-      data[i] = src.data[j]; data[i + 1] = src.data[j + 1]; data[i + 2] = src.data[j + 2]; data[i + 3] = src.data[j + 3];
+      const i = (y * w + x) * 4,
+        j = (y * src.width + sx) * 4;
+      data[i] = src.data[j];
+      data[i + 1] = src.data[j + 1];
+      data[i + 2] = src.data[j + 2];
+      data[i + 3] = src.data[j + 3];
     }
   }
   return { width: w, height: src.height, data };
@@ -640,14 +867,19 @@ export function restoreIconAspect(src, aspect) {
  * .Raycast's rule: the near crossing is behind it).
  */
 export function rayUprightCapsule(o, d, maxDist, feet, radius, height) {
-  const ya = feet[1] + radius, yb = feet[1] + Math.max(radius, height - radius);
+  const ya = feet[1] + radius,
+    yb = feet[1] + Math.max(radius, height - radius);
   let best = null;
-  const take = (t, n) => { if (t >= 0 && t <= maxDist && (!best || t < best.dist)) best = { dist: t, normal: normalized(n) }; };
+  const take = (t, n) => {
+    if (t >= 0 && t <= maxDist && (!best || t < best.dist)) best = { dist: t, normal: normalized(n) };
+  };
   // the side
-  const ox = o[0] - feet[0], oz = o[2] - feet[2];
+  const ox = o[0] - feet[0],
+    oz = o[2] - feet[2];
   const a = d[0] * d[0] + d[2] * d[2];
   if (a > 1e-12) {
-    const b = 2 * (ox * d[0] + oz * d[2]), c = ox * ox + oz * oz - radius * radius;
+    const b = 2 * (ox * d[0] + oz * d[2]),
+      c = ox * ox + oz * oz - radius * radius;
     const disc = b * b - 4 * a * c;
     if (disc >= 0) {
       const t = (-b - Math.sqrt(disc)) / (2 * a);
@@ -657,8 +889,11 @@ export function rayUprightCapsule(o, d, maxDist, feet, radius, height) {
   }
   // the caps
   for (const cy of [ya, yb]) {
-    const lx = o[0] - feet[0], ly = o[1] - cy, lz = o[2] - feet[2];
-    const b = lx * d[0] + ly * d[1] + lz * d[2], c = lx * lx + ly * ly + lz * lz - radius * radius;
+    const lx = o[0] - feet[0],
+      ly = o[1] - cy,
+      lz = o[2] - feet[2];
+    const b = lx * d[0] + ly * d[1] + lz * d[2],
+      c = lx * lx + ly * ly + lz * lz - radius * radius;
     const disc = b * b - c;
     if (disc < 0) continue;
     const t = -b - Math.sqrt(disc);

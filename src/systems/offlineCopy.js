@@ -28,7 +28,7 @@
 
 import { QUEST_OWN_SECOND_KEYS, QUEST_WORLD_SECOND_KEYS, shiftQuestStamps, markOwnClock } from './quest/questStamps.js';
 import { LEGACY_VENDOR } from './legacy/family.js';
-import { skyOfEventLaw, eventOfSkyLaw } from './skyCalendar.js';   // AUDIT WAITS B1: a banishment's days are the sky's calendar's
+import { skyOfEventLaw, eventOfSkyLaw } from './skyCalendar.js'; // AUDIT WAITS B1: a banishment's days are the sky's calendar's
 import { markRealmCopy } from './realmCopyMark.js';
 
 /** AUDIT LIVED1b F3 (S4): a save's clock - classic minutes, an unsigned count below 2^31 (4,000 years of the calendar;
@@ -36,7 +36,8 @@ import { markRealmCopy } from './realmCopyMark.js';
  *  clocks through it: a tampered 1e14 stood the character's clock still in play (a frame's minutes under half an ulp),
  *  2^53 froze the page in the calendar loop, a string or a null loaded an online character at minute 0. */
 export const SAVE_CLOCK_MAX = 2 ** 31;
-export const saneSaveClock = (v) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null);
+export const saneSaveClock = (v) =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v < SAVE_CLOCK_MAX ? v : null;
 
 // The quest system's stamps by clock, in SECONDS - the character's (TIME3: the countdowns) and the world's (the
 // journal's dates; AUDIT LIVED1b R3 (O2): each logged step's `time` with them, DFU's LogEntry.dateTime, which %qdt reads)
@@ -50,7 +51,8 @@ export { QUEST_OWN_SECOND_KEYS, QUEST_WORLD_SECOND_KEYS };
 const STOCK_DAYS_PER_YEAR = 360;
 const stockDayIndex = (d) => Math.floor(d / 1000) * STOCK_DAYS_PER_YEAR + (d % 1000) - 1;
 const stockDateOf = (i) => Math.floor(i / STOCK_DAYS_PER_YEAR) * 1000 + (i % STOCK_DAYS_PER_YEAR) + 1;
-const shiftStockDate = (d, days) => (Number.isFinite(d) && d > 1 ? stockDateOf(stockDayIndex(Math.floor(d)) + days) : d);
+const shiftStockDate = (d, days) =>
+  Number.isFinite(d) && d > 1 ? stockDateOf(stockDayIndex(Math.floor(d)) + days) : d;
 
 /** Every WORLD-clock stamp in the envelope moved by `delta` classic minutes (in place); `days` is the distance between
  *  the two clocks' calendar days, for the stamps that are days. `questOwn` says which quest countdowns stood on the
@@ -59,9 +61,12 @@ const shiftStockDate = (d, days) => (Number.isFinite(d) && d > 1 ? stockDateOf(s
 function rebaseWorldStamps(copy, delta, days, { questOwn = false } = {}) {
   if (!delta) return copy;
   if (copy.quest) shiftQuestStamps(copy.quest, delta * 60, { own: questOwn, world: true });
-  for (const r of copy.talk?.listRumorMill ?? []) if (r && Number.isFinite(r.timeLimit) && r.timeLimit > 0) r.timeLimit += delta;   // a quest rumour's 0 is "no limit"
+  for (const r of copy.talk?.listRumorMill ?? [])
+    if (r && Number.isFinite(r.timeLimit) && r.timeLimit > 0) r.timeLimit += delta; // a quest rumour's 0 is "no limit"
   if (Array.isArray(copy.spawns)) {
-    copy.spawns = copy.spawns.map((row) => (Array.isArray(row) ? row.map((v, i) => (i > 0 && Number.isFinite(v) ? v + delta : v)) : row));   // [key, seen, cleared?]
+    copy.spawns = copy.spawns.map((row) =>
+      Array.isArray(row) ? row.map((v, i) => (i > 0 && Number.isFinite(v) ? v + delta : v)) : row,
+    ); // [key, seen, cleared?]
   }
   for (const c of copy.world?.camps ?? []) {
     if (c && Number.isFinite(c.litUntil)) c.litUntil += delta;
@@ -73,7 +78,8 @@ function rebaseWorldStamps(copy, delta, days, { questOwn = false } = {}) {
   // and the world runs months ahead of a new offline calendar); and the minute each was paid, which a mate's clear is
   // read against (bountyClearPays). Never below the calendar's start.
   const ledger = copy.modData?.[BOUNTY_RECORD_VENDOR];
-  for (const h of Array.isArray(ledger?.held) ? ledger.held : []) if (h && Number.isFinite(h.takenAt)) h.takenAt = Math.max(0, h.takenAt + delta);
+  for (const h of Array.isArray(ledger?.held) ? ledger.held : [])
+    if (h && Number.isFinite(h.takenAt)) h.takenAt = Math.max(0, h.takenAt + delta);
   const paidAt = ledger?.paidAt && typeof ledger.paidAt === 'object' ? ledger.paidAt : {};
   for (const k of Object.keys(paidAt)) if (Number.isSafeInteger(paidAt[k])) paidAt[k] = Math.max(0, paidAt[k] + delta);
   if (days) {
@@ -89,7 +95,7 @@ function rebaseWorldStamps(copy, delta, days, { questOwn = false } = {}) {
       for (const c of scene?.lootContainers ?? []) {
         if (!c || typeof c !== 'object') continue;
         c.stockedDate = shiftStockDate(c.stockedDate, days);
-        c.openedOn = shiftStockDate(c.openedOn, days);   // UXB1-O: the searched lid is the stock's own day, and moves with it
+        c.openedOn = shiftStockDate(c.openedOn, days); // UXB1-O: the searched lid is the stock's own day, and moves with it
       }
     }
   }
@@ -148,18 +154,19 @@ export function offlineCopyOf(snap) {
   if (!copy || typeof copy !== 'object') return copy;
   dropLineage(copy);
   dropSeason(copy);
-  const own = saneSaveClock(copy.classicMinutes), world = saneSaveClock(copy.worldMinutes);
+  const own = saneSaveClock(copy.classicMinutes),
+    world = saneSaveClock(copy.worldMinutes);
   delete copy.worldMinutes;
   delete copy.joinFresh;
-  delete copy.realmHeld;   // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none
+  delete copy.realmHeld; // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none
   // The copy's new id was never counted by the realm, so customs can never let it in: the Online door reads the mark.
   markRealmCopy(copy);
   if (own === null || world === null) return copy;
-  if (copy.modData && typeof copy.modData === 'object') delete copy.modData[RAID_RECORD_VENDOR];   // AUDIT LIVED1b R1
-  rebaseWorldStamps(copy, Math.floor(own) - Math.floor(world), daysBetween(own, world), { questOwn: 'legacy' });   // classic minutes: the character's clock less the world's
+  if (copy.modData && typeof copy.modData === 'object') delete copy.modData[RAID_RECORD_VENDOR]; // AUDIT LIVED1b R1
+  rebaseWorldStamps(copy, Math.floor(own) - Math.floor(world), daysBetween(own, world), { questOwn: 'legacy' }); // classic minutes: the character's clock less the world's
   // AUDIT WAITS B1: the sky's days a banishment has left become days of the one clock
   moveBanishments(copy, (b) => Math.floor(own) + (skyOfEventLaw(b) - skyOfEventLaw(Math.floor(world))));
-  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);   // TIME3: every countdown is on the character's clock now
+  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60); // TIME3: every countdown is on the character's clock now
   return copy;
 }
 
@@ -183,7 +190,7 @@ export function onlineCopyOf(snap, worldNow) {
   // (save.js), whatever the stamp, and the next save the realm keeps is composed without the flag.
   copy.joinFresh = true;
   if (own === null) return copy;
-  rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own));   // TIME3: the countdowns stay - the one clock is the character's
+  rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own)); // TIME3: the countdowns stay - the one clock is the character's
   // AUDIT WAITS B1: the one clock's days a banishment has left become the sky's, from the world's minute now
   moveBanishments(copy, (b) => eventOfSkyLaw(skyOfEventLaw(Math.floor(worldNow)) + (b - Math.floor(own))));
   if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);

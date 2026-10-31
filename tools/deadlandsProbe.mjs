@@ -18,8 +18,13 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
-const W = 640, H = 400;
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
+const W = 640,
+  H = 400;
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=${W} height=${H}></canvas><script type=module>
 import { buildCourtModel, courtToDungeon, courtBraziers, COURT_FOG, LAVA_Y } from '/src/world/gate/gateArena.js';
@@ -86,10 +91,25 @@ window.ready = true;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }   // not the root: U60 keeps that the landing page's
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  } // not the root: U60 keeps that the landing page's
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -97,40 +117,78 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
   const p = await page.evaluate(() => window.probe);
   check('the pass builds', !p.err, p.err ?? '');
-  check('all three programs link in a real WebGL2 (the sky, the sea, the air\'s life)', p.linked.length === 3 && p.linked.every(Boolean), JSON.stringify(p.linked));
+  check(
+    "all three programs link in a real WebGL2 (the sky, the sea, the air's life)",
+    p.linked.length === 3 && p.linked.every(Boolean),
+    JSON.stringify(p.linked),
+  );
   const lum = (c) => c[0] + c[1] + c[2];
   const red = (c) => c[0] > c[1] && c[0] > c[2];
   const arrive = await page.evaluate(() => window.draw([0, 1.7, 18], [0, 4, 0], 40));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'arrive.png') });
   check('no GL error drawing it', arrive.error === 0, `error ${arrive.error}`);
-  check('the sea, then the sky', JSON.stringify(arrive.drawn) === JSON.stringify(['sea', 'sky']), JSON.stringify(arrive.drawn));
-  check('the overcast is the Deadlands\' red, and lit', red(arrive.sky) && lum(arrive.sky) > 30, JSON.stringify(arrive.sky));
-  check('the beam burns over the great tower', arrive.beam[0] > 200 && arrive.beam[1] > 90, `${JSON.stringify(arrive.beam)} at ${JSON.stringify(arrive.beamAt)}`);
-  check('the court\'s floor stands in front of the sky (its own dark, not the sky\'s red)', lum(arrive.floor) < lum(arrive.sky) + 60, `${JSON.stringify(arrive.floor)} vs ${JSON.stringify(arrive.sky)}`);
+  check(
+    'the sea, then the sky',
+    JSON.stringify(arrive.drawn) === JSON.stringify(['sea', 'sky']),
+    JSON.stringify(arrive.drawn),
+  );
+  check(
+    "the overcast is the Deadlands' red, and lit",
+    red(arrive.sky) && lum(arrive.sky) > 30,
+    JSON.stringify(arrive.sky),
+  );
+  check(
+    'the beam burns over the great tower',
+    arrive.beam[0] > 200 && arrive.beam[1] > 90,
+    `${JSON.stringify(arrive.beam)} at ${JSON.stringify(arrive.beamAt)}`,
+  );
+  check(
+    "the court's floor stands in front of the sky (its own dark, not the sky's red)",
+    lum(arrive.floor) < lum(arrive.sky) + 60,
+    `${JSON.stringify(arrive.floor)} vs ${JSON.stringify(arrive.sky)}`,
+  );
   const up = await page.evaluate(() => window.draw([0, 1.7, 18], [4, 30, -20], 120));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'up.png') });
-  check('the vortex\'s eye burns bright', lum(up.mid) > 250 || lum(up.beam) > 400, `${JSON.stringify(up.mid)} ${JSON.stringify(up.beam)}`);
+  check(
+    "the vortex's eye burns bright",
+    lum(up.mid) > 250 || lum(up.beam) > 400,
+    `${JSON.stringify(up.mid)} ${JSON.stringify(up.beam)}`,
+  );
   const over = await page.evaluate(() => window.draw([34, 30, 40], [0, -6, 0], 300));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'over.png') });
   const hottest = over.below.reduce((a, c) => (lum(c) > lum(a) ? c : a));
-  check('the sea burns round the court - crust plates over molten fire', red(hottest) && lum(hottest) > 200 && over.below.some((c) => lum(c) < lum(hottest) * 0.5), `hottest ${JSON.stringify(hottest)} of ${over.below.length}`);
+  check(
+    'the sea burns round the court - crust plates over molten fire',
+    red(hottest) && lum(hottest) > 200 && over.below.some((c) => lum(c) < lum(hottest) * 0.5),
+    `hottest ${JSON.stringify(hottest)} of ${over.below.length}`,
+  );
   // no edge: along the top of the overview, where the sea's rim meets the sky, the colour moves smoothly
   const steps = over.rim.map((c, i, a) => (i ? Math.abs(lum(c) - lum(a[i - 1])) : 0));
-  check('the sea\'s rim meets the sky with no edge', Math.max(...steps) < 60, JSON.stringify(over.rim));
+  check("the sea's rim meets the sky with no edge", Math.max(...steps) < 60, JSON.stringify(over.rim));
   // WB6b: the air's life over the arrival's view - the same frame without it and with it
   const bare = await page.evaluate(() => window.draw([0, 1.7, 18], [0, 4, 0], 40, false));
   const lived = await page.evaluate(() => window.draw([0, 1.7, 18], [0, 4, 0], 40, true));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'life.png') });
-  check('no GL error drawing the air\'s life', lived.error === 0, `error ${lived.error}`);
-  check('the ash, then the embers', JSON.stringify(lived.lifeDrawn) === JSON.stringify(['ash', 'embers']), JSON.stringify(lived.lifeDrawn));
-  let sparks = 0, ashen = 0;
+  check("no GL error drawing the air's life", lived.error === 0, `error ${lived.error}`);
+  check(
+    'the ash, then the embers',
+    JSON.stringify(lived.lifeDrawn) === JSON.stringify(['ash', 'embers']),
+    JSON.stringify(lived.lifeDrawn),
+  );
+  let sparks = 0,
+    ashen = 0;
   for (let i = 0; i < bare.frame.length; i += 4) {
-    const d = lived.frame[i] + lived.frame[i + 1] + lived.frame[i + 2] - (bare.frame[i] + bare.frame[i + 1] + bare.frame[i + 2]);
+    const d =
+      lived.frame[i] +
+      lived.frame[i + 1] +
+      lived.frame[i + 2] -
+      (bare.frame[i] + bare.frame[i + 1] + bare.frame[i + 2]);
     if (d > 40 && lived.frame[i] >= lived.frame[i + 1] && lived.frame[i + 1] >= lived.frame[i + 2]) sparks++;
     if (d < -12) ashen++;
   }

@@ -2,8 +2,8 @@
   {
     "name": "EGLOOK-LORDS-presence-table-moved",
     "file": "src/world/eliteGates/egKit.js",
-    "old": "EG_LORD_PRESENCE = Object.freeze({ lord: 1.6, valkynaz: 1.8, champion: 1.4 });",
-    "new": "EG_LORD_PRESENCE = Object.freeze({ lord: 1.6, valkynaz: 1.6, champion: 1.4 });",
+    "old": "export const EG_LORD_PRESENCE = Object.freeze({ lord: 1.6, valkynaz: 1.8, champion: 1.4 });",
+    "new": "export const EG_LORD_PRESENCE = Object.freeze({ lord: 1.6, valkynaz: 1.6, champion: 1.4 });",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGLOOK-LORDS-champion-at-a-lords",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (CHAMPION_KEYS.has(key)) return EG_LORD_PRESENCE.champion;",
-    "new": "if (CHAMPION_KEYS.has(key)) return EG_LORD_PRESENCE.lord;",
+    "old": "  if (CHAMPION_KEYS.has(key)) return EG_LORD_PRESENCE.champion;",
+    "new": "  if (CHAMPION_KEYS.has(key)) return EG_LORD_PRESENCE.lord;",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGLOOK-LORDS-valkynaz-at-a-lords",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "return EG_LORDS[key]?.valk ? EG_LORD_PRESENCE.valkynaz : EG_LORD_PRESENCE.lord;",
-    "new": "return EG_LORD_PRESENCE.lord;",
+    "old": "  return EG_LORDS[key]?.valk ? EG_LORD_PRESENCE.valkynaz : EG_LORD_PRESENCE.lord;",
+    "new": "  return EG_LORD_PRESENCE.lord;",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGLOOK-LORDS-mirror-095-lost",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "* ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1), presence",
-    "new": "* ((b.fl & EG_FL.mirror) !== 0 ? 1 : 1), presence",
+    "old": "    const scale = L.scale * (b.sz ?? 1) * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1),",
+    "new": "    const scale = L.scale * (b.sz ?? 1) * ((b.fl & EG_FL.mirror) !== 0 ? 1 : 1),",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGLOOK-LORDS-colossal-size-unread",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const scale = L.scale * (b.sz ?? 1)",
-    "new": "const scale = L.scale * 1",
+    "old": "    const scale = L.scale * (b.sz ?? 1) * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1),",
+    "new": "    const scale = L.scale * 1 * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1),",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js",
       "test/net/eliteGates/egz_relay.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "EGLOOK-LORDS-scale-grown-to-presence",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const scale = L.scale * (b.sz ?? 1)",
-    "new": "const scale = egPresenceOf(key) * L.scale * (b.sz ?? 1)",
+    "old": "    const scale = L.scale * (b.sz ?? 1) * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1),",
+    "new": "    const scale = egPresenceOf(key) * L.scale * (b.sz ?? 1) * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1),",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js",
       "test/net/eliteGates/egz_relay.test.js"
@@ -58,8 +58,8 @@
   {
     "name": "EGLOOK-LORDS-drawn-at-the-body",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "drawn: scale * presence,",
-    "new": "drawn: scale,",
+    "old": "      drawn: scale * presence,",
+    "new": "      drawn: scale,",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js",
       "test/net/eliteGates/egz_relay.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "EGLOOK-LORDS-hover-at-the-bodys",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "hover: fly ? EG_LORD_HOVER_M * presence : 0",
-    "new": "hover: fly ? EG_LORD_HOVER_M : 0",
+    "old": "      hover: fly ? EG_LORD_HOVER_M * presence : 0,",
+    "new": "      hover: fly ? EG_LORD_HOVER_M : 0,",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "EGLOOK-LORDS-adds-grown",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "presence: 1, drawn: L.scale,",
-    "new": "presence: 1.6, drawn: L.scale * 1.6,",
+    "old": "    return { ...L, presence: 1, drawn: L.scale, hover: (b.fl & EG_FL.fly) !== 0 ? L.hover : Math.min(L.hover, 0.9) };",
+    "new": "    return {\n      ...L,\n      presence: 1.6,\n      drawn: L.scale * 1.6,\n      hover: (b.fl & EG_FL.fly) !== 0 ? L.hover : Math.min(L.hover, 0.9),\n    };",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "EGLOOK-LORDS-quad-at-the-body",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "w = sz.w * look.drawn, h = sz.h * look.drawn;",
-    "new": "w = sz.w * look.scale, h = sz.h * look.scale;",
+    "old": "      w = sz.w * look.drawn,\n      h = sz.h * look.drawn; // EG-LOOK (section 9): the sprite at its presence",
+    "new": "      w = sz.w * look.scale,\n      h = sz.h * look.scale; // EG-LOOK (section 9): the sprite at its presence",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "EGLOOK-LORDS-feet-centred",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "d.batch.origin[1] = d.at[1];",
-    "new": "d.batch.origin[1] = d.at[1] - h / 2;",
+    "old": "    d.batch.origin[1] = d.at[1];",
+    "new": "    d.batch.origin[1] = d.at[1] - h / 2;",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "EGLOOK-LORDS-shadow-kept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (look.presence > 1) d.batch.noShadow = true;",
-    "new": "if (look.presence > 2) d.batch.noShadow = true;",
+    "old": "      if (look.presence > 1) d.batch.noShadow = true; // EG-LOOK: OW-BIG's law - a grown figure casts no giant's shadow (render/shadowPass.js)",
+    "new": "      if (look.presence > 2) d.batch.noShadow = true; // EG-LOOK: OW-BIG's law - a grown figure casts no giant's shadow (render/shadowPass.js)",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -113,8 +113,8 @@
   {
     "name": "EGLOOK-LORDS-sphere-at-the-body",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "if (d.batch.bounds) d.batch.bounds[3] = Math.hypot(w, h) * 0.5;",
-    "new": "if (d.batch.bounds) d.batch.bounds[3] = Math.hypot(sz.w * look.scale, sz.h * look.scale) * 0.5;",
+    "old": "    if (d.batch.bounds) d.batch.bounds[3] = Math.hypot(w, h) * 0.5;",
+    "new": "    if (d.batch.bounds) d.batch.bounds[3] = Math.hypot(sz.w * look.scale, sz.h * look.scale) * 0.5;",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "EGLOOK-LORDS-target-height-short",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(look.lord ? look.drawn / 1.2 : 1)",
-    "new": "(look.lord ? look.scale / 1.2 : 1)",
+    "old": "      d.target.height = (look.lord ? 2.2 : (EG_LEGION_KINDS[b.k]?.h ?? 2)) * (look.lord ? look.drawn / 1.2 : 1);",
+    "new": "      d.target.height = (look.lord ? 2.2 : (EG_LEGION_KINDS[b.k]?.h ?? 2)) * (look.lord ? look.scale / 1.2 : 1);",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "EGLOOK-LORDS-target-reach-grown",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "Math.max(0.8, (1.8 * look.scale) / 3)",
-    "new": "Math.max(0.8, (1.8 * look.drawn) / 3)",
+    "old": "      d.target.radius = look.lord ? Math.max(0.8, (1.8 * look.scale) / 3) : (EG_LEGION_KINDS[b.k]?.r ?? 0.6);",
+    "new": "      d.target.radius = look.lord ? Math.max(0.8, (1.8 * look.drawn) / 3) : (EG_LEGION_KINDS[b.k]?.r ?? 0.6);",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "EGLOOK-LORDS-bob-at-the-bodys",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "look.hover + HOVER_BOB_M * look.presence * Math.sin",
-    "new": "look.hover + HOVER_BOB_M * Math.sin",
+    "old": "      (look.hover > 0\n        ? ('aloft' in act ? act.aloft : 1) * (look.hover + HOVER_BOB_M * look.presence * Math.sin(t / 260 + b.i))\n        : 0); // EG-LOOK: a flyer's hover and bob its drawn ones; EG-FALL: dropping out of them as it falls",
+    "new": "      (look.hover > 0 ? ('aloft' in act ? act.aloft : 1) * (look.hover + HOVER_BOB_M * Math.sin(t / 260 + b.i)) : 0); // EG-LOOK: a flyer's hover and bob its drawn ones; EG-FALL: dropping out of them as it falls",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "EGLOOK-LORDS-target-on-the-ground-under-a-flyer",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "d.target.feet[1] = centre[1] + y;",
-    "new": "d.target.feet[1] = centre[1] + bodyY;",
+    "old": "      d.target.feet[1] = centre[1] + y;",
+    "new": "      d.target.feet[1] = centre[1] + bodyY;",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "EGLOOK-LORDS-stale-head-kept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "d.look = look; d.top = NaN;",
-    "new": "d.look = look;",
+    "old": "    d.top = NaN;\n    if (b.fellAt > 0 && b.role === EG_ROLE.lord) lordFall.see(b, t, look, centre); // EG-FALL: its fall's beats, its dying glow, its body left - its pictures or none",
+    "new": "    if (b.fellAt > 0 && b.role === EG_ROLE.lord) lordFall.see(b, t, look, centre); // EG-FALL: its fall's beats, its dying glow, its body left - its pictures or none",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "EGLOOK-LORDS-numerals-at-the-body",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "b.role === EG_ROLE.lord ? drawn.get(i)?.top : NaN",
-    "new": "NaN",
+    "old": "        const at = egScreenAt(vp, egGivenAt(b, centre, tg, b.role === EG_ROLE.lord ? drawn.get(i)?.top : NaN)); // EG-LOOK (section 9): over a lord's drawn head",
+    "new": "        const at = egScreenAt(vp, egGivenAt(b, centre, tg, NaN)); // EG-LOOK (section 9): over a lord's drawn head",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "EGLOOK-LORDS-head-at-the-bodys-height",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "d.top = d.at[1] + h;",
-    "new": "d.top = d.at[1] + h / 1.6;",
+    "old": "    d.top = d.at[1] + h;",
+    "new": "    d.top = d.at[1] + h / 1.6;",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "EGLOOK-LORDS-margin-dropped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const y = Number.isFinite(top) ? top + EG_GIVEN_OVER_HEAD_M",
-    "new": "const y = Number.isFinite(top) ? top",
+    "old": "    ? top + EG_GIVEN_OVER_HEAD_M",
+    "new": "    ? top",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "EGLOOK-LORDS-laws-height-swapped",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(b.role === EG_ROLE.lord ? EG_GIVEN_UP_LORD_M : EG_GIVEN_UP_M)",
-    "new": "(b.role === EG_ROLE.lord ? EG_GIVEN_UP_M : EG_GIVEN_UP_LORD_M)",
+    "old": "    : centre[1] + egBodyHeight(b, t) + (b.role === EG_ROLE.lord ? EG_GIVEN_UP_LORD_M : EG_GIVEN_UP_M);",
+    "new": "    : centre[1] + egBodyHeight(b, t) + (b.role === EG_ROLE.lord ? EG_GIVEN_UP_M : EG_GIVEN_UP_LORD_M);",
     "tests": [
       "test/net/eliteGates/eglook_lords.test.js",
       "test/net/eliteGates/egaudit4_lords_errands.test.js"

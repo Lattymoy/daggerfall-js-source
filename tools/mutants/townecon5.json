@@ -2,8 +2,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-pixel-unread",
     "file": "src/net/townEconLaw.js",
-    "old": "|| townPixelIdOf(map) !== py * 1000 + px) return null;",
-    "new": ") return null;",
+    "old": "    if (!ok(location, 9999) || townPixelIdOf(map) !== py * 1000 + px) return null;",
+    "new": "    if (!ok(location, 9999)) return null;",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -23,8 +23,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE3-pay-unbound",
     "file": "src/net/townEconLaw.js",
-    "old": "pay = pctOf(townShopFactor(p, 'Sell', seatFactor));",
-    "new": "pay = pctOf(townSaleFactor(p));",
+    "old": "    pay = pctOf(townShopFactor(p, 'Sell', seatFactor)); // AUDIT TOWN-ECON 2 PRICE-3: what a counter pays, SEAT-LOOP's bound and all",
+    "new": "    pay = pctOf(townSaleFactor(p)); // AUDIT TOWN-ECON 2 PRICE-3: what a counter pays, SEAT-LOOP's bound and all",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -33,8 +33,8 @@
   {
     "name": "TOWNECON-AUDIT2-LIV3-no-room",
     "file": "src/net/townEconLaw.js",
-    "old": "if (backers && lines.length <= TOWN_TIP_PATRONS_ROOM) lines.push(backers);",
-    "new": "if (backers) lines.push(backers);",
+    "old": "  if (backers && lines.length <= TOWN_TIP_PATRONS_ROOM) lines.push(backers); // AUDIT TOWN-ECON 2 LIV-3: where the card has room",
+    "new": "  if (backers) lines.push(backers); // AUDIT TOWN-ECON 2 LIV-3: where the card has room",
     "tests": [
       "test/systems/townecon.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC4-limit",
     "file": "server-account/src/townEcon.js",
-    "old": "WHERE kind = ?1 AND key = ?2 ORDER BY at, account')\n    .bind(TOWN_WITNESS_KIND, key).all();",
-    "new": "WHERE kind = ?1 AND key = ?2 ORDER BY at, account LIMIT 2')\n    .bind(TOWN_WITNESS_KIND, key).all();",
+    "old": "    .prepare('SELECT account, report, at FROM world_witness WHERE kind = ?1 AND key = ?2 ORDER BY at, account')",
+    "new": "    .prepare('SELECT account, report, at FROM world_witness WHERE kind = ?1 AND key = ?2 ORDER BY at, account LIMIT 2')",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC2-unseated",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/towns/watch': Object.freeze(['watch', false]),\n",
-    "new": "",
+    "old": "  '/v1/towns/watch': Object.freeze(['watch', false]),\n  '/v1/marks/find': Object.freeze(['find', false]),",
+    "new": "  '/v1/marks/find': Object.freeze(['find', false]),",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC5-full-unsaid",
     "file": "server-account/src/townEcon.js",
-    "old": "    if (src === 'watch' && day === today && counts.get(k) === TOWN_ECON_CAPS.watch) full.add(`${c.x},${c.y}`);\n",
-    "new": "",
+    "old": "    if (src === 'watch' && day === today && counts.get(k) === TOWN_ECON_CAPS.watch) full.add(`${c.x},${c.y}`);\n  };",
+    "new": "  };",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC9-skew",
     "file": "server-account/src/townEcon.js",
-    "old": "    const day = Math.min(utcDay(c.i), today);\n    if (today - day >= TOWN_ECON_DAYS) { tally('old'); continue; }",
-    "new": "    const day = utcDay(c.i);\n    if (day > today || today - day >= TOWN_ECON_DAYS) { tally('old'); continue; }",
+    "old": "    const day = Math.min(utcDay(c.i), today);\n    if (today - day >= TOWN_ECON_DAYS) {",
+    "new": "    const day = utcDay(c.i);\n    if (day > today || today - day >= TOWN_ECON_DAYS) {",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC3-days-read",
     "file": "server-account/src/townEcon.js",
-    "old": "  let towns = null, regions = null;\n  try { towns = row ? JSON.parse(String(row.towns)) : null; } catch { towns = null; }",
-    "new": "  let towns = null, regions = null;",
+    "old": "    towns = row ? JSON.parse(String(row.towns)) : null;\n  } catch {\n    towns = null;\n  }\n  try {\n    regions = row?.regions ? JSON.parse(String(row.regions)) : null;",
+    "new": "    regions = row?.regions ? JSON.parse(String(row.regions)) : null;",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC3-counted-fresh",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (row && nowS - Number(row.at) < TOWN_ECON_KEPT_S) { _keptAt = Number(row.at); return 0; }\n",
-    "new": "",
+    "old": "  if (row && nowS - Number(row.at) < TOWN_ECON_KEPT_S) {\n    _keptAt = Number(row.at);\n    return 0;\n  }\n  const towns = await countTownShares(db, nowS);",
+    "new": "  const towns = await countTownShares(db, nowS);",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -173,7 +173,7 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-unwalked",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (!v.ok || v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py) return { error: 'town-unwalked' };",
+    "old": "  if (!v.ok || v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py)\n    return { error: 'town-unwalked' };",
     "new": "  if (receipt == null) return { error: 'town-unwalked' };",
     "tests": [
       "test/server/townecon_service.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-another-pixel",
     "file": "server-account/src/townEcon.js",
-    "old": "v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py) return",
-    "new": "v.claims.s !== player.id) return",
+    "old": "  if (!v.ok || v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py)\n    return { error: 'town-unwalked' };",
+    "new": "  if (!v.ok || v.claims.s !== player.id) return { error: 'town-unwalked' };",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-strike-kept",
     "file": "server-account/src/townEcon.js",
-    "old": "    db.prepare('DELETE FROM town_econ_towns WHERE map = ?1').bind(map),\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM town_econ_towns WHERE map = ?1').bind(map),\n    db.prepare('DELETE FROM town_econ_acts WHERE map = ?1').bind(map),",
+    "new": "    db.prepare('DELETE FROM town_econ_acts WHERE map = ?1').bind(map),",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-struck-again",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (known?.struck) return { ok: true, counted: false, why: 'struck' };\n",
-    "new": "",
+    "old": "  if (known?.struck) return { ok: true, counted: false, why: 'struck' };\n  const key = townWitnessKey(t.map);",
+    "new": "  const key = townWitnessKey(t.map);",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-strike-anyone",
     "file": "server-account/src/townEcon.js",
-    "old": "export async function strikeTown({ db, nowS }, dev, env, { map } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
-    "new": "export async function strikeTown({ db, nowS }, dev, env, { map } = {}) {",
+    "old": "  if (!isDeveloper(dev, env)) return { error: 'not-developer' };\n  if (!Number.isSafeInteger(map) || map < 1 || map > 0xffffffff) return { error: 'bad-town' };",
+    "new": "  if (!Number.isSafeInteger(map) || map < 1 || map > 0xffffffff) return { error: 'bad-town' };",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -223,7 +223,7 @@
   {
     "name": "TOWNECON-AUDIT2-SVC7-switch",
     "file": "server-account/src/townEcon.js",
-    "old": "export const townsOpen = (env) => String(env?.TOWNS_OPEN ?? 'on').trim().toLowerCase() !== 'off';",
+    "old": "export const townsOpen = (env) =>\n  String(env?.TOWNS_OPEN ?? 'on')\n    .trim()\n    .toLowerCase() !== 'off';",
     "new": "export const townsOpen = (env) => !!env || true;",
     "tests": [
       "test/server/townecon_service.test.js"
@@ -233,7 +233,7 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-book-unwalked",
     "file": "src/net/townEconBook.js",
-    "old": "      if (!receipt) { waiting.set(t.map, t); if (waiting.size > 8) waiting.delete(waiting.keys().next().value); return false; }",
+    "old": "      if (!receipt) {\n        waiting.set(t.map, t);\n        if (waiting.size > 8) waiting.delete(waiting.keys().next().value);\n        return false;\n      }",
     "new": "      if (!receipt) return sendWitness(t, 'k1.none');",
     "tests": [
       "test/net/townecon_client.test.js"
@@ -243,8 +243,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-book-waiting",
     "file": "src/net/townEconBook.js",
-    "old": "      for (const [map, t] of waiting) if (t.px === c.x && t.py === c.y) { waiting.delete(map); if (!witnessStopped) sendWitness(t, /** @type {string} */ (r)); }\n",
-    "new": "",
+    "old": "      for (const [map, t] of waiting)\n        if (t.px === c.x && t.py === c.y) {\n          waiting.delete(map);\n          if (!witnessStopped) sendWitness(t, /** @type {string} */ (r));\n        }\n      if (!isTownPixel(c.x, c.y)) return false;",
+    "new": "      if (!isTownPixel(c.x, c.y)) return false;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI3-taken-done",
     "file": "src/net/townEconBook.js",
-    "old": "(r.data?.counted === true && r.data?.why !== 'taken'));",
-    "new": "r.data?.counted === true);",
+    "old": "      (r.data?.confirmed === true ||\n        r.data?.why === 'known' ||\n        r.data?.why === 'struck' ||\n        (r.data?.counted === true && r.data?.why !== 'taken'));",
+    "new": "      (r.data?.confirmed === true || r.data?.why === 'known' || r.data?.why === 'struck' || r.data?.counted === true);",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI3-stale-table",
     "file": "src/net/townEconBook.js",
-    "old": "sort((a, b) => (b[1] % TOWN_ECON_DONE) - (a[1] % TOWN_ECON_DONE))",
-    "new": "sort((a, b) => b[1] - a[1])",
+    "old": "        .sort((a, b) => (b[1] % TOWN_ECON_DONE) - (a[1] % TOWN_ECON_DONE))",
+    "new": "        .sort((a, b) => b[1] - a[1])",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -273,8 +273,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC5-book-full-kept",
     "file": "src/net/townEconBook.js",
-    "old": "      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false;   // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today\n",
-    "new": "",
+    "old": "      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false; // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today\n      const list = watchHeld().filter((w) => alive(w, t));",
+    "new": "      const list = watchHeld().filter((w) => alive(w, t));",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -283,8 +283,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI4-no-clock",
     "file": "src/net/townEconBook.js",
-    "old": "      if (nowMs() - dueLookAt >= TOWN_ECON_DUE_LOOK_MS) { dueLookAt = nowMs(); if (due()) book.claim(); }\n",
-    "new": "",
+    "old": "      if (nowMs() - dueLookAt >= TOWN_ECON_DUE_LOOK_MS) {\n        dueLookAt = nowMs();\n        if (due()) book.claim();\n      }\n      return mapId == null || !Number.isFinite(Number(mapId)) ? 0 : (shares.get(Number(mapId) >>> 0) ?? 0);",
+    "new": "      return mapId == null || !Number.isFinite(Number(mapId)) ? 0 : (shares.get(Number(mapId) >>> 0) ?? 0);",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI6-device-clock",
     "file": "src/scenes/townEconHost.js",
-    "old": "relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null), turnMs: dayTurnMs() }) : null;",
-    "new": "relayNowS: () => Math.floor(reading.nowMs() / 1000), turnMs: dayTurnMs() }) : null;",
+    "old": "        relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null),",
+    "new": "        relayNowS: () => Math.floor(reading.nowMs() / 1000),",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI1-frozen-early",
     "file": "src/scenes/townEconHost.js",
-    "old": "      if (!ready()) return econ.bandOf(town?.mapId);\n",
-    "new": "",
+    "old": "      if (!ready()) return econ.bandOf(town?.mapId);\n      const k = `${town?.mapId >>> 0}:${day}`;",
+    "new": "      const k = `${town?.mapId >>> 0}:${day}`;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -313,8 +313,8 @@
   {
     "name": "TOWNECON-AUDIT2-CLI1-plans-kept",
     "file": "src/scenes/townEconHost.js",
-    "old": "    setTimeout(() => { try { onBandsReady(); } catch { /* the trips' memo not yet stood: nothing planned on it */ } }, 0);\n",
-    "new": "",
+    "old": "    setTimeout(() => {\n      try {\n        onBandsReady();\n      } catch {\n        /* the trips' memo not yet stood: nothing planned on it */\n      }\n    }, 0);\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/net/townecon_client.test.js"
     ],
@@ -323,7 +323,7 @@
   {
     "name": "TOWNECON-AUDIT2-LIV8-wiped",
     "file": "src/scenes/townEconHost.js",
-    "old": "        if (marketBands.size >= MARKET_BANDS_MAX) marketBands.delete(/** @type {string} */ (marketBands.keys().next().value));",
+    "old": "        if (marketBands.size >= MARKET_BANDS_MAX)\n          marketBands.delete(/** @type {string} */ (marketBands.keys().next().value));",
     "new": "        if (marketBands.size >= MARKET_BANDS_MAX) marketBands.clear();",
     "tests": [
       "test/net/townecon_client.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "TOWNECON-AUDIT2-LIV11-by-name",
     "file": "src/net/chapterSheet.js",
-    "old": ".sort((a, b) => b.n - a.n || (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0))",
-    "new": ".sort((a, b) => (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0))",
+    "old": "              [...g.values()]\n                .sort((a, b) => b.n - a.n || (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0))\n                .map((e) => e.p),",
+    "new": "              [...g.values()].sort((a, b) => (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0)).map((e) => e.p),",
     "tests": [
       "test/systems/livingWorld/townecon_living.test.js"
     ],
@@ -374,7 +374,7 @@
     "name": "TOWNECON-AUDIT2-CLI2-every-ask",
     "file": "src/net/chapterSheet.js",
     "old": "      return (patronIndex.by.get(/** @type {number} */ (region)) ?? []).map((p) => ({ ...p }));",
-    "new": "      return (patronIndex.by.get(/** @type {number} */ (region)) ?? []);",
+    "new": "      return patronIndex.by.get(/** @type {number} */ (region)) ?? [];",
     "tests": [
       "test/systems/livingWorld/townecon_living.test.js"
     ],
@@ -383,8 +383,8 @@
   {
     "name": "TOWNECON-AUDIT2-LIV12-every-ask",
     "file": "src/systems/livingWorld/lines.js",
-    "old": "  if (_econNews && textRevision() === _econRev) return _econNews;\n  _econRev = textRevision();",
-    "new": "  if (_econNews && textRevision() === _econRev && false) return _econNews;\n  _econRev = textRevision();",
+    "old": "  if (_econNews && textRevision() === _econRev) return _econNews;",
+    "new": "  if (_econNews && textRevision() === _econRev && false) return _econNews;",
     "tests": [
       "test/systems/livingWorld/townecon_living.test.js"
     ],
@@ -405,8 +405,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE1-asks-plain",
     "file": "src/systems/tradeModes.js",
-    "old": "buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId })",
-    "new": "buyItemPrice(it, { quality: 10, online })",
+    "old": "  const asks = lot.map((it) =>\n    Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)),\n  ); // a gold a piece at least, as a purchase asks",
+    "new": "  const asks = lot.map((it) => Math.max(buyItemPrice(it, { quality: 10, online }), stackOf(it))); // a gold a piece at least, as a purchase asks",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -426,8 +426,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE5-floor-zero",
     "file": "src/systems/tradeModes.js",
-    "old": "  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0;",
-    "new": "  const base = 0;",
+    "old": "  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0; // PRICE-5: a gold a piece first, where the lot paid it",
+    "new": "  const base = 0; // PRICE-5: a gold a piece first, where the lot paid it",
     "tests": [
       "test/systems/townecon_audit2.test.js",
       "test/systems/townecon.test.js"
@@ -437,8 +437,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE6-value-unmarked",
     "file": "src/systems/tradeModes.js",
-    "old": "    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v);   // PRICE-6\n",
-    "new": "",
+    "old": "    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v); // PRICE-6\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -477,8 +477,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-held-counted",
     "file": "src/systems/materialsBag.js",
-    "old": "&& (counter || !counterPiece(it))) n += it.stackCount ?? 1;",
-    "new": ") n += it.stackCount ?? 1;",
+    "old": "    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1; // AUDIT TOWN-ECON 2 PRICE-2: `counter` false, a counter's pieces not",
+    "new": "    for (const it of list) if (materialKeyOfItem(it) === key) n += it.stackCount ?? 1; // AUDIT TOWN-ECON 2 PRICE-2: `counter` false, a counter's pieces not",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -487,8 +487,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-taken-first",
     "file": "src/systems/materialsBag.js",
-    "old": "  for (const marked of counter ? [false, true] : [false]) for",
-    "new": "  for (const marked of counter ? [true, false] : [false]) for",
+    "old": "  for (const marked of counter ? [false, true] : [false])",
+    "new": "  for (const marked of counter ? [true, false] : [false])",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -497,8 +497,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-page-takes",
     "file": "src/systems/materialsBag.js",
-    "old": "  for (const marked of counter ? [false, true] : [false]) for",
-    "new": "  for (const marked of [false, true]) for",
+    "old": "  for (const marked of counter ? [false, true] : [false])",
+    "new": "  for (const marked of [false, true])",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -516,7 +516,7 @@
   },
   {
     "name": "TOWNECON-AUDIT2-PRICE2-world-unwired",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        carriedHeld: (k) => bagHeldOf(playerEntity, k, { counter: false }),",
     "new": "        carriedHeld: (k) => bagHeldOf(playerEntity, k),",
     "tests": [
@@ -527,8 +527,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-socket-unmarked",
     "file": "src/systems/reforge.js",
-    "old": "  if (stone?.[PATRON_COUNTER_MARK] === true) item.socketBought",
-    "new": "  if (stone?.[PATRON_COUNTER_MARK] === 'never') item.socketBought",
+    "old": "  if (stone?.[PATRON_COUNTER_MARK] === true)",
+    "new": "  if (stone?.[PATRON_COUNTER_MARK] === 'never')",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -537,8 +537,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-extract-unmarked",
     "file": "src/systems/reforge.js",
-    "old": "  if (bought) { stone[PATRON_COUNTER_MARK] = true;",
-    "new": "  if (bought && false) { stone[PATRON_COUNTER_MARK] = true;",
+    "old": "  if (bought) {",
+    "new": "  if (bought && false) {",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -557,8 +557,8 @@
   {
     "name": "TOWNECON-AUDIT2-PRICE2-unset-kept",
     "file": "src/systems/reforge.js",
-    "old": "  unbought(item, i);   // AUDIT TOWN-ECON 2 PRICE-2: the stone shattered, its mark with it\n",
-    "new": "",
+    "old": "  unbought(item, i); // AUDIT TOWN-ECON 2 PRICE-2: the stone shattered, its mark with it\n  refold(item, player);",
+    "new": "  refold(item, player);",
     "tests": [
       "test/systems/townecon_audit2.test.js"
     ],
@@ -597,8 +597,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC3-kept-read-each-minute",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (nowS - _keptAt < TOWN_ECON_KEPT_S) return 0;   // kept here a moment ago: the quiet world's minute asks nothing (AUDIT SCALE D7)\n",
-    "new": "",
+    "old": "  if (nowS - _keptAt < TOWN_ECON_KEPT_S) return 0; // kept here a moment ago: the quiet world's minute asks nothing (AUDIT SCALE D7)\n  const row = await db.prepare('SELECT at FROM town_econ_kept WHERE id = 1').first();",
+    "new": "  const row = await db.prepare('SELECT at FROM town_econ_kept WHERE id = 1').first();",
     "tests": [
       "test/net/auditscale.test.js"
     ],

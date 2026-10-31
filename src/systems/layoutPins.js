@@ -23,7 +23,12 @@
 // This module holds no game state: the hosts hand it the save's records (`layoutRecordsOf`) and the location of a map
 // id, and refresh the towns whose answer changed.
 
-import { setLayoutPinOracle, worldDataVendorCarries, locationReplacementFilename, blockReplacementFilename } from '../formats/worldData/worldDataReplacement.js';
+import {
+  setLayoutPinOracle,
+  worldDataVendorCarries,
+  locationReplacementFilename,
+  blockReplacementFilename,
+} from '../formats/worldData/worldDataReplacement.js';
 
 /** The world-data mods that MOVE BUILDINGS in towns - the only ones a pin speaks for. A mod that adds scenery to a
  *  dungeon or a ship's deck moves no building a save keeps by key. OWN-WORK3 (2026-10-31): both are retired and no
@@ -41,7 +46,8 @@ export const LAYOUT_MOD_VERSIONS = Object.freeze({ 'beautiful-villages': '1.4.2'
 
 /** AUDIT WD3 B6: said when a town a save holds could not be stood in the layout it was left in - OWN-WORK3: a retired
  *  town mod's, the one layout no pack stands now. */
-export const PINS_DROPPED_LINE = 'Some of your places stood in a town layout this game no longer has, so they cannot be used.';
+export const PINS_DROPPED_LINE =
+  'Some of your places stood in a town layout this game no longer has, so they cannot be used.';
 
 /** The layout of a town no layout mod serves. */
 export const CLASSIC_LAYOUT = 'classic';
@@ -51,21 +57,30 @@ export const CLASSIC_LAYOUT = 'classic';
 export const HOME_LAYOUTS_WAIT_MS = 6000;
 export const HOME_LAYOUTS_RETRIES = 4;
 
-let _vendorOn = () => false;            // a layout mod loaded for this game
-let _vendorVersion = () => '';          // its version, carried in a stamp
-let _keyOfMapId = () => null;           // a town's map id -> its location key
-let _keyOfPixel = () => null;           // a map pixel -> the location key of the town on it
-let _gridOf = () => null;               // a location key -> the block names its town is laid out from now, or null
-let _keyOfTown = () => null;            // (regionIndex, town name) -> its location key (the discovery store's town id)
-let _typeOf = () => null;               // a location key -> its MapTable LocationType, or null
-let _pins = new Map();                  // locationKey -> { out:Set, in:Set, stamp, why }
-let _heldBack = new Set();              // QUEST-AUDIT II PIN-SLEEP: locationKeys whose pin this session could not honour
-let _missingVendors = new Set();        // AUDIT QA2: the layout mods switched on whose packs did not load this session
-let _displaced = () => false;           // ARENA1: a record whose building the port itself took away (world/arena/arenaCity.js)
+let _vendorOn = () => false; // a layout mod loaded for this game
+let _vendorVersion = () => ''; // its version, carried in a stamp
+let _keyOfMapId = () => null; // a town's map id -> its location key
+let _keyOfPixel = () => null; // a map pixel -> the location key of the town on it
+let _gridOf = () => null; // a location key -> the block names its town is laid out from now, or null
+let _keyOfTown = () => null; // (regionIndex, town name) -> its location key (the discovery store's town id)
+let _typeOf = () => null; // a location key -> its MapTable LocationType, or null
+let _pins = new Map(); // locationKey -> { out:Set, in:Set, stamp, why }
+let _heldBack = new Set(); // QUEST-AUDIT II PIN-SLEEP: locationKeys whose pin this session could not honour
+let _missingVendors = new Set(); // AUDIT QA2: the layout mods switched on whose packs did not load this session
+let _displaced = () => false; // ARENA1: a record whose building the port itself took away (world/arena/arenaCity.js)
 
 /** The hosts' half: which layout mods are loaded for the game (the latch) and their versions (the world-data loader,
  *  scenes/modWorldData.js), and where a town is (the world host, which holds the map). Each is kept until replaced. */
-export function configureLayoutPins({ vendorOn = null, vendorVersion = null, locationKeyOfMapId = null, locationKeyOfPixel = null, gridOf = null, locationKeyOfTown = null, locationTypeOf = null, recordDisplaced = null } = {}) {
+export function configureLayoutPins({
+  vendorOn = null,
+  vendorVersion = null,
+  locationKeyOfMapId = null,
+  locationKeyOfPixel = null,
+  gridOf = null,
+  locationKeyOfTown = null,
+  locationTypeOf = null,
+  recordDisplaced = null,
+} = {}) {
   if (typeof recordDisplaced === 'function') _displaced = recordDisplaced;
   if (typeof locationTypeOf === 'function') _typeOf = locationTypeOf;
   if (typeof locationKeyOfTown === 'function') _keyOfTown = locationKeyOfTown;
@@ -86,23 +101,34 @@ export function configureLayoutPins({ vendorOn = null, vendorVersion = null, loc
  */
 export function layoutModTouches(vendor, locationKey) {
   if (locationKey == null || locationKey < 0) return true;
-  const regionIndex = locationKey % 100, locationIndex = Math.floor(locationKey / 100);
+  const regionIndex = locationKey % 100,
+    locationIndex = Math.floor(locationKey / 100);
   if (worldDataVendorCarries(vendor, locationReplacementFilename(regionIndex, locationIndex))) return true;
   const grid = _gridOf(locationKey);
   if (!Array.isArray(grid)) return true;
-  return grid.some((name) => typeof name === 'string' && worldDataVendorCarries(vendor, blockReplacementFilename(name)));
+  return grid.some(
+    (name) => typeof name === 'string' && worldDataVendorCarries(vendor, blockReplacementFilename(name)),
+  );
 }
 
 /** A stamp: the layout mods serving a town, `vendor@version` sorted and joined by '+', or 'classic'. */
 export function layoutStampOf(vendors) {
-  const list = [...vendors].filter((v) => LAYOUT_MODS.includes(v)).sort().map((v) => `${v}@${_vendorVersion(v) || '?'}`);
+  const list = [...vendors]
+    .filter((v) => LAYOUT_MODS.includes(v))
+    .sort()
+    .map((v) => `${v}@${_vendorVersion(v) || '?'}`);
   return list.length ? list.join('+') : CLASSIC_LAYOUT;
 }
 /** The vendors a stamp names. A record written before WD3 carries none and reads as the classic layout - every such
  *  record was made in a classic town, because no layout mod existed to serve it otherwise. */
 export function stampVendors(stamp) {
   if (typeof stamp !== 'string' || !stamp || stamp === CLASSIC_LAYOUT) return new Set();
-  return new Set(stamp.split('+').map((s) => s.split('@')[0]).filter((v) => LAYOUT_MODS.includes(v)));
+  return new Set(
+    stamp
+      .split('+')
+      .map((s) => s.split('@')[0])
+      .filter((v) => LAYOUT_MODS.includes(v)),
+  );
 }
 
 /**
@@ -126,23 +152,33 @@ export function stampVendors(stamp) {
  * lay TEMPASA2 out among their own houses are the author's.
  */
 export const CURATED_CLASSIC = Object.freeze([
-  Object.freeze({ vendor: 'beautiful-villages', locationType: 6, blocks: Object.freeze(['TVRNAS00.RMB', 'TVRNAS06.RMB']), why: 'a tavern with no tavern' }),
   Object.freeze({
-    vendor: 'beautiful-villages', why: 'a temple with no house',
-    locations: Object.freeze([4401, 4501, 6442, 6801, 7001, 7842, 10142, 10801, 17760, 19442, 20301, 20701, 22901, 26201, 27201, 28560, 29401,
-      31360, 35801, 41901, 43660, 46060, 46101, 46801, 48201, 51501, 51901, 57801, 62601, 63001, 67301, 85801, 88701, 89701]),
+    vendor: 'beautiful-villages',
+    locationType: 6,
+    blocks: Object.freeze(['TVRNAS00.RMB', 'TVRNAS06.RMB']),
+    why: 'a tavern with no tavern',
+  }),
+  Object.freeze({
+    vendor: 'beautiful-villages',
+    why: 'a temple with no house',
+    locations: Object.freeze([
+      4401, 4501, 6442, 6801, 7001, 7842, 10142, 10801, 17760, 19442, 20301, 20701, 22901, 26201, 27201, 28560, 29401,
+      31360, 35801, 41901, 43660, 46060, 46101, 46801, 48201, 51501, 51901, 57801, 62601, 63001, 67301, 85801, 88701,
+      89701,
+    ]),
   }),
 ]);
 /** TEMPLE-HOME: the towns the curation names by key (worldDataVariants.js makeLocationKey) -> the mods kept out. */
 const CURATED_TOWNS = new Map();
-for (const c of CURATED_CLASSIC) for (const k of c.locations ?? []) (CURATED_TOWNS.get(k) ?? CURATED_TOWNS.set(k, []).get(k)).push(c.vendor);
+for (const c of CURATED_CLASSIC)
+  for (const k of c.locations ?? []) (CURATED_TOWNS.get(k) ?? CURATED_TOWNS.set(k, []).get(k)).push(c.vendor);
 /** The mods the curation keeps out of a town, or null. */
-let _curating = false;   // a resolver that reads the location through the door asks the door's oracle again: no answer inside
+let _curating = false; // a resolver that reads the location through the door asks the door's oracle again: no answer inside
 export function curatedOut(locationKey) {
   if (locationKey == null || locationKey < 0 || _curating) return null;
   _curating = true;
   try {
-    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null;   // TEMPLE-HOME: by the town's key
+    let out = CURATED_TOWNS.has(locationKey) ? new Set(CURATED_TOWNS.get(locationKey)) : null; // TEMPLE-HOME: by the town's key
     const type = _typeOf(locationKey);
     if (type == null) return out;
     for (const c of CURATED_CLASSIC) {
@@ -151,7 +187,9 @@ export function curatedOut(locationKey) {
       if (Array.isArray(grid) && grid.some((n) => c.blocks.includes(n))) (out ??= new Set()).add(c.vendor);
     }
     return out;
-  } finally { _curating = false; }
+  } finally {
+    _curating = false;
+  }
 }
 /** A curated town's standing pin (no save holds it). */
 const curatedPin = (locationKey) => {
@@ -159,7 +197,7 @@ const curatedPin = (locationKey) => {
   return out ? { out, in: new Set(), stamp: CLASSIC_LAYOUT, why: 'curated' } : null;
 };
 /** Whether a mod serves a town, the curation aside of any save's pin - what a record is stamped against. */
-const servesUnpinned = (v, locationKey) => !!_vendorOn(v) && !(curatedOut(locationKey)?.has(v));
+const servesUnpinned = (v, locationKey) => !!_vendorOn(v) && !curatedOut(locationKey)?.has(v);
 
 /** The pin on a town, or null - the door's oracle: a save's, else the curation's. */
 export const pinAt = (locationKey) => _pins.get(locationKey) ?? curatedPin(locationKey);
@@ -168,18 +206,20 @@ setLayoutPinOracle(pinAt);
 /** The layout a town is served in NOW - what a record made there now is stamped with. */
 export function layoutStampAt(locationKey) {
   const p = locationKey == null ? null : pinAt(locationKey);
-  const live = LAYOUT_MODS.filter((v) => (p?.in.has(v)) || (_vendorOn(v) && !p?.out.has(v)));
+  const live = LAYOUT_MODS.filter((v) => p?.in.has(v) || (_vendorOn(v) && !p?.out.has(v)));
   return layoutStampOf(live.filter((v) => layoutModTouches(v, locationKey)));
 }
 /** The layout of the town a map id names, now. A town the host cannot place is no pinned town (a pin is keyed by the
  *  same answer), so it is served as the mods loaded for the game serve every town. */
 export const layoutStampOfMapId = (mapId) => layoutStampAt(mapId ? _keyOfMapId(mapId) : null);
 /** The layout of the town on a map pixel, now. */
-export const layoutStampOfPixel = (x, y) => layoutStampAt(Number.isFinite(x) && Number.isFinite(y) ? _keyOfPixel(x, y) : null);
+export const layoutStampOfPixel = (x, y) =>
+  layoutStampAt(Number.isFinite(x) && Number.isFinite(y) ? _keyOfPixel(x, y) : null);
 /** Whether two stamps are one layout - the same layout mods, whatever versions they name. A missing stamp is the
  *  classic layout (stampVendors). */
 export function layoutsMatch(a, b) {
-  const va = stampVendors(a), vb = stampVendors(b);
+  const va = stampVendors(a),
+    vb = stampVendors(b);
   return va.size === vb.size && [...va].every((v) => vb.has(v));
 }
 /**
@@ -234,11 +274,19 @@ export function recordHeldBack(rec) {
   return false;
 }
 /** The location key of the town a map id names, or null - the hosts' resolver, shared. */
-export const layoutLocationKeyOfMapId = (mapId) => (mapId ? _keyOfMapId(mapId) ?? null : null);
+export const layoutLocationKeyOfMapId = (mapId) => (mapId ? (_keyOfMapId(mapId) ?? null) : null);
 
 /** How strongly a kind of record holds its town: the house outranks the rest (a quest site made in a town a house
  *  pinned is made in the house's layout anyway - the strongest record's stamp is the town's). */
-export const RECORD_WEIGHT = Object.freeze({ house: 5, room: 4, quest: 3, questor: 3, inside: 2, anchor: 2, repair: 1 });
+export const RECORD_WEIGHT = Object.freeze({
+  house: 5,
+  room: 4,
+  quest: 3,
+  questor: 3,
+  inside: 2,
+  anchor: 2,
+  repair: 1,
+});
 
 /**
  * The pins a save's records ask for. `records`: [{ locationKey, stamp, kind }] - a record whose town is unknown
@@ -257,13 +305,20 @@ export function pinsFrom(records) {
   const pins = new Map();
   for (const [key, { r }] of best) {
     const want = stampVendors(r.stamp);
-    const out = new Set(), inn = new Set();
+    const out = new Set(),
+      inn = new Set();
     for (const v of LAYOUT_MODS) {
-      const on = servesUnpinned(v, key);   // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own
-      if (on && !want.has(v) && layoutModTouches(v, key)) out.add(v);   // a mod that changes nothing here needs no pin
-      if (!on && want.has(v)) inn.add(v);   // the stamp names it only where it changed the town
+      const on = servesUnpinned(v, key); // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own
+      if (on && !want.has(v) && layoutModTouches(v, key)) out.add(v); // a mod that changes nothing here needs no pin
+      if (!on && want.has(v)) inn.add(v); // the stamp names it only where it changed the town
     }
-    if (out.size || inn.size) pins.set(key, { out, in: inn, stamp: typeof r.stamp === 'string' && r.stamp ? r.stamp : CLASSIC_LAYOUT, why: r.kind });
+    if (out.size || inn.size)
+      pins.set(key, {
+        out,
+        in: inn,
+        stamp: typeof r.stamp === 'string' && r.stamp ? r.stamp : CLASSIC_LAYOUT,
+        why: r.kind,
+      });
   }
   return pins;
 }
@@ -276,7 +331,13 @@ export function setLayoutPins(pins, { heldBack = null, missing = null } = {}) {
   _missingVendors = new Set(missing ?? []);
   const next = pins instanceof Map ? pins : new Map();
   const changed = new Set();
-  const same = (a, b) => !!a && !!b && a.out.size === b.out.size && a.in.size === b.in.size && [...a.out].every((v) => b.out.has(v)) && [...a.in].every((v) => b.in.has(v));
+  const same = (a, b) =>
+    !!a &&
+    !!b &&
+    a.out.size === b.out.size &&
+    a.in.size === b.in.size &&
+    [...a.out].every((v) => b.out.has(v)) &&
+    [...a.in].every((v) => b.in.has(v));
   for (const [k, p] of next) if (!same(p, _pins.get(k))) changed.add(k);
   for (const k of _pins.keys()) if (!next.has(k)) changed.add(k);
   _pins = next;
@@ -292,7 +353,12 @@ export async function admitPinnedPacks(pins, ensure) {
   let dropped = 0;
   const heldBack = new Set();
   for (const [key, pin] of pins) {
-    for (const v of [...pin.in]) if (!(await ensure(v))) { pin.in.delete(v); dropped++; heldBack.add(key); }
+    for (const v of [...pin.in])
+      if (!(await ensure(v))) {
+        pin.in.delete(v);
+        dropped++;
+        heldBack.add(key);
+      }
   }
   return { dropped, heldBack };
 }
@@ -321,18 +387,32 @@ export const layoutPins = () => new Map(_pins);
  *     (worldModes.js restoreInterior), and a door of the same block in another layout is another building
  * The resolvers default to the hosts' (configureLayoutPins).
  */
-export function layoutRecordsOf({ houses = [], rooms = [], sites = [], questors = [], repairs = [], anchor = null, inside = null } = {}, { locationKeyOfMapId = _keyOfMapId, locationKeyOfPixel = _keyOfPixel } = {}) {
+export function layoutRecordsOf(
+  { houses = [], rooms = [], sites = [], questors = [], repairs = [], anchor = null, inside = null } = {},
+  { locationKeyOfMapId = _keyOfMapId, locationKeyOfPixel = _keyOfPixel } = {},
+) {
   const out = [];
-  for (const h of houses ?? []) if (h && h.buildingKey > 0 && h.mapId) out.push({ locationKey: locationKeyOfMapId(h.mapId), stamp: h.layout, kind: 'house' });
-  for (const r of rooms ?? []) if (r && r.buildingKey > 0 && r.mapId) out.push({ locationKey: locationKeyOfMapId(r.mapId), stamp: r.layout, kind: 'room' });
+  for (const h of houses ?? [])
+    if (h && h.buildingKey > 0 && h.mapId)
+      out.push({ locationKey: locationKeyOfMapId(h.mapId), stamp: h.layout, kind: 'house' });
+  for (const r of rooms ?? [])
+    if (r && r.buildingKey > 0 && r.mapId)
+      out.push({ locationKey: locationKeyOfMapId(r.mapId), stamp: r.layout, kind: 'room' });
   for (const site of sites ?? []) {
-    const s = site?.unseated ? { ...site, ...site.unseated } : site;   // FIELD BUGS 2026-10-04d RESEAT-GAPS: an unseated site still asks for the layout it was chosen in (place.js reseatMovedSite)
-    if (s && s.buildingKey > 0 && s.mapId) out.push({ locationKey: locationKeyOfMapId(s.mapId), stamp: s.layout, kind: 'quest' });
+    const s = site?.unseated ? { ...site, ...site.unseated } : site; // FIELD BUGS 2026-10-04d RESEAT-GAPS: an unseated site still asks for the layout it was chosen in (place.js reseatMovedSite)
+    if (s && s.buildingKey > 0 && s.mapId)
+      out.push({ locationKey: locationKeyOfMapId(s.mapId), stamp: s.layout, kind: 'quest' });
   }
-  for (const q of questors ?? []) if (q && q.buildingKey > 0 && q.mapID) out.push({ locationKey: locationKeyOfMapId(q.mapID), stamp: q.layout, kind: 'questor' });
-  for (const d of repairs ?? []) if (d && d.buildingKey > 0 && d.mapId) out.push({ locationKey: locationKeyOfMapId(d.mapId), stamp: d.layout, kind: 'repair' });
-  if (anchor?.insideBuilding && anchor.pixel) out.push({ locationKey: locationKeyOfPixel(anchor.pixel.x, anchor.pixel.y), stamp: anchor.layout, kind: 'anchor' });
-  if (inside?.pixel) out.push({ locationKey: locationKeyOfPixel(inside.pixel.x, inside.pixel.y), stamp: inside.layout, kind: 'inside' });
+  for (const q of questors ?? [])
+    if (q && q.buildingKey > 0 && q.mapID)
+      out.push({ locationKey: locationKeyOfMapId(q.mapID), stamp: q.layout, kind: 'questor' });
+  for (const d of repairs ?? [])
+    if (d && d.buildingKey > 0 && d.mapId)
+      out.push({ locationKey: locationKeyOfMapId(d.mapId), stamp: d.layout, kind: 'repair' });
+  if (anchor?.insideBuilding && anchor.pixel)
+    out.push({ locationKey: locationKeyOfPixel(anchor.pixel.x, anchor.pixel.y), stamp: anchor.layout, kind: 'anchor' });
+  if (inside?.pixel)
+    out.push({ locationKey: locationKeyOfPixel(inside.pixel.x, inside.pixel.y), stamp: inside.layout, kind: 'inside' });
   return out;
 }
 

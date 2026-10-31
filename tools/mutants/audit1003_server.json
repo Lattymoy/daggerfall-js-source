@@ -49,8 +49,8 @@
   {
     "name": "AUDIT1003-S2-the-signed-level-uncapped",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "cl <= ARENA_CL_MAX ? cl : arenaLv(lv);\n  return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
-    "new": "cl <= ARENA_CL_MAX ? cl : Math.min(arenaLv(lv), ladderLevelCap(tier));\n  return ladderVitalityAt(level);",
+    "old": "  const level = Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX ? cl : arenaLv(lv);\n  return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
+    "new": "  const level =\n    Number.isSafeInteger(cl) && cl >= ARENA_CL_MIN && cl <= ARENA_CL_MAX\n      ? cl\n      : Math.min(arenaLv(lv), ladderLevelCap(tier));\n  return ladderVitalityAt(level);",
     "tests": [
       "test/net/arena/audit1003_server.test.js",
       "test/net/arena/arena4b_trust.test.js"
@@ -59,8 +59,8 @@
   {
     "name": "AUDIT1003-S2-the-cap-off-another-tier",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
-    "new": "return ladderVitalityAt(Math.min(level, ladderLevelCap(9)));",
+    "old": "  return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
+    "new": "  return ladderVitalityAt(Math.min(level, ladderLevelCap(9)));",
     "tests": [
       "test/net/arena/audit1003_server.test.js",
       "test/net/arena/arena4b_trust.test.js"
@@ -124,8 +124,8 @@
   {
     "name": "AUDIT1003-S4-reused-unsaid-on-the-client",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]);",
-    "new": "if (d?.recorded === false && (d.why === 'order' || d.why === 'forfeit')) say(O[d.why]);",
+    "old": "    if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]); // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse; AUDIT ARENA-LADDER: a forfeit's",
+    "new": "    if (d?.recorded === false && (d.why === 'order' || d.why === 'forfeit')) say(O[d.why]); // AUDIT PRE-MERGE 1003 S4: a reused bout's own words - and, never `claimed`, no purse; AUDIT ARENA-LADDER: a forfeit's",
     "tests": [
       "test/net/arena/audit1003_server.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "AUDIT1003-S4-reused-paid-as-claimed-on-the-client",
     "file": "src/scenes/arena/arenaOnline.js",
-    "old": "else if (d?.why === 'claimed') won = c.r === 1;",
-    "new": "else if (d?.why === 'claimed' || d?.why === 'reused') won = c.r === 1;",
+    "old": "    else if (d?.why === 'claimed')",
+    "new": "    else if (d?.why === 'claimed' || d?.why === 'reused')",
     "tests": [
       "test/net/arena/audit1003_server.test.js"
     ]

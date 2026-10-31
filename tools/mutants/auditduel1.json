@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-DUEL1-A3-every-stranger-answered",
     "file": "src/net/duel/duelSession.js",
-    "old": "          if (busy) { if (!engagedElsewhere(from)) answer(",
-    "new": "          if (busy) { if (true) answer(",
+    "old": "            if (!engagedElsewhere(from)) answer(from, { k: 'no', to: from, s: d.s });",
+    "new": "            if (true) answer(from, { k: 'no', to: from, s: d.s });",
     "tests": [
       "test/combat/auditduel1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-DUEL1-A3-the-limiter-per-frame",
     "file": "src/net/duel/duelSession.js",
-    "old": "    if (t - (answered.get(peer) ?? -Infinity) < DUEL_REASK_MS) return false;\n",
-    "new": "",
+    "old": "    if (t - (answered.get(peer) ?? -Infinity) < DUEL_REASK_MS) return false;\n    if (answered.size > 64) for (const [p, at] of answered) if (t - at >= DUEL_REASK_MS) answered.delete(p);",
+    "new": "    if (answered.size > 64) for (const [p, at] of answered) if (t - at >= DUEL_REASK_MS) answered.delete(p);",
     "tests": [
       "test/combat/auditduel1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-DUEL1-A5-the-cancel-without-its-quiet",
     "file": "src/net/duel/duelSession.js",
-    "old": "incoming.delete(from); quiet.set(from, now()); if (d.why",
-    "new": "incoming.delete(from); if (d.why",
+    "old": "            quiet.set(from, now());\n            if (d.why === 'timeout') say(`${nameOf(from)}'s challenge lapsed.`);",
+    "new": "            if (d.why === 'timeout') say(`${nameOf(from)}'s challenge lapsed.`);",
     "tests": [
       "test/combat/auditduel1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-DUEL1-D5-a-gone-peers-ask-kept",
     "file": "src/net/duel/duelSession.js",
-    "old": "      for (const p of [...incoming.keys()]) if (!reaches(p)) mgr.peerGone(p);\n",
-    "new": "",
+    "old": "      for (const p of [...incoming.keys()]) if (!reaches(p)) mgr.peerGone(p);\n      for (const x of [outgoing, waiting, starting]) if (x && !reaches(x.peer)) mgr.peerGone(x.peer);",
+    "new": "      for (const x of [outgoing, waiting, starting]) if (x && !reaches(x.peer)) mgr.peerGone(x.peer);",
     "tests": [
       "test/combat/auditduel1.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-DUEL1-B6-the-trail-unread",
     "file": "src/combat/duelCombat.js",
-    "old": "  if (melee) return mines.some((m) => {",
-    "new": "  if (melee) return [mines.at(-1)].some((m) => {",
+    "old": "    return mines.some((m) => {",
+    "new": "    return [mines.at(-1)].some((m) => {",
     "tests": [
       "test/combat/auditduel1.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "AUDIT-DUEL1-D3-the-pad-ignored",
     "file": "src/ui/quickslotTags.js",
-    "old": "controller: !!pad?.controller",
-    "new": "controller: false",
+    "old": "  const tag = quickslotTag(CELL_ACTIONS.main, {\n    bindings: store,\n    controller: !!pad?.controller,\n    family: pad?.family ?? 'xbox',\n  });",
+    "new": "  const tag = quickslotTag(CELL_ACTIONS.main, { bindings: store, controller: false, family: pad?.family ?? 'xbox' });",
     "tests": [
       "test/systems/disc21.test.js"
     ]

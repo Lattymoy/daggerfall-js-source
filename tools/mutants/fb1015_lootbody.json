@@ -2,8 +2,8 @@
   {
     "name": "LOOT-BODY-no-flat-shown-first",
     "file": "src/characters/foeBodies.js",
-    "old": "  for (const f of foes) { const b = corpseFlat(f); if (b) b.castOnly = false; }\n",
-    "new": "\n",
+    "old": "  for (const f of foes) {\n    const b = corpseFlat(f);\n    if (b) b.castOnly = false;\n  }\n  if (!lane || !(lane.offered > 0)) return false;",
+    "new": "  if (!lane || !(lane.offered > 0)) return false;",
     "tests": [
       "test/render/fb1015_lootbody.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LOOT-BODY-a-standing-body-flat-drawn",
     "file": "src/characters/foeBodies.js",
-    "old": "if (b) b.castOnly = lane.has('foe', idOf(f)); }",
-    "new": "if (b) b.castOnly = false; }",
+    "old": "    if (b) b.castOnly = lane.has('foe', idOf(f));",
+    "new": "    if (b) b.castOnly = false;",
     "tests": [
       "test/render/fb1015_lootbody.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LOOT-BODY-no-body-drawn",
     "file": "src/characters/foeBodies.js",
-    "old": "  try { lane.draw(canvas, { proj, view, eye }); }",
-    "new": "  try { /* none */ }",
+    "old": "    lane.draw(canvas, { proj, view, eye });",
+    "new": "    /* none */",
     "tests": [
       "test/render/fb1015_lootbody.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LOOT-BODY-the-window-steps-the-bodies",
     "file": "src/characters/foeBodies.js",
-    "old": "  if (!lane || !(lane.offered > 0)) return false;",
-    "new": "  if (!lane || !(lane.offered > 0)) return false; lane.end(1 / 60, eye);",
+    "old": "  for (const f of stood) {",
+    "new": "  lane.end(1 / 60, eye);\n  for (const f of stood) {",
     "tests": [
       "test/render/fb1015_lootbody.test.js"
     ]

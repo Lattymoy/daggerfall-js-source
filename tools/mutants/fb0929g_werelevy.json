@@ -2,8 +2,8 @@
   {
     "name": "WERE-LEVY-the-stop-refused-through-the-setter",
     "file": "src/scenes/standingHost.js",
-    "old": "        playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy;   // the levy's own write (WERE-LEVY: the field)",
-    "new": "        setCrimeCommitted(playerEntity, CRIMES.Criminal_Conspiracy);   // the levy's own write (WERE-LEVY: the field)",
+    "old": "          playerEntity.crimeCommitted = CRIMES.Criminal_Conspiracy; // the levy's own write (WERE-LEVY: the field)",
+    "new": "          setCrimeCommitted(playerEntity, CRIMES.Criminal_Conspiracy); // the levy's own write (WERE-LEVY: the field)",
     "tests": [
       "test/systems/beastform.test.js",
       "test/systems/rep1_watchstop.test.js"

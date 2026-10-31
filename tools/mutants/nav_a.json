@@ -29,8 +29,8 @@
   {
     "name": "NAV-A-the-struck-edge",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "else if (s.state === SHIP_STATES.afloat && s.hull <= s.maxHull * STRUCK_AT) { s.state = SHIP_STATES.struck; douse(); }",
-    "new": "else if (s.state === SHIP_STATES.afloat && s.hull < s.maxHull * STRUCK_AT) { s.state = SHIP_STATES.struck; douse(); }",
+    "old": "        else if (s.state === SHIP_STATES.afloat && s.hull <= s.maxHull * STRUCK_AT) {",
+    "new": "        else if (s.state === SHIP_STATES.afloat && s.hull < s.maxHull * STRUCK_AT) {",
     "tests": [
       "test/systems/naval/nav_a_guns.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NAV-A-a-fire-topping-up",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "    if (s.fires.length < FIRE_STACK) { s.fires.push(f); return; }",
-    "new": "    if (s.fires.length) { s.fires[0].t = f.t; return; }\n    if (s.fires.length < FIRE_STACK) { s.fires.push(f); return; }",
+    "old": "    if (s.fires.length < FIRE_STACK) {",
+    "new": "    if (s.fires.length) {\n      s.fires[0].t = f.t;\n      return;\n    }\n    if (s.fires.length < FIRE_STACK) {",
     "tests": [
       "test/systems/naval/nav_a_guns.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "NAV-A-the-reach-ignored",
     "file": "src/systems/naval/navalShots.js",
-    "old": "insideGrown(k.box, f.pos, FLOTSAM_REACH));",
-    "new": "insideGrown(k.box, f.pos, 1e9));",
+    "old": "        const c = (deps.collectors?.() ?? []).find((k) => insideGrown(k.box, f.pos, FLOTSAM_REACH));",
+    "new": "        const c = (deps.collectors?.() ?? []).find((k) => insideGrown(k.box, f.pos, 1e9));",
     "tests": [
       "test/systems/naval/nav_a_guns.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "NAV-A-resolve-dropped",
     "file": "src/systems/naval/navalShots.js",
-    "old": "zone: hitZone(ship.e.point[1] - seaY), dir, resolve: b.resolve,",
-    "new": "zone: hitZone(ship.e.point[1] - seaY), dir, resolve: true,",
+    "old": "        zone: hitZone(ship.e.point[1] - seaY),\n        dir,\n        resolve: b.resolve,\n      });",
+    "new": "        zone: hitZone(ship.e.point[1] - seaY),\n        dir,\n        resolve: true,\n      });",
     "tests": [
       "test/systems/naval/nav_a_guns.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "NAV-A-the-ripple-ignored",
     "file": "src/systems/naval/navalShots.js",
-    "old": "born: clock - back + Math.max(0, l.delay ?? 0),",
-    "new": "born: clock - back,",
+    "old": "        born: clock - back + Math.max(0, l.delay ?? 0),",
+    "new": "        born: clock - back,",
     "tests": [
       "test/systems/naval/nav_a_guns.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "NAV-A-the-launch-left-behind",
     "file": "src/systems/naval/navalShots.js",
-    "old": "    for (const b of balls) for (const k of ['p0', 'prev', 'pos']) { b[k][0] += o[0]; b[k][1] += o[1]; b[k][2] += o[2]; }",
-    "new": "    for (const b of balls) for (const k of ['prev', 'pos']) { b[k][0] += o[0]; b[k][1] += o[1]; b[k][2] += o[2]; }",
+    "old": "      for (const k of ['p0', 'prev', 'pos']) {",
+    "new": "      for (const k of ['prev', 'pos']) {",
     "tests": [
       "test/systems/naval/nav_a_guns.test.js"
     ]

@@ -5,8 +5,8 @@
     "tests": [
       "test/systems/quest/quest_uid1.test.js"
     ],
-    "old": "    if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');\n    this.quests.set(quest.uid, quest);\n    if (isMainStoryQuest",
-    "new": "    this.quests.set(quest.uid, quest);\n    if (isMainStoryQuest"
+    "old": "    if (this.quests.has(quest.uid)) throw new Error('An item with the same key has already been added.');\n    this.quests.set(quest.uid, quest);",
+    "new": "    this.quests.set(quest.uid, quest);"
   },
   {
     "name": "QU1-load-keeps-the-offer",
@@ -23,8 +23,8 @@
     "tests": [
       "test/systems/quest/quest_uid1.test.js"
     ],
-    "old": "    if (!this.offeredQuest) return { kind: 'close' };   // QUEST-UID1",
-    "new": "    // QUEST-UID1"
+    "old": "    if (!this.offeredQuest) return { kind: 'close' }; // QUEST-UID1: a load took the offer away under its popup",
+    "new": "    // QUEST-UID1: a load took the offer away under its popup"
   },
   {
     "name": "QU1-reset-keeps-the-pool",
@@ -32,8 +32,8 @@
     "tests": [
       "test/systems/quest/quest_uid1.test.js"
     ],
-    "old": "  reset() {\n    this.offeredQuest = null;\n    this.questPool = null;",
-    "new": "  reset() {\n    this.offeredQuest = null;"
+    "old": "  reset() {\n    this.offeredQuest = null;\n    this.questPool = null;\n    this.menu = false;\n    this._guild = null;",
+    "new": "  reset() {\n    this.offeredQuest = null;\n    this.menu = false;\n    this._guild = null;"
   },
   {
     "name": "QU1-pick-without-a-pool",
@@ -41,7 +41,7 @@
     "tests": [
       "test/systems/quest/quest_uid1.test.js"
     ],
-    "old": "    if (!this.questPool) return null;   // QUEST-UID1",
-    "new": "    // QUEST-UID1"
+    "old": "    if (!this.questPool) return null; // QUEST-UID1: a load took the pool away under its picker",
+    "new": "    // QUEST-UID1: a load took the pool away under its picker"
   }
 ]

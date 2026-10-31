@@ -28,12 +28,12 @@
 // (ui/naval/navalHud.js drawNavalHud's `under`).
 import { PIXEL_STACK } from '../pixelifyFive.js';
 import { injectEnhancedStyle } from './enhancedStyle.js';
-import { placeHudPieces } from '../hud/hudPlacer.js';   // HUD-HELM: a new panel stands where HUD-MOVE put it from its first frame
-import { isTouchDevice } from '../touch/touchDevice.js';   // HUD-HELM: the preview stands at a finger's place where the hosts' touch layer does (ui/touch/touch.js attachTouch)
-import { t } from '../../systems/textManager.js';   // L10N4: the preview's name in the player's language
+import { placeHudPieces } from '../hud/hudPlacer.js'; // HUD-HELM: a new panel stands where HUD-MOVE put it from its first frame
+import { isTouchDevice } from '../touch/touchDevice.js'; // HUD-HELM: the preview stands at a finger's place where the hosts' touch layer does (ui/touch/touch.js attachTouch)
+import { t } from '../../systems/textManager.js'; // L10N4: the preview's name in the player's language
 import { HELM_DPAD } from '../plus/plusPad.js';
-import { HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayHulls.js';   // HUD-HELM: the leaves, not the boat and the sea - the HUD's preview reaches
-import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAwayActions.js';   // this module, and AUDIT GUIDE O6 keeps the quest machine off the HUD
+import { HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayHulls.js'; // HUD-HELM: the leaves, not the boat and the sea - the HUD's preview reaches
+import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAwayActions.js'; // this module, and AUDIT GUIDE O6 keeps the quest machine off the HUD
 
 export const ENHANCED_HELM_ID = 'enhanced-helm';
 const HELM_STYLE_ID = 'enhanced-helm-style';
@@ -41,10 +41,17 @@ const HELM_STYLE_ID = 'enhanced-helm-style';
 /** The registry actions the panel presses - the mod's own nine and HELM-KEYS' more and less sail, by the panel's names
  *  for them (one home for the names: systems/comeSailAway/comeSailAwayActions.js BOAT_ACTIONS). */
 export const HELM_ACTIONS = Object.freeze({
-  sail: BOAT_ACTIONS.toggleSail, light: BOAT_ACTIONS.toggleLight, disembark: BOAT_ACTIONS.disembark,
-  trimLeft: BOAT_ACTIONS.trimLeft, trimRight: BOAT_ACTIONS.trimRight, trimModifier: BOAT_ACTIONS.trimModifier,
-  slower: BOAT_ACTIONS.timeScaleDown, faster: BOAT_ACTIONS.timeScaleUp, normal: BOAT_ACTIONS.timeScaleReset,
-  more: BOAT_ACTIONS.sailUp, less: BOAT_ACTIONS.sailDown,
+  sail: BOAT_ACTIONS.toggleSail,
+  light: BOAT_ACTIONS.toggleLight,
+  disembark: BOAT_ACTIONS.disembark,
+  trimLeft: BOAT_ACTIONS.trimLeft,
+  trimRight: BOAT_ACTIONS.trimRight,
+  trimModifier: BOAT_ACTIONS.trimModifier,
+  slower: BOAT_ACTIONS.timeScaleDown,
+  faster: BOAT_ACTIONS.timeScaleUp,
+  normal: BOAT_ACTIONS.timeScaleReset,
+  more: BOAT_ACTIONS.sailUp,
+  less: BOAT_ACTIONS.sailDown,
 });
 const A = HELM_ACTIONS;
 const PAD_CODE = Object.fromEntries(Object.entries(HELM_DPAD).map(([code, dir]) => [dir, code]));
@@ -62,20 +69,36 @@ const PAD_CODE = Object.fromEntries(Object.entries(HELM_DPAD).map(([code, dir]) 
 export function helmPadGesture(dir, kind, h, { press, hold }) {
   if (!h) return false;
   const trim = dir === 'left' ? A.trimLeft : A.trimRight;
-  if (kind === 'release') { if (dir === 'left' || dir === 'right') hold(trim, false); return false; }
+  if (kind === 'release') {
+    if (dir === 'left' || dir === 'right') hold(trim, false);
+    return false;
+  }
   if (kind === 'tap') {
-    if (dir === 'up') { if (h.hasSails) press(A.sail); }
-    else if (dir === 'down') press(A.light);
-    else if (h.timeDial === false) return false;   // HELM-TIME-ONLINE: no dial to step
+    if (dir === 'up') {
+      if (h.hasSails) press(A.sail);
+    } else if (dir === 'down') press(A.light);
+    else if (h.timeDial === false)
+      return false; // HELM-TIME-ONLINE: no dial to step
     else if (dir === 'left') press(A.slower);
     else if (dir === 'right') press(A.faster);
     return false;
   }
-  if (dir === 'up') { if (h.squareToggle) press(A.sail, A.trimModifier); else if (h.hasSails) press(A.sail); return false; }
-  if (dir === 'down') { press(A.disembark); return false; }
-  if (h.manualTrim && h.hasSails) { hold(trim, true); return true; }
-  if (h.timeDial === false) return false;   // HELM-TIME-ONLINE: no time to put back
-  if (dir === 'left') press(A.normal); else press(A.faster);
+  if (dir === 'up') {
+    if (h.squareToggle) press(A.sail, A.trimModifier);
+    else if (h.hasSails) press(A.sail);
+    return false;
+  }
+  if (dir === 'down') {
+    press(A.disembark);
+    return false;
+  }
+  if (h.manualTrim && h.hasSails) {
+    hold(trim, true);
+    return true;
+  }
+  if (h.timeDial === false) return false; // HELM-TIME-ONLINE: no time to put back
+  if (dir === 'left') press(A.normal);
+  else press(A.faster);
   return false;
 }
 /** CSA-L: the prompt bar's rows at the helm (the pad's own glyphs, ui/plus/plusPad.js showPrompts). AUDIT FB1021d PS-7:
@@ -90,8 +113,13 @@ export function helmPadPrompts(h, { glass = [], passenger = false } = {}) {
     [[PAD_CODE.down], 'Lanterns (hold: leave the helm)'],
   ];
   // HELM-TIME-ONLINE: online no dial - the pair says the trim alone, where the trim is the player's
-  if (h.timeDial === false) { if (trims) rows.push([[PAD_CODE.left, PAD_CODE.right], 'Trim (hold)']); }
-  else rows.push([[PAD_CODE.left, PAD_CODE.right], trims ? 'Slower / faster (hold: trim)' : 'Slower / faster (hold left: normal time)']);
+  if (h.timeDial === false) {
+    if (trims) rows.push([[PAD_CODE.left, PAD_CODE.right], 'Trim (hold)']);
+  } else
+    rows.push([
+      [PAD_CODE.left, PAD_CODE.right],
+      trims ? 'Slower / faster (hold: trim)' : 'Slower / faster (hold left: normal time)',
+    ]);
   return rows;
 }
 /**
@@ -108,7 +136,11 @@ function glassHelmPrompts(h, glass, trims, passenger = false) {
     right: { tap: dial ? 'Faster' : null, hold: trims ? 'trim' : null },
   };
   // AUDIT FB1021d PS-7: a passenger's - her sails, her lanterns and her trim are her master's
-  if (passenger) { own.up = { tap: null, hold: null }; own.down.tap = null; if (trims) own.left.hold = own.right.hold = null; }
+  if (passenger) {
+    own.up = { tap: null, hold: null };
+    own.down.tap = null;
+    if (trims) own.left.hold = own.right.hold = null;
+  }
   for (const { dir, kind } of glass) if (own[dir]) own[dir][kind] = 'spyglass';
   const rows = [];
   for (const dir of ['up', 'down', 'left', 'right']) {
@@ -130,18 +162,33 @@ export function helmButtons(h) {
   const out = [];
   // HELM-LADDER: the sails' button is the mod's own toggle (the End key's) - the arrows climb the oars' rungs first now,
   // and the button raises or strikes all her canvas as its label says, from any rung
-  if (h.hasSails) out.push({ act: 'sails', label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: A.sail });
-  if (h.squareToggle) out.push({ act: 'square', label: h.squareUp ? 'Stow square sails' : 'Raise square sails', kind: 'tap', action: A.sail, withHeld: A.trimModifier });
+  if (h.hasSails)
+    out.push({ act: 'sails', label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: A.sail });
+  if (h.squareToggle)
+    out.push({
+      act: 'square',
+      label: h.squareUp ? 'Stow square sails' : 'Raise square sails',
+      kind: 'tap',
+      action: A.sail,
+      withHeld: A.trimModifier,
+    });
   if (h.manualTrim && h.hasSails) {
-    out.push({ act: 'trimLeft', label: '◀ Trim', kind: 'hold', action: A.trimLeft }, { act: 'trimRight', label: 'Trim ▶', kind: 'hold', action: A.trimRight });
+    out.push(
+      { act: 'trimLeft', label: '◀ Trim', kind: 'hold', action: A.trimLeft },
+      { act: 'trimRight', label: 'Trim ▶', kind: 'hold', action: A.trimRight },
+    );
     // the square sails' own trim, where the hull has both kinds (a square rig alone trims them with the brackets bare)
-    if (h.hasSquare && !h.squareOnly) out.push({ act: 'squareLeft', label: '◀ Square', kind: 'hold', action: A.trimLeft, withHeld: A.trimModifier }, { act: 'squareRight', label: 'Square ▶', kind: 'hold', action: A.trimRight, withHeld: A.trimModifier });
+    if (h.hasSquare && !h.squareOnly)
+      out.push(
+        { act: 'squareLeft', label: '◀ Square', kind: 'hold', action: A.trimLeft, withHeld: A.trimModifier },
+        { act: 'squareRight', label: 'Square ▶', kind: 'hold', action: A.trimRight, withHeld: A.trimModifier },
+      );
   }
   out.push({ act: 'light', label: h.light ? 'Douse lanterns' : 'Light lanterns', kind: 'tap', action: A.light });
   out.push(...dialButtons(h));
-  if (h.orders) out.push({ act: 'orders', label: 'Orders', kind: 'hook' });   // SHIP-CREW: her captain's orders (the naval arc on)
-  if (h.cargo) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' });   // CARGO-ANYWHERE: her hold, from the wheel (scenes/holdDoor.js)
-  if (h.shot) out.push({ act: 'shot', label: h.shot, kind: 'hook' });   // SHOT-KINDS: her guns' load, stepped on (scenes/naval/navalLoads.js - its label)
+  if (h.orders) out.push({ act: 'orders', label: 'Orders', kind: 'hook' }); // SHIP-CREW: her captain's orders (the naval arc on)
+  if (h.cargo) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' }); // CARGO-ANYWHERE: her hold, from the wheel (scenes/holdDoor.js)
+  if (h.shot) out.push({ act: 'shot', label: h.shot, kind: 'hook' }); // SHOT-KINDS: her guns' load, stepped on (scenes/naval/navalLoads.js - its label)
   out.push({ act: 'position', label: 'Position', kind: 'hook' });
   out.push(leaveButton());
   return out;
@@ -152,9 +199,23 @@ const leaveButton = () => ({ act: 'leave', label: 'Leave the helm', kind: 'tap',
  *  turns. @param {{ timeDial?: boolean, timeScale?: number, timeScaleIndex?: number, timeScaleMax?: number }} h */
 function dialButtons(h) {
   if (h.timeDial === false) return [];
-  return [{ act: 'slower', label: '−', kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) > 0) },
-    { act: 'normal', label: `×${h.timeScale ?? 1}`, kind: 'tap', action: A.normal, disabled: !(Number(h.timeScaleIndex) > 0) },
-    { act: 'faster', label: '+', kind: 'tap', action: A.faster, disabled: !(Number(h.timeScaleIndex) < Number(h.timeScaleMax)) }];
+  return [
+    { act: 'slower', label: '−', kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) > 0) },
+    {
+      act: 'normal',
+      label: `×${h.timeScale ?? 1}`,
+      kind: 'tap',
+      action: A.normal,
+      disabled: !(Number(h.timeScaleIndex) > 0),
+    },
+    {
+      act: 'faster',
+      label: '+',
+      kind: 'tap',
+      action: A.faster,
+      disabled: !(Number(h.timeScaleIndex) < Number(h.timeScaleMax)),
+    },
+  ];
 }
 /** AUDIT FB1021d PS-7: a passenger's card keeps what a passenger keeps (scenes/naval/passageHelm.js PASSENGER_KEYS) - the
  *  time dial, where it turns, and leaving the helm - for a hand on a mouse or a screen as much as on the keys.
@@ -221,12 +282,17 @@ function injectHelmStyle(doc) {
 /** A press on the panel is the panel's - never a swing, a look or an activation in the world (decorPanel.js's law). */
 const swallowPresses = (node) => {
   const swallow = (e) => e.stopPropagation();
-  for (const t of ['pointerdown', 'mousedown', 'mouseup', 'click', 'touchstart', 'wheel', 'contextmenu']) node.addEventListener(t, swallow);
+  for (const t of ['pointerdown', 'mousedown', 'mouseup', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    node.addEventListener(t, swallow);
 };
 
 /** The panel's nodes, not yet on the page - the one shape the live panel and HUD-MOVE's preview are both made in. */
 function build(doc) {
-  try { injectEnhancedStyle(doc); } catch { /* the kit's sheet is the HUD's; a document without it still takes the panel */ }
+  try {
+    injectEnhancedStyle(doc);
+  } catch {
+    /* the kit's sheet is the HUD's; a document without it still takes the panel */
+  }
   injectHelmStyle(doc);
   const root = doc.createElement('div');
   root.className = 'helmpanel';
@@ -236,7 +302,7 @@ function build(doc) {
   title.className = 'helmpanel-title';
   const name = doc.createElement('span');
   name.className = 'helmpanel-name';
-  const speed = doc.createElement('span');   // HELM-SPEED: her way, beside her name
+  const speed = doc.createElement('span'); // HELM-SPEED: her way, beside her name
   speed.className = 'helmpanel-speed';
   const hint = doc.createElement('span');
   hint.className = 'helmpanel-hint';
@@ -259,7 +325,8 @@ function releaseAll(holds = holding) {
 /** `parts` the nodes build() made and `holds` their holds - the live panel's or a preview's own, never both. */
 function makeButtons(doc, parts, list, hooks, holds) {
   releaseAll(holds);
-  if (typeof parts.btns.replaceChildren === 'function') parts.btns.replaceChildren(); else parts.btns.textContent = '';
+  if (typeof parts.btns.replaceChildren === 'function') parts.btns.replaceChildren();
+  else parts.btns.textContent = '';
   parts.buttons.clear();
   for (const b of list) {
     const n = doc.createElement('button');
@@ -282,7 +349,11 @@ function makeButtons(doc, parts, list, hooks, holds) {
       n.addEventListener('pointerdown', (e) => {
         e.preventDefault?.();
         if (n.disabled || holds.has(b.act)) return;
-        try { n.setPointerCapture?.(e.pointerId); } catch { /* a pointer gone already */ }
+        try {
+          n.setPointerCapture?.(e.pointerId);
+        } catch {
+          /* a pointer gone already */
+        }
         if (b.withHeld) hooks.hold?.(b.withHeld, true);
         hooks.hold?.(b.action, true);
         holds.set(b.act, up);
@@ -313,19 +384,32 @@ function makeButtons(doc, parts, list, hooks, holds) {
  */
 export function drawEnhancedHelm(state = {}, hooks = {}, { doc = globalThis.document } = {}) {
   if (!doc?.body) return null;
-  const h = state.helm ?? null, aboard = h ? null : (state.aboard ?? null);
-  if (!h && !aboard) { hideEnhancedHelm(); return null; }
+  const h = state.helm ?? null,
+    aboard = h ? null : (state.aboard ?? null);
+  if (!h && !aboard) {
+    hideEnhancedHelm();
+    return null;
+  }
   if (!host) {
-    last = {}; parts = build(doc); host = parts.root;
+    last = {};
+    parts = build(doc);
+    host = parts.root;
     host.id = ENHANCED_HELM_ID;
     doc.body.append(host);
-    placeHudPieces(doc);   // HUD-HELM: where the player moved it (or turned it off) from its first frame - not at the next sweep
+    placeHudPieces(doc); // HUD-HELM: where the player moved it (or turned it off) from its first frame - not at the next sweep
   }
   if (state.covered) {
-    if (last.covered !== true) { last.covered = true; parts.root.style.display = 'none'; releaseAll(); }
+    if (last.covered !== true) {
+      last.covered = true;
+      parts.root.style.display = 'none';
+      releaseAll();
+    }
     return parts.root;
   }
-  if (last.covered === true) { last.covered = false; parts.root.style.display = ''; }
+  if (last.covered === true) {
+    last.covered = false;
+    parts.root.style.display = '';
+  }
   paintHelm(doc, parts, last, state, hooks, holding);
   return parts.root;
 }
@@ -333,21 +417,45 @@ export function drawEnhancedHelm(state = {}, hooks = {}, { doc = globalThis.docu
 /** The panel's face for a state: `parts` its nodes, `last` what they show now (each piece written only when it moves),
  *  `holds` its holds. The live panel's frame and the preview's one painting. */
 function paintHelm(doc, parts, last, state, hooks, holds) {
-  const h = state.helm ?? null, aboard = h ? null : (state.aboard ?? null);
+  const h = state.helm ?? null,
+    aboard = h ? null : (state.aboard ?? null);
   const hud = /** @type {any} */ (doc.querySelector?.('.hud'));
-  const scale = hud?.style?.getPropertyValue?.('--hud-scale') || '1';   // the HUD's scale, read off the HUD (the journey bar's PLUS8)
-  if (last.scale !== scale) { last.scale = scale; parts.root.style.setProperty?.('--hud-scale', scale); }
+  const scale = hud?.style?.getPropertyValue?.('--hud-scale') || '1'; // the HUD's scale, read off the HUD (the journey bar's PLUS8)
+  if (last.scale !== scale) {
+    last.scale = scale;
+    parts.root.style.setProperty?.('--hud-scale', scale);
+  }
   const rootClass = `helmpanel${state.touch ? ' touch' : ''}${aboard ? ' aboard' : ''}`;
-  if (last.rootClass !== rootClass) { last.rootClass = rootClass; parts.root.className = rootClass; }
-  const title = h ? `At the helm - ${HULL_NAMES[h.hull] ?? 'Boat'}` : aboard.passage ? passengerTitle(aboard.passage) : `Aboard ${aboard.owner ? `${aboard.owner}'s` : "another player's"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;
-  if (last.title !== title) { last.title = title; parts.name.textContent = title; }
+  if (last.rootClass !== rootClass) {
+    last.rootClass = rootClass;
+    parts.root.className = rootClass;
+  }
+  const title = h
+    ? `At the helm - ${HULL_NAMES[h.hull] ?? 'Boat'}`
+    : aboard.passage
+      ? passengerTitle(aboard.passage)
+      : `Aboard ${aboard.owner ? `${aboard.owner}'s` : "another player's"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;
+  if (last.title !== title) {
+    last.title = title;
+    parts.name.textContent = title;
+  }
   const speed = h ? helmSpeedText(h.way) : '';
-  if (last.speed !== speed) { last.speed = speed; parts.speed.textContent = speed; }
-  const hint = h ? helmHint(h, state) : aboard?.passage && aboard.heavy ? helmHeavyText() : '';   // AUDIT FB1029d B5: a passenger's load
-  if (last.hint !== hint) { last.hint = hint; parts.hint.textContent = hint; }
+  if (last.speed !== speed) {
+    last.speed = speed;
+    parts.speed.textContent = speed;
+  }
+  const hint = h ? helmHint(h, state) : aboard?.passage && aboard.heavy ? helmHeavyText() : ''; // AUDIT FB1029d B5: a passenger's load
+  if (last.hint !== hint) {
+    last.hint = hint;
+    parts.hint.textContent = hint;
+  }
   const list = h ? helmButtons(h) : aboard?.passage ? passengerButtons(aboard) : [];
   const sig = list.map((b) => b.act).join(',');
-  if (last.sig !== sig) { last.sig = sig; last.labels = {}; makeButtons(doc, parts, list, hooks, holds); }
+  if (last.sig !== sig) {
+    last.sig = sig;
+    last.labels = {};
+    makeButtons(doc, parts, list, hooks, holds);
+  }
   for (const b of list) {
     const p = parts.buttons.get(b.act);
     if (!p) continue;
@@ -366,14 +474,32 @@ function paintHelm(doc, parts, last, state, hooks, holds) {
 /** FIELD BUGS 2026-10-21d PASSAGE-HANDS: a passenger at a booked ship's helm reads her card - her name and her port, and
  *  only what a passenger keeps (passengerButtons) (scenes/naval/passageHelm.js passengerCard): her master's hand alone
  *  is on her helm while the voyage runs. */
-const passengerTitle = (p) => t('helm.passenger', '{ship}, bound for {port} - her master steers', { ship: p.ship ?? t('passage.theShip', 'The ship'), port: p.port });
+const passengerTitle = (p) =>
+  t('helm.passenger', '{ship}, bound for {port} - her master steers', {
+    ship: p.ship ?? t('passage.theShip', 'The ship'),
+    port: p.port,
+  });
 
 /** HUD-HELM: the state HUD-MOVE's preview stands on - a Come Sail Away boat at the wheel with her sails stowed and her
  *  lanterns dark, the time dial at one. Named a preview on its title (buildHelmPreview), as every stand-in is. */
 const HELM_PREVIEW = Object.freeze({
-  hull: null, hasSails: true, sailsUp: false, squareToggle: false, squareUp: false, hasSquare: false, squareOnly: false,
-  manualTrim: false, light: false, timeDial: true, timeScale: 1, timeScaleIndex: 0, timeScaleMax: 3, orders: false,
-  inIrons: false, way: 0, heavy: false,
+  hull: null,
+  hasSails: true,
+  sailsUp: false,
+  squareToggle: false,
+  squareUp: false,
+  hasSquare: false,
+  squareOnly: false,
+  manualTrim: false,
+  light: false,
+  timeDial: true,
+  timeScale: 1,
+  timeScaleIndex: 0,
+  timeScaleMax: 3,
+  orders: false,
+  inIrons: false,
+  way: 0,
+  heavy: false,
 });
 
 /** HUD-MOVE's preview (ui/hud/hudLayout.js): the panel as it stands at a helm, for the unlocked HUD while nobody is at one -
@@ -381,7 +507,14 @@ const HELM_PREVIEW = Object.freeze({
  *  empty), at a finger's place on a touch device as the hosts' own panel is. Its buttons answer nothing. */
 export function buildHelmPreview(doc) {
   const p = build(doc);
-  paintHelm(doc, p, {}, { helm: HELM_PREVIEW, touch: isTouchDevice(doc.defaultView ?? globalThis.window), mouseFree: true }, {}, new Map());
+  paintHelm(
+    doc,
+    p,
+    {},
+    { helm: HELM_PREVIEW, touch: isTouchDevice(doc.defaultView ?? globalThis.window), mouseFree: true },
+    {},
+    new Map(),
+  );
   p.name.textContent = t('menu.hud.preview.helm', 'At the helm (preview)');
   return p.root;
 }
@@ -406,11 +539,17 @@ export function helmHint(h, state = {}) {
     const strike = [key('MoveBackwards'), key(A.less)].filter(Boolean).join(' ');
     return `In irons. Strike sail${strike ? ` (${strike})` : ''} and row to turn`;
   }
-  if (h.heavy) return helmHeavyText();   // HEAVY-HINT: said while it holds her, not once as the helm is taken
+  if (h.heavy) return helmHeavyText(); // HEAVY-HINT: said while it holds her, not once as the helm is taken
   if (state.touch) return '';
-  const keys = (label, ...as) => { const ks = [...new Set(as.map(key).filter(Boolean))]; return ks.length ? `${label} ${ks.join(' ')}` : ''; };
+  const keys = (label, ...as) => {
+    const ks = [...new Set(as.map(key).filter(Boolean))];
+    return ks.length ? `${label} ${ks.join(' ')}` : '';
+  };
   // HELM-LADDER: W and the up arrow, S and the down arrow, one ladder - her oars, then her sails; A, D and the side arrows steer
-  const parts = [keys(h.hasSails ? 'Oars & sails' : 'Oars', 'MoveForwards', 'MoveBackwards', A.more, A.less), keys('Steer', 'MoveLeft', 'MoveRight', 'TurnLeft', 'TurnRight')];
+  const parts = [
+    keys(h.hasSails ? 'Oars & sails' : 'Oars', 'MoveForwards', 'MoveBackwards', A.more, A.less),
+    keys('Steer', 'MoveLeft', 'MoveRight', 'TurnLeft', 'TurnRight'),
+  ];
   if (!state.mouseFree) parts.push(`Free the mouse (${state.freeKey || 'Y'}) to use these`);
   return parts.filter(Boolean).join(' · ');
 }
@@ -418,14 +557,21 @@ export function helmHint(h, state = {}) {
 /** HELM-SPEED (2026-10-06, Mac: "add a speed indicator for when you're sailing"): knots in a metre a second. */
 export const KNOTS_PER_MPS = 3600 / 1852;
 /** Her way (m/s, helmPanelState's `way`) as the helm reads it - in knots, to a tenth; '' with none known. */
-export const helmSpeedText = (way) => (Number.isFinite(way) ? `${(Math.max(0, way) * KNOTS_PER_MPS).toFixed(1)} knots` : '');
+export const helmSpeedText = (way) =>
+  Number.isFinite(way) ? `${(Math.max(0, way) * KNOTS_PER_MPS).toFixed(1)} knots` : '';
 
 /** Taken down: at the helm no longer, aboard nothing, the skin or the mod off. Every hold is let go first. */
 export function hideEnhancedHelm() {
   if (!host) return;
   releaseAll();
-  try { host.remove(); } catch { /* already gone */ }
-  host = null; parts = null; last = null;
+  try {
+    host.remove();
+  } catch {
+    /* already gone */
+  }
+  host = null;
+  parts = null;
+  last = null;
 }
 
 export const enhancedHelmMounted = () => !!host;

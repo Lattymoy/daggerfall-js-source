@@ -8,5 +8,8 @@
 export function canon(/** @type {any} */ v) {
   if (v === null || typeof v !== 'object') return JSON.stringify(v);
   if (Array.isArray(v)) return `[${v.map(canon).join(',')}]`;
-  return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canon(v[k])}`).join(',')}}`;
+  return `{${Object.keys(v)
+    .sort()
+    .map((k) => `${JSON.stringify(k)}:${canon(v[k])}`)
+    .join(',')}}`;
 }

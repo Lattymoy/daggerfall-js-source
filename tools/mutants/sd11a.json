@@ -2,8 +2,8 @@
   {
     "name": "SD11A-L2F1-the-hand-a-mirror",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "  const x0 = y1 * n[2] - y2 * n[1], x1 = y2 * n[0] - y0 * n[2], x2 = y0 * n[1] - y1 * n[0];   // its own +x: y x n",
-    "new": "  const x0 = n[1] * y2 - n[2] * y1, x1 = n[2] * y0 - n[0] * y2, x2 = n[0] * y1 - n[1] * y0;   // its own +x: y x n",
+    "old": "  const x0 = y1 * n[2] - y2 * n[1],\n    x1 = y2 * n[0] - y0 * n[2],\n    x2 = y0 * n[1] - y1 * n[0]; // its own +x: y x n",
+    "new": "  const x0 = n[1] * y2 - n[2] * y1,\n    x1 = n[2] * y0 - n[0] * y2,\n    x2 = n[0] * y1 - n[1] * y0; // its own +x: y x n",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SD11A-L2F1-the-plaque-mirrored",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "0, SD_ORRERY.z + SD_PLAQUE.r * Math.cos(b)], n, R: [-n[2], 0, n[0]] };",
-    "new": "0, SD_ORRERY.z + SD_PLAQUE.r * Math.cos(b)], n, R: [n[2], 0, -n[0]] };",
+    "old": "    R: [-n[2], 0, n[0]],",
+    "new": "    R: [n[2], 0, -n[0]],",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SD11A-L2F1-the-notch-wound-away",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "f.tri(SD_REALM_BRASS_RECORD, T(tip), T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))), T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))), [0.5, 0], [0, 1], [1, 1]);",
-    "new": "f.tri(SD_REALM_BRASS_RECORD, T(tip), T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))), T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))), [0.5, 0], [1, 1], [0, 1]);",
+    "old": "    T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))),\n    T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))),\n    [0.5, 0],\n    [0, 1],\n    [1, 1],",
+    "new": "    T(add(add(tip, [0, 0.12, 0]), mul(R, 0.07))),\n    T(add(add(tip, [0, 0.12, 0]), mul(R, -0.07))),\n    [0.5, 0],\n    [1, 1],\n    [0, 1],",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "SD11A-L2F2-the-stones-not-solid",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "const floors = hallFloorTris(), solids = hallSolidTris(), tris",
-    "new": "const floors = hallFloorTris(), solids = new Float32Array(0), tris",
+    "old": "        solids = hallSolidTris(),",
+    "new": "        solids = new Float32Array(0),",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js",
       "test/world/superDungeon/sd6c_hall.test.js"
@@ -53,8 +53,8 @@
   {
     "name": "SD11A-L2F2-the-plaques-not-solid",
     "file": "src/world/superDungeon/sdHall.js",
-    "old": "    boxQuads(at, R, n, 0.07, 0.07, SD_PLAQUE.post).forEach(tri2);\n    tri2(uprightQuad(plaqueFaceFoot(k), R, SD_PLAQUE.w, SD_PLAQUE.h));\n",
-    "new": "",
+    "old": "    boxQuads(at, R, n, 0.07, 0.07, SD_PLAQUE.post).forEach(tri2);\n    tri2(uprightQuad(plaqueFaceFoot(k), R, SD_PLAQUE.w, SD_PLAQUE.h));\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "SD11A-L2F2-turned-from-behind",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "      if (!beforeStone(i, at[0], at[2])) { say(SD_HALL_TEXT.front); return true; }",
-    "new": "      if (false) { say(SD_HALL_TEXT.front); return true; }",
+    "old": "      if (!beforeStone(i, at[0], at[2])) {",
+    "new": "      if (false) {",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "SD11A-L2F3-the-hall-a-window",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true }); }",
-    "new": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission); }",
+    "old": "    renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true });",
+    "new": "    renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission);",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "SD11A-L2F3-the-echoes-a-window",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true }); }",
-    "new": "renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission); }",
+    "old": "    renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission, { white: true });",
+    "new": "    renderer.uploadEmissionTexture?.(SD_REALM_ARCHIVE, rec, art.emission);",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -204,8 +204,8 @@
   {
     "name": "SD11A-L2F8-blood-on-a-mover-the-wall",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "          if (onMover(col, wall)) continue;   // AUDIT SD II (L2 F8): it met a surface that moves\n",
-    "new": "",
+    "old": "          if (onMover(col, wall)) continue; // AUDIT SD II (L2 F8): it met a surface that moves\n          const wx = pos[0] + (ox / run) * wall.dist,",
+    "new": "          const wx = pos[0] + (ox / run) * wall.dist,",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -214,8 +214,8 @@
   {
     "name": "SD11A-L2F8-blood-on-a-mover-the-floor",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "      if (onMover(col, h)) continue;   // AUDIT SD II (L2 F8): a surface that moves takes no mark\n",
-    "new": "",
+    "old": "      if (onMover(col, h)) continue; // AUDIT SD II (L2 F8): a surface that moves takes no mark\n      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
+    "new": "      const at = [fromX, pos[1] + dir[1] * h.dist, fromZ];",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -224,8 +224,8 @@
   {
     "name": "SD11A-L2F8-blood-on-a-mover-the-pool",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): nor one that moves\n",
-    "new": "",
+    "old": "    if (onMover(col, h)) return null; // AUDIT SD II (L2 F8): nor one that moves\n    ensure();",
+    "new": "    ensure();",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -234,8 +234,8 @@
   {
     "name": "SD11A-L2F8-blood-on-a-mover-the-print",
     "file": "src/combat/blood/bloodMarks.js",
-    "old": "    if (onMover(col, h)) return null;   // AUDIT SD II (L2 F8): a foot on a surface that moves prints nothing, and picks nothing up\n",
-    "new": "",
+    "old": "    if (onMover(col, h)) return null; // AUDIT SD II (L2 F8): a foot on a surface that moves prints nothing, and picks nothing up\n    const foot = [pos[0], pos[1] + DRIP_FROM - h.dist, pos[2]];",
+    "new": "    const foot = [pos[0], pos[1] + DRIP_FROM - h.dist, pos[2]];",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -284,8 +284,8 @@
   {
     "name": "SD11A-L2F9-a-blow-ended-a-new-table",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "      if (blowMet.size) blowMet.clear();",
-    "new": "      blowMet.clear();",
+    "old": "      if (blowMet.size) blowMet.clear(); // a frame ends my blow (AUDIT SD II, L2 F9: an empty Set's clear makes it a new table)",
+    "new": "      blowMet.clear(); // a frame ends my blow (AUDIT SD II, L2 F9: an empty Set's clear makes it a new table)",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "SD11A-L2F9-a-still-body-posed-again",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "    if (!d.hidden && was[0] === p.x && was[1] === p.z && was[2] === p.yw && was[3] === p.sink && was[4] === scale) return;\n",
-    "new": "",
+    "old": "    if (!d.hidden && was[0] === p.x && was[1] === p.z && was[2] === p.yw && was[3] === p.sink && was[4] === scale)\n      return;\n    was[0] = p.x;",
+    "new": "    was[0] = p.x;",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "SD11A-L2F9-the-remnant-pose-made",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "remnantPose(s, t, _remPose), 0, dt)",
-    "new": "remnantPose(s, t), 0, dt)",
+    "old": "      place(remDraw, turn(remnantPose(s, t, _remPose), 0, dt), 1); // AUDIT SD III (V6): turned, never snapped",
+    "new": "      place(remDraw, turn(remnantPose(s, t), 0, dt), 1); // AUDIT SD III (V6): turned, never snapped",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -314,8 +314,8 @@
   {
     "name": "SD11A-L2F9-the-echo-poses-made",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "echoPose(s, e, t, _echoPose), 1 + e, dt)",
-    "new": "echoPose(s, e, t), 1 + e, dt)",
+    "old": "        place(echoDraws[e], turn(echoPose(s, e, t, _echoPose), 1 + e, dt), ECHO_SCALE);",
+    "new": "        place(echoDraws[e], turn(echoPose(s, e, t), 1 + e, dt), ECHO_SCALE);",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -324,8 +324,8 @@
   {
     "name": "SD11A-L2F9-the-end-a-hypot",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "dx * dx + dy * dy + dz * dz > SD_STEP_JUMP_M * SD_STEP_JUMP_M;",
-    "new": "Math.hypot(dx, dy, dz) > SD_STEP_JUMP_M;",
+    "old": "      const gap =\n        t - lastAt[0] > SD_STEP_GAP_MS || !hasLast || dx * dx + dy * dy + dz * dz > SD_STEP_JUMP_M * SD_STEP_JUMP_M;",
+    "new": "      const gap = t - lastAt[0] > SD_STEP_GAP_MS || !hasLast || Math.hypot(dx, dy, dz) > SD_STEP_JUMP_M;",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "SD11A-L2F9-the-end-boxes-each-ask",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "    targets() { return _targets; },",
-    "new": "    targets() { return [..._targets]; },",
+    "old": "      return _targets;",
+    "new": "      return [..._targets];",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -354,8 +354,8 @@
   {
     "name": "SD11A-L2F9-the-feet-a-copy",
     "file": "src/scenes/superDungeon/sdEnd.js",
-    "old": "lastFeet[0] = feet[0]; lastFeet[1] = feet[1]; lastFeet[2] = feet[2]; hasLast = true;",
-    "new": "lastFeet.splice(0, 3, feet[0], feet[1], feet[2]); hasLast = true;",
+    "old": "      lastFeet[0] = feet[0];\n      lastFeet[1] = feet[1];\n      lastFeet[2] = feet[2];",
+    "new": "      lastFeet.splice(0, 3, feet[0], feet[1], feet[2]);",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -395,8 +395,8 @@
   {
     "name": "SD11A-L2F9-the-sky-basis-made",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "b = sdSkyBasisInto(view, proj, this._b);",
-    "new": "b = sdSkyBasisInto(view, proj, { right: [0, 0, 0], up: [0, 0, 0], fwd: [0, 0, 0], lens: [0, 0, 0, 0] });",
+    "old": "      b = sdSkyBasisInto(view, proj, this._b);",
+    "new": "      b = sdSkyBasisInto(view, proj, { right: [0, 0, 0], up: [0, 0, 0], fwd: [0, 0, 0], lens: [0, 0, 0, 0] });",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -405,8 +405,8 @@
   {
     "name": "SD11A-L2F9-the-blows-with-nothing-in-flight",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "      if (!sdAnyInFlight(s) && !pools.length) { inFire = false; shapes = NONE; fall(s, t); return; }\n",
-    "new": "",
+    "old": "      if (!sdAnyInFlight(s) && !pools.length) {\n        inFire = false;\n        shapes = NONE;\n        fall(s, t);\n        return;\n      }\n      const f = feet(),",
+    "new": "      const f = feet(),",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js",
       "test/net/superDungeon/sd8d_remnant_blows.test.js"
@@ -416,8 +416,8 @@
   {
     "name": "SD11A-L2F9-an-echos-blow-never-in-flight",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "  if (ec) for (let k = 0; k < ec.length; k++) if (ec[k].h > 0 && ec[k].atk) return true;\n",
-    "new": "",
+    "old": "  if (ec) for (let k = 0; k < ec.length; k++) if (ec[k].h > 0 && ec[k].atk) return true;\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -478,8 +478,8 @@
   {
     "name": "SD11A-L2F11-a-hidden-body-drawn",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "  const hide = (d) => { if (d && !d.hidden) { d.object.matrix.set(ZERO); d.hidden = true; } };",
-    "new": "  const hide = (d) => { if (d && !d.hidden) { d.object.matrix.set(ZERO); } };",
+    "old": "      d.hidden = true;\n    }",
+    "new": "    }",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -488,8 +488,8 @@
   {
     "name": "SD11A-L2F11-a-body-never-drawn-again",
     "file": "src/scenes/superDungeon/sdRemnant.js",
-    "old": "remnantMatrix(SD_REALM_ORIGIN[0] + SD_ARENA.x + p.x, SD_REALM_ORIGIN[1] - p.sink, SD_REALM_ORIGIN[2] + SD_ARENA.z + p.z, p.yw, scale, d.object.matrix);\n    d.hidden = false;",
-    "new": "remnantMatrix(SD_REALM_ORIGIN[0] + SD_ARENA.x + p.x, SD_REALM_ORIGIN[1] - p.sink, SD_REALM_ORIGIN[2] + SD_ARENA.z + p.z, p.yw, scale, d.object.matrix);",
+    "old": "    d.hidden = false;\n  };",
+    "new": "  };",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js",
       "test/net/superDungeon/sd8c_remnant_page.test.js"
@@ -509,8 +509,8 @@
   {
     "name": "SD11A-L2F12-the-arch-a-pow",
     "file": "src/render/superDungeon/sdSky.js",
-    "old": "  float curve = 0.14 + 0.36 * arch * arch;",
-    "new": "  float curve = 0.14 + 0.36 * pow(arch, 2.0);",
+    "old": "  float curve = 0.14 + 0.36 * arch * arch;         // where GLSL ES leaves a power of it undefined (D3D answers NaN)",
+    "new": "  float curve = 0.14 + 0.36 * pow(arch, 2.0);         // where GLSL ES leaves a power of it undefined (D3D answers NaN)",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -590,7 +590,7 @@
   {
     "name": "SD11A-L2F16-the-snap-empty-at-once",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "    if (!first && w.x) { frayFullUntil = now() + SD_FRAY_FULL_MS; setFray(tabs, true); }\n    else if (!(now() < frayFullUntil)) setFray(frayArc(w.f));",
+    "old": "    if (!first && w.x) {\n      frayFullUntil = now() + SD_FRAY_FULL_MS;\n      setFray(tabs, true);\n    } else if (!(now() < frayFullUntil)) setFray(frayArc(w.f));",
     "new": "    setFray(frayArc(w.f));",
     "tests": [
       "test/world/superDungeon/sd6c_hall.test.js"
@@ -600,8 +600,8 @@
   {
     "name": "SD11A-L2F16-full-for-ever",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "      if (frayFullUntil !== -Infinity && now() >= frayFullUntil) { frayFullUntil = -Infinity; setFray(frayArc(frayWant)); }",
-    "new": "      void frayWant;",
+    "old": "      if (frayFullUntil !== -Infinity && now() >= frayFullUntil) {\n        frayFullUntil = -Infinity;\n        setFray(frayArc(frayWant));\n      } // AUDIT SD II (L2 F16): the full moment over",
+    "new": "      void frayWant; // AUDIT SD II (L2 F16): the full moment over",
     "tests": [
       "test/world/superDungeon/sd6c_hall.test.js"
     ],
@@ -620,8 +620,8 @@
   {
     "name": "SD11A-L2F18-the-wrong-way",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  if (u < span) { out.dir = gustSign(n); out.k = u / span; }",
-    "new": "  if (u < span) { out.dir = -gustSign(n); out.k = u / span; }",
+    "old": "    out.dir = gustSign(n);",
+    "new": "    out.dir = -gustSign(n);",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -630,8 +630,8 @@
   {
     "name": "SD11A-L2F18-shown-between-gusts",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  if (u < span) { out.dir = gustSign(n); out.k = u / span; } else { out.dir = 0; out.k = 0; }",
-    "new": "  out.dir = gustSign(n); out.k = u / SD_GUST_EVERY;",
+    "old": "  if (u < span) {\n    out.dir = gustSign(n);\n    out.k = u / span;\n  } else {\n    out.dir = 0;\n    out.k = 0;\n  }",
+    "new": "  out.dir = gustSign(n);\n  out.k = u / SD_GUST_EVERY;",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],

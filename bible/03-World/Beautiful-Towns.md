@@ -278,14 +278,14 @@ elsewhere.
   Person whose spot shares a standing person's pick box (each its billboard's width, square on the floor) stands at the
   site's nearest other spawn marker with a floor that shares none; none clear, beside its own on the same floor (RPT1026-QUESTS
   QUEST-CROWD, below), never an item's marker nor the room's door. An item is no one and stays; the Person's layout data (its name, its click) is still its drawn
-  marker's (`sceneMount.js:"export function buildingStandSpot(own, spots, collider, lift, w = null, people = null, stands = null, self = null) {"`, the
+  marker's (`sceneMount.js:"export function buildingStandSpot"`, the
   building stands' `worldModes.js:"isItem ? null : size.w, ctx.people, list, stand);"`). Over every interior of BLOCKS.BSA and both
   packs it moves a Person of Ysolde's width in that hall alone; 89 buildings whose only spawn marker shares a resident's
   box (24 of Daggerfall's, 18 of Beautiful Villages', 47 of Beautiful Cities') kept DFU's stand (FIELD BUGS 2026-10-20c
   CROWD-CLEAR; `test/systems/quest/fb1020c_crowdclear.test.js`, `tools/mutants/fb1020c_crowdclear.json`) until RPT1026-QUESTS
   QUEST-CROWD (2026-10-26): there, and where another quest's Person already stands on the one marker (215 of
   Daggerfall's 345 tavern interiors lay one), the Person stands beside it, on the same floor and in plain line
-  (`sceneMount.js:"export function besideSpot(at, collider, lift, w, crowd) {"`; `06-Systems/Quest-Arc.md` RPT1026-QUESTS).
+  (`sceneMount.js:"export function besideSpot"`; `06-Systems/Quest-Arc.md` RPT1026-QUESTS).
 - **The port's curation: a tavern with no tavern.** Beautiful Villages rebuilds
   `TVRNAS00` and `TVRNAS06` as houses (the classic blocks hold three taverns
   each) and leaves the 274 roadside taverns standing on them (their location

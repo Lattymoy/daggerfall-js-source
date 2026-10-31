@@ -16,9 +16,20 @@
 // - no imports, no behaviour - so both sides can have it, and
 // `court.js` re-exports it so no other caller moved.
 export const CRIMES = Object.freeze({
-  None: 0, Attempted_Breaking_And_Entering: 1, Trespassing: 2,
-  Breaking_And_Entering: 3, Assault: 4, Murder: 5, Tax_Evasion: 6,
-  Criminal_Conspiracy: 7, Vagrancy: 8, Smuggling: 9, Piracy: 10,
-  High_Treason: 11, Pickpocketing: 12, Theft: 13, Treason: 14,
+  None: 0,
+  Attempted_Breaking_And_Entering: 1,
+  Trespassing: 2,
+  Breaking_And_Entering: 3,
+  Assault: 4,
+  Murder: 5,
+  Tax_Evasion: 6,
+  Criminal_Conspiracy: 7,
+  Vagrancy: 8,
+  Smuggling: 9,
+  Piracy: 10,
+  High_Treason: 11,
+  Pickpocketing: 12,
+  Theft: 13,
+  Treason: 14,
   LoanDefault: 15,
 });

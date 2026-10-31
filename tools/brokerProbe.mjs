@@ -157,27 +157,52 @@ const VIEWS = [
 ];
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
-const browser = await chromium.launch({ ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}), args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  ...(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {}),
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const fails = [];
 let checks = 0;
-const check = (ok, what) => { checks++; if (!ok) fails.push(what); };
-const settle = (page) => page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
+const check = (ok, what) => {
+  checks++;
+  if (!ok) fails.push(what);
+};
+const settle = (page) =>
+  page.evaluate(() => new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res))));
 /** Do two boxes overlap (by more than a hair)? */
-const overlap = (a, b) => !!a && !!b && Math.min(a.r, b.r) - Math.max(a.x, b.x) > 1 && Math.min(a.b, b.b) - Math.max(a.y, b.y) > 1;
+const overlap = (a, b) =>
+  !!a && !!b && Math.min(a.r, b.r) - Math.max(a.x, b.x) > 1 && Math.min(a.b, b.b) - Math.max(a.y, b.y) > 1;
 /** Every pair of named boxes that overlaps. */
-const clashes = (boxes) => { const k = Object.keys(boxes).filter((n) => boxes[n]); const out = []; for (let i = 0; i < k.length; i++) for (let j = i + 1; j < k.length; j++) if (overlap(boxes[k[i]], boxes[k[j]])) out.push(`${k[i]}/${k[j]}`); return out; };
+const clashes = (boxes) => {
+  const k = Object.keys(boxes).filter((n) => boxes[n]);
+  const out = [];
+  for (let i = 0; i < k.length; i++)
+    for (let j = i + 1; j < k.length; j++) if (overlap(boxes[k[i]], boxes[k[j]])) out.push(`${k[i]}/${k[j]}`);
+  return out;
+};
 const inside = (a, w) => !!a && a.x >= w.x - 0.5 && a.r <= w.r + 0.5 && a.y >= w.y - 0.5 && a.b <= w.b + 0.5;
 /** How many pixels of two frames differ, and the box they differ in. */
 const diff = (a, b, w, h) => {
-  let n = 0, x0 = w, y0 = h, x1 = -1, y1 = -1;
+  let n = 0,
+    x0 = w,
+    y0 = h,
+    x1 = -1,
+    y1 = -1;
   for (let i = 0; i < a.length; i += 4) {
     if (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) < 24) continue;
     n++;
-    const p = i / 4, x = p % w, y = h - 1 - Math.floor(p / w);
-    x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    const p = i / 4,
+      x = p % w,
+      y = h - 1 - Math.floor(p / w);
+    x0 = Math.min(x0, x);
+    x1 = Math.max(x1, x);
+    y0 = Math.min(y0, y);
+    y1 = Math.max(y1, y);
   }
   return { n, box: n ? { x0, y0, x1, y1 } : null };
 };
@@ -188,8 +213,13 @@ try {
     const ctx = await browser.newContext({ viewport: { width: 960, height: 540 } });
     const page = await ctx.newPage();
     page.on('pageerror', (err) => fails.push(`world: page error ${err.message}`));
-    await page.route('**/tools/arena2/**', (route) => route.continue({ url: route.request().url().replace('/tools/arena2/', '/arena2/') }));   // dataSource fetches ./arena2/ RELATIVE to the page
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.route('**/tools/arena2/**', (route) =>
+      route.continue({ url: route.request().url().replace('/tools/arena2/', '/arena2/') }),
+    ); // dataSource fetches ./arena2/ RELATIVE to the page
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
     await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 120000 });
     const errs = await page.evaluate(() => globalThis.__errs);
     check(errs.length === 0, `world: page errors ${errs.join(' | ')}`);
@@ -204,85 +234,178 @@ try {
     for (const [name, eyeL, lookL] of shots) {
       if (name === 'open') {
         const st = await page.evaluate(() => globalThis.__free());
-        check(!st.caged && Math.abs(st.door + 1.75) < 1e-6, `world open: freed, her door swung (${JSON.stringify({ caged: st.caged, door: st.door })})`);
+        check(
+          !st.caged && Math.abs(st.door + 1.75) < 1e-6,
+          `world open: freed, her door swung (${JSON.stringify({ caged: st.caged, door: st.door })})`,
+        );
       }
-      const eye = await at(...eyeL), look = await at(...lookL);
+      const eye = await at(...eyeL),
+        look = await at(...lookL);
       const withB = await page.evaluate(([e, a]) => globalThis.__shoot(e, a, true), [eye, look]);
       await page.screenshot({ path: join(OUT, `broker-world-${name}.png`) });
       const without = await page.evaluate(([e, a]) => globalThis.__shoot(e, a, false), [eye, look]);
       const d = diff(withB.px, without.px, withB.w, withB.h);
-      console.log(`world ${name}: stands ${withB.stands} caged ${withB.caged} door ${withB.door.toFixed(2)} drawn ${withB.drawn} body ${withB.body} local ${withB.local?.map((v) => v.toFixed(2)).join(',')} batch ${JSON.stringify(withB.batch && { ...withB.batch, origin: withB.batch.origin.map((v) => +v.toFixed(2)) })} - her frame differs in ${d.n} px ${JSON.stringify(d.box)}`);
+      console.log(
+        `world ${name}: stands ${withB.stands} caged ${withB.caged} door ${withB.door.toFixed(2)} drawn ${withB.drawn} body ${withB.body} local ${withB.local?.map((v) => v.toFixed(2)).join(',')} batch ${JSON.stringify(withB.batch && { ...withB.batch, origin: withB.batch.origin.map((v) => +v.toFixed(2)) })} - her frame differs in ${d.n} px ${JSON.stringify(d.box)}`,
+      );
       check(withB.stands, `world ${name}: she does not stand`);
       check(withB.caged === (name !== 'open'), `world ${name}: caged ${withB.caged}`);
       check(withB.drawn === 2, `world ${name}: her cage drew ${withB.drawn} meshes - the cage and its door`);
       check(withB.body === 'loaded', `world ${name}: her sprite is ${withB.body}`);
-      check(withB.local && Math.abs(withB.local[0]) < 1e-3 && Math.abs(withB.local[2]) < 1e-3, `world ${name}: she stands at ${withB.local} in her cage's frame`);
-      check(withB.batch && W.idle.some((r) => withB.batch.record === `${r}#0`), `world ${name}: her record ${withB.batch?.record} is not an idle one`);
-      check(withB.batch && withB.batch.h > 1.9 && withB.batch.h < 2.3, `world ${name}: she is ${withB.batch?.h} m tall`);
-      check(d.n > 1500, `world ${name}: a frame without her and her cage differs in ${d.n} pixels - they are not on the screen`);
-      if (name === 'near') check(d.box && d.box.x0 < 480 && d.box.x1 > 480, `world near: she is not in the middle of the frame (${JSON.stringify(d.box)})`);
+      check(
+        withB.local && Math.abs(withB.local[0]) < 1e-3 && Math.abs(withB.local[2]) < 1e-3,
+        `world ${name}: she stands at ${withB.local} in her cage's frame`,
+      );
+      check(
+        withB.batch && W.idle.some((r) => withB.batch.record === `${r}#0`),
+        `world ${name}: her record ${withB.batch?.record} is not an idle one`,
+      );
+      check(
+        withB.batch && withB.batch.h > 1.9 && withB.batch.h < 2.3,
+        `world ${name}: she is ${withB.batch?.h} m tall`,
+      );
+      check(
+        d.n > 1500,
+        `world ${name}: a frame without her and her cage differs in ${d.n} pixels - they are not on the screen`,
+      );
+      if (name === 'near')
+        check(
+          d.box && d.box.x0 < 480 && d.box.x1 > 480,
+          `world near: she is not in the middle of the frame (${JSON.stringify(d.box)})`,
+        );
     }
     await ctx.close();
   }
   // ── THE WINDOW ──
   for (const v of VIEWS) {
-    const ctx = await browser.newContext({ viewport: v.viewport, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch, deviceScaleFactor: 2 });
+    const ctx = await browser.newContext({
+      viewport: v.viewport,
+      isMobile: !!v.isMobile,
+      hasTouch: !!v.hasTouch,
+      deviceScaleFactor: 2,
+    });
     const page = await ctx.newPage();
     page.on('pageerror', (err) => fails.push(`${v.name}: page error ${err.message}`));
-    await page.route('**/tools/arena2/**', (route) => route.continue({ url: route.request().url().replace('/tools/arena2/', '/arena2/') }));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=${v.skin ?? 'enhanced'}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await page.route('**/tools/arena2/**', (route) =>
+      route.continue({ url: route.request().url().replace('/tools/arena2/', '/arena2/') }),
+    );
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=${v.skin ?? 'enhanced'}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
     await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 120000 });
     check(await page.evaluate(() => globalThis.__open()), `${v.name}: the door did not open`);
     if (v.skin === 'classic') {
       await page.waitForSelector('.broker-win', { timeout: 30000 });
-      const sheets = await page.evaluate(() => ({ own: !!document.getElementById('broker-skin-style'), plus: !!document.getElementById('enhanced-plus-style') }));
-      check(sheets.own && !sheets.plus, `${v.name}: the classic page lays ${JSON.stringify(sheets)} - its own sheet, and never the Plus sheet`);
+      const sheets = await page.evaluate(() => ({
+        own: !!document.getElementById('broker-skin-style'),
+        plus: !!document.getElementById('enhanced-plus-style'),
+      }));
+      check(
+        sheets.own && !sheets.plus,
+        `${v.name}: the classic page lays ${JSON.stringify(sheets)} - its own sheet, and never the Plus sheet`,
+      );
     }
     await page.waitForSelector('.broker-win .broker-offer', { timeout: 30000 });
     await page.evaluate(() => document.fonts.ready);
     // the pictures land through the pack's own icon door and repaint the window
-    await page.waitForFunction(() => document.querySelectorAll('.broker-offer .tile img').length === 6, null, { timeout: 30000 }).catch(() => {});
+    await page
+      .waitForFunction(() => document.querySelectorAll('.broker-offer .tile img').length === 6, null, {
+        timeout: 30000,
+      })
+      .catch(() => {});
     await settle(page);
     let s = await page.evaluate(() => globalThis.__win());
-    console.log(`${v.name}: window ${s.win.w.toFixed(0)}x${s.win.h.toFixed(0)} purse "${s.purse}" - ${s.rows.map((r) => `${r.slot}:${r.name} (${r.set}) ${r.price} [${r.buyText}]${r.img ? '' : ' NO PICTURE'}`).join(' | ')}`);
-    check(s.win.x >= -0.5 && s.win.r <= v.viewport.width + 0.5 && s.win.y >= -0.5 && s.win.b <= v.viewport.height + 0.5, `${v.name}: the window runs off the screen ${JSON.stringify(s.win)}`);
+    console.log(
+      `${v.name}: window ${s.win.w.toFixed(0)}x${s.win.h.toFixed(0)} purse "${s.purse}" - ${s.rows.map((r) => `${r.slot}:${r.name} (${r.set}) ${r.price} [${r.buyText}]${r.img ? '' : ' NO PICTURE'}`).join(' | ')}`,
+    );
+    check(
+      s.win.x >= -0.5 && s.win.r <= v.viewport.width + 0.5 && s.win.y >= -0.5 && s.win.b <= v.viewport.height + 0.5,
+      `${v.name}: the window runs off the screen ${JSON.stringify(s.win)}`,
+    );
     check(s.rows.length === 6, `${v.name}: ${s.rows.length} rows`);
     check(s.purse === '7 Deadlands Embers · 1 locked', `${v.name}: the purse reads "${s.purse}"`);
-    check(/^Deadlands Embers buy the day's stock · it turns in \d+(h \d\dm|m)$/.test(s.sub), `${v.name}: the sub line reads "${s.sub}"`);
-    check(/Pixel|monospace|VT323|Press/i.test(s.font) || s.font.length > 0, `${v.name}: the window has no font (${s.font})`);
+    check(
+      /^Deadlands Embers buy the day's stock · it turns in \d+(h \d\dm|m)$/.test(s.sub),
+      `${v.name}: the sub line reads "${s.sub}"`,
+    );
+    check(
+      /Pixel|monospace|VT323|Press/i.test(s.font) || s.font.length > 0,
+      `${v.name}: the window has no font (${s.font})`,
+    );
     check(s.border !== 'none', `${v.name}: the kit did not dress the window (border ${s.border})`);
     // the header: the title, the line under it, the purse and Close each clear of the others, all inside the window
     const hc = clashes(s.head);
     check(hc.length === 0, `${v.name}: the header's pieces overlap: ${hc.join(', ')} ${JSON.stringify(s.head)}`);
-    for (const [k, b] of Object.entries(s.head)) check(inside(b, s.win), `${v.name}: the header's ${k} runs out of the window ${JSON.stringify(b)}`);
+    for (const [k, b] of Object.entries(s.head))
+      check(inside(b, s.win), `${v.name}: the header's ${k} runs out of the window ${JSON.stringify(b)}`);
     check(s.head.title && s.head.title.h < 40, `${v.name}: the title wraps (${s.head.title?.h}px tall)`);
     check(s.head.sub && s.head.sub.h < 64, `${v.name}: the line under the title wraps to ${s.head.sub?.h}px`);
     for (const r of s.rows) {
       check(r.img, `${v.name}: row ${r.slot} (${r.name}) has no picture`);
-      check(r.buy && r.visible && r.buy.x >= r.box.x - 0.5 && r.buy.r <= r.box.r + 0.5 && r.buy.y >= r.box.y - 0.5 && r.buy.b <= r.box.b + 0.5, `${v.name}: row ${r.slot}'s Buy is outside its row ${JSON.stringify({ buy: r.buy, row: r.box })}`);
-      check(r.buy && r.buy.h >= 22 && r.buy.w >= 44, `${v.name}: row ${r.slot}'s Buy is ${r.buy?.w}x${r.buy?.h} - too small to press`);
+      check(
+        r.buy &&
+          r.visible &&
+          r.buy.x >= r.box.x - 0.5 &&
+          r.buy.r <= r.box.r + 0.5 &&
+          r.buy.y >= r.box.y - 0.5 &&
+          r.buy.b <= r.box.b + 0.5,
+        `${v.name}: row ${r.slot}'s Buy is outside its row ${JSON.stringify({ buy: r.buy, row: r.box })}`,
+      );
+      check(
+        r.buy && r.buy.h >= 22 && r.buy.w >= 44,
+        `${v.name}: row ${r.slot}'s Buy is ${r.buy?.w}x${r.buy?.h} - too small to press`,
+      );
       check(r.rune.startsWith('url('), `${v.name}: row ${r.slot} wears no set rune (${r.rune})`);
       const rc = clashes(r.parts);
       check(rc.length === 0, `${v.name}: row ${r.slot}'s pieces overlap: ${rc.join(', ')} ${JSON.stringify(r.parts)}`);
       check(r.parts.name && r.parts.name.w >= 80, `${v.name}: row ${r.slot}'s name is starved to ${r.parts.name?.w}px`);
-      check(r.name && !/null|undefined|NaN/.test(`${r.name}${r.set}${r.price}`), `${v.name}: row ${r.slot} says ${r.name} / ${r.set} / ${r.price}`);
+      check(
+        r.name && !/null|undefined|NaN/.test(`${r.name}${r.set}${r.price}`),
+        `${v.name}: row ${r.slot} says ${r.name} / ${r.set} / ${r.price}`,
+      );
     }
     const priceXs = s.rows.map((r) => r.parts.price?.x ?? NaN);
-    check(Math.max(...priceXs) - Math.min(...priceXs) < 2, `${v.name}: the prices do not stand in a line: ${priceXs.map((x) => x.toFixed(0)).join(', ')}`);
+    check(
+      Math.max(...priceXs) - Math.min(...priceXs) < 2,
+      `${v.name}: the prices do not stand in a line: ${priceXs.map((x) => x.toFixed(0)).join(', ')}`,
+    );
     const buyWs = s.rows.map((r) => r.buy?.w ?? NaN);
-    check(Math.max(...buyWs) - Math.min(...buyWs) < 1, `${v.name}: the Buys are not one width: ${buyWs.map((x) => x.toFixed(0)).join(', ')}`);
-    check(s.rows[5].buyText === 'Need 5 more' && s.rows[5].buyTitle === 'Not enough Deadlands Embers' && s.rows[5].disabled, `${v.name}: the Regalia at twelve, a purse of seven: "${s.rows[5].buyText}" (${s.rows[5].buyTitle})`);
-    check(s.card && s.setbox && s.sigilbox, `${v.name}: the card has ${s.setbox ? '' : 'no set block '}${s.sigilbox ? '' : 'no sigil block'}`);
-    check(s.card && s.card.x >= -0.5 && s.card.r <= v.viewport.width + 0.5, `${v.name}: the card runs off the screen sideways`);
-    check(!/null|undefined|NaN/.test(s.cardText), `${v.name}: the card says null/undefined: ${s.cardText.slice(0, 200)}`);
+    check(
+      Math.max(...buyWs) - Math.min(...buyWs) < 1,
+      `${v.name}: the Buys are not one width: ${buyWs.map((x) => x.toFixed(0)).join(', ')}`,
+    );
+    check(
+      s.rows[5].buyText === 'Need 5 more' && s.rows[5].buyTitle === 'Not enough Deadlands Embers' && s.rows[5].disabled,
+      `${v.name}: the Regalia at twelve, a purse of seven: "${s.rows[5].buyText}" (${s.rows[5].buyTitle})`,
+    );
+    check(
+      s.card && s.setbox && s.sigilbox,
+      `${v.name}: the card has ${s.setbox ? '' : 'no set block '}${s.sigilbox ? '' : 'no sigil block'}`,
+    );
+    check(
+      s.card && s.card.x >= -0.5 && s.card.r <= v.viewport.width + 0.5,
+      `${v.name}: the card runs off the screen sideways`,
+    );
+    check(
+      !/null|undefined|NaN/.test(s.cardText),
+      `${v.name}: the card says null/undefined: ${s.cardText.slice(0, 200)}`,
+    );
     await page.screenshot({ path: join(OUT, `broker-${v.name}-window.png`) });
     // the Regalia's card
     await page.evaluate(() => globalThis.__press('5'));
     await settle(page);
-    await page.waitForTimeout(600);   // a phone's press scrolls the card up, smoothly
+    await page.waitForTimeout(600); // a phone's press scrolls the card up, smoothly
     s = await page.evaluate(() => globalThis.__win());
-    check(/Ruhn's Regalia/.test(s.cardText) && s.rows[5].box, `${v.name}: the Regalia's card does not read Ruhn's Regalia`);
-    if (v.isMobile) check(s.card && s.card.y < v.viewport.height * 0.6 && s.card.y > -1, `${v.name}: a press left the card off the screen (its top at ${s.card?.y?.toFixed(0)})`);   // AUDIT SET U4
+    check(
+      /Ruhn's Regalia/.test(s.cardText) && s.rows[5].box,
+      `${v.name}: the Regalia's card does not read Ruhn's Regalia`,
+    );
+    if (v.isMobile)
+      check(
+        s.card && s.card.y < v.viewport.height * 0.6 && s.card.y > -1,
+        `${v.name}: a press left the card off the screen (its top at ${s.card?.y?.toFixed(0)})`,
+      ); // AUDIT SET U4
     await page.screenshot({ path: join(OUT, `broker-${v.name}-regalia.png`) });
     // a sale
     const before = await page.evaluate(() => globalThis.__stones());
@@ -291,17 +414,31 @@ try {
     s = await page.evaluate(() => globalThis.__win());
     const after = await page.evaluate(() => globalThis.__stones());
     const sold = s.rows.find((r) => r.slot === slot);
-    console.log(`${v.name}: bought slot ${slot} - "${s.note}" stones ${before.spendable}->${after.spendable} (locked ${after.locked}) purse "${s.purse}"`);
-    check(slot != null && /^Bought: .+, for \d+ Deadlands Embers?\.$/.test(s.note ?? ''), `${v.name}: the sale says "${s.note}"`);
+    console.log(
+      `${v.name}: bought slot ${slot} - "${s.note}" stones ${before.spendable}->${after.spendable} (locked ${after.locked}) purse "${s.purse}"`,
+    );
+    check(
+      slot != null && /^Bought: .+, for \d+ Deadlands Embers?\.$/.test(s.note ?? ''),
+      `${v.name}: the sale says "${s.note}"`,
+    );
     const paid = Number(/for (\d+) Sigil/.exec(s.note ?? '')?.[1]);
     // SS1: the price out of the one stack, which keeps the rest - a record more in the pack (the piece), none fewer
-    check(after.locked === 1 && before.spendable - after.spendable === paid && after.items === before.items + 1, `${v.name}: the stones ${JSON.stringify({ before, after, paid })}`);
-    check(sold?.buyText === 'Bought' && sold.buyTitle === 'Bought today' && sold.disabled, `${v.name}: the bought row reads "${sold?.buyText}" (${sold?.buyTitle})`);
+    check(
+      after.locked === 1 && before.spendable - after.spendable === paid && after.items === before.items + 1,
+      `${v.name}: the stones ${JSON.stringify({ before, after, paid })}`,
+    );
+    check(
+      sold?.buyText === 'Bought' && sold.buyTitle === 'Bought today' && sold.disabled,
+      `${v.name}: the bought row reads "${sold?.buyText}" (${sold?.buyTitle})`,
+    );
     await page.screenshot({ path: join(OUT, `broker-${v.name}-sold.png`) });
     // the back key shuts it through the door
     await page.keyboard.press('Escape');
     await settle(page);
-    check(!(await page.evaluate(() => globalThis.__doorOpen())) && !(await page.$('.broker-win')), `${v.name}: Escape did not shut the window`);
+    check(
+      !(await page.evaluate(() => globalThis.__doorOpen())) && !(await page.$('.broker-win')),
+      `${v.name}: Escape did not shut the window`,
+    );
     await ctx.close();
   }
 } finally {

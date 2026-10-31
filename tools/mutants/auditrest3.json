@@ -150,8 +150,8 @@
   {
     "name": "AUDITREST3-D1-the-rows-left-on-the-old-clock",
     "file": "src/systems/offlineCopy.js",
-    "old": "for (const h of Array.isArray(ledger?.held) ? ledger.held : []) if (h && Number.isFinite(h.takenAt)) h.takenAt = Math.max(0, h.takenAt + delta);",
-    "new": "void ledger;",
+    "old": "  for (const h of Array.isArray(ledger?.held) ? ledger.held : [])\n    if (h && Number.isFinite(h.takenAt)) h.takenAt = Math.max(0, h.takenAt + delta);",
+    "new": "  void ledger;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "AUDITREST3-D1-the-paid-minutes-left",
     "file": "src/systems/offlineCopy.js",
-    "old": "if (Number.isSafeInteger(paidAt[k])) paidAt[k] = Math.max(0, paidAt[k] + delta);",
-    "new": "void k;",
+    "old": "  for (const k of Object.keys(paidAt)) if (Number.isSafeInteger(paidAt[k])) paidAt[k] = Math.max(0, paidAt[k] + delta);",
+    "new": "  for (const k of Object.keys(paidAt)) void k;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "AUDITREST3-D1-a-day-before-the-calendar",
     "file": "src/systems/offlineCopy.js",
-    "old": "h.takenAt = Math.max(0, h.takenAt + delta);",
-    "new": "h.takenAt = h.takenAt + delta;",
+    "old": "    if (h && Number.isFinite(h.takenAt)) h.takenAt = Math.max(0, h.takenAt + delta);",
+    "new": "    if (h && Number.isFinite(h.takenAt)) h.takenAt = h.takenAt + delta;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AUDITREST3-D1-a-paid-minute-before-the-calendar",
     "file": "src/systems/offlineCopy.js",
-    "old": "paidAt[k] = Math.max(0, paidAt[k] + delta);",
-    "new": "paidAt[k] = paidAt[k] + delta;",
+    "old": "  for (const k of Object.keys(paidAt)) if (Number.isSafeInteger(paidAt[k])) paidAt[k] = Math.max(0, paidAt[k] + delta);",
+    "new": "  for (const k of Object.keys(paidAt)) if (Number.isSafeInteger(paidAt[k])) paidAt[k] = paidAt[k] + delta;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "AUDITREST3-C1-the-debt-never-asked",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
-    "new": "(now - rec.answered >= gapMs)",
+    "old": "      const move =\n        nightMoved(rec.high, at, now, isNight, freshMs) &&\n        (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));",
+    "new": "      const move = nightMoved(rec.high, at, now, isNight, freshMs) && now - rec.answered >= gapMs;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "AUDITREST3-C1-always-owed",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
-    "new": "(now - rec.answered >= gapMs || true)",
+    "old": "      const move =\n        nightMoved(rec.high, at, now, isNight, freshMs) &&\n        (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));",
+    "new": "      const move = nightMoved(rec.high, at, now, isNight, freshMs) && (now - rec.answered >= gapMs || true);",
     "tests": [
       "test/systems/auditrest3.test.js",
       "test/systems/auditrest2_party.test.js"
@@ -205,8 +205,8 @@
   {
     "name": "AUDITREST3-C1-the-debt-asked-first",
     "file": "src/systems/party/partyRestLaw.js",
-    "old": "(now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due))",
-    "new": "(!!(typeof due === 'function' ? due() : due) || now - rec.answered >= gapMs)",
+    "old": "        (now - rec.answered >= gapMs || !!(typeof due === 'function' ? due() : due));",
+    "new": "        (!!(typeof due === 'function' ? due() : due) || now - rec.answered >= gapMs);",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "AUDITREST3-C3-only-a-whole-night-raises",
     "file": "src/systems/rest/restAct.js",
-    "old": "  const raise = !!r;\n  if (!night)",
-    "new": "  const raise = nightWhole(r);\n  if (!night)",
+    "old": "  const raise = !!r;",
+    "new": "  const raise = nightWhole(r);",
     "tests": [
       "test/systems/auditrest2_party.test.js"
     ]
@@ -233,8 +233,8 @@
   {
     "name": "AUDITREST3-C3-a-rest-that-never-ran-raises",
     "file": "src/systems/rest/restAct.js",
-    "old": "  const raise = !!r;\n  if (!night)",
-    "new": "  const raise = true;\n  if (!night)",
+    "old": "  const raise = !!r;",
+    "new": "  const raise = true;",
     "tests": [
       "test/systems/auditrest2_party.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "AUDITREST3-B2-the-decor-unread",
     "file": "src/systems/realmCustoms.js",
-    "old": "for (const id of own ? Object.keys(own) : []) {",
-    "new": "for (const id of []) {",
+    "old": "      for (const id of own ? Object.keys(own) : []) {",
+    "new": "      for (const id of []) {",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "AUDITREST3-B2-the-piece-left-standing",
     "file": "src/systems/realmCustoms.js",
-    "old": "        if (Array.isArray(sc.decor)) sc.decor = sc.decor.filter((/** @type {any} */ p) => p?.id !== id);\n",
-    "new": "",
+    "old": "        if (Array.isArray(sc.decor)) sc.decor = sc.decor.filter((/** @type {any} */ p) => p?.id !== id);\n        restKept++;",
+    "new": "        restKept++;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "AUDITREST3-B2-the-decor-unsaid",
     "file": "src/systems/realmCustoms.js",
-    "old": "p?.id !== id);\n        restKept++;",
-    "new": "p?.id !== id);",
+    "old": "        restKept++;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "AUDITREST3-B4-every-list-counted",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (!foreign.has(list)) restKept += n;",
-    "new": "restKept += n;",
+    "old": "      if (!foreign.has(list)) restKept += n;",
+    "new": "      restKept += n;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "AUDITREST3-B4-the-shelf-counted",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);",
-    "new": "void c;",
+    "old": "    for (const sc of scenes)\n      for (const c of sc?.lootContainers ?? [])\n        if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);",
+    "new": "    for (const sc of scenes) for (const c of sc?.lootContainers ?? []) void c;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "AUDITREST3-B4-the-pile-counted",
     "file": "src/systems/realmCustoms.js",
-    "old": "    for (const pile of snap.world?.piles ?? []) if (Array.isArray(pile?.items)) foreign.add(pile.items);\n",
-    "new": "",
+    "old": "    for (const pile of snap.world?.piles ?? []) if (Array.isArray(pile?.items)) foreign.add(pile.items);\n    for (const foe of snap.world?.foes ?? []) if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
+    "new": "    for (const foe of snap.world?.foes ?? []) if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -296,8 +296,8 @@
   {
     "name": "AUDITREST3-B4-the-dead-foe-counted",
     "file": "src/systems/realmCustoms.js",
-    "old": "if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
-    "new": "void foe;",
+    "old": "    for (const foe of snap.world?.foes ?? []) if (foe?.dead && Array.isArray(foe.items)) foreign.add(foe.items);",
+    "new": "    for (const foe of snap.world?.foes ?? []) void foe;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -305,8 +305,8 @@
   {
     "name": "AUDITREST3-B4-a-chest-uncounted",
     "file": "src/systems/realmCustoms.js",
-    "old": "for (const sc of scenes) for (const c of sc?.lootContainers ?? []) if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves",
-    "new": "for (const sc of scenes) for (const c of sc?.lootContainers ?? []) if (c?.containerType !== LOOT_CONTAINER_TYPES.Nothing",
+    "old": "        if (c?.containerType === LOOT_CONTAINER_TYPES.ShopShelves && Array.isArray(c.items)) foreign.add(c.items);",
+    "new": "        if (c?.containerType !== LOOT_CONTAINER_TYPES.Nothing && Array.isArray(c.items)) foreign.add(c.items);",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AUDITREST3-A2-a-tent-s-stoke-for-anyone",
     "file": "src/systems/survival/camp.js",
-    "old": "export const canStoke = (camp, now, mine) => !!camp && !!mine && ",
-    "new": "export const canStoke = (camp, now, mine) => !!camp && (!!mine || camp.kind === CAMP_KIND.Tent) && ",
+    "old": "  !!mine &&",
+    "new": "  (!!mine || camp.kind === CAMP_KIND.Tent) &&",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "AUDITREST3-A3-the-tent-s-rest-dropped",
     "file": "src/systems/survival/camp.js",
-    "old": "const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
-    "new": "const restable = false;",
+    "old": "    const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
+    "new": "    const restable = false;",
     "tests": [
       "test/systems/auditrest3.test.js",
       "test/systems/auditrest2_camps.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "AUDITREST3-A3-any-cold-camp-rests",
     "file": "src/systems/survival/camp.js",
-    "old": "const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
-    "new": "const restable = true;",
+    "old": "    const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
+    "new": "    const restable = true;",
     "tests": [
       "test/systems/auditrest3.test.js",
       "test/systems/auditrest2_camps.test.js"
@@ -373,8 +373,8 @@
   {
     "name": "AUDITREST3-A3-a-friend-s-tent-rests",
     "file": "src/systems/survival/camp.js",
-    "old": "const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
-    "new": "const restable = camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
+    "old": "    const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
+    "new": "    const restable = camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDITREST3-A3-a-worn-tent-rests",
     "file": "src/systems/survival/camp.js",
-    "old": "const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
-    "new": "const restable = mine && camp.kind === CAMP_KIND.Tent;",
+    "old": "    const restable = mine && camp.kind === CAMP_KIND.Tent && (camp.wear | 0) > 0;",
+    "new": "    const restable = mine && camp.kind === CAMP_KIND.Tent;",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDITREST3-B5-the-jar-a-campfire",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (camp.jar) return mine ? CAMP_TEXT.seeOwnJar : CAMP_TEXT.seeJar;",
-    "new": "",
+    "old": "  if (camp.jar) return mine ? CAMP_TEXT.seeOwnJar : CAMP_TEXT.seeJar; // AUDIT REST III B5: an Ember Jar's is no Campfire, here as on its hover",
+    "new": "  // AUDIT REST III B5: an Ember Jar's is no Campfire, here as on its hover",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "AUDITREST3-B5-whose-jar",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (camp.jar) return mine ? CAMP_TEXT.seeOwnJar : CAMP_TEXT.seeJar;",
-    "new": "  if (camp.jar) return mine ? CAMP_TEXT.seeJar : CAMP_TEXT.seeOwnJar;",
+    "old": "  if (camp.jar) return mine ? CAMP_TEXT.seeOwnJar : CAMP_TEXT.seeJar; // AUDIT REST III B5: an Ember Jar's is no Campfire, here as on its hover",
+    "new": "  if (camp.jar) return mine ? CAMP_TEXT.seeJar : CAMP_TEXT.seeOwnJar; // AUDIT REST III B5: an Ember Jar's is no Campfire, here as on its hover",
     "tests": [
       "test/systems/auditrest3.test.js"
     ]
@@ -512,8 +512,8 @@
   {
     "name": "AUDITREST3-D2-the-ransom-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  K0C00Y07: Object.freeze(['2ransom']),",
-    "new": "",
+    "old": "  K0C00Y07: Object.freeze(['2ransom']), // AUDIT REST III D2: \"The ransom must be paid in =2ransom_ days or they will kill _victim_\"",
+    "new": "  // AUDIT REST III D2: \"The ransom must be paid in =2ransom_ days or they will kill _victim_\"",
     "tests": [
       "test/systems/auditrest3.test.js",
       "test/systems/quest/rest8_questwaits.test.js",
@@ -523,8 +523,8 @@
   {
     "name": "AUDITREST3-D2-the-daughter-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  B0B71Y03: Object.freeze(['finddaughter']),",
-    "new": "",
+    "old": "  B0B71Y03: Object.freeze(['finddaughter']), // AUDIT REST III D2: \"within =finddaughter_ days and I will tell you\"",
+    "new": "  // AUDIT REST III D2: \"within =finddaughter_ days and I will tell you\"",
     "tests": [
       "test/systems/auditrest3.test.js",
       "test/systems/quest/rest8_questwaits.test.js",

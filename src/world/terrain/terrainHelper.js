@@ -61,7 +61,7 @@ export const SMOOTH_GRADIENT_THRESHOLD = 20;
 export function dilateCoastalClimate(maps, passes = 2) {
   const pak = maps?.climatePak;
   if (!pak?.buffer) return 0;
-  pak.undilated ??= pak.buffer;   // AUDIT PRECIP AIR-10: the file's own climates kept - the air's (a texture repair is no weather); each pass writes a new buffer
+  pak.undilated ??= pak.buffer; // AUDIT PRECIP AIR-10: the file's own climates kept - the air's (a texture repair is no weather); each pass writes a new buffer
   let changed = 0;
   for (let pass = 0; pass < passes; pass++) {
     const src = pak.buffer;
@@ -71,9 +71,9 @@ export function dilateCoastalClimate(maps, passes = 2) {
     // ocean (TransferLandToOcean, :420-441) - inlined per neighbour.
     const transfer = (srcX, srcY, dstX, dstY) => {
       const srcClimate = src[srcY * PAK_WIDTH + (srcX + 1)];
-      if (srcClimate === OCEAN_CLIMATE) return;   // source must be land
+      if (srcClimate === OCEAN_CLIMATE) return; // source must be land
       const dstOffset = dstY * PAK_WIDTH + (dstX + 1);
-      if (src[dstOffset] !== OCEAN_CLIMATE) return;   // destination must be ocean
+      if (src[dstOffset] !== OCEAN_CLIMATE) return; // destination must be ocean
       if (climateArray[dstOffset] !== srcClimate) changed++;
       climateArray[dstOffset] = srcClimate;
     };

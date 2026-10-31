@@ -83,8 +83,8 @@
   {
     "name": "TV-WASD-no-hold-in-the-words",
     "file": "src/scenes/travelView.js",
-    "old": "  travelling: (rate, held = null) => (held != null && held < rate ?",
-    "new": "  travelling: (rate, held = null) => (false ?",
+    "old": "  travelling: (rate, held = null) =>\n    held != null && held < rate ? `Traveling at ×${held} of ×${rate}` : `Traveling at ×${rate}`, // the travel strip's own sign",
+    "new": "  travelling: (rate, held = null) => (false ? `Traveling at ×${held} of ×${rate}` : `Traveling at ×${rate}`), // the travel strip's own sign",
     "tests": [
       "test/systems/travel/tv_wasd.test.js"
     ]

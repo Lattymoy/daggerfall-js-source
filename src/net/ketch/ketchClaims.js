@@ -20,7 +20,7 @@
 //
 // Pure - the call, the store and the clocks are handed in. Not a DFU member. Ledger A (KETCH).
 import { readKetchReceipt } from './ketchReceipt.js';
-import { noteAct } from '../../systems/questlines/qlActs.js';   // the questline's act: the Warden felled, counted once
+import { noteAct } from '../../systems/questlines/qlActs.js'; // the questline's act: the Warden felled, counted once
 import { t } from '../../systems/textManager.js';
 
 /** The device's Ketch receipts not yet settled with the account service: `[{ r, cid, a? }]` - the receipt, its claim id,
@@ -28,7 +28,11 @@ import { t } from '../../systems/textManager.js';
 export const KT_CLAIMS_KEY = 'kt.ketchClaims';
 /** A claim id - sixteen hex digits, the service's KT_CID_RE. */
 export const KT_CID_RE = /^[0-9a-f]{16}$/;
-const mintCid = () => { const b = new Uint8Array(8); globalThis.crypto.getRandomValues(b); return [...b].map((x) => x.toString(16).padStart(2, '0')).join(''); };
+const mintCid = () => {
+  const b = new Uint8Array(8);
+  globalThis.crypto.getRandomValues(b);
+  return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+};
 /** The most it keeps for one account and for the device (a voyage every ten hours, each claimed as it is earned: a handful at most). */
 export const KT_CLAIMS_MAX = 8;
 export const KT_CLAIMS_ALL_MAX = 64;
@@ -40,14 +44,29 @@ export const KT_CLAIM_MENDABLE = Object.freeze(['signature', 'verify-threw', 'fu
 
 /** The words - each read through the text core when it is said (L10N4). */
 export const KT_CLAIM_TEXT = Object.freeze({
-  recorded: (n) => t('ketch.claim.recorded', 'The Ketchmaster\'s hold pays your share. Voyages sailed: {n}.', { n }),
-  get taken() { return t('ketch.claim.taken', 'You already took a share this voyage with another crew. Each voyage pays one share.'); },
+  recorded: (n) => t('ketch.claim.recorded', "The Ketchmaster's hold pays your share. Voyages sailed: {n}.", { n }),
+  get taken() {
+    return t(
+      'ketch.claim.taken',
+      'You already took a share this voyage with another crew. Each voyage pays one share.',
+    );
+  },
 });
 
 /** What the account service's answer does to a kept receipt: 'done' (let it go) or 'keep'. */
 export function ketchClaimVerdict(answer) {
-  if (answer?.ok) return answer.data?.guest === true && answer.data?.recorded !== true && answer.data?.why !== 'taken' && answer.data?.why !== 'claimed' ? 'keep' : 'done';
-  return answer?.error === 'receipt' && !KT_CLAIM_MENDABLE.includes(answer.why) ? 'done' : answer?.error === 'not-yours' ? 'done' : 'keep';
+  if (answer?.ok)
+    return answer.data?.guest === true &&
+      answer.data?.recorded !== true &&
+      answer.data?.why !== 'taken' &&
+      answer.data?.why !== 'claimed'
+      ? 'keep'
+      : 'done';
+  return answer?.error === 'receipt' && !KT_CLAIM_MENDABLE.includes(answer.why)
+    ? 'done'
+    : answer?.error === 'not-yours'
+      ? 'done'
+      : 'keep';
 }
 /** The voyages sailed as the account card says them - "3", "None yet" - or null for no record. */
 export function ketchRecordText(rec) {
@@ -64,23 +83,54 @@ export function ketchRecordText(rec) {
  * }} deps `claim` net/accountClient.js accountKetch's - `{ ok, data }` or `{ ok: false, error, why? }`, never a throw; `nowS`
  *   the relay's clock (null unheard); `me` the signed-in account; `paid` the hold's share answered - its spoils to roll
  */
-export function createKetchClaims({ claim, store = null, nowS = () => Math.floor(Date.now() / 1000), nowMs = () => Date.now(), say = () => {}, me = () => null, paid = () => {}, cid = mintCid }) {
-  let busy = false, again = false, lastAt = -Infinity;
-  let lastMe, meAt = -Infinity;
+export function createKetchClaims({
+  claim,
+  store = null,
+  nowS = () => Math.floor(Date.now() / 1000),
+  nowMs = () => Date.now(),
+  say = () => {},
+  me = () => null,
+  paid = () => {},
+  cid = mintCid,
+}) {
+  let busy = false,
+    again = false,
+    lastAt = -Infinity;
+  let lastMe,
+    meAt = -Infinity;
   const settled = new Set();
-  const live = (r) => { const c = typeof r === 'string' ? readKetchReceipt(r) : null; const t = nowS(); return c && c.signed && (t == null || c.e > t) ? c : null; };
-  const entry = (e) => (e && typeof e === 'object' && live(e.r) && typeof e.cid === 'string' && KT_CID_RE.test(e.cid) ? e : null);
+  const live = (r) => {
+    const c = typeof r === 'string' ? readKetchReceipt(r) : null;
+    const t = nowS();
+    return c && c.signed && (t == null || c.e > t) ? c : null;
+  };
+  const entry = (e) =>
+    e && typeof e === 'object' && live(e.r) && typeof e.cid === 'string' && KT_CID_RE.test(e.cid) ? e : null;
   let memory = [];
   /** @returns {Array<{ r: string, cid: string, a?: number }>} */
   function kept() {
     let v;
-    try { v = store ? store.get(KT_CLAIMS_KEY) : undefined; } catch { v = undefined; }
+    try {
+      v = store ? store.get(KT_CLAIMS_KEY) : undefined;
+    } catch {
+      v = undefined;
+    }
     return (Array.isArray(v) ? v : v === undefined ? memory : []).filter((e) => entry(e));
   }
-  const keep = (list) => { memory = list; try { store?.set(KT_CLAIMS_KEY, list); } catch { /* memory holds it */ } };
+  const keep = (list) => {
+    memory = list;
+    try {
+      store?.set(KT_CLAIMS_KEY, list);
+    } catch {
+      /* memory holds it */
+    }
+  };
 
   async function flush() {
-    if (busy) { again = true; return 0; }
+    if (busy) {
+      again = true;
+      return 0;
+    }
     busy = true;
     lastAt = nowMs();
     let n = 0;
@@ -89,20 +139,43 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
       keep(list);
       const mine = me();
       for (const e of list) {
-        const { r } = e, c = live(r);
+        const { r } = e,
+          c = live(r);
         if (!mine || c?.s !== mine) continue;
         let answer;
-        try { answer = await claim(r, e.cid); } catch { answer = { ok: false, error: 'offline' }; }
-        const d = answer?.ok ? answer.data ?? {} : null;
-        if (d?.recorded === true) { n++; if (Number.isSafeInteger(d.sailed)) say(KT_CLAIM_TEXT.recorded(d.sailed)); }
+        try {
+          answer = await claim(r, e.cid);
+        } catch {
+          answer = { ok: false, error: 'offline' };
+        }
+        const d = answer?.ok ? (answer.data ?? {}) : null;
+        if (d?.recorded === true) {
+          n++;
+          if (Number.isSafeInteger(d.sailed)) say(KT_CLAIM_TEXT.recorded(d.sailed));
+        }
         if (d && d.share === true) {
-          if (!kept().find((k) => k.r === r)?.a) { keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k))); noteAct('warden-felled'); }   // the act once, kept before it is said
-          try { paid(c, d); } catch (err) { console.warn('[kt] spoils', err?.message ?? err); }
+          if (!kept().find((k) => k.r === r)?.a) {
+            keep(kept().map((k) => (k.r === r ? { ...k, a: 1 } : k)));
+            noteAct('warden-felled');
+          } // the act once, kept before it is said
+          try {
+            paid(c, d);
+          } catch (err) {
+            console.warn('[kt] spoils', err?.message ?? err);
+          }
         } else if (d && d.why === 'taken') say(KT_CLAIM_TEXT.taken);
-        if (ketchClaimVerdict(answer) === 'done') { settled.add(r); keep(kept().filter((k) => k.r !== r)); }
+        if (ketchClaimVerdict(answer) === 'done') {
+          settled.add(r);
+          keep(kept().filter((k) => k.r !== r));
+        }
       }
-    } finally { busy = false; }
-    if (again) { again = false; void flush(); }
+    } finally {
+      busy = false;
+    }
+    if (again) {
+      again = false;
+      void flush();
+    }
     return n;
   }
   return {
@@ -111,7 +184,12 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
       const c = live(r);
       if (!c || settled.has(r)) return false;
       const list = kept();
-      if (!list.some((k) => { const o = readKetchReceipt(k.r); return k.r === r || (o?.d === c.d && o?.s === c.s && o?.o === c.o); })) {
+      if (
+        !list.some((k) => {
+          const o = readKetchReceipt(k.r);
+          return k.r === r || (o?.d === c.d && o?.s === c.s && o?.o === c.o);
+        })
+      ) {
         const theirs = list.filter((k) => readKetchReceipt(k.r)?.s === c.s);
         const drop = theirs.length >= KT_CLAIMS_MAX ? theirs[0] : null;
         keep([...list.filter((k) => k !== drop), { r, cid: cid() }].slice(-KT_CLAIMS_ALL_MAX));
@@ -123,13 +201,18 @@ export function createKetchClaims({ claim, store = null, nowS = () => Math.floor
      *  signs in. */
     tick() {
       if (busy) return false;
-      const t = nowMs(), due = t - lastAt >= KT_CLAIM_RETRY_MS;
+      const t = nowMs(),
+        due = t - lastAt >= KT_CLAIM_RETRY_MS;
       if (!due && t - meAt < KT_ME_POLL_MS) return false;
       meAt = t;
-      const mine = me(), signedIn = mine !== lastMe;
+      const mine = me(),
+        signedIn = mine !== lastMe;
       lastMe = mine;
       if (!signedIn && !due) return false;
-      if (!kept().some((e) => mine && live(e.r)?.s === mine)) { lastAt = nowMs(); return false; }
+      if (!kept().some((e) => mine && live(e.r)?.s === mine)) {
+        lastAt = nowMs();
+        return false;
+      }
       void flush();
       return true;
     },

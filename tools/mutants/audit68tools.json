@@ -2,8 +2,8 @@
   {
     "name": "AUDIT68-S01-a-bake-runs-on-import-again",
     "file": "scripts/bakeBooks.mjs",
-    "old": "if (isMain(import.meta.url)) {\nconst entries = parseBookMapping(",
-    "new": "if (true) {\nconst entries = parseBookMapping(",
+    "old": "if (isMain(import.meta.url)) {",
+    "new": "if (true) {",
     "tests": [
       "test/tooling/audit68_tools.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT68-S01-the-schema-line-is-a-label-again",
     "file": "scripts/bakeSettingsText.mjs",
-    "old": "    if (line.startsWith('-') || /^schema:/i.test(line)) continue;\n",
-    "new": "",
+    "old": "    if (line.startsWith('-') || /^schema:/i.test(line)) continue;\n    const c = line.indexOf(',');",
+    "new": "    const c = line.indexOf(',');",
     "tests": [
       "test/tooling/audit68_tools.test.js",
       "test/systems/settings/settingsText.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "AUDIT68-X5-a-foreign-path-is-this-targets-cite",
     "file": "tools/citeShift.mjs",
-    "old": "        if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;\n",
-    "new": "",
+    "old": "        if (dir && dir !== target && !target.endsWith('/' + dir) && !dir.endsWith('/' + target)) continue;\n        const a = +m[1],",
+    "new": "        const a = +m[1],",
     "tests": [
       "test/tooling/audit68_tools.test.js",
       "test/tooling/citemerge.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "AUDIT68-X5-a-regex-delimiter-hides-the-escaped-cite",
     "file": "tools/citeShift.mjs",
-    "old": "new RegExp(`(?<![\\\\w\\\\\\\\])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}",
-    "new": "new RegExp(`(?<![\\\\w/])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}",
+    "old": "    new RegExp(`(?<![\\\\w\\\\\\\\])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}\\\\\\\\${esc(ext)}:(\\\\d+)(?:-(\\\\d+))?`, 'g'),",
+    "new": "    new RegExp(`(?<![\\\\w/])(?:[\\\\w.-]+\\\\\\\\/)*${esc(stem)}\\\\\\\\${esc(ext)}:(\\\\d+)(?:-(\\\\d+))?`, 'g'),",
     "tests": [
       "test/tooling/audit68_tools.test.js"
     ]
@@ -67,7 +67,7 @@
   {
     "name": "AUDIT68-X5-a-signal-kills-the-harness-mid-mutant",
     "file": "tools/mutate.mjs",
-    "old": "for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { interrupted = sig; for (const c of children) c.kill(sig); });\n",
+    "old": "for (const sig of ['SIGINT', 'SIGTERM'])\n  process.on(sig, () => {\n    interrupted = sig;\n    for (const c of children) c.kill(sig);\n  });\n",
     "new": "",
     "tests": [
       "test/tooling/audit68_tools.test.js"
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT68-X5-confirm-reads-the-suite-through-1-MiB",
     "file": "tools/mutation/confirm.mjs",
-    "old": "timeout: 600000, maxBuffer: 1 << 28 });",
-    "new": "timeout: 600000 });",
+    "old": "  const r = spawnSync(process.execPath, ['--test'], {\n    cwd: ROOT,\n    encoding: 'utf8',\n    timeout: 600000,\n    maxBuffer: 1 << 28,\n  });",
+    "new": "  const r = spawnSync(process.execPath, ['--test'], { cwd: ROOT, encoding: 'utf8', timeout: 600000 });",
     "tests": [
       "test/tooling/audit68_tools.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "AUDIT68-X5-git-sizes-the-tag-again",
     "file": "scripts/buildTag.mjs",
-    "old": "git rev-parse --short=12 HEAD",
-    "new": "git rev-parse --short HEAD",
+    "old": "  const sha = execSync('git rev-parse --short=12 HEAD').toString().trim();",
+    "new": "  const sha = execSync('git rev-parse --short HEAD').toString().trim();",
     "tests": [
       "test/tooling/audit68_tools.test.js"
     ]

@@ -54,13 +54,13 @@
 // which is strictly stronger: it also sees a container's contents
 // change under a constant key, which the mod cannot.
 import { modSetting } from './modSettings.js';
-import { foeTitle } from './foeTitle.js';   // FOE-TITLE: a champion, an elite, a revenant - what each is called
-import { itemLongName } from './item/itemInfo.js';   // RF6: ResolveItemLongName, the port's one resolver
+import { foeTitle } from './foeTitle.js'; // FOE-TITLE: a champion, an elite, a revenant - what each is called
+import { itemLongName } from './item/itemInfo.js'; // RF6: ResolveItemLongName, the port's one resolver
 import { buildingClosedText, buildingLockValue } from './buildingLocks.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { TRIGGER_FLAGS } from '../world/rdbLayout.js';   // DFBlock.RdbTriggerFlags has ONE home; this arm compares against it rather than a second copy by name
-import { isActionDoorObject } from '../world/actionSystem.js';   // SENSE1: GetComponent<DaggerfallActionDoor>, the door band's own question
-import { DUNGEON_TIER_TEXT } from './dungeon/dungeonTier.js';   // TIER1: a dungeon's tier, in the words every surface draws
+import { TRIGGER_FLAGS } from '../world/rdbLayout.js'; // DFBlock.RdbTriggerFlags has ONE home; this arm compares against it rather than a second copy by name
+import { isActionDoorObject } from '../world/actionSystem.js'; // SENSE1: GetComponent<DaggerfallActionDoor>, the door band's own question
+import { DUNGEON_TIER_TEXT } from './dungeon/dungeonTier.js'; // TIER1: a dungeon's tier, in the words every surface draws
 
 /** The mod's switch, and its one knob. Online forces every mod on
  *  (OL1), which `modSetting` already applies - right for this one: a
@@ -92,10 +92,22 @@ export const INTERACT_TEXT = '<Interact>';
 // rather than silently reconciled, because reconciling it would mean
 // one of the two stops being a faithful copy of its source.
 export const DAEDRA_BY_RECORD = Object.freeze([
-  'Azura', 'Boethiah', 'Clavicus Vile', 'Hircine',
-  'Hermaeus Mora', 'Malacath', 'Mehrunes Dagon', 'Mephala',
-  'Meridia', 'Molag Bal', 'Namira', 'Nocturnal',
-  'Peryite', 'Sanguine', 'Sheogorath', 'Vaermina',
+  'Azura',
+  'Boethiah',
+  'Clavicus Vile',
+  'Hircine',
+  'Hermaeus Mora',
+  'Malacath',
+  'Mehrunes Dagon',
+  'Mephala',
+  'Meridia',
+  'Molag Bal',
+  'Namira',
+  'Nocturnal',
+  'Peryite',
+  'Sanguine',
+  'Sheogorath',
+  'Vaermina',
 ]);
 export const DAEDRA_ARCHIVE = 175;
 
@@ -124,7 +136,9 @@ export function npcHoverName(displayName, { archive = -1, record = -1 } = {}) {
 // all (.cs:403-405) - the rest are chain links and traps the player is
 // not meant to see as interactive.
 export const ACTION_TRIGGERS_NAMED = Object.freeze([
-  TRIGGER_FLAGS.Direct, TRIGGER_FLAGS.Direct6, TRIGGER_FLAGS.MultiTrigger,
+  TRIGGER_FLAGS.Direct,
+  TRIGGER_FLAGS.Direct6,
+  TRIGGER_FLAGS.MultiTrigger,
 ]);
 
 /** The three models the mod names outright (.cs:420-431). */
@@ -200,13 +214,18 @@ const CONTAINER_NAME_GROUPS = Object.freeze([
   ['Shelf', [41027]],
   ['Dresser', [41034, 41050, 41803, 41806]],
   ['Cupboard', [41032, 41035, 41037, 41051, 41807, 41804, 41808, 41809, 41814]],
-  ['Crate', [41815, 41816, 41817, 41818, 41819, 41820, 41821, 41822, 41823,
-    41824, 41825, 41826, 41827, 41828, 41829, 41830, 41831, 41832, 41833, 41834]],
+  [
+    'Crate',
+    [
+      41815, 41816, 41817, 41818, 41819, 41820, 41821, 41822, 41823, 41824, 41825, 41826, 41827, 41828, 41829, 41830,
+      41831, 41832, 41833, 41834,
+    ],
+  ],
   ['Chest', [41811, 41812, 41813]],
 ]);
-export const HOUSE_CONTAINER_NAMES = Object.freeze(Object.fromEntries(
-  CONTAINER_NAME_GROUPS.flatMap(([name, ids]) => ids.map((id) => [id, name])),
-));
+export const HOUSE_CONTAINER_NAMES = Object.freeze(
+  Object.fromEntries(CONTAINER_NAME_GROUPS.flatMap(([name, ids]) => ids.map((id) => [id, name]))),
+);
 
 /**
  * A house container's word - the mod's `default: "<Interact>"`
@@ -303,7 +322,7 @@ export const corpseName = (entityName) => `${entityName ?? ''} (dead)`;
 
 /** .cs:299-302 - a walking townsperson is MobilePersonNPC.NameNPC,
  *  the same field the talk session takes its partner's name from. */
-export const mobilePersonName = (nameNPC) => (nameNPC || null);
+export const mobilePersonName = (nameNPC) => nameNPC || null;
 
 /**
  * .cs:304-312 - a live entity is `Entity.Name`, and ONLY when its
@@ -470,11 +489,20 @@ export function actionObjectName(o, { hideInteract = false } = {}) {
  * SENTENCE itself is `buildingLocks.buildingClosedText`, the port's one
  * home for it, which takes that substitution as its `subject`.
  */
-export function staticDoorName(kind, {
-  displayName = '', locationName = '', regionName = '',
-  buildingType = BUILDING_TYPES.None, unlocked = true, quality = 0,
-  inTown = false, tier = null, size = null,
-} = {}) {
+export function staticDoorName(
+  kind,
+  {
+    displayName = '',
+    locationName = '',
+    regionName = '',
+    buildingType = BUILDING_TYPES.None,
+    unlocked = true,
+    quality = 0,
+    inTown = false,
+    tier = null,
+    size = null,
+  } = {},
+) {
   // ELITE: the mouth of an elite spawned dungeon says so, in the plaque's title, with the way in beneath.
   // TIER1 (Super-Dungeons.md section 12): and every dungeon's mouth says its TIER the same way where the host names one -
   // online, where the tiers differ (systems/dungeon/dungeonTier.js) - Regular, Elite or Super, and beneath the way in, the
@@ -483,7 +511,7 @@ export function staticDoorName(kind, {
   if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {
     const name = String(locationName ?? '').replace(/^Elite /, '');
     const subs = [];
-    if (name) subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`);   // AUDIT SD II (L6 F20): "To the Brass Hollow"
+    if (name) subs.push(`To ${tier === 'super' ? name.replace(/^The /, 'the ') : name}`); // AUDIT SD II (L6 F20): "To the Brass Hollow"
     if (size) subs.push(String(size));
     return { title: DUNGEON_TIER_TEXT[tier], subs };
   }
@@ -493,7 +521,7 @@ export function staticDoorName(kind, {
   if (kind === 'dungeonExit') {
     // .cs:777-782: a town's dungeon exit names the town; anything else
     // names the REGION, because you step out into open country.
-    const to = inTown ? locationName : (regionName ? `${regionName} Region` : '');
+    const to = inTown ? locationName : regionName ? `${regionName} Region` : '';
     return to ? { title: `To\n${to}` } : null;
   }
   if (kind !== 'building') return null;
@@ -503,16 +531,18 @@ export function staticDoorName(kind, {
   // stands in, so every door a player can walk through names where it goes (the
   // mod would print "To" and nothing; DFU names every house "Residence" - the
   // host's homeDoorName - and every shop by BuildingNames).
-  const to = buildingType === BUILDING_TYPES.Town23
-    ? (locationName ? `${locationName} City Walls` : '')
-    : displayName || locationName;
+  const to =
+    buildingType === BUILDING_TYPES.Town23
+      ? locationName
+        ? `${locationName} City Walls`
+        : ''
+      : displayName || locationName;
   if (!to) return null;
   const subs = [];
-  if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`);   // .cs:735-738
-  if (!unlocked && buildingType <= BUILDING_TYPES.Palace
-    && buildingType !== BUILDING_TYPES.HouseForSale) {                     // .cs:740-741
-    subs.push(buildingClosedText(buildingType,
-      { subject: buildingType === BUILDING_TYPES.Palace ? 'Palace' : null }));   // .cs:747-748
+  if (!unlocked) subs.push(`Lock Level: ${buildingLockValue(quality)}`); // .cs:735-738
+  if (!unlocked && buildingType <= BUILDING_TYPES.Palace && buildingType !== BUILDING_TYPES.HouseForSale) {
+    // .cs:740-741
+    subs.push(buildingClosedText(buildingType, { subject: buildingType === BUILDING_TYPES.Palace ? 'Palace' : null })); // .cs:747-748
   }
   return { title: `To\n${to}`, subs };
 }
@@ -521,7 +551,10 @@ export function staticDoorName(kind, {
  * A placed decoration indoors. A chair, a candle or any other piece that does nothing stays unnamed. One's own
  * thing, a container, a station and a hall's board keep the word the press acts on.
  */
-export function indoorDecorHover(piece, { itemTitle = null, boardTitle = null, catalogueName = null, containerName = null, stationName = null } = {}) {
+export function indoorDecorHover(
+  piece,
+  { itemTitle = null, boardTitle = null, catalogueName = null, containerName = null, stationName = null } = {},
+) {
   if (!piece) return null;
   if (piece.item) return itemTitle ? { title: itemTitle } : null;
   if (boardTitle) return { title: boardTitle };

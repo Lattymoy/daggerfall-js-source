@@ -40,13 +40,20 @@ export function createSdLanes(o) {
   const placesOf = () => (o.places !== undefined ? o.places : keptPlaces());
   const theatres = createEventTheatres({
     scans: () => (o.theatreScans !== undefined ? o.theatreScans : keptTheatreScans()),
-    generation: () => placesOf()?.generation?.() ?? 0, land: () => (o.landVersion ?? tamrielLandVersion)(),
+    generation: () => placesOf()?.generation?.() ?? 0,
+    land: () => (o.landVersion ?? tamrielLandVersion)(),
     idle: o.idle,
   });
   const standing = o.standing ?? (() => null);
   /** The Bay's lane's host - the one it always was, judging the Bay's own slots alone where I stand (a province's Hollow I
    *  stand in is its own lane's to end). */
-  const bay = createSdHost({ ...o, standing: () => { const s = standing(); return s != null && sdLaneOf(s) === 0 ? s : null; } });
+  const bay = createSdHost({
+    ...o,
+    standing: () => {
+      const s = standing();
+      return s != null && sdLaneOf(s) === 0 ? s : null;
+    },
+  });
   /** lane -> its host, made at its first record */
   /** @type {Map<number, SdHost>} */ const lanes = new Map();
   /** WHETHER A PROVINCE'S HOLLOW IS ASKED OF ITS GROUND NOW - its theatre's scan is a few hundred milliseconds of the
@@ -67,14 +74,22 @@ export function createSdLanes(o) {
       h = createSdHost({
         ...o,
         // its theatre's scan once warm, and one with no town is none yet (TESA's places not landed: asked again when they do)
-        scan: () => { const sc = wanted(lane, lanes.get(lane)) ? theatres.scanOf(lane) : null; return sc && sc.towns.length ? sc : null; },
+        scan: () => {
+          const sc = wanted(lane, lanes.get(lane)) ? theatres.scanOf(lane) : null;
+          return sc && sc.towns.length ? sc : null;
+        },
         rescan: true,
-        warmScan: () => { if (wanted(lane, lanes.get(lane))) theatres.scanOf(lane); },
+        warmScan: () => {
+          if (wanted(lane, lanes.get(lane))) theatres.scanOf(lane);
+        },
         cities: (r) => sdTheatreCities(placesOf(), lane, r, { provinceName: province }),
         findSite: findSdTheatreSite,
         province,
         // its own slots alone: another lane's Hollow I stand in is that lane's to judge
-        standing: () => { const s = standing(); return s != null && sdLaneOf(s) === lane ? s : null; },
+        standing: () => {
+          const s = standing();
+          return s != null && sdLaneOf(s) === lane ? s : null;
+        },
       });
       lanes.set(lane, h);
     }
@@ -82,18 +97,25 @@ export function createSdLanes(o) {
   };
   /** Every lane's host there is: the Bay's, then each province's that has heard its record. */
   const all = () => [bay, ...lanes.values()];
-  const hostOf = (s) => { const lane = Number.isSafeInteger(s) ? sdLaneOf(s) : 0; return lane === 0 ? bay : lanes.get(lane) ?? null; };
+  const hostOf = (s) => {
+    const lane = Number.isSafeInteger(s) ? sdLaneOf(s) : 0;
+    return lane === 0 ? bay : (lanes.get(lane) ?? null);
+  };
   /** THE FOCUS: the lane I stand in (its Hollow or its Hour), else the one whose Hollow stands nearest me, else the Bay's. */
   function focus() {
     const s = standing();
     if (s != null) return hostOf(s) ?? bay;
     const p = o.here?.() ?? null;
-    let best = bay, bestD = Infinity;
+    let best = bay,
+      bestD = Infinity;
     for (const h of all()) {
       const site = h.hollow()?.site;
       if (!site) continue;
       const d = p ? Math.hypot(site.px - p.x, site.py - p.y) : h === bay ? 0 : Infinity;
-      if (d < bestD) { best = h; bestD = d; }
+      if (d < bestD) {
+        best = h;
+        bestD = d;
+      }
     }
     return best;
   }
@@ -106,18 +128,23 @@ export function createSdLanes(o) {
       else if (SD_LANES.includes(lane)) laneHost(lane).heard(w);
     },
     /** ONE FRAME of every lane's host. */
-    frame() { for (const h of all()) h.frame(); },
+    frame() {
+      for (const h of all()) h.frame();
+    },
     /** The record of slot `s`'s lane, else the focus's (null before its hub's first word). */
-    record: (s) => (s != null ? hostOf(s)?.record() ?? null : focus().record()),
+    record: (s) => (s != null ? (hostOf(s)?.record() ?? null) : focus().record()),
     /** The Hollow standing in the world for slot `s`'s lane, else the focus's - `{ s, site, loc, key }` - or null. */
-    hollow: (s) => (s != null ? hostOf(s)?.hollow() ?? null : focus().hollow()),
+    hollow: (s) => (s != null ? (hostOf(s)?.hollow() ?? null) : focus().hollow()),
     isHollow: (loc) => bay.isHollow(loc),
     /** The phase of slot `s`'s lane's record, else the focus's. */
-    phase: (s) => (s != null ? hostOf(s)?.phase() ?? 'gone' : focus().phase()),
+    phase: (s) => (s != null ? (hostOf(s)?.phase() ?? 'gone') : focus().phase()),
     /** The focus's ring on the map (the notice boards' and the compass's one Hollow). */
     mapMark: () => focus().mapMark(),
     /** WW5: every lane's ring while its Hollow is news - the held map's (ui/heldMap.js `sd`). */
-    mapMarks: () => all().map((h) => h.mapMark()).filter(Boolean),
+    mapMarks: () =>
+      all()
+        .map((h) => h.mapMark())
+        .filter(Boolean),
     /** The focus's omen column. */
     omen: () => focus().omen(),
     /** "Any news?" - the focus's taverns' word. */
@@ -127,8 +154,17 @@ export function createSdLanes(o) {
      *  in: its next rise is its own players' row). */
     timers() {
       const one = (h) => ({ rec: h.record(), name: h.hollow()?.loc?.name ?? null, site: h.hollow()?.site ?? null });
-      const p = o.here?.() ?? null, at = p ? theatreAt(p.x, p.y) : -1;
-      return { ...one(bay), lanes: [...lanes.entries()].map(([lane, h]) => ({ ...one(h), lane, province: PROVINCE_REGION_NAMES[lane - 1] ?? '', mine: lane === at })) };
+      const p = o.here?.() ?? null,
+        at = p ? theatreAt(p.x, p.y) : -1;
+      return {
+        ...one(bay),
+        lanes: [...lanes.entries()].map(([lane, h]) => ({
+          ...one(h),
+          lane,
+          province: PROVINCE_REGION_NAMES[lane - 1] ?? '',
+          mine: lane === at,
+        })),
+      };
     },
     /** The lanes' hosts, for the tests and the probes. */
     lanes: () => new Map([[0, bay], ...lanes]),

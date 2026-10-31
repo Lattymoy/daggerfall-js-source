@@ -211,7 +211,7 @@ test('AUDIT DEEP R-1: EVERY fogged program under the travel view measures its fo
   assert.match(rd('src/render/killFx.js'), /if \(u\.uFocus\) gl\.uniform4fv\(u\.uFocus, fog\?\.focus \?\? \[0, 0, 0, 0\]\);/, 'the kill pass uploads it');
   assert.match(rd('src/scenes/hostMagic.js'), /const n = killPass\.draw\(killFx, renderer\._proj, renderer\._view, eye, \{[^\n]*focus: renderer\._focus/, 'and the cast engine hands it');
   // STAR4 (2026-10-20) joined the list: the Starfall's beacons stand over the land the view flies over - its host hands the focus
-  assert.match(rd('src/scenes/starfall/starfallHost.js'), /const fogOf = \(\) => \(renderer \? \{[^\n]*camPos: renderer\._camPos, focus: renderer\._focus, haze: renderer\._haze \} : null\);/, 'the star\'s sky handed it');
+  assert.match(rd('src/scenes/starfall/starfallHost.js'), /const fogOf = \(\) =>\n\s*renderer\n\s*\? \{\n\s*mode: renderer\._fogMode,\n\s*density: renderer\._fogDensity,\n\s*range: renderer\._fogRange,\n\s*color: renderer\._fogColor,\n\s*camPos: renderer\._camPos,\n\s*focus: renderer\._focus,\n\s*haze: renderer\._haze,\n\s*\}\n\s*: null;/, 'the star\'s sky handed it');
   // ROCKET1 (2026-10-23) joined the list: the rocket's mounds stand round the traveller the view flies over - its pass uploads the focus its host hands it
   assert.match(readFileSync(new URL('rocketPass.js', dir), 'utf8'), /if \(U\.uFocus\) gl\.uniform4fv\(U\.uFocus, fog\?\.focus \?\? NO_FOCUS\);/);
   assert.match(rd('src/scenes/rocketHost.js'), /camPos: renderer\._camPos, focus: renderer\._focus, haze: renderer\._haze \}\);/, 'the rocket handed it');

@@ -15,13 +15,27 @@
 //
 // The shader carries no colour of its own: every colour is generated from world/rocketEvent.js's tables, so the JS
 // and the GLSL cannot drift. Not a DFU member. Ledger A (ROCKET).
-import { buildProgram } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { buildProgram } from './glProgram.js'; // AUDIT 68 S17-gl-program-dup: the one compile and link
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { multiply } from '../world/mat4.js';
 import {
-  ROCKET_POOP, ROCKET_POOP_DARK, ROCKET_POOP_SHINE, ROCKET_MOUND, ROCKET_MOUND_TOP, ROCKET_GAS, ROCKET_GAS_EDGE,
-  ROCKET_FRENZY_ZENITH, ROCKET_FRENZY_HORIZON, ROCKET_FRENZY_SWIRL, ROCKET_WASH, ROCKET_COATS, ROCKET_MANES,
-  ROCKET_RAIN_SPAN_M, ROCKET_RAIN_TOP_M, ROCKET_HORSE_GIRTH, ROCKET_HORSE_LEGS,
+  ROCKET_POOP,
+  ROCKET_POOP_DARK,
+  ROCKET_POOP_SHINE,
+  ROCKET_MOUND,
+  ROCKET_MOUND_TOP,
+  ROCKET_GAS,
+  ROCKET_GAS_EDGE,
+  ROCKET_FRENZY_ZENITH,
+  ROCKET_FRENZY_HORIZON,
+  ROCKET_FRENZY_SWIRL,
+  ROCKET_WASH,
+  ROCKET_COATS,
+  ROCKET_MANES,
+  ROCKET_RAIN_SPAN_M,
+  ROCKET_RAIN_TOP_M,
+  ROCKET_HORSE_GIRTH,
+  ROCKET_HORSE_LEGS,
 } from '../world/rocketEvent.js';
 
 const f = (v) => v.toFixed(4);
@@ -30,7 +44,7 @@ const v3 = (c) => `vec3(${c.map(f).join(', ')})`;
 const HEAD = `#version 300 es
 precision highp float;
 precision highp int;
-`;   // the int too: `uMode` is both stages' (a fragment shader's int is mediump by default - they would not link)
+`; // the int too: `uMode` is both stages' (a fragment shader's int is mediump by default - they would not link)
 const FOG = `uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
@@ -42,10 +56,14 @@ const FOG_UNIFORMS = ['uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus
 
 // ── The frenzy's sky, and its wash ────────────────────────────────
 /** One triangle at the far plane; the ray rebuilt from the view's rotation and the projection's two scales. */
-export const ROCKET_SKY_VS = HEAD + `layout(location = 0) in vec2 aP;
+export const ROCKET_SKY_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aP;
 out vec2 vNdc;
 void main() { vNdc = aP; gl_Position = vec4(aP, 1.0, 1.0); }`;
-export const ROCKET_SKY_FS = HEAD + `in vec2 vNdc;
+export const ROCKET_SKY_FS =
+  HEAD +
+  `in vec2 vNdc;
 uniform mat4 uView;
 uniform vec2 uInvP;     // 1 / proj[0], 1 / proj[5]
 uniform float uWeight;  // the frenzy's weight, 0..1
@@ -86,7 +104,9 @@ void main() {
 // ── The mounds ────────────────────────────────────────────────────
 /** A mound: the unit half-ellipsoid `aP` (x, z on the unit disk, y its height - a skirt below 0 meets a slope), each
  *  one's `aA` (x, the ground, z, radius) and `aB` (height, seed, its surges' rate, -). */
-export const ROCKET_MOUND_VS = HEAD + `layout(location = 0) in vec3 aP;
+export const ROCKET_MOUND_VS =
+  HEAD +
+  `layout(location = 0) in vec3 aP;
 layout(location = 1) in vec4 aA;
 layout(location = 2) in vec4 aB;
 uniform mat4 uVP;
@@ -107,7 +127,9 @@ void main() {
   vSeed = aB.y;
   gl_Position = uVP * vec4(vWorld, 1.0);
 }`;
-export const ROCKET_MOUND_FS = HEAD + `in vec3 vWorld;
+export const ROCKET_MOUND_FS =
+  HEAD +
+  `in vec3 vWorld;
 in vec3 vN;
 in vec3 vLocal;
 in float vSeed;
@@ -131,7 +153,9 @@ void main() {
 /** A billboard, by `uMode`: 0 a mound's chunk (`aA` the mound: x, the ground, z, its jet's height; `aB` its seed plus the
  *  chunk's index, a chunk's flight, its surges' rate, the mound's height), 1 the frenzy's falling chunk (`aA` its place
  *  in the square, its seed, its speed), 2 a fart's cloud (`aA` its place and size, `aB` its fade and seed). */
-export const ROCKET_SPRITE_VS = HEAD + `layout(location = 0) in vec2 aQ;
+export const ROCKET_SPRITE_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aQ;
 layout(location = 1) in vec4 aA;
 layout(location = 2) in vec4 aB;
 uniform mat4 uVP;
@@ -181,7 +205,9 @@ ${HASH}void main() {
   vWorld = w;
   gl_Position = uVP * vec4(w, 1.0);
 }`;
-export const ROCKET_SPRITE_FS = HEAD + `in vec2 vUv;
+export const ROCKET_SPRITE_FS =
+  HEAD +
+  `in vec2 vUv;
 in vec3 vWorld;
 in float vSeed;
 in float vFade;
@@ -227,7 +253,9 @@ void main() {
 // ── The horses ────────────────────────────────────────────────────
 /** A horse: `aA` its place and length, `aB` the way it goes and its gallop's phase, `aC` its coat. The billboard stands
  *  upright to the eye, its nose the way it goes on the screen. */
-export const ROCKET_HORSE_VS = HEAD + `layout(location = 0) in vec2 aQ;
+export const ROCKET_HORSE_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aQ;
 layout(location = 1) in vec4 aA;
 layout(location = 2) in vec4 aB;
 layout(location = 3) in float aC;
@@ -250,7 +278,9 @@ void main() {
   vCoat = int(aC + 0.5);
   gl_Position = uVP * vec4(w, 1.0);
 }`;
-export const ROCKET_HORSE_FS = HEAD + `in vec2 vP;
+export const ROCKET_HORSE_FS =
+  HEAD +
+  `in vec2 vP;
 in vec3 vWorld;
 in float vGallop;
 flat in int vCoat;
@@ -306,19 +336,29 @@ void main() {
 }`;
 
 /** FIRST-USE (#1144): the pass's programs, as its constructor builds them. */
-export const ROCKET_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([
-  [ROCKET_SKY_VS, ROCKET_SKY_FS], [ROCKET_MOUND_VS, ROCKET_MOUND_FS], [ROCKET_SPRITE_VS, ROCKET_SPRITE_FS], [ROCKET_HORSE_VS, ROCKET_HORSE_FS],
-]));
+export const ROCKET_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (
+  Object.freeze([
+    [ROCKET_SKY_VS, ROCKET_SKY_FS],
+    [ROCKET_MOUND_VS, ROCKET_MOUND_FS],
+    [ROCKET_SPRITE_VS, ROCKET_SPRITE_FS],
+    [ROCKET_HORSE_VS, ROCKET_HORSE_FS],
+  ])
+);
 
 /** The mound's half-ellipsoid: `rings` rings from the skirt (y -0.6, a touch wider) up over the crown, `segs` round -
  *  triangles, xyz a vertex. */
 export function moundMesh(rings = 7, segs = 16) {
-  const ring = (i) => (i === 0 ? { r: 1.04, y: -0.6 } : { r: Math.cos(((i - 1) / (rings - 1)) * Math.PI / 2), y: Math.sin(((i - 1) / (rings - 1)) * Math.PI / 2) });
+  const ring = (i) =>
+    i === 0
+      ? { r: 1.04, y: -0.6 }
+      : { r: Math.cos((((i - 1) / (rings - 1)) * Math.PI) / 2), y: Math.sin((((i - 1) / (rings - 1)) * Math.PI) / 2) };
   const out = [];
   for (let i = 0; i < rings; i++) {
-    const a = ring(i), b = ring(i + 1);
+    const a = ring(i),
+      b = ring(i + 1);
     for (let s = 0; s < segs; s++) {
-      const t0 = (s / segs) * 2 * Math.PI, t1 = ((s + 1) / segs) * 2 * Math.PI;
+      const t0 = (s / segs) * 2 * Math.PI,
+        t1 = ((s + 1) / segs) * 2 * Math.PI;
       const P = (q, t) => [q.r * Math.cos(t), q.y, q.r * Math.sin(t)];
       out.push(...P(a, t0), ...P(b, t0), ...P(b, t1), ...P(a, t0), ...P(b, t1), ...P(a, t1));
     }
@@ -345,33 +385,92 @@ export class RocketPassRenderer {
     this.sky = buildProgram(gl, sky[0], sky[1], 'rocketSky');
     this.uk = uniforms(gl, this.sky, ['uView', 'uInvP', 'uWeight', 'uTime', 'uMode']);
     this.mound = buildProgram(gl, mound[0], mound[1], 'rocketMounds');
-    this.um = uniforms(gl, this.mound, ['uVP', 'uRise', 'uJet', 'uTime', 'uLightDir', 'uAmbient', 'uSun', ...FOG_UNIFORMS]);
+    this.um = uniforms(gl, this.mound, [
+      'uVP',
+      'uRise',
+      'uJet',
+      'uTime',
+      'uLightDir',
+      'uAmbient',
+      'uSun',
+      ...FOG_UNIFORMS,
+    ]);
     this.sprite = buildProgram(gl, sprite[0], sprite[1], 'rocketPoop');
-    this.us = uniforms(gl, this.sprite, ['uVP', 'uRight', 'uUp', 'uEye', 'uMode', 'uTime', 'uJet', 'uRise', 'uFrenzy', 'uLight', ...FOG_UNIFORMS]);
+    this.us = uniforms(gl, this.sprite, [
+      'uVP',
+      'uRight',
+      'uUp',
+      'uEye',
+      'uMode',
+      'uTime',
+      'uJet',
+      'uRise',
+      'uFrenzy',
+      'uLight',
+      ...FOG_UNIFORMS,
+    ]);
     this.horse = buildProgram(gl, horse[0], horse[1], 'rocketHorses');
     this.uh = uniforms(gl, this.horse, ['uVP', 'uEye', 'uCoat', 'uMane', 'uLight', ...FOG_UNIFORMS]);
     this.buffers = [];
-    const buf = (data, usage) => { const b = gl.createBuffer(); this.buffers.push(b); gl.bindBuffer(gl.ARRAY_BUFFER, b); gl.bufferData(gl.ARRAY_BUFFER, data, usage); return b; };
+    const buf = (data, usage) => {
+      const b = gl.createBuffer();
+      this.buffers.push(b);
+      gl.bindBuffer(gl.ARRAY_BUFFER, b);
+      gl.bufferData(gl.ARRAY_BUFFER, data, usage);
+      return b;
+    };
     this.vaos = [];
-    const vao = () => { const v = gl.createVertexArray(); this.vaos.push(v); gl.bindVertexArray(v); return v; };
+    const vao = () => {
+      const v = gl.createVertexArray();
+      this.vaos.push(v);
+      gl.bindVertexArray(v);
+      return v;
+    };
     /** @param {number} loc @param {number} size @param {number} stride @param {number} off @param {boolean} inst */
-    const attr = (loc, size, stride, off, inst) => { gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, size, gl.FLOAT, false, stride, off); if (inst) gl.vertexAttribDivisor(loc, 1); };
-    this.fullVao = vao(); buf(FULL, gl.STATIC_DRAW); attr(0, 2, 8, 0, false);
+    const attr = (loc, size, stride, off, inst) => {
+      gl.enableVertexAttribArray(loc);
+      gl.vertexAttribPointer(loc, size, gl.FLOAT, false, stride, off);
+      if (inst) gl.vertexAttribDivisor(loc, 1);
+    };
+    this.fullVao = vao();
+    buf(FULL, gl.STATIC_DRAW);
+    attr(0, 2, 8, 0, false);
     const mesh = moundMesh();
     this.moundCount = mesh.length / 3;
-    this.moundVao = vao(); buf(mesh, gl.STATIC_DRAW); attr(0, 3, 12, 0, false);
-    this.moundInst = buf(new Float32Array(8), gl.DYNAMIC_DRAW); attr(1, 4, 32, 0, true); attr(2, 4, 32, 16, true);
+    this.moundVao = vao();
+    buf(mesh, gl.STATIC_DRAW);
+    attr(0, 3, 12, 0, false);
+    this.moundInst = buf(new Float32Array(8), gl.DYNAMIC_DRAW);
+    attr(1, 4, 32, 0, true);
+    attr(2, 4, 32, 16, true);
     const quad = buf(QUAD, gl.STATIC_DRAW);
     // the sprites' two instance streams - the jets' (rebuilt when the mounds change) and the falling poop's (built once)
     // - and the clouds' (every frame); the horses' their own
-    this.jetVao = vao(); gl.bindBuffer(gl.ARRAY_BUFFER, quad); attr(0, 2, 8, 0, false);
-    this.jetInst = buf(new Float32Array(8), gl.DYNAMIC_DRAW); attr(1, 4, 32, 0, true); attr(2, 4, 32, 16, true);
-    this.rainVao = vao(); gl.bindBuffer(gl.ARRAY_BUFFER, quad); attr(0, 2, 8, 0, false);
-    this.rainInst = buf(new Float32Array(8), gl.STATIC_DRAW); attr(1, 4, 32, 0, true); attr(2, 4, 32, 16, true);
-    this.puffVao = vao(); gl.bindBuffer(gl.ARRAY_BUFFER, quad); attr(0, 2, 8, 0, false);
-    this.puffInst = buf(new Float32Array(8), gl.DYNAMIC_DRAW); attr(1, 4, 32, 0, true); attr(2, 4, 32, 16, true);
-    this.horseVao = vao(); gl.bindBuffer(gl.ARRAY_BUFFER, quad); attr(0, 2, 8, 0, false);
-    this.horseInst = buf(new Float32Array(9), gl.DYNAMIC_DRAW); attr(1, 4, 36, 0, true); attr(2, 4, 36, 16, true); attr(3, 1, 36, 32, true);
+    this.jetVao = vao();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    attr(0, 2, 8, 0, false);
+    this.jetInst = buf(new Float32Array(8), gl.DYNAMIC_DRAW);
+    attr(1, 4, 32, 0, true);
+    attr(2, 4, 32, 16, true);
+    this.rainVao = vao();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    attr(0, 2, 8, 0, false);
+    this.rainInst = buf(new Float32Array(8), gl.STATIC_DRAW);
+    attr(1, 4, 32, 0, true);
+    attr(2, 4, 32, 16, true);
+    this.puffVao = vao();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    attr(0, 2, 8, 0, false);
+    this.puffInst = buf(new Float32Array(8), gl.DYNAMIC_DRAW);
+    attr(1, 4, 32, 0, true);
+    attr(2, 4, 32, 16, true);
+    this.horseVao = vao();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+    attr(0, 2, 8, 0, false);
+    this.horseInst = buf(new Float32Array(9), gl.DYNAMIC_DRAW);
+    attr(1, 4, 36, 0, true);
+    attr(2, 4, 36, 16, true);
+    attr(3, 1, 36, 32, true);
     gl.bindVertexArray(null);
     this.moundN = 0;
     this.jetN = 0;
@@ -384,24 +483,32 @@ export class RocketPassRenderer {
   /** The mounds and their jets' chunks, from the host's list (`[{ x, y, z, r, h, jetH, flight, pulse, seed }]`, scene
    *  places) - asked again only when the list changes. */
   setMounds(mounds, chunks) {
-    const gl = this.gl, list = Array.isArray(mounds) ? mounds : [];
-    const m = new Float32Array(Math.max(1, list.length) * 8), j = new Float32Array(Math.max(1, list.length * chunks) * 8);
+    const gl = this.gl,
+      list = Array.isArray(mounds) ? mounds : [];
+    const m = new Float32Array(Math.max(1, list.length) * 8),
+      j = new Float32Array(Math.max(1, list.length * chunks) * 8);
     list.forEach((d, i) => {
       const s0 = (d.seed % 9973) / 9973;
       m.set([d.x, d.y, d.z, d.r, d.h, s0, d.pulse, 0], i * 8);
-      for (let c = 0; c < chunks; c++) j.set([d.x, d.y, d.z, d.jetH, c + s0, d.flight, d.pulse, d.h], (i * chunks + c) * 8);
+      for (let c = 0; c < chunks; c++)
+        j.set([d.x, d.y, d.z, d.jetH, c + s0, d.flight, d.pulse, d.h], (i * chunks + c) * 8);
     });
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.moundInst); gl.bufferData(gl.ARRAY_BUFFER, m, gl.DYNAMIC_DRAW);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.jetInst); gl.bufferData(gl.ARRAY_BUFFER, j, gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.moundInst);
+    gl.bufferData(gl.ARRAY_BUFFER, m, gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.jetInst);
+    gl.bufferData(gl.ARRAY_BUFFER, j, gl.DYNAMIC_DRAW);
     this.moundN = list.length;
     this.jetN = list.length * chunks;
   }
 
   /** The frenzy's falling chunks: `n` of them, each its place in the square, its seed and its speed (built once). */
   setRain(n, speed, rng = Math.random) {
-    const gl = this.gl, a = new Float32Array(Math.max(1, n) * 8);
-    for (let i = 0; i < n; i++) a.set([rng(), rng(), (i + 0.5) / n, speed[0] + (speed[1] - speed[0]) * rng(), 0, 0, 0, 0], i * 8);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.rainInst); gl.bufferData(gl.ARRAY_BUFFER, a, gl.STATIC_DRAW);
+    const gl = this.gl,
+      a = new Float32Array(Math.max(1, n) * 8);
+    for (let i = 0; i < n; i++)
+      a.set([rng(), rng(), (i + 0.5) / n, speed[0] + (speed[1] - speed[0]) * rng(), 0, 0, 0, 0], i * 8);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.rainInst);
+    gl.bufferData(gl.ARRAY_BUFFER, a, gl.STATIC_DRAW);
     this.rainN = n;
   }
 
@@ -424,25 +531,35 @@ export class RocketPassRenderer {
    */
   draw(s, proj, view, eye, seconds, light = null, fog = null) {
     this.drawn = 0;
-    const rise = Math.max(0, Math.min(1, s?.rise ?? 0)), jet = Math.max(0, s?.jet ?? 0), frenzy = Math.max(0, Math.min(1, s?.frenzy ?? 0));
+    const rise = Math.max(0, Math.min(1, s?.rise ?? 0)),
+      jet = Math.max(0, s?.jet ?? 0),
+      frenzy = Math.max(0, Math.min(1, s?.frenzy ?? 0));
     const horses = (s?.horses ?? []).filter((h) => h?.at?.every?.(Number.isFinite) && h.len > 0);
     const puffs = (s?.puffs ?? []).filter((p) => p?.at?.every?.(Number.isFinite) && p.size > 0 && p.fade > 0.001);
-    const mounds = rise > 0.001 && this.moundN > 0, jets = mounds && jet > 0.001 && this.jetN > 0, rain = frenzy > 0.001 && this.rainN > 0;
+    const mounds = rise > 0.001 && this.moundN > 0,
+      jets = mounds && jet > 0.001 && this.jetN > 0,
+      rain = frenzy > 0.001 && this.rainN > 0;
     if (!mounds && !rain && !frenzy && !horses.length && !puffs.length) return 0;
     const gl = this.gl;
     const time = ((seconds % 600) + 600) % 600;
     multiply(proj, view, this._vp);
-    const lum = light?.ambient ? Math.max(0.35, (light.ambient[0] + light.ambient[1] + light.ambient[2]) / 3 + 0.6 * (light.sun ?? 0)) : 1;
+    const lum = light?.ambient
+      ? Math.max(0.35, (light.ambient[0] + light.ambient[1] + light.ambient[2]) / 3 + 0.6 * (light.sun ?? 0))
+      : 1;
     gl.disable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
     if (frenzy > 0.001) {
       const U = this.uk;
       gl.useProgram(this.sky);
-      gl.depthMask(false); gl.depthFunc(gl.LEQUAL);
-      gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+      gl.depthMask(false);
+      gl.depthFunc(gl.LEQUAL);
+      gl.enable(gl.BLEND);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
       gl.uniformMatrix4fv(U.uView, false, view);
       gl.uniform2f(U.uInvP, 1 / proj[0], 1 / proj[5]);
-      gl.uniform1f(U.uWeight, frenzy); gl.uniform1f(U.uTime, time); gl.uniform1i(U.uMode, 0);
+      gl.uniform1f(U.uWeight, frenzy);
+      gl.uniform1f(U.uTime, time);
+      gl.uniform1i(U.uMode, 0);
       gl.bindVertexArray(this.fullVao);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       this.drawn++;
@@ -454,7 +571,9 @@ export class RocketPassRenderer {
       const U = this.um;
       gl.useProgram(this.mound);
       gl.uniformMatrix4fv(U.uVP, false, this._vp);
-      gl.uniform1f(U.uRise, rise); gl.uniform1f(U.uJet, Math.min(1, jet)); gl.uniform1f(U.uTime, time);
+      gl.uniform1f(U.uRise, rise);
+      gl.uniform1f(U.uJet, Math.min(1, jet));
+      gl.uniform1f(U.uTime, time);
       gl.uniform3fv(U.uLightDir, light?.dir ?? [0, 1, 0]);
       gl.uniform3fv(U.uAmbient, light?.ambient ?? GREY);
       gl.uniform1f(U.uSun, light?.sun ?? 0.5);
@@ -470,34 +589,58 @@ export class RocketPassRenderer {
       gl.uniform3f(U.uRight, view[0], view[4], view[8]);
       gl.uniform3f(U.uUp, view[1], view[5], view[9]);
       gl.uniform3fv(U.uEye, eye);
-      gl.uniform1f(U.uTime, time); gl.uniform1f(U.uJet, jet); gl.uniform1f(U.uRise, rise); gl.uniform1f(U.uFrenzy, frenzy);
+      gl.uniform1f(U.uTime, time);
+      gl.uniform1f(U.uJet, jet);
+      gl.uniform1f(U.uRise, rise);
+      gl.uniform1f(U.uFrenzy, frenzy);
       gl.uniform1f(U.uLight, lum);
       this._fog(U, fog, eye);
-      if (jets) { gl.uniform1i(U.uMode, 0); gl.bindVertexArray(this.jetVao); gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.jetN); this.drawn++; }
-      if (rain) { gl.uniform1i(U.uMode, 1); gl.bindVertexArray(this.rainVao); gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.rainN); this.drawn++; }
+      if (jets) {
+        gl.uniform1i(U.uMode, 0);
+        gl.bindVertexArray(this.jetVao);
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.jetN);
+        this.drawn++;
+      }
+      if (rain) {
+        gl.uniform1i(U.uMode, 1);
+        gl.bindVertexArray(this.rainVao);
+        gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.rainN);
+        this.drawn++;
+      }
     }
     if (horses.length) {
-      const U = this.uh, a = new Float32Array(horses.length * 9);
-      horses.forEach((h, i) => a.set([h.at[0], h.at[1], h.at[2], h.len, h.forward[0], h.forward[1], h.forward[2], h.gallop, h.coat | 0], i * 9));
+      const U = this.uh,
+        a = new Float32Array(horses.length * 9);
+      horses.forEach((h, i) =>
+        a.set(
+          [h.at[0], h.at[1], h.at[2], h.len, h.forward[0], h.forward[1], h.forward[2], h.gallop, h.coat | 0],
+          i * 9,
+        ),
+      );
       gl.useProgram(this.horse);
       gl.uniformMatrix4fv(U.uVP, false, this._vp);
       gl.uniform3fv(U.uEye, eye);
-      gl.uniform3fv(U.uCoat, COATS); gl.uniform3fv(U.uMane, MANES);
+      gl.uniform3fv(U.uCoat, COATS);
+      gl.uniform3fv(U.uMane, MANES);
       gl.uniform1f(U.uLight, lum);
       this._fog(U, fog, eye);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.horseInst); gl.bufferData(gl.ARRAY_BUFFER, a, gl.DYNAMIC_DRAW);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.horseInst);
+      gl.bufferData(gl.ARRAY_BUFFER, a, gl.DYNAMIC_DRAW);
       gl.bindVertexArray(this.horseVao);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, horses.length);
       this.drawn++;
     }
     if (puffs.length) {
-      const U = this.us, a = new Float32Array(puffs.length * 8);
+      const U = this.us,
+        a = new Float32Array(puffs.length * 8);
       puffs.forEach((p, i) => a.set([p.at[0], p.at[1], p.at[2], p.size, p.fade, (i * 0.618034) % 1, 0, 0], i * 8));
-      gl.useProgram(this.sprite);   // the clouds are the sprites' third kind - the horses' program stood between
+      gl.useProgram(this.sprite); // the clouds are the sprites' third kind - the horses' program stood between
       gl.uniform1i(U.uMode, 2);
       gl.depthMask(false);
-      gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.puffInst); gl.bufferData(gl.ARRAY_BUFFER, a, gl.DYNAMIC_DRAW);
+      gl.enable(gl.BLEND);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.puffInst);
+      gl.bufferData(gl.ARRAY_BUFFER, a, gl.DYNAMIC_DRAW);
       gl.bindVertexArray(this.puffVao);
       gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, puffs.length);
       this.drawn++;
@@ -505,9 +648,13 @@ export class RocketPassRenderer {
     if (frenzy > 0.001) {
       const U = this.uk;
       gl.useProgram(this.sky);
-      gl.disable(gl.DEPTH_TEST); gl.depthMask(false);
-      gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
-      gl.uniform1f(U.uWeight, frenzy); gl.uniform1f(U.uTime, time); gl.uniform1i(U.uMode, 1);
+      gl.disable(gl.DEPTH_TEST);
+      gl.depthMask(false);
+      gl.enable(gl.BLEND);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ZERO, gl.ONE);
+      gl.uniform1f(U.uWeight, frenzy);
+      gl.uniform1f(U.uTime, time);
+      gl.uniform1i(U.uMode, 1);
       gl.bindVertexArray(this.fullVao);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       this.drawn++;
@@ -527,6 +674,7 @@ export class RocketPassRenderer {
     for (const p of [this.sky, this.mound, this.sprite, this.horse]) gl.deleteProgram(p);
     for (const b of this.buffers) gl.deleteBuffer(b);
     for (const v of this.vaos) gl.deleteVertexArray(v);
-    this.buffers = []; this.vaos = [];
+    this.buffers = [];
+    this.vaos = [];
   }
 }

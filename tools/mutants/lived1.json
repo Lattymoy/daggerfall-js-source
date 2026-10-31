@@ -214,8 +214,8 @@
   {
     "name": "LIVED1-the-tavern-calendar-is-the-characters",
     "file": "src/ui/tavernWindow.js",
-    "old": "      room, nowMinutes: now, date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },",
-    "new": "      room, nowMinutes: now, date: { dayOfYear: dayOfYearFromMinutes(now) },",
+    "old": "      date: { dayOfYear: dayOfYearFromMinutes(h.worldNow?.() ?? now) },",
+    "new": "      date: { dayOfYear: dayOfYearFromMinutes(now) },",
     "tests": [
       "test/systems/lived1.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "LIVED1-the-spawn-table-reads-the-characters-hour",
     "file": "src/systems/encounters.js",
-    "old": "const timeOfDay = ((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440 + 1440) % 1440;",
-    "new": "const timeOfDay = ((ctx.gameMinutes) % 1440 + 1440) % 1440;",
+    "old": "  const timeOfDay = (((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440) + 1440) % 1440;",
+    "new": "  const timeOfDay = ((ctx.gameMinutes % 1440) + 1440) % 1440;",
     "tests": [
       "test/systems/lived1.test.js",
       "test/systems/encounters.test.js"

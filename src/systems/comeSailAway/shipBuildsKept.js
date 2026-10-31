@@ -13,11 +13,13 @@ export const shipBuildScope = (ship) => `fv-ship:${ship}:`;
 
 /** The key of one ship's build. @param {string} ship @param {string} sha256 @param {string} bake - the bake's JSON text
  *  @param {number} base @param {string} old - the mod prefabs it reads, as JSON text */
-export const shipBuildKey = (ship, sha256, bake, base, old) => `${shipBuildScope(ship)}${firstVisitPin('shipBuilds')}:${sha256 ?? ''}:${base}:${textStamp(bake, old)}`;
+export const shipBuildKey = (ship, sha256, bake, base, old) =>
+  `${shipBuildScope(ship)}${firstVisitPin('shipBuilds')}:${sha256 ?? ''}:${base}:${textStamp(bake, old)}`;
 
 /** A build as the builders answer it: its prefab tree, its components, its meshes' geometry and its animation. */
 export function isShipBuild(v) {
-  if (!v || typeof v !== 'object' || !v.prefab || typeof v.prefab !== 'object' || !Array.isArray(v.components)) return false;
+  if (!v || typeof v !== 'object' || !v.prefab || typeof v.prefab !== 'object' || !Array.isArray(v.components))
+    return false;
   if (!v.meshes || typeof v.meshes !== 'object' || !v.animation || typeof v.animation !== 'object') return false;
   return Object.values(v.meshes).every((g) => g?.positions instanceof Float32Array && Number.isInteger(g.vertexCount));
 }

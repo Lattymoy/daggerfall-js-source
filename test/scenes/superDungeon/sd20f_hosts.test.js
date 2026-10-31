@@ -77,7 +77,7 @@ test('SD20f ONE LIFE A HOLLOW IS THE ACCOUNT\'S, AND EVERY TAB\'S (H1): the slot
   const mine = keptOf(refusing, () => 'acct-a')(SD_FALLEN_KEY);
   mine.add(11);
   assert.equal(mine.has(11), true, 'this session holds it');
-  assert.match(read('src/systems/superDungeon/sdSlots.js'), /const keyNow = \(\) => \{ const id = me\(\); return id \? `\$\{key\}:\$\{id\}` : key; \};/);   // PIN MOVED (WITCH1): out of world.js whole, the account handed in
+  assert.match(read('src/systems/superDungeon/sdSlots.js'), /const keyNow = \(\) => \{\n\s*const id = me\(\);\n\s*return id \? `\$\{key\}:\$\{id\}` : key;\n\s*\};/);   // PIN MOVED (WITCH1): out of world.js whole, the account handed in
 });
 
 // ── H4: the cast-out once a stay ──────────────────────────────────────

@@ -12,7 +12,8 @@ import { trophyTitle } from './trophies.js';
 /** A named mark's boss traits: two, as a raid's leader carries. */
 export const HUNT_MARK_TRAITS = 2;
 /** The week's two traits for a tier, the same on every client. */
-export const huntMarkTraits = (/** @type {number} */ week, /** @type {number} */ tier) => rollBossTraits(HUNT_MARK_TRAITS, eliteRng(huntMarkSeed(week, tier)));
+export const huntMarkTraits = (/** @type {number} */ week, /** @type {number} */ tier) =>
+  rollBossTraits(HUNT_MARK_TRAITS, eliteRng(huntMarkSeed(week, tier)));
 
 /**
  * The week's named mark a peer's leader is - `{ week, tier, foe, nameIndex, title }` - read off its kind and its traits'

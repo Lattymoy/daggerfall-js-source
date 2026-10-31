@@ -30,8 +30,8 @@
   {
     "name": "AUDWBX2-M2-nothing-taken-as-whole",
     "file": "src/net/gate/gateBrain.js",
-    "old": "Number.isFinite(f.idle) ? f.idle : 1);",
-    "new": "1);",
+    "old": "export const standsAt = (f) => (f.max > 0 ? f.hp / f.max : Number.isFinite(f.idle) ? f.idle : 1);",
+    "new": "export const standsAt = (f) => (f.max > 0 ? f.hp / f.max : 1);",
     "tests": [
       "test/net/gate/auditwbx2.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "AUDWBX2-M5-the-relay-lands-at-once",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  } else if (A === ATTACKS.leap || A === ATTACKS.cross) { const p = leapAt(f.atk, now); if (p) f.pos = p; }",
-    "new": "  } else if ((A === ATTACKS.leap || A === ATTACKS.cross) && now >= f.atk.at) { const p = leapAt(f.atk, now); if (p) f.pos = p; }",
+    "old": "  } else if (A === ATTACKS.leap || A === ATTACKS.cross) {",
+    "new": "  } else if ((A === ATTACKS.leap || A === ATTACKS.cross) && now >= f.atk.at) {",
     "tests": [
       "test/net/gate/auditwbx2.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "AUDWBX2-M5-the-screen-its-own-flight",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  const leap = atk ? leapAt(atk, now) : null;",
-    "new": "  const leap = atk && now >= atk.at ? leapAt(atk, now) : null;",
+    "old": "  const leap = atk ? leapAt(atk, now) : null; // WBX5: the brain's own flight - the relay settles a kill in the air there too",
+    "new": "  const leap = atk && now >= atk.at ? leapAt(atk, now) : null; // WBX5: the brain's own flight - the relay settles a kill in the air there too",
     "tests": [
       "test/net/gate/auditwbx2.test.js",
       "test/world/gate/wbx_gate_fixes.test.js"
@@ -141,7 +141,7 @@
   {
     "name": "AUDWBX2-M8-the-beat-its-own-flight",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    settleAt(f, now);   // the charge down its lane, the leap through the air (WBX5) - AUDIT WBX2 M8: the kill's own rule, one copy",
+    "old": "    settleAt(f, now); // the charge down its lane, the leap through the air (WBX5) - AUDIT WBX2 M8: the kill's own rule, one copy",
     "new": "    if (ATTACK_BY_ID[f.atk.a] !== ATTACKS.leap || now >= f.atk.at) settleAt(f, now);",
     "tests": [
       "test/net/gate/auditwbx2.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-REST-PARTY-D1-the-artifact-hunt-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  B0B81Y02: Object.freeze(['S.30']),   // AUDIT REST-PARTY D1: the artifact hunt, through the knight's reward\n",
-    "new": "",
+    "old": "  B0B81Y02: Object.freeze(['S.30']), // AUDIT REST-PARTY D1: the artifact hunt, through the knight's reward\n  S0000011: Object.freeze(['S.01']), // AUDIT REST II Q2: Barenziah's chapter, before the Necromancers steal it",
+    "new": "  S0000011: Object.freeze(['S.01']), // AUDIT REST II Q2: Barenziah's chapter, before the Necromancers steal it",
     "tests": [
       "test/systems/quest/auditrestparty_quests.test.js",
       "test/systems/quest/rest8_questwaits.test.js"
@@ -13,8 +13,8 @@
   {
     "name": "AUDIT-REST-PARTY-D2-the-scholar-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  N0B00Y17: Object.freeze(['time2']),   // AUDIT REST-PARTY D2: the scholar's \"Please be prompt\"\n",
-    "new": "",
+    "old": "  N0B00Y17: Object.freeze(['time2']), // AUDIT REST-PARTY D2: the scholar's \"Please be prompt\"\n  K0C30Y03: Object.freeze(['S.13']), // AUDIT REST-PARTY D2: the guard's lead",
+    "new": "  K0C30Y03: Object.freeze(['S.13']), // AUDIT REST-PARTY D2: the guard's lead",
     "tests": [
       "test/systems/quest/auditrestparty_quests.test.js",
       "test/systems/quest/rest8_questwaits.test.js"
@@ -24,8 +24,8 @@
   {
     "name": "AUDIT-REST-PARTY-D2-the-guard-out-of-the-table",
     "file": "src/systems/quest/clock.js",
-    "old": "  K0C30Y03: Object.freeze(['S.13']),   // AUDIT REST-PARTY D2: the guard's lead\n",
-    "new": "",
+    "old": "  K0C30Y03: Object.freeze(['S.13']), // AUDIT REST-PARTY D2: the guard's lead\n  B0B81Y02: Object.freeze(['S.30']), // AUDIT REST-PARTY D1: the artifact hunt, through the knight's reward",
+    "new": "  B0B81Y02: Object.freeze(['S.30']), // AUDIT REST-PARTY D1: the artifact hunt, through the knight's reward",
     "tests": [
       "test/systems/quest/auditrestparty_quests.test.js",
       "test/systems/quest/rest8_questwaits.test.js"
@@ -35,8 +35,8 @@
   {
     "name": "AUDIT-REST-PARTY-D4-the-table-a-closing-on-success",
     "file": "src/systems/quest/clock.js",
-    "old": "      this._closesOnSuccess = this._deadline && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(name)\n",
-    "new": "      this._closesOnSuccess = this._deadline\n",
+    "old": "      this._closesOnSuccess =\n        this._deadline &&\n        !(ONLINE_DEADLINES[q?.questName] ?? []).includes(name) &&\n        !!q?.tasks &&\n        startersOf(q, name).length > 0;",
+    "new": "      this._closesOnSuccess = this._deadline && !!q?.tasks && startersOf(q, name).length > 0;",
     "tests": [
       "test/systems/quest/auditrestparty_quests.test.js"
     ],
@@ -45,8 +45,8 @@
   {
     "name": "AUDIT-REST-PARTY-D3-the-mark-not-saved",
     "file": "src/systems/quest/clock.js",
-    "old": "      declaredAtOnce: this.declaredAtOnce,   // AUDIT REST-PARTY D3",
-    "new": "      // AUDIT REST-PARTY D3",
+    "old": "      declaredAtOnce: this.declaredAtOnce, // AUDIT REST-PARTY D3 (the port's; a restore has no declaration to read)",
+    "new": "      // AUDIT REST-PARTY D3 (the port's; a restore has no declaration to read)",
     "tests": [
       "test/systems/quest/auditrestparty_quests.test.js",
       "test/systems/quest/rest8_audit_timefree.test.js"
@@ -55,8 +55,8 @@
   {
     "name": "AUDIT-REST-PARTY-D3-the-mark-not-restored",
     "file": "src/systems/quest/clock.js",
-    "old": "    this.declaredAtOnce = typeof dataIn.declaredAtOnce === 'boolean' ? dataIn.declaredAtOnce\n      : this.startingTimeInSeconds",
-    "new": "    this.declaredAtOnce = this.startingTimeInSeconds",
+    "old": "    this.declaredAtOnce =\n      typeof dataIn.declaredAtOnce === 'boolean'\n        ? dataIn.declaredAtOnce\n        : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);",
+    "new": "    this.declaredAtOnce = this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);",
     "tests": [
       "test/systems/quest/auditrestparty_quests.test.js"
     ],
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-REST-PARTY-D3-the-old-save-default-dropped",
     "file": "src/systems/quest/clock.js",
-    "old": "      : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);",
-    "new": "      : false;",
+    "old": "    this.declaredAtOnce =\n      typeof dataIn.declaredAtOnce === 'boolean'\n        ? dataIn.declaredAtOnce\n        : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);",
+    "new": "    this.declaredAtOnce = typeof dataIn.declaredAtOnce === 'boolean' ? dataIn.declaredAtOnce : false;",
     "tests": [
       "test/systems/quest/auditrestparty_quests.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-REST-PARTY-D3-the-old-save-default-forgets-the-travel-arm",
     "file": "src/systems/quest/clock.js",
-    "old": "      : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);",
-    "new": "      : this.startingTimeInSeconds === 0;",
+    "old": "      typeof dataIn.declaredAtOnce === 'boolean'\n        ? dataIn.declaredAtOnce\n        : this.startingTimeInSeconds === 0 && !travelArmed(this.flag, this.maxRange, 0);",
+    "new": "      typeof dataIn.declaredAtOnce === 'boolean' ? dataIn.declaredAtOnce : this.startingTimeInSeconds === 0;",
     "tests": [
       "test/systems/quest/auditrestparty_quests.test.js"
     ],

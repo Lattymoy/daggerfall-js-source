@@ -32,12 +32,18 @@ export function duelRecordText(rec) {
  *  (server-account/src/accounts.js claimDuel) - null for nothing to add: a draw was said by the duel itself. */
 export function duelUncountedText(why) {
   switch (why) {
-    case 'draw': return null;
-    case 'guest': return 'This duel did not count toward your record: only duels between registered accounts count.';
-    case 'gap': return 'This duel did not count toward your record: it came too soon after your last.';
-    case 'pair': return 'This duel did not count toward your record: you have fought them enough times today.';
-    case 'winner': return 'This duel did not count toward your record: they have won enough duels today.';
-    default: return 'This duel did not count toward your record.';
+    case 'draw':
+      return null;
+    case 'guest':
+      return 'This duel did not count toward your record: only duels between registered accounts count.';
+    case 'gap':
+      return 'This duel did not count toward your record: it came too soon after your last.';
+    case 'pair':
+      return 'This duel did not count toward your record: you have fought them enough times today.';
+    case 'winner':
+      return 'This duel did not count toward your record: they have won enough duels today.';
+    default:
+      return 'This duel did not count toward your record.';
   }
 }
 
@@ -59,23 +65,37 @@ export function createDuelRecords({ read, now = () => Date.now(), onRecord = () 
     const e = kept.get(id) ?? { rec: null, at: -Infinity, asking: false };
     e.asking = true;
     kept.set(id, e);
-    Promise.resolve().then(() => read(id)).then((r) => {
-      const d = r?.ok ? r.data : null;
-      // WB5b: the gates closed ride the same answer (server-account/src/index.js `/v1/duel/record`) - absent from a
-      // service before them
-      const gates = Number.isSafeInteger(d?.gates?.closed) ? { gates: { closed: d.gates.closed } } : {};
-      // AUDIT SD II (L5 F1): and the towns defended (RAID4), the serpents slain (SERPENT1) and the Hours broken (SD9b) -
-      // the same answer carried all three, and this kept none: the Inspect card never said them
-      const more = {
-        ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),
-        ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),
-        ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}),   // AUDIT DRAGON
-        ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),
-      };
-      const rec = d && Number.isSafeInteger(d.wins) && Number.isSafeInteger(d.losses) ? { wins: d.wins, losses: d.losses, ...gates, ...more } : null;
-      e.rec = rec; e.at = now(); e.asking = false;
-      onRecord(id, rec);
-    }, () => { e.at = now(); e.asking = false; onRecord(id, e.rec); });
+    Promise.resolve()
+      .then(() => read(id))
+      .then(
+        (r) => {
+          const d = r?.ok ? r.data : null;
+          // WB5b: the gates closed ride the same answer (server-account/src/index.js `/v1/duel/record`) - absent from a
+          // service before them
+          const gates = Number.isSafeInteger(d?.gates?.closed) ? { gates: { closed: d.gates.closed } } : {};
+          // AUDIT SD II (L5 F1): and the towns defended (RAID4), the serpents slain (SERPENT1) and the Hours broken (SD9b) -
+          // the same answer carried all three, and this kept none: the Inspect card never said them
+          const more = {
+            ...(Number.isSafeInteger(d?.raids?.defended) ? { raids: { defended: d.raids.defended } } : {}),
+            ...(Number.isSafeInteger(d?.serpents?.slain) ? { serpents: { slain: d.serpents.slain } } : {}),
+            ...(Number.isSafeInteger(d?.dragons?.slain) ? { dragons: { slain: d.dragons.slain } } : {}), // AUDIT DRAGON
+            ...(Number.isSafeInteger(d?.sds?.broken) ? { sds: { broken: d.sds.broken } } : {}),
+          };
+          const rec =
+            d && Number.isSafeInteger(d.wins) && Number.isSafeInteger(d.losses)
+              ? { wins: d.wins, losses: d.losses, ...gates, ...more }
+              : null;
+          e.rec = rec;
+          e.at = now();
+          e.asking = false;
+          onRecord(id, rec);
+        },
+        () => {
+          e.at = now();
+          e.asking = false;
+          onRecord(id, e.rec);
+        },
+      );
   };
   return {
     get(id) {
@@ -85,6 +105,8 @@ export function createDuelRecords({ read, now = () => Date.now(), onRecord = () 
       const cur = kept.get(id);
       return cur?.rec ?? (cur?.asking ? 'asking' : null);
     },
-    forget(id) { kept.delete(id); },
+    forget(id) {
+      kept.delete(id);
+    },
   };
 }

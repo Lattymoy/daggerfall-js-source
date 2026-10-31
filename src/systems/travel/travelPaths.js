@@ -23,24 +23,63 @@ import { DIR as NETWORK_DIR, MAP_W, MAP_H } from '../../world/road/roadNetwork.j
 // AUDIT JUNGLE-ROADSIDE DOC-2: the path data - the arrays' order, the compass, the units, the data-point reads - lives in
 // world/road/pathData.js (the terrain worker reads the network by it too); every name is still this module's
 import {
-  PATH_ROADS, PATH_TRACKS, N, NE, E, SE, S, SW, W, NW, MP_WORLD_UNITS, HALF_MP_WORLD_UNITS, T_SIZE, P_SIZE,
+  PATH_ROADS,
+  PATH_TRACKS,
+  N,
+  NE,
+  E,
+  SE,
+  S,
+  SW,
+  W,
+  NW,
+  MP_WORLD_UNITS,
+  HALF_MP_WORLD_UNITS,
+  T_SIZE,
+  P_SIZE,
 } from '../../world/road/pathData.js';
 export {
-  PATH_ROADS, PATH_TRACKS, PATH_RIVERS, PATH_STREAMS, PATH_KEYS, N, NE, E, SE, S, SW, W, NW, DIRECTIONS, MP_WORLD_UNITS,
-  HALF_MP_WORLD_UNITS, T_SIZE, P_SIZE, pathsDataPoint, roadsDataPoint, dataPoint,
+  PATH_ROADS,
+  PATH_TRACKS,
+  PATH_RIVERS,
+  PATH_STREAMS,
+  PATH_KEYS,
+  N,
+  NE,
+  E,
+  SE,
+  S,
+  SW,
+  W,
+  NW,
+  DIRECTIONS,
+  MP_WORLD_UNITS,
+  HALF_MP_WORLD_UNITS,
+  T_SIZE,
+  P_SIZE,
+  pathsDataPoint,
+  roadsDataPoint,
+  dataPoint,
 } from '../../world/road/pathData.js';
-
 
 /** The port's own road network uses the same eight values. Kept as a
  *  function rather than an assert so the pin can state it and no
  *  module pays for it at import. */
 export function sameCompass() {
-  return NETWORK_DIR.N === N && NETWORK_DIR.NE === NE && NETWORK_DIR.E === E && NETWORK_DIR.SE === SE
-    && NETWORK_DIR.S === S && NETWORK_DIR.SW === SW && NETWORK_DIR.W === W && NETWORK_DIR.NW === NW;
+  return (
+    NETWORK_DIR.N === N &&
+    NETWORK_DIR.NE === NE &&
+    NETWORK_DIR.E === E &&
+    NETWORK_DIR.SE === SE &&
+    NETWORK_DIR.S === S &&
+    NETWORK_DIR.SW === SW &&
+    NETWORK_DIR.W === W &&
+    NETWORK_DIR.NW === NW
+  );
 }
 
-export const MID_LO = HALF_MP_WORLD_UNITS - T_SIZE;         // 16128
-export const MID_HI = HALF_MP_WORLD_UNITS + T_SIZE;         // 16640
+export const MID_LO = HALF_MP_WORLD_UNITS - T_SIZE; // 16128
+export const MID_HI = HALF_MP_WORLD_UNITS + T_SIZE; // 16640
 /** :93 - half of 45, the half-width of a compass point. */
 export const ANG_UNIT = 22.5;
 
@@ -100,15 +139,24 @@ export function directionOfYaw(yaw) {
  *  (:270, GetTargetPixel(0, currMapPixel)). */
 export function targetPixel(direction, mapPixelX, mapPixelY) {
   switch (direction) {
-    case N: return { x: mapPixelX, y: mapPixelY - 1 };
-    case NE: return { x: mapPixelX + 1, y: mapPixelY - 1 };
-    case E: return { x: mapPixelX + 1, y: mapPixelY };
-    case SE: return { x: mapPixelX + 1, y: mapPixelY + 1 };
-    case S: return { x: mapPixelX, y: mapPixelY + 1 };
-    case SW: return { x: mapPixelX - 1, y: mapPixelY + 1 };
-    case W: return { x: mapPixelX - 1, y: mapPixelY };
-    case NW: return { x: mapPixelX - 1, y: mapPixelY - 1 };
-    default: return { x: mapPixelX, y: mapPixelY };
+    case N:
+      return { x: mapPixelX, y: mapPixelY - 1 };
+    case NE:
+      return { x: mapPixelX + 1, y: mapPixelY - 1 };
+    case E:
+      return { x: mapPixelX + 1, y: mapPixelY };
+    case SE:
+      return { x: mapPixelX + 1, y: mapPixelY + 1 };
+    case S:
+      return { x: mapPixelX, y: mapPixelY + 1 };
+    case SW:
+      return { x: mapPixelX - 1, y: mapPixelY + 1 };
+    case W:
+      return { x: mapPixelX - 1, y: mapPixelY };
+    case NW:
+      return { x: mapPixelX - 1, y: mapPixelY - 1 };
+    default:
+      return { x: mapPixelX, y: mapPixelY };
   }
 }
 
@@ -116,7 +164,10 @@ export function targetPixel(direction, mapPixelX, mapPixelY) {
 export function countSetBits(n) {
   let count = 0;
   let v = n & 0xff;
-  while (v > 0) { count += v & 1; v >>= 1; }
+  while (v > 0) {
+    count += v & 1;
+    v >>= 1;
+  }
   return count;
 }
 
@@ -159,7 +210,6 @@ export function playerOnPathAt(pathsDataPt, worldX, worldZ, mapPixelX, mapPixelY
   const origin = mapPixelWorldOrigin(mapPixelX, mapPixelY);
   return playerOnPath(pathsDataPt, worldX - origin.x, worldZ - origin.z);
 }
-
 
 /** TravelOptionsMod.cs:1025-1050, SelectNextPath's junction arm. At a
  *  pixel with exactly two edges the mod carries straight on: keep the

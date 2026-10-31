@@ -342,8 +342,8 @@
   {
     "name": "WW7-11-lanes-cross-not-far",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "          const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond;",
-    "new": "          const far = livingSide(town) === LIVING_SIDES.beyond;",
+    "old": "            const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond; // WW7-11: past the Bay or across its edge - a passage of more cycles than one",
+    "new": "            const far = livingSide(town) === LIVING_SIDES.beyond; // WW7-11: past the Bay or across its edge - a passage of more cycles than one",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "WW7-11-lanes-past-not-far",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "          const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond;",
-    "new": "          const far = !!l.cross;",
+    "old": "            const far = !!l.cross || livingSide(town) === LIVING_SIDES.beyond; // WW7-11: past the Bay or across its edge - a passage of more cycles than one",
+    "new": "            const far = !!l.cross; // WW7-11: past the Bay or across its edge - a passage of more cycles than one",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "WW7-11-lanes-bay-shape",
     "file": "src/scenes/livingWorld/livingLanes.js",
-    "old": "[{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }]",
-    "new": "[{ to, len: w.len, key: l.key, far }]",
+    "old": "              ? [{ to, len: w.len, key: l.key, ...(far ? { far: true } : {}) }]",
+    "new": "              ? [{ to, len: w.len, key: l.key, far }]",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -493,8 +493,8 @@
   {
     "name": "WW7-12-herald-agree",
     "file": "src/net/serpent/serpentHerald.js",
-    "old": "  const a = agreedSerpentSite(rec, d);\n  return a ? { t: 'serpent', k: 'at'",
-    "new": "  const a = rec.c?.[0] ? { sx: rec.c[0][0], sz: rec.c[0][1], place: rec.c[0][2] } : null;\n  return a ? { t: 'serpent', k: 'at'",
+    "old": "  const a = agreedSerpentSite(rec, d);",
+    "new": "  const a = rec.c?.[0] ? { sx: rec.c[0][0], sz: rec.c[0][1], place: rec.c[0][2] } : null;",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -543,8 +543,8 @@
   {
     "name": "WW7-12-link-older",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "      if (w.k === 'at') { if (!told || w.d >= told.d) told =",
-    "new": "      if (w.k === 'at') { if (true) told =",
+    "old": "        if (!told || w.d >= told.d) told = { d: w.d, sx: w.sx, sz: w.sz, pl: w.pl };",
+    "new": "        if (true) told = { d: w.d, sx: w.sx, sz: w.sz, pl: w.pl };",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -603,8 +603,8 @@
   {
     "name": "WW7-12-site-told-over-own",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "  if (lanes.whole()) return findSerpentSite(",
-    "new": "  if (lanes.whole() && !told(day)) return findSerpentSite(",
+    "old": "  if (lanes.whole()) return findSerpentSite(day, { lanes: lanes.all(), wayOf: lanes.way, open: lanes.open });",
+    "new": "  if (lanes.whole() && !told(day))\n    return findSerpentSite(day, { lanes: lanes.all(), wayOf: lanes.way, open: lanes.open });",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -613,8 +613,8 @@
   {
     "name": "WW7-12-site-told-unmarked",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "between: [null, null], ring: serpentRing(day, sx, sz), told: true });",
-    "new": "between: [null, null], ring: serpentRing(day, sx, sz) });",
+    "old": "    told: true,\n  });",
+    "new": "  });",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],
@@ -623,8 +623,8 @@
   {
     "name": "WW7-12-site-told-pixel",
     "file": "src/systems/serpent/serpentSite.js",
-    "old": "  const [px, py] = sitePixelOfNative(sx, sz);\n  return Object.freeze({ day, lane: null",
-    "new": "  const [px, py] = [Math.round(sx / 32768), Math.round(sz / 32768)];\n  return Object.freeze({ day, lane: null",
+    "old": "  const [px, py] = sitePixelOfNative(sx, sz);",
+    "new": "  const [px, py] = [Math.round(sx / 32768), Math.round(sz / 32768)];",
     "tests": [
       "test/world/worldWide/ww7_longer.test.js"
     ],

@@ -29,12 +29,22 @@ import { eotbPictures } from './lib/eotbPictures.mjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
 if (shotsAt) mkdirSync(shotsAt, { recursive: true });
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
-if (!process.env.ARENA2_PATH) { console.error('ARENA2_PATH is not set: sh tools/fetch-data.sh, then point it at the arena2 folder'); process.exit(2); }
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
+if (!process.env.ARENA2_PATH) {
+  console.error('ARENA2_PATH is not set: sh tools/fetch-data.sh, then point it at the arena2 folder');
+  process.exit(2);
+}
 const EOTB = eotbPictures();
 const SPRITE = await EOTB.dataUrl('112364_0-0');
 const MW_SK = buildSkeleton(parseNif(retailSkeleton()));
-const MW_BONES = armBonesInBody({ skeleton: MW_SK, mats: skeletonSpaceMatrices(MW_SK, new Map(), GRAPH_ROOT) }, ARMORY_BONES);
+const MW_BONES = armBonesInBody(
+  { skeleton: MW_SK, mats: skeletonSpaceMatrices(MW_SK, new Map(), GRAPH_ROOT) },
+  ARMORY_BONES,
+);
 const BACK = await EOTB.dataUrl('112364_4-0');
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=480 height=640></canvas><script type=module>
@@ -165,53 +175,123 @@ window.stageOf = (spec) => {
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
-  if (url === '/stage/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(STAGE_PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
+  if (url === '/stage/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(STAGE_PAGE);
+    return;
+  }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : extname(f) === '.png' ? 'image/png' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : extname(f) === '.png'
+            ? 'image/png'
+            : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const port = server.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-const at = (name) => { const i = POSE_AT[name]; return [REST_POINTS[i], REST_POINTS[i + 1], REST_POINTS[i + 2]]; };
-const MW_POSE = newPose(); poseFromBones(MW_BONES, MW_POSE);
+const at = (name) => {
+  const i = POSE_AT[name];
+  return [REST_POINTS[i], REST_POINTS[i + 1], REST_POINTS[i + 2]];
+};
+const MW_POSE = newPose();
+poseFromBones(MW_BONES, MW_POSE);
 try {
   const page = await browser.newPage({ viewport: { width: 480, height: 640 } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message)); page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') errs.push(m.text()); });
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error' || m.type() === 'warning') errs.push(m.text());
+  });
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 30000 });
   const p = await page.evaluate(() => window.probe);
   check('the pass builds', !p.err, p.err ?? '');
-  ARMORY_PIECES.forEach((pc, i) => check(`${pc.key}: its program links in a real WebGL2`, p.linked[i] === true, typeof p.linked[i] === 'string' ? p.linked[i].slice(0, 400) : ''));
+  ARMORY_PIECES.forEach((pc, i) =>
+    check(
+      `${pc.key}: its program links in a real WebGL2`,
+      p.linked[i] === true,
+      typeof p.linked[i] === 'string' ? p.linked[i].slice(0, 400) : '',
+    ),
+  );
   const draw = (o) => page.evaluate((x) => window.draw(x), o);
-  const shot = async (name) => { if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, `${name}.png`) }); };
-  const FRONT = [0, 1.25, 2.6], BEHIND = [0, 1.25, -2.6], SIDE = [2.6, 1.25, 0.4];
-  const head = at('head'), crownTop = [0, at('crown')[1] + 0.12, 0], chest = at('chest'), knee = at('knL'), shin = [at('ftL')[0], at('ftL')[1] + 0.1, 0.09];
+  const shot = async (name) => {
+    if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, `${name}.png`) });
+  };
+  const FRONT = [0, 1.25, 2.6],
+    BEHIND = [0, 1.25, -2.6],
+    SIDE = [2.6, 1.25, 0.4];
+  const head = at('head'),
+    crownTop = [0, at('crown')[1] + 0.12, 0],
+    chest = at('chest'),
+    knee = at('knL'),
+    shin = [at('ftL')[0], at('ftL')[1] + 0.1, 0.09];
   const rigKit = { full: 'aaaa0', eternal: 'bbbb0', none: null };
   // the rig, every Dagonfire piece at once
   const bare = await draw({ kit: '00000', eye: FRONT, pts: [crownTop, chest, shin] });
   const r = await draw({ kit: 'aaaa0', eye: FRONT, pts: [crownTop, chest, shin, [0.6, 1.0, 0], [0.5, 1.6, 0]] });
   await shot('rig_dagonfire_front');
-  check('the rig in Dagonfire: drawn without a GL error', r.error === 0 && r.drawn === 4, `error ${r.error}, drawn ${r.drawn}`);
-  check('the crown\'s horns burn over the head', r.px[0] > bare.px[0] + 90, `${r.px[0]} against ${bare.px[0]}`);
+  check(
+    'the rig in Dagonfire: drawn without a GL error',
+    r.error === 0 && r.drawn === 4,
+    `error ${r.error}, drawn ${r.drawn}`,
+  );
+  check("the crown's horns burn over the head", r.px[0] > bare.px[0] + 90, `${r.px[0]} against ${bare.px[0]}`);
   check('the Ember Heart burns on the chest', r.px[1] > bare.px[1] + 90, `${r.px[1]} against ${bare.px[1]}`);
   check('the Cinderstride burns at the shins', r.px[2] > bare.px[2] + 60, `${r.px[2]} against ${bare.px[2]}`);
   check('nothing beside the body or beside the head', r.px[3] < 60 && r.px[4] < 60, `${r.px[3]}, ${r.px[4]}`);
   const backBare = await draw({ kit: '00000', eye: BEHIND, pts: [[chest[0], chest[1], -0.05]] });
   const back = await draw({ kit: '0a000', eye: BEHIND, pts: [[chest[0], chest[1], -0.05]] });
   await shot('rig_heart_behind');
-  check('the Ember Heart from behind: none of it through the body', back.px[0] <= backBare.px[0] + 12, `${back.px[0]} against the bare body's ${backBare.px[0]}`);
+  check(
+    'the Ember Heart from behind: none of it through the body',
+    back.px[0] <= backBare.px[0] + 12,
+    `${back.px[0]} against the bare body's ${backBare.px[0]}`,
+  );
   const cold = await draw({ kit: 'aaaa0', eye: FRONT, kindle: 0, pts: [crownTop, chest, shin] });
   check('nothing at all before it kindles', cold.lit === 0 && cold.drawn === 0, `${cold.lit} lit, ${cold.drawn} drawn`);
   const beast = await draw({ kit: 'aaaa0', eye: FRONT, torn: 1, pts: [crownTop, chest, shin] });
   await shot('rig_beast_dagonfire_front');
-  check('WOLF-KIT turned beast: the crown off, the heart and the stride still worn', beast.px[0] < bare.px[0] + 30 && beast.px[1] > bare.px[1] + 90 && beast.px[2] > bare.px[2] + 60 && beast.drawn === 3, `${beast.px.join(', ')}, drawn ${beast.drawn}`);
-  const e = await draw({ kit: 'bbbb0', eye: FRONT, pts: [[0, at('crown')[1] + 0.05, 0.17], chest, shin, [0.6, 1.0, 0]] });
+  check(
+    'WOLF-KIT turned beast: the crown off, the heart and the stride still worn',
+    beast.px[0] < bare.px[0] + 30 &&
+      beast.px[1] > bare.px[1] + 90 &&
+      beast.px[2] > bare.px[2] + 60 &&
+      beast.drawn === 3,
+    `${beast.px.join(', ')}, drawn ${beast.drawn}`,
+  );
+  const e = await draw({
+    kit: 'bbbb0',
+    eye: FRONT,
+    pts: [[0, at('crown')[1] + 0.05, 0.17], chest, shin, [0.6, 1.0, 0]],
+  });
   await shot('rig_eternal_front');
-  check('the rig in Eternal: drawn without a GL error', e.error === 0 && e.drawn === 4, `error ${e.error}, drawn ${e.drawn}`);
-  check('the halo\'s spark at its front, the sigil on the chest, the greaves at the shins', e.px[0] > 120 && e.px[1] > 90 && e.px[2] > 60, e.px.join(', '));
+  check(
+    'the rig in Eternal: drawn without a GL error',
+    e.error === 0 && e.drawn === 4,
+    `error ${e.error}, drawn ${e.drawn}`,
+  );
+  check(
+    "the halo's spark at its front, the sigil on the chest, the greaves at the shins",
+    e.px[0] > 120 && e.px[1] > 90 && e.px[2] > 60,
+    e.px.join(', '),
+  );
   check('the Eternal line beside the body: nothing', e.px[3] < 60, `${e.px[3]}`);
   const sideE = await draw({ kit: 'bbbb0', eye: SIDE, pts: [] });
   await shot('rig_eternal_side');
@@ -221,20 +301,51 @@ try {
   // the clock's wrap: the frame a hair before and after it nearly the same
   const before = await draw({ kit: 'aaaa0', eye: FRONT, t: AURA_CLOCK_PERIOD - 1 / 240, pts: [crownTop, chest, shin] });
   const after = await draw({ kit: 'aaaa0', eye: FRONT, t: 1 / 240, pts: [crownTop, chest, shin] });
-  check('no jump at the clock\'s wrap', before.px.every((v, i) => Math.abs(v - after.px[i]) < 60), `${before.px} against ${after.px}`);
+  check(
+    "no jump at the clock's wrap",
+    before.px.every((v, i) => Math.abs(v - after.px[i]) < 60),
+    `${before.px} against ${after.px}`,
+  );
   // THE SPRITE: its own picture on a card through its feet
   const sb = await draw({ body: 'sprite', kit: '00000', eye: FRONT, pts: [] });
   const sf = await draw({ body: 'sprite', kit: 'aaaa0', eye: FRONT, pts: [], plain: true });
   await shot('sprite_dagonfire_front');
-  const sp = sf.pose, spt = (n) => [sp[POSE_AT[n]] + sf.right[0] * sf.dx[POSE_AT[n] / 3], sp[POSE_AT[n] + 1], sp[POSE_AT[n] + 2] + sf.right[2] * sf.dx[POSE_AT[n] / 3]];
+  const sp = sf.pose,
+    spt = (n) => [
+      sp[POSE_AT[n]] + sf.right[0] * sf.dx[POSE_AT[n] / 3],
+      sp[POSE_AT[n] + 1],
+      sp[POSE_AT[n] + 2] + sf.right[2] * sf.dx[POSE_AT[n] / 3],
+    ];
   console.log('marks', JSON.stringify(sf.marks));
   const sc = await draw({ body: 'sprite', kit: '0a000', eye: FRONT, pts: [spt('chest')] });
-  const sbkBare = await draw({ body: 'sprite', kit: '00000', eye: BEHIND, side: 'back', yaw: 0, pts: [[spt('chest')[0], spt('chest')[1], 0]] });
-  const sbk = await draw({ body: 'sprite', kit: '0a000', eye: BEHIND, side: 'back', yaw: 0, pts: [[spt('chest')[0], spt('chest')[1], 0]] });
+  const sbkBare = await draw({
+    body: 'sprite',
+    kit: '00000',
+    eye: BEHIND,
+    side: 'back',
+    yaw: 0,
+    pts: [[spt('chest')[0], spt('chest')[1], 0]],
+  });
+  const sbk = await draw({
+    body: 'sprite',
+    kit: '0a000',
+    eye: BEHIND,
+    side: 'back',
+    yaw: 0,
+    pts: [[spt('chest')[0], spt('chest')[1], 0]],
+  });
   await shot('sprite_heart_behind');
-  check('the sprite: drawn without a GL error', sf.error === 0 && sf.drawn === 4 && sb.lit < sf.lit, `error ${sf.error}, drawn ${sf.drawn}`);
-  check('THE CARD LAW: the heart on the sprite\'s chest from the front', sc.px[0] > 120, `${sc.px[0]}`);
-  check('THE CARD LAW: none of the heart through the card from behind', sbk.px[0] <= sbkBare.px[0] + 12, `${sbk.px[0]} against the bare card's ${sbkBare.px[0]}`);
+  check(
+    'the sprite: drawn without a GL error',
+    sf.error === 0 && sf.drawn === 4 && sb.lit < sf.lit,
+    `error ${sf.error}, drawn ${sf.drawn}`,
+  );
+  check("THE CARD LAW: the heart on the sprite's chest from the front", sc.px[0] > 120, `${sc.px[0]}`);
+  check(
+    'THE CARD LAW: none of the heart through the card from behind',
+    sbk.px[0] <= sbkBare.px[0] + 12,
+    `${sbk.px[0]} against the bare card's ${sbkBare.px[0]}`,
+  );
   await draw({ body: 'sprite', kit: 'bbbb0', eye: FRONT, pts: [], plain: true });
   await shot('sprite_eternal_front');
   await draw({ body: 'sprite', kit: 'aa000', eye: [0, 1.75, 1.3], at: [0, 1.7, 0], pts: [], plain: true });
@@ -246,13 +357,25 @@ try {
   await draw({ body: 'sprite', kit: 'bbbb0', eye: [1.9, 1.3, 1.9], pts: [], plain: true });
   await shot('sprite_eternal_threequarter');
   // GUILD-SHOP: THE INSIGNIA ARMLET - the wearer's left upper arm alone, its crest the guild's arms
-  const ARMS = { heraldry: { field: 'crimson', border: 'gold', device: 'dragon', division: 'quarterly', field2: 'sable' }, logo: null };
-  const armL = [at('shL')[0] - 0.02, at('shL')[1] - 0.1, 0.06], armR = [at('shR')[0] + 0.02, at('shR')[1] - 0.1, 0.06];
+  const ARMS = {
+    heraldry: { field: 'crimson', border: 'gold', device: 'dragon', division: 'quarterly', field2: 'sable' },
+    logo: null,
+  };
+  const armL = [at('shL')[0] - 0.02, at('shL')[1] - 0.1, 0.06],
+    armR = [at('shR')[0] + 0.02, at('shR')[1] - 0.1, 0.06];
   const armBare = await draw({ kit: '00000', eye: FRONT, pts: [armL, armR] });
   const arm = await draw({ kit: '00c00', eye: FRONT, arms: ARMS, pts: [armL, armR] });
   await shot('rig_armlet_front');
-  check('the Insignia Armlet: drawn without a GL error', arm.error === 0 && arm.drawn === 1, `error ${arm.error}, drawn ${arm.drawn}`);
-  check('the Insignia Armlet on the left upper arm, never the right', arm.px[0] > armBare.px[0] + 90 && arm.px[1] <= armBare.px[1] + 12, `${arm.px} against ${armBare.px}`);
+  check(
+    'the Insignia Armlet: drawn without a GL error',
+    arm.error === 0 && arm.drawn === 1,
+    `error ${arm.error}, drawn ${arm.drawn}`,
+  );
+  check(
+    'the Insignia Armlet on the left upper arm, never the right',
+    arm.px[0] > armBare.px[0] + 90 && arm.px[1] <= armBare.px[1] + 12,
+    `${arm.px} against ${armBare.px}`,
+  );
   await draw({ kit: '00c00', eye: [-1.2, 1.35, 1.1], at: [-0.22, 1.25, 0], arms: ARMS, pts: [] });
   await shot('rig_armlet_close');
   await draw({ kit: '00c00', eye: [-1.2, 1.35, 1.1], at: [-0.22, 1.25, 0], arms: null, pts: [] });
@@ -262,33 +385,70 @@ try {
   await draw({ body: 'sprite', kit: '00c00', eye: [0, 1.45, 1.2], at: [0, 1.3, 0], arms: ARMS, pts: [], plain: true });
   await shot('sprite_armlet_close');
   // THE MORROWIND BODY: the pieces on retail's skeleton as the game reads it
-  const mw = (n) => { const i = POSE_AT[n]; return [MW_POSE.pts[i], MW_POSE.pts[i + 1], MW_POSE.pts[i + 2]]; };
-  const mwBare = await draw({ body: 'mw', kit: '00000', eye: FRONT, at: [0, 1.0, 0], pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]] });
-  const mwD = await draw({ body: 'mw', kit: 'aaaa0', eye: FRONT, at: [0, 1.0, 0], pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]] });
+  const mw = (n) => {
+    const i = POSE_AT[n];
+    return [MW_POSE.pts[i], MW_POSE.pts[i + 1], MW_POSE.pts[i + 2]];
+  };
+  const mwBare = await draw({
+    body: 'mw',
+    kit: '00000',
+    eye: FRONT,
+    at: [0, 1.0, 0],
+    pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]],
+  });
+  const mwD = await draw({
+    body: 'mw',
+    kit: 'aaaa0',
+    eye: FRONT,
+    at: [0, 1.0, 0],
+    pts: [[0, mw('crown')[1] - 0.04, 0.02], mw('chest'), [mw('ftR')[0], mw('ftR')[1] + 0.12, mw('ftR')[2] + 0.08]],
+  });
   await shot('mw_dagonfire_front');
-  check('the Morrowind body in Dagonfire: posed off its bones, drawn without a GL error', mwD.error === 0 && mwD.drawn === 4, `error ${mwD.error}, drawn ${mwD.drawn}`);
-  check('on the Morrowind body: the crown over its head, the heart on its chest, the fire at its shins', mwD.px.every((v, i) => v > mwBare.px[i] + 60), `${mwD.px} against ${mwBare.px}`);
+  check(
+    'the Morrowind body in Dagonfire: posed off its bones, drawn without a GL error',
+    mwD.error === 0 && mwD.drawn === 4,
+    `error ${mwD.error}, drawn ${mwD.drawn}`,
+  );
+  check(
+    'on the Morrowind body: the crown over its head, the heart on its chest, the fire at its shins',
+    mwD.px.every((v, i) => v > mwBare.px[i] + 60),
+    `${mwD.px} against ${mwBare.px}`,
+  );
   const mwE = await draw({ body: 'mw', kit: 'bbbb0', eye: FRONT, at: [0, 1.0, 0], pts: [mw('chest')] });
   const backAt = [mw('chest')[0], mw('chest')[1], mw('chest')[2] - 0.27];
   const mwBackBare = await draw({ body: 'mw', kit: '00000', eye: BEHIND, at: [0, 1.0, 0], pts: [backAt] });
   const mwBack = await draw({ body: 'mw', kit: '0b000', eye: BEHIND, at: [0, 1.0, 0], pts: [backAt] });
-  check('the Eternal Sigil burns on the Morrowind body\'s back, clear of its torso (AUDIT ARMORY)', mwBack.px[0] > mwBackBare.px[0] + 60, `${mwBack.px[0]} against ${mwBackBare.px[0]}`);
+  check(
+    "the Eternal Sigil burns on the Morrowind body's back, clear of its torso (AUDIT ARMORY)",
+    mwBack.px[0] > mwBackBare.px[0] + 60,
+    `${mwBack.px[0]} against ${mwBackBare.px[0]}`,
+  );
   await shot('mw_eternal_front');
   check('the Morrowind body in Eternal: drawn', mwE.error === 0 && mwE.drawn === 4 && mwE.lit > 300, `${mwE.lit}`);
   await draw({ body: 'mw', kit: '00c00', eye: [-1.4, 1.45, 1.4], at: [-0.2, 1.3, 0], arms: ARMS, pts: [] });
   await shot('mw_armlet_close');
-  for (const [kit, name] of [['aaaa0', 'dagonfire'], ['bbbb0', 'eternal']]) {
-    await draw({ body: 'mw', kit, eye: [0, 1.3, 3.1], at: [0, 1.1, 0], pts: [] }); await shot(`mw_${name}_framed`);
-    await draw({ body: 'mw', kit, eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] }); await shot(`mw_${name}_threequarter`);
-    await draw({ body: 'mw', kit, eye: [0, 1.3, -3.1], at: [0, 1.1, 0], pts: [] }); await shot(`mw_${name}_behind`);
-    await draw({ body: 'mw', kit, eye: [0.5, 1.85, 1.1], at: [0, 1.7, 0], pts: [] }); await shot(`mw_${name}_head`);
-    await draw({ body: 'sprite', kit, eye: [0, 1.3, 3.1], at: [0, 1.1, 0], pts: [], plain: true }); await shot(`sprite_${name}_framed`);
+  for (const [kit, name] of [
+    ['aaaa0', 'dagonfire'],
+    ['bbbb0', 'eternal'],
+  ]) {
+    await draw({ body: 'mw', kit, eye: [0, 1.3, 3.1], at: [0, 1.1, 0], pts: [] });
+    await shot(`mw_${name}_framed`);
+    await draw({ body: 'mw', kit, eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] });
+    await shot(`mw_${name}_threequarter`);
+    await draw({ body: 'mw', kit, eye: [0, 1.3, -3.1], at: [0, 1.1, 0], pts: [] });
+    await shot(`mw_${name}_behind`);
+    await draw({ body: 'mw', kit, eye: [0.5, 1.85, 1.1], at: [0, 1.7, 0], pts: [] });
+    await shot(`mw_${name}_head`);
+    await draw({ body: 'sprite', kit, eye: [0, 1.3, 3.1], at: [0, 1.1, 0], pts: [], plain: true });
+    await shot(`sprite_${name}_framed`);
   }
-  await draw({ body: 'mw', kit: 'baab0', eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] }); await shot('mw_mixed_threequarter');
+  await draw({ body: 'mw', kit: 'baab0', eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] });
+  await shot('mw_mixed_threequarter');
   // each body piece alone on the Morrowind body, three-quarters on (the weapon's on its stage, below)
   for (const pc of ARMORY_PIECES.filter((x) => x.slot !== 'weapon')) {
     const kit = ['head', 'torso', 'arms', 'legs', 'weapon'].map((sl) => (sl === pc.slot ? pc.code : '0')).join('');
-    await draw({ body: 'mw', kit, eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] }); await shot(`piece_${pc.key}`);
+    await draw({ body: 'mw', kit, eye: [2.2, 1.4, 2.2], at: [0, 1.1, 0], pts: [] });
+    await shot(`piece_${pc.key}`);
   }
   // the walk: a Cinderstride's footfall embers on the ground behind
   const walk = await draw({ kit: '000a0', eye: [0, 1.6, 2.6], walk: 1, pts: [] });
@@ -298,17 +458,39 @@ try {
   const stage = await browser.newPage({ viewport: { width: 320, height: 420 } });
   stage.on('pageerror', (x) => errs.push(x.message));
   await stage.goto(`http://127.0.0.1:${port}/stage/`);
-  for (const [key, look] of [['eternaledge', 'edge'], ['breachbrand', 'brand']]) {
+  for (const [key, look] of [
+    ['eternaledge', 'edge'],
+    ['breachbrand', 'brand'],
+  ]) {
     const s = await stage.evaluate((spec) => window.stageOf(spec), glowSpec(look, ARMORY_LEVEL));
     if (shotsAt) await stage.locator('#s').screenshot({ path: join(shotsAt, `stage_${key}.png`) });
-    check(`${key}: its stage starts and draws without a GL error`, s.ok && s.error === 0, JSON.stringify(s).slice(0, 200));
-    check(`${key}: the blade stands in the middle, steel`, s.blade[0] > 90 && Math.abs(s.blade[0] - s.blade[2]) < 60, s.blade.join(', '));
+    check(
+      `${key}: its stage starts and draws without a GL error`,
+      s.ok && s.error === 0,
+      JSON.stringify(s).slice(0, 200),
+    );
+    check(
+      `${key}: the blade stands in the middle, steel`,
+      s.blade[0] > 90 && Math.abs(s.blade[0] - s.blade[2]) < 60,
+      s.blade.join(', '),
+    );
     const [r, , b] = s.beside;
-    check(`${key}: its light beside the blade, in its own colours`, look === 'edge' ? b > 150 && b > r : r > 150 && r > b, s.beside.join(', '));
-    check(`${key}: nothing far from the blade`, s.far.every((v) => v < 30), s.far.join(', '));
+    check(
+      `${key}: its light beside the blade, in its own colours`,
+      look === 'edge' ? b > 150 && b > r : r > 150 && r > b,
+      s.beside.join(', '),
+    );
+    check(
+      `${key}: nothing far from the blade`,
+      s.far.every((v) => v < 30),
+      s.far.join(', '),
+    );
   }
-  check('an Eternal Edge kit alone takes the weapon\'s stage, any other kit the figure\'s', weaponStageOf('0000b') === 'edge' && weaponStageOf('b000b') === null && weaponStageOf(null) === null);
-  const real = errs.filter((x) => !/GPU stall|fallback to software WebGL|404 \(Not Found\)/.test(x));   // the driver's own notes, and the page's missing favicon
+  check(
+    "an Eternal Edge kit alone takes the weapon's stage, any other kit the figure's",
+    weaponStageOf('0000b') === 'edge' && weaponStageOf('b000b') === null && weaponStageOf(null) === null,
+  );
+  const real = errs.filter((x) => !/GPU stall|fallback to software WebGL|404 \(Not Found\)/.test(x)); // the driver's own notes, and the page's missing favicon
   check('no page error', real.length === 0, real.join(' | ').slice(0, 600));
 } finally {
   await browser.close();

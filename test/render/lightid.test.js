@@ -48,7 +48,7 @@ test('LIGHT-ID: THE ONE CONSTRUCTION SEAM - no light is written into a frame\'s 
     });
   }
   assert.deepEqual(hits, [], 'a light written into a list outside the seam');
-  assert.match(rd('src/render/lightId.js'), /out\[i \* 4\] = l\.x; out\[i \* 4 \+ 1\] = l\.y; out\[i \* 4 \+ 2\] = l\.z; out\[i \* 4 \+ 3\] = range;\n\s+if \(out\.ids\) out\.ids\[i\] = lightIdOf\(l\);/, 'the seam writes the place and the identity side by side');
+  assert.match(rd('src/render/lightId.js'), /out\[i \* 4\] = l\.x; out\[i \* 4 \+ 1\] = l\.y; out\[i \* 4 \+ 2\] = l\.z; out\[i \* 4 \+ 3\] = range;\n\s*if \(out\.ids\) out\.ids\[i\] = lightIdOf\(l\);/, 'the seam writes the place and the identity side by side');
   for (const [file, re] of [
     ['src/world/city/cityLights.js', /packLight\(out, i, l, Number\.isFinite\(w\) \? w : CITY_LIGHT_RANGE\);/],
     ['src/scenes/magicCandle.js', /packLight\(out, i, l\);[\s\S]*copyLights\(out, live\.length, base, 0, keep \/ 4\);/],

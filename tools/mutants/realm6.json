@@ -2,8 +2,8 @@
   {
     "name": "REALM6-station-free",
     "file": "src/net/decorLaw.js",
-    "old": "  if (now.station && now.station !== (was?.station ?? null)) delta -= DECOR_STATION_FEES[now.station] ?? 0;\n",
-    "new": "",
+    "old": "  if (now.station && now.station !== (was?.station ?? null)) delta -= DECOR_STATION_FEES[now.station] ?? 0;\n  return { delta, ledger: next };",
+    "new": "  return { delta, ledger: next };",
     "tests": [
       "test/server/realm6.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REALM6-shrink-whole",
     "file": "src/net/decorLaw.js",
-    "old": "delta = Math.trunc(base / 2);",
-    "new": "delta = base;",
+    "old": "    delta = Math.trunc(base / 2);",
+    "new": "    delta = base;",
     "tests": [
       "test/server/realm6.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "REALM6-buy-never-reserves",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "        reserve: paid.reserve,\n",
-    "new": "",
+    "old": "        reserve: paid.reserve,\n        // AUDIT REALM: a claim answered as the house already this character's (`repeat`) moved no gold on the record - the",
+    "new": "        // AUDIT REALM: a claim answered as the house already this character's (`repeat`) moved no gold on the record - the",
     "tests": [
       "test/server/realm6.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "REALM6-sale-guesses",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    const r = await realm.act({\n      needsAnswer: true,\n",
-    "new": "    const r = await realm.act({\n",
+    "old": "      needsAnswer: true,\n      apply: (/** @type {any} */ res) => {",
+    "new": "      apply: (/** @type {any} */ res) => {",
     "tests": [
       "test/server/realm6.test.js"
     ],

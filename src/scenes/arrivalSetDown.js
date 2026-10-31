@@ -8,7 +8,14 @@ import { t } from '../systems/textManager.js';
 /** How far a pile looks for the solid it lies inside: a crate's or a wardrobe's faces, seen from within. */
 export const BURIED_RAY_M = 3;
 /** The four level bearings, a hand's breadth over the floor. */
-const LEVEL_RAYS = Object.freeze([[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].map(Object.freeze));
+const LEVEL_RAYS = Object.freeze(
+  [
+    [1, 0, 0],
+    [-1, 0, 0],
+    [0, 0, 1],
+    [0, 0, -1],
+  ].map(Object.freeze),
+);
 const metFromBehind = (collider, from, dir) => {
   const hit = collider.raycastHit(from, dir, BURIED_RAY_M);
   return Number.isFinite(hit?.dist) && hit.back;
@@ -28,7 +35,9 @@ export function createArrivalSetDown({ dropPile, say }) {
   let held = [];
   return {
     /** A room's restore begins: nothing is held from another. */
-    reset() { held = []; },
+    reset() {
+      held = [];
+    },
     /** What a chest that stands no more held. `crate`: a house the arena moved brings its things in one, unsaid. */
     hold(items, { crate = false } = {}) {
       if (items?.length) held.push({ items: items.map((it) => ({ ...it })), said: crate ? null : 'chest' });
@@ -49,10 +58,20 @@ export function createArrivalSetDown({ dropPile, say }) {
     /** The player stands at `feet`: everything held is set down there, and said once a kind. */
     land(feet) {
       const said = new Set();
-      for (const h of held) { dropPile(h.items, feet); if (h.said) said.add(h.said); }
+      for (const h of held) {
+        dropPile(h.items, feet);
+        if (h.said) said.add(h.said);
+      }
       held = [];
-      if (said.has('chest')) say(t('interior.setDown.chest', 'A chest that stood here is gone. What it held was set down at your feet.'));
-      if (said.has('buried')) say(t('interior.setDown.buried', 'Furniture now stands where you left some things. They were set down at your feet.'));
+      if (said.has('chest'))
+        say(t('interior.setDown.chest', 'A chest that stood here is gone. What it held was set down at your feet.'));
+      if (said.has('buried'))
+        say(
+          t(
+            'interior.setDown.buried',
+            'Furniture now stands where you left some things. They were set down at your feet.',
+          ),
+        );
       return said.size;
     },
   };

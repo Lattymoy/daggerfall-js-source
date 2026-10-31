@@ -1,18 +1,27 @@
 [
   {
-    "name": "AURUM-CACHES-the-amount",
+    "name": "CACHE-SPREAD-the-least",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_AURUM = 10;",
-    "new": "export const AURUM_CACHE_AURUM = 15;",
+    "old": "export const AURUM_CACHE_AURUM_MIN = 5;",
+    "new": "export const AURUM_CACHE_AURUM_MIN = 6;",
     "tests": [
       "test/net/aurum_cache_law.test.js"
     ]
   },
   {
-    "name": "CACHES-ONCE-the-forgery-bound",
+    "name": "CACHE-SPREAD-the-most",
     "file": "src/net/aurumCacheLaw.js",
-    "old": "export const AURUM_CACHE_DAY_MAX = 10;",
-    "new": "export const AURUM_CACHE_DAY_MAX = 11;",
+    "old": "export const AURUM_CACHE_AURUM_MAX = 10;",
+    "new": "export const AURUM_CACHE_AURUM_MAX = 11;",
+    "tests": [
+      "test/net/aurum_cache_law.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-SPREAD-the-amount-not-the-ids",
+    "file": "src/net/aurumCacheLaw.js",
+    "old": "aurumCacheUnit(`${id}|aurum`)",
+    "new": "aurumCacheUnit('aurum')",
     "tests": [
       "test/net/aurum_cache_law.test.js"
     ]
@@ -48,8 +57,26 @@
   {
     "name": "AURUM-CACHES-the-lines-amount",
     "file": "server-account/src/aurumCache.js",
-    "old": ".bind(player.id, id, AURUM_CACHE_AURUM, day, nowS, AURUM_CACHE_DAY_MAX)",
-    "new": ".bind(player.id, id, 1, day, nowS, AURUM_CACHE_DAY_MAX)",
+    "old": ".bind(player.id, id, aurum, utcDay(nowS), nowS)",
+    "new": ".bind(player.id, id, 10, utcDay(nowS), nowS)",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-SPREAD-a-bound-kept",
+    "file": "server-account/src/aurumCache.js",
+    "old": "VALUES (?1, 'cache', ?2, ?3, ?4, ?5)",
+    "new": "SELECT ?1, 'cache', ?2, ?3, ?4, ?5 WHERE (SELECT COUNT(*) FROM aurum_ledger WHERE account = ?1 AND kind = 'cache' AND day = ?4) < 10",
+    "tests": [
+      "test/server/aurum_cache_service.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-SPREAD-the-answer-not-the-lines",
+    "file": "server-account/src/aurumCache.js",
+    "old": "? { ok: true, id, aurum }",
+    "new": "? { ok: true, id, aurum: 10 }",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]
@@ -64,37 +91,10 @@
     ]
   },
   {
-    "name": "AURUM-CACHES-a-repeat-called-capped",
+    "name": "CACHE-SPREAD-the-lines-day-not-the-claims",
     "file": "server-account/src/aurumCache.js",
-    "old": "return { error: held?.results?.length ? 'cache-taken' : 'cache-capped' };",
-    "new": "return { error: 'cache-capped' };",
-    "tests": [
-      "test/server/aurum_cache_service.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-the-bound-off-by-one",
-    "file": "server-account/src/aurumCache.js",
-    "old": "AND kind = 'cache' AND day = ?4) < ?6",
-    "new": "AND kind = 'cache' AND day = ?4) <= ?6",
-    "tests": [
-      "test/server/aurum_cache_service.test.js"
-    ]
-  },
-  {
-    "name": "AURUM-CACHES-the-bound-ignored",
-    "file": "server-account/src/aurumCache.js",
-    "old": "WHERE (SELECT COUNT(*) FROM aurum_ledger WHERE account = ?1 AND kind = 'cache' AND day = ?4) < ?6",
-    "new": "WHERE ?6 > 0 AND ?4 >= 0",
-    "tests": [
-      "test/server/aurum_cache_service.test.js"
-    ]
-  },
-  {
-    "name": "CACHES-ONCE-the-bound-made-lifelong",
-    "file": "server-account/src/aurumCache.js",
-    "old": "const day = utcDay(nowS);",
-    "new": "const day = 0;",
+    "old": ".bind(player.id, id, aurum, utcDay(nowS), nowS)",
+    "new": ".bind(player.id, id, aurum, 0, nowS)",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AURUM-CACHES-the-route-no-progression-claim",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/aurum/cache': Object.freeze(['pass', false]),",
-    "new": "",
+    "old": "  '/v1/aurum/cache': Object.freeze(['pass', false]), // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
+    "new": "  // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]
@@ -227,10 +227,10 @@
     ]
   },
   {
-    "name": "CACHES-ONCE-a-capped-coffer-kept-as-emptied",
+    "name": "CACHES-ONCE-a-proofless-coffer-kept-as-emptied",
     "file": "src/scenes/aurumCacheHost.js",
     "old": "if (r?.ok || r?.error === 'cache-taken') keepId(",
-    "new": "if (r?.ok || r?.error === 'cache-taken' || r?.error === 'cache-capped') keepId(",
+    "new": "if (r?.ok || r?.error === 'cache-taken' || r?.error === 'cache-proof') keepId(",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]
@@ -294,6 +294,15 @@
     "file": "src/scenes/aurumCacheHost.js",
     "old": "      if (gone) { if (r?.ok) lateSay(found()); return; }\n",
     "new": "",
+    "tests": [
+      "test/scenes/aurum_cache_world.test.js"
+    ]
+  },
+  {
+    "name": "CACHE-SPREAD-the-said-Aurum-not-the-caches",
+    "file": "src/scenes/aurumCacheHost.js",
+    "old": "r.data.aurum : aurumCacheAurumOf(id));",
+    "new": "r.data.aurum : 10);",
     "tests": [
       "test/scenes/aurum_cache_world.test.js"
     ]

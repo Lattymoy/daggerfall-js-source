@@ -39,7 +39,7 @@
 //   their motion tallies count the ground actually covered instead
 //   (movementTallyWeight, below).
 
-import { masterSkillsActive, masterCappedSkill } from './masterSkills.js';   // SOFTCAP3: a leaf
+import { masterSkillsActive, masterCappedSkill } from './masterSkills.js'; // SOFTCAP3: a leaf
 
 export const SKILL_SOFT_CAP = 100;
 export const SKILL_HARD_CAP = 200;
@@ -69,7 +69,7 @@ export const clampSkill = (v) => Math.max(0, Math.min(SKILL_HARD_CAP, Number.isF
 export function softcapCostMultiplier(v) {
   if (!(v >= SKILL_SOFT_CAP)) return 1;
   for (const t of SOFTCAP_TIERS) if (v < t.to) return t.mult;
-  return Infinity;   // at the hard cap: nothing more to buy
+  return Infinity; // at the hard cap: nothing more to buy
 }
 
 /** The milestone that a skill reaching exactly `v` has just passed, or null. */
@@ -78,7 +78,7 @@ export const milestoneAt = (v) => SKILL_MILESTONES.find((m) => m.at === v) ?? nu
 /** The sum of every milestone bonus at or below `v`. */
 export function milestoneBonus(v) {
   let b = 0;
-  for (let i = 0; i < SKILL_MILESTONES.length; i++) if (v >= SKILL_MILESTONES[i].at) b += SKILL_MILESTONES[i].bonus;   // AUDIT MARTIAL L2 F3: indexed - a swing's pace reads the climb every frame of the swing
+  for (let i = 0; i < SKILL_MILESTONES.length; i++) if (v >= SKILL_MILESTONES[i].at) b += SKILL_MILESTONES[i].bonus; // AUDIT MARTIAL L2 F3: indexed - a swing's pace reads the climb every frame of the swing
   return b;
 }
 
@@ -104,18 +104,22 @@ export const CLIMB_OVERCAP_SPEED_PER_POINT = 0.01;
 /** The climb speed's multiplier for a LIVE Climbing value (skills.js skillValue): 1 to 100, bounded at the effective cap. */
 export function overcapClimbSpeed(liveClimbing) {
   const gain = Math.min(EFFECTIVE_SKILL_MAX, liveClimbing) - SKILL_SOFT_CAP;
-  return gain > 0 ? 1 + gain * CLIMB_OVERCAP_SPEED_PER_POINT : 1;   // a missing value (NaN) climbs as DFU's
+  return gain > 0 ? 1 + gain * CLIMB_OVERCAP_SPEED_PER_POINT : 1; // a missing value (NaN) climbs as DFU's
 }
 
 // ---- the real-use law -------------------------------------------------
 
 /** Skill ids, kept numeric here so this leaf needs no import (skills.js SKILLS). */
-const COMBAT_SKILL_IDS = new Set([19, 20, 28, 29, 30, 31, 32, 33, 34]);   // Backstabbing, Dodging, the five weapons + HandToHand, Archery, CriticalStrike
-const MAGIC_SKILL_IDS = new Set([22, 23, 24, 25, 26, 27]);               // the six schools
+const COMBAT_SKILL_IDS = new Set([19, 20, 28, 29, 30, 31, 32, 33, 34]); // Backstabbing, Dodging, the five weapons + HandToHand, Archery, CriticalStrike
+const MAGIC_SKILL_IDS = new Set([22, 23, 24, 25, 26, 27]); // the six schools
 
 export const SKILL_CATEGORY = Object.freeze({ combat: 'combat', magic: 'magic', utility: 'utility' });
-export const skillCategory = (id) => (COMBAT_SKILL_IDS.has(id) ? SKILL_CATEGORY.combat
-  : MAGIC_SKILL_IDS.has(id) ? SKILL_CATEGORY.magic : SKILL_CATEGORY.utility);
+export const skillCategory = (id) =>
+  COMBAT_SKILL_IDS.has(id)
+    ? SKILL_CATEGORY.combat
+    : MAGIC_SKILL_IDS.has(id)
+      ? SKILL_CATEGORY.magic
+      : SKILL_CATEGORY.utility;
 
 /** How long a struck/striking foe stays "the foe" for the tallies that follow the blow. */
 export const CHALLENGE_TTL_MS = 6000;
@@ -128,7 +132,7 @@ export const SPAM_FREE_BURST = Object.freeze({ combat: 40, magic: 10, utility: 6
 
 /** A foe's tier on the skill scale - SetEnemyCareer's 5L+30, unclamped. */
 export function challengeTier(foe) {
-  const lv = Number(foe?.challengeLevel ?? foe?.level);   // SOFTCAP2: a scaled foe teaches at its challenge level
+  const lv = Number(foe?.challengeLevel ?? foe?.level); // SOFTCAP2: a scaled foe teaches at its challenge level
   return Number.isFinite(lv) && lv > 0 ? lv * 5 + 30 : 0;
 }
 
@@ -137,7 +141,10 @@ export function challengeQuality(tier, skill) {
   if (!(tier > 0) || !(skill > 0)) return 0;
   const r = tier / skill;
   if (r < 0.75) return 0;
-  if (r < 1) { const x = (r - 0.75) / 0.25; return x * x; }
+  if (r < 1) {
+    const x = (r - 0.75) / 0.25;
+    return x * x;
+  }
   return 1 + 0.5 * Math.min(1, (r - 1) / 0.5);
 }
 
@@ -176,7 +183,8 @@ export function overcapTallyWeight(entity, skillId, amount, skill, now = Date.no
   const ch = liveChallenge(entity, now);
   let q;
   if (cat === SKILL_CATEGORY.combat) q = ch ? challengeQuality(ch.tier, skill) : 0;
-  else if (cat === SKILL_CATEGORY.magic) q = Math.max(UNCHALLENGED_MAGIC_WEIGHT, ch ? challengeQuality(ch.tier, skill) : 0);   // BAL9a: a spell now answers its foe (scenes/hostMagic.js) - a tough one raises its weight, a weak one never takes it under a cast at a wall
+  else if (cat === SKILL_CATEGORY.magic)
+    q = Math.max(UNCHALLENGED_MAGIC_WEIGHT, ch ? challengeQuality(ch.tier, skill) : 0); // BAL9a: a spell now answers its foe (scenes/hostMagic.js) - a tough one raises its weight, a weak one never takes it under a cast at a wall
   else q = 1;
   if (q <= 0) return 0;
   return amount * q * spamWeight(entity, skillId, cat, amount * q, now);
@@ -206,10 +214,10 @@ export function overcapTallyWeight(entity, skillId, amount, skill, now = Date.no
 /** Per movement skill (skills.js ids): the odometer axis its motion is read on and the metres one use needs.
  *  h = across the ground, v = up or down, hv = either (through water). */
 export const MOVEMENT_SKILLS = Object.freeze({
-  3: Object.freeze({ axis: 'h', stride: 1 }),     // Jumping: a jump that carried you somewhere (one in place goes nowhere)
-  17: Object.freeze({ axis: 'hv', stride: 3 }),   // Swimming: a use a game minute (5 real seconds) through the water
-  18: Object.freeze({ axis: 'v', stride: 0.5 }),  // Climbing: a check each ~0.8 s up or down the wall
-  21: Object.freeze({ axis: 'h', stride: 1 }),    // Running: a use every quarter second (DFU's cadence)
+  3: Object.freeze({ axis: 'h', stride: 1 }), // Jumping: a jump that carried you somewhere (one in place goes nowhere)
+  17: Object.freeze({ axis: 'hv', stride: 3 }), // Swimming: a use a game minute (5 real seconds) through the water
+  18: Object.freeze({ axis: 'v', stride: 0.5 }), // Climbing: a check each ~0.8 s up or down the wall
+  21: Object.freeze({ axis: 'h', stride: 1 }), // Running: a use every quarter second (DFU's cadence)
 });
 /** The most a movement skill's unspent motion is worth, in uses. */
 export const MOVE_CREDIT_CAP = 2;
@@ -230,7 +238,10 @@ export function movementTallyWeight(entity, skillId, amount, skill) {
   const marks = (entity._moveMark ??= {});
   const m = marks[skillId];
   // a first use, or another motor's odometer (a host swap), starts the mark with nothing banked
-  if (!m || m.src !== odo || !(read >= m.at)) { marks[skillId] = { src: odo, at: read, credit: 0 }; return 0; }
+  if (!m || m.src !== odo || !(read >= m.at)) {
+    marks[skillId] = { src: odo, at: read, credit: 0 };
+    return 0;
+  }
   m.credit = Math.min(MOVE_CREDIT_CAP, m.credit + (read - m.at) / law.stride);
   m.at = read;
   const w = Math.min(amount, m.credit);
@@ -308,25 +319,25 @@ export const ENEMY_SCALING = Object.freeze({
 });
 /** The share of the scaling each dungeon kind carries, by DFRegion.DungeonTypes index (formats/mapsFile.js). */
 export const DUNGEON_SHARE = Object.freeze([
-  0.88,   //  0 Crypt
-  0.88,   //  1 Orc Stronghold
-  0.22,   //  2 Human Stronghold
-  0.44,   //  3 Prison
-  1.00,   //  4 Desecrated Temple
-  0.11,   //  5 Mine
-  0.11,   //  6 Natural Cave
-  1.00,   //  7 Coven
-  1.00,   //  8 Vampire Haunt
-  1.00,   //  9 Laboratory
-  0.44,   // 10 Harpy Nest
-  0.22,   // 11 Ruined Castle
-  0.22,   // 12 Spider Nest
-  0.88,   // 13 Giant Stronghold
-  1.00,   // 14 Dragon's Den
-  1.00,   // 15 Barbarian Stronghold
-  1.00,   // 16 Volcanic Caves
-  0.44,   // 17 Scorpion Nest
-  0.22,   // 18 Cemetery
+  0.88, //  0 Crypt
+  0.88, //  1 Orc Stronghold
+  0.22, //  2 Human Stronghold
+  0.44, //  3 Prison
+  1.0, //  4 Desecrated Temple
+  0.11, //  5 Mine
+  0.11, //  6 Natural Cave
+  1.0, //  7 Coven
+  1.0, //  8 Vampire Haunt
+  1.0, //  9 Laboratory
+  0.44, // 10 Harpy Nest
+  0.22, // 11 Ruined Castle
+  0.22, // 12 Spider Nest
+  0.88, // 13 Giant Stronghold
+  1.0, // 14 Dragon's Den
+  1.0, // 15 Barbarian Stronghold
+  1.0, // 16 Volcanic Caves
+  0.44, // 17 Scorpion Nest
+  0.22, // 18 Cemetery
 ]);
 export const FOE_SHARE_FLOOR = 4;
 export const FOE_SHARE_SPAN = 8;
@@ -345,8 +356,9 @@ export const climbedSkill = (entity, id) => effectiveSkill(masterCappedSkill(ent
 export function combatEdge(entity) {
   // SOFTCAP3: no edge while mentoring, and none while Master Skills is off (or offline) - the climb is opt-in
   if (!Array.isArray(entity?.skills) || entity._mentor || !masterSkillsActive(entity)) return 0;
-  const gains = EDGE_SKILL_IDS.map((id) => Math.max(0, climbedSkill(entity, id) - SKILL_SOFT_CAP))   // SOFTCAP4: mastered skills only; BAL9b: the climb's one home
-    .sort((a, b) => b - a).slice(0, EDGE_TOP_N);
+  const gains = EDGE_SKILL_IDS.map((id) => Math.max(0, climbedSkill(entity, id) - SKILL_SOFT_CAP)) // SOFTCAP4: mastered skills only; BAL9b: the climb's one home
+    .sort((a, b) => b - a)
+    .slice(0, EDGE_TOP_N);
   return gains.reduce((a, g) => a + g, 0) / EDGE_TOP_N;
 }
 
@@ -357,9 +369,10 @@ export const WILDERNESS_SHARE = Object.freeze({ day: 0.22, night: 0.44 });
 export const wildernessShare = (night) => (night ? WILDERNESS_SHARE.night : WILDERNESS_SHARE.day);
 
 /** 0..1 for a dungeon kind (its DungeonTypes index); 0 for none or an unknown one. */
-export const dungeonShare = (dungeonType) => (Number.isInteger(dungeonType) ? DUNGEON_SHARE[dungeonType] ?? 0 : 0);
+export const dungeonShare = (dungeonType) => (Number.isInteger(dungeonType) ? (DUNGEON_SHARE[dungeonType] ?? 0) : 0);
 /** 0..1 from the foe itself. */
-export const foeShare = (baseLevel, isClass) => (isClass ? 1 : clamp01(((baseLevel ?? 0) - FOE_SHARE_FLOOR) / FOE_SHARE_SPAN));
+export const foeShare = (baseLevel, isClass) =>
+  isClass ? 1 : clamp01(((baseLevel ?? 0) - FOE_SHARE_FLOOR) / FOE_SHARE_SPAN);
 
 /** The inverse of effectiveSkill: the smallest raw value that reads `target`. */
 export function rawSkillForEffective(target) {
@@ -372,9 +385,11 @@ export function rawSkillForEffective(target) {
  *  0 while mentoring or while Master Skills is not in force). */
 export function veteranProgress(entity) {
   if (!Array.isArray(entity?.skills) || entity._mentor || !masterSkillsActive(entity)) return 0;
-  const from = ENEMY_SCALING.veteranFrom, span = SKILL_SOFT_CAP - from;
+  const from = ENEMY_SCALING.veteranFrom,
+    span = SKILL_SOFT_CAP - from;
   const parts = EDGE_SKILL_IDS.map((id) => clamp01((Math.min(SKILL_SOFT_CAP, entity.skills[id] ?? 0) - from) / span))
-    .sort((a, b) => b - a).slice(0, EDGE_TOP_N);
+    .sort((a, b) => b - a)
+    .slice(0, EDGE_TOP_N);
   return parts.reduce((a, g) => a + g, 0) / EDGE_TOP_N;
 }
 
@@ -398,7 +413,8 @@ export const combatStanding = (entity) => ({ veteran: veteranProgress(entity), e
 // the ladder's, so with it off the place is DFU's again, as the ladder's champions and elites are.
 export const PLACE_THREAT = Object.freeze({ from: 4, full: 18, wilderness: Object.freeze({ day: 5, night: 7 }) });
 /** The place's veteran, 0..1, from its tier (0..21): none at a town's 4 or under, whole at a Dragon's Den's 18. */
-export const placeVeteran = (tier) => (Number.isFinite(tier) ? clamp01((tier - PLACE_THREAT.from) / (PLACE_THREAT.full - PLACE_THREAT.from)) : 0);
+export const placeVeteran = (tier) =>
+  Number.isFinite(tier) ? clamp01((tier - PLACE_THREAT.from) / (PLACE_THREAT.full - PLACE_THREAT.from)) : 0;
 /** The wilderness's tier by the hour. */
 export const wildernessThreat = (night) => (night ? PLACE_THREAT.wilderness.night : PLACE_THREAT.wilderness.day);
 
@@ -412,18 +428,23 @@ export function progressionScaling(standing, dShare, fShare, place = 0, hero = n
   const v = clamp01(standing?.veteran ?? 0);
   const p = clamp01(place);
   const o = clamp01((standing?.edge ?? 0) / (EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP));
-  const vet = Math.max(clamp01(fShare) * p, share * v);   // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it
+  const vet = Math.max(clamp01(fShare) * p, share * v); // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it
   const over = share * o;
-  const hd = hero?.damage > 1 ? hero.damage : 1, hh = hero?.health > 1 ? hero.health : 1;   // BAL11: never under 1
+  const hd = hero?.damage > 1 ? hero.damage : 1,
+    hh = hero?.health > 1 ? hero.health : 1; // BAL11: never under 1
   if (!(vet > 0 || over > 0 || hd > 1 || hh > 1)) return null;
   const { veteran: V, overcap: O } = ENEMY_SCALING;
   const skillGain = V.skill * vet + O.skill * over;
   return {
-    share, veteran: v, place: p, edge: standing?.edge ?? 0,
+    share,
+    veteran: v,
+    place: p,
+    edge: standing?.edge ?? 0,
     skillGain,
     healthMult: (1 + V.health * vet + O.health * over) * hh,
     damageMult: (1 + V.damage * vet + O.damage * over) * hd,
-    heroHealth: hh, heroDamage: hd,
+    heroHealth: hh,
+    heroDamage: hd,
     challengeLevels: Math.round(skillGain * CHALLENGE_LEVELS_PER_SKILL),
   };
 }

@@ -18,9 +18,9 @@
 // its index in PROVINCES, PROVINCE_NONE at sea.
 // ═══════════════════════════════════════════════════════════════════
 import { PROVINCES } from './tamrielGeography.js';
-import { tamrielSize, tamrielFit, BAY_W, BAY_H } from './tamrielFrame.js';   // TAMRIEL3: the live fit
-import { provinceKeyAt } from './tamrielLand.js';   // TAMRIEL3: the picture's own land where it is traced
-import { authoredHeightByte, groundHash, SHORE_BYTE, INLAND_BYTE, SNOW_BYTE, PLAIN_REACH } from './tamrielGround.js';   // TAMRIEL2: the one height law, the streamed ground's
+import { tamrielSize, tamrielFit, BAY_W, BAY_H } from './tamrielFrame.js'; // TAMRIEL3: the live fit
+import { provinceKeyAt } from './tamrielLand.js'; // TAMRIEL3: the picture's own land where it is traced
+import { authoredHeightByte, groundHash, SHORE_BYTE, INLAND_BYTE, SNOW_BYTE, PLAIN_REACH } from './tamrielGround.js'; // TAMRIEL2: the one height law, the streamed ground's
 import { CLIMATES } from '../../formats/mapsTables.js';
 
 export const PROVINCE_NONE = 255;
@@ -32,12 +32,13 @@ export { SHORE_BYTE, INLAND_BYTE, SNOW_BYTE, PLAIN_REACH };
  */
 export function rasterizeTamriel({ cell = 8 } = {}) {
   const size = tamrielSize();
-  const width = Math.ceil(size.w / cell), height = Math.ceil(size.h / cell);
+  const width = Math.ceil(size.w / cell),
+    height = Math.ceil(size.h / cell);
   const n = width * height;
   const province = new Uint8Array(n).fill(PROVINCE_NONE);
   const climate = new Uint8Array(n).fill(CLIMATES.Ocean);
   const heightBytes = new Uint8Array(n);
-  const unit = tamrielFit().ppu / cell;   // cells a picture unit
+  const unit = tamrielFit().ppu / cell; // cells a picture unit
   const index = new Map(PROVINCES.map((p, i) => [p.key, i]));
   // TAMRIEL3: each cell asks the land module at its centre - the picture's own land where it is traced, the authored
   // rings else - and TAMRIEL2's one height law (world/tamriel/tamrielGround.js), so the streamed ground past the Bay and this
@@ -51,7 +52,10 @@ export function rasterizeTamriel({ cell = 8 } = {}) {
       if (p === undefined) continue;
       province[i] = p;
       climate[i] = PROVINCES[p].climate;
-      heightBytes[i] = Math.max(SHORE_BYTE, authoredHeightByte((x + 0.5) / unit, (y + 0.5) / unit, (groundHash(x, y) - 0.5) * 4));
+      heightBytes[i] = Math.max(
+        SHORE_BYTE,
+        authoredHeightByte((x + 0.5) / unit, (y + 0.5) / unit, (groundHash(x, y) - 0.5) * 4),
+      );
     }
   }
   return { width, height, cell, heightBytes, climate, province };
@@ -67,12 +71,15 @@ export function rasterizeTamriel({ cell = 8 } = {}) {
 export function composeBay(raster, bay) {
   const bw = bay.width ?? BAY_W;
   let written = 0;
-  const { ox, oy } = tamrielFit();   // TAMRIEL3: the live origin
-  const cx0 = Math.floor(ox / raster.cell), cx1 = Math.ceil((ox + BAY_W) / raster.cell);
-  const cy0 = Math.floor(oy / raster.cell), cy1 = Math.ceil((oy + BAY_H) / raster.cell);
+  const { ox, oy } = tamrielFit(); // TAMRIEL3: the live origin
+  const cx0 = Math.floor(ox / raster.cell),
+    cx1 = Math.ceil((ox + BAY_W) / raster.cell);
+  const cy0 = Math.floor(oy / raster.cell),
+    cy1 = Math.ceil((oy + BAY_H) / raster.cell);
   for (let y = Math.max(0, cy0); y < Math.min(raster.height, cy1); y++) {
     for (let x = Math.max(0, cx0); x < Math.min(raster.width, cx1); x++) {
-      const bx = Math.floor((x + 0.5) * raster.cell - ox), by = Math.floor((y + 0.5) * raster.cell - oy);
+      const bx = Math.floor((x + 0.5) * raster.cell - ox),
+        by = Math.floor((y + 0.5) * raster.cell - oy);
       if (bx < 0 || by < 0 || bx >= BAY_W || by >= BAY_H) continue;
       const i = y * raster.width + x;
       raster.heightBytes[i] = bay.heightBytes[by * bw + bx] ?? 0;

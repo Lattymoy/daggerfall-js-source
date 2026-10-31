@@ -64,7 +64,12 @@ export function deedLabel(kind) {
 /** The player's side, by tone (Polite, Normal, Blunt). @param {string} kind @param {number} [tone] */
 export function deedQuestion(kind, tone = 1) {
   const i = Math.max(0, Math.min(2, tone | 0));
-  if (kind === 'compliment') return [t('legacy.deed.complimentPolite', 'May I say, you look very well today.'), t('legacy.deed.complimentNormal', 'You look good today.'), t('legacy.deed.complimentBlunt', 'You look great.')][i];
+  if (kind === 'compliment')
+    return [
+      t('legacy.deed.complimentPolite', 'May I say, you look very well today.'),
+      t('legacy.deed.complimentNormal', 'You look good today.'),
+      t('legacy.deed.complimentBlunt', 'You look great.'),
+    ][i];
   if (kind === 'gift') return t('legacy.deed.giftAsk', 'I brought you something.');
   if (kind === 'embrace') return t('legacy.deed.embraceAsk', 'Come here.');
   return t('legacy.deed.kissAsk', 'You lean in for a kiss.');
@@ -92,14 +97,18 @@ export function deedAffection(kind, taste = 0) {
 }
 
 /** The regard a deed adds (relations.js EVENTS), 0 for a compliment taken ill. @param {string} kind @param {number} taste */
-export const deedRegard = (kind, taste = 0) => (kind === 'compliment' && taste < 0 ? 0 : EVENTS[/** @type {keyof typeof EVENTS} */ (kind)] ?? 0);
+export const deedRegard = (kind, taste = 0) =>
+  kind === 'compliment' && taste < 0 ? 0 : (EVENTS[/** @type {keyof typeof EVENTS} */ (kind)] ?? 0);
 
 /** What the deed moved, said after the answer: "(Regard +2, now 14. Courtship +4, now 41 of 100.)" - `gained` the whole
  *  answer's, the tone's with it; the courtship while one is begun and not yet betrothed (at the full mark it says so: a
  *  proposal waits). @param {{ regard: number, gained: number, affection?: number | null, warmed?: number }} o */
 export function deedTally({ regard, gained, affection = null, warmed = 0 }) {
   const r = Math.trunc(regard);
-  const said = t('legacy.deed.tallyRegard', 'Regard {gained}, now {regard}.', { gained: `${gained >= 0 ? '+' : ''}${Math.trunc(gained)}`, regard: `${r > 0 ? '+' : ''}${r}` });
+  const said = t('legacy.deed.tallyRegard', 'Regard {gained}, now {regard}.', {
+    gained: `${gained >= 0 ? '+' : ''}${Math.trunc(gained)}`,
+    regard: `${r > 0 ? '+' : ''}${r}`,
+  });
   if (affection == null) return `(${said})`;
   return `(${said} ${t('legacy.deed.tallyCourt', 'Courtship {warmed}, now {affection, number} of {max, number}.', { warmed: `+${warmed}`, affection, max: AFFECTION_MAX })})`;
 }
@@ -109,10 +118,24 @@ export const DEED_TEXT = Object.freeze({
   compliment: (name) => t('legacy.deed.complimented', '{name} smiles. "Flatterer. Say it again tomorrow."', { name }),
   flat: (name) => t('legacy.deed.flat', '{name} frowns. "Is that meant to be a compliment?"', { name }),
   gift: (name) => t('legacy.deed.gifted', '{name} turns the gift over in their hands. "For me? Thank you."', { name }),
-  poor: (name) => t('legacy.deed.poor', 'You haven\'t the {gold, number} gold for a gift worthy of {name}.', { name, gold: GIFT_GOLD }),
+  poor: (name) =>
+    t('legacy.deed.poor', "You haven't the {gold, number} gold for a gift worthy of {name}.", {
+      name,
+      gold: GIFT_GOLD,
+    }),
   embrace: (name) => t('legacy.deed.embraced', '{name} holds you close for a moment.', { name }),
   kiss: (name) => t('legacy.deed.kissed', '{name} kisses you back.', { name }),
   again: (name) => t('legacy.deed.again', '{name} laughs. "Once a day is plenty. Tomorrow."', { name }),
-  notFriend: (name) => t('legacy.deed.notFriend', '{name} steps back. "We hardly know each other." (A hug needs them to count you a friend: regard +{at, number}.)', { name, at: FRIEND_AT }),
-  notCourting: (name) => t('legacy.deed.notCourting', '{name} turns their cheek. "Not yet." (A kiss needs a courtship of {at, number} or more - ask about Courtship once you are friends.)', { name, at: KISS_AT }),
+  notFriend: (name) =>
+    t(
+      'legacy.deed.notFriend',
+      '{name} steps back. "We hardly know each other." (A hug needs them to count you a friend: regard +{at, number}.)',
+      { name, at: FRIEND_AT },
+    ),
+  notCourting: (name) =>
+    t(
+      'legacy.deed.notCourting',
+      '{name} turns their cheek. "Not yet." (A kiss needs a courtship of {at, number} or more - ask about Courtship once you are friends.)',
+      { name, at: KISS_AT },
+    ),
 });

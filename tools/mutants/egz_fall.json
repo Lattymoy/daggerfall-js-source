@@ -2,8 +2,8 @@
   {
     "name": "EGZO-the-rim-smooth",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "rr = U.r * (1 + U.rag * (2 * rnd() - 1)); rim.push(",
-    "new": "rr = U.r * (1 + 0 * (2 * rnd() - 1)); rim.push(",
+    "old": "      rr = U.r * (1 + U.rag * (2 * rnd() - 1));",
+    "new": "      rr = U.r * (1 + 0 * (2 * rnd() - 1));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGZO-the-floor-folded",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "const s = U.waist * (1 - 0.04 * rnd());",
-    "new": "const s = 1.05 * (1 - 0.04 * rnd());",
+    "old": "        const s = U.waist * (1 - 0.04 * rnd());",
+    "new": "        const s = 1.05 * (1 - 0.04 * rnd());",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZO-the-rock-unjittered",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "rr = egUndersideRockR(t) * (1 + U.jitter * (2 * rnd() - 1));",
-    "new": "rr = egUndersideRockR(t) * (1 + 0 * (2 * rnd() - 1));",
+    "old": "        rr = egUndersideRockR(t) * (1 + U.jitter * (2 * rnd() - 1));",
+    "new": "        rr = egUndersideRockR(t) * (1 + 0 * (2 * rnd() - 1));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGZO-the-rock-untapered",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "(1 - Math.max(0, Math.min(1, t))) ** EG_UNDERSIDE.taper",
-    "new": "(1 - Math.max(0, Math.min(1, t))) ** 1",
+    "old": "export const egUndersideRockR = (t) =>\n  EG_UNDERSIDE.waist * EG_UNDERSIDE.r * (1 - Math.max(0, Math.min(1, t))) ** EG_UNDERSIDE.taper;",
+    "new": "export const egUndersideRockR = (t) => EG_UNDERSIDE.waist * EG_UNDERSIDE.r * (1 - Math.max(0, Math.min(1, t))) ** 1;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZO-the-cake-flat",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "step: i > 0 ? 1 + U.step * (0.6 + 0.8 * rnd()) : 1",
-    "new": "step: i > 0 ? 1 + 0 * (0.6 + 0.8 * rnd()) : 1",
+    "old": "    rings.push({ y, corners, step: i > 0 ? 1 + U.step * (0.6 + 0.8 * rnd()) : 1 });",
+    "new": "    rings.push({ y, corners, step: i > 0 ? 1 + 0 * (0.6 + 0.8 * rnd()) : 1 });",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZO-the-ledge-up",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "kit.quad(recs.rock, outer[k], outer[k1], B.corners[k1], B.corners[k], [0, -1, 0], true,",
-    "new": "kit.quad(recs.rock, outer[k], outer[k1], B.corners[k1], B.corners[k], [0, 1, 0], true,",
+    "old": "      kit.quad(recs.rock, outer[k], outer[k1], B.corners[k1], B.corners[k], [0, -1, 0], true, [",
+    "new": "      kit.quad(recs.rock, outer[k], outer[k1], B.corners[k1], B.corners[k], [0, 1, 0], true, [",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZO-the-lip-up",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "ring0[k1], ring0[k], [0, -1, 0], true,",
-    "new": "ring0[k1], ring0[k], [0, 1, 0], true,",
+    "old": "      [0, -1, 0],",
+    "new": "      [0, 1, 0],",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZO-the-flank-in",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "kit.quad(recs.rock, A.corners[k], A.corners[k1], outer[k1], outer[k], mid, false,",
-    "new": "kit.quad(recs.rock, A.corners[k], A.corners[k1], outer[k1], outer[k], mid, true,",
+    "old": "      kit.quad(recs.rock, A.corners[k], A.corners[k1], outer[k1], outer[k], mid, false, [",
+    "new": "      kit.quad(recs.rock, A.corners[k], A.corners[k1], outer[k1], outer[k], mid, true, [",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGZO-the-floor-down",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "[q[0], 0, q[1]], [0, 1, 0], true,",
-    "new": "[q[0], 0, q[1]], [0, -1, 0], true,",
+    "old": "      [0, 1, 0],",
+    "new": "      [0, -1, 0],",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGZO-the-edge-in",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "kit.prism(recs.stone, rim, -U.slab, 0, { top: false, bottom: false });",
-    "new": "kit.prism(recs.stone, rim, -U.slab, 0, { top: false, bottom: true });",
+    "old": "  kit.prism(recs.stone, rim, -U.slab, 0, { top: false, bottom: false });",
+    "new": "  kit.prism(recs.stone, rim, -U.slab, 0, { top: false, bottom: true });",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGZO-the-lip-at-its-depth",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "[[u0, 0], [u1, 0], [u1, v0], [u0, v0]]",
-    "new": "[[u0, v0], [u1, v0], [u1, v0], [u0, v0]]",
+    "old": "        [u0, 0],\n        [u1, 0],",
+    "new": "        [u0, v0],\n        [u1, v0],",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGZO-the-tip-out-of-the-haze",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "(tip ? Math.max(EG_UNDERSIDE_HAZE, vOf(p[1])) : vOf(p[1]))",
-    "new": "(tip ? vOf(p[1]) : vOf(p[1]))",
+    "old": "      rings.push({ c, ring, outer, v: ring.map((p) => (tip ? Math.max(EG_UNDERSIDE_HAZE, vOf(p[1])) : vOf(p[1]))) });",
+    "new": "      rings.push({ c, ring, outer, v: ring.map((p) => (tip ? vOf(p[1]) : vOf(p[1]))) });",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGZO-a-spire-inside-out",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "kit.quad(recs.rock, A.ring[k], A.ring[k1], B.outer[k1], B.outer[k], mid, false,",
-    "new": "kit.quad(recs.rock, A.ring[k], A.ring[k1], B.outer[k1], B.outer[k], mid, true,",
+    "old": "        kit.quad(recs.rock, A.ring[k], A.ring[k1], B.outer[k1], B.outer[k], mid, false, [",
+    "new": "        kit.quad(recs.rock, A.ring[k], A.ring[k1], B.outer[k1], B.outer[k], mid, true, [",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGZO-a-spire-ledge-up",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "if (ledge) kit.quad(recs.rock, B.outer[k], B.outer[k1], B.ring[k1], B.ring[k], [0, -1, 0], true,",
-    "new": "if (ledge) kit.quad(recs.rock, B.outer[k], B.outer[k1], B.ring[k1], B.ring[k], [0, 1, 0], true,",
+    "old": "          kit.quad(recs.rock, B.outer[k], B.outer[k1], B.ring[k1], B.ring[k], [0, -1, 0], true, [",
+    "new": "          kit.quad(recs.rock, B.outer[k], B.outer[k1], B.ring[k1], B.ring[k], [0, 1, 0], true, [",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGZO-the-spire-unbent",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "b = S.bend * s.len * t * t;",
-    "new": "b = 0 * s.len * t * t;",
+    "old": "    b = S.bend * s.len * t * t;",
+    "new": "    b = 0 * s.len * t * t;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGZO-the-tip-unbroken",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "R: s.R * (1 - (1 - S.tip) * t ** 1.1)",
-    "new": "R: s.R * (1 - (1 - S.tip) * 0)",
+    "old": "    R: s.R * (1 - (1 - S.tip) * t ** 1.1),",
+    "new": "    R: s.R * (1 - (1 - S.tip) * 0),",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGZO-the-tip-open",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "for (let k = 0; k < n; k++) kit.tri(recs.rock, last.ring[k], last.ring[(k + 1) % n], point, above, false,",
-    "new": "for (let k = 0; k < 0; k++) kit.tri(recs.rock, last.ring[k], last.ring[(k + 1) % n], point, above, false,",
+    "old": "      above = [last.c.x, last.c.y + 1, last.c.z];\n    for (let k = 0; k < n; k++)",
+    "new": "      above = [last.c.x, last.c.y + 1, last.c.z];\n    for (let k = 0; k < 0; k++)",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGZO-a-gallery-afloat",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "const inner = flank - 3,",
-    "new": "const inner = flank + 3,",
+    "old": "    const inner = flank - 3,",
+    "new": "    const inner = flank + 3,",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EGZO-a-girder-level",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "y - R.droop, Math.sin(a) * (flank + out)",
-    "new": "y, Math.sin(a) * (flank + out)",
+    "old": "      b: [Math.cos(a) * (flank + out), y - R.droop, Math.sin(a) * (flank + out)],",
+    "new": "      b: [Math.cos(a) * (flank + out), y, Math.sin(a) * (flank + out)],",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGZO-a-column-off-the-floor",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "columns.push({ x: (rim[i][0] + ring0[0]) / 2, z: (rim[i][1] + ring0[2]) / 2,",
-    "new": "columns.push({ x: rim[i][0], z: rim[i][1],",
+    "old": "    columns.push({ x: (rim[i][0] + ring0[0]) / 2, z: (rim[i][1] + ring0[2]) / 2, len: lerp(C.len, rnd()) });",
+    "new": "    columns.push({ x: rim[i][0], z: rim[i][1], len: lerp(C.len, rnd()) });",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGZO-the-colonnade-on-the-floor",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "{ centre: [c.x, -EG_UNDERSIDE.slab, c.z] }",
-    "new": "{ centre: [c.x, 0, c.z] }",
+    "old": "      { centre: [c.x, -EG_UNDERSIDE.slab, c.z] },",
+    "new": "      { centre: [c.x, 0, c.z] },",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGZO-the-dress-not-the-bands",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "return kit.pack(egBandArchive(band));",
-    "new": "return kit.pack(egBandArchive(0));",
+    "old": "  return kit.pack(egBandArchive(band));",
+    "new": "  return kit.pack(egBandArchive(0));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGZO-every-slice-at-once",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "step() { if (i < slices.length) slices[i++](); return i >= slices.length; },",
-    "new": "step() { while (i < slices.length) slices[i++](); return i >= slices.length; },",
+    "old": "      if (i < slices.length) slices[i++]();",
+    "new": "      while (i < slices.length) slices[i++]();",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGZO-the-pictures-of-another-band",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "parts.art.push(egBandArtOf(b, rec));",
-    "new": "parts.art.push(egBandArtOf(0, rec));",
+    "old": "      parts.art.push(egBandArtOf(b, rec));",
+    "new": "      parts.art.push(egBandArtOf(0, rec));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EGZO-the-parts-pack-another-dress",
     "file": "src/world/eliteGates/egUndersideModel.js",
-    "old": "() => { parts.model = kit.pack(egBandArchive(b)); },",
-    "new": "() => { parts.model = kit.pack(egBandArchive(0)); },",
+    "old": "      parts.model = kit.pack(egBandArchive(b));",
+    "new": "      parts.model = kit.pack(egBandArchive(0));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGZO-the-fall-at-full-speed",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "return EG_FALL.v * (s - EG_FALL.tau * (1 - Math.exp(-s / EG_FALL.tau)));",
-    "new": "return EG_FALL.v * s;",
+    "old": "  return EG_FALL.v * (s - EG_FALL.tau * (1 - Math.exp(-s / EG_FALL.tau)));",
+    "new": "  return EG_FALL.v * s;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "EGZO-the-fall-rising",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "const s = Math.max(0, t); return EG_FALL.v",
-    "new": "const s = t; return EG_FALL.v",
+    "old": "  const s = Math.max(0, t);",
+    "new": "  const s = t;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EGZO-the-eyes-jerk",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "(EG_FALL.pitch1 - EG_FALL.pitch0) * u * u * (3 - 2 * u)",
-    "new": "(EG_FALL.pitch1 - EG_FALL.pitch0) * u",
+    "old": "  return EG_FALL.pitch0 + (EG_FALL.pitch1 - EG_FALL.pitch0) * u * u * (3 - 2 * u);",
+    "new": "  return EG_FALL.pitch0 + (EG_FALL.pitch1 - EG_FALL.pitch0) * u;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "EGZO-the-eyes-past-the-clock",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "const u = Math.max(0, Math.min(1, t / EG_FALL_SPAN));",
-    "new": "const u = Math.max(0, Math.min(1, t / (2 * EG_FALL_SPAN)));",
+    "old": "  const u = Math.max(0, Math.min(1, t / EG_FALL_SPAN));",
+    "new": "  const u = Math.max(0, Math.min(1, t / (2 * EG_FALL_SPAN)));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "EGZO-the-clock-without-its-open",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "EG_STAIR_VEIL.close + EG_STAIR_VEIL.fallHold + EG_STAIR_VEIL.open;",
-    "new": "EG_STAIR_VEIL.close + EG_STAIR_VEIL.fallHold;",
+    "old": "export const EG_FALL_SPAN = EG_STAIR_VEIL.close + EG_STAIR_VEIL.fallHold + EG_STAIR_VEIL.open;",
+    "new": "export const EG_FALL_SPAN = EG_STAIR_VEIL.close + EG_STAIR_VEIL.fallHold;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGZO-no-drift",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "out[0] = EG_FALL.d0 + EG_FALL.drift * d;",
-    "new": "out[0] = EG_FALL.d0;",
+    "old": "  out[0] = EG_FALL.d0 + EG_FALL.drift * d;",
+    "new": "  out[0] = EG_FALL.d0;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "EGZO-the-view-off-the-eye",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "V[13] = -(sp * e[0] + cp * e[1]);",
-    "new": "V[13] = -(cp * e[1]);",
+    "old": "  V[13] = -(sp * e[0] + cp * e[1]);",
+    "new": "  V[13] = -(cp * e[1]);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGZO-the-view-pitched-down",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "V[0] = 0; V[1] = sp; V[2] = cp;",
-    "new": "V[0] = 0; V[1] = -sp; V[2] = cp;",
+    "old": "  V[1] = sp;",
+    "new": "  V[1] = -sp;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "EGZO-the-lens-square",
     "file": "src/world/eliteGates/egUnderside.js",
-    "old": "P[0] = f / (aspect > 0 ? aspect : 1);",
-    "new": "P[0] = f;",
+    "old": "  P[0] = f / (aspect > 0 ? aspect : 1);",
+    "new": "  P[0] = f;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -326,7 +326,7 @@
   {
     "name": "EGZO-a-record-unpainted-unsaid",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "if (!paint) throw new Error(`the band paints no record ${rec}`);",
+    "old": "  if (!paint) throw new Error(`the band paints no record ${rec}`);",
     "new": "",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
@@ -335,8 +335,8 @@
   {
     "name": "EGZO-the-band-unclamped",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "return [rec, paint(Math.max(0, Math.min(3, band | 0)))];",
-    "new": "return [rec, paint(band | 0)];",
+    "old": "  return [rec, paint(Math.max(0, Math.min(3, band | 0)))];",
+    "new": "  return [rec, paint(band | 0)];",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EGZO-the-dress-short",
     "file": "src/world/eliteGates/egBandArt.js",
-    "old": "return EG_BAND_RECORDS.map((rec) => egBandArtOf(band, rec));",
-    "new": "return EG_BAND_RECORDS.slice(1).map((rec) => egBandArtOf(band, rec));",
+    "old": "  return EG_BAND_RECORDS.map((rec) => egBandArtOf(band, rec));",
+    "new": "  return EG_BAND_RECORDS.slice(1).map((rec) => egBandArtOf(band, rec));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "EGZO-the-fall-on-the-screens-rows",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "vec2 p = uMode < 0.5 ? fallRay(gl_FragCoord.xy) : (gl_FragCoord.xy - 0.5 * uRes) / (0.5 * uRes.y);",
-    "new": "vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / (0.5 * uRes.y);",
+    "old": "  vec2 p = uMode < 0.5 ? fallRay(gl_FragCoord.xy) : (gl_FragCoord.xy - 0.5 * uRes) / (0.5 * uRes.y);   // EG-ZO: the fall's, the camera's",
+    "new": "  vec2 p = (gl_FragCoord.xy - 0.5 * uRes) / (0.5 * uRes.y);   // EG-ZO: the fall's, the camera's",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "EGZO-the-ray-upside-down",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "return vec2(atan(dot(d, uRight), dot(d, uFwd)) * ${f4(EG_UNDERSIDE_LOOK.azimuth)}, d.y);",
-    "new": "return vec2(atan(dot(d, uRight), dot(d, uFwd)) * ${f4(EG_UNDERSIDE_LOOK.azimuth)}, -d.y);",
+    "old": "  return vec2(atan(dot(d, uRight), dot(d, uFwd)) * ${f4(EG_UNDERSIDE_LOOK.azimuth)}, d.y);",
+    "new": "  return vec2(atan(dot(d, uRight), dot(d, uFwd)) * ${f4(EG_UNDERSIDE_LOOK.azimuth)}, -d.y);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "EGZO-the-ray-without-its-lens",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "+ uUp * ((n.y + uLens.w) / uLens.y) + uFwd);",
-    "new": "+ uUp * (n.y + uLens.w) + uFwd);",
+    "old": "  vec3 d = normalize(uRight * ((n.x + uLens.z) / uLens.x) + uUp * ((n.y + uLens.w) / uLens.y) + uFwd);",
+    "new": "  vec3 d = normalize(uRight * ((n.x + uLens.z) / uLens.x) + uUp * (n.y + uLens.w) + uFwd);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "EGZO-the-embers-columns-unscaled",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "dot(d, uFwd)) * ${f4(EG_UNDERSIDE_LOOK.azimuth)}, d.y);",
-    "new": "dot(d, uFwd)), d.y);",
+    "old": "  return vec2(atan(dot(d, uRight), dot(d, uFwd)) * ${f4(EG_UNDERSIDE_LOOK.azimuth)}, d.y);",
+    "new": "  return vec2(atan(dot(d, uRight), dot(d, uFwd)), d.y);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "EGZO-the-deep-from-above",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "${f4(EG_UNDERSIDE_LOOK.deep)} * max(0.0, -n.y)",
-    "new": "${f4(EG_UNDERSIDE_LOOK.deep)} * max(0.0, n.y)",
+    "old": "  vec3 l = DEEP[b] * (${f4(EG_UNDERSIDE_LOOK.deep)} * max(0.0, -n.y) + ${f4(EG_UNDERSIDE_LOOK.side)} * (1.0 - abs(n.y)))",
+    "new": "  vec3 l = DEEP[b] * (${f4(EG_UNDERSIDE_LOOK.deep)} * max(0.0, n.y) + ${f4(EG_UNDERSIDE_LOOK.side)} * (1.0 - abs(n.y)))",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGZO-the-zenith-from-below",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "${f4(EG_UNDERSIDE_LOOK.zen)} * max(0.0, n.y);",
-    "new": "${f4(EG_UNDERSIDE_LOOK.zen)} * max(0.0, -n.y);",
+    "old": "    + HOR[b] * ${f4(EG_UNDERSIDE_LOOK.hor)} + ZEN[b] * ${f4(EG_UNDERSIDE_LOOK.zen)} * max(0.0, n.y);",
+    "new": "    + HOR[b] * ${f4(EG_UNDERSIDE_LOOK.hor)} + ZEN[b] * ${f4(EG_UNDERSIDE_LOOK.zen)} * max(0.0, -n.y);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGZO-the-moon-in-every-band",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "${EG_SKIES.map((s) => (s.moon ? 1 : 0).toFixed(1)).join(', ')}",
-    "new": "${EG_SKIES.map(() => (1).toFixed(1)).join(', ')}",
+    "old": "const float MOONS[4] = float[4](${EG_SKIES.map((s) => (s.moon ? 1 : 0).toFixed(1)).join(', ')});",
+    "new": "const float MOONS[4] = float[4](${EG_SKIES.map(() => (1).toFixed(1)).join(', ')});",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGZO-the-haze-never-thickening",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "exp(-d * ${f4(EG_UNDERSIDE_LOOK.fog)})",
-    "new": "exp(-d * 0.0)",
+    "old": "  return mix(voidOf(r.y / d, b), alb * litBy(n, b), exp(-d * ${f4(EG_UNDERSIDE_LOOK.fog)}));",
+    "new": "  return mix(voidOf(r.y / d, b), alb * litBy(n, b), exp(-d * 0.0));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGZO-the-haze-the-wrong-way",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "return mix(voidOf(r.y / d, b), alb * litBy(n, b),",
-    "new": "return mix(voidOf(-r.y / d, b), alb * litBy(n, b),",
+    "old": "  return mix(voidOf(r.y / d, b), alb * litBy(n, b), exp(-d * ${f4(EG_UNDERSIDE_LOOK.fog)}));",
+    "new": "  return mix(voidOf(-r.y / d, b), alb * litBy(n, b), exp(-d * ${f4(EG_UNDERSIDE_LOOK.fog)}));",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGZO-the-underside-dither-inverted",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "if (bayer4(px) >= uCover) discard;",
-    "new": "if (bayer4(px) < uCover) discard;",
+    "old": "  if (bayer4(px) >= uCover) discard;   // THE DITHER: the world shows where the veil has not yet taken",
+    "new": "  if (bayer4(px) < uCover) discard;   // THE DITHER: the world shows where the veil has not yet taken",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGZO-the-picture-unread",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "vec3 c = undersideAt(vPos, normalize(vN), texture(uTex, vUv).rgb, uEye, b);",
-    "new": "vec3 c = undersideAt(vPos, normalize(vN), vec3(0.5), uEye, b);",
+    "old": "  vec3 c = undersideAt(vPos, normalize(vN), texture(uTex, vUv).rgb, uEye, b);",
+    "new": "  vec3 c = undersideAt(vPos, normalize(vN), vec3(0.5), uEye, b);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EGZO-the-depth-never-cleared",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "gl.clear(cam ? gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT : gl.COLOR_BUFFER_BIT);",
-    "new": "gl.clear(gl.COLOR_BUFFER_BIT);",
+    "old": "    gl.clear(cam ? gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT : gl.COLOR_BUFFER_BIT);",
+    "new": "    gl.clear(gl.COLOR_BUFFER_BIT);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "EGZO-the-underside-in-the-veil",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "const gl = this.gl, U = this.u, cam = look?.mode === EG_STAIR_MODE.fall ? look?.cam ?? null : null;",
-    "new": "const gl = this.gl, U = this.u, cam = look?.cam ?? null;",
+    "old": "      cam = look?.mode === EG_STAIR_MODE.fall ? (look?.cam ?? null) : null;",
+    "new": "      cam = look?.cam ?? null;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "EGZO-a-freed-underside-drawn",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "if (cam && look.under?.live && this.under)",
-    "new": "if (cam && look.under && this.under)",
+    "old": "    if (cam && look.under?.live && this.under) this.drawUnderside(look.under, cam, v.cover, (look.band ?? 0) | 0);",
+    "new": "    if (cam && look.under && this.under) this.drawUnderside(look.under, cam, v.cover, (look.band ?? 0) | 0);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "EGZO-the-void-off-the-camera",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "gl.uniform3fv(U.uRight, B.right); gl.uniform3fv(U.uUp, B.up);",
-    "new": "gl.uniform3fv(U.uUp, B.up);",
+    "old": "      gl.uniform3fv(U.uRight, B.right);\n      gl.uniform3fv(U.uUp, B.up);",
+    "new": "      gl.uniform3fv(U.uUp, B.up);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EGZO-a-sub-mesh-off-its-offset",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "gl.drawElements(gl.TRIANGLES, s.count, gl.UNSIGNED_INT, s.start * 4);",
-    "new": "gl.drawElements(gl.TRIANGLES, s.count, gl.UNSIGNED_INT, s.start);",
+    "old": "      gl.drawElements(gl.TRIANGLES, s.count, gl.UNSIGNED_INT, s.start * 4);",
+    "new": "      gl.drawElements(gl.TRIANGLES, s.count, gl.UNSIGNED_INT, s.start);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EGZO-the-backs-drawn",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK);",
-    "new": "gl.cullFace(gl.BACK);",
+    "old": "    gl.enable(gl.CULL_FACE);\n    gl.cullFace(gl.BACK);",
+    "new": "    gl.cullFace(gl.BACK);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGZO-the-state-kept",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "gl.disable(gl.CULL_FACE); gl.disable(gl.DEPTH_TEST);",
-    "new": "gl.disable(gl.DEPTH_TEST);",
+    "old": "    gl.disable(gl.CULL_FACE);\n    gl.disable(gl.DEPTH_TEST);",
+    "new": "    gl.disable(gl.DEPTH_TEST);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGZO-the-depth-unwritten",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "gl.depthFunc(gl.LESS); gl.depthMask(true);",
-    "new": "gl.depthFunc(gl.LESS); gl.depthMask(false);",
+    "old": "    gl.depthMask(true);",
+    "new": "    gl.depthMask(false);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGZO-the-program-each-upload",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "if (!this.under && !this.underBroken) {",
-    "new": "if (!this.underBroken) {",
+    "old": "    if (!this.under && !this.underBroken) {",
+    "new": "    if (!this.underBroken) {",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGZO-the-broken-program-tried-again",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "console.warn('[eg] the underside would not build', e?.message ?? e); this.underBroken = true;",
-    "new": "console.warn('[eg] the underside would not build', e?.message ?? e);",
+    "old": "        this.underBroken = true;\n        this.under = null;",
+    "new": "        this.under = null;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -542,7 +542,7 @@
   {
     "name": "EGZO-a-failed-upload-leaks",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "new EgUnderside(gl, m, tex, { vao, bufs }).destroy();   // what was made is freed",
+    "old": "      new EgUnderside(gl, m, tex, { vao, bufs }).destroy(); // what was made is freed",
     "new": "",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
@@ -551,8 +551,8 @@
   {
     "name": "EGZO-the-strata-wrapped",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "rec === EG_DRESS.root ? gl.CLAMP_TO_EDGE : gl.REPEAT",
-    "new": "gl.REPEAT",
+    "old": "        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, rec === EG_DRESS.root ? gl.CLAMP_TO_EDGE : gl.REPEAT);",
+    "new": "        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -560,7 +560,7 @@
   {
     "name": "EGZO-no-mipmaps",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "gl.generateMipmap(gl.TEXTURE_2D);",
+    "old": "        gl.generateMipmap(gl.TEXTURE_2D);",
     "new": "",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
@@ -569,8 +569,8 @@
   {
     "name": "EGZO-the-pixel-art-smeared",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);",
-    "new": "gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);",
+    "old": "        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);",
+    "new": "        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGZO-a-picture-leaked",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "for (const t of this.tex.values()) gl.deleteTexture(t);",
-    "new": "",
+    "old": "    for (const t of this.tex.values()) gl.deleteTexture(t);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -587,7 +587,7 @@
   {
     "name": "EGZO-a-buffer-leaked",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "for (const b of this.bufs) gl.deleteBuffer(b);",
+    "old": "    for (const b of this.bufs) gl.deleteBuffer(b);",
     "new": "",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
@@ -605,8 +605,8 @@
   {
     "name": "EGZO-the-underside-program-kept-past-the-pass",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "if (this.under) gl.deleteProgram(this.under);",
-    "new": "",
+    "old": "    if (this.under) gl.deleteProgram(this.under); // EG-ZO: the underside's program, kept with the pass",
+    "new": "    // EG-ZO: the underside's program, kept with the pass",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "EGZO-no-depth-buffer",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "antialias: false, depth: true, stencil: false",
-    "new": "antialias: false, depth: false, stencil: false",
+    "old": "        depth: true,",
+    "new": "        depth: false,",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "EGZO-a-slice-in-the-shutting-tick",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (!shuts) fallSlice();",
-    "new": "fallSlice();",
+    "old": "    if (!shuts) fallSlice(); // EG-ZO: a slice of the fall's underside a tick - never in the tick whose end runs the step's own work",
+    "new": "    fallSlice(); // EG-ZO: a slice of the fall's underside a tick - never in the tick whose end runs the step's own work",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "EGZO-every-slice-in-one-tick",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (!fall.parts.done) { fall.parts.step(); return; }",
-    "new": "while (!fall.parts.done) fall.parts.step();",
+    "old": "    if (!fall.parts.done) {\n      fall.parts.step();\n      return;\n    }",
+    "new": "    while (!fall.parts.done) fall.parts.step();",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "EGZO-kept-past-the-veil",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (phase === 'idle') fallFree();",
-    "new": "",
+    "old": "    if (phase === 'idle') fallFree(); // EG-ZO: and the fall's underside with it",
+    "new": "    // EG-ZO: and the fall's underside with it",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "EGZO-kept-past-another-look",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (egMode() !== EG_STAIR_MODE.fall) { fallFree(); return; }",
-    "new": "if (egMode() !== EG_STAIR_MODE.fall) { return; }",
+    "old": "      fallFree();\n      return;",
+    "new": "      return;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "EGZO-another-bands-fall-kept",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (fall?.band === egBand) return;",
-    "new": "if (fall) return;",
+    "old": "    if (fall?.band === egBand) return;",
+    "new": "    if (fall) return;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -668,7 +668,7 @@
   {
     "name": "EGZO-kept-past-the-destroy",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "fallFree();   // EG-ZO: the fall's underside before the pass that drew it",
+    "old": "      fallFree(); // EG-ZO: the fall's underside before the pass that drew it",
     "new": "",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
@@ -677,8 +677,8 @@
   {
     "name": "EGZO-a-failed-upload-tried-each-tick",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (!fall.under) fall.failed = true;",
-    "new": "",
+    "old": "    if (!fall.under) fall.failed = true;\n  }",
+    "new": "  }",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "EGZO-the-camera-off-the-clock",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "egFallCamera(s, w / h, fallCam)",
-    "new": "egFallCamera(0, w / h, fallCam)",
+    "old": "    const cam = m === EG_STAIR_MODE.fall ? egFallCamera(s, w / h, fallCam) : null;",
+    "new": "    const cam = m === EG_STAIR_MODE.fall ? egFallCamera(0, w / h, fallCam) : null;",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "EGZO-the-underside-never-handed",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "under: fall?.under ?? null",
-    "new": "under: null",
+    "old": "      egPass.draw(w, h, s, v, { mode: m, band: egBand, cam, under: fall?.under ?? null });",
+    "new": "      egPass.draw(w, h, s, v, { mode: m, band: egBand, cam, under: null });",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"
     ]
@@ -704,7 +704,7 @@
   {
     "name": "EGZO-the-fall-never-taken",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "fallTake();   // EG-ZO: a fall keeps or starts its underside; any other look frees it",
+    "old": "    fallTake(); // EG-ZO: a fall keeps or starts its underside; any other look frees it",
     "new": "",
     "tests": [
       "test/world/eliteGates/egz_fall.test.js"

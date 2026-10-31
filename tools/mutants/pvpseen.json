@@ -2,8 +2,8 @@
   {
     "name": "PVP-SEEN-the-veil-unmarked",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "return look.kind === 'conceal' ? { kind: 'conceal', visual: { ...look.visual, named: true } } : look;",
-    "new": "return look;",
+    "old": "      return look.kind === 'conceal' ? { kind: 'conceal', visual: { ...look.visual, named: true } } : look;",
+    "new": "      return look;",
     "tests": [
       "test/net/pvpseen.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PVP-SEEN-bar-never-kept",
     "file": "src/scenes/pvpFlagHost.js",
-    "old": "barKept: (id) => now() - (veiled.get(id) ?? -Infinity) < VEIL_FRAME_MS,",
-    "new": "barKept: (id) => false,",
+    "old": "    barKept: (id) => now() - (veiled.get(id) ?? -Infinity) < VEIL_FRAME_MS,",
+    "new": "    barKept: (id) => false,",
     "tests": [
       "test/net/pvpseen.test.js"
     ]

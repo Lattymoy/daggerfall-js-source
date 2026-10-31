@@ -9,7 +9,7 @@
 //
 // Not a DFU member. Ledger A (WB).
 import { GATE_RING_CSS } from './gateMapMark.js';
-import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';   // WB13c: the classic face, loaded by the gate's own screens
+import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js'; // WB13c: the classic face, loaded by the gate's own screens
 
 /** Where it stands: under the compass strip, centred. */
 export const GATE_BANNER_TOP = '64px';
@@ -28,7 +28,8 @@ export const GATE_BANNER_CSS = `
 `;
 
 let node = null;
-let shown = '', shownCls = 'wb-gate-banner';
+let shown = '',
+  shownCls = 'wb-gate-banner';
 
 /** The banner's text now, or null to hide it; `hidden` is the HUD's own hide (a window up, the HUD off); `look` the
  *  gate's (Dagon's red) or 'brass' (an Abyss Dungeon's door). */
@@ -41,14 +42,17 @@ export function drawGateBanner(text, { hidden = false, look = 'gate', doc = glob
       st.id = GATE_BANNER_STYLE_ID;
       st.textContent = GATE_BANNER_CSS;
       (doc.head ?? doc.body)?.append(st);
-      if (doc.head) injectEnhancedFonts(doc);   // WB13c: Cormorant on the classic skin too (it came only if another window had asked)
+      if (doc.head) injectEnhancedFonts(doc); // WB13c: Cormorant on the classic skin too (it came only if another window had asked)
     }
     node = doc.createElement('div');
     node.className = 'wb-gate-banner';
     (doc.body ?? doc.documentElement)?.append(node);
   }
   const cls = look === 'brass' ? 'wb-gate-banner sd-brass' : 'wb-gate-banner';
-  if (cls !== shownCls) { shownCls = cls; node.className = cls; }
+  if (cls !== shownCls) {
+    shownCls = cls;
+    node.className = cls;
+  }
   if (want === shown) return;
   shown = want;
   node.textContent = want;
@@ -59,5 +63,6 @@ export function drawGateBanner(text, { hidden = false, look = 'gate', doc = glob
 export function destroyGateBanner() {
   node?.remove?.();
   node = null;
-  shown = ''; shownCls = 'wb-gate-banner';
+  shown = '';
+  shownCls = 'wb-gate-banner';
 }

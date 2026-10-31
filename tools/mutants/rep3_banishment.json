@@ -11,8 +11,8 @@
   {
     "name": "REP3-the-rolls-drawn-for-all",
     "file": "src/systems/court.js",
-    "old": "(!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1)",
-    "new": "(Math.floor(rolls() * 100) >= threshold1 || !BANISHABLE_CRIMES.has(crime))",
+    "old": "  const punishmentType = failed2 && (!BANISHABLE_CRIMES.has(crime) || Math.floor(rolls() * 100) >= threshold1) ? 2 : 0;",
+    "new": "  const punishmentType = failed2 && (Math.floor(rolls() * 100) >= threshold1 || !BANISHABLE_CRIMES.has(crime)) ? 2 : 0;",
     "tests": [
       "test/systems/rep3_banishment.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REP3-for-ever",
     "file": "src/systems/standing.js",
-    "old": "  if (worldNow >= r.banishedUntil) { liftBanishment(player, regionIndex); return false; }\n",
-    "new": "",
+    "old": "  if (worldNow >= r.banishedUntil) {\n    liftBanishment(player, regionIndex);\n    return false;\n  }\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/rep3_banishment.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "REP3-the-term-never-stamped",
     "file": "src/systems/standing.js",
-    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null;   // BANISH-SKY: the calendar's thirty days\n  return true;",
+    "old": "  r.banishedUntil = Number.isFinite(worldNow) ? banishmentEnd(worldNow) : null; // BANISH-SKY: the calendar's thirty days\n  return true;",
     "new": "  return true;",
     "tests": [
       "test/systems/rep3_banishment.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "REP3-the-term-dropped-on-save",
     "file": "src/systems/region/regionConditions.js",
-    "old": "    ...(Number.isFinite(r.banishedUntil) ? { b: r.banishedUntil } : {}),",
-    "new": "    ...({}),",
+    "old": "    ...(Number.isFinite(r.banishedUntil) ? { b: r.banishedUntil } : {}), // REP3: only a banishment standing carries one",
+    "new": "    ...{}, // REP3: only a banishment standing carries one",
     "tests": [
       "test/systems/rep3_banishment.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REP3-the-pardon-never-lifts",
     "file": "src/systems/standing.js",
-    "old": "export function grantPardon(player, regionIndex, ownNow) {\n  liftBanishment(player, regionIndex);",
-    "new": "export function grantPardon(player, regionIndex, ownNow) {",
+    "old": "  liftBanishment(player, regionIndex);\n  const s = standingOf(player);",
+    "new": "  const s = standingOf(player);",
     "tests": [
       "test/systems/rep3_banishment.test.js"
     ]

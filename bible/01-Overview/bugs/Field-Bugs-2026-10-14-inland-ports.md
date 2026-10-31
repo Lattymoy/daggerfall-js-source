@@ -21,14 +21,14 @@ where its own blocks hold ponds (eight of its forty-nine, the Mages Guild's besi
 
 FOUND. The shipyard law asked whether a town is a port and nothing else (`03-World/Shipyards.md` "Which towns"):
 `isPortTown(dfLocation, portByData(dfLocation))`, the host's `portByData` being `portTownByData` - Travel Options'
-harbours (`travelPorts.js hasPort`) or the byte not nought (`portPlaces.js:"export const portTownByData = (loc, hasPort) =>"`).
+harbours (`travelPorts.js hasPort`) or the byte not nought (`portPlaces.js:"export const portTownByData"`).
 That reads DFU's own port-town data the way DFU reads it - `DaggerfallBankingWindow.cs` sells a ship wherever the byte
 is not nought, the one read of it in DFU (`worldModes.js:"isPortTown: () => (buildingDirectory?.()?.portTownAndUnknown"`,
 left as it is) - but a bank's ship is a deed, and a shipyard is timber on a shore. The byte is two things (FIELD BUGS
 2026-10-13c measured it): its low four bits name the sides of a place water lies on, and 0x10 is the region capitals'
 mark, on 39 cities. Hazelnut's table is the byte's 343 locations and 35 more, so it says the same. Then where the town
 holds no sea of its own and the map shows none within SEA_RING, the placement's field fell to the town's middle
-(`portSites.js:"return { kind: 'middle', at: (gx, gy) => Math.sqrt("`) and stood both there - in Ilessan Hills beside its
+(`portSites.js:"=> (reach - along(gx, gy) + LATERAL_K * Math.abs(across(gx, gy)))".."return {"`) and stood both there - in Ilessan Hills beside its
 blocks' ponds. FIELD BUGS 2026-10-13c had named the 31 capitals with no sea within six pixels and left them to the owner;
 the report is that case, played.
 
@@ -40,7 +40,7 @@ Bay can reach.
 
 FIXED, at the root:
 
-- THE OPEN SEA (`portSites.js:"export function openSeaOf(isWater, width, height) {"`): the one water law's pixels flooded
+- THE OPEN SEA (`portSites.js:"export function openSeaOf"`): the one water law's pixels flooded
   eight-way from the map's border - the flood Deep Waters' bake makes of the sea (`world/deepWater/deepWatersBake.js` COARSE: "the
   8-connected flood of candidates from the map's border - one component in the file, every inland lake left out"), a
   map pixel at a time. On the real map: one body of 179,926 pixels; the 81 lakes and ponds none of it. The host floods
@@ -48,9 +48,9 @@ FIXED, at the root:
   about 40 ms over the 500,000 pixels in Node), declared above the stream beside `seaPixel` (BOOT-TDZ); past the Veil it
   is the Eltheric Ocean's own water round its isles (each isle a hill of land in open water, `ethericSea.js isleByte`), so
   a freeport's town keeps its places.
-- A PORT TOWN IS ONE THE OPEN SEA BEARS ON (`portSites.js:"export function portTownOnSea(loc, hasPort, isSea) {"`): a
+- A PORT TOWN IS ONE THE OPEN SEA BEARS ON (`portSites.js:"export function portTownOnSea"`): a
   port by its data (`portTownByData`, unchanged) with a pixel of the open sea within SEA_RING of its own
-  (`fortLaw.js:"export function seaBears(px, py, isSea) {"`, re-exported by `portSites.js` since FB1020c BERTH-RING) - the ring the placement reads its bearing off, so every
+  (`fortLaw.js:"export function seaBears"`, re-exported by `portSites.js` since FB1020c BERTH-RING) - the ring the placement reads its bearing off, so every
   port town has a seaward edge, Mac's "Town's seaward edge". The host asks it in both places a town's places are decided
   (`world.js:"const portOnSea = (dfLocation) =>"`: the pixel's build and `townPlacesFor`), and the bearing is read off the
   open sea too (`world.js:"const bearing = seaBearing(lp.x, lp.y, openSea);"`), so a lake behind a coastal town never

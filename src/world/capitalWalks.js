@@ -23,16 +23,23 @@ export function carveCapitalWalks(nav, dfLocation) {
   const cap = dfLocation?.capital ? CAPITALS[dfLocation.capital.k] : null;
   const rects = capitalWalkShut(cap);
   if (!nav?.grid || !rects.length) return 0;
-  const D = capitalDims(cap), s = dfLocation.capital.s ?? capitalCentre(cap), h = dfLocation.exterior?.exteriorData?.height ?? 8;
-  const ox = (cap.anchor[0] - (s % D.w) * 8) * BLOCK_M, oz = (Math.floor(s / D.w) * 8 + h - cap.anchor[1]) * BLOCK_M;
-  const lo = (v) => Math.floor(v / NAV_CELL + 1e-6), hi = (v) => Math.ceil(v / NAV_CELL - 1e-6);   // a rect's edge on a cell's line closes no cell past it
+  const D = capitalDims(cap),
+    s = dfLocation.capital.s ?? capitalCentre(cap),
+    h = dfLocation.exterior?.exteriorData?.height ?? 8;
+  const ox = (cap.anchor[0] - (s % D.w) * 8) * BLOCK_M,
+    oz = (Math.floor(s / D.w) * 8 + h - cap.anchor[1]) * BLOCK_M;
+  const lo = (v) => Math.floor(v / NAV_CELL + 1e-6),
+    hi = (v) => Math.ceil(v / NAV_CELL - 1e-6); // a rect's edge on a cell's line closes no cell past it
   let n = 0;
   for (const [x0, z0, x1, z1] of rects) {
     for (let gy = lo(oz - z1); gy < hi(oz - z0); gy++) {
       for (let gx = lo(x0 + ox); gx < hi(x1 + ox); gx++) {
         if (!nav.inBounds(gx, gy)) continue;
         const i = gy * nav.width + gx;
-        if (nav.grid[i] !== 0) { nav.grid[i] = 0; n++; }
+        if (nav.grid[i] !== 0) {
+          nav.grid[i] = 0;
+          n++;
+        }
       }
     }
   }

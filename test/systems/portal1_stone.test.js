@@ -741,10 +741,10 @@ test('PORTAL1 the counter\'s row on the classic popups: under the art, drawn in 
   const msw = read('src/ui/merchant/merchantServiceWindow.js');
   assert.match(msw, /drawRect\(renderer, m, px \+ rx, py \+ ry, rw, rh, REFORGE_ROW_BG\);\n\s+shadowText\(renderer, font, label, m, px \+ rx, py \+ ry \+ 2, \{ align: 'center', w: rw \}\);/, 'the Reforge row\'s one dark, the label centred on it');
   assert.deepEqual(REFORGE_ROW_BG, [0.16, 0.11, 0.06, 0.92]);
-  assert.match(msw, /if \(this\.hooks\.portal\) drawPortalRow\(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this\.hooks\.portal\.label\);/, 'the plain popup draws it');
-  assert.match(read('src/ui/merchant/merchantRepairWindow.js'), /if \(this\.hooks\.portal && font\) drawPortalRow\(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this\.hooks\.portal\.label\);/, 'the repair popup draws it');
+  assert.match(msw, /if \(this\.hooks\.portal\)\n\s*drawPortalRow\(renderer, m, font, MERCHANT_PANEL_X, MERCHANT_PANEL_Y, MERCHANT_PANEL_H, this\.hooks\.portal\.label\);/, 'the plain popup draws it');
+  assert.match(read('src/ui/merchant/merchantRepairWindow.js'), /if \(this\.hooks\.portal && font\)\n\s*drawPortalRow\(renderer, m, font, REPAIR_PANEL_X, REPAIR_PANEL_Y, REPAIR_PANEL_H, this\.hooks\.portal\.label\);/, 'the repair popup draws it');
   for (const door of ['src/ui/merchant/merchantServiceDoor.js', 'src/ui/merchant/merchantRepairDoor.js']) {
-    assert.match(read(door), /\.\.\.\(hooks\.portal \? \[\{ label: hooks\.portal\.label, onClick: \(\) => \{ close\(\); hooks\.portal\.onBuy\?\.\(\); \} \}\] : \[\]\),[^\n]*\n\s+\{ label: 'Exit', onClick: close \},/, `${door}: the Enhanced Plus panel's button, above Exit`);
+    assert.match(read(door), /\.\.\.\(hooks\.portal\n\s*\? \[\n\s*\{\n\s*label: hooks\.portal\.label,\n\s*onClick: \(\) => \{\n\s*close\(\);\n\s*hooks\.portal\.onBuy\?\.\(\);\n\s*\},\n\s*\},\n\s*\]\n\s*: \[\]\), \/\/ PORTAL1: the Portal Stone, for shards\n\s*\{ label: 'Exit', onClick: close \},/, `${door}: the Enhanced Plus panel's button, above Exit`);
   }
 });
 
@@ -768,8 +768,8 @@ test('PORTAL1 the hosts: every shop\'s keeper sells it (a teller and a mod\'s se
   assert.match(read('src/scenes/shopRows.js'), /const portalCounter = createPortalCounter\(\{ say, mount: mountInterior \}\);/);
   assert.doesNotMatch(wm, /askPortalStone|buyPortalStoneNow|buyPortalStones?\(/, 'no second sale in the host');
   const pc = read('src/scenes/portalCounter.js');
-  assert.match(pc, /if \(max < 1\) \{ say\(portalStoneRefusalText\(pack\(\), portalStoneRefusal\(pack\(\), 1\)\)\); return null; \}/, 'a short purse (or a full stack) is told at once, nothing raised - AUDIT PORTAL1 C4');
-  assert.match(pc, /const sale = buyPortalStones\(entity\.items, n\);\n\s+if \(!sale\.ok\) \{ say\(portalStoneRefusalText\(entity\.items, sale\.reason\)\); return false; \}/, 'the sale the law\'s, refused in words');
+  assert.match(pc, /if \(max < 1\) \{\n\s*say\(portalStoneRefusalText\(pack\(\), portalStoneRefusal\(pack\(\), 1\)\)\);\n\s*return null;\n\s*\}/, 'a short purse (or a full stack) is told at once, nothing raised - AUDIT PORTAL1 C4');
+  assert.match(pc, /const sale = buyPortalStones\(entity\.items, n\);\n\s*if \(!sale\.ok\) \{\n\s*say\(portalStoneRefusalText\(entity\.items, sale\.reason\)\);\n\s*return false;\n\s*\}/, 'the sale the law\'s, refused in words');
   const w = read('src/scenes/world.js');
   const doors = cut(w, '  const packDoors = {', '\n  };\n');
   assert.match(doors, /openPortal: \(item, list\) => \(isPortalBook\(item\) \? portalBook\.open\(\) : openPortalStone\(item, list\)\),/, 'the pack\'s door (the interior\'s pack is this host\'s)');   // PIN MOVED (PORTAL-BOOK): a book opens its window

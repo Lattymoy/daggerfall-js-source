@@ -71,5 +71,5 @@ test('AUDIT TESA III E1-4 the isles\' rects reach both bakes whole (by source): 
   assert.match(src('src/scenes/world.js'), /ether: etherSea \? etherPlaceRects\(_etherTemplates, locationRectReader\(maps, blocks, \{ regionIndex: ETHER_REGION, locationIndex: -1000 \}\)\) : null,/);
   const client = src('src/world/deepWater/deepWatersClient.js');
   assert.match(client, /worker\.postMessage\(\{ t: 'build', woodsBytes: bytes, rects, ether, continent \}, \[bytes\.buffer\]\);/);   // PIN MOVED (TAMRIEL-DEEP): and whether the continent's bake has room
-  assert.match(client, /worldBakes\(new DeepWatersBake\(\{ woods, global: record, locationRectAt: rectsLookup\(rects\) \}\), \{ woods: ether \? etherGround\(woods\) : woods, ether, continent \}\)/);   // PIN MOVED (TAMRIEL-DEEP)
+  assert.match(client, /worldBakes\(new DeepWatersBake\(\{ woods, global: record, locationRectAt: rectsLookup\(rects\) \}\), \{\n\s*woods: ether \? etherGround\(woods\) : woods,\n\s*ether,\n\s*continent,\n\s*\}\)/);   // PIN MOVED (TAMRIEL-DEEP)
 });

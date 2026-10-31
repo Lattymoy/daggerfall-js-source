@@ -15,14 +15,14 @@
 // Unity Random.Range slots are uniform rolls, as in DFU itself.
 // Equipment (SetEnemyEquipment) and loot generation: E3b/E4.
 
-import { effectiveSkill, rawSkillForEffective } from '../../systems/skillSoftcap.js';   // SOFTCAP2: a leaf
+import { effectiveSkill, rawSkillForEffective } from '../../systems/skillSoftcap.js'; // SOFTCAP2: a leaf
 import { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from '../mobile/mobileTypes.js';
-import { meanerMonstersRow as pcaaoMeanerMonstersRow } from '../../combat/pcaaoMeanerMonsters.js';   // PCO1: Kirk.O's Meaner Monsters edit, when both mods are on
-import { applyMeanerMonsters } from '../meanerMonsters.js';   // MM1: Ralzar's Meaner Monsters, when its switch is on
-import { enemyEntityType, enemyCareerIndex } from './enemyBasics.js';   // DEX1: SetupDemoEnemy's entity type and SetEnemyCareer's careerIndex, one home
-import { customCareerTemplate } from './customEnemies.js';   // DEX1: DaggerfallEntity.CustomCareerTemplates
+import { meanerMonstersRow as pcaaoMeanerMonstersRow } from '../../combat/pcaaoMeanerMonsters.js'; // PCO1: Kirk.O's Meaner Monsters edit, when both mods are on
+import { applyMeanerMonsters } from '../meanerMonsters.js'; // MM1: Ralzar's Meaner Monsters, when its switch is on
+import { enemyEntityType, enemyCareerIndex } from './enemyBasics.js'; // DEX1: SetupDemoEnemy's entity type and SetEnemyCareer's careerIndex, one home
+import { customCareerTemplate } from './customEnemies.js'; // DEX1: DaggerfallEntity.CustomCareerTemplates
 
-export { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from '../mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
+export { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from '../mobile/mobileTypes.js'; // AUDIT 24 (wave 41): one home
 
 /** Monster careers (E4a): ENEMY{nnn}.CFG records inside MONSTER.BSA,
  *  the SAME 74-byte ClassFile format (verbatim
@@ -56,7 +56,11 @@ export async function loadClassCareer(careerIndex, fetchBytes) {
   const { ClassFile } = await import('../../formats/classFile.js');
   const cf = new ClassFile();
   let bytes;
-  try { bytes = await fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`); } catch { bytes = null; }
+  try {
+    bytes = await fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`);
+  } catch {
+    bytes = null;
+  }
   const career = bytes && cf.load(bytes) !== false ? cf.career : null;
   _classCareers.set(careerIndex, career);
   return career;
@@ -86,14 +90,20 @@ export function registerMintRowEditor(fn) {
   _mintRowEditors.push(fn);
 }
 /** The test seam. */
-export function _resetMintRowEditors() { _mintRowEditors.length = 0; }
-const editAtMint = (mobileType, row) => { let r = row; for (const fn of _mintRowEditors) r = fn(mobileType, r) ?? r; return r; };
+export function _resetMintRowEditors() {
+  _mintRowEditors.length = 0;
+}
+const editAtMint = (mobileType, row) => {
+  let r = row;
+  for (const fn of _mintRowEditors) r = fn(mobileType, r) ?? r;
+  return r;
+};
 
 export function rollEnemyClassMaxHealth(level, hitPointsPerLevel, rollFn = Math.random) {
   const baseHealth = 10;
   let maxHealth = baseHealth;
   for (let i = 0; i < level; i++) {
-    maxHealth += 1 + Math.floor(rollFn() * hitPointsPerLevel);   // Range(1, hpPerLevel + 1)
+    maxHealth += 1 + Math.floor(rollFn() * hitPointsPerLevel); // Range(1, hpPerLevel + 1)
   }
   return maxHealth;
 }
@@ -128,10 +138,16 @@ export function applyProgressionScaling(entity, scaling) {
   }
   entity.maxHealth = Math.max(1, Math.round(entity.maxHealth * scaling.healthMult));
   entity.health = entity.maxHealth;
-  if (scaling.heroHealth > 1) entity.healthMult = (entity.healthMult ?? 1) * scaling.heroHealth;   // BAL11: TELL1's poise reads the kind's own health
+  if (scaling.heroHealth > 1) entity.healthMult = (entity.healthMult ?? 1) * scaling.heroHealth; // BAL11: TELL1's poise reads the kind's own health
   entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * scaling.damageMult;
   entity.challengeLevel = (entity.level ?? 1) + scaling.challengeLevels;
-  entity.progression = { share: scaling.share, veteran: scaling.veteran, place: scaling.place ?? 0, edge: scaling.edge, hero: { damage: scaling.heroDamage ?? 1, health: scaling.heroHealth ?? 1 } };   // for a HUD or a debugger; nothing reads it as law (BAL3: the place's veteran beside the player's; BAL11: the hero's threat)
+  entity.progression = {
+    share: scaling.share,
+    veteran: scaling.veteran,
+    place: scaling.place ?? 0,
+    edge: scaling.edge,
+    hero: { damage: scaling.heroDamage ?? 1, health: scaling.heroHealth ?? 1 },
+  }; // for a HUD or a debugger; nothing reads it as law (BAL3: the place's veteran beside the player's; BAL11: the hero's threat)
   return entity;
 }
 
@@ -141,7 +157,14 @@ export function applyProgressionScaling(entity, scaling) {
  * @param career parsed CLASS*.CFG career (class enemies) or null
  * @param playerLevel
  */
-export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollFn = Math.random, { exactLevel = false } = {}) {
+export function makeEnemyEntity(
+  mobileType,
+  basicsIn,
+  career,
+  playerLevel,
+  rollFn = Math.random,
+  { exactLevel = false } = {},
+) {
   // DEX1: SetupDemoEnemy's entity type, not `>= 128` - a mod's monster (Enemy Expansion's 256-290) has the 128 bit clear
   // and is levelled by its row, a mod's class (384-398) by the player; a custom one of either takes DFU's same arm
   // (EnemyEntity.cs:251-274: "Default like a monster" / "like a class enemy" - and no watchman's bonus, its id not 146)
@@ -155,12 +178,25 @@ export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollF
   const basics = editAtMint(mobileType, pcaaoMeanerMonstersRow(mobileType, applyMeanerMonsters(mobileType, basicsIn)));
   const stats = career
     ? {
-        strength: career.strength, intelligence: career.intelligence,
-        willpower: career.willpower, agility: career.agility,
-        endurance: career.endurance, personality: career.personality,
-        speed: career.speed, luck: career.luck,
+        strength: career.strength,
+        intelligence: career.intelligence,
+        willpower: career.willpower,
+        agility: career.agility,
+        endurance: career.endurance,
+        personality: career.personality,
+        speed: career.speed,
+        luck: career.luck,
       }
-    : { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 };
+    : {
+        strength: 50,
+        intelligence: 50,
+        willpower: 50,
+        agility: 50,
+        endurance: 50,
+        personality: 50,
+        speed: 50,
+        luck: 50,
+      };
   let level, maxHealth, liveSpeed, armor;
   if (isClass) {
     level = playerLevel;
@@ -168,14 +204,14 @@ export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollF
     // already carries this bonus - the reader hands the streamed level in with `exactLevel` so it is not rolled twice
     // (a 146 puppet stood three to six levels above the watchman it copies, the one species where builtLevel and
     // entity.level disagreed, and the one term a crafted `t: 146` record could ride).
-    if (mobileType === KNIGHT_CITYWATCH_ID && !exactLevel) level += 3 + Math.floor(rollFn() * 4);   // Range(3, 7)
+    if (mobileType === KNIGHT_CITYWATCH_ID && !exactLevel) level += 3 + Math.floor(rollFn() * 4); // Range(3, 7)
     maxHealth = rollEnemyClassMaxHealth(level, career.hitPointsPerLevel, rollFn);
     liveSpeed = career.speed;
-    armor = 0;   // class armor comes from equipment (E3b: SetEnemyEquipment)
+    armor = 0; // class armor comes from equipment (E3b: SetEnemyEquipment)
   } else {
     level = basics.level;
-    maxHealth = basics.minHealth + Math.floor(rollFn() * (basics.maxHealth + 1 - basics.minHealth));   // Range(min, max+1)
-    liveSpeed = career ? career.speed : 50;   // the ENEMY{nnn}.CFG career's Speed (E4a); 50 only when a caller skips the load
+    maxHealth = basics.minHealth + Math.floor(rollFn() * (basics.maxHealth + 1 - basics.minHealth)); // Range(min, max+1)
+    liveSpeed = career ? career.speed : 50; // the ENEMY{nnn}.CFG career's Speed (E4a); 50 only when a caller skips the load
     armor = (basics.armorValue ?? 0) * 5;
     // AUDIT 24 (wave 28): EnemyEntity.cs:264-267 / :286-291 fills the
     // seven-part ArmorValues with exactly this, so the scalar is an
@@ -187,15 +223,15 @@ export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollF
     mobileType,
     isClass,
     isPlayer: false,
-    careerIndex: enemyCareerIndex(mobileType),   // DEX1: a custom enemy's is its own id (EnemyEntity.cs:256)
+    careerIndex: enemyCareerIndex(mobileType), // DEX1: a custom enemy's is its own id (EnemyEntity.cs:256)
     level,
     maxHealth,
     health: maxHealth,
     liveSpeed,
     armor,
-    armorValues: new Array(7).fill(isClass ? 100 : armor),   // EnemyEntity.cs:264-267 (monster), :409-413 (class starts at 100 "no armor")
-    skills: skillsLevel(level),           // every skill, per SetEnemyCareer
-    basics,                               // MobileEnemy reference (multi-attack damage spans - audit F2)
+    armorValues: new Array(7).fill(isClass ? 100 : armor), // EnemyEntity.cs:264-267 (monster), :409-413 (class starts at 100 "no armor")
+    skills: skillsLevel(level), // every skill, per SetEnemyCareer
+    basics, // MobileEnemy reference (multi-attack damage spans - audit F2)
     // stats.SetPermanentFromCareer: ALL EIGHT attributes ride the
     // career (audit F14 - savingThrow needs willpower, level-up needs
     // endurance). 50s only when a caller skips the career load.
@@ -251,6 +287,14 @@ export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollF
  */
 export const enemyLootSpawned = Object.freeze({
   _fns: [],
-  add(fn) { this._fns.push(fn); return () => { const i = this._fns.indexOf(fn); if (i >= 0) this._fns.splice(i, 1); }; },
-  raise(args) { for (const fn of [...this._fns]) fn(args); },
+  add(fn) {
+    this._fns.push(fn);
+    return () => {
+      const i = this._fns.indexOf(fn);
+      if (i >= 0) this._fns.splice(i, 1);
+    };
+  },
+  raise(args) {
+    for (const fn of [...this._fns]) fn(args);
+  },
 });

@@ -254,7 +254,7 @@ test('UI2 wiring: the bar\'s slots draw fitted pictures at a measured box - an i
   const bar = read('src/ui/enhanced/enhancedHotbar.js');
   assert.match(bar, /const drew = iconFor\(s, v\.slot, null, entity, v\.noIcon \? null : v\.icon\);[^\n]*\n\s+const sig = v\.noIcon \? spellInitials\(v\.name\) : spellSigil\(v\.name\);\n\s+s\.glyph\.textContent = drew \? '' : sig;/);
   assert.match(bar, /pic = spellIconPicture\(spellIcon, \{ box: fit\.box, dpr: fit\.dpr, onReady: again \}\);/);
-  assert.match(bar, /requestFittedIcon\(image\.archive, image\.record, \{ box: fit\.box, dpr: fit\.dpr, dye: image\.dye, dyeTarget: image\.dyeTarget, onReady: again \}\)/);   // MERGE (UI2 x DYE-ICON): and the swatch
+  assert.match(bar, /requestFittedIcon\(image\.archive, image\.record, \{\n\s*box: fit\.box,\n\s*dpr: fit\.dpr,\n\s*dye: image\.dye,\n\s*dyeTarget: image\.dyeTarget,\n\s*onReady: again,\n\s*\}\)/);   // MERGE (UI2 x DYE-ICON): and the swatch
   assert.match(bar, /const key = kind \? `\$\{kind\}@\$\{fit\.box\}x\$\{fit\.dpr\}` : '';/, 'a new size draws them anew');
   assert.match(bar, /faceFit\[k\] = \{ box: Math\.max\(8, layout - 4\), dpr \};/, 'the face less two a side');
   // AUDIT UI B2/B3: the face of a slot of the picture's own kind, the ratio off the bar (never a slot the crossbar scales)
@@ -262,7 +262,7 @@ test('UI2 wiring: the bar\'s slots draw fitted pictures at a measured box - an i
   assert.match(bar, /const barShown = barLayout > 0 \? \(bar\.getBoundingClientRect\?\.\(\)\.width \?\? barLayout\) : 0;/);
   assert.match(bar, /const fit = slotFit\(!item && spellIcon != null\);/);
   assert.match(bar, /const HINT_DROP = 'Drag any item or a spell onto a slot\. Drag a slot off the bar to clear it\.';/);
-  assert.match(bar, /if \(hbDrag\.icon\?\.src\) tile\.append\(fittedImg\(hbDrag\.icon\)\);/);
+  assert.match(bar, /if \(hbDrag\.icon\?\.src\)\n\s*tile\.append\(fittedImg\(hbDrag\.icon\)\);/);
   assert.match(bar, /icon: slotPicture\(s\.icon\),/, 'a slot carried keeps its picture');
   const book = read('src/ui/enhanced/enhancedSpellbook.js');
   assert.match(book, /icon: r\.spell\?\.noIcon \? null : spellIconPicture\(r\.spell\?\.icon, \{ box: SPELL_DRAG_BOX \}\) \}\);/);
@@ -276,7 +276,7 @@ test('UI2 wiring: the bar\'s slots draw fitted pictures at a measured box - an i
   assert.match(hud, /const QUICK_BOX = 40, QUICK_BOX_NARROW = 28;\nconst QUICK_NARROW = '\(max-width: 860px\)';/);
   assert.match(hud, /const key = `\$\{iconKeyOf\(item\)\}@\$\{box\}x\$\{dpr\}`;/, 'a new size or scale draws it anew');
   const art = read('src/ui/enhanced/enhancedArt.js');
-  assert.match(art, /return requestFittedPicture\(`spellicon\$\{index\}`, \(wake\) => sheetCutUrl\('ICON00I0\.IMG', rect, 1, wake\), \{ box, dpr, trim: false, onReady \}\);/);
+  assert.match(art, /return requestFittedPicture\(`spellicon\$\{index\}`, \(wake\) => sheetCutUrl\('ICON00I0\.IMG', rect, 1, wake\), \{\n\s*box,\n\s*dpr,\n\s*trim: false,\n\s*onReady,\n\s*\}\);/);
 });
 
 test('UI2 the sheet cutter tells every screen that waited on it: a spell icon is cut from ICON00I0 once its sheet lands, and each asker hears it once - a fitted icon asks second (mutant: a waiter not heard)', async () => {

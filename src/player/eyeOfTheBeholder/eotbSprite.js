@@ -283,7 +283,7 @@ export function worldOrderColors(image, { owned = false } = {}) {
  *  first - eotbGlow.js heldGlowPx). */
 export function worldOrderLayered(image) {
   const held = image.held ?? null;
-  return { ...worldOrderColors(image, { owned: true }), held, ...(image.provisional ? { provisional: true } : {}) };   // AUDIT: drawn before its weapon's picture came
+  return { ...worldOrderColors(image, { owned: true }), held, ...(image.shield ? { shield: image.shield } : {}), ...(image.provisional ? { provisional: true } : {}) };   // AUDIT: drawn before its weapon's picture came; LAYERED-SHIELD: its shield's px
 }
 
 /**

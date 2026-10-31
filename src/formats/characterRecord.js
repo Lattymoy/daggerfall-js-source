@@ -119,37 +119,37 @@ export function parseCharacterRecordData(recordData) {
   // ReadGender: "Daggerfall uses a wide range of gender values ... the
   // first bit maps 0 male / 1 female". 0=male 1=female, Genders order.
   d.gender = (recordData[0x40] & 1) === 1 ? 1 : 0;
-  d.transportationFlags = recordData[0x41];   // x1 Foot, x2 Horse, x4 Cart
+  d.transportationFlags = recordData[0x41]; // x1 Foot, x2 Horse, x4 Cart
   d.minMetalToHit = recordData[0x42];
-  d.race = recordData[0x43];                  // 0-based here; live race is +1 (EntityEnums.Races)
+  d.race = recordData[0x43]; // 0-based here; live race is +1 (EntityEnums.Races)
 
   const armorValues = new Array(7);
   for (let i = 0; i < 7; i++) armorValues[i] = v.getInt8(0x44 + i);
   d.armorValues = armorValues;
 
-  d.skillsRaisedThisLevel1 = v.getUint32(0x50, true);   // flags, skills 0-31
-  d.skillsRaisedThisLevel2 = v.getUint32(0x54, true);   // flags, skills 32-34
+  d.skillsRaisedThisLevel1 = v.getUint32(0x50, true); // flags, skills 0-31
+  d.skillsRaisedThisLevel2 = v.getUint32(0x54, true); // flags, skills 32-34
   d.startingLevelUpSkillSum = v.getInt32(0x58, true);
   d.baseHealth = v.getInt16(0x5c, true);
 
   d.lastTimeUrgeToHuntInnocentSatisfied = v.getUint32(0x60, true);
   d.timeAfterWhichShieldEffectWillEnd = v.getUint32(0x64, true);
   d.unknownLycanthropy = v.getInt16(0x68, true);
-  d.incubatingLycanthropy = v.getInt16(0x6c, true);     // 0 none, 1 werewolf, 2 wereboar
+  d.incubatingLycanthropy = v.getInt16(0x6c, true); // 0 none, 1 werewolf, 2 wereboar
 
-  d.playerHouse = v.getUint32(0x74, true);              // building id, 0 = none
+  d.playerHouse = v.getUint32(0x74, true); // building id, 0 = none
   d.playerShip = v.getUint32(0x78, true);
   d.currentHealth = v.getInt16(0x7c, true);
   d.maxHealth = v.getInt16(0x7e, true);
   d.faceIndex = recordData[0x80];
   d.level = recordData[0x81];
-  d.reflexes = recordData[0x83];                        // PlayerReflexes value
+  d.reflexes = recordData[0x83]; // PlayerReflexes value
 
   d.physicalGold = v.getUint32(0x85, true);
-  d.magicEffects1 = recordData[0x89];   // x1 paralyzed .. x80 regenerating
-  d.magicEffects2 = recordData[0x8a];   // x1 silenced .. x80 climbing
-  d.magicEffects3 = recordData[0x8b];   // x1 jumping .. x80 detect
-  d.magicEffects4 = recordData[0x8c];   // x1 darkness .. x80 resist magicka
+  d.magicEffects1 = recordData[0x89]; // x1 paralyzed .. x80 regenerating
+  d.magicEffects2 = recordData[0x8a]; // x1 silenced .. x80 climbing
+  d.magicEffects3 = recordData[0x8b]; // x1 jumping .. x80 detect
+  d.magicEffects4 = recordData[0x8c]; // x1 darkness .. x80 resist magicka
   d.currentSpellPoints = v.getInt16(0x8d, true);
   d.maxSpellPoints = v.getInt16(0x8f, true);
 
@@ -179,7 +179,7 @@ export function parseCharacterRecordData(recordData) {
     d.equippedItems[i] = v.getUint32(0x16f + i * 4, true);
   }
 
-  d.race2 = recordData[0x1f2];   // original race while transformed
+  d.race2 = recordData[0x1f2]; // original race while transformed
   d.timeToBecomeVampireOrWerebeast = v.getUint32(0x1f3, true);
   d.hasStartedInitialVampireQuest = recordData[0x1f8];
   d.lastTimeVampireNeedToKillSatiated = v.getUint32(0x1fd, true);

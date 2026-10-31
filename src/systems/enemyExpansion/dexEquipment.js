@@ -28,15 +28,17 @@ import { MOBILE_TYPES as M } from '../../characters/mobile/mobileTypes.js';
 
 /** The classes HasClassTable is asked of by name - MobileTypes' class members, the City Watch aside (asked by "Guard"
  *  alone: `if (classType == MobileTypes.Knight_CityWatch) return equipmentTable.Equals("Guard", ...)`). */
-const CLASS_BY_NAME = new Map(Object.entries(M)
-  .filter(([name, id]) => id >= M.Mage && id <= M.Knight && name !== 'Knight_CityWatch')
-  .map(([name, id]) => [name.toLowerCase(), id]));
+const CLASS_BY_NAME = new Map(
+  Object.entries(M)
+    .filter(([name, id]) => id >= M.Mage && id <= M.Knight && name !== 'Knight_CityWatch')
+    .map(([name, id]) => [name.toLowerCase(), id]),
+);
 
 /** The class a row's kit is drawn by (HasClassTable's answer for every class at once): `propsOf(id)` the mod's
  *  properties (dexInstall.js dexProperties). Null where the table names no class - the arm's unknown. */
 export function dexClassTable(mobileId, propsOf) {
   const table = propsOf(mobileId)?.equipmentTable;
-  if (!table) return mobileId;   // `return mobileId == (int)classType`
+  if (!table) return mobileId; // `return mobileId == (int)classType`
   const name = String(table).toLowerCase();
   if (name === 'guard') return M.Knight_CityWatch;
   return CLASS_BY_NAME.get(name) ?? null;
@@ -48,32 +50,59 @@ const forbiddenArmors = (career) => ((career?.weaponArmorShieldsBitfield ?? 0) >
 /** DEX_RRICompat.CoinFlip (:47-50), the copy's own: `Random.Range(0, 2) == 0` on the caller's stream. */
 const coinFlip = (rolls) => Math.floor(rolls() * 2) === 0;
 
-const CLASSIC_PIECE = Object.freeze({ ChestArmor: A.Cuirass, LegsArmor: A.Greaves, LeftArm: A.Left_Pauldron, RightArm: A.Right_Pauldron, Feet: A.Boots, Gloves: A.Gauntlets, Head: A.Helm });
-const CHAIN_PIECE = Object.freeze({ ChestArmor: RRI_ITEM.Hauberk, LegsArmor: RRI_ITEM.Chausses, LeftArm: RRI_ITEM.LeftSpaulder, RightArm: RRI_ITEM.RightSpaulder, Feet: RRI_ITEM.Sollerets, Gloves: RRI_ITEM.Gloves, Head: RRI_ITEM.Helmet });
-const LEATHER_PIECE = Object.freeze({ ChestArmor: RRI_ITEM.Jerkin, LegsArmor: RRI_ITEM.Cuisse, LeftArm: RRI_ITEM.LeftVambrace, RightArm: RRI_ITEM.RightVambrace, Feet: RRI_ITEM.Boots, Gloves: RRI_ITEM.Gloves, Head: RRI_ITEM.Helmet });
+const CLASSIC_PIECE = Object.freeze({
+  ChestArmor: A.Cuirass,
+  LegsArmor: A.Greaves,
+  LeftArm: A.Left_Pauldron,
+  RightArm: A.Right_Pauldron,
+  Feet: A.Boots,
+  Gloves: A.Gauntlets,
+  Head: A.Helm,
+});
+const CHAIN_PIECE = Object.freeze({
+  ChestArmor: RRI_ITEM.Hauberk,
+  LegsArmor: RRI_ITEM.Chausses,
+  LeftArm: RRI_ITEM.LeftSpaulder,
+  RightArm: RRI_ITEM.RightSpaulder,
+  Feet: RRI_ITEM.Sollerets,
+  Gloves: RRI_ITEM.Gloves,
+  Head: RRI_ITEM.Helmet,
+});
+const LEATHER_PIECE = Object.freeze({
+  ChestArmor: RRI_ITEM.Jerkin,
+  LegsArmor: RRI_ITEM.Cuisse,
+  LeftArm: RRI_ITEM.LeftVambrace,
+  RightArm: RRI_ITEM.RightVambrace,
+  Feet: RRI_ITEM.Boots,
+  Gloves: RRI_ITEM.Gloves,
+  Head: RRI_ITEM.Helmet,
+});
 
 /** DEX_RRICompat.GetArmorTemplateIndex: the slot's piece for `career`, or -1. The coin is thrown only past the first
  *  two tests (C#'s ||). */
 export function dexArmorTemplateIndex(slot, career, rolls = Math.random) {
   const forbidden = forbiddenArmors(career);
-  if (!rriModule('newArmor') || (forbidden & ARMOR_FLAG.Plate) === 0 || coinFlip(rolls)) return CLASSIC_PIECE[slot] ?? -1;
+  if (!rriModule('newArmor') || (forbidden & ARMOR_FLAG.Plate) === 0 || coinFlip(rolls))
+    return CLASSIC_PIECE[slot] ?? -1;
   if ((forbidden & ARMOR_FLAG.Chain) === 0) return CHAIN_PIECE[slot] ?? -1;
   if ((forbidden & ARMOR_FLAG.Leather) === 0) return LEATHER_PIECE[slot] ?? -1;
   return -1;
 }
 
 /** The arm's reads for the mod's copy (rriEnemyEquipment.js RRI_READ's shape). */
-export const dexKitRead = (propsOf) => Object.freeze({
-  classOf: (entity) => dexClassTable(entity.mobileType, propsOf),
-  armorTemplate: (slot, { career }, rolls) => dexArmorTemplateIndex(slot, career, rolls),
-  unknownArmed: true,
-  equipsSecondary: true,
-});
+export const dexKitRead = (propsOf) =>
+  Object.freeze({
+    classOf: (entity) => dexClassTable(entity.mobileType, propsOf),
+    armorTemplate: (slot, { career }, rolls) => dexArmorTemplateIndex(slot, career, rolls),
+    unknownArmed: true,
+    equipsSecondary: true,
+  });
 
 /** BestiaryMod.AssignEnemyStartingEquipment, the delegate the mod installs: the copy while realisticEnemyEquipment is
  *  on, and null - ItemHelper's arm - while it is off (assignRriEnemyEquipment's own gate, the setting
  *  DEX_RRICompat.hasRRIRealisticEnemyEquipment reads). */
 export function createDexEquipmentAssigner(propsOf) {
   const read = dexKitRead(propsOf);
-  return (entity, variant, playerLevel, opts = {}) => assignRriEnemyEquipment(entity, variant, playerLevel, { ...opts, read });
+  return (entity, variant, playerLevel, opts = {}) =>
+    assignRriEnemyEquipment(entity, variant, playerLevel, { ...opts, read });
 }

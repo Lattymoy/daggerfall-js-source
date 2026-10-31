@@ -28,10 +28,18 @@ import { PNG } from 'pngjs';
 import { isMain } from './lib/isMain.mjs';
 import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { DFPalette } from '../src/formats/dfPalette.js';
-import { classicRecords, findClassicSource } from './lib/classicSource.mjs';   // a record within a pixel of the picture's size, at every offset
+import { classicRecords, findClassicSource } from './lib/classicSource.mjs'; // a record within a pixel of the picture's size, at every offset
 
 /** The seven pictures PassiveFishSpeciesCatalog loads, by their bundle names. */
-export const FISH_TEXTURES = Object.freeze(['longnose_butterflyfish', 'largemouth_bass', 'canary_rockfish', 'crucian_carp', 'mackerel', 'white_zebra_angelfish', 'finulon']);
+export const FISH_TEXTURES = Object.freeze([
+  'longnose_butterflyfish',
+  'largemouth_bass',
+  'canary_rockfish',
+  'crucian_carp',
+  'mackerel',
+  'white_zebra_angelfish',
+  'finulon',
+]);
 
 /** The bundle's fish pictures. @param {Uint8Array} bundleBytes */
 export function fishAssets(bundleBytes) {
@@ -48,13 +56,22 @@ export function fishAssets(bundleBytes) {
 /** Our listing of the pictures, in the catalog's order, each by its sha256. @param {(name: string) => Uint8Array} pngOf */
 export function fishListing(pngOf) {
   const files = FISH_TEXTURES.map((n) => `Flats/${n}.png`);
-  return `${JSON.stringify({
-    ModTitle: 'Iliac Puddle No More', ModVersion: '1.2.2', ModAuthor: 'jet082', Source: 'https://www.nexusmods.com/daggerfallunity/mods/1304',
-    Archive: 'Iliac_Puddle_No_More_1304_1.2.2_2026-07-11T17-49Z_psKKacHpq.7z',
-    Note: 'Written by tools/iliacPuddleAssets.mjs, not by hand: the seven fish pictures under Flats/, the author\'s own, and the sha256 of each. The authority test/tooling/doctrine.test.js reads for what may stand there. The rest of the mod is our own code now (OWN-WORK3).',
-    Files: files,
-    Sha256: Object.fromEntries(files.map((f, i) => [f, createHash('sha256').update(pngOf(FISH_TEXTURES[i])).digest('hex')])),
-  }, null, 2)}\n`;
+  return `${JSON.stringify(
+    {
+      ModTitle: 'Iliac Puddle No More',
+      ModVersion: '1.2.2',
+      ModAuthor: 'jet082',
+      Source: 'https://www.nexusmods.com/daggerfallunity/mods/1304',
+      Archive: 'Iliac_Puddle_No_More_1304_1.2.2_2026-07-11T17-49Z_psKKacHpq.7z',
+      Note: "Written by tools/iliacPuddleAssets.mjs, not by hand: the seven fish pictures under Flats/, the author's own, and the sha256 of each. The authority test/tooling/doctrine.test.js reads for what may stand there. The rest of the mod is our own code now (OWN-WORK3).",
+      Files: files,
+      Sha256: Object.fromEntries(
+        files.map((f, i) => [f, createHash('sha256').update(pngOf(FISH_TEXTURES[i])).digest('hex')]),
+      ),
+    },
+    null,
+    2,
+  )}\n`;
 }
 
 /** A bundle picture as a PNG - rgba() hands its rows top-down, as a PNG holds them. */
@@ -68,13 +85,17 @@ if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
   if (args[0] === '--listing') {
     const dir = args[1] ?? join(fileURLToPath(new URL('..', import.meta.url)), 'vendor/iliac-puddle-no-more');
-    writeFileSync(join(dir, 'iliac-puddle-no-more.files.json'), fishListing((n) => readFileSync(join(dir, 'Flats', `${n}.png`))));
+    writeFileSync(
+      join(dir, 'iliac-puddle-no-more.files.json'),
+      fishListing((n) => readFileSync(join(dir, 'Flats', `${n}.png`))),
+    );
     console.log('iliac-puddle-no-more.files.json');
     process.exit(0);
   }
   const arenaAt = args.indexOf('--arena2');
   const arena2 = arenaAt >= 0 ? args.splice(arenaAt, 2)[1] : process.env.ARENA2_PATH;
-  const [bundlePath, outDir = join(fileURLToPath(new URL('..', import.meta.url)), 'vendor/iliac-puddle-no-more')] = args;
+  const [bundlePath, outDir = join(fileURLToPath(new URL('..', import.meta.url)), 'vendor/iliac-puddle-no-more')] =
+    args;
   if (!bundlePath || !arena2) {
     console.error('usage: node tools/iliacPuddleAssets.mjs "<iliac puddle no more.dfmod>" [outDir] --arena2 <ARENA2>');
     process.exit(2);
@@ -87,11 +108,17 @@ if (isMain(import.meta.url)) {
   const pngs = new Map();
   for (const pic of pictures) {
     const src = findClassicSource(pic, records);
-    if (src) throw new Error(`${pic.name}: TEXTURE.${src.archive} record ${src.record} covers it - not the author's own picture`);
+    if (src)
+      throw new Error(
+        `${pic.name}: TEXTURE.${src.archive} record ${src.record} covers it - not the author's own picture`,
+      );
     pngs.set(pic.name, toPng(pic));
     writeFileSync(join(outDir, 'Flats', `${pic.name}.png`), pngs.get(pic.name));
     console.log(`Flats/${pic.name}.png ${pic.width}x${pic.height} - no classic record covers it`);
   }
-  writeFileSync(join(outDir, 'iliac-puddle-no-more.files.json'), fishListing((n) => pngs.get(n)));
+  writeFileSync(
+    join(outDir, 'iliac-puddle-no-more.files.json'),
+    fishListing((n) => pngs.get(n)),
+  );
   console.log('iliac-puddle-no-more.files.json');
 }

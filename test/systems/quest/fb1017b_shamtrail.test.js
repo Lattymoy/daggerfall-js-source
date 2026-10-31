@@ -259,10 +259,10 @@ test('SHAM-TRAIL, the words: the entry is the text core\'s (quest.possessedChild
 test('SHAM-TRAIL, the wiring: the browser\'s pack patches DFU\'s own quests as each is read (the entry in that moment\'s language), a mod\'s quest of the name stays the mod\'s, and a patch that no longer finds its text loads the quest as shipped', () => {
   const src = rd('src/scenes/quest/questData.js');
   assert.match(src, /import \{ applyQuestPatches, QUEST_PATCHES \} from '\.\.\/\.\.\/systems\/quest\/questPatches\.js';/);
-  assert.match(src, /try \{ return applyQuestPatches\(name, text\)\.split\(\/\\r\?\\n\/\); \} catch \(e\) \{/);
+  assert.match(src, /try \{\n\s*return applyQuestPatches\(name, text\)\.split\(\/\\r\?\\n\/\);\n\s*\} catch \(e\) \{/);
   assert.match(src, /if \(QUEST_PATCHES\[name\]\) patchable\.set\(name, text\);/);
-  assert.match(src, /quests\.set\(name, text\.split\(\/\\r\?\\n\/\)\); patchable\.delete\(name\);/);   // OWN-WORK3: a mod's text, read as it stands
+  assert.match(src, /quests\.set\(name, text\.split\(\/\\r\?\\n\/\)\);\n\s*patchable\.delete\(name\);/);   // OWN-WORK3: a mod's text, read as it stands
   // PIN MOVED (QL4): the read is the questlines' too - a flagship quest's branch patched over it while their switch is on
   // PIN MOVED (AUDIT QUESTLINES BRANCH-12): and a shared copy's shape read as its own stamp read it - the read's second argument
-  assert.match(src, /getQuestSourceLines: \(name, questlines\) => questlineLines\(name, \(patchable\.has\(name\) \? patchedLines\(name, patchable\.get\(name\)\) : null\) \?\? quests\.get\(name\) \?\? null, questlines\),/);
+  assert.match(src, /getQuestSourceLines: \(name, questlines\) =>\n\s*questlineLines\(\n\s*name,\n\s*\(patchable\.has\(name\) \? patchedLines\(name, patchable\.get\(name\)\) : null\) \?\? quests\.get\(name\) \?\? null,\n\s*questlines,/);
 });

@@ -59,7 +59,7 @@ test('SKIN-CARRY by source: the UI Overhaul card\'s choice reads the store\'s wo
   assert.match(fn, /return url\.toString\(\);/);
   assert.doesNotMatch(rd('src/ui/enhanced/enhancedMenu.js'), /function switchSkin\(/, 'the menu\'s own door is retired (MENU-TOGGLE)');
   assert.match(rd('src/systems/uiSkin.js'), /return setPref\('skin', skin\) === false \? null : skin;/);
-  assert.match(rd('src/systems/uiPrefs.js'), /export function setPref\(k, v\) \{ if \(_prefs === null\) loadPrefs\(\); _prefs\[k\] = v; return savePrefs\(\); \}/);
+  assert.match(rd('src/systems/uiPrefs.js'), /export function setPref\(k, v\) \{\n\s*if \(_prefs === null\) loadPrefs\(\);\n\s*_prefs\[k\] = v;\n\s*return savePrefs\(\);\n\s*\}/);
 });
 
 test('DG-LNX by source: the folder arm is guarded like the zip arm, reports progress, and names the zip and the drop when the browser hands over nothing or the read throws (mutant: the guard or the hint dropped)', () => {

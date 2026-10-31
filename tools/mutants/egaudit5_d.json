@@ -29,8 +29,8 @@
   {
     "name": "EG5D-L4-1-the-field-read-to-now",
     "file": "src/net/bossRef.js",
-    "old": "upto = Math.max(from, Math.min(now - EG_TS_LAG_MAX_MS, a.at + sp));",
-    "new": "upto = Math.max(from, Math.min(now, a.at + sp));",
+    "old": "          upto = Math.max(from, Math.min(now - EG_TS_LAG_MAX_MS, a.at + sp));",
+    "new": "          upto = Math.max(from, Math.min(now, a.at + sp));",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "EG5D-L4-9-the-finding-taken-again",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  if (B.hold) return 'hold';",
-    "new": "  if (B.hold) { B.hold.f = holdFind(B, B.hold.at, now); return 'hold'; }",
+    "old": "  if (B.hold) return 'hold'; // woken again inside a hold: its release gives the whole gap back (AUDIT EG III: to what it found - AUDIT EG V: the record's)",
+    "new": "  if (B.hold) {\n    B.hold.f = holdFind(B, B.hold.at, now);\n    return 'hold';\n  } // woken again inside a hold: its release gives the whole gap back (AUDIT EG III: to what it found - AUDIT EG V: the record's)",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "EG5D-L4-9-the-finding-not-kept",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "ran, f: holdFind(B, at, now) };",
-    "new": "ran, f: null };",
+    "old": "  B.hold = { at, until: now + EG_REJOIN_MS, ran, f: holdFind(B, at, now) }; // AUDIT EG III (lane3 #8): what the hold found - its release moves those alone; AUDIT EG V (L4-9): kept in the record",
+    "new": "  B.hold = { at, until: now + EG_REJOIN_MS, ran, f: null }; // AUDIT EG III (lane3 #8): what the hold found - its release moves those alone; AUDIT EG V (L4-9): kept in the record",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "EG5D-L4-9-before-the-sleep-left",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "(_o, _k, v) => v <= h.at || found.has(v)",
-    "new": "(_o, _k, v) => found.has(v)",
+    "old": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => v <= h.at || found.has(v) : null);",
+    "new": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => found.has(v) : null);",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "EG5D-L4-9-the-found-deadline-left",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "(_o, _k, v) => v <= h.at || found.has(v)",
-    "new": "(_o, _k, v) => v <= h.at",
+    "old": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => v <= h.at || found.has(v) : null);",
+    "new": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => v <= h.at : null);",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "EG5D-L4-9-everything-found",
     "file": "src/net/eliteGates/egDurable.js",
-    "old": "  instantsOf(B, now, (_o, _k, v) => { if (v > at) f.add(v); });",
-    "new": "  instantsOf(B, now, (_o, _k, v) => { f.add(v); });",
+    "old": "    if (v > at) f.add(v);",
+    "new": "    f.add(v);",
     "tests": [
       "test/net/eliteGates/egaudit5_d_relay.test.js"
     ],
@@ -259,8 +259,8 @@
   {
     "name": "EG5D-L4-4-the-call-wipes-the-breach",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "    case 'call': return s.b === w.b || egLiveHeld(s) ?",
-    "new": "    case 'call': return s.b === w.b ?",
+    "old": "      return s.b === w.b || egLiveHeld(s)",
+    "new": "      return s.b === w.b",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "EG5D-L8-1-my-blow-no-foes",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
-    "new": "spared(E, F, bl), part * egTouchedX(F, bl, me(), t));",
+    "old": "              landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
+    "new": "              landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part * egTouchedX(F, bl, me(), t));",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]
@@ -323,8 +323,8 @@
   {
     "name": "EG5D-L8-1-a-chained-mates-no-foes",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part, true); }",
-    "new": "landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part); }",
+    "old": "              if (v === 'hit') landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part, true);",
+    "new": "              if (v === 'hit') landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part);",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]
@@ -332,8 +332,8 @@
   {
     "name": "EG5D-L8-1-the-mark-read-by-no-save",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
-    "new": "",
+    "old": "  if (!blow && spire) {\n    shed(entity, before, after, saved);\n    reprieve(entity, before, after, saved);\n    return;\n  } // AUDIT EG V (L8-1): a Spire foe's blow - its two saves",
+    "new": "  // AUDIT EG V (L8-1): a Spire foe's blow - its two saves",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/systems/eliteGates/eg15_panoply.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "EG5D-L8-1-the-reprieve-unread",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
-    "new": "if (!blow && spire) { shed(entity, before, after, saved); return; }",
+    "old": "    reprieve(entity, before, after, saved);\n    return;",
+    "new": "    return;",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "EG5D-L8-1-shed-skin-unread",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
-    "new": "if (!blow && spire) { reprieve(entity, before, after, saved); return; }",
+    "old": "    shed(entity, before, after, saved);\n    reprieve(entity, before, after, saved);",
+    "new": "    reprieve(entity, before, after, saved);",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "EG5D-L4-5-re-signed-as-of-now",
     "file": "server-account/src/eg.js",
-    "old": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS: int(had.at) });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
-    "new": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
+    "old": "      },\n      key,\n      { subtle, nowS: int(had.at) },\n    );\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
+    "new": "      },\n      key,\n      { subtle, nowS },\n    );\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "EG5D-L8-2-embers-on-gold-alone",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "o.goldOnly ? null : egEmberStack(o.embers)",
-    "new": "egEmberStack(o.embers)",
+    "old": "  return dressed(seed, rollEgSpoils(seed, level, w, o), o.goldOnly ? null : egEmberStack(o.embers));",
+    "new": "  return dressed(seed, rollEgSpoils(seed, level, w, o), egEmberStack(o.embers));",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"
@@ -398,8 +398,8 @@
   {
     "name": "EG5D-L8-2-the-stack-one",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "Object.assign(sigilStone(), { stackCount: Math.min(n, EG_EMBERS_MAX) })",
-    "new": "sigilStone()",
+    "old": "export const egEmberStack = (n) =>\n  Number.isSafeInteger(n) && n > 0 ? Object.assign(sigilStone(), { stackCount: Math.min(n, EG_EMBERS_MAX) }) : null;",
+    "new": "export const egEmberStack = (n) => (Number.isSafeInteger(n) && n > 0 ? sigilStone() : null);",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"
@@ -428,8 +428,8 @@
   {
     "name": "EG5D-L8-5-the-answer-the-receipts",
     "file": "server-account/src/egEconomy.js",
-    "old": "seed: egSpoilsSeed(c.c, r?.nonce),",
-    "new": "seed: c.c,",
+    "old": "      seed: egSpoilsSeed(c.c, r?.nonce), // AUDIT EG V (lane8 L8-5): what the spoils roll on - the row's own claim's draw",
+    "new": "      seed: c.c, // AUDIT EG V (lane8 L8-5): what the spoils roll on - the row's own claim's draw",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js",
       "test/net/eliteGates/egplay_service.test.js"
@@ -438,8 +438,8 @@
   {
     "name": "EG5D-L8-5-the-pity-on-the-receipts",
     "file": "server-account/src/egEconomy.js",
-    "old": "egPanoplyHit(egSpoilsSeed(c.c, nonce), w, p)",
-    "new": "egPanoplyHit(c.c, w, p)",
+    "old": "  const hits = Array.from({ length: egSpoilsPasses(w) }, (_, p) => egPanoplyHit(egSpoilsSeed(c.c, nonce), w, p));",
+    "new": "  const hits = Array.from({ length: egSpoilsPasses(w) }, (_, p) => egPanoplyHit(c.c, w, p));",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
     ]
@@ -447,8 +447,8 @@
   {
     "name": "EG5D-L8-5-an-ends-seed-the-receipts",
     "file": "server-account/src/eg.js",
-    "old": "return r ? { seed: egSpoilsSeed(c.c, r.nonce) } : {};",
-    "new": "return r ? { seed: c.c } : {};",
+    "old": "  return r ? { seed: egSpoilsSeed(c.c, r.nonce) } : {};",
+    "new": "  return r ? { seed: c.c } : {};",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -456,8 +456,8 @@
   {
     "name": "EG5D-L8-5-an-ends-draw-one-for-all",
     "file": "server-account/src/eg.js",
-    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(c.b, player.id, c.h, c.why, c.t, nowS, hex(rand(new Uint8Array(8)))),",
-    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(c.b, player.id, c.h, c.why, c.t, nowS, '0123456789abcdef'),",
+    "old": "        .bind(c.b, player.id, c.h, c.why, c.t, nowS, hex(rand(new Uint8Array(8)))),",
+    "new": "        .bind(c.b, player.id, c.h, c.why, c.t, nowS, '0123456789abcdef'),",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "EG5D-L8-5-the-client-rolls-the-receipts",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "Number.isSafeInteger(d?.seed) && d.seed >= 0 ? d.seed >>> 0 : (c?.c ?? 0) >>> 0",
-    "new": "(c?.c ?? 0) >>> 0",
+    "old": "export const egSpoilsSeedOf = (c, d) =>\n  Number.isSafeInteger(d?.seed) && d.seed >= 0 ? d.seed >>> 0 : (c?.c ?? 0) >>> 0;",
+    "new": "export const egSpoilsSeedOf = (c, d) => (c?.c ?? 0) >>> 0;",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"
@@ -475,7 +475,7 @@
   {
     "name": "EG5D-L8-5-the-reliquaries-the-receipts",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "  const seed = egSpoilsSeedOf(c, d);   // AUDIT EG V (lane8 L8-5): the claim's seed, never the receipt's own",
+    "old": "  const seed = egSpoilsSeedOf(c, d); // AUDIT EG V (lane8 L8-5): the claim's seed, never the receipt's own",
     "new": "  const seed = c.c;",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js"
@@ -493,8 +493,8 @@
   {
     "name": "EG5D-L8-4-every-end-writes-it",
     "file": "server-account/src/egEconomy.js",
-    "old": "'INSERT OR IGNORE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)'",
-    "new": "'INSERT OR REPLACE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)'",
+    "old": "            .prepare('INSERT OR IGNORE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)')",
+    "new": "            .prepare('INSERT OR REPLACE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)')",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "EG5D-L8-4-no-week",
     "file": "server-account/src/egEconomy.js",
-    "old": "    const wk = arenaWeekOf(nowS);\n    const week = await db.prepare",
-    "new": "    const wk = 0;\n    const week = await db.prepare",
+    "old": "    const wk = arenaWeekOf(nowS);",
+    "new": "    const wk = 0;",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "EG5D-L8-9-the-decrees-unkept",
     "file": "server-account/src/egHonours.js",
-    "old": "arenaSeasonOf(c.i), wagerText(c)),",
-    "new": "arenaSeasonOf(c.i), ''),",
+    "old": "        wagerText(c),",
+    "new": "        '',",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "EG5D-L8-9-the-row-unread",
     "file": "server-account/src/egHonours.js",
-    "old": "wagered: int(r.wg) === 1, wg: wagerOfText(r.wgs) }));",
-    "new": "wagered: int(r.wg) === 1, wg: [] }));",
+    "old": "      wg: wagerOfText(r.wgs),",
+    "new": "      wg: [],",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "EG5D-L8-9-the-decrees-unnamed",
     "file": "src/ui/eliteGates/egBoardWindow.js",
-    "old": "return names.length ? ` - ${EG_TEXT.wager(names.join(', '))}` : r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
-    "new": "return r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
+    "old": "      return names.length ? ` - ${EG_TEXT.wager(names.join(', '))}` : r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
+    "new": "      return r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
     "tests": [
       "test/systems/eliteGates/egaudit5_d_client.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"
@@ -584,8 +584,8 @@
   {
     "name": "EG5D-L9-6-the-rite-the-kills",
     "file": "server-account/src/eg.js",
-    "old": "drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS)",
-    "new": "drawUnder(rand, c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS)",
+    "old": "      .bind(\n        player.id,\n        c.d,\n        drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS) ? 1 : 0,\n        EG_KEY_PITY,\n      ); // WB14g: a portent night's at the rite's",
+    "new": "      .bind(player.id, c.d, drawUnder(rand, c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS) ? 1 : 0, EG_KEY_PITY); // WB14g: a portent night's at the rite's",
     "tests": [
       "test/net/eliteGates/egaudit5_d_service.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "EG5D-L9-5-a-week-off-by-one",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
-    "new": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S) + 1);",
+    "old": "  Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
+    "new": "  Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S) + 1);",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
     ]
@@ -620,7 +620,7 @@
   {
     "name": "EG5D-L9-5-the-old-epoch-of-1970-weeks",
     "file": "src/net/arena/arenaLaw.js",
-    "old": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
+    "old": "export const arenaWeekOf = (nowS) =>\n  Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
     "new": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor(Math.floor(Number(nowS) || 0) / ARENA_WEEK_S));",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
@@ -629,8 +629,8 @@
   {
     "name": "EG5D-L9-5-the-valkynaz-odds-the-floors",
     "file": "src/net/eliteGates/egPay.js",
-    "old": "export const egPanoplyIn = (w) => (egValkRedoubt(w) ? EG_PANOPLY_VALK_IN : Math.max(4,",
-    "new": "export const egPanoplyIn = (w) => (egValkRedoubt(w) && false ? EG_PANOPLY_VALK_IN : Math.max(4,",
+    "old": "  egValkRedoubt(w) ? EG_PANOPLY_VALK_IN : Math.max(4, 12 - Math.floor(Math.max(1, w | 0) / 2));",
+    "new": "  egValkRedoubt(w) && false ? EG_PANOPLY_VALK_IN : Math.max(4, 12 - Math.floor(Math.max(1, w | 0) / 2));",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
     ]
@@ -639,7 +639,7 @@
     "name": "EG5D-L9-5-the-panoply-on-the-spoils-own-stream",
     "file": "src/net/eliteGates/egPay.js",
     "old": "export const egPanoplyDraw = (seed, pass) => mix((egPassSeed(seed, pass) ^ 0x7a40b1e5) >>> 0) / 4294967296;",
-    "new": "export const egPanoplyDraw = (seed, pass) => { const a = (egPassSeed(seed, pass) + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), a | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };",
+    "new": "export const egPanoplyDraw = (seed, pass) => {\n  const a = (egPassSeed(seed, pass) + 0x6d2b79f5) >>> 0;\n  let t = Math.imul(a ^ (a >>> 15), a | 1);\n  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);\n  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;\n};",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
     ]
@@ -647,8 +647,8 @@
   {
     "name": "EG5D-L9-5-the-first-this-season-ember-dropped",
     "file": "src/net/eliteGates/egPay.js",
-    "old": " + (firstThisSeason ? 1 : 0);",
-    "new": " + 0;",
+    "old": "export const egEmbersOf = (w, firstThisSeason) =>\n  (egValkRedoubt(w) ? 1 + Math.floor(w / 10) : 0) + (firstThisSeason ? 1 : 0);",
+    "new": "export const egEmbersOf = (w, firstThisSeason) => (egValkRedoubt(w) ? 1 + Math.floor(w / 10) : 0) + 0;",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "EG5D-L9-5-the-legendary-share-steeper",
     "file": "src/net/eliteGates/egPay.js",
-    "old": "Math.min(0.65, 0.2 + 0.03 *",
-    "new": "Math.min(0.65, 0.2 + 0.04 *",
+    "old": "export const egLegendaryShare = (w) => Math.min(0.65, 0.2 + 0.03 * (Math.max(1, w | 0) - 1));",
+    "new": "export const egLegendaryShare = (w) => Math.min(0.65, 0.2 + 0.04 * (Math.max(1, w | 0) - 1));",
     "tests": [
       "test/net/eliteGates/egeco_pay.test.js",
       "test/net/eliteGates/egaudit5_d_service.test.js"

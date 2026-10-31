@@ -9,7 +9,8 @@ const progress = {
   PcAt: { textShown: bool },
   DroppedItemAtPlace: { textShown: bool },
   CreateFoe: {
-    lastSpawnTime: finite, spawnCounter: count,
+    lastSpawnTime: finite,
+    spawnCounter: count,
     msgMessageID: (v, own) => v === own || v === -1,
   },
   WhenPcEntersExits: { currentLocationType: location, previousLocationType: location },
@@ -34,8 +35,16 @@ const holders = {
 };
 
 // Save fields may be absent rather than undefined after JSON transport. Key order is irrelevant.
-const canonical = (value) => JSON.stringify(value, (_key, v) => v && typeof v === 'object' && !Array.isArray(v)
-  ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, v[k]])) : v);
+const canonical = (value) =>
+  JSON.stringify(value, (_key, v) =>
+    v && typeof v === 'object' && !Array.isArray(v)
+      ? Object.fromEntries(
+          Object.keys(v)
+            .sort()
+            .map((k) => [k, v[k]]),
+        )
+      : v,
+  );
 const same = (a, b) => canonical(a) === canonical(b);
 
 /** AUDIT QA3 C1: what a copy parsed by an earlier build of the port writes otherwise - accepted, never taken (the
@@ -44,15 +53,21 @@ const same = (a, b) => canonical(a) === canonical(b);
  *  and every share and sync of it was refused as forged. */
 const LEGACY_CLIMATES = Object.freeze({ 225: 224, 230: 226 });
 const legacy = Object.freeze({
-  Climate: { climate: (v, own) => v === LEGACY_CLIMATES[own] },   // ClimateCondition's typeName
+  Climate: { climate: (v, own) => v === LEGACY_CLIMATES[own] }, // ClimateCondition's typeName
 });
 
 /** Validate definitions against the local parse, allowing only bounded runtime progress. */
 export function sharedActionMatches(own, incoming) {
-  if (!incoming || incoming.type !== own.type || !bool(incoming.isComplete)
-    || incoming.isTriggerCondition !== own.isTriggerCondition
-    || incoming.isAlwaysOnTriggerCondition !== own.isAlwaysOnTriggerCondition) return false;
-  const expected = own.actionSpecific, got = incoming.actionSpecific;
+  if (
+    !incoming ||
+    incoming.type !== own.type ||
+    !bool(incoming.isComplete) ||
+    incoming.isTriggerCondition !== own.isTriggerCondition ||
+    incoming.isAlwaysOnTriggerCondition !== own.isAlwaysOnTriggerCondition
+  )
+    return false;
+  const expected = own.actionSpecific,
+    got = incoming.actionSpecific;
   if (expected == null) return got == null;
   if (!got || typeof got !== 'object' || Array.isArray(got)) return false;
   if (Object.keys(got).some((k) => !Object.hasOwn(expected, k))) return false;
@@ -60,8 +75,14 @@ export function sharedActionMatches(own, incoming) {
     const received = got[key];
     if (same(value, received)) continue;
     // These two actions normalize a script argument once executed; accept only that exact result.
-    if (own.type === 'StartQuest' && key === 'questName' && value === '' && expected.questIndex1 > 0
-      && received === `S${String(expected.questIndex1).padStart(7, '0')}`) continue;
+    if (
+      own.type === 'StartQuest' &&
+      key === 'questName' &&
+      value === '' &&
+      expected.questIndex1 > 0 &&
+      received === `S${String(expected.questIndex1).padStart(7, '0')}`
+    )
+      continue;
     if (own.type === 'WorldUpdate' && key === 'variant' && value === '-' && received === '') continue;
     const validate = progress[own.type]?.[key] ?? holders[own.type]?.[key] ?? legacy[own.type]?.[key];
     if (!validate || !validate(received, value)) return false;
@@ -75,16 +96,24 @@ export function sharedActionMatches(own, incoming) {
 export function takeLocalActions(local, data, live = null) {
   const ref = local.getSaveData();
   const mine = live?.getSaveData?.() ?? null;
-  return { ...data, tasks: data.tasks.map((task, i) => ({ ...task, actions: task.actions.map((action, j) => {
-    const own = ref.tasks[i].actions[j];
-    const specific = own.actionSpecific == null ? null : { ...own.actionSpecific };
-    if (specific) for (const key of Object.keys(progress[own.type] ?? {})) {
-      if (Object.hasOwn(action.actionSpecific, key)) specific[key] = action.actionSpecific[key];
-    }
-    const kept = mine?.tasks?.[i]?.actions?.[j];
-    if (specific && kept?.type === own.type && kept.actionSpecific) for (const key of Object.keys(holders[own.type] ?? {})) {
-      if (Object.hasOwn(kept.actionSpecific, key)) specific[key] = kept.actionSpecific[key];
-    }
-    return { ...own, isComplete: action.isComplete, actionSpecific: specific };
-  }) })) };
+  return {
+    ...data,
+    tasks: data.tasks.map((task, i) => ({
+      ...task,
+      actions: task.actions.map((action, j) => {
+        const own = ref.tasks[i].actions[j];
+        const specific = own.actionSpecific == null ? null : { ...own.actionSpecific };
+        if (specific)
+          for (const key of Object.keys(progress[own.type] ?? {})) {
+            if (Object.hasOwn(action.actionSpecific, key)) specific[key] = action.actionSpecific[key];
+          }
+        const kept = mine?.tasks?.[i]?.actions?.[j];
+        if (specific && kept?.type === own.type && kept.actionSpecific)
+          for (const key of Object.keys(holders[own.type] ?? {})) {
+            if (Object.hasOwn(kept.actionSpecific, key)) specific[key] = kept.actionSpecific[key];
+          }
+        return { ...own, isComplete: action.isComplete, actionSpecific: specific };
+      }),
+    })),
+  };
 }

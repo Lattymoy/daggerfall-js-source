@@ -24,15 +24,22 @@ export const PEER_MENU_DEFAULTS = Object.freeze({
 });
 const PREF = { key: 'peerMenuKey', pad: 'peerMenuPad' };
 
-const validCode = (kind, code) => typeof code === 'string' && code.length > 0 && code.length < 40
-  && (kind === 'pad' ? code.startsWith('Joystick') : !code.startsWith('Joystick') && !code.startsWith('Mouse'));
+const validCode = (kind, code) =>
+  typeof code === 'string' &&
+  code.length > 0 &&
+  code.length < 40 &&
+  (kind === 'pad' ? code.startsWith('Joystick') : !code.startsWith('Joystick') && !code.startsWith('Mouse'));
 
 /** The bind of one kind ('key' | 'pad'): { code, hold }. code null = unbound. Anything unreadable is the default. */
 export function peerMenuBind(kind) {
   const def = PEER_MENU_DEFAULTS[kind];
   if (!def) return { code: null, hold: false };
   let v = null;
-  try { v = getPref(PREF[kind]); } catch { v = null; }
+  try {
+    v = getPref(PREF[kind]);
+  } catch {
+    v = null;
+  }
   if (!v || typeof v !== 'object') return { ...def };
   const code = v.code === null ? null : validCode(kind, v.code) ? v.code : def.code;
   return { code, hold: typeof v.hold === 'boolean' ? v.hold : def.hold };
@@ -44,7 +51,10 @@ export function setPeerMenuBind(kind, patch) {
   if (next.code !== null && !validCode(kind, next.code)) return false;
   return setPref(PREF[kind], { code: next.code, hold: !!next.hold });
 }
-export const resetPeerMenuBinds = () => { setPref(PREF.key, null); setPref(PREF.pad, null); };
+export const resetPeerMenuBinds = () => {
+  setPref(PREF.key, null);
+  setPref(PREF.pad, null);
+};
 
 /**
  * The press/hold reader. The host hands it every keydown / keyup it hears (the pad's buttons arrive as keydowns of
@@ -54,29 +64,51 @@ export const resetPeerMenuBinds = () => { setPref(PREF.key, null); setPref(PREF.
  *    meaning, E's Interact, already had its press).
  * `enabled()` false (offline, a window up) drops any hold in progress.
  */
-export function createPeerMenuReader({ onFire, enabled = () => true, now = () => performance.now() / 1000, bindOf = peerMenuBind } = {}) {
-  const downAt = new Map();   // code -> the time its hold began (fired holds are removed)
-  const matching = (code) => ['key', 'pad'].map((k) => ({ kind: k, ...bindOf(k) })).find((b) => b.code && b.code === code) ?? null;
+export function createPeerMenuReader({
+  onFire,
+  enabled = () => true,
+  now = () => performance.now() / 1000,
+  bindOf = peerMenuBind,
+} = {}) {
+  const downAt = new Map(); // code -> the time its hold began (fired holds are removed)
+  const matching = (code) =>
+    ['key', 'pad'].map((k) => ({ kind: k, ...bindOf(k) })).find((b) => b.code && b.code === code) ?? null;
   return {
     down(code, repeat = false) {
       if (repeat || !enabled()) return false;
       const b = matching(code);
       if (!b) return false;
-      if (!b.hold) { onFire?.(b.kind); return true; }
+      if (!b.hold) {
+        onFire?.(b.kind);
+        return true;
+      }
       downAt.set(code, now());
       return false;
     },
-    up(code) { downAt.delete(code); },
+    up(code) {
+      downAt.delete(code);
+    },
     frame() {
       if (!downAt.size) return;
-      if (!enabled()) { downAt.clear(); return; }
+      if (!enabled()) {
+        downAt.clear();
+        return;
+      }
       const t = now();
       for (const [code, at] of [...downAt]) {
         const b = matching(code);
-        if (!b || !b.hold) { downAt.delete(code); continue; }
-        if (t - at >= PEER_MENU_HOLD_S) { downAt.delete(code); onFire?.(b.kind); }
+        if (!b || !b.hold) {
+          downAt.delete(code);
+          continue;
+        }
+        if (t - at >= PEER_MENU_HOLD_S) {
+          downAt.delete(code);
+          onFire?.(b.kind);
+        }
       }
     },
-    reset() { downAt.clear(); },
+    reset() {
+      downAt.clear();
+    },
   };
 }

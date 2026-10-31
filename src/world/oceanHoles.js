@@ -23,17 +23,23 @@
 
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { ENEMY_BASICS, MOBILE_BEHAVIOUR } from '../characters/enemy/enemyBasics.js';
-import { longitudeLatitudeToMapPixel, mapPixelToWorldCoord, getMapPixelID, WORLD_MAP_TILE_DIM, WORLD_MAP_RMB_DIM } from '../formats/mapsFile.js';
+import {
+  longitudeLatitudeToMapPixel,
+  mapPixelToWorldCoord,
+  getMapPixelID,
+  WORLD_MAP_TILE_DIM,
+  WORLD_MAP_RMB_DIM,
+} from '../formats/mapsFile.js';
 import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';
-import { TORCH_ARCHIVE, TORCH_RECORDS } from '../systems/soundClips.js';   // RDBLayout.IsTorchFlat
-import { scaledSliderValue } from './deepWater/deepWaterLook.js';   // GetScaledSliderValue: the same member Iliac Puddle No More ships, one home
-import { colorLerp } from '../systems/mathf.js';          // Color.Lerp
-import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
-import { dropFoundMark } from '../systems/item/foundMark.js';   // AUDIT MEND-THIRD L3-4: a re-mint is handed over whole
-import { clampArmorVariant } from '../systems/armorMaterials.js';   // ItemBuilder.SetVariant's clamps: CurrentVariant
-import { inBay } from './tamriel/tamrielFrame.js';   // PITS-WORLD: the Bay's pixel ids are the Bay's
-import { worldLaneMapId, worldLaneOf, ABYSS_WORLD_LANE } from './worldWide/worldLanes.js';   // PITS-WORLD: an abyss past the Bay
-import { inWorldGrid } from './worldWide/worldGrid.js';   // PITS-WORLD: the pits' ground the world's grid
+import { TORCH_ARCHIVE, TORCH_RECORDS } from '../systems/soundClips.js'; // RDBLayout.IsTorchFlat
+import { scaledSliderValue } from './deepWater/deepWaterLook.js'; // GetScaledSliderValue: the same member Iliac Puddle No More ships, one home
+import { colorLerp } from '../systems/mathf.js'; // Color.Lerp
+import { dice100 } from '../combat/formulas.js'; // Dice100.SuccessRoll, one home
+import { dropFoundMark } from '../systems/item/foundMark.js'; // AUDIT MEND-THIRD L3-4: a re-mint is handed over whole
+import { clampArmorVariant } from '../systems/armorMaterials.js'; // ItemBuilder.SetVariant's clamps: CurrentVariant
+import { inBay } from './tamriel/tamrielFrame.js'; // PITS-WORLD: the Bay's pixel ids are the Bay's
+import { worldLaneMapId, worldLaneOf, ABYSS_WORLD_LANE } from './worldWide/worldLanes.js'; // PITS-WORLD: an abyss past the Bay
+import { inWorldGrid } from './worldWide/worldGrid.js'; // PITS-WORLD: the pits' ground the world's grid
 
 const f32 = Math.fround;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -70,9 +76,27 @@ export const SURFACE_MIASMA_EMISSION_RATE = 2;
 /** AbyssFogColor and AbyssAmbientLight, rgba. */
 export const ABYSS_FOG_COLOR = Object.freeze([f32(0.012), f32(0.022), f32(0.026), 1]);
 export const ABYSS_AMBIENT_LIGHT = Object.freeze([f32(0.05), f32(0.075), f32(0.11), 1]);
-export const NAME_ADJECTIVES = Object.freeze(['Drowned', 'Soundless', 'Lightless', 'Salt-Black', 'Sunken', 'Fathomless', 'Deadwater', 'Whispering']);
+export const NAME_ADJECTIVES = Object.freeze([
+  'Drowned',
+  'Soundless',
+  'Lightless',
+  'Salt-Black',
+  'Sunken',
+  'Fathomless',
+  'Deadwater',
+  'Whispering',
+]);
 export const NAME_NOUNS = Object.freeze(['Maw', 'Trench', 'Sepulchre', 'Hold', 'Vault', 'Chasm', 'Gullet', 'Abyss']);
-export const NAME_ENDINGS = Object.freeze(['of Lost Sound', 'of the Last Tide', 'Below All Light', 'of Drowned Stars', 'of the Pale Current', 'of Black Salt', 'of the Sleepless Deep', 'Beneath the Keel']);
+export const NAME_ENDINGS = Object.freeze([
+  'of Lost Sound',
+  'of the Last Tide',
+  'Below All Light',
+  'of Drowned Stars',
+  'of the Pale Current',
+  'of Black Salt',
+  'of the Sleepless Deep',
+  'Beneath the Keel',
+]);
 /** The pit's entrance: BuildPit's box (18 x 0.35 x 18 at scale 1), its centre 0.22 over the opening. */
 export const ENTRANCE_HALF_HEIGHT = f32(0.35) / 2;
 
@@ -146,7 +170,10 @@ export function deformSeafloorVertices(positions, { fractionX, fractionZ, sizeX,
   for (let i = 0; i < n; i++) {
     const num6 = f32(out[i * 3] - num);
     const num7 = f32(out[i * 3 + 2] - num2);
-    if (!(f32(f32(num6 * num6) + f32(num7 * num7)) > f32(num3 * num3))) { num4 = f32(num4 + out[i * 3 + 1]); num5++; }
+    if (!(f32(f32(num6 * num6) + f32(num7 * num7)) > f32(num3 * num3))) {
+      num4 = f32(num4 + out[i * 3 + 1]);
+      num5++;
+    }
   }
   let num8 = 0;
   if (num5 > 0) {
@@ -155,7 +182,8 @@ export function deformSeafloorVertices(positions, { fractionX, fractionZ, sizeX,
     for (let j = 0; j < n; j++) {
       const num10 = f32(out[j * 3] - num);
       const num11 = f32(out[j * 3 + 2] - num2);
-      if (f32(f32(num10 * num10) + f32(num11 * num11)) <= f32(num9 * num9)) num8 = Math.max(num8, Math.abs(f32(out[j * 3 + 1] - num4)));
+      if (f32(f32(num10 * num10) + f32(num11 * num11)) <= f32(num9 * num9))
+        num8 = Math.max(num8, Math.abs(f32(out[j * 3 + 1] - num4)));
     }
   }
   const flattened = !!allowFlatten && num5 > 0 && num8 > 5;
@@ -169,7 +197,7 @@ export function deformSeafloorVertices(positions, { fractionX, fractionZ, sizeX,
     if (flattened && num16 < f32(num3 + num13)) {
       let num17 = num16 <= num3 ? 1 : f32(1 - f32(f32(num16 - num3) / num13));
       num17 = f32(f32(num17 * num17) * f32(3 - f32(2 * num17)));
-      y = f32(y + f32(f32(num4 - y) * clamp01(num17)));   // Mathf.Lerp: t clamped
+      y = f32(y + f32(f32(num4 - y) * clamp01(num17))); // Mathf.Lerp: t clamped
     }
     const floorPitDepth = getFloorPitDepth(num16, scale);
     if (!(floorPitDepth <= 0)) y = f32(y - floorPitDepth);
@@ -202,7 +230,10 @@ export function findPitOpeningY(floorYAt, worldX, worldZ, surfaceY, floorY, scal
   const num = f32(12 * scale);
   for (let i = 0; i < 16; i++) {
     const num2 = f32(f32(f32(Math.PI * 2) * i) / 16);
-    const y = raycastFloorY(floorYAt(f32(worldX + f32(f32(Math.cos(num2)) * num)), f32(worldZ + f32(f32(Math.sin(num2)) * num))), surfaceY);
+    const y = raycastFloorY(
+      floorYAt(f32(worldX + f32(f32(Math.cos(num2)) * num)), f32(worldZ + f32(f32(Math.sin(num2)) * num))),
+      surfaceY,
+    );
     if (y != null) floorY = Math.max(floorY, y);
   }
   return floorY;
@@ -223,9 +254,10 @@ export const buildGpsDungeonName = (dungeonName, pitMapX, pitMapY) => `${dungeon
  *  shared its abyss - so the abyss there is named in the world's abyss lane over the pit's world pixel key
  *  (world/worldWide/worldLanes.js ABYSS_WORLD_LANE: 0x600 to 0x7ff with the lane's flag, never a Bay abyss's id). The
  *  Bay's is the mod's own, to the bit. */
-export const getAbyssMapId = (pitMapX, pitMapY) => (inBay(pitMapX, pitMapY)
-  ? (0x60000000 | (getMapPixelID(pitMapX, pitMapY) & 0xfffff)) >>> 0
-  : worldLaneMapId(ABYSS_WORLD_LANE, pitMapX, pitMapY));
+export const getAbyssMapId = (pitMapX, pitMapY) =>
+  inBay(pitMapX, pitMapY)
+    ? (0x60000000 | (getMapPixelID(pitMapX, pitMapY) & 0xfffff)) >>> 0
+    : worldLaneMapId(ABYSS_WORLD_LANE, pitMapX, pitMapY);
 
 /** PITS-WORLD: IS A MAP ID AN ABYSS'S - a Bay pit's (GetAbyssMapId's 0x600 over a Bay pixel id, under 500,000) or one past
  *  the Bay (the world's abyss lane). The readers that had taken every id from 0x60000000 up for an abyss's (scenes/
@@ -234,7 +266,7 @@ export const getAbyssMapId = (pitMapX, pitMapY) => (inBay(pitMapX, pitMapY)
 export function isAbyssMapId(id) {
   const v = Number(id);
   if (!Number.isSafeInteger(v) || v < 0 || v > 0xffffffff) return false;
-  return ((v >>> 20) === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;
+  return (v >>> 20 === 0x600 && (v & 0xfffff) < 500000) || worldLaneOf(v) === ABYSS_WORLD_LANE;
 }
 
 /** PITS-WORLD: MAY A PIXEL OPEN A PIT - IsValidMapPixel's guard, the Bay's 1000 x 500 (ETHER-DEEP held the pits there for
@@ -244,7 +276,12 @@ export const pitPixelOk = (mapPixelX, mapPixelY) => inWorldGrid(mapPixelX, mapPi
 
 /** IsFlameEnemy: the fire daedra, the fire atronach and both dragonlings - they do not go under the sea. */
 export function isFlameEnemy(type) {
-  return type === MOBILE_TYPES.FireDaedra || type === MOBILE_TYPES.FireAtronach || type === MOBILE_TYPES.Dragonling || type === MOBILE_TYPES.Dragonling_Alternate;
+  return (
+    type === MOBILE_TYPES.FireDaedra ||
+    type === MOBILE_TYPES.FireAtronach ||
+    type === MOBILE_TYPES.Dragonling ||
+    type === MOBILE_TYPES.Dragonling_Alternate
+  );
 }
 
 /** MobileBehaviour (enemyBasics.js MOBILE_BEHAVIOUR, the C#'s ints) and MobileTeams' Undead. */
@@ -253,7 +290,17 @@ const TEAM_UNDEAD = 'Undead';
 /** GameObjectHelper.EnemyDict's row for a type: its behaviour's number, its team, its level - or null where the table has none. */
 export function enemyRow(type) {
   const b = ENEMY_BASICS[type];
-  return b ? { id: type, behaviour: BEHAVIOUR[b.behaviour] ?? 0, team: b.team, level: b.level ?? 0, noShadow: !!b.noShadow, glowColor: b.glowColor ?? null, lootTableKey: b.lootTableKey ?? null } : null;
+  return b
+    ? {
+        id: type,
+        behaviour: BEHAVIOUR[b.behaviour] ?? 0,
+        team: b.team,
+        level: b.level ?? 0,
+        noShadow: !!b.noShadow,
+        glowColor: b.glowColor ?? null,
+        lootTableKey: b.lootTableKey ?? null,
+      }
+    : null;
 }
 export { MOBILE_BEHAVIOUR };
 
@@ -264,7 +311,9 @@ export function isEligibleUnderwaterReplacement(type, undeadOnly, aquaticOnly, r
   if (!candidate) return null;
   if (aquaticOnly) return candidate.behaviour === BEHAVIOUR.Aquatic ? candidate : null;
   if (!undeadOnly) return candidate;
-  return candidate.team === TEAM_UNDEAD && type !== MOBILE_TYPES.VampireAncient && type !== MOBILE_TYPES.AncientLich ? candidate : null;
+  return candidate.team === TEAM_UNDEAD && type !== MOBILE_TYPES.VampireAncient && type !== MOBILE_TYPES.AncientLich
+    ? candidate
+    : null;
 }
 
 /** TryPickUnderwaterEnemy: the roster weighted max(1, level - 5), walked by the hash mod the total; null when nothing weighs. */
@@ -304,10 +353,23 @@ export function isDungeonLightFixture(archive, record) {
 /** NextArmorMaterial: leather to chain, chain (and chain's second) to iron, iron through daedric one step up; daedric and anything else stays. */
 export function nextArmorMaterial(current) {
   switch (current) {
-    case 0: return 256;
-    case 256: case 259: return 512;
-    case 512: case 513: case 514: case 515: case 516: case 517: case 518: case 519: case 520: return current + 1;
-    default: return current;
+    case 0:
+      return 256;
+    case 256:
+    case 259:
+      return 512;
+    case 512:
+    case 513:
+    case 514:
+    case 515:
+    case 516:
+    case 517:
+    case 518:
+    case 519:
+    case 520:
+      return current + 1;
+    default:
+      return current;
   }
 }
 
@@ -325,7 +387,10 @@ export function addBonusMagicLoot(chance, items, createMagicItem, rolls = Math.r
   let num2 = f32(chance);
   while (dice100(Math.trunc(num2), rolls())) {
     const it = createMagicItem();
-    if (it) { items.push(it); num++; }   // AddItem(item, AddPosition.Back)
+    if (it) {
+      items.push(it);
+      num++;
+    } // AddItem(item, AddPosition.Back)
     num2 = f32(num2 * f32(0.5));
   }
   return num;
@@ -349,21 +414,38 @@ export function upgradeLoot(items, { remintWeapon, remintArmor, isCustom = () =>
   for (const item of items) {
     if (!item || isCustom(item) || item.questItem || item.artifact) continue;
     const enchanted = isEnchanted(item);
-    const kept = { name: item.name, value: item.value, currentCondition: item.currentCondition, maxCondition: item.maxCondition, flags: item.flags, isIdentified: item.isIdentified };
+    const kept = {
+      name: item.name,
+      value: item.value,
+      currentCondition: item.currentCondition,
+      maxCondition: item.maxCondition,
+      flags: item.flags,
+      isIdentified: item.isIdentified,
+    };
     let fresh = null;
-    if (item.group === 'Weapons') {   // && GroupIndex != 131 - always so (the header)
+    if (item.group === 'Weapons') {
+      // && GroupIndex != 131 - always so (the header)
       const num = Math.max(0, Math.min(9, item.material ?? 0));
       if (num < 9) fresh = remintWeapon(item.templateIndex, num + 1);
     } else if (item.group === 'Armor') {
       const next = nextArmorMaterial(item.material ?? 0);
       // AUDIT OH-F C8: `int currentVariant = item.CurrentVariant` - the STORED variant, SetVariant's clamp for the old
       // material (a chain cuirass holds 4) - which ApplyArmorSettings clamps again for the new one (iron: 3)
-      if (next !== (item.material ?? 0)) fresh = remintArmor(item.templateIndex, next, clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0));
+      if (next !== (item.material ?? 0))
+        fresh = remintArmor(
+          item.templateIndex,
+          next,
+          clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0),
+        );
     }
     if (!fresh) continue;
-    Object.assign(item, fresh, { flags: 0, stackCount: 1 });   // SetItem (DaggerfallUnityItem.cs:565, :572), then the material pass
+    Object.assign(item, fresh, { flags: 0, stackCount: 1 }); // SetItem (DaggerfallUnityItem.cs:565, :572), then the material pass
     delete item.isIdentified;
-    if (enchanted) for (const [k, v] of Object.entries(kept)) { if (v === undefined) delete item[k]; else item[k] = v; }
+    if (enchanted)
+      for (const [k, v] of Object.entries(kept)) {
+        if (v === undefined) delete item[k];
+        else item[k] = v;
+      }
     // AUDIT MEND-THIRD L3-4: a re-minted piece is handed over whole - Roleplay & Realism: Items' roll ran first, and its mark
     // stood on the whole piece, so an Ebony longsword marked at 31% became a whole Orcish one that sold at 51% online
     if (!enchanted) dropFoundMark(item);
@@ -376,8 +458,8 @@ export function getLocationRect(location) {
   const mapPixel = longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
   const worldOrigin = mapPixelToWorldCoord(mapPixel.x, mapPixel.y);
   const tileOrigin = getLocationTerrainTileOrigin(location);
-  const x = worldOrigin.x + (tileOrigin.x * 2) * WORLD_MAP_TILE_DIM;
-  const y = worldOrigin.y + (tileOrigin.y * 2) * WORLD_MAP_TILE_DIM;
+  const x = worldOrigin.x + tileOrigin.x * 2 * WORLD_MAP_TILE_DIM;
+  const y = worldOrigin.y + tileOrigin.y * 2 * WORLD_MAP_TILE_DIM;
   const width = location.exterior.exteriorData.width * WORLD_MAP_RMB_DIM;
   const height = location.exterior.exteriorData.height * WORLD_MAP_RMB_DIM;
   return { xMin: x, xMax: x + width, yMin: y, yMax: y + height };
@@ -389,11 +471,18 @@ export function tryGetTemplateSavePosition(location) {
   const val = longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
   const val2 = mapPixelToWorldCoord(val.x, val.y);
   const num = 32704;
-  const corners = [[64, 64], [num, 64], [64, num], [num, num]];
+  const corners = [
+    [64, 64],
+    [num, 64],
+    [64, num],
+    [num, num],
+  ];
   const rect = getLocationRect(location);
   for (const [dx, dy] of corners) {
-    const num2 = val2.x + dx, num3 = val2.y + dy;
-    if (num2 < rect.xMin - 4096 || num2 > rect.xMax + 4096 || num3 < rect.yMin - 4096 || num3 > rect.yMax + 4096) return { x: num2, y: num3 };
+    const num2 = val2.x + dx,
+      num3 = val2.y + dy;
+    if (num2 < rect.xMin - 4096 || num2 > rect.xMax + 4096 || num3 < rect.yMin - 4096 || num3 > rect.yMax + 4096)
+      return { x: num2, y: num3 };
   }
   return null;
 }
@@ -438,7 +527,8 @@ export function tryFindTemplate(mapPixelX, mapPixelY, maps, siteLinkCount, isMai
       const savePosition = tryGetTemplateSavePosition(location);
       if (!savePosition) continue;
       if (siteLinkCount(location.mapTableData.mapId) === 0) {
-        if (location.mapTableData.dungeonType === PREFERRED_TEMPLATE_DUNGEON_TYPE) return { template: location, savePosition };
+        if (location.mapTableData.dungeonType === PREFERRED_TEMPLATE_DUNGEON_TYPE)
+          return { template: location, savePosition };
         if (!fallback) fallback = { template: location, savePosition };
       }
     }
@@ -448,7 +538,11 @@ export function tryFindTemplate(mapPixelX, mapPixelY, maps, siteLinkCount, isMai
 
 /** CloneDungeon: the struct copied, its blocks array Clone()d (DungeonBlock is a struct, so each block its own copy), renamed. */
 export function cloneDungeon(template, dungeonName) {
-  return { ...template, name: dungeonName, dungeon: { ...template.dungeon, blocks: template.dungeon.blocks.map((b) => ({ ...b })) } };
+  return {
+    ...template,
+    name: dungeonName,
+    dungeon: { ...template.dungeon, blocks: template.dungeon.blocks.map((b) => ({ ...b })) },
+  };
 }
 
 /**
@@ -463,7 +557,7 @@ export function abyssWaterLevel(startY, maxMeshTopY, dungeonY) {
   const top = Math.max(f32(y + 3), maxMeshTopY);
   const v = f32(f32(-f32(Math.max(f32(y + 2.5), f32(top + 1)) - dungeonY)) / f32(0.025));
   const f = Math.floor(v);
-  const r = v - f === 0.5 ? (f % 2 === 0 ? f : f + 1) : Math.round(v);   // Mathf.RoundToInt
+  const r = v - f === 0.5 ? (f % 2 === 0 ? f : f + 1) : Math.round(v); // Mathf.RoundToInt
   return Math.max(-32767, Math.min(32766, r));
 }
 
@@ -486,8 +580,12 @@ export function createDiscMesh() {
     const num2 = j + 1;
     const num3 = ((j + 1) % 48) + 1;
     const num4 = j * 6;
-    indices[num4] = 0; indices[num4 + 1] = num3; indices[num4 + 2] = num2;
-    indices[num4 + 3] = 0; indices[num4 + 4] = num2; indices[num4 + 5] = num3;
+    indices[num4] = 0;
+    indices[num4 + 1] = num3;
+    indices[num4 + 2] = num2;
+    indices[num4 + 3] = 0;
+    indices[num4 + 4] = num2;
+    indices[num4 + 5] = num3;
   }
   return { positions, normals, indices };
 }
@@ -503,8 +601,10 @@ export function createMiasmaTexture() {
       const num4 = f32(0.85 + f32(0.15 * f32(Math.sin(f32(f32(num * 9) + f32(num2 * 7))))));
       const num5 = f32(f32(num3 * num3) * num4);
       const o = (i * 32 + j) * 4;
-      px[o] = 255; px[o + 1] = 255; px[o + 2] = 255;
-      px[o + 3] = Math.round(clamp01(num5) * 255);   // Color -> RGBA32: Unity's Color32 conversion rounds
+      px[o] = 255;
+      px[o + 1] = 255;
+      px[o + 2] = 255;
+      px[o + 3] = Math.round(clamp01(num5) * 255); // Color -> RGBA32: Unity's Color32 conversion rounds
     }
   }
   return { width: 32, height: 32, pixels: px };
@@ -536,11 +636,18 @@ export function validateDeterminism() {
       const flag3 = isPitPixel(j, i, 0.25);
       const flag4 = isPitPixel(j, i, 0.5);
       const flag5 = isPitPixel(j, i, 1);
-      if (num || flag4 !== flag2 || (flag3 && !flag4) || (flag4 && !flag5)) throw new Error('Ocean hole spawn-rate selection is invalid.');
+      if (num || flag4 !== flag2 || (flag3 && !flag4) || (flag4 && !flag5))
+        throw new Error('Ocean hole spawn-rate selection is invalid.');
       flag = flag || (flag5 && !flag4);
     }
   }
   if (!flag) throw new Error('Ocean hole spawn-rate range is invalid.');
-  if (Math.abs(getFloorPitDepth(0, 1) - 14) > 0.001 || getFloorPitDepth(32, 1) !== 0 || Math.abs(getScaledSliderValue(0.5, 300) - 300) > 0.001
-    || getScaledSliderValue(0, 300) !== 0 || Math.abs(getScaledSliderValue(1, 300) - 600) > 0.001) throw new Error('Ocean hole floor profile is invalid.');
+  if (
+    Math.abs(getFloorPitDepth(0, 1) - 14) > 0.001 ||
+    getFloorPitDepth(32, 1) !== 0 ||
+    Math.abs(getScaledSliderValue(0.5, 300) - 300) > 0.001 ||
+    getScaledSliderValue(0, 300) !== 0 ||
+    Math.abs(getScaledSliderValue(1, 300) - 600) > 0.001
+  )
+    throw new Error('Ocean hole floor profile is invalid.');
 }

@@ -19,7 +19,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createEgClient, egRefusalText, egBreachUsage, egBreachUsageOut, egRespiteHow, egRestVitals, EG_START_ASKING_TEXT, EG_POTIONS_KEY, EG_PAD_SHOULDERS } from '../../../src/scenes/eliteGates/egClient.js';
+import { createEgClient, egRefusalText, egBreachUsage, egBreachUsageOut, egRespiteHow, egRestVitals, EG_START_ASKING_TEXT, EG_PAD_SHOULDERS } from '../../../src/scenes/eliteGates/egClient.js';
 import { breachCommandOf, helpLines, breachHelpLine, HELP_LINES, HOST_COMMANDS, parseChatLine } from '../../../src/net/chatCommands.js';
 import { egBreachNew, egEnter, egStateOf, egStep, EG_PING_MS } from '../../../src/net/eliteGates/egBrain.js';
 import { egAsk, EG_ASK_MS } from '../../../src/net/eliteGates/egRun.js';
@@ -30,7 +30,10 @@ import { realmToDungeon } from '../../../src/net/superDungeon/sdBrain.js';
 import { accountRefusalText } from '../../../src/net/accountClient.js';
 import { maxFatigue } from '../../../src/systems/statMods.js';
 import { egFirstOver, egFirstKey, egFirstRead, EG_FIRST_KEY } from '../../../src/ui/eliteGates/egBeats.js';
-import { drawEgPanel, destroyEgHud, egPanelModel, EG_POTIONS_PER_HALL } from '../../../src/ui/eliteGates/egHud.js';
+import { registerMadeLevelHere } from '../../../src/systems/madeLevel.js';
+import { pvpPotionDrunk, resetPvpPotions } from '../../../src/combat/pvpPotions.js';   // POTION-CLOCK
+import { POTION_RECIPES, potionRecipeKey } from '../../../src/systems/potionRecipes.js';
+import { drawEgPanel, destroyEgHud, egPanelModel } from '../../../src/ui/eliteGates/egHud.js';
 import { egPadAct, egPadPrompts, destroyEgSpireHud } from '../../../src/ui/eliteGates/egSpireHud.js';
 
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
@@ -310,29 +313,22 @@ test('AUDIT EG V L2-9 A REST THAT HEALS LESS THAN WHOLE GIVES MAGICKA AND FATIGU
   assert.deepEqual([W.entity.health, W.entity.magicka, W.entity.fatigue], [100, 50, maxFatigue(W.entity)]);
 });
 
-// ── L2-14 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
-test('AUDIT EG V L2-14 A RELOAD REFILLS NO POTION (section 17.4, THE POTION LAW): the hall\'s count is kept on the device by its breach, hall and stage, so a client made again over the same store (a reload) in the same hall\'s trial holds what was left; the next hall\'s wake refills it; another breach\'s count is its own (mutants: the count kept in memory alone; a refill on the reload; another breach\'s count carried)', (t) => {
-  const store = memStore();
-  const R = spire(t, { h: 7, sg: 'trial', store });
-  R.tell(egStateOf(R.B, R.now())); R.client.frame();
-  assert.equal(R.client.potionAllowed(), true);
-  R.client.potionUsed(); R.client.potionUsed();
-  assert.equal(R.client.potionAllowed(), false, 'two a hall');
-  assert.equal(JSON.parse(store.getItem(EG_POTIONS_KEY)).n, 0);
-  // a reload: the same breach, the same hall, the same store
-  const Q = spire(t, { h: 7, sg: 'trial', store });
-  Q.tell(egStateOf(Q.B, Q.now())); Q.client.frame();
-  assert.equal(Q.client.potionAllowed(), false, 'the reload refilled nothing');
-  // the next hall's wake refills
-  Q.B.h = 8; Q.tell(egStateOf(Q.B, Q.now())); Q.client.frame();
-  assert.equal(Q.client.potionAllowed(), true);
-  Q.client.potionUsed();
-  assert.deepEqual(JSON.parse(store.getItem(EG_POTIONS_KEY)), { k: `${BID}:8:t`, n: EG_POTIONS_PER_HALL - 1 });
-  // another breach: its own two
-  store.setItem(EG_POTIONS_KEY, JSON.stringify({ k: 'ffffffffffffffff:8:t', n: 0 }));
-  const O = spire(t, { h: 8, sg: 'closing', store });
-  O.tell(egStateOf(O.B, O.now())); O.client.frame();
-  assert.equal(O.client.potionAllowed(), true, 'another breach\'s count is not this one\'s');
+// ── L2-14: RETIRED by POTION-CLOCK (2026-10-31, Elite-Gates.md section 17.4) - no count is kept to refill; a reload outlasts the 15 s clock ──
+test('POTION-CLOCK THE CLIENT\'S PIP (section 17.4): in a breach\'s trial a health potion drunk puts its kind\'s wait on the desk\'s chip, counting down on the shared clock, and the chip is empty again at 15 s (mutants: the client handing the HUD no waits; the clock not run in the Spire)', (t) => {
+  const R = spire(t, { h: 7, sg: 'trial' });
+  R.tell(egStateOf(R.B, R.now()));
+  registerMadeLevelHere(() => 'spire');
+  globalThis.document = fakeDocument();
+  try {
+    const chip = () => { R.client.frame(); return find(globalThis.document.body, 'eg-potion')[0]?.textContent ?? ''; };
+    assert.equal(chip(), '', 'nothing waits');
+    pvpPotionDrunk({ potionRecipeKey: potionRecipeKey(POTION_RECIPES.find((r) => r.name === 'healing').ingredients) });
+    assert.equal(chip(), 'Health\u00a0potion\u00a015\u00a0s');
+    R.step(6000);
+    assert.equal(chip(), 'Health\u00a0potion\u00a09\u00a0s');
+    R.step(9000);
+    assert.equal(chip(), '', 'drinkable again');
+  } finally { destroyEgSpireHud(); destroyEgHud(); delete globalThis.document; registerMadeLevelHere(null); resetPvpPotions(); }
 });
 
 // ── L7-23 ───────────────────────────────────────────────────────────────────────────────────────────────────────────────

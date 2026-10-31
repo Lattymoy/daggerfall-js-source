@@ -90,8 +90,7 @@ export function tallyCrimeGuildRequirements(entity, thievingCrime, amount, nowCl
     // zero. A bare `=== 0` gate reads false against undefined and would
     // have frozen the tally at zero for every new game - the guild
     // would have been unreachable except from a classic import.
-    if ((entity.timeForThievesGuildLetter ?? 0) === 0
-      && entity.thievesGuildRequirementTally !== INVITE_SENT) {
+    if ((entity.timeForThievesGuildLetter ?? 0) === 0 && entity.thievesGuildRequirementTally !== INVITE_SENT) {
       entity.thievesGuildRequirementTally = (entity.thievesGuildRequirementTally ?? 0) + amount;
       if (entity.thievesGuildRequirementTally >= THIEVES_GUILD_TALLY_TARGET) {
         entity.timeForThievesGuildLetter = nowClassicMinutes + CRIME_GUILD_LETTER_DELAY_MINUTES;
@@ -100,8 +99,7 @@ export function tallyCrimeGuildRequirements(entity, thievingCrime, amount, nowCl
     }
     return false;
   }
-  if ((entity.timeForDarkBrotherhoodLetter ?? 0) === 0
-    && entity.darkBrotherhoodRequirementTally !== INVITE_SENT) {
+  if ((entity.timeForDarkBrotherhoodLetter ?? 0) === 0 && entity.darkBrotherhoodRequirementTally !== INVITE_SENT) {
     entity.darkBrotherhoodRequirementTally = (entity.darkBrotherhoodRequirementTally ?? 0) + amount;
     if (entity.darkBrotherhoodRequirementTally >= DARK_BROTHERHOOD_TALLY_TARGET) {
       entity.timeForDarkBrotherhoodLetter = nowClassicMinutes + CRIME_GUILD_LETTER_DELAY_MINUTES;
@@ -124,14 +122,22 @@ export function tallyCrimeGuildRequirements(entity, thievingCrime, amount, nowCl
 // zero, which would land three days into the epoch and never fire.
 let _clock = () => null;
 /** One call per host at boot: `() => classicMinutes`. */
-export function setCrimeGuildClock(fn) { const prev = _clock; _clock = fn ?? (() => null); return prev; }
+export function setCrimeGuildClock(fn) {
+  const prev = _clock;
+  _clock = fn ?? (() => null);
+  return prev;
+}
 
 // The quest host, registered once (racialQuests.js's shape, and for the
 // same reason: PlayerEntity.Update starts a quest, and the tick has no
 // business carrying a quest machine through its arguments).
 let _host = null;
 /** One call per host at boot: `{ startQuest(name, factionId) }`. */
-export function setCrimeGuildQuestHost(host) { const prev = _host; _host = host ?? null; return prev; }
+export function setCrimeGuildQuestHost(host) {
+  const prev = _host;
+  _host = host ?? null;
+  return prev;
+}
 
 /**
  * HandleStartingCrimeGuildQuests (:1503-1522), called from the tail of
@@ -154,7 +160,7 @@ export function setCrimeGuildQuestHost(host) { const prev = _host; _host = host 
 export function handleStartingCrimeGuildQuests(entity, { nowClassicMinutes, inside = false, online = false } = {}) {
   if (!entity || !_host?.startQuest || inside) return [];
   const started = [];
-  const stampedAt = nowClassicMinutes;   // DB-LETTER: a letter that could not start is stamped again from the real minute
+  const stampedAt = nowClassicMinutes; // DB-LETTER: a letter that could not start is stamped again from the real minute
   // REST8 (TIMEFREE's): online a pending letter is due the short wait after the tally reached it - the stamp is three days on
   if (online) nowClassicMinutes += CRIME_GUILD_LETTER_DELAY_MINUTES - CRIME_GUILD_LETTER_ONLINE_MINUTES;
   for (const [tally, clock, questName, factionId] of LETTERS) {
@@ -172,8 +178,18 @@ export function handleStartingCrimeGuildQuests(entity, { nowClassicMinutes, insi
 
 /** The two letters, in DFU's order (:1505-1521): the tally, its clock, the initiation quest and its guild. */
 const LETTERS = Object.freeze([
-  ['thievesGuildRequirementTally', 'timeForThievesGuildLetter', THIEVES_GUILD_INITIATION_QUEST, THIEVES_GUILD_FACTION_ID],
-  ['darkBrotherhoodRequirementTally', 'timeForDarkBrotherhoodLetter', DARK_BROTHERHOOD_INITIATION_QUEST, DARK_BROTHERHOOD_FACTION_ID],
+  [
+    'thievesGuildRequirementTally',
+    'timeForThievesGuildLetter',
+    THIEVES_GUILD_INITIATION_QUEST,
+    THIEVES_GUILD_FACTION_ID,
+  ],
+  [
+    'darkBrotherhoodRequirementTally',
+    'timeForDarkBrotherhoodLetter',
+    DARK_BROTHERHOOD_INITIATION_QUEST,
+    DARK_BROTHERHOOD_FACTION_ID,
+  ],
 ]);
 
 /** DB-LETTER (2026-10-25, a player's level 10 vampire: tally 100, no letter clock, and no Acceptance Test anywhere in

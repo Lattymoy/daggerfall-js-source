@@ -19,7 +19,7 @@
 // PURE: distances, a Stealth, a clock step and a die in; an answer out. The keys are the caller's (a band's id, a foe
 // record) and the store is pruned by the caller's own life.
 // ═══════════════════════════════════════════════════════════════════
-import { stealthChance, STEALTH_MAX_DISTANCE, blockedByIllusionEffect } from '../../characters/enemy/enemyMotor.js';   // ONE DFU MEMBER, ONE EXPORT: FormulaHelper.CalculateStealthChance; INVIS-SWING: EnemySenses.BlockedByIllusionEffect
+import { stealthChance, STEALTH_MAX_DISTANCE, blockedByIllusionEffect } from '../../characters/enemy/enemyMotor.js'; // ONE DFU MEMBER, ONE EXPORT: FormulaHelper.CalculateStealthChance; INVIS-SWING: EnemySenses.BlockedByIllusionEffect
 
 /** Seconds of the traveller's (scaled) clock between two checks of one enemy: a classic game minute (60 game seconds at
  *  DFU's TimeScale 12) - EnemySenses.StealthCheck's own cadence. */
@@ -51,7 +51,12 @@ export function noticeChance(distM, reachM, stealth) {
  * @param {number} distM @param {number} reachM @param {number} stealth
  * @param {{ seesThrough?: boolean, concealment?: { invisible?: boolean, blending?: boolean, shade?: boolean } | null, rng?: () => number }} [o]
  */
-export function noticeRoll(distM, reachM, stealth, { seesThrough = false, concealment = null, rng = Math.random } = {}) {
+export function noticeRoll(
+  distM,
+  reachM,
+  stealth,
+  { seesThrough = false, concealment = null, rng = Math.random } = {},
+) {
   if (concealment && blockedByIllusionEffect(seesThrough, concealment, rng)) return false;
   return rng() * 100 < noticeChance(distM, reachM, stealth);
 }
@@ -70,7 +75,10 @@ export function createWildAlert({ rng = Math.random, weak = false } = {}) {
     /** When it noticed (the caller's clock), or null. */
     alertedAt: (k) => get(k)?.at ?? null,
     /** Whether `k` has been checked and has NOT noticed - an enemy in reach that keeps to its own business. */
-    unaware: (k) => { const s = get(k); return !!s && !s.alerted; },
+    unaware: (k) => {
+      const s = get(k);
+      return !!s && !s.alerted;
+    },
     /**
      * One frame of one enemy: `distM` its distance, `reachM` its reach, `stealth` the traveller's, `scaledDt` the frame on
      * the traveller's clock (real seconds times the time scale), `now` the caller's clock for `alertedAt`. Out of reach
@@ -82,22 +90,46 @@ export function createWildAlert({ rng = Math.random, weak = false } = {}) {
     step(k, { distM, reachM, stealth, scaledDt, now = 0, seesThrough = false, concealment = null }) {
       let s = get(k);
       if (s?.alerted) return { alerted: true, noticed: false };
-      if (!(distM <= reachM)) { if (s) s.clock = WILD_ROLL_S; return { alerted: false, noticed: false }; }
-      if (!s) { s = { alerted: false, clock: WILD_ROLL_S, at: 0 }; st.set(k, s); }
+      if (!(distM <= reachM)) {
+        if (s) s.clock = WILD_ROLL_S;
+        return { alerted: false, noticed: false };
+      }
+      if (!s) {
+        s = { alerted: false, clock: WILD_ROLL_S, at: 0 };
+        st.set(k, s);
+      }
       s.clock += Math.max(0, scaledDt);
       if (s.clock < WILD_ROLL_S) return { alerted: false, noticed: false };
       s.clock = 0;
-      if (noticeRoll(distM, reachM, stealth, { seesThrough, concealment, rng })) { s.alerted = true; s.at = now; return { alerted: true, noticed: true }; }
+      if (noticeRoll(distM, reachM, stealth, { seesThrough, concealment, rng })) {
+        s.alerted = true;
+        s.at = now;
+        return { alerted: true, noticed: true };
+      }
       return { alerted: false, noticed: false };
     },
     /** `k` was checked another way and did NOT notice (the wanderer's check at the spot it was placed) - its next check
      *  waits a full WILD_ROLL_S, as a rolled one's does. */
-    checked(k) { if (!get(k)) st.set(k, { alerted: false, clock: 0, at: 0 }); },
+    checked(k) {
+      if (!get(k)) st.set(k, { alerted: false, clock: 0, at: 0 });
+    },
     /** `k` has noticed the traveller another way (it struck, it was struck, its campmate woke it). */
-    alert(k, now = 0) { const s = get(k); if (s) { if (!s.alerted) { s.alerted = true; s.at = now; } } else st.set(k, { alerted: true, clock: 0, at: now }); },
+    alert(k, now = 0) {
+      const s = get(k);
+      if (s) {
+        if (!s.alerted) {
+          s.alerted = true;
+          s.at = now;
+        }
+      } else st.set(k, { alerted: true, clock: 0, at: now });
+    },
     /** `k` is forgotten - gone, or given up: the next sight of the traveller is a fresh check. */
-    forget(k) { st.delete(k); },
+    forget(k) {
+      st.delete(k);
+    },
     /** Map stores only: keep the keys `keep` answers for. */
-    prune(keep) { if (st instanceof Map) for (const k of [...st.keys()]) if (!keep(k)) st.delete(k); },
+    prune(keep) {
+      if (st instanceof Map) for (const k of [...st.keys()]) if (!keep(k)) st.delete(k);
+    },
   };
 }

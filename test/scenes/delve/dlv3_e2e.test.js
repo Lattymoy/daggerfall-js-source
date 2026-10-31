@@ -7,7 +7,7 @@ import '../../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validDelveOut } from '../../../src/net/wire.js';
-import { DP, DELVE_KIND_NAMES, sealSpots, VIGIL_REST_MS, HOLD_GATHER_MS } from '../../../src/net/delve/delveLaw.js';
+import { DP, DELVE_KIND_NAMES, sealSpots, VIGIL_REST_MS, HOLD_GATHER_MS, litanyPlates, litanyShowMs } from '../../../src/net/delve/delveLaw.js';
 import { HIT_KINDS } from '../../../src/net/gate/gateBrain.js';
 import { Room } from '../../../server/src/index.js';
 import { fakeRooms } from '../../fakeRoom.mjs';
@@ -19,8 +19,9 @@ import { _resetForTests } from '../../../src/systems/uiPrefs.js';
 const quiet = async (fn) => { const w = console.warn, i = console.info; console.warn = () => {}; console.info = () => {}; try { return await fn(); } finally { console.warn = w; console.info = i; } };
 
 /** One page in a dungeon's room, its host the rig's, on a clock of the pin's. `fn` gets `go(ms, feet)`: frames of 100 ms
- *  at `feet`, each word the host said delivered, each the room said heard; `log` every room word as read (or dropped). */
-async function e2e(kind, fn) {
+ *  at `feet`, each word the host said delivered, each the room said heard; `log` every room word as read (or dropped).
+ *  `lag`: the room hears last frame's feet, as the real page says its pose before the dungeon moves the player. */
+async function e2e(kind, fn, { lag = false } = {}) {
   const realNow = Date.now, realKin = Room.prototype._instanceKinOf; let clock = 1_800_000_000_000; Date.now = () => clock;
   Room.prototype._instanceKinOf = async () => false;
   try {
@@ -36,13 +37,16 @@ async function e2e(kind, fn) {
       const s = D.host.sites[0];
       let read = 0;
       const log = [];
+      let was = null;
       const go = async (ms, feet) => {
         for (let k = 0; k < ms; k += 100) {
+          const heard = lag && was ? was : feet;
           D.host.frame(0.1, feet);
+          was = feet;
           clock += 100;
           while (queue.length) {
             const w = queue.shift();
-            await r.pose(ws, { x: feet[0], y: feet[1], z: feet[2], yaw: 0, pitch: 0 });
+            await r.pose(ws, { x: heard[0], y: heard[1], z: heard[2], yaw: 0, pitch: 0 });
             await r.raw(ws, JSON.stringify({ t: 'dv', ...w }));
           }
           for (; read < ws.sent.length; read++) {
@@ -106,4 +110,26 @@ test('DLV3 E2E THE VIGIL TWICE: its relic struck dark, rested, woken again - the
     assert.notEqual(D.host.state()[0].p, DP.idle, 'woken again');
     assert.equal(ends(), 1, 'twenty seconds and no blow: not dark');
   });
+});
+
+test('LITANY-STAND E2E: the Litany won online with the room hearing last frame\'s feet, as the real page says them - each plate walked onto and stood on is lit, the vault my share (mutants: the plate said at this frame\'s feet)', async () => {
+  await e2e('litany', async ({ D, s, go }) => {
+    const heart = [s.x, s.y, s.z], plates = litanyPlates(s);
+    await go(500, [s.x + 30, s.y, s.z]);
+    await go(1_500, heart);
+    const order = D.host.state()[0].order;
+    assert.equal(order.length, 4, 'the order heard while shown');
+    await go(litanyShowMs(4), heart);
+    assert.equal(D.host.state()[0].p, DP.work);
+    for (const [n, j] of order.entries()) {
+      await go(300, plates[j]);
+      assert.equal(D.host.state()[0].next, n + 1, `plate ${j} lit, stood on`);
+      await go(300, heart);
+    }
+    assert.equal(D.host.state()[0].won, true, 'won online');
+    D.host.press('delve:vault:0');
+    await go(200, heart);
+    const vault = D.host.contents('delve:vault:0');
+    assert.ok(vault.length >= 2 && vault[0].isIdentified && vault.at(-1).group === 'Currency', 'my share: the piece, the pile, the gold');
+  }, { lag: true });
 });

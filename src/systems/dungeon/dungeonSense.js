@@ -22,10 +22,10 @@
 //
 // Not a DFU member. Pure but for the pulse's own state.
 
-import { TRIGGER_FLAGS } from '../../world/rdbLayout.js';   // DFBlock.RdbTriggerFlags has ONE home
-import { TRIGGER_GATE, isActionDoorObject } from '../../world/actionSystem.js';   // AUDIT DELVE A5: who a trigger admits, read where it is written
-import { NODE_GLOW_MAX } from '../../render/nodeGlow.js';   // AUDIT DELVE A4: the glow's own budget
-import { PICK_PARDON_M } from '../../player/activate.js';   // AUDIT DELVE C8: the pick's own pardon
+import { TRIGGER_FLAGS } from '../../world/rdbLayout.js'; // DFBlock.RdbTriggerFlags has ONE home
+import { TRIGGER_GATE, isActionDoorObject } from '../../world/actionSystem.js'; // AUDIT DELVE A5: who a trigger admits, read where it is written
+import { NODE_GLOW_MAX } from '../../render/nodeGlow.js'; // AUDIT DELVE A4: the glow's own budget
+import { PICK_PARDON_M } from '../../player/activate.js'; // AUDIT DELVE C8: the pick's own pardon
 
 /** How far a pulse reaches from the eye, to the nearest point of a thing's box (m). Two and a half door reaches. */
 export const SENSE_M = 8;
@@ -46,10 +46,18 @@ export const SENSE_CSS = Object.freeze({ use: '#ffe9a8', door: '#9cc8ff', find: 
  *  alone; a find, the motes - a treasure's glints - over a faint halo; a secret, the shimmer and a few faint motes, no
  *  body of light (a wall that is not quite a wall). A profession's node is all three, whole. */
 export const SENSE_FORM = Object.freeze({
-  use: Object.freeze([1, 1, 0]), door: Object.freeze([1.2, 0, 0]), find: Object.freeze([0.4, 0, 1]), secret: Object.freeze([0.25, 1.6, 0.35]),
+  use: Object.freeze([1, 1, 0]),
+  door: Object.freeze([1.2, 0, 0]),
+  find: Object.freeze([0.4, 0, 1]),
+  secret: Object.freeze([0.25, 1.6, 0.35]),
 });
-const hexRgb = (hex) => { const n = parseInt(hex.slice(1), 16); return Object.freeze([((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]); };
-export const SENSE_RGB = Object.freeze(Object.fromEntries(Object.entries(SENSE_CSS).map(([k, hex]) => [k, hexRgb(hex)])));
+const hexRgb = (hex) => {
+  const n = parseInt(hex.slice(1), 16);
+  return Object.freeze([((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255]);
+};
+export const SENSE_RGB = Object.freeze(
+  Object.fromEntries(Object.entries(SENSE_CSS).map(([k, hex]) => [k, hexRgb(hex)])),
+);
 /** A card's least and most size (m): a lever is never a speck, a corridor piece never a wall of light. */
 export const SENSE_CARD_MIN = 0.5;
 export const SENSE_CARD_W_MAX = 2.4;
@@ -58,7 +66,7 @@ export const SENSE_CARD_H_MAX = 2.8;
 /** The tier a stored value names; anything else is On (the row's initial). Pure. */
 export const senseTier = (v) => (v === 'off' || v === 'secrets' ? v : 'on');
 
-const FIND_PREFIXES = Object.freeze(['loot:', 'corpse:', 'search:', 'droppedLoot:', 'srch:', 'delve:']);   // DELVE II: an encounter's vault
+const FIND_PREFIXES = Object.freeze(['loot:', 'corpse:', 'search:', 'droppedLoot:', 'srch:', 'delve:']); // DELVE II: an encounter's vault
 /**
  * A target's kind, by its key - the activation ladder's own vocabulary - and the plaque's word for it: an action
  * object the plaque calls a door (an action door's band) is a way through, as an exit is; the containers and the
@@ -104,7 +112,13 @@ export function senseFlat(target, object = null) {
 }
 const FLAT_PREFIXES = Object.freeze(['loot:', 'corpse:', 'droppedLoot:']);
 
-const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);
+const isVec3 = (v) =>
+  v != null &&
+  typeof v === 'object' &&
+  v.length >= 3 &&
+  Number.isFinite(v[0]) &&
+  Number.isFinite(v[1]) &&
+  Number.isFinite(v[2]);
 
 /**
  * IN PLAIN SIGHT: a clear line from `eye` to the middle of `box` - or to its top's middle, whichever is clear - through
@@ -115,9 +129,13 @@ const isVec3 = (v) => v != null && typeof v === 'object' && v.length >= 3 && Num
  * @param {{ min: number[], max: number[] }} box @param {{ skip?: string|null, noSurface?: boolean }} [o]
  */
 export function inPlainSight(collider, eye, box, { skip = null, noSurface = false } = {}) {
-  const cx = (box.min[0] + box.max[0]) / 2, cz = (box.min[2] + box.max[2]) / 2;
+  const cx = (box.min[0] + box.max[0]) / 2,
+    cz = (box.min[2] + box.max[2]) / 2;
   for (const y of [(box.min[1] + box.max[1]) / 2, box.max[1] - 0.05]) {
-    const dx = cx - eye[0], dy = y - eye[1], dz = cz - eye[2], len = Math.hypot(dx, dy, dz);
+    const dx = cx - eye[0],
+      dy = y - eye[1],
+      dz = cz - eye[2],
+      len = Math.hypot(dx, dy, dz);
     if (!(len > 1e-3)) return true;
     const dir = [dx / len, dy / len, dz / len];
     const hit = collider.raycastHit(eye, dir, len, skip ? { skip: [skip] } : null);
@@ -191,7 +209,12 @@ export function isSecretMover(o, chainTargets) {
  * @param {{ boxOf: (o: any) => any, sees?: (o: any, box: any) => boolean, reach?: number, max?: number }} o
  * @returns {SenseFind[]}
  */
-export function senseSecrets(objects, chainTargets, eye, { boxOf, sees = () => true, reach = SENSE_M, max = SENSE_MAX }) {
+export function senseSecrets(
+  objects,
+  chainTargets,
+  eye,
+  { boxOf, sees = () => true, reach = SENSE_M, max = SENSE_MAX },
+) {
   /** @type {SenseFind[]} */
   const out = [];
   if (!objects || !isVec3(eye) || typeof boxOf !== 'function') return out;
@@ -215,7 +238,8 @@ export function senseSecrets(objects, chainTargets, eye, { boxOf, sees = () => t
  */
 export function senseRound(finds, secrets = [], max = SENSE_MAX) {
   const all = [...(finds ?? []), ...(secrets ?? [])].sort((a, b) => a.d - b.d);
-  const seen = new Set(), out = [];
+  const seen = new Set(),
+    out = [];
   for (const f of all) {
     if (seen.has(f.key)) continue;
     seen.add(f.key);
@@ -256,26 +280,53 @@ export function createSensePulse({ hold = SENSE_HOLD_S, fade = SENSE_FADE_S } = 
   /** @type {SenseFind[]} */
   let finds = [];
   /** @type {Array<{ key: string, at: number[], w: number, h: number, rgb: readonly number[], gain: number, form: readonly number[] }>} */
-  const pool = [], out = [];
+  const pool = [],
+    out = [];
   return {
     /** @param {number} nowS @param {SenseFind[]} list */
-    pulse(nowS, list) { at = nowS; finds = Array.isArray(list) ? list.slice() : []; return finds.length; },
+    pulse(nowS, list) {
+      at = nowS;
+      finds = Array.isArray(list) ? list.slice() : [];
+      return finds.length;
+    },
     /** @param {number} nowS */
-    lit(nowS) { const age = nowS - at; return age >= 0 && age < hold && finds.length > 0; },
+    lit(nowS) {
+      const age = nowS - at;
+      return age >= 0 && age < hold && finds.length > 0;
+    },
     /** @param {number} nowS */
     marks(nowS) {
       out.length = 0;
       const age = nowS - at;
-      if (!(age >= 0 && age < hold)) { finds = []; return out; }
+      if (!(age >= 0 && age < hold)) {
+        finds = [];
+        return out;
+      }
       const gain = age > hold - fade ? Math.max(0, (hold - age) / fade) : 1;
       for (const f of finds) {
-        const m = pool[out.length] ??= { key: '', at: f.at, w: 0, h: 0, rgb: SENSE_RGB.use, gain: 0, form: SENSE_FORM.use };
-        m.key = `sense:${f.key}`; m.at = f.at; m.w = f.w; m.h = f.h; m.rgb = SENSE_RGB[f.kind] ?? SENSE_RGB.use; m.gain = gain;
-        m.form = SENSE_FORM[f.kind] ?? SENSE_FORM.use;   // AUDIT DELVE D6
+        const m = (pool[out.length] ??= {
+          key: '',
+          at: f.at,
+          w: 0,
+          h: 0,
+          rgb: SENSE_RGB.use,
+          gain: 0,
+          form: SENSE_FORM.use,
+        });
+        m.key = `sense:${f.key}`;
+        m.at = f.at;
+        m.w = f.w;
+        m.h = f.h;
+        m.rgb = SENSE_RGB[f.kind] ?? SENSE_RGB.use;
+        m.gain = gain;
+        m.form = SENSE_FORM[f.kind] ?? SENSE_FORM.use; // AUDIT DELVE D6
         out.push(m);
       }
       return out;
     },
-    clear() { at = -Infinity; finds = []; },
+    clear() {
+      at = -Infinity;
+      finds = [];
+    },
   };
 }

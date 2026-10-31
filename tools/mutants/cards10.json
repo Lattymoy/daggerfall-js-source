@@ -65,8 +65,8 @@
   {
     "name": "CARDS10-evening-think",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "  _thought() { return ILIAC_THINK_MS + Math.floor(this.unit() * ILIAC_THINK_SPREAD_MS); }",
-    "new": "  _thought() { return 0; }",
+    "old": "    return ILIAC_THINK_MS + Math.floor(this.unit() * ILIAC_THINK_SPREAD_MS);",
+    "new": "    return 0;",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CARDS10-evening-beat",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "this.revealAt = now + ILIAC_REVEAL_MS; }",
-    "new": "this.revealAt = now; }",
+    "old": "    if (this.state.players[0].plays && this.state.players[1].plays) this.revealAt = now + ILIAC_REVEAL_MS;",
+    "new": "    if (this.state.players[0].plays && this.state.players[1].plays) this.revealAt = now;",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CARDS10-evening-payer",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "      const card = from === 'patron' ? forfeitCard(this.seats[1].deck, this.unit) : this.stake;",
-    "new": "      const card = forfeitCard(this.seats[from === 'patron' ? 0 : 1].deck, this.unit);",
+    "old": "      const card = from === 'patron' ? forfeitCard(this.seats[1].deck, this.unit) : this.stake; // AUDIT CARDS-6 B1: the player's, his stake",
+    "new": "      const card = forfeitCard(this.seats[from === 'patron' ? 0 : 1].deck, this.unit); // AUDIT CARDS-6 B1: the player's, his stake",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "CARDS10-evening-concession",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "      if (this.forKeeps) this.prize = this.stake ? { from: 'player', card: this.stake } : null;   // AUDIT CARDS-6 B1: his stake\n",
-    "new": "",
+    "old": "      if (this.forKeeps) this.prize = this.stake ? { from: 'player', card: this.stake } : null; // AUDIT CARDS-6 B1: his stake\n      this._say({ t: 'end', why: 'left', result: null, prize: this.prize }, now);",
+    "new": "      this._say({ t: 'end', why: 'left', result: null, prize: this.prize }, now);",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CARDS10-book-day",
     "file": "src/systems/iliac/iliacTableSession.js",
-    "old": "  return e && e.day === day && Array.isArray(e.paid)",
-    "new": "  return e && Array.isArray(e.paid)",
+    "old": "  return e && e.day === day && Array.isArray(e.paid) ? e.paid.filter((n) => typeof n === 'string') : [];",
+    "new": "  return e && Array.isArray(e.paid) ? e.paid.filter((n) => typeof n === 'string') : [];",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CARDS10-staging-room",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  for (let h = 0; h < ILIAC_HOLDINGS; h++) if (units[h] > view.holdings[h].room - view.holdings[h].sides[view.viewer].length) return 'room';\n",
-    "new": "",
+    "old": "  for (let h = 0; h < ILIAC_HOLDINGS; h++)\n    if (units[h] > view.holdings[h].room - view.holdings[h].sides[view.viewer].length) return 'room';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "CARDS10-staging-spell",
     "file": "src/ui/iliacTableHud.js",
-    "old": "    if (card.kind === 'spell') { if (holdingRule(view.holdings[x.holding].id, 'nospell')) return 'spell'; } else units[x.holding]++;",
+    "old": "    if (card.kind === 'spell') {\n      if (holdingRule(view.holdings[x.holding].id, 'nospell')) return 'spell';\n    } else units[x.holding]++;",
     "new": "    if (card.kind !== 'spell') units[x.holding]++;",
     "tests": [
       "test/systems/cards10_table.test.js"
@@ -137,7 +137,7 @@
   {
     "name": "CARDS10-staging-discount",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  for (const fx of cardById(view.holdings[h].id)?.fx ?? []) if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;",
+    "old": "  for (const fx of cardById(view.holdings[h].id)?.fx ?? [])\n    if (fx.on === 'ongoing' && fx.do === 'discount' && fx.kind === card.kind) off += fx.n;",
     "new": "",
     "tests": [
       "test/systems/cards10_table.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "CARDS10-panel-words",
     "file": "src/ui/iliacTableHud.js",
-    "old": ": 'Pass this turn', enabled: !committed",
-    "new": ": 'Pass', enabled: !committed",
+    "old": "            : 'Pass this turn',",
+    "new": "            : 'Pass',",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CARDS10-cloth-row",
     "file": "src/world/iliacCloth.js",
-    "old": "c[0] + across[0] * (h - 1) * ILIAC_HOLD_GAP",
-    "new": "c[0] + across[0] * (h - 1) * 0",
+    "old": "    c[0] + across[0] * (h - 1) * ILIAC_HOLD_GAP,",
+    "new": "    c[0] + across[0] * (h - 1) * 0,",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "CARDS10-cloth-throw",
     "file": "src/world/iliacCloth.js",
-    "old": "    const k = at === undefined ? 1 : Math.max(0, Math.min(1, (t - at) / ILIAC_THROW_S));",
-    "new": "    const k = 1;",
+    "old": "        const k = at === undefined ? 1 : Math.max(0, Math.min(1, (t - at) / ILIAC_THROW_S));",
+    "new": "        const k = 1;",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "CARDS10-atlas-cells",
     "file": "src/render/iliacTableDraw.js",
-    "old": "[i % ILIAC_ATLAS_COLS, Math.floor(i / ILIAC_ATLAS_COLS)]",
-    "new": "[0, Math.floor(i / ILIAC_ATLAS_COLS)]",
+    "old": "  return i === undefined ? ILIAC_CELL_BACK.slice() : [i % ILIAC_ATLAS_COLS, Math.floor(i / ILIAC_ATLAS_COLS)];",
+    "new": "  return i === undefined ? ILIAC_CELL_BACK.slice() : [0, Math.floor(i / ILIAC_ATLAS_COLS)];",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "CARDS10-atlas-free",
     "file": "src/render/iliacTableDraw.js",
-    "old": "      renderer.releaseTexture?.(ILIAC_ARCHIVE, ILIAC_RECORD);\n",
-    "new": "",
+    "old": "      renderer.releaseTexture?.(ILIAC_ARCHIVE, ILIAC_RECORD);\n      meshes.clear();",
+    "new": "      meshes.clear();",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CARDS10-host-concession",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (concede && g.session && !g.session.over) { g.session.leave(d.now()); settle(); }",
-    "new": "      if (concede && g.session && !g.session.over) { g.session.leave(d.now()); }",
+    "old": "        settle();\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/cards10_table.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CARDS10-relay-bad-deck",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  if (!Array.isArray(deck) || deckValid(deck) !== null) return 'bad deck';\n",
-    "new": "",
+    "old": "  if (!Array.isArray(deck) || deckValid(deck) !== null) return 'bad deck';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "CARDS10-relay-own-view",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "const own = (t, p) => ({ to: t.seats[p].id,",
-    "new": "const own = (t, p) => ({ to: null,",
+    "old": "  to: t.seats[p].id,",
+    "new": "  to: null,",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "CARDS10-relay-hidden-commit",
     "file": "src/net/iliac/iliacTable.js",
-    "old": "  const said = { t: 'commit', seat: p, at: now };",
-    "new": "  const said = { t: 'commit', seat: p, plays, at: now };",
+    "old": "  const said = { t: 'commit', seat: p, at: now }; // the room hears that he has, never what",
+    "new": "  const said = { t: 'commit', seat: p, plays, at: now }; // the room hears that he has, never what",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CARDS10-relay-concede",
     "file": "src/net/iliac/iliacTable.js",
-    "old": ": finish(t, now, p, idle ? 'idle' : null));",
-    "new": ": finish(t, now, 1 - p, idle ? 'idle' : null));",
+    "old": "    events.push(late ? finish(t, now, -1, 'void') : finish(t, now, p, idle ? 'idle' : null));",
+    "new": "    events.push(late ? finish(t, now, -1, 'void') : finish(t, now, 1 - p, idle ? 'idle' : null));",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "CARDS10-receipt-draw",
     "file": "src/net/iliac/iliacReceipt.js",
-    "old": "  if ((c.r === 2) !== (c.h === 'draw')) return false;   // a draw is said one way only\n",
-    "new": "",
+    "old": "  if ((c.r === 2) !== (c.h === 'draw')) return false; // a draw is said one way only\n  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
+    "new": "  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
     "tests": [
       "test/net/iliac/cards10_relay.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "CARDS10-service-short",
     "file": "server-account/src/iliac.js",
-    "old": "  if (short) return { error: 'deck-short', card: short };\n",
-    "new": "",
+    "old": "  if (short) return { error: 'deck-short', card: short };\n  const digest = await deckDigest(deck, { subtle });",
+    "new": "  const digest = await deckDigest(deck, { subtle });",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "CARDS10-service-account",
     "file": "server-account/src/iliac.js",
-    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n",
-    "new": "",
+    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n  if (!player.handle) return { recorded: false, why: 'guest' };",
+    "new": "  if (!player.handle) return { recorded: false, why: 'guest' };",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "CARDS10-service-title-foes",
     "file": "server-account/src/iliac.js",
-    "old": "Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= ILIAC_CHAMPION_MIN_FOES;",
-    "new": "Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES;",
+    "old": "export const iliacTitleWorthy = (r) =>\n  !!r && Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= ILIAC_CHAMPION_MIN_FOES;",
+    "new": "export const iliacTitleWorthy = (r) => !!r && Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES;",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ]
@@ -408,8 +408,8 @@
   {
     "name": "CARDS10-service-title-held",
     "file": "server-account/src/titles.js",
-    "old": "  if (player?.iliac?.champion === true) held.push('iliacchampion');",
-    "new": "",
+    "old": "  if (player?.iliac?.champion === true) held.push('iliacchampion'); // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top",
+    "new": "  // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ]
@@ -417,8 +417,8 @@
   {
     "name": "CARDS10-service-honours-door",
     "file": "server-account/src/honours.js",
-    "old": "arena: answers[0], iliac: answers[1], gambit: answers[2]",
-    "new": "arena: answers[0], gambit: answers[2]",
+    "old": "  return { ...player, arena: answers[0], iliac: answers[1], gambit: answers[2] };",
+    "new": "  return { ...player, arena: answers[0], gambit: answers[2] };",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ],
@@ -427,8 +427,8 @@
   {
     "name": "CARDS10-service-season-played",
     "file": "server-account/src/iliac.js",
-    "old": ": played ? await storeIliacChampion(ctx, season, nowS) : null;",
-    "new": ": await storeIliacChampion(ctx, season, nowS);",
+    "old": "      : played\n        ? await storeIliacChampion(ctx, season, nowS)\n        : null;",
+    "new": "      : await storeIliacChampion(ctx, season, nowS);",
     "tests": [
       "test/server/scale4b.test.js",
       "test/systems/legacy/stormshed2.test.js"
@@ -438,8 +438,8 @@
   {
     "name": "CARDS10-client-my-view",
     "file": "src/systems/iliac/iliacRemoteTable.js",
-    "old": "const v = this.seat() >= 0 ? (this.mine?.gameNo === this.state.gameNo ? this.mine.view : this.state.game) :",
-    "new": "const v = this.seat() >= 0 ? this.state.game :",
+    "old": "    const v =\n      this.seat() >= 0\n        ? this.mine?.gameNo === this.state.gameNo\n          ? this.mine.view\n          : this.state.game\n        : (this.state.game ?? this.state.last?.view ?? null);",
+    "new": "    const v = this.seat() >= 0 ? this.state.game : (this.state.game ?? this.state.last?.view ?? null);",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]
@@ -465,8 +465,8 @@
   {
     "name": "CARDS10-client-look",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "  if (d.online) d.online.send({ op: 'look', table: d.online.table });",
-    "new": "",
+    "old": "  if (d.online) d.online.send({ op: 'look', table: d.online.table }); // the room's table as it stands: a game under way is watched",
+    "new": "  // the room's table as it stands: a game under way is watched",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "CARDS10-client-sit-deck",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "chairs: d.online.chairs, deck: deck.cards.slice(), ...(order ? { order } : {}) });",
-    "new": "chairs: d.online.chairs, deck: [], ...(order ? { order } : {}) });",
+    "old": "        deck: deck.cards.slice(),",
+    "new": "        deck: [],",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]
@@ -483,8 +483,8 @@
   {
     "name": "CARDS10-client-commit",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "gameNo: at.gameNo, turn: at.turn, plays: g.staged }))",
-    "new": "gameNo: at.gameNo, turn: at.turn, plays: [] }))",
+    "old": "      if (d.online.send({ op: 'commit', table: d.online.table, gameNo: at.gameNo, turn: at.turn, plays: g.staged })) {",
+    "new": "      if (d.online.send({ op: 'commit', table: d.online.table, gameNo: at.gameNo, turn: at.turn, plays: [] })) {",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]
@@ -492,7 +492,7 @@
   {
     "name": "CARDS10-client-stand",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      if (d.online && (mySeat() >= 0 || g.sat)) d.online.send({ op: 'stand', table: d.online.table, gameNo: g.remote.state?.gameNo ?? 0 });",
+    "old": "      if (d.online && (mySeat() >= 0 || g.sat))\n        d.online.send({ op: 'stand', table: d.online.table, gameNo: g.remote.state?.gameNo ?? 0 });",
     "new": "",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
@@ -501,8 +501,8 @@
   {
     "name": "CARDS10-client-order",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "        go(r.order);",
-    "new": "        go(null);",
+    "old": "          go(r.order);",
+    "new": "          go(null);",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]
@@ -510,8 +510,8 @@
   {
     "name": "CARDS10-client-regulars",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "if (mySeat() < 0 && !g.sat && d.regulars.length) { g.mode = 'regulars'; g.why = null; }",
-    "new": "if (mySeat() < 0 && !g.sat && d.regulars.length) { g.why = null; }",
+    "old": "          g.mode = 'regulars';\n          g.why = null;",
+    "new": "          g.why = null;",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]
@@ -528,8 +528,8 @@
   {
     "name": "CARDS10-client-board-press",
     "file": "src/scenes/iliacTableGame.js",
-    "old": "      else if (id === 'board') { seasonBoard(); return; }\n",
-    "new": "",
+    "old": "      } else if (id === 'board') {\n        seasonBoard();\n        return;\n      }",
+    "new": "      }",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]
@@ -537,8 +537,8 @@
   {
     "name": "CARDS10-client-board-pinned",
     "file": "src/ui/iliacTableHud.js",
-    "old": "  if (b.pinned) out.push('...', row(b.pinned));\n",
-    "new": "",
+    "old": "  if (b.pinned) out.push('...', row(b.pinned));\n  out.push(",
+    "new": "  out.push(",
     "tests": [
       "test/net/iliac/cards10_client.test.js"
     ]
@@ -636,8 +636,8 @@
   {
     "name": "CARDS3c-clamp",
     "file": "src/world/card/cardHand.js",
-    "old": "  const k = Math.max(0, Math.min(1, s));\n  return multiply(m, trs(0, 0, -SQUEEZE_RISE",
-    "new": "  const k = s;\n  return multiply(m, trs(0, 0, -SQUEEZE_RISE",
+    "old": "  const k = Math.max(0, Math.min(1, s));",
+    "new": "  const k = s;",
     "tests": [
       "test/world/card/cards3c_gestures.test.js"
     ]

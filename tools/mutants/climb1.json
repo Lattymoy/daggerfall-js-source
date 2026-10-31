@@ -36,8 +36,8 @@
   {
     "name": "CLIMB1-any-facing",
     "file": "src/player/parkour.js",
-    "old": "  if (-(nx * dir[0] + nz * dir[2]) / l < PARKOUR_FACING_DOT) return null;\n",
-    "new": "",
+    "old": "  if (-(nx * dir[0] + nz * dir[2]) / l < PARKOUR_FACING_DOT) return null;\n  return { dist: hit.dist, normal: [nx / l, 0, nz / l], key: hit.key ?? null };",
+    "new": "  return { dist: hit.dist, normal: [nx / l, 0, nz / l], key: hit.key ?? null };",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",
@@ -80,8 +80,8 @@
   {
     "name": "CLIMB1-above-reach-taken",
     "file": "src/player/parkour.js",
-    "old": "  if (rise > high) return { ok: false, why: 'too-high' };\n",
-    "new": "",
+    "old": "  if (rise > high) return { ok: false, why: 'too-high' };\n  if (rise < low - 0.05) return { ok: false, why: 'too-low' };",
+    "new": "  if (rise < low - 0.05) return { ok: false, why: 'too-low' };",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",
@@ -113,8 +113,8 @@
   {
     "name": "CLIMB1-vault-any-height",
     "file": "src/player/parkour.js",
-    "old": "  if (!(ledge?.ok) || ledge.rise > PARKOUR_VAULT_MAX) return null;",
-    "new": "  if (!(ledge?.ok)) return null;",
+    "old": "  if (!ledge?.ok || ledge.rise > PARKOUR_VAULT_MAX) return null;",
+    "new": "  if (!ledge?.ok) return null;",
     "tests": [
       "test/systems/auditclimb1.test.js",
       "test/systems/parkour.test.js",

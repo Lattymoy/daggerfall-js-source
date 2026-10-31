@@ -16,7 +16,7 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { bannerClock, BANNER_TEXTURE_IDLE_S } from './bannerPass.js';
-import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // AUDIT 2: SHIP-FADE's dissolve, her cloth with her hull
+import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js'; // AUDIT 2: SHIP-FADE's dissolve, her cloth with her hull
 
 /** The quads along the fly and down the hoist. */
 export const FLAG_COLS = 12;
@@ -36,7 +36,9 @@ export const FLAG_WAVES = 1.6;
 const HEAD = `#version 300 es
 precision highp float;
 `;
-export const FLAG_VS = HEAD + `layout(location = 0) in vec2 aUV;   // x: along the fly 0..1 from the hoist, y: down the hoist 0..1
+export const FLAG_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aUV;   // x: along the fly 0..1 from the hoist, y: down the hoist 0..1
 uniform mat4 uVP;
 uniform vec3 uTop;     // the hoist's top, in the scene (her masthead)
 uniform vec3 uFly;     // along the fly, flat (downwind)
@@ -73,7 +75,9 @@ void main() {
   vWorld = p;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const FLAG_FS = HEAD + `in vec2 vUV;
+export const FLAG_FS =
+  HEAD +
+  `in vec2 vUV;
 in vec3 vWorld;
 in vec3 vNormal;
 uniform sampler2D uTex;
@@ -113,8 +117,21 @@ export function flagVertices(cols = FLAG_COLS, rows = FLAG_ROWS) {
   let o = 0;
   for (let j = 0; j < rows; j++) {
     for (let i = 0; i < cols; i++) {
-      const u0 = i / cols, u1 = (i + 1) / cols, v0 = j / rows, v1 = (j + 1) / rows;
-      for (const [u, v] of [[u0, v0], [u1, v0], [u1, v1], [u0, v0], [u1, v1], [u0, v1]]) { out[o++] = u; out[o++] = v; }
+      const u0 = i / cols,
+        u1 = (i + 1) / cols,
+        v0 = j / rows,
+        v1 = (j + 1) / rows;
+      for (const [u, v] of [
+        [u0, v0],
+        [u1, v0],
+        [u1, v1],
+        [u0, v0],
+        [u1, v1],
+        [u0, v1],
+      ]) {
+        out[o++] = u;
+        out[o++] = v;
+      }
     }
   }
   return out;
@@ -122,20 +139,22 @@ export function flagVertices(cols = FLAG_COLS, rows = FLAG_ROWS) {
 
 /** The fly's flat direction from a forward (her FlagObject's), unit - or +z for one that points straight up or down. */
 export function flyOf(forward) {
-  const x = Number(forward?.[0]) || 0, z = Number(forward?.[2]) || 0;
+  const x = Number(forward?.[0]) || 0,
+    z = Number(forward?.[2]) || 0;
   const l = Math.hypot(x, z);
   return l > 1e-4 ? [x / l, 0, z / l] : [0, 0, 1];
 }
 
 function mat4Multiply(out, a, b) {
   for (let c = 0; c < 4; c++) {
-    for (let r = 0; r < 4; r++) out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    for (let r = 0; r < 4; r++)
+      out[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
   }
   return out;
 }
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_WATER_FOG = new Float32Array(20);
-const NO_HAZE = new Float32Array(8);   // BANTHA1: uJungleHaze off ([1].x 0)
+const NO_HAZE = new Float32Array(8); // BANTHA1: uJungleHaze off ([1].x 0)
 const NO_FOCUS = new Float32Array(4);
 const GREY = new Float32Array([0.5, 0.5, 0.5]);
 const UP = new Float32Array([0, 1, 0]);
@@ -148,8 +167,33 @@ export class ShipFlagRenderer {
     const prog = buildProgram(gl, FLAG_VS, FLAG_FS);
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uTop', 'uFly', 'uSize', 'uTime', 'uWind', 'uPhase', 'uTex', 'uSunDir', 'uAmb', 'uSunCol', 'uSunScale', 'uMoonDir', 'uMoonCol', 'uMoonScale',
-      'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwFog', 'uJungleHaze', 'uFocus', 'uDissolveCut']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of [
+      'uVP',
+      'uTop',
+      'uFly',
+      'uSize',
+      'uTime',
+      'uWind',
+      'uPhase',
+      'uTex',
+      'uSunDir',
+      'uAmb',
+      'uSunCol',
+      'uSunScale',
+      'uMoonDir',
+      'uMoonCol',
+      'uMoonScale',
+      'uFogColor',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uDwFog',
+      'uJungleHaze',
+      'uFocus',
+      'uDissolveCut',
+    ])
+      this.u[n] = gl.getUniformLocation(prog, n);
     const verts = flagVertices();
     this.count = verts.length / 2;
     this.vao = gl.createVertexArray();
@@ -157,7 +201,8 @@ export class ShipFlagRenderer {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
     /** @type {Map<string, {tex: WebGLTexture | null, seen: number, failed?: number}>} a flag's texture, by its key, when it
@@ -171,10 +216,16 @@ export class ShipFlagRenderer {
    *  flag that would not paint). */
   textureOf(key, flag, seconds = 0) {
     const had = this.textures.get(key);
-    if (had) { had.seen = seconds; if (had.tex || seconds - had.failed < FLAG_REPAINT_S) return had.tex; }
+    if (had) {
+      had.seen = seconds;
+      if (had.tex || seconds - had.failed < FLAG_REPAINT_S) return had.tex;
+    }
     const gl = this.gl;
     const canvas = this.paint?.(flag) ?? null;
-    if (!canvas) { this.textures.set(key, { tex: null, seen: seconds, failed: seconds }); return null; }
+    if (!canvas) {
+      this.textures.set(key, { tex: null, seen: seconds, failed: seconds });
+      return null;
+    }
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
@@ -193,7 +244,11 @@ export class ShipFlagRenderer {
   /** A flag not drawn for BANNER_TEXTURE_IDLE_S gives its texture back - asked by every draw, one of no flags too (the
    *  host draws on, so the textures of flags sailed out of sight go). */
   prune(seconds) {
-    for (const [key, t] of this.textures) if (seconds - t.seen > BANNER_TEXTURE_IDLE_S) { if (t.tex) this.gl.deleteTexture(t.tex); this.textures.delete(key); }
+    for (const [key, t] of this.textures)
+      if (seconds - t.seen > BANNER_TEXTURE_IDLE_S) {
+        if (t.tex) this.gl.deleteTexture(t.tex);
+        this.textures.delete(key);
+      }
   }
 
   /**
@@ -205,9 +260,12 @@ export class ShipFlagRenderer {
   draw(flags, proj, view, eye, seconds, { light = null, wind = 0, fog = null } = {}) {
     this.drawn = 0;
     this.prune(seconds);
-    const list = (Array.isArray(flags) ? flags : []).filter((f) => f && Array.isArray(f.top) && f.top.every(Number.isFinite) && Array.isArray(f.size)).slice(0, FLAGS_MAX);
+    const list = (Array.isArray(flags) ? flags : [])
+      .filter((f) => f && Array.isArray(f.top) && f.top.every(Number.isFinite) && Array.isArray(f.size))
+      .slice(0, FLAGS_MAX);
     if (!list.length) return false;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
@@ -226,7 +284,7 @@ export class ShipFlagRenderer {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? GREY);
     if (U.uDwFog) gl.uniform4fv(U.uDwFog, fog?.dw ?? NO_WATER_FOG);
-    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze); none handed, off
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1: the jungle's haze (renderer.setJungleHaze); none handed, off
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
     gl.uniform1i(U.uTex, 0);
     gl.activeTexture(gl.TEXTURE0);
@@ -241,7 +299,8 @@ export class ShipFlagRenderer {
       gl.uniform3f(U.uFly, fly[0], fly[1], fly[2]);
       gl.uniform2f(U.uSize, f.size[0], f.size[1]);
       gl.uniform1f(U.uPhase, Number(f.phase) || 0);
-      if (U.uDissolveCut) gl.uniform1f(U.uDissolveCut, 1 - Math.max(0, Math.min(1, Number.isFinite(f.fade) ? f.fade : 1)));   // AUDIT 2: her fade's share CUT (nought whole)
+      if (U.uDissolveCut)
+        gl.uniform1f(U.uDissolveCut, 1 - Math.max(0, Math.min(1, Number.isFinite(f.fade) ? f.fade : 1))); // AUDIT 2: her fade's share CUT (nought whole)
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;
     }

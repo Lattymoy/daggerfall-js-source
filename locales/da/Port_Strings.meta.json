@@ -1339,11 +1339,6 @@
   "tr": "cfe481ae4b7b",
   "by": "claude-in-session"
  },
- "account.refusal.cacheCapped": {
-  "en": "9104ce44c542",
-  "tr": "aeab17895ac5",
-  "by": "claude-in-session"
- },
  "account.refusal.cacheClosed": {
   "en": "e8e601ad45b4",
   "tr": "3504ec26f52e",
@@ -12574,6 +12569,11 @@
   "tr": "8fa72b0de760",
   "by": "claude-in-session"
  },
+ "eg.potion.wait": {
+  "en": "3ee335241484",
+  "tr": "6b81c6fcabe2",
+  "by": "claude-in-session"
+ },
  "eg.progress.gauntlet": {
   "en": "83d2b8b37cf7",
   "tr": "e4fcb9c6a34d",
@@ -20629,9 +20629,9 @@
   "tr": "45d0dce86c15",
   "by": "claude-in-session"
  },
- "madeRules.potions": {
-  "en": "88310252fc38",
-  "tr": "30586cb1cc6f",
+ "madeRules.potionClock": {
+  "en": "74ec7fa1a624",
+  "tr": "b30c58f415bc",
   "by": "claude-in-session"
  },
  "madeRules.regen": {
@@ -42267,6 +42267,11 @@
  "shop.who.reading": {
   "en": "9964cedb67bf",
   "tr": "65a7e3a374d8",
+  "by": "claude-in-session"
+ },
+ "shop.who.unread": {
+  "en": "dcec3bbdb56e",
+  "tr": "a4d4d0510ee7",
   "by": "claude-in-session"
  },
  "shop.yourName": {

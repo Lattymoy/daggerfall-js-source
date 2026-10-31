@@ -4,7 +4,13 @@
 // server's Discord invite with a Copy button. It holds nothing itself: the motor is held by the paralysis gates
 // (characters/playerEntity.js staffFrozen), and the relay and the account service hold a game that never draws this.
 // It takes no focus and no keys, so the mouse still looks around and the chat still opens on the Staff tab.
-import { frozenTitleText, frozenBodyText, frozenUntilText, frozenReasonText, staffInviteText } from '../net/staffChat.js';
+import {
+  frozenTitleText,
+  frozenBodyText,
+  frozenUntilText,
+  frozenReasonText,
+  staffInviteText,
+} from '../net/staffChat.js';
 import { copyText } from '../net/chat.js';
 
 // z 34: over the HUD's banners and title cards (30-32), under the game's windows and boxes (35-39) and the asset picker
@@ -21,17 +27,39 @@ text-align:center;pointer-events:none}
  * @param {{ doc?: Document, win?: any }} [io]
  */
 export function createFreezeScreen({ doc = document, win = globalThis } = {}) {
-  const el = (/** @type {string} */ tag, /** @type {string} */ cls = '', text = '') => { const n = doc.createElement(tag); if (cls) n.className = cls; if (text) n.textContent = text; return n; };
-  if (!doc.getElementById('dffreeze-css')) { const s = el('style'); s.id = 'dffreeze-css'; s.textContent = CSS; doc.head.append(s); }
+  const el = (/** @type {string} */ tag, /** @type {string} */ cls = '', text = '') => {
+    const n = doc.createElement(tag);
+    if (cls) n.className = cls;
+    if (text) n.textContent = text;
+    return n;
+  };
+  if (!doc.getElementById('dffreeze-css')) {
+    const s = el('style');
+    s.id = 'dffreeze-css';
+    s.textContent = CSS;
+    doc.head.append(s);
+  }
   const root = el('div', 'dffreeze');
   root.hidden = true;
   root.setAttribute('role', 'status');
-  const title = el('h2'), body = el('p'), until = el('p'), why = el('p'), invite = el('p', 'dffreeze-invite');
-  const link = el('span'), copy = /** @type {HTMLButtonElement} */ (el('button'));
+  const title = el('h2'),
+    body = el('p'),
+    until = el('p'),
+    why = el('p'),
+    invite = el('p', 'dffreeze-invite');
+  const link = el('span'),
+    copy = /** @type {HTMLButtonElement} */ (el('button'));
   copy.type = 'button';
-  copy.tabIndex = -1;   // never the focus: the keys stay the game's
+  copy.tabIndex = -1; // never the focus: the keys stay the game's
   let words = '';
-  copy.addEventListener('click', (e) => { e.stopPropagation?.(); try { win.navigator?.clipboard?.writeText?.(words)?.catch?.(() => {}); } catch { /* the words stay on the screen to select */ } });
+  copy.addEventListener('click', (e) => {
+    e.stopPropagation?.();
+    try {
+      win.navigator?.clipboard?.writeText?.(words)?.catch?.(() => {});
+    } catch {
+      /* the words stay on the screen to select */
+    }
+  });
   invite.append(link, copy);
   root.append(title, body, until, why, invite);
   doc.body.append(root);
@@ -50,6 +78,8 @@ export function createFreezeScreen({ doc = document, win = globalThis } = {}) {
       link.textContent = url ? staffInviteText(url) : '';
       copy.textContent = copyText();
     },
-    destroy() { root.remove(); },
+    destroy() {
+      root.remove();
+    },
   };
 }

@@ -2,8 +2,8 @@
   {
     "name": "DRAGON7-the-wings-left-brass",
     "file": "src/characters/dwarvenDragonShiny.js",
-    "old": "  if (h >= WING_LO && h < WING_HI) return rgb(AETHER_WING_HUE, Math.min(1, s * 1.1), v);\n",
-    "new": "",
+    "old": "  if (h >= WING_LO && h < WING_HI) return rgb(AETHER_WING_HUE, Math.min(1, s * 1.1), v);\n  return rgb(AETHER_HUE, Math.min(1, s * 1.05), Math.min(1, v * 1.08));",
+    "new": "  return rgb(AETHER_HUE, Math.min(1, s * 1.05), Math.min(1, v * 1.08));",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DRAGON7-the-brass-left",
     "file": "src/characters/dwarvenDragonShiny.js",
-    "old": "  return rgb(AETHER_HUE, Math.min(1, s * 1.05), Math.min(1, v * 1.08));\n",
-    "new": "  return [r, g, b];\n",
+    "old": "  return rgb(AETHER_HUE, Math.min(1, s * 1.05), Math.min(1, v * 1.08));",
+    "new": "  return [r, g, b];",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DRAGON7-the-greys-turned",
     "file": "src/characters/dwarvenDragonShiny.js",
-    "old": "  if (s < GREY_SAT) return rgb(AETHER_HUE + 10, Math.max(s, 0.08), v);\n",
-    "new": "",
+    "old": "  if (s < GREY_SAT) return rgb(AETHER_HUE + 10, Math.max(s, 0.08), v);\n  if (h >= WING_LO && h < WING_HI) return rgb(AETHER_WING_HUE, Math.min(1, s * 1.1), v);",
+    "new": "  if (h >= WING_LO && h < WING_HI) return rgb(AETHER_WING_HUE, Math.min(1, s * 1.1), v);",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DRAGON7-the-CRC-left",
     "file": "src/characters/dwarvenDragonShiny.js",
-    "old": "      out.set([crc >>> 24, (crc >>> 16) & 255, (crc >>> 8) & 255, crc & 255], i + 8 + n);\n",
-    "new": "",
+    "old": "      out.set([crc >>> 24, (crc >>> 16) & 255, (crc >>> 8) & 255, crc & 255], i + 8 + n);\n      return out;",
+    "new": "      return out;",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DRAGON7-1801-the-brass-bytes",
     "file": "src/characters/dwarvenDragon.js",
-    "old": "load: async () => aetherbrightPng(await fetchBytes(url)) });",
-    "new": "load: () => fetchBytes(url) });",
+    "old": "        load: async () => aetherbrightPng(await fetchBytes(url)),",
+    "new": "        load: () => fetchBytes(url),",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "DRAGON7-the-icon-brass",
     "file": "src/systems/dragon/dragonMount.js",
-    "old": "({ archive: dragonArchiveOf(dragonLookOfItem(it)), record: DRAGON_MOUNT_ICON[1] })",
-    "new": "({ archive: DWARVEN_DRAGON_ARCHIVE, record: DRAGON_MOUNT_ICON[1] })",
+    "old": "  archive: dragonArchiveOf(dragonLookOfItem(it)),",
+    "new": "  archive: DWARVEN_DRAGON_ARCHIVE,",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ]

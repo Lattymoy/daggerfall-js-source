@@ -38,16 +38,22 @@ export const PREBUILD_REACH = R + NEAR_RING + 1;
  * @returns {Array<{ s: number, near: boolean }>}
  */
 export function prebuildWanted(x, y, px, py, heading = null) {
-  const dx = x - px + R, dy = y - py + R, out = [];
+  const dx = x - px + R,
+    dy = y - py + R,
+    out = [];
   const [hx, hy] = heading ?? [0, 0];
-  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) => (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;
+  const ahead = (/** @type {number} */ ox, /** @type {number} */ oy) =>
+    (hx !== 0 || hy !== 0) && Math.max(Math.abs(ox - hx), Math.abs(oy - hy)) <= NEAR_RING;
   for (let ring = 0; ring <= NEAR_RING + 1; ring++) {
     const here = [];
-    for (let oy = -ring; oy <= ring; oy++) for (let ox = -ring; ox <= ring; ox++) {
-      if (Math.max(Math.abs(ox), Math.abs(oy)) !== ring) continue;
-      const sx = dx + ox, sy = dy + oy;
-      if (sx >= 0 && sy >= 0 && sx < IMPERIAL_SPAN && sy < IMPERIAL_SPAN) here.push({ s: sy * IMPERIAL_SPAN + sx, near: ring <= NEAR_RING || ahead(ox, oy), d: Math.hypot(ox, oy) });
-    }
+    for (let oy = -ring; oy <= ring; oy++)
+      for (let ox = -ring; ox <= ring; ox++) {
+        if (Math.max(Math.abs(ox), Math.abs(oy)) !== ring) continue;
+        const sx = dx + ox,
+          sy = dy + oy;
+        if (sx >= 0 && sy >= 0 && sx < IMPERIAL_SPAN && sy < IMPERIAL_SPAN)
+          here.push({ s: sy * IMPERIAL_SPAN + sx, near: ring <= NEAR_RING || ahead(ox, oy), d: Math.hypot(ox, oy) });
+      }
     here.sort((a, b) => Number(b.near) - Number(a.near) || a.d - b.d || a.s - b.s);
     out.push(...here.map(({ s, near }) => ({ s, near })));
   }
@@ -78,29 +84,49 @@ export function slicePieceKeys(s, near) {
 const LOOKS_KEEP = 256;
 /** IC-STUTTER: whether the page already has a piece - made and kept by the world-data door or the models' family (a read
  *  of it makes nothing). @param {string} key */
-export const pageHasPiece = (key) => (key.startsWith('b:') ? portBlockFamilyHas(key.slice(2)) : customModelReady(Number(key.slice(2))));
+export const pageHasPiece = (key) =>
+  key.startsWith('b:') ? portBlockFamilyHas(key.slice(2)) : customModelReady(Number(key.slice(2)));
 
 /** @param {{ state: any, built?: Map<string, any> }} host @param {{ make?: () => any, centre?: () => ?{ px: number, py: number }, pageHas?: (key: string) => boolean, onPixel?: (px: number, py: number) => any }} [o]
  *  the client's maker, the city's centre pixel, the page's own caches and the capitals' pixels (the pins' fakes) */
-export function createCapitalPrebuild(host, { make = () => createImperialPrebuild(), centre: centreOf = () => (CITY >= 0 ? capitalCentrePixel(CITY) : null), pageHas = pageHasPiece, onPixel = capitalOnPixel } = {}) {
+export function createCapitalPrebuild(
+  host,
+  {
+    make = () => createImperialPrebuild(),
+    centre: centreOf = () => (CITY >= 0 ? capitalCentrePixel(CITY) : null),
+    pageHas = pageHasPiece,
+    onPixel = capitalOnPixel,
+  } = {},
+) {
   /** @type {any} */
-  let client = null, at = '';
+  let client = null,
+    at = '';
   /** IC-STUTTER: the pixel the traveller stood on before this one, and the way they last crossed. */
-  let /** @type {?{ x: number, y: number }} */ was = null, /** @type {?number[]} */ heading = null;
+  let /** @type {?{ x: number, y: number }} */ was = null,
+    /** @type {?number[]} */ heading = null;
   /** IC-STUTTER: A LOOK A SLICE - per slice and view (`s * 2 + near`), its pieces' keys and how far along them a look has
    *  found every key had (held from a worker, or the page's): a frame looks again from the first key still owed, never
    *  the whole view's (a queue of 81 pixels of the city looked at whole was ~2 ms a frame while the pump waited).
    *  @type {Map<number, { keys: string[], at: number }>} */
   const looks = new Map();
-  const drop = () => { client?.dispose(); client = null; looks.clear(); };
+  const drop = () => {
+    client?.dispose();
+    client = null;
+    looks.clear();
+  };
   function sweep() {
-    const cur = host.state?.current, c = cur ? centreOf() : null;
+    const cur = host.state?.current,
+      c = cur ? centreOf() : null;
     const key = cur && c ? `${cur.x},${cur.y}:${c.px},${c.py}` : '';
     if (key === at) return;
     at = key;
-    if (cur && was && (cur.x !== was.x || cur.y !== was.y)) heading = [Math.sign(cur.x - was.x), Math.sign(cur.y - was.y)];   // IC-STUTTER
+    if (cur && was && (cur.x !== was.x || cur.y !== was.y))
+      heading = [Math.sign(cur.x - was.x), Math.sign(cur.y - was.y)]; // IC-STUTTER
     was = cur ? { x: cur.x, y: cur.y } : null;
-    if (!cur || !c || Math.max(Math.abs(cur.x - c.px), Math.abs(cur.y - c.py)) > PREBUILD_REACH) { drop(); return; }
+    if (!cur || !c || Math.max(Math.abs(cur.x - c.px), Math.abs(cur.y - c.py)) > PREBUILD_REACH) {
+      drop();
+      return;
+    }
     client ??= make();
     client.want(prebuildWanted(cur.x, cur.y, c.px, c.py, heading));
   }
@@ -115,7 +141,8 @@ export function createCapitalPrebuild(host, { make = () => createImperialPrebuil
   function lookOf(px, py) {
     const on = onPixel(px, py);
     if (!on?.cap?.family) return null;
-    const near = capitalNear(px, py, host.state?.current), id = on.s * 2 + (near ? 1 : 0);
+    const near = capitalNear(px, py, host.state?.current),
+      id = on.s * 2 + (near ? 1 : 0);
     let look = looks.get(id);
     if (!look) {
       look = { keys: slicePieceKeys(on.s, near), at: 0 };
@@ -127,7 +154,10 @@ export function createCapitalPrebuild(host, { make = () => createImperialPrebuil
   }
   /** the pieces a look still owes, put on `out` (no list made a frame for each).
    *  @param {{ keys: string[], at: number }} look @param {string[]} out */
-  const owedInto = (look, out) => { for (let i = look.at; i < look.keys.length; i++) if (!had(look.keys[i])) out.push(look.keys[i]); return out; };
+  const owedInto = (look, out) => {
+    for (let i = look.at; i < look.keys.length; i++) if (!had(look.keys[i])) out.push(look.keys[i]);
+    return out;
+  };
   /** IC-STUTTER: a look done, looked at whole again before its pixel is built - a piece let go since it was looked at is
    *  owed again, and the look goes back to it. @param {{ keys: string[], at: number }} look */
   function whole(look) {
@@ -155,17 +185,42 @@ export function createCapitalPrebuild(host, { make = () => createImperialPrebuil
    */
   function firstReady(queue) {
     if (!client?.alive || !queue.length) return true;
-    let first = -1, owing = 0;
-    const holes = [], behind = [];
+    let first = -1,
+      owing = 0;
+    const holes = [],
+      behind = [];
     for (let i = 0; i < queue.length && (first < 0 || owing < NEED_AHEAD); i++) {
-      const q = queue[i], look = lookOf(q.px, q.py);
-      if (!look || (look.at >= look.keys.length && (first >= 0 || whole(look)))) { if (first < 0) first = i; continue; }
-      if (++owing > NEED_AHEAD) continue;   // asked when the pump comes nearer it
+      const q = queue[i],
+        look = lookOf(q.px, q.py);
+      if (!look || (look.at >= look.keys.length && (first >= 0 || whole(look)))) {
+        if (first < 0) first = i;
+        continue;
+      }
+      if (++owing > NEED_AHEAD) continue; // asked when the pump comes nearer it
       owedInto(look, host.built?.has(`${q.px},${q.py}`) ? behind : holes);
     }
     if (holes.length || behind.length) client.need([...holes, ...behind]);
     if (first > 0) queue.unshift(...queue.splice(first, 1));
     return first >= 0;
   }
-  return { sweep, readyToBuild, firstReady, drop: () => { drop(); at = ''; was = null; heading = null; }, get client() { return client; }, get heading() { return heading; }, get looks() { return looks.size; } };
+  return {
+    sweep,
+    readyToBuild,
+    firstReady,
+    drop: () => {
+      drop();
+      at = '';
+      was = null;
+      heading = null;
+    },
+    get client() {
+      return client;
+    },
+    get heading() {
+      return heading;
+    },
+    get looks() {
+      return looks.size;
+    },
+  };
 }

@@ -16,7 +16,12 @@
 // and the gait it took (HORSE-TIERS: the motor's own `rideWalking` - a gallop asked and refused rides DFU's pace in
 // Boons and walks in Hard, which only the motor knows), and `frame` whether the panel may stand: Enhanced Plus, walking,
 // outdoors - and what covers it.
-import { drawEnhancedSaddle, hideEnhancedSaddle, enhancedSaddleMounted, toggleSaddlePanel } from '../ui/enhanced/enhancedSaddle.js';
+import {
+  drawEnhancedSaddle,
+  hideEnhancedSaddle,
+  enhancedSaddleMounted,
+  toggleSaddlePanel,
+} from '../ui/enhanced/enhancedSaddle.js';
 import { upkeepReach } from '../systems/upkeep/upkeepRuntime.js';
 import { activeWagonItem } from '../systems/wagon/wagonKinds.js';
 import { wagonWord } from '../systems/wagon/wagonUpkeep.js';
@@ -31,21 +36,50 @@ export const SADDLE_MODES = Object.freeze(['Horse', 'Cart']);
  *   say: (t: string) => void, pass: (m: number) => void, openStable: () => void, canView: () => boolean,
  *   toggleView: () => void, foot: () => void }} deps
  */
-export function createSaddleHost({ upkeep, runtime, items, wagonKg, wagonLimit, say, pass, openStable, canView, toggleView, foot }) {
-  let speed = 0, galloping = false, walking = false;
+export function createSaddleHost({
+  upkeep,
+  runtime,
+  items,
+  wagonKg,
+  wagonLimit,
+  say,
+  pass,
+  openStable,
+  canView,
+  toggleView,
+  foot,
+}) {
+  let speed = 0,
+    galloping = false,
+    walking = false;
   /** @type {any} the read the panel stands on now - the horse its Feed and its apple go to */
   let shown = null;
   /** The upkeep's reach for a press made in the saddle: the horse is under its rider, so it is always near. */
-  const reach = () => { const rt = runtime(); return { ...upkeepReach(rt, !!rt), near: true, stabled: false }; };
-  const act = (verb, arg = 0) => { const r = upkeep.act(verb, arg, { ...reach(), pass }); if (r?.text) say(r.text); return r; };
+  const reach = () => {
+    const rt = runtime();
+    return { ...upkeepReach(rt, !!rt), near: true, stabled: false };
+  };
+  const act = (verb, arg = 0) => {
+    const r = upkeep.act(verb, arg, { ...reach(), pass });
+    if (r?.text) say(r.text);
+    return r;
+  };
   const hooks = {
     // the feed and the apple to the horse the panel shows hungry - the one ridden, or the team's hungriest
-    feed: () => act('feed', shown?.horse?.feed ?? 0), treat: () => act('treat', shown?.horse?.feed ?? 0), kit: () => act('kit'),
-    cargo: () => { runtime()?.openWagonCargo?.(); },
+    feed: () => act('feed', shown?.horse?.feed ?? 0),
+    treat: () => act('treat', shown?.horse?.feed ?? 0),
+    kit: () => act('kit'),
+    cargo: () => {
+      runtime()?.openWagonCargo?.();
+    },
     stable: () => openStable(),
     view: () => toggleView(),
     // Horse Cart and Cargo's mount key (its handler: the direct set to foot, its horse stood behind), else the classic foot
-    dismount: () => { const rt = runtime(); if (rt) rt.handleQuickMountOrDismount(); else foot(); },
+    dismount: () => {
+      const rt = runtime();
+      if (rt) rt.handleQuickMountOrDismount();
+      else foot();
+    },
   };
 
   /** The frame's motion: `metres` rolled over `dt` seconds, `gallop` the run on a horse, `walk` the walk the motor took
@@ -60,20 +94,30 @@ export function createSaddleHost({ upkeep, runtime, items, wagonKg, wagonLimit, 
   /** The panel's read for `mode`, or null out of the saddle. @param {string} mode */
   function read(mode) {
     if (!SADDLE_MODES.includes(mode)) return null;
-    const rt = runtime(), r = reach();
+    const rt = runtime(),
+      r = reach();
     const base = upkeep.saddle(mode);
     const cart = mode === 'Cart';
     const w = cart ? activeWagonItem(items() ?? []) : null;
     const limit = cart ? wagonLimit() : 0;
     return {
-      mode, name: rt?.hasHorseName ? rt.horseName : '', wagonName: w ? wagonWord(w) : '',
-      speed, galloping: mode === 'Horse' && galloping,
-      walks: mode === 'Horse' && walking,   // HORSE-WALK: the ride's own pace a walk - the word the motor took (HORSE-TIERS), so the panel says what it does
-      horse: base.horse, wagon: cart ? base.wagon : null, oats: base.oats, apples: base.apples, kits: base.kits,
+      mode,
+      name: rt?.hasHorseName ? rt.horseName : '',
+      wagonName: w ? wagonWord(w) : '',
+      speed,
+      galloping: mode === 'Horse' && galloping,
+      walks: mode === 'Horse' && walking, // HORSE-WALK: the ride's own pace a walk - the word the motor took (HORSE-TIERS), so the panel says what it does
+      horse: base.horse,
+      wagon: cart ? base.wagon : null,
+      oats: base.oats,
+      apples: base.apples,
+      kits: base.kits,
       load: cart && limit > 0 ? { kg: wagonKg(), limit } : null,
-      near: true, wagonNear: r.wagonNear,
+      near: true,
+      wagonNear: r.wagonNear,
       cargo: cart && rt ? !!rt.canAccessWagonInventory?.()?.allowed : null,
-      view: !!canView(), hcc: !!rt,
+      view: !!canView(),
+      hcc: !!rt,
     };
   }
 
@@ -84,13 +128,40 @@ export function createSaddleHost({ upkeep, runtime, items, wagonKg, wagonLimit, 
    * the saddle and with nothing over the HUD.
    * @param {{ show: boolean, mode: string, covered?: boolean, touch?: boolean, mouseFree?: boolean, freeKey?: string, keyOf?: (a: string) => string, toggle?: boolean }} f
    */
-  function frame({ show, mode, covered = false, touch = false, mouseFree = true, freeKey = 'Y', keyOf, toggle = false }) {
+  function frame({
+    show,
+    mode,
+    covered = false,
+    touch = false,
+    mouseFree = true,
+    freeKey = 'Y',
+    keyOf,
+    toggle = false,
+  }) {
     const s = show ? read(mode) : null;
     if (s && toggle && !covered) toggleSaddlePanel();
     shown = s;
-    if (!s) { speed = 0; galloping = false; walking = false; if (enhancedSaddleMounted()) hideEnhancedSaddle(); return null; }
+    if (!s) {
+      speed = 0;
+      galloping = false;
+      walking = false;
+      if (enhancedSaddleMounted()) hideEnhancedSaddle();
+      return null;
+    }
     return drawEnhancedSaddle({ saddle: s, covered, touch, mouseFree, freeKey, keyOf }, hooks);
   }
 
-  return { motion, read, frame, hooks, hide: () => { speed = 0; hideEnhancedSaddle(); }, get speed() { return speed; } };
+  return {
+    motion,
+    read,
+    frame,
+    hooks,
+    hide: () => {
+      speed = 0;
+      hideEnhancedSaddle();
+    },
+    get speed() {
+      return speed;
+    },
+  };
 }

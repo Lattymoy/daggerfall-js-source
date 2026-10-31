@@ -13,7 +13,12 @@
 // prototype's first phone shot drew every star as a vertical streak
 // because a 480x270 canvas was stretched over a portrait screen.
 
-const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+const BAYER = [
+  [0, 8, 2, 10],
+  [12, 4, 14, 6],
+  [3, 11, 1, 9],
+  [15, 7, 13, 5],
+];
 
 // The ramp, deep night up top to a low horizon glow. Kept here rather
 // than in the stylesheet: these are QUANTIZATION STEPS, not theme
@@ -21,8 +26,8 @@ const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
 // dither texture, which is a drawing decision, not a palette one.
 const RAMP = ['#07080d', '#0b0d14', '#10141d', '#161c27', '#1e2632', '#28313f'];
 
-const SCALE = 4;     // one art pixel = 4 css pixels before DPR
-const OVER = 1.5;    // the canvas overdraws 150% so the drift never shows an edge
+const SCALE = 4; // one art pixel = 4 css pixels before DPR
+const OVER = 1.5; // the canvas overdraws 150% so the drift never shows an edge
 
 const hx = (s) => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
 // MEM-AUDIT (2026-10-23): the steps as bytes once - a draw split the strings again at every pixel, a new array each, and
@@ -45,22 +50,28 @@ export function drawPixelGround(canvas, w, h, t = 0, { keep = true } = {}) {
   const g = canvas.getContext('2d');
   // AUDIT MEM-AUDIT P9: `keep` false for a one-off draw (the loading screen's still, kept a session) - its image is not held
   let img = keep ? _images.get(canvas) : null;
-  if (!img || img.width !== W || img.height !== H) { img = g.createImageData(W, H); if (keep) _images.set(canvas, img); else _images.delete(canvas); }
+  if (!img || img.width !== W || img.height !== H) {
+    img = g.createImageData(W, H);
+    if (keep) _images.set(canvas, img);
+    else _images.delete(canvas);
+  }
   const data = img.data;
   let seed = 0xda66e4;
   const rnd = () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 0x100000000;
   // The blobs drift in slow ellipses around their homes - different
   // periods so the pair never repeats together.
   const fogs = [
-    { x: W * (0.30 + 0.05 * Math.sin(t / 41)), y: H * (0.72 + 0.03 * Math.cos(t / 53)), r: H * 0.55, k: 1.4 },
+    { x: W * (0.3 + 0.05 * Math.sin(t / 41)), y: H * (0.72 + 0.03 * Math.cos(t / 53)), r: H * 0.55, k: 1.4 },
     { x: W * (0.78 + 0.06 * Math.cos(t / 47)), y: H * (0.35 + 0.04 * Math.sin(t / 59)), r: H * 0.45, k: 0.9 },
   ];
   for (let y = 0; y < H; y++) {
     for (let x = 0; x < W; x++) {
-      let v = y / H;                        // 0 top .. 1 bottom
+      let v = y / H; // 0 top .. 1 bottom
       for (let j = 0; j < fogs.length; j++) {
-        const f = fogs[j], dx = x - f.x, dy = y - f.y;
-        if (dx >= f.r || dx <= -f.r || dy >= f.r || dy <= -f.r) continue;   // MEM-AUDIT: hypot >= max(|dx|, |dy|) >= r - d >= 1, no fog
+        const f = fogs[j],
+          dx = x - f.x,
+          dy = y - f.y;
+        if (dx >= f.r || dx <= -f.r || dy >= f.r || dy <= -f.r) continue; // MEM-AUDIT: hypot >= max(|dx|, |dy|) >= r - d >= 1, no fog
         const d = Math.hypot(dx, dy) / f.r;
         if (d < 1) v += (1 - d) * (1 - d) * 0.22 * f.k;
       }
@@ -70,14 +81,18 @@ export function drawPixelGround(canvas, w, h, t = 0, { keep = true } = {}) {
       const th = (BAYER[y & 3][x & 3] + 0.5) / 16;
       const c = RAMP_RGB[Math.min(RAMP.length - 1, i0 + (t - i0 > th ? 1 : 0))];
       const o = (y * W + x) * 4;
-      data[o] = c[0]; data[o + 1] = c[1]; data[o + 2] = c[2]; data[o + 3] = 255;
+      data[o] = c[0];
+      data[o + 1] = c[1];
+      data[o + 2] = c[2];
+      data[o + 3] = 255;
     }
   }
   // Stars: upper half, density by area, two brightnesses, same seed
   // every draw - a sky that reshuffles on every resize flickers.
   const n = Math.round((W * H) / 1440);
   for (let i = 0; i < n; i++) {
-    const x = (rnd() * W) | 0, y = (rnd() * H * 0.55) | 0;
+    const x = (rnd() * W) | 0,
+      y = (rnd() * H * 0.55) | 0;
     const bright = rnd() < 0.25;
     const phase = rnd() * Math.PI * 2;
     let b = bright ? 200 : 120;
@@ -85,7 +100,9 @@ export function drawPixelGround(canvas, w, h, t = 0, { keep = true } = {}) {
     // STEPPED, because a pixel star fades in levels, not a ramp.
     if (bright) b = [140, 170, 200, 230][Math.floor(2 + 1.99 * Math.sin(t / 1.7 + phase))];
     const o = (y * W + x) * 4;
-    data[o] = b; data[o + 1] = b; data[o + 2] = b - 10;
+    data[o] = b;
+    data[o + 1] = b;
+    data[o + 2] = b - 10;
   }
   g.putImageData(img, 0, 0);
 }

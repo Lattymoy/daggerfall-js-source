@@ -12,8 +12,8 @@
   {
     "name": "MWBRIG4-every-metal-in-steel",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "  parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),",
-    "new": "  parts: Object.freeze([Object.freeze({ part: 'cuirass', model: 'brigandine_steel.nif' })]),",
+    "old": "    parts: Object.freeze([Object.freeze({ part: 'cuirass', model: `brigandine_${metal.toLowerCase()}.nif` })]),",
+    "new": "    parts: Object.freeze([Object.freeze({ part: 'cuirass', model: 'brigandine_steel.nif' })]),",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "MWBRIG4-the-row-keyed-on-steel",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "  material: ARMOR_MATERIAL[metal],\n  skinFrom: BRIGANDINE_SKIN_FROM,",
-    "new": "  material: ARMOR_MATERIAL.Steel,\n  skinFrom: BRIGANDINE_SKIN_FROM,",
+    "old": "    material: ARMOR_MATERIAL[metal],",
+    "new": "    material: ARMOR_MATERIAL.Steel,",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
     ]
@@ -31,7 +31,7 @@
   {
     "name": "MWBRIG4-not-fitted",
     "file": "src/characters/ownModels/ownArmorModels.js",
-    "old": "  fitTo: 'chest',   // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck",
+    "old": "    fitTo: 'chest', // MW-BRIG3: its closed top sits where the chest skin it hides ends, at the base of the neck",
     "new": "",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
@@ -40,8 +40,8 @@
   {
     "name": "MWBRIG4-every-nif-names-steel",
     "file": "tools/bakeBrigandine.mjs",
-    "old": "nif: meshToNif(named, { texture: textureNameFor(metal), node: 'Brigandine' })",
-    "new": "nif: meshToNif(named, { texture: TEXTURE_NAME, node: 'Brigandine' })",
+    "old": "  const out = {\n    metal,\n    png,\n    dds,\n    nif: meshToNif(named, { texture: textureNameFor(metal), node: 'Brigandine' }),\n    sheets: null,\n  };",
+    "new": "  const out = { metal, png, dds, nif: meshToNif(named, { texture: TEXTURE_NAME, node: 'Brigandine' }), sheets: null };",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "MWBRIG4-a-missing-painting-baked-anyway",
     "file": "tools/bakeBrigandine.mjs",
-    "old": "      if (!pngs[metal]) throw new Error(`no painting for the ${metal} brigandine (${PAINTING[metal]})`);",
-    "new": "",
+    "old": "      if (!pngs[metal]) throw new Error(`no painting for the ${metal} brigandine (${PAINTING[metal]})`);\n      return paint(mesh, metal, pngs[metal], sheets);",
+    "new": "      return paint(mesh, metal, pngs[metal], sheets);",
     "tests": [
       "test/formats/morrowind/mwbrig4.test.js"
     ]

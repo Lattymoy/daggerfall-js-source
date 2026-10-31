@@ -38,8 +38,8 @@
   {
     "name": "HELM-TIME-presses-kept-online",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.timeDial === false) return [];\n  return [{ act: 'slower'",
-    "new": "  return [{ act: 'slower'",
+    "old": "  if (h.timeDial === false) return [];\n  return [",
+    "new": "  return [",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HELM-TIME-pad-still-steps",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "    else if (h.timeDial === false) return false;   // HELM-TIME-ONLINE: no dial to step\n",
-    "new": "",
+    "old": "    else if (h.timeDial === false)\n      return false; // HELM-TIME-ONLINE: no dial to step\n    else if (dir === 'left') press(A.slower);",
+    "new": "    else if (dir === 'left') press(A.slower);",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HELM-TIME-pad-hold-puts-back",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.timeDial === false) return false;   // HELM-TIME-ONLINE: no time to put back\n",
-    "new": "",
+    "old": "  if (h.timeDial === false) return false; // HELM-TIME-ONLINE: no time to put back\n  if (dir === 'left') press(A.normal);",
+    "new": "  if (dir === 'left') press(A.normal);",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HELM-TIME-prompt-says-the-dial",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.timeDial === false) { if (trims) rows.push",
-    "new": "  if (false) { if (trims) rows.push",
+    "old": "  if (h.timeDial === false) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]

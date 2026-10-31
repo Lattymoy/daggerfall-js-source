@@ -117,8 +117,8 @@ test('L10N3c a -LOC file that will not do is said and read as none - no DisplayN
 
 test('L10N3c by source: both parse doors take the -LOC DisplayName, GetMessage asks the table, and the offer list\'s label is wired to it', () => {
   const machine = rd('src/systems/quest/machine.js');
-  assert.match(machine, /localizeDisplayName\(quest\);   \/\/ L10N3c\n\s+this\.questsToInvoke\.push\(quest\);/, 'scheduleQuest');
-  assert.match(machine, /return localizeDisplayName\(this\.parser\.parse\(lines, factionId,/, 'parseQuestForLists');
-  assert.match(rd('src/systems/quest/quest.js'), /const lines = localizedQuestMessage\(this\.questName, messageID\);\n\s+if \(lines\) result\.localize\(lines\);/);   // L10N5: read in place, the quest's own kept
+  assert.match(machine, /localizeDisplayName\(quest\); \/\/ L10N3c\n\s*this\.questsToInvoke\.push\(quest\);/, 'scheduleQuest');
+  assert.match(machine, /return localizeDisplayName\(\n\s*this\.parser\.parse\(lines, factionId,/, 'parseQuestForLists');
+  assert.match(rd('src/systems/quest/quest.js'), /const lines = localizedQuestMessage\(this\.questName, messageID\);\n\s*if \(lines\)\n\s*result\.localize\(lines\);/);   // L10N5: read in place, the quest's own kept
   assert.match(rd('src/scenes/quest/questBridge.js'), /getLocalizedQuestDisplayName: \(questName\) => localizedQuestDisplayName\(questName\),/);
 });

@@ -2,7 +2,7 @@
   {
     "name": "law-sniff-alone",
     "file": "src/ui/touch/touchDevice.js",
-    "old": "  if (typeof win.matchMedia !== 'function') return true;   // no media queries: the sniff is all there is",
+    "old": "  if (typeof win.matchMedia !== 'function') return true; // no media queries: the sniff is all there is",
     "new": "  return true;",
     "tests": [
       "test/ui/touch/touchdevice.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "law-no-unknown-fallback",
     "file": "src/ui/touch/touchDevice.js",
-    "old": "    if (!coarse && !fine) return true;   // the query is unknown here (neither answers): the sniff stands\n",
-    "new": "",
+    "old": "    if (!coarse && !fine) return true; // the query is unknown here (neither answers): the sniff stands\n    return coarse && win.matchMedia('(hover: none)').matches;",
+    "new": "    return coarse && win.matchMedia('(hover: none)').matches;",
     "tests": [
       "test/ui/touch/touchdevice.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "law-no-sniff-gate",
     "file": "src/ui/touch/touchDevice.js",
-    "old": "  if (!sniff) return false;\n",
-    "new": "",
+    "old": "  if (!sniff) return false;\n  if (typeof win.matchMedia !== 'function') return true; // no media queries: the sniff is all there is",
+    "new": "  if (typeof win.matchMedia !== 'function') return true; // no media queries: the sniff is all there is",
     "tests": [
       "test/ui/touch/touchdevice.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "door-ignored",
     "file": "src/ui/touch/touchDevice.js",
-    "old": "  if (door !== null) return door;\n",
-    "new": "",
+    "old": "  if (door !== null) return door;\n  const sniff = 'ontouchstart' in win || (win.navigator?.maxTouchPoints ?? 0) > 0;",
+    "new": "  const sniff = 'ontouchstart' in win || (win.navigator?.maxTouchPoints ?? 0) > 0;",
     "tests": [
       "test/ui/touch/touchdevice.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "law-throw-is-off",
     "file": "src/ui/touch/touchDevice.js",
-    "old": "  } catch { return true; }",
-    "new": "  } catch { return false; }",
+    "old": "    return true;",
+    "new": "    return false;",
     "tests": [
       "test/ui/touch/touchdevice.test.js"
     ]

@@ -15,8 +15,13 @@ export function createStaffPull({ client, glyphs, here, prepare, place, why, ali
   return {
     /** Staff: /tpa <player>, its lines to the typer (`tell`). @param {string} player @param {(line: string) => void} tell */
     command(player, tell) {
-      if (!staffPullAllowed(glyphs())) { tell(t('net.staffPull.denied', 'Only an admin or the Shadow Fang may bring a player.')); return; }
-      this.pull({ name: player }).then(tell, (e) => tell(e?.message || t('net.staffPull.failed', 'The player could not be brought.')));
+      if (!staffPullAllowed(glyphs())) {
+        tell(t('net.staffPull.denied', 'Only an admin or the Shadow Fang may bring a player.'));
+        return;
+      }
+      this.pull({ name: player }).then(tell, (e) =>
+        tell(e?.message || t('net.staffPull.failed', 'The player could not be brought.')),
+      );
     },
     /** Staff: bring `target` (`{ id }`, `{ acct }` or `{ name }`) to where I stand. Resolves the line to say. */
     async pull(/** @type {any} */ target) {
@@ -41,7 +46,10 @@ export function createStaffPull({ client, glyphs, here, prepare, place, why, ali
       } catch (e) {
         console.warn('[staff] pull landing:', /** @type {any} */ (e)?.message ?? e);
         return { error: 'unavailable' };
-      } finally { hold(false); fade.fadeHUDFromBlack(); }
+      } finally {
+        hold(false);
+        fade.fadeHUDFromBlack();
+      }
     },
   };
 }

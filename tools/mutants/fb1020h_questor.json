@@ -2,8 +2,8 @@
   {
     "name": "QUESTOR-HELD-the-offer-holds-nothing",
     "file": "src/systems/npcSession.js",
-    "old": "removeNpcQuestor(nameSeed) { this.npcsWithWork.delete(nameSeed); this._holdSelection(); }",
-    "new": "removeNpcQuestor(nameSeed) { this.npcsWithWork.delete(nameSeed); }",
+    "old": "    this.npcsWithWork.delete(nameSeed);\n    this._holdSelection();\n  }",
+    "new": "    this.npcsWithWork.delete(nameSeed);\n  }",
     "tests": [
       "test/systems/talk/fb1020h_questor.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QUESTOR-HELD-the-load-holds-nothing",
     "file": "src/systems/npcSession.js",
-    "old": "    // this session's selection is rarely in it\n    this._holdSelection();",
-    "new": "    // this session's selection is rarely in it",
+    "old": "    // this session's selection is rarely in it\n    this._holdSelection();\n  }",
+    "new": "    // this session's selection is rarely in it\n  }",
     "tests": [
       "test/systems/talk/fb1020h_questor.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "QUESTOR-HELD-only-an-empty-pool-is-held",
     "file": "src/systems/npcSession.js",
-    "old": "if (this.npcsWithWork.size === 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
-    "new": "if (this.npcsWithWork.size !== 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
+    "old": "    if (this.npcsWithWork.size === 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
+    "new": "    if (this.npcsWithWork.size !== 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
     "tests": [
       "test/systems/talk/fb1020h_questor.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "QUESTOR-HELD-a-held-selection-is-moved",
     "file": "src/systems/npcSession.js",
-    "old": "if (this.npcsWithWork.size === 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
-    "new": "if (this.npcsWithWork.size === 0 || !this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
+    "old": "    if (this.npcsWithWork.size === 0 || this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
+    "new": "    if (this.npcsWithWork.size === 0 || !this.npcsWithWork.has(this.selectedNpcWorkKey)) return;",
     "tests": [
       "test/systems/talk/fb1020h_questor.test.js"
     ]
@@ -39,7 +39,7 @@
     "name": "QUESTOR-HELD-the-first-questor-not-the-last",
     "file": "src/systems/npcSession.js",
     "old": "    for (const k of this.npcsWithWork.keys()) last = k;",
-    "new": "    for (const k of this.npcsWithWork.keys()) { last = k; break; }",
+    "new": "    for (const k of this.npcsWithWork.keys()) {\n      last = k;\n      break;\n    }",
     "tests": [
       "test/systems/talk/fb1020h_questor.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "QUESTOR-HELD-the-selection-never-written",
     "file": "src/systems/npcSession.js",
-    "old": "    this.selectedNpcWorkKey = last;",
-    "new": "",
+    "old": "    this.selectedNpcWorkKey = last;\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/talk/fb1020h_questor.test.js"
     ]

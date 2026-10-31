@@ -25,10 +25,10 @@ import { registerCustomFaction } from '../formats/factionFile.js';
 import { registerMerchantService } from './guild/guildServices.js';
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
 import { CAPITAL_MAP_IDS, LARGE_DOCK_MAP_IDS, DOCK_PIXEL_IDS } from './immersiveTravelTables.js';
-import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id masks to no Bay pixel
-import { setFlatFaceOverride } from '../characters/staticNpc.js';   // DRIVER-FACE: FLATS.CFG's dictionary, as Roleplay & Realism writes it
-import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
-import { inBay } from '../world/tamriel/tamrielFrame.js';   // TRAVEL-EVERYWHERE: a capital past the Bay is no row of the table
+import { isHallMapId } from '../net/wire.js'; // AUDIT WW F1: a zone hall's id masks to no Bay pixel
+import { setFlatFaceOverride } from '../characters/staticNpc.js'; // DRIVER-FACE: FLATS.CFG's dictionary, as Roleplay & Realism writes it
+import { noteFirstUse } from './tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+import { inBay } from '../world/tamriel/tamrielFrame.js'; // TRAVEL-EVERYWHERE: a capital past the Bay is no row of the table
 import { capitalOnPixel } from '../world/tamrielCapitals.js';
 
 export { CAPITAL_MAP_IDS, LARGE_DOCK_MAP_IDS, DOCK_PIXEL_IDS };
@@ -42,8 +42,32 @@ export const CARRIAGE_DRIVERS_FACTION_ID = 8642;
 /** RegisterCustomFaction(8643, ...) - the same record under Carriage Drivers. */
 export const SAILORS_FACTION_ID = 8643;
 export const IT_FACTIONS = Object.freeze([
-  Object.freeze({ id: CARRIAGE_DRIVERS_FACTION_ID, parent: 0, type: 15, name: 'Carriage Drivers', summon: -1, region: -1, power: 100, face: -1, race: -1, sgroup: 1, ggroup: 16 }),
-  Object.freeze({ id: SAILORS_FACTION_ID, parent: CARRIAGE_DRIVERS_FACTION_ID, type: 15, name: 'Sailors', summon: -1, region: -1, power: 100, face: -1, race: -1, sgroup: 1, ggroup: 16 }),
+  Object.freeze({
+    id: CARRIAGE_DRIVERS_FACTION_ID,
+    parent: 0,
+    type: 15,
+    name: 'Carriage Drivers',
+    summon: -1,
+    region: -1,
+    power: 100,
+    face: -1,
+    race: -1,
+    sgroup: 1,
+    ggroup: 16,
+  }),
+  Object.freeze({
+    id: SAILORS_FACTION_ID,
+    parent: CARRIAGE_DRIVERS_FACTION_ID,
+    type: 15,
+    name: 'Sailors',
+    summon: -1,
+    region: -1,
+    power: 100,
+    face: -1,
+    race: -1,
+    sgroup: 1,
+    ggroup: 16,
+  }),
 ]);
 /** RegisterMerchantService(..., "Fast Travel") - both services' label (IL_0528, IL_0544). */
 export const IT_SERVICE_LABEL = 'Fast Travel';
@@ -53,15 +77,17 @@ export const IT_TEXT = Object.freeze({
   /** CarriageMap.CreatePopUpWindow, IL_098e - region-locked, standing in a capital. */
   capitalOnly: 'To reach that location, you must travel to the capital of that region and take a carriage from there.',
   /** IL_099d - region-locked, standing anywhere else. */
-  regionLocked: 'This carriage won\'t travel outside the region. Find a carriage in the capital or travel by sea.',
+  regionLocked: "This carriage won't travel outside the region. Find a carriage in the capital or travel by sea.",
   /** IL_0a14 - a destination type the settings bar. */
-  wrongType: 'The driver won\'t take you to this type of location.',
+  wrongType: "The driver won't take you to this type of location.",
   /** SeafarersMap.CreatePopUpWindow, IL_1715. */
-  smallBoat: 'This small boat will only take you to locations in the same region. Travel to a major port to find a larger ship.',
+  smallBoat:
+    'This small boat will only take you to locations in the same region. Travel to a major port to find a larger ship.',
   /** IL_175d. */
-  noDock: 'That location doesn\'t have a suitable dock.',
+  noDock: "That location doesn't have a suitable dock.",
   /** ImmersiveTravelPopUp.OnPush, IL_1a54 - the player's own map, a place a carriage could reach. */
-  mustTakeCarriage: 'You must take a carriage to initiate fast travel. Carriage drivers are stationed outside the gates of large cities.',
+  mustTakeCarriage:
+    'You must take a carriage to initiate fast travel. Carriage drivers are stationed outside the gates of large cities.',
   /** IL_1a76 - the player's own map, a place no carriage goes. */
   cannotTravelType: 'You cannot travel to this type of location.',
   /** ForceNonShipTravel, IL_1ad3. */
@@ -101,7 +127,7 @@ export function readImmersiveTravelSettings(get = modSetting) {
       graveyards: v('AllowedDestinations.Graveyards') === true,
       farms: v('AllowedDestinations.Farms') === true,
       hamlets: v('AllowedDestinations.Hamlets') === true,
-      homes: v('AllowedDestinations.Homes') === true,   // read by nothing: see isDestinationValid
+      homes: v('AllowedDestinations.Homes') === true, // read by nothing: see isDestinationValid
       temples: v('AllowedDestinations.Temples') === true,
       taverns: v('AllowedDestinations.Taverns') === true,
       villages: v('AllowedDestinations.Villages') === true,
@@ -121,10 +147,15 @@ const T = LOCATION_TYPES;
 export function isDestinationValid(locationType, allowed) {
   const a = allowed ?? {};
   if (locationType === T.Coven && a.covens) return true;
-  if ((locationType === T.DungeonKeep || locationType === T.DungeonLabyrinth || locationType === T.DungeonRuin) && a.dungeons) return true;
+  if (
+    (locationType === T.DungeonKeep || locationType === T.DungeonLabyrinth || locationType === T.DungeonRuin) &&
+    a.dungeons
+  )
+    return true;
   if (locationType === T.Graveyard && a.graveyards) return true;
   if (locationType === T.HomeFarms && a.farms) return true;
-  if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.dungeons) return true;   // IL_0adb: "Dungeons", the mod's own
+  if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.dungeons)
+    return true; // IL_0adb: "Dungeons", the mod's own
   if ((locationType === T.ReligionCult || locationType === T.ReligionTemple) && a.temples) return true;
   if (locationType === T.Tavern && a.taverns) return true;
   if (locationType === T.TownCity && a.cities) return true;
@@ -140,7 +171,13 @@ export function isDestinationValid(locationType, allowed) {
  *  shipped: region 0 (Alik'r Desert) is never an answer, and a pixel inland of a coast answers its inland
  *  neighbour's region. `politicAt(x, y)` is MapsFile.GetPoliticIndex. */
 export function borderingRegionIndex(x, y, politicAt) {
-  for (const [px, py] of [[x, y + 1], [x, y + 1], [x + 1, y], [x, y - 1], [x - 1, y]]) {
+  for (const [px, py] of [
+    [x, y + 1],
+    [x, y + 1],
+    [x + 1, y],
+    [x, y - 1],
+    [x - 1, y],
+  ]) {
     const r = (politicAt(px, py) | 0) - 128;
     if (r === 31) continue;
     if (r > 0) return r;
@@ -166,10 +203,15 @@ export function carriageRefusal(settings, { here, dest, politicAt }) {
   if (!isDestinationValid(dest.locationType, settings.allowed)) return 'wrongType';
   if (!settings.regionLockedCarriages) return null;
   const border = borderingRegionIndex(here.x, here.y, politicAt);
-  const fromCapital = isCapital(here.mapId ?? 0) || (Number.isInteger(here.x) && Number.isInteger(here.y) && !inBay(here.x, here.y) && !!capitalOnPixel(here.x, here.y));   // TRAVEL-EVERYWHERE: a capital past the Bay
-  if (fromCapital && (dest.capital ?? isCapital(dest.mapId))) return null;   // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word
-  if (border === dest.regionIndex) return null;            // IL_0960-096c
-  return fromCapital ? 'capitalOnly' : 'regionLocked';      // IL_097e-09a3
+  const fromCapital =
+    isCapital(here.mapId ?? 0) ||
+    (Number.isInteger(here.x) &&
+      Number.isInteger(here.y) &&
+      !inBay(here.x, here.y) &&
+      !!capitalOnPixel(here.x, here.y)); // TRAVEL-EVERYWHERE: a capital past the Bay
+  if (fromCapital && (dest.capital ?? isCapital(dest.mapId))) return null; // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word
+  if (border === dest.regionIndex) return null; // IL_0960-096c
+  return fromCapital ? 'capitalOnly' : 'regionLocked'; // IL_097e-09a3
 }
 
 /** CarriageMap.IsLocationLarge (IL_1468-1483) - a city or a hamlet, or every place with ClearerMapDots off. Travel
@@ -184,7 +226,12 @@ export const carriageLocationLarge = (locationType, settings) =>
  *  (IL_1dfb tests the toggle alone, where DFU asks `pixelsTraveledOnOcean > 0`), so a trip over land on the ship toggle
  *  pays one sea day - only with DisableShipTravelOutsideDocks off. The minutes are the popup's, which
  *  ImmersiveTravelPopUp leaves to DFU's own CalculateTravelTime. Never below zero (IL_1e36). */
-export function carriageTripCost(minutes, oceanPixels, { sleepModeInn = false, hasShip = false, travelShip = false, freeTavernRooms = false } = {}, settings) {
+export function carriageTripCost(
+  minutes,
+  oceanPixels,
+  { sleepModeInn = false, hasShip = false, travelShip = false, freeTavernRooms = false } = {},
+  settings,
+) {
   const hours = Math.trunc(((minutes | 0) + 59) / 60);
   const ocean = oceanPixels | 0;
   let piecesCost = 0;
@@ -239,7 +286,9 @@ export function seafarerRefusal(settings, { here, gps, dest, politicAt }) {
 
 /** SeafarersMap.IsLocationLarge (IL_17f0-180a): with ShowLargerDocks, a place by a dock; else the carriage map's. */
 export const seafarerLocationLarge = (summary, settings) =>
-  (settings?.showLargerDocks ? nearDock(summary.mapID ?? summary.mapId) : carriageLocationLarge(summary.locationType, settings));
+  settings?.showLargerDocks
+    ? nearDock(summary.mapID ?? summary.mapId)
+    : carriageLocationLarge(summary.locationType, settings);
 /** SeafarersMap.checkLocationDiscovered (IL_17a0-17ee): the map's own answer, and with ShowOnlyDocks only a place by a
  *  dock - asked of the summary's ID (the pixel id), where every other dock question asks MapID; the two mask alike. */
 export const seafarerDiscovered = (summary, discovered, settings) =>
@@ -272,7 +321,12 @@ export function seafarerTripCost(minutes, { hasShip = false } = {}, settings) {
  *  the player stands on, `mapId`, `locationType` and `regionIndex` of where they stand; `summary` the map's
  *  locationSummary (the port's MapSummary: mapID, regionIndex, locationType). */
 export function itMapRefusal(kind, settings, { here, summary, politicAt }) {
-  const dest = { locationType: summary.locationType, mapId: summary.mapID ?? summary.mapId, regionIndex: summary.regionIndex, capital: summary.capital };
+  const dest = {
+    locationType: summary.locationType,
+    mapId: summary.mapID ?? summary.mapId,
+    regionIndex: summary.regionIndex,
+    capital: summary.capital,
+  };
   if (kind === IT_POPUP.seafarer) return seafarerRefusal(settings, { here, gps: here, dest, politicAt });
   return carriageRefusal(settings, { here, dest, politicAt });
 }
@@ -280,7 +334,12 @@ export function itMapRefusal(kind, settings, { here, summary, politicAt }) {
 /** The carriage map's roads and tracks (CarriageMap..cctor IL_1538-1579): each drawn only with Basic Roads loaded and
  *  its own switch on - in the five-texel page's path order (ui/travel/travelMapOptions.js: roads, tracks, rivers, streams;
  *  the mod draws no water). */
-export const itMapPaths = (settings) => [!!(settings?.basicRoads && settings.drawRoads), !!(settings?.basicRoads && settings.drawTracks), false, false];
+export const itMapPaths = (settings) => [
+  !!(settings?.basicRoads && settings.drawRoads),
+  !!(settings?.basicRoads && settings.drawTracks),
+  false,
+  false,
+];
 
 // ── the popups ─────────────────────────────────────────────────────────────────────────────────────────────────────
 /** The three popups the mod makes. `carriage` - ImmersiveTravelPopUp over a driver's map; `seafarer` - SeafarersPopUp
@@ -321,14 +380,23 @@ export function itTogglePress(kind, st, settings, press, { ship = false, inn = f
   const disableShip = !!settings?.disableShipTravelOutsideDocks;
   const transport = press === 'transportClick' || press === 'transportToggle';
   const sleep = press === 'sleepClick' || press === 'sleepToggle';
-  if (!transport && !sleep) return null;   // the speed pair is the base's alone - the mod overrides none of its handlers
+  if (!transport && !sleep) return null; // the speed pair is the base's alone - the mod overrides none of its handlers
   if (kind === IT_POPUP.seafarer) {
-    if (transport && st.travelShip) { st.travelShip = true; return 'cannotDisableShip'; }   // IL_1f33-1f41, IL_1f4c-1f5a
-    if (sleep && !st.sleepModeInn) { st.sleepModeInn = false; return 'noInnsAtSea'; }       // IL_1f64-1f72, IL_1f7d-1f8b
+    if (transport && st.travelShip) {
+      st.travelShip = true;
+      return 'cannotDisableShip';
+    } // IL_1f33-1f41, IL_1f4c-1f5a
+    if (sleep && !st.sleepModeInn) {
+      st.sleepModeInn = false;
+      return 'noInnsAtSea';
+    } // IL_1f64-1f72, IL_1f7d-1f8b
   } else if (transport) {
-    if (!st.travelShip && disableShip) { st.travelShip = false; return 'mustFindShip'; }   // IL_1b07-1b1c, IL_1b27-1b3c
+    if (!st.travelShip && disableShip) {
+      st.travelShip = false;
+      return 'mustFindShip';
+    } // IL_1b07-1b1c, IL_1b27-1b3c
   } else if ((press === 'sleepClick' ? !inn : campOutButton) && disableShip) {
-    st.travelShip = false;   // IL_1b46-1b5d, IL_1b67-1b7e - the camp-out button alone
+    st.travelShip = false; // IL_1b46-1b5d, IL_1b67-1b7e - the camp-out button alone
   }
   // the base arms (DaggerfallTravelPopUp :516-560): a click assigns, a scroll or a hotkey toggles
   if (press === 'transportClick') st.travelShip = !!ship;
@@ -346,14 +414,47 @@ export function itTogglePress(kind, st, settings, press, { ship = false, inn = f
  * the port's word on DFU's and Travel Options' fares: a driver's price is the mod's, and online the room's.
  * `calc` is { calculateTravelTime, guildFastTravel } off the host (systems/travel/travel.js, systems/guild/guildVariants.js).
  */
-export function itTrip(kind, settings, { start, end, opts, hasHorse = false, hasCart = false, hasShip = false, freeTavernRooms = false, getClimateIndex, playerEntity = null, calc }) {
-  const t = kind === IT_POPUP.seafarer
-    ? seafarerTravelTime(start, end, { speedCautious: opts.speedCautious })
-    : calc.calculateTravelTime(start, end, { speedCautious: opts.speedCautious, sleepModeInn: opts.sleepModeInn, travelShip: opts.travelShip, hasHorse, hasCart }, getClimateIndex);
+export function itTrip(
+  kind,
+  settings,
+  {
+    start,
+    end,
+    opts,
+    hasHorse = false,
+    hasCart = false,
+    hasShip = false,
+    freeTavernRooms = false,
+    getClimateIndex,
+    playerEntity = null,
+    calc,
+  },
+) {
+  const t =
+    kind === IT_POPUP.seafarer
+      ? seafarerTravelTime(start, end, { speedCautious: opts.speedCautious })
+      : calc.calculateTravelTime(
+          start,
+          end,
+          {
+            speedCautious: opts.speedCautious,
+            sleepModeInn: opts.sleepModeInn,
+            travelShip: opts.travelShip,
+            hasHorse,
+            hasCart,
+          },
+          getClimateIndex,
+        );
   const minutes = calc.guildFastTravel(playerEntity, t.minutes);
-  const cost = kind === IT_POPUP.seafarer
-    ? seafarerTripCost(minutes, { hasShip }, settings)
-    : carriageTripCost(minutes, t.oceanPixels, { sleepModeInn: opts.sleepModeInn, hasShip, travelShip: opts.travelShip, freeTavernRooms }, settings);
+  const cost =
+    kind === IT_POPUP.seafarer
+      ? seafarerTripCost(minutes, { hasShip }, settings)
+      : carriageTripCost(
+          minutes,
+          t.oceanPixels,
+          { sleepModeInn: opts.sleepModeInn, hasShip, travelShip: opts.travelShip, freeTavernRooms },
+          settings,
+        );
   return { minutes, oceanPixels: t.oceanPixels, ...cost };
 }
 
@@ -364,7 +465,8 @@ let _installed = false;
  *  patch and its layer (scenes/modWorldData.js), the driver's map and the player's map's Disable Normal Travel
  *  (scenes/world.js) all ask this, so a switch flipped mid-game reaches none of them before the game is next started:
  *  it had left carriages standing whose drivers only talked, and towns that kept or lost them by the cache. */
-export const immersiveTravelLoaded = () => modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);
+export const immersiveTravelLoaded = () =>
+  modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true;
 /**
  * The mod's Init, once, at the boot every host shares (scenes/shared.js): the mod latched loaded for the game or not
  * (AUDIT IT1 W4 - the dictionary is built at the load once a page, so a switch reaches the next start), then while it
@@ -396,17 +498,32 @@ export function installImmersiveTravel() {
     console.warn('[ImmersiveTravel] Error: could not register custom factions!');
     return true;
   }
-  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);   // DRIVER-FACE
-  registerMerchantService(CARRIAGE_DRIVERS_FACTION_ID, (door) => immersiveTravelService(door, IT_POPUP.carriage), IT_SERVICE_LABEL, immersiveTravelLoaded);
-  registerMerchantService(SAILORS_FACTION_ID, (door) => immersiveTravelService(door, IT_POPUP.seafarer), IT_SERVICE_LABEL, immersiveTravelLoaded);
+  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex); // DRIVER-FACE
+  registerMerchantService(
+    CARRIAGE_DRIVERS_FACTION_ID,
+    (door) => immersiveTravelService(door, IT_POPUP.carriage),
+    IT_SERVICE_LABEL,
+    immersiveTravelLoaded,
+  );
+  registerMerchantService(
+    SAILORS_FACTION_ID,
+    (door) => immersiveTravelService(door, IT_POPUP.seafarer),
+    IT_SERVICE_LABEL,
+    immersiveTravelLoaded,
+  );
   return true;
 }
 /** CarriageTravelService / ShipTravelService: enemies near say DFU's cannotTravelWithEnemiesNearby and nothing opens;
  *  otherwise the driver's (or the captain's) map. Nothing else is asked - not the sun, not a quest's offer: those are
  *  DaggerfallUI's travel-map door (DaggerfallUI.cs:604-626), which a service's PushWindow never passes. */
 export function immersiveTravelService(door, kind) {
-  noteFirstUse('carriages');   // TUT1
-  if (door?.enemiesNearby?.()) { door.messageBox?.(door.enemiesText ?? 'You cannot travel with enemies nearby.'); return false; }
+  noteFirstUse('carriages'); // TUT1
+  if (door?.enemiesNearby?.()) {
+    door.messageBox?.(door.enemiesText ?? 'You cannot travel with enemies nearby.');
+    return false;
+  }
   return !!door?.openImmersiveMap?.(kind);
 }
-export function _resetImmersiveTravel() { _installed = false; }
+export function _resetImmersiveTravel() {
+  _installed = false;
+}

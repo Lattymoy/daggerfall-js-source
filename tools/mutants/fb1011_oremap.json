@@ -12,8 +12,8 @@
   {
     "name": "ORE-MAP-b-silver-held-back",
     "file": "src/ui/oreMapTip.js",
-    "old": "tierOf(k) > UNCONFIRMED_VEIN_TIER",
-    "new": "tierOf(k) > UNCONFIRMED_VEIN_TIER - 1",
+    "old": "    ...new Set([...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores]),",
+    "new": "    ...new Set([\n      ...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER - 1)),\n      ...ores,\n    ]),",
     "tests": [
       "test/ui/fb1011_oremap.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "ORE-MAP-c-gold-said-free",
     "file": "src/ui/oreMapTip.js",
-    "old": "tierOf(k) > UNCONFIRMED_VEIN_TIER",
-    "new": "tierOf(k) > UNCONFIRMED_VEIN_TIER + 1",
+    "old": "    ...new Set([...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...ores]),",
+    "new": "    ...new Set([\n      ...table.filter((k) => !own.includes(k) || (!surveyed && tierOf(k) > UNCONFIRMED_VEIN_TIER + 1)),\n      ...ores,\n    ]),",
     "tests": [
       "test/ui/fb1011_oremap.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "ORE-MAP-d-disputed-said-unwitnessed",
     "file": "src/ui/oreMapTip.js",
-    "old": "  if (factConfirmed(fact)) lines.push(",
-    "new": "  if (fact?.state === 'confirmed') lines.push(",
+    "old": "  if (factConfirmed(fact)) lines.push(withDeep(t('ore.tip.witnessed', WITNESSED)));",
+    "new": "  if (fact?.state === 'confirmed') lines.push(withDeep(t('ore.tip.witnessed', WITNESSED)));",
     "tests": [
       "test/ui/fb1011_oremap.test.js"
     ]

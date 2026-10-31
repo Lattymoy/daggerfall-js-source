@@ -47,8 +47,8 @@
   {
     "name": "VERMIN-shared-copy-any-instance",
     "file": "src/systems/quest/machine.js",
-    "old": "this.sharedQuestNames.has(quest.questName) && this.sharedCandidateNamed(quest.questName) === quest,",
-    "new": "this.sharedQuestNames.has(quest.questName),",
+    "old": "      sharedCopy: (quest) =>\n        !!quest && this.sharedQuestNames.has(quest.questName) && this.sharedCandidateNamed(quest.questName) === quest,",
+    "new": "      sharedCopy: (quest) => !!quest && this.sharedQuestNames.has(quest.questName),",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "VERMIN-shared-copy-unshared",
     "file": "src/systems/quest/machine.js",
-    "old": "sharedCopy: (quest) => !!quest && this.sharedQuestNames.has(quest.questName) && ",
-    "new": "sharedCopy: (quest) => !!quest && ",
+    "old": "      sharedCopy: (quest) =>\n        !!quest && this.sharedQuestNames.has(quest.questName) && this.sharedCandidateNamed(quest.questName) === quest,",
+    "new": "      sharedCopy: (quest) => !!quest && this.sharedCandidateNamed(quest.questName) === quest,",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "VERMIN-defer-on-presence",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (dx * dx + dz * dz <= radius * radius) return sharerFoeStands({ foes, sharer, questName, symbol, accountOfPeer });\n",
-    "new": "    if (dx * dx + dz * dz <= radius * radius) return true;\n",
+    "old": "    if (dx * dx + dz * dz <= radius * radius)\n      return sharerFoeStands({ foes, sharer, questName, symbol, accountOfPeer });",
+    "new": "    if (dx * dx + dz * dz <= radius * radius) return true;",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js",
       "test/scenes/questparty.test.js",
@@ -76,8 +76,8 @@
   {
     "name": "VERMIN-body-defers",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (f.dead) continue;   // a body stands no wave",
-    "new": "    if (false) continue;   // a body stands no wave",
+    "old": "    if (f.dead) continue; // a body stands no wave (a puppet let go is dead too - removePuppet)",
+    "new": "    if (false) continue; // a body stands no wave (a puppet let go is dead too - removePuppet)",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js",
       "test/scenes/questparty.test.js",
@@ -87,8 +87,8 @@
   {
     "name": "VERMIN-any-foe-defers",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;\n",
-    "new": "    if (!tag || tag.q !== questName) continue;\n",
+    "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;",
+    "new": "    if (!tag || tag.q !== questName) continue;",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js",
       "test/scenes/questparty.test.js",
@@ -98,8 +98,8 @@
   {
     "name": "VERMIN-any-quest-defers",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;\n",
-    "new": "    if (!tag || tag.s !== symbol) continue;\n",
+    "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;",
+    "new": "    if (!tag || tag.s !== symbol) continue;",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js",
       "test/scenes/questparty.test.js",
@@ -109,8 +109,8 @@
   {
     "name": "VERMIN-untagged-defers",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;\n",
-    "new": "    if (tag && (tag.q !== questName || tag.s !== symbol)) continue;\n",
+    "old": "    if (!tag || tag.q !== questName || tag.s !== symbol) continue;",
+    "new": "    if (tag && (tag.q !== questName || tag.s !== symbol)) continue;",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js",
       "test/scenes/questparty.test.js",
@@ -120,8 +120,8 @@
   {
     "name": "VERMIN-anyones-foe-defers",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (accountOfPeer(f.puppet ?? f._ownFrom) === sharer) return true;\n",
-    "new": "    return true;\n",
+    "old": "    if (accountOfPeer(f.puppet ?? f._ownFrom) === sharer) return true;",
+    "new": "    return true;",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js",
       "test/scenes/questparty.test.js",
@@ -131,8 +131,8 @@
   {
     "name": "VERMIN-dungeon-owner-unread",
     "file": "src/scenes/quest/questFoeHost.js",
-    "old": "    if (accountOfPeer(f.puppet ?? f._ownFrom) === sharer) return true;\n",
-    "new": "    if (accountOfPeer(f.puppet) === sharer) return true;\n",
+    "old": "    if (accountOfPeer(f.puppet ?? f._ownFrom) === sharer) return true;",
+    "new": "    if (accountOfPeer(f.puppet) === sharer) return true;",
     "tests": [
       "test/systems/quest/fb1003b_vermin.test.js",
       "test/scenes/questparty.test.js",

@@ -2,8 +2,8 @@
   {
     "name": "KETCH-OWED-paid-owed-again",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "ktWholeBridge(b) && !paidKeys.has(paidKey(ws.fi, b.i)) && ",
-    "new": "ktWholeBridge(b) && ",
+    "old": "        if (ktWholeBridge(b) && !paidKeys.has(paidKey(ws.fi, b.i)) && !owed.some((o) => o.i === b.i && o.fi === ws.fi))\n          owed.push({ ...b, fi: ws.fi }); // RPT1026-EVENTS KETCH-OWED: never one already paid",
+    "new": "        if (ktWholeBridge(b) && !owed.some((o) => o.i === b.i && o.fi === ws.fi)) owed.push({ ...b, fi: ws.fi }); // RPT1026-EVENTS KETCH-OWED: never one already paid",
     "tests": [
       "test/net/ketch/rpt1026_events_ketch.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "KETCH-OWED-paid-not-remembered",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "      for (const o of owed) if (o.i === i) paidKeys.add(paidKey(o.fi, i));",
-    "new": "      for (const o of owed) if (o.i === -1) paidKeys.add(paidKey(o.fi, i));",
+    "old": "      for (const o of owed) if (o.i === i) paidKeys.add(paidKey(o.fi, i)); // RPT1026-EVENTS KETCH-OWED: and remembered - the newest KT_OWED_MAX x 2",
+    "new": "      for (const o of owed) if (o.i === -1) paidKeys.add(paidKey(o.fi, i)); // RPT1026-EVENTS KETCH-OWED: and remembered - the newest KT_OWED_MAX x 2",
     "tests": [
       "test/net/ketch/rpt1026_events_ketch.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "KETCH-OWED-paid-kept-past-the-fight",
     "file": "src/net/ketch/ketchLink.js",
-    "old": "if (!ws || (was.ws && ws.fi !== was.ws.fi)) { owed = owed.filter((b) => ws && b.fi === ws.fi); paidKeys.clear(); }",
-    "new": "if (!ws || (was.ws && ws.fi !== was.ws.fi)) { owed = owed.filter((b) => ws && b.fi === ws.fi); }",
+    "old": "      paidKeys.clear();\n    }",
+    "new": "    }",
     "tests": [
       "test/net/ketch/rpt1026_events_ketch.test.js"
     ],
@@ -153,7 +153,7 @@
   {
     "name": "GATE-WAY-arches-never-said",
     "file": "src/scenes/eliteGates/egArch.js",
-    "old": "  setEventGround('arch', () => (arches.size ? [...arches.values()].filter((a) => a.place).map((a) => a.place.origin) : NO_LIST));",
+    "old": "  setEventGround('arch', () =>\n    arches.size ? [...arches.values()].filter((a) => a.place).map((a) => a.place.origin) : NO_LIST,\n  );",
     "new": "  setEventGround('arch', () => NO_LIST);",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
@@ -163,8 +163,8 @@
   {
     "name": "GATE-WAY-stars-never-said",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "for (const S of stars.values()) if (S.phase === 'streak' || S.phase === 'fallen') out.push(S.heart); return out; });",
-    "new": "for (const S of stars.values()) if (S.phase === 'none') out.push(S.heart); return out; });",
+    "old": "    for (const S of stars.values()) if (S.phase === 'streak' || S.phase === 'fallen') out.push(S.heart);",
+    "new": "    for (const S of stars.values()) if (S.phase === 'none') out.push(S.heart);",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "GATE-WAY-peer-word-believed",
     "file": "src/scenes/portalGates.js",
-    "old": "    if (offGround(toScene(r.p))) return false;",
-    "new": "    void 0;",
+    "old": "    if (offGround(toScene(r.p))) return false; // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here",
+    "new": "    void 0; // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "GATE-WAY-standing-left-open",
     "file": "src/scenes/portalGates.js",
-    "old": "      if (offGround(at)) { drop(g); continue; }",
-    "new": "      void 0;",
+    "old": "      if (offGround(at)) {\n        drop(g);\n        continue;\n      } // RPT1026-EVENTS GATE-WAY: a gate risen beside it closes it - it takes nobody running to the fire",
+    "new": "      void 0; // RPT1026-EVENTS GATE-WAY: a gate risen beside it closes it - it takes nobody running to the fire",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "GATE-WAY-call-portal-dropped",
     "file": "src/scenes/eliteGates/egCall.js",
-    "old": "eventGround: false",
-    "new": "eventGround: true",
+    "old": "    eventGround: false,",
+    "new": "    eventGround: true,",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "ORRERY-HANDS-nets-kept",
     "file": "src/net/superDungeon/sdBrain.js",
-    "old": "  return { by, ids: /** @type {Record<string, number>} */ ({}), wt:",
-    "new": "  return { by, ids: R.ids, wt:",
+    "old": "  return { by, ids: /** @type {Record<string, number>} */ ({}), wt: /** @type {Record<string, 1>} */ ({}) };",
+    "new": "  return { by, ids: R.ids, wt: /** @type {Record<string, 1>} */ ({}) };",
     "tests": [
       "test/net/superDungeon/rpt1026_events_orrery.test.js"
     ],
@@ -294,8 +294,8 @@
   {
     "name": "ORRERY-HANDS-turner-never-kept",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "      lastBy[w.i] = typeof w.by === 'string' ? w.by : '';",
-    "new": "      lastBy[w.i] = '';",
+    "old": "      lastBy[w.i] = typeof w.by === 'string' ? w.by : ''; // RPT1026-EVENTS ORRERY-HANDS: whose hand it was",
+    "new": "      lastBy[w.i] = ''; // RPT1026-EVENTS ORRERY-HANDS: whose hand it was",
     "tests": [
       "test/net/superDungeon/rpt1026_events_orrery.test.js"
     ],
@@ -304,8 +304,8 @@
   {
     "name": "ORRERY-HANDS-hover-unnamed",
     "file": "src/scenes/superDungeon/sdHall.js",
-    "old": "...(lastBy[i] ? [SD_HALL_TEXT.lastBy(lastBy[i])] : [])",
-    "new": "...([])",
+    "old": "            ...(lastBy[i] ? [SD_HALL_TEXT.lastBy(lastBy[i])] : []),",
+    "new": "            ...[],",
     "tests": [
       "test/net/superDungeon/rpt1026_events_orrery.test.js"
     ],
@@ -324,8 +324,8 @@
   {
     "name": "CROWD-KIN-crowd-never-said",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "  _crowdGone = gone;",
-    "new": "  void gone;",
+    "old": "  _crowdGone = gone; // RPT1026-EVENTS CROWD-KIN: the page's one crowd, read where what a player brings with them stands",
+    "new": "  void gone; // RPT1026-EVENTS CROWD-KIN: the page's one crowd, read where what a player brings with them stands",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],
@@ -334,8 +334,8 @@
   {
     "name": "CROWD-KIN-kin-drawn",
     "file": "src/systems/combatVisuals.js",
-    "old": "  if (crowdKinHidden(foe)) return HIDDEN;   // RPT1026-EVENTS CROWD-KIN: a cut player's own stand with them\n",
-    "new": "",
+    "old": "  if (crowdKinHidden(foe)) return HIDDEN; // RPT1026-EVENTS CROWD-KIN: a cut player's own stand with them\n  if (!isMagicallyConcealed(foe.entity)) return PLAIN;",
+    "new": "  if (!isMagicallyConcealed(foe.entity)) return PLAIN;",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "CROWD-KIN-ray-offered",
     "file": "src/player/activate.js",
-    "old": "  if (!feet || crowdKinHidden(f)) return null;",
-    "new": "  if (!feet) return null;",
+    "old": "  if (!feet || crowdKinHidden(f)) return null; // RPT1026-EVENTS CROWD-KIN: undrawn with their cut owner, so no box - neither the plaque's sweep nor the press's finds it",
+    "new": "  if (!feet) return null; // RPT1026-EVENTS CROWD-KIN: undrawn with their cut owner, so no box - neither the plaque's sweep nor the press's finds it",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],
@@ -354,8 +354,8 @@
   {
     "name": "CROWD-KIN-on-me-hidden",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "  return owner != null && !f._pupMine && (",
-    "new": "  return owner != null && (",
+    "old": "  return (\n    owner != null &&\n    !f._pupMine &&\n    (f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) &&\n    crowdCutsPeer(owner)\n  );",
+    "new": "  return owner != null && (f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) && crowdCutsPeer(owner);",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],
@@ -364,8 +364,8 @@
   {
     "name": "CROWD-KIN-world-foes-hidden",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "(f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) && crowdCutsPeer(owner);",
-    "new": "(true) && crowdCutsPeer(owner);",
+    "old": "  return (\n    owner != null &&\n    !f._pupMine &&\n    (f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) &&\n    crowdCutsPeer(owner)\n  );",
+    "new": "  return owner != null && !f._pupMine && true && crowdCutsPeer(owner);",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],
@@ -374,8 +374,8 @@
   {
     "name": "CROWD-KIN-companion-shown",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "(f.companion != null || !!f.entity?.revenant",
-    "new": "(false || !!f.entity?.revenant",
+    "old": "    owner != null &&\n    !f._pupMine &&\n    (f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) &&\n    crowdCutsPeer(owner)",
+    "new": "    owner != null && !f._pupMine && (false || !!f.entity?.revenant || !!f.entity?.bandName) && crowdCutsPeer(owner)",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],
@@ -384,8 +384,8 @@
   {
     "name": "CROWD-KIN-band-shown",
     "file": "src/net/gate/gateCrowd.js",
-    "old": "|| !!f.entity?.bandName) && crowdCutsPeer(owner);",
-    "new": "|| false) && crowdCutsPeer(owner);",
+    "old": "  return (\n    owner != null &&\n    !f._pupMine &&\n    (f.companion != null || !!f.entity?.revenant || !!f.entity?.bandName) &&\n    crowdCutsPeer(owner)\n  );",
+    "new": "  return owner != null && !f._pupMine && (f.companion != null || !!f.entity?.revenant || false) && crowdCutsPeer(owner);",
     "tests": [
       "test/scenes/rpt1026_events_crowdkin.test.js"
     ],

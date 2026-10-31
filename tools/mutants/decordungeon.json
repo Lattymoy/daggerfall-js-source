@@ -2,8 +2,8 @@
   {
     "name": "DECORDUNGEON-architecture-taken",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "  && ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST) || FREE_STANDING.has(id));",
-    "new": "  && true;",
+    "old": "export const isDungeonFurnishing = (id) =>\n  Number.isSafeInteger(id) &&\n  id !== LADDER_MODEL_ID &&\n  ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST) || FREE_STANDING.has(id));",
+    "new": "export const isDungeonFurnishing = (id) => Number.isSafeInteger(id) && id !== LADDER_MODEL_ID && true;",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DECORDUNGEON-free-standing-lost",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "  && ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST) || FREE_STANDING.has(id));",
-    "new": "  && ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST));",
+    "old": "  Number.isSafeInteger(id) &&\n  id !== LADDER_MODEL_ID &&\n  ((id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST) || FREE_STANDING.has(id));",
+    "new": "  Number.isSafeInteger(id) && id !== LADDER_MODEL_ID && id >= DECOR_FURNITURE_FIRST && id <= DECOR_FURNITURE_LAST;",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DECORDUNGEON-statues-halved",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "  62323, 62324, 62325, 62326, 62327, 62328, 62329, 62330,   // the statues - a figure standing and one seated, small and large, in pale stone and in dark (ST0-ST3 26, 14, 5, 3, 6, 7, 8, 6)",
-    "new": "  62324, 62325, 62328, 62330,   // the statues World of Daggerfall's palette names - the defect measured",
+    "old": "  62323,\n  62324,\n  62325,\n  62326,\n  62327,\n  62328,\n  62329,\n  62330, // the statues - a figure standing and one seated, small and large, in pale stone and in dark (ST0-ST3 26, 14, 5, 3, 6, 7, 8, 6)",
+    "new": "  62324,\n  62325,\n  62328,\n  62330, // the statues World of Daggerfall's palette names - the defect measured",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "DECORDUNGEON-markers-taken",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "          if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE || fr.action > 0 || isNatureArchive(a)) continue;",
-    "new": "          if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || fr.action > 0 || isNatureArchive(a)) continue;",
+    "old": "          if (\n            !Number.isSafeInteger(a) ||\n            !Number.isSafeInteger(r) ||\n            r < 0 ||\n            a === EDITOR_FLATS_ARCHIVE ||\n            fr.action > 0 ||\n            isNatureArchive(a)\n          )",
+    "new": "          if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || fr.action > 0 || isNatureArchive(a))",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "DECORDUNGEON-acting-flats-taken",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "          if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE || fr.action > 0 || isNatureArchive(a)) continue;",
-    "new": "          if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE || isNatureArchive(a)) continue;",
+    "old": "            fr.action > 0 ||\n            isNatureArchive(a)",
+    "new": "            isNatureArchive(a)",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "DECORDUNGEON-nature-taken",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "          if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE || fr.action > 0 || isNatureArchive(a)) continue;",
-    "new": "          if (!Number.isSafeInteger(a) || !Number.isSafeInteger(r) || r < 0 || a === EDITOR_FLATS_ARCHIVE || fr.action > 0) continue;",
+    "old": "            fr.action > 0 ||\n            isNatureArchive(a)",
+    "new": "            fr.action > 0",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "DECORDUNGEON-room-reading-lost",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    else if ((DECOR_FROM[from] ?? 0) < (DECOR_FROM[had.from] ?? 0)) out.set(key, { ...what, count: had.count + 1, from });\n",
-    "new": "",
+    "old": "    else if ((DECOR_FROM[from] ?? 0) < (DECOR_FROM[had.from] ?? 0))\n      out.set(key, { ...what, count: had.count + 1, from });\n    else had.count++;",
+    "new": "    else had.count++;",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "DECORDUNGEON-kind-unset",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "    else if (c.from === 'dungeon' && plain) kind = 'dungeon';\n",
-    "new": "",
+    "old": "    else if (c.from === 'dungeon' && plain) kind = 'dungeon';\n    // DECOR-OUTDOOR: and what stands in a street and nowhere inside is an outdoor piece - but a light, a crate, a person,",
+    "new": "    // DECOR-OUTDOOR: and what stands in a street and nowhere inside is an outdoor piece - but a light, a crate, a person,",
     "tests": [
       "test/systems/decor/decordungeon.test.js"
     ],

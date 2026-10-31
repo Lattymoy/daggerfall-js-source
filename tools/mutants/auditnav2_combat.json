@@ -1,137 +1,137 @@
 [
- {
-  "name": "AUDIT-NAV2-F54-a-shipmate-is-a-mark-again",
-  "file": "src/player/mobileEnemyActivate.js",
-  "old": "  if (sparedByPlayer(foe)) return true;\n",
-  "new": "  if (false && isShipmate(foe)) return true;\n",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F54-the-refusal-under-the-distance-line",
-  "file": "src/player/mobileEnemyActivate.js",
-  "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n",
-  "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  if (sparedByPlayer(foe)) return true;\n",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F54-the-refusal-after-the-roll",
-  "file": "src/player/mobileEnemyActivate.js",
-  "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true;   // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611\n",
-  "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }   // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true;   // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText });   // :838 -> :1611\n  if (sparedByPlayer(foe)) return true;\n",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F54-the-ally-revert-dropped-the-motor-half-alone",
-  "file": "src/player/mobileEnemyActivate.js",
-  "old": "    if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n",
-  "new": "    if (false && foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F54-the-ally-revert-out-of-the-failure-arm",
-  "file": "src/player/mobileEnemyActivate.js",
-  "old": "    if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n  }\n  return true;\n}\n",
-  "new": "  }\n  if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n  return true;\n}\n",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F55-the-rows-spared-unwritten",
-  "file": "src/scenes/hostEnchant.js",
-  "old": "          spared: sparedByPlayer(f),\n",
-  "new": "          spared: false,\n",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F55-the-rows-spare-no-defender",
-  "file": "src/scenes/hostEnchant.js",
-  "old": "          spared: sparedByPlayer(f),\n",
-  "new": "          spared: sparedByPlayer(f) && f.defender !== true,\n",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F55-the-rows-drop-the-drains-word",
-  "file": "src/scenes/hostEnchant.js",
-  "old": "          hurt: (n, o) => foeSinks(f).hurt?.(n, o),\n",
-  "new": "          hurt: (n) => foeSinks(f).hurt?.(n),\n",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F55-the-drain-skips-no-one",
-  "file": "src/systems/enchantments.js",
-  "old": "      for (const foe of nearby.filter((n) => !n.spared)) {",
-  "new": "      for (const foe of nearby) {",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F55-the-drain-the-players-attack-again",
-  "file": "src/systems/enchantments.js",
-  "old": "        foe.hurt?.(1, { fromPlayer: false });",
-  "new": "        foe.hurt?.(1);",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F55-the-door-lands-the-players-harm-on-a-shipmate",
-  "file": "src/scenes/exteriorFoes.js",
-  "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
-  "new": "if (f.dead) return;",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F55-the-door-guard-deaf-to-provenance",
-  "file": "src/scenes/exteriorFoes.js",
-  "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
-  "new": "if (f.dead || (!peer && sparedBySwing(f))) return;",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F55-the-door-guard-deaf-to-a-peer",
-  "file": "src/scenes/exteriorFoes.js",
-  "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
-  "new": "if (f.dead || (fromPlayer && sparedBySwing(f))) return;",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F56-the-blast-wrapper-drops-its-foe",
-  "file": "src/characters/enemy/enemyCasting.js",
-  "old": "      { entity: f.entity, sinks: foeSinks(f), foe: f }, { excludeFoe: f, playerHeight });",
-  "new": "      { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f, playerHeight });",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- },
- {
-  "name": "AUDIT-NAV2-F54-the-shipmate-alone-refused",
-  "file": "src/player/mobileEnemyActivate.js",
-  "old": "if (sparedByPlayer(foe)) return true;",
-  "new": "if (foe?.deckBoat != null && foe.entity?.team === 'PlayerAlly' && !foe.dead) return true;",
-  "tests": [
-   "test/scenes/auditnav2_combat.test.js"
-  ]
- }
+  {
+    "name": "AUDIT-NAV2-F54-a-shipmate-is-a-mark-again",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (sparedByPlayer(foe)) return true;",
+    "new": "  if (false && isShipmate(foe)) return true;",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F54-the-refusal-under-the-distance-line",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) {\n    midScreen?.(tooFarAwayText());\n    return true;\n  } // :834 - the mid-screen refusal",
+    "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) {\n    midScreen?.(tooFarAwayText());\n    return true;\n  } // :834 - the mid-screen refusal\n  if (sparedByPlayer(foe)) return true;",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F54-the-refusal-after-the-roll",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (sparedByPlayer(foe)) return true;\n  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) {\n    midScreen?.(tooFarAwayText());\n    return true;\n  } // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true; // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText }); // :838 -> :1611",
+    "new": "  // :830 - the flag wraps EVERYTHING below, the distance line included.\n  if (entity.pickpocketAttempted) return true;\n  if (distance > PICKPOCKET_DISTANCE) {\n    midScreen?.(tooFarAwayText());\n    return true;\n  } // :834 - the mid-screen refusal\n  entity.pickpocketAttempted = true; // :837\n  const r = pickpocket(player, { target: entity, rolls, nothingText }); // :838 -> :1611\n  if (sparedByPlayer(foe)) return true;",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F54-the-ally-revert-dropped-the-motor-half-alone",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);",
+    "new": "    if (false && foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F54-the-ally-revert-out-of-the-failure-arm",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "    if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);\n  }",
+    "new": "  }\n  if (foe.ai) resetAllyTeamOnPlayerAttack(foe.ai, foe.entity, foe.mobileType);",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F55-the-rows-spared-unwritten",
+    "file": "src/scenes/hostEnchant.js",
+    "old": "          spared: sparedByPlayer(f),\n",
+    "new": "          spared: false,\n",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F55-the-rows-spare-no-defender",
+    "file": "src/scenes/hostEnchant.js",
+    "old": "          spared: sparedByPlayer(f),\n",
+    "new": "          spared: sparedByPlayer(f) && f.defender !== true,\n",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F55-the-rows-drop-the-drains-word",
+    "file": "src/scenes/hostEnchant.js",
+    "old": "          hurt: (n, o) => foeSinks(f).hurt?.(n, o),\n",
+    "new": "          hurt: (n) => foeSinks(f).hurt?.(n),\n",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F55-the-drain-skips-no-one",
+    "file": "src/systems/enchantments.js",
+    "old": "        for (const foe of nearby.filter((n) => !n.spared)) {",
+    "new": "        for (const foe of nearby) {",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F55-the-drain-the-players-attack-again",
+    "file": "src/systems/enchantments.js",
+    "old": "          foe.hurt?.(1, { fromPlayer: false }); // AUDIT NAV2 F55: DFU writes CurrentHealth and raises no attack (no HandleAttackFromSource) - as the player's blow the drain woke the area (a prize's yielded men) and turned a drained ally on the wearer",
+    "new": "          foe.hurt?.(1); // AUDIT NAV2 F55: DFU writes CurrentHealth and raises no attack (no HandleAttackFromSource) - as the player's blow the drain woke the area (a prize's yielded men) and turned a drained ally on the wearer",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F55-the-door-lands-the-players-harm-on-a-shipmate",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
+    "new": "if (f.dead) return;",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F55-the-door-guard-deaf-to-provenance",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
+    "new": "if (f.dead || (!peer && sparedBySwing(f))) return;",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F55-the-door-guard-deaf-to-a-peer",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "if (f.dead || (fromPlayer && !peer && sparedBySwing(f))) return;",
+    "new": "if (f.dead || (fromPlayer && sparedBySwing(f))) return;",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F56-the-blast-wrapper-drops-its-foe",
+    "file": "src/characters/enemy/enemyCasting.js",
+    "old": "      { entity: f.entity, sinks: foeSinks(f), foe: f }, { excludeFoe: f, playerHeight });",
+    "new": "      { entity: f.entity, sinks: foeSinks(f) }, { excludeFoe: f, playerHeight });",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-NAV2-F54-the-shipmate-alone-refused",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (sparedByPlayer(foe)) return true;",
+    "new": "  if (foe?.deckBoat != null && foe.entity?.team === 'PlayerAlly' && !foe.dead) return true;",
+    "tests": [
+      "test/scenes/auditnav2_combat.test.js"
+    ]
+  }
 ]

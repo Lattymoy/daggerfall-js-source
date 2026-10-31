@@ -39,7 +39,7 @@
 // spent. Idempotent: a moved piece is on the pool, and nothing finds it to move again.
 
 import { mintCondition, ITEM_TEMPLATES, templateByIndex } from './item/itemTemplates.js';
-import { scaleFoundMark, markFound } from './item/foundMark.js';   // AUDIT MEND-THIRD: the mark's one home
+import { scaleFoundMark, markFound } from './item/foundMark.js'; // AUDIT MEND-THIRD: the mark's one home
 import { ARROW_TEMPLATE } from './inventory.js';
 import { WEAPONS, WEAPON_MATERIALS, conditionMultipliersByMaterial } from '../characters/weapons.js';
 import { QUALITY_EFFECTS } from '../net/recipeLaw.js';
@@ -50,7 +50,8 @@ const WEARABLE = new Set(WEARABLE_GROUPS);
 
 /** Roleplay & Realism's worn questions' dagger: "Set condition of ebony dagger if player has one from char creation
  *  questions" - a dagger finer than steel. One home, read by the kit and by the repair. */
-export const isQuestionsDagger = (item) => item?.group === 'Weapons' && item.templateIndex === WEAPONS.Dagger && (item.material ?? 0) > WEAPON_MATERIALS.Steel;
+export const isQuestionsDagger = (item) =>
+  item?.group === 'Weapons' && item.templateIndex === WEAPONS.Dagger && (item.material ?? 0) > WEAPON_MATERIALS.Steel;
 /** The kit's wear: `(int)(maxCondition * 0.2f)`. */
 export const QUESTIONS_DAGGER_WEAR = 0.2;
 
@@ -62,12 +63,14 @@ export const QUESTIONS_DAGGER_WEAR = 0.2;
 export function repairUnmintedConditions(items) {
   let n = 0;
   for (const it of Array.isArray(items) ? items : []) {
-    if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group) || !Object.isExtensible(it)) continue;
+    if (!it || typeof it !== 'object' || it.maxCondition != null || !WEARABLE.has(it.group) || !Object.isExtensible(it))
+      continue;
     const had = it.currentCondition;
     mintCondition(it);
     if (it.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE) it.currentCondition = 0;
-    else if (had === 0 && isQuestionsDagger(it)) it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);
-    if (had === 0 && isQuestionsDagger(it)) markFound(it);   // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked
+    else if (had === 0 && isQuestionsDagger(it))
+      it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);
+    if (had === 0 && isQuestionsDagger(it)) markFound(it); // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked
     n++;
   }
   return n;
@@ -76,14 +79,27 @@ export function repairUnmintedConditions(items) {
 /** The hit points Roleplay & Realism: Items 1.3 patched onto classic weapon rows (a Tanto at 40, a Short Bow at 80): a
  *  piece minted under that release carries its patch's pool. OWN-WORK3 dropped the patches; an old save's pieces
  *  still do, so these are a fact of the save, kept. */
-export const RRI_RELEASE_POOLS = new Map([[114, 40], [116, 400], [117, 150], [118, 700], [121, 350], [123, 450], [129, 80], [130, 120]]);
+export const RRI_RELEASE_POOLS = new Map([
+  [114, 40],
+  [116, 400],
+  [117, 150],
+  [118, 700],
+  [121, 350],
+  [123, 450],
+  [129, 80],
+  [130, 120],
+]);
 
 /** The pools a weapon of this template may have been minted on before WEAPON-POOL: Daggerfall's row, a custom
  *  template's own, and the mod's patch of the row.
  * @param {number} templateIndex
  * @returns {number[]} */
-const rowPools = (templateIndex) => [ITEM_TEMPLATES[templateIndex]?.hitPoints, templateByIndex(templateIndex)?.hitPoints, RRI_RELEASE_POOLS.get(templateIndex)]
-  .filter((hp) => typeof hp === 'number');
+const rowPools = (templateIndex) =>
+  [
+    ITEM_TEMPLATES[templateIndex]?.hitPoints,
+    templateByIndex(templateIndex)?.hitPoints,
+    RRI_RELEASE_POOLS.get(templateIndex),
+  ].filter((hp) => typeof hp === 'number');
 
 /** A pool through a piece's own mint: the material ladder (mintCondition's arithmetic - no material is x4 / 4), then a
  *  made piece's quality (smithItems.js mintPiece's `round(maxCondition * condition)`; its floor at 1 never reaches a
@@ -105,8 +121,16 @@ function mintedOn(pool, it) {
 export function repoolWeapon(it) {
   // a magic item's condition is its uses (a classic save's artifact carries `artifact` alone - AUDIT WEAPON-POOL P4); a
   // piece at a smith keeps its booked job (P3); a frozen record cannot be written
-  if (!it || it.group !== 'Weapons' || it.magic || it.artifact || it.repairData != null || !Object.isExtensible(it)
-    || !Number.isFinite(it.currentCondition)) return false;
+  if (
+    !it ||
+    it.group !== 'Weapons' ||
+    it.magic ||
+    it.artifact ||
+    it.repairData != null ||
+    !Object.isExtensible(it) ||
+    !Number.isFinite(it.currentCondition)
+  )
+    return false;
   const max = it.maxCondition;
   const pool = mintedOn(mintCondition({ group: 'Weapons', templateIndex: it.templateIndex }).maxCondition, it);
   if (pool === max || !rowPools(it.templateIndex).some((hp) => mintedOn(hp, it) === max)) return false;
@@ -114,7 +138,7 @@ export function repoolWeapon(it) {
   // is never rounded to either
   const share = (/** @type {number} */ n) => Math.round((n * pool) / max);
   it.currentCondition = share(it.currentCondition);
-  scaleFoundMark(it, max, pool);   // P1: the online counter reads the mark (and MEND-THIRD its owner's mends) over the maximum
+  scaleFoundMark(it, max, pool); // P1: the online counter reads the mark (and MEND-THIRD its owner's mends) over the maximum
   it.maxCondition = pool;
   return true;
 }

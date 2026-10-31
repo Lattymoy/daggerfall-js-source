@@ -92,8 +92,8 @@
   {
     "name": "STREETS-TAB-the-M-key-own-bag",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "      town: townSheetBag(deps),   // FB1020c STREETS-TAB",
-    "new": "      town: { ...townSheetBag(deps), blocks: deps.blocks ?? [] },   // FB1020c STREETS-TAB",
+    "old": "      town: townSheetBag(deps), // FB1020c STREETS-TAB: the streets' bag has one home - the travel key's window takes the same",
+    "new": "      town: { ...townSheetBag(deps), blocks: deps.blocks ?? [] }, // FB1020c STREETS-TAB: the streets' bag has one home - the travel key's window takes the same",
     "tests": [
       "test/ui/town/fb1020c_streetstab.test.js"
     ],

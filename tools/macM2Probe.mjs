@@ -24,15 +24,16 @@ const check = (name, ok, detail = '') => {
 const browser = await chromium.launch();
 
 async function bootSettled(page) {
-  await page.waitForFunction(
-    () => document.body.textContent.includes('boot failed'), null, { timeout: 15000 },
-  ).catch(() => {});
+  await page
+    .waitForFunction(() => document.body.textContent.includes('boot failed'), null, { timeout: 15000 })
+    .catch(() => {});
 }
 
 async function toGamePage(page) {
   await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
   await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
-  if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
+  if (await page.locator('#enhanced-menu .doorbtn.door-offline').count())
+    await page.locator('#enhanced-menu .doorbtn.door-offline').click(); // UI-CALM: the games stand behind Offline
   await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await page.getByRole('button', { name: 'Begin', exact: true }).click();
   await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
@@ -42,32 +43,53 @@ async function toGamePage(page) {
 /** `wear` names a template to put on the body before the window opens;
  *  `loot` mints a container so the pane opens in LOOT mode. */
 async function openPack(page, { wear = null, loot = false } = {}) {
-  await page.evaluate(async ({ wear: w, loot: l }) => {
-    const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
-    const { equipItem } = await import('/src/systems/equip.js');
-    const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
-    const mk = (n, group = 'Weapons') => {
-      const tp = t(n);
-      return tp && {
-        name: tp.name, templateIndex: tp.index, group, stackCount: 1,
-        currentCondition: tp.hitPoints ?? 50, maxCondition: tp.hitPoints ?? 50,
+  await page.evaluate(
+    async ({ wear: w, loot: l }) => {
+      const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
+      const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
+      const { equipItem } = await import('/src/systems/equip.js');
+      const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
+      const mk = (n, group = 'Weapons') => {
+        const tp = t(n);
+        return (
+          tp && {
+            name: tp.name,
+            templateIndex: tp.index,
+            group,
+            stackCount: 1,
+            currentCondition: tp.hitPoints ?? 50,
+            maxCondition: tp.hitPoints ?? 50,
+          }
+        );
       };
-    };
-    const e = {
-      name: 'Aelwyn', career: { name: 'Spellsword' },
-      stats: { strength: 50, endurance: 48 }, items: [],
-    };
-    e.items = [mk('Longsword'), mk('Dagger'), mk('Cuirass', 'Armor'),
-      { name: 'Gold Pieces', templateIndex: 276, group: 'Currency', stackCount: 1287 }].filter(Boolean);
-    if (w) equipItem(e, e.items.find((it) => it.name === w));
-    globalThis.__ent = e;
-    const pile = [mk('Dagger')];
-    globalThis.__slot = createInventoryWindow({
-      entity: e, items: () => e.items, wagonItems: () => [],
-      ...(l ? { loot: { items: () => pile } } : {}),
-    });
-  }, { wear, loot });
+      const e = {
+        name: 'Aelwyn',
+        career: { name: 'Spellsword' },
+        stats: { strength: 50, endurance: 48 },
+        items: [],
+      };
+      e.items = [
+        mk('Longsword'),
+        mk('Dagger'),
+        mk('Cuirass', 'Armor'),
+        { name: 'Gold Pieces', templateIndex: 276, group: 'Currency', stackCount: 1287 },
+      ].filter(Boolean);
+      if (w)
+        equipItem(
+          e,
+          e.items.find((it) => it.name === w),
+        );
+      globalThis.__ent = e;
+      const pile = [mk('Dagger')];
+      globalThis.__slot = createInventoryWindow({
+        entity: e,
+        items: () => e.items,
+        wagonItems: () => [],
+        ...(l ? { loot: { items: () => pile } } : {}),
+      });
+    },
+    { wear, loot },
+  );
   await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 20000 });
 }
 
@@ -89,19 +111,24 @@ await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
 await page.mouse.down();
 await page.mouse.move(from.x + from.width / 2 + 20, from.y + from.height / 2 + 20, { steps: 4 });
 const ghost = page.locator('body > .dragghost');
-check('A: the hold really carries the worn piece - a ghost on the BODY',
-  (await ghost.count()) === 1);
+check('A: the hold really carries the worn piece - a ghost on the BODY', (await ghost.count()) === 1);
 // still over the MAP: the cancel gesture, so the ghost promises nothing
-check('A: over the body it promises nothing - a release there is the cancel',
+check(
+  'A: over the body it promises nothing - a release there is the cancel',
   (await ghost.locator('.ghostact').textContent()) === '',
-  JSON.stringify(await ghost.locator('.ghostact').textContent()));
+  JSON.stringify(await ghost.locator('.ghostact').textContent()),
+);
 
 await page.mouse.move(dock.x + dock.width / 2, dock.y + dock.height / 2, { steps: 8 });
-check('A: over the dock it says what the release will do',
+check(
+  'A: over the dock it says what the release will do',
   (await ghost.locator('.ghostact').textContent()) === 'Take off',
-  JSON.stringify(await ghost.locator('.ghostact').textContent()));
-check('A: the dock lights as the one target',
-  await page.locator('#enhanced-inventory .pack-dock.dragover').count() === 1);
+  JSON.stringify(await ghost.locator('.ghostact').textContent()),
+);
+check(
+  'A: the dock lights as the one target',
+  (await page.locator('#enhanced-inventory .pack-dock.dragover').count()) === 1,
+);
 await page.mouse.up();
 check('A: the ghost is gone on release', (await ghost.count()) === 0);
 const afterDrag = await page.evaluate(() => ({
@@ -115,29 +142,36 @@ check('A: and is in the bag, not on the floor', afterDrag.held === true);
 // not follow a take-off (only a take does - PX31)
 const armourRows = await page.evaluate(() => {
   [...document.querySelectorAll('#enhanced-inventory .packtab')]
-    .find((b) => b.textContent.startsWith('Armor') || b.textContent.startsWith('Armour'))?.click();
+    .find((b) => b.textContent.startsWith('Armor') || b.textContent.startsWith('Armour'))
+    ?.click();
   return [...document.querySelectorAll('#enhanced-inventory .itemrow .itemname span')].map((n) => n.textContent);
 });
-check('A: so the pack list shows it again', armourRows.includes('Cuirass'),
-  armourRows.join(', ') || afterDrag.rows.join(', '));
+check(
+  'A: so the pack list shows it again',
+  armourRows.includes('Cuirass'),
+  armourRows.join(', ') || afterDrag.rows.join(', '),
+);
 await page.evaluate(() => globalThis.__slot.dispose());
 
 // ── A2: THE PLAIN CLICK IS UNTOUCHED ─────────────────────────────
 await openPack(page, { wear: 'Cuirass' });
 await page.locator('#enhanced-inventory .wornrow:not(.wornempty)').first().click();
-check('A2: a plain click raises the card',
-  (await page.locator('#enhanced-inventory .packtip').count()) === 1);
-check('A2: and takes nothing off by itself',
-  await page.evaluate(() => !!globalThis.__ent.items.find((i) => i.name === 'Cuirass')?.equipSlot));
+check('A2: a plain click raises the card', (await page.locator('#enhanced-inventory .packtip').count()) === 1);
+check(
+  'A2: and takes nothing off by itself',
+  await page.evaluate(() => !!globalThis.__ent.items.find((i) => i.name === 'Cuirass')?.equipSlot),
+);
 await page.locator('#enhanced-inventory .packtip .act.primary').click();
-check('A2: the card’s Take off still works',
-  await page.evaluate(() => !globalThis.__ent.items.find((i) => i.name === 'Cuirass')?.equipSlot));
+check(
+  'A2: the card’s Take off still works',
+  await page.evaluate(() => !globalThis.__ent.items.find((i) => i.name === 'Cuirass')?.equipSlot),
+);
 await page.evaluate(() => globalThis.__slot.dispose());
 
 // ── B: THE LOOT BAR ──────────────────────────────────────────────
 await openPack(page, { loot: true });
 const bar = await page.$$eval('#enhanced-inventory .remoteacts .act', (ns) => ns.map((n) => n.textContent));
-check('B: the loot frame is the only window', await page.locator('#enhanced-inventory .pack-win').count() === 0);
+check('B: the loot frame is the only window', (await page.locator('#enhanced-inventory .pack-win').count()) === 0);
 check('B: and its bar carries no Gold and no Pack', bar.length === 0, JSON.stringify(bar));
 await page.evaluate(() => globalThis.__slot.dispose());
 
@@ -147,11 +181,15 @@ const row = page.locator('#enhanced-inventory .itemrow').first();
 const rb = await row.boundingBox();
 await page.mouse.move(rb.x + rb.width / 2, rb.y + rb.height / 2);
 await page.mouse.down();
-await page.mouse.move(20, 20, { steps: 8 });   // off the panel: a ground drop
+await page.mouse.move(20, 20, { steps: 8 }); // off the panel: a ground drop
 await page.mouse.up();
 const bar2 = await page.$$eval('#enhanced-inventory .remoteacts .act', (ns) => ns.map((n) => n.textContent));
 const gold2 = await page.$$eval('#enhanced-inventory .goldbtn', (ns) => ns.map((n) => n.textContent));
-check('B2: the normal pack still carries Gold - GOLD-DROP: on its own footer', gold2.length === 1, JSON.stringify(gold2));
+check(
+  'B2: the normal pack still carries Gold - GOLD-DROP: on its own footer',
+  gold2.length === 1,
+  JSON.stringify(gold2),
+);
 check('B2: and never a Pack button', !bar2.includes('Pack'), JSON.stringify(bar2));
 
 check('no page errors', errors.length === 0, errors.join(' | '));

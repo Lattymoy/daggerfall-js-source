@@ -30,8 +30,8 @@
   {
     "name": "INVIS-SWING-the-illusion-unread",
     "file": "src/systems/wild/wildAlert.js",
-    "old": "  if (concealment && blockedByIllusionEffect(seesThrough, concealment, rng)) return false;\n",
-    "new": "",
+    "old": "  if (concealment && blockedByIllusionEffect(seesThrough, concealment, rng)) return false;\n  return rng() * 100 < noticeChance(distM, reachM, stealth);",
+    "new": "  return rng() * 100 < noticeChance(distM, reachM, stealth);",
     "tests": [
       "test/characters/enemy/fb1015f_invisswing.test.js"
     ]

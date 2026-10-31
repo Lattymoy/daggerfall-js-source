@@ -11,8 +11,8 @@
   {
     "name": "SIGIL-UI-the-bar-from-zero",
     "file": "src/systems/sigil/sigil.js",
-    "old": "(s.xp - from) / (next.xp - from)",
-    "new": "s.xp / next.xp",
+    "old": "    frac: next ? Math.max(0, Math.min(1, (s.xp - from) / (next.xp - from))) : 1,",
+    "new": "    frac: next ? Math.max(0, Math.min(1, s.xp / next.xp)) : 1,",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SIGIL-UI-the-held-note-dropped",
     "file": "src/ui/sigilCard.js",
-    "old": "  if (v.held) box.append(el('p', 'sigil-note', `Your Renown limits it to ",
-    "new": "  if (false) box.append(el('p', 'sigil-note', `Your Renown limits it to ",
+    "old": "  box.append(meter, prog);\n  if (v.held)",
+    "new": "  box.append(meter, prog);\n  if (false)",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "RARITY-UI-the-hotbar-unmarked",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if (rar) n.dataset.rarity = rar; else delete n.dataset.rarity;",
+    "old": "  if (rar) n.dataset.rarity = rar;\n  else delete n.dataset.rarity;",
     "new": "  delete n.dataset.rarity;",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"

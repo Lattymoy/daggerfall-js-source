@@ -2,8 +2,8 @@
   {
     "name": "MEND-WORN-dfu-walk",
     "file": "src/systems/enchantments.js",
-    "old": "      const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });\n      if (!it) return;\n      repoolWeapon(it);\n      const was = it.currentCondition;\n      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));\n      creditOwnMend(it, was);   // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells\n",
-    "new": "      for (const it of entity.items ?? []) {\n        if (it && it.currentCondition != null && it.maxCondition != null && it.currentCondition < it.maxCondition) {\n          if (isEnchantedItem(it) && !(ctx?.allowMagicRepairs ?? false)) continue;\n          it.currentCondition += 1;\n          return;\n        }\n      }\n",
+    "old": "        const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });\n        if (!it) return;\n        repoolWeapon(it);\n        const was = it.currentCondition;\n        it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));\n        creditOwnMend(it, was); // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells",
+    "new": "        for (const it of entity.items ?? []) {\n          if (it && it.currentCondition != null && it.maxCondition != null && it.currentCondition < it.maxCondition) {\n            if (isEnchantedItem(it) && !(ctx?.allowMagicRepairs ?? false)) continue;\n            it.currentCondition += 1;\n            return;\n          }\n        }",
     "tests": [
       "test/systems/mend_worn.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MEND-WORN-pack-order",
     "file": "src/systems/enchantments.js",
-    "old": "(tier === bestTier && mendOrder(it, best) < 0)) { best = it; bestTier = tier; }",
-    "new": "(tier === bestTier && false)) { best = it; bestTier = tier; }",
+    "old": "    if (!best || tier < bestTier || (tier === bestTier && mendOrder(it, best) < 0)) {",
+    "new": "    if (!best || tier < bestTier || (tier === bestTier && false)) {",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "MEND-WORN-order-least-worn",
     "file": "src/systems/item/itemTemplates.js",
-    "old": "wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
-    "new": "wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
+    "old": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
+    "new": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "MEND-WORN-smiths-refusal-unread",
     "file": "src/systems/enchantments.js",
-    "old": "    if (templateByIndex(it.templateIndex)?.isNotRepairable) continue;\n",
-    "new": "",
+    "old": "    if (templateByIndex(it.templateIndex)?.isNotRepairable) continue;\n    if (isEnchantedItem(it) && !allowMagicRepairs) continue;",
+    "new": "    if (isEnchantedItem(it) && !allowMagicRepairs) continue;",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "MEND-WORN-magic-unasked",
     "file": "src/systems/enchantments.js",
-    "old": "    if (isEnchantedItem(it) && !allowMagicRepairs) continue;\n",
-    "new": "",
+    "old": "    if (isEnchantedItem(it) && !allowMagicRepairs) continue;\n    if (it.templateIndex === TRANSPORT_SMALL_CART || it.templateIndex === TRANSPORT_HORSE) continue; // AUDIT WAGONS4: a wagon's condition is its upkeep - a Wagon Yard's or a kit's, never a held enchantment's (DFU's wagon never wore)",
+    "new": "    if (it.templateIndex === TRANSPORT_SMALL_CART || it.templateIndex === TRANSPORT_HORSE) continue; // AUDIT WAGONS4: a wagon's condition is its upkeep - a Wagon Yard's or a kit's, never a held enchantment's (DFU's wagon never wore)",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "MEND-WORN-a-point-on-the-pool",
     "file": "src/systems/enchantments.js",
-    "old": "it.currentCondition + repairsObjectsMend(it));",
-    "new": "it.currentCondition + CONDITION_AMOUNT);",
+    "old": "        it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));",
+    "new": "        it.currentCondition = Math.min(it.maxCondition, it.currentCondition + CONDITION_AMOUNT);",
     "tests": [
       "test/systems/mend_worn.test.js"
     ],
@@ -67,8 +67,8 @@
   {
     "name": "MEND-WORN-uses-on-the-share",
     "file": "src/systems/enchantments.js",
-    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
-    "new": "export const repairsObjectsMend = (it) => (it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "old": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "new": "  it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
     "tests": [
       "test/systems/mend_worn.test.js",
       "test/systems/fb1016b_mendarmour.test.js"
@@ -78,8 +78,8 @@
   {
     "name": "MEND-WORN-artifact-on-the-share",
     "file": "src/systems/enchantments.js",
-    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
-    "new": "export const repairsObjectsMend = (it) => (it.magic ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "old": "  it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
+    "new": "  it.magic ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF));",
     "tests": [
       "test/systems/mend_worn.test.js"
     ],
@@ -88,8 +88,8 @@
   {
     "name": "MEND-WORN-past-its-condition",
     "file": "src/systems/enchantments.js",
-    "old": "      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));",
-    "new": "      it.currentCondition = it.currentCondition + repairsObjectsMend(it);",
+    "old": "        it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));",
+    "new": "        it.currentCondition = it.currentCondition + repairsObjectsMend(it);",
     "tests": [
       "test/systems/mend_worn.test.js"
     ],
@@ -98,8 +98,8 @@
   {
     "name": "MEND-WORN-row-pool-kept",
     "file": "src/systems/enchantments.js",
-    "old": "      repoolWeapon(it);\n      const was = it.currentCondition;\n      it.currentCondition = Math.min(",
-    "new": "      const was = it.currentCondition;\n      it.currentCondition = Math.min(",
+    "old": "        repoolWeapon(it);\n        const was = it.currentCondition;",
+    "new": "        const was = it.currentCondition;",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]
@@ -117,8 +117,8 @@
   {
     "name": "MEND-WORN-a-foes-ring",
     "file": "src/systems/enchantments.js",
-    "old": "      if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;",
-    "new": "      if (round % CONDITION_PER_ROUNDS !== 0) return;",
+    "old": "        if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;",
+    "new": "        if (round % CONDITION_PER_ROUNDS !== 0) return;",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]
@@ -126,8 +126,8 @@
   {
     "name": "MEND-WORN-every-round",
     "file": "src/systems/enchantments.js",
-    "old": "      if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;",
-    "new": "      if (!entity.isPlayer) return;",
+    "old": "        if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;",
+    "new": "        if (!entity.isPlayer) return;",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]
@@ -135,8 +135,8 @@
   {
     "name": "MEND-WORN-kit-own-order",
     "file": "src/systems/smithItems.js",
-    "old": "    .sort(mendOrder);",
-    "new": "    .sort((a, b) => a.currentCondition / a.maxCondition - b.currentCondition / b.maxCondition);",
+    "old": "    .sort(mendOrder); // MEND-WORN: the order's one home, Repairs Objects' too (itemTemplates.js)",
+    "new": "    .sort((a, b) => a.currentCondition / a.maxCondition - b.currentCondition / b.maxCondition); // MEND-WORN: the order's one home, Repairs Objects' too (itemTemplates.js)",
     "tests": [
       "test/systems/mend_worn.test.js"
     ]

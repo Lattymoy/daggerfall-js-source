@@ -20,10 +20,14 @@ export function noteHomeDecorList(mapId, buildingKey, data, ground, townBlocks, 
   room = Number.isSafeInteger(data?.cap) && data.cap > 0 ? { key, cap: data.cap } : null;
   if (data?.measured !== false || !(ground > 0) || typeof homeDecor?.use !== 'function' || refused.has(key)) return;
   const blocks = Number.isSafeInteger(townBlocks) && townBlocks >= 0 ? townBlocks : 0;
-  Promise.resolve(homeDecor.use({ mapId, buildingKey, character, op: 'ground', ground, townBlocks: blocks })).then((res) => {
-    if (res?.ok === false) refused.add(key);
-    if (res?.ok && room?.key === key && typeof res.data?.ground === 'number') room = { key, cap: decorCapOf(res.data.ground) };
-  }, () => {});
+  Promise.resolve(homeDecor.use({ mapId, buildingKey, character, op: 'ground', ground, townBlocks: blocks })).then(
+    (res) => {
+      if (res?.ok === false) refused.add(key);
+      if (res?.ok && room?.key === key && typeof res.data?.ground === 'number')
+        room = { key, cap: decorCapOf(res.data.ground) };
+    },
+    () => {},
+  );
 }
 /** The cap the service said this room holds, or null (another room, or a service from before DECOR-ROOMY). */
 export const homeDecorCap = (mapId, buildingKey) => (room && room.key === keyOf(mapId, buildingKey) ? room.cap : null);

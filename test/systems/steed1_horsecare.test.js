@@ -431,8 +431,8 @@ test('STEED1 THE ITEM: `horseBond` (tenths, 1..1000) and `horseFed` (a minute, 1
 test('STEED1 THE SWITCH: a Features row of the World tab\'s Travel; the enhanced lane\'s alone. HORSE-TIERS (PIN MOVED): tiers on the one key, Boons the default, the player\'s online, read through the one accessor (test/systems/horsetiers.test.js holds the rest)', () => {
   const f = FEATURES.find((x) => x.id === 'horse-care');
   assert.deepEqual([f.group, f.kinds, f.control.store, f.control.key, f.control.initial, f.control.online], ['world', ['enhanced'], 'prefs', 'horseCare', 'boons', 'player']);
-  assert.match(rd('src/systems/upkeep/upkeepSwitch.js'), /export const horseCareRules = \(\) => \(isEnhanced\(\) \? horseCareRulesForTier\(horseCareTierOfStored\(getPref\(HORSE_CARE_PREF\)\)\) : null\);/);
-  assert.match(rd('src/ui/settings/settingsMap.js'), /"feat:mod-horse-cart-and-cargo", "feat:horse-care", "feat:wagon-upkeep"\]/);
+  assert.match(rd('src/systems/upkeep/upkeepSwitch.js'), /export const horseCareRules = \(\) =>\n\s*isEnhanced\(\) \? horseCareRulesForTier\(horseCareTierOfStored\(getPref\(HORSE_CARE_PREF\)\)\) : null;/);
+  assert.match(rd('src/ui/settings/settingsMap.js'), /'feat:mod-horse-cart-and-cargo',\n\s*'feat:horse-care',\n\s*'feat:wagon-upkeep',\n\s*\]/);
 });
 
 test('STEED1 THE STABLE PAGE: each horse its card - its bond and hunger in words, the ridden one\'s breath, four stats with the bond\'s share beside, Feed oats and Give an apple (dark with none, full or away), Ride this one on every other (mutants: a horse dropped, the acts unwired)', async () => {
@@ -491,7 +491,7 @@ test('STEED1 THE HOSTS (world.js, exterior.js): the upkeep built before the mod\
   assert.match(rd('src/ui/hud/hud.js'), /drawGripBar\(renderer, canvas, art, grip \?\? steed, s\);/, 'the classic HUD: the horse\'s breath in the grip\'s place');
   assert.match(rd('src/ui/enhanced/enhancedHud.js'), /const gr = opts\.grip \?\? opts\.steed \?\? null;\n\s*const gripWord = opts\.grip \? 'Grip' : 'Horse';/, 'the enhanced HUD: under the horse\'s word');
   for (const host of ['src/scenes/worldModes.js', 'src/scenes/dungeonContext.js']) assert.equal(/upkeep\.(tick|rideScale|bar)\(/.test(rd(host)), false, `${host}: no transport indoors`);
-  assert.match(rd('src/systems/transport.js'), /dismountOnTransition = \(mode, transition\) =>\n\s*\(transition === 'ToBuildingInterior' \|\| transition === 'ToDungeonInterior' \? TRANSPORT_MODES\.Foot : mode\);/);
+  assert.match(rd('src/systems/transport.js'), /dismountOnTransition = \(mode, transition\) =>\n\s*transition === 'ToBuildingInterior' \|\| transition === 'ToDungeonInterior' \? TRANSPORT_MODES\.Foot : mode;/);
 });
 
 test('AUDIT STEED1 THE KEEP\'S CLOCK: a load and a new character start it afresh (upkeep.reset, at every door the hosts load through), and so does the switch turned off - a horse is never fed back the span from a minute another character, or another session, last kept it (mutants: AUDIT-STEED1-off-keeps-clock, AUDIT-STEED1-load-no-reset)', () => {

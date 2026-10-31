@@ -20,8 +20,8 @@
   {
     "name": "GUILD-LETTER-the-letter-at-the-back",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": ".unshift(realmLetterOfCredit(amount));",
-    "new": ".push(realmLetterOfCredit(amount));",
+    "old": "    (Array.isArray(save.items) ? save.items : (save.items = [])).unshift(realmLetterOfCredit(amount));",
+    "new": "    (Array.isArray(save.items) ? save.items : (save.items = [])).push(realmLetterOfCredit(amount));",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUILD-LETTER-the-light-left-behind",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    if (Number.isSafeInteger(save.lightSourceIndex) && save.lightSourceIndex >= 0) save.lightSourceIndex += 1;\n",
-    "new": "",
+    "old": "    if (Number.isSafeInteger(save.lightSourceIndex) && save.lightSourceIndex >= 0) save.lightSourceIndex += 1;\n  } else save.goldPieces = whole(save.goldPieces) + amount;",
+    "new": "  } else save.goldPieces = whole(save.goldPieces) + amount;",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GUILD-LETTER-a-light-lit-on-the-letter",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "Number.isSafeInteger(save.lightSourceIndex) && save.lightSourceIndex >= 0)",
-    "new": "Number.isSafeInteger(save.lightSourceIndex))",
+    "old": "    if (Number.isSafeInteger(save.lightSourceIndex) && save.lightSourceIndex >= 0) save.lightSourceIndex += 1;",
+    "new": "    if (Number.isSafeInteger(save.lightSourceIndex)) save.lightSourceIndex += 1;",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GUILD-LETTER-the-letter-misnamed",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "name: 'Letter of Credit', value, stackCount: 1 });",
-    "new": "name: 'Letter of credit', value, stackCount: 1 });",
+    "old": "  name: 'Letter of Credit',",
+    "new": "  name: 'Letter of credit',",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GUILD-LETTER-the-letter-unasked",
     "file": "src/net/guild/guildBook.js",
-    "old": "this.door.withdraw(character, gold, at, letter)",
-    "new": "this.door.withdraw(character, gold, at)",
+    "old": "            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at, letter),",
+    "new": "            call: (/** @type {any} */ at) => this.door.withdraw(character, gold, at),",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "GUILD-LETTER-the-apply-pays-coins",
     "file": "src/net/guild/guildBook.js",
-    "old": "        apply: () => this.wallet().credit(gold, { letter }),",
-    "new": "        apply: () => this.wallet().credit(gold),",
+    "old": "            apply: () => this.wallet().credit(gold, { letter }),",
+    "new": "            apply: () => this.wallet().credit(gold),",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "GUILD-LETTER-the-old-lane-pays-coins",
     "file": "src/net/guild/guildBook.js",
-    "old": "      if (r?.ok) this.wallet().credit(gold, { letter });",
-    "new": "      if (r?.ok) this.wallet().credit(gold);",
+    "old": "        if (r?.ok) this.wallet().credit(gold, { letter });",
+    "new": "        if (r?.ok) this.wallet().credit(gold);",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "GUILD-LETTER-the-answer-unsaid",
     "file": "src/net/guild/guildBook.js",
-    "old": "const said = (/** @type {any} */ r) => (r.ok && letter ? { ...r, letter } : r);",
-    "new": "const said = (/** @type {any} */ r) => r;",
+    "old": "    const said = (/** @type {any} */ r) => (r.ok && letter ? { ...r, letter } : r);",
+    "new": "    const said = (/** @type {any} */ r) => r;",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "GUILD-LETTER-a-refusal-says-a-letter",
     "file": "src/net/guild/guildBook.js",
-    "old": "(r.ok && letter ? { ...r, letter } : r)",
-    "new": "(letter ? { ...r, letter } : r)",
+    "old": "    const said = (/** @type {any} */ r) => (r.ok && letter ? { ...r, letter } : r);",
+    "new": "    const said = (/** @type {any} */ r) => (letter ? { ...r, letter } : r);",
     "tests": [
       "test/systems/fb0930_guildletter.test.js"
     ]

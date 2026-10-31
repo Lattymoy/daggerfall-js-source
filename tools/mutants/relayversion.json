@@ -21,8 +21,8 @@
   {
     "name": "R3-mat4-edited-the-graph-reaches-it",
     "file": "src/world/mat4.js",
-    "old": "export function wrapAngle",
-    "new": "// edited\nexport function wrapAngle",
+    "old": "export function wrapAngle(a) {",
+    "new": "// edited\nexport function wrapAngle(a) {",
     "tests": [
       "test/net/relayversion.test.js"
     ]

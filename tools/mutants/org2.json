@@ -2,8 +2,8 @@
   {
     "name": "ORG2-a-row-with-no-place",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "      \"feat:grass\", \"feat:wind\", ",
-    "new": "      \"feat:wind\", ",
+    "old": "      'feat:grass',\n      'feat:wind',",
+    "new": "      'feat:wind',",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ORG2-a-row-placed-twice",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "      \"feat:enhanced-climbing\", \"Enhancements/AdvancedClimbing\", \"feat:resource-highlights\", \"feat:mod-foraging\"]),",
-    "new": "      \"feat:enhanced-climbing\", \"Enhancements/AdvancedClimbing\", \"feat:resource-highlights\", \"feat:mod-foraging\", \"feat:grass\"]),",
+    "old": "      'feat:mod-foraging',\n    ]),",
+    "new": "      'feat:mod-foraging',\n      'feat:grass',\n    ]),",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ORG2-a-moved-key-filed-away-from-its-row",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "      \"feat:land-view-distance\", \"Experimental/TerrainDistance\", ",
-    "new": "      \"feat:land-view-distance\", ",
+    "old": "      'Experimental/TerrainDistance',\n      'feat:ground-sharpness',",
+    "new": "      'feat:ground-sharpness',",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ORG2-optionPath-without-the-section",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "...(section && w.tab.sections.length > 1 ? [w.section.title] : [])",
-    "new": "...[]",
+    "old": "  return ['Settings', w.tab.title, ...(section && w.tab.sections.length > 1 ? [w.section.title] : [])].join(' \\u203a ');",
+    "new": "  return ['Settings', w.tab.title, ...[]].join(' \\u203a ');",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ORG2-high-is-not-how-it-ships",
     "file": "src/systems/graphicsPresets.js",
-    "old": "values: Object.freeze({ 'land-view-distance': 5, grass: 1, 'cloud-quality': 'default'",
-    "new": "values: Object.freeze({ 'land-view-distance': 5, grass: 0.5, 'cloud-quality': 'default'",
+    "old": "      'land-view-distance': 5,\n      grass: 1,",
+    "new": "      'land-view-distance': 5,\n      grass: 0.5,",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ORG2-a-preset-value-off-its-row",
     "file": "src/systems/graphicsPresets.js",
-    "old": "'cloud-quality': 'hi', 'ground-sharpness': 'max'",
-    "new": "'cloud-quality': 'ultra', 'ground-sharpness': 'max'",
+    "old": "      'cloud-quality': 'hi',",
+    "new": "      'cloud-quality': 'ultra',",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ORG2-one-row-is-enough-for-a-preset",
     "file": "src/systems/graphicsPresets.js",
-    "old": "PRESET_ROWS.every((id) =>",
-    "new": "PRESET_ROWS.some((id) =>",
+    "old": "        PRESET_ROWS.every((id) => String(valueOf(id)) === String(asRead(id, p.values[id]))) &&",
+    "new": "        PRESET_ROWS.some((id) => String(valueOf(id)) === String(asRead(id, p.values[id]))) &&",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "ORG2-graphics-not-first",
     "file": "src/ui/settings/settingsMap.js",
-    "old": "export const CATEGORIES = Object.freeze([\n  tab(\"graphics\"",
-    "new": "export const CATEGORIES = Object.freeze([\n  tab(\"graphics2\"",
+    "old": "  tab('graphics', 'Graphics', [",
+    "new": "  tab('graphics2', 'Graphics', [",
     "tests": [
       "test/systems/org2_options.test.js",
       "test/ui/settings/settingsUI.test.js"

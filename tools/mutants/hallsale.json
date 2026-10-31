@@ -73,8 +73,8 @@
   {
     "name": "GUILD-HALL-SALE-registry-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "            hallSell: h.hallSell === true,",
-    "new": "            hallSell: false,",
+    "old": "              hallSell: h.hallSell === true, // GUILD-HALL-SALE: may sell it at its door - the rank's, as sellHall asks it",
+    "new": "              hallSell: false, // GUILD-HALL-SALE: may sell it at its door - the rank's, as sellHall asks it",
     "tests": [
       "test/net/hallsale.test.js"
     ],

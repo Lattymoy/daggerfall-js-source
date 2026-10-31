@@ -72,8 +72,8 @@
   {
     "name": "HOME-VOTE-owner-votes",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "home.mine !== true && home.deed !== true",
-    "new": "home.deed !== true",
+    "old": "  !!home &&\n  !home.own &&\n  home.mine !== true &&\n  home.deed !== true &&\n  !(home.hall && (home.member === true || home.insider === true));",
+    "new": "  !!home && !home.own && home.deed !== true && !(home.hall && (home.member === true || home.insider === true));",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "HOME-VOTE-member-votes",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "!(home.hall && (home.member === true || home.insider === true));",
-    "new": "!(home.hall && home.insider === true);",
+    "old": "  !!home &&\n  !home.own &&\n  home.mine !== true &&\n  home.deed !== true &&\n  !(home.hall && (home.member === true || home.insider === true));",
+    "new": "  !!home && !home.own && home.mine !== true && home.deed !== true && !(home.hall && home.insider === true);",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "HOME-VOTE-kin-votes",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "!(home.hall && (home.member === true || home.insider === true));",
-    "new": "!(home.hall && home.member === true);",
+    "old": "  !!home &&\n  !home.own &&\n  home.mine !== true &&\n  home.deed !== true &&\n  !(home.hall && (home.member === true || home.insider === true));",
+    "new": "  !!home && !home.own && home.mine !== true && home.deed !== true && !(home.hall && home.member === true);",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "HOME-VOTE-take-back-re-sent",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    mine === HOME_VOTE_UP ? { id: HOME_VOTE_VERB.clear, label: 'Take back your vote up' }",
-    "new": "    mine === HOME_VOTE_UP ? { id: HOME_VOTE_VERB.up, label: 'Take back your vote up' }",
+    "old": "      ? { id: HOME_VOTE_VERB.clear, label: 'Take back your vote up' }",
+    "new": "      ? { id: HOME_VOTE_VERB.up, label: 'Take back your vote up' }",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "HOME-VOTE-clear-a-vote",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "id === HOME_VOTE_VERB.clear ? 0 : null",
-    "new": "id === HOME_VOTE_VERB.clear ? 1 : null",
+    "old": "        ? 0",
+    "new": "        ? 1",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "HOME-VOTE-choices-inverted",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "vote: homeVoteOfVerb(row.id) };",
-    "new": "vote: -homeVoteOfVerb(row.id) };",
+    "old": "    return { code: down ? 'KeyD' : 'KeyU', label: `${down ? 'D' : 'U'} - ${row.label}`, vote: homeVoteOfVerb(row.id) };",
+    "new": "    return { code: down ? 'KeyD' : 'KeyU', label: `${down ? 'D' : 'U'} - ${row.label}`, vote: -homeVoteOfVerb(row.id) };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "HOME-VOTE-zero-vote-unsaid",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  const lines = score !== 0 || homeMyVoteOf(home.myVote) ?",
-    "new": "  const lines = score !== 0 ?",
+    "old": "  const lines = score !== 0 || homeMyVoteOf(home.myVote) ? [homeVotesLine(score, homeMyVoteOf(home.myVote))] : [];",
+    "new": "  const lines = score !== 0 ? [homeVotesLine(score, homeMyVoteOf(home.myVote))] : [];",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "HOME-VOTE-score-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "            score: homeScoreOf(h.score), myVote: homeMyVoteOf(h.vote),",
-    "new": "            score: 0, myVote: 0,",
+    "old": "              score: homeScoreOf(h.score),\n              myVote: homeMyVoteOf(h.vote), // HOME-VOTE: its votes summed, and this account's own",
+    "new": "              score: 0,\n              myVote: 0, // HOME-VOTE: its votes summed, and this account's own",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "HOME-VOTE-insider-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "            insider: h.insider === true,",
-    "new": "            insider: false,",
+    "old": "              insider: h.insider === true, // AUDIT HOME-VOTE A5: a hall of a guild this account has any character in",
+    "new": "              insider: false, // AUDIT HOME-VOTE A5: a hall of a guild this account has any character in",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "HOME-VOTE-listener-told",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "{ ...row, score, myVote: mine }, { mine: false });",
-    "new": "{ ...row, score, myVote: mine });",
+    "old": "      if (row) wrote(id, buildingKey, { ...row, score, myVote: mine }, { mine: false });",
+    "new": "      if (row) wrote(id, buildingKey, { ...row, score, myVote: mine });",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "HOME-VOTE-unknown-home-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "      else ensure(id, { force: true });\n",
-    "new": "",
+    "old": "      else ensure(id, { force: true });\n      return { ok: true, vote: mine, score };",
+    "new": "      return { ok: true, vote: mine, score };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "HOME-VOTE-gone-never-re-asked",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (r?.error === 'no-home' || r?.error === 'vote-own') ensure(id, { force: true });",
-    "new": "    if (r?.error === 'vote-own') ensure(id, { force: true });",
+    "old": "    if (r?.error === 'no-home' || r?.error === 'vote-own') ensure(id, { force: true }); // nobody's now, or mine: the door should say so",
+    "new": "    if (r?.error === 'vote-own') ensure(id, { force: true }); // nobody's now, or mine: the door should say so",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "HOME-VOTE-change-dropped",
     "file": "server-account/src/homeVotes.js",
-    "old": "      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`)",
-    "new": "      ON CONFLICT (map_id, building_key, player) DO NOTHING`)",
+    "old": "      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`,",
+    "new": "      ON CONFLICT (map_id, building_key, player) DO NOTHING`,",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "HOME-VOTE-owner-votes-service",
     "file": "server-account/src/homeVotes.js",
-    "old": "((h.guild_id IS NULL AND h.player = ?)",
-    "new": "((h.guild_id IS NULL AND h.player = ? AND 0)",
+    "old": "export const INSIDER = `((h.guild_id IS NULL AND h.player = ?)",
+    "new": "export const INSIDER = `((h.guild_id IS NULL AND h.player = ? AND 0)",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -252,8 +252,8 @@
   {
     "name": "HOME-VOTE-member-votes-service",
     "file": "server-account/src/homeVotes.js",
-    "old": "g.guild_id = h.guild_id AND g.player = ?)))`;",
-    "new": "g.guild_id = h.guild_id AND g.player = ? AND 0)))`;",
+    "old": "    OR (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = ?)))`;",
+    "new": "    OR (h.guild_id IS NOT NULL AND EXISTS (SELECT 1 FROM guild_members g WHERE g.guild_id = h.guild_id AND g.player = ? AND 0)))`;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "HOME-VOTE-no-age-bar",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S)) return { error: 'vote-young' };   // AUDIT A1\n",
-    "new": "",
+    "old": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))\n    return { error: 'vote-young' }; // AUDIT A1\n  // AUDIT HOME-VOTE II A2: the hour's bar is on votes cast - a vote taken back deletes the account's own row and no",
+    "new": "  // AUDIT HOME-VOTE II A2: the hour's bar is on votes cast - a vote taken back deletes the account's own row and no",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -272,8 +272,8 @@
   {
     "name": "HOME-VOTE-take-back-aged",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (vote !== 0 && !(Number.isSafeInteger",
-    "new": "  if (!(Number.isSafeInteger",
+    "old": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))",
+    "new": "  if (!(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "HOME-VOTE-withdrawal-guarded",
     "file": "server-account/src/homeVotes.js",
-    "old": "    ? db.prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?').bind(mapId, buildingKey, player.id)",
-    "new": "    ? db.prepare(`DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ? AND ${VOTABLE}`).bind(mapId, buildingKey, player.id, mapId, buildingKey, player.id, player.id)",
+    "old": "          .prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?')\n          .bind(mapId, buildingKey, player.id)",
+    "new": "          .prepare(`DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ? AND ${VOTABLE}`)\n          .bind(mapId, buildingKey, player.id, mapId, buildingKey, player.id, player.id)",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "HOME-VOTE-rate-uncounted",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (vote !== 0 && await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S)) return { error: 'vote-rate' };\n",
-    "new": "",
+    "old": "  if (vote !== 0 && (await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S)))\n    return { error: 'vote-rate' };\n  // AUDIT A4: one's own vote is taken back whatever one is now - the key names the account's own row and nobody else's",
+    "new": "  // AUDIT A4: one's own vote is taken back whatever one is now - the key names the account's own row and nobody else's",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "HOME-VOTE-bad-vote-taken",
     "file": "server-account/src/homeVotes.js",
-    "old": "|| !homeVoteOk(vote) ||",
-    "new": "||",
+    "old": "  if (\n    !homeMapIdOk(mapId) ||\n    !homeBuildingKeyOk(buildingKey) ||\n    !homeVoteOk(vote) ||\n    (vote !== 0 && !homeVoteOwnerOk(owner))\n  )",
+    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || (vote !== 0 && !homeVoteOwnerOk(owner)))",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -312,8 +312,8 @@
   {
     "name": "HOME-VOTE-withdraw-inserted",
     "file": "server-account/src/homeVotes.js",
-    "old": "  const write = vote === 0\n",
-    "new": "  const write = false\n",
+    "old": "  const write =\n    vote === 0\n      ? db\n          .prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?')\n          .bind(mapId, buildingKey, player.id)\n      : db\n          .prepare(\n            `INSERT INTO home_votes (map_id, building_key, player, vote, voted_at) SELECT ?, ?, ?, ?, ? WHERE ${VOTABLE}\n      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`,\n          )\n          .bind(mapId, buildingKey, player.id, vote, nowS, mapId, buildingKey, owner, player.id, player.id);",
+    "new": "  const write = false\n    ? db\n        .prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?')\n        .bind(mapId, buildingKey, player.id)\n    : db\n        .prepare(\n          `INSERT INTO home_votes (map_id, building_key, player, vote, voted_at) SELECT ?, ?, ?, ?, ? WHERE ${VOTABLE}\n      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`,\n        )\n        .bind(mapId, buildingKey, player.id, vote, nowS, mapId, buildingKey, owner, player.id, player.id);",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -572,8 +572,8 @@
   {
     "name": "HOME-VOTE-II-A2-bar-on-take-back",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (vote !== 0 && await overRate(",
-    "new": "  if (await overRate(",
+    "old": "  if (vote !== 0 && (await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S)))",
+    "new": "  if (await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S))",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -582,7 +582,7 @@
   {
     "name": "HOME-VOTE-II-A3-take-back-unoffered",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  if (!homeVotable(home)) return mine ? [{ id: HOME_VOTE_VERB.clear, label: `Take back your vote ${mine === HOME_VOTE_UP ? 'up' : 'down'}` }] : [];",
+    "old": "  if (!homeVotable(home))\n    return mine\n      ? [{ id: HOME_VOTE_VERB.clear, label: `Take back your vote ${mine === HOME_VOTE_UP ? 'up' : 'down'}` }]\n      : [];",
     "new": "  if (!homeVotable(home)) return [];",
     "tests": [
       "test/net/homevote.test.js"
@@ -592,8 +592,8 @@
   {
     "name": "HOME-VOTE-II-A3-member-casts",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "homeVotable(home) || (vote === 0 && !!homeMyVoteOf(home?.myVote));",
-    "new": "homeVotable(home) || !!homeMyVoteOf(home?.myVote);",
+    "old": "export const homeVotePressable = (home, vote) => homeVotable(home) || (vote === 0 && !!homeMyVoteOf(home?.myVote));",
+    "new": "export const homeVotePressable = (home, vote) => homeVotable(home) || !!homeMyVoteOf(home?.myVote);",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -602,8 +602,8 @@
   {
     "name": "HOME-VOTE-II-A3-down-key-lost",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "const down = row.id === HOME_VOTE_VERB.down || (row.id === HOME_VOTE_VERB.clear && homeMyVoteOf(home.myVote) === HOME_VOTE_DOWN);",
-    "new": "const down = row.id === HOME_VOTE_VERB.down;",
+    "old": "    const down =\n      row.id === HOME_VOTE_VERB.down ||\n      (row.id === HOME_VOTE_VERB.clear && homeMyVoteOf(home.myVote) === HOME_VOTE_DOWN);",
+    "new": "    const down = row.id === HOME_VOTE_VERB.down;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -612,8 +612,8 @@
   {
     "name": "HOME-VOTE-II-A4-owner-unread",
     "file": "server-account/src/homeVotes.js",
-    "old": "h.building_key = ? AND h.deed = 0 AND ${OWNER} = ? AND NOT ${INSIDER}",
-    "new": "h.building_key = ? AND h.deed = 0 AND (? IS NOT NULL) AND NOT ${INSIDER}",
+    "old": "const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND h.deed = 0 AND ${OWNER} = ? AND NOT ${INSIDER})`;",
+    "new": "const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND h.deed = 0 AND (? IS NOT NULL) AND NOT ${INSIDER})`;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -622,8 +622,8 @@
   {
     "name": "HOME-VOTE-II-A4-owner-unchecked",
     "file": "server-account/src/homeVotes.js",
-    "old": " || (vote !== 0 && !homeVoteOwnerOk(owner))) return { error: 'bad-vote' };",
-    "new": ") return { error: 'bad-vote' };",
+    "old": "  if (\n    !homeMapIdOk(mapId) ||\n    !homeBuildingKeyOk(buildingKey) ||\n    !homeVoteOk(vote) ||\n    (vote !== 0 && !homeVoteOwnerOk(owner))\n  )\n    return { error: 'bad-vote' };",
+    "new": "  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeVoteOk(vote)) return { error: 'bad-vote' };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -632,8 +632,8 @@
   {
     "name": "HOME-VOTE-II-A4-owner-unsent",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "vote: v, ...(owner ? { owner } : {}) });",
-    "new": "vote: v });",
+    "old": "    const r = await api.vote?.({ mapId: id, buildingKey, vote: v, ...(owner ? { owner } : {}) });",
+    "new": "    const r = await api.vote?.({ mapId: id, buildingKey, vote: v });",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -642,8 +642,8 @@
   {
     "name": "HOME-VOTE-II-A4-unknown-sent",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (v !== 0 && !owner) { ensure(id, { force: true }); return { ok: false, error: 'no-home' }; }\n",
-    "new": "",
+    "old": "    if (v !== 0 && !owner) {\n      ensure(id, { force: true });\n      return { ok: false, error: 'no-home' };\n    }\n    const r = await api.vote?.({ mapId: id, buildingKey, vote: v, ...(owner ? { owner } : {}) });",
+    "new": "    const r = await api.vote?.({ mapId: id, buildingKey, vote: v, ...(owner ? { owner } : {}) });",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -662,8 +662,8 @@
   {
     "name": "HOME-VOTE-II-B5-deed-votable-service",
     "file": "server-account/src/homeVotes.js",
-    "old": "h.building_key = ? AND h.deed = 0 AND ${OWNER} = ? AND NOT ${INSIDER}",
-    "new": "h.building_key = ? AND ${OWNER} = ? AND NOT ${INSIDER}",
+    "old": "const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND h.deed = 0 AND ${OWNER} = ? AND NOT ${INSIDER})`;",
+    "new": "const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND ${OWNER} = ? AND NOT ${INSIDER})`;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -672,8 +672,8 @@
   {
     "name": "HOME-VOTE-II-B5-deed-votable-client",
     "file": "src/systems/online/onlineHomes.js",
-    "old": " && home.deed !== true && ",
-    "new": " && ",
+    "old": "  !!home &&\n  !home.own &&\n  home.mine !== true &&\n  home.deed !== true &&\n  !(home.hall && (home.member === true || home.insider === true));",
+    "new": "  !!home && !home.own && home.mine !== true && !(home.hall && (home.member === true || home.insider === true));",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -712,8 +712,8 @@
   {
     "name": "HOME-VOTE-II-A6-score-restored",
     "file": "tools/realmRestore.mjs",
-    "old": "insert('homes', homeRowOf(home))",
-    "new": "insert('homes', home)",
+    "old": "        if (!nowHome) sql.push(insert('homes', homeRowOf(home)));",
+    "new": "        if (!nowHome) sql.push(insert('homes', home));",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -722,8 +722,8 @@
   {
     "name": "HOME-VOTE-II-age-boundary",
     "file": "server-account/src/homeVotes.js",
-    "old": "player.registered_at <= nowS - HOME_VOTE_AGE_S)) return { error: 'vote-young' }",
-    "new": "player.registered_at < nowS - HOME_VOTE_AGE_S)) return { error: 'vote-young' }",
+    "old": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))",
+    "new": "  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at < nowS - HOME_VOTE_AGE_S))",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -732,8 +732,8 @@
   {
     "name": "HOME-VOTE-II-guest-unguarded",
     "file": "server-account/src/homeVotes.js",
-    "old": "  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n",
-    "new": "",
+    "old": "  if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };\n  if (",
+    "new": "  if (",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -742,8 +742,8 @@
   {
     "name": "HOME-VOTE-II-empty-take-back-checked",
     "file": "server-account/src/homeVotes.js",
-    "old": "if (!r?.meta?.changes && vote !== 0) {",
-    "new": "if (!r?.meta?.changes) {",
+    "old": "  if (!r?.meta?.changes && vote !== 0) {",
+    "new": "  if (!r?.meta?.changes) {",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -762,8 +762,8 @@
   {
     "name": "HOME-VOTE-II-voted-up-says-down",
     "file": "src/net/homeVoteLaw.js",
-    "old": "`You voted this home up. Its votes",
-    "new": "`You voted this home down. Its votes",
+    "old": "    ? `You voted this home up. Its votes: ${homeScoreText(score)}.`",
+    "new": "    ? `You voted this home down. Its votes: ${homeScoreText(score)}.`",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -772,8 +772,8 @@
   {
     "name": "HOME-VOTE-II-voted-down-says-up",
     "file": "src/net/homeVoteLaw.js",
-    "old": "`You voted this home down. Its votes",
-    "new": "`You voted this home up. Its votes",
+    "old": "      ? `You voted this home down. Its votes: ${homeScoreText(score)}.`",
+    "new": "      ? `You voted this home up. Its votes: ${homeScoreText(score)}.`",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -792,8 +792,8 @@
   {
     "name": "HOME-VOTE-II-owner-told-hall",
     "file": "src/net/homeVoteLaw.js",
-    "old": "hall ? \"Your hall's\" : \"Your home's\"",
-    "new": "hall ? \"Your hall's\" : \"Your hall's\"",
+    "old": "  `Votes: ${homeScoreText(score)}. ${hall ? \"Your hall's\" : \"Your home's\"} decorations are hidden from other players.`;",
+    "new": "  `Votes: ${homeScoreText(score)}. ${hall ? \"Your hall's\" : \"Your hall's\"} decorations are hidden from other players.`;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -802,8 +802,8 @@
   {
     "name": "HOME-VOTE-II-down-take-back-label",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "{ id: HOME_VOTE_VERB.clear, label: 'Take back your vote down' }",
-    "new": "{ id: HOME_VOTE_VERB.clear, label: 'Take back your vote up' }",
+    "old": "      ? { id: HOME_VOTE_VERB.clear, label: 'Take back your vote down' }",
+    "new": "      ? { id: HOME_VOTE_VERB.clear, label: 'Take back your vote up' }",
     "tests": [
       "test/net/homevote.test.js"
     ],

@@ -306,7 +306,7 @@ test('AUDIT IT1 L3: Init registers its services only once BOTH factions went in 
 });
 
 test('AUDIT IT1 W1: the enhanced skin\'s merchant popup names a registered service by its own label - the driver\'s button said "Sell"', () => {
-  assert.match(read('src/ui/merchant/merchantServiceDoor.js'), /\{ label: hooks\.label \?\? merchantServiceLabel\(hooks\.service\), onClick: \(\) => \{ close\(\); hooks\.onService\?\.\(\); \} \},/);
+  assert.match(read('src/ui/merchant/merchantServiceDoor.js'), /\{\n\s*label: hooks\.label \?\? merchantServiceLabel\(hooks\.service\),\n\s*onClick: \(\) => \{\n\s*close\(\);\n\s*hooks\.onService\?\.\(\);\n\s*\},\n\s*\},/);
 });
 
 test('AUDIT IT1 L1/W2/W6: the driver\'s map reads PlayerGPS\'s region (politic 64 is 31), refuses a sun-averse traveller by day ONLINE as the travel map\'s door does (no arrival clamp there), and says why when it does not open', () => {

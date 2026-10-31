@@ -53,7 +53,7 @@
     "name": "OW-BUILD-the-prover-floor-under-the-view",
     "file": "src/systems/buildBreather.js",
     "old": "    return Number.isNaN(left) ? BUILD_SLICE_MS : Math.max(BUILD_SLICE_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));",
-    "new": "    return Number.isNaN(left) ? BUILD_SLICE_MS : Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));",
+    "new": "    return Number.isNaN(left)\n      ? BUILD_SLICE_MS\n      : Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));",
     "tests": [
       "test/systems/travel/ow_buildpace.test.js"
     ],

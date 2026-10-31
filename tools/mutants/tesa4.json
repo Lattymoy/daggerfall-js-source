@@ -11,8 +11,8 @@
   {
     "name": "TESA4-a-corner-its-se",
     "file": "src/world/arenaRoads.js",
-    "old": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
-    "new": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x15) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
+    "old": "  (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
+    "new": "  (arenaRoadByte(kind, x + 1, y) & 0x15) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TESA4-a-corner-its-n",
     "file": "src/world/arenaRoads.js",
-    "old": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
-    "new": "export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0xd0);",
+    "old": "  (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);",
+    "new": "  (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0xd0);",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TESA4-the-touch-its-own-pixel",
     "file": "src/world/arenaRoads.js",
-    "old": "export const layerTouches = (layer, x, y) => !!layer && [-1, 0, 1].some(",
-    "new": "export const layerTouches = (layer, x, y) => !!layer && [0].some(",
+    "old": "  [-1, 0, 1].some(",
+    "new": "  [0].some(",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TESA4-the-version-still",
     "file": "src/world/arenaRoads.js",
-    "old": "  _layer = layer ?? null;\n  _version++;",
-    "new": "  _layer = layer ?? null;",
+    "old": "  _version++;\n  if (!merged) {",
+    "new": "  if (!merged) {",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TESA4-the-verge-unasked",
     "file": "src/world/road/roadBand.js",
-    "old": "const r = arenaRoadByte('roads', mx, my), t = arenaRoadByte('tracks', mx, my);",
-    "new": "const r = 0, t = 0;",
+    "old": "        const r = arenaRoadByte('roads', mx, my),\n          t = arenaRoadByte('tracks', mx, my);",
+    "new": "        const r = 0,\n          t = 0;",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TESA4-the-verge-asks-the-bay-of-the-layer",
     "file": "src/world/road/roadBand.js",
-    "old": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my);",
-    "new": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) | arenaRoadByte('roads', mx, my);",
+    "old": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my); // TESA5: and a crossing's join on it",
+    "new": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) | arenaRoadByte('roads', mx, my); // TESA5: and a crossing's join on it",
     "tests": [
       "test/tesa4_roads.test.js"
     ]

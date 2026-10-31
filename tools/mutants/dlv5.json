@@ -11,8 +11,8 @@
   {
     "name": "DLV5-id-any",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "/^[a-z][a-z0-9-]{2,40}$/.test(rec.id)",
-    "new": "/./.test(rec.id)",
+    "old": "  if (typeof rec.id !== 'string' || !/^[a-z][a-z0-9-]{2,40}$/.test(rec.id)) return 'id: a-z, 0-9 and -';",
+    "new": "  if (typeof rec.id !== 'string' || !/./.test(rec.id)) return 'id: a-z, 0-9 and -';",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DLV5-n-unbounded",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "rec.n < 0 || rec.n >= CURATED_BLOCKS_MAX",
-    "new": "rec.n < 0",
+    "old": "  if (!Number.isInteger(rec.n) || rec.n < 0 || rec.n >= CURATED_BLOCKS_MAX) return `n: 0 to ${CURATED_BLOCKS_MAX - 1}`;",
+    "new": "  if (!Number.isInteger(rec.n) || rec.n < 0) return `n: 0 to ${CURATED_BLOCKS_MAX - 1}`;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DLV5-base-a-border",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "/^[NW][0-9]{7}\\.RDB$/.test(rec.base)",
-    "new": "/^[NWBS][0-9]{7}\\.RDB$/.test(rec.base)",
+    "old": "  if (typeof rec.base !== 'string' || !/^[NW][0-9]{7}\\.RDB$/.test(rec.base))",
+    "new": "  if (typeof rec.base !== 'string' || !/^[NWBS][0-9]{7}\\.RDB$/.test(rec.base))",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "DLV5-types-unread",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "!rec.types.every((t) => types.includes(t))",
-    "new": "false",
+    "old": "  if (!Array.isArray(rec.types) || !rec.types.length || !rec.types.every((t) => types.includes(t)))\n    return 'types: the dungeon types it joins';",
+    "new": "  if (!Array.isArray(rec.types) || !rec.types.length || false) return 'types: the dungeon types it joins';",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DLV5-drop-names-nothing",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "[d.model !== undefined, d.flat !== undefined, d.marker !== undefined].filter(Boolean).length !== 1",
-    "new": "[d.model !== undefined, d.flat !== undefined, d.marker !== undefined].filter(Boolean).length > 1",
+    "old": "    if ([d.model !== undefined, d.flat !== undefined, d.marker !== undefined].filter(Boolean).length !== 1)",
+    "new": "    if ([d.model !== undefined, d.flat !== undefined, d.marker !== undefined].filter(Boolean).length > 1)",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DLV5-add-two-at-once",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "if (kinds !== 1) return 'add: one of model, flat, marker or light';",
-    "new": "if (kinds > 1 && false) return 'add: one of model, flat, marker or light';",
+    "old": "    if (kinds !== 1) return 'add: one of model, flat, marker or light';",
+    "new": "    if (kinds > 1 && false) return 'add: one of model, flat, marker or light';",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DLV5-foe-without-mobile",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "(a.marker === 'foe') !== (a.mobile !== undefined)",
-    "new": "false",
+    "old": "    if (\n      (a.marker === 'foe') !== (a.mobile !== undefined) ||\n      (a.mobile !== undefined && !(Number.isInteger(a.mobile) && a.mobile >= 0 && a.mobile < 1024))\n    )",
+    "new": "    if (false || (a.mobile !== undefined && !(Number.isInteger(a.mobile) && a.mobile >= 0 && a.mobile < 1024)))",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DLV5-flat-record-unbounded",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "v >= 0 && v < 1024",
-    "new": "v >= 0",
+    "old": "const flat = (a) => Array.isArray(a) && a.length === 2 && a.every((v) => Number.isInteger(v) && v >= 0 && v < 1024);",
+    "new": "const flat = (a) => Array.isArray(a) && a.length === 2 && a.every((v) => Number.isInteger(v) && v >= 0);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DLV5-anchor-any-kind",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "if (!DELVE_KIND_NAMES.includes(a?.kind)) return",
-    "new": "if (!a?.kind) return",
+    "old": "    if (!DELVE_KIND_NAMES.includes(a?.kind)) return `anchors: a kind of ${DELVE_KIND_NAMES.join(', ')}`;",
+    "new": "    if (!a?.kind) return `anchors: a kind of ${DELVE_KIND_NAMES.join(', ')}`;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "DLV5-drop-any-model",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "if (d.model !== undefined) return o.type === RDB_RESOURCE_TYPES.Model && rdb.modelReferenceList?.[o.resources?.modelResource?.modelIndex]?.modelIdNum === d.model;",
-    "new": "if (d.model !== undefined) return o.type === RDB_RESOURCE_TYPES.Model;",
+    "old": "  if (d.model !== undefined)\n    return (\n      o.type === RDB_RESOURCE_TYPES.Model &&\n      rdb.modelReferenceList?.[o.resources?.modelResource?.modelIndex]?.modelIdNum === d.model\n    );",
+    "new": "  if (d.model !== undefined) return o.type === RDB_RESOURCE_TYPES.Model;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DLV5-drop-a-model-as-flat",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "  if (o.type !== RDB_RESOURCE_TYPES.Flat) return false;\n",
-    "new": "",
+    "old": "  if (o.type !== RDB_RESOURCE_TYPES.Flat) return false;\n  const f = o.resources?.flatResource;",
+    "new": "  const f = o.resources?.flatResource;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DLV5-drop-chained",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "const dropped = (o) => !linked.has(o.position) && (rec.drop ?? [])",
-    "new": "const dropped = (o) => (rec.drop ?? [])",
+    "old": "    !linked.has(o.position) &&\n    (rec.drop ?? []).some((d) => takes(d, o, rdb) && Math.hypot(...metresOf(o).map((v, k) => v - d.at[k])) <= d.r);",
+    "new": "    (rec.drop ?? []).some((d) => takes(d, o, rdb) && Math.hypot(...metresOf(o).map((v, k) => v - d.at[k])) <= d.r);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "DLV5-drop-reach-unread",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "Math.hypot(...metresOf(o).map((v, k) => v - d.at[k])) <= d.r",
-    "new": "true",
+    "old": "  const dropped = (o) =>\n    !linked.has(o.position) &&\n    (rec.drop ?? []).some((d) => takes(d, o, rdb) && Math.hypot(...metresOf(o).map((v, k) => v - d.at[k])) <= d.r);",
+    "new": "  const dropped = (o) => !linked.has(o.position) && (rec.drop ?? []).some((d) => takes(d, o, rdb) && true);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DLV5-ref-doubled",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "let k = refs.findIndex((m) => m.modelIdNum === id && !m.description);",
-    "new": "let k = -1;",
+    "old": "    let k = refs.findIndex((m) => m.modelIdNum === id && !m.description); // a described reference means more (`DOR`: an action door)",
+    "new": "    let k = -1; // a described reference means more (`DOR`: an action door)",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "DLV5-rotation-sign",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "Math.round(-deg * ROTATION_DIVISOR)",
-    "new": "Math.round(deg * ROTATION_DIVISOR)",
+    "old": "      const [rx, ry, rz] = (a.rot ?? [0, 0, 0]).map((deg) => Math.round(-deg * ROTATION_DIVISOR));",
+    "new": "      const [rx, ry, rz] = (a.rot ?? [0, 0, 0]).map((deg) => Math.round(deg * ROTATION_DIVISOR));",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "DLV5-height-sign",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "Math.round(-at[1] / GLOBAL_SCALE)",
-    "new": "Math.round(at[1] / GLOBAL_SCALE)",
+    "old": "  Math.round(-at[1] / GLOBAL_SCALE),",
+    "new": "  Math.round(at[1] / GLOBAL_SCALE),",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DLV5-base-position-kept",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "servedName: name, position: CURATED_POSITION + rec.n * CURATED_POSITION_STEP,",
-    "new": "servedName: name,",
+    "old": "    position: CURATED_POSITION + rec.n * CURATED_POSITION_STEP,\n    rdbBlock: {",
+    "new": "    rdbBlock: {",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "DLV5-added-positions-base",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "position: CURATED_ADD_POSITION + k,",
-    "new": "position: k,",
+    "old": "    const o = {\n      position: CURATED_ADD_POSITION + k,\n      next: 0,\n      previous: 0,\n      index: k,\n      xPos,\n      yPos,\n      zPos,\n      resourceOffset: 0,\n    };",
+    "new": "    const o = { position: k, next: 0, previous: 0, index: k, xPos, yPos, zPos, resourceOffset: 0 };",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "DLV5-treasure-record",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "enemy: 16, foe: 15, treasure: 19 });",
-    "new": "enemy: 16, foe: 15, treasure: 20 });",
+    "old": "export const CURATED_MARKERS = Object.freeze({ start: 10, enter: 8, enemy: 16, foe: 15, treasure: 19 });",
+    "new": "export const CURATED_MARKERS = Object.freeze({ start: 10, enter: 8, enemy: 16, foe: 15, treasure: 20 });",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "DLV5-mobile-unread",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "flatOf(archive, record, a.mobile ?? 0)",
-    "new": "flatOf(archive, record, 0)",
+    "old": "      resources: {\n        modelResource: modelNone(),\n        flatResource: flatOf(archive, record, a.mobile ?? 0),\n        lightResource: lightNone(),\n      },",
+    "new": "      resources: { modelResource: modelNone(), flatResource: flatOf(archive, record, 0), lightResource: lightNone() },",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "DLV5-flat-no-model-struct",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "resources: { modelResource: modelNone(), flatResource: flatOf(archive, record, a.mobile ?? 0)",
-    "new": "resources: { modelResource: null, flatResource: flatOf(archive, record, a.mobile ?? 0)",
+    "old": "      resources: {\n        modelResource: modelNone(),",
+    "new": "      resources: {\n        modelResource: null,",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "DLV5-anchor-origin-unread",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "at: [a.at[0] + b.originX, a.at[1], a.at[2] + b.originZ]",
-    "new": "at: [a.at[0], a.at[1], a.at[2]]",
+    "old": "        at: [a.at[0] + b.originX, a.at[1], a.at[2] + b.originZ],",
+    "new": "        at: [a.at[0], a.at[1], a.at[2]],",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "DLV5-name-any",
     "file": "src/world/dungeon/curatedBlocks.js",
-    "old": "/^NDLV[0-9]{4}\\.RDB$/.test(String(name ?? ''))",
-    "new": "/^N/.test(String(name ?? ''))",
+    "old": "export const isCuratedName = (name) => /^NDLV[0-9]{4}\\.RDB$/.test(String(name ?? ''));",
+    "new": "export const isCuratedName = (name) => /^N/.test(String(name ?? ''));",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "DLV5-lab-draft-ships",
     "file": "src/world/dungeon/curatedRecords.js",
-    "old": "(rec.n === 0 ? 'n: 0 is the lab\\'s draft' :",
-    "new": "(false ? 'n: 0 is the lab\\'s draft' :",
+    "old": "        (rec.n === 0 ? \"n: 0 is the lab's draft\" : ids.has(rec.id) ? 'id: twice' : ns.has(rec.n) ? 'n: twice' : null);",
+    "new": "        (false ? \"n: 0 is the lab's draft\" : ids.has(rec.id) ? 'id: twice' : ns.has(rec.n) ? 'n: twice' : null);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "DLV5-id-twice",
     "file": "src/world/dungeon/curatedRecords.js",
-    "old": ": ids.has(rec.id) ? 'id: twice'",
-    "new": ": false ? 'id: twice'",
+    "old": "        (rec.n === 0 ? \"n: 0 is the lab's draft\" : ids.has(rec.id) ? 'id: twice' : ns.has(rec.n) ? 'n: twice' : null);",
+    "new": "        (rec.n === 0 ? \"n: 0 is the lab's draft\" : false ? 'id: twice' : ns.has(rec.n) ? 'n: twice' : null);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DLV5-n-twice",
     "file": "src/world/dungeon/curatedRecords.js",
-    "old": ": ns.has(rec.n) ? 'n: twice'",
-    "new": ": false ? 'n: twice'",
+    "old": "        (rec.n === 0 ? \"n: 0 is the lab's draft\" : ids.has(rec.id) ? 'id: twice' : ns.has(rec.n) ? 'n: twice' : null);",
+    "new": "        (rec.n === 0 ? \"n: 0 is the lab's draft\" : ids.has(rec.id) ? 'id: twice' : false ? 'n: twice' : null);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "DLV5-chance-unread",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "  if (share(id, 0) >= CURATED_CHANCE) return null;\n",
-    "new": "",
+    "old": "  if (share(id, 0) >= CURATED_CHANCE) return null;\n  const slots = blocks.map((b, j) => j).filter((j) => !border(blocks[j]) && !blocks[j].isStartingBlock);",
+    "new": "  const slots = blocks.map((b, j) => j).filter((j) => !border(blocks[j]) && !blocks[j].isStartingBlock);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "DLV5-border-taken",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "!border(blocks[j]) && !blocks[j].isStartingBlock",
-    "new": "!blocks[j].isStartingBlock",
+    "old": "  const slots = blocks.map((b, j) => j).filter((j) => !border(blocks[j]) && !blocks[j].isStartingBlock);",
+    "new": "  const slots = blocks.map((b, j) => j).filter((j) => !blocks[j].isStartingBlock);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "DLV5-start-taken",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "!border(blocks[j]) && !blocks[j].isStartingBlock",
-    "new": "!border(blocks[j])",
+    "old": "  const slots = blocks.map((b, j) => j).filter((j) => !border(blocks[j]) && !blocks[j].isStartingBlock);",
+    "new": "  const slots = blocks.map((b, j) => j).filter((j) => !border(blocks[j]));",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "DLV5-type-unread",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "const pool = records.filter((r) => r.types.includes(type));",
-    "new": "const pool = records;",
+    "old": "  const pool = records.filter((r) => r.types.includes(type));",
+    "new": "  const pool = records;",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DLV5-slot-of-one",
     "file": "src/world/dungeon/curatedSplice.js",
-    "old": "return { j: slots[pick(id, 2, slots.length)], rec };",
-    "new": "return { j: slots[0], rec };",
+    "old": "  return { j: slots[pick(id, 2, slots.length)], rec };",
+    "new": "  return { j: slots[0], rec };",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "DLV5-anchor-kind-unbuilt",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "anchors.filter((a) => kinds.includes(a.kind) && fires",
-    "new": "anchors.filter((a) => true && fires",
+    "old": "          kinds.includes(a.kind) &&",
+    "new": "          true &&",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "DLV5-count-not-shortened",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "Math.max(0, delveSiteCount(blocks) - fixed.length)",
-    "new": "delveSiteCount(blocks)",
+    "old": "  const count = none ? 0 : Math.max(0, delveSiteCount(blocks) - fixed.length);",
+    "new": "  const count = none ? 0 : delveSiteCount(blocks);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "DLV5-found-on-an-anchor",
     "file": "src/world/dungeon/delveSites.js",
-    "old": ".filter((c) => !tooNearTaken(c.pos, held)) : [];",
-    "new": " : [];",
+    "old": "  const valid = count > 0 ? landDelveSites(cands, { ...marks, tally }).filter((c) => !tooNearTaken(c.pos, held)) : [];",
+    "new": "  const valid = count > 0 ? landDelveSites(cands, { ...marks, tally }) : [];",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "DLV5-anchor-family-unread",
     "file": "src/world/dungeon/delveSites.js",
-    "old": "siteKinds(fixed.length + chosen.length, seed, kinds, fixed.map((a) => a.kind))",
-    "new": "siteKinds(fixed.length + chosen.length, seed, kinds)",
+    "old": "  const kindOf = siteKinds(\n    fixed.length + chosen.length,\n    seed,\n    kinds,\n    fixed.map((a) => a.kind),\n  );",
+    "new": "  const kindOf = siteKinds(fixed.length + chosen.length, seed, kinds);",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "DLV5-splice-unasked",
     "file": "src/world/smallerDungeons.js",
-    "old": "return deps.whole ? built : curatedLocation(built);",
-    "new": "return built;",
+    "old": "  return deps.whole ? built : curatedLocation(built);",
+    "new": "  return built;",
     "tests": [
       "test/world/dlv5_curated.test.js",
       "test/world/dlv56_audit.test.js"
@@ -381,8 +381,8 @@
   {
     "name": "DLV5-install-one-index",
     "file": "src/world/dungeon/curatedInstall.js",
-    "old": "(blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec), CURATED_BLOCK_INDEX + rec.n);",
-    "new": "(blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec), CURATED_BLOCK_INDEX);",
+    "old": "      CURATED_BLOCK_INDEX + rec.n,",
+    "new": "      CURATED_BLOCK_INDEX,",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "DLV5-install-base-unread",
     "file": "src/world/dungeon/curatedInstall.js",
-    "old": "blocksFile.getBlockIndex(rec.base)",
-    "new": "blocksFile.getBlockIndex(curatedBlockName(rec.n))",
+    "old": "      (blocksFile) => curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(rec.base)) ?? null, rec),",
+    "new": "      (blocksFile) =>\n        curatedBlockOf(blocksFile?.readClassicBlock?.(blocksFile.getBlockIndex(curatedBlockName(rec.n))) ?? null, rec),",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "DLV5-install-unwired",
     "file": "src/scenes/modWorldData.js",
-    "old": "    installCuratedBlocks();   // DELVE II (DLV5)",
-    "new": "    void installCuratedBlocks;   // DELVE II (DLV5)",
+    "old": "    installCuratedBlocks(); // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)",
+    "new": "    void installCuratedBlocks; // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)",
     "tests": [
       "test/world/dlv5_curated.test.js"
     ]

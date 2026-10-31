@@ -2,8 +2,8 @@
   {
     "name": "IOS-BUDGET-no-report-is-8gb-again",
     "file": "src/systems/textureReplacement.js",
-    "old": "  return isTouchDevice(win) ? IOS_TAB_GB : 8;\n",
-    "new": "  return 8;\n",
+    "old": "  return isTouchDevice(win) ? IOS_TAB_GB : 8;",
+    "new": "  return 8;",
     "tests": [
       "test/systems/dfmod1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "IOS-BUDGET-tab-is-not-2gb",
     "file": "src/systems/textureReplacement.js",
-    "old": "export const IOS_TAB_GB = 2;\n",
-    "new": "export const IOS_TAB_GB = 4;\n",
+    "old": "export const IOS_TAB_GB = 2;",
+    "new": "export const IOS_TAB_GB = 4;",
     "tests": [
       "test/systems/dfmod1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "IOS-BUDGET-a-report-is-ignored-on-a-phone",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (reported > 0) return reported;\n",
-    "new": "  if (reported > 0 && !isTouchDevice(win)) return reported;\n",
+    "old": "  if (reported > 0) return reported;",
+    "new": "  if (reported > 0 && !isTouchDevice(win)) return reported;",
     "tests": [
       "test/systems/dfmod1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "IOS-BUDGET-a-zero-report-is-a-report",
     "file": "src/systems/textureReplacement.js",
-    "old": "  if (reported > 0) return reported;\n",
-    "new": "  if (reported >= 0) return reported;\n",
+    "old": "  if (reported > 0) return reported;",
+    "new": "  if (reported >= 0) return reported;",
     "tests": [
       "test/systems/dfmod1.test.js"
     ]

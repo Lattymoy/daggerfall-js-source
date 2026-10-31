@@ -2,8 +2,8 @@
   {
     "name": "MAIN-SPINE-check-never-run",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (this.beat % SPINE_CHECK_TICKS === 0) this.keepSpine();",
-    "new": "",
+    "old": "    if (this.beat % SPINE_CHECK_TICKS === 0) this.keepSpine(); // MAIN-SPINE: before the invoke loop, so a start lands this tick",
+    "new": "    // MAIN-SPINE: before the invoke loop, so a start lands this tick",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MAIN-SPINE-a-failure-said-every-check",
     "file": "src/systems/quest/machine.js",
-    "old": "    else if (this.spineTries === 1) console.warn(",
-    "new": "    else console.warn(",
+    "old": "    else if (this.spineTries === 1)",
+    "new": "    else",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "MAIN-SPINE-opener-start-unread",
     "file": "src/systems/quest/mainSpine.js",
-    "old": "      if (String(a.questName ?? '').toUpperCase() === SPINE || a.questIndex1 === 999) return true;",
-    "new": "",
+    "old": "      if (String(a.questName ?? '').toUpperCase() === SPINE || a.questIndex1 === 999) return true;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "MAIN-SPINE-archive-unread",
     "file": "src/systems/quest/machine.js",
-    "old": "    if ((entries ?? []).some((e) => e?.kind === 'quest' && questNameIn([SPINE_OPENER], String(e.quest ?? '')))) this.spine.opened = true;",
-    "new": "",
+    "old": "  seedSpine(entries) {\n    if ((entries ?? []).some((e) => e?.kind === 'quest' && questNameIn([SPINE_OPENER], String(e.quest ?? ''))))\n      this.spine.opened = true;\n  }",
+    "new": "  seedSpine(entries) {}",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],
@@ -92,7 +92,7 @@
   {
     "name": "MAIN-SPINE-start-unrecorded",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (questNameIn([SPINE], quest.questName)) this.spine.ran = true; else if (questNameIn([SPINE_OPENER], quest.questName)) this.spine.opened = true;   // MAIN-SPINE: the record the law reads",
+    "old": "    if (questNameIn([SPINE], quest.questName)) this.spine.ran = true;\n    else if (questNameIn([SPINE_OPENER], quest.questName)) this.spine.opened = true; // MAIN-SPINE: the record the law reads",
     "new": "    if (questNameIn([SPINE_OPENER], quest.questName)) this.spine.opened = true;",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "MAIN-SPINE-opener-start-unrecorded",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (questNameIn([SPINE], quest.questName)) this.spine.ran = true; else if (questNameIn([SPINE_OPENER], quest.questName)) this.spine.opened = true;   // MAIN-SPINE: the record the law reads",
-    "new": "    if (questNameIn([SPINE], quest.questName)) this.spine.ran = true;",
+    "old": "    else if (questNameIn([SPINE_OPENER], quest.questName)) this.spine.opened = true; // MAIN-SPINE: the record the law reads\n    this.deps.onQuestStarted?.(quest);",
+    "new": "    this.deps.onQuestStarted?.(quest);",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
     ],
@@ -112,7 +112,7 @@
   {
     "name": "MAIN-SPINE-record-unsaved",
     "file": "src/systems/quest/machine.js",
-    "old": "      ...this._spineData(),   // MAIN-SPINE: written once the opener begins",
+    "old": "      ...this._spineData(), // MAIN-SPINE: written once the opener begins",
     "new": "",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
@@ -122,7 +122,7 @@
   {
     "name": "MAIN-SPINE-record-unloaded",
     "file": "src/systems/quest/mainSpine.js",
-    "old": "  return { opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE), ran: saved?.ran === true || has(SPINE) };",
+    "old": "  return {\n    opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),\n    ran: saved?.ran === true || has(SPINE),\n  };",
     "new": "  return { opened: has(SPINE_OPENER) || has(SPINE_CURSE), ran: has(SPINE) };",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
@@ -132,7 +132,7 @@
   {
     "name": "MAIN-SPINE-saved-opener-unread",
     "file": "src/systems/quest/mainSpine.js",
-    "old": "  return { opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE), ran: saved?.ran === true || has(SPINE) };",
+    "old": "  return {\n    opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),\n    ran: saved?.ran === true || has(SPINE),\n  };",
     "new": "  return { opened: saved?.opened === true || has(SPINE_CURSE), ran: saved?.ran === true || has(SPINE) };",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"
@@ -142,7 +142,7 @@
   {
     "name": "MAIN-SPINE-saved-backbone-unread",
     "file": "src/systems/quest/mainSpine.js",
-    "old": "  return { opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE), ran: saved?.ran === true || has(SPINE) };",
+    "old": "  return {\n    opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE),\n    ran: saved?.ran === true || has(SPINE),\n  };",
     "new": "  return { opened: saved?.opened === true || has(SPINE_OPENER) || has(SPINE_CURSE), ran: saved?.ran === true };",
     "tests": [
       "test/systems/quest/fb1026d_mainspine.test.js"

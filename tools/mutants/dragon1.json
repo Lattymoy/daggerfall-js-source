@@ -1,8 +1,56 @@
 [
-  {"name": "DRAGON1-the-clamp-left-at-the-cart", "file": "src/net/wire.js", "old": "  const r = uint(rd, POSE_RIDE.Dragon) ?? 0;", "new": "  const r = uint(rd, POSE_RIDE.Cart) ?? 0;", "tests": ["test/net/dragonride_wire.test.js"]},
-  {"name": "DRAGON1-the-gate-a-version-early", "file": "src/net/wire.js", "old": "export const DRAGON_RIDE_RELAY_MIN = 288;", "new": "export const DRAGON_RIDE_RELAY_MIN = 287;", "tests": ["test/net/dragonride_wire.test.js"]},
-  {"name": "DRAGON1-the-staff-ride-keeps-its-own-number", "file": "src/systems/staffDragon.js", "old": "export function noteDragonRelay(v) { _relayKeepsRide = relaySupportsDragonRide(v); }", "new": "export function noteDragonRelay(v) { _relayKeepsRide = Number(/^world(\\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? NaN) >= 276; }", "tests": ["test/net/dragonride_wire.test.js"]},
-  {"name": "DRAGON1-the-dragon-kind-dropped", "file": "src/net/remotePlayers.js", "old": ": peer.shown.rd === POSE_RIDE.Dragon && ENEMY_BASICS[DWARVEN_DRAGON_ID] ? DWARVEN_DRAGON_ID : spritesOn", "new": ": spritesOn", "tests": ["test/net/dragonride_wire.test.js"]},
-  {"name": "DRAGON1-the-hooves-heard", "file": "src/net/remotePlayers.js", "old": "const rd = peer.shown?.rd === POSE_RIDE.Dragon ? 0 : (peer.shown?.rd | 0)", "new": "const rd = (peer.shown?.rd | 0)", "tests": ["test/net/dragonride_wire.test.js"]},
-  {"name": "DRAGON1-the-body-kept", "file": "src/scenes/world.js", "old": "const afoot = seen.filter((d) => d.shown?.rd !== POSE_RIDE.Dragon && (peerRidesIn3d(d)", "new": "const afoot = seen.filter((d) => (peerRidesIn3d(d)", "tests": ["test/net/dragonride_wire.test.js"]}
+  {
+    "name": "DRAGON1-the-clamp-left-at-the-cart",
+    "file": "src/net/wire.js",
+    "old": "  const r = uint(rd, POSE_RIDE.Dragon) ?? 0;",
+    "new": "  const r = uint(rd, POSE_RIDE.Cart) ?? 0;",
+    "tests": [
+      "test/net/dragonride_wire.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON1-the-gate-a-version-early",
+    "file": "src/net/wire.js",
+    "old": "export const DRAGON_RIDE_RELAY_MIN = 288;",
+    "new": "export const DRAGON_RIDE_RELAY_MIN = 287;",
+    "tests": [
+      "test/net/dragonride_wire.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON1-the-staff-ride-keeps-its-own-number",
+    "file": "src/systems/staffDragon.js",
+    "old": "  _relayKeepsRide = relaySupportsDragonRide(v);",
+    "new": "  _relayKeepsRide = Number(/^world(\\d+)$/.exec(typeof v === 'string' ? v : '')?.[1] ?? NaN) >= 276;",
+    "tests": [
+      "test/net/dragonride_wire.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON1-the-dragon-kind-dropped",
+    "file": "src/net/remotePlayers.js",
+    "old": ": peer.shown.rd === POSE_RIDE.Dragon && ENEMY_BASICS[DWARVEN_DRAGON_ID] ? DWARVEN_DRAGON_ID : spritesOn",
+    "new": ": spritesOn",
+    "tests": [
+      "test/net/dragonride_wire.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON1-the-hooves-heard",
+    "file": "src/net/remotePlayers.js",
+    "old": "const rd = peer.shown?.rd === POSE_RIDE.Dragon ? 0 : (peer.shown?.rd | 0)",
+    "new": "const rd = (peer.shown?.rd | 0)",
+    "tests": [
+      "test/net/dragonride_wire.test.js"
+    ]
+  },
+  {
+    "name": "DRAGON1-the-body-kept",
+    "file": "src/scenes/world.js",
+    "old": "const afoot = seen.filter((d) => d.shown?.rd !== POSE_RIDE.Dragon && (peerRidesIn3d(d)",
+    "new": "const afoot = seen.filter((d) => (peerRidesIn3d(d)",
+    "tests": [
+      "test/net/dragonride_wire.test.js"
+    ]
+  }
 ]

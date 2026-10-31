@@ -30,7 +30,9 @@ import { buttonText } from './controlsConfig.js';
  *  reason this module is a leaf. Null until the store is first built,
  *  which is what the fallback caption below is for. */
 let _store = null;
-export function setStatusBindings(store) { _store = store ?? null; }
+export function setStatusBindings(store) {
+  _store = store ?? null;
+}
 
 /** ClickAnywhereToClose is not this box's law, so the panel must not
  *  say it is (the AUDIT ENH-NOTICE3 B2-B4 rule: a hint tells the
@@ -46,10 +48,18 @@ let _drop = null;
 
 /** The box has been mounted in a host's slot: this is the live one,
  *  and `drop` is how it leaves that slot. */
-export function holdStatusReadout(box, drop = null) { _live = box; _drop = drop; }
+export function holdStatusReadout(box, drop = null) {
+  _live = box;
+  _drop = drop;
+}
 /** The box closed itself (dismissal, replacement, or the uncovering
  *  that ends a readout left under another window). */
-export function forgetStatusReadout(box) { if (_live === box) { _live = null; _drop = null; } }
+export function forgetStatusReadout(box) {
+  if (_live === box) {
+    _live = null;
+    _drop = null;
+  }
+}
 
 /** Is a readout up?
  *
@@ -66,10 +76,15 @@ export const statusReadoutUp = () => !!_live;
  *  False when there was nothing up. */
 export function closeStatusReadout() {
   if (!_live) return false;
-  const box = _live, drop = _drop;
-  box.input();               // done, and the enhanced panel slides out
-  forgetStatusReadout(box);  // (the box's own input already did, unless a caller passed something else)
-  try { drop?.(box); } catch { /* the host is gone; the box is closed either way */ }
+  const box = _live,
+    drop = _drop;
+  box.input(); // done, and the enhanced panel slides out
+  forgetStatusReadout(box); // (the box's own input already did, unless a caller passed something else)
+  try {
+    drop?.(box);
+  } catch {
+    /* the host is gone; the box is closed either way */
+  }
   return true;
 }
 
@@ -80,18 +95,27 @@ export function closeStatusReadout() {
  *  derived as "not a movement key", because the set that matters is
  *  routeAction's own window arms and a derived one would quietly grow
  *  a hole every time an action is appended to the registry. */
-export const STATUS_YIELD_ACTIONS = Object.freeze(new Set([
-  'Escape',            // ...and Escape SPENDS the key: it closes the readout, it does not also open the pause menu
-  'CharacterSheet', 'Inventory', 'LogBook', 'NoteBook', 'AutoMap', 'TravelMap',
-  'CastSpell',         // the spellbook
-  'Rest', 'Transport',
-  'QuickSave', 'QuickLoad',
-  // NOT 'ToggleConsole', 'CenterView', 'PrintScreen' or 'Slide':
-  // those four are the registry rows nothing in src/ routes
-  // (test/ui/pad1.test.js's derived law names them), so a dispatch
-  // would never hand one of them here - and a set that lists an
-  // action no door produces reads as a promise nothing keeps.
-]));
+export const STATUS_YIELD_ACTIONS = Object.freeze(
+  new Set([
+    'Escape', // ...and Escape SPENDS the key: it closes the readout, it does not also open the pause menu
+    'CharacterSheet',
+    'Inventory',
+    'LogBook',
+    'NoteBook',
+    'AutoMap',
+    'TravelMap',
+    'CastSpell', // the spellbook
+    'Rest',
+    'Transport',
+    'QuickSave',
+    'QuickLoad',
+    // NOT 'ToggleConsole', 'CenterView', 'PrintScreen' or 'Slide':
+    // those four are the registry rows nothing in src/ routes
+    // (test/ui/pad1.test.js's derived law names them), so a dispatch
+    // would never hand one of them here - and a set that lists an
+    // action no door produces reads as a promise nothing keeps.
+  ]),
+);
 
 /**
  * The yield, asked once per dispatched action (ui/input.js's
@@ -109,4 +133,8 @@ export function statusReadoutTakesAction(act) {
 
 /** Tests and host teardown: forget the live readout without touching
  *  a slot that may already be gone. */
-export function _resetStatusReadout() { _live = null; _drop = null; _store = null; }
+export function _resetStatusReadout() {
+  _live = null;
+  _drop = null;
+  _store = null;
+}

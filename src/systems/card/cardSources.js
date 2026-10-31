@@ -26,7 +26,7 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { ILIAC_CARDS, cardById } from '../../net/iliac/iliacCards.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
-import { getDivine, getOrder } from '../guild/guildVariants.js';   // AUDIT CARDS-6 A4: a temple's hall by Temple.GetDivine's own walk
+import { getDivine, getOrder } from '../guild/guildVariants.js'; // AUDIT CARDS-6 A4: a temple's hall by Temple.GetDivine's own walk
 import { mintIliacCard, mintCardPack, isCardPack, CARD_PACK_TEMPLATE, iliacCardName } from '../iliac/iliacItems.js';
 import { registerItemUseHandler } from '../item/itemTemplates.js';
 import { addItem } from '../inventory.js';
@@ -39,7 +39,7 @@ import { totalGoldAmount, deductGold } from '../court.js';
 // The bosses' own cards live in systems/bossCards.js (the hoards import it; this module would close a cycle round them).
 export { BOSS_CARDS, BOSS_CARD_IDS, BOSS_CARD_PER_MILLE, bossCardRoll } from '../bossCards.js';
 import { BOSS_CARD_IDS } from '../bossCards.js';
-import { FESTIVAL_CARD_IDS } from '../../net/festivalLaw.js';   // WITCH1: the Witches' Festival's cards are the Wyrd Sisters' alone
+import { FESTIVAL_CARD_IDS } from '../../net/festivalLaw.js'; // WITCH1: the Witches' Festival's cards are the Wyrd Sisters' alone
 
 // ── THE FOES ──────────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -49,24 +49,65 @@ const M = MOBILE_TYPES;
  *  the thirteen; KG-SET gave the Grizzly Bear, the Sabertooth Tiger, the Spider, the Slaughterfish, the Mummy, the Frost
  *  and Fire Daedra, the Archer and the Ranger their own - AUDIT KG II E19: the list still named them). */
 export const FOE_CARDS = Object.freeze({
-  [M.Rat]: 'rat', [M.Imp]: 'imp', [M.Spriggan]: 'spriggan', [M.GiantBat]: 'giant-bat', [M.Orc]: 'orc', [M.Centaur]: 'centaur',
-  [M.Werewolf]: 'werewolf', [M.Nymph]: 'nymph', [M.OrcSergeant]: 'orc-sergeant', [M.Harpy]: 'harpy', [M.Wereboar]: 'wereboar',
-  [M.SkeletalWarrior]: 'skeletal-warrior', [M.Giant]: 'giant', [M.Zombie]: 'zombie', [M.Ghost]: 'ghost',
-  [M.GiantScorpion]: 'giant-scorpion', [M.OrcShaman]: 'orc-shaman', [M.Gargoyle]: 'gargoyle', [M.Wraith]: 'wraith',
-  [M.OrcWarlord]: 'orc-warlord', [M.Daedroth]: 'daedroth', [M.Vampire]: 'vampire', [M.DaedraSeducer]: 'daedra-seducer',
-  [M.VampireAncient]: 'ancient-vampire', [M.DaedraLord]: 'daedra-lord', [M.Lich]: 'lich', [M.AncientLich]: 'ancient-lich',
-  [M.Dragonling]: 'dragonling', [M.Dragonling_Alternate]: 'dragonling', [M.FireAtronach]: 'fire-atronach',
-  [M.IronAtronach]: 'iron-atronach', [M.FleshAtronach]: 'flesh-atronach', [M.IceAtronach]: 'ice-atronach',
-  [M.Dreugh]: 'dreugh', [M.Lamia]: 'lamia',
+  [M.Rat]: 'rat',
+  [M.Imp]: 'imp',
+  [M.Spriggan]: 'spriggan',
+  [M.GiantBat]: 'giant-bat',
+  [M.Orc]: 'orc',
+  [M.Centaur]: 'centaur',
+  [M.Werewolf]: 'werewolf',
+  [M.Nymph]: 'nymph',
+  [M.OrcSergeant]: 'orc-sergeant',
+  [M.Harpy]: 'harpy',
+  [M.Wereboar]: 'wereboar',
+  [M.SkeletalWarrior]: 'skeletal-warrior',
+  [M.Giant]: 'giant',
+  [M.Zombie]: 'zombie',
+  [M.Ghost]: 'ghost',
+  [M.GiantScorpion]: 'giant-scorpion',
+  [M.OrcShaman]: 'orc-shaman',
+  [M.Gargoyle]: 'gargoyle',
+  [M.Wraith]: 'wraith',
+  [M.OrcWarlord]: 'orc-warlord',
+  [M.Daedroth]: 'daedroth',
+  [M.Vampire]: 'vampire',
+  [M.DaedraSeducer]: 'daedra-seducer',
+  [M.VampireAncient]: 'ancient-vampire',
+  [M.DaedraLord]: 'daedra-lord',
+  [M.Lich]: 'lich',
+  [M.AncientLich]: 'ancient-lich',
+  [M.Dragonling]: 'dragonling',
+  [M.Dragonling_Alternate]: 'dragonling',
+  [M.FireAtronach]: 'fire-atronach',
+  [M.IronAtronach]: 'iron-atronach',
+  [M.FleshAtronach]: 'flesh-atronach',
+  [M.IceAtronach]: 'ice-atronach',
+  [M.Dreugh]: 'dreugh',
+  [M.Lamia]: 'lamia',
   // KG-SET (2026-10-13, Kings-Gambit.md section 10.3): seven foes that dropped no card drop their own now
-  [M.GrizzlyBear]: 'grizzly-bear', [M.SabertoothTiger]: 'sabretooth-tiger', [M.Spider]: 'spider', [M.Slaughterfish]: 'slaughterfish',
-  [M.Mummy]: 'mummy', [M.FrostDaedra]: 'frost-daedra', [M.FireDaedra]: 'fire-daedra',
+  [M.GrizzlyBear]: 'grizzly-bear',
+  [M.SabertoothTiger]: 'sabretooth-tiger',
+  [M.Spider]: 'spider',
+  [M.Slaughterfish]: 'slaughterfish',
+  [M.Mummy]: 'mummy',
+  [M.FrostDaedra]: 'frost-daedra',
+  [M.FireDaedra]: 'fire-daedra',
   // the callings - the guild card each one's work is
-  [M.Mage]: 'mages-guild-apprentice', [M.Battlemage]: 'mages-guild-battlemage', [M.Sorcerer]: 'mages-guild-battlemage',
-  [M.Healer]: 'priest-of-arkay', [M.Nightblade]: 'nightblade', [M.Burglar]: 'thieves-guild-filcher', [M.Thief]: 'thieves-guild-filcher',
-  [M.Rogue]: 'thieves-guild-crook', [M.Assassin]: 'dark-brotherhood-assassin', [M.Warrior]: 'fighters-guild-swordsman',
-  [M.Barbarian]: 'fighters-guild-swordsman', [M.Knight]: 'knight-of-the-wheel', [M.Spellsword]: 'knight-of-the-dragon',
-  [M.Archer]: 'archer', [M.Ranger]: 'ranger',   // KG-SET: their own cards
+  [M.Mage]: 'mages-guild-apprentice',
+  [M.Battlemage]: 'mages-guild-battlemage',
+  [M.Sorcerer]: 'mages-guild-battlemage',
+  [M.Healer]: 'priest-of-arkay',
+  [M.Nightblade]: 'nightblade',
+  [M.Burglar]: 'thieves-guild-filcher',
+  [M.Thief]: 'thieves-guild-filcher',
+  [M.Rogue]: 'thieves-guild-crook',
+  [M.Assassin]: 'dark-brotherhood-assassin',
+  [M.Warrior]: 'fighters-guild-swordsman',
+  [M.Barbarian]: 'fighters-guild-swordsman',
+  [M.Knight]: 'knight-of-the-wheel',
+  [M.Spellsword]: 'knight-of-the-dragon',
+  [M.Archer]: 'archer',
+  [M.Ranger]: 'ranger', // KG-SET: their own cards
 });
 /** MEASURE (CARDS9): a foe's card, per mille of its deaths, by its card's tier - about one rat in sixty, one Ancient
  *  Lich in three hundred. */
@@ -107,15 +148,36 @@ export function dropFoeCard(/** @type {any} */ entity, /** @type {any} */ opts =
 /** Each guild's cards by the rank they come at (the lowest rank first): a guild quest pays the best its quester's rank
  *  reaches. Keyed by the guild's membership name (systems/guild/guilds.js GUILDS, guildVariants.js templeOf / orderOf). */
 export const GUILD_CARDS = Object.freeze({
-  MagesGuild: [[0, 'mages-guild-apprentice'], [4, 'mages-guild-battlemage'], [7, 'mages-guild-archmage']],
-  FightersGuild: [[0, 'fighters-guild-swordsman'], [7, 'fighters-guild-champion']],
-  ThievesGuild: [[0, 'thieves-guild-filcher'], [5, 'thieves-guild-crook']],
-  DarkBrotherhood: [[0, 'nightblade'], [6, 'dark-brotherhood-assassin']],
-  'Temple:Akatosh': [[0, 'priest-of-akatosh']], 'Temple:Arkay': [[0, 'priest-of-arkay']], 'Temple:Dibella': [[0, 'priest-of-dibella']],
-  'Temple:Julianos': [[0, 'priest-of-julianos']], 'Temple:Kynareth': [[0, 'priest-of-kynareth']], 'Temple:Mara': [[0, 'priest-of-mara']],
-  'Temple:Stendarr': [[0, 'priest-of-stendarr']], 'Temple:Zenithar': [[0, 'priest-of-zenithar']],
-  'Order:Dragon': [[0, 'knight-of-the-dragon']], 'Order:Wheel': [[0, 'knight-of-the-wheel']], 'Order:Horn': [[0, 'host-of-the-horn']],
-  'Order:Rose': [[0, 'knight-of-the-rose']], 'Order:Flame': [[0, 'knight-of-the-flame']],
+  MagesGuild: [
+    [0, 'mages-guild-apprentice'],
+    [4, 'mages-guild-battlemage'],
+    [7, 'mages-guild-archmage'],
+  ],
+  FightersGuild: [
+    [0, 'fighters-guild-swordsman'],
+    [7, 'fighters-guild-champion'],
+  ],
+  ThievesGuild: [
+    [0, 'thieves-guild-filcher'],
+    [5, 'thieves-guild-crook'],
+  ],
+  DarkBrotherhood: [
+    [0, 'nightblade'],
+    [6, 'dark-brotherhood-assassin'],
+  ],
+  'Temple:Akatosh': [[0, 'priest-of-akatosh']],
+  'Temple:Arkay': [[0, 'priest-of-arkay']],
+  'Temple:Dibella': [[0, 'priest-of-dibella']],
+  'Temple:Julianos': [[0, 'priest-of-julianos']],
+  'Temple:Kynareth': [[0, 'priest-of-kynareth']],
+  'Temple:Mara': [[0, 'priest-of-mara']],
+  'Temple:Stendarr': [[0, 'priest-of-stendarr']],
+  'Temple:Zenithar': [[0, 'priest-of-zenithar']],
+  'Order:Dragon': [[0, 'knight-of-the-dragon']],
+  'Order:Wheel': [[0, 'knight-of-the-wheel']],
+  'Order:Horn': [[0, 'host-of-the-horn']],
+  'Order:Rose': [[0, 'knight-of-the-rose']],
+  'Order:Flame': [[0, 'knight-of-the-flame']],
 });
 /** The guild a quest's faction id names (the quest machine's `factionId` - the guild's, a temple's hall, an order's).
  *  AUDIT CARDS-6 A4: A TEMPLE'S HALL BY ITS OWN WALK. A temple's quest carries its hall's faction (quest/offerFlow.js
@@ -155,8 +217,18 @@ export function guildCardRoll(factionId, rank, rolls, factionDict = null) {
 export const CARD_PACK_SIZE = 5;
 /** Every card a pack may hold, by tier: never a holding (the game deals those), never a boss's own, never the Witches'
  *  Festival's (WITCH1: sold by the Wyrd Sisters alone). */
-export const PACK_POOL = Object.freeze(Object.fromEntries(['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact'].map((t) => [t,
-  Object.freeze(ILIAC_CARDS.filter((c) => c.tier === t && !BOSS_CARD_IDS.includes(c.id) && !FESTIVAL_CARD_IDS.includes(c.id)).map((c) => c.id))])));
+export const PACK_POOL = Object.freeze(
+  Object.fromEntries(
+    ['common', 'magic', 'rare', 'legendary', 'aetheric', 'artifact'].map((t) => [
+      t,
+      Object.freeze(
+        ILIAC_CARDS.filter(
+          (c) => c.tier === t && !BOSS_CARD_IDS.includes(c.id) && !FESTIVAL_CARD_IDS.includes(c.id),
+        ).map((c) => c.id),
+      ),
+    ]),
+  ),
+);
 /** MEASURE (CARDS9): a pack's first four - a common or a magic - and its last, rare or better, per mille by tier. */
 export const PACK_SLOT_TIERS = Object.freeze({ common: 720, magic: 280 });
 export const PACK_TOP_TIERS = Object.freeze({ rare: 850, legendary: 130, aetheric: 15, artifact: 5 });
@@ -164,7 +236,10 @@ export const PACK_TOP_TIERS = Object.freeze({ rare: 850, legendary: 130, aetheri
 function tierOf(table, r) {
   let acc = 0;
   const entries = Object.entries(table);
-  for (const [t, w] of entries) { acc += w; if (r * 1000 < acc) return t; }
+  for (const [t, w] of entries) {
+    acc += w;
+    if (r * 1000 < acc) return t;
+  }
   return entries[entries.length - 1][0];
 }
 /**
@@ -185,7 +260,8 @@ export function rollPackCards(rolls) {
  *  Personality - DFU's own CalculateTradePrice, as a room's is). */
 export const CARD_PACK_BASE_PRICE = 40;
 /** A pack's price at a counter of `quality` for `skills` ({mercantile, personality}). */
-export const cardPackPrice = (/** @type {number} */ quality, /** @type {any} */ skills = {}, opts = undefined) => Math.max(1, calculateTradePrice(CARD_PACK_BASE_PRICE, quality, skills, false, opts));
+export const cardPackPrice = (/** @type {number} */ quality, /** @type {any} */ skills = {}, opts = undefined) =>
+  Math.max(1, calculateTradePrice(CARD_PACK_BASE_PRICE, quality, skills, false, opts));
 /**
  * A PACK BOUGHT: its price taken from the purse (coins, then letters - DFU's deductGold) and the pack put in the pack.
  * Answers `{ ok: true, price }`, or `{ ok: false, price, why: 'gold' }` with nothing moved.
@@ -200,7 +276,8 @@ export function buyCardPack(entity, { quality, skills = {}, online = undefined }
   return { ok: true, price };
 }
 /** The words a pack opened says: what came out of it. */
-export const packOpenedText = (/** @type {string[]} */ ids) => `You open the pack: ${ids.map((id) => iliacCardName({ card: id }).replace(/^Card: /, '')).join(', ')}.`;
+export const packOpenedText = (/** @type {string[]} */ ids) =>
+  `You open the pack: ${ids.map((id) => iliacCardName({ card: id }).replace(/^Card: /, '')).join(', ')}.`;
 /**
  * A PACK'S USE (itemTemplates.js registerItemUseHandler): one pack off its stack, its five cards into the list it came
  * from - the words say which. The draw is the use's own source.
@@ -209,13 +286,21 @@ export function openCardPack(/** @type {any} */ item, /** @type {any[]} */ colle
   if (!isCardPack(item) || !Array.isArray(collection)) return null;
   const at = collection.indexOf(item);
   if (at < 0) return null;
-  if ((item.stackCount ?? 1) > 1) item.stackCount -= 1; else collection.splice(at, 1);
+  if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;
+  else collection.splice(at, 1);
   const ids = rollPackCards(rolls);
-  for (const id of ids) { const c = mintIliacCard(id); if (c) addItem(collection, c); }
+  for (const id of ids) {
+    const c = mintIliacCard(id);
+    if (c) addItem(collection, c);
+  }
   return { kind: 'cardpack', ids, text: packOpenedText(ids) };
 }
 // AT THIS MODULE'S END, ITS IMPORTS ALL EVALUATED: the pack's Use, and a foe's card at every body door. The app carries
 // the import from systems/worldTick.js (the shared clock every host mounts - AUDIT-THUNDERLOCK F1's wire); a module-level
 // call from worldTick would run inside an import cycle (court.js and shopStock.js reach worldTick) before this body did.
-registerItemUseHandler(CARD_PACK_TEMPLATE, (item, collection, opts = {}) => openCardPack(item, collection, { rolls: opts.rolls ?? Math.random }));
-registerEnemyDeathHandler(CARD_DROP_HANDLER, (entity, opts = {}) => { dropFoeCard(entity, opts); });
+registerItemUseHandler(CARD_PACK_TEMPLATE, (item, collection, opts = {}) =>
+  openCardPack(item, collection, { rolls: opts.rolls ?? Math.random }),
+);
+registerEnemyDeathHandler(CARD_DROP_HANDLER, (entity, opts = {}) => {
+  dropFoeCard(entity, opts);
+});

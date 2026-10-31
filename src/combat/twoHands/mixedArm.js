@@ -25,13 +25,15 @@ import { holdsGun } from '../gun/gunHold.js';
  */
 export function gunArmOf({ dual = false, weapon = null, offWeapon = null } = {}) {
   if (!dual || !weapon || !offWeapon) return null;
-  const r = holdsGun(weapon), l = holdsGun(offWeapon);
+  const r = holdsGun(weapon),
+    l = holdsGun(offWeapon);
   return r === l ? null : r ? 'R' : 'L';
 }
 
 /** The Morrowind weapon type a blow of `hand` plays its group in - the left weapon's own (`offType`) for a mixed pair's
  *  left hand, else null (the arm's own group). */
-export const blowTypeOf = ({ gunArm = null, hand = 'R', offType = null } = {}) => (gunArm && hand === 'L' && Number.isFinite(offType) ? offType : null);
+export const blowTypeOf = ({ gunArm = null, hand = 'R', offType = null } = {}) =>
+  gunArm && hand === 'L' && Number.isFinite(offType) ? offType : null;
 
 /**
  * The gun stance's hand on rig `r` (combat/gun/gunHold.js applyGunStance's row and options), or null when no gun is held:
@@ -54,15 +56,19 @@ export function gunHoldOf({ weapon = null, offWeapon = null, dual = false, offSh
 
 /** AUDIT MIXED-PAIR L3-11 (HOST-SPLIT): a mixed pair's LEFT arm at rest holds its own weapon's stance - the type whose idle
  *  it takes (in the mirror), or null: a blade pair's left arm is the right's own mirror (TWO-HANDS). */
-export const offStanceTypeOf = ({ weapon = null, offWeapon = null } = {}) => (gunArmOf({ dual: true, weapon, offWeapon }) && offWeapon ? offWeapon.type ?? null : null);
+export const offStanceTypeOf = ({ weapon = null, offWeapon = null } = {}) =>
+  gunArmOf({ dual: true, weapon, offWeapon }) && offWeapon ? (offWeapon.type ?? null) : null;
 
 /** MIXED-PAIR: the gun's aim comes up for its own hand's shot alone - never the blade's swing beside it (`hold` gunHoldOf's). */
-export const gunAimShooting = ({ attacking = false, hold = null, dual = false, hand = null } = {}) => !!attacking && !(hold && hold.only && dual && hand !== hold.only);
+export const gunAimShooting = ({ attacking = false, hold = null, dual = false, hand = null } = {}) =>
+  !!attacking && !(hold && hold.only && dual && hand !== hold.only);
 
 /** AUDIT MIXED-PAIR L3-6 / L3-8: the weapon that strikes - a pair's LEFT blow is its left weapon's (its record's pace, its
  *  barrel), any other the right's (the arm draws one weapon in the right hand, MW-HAND). */
-export const blowWeaponOf = ({ hand = null, weapon = null, offWeapon = null } = {}) => (hand === 'L' && offWeapon ? offWeapon : weapon);
+export const blowWeaponOf = ({ hand = null, weapon = null, offWeapon = null } = {}) =>
+  hand === 'L' && offWeapon ? offWeapon : weapon;
 
 /** AUDIT MIXED-PAIR L3-6: the piece a shot leaves from - a pair's LEFT hand's own (the left weapon, on Weapon Bone Left),
  *  else the right weapon's; the right's where the rig bound no left. */
-export const muzzlePieceOf = (pieces, hand = 'R') => (hand === 'L' && pieces.find((p) => p.slot === 'offweapon')) || pieces.find((p) => p.slot === 'weapon') || null;
+export const muzzlePieceOf = (pieces, hand = 'R') =>
+  (hand === 'L' && pieces.find((p) => p.slot === 'offweapon')) || pieces.find((p) => p.slot === 'weapon') || null;

@@ -2,8 +2,8 @@
   {
     "name": "C1-subscribed-only-at-birth",
     "file": "src/systems/handheldTorches.js",
-    "old": "    offLight ??= addLightSourceListener(onLight);   // AUDIT DISC7 C1: (re)armed with the frame\n",
-    "new": "",
+    "old": "    offLight ??= addLightSourceListener(onLight); // AUDIT DISC7 C1: (re)armed with the frame\n    _liveHandLaw = applyHandLaw; // HT6: this host has the player, so this component answers the equip change",
+    "new": "    _liveHandLaw = applyHandLaw; // HT6: this host has the player, so this component answers the equip change",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "C2-symbol-left-stale",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    if (this.targetResource?.symbol) this.targetSymbol = this.targetResource.symbol;\n",
-    "new": "",
+    "old": "    if (this.targetResource?.symbol) this.targetSymbol = this.targetResource.symbol;\n    if (this.targetResource && !this.targetResource.questResourceBehaviour)",
+    "new": "    if (this.targetResource && !this.targetResource.questResourceBehaviour)",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "C2-behaviours-never-registered",
     "file": "src/systems/quest/resourceBehaviour.js",
-    "old": "    machine?._registerBehaviour?.(this);",
-    "new": "",
+    "old": "    machine?._registerBehaviour?.(this); // AUDIT DISC7 C2: the resync finds every behaviour standing on its quest",
+    "new": "    // AUDIT DISC7 C2: the resync finds every behaviour standing on its quest",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "C3-spell-queue-replaced",
     "file": "src/systems/quest/machine.js",
-    "old": "      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;\n",
-    "new": "",
+    "old": "      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;\n      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;",
+    "new": "      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "C3-item-queue-replaced",
     "file": "src/systems/quest/machine.js",
-    "old": "      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;\n",
-    "new": "",
+    "old": "      if ((was.itemQueue?.length ?? 0) > (r.itemQueue?.length ?? 0)) r.itemQueue = was.itemQueue;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "D7-pending-kill-dropped",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (was.dying) r.deathTrigger = true;\n",
-    "new": "",
+    "old": "      if (was.dying) r.deathTrigger = true;\n      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;",
+    "new": "      if ((was.spellQueue?.length ?? 0) > (r.spellQueue?.length ?? 0)) r.spellQueue = was.spellQueue;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "D7-injury-dropped",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (was.injured) r.injuredTrigger = true;\n      if (was.dying)",
-    "new": "      if (was.dying)",
+    "old": "      if (was.injured) r.injuredTrigger = true;\n      if (was.dying) r.deathTrigger = true;",
+    "new": "      if (was.dying) r.deathTrigger = true;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "C7-bailed-frame-keeps-its-previous",
     "file": "src/render/airPass.js",
-    "old": "{ this.f = null; this.prevValid = false; return; }",
-    "new": "{ this.f = null; return; }",
+    "old": "      this.prevValid = false;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "A7-one-verb-eats-the-wheel",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (_actionIds && _actionIds.length <= 1 && _sel.row >= 0) return false;\n",
-    "new": "",
+    "old": "  if (_actionIds && _actionIds.length <= 1 && _sel.row >= 0) return false;\n  _nudge += clicks;",
+    "new": "  _nudge += clicks;",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "A10-hitched-wagon-hitched-again",
     "file": "src/systems/horse/horseCartLaw.js",
-    "old": "horseMode === HORSE_MODE.HitchedToWagon ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.hitch",
-    "new": "HCC_ACTION_TEXT.hitch",
+    "old": "      {\n        id: ACTIVATE_MODE.Grab,\n        label: horseMode === HORSE_MODE.HitchedToWagon ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.hitch,\n      },",
+    "new": "      { id: ACTIVATE_MODE.Grab, label: HCC_ACTION_TEXT.hitch },",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]

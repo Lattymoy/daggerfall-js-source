@@ -454,7 +454,7 @@
   {
     "name": "EGZ-the-span-unjudged",
     "file": "src/net/bossRef.js",
-    "old": "if (caughtWhile(test, b.tr, from, upto, F.h, spec, ys, { free, by })) { a.bh.push(b.sub); out.push(hit); }",
+    "old": "        if (caughtWhile(test, b.tr, from, upto, F.h, spec, ys, { free, by })) {\n          a.bh.push(b.sub);\n          out.push(hit);\n        }",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
@@ -463,8 +463,8 @@
   {
     "name": "EGZ-the-span-closed-at-its-landing",
     "file": "src/net/bossRef.js",
-    "old": "if (now >= a.at + sp + EG_POSE_WAIT_MS) a.bj = 1;",
-    "new": "if (now >= a.at + EG_POSE_WAIT_MS) a.bj = 1;",
+    "old": "    if (now >= a.at + sp + EG_POSE_WAIT_MS) a.bj = 1;",
+    "new": "    if (now >= a.at + EG_POSE_WAIT_MS) a.bj = 1;",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "EGZ-hn-ignored",
     "file": "src/net/bossRef.js",
-    "old": "const free = a.hn === b.sub,",
-    "new": "const free = false,",
+    "old": "      const free = a.hn === b.sub,",
+    "new": "      const free = false,",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
     ]
@@ -481,8 +481,8 @@
   {
     "name": "EGZ-the-burning-unjudged",
     "file": "src/net/bossRef.js",
-    "old": "L.aim !== 'check' && L.aim !== 'trav')",
-    "new": "L.aim !== 'check')",
+    "old": "    if (!L || (L.aim !== 'fight' && L.aim !== 'check' && L.aim !== 'trav') || hz.kind === 'wisp' || !(L.pct > 0))\n      continue;",
+    "new": "    if (!L || (L.aim !== 'fight' && L.aim !== 'check') || hz.kind === 'wisp' || !(L.pct > 0)) continue;",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "EGZ-the-bridges-unburned",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && ",
-    "new": "test: (s, F) => ",
+    "old": "    test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && !egCaughtBy(F, EG_FEAT_BRIDGE).length,",
+    "new": "    test: (s, F) => !egCaughtBy(F, EG_FEAT_BRIDGE).length,",
     "tests": [
       "test/net/eliteGates/egz_legion.test.js"
     ]

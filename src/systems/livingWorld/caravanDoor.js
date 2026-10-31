@@ -26,7 +26,11 @@ import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { WALK_FROM_H, WALK_TO_H, NATIVE_PER_M, NATIVE_PIXEL, partyAt, membersAt } from './trips.js';
 
 /** The kinds of trip that keep a counter on the road, and its kind of shop. */
-export const COUNTERS = Object.freeze({ merchant: BUILDING_TYPES.GeneralStore, carter: BUILDING_TYPES.GeneralStore, pedlar: BUILDING_TYPES.PawnShop });
+export const COUNTERS = Object.freeze({
+  merchant: BUILDING_TYPES.GeneralStore,
+  carter: BUILDING_TYPES.GeneralStore,
+  pedlar: BUILDING_TYPES.PawnShop,
+});
 /** A counter's quality by its town's size: 6 and one each four blocks, to 20. @param {any} trip */
 export const CARAVAN_QUALITY = (trip) => Math.max(1, Math.min(20, 6 + Math.floor((trip.from?.blocks | 0) / 4)));
 /** The coin a counter's purse holds for a trip, by its quality. */
@@ -54,7 +58,8 @@ export function counterOf(trip) {
   const buildingType = COUNTERS[/** @type {keyof typeof COUNTERS} */ (trip?.kind)];
   if (buildingType == null) return null;
   const quality = CARAVAN_QUALITY(trip);
-  const name = trip.kind === 'merchant' ? `${trip.leader?.name ?? 'The'}'s caravan` : `${trip.leader?.name ?? 'The'}'s pack`;
+  const name =
+    trip.kind === 'merchant' ? `${trip.leader?.name ?? 'The'}'s caravan` : `${trip.leader?.name ?? 'The'}'s pack`;
   return { buildingType, quality, name, purse: purseOf(quality) };
 }
 /** A counter's purse for its trip, by its quality. @param {number} quality */
@@ -118,7 +123,10 @@ export function escortPay(trip, level, foes = 0, from = -Infinity) {
   const days = Math.max(1, Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)));
   const at = from > trip.outT0 ? partyAt(trip, from) : null;
   const ahead = at?.s != null ? Math.min(1, Math.max(0, trip.way.len - trip.trim1 - at.s) / Math.max(1e-9, len)) : 1;
-  return Math.round(days * (ESCORT_GOLD_DAY + ESCORT_GOLD_LEVEL * Math.max(1, level | 0)) * ahead) + ESCORT_FIGHT * Math.max(0, foes | 0);
+  return (
+    Math.round(days * (ESCORT_GOLD_DAY + ESCORT_GOLD_LEVEL * Math.max(1, level | 0)) * ahead) +
+    ESCORT_FIGHT * Math.max(0, foes | 0)
+  );
 }
 
 /**
@@ -137,8 +145,17 @@ export function escortNear(trip, here, since, t) {
   // location the one on its pixel
   const near = (/** @type {number} */ m) => {
     const at = partyAt(trip, m);
-    if (at.inn && Math.floor(here.x / NATIVE_PIXEL) === at.inn.px && 499 - Math.floor(here.z / NATIVE_PIXEL) === at.inn.py) return true;
-    return at.x != null && Math.hypot(here.x - /** @type {number} */ (at.x), here.z - /** @type {number} */ (at.z)) / NATIVE_PER_M <= ESCORT_KEEP_M;
+    if (
+      at.inn &&
+      Math.floor(here.x / NATIVE_PIXEL) === at.inn.px &&
+      499 - Math.floor(here.z / NATIVE_PIXEL) === at.inn.py
+    )
+      return true;
+    return (
+      at.x != null &&
+      Math.hypot(here.x - /** @type {number} */ (at.x), here.z - /** @type {number} */ (at.z)) / NATIVE_PER_M <=
+        ESCORT_KEEP_M
+    );
   };
   let last = since;
   for (let m = since; ; m = Math.min(t, m + ESCORT_SAMPLE_MIN)) {

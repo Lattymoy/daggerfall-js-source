@@ -43,10 +43,12 @@ import { weaponOffsetHeight } from '../../ui/hud/hudLarge.js';
  */
 export function spellHandOf({ lead = 'R', right = null, left = null, leftBusy = false } = {}) {
   if (leftBusy) return null;
-  const weaponHand = lead === 'L' ? 'L' : 'R', spellHand = otherHand(weaponHand);
-  const weapon = weaponHand === 'R' ? right : left, free = spellHand === 'R' ? right : left;
-  if (!dualEligible(weapon)) return null;   // a one-handed weapon fights: a blade or a Pistolet (never a bow's, a staff's)
-  if (free?.item) return null;   // a weapon or a shield in the free hand
+  const weaponHand = lead === 'L' ? 'L' : 'R',
+    spellHand = otherHand(weaponHand);
+  const weapon = weaponHand === 'R' ? right : left,
+    free = spellHand === 'R' ? right : left;
+  if (!dualEligible(weapon)) return null; // a one-handed weapon fights: a blade or a Pistolet (never a bow's, a staff's)
+  if (free?.item) return null; // a weapon or a shield in the free hand
   return { weaponHand, spellHand };
 }
 
@@ -70,14 +72,25 @@ export const spellHandBusy = () => (live.up || live.fits) && live.busy;
 export const castPending = () => live.pending;
 /** The rig's word, once a frame and again as a strike begins: `fits` - the hands would hold a spell beside the drawn
  *  weapon (whether or not one is readied); `up` - one is; `busy` - a strike is in flight. */
-export function tellSpellHand({ up = false, fits = false, busy = false } = {}) { live.up = !!up; live.fits = !!fits || !!up; live.busy = !!busy; }
+export function tellSpellHand({ up = false, fits = false, busy = false } = {}) {
+  live.up = !!up;
+  live.fits = !!fits || !!up;
+  live.busy = !!busy;
+}
 /** SPELL-HAND: a CAST's own press, as the hosts hand it to the cast's door (scenes/hostMagic.js interceptAttack) - one frozen
  *  word, imported, so no host grows by an entry for it (HOST-SPLIT: test/scenes/hostceiling.test.js counts entries). */
 export const CAST_PRESS = Object.freeze({ cast: true });
 /** The magic engine's word: a cast press waits (scenes/hostMagic.js firePending). */
-export function tellCastPending(on) { live.pending = !!on; }
+export function tellCastPending(on) {
+  live.pending = !!on;
+}
 /** The pins' reset. */
-export function _resetSpellHand() { live.up = false; live.fits = false; live.busy = false; live.pending = false; }
+export function _resetSpellHand() {
+  live.up = false;
+  live.fits = false;
+  live.busy = false;
+  live.pending = false;
+}
 
 // ---- THE PICTURE (the classic lane) ---------------------------------------------------------------------------------
 
@@ -93,13 +106,24 @@ export function _resetSpellHand() { live.up = false; live.fits = false; live.bus
  * @param {number} frameIndex
  * @param {{ side?: 'left'|'right', tint?: number[] | null, offsetHeight?: number, guard?: number }} [o]
  */
-export function drawSpellHand(renderer, canvas, art, frameIndex, { side = 'left', tint = null, offsetHeight = weaponOffsetHeight(), guard = 0 } = {}) {
+export function drawSpellHand(
+  renderer,
+  canvas,
+  art,
+  frameIndex,
+  { side = 'left', tint = null, offsetHeight = weaponOffsetHeight(), guard = 0 } = {},
+) {
   if (!renderer || !canvas || !art || frameIndex < 0) return false;
   const rec = art.records[frameIndex];
   if (!rec || !rec.width || !rec.height) return false;
   const rects = spellHandRects(canvas, rec, { frameIndex, element: art.element, offsetHeight });
   const r = side === 'right' ? rects.right : rects.left;
-  renderer.drawScreenQuad(rec.tex, { ...r, y: r.y + guardDrop(guard, r.h) }, side === 'right' ? RIGHT_HAND_UV : undefined, tint ?? undefined);
+  renderer.drawScreenQuad(
+    rec.tex,
+    { ...r, y: r.y + guardDrop(guard, r.h) },
+    side === 'right' ? RIGHT_HAND_UV : undefined,
+    tint ?? undefined,
+  );
   return true;
 }
 

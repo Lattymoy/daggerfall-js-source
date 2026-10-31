@@ -262,7 +262,7 @@ test('AUDIT CC-B4 (major): a companion never runs out past the leash at a foe st
 });
 
 test('AUDIT CC-B5: the pathing motor drops the route it held when it turns from fighting to following and back', () => {
-  assert.match(rd('src/ai/enhancedMotor.js'), /if \(this\._following !== this\._wasFollowing\) \{ this\._wasFollowing = this\._following; this\.path = null; this\.repathT = 0; \}/);
+  assert.match(rd('src/ai/enhancedMotor.js'), /if \(this\._following !== this\._wasFollowing\) \{\n\s*this\._wasFollowing = this\._following;\n\s*this\.path = null;\n\s*this\.repathT = 0;\n\s*\}/);
 });
 
 test('AUDIT CC-B6: a torch thrown indoors or underground passes a companion by (the street\'s already did); the watch stays while a monster fights one', () => {
@@ -396,7 +396,7 @@ test('AUDIT CC-D7: a knock after a load still costs her crew - the event lands o
 
 test('AUDIT CC-D8: the plate says her repairs while the order stands; the card marks a hand ashore; the next hand answers for a First Mate ashore', () => {
   assert.match(rd('src/scenes/naval/navalHost.js'), /repairing: !!st\.repairing, repairOrdered: st\.crew\.order === CREW_ORDERS\.repair,/);
-  assert.match(rd('src/ui/naval/navalHud.js'), /ship\.repairOrdered \? 'Crippled, repairs ordered'/);
+  assert.match(rd('src/ui/naval/navalHud.js'), /ship\.repairOrdered\n\s*\? 'Crippled, repairs ordered'/);
   const lines = crewCard({ morale: 60, hands: [{ name: 'Aldric', role: 'First Mate', fights: 0, boardings: 0 }, { name: 'Brand', role: 'Bard', fights: 1, boardings: 0 }] }, { ashore: new Set(['Aldric']) });
   assert.ok(lines.some((l) => /^Aldric, First Mate.*ashore with you/.test(l)));
   assert.match(rd('src/scenes/naval/navalHost.js'), /const mateOf = \(boat, st\) =>/);

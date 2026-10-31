@@ -52,9 +52,10 @@ export const BOAT_GLYPH_ROWS = Object.freeze([
 ]);
 
 /** The enhanced strip's glyph: the same boat drawn at 14x12 CSS px, edged dark as every other mark on the strip is. */
-export const BOAT_GLYPH_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="12" viewBox="0 0 14 12">'
-  + `<path d="M7 1 L12 8 H7 Z M1 8.5 H13 L10.5 11.5 H3.5 Z" fill="${BOAT_MARK_CSS}" stroke="#0a0c11" stroke-width="1" `
-  + 'stroke-linejoin="round" paint-order="stroke"/></svg>';
+export const BOAT_GLYPH_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="12" viewBox="0 0 14 12">' +
+  `<path d="M7 1 L12 8 H7 Z M1 8.5 H13 L10.5 11.5 H3.5 Z" fill="${BOAT_MARK_CSS}" stroke="#0a0c11" stroke-width="1" ` +
+  'stroke-linejoin="round" paint-order="stroke"/></svg>';
 export const BOAT_GLYPH_URL = `url("data:image/svg+xml;utf8,${encodeURIComponent(BOAT_GLYPH_SVG)}")`;
 
 /**
@@ -81,20 +82,29 @@ export function boatMarkAt(boat, world, terrainSize, out = [0, 0]) {
   const live = !!p && Number.isFinite(p[0]) && Number.isFinite(p[2]);
   if (boat?.GameObject?.activeSelf && !boat.inside) {
     if (!live) return null;
-    out[0] = p[0]; out[1] = p[2];
+    out[0] = p[0];
+    out[1] = p[2];
     return out;
   }
   const px = boat?.MapPixel;
   if (!px || !Number.isInteger(px.X) || !Number.isInteger(px.Y)) return null;
   const t = world.pixelTranslation(px.X, px.Y, _t);
-  const x0 = t[0], z0 = t[2];
-  if (live && !boat.inside
-    && p[0] >= x0 - BOAT_PIXEL_SLACK_M && p[0] <= x0 + terrainSize + BOAT_PIXEL_SLACK_M
-    && p[2] >= z0 - BOAT_PIXEL_SLACK_M && p[2] <= z0 + terrainSize + BOAT_PIXEL_SLACK_M) {
-    out[0] = p[0]; out[1] = p[2];
+  const x0 = t[0],
+    z0 = t[2];
+  if (
+    live &&
+    !boat.inside &&
+    p[0] >= x0 - BOAT_PIXEL_SLACK_M &&
+    p[0] <= x0 + terrainSize + BOAT_PIXEL_SLACK_M &&
+    p[2] >= z0 - BOAT_PIXEL_SLACK_M &&
+    p[2] <= z0 + terrainSize + BOAT_PIXEL_SLACK_M
+  ) {
+    out[0] = p[0];
+    out[1] = p[2];
     return out;
   }
-  out[0] = x0 + terrainSize / 2; out[1] = z0 + terrainSize / 2;
+  out[0] = x0 + terrainSize / 2;
+  out[1] = z0 + terrainSize / 2;
   return out;
 }
 
@@ -118,7 +128,7 @@ export function boatCompassPoints(boats, current, feet, world, terrainSize) {
   let used = 0;
   for (const boat of boats) {
     if (!boat || boat === current) continue;
-    const p = _pool[used] ??= [0, 0];
+    const p = (_pool[used] ??= [0, 0]);
     if (!boatMarkAt(boat, world, terrainSize, p)) continue;
     if (Math.hypot(p[0] - feet[0], p[1] - feet[2]) < BOAT_MARK_NEAR_M) continue;
     used++;

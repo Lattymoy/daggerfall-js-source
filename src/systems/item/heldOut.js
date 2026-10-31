@@ -29,7 +29,9 @@ export function holdOut(/** @type {any} */ entity, /** @type {() => any} */ item
   if (!entity || typeof items !== 'function') return () => {};
   const h = { entity, items };
   _held.add(h);
-  return () => { _held.delete(h); };
+  return () => {
+    _held.delete(h);
+  };
 }
 
 /** The goods every standing window holds out of `entity`'s pack, each once, and none the pack holds itself. */
@@ -41,8 +43,13 @@ export function heldOutOf(/** @type {any} */ entity) {
   for (const h of _held) {
     if (h.entity !== entity) continue;
     let list = null;
-    try { list = h.items(); } catch { list = null; }   // a window's reader is never the save's problem
-    for (const it of Array.isArray(list) ? list : []) if (it && typeof it === 'object' && !pack.includes(it) && !out.includes(it)) out.push(it);
+    try {
+      list = h.items();
+    } catch {
+      list = null;
+    } // a window's reader is never the save's problem
+    for (const it of Array.isArray(list) ? list : [])
+      if (it && typeof it === 'object' && !pack.includes(it) && !out.includes(it)) out.push(it);
   }
   return out;
 }

@@ -110,8 +110,8 @@
   {
     "name": "EGA3C-card-hidden-not-its-own",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (cardUp) { drawGateTitleCard(null); cardUp = false; }",
-    "new": "      drawGateTitleCard(null); cardUp = false;",
+    "old": "      if (cardUp) {\n        drawGateTitleCard(null);\n        cardUp = false;\n      } // AUDIT EG III (lane4 #2): only a card this fight drew",
+    "new": "      drawGateTitleCard(null);\n      cardUp = false; // AUDIT EG III (lane4 #2): only a card this fight drew",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGA3C-card-drawn-over-another",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "    if (m || cardUp) { drawGateTitleCard(m, { hidden: hudHidden() }); cardUp = !!m; }",
-    "new": "    drawGateTitleCard(m, { hidden: hudHidden() }); cardUp = !!m;",
+    "old": "    if (m || cardUp) {\n      drawGateTitleCard(m, { hidden: hudHidden() });\n      cardUp = !!m;\n    }",
+    "new": "    drawGateTitleCard(m, { hidden: hudHidden() });\n    cardUp = !!m;",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGA3C-card-own-never-noted",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "{ drawGateTitleCard(m, { hidden: hudHidden() }); cardUp = !!m; }",
-    "new": "{ drawGateTitleCard(m, { hidden: hudHidden() }); cardUp = false; }",
+    "old": "      cardUp = !!m;",
+    "new": "      cardUp = false;",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "EGA3C-edge-palette-ignored",
     "file": "src/world/eliteGates/egLook.js",
-    "old": "const g = pal && pal.key !== 'standard' && Array.isArray(pal.safety) ? pal.safety : EG_EDGE_LINE.color,",
-    "new": "const g = EG_EDGE_LINE.color,",
+    "old": "  const g = pal && pal.key !== 'standard' && Array.isArray(pal.safety) ? pal.safety : EG_EDGE_LINE.color,",
+    "new": "  const g = EG_EDGE_LINE.color,",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "EGA3C-ask-gone-silent",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "if (!box.done) { box.done = true; onGone(); }",
-    "new": "if (!box.done) { box.done = true; }",
+    "old": "        onGone();\n      }",
+    "new": "      }",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "EGA3C-ask-gone-twice",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "if (!box.done) { box.done = true; onGone(); }",
-    "new": "if (!box.done) { onGone(); }",
+    "old": "        box.done = true;\n        onGone();",
+    "new": "        onGone();",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]
@@ -472,8 +472,8 @@
   {
     "name": "EGA3C-ask-gone-unwired",
     "file": "src/ui/eliteGates/egStartWindow.js",
-    "old": "() => { if (!done) showMain(); }, cancel);",
-    "new": "() => { if (!done) showMain(); });",
+    "old": "      },\n      cancel,\n    );",
+    "new": "      },\n    );",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "EGA3C-veil-opening-look-kept",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts);",
-    "new": "      if (phase === 'idle') takeLook(look, opts);",
+    "old": "      if (phase === 'idle' || phase === 'opening') takeLook(look, opts); // AUDIT EG III (lane4 #13): a cover asked while the last step's veil still opens closes in ITS OWN look - a closing or a shut veil keeps the one it closed with",
+    "new": "      if (phase === 'idle') takeLook(look, opts); // AUDIT EG III (lane4 #13): a cover asked while the last step's veil still opens closes in ITS OWN look - a closing or a shut veil keeps the one it closed with",
     "tests": [
       "test/scenes/eliteGates/egaudit3_client.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "EGA3C-tonic-kind-unknown",
     "file": "src/net/wire.js",
-    "old": "'claimed', 'heal', 'tonic', 'mast', 'wkpaid', 'yield', 'rz']);",
-    "new": "'claimed', 'heal', 'mast', 'wkpaid', 'yield', 'rz']);",
+    "old": "'claimed', 'heal', 'tonic', 'mast', 'wkpaid', 'yield', 'rz', 'pot']);",
+    "new": "'claimed', 'heal', 'mast', 'wkpaid', 'yield', 'rz', 'pot']);",
     "tests": [
       "test/net/eliteGates/egaudit3_client_tonic.test.js",
       "test/net/eliteGates/egplay_relay.test.js"
@@ -617,8 +617,8 @@
   {
     "name": "EGA3C-longstep-held-dropped",
     "file": "src/systems/eliteGates/spireVestiges.js",
-    "old": "...(holder.ls === true ? { ls: true } : {})",
-    "new": "...{}",
+    "old": "        ? {\n            entity,\n            vs: holder.vs ?? [],\n            mast: holder.mast ?? -1,\n            b: holder.b ?? '',\n            h: holder.h | 0,\n            ...(holder.ls === true ? { ls: true } : {}),\n          }",
+    "new": "        ? { entity, vs: holder.vs ?? [], mast: holder.mast ?? -1, b: holder.b ?? '', h: holder.h | 0, ...{} }",
     "tests": [
       "test/net/eliteGates/egaudit3_client_tonic.test.js"
     ]
@@ -671,8 +671,8 @@
   {
     "name": "EGA3C-touched-unweighed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "m[2] > t) ? EG_TOUCH_X : 1;",
-    "new": "m[2] > t) ? 1 : 1;",
+    "old": "  return (F.mk ?? []).some((m) => m[0] === me && m[1] === mark && m[2] > t) ? EG_TOUCH_X : 1;",
+    "new": "  return (F.mk ?? []).some((m) => m[0] === me && m[1] === mark && m[2] > t) ? 1 : 1;",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -680,8 +680,8 @@
   {
     "name": "EGA3C-touched-lapsed-weighed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(m) => m[0] === me && m[1] === mark && m[2] > t)",
-    "new": "(m) => m[0] === me && m[1] === mark && m[2] > 0)",
+    "old": "  return (F.mk ?? []).some((m) => m[0] === me && m[1] === mark && m[2] > t) ? EG_TOUCH_X : 1;",
+    "new": "  return (F.mk ?? []).some((m) => m[0] === me && m[1] === mark && m[2] > 0) ? EG_TOUCH_X : 1;",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -689,8 +689,8 @@
   {
     "name": "EGA3C-touched-anothers-mark",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "(m) => m[0] === me && m[1] === mark && m[2] > t)",
-    "new": "(m) => m[1] === mark && m[2] > t)",
+    "old": "  return (F.mk ?? []).some((m) => m[0] === me && m[1] === mark && m[2] > t) ? EG_TOUCH_X : 1;",
+    "new": "  return (F.mk ?? []).some((m) => m[1] === mark && m[2] > t) ? EG_TOUCH_X : 1;",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "EGA3C-touched-not-on-screen",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
-    "new": "spared(E, F, bl), part, true);",
+    "old": "              landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
+    "new": "              landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part, true);",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -736,8 +736,8 @@
   {
     "name": "EGA3C-chain-unsplit",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "part = 1 / (mates.length + 1);",
-    "new": "part = 1;",
+    "old": "        part = 1 / (mates.length + 1);",
+    "new": "        part = 1;",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -745,8 +745,8 @@
   {
     "name": "EGA3C-chain-mate-unjudged",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "        if (mates.length && !bl.cut && standing) for (const sub of mates) {",
-    "new": "        if (false) for (const sub of mates) {",
+    "old": "        if (mates.length && !bl.cut && standing)",
+    "new": "        if (false)",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]
@@ -772,8 +772,8 @@
   {
     "name": "EGA3C-chain-one-link",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      if (a !== b) { const n = a ? t[1] : t[0]; seen.add(n); out.push(n); grew = true; }",
-    "new": "      if (a && !b) { seen.add(t[1]); out.push(t[1]); }",
+    "old": "      if (a !== b) {\n        const n = a ? t[1] : t[0];\n        seen.add(n);\n        out.push(n);\n        grew = true;",
+    "new": "      if (a && !b) {\n        seen.add(t[1]);\n        out.push(t[1]);",
     "tests": [
       "test/net/eliteGates/egaudit3_client_fight.test.js"
     ]

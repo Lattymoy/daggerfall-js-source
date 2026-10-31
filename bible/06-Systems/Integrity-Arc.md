@@ -553,11 +553,11 @@ record: staff give one back fresh, Add an item, on the player's word). Such a pa
 `keep: true`: one of each kept - of the record's own lists first (its pack before a room's chest), the first of the print
 its ledger row holds - and every other copy destroyed wherever the save holds it, the places the checkpoint never reads
 with them: a deserter revenant's take, a pile on the ground, a shop's shelf, a dungeon's chest
-(`staffRealm.js:"export function copiesOfKeys(save, keySet) {"`, said as `hidden`), and of a piece it lifts, the
+(`staffRealm.js:"export function copiesOfKeys"`, said as `hidden`), and of a piece it lifts, the
 account's chests'. A `twice` copy is lifted in the same batch only where the act itself leaves the record one - its
 batch destroys a copy of it, or staff's Remove took one off the character and keeps it - its row the record's own, held
 and unclaimed and of the piece kept, no other record's copy known, and no trail check or one that found it innocent
-(`ledger.js:"export async function ownCopiesLiftable(db, char, pieces) {"`); the `dupe` finding and the answer's
+(`ledger.js:"export async function ownCopiesLiftable"`); the `dupe` finding and the answer's
 `lifted` say what the batch took, and a checkpoint landing between the act's read and its seizure refuses it `seq`. No
 checkpoint lifts a copy (AUDIT FB1025i): the record a checkpoint shows is the lists it holds, and a copy moved where it
 lists nothing - a revenant's take (RVN8: a deserter's split, `splitPack`, and a kill's, `pickTaken` - neither takes a
@@ -737,6 +737,10 @@ The relay stamps `wa` on the socket at the hello, and every referee - a siege's,
 signed bow; a fist is every fighter's own. A token with no `wa` (a character not judged since INT7) is clipped to the
 look's weapon alone, the law before it.
 
+EG-MIGHT (2026-10-31, `11-Multiplayer/Elite-Gates.md` section 21.1): the same verdict reads the kit's might off the judged
+pack (`net/kitMight.js`), kept on the row (`might`, migration 0204) and signed as `mg` beside `rc` 1, grown by the Renown's
+sky. An Elite Breach's purse grows by it; no referee between players reads it.
+
 ### INT8 - the duel refereed (`net/duel/duelRef.js`, `net/duel/duelReceipt.js`)
 
 A duel is the Royal Tourney's ring without its title. The relay that routes it notes the ask and the yes as they pass
@@ -851,7 +855,7 @@ receipt's carrier); `scenes/dungeonContext.js` and `scenes/worldModes.js` NO DUE
   pieces were lost and that the character's trading is frozen, and names any letters of credit among them by their worth.
 - **THE FOUR HOSTS.** `scenes/world.js` WIRED (the zone word, the blows, the referee's readout, the fall, the drop, the
   deposit, the seizure, the escrow - the killer's collect carried, the fallen's piece taken back, both on the zone's
-  frame, `wildEscrowHost.js:"const wildEscrowFrame = () =>"`); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and
+  frame, `wildEscrowHost.js:"const wildEscrowFrame"`); `scenes/dungeonContext.js` (the zone's halls) WIRED through world.js's own `wildStrike` and
   `wildSpellOut`, refereed alike, its pool holding the remains, its ghost leaving once its deposit has gone; `scenes/
   worldModes.js` (a building) no fight - the zone word is 0 indoors - its pool holding the remains;
   `scenes/exterior.js`, the offline fixed city, NOT WIRED on purpose: the zone is online's alone.
@@ -936,24 +940,11 @@ Mac, asked on a player's private report - in a duel, their own health bar did no
 bar read the save's health, which a duel never touches, and the referee's vitality stood in a line of its own under the
 battles' readout ("Your vitality: n / m"). **"Bar shows duel vitality."**
 
-RETIRED BY SHARED-HEALTH (2026-10-26, below): the duel's count is the player's health now, so the world host hands
-drawHud no referee's pair and the bar reads the health it always read; neither readout prints "Your vitality" any more.
-What stands of DUEL-BAR is its seam, with no caller: the leaf (duelBar.js:"export function duelVitality") and the HUD's
-one pair below.
-
-- **ONE PAIR, BOTH SKINS.** The HUD reads one health (hudVitals.js:"export function hudHealth"): drawHud's
-  `healthBar` where a host hands one (none does since SHARED-HEALTH), else the save's. The classic
-  bars and the large HUD's draw off its snapshot (hud.js:"const health = hudHealth"), the enhanced HUD's off the pair
-  drawHud hands on (enhancedHud.js:"const hp = opts.health"); and so does everything drawn off the HUD's health - the
-  trails, the near-death tint, the blow's recoil, the lens. The turn each way is no blow and no heal
-  (hudVitals.js:"if (_lastFrom !== null && _lastFrom !== from)"): the detector primes afresh, and the enhanced bar's
-  held loss and its heal reading start again.
-- **THE ARENA IS NOT THIS.** A bout between players on the arena's sand (ARENA4) writes its referee's share into the
-  save's health and its healers come at the end (arenaBouts.js:"MY HEALTH IS THE"), so its bar already fell; it keeps
-  its own law.
-
-Pinned: `test/ui/fb1019f_duelbar.test.js` (the seam read by the real drawHud on both skins, and the host handing it
-nothing); `tools/mutants/duel_bar.json`.
+RETIRED BY SHARED-HEALTH (2026-10-26, below): the duel's count is the player's health now, so the bar reads the health
+it always read and neither readout prints "Your vitality" any more. The seam it left with no caller (`duelVitality`,
+drawHud's `healthBar` and the detector's turn between two sources) was removed in the 2026-10-30 cleanup: the HUD
+reads one health, the entity's own (hudVitals.js:"export function hudHealth"). Its SHARED-HEALTH pin moved to
+`test/net/duel/sharedhealth_duel.test.js`.
 
 ### Decisions (2026-10-26, SHARED-HEALTH)
 
@@ -1001,7 +992,7 @@ healing too - only mid-PvP.
 
 A departure from DFU only in that DFU has no other player; its health is PlayerEntity's alone, which is what the bar
 reads again. Pinned: `test/net/siege/sharedhealth_law.test.js` (the law and the mirror through the races),
-`test/net/int9_wild_ref.test.js`, `test/ui/fb1019f_duelbar.test.js` and `test/net/siege/pvpref_relay.test.js` (each mode
+`test/net/int9_wild_ref.test.js`, `test/net/duel/sharedhealth_duel.test.js` and `test/net/siege/pvpref_relay.test.js` (each mode
 on the real relay); `tools/mutants/shared_health.json`.
 
 ### What lane 2 leaves open

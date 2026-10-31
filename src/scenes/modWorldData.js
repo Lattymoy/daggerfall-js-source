@@ -8,23 +8,29 @@
 //
 // BROWSER-ONLY: import.meta.glob is a Vite compile-time macro - node
 // tests register their JSON on the door from fs.
-import { registerWorldDataAsset, installWorldDataReplacement, boundWorldDataBlocks, latchWorldDataDoor, worldDataBlocksServing } from '../formats/worldData/worldDataReplacement.js';
+import {
+  registerWorldDataAsset,
+  installWorldDataReplacement,
+  boundWorldDataBlocks,
+  latchWorldDataDoor,
+  worldDataBlocksServing,
+} from '../formats/worldData/worldDataReplacement.js';
 import { rebuildWorldDataPatch, canonicalSha256 } from '../formats/worldData/worldDataPatch.js';
 import { modSetting } from '../systems/modSettings.js';
-import { configureLayoutPins } from '../systems/layoutPins.js';   // WD3: the layout a save's towns were made in
-import { installTownStandIns } from '../world/townStandIns.js';   // WD3: the port's own pieces, a room's decor among them
-import { installTownDress } from './townDressHost.js';   // TOWN-DRESS (OWN-WORK3): our market stall
-import { installArena } from '../world/arena/arenaCity.js';   // ARENA1: the Arena of Daggerfall - the port's own block, the city's edit and the colosseum
-import { installCapitals } from '../world/capitalModels.js';   // TESA10: the capitals' blocks, landmarks and pictures
-import { installCuratedBlocks } from '../world/dungeon/curatedInstall.js';   // DELVE II (DLV5): the curated blocks
-import { installTownOutline } from '../world/townOutline.js';   // TOWN-SHAPES TS3: the open cell a town past the Bay leaves
-import { installUrbanArt } from '../world/urban/urbanArt.js';   // URBANIZER: the towns' own pictures - their streets' stone, their walls, the capitals' brick, half-timber and ashlar
-import { installShipRefit } from '../world/shipRefit.js';   // the ships a player owns, furnished
-import { installRoleplayRealismWorld } from '../systems/roleplayRealism/rrWorld.js';   // OWN-WORK3: the Master Armorer's keep and shop, our own
-import { installImmersiveTravelGates } from '../world/immersiveTravelGates.js';   // IT1: the carriages at the gates
-import { immersiveTravelLoaded } from '../systems/immersiveTravel.js';   // AUDIT IT1 G3: the mod loaded for the game
-import { prefetchGroundTiles } from '../world/terrain/groundTilesKept.js';   // FIRST-VISIT
-import { prefetchPortSites } from '../world/portSitesKept.js';   // FIRST-VISIT
+import { configureLayoutPins } from '../systems/layoutPins.js'; // WD3: the layout a save's towns were made in
+import { installTownStandIns } from '../world/townStandIns.js'; // WD3: the port's own pieces, a room's decor among them
+import { installTownDress } from './townDressHost.js'; // TOWN-DRESS (OWN-WORK3): our market stall
+import { installArena } from '../world/arena/arenaCity.js'; // ARENA1: the Arena of Daggerfall - the port's own block, the city's edit and the colosseum
+import { installCapitals } from '../world/capitalModels.js'; // TESA10: the capitals' blocks, landmarks and pictures
+import { installCuratedBlocks } from '../world/dungeon/curatedInstall.js'; // DELVE II (DLV5): the curated blocks
+import { installTownOutline } from '../world/townOutline.js'; // TOWN-SHAPES TS3: the open cell a town past the Bay leaves
+import { installUrbanArt } from '../world/urban/urbanArt.js'; // URBANIZER: the towns' own pictures - their streets' stone, their walls, the capitals' brick, half-timber and ashlar
+import { installShipRefit } from '../world/shipRefit.js'; // the ships a player owns, furnished
+import { installRoleplayRealismWorld } from '../systems/roleplayRealism/rrWorld.js'; // OWN-WORK3: the Master Armorer's keep and shop, our own
+import { installImmersiveTravelGates } from '../world/immersiveTravelGates.js'; // IT1: the carriages at the gates
+import { immersiveTravelLoaded } from '../systems/immersiveTravel.js'; // AUDIT IT1 G3: the mod loaded for the game
+import { prefetchGroundTiles } from '../world/terrain/groundTilesKept.js'; // FIRST-VISIT
+import { prefetchPortSites } from '../world/portSitesKept.js'; // FIRST-VISIT
 
 // The glob sits INSIDE the loader (Vite rewrites it wherever it stands),
 // so a node test that imports a host reaching this module does not trip
@@ -44,30 +50,38 @@ export async function loadModWorldData() {
   if (_loaded) return _loaded;
   _loaded = (async () => {
     installWorldDataReplacement();
-    await installArena();   // ARENA1: behind no switch and no door - the arena stands in every layout (world/arena/arenaCity.js)
-    installCapitals();   // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)
-    installTownOutline();   // TOWN-SHAPES TS3: the same - the open cell of a town past the Bay (world/townOutline.js)
-    installUrbanArt();   // URBANIZER: the same - the towns' own pictures (world/urban/urbanArt.js)
-    installShipRefit(boundWorldDataBlocks());   // the ships' building files, built from your own BLOCKS.BSA (world/shipRefit.js)
-    installCuratedBlocks();   // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)
-    latchWorldDataDoor();   // WD3 (AUDIT WD3 P2/P3): Replace Game Artwork (online, the room) read once for the game
-    installTownDress();   // TOWN-DRESS (OWN-WORK3): behind no switch and no door - our market stall (scenes/townDressHost.js)
-    installTownStandIns();   // OWN-WORK3: the port's own pieces a room's decor may stand, at every boot (world/townStandIns.js)
+    await installArena(); // ARENA1: behind no switch and no door - the arena stands in every layout (world/arena/arenaCity.js)
+    installCapitals(); // TESA10: the same - the capitals' blocks and landmarks (world/capitalModels.js)
+    installTownOutline(); // TOWN-SHAPES TS3: the same - the open cell of a town past the Bay (world/townOutline.js)
+    installUrbanArt(); // URBANIZER: the same - the towns' own pictures (world/urban/urbanArt.js)
+    installShipRefit(boundWorldDataBlocks()); // the ships' building files, built from your own BLOCKS.BSA (world/shipRefit.js)
+    installCuratedBlocks(); // DELVE II (DLV5): the same - the curated blocks, each made of its base (world/dungeon/curatedInstall.js)
+    latchWorldDataDoor(); // WD3 (AUDIT WD3 P2/P3): Replace Game Artwork (online, the room) read once for the game
+    installTownDress(); // TOWN-DRESS (OWN-WORK3): behind no switch and no door - our market stall (scenes/townDressHost.js)
+    installTownStandIns(); // OWN-WORK3: the port's own pieces a room's decor may stand, at every boot (world/townStandIns.js)
     let n = 0;
-    await Promise.all(Object.entries(globFiles()).map(async ([path, load]) => {
-      const vendor = vendorOf(path);
-      const json = await load();
-      if (registerWorldDataAsset(baseName(path), json, () => modSetting(vendor, 'Enabled') === true)) n++;
-    }));
-    await Promise.all(Object.entries(globPatches()).map(async ([path, load]) => {
-      const vendor = vendorOf(path);
-      if (await registerWorldDataPatch(await load(), () => modSetting(vendor, 'Enabled') === true)) n++;
-    }));
-    n += installRoleplayRealismWorld(boundWorldDataBlocks());   // OWN-WORK3: the Master Armorer's keep and shop, our own (systems/roleplayRealism/rrWorld.js)
+    await Promise.all(
+      Object.entries(globFiles()).map(async ([path, load]) => {
+        const vendor = vendorOf(path);
+        const json = await load();
+        if (registerWorldDataAsset(baseName(path), json, () => modSetting(vendor, 'Enabled') === true)) n++;
+      }),
+    );
+    await Promise.all(
+      Object.entries(globPatches()).map(async ([path, load]) => {
+        const vendor = vendorOf(path);
+        if (await registerWorldDataPatch(await load(), () => modSetting(vendor, 'Enabled') === true)) n++;
+      }),
+    );
+    n += installRoleplayRealismWorld(boundWorldDataBlocks()); // OWN-WORK3: the Master Armorer's keep and shop, our own (systems/roleplayRealism/rrWorld.js)
     // IT1: the carriages at the gates, while Immersive Travel is loaded for the game (world/immersiveTravelGates.js).
     // AUDIT IT1 G3: asked of the mod LOADED FOR THE GAME (its Init's latch), never the switch as it stands. AUDIT IT1 G2:
     // guarded, in every host's load
-    try { installImmersiveTravelGates(immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate stand: ${e?.message ?? e}`); }
+    try {
+      installImmersiveTravelGates(immersiveTravelLoaded);
+    } catch (e) {
+      console.error(`[worlddata] immersive travel's gate stand: ${e?.message ?? e}`);
+    }
     // OWN-WORK3: no layout mod is loaded - Beautiful Villages and Beautiful Cities are retired, and every town stands as
     // Daggerfall lays it, dressed by our own law (world/townDress.js). A save's record stamped with their layout keeps
     // its stamp and sleeps (systems/layoutPins.js)
@@ -86,7 +100,9 @@ export async function loadModWorldData() {
 
 /** WD3, OWN-WORK3: a layout a save's pin asks for is never loaded - the town packs are retired, so no layout mod's pack
  *  is in the build. The pin is dropped and its records sleep (systems/layoutPins.js admitPinnedPacks). */
-export async function ensureWorldDataPack(_vendor) { return false; }
+export async function ensureWorldDataPack(_vendor) {
+  return false;
+}
 /** WD3 (AUDIT WD3 B1): the packed mods switched on for this game whose packs did not load - none since OWN-WORK3. */
 export const worldDataPacksMissing = () => [];
 
@@ -102,10 +118,21 @@ export const worldDataPacksMissing = () => [];
  */
 export async function registerWorldDataPatch(patch, isOn) {
   const blocks = boundWorldDataBlocks();
-  if (!blocks) { console.warn(`[worlddata] ${patch?.rebuilds}: no BLOCKS.BSA bound - patch not rebuilt`); return false; }
+  if (!blocks) {
+    console.warn(`[worlddata] ${patch?.rebuilds}: no BLOCKS.BSA bound - patch not rebuilt`);
+    return false;
+  }
   let json;
-  try { json = rebuildWorldDataPatch(patch, blocks); } catch (e) { console.error(`[worlddata] ${patch?.rebuilds}: ${e?.message ?? e}`); return false; }
+  try {
+    json = rebuildWorldDataPatch(patch, blocks);
+  } catch (e) {
+    console.error(`[worlddata] ${patch?.rebuilds}: ${e?.message ?? e}`);
+    return false;
+  }
   const sha = await canonicalSha256(json);
-  if (sha !== patch.sha256) console.warn(`[worlddata] ${patch.rebuilds}: rebuilt from this BLOCKS.BSA, but not to the author's file (sha256 ${sha.slice(0, 12)}, the patch records ${String(patch.sha256).slice(0, 12)})`);
+  if (sha !== patch.sha256)
+    console.warn(
+      `[worlddata] ${patch.rebuilds}: rebuilt from this BLOCKS.BSA, but not to the author's file (sha256 ${sha.slice(0, 12)}, the patch records ${String(patch.sha256).slice(0, 12)})`,
+    );
   return registerWorldDataAsset(patch.rebuilds, json, isOn);
 }

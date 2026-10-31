@@ -30,7 +30,7 @@
 // verbatim: the 1:1 lane keeps DFU's night, as it keeps its hard-off moonlight. `?nightfog=off` is the door back (nightFogOn).
 // ═══════════════════════════════════════════════════════════════════
 import { exteriorAmbient } from '../../world/worldClock.js';
-import { pageParam } from '../pageQuery.js';   // PERF-URL: the door, read off the page's query once a search
+import { pageParam } from '../pageQuery.js'; // PERF-URL: the door, read off the page's query once a search
 
 /** `?nightfog=off` - the fog as its sky has it (DS1's black night, the dome's night sky, DFU's grey). Read at every ask, off
  *  the page's query once a search (systems/pageQuery.js - a replaceState is answered at once: a probe photographs one
@@ -64,7 +64,8 @@ const TINT_LUM = lum(NIGHT_AIR.tint);
  */
 export function airLight({ minute, nightScale = 1, sun = 1, moon = null }, out = new Float32Array(3)) {
   const a = exteriorAmbient(minute, nightScale, sun);
-  for (let c = 0; c < 3; c++) out[c] = a[c] + (moon ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c] : 0);
+  for (let c = 0; c < 3; c++)
+    out[c] = a[c] + (moon ? moon.ambient[c] + NIGHT_AIR.moon * moon.scale * moon.color[c] : 0);
   return out;
 }
 
@@ -81,7 +82,8 @@ export function airColor(light, out = new Float32Array(3)) {
  * @param {ArrayLike<number>} fog @param {ArrayLike<number>} air @param {Float32Array} [out]
  */
 export function litFog(fog, air, out = new Float32Array(3)) {
-  const la = lum(air), lack = la - lum(fog);
+  const la = lum(air),
+    lack = la - lum(fog);
   if (!(lack > 0)) return fog;
   const k = lack / la;
   for (let c = 0; c < 3; c++) out[c] = Math.min(1, Math.max(0, fog[c] + air[c] * k));

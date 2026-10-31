@@ -10,26 +10,60 @@
 // the disk (_useLocaleFilesForTests) to run the boot's laws. Nothing here may stop the game: a language whose text
 // fails to load leaves English standing.
 
-import { registerLocale, patchLocaleTable, setLocale, loadStringTableCsv, localeChain, localeInfo, clearLocaleTables, registerLocalizedFont, currentLocale, setLocaleDocuments, localeDocument, BASE_LOCALE, PSEUDO_LOCALE } from '../systems/textManager.js';
-import { LOCALE_CATALOG, localeFileOf, resolveLocale, localeForBrowser, catalogLocale } from '../systems/localeCatalog.js';
+import {
+  registerLocale,
+  patchLocaleTable,
+  setLocale,
+  loadStringTableCsv,
+  localeChain,
+  localeInfo,
+  clearLocaleTables,
+  registerLocalizedFont,
+  currentLocale,
+  setLocaleDocuments,
+  localeDocument,
+  BASE_LOCALE,
+  PSEUDO_LOCALE,
+} from '../systems/textManager.js';
+import {
+  LOCALE_CATALOG,
+  localeFileOf,
+  resolveLocale,
+  localeForBrowser,
+  catalogLocale,
+} from '../systems/localeCatalog.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { installLocaleFaces } from '../ui/localeFaces.js';   // L10N2: the classic fonts' faces for the language
-import { createGlyphFace } from '../ui/glyphFace.js';   // L10N3b: a pack's own font, grown as DFU's is
+import { installLocaleFaces } from '../ui/localeFaces.js'; // L10N2: the classic fonts' faces for the language
+import { createGlyphFace } from '../ui/glyphFace.js'; // L10N3b: a pack's own font, grown as DFU's is
 import { PACK_KIND, classifyPackFile } from '../systems/translationPacks.js';
-import * as packStore from './translationStore.js';   // L10N3b: the packs the player installed
-import '../systems/grammar/frenchGrammar.js';   // L10N3g: the French pack's grammar processor (MIT), chosen for French
+import * as packStore from './translationStore.js'; // L10N3b: the packs the player installed
+import '../systems/grammar/frenchGrammar.js'; // L10N3g: the French pack's grammar processor (MIT), chosen for French
 
 const IN_BROWSER = typeof window !== 'undefined';
 const FILES = IN_BROWSER ? import.meta.glob('../../locales/*/*.csv', { query: '?raw', import: 'default' }) : {};
 // L10N6: the packs the tree BUNDLES (locales/<tag>/pack/ - tools/l10nPack.mjs holds what one must carry), only where an
 // author's terms allow it. Their text is a lazy chunk like the drafts; a font is fetched by its URL; PACK.json (who made
 // it, on what terms) is read at once, for the Language row and the About pane's credits.
-const BUNDLED_TEXT = IN_BROWSER ? import.meta.glob(['../../locales/*/pack/**/*.csv', '../../locales/*/pack/**/*.txt'], { query: '?raw', import: 'default' }) : {};
-const BUNDLED_FONTS = IN_BROWSER ? import.meta.glob(['../../locales/*/pack/**/*.ttf', '../../locales/*/pack/**/*.otf'], { query: '?url', import: 'default' }) : {};
-const BUNDLED_META = IN_BROWSER ? import.meta.glob('../../locales/*/pack/PACK.json', { eager: true, import: 'default' }) : {};
+const BUNDLED_TEXT = IN_BROWSER
+  ? import.meta.glob(['../../locales/*/pack/**/*.csv', '../../locales/*/pack/**/*.txt'], {
+      query: '?raw',
+      import: 'default',
+    })
+  : {};
+const BUNDLED_FONTS = IN_BROWSER
+  ? import.meta.glob(['../../locales/*/pack/**/*.ttf', '../../locales/*/pack/**/*.otf'], {
+      query: '?url',
+      import: 'default',
+    })
+  : {};
+const BUNDLED_META = IN_BROWSER
+  ? import.meta.glob('../../locales/*/pack/PACK.json', { eager: true, import: 'default' })
+  : {};
 // L10N6: the people who translated or checked a language (`locales/<tag>/translators.json`, a list of names) - the About
 // pane credits them beside the machine's drafts.
-const TRANSLATORS = IN_BROWSER ? import.meta.glob('../../locales/*/translators.json', { eager: true, import: 'default' }) : {};
+const TRANSLATORS = IN_BROWSER
+  ? import.meta.glob('../../locales/*/translators.json', { eager: true, import: 'default' })
+  : {};
 
 /** A glob's locale files by tag - `locales/<tag>/<table>.csv` -> [{ table, load }] - English left out: it is the
  *  code's. */
@@ -55,12 +89,15 @@ export function indexBundledPacks({ text = {}, fonts = {}, meta = {} } = {}) {
     const hit = at(path);
     if (hit && hit[1] !== BASE_LOCALE && m && typeof m === 'object') out.set(hit[1], { meta: m, files: [] });
   }
-  for (const [glob, font] of [[text, false], [fonts, true]]) {
+  for (const [glob, font] of [
+    [text, false],
+    [fonts, true],
+  ]) {
     for (const [path, load] of Object.entries(glob)) {
       const hit = at(path);
       const pack = hit && out.get(hit[1]);
       const f = pack && classifyPackFile(hit[2]);
-      if (f && (font === (f.kind === PACK_KIND.FONT))) pack.files.push({ ...f, load, font });
+      if (f && font === (f.kind === PACK_KIND.FONT)) pack.files.push({ ...f, load, font });
     }
   }
   return out;
@@ -74,7 +111,9 @@ export function indexTranslators(glob = {}) {
   const out = new Map();
   for (const [path, names] of Object.entries(glob)) {
     const hit = /locales\/([^/]+)\/translators\.json$/.exec(String(path).replace(/\\/g, '/'));
-    const list = Array.isArray(names) ? names.filter((n) => typeof n === 'string' && n.trim()).map((n) => n.trim()) : [];
+    const list = Array.isArray(names)
+      ? names.filter((n) => typeof n === 'string' && n.trim()).map((n) => n.trim())
+      : [];
     if (hit && hit[1] !== BASE_LOCALE && list.length) out.set(hit[1], Object.freeze(list));
   }
   return out;
@@ -85,13 +124,21 @@ let _translators = indexTranslators(TRANSLATORS);
 let _packs = new Map();
 /** Whether the game holds text for `code`: the build's (English and the pseudo-locale always), or an installed pack. A
  *  language still `drafting` (systems/localeCatalog.js) is not held by its part-drafts alone - only a pack offers it. */
-export const hasLocaleText = (code) => code === BASE_LOCALE || code === PSEUDO_LOCALE || (byCode.has(code) && !catalogLocale(code)?.drafting)
-  || ((_packs.has(code) || _bundled.has(code)) && !!catalogLocale(code));
+export const hasLocaleText = (code) =>
+  code === BASE_LOCALE ||
+  code === PSEUDO_LOCALE ||
+  (byCode.has(code) && !catalogLocale(code)?.drafting) ||
+  ((_packs.has(code) || _bundled.has(code)) && !!catalogLocale(code));
 
 /** What the text core is told of a language: the catalog's record, its installed pack's (`pack` - the language row
  *  shows it), its bundled pack's PACK.json (`bundled`, L10N6) and its translators (`translators`, L10N6) - the last
  *  two the About pane's credits (ui/credits.js translationCredits). */
-const localeRecord = (info) => ({ ...info, pack: _packs.get(info.code) ?? null, bundled: bundledPackFor(info.code), translators: _translators.get(info.code) ?? [] });
+const localeRecord = (info) => ({
+  ...info,
+  pack: _packs.get(info.code) ?? null,
+  bundled: bundledPackFor(info.code),
+  translators: _translators.get(info.code) ?? [],
+});
 
 let _registered = false;
 /** The catalog's languages whose text the game holds, told to the text core once. */
@@ -151,16 +198,23 @@ async function bundledFiles(tag) {
   const pack = _bundled.get(tag);
   if (!pack) return [];
   const files = pack.files.filter((f) => !f.font || typeof globalThis.FontFace === 'function');
-  return (await Promise.all(files.map(async (f) => {
-    const got = await f.load();
-    if (!f.font) return { kind: f.kind, name: f.name, data: got };
-    try {
-      return { kind: f.kind, name: f.name, data: await (await fetch(got)).arrayBuffer() };
-    } catch (err) {
-      console.warn(`[text] the bundled pack's ${f.name} did not fetch - the language's own face stands:`, err?.message ?? err);
-      return null;
-    }
-  }))).filter(Boolean);
+  return (
+    await Promise.all(
+      files.map(async (f) => {
+        const got = await f.load();
+        if (!f.font) return { kind: f.kind, name: f.name, data: got };
+        try {
+          return { kind: f.kind, name: f.name, data: await (await fetch(got)).arrayBuffer() };
+        } catch (err) {
+          console.warn(
+            `[text] the bundled pack's ${f.name} did not fetch - the language's own face stands:`,
+            err?.message ?? err,
+          );
+          return null;
+        }
+      }),
+    )
+  ).filter(Boolean);
 }
 /** Put `tag`'s packs to use over the build's drafts: the bundled pack (L10N6), then the one the player installed
  *  (L10N3b) over both - the player's own choice is the last word. */
@@ -172,7 +226,7 @@ async function applyPack(tag) {
   setLocaleDocuments(tag, text);
 }
 
-const _loaded = new Map();   // tag -> the promise of its tables patched in
+const _loaded = new Map(); // tag -> the promise of its tables patched in
 /** Fetch and patch every table of `code`'s chain not yet loaded. A load that fails is forgotten, so the next ask
  *  fetches again. */
 export function loadLocaleText(code) {
@@ -180,10 +234,20 @@ export function loadLocaleText(code) {
   for (const tag of localeChain(code)) {
     if (!byCode.has(tag) && !_packs.has(tag) && !_bundled.has(tag)) continue;
     if (!_loaded.has(tag)) {
-      _loaded.set(tag, Promise.all((byCode.get(tag) ?? []).map(async ({ table, load }) => {
-        const rows = loadStringTableCsv(await load());
-        if (rows) patchLocaleTable(tag, table, rows);
-      })).then(() => applyPack(tag)).catch((err) => { _loaded.delete(tag); throw err; }));   // L10N3b: the pack over the drafts
+      _loaded.set(
+        tag,
+        Promise.all(
+          (byCode.get(tag) ?? []).map(async ({ table, load }) => {
+            const rows = loadStringTableCsv(await load());
+            if (rows) patchLocaleTable(tag, table, rows);
+          }),
+        )
+          .then(() => applyPack(tag))
+          .catch((err) => {
+            _loaded.delete(tag);
+            throw err;
+          }),
+      ); // L10N3b: the pack over the drafts
     }
     jobs.push(_loaded.get(tag));
   }
@@ -201,7 +265,8 @@ export async function reloadLocaleText(code) {
 /** L10N3b: install `entries` (a folder's files or a zip's, translationStore.entriesFromFiles) as `code`'s pack, and put
  *  it to use at once. Answers the pack's record; throws, changing nothing, when they hold no translation. */
 export async function installTranslationPack(code, entries, opts = {}) {
-  if (!catalogLocale(code) || code === BASE_LOCALE || catalogLocale(code).hidden) throw new Error(`${code} is not a language a pack can be installed for`);
+  if (!catalogLocale(code) || code === BASE_LOCALE || catalogLocale(code).hidden)
+    throw new Error(`${code} is not a language a pack can be installed for`);
   const record = await packStore.installPack(code, entries, opts);
   await refreshPacks();
   await reloadLocaleText(code);
@@ -246,11 +311,14 @@ export function browserLanguages() {
  *  the offer can ask in it (ui/enhanced/enhancedMenu.js languageOffer). A failure leaves English standing and the game starts. */
 export async function initLocale(params = null, { languages = browserLanguages() } = {}) {
   try {
-    _packs = await packStore.installedPacks();   // L10N3b: before anything is registered, so a pack's language is offered
+    _packs = await packStore.installedPacks(); // L10N3b: before anything is registered, so a pack's language is offered
     const code = await switchLocale(params?.get?.('lang') ?? getPref('language'));
     if (code === BASE_LOCALE && !params?.has?.('lang') && !getPref('languageOffered')) {
       const offer = localeForBrowser(languages, hasLocaleText);
-      if (offer) await loadLocaleText(offer).catch((err) => console.warn('[text] the offered language could not load:', err?.message ?? err));
+      if (offer)
+        await loadLocaleText(offer).catch((err) =>
+          console.warn('[text] the offered language could not load:', err?.message ?? err),
+        );
     }
     return code;
   } catch (err) {
@@ -265,7 +333,7 @@ export async function initLocale(params = null, { languages = browserLanguages()
  *  or loaded yet. */
 export function _useLocaleFilesForTests(glob, bundled = {}) {
   byCode = indexLocaleFiles(glob);
-  _bundled = indexBundledPacks(bundled);   // L10N6: { text, fonts, meta, translators }, as the build's globs give them
+  _bundled = indexBundledPacks(bundled); // L10N6: { text, fonts, meta, translators }, as the build's globs give them
   _translators = indexTranslators(bundled.translators);
   _registered = false;
   _loaded.clear();

@@ -2,8 +2,8 @@
   {
     "name": "SIDE-ONCE-user-takes-damage-given-back-dfus-flag",
     "file": "src/systems/enchantmentCatalogue.js",
-    "old": "  UserTakesDamage: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once\n",
-    "new": "  UserTakesDamage: 1 | 2,\n",
+    "old": "  UserTakesDamage: 1, // SIDE-ONCE: DFU's 1 | 2 - a setting once",
+    "new": "  UserTakesDamage: 1 | 2,",
     "tests": [
       "test/systems/fb1019f_sideonce.test.js",
       "test/systems/enchantmentcatalogue.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SIDE-ONCE-item-deteriorates-given-back-dfus-flag",
     "file": "src/systems/enchantmentCatalogue.js",
-    "old": "  ItemDeteriorates: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once\n",
-    "new": "  ItemDeteriorates: 1 | 2,\n",
+    "old": "  ItemDeteriorates: 1, // SIDE-ONCE: DFU's 1 | 2 - a setting once",
+    "new": "  ItemDeteriorates: 1 | 2,",
     "tests": [
       "test/systems/fb1019f_sideonce.test.js",
       "test/systems/enchantmentcatalogue.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "SIDE-ONCE-the-empty-chooser-listed-again",
     "file": "src/systems/enchantmentCatalogue.js",
-    "old": "    return !(pick?.kind === 'choose' && pick.options.length === 0);\n",
-    "new": "    return true;\n",
+    "old": "    return !(pick?.kind === 'choose' && pick.options.length === 0);",
+    "new": "    return true;",
     "tests": [
       "test/systems/fb1019f_sideonce.test.js",
       "test/systems/enchantmentcatalogue.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "SIDE-ONCE-the-last-setting-read-as-none",
     "file": "src/systems/enchantmentCatalogue.js",
-    "old": "    return !(pick?.kind === 'choose' && pick.options.length === 0);\n",
-    "new": "    return !(pick?.kind === 'choose' && pick.options.length === 1);\n",
+    "old": "    return !(pick?.kind === 'choose' && pick.options.length === 0);",
+    "new": "    return !(pick?.kind === 'choose' && pick.options.length === 1);",
     "tests": [
       "test/systems/fb1019f_sideonce.test.js",
       "test/systems/enchantmentcatalogue.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "C6-stake-fields-anywhere",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.o !== 'stake' && !noStake) return false;\n",
-    "new": "",
+    "old": "  if (c.o !== 'stake' && !noStake) return false;\n  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege))",
+    "new": "  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege))",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -19,8 +19,8 @@
   {
     "name": "C6-stake-unchecked",
     "file": "src/net/identityToken.js",
-    "old": "if (c.o === 'stake' && (!stakeOrderValid(c) ||",
-    "new": "if (c.o === 'stake' && (false ||",
+    "old": "  if (c.o === 'stake' && (!stakeOrderValid(c) || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege))\n    return false;",
+    "new": "  if (c.o === 'stake' && (false || c.mu !== undefined || c.lv !== undefined || !noGuild || !noSiege)) return false;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -36,8 +36,8 @@
   {
     "name": "C6-stake-any-room",
     "file": "src/net/identityToken.js",
-    "old": "|| typeof c.cr !== 'string' || !STAKE_ROOM_RE.test(c.cr)) return false;",
-    "new": ") return false;",
+    "old": "  if (typeof c.cj !== 'string' || !STAKE_ID_RE.test(c.cj) || typeof c.cr !== 'string' || !STAKE_ROOM_RE.test(c.cr))\n    return false;",
+    "new": "  if (typeof c.cj !== 'string' || !STAKE_ID_RE.test(c.cj)) return false;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -53,8 +53,8 @@
   {
     "name": "C6-void-any-kind",
     "file": "src/net/identityToken.js",
-    "old": "valid: (c) => orderValid(c) && c.o === 'stake' });",
-    "new": "valid: (c) => orderValid(c) });",
+    "old": "  return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) && c.o === 'stake' });",
+    "new": "  return openSealed(token, publicKey, { subtle, nowS: i, skewS: 0, valid: (c) => orderValid(c) });",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -70,8 +70,8 @@
   {
     "name": "C6-broke-with-chips",
     "file": "src/net/card/cardReceipt.js",
-    "old": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false;   // out of chips is nothing back; a top-up's is its seat's\n",
-    "new": "",
+    "old": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's\n  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
+    "new": "  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -91,8 +91,8 @@
   {
     "name": "C6-why-any",
     "file": "src/net/card/cardReceipt.js",
-    "old": "  if (!CARD_RECEIPT_WHY.includes(c.w)) return false;\n",
-    "new": "",
+    "old": "  if (!CARD_RECEIPT_WHY.includes(c.w)) return false;\n  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's",
+    "new": "  if ((c.w === 'broke' || c.w === 'joined') && c.r !== 0) return false; // out of chips is nothing back; a top-up's is its seat's",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -108,8 +108,8 @@
   {
     "name": "C6-receipt-forever",
     "file": "src/net/card/cardReceipt.js",
-    "old": "  if (!anyAge && nowS >= claims.e) return { ok: false, why: 'expired' };\n",
-    "new": "",
+    "old": "  if (!anyAge && nowS >= claims.e) return { ok: false, why: 'expired' };\n  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
+    "new": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -129,7 +129,7 @@
   {
     "name": "C6-gold-or-not",
     "file": "src/net/holdemTable.js",
-    "old": "  if (!!t.gold !== !!stake) return t.gold ? 'gold table' : 'friendly table';   // CARDS6: every seat staked, or none",
+    "old": "  if (!!t.gold !== !!stake) return t.gold ? 'gold table' : 'friendly table'; // CARDS6: every seat staked, or none",
     "new": "  void stake;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
@@ -146,7 +146,7 @@
   {
     "name": "C6-stake-any-size",
     "file": "src/net/holdemTable.js",
-    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb)) return 'bad stake';",
+    "old": "  if (stake && !(stake.amount >= HOLDEM_STAKE_MIN_BB * t.bb && stake.amount <= HOLDEM_STAKE_MAX_BB * t.bb))\n    return 'bad stake';",
     "new": "  void HOLDEM_STAKE_MIN_BB;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
@@ -163,7 +163,7 @@
   {
     "name": "C6-no-cashout",
     "file": "src/net/holdemTable.js",
-    "old": "  (t.cashouts ??= []).push({ to: seat.id, j: seat.stake, s: seat.sub, r: seat.stack, w: seat.stack > 0 ? 'stood' : 'broke' });",
+    "old": "  (t.cashouts ??= []).push({\n    to: seat.id,\n    j: seat.stake,\n    s: seat.sub,\n    r: seat.stack,\n    w: seat.stack > 0 ? 'stood' : 'broke',\n  });",
     "new": "  void seat;",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
@@ -197,8 +197,8 @@
   {
     "name": "C6-cashed-rejoins",
     "file": "src/net/holdemTable.js",
-    "old": "return t.seats[mine].cashed ? 'cashed out' : null;",
-    "new": "return null;",
+    "old": "  if (mine >= 0 && t.seats[mine].leaving) return t.seats[mine].cashed ? 'cashed out' : null; // CARDS6: his stack went home in a receipt - the chair is not his to play again",
+    "new": "  if (mine >= 0 && t.seats[mine].leaving) return null; // CARDS6: his stack went home in a receipt - the chair is not his to play again",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -214,8 +214,8 @@
   {
     "name": "C6-folded-paid-whole",
     "file": "src/net/holdemTable.js",
-    "old": "r: t.hand.seats[k].stack, w: t.hand.seats[k].stack > 0",
-    "new": "r: seat.stack, w: t.hand.seats[k].stack > 0",
+    "old": "    r: t.hand.seats[k].stack,",
+    "new": "    r: seat.stack,",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -537,8 +537,8 @@
   {
     "name": "C6-book-no-hold",
     "file": "src/net/card/cardStakes.js",
-    "old": "...(first ? { reserve: () => wallet(x.reg).pay(x.amount) } : { apply:",
-    "new": "...(first ? {} : { apply:",
+    "old": "        ? { reserve: () => wallet(x.reg).pay(x.amount) }",
+    "new": "        ? {}",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -558,8 +558,8 @@
   {
     "name": "C6-book-repeat-pays",
     "file": "src/net/card/cardStakes.js",
-    "old": "if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0)",
-    "new": "if (Number.isSafeInteger(g) && g > 0)",
+    "old": "                  if (!a?.data?.repeat && Number.isSafeInteger(g) && g > 0) {",
+    "new": "                  if (Number.isSafeInteger(g) && g > 0) {",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -575,8 +575,8 @@
   {
     "name": "C6-book-not-kept-first",
     "file": "src/net/card/cardStakes.js",
-    "old": "      write(CARD_STAKES_KEY, [...read(CARD_STAKES_KEY), { rid, room, table, bb, amount, c, reg, at: now(), ...(topup ? { topup: true } : {}), ...(place ? { place: String(place).slice(0, 80) } : {}) }]);\n",
-    "new": "",
+    "old": "      write(CARD_STAKES_KEY, [\n        ...read(CARD_STAKES_KEY),\n        {\n          rid,\n          room,\n          table,\n          bb,\n          amount,\n          c,\n          reg,\n          at: now(),\n          ...(topup ? { topup: true } : {}),\n          ...(place ? { place: String(place).slice(0, 80) } : {}),\n        },\n      ]);\n      if (!read(CARD_STAKES_KEY).some((x) => x.rid === rid)) return { ok: false, error: 'cards-kept-full' };",
+    "new": "      if (!read(CARD_STAKES_KEY).some((x) => x.rid === rid)) return { ok: false, error: 'cards-kept-full' };",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -596,8 +596,8 @@
   {
     "name": "C6-book-any-character",
     "file": "src/net/card/cardStakes.js",
-    "old": "(x.c == null || x.c === character()) && !tried.has(x.j)",
-    "new": "!tried.has(x.j)",
+    "old": "          for (\n            let next;\n            realm &&\n            wallet &&\n            (next = read(CARD_RECEIPTS_KEY).filter((x) => (x.c == null || x.c === character()) && !tried.has(x.j)))\n              .length;\n          ) {",
+    "new": "          for (let next; realm && wallet && (next = read(CARD_RECEIPTS_KEY).filter((x) => !tried.has(x.j))).length;) {",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",
@@ -617,8 +617,8 @@
   {
     "name": "C6-book-void-at-once",
     "file": "src/net/card/cardStakes.js",
-    "old": "t - x.at >= CARD_VOID_AFTER_MS",
-    "new": "true",
+    "old": "        .filter(\n          (x) => x.room === room && x.order && !x.sat && t - x.at >= CARD_VOID_AFTER_MS && !(x.voided > t - 60_000),\n        )",
+    "new": "        .filter((x) => x.room === room && x.order && !x.sat && true && !(x.voided > t - 60_000))",
     "tests": [
       "test/world/card/auditcards3_pins.test.js",
       "test/net/auditcards3_relay.test.js",

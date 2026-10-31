@@ -26,7 +26,7 @@
 // FoodAndDrink_OnItemPicked never stages either.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { noticeHold, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: this window's own click-anywhere box, as the enhanced panel
+import { noticeHold, noticeRelease } from './enhancedNotice.js'; // ENH-NOTICE3: this window's own click-anywhere box, as the enhanced panel
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from '../input.js';
 import { audio } from '../../systems/audio.js';
@@ -34,20 +34,41 @@ import { SOUND } from '../../systems/soundClips.js';
 import { macroRows } from '../guildServiceWindows.js';
 import { totalGoldAmount, deductGold } from '../../systems/court.js';
 import { dayOfYearFromMinutes } from '../../systems/gameDate.js';
-import { OWN_TIME_ROOM, OWN_TIME_ROOM_NOTE } from '../tavernWindow.js';   // LIVED1: the offer's own-time row, one home for its words
+import { OWN_TIME_ROOM, OWN_TIME_ROOM_NOTE } from '../tavernWindow.js'; // LIVED1: the offer's own-time row, one home for its words
 import {
-  TOO_MANY_DAYS_ID, OFFER_PRICE_ID, NOT_ENOUGH_GOLD_ID,
-  HOW_MANY_DAYS_ID, HOW_MANY_ADDITIONAL_DAYS_ID,
-  roomFreeForKnightText, roomFreeHeartsDayText, youAreNotHungryText,   // L10N3d: the lines in the player's language
-  tavernMenuLines, tavernMenuPrice, removeExpiredRooms, findRentedRoom, roomRemainingHours,
-  rentalDecision, rentRoom, canEat, eatOrDrink,
+  TOO_MANY_DAYS_ID,
+  OFFER_PRICE_ID,
+  NOT_ENOUGH_GOLD_ID,
+  HOW_MANY_DAYS_ID,
+  HOW_MANY_ADDITIONAL_DAYS_ID,
+  roomFreeForKnightText,
+  roomFreeHeartsDayText,
+  youAreNotHungryText, // L10N3d: the lines in the player's language
+  tavernMenuLines,
+  tavernMenuPrice,
+  removeExpiredRooms,
+  findRentedRoom,
+  roomRemainingHours,
+  rentalDecision,
+  rentRoom,
+  canEat,
+  eatOrDrink,
 } from '../../systems/tavern.js';
-import { survivalOn, survivalRules } from '../../systems/survival/switch.js';   // SURV-TIERS: the tier prices the drink
-import { tavernMenu, tavernEat, tavernDrink, tavernOrder, tavernWater, tavernRefresh, blackout, blackoutWaking } from '../../systems/survival/tavernMenu.js';   // INN-WATER: tavernWater, the fountain's law at the bar; AUDIT C&C I6: tavernRefresh; I4: blackoutWaking
+import { survivalOn, survivalRules } from '../../systems/survival/switch.js'; // SURV-TIERS: the tier prices the drink
+import {
+  tavernMenu,
+  tavernEat,
+  tavernDrink,
+  tavernOrder,
+  tavernWater,
+  tavernRefresh,
+  blackout,
+  blackoutWaking,
+} from '../../systems/survival/tavernMenu.js'; // INN-WATER: tavernWater, the fountain's law at the bar; AUDIT C&C I6: tavernRefresh; I4: blackoutWaking
 import { survivalOf } from '../../systems/survival/needs.js';
 import { stiffen, REST_KIND } from '../../systems/survival/rest.js';
-import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
-import { cardPackPrice, buyCardPack } from '../../systems/card/cardSources.js';   // CARDS9: the keeper's packs
+import { listenWindowKeys } from '../windowStack.js'; // COVERED-KEYS: the window's keys, gated while a box covers it
+import { cardPackPrice, buyCardPack } from '../../systems/card/cardSources.js'; // CARDS9: the keeper's packs
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -59,10 +80,10 @@ const el = (tag, cls, text) => {
 let host = null;
 let deps = {};
 let onExit = () => {};
-let screen = 'main';      // 'main' | 'room'
-let roomDraft = '1';       // the days field, as typed
-let box = null;            // { rows, buttons: 'YesNo'|null, onYes }
-let menu = null;           // the food/drink rows, while that picker is up
+let screen = 'main'; // 'main' | 'room'
+let roomDraft = '1'; // the days field, as typed
+let box = null; // { rows, buttons: 'YesNo'|null, onYes }
+let menu = null; // the food/drink rows, while that picker is up
 let unregisterOutside = () => {};
 let unlistenKeys = null;
 /** ENH-NOTICE3: the notice panel's OWNER for this window. A module-level
@@ -83,13 +104,12 @@ const line = (text) => [{ text, center: true }];
  *  than resolved. Rather than wire a fifth hook for one line, this
  *  strips the clause instead, on request: the tavern master says
  *  "Good day." and stops, same as its own greeting screen does. */
-const rows = (id, ctx = {}) => macroRows(deps.rows ?? (() => []), id, {
-  gold: totalGoldAmount(deps.entity ?? {}),
-  playerName: deps.entity?.name ?? '',
-  ...ctx,
-}).map((r) => (typeof r.text === 'string'
-  ? { ...r, text: r.text.replace(/,?\s*%ra\b/, '') }
-  : r));
+const rows = (id, ctx = {}) =>
+  macroRows(deps.rows ?? (() => []), id, {
+    gold: totalGoldAmount(deps.entity ?? {}),
+    playerName: deps.entity?.name ?? '',
+    ...ctx,
+  }).map((r) => (typeof r.text === 'string' ? { ...r, text: r.text.replace(/,?\s*%ra\b/, '') } : r));
 
 /** CARDS9: a pack's price at this counter - the tavern's quality, the buyer's haggle (systems/card/cardSources.js). */
 const packPrice = () => cardPackPrice(deps.quality?.() ?? 10, deps.skills?.() ?? {});
@@ -97,7 +117,10 @@ const packPrice = () => cardPackPrice(deps.quality?.() ?? 10, deps.skills?.() ??
 function buyPack() {
   audio.playOneShot(SOUND.ButtonClick, 1);
   const r = buyCardPack(deps.entity, { quality: deps.quality?.() ?? 10, skills: deps.skills?.() ?? {} });
-  if (!r.ok) { say(rows(NOT_ENOUGH_GOLD_ID, { amount: r.price })); return; }
+  if (!r.ok) {
+    say(rows(NOT_ENOUGH_GOLD_ID, { amount: r.price }));
+    return;
+  }
   say(line(`You buy a pack of Iliac Hand cards for ${r.price} gold. Use it from your pack to open it.`));
 }
 
@@ -151,11 +174,18 @@ function openRoom() {
 function submitRoom() {
   const { room, now } = currentRoom();
   const d = rentalDecision(roomDraft, {
-    room, nowMinutes: now, date: { dayOfYear: dayOfYearFromMinutes(deps.worldNow?.() ?? now) },   // LIVED1: Heart's Day is the world's calendar, the room the character's own time
-    quality: deps.quality?.() ?? 0, free: !!deps.freeRooms?.(), skills: deps.skills?.(),
+    room,
+    nowMinutes: now,
+    date: { dayOfYear: dayOfYearFromMinutes(deps.worldNow?.() ?? now) }, // LIVED1: Heart's Day is the world's calendar, the room the character's own time
+    quality: deps.quality?.() ?? 0,
+    free: !!deps.freeRooms?.(),
+    skills: deps.skills?.(),
   });
-  if (d.kind === 'ignore') return;   // int.TryParse: nothing at all
-  if (d.kind === 'tooMany') { say(rows(TOO_MANY_DAYS_ID, { room, roomHours: room ? roomRemainingHours(room, now) : null })); return; }
+  if (d.kind === 'ignore') return; // int.TryParse: nothing at all
+  if (d.kind === 'tooMany') {
+    say(rows(TOO_MANY_DAYS_ID, { room, roomHours: room ? roomRemainingHours(room, now) : null }));
+    return;
+  }
   if (d.kind === 'free') {
     rent(room, d.days);
     say(line(roomFreeForKnightText()));
@@ -166,7 +196,10 @@ function submitRoom() {
     ...ownTimeRows(room, d.days, now),
   ];
   const raise = () => ask(offerRows, () => confirmRoom(room, d));
-  if (d.heartsDay) { say(line(roomFreeHeartsDayText()), { onDismiss: raise }); return; }
+  if (d.heartsDay) {
+    say(line(roomFreeHeartsDayText()), { onDismiss: raise });
+    return;
+  }
   raise();
 }
 
@@ -178,7 +211,10 @@ function ownTimeRows(room, days, now) {
 }
 
 function confirmRoom(room, d) {
-  if (totalGoldAmount(deps.entity) < d.price) { say(rows(NOT_ENOUGH_GOLD_ID, { amount: d.price })); return; }
+  if (totalGoldAmount(deps.entity) < d.price) {
+    say(rows(NOT_ENOUGH_GOLD_ID, { amount: d.price }));
+    return;
+  }
   deductGold(deps.entity, d.price);
   rent(room, d.days);
   screen = 'main';
@@ -189,9 +225,13 @@ function rent(room, days) {
   const h = deps;
   h.entity.rentedRooms = h.entity.rentedRooms ?? [];
   rentRoom(h.entity.rentedRooms, {
-    room, days, nowMinutes: h.now(),
-    mapId: h.mapId(), buildingKey: h.buildingKey(),
-    name: h.buildingName?.() ?? '', bedCount: h.bedCount?.() ?? 1,
+    room,
+    days,
+    nowMinutes: h.now(),
+    mapId: h.mapId(),
+    buildingKey: h.buildingKey(),
+    name: h.buildingName?.() ?? '',
+    bedCount: h.bedCount?.() ?? 1,
     rolls: h.rolls ?? Math.random,
     sceneCache: h.sceneCache?.() ?? null,
   });
@@ -201,11 +241,20 @@ function rent(room, days) {
 
 function openFood() {
   const h = deps;
-  if (survivalOn() && typeof h.climateIndex === 'function') { openSurvivalMenu(); return; }
+  if (survivalOn() && typeof h.climateIndex === 'function') {
+    openSurvivalMenu();
+    return;
+  }
   const now = h.now();
-  if (!canEat(h.entity.lastTimePlayerAteOrDrankAtTavern, now)) { say(line(youAreNotHungryText())); return; }
+  if (!canEat(h.entity.lastTimePlayerAteOrDrankAtTavern, now)) {
+    say(line(youAreNotHungryText()));
+    return;
+  }
   menu = {
-    rows: tavernMenuLines().map((text, i) => ({ name: text.replace(/\s*\([^)]*\)\s*$/, ''), price: tavernMenuPrice(i) })),   // ESSENTIALS-HALF: online, the half it costs; L10N3d: the language's lines
+    rows: tavernMenuLines().map((text, i) => ({
+      name: text.replace(/\s*\([^)]*\)\s*$/, ''),
+      price: tavernMenuPrice(i),
+    })), // ESSENTIALS-HALF: online, the half it costs; L10N3d: the language's lines
     pick: (i) => pickClassic(i, now),
   };
   render();
@@ -214,26 +263,38 @@ function openFood() {
 function pickClassic(i, now) {
   audio.playOneShot(SOUND.ButtonClick, 1);
   const h = deps;
-  const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now });   // LIVED1: the meal's holiday is the world's calendar
+  const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now }); // LIVED1: the meal's holiday is the world's calendar
   if (r.kind === 'ignore') return;
   menu = null;
-  if (r.kind === 'poor') { say(rows(NOT_ENOUGH_GOLD_ID)); return; }
+  if (r.kind === 'poor') {
+    say(rows(NOT_ENOUGH_GOLD_ID));
+    return;
+  }
   if (r.spend) deductGold(h.entity, r.spend);
   h.heal?.(r.heal);
   h.entity.lastTimePlayerAteOrDrankAtTavern = now;
-  render();   // DFU shows nothing at all on a meal - back to the panel, silently
+  render(); // DFU shows nothing at all on a meal - back to the panel, silently
 }
 
 function openSurvivalMenu() {
   const h = deps;
   const now = h.now();
   // AUDIT C&C I8: the region keys the menu first (regionMenuDay), and the world's calendar pours the holidays' drinks
-  const m = tavernMenu({ climateIndex: h.climateIndex(), regionIndex: h.regionIndex?.() ?? -1, quality: h.quality?.() ?? 5, minutes: h.worldNow?.() ?? now, hour: Math.trunc((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440 / 60) });   // LIVED1: the kitchen keeps the sky's hours
+  const m = tavernMenu({
+    climateIndex: h.climateIndex(),
+    regionIndex: h.regionIndex?.() ?? -1,
+    quality: h.quality?.() ?? 5,
+    minutes: h.worldNow?.() ?? now,
+    hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),
+  }); // LIVED1: the kitchen keeps the sky's hours
   menu = { rows: m.rows, pick: (i) => pickSurvival(m.rows[i], now) };
   // AUDIT SURV-TIERS (the second pass): before six the kitchen refuses in the mod's two words and the DRINKS STILL
   // POUR - the classic window's picker follows its refusal (AUDIT SURV C/D), and this one returned on the words and
   // served nothing. The list is the drinks alone then (tavernMenu stands no food row while the kitchen is shut).
-  if (m.closed) { say(line(m.closedText)); return; }
+  if (m.closed) {
+    say(line(m.closedText));
+    return;
+  }
   render();
 }
 
@@ -244,16 +305,27 @@ function pickSurvival(row, now) {
   const s = survivalOf(h.entity, now);
   const endurance = h.endurance?.() ?? 50;
   const rules = survivalRules();
-  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }
+  if (totalGoldAmount(h.entity) < row.price) {
+    say(rows(NOT_ENOUGH_GOLD_ID));
+    return;
+  }
   // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste
-  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after
-  if (!order.ok) { say(line(order.text)); return; }   // the menu stays up, as it does for the gold: a lighter drink still serves
+  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after
+  if (!order.ok) {
+    say(line(order.text));
+    return;
+  } // the menu stays up, as it does for the gold: a lighter drink still serves
   deductGold(h.entity, row.price);
   // INN-WATER: the water row is the fountain's law (a skin filled at the bar), paid as every row is paid
-  const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : row.kind === 'water' ? tavernWater(h.entity, now) : tavernDrink(s, row.strength, { endurance, rules });
+  const r =
+    row.kind === 'food'
+      ? tavernEat(s, now, row.worth)
+      : row.kind === 'water'
+        ? tavernWater(h.entity, now)
+        : tavernDrink(s, row.strength, { endurance, rules });
   h.advanceMinutes?.(r.minutes);
   h.entity.lastTimePlayerAteOrDrankAtTavern = now;
-  tavernRefresh(h.entity, r);   // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour
+  tavernRefresh(h.entity, r); // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour
   let b = null;
   if (r.blackout) {
     // AUDIT C&C I4: the night to the SKY's six from where it stands after the drink, and dawn said only under a dawn sky
@@ -263,7 +335,7 @@ function pickSurvival(row, now) {
     b.text = blackoutWaking(h.worldNow?.() ?? now + r.minutes + b.minutes);
   }
   menu = null;
-  say(b ? [...line(r.text), ...line(b.text)] : line(r.text));   // AUDIT SURV-TIERS (the third pass): and the waking, as the classic window says it
+  say(b ? [...line(r.text), ...line(b.text)] : line(r.text)); // AUDIT SURV-TIERS (the third pass): and the waking, as the classic window says it
 }
 
 // ── RENDER ────────────────────────────────────────────────────────
@@ -298,16 +370,21 @@ function mainButtons() {
 function greeting() {
   const name = deps.buildingName?.() || 'the tavern';
   const { room } = currentRoom();
-  return room
-    ? `Welcome back to ${name}. Your room is still yours.`
-    : `Welcome to ${name}. What can I get you?`;
+  return room ? `Welcome back to ${name}. Your room is still yours.` : `Welcome to ${name}. What can I get you?`;
 }
 
 function roomForm() {
   const wrap = el('div', 'tavern-room');
   const { room, now } = currentRoom();
-  wrap.append(el('p', 'px-note', (rows(room ? HOW_MANY_ADDITIONAL_DAYS_ID : HOW_MANY_DAYS_ID,
-    { roomHours: room ? roomRemainingHours(room, now) : null })[0]?.text) ?? 'How many days?'));
+  wrap.append(
+    el(
+      'p',
+      'px-note',
+      rows(room ? HOW_MANY_ADDITIONAL_DAYS_ID : HOW_MANY_DAYS_ID, {
+        roomHours: room ? roomRemainingHours(room, now) : null,
+      })[0]?.text ?? 'How many days?',
+    ),
+  );
   const form = el('form', 'goldfield');
   const input = el('input');
   input.type = 'text';
@@ -315,15 +392,23 @@ function roomForm() {
   input.maxLength = 3;
   input.value = roomDraft;
   input.setAttribute('aria-label', 'How many days');
-  input.oninput = () => { roomDraft = input.value; };
+  input.oninput = () => {
+    roomDraft = input.value;
+  };
   form.append(input);
   const go = el('button', 'act primary', 'Rent');
   go.type = 'submit';
-  form.onsubmit = (e) => { e.preventDefault(); submitRoom(); };
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    submitRoom();
+  };
   form.append(go);
   wrap.append(form);
   const back = el('button', 'act', 'Back');
-  back.onclick = () => { screen = 'main'; render(); };
+  back.onclick = () => {
+    screen = 'main';
+    render();
+  };
   wrap.append(back);
   return wrap;
 }
@@ -332,7 +417,10 @@ function foodMenu() {
   const wrap = el('div', 'packcol tavern-menu');
   const list = el('div', 'tavern-menu-list');
   menu.rows.forEach((r, i) => {
-    if (r.kind === 'header') { list.append(el('p', 'tavern-menu-header', String(r.text).replace(/^[\s-]+|[\s-]+$/g, ''))); return; }   // PLUS6: the sheet draws the rules itself
+    if (r.kind === 'header') {
+      list.append(el('p', 'tavern-menu-header', String(r.text).replace(/^[\s-]+|[\s-]+$/g, '')));
+      return;
+    } // PLUS6: the sheet draws the rules itself
     const row = el('button', 'itemrow tavern-row');
     row.append(el('span', 'itemname', r.name));
     row.append(el('span', 'itemwt tavern-price', `${r.price} gp`));
@@ -341,7 +429,10 @@ function foodMenu() {
   });
   wrap.append(list);
   const back = el('button', 'act', 'Back');
-  back.onclick = () => { menu = null; render(); };
+  back.onclick = () => {
+    menu = null;
+    render();
+  };
   wrap.append(back);
   return wrap;
 }
@@ -402,9 +493,17 @@ function boxScrim() {
   const acts = el('div', 'sb-acts');
   if (box.buttons === 'YesNo') {
     const yes = el('button', 'act primary', 'Yes');
-    yes.onclick = () => { const cb = box.onYes; box = null; cb?.(); render(); };
+    yes.onclick = () => {
+      const cb = box.onYes;
+      box = null;
+      cb?.();
+      render();
+    };
     const no = el('button', 'act', 'No');
-    no.onclick = () => { box = null; render(); };
+    no.onclick = () => {
+      box = null;
+      render();
+    };
     acts.append(yes, no);
   } else {
     const ok = el('button', 'act primary', 'OK');
@@ -438,20 +537,31 @@ function render() {
   if (box) {
     for (const b of win.querySelectorAll('button, input')) b.disabled = true;
     const scrim = boxScrim();
-    (scrim.className.includes('sb-screen') ? shell : win).append(scrim);   // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)
-  } else noticeRelease(noticeOwner);   // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:"if (drawMessageBox(renderer, m, font, this._box))")
+    (scrim.className.includes('sb-screen') ? shell : win).append(scrim); // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)
+  } else noticeRelease(noticeOwner); // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:"if (drawMessageBox(renderer, m, font, this._box))")
   shell.append(win);
   host.append(shell);
   unregisterOutside();
-  unregisterOutside = closeOnOutsideTap(shell, '.px-win', () => { if (!box) close(); });
+  unregisterOutside = closeOnOutsideTap(shell, '.px-win', () => {
+    if (!box) close();
+  });
 }
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   if (box) {
     if (box.buttons === 'YesNo') {
-      if (e.code === 'KeyY') { e.preventDefault(); const cb = box.onYes; box = null; cb?.(); render(); }
-      else if (e.code === 'KeyN' || overlayAction(e) === 'back') { e.preventDefault(); box = null; render(); }
+      if (e.code === 'KeyY') {
+        e.preventDefault();
+        const cb = box.onYes;
+        box = null;
+        cb?.();
+        render();
+      } else if (e.code === 'KeyN' || overlayAction(e) === 'back') {
+        e.preventDefault();
+        box = null;
+        render();
+      }
     } else if (overlayAction(e) === 'back' || e.key === 'Enter') {
       e.preventDefault();
       dismiss();
@@ -462,9 +572,13 @@ function onKey(e) {
   if (t && (t.tagName === 'INPUT' || t.isContentEditable)) return;
   if (overlayAction(e) === 'back') {
     e.preventDefault();
-    if (menu) { menu = null; render(); }
-    else if (screen === 'room') { screen = 'main'; render(); }
-    else close();
+    if (menu) {
+      menu = null;
+      render();
+    } else if (screen === 'room') {
+      screen = 'main';
+      render();
+    } else close();
   }
 }
 
@@ -481,8 +595,8 @@ export function mountEnhancedTavern(hostEl, hooks = {}) {
   box = null;
   menu = null;
   render();
-  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
-  unlistenKeys = listenWindowKeys(hooks.owner, onKey);   // COVERED-KEYS: hooks.owner, the panel's window (ui/tavernDoor.js)
+  unlistenKeys?.(); // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(hooks.owner, onKey); // COVERED-KEYS: hooks.owner, the panel's window (ui/tavernDoor.js)
   return {
     repaint: render,
     unmount() {

@@ -25,7 +25,7 @@
 // (player/tapRay.js projectToScreen) and hands the touch layer a
 // screen position. This module never sees a pixel.
 
-import { wrapAngle } from '../world/mat4.js';   // ONCRASH1: the port's one wrap
+import { wrapAngle } from '../world/mat4.js'; // ONCRASH1: the port's one wrap
 
 /** m: a tap locks what its ray reaches this far. */
 export const LOCK_PICK_DISTANCE = 24;
@@ -58,19 +58,24 @@ export function chestPoint(foe) {
  * (every host's useFwd), so the yaw TO a point is atan2(dx, dz) and the
  * pitch atan2(dy, horizontal) - the errors below are in those terms.
  */
-export function createLockOn({
-  breakDistance = LOCK_BREAK_DISTANCE,
-  gain = LOCK_FACE_GAIN,
-} = {}) {
+export function createLockOn({ breakDistance = LOCK_BREAK_DISTANCE, gain = LOCK_FACE_GAIN } = {}) {
   let target = null;
   return {
-    get target() { return target; },
-    get locked() { return target !== null; },
-    lock(foe) { target = foe ?? null; },
-    unlock() { target = null; },
+    get target() {
+      return target;
+    },
+    get locked() {
+      return target !== null;
+    },
+    lock(foe) {
+      target = foe ?? null;
+    },
+    unlock() {
+      target = null;
+    },
     /** A tap on the locked foe unlocks; on any other foe re-locks. */
     toggle(foe) {
-      target = (target === foe) ? null : (foe ?? null);
+      target = target === foe ? null : (foe ?? null);
       return target;
     },
     /**
@@ -79,12 +84,23 @@ export function createLockOn({
      */
     tick(dt, cam, eye, lookFilter) {
       if (!target) return null;
-      if (target.dead) { target = null; return null; }
+      if (target.dead) {
+        target = null;
+        return null;
+      }
       const chest = chestPoint(target);
-      if (!chest) { target = null; return null; }
-      const dx = chest[0] - eye[0], dy = chest[1] - eye[1], dz = chest[2] - eye[2];
+      if (!chest) {
+        target = null;
+        return null;
+      }
+      const dx = chest[0] - eye[0],
+        dy = chest[1] - eye[1],
+        dz = chest[2] - eye[2];
       const horiz = Math.hypot(dx, dz);
-      if (Math.hypot(horiz, dy) > breakDistance) { target = null; return null; }
+      if (Math.hypot(horiz, dy) > breakDistance) {
+        target = null;
+        return null;
+      }
       // AUDIT 68 S15-lockon-owed-residual: the error to the look TARGET -
       // the camera plus what the filter still owes it, which is what a
       // drag adds to. Against the camera alone the owed look was asked

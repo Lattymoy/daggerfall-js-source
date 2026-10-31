@@ -139,5 +139,5 @@ test('CHAP5a the wiring: the host\'s roll off the sheet in the politic region; t
   assert.match(m, /const roll = chapterRollOf\(guild\);   \/\/ CHAP5a: the shelf's first book\n\s+shelf\.books \?\?= populateBookshelf\(\);/);
   assert.match(m, /items: roll \? \[roll\.title, \.\.\.bookshelfTitles\(shelf\.books\)\] : bookshelfTitles\(shelf\.books\),/);
   assert.match(m, /if \(roll && i === 0\) \{ interiorOverlay = chapterRollWindow\(roll\); return; \}[^\n]*\n\s+_openBookById\(\{ message: shelf\.books\[roll \? i - 1 : i\] \}\);/);
-  assert.match(src('src/ui/chapterRoll.js'), /export const chapterRollWindow = \([^)]*roll\) => createBookReaderWindow\(chapterRollBook\(roll\)\);/);
+  assert.match(src('src/ui/chapterRoll.js'), /export const chapterRollWindow = \(\/\*\* @type \{\{ title: string, lines: string\[\] \}\} \*\/ roll\) =>\n\s*createBookReaderWindow\(chapterRollBook\(roll\)\);/);
 });

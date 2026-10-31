@@ -18,7 +18,7 @@
 //
 // Not a DFU member. Ledger A (EVERY PALACE A SEAT's row).
 import { readSiegeReceipt, readRoyalReceipt } from './siegeReceipt.js';
-import { readDuelReceipt } from '../duel/duelReceipt.js';   // INT8: a duel's receipt
+import { readDuelReceipt } from '../duel/duelReceipt.js'; // INT8: a duel's receipt
 
 /** The device's siege receipts not yet settled with the account service. */
 export const SIEGE_CLAIMS_KEY = 'seat2a.siegeClaims';
@@ -31,7 +31,7 @@ const MENDABLE = Object.freeze(['signature', 'verify-threw', 'future', 'clock'])
 /** Whether an answer settles a receipt (let go) or keeps it. */
 export function siegeClaimSettles(r) {
   if (r?.ok) return true;
-  if (r?.error === 'honours-twice' || r?.error === 'battle-none' || r?.error === 'battle-void') return true;   // AUDIT-SEATS S3: void at its Turning
+  if (r?.error === 'honours-twice' || r?.error === 'battle-none' || r?.error === 'battle-void') return true; // AUDIT-SEATS S3: void at its Turning
   if (r?.error === 'receipt') return !MENDABLE.includes(r?.why);
   return false;
 }
@@ -44,15 +44,39 @@ export function siegeClaimSettles(r) {
  * for a Royal Tourney's bouts (createRoyalClaims) - its store's key, its receipt's reader, its own settling answers and
  * how many it keeps; INT8: and a duel's (createDuelClaims), whose receipt is `mine` where the account is either fighter.
  */
-export function createSiegeClaims({ claim, me = () => null, nowMs = () => Date.now(), storage = null, onClaimed = null,
-  storeKey = SIEGE_CLAIMS_KEY, read = readSiegeReceipt, settles = siegeClaimSettles, max = SIEGE_CLAIMS_MAX, mine = (c, who) => c?.s === who }) {
+export function createSiegeClaims({
+  claim,
+  me = () => null,
+  nowMs = () => Date.now(),
+  storage = null,
+  onClaimed = null,
+  storeKey = SIEGE_CLAIMS_KEY,
+  read = readSiegeReceipt,
+  settles = siegeClaimSettles,
+  max = SIEGE_CLAIMS_MAX,
+  mine = (c, who) => c?.s === who,
+}) {
   /** @type {string[]} */
   let kept = [];
-  try { const v = JSON.parse(storage?.getItem(storeKey) ?? '[]'); if (Array.isArray(v)) kept = v.filter((x) => typeof x === 'string' && read(x)); } catch { kept = []; }
+  try {
+    const v = JSON.parse(storage?.getItem(storeKey) ?? '[]');
+    if (Array.isArray(v)) kept = v.filter((x) => typeof x === 'string' && read(x));
+  } catch {
+    kept = [];
+  }
   let offeredAt = -Infinity;
   let busy = false;
-  const save = () => { try { storage?.setItem(storeKey, JSON.stringify(kept)); } catch { /* memory keeps it */ } };
-  const live = (r, nowS) => { const c = read(r); return !!c && c.signed && c.e > nowS; };
+  const save = () => {
+    try {
+      storage?.setItem(storeKey, JSON.stringify(kept));
+    } catch {
+      /* memory keeps it */
+    }
+  };
+  const live = (r, nowS) => {
+    const c = read(r);
+    return !!c && c.signed && c.e > nowS;
+  };
   return {
     /** The receipts kept. */
     list: () => kept.slice(),
@@ -73,24 +97,33 @@ export function createSiegeClaims({ claim, me = () => null, nowMs = () => Date.n
     /** Offer what is kept, the signed-in account's own, unless offered within SIEGE_CLAIM_RETRY_MS (`force`: now).
      *  Answers how many settled. */
     async offer({ force = false } = {}) {
-      const now = nowMs(), nowS = Math.floor(now / 1000);
+      const now = nowMs(),
+        nowS = Math.floor(now / 1000);
       if (busy || (!force && now - offeredAt < SIEGE_CLAIM_RETRY_MS)) return 0;
       const who = me();
       if (!who) return 0;
-      busy = true; offeredAt = now;
+      busy = true;
+      offeredAt = now;
       let settled = 0;
       try {
         kept = kept.filter((r) => live(r, nowS));
         for (const r of kept.slice()) {
-          if (!mine(read(r), who)) continue;   // INT8: a duel's receipt is either of its two fighters'
+          if (!mine(read(r), who)) continue; // INT8: a duel's receipt is either of its two fighters'
           let a;
-          try { a = await claim(r); } catch { a = { ok: false, error: 'offline' }; }
+          try {
+            a = await claim(r);
+          } catch {
+            a = { ok: false, error: 'offline' };
+          }
           if (!settles(a)) continue;
           kept = kept.filter((x) => x !== r);
           settled++;
-          onClaimed?.(a, r);   // AUDIT-SEATS C7: every settling answer, taken or refused for good
+          onClaimed?.(a, r); // AUDIT-SEATS C7: every settling answer, taken or refused for good
         }
-      } finally { busy = false; save(); }
+      } finally {
+        busy = false;
+        save();
+      }
       return settled;
     },
   };
@@ -110,7 +143,14 @@ export function royalClaimSettles(r) {
   return false;
 }
 /** THE BOUTS' CARRIER - createSiegeClaims's, over `t1` receipts (`/v1/seats/royal/claim`). */
-export const createRoyalClaims = (o) => createSiegeClaims({ ...o, storeKey: ROYAL_CLAIMS_KEY, read: readRoyalReceipt, settles: royalClaimSettles, max: ROYAL_CLAIMS_MAX });
+export const createRoyalClaims = (o) =>
+  createSiegeClaims({
+    ...o,
+    storeKey: ROYAL_CLAIMS_KEY,
+    read: readRoyalReceipt,
+    settles: royalClaimSettles,
+    max: ROYAL_CLAIMS_MAX,
+  });
 
 // ─── INT8: A DUEL'S BOUTS (bible/06-Systems/Integrity-Arc.md lane 2) ────────────────────────────────────────────────
 /** The device's duel receipts not yet settled with the account service. */
@@ -126,5 +166,12 @@ export function duelClaimSettles(r) {
   return false;
 }
 /** THE BOUTS' CARRIER - createSiegeClaims's, over `d1` receipts (`/v1/duel/claim`): either fighter's to carry. */
-export const createDuelClaims = (o) => createSiegeClaims({ ...o, storeKey: DUEL_CLAIMS_KEY, read: readDuelReceipt, settles: duelClaimSettles, max: DUEL_CLAIMS_MAX,
-  mine: (c, who) => Array.isArray(c?.f) && c.f.includes(who) });
+export const createDuelClaims = (o) =>
+  createSiegeClaims({
+    ...o,
+    storeKey: DUEL_CLAIMS_KEY,
+    read: readDuelReceipt,
+    settles: duelClaimSettles,
+    max: DUEL_CLAIMS_MAX,
+    mine: (c, who) => Array.isArray(c?.f) && c.f.includes(who),
+  });

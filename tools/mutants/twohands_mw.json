@@ -1,80 +1,704 @@
 [
-  { "name": "TWOHANDSMW-made-bone-not-mirrored", "file": "src/combat/twoHands/mirrorRig.js", "old": "const local = mul(mul(inv({ a: F, t: [0, 0, 0] }), { a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: [e.translation[0], e.translation[1], e.translation[2]] }), { a: S3, t: [0, 0, 0] });", "new": "const local = mul({ a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: [e.translation[0], e.translation[1], e.translation[2]] }, { a: S3, t: [0, 0, 0] });", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-made-bone-x-kept", "file": "src/combat/twoHands/mirrorRig.js", "old": "const local = mul(mul(inv({ a: F, t: [0, 0, 0] }), { a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: [e.translation[0], e.translation[1], e.translation[2]] }), { a: S3, t: [0, 0, 0] });", "new": "const local = mul(inv({ a: F, t: [0, 0, 0] }), { a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: [e.translation[0], e.translation[1], e.translation[2]] });", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-made-bone-under-the-right-hand", "file": "src/combat/twoHands/mirrorRig.js", "old": "const pl = skeleton.nodes.has(pr) ? skeleton.byName.get(counterpartName(skeleton.nodes.get(pr).name)) : undefined;", "new": "const pl = pr;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-assembly-makes-no-bone", "file": "src/formats/morrowind/mwFirstPerson.js", "old": "  if (offWeaponBone) {", "new": "  if (false) {", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-body-asks-no-bone", "file": "src/combat/fpArm.js", "old": "let arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources, parseNif: parseNifOnce, offWeaponBone: true });", "new": "let arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources, parseNif: parseNifOnce, offWeaponBone: false });", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-arm-asks-no-bone", "file": "src/combat/fpArm.js", "old": "const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, parseNif: parseNifOnce, offWeaponBone: true });", "new": "const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, parseNif: parseNifOnce, offWeaponBone: false });", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-off-weapon-asks-the-bytes", "file": "src/combat/fpArm.js", "old": "const carries = hasBone ? hasBone(OFF_WEAPON_BONE) : skeletonHasBone(skeletonBytes, OFF_WEAPON_BONE);", "new": "const carries = skeletonHasBone(skeletonBytes, OFF_WEAPON_BONE);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-off-weapon-any-node", "file": "src/combat/fpArm.js", "old": "  if (!carries) {\n    return { parts: [], info: null, notes: [...notes, noBoneNote('offweapon', OFF_WEAPON_BONE,", "new": "  if (false) {\n    return { parts: [], info: null, notes: [...notes, noBoneNote('offweapon', OFF_WEAPON_BONE,", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-swap-asks-the-bytes", "file": "src/combat/fpArm.js", "old": "skeletonBytes: token.skeletonBytes, has: archiveHas(archives), hasBone: boneOf(token) });", "new": "skeletonBytes: token.skeletonBytes, has: archiveHas(archives) });", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-composition-on-the-blade", "file": "src/combat/fpArm.js", "old": "    if (pairHeld()) {   // TWO-HANDS AUDIT: the pair in the hands, not the left blade bound - a rig that cannot hang it still holds two", "new": "    if (offShown(r)) {", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-body-notes-dropped", "file": "src/combat/fpArm.js", "old": "t.notes = [...(t.notes || []).filter((n) => !/^offweapon[ :@]/.test(n)), ...tRes.notes];", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-mirror-joint-swings", "file": "src/combat/twoHands/mirrorRig.js", "old": "const linear = (m) => ({ a: m.a, t: [0, 0, 0] });", "new": "const linear = (m) => m;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-mirror-one-reflection", "file": "src/combat/twoHands/mirrorRig.js", "old": "const Kb = linear(mul(mul(restInv.get(m), S), restOf.get(ref)));", "new": "const Kb = linear(mul(restInv.get(m), restOf.get(ref)));", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-mirror-rest-dropped", "file": "src/combat/twoHands/mirrorRig.js", "old": "link.set(ref, { m, A: mul(mul(restLocal(ref), inv(Kb)), inv(restLocal(m))), B: Kb });", "new": "link.set(ref, { m, A: inv(Kb), B: Kb });", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-limb-reads-the-clip", "file": "src/combat/twoHands/mirrorRig.js", "old": "const src = l.pose ?? clip;", "new": "const src = clip;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-carry-keeps-written-only", "file": "src/combat/twoHands/mirrorRig.js", "old": "if (last) last.set(ref, out ?? clipL(ref));", "new": "if (last && out) last.set(ref, out);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-carry-skips-unwritten", "file": "src/combat/twoHands/mirrorRig.js", "old": "if (off) out = carried(off, out ?? clipL(ref), k);", "new": "if (off && out) out = carried(off, out, k);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-carry-starts-spent", "file": "src/combat/twoHands/mirrorRig.js", "old": "st.k = st.from.size ? 1 : 0;", "new": "st.k = 0;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-carry-turn-dropped", "file": "src/combat/twoHands/mirrorRig.js", "old": "q: quatOf(mat33Mul(prev.rotation, transposed(now.rotation))),", "new": "q: [0, 0, 0, 1],", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-fresh-carry-eases-in", "file": "src/combat/twoHands/mirrorRig.js", "old": "if (st && st.key === undefined) { st.key = c.key; st.from = null; st.k = 0; st.last = null; }", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-climb-or-run", "file": "src/combat/fpArm.js", "old": "        run: firstRun(cam),", "new": "        run: fClimb ? null : firstRun(cam),", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-run-dropped-under-the-sheet", "file": "src/combat/fpArm.js", "old": "        run: firstRun(cam),", "new": "        run: held ? null : firstRun(cam),", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-run-never-solved", "file": "src/formats/morrowind/mwFirstPerson.js", "old": "assembly.runFit = run ? applyClimbRig(skeleton, pose, GRAPH_ROOT, fns.skelMats, run) : null;", "new": "assembly.runFit = null;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-mirrored-blow-forgets-its-way", "file": "src/combat/fpArm.js", "old": "attackReversed = type === 'slash' && strikeReversed(inMirror ? mirrorStrike(strike) : strike);", "new": "attackReversed = type === 'slash' && strikeReversed(strike);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-mirror-by-the-hand-alone", "file": "src/combat/fpArm.js", "old": "const inMirror = !!mirrorFor(viewMode, rig(), 0).full;", "new": "const inMirror = attackHand === 'L';", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-view-switch-keeps-the-carry", "file": "src/combat/fpArm.js", "old": "      mirrorCarry.first = {}; mirrorCarry.third = {};\n      resetMovement();", "new": "      resetMovement();", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-draw-not-composed", "file": "src/combat/fpArm.js", "old": "(weaponShown || upper === UPPER_BODY.Equipping || upper === UPPER_BODY.Unequipping)", "new": "weaponShown", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-portrait-left-blade-stale", "file": "src/combat/fpArm.js", "old": "else if (r.slot === 'offweapon') r.hidden = !(handsMode === 'dual' && t.offWeapon);", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-portrait-one-arm-up", "file": "src/combat/fpArm.js", "old": "mirror: portraitMirror(),   // TWO-HANDS AUDIT", "new": "mirror: null,", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-off-failed-forever", "file": "src/combat/fpArm.js", "old": "token.offFailed = null;", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-other-clip-sampled-whole", "file": "src/formats/morrowind/mwFirstPerson.js", "old": "fns.poseSkeleton(limbSkeleton(skeleton, GRAPH_ROOT, fns.skelMats, side, l), l.clip.tracks", "new": "fns.poseSkeleton(skeleton, l.clip.tracks", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-run-lens-unpitched", "file": "src/combat/fpArm.js", "old": "const lensPitch = followCam ? 0 : (cam.pitch || 0);", "new": "const lensPitch = 0;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-rig-phase-ignored", "file": "src/combat/fpArm.js", "old": "runPump.phase = runPhaseFollow(runPump.phase, runPump.given, runPump.speed, dt, fresh);", "new": "runPump.phase = runPhaseFollow(runPump.phase, null, runPump.speed, dt, fresh);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-rig-phase-sticks", "file": "src/combat/fpArm.js", "old": "runPump.given = Number.isFinite(phase) ? phase : null;", "new": "if (Number.isFinite(phase)) runPump.given = phase;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-guard-on-the-striking-arm", "file": "src/combat/fpArm.js", "old": "pairGuard[h] = guardStep(pairGuard[h], pairHeld() && attackingNow() && !!attackHand && attackHand !== h, dt);", "new": "pairGuard[h] = guardStep(pairGuard[h], pairHeld() && attackingNow() && !!attackHand && attackHand === h, dt);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-guard-snaps", "file": "src/combat/fpArm.js", "old": "pairGuard[h] = guardStep(pairGuard[h], pairHeld() && attackingNow() && !!attackHand && attackHand !== h, dt);", "new": "pairGuard[h] = pairHeld() && attackingNow() && !!attackHand && attackHand !== h ? 1 : 0;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-guard-raises", "file": "src/combat/twoHands/mirrorRig.js", "old": "rotAxisAngle([n[0] / nl, n[1] / nl, n[2] / nl], -angle)", "new": "rotAxisAngle([n[0] / nl, n[1] / nl, n[2] / nl], angle)", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-guard-moves-the-shoulder", "file": "src/combat/twoHands/mirrorRig.js", "old": "e.rotation), translation: e.translation, scale: e.scale };", "new": "e.rotation), translation: [e.translation[0], e.translation[1], e.translation[2] - angle], scale: e.scale };", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-guard-not-asked", "file": "src/combat/fpArm.js", "old": "    req.dip = pairDip();   // TWO-HANDS AUDIT: the guard, over every composition below", "new": "    req.dip = null;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-guard-at-the-eye", "file": "src/combat/fpArm.js", "old": "return reach > 1e-6 ? drop[s] * Math.hypot(wr[0] - eye[0], wr[1] - eye[1], wr[2] - eye[2]) / reach : 0;", "new": "return reach > 1e-6 ? drop[s] : 0;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-made-bone-rest-not-skin", "file": "src/combat/twoHands/mirrorRig.js", "old": "  let F = skinHandMirror(nif, pr, pl);", "new": "  let F = null;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-made-bone-bind-inverted", "file": "src/combat/twoHands/mirrorRig.js", "old": "return mul(mul(invBind(ia), { a: S3, t: [0, 0, 0] }), inv(invBind(ib))).a;", "new": "return mul(mul(inv(invBind(ia)), { a: S3, t: [0, 0, 0] }), invBind(ib)).a;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-turned-skin-read", "file": "src/combat/twoHands/mirrorRig.js", "old": "    if (!unturned(data.transform) || !unturned(shape)) continue;\n", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-made-bone-mirror-uninverted", "file": "src/combat/twoHands/mirrorRig.js", "old": "const local = mul(mul(inv({ a: F, t: [0, 0, 0] }), { a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: [e.translation[0], e.translation[1], e.translation[2]] }), { a: S3, t: [0, 0, 0] });", "new": "const local = mul(mul({ a: F, t: [0, 0, 0] }, { a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)), t: [e.translation[0], e.translation[1], e.translation[2]] }), { a: S3, t: [0, 0, 0] });", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-made-bone-reads-the-plan", "file": "src/combat/twoHands/mirrorRig.js", "old": "  let F = skinHandMirror(nif, pr, pl);", "new": "  buildPlan(skeleton, root, skelMats);\n  let F = skinHandMirror(nif, pr, pl);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-assembly-hands-no-skin", "file": "src/formats/morrowind/mwFirstPerson.js", "old": "const addon = offWeaponBoneAddon(skeleton, GRAPH_ROOT, mod.skelMats, skeletonFile);", "new": "const addon = offWeaponBoneAddon(skeleton, GRAPH_ROOT, mod.skelMats);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-dip-drawn-unkept", "file": "src/combat/twoHands/mirrorRig.js", "old": "const keep = !!st && (composing || !!st.from || dipping || spreading);", "new": "const keep = !!st && (composing || !!st.from || spreading);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-dip-not-laid", "file": "src/combat/twoHands/mirrorRig.js", "old": "if (e) targets.set(plan.uppers[side], e); }", "new": "}", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-idle-key-reads-the-plan", "file": "src/combat/twoHands/mirrorRig.js", "old": "  if (st && st.key !== c.key && !st.last && !st.from && !composing && !dipping && !spreading) { st.key = c.key; return null; }\n", "new": "", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-guard-under-a-sheet", "file": "src/combat/fpArm.js", "old": "const pairHeld = () => handsMode === 'dual' && !handsTaken(built) && (", "new": "const pairHeld = () => handsMode === 'dual' && !spellStance() && (", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-dip-under-the-gate", "file": "src/combat/fpArm.js", "old": "if (handsTaken(r)) { req.carry.key = 'taken'; return req; }", "new": "if (handsTaken(r)) { req.carry.key = 'taken'; req.dip = pairDip(); return req; }", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-taken-under-no-key", "file": "src/combat/fpArm.js", "old": "if (handsTaken(r)) { req.carry.key = 'taken'; return req; }", "new": "if (handsTaken(r)) return req;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-guard-the-fists-tuck", "file": "src/combat/fpArm.js", "old": "return h > 0 ? Math.atan(GUARD.LOWER * h) : GUARD_LENS_DROP;", "new": "return GUARD_LENS_DROP;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-bladeless-hand-unguarded", "file": "src/combat/fpArm.js", "old": "return h > 0 ? Math.atan(GUARD.LOWER * h) : GUARD_LENS_DROP;", "new": "return h > 0 ? Math.atan(GUARD.LOWER * h) : 0;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-blade-off-the-picture", "file": "src/combat/fpArm.js", "old": "const shown = Math.min(hi, edge) - Math.max(lo, -edge);", "new": "const shown = hi - lo;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-left-blade-on-its-own-bone", "file": "src/combat/fpArm.js", "old": "const pictureBone = (sk, p) => (p.slot === 'offweapon' ? sk.byName.get(counterpartName(sk.nodes.get(p.attachRef)?.name)) : p.attachRef);", "new": "const pictureBone = (sk, p) => p.attachRef;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-guard-memo-blind", "file": "src/combat/fpArm.js", "old": " && memo.left === left) return memo;", "new": ") return memo;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-guard-measured-every-frame", "file": "src/combat/fpArm.js", "old": "    if (!(pairGuard.L > 0 || pairGuard.R > 0)) return null;\n    const d = guardDipNow();", "new": "    guardDipNow();\n    if (!(pairGuard.L > 0 || pairGuard.R > 0)) return null;\n    const d = guardDipNow();", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-rig-phase-taken-whole", "file": "src/combat/fpArm.js", "old": "runPump.phase = runPhaseFollow(runPump.phase, runPump.given, runPump.speed, dt, fresh);", "new": "runPump.phase = Number.isFinite(runPump.given) ? runPump.given : runPhaseFollow(runPump.phase, null, runPump.speed, dt, fresh);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-run-fresh-ignored", "file": "src/combat/fpArm.js", "old": "const fresh = !(runPump.w > 0);", "new": "const fresh = false;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-rebuild-forgets-the-blade", "file": "src/combat/fpArm.js", "old": "offKey = res && res.ok && !res.werewolf && opts && opts.offWeapon ? fpWeaponKey(opts.offWeapon, false) : null;", "new": "offKey = null;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-build-binds-no-blade", "file": "src/combat/fpArm.js", "old": "    if (offWeapon && arm.ok) {", "new": "    if (false) {", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-body-blade-unrecorded", "file": "src/combat/fpArm.js", "old": "      if (third?.ok && offBound.third) {", "new": "      if (false) {", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-left-effect-under-the-sheet", "file": "src/combat/fpArm.js", "old": "if (eff.slot === 'offweapon') return !offShown(rig()) || bladeAway;", "new": "if (eff.slot === 'offweapon') return !offShown(rig());", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-right-effect-under-the-sheet", "file": "src/combat/fpArm.js", "old": "if (eff.slot === 'weapon') return !weaponInHand() || bladeAway;", "new": "if (eff.slot === 'weapon') return !weaponInHand();", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-sheet-takes-no-blade", "file": "src/combat/fpArm.js", "old": "const bladeAway = climbHands || (viewMode === 'first' && !!held);", "new": "const bladeAway = climbHands;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-left-glow-on-the-stone", "file": "src/combat/fpArm.js", "old": "offGlowKey === offKey && !climbHands && handsMode", "new": "offGlowKey === offKey && handsMode", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-right-glow-on-the-stone", "file": "src/combat/fpArm.js", "old": "const glowShown = () => (climbHands ? null : weaponGlowSpec", "new": "const glowShown = () => (weaponGlowSpec", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-lantern-takes-a-hand", "file": "src/combat/weapon/weaponRig.js", "old": "&& (fpArm.ready() ? isLitTorch(entity.lightSource) : handheldOn());", "new": "&& (fpArm.ready() ? true : handheldOn());", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "TWOHANDSMW-AUDIT2-H-refused-between-fists", "file": "src/combat/weapon/weaponRig.js", "old": " && playerWeapon.handsMode !== HANDS_MODE.Fists) return false;", "new": ") return false;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "FIELD-first-person-mirrored-across-the-chest", "file": "src/combat/fpArm.js", "old": "if (rigKey === 'first' && r && r.cameraRef != null) req.plane = { ref: r.cameraRef, dx: fpOffset[0] };", "new": "if (rigKey === 'first' && r && r.cameraRef != null) req.plane = null;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "FIELD-picture-plane-not-the-eye", "file": "src/combat/twoHands/mirrorRig.js", "old": "const P = { a: S3, t: [2 * (eye[0] + (plane.dx || 0)), 0, 0] };", "new": "const P = { a: S3, t: [2 * plan.x0, 0, 0] };", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "FIELD-picture-plane-arm-hung-unrooted", "file": "src/combat/twoHands/mirrorRig.js", "old": "targets.set(ref, entryOf(mul(inv(up), W)));", "new": "targets.set(ref, entryOf(W));", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "FIELD-the-pair-on-the-move-swings-together", "file": "src/combat/fpArm.js", "old": "const stride = offIdle ? null : strideOpposite();", "new": "const stride = null;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "FIELD-stride-not-half-on", "file": "src/combat/fpArm.js", "old": "return a + ((((time - a + span / 2) % span) + span) % span);", "new": "return a + ((((time - a) % span) + span) % span);", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "FIELD-stride-window-off-the-state", "file": "src/combat/fpArm.js", "old": "let a = keyIn('loop start'), b = keyIn('loop stop');", "new": "let a = state.loopStartTime, b = state.loopStopTime;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "FIELD-stride-under-a-blow", "file": "src/combat/fpArm.js", "old": "if (deathState || actionState || hitState || !movementState || !movementSource) return null;", "new": "if (!movementState || !movementSource) return null;", "tests": ["test/combat/twohands_mw.test.js"] },
-  { "name": "FIELD-picture-chain-unparented", "file": "src/combat/twoHands/mirrorRig.js", "old": "if (!m) { m = mul(get(skeleton.nodes.get(ref).parent), affineOf(localOf(ref))); memo.set(ref, m); }", "new": "if (!m) { m = affineOf(localOf(ref)); memo.set(ref, m); }", "tests": ["test/combat/twohands_mw.test.js"] }
+  {
+    "name": "TWOHANDSMW-made-bone-not-mirrored",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    mul(inv({ a: F, t: [0, 0, 0] }), {\n      a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)),\n      t: [e.translation[0], e.translation[1], e.translation[2]],\n    }),",
+    "new": "    {\n      a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)),\n      t: [e.translation[0], e.translation[1], e.translation[2]],\n    },",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-made-bone-x-kept",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  const local = mul(\n    mul(inv({ a: F, t: [0, 0, 0] }), {\n      a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)),\n      t: [e.translation[0], e.translation[1], e.translation[2]],\n    }),\n    { a: S3, t: [0, 0, 0] },\n  );",
+    "new": "  const local = mul(inv({ a: F, t: [0, 0, 0] }), {\n    a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)),\n    t: [e.translation[0], e.translation[1], e.translation[2]],\n  });",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-made-bone-under-the-right-hand",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  const pl = skeleton.nodes.has(pr) ? skeleton.byName.get(counterpartName(skeleton.nodes.get(pr).name)) : undefined;",
+    "new": "  const pl = pr;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-assembly-makes-no-bone",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  if (offWeaponBone) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-body-asks-no-bone",
+    "file": "src/combat/fpArm.js",
+    "old": "let arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources, parseNif: parseNifOnce, offWeaponBone: true });",
+    "new": "let arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, boneSources, parseNif: parseNifOnce, offWeaponBone: false });",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-arm-asks-no-bone",
+    "file": "src/combat/fpArm.js",
+    "old": "const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, parseNif: parseNifOnce, offWeaponBone: true });",
+    "new": "const arm = await assembleFirstPersonArm({ skeletonBytes, parts: partBytes, parseNif: parseNifOnce, offWeaponBone: false });",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-off-weapon-asks-the-bytes",
+    "file": "src/combat/fpArm.js",
+    "old": "const carries = hasBone ? hasBone(OFF_WEAPON_BONE) : skeletonHasBone(skeletonBytes, OFF_WEAPON_BONE);",
+    "new": "const carries = skeletonHasBone(skeletonBytes, OFF_WEAPON_BONE);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-off-weapon-any-node",
+    "file": "src/combat/fpArm.js",
+    "old": "  if (!carries) {\n    return { parts: [], info: null, notes: [...notes, noBoneNote('offweapon', OFF_WEAPON_BONE,",
+    "new": "  if (false) {\n    return { parts: [], info: null, notes: [...notes, noBoneNote('offweapon', OFF_WEAPON_BONE,",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-swap-asks-the-bytes",
+    "file": "src/combat/fpArm.js",
+    "old": "skeletonBytes: token.skeletonBytes, has: archiveHas(archives), hasBone: boneOf(token) });",
+    "new": "skeletonBytes: token.skeletonBytes, has: archiveHas(archives) });",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-composition-on-the-blade",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (pairHeld()) {   // TWO-HANDS AUDIT: the pair in the hands, not the left blade bound - a rig that cannot hang it still holds two",
+    "new": "    if (offShown(r)) {",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-body-notes-dropped",
+    "file": "src/combat/fpArm.js",
+    "old": "t.notes = [...(t.notes || []).filter((n) => !/^offweapon[ :@]/.test(n)), ...tRes.notes];",
+    "new": "",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-mirror-joint-swings",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  const linear = (m) => ({ a: m.a, t: [0, 0, 0] });",
+    "new": "  const linear = (m) => m;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-mirror-one-reflection",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    const Kb = linear(mul(mul(restInv.get(m), S), restOf.get(ref)));",
+    "new": "    const Kb = linear(mul(restInv.get(m), restOf.get(ref)));",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-mirror-rest-dropped",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    link.set(ref, { m, A: mul(mul(restLocal(ref), inv(Kb)), inv(restLocal(m))), B: Kb });",
+    "new": "    link.set(ref, { m, A: inv(Kb), B: Kb });",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-limb-reads-the-clip",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    const src = l.pose ?? clip;",
+    "new": "    const src = clip;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-carry-keeps-written-only",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    if (last) last.set(ref, out ?? clipL(ref));",
+    "new": "    if (last && out) last.set(ref, out);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-carry-skips-unwritten",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    if (off) out = carried(off, out ?? clipL(ref), k);",
+    "new": "    if (off && out) out = carried(off, out, k);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-carry-starts-spent",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "      st.k = st.from.size ? 1 : 0;",
+    "new": "      st.k = 0;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-carry-turn-dropped",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "          q: quatOf(mat33Mul(prev.rotation, transposed(now.rotation))),",
+    "new": "          q: [0, 0, 0, 1],",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-fresh-carry-eases-in",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  if (st && st.key === undefined) {\n    st.key = c.key;\n    st.from = null;\n    st.k = 0;\n    st.last = null;\n  }",
+    "new": "",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-climb-or-run",
+    "file": "src/combat/fpArm.js",
+    "old": "        run: firstRun(cam),",
+    "new": "        run: fClimb ? null : firstRun(cam),",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-run-dropped-under-the-sheet",
+    "file": "src/combat/fpArm.js",
+    "old": "        run: firstRun(cam),",
+    "new": "        run: held ? null : firstRun(cam),",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-run-never-solved",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "assembly.runFit = run ? applyClimbRig(skeleton, pose, GRAPH_ROOT, fns.skelMats, run) : null;",
+    "new": "assembly.runFit = null;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-mirrored-blow-forgets-its-way",
+    "file": "src/combat/fpArm.js",
+    "old": "attackReversed = type === 'slash' && strikeReversed(inMirror ? mirrorStrike(strike) : strike);",
+    "new": "attackReversed = type === 'slash' && strikeReversed(strike);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-mirror-by-the-hand-alone",
+    "file": "src/combat/fpArm.js",
+    "old": "const inMirror = !!mirrorFor(viewMode, rig(), 0).full;",
+    "new": "const inMirror = attackHand === 'L';",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-view-switch-keeps-the-carry",
+    "file": "src/combat/fpArm.js",
+    "old": "      mirrorCarry.first = {}; mirrorCarry.third = {};\n      resetMovement();",
+    "new": "      resetMovement();",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-draw-not-composed",
+    "file": "src/combat/fpArm.js",
+    "old": "(weaponShown || upper === UPPER_BODY.Equipping || upper === UPPER_BODY.Unequipping)",
+    "new": "weaponShown",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-portrait-left-blade-stale",
+    "file": "src/combat/fpArm.js",
+    "old": "else if (r.slot === 'offweapon') r.hidden = !(handsMode === 'dual' && t.offWeapon);",
+    "new": "",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-portrait-one-arm-up",
+    "file": "src/combat/fpArm.js",
+    "old": "mirror: portraitMirror(),   // TWO-HANDS AUDIT",
+    "new": "mirror: null,",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-off-failed-forever",
+    "file": "src/combat/fpArm.js",
+    "old": "token.offFailed = null;",
+    "new": "",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-other-clip-sampled-whole",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "fns.poseSkeleton(limbSkeleton(skeleton, GRAPH_ROOT, fns.skelMats, side, l), l.clip.tracks",
+    "new": "fns.poseSkeleton(skeleton, l.clip.tracks",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-run-lens-unpitched",
+    "file": "src/combat/fpArm.js",
+    "old": "const lensPitch = followCam ? 0 : (cam.pitch || 0);",
+    "new": "const lensPitch = 0;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-rig-phase-ignored",
+    "file": "src/combat/fpArm.js",
+    "old": "runPump.phase = runPhaseFollow(runPump.phase, runPump.given, runPump.speed, dt, fresh);",
+    "new": "runPump.phase = runPhaseFollow(runPump.phase, null, runPump.speed, dt, fresh);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-rig-phase-sticks",
+    "file": "src/combat/fpArm.js",
+    "old": "runPump.given = Number.isFinite(phase) ? phase : null;",
+    "new": "if (Number.isFinite(phase)) runPump.given = phase;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-guard-on-the-striking-arm",
+    "file": "src/combat/fpArm.js",
+    "old": "pairGuard[h] = guardStep(pairGuard[h], pairHeld() && attackingNow() && !!attackHand && attackHand !== h, dt);",
+    "new": "pairGuard[h] = guardStep(pairGuard[h], pairHeld() && attackingNow() && !!attackHand && attackHand === h, dt);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-guard-snaps",
+    "file": "src/combat/fpArm.js",
+    "old": "pairGuard[h] = guardStep(pairGuard[h], pairHeld() && attackingNow() && !!attackHand && attackHand !== h, dt);",
+    "new": "pairGuard[h] = pairHeld() && attackingNow() && !!attackHand && attackHand !== h ? 1 : 0;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-guard-raises",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    rotation: mat33Mul(rotAxisAngle([n[0] / nl, n[1] / nl, n[2] / nl], -angle), e.rotation),",
+    "new": "    rotation: mat33Mul(rotAxisAngle([n[0] / nl, n[1] / nl, n[2] / nl], angle), e.rotation),",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-guard-moves-the-shoulder",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    rotation: mat33Mul(rotAxisAngle([n[0] / nl, n[1] / nl, n[2] / nl], -angle), e.rotation),\n    translation: e.translation,",
+    "new": "    rotation: mat33Mul(rotAxisAngle([n[0] / nl, n[1] / nl, n[2] / nl], -angle), e.rotation),\n    translation: [e.translation[0], e.translation[1], e.translation[2] - angle],",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-guard-not-asked",
+    "file": "src/combat/fpArm.js",
+    "old": "    req.dip = pairDip();   // TWO-HANDS AUDIT: the guard, over every composition below",
+    "new": "    req.dip = null;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-guard-at-the-eye",
+    "file": "src/combat/fpArm.js",
+    "old": "return reach > 1e-6 ? drop[s] * Math.hypot(wr[0] - eye[0], wr[1] - eye[1], wr[2] - eye[2]) / reach : 0;",
+    "new": "return reach > 1e-6 ? drop[s] : 0;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-made-bone-rest-not-skin",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  let F = skinHandMirror(nif, pr, pl);",
+    "new": "  let F = null;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-made-bone-bind-inverted",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    return mul(mul(invBind(ia), { a: S3, t: [0, 0, 0] }), inv(invBind(ib))).a;",
+    "new": "    return mul(mul(inv(invBind(ia)), { a: S3, t: [0, 0, 0] }), invBind(ib)).a;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-turned-skin-read",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    if (!unturned(data.transform) || !unturned(shape)) continue;\n    const invBind = (i) => {",
+    "new": "    const invBind = (i) => {",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-made-bone-mirror-uninverted",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    mul(inv({ a: F, t: [0, 0, 0] }), {\n      a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)),\n      t: [e.translation[0], e.translation[1], e.translation[2]],\n    }),",
+    "new": "    mul(\n      { a: F, t: [0, 0, 0] },\n      {\n        a: Float32Array.from(e.rotation, (v) => v * (e.scale ?? 1)),\n        t: [e.translation[0], e.translation[1], e.translation[2]],\n      },\n    ),",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-made-bone-reads-the-plan",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  let F = skinHandMirror(nif, pr, pl);",
+    "new": "  buildPlan(skeleton, root, skelMats);\n  let F = skinHandMirror(nif, pr, pl);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-assembly-hands-no-skin",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "const addon = offWeaponBoneAddon(skeleton, GRAPH_ROOT, mod.skelMats, skeletonFile);",
+    "new": "const addon = offWeaponBoneAddon(skeleton, GRAPH_ROOT, mod.skelMats);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-dip-drawn-unkept",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  const keep = !!st && (composing || !!st.from || dipping || spreading);",
+    "new": "  const keep = !!st && (composing || !!st.from || spreading);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-dip-not-laid",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "      if (e) targets.set(plan.uppers[side], e);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-idle-key-reads-the-plan",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  if (st && st.key !== c.key && !st.last && !st.from && !composing && !dipping && !spreading) {\n    st.key = c.key;\n    return null;\n  }\n  const carrying = !!st && (!!st.from || st.key !== c.key);",
+    "new": "  const carrying = !!st && (!!st.from || st.key !== c.key);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-guard-under-a-sheet",
+    "file": "src/combat/fpArm.js",
+    "old": "const pairHeld = () => handsMode === 'dual' && !handsTaken(built) && (",
+    "new": "const pairHeld = () => handsMode === 'dual' && !spellStance() && (",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-dip-under-the-gate",
+    "file": "src/combat/fpArm.js",
+    "old": "if (handsTaken(r)) { req.carry.key = 'taken'; return req; }",
+    "new": "if (handsTaken(r)) { req.carry.key = 'taken'; req.dip = pairDip(); return req; }",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-taken-under-no-key",
+    "file": "src/combat/fpArm.js",
+    "old": "if (handsTaken(r)) { req.carry.key = 'taken'; return req; }",
+    "new": "if (handsTaken(r)) return req;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-guard-the-fists-tuck",
+    "file": "src/combat/fpArm.js",
+    "old": "return h > 0 ? Math.atan(GUARD.LOWER * h) : GUARD_LENS_DROP;",
+    "new": "return GUARD_LENS_DROP;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-bladeless-hand-unguarded",
+    "file": "src/combat/fpArm.js",
+    "old": "return h > 0 ? Math.atan(GUARD.LOWER * h) : GUARD_LENS_DROP;",
+    "new": "return h > 0 ? Math.atan(GUARD.LOWER * h) : 0;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-blade-off-the-picture",
+    "file": "src/combat/fpArm.js",
+    "old": "const shown = Math.min(hi, edge) - Math.max(lo, -edge);",
+    "new": "const shown = hi - lo;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-left-blade-on-its-own-bone",
+    "file": "src/combat/fpArm.js",
+    "old": "const pictureBone = (sk, p) => (p.slot === 'offweapon' ? sk.byName.get(counterpartName(sk.nodes.get(p.attachRef)?.name)) : p.attachRef);",
+    "new": "const pictureBone = (sk, p) => p.attachRef;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-guard-memo-blind",
+    "file": "src/combat/fpArm.js",
+    "old": " && memo.left === left) return memo;",
+    "new": ") return memo;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-guard-measured-every-frame",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (!(pairGuard.L > 0 || pairGuard.R > 0)) return null;\n    const d = guardDipNow();",
+    "new": "    guardDipNow();\n    if (!(pairGuard.L > 0 || pairGuard.R > 0)) return null;\n    const d = guardDipNow();",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-rig-phase-taken-whole",
+    "file": "src/combat/fpArm.js",
+    "old": "runPump.phase = runPhaseFollow(runPump.phase, runPump.given, runPump.speed, dt, fresh);",
+    "new": "runPump.phase = Number.isFinite(runPump.given) ? runPump.given : runPhaseFollow(runPump.phase, null, runPump.speed, dt, fresh);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-run-fresh-ignored",
+    "file": "src/combat/fpArm.js",
+    "old": "const fresh = !(runPump.w > 0);",
+    "new": "const fresh = false;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-rebuild-forgets-the-blade",
+    "file": "src/combat/fpArm.js",
+    "old": "offKey = res && res.ok && !res.werewolf && opts && opts.offWeapon ? fpWeaponKey(opts.offWeapon, false) : null;",
+    "new": "offKey = null;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-build-binds-no-blade",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (offWeapon && arm.ok) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-body-blade-unrecorded",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (third?.ok && offBound.third) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-left-effect-under-the-sheet",
+    "file": "src/combat/fpArm.js",
+    "old": "if (eff.slot === 'offweapon') return !offShown(rig()) || bladeAway;",
+    "new": "if (eff.slot === 'offweapon') return !offShown(rig());",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-right-effect-under-the-sheet",
+    "file": "src/combat/fpArm.js",
+    "old": "if (eff.slot === 'weapon') return !weaponInHand() || bladeAway;",
+    "new": "if (eff.slot === 'weapon') return !weaponInHand();",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-sheet-takes-no-blade",
+    "file": "src/combat/fpArm.js",
+    "old": "const bladeAway = climbHands || (viewMode === 'first' && !!held);",
+    "new": "const bladeAway = climbHands;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-left-glow-on-the-stone",
+    "file": "src/combat/fpArm.js",
+    "old": "offGlowKey === offKey && !climbHands && handsMode",
+    "new": "offGlowKey === offKey && handsMode",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-right-glow-on-the-stone",
+    "file": "src/combat/fpArm.js",
+    "old": "const glowShown = () => (climbHands ? null : weaponGlowSpec",
+    "new": "const glowShown = () => (weaponGlowSpec",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-lantern-takes-a-hand",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "&& (fpArm.ready() ? isLitTorch(entity.lightSource) : handheldOn());",
+    "new": "&& (fpArm.ready() ? true : handheldOn());",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWOHANDSMW-AUDIT2-H-refused-between-fists",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": " && playerWeapon.handsMode !== HANDS_MODE.Fists) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-first-person-mirrored-across-the-chest",
+    "file": "src/combat/fpArm.js",
+    "old": "if (rigKey === 'first' && r && r.cameraRef != null) req.plane = { ref: r.cameraRef, dx: fpOffset[0] };",
+    "new": "if (rigKey === 'first' && r && r.cameraRef != null) req.plane = null;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-picture-plane-not-the-eye",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  const P = { a: S3, t: [2 * (eye[0] + (plane.dx || 0)), 0, 0] };",
+    "new": "  const P = { a: S3, t: [2 * plan.x0, 0, 0] };",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-picture-plane-arm-hung-unrooted",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    targets.set(ref, entryOf(mul(inv(up), W)));",
+    "new": "    targets.set(ref, entryOf(W));",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-the-pair-on-the-move-swings-together",
+    "file": "src/combat/fpArm.js",
+    "old": "const stride = offIdle ? null : strideOpposite();",
+    "new": "const stride = null;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-stride-not-half-on",
+    "file": "src/combat/fpArm.js",
+    "old": "return a + ((((time - a + span / 2) % span) + span) % span);",
+    "new": "return a + ((((time - a) % span) + span) % span);",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-stride-window-off-the-state",
+    "file": "src/combat/fpArm.js",
+    "old": "let a = keyIn('loop start'), b = keyIn('loop stop');",
+    "new": "let a = state.loopStartTime, b = state.loopStopTime;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-stride-under-a-blow",
+    "file": "src/combat/fpArm.js",
+    "old": "if (deathState || actionState || hitState || !movementState || !movementSource) return null;",
+    "new": "if (!movementState || !movementSource) return null;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "FIELD-picture-chain-unparented",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "      m = mul(get(skeleton.nodes.get(ref).parent), affineOf(localOf(ref)));",
+    "new": "      m = affineOf(localOf(ref));",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  }
 ]

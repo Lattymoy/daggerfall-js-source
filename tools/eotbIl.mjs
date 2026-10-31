@@ -40,4 +40,7 @@ for (const t of bundle.textAssets) {
     console.log(`txt ${t.name} ${t.bytes.length} bytes`);
   }
 }
-if (!dlls) { console.error('no PE text asset in the bundle'); process.exit(1); }
+if (!dlls) {
+  console.error('no PE text asset in the bundle');
+  process.exit(1);
+}

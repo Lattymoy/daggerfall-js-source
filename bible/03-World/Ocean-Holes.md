@@ -488,7 +488,7 @@ needs to be addressed. No exceptions.", 2026-10-26): the pits' abyss id stands i
 (`03-World/World-Wide.md` WORLD-LANES).
 
 What stands now:
-- **The hold is the world's grid** (`world/oceanHoles.js:"export const pitPixelOk = (mapPixelX, mapPixelY) => inWorldGrid(mapPixelX, mapPixelY);"`):
+- **The hold is the world's grid** (`world/oceanHoles.js:"export const pitPixelOk"`):
   the Bay's sea, the continent's past it (the Topal Bay, the Sea of Ghosts) and the Eltheric Ocean's. The bake
   still says where the sea is, and every other gate of the queue is the mod's, in its order.
 - **An abyss past the Bay is named in the world's abyss lane** (`world/worldWide/worldLanes.js` ABYSS_WORLD_LANE, 0x600 to
@@ -519,7 +519,7 @@ AF2-W5-abyss-lairable.
 PITS-WORLD put the pits on the world's grid, but a staff destination in an abyss still held its pit to the Bay's map
 (`net/staffTeleport.js` validStaffDestination, 0..999 and 0..499). The target's game answered `unavailable` and the
 relay dropped the answer, so staff could not /tp to a player in a drowned dungeon past the Bay. The pit is now bounded
-by the world's grid (`src/net/staffTeleport.js:"if (!a || !worldPixelOk(a.PitMapX) || !worldPixelOk(a.PitMapY)"`). The
+by the world's grid (`src/net/staffTeleport.js:"!a ||"`). The
 template stays a Bay dungeon's, so its fields keep the Bay's bounds. Pins: `test/world/worldWide/audit_tamrielwide_relay.test.js` B2 (a Bay pit and three past it,
 through the real hub). Mutants: `tools/mutants/audit_tamrielwide_relay.json` (2, dead). Relay world284.
 

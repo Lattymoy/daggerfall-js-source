@@ -1,197 +1,197 @@
 [
- {
-  "name": "DEX-MEANER-its-tables-never-read",
-  "file": "src/systems/enemyExpansion/dexInstall.js",
-  "old": "const dbAssets = (extension, meaner) => [...Object.entries(DEX_TABLE_TEXT), ...(meaner ? Object.entries(DEX_MEANER_TABLE_TEXT) : [])]",
-  "new": "const dbAssets = (extension, meaner) => [...Object.entries(DEX_TABLE_TEXT), ...([])]",
-  "why": "ours loaded and never read: the orc, the wolf and the courts are DEX's alone",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js",
-   "test/net/foebounds_law.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-its-tables-before-DEX-s",
-  "file": "src/systems/enemyExpansion/dexInstall.js",
-  "old": "const dbAssets = (extension, meaner) => [...Object.entries(DEX_TABLE_TEXT), ...(meaner ? Object.entries(DEX_MEANER_TABLE_TEXT) : [])]",
-  "new": "const dbAssets = (extension, meaner) => [...(meaner ? Object.entries(DEX_MEANER_TABLE_TEXT) : []), ...Object.entries(DEX_TABLE_TEXT)]",
-  "why": "ours read before DEX's: DEX's lines land over ours, and the courts stand before its defaults",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-loaded-without-Meaner-Monsters",
-  "file": "src/systems/enemyExpansion/dexInstall.js",
-  "old": "latchModLoaded(DEX_MEANER_LATCH, !!on && !!meaner)",
-  "new": "latchModLoaded(DEX_MEANER_LATCH, !!on)",
-  "why": "ours load with Meaner Monsters off: a player who never chose the meaner monsters gets them",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-loaded-without-DEX",
-  "file": "src/systems/enemyExpansion/dexInstall.js",
-  "old": "latchModLoaded(DEX_MEANER_LATCH, !!on && !!meaner)",
-  "new": "latchModLoaded(DEX_MEANER_LATCH, !!meaner)",
-  "why": "ours load with DEX off - lines over a mod that is not there",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-the-read-one-variant",
-  "file": "src/systems/enemyExpansion/dexInstall.js",
-  "old": "  const key = game ? dexMeanerLoaded() : meaner === true;",
-  "new": "  const key = false;",
-  "why": "one read for every set of tables: ours never read, or DEX's alone answered with ours",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js",
-   "test/net/foebounds_law.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-reset-keeps-the-latch",
-  "file": "src/systems/enemyExpansion/dexInstall.js",
-  "old": "  latchModLoaded(DEX_MEANER_LATCH, false);\n",
-  "new": "",
-  "why": "a reset leaves ours loaded: the next read is ours whatever was installed",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-Meaner-Monsters-never-stands-aside",
-  "file": "src/systems/enemyExpansion/dexSwitches.js",
-  "old": "export const meanerMonstersAlone = (on) => !!on && modLatchedOn(DEX_VENDOR) !== true;",
-  "new": "export const meanerMonstersAlone = (on) => !!on;",
-  "why": "beside DEX, Meaner Monsters' rows go on under ours: two meaner designs stack",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js",
-   "test/systems/enemyExpansion/dex1_registry.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-its-rows-ignore-DEX",
-  "file": "src/characters/meanerMonsters.js",
-  "old": "export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersAlone(meanerMonstersEnabled())) {",
-  "new": "export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersEnabled()) {",
-  "why": "Meaner Monsters' rows at the mint beside DEX: a foe minted over our table with Meaner Monsters' stats",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js",
-   "test/systems/enemyExpansion/dex1_registry.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-its-xml-ignores-DEX",
-  "file": "src/characters/meanerMonsters.js",
-  "old": "() => meanerMonstersAlone(meanerMonstersEnabled(read ?? undefined))",
-  "new": "() => meanerMonstersEnabled(read ?? undefined)",
-  "why": "the werewolf scaled by Meaner Monsters' xml beside DEX, where ours scale none",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-PCAAO-s-edit-ignores-DEX",
-  "file": "src/combat/pcaaoMeanerMonsters.js",
-  "old": "  !!read('Enabled') && meanerMonstersAlone(!!other('meanerMonsters', 'Enabled'));",
-  "new": "  !!read('Enabled') && !!other('meanerMonsters', 'Enabled');",
-  "why": "PCAAO's edit of Meaner Monsters live beside DEX, over ours",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js",
-   "test/systems/enemyExpansion/dex1_registry.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-the-bound-without-ours",
-  "file": "src/net/foeBounds.js",
-  "old": "[42, [90, 16, 16]]",
-  "new": "[42, [74, 16, 16]]",
-  "why": "the relay refuses our Lamia at its own 90 health",
-  "tests": [
-   "test/net/foebounds_law.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-the-newcomer-one-level-short",
-  "file": "src/systems/enemyExpansion/dexMeaner.js",
-  "old": "  if (level <= NEWCOMER_LEVEL) {",
-  "new": "  if (level < NEWCOMER_LEVEL) {",
-  "why": "a level-4 foe raised as a veteran's: the bear and the spider leave the newcomer's rule",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-the-touch-ignored",
-  "file": "src/systems/enemyExpansion/dexMeaner.js",
-  "old": "    if (!casts && !touch && blow < dmg) damage",
-  "new": "    if (!casts && blow < dmg) damage",
-  "why": "a drain's or a spell touch's blow raised: the nymph drains four times its fatigue",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-the-caster-ignored",
-  "file": "src/systems/enemyExpansion/dexMeaner.js",
-  "old": "    if (!casts && !touch && blow < dmg) damage",
-  "new": "    if (!touch && blow < dmg) damage",
-  "why": "a caster's blow raised as a fighter's",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-the-health-floor-moved",
-  "file": "src/systems/enemyExpansion/dexMeaner.js",
-  "old": "export const MEANER_FLOOR = Object.freeze({ damage: 2, health: 4.5 });",
-  "new": "export const MEANER_FLOOR = Object.freeze({ damage: 2, health: 4 });",
-  "why": "the floor is no longer the bestiary's average",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-the-cut-past-the-floor",
-  "file": "src/systems/enemyExpansion/dexMeaner.js",
-  "old": "  return [a, down ? Math.max(a, 2 * mean - a) : 2 * mean - a];",
-  "new": "  return [a, 2 * mean - a + (down ? 1 : 0)];",
-  "why": "a newcomer's blow left above the floor",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-a-row-not-the-rule-s",
-  "file": "src/systems/enemyExpansion/dexMeaner.js",
-  "old": "  [7, 3, 17, null, null],",
-  "new": "  [7, 3, 16, null, null],",
-  "why": "the orc's line written by hand: a row the rule does not make",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-the-courts-runs-uneven",
-  "file": "src/systems/enemyExpansion/dexMeaner.js",
-  "old": "kinds[Math.floor((i * kinds.length) / 20)]",
-  "new": "kinds[Math.round((i * kinds.length) / 20) % kinds.length]",
-  "why": "the runs uneven, the master wrapped to the first slot",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- },
- {
-  "name": "DEX-MEANER-a-court-out-of-order",
-  "file": "src/systems/enemyExpansion/dexMeaner.js",
-  "old": "['Court_Crypt_Hungry', 0, [0, 277, 15, 19, 287, 273]]",
-  "new": "['Court_Crypt_Hungry', 0, [0, 277, 15, 287, 19, 273]]",
-  "why": "a court's dire ghoul seated before a mummy of lower level",
-  "tests": [
-   "test/systems/enemyExpansion/dexmeaner.test.js"
-  ]
- }
+  {
+    "name": "DEX-MEANER-its-tables-never-read",
+    "file": "src/systems/enemyExpansion/dexInstall.js",
+    "old": "  [...Object.entries(DEX_TABLE_TEXT), ...(meaner ? Object.entries(DEX_MEANER_TABLE_TEXT) : [])]",
+    "new": "  [...Object.entries(DEX_TABLE_TEXT), ...[]]",
+    "why": "ours loaded and never read: the orc, the wolf and the courts are DEX's alone",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js",
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-its-tables-before-DEX-s",
+    "file": "src/systems/enemyExpansion/dexInstall.js",
+    "old": "  [...Object.entries(DEX_TABLE_TEXT), ...(meaner ? Object.entries(DEX_MEANER_TABLE_TEXT) : [])]",
+    "new": "  [...(meaner ? Object.entries(DEX_MEANER_TABLE_TEXT) : []), ...Object.entries(DEX_TABLE_TEXT)]",
+    "why": "ours read before DEX's: DEX's lines land over ours, and the courts stand before its defaults",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-loaded-without-Meaner-Monsters",
+    "file": "src/systems/enemyExpansion/dexInstall.js",
+    "old": "  const meanerOn = latchModLoaded(DEX_MEANER_LATCH, !!on && !!meaner); // OWN-WORK2: loaded for the game with the mod",
+    "new": "  const meanerOn = latchModLoaded(DEX_MEANER_LATCH, !!on); // OWN-WORK2: loaded for the game with the mod",
+    "why": "ours load with Meaner Monsters off: a player who never chose the meaner monsters gets them",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-loaded-without-DEX",
+    "file": "src/systems/enemyExpansion/dexInstall.js",
+    "old": "  const meanerOn = latchModLoaded(DEX_MEANER_LATCH, !!on && !!meaner); // OWN-WORK2: loaded for the game with the mod",
+    "new": "  const meanerOn = latchModLoaded(DEX_MEANER_LATCH, !!meaner); // OWN-WORK2: loaded for the game with the mod",
+    "why": "ours load with DEX off - lines over a mod that is not there",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-the-read-one-variant",
+    "file": "src/systems/enemyExpansion/dexInstall.js",
+    "old": "  const key = game ? dexMeanerLoaded() : meaner === true;",
+    "new": "  const key = false;",
+    "why": "one read for every set of tables: ours never read, or DEX's alone answered with ours",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js",
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-reset-keeps-the-latch",
+    "file": "src/systems/enemyExpansion/dexInstall.js",
+    "old": "  latchModLoaded(DEX_MEANER_LATCH, false);\n  _installed = false;",
+    "new": "  _installed = false;",
+    "why": "a reset leaves ours loaded: the next read is ours whatever was installed",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-Meaner-Monsters-never-stands-aside",
+    "file": "src/systems/enemyExpansion/dexSwitches.js",
+    "old": "export const meanerMonstersAlone = (on) => !!on && modLatchedOn(DEX_VENDOR) !== true;",
+    "new": "export const meanerMonstersAlone = (on) => !!on;",
+    "why": "beside DEX, Meaner Monsters' rows go on under ours: two meaner designs stack",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js",
+      "test/systems/enemyExpansion/dex1_registry.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-its-rows-ignore-DEX",
+    "file": "src/characters/meanerMonsters.js",
+    "old": "export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersAlone(meanerMonstersEnabled())) {",
+    "new": "export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersEnabled()) {",
+    "why": "Meaner Monsters' rows at the mint beside DEX: a foe minted over our table with Meaner Monsters' stats",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js",
+      "test/systems/enemyExpansion/dex1_registry.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-its-xml-ignores-DEX",
+    "file": "src/characters/meanerMonsters.js",
+    "old": "    meanerMonstersAlone(meanerMonstersEnabled(read ?? undefined)),",
+    "new": "    meanerMonstersEnabled(read ?? undefined),",
+    "why": "the werewolf scaled by Meaner Monsters' xml beside DEX, where ours scale none",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-PCAAO-s-edit-ignores-DEX",
+    "file": "src/combat/pcaaoMeanerMonsters.js",
+    "old": "  !!read('Enabled') && meanerMonstersAlone(!!other('meanerMonsters', 'Enabled'));",
+    "new": "  !!read('Enabled') && !!other('meanerMonsters', 'Enabled');",
+    "why": "PCAAO's edit of Meaner Monsters live beside DEX, over ours",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js",
+      "test/systems/enemyExpansion/dex1_registry.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-the-bound-without-ours",
+    "file": "src/net/foeBounds.js",
+    "old": "    [42, [90, 16, 16]],",
+    "new": "    [42, [74, 16, 16]],",
+    "why": "the relay refuses our Lamia at its own 90 health",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-the-newcomer-one-level-short",
+    "file": "src/systems/enemyExpansion/dexMeaner.js",
+    "old": "  if (level <= NEWCOMER_LEVEL) {",
+    "new": "  if (level < NEWCOMER_LEVEL) {",
+    "why": "a level-4 foe raised as a veteran's: the bear and the spider leave the newcomer's rule",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-the-touch-ignored",
+    "file": "src/systems/enemyExpansion/dexMeaner.js",
+    "old": "    if (!casts && !touch && blow < dmg) damage",
+    "new": "    if (!casts && blow < dmg) damage",
+    "why": "a drain's or a spell touch's blow raised: the nymph drains four times its fatigue",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-the-caster-ignored",
+    "file": "src/systems/enemyExpansion/dexMeaner.js",
+    "old": "    if (!casts && !touch && blow < dmg) damage",
+    "new": "    if (!touch && blow < dmg) damage",
+    "why": "a caster's blow raised as a fighter's",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-the-health-floor-moved",
+    "file": "src/systems/enemyExpansion/dexMeaner.js",
+    "old": "export const MEANER_FLOOR = Object.freeze({ damage: 2, health: 4.5 });",
+    "new": "export const MEANER_FLOOR = Object.freeze({ damage: 2, health: 4 });",
+    "why": "the floor is no longer the bestiary's average",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-the-cut-past-the-floor",
+    "file": "src/systems/enemyExpansion/dexMeaner.js",
+    "old": "  return [a, down ? Math.max(a, 2 * mean - a) : 2 * mean - a];",
+    "new": "  return [a, 2 * mean - a + (down ? 1 : 0)];",
+    "why": "a newcomer's blow left above the floor",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-a-row-not-the-rule-s",
+    "file": "src/systems/enemyExpansion/dexMeaner.js",
+    "old": "  [7, 3, 17, null, null],",
+    "new": "  [7, 3, 16, null, null],",
+    "why": "the orc's line written by hand: a row the rule does not make",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-the-courts-runs-uneven",
+    "file": "src/systems/enemyExpansion/dexMeaner.js",
+    "old": "kinds[Math.floor((i * kinds.length) / 20)]",
+    "new": "kinds[Math.round((i * kinds.length) / 20) % kinds.length]",
+    "why": "the runs uneven, the master wrapped to the first slot",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  },
+  {
+    "name": "DEX-MEANER-a-court-out-of-order",
+    "file": "src/systems/enemyExpansion/dexMeaner.js",
+    "old": "['Court_Crypt_Hungry', 0, [0, 277, 15, 19, 287, 273]]",
+    "new": "['Court_Crypt_Hungry', 0, [0, 277, 15, 287, 19, 273]]",
+    "why": "a court's dire ghoul seated before a mummy of lower level",
+    "tests": [
+      "test/systems/enemyExpansion/dexmeaner.test.js"
+    ]
+  }
 ]

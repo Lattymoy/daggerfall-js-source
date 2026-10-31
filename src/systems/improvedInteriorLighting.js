@@ -24,8 +24,8 @@
 
 import { attachedDfmods, dfmodGeneration } from './dfmodTextures.js';
 import { getPref } from './uiPrefs.js';
-import { syncClassicShadowLane } from '../render/classicShadowLane.js';   // IIL2: the mod's shadows, in Daggerfall's look   // IIL1-T: the Features rows
-import { pageParam } from './pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { syncClassicShadowLane } from '../render/classicShadowLane.js'; // IIL2: the mod's shadows, in Daggerfall's look   // IIL1-T: the Features rows
+import { pageParam } from './pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 
 export const IIL_MOD = Object.freeze({
   guid: '55d7c31a-c571-45ea-bb72-fb5aa359e106',
@@ -36,9 +36,30 @@ export const IIL_MOD = Object.freeze({
 
 const WARM = Object.freeze([255, 147, 41]);
 export const IIL_SETTINGS = Object.freeze({
-  Interiors: Object.freeze({ Enabled: true, NpcShadows: true, InteriorLightsColor: WARM, InteriorLightsIntensity: 0.5, InteriorFlickeringLights: true, LightFlickerStrength: 0.5 }),
-  Dungeons: Object.freeze({ Enabled: true, EnemyShadows: true, EnemyShadowsNoShadowEnemies: false, DungeonLightsColor: WARM, DungeonLightsIntensity: 0.5, FlickeringLights: true, LightFlickerStrength: 1.5 }),
-  FirePlaces: Object.freeze({ EnabledInInteriors: true, FireplaceLightsColor: WARM, FireplaceIntensity: 1.0, FireplaceFlickeringLights: true, FireplaceFlickerStrength: 1.0 }),
+  Interiors: Object.freeze({
+    Enabled: true,
+    NpcShadows: true,
+    InteriorLightsColor: WARM,
+    InteriorLightsIntensity: 0.5,
+    InteriorFlickeringLights: true,
+    LightFlickerStrength: 0.5,
+  }),
+  Dungeons: Object.freeze({
+    Enabled: true,
+    EnemyShadows: true,
+    EnemyShadowsNoShadowEnemies: false,
+    DungeonLightsColor: WARM,
+    DungeonLightsIntensity: 0.5,
+    FlickeringLights: true,
+    LightFlickerStrength: 1.5,
+  }),
+  FirePlaces: Object.freeze({
+    EnabledInInteriors: true,
+    FireplaceLightsColor: WARM,
+    FireplaceIntensity: 1.0,
+    FireplaceFlickeringLights: true,
+    FireplaceFlickerStrength: 1.0,
+  }),
   Torch: Object.freeze({ PlayerTorchChanged: true, PlayerTorchColor: WARM }),
 });
 
@@ -46,8 +67,8 @@ export const IIL_SETTINGS = Object.freeze({
 export const IIL_FIREPLACE_MODELS = Object.freeze(new Set([41116, 41117]));
 /** ImproveDungeonLighting.LIGHT_OBJECT_ARCHIVE. */
 export const IIL_LIGHT_ARCHIVE = 210;
-const LIGHT_RANGE = 10;       // both scripts: range = 10
-const FIREPLACE_RANGE = 15;   // ImproveFireplaces: range = 15
+const LIGHT_RANGE = 10; // both scripts: range = 10
+const FIREPLACE_RANGE = 15; // ImproveFireplaces: range = 15
 // AddLightFlicker's arguments at each call site: [MaxReduction, MaxIncrease, RateDamping]
 const FLICKER_ROOM = Object.freeze([1.5, 2.5, 0]);
 const FLICKER_FIRE = Object.freeze([3, 4.5, 0.02]);
@@ -57,18 +78,25 @@ const rgb = (c) => [c[0] / 255, c[1] / 255, c[2] / 255];
 // ---- is it on --------------------------------------------------------------------------------------------------------
 
 /** Does an attached-mod entry name this mod - by GUID, or by title for a rebuilt one. */
-export const isIilMod = (m) => !!m && (m.guid === IIL_MOD.guid || /^improved interior lighting$/i.test(String(m.title ?? '').trim()));
+export const isIilMod = (m) =>
+  !!m && (m.guid === IIL_MOD.guid || /^improved interior lighting$/i.test(String(m.title ?? '').trim()));
 // The player attaches the `.dfmod` like any other (Settings > Mods > Add texture mods); the attached list answers,
 // re-read only when that list changes (dfmodGeneration)
-let _seenGen = -1, _seen = false;
+let _seenGen = -1,
+  _seen = false;
 const fromAttached = () => {
   const g = dfmodGeneration();
-  if (g !== _seenGen) { _seenGen = g; _seen = attachedDfmods().some(isIilMod); }
+  if (g !== _seenGen) {
+    _seenGen = g;
+    _seen = attachedDfmods().some(isIilMod);
+  }
   return _seen;
 };
 let _attached = fromAttached;
 /** Test seam: who answers "is the mod attached". */
-export function setIilAttachedSource(fn) { _attached = typeof fn === 'function' ? fn : fromAttached; }
+export function setIilAttachedSource(fn) {
+  _attached = typeof fn === 'function' ? fn : fromAttached;
+}
 /**
  * IIL1-T - THE TEST DOOR FOR WHAT THE CLASSIC LANE CANNOT CARRY. `?iil=shadows` runs the mod's lights ON the
  * Enhanced Lighting lane: its shadow maps then give the lights the mod's soft shadows, and billboards - NPCs and
@@ -76,12 +104,14 @@ export function setIilAttachedSource(fn) { _attached = typeof fn === 'function' 
  * on for it (the lane is what draws the shadows); off, the mod runs on the classic lane as ever. A test switch, by
  * address only, so nobody meets it by accident.
  */
-export const iilOnLane = (search = globalThis.location?.search ?? '') => pageParam('iil', search) === 'shadows';   // PERF-URL
+export const iilOnLane = (search = globalThis.location?.search ?? '') => pageParam('iil', search) === 'shadows'; // PERF-URL
 // IIL1-T: the Features row - Off / On / With shadows (`moddedLighting`, default On; an older boolean reads as On/Off).
 // With shadows runs the mod's lights on the Enhanced Lighting lane; `?iil=shadows` is the same by address.
 let _pref = (key) => getPref(key);
 /** Test seam: who answers a pref. */
-export function setIilPrefSource(fn) { _pref = typeof fn === 'function' ? fn : (key) => getPref(key); }
+export function setIilPrefSource(fn) {
+  _pref = typeof fn === 'function' ? fn : (key) => getPref(key);
+}
 /** The row's tier: 'off' | 'on' | 'shadows'. */
 export const iilTier = () => {
   const v = _pref('moddedLighting');
@@ -126,7 +156,7 @@ export function stepFlicker(st, base, [maxReduction, maxIncrease, rate], strengt
 }
 
 // Per scene: the light list the hosts hand in is built once per visit, so its identity keys the flicker state.
-const _states = new WeakMap();   // light list -> { at, lights, ranges, level: Float32Array, st: [] }
+const _states = new WeakMap(); // light list -> { at, lights, ranges, level: Float32Array, st: [] }
 const now = () => (globalThis.performance?.now?.() ?? Date.now()) / 1000;
 
 /**
@@ -147,7 +177,7 @@ function advance(key, build, section) {
     _states.set(key, s);
   }
   const t = now();
-  const dt = Math.min(0.25, Math.max(0, t - s.at));   // a paused tab does not arrive with seconds of lerp
+  const dt = Math.min(0.25, Math.max(0, t - s.at)); // a paused tab does not arrive with seconds of lerp
   s.at = t;
   for (let i = 0; i < s.lights.length; i++) {
     const l = s.lights[i];
@@ -167,18 +197,35 @@ function advance(key, build, section) {
  * `fireplaces` its fireplace models' positions ([{x,y,z}]). Null when the Interiors section is off.
  */
 export function iilInteriorLights(roomLights, fireplaces = [], settings = IIL_SETTINGS) {
-  const S = settings.Interiors, F = settings.FirePlaces;
+  const S = settings.Interiors,
+    F = settings.FirePlaces;
   if (!S.Enabled) return null;
-  return advance(roomLights, () => [
-    ...roomLights.map((l) => ({
-      x: l.x, y: l.y, z: l.z, range: LIGHT_RANGE, rgb: rgb(S.InteriorLightsColor), base: S.InteriorLightsIntensity,
-      flicker: S.InteriorFlickeringLights ? FLICKER_ROOM : null, strength: S.LightFlickerStrength,
-    })),
-    ...(F.EnabledInInteriors ? fireplaces : []).map((f) => ({
-      x: f.x, y: f.y, z: f.z, range: FIREPLACE_RANGE, rgb: rgb(F.FireplaceLightsColor), base: F.FireplaceIntensity,
-      flicker: F.FireplaceFlickeringLights ? FLICKER_FIRE : null, strength: F.FireplaceFlickerStrength,
-    })),
-  ], 'Interiors');
+  return advance(
+    roomLights,
+    () => [
+      ...roomLights.map((l) => ({
+        x: l.x,
+        y: l.y,
+        z: l.z,
+        range: LIGHT_RANGE,
+        rgb: rgb(S.InteriorLightsColor),
+        base: S.InteriorLightsIntensity,
+        flicker: S.InteriorFlickeringLights ? FLICKER_ROOM : null,
+        strength: S.LightFlickerStrength,
+      })),
+      ...(F.EnabledInInteriors ? fireplaces : []).map((f) => ({
+        x: f.x,
+        y: f.y,
+        z: f.z,
+        range: FIREPLACE_RANGE,
+        rgb: rgb(F.FireplaceLightsColor),
+        base: F.FireplaceIntensity,
+        flicker: F.FireplaceFlickeringLights ? FLICKER_FIRE : null,
+        strength: F.FireplaceFlickerStrength,
+      })),
+    ],
+    'Interiors',
+  );
 }
 
 /**
@@ -188,10 +235,21 @@ export function iilInteriorLights(roomLights, fireplaces = [], settings = IIL_SE
 export function iilDungeonLights(lightFlats, settings = IIL_SETTINGS) {
   const S = settings.Dungeons;
   if (!S.Enabled) return null;
-  return advance(lightFlats, () => lightFlats.map((f) => ({
-    x: f.x, y: f.y, z: f.z, range: LIGHT_RANGE, rgb: rgb(S.DungeonLightsColor), base: S.DungeonLightsIntensity,
-    flicker: S.FlickeringLights ? FLICKER_ROOM : null, strength: S.LightFlickerStrength,
-  })), 'Dungeons');
+  return advance(
+    lightFlats,
+    () =>
+      lightFlats.map((f) => ({
+        x: f.x,
+        y: f.y,
+        z: f.z,
+        range: LIGHT_RANGE,
+        rgb: rgb(S.DungeonLightsColor),
+        base: S.DungeonLightsIntensity,
+        flicker: S.FlickeringLights ? FLICKER_ROOM : null,
+        strength: S.LightFlickerStrength,
+      })),
+    'Dungeons',
+  );
 }
 
 /** ImprovePlayerTorch: the torch in PlayerTorchColor (its range and place unchanged). A null torch stays null. */
@@ -201,4 +259,8 @@ export function iilTorch(light, settings = IIL_SETTINGS) {
 }
 
 /** Test seam. */
-export function _resetIilForTests() { _attached = fromAttached; _seenGen = -1; _pref = (key) => getPref(key); }
+export function _resetIilForTests() {
+  _attached = fromAttached;
+  _seenGen = -1;
+  _pref = (key) => getPref(key);
+}

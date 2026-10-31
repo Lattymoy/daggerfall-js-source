@@ -12,7 +12,11 @@
 /** WEBGL_lose_context's door, the one home: a context let go now. Never throws (a context already lost answers no
  *  extension, and one lost twice is lost). */
 export function loseGlContext(gl) {
-  try { gl?.getExtension?.('WEBGL_lose_context')?.loseContext(); } catch { /* already gone */ }
+  try {
+    gl?.getExtension?.('WEBGL_lose_context')?.loseContext();
+  } catch {
+    /* already gone */
+  }
 }
 
 const releasers = new Set();
@@ -28,5 +32,11 @@ export function onPageGone(fn) {
 export function releaseGlContexts() {
   const all = [...releasers];
   releasers.clear();
-  for (const fn of all) { try { fn(); } catch { /* the page is going either way */ } }
+  for (const fn of all) {
+    try {
+      fn();
+    } catch {
+      /* the page is going either way */
+    }
+  }
 }

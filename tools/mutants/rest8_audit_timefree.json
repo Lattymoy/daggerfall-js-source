@@ -30,8 +30,8 @@
   {
     "name": "REST8-AUDIT-TIMEFREE-T1-the-closing-by-hand-back",
     "file": "src/systems/quest/clock.js",
-    "old": "        || (!atOnce && clockIsDeadline(q, this));",
-    "new": "        || (!(q?.questName === 'R0C11Y03' && name === '2ndparton') && !atOnce && clockIsDeadline(q, this));",
+    "old": "      this._deadline = (ONLINE_DEADLINES[q?.questName] ?? []).includes(name) || (!atOnce && clockIsDeadline(q, this)); // (AUDIT REST II Q1: no closings table - see `closes`)",
+    "new": "      this._deadline =\n        (ONLINE_DEADLINES[q?.questName] ?? []).includes(name) ||\n        (!(q?.questName === 'R0C11Y03' && name === '2ndparton') && !atOnce && clockIsDeadline(q, this)); // (AUDIT REST II Q1: no closings table - see `closes`)",
     "tests": [
       "test/systems/quest/rest8_audit_timefree.test.js",
       "test/systems/quest/auditrest2_quests.test.js"
@@ -59,8 +59,8 @@
   {
     "name": "REST8-AUDIT-TIMEFREE-T5-the-mark-not-saved",
     "file": "src/systems/quest/clock.js",
-    "old": "      startedAfterSuccess: this.startedAfterSuccess,",
-    "new": "",
+    "old": "      startedAfterSuccess: this.startedAfterSuccess, // AUDIT TIMEFREE T5 (the port's; absent from a save before it - false)",
+    "new": "      // AUDIT TIMEFREE T5 (the port's; absent from a save before it - false)",
     "tests": [
       "test/systems/quest/rest8_audit_timefree.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "REST8-AUDIT-TIMEFREE-T2-the-not-reward-read-whole",
     "file": "src/systems/quest/clock.js",
-    "old": "is still the loss of that pay\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
-    "new": "is still the loss of that pay\n    if (reached(quest, tn).settles || [...PROGRESS].some((x) => reached(quest, tn).types.has(x))) return true;",
+    "old": "    // `when ... not _S.01_`, and its end, which hands the haul back as the posse comes, is still the loss of that pay\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
+    "new": "    // `when ... not _S.01_`, and its end, which hands the haul back as the posse comes, is still the loss of that pay\n    if (reached(quest, tn).settles || [...PROGRESS].some((x) => reached(quest, tn).types.has(x))) return true;",
     "tests": [
       "test/systems/quest/rest8_audit_timefree.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "REST8-AUDIT-TIMEFREE-T3-the-alone-reading-dropped",
     "file": "src/systems/quest/clock.js",
-    "old": "      if (alone && !reader._checkEvals?.call(",
-    "new": "      if (false && !reader._checkEvals?.call(",
+    "old": "      if (alone && !reader._checkEvals?.call({ evaluations: reader.evaluations, _isTaskSet: isSet })) continue;",
+    "new": "      if (false && !reader._checkEvals?.call({ evaluations: reader.evaluations, _isTaskSet: isSet })) continue;",
     "tests": [
       "test/systems/quest/rest8_audit_timefree.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "REST8-AUDIT-TIMEFREE-T3-the-at-once-rule-dropped",
     "file": "src/systems/quest/clock.js",
-    "old": "      const atOnce = this.declaredAtOnce && !/^_2.*_$/.test(this.symbol?.original ?? '');",
-    "new": "      const atOnce = false;",
+    "old": "      const atOnce = this.declaredAtOnce && !/^_2.*_$/.test(this.symbol?.original ?? ''); // (a `_2place_` clock's zero is its trip, StartTimer's)",
+    "new": "      const atOnce = false; // (a `_2place_` clock's zero is its trip, StartTimer's)",
     "tests": [
       "test/systems/quest/rest8_audit_timefree.test.js"
     ]

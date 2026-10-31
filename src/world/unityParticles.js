@@ -55,7 +55,13 @@ export const SCALING = Object.freeze({ Hierarchy: 0, Local: 1, Shape: 2 });
 /** ParticleSystemSubEmitterType. */
 export const SUB_EMITTER = Object.freeze({ Birth: 0, Collision: 1, Death: 2 });
 /** ParticleSystemRenderMode. */
-export const RENDER_MODE = Object.freeze({ Billboard: 0, Stretch: 1, HorizontalBillboard: 2, VerticalBillboard: 3, Mesh: 4 });
+export const RENDER_MODE = Object.freeze({
+  Billboard: 0,
+  Stretch: 1,
+  HorizontalBillboard: 2,
+  VerticalBillboard: 3,
+  Mesh: 4,
+});
 
 // ---- curves -----------------------------------------------------------------
 
@@ -70,7 +76,10 @@ const KEY_TUPLES = new WeakMap();
 export function evaluateKeyframes(keys, t) {
   if (!keys?.length) return 0;
   let tuples = KEY_TUPLES.get(keys);
-  if (!tuples) { tuples = keys.map((k) => [k.time, k.value, k.inSlope, k.outSlope]); KEY_TUPLES.set(keys, tuples); }
+  if (!tuples) {
+    tuples = keys.map((k) => [k.time, k.value, k.inSlope, k.outSlope]);
+    KEY_TUPLES.set(keys, tuples);
+  }
   return evaluateCurve(tuples, t);
 }
 
@@ -81,17 +90,37 @@ export function evaluateKeyframes(keys, t) {
 export function evaluateMinMax(c, t = 0, r = 0) {
   if (!c) return 0;
   switch (c.minMaxState) {
-    case 0: return c.scalar;
-    case 1: return c.scalar * evaluateKeyframes(c.maxCurve?.m_Curve, t);
-    case 2: { const lo = evaluateKeyframes(c.minCurve?.m_Curve, t), hi = evaluateKeyframes(c.maxCurve?.m_Curve, t); return c.scalar * (lo + (hi - lo) * r); }
-    case 3: return c.minScalar + (c.scalar - c.minScalar) * r;
-    default: return c.scalar ?? 0;
+    case 0:
+      return c.scalar;
+    case 1:
+      return c.scalar * evaluateKeyframes(c.maxCurve?.m_Curve, t);
+    case 2: {
+      const lo = evaluateKeyframes(c.minCurve?.m_Curve, t),
+        hi = evaluateKeyframes(c.maxCurve?.m_Curve, t);
+      return c.scalar * (lo + (hi - lo) * r);
+    }
+    case 3:
+      return c.minScalar + (c.scalar - c.minScalar) * r;
+    default:
+      return c.scalar ?? 0;
   }
 }
 /** `new MinMaxCurve(v)` - what the C#'s `main.startSize = v` and `force.x = new MinMaxCurve(v)` assign. */
-export const constantCurve = (v) => ({ minMaxState: 0, scalar: v, minScalar: v, maxCurve: { m_Curve: [] }, minCurve: { m_Curve: [] } });
+export const constantCurve = (v) => ({
+  minMaxState: 0,
+  scalar: v,
+  minScalar: v,
+  maxCurve: { m_Curve: [] },
+  minCurve: { m_Curve: [] },
+});
 /** `new MinMaxCurve(min, max)` - the random between two constants (the C#'s rain and snow forces). */
-export const twoConstantsCurve = (min, max) => ({ minMaxState: 3, scalar: max, minScalar: min, maxCurve: { m_Curve: [] }, minCurve: { m_Curve: [] } });
+export const twoConstantsCurve = (min, max) => ({
+  minMaxState: 3,
+  scalar: max,
+  minScalar: min,
+  maxCurve: { m_Curve: [] },
+  minCurve: { m_Curve: [] },
+});
 
 // ---- small vector and matrix helpers (column-major 4x4, as the port's) --------
 
@@ -100,9 +129,20 @@ const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const scale = (a, s) => [a[0] * s, a[1] * s, a[2] * s];
 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const len = (a) => Math.hypot(a[0], a[1], a[2]);
-const norm = (a) => { const l = len(a); return l > 1e-5 ? scale(a, 1 / l) : [0, 0, 0]; };
-const mulPoint = (m, p) => [m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12], m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13], m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14]];
-const mulDir = (m, d) => [m[0] * d[0] + m[4] * d[1] + m[8] * d[2], m[1] * d[0] + m[5] * d[1] + m[9] * d[2], m[2] * d[0] + m[6] * d[1] + m[10] * d[2]];
+const norm = (a) => {
+  const l = len(a);
+  return l > 1e-5 ? scale(a, 1 / l) : [0, 0, 0];
+};
+const mulPoint = (m, p) => [
+  m[0] * p[0] + m[4] * p[1] + m[8] * p[2] + m[12],
+  m[1] * p[0] + m[5] * p[1] + m[9] * p[2] + m[13],
+  m[2] * p[0] + m[6] * p[1] + m[10] * p[2] + m[14],
+];
+const mulDir = (m, d) => [
+  m[0] * d[0] + m[4] * d[1] + m[8] * d[2],
+  m[1] * d[0] + m[5] * d[1] + m[9] * d[2],
+  m[2] * d[0] + m[6] * d[1] + m[10] * d[2],
+];
 const trs = (q, p, s) => mat4FromQuatPosScale(q, p, s);
 const vec = (v, d = [0, 0, 0]) => (v ? [v.x ?? d[0], v.y ?? d[1], v.z ?? d[2]] : [...d]);
 
@@ -136,12 +176,18 @@ function createParticleSystem(node, component, rendererComponent, { random = Mat
       startSize: main.startSize,
       /** CSA-G: startDelay - the seconds a fresh Play waits before its clock starts (the oars' events set it). */
       startDelay: c.startDelay,
-      get startLifetimeMultiplier() { return this.startLifetime?.scalar ?? 0; },
+      get startLifetimeMultiplier() {
+        return this.startLifetime?.scalar ?? 0;
+      },
       /** MinMaxCurve.curveMultiplier: a constant's value, a curve's scalar. */
-      set startLifetimeMultiplier(v) { this.startLifetime = { ...this.startLifetime, scalar: v }; },
+      set startLifetimeMultiplier(v) {
+        this.startLifetime = { ...this.startLifetime, scalar: v };
+      },
     },
     /** ForceOverLifetimeModule: `space` (0 Local, 1 World) and the x, y, z curves. */
-    forceOverLifetime: force ? { space: force.inWorldSpace ? SPACE.World : SPACE.Local, x: force.x, y: force.y, z: force.z } : null,
+    forceOverLifetime: force
+      ? { space: force.inWorldSpace ? SPACE.World : SPACE.Local, x: force.x, y: force.y, z: force.z }
+      : null,
     /** @type {{ system:any, type:number, probability:number }[]} */ subEmitters: [],
     /** @type {any[]} */ planes: [],
     time: 0,
@@ -152,29 +198,68 @@ function createParticleSystem(node, component, rendererComponent, { random = Mat
     _accDistance: 0,
     _delay: 0,
     /** @type {number[] | null} */ _lastPosition: null,
-    get particleCount() { return this.particles.length; },
-    get isPlaying() { return this.playing; },
-    get isEmitting() { return this.emitting; },
-    /** Play(withChildren): the clock from nought if stopped, emitting again - and every child system not a sub-emitter. */
-    play() { for (const s of treeSystems(this)) s._playOne(); },
-    /** Stop(withChildren, StopEmitting): no more emitted; the living live on. */
-    stop() { for (const s of treeSystems(this)) s._stopOne(); },
-    _playOne() {
-      if (!this.playing) { this.time = 0; this._accTime = 0; this._accDistance = 0; this._firedBursts = new Set(); this._delay = Math.max(0, evaluateMinMax(this.main.startDelay, 0, random())); }
-      this.playing = true; this.emitting = true; this._lastPosition = null;
+    get particleCount() {
+      return this.particles.length;
     },
-    _stopOne() { this.emitting = false; },
+    get isPlaying() {
+      return this.playing;
+    },
+    get isEmitting() {
+      return this.emitting;
+    },
+    /** Play(withChildren): the clock from nought if stopped, emitting again - and every child system not a sub-emitter. */
+    play() {
+      for (const s of treeSystems(this)) s._playOne();
+    },
+    /** Stop(withChildren, StopEmitting): no more emitted; the living live on. */
+    stop() {
+      for (const s of treeSystems(this)) s._stopOne();
+    },
+    _playOne() {
+      if (!this.playing) {
+        this.time = 0;
+        this._accTime = 0;
+        this._accDistance = 0;
+        this._firedBursts = new Set();
+        this._delay = Math.max(0, evaluateMinMax(this.main.startDelay, 0, random()));
+      }
+      this.playing = true;
+      this.emitting = true;
+      this._lastPosition = null;
+    },
+    _stopOne() {
+      this.emitting = false;
+    },
     /** GetParticles / SetParticles: the living, as they stand. */
-    getParticles() { return this.particles; },
-    setParticles(list) { this.particles = list; },
+    getParticles() {
+      return this.particles;
+    },
+    setParticles(list) {
+      this.particles = list;
+    },
     /** One frame of Time.deltaTime, the transforms as they now stand. */
-    step(dt) { stepSystem(this, dt, random); },
+    step(dt) {
+      stepSystem(this, dt, random);
+    },
     /** Every living particle in the world: its centre, its size per axis and its rotation (radians, Z or 3D). */
-    renderList() { return renderList(this); },
+    renderList() {
+      return renderList(this);
+    },
     _firedBursts: new Set(),
     _sim: {
-      duration: c.lengthInSec ?? 5, looping: !!c.looping, space: c.moveWithTransform ?? SPACE.Local, scaling: c.scalingMode ?? SCALING.Local,
-      maxParticles: main.maxNumParticles ?? 1000, rotation3D: !!main.rotation3D, size3D: !!main.size3D, main, emission, shape, size, collision, subModule,
+      duration: c.lengthInSec ?? 5,
+      looping: !!c.looping,
+      space: c.moveWithTransform ?? SPACE.Local,
+      scaling: c.scalingMode ?? SCALING.Local,
+      maxParticles: main.maxNumParticles ?? 1000,
+      rotation3D: !!main.rotation3D,
+      size3D: !!main.size3D,
+      main,
+      emission,
+      shape,
+      size,
+      collision,
+      subModule,
     },
   };
   if (c.playOnAwake) ps._playOne();
@@ -184,10 +269,11 @@ function createParticleSystem(node, component, rendererComponent, { random = Mat
 /** The system and every system on its node's subtree that is no system's sub-emitter, as Play(true) reaches them. */
 function treeSystems(ps) {
   const out = [];
-  for (const n of ps.node.walk()) for (const comp of n.getComponents('ParticleSystem')) {
-    const s = comp.particleSystem;
-    if (s && (s === ps || !s.isSubEmitter)) out.push(s);
-  }
+  for (const n of ps.node.walk())
+    for (const comp of n.getComponents('ParticleSystem')) {
+      const s = comp.particleSystem;
+      if (s && (s === ps || !s.isSubEmitter)) out.push(s);
+    }
   return out;
 }
 
@@ -207,7 +293,10 @@ export function linkParticleSystem(ps) {
     }
   }
   if (sim.collision && sim.collision.type === 0) {
-    for (let i = 0; i < 6; i++) { const n = resolveNodePointer(ps.node, sim.collision[`plane${i}`]); if (n) ps.planes.push(n); }
+    for (let i = 0; i < 6; i++) {
+      const n = resolveNodePointer(ps.node, sim.collision[`plane${i}`]);
+      if (n) ps.planes.push(n);
+    }
   }
 }
 
@@ -221,18 +310,21 @@ function emitterMatrix(ps) {
 /** One particle's birth in the shape's frame: [position, direction]. */
 function shapeSample(sim, random) {
   const sh = sim.shape;
-  let p = [0, 0, 0], d = [0, 0, 1];
+  let p = [0, 0, 0],
+    d = [0, 0, 1];
   if (sh) {
     if (sh.type === SHAPE.Box) {
       p = [random() - 0.5, random() - 0.5, random() - 0.5];
       d = [0, 0, 1];
     } else if (sh.type === SHAPE.Cone) {
-      const radius = sh.radius?.value ?? 1, thickness = sh.radiusThickness ?? 1;
+      const radius = sh.radius?.value ?? 1,
+        thickness = sh.radiusThickness ?? 1;
       const arc = ((sh.arc?.value ?? 360) * Math.PI) / 180;
       const theta = random() * arc;
       const inner = 1 - thickness;
-      const u = Math.sqrt(inner * inner + random() * (1 - inner * inner));   // uniform by area over the ring
-      const x = Math.cos(theta) * u, y = Math.sin(theta) * u;
+      const u = Math.sqrt(inner * inner + random() * (1 - inner * inner)); // uniform by area over the ring
+      const x = Math.cos(theta) * u,
+        y = Math.sin(theta) * u;
       const tan = Math.tan(((sh.angle ?? 25) * Math.PI) / 180);
       p = [x * radius, y * radius, 0];
       d = norm([x * tan, y * tan, 1]);
@@ -250,14 +342,21 @@ function shapeSample(sim, random) {
 
 /** A newborn particle: in the system's space, `age` seconds already lived. */
 function birth(ps, at, ageAhead, random, originWorld = null) {
-  const sim = ps._sim, m = sim.main;
+  const sim = ps._sim,
+    m = sim.main;
   const [lp, ld] = shapeSample(sim, random);
   const lifetime = evaluateMinMax(ps.main.startLifetime, 0, random());
   const speed = evaluateMinMax(ps.main.startSpeed, 0, random());
   const s0 = evaluateMinMax(ps.main.startSize, 0, random());
-  const startSize = sim.size3D ? [s0, evaluateMinMax(m.startSizeY, 0, random()), evaluateMinMax(m.startSizeZ, 0, random())] : [s0, s0, s0];
+  const startSize = sim.size3D
+    ? [s0, evaluateMinMax(m.startSizeY, 0, random()), evaluateMinMax(m.startSizeZ, 0, random())]
+    : [s0, s0, s0];
   const rotation = sim.rotation3D
-    ? [evaluateMinMax(m.startRotationX, 0, random()), evaluateMinMax(m.startRotationY, 0, random()), evaluateMinMax(m.startRotation, 0, random())]
+    ? [
+        evaluateMinMax(m.startRotationX, 0, random()),
+        evaluateMinMax(m.startRotationY, 0, random()),
+        evaluateMinMax(m.startRotation, 0, random()),
+      ]
     : [0, 0, evaluateMinMax(m.startRotation, 0, random())];
   let position, velocity;
   if (sim.space === SPACE.World) {
@@ -275,7 +374,10 @@ function birth(ps, at, ageAhead, random, originWorld = null) {
 function inverseDir(ps, world) {
   const m = emitterMatrix(ps);
   const d = sub(world, [m[12], m[13], m[14]]);
-  const inv = (col) => { const l2 = col[0] * col[0] + col[1] * col[1] + col[2] * col[2]; return l2 > 0 ? dot(d, col) / l2 : 0; };
+  const inv = (col) => {
+    const l2 = col[0] * col[0] + col[1] * col[1] + col[2] * col[2];
+    return l2 > 0 ? dot(d, col) / l2 : 0;
+  };
   return [inv([m[0], m[1], m[2]]), inv([m[4], m[5], m[6]]), inv([m[8], m[9], m[10]])];
 }
 
@@ -290,7 +392,10 @@ function forceOf(ps, part) {
   else if (fo.space === SPACE.Local && worldSim) a = mulDir(emitterMatrix(ps), a);
   return a;
 }
-const positionOf = (ps) => { const m = emitterMatrix(ps); return [m[12], m[13], m[14]]; };
+const positionOf = (ps) => {
+  const m = emitterMatrix(ps);
+  return [m[12], m[13], m[14]];
+};
 
 /** A particle lived on by `dt`: its lifetime spent, the force on its velocity, the velocity on its position. */
 function advance(ps, part, dt) {
@@ -309,7 +414,12 @@ function sizeOf(ps, part) {
   const sz = ps._sim.size;
   if (!sz) return part.startSize;
   const t = Math.min(1, Math.max(0, 1 - part.remainingLifetime / (part.startLifetime || 1)));
-  if (sz.separateAxes) return [part.startSize[0] * evaluateMinMax(sz.curve, t, 0.5), part.startSize[1] * evaluateMinMax(sz.y, t, 0.5), part.startSize[2] * evaluateMinMax(sz.z, t, 0.5)];
+  if (sz.separateAxes)
+    return [
+      part.startSize[0] * evaluateMinMax(sz.curve, t, 0.5),
+      part.startSize[1] * evaluateMinMax(sz.y, t, 0.5),
+      part.startSize[2] * evaluateMinMax(sz.z, t, 0.5),
+    ];
   const k = evaluateMinMax(sz.curve, t, 0.5);
   return [part.startSize[0] * k, part.startSize[1] * k, part.startSize[2] * k];
 }
@@ -319,10 +429,12 @@ function planeHit(ps, part, p0, p1) {
   if (!ps.planes.length) return null;
   const sim = ps._sim;
   const s = emitterScale(ps);
-  const radius = (sizeOf(ps, part)[0] * s) / 2 * (sim.collision.radiusScale ?? 1);
+  const radius = ((sizeOf(ps, part)[0] * s) / 2) * (sim.collision.radiusScale ?? 1);
   for (const n of ps.planes) {
-    const o = n.position, up = norm(quatRotate(n.rotation, [0, 1, 0]));
-    const d0 = dot(sub(p0, o), up) - radius, d1 = dot(sub(p1, o), up) - radius;
+    const o = n.position,
+      up = norm(quatRotate(n.rotation, [0, 1, 0]));
+    const d0 = dot(sub(p0, o), up) - radius,
+      d1 = dot(sub(p1, o), up) - radius;
     if (d0 >= 0 && d1 < 0) {
       const t = d0 / (d0 - d1);
       return add(p0, scale(sub(p1, p0), t));
@@ -330,19 +442,26 @@ function planeHit(ps, part, p0, p1) {
   }
   return null;
 }
-const emitterScale = (ps) => (ps._sim.scaling === SCALING.Local ? (ps.node.localScale?.[0] ?? 1) : ps._sim.scaling === SCALING.Hierarchy ? (ps.node.lossyScale?.[0] ?? 1) : 1);
+const emitterScale = (ps) =>
+  ps._sim.scaling === SCALING.Local
+    ? (ps.node.localScale?.[0] ?? 1)
+    : ps._sim.scaling === SCALING.Hierarchy
+      ? (ps.node.lossyScale?.[0] ?? 1)
+      : 1;
 
 /** A collision's sub-emitters: each one's bursts, at the point. */
 function fireSubEmitters(ps, type, point, random) {
   for (const e of ps.subEmitters) {
     if (e.type !== type || random() >= e.probability) continue;
-    const sys = e.system, sim = sys._sim;
+    const sys = e.system,
+      sim = sys._sim;
     if (!sys.node.activeInHierarchy) continue;
     const at = emitterMatrix(sys);
     for (const b of sim.emission?.m_Bursts ?? []) {
       if (b.time > 0) continue;
       const n = Math.max(0, Math.round(evaluateMinMax(b.countCurve, 0, random())));
-      for (let i = 0; i < n && sys.particles.length < sim.maxParticles; i++) sys.particles.push(birth(sys, at, 0, random, point));
+      for (let i = 0; i < n && sys.particles.length < sim.maxParticles; i++)
+        sys.particles.push(birth(sys, at, 0, random, point));
     }
   }
 }
@@ -365,7 +484,8 @@ function stepSystem(ps, dt, random) {
       if (hit) {
         const loss = evaluateMinMax(sim.collision.m_EnergyLossOnCollision, 0, 0.5);
         part.remainingLifetime -= part.startLifetime * loss;
-        const damp = evaluateMinMax(sim.collision.m_Dampen, 0, 0.5), bounce = evaluateMinMax(sim.collision.m_Bounce, 0, 0.5);
+        const damp = evaluateMinMax(sim.collision.m_Dampen, 0, 0.5),
+          bounce = evaluateMinMax(sim.collision.m_Bounce, 0, 0.5);
         part.velocity = scale(part.velocity, (1 - damp) * bounce);
         fireSubEmitters(ps, SUB_EMITTER.Collision, hit, random);
         if (part.remainingLifetime <= 0) continue;
@@ -381,7 +501,11 @@ function stepSystem(ps, dt, random) {
     const waited = Math.min(ps._delay, dt);
     ps._delay -= waited;
     dt -= waited;
-    if (!(dt > 0)) { const m0 = emitterMatrix(ps); ps._lastPosition = [m0[12], m0[13], m0[14]]; return; }
+    if (!(dt > 0)) {
+      const m0 = emitterMatrix(ps);
+      ps._lastPosition = [m0[12], m0[13], m0[14]];
+      return;
+    }
   }
   // the clock, the loop and the bursts
   const t0 = ps.time;
@@ -394,7 +518,8 @@ function stepSystem(ps, dt, random) {
       ps._firedBursts.add(bi);
       if (random() >= (b.probability ?? 1)) continue;
       const n = Math.max(0, Math.round(evaluateMinMax(b.countCurve, 0, random())));
-      for (let i = 0; i < n && ps.particles.length < sim.maxParticles; i++) ps.particles.push(birth(ps, m, t1 - Math.max(b.time, t0), random));
+      for (let i = 0; i < n && ps.particles.length < sim.maxParticles; i++)
+        ps.particles.push(birth(ps, m, t1 - Math.max(b.time, t0), random));
     }
     // rate over time and over distance: the frame's whole crossings, each at its fraction of the frame
     const rate = evaluateMinMax(sim.emission.rateOverTime, t0 / sim.duration, random());
@@ -407,7 +532,9 @@ function stepSystem(ps, dt, random) {
       for (let k = Math.floor(a0) + 1; k <= a1 && ps.particles.length < sim.maxParticles; k++) {
         const frac = gain > 0 ? (k - a0) / gain : 1;
         const at = m.slice();
-        at[12] = from[0] + (here[0] - from[0]) * frac; at[13] = from[1] + (here[1] - from[1]) * frac; at[14] = from[2] + (here[2] - from[2]) * frac;
+        at[12] = from[0] + (here[0] - from[0]) * frac;
+        at[13] = from[1] + (here[1] - from[1]) * frac;
+        at[14] = from[2] + (here[2] - from[2]) * frac;
         ps.particles.push(birth(ps, at, (1 - frac) * dt, random));
       }
       ps[accKey] = a1 - Math.floor(a1);
@@ -417,8 +544,13 @@ function stepSystem(ps, dt, random) {
   }
   ps._lastPosition = here;
   if (t1 >= sim.duration) {
-    if (sim.looping) { t1 -= sim.duration * Math.floor(t1 / sim.duration); ps._firedBursts = new Set(); }
-    else { t1 = sim.duration; ps.emitting = false; }
+    if (sim.looping) {
+      t1 -= sim.duration * Math.floor(t1 / sim.duration);
+      ps._firedBursts = new Set();
+    } else {
+      t1 = sim.duration;
+      ps.emitting = false;
+    }
   }
   ps.time = t1;
   if (!ps.emitting && !ps.particles.length) ps.playing = false;
@@ -427,11 +559,21 @@ function stepSystem(ps, dt, random) {
 function renderList(ps) {
   const out = [];
   if (!ps.node.activeInHierarchy) return out;
-  const s = ps._sim.scaling === SCALING.Local ? ps.node.localScale : ps._sim.scaling === SCALING.Hierarchy ? ps.node.lossyScale : [1, 1, 1];
+  const s =
+    ps._sim.scaling === SCALING.Local
+      ? ps.node.localScale
+      : ps._sim.scaling === SCALING.Hierarchy
+        ? ps.node.lossyScale
+        : [1, 1, 1];
   const rot = ps.node.rotation;
   for (const part of ps.particles) {
     const sz = sizeOf(ps, part);
-    out.push({ position: worldPosition(ps, part), size: [sz[0] * s[0], sz[1] * s[1], sz[2] * s[2]], rotation: part.rotation, systemRotation: rot });
+    out.push({
+      position: worldPosition(ps, part),
+      size: [sz[0] * s[0], sz[1] * s[1], sz[2] * s[2]],
+      rotation: part.rotation,
+      systemRotation: rot,
+    });
   }
   return out;
 }
@@ -441,7 +583,10 @@ export function instanceParticleSystems(root, opts) {
   const systems = [];
   for (const n of root.walk()) {
     const r = n.getComponent('ParticleSystemRenderer');
-    for (const comp of n.getComponents('ParticleSystem')) { comp.particleSystem = createParticleSystem(n, comp, r, opts); systems.push(comp.particleSystem); }
+    for (const comp of n.getComponents('ParticleSystem')) {
+      comp.particleSystem = createParticleSystem(n, comp, r, opts);
+      systems.push(comp.particleSystem);
+    }
   }
   for (const s of systems) linkParticleSystem(s);
   return systems;

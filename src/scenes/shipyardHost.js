@@ -37,13 +37,22 @@
 // Not a DFU member. Ledger A (SHIPYARDS).
 import { fleetShip, titleDeed, forgetShip, shipLabel, fleetCrossed } from '../systems/fleet.js';
 import {
-  SHIPYARD_HULLS, shipSpec, shipyardItem, shipBuyPrice, shipSalePrice, shipWorth, saleRefusal, SHIPYARD_TEXT, BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE,
+  SHIPYARD_HULLS,
+  shipSpec,
+  shipyardItem,
+  shipBuyPrice,
+  shipSalePrice,
+  shipWorth,
+  saleRefusal,
+  SHIPYARD_TEXT,
+  BOAT_DEED_TEMPLATE,
+  BOAT_PARTS_TEMPLATE,
 } from '../systems/shipyards.js';
 import { recruitsOf, enlistPlan, recruitFee, hireCharge, recruitDay, CREW_HALL_TEXT } from '../systems/crewHall.js';
 import { DOCK_REFUSED } from '../systems/naval/quays.js';
 import { CREWED_HULLS } from './fleetHost.js';
-import { MOBILE } from '../systems/naval/navalBoarding.js';   // AUDIT SHIPYARDS L2-7: a Bard by his class, as the Fleet page reads him
-import { createCrewSignBook } from './crewSignBook.js';   // CREW-SIGNED: a recruit signed once online
+import { MOBILE } from '../systems/naval/navalBoarding.js'; // AUDIT SHIPYARDS L2-7: a Bard by his class, as the Fleet page reads him
+import { createCrewSignBook } from './crewSignBook.js'; // CREW-SIGNED: a recruit signed once online
 import { crewSignOf } from '../net/crewSignLaw.js';
 
 /** The window's pages, in its tabs' order. */
@@ -59,11 +68,14 @@ export function createShipyardHost(deps) {
   const csa = () => deps.csa?.() ?? null;
   const gold = () => Math.max(0, Math.floor(Number(deps.gold?.() ?? 0) || 0));
   const skills = () => deps.skills?.() ?? { mercantile: 0, personality: 50 };
-  const signs = deps.signs ?? createCrewSignBook({ live: () => !!deps.online?.(), character: () => deps.online?.() || null });
+  const signs =
+    deps.signs ?? createCrewSignBook({ live: () => !!deps.online?.(), character: () => deps.online?.() || null });
   /** CREW-SIGNED: the recruit ids a hire holds at the service while its act is asked again. */
   const held = new Set();
   /** CREW-SIGNED: a hand who leaves a ship of the player's goes back to the hall for every player. */
-  const letGo = (hand) => { if (hand?.hall && signs.live()) signs.release(hand.hall); };
+  const letGo = (hand) => {
+    if (hand?.hall && signs.live()) signs.release(hand.hall);
+  };
 
   /** Every ship of the player's as the Fleet reads her (its own sweep first), with her boat or stand-in. */
   function ships() {
@@ -80,23 +92,32 @@ export function createShipyardHost(deps) {
   }
   /** The hands of hers ashore at the player's side - by her number, wherever she lies (packed, laid up), whatever the
    *  sea fight's switch (AUDIT SHIPYARDS L1-6). */
-  const ashoreOf = (s) => (deps.ashore ? deps.ashore(s.row.uid) : s.at.boat ? naval()?.awayOf?.(s.at.boat)?.size ?? 0 : 0);
+  const ashoreOf = (s) =>
+    deps.ashore ? deps.ashore(s.row.uid) : s.at.boat ? (naval()?.awayOf?.(s.at.boat)?.size ?? 0) : 0;
   /** The hall ids of the recruits serving every crewed ship of the player's - none of them is on a hall's roster (AUDIT
    *  SHIPYARDS L2-9: by id - a hand who merely shares a recruit's name hides nobody). */
   function serving(list) {
     const out = new Set();
-    for (const s of list) if (CREWED_HULLS.includes(s.row.hull) && s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) if (h.hall) out.add(h.hall);
+    for (const s of list)
+      if (CREWED_HULLS.includes(s.row.hull) && s.at.boat)
+        for (const h of naval()?.crewHands?.(s.at.boat) ?? []) if (h.hall) out.add(h.hall);
     return out;
   }
 
   /** WHY THE SHIPMASTER WILL NOT BUY HER HERE, or null (systems/shipyards.js saleRefusal, and her cabin's chests). */
   function saleWhy(s) {
     const why = saleRefusal({
-      where: s.at.where, hold: holdOf(s), ashore: ashoreOf(s), fighting: !!s.row.status?.inFight,
-      aboard: s.at.boat && s.at.where === 'here' ? deps.passengersAboard?.(s.at.boat) ?? 0 : 0, atPort: true, crossed: fleetCrossed(s.row.uid),
+      where: s.at.where,
+      hold: holdOf(s),
+      ashore: ashoreOf(s),
+      fighting: !!s.row.status?.inFight,
+      aboard: s.at.boat && s.at.where === 'here' ? (deps.passengersAboard?.(s.at.boat) ?? 0) : 0,
+      atPort: true,
+      crossed: fleetCrossed(s.row.uid),
     });
     if (why) return why;
-    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return 'Empty the cabin first. Anything left in it is sold with the ship.';
+    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0)
+      return 'Empty the cabin first. Anything left in it is sold with the ship.';
     return null;
   }
   /** Her worth sold back, and what the shipmaster offers this seller for it. */
@@ -114,11 +135,19 @@ export function createShipyardHost(deps) {
    */
   function model(site, view = {}) {
     const page = SHIPYARD_PAGES.includes(/** @type {any} */ (view.page)) ? view.page : 'ships';
-    const purse = gold(), sk = skills();
+    const purse = gold(),
+      sk = skills();
     const list = ships();
     const base = {
-      page, title: site?.name ?? 'The Shipyard', keeper: site?.keeper?.name ?? '', crewName: site?.crewName ?? 'The Crew Hall',
-      crewmaster: site?.crewmaster?.name ?? '', town: site?.townName ?? '', gold: purse, sailing: !!csa(), sea: !!naval(),
+      page,
+      title: site?.name ?? 'The Shipyard',
+      keeper: site?.keeper?.name ?? '',
+      crewName: site?.crewName ?? 'The Crew Hall',
+      crewmaster: site?.crewmaster?.name ?? '',
+      town: site?.townName ?? '',
+      gold: purse,
+      sailing: !!csa(),
+      sea: !!naval(),
     };
     const atHand = list.filter((s) => AT_HAND.includes(s.at.where));
     const pick = (cands) => cands.find((s) => s.row.uid === view.uid) ?? cands[0] ?? null;
@@ -127,8 +156,14 @@ export function createShipyardHost(deps) {
       return {
         ...base,
         ships: SHIPYARD_HULLS.map((hull) => {
-          const spec = shipSpec(hull), price = shipBuyPrice(spec.price, sk);
-          return { ...spec, asked: price, docks: !DOCK_REFUSED.includes(hull), why: !csa() ? SHIPYARD_TEXT.noSail : purse < price ? SHIPYARD_TEXT.short(price) : null };
+          const spec = shipSpec(hull),
+            price = shipBuyPrice(spec.price, sk);
+          return {
+            ...spec,
+            asked: price,
+            docks: !DOCK_REFUSED.includes(hull),
+            why: !csa() ? SHIPYARD_TEXT.noSail : purse < price ? SHIPYARD_TEXT.short(price) : null,
+          };
         }),
       };
     }
@@ -144,27 +179,59 @@ export function createShipyardHost(deps) {
     if (page === 'yard') {
       const cands = atHand.filter((s) => s.row.can?.yard == null);
       const s = pick(cands);
-      return { ...base, choices: choice(cands), uid: s?.row.uid ?? null, ship: s?.row ?? null, yard: s && s.at.boat ? naval()?.yardModelOf?.(s.at.boat) ?? null : null,
-        why: !naval() ? 'Turn on Naval Combat to use the shipwrights.' : cands.length ? null : 'No ship of yours lies at this port or laid up.' };
+      return {
+        ...base,
+        choices: choice(cands),
+        uid: s?.row.uid ?? null,
+        ship: s?.row ?? null,
+        yard: s && s.at.boat ? (naval()?.yardModelOf?.(s.at.boat) ?? null) : null,
+        why: !naval()
+          ? 'Turn on Naval Combat to use the shipwrights.'
+          : cands.length
+            ? null
+            : 'No ship of yours lies at this port or laid up.',
+      };
     }
     if (page === 'refits') {
       const cands = atHand.filter((s) => s.row.can?.refit == null || s.row.loan);
       const s = pick(cands);
-      return { ...base, choices: choice(cands), uid: s?.row.uid ?? null, ship: s?.row ?? null, refit: s ? fleet()?.offer?.(s.row.uid) ?? null : null,
-        why: cands.length ? null : 'No ship of yours lies at this port or laid up.' };
+      return {
+        ...base,
+        choices: choice(cands),
+        uid: s?.row.uid ?? null,
+        ship: s?.row ?? null,
+        refit: s ? (fleet()?.offer?.(s.row.uid) ?? null) : null,
+        why: cands.length ? null : 'No ship of yours lies at this port or laid up.',
+      };
     }
     // the crew hall
     const crewed = atHand.filter((s) => CREWED_HULLS.includes(s.row.hull) && s.at.boat);
     const s = pick(crewed);
     const day = Math.floor(Number(deps.day?.() ?? 0) || 0);
-    const signed = signs.taken(site?.mapId ?? 0, day);   // CREW-SIGNED: the sailors other players hold today
-    const recruits = recruitsOf({ mapId: site?.mapId ?? 0, day, regionIndex: site?.regionIndex ?? -1, serving: serving(list) })
-      .filter((r) => !signed.slots.has(crewSignOf(r.id)?.slot ?? -1));
-    let room = null, hands = [];
+    const signed = signs.taken(site?.mapId ?? 0, day); // CREW-SIGNED: the sailors other players hold today
+    const recruits = recruitsOf({
+      mapId: site?.mapId ?? 0,
+      day,
+      regionIndex: site?.regionIndex ?? -1,
+      serving: serving(list),
+    }).filter((r) => !signed.slots.has(crewSignOf(r.id)?.slot ?? -1));
+    let room = null,
+      hands = [];
     if (s && naval()) {
       // AUDIT SHIPYARDS L2-3: the sea fight's awayOf answers her ROSTER PLACES ashore (navalHost.js), never names
       const away = naval().awayOf?.(s.at.boat);
-      hands = naval().crewHands(s.at.boat).map((h, i) => ({ name: h.name, role: h.role, fights: h.fights | 0, boardings: h.boardings | 0, mobile: h.mobile, bard: h.mobile === MOBILE.Bard, gender: h.gender, ashore: !!away?.has?.(i) }));
+      hands = naval()
+        .crewHands(s.at.boat)
+        .map((h, i) => ({
+          name: h.name,
+          role: h.role,
+          fights: h.fights | 0,
+          boardings: h.boardings | 0,
+          mobile: h.mobile,
+          bard: h.mobile === MOBILE.Bard,
+          gender: h.gender,
+          ashore: !!away?.has?.(i),
+        }));
       const st = s.row.status;
       room = st ? enlistPlan({ hull: s.row.hull, crew: st.crew, maxCrew: st.maxCrew, hands: hands.length }) : null;
     }
@@ -172,15 +239,38 @@ export function createShipyardHost(deps) {
     const swappable = hands.some((h) => !h.ashore);
     /** What signing `r` on costs on this ship: his fee, or the shipwright's price for the men a hire raises her by. */
     const priceOf = (r) => (room?.ok ? hireCharge(r.fee, room.raise) : r.fee);
-    const whyOf = (r) => (!naval() ? CREW_HALL_TEXT.noSea : !s ? CREW_HALL_TEXT.noShip : fighting ? CREW_HALL_TEXT.fighting
-      : room && !room.ok && !room.full ? room.why : room?.full && !swappable ? CREW_HALL_TEXT.ashore('The whole crew')
-        : purse < priceOf(r) ? CREW_HALL_TEXT.short(priceOf(r)) : null);
+    const whyOf = (r) =>
+      !naval()
+        ? CREW_HALL_TEXT.noSea
+        : !s
+          ? CREW_HALL_TEXT.noShip
+          : fighting
+            ? CREW_HALL_TEXT.fighting
+            : room && !room.ok && !room.full
+              ? room.why
+              : room?.full && !swappable
+                ? CREW_HALL_TEXT.ashore('The whole crew')
+                : purse < priceOf(r)
+                  ? CREW_HALL_TEXT.short(priceOf(r))
+                  : null;
     return {
-      ...base, choices: choice(crewed), uid: s?.row.uid ?? null, ship: s?.row ?? null, hands, room, fighting,
+      ...base,
+      choices: choice(crewed),
+      uid: s?.row.uid ?? null,
+      ship: s?.row ?? null,
+      hands,
+      room,
+      fighting,
       // AUDIT SHIPYARDS L7-2: a full deck signs a recruit on IN A HAND'S PLACE (`swap`), the player naming the hand
       recruits: recruits.map((r) => ({ ...r, price: priceOf(r), swap: !!room?.full, why: whyOf(r) })),
-      why: !naval() ? CREW_HALL_TEXT.noSea : crewed.length ? (fighting ? CREW_HALL_TEXT.fighting : null) : CREW_HALL_TEXT.noShip,
-      wait: signed.wait,   // CREW-SIGNED: the hall's read in flight - the window paints again when it lands
+      why: !naval()
+        ? CREW_HALL_TEXT.noSea
+        : crewed.length
+          ? fighting
+            ? CREW_HALL_TEXT.fighting
+            : null
+          : CREW_HALL_TEXT.noShip,
+      wait: signed.wait, // CREW-SIGNED: the hall's read in flight - the window paints again when it lands
     };
   }
 
@@ -201,7 +291,8 @@ export function createShipyardHost(deps) {
       if (gold() < price) return said(false, SHIPYARD_TEXT.short(price));
       const it = shipyardItem(hull, deps.mintUid());
       // AUDIT SHIPYARDS L1-4: her parts go into the pack by the counter's own carry gate - asked before a coin moves
-      if (it.templateIndex !== BOAT_DEED_TEMPLATE && deps.canCarry && !deps.canCarry(it)) return said(false, SHIPYARD_TEXT.heavy(it.name));
+      if (it.templateIndex !== BOAT_DEED_TEMPLATE && deps.canCarry && !deps.canCarry(it))
+        return said(false, SHIPYARD_TEXT.heavy(it.name));
       deps.pay?.(price);
       if (it.templateIndex === BOAT_DEED_TEMPLATE) {
         const rec = titleDeed(it, { port: site?.townName ? { name: site.townName } : null });
@@ -227,16 +318,17 @@ export function createShipyardHost(deps) {
       // let go first - its click would stand her again off the item the sale spends, a ship sold twice
       const c = csa();
       if (c?.state?.placing && c.state.placeItem?.UID === uid) c.StopPlacing?.();
-      if (s.at.where === 'here' && !csa()?.LayUpBoat?.(s.at.boat)) return said(false, 'The ship couldn\'t be brought in to be sold.');
+      if (s.at.where === 'here' && !csa()?.LayUpBoat?.(s.at.boat))
+        return said(false, "The ship couldn't be brought in to be sold.");
       if (s.at.where === 'packed') {
         const pack = deps.pack?.() ?? [];
         const i = pack.findIndex((it) => it?.templateIndex === BOAT_PARTS_TEMPLATE && it.UID === uid);
         if (i >= 0) pack.splice(i, 1);
       }
       deps.cabinSold?.(uid, site?.regionIndex ?? 0);
-      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h);   // CREW-SIGNED: her hands back at the hall
+      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall
       forgetShip(uid);
-      (deps.forgetBoat ?? ((u) => naval()?.forgetBoat?.(u)))(uid);   // AUDIT SHIPYARDS L1-6: whatever the sea fight's switch
+      (deps.forgetBoat ?? ((u) => naval()?.forgetBoat?.(u)))(uid); // AUDIT SHIPYARDS L1-6: whatever the sea fight's switch
       csa()?.forgetHold?.(uid);
       deps.credit?.(offer);
       deps.traded?.();
@@ -246,19 +338,26 @@ export function createShipyardHost(deps) {
     if (verb === 'summon' || verb === 'away' || verb === 'rename' || verb === 'refit' || verb === 'role') {
       // AUDIT SHIPYARDS L1-9: a summons while another placing is armed lets that one go - Come Sail Away's StartPlacing
       // keeps the first and the window's second press was nothing, its next click standing the other ship
-      if (verb === 'summon') { const c = csa(); if (c?.state?.placing) c.StopPlacing?.(); }
+      if (verb === 'summon') {
+        const c = csa();
+        if (c?.state?.placing) c.StopPlacing?.();
+      }
       return f.act(uid, verb === 'refit' ? 'refit' : verb, b);
     }
     if (verb === 'hire' || verb === 'payoff') {
       const n = naval();
       if (!n) return said(false, CREW_HALL_TEXT.noSea);
-      if (!CREWED_HULLS.includes(rec.hull) || !s.at.boat || !AT_HAND.includes(s.at.where)) return said(false, CREW_HALL_TEXT.noShip);
-      if (s.row.status?.inFight) return said(false, CREW_HALL_TEXT.fighting);   // AUDIT SHIPYARDS L2-11: as the sale and the yard
+      if (!CREWED_HULLS.includes(rec.hull) || !s.at.boat || !AT_HAND.includes(s.at.where))
+        return said(false, CREW_HALL_TEXT.noShip);
+      if (s.row.status?.inFight) return said(false, CREW_HALL_TEXT.fighting); // AUDIT SHIPYARDS L2-11: as the sale and the yard
       if (verb === 'payoff') {
         const r = n.releaseHand(s.at.boat, String(b ?? ''));
         if (!r.ok) return said(false, r.text);
         letGo(r.hand);
-        return said(true, r.next ? CREW_HALL_TEXT.steppedUp(r.hand.name, name, r.next.name) : CREW_HALL_TEXT.paidOff(r.hand.name, name));
+        return said(
+          true,
+          r.next ? CREW_HALL_TEXT.steppedUp(r.hand.name, name, r.next.name) : CREW_HALL_TEXT.paidOff(r.hand.name, name),
+        );
       }
       const plan = hirePlan(site, s, rec, n, name, b);
       if (!plan.go) return plan;
@@ -270,7 +369,11 @@ export function createShipyardHost(deps) {
         if (!k.ok) return said(false, k.text);
         held.add(id);
         let r;
-        try { r = act(site, verb, a, b); } finally { held.delete(id); }
+        try {
+          r = act(site, verb, a, b);
+        } finally {
+          held.delete(id);
+        }
         if (!r?.ok && k.fresh) signs.release(id);
         return r;
       });
@@ -287,31 +390,46 @@ export function createShipyardHost(deps) {
     const id = typeof b === 'object' && b ? b.id : b;
     const replace = typeof b === 'object' && b && typeof b.replace === 'string' && b.replace ? b.replace : null;
     const day = deps.day?.() ?? 0;
-    const all = recruitsOf({ mapId: site?.mapId ?? 0, day, regionIndex: site?.regionIndex ?? -1, serving: serving(ships()) });
+    const all = recruitsOf({
+      mapId: site?.mapId ?? 0,
+      day,
+      regionIndex: site?.regionIndex ?? -1,
+      serving: serving(ships()),
+    });
     const recruit = all.find((r) => r.id === id);
     // AUDIT SHIPYARDS L2-8: a roster turned while the window stood says so - not "signed on elsewhere"
-    if (!recruit) return said(false, recruitDay(id) !== Math.floor(Number(day) || 0) ? CREW_HALL_TEXT.newDay : CREW_HALL_TEXT.gone);
+    if (!recruit)
+      return said(false, recruitDay(id) !== Math.floor(Number(day) || 0) ? CREW_HALL_TEXT.newDay : CREW_HALL_TEXT.gone);
     const fee = recruitFee(recruit.grade, recruit.trade);
-    if (replace) {   // AUDIT SHIPYARDS L7-2: her deck full - he signs on in the named hand's place
+    if (replace) {
+      // AUDIT SHIPYARDS L7-2: her deck full - he signs on in the named hand's place
       if (gold() < fee) return said(false, CREW_HALL_TEXT.short(fee));
-      return { recruit, go: () => {
-        const r = n.swapHand(s.at.boat, replace, recruit);
-        if (!r.ok) return said(false, r.text);
-        deps.pay?.(fee);
-        letGo(r.out);
-        return said(true, CREW_HALL_TEXT.swapped(recruit.name, r.hand.role, name, r.out?.name ?? replace));
-      } };
+      return {
+        recruit,
+        go: () => {
+          const r = n.swapHand(s.at.boat, replace, recruit);
+          if (!r.ok) return said(false, r.text);
+          deps.pay?.(fee);
+          letGo(r.out);
+          return said(true, CREW_HALL_TEXT.swapped(recruit.name, r.hand.role, name, r.out?.name ?? replace));
+        },
+      };
     }
     const st = s.row.status;
-    const plan = st ? enlistPlan({ hull: rec.hull, crew: st.crew, maxCrew: st.maxCrew, hands: n.crewHands(s.at.boat).length }) : null;
-    const cost = plan?.ok ? hireCharge(fee, plan.raise) : fee;   // AUDIT SHIPYARDS L2-2: the men a hire raises at the shipwright's price
+    const plan = st
+      ? enlistPlan({ hull: rec.hull, crew: st.crew, maxCrew: st.maxCrew, hands: n.crewHands(s.at.boat).length })
+      : null;
+    const cost = plan?.ok ? hireCharge(fee, plan.raise) : fee; // AUDIT SHIPYARDS L2-2: the men a hire raises at the shipwright's price
     if (gold() < cost) return said(false, CREW_HALL_TEXT.short(cost));
-    return { recruit, go: () => {
-      const r = n.enlistHand(s.at.boat, recruit);
-      if (!r.ok) return said(false, r.full ? CREW_HALL_TEXT.full : r.text);
-      deps.pay?.(hireCharge(fee, r.raise ?? 0));
-      return said(true, CREW_HALL_TEXT.signed(recruit.name, r.hand.role, name));
-    } };
+    return {
+      recruit,
+      go: () => {
+        const r = n.enlistHand(s.at.boat, recruit);
+        if (!r.ok) return said(false, r.full ? CREW_HALL_TEXT.full : r.text);
+        deps.pay?.(hireCharge(fee, r.raise ?? 0));
+        return said(true, CREW_HALL_TEXT.signed(recruit.name, r.hand.role, name));
+      },
+    };
   }
 
   return { model, act };

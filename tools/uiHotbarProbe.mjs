@@ -93,62 +93,148 @@ globalThis.__chip = () => { const c = document.querySelector('.hud-qspell'); ret
 </script></body></html>`;
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = process.env.PROBE_PORT ?? vite.config.server.port ?? vite.httpServer.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 let failures = 0;
-const check = (name, ok, detail = '') => { if (!ok) failures++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  if (!ok) failures++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 const VIEWS = [
   { name: 'desktop-1x', viewport: { width: 1440, height: 900 }, dpr: 1 },
   { name: 'desktop-2x', viewport: { width: 1440, height: 900 }, dpr: 2 },
-  { name: 'laptop-1.25x', viewport: { width: 1366, height: 768 }, dpr: 1.25 },   // AUDIT UI B2: where a spell's icon ran past its face
+  { name: 'laptop-1.25x', viewport: { width: 1366, height: 768 }, dpr: 1.25 }, // AUDIT UI B2: where a spell's icon ran past its face
   { name: 'phone-2.625x', viewport: { width: 393, height: 851 }, dpr: 2.625, isMobile: true, hasTouch: true },
 ];
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   for (const v of VIEWS) {
-    const ctx = await browser.newContext({ viewport: v.viewport, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch, deviceScaleFactor: v.dpr });
+    const ctx = await browser.newContext({
+      viewport: v.viewport,
+      isMobile: !!v.isMobile,
+      hasTouch: !!v.hasTouch,
+      deviceScaleFactor: v.dpr,
+    });
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (err) => errors.push(err.message));
-    await page.route('**/tools/arena2/**', (route) => route.continue({ url: route.request().url().replace('/tools/arena2/', '/arena2/') }));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 90000 });
-    await page.waitForFunction(() => typeof globalThis.__slots === 'function' && globalThis.__slots().length >= 10, null, { timeout: 90000 });
-    await page.waitForFunction(() => globalThis.__slots().filter((s) => s.title && s.title !== `Slot ${s.slot + 1}`).every((s) => s.pic?.nat?.[0] > 0), null, { timeout: 30000 }).catch(() => {});
-    await page.waitForTimeout(1500);   // a second pass of the bar's measure (its FIT_TTL)
+    await page.route('**/tools/arena2/**', (route) =>
+      route.continue({ url: route.request().url().replace('/tools/arena2/', '/arena2/') }),
+    );
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
+    await page.waitForFunction(
+      () => typeof globalThis.__slots === 'function' && globalThis.__slots().length >= 10,
+      null,
+      { timeout: 90000 },
+    );
+    await page
+      .waitForFunction(
+        () =>
+          globalThis
+            .__slots()
+            .filter((s) => s.title && s.title !== `Slot ${s.slot + 1}`)
+            .every((s) => s.pic?.nat?.[0] > 0),
+        null,
+        { timeout: 30000 },
+      )
+      .catch(() => {});
+    await page.waitForTimeout(1500); // a second pass of the bar's measure (its FIT_TTL)
     const slots = await page.evaluate(() => globalThis.__slots());
     const tag = v.name;
     const filled = slots.filter((s) => s.title && s.title !== `Slot ${s.slot + 1}`);
     const spells = filled.filter((s) => s.spell);
-    check(`${tag}: three spell slots, each its ICON00I0 icon, no initials`, spells.length === 3 && spells.every((s) => s.pic && s.pic.fit && !s.glyph),
-      JSON.stringify(spells.map((s) => ({ t: s.title, g: s.glyph, p: s.pic }))));
-    check(`${tag}: the lost spell keeps its icon, a ghost`, spells.some((s) => s.ghost && s.pic));
+    check(
+      `${tag}: three spell slots, each its ICON00I0 icon, no initials`,
+      spells.length === 3 && spells.every((s) => s.pic && s.pic.fit && !s.glyph),
+      JSON.stringify(spells.map((s) => ({ t: s.title, g: s.glyph, p: s.pic }))),
+    );
+    check(
+      `${tag}: the lost spell keeps its icon, a ghost`,
+      spells.some((s) => s.ghost && s.pic),
+    );
     const items = filled.filter((s) => !s.spell);
-    check(`${tag}: every item slot a fitted picture (${items.length})`, items.length >= 7 && items.every((s) => s.pic?.fit), items.filter((s) => !s.pic?.fit).map((s) => s.title).join(', '));
+    check(
+      `${tag}: every item slot a fitted picture (${items.length})`,
+      items.length >= 7 && items.every((s) => s.pic?.fit),
+      items
+        .filter((s) => !s.pic?.fit)
+        .map((s) => s.title)
+        .join(', '),
+    );
     const all = filled.filter((s) => s.pic);
-    check(`${tag}: the page resamples none of them`, all.every((s) => !s.pic.resampled), all.filter((s) => s.pic.resampled).map((s) => `${s.title} ${s.pic.nat} @ ${s.pic.shown.map((x) => x.toFixed(1))}`).join('; '));
-    check(`${tag}: none past its face`, all.every((s) => s.pic.shown[0] <= s.face.w + 0.5 && s.pic.shown[1] <= s.face.h + 0.5));
+    check(
+      `${tag}: the page resamples none of them`,
+      all.every((s) => !s.pic.resampled),
+      all
+        .filter((s) => s.pic.resampled)
+        .map((s) => `${s.title} ${s.pic.nat} @ ${s.pic.shown.map((x) => x.toFixed(1))}`)
+        .join('; '),
+    );
+    check(
+      `${tag}: none past its face`,
+      all.every((s) => s.pic.shown[0] <= s.face.w + 0.5 && s.pic.shown[1] <= s.face.h + 0.5),
+    );
     const counts = Object.fromEntries(filled.map((s) => [s.title.split(' (')[0], s.count]));
-    check(`${tag}: the stacks show their counts, a single piece none`, Object.entries(counts).filter(([, c]) => c).length >= 3
-      && filled.filter((s) => /Ruby|Red Flowers|Potion|Glass/.test(s.title)).every((s) => Number(s.count) > 1)
-      && filled.filter((s) => /Cuirass|Ring|Book|Longsword/.test(s.title)).every((s) => !s.count), JSON.stringify(counts));
+    check(
+      `${tag}: the stacks show their counts, a single piece none`,
+      Object.entries(counts).filter(([, c]) => c).length >= 3 &&
+        filled.filter((s) => /Ruby|Red Flowers|Potion|Glass/.test(s.title)).every((s) => Number(s.count) > 1) &&
+        filled.filter((s) => /Cuirass|Ring|Book|Longsword/.test(s.title)).every((s) => !s.count),
+      JSON.stringify(counts),
+    );
     // UI1b: A TIERED ITEM'S OUTLINE IS THE SLOT'S OWN EDGE - the frame spans the slot, and wears the tier's colour
     const tiered = filled.filter((s) => s.rarity);
-    check(`${tag}: the tiered slots' own frames wear their tiers (${tiered.map((s) => s.rarity).join(', ')})`, tiered.length === 3
-      && tiered.every((s) => s.frame !== filled.find((x) => !x.rarity && !x.spell)?.frame && Math.abs(s.frameBox.w - s.slotBox.w) < 0.5 && Math.abs(s.frameBox.h - s.slotBox.h) < 0.5),
-      JSON.stringify(tiered.map((s) => [s.rarity, s.frame, s.frameBox?.w, s.slotBox.w])));
-    console.log(`     ${filled.map((s) => `${s.title.slice(0, 16)}${s.count ? `x${s.count}` : ''}=${s.pic ? s.pic.shown.map((x) => x.toFixed(0)).join('x') : 'none'}`).join(', ')}`);
-    await page.locator('.hb').screenshot({ path: join(OUT, `ui2-hotbar-${tag}.png`) }).catch(() => {});
+    check(
+      `${tag}: the tiered slots' own frames wear their tiers (${tiered.map((s) => s.rarity).join(', ')})`,
+      tiered.length === 3 &&
+        tiered.every(
+          (s) =>
+            s.frame !== filled.find((x) => !x.rarity && !x.spell)?.frame &&
+            Math.abs(s.frameBox.w - s.slotBox.w) < 0.5 &&
+            Math.abs(s.frameBox.h - s.slotBox.h) < 0.5,
+        ),
+      JSON.stringify(tiered.map((s) => [s.rarity, s.frame, s.frameBox?.w, s.slotBox.w])),
+    );
+    console.log(
+      `     ${filled.map((s) => `${s.title.slice(0, 16)}${s.count ? `x${s.count}` : ''}=${s.pic ? s.pic.shown.map((x) => x.toFixed(0)).join('x') : 'none'}`).join(', ')}`,
+    );
+    await page
+      .locator('.hb')
+      .screenshot({ path: join(OUT, `ui2-hotbar-${tag}.png`) })
+      .catch(() => {});
     // the diamond instead: its spell chip wears the icon
     await page.evaluate(() => globalThis.__mode('diamond'));
     await page.waitForFunction(() => globalThis.__chip()?.icon?.nat?.[0] > 0, null, { timeout: 20000 }).catch(() => {});
     const chip = await page.evaluate(() => globalThis.__chip());
-    check(`${tag}: the diamond's spell chip wears its spell's icon before its name`, !!chip?.on && !!chip.icon?.fit && chip.name === 'Fireball' && !chip.icon.resampled, JSON.stringify(chip));
-    await page.waitForFunction(() => globalThis.__cells().length >= 1 && globalThis.__cells().every((p) => p.nat[0] > 0), null, { timeout: 20000 }).catch(() => {});
+    check(
+      `${tag}: the diamond's spell chip wears its spell's icon before its name`,
+      !!chip?.on && !!chip.icon?.fit && chip.name === 'Fireball' && !chip.icon.resampled,
+      JSON.stringify(chip),
+    );
+    await page
+      .waitForFunction(
+        () => globalThis.__cells().length >= 1 && globalThis.__cells().every((p) => p.nat[0] > 0),
+        null,
+        { timeout: 20000 },
+      )
+      .catch(() => {});
     const cells = await page.evaluate(() => globalThis.__cells());
-    check(`${tag}: the diamond's cells draw fitted pictures, unresampled (${cells.length})`, cells.length >= 1 && cells.every((p) => p.fit && !p.resampled), JSON.stringify(cells));
-    await page.locator('.hud-quick').screenshot({ path: join(OUT, `ui2-diamond-${tag}.png`) }).catch(() => {});
+    check(
+      `${tag}: the diamond's cells draw fitted pictures, unresampled (${cells.length})`,
+      cells.length >= 1 && cells.every((p) => p.fit && !p.resampled),
+      JSON.stringify(cells),
+    );
+    await page
+      .locator('.hud-quick')
+      .screenshot({ path: join(OUT, `ui2-diamond-${tag}.png`) })
+      .catch(() => {});
     check(`${tag}: no page errors`, errors.length === 0, errors.join(' | '));
     await ctx.close();
   }

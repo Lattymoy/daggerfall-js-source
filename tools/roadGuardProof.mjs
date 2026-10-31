@@ -20,7 +20,7 @@ import { execFileSync } from 'node:child_process';
 import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-export const GUARD_PARENT = 'ae33fe8e7';   // the commit the guard (a06279295) was made on
+export const GUARD_PARENT = 'ae33fe8e7'; // the commit the guard (a06279295) was made on
 
 /** The painter as it stood at `ref`, its relative imports pointed back into this tree; answers its module. */
 async function painterAt(ref) {
@@ -31,28 +31,45 @@ async function painterAt(ref) {
   const dir = mkdtempSync(join(tmpdir(), 'roadguard-'));
   const file = join(dir, 'roadPainter.before.mjs');
   writeFileSync(file, text);
-  try { return await import(pathToFileURL(file).href); } finally { rmSync(dir, { recursive: true, force: true }); }
+  try {
+    return await import(pathToFileURL(file).href);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 async function main(argv) {
-  const at = (flag) => { const i = argv.indexOf(flag); return i >= 0 ? argv[i + 1] : null; };
+  const at = (flag) => {
+    const i = argv.indexOf(flag);
+    return i >= 0 ? argv[i + 1] : null;
+  };
   const every = Math.max(1, Number(at('--every')) || 1);
   const before = await painterAt(at('--ref') ?? GUARD_PARENT);
   const now = await import(pathToFileURL(join(ROOT, 'src/world/road/roadPainter.js')).href);
   const { MAP_W } = await import(pathToFileURL(join(ROOT, 'src/world/road/roadNetwork.js')).href);
   const { bayRoads } = await import(pathToFileURL(join(ROOT, 'test/bayRoads.mjs')).href);
   const bay = bayRoads();
-  if (!bay) { console.error('roadGuardProof: ARENA2_PATH is not an ARENA2 folder (sh tools/fetch-data.sh)'); process.exit(2); }
+  if (!bay) {
+    console.error('roadGuardProof: ARENA2_PATH is not an ARENA2 folder (sh tools/fetch-data.sh)');
+    process.exit(2);
+  }
   const R = { road: bay.roads, track: bay.tracks, river: bay.rivers, stream: bay.streams };
   let seed = 12345;
-  const rnd = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
-  let cases = 0, differing = 0;
+  const rnd = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
+  let cases = 0,
+    differing = 0;
   const check = (masks, corners, water, rect, prefill) => {
     const ground = new Uint8Array(129 * 129);
     for (let k = 0; k < ground.length; k++) ground[k] = Math.floor(rnd() * 5);
-    const a = new Uint8Array(128 * 128), b = new Uint8Array(128 * 128);
-    if (prefill) for (let k = 0; k < 300; k++) { const j = Math.floor(rnd() * 16384); a[j] = b[j] = 1 + Math.floor(rnd() * 200); }
-    const pa = new Uint8Array(16384), pb = new Uint8Array(16384);
+    const a = new Uint8Array(128 * 128),
+      b = new Uint8Array(128 * 128);
+    if (prefill)
+      for (let k = 0; k < 300; k++) {
+        const j = Math.floor(rnd() * 16384);
+        a[j] = b[j] = 1 + Math.floor(rnd() * 200);
+      }
+    const pa = new Uint8Array(16384),
+      pb = new Uint8Array(16384);
     const opts = (paths) => ({ river: masks.river, stream: masks.stream, water, paths, corners });
     const na = before.paintRoads(ground, a, masks.road, masks.track, rect, 129, opts(pa));
     const nb = now.paintRoads(ground, b, masks.road, masks.track, rect, 129, opts(pb));
@@ -65,11 +82,35 @@ async function main(argv) {
   let real = 0;
   for (let i = 0; i < R.road.length; i++) {
     const masks = { road: R.road[i], track: R.track[i], river: R.river[i], stream: R.stream[i] };
-    const px = i % MAP_W, py = (i / MAP_W) | 0;
-    const corners = { road: cornersOf(R.road, px, py), track: cornersOf(R.track, px, py), river: cornersOf(R.river, px, py), stream: cornersOf(R.stream, px, py) };
-    if (!masks.road && !masks.track && !masks.river && !masks.stream && !corners.road && !corners.track && !corners.river && !corners.stream) continue;
+    const px = i % MAP_W,
+      py = (i / MAP_W) | 0;
+    const corners = {
+      road: cornersOf(R.road, px, py),
+      track: cornersOf(R.track, px, py),
+      river: cornersOf(R.river, px, py),
+      stream: cornersOf(R.stream, px, py),
+    };
+    if (
+      !masks.road &&
+      !masks.track &&
+      !masks.river &&
+      !masks.stream &&
+      !corners.road &&
+      !corners.track &&
+      !corners.river &&
+      !corners.stream
+    )
+      continue;
     if (real++ % every) continue;
-    const rect = i % 7 === 0 ? { xMin: 20 + Math.floor(rnd() * 30), yMin: 20 + Math.floor(rnd() * 30), xMax: 70 + Math.floor(rnd() * 50), yMax: 70 + Math.floor(rnd() * 50) } : null;
+    const rect =
+      i % 7 === 0
+        ? {
+            xMin: 20 + Math.floor(rnd() * 30),
+            yMin: 20 + Math.floor(rnd() * 30),
+            xMax: 70 + Math.floor(rnd() * 50),
+            yMax: 70 + Math.floor(rnd() * 50),
+          }
+        : null;
     check(masks, corners, true, rect, i % 3 === 0);
     if (i % 5 === 0) check(masks, corners, false, rect, false);
   }
@@ -77,12 +118,35 @@ async function main(argv) {
   for (let m = 0; m < 256; m++) {
     for (let k = 0; k < 40; k++) {
       const r8 = () => Math.floor(rnd() * 256);
-      check({ road: m, track: r8(), river: r8(), stream: r8() }, { road: r8(), track: r8(), river: r8(), stream: r8() }, rnd() < 0.7,
-        rnd() < 0.5 ? { xMin: Math.floor(rnd() * 64), yMin: Math.floor(rnd() * 64), xMax: 64 + Math.floor(rnd() * 64), yMax: 64 + Math.floor(rnd() * 64) } : null, rnd() < 0.3);
+      check(
+        { road: m, track: r8(), river: r8(), stream: r8() },
+        { road: r8(), track: r8(), river: r8(), stream: r8() },
+        rnd() < 0.7,
+        rnd() < 0.5
+          ? {
+              xMin: Math.floor(rnd() * 64),
+              yMin: Math.floor(rnd() * 64),
+              xMax: 64 + Math.floor(rnd() * 64),
+              yMax: 64 + Math.floor(rnd() * 64),
+            }
+          : null,
+        rnd() < 0.3,
+      );
     }
   }
-  console.log(`${map} cases over the shipped map, ${cases} with the sweep: ${differing ? `${differing} DIFFER` : 'none differ'}`);
+  console.log(
+    `${map} cases over the shipped map, ${cases} with the sweep: ${differing ? `${differing} DIFFER` : 'none differ'}`,
+  );
   return differing ? 1 : 0;
 }
 
-if (isMain(import.meta.url)) main(process.argv.slice(2)).then((code) => { process.exitCode = code; }, (e) => { console.error(e?.message ?? e); process.exitCode = 2; });
+if (isMain(import.meta.url))
+  main(process.argv.slice(2)).then(
+    (code) => {
+      process.exitCode = code;
+    },
+    (e) => {
+      console.error(e?.message ?? e);
+      process.exitCode = 2;
+    },
+  );

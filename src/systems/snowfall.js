@@ -19,9 +19,9 @@
 // in double - pinned against the reference harness's traces (test/systems/snowfall1_model.test.js).
 
 import { modSetting } from './modSettings.js';
-import { roundToInt, lerpF } from './mathf.js';   // Mathf.RoundToInt (banker's), Mathf.Lerp in float
-import { bytesToBase64, base64ToBytes } from './save/base64Bytes.js';   // Convert.ToBase64String / FromBase64String
-import { deflateRaw, inflateRaw } from '../formats/rawDeflate.js';   // DeflateStream
+import { roundToInt, lerpF } from './mathf.js'; // Mathf.RoundToInt (banker's), Mathf.Lerp in float
+import { bytesToBase64, base64ToBytes } from './save/base64Bytes.js'; // Convert.ToBase64String / FromBase64String
+import { deflateRaw, inflateRaw } from '../formats/rawDeflate.js'; // DeflateStream
 
 const f32 = Math.fround;
 const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
@@ -36,7 +36,11 @@ export function smoothStepF(edge0, edge1, value) {
   return f32(f32(t * t) * f32(3 - f32(2 * t)));
 }
 /** Vector2.Distance, as Unity computes it: the squares summed in float, the root in double, cast to float. */
-const distanceF = (ax, ay, bx, by) => { const dx = f32(ax - bx), dy = f32(ay - by); return f32(Math.sqrt(f32(f32(dx * dx) + f32(dy * dy)))); };
+const distanceF = (ax, ay, bx, by) => {
+  const dx = f32(ax - bx),
+    dy = f32(ay - by);
+  return f32(Math.sqrt(f32(f32(dx * dx) + f32(dy * dy))));
+};
 
 // ---- DynamicSnowSettings and ReadSettings -------------------------------------------------------------------------
 export const SNOWFALL_VENDOR = 'snowfall';
@@ -45,18 +49,50 @@ export const MESH_RESOLUTIONS = Object.freeze([97, 129, 161]);
 export const MASK_RESOLUTIONS = Object.freeze([128, 256, 512]);
 /** DynamicSnowSettings' field initialisers: the built-in values, and the three the mod gives no setting (the corpses'). */
 export const SNOWFALL_BUILT_IN = Object.freeze({
-  corpseImpressionsEnabled: true, corpseRemainingSnowDepth: f32(0.1), corpseImpressionWidth: f32(1.5),
-  enabled: true, activationOverride: 0, debugSnowDepthOverride: 0,
-  settlementMinimumDepth: f32(0.2), settlementMaximumDepth: f32(0.4), wildernessMinimumDepth: f32(0.4), wildernessMaximumDepth: f32(0.8),
-  snowfallDepthStep: f32(0.1), snowfallDepthHours: 3, meltDepthStep: f32(0.1), meltDepthHours: 72,
-  settlementBoundaryFeather: 8, locationLoaderIntegration: true, locationLoaderMaximumDepth: f32(0.1), locationLoaderBoundaryFeather: 4,
-  basicRoadsIntegration: true, pathMaximumDepth: f32(0.1), pathBoundaryFeather: 1, roadBermsEnabled: true, roadBermRise: f32(0.05), roadBermWidth: 2,
-  snowRadius: 32, meshResolution: 161, maskResolution: 256, recenterDistance: 6, maxSnowSlope: 55,
-  textureWorldSize: 4, compressionDarkening: f32(0.18), trackImpressionStrength: 1, impressionShoulderWidth: f32(0.5),
-  playerTrackWidth: f32(0.7), playerRemainingSnow: f32(0.18), playerStampSpacing: f32(0.25),
-  npcTracksEnabled: true, npcTrackWidth: f32(0.55), npcRemainingSnow: f32(0.28), npcStampSpacing: f32(0.5),
-  passiveRefillHours: 12, snowfallRefillHours: f32(1.5),
-  streamedBlanketPrototype: true, distantTracksEnabled: true,
+  corpseImpressionsEnabled: true,
+  corpseRemainingSnowDepth: f32(0.1),
+  corpseImpressionWidth: f32(1.5),
+  enabled: true,
+  activationOverride: 0,
+  debugSnowDepthOverride: 0,
+  settlementMinimumDepth: f32(0.2),
+  settlementMaximumDepth: f32(0.4),
+  wildernessMinimumDepth: f32(0.4),
+  wildernessMaximumDepth: f32(0.8),
+  snowfallDepthStep: f32(0.1),
+  snowfallDepthHours: 3,
+  meltDepthStep: f32(0.1),
+  meltDepthHours: 72,
+  settlementBoundaryFeather: 8,
+  locationLoaderIntegration: true,
+  locationLoaderMaximumDepth: f32(0.1),
+  locationLoaderBoundaryFeather: 4,
+  basicRoadsIntegration: true,
+  pathMaximumDepth: f32(0.1),
+  pathBoundaryFeather: 1,
+  roadBermsEnabled: true,
+  roadBermRise: f32(0.05),
+  roadBermWidth: 2,
+  snowRadius: 32,
+  meshResolution: 161,
+  maskResolution: 256,
+  recenterDistance: 6,
+  maxSnowSlope: 55,
+  textureWorldSize: 4,
+  compressionDarkening: f32(0.18),
+  trackImpressionStrength: 1,
+  impressionShoulderWidth: f32(0.5),
+  playerTrackWidth: f32(0.7),
+  playerRemainingSnow: f32(0.18),
+  playerStampSpacing: f32(0.25),
+  npcTracksEnabled: true,
+  npcTrackWidth: f32(0.55),
+  npcRemainingSnow: f32(0.28),
+  npcStampSpacing: f32(0.5),
+  passiveRefillHours: 12,
+  snowfallRefillHours: f32(1.5),
+  streamedBlanketPrototype: true,
+  distantTracksEnabled: true,
 });
 
 /** DynamicSnowMod.FiniteRoadValue. */
@@ -117,17 +153,31 @@ export function snowfallSettings(read = (k) => modSetting(SNOWFALL_VENDOR, k)) {
 // ---- SnowpackState ------------------------------------------------------------------------------------------------
 const SECONDS_PER_HOUR = 3600;
 /** Clamp(double), the snowpack's: a non-finite value is the minimum. */
-const clampD = (value, minimum, maximum) => (Number.isFinite(value) ? Math.max(minimum, Math.min(maximum, value)) : minimum);
+const clampD = (value, minimum, maximum) =>
+  Number.isFinite(value) ? Math.max(minimum, Math.min(maximum, value)) : minimum;
 
 /** SnowpackState: the two depths (vanilla locations' and the wild's), the phase the weather is in and how far through
  *  its interval - in double, as the mod keeps it; game seconds are DaggerfallDateTime.ToSeconds(). */
 export class SnowpackState {
   constructor() {
-    this.settlementMin = 0; this.settlementMax = 0; this.wildernessMin = 0; this.wildernessMax = 0;
-    this.snowfallStep = 0; this.meltStep = 0; this.snowfallInterval = 0; this.meltInterval = 0;
-    this.lastObservedGameSeconds = 0; this.hasTimeAnchor = false; this.hasConfiguration = false;
-    this.hasSeasonObservation = false; this.wasWinter = false; this.preserveRestoredWinter = false;
-    this.settlementDepth = 0; this.wildernessDepth = 0; this.phaseProgressSeconds = 0; this.phaseWasSnowing = false;
+    this.settlementMin = 0;
+    this.settlementMax = 0;
+    this.wildernessMin = 0;
+    this.wildernessMax = 0;
+    this.snowfallStep = 0;
+    this.meltStep = 0;
+    this.snowfallInterval = 0;
+    this.meltInterval = 0;
+    this.lastObservedGameSeconds = 0;
+    this.hasTimeAnchor = false;
+    this.hasConfiguration = false;
+    this.hasSeasonObservation = false;
+    this.wasWinter = false;
+    this.preserveRestoredWinter = false;
+    this.settlementDepth = 0;
+    this.wildernessDepth = 0;
+    this.phaseProgressSeconds = 0;
+    this.phaseWasSnowing = false;
   }
 
   /** Configure(settings, resetProgress). */
@@ -204,17 +254,26 @@ export class SnowpackState {
     }
     if (!this.hasTimeAnchor || now <= this.lastObservedGameSeconds) {
       this.resetClock(now);
-      if (snowing !== this.phaseWasSnowing) { this.phaseWasSnowing = snowing; this.phaseProgressSeconds = 0; }
+      if (snowing !== this.phaseWasSnowing) {
+        this.phaseWasSnowing = snowing;
+        this.phaseProgressSeconds = 0;
+      }
       return changed;
     }
     const elapsed = now - this.lastObservedGameSeconds;
     this.lastObservedGameSeconds = now;
     if (!winter || desert) {
-      if (snowing !== this.phaseWasSnowing) { this.phaseWasSnowing = snowing; this.phaseProgressSeconds = 0; }
+      if (snowing !== this.phaseWasSnowing) {
+        this.phaseWasSnowing = snowing;
+        this.phaseProgressSeconds = 0;
+      }
       return changed;
     }
     changed = this._applyElapsed(elapsed) || changed;
-    if (snowing !== this.phaseWasSnowing) { this.phaseWasSnowing = snowing; this.phaseProgressSeconds = 0; }
+    if (snowing !== this.phaseWasSnowing) {
+      this.phaseWasSnowing = snowing;
+      this.phaseProgressSeconds = 0;
+    }
     return changed;
   }
 
@@ -228,14 +287,18 @@ export class SnowpackState {
   /** ApplyElapsed(elapsed): whole intervals step both depths, the remainder carried; at the limit the phase's progress
    *  is dropped. */
   _applyElapsed(elapsed) {
-    if (this._atLimit()) { this.phaseProgressSeconds = 0; return false; }
+    if (this._atLimit()) {
+      this.phaseProgressSeconds = 0;
+      return false;
+    }
     const interval = this.phaseWasSnowing ? this.snowfallInterval : this.meltInterval;
     this.phaseProgressSeconds += elapsed;
     const steps = Math.floor(this.phaseProgressSeconds / interval);
     if (steps < 1) return false;
     this.phaseProgressSeconds -= steps * interval;
     const delta = (this.phaseWasSnowing ? this.snowfallStep : -this.meltStep) * steps;
-    const settlement = this.settlementDepth, wilderness = this.wildernessDepth;
+    const settlement = this.settlementDepth,
+      wilderness = this.wildernessDepth;
     this.settlementDepth = clampD(this.settlementDepth + delta, this.settlementMin, this.settlementMax);
     this.wildernessDepth = clampD(this.wildernessDepth + delta, this.wildernessMin, this.wildernessMax);
     if (this._atLimit()) this.phaseProgressSeconds = 0;
@@ -275,13 +338,18 @@ export function resolveSnowDepth(ctx, wilderness, settlement, locationCap, s) {
 export const contextOf = (r, g, b, a) => contextInto(r, g, b, a, [0, 0, 0, 0]);
 /** contextOf written into `out` at `o` (AUDIT ENVIRONS P6: a blanket vertex's own row, no array made). */
 export function contextInto(r, g, b, a, out, o = 0) {
-  out[o] = f32(r / 255); out[o + 1] = f32(g / 255); out[o + 2] = f32(b / 255); out[o + 3] = f32(a / 255);
+  out[o] = f32(r / 255);
+  out[o + 1] = f32(g / 255);
+  out[o + 2] = f32(b / 255);
+  out[o + 3] = f32(a / 255);
   return out;
 }
 
 // ---- SnowCoverageData ---------------------------------------------------------------------------------------------
 export const SNOW_MASK_ARCHIVES = Object.freeze([103, 303, 403]);
-const MASK_RECORDS = 56, MASK_TILE = 64, MASK_PIXELS = 4096;
+const MASK_RECORDS = 56,
+  MASK_TILE = 64,
+  MASK_PIXELS = 4096;
 /** The byte count of one archive's masks (DynamicSnowMod.SurfaceMaskByteCount). */
 export const SNOW_MASK_BYTES = MASK_RECORDS * MASK_PIXELS;
 const ROAD_RECORDS = Object.freeze([46, 47, 55]);
@@ -291,18 +359,26 @@ const SQRT2_F = f32(1.4142135);
  *  its x and its y apart (AUDIT ENVIRONS P5: no pair a sample). Basic Roads' PathUV turns a track tile the same way. */
 function turnX(tile, u, v) {
   switch (tile & 3) {
-    case 1: return v;
-    case 2: return f32(1 - u);
-    case 3: return f32(1 - v);
-    default: return u;
+    case 1:
+      return v;
+    case 2:
+      return f32(1 - u);
+    case 3:
+      return f32(1 - v);
+    default:
+      return u;
   }
 }
 function turnY(tile, u, v) {
   switch (tile & 3) {
-    case 1: return f32(1 - u);
-    case 2: return f32(1 - v);
-    case 3: return u;
-    default: return v;
+    case 1:
+      return f32(1 - u);
+    case 2:
+      return f32(1 - v);
+    case 3:
+      return u;
+    default:
+      return v;
   }
 }
 
@@ -311,17 +387,23 @@ function turnY(tile, u, v) {
 export class SnowCoverage {
   /** @param {ArrayLike<Uint8Array>} masks - the three archives' bytes, in SNOW_MASK_ARCHIVES' order */
   constructor(masks) {
-    if (!masks || masks.length !== SNOW_MASK_ARCHIVES.length) throw new Error('Three winter surface-mask arrays are required.');
+    if (!masks || masks.length !== SNOW_MASK_ARCHIVES.length)
+      throw new Error('Three winter surface-mask arrays are required.');
     /** @type {Map<number, { pixels: Uint8Array, full: boolean[], roads: Map<number, Float32Array>, byTile?: Uint8Array }>} */
     this.archives = new Map();
     SNOW_MASK_ARCHIVES.forEach((archive, i) => {
       const pixels = masks[i];
-      if (!pixels || pixels.length !== SNOW_MASK_BYTES) throw new Error('A winter surface-mask asset has an invalid size.');
+      if (!pixels || pixels.length !== SNOW_MASK_BYTES)
+        throw new Error('A winter surface-mask asset has an invalid size.');
       const full = [];
       for (let j = 0; j < MASK_RECORDS; j++) {
         let all = true;
         const o = j * MASK_PIXELS;
-        for (let k = 0; k < MASK_PIXELS; k++) if (pixels[o + k] !== 255) { all = false; break; }
+        for (let k = 0; k < MASK_PIXELS; k++)
+          if (pixels[o + k] !== 255) {
+            all = false;
+            break;
+          }
         full.push(all);
       }
       const roads = new Map();
@@ -335,14 +417,25 @@ export class SnowCoverage {
     const a = this.archives.get(archive);
     const field = a?.roads.get(tile >> 2);
     if (!field) return Infinity;
-    const x = turnX(tile, u, v), y = f32(1 - turnY(tile, u, v));
-    const cx = clamp01(x), cy = clamp01(y);
-    const px = f32(cx * 63), py = f32(cy * 63);
-    const x0 = floorToInt(px), y0 = floorToInt(py);
-    const x1 = Math.min(x0 + 1, 63), y1 = Math.min(y0 + 1, 63);
-    const fx = f32(px - x0), fy = f32(py - y0);
-    const along = lerpF(lerpF(field[y0 * 64 + x0], field[y0 * 64 + x1], fx), lerpF(field[y1 * 64 + x0], field[y1 * 64 + x1], fx), fy);
-    const ox = f32(x - cx), oy = f32(y - cy);
+    const x = turnX(tile, u, v),
+      y = f32(1 - turnY(tile, u, v));
+    const cx = clamp01(x),
+      cy = clamp01(y);
+    const px = f32(cx * 63),
+      py = f32(cy * 63);
+    const x0 = floorToInt(px),
+      y0 = floorToInt(py);
+    const x1 = Math.min(x0 + 1, 63),
+      y1 = Math.min(y0 + 1, 63);
+    const fx = f32(px - x0),
+      fy = f32(py - y0);
+    const along = lerpF(
+      lerpF(field[y0 * 64 + x0], field[y0 * 64 + x1], fx),
+      lerpF(field[y1 * 64 + x0], field[y1 * 64 + x1], fx),
+      fy,
+    );
+    const ox = f32(x - cx),
+      oy = f32(y - cy);
     return f32(f32(along / 63) + f32(Math.sqrt(f32(f32(ox * ox) + f32(oy * oy)))));
   }
 
@@ -352,11 +445,16 @@ export class SnowCoverage {
     const record = tile >> 2;
     const a = this.archives.get(archive);
     if (!a || record < 0 || record >= MASK_RECORDS) return null;
-    const px = f32(clamp01(turnX(tile, u, v)) * 63), py = f32(f32(1 - clamp01(turnY(tile, u, v))) * 63);
-    const x0 = floorToInt(px), y0 = floorToInt(py);
-    const x1 = Math.min(x0 + 1, 63), y1 = Math.min(y0 + 1, 63);
-    const fx = f32(px - x0), fy = f32(py - y0);
-    const o = record * MASK_PIXELS, p = a.pixels;
+    const px = f32(clamp01(turnX(tile, u, v)) * 63),
+      py = f32(f32(1 - clamp01(turnY(tile, u, v))) * 63);
+    const x0 = floorToInt(px),
+      y0 = floorToInt(py);
+    const x1 = Math.min(x0 + 1, 63),
+      y1 = Math.min(y0 + 1, 63);
+    const fx = f32(px - x0),
+      fy = f32(py - y0);
+    const o = record * MASK_PIXELS,
+      p = a.pixels;
     const top = lerpF(p[o + y0 * MASK_TILE + x0], p[o + y0 * MASK_TILE + x1], fx);
     const bottom = lerpF(p[o + y1 * MASK_TILE + x0], p[o + y1 * MASK_TILE + x1], fx);
     return f32(lerpF(top, bottom, fy) / 255);
@@ -373,7 +471,10 @@ export class SnowCoverage {
   fullByTile(archive) {
     const a = this.archives.get(archive);
     if (!a) return null;
-    if (!a.byTile) { a.byTile = new Uint8Array(256); for (let b = 0; b < 256; b++) a.byTile[b] = this.isFullySnowCovered(archive, b) ? 1 : 0; }
+    if (!a.byTile) {
+      a.byTile = new Uint8Array(256);
+      for (let b = 0; b < 256; b++) a.byTile[b] = this.isFullySnowCovered(archive, b) ? 1 : 0;
+    }
     return a.byTile;
   }
 }
@@ -390,7 +491,8 @@ function roadDistanceField(pixels, record) {
         const y = pass === 0 ? r : 63 - r;
         const step = pass !== 0 ? 1 : -1;
         const i = y * 64 + x;
-        const nx = x + step, ny = y + step;
+        const nx = x + step,
+          ny = y + step;
         if (nx >= 0 && nx < 64) d[i] = Math.min(d[i], f32(d[y * 64 + nx] + 1));
         if (ny >= 0 && ny < 64) {
           d[i] = Math.min(d[i], f32(d[ny * 64 + x] + 1));
@@ -404,14 +506,21 @@ function roadDistanceField(pixels, record) {
 }
 
 /** SnowCoverageData.GetWinterArchive: the climate's ground archive, plus one (its winter set) off the desert. */
-export const winterArchiveOf = (climateSettings) => (!climateSettings ? 0
-  : climateSettings.climateType === 0 ? climateSettings.groundArchive : climateSettings.groundArchive + 1);
+export const winterArchiveOf = (climateSettings) =>
+  !climateSettings
+    ? 0
+    : climateSettings.climateType === 0
+      ? climateSettings.groundArchive
+      : climateSettings.groundArchive + 1;
 
 // ---- the static snow a place takes --------------------------------------------------------------------------------
 /** EncodeStaticSnow(depthMultiplier, coverage): the multiplier over two in r and b, the coverage in g. */
 export function encodeStaticSnow(depthMultiplier, coverage, out = new Uint8Array(4), o = 0) {
   const b = roundToInt(f32(clamp01(f32(depthMultiplier / 2)) * 255));
-  out[o] = b; out[o + 1] = roundToInt(f32(clamp01(coverage) * 255)); out[o + 2] = b; out[o + 3] = 255;
+  out[o] = b;
+  out[o + 1] = roundToInt(f32(clamp01(coverage) * 255));
+  out[o + 2] = b;
+  out[o + 3] = 255;
   return out;
 }
 /** TrySampleStaticSnow's depth multiplier: coverage squared, tapered over the last ten degrees below the slope limit. */
@@ -423,7 +532,10 @@ export function staticSnowMultiplier(coverage, steepness, maxSnowSlope) {
 
 /** SnapToGrid(position, spacing, origin), in float (Mathf.Round: banker's). */
 export function snapToGrid(x, z, spacing, ox, oz) {
-  return [f32(ox + f32(roundToInt(f32(f32(x - ox) / spacing)) * spacing)), f32(oz + f32(roundToInt(f32(f32(z - oz) / spacing)) * spacing))];
+  return [
+    f32(ox + f32(roundToInt(f32(f32(x - ox) / spacing)) * spacing)),
+    f32(oz + f32(roundToInt(f32(f32(z - oz) / spacing)) * spacing)),
+  ];
 }
 
 // ---- the track masks ----------------------------------------------------------------------------------------------
@@ -438,14 +550,33 @@ export const fullSnowMask = (res) => new Uint8Array(res * res * 4).fill(255);
  * the half-width at least `minRadius` pixels. `onPixel(x, z)` hears each pixel changed (Texture2D.SetPixel); answers
  * the count.
  */
-export function rasterizeTrack(pixels, res, originX, originZ, scale, minRadius, sx, sz, ex, ez, width, remaining, onPixel = null) {
-  const ax = f32(f32(sx - originX) * scale), az = f32(f32(sz - originZ) * scale);
-  const bx = f32(f32(ex - originX) * scale), bz = f32(f32(ez - originZ) * scale);
+export function rasterizeTrack(
+  pixels,
+  res,
+  originX,
+  originZ,
+  scale,
+  minRadius,
+  sx,
+  sz,
+  ex,
+  ez,
+  width,
+  remaining,
+  onPixel = null,
+) {
+  const ax = f32(f32(sx - originX) * scale),
+    az = f32(f32(sz - originZ) * scale);
+  const bx = f32(f32(ex - originX) * scale),
+    bz = f32(f32(ez - originZ) * scale);
   const radius = Math.max(minRadius, f32(f32(width * 0.5) * scale));
   const last = res - 1;
-  const x0 = clampI(floorToInt(f32(Math.min(ax, bx) - radius)), 0, last), x1 = clampI(ceilToInt(f32(Math.max(ax, bx) + radius)), 0, last);
-  const z0 = clampI(floorToInt(f32(Math.min(az, bz) - radius)), 0, last), z1 = clampI(ceilToInt(f32(Math.max(az, bz) + radius)), 0, last);
-  const dx = f32(bx - ax), dz = f32(bz - az);
+  const x0 = clampI(floorToInt(f32(Math.min(ax, bx) - radius)), 0, last),
+    x1 = clampI(ceilToInt(f32(Math.max(ax, bx) + radius)), 0, last);
+  const z0 = clampI(floorToInt(f32(Math.min(az, bz) - radius)), 0, last),
+    z1 = clampI(ceilToInt(f32(Math.max(az, bz) + radius)), 0, last);
+  const dx = f32(bx - ax),
+    dz = f32(bz - az);
   const sqr = f32(f32(dx * dx) + f32(dz * dz));
   const floor = roundToInt(f32(clamp01(remaining) * 255));
   let changed = 0;
@@ -456,7 +587,11 @@ export function rasterizeTrack(pixels, res, originX, originZ, scale, minRadius, 
       if (dist > radius) continue;
       const v = roundToInt(lerpF(floor, 255, smoothStepF(0.25, 1, f32(dist / radius))));
       const k = (i * res + j) * 4;
-      if (v < pixels[k]) { pixels[k] = v; onPixel?.(j, i); changed++; }
+      if (v < pixels[k]) {
+        pixels[k] = v;
+        onPixel?.(j, i);
+        changed++;
+      }
     }
   }
   return changed;
@@ -472,7 +607,10 @@ export function scrollMask(pixels, scratch, res, dx, dz) {
   for (let i = 0; i < res; i++) {
     const src = i + dz;
     const row = i * res;
-    if (src < 0 || src >= res) { scratch.fill(255, row * 4, (row + res) * 4); continue; }
+    if (src < 0 || src >= res) {
+      scratch.fill(255, row * 4, (row + res) * 4);
+      continue;
+    }
     scratch.fill(255, row * 4, (row + lead) * 4);
     scratch.set(pixels.subarray((src * res + lead + dx) * 4, (src * res + lead + dx + span) * 4), (row + lead) * 4);
     scratch.fill(255, (row + lead + span) * 4, (row + res) * 4);
@@ -495,8 +633,12 @@ export function snowContactRamp(pixels, width, height, radius) {
   if (!pixels || width < 2 || height < 2 || pixels.length !== width * height * 4 || radius < 1) return;
   // AUDIT ENVIRONS P7: the distance in bytes of its own while it is reckoned (the alpha's four-byte stride walked a
   // quarter as densely), a pixel at nought left as it stands (no neighbour can lower it), written back in the last pass
-  const n = width * height, d = rampScratch(n);
-  for (let i = 0, k = 0; i < n; i++, k += 4) { pixels[k] = pixels[k + 2]; d[i] = pixels[k + 1] > 1 ? 255 : 0; }
+  const n = width * height,
+    d = rampScratch(n);
+  for (let i = 0, k = 0; i < n; i++, k += 4) {
+    pixels[k] = pixels[k + 2];
+    d[i] = pixels[k + 1] > 1 ? 255 : 0;
+  }
   for (let j = 0; j < height; j++) {
     for (let x = 0; x < width; x++) {
       const i = j * width + x;
@@ -531,7 +673,7 @@ export function snowContactRamp(pixels, width, height, radius) {
       const t = radius === 1 ? 0 : clamp01(f32(f32(a - 1) / f32(radius - 1)));
       pixels[k] = roundToInt(f32(pixels[k + 2] * t));
       pixels[k + 3] = roundToInt(f32(255 * t));
-    } else pixels[k + 3] = pixels[k + 1] > 1 ? 255 : 0;   // bare ground: its distance, nought
+    } else pixels[k + 3] = pixels[k + 1] > 1 ? 255 : 0; // bare ground: its distance, nought
   }
 }
 let _ramp = new Uint8Array(0);
@@ -542,7 +684,8 @@ export const TRACK_CELL_SIZE = 0.5;
 export const TRACK_MAX_CELLS = 65536;
 const BUCKET = 64;
 const MAX_PACKED_CHARACTERS = 2097152;
-const KEY_BIAS = 1 << 25, KEY_SPAN = 1 << 26;
+const KEY_BIAS = 1 << 25,
+  KEY_SPAN = 1 << 26;
 /** MakeKey(x, z): one number for a cell (C#'s long (x << 32) | (uint)z, as a JS-safe integer). */
 const makeKey = (x, z) => (x + KEY_BIAS) * KEY_SPAN + (z + KEY_BIAS);
 const keyX = (k) => Math.floor(k / KEY_SPAN) - KEY_BIAS;
@@ -564,14 +707,23 @@ export class SlotMap {
     /** @type {boolean[]} */ this.live = [];
     /** @type {number[]} */ this.free = [];
   }
-  get size() { return this.index.size; }
-  has(key) { return this.index.has(key); }
-  get(key) { const i = this.index.get(key); return i === undefined ? undefined : this.vals[i]; }
+  get size() {
+    return this.index.size;
+  }
+  has(key) {
+    return this.index.has(key);
+  }
+  get(key) {
+    const i = this.index.get(key);
+    return i === undefined ? undefined : this.vals[i];
+  }
   set(key, value) {
     let i = this.index.get(key);
     if (i === undefined) {
       i = this.free.length ? /** @type {number} */ (this.free.pop()) : this.keys.length;
-      this.index.set(key, i); this.keys[i] = key; this.live[i] = true;
+      this.index.set(key, i);
+      this.keys[i] = key;
+      this.live[i] = true;
     }
     this.vals[i] = value;
     return this;
@@ -579,11 +731,23 @@ export class SlotMap {
   delete(key) {
     const i = this.index.get(key);
     if (i === undefined) return false;
-    this.index.delete(key); this.live[i] = false; this.keys[i] = undefined; this.vals[i] = undefined; this.free.push(i);
+    this.index.delete(key);
+    this.live[i] = false;
+    this.keys[i] = undefined;
+    this.vals[i] = undefined;
+    this.free.push(i);
     return true;
   }
-  clear() { this.index.clear(); this.keys = []; this.vals = []; this.live = []; this.free = []; }
-  *[Symbol.iterator]() { for (let i = 0; i < this.keys.length; i++) if (this.live[i]) yield [this.keys[i], this.vals[i]]; }
+  clear() {
+    this.index.clear();
+    this.keys = [];
+    this.vals = [];
+    this.live = [];
+    this.free = [];
+  }
+  *[Symbol.iterator]() {
+    for (let i = 0; i < this.keys.length; i++) if (this.live[i]) yield [this.keys[i], this.vals[i]];
+  }
 }
 
 /**
@@ -603,7 +767,9 @@ export class PersistentTrackField {
     this.order = [];
     this.orderHead = 0;
     this.nextSequence = 0;
-    this.lastSaveRawBytes = 0; this.lastSaveCompressedBytes = 0; this.lastSaveBase64Characters = 0;
+    this.lastSaveRawBytes = 0;
+    this.lastSaveCompressedBytes = 0;
+    this.lastSaveBase64Characters = 0;
     this.evictedCells = 0;
     /** TV-SAVE (FIELD BUGS 2026-10-09): moves on every change to what the record packs - a cell made or deepened
      *  (_setCellMinimum, whose limit lets the oldest go only after it made one), every cell refilled (Refill, which lets
@@ -613,27 +779,41 @@ export class PersistentTrackField {
     this._packed = null;
     this.packs = 0;
   }
-  get count() { return this.cells.size; }
-  get hasDeformation() { return this.cells.size > 0; }
-  get _orderCount() { return this.order.length - this.orderHead; }
+  get count() {
+    return this.cells.size;
+  }
+  get hasDeformation() {
+    return this.cells.size > 0;
+  }
+  get _orderCount() {
+    return this.order.length - this.orderHead;
+  }
 
   /** StampSegment(start, end, width, remainingSnow): the capsule pressed into the cells, in double. */
   stampSegment(sx, sz, ex, ez, width, remainingSnow) {
     if (width <= 0 || remainingSnow >= 1) return;
     let [x1, z1] = this.toGlobal(sx, sz);
     let [x2, z2] = this.toGlobal(ex, ez);
-    x1 /= TRACK_CELL_SIZE; z1 /= TRACK_CELL_SIZE; x2 /= TRACK_CELL_SIZE; z2 /= TRACK_CELL_SIZE;
-    const radius = Math.max(0.75, width * 0.5 / 0.5);
-    const minX = Math.floor(Math.min(x1, x2) - radius), maxX = Math.ceil(Math.max(x1, x2) + radius);
-    const minZ = Math.floor(Math.min(z1, z2) - radius), maxZ = Math.ceil(Math.max(z1, z2) + radius);
-    const dx = x2 - x1, dz = z2 - z1;
+    x1 /= TRACK_CELL_SIZE;
+    z1 /= TRACK_CELL_SIZE;
+    x2 /= TRACK_CELL_SIZE;
+    z2 /= TRACK_CELL_SIZE;
+    const radius = Math.max(0.75, (width * 0.5) / 0.5);
+    const minX = Math.floor(Math.min(x1, x2) - radius),
+      maxX = Math.ceil(Math.max(x1, x2) + radius);
+    const minZ = Math.floor(Math.min(z1, z2) - radius),
+      maxZ = Math.ceil(Math.max(z1, z2) + radius);
+    const dx = x2 - x1,
+      dz = z2 - z1;
     const sqr = dx * dx + dz * dz;
     const floor = roundToInt(f32(clamp01(remainingSnow) * 255));
     for (let i = minZ; i <= maxZ; i++) {
       for (let j = minX; j <= maxX; j++) {
-        const cx = j + 0.5, cz = i + 0.5;
+        const cx = j + 0.5,
+          cz = i + 0.5;
         const t = sqr > 0.0001 ? Math.max(0, Math.min(1, ((cx - x1) * dx + (cz - z1) * dz) / sqr)) : 0;
-        const ox = cx - (x1 + dx * t), oz = cz - (z1 + dz * t);
+        const ox = cx - (x1 + dx * t),
+          oz = cz - (z1 + dz * t);
         const dist = Math.sqrt(ox * ox + oz * oz);
         if (dist > radius) continue;
         const k = smoothStepF(0.25, 1, f32(dist / radius));
@@ -648,9 +828,14 @@ export class PersistentTrackField {
     if (!pixels || pixels.length !== res * res * 4 || res < 2 || diameter <= 0 || this.cells.size === 0) return 0;
     const [wx, wz] = this.toGlobal(centerX, centerZ);
     const half = diameter * 0.5;
-    const minX = Math.floor((wx - half) / 0.5) - 1, maxX = Math.ceil((wx + half) / 0.5) + 1;
-    const minZ = Math.floor((wz - half) / 0.5) - 1, maxZ = Math.ceil((wz + half) / 0.5) + 1;
-    const bx0 = floorDivide(minX, BUCKET), bx1 = floorDivide(maxX, BUCKET), bz0 = floorDivide(minZ, BUCKET), bz1 = floorDivide(maxZ, BUCKET);
+    const minX = Math.floor((wx - half) / 0.5) - 1,
+      maxX = Math.ceil((wx + half) / 0.5) + 1;
+    const minZ = Math.floor((wz - half) / 0.5) - 1,
+      maxZ = Math.ceil((wz + half) / 0.5) + 1;
+    const bx0 = floorDivide(minX, BUCKET),
+      bx1 = floorDivide(maxX, BUCKET),
+      bz0 = floorDivide(minZ, BUCKET),
+      bz1 = floorDivide(maxZ, BUCKET);
     const scale = f32(f32(res - 1) / diameter);
     const radius = Math.max(0.75, f32(0.3 * scale));
     let changed = 0;
@@ -660,17 +845,25 @@ export class PersistentTrackField {
         if (!bucket) continue;
         // AUDIT ENVIRONS P4: a bucket whose every disc lies in the preserved rectangle writes nothing - its first and last
         // cells' reach, as StampMaskPoint reckons it (monotone in the cell), inside it on both axes
-        if (discsWithin(bx * BUCKET, wx, half, scale, radius, res, pMinX, pMaxX) && discsWithin(bz * BUCKET, wz, half, scale, radius, res, pMinZ, pMaxZ)) continue;
-        const keys = bucket.keys, live = bucket.live;   // the slots walked as the HashSet enumerates them, no generator
+        if (
+          discsWithin(bx * BUCKET, wx, half, scale, radius, res, pMinX, pMaxX) &&
+          discsWithin(bz * BUCKET, wz, half, scale, radius, res, pMinZ, pMaxZ)
+        )
+          continue;
+        const keys = bucket.keys,
+          live = bucket.live; // the slots walked as the HashSet enumerates them, no generator
         for (let q = 0; q < keys.length; q++) {
           if (!live[q]) continue;
           const key = keys[q];
           const cell = this.cells.get(key);
           if (!cell) continue;
-          const x = keyX(key), z = keyZ(key);
+          const x = keyX(key),
+            z = keyZ(key);
           if (x < minX || x > maxX || z < minZ || z > maxZ) continue;
-          const gx = (x + 0.5) * 0.5, gz = (z + 0.5) * 0.5;
-          const px = f32((gx - (wx - half)) * scale), pz = f32((gz - (wz - half)) * scale);
+          const gx = (x + 0.5) * 0.5,
+            gz = (z + 0.5) * 0.5;
+          const px = f32((gx - (wx - half)) * scale),
+            pz = f32((gz - (wz - half)) * scale);
           changed += stampMaskPoint(pixels, res, px, pz, radius, cell.remaining, pMinX, pMaxX, pMinZ, pMaxZ);
         }
       }
@@ -681,13 +874,21 @@ export class PersistentTrackField {
   /** Refill(byteStep): every cell rises by the step; a cell that reaches full is gone. */
   refill(byteStep) {
     if (byteStep <= 0 || this.cells.size === 0) return;
-    this.revision++;   // TV-SAVE: every cell rises or goes
-    const C = this.cells, keys = C.keys, live = C.live, vals = C.vals, n = keys.length;   // AUDIT ENVIRONS P4: the Dictionary's slots in its order - a removal frees its own slot, never a later one's, so no copy of the keys
+    this.revision++; // TV-SAVE: every cell rises or goes
+    const C = this.cells,
+      keys = C.keys,
+      live = C.live,
+      vals = C.vals,
+      n = keys.length; // AUDIT ENVIRONS P4: the Dictionary's slots in its order - a removal frees its own slot, never a later one's, so no copy of the keys
     for (let q = 0; q < n; q++) {
       if (!live[q]) continue;
-      const key = keys[q], cell = vals[q];
+      const key = keys[q],
+        cell = vals[q];
       const v = Math.min(255, cell.remaining + byteStep);
-      if (v >= 255) { this._removeCell(key); continue; }
+      if (v >= 255) {
+        this._removeCell(key);
+        continue;
+      }
       cell.remaining = v;
     }
     this._compact();
@@ -695,9 +896,16 @@ export class PersistentTrackField {
 
   /** Clear(). */
   clear() {
-    this.cells.clear(); this.buckets.clear(); this.order = []; this.orderHead = 0; this.nextSequence = 0;
-    this.lastSaveRawBytes = 0; this.lastSaveCompressedBytes = 0; this.lastSaveBase64Characters = 0; this.evictedCells = 0;
-    this._packed = null;   // TV-SAVE: the last record's text goes with the field (an empty field packs none)
+    this.cells.clear();
+    this.buckets.clear();
+    this.order = [];
+    this.orderHead = 0;
+    this.nextSequence = 0;
+    this.lastSaveRawBytes = 0;
+    this.lastSaveCompressedBytes = 0;
+    this.lastSaveBase64Characters = 0;
+    this.evictedCells = 0;
+    this._packed = null; // TV-SAVE: the last record's text goes with the field (an empty field packs none)
   }
 
   /** WriteSaveData(data): nine bytes a cell (x and z little-endian, the snow left), deflated, base64 - into the record.
@@ -710,13 +918,20 @@ export class PersistentTrackField {
     data.FormatVersion = 1;
     data.CellCount = this.cells.size;
     this.lastSaveRawBytes = this.cells.size * 9;
-    if (this.cells.size === 0) { data.PackedCells = ''; this.lastSaveCompressedBytes = 0; this.lastSaveBase64Characters = 0; return; }
+    if (this.cells.size === 0) {
+      data.PackedCells = '';
+      this.lastSaveCompressedBytes = 0;
+      this.lastSaveBase64Characters = 0;
+      return;
+    }
     if (this._packed?.revision !== this.revision) {
       const raw = new Uint8Array(this.cells.size * 9);
       const view = new DataView(raw.buffer);
       let o = 0;
       for (const [key, cell] of this.cells) {
-        view.setInt32(o, keyX(key), true); view.setInt32(o + 4, keyZ(key), true); raw[o + 8] = cell.remaining;
+        view.setInt32(o, keyX(key), true);
+        view.setInt32(o + 4, keyZ(key), true);
+        raw[o + 8] = cell.remaining;
         o += 9;
       }
       const packed = deflateRaw(raw);
@@ -733,7 +948,14 @@ export class PersistentTrackField {
     this.clear();
     if (!data || !data.CellCount || !data.PackedCells) return true;
     const count = data.CellCount;
-    if (data.FormatVersion !== 1 || !Number.isInteger(count) || count < 0 || count > TRACK_MAX_CELLS || data.PackedCells.length > MAX_PACKED_CHARACTERS) return false;
+    if (
+      data.FormatVersion !== 1 ||
+      !Number.isInteger(count) ||
+      count < 0 ||
+      count > TRACK_MAX_CELLS ||
+      data.PackedCells.length > MAX_PACKED_CHARACTERS
+    )
+      return false;
     try {
       if (/[^A-Za-z0-9+/=]/.test(data.PackedCells)) throw new Error('not base64');
       const raw = inflateRaw(base64ToBytes(data.PackedCells));
@@ -760,7 +982,7 @@ export class PersistentTrackField {
       if (remaining < cell.remaining) {
         this._compact(1);
         cell.remaining = remaining;
-        this.revision++;   // TV-SAVE: deepened
+        this.revision++; // TV-SAVE: deepened
         cell.sequence = ++this.nextSequence;
         this.order.push({ key, sequence: cell.sequence });
         this._compact();
@@ -770,23 +992,35 @@ export class PersistentTrackField {
     this._compact(1);
     const fresh = { remaining, sequence: ++this.nextSequence };
     this.cells.set(key, fresh);
-    this.revision++;   // TV-SAVE: made
+    this.revision++; // TV-SAVE: made
     this.order.push({ key, sequence: fresh.sequence });
     const bucketKey = makeKey(floorDivide(x, BUCKET), floorDivide(z, BUCKET));
     let bucket = this.buckets.get(bucketKey);
-    if (!bucket) { bucket = new SlotMap(); this.buckets.set(bucketKey, bucket); }
+    if (!bucket) {
+      bucket = new SlotMap();
+      this.buckets.set(bucketKey, bucket);
+    }
     bucket.set(key, key);
     while (this.cells.size > TRACK_MAX_CELLS && this._orderCount > 0) {
       const ref = this.order[this.orderHead++];
       const c = this.cells.get(ref.key);
-      if (c && c.sequence === ref.sequence) { this._removeCell(ref.key); this.evictedCells++; }
+      if (c && c.sequence === ref.sequence) {
+        this._removeCell(ref.key);
+        this.evictedCells++;
+      }
     }
     this._compact();
   }
 
   /** CompactInsertionOrder(pendingAppend): the queue keeps only live references once it is over twice the cells. */
   _compact(pendingAppend = 0) {
-    if (this.cells.size === 0) { if (this._orderCount !== 0) { this.order = []; this.orderHead = 0; } return; }
+    if (this.cells.size === 0) {
+      if (this._orderCount !== 0) {
+        this.order = [];
+        this.orderHead = 0;
+      }
+      return;
+    }
     if (this._orderCount + pendingAppend <= Math.max(1024, 2 * this.cells.size)) return;
     const live = [];
     for (let i = this.orderHead; i < this.order.length; i++) {
@@ -794,7 +1028,8 @@ export class PersistentTrackField {
       const c = this.cells.get(ref.key);
       if (c && c.sequence === ref.sequence) live.push(ref);
     }
-    this.order = live; this.orderHead = 0;
+    this.order = live;
+    this.orderHead = 0;
   }
 
   /** RemoveCell(key). */
@@ -802,29 +1037,38 @@ export class PersistentTrackField {
     this.cells.delete(key);
     const bucketKey = makeKey(floorDivide(keyX(key), BUCKET), floorDivide(keyZ(key), BUCKET));
     const bucket = this.buckets.get(bucketKey);
-    if (bucket) { bucket.delete(key); if (bucket.size === 0) this.buckets.delete(bucketKey); }
+    if (bucket) {
+      bucket.delete(key);
+      if (bucket.size === 0) this.buckets.delete(bucketKey);
+    }
   }
 }
 
 /** Whether the discs of a bucket's 64 cells from `first` on one axis all lie within the preserved pixels [lo, hi] -
  *  StampMaskPoint's own reach of the first cell and of the last (AUDIT ENVIRONS P4). */
 function discsWithin(first, w, half, scale, radius, res, lo, hi) {
-  const a = f32(((first + 0.5) * 0.5 - (w - half)) * scale), b = f32(((first + BUCKET - 1 + 0.5) * 0.5 - (w - half)) * scale);
+  const a = f32(((first + 0.5) * 0.5 - (w - half)) * scale),
+    b = f32(((first + BUCKET - 1 + 0.5) * 0.5 - (w - half)) * scale);
   return clampI(floorToInt(f32(a - radius)), 0, res - 1) >= lo && clampI(ceilToInt(f32(b + radius)), 0, res - 1) <= hi;
 }
 /** StampMaskPoint: a disc of `radius` pixels at (cx, cz) lowering the red to `target`, outside the preserved
  *  rectangle; answers the pixels changed. */
 function stampMaskPoint(pixels, res, cx, cz, radius, target, pMinX, pMaxX, pMinZ, pMaxZ) {
-  const x0 = clampI(floorToInt(f32(cx - radius)), 0, res - 1), x1 = clampI(ceilToInt(f32(cx + radius)), 0, res - 1);
-  const z0 = clampI(floorToInt(f32(cz - radius)), 0, res - 1), z1 = clampI(ceilToInt(f32(cz + radius)), 0, res - 1);
-  if (x0 >= pMinX && x1 <= pMaxX && z0 >= pMinZ && z1 <= pMaxZ) return 0;   // AUDIT ENVIRONS P4: every pixel of it preserved - none to visit
+  const x0 = clampI(floorToInt(f32(cx - radius)), 0, res - 1),
+    x1 = clampI(ceilToInt(f32(cx + radius)), 0, res - 1);
+  const z0 = clampI(floorToInt(f32(cz - radius)), 0, res - 1),
+    z1 = clampI(ceilToInt(f32(cz + radius)), 0, res - 1);
+  if (x0 >= pMinX && x1 <= pMaxX && z0 >= pMinZ && z1 <= pMaxZ) return 0; // AUDIT ENVIRONS P4: every pixel of it preserved - none to visit
   let changed = 0;
   for (let i = z0; i <= z1; i++) {
     for (let j = x0; j <= x1; j++) {
       if (!(j < pMinX || j > pMaxX || i < pMinZ || i > pMaxZ)) continue;
       if (distanceF(j, i, cx, cz) > radius) continue;
       const k = (i * res + j) * 4;
-      if (target < pixels[k]) { pixels[k] = target; changed++; }
+      if (target < pixels[k]) {
+        pixels[k] = target;
+        changed++;
+      }
     }
   }
   return changed;
@@ -835,19 +1079,26 @@ function stampMaskPoint(pixels, res, cx, cz, radius, target, pMinX, pMaxX, pMinZ
  *  `refilled` at its middle 40%, rising by a SmoothStep to full at its edge. */
 export function rasterizeCorpse(pixels, res, x, z, radius, refilled) {
   const reach = f32(radius + 0.5);
-  if (radius <= 0 || f32(x + reach) < 0 || f32(z + reach) < 0 || f32(x - reach) > res - 1 || f32(z - reach) > res - 1) return false;
-  const x0 = Math.max(0, floorToInt(f32(x - reach))), x1 = Math.min(res - 1, ceilToInt(f32(x + reach)));
-  const z0 = Math.max(0, floorToInt(f32(z - reach))), z1 = Math.min(res - 1, ceilToInt(f32(z + reach)));
+  if (radius <= 0 || f32(x + reach) < 0 || f32(z + reach) < 0 || f32(x - reach) > res - 1 || f32(z - reach) > res - 1)
+    return false;
+  const x0 = Math.max(0, floorToInt(f32(x - reach))),
+    x1 = Math.min(res - 1, ceilToInt(f32(x + reach)));
+  const z0 = Math.max(0, floorToInt(f32(z - reach))),
+    z1 = Math.min(res - 1, ceilToInt(f32(z + reach)));
   let changed = false;
   for (let i = z0; i <= z1; i++) {
     for (let j = x0; j <= x1; j++) {
-      const ox = Math.max(0, f32(Math.abs(f32(j - x)) - 0.5)), oz = Math.max(0, f32(Math.abs(f32(i - z)) - 0.5));
+      const ox = Math.max(0, f32(Math.abs(f32(j - x)) - 0.5)),
+        oz = Math.max(0, f32(Math.abs(f32(i - z)) - 0.5));
       const d = f32(Math.sqrt(f32(f32(ox * ox) + f32(oz * oz))));
       const t = clamp01(f32(f32(f32(d / radius) - f32(0.4)) / f32(0.6)));
       const s = f32(f32(t * t) * f32(3 - f32(2 * t)));
       const v = roundToInt(lerpF(refilled, 255, s));
       const k = (i * res + j) * 4 + 1;
-      if (v < pixels[k]) { pixels[k] = v; changed = true; }
+      if (v < pixels[k]) {
+        pixels[k] = v;
+        changed = true;
+      }
     }
   }
   return changed;
@@ -866,17 +1117,26 @@ export class CorpseImpressions {
     this.enabled = true;
     this.width = f32(1.5);
   }
-  get hasImpressions() { return this.enabled && this.impressions.length > 0; }
-  get activeCount() { let n = 0; for (const i of this.impressions) if (i.corpse.alive()) n++; return n; }
+  get hasImpressions() {
+    return this.enabled && this.impressions.length > 0;
+  }
+  get activeCount() {
+    let n = 0;
+    for (const i of this.impressions) if (i.corpse.alive()) n++;
+    return n;
+  }
 
   /** Register(corpse): a body not yet held, in the exterior; false when it is not one or is held already. */
   register(corpse) {
     if (!this.enabled || !corpse || !corpse.alive()) return false;
-    if (this.impressions.some((i) => i.corpse === corpse || (corpse.id != null && i.corpse.id === corpse.id))) return false;
+    if (this.impressions.some((i) => i.corpse === corpse || (corpse.id != null && i.corpse.id === corpse.id)))
+      return false;
     this.impressions.push({ corpse, x: corpse.x, z: corpse.z, refilled: 0 });
     return true;
   }
-  clear() { this.impressions.length = 0; }
+  clear() {
+    this.impressions.length = 0;
+  }
 
   /** Refill(byteStep): a body gone fills back by the step and is forgotten at full; true when any was gone. */
   refill(byteStep) {
@@ -896,14 +1156,19 @@ export class CorpseImpressions {
   project(pixels, res, centerX, centerZ, diameter) {
     if (!pixels || diameter <= 0) return false;
     let changed = false;
-    for (let k = 1; k < pixels.length; k += 4) { if (pixels[k] !== 255) changed = true; pixels[k] = 255; }
+    for (let k = 1; k < pixels.length; k += 4) {
+      if (pixels[k] !== 255) changed = true;
+      pixels[k] = 255;
+    }
     if (!this.enabled || this.impressions.length === 0) return changed;
     const [gx, gz] = this.toGlobal(centerX, centerZ);
-    const ox = gx - diameter * 0.5, oz = gz - diameter * 0.5;
+    const ox = gx - diameter * 0.5,
+      oz = gz - diameter * 0.5;
     const scale = f32(f32(res - 1) / diameter);
     const radius = f32(f32(f32(this.width * 0.5)) * scale);
     for (const i of this.impressions) {
-      changed = rasterizeCorpse(pixels, res, f32((i.x - ox) * scale), f32((i.z - oz) * scale), radius, i.refilled) || changed;
+      changed =
+        rasterizeCorpse(pixels, res, f32((i.x - ox) * scale), f32((i.z - oz) * scale), radius, i.refilled) || changed;
     }
     return changed;
   }
@@ -924,12 +1189,14 @@ export const isVanillaLocation = (type) => type <= 13;
  *  (MapsFile.MapPixelToWorldCoord), its tile origin (TerrainHelper.GetLocationTerrainTileOrigin, 256 world units a
  *  tile) and 4096 world units a block, over StreamingWorld.SceneMapRatio. */
 export function locationRect(mapX, mapY, tileOrigin, width, height) {
-  const x = mapX * 32768 + tileOrigin.x * 2 * 128, z = (499 - mapY) * 32768 + tileOrigin.y * 2 * 128;
+  const x = mapX * 32768 + tileOrigin.x * 2 * 128,
+    z = (499 - mapY) * 32768 + tileOrigin.y * 2 * 128;
   return { minX: x / 40, minZ: z / 40, maxX: (x + width * 4096) / 40, maxZ: (z + height * 4096) / 40 };
 }
 /** The distance from (x, z) to a rectangle `{ minX, minZ, maxX, maxZ }`, 0 inside (SampleSettlement's own, kept in this module). */
 function rectDistance(r, x, z) {
-  const ox = Math.max(Math.max(r.minX - x, x - r.maxX), 0), oz = Math.max(Math.max(r.minZ - z, z - r.maxZ), 0);
+  const ox = Math.max(Math.max(r.minX - x, x - r.maxX), 0),
+    oz = Math.max(Math.max(r.minZ - z, z - r.maxZ), 0);
   return Math.sqrt(ox * ox + oz * oz);
 }
 /** SampleSettlement / SampleLocationCap: the nearest rectangle's outside weight (255 inside one), 0 with none. */
@@ -948,13 +1215,27 @@ export function rectWeight(rects, x, z, feather) {
 /** InterpolateQuad(a, right, top, c, fx, fz): a grid cell's two triangles' barycentrics (the diagonal from a to c),
  *  the height and normal blended, the three corners' contexts carried for the shader to resolve and blend - into `out`
  *  (AUDIT ENVIRONS P5: the middle ring hands one of its own, no object a vertex). */
-export function interpolateQuad(a, right, top, c, fx, fz, out = { height: 0, normal: [0, 0, 0], contextA: null, contextB: null, contextC: null, blend: [0, 0, 0], offset: 0 }) {
+export function interpolateQuad(
+  a,
+  right,
+  top,
+  c,
+  fx,
+  fz,
+  out = { height: 0, normal: [0, 0, 0], contextA: null, contextB: null, contextC: null, blend: [0, 0, 0], offset: 0 },
+) {
   const mid = fz >= fx ? top : right;
-  const wa = f32(1 - Math.max(fx, fz)), wm = Math.abs(f32(fz - fx)), wc = Math.min(fx, fz);
+  const wa = f32(1 - Math.max(fx, fz)),
+    wm = Math.abs(f32(fz - fx)),
+    wc = Math.min(fx, fz);
   out.height = blend3(a.height, mid.height, c.height, wa, wm, wc);
   for (let k = 0; k < 3; k++) out.normal[k] = blend3(a.normal[k], mid.normal[k], c.normal[k], wa, wm, wc);
-  out.contextA = a.contextA; out.contextB = mid.contextA; out.contextC = c.contextA;
-  out.blend[0] = wa; out.blend[1] = wm; out.blend[2] = wc;
+  out.contextA = a.contextA;
+  out.contextB = mid.contextA;
+  out.contextC = c.contextA;
+  out.blend[0] = wa;
+  out.blend[1] = wm;
+  out.blend[2] = wc;
   out.offset = blend3(a.offset, mid.offset, c.offset, wa, wm, wc);
   return out;
 }
@@ -969,10 +1250,32 @@ const TRACK_DIAGONAL = [0, 99, 51, 52];
 const TRACK_EDGE = [0, 99, 12, 27];
 const TRACK_CORNER = [0, 99, 10, 25];
 const PATH_POLYGONS = [
-  [[0.5, 0], [1, 0], [1, 1], [0.5, 1]],
-  [[0, 0], [1, 0], [1, 1], [0.5, 1], [0, 0.5]],
-  [[0.5, 0], [1, 0], [1, 0.5]],
-  [[0, 0], [0.5, 0], [1, 0.5], [1, 1], [0.5, 1], [0, 0.5]],
+  [
+    [0.5, 0],
+    [1, 0],
+    [1, 1],
+    [0.5, 1],
+  ],
+  [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+    [0.5, 1],
+    [0, 0.5],
+  ],
+  [
+    [0.5, 0],
+    [1, 0],
+    [1, 0.5],
+  ],
+  [
+    [0, 0],
+    [0.5, 0],
+    [1, 0.5],
+    [1, 1],
+    [0.5, 1],
+    [0, 0.5],
+  ],
 ];
 const HALF_SQRT2_F = f32(0.70710677);
 /** The road records Basic Roads paints: its road and the tracks' four sets (BasicRoadsTerrain's classification set). */
@@ -981,13 +1284,23 @@ export const PAINTED_ROAD_RECORDS = Object.freeze([46, 47, 55, 10, 11, 12, 25, 2
 /** BasicRoadsClassifier.PathEdgeDistance(tile, u, v): signed distance in tile widths to a track's painted edge -
  *  0 or less on the track; Infinity for a tile that is no track. */
 export function pathEdgeDistance(tile, u, v) {
-  const x = turnX(tile, u, v), y = turnY(tile, u, v);   // PathUV
+  const x = turnX(tile, u, v),
+    y = turnY(tile, u, v); // PathUV
   switch (tile >> 2) {
-    case 11: case 26: return f32(0.5 - x);
-    case 10: case 25: return f32(f32(f32(y - x) - 0.5) * HALF_SQRT2_F);
-    case 12: case 27: return f32(f32(f32(y - x) + 0.5) * HALF_SQRT2_F);
-    case 51: case 52: return f32(f32(Math.abs(f32(x - y)) - 0.5) * HALF_SQRT2_F);
-    default: return Infinity;
+    case 11:
+    case 26:
+      return f32(0.5 - x);
+    case 10:
+    case 25:
+      return f32(f32(f32(y - x) - 0.5) * HALF_SQRT2_F);
+    case 12:
+    case 27:
+      return f32(f32(f32(y - x) + 0.5) * HALF_SQRT2_F);
+    case 51:
+    case 52:
+      return f32(f32(Math.abs(f32(x - y)) - 0.5) * HALF_SQRT2_F);
+    default:
+      return Infinity;
   }
 }
 /** BasicRoadsClassifier.PathOutsideDistance(tile, u, v): tile widths from (u, v) to the track's painted polygon, 0 on
@@ -995,21 +1308,42 @@ export function pathEdgeDistance(tile, u, v) {
 export function pathOutsideDistance(tile, u, v) {
   let poly;
   switch (tile >> 2) {
-    case 11: case 26: poly = 0; break;
-    case 10: case 25: poly = 1; break;
-    case 12: case 27: poly = 2; break;
-    case 51: case 52: poly = 3; break;
-    default: return Infinity;
+    case 11:
+    case 26:
+      poly = 0;
+      break;
+    case 10:
+    case 25:
+      poly = 1;
+      break;
+    case 12:
+    case 27:
+      poly = 2;
+      break;
+    case 51:
+    case 52:
+      poly = 3;
+      break;
+    default:
+      return Infinity;
   }
-  const x = turnX(tile, u, v), y = turnY(tile, u, v);   // PathUV
+  const x = turnX(tile, u, v),
+    y = turnY(tile, u, v); // PathUV
   if (x >= 0 && x <= 1 && y >= 0 && y <= 1 && pathEdgeDistance(tile, u, v) <= 0) return 0;
   const pts = PATH_POLYGONS[poly];
   let best = Infinity;
   for (let i = 0; i < pts.length; i++) {
-    const A = pts[i], B = pts[(i + 1) % pts.length], ax = A[0], ay = A[1], bx = B[0], by = B[1];
-    const ex = f32(bx - ax), ey = f32(by - ay);
+    const A = pts[i],
+      B = pts[(i + 1) % pts.length],
+      ax = A[0],
+      ay = A[1],
+      bx = B[0],
+      by = B[1];
+    const ex = f32(bx - ax),
+      ey = f32(by - ay);
     const t = clamp01(f32(f32(f32(f32(x - ax) * ex) + f32(f32(y - ay) * ey)) / f32(f32(ex * ex) + f32(ey * ey))));
-    const dx = f32(f32(x - ax) - f32(t * ex)), dy = f32(f32(y - ay) - f32(t * ey));
+    const dx = f32(f32(x - ax) - f32(t * ex)),
+      dy = f32(f32(y - ay) - f32(t * ey));
     best = Math.min(best, f32(f32(dx * dx) + f32(dy * dy)));
   }
   return f32(Math.sqrt(best));
@@ -1027,38 +1361,116 @@ export function predictRoadTile(x, y, flags, corners, ground, road, rect) {
   // PERF-SNOW1 (2026-10-10): the classifier's `paint` is a module function over the tile it is handed (roadPaint), not a
   // closure minted on every one of the up to six predictions a painted tile's classification asks - the same calls, in
   // the same order, each answering what the closure did (the tile it would leave, or ROAD_UNPAINTED where it refused)
-  let tile = -1, t;
+  let tile = -1,
+    t;
   let painted = false;
   const straight = road ? 46 : TRACK_STRAIGHT[ground];
   const diagonal = road ? 46 : TRACK_DIAGONAL[ground];
   const edge = road ? ROAD_EDGE[ground] : TRACK_EDGE[ground];
   if (flags !== 0) {
-    const mid = x === 63 || x === 64, midY = y === 63 || y === 64;
-    if (((flags & 0x80) && mid && y > 63) || ((flags & 8) && mid && y < 64)) { t = roadPaint(tile, straight, false, x === 64, true); if (t !== ROAD_UNPAINTED) { tile = t; painted = true; } }
-    if (((flags & 0x80) && mid && y === 63) || ((flags & 8) && mid && y === 64)) { t = roadPaint(tile, edge, x === y, x === 64, false); if (t !== ROAD_UNPAINTED) { tile = t; painted = true; } }
-    if (((flags & 0x20) && midY && x > 63) || ((flags & 2) && midY && x < 64)) { t = roadPaint(tile, straight, true, y === 64, true); if (t !== ROAD_UNPAINTED) { tile = t; painted = true; } }
-    if (((flags & 0x20) && midY && x === 63) || ((flags & 2) && midY && x === 64)) { t = roadPaint(tile, edge, x === y, x === 64, false); if (t !== ROAD_UNPAINTED) { tile = t; painted = true; } }
-    if (((flags & 0x40) && x === y && x > 63) || ((flags & 4) && x === y && x < 64)) { t = roadPaint(tile, diagonal, false, false, true); if (t !== ROAD_UNPAINTED) { tile = t; painted = true; } }
-    if (!painted && (((flags & 0x40) && ((x === y + 1 && x > 63) || (x + 1 === y && y > 63))) || ((flags & 4) && ((x === y + 1 && x <= 64) || (x + 1 === y && y <= 64))))) {
-      t = roadPaint(tile, edge, false, x === y + 1, true); if (t !== ROAD_UNPAINTED) { tile = t; painted = true; }
+    const mid = x === 63 || x === 64,
+      midY = y === 63 || y === 64;
+    if ((flags & 0x80 && mid && y > 63) || (flags & 8 && mid && y < 64)) {
+      t = roadPaint(tile, straight, false, x === 64, true);
+      if (t !== ROAD_UNPAINTED) {
+        tile = t;
+        painted = true;
+      }
+    }
+    if ((flags & 0x80 && mid && y === 63) || (flags & 8 && mid && y === 64)) {
+      t = roadPaint(tile, edge, x === y, x === 64, false);
+      if (t !== ROAD_UNPAINTED) {
+        tile = t;
+        painted = true;
+      }
+    }
+    if ((flags & 0x20 && midY && x > 63) || (flags & 2 && midY && x < 64)) {
+      t = roadPaint(tile, straight, true, y === 64, true);
+      if (t !== ROAD_UNPAINTED) {
+        tile = t;
+        painted = true;
+      }
+    }
+    if ((flags & 0x20 && midY && x === 63) || (flags & 2 && midY && x === 64)) {
+      t = roadPaint(tile, edge, x === y, x === 64, false);
+      if (t !== ROAD_UNPAINTED) {
+        tile = t;
+        painted = true;
+      }
+    }
+    if ((flags & 0x40 && x === y && x > 63) || (flags & 4 && x === y && x < 64)) {
+      t = roadPaint(tile, diagonal, false, false, true);
+      if (t !== ROAD_UNPAINTED) {
+        tile = t;
+        painted = true;
+      }
+    }
+    if (
+      !painted &&
+      ((flags & 0x40 && ((x === y + 1 && x > 63) || (x + 1 === y && y > 63))) ||
+        (flags & 4 && ((x === y + 1 && x <= 64) || (x + 1 === y && y <= 64))))
+    ) {
+      t = roadPaint(tile, edge, false, x === y + 1, true);
+      if (t !== ROAD_UNPAINTED) {
+        tile = t;
+        painted = true;
+      }
     }
     const nx = 127 - x;
-    if (((flags & 1) && nx === y && x < 64) || ((flags & 0x10) && nx === y && x > 63)) { t = roadPaint(tile, diagonal, true, false, true); if (t !== ROAD_UNPAINTED) { tile = t; painted = true; } }
-    if (!painted && (((flags & 1) && ((nx === y + 1 && x < 64) || (nx + 1 === y && y > 63))) || ((flags & 0x10) && ((nx === y + 1 && x >= 63) || (nx + 1 === y && y <= 64))))) {
-      t = roadPaint(tile, edge, true, nx !== y + 1, true); if (t !== ROAD_UNPAINTED) { tile = t; painted = true; }
+    if ((flags & 1 && nx === y && x < 64) || (flags & 0x10 && nx === y && x > 63)) {
+      t = roadPaint(tile, diagonal, true, false, true);
+      if (t !== ROAD_UNPAINTED) {
+        tile = t;
+        painted = true;
+      }
+    }
+    if (
+      !painted &&
+      ((flags & 1 && ((nx === y + 1 && x < 64) || (nx + 1 === y && y > 63))) ||
+        (flags & 0x10 && ((nx === y + 1 && x >= 63) || (nx + 1 === y && y <= 64))))
+    ) {
+      t = roadPaint(tile, edge, true, nx !== y + 1, true);
+      if (t !== ROAD_UNPAINTED) {
+        tile = t;
+        painted = true;
+      }
     }
     if (!road) {
-      if ((flags & 0x80) && (flags & 2) && x === 63 && y === 64) { t = roadPaint(tile, TRACK_CORNER[ground], false, false, true); if (t !== ROAD_UNPAINTED) tile = t; }
-      if ((flags & 0x80) && (flags & 0x20) && x === 64 && y === 64) { t = roadPaint(tile, TRACK_CORNER[ground], true, true, true); if (t !== ROAD_UNPAINTED) tile = t; }
-      if ((flags & 8) && (flags & 2) && x === 63 && y === 63) { t = roadPaint(tile, TRACK_CORNER[ground], true, false, true); if (t !== ROAD_UNPAINTED) tile = t; }
-      if ((flags & 8) && (flags & 0x20) && x === 64 && y === 63) { t = roadPaint(tile, TRACK_CORNER[ground], false, true, true); if (t !== ROAD_UNPAINTED) tile = t; }
+      if (flags & 0x80 && flags & 2 && x === 63 && y === 64) {
+        t = roadPaint(tile, TRACK_CORNER[ground], false, false, true);
+        if (t !== ROAD_UNPAINTED) tile = t;
+      }
+      if (flags & 0x80 && flags & 0x20 && x === 64 && y === 64) {
+        t = roadPaint(tile, TRACK_CORNER[ground], true, true, true);
+        if (t !== ROAD_UNPAINTED) tile = t;
+      }
+      if (flags & 8 && flags & 2 && x === 63 && y === 63) {
+        t = roadPaint(tile, TRACK_CORNER[ground], true, false, true);
+        if (t !== ROAD_UNPAINTED) tile = t;
+      }
+      if (flags & 8 && flags & 0x20 && x === 64 && y === 63) {
+        t = roadPaint(tile, TRACK_CORNER[ground], false, true, true);
+        if (t !== ROAD_UNPAINTED) tile = t;
+      }
     }
     if (road && x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax) return 184;
   }
-  if ((corners & 1) && x === 127 && y === 127) { t = roadPaint(tile, edge, true, false, true); if (t !== ROAD_UNPAINTED) tile = t; }
-  if ((corners & 4) && x === 127 && y === 0) { t = roadPaint(tile, edge, false, false, true); if (t !== ROAD_UNPAINTED) tile = t; }
-  if ((corners & 0x10) && x === 0 && y === 0) { t = roadPaint(tile, edge, true, true, true); if (t !== ROAD_UNPAINTED) tile = t; }
-  if ((corners & 0x40) && x === 0 && y === 127) { t = roadPaint(tile, edge, false, true, true); if (t !== ROAD_UNPAINTED) tile = t; }
+  if (corners & 1 && x === 127 && y === 127) {
+    t = roadPaint(tile, edge, true, false, true);
+    if (t !== ROAD_UNPAINTED) tile = t;
+  }
+  if (corners & 4 && x === 127 && y === 0) {
+    t = roadPaint(tile, edge, false, false, true);
+    if (t !== ROAD_UNPAINTED) tile = t;
+  }
+  if (corners & 0x10 && x === 0 && y === 0) {
+    t = roadPaint(tile, edge, true, true, true);
+    if (t !== ROAD_UNPAINTED) tile = t;
+  }
+  if (corners & 0x40 && x === 0 && y === 127) {
+    t = roadPaint(tile, edge, false, true, true);
+    if (t !== ROAD_UNPAINTED) tile = t;
+  }
   return tile;
 }
 /** PERF-SNOW1: the classifier's paint - the tile `record` painted (turned, flipped) over `tile`, or ROAD_UNPAINTED where it
@@ -1073,9 +1485,14 @@ function roadPaint(tile, record, rotate, flip, overwrite) {
  *  it, a track's when (on the two track sets, where no road is) a track's is; an authored location tile is neither. */
 export function classifyRoadTile(x, y, actual, net, rect, authored) {
   if (authored) return ROAD_KIND.none;
-  for (let g = 0; g <= 3; g++) if (predictRoadTile(x, y, net.roads, net.roadCorners, g, true, rect) === actual) return ROAD_KIND.road;
+  for (let g = 0; g <= 3; g++)
+    if (predictRoadTile(x, y, net.roads, net.roadCorners, g, true, rect) === actual) return ROAD_KIND.road;
   for (let g = 2; g <= 3; g++) {
-    if (predictRoadTile(x, y, net.roads, net.roadCorners, g, true, rect) < 0 && predictRoadTile(x, y, net.paths, net.pathCorners, g, false, rect) === actual) return ROAD_KIND.path;
+    if (
+      predictRoadTile(x, y, net.roads, net.roadCorners, g, true, rect) < 0 &&
+      predictRoadTile(x, y, net.paths, net.pathCorners, g, false, rect) === actual
+    )
+      return ROAD_KIND.path;
   }
   return ROAD_KIND.none;
 }
@@ -1084,10 +1501,22 @@ export function classifyRoadTile(x, y, actual, net, rect, authored) {
  *  record is under 56, the tiles TerrainHelper.SetLocationTiles stamps - marked authored, row 0 south. `ground` is the
  *  block's RmbGroundTiles[16, 16] ([x][y], y from the north). */
 export function markAuthoredBlock(authored, ground, originX, originZ) {
-  if (!authored || authored.length !== 16384 || !ground || ground.length !== 16 || ground.some((c) => !c || c.length !== 16) || originX < 0 || originZ < 0 || originX + 16 > 128 || originZ + 16 > 128) {
+  if (
+    !authored ||
+    authored.length !== 16384 ||
+    !ground ||
+    ground.length !== 16 ||
+    ground.some((c) => !c || c.length !== 16) ||
+    originX < 0 ||
+    originZ < 0 ||
+    originX + 16 > 128 ||
+    originZ + 16 > 128
+  ) {
     throw new Error('Malformed authored exterior ground block.');
   }
-  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) if (ground[j][15 - i].textureRecord < 56) authored[(originZ + i) * 128 + originX + j] = 1;
+  for (let i = 0; i < 16; i++)
+    for (let j = 0; j < 16; j++)
+      if (ground[j][15 - i].textureRecord < 56) authored[(originZ + i) * 128 + originX + j] = 1;
 }
 
 /** BasicRoadsTerrain: one pixel's painted tiles, each road record classified as the network's road or track.
@@ -1103,30 +1532,42 @@ export class BasicRoadsTerrain {
    * @param {{ xMin: number, xMax: number, yMin: number, yMax: number }} rect - the location's rectangle in tiles
    */
   constructor(mapX, mapY, tiles, authored, net, rect) {
-    if (!tiles || tiles.length !== 16384 || !authored || authored.length !== tiles.length) throw new Error('Expected 128 by 128 promoted and authored tile arrays.');
-    this.mapX = mapX; this.mapY = mapY;
+    if (!tiles || tiles.length !== 16384 || !authored || authored.length !== tiles.length)
+      throw new Error('Expected 128 by 128 promoted and authored tile arrays.');
+    this.mapX = mapX;
+    this.mapY = mapY;
     this.tiles = Uint8Array.from(tiles);
     this.kinds = new Uint8Array(16384);
-    this.roadTiles = 0; this.pathTiles = 0;
+    this.roadTiles = 0;
+    this.pathTiles = 0;
     for (let z = 0; z < 128; z++) {
       for (let x = 0; x < 128; x++) {
         const i = z * 128 + x;
         if (!PAINTED_ROAD_RECORDS.includes(this.tiles[i] >> 2)) continue;
-        const k = net.kindAt ? (authored[i] ? ROAD_KIND.none : net.kindAt(x, z, this.tiles[i])) : classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);
+        const k = net.kindAt
+          ? authored[i]
+            ? ROAD_KIND.none
+            : net.kindAt(x, z, this.tiles[i])
+          : classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);
         this.kinds[i] = k;
         if (k === ROAD_KIND.road) this.roadTiles++;
         if (k === ROAD_KIND.path) this.pathTiles++;
       }
     }
   }
-  at(x, z) { return x >= 0 && z >= 0 && x < 128 && z < 128 ? this.kinds[z * 128 + x] : ROAD_KIND.none; }
+  at(x, z) {
+    return x >= 0 && z >= 0 && x < 128 && z < 128 ? this.kinds[z * 128 + x] : ROAD_KIND.none;
+  }
   /** PathTile(x, z): the tile byte where a track lies, else 0. */
-  pathTile(x, z) { return this.at(x, z) === ROAD_KIND.path ? this.tiles[z * 128 + x] : 0; }
+  pathTile(x, z) {
+    return this.at(x, z) === ROAD_KIND.path ? this.tiles[z * 128 + x] : 0;
+  }
   /** SamplePath(x, z, tileMetres, featherMetres): the track weight at (x, z) in tiles - 255 on a track, falling over
    *  the feather outside. */
   samplePath(x, z, tileMetres, featherMetres) {
     if (this.pathTiles === 0 || tileMetres <= 0 || featherMetres < 0 || featherMetres > tileMetres) return 0;
-    const fx = floorToInt(x), fz = floorToInt(z);
+    const fx = floorToInt(x),
+      fz = floorToInt(z);
     let best = Infinity;
     for (let i = Math.max(0, fz - 1); i <= Math.min(127, fz + 1); i++) {
       for (let j = Math.max(0, fx - 1); j <= Math.min(127, fx + 1); j++) {
@@ -1142,12 +1583,17 @@ export class BasicRoadsTerrain {
    *  out from a main road's bare edge. */
   sampleBerm(x, z, tileMetres, width, archive, coverage) {
     if (this.roadTiles === 0 || width <= 0 || width > tileMetres) return 0;
-    const fx = floorToInt(x), fz = floorToInt(z);
+    const fx = floorToInt(x),
+      fz = floorToInt(z);
     let best = Infinity;
     for (let i = Math.max(0, fz - 1); i <= Math.min(127, fz + 1); i++) {
       for (let j = Math.max(0, fx - 1); j <= Math.min(127, fx + 1); j++) {
         const k = i * 128 + j;
-        if (this.kinds[k] === ROAD_KIND.road) best = Math.min(best, f32(coverage.roadDistance(archive, this.tiles[k], f32(x - j), f32(z - i)) * tileMetres));
+        if (this.kinds[k] === ROAD_KIND.road)
+          best = Math.min(
+            best,
+            f32(coverage.roadDistance(archive, this.tiles[k], f32(x - j), f32(z - i)) * tileMetres),
+          );
       }
     }
     if (best <= 0 || best >= width) return 0;

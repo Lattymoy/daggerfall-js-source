@@ -2,8 +2,8 @@
   {
     "name": "PF-follow-dropped-on-refusal",
     "file": "src/systems/party/partyTravel.js",
-    "old": "    if (waitsOut) {\n      if (refusal !== followRefused)",
-    "new": "    if (false) {\n      if (refusal !== followRefused)",
+    "old": "    if (waitsOut) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PF-refusal-never-leaves-behind",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (waitsOut && waited >= 2 * TRIP_FOLLOW_MS) {",
-    "new": "if (false) {",
+    "old": "    if (waitsOut && waited >= 2 * TRIP_FOLLOW_MS) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PF-refusal-said-every-tick",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (refusal !== followRefused) host.say(",
-    "new": "if (true) host.say(",
+    "old": "      if (refusal !== followRefused)",
+    "new": "      if (true)",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PF-off-waited-out",
     "file": "src/systems/party/partyTravel.js",
-    "old": "const waitsOut = !!refusal && refusal !== PARTY_TRAVEL_TEXT.off;",
-    "new": "const waitsOut = !!refusal;",
+    "old": "    const waitsOut = !!refusal && refusal !== PARTY_TRAVEL_TEXT.off;",
+    "new": "    const waitsOut = !!refusal;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PF-fallback-on-first-check",
     "file": "src/systems/party/partyArrival.js",
-    "old": "return target && !last ? null : seams.supportedLanding(fallback);",
-    "new": "return seams.supportedLanding(fallback);",
+    "old": "        return target && !last ? null : seams.supportedLanding(fallback);",
+    "new": "        return seams.supportedLanding(fallback);",
     "tests": [
       "test/systems/partyArrivalTransaction.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PF-fallback-never-taken",
     "file": "src/systems/party/partyArrival.js",
-    "old": "return target && !last ? null : seams.supportedLanding(fallback);",
-    "new": "return target ? null : seams.supportedLanding(fallback);",
+    "old": "        return target && !last ? null : seams.supportedLanding(fallback);",
+    "new": "        return target ? null : seams.supportedLanding(fallback);",
     "tests": [
       "test/systems/partyArrivalTransaction.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PF-last-attempt-never-said",
     "file": "src/systems/party/partyArrival.js",
-    "old": "const landing = probe(last);",
-    "new": "const landing = probe(false);",
+    "old": "    const landing = probe(last);",
+    "new": "    const landing = probe(false);",
     "tests": [
       "test/systems/partyArrivalTransaction.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PF-missed-line-dropped",
     "file": "src/systems/party/partyArrival.js",
-    "old": "if (partyArrival && pick.besideMissedText) return pick.besideMissedText;",
-    "new": "if (false) return pick.besideMissedText;",
+    "old": "    if (partyArrival && pick.besideMissedText) return pick.besideMissedText;",
+    "new": "    if (false) return pick.besideMissedText;",
     "tests": [
       "test/systems/partyArrivalTransaction.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PF-sent-back-kept-bound",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!went && bound === journeyBound) bound = null;",
-    "new": "if (false) bound = null;",
+    "old": "      if (!went && bound === journeyBound) bound = null;",
+    "new": "      if (false) bound = null;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PF-gives-up-on-present-seat",
     "file": "src/systems/party/partyTravel.js",
-    "old": "const seatQuiet = !p && waited >= TRIP_FOLLOW_MS;",
-    "new": "const seatQuiet = waited >= TRIP_FOLLOW_MS;",
+    "old": "    const seatQuiet = !p && waited >= TRIP_FOLLOW_MS;",
+    "new": "    const seatQuiet = waited >= TRIP_FOLLOW_MS;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PF-departure-unread",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (roundLeft && atDeparture && !there) {",
-    "new": "if (roundLeft && !there) {",
+    "old": "    if (roundLeft && atDeparture && !there) {",
+    "new": "    if (roundLeft && !there) {",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PF-round-left-unread",
     "file": "src/systems/party/partyTravel.js",
-    "old": "if (!arrived && !roundLeft && !seatQuiet) return;",
-    "new": "if (!arrived && !seatQuiet) return;",
+    "old": "    if (!arrived && !roundLeft && !seatQuiet) return;",
+    "new": "    if (!arrived && !seatQuiet) return;",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "PF-leader-pixel-unread",
     "file": "src/systems/party/partyTravel.js",
-    "old": "const to = arrived || !roundLeft ? { x: f.x, y: f.y } : { x: p.px, y: p.py };",
-    "new": "const to = { x: f.x, y: f.y };",
+    "old": "    const to = arrived || !roundLeft ? { x: f.x, y: f.y } : { x: p.px, y: p.py };",
+    "new": "    const to = { x: f.x, y: f.y };",
     "tests": [
       "test/systems/party/partytravel.test.js"
     ]

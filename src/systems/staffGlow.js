@@ -6,12 +6,21 @@ import { EQUIP_SLOTS, equipTableOf } from './equip.js';
 import { GLOW_SET_FIELD } from './weaponGlow.js';
 
 /** The colours /glow takes, by the look each one is. `crimson` is the Gilded rung's. */
-export const GLOW_SET_COLOURS = Object.freeze({ fire: 'fire', frost: 'frost', shock: 'shock', arcane: 'arcane', crimson: 'gilded', brand: 'brand', edge: 'edge' });
+export const GLOW_SET_COLOURS = Object.freeze({
+  fire: 'fire',
+  frost: 'frost',
+  shock: 'shock',
+  arcane: 'arcane',
+  crimson: 'gilded',
+  brand: 'brand',
+  edge: 'edge',
+});
 /** The looks with three strengths; the rest have one, 2. */
 const BANDED = ['fire', 'frost', 'shock'];
 
 /** The `/staff` line. */
-export const GLOW_HELP_LINE = '/glow <fire|frost|shock|arcane|crimson|brand|edge> [1-3] | off - set the glow of the weapon or wraps in your hands';
+export const GLOW_HELP_LINE =
+  '/glow <fire|frost|shock|arcane|crimson|brand|edge> [1-3] | off - set the glow of the weapon or wraps in your hands';
 const USAGE = 'Usage: /glow <fire|frost|shock|arcane|crimson|brand|edge> [1-3], or /glow off.';
 
 /**
@@ -24,7 +33,10 @@ export function parseGlowCommand(text) {
   if (!m) return null;
   const words = (m[1] ?? '').toLowerCase().split(/\s+/).filter(Boolean);
   if (words.length === 1 && (words[0] === 'off' || words[0] === 'none')) return { cmd: 'glow', word: null };
-  const look = words.length >= 1 && words.length <= 2 && Object.hasOwn(GLOW_SET_COLOURS, words[0]) ? GLOW_SET_COLOURS[/** @type {keyof typeof GLOW_SET_COLOURS} */ (words[0])] : null;
+  const look =
+    words.length >= 1 && words.length <= 2 && Object.hasOwn(GLOW_SET_COLOURS, words[0])
+      ? GLOW_SET_COLOURS[/** @type {keyof typeof GLOW_SET_COLOURS} */ (words[0])]
+      : null;
   if (!look) return { error: USAGE };
   const banded = BANDED.includes(look);
   if (words[1] !== undefined && !banded) return { error: `${words[0]} has one strength.` };
@@ -48,7 +60,10 @@ export function heldGlowItems(/** @type {any} */ entity) {
 export function runGlowCommand(entity, c, changed = () => {}) {
   const items = heldGlowItems(entity);
   if (!items.length) return 'Hold a weapon or wear Hand Wraps first.';
-  for (const it of items) { if (c.word) it[GLOW_SET_FIELD] = c.word; else delete it[GLOW_SET_FIELD]; }
+  for (const it of items) {
+    if (c.word) it[GLOW_SET_FIELD] = c.word;
+    else delete it[GLOW_SET_FIELD];
+  }
   changed();
   const names = items.map((it) => it.shortName ?? it.name ?? 'weapon').join(' and ');
   return c.word ? `${names}: glow set.` : `${names}: set glow removed.`;

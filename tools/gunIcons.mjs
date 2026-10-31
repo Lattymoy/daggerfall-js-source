@@ -59,13 +59,18 @@ export function parts({ width: w, height: h, data }) {
     while (stack.length) {
       const p = stack.pop();
       part.push(p);
-      const x = p % w, y = (p / w) | 0;
+      const x = p % w,
+        y = (p / w) | 0;
       for (let dy = -1; dy <= 1; dy++) {
         for (let dx = -1; dx <= 1; dx++) {
-          const nx = x + dx, ny = y + dy;
+          const nx = x + dx,
+            ny = y + dy;
           if ((dx || dy) && nx >= 0 && ny >= 0 && nx < w && ny < h) {
             const q = ny * w + nx;
-            if (!seen[q] && data[q * 4 + 3] > DRAWN) { seen[q] = 1; stack.push(q); }
+            if (!seen[q] && data[q * 4 + 3] > DRAWN) {
+              seen[q] = 1;
+              stack.push(q);
+            }
           }
         }
       }
@@ -86,21 +91,29 @@ export function healGap(img) {
   const out = { width: w, height: h, data: new Uint8ClampedArray(data) };
   const ps = parts(img);
   if (ps.length < 2) return out;
-  const body = new Set(ps[0]), butt = ps[1];
+  const body = new Set(ps[0]),
+    butt = ps[1];
   const by = butt.map((p) => (p / w) | 0);
-  const top = Math.min(...by), bottom = Math.max(...by);
+  const top = Math.min(...by),
+    bottom = Math.max(...by);
   for (let y = top; y <= bottom; y++) {
     const bx = butt.filter((p) => ((p / w) | 0) === y).map((p) => p % w);
     if (!bx.length) continue;
     const right = Math.min(...bx);
     let left = -1;
-    for (let x = right - 1; x >= 0; x--) if (body.has(y * w + x)) { left = x; break; }
+    for (let x = right - 1; x >= 0; x--)
+      if (body.has(y * w + x)) {
+        left = x;
+        break;
+      }
     if (left < 0 || right - left <= 1) continue;
     const r = bottom > top ? (y - top) / (bottom - top) : 0.5;
     const shade = 1.16 - 0.4 * r;
     for (let x = left + 1; x < right; x++) {
       const t = (x - left) / (right - left);
-      const a = (y * w + left) * 4, b = (y * w + right) * 4, o = (y * w + x) * 4;
+      const a = (y * w + left) * 4,
+        b = (y * w + right) * 4,
+        o = (y * w + x) * 4;
       for (let k = 0; k < 3; k++) out.data[o + k] = Math.round((data[a + k] * (1 - t) + data[b + k] * t) * shade);
       out.data[o + 3] = 255;
     }
@@ -111,27 +124,42 @@ export function healGap(img) {
 /** The box of everything drawn, and the picture cut to it. */
 export function trim(img) {
   const { width: w, height: h, data } = img;
-  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  let x0 = w,
+    y0 = h,
+    x1 = -1,
+    y1 = -1;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       if (data[(y * w + x) * 4 + 3] <= 0) continue;
-      if (x < x0) x0 = x; if (x > x1) x1 = x;
-      if (y < y0) y0 = y; if (y > y1) y1 = y;
+      if (x < x0) x0 = x;
+      if (x > x1) x1 = x;
+      if (y < y0) y0 = y;
+      if (y > y1) y1 = y;
     }
   }
   if (x1 < 0) return img;
-  const W = x1 - x0 + 1, H = y1 - y0 + 1;
+  const W = x1 - x0 + 1,
+    H = y1 - y0 + 1;
   const out = new Uint8ClampedArray(W * H * 4);
   for (let y = 0; y < H; y++) out.set(data.subarray(((y + y0) * w + x0) * 4, ((y + y0) * w + x1 + 1) * 4), y * W * 4);
   return { width: W, height: H, data: out };
 }
 
 /** GOLD LEAF, darkest to brightest - the ramp a gilded pixel's lightness is laid on. */
-export const GOLD = Object.freeze([[46, 26, 4], [96, 62, 8], [156, 108, 20], [212, 160, 38], [246, 204, 76], [255, 236, 150], [255, 255, 232]]);
+export const GOLD = Object.freeze([
+  [46, 26, 4],
+  [96, 62, 8],
+  [156, 108, 20],
+  [212, 160, 38],
+  [246, 204, 76],
+  [255, 236, 150],
+  [255, 255, 232],
+]);
 /** A ramp read at `t` (0..1), linearly between its stops. */
 export function ramp(stops, t) {
   const u = Math.max(0, Math.min(1, t)) * (stops.length - 1);
-  const i = Math.min(stops.length - 2, Math.floor(u)), f = u - i;
+  const i = Math.min(stops.length - 2, Math.floor(u)),
+    f = u - i;
   return [0, 1, 2].map((k) => Math.round(stops[i][k] * (1 - f) + stops[i + 1][k] * f));
 }
 const lightness = (d, o) => (0.299 * d[o] + 0.587 * d[o + 1] + 0.114 * d[o + 2]) / 255;
@@ -148,7 +176,8 @@ export function gild(img) {
   for (let i = 0; i < w * h; i++) if (data[i * 4 + 3] >= 8) ls.push(lightness(data, i * 4));
   if (!ls.length) return out;
   ls.sort((a, b) => a - b);
-  const lo = ls[Math.floor(ls.length * 0.05)], hi = ls[Math.floor(ls.length * 0.95)];
+  const lo = ls[Math.floor(ls.length * 0.05)],
+    hi = ls[Math.floor(ls.length * 0.95)];
   const span = Math.max(1e-6, hi - lo);
   const bright = [];
   for (let i = 0; i < w * h; i++) {
@@ -156,7 +185,9 @@ export function gild(img) {
     if (data[o + 3] < 8) continue;
     const t = Math.max(0, Math.min(1, (lightness(data, o) - lo) / span)) ** 1.1;
     const c = ramp(GOLD, 0.06 + 0.88 * t);
-    out.data[o] = c[0]; out.data[o + 1] = c[1]; out.data[o + 2] = c[2];
+    out.data[o] = c[0];
+    out.data[o + 1] = c[1];
+    out.data[o + 2] = c[2];
     bright.push([t, i]);
   }
   // the two glints: the brightest pixels at least five apart, ties broken by place so the pick is one answer
@@ -164,10 +195,16 @@ export function gild(img) {
   const glints = [];
   for (const [, i] of bright) {
     if (glints.length >= 2) break;
-    const x = i % w, y = (i / w) | 0;
+    const x = i % w,
+      y = (i / w) | 0;
     if (glints.every((j) => Math.abs((j % w) - x) + Math.abs(((j / w) | 0) - y) >= 5)) glints.push(i);
   }
-  for (const i of glints) { const o = i * 4; out.data[o] = 255; out.data[o + 1] = 255; out.data[o + 2] = 255; }
+  for (const i of glints) {
+    const o = i * 4;
+    out.data[o] = 255;
+    out.data[o + 1] = 255;
+    out.data[o + 2] = 255;
+  }
   return out;
 }
 

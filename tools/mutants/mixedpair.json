@@ -20,8 +20,8 @@
   {
     "name": "MIXEDPAIR-blade-read-as-gun",
     "file": "src/combat/twoHands/handsLaw.js",
-    "old": "  if (!dualEligible(right) || !dualEligible(left)) return null;\n  const r = dualGun(right), l = dualGun(left);",
-    "new": "  if (!dualEligible(right) || !dualEligible(left)) return null;\n  const r = dualGun(right), l = true;",
+    "old": "    l = dualGun(left);",
+    "new": "    l = true;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MIXEDPAIR-blade-waits-the-reload",
     "file": "src/combat/playerWeapon.js",
-    "old": "m.cooldownUntil = this.mixedPair ? Math.max(m.now, this._classicCooldown) : m.now + Math.min(",
-    "new": "m.cooldownUntil = m.now + Math.min(",
+    "old": "    m.cooldownUntil = this.mixedPair\n      ? Math.max(m.now, this._classicCooldown)\n      : m.now + Math.min(...hands.map((x) => this._pistolLeft(x))); // AUDIT MIXED-PAIR L1-5: and what the machine was owed when the pistols took it (AUDIT PISTOL-PORT C1)",
+    "new": "    m.cooldownUntil = m.now + Math.min(...hands.map((x) => this._pistolLeft(x))); // AUDIT MIXED-PAIR L1-5: and what the machine was owed when the pistols took it (AUDIT PISTOL-PORT C1)",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MIXEDPAIR-clock-blind-to-the-shot",
     "file": "src/combat/playerWeapon.js",
-    "old": "      if (this.mixedPair) { this._lastHand = this.strike.hand; this._lastEnd = m.now; }",
-    "new": "      if (false) { this._lastHand = this.strike.hand; this._lastEnd = m.now; }",
+    "old": "      if (this.mixedPair) {",
+    "new": "      if (false) {",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MIXEDPAIR-reload-on-both",
     "file": "src/combat/playerWeapon.js",
-    "old": "ms = PISTOLET_FEEL.reloadMs * (h === gh ? MIXED.RELOAD : 1);",
-    "new": "ms = PISTOLET_FEEL.reloadMs * (gh ? MIXED.RELOAD : 1);",
+    "old": "        ms = PISTOLET_FEEL.reloadMs * (h === gh ? MIXED.RELOAD : 1);",
+    "new": "        ms = PISTOLET_FEEL.reloadMs * (gh ? MIXED.RELOAD : 1);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MIXEDPAIR-reload-never-reset",
     "file": "src/combat/playerWeapon.js",
-    "old": "ms = PISTOLET_FEEL.reloadMs * (h === gh ? MIXED.RELOAD : 1);",
-    "new": "ms = h === gh ? PISTOLET_FEEL.reloadMs * MIXED.RELOAD : g.cooldownMs;",
+    "old": "        ms = PISTOLET_FEEL.reloadMs * (h === gh ? MIXED.RELOAD : 1);",
+    "new": "        ms = h === gh ? PISTOLET_FEEL.reloadMs * MIXED.RELOAD : g.cooldownMs;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MIXEDPAIR-blade-on-the-pistol-clock",
     "file": "src/combat/playerWeapon.js",
-    "old": "    this._tuneClassic(weaponTypeForItem(this.handItem(s.hand)));   // the blade's law",
-    "new": "    // this._tuneClassic(weaponTypeForItem(this.handItem(s.hand)));   // the blade's law",
+    "old": "    this._tuneClassic(weaponTypeForItem(this.handItem(s.hand))); // the blade's law - the gun's last shot left the machine on its own clock",
+    "new": "    // this._tuneClassic(weaponTypeForItem(this.handItem(s.hand)));   // the blade's law - the gun's last shot left the machine on its own clock",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "MIXEDPAIR-not-in-pair",
     "file": "src/combat/playerWeapon.js",
-    "old": "    this.pistols.inPair = !!gh;",
-    "new": "    this.pistols.inPair = false;",
+    "old": "    this.pistols.inPair = !!gh; // MIXED-PAIR: one pistol, a hand of a pair - drawn on its own hand's side (combat/gun/pistolLane.js)",
+    "new": "    this.pistols.inPair = false; // MIXED-PAIR: one pistol, a hand of a pair - drawn on its own hand's side (combat/gun/pistolLane.js)",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MIXEDPAIR-flip-the-lone-side",
     "file": "src/combat/gun/pistolLane.js",
-    "old": "(pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded)",
-    "new": "(pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded)",
+    "old": "const flipFor = (pistols, h, leftHanded) =>\n  pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded;",
+    "new": "const flipFor = (pistols, h, leftHanded) => (pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MIXEDPAIR-guard-unread",
     "file": "src/combat/gun/pistolViewmodel.js",
-    "old": " || (m.state !== 'Firing' && !!lowered(h)), dt);",
-    "new": ", dt);",
+    "old": "    s.guard = guardStep(\n      s.guard,\n      (dual && guard && other.state === 'Firing' && m.state !== 'Firing') || (m.state !== 'Firing' && !!lowered(h)),\n      dt,\n    );",
+    "new": "    s.guard = guardStep(s.guard, dual && guard && other.state === 'Firing' && m.state !== 'Firing', dt);",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "MIXEDPAIR-held-shot-unread",
     "file": "src/combat/playerWeapon.js",
-    "old": "  _gunStriking() { return !!this.gunHand && (this._shotMirror || this.shotHeld() === true); }",
-    "new": "  _gunStriking() { return !!this.gunHand && this._shotMirror; }",
+    "old": "    return !!this.gunHand && (this._shotMirror || this.shotHeld() === true);",
+    "new": "    return !!this.gunHand && this._shotMirror;",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "MIXEDPAIR-putby-cuts-the-blow",
     "file": "src/combat/playerWeapon.js",
-    "old": "    if (this._bladeTurn) { m.cooldownUntil",
-    "new": "    if (false) { m.cooldownUntil",
+    "old": "    if (this._bladeTurn) {",
+    "new": "    if (false) {",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "MIXEDPAIR-blade-turn-never-kept",
     "file": "src/combat/playerWeapon.js",
-    "old": "    this._bladeTurn = !!blade;\n",
-    "new": "",
+    "old": "    this._bladeTurn = !!blade;\n    if (pistols && !blade) return this._pistolsStep(dt); // PISTOL-PORT: a Pistolet steps on the pistol lab's machines",
+    "new": "    if (pistols && !blade) return this._pistolsStep(dt); // PISTOL-PORT: a Pistolet steps on the pistol lab's machines",
     "tests": [
       "test/combat/mixedpair.test.js"
     ]

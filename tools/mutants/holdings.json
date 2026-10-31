@@ -38,8 +38,8 @@
   {
     "name": "HOLD-the-hotkey-says-nothing",
     "file": "src/systems/horse/horseCart.js",
-    "old": "  function handleSummonTransport() { const d = dragonKeepDoor(); if (d?.summonsFirst()) { d.call(); return; } say(summonTransport().text); }   // DRAGON5b: the dragon when it was the last ridden (or there is nothing else to call)",
-    "new": "  function handleSummonTransport() { summonTransport(); }",
+    "old": "    const d = dragonKeepDoor();\n    if (d?.summonsFirst()) {\n      d.call();\n      return;\n    }\n    say(summonTransport().text);\n  } // DRAGON5b: the dragon when it was the last ridden (or there is nothing else to call)",
+    "new": "    summonTransport();\n  }",
     "tests": [
       "test/systems/horse/holdings.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "HOLD-the-stable-words-classic",
     "file": "src/ui/holdingsPages.js",
-    "old": "    else horse = { state: 'Stabled', tone: 'is-away',",
-    "new": "    else horse = { state: 'With you', tone: 'is-away',",
+    "old": "      horse = {\n        state: 'Stabled',",
+    "new": "      horse = {\n        state: 'With you',",
     "tests": [
       "test/systems/horse/holdings.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "FLEET-name-unfiltered",
     "file": "src/systems/fleet.js",
-    "old": "  return v.ok ? { ok: true, name: s, reason: null } : { ok: false, name: '', reason: v.reason ?? 'That name will not do.' };",
+    "old": "  return v.ok\n    ? { ok: true, name: s, reason: null }\n    : { ok: false, name: '', reason: v.reason ?? 'That name will not do.' };",
     "new": "  return { ok: true, name: s, reason: null };",
     "tests": [
       "test/systems/naval/fleet.test.js"
@@ -93,7 +93,7 @@
     "name": "FLEET-name-unbounded",
     "file": "src/systems/fleet.js",
     "old": "  s = s.replace(/\\s+/g, ' ').trim().slice(0, SHIP_NAME_MAX).trim();",
-    "new": "  s = s.replace(/\\s+/g, ' ').trim().slice(0, SHIP_NAME_MAX + 8).trim();",
+    "new": "  s = s\n    .replace(/\\s+/g, ' ')\n    .trim()\n    .slice(0, SHIP_NAME_MAX + 8)\n    .trim();",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "FLEET-loan-due-unread",
     "file": "src/systems/fleet.js",
-    "old": "  for (const r of _ships.values()) if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) { r.credit = null; n++; }",
-    "new": "  for (const r of _ships.values()) if (false) { r.credit = null; n++; }",
+    "old": "    if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ],
@@ -148,8 +148,8 @@
   {
     "name": "FLEET-title-left-in-the-pack",
     "file": "src/systems/fleet.js",
-    "old": "  if (from) { const i = from.indexOf(deed); if (i >= 0) from.splice(i, 1); }",
-    "new": "  if (false) { const i = from.indexOf(deed); if (i >= 0) from.splice(i, 1); }",
+    "old": "  if (from) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "FLEET-wire-n-always",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "...(named ? { n } : {}), ...(flagged",
-    "new": "n, ...(flagged",
+    "old": "    ...(named ? { n } : {}),",
+    "new": "    n,",
     "tests": [
       "test/systems/naval/fleet.test.js"
     ],

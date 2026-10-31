@@ -192,7 +192,7 @@
   {
     "name": "OWN-WORDS1-pack-reads-dfu",
     "file": "src/scenes/quest/questData.js",
-    "old": "const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/__DEMO01.txt', { query: '?raw', import: 'default' });",
+    "old": "const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/__DEMO01.txt', {\n  query: '?raw',\n  import: 'default',\n});",
     "new": "const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });",
     "tests": [
       "test/tooling/ownquestcheck.test.js"

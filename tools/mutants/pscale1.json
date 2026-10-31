@@ -42,8 +42,8 @@
   {
     "name": "PSCALE1-party-past-its-seats",
     "file": "src/systems/party/partyScale.js",
-    "old": "Math.max(1, Math.min(PARTY_MAX, Math.floor(n)))",
-    "new": "Math.max(1, Math.floor(n))",
+    "old": "export const partySizeOf = (n) => (Number.isFinite(n) ? Math.max(1, Math.min(PARTY_MAX, Math.floor(n))) : 1);",
+    "new": "export const partySizeOf = (n) => (Number.isFinite(n) ? Math.max(1, Math.floor(n)) : 1);",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "PSCALE1-remainder-lost-to-a-double",
     "file": "src/systems/party/partyScale.js",
-    "old": "  const whole = Math.floor(exact + 1e-9);   // 1.2 + 0.8",
-    "new": "  const whole = Math.floor(exact);   // 1.2 + 0.8",
+    "old": "  const whole = Math.floor(exact + 1e-9); // 1.2 + 0.8 is 1.9999999999999998 in a double: a point owed is a point paid",
+    "new": "  const whole = Math.floor(exact); // 1.2 + 0.8 is 1.9999999999999998 in a double: a point owed is a point paid",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "PSCALE1-health-not-whole",
     "file": "src/systems/party/partyScale.js",
-    "old": "  const whole = Math.floor(exact + 1e-9);   // 1.2 + 0.8",
-    "new": "  const whole = exact;   // 1.2 + 0.8",
+    "old": "  const whole = Math.floor(exact + 1e-9); // 1.2 + 0.8 is 1.9999999999999998 in a double: a point owed is a point paid",
+    "new": "  const whole = exact; // 1.2 + 0.8 is 1.9999999999999998 in a double: a point owed is a point paid",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "PSCALE1-camp-extras-not-its-own",
     "file": "src/systems/party/partyScale.js",
-    "old": "for (let k = 0; k < more && own.length; k++) out.push(own[k % own.length]);",
-    "new": "for (let k = 0; k < more && own.length; k++) out.push(own[0]);",
+    "old": "  for (let k = 0; k < more && own.length; k++) out.push(own[k % own.length]);",
+    "new": "  for (let k = 0; k < more && own.length; k++) out.push(own[0]);",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"

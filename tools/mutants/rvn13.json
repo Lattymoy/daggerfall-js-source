@@ -2,8 +2,8 @@
   {
     "name": "RVN13-bit-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "return i >= 0 ? (m | (1 << i)) >>> 0 : m; }, 0);",
-    "new": "return i >= 0 ? (m | (1 << (i + 1))) >>> 0 : m; }, 0);",
+    "old": "    return i >= 0 ? (m | (1 << i)) >>> 0 : m;",
+    "new": "    return i >= 0 ? (m | (1 << (i + 1))) >>> 0 : m;",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "RVN13-read-bit-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "ADAPTATIONS.filter((_, i) => ((Number(mask) >>> i) & 1) === 1).slice(0, ADAPT_MAX);",
-    "new": "ADAPTATIONS.filter((_, i) => ((Number(mask) >>> (i + 1)) & 1) === 1).slice(0, ADAPT_MAX);",
+    "old": "export const maskAdapt = (mask) => ADAPTATIONS.filter((_, i) => ((Number(mask) >>> i) & 1) === 1).slice(0, ADAPT_MAX);",
+    "new": "export const maskAdapt = (mask) =>\n  ADAPTATIONS.filter((_, i) => ((Number(mask) >>> (i + 1)) & 1) === 1).slice(0, ADAPT_MAX);",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RVN13-read-uncapped",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "=== 1).slice(0, ADAPT_MAX);",
-    "new": "=== 1);",
+    "old": "export const maskAdapt = (mask) => ADAPTATIONS.filter((_, i) => ((Number(mask) >>> i) & 1) === 1).slice(0, ADAPT_MAX);",
+    "new": "export const maskAdapt = (mask) => ADAPTATIONS.filter((_, i) => ((Number(mask) >>> i) & 1) === 1);",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -30,7 +30,7 @@
     "name": "RVN13-weak-index-off",
     "file": "src/systems/revenant/revenantFeud.js",
     "old": "export const weakAt = (i) => (Number.isInteger(i) && i >= 0 && i < WEAKNESSES.length ? WEAKNESSES[i] : null);",
-    "new": "export const weakAt = (i) => (Number.isInteger(i) && i >= 0 && i < WEAKNESSES.length ? WEAKNESSES[i + 1] ?? null : null);",
+    "new": "export const weakAt = (i) =>\n  Number.isInteger(i) && i >= 0 && i < WEAKNESSES.length ? (WEAKNESSES[i + 1] ?? null) : null;",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RVN13-weak-unread",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "  const weak = r?.wq != null ? weakAt(r.wq) : null;\n  const blows",
-    "new": "  const weak = null;\n  const blows",
+    "old": "  const weak = r?.wq != null ? weakAt(r.wq) : null;",
+    "new": "  const weak = null;",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RVN13-edge-unbuilt",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "learned, weak, edge: adaptEdge(learned, weak), p2:",
-    "new": "learned, weak, p2:",
+    "old": "  return {\n    ...(rev ?? {}),\n    learned,\n    weak,\n    edge: adaptEdge(learned, weak),\n    p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null,\n    blows,\n  };",
+    "new": "  return { ...(rev ?? {}), learned, weak, p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null, blows };",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN13-p2-unread",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null, blows };",
-    "new": "p2: null, blows };",
+    "old": "  return {\n    ...(rev ?? {}),\n    learned,\n    weak,\n    edge: adaptEdge(learned, weak),\n    p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null,\n    blows,\n  };",
+    "new": "  return { ...(rev ?? {}), learned, weak, edge: adaptEdge(learned, weak), p2: null, blows };",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN13-p2-kept",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null, blows };",
-    "new": "p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : rev?.p2 ?? null, blows };",
+    "old": "    p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : null,",
+    "new": "    p2: r?.p2 === 1 ? (rev?.p2 ?? phaseTwo()) : (rev?.p2 ?? null),",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "RVN13-reveal-unwired",
     "file": "src/systems/feudLedger.js",
-    "old": "  try { _onWeak(entity, { peer: true }); } catch { /* the reveal is no blow's business */ }",
-    "new": "",
+    "old": "  try {\n    _onWeak(entity, { peer: true });\n  } catch {\n    /* the reveal is no blow's business */\n  } // AUDIT FEUD 2: no word of mine for it",
+    "new": "  // AUDIT FEUD 2: no word of mine for it",
     "tests": [
       "test/systems/rvn13_wire.test.js"
     ]

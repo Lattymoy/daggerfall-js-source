@@ -574,7 +574,7 @@ test('BLOOD1a: the mark’s size band is the port’s own choice, and it reads t
   // drift the day a rung moves.
   const src = readFileSync(new URL('../../src/combat/blood/bloodDecals.js', import.meta.url), 'utf8');
   const fn = src.slice(src.indexOf('export function markSize('), src.indexOf('export const BLOODLESS_INDEX'));
-  assert.match(fn, /const lo = ladderRate\(0\), hi = RATE_MAX;/);
+  assert.match(fn, /const lo = ladderRate\(0\),\n\s*hi = RATE_MAX;/);
   // comments stripped, for the reason the no-GL pin above strips them:
   // the law is that the CODE carries no second copy, and the line that
   // reads the ladder's ends is allowed to say which ends it means.
@@ -924,7 +924,7 @@ test('BLOOD1b: one blood event is a SPRAY, laid by area, and each drop finds its
   // ...and it reads the ends rather than keeping a second copy of them
   const src = readFileSync(new URL('../../src/combat/blood/bloodDecals.js', import.meta.url), 'utf8');
   const fn = src.slice(src.indexOf('export function sprayRadius('), src.indexOf('export const SPRAY_LOBES_MAX'));
-  assert.match(fn, /const lo = ladderRate\(0\), hi = RATE_MAX;/);
+  assert.match(fn, /const lo = ladderRate\(0\),\n\s*hi = RATE_MAX;/);
   assert.doesNotMatch(fn.replace(/\/\/.*$/gm, ''), /\b(30|200)\b/, 'no second copy of the ladder’s ends');
 
   // DROP ZERO IS THE BODY'S OWN SPOT. Whatever else a spray does, the
@@ -3574,7 +3574,7 @@ test('BLOOD2e: blood on the lens - a real blow throws drops that slide and fade,
   const detector = hud.indexOf('const rig = updateHudVitals(');
   const artReturn = hud.indexOf('  if (!art) return;');
   assert.ok(detector > 0 && spat > detector && tick > spat && draw > tick && draw < artReturn, 'after the detector, before the art return');
-  assert.match(a4Read('src/ui/damageFlash.js'), /export function flashPlayerBleed\(\) \{ playerDamageFlash\.bleed\(\); \}/);
+  assert.match(a4Read('src/ui/damageFlash.js'), /export function flashPlayerBleed\(\) \{\n\s*playerDamageFlash\.bleed\(\);\n\s*\}/);
 });
 
 

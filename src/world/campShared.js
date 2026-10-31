@@ -25,9 +25,13 @@ import { FOE_SEQ_MAX } from '../net/wire.js';
 /** The kinds a group is, and their codes on the wire. */
 export const CAMP_KINDS = Object.freeze(['camp', 'pack', 'band']);
 /** A kind's code (1..3), a pack's for anything unknown. */
-export const campKindCode = (kind) => { const k = CAMP_KINDS.indexOf(kind); return k >= 0 ? k + 1 : 2; };
+export const campKindCode = (kind) => {
+  const k = CAMP_KINDS.indexOf(kind);
+  return k >= 0 ? k + 1 : 2;
+};
 /** A code's kind, or null. */
-export const campKindOf = (code) => (Number.isInteger(code) && code >= 1 && code <= CAMP_KINDS.length ? CAMP_KINDS[code - 1] : null);
+export const campKindOf = (code) =>
+  Number.isInteger(code) && code >= 1 && code <= CAMP_KINDS.length ? CAMP_KINDS[code - 1] : null;
 /** The most tags one frame may carry - a frame's own record bound (wire.js CELL_FRAME_RECORDS_MAX). */
 export const CAMP_TAGS_MAX = 64;
 /** A camp's number on its owner: a positive whole number. */
@@ -74,10 +78,22 @@ export function groupCamps(members, nameOf) {
   for (const m of members ?? []) {
     if (!m?.camp || !Array.isArray(m.feet)) continue;
     let g = by.get(m.camp);
-    if (!g) { g = { key: m.camp, kind: m.kind, type: m.type, n: 0, x: 0, y: 0, z: 0 }; by.set(m.camp, g); }
-    g.n++; g.x += m.feet[0]; g.y += m.feet[1]; g.z += m.feet[2];
+    if (!g) {
+      g = { key: m.camp, kind: m.kind, type: m.type, n: 0, x: 0, y: 0, z: 0 };
+      by.set(m.camp, g);
+    }
+    g.n++;
+    g.x += m.feet[0];
+    g.y += m.feet[1];
+    g.z += m.feet[2];
   }
-  return [...by.values()].map((g) => ({ key: g.key, kind: g.kind, n: g.n, at: [g.x / g.n, g.y / g.n, g.z / g.n], label: campLabel(nameOf(g.type), g.kind, g.n) }));
+  return [...by.values()].map((g) => ({
+    key: g.key,
+    kind: g.kind,
+    n: g.n,
+    at: [g.x / g.n, g.y / g.n, g.z / g.n],
+    label: campLabel(nameOf(g.type), g.kind, g.n),
+  }));
 }
 
 /** A camp's words over its mark: "Orc camp, 4", "Wolf pack, 3", "Orc band, 5" - one alone, its kind alone. */

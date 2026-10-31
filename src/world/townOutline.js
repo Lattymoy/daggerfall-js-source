@@ -34,11 +34,15 @@
 // ═══════════════════════════════════════════════════════════════════
 import { shapeWander, isWallBlock, unwalledLocation } from './townShape.js';
 
-export { unwalledLocation };   // TS7: a Bay city walled on its outline, read as its template (world/townShape.js)
+export { unwalledLocation }; // TS7: a Bay city walled on its outline, read as its template (world/townShape.js)
 import { drawNamedBuildings, blockBuildingCount, UNCARRIED_GUILD_FACTIONS } from '../systems/talk/talkTopics.js';
 import { BUILDING_TYPES, isNamedBuildingType } from './buildingNames.js';
-import { registerPortBlock, installWorldDataReplacement, registerLocationEdit } from '../formats/worldData/worldDataReplacement.js';
-import { townWallBlockName, registerTownWall } from './townWalls.js';   // TS4: a walled city's south-west cell carries its wall; TS7: the Bay's too
+import {
+  registerPortBlock,
+  installWorldDataReplacement,
+  registerLocationEdit,
+} from '../formats/worldData/worldDataReplacement.js';
+import { townWallBlockName, registerTownWall } from './townWalls.js'; // TS4: a walled city's south-west cell carries its wall; TS7: the Bay's too
 
 /** THE OPEN CELL: a block of the port's own a town past the Bay leaves where it lays no block of its template - every
  *  ground tile record 63 (past GROUND_RECORD_LIMIT, world/terrain/terrainTiles.js: never stamped - the land's own tile),
@@ -56,7 +60,15 @@ const OPEN_TILE = 63;
  *  the first that keeps one of each kind of its buildings - townOutlineCells). */
 /** @typedef {{ reach: number, depth: readonly number[], lobes: readonly number[], noise: number, noiseCell: number, min: number, turns: number }} OutlineMeasures */
 /** @type {Readonly<OutlineMeasures>} */
-export const TOWN_OUTLINE = Object.freeze({ reach: 0.98, depth: Object.freeze([0.14, 0.24]), lobes: Object.freeze([3, 5]), noise: 0.08, noiseCell: 9, min: 3, turns: 8 });
+export const TOWN_OUTLINE = Object.freeze({
+  reach: 0.98,
+  depth: Object.freeze([0.14, 0.24]),
+  lobes: Object.freeze([3, 5]),
+  noise: 0.08,
+  noiseCell: 9,
+  min: 3,
+  turns: 8,
+});
 /** TS5 (the owner: "with the outskirt locations being circular also"): a ROUND town's - the Imperial City's outskirts
  *  (world/imperialCity.js IMPERIAL_OUTSKIRTS) - no lobe and no noise, its rim within a ring of its grid: a three by three
  *  leaves its corners out. */
@@ -67,7 +79,8 @@ export const ROUND_OUTLINE = Object.freeze({ ...TOWN_OUTLINE, reach: 0.9, depth:
  *  temple a god's) - the rest one kind a type. */
 const BY_FACTION = /** @type {Set<number>} */ (new Set([BUILDING_TYPES.GuildHall, BUILDING_TYPES.Temple]));
 /** A location's building's kind - what a town past the Bay always keeps one of. @param {{ buildingType: number, factionId?: number }} b */
-export const buildingKind = (b) => (BY_FACTION.has(b.buildingType) ? `${b.buildingType}:${b.factionId ?? 0}` : `${b.buildingType}`);
+export const buildingKind = (b) =>
+  BY_FACTION.has(b.buildingType) ? `${b.buildingType}:${b.factionId ?? 0}` : `${b.buildingType}`;
 
 /**
  * THE BLOB: the cells of a `w` x `h` grid a town keeps (1) on its seed - `isWall(bx, by)` a wall ring's cell (never kept:
@@ -80,26 +93,43 @@ export const buildingKind = (b) => (BY_FACTION.has(b.buildingType) ? `${b.buildi
  */
 export function outlineCells(w, h, seed, isWall = () => false, turn = 0, O = TOWN_OUTLINE) {
   const keep = new Uint8Array(w * h);
-  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  let x0 = Infinity,
+    x1 = -Infinity,
+    y0 = Infinity,
+    y1 = -Infinity;
   for (let by = 0; by < h; by++) {
     for (let bx = 0; bx < w; bx++) {
       if (isWall(bx, by)) continue;
       keep[by * w + bx] = 1;
-      x0 = Math.min(x0, bx); x1 = Math.max(x1, bx); y0 = Math.min(y0, by); y1 = Math.max(y1, by);
+      x0 = Math.min(x0, bx);
+      x1 = Math.max(x1, bx);
+      y0 = Math.min(y0, by);
+      y1 = Math.max(y1, by);
     }
   }
-  const iw = x1 - x0 + 1, ih = y1 - y0 + 1;
+  const iw = x1 - x0 + 1,
+    ih = y1 - y0 + 1;
   if (!(iw >= O.min || ih >= O.min)) return keep;
-  const s = seed >>> 0, [dLo, dHi] = O.depth, [lLo, lHi] = O.lobes;
-  const lobes = lLo + (s % (lHi - lLo + 1)), phase = (((s >>> 3) % 360) * Math.PI) / 180 + (turn * Math.PI) / O.turns;
+  const s = seed >>> 0,
+    [dLo, dHi] = O.depth,
+    [lLo, lHi] = O.lobes;
+  const lobes = lLo + (s % (lHi - lLo + 1)),
+    phase = (((s >>> 3) % 360) * Math.PI) / 180 + (turn * Math.PI) / O.turns;
   const depth = dLo + (((s >>> 9) % 10) / 9) * (dHi - dLo);
-  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, hx = Math.max(0.5, iw / 2), hy = Math.max(0.5, ih / 2);
+  const cx = (x0 + x1) / 2,
+    cy = (y0 + y1) / 2,
+    hx = Math.max(0.5, iw / 2),
+    hy = Math.max(0.5, ih / 2);
   for (let by = y0; by <= y1; by++) {
     for (let bx = x0; bx <= x1; bx++) {
       const i = by * w + bx;
       if (!keep[i]) continue;
-      const dx = (bx - cx) / hx, dy = (by - cy) / hy;
-      const rim = O.reach + depth * Math.sin(lobes * Math.atan2(dy, dx) + phase) + O.noise * shapeWander(s, bx * 7, by * 7, O.noiseCell);
+      const dx = (bx - cx) / hx,
+        dy = (by - cy) / hy;
+      const rim =
+        O.reach +
+        depth * Math.sin(lobes * Math.atan2(dy, dx) + phase) +
+        O.noise * shapeWander(s, bx * 7, by * 7, O.noiseCell);
       if (Math.hypot(dx, dy) > rim) keep[i] = 0;
     }
   }
@@ -108,17 +138,29 @@ export function outlineCells(w, h, seed, isWall = () => false, turn = 0, O = TOW
 
 /** The 4-connected pieces of a grid's kept cells, each a list of its cells. */
 function pieces(keep, w, h) {
-  const seen = new Uint8Array(w * h), out = [];
+  const seen = new Uint8Array(w * h),
+    out = [];
   for (let i = 0; i < w * h; i++) {
     if (!keep[i] || seen[i]) continue;
-    const piece = [], stack = [i];
+    const piece = [],
+      stack = [i];
     seen[i] = 1;
     while (stack.length) {
-      const c = /** @type {number} */ (stack.pop()), x = c % w, y = (c - x) / w;
+      const c = /** @type {number} */ (stack.pop()),
+        x = c % w,
+        y = (c - x) / w;
       piece.push(c);
-      for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {
+      for (const [nx, ny] of [
+        [x - 1, y],
+        [x + 1, y],
+        [x, y - 1],
+        [x, y + 1],
+      ]) {
         const n = ny * w + nx;
-        if (nx >= 0 && ny >= 0 && nx < w && ny < h && keep[n] && !seen[n]) { seen[n] = 1; stack.push(n); }
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h && keep[n] && !seen[n]) {
+          seen[n] = 1;
+          stack.push(n);
+        }
       }
     }
     out.push(piece);
@@ -135,9 +177,11 @@ function pieces(keep, w, h) {
  * @param {(bx: number, by: number) => boolean} [isWall]
  */
 export function wholeOutline(keep, w, h, kindsOf, isWall = () => false) {
-  const cx = (w - 1) / 2, cy = (h - 1) / 2;
+  const cx = (w - 1) / 2,
+    cy = (h - 1) / 2;
   const far = (i) => Math.hypot((i % w) - cx, Math.floor(i / w) - cy);
-  const kept = new Set(), holders = new Map();
+  const kept = new Set(),
+    holders = new Map();
   for (let i = 0; i < w * h; i++) {
     for (const k of kindsOf(i)) {
       if (keep[i]) kept.add(k);
@@ -148,20 +192,32 @@ export function wholeOutline(keep, w, h, kindsOf, isWall = () => false) {
   const open = (i) => !isWall(i % w, Math.floor(i / w));
   for (let parts = pieces(keep, w, h); parts.length > 1; parts = pieces(keep, w, h)) {
     parts.sort((a, b) => b.length - a.length || a[0] - b[0]);
-    const main = new Set(parts[0]), from = new Int32Array(w * h).fill(-1), queue = [...parts[0]];
+    const main = new Set(parts[0]),
+      from = new Int32Array(w * h).fill(-1),
+      queue = [...parts[0]];
     for (const i of queue) from[i] = i;
     let hit = -1;
     for (let q = 0; q < queue.length && hit < 0; q++) {
-      const c = queue[q], x = c % w, y = (c - x) / w;
-      for (const [nx, ny] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) {
+      const c = queue[q],
+        x = c % w,
+        y = (c - x) / w;
+      for (const [nx, ny] of [
+        [x - 1, y],
+        [x + 1, y],
+        [x, y - 1],
+        [x, y + 1],
+      ]) {
         const n = ny * w + nx;
         if (nx < 0 || ny < 0 || nx >= w || ny >= h || from[n] >= 0 || !open(n)) continue;
         from[n] = c;
-        if (keep[n] && !main.has(n)) { hit = n; break; }
+        if (keep[n] && !main.has(n)) {
+          hit = n;
+          break;
+        }
         queue.push(n);
       }
     }
-    if (hit < 0) break;   // a piece no way reaches (walled off): left as it is
+    if (hit < 0) break; // a piece no way reaches (walled off): left as it is
     for (let c = from[hit]; !main.has(c); c = from[c]) keep[c] = 1;
   }
   return keep;
@@ -176,11 +232,16 @@ export function wholeOutline(keep, w, h, kindsOf, isWall = () => false) {
 export function townOutlineCells(w, h, seed, kindsOf, isWall = () => false, O = TOWN_OUTLINE) {
   const all = new Set();
   for (let i = 0; i < w * h; i++) for (const k of kindsOf(i)) all.add(k);
-  let best = null, bestMissing = Infinity;
+  let best = null,
+    bestMissing = Infinity;
   for (let turn = 0; turn < O.turns && bestMissing > 0; turn++) {
-    const keep = outlineCells(w, h, seed, isWall, turn, O), kept = new Set();
+    const keep = outlineCells(w, h, seed, isWall, turn, O),
+      kept = new Set();
     for (let i = 0; i < w * h; i++) if (keep[i]) for (const k of kindsOf(i)) kept.add(k);
-    if (all.size - kept.size < bestMissing) { best = keep; bestMissing = all.size - kept.size; }
+    if (all.size - kept.size < bestMissing) {
+      best = keep;
+      bestMissing = all.size - kept.size;
+    }
   }
   return wholeOutline(/** @type {Uint8Array} */ (best), w, h, kindsOf, isWall);
 }
@@ -191,10 +252,14 @@ export function townOutlineCells(w, h, seed, kindsOf, isWall = () => false, O = 
 const _records = new Map();
 function classicRecords(name, classicOf) {
   if (_records.has(name)) return _records.get(name);
-  const dfBlock = classicOf(name), fh = dfBlock?.rmbBlock?.fldHeader;
-  const out = fh ? Array.from({ length: Math.min(fh.buildingDataList?.length ?? 0, blockBuildingCount(dfBlock) ?? 0) }, (_, i) => ({
-    type: fh.buildingDataList[i].buildingType, raven: fh.otherNames?.[i] === 'KRAVE01.HS2',
-  })) : null;
+  const dfBlock = classicOf(name),
+    fh = dfBlock?.rmbBlock?.fldHeader;
+  const out = fh
+    ? Array.from({ length: Math.min(fh.buildingDataList?.length ?? 0, blockBuildingCount(dfBlock) ?? 0) }, (_, i) => ({
+        type: fh.buildingDataList[i].buildingType,
+        raven: fh.otherNames?.[i] === 'KRAVE01.HS2',
+      }))
+    : null;
   _records.set(name, out);
   return out;
 }
@@ -208,7 +273,11 @@ function classicRecords(name, classicOf) {
  * @returns {string[][]} each cell's kinds (buildingKind's)
  */
 export function classicKinds(buildings, names, classicOf) {
-  const pool = buildings.filter((b) => isNamedBuildingType(b.buildingType) && !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)));
+  const pool = buildings.filter(
+    (b) =>
+      isNamedBuildingType(b.buildingType) &&
+      !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)),
+  );
   const used = new Uint8Array(pool.length);
   return names.map((name) => {
     const kinds = [];
@@ -237,14 +306,15 @@ export function classicKinds(buildings, names, classicOf) {
  * @param {{ round?: boolean }} [o] TS5: a round town's outline (ROUND_OUTLINE - the Imperial City's outskirts)
  */
 export function outlineTownLocation(dfLocation, { classicOf, servedOf }, { round = false } = {}) {
-  dfLocation = unwalledLocation(dfLocation);   // TS7: a Bay city's template is its own ring
+  dfLocation = unwalledLocation(dfLocation); // TS7: a Bay city's template is its own ring
   const ed = dfLocation?.exterior?.exteriorData;
   if (!ed?.blockNames || !Array.isArray(dfLocation.exterior.buildings)) return dfLocation;
   const { width: w, height: h } = ed;
   const isWall = (bx, by) => isWallBlock(ed.blockNames[by * w + bx]);
   const seed = (dfLocation.mapTableData?.mapId ?? ed.mapId ?? 0) >>> 0;
   const kinds = classicKinds(dfLocation.exterior.buildings, ed.blockNames, classicOf);
-  const list = [], cellOf = new Map();
+  const list = [],
+    cellOf = new Map();
   for (let by = 0; by < h; by++) {
     for (let bx = 0; bx < w; bx++) {
       const dfBlock = servedOf(ed.blockNames[by * w + bx]);
@@ -258,12 +328,15 @@ export function outlineTownLocation(dfLocation, { classicOf, servedOf }, { round
   const keep = townOutlineCells(w, h, seed, (i) => kinds[i], isWall, round ? ROUND_OUTLINE : TOWN_OUTLINE);
   const left = keep.reduce((n, v) => n + (v ? 0 : 1), 0);
   if (!left || left === w * h) return dfLocation;
-  const { drawn } = drawNamedBuildings(dfLocation.exterior.buildings, list, { locationIndex: dfLocation.locationIndex ?? 0 });
+  const { drawn } = drawNamedBuildings(dfLocation.exterior.buildings, list, {
+    locationIndex: dfLocation.locationIndex ?? 0,
+  });
   const strip = new Set();
-  for (const [b, entries] of drawn) if (!keep[/** @type {number} */ (cellOf.get(b))]) for (const e of entries) strip.add(e);
+  for (const [b, entries] of drawn)
+    if (!keep[/** @type {number} */ (cellOf.get(b))]) for (const e of entries) strip.add(e);
   const buildings = dfLocation.exterior.buildings.filter((b) => !strip.has(b));
   const walled = ed.blockNames.some((n) => isWallBlock(n));
-  const open = (i) => (walled && i === 0 ? townWallBlockName(seed) : TOWN_OUTLINE_BLOCK);   // TS4: its ring's corner (world/townWalls.js)
+  const open = (i) => (walled && i === 0 ? townWallBlockName(seed) : TOWN_OUTLINE_BLOCK); // TS4: its ring's corner (world/townWalls.js)
   return {
     ...dfLocation,
     exterior: {
@@ -278,11 +351,28 @@ export function outlineTownLocation(dfLocation, { classicOf, servedOf }, { round
 
 /** The open cell's block in DFU's world-data JSON (formats/worldData/worldDataReplacement.js blockFromJson). */
 export function townOutlineBlockJson() {
-  const GroundTiles = [], GroundScenery = [], AutoMapData = new Array(64 * 64).fill(0);
-  for (let i = 0; i < 256; i++) { GroundTiles.push({ TileBitfield: OPEN_TILE }); GroundScenery.push({ TextureRecord: -1 }); }
+  const GroundTiles = [],
+    GroundScenery = [],
+    AutoMapData = new Array(64 * 64).fill(0);
+  for (let i = 0; i < 256; i++) {
+    GroundTiles.push({ TileBitfield: OPEN_TILE });
+    GroundScenery.push({ TextureRecord: -1 });
+  }
   return {
-    Name: TOWN_OUTLINE_BLOCK, Type: 'Rmb', Position: 0,
-    RmbBlock: { FldHeader: { GroundData: { GroundTiles, GroundScenery }, AutoMapData, BuildingDataList: [], Name: TOWN_OUTLINE_BLOCK }, SubRecords: [], Misc3dObjectRecords: [], MiscFlatObjectRecords: [] },
+    Name: TOWN_OUTLINE_BLOCK,
+    Type: 'Rmb',
+    Position: 0,
+    RmbBlock: {
+      FldHeader: {
+        GroundData: { GroundTiles, GroundScenery },
+        AutoMapData,
+        BuildingDataList: [],
+        Name: TOWN_OUTLINE_BLOCK,
+      },
+      SubRecords: [],
+      Misc3dObjectRecords: [],
+      MiscFlatObjectRecords: [],
+    },
   };
 }
 
@@ -304,19 +394,32 @@ const CLASSIC_WALL = /^WALLAA(0\d|1[01])\.RMB$/i;
  */
 export function wallBayCity(dfLocation, maps = null, blocksFile = null) {
   const ed = dfLocation?.exterior?.exteriorData;
-  if (!ed?.blockNames || !blocksFile || dfLocation.capital) return false;   // a grid read again after its edit has no wall ring left: refused below
-  const { width: w, height: h } = ed, names = ed.blockNames;
+  if (!ed?.blockNames || !blocksFile || dfLocation.capital) return false; // a grid read again after its edit has no wall ring left: refused below
+  const { width: w, height: h } = ed,
+    names = ed.blockNames;
   if (!(w >= 3 && h >= 3) || names.length !== w * h) return false;
-  const border = (i) => { const x = i % w, y = (i - x) / w; return x === 0 || y === 0 || x === w - 1 || y === h - 1; };
+  const border = (i) => {
+    const x = i % w,
+      y = (i - x) / w;
+    return x === 0 || y === 0 || x === w - 1 || y === h - 1;
+  };
   if (!names.every((n, i) => (border(i) ? CLASSIC_WALL.test(String(n ?? '')) : !isWallBlock(n)))) return false;
   const mapId = (dfLocation.mapTableData?.mapId ?? 0) >>> 0;
   ed.blockNames = names.map((n, i) => (!border(i) ? n : i === 0 ? townWallBlockName(mapId) : TOWN_OUTLINE_BLOCK));
   ed.wallTook = names;
   dfLocation.outline = Object.freeze({ kept: (w - 2) * (h - 2), left: 2 * (w + h) - 4, walled: true, bay: true });
-  registerTownWall(dfLocation, names, {
-    servedOf: (n) => blocksFile.getBlockByName(n),
-    classicOf: (n) => { const i = blocksFile.getBlockIndex(blocksFile.checkName(n)); return i < 0 ? null : blocksFile.readClassicBlock(i); },
-  }, townOutlineBlockJson);
+  registerTownWall(
+    dfLocation,
+    names,
+    {
+      servedOf: (n) => blocksFile.getBlockByName(n),
+      classicOf: (n) => {
+        const i = blocksFile.getBlockIndex(blocksFile.checkName(n));
+        return i < 0 ? null : blocksFile.readClassicBlock(i);
+      },
+    },
+    townOutlineBlockJson,
+  );
   return true;
 }
 let _installed = false;

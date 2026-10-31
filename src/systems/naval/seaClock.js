@@ -15,7 +15,8 @@
  *  plane. */
 export function sharedSea(peers, feet, radius) {
   if (!Array.isArray(peers) || !Array.isArray(feet)) return false;
-  for (const p of peers) if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;
+  for (const p of peers)
+    if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;
   return false;
 }
 /** The sea's seconds for a frame of `dt` world seconds at the world's time scale `scale`: the world's own alone, real

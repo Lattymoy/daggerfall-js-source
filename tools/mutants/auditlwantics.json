@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-LW-ANTICS-food-sellers",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const buys = y.kind === 'stall' && FOOD_SELLERS.has(y.who.job);",
-    "new": "const buys = y.kind === 'stall';",
+    "old": "    const buys = y.kind === 'stall' && FOOD_SELLERS.has(y.who.job);",
+    "new": "    const buys = y.kind === 'stall';",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-LW-ANTICS-morning-hours",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "h >= MORNING_HOURS[0] && h < MORNING_HOURS[1] ? [...morningWatchWords(), ...watchWords()] : watchWords();",
-    "new": "[...morningWatchWords(), ...watchWords()];",
+    "old": "    const pool = buys\n      ? watchBuys()\n      : y.kind === 'beg'\n        ? beggarWords()\n        : h >= MORNING_HOURS[0] && h < MORNING_HOURS[1]\n          ? [...morningWatchWords(), ...watchWords()]\n          : watchWords();",
+    "new": "    const pool = buys ? watchBuys() : y.kind === 'beg' ? beggarWords() : [...morningWatchWords(), ...watchWords()];",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-LW-ANTICS-beggar-end",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (gone && g.t1 >= y.t1 && y.t1 - o0 > goneLen) {",
-    "new": "if (gone && y.t1 - o0 > goneLen) {",
+    "old": "    if (gone && g.t1 >= y.t1 && y.t1 - o0 > goneLen) {",
+    "new": "    if (gone && y.t1 - o0 > goneLen) {",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-LW-ANTICS-beggar-words",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "y.kind === 'beg' ? beggarWords() : ",
-    "new": "",
+    "old": "      : y.kind === 'beg'\n        ? beggarWords()\n        : h >= MORNING_HOURS[0] && h < MORNING_HOURS[1]\n          ? [...morningWatchWords(), ...watchWords()]\n          : watchWords();",
+    "new": "      : h >= MORNING_HOURS[0] && h < MORNING_HOURS[1]\n        ? [...morningWatchWords(), ...watchWords()]\n        : watchWords();",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-LW-ANTICS-stopped-stop",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "|| stoppedAt.has(`${g.who.id}|${g.t0}`)) continue;",
-    "new": ") continue;",
+    "old": "    if (!g.duty || g.kind !== 'watch' || g.pair === 1 || stoppedAt.has(`${g.who.id}|${g.t0}`)) continue;",
+    "new": "    if (!g.duty || g.kind !== 'watch' || g.pair === 1) continue;",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-LW-ANTICS-one-a-day",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    met.add(pairOf(g.who, y.who));   // AUDIT LW-ANTICS B9",
-    "new": "    // AUDIT LW-ANTICS B9",
+    "old": "    met.add(pairOf(g.who, y.who)); // AUDIT LW-ANTICS B9: one word a day between a watchman and one of the town at a spot",
+    "new": "    // AUDIT LW-ANTICS B9: one word a day between a watchman and one of the town at a spot",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-LW-ANTICS-mark-outlasts",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "h >= 9 && h < 18 && y.t1 >= x.t1 && busy(at)",
-    "new": "h >= 9 && h < 18 && busy(at)",
+    "old": "      if (y && !met.has(pair) && h >= 9 && h < 18 && y.t1 >= x.t1 && busy(at) >= CUTPURSE_CROWD && x.t1 - o0 > len) {",
+    "new": "      if (y && !met.has(pair) && h >= 9 && h < 18 && busy(at) >= CUTPURSE_CROWD && x.t1 - o0 > len) {",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-LW-ANTICS-lift-hour",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "const at = Math.max(o0, x.t1 - len), h = hourOf(at);",
-    "new": "const at = Math.max(o0, x.t1 - len), h = hourOf(x.t0);",
+    "old": "        h = hourOf(at);",
+    "new": "        h = hourOf(x.t0);",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-LW-ANTICS-lift-at-end",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "ps, at, x.t1, null, watch, chaseLines()",
-    "new": "ps, o0, x.t1, null, watch, chaseLines()",
+    "old": "          at,",
+    "new": "          o0,",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-LW-ANTICS-evening-met",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "    if (hourOf(o0) < 18 && hourOf(o1) >= 18) continue;",
-    "new": "",
+    "old": "    if (hourOf(o0) < 18 && hourOf(o1) >= 18) continue; // met before six: not yet the evening's (a stay over the evening's start)",
+    "new": "    // met before six: not yet the evening's (a stay over the evening's start)",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-LW-ANTICS-evening-stay-end",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "x.kind === 'gate' || hourOf(x.t1) < 18) continue;",
-    "new": "x.kind === 'gate' || hourOf(x.t0) < 18) continue;",
+    "old": "    if (x.who.town !== mapId || x.kind === 'stall' || x.kind === 'beg' || x.kind === 'gate' || hourOf(x.t1) < 18)",
+    "new": "    if (x.who.town !== mapId || x.kind === 'stall' || x.kind === 'beg' || x.kind === 'gate' || hourOf(x.t0) < 18)",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-LW-ANTICS-sermon-god",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (antics.length > n) antics[n].god = spot?.god ?? null;",
-    "new": "if (antics.length > n) antics[n].god = null;",
+    "old": "        if (antics.length > n) antics[n].god = spot?.god ?? null; // AUDIT LW-ANTICS B7: the temple's own god",
+    "new": "        if (antics.length > n) antics[n].god = null; // AUDIT LW-ANTICS B7: the temple's own god",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-LW-ANTICS-god-filled",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "place, god: inc.god ?? (inc.kind === 'sermon' ? theDivines() : null), a:",
-    "new": "place, a:",
+    "old": "    god: inc.god ?? (inc.kind === 'sermon' ? theDivines() : null),\n    a: firstNameOf(inc.members[0].name),",
+    "new": "    a: firstNameOf(inc.members[0].name),",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-LW-ANTICS-beats-apart",
     "file": "src/systems/livingWorld/dayPlan.js",
-    "old": "const pool = free.length >= 4 ? free : all;",
-    "new": "const pool = all;",
+    "old": "  const pool = free.length >= 4 ? free : all;",
+    "new": "  const pool = all;",
     "tests": [
       "test/systems/livingWorld/lwantics_street.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-LW-ANTICS-quarter-tag",
     "file": "src/systems/livingWorld/places.js",
-    "old": "tag: q ? `q${q}.` : '' }",
-    "new": "tag: '' }",
+    "old": "    each.push(\n      yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: q ? `q${q}.` : '' }),\n    );",
+    "new": "    each.push(yield* townPlacesSteps(nav, byQ[q], buildings, { streets, netId: quarterIds[q], tag: '' }));",
     "tests": [
       "test/world/ic_stutter.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-LW-ANTICS-side-shift",
     "file": "src/characters/residentWalker.js",
-    "old": ": SHIFT_RECORDS.has(rec) ? IDLE_SHIFT_FRAMES : SIDE_SHIFT_FRAMES);",
-    "new": ": IDLE_SHIFT_FRAMES);",
+    "old": "  guard\n    ? SHIFT_RECORDS.has(rec)\n      ? GUARD_SHIFT_FRAMES\n      : null\n    : SHIFT_RECORDS.has(rec)\n      ? IDLE_SHIFT_FRAMES\n      : SIDE_SHIFT_FRAMES;",
+    "new": "  guard ? (SHIFT_RECORDS.has(rec) ? GUARD_SHIFT_FRAMES : null) : IDLE_SHIFT_FRAMES;",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-LW-ANTICS-guard-frames",
     "file": "src/characters/residentWalker.js",
-    "old": "(guard ? (SHIFT_RECORDS.has(rec) ? GUARD_SHIFT_FRAMES : null) :",
-    "new": "(guard ? (SHIFT_RECORDS.has(rec) ? IDLE_SHIFT_FRAMES : null) :",
+    "old": "      ? GUARD_SHIFT_FRAMES",
+    "new": "      ? IDLE_SHIFT_FRAMES",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-LW-ANTICS-attending-glance",
     "file": "src/characters/residentWalker.js",
-    "old": "this.stir = this._stirDraw() < 0.5 && !this.attending ? 'glance' : 'shift';",
-    "new": "this.stir = this._stirDraw() < 0.5 ? 'glance' : 'shift';",
+    "old": "    this.stir = this._stirDraw() < 0.5 && !this.attending ? 'glance' : 'shift';",
+    "new": "    this.stir = this._stirDraw() < 0.5 ? 'glance' : 'shift';",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-LW-ANTICS-glance-yaw",
     "file": "src/characters/residentWalker.js",
-    "old": "export const IDLE_GLANCE_YAW = 0.85;",
-    "new": "export const IDLE_GLANCE_YAW = 0.7;",
+    "old": "export const IDLE_GLANCE_YAW = 0.85; // AUDIT STAND-LIFE B5: past the wheel's 45-degree sector, so a glance always shows (0.7 drew nothing new one time in nine)",
+    "new": "export const IDLE_GLANCE_YAW = 0.7; // AUDIT STAND-LIFE B5: past the wheel's 45-degree sector, so a glance always shows (0.7 drew nothing new one time in nine)",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js"
     ]

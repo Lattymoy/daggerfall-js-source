@@ -313,9 +313,9 @@ test('SHOT-KINDS the captains: a pirate who means to board loads her broadsides 
   captainLoads(navy, at(20));
   assert.equal(navy.guns.load('port'), 'round');
   const ai = rd('src/systems/naval/navalAI.js');
-  assert.match(ai, /captainLoads\(ship, enemy\);\n\s+if \(!ship\.guns\.braced && !\(enemy\?\.crippled && enemy\.kind === 'player'\)\) \{\n\s+gunnery\(ship, world, enemy \?\? \(ship\.cls\.faction === 'merchant' \? threat : null\), out, \{ broadsides: boarderBroadsides\(ship\) \}\);/);
+  assert.match(ai, /captainLoads\(ship, enemy\);\n\s*if \(!ship\.guns\.braced && !\(enemy\?\.crippled && enemy\.kind === 'player'\)\) \{\n\s*gunnery\(ship, world, enemy \?\? \(ship\.cls\.faction === 'merchant' \? threat : null\), out, \{\n\s*broadsides: boarderBroadsides\(ship\),\n\s*\}\);/);
   assert.match(ai, /const shot = ship\.guns\.load\(side\);[^\n]*\n\s+const g = shotGun\(bat\.gun, GUNS\[bat\.gun\], shot\);/, 'laid and led for her load');
-  assert.match(ai, /targetY: aimY, shot \}\);/);
+  assert.match(ai, /targetY: aimY,\n\s*shot,\n\s*\}\);/);
 });
 
 test('SHOT-KINDS the HUD and the picture: each battery\'s load under its count (the chasers named as the bore they are), the aim\'s line naming it; each load its own ball - grape\'s pellets, chain\'s two halves and its links, heated shot\'s glow and trail - and its own splash and hit (mutants: the load word, the aim\'s load, each picture)', () => {

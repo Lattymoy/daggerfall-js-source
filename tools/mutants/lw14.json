@@ -2,8 +2,8 @@
   {
     "name": "LW14-stop-fixed",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "    .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
-    "new": "    .filter((m) => m.record === STOP_FOE || m.record === STOP_TREASURE || m.record === 16)",
+    "old": "      .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
+    "new": "      .filter((m) => m.record === STOP_FOE || m.record === STOP_TREASURE || m.record === 16)",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LW14-stop-216",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "    .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
-    "new": "    .filter((m) => (m.record === STOP_FOE || m.record === STOP_TREASURE))",
+    "old": "      .filter((m) => !m.archive && (m.record === STOP_FOE || m.record === STOP_TREASURE))",
+    "new": "      .filter((m) => m.record === STOP_FOE || m.record === STOP_TREASURE)",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LW14-bfs-order",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {",
-    "new": "    for (const [dx, dz] of [[0, 1], [1, 0], [-1, 0], [0, -1]]) {",
+    "old": "      [1, 0],\n      [-1, 0],\n      [0, 1],",
+    "new": "      [0, 1],\n      [1, 0],\n      [-1, 0],",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LW14-start-block",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  let first = blocks.findIndex((b) => from.x >= b.originX",
-    "new": "  let first = 0 * blocks.findIndex((b) => from.x >= b.originX",
+    "old": "  let first = blocks.findIndex(\n    (b) => from.x >= b.originX && from.x < b.originX + side && from.z >= b.originZ && from.z < b.originZ + side,\n  );",
+    "new": "  let first =\n    0 *\n    blocks.findIndex(\n      (b) => from.x >= b.originX && from.x < b.originX + side && from.z >= b.originZ && from.z < b.originZ + side,\n    );",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LW14-fight-fated",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  if (trip.enc?.inside) return null;",
-    "new": "  if (false) return null;",
+    "old": "  if (trip.enc?.inside) return null; // a fated trouble is the dive's own (trouble.js diveTrouble) - AUDIT LW-II-2 D8: one met INSIDE; a road's trouble on the way there or back takes nothing from the deep",
+    "new": "  if (false) return null; // a fated trouble is the dive's own (trouble.js diveTrouble) - AUDIT LW-II-2 D8: one met INSIDE; a road's trouble on the way there or back takes nothing from the deep",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LW14-clear-at",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "for (const l of r?.legs ?? []) if (l.tOut <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
-    "new": "for (const l of r?.legs ?? []) if (l.tIn <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
+    "old": "    for (const l of r?.legs ?? []) if (l.tOut <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
+    "new": "    for (const l of r?.legs ?? []) if (l.tIn <= t && t - l.tOut < DIVE_CLEAR_MIN) out.add(l.stop.key);",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -137,7 +137,7 @@
   {
     "name": "LW14-way-out",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(), { x: entry.x, z: entry.z, ...yOf(entry) }];",
+    "old": "  const path = [\n    ...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse(),\n    { x: entry.x, z: entry.z, ...yOf(entry) },\n  ];",
     "new": "  const path = [...legs.map((l) => ({ x: l.stop.x, z: l.stop.z, ...yOf(l.stop) })).reverse()];",
     "tests": [
       "test/scenes/lw14_deep.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "LW14-stop-nearer",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "return s.f >= 0.5 || !a.key ? b : a;",
-    "new": "return b;",
+    "old": "    return s.f >= 0.5 || !a.key ? b : a;",
+    "new": "    return b;",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "LW14-see",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "(d <= DEEP_NEAR_M || (d <= DEEP_SEE_M && (deps.clearLine?.(L.feet, at) ?? false)))",
-    "new": "(d <= DEEP_NEAR_M || d <= DEEP_SEE_M)",
+    "old": "        if (floor && (d <= DEEP_NEAR_M || (d <= DEEP_SEE_M && (deps.clearLine?.(L.feet, at) ?? false)))) {",
+    "new": "        if (floor && (d <= DEEP_NEAR_M || d <= DEEP_SEE_M)) {",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ],
@@ -184,8 +184,8 @@
   {
     "name": "LW14-hold",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        if (rec.ai && !at) rec.ai.follow = heelOf(i);",
-    "new": "        if (rec.ai) rec.ai.follow = heelOf(i);",
+    "old": "          if (rec.ai && !at) rec.ai.follow = heelOf(i); // LW14: along the trail; met at their place, they hold it",
+    "new": "          if (rec.ai) rec.ai.follow = heelOf(i); // LW14: along the trail; met at their place, they hold it",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -202,7 +202,7 @@
   {
     "name": "LW14-heard-once",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          if (!heard.has(trip.id)) { heard.add(trip.id); deps.say?.('You hear fighting ahead.'); }",
+    "old": "          if (!heard.has(trip.id)) {\n            heard.add(trip.id);\n            deps.say?.('You hear fighting ahead.');\n          }",
     "new": "          deps.say?.('You hear fighting ahead.');",
     "tests": [
       "test/scenes/lw14_deep.test.js"
@@ -211,7 +211,7 @@
   {
     "name": "LW14-ring-beat",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          if (now >= (rings.get(trip.id) ?? 0)) { rings.set(trip.id, now + DEEP_RING_S); deps.ring?.(at); }",
+    "old": "          if (now >= (rings.get(trip.id) ?? 0)) {\n            rings.set(trip.id, now + DEEP_RING_S);\n            deps.ring?.(at);\n          }",
     "new": "          deps.ring?.(at);",
     "tests": [
       "test/scenes/lw14_deep.test.js"
@@ -220,8 +220,8 @@
   {
     "name": "LW14-trail",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "const heelOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M, trail: () => trail });",
-    "new": "const heelOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M });",
+    "old": "  const heelOf = (i) => ({\n    feet: () => deps.leader()?.feet ?? null,\n    stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M,\n    trail: () => trail,\n  });",
+    "new": "  const heelOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: DIVER_HEEL_M + i * DIVER_HEEL_STEP_M });",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "LW14-lead-next",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "    if (c.mode === 'lead' && c.going && standing.every(",
-    "new": "    if (false && c.going && standing.every(",
+    "old": "          c.mode === 'lead' &&",
+    "new": "          false &&",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "LW14-join",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          { code: 'KeyJ', label: 'J - join us', action: () => join(c) },",
-    "new": "          { code: 'KeyJ', label: 'J - join us', action: () => {} },",
+    "old": "            { code: 'KeyJ', label: 'J - join us', action: () => join(c) },",
+    "new": "            { code: 'KeyJ', label: 'J - join us', action: () => {} },",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "LW14-part",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          { code: 'KeyP', label: 'P - part ways', action: () => { c.parted = true; c.mode = 'hold'; } },",
-    "new": "          { code: 'KeyP', label: 'P - part ways', action: () => { c.mode = 'hold'; } },",
+    "old": "                c.parted = true;\n                c.mode = 'hold';",
+    "new": "                c.mode = 'hold';",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "LW14-half",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "if (!c.pending && c.size > 1 && standing.length * 2 < c.size)",
-    "new": "if (!c.pending && c.size > 1 && standing.length === 0)",
+    "old": "        if (!c.pending && c.size > 1 && standing.length * 2 < c.size) {",
+    "new": "        if (!c.pending && c.size > 1 && standing.length === 0) {",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ],
@@ -302,8 +302,8 @@
   {
     "name": "LW14-keep",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "          if (away > DEEP_KEEP_M) letGo(id);",
-    "new": "",
+    "old": "          if (away > DEEP_KEEP_M) letGo(id);\n        }",
+    "new": "        }",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "LW14-poached-once",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "kind === 'poached' ? 'poach' : DEED_STAMPS[",
-    "new": "DEED_STAMPS[",
+    "old": "            : kind === 'poached'\n              ? 'poach'\n              : (DEED_STAMPS[/** @type {keyof typeof DEED_STAMPS} */ (kind)] ?? null); // LW14: a find taken, once a day; COURT-DEEDS: a deed",
+    "new": "            : (DEED_STAMPS[/** @type {keyof typeof DEED_STAMPS} */ (kind)] ?? null); // LW14: a find taken, once a day; COURT-DEEDS: a deed",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -338,8 +338,8 @@
   {
     "name": "LW14-poached-kept",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "        if (e.poach != null) people[id].poach = e.poach;   // LW14: only once counted\n",
-    "new": "",
+    "old": "        if (e.poach != null) people[id].poach = e.poach; // LW14: only once counted\n        for (const k of Object.values(DEED_STAMPS))",
+    "new": "        for (const k of Object.values(DEED_STAMPS))",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "LW14-poached-cost",
     "file": "src/systems/livingWorld/relations.js",
-    "old": "  poached: -4,",
-    "new": "  poached: -2,",
+    "old": "  poached: -4, // LW14: a find of theirs taken before them in the deep (once a day, as a tone)",
+    "new": "  poached: -2, // LW14: a find of theirs taken before them in the deep (once a day, as a tone)",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "LW14-AUDIT-D2-strength-stood",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        c.size++;\n",
-    "new": "",
+    "old": "          c.size++;\n          const hp = was?.hp.get(m.id); // AUDIT LW-II D8: hurt when it was left, hurt still",
+    "new": "          const hp = was?.hp.get(m.id); // AUDIT LW-II D8: hurt when it was left, hurt still",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "LW14-AUDIT-D2-pending",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "if (!c.pending && c.size > 1 && standing.length * 2 < c.size)",
-    "new": "if (c.size > 1 && standing.length * 2 < c.size)",
+    "old": "        if (!c.pending && c.size > 1 && standing.length * 2 < c.size) {",
+    "new": "        if (c.size > 1 && standing.length * 2 < c.size) {",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "LW14-AUDIT-D4-arrive",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "< (rec.ai.follow?.stop ?? DIVER_HEEL_M) + DIVER_ARRIVE_SLACK_M)) {",
-    "new": "< 3)) {",
+    "old": "              !rec.ai?.feet ||\n              Math.hypot(rec.ai.feet[0] - c.going.feet[0], rec.ai.feet[2] - c.going.feet[2]) <\n                (rec.ai.follow?.stop ?? DIVER_HEEL_M) + DIVER_ARRIVE_SLACK_M,",
+    "new": "              !rec.ai?.feet || Math.hypot(rec.ai.feet[0] - c.going.feet[0], rec.ai.feet[2] - c.going.feet[2]) < 3,",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "LW14-AUDIT-D4-fellback",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 }; rec.fellBack = false; }",
-    "new": "rec.ai.follow = { feet: () => feet, stop: 1.5 + (rec.heel ?? 0) * 0.8 }; }",
+    "old": "        rec.fellBack = false;\n      } // AUDIT LW-II D4: a new walk, a new chance to fall back",
+    "new": "      } // AUDIT LW-II D4: a new walk, a new chance to fall back",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "LW14-AUDIT-D6-way-out",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "    if (!s?.at && !s?.between) return null;",
-    "new": "",
+    "old": "    if (!s?.at && !s?.between) return null; // AUDIT LW-II D6: on the way out (or not inside) - no stop ahead (legs[0], passed hours ago, was charged as their find)",
+    "new": "    // AUDIT LW-II D6: on the way out (or not inside) - no stop ahead (legs[0], passed hours ago, was charged as their find)",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "LW14-AUDIT-D7-floor",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "const floor = Math.abs(at[1] - L.feet[1]) <= DEEP_FLOOR_DY;",
-    "new": "const floor = true;",
+    "old": "        const floor = Math.abs(at[1] - L.feet[1]) <= DEEP_FLOOR_DY; // AUDIT LW-II D7: on the player's floor - one below or above is heard, never met",
+    "new": "        const floor = true; // AUDIT LW-II D7: on the player's floor - one below or above is heard, never met",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "LW14-AUDIT-D8-parted-kept",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "parted: !!was?.parted, said: new Set() };",
-    "new": "parted: false, said: new Set() };",
+    "old": "      parted: !!was?.parted,",
+    "new": "      parted: false,",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "LW14-AUDIT-D8-hp-kept",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "        if (hp != null && rec.entity?.maxHealth > 0) rec.entity.health",
-    "new": "        if (false) rec.entity.health",
+    "old": "          if (hp != null && rec.entity?.maxHealth > 0)\n            rec.entity.health = Math.max(1, Math.round(rec.entity.maxHealth * hp));",
+    "new": "          if (false) rec.entity.health = Math.max(1, Math.round(rec.entity.maxHealth * hp));",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "LW14-AUDIT-D8-hostile-kept",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "if (c.at && L && c.mode !== 'join' && ![...c.foes.values()].some((rec) => !rec.dead)) {",
-    "new": "if (c.at && L && c.mode !== 'join') {",
+    "old": "        if (c.at && L && c.mode !== 'join' && ![...c.foes.values()].some((rec) => !rec.dead)) {",
+    "new": "        if (c.at && L && c.mode !== 'join') {",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "LW14-AUDIT-D12-once",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "if (!c.said.has(c.pile.at.key)) { c.said.add(c.pile.at.key); deps.say?.(POACHED_LINE(firstNameOf(head.name))); }",
-    "new": "deps.say?.(POACHED_LINE(firstNameOf(head.name)));",
+    "old": "              if (!c.said.has(c.pile.at.key)) {\n                c.said.add(c.pile.at.key);\n                deps.say?.(POACHED_LINE(firstNameOf(head.name)));\n              } // AUDIT LW-II D12: said once a pile, not once an item",
+    "new": "              deps.say?.(POACHED_LINE(firstNameOf(head.name))); // AUDIT LW-II D12: said once a pile, not once an item",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -521,7 +521,7 @@
   {
     "name": "LW14-AUDIT-D11-reach",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "    if (far) { midScreen?.(tooFarAwayText()); return true; }\n    if (openLiving(foe)) return true;",
+    "old": "    if (far) {\n      midScreen?.(tooFarAwayText());\n      return true;\n    }\n    if (openLiving(foe)) return true;",
     "new": "    if (openLiving(foe)) return true;",
     "tests": [
       "test/scenes/lw14_deep.test.js"
@@ -531,8 +531,8 @@
   {
     "name": "LW14-AUDIT-D11-info",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (mode !== 'steal' && mode !== 'info' && openLiving",
-    "new": "if (mode !== 'steal' && openLiving",
+    "old": "  if (mode !== 'steal' && mode !== 'info' && openLiving && foe.living?.res && foe.shipmate === true) {",
+    "new": "  if (mode !== 'steal' && openLiving && foe.living?.res && foe.shipmate === true) {",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]
@@ -540,8 +540,8 @@
   {
     "name": "LW14-AUDIT-D7-out-y",
     "file": "src/systems/livingWorld/deepRoute.js",
-    "old": "return s.out ? { x: s.out.x, z: s.out.z, y: s.out.y } : null;",
-    "new": "return s.out ? { x: s.out.x, z: s.out.z, y: undefined } : null;",
+    "old": "  return s.out ? { x: s.out.x, z: s.out.z, y: s.out.y } : null;",
+    "new": "  return s.out ? { x: s.out.x, z: s.out.z, y: undefined } : null;",
     "tests": [
       "test/scenes/lw14_deep.test.js"
     ]

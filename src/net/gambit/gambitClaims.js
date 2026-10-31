@@ -12,4 +12,5 @@ import { readGambitReceipt } from './gambitReceipt.js';
 export const GAMBIT_CLAIMS_KEY = 'kg6.gambitClaims';
 
 /** The carrier, its deps Iliac Hand's (`claim` net/accountClient.js accountGambit's). @param {any} deps */
-export const createGambitClaims = (deps) => createIliacClaims({ ...deps, read: readGambitReceipt, key: GAMBIT_CLAIMS_KEY });
+export const createGambitClaims = (deps) =>
+  createIliacClaims({ ...deps, read: readGambitReceipt, key: GAMBIT_CLAIMS_KEY });

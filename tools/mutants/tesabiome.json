@@ -275,8 +275,8 @@
   {
     "name": "TESA-BIOME-31-beyond-ignored",
     "file": "src/world/jungle/jungleRegion.js",
-    "old": "farSide.set(k, v = beyond(x, y) ? 1 : 0);",
-    "new": "farSide.set(k, v = 0);",
+    "old": "        farSide.set(k, (v = beyond(x, y) ? 1 : 0));",
+    "new": "        farSide.set(k, (v = 0));",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "TESA-BIOME-32-far-dist-sign",
     "file": "src/world/jungle/jungleRegion.js",
-    "old": "const v = Math.fround(me ? best : -best);",
-    "new": "const v = Math.fround(me ? -best : best);",
+    "old": "        const v = Math.fround(me ? best : -best);",
+    "new": "        const v = Math.fround(me ? -best : best);",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "TESA-BIOME-33-far-fround",
     "file": "src/world/jungle/jungleRegion.js",
-    "old": "const v = Math.fround(me ? best : -best);",
-    "new": "const v = me ? best : -best;",
+    "old": "        const v = Math.fround(me ? best : -best);",
+    "new": "        const v = me ? best : -best;",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "TESA-BIOME-37-class-from",
     "file": "src/systems/tamrielFauna.js",
-    "old": "      if (lv == null) { if (i < CLASS_FROM) continue; } else {",
-    "new": "      if (lv == null) { if (i < 0) continue; } else {",
+    "old": "        if (i < CLASS_FROM) continue;",
+    "new": "        if (i < 0) continue;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -365,8 +365,8 @@
   {
     "name": "TESA-BIOME-41-out-of-reach",
     "file": "src/systems/tamrielFauna.js",
-    "old": "        if (off > SLOT_REACH) continue;\n",
-    "new": "",
+    "old": "        if (off > SLOT_REACH) continue;\n        w /= 1 + off / 2;",
+    "new": "        w /= 1 + off / 2;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "TESA-BIOME-44-fallback-far",
     "file": "src/systems/tamrielFauna.js",
-    "old": "      pick = nearest(i, (id, r) => fresh(id, r) && !crowded(id, i) && near(id)) ?? nearest(i, fresh) ?? nearest(i, () => true)",
-    "new": "      pick = nearest(i, (id, r) => fresh(id, r) && !crowded(id, i)) ?? nearest(i, fresh) ?? nearest(i, () => true)",
+    "old": "        nearest(i, (id, r) => fresh(id, r) && !crowded(id, i) && near(id)) ??",
+    "new": "        nearest(i, (id, r) => fresh(id, r) && !crowded(id, i)) ??",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "TESA-BIOME-45-fallback-person-low",
     "file": "src/systems/tamrielFauna.js",
-    "old": "        ?? (i >= CLASS_FROM ? entries[0]?.[0] : undefined) ?? 0;",
-    "new": "        ?? entries[0]?.[0] ?? 0;",
+    "old": "        (i >= CLASS_FROM ? entries[0]?.[0] : undefined) ??",
+    "new": "        entries[0]?.[0] ??",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "TESA-BIOME-47-no-cover",
     "file": "src/systems/tamrielFauna.js",
-    "old": "    if (at < 0) continue;\n",
-    "new": "    if (at < 0 || true) continue;\n",
+    "old": "    if (at < 0) continue;",
+    "new": "    if (at < 0 || true) continue;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "TESA-BIOME-54-standin-wolf",
     "file": "src/systems/tamrielFauna.js",
-    "old": "[M.Wolf]: null,",
-    "new": "[M.Wolf]: M.Sabertooth,",
+    "old": "  [M.Wolf]: null,",
+    "new": "  [M.Wolf]: M.Sabertooth,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "TESA-BIOME-55-standin-troll",
     "file": "src/systems/tamrielFauna.js",
-    "old": "[M.Troll]: null,",
-    "new": "[M.Troll]: M.Giant,",
+    "old": "  [M.Troll]: null,",
+    "new": "  [M.Troll]: M.Giant,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "TESA-BIOME-56-standin-land-dreugh",
     "file": "src/systems/tamrielFauna.js",
-    "old": "[M.LandDreugh]: null,",
-    "new": "[M.LandDreugh]: M.Dreugh,",
+    "old": "  [M.LandDreugh]: null,",
+    "new": "  [M.LandDreugh]: M.Dreugh,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "TESA-BIOME-57-band-order",
     "file": "src/systems/tamrielFauna.js",
-    "old": "BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, k]); });",
-    "new": "BIOMES.forEach((b, i) => { for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, 2 - k]); });",
+    "old": "  for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, k]);",
+    "new": "  for (let k = 0; k < 3; k++) BIOME_OF_INDEX.set(BIOME_TABLE_BASE + 3 * i + k, [b, 2 - k]);",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -545,7 +545,7 @@
   {
     "name": "TESA-BIOME-61-levels-classic",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return dex ? dexClassicRow(id, v).level ?? v.level : v.level;",
+    "old": "  return dex ? (dexClassicRow(id, v).level ?? v.level) : v.level;",
     "new": "  return v.level;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
@@ -563,7 +563,7 @@
   {
     "name": "TESA-BIOME-64-band-at-bay",
     "file": "src/systems/tamrielFauna.js",
-    "old": "  return b ? BIOME_BANDS.get(b.key) ?? null : null;",
+    "old": "  return b ? (BIOME_BANDS.get(b.key) ?? null) : null;",
     "new": "  return BIOME_BANDS.get('cyrodiilNibenay');",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
@@ -581,8 +581,8 @@
   {
     "name": "TESA-BIOME-66-fauna-unread",
     "file": "src/systems/encounters.js",
-    "old": "const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);",
-    "new": "const band = CLIMATE_TABLE.get(ctx.climateIndex);",
+    "old": "  const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);",
+    "new": "  const band = CLIMATE_TABLE.get(ctx.climateIndex);",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -599,8 +599,8 @@
   {
     "name": "TESA-BIOME-68-grant-species-fauna",
     "file": "src/scenes/grantHost.js",
-    "old": "return chooseRandomEnemy({ climateIndex: climate, fauna, inLocationRect: inRect,",
-    "new": "return chooseRandomEnemy({ climateIndex: climate, inLocationRect: inRect,",
+    "old": "    { climateIndex: climate, fauna, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 },",
+    "new": "    { climateIndex: climate, inLocationRect: inRect, isDay: !isNight(gr.m), playerLevel: gr.l > 0 ? gr.l : 1 },",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -608,8 +608,8 @@
   {
     "name": "TESA-BIOME-69-grant-set-key",
     "file": "src/scenes/grantHost.js",
-    "old": "const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`;",
-    "new": "const key = `${c}:${encounterTableGeneration()}`;",
+    "old": "  const key = `${c}:${fauna?.[0] ?? ''}:${encounterTableGeneration()}`; // DEX3: kept per climate (TESA-BIOME: and zone) while the tables' selectors stand",
+    "new": "  const key = `${c}:${encounterTableGeneration()}`; // DEX3: kept per climate (TESA-BIOME: and zone) while the tables' selectors stand",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "TESA-BIOME-70-grant-set-fauna",
     "file": "src/scenes/grantHost.js",
-    "old": ".map((o) => resolveEncounterTableIndex({ climateIndex: c, fauna, ...o }))",
-    "new": ".map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o }))",
+    "old": "    .map((o) => resolveEncounterTableIndex({ climateIndex: c, fauna, ...o }))",
+    "new": "    .map((o) => resolveEncounterTableIndex({ climateIndex: c, ...o }))",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -626,8 +626,8 @@
   {
     "name": "TESA-BIOME-71-grant-host-fauna",
     "file": "src/scenes/grantHost.js",
-    "old": "!!inRect, faunaAt(gr.p[0], gr.p[1])) : -1);",
-    "new": "!!inRect) : -1);",
+    "old": "    gr?.k === 'encr' && climateAt\n      ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect, faunaAt(gr.p[0], gr.p[1]))\n      : -1;",
+    "new": "    gr?.k === 'encr' && climateAt ? grantSpecies(gr, i, climateAt(gr.p[0], gr.p[1]), !!inRect) : -1;",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -644,8 +644,8 @@
   {
     "name": "TESA-BIOME-73-reader-encr-zone",
     "file": "src/scenes/grantHost.js",
-    "old": "z = faunaAt(gr.p[0], gr.p[1]), i = r.gr[1];",
-    "new": "z = null, i = r.gr[1];",
+    "old": "      z = faunaAt(gr.p[0], gr.p[1]),",
+    "new": "      z = null,",
     "tests": [
       "test/systems/tesabiome_fauna.test.js"
     ]
@@ -734,8 +734,8 @@
   {
     "name": "TESA-BIOME-83-range-keep-unread",
     "file": "src/world/tamriel/tamrielGeography.js",
-    "old": "    if (keep && !keep(rg.name)) continue;\n",
-    "new": "",
+    "old": "    if (keep && !keep(rg.name)) continue;\n    const d = spineDistance(rg, x, y);",
+    "new": "    const d = spineDistance(rg, x, y);",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]

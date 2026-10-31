@@ -447,7 +447,7 @@ test('WERE-WRAPS: Hand Wraps stay on the claws at the change, a weapon comes off
   morphSelf(p, { force: true, nowMinutes: NOW });
   assert.equal(equipTableOf(p)[EQUIP_SLOTS.RightHand], wraps, 'the wraps stayed');
   assert.equal(equipTableOf(p)[EQUIP_SLOTS.LeftHand] ?? null, null, 'the sword came off');
-  assert.match(rd('src/combat/playerWeapon.js'), /get wraps\(\) \{ return this\.wrapsOf\(this\.activeHand\); \}/, 'the claws strike in them');
+  assert.match(rd('src/combat/playerWeapon.js'), /get wraps\(\) \{\n\s*return this\.wrapsOf\(this\.activeHand\);\n\s*\}/, 'the claws strike in them');
 });
 
 test('DISC10-D H1: every player strike site calls the one dispatcher AFTER its door - the dungeon\'s swing (both arms), the encounter pool\'s, the watch\'s, the civilian\'s, the arrow\'s', () => {

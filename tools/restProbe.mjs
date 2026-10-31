@@ -14,13 +14,21 @@ import { chromium } from 'playwright';
 
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5223, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 
 async function boot(query) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   const errors = [];
-  page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+  page.on('pageerror', (e) => {
+    errors.push(e.message);
+    console.log('[pageerror]', e.message);
+  });
   await page.goto(`http://localhost:5223/play/${query}`);
   await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
   const waitFrames = async (n) => {
@@ -149,14 +157,15 @@ console.log('\n== THE WORLD HOST: THE SAME KEY, THE OTHER SCENE ==');
   await page.keyboard.press('y');
   await waitFrames(2);
   t = await talk();
-  if (!(await page.evaluate(() => window.__playerEntity.crimeCommitted))) fail('the world host must book the vagrancy too');
+  if (!(await page.evaluate(() => window.__playerEntity.crimeCommitted)))
+    fail('the world host must book the vagrancy too');
   console.log('after Y ->', JSON.stringify({ rest: t.overlayRest }));
   if (!t.overlayRest) fail('the confirmed press must open the rest window');
 
   // THE CLOCK MOVES, through the shared deps builder's advanceMinutes.
   const minutesOf = () => page.evaluate(() => JSON.parse(window.__travelProbe()).minutes);
   const t0 = await minutesOf();
-  await page.keyboard.press('l');          // Loiter
+  await page.keyboard.press('l'); // Loiter
   await waitFrames(2);
   await page.keyboard.press('1');
   await page.keyboard.press('Enter');
@@ -165,7 +174,8 @@ console.log('\n== THE WORLD HOST: THE SAME KEY, THE OTHER SCENE ==');
   // A WHOLE HOUR, not the first sub-tick: 6 x 10 classic minutes at
   // 0.125 real seconds each, so this is under a second of wall clock
   // and a rest that ticks once and stalls still fails.
-  await page.waitForFunction((m0) => JSON.parse(window.__travelProbe()).minutes >= m0 + 60, t0, { timeout: 60000 })
+  await page
+    .waitForFunction((m0) => JSON.parse(window.__travelProbe()).minutes >= m0 + 60, t0, { timeout: 60000 })
     .catch(() => {});
   const t1 = await minutesOf();
   console.log('clock: %s -> %s (%s classic minutes)', t0, t1, t1 - t0);

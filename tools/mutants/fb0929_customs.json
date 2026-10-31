@@ -110,8 +110,8 @@
   {
     "name": "FB0929-preview-hides-the-loans",
     "file": "src/systems/realmCustoms.js",
-    "old": "  if (called > 0) {\n    lines.push(before",
-    "new": "  if (called > 0 && !before) {\n    lines.push(before",
+    "old": "  if (called > 0) {",
+    "new": "  if (called > 0 && !before) {",
     "tests": [
       "test/server/fb0929_customs.test.js"
     ]

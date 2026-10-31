@@ -2,8 +2,8 @@
   {
     "name": "RPT1026-PROGRESS-mastery-keeps-plain-practice",
     "file": "src/systems/masterSkills.js",
-    "old": "  dropPlainPractice(entity, id);   // RPT1026-PROGRESS: what it practised unmastered was counted whole\n",
-    "new": "",
+    "old": "  dropPlainPractice(entity, id); // RPT1026-PROGRESS: what it practised unmastered was counted whole\n  const n = names?.[id] ?? 'The skill';",
+    "new": "  const n = names?.[id] ?? 'The skill';",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "RPT1026-PROGRESS-switch-keeps-plain-practice",
     "file": "src/systems/masterSkills.js",
-    "old": "for (const id of masteredSkills(entity)) dropPlainPractice(entity, id); returnMasterPractice(entity); }",
-    "new": "returnMasterPractice(entity); }",
+    "old": "    for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);\n    returnMasterPractice(entity);",
+    "new": "    returnMasterPractice(entity);",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "RPT1026-PROGRESS-switch-drops-every-skill",
     "file": "src/systems/masterSkills.js",
-    "old": "for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);",
-    "new": "for (const id of entity.skills.keys()) if (entity.skillUses) entity.skillUses[id] = 0;",
+    "old": "    for (const id of masteredSkills(entity)) dropPlainPractice(entity, id);",
+    "new": "    for (const id of entity.skills.keys()) if (entity.skillUses) entity.skillUses[id] = 0;",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "RPT1026-PROGRESS-drop-below-100",
     "file": "src/systems/masterSkills.js",
-    "old": "  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses)",
-    "new": "  if (Array.isArray(entity.skillUses)",
+    "old": "  if ((entity?.skills?.[id] ?? 0) >= 100 && Array.isArray(entity.skillUses) && id < entity.skillUses.length)\n    entity.skillUses[id] = 0;",
+    "new": "  if (Array.isArray(entity.skillUses) && id < entity.skillUses.length) entity.skillUses[id] = 0;",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -95,8 +95,8 @@
   {
     "name": "RPT1026-PROGRESS-maker-souls-frozen",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": "  get _souls() { return this._filledSouls(); }",
-    "new": "  get _souls() { return (this.__souls ??= this._filledSouls()); }",
+    "old": "    return this._filledSouls();",
+    "new": "    return (this.__souls ??= this._filledSouls());",
     "tests": [
       "test/ui/rpt1026_progress_ui.test.js",
       "test/systems/audit63_effects.test.js"
@@ -106,8 +106,8 @@
   {
     "name": "RPT1026-PROGRESS-maker-souls-unasked",
     "file": "src/ui/item/itemMakerWindow.js",
-    "old": ", souls: this._souls });   // PROF12",
-    "new": " });   // PROF12",
+    "old": "      souls: this._souls,\n    }); // PROF12: Enchanting's layer; RPT1026-PROGRESS: the souls the pack holds now",
+    "new": "    }); // PROF12: Enchanting's layer; RPT1026-PROGRESS: the souls the pack holds now",
     "tests": [
       "test/ui/rpt1026_progress_ui.test.js"
     ],
@@ -116,8 +116,8 @@
   {
     "name": "RPT1026-PROGRESS-law-soul-gone-unrefused",
     "file": "src/systems/enchanting.js",
-    "old": "    if ([...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param))) return",
-    "new": "    if (false && [...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param))) return",
+    "old": "    if ([...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param)))",
+    "new": "    if (false && [...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param)))",
     "tests": [
       "test/ui/rpt1026_progress_ui.test.js"
     ],
@@ -126,8 +126,8 @@
   {
     "name": "RPT1026-PROGRESS-law-soul-asked-unnamed",
     "file": "src/systems/enchanting.js",
-    "old": "  if (souls !== null) {\n    const held",
-    "new": "  {\n    const held",
+    "old": "  if (souls !== null) {",
+    "new": "  {",
     "tests": [
       "test/ui/rpt1026_progress_ui.test.js"
     ],
@@ -147,8 +147,8 @@
   {
     "name": "RPT1026-PROGRESS-summon-body-kept",
     "file": "src/systems/foeLootCap.js",
-    "old": "  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0);   // RPT1026-PROGRESS: a summon's body (summonedBody)\n",
-    "new": "",
+    "old": "  if (entity?.summoned === true && Array.isArray(entity.items)) return entity.items.splice(0); // RPT1026-PROGRESS: a summon's body (summonedBody)\n  const cap = entity?.lootCap;",
+    "new": "  const cap = entity?.lootCap;",
     "tests": [
       "test/scenes/rpt1026_progress_summon.test.js"
     ],
@@ -157,8 +157,8 @@
   {
     "name": "RPT1026-PROGRESS-summon-items-kept",
     "file": "src/systems/foeLootCap.js",
-    "old": "  e.summoned = true;\n  e.items = [];",
-    "new": "  e.summoned = true;",
+    "old": "  e.items = [];\n  return f;",
+    "new": "  return f;",
     "tests": [
       "test/scenes/rpt1026_progress_summon.test.js"
     ],
@@ -167,8 +167,8 @@
   {
     "name": "RPT1026-PROGRESS-flow-chip-none",
     "file": "src/systems/martialPowers.js",
-    "old": "  return [{ key: 'flowing-steel', set: 'martial', name: `${name} ${n}`",
-    "new": "  return NO_CHIPS || [{ key: 'flowing-steel', set: 'martial', name: `${name} ${n}`",
+    "old": "  return [\n    {\n      key: 'flowing-steel',\n      set: 'martial',\n      name: `${name} ${n}`,\n      text: `${Math.max(0, Math.ceil(_s.flowUntil - now))}s`,\n      state: 'active',\n    },\n  ];",
+    "new": "  return (\n    NO_CHIPS || [\n      {\n        key: 'flowing-steel',\n        set: 'martial',\n        name: `${name} ${n}`,\n        text: `${Math.max(0, Math.ceil(_s.flowUntil - now))}s`,\n        state: 'active',\n      },\n    ]\n  );",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -198,8 +198,8 @@
   {
     "name": "RPT1026-PROGRESS-hotbar-jewel-worn",
     "file": "src/systems/quickslots.js",
-    "old": "return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear';",
-    "new": "return 'wear';",
+    "old": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return castsWhenUsed(item) && !wornForMore(item) ? 'use' : 'wear'; // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too",
+    "new": "  if (getEquipSlot({}, item) !== EQUIP_SLOTS.None) return 'wear'; // UI2: a throwaway table - the rule is the item's; RPT1026-PROGRESS: a power to use is used; AUDIT RPT1026 F2: unless wearing it is worth something too",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -208,8 +208,8 @@
   {
     "name": "RPT1026-PROGRESS-hotbar-saved-slot-worn",
     "file": "src/systems/quickslots.js",
-    "old": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return",
-    "new": "  if (false && castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function') return",
+    "old": "  if (castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function')",
+    "new": "  if (false && castsWhenUsed(worn) && (!wornForMore(worn) || isEquipped(worn)) && typeof doors.quickUse === 'function')",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -218,8 +218,8 @@
   {
     "name": "RPT1026-PROGRESS-hotbar-held-used",
     "file": "src/systems/quickslots.js",
-    "old": "e?.type === ENCHANTMENT_TYPES.CastWhenUsed);",
-    "new": "e?.type === ENCHANTMENT_TYPES.CastWhenUsed || e?.type === ENCHANTMENT_TYPES.CastWhenHeld);",
+    "old": "  Array.isArray(item?.enchantments) && item.enchantments.some((e) => e?.type === ENCHANTMENT_TYPES.CastWhenUsed);",
+    "new": "  Array.isArray(item?.enchantments) &&\n  item.enchantments.some(\n    (e) => e?.type === ENCHANTMENT_TYPES.CastWhenUsed || e?.type === ENCHANTMENT_TYPES.CastWhenHeld,\n  );",
     "tests": [
       "test/systems/rpt1026_progress.test.js",
       "test/scenes/audit_rpt1026_progress.test.js"
@@ -260,8 +260,8 @@
   {
     "name": "RPT1026-PROGRESS-goldsmith-old-words",
     "file": "src/net/professionLaw.js",
-    "old": "spec('goldsmith', 'Goldsmith', 'Silver jewelry you make has the enchantment points and worth of Gold.')",
-    "new": "spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.')",
+    "old": "      spec('goldsmith', 'Goldsmith', 'Silver jewelry you make has the enchantment points and worth of Gold.'),",
+    "new": "      spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.'),",
     "tests": [
       "test/systems/rpt1026_progress.test.js"
     ],
@@ -310,8 +310,8 @@
   {
     "name": "RPT1026-PROGRESS-peer-word-every-loose",
     "file": "src/systems/foeLootCap.js",
-    "old": "if (!qt && f?.entity?.summoned === true && out[k]) sm.push(out[k].i);",
-    "new": "if (!qt && out[k]) sm.push(out[k].i);",
+    "old": "    if (!qt && f?.entity?.summoned === true && out[k]) sm.push(out[k].i);",
+    "new": "    if (!qt && out[k]) sm.push(out[k].i);",
     "tests": [
       "test/scenes/rpt1026_progress_peersummon.test.js"
     ],

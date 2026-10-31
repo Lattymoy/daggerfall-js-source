@@ -40,10 +40,10 @@
 // FAST_M and FAST_DEG of it she lies MADE FAST: a gangway runs from the quay's face to her rail (`gangwayOf`).
 
 import { alongside, berthSize, BERTH_HULL } from './shipLife.js';
-import { hullBuild, MOD_BUILDS } from './navalShips.js';   // GALLEON-HOLDINGS: hull 2's gangway follows the build that stands (SHIPS-2: hull 4's too)
+import { hullBuild, MOD_BUILDS } from './navalShips.js'; // GALLEON-HOLDINGS: hull 2's gangway follows the build that stands (SHIPS-2: hull 4's too)
 import { hash32 } from '../../world/spawnedDungeons.js';
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
-import { SHORE_TERRAIN_FIT_METERS } from '../../world/deepWater/deepWaterFloor.js';   // HARBOUR-BOOK: the shelf a pier crosses
+import { SHORE_TERRAIN_FIT_METERS } from '../../world/deepWater/deepWaterFloor.js'; // HARBOUR-BOOK: the shelf a pier crosses
 
 /** The water between her widest and the quay's face (m) - the fenders' room. */
 export const QUAY_GAP = 0.8;
@@ -143,11 +143,11 @@ export const QUAY_KERB_H = 0.15;
  * stands in.
  */
 export const GANGWAY_SIDE = Object.freeze([
-  Object.freeze([0.95, 0.7]),    // 0 Rowboat - on her gunwale (0.63 m up at 0.9 m out)
-  Object.freeze([1.9, 2.26]),    // 1 Large Boat - SHIPS-2: Mac's Tiny Ship: on her gunwale's cap at its outer edge (1.89 out, 2.25 up)
-  Object.freeze([5.45, 6.7]),    // 2 Small Ship - Mac's galleon: the entry port in her waist's bulwark, her side 5.33 m out there
-  Object.freeze([9.2, 10.75]),   // 3 Large Galley - her upper deck (she never docks - DOCK_REFUSED)
-  Object.freeze([6.21, 8.31]),   // 4 Carrack - SHIPS-2: Mac's carrack: the entry port in her waist's bulwark (its sill 7.94 up and 6.09 out), half a metre over her deck
+  Object.freeze([0.95, 0.7]), // 0 Rowboat - on her gunwale (0.63 m up at 0.9 m out)
+  Object.freeze([1.9, 2.26]), // 1 Large Boat - SHIPS-2: Mac's Tiny Ship: on her gunwale's cap at its outer edge (1.89 out, 2.25 up)
+  Object.freeze([5.45, 6.7]), // 2 Small Ship - Mac's galleon: the entry port in her waist's bulwark, her side 5.33 m out there
+  Object.freeze([9.2, 10.75]), // 3 Large Galley - her upper deck (she never docks - DOCK_REFUSED)
+  Object.freeze([6.21, 8.31]), // 4 Carrack - SHIPS-2: Mac's carrack: the entry port in her waist's bulwark (its sill 7.94 up and 6.09 out), half a metre over her deck
 ]);
 /** GALLEON-HOLDINGS: the mod's own Small Ship's - her main deck's port, her side 7.5-7.55 m out there - hull 2's
  *  while she stands in for Mac's galleon (navalShips.js MOD_SMALL_SHIP_BUILD, AUDIT GN-G4). */
@@ -159,16 +159,28 @@ export const MOD_CARRACK_GANGWAY = Object.freeze([7.65, 4.14]);
  *  Mac's Tiny Ship (navalShips.js MOD_LARGE_BOAT_BUILD). */
 export const MOD_LARGE_BOAT_GANGWAY = Object.freeze([1.75, 1.36]);
 /** SHIPS-2: the mod's own gangway of each hull a ship of the port's stands in for. */
-export const MOD_GANGWAYS = Object.freeze({ 1: MOD_LARGE_BOAT_GANGWAY, 2: MOD_SMALL_SHIP_GANGWAY, 4: MOD_CARRACK_GANGWAY });
+export const MOD_GANGWAYS = Object.freeze({
+  1: MOD_LARGE_BOAT_GANGWAY,
+  2: MOD_SMALL_SHIP_GANGWAY,
+  4: MOD_CARRACK_GANGWAY,
+});
 /** GALLEON-HOLDINGS: where a gangway meets `hull` - GANGWAY_SIDE's, but the mod's own ship's wherever its is the build
  *  that stands (SHIPS-2: the galleon's, the carrack's and the large boat's). */
-export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] && hullBuild(hull) === MOD_BUILDS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);
+export const gangwaySide = (hull) =>
+  MOD_GANGWAYS[hull] && hullBuild(hull) === MOD_BUILDS[hull]
+    ? MOD_GANGWAYS[hull]
+    : (GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);
 /** AUDIT HOLDINGS Q2: the hulls no quay takes - a Large Galley (93 m) is half again a Carrack's berth, and rows in and
  *  out as the sea's own never moor (shipLife.js). */
 export const DOCK_REFUSED = Object.freeze([3]);
 
 const TAU = Math.PI * 2;
-const wrap = (a) => { a %= TAU; if (a > Math.PI) a -= TAU; else if (a < -Math.PI) a += TAU; return a; };
+const wrap = (a) => {
+  a %= TAU;
+  if (a > Math.PI) a -= TAU;
+  else if (a < -Math.PI) a += TAU;
+  return a;
+};
 const DEG = Math.PI / 180;
 
 /**
@@ -179,20 +191,32 @@ const DEG = Math.PI / 180;
 export function quayFrame(berth, hull = BERTH_HULL) {
   const [nx, nz] = berth.normal;
   const theta = Math.atan2(nz, -nx);
-  const fz = Math.sin(berth.yaw) * nz - Math.cos(berth.yaw) * nx;   // her bow along +z (sin theta, cos theta) = (nz, -nx)
+  const fz = Math.sin(berth.yaw) * nz - Math.cos(berth.yaw) * nx; // her bow along +z (sin theta, cos theta) = (nz, -nx)
   const zSign = fz >= 0 ? 1 : -1;
-  const s = berthSize(hull);   // SHIPS-2: the harbour's hull's the berths' template's (shipLife.js berthSize)
-  const zAft = zSign > 0 ? s.aftZ : -s.bowZ, zBow = zSign > 0 ? s.bowZ : -s.aftZ;
-  return { origin: [berth.pos[0], berth.pos[1]], theta, zSign, halfWidth: s.halfWidth, z0: Math.min(zAft, zBow), z1: Math.max(zAft, zBow) };
+  const s = berthSize(hull); // SHIPS-2: the harbour's hull's the berths' template's (shipLife.js berthSize)
+  const zAft = zSign > 0 ? s.aftZ : -s.bowZ,
+    zBow = zSign > 0 ? s.bowZ : -s.aftZ;
+  return {
+    origin: [berth.pos[0], berth.pos[1]],
+    theta,
+    zSign,
+    halfWidth: s.halfWidth,
+    z0: Math.min(zAft, zBow),
+    z1: Math.max(zAft, zBow),
+  };
 }
 /** A point of the berth's frame in the scene: `[x, z]`. */
 export function quayToScene(frame, lx, lz) {
-  const c = Math.cos(frame.theta), s = Math.sin(frame.theta);
+  const c = Math.cos(frame.theta),
+    s = Math.sin(frame.theta);
   return [frame.origin[0] + lx * c + lz * s, frame.origin[1] - lx * s + lz * c];
 }
 /** A scene point in the berth's frame: `[lx, lz]`. */
 export function sceneToQuay(frame, x, z) {
-  const c = Math.cos(frame.theta), s = Math.sin(frame.theta), dx = x - frame.origin[0], dz = z - frame.origin[1];
+  const c = Math.cos(frame.theta),
+    s = Math.sin(frame.theta),
+    dx = x - frame.origin[0],
+    dz = z - frame.origin[1];
   return [dx * c - dz * s, dx * s + dz * c];
 }
 
@@ -206,19 +230,27 @@ export function sceneToQuay(frame, x, z) {
 export function planQuay({ berth, hull = BERTH_HULL, key = '', index = 0, seaY, groundAt, others = [] }) {
   const frame = quayFrame(berth, hull);
   const deck = QUAY_DECK_UP;
-  const x0 = frame.halfWidth + QUAY_GAP, x1 = x0 + QUAY_WIDTH;
-  const z0 = frame.z0 - QUAY_ENDS, z1 = frame.z1 + QUAY_ENDS;
+  const x0 = frame.halfWidth + QUAY_GAP,
+    x1 = x0 + QUAY_WIDTH;
+  const z0 = frame.z0 - QUAY_ENDS,
+    z1 = frame.z1 + QUAY_ENDS;
   let unbuilt = false;
   /** The ground under a point of the frame, over the sea's top - NaN (and the plan unbuilt) where it is not up yet. */
   const ground = (lx, lz) => {
     const [x, z] = quayToScene(frame, lx, lz);
     const g = groundAt(x, z);
-    if (!Number.isFinite(g)) { unbuilt = true; return NaN; }
+    if (!Number.isFinite(g)) {
+      unbuilt = true;
+      return NaN;
+    }
     return g - seaY;
   };
-  const footOf = (lx, lz) => { const g = ground(lx, lz); return Math.max(-PILE_DEPTH, Number.isFinite(g) ? g - 0.3 : -PILE_DEPTH); };
+  const footOf = (lx, lz) => {
+    const g = ground(lx, lz);
+    return Math.max(-PILE_DEPTH, Number.isFinite(g) ? g - 0.3 : -PILE_DEPTH);
+  };
   const piles = [];
-  const rows = [];   // SHIPYARDS (THE PIER'S DRESS): each row's own piles, for its braces
+  const rows = []; // SHIPYARDS (THE PIER'S DRESS): each row's own piles, for its braces
   /** Piles along a line of the frame where the ground is under the deck. */
   const pileRow = (lx, from, to) => {
     const n = Math.max(1, Math.round((to - from) / PILE_STEP));
@@ -234,16 +266,24 @@ export function planQuay({ berth, hull = BERTH_HULL, key = '', index = 0, seaY, 
   pileRow(x1 - PILE_R, z0 + PILE_R, z1 - PILE_R);
   // the shore, walked from the quay's back along +x at her waist
   const zJ = (frame.z0 + frame.z1) / 2;
-  let jetty = null, ramp = null;
+  let jetty = null,
+    ramp = null;
   // QUAY-CROSSING: the harbour's earlier berths' piers (`others`, their plans), in this frame - a jetty that meets one
   // ends on it, its deck at this one's height, never runs on across it (two shores round a point of land walked
   // landward converge, and Deep Waters' shelf gave each jetty up to JETTY_MAX of water to cross before the land)
-  const piers = others.flatMap((o) => (o?.plan ? pierOutline(o.plan, o.origin) : [])).map((box) => box.map(([x, z]) => sceneToQuay(frame, x, z)));
+  const piers = others
+    .flatMap((o) => (o?.plan ? pierOutline(o.plan, o.origin) : []))
+    .map((box) => box.map(([x, z]) => sceneToQuay(frame, x, z)));
   const onPier = (lx) => piers.some((box) => [-0.5, 0, 0.5].some((k) => inBox(box, lx, zJ + k * JETTY_WIDTH)));
   for (let t = 0; t <= JETTY_MAX && !jetty; t += JETTY_STEP) {
     if (onPier(x1 + t)) {
-      let a = Math.max(0, t - JETTY_STEP), b = t;   // where it first meets it, to a hand's breadth: its end on the pier's edge
-      for (let k = 0; k < 6; k++) { const m = (a + b) / 2; if (onPier(x1 + m)) b = m; else a = m; }
+      let a = Math.max(0, t - JETTY_STEP),
+        b = t; // where it first meets it, to a hand's breadth: its end on the pier's edge
+      for (let k = 0; k < 6; k++) {
+        const m = (a + b) / 2;
+        if (onPier(x1 + m)) b = m;
+        else a = m;
+      }
       jetty = { x0: x1, x1: x1 + b, z0: zJ - JETTY_WIDTH / 2, z1: zJ + JETTY_WIDTH / 2 };
       break;
     }
@@ -251,15 +291,29 @@ export function planQuay({ berth, hull = BERTH_HULL, key = '', index = 0, seaY, 
     if (!Number.isFinite(g)) break;
     // a bank meets the deck - AUDIT HOLDINGS Q9: one standing over it by more than two steps (a wall, a cliff) is met at
     // its face, never run JETTY_LAND into it
-    if (g >= deck - STEP_M) { jetty = { x0: x1, x1: x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0), z0: zJ - JETTY_WIDTH / 2, z1: zJ + JETTY_WIDTH / 2 }; break; }
+    if (g >= deck - STEP_M) {
+      jetty = {
+        x0: x1,
+        x1: x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0),
+        z0: zJ - JETTY_WIDTH / 2,
+        z1: zJ + JETTY_WIDTH / 2,
+      };
+      break;
+    }
     if (g >= DRY_M) {
       // dry ground under the deck: the jetty to it, and a ramp down to the ground
       jetty = { x0: x1, x1: x1 + t, z0: zJ - JETTY_WIDTH / 2, z1: zJ + JETTY_WIDTH / 2 };
-      let end = RAMP_MAX, endY = deck - RAMP_MAX * RAMP_SLOPE;
+      let end = RAMP_MAX,
+        endY = deck - RAMP_MAX * RAMP_SLOPE;
       for (let s = JETTY_STEP; s <= RAMP_MAX; s += JETTY_STEP) {
-        const y = deck - s * RAMP_SLOPE, gs = ground(x1 + t + s, zJ);
+        const y = deck - s * RAMP_SLOPE,
+          gs = ground(x1 + t + s, zJ);
         if (!Number.isFinite(gs)) break;
-        if (y <= gs + 0.05) { end = s; endY = Math.max(y, gs); break; }
+        if (y <= gs + 0.05) {
+          end = s;
+          endY = Math.max(y, gs);
+          break;
+        }
       }
       ramp = { x0: x1 + t, x1: x1 + t + end, y0: deck, y1: endY, z0: jetty.z0, z1: jetty.z1 };
     }
@@ -267,12 +321,20 @@ export function planQuay({ berth, hull = BERTH_HULL, key = '', index = 0, seaY, 
   if (unbuilt) return null;
   if (jetty && jetty.x1 - jetty.x0 > 0.5) {
     pileRow(Math.min(jetty.x1, x1 + 0.6), jetty.z0 + PILE_R, jetty.z1 - PILE_R);
-    for (let lx = x1 + PILE_STEP; lx < jetty.x1 - 0.5; lx += PILE_STEP) pileRow(lx, jetty.z0 + PILE_R, jetty.z1 - PILE_R);
+    for (let lx = x1 + PILE_STEP; lx < jetty.x1 - 0.5; lx += PILE_STEP)
+      pileRow(lx, jetty.z0 + PILE_R, jetty.z1 - PILE_R);
   }
   if (unbuilt) return null;
   const zMid = (frame.z0 + frame.z1) / 2;
-  const bollards = [[x0 + 0.45, frame.z0 + 4], [x0 + 0.45, zMid], [x0 + 0.45, frame.z1 - 4]];
-  const lanterns = [[x1 - 0.4, z0 + 0.6], [x1 - 0.4, z1 - 0.6]];
+  const bollards = [
+    [x0 + 0.45, frame.z0 + 4],
+    [x0 + 0.45, zMid],
+    [x0 + 0.45, frame.z1 - 4],
+  ];
+  const lanterns = [
+    [x1 - 0.4, z0 + 0.6],
+    [x1 - 0.4, z1 - 0.6],
+  ];
   // the cargo: on the quay's back, clear of the jetty's mouth, the gangway's lane at her waist and the lanterns - its face
   // kept for the walk
   const r = mulberry32(hash32(keyHash(key), index >>> 0, QUAY_SALT));
@@ -283,16 +345,43 @@ export function planQuay({ berth, hull = BERTH_HULL, key = '', index = 0, seaY, 
     const s = kind === 'crate' ? 0.8 + r() * 0.35 : 0.36;
     const lz = z0 + 2 + r() * (z1 - z0 - 4);
     const lx = x1 - 0.9 - r() * 1.2;
-    if (Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 || Math.abs(lz) < GANGWAY_LANE || Math.abs(lz - z0) < 1.6 || Math.abs(lz - z1) < 1.6) continue;
+    if (
+      Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 ||
+      Math.abs(lz) < GANGWAY_LANE ||
+      Math.abs(lz - z0) < 1.6 ||
+      Math.abs(lz - z1) < 1.6
+    )
+      continue;
     if (cargo.some((c) => Math.abs(c.z - lz) < 1.6)) continue;
     const stack = kind === 'crate' && r() < 0.35 ? 2 : 1;
     cargo.push({ kind, x: lx, z: lz, s, stack });
     k++;
   }
-  const dress = pierDress({ frame, deck, quay: { x0, x1, z0, z1 }, zJ, jetty, rows, bollards, cargo, key, index, ground });
+  const dress = pierDress({
+    frame,
+    deck,
+    quay: { x0, x1, z0, z1 },
+    zJ,
+    jetty,
+    rows,
+    bollards,
+    cargo,
+    key,
+    index,
+    ground,
+  });
   if (unbuilt) return null;
   return {
-    frame, deck, quay: { x0, x1, z0, z1 }, jetty, ramp, piles, bollards, lanterns, cargo, ...dress,
+    frame,
+    deck,
+    quay: { x0, x1, z0, z1 },
+    jetty,
+    ramp,
+    piles,
+    bollards,
+    lanterns,
+    cargo,
+    ...dress,
   };
 }
 
@@ -314,12 +403,22 @@ export function pierDress({ frame, deck, quay, zJ, jetty, rows, bollards, cargo,
   const top = deck - QUAY_DECK_T - 0.12;
   for (const row of rows) {
     for (let k = 0; k + 1 < row.length; k++) {
-      const a = row[k], b = row[k + 1];
+      const a = row[k],
+        b = row[k + 1];
       const span = Math.hypot(b[0] - a[0], b[1] - a[1]);
       if (span < 0.5 || span > BRACE_SPAN) continue;
       const low = Math.max(a[2], b[2], BRACE_LOW) + 0.1;
       if (top - low < 0.6) continue;
-      braces.push([[a[0], top, a[1]], [b[0], low, b[1]]], [[a[0], low, a[1]], [b[0], top, b[1]]]);
+      braces.push(
+        [
+          [a[0], top, a[1]],
+          [b[0], low, b[1]],
+        ],
+        [
+          [a[0], low, a[1]],
+          [b[0], top, b[1]],
+        ],
+      );
     }
   }
   // the ladders: one each side of her waist, between its bollards, out of the lane and off a bollard
@@ -331,7 +430,7 @@ export function pierDress({ frame, deck, quay, zJ, jetty, rows, bollards, cargo,
     if (bollards.some(([, bz]) => Math.abs(bz - lz) < 0.8)) lz += lz < 0 ? -1.2 : 1.2;
     if (lz < z0 + 1 || lz > z1 - 1) continue;
     const g = ground(x0 - 0.1, lz);
-    if (!Number.isFinite(g) || g > deck - 0.8) continue;   // the bank at the face: no water to climb down to
+    if (!Number.isFinite(g) || g > deck - 0.8) continue; // the bank at the face: no water to climb down to
     ladders.push([lz, Math.max(LADDER_DOWN, g + 0.05)]);
   }
   // the fender piles along the face, out of the lane and off the ladders
@@ -345,11 +444,16 @@ export function pierDress({ frame, deck, quay, zJ, jetty, rows, bollards, cargo,
     fenders.push([lz, Math.max(FENDER_DOWN, g + 0.05)]);
   }
   // the cleats: at the face's two ends, and by each ladder's head on its far side from the lane
-  const cleats = [[x0 + 0.35, z0 + 1], [x0 + 0.35, z1 - 1], ...ladders.map(([lz]) => [x0 + 0.35, lz + (lz < 0 ? -0.9 : 0.9)])];
+  const cleats = [
+    [x0 + 0.35, z0 + 1],
+    [x0 + 0.35, z1 - 1],
+    ...ladders.map(([lz]) => [x0 + 0.35, lz + (lz < 0 ? -0.9 : 0.9)]),
+  ];
   // a coil of rope by each bollard, on whichever side its stream turns, out of the lane
   const coils = [];
   for (const [, bz] of bollards) {
-    const side = rd() < 0.5 ? -1 : 1, r = 0.26 + rd() * 0.1;
+    const side = rd() < 0.5 ? -1 : 1,
+      r = 0.26 + rd() * 0.1;
     for (const cz of [bz + side * 0.95, bz - side * 0.95]) {
       if (inLane(cz, DRESS_LANE + r) || cz < z0 + 0.8 || cz > z1 - 0.8) continue;
       coils.push([x0 + 1.05, cz, r]);
@@ -358,12 +462,12 @@ export function pierDress({ frame, deck, quay, zJ, jetty, rows, bollards, cargo,
   }
   // the crane: a harbour's first berth's, at one end of its back, its post clear of the jetty's mouth and the cargo
   let crane = null;
-  if ((index >>> 0) === 0) {
+  if (index >>> 0 === 0) {
     for (const end of rd() < 0.5 ? [1, -1] : [-1, 1]) {
       const cz = end > 0 ? z1 - 3 : z0 + 3;
       if (inLane(cz, 1) || Math.abs(cz - zJ) < JETTY_WIDTH / 2 + 1.5) continue;
       if (cargo.some((c) => Math.abs(c.z - cz) < c.s / 2 + 0.6)) continue;
-      crane = { x: x1 - 0.75, z: cz, dir: -end, up: CRANE_UP, jib: CRANE_JIB, hook: CRANE_HOOK_UP };   // its jib along the quay, toward its middle
+      crane = { x: x1 - 0.75, z: cz, dir: -end, up: CRANE_UP, jib: CRANE_JIB, hook: CRANE_HOOK_UP }; // its jib along the quay, toward its middle
       break;
     }
   }
@@ -382,14 +486,23 @@ export function pierDress({ frame, deck, quay, zJ, jetty, rows, bollards, cargo,
  *  ([x, z], in order round it) - `origin` its berth's live place (a recentre moves the berth, never the plan). */
 export function pierOutline(plan, origin = plan.frame.origin) {
   const at = { ...plan.frame, origin };
-  return [plan.quay, plan.jetty, plan.ramp].filter((r) => r && r.x1 - r.x0 > 0)
-    .map((r) => [[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]].map(([x, z]) => quayToScene(at, x, z)));
+  return [plan.quay, plan.jetty, plan.ramp]
+    .filter((r) => r && r.x1 - r.x0 > 0)
+    .map((r) =>
+      [
+        [r.x0, r.z0],
+        [r.x1, r.z0],
+        [r.x1, r.z1],
+        [r.x0, r.z1],
+      ].map(([x, z]) => quayToScene(at, x, z)),
+    );
 }
 /** Whether `(x, z)` lies within the convex quad `box` (its corners in order round it, either way). */
 function inBox(box, x, z) {
   let sign = 0;
   for (let i = 0; i < 4; i++) {
-    const [ax, az] = box[i], [bx, bz] = box[(i + 1) % 4];
+    const [ax, az] = box[i],
+      [bx, bz] = box[(i + 1) % 4];
     const c = (bx - ax) * (z - az) - (bz - az) * (x - ax);
     if (c === 0) continue;
     if (sign && Math.sign(c) !== sign) return false;
@@ -413,7 +526,10 @@ export const jettyLanternHead = (lx, lz, side, deck) => [lx, deck + LANTERN_UP -
  *  place - the plan's is where it was laid) - the quay's two, then its jetty's. */
 export function lanternLights(plan, seaY, origin = plan.frame.origin) {
   const frame = origin === plan.frame.origin ? plan.frame : { ...plan.frame, origin };
-  const at = (h) => { const [x, z] = quayToScene(frame, h[0], h[2]); return [x, seaY + h[1], z]; };
+  const at = (h) => {
+    const [x, z] = quayToScene(frame, h[0], h[2]);
+    return [x, seaY + h[1], z];
+  };
   return [
     ...plan.lanterns.map(([lx, lz]) => at(lanternHead(lx, lz, plan.deck))),
     ...(plan.jettyLanterns ?? []).map(([lx, lz, side]) => at(jettyLanternHead(lx, lz, side, plan.deck))),
@@ -428,7 +544,7 @@ export function lanternLights(plan, seaY, origin = plan.frame.origin) {
  * @param {{ pos: number[], yaw: number, hull: number }} ship @param {Array<any>} berths
  */
 export function dockFor(ship, berths) {
-  if (DOCK_REFUSED.includes(ship.hull)) return null;   // AUDIT HOLDINGS Q2
+  if (DOCK_REFUSED.includes(ship.hull)) return null; // AUDIT HOLDINGS Q2
   let best = null;
   for (const b of berths) {
     if (b.free === false) continue;
@@ -450,7 +566,10 @@ export function madeFast(ship, dock) {
  *  (her hands on the warps, not a tow), and her heading brought round with it so both come home together -
  *  `{ pos: [x, z], yaw }`. Pure. */
 export function warpStep(pos, yaw, dock, dt) {
-  const t = Math.max(0, dt), dx = dock.pos[0] - pos[0], dz = dock.pos[1] - pos[1], d = Math.hypot(dx, dz);
+  const t = Math.max(0, dt),
+    dx = dock.pos[0] - pos[0],
+    dz = dock.pos[1] - pos[1],
+    d = Math.hypot(dx, dz);
   const ease = 1 - Math.exp(-DOCK_EASE * t);
   const step = Math.min(WARP_SPEED * t, d * ease);
   const k = d > 1e-9 ? step / d : 1;
@@ -459,7 +578,8 @@ export function warpStep(pos, yaw, dock, dt) {
 /** Which of her sides lies to the quay: +1 her starboard (her frame's +x), -1 her port. `landward` the berth's frame's
  *  +x in the scene ([x, z]). */
 export function quaySide(yaw, landward) {
-  const sx = Math.cos(yaw), sz = -Math.sin(yaw);   // her starboard, the yaw's own +x
+  const sx = Math.cos(yaw),
+    sz = -Math.sin(yaw); // her starboard, the yaw's own +x
   return sx * landward[0] + sz * landward[1] >= 0 ? 1 : -1;
 }
 /**

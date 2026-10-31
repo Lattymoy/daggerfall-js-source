@@ -18,7 +18,7 @@
 //
 // PURE; the relay (server/src/index.js) and the client import it. Not a DFU member. Ledger A (ELITE-GATES).
 import { _b64url, SIG_BYTES } from '../identityToken.js';
-import { EG_CALL_SG_RE } from '../wire.js';   // a signature's shape on the wire (64 bytes, base64url, unpadded) - the wire's own
+import { EG_CALL_SG_RE } from '../wire.js'; // a signature's shape on the wire (64 bytes, base64url, unpadded) - the wire's own
 
 /** The version leading the signed bytes. */
 export const EG_CALL_SIG_V = 'ec1';
@@ -52,5 +52,9 @@ export async function verifyEgCall(c, publicKey, { subtle }) {
   if (!publicKey || !c || typeof c.sg !== 'string' || !EG_CALL_SG_RE.test(c.sg) || !c.site) return false;
   const sig = _b64url.decode(c.sg);
   if (!sig || sig.length !== SIG_BYTES) return false;
-  try { return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(egCallBytes(c))); } catch { return false; }
+  try {
+    return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(egCallBytes(c)));
+  } catch {
+    return false;
+  }
 }

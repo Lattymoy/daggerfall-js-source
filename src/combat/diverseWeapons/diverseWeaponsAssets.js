@@ -38,15 +38,21 @@
 // Same registry shape as the widget's door - a name list and a loader,
 // the bundle opened once, never throwing.
 
-import { openUnityBundle } from '../../formats/unity/unityBundleClient.js';   // the open runs in a worker (~10 s of LZ4 for this bundle); this thread when there is none
-import { toScreenOrder } from '../../formats/color32Order.js';   // DWHD1: EVERY arm keeps its rows - a screen quad, and the bundle reader already answers top-first
+import { openUnityBundle } from '../../formats/unity/unityBundleClient.js'; // the open runs in a worker (~10 s of LZ4 for this bundle); this thread when there is none
+import { toScreenOrder } from '../../formats/color32Order.js'; // DWHD1: EVERY arm keeps its rows - a screen quad, and the bundle reader already answers top-first
 import { decodePng } from '../../systems/textureReplacement.js';
-import { DFMOD_KEY_PREFIX } from '../../systems/seasonsIliacBayAssets.js';   // the stored-name prefix the texture pick writes for a bundle - one home
+import { DFMOD_KEY_PREFIX } from '../../systems/seasonsIliacBayAssets.js'; // the stored-name prefix the texture pick writes for a bundle - one home
 import { weaponWidgetImage } from '../weapon/weaponWidgetAssets.js';
-import { dfmodCifRciNamed } from '../../systems/dfmodTextures.js';   // DFMOD2: an attached mod's handheld frames, after the two weapon mods
-import { APP_ROOT } from '../../systems/appRoot.js';   // DW2: the shipped sprites hang off the site root, as the held map does
-import { rebuiltPicture } from '../../systems/rebuiltPicture.js';   // NO-BETHESDA3: a sprite that is Daggerfall's own, built from the player's files
-import { DIVERSE_WEAPONS_STEMS, DIVERSE_WEAPONS_METALS, DIVERSE_WEAPONS_BARE, DIVERSE_WEAPONS_ODD, DIVERSE_WEAPONS_DERIVED } from './diverseWeaponsIndex.js';   // DW2: generated from the manifest
+import { dfmodCifRciNamed } from '../../systems/dfmodTextures.js'; // DFMOD2: an attached mod's handheld frames, after the two weapon mods
+import { APP_ROOT } from '../../systems/appRoot.js'; // DW2: the shipped sprites hang off the site root, as the held map does
+import { rebuiltPicture } from '../../systems/rebuiltPicture.js'; // NO-BETHESDA3: a sprite that is Daggerfall's own, built from the player's files
+import {
+  DIVERSE_WEAPONS_STEMS,
+  DIVERSE_WEAPONS_METALS,
+  DIVERSE_WEAPONS_BARE,
+  DIVERSE_WEAPONS_ODD,
+  DIVERSE_WEAPONS_DERIVED,
+} from './diverseWeaponsIndex.js'; // DW2: generated from the manifest
 
 export const DIVERSE_WEAPONS_MOD = Object.freeze({
   guid: '8e83d67c-a0ac-4935-a8c5-6b18c9f35bfc',
@@ -57,7 +63,10 @@ export const DIVERSE_WEAPONS_MOD = Object.freeze({
 
 // DWHD1: not the HD replacers ("Diverse Weapons HD - ...") - they are texture mods the generic door reads; this door
 // opened each one whole only to find its GUID was not RealAKP's
-const isDiverseDfmod = (name) => /\.dfmod$/i.test(name) && /diverse.?weapons/i.test(name.slice(name.lastIndexOf('/') + 1)) && !/\bhd\b/i.test(name.slice(name.lastIndexOf('/') + 1));
+const isDiverseDfmod = (name) =>
+  /\.dfmod$/i.test(name) &&
+  /diverse.?weapons/i.test(name.slice(name.lastIndexOf('/') + 1)) &&
+  !/\bhd\b/i.test(name.slice(name.lastIndexOf('/') + 1));
 const isPng = (name) => /\.png$/i.test(name);
 /** The mod's own spellings for a loose PNG: a per-weapon CIF name with
  *  or without the `w_` prefix (`LONGSWORD.CIF_0-0_Iron.png`), or an
@@ -88,7 +97,9 @@ export function hasDiverseWeaponsSprite(name) {
 }
 
 /** How many names the shipped set carries (the manifest's count). */
-export const DIVERSE_WEAPONS_SPRITE_COUNT = Object.values(DIVERSE_WEAPONS_STEMS).reduce((n, b) => n + (b.toString(2).split('1').length - 1), 0) + DIVERSE_WEAPONS_ODD.length;
+export const DIVERSE_WEAPONS_SPRITE_COUNT =
+  Object.values(DIVERSE_WEAPONS_STEMS).reduce((n, b) => n + (b.toString(2).split('1').length - 1), 0) +
+  DIVERSE_WEAPONS_ODD.length;
 
 /** The shipped sprite's URL - `<root>/art/diverse-weapons/<name>.png`,
  *  off the app root the module URL names (systems/appRoot.js), else
@@ -106,8 +117,14 @@ export const isDerivedDiverseWeaponsSprite = (name) => DERIVED.has(name);
 let _specs = null;
 /** The specs (vendor/diverse-weapons/derived-art.json, 425 kB): their own chunk, read on the first build. A failed
  *  read is forgotten. */
-export const diverseWeaponsDerivedSpecs = () => (_specs ??= import('../../../vendor/diverse-weapons/derived-art.json', { with: { type: 'json' } })
-  .then((m) => m.default, (e) => { _specs = null; throw e; }));
+export const diverseWeaponsDerivedSpecs = () =>
+  (_specs ??= import('../../../vendor/diverse-weapons/derived-art.json', { with: { type: 'json' } }).then(
+    (m) => m.default,
+    (e) => {
+      _specs = null;
+      throw e;
+    },
+  ));
 /** A derived sprite in the door's shape, built through `art` (the session's classic reader by default); null, said
  *  once, where the player's files will not build it - the classic frame then draws, as for any miss. */
 async function derivedImage(name, art) {
@@ -125,17 +142,23 @@ async function derivedImage(name, art) {
 
 let _names = [];
 let _load = null;
-let _bundle = null;     // Promise<{ bundle, manifest, byName } | null>
-let _images = new Map();   // texture name -> Promise<image | null>
-let _workerFactory = null;   // test seam: a fake Worker, or a factory that throws (the same-thread fallback)
+let _bundle = null; // Promise<{ bundle, manifest, byName } | null>
+let _images = new Map(); // texture name -> Promise<image | null>
+let _workerFactory = null; // test seam: a fake Worker, or a factory that throws (the same-thread fallback)
 
 /** Register the stored names and a `load(name) -> bytes` loader (the
  *  texture pick's own). Returns how many entries could carry this mod's
  *  textures: its bundle and any loose PNG spelt as it asks. */
 export function setDiverseWeaponsSources(fileNames, load, { workerFactory = null } = {}) {
-  const names = (fileNames ?? []).filter((n) => (n.startsWith(DFMOD_KEY_PREFIX) && isDiverseDfmod(n)) || (isPng(n) && isDiversePng(n)));
+  const names = (fileNames ?? []).filter(
+    (n) => (n.startsWith(DFMOD_KEY_PREFIX) && isDiverseDfmod(n)) || (isPng(n) && isDiversePng(n)),
+  );
   const loader = typeof load === 'function' ? load : null;
-  const same = loader === _load && names.length === _names.length && names.every((n, i) => n === _names[i]) && workerFactory === _workerFactory;
+  const same =
+    loader === _load &&
+    names.length === _names.length &&
+    names.every((n, i) => n === _names[i]) &&
+    workerFactory === _workerFactory;
   _names = names;
   _load = loader;
   _workerFactory = workerFactory;
@@ -145,7 +168,8 @@ export function setDiverseWeaponsSources(fileNames, load, { workerFactory = null
 /** Drop the open bundle (and its worker, when it has one) and the name cache. */
 function forgetBundle() {
   const old = _bundle;
-  _bundle = null; _images = new Map();
+  _bundle = null;
+  _images = new Map();
   old?.then((b) => b?.bundle.close()).catch(() => null);
 }
 export const clearDiverseWeaponsSources = () => setDiverseWeaponsSources([], null);
@@ -154,7 +178,11 @@ export const diverseWeaponsSourcesCount = () => _names.length;
 function manifestOf(bundle) {
   for (const t of bundle?.textAssets ?? []) {
     if (!/\.dfmod$/i.test(t.name)) continue;
-    try { return JSON.parse(t.text); } catch { /* not this one */ }
+    try {
+      return JSON.parse(t.text);
+    } catch {
+      /* not this one */
+    }
   }
   return null;
 }
@@ -174,11 +202,19 @@ export async function diverseWeaponsBundle() {
         try {
           const bytes = await _load(name);
           if (!bytes || !bytes.byteLength) continue;
-          const bundle = await openUnityBundle(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes), { workerFactory: _workerFactory });
+          const bundle = await openUnityBundle(bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes), {
+            workerFactory: _workerFactory,
+          });
           const manifest = manifestOf(bundle);
-          if (!manifest) { bundle.close(); continue; }
+          if (!manifest) {
+            bundle.close();
+            continue;
+          }
           if (manifest.GUID === DIVERSE_WEAPONS_MOD.guid || manifest.ModTitle === DIVERSE_WEAPONS_MOD.title) {
-            if (manifest.ModVersion && String(manifest.ModVersion) !== DIVERSE_WEAPONS_MOD.version) console.warn(`[diverse weapons] the bundle is ${manifest.ModTitle} ${manifest.ModVersion}; the port carries ${DIVERSE_WEAPONS_MOD.version}'s script`);
+            if (manifest.ModVersion && String(manifest.ModVersion) !== DIVERSE_WEAPONS_MOD.version)
+              console.warn(
+                `[diverse weapons] the bundle is ${manifest.ModTitle} ${manifest.ModVersion}; the port carries ${DIVERSE_WEAPONS_MOD.version}'s script`,
+              );
             const byName = new Map();
             for (const t of bundle.textures ?? []) if (!byName.has(t.name)) byName.set(t.name, t);
             return { bundle, manifest, byName };
@@ -195,7 +231,9 @@ export async function diverseWeaponsBundle() {
 }
 
 /** True once a bundle answering to the mod's GUID has been opened. */
-export async function diverseWeaponsTexturesAttached() { return !!(await diverseWeaponsBundle()); }
+export async function diverseWeaponsTexturesAttached() {
+  return !!(await diverseWeaponsBundle());
+}
 
 /** One texture by name - `{ width, height, colors }` RGBA in the port's
  *  color32 (bottom-up) order, the shape renderer.uploadTexture reads -
@@ -206,22 +244,28 @@ export async function diverseWeaponsTexturesAttached() { return !!(await diverse
  *  top-first already and keeps its rows through `toScreenOrder`. A derived name is built through `art`, never fetched. */
 export function diverseWeaponsImage(name, { decode = decodePng, fetchFn = globalThis.fetch, art = undefined } = {}) {
   if (!_images.has(name)) {
-    _images.set(name, (async () => {
-      const attached = _names.length ? await attachedImage(name, decode) : null;   // nothing attached: no bundle walk
-      if (attached) return attached;
-      if (isDerivedDiverseWeaponsSprite(name)) return derivedImage(name, art);   // NO-BETHESDA3: built, never fetched
-      // DW2: the shipped set, by the manifest's index - a name it lacks
-      // is a miss here and now, not a 404
-      if (!hasDiverseWeaponsSprite(name) || typeof fetchFn !== 'function') return null;
-      try {
-        const res = await fetchFn(diverseWeaponsSpriteUrl(name));
-        if (!res?.ok) { console.warn(`[diverse weapons] ${name}.png is in the index and not on the site (${res?.status})`); return null; }
-        return toScreenOrder(await decode(new Uint8Array(await res.arrayBuffer())));   // a PNG's rows are top-first: no flip (HT3)
-      } catch (e) {
-        console.warn(`[diverse weapons] ${name} would not load:`, e?.message ?? e);
-        return null;
-      }
-    })());
+    _images.set(
+      name,
+      (async () => {
+        const attached = _names.length ? await attachedImage(name, decode) : null; // nothing attached: no bundle walk
+        if (attached) return attached;
+        if (isDerivedDiverseWeaponsSprite(name)) return derivedImage(name, art); // NO-BETHESDA3: built, never fetched
+        // DW2: the shipped set, by the manifest's index - a name it lacks
+        // is a miss here and now, not a 404
+        if (!hasDiverseWeaponsSprite(name) || typeof fetchFn !== 'function') return null;
+        try {
+          const res = await fetchFn(diverseWeaponsSpriteUrl(name));
+          if (!res?.ok) {
+            console.warn(`[diverse weapons] ${name}.png is in the index and not on the site (${res?.status})`);
+            return null;
+          }
+          return toScreenOrder(await decode(new Uint8Array(await res.arrayBuffer()))); // a PNG's rows are top-first: no flip (HT3)
+        } catch (e) {
+          console.warn(`[diverse weapons] ${name} would not load:`, e?.message ?? e);
+          return null;
+        }
+      })(),
+    );
   }
   return _images.get(name);
 }
@@ -233,7 +277,12 @@ async function attachedImage(name, decode) {
     // the pixels cross from the worker per ask (one transfer). DWHD1 (a player: "all weapons are overhead"): NOT
     // flipped - unityBundle.decodeTexture2D already turns Unity's bottom-up rows top-first, the order a decoded PNG
     // has, and this is a SCREEN quad (HT3's rule). The flip here drew every bundle frame upside down.
-    try { const img = await b.bundle.rgba(name); if (img) return toScreenOrder(img); } catch (e) { console.warn(`[diverse weapons] ${name} would not decode:`, e?.message ?? e); }
+    try {
+      const img = await b.bundle.rgba(name);
+      if (img) return toScreenOrder(img);
+    } catch (e) {
+      console.warn(`[diverse weapons] ${name} would not decode:`, e?.message ?? e);
+    }
   }
   if (!_load) return null;
   const loose = _names.find((n) => isPng(n) && n.slice(n.lastIndexOf('/') + 1).replace(/\.png$/i, '') === name);
@@ -269,8 +318,15 @@ async function weaponModImage(name) {
 /** DFMOD2: a player-attached texture mod's frame of the name (DREAM's handhelds, Diverse Weapons HD). DWHD1: top-first,
  *  a screen quad's order - the flip this used drew every such frame upside down. */
 async function dfmodWeaponImage(name) {
-  try { const img = await dfmodCifRciNamed(name); return img ? toScreenOrder(img) : null; } catch { return null; }
+  try {
+    const img = await dfmodCifRciNamed(name);
+    return img ? toScreenOrder(img) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Test seam: forget the name cache without touching the sources. */
-export function _resetDiverseWeaponsImages() { forgetBundle(); }
+export function _resetDiverseWeaponsImages() {
+  forgetBundle();
+}

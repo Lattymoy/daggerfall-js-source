@@ -40,8 +40,8 @@
   {
     "name": "RW1-day-share-lost",
     "file": "src/render/realWindows.js",
-    "old": "    day: [(ambient?.[0] ?? 0) * ROOM_DAY_SHARE,",
-    "new": "    day: [(ambient?.[0] ?? 0),",
+    "old": "    day: [\n      (ambient?.[0] ?? 0) * ROOM_DAY_SHARE,\n      (ambient?.[1] ?? 0) * ROOM_DAY_SHARE,\n      (ambient?.[2] ?? 0) * ROOM_DAY_SHARE,\n    ],",
+    "new": "    day: [ambient?.[0] ?? 0, (ambient?.[1] ?? 0) * ROOM_DAY_SHARE, (ambient?.[2] ?? 0) * ROOM_DAY_SHARE],",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "RW1-sphere-behind-drawn",
     "file": "src/render/realWindows.js",
-    "old": "  if (w + sw <= 0) return null;",
-    "new": "  if (w + sw <= -1e9) return null;",
+    "old": "  if (w + sw <= 0) return null; // behind the eye",
+    "new": "  if (w + sw <= -1e9) return null; // behind the eye",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "RW1-sphere-depth-whole",
     "file": "src/render/realWindows.js",
-    "old": "  const n = w - sw, f = w + sw;",
-    "new": "  const n = w, f = w;",
+    "old": "  const n = w - sw,\n    f = w + sw;",
+    "new": "  const n = w,\n    f = w;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "RW1-margin-lost",
     "file": "src/render/realWindows.js",
-    "old": "  const x0 = Math.max(-1, rect[0] - margin), y0 = Math.max(-1, rect[1] - margin);",
-    "new": "  const x0 = Math.max(-1, rect[0]), y0 = Math.max(-1, rect[1] - margin);",
+    "old": "  const x0 = Math.max(-1, rect[0] - margin),",
+    "new": "  const x0 = Math.max(-1, rect[0]),",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "RW1-never-released",
     "file": "src/render/realWindows.js",
-    "old": "    if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) { renderer.releaseOutsideView?.(); state.drawn = false; }",
-    "new": "    if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) { state.drawn = false; }",
+    "old": "    if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) {\n      renderer.releaseOutsideView?.();\n      state.drawn = false;",
+    "new": "    if (state.drawn && now - state.lastWanted > VIEW_RELEASE_MS) {\n      state.drawn = false;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "RW1-skin-gate-lost",
     "file": "src/render/realWindows.js",
-    "old": "  if (!isEnhanced(search)) return 'off';",
-    "new": "",
+    "old": "  if (!isEnhanced(search)) return 'off';\n  const door = pageParam('windows', search);",
+    "new": "  const door = pageParam('windows', search);",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "RW1-door-ignored",
     "file": "src/render/realWindows.js",
-    "old": "  const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows');",
-    "new": "  const v = getPref('realWindows');",
+    "old": "  const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows'); // RW1 (AUDIT): a door it does not know (`?windows=0`, a typo) is no door - the row's word stands",
+    "new": "  const v = getPref('realWindows'); // RW1 (AUDIT): a door it does not know (`?windows=0`, a typo) is no door - the row's word stands",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "RW1-glass-wears-style",
     "file": "src/render/realWindows.js",
-    "old": "  + '  emission *= step(uWinMode, 1.5);   // RW1: an interior\\'s glass wears no window style';",
-    "new": "  + '  emission *= step(uWinMode, 2.5);   // RW1: an interior\\'s glass wears no window style';",
+    "old": "  \"  emission *= step(uWinMode, 1.5);   // RW1: an interior's glass wears no window style\";",
+    "new": "  \"  emission *= step(uWinMode, 2.5);   // RW1: an interior's glass wears no window style\";",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "RW1-cutout-ungated",
     "file": "src/render/realWindows.js",
-    "old": "export const RW_MAIN_CUTOUT = '  if (uCutout > 0.5 && tex.a < 0.5) discard;",
-    "new": "export const RW_MAIN_CUTOUT = '  if (tex.a < 0.5) discard;",
+    "old": "  \"  if (uCutout > 0.5 && tex.a < 0.5) discard;   // RW1: a cutout picture's hole (every other picture keeps INCIDENT 2026-09-04's no-clip law)\";",
+    "new": "  \"  if (tex.a < 0.5) discard;   // RW1: a cutout picture's hole (every other picture keeps INCIDENT 2026-09-04's no-clip law)\";",
     "tests": [
       "test/render/windows1_rooms.test.js",
       "test/scenes/incident_dungeon_seams.test.js"
@@ -367,7 +367,7 @@
   {
     "name": "RW1-pieces-off",
     "file": "src/render/staticBatch.js",
-    "old": "      if (this.pieces) {   // RW1: one sphere a model that went into this sub-mesh",
+    "old": "      if (this.pieces) {\n        // RW1: one sphere a model that went into this sub-mesh",
     "new": "      if (false) {",
     "tests": [
       "test/render/windows1_view.test.js"
@@ -421,8 +421,8 @@
   {
     "name": "RW1-medium-off-preset",
     "file": "src/systems/graphicsPresets.js",
-    "old": "'water-quality': 'simple', 'real-windows': 'rooms' }",
-    "new": "'water-quality': 'simple', 'real-windows': 'off' }",
+    "old": "      'real-windows': 'rooms',",
+    "new": "      'real-windows': 'off',",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "RW1-glass-blooms",
     "file": "src/render/airPass.js",
-    "old": "          if (sm._evWin === GLASS_INTERIOR) continue;",
-    "new": "",
+    "old": "          if (sm._evWin === GLASS_INTERIOR) continue; // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
+    "new": "          // RW1: an interior's declared glass rides the emission unit and is never an emission - it glows nowhere (render/realWindows.js)",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -511,8 +511,8 @@
   {
     "name": "RW1-AUDIT-an-unknown-door-full",
     "file": "src/render/realWindows.js",
-    "old": "const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows');",
-    "new": "const v = door ?? getPref('realWindows');",
+    "old": "  const v = door === 'full' || door === 'rooms' || door === 'off' ? door : getPref('realWindows'); // RW1 (AUDIT): a door it does not know (`?windows=0`, a typo) is no door - the row's word stands",
+    "new": "  const v = door ?? getPref('realWindows'); // RW1 (AUDIT): a door it does not know (`?windows=0`, a typo) is no door - the row's word stands",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -520,8 +520,8 @@
   {
     "name": "RW1-AUDIT-the-half-metre-seed",
     "file": "src/render/realWindows.js",
-    "old": "* 40.0 + 0.5);   // RW1 (AUDIT)",
-    "new": "* 2.0 + 0.5);   // RW1 (AUDIT)",
+    "old": "  float plane = floor(dot(vn, vWorldPos - uModel[3].xyz) * 40.0 + 0.5);   // RW1 (AUDIT): rounded to the native a wall stands on - at half metres a wall at 0.25 m sat on the boundary and the floating origin flipped its seed",
+    "new": "  float plane = floor(dot(vn, vWorldPos - uModel[3].xyz) * 2.0 + 0.5);   // RW1 (AUDIT): rounded to the native a wall stands on - at half metres a wall at 0.25 m sat on the boundary and the floating origin flipped its seed",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -529,8 +529,8 @@
   {
     "name": "RW1-AUDIT-the-negative-pow",
     "file": "src/render/realWindows.js",
-    "old": "float F = pow(max(1.0 - nv, 0.0), 5.0);",
-    "new": "float F = pow(1.0 - nv, 5.0);",
+    "old": "  float F = pow(max(1.0 - nv, 0.0), 5.0);   // RW1 (AUDIT): head on, nv rounds past 1 - pow of a negative is undefined",
+    "new": "  float F = pow(1.0 - nv, 5.0);   // RW1 (AUDIT): head on, nv rounds past 1 - pow of a negative is undefined",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -538,8 +538,8 @@
   {
     "name": "RW1-AUDIT-the-replays-stale-vao",
     "file": "src/render/airPass.js",
-    "old": "    f.bindVao?.(null);   // RW1 (AUDIT)",
-    "new": "    void f;   // RW1 (AUDIT)",
+    "old": "    f.bindVao?.(null); // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
+    "new": "    void f; // RW1 (AUDIT): the images' quads bind their own VAO behind the renderer's back - its shadow still named a mesh's, so the first replay's bind of that mesh was skipped and drew from the quad (GL 1282, \"no element array buffer bound\")",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -556,8 +556,8 @@
   {
     "name": "GLASS-ALL-dungeon-set-taken",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "  return Number.isInteger(archive) && archive >= 0 && archive < 500 && INTERIOR_BASES.has(Math.trunc(archive / 100)) && BUILDING_INTERIOR_SETS.has(archive % 100);",
-    "new": "  return Number.isInteger(archive) && archive >= 0 && archive < 500 && INTERIOR_BASES.has(Math.trunc(archive / 100)) && (BUILDING_INTERIOR_SETS.has(archive % 100) || archive % 100 === 22);",
+    "old": "    BUILDING_INTERIOR_SETS.has(archive % 100)",
+    "new": "    (BUILDING_INTERIOR_SETS.has(archive % 100) || archive % 100 === 22)",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -574,7 +574,7 @@
   {
     "name": "GLASS-ALL-the-castle-exception-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "const WINDOW_EXCEPTIONS = new Map([[11, null], [111, Object.freeze({ record: 1, twin: 0 })]]);",
+    "old": "const WINDOW_EXCEPTIONS = new Map([\n  [11, null],\n  [111, Object.freeze({ record: 1, twin: 0 })],\n]);",
     "new": "const WINDOW_EXCEPTIONS = new Map([[11, null]]);",
     "tests": [
       "test/render/windows1_view.test.js"
@@ -601,8 +601,8 @@
   {
     "name": "GLASS-ALL-the-ramp-unread",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
-    "new": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && dense(x, y)) ? 1 : 0;",
+    "old": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
+    "new": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && dense(x, y)) ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -619,8 +619,8 @@
   {
     "name": "GLASS-ALL-the-index-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
-    "new": "    cand[i] = fresh[i] && RAMP.has(d[i]) && dense(x, y) ? 1 : 0;",
+    "old": "      cand[i] = d[i] === GLASS_INDEX || (fresh[i] && RAMP.has(d[i]) && dense(x, y)) ? 1 : 0;",
+    "new": "      cand[i] = fresh[i] && RAMP.has(d[i]) && dense(x, y) ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -646,8 +646,8 @@
   {
     "name": "GLASS-ALL-the-edges-lost",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    core[y * W + x] = k >= GLASS_CORE_NEIGHBOURS ? 1 : 0;",
-    "new": "    core[y * W + x] = k >= 8 ? 1 : 0;",
+    "old": "      core[y * W + x] = k >= GLASS_CORE_NEIGHBOURS ? 1 : 0;",
+    "new": "      core[y * W + x] = k >= 8 ? 1 : 0;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]
@@ -655,8 +655,8 @@
   {
     "name": "GLASS-ALL-rows-unflipped",
     "file": "src/world/interior/interiorGlass.js",
-    "old": "    const o = ((height - 1 - y) * width + x) * 4;",
-    "new": "    const o = (y * width + x) * 4;",
+    "old": "      const o = ((height - 1 - y) * width + x) * 4;",
+    "new": "      const o = (y * width + x) * 4;",
     "tests": [
       "test/render/windows1_view.test.js"
     ]

@@ -74,8 +74,8 @@
   {
     "name": "HV2-stand-step-posing",
     "file": "src/world/standingHorses.js",
-    "old": "look: o.look, pose: false });",
-    "new": "look: o.look });",
+    "old": "        rig.step(e.horse, { feet: o.feet, yaw: o.yaw, speed: 0, dt, look: o.look, pose: false }); // HORSE-VIEW II: its idle's clock every frame",
+    "new": "        rig.step(e.horse, { feet: o.feet, yaw: o.yaw, speed: 0, dt, look: o.look }); // HORSE-VIEW II: its idle's clock every frame",
     "tests": [
       "test/systems/horse/fb1021b_strangers.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "HV2-stand-view-unread",
     "file": "src/world/standingHorses.js",
-    "old": "if (cam) { pass.view = cam.view; pass.proj = cam.proj; pass.lens = lensOf(cam.proj); }",
-    "new": "if (cam) { pass.lens = lensOf(cam.proj); }",
+    "old": "        pass.view = cam.view;\n        pass.proj = cam.proj;\n        pass.lens = lensOf(cam.proj);",
+    "new": "        pass.lens = lensOf(cam.proj);",
     "tests": [
       "test/systems/horse/fb1021b_strangers.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "HV2-stand-lens-unread",
     "file": "src/world/standingHorses.js",
-    "old": "pass.lens = lensOf(cam.proj); }",
-    "new": "pass.lens = 1; }",
+    "old": "        pass.lens = lensOf(cam.proj);",
+    "new": "        pass.lens = 1;",
     "tests": [
       "test/systems/horse/fb1021b_strangers.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "HV2-stand-fresh-unhanded",
     "file": "src/world/standingHorses.js",
-    "old": "eye: eyeAt, up, fresh: e.fresh })",
-    "new": "eye: eyeAt, up })",
+    "old": "          if (rig.draw(e.horse, canvas, { proj, view, eye: eyeAt, up, fresh: e.fresh })) drawn++;",
+    "new": "          if (rig.draw(e.horse, canvas, { proj, view, eye: eyeAt, up })) drawn++;",
     "tests": [
       "test/systems/horse/fb1021b_strangers.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "HV2-stand-fresh-never-set",
     "file": "src/world/standingHorses.js",
-    "old": "        e.fresh = e.out;",
-    "new": "        e.fresh = false;",
+    "old": "        e.fresh = e.out; // out of the view when last judged: the draw catches it up as it comes into this one",
+    "new": "        e.fresh = false; // out of the view when last judged: the draw catches it up as it comes into this one",
     "tests": [
       "test/systems/horse/fb1021b_strangers.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "HV2-stand-drawn-out-of-view",
     "file": "src/world/standingHorses.js",
-    "old": "if (e.frame !== frameNo || e.out) continue;",
-    "new": "if (e.frame !== frameNo) continue;",
+    "old": "          if (e.frame !== frameNo || e.out) continue;",
+    "new": "          if (e.frame !== frameNo) continue;",
     "tests": [
       "test/systems/horse/fb1021b_strangers.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "HV2-stand-phase-dropped",
     "file": "src/world/standingHorses.js",
-    "old": "phase: phases++, out: false, fresh: false };",
-    "new": "phase: 0, out: false, fresh: false };",
+    "old": "            e = { horse, rig, batch: o.batch, frame: 0, phase: phases++, out: false, fresh: false };",
+    "new": "            e = { horse, rig, batch: o.batch, frame: 0, phase: 0, out: false, fresh: false };",
     "tests": [
       "test/systems/horse/fb1021b_strangers.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HV2-stand-begins-eye-unread",
     "file": "src/world/standingHorses.js",
-    "old": "cam ? pass : null, eye, frameNo, e.phase);",
-    "new": "cam ? pass : null, null, frameNo, e.phase);",
+    "old": "        e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);",
+    "new": "        e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, null, frameNo, e.phase);",
     "tests": [
       "test/systems/horse/fb1021b_strangers.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "BEAST-BOOTS-default-cut",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  const wear = beast ? beastWear : null;",
-    "new": "  const wear = beast ? { feet: 'shafts', helm: 'open' } : null;",
+    "old": "  const wear = beast ? beastWear : null; // BEAST-BOOTS",
+    "new": "  const wear = beast ? { feet: 'shafts', helm: 'open' } : null; // BEAST-BOOTS",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "BEAST-BOOTS-shafts-refuse-whole",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (wear.feet === 'hidden' && parts.some((r) => BEAST_FEET.has(name(r))))",
-    "new": "  if (wear.feet !== 'worn' && parts.some((r) => BEAST_FEET.has(name(r))))",
+    "old": "  if (wear.feet === 'hidden' && parts.some((r) => BEAST_FEET.has(name(r)))) return { refused: 'feet', rec, bared: 0 };",
+    "new": "  if (wear.feet !== 'worn' && parts.some((r) => BEAST_FEET.has(name(r)))) return { refused: 'feet', rec, bared: 0 };",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BEAST-BOOTS-open-refuses-nothing",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "  if (wear.helm !== 'worn' && parts.some((r) => name(r) === 'head'))",
-    "new": "  if (false && parts.some((r) => name(r) === 'head'))",
+    "old": "  if (wear.helm !== 'worn' && parts.some((r) => name(r) === 'head')) return { refused: 'helm', rec, bared: 0 };",
+    "new": "  if (false && parts.some((r) => name(r) === 'head')) return { refused: 'helm', rec, bared: 0 };",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BEAST-BOOTS-open-hides-the-coif",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    if (wear?.helm === 'hidden' && armorRowOf(piece.templateIndex)",
-    "new": "    if (wear && wear.helm !== 'worn' && armorRowOf(piece.templateIndex)",
+    "old": "    if (wear?.helm === 'hidden' && armorRowOf(piece.templateIndex) === DF_ARMOR_ROWS[HELM_TEMPLATE]) {",
+    "new": "    if (wear && wear.helm !== 'worn' && armorRowOf(piece.templateIndex) === DF_ARMOR_ROWS[HELM_TEMPLATE]) {",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
     ]
@@ -56,7 +56,7 @@
   {
     "name": "BEAST-BOOTS-hidden-helm-unread",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    if (wear?.helm === 'hidden' && armorRowOf(piece.templateIndex) === DF_ARMOR_ROWS[HELM_TEMPLATE]) { notes.push(`armor ${piece.templateIndex}: ${beastNoHelm()}`); continue; }",
+    "old": "    if (wear?.helm === 'hidden' && armorRowOf(piece.templateIndex) === DF_ARMOR_ROWS[HELM_TEMPLATE]) {\n      notes.push(`armor ${piece.templateIndex}: ${beastNoHelm()}`);\n      continue;\n    }",
     "new": "",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "BEAST-BOOTS-refused-helm-hides-hair",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "    if (refused) { notes.push(`armor ${piece.templateIndex}: ${beastRefusal(refused.why, refused.id)}`); continue; }",
-    "new": "    if (refused) { notes.push(`armor ${piece.templateIndex}: ${beastRefusal(refused.why, refused.id)}`); hairHidden = 3; continue; }",
+    "old": "      notes.push(`armor ${piece.templateIndex}: ${beastRefusal(refused.why, refused.id)}`);\n      continue;",
+    "new": "      notes.push(`armor ${piece.templateIndex}: ${beastRefusal(refused.why, refused.id)}`);\n      hairHidden = 3;\n      continue;",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BEAST-BOOTS-own-hides-unread",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "p.part === 'head' || (p.hides ?? []).includes('head')",
-    "new": "p.part === 'head'",
+    "old": "      const ownHead =\n        wear && wear.helm !== 'worn' && ownParts.some((p) => p.part === 'head' || (p.hides ?? []).includes('head'));",
+    "new": "      const ownHead = wear && wear.helm !== 'worn' && ownParts.some((p) => p.part === 'head');",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
     ]
@@ -83,7 +83,7 @@
   {
     "name": "BEAST-BOOTS-own-boot-kept",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "        if (wear?.feet === 'shafts' && BEAST_FEET.has(p.part)) { notes.push(`armor ${piece.templateIndex}: ${beastBared(own.id)}`); continue; }",
+    "old": "        if (wear?.feet === 'shafts' && BEAST_FEET.has(p.part)) {\n          notes.push(`armor ${piece.templateIndex}: ${beastBared(own.id)}`);\n          continue;\n        }",
     "new": "",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "BEAST-BOOTS-refusal-misnamed",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "(refused === 'helm' ? beastRefused(id) : beastNoFootwear(id))",
-    "new": "(refused === 'helm' ? beastRefused(id) : beastBared(id))",
+    "old": "const beastRefusal = (refused, id) => (refused === 'helm' ? beastRefused(id) : beastNoFootwear(id));",
+    "new": "const beastRefusal = (refused, id) => (refused === 'helm' ? beastRefused(id) : beastBared(id));",
     "tests": [
       "test/formats/morrowind/mwbeast1_beastboots.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "BEAST-BOOTS-portrait-key-unswitched",
     "file": "src/characters/headPortraits.js",
-    "old": "/${getPref('mwSteelHelm')}/${getPref('mwBeastHelm')}`",
-    "new": "/${getPref('mwSteelHelm')}`",
+    "old": "  return `${stamp}|${helm ? `${helm.templateIndex}/${helm.material ?? 0}/${getPref('mwSteelHelm')}/${getPref('mwBeastHelm')}` : '-'}`;",
+    "new": "  return `${stamp}|${helm ? `${helm.templateIndex}/${helm.material ?? 0}/${getPref('mwSteelHelm')}` : '-'}`;",
     "tests": [
       "test/ui/portrait3d.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "BEAST-BOOTS-npc-list-cut",
     "file": "src/net/peer/peerBodies.js",
-    "old": "withNpcPicks(worn, npc)",
-    "new": "withNpcPicks(worn.filter((p) => !WARDROBE_BEAST_RACES.includes(stub.race) || p.templateIndex !== ARMOR_ENUM.Boots), npc)",
+    "old": "    armor: [...(npc ? withNpcPicks(worn, npc) : worn), ...outfitPiece(look, wolf)], // MWNPC17: each garment its rung and its pick; BEAST-BOOTS: a beast NPC's helm and boots go to the composer as a player's do; MW-FOLK1: and a townsperson's outfit",
+    "new": "    armor: [\n      ...(npc\n        ? withNpcPicks(\n            worn.filter((p) => !WARDROBE_BEAST_RACES.includes(stub.race) || p.templateIndex !== ARMOR_ENUM.Boots),\n            npc,\n          )\n        : worn),\n      ...outfitPiece(look, wolf),\n    ], // MWNPC17: each garment its rung and its pick; BEAST-BOOTS: a beast NPC's helm and boots go to the composer as a player's do; MW-FOLK1: and a townsperson's outfit",
     "tests": [
       "test/characters/mwnpc17_wardrobe.test.js"
     ]

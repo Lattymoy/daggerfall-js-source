@@ -101,8 +101,8 @@
   {
     "name": "SD5A-a-rest-in-the-Hour",
     "file": "src/systems/madeLevel.js",
-    "old": "  hour: row({ save: 'refused', rest: 'refused',",
-    "new": "  hour: row({ save: 'refused', rest: null,",
+    "old": "  hour: row({\n    save: 'refused',\n    rest: 'refused',\n    automap: 'off',",
+    "new": "  hour: row({\n    save: 'refused',\n    rest: null,\n    automap: 'off',",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD5A-a-Recall-out-of-the-Hour",
     "file": "src/systems/madeLevel.js",
-    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned',",
-    "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: null, portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned',",
+    "old": "  hour: row({\n    save: 'refused',\n    rest: 'refused',\n    automap: 'off',\n    mark: 'refused',\n    recall: 'refused',\n    portalStone: 'refused',\n    companions: 'out',\n    regen: 'held',\n    levitate: 'banned',",
+    "new": "  hour: row({\n    save: 'refused',\n    rest: 'refused',\n    automap: 'off',\n    mark: 'refused',\n    recall: null,\n    portalStone: 'refused',\n    companions: 'out',\n    regen: 'held',\n    levitate: 'banned',",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "SD5A-regeneration-in-the-Hour",
     "file": "src/systems/madeLevel.js",
-    "old": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: 'held', levitate: 'banned',",
-    "new": "  hour: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone: 'refused', companions: 'out', regen: null, levitate: 'banned',",
+    "old": "    portalStone: 'refused',\n    companions: 'out',\n    regen: 'held',\n    levitate: 'banned',\n    runLeap: 'refused',",
+    "new": "    portalStone: 'refused',\n    companions: 'out',\n    regen: null,\n    levitate: 'banned',\n    runLeap: 'refused',",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]

@@ -20,8 +20,8 @@
   {
     "name": "AUDIT3-A4-a-closed-word-opened-again",
     "file": "server-account/src/shop.js",
-    "old": "DO UPDATE SET open = MIN(open, excluded.open), at = excluded.at",
-    "new": "DO UPDATE SET open = excluded.open, at = excluded.at",
+    "old": "      'INSERT INTO shop_charge_words (intent, kind, ref, open, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (intent, kind, ref) DO UPDATE SET open = MIN(open, excluded.open), at = excluded.at',",
+    "new": "      'INSERT INTO shop_charge_words (intent, kind, ref, open, at) VALUES (?1, ?2, ?3, ?4, ?5) ON CONFLICT (intent, kind, ref) DO UPDATE SET open = excluded.open, at = excluded.at',",
     "tests": [
       "test/server/storefront_audit3_money.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT3-A4-created-revoking-whatever-its-word",
     "file": "server-account/src/shop.js",
-    "old": "      if (Number(word?.open) !== 1) return { ok: true, applied: 0 };   // AUDIT-STOREFRONT III A4: closed in our favour before this word landed\n",
-    "new": "",
+    "old": "      if (Number(word?.open) !== 1) return { ok: true, applied: 0 }; // AUDIT-STOREFRONT III A4: closed in our favour before this word landed\n      return revokeOrder(ctx, o.payment_intent, 'disputed', { env, fetch });",
+    "new": "      return revokeOrder(ctx, o.payment_intent, 'disputed', { env, fetch });",
     "tests": [
       "test/server/storefront_audit3_money.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT3-A4-a-lost-dispute-closed",
     "file": "server-account/src/shop.js",
-    "old": "await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), ours ? 0 : 1, ctx.nowS);",
-    "new": "await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), 0, ctx.nowS);",
+    "old": "      await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), ours ? 0 : 1, ctx.nowS);",
+    "new": "      await keepWord(ctx.db, o.payment_intent, 'dispute', String(o.id ?? ''), 0, ctx.nowS);",
     "tests": [
       "test/server/storefront_audit3_money.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "AUDIT3-A5-the-aurum-buy-no-holder",
     "file": "server-account/src/shop.js",
-    "old": "  return [...paid, ...bought.map((/** @type {any} */ b) => ({ id: `aurum:${b.ref}`, ware: String(b.ref), credit: String(b.credit ?? '') }))];   // AUDIT AURUM-SPEND F1: its credit, as an order's",
+    "old": "  return [\n    ...paid,\n    ...bought.map((/** @type {any} */ b) => ({\n      id: `aurum:${b.ref}`,\n      ware: String(b.ref),\n      credit: String(b.credit ?? ''),\n    })),\n  ]; // AUDIT AURUM-SPEND F1: its credit, as an order's",
     "new": "  return paid;",
     "tests": [
       "test/server/storefront_audit3_money.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT3-A7-the-pack-told-to-be-worn",
     "file": "server-account/src/shop.js",
-    "old": "shopRepeatable(w) ? 'Go back to the game: spend it in the shop. A receipt is in your mailbox.' : 'Go back",
-    "new": "false ? 'Go back to the game: spend it in the shop. A receipt is in your mailbox.' : 'Go back",
+    "old": "        shopRepeatable(w)",
+    "new": "        false",
     "tests": [
       "test/server/storefront_audit3_money.test.js"
     ]

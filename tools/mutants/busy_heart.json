@@ -1,22 +1,22 @@
 [
- {
-  "name": "BUSYHEART-heartbeat-dropped",
-  "file": "src/net/busyLaw.js",
-  "old": "  ['/v1/heartbeat', 'POST'],        // BUSY-HEART",
-  "new": "  // BUSY-HEART",
-  "tests": [
-   "test/net/busy_heart.test.js"
-  ],
-  "note": "the heartbeat asked again three times in 2 s through an overload, and never shed"
- },
- {
-  "name": "BUSYHEART-motherlodes-dropped",
-  "file": "src/net/busyLaw.js",
-  "old": "  ['/v1/prof/motherlodes', 'POST'], // BUSY-HEART",
-  "new": "  // BUSY-HEART",
-  "tests": [
-   "test/net/busy_heart.test.js"
-  ],
-  "note": "the day's motherlodes asked on through an overload"
- }
+  {
+    "name": "BUSYHEART-heartbeat-dropped",
+    "file": "src/net/busyLaw.js",
+    "old": "  ['/v1/heartbeat', 'POST'], // BUSY-HEART: the box, the board, the post and the beat - the overload's busiest",
+    "new": "  // BUSY-HEART: the box, the board, the post and the beat - the overload's busiest",
+    "tests": [
+      "test/net/busy_heart.test.js"
+    ],
+    "note": "the heartbeat asked again three times in 2 s through an overload, and never shed"
+  },
+  {
+    "name": "BUSYHEART-motherlodes-dropped",
+    "file": "src/net/busyLaw.js",
+    "old": "  ['/v1/prof/motherlodes', 'POST'], // BUSY-HEART: the day's three, and its pick",
+    "new": "  // BUSY-HEART: the day's three, and its pick",
+    "tests": [
+      "test/net/busy_heart.test.js"
+    ],
+    "note": "the day's motherlodes asked on through an overload"
+  }
 ]

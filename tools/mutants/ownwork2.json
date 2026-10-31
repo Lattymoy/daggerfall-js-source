@@ -83,8 +83,8 @@
   {
     "name": "OWN-WORK2-the-rivers-uncached",
     "file": "src/world/roadsCache.js",
-    "old": "rivers: { ...RIVER_DIALS, ...(dials.rivers ?? {}) } };",
-    "new": "};",
+    "old": "  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS, rivers: { ...RIVER_DIALS, ...(dials.rivers ?? {}) } }; // OWN-WORK2: the land's law's and the rivers' dials too",
+    "new": "  const d = { ...ROAD_DIALS, ...dials, terrain: VOYAGER_DIALS }; // OWN-WORK2: the land's law's and the rivers' dials too",
     "tests": [
       "test/world/road/ownwork2_bayroads.test.js"
     ]

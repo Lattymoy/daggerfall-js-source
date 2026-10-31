@@ -39,7 +39,8 @@ export const HARBOUR_RETRY_S = 10;
 
 /** FB1020c HARBOUR-REACH: the reach (m) off a town's footprint `rect` that sounds the pixels within SEA_RING of its own -
  *  the ring the port law reads (a town's footprint stands at its pixel's middle, DFU's TerrainHelper's tile origin). */
-export const portRingReach = (rect) => (SEA_RING + 0.5) * TERRAIN_SIZE - Math.max(rect.maxX - rect.minX, rect.maxZ - rect.minZ) / 2;
+export const portRingReach = (rect) =>
+  (SEA_RING + 0.5) * TERRAIN_SIZE - Math.max(rect.maxX - rect.minX, rect.maxZ - rect.minZ) / 2;
 
 /**
  * RPT1026-WORLD FAR-QUAY (a private report, 2026-10-24: sailing from one port to another, no other port's docks stood,
@@ -59,14 +60,17 @@ export const portRingReach = (rect) => (SEA_RING + 0.5) * TERRAIN_SIZE - Math.ma
  *   TerrainDistance 3, has every ring pixel built or dry.
  * Not a DFU member (QUAYS, above).
  */
-export const HARBOUR_TOWN_ORDER = Object.freeze((() => {
-  const out = [];
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) out.push(Object.freeze([dx, dy]));
-  for (let dy = -SEA_RING; dy <= SEA_RING; dy++) {
-    for (let dx = -SEA_RING; dx <= SEA_RING; dx++) if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));
-  }
-  return out;
-})());
+export const HARBOUR_TOWN_ORDER = Object.freeze(
+  (() => {
+    const out = [];
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) out.push(Object.freeze([dx, dy]));
+    for (let dy = -SEA_RING; dy <= SEA_RING; dy++) {
+      for (let dx = -SEA_RING; dx <= SEA_RING; dx++)
+        if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) out.push(Object.freeze([dx, dy]));
+    }
+    return out;
+  })(),
+);
 
 /** RPT1026-WORLD FAR-QUAY: each height map's answers, a pixel's at its key - the map never changes under a session. */
 const DRY = new WeakMap();
@@ -84,13 +88,14 @@ const DRY = new WeakMap();
 export function dryPixel(woods, px, py) {
   if (!woods || !(px >= 0 && py >= 0 && px < 1000 && py < 500)) return false;
   let memo = DRY.get(woods);
-  if (!memo) DRY.set(woods, memo = new Map());
+  if (!memo) DRY.set(woods, (memo = new Map()));
   const key = py * 1000 + px;
   let d = memo.get(key);
   if (d !== undefined) return d;
   const k = sampleKernel(woods, px, py, HEIGHTMAP_DIMENSION, false);
   d = true;
-  for (let x = 0; x < HEIGHTMAP_DIMENSION && d; x++) for (let y = 0; y < HEIGHTMAP_DIMENSION && d; y++) d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));
+  for (let x = 0; x < HEIGHTMAP_DIMENSION && d; x++)
+    for (let y = 0; y < HEIGHTMAP_DIMENSION && d; y++) d = !isWaterHeight(sampleHeight(Math.fround(k(x, y))));
   memo.set(key, d);
   return d;
 }
@@ -105,7 +110,11 @@ export function dryPixel(woods, px, py) {
 export function harbourKnown(built, state, woods, x, z) {
   if (built(x, z)) return true;
   const c = state.compensation;
-  return dryPixel(woods, state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE), state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE));
+  return dryPixel(
+    woods,
+    state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE),
+    state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE),
+  );
 }
 
 /**
@@ -126,18 +135,34 @@ export function harbourKnown(built, state, woods, x, z) {
 export const EDGE_IN = 0.01;
 export function harbourOf(t, { state, built, woods }) {
   const r = locationWorldRect(t.loc, t.x, t.y);
-  const [ax, az] = state.localFromWorld(r.minX, r.minZ), [bx, bz] = state.localFromWorld(r.maxX, r.maxZ);
+  const [ax, az] = state.localFromWorld(r.minX, r.minZ),
+    [bx, bz] = state.localFromWorld(r.maxX, r.maxZ);
   const rect = { minX: Math.min(ax, bx), maxX: Math.max(ax, bx), minZ: Math.min(az, bz), maxZ: Math.max(az, bz) };
-  const reach = t.reach ?? HARBOUR_REACH;   // AUDIT CAPTAIN'S SEA H1: an isle port's sounding reaches its shore
+  const reach = t.reach ?? HARBOUR_REACH; // AUDIT CAPTAIN'S SEA H1: an isle port's sounding reaches its shore
   const ready = (r = reach) => {
-    const x0 = rect.minX - r, z0 = rect.minZ - r, sx = rect.maxX - rect.minX + 2 * r, sz = rect.maxZ - rect.minZ + 2 * r;
-    const nx = Math.ceil(sx / 400), nz = Math.ceil(sz / 400);   // under 400 m apart, both edges read: no pixel (819.2 m) between two
+    const x0 = rect.minX - r,
+      z0 = rect.minZ - r,
+      sx = rect.maxX - rect.minX + 2 * r,
+      sz = rect.maxZ - rect.minZ + 2 * r;
+    const nx = Math.ceil(sx / 400),
+      nz = Math.ceil(sz / 400); // under 400 m apart, both edges read: no pixel (819.2 m) between two
     // RPT1026-WORLD FAR-QUAY: the box half-open - its far edges a hair inside it (EDGE_IN): the ring's own far edge is a
     // pixel's edge, and a point ON it was read as the next pixel's, one past the ring the port law reads
-    for (let i = 0; i <= nx; i++) for (let k = 0; k <= nz; k++) if (!harbourKnown(built, state, woods, x0 + Math.min(sx * i / nx, sx - EDGE_IN), z0 + Math.min(sz * k / nz, sz - EDGE_IN))) return false;
+    for (let i = 0; i <= nx; i++)
+      for (let k = 0; k <= nz; k++)
+        if (
+          !harbourKnown(
+            built,
+            state,
+            woods,
+            x0 + Math.min((sx * i) / nx, sx - EDGE_IN),
+            z0 + Math.min((sz * k) / nz, sz - EDGE_IN),
+          )
+        )
+          return false;
     return true;
   };
-  return { key: `port:${t.id}`, name: t.name ?? null, rect, ready, reach };   // SHIP-TAGS: her name, the words a ship bound there is read by
+  return { key: `port:${t.id}`, name: t.name ?? null, rect, ready, reach }; // SHIP-TAGS: her name, the words a ship bound there is read by
 }
 
 /**
@@ -161,26 +186,48 @@ export function createHarbourBook(deps) {
   function step(clock) {
     const near = deps.harbourNear() ?? null;
     if (!near) return;
-    for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock);   // RPT1026-WORLD FAR-QUAY: every port near
+    for (const one of Array.isArray(near) ? near : [near]) stepOne(one, clock); // RPT1026-WORLD FAR-QUAY: every port near
   }
   /** One port's sounding (step's, for each port the host names). */
   function stepOne(near, clock) {
     const own = near.reach ?? HARBOUR_REACH;
-    const sound = (reach = own, square = false) => findHarbour({ rect: near.rect, isWater: (x, z, h) => deps.isWater(x, z, h), reach, square, keep: near.keep ?? null, ground: deps.ground ?? null });   // AUDIT CAPTAIN'S SEA H1: an isle port's own reach; PORT-SHIPS: its town's keep and the ground
+    const sound = (reach = own, square = false) =>
+      findHarbour({
+        rect: near.rect,
+        isWater: (x, z, h) => deps.isWater(x, z, h),
+        reach,
+        square,
+        keep: near.keep ?? null,
+        ground: deps.ground ?? null,
+      }); // AUDIT CAPTAIN'S SEA H1: an isle port's own reach; PORT-SHIPS: its town's keep and the ground
     const h = book.get(near.key);
-    if (!h) { if (near.ready?.() !== false) book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock }); }
-    else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) { h.harbour = sound(); h.at = clock; }
-    const e = book.get(near.key), far = own === HARBOUR_REACH ? portRingReach(near.rect) : 0;
-    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far) ?? sound(far, true); e.far = true; }   // ALDBRUGH-QUAY: and its corners where the round reach finds no shore
+    if (!h) {
+      if (near.ready?.() !== false)
+        book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });
+    } else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {
+      h.harbour = sound();
+      h.at = clock;
+    }
+    const e = book.get(near.key),
+      far = own === HARBOUR_REACH ? portRingReach(near.rect) : 0;
+    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) {
+      e.harbour = sound(far) ?? sound(far, true);
+      e.far = true;
+    } // ALDBRUGH-QUAY: and its corners where the round reach finds no shore
   }
   /** The world moved (the floating origin): every harbour's berths, approaches and mouth with it, in place. */
-  function offsetAll(o) { for (const h of book.values()) offsetHarbour(h.harbour, o); }
+  function offsetAll(o) {
+    for (const h of book.values()) offsetHarbour(h.harbour, o);
+  }
   /** A transition, a jump, a load: every harbour forgotten, to be sounded again where the world is next. */
-  function clear() { book.clear(); }
+  function clear() {
+    book.clear();
+  }
   /** The harbours with berths, for the quays - `[{ key, name, harbour }]`. */
   function list() {
     const out = [];
-    for (const h of book.values()) if (h.harbour?.berths?.length) out.push({ key: h.key, name: h.name ?? null, harbour: h.harbour });
+    for (const h of book.values())
+      if (h.harbour?.berths?.length) out.push({ key: h.key, name: h.name ?? null, harbour: h.harbour });
     return out;
   }
   return { step, offsetAll, clear, list, get: (key) => book.get(key), values: () => book.values() };

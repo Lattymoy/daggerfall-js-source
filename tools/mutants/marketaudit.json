@@ -11,8 +11,8 @@
   {
     "name": "MARKET-AUDIT-S2-last-unit-untaxed-not",
     "file": "src/net/marketLaw.js",
-    "old": "return last && total >= 1 && total - t < 1 ? total - 1 : t; };",
-    "new": "return t; };",
+    "old": "  return last && total >= 1 && total - t < 1 ? total - 1 : t;",
+    "new": "  return t;",
     "tests": [
       "test/net/marketaudit.test.js"
     ]
@@ -48,7 +48,7 @@
   {
     "name": "MARKET-AUDIT-B1-undo-ignored",
     "file": "src/net/realm/realmGoldLaw.js",
-    "old": "    if (undo) undo(); else wallet.credit?.(n);",
+    "old": "    if (undo) undo();\n    else wallet.credit?.(n);",
     "new": "    wallet.credit?.(n);",
     "tests": [
       "test/net/marketaudit.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "MARKET-AUDIT-B1-letter-not-back",
     "file": "src/systems/court.js",
-    "old": "      else { it.value = back; pack.push(it); }",
-    "new": "      else { it.value = back; }",
+    "old": "        pack.push(it);\n      }",
+    "new": "      }",
     "tests": [
       "test/net/marketaudit.test.js"
     ]
@@ -75,7 +75,7 @@
   {
     "name": "MARKET-AUDIT-B4-fresh-id-again",
     "file": "src/net/marketBook.js",
-    "old": "        if (was) return was.gold ? goldBuy(was, mint, key, false) : keptAct('buys', was, () => door.buy(was.body), mint, key);",
+    "old": "        if (was)\n          return was.gold ? goldBuy(was, mint, key, false) : keptAct('buys', was, () => door.buy(was.body), mint, key);",
     "new": "        if (was && false) return null;",
     "tests": [
       "test/net/marketaudit.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "MARKET-BAG-no-put-in",
     "file": "src/ui/marketTab.js",
-    "old": "    if (m.putIn && n > inStores(key)) { const r = await m.putIn(key, n); if (!r?.ok) return { ok: false, error: r?.error ?? 'materials-short' }; }",
-    "new": "    if (m.putIn && n > inStores(key)) { await m.putIn(key, n); }",
+    "old": "      const r = await m.putIn(key, n);\n      if (!r?.ok) return { ok: false, error: r?.error ?? 'materials-short' };",
+    "new": "      await m.putIn(key, n);",
     "tests": [
       "test/net/marketaudit.test.js"
     ]
@@ -102,7 +102,7 @@
   {
     "name": "MARKET-AUDIT-U2-labels-bare",
     "file": "src/ui/marketTab.js",
-    "old": "      const pieceSub = (p) => [packTierWord(p.item), auction ? null : QUALITY_NAMES[p.item.quality] ?? null, wearText(wearOf(p.item)), p.where === 'home' ? 'your home' : null].filter(Boolean).join(' · ') || null;",
+    "old": "      const pieceSub = (p) =>\n        [\n          packTierWord(p.item),\n          auction ? null : (QUALITY_NAMES[p.item.quality] ?? null),\n          wearText(wearOf(p.item)),\n          p.where === 'home' ? 'your home' : null,\n        ]\n          .filter(Boolean)\n          .join(' · ') || null;",
     "new": "      const pieceSub = (p) => null;",
     "tests": [
       "test/net/marketaudit.test.js"
@@ -111,8 +111,8 @@
   {
     "name": "MARKET-AUDIT-U3-past-cap-hidden",
     "file": "src/ui/marketTab.js",
-    "old": "(st.data?.ways && !heldIds().includes(pv) ? 'unasked' : null)",
-    "new": "(null)",
+    "old": "  const heldState = (pv) =>\n    st.view !== 'mine' ? null : (st.data?.ways?.[pv] ?? (st.data?.ways && !heldIds().includes(pv) ? 'unasked' : null)); // MARKET-AUDIT U3: past MARKET_HELD_MAX, never asked",
+    "new": "  const heldState = (pv) => (st.view !== 'mine' ? null : (st.data?.ways?.[pv] ?? null)); // MARKET-AUDIT U3: past MARKET_HELD_MAX, never asked",
     "tests": [
       "test/net/marketaudit.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "MARKET-AUDIT-U4-shut-tab-vanishes",
     "file": "src/ui/noticeWindow.js",
-    "old": "(marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market')",
-    "new": "(marketAtOpen || marketHost.book?.state?.open !== false)",
+    "old": "  const marketShown = () =>\n    !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
+    "new": "  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false);",
     "tests": [
       "test/net/marketaudit.test.js",
       "test/ui/audit657_board.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "MARKET-AUDIT-U5-failed-read-alone",
     "file": "src/ui/marketTab.js",
-    "old": "      if (shut) return box;\n",
-    "new": "      return box;\n",
+    "old": "      if (shut) return box;",
+    "new": "      return box;",
     "tests": [
       "test/net/marketaudit.test.js"
     ]
@@ -139,7 +139,7 @@
   {
     "name": "MARKET-AUDIT-U6-word-kept",
     "file": "src/ui/marketTab.js",
-    "old": "    ui.hush?.(); st.view = view;",
+    "old": "    ui.hush?.();\n    st.view = view;",
     "new": "    st.view = view;",
     "tests": [
       "test/net/marketaudit.test.js"
@@ -148,8 +148,8 @@
   {
     "name": "MARKET-AUDIT-U7-other-arrived",
     "file": "src/ui/marketTab.js",
-    "old": "        : !mine(x) && x.ready ? 'waiting for another of your characters'",
-    "new": "        : false ? ''",
+    "old": "          : !mine(x) && x.ready\n            ? 'waiting for another of your characters' // MARKET-AUDIT U7: never \"arrived\" forever",
+    "new": "          : false\n            ? '' // MARKET-AUDIT U7: never \"arrived\" forever",
     "tests": [
       "test/net/marketaudit.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "MARKET-AUDIT-U7-other-asked",
     "file": "src/ui/marketTab.js",
-    "old": "x.ready && mine(x) && !tried.has(x.id));",
-    "new": "x.ready && !tried.has(x.id));",
+    "old": "    (m.book.state.road ?? []).filter(\n      (x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && mine(x) && !tried.has(x.id),\n    ); // MARKET-ANY: a pack's piece too",
+    "new": "    (m.book.state.road ?? []).filter((x) => (x.kind === 'piece' || x.kind === 'item') && x.ready && !tried.has(x.id)); // MARKET-ANY: a pack's piece too",
     "tests": [
       "test/net/marketaudit.test.js"
     ]

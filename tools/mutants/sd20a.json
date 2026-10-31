@@ -11,8 +11,8 @@
   {
     "name": "SD20A-F1-the-wire-past-it",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "(atk?.sh?.ps != null ? pulseStepPct(atk.sh.ps, atk.n) :",
-    "new": "(atk?.sh?.ps != null ? SD_PULSE_PCT + atk.sh.ps * Math.max(0, Math.floor(Number(atk.n) || 0)) :",
+    "old": "export const pulsePctOf = (atk) => (atk?.sh?.ps != null ? pulseStepPct(atk.sh.ps, atk.n) : pulsePct(atk?.n ?? 0)); // AUDIT SD III (F1): to the same ceiling",
+    "new": "export const pulsePctOf = (atk) =>\n  atk?.sh?.ps != null ? SD_PULSE_PCT + atk.sh.ps * Math.max(0, Math.floor(Number(atk.n) || 0)) : pulsePct(atk?.n ?? 0); // AUDIT SD III (F1): to the same ceiling",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD20A-F1-the-omens-old-words",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.'",
-    "new": "text: 'Each Mantella Pulse strikes harder than the last by twice as much.'",
+    "old": "    text: 'Each Mantella Pulse climbs twice as fast, to three quarters of your health at most.',",
+    "new": "    text: 'Each Mantella Pulse strikes harder than the last by twice as much.',",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD20A-F3-the-late-law-over-the-hours-own",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "      if (!out.all) {\n        out.all = true;\n",
-    "new": "      if (landing('all')) {\n",
+    "old": "      if (!out.all) {\n        out.all = true;",
+    "new": "      if (landing('all')) {",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD20A-F3-struck-twice",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "      if (!out.all) {\n        out.all = true;\n",
-    "new": "      {\n        out.all = true;\n",
+    "old": "      if (!out.all) {",
+    "new": "      {",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "SD20A-F4-every-page-judged",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "if (alive && link.counted()) {",
-    "new": "if (alive) {",
+    "old": "      if (alive && link.counted()) {",
+    "new": "      if (alive) {",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "SD20A-F5-hardened-half-again",
     "file": "src/net/superDungeon/sdMarks.js",
-    "old": "law: Object.freeze({ heartX: 1.25 })",
-    "new": "law: Object.freeze({ heartX: 1.5 })",
+    "old": "    law: Object.freeze({ heartX: 1.25 }),",
+    "new": "    law: Object.freeze({ heartX: 1.5 }),",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js",
       "test/net/superDungeon/sd18a_marks.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "SD20A-F6-the-reset-inside-the-pulse",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": " && !(f.clock && f.clock.a === SD_BLOWS.pulse.id)) {",
-    "new": ") {",
+    "old": "    if (\n      f.phase === 3 &&\n      !B.atk &&\n      f.resetAt > 0 &&\n      now >= f.resetAt &&\n      now >= B.nextAt &&\n      !(f.clock && f.clock.a === SD_BLOWS.pulse.id)\n    ) {",
+    "new": "    if (f.phase === 3 && !B.atk && f.resetAt > 0 && now >= f.resetAt && now >= B.nextAt) {",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "SD20A-F8-the-top-shaded",
     "file": "src/net/superDungeon/sdStrike.js",
-    "old": "(over || !behindPillar(atk.x, atk.z, px, pz))",
-    "new": "!behindPillar(atk.x, atk.z, px, pz)",
+    "old": "        (over || !behindPillar(atk.x, atk.z, px, pz))",
+    "new": "        !behindPillar(atk.x, atk.z, px, pz)",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "SD20A-F8-the-rig-never-over",
     "file": "src/scenes/superDungeon/sdRemnantBlows.js",
-    "old": "feetOver = ry >= SD_PILLAR_OVER_Y;",
-    "new": "feetOver = false;",
+    "old": "        feetOver = ry >= SD_PILLAR_OVER_Y;",
+    "new": "        feetOver = false;",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "SD20A-F9-the-old-floor",
     "file": "src/net/superDungeon/sdRemnant.js",
-    "old": "return Math.max(Math.min(SD_HEART.min, Math.round(team)), ",
-    "new": "return Math.max(SD_HEART.min, ",
+    "old": "  return Math.max(Math.min(SD_HEART.min, Math.round(team)), Math.round((SD_HEART.teamS * team) / Math.max(1, n)));",
+    "new": "  return Math.max(SD_HEART.min, Math.round((SD_HEART.teamS * team) / Math.max(1, n)));",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]

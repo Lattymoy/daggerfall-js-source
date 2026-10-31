@@ -2,8 +2,8 @@
   {
     "name": "WALK-WHOLE-the-cut-unasked",
     "file": "src/world/placedCardTable.js",
-    "old": "      if (inTheWay(i, k, w)) continue;\n",
-    "new": "",
+    "old": "      if (inTheWay(i, k, w)) continue;\n      let fy = -Infinity; // the highest floor under its top",
+    "new": "      let fy = -Infinity; // the highest floor under its top",
     "tests": [
       "test/world/fb1009c_walkwhole.test.js",
       "test/world/card/taverntable.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "WALK-WHOLE-every-spot-cuts",
     "file": "src/world/placedCardTable.js",
-    "old": "      else if (was !== after[c]) return true;",
-    "new": "      else return true;",
+    "old": "        else if (was !== after[c]) return true;",
+    "new": "        else return true;",
     "tests": [
       "test/world/fb1009c_walkwhole.test.js",
       "test/world/card/taverntable.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "WALK-WHOLE-the-lane-z-unasked",
     "file": "src/world/placedCardTable.js",
-    "old": "    const li = w.ri + PLACE_LANE_CELLS, lk = w.rk + PLACE_LANE_CELLS;",
-    "new": "    const li = w.ri + PLACE_LANE_CELLS, lk = w.rk;",
+    "old": "      lk = w.rk + PLACE_LANE_CELLS;",
+    "new": "      lk = w.rk;",
     "tests": [
       "test/world/fb1009c_walkwhole.test.js",
       "test/world/card/taverntable.test.js"

@@ -2,7 +2,7 @@
   {
     "name": "CSA-C-colliders-inactive-walked",
     "file": "src/world/prefabColliders.js",
-    "old": "  for (let i = 0; i < ix.nodes.length; i++) ix.on[i] = ix.nodes[i].activeSelf && (ix.parent[i] < 0 || ix.on[ix.parent[i]]) ? 1 : 0;",
+    "old": "  for (let i = 0; i < ix.nodes.length; i++)\n    ix.on[i] = ix.nodes[i].activeSelf && (ix.parent[i] < 0 || ix.on[ix.parent[i]]) ? 1 : 0;",
     "new": "  for (let i = 0; i < ix.nodes.length; i++) ix.on[i] = 1;",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "CSA-C-colliders-disabled-kept",
     "file": "src/world/prefabColliders.js",
-    "old": "on[e.i] && e.collider.m_Enabled !== false",
-    "new": "on[e.i]",
+    "old": "  return ix.entries.filter((e) => ix.on[e.i] && e.collider.m_Enabled !== false);",
+    "new": "  return ix.entries.filter((e) => ix.on[e.i]);",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CSA-C-box-from-inside-hits",
     "file": "src/world/prefabColliders.js",
-    "old": "  return tMin >= 0 ? tMin : null;\n}",
-    "new": "  return tMax >= 0 ? Math.max(tMin, 0) : null;\n}",
+    "old": "  return tMin >= 0 ? tMin : null;",
+    "new": "  return tMax >= 0 ? Math.max(tMin, 0) : null;",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CSA-C-mesh-front-face-only",
     "file": "src/world/prefabColliders.js",
-    "old": "  if (det === 0) return null;\n  const inv = 1 / det;",
-    "new": "  if (det <= 0) return null;\n  const inv = 1 / det;",
+    "old": "  if (det === 0) return null;",
+    "new": "  if (det <= 0) return null;",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "CSA-C-hull-from-inside-hits",
     "file": "src/world/prefabColliders.js",
-    "old": "  return tEnter >= 0 ? tEnter : null;\n}",
-    "new": "  return tExit >= 0 ? Math.max(tEnter, 0) : null;\n}",
+    "old": "  return tEnter >= 0 ? tEnter : null;",
+    "new": "  return tExit >= 0 ? Math.max(tEnter, 0) : null;",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CSA-C-hull-flat-set-cooks",
     "file": "src/world/prefabColliders.js",
-    "old": "  if (i3 < 0) return null;\n  /** @type",
-    "new": "  if (i3 < 0) i3 = (i2 + 1) % count;\n  /** @type",
+    "old": "  if (i3 < 0) return null;",
+    "new": "  if (i3 < 0) i3 = (i2 + 1) % count;",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "CSA-C-maxdistance-ignored",
     "file": "src/world/prefabColliders.js",
-    "old": "if (t != null && t <= maxDistance && (!best || t < best.distance))",
-    "new": "if (t != null && (!best || t < best.distance))",
+    "old": "    if (t != null && t <= maxDistance && (!best || t < best.distance)) best = { distance: t, node, collider };",
+    "new": "    if (t != null && (!best || t < best.distance)) best = { distance: t, node, collider };",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"
     ]
@@ -92,7 +92,7 @@
   {
     "name": "CSA-C-convex-as-triangles",
     "file": "src/world/prefabColliders.js",
-    "old": "      if (collider.m_Convex) { const h = hullOf(g); t = h ? rayConvexEntry(o, d, h) : null; }\n      else t = g.indices.length > MESH_GRID_FROM * 3 ? rayMeshEntryWithin(o, d, g, maxDistance) : rayMeshEntry(o, d, g);",
+    "old": "      if (collider.m_Convex) {\n        const h = hullOf(g);\n        t = h ? rayConvexEntry(o, d, h) : null;\n      } else\n        t = g.indices.length > MESH_GRID_FROM * 3 ? rayMeshEntryWithin(o, d, g, maxDistance) : rayMeshEntry(o, d, g);",
     "new": "      t = g.indices.length > MESH_GRID_FROM * 3 ? rayMeshEntryWithin(o, d, g, maxDistance) : rayMeshEntry(o, d, g);",
     "tests": [
       "test/systems/comeSailAway/csa_placing.test.js"

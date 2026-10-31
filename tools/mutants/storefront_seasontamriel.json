@@ -169,8 +169,8 @@
   {
     "name": "W14-the-key-read-every-pixel",
     "file": "src/world/gate/gateClearance.js",
-    "old": "if (!comeOf.has(was)) {   // W14",
-    "new": "if (true) {   // W14",
+    "old": "        if (!comeOf.has(was)) {",
+    "new": "        if (true) {",
     "tests": [
       "test/world/worldWide/season_tamriel.test.js"
     ],

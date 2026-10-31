@@ -92,7 +92,7 @@ test('OWN-WORK3 no layer: a gate file another mod serves is served as it is - th
 
 test('IT1 by source: the loader lays the stand with the mod loaded for the game, guarded; no patch and no vendored directory of the mod\'s', () => {
   const src = readFileSync(join(ROOT, 'src/scenes/modWorldData.js'), 'utf8');
-  assert.match(src, /try \{ installImmersiveTravelGates\(immersiveTravelLoaded\); \} catch \(e\)/);   // AUDIT IT1 G2, G3
+  assert.match(src, /try \{\n\s*installImmersiveTravelGates\(immersiveTravelLoaded\);\n\s*\} catch \(e\)/);   // AUDIT IT1 G2, G3
   assert.equal(existsSync(join(ROOT, 'vendor/immersive-travel')), false, 'OWN-WORK2: retired');
   assert.equal(existsSync(join(ROOT, 'tools/immersiveTravelPatches.mjs')), false);
 });

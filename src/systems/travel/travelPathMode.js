@@ -29,7 +29,7 @@ export const TRAVEL_PATH_TEXT = Object.freeze({
   free: 'Free',
   label: 'Path',
   tipRoads: 'Follow roads to reach towns. Shift-click to walk to an exact spot.',
-  tipFree: 'Walk straight across country. Clicks near a town go to the exact spot.',   // MOUNTAINS WALKABLE: no longer round them
+  tipFree: 'Walk straight across country. Clicks near a town go to the exact spot.', // MOUNTAINS WALKABLE: no longer round them
   fellBack: 'There is no open way there, so you take the roads.',
 });
 
@@ -40,7 +40,11 @@ const listeners = new Set();
 export function travelPathMode() {
   if (mode) return mode;
   let v = null;
-  try { v = appStorage()?.getItem(TRAVEL_PATH_STORE_KEY) ?? null; } catch { v = null; }
+  try {
+    v = appStorage()?.getItem(TRAVEL_PATH_STORE_KEY) ?? null;
+  } catch {
+    v = null;
+  }
   mode = TRAVEL_PATH_MODES.includes(/** @type {string} */ (v)) ? /** @type {string} */ (v) : TRAVEL_PATH_DEFAULT;
   return mode;
 }
@@ -50,8 +54,18 @@ export function setTravelPathMode(next) {
   if (!TRAVEL_PATH_MODES.includes(next)) return travelPathMode();
   if (travelPathMode() === next) return next;
   mode = next;
-  try { appStorage()?.setItem(TRAVEL_PATH_STORE_KEY, next); } catch { /* no storage: held for the session */ }
-  for (const fn of [...listeners]) { try { fn(next); } catch { /* a listener's own fault */ } }
+  try {
+    appStorage()?.setItem(TRAVEL_PATH_STORE_KEY, next);
+  } catch {
+    /* no storage: held for the session */
+  }
+  for (const fn of [...listeners]) {
+    try {
+      fn(next);
+    } catch {
+      /* a listener's own fault */
+    }
+  }
   return next;
 }
 
@@ -87,8 +101,10 @@ export const PLACE_MIDDLE_SHARE = 0.4;
 export const PLACE_MIDDLE_MIN = 3072;
 export function pickNearPlaceMiddle(p, rect, grow = 0) {
   if (!p || !rect) return false;
-  const hx = Math.max(0, (rect.maxX - rect.minX) / 2 - grow), hz = Math.max(0, (rect.maxZ - rect.minZ) / 2 - grow);
-  const rx = Math.max(PLACE_MIDDLE_MIN, hx * PLACE_MIDDLE_SHARE), rz = Math.max(PLACE_MIDDLE_MIN, hz * PLACE_MIDDLE_SHARE);
+  const hx = Math.max(0, (rect.maxX - rect.minX) / 2 - grow),
+    hz = Math.max(0, (rect.maxZ - rect.minZ) / 2 - grow);
+  const rx = Math.max(PLACE_MIDDLE_MIN, hx * PLACE_MIDDLE_SHARE),
+    rz = Math.max(PLACE_MIDDLE_MIN, hz * PLACE_MIDDLE_SHARE);
   return Math.abs(p.x - rect.cx) <= rx && Math.abs(p.z - rect.cz) <= rz;
 }
 
@@ -96,4 +112,7 @@ export function pickNearPlaceMiddle(p, rect, grow = 0) {
 export const fineMoveHeld = (e) => !!(e && (e.shiftKey || e.altKey));
 
 /** Pins: back to the device's word. */
-export function _resetTravelPathMode() { mode = null; listeners.clear(); }
+export function _resetTravelPathMode() {
+  mode = null;
+  listeners.clear();
+}

@@ -84,8 +84,8 @@
   {
     "name": "TONE-TASTE-normal-kind",
     "file": "src/systems/legacy/marriage.js",
-    "old": "(taste > 0 ? COURT_TASTE : 0)",
-    "new": "(taste >= 0 ? COURT_TASTE : 0)",
+    "old": "    (taste > 0 ? COURT_TASTE : 0);",
+    "new": "    (taste >= 0 ? COURT_TASTE : 0);",
     "tests": [
       "test/systems/livingWorld/tonetaste.test.js",
       "test/systems/legacy/legacy5_marriage.test.js"

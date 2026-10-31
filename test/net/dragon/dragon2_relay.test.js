@@ -6,7 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DRAGON_FIGHT_KEY, SOCIAL_ROOM, cellRoomOfWire, PIXEL_UNITS } from '../../../src/net/wire.js';
 import { dragonTimes, dragonFightId, DRAGON_BRAIN_V, DRAGON_NATIVE_PER_M, DRAGON_CLIMB_MS } from '../../../src/net/dragon/dragonLaw.js';
-import { RELAY_KEY, dragonOmenFrom } from '../../dragonOmen.mjs';
+import { RELAY_KEY, dragonOmenFrom, siteOf, aged } from '../../dragonOmen.mjs';
 import { DRAGON_TICK_MS, DRAGON_OPENING_MS, DRAGON_FAN_R, DRAGON_ADMIT_R, DRAGON_TTK_S } from '../../../src/net/dragon/dragonBrain.js';
 import { dpsRef } from '../../../src/net/gate/gateBrain.js';
 import { verifyDragonReceipt } from '../../../src/net/dragon/dragonReceipt.js';
@@ -16,7 +16,7 @@ import { fakeRooms } from '../../fakeRoom.mjs';
 const subtle = globalThis.crypto.subtle;
 const OMEN = await dragonOmenFrom(500_000), { w: W } = OMEN;   // DRAGON-HIDDEN: a dragon's watch under the relay's own secret
 const TT = dragonTimes(OMEN);
-const PX = 205, PY = 214;
+const { px: PX, py: PY } = siteOf(OMEN);   // DRAGON-CELL: a pixel of its omen's cell
 const SX = (PX + 0.5) * PIXEL_UNITS, SZ = (499 - PY + 0.5) * PIXEL_UNITS;
 const CELL = cellRoomOfWire(SX, SZ);
 const ID = dragonFightId(W, SX, SZ), FIGHT_AT = `${DRAGON_FIGHT_KEY}:${ID}`;
@@ -30,7 +30,7 @@ async function withSky(fn, { start = TT.landAt + 60_000 } = {}) {
   try {
     Date.now = () => clock;
     const world = fakeRooms({ now: () => clock });
-    const r = world.room(CELL);
+    const r = aged(world.room(CELL));
     r.env.GATE_SIGNING_KEY = RELAY_KEY.pkcs8;   // DRAGON-HIDDEN: no secret, no dragon
     const tick = async (n = 1) => { for (let i = 0; i < n; i++) { clock += DRAGON_TICK_MS; if (r.alarm.at != null && clock >= r.alarm.at) await r.fire(); } };
     const say = (ws, o) => r.raw(ws, JSON.stringify({ t: 'dragon', ...o }));
@@ -43,18 +43,19 @@ test('DRAGON2 relay: THE JOIN - `in` from a pose near its site stands the fight 
   await withSky(async ({ r, tick, say, now }) => {
     const a = r.connect(), b = r.connect(), c = r.connect();
     await r.hello(a, 'peer-0001', at(60, 0)); await r.hello(b, 'peer-0002', at(2500, 0)); await r.hello(c, 'peer-0003', at(0, -4200));
+    await say(b, { k: 'ask', w: W });   // PIN MOVED (AUDIT DRAGON-CELL III G7): a watcher hears once its account is granted the fight's cell - it asked, as every screen does
     await say(a, IN());
     const st = words(a, 'st')[0];
     assert.deepEqual([st.w, st.b, st.ph, st.m], [W, 0, 1, DRAGON_TTK_S * dpsRef(20)]);
     assert.ok(fightIn(r).players['acct-peer-0001'], 'the account the token verified');
     assert.equal(r.store.get(FIGHT_AT).w, W, 'kept at once');
-    assert.equal(words(b).length + words(c).length, 0, 'the state went to its asker alone');
+    assert.equal(words(b).filter((m) => m.k !== 'omen').length + words(c).length, 0, 'the state went to its asker alone');
     assert.equal(r.alarm.at, now() + DRAGON_TICK_MS, 'the beat armed');
     await tick(Math.ceil(DRAGON_OPENING_MS / DRAGON_TICK_MS) + 40);
     const heard = words(a).filter((m) => m.k !== 'st');
     assert.ok(heard.some((m) => m.k === 'atk'), 'it struck after its opening');
     assert.ok(heard.every((m) => m.w === W && m.sx === SX && m.sz === SZ), 'every word names its fight');
-    assert.deepEqual(words(b).filter((m) => m.k !== 'st'), heard, 'a watcher in its sky heard every word');
+    assert.deepEqual(words(b).filter((m) => m.k !== 'st' && m.k !== 'omen'), heard, 'a watcher in its sky heard every word');
     assert.equal(words(c).length, 0, 'past DRAGON_FAN_R, nothing');
   });
 });

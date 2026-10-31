@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-PSCALE1-fighters-count-blows",
     "file": "src/systems/party/partyScale.js",
-    "old": "  m.set(who, now);\n}",
-    "new": "  m.set(`${String(who)}:${now}`, now);\n}",
+    "old": "  m.set(who, now);",
+    "new": "  m.set(`${String(who)}:${now}`, now);",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-PSCALE1-remainder-shared-across-foes",
     "file": "src/systems/party/partyScale.js",
-    "old": "  const exact = amount / t + (key ? carry.get(key) ?? 0 : 0);",
-    "new": "  const exact = amount / t + (key ? carry.get(_carry) ?? 0 : 0);",
+    "old": "  const exact = amount / t + (key ? (carry.get(key) ?? 0) : 0);",
+    "new": "  const exact = amount / t + (key ? (carry.get(_carry) ?? 0) : 0);",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -234,8 +234,8 @@
   {
     "name": "AUDIT-PSCALE1-stat-zero-divided",
     "file": "src/systems/statMods.js",
-    "old": "    sinks?.hurt?.(entity.health, { whole: true });",
-    "new": "    sinks?.hurt?.(entity.health);",
+    "old": "    sinks?.hurt?.(entity.health, { whole: true }); // AUDIT PSCALE1 DOORS-1: DFU's CurrentHealth = 0 - a kill, never divided by a party's toughness",
+    "new": "    sinks?.hurt?.(entity.health); // AUDIT PSCALE1 DOORS-1: DFU's CurrentHealth = 0 - a kill, never divided by a party's toughness",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -244,8 +244,8 @@
   {
     "name": "AUDIT-PSCALE1-razor-unmarked",
     "file": "src/systems/artifactEffects.js",
-    "old": "        markWholeBlow(target);   // AUDIT PSCALE1 DOORS-1",
-    "new": "        void markWholeBlow;   // AUDIT PSCALE1 DOORS-1",
+    "old": "          markWholeBlow(target); // AUDIT PSCALE1 DOORS-1: the whole health, whole - the foe's door takes it undivided, and so does its owner's",
+    "new": "          void markWholeBlow; // AUDIT PSCALE1 DOORS-1: the whole health, whole - the foe's door takes it undivided, and so does its owner's",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-PSCALE1-namira-writes-the-number",
     "file": "src/systems/artifactEffects.js",
-    "old": "  if (door) door(reflected);\n  else attacker.health",
-    "new": "  if (false) door(reflected);\n  else attacker.health",
+    "old": "  if (door) door(reflected);",
+    "new": "  if (false) door(reflected);",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -284,8 +284,8 @@
   {
     "name": "AUDIT-PSCALE1-a-squad-of-liches",
     "file": "src/systems/roadEncounters.js",
-    "old": "  if (solitary(mobileType)) return 1;\n",
-    "new": "",
+    "old": "  if (solitary(mobileType)) return 1;\n  return Math.min(ROAD_PARTY_MAX, 1 + Math.max(0, partyExtra | 0) + Math.max(0, company | 0));",
+    "new": "  return Math.min(ROAD_PARTY_MAX, 1 + Math.max(0, partyExtra | 0) + Math.max(0, company | 0));",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e WILD-ROAD): the count's one home is roadEncounters.js wandererCount",
     "tests": [
       "test/systems/party/pscale1.test.js",
@@ -355,8 +355,8 @@
   {
     "name": "AUDIT-PSCALE1-chain-leaves-its-far-end",
     "file": "src/systems/campEncounters.js",
-    "old": "    if (!taken) rollers.push(p);",
-    "new": "    if (!taken) rollers.push(p); else return false;",
+    "old": "    if (!taken) rollers.push(p);\n  }",
+    "new": "    if (!taken) rollers.push(p);\n    else return false;\n  }",
     "tests": [
       "test/systems/party/pscale1.test.js",
       "test/systems/auditpscale1.test.js"
@@ -448,8 +448,8 @@
   {
     "name": "BOSS-HIT-SHARE-unsplit",
     "file": "src/systems/eliteFoes.js",
-    "old": "* STAFF_BOSS_HIT_SHARE) / Math.max(1, fighters))));",
-    "new": "* STAFF_BOSS_HIT_SHARE))));",
+    "old": "  Math.min(\n    damage,\n    Math.max(1, Math.round(((maxHealth > 0 ? maxHealth : 1) * STAFF_BOSS_HIT_SHARE) / Math.max(1, fighters))),\n  );",
+    "new": "  Math.min(damage, Math.max(1, Math.round((maxHealth > 0 ? maxHealth : 1) * STAFF_BOSS_HIT_SHARE)));",
     "tests": [
       "test/systems/auditpscale1.test.js"
     ]

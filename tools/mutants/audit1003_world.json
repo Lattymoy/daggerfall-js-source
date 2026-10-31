@@ -12,8 +12,8 @@
   {
     "name": "AUDIT1003-W1-GROUND-UNREGISTERED",
     "file": "src/world/arena/arenaCity.js",
-    "old": "  registerCustomModel(ARENA_GROUND_MODEL, () => arenaGroundModel(arenaGroundTiles()));",
-    "new": "",
+    "old": "  registerCustomModel(ARENA_GROUND_MODEL, () => arenaGroundModel(arenaGroundTiles())); // AUDIT PRE-MERGE 1003 W1: the cell's paving, under the floor's instance",
+    "new": "  // AUDIT PRE-MERGE 1003 W1: the cell's paving, under the floor's instance",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "AUDIT1003-W1-GROUND-AT-THE-BLOCK-ZERO",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "xPos: 0, yPos: -GROUND_Y, zPos: 0,",
-    "new": "xPos: 0, yPos: 0, zPos: 0,",
+    "old": "    yPos: -GROUND_Y,",
+    "new": "    yPos: 0,",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "AUDIT1003-W1-MOUTH-OPEN",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "  wall([c[0] + GATE_MOUTH.x0 - 3, c[2] + GATE_MOUTH.z], [c[0] + GATE_MOUTH.x1 + 3, c[2] + GATE_MOUTH.z], 12);",
-    "new": "",
+    "old": "  wall([c[0] + GATE_MOUTH.x0 - 3, c[2] + GATE_MOUTH.z], [c[0] + GATE_MOUTH.x1 + 3, c[2] + GATE_MOUTH.z], 12); // the mouth, into the walls either side",
+    "new": "  // the mouth, into the walls either side",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "AUDIT1003-W1-EDGE-OPEN",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "  wall([0, 0], [S, 0], 40); wall([S, 0], [S, S], 40); wall([S, S], [0, S], 40); wall([0, S], [0, 0], 40);",
-    "new": "",
+    "old": "  wall([0, 0], [S, 0], 40);\n  wall([S, 0], [S, S], 40);\n  wall([S, S], [0, S], 40);\n  wall([0, S], [0, 0], 40); // the cell's edge, over its highest roof",
+    "new": "  // the cell's edge, over its highest roof",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "AUDIT1003-W1-NO-WAY-OUT-AT-THE-MOUTH",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "  Object.freeze({ at: Object.freeze([(GATE_MOUTH.x0 + GATE_MOUTH.x1) / 2, GATE_MOUTH.z - 0.5, CITY_GROUND_UP]), normal: Object.freeze([0, 0, -1]) }),\n",
-    "new": "",
+    "old": "  Object.freeze({\n    at: Object.freeze([(GATE_MOUTH.x0 + GATE_MOUTH.x1) / 2, GATE_MOUTH.z - 0.5, CITY_GROUND_UP]),\n    normal: Object.freeze([0, 0, -1]),\n  }),\n]);",
+    "new": "]);",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT1003-W1-LAYS-UNTURNED",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "const lay = (tile.IsRotated ? 1 : 0) + (tile.IsFlipped ? 2 : 0);",
-    "new": "const lay = 0;",
+    "old": "      const lay = (tile.IsRotated ? 1 : 0) + (tile.IsFlipped ? 2 : 0);",
+    "new": "      const lay = 0;",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT1003-W1-PAVING-FACING-DOWN",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "?.push(base, base + 2, base + 1, base, base + 3, base + 2);",
-    "new": "?.push(base, base + 1, base + 2, base, base + 2, base + 3);",
+    "old": "      byRecord.get(tile.TextureRecord)?.push(base, base + 2, base + 1, base, base + 3, base + 2); // wound so cross(b - a, c - a) points up (the port's front face)",
+    "new": "      byRecord.get(tile.TextureRecord)?.push(base, base + 1, base + 2, base, base + 2, base + 3); // wound so cross(b - a, c - a) points up (the port's front face)",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -161,7 +161,7 @@
   {
     "name": "AUDIT1003-W5-NO-FOOTING",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "      if (!seatFooting(heightAt, x, z, a, /** @type {number} */ (h))) continue;   // AUDIT PRE-MERGE 1003 W5",
+    "old": "      if (!seatFooting(heightAt, x, z, a, /** @type {number} */ (h))) continue; // AUDIT PRE-MERGE 1003 W5",
     "new": "",
     "tests": [
       "test/world/audit1003_world.test.js"
@@ -188,8 +188,8 @@
   {
     "name": "AUDIT1003-W5-ALONG-ONLY",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "for (const [dx, dz] of [[c, s], [-c, -s], [-s, c], [s, -c]]) {",
-    "new": "for (const [dx, dz] of [[c, s], [-c, -s]]) {",
+    "old": "    [-s, c],\n    [s, -c],\n  ]) {",
+    "new": "  ]) {",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -197,8 +197,8 @@
   {
     "name": "AUDIT1003-W5-ACROSS-ONLY",
     "file": "src/world/arena/arenaFloor.js",
-    "old": "for (const [dx, dz] of [[c, s], [-c, -s], [-s, c], [s, -c]]) {",
-    "new": "for (const [dx, dz] of [[-s, c], [s, -c]]) {",
+    "old": "    [c, s],\n    [-c, -s],\n    [-s, c],",
+    "new": "    [-s, c],",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -206,8 +206,8 @@
   {
     "name": "AUDIT1003-W6-NO-BREATH",
     "file": "src/world/arena/arenaModel.js",
-    "old": "    if (r.done) return r.value;\n    await breathe();\n",
-    "new": "    if (r.done) return r.value;\n",
+    "old": "    await breathe();\n  }",
+    "new": "  }",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "AUDIT1003-W6-ARENA-UNSLICED",
     "file": "src/world/arena/arenaCity.js",
-    "old": "buildSliced: (ctx, breathe) => arenaDrawnModelSliced(buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null), breathe) });",
-    "new": "buildSliced: null });",
+    "old": "        {\n          climateFree: true,\n          needs: [...new Set(ARENA_MODEL_INDEX.pieces.map((p) => p.model))],\n          buildSliced: (ctx, breathe) =>\n            arenaDrawnModelSliced(\n              buildArenaModel(ARENA_MODEL_INDEX, bin, (id) => ctx?.classicModel?.(id) ?? null),\n              breathe,\n            ),\n        },",
+    "new": "        { climateFree: true, needs: [...new Set(ARENA_MODEL_INDEX.pieces.map((p) => p.model))], buildSliced: null },",
     "tests": [
       "test/world/audit1003_world.test.js"
     ]
@@ -252,8 +252,8 @@
   {
     "name": "AUDIT1003-W7-ARENA-TAKEN",
     "file": "src/systems/siegeField.js",
-    "old": "    if (d?.arena) continue;   // AUDIT PRE-MERGE 1003 W7",
-    "new": "",
+    "old": "    if (d?.arena) continue; // AUDIT PRE-MERGE 1003 W7\n    if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6)",
+    "new": "    if (!d?.door || !Array.isArray(d.door.a) || !Array.isArray(d.door.b) || !Array.isArray(d.box) || d.box.length < 6)",
     "tests": [
       "test/world/audit1003_world.test.js",
       "test/scenes/castle_gate.test.js"

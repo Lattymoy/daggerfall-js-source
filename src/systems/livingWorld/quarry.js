@@ -22,13 +22,23 @@ export const QUARRY_BLOW = () => 1;
  */
 export function makeQuarry(person, struck) {
   const q = {
-    civilian: true, living: person.living, person,
-    ai: { feet: [0, 0, 0], height: QUARRY_HEIGHT, centreOffset: QUARRY_HEIGHT / 2, target: null, isHostile: false, wouldBeSpawned: true, yaw: 0 },
+    civilian: true,
+    living: person.living,
+    person,
+    ai: {
+      feet: [0, 0, 0],
+      height: QUARRY_HEIGHT,
+      centreOffset: QUARRY_HEIGHT / 2,
+      target: null,
+      isHostile: false,
+      wouldBeSpawned: true,
+      yaw: 0,
+    },
     entity: { team: 'Civilian', mobileTeam: 'Civilian', health: 1, maxHealth: 1 },
     /** A monster's landed blow - the first is death, whatever it dealt. Answers 1 that once, else 0. */
     hurtFromFoe(_damage, _dir, striker) {
       if (q.entity.health <= 0) return 0;
-      q.entity.health = 0;   // the target machine lets go of a body at no health (enemyTargets.js targetHealth)
+      q.entity.health = 0; // the target machine lets go of a body at no health (enemyTargets.js targetHealth)
       struck(q, striker);
       return 1;
     },

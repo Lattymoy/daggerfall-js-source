@@ -9,13 +9,24 @@
 
 /** 8-connected pixels a -> b (Bresenham). @param {{x: number, y: number}} a @param {{x: number, y: number}} b */
 function line(a, b) {
-  const out = [a]; let x = a.x, y = a.y;
-  const dx = Math.abs(b.x - a.x), dy = Math.abs(b.y - a.y), sx = a.x < b.x ? 1 : -1, sy = a.y < b.y ? 1 : -1;
+  const out = [a];
+  let x = a.x,
+    y = a.y;
+  const dx = Math.abs(b.x - a.x),
+    dy = Math.abs(b.y - a.y),
+    sx = a.x < b.x ? 1 : -1,
+    sy = a.y < b.y ? 1 : -1;
   let err = dx - dy;
   while (x !== b.x || y !== b.y) {
     const e2 = 2 * err;
-    if (e2 > -dy) { err -= dy; x += sx; }
-    if (e2 < dx) { err += dx; y += sy; }
+    if (e2 > -dy) {
+      err -= dy;
+      x += sx;
+    }
+    if (e2 < dx) {
+      err += dx;
+      y += sy;
+    }
     out.push({ x, y });
   }
   return out;
@@ -37,7 +48,8 @@ export function freePull(plan, ground) {
     }
     return true;
   };
-  const px = plan.pixels, keep = [px[0]];
+  const px = plan.pixels,
+    keep = [px[0]];
   let i = 0;
   while (i < px.length - 1) {
     let j = px.length - 1;

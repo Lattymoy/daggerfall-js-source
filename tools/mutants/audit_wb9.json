@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WB9-the-whole-word-in-the-row-sign",
     "file": "src/ui/brokerWindow.js",
-    "old": "hero ? g.name : [...g.name][0] ?? ''",
-    "new": "g.name",
+    "old": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? g.name : ([...g.name][0] ?? ''));",
+    "new": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', g.name);",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WB9-the-card-sign-a-letter",
     "file": "src/ui/brokerWindow.js",
-    "old": "hero ? g.name : [...g.name][0] ?? ''",
-    "new": "[...g.name][0] ?? ''",
+    "old": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? g.name : ([...g.name][0] ?? ''));",
+    "new": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', [...g.name][0] ?? '');",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-WB9-the-letter-sized-as-the-word",
     "file": "src/ui/brokerWindow.js",
-    "old": "hero ? 'insignia-word' : 'insignia-word mono'",
-    "new": "'insignia-word'",
+    "old": "    const word = el('span', hero ? 'insignia-word' : 'insignia-word mono', hero ? g.name : ([...g.name][0] ?? ''));",
+    "new": "    const word = el('span', 'insignia-word', hero ? g.name : ([...g.name][0] ?? ''));",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "AUDIT-WB9-the-wares-pressable-mid-sale",
     "file": "src/ui/brokerWindow.js",
-    "old": "      if (s.ok && (pendingInsig || deps.insigniaBusy?.())) buy.setAttribute('disabled', '');",
-    "new": "",
+    "old": "      if (s.ok && (pendingInsig || deps.insigniaBusy?.())) buy.setAttribute('disabled', ''); // AUDIT WB9 (insignia F2): nothing else sold while a piece of the insignia is",
+    "new": "      // AUDIT WB9 (insignia F2): nothing else sold while a piece of the insignia is",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-WB9-a-ware-sold-mid-sale-by-a-press",
     "file": "src/ui/brokerWindow.js",
-    "old": "        if (pendingInsig || deps.insigniaBusy?.()) return;\n",
-    "new": "",
+    "old": "        if (pendingInsig || deps.insigniaBusy?.()) return;\n        const done = deps.buy(o);",
+    "new": "        const done = deps.buy(o);",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-WB9-a-blow-on-him-from-anywhere-on-the-floor",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!inCourt(pose.x, pose.z, B.court, POSE_SLACK)) return 0;\n",
-    "new": "",
+    "old": "  if (!inCourt(pose.x, pose.z, B.court, POSE_SLACK)) return 0;\n  const P = half === HALF.flame ? flameProfileOf(f) : profileOf(f);",
+    "new": "  const P = half === HALF.flame ? flameProfileOf(f) : profileOf(f);",
     "tests": [
       "test/net/gate/audit_wb9.test.js",
       "test/net/gate/wb9b_gate_courts.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-WB9-a-crystal-struck-from-anywhere-on-the-floor",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK)) return out;   // AUDIT WB9 (brain F1): from his court, as a blow on him\n",
-    "new": "",
+    "old": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK)) return out; // AUDIT WB9 (brain F1): from his court, as a blow on him\n  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - CRYSTAL_R > MELEE_REACH + POSE_SLACK) return out;",
+    "new": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - CRYSTAL_R > MELEE_REACH + POSE_SLACK) return out;",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-WB9-a-crystal-struck-after-the-landing",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!reckonOpen(f, now)) return out;   // AUDIT WB9 (brain F2): only while the Reckoning still winds up, and not in its last breath\n",
-    "new": "",
+    "old": "  if (!reckonOpen(f, now)) return out; // AUDIT WB9 (brain F2): only while the Reckoning still winds up, and not in its last breath\n  if (!spendBlow(p, now, seq, `x${c}`)) return out; // his hand (AUDIT WB11 W3: once a blow)",
+    "new": "  if (!spendBlow(p, now, seq, `x${c}`)) return out; // his hand (AUDIT WB11 W3: once a blow)",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "AUDIT-WB9-a-crystal-struck-in-the-last-breath",
     "file": "src/net/gate/gateBrain.js",
-    "old": "now < f.atk.at - RECKON_CLOSE_MS;",
-    "new": "now < f.atk.at;",
+    "old": "export const reckonOpen = (f, now) => !!f.atk && f.atk.a === ATTACKS.reckon.id && now < f.atk.at - RECKON_CLOSE_MS;",
+    "new": "export const reckonOpen = (f, now) => !!f.atk && f.atk.a === ATTACKS.reckon.id && now < f.atk.at;",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "AUDIT-WB9-the-stun-kept-through-the-wrath",
     "file": "src/net/gate/gateLink.js",
-    "old": "...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}), ",
-    "new": "",
+    "old": "        ...(g.a === ATTACKS.wrath.id ? { stunUntil: 0, ...flameStill(s) } : {}),\n        ...crossLaid(s, g),",
+    "new": "        ...crossLaid(s, g),",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "AUDIT-WB9-the-crystals-outliving-the-kill",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    f.cx = null;   // AUDIT WB9 (brain F4): a kill mid-Reckoning spends its crystals - no beat after the fall clears them\n",
-    "new": "",
+    "old": "    f.cx = null; // AUDIT WB9 (brain F4): a kill mid-Reckoning spends its crystals - no beat after the fall clears them\n    if (f.lg) f.lg.ads = []; // WB11b: and his host goes with him (the fall's word says so - no word of its own)",
+    "new": "    if (f.lg) f.lg.ads = []; // WB11b: and his host goes with him (the fall's word says so - no word of its own)",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "AUDIT-WB9-the-last-walkway-alone",
     "file": "src/net/gate/gateLink.js",
-    "old": "for (let j = 0; j <= k; j++) if (!Number.isFinite(xa[j])) xa[j] = g.at - ATTACKS.cross.windup;",
-    "new": "xa[k] = g.at - ATTACKS.cross.windup;",
+    "old": "  for (let j = 0; j <= k; j++) if (!Number.isFinite(xa[j])) xa[j] = g.at - ATTACKS.cross.windup;",
+    "new": "  xa[k] = g.at - ATTACKS.cross.windup;",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "AUDIT-WB9-the-far-walkway-for-the-middle-court",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "(one && w.a !== k0 && w.b !== k0)",
-    "new": "(one && w.a !== k0)",
+    "old": "        if (!(f > 0) || (one && w.a !== k0 && w.b !== k0)) continue; // WB14b: a walkway by its two floors",
+    "new": "        if (!(f > 0) || (one && w.a !== k0)) continue; // WB14b: a walkway by its two floors",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "AUDIT-WB9-the-arm-left-standing",
     "file": "src/systems/quickLoot.js",
-    "old": "export function quickLootSpend() { _pending = null; }",
-    "new": "export function quickLootSpend() { }",
+    "old": "export function quickLootSpend() {\n  _pending = null;\n}",
+    "new": "export function quickLootSpend() {}",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -283,7 +283,7 @@
   {
     "name": "AUDIT-WB9-the-bank-unbounded",
     "file": "src/net/peer/peerBodies.js",
-    "old": "      b.bank = Math.min(EFFECTS_BANK_MAX_S, b.bank + dt);   // AUDIT WB9 (bodies F1)",
+    "old": "      b.bank = Math.min(EFFECTS_BANK_MAX_S, b.bank + dt); // AUDIT WB9 (bodies F1)",
     "new": "      b.bank += dt;",
     "tests": [
       "test/net/gate/audit_wb9.test.js",
@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-WB9-the-build-reading-the-look-late",
     "file": "src/net/peer/peerBodies.js",
-    "old": "this._build(b, look, shown, glyphs)",
-    "new": "this._build(b, peer.look, peer.shown, peer.glyphs)",
+    "old": "        const build = () => this._build(b, look, shown, glyphs);",
+    "new": "        const build = () => this._build(b, peer.look, peer.shown, peer.glyphs);",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "AUDIT-WB9-the-spares-first-frame-drawn-open",
     "file": "src/net/peer/peerBodies.js",
-    "old": "veil: conceal ? (conceal(peer.id) ?? null) : null };",
-    "new": "veil: null };",
+    "old": "        veil: conceal ? (conceal(peer.id) ?? null) : null,",
+    "new": "        veil: null,",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]

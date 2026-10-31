@@ -15,7 +15,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SKILL_COUNT } from '../skills.js';
-import { revivedOf } from './revived.js';   // AUDIT FB1029 E-S1: a union child's death the bearer took back
+import { revivedOf } from './revived.js'; // AUDIT FB1029 E-S1: a union child's death the bearer took back
 
 /** THE BLOOD: a stat's gift is `round((parent - 50) / 10)`, held to 0..3 (family.js bloodOf). */
 export const BLOOD_MAX = 3;
@@ -34,7 +34,8 @@ export const REMAINS_GOLD_MAX = 2_500;
 /** A member's blood names at most the eight stats. */
 export const BLOOD_KEYS_MAX = 8;
 
-const whole = (/** @type {unknown} */ v, /** @type {number} */ max) => Number.isInteger(v) && /** @type {number} */ (v) >= 0 && /** @type {number} */ (v) <= max;
+const whole = (/** @type {unknown} */ v, /** @type {number} */ max) =>
+  Number.isInteger(v) && /** @type {number} */ (v) >= 0 && /** @type {number} */ (v) <= max;
 const isObject = (/** @type {unknown} */ v) => !!v && typeof v === 'object' && !Array.isArray(v);
 
 /**
@@ -49,10 +50,21 @@ export function lineageLawFindings(record, stored = null) {
   const people = Array.isArray(record?.people) ? record.people : [];
   for (const p of people) {
     if (p?.blood !== undefined) {
-      if (!isObject(p.blood) || Object.keys(p.blood).length > BLOOD_KEYS_MAX || !Object.values(p.blood).every((v) => whole(v, BLOOD_MAX))) out.add('blood');
+      if (
+        !isObject(p.blood) ||
+        Object.keys(p.blood).length > BLOOD_KEYS_MAX ||
+        !Object.values(p.blood).every((v) => whole(v, BLOOD_MAX))
+      )
+        out.add('blood');
     }
     if (p?.hearth !== undefined) {
-      if (!isObject(p.hearth) || !Object.entries(p.hearth).every(([k, v]) => /^(0|[1-9]\d?)$/.test(k) && Number(k) < SKILL_COUNT && whole(v, HEARTH_MAX))) out.add('hearth');
+      if (
+        !isObject(p.hearth) ||
+        !Object.entries(p.hearth).every(
+          ([k, v]) => /^(0|[1-9]\d?)$/.test(k) && Number(k) < SKILL_COUNT && whole(v, HEARTH_MAX),
+        )
+      )
+        out.add('hearth');
     }
   }
   if (record?.pending != null && !whole(record.pending.estate ?? 0, ESTATE_MAX)) out.add('estate');
@@ -60,8 +72,16 @@ export function lineageLawFindings(record, stored = null) {
     const byId = new Map(people.map((/** @type {any} */ p) => [p?.id, p]));
     for (const was of stored.people) {
       const now = byId.get(was?.id);
-      if (!now) { out.add('member'); continue; }
-      if (was.died && !now.died && !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))) out.add('death');
+      if (!now) {
+        out.add('member');
+        continue;
+      }
+      if (
+        was.died &&
+        !now.died &&
+        !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))
+      )
+        out.add('death');
       if (was.retired != null && now.retired == null) out.add('retired');
     }
     const rows = new Set((Array.isArray(record?.remains) ? record.remains : []).map((/** @type {any} */ r) => r?.id));

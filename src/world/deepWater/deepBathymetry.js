@@ -27,34 +27,56 @@ export const MAX_ABSOLUTE_DEPTH = 250;
 /** ClimateBaseDepth: the plain's depth off each climate's coast. */
 export function climateBaseDepth(climateIndex) {
   switch (climateIndex) {
-    case 223: return 210;   // Ocean
-    case 229: return 175;   // Subtropical
-    case 227: return 150;   // Rainforest
-    case 228: return 28;    // Swamp
-    case 231: return 165;   // Woodlands
-    case 232: return 165;   // Haunted woodlands
-    case 230: return 185;   // Mountain woods
-    case 226: return 185;   // Mountain
-    case 224: return 90;    // Desert
-    case 225: return 90;    // Desert (hot)
-    default: return 210;
+    case 223:
+      return 210; // Ocean
+    case 229:
+      return 175; // Subtropical
+    case 227:
+      return 150; // Rainforest
+    case 228:
+      return 28; // Swamp
+    case 231:
+      return 165; // Woodlands
+    case 232:
+      return 165; // Haunted woodlands
+    case 230:
+      return 185; // Mountain woods
+    case 226:
+      return 185; // Mountain
+    case 224:
+      return 90; // Desert
+    case 225:
+      return 90; // Desert (hot)
+    default:
+      return 210;
   }
 }
 
 /** ClimateBandSignal: the floor's colour band per climate (the floor shader's vertex G). */
 export function climateBandSignal(climateIndex) {
   switch (climateIndex) {
-    case 223: return 1;
-    case 229: return 0.7;
-    case 227: return 0.55;
-    case 228: return 0.15;
-    case 231: return 0.6;
-    case 232: return 0.45;
-    case 230: return 0.65;
-    case 226: return 0.65;
-    case 224: return 0.3;
-    case 225: return 0.3;
-    default: return 0.8;
+    case 223:
+      return 1;
+    case 229:
+      return 0.7;
+    case 227:
+      return 0.55;
+    case 228:
+      return 0.15;
+    case 231:
+      return 0.6;
+    case 232:
+      return 0.45;
+    case 230:
+      return 0.65;
+    case 226:
+      return 0.65;
+    case 224:
+      return 0.3;
+    case 225:
+      return 0.3;
+    default:
+      return 0.8;
   }
 }
 
@@ -92,8 +114,18 @@ export function sampleDepthMeters(worldX, worldZ, baseDepth, distanceToCoastMete
   const num13 = computeRavineAddition(worldX, worldZ, distanceToCoastMeters);
   const num14 = num9 + num10 + num11 + num12 + num13;
   const minimumRawDepth = num2 / Math.max(0.0001, num3);
-  const num15 = computeSeamountLift(worldX, worldZ, distanceToCoastMeters, computePeakLiftCapacity(num14, minimumRawDepth, 0.82));
-  const num16 = computeVolcanicConeLift(worldX, worldZ, distanceToCoastMeters, computePeakLiftCapacity(num14, minimumRawDepth, 0.88));
+  const num15 = computeSeamountLift(
+    worldX,
+    worldZ,
+    distanceToCoastMeters,
+    computePeakLiftCapacity(num14, minimumRawDepth, 0.82),
+  );
+  const num16 = computeVolcanicConeLift(
+    worldX,
+    worldZ,
+    distanceToCoastMeters,
+    computePeakLiftCapacity(num14, minimumRawDepth, 0.88),
+  );
   const num17 = (num14 - num15 - num16) * num3;
   const num18 = computeSafetyFloorRelief(worldX, worldZ, distanceToCoastMeters, num);
   return clamp(Math.max(num17, num2 + num18), num2, num);

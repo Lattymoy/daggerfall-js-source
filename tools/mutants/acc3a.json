@@ -12,8 +12,8 @@
   {
     "name": "ACC3a-2-the-cutoff-turned-exclusive",
     "file": "server-account/src/titles.js",
-    "old": "firstPlayed(player) <= FOUNDER_UNTIL",
-    "new": "firstPlayed(player) < FOUNDER_UNTIL",
+    "old": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
+    "new": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) < FOUNDER_UNTIL) held.push('founder');",
     "tests": [
       "test/server/acc3titles.test.js"
     ],
@@ -42,7 +42,7 @@
   {
     "name": "ACC3a-5-the-developer-list-believed-case-sensitively",
     "file": "server-account/src/titles.js",
-    "old": "  return new Set(raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));",
+    "old": "  return new Set(\n    raw\n      .split(',')\n      .map((h) => h.trim().toLowerCase())\n      .filter(Boolean),\n  );",
     "new": "  return new Set(raw.split(',').filter(Boolean));",
     "tests": [
       "test/server/acc3titles.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "ACC3a-9-the-relay-believes-the-frame",
     "file": "server/src/index.js",
-    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };",
-    "new": "    return { name: c.n, kind: c.k, subject: c.s, title: m.title, glyphs: m.glyphs, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa };",
+    "old": "    return { name: c.n, kind: c.k, subject: c.s, title: c.t, ts: c.ts, glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa, mg: c.mg };",
+    "new": "    return { name: c.n, kind: c.k, subject: c.s, title: m.title, glyphs: m.glyphs, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv, ...guild, gio: c.i, ar: c.ar, cl: c.cl, ...house, ci: c.ci, wa: c.wa, mg: c.mg };",
     "tests": [
       "test/server/acc3titles.test.js"
     ],

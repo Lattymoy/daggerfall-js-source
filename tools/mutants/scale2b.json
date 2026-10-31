@@ -208,8 +208,8 @@
   {
     "name": "SCALE2b-metrics-a-point-a-frame",
     "file": "server/src/relayScale.js",
-    "old": "    if (!force && now - this.since < METRICS_WINDOW_MS) return false;",
-    "new": "",
+    "old": "    if (!force && now - this.since < METRICS_WINDOW_MS) return false;\n    const c = this.c,",
+    "new": "    const c = this.c,",
     "tests": [
       "test/net/scale2b.test.js"
     ],
@@ -228,7 +228,7 @@
   {
     "name": "SCALE2b-storage-reads-uncounted",
     "file": "server/src/relayScale.js",
-    "old": "      if (k === 'get' || k === 'list') return (...args) => { metrics.c.reads++; return v.apply(t, args); };",
+    "old": "      if (k === 'get' || k === 'list')\n        return (...args) => {\n          metrics.c.reads++;\n          return v.apply(t, args);\n        };",
     "new": "      if (k === 'get' || k === 'list') return (...args) => v.apply(t, args);",
     "tests": [
       "test/net/scale2b.test.js"
@@ -452,8 +452,8 @@
   {
     "name": "SCALE2b-cabin-to-nobody",
     "file": "src/net/sailingCabinLink.js",
-    "old": "      if (link.othersHere === 0) { sentAt = -Infinity; welcome = -1; }",
-    "new": "      if (false) { sentAt = -Infinity; welcome = -1; }",
+    "old": "      if (link.othersHere === 0) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/scale2b.test.js"
     ],

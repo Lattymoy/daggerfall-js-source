@@ -16,11 +16,37 @@ import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
-const TW = 240, TH = 300, COLS = 6;
-const POSES = ['dormant', 'still', 'walk', 'stompRaise', 'stompLand', 'handRaise', 'handSweep', 'volleyGather', 'volleyThrow', 'pulse', 'resetRaise', 'resetSlam', 'end', 'stunned', 'rising', 'slip', 'fallen', 'beam'];
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
+const TW = 240,
+  TH = 300,
+  COLS = 6;
+const POSES = [
+  'dormant',
+  'still',
+  'walk',
+  'stompRaise',
+  'stompLand',
+  'handRaise',
+  'handSweep',
+  'volleyGather',
+  'volleyThrow',
+  'pulse',
+  'resetRaise',
+  'resetSlam',
+  'end',
+  'stunned',
+  'rising',
+  'slip',
+  'fallen',
+  'beam',
+];
 const ROWS = Math.ceil(POSES.length / COLS);
-const PAGE_NAME = 'sdbody-probe.tmp.html', PAGE_PATH = join(ROOT, 'tools', PAGE_NAME);
+const PAGE_NAME = 'sdbody-probe.tmp.html',
+  PAGE_PATH = join(ROOT, 'tools', PAGE_NAME);
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=${TW * COLS} height=${TH * ROWS}></canvas><script type=module>
 import { buildRemnantParts, SD_REMNANT_PARTS } from '/src/world/superDungeon/sdRemnantModel.js';
@@ -118,29 +144,72 @@ const browser = await chromium.launch();
 try {
   await writeFile(PAGE_PATH, PAGE);
   const page = await browser.newPage({ viewport: { width: TW * COLS, height: TH * ROWS } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
-  page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text()); });
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
+  page.on('console', (m) => {
+    if (m.type() === 'error') errs.push(m.text());
+  });
   await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  try { await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 }); } catch (e) { console.log(errs.join('\n')); throw e; }
+  try {
+    await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
+  } catch (e) {
+    console.log(errs.join('\n'));
+    throw e;
+  }
   const p = await page.evaluate(() => window.probe);
-  check('the beam\'s program compiles and links', !p.beamErr && p.beamLinked === true, p.beamErr ?? '');
+  check("the beam's program compiles and links", !p.beamErr && p.beamLinked === true, p.beamErr ?? '');
   const r = await page.evaluate((names) => window.drawAll(names), POSES);
-  for (const name of POSES.filter((n) => n !== 'beam')) check(`${name}: the rig names it so, no GL error`, r[name].state === name && r[name].glErr === 0, `${r[name].state}`);
+  for (const name of POSES.filter((n) => n !== 'beam'))
+    check(
+      `${name}: the rig names it so, no GL error`,
+      r[name].state === name && r[name].glErr === 0,
+      `${r[name].state}`,
+    );
   // the pixels: each tile's body drawn, and differing from its rest ('still')
-  const px = await page.evaluate(([W, H, C, R, names]) => {
-    const gl = document.getElementById('c').getContext('webgl2');
-    const all = new Uint8Array(W * C * H * R * 4); gl.readPixels(0, 0, W * C, H * R, gl.RGBA, gl.UNSIGNED_BYTE, all);
-    const tile = (k) => { const x0 = (k % C) * W, y0 = (R - 1 - Math.floor(k / C)) * H, m = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const o = ((y0 + y) * W * C + x0 + x) * 4; m.push(all[o] + all[o + 1] + all[o + 2] > 60 ? 1 : 0); } return m; };
-    const tiles = names.map((_, k) => tile(k)), still = tiles[names.indexOf('still')];
-    return names.map((n, k) => ({ n, body: tiles[k].reduce((a, v) => a + v, 0), diff: tiles[k].reduce((a, v, i) => a + (v !== still[i] ? 1 : 0), 0) }));
-  }, [TW, TH, COLS, ROWS, POSES]);
+  const px = await page.evaluate(
+    ([W, H, C, R, names]) => {
+      const gl = document.getElementById('c').getContext('webgl2');
+      const all = new Uint8Array(W * C * H * R * 4);
+      gl.readPixels(0, 0, W * C, H * R, gl.RGBA, gl.UNSIGNED_BYTE, all);
+      const tile = (k) => {
+        const x0 = (k % C) * W,
+          y0 = (R - 1 - Math.floor(k / C)) * H,
+          m = [];
+        for (let y = 0; y < H; y++)
+          for (let x = 0; x < W; x++) {
+            const o = ((y0 + y) * W * C + x0 + x) * 4;
+            m.push(all[o] + all[o + 1] + all[o + 2] > 60 ? 1 : 0);
+          }
+        return m;
+      };
+      const tiles = names.map((_, k) => tile(k)),
+        still = tiles[names.indexOf('still')];
+      return names.map((n, k) => ({
+        n,
+        body: tiles[k].reduce((a, v) => a + v, 0),
+        diff: tiles[k].reduce((a, v, i) => a + (v !== still[i] ? 1 : 0), 0),
+      }));
+    },
+    [TW, TH, COLS, ROWS, POSES],
+  );
   for (const t of px) {
     if (t.n === 'beam') continue;
-    check(`${t.n}: the body drawn${t.n === 'still' ? '' : ', and moved from its rest'}`, t.body > 2000 && (t.n === 'still' || t.diff > 150), `${t.body} px, ${t.diff} px from rest`);
+    check(
+      `${t.n}: the body drawn${t.n === 'still' ? '' : ', and moved from its rest'}`,
+      t.body > 2000 && (t.n === 'still' || t.diff > 150),
+      `${t.body} px, ${t.diff} px from rest`,
+    );
   }
   const beamTile = px.find((t) => t.n === 'beam');
-  check('the beam drawn by its pass, out of its hand along the sweep', r.beam.beamDrew && r.beam.glErr === 0 && beamTile.body > px.find((t) => t.n === 'handSweep').body * 0.5, `${beamTile.body} px lit`);
-  if (process.env.SD_BODY_SHOT) { await page.screenshot({ path: process.env.SD_BODY_SHOT }); console.log(`tiles: ${process.env.SD_BODY_SHOT}`); }
+  check(
+    'the beam drawn by its pass, out of its hand along the sweep',
+    r.beam.beamDrew && r.beam.glErr === 0 && beamTile.body > px.find((t) => t.n === 'handSweep').body * 0.5,
+    `${beamTile.body} px lit`,
+  );
+  if (process.env.SD_BODY_SHOT) {
+    await page.screenshot({ path: process.env.SD_BODY_SHOT });
+    console.log(`tiles: ${process.env.SD_BODY_SHOT}`);
+  }
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

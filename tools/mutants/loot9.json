@@ -47,8 +47,8 @@
   {
     "name": "LOOT9-shard-unlisted",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]);   // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -",
-    "new": "Object.freeze([570, 572, 575, 577, 580, 582, 1820, 2000, 2001]);   // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -",
+    "old": "export const BOUND_TEMPLATES = Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
+    "new": "export const BOUND_TEMPLATES = Object.freeze([570, 572, 575, 577, 580, 582, 1820, 2000, 2001]); // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -   // DRAGON5: the Dwarven Dragon's (systems/dragon/dragonMount.js) - a tame is its character's alone -   // WITCH1: the Soul Cake's and the Hearth Offering's (systems/festival/festivalRows.js) -   // EG-PLAY: the Weir Key's (systems/eliteGates/weirKey.js) -   // LOOT9: the Welkynd Shard's row beside the Stone's; PORTAL1: the Portal Stone's beside the shard's; WALLET1: the Wallet's (systems/walletItem.js); CARDS8: the Card Binder's (systems/iliac/iliacItems.js)",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "LOOT9-emptied-stack-kept",
     "file": "src/systems/reforge.js",
-    "old": "if (have <= owed) { items.splice(i, 1); owed -= have; }",
-    "new": "if (have <= owed) { it.stackCount = 0; owed -= have; }",
+    "old": "      items.splice(i, 1);",
+    "new": "      it.stackCount = 0;",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "LOOT9-any-legendary-priced",
     "file": "src/systems/reforge.js",
-    "old": "    : item?.rarity === 'legendary' && item.exalted === true ? REFORGE_PRICE.exalted : null;",
-    "new": "    : item?.rarity === 'legendary' ? REFORGE_PRICE.exalted : null;",
+    "old": "      ? REFORGE_PRICE[item.rarity]\n      : item?.rarity === 'legendary' && item.exalted === true",
+    "new": "      ? REFORGE_PRICE[item.rarity]\n      : item?.rarity === 'legendary'",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ],
@@ -403,8 +403,8 @@
   {
     "name": "LOOT9-window-breaks-unasked",
     "file": "src/ui/reforgeWindow.js",
-    "old": "          if (asking !== it) { asking = it; say(false, BREAK_ASK(nameOf(it), n)); render(); return; }\n",
-    "new": "\n",
+    "old": "          if (asking !== it) {\n            asking = it;\n            say(false, BREAK_ASK(nameOf(it), n));\n            render();\n            return;\n          }",
+    "new": "",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "LOOT9-window-shows-the-unknown",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    if (!itemIsIdentified(it)) {   // its lines",
-    "new": "    if (false) {   // its lines",
+    "old": "    if (!itemIsIdentified(it)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

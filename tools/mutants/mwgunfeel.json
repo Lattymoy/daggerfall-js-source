@@ -2,8 +2,8 @@
   {
     "name": "MW-GUN-FEEL-the-kick-upside-down",
     "file": "src/combat/gun/gunFeel.js",
-    "old": "  return { pitch: (k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180),",
-    "new": "  return { pitch: (-k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180),",
+    "old": "    pitch: (k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180),",
+    "new": "    pitch: (-k * f.kickDegPerPx - d * f.reloadPitchDeg) * (Math.PI / 180),",
     "tests": [
       "test/combat/mwgunfeel.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MW-GUN-FEEL-the-turn-about-the-eye",
     "file": "src/combat/gun/gunFeel.js",
-    "old": "  const py = pivot[1] * unitsPerMetre, pz = pivot[2] * unitsPerMetre;",
-    "new": "  const py = 0 * pivot[1], pz = 0 * pivot[2];",
+    "old": "  const py = pivot[1] * unitsPerMetre,\n    pz = pivot[2] * unitsPerMetre;",
+    "new": "  const py = 0 * pivot[1],\n    pz = 0 * pivot[2];",
     "tests": [
       "test/combat/mwgunfeel.test.js"
     ]

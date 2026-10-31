@@ -38,8 +38,8 @@
   {
     "name": "WATER-FOES-sweep-counts-it",
     "file": "src/systems/encounters.js",
-    "old": "    if (f.ai.unreachable) continue;\n",
-    "new": "\n",
+    "old": "    if (f.ai.unreachable) continue;",
+    "new": "",
     "tests": [
       "test/systems/waterfoes.test.js"
     ]

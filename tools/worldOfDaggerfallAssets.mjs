@@ -27,8 +27,16 @@ import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
-import { loadLocationInstance, loadLocationPrefab, ntfsCompare } from '../src/world/worldOfDaggerfall/wodLocationData.js';
-import { encodeRegionPack, decodeRegionPack, WOD_PACK_VERSION } from '../src/world/worldOfDaggerfall/wodLocationPack.js';
+import {
+  loadLocationInstance,
+  loadLocationPrefab,
+  ntfsCompare,
+} from '../src/world/worldOfDaggerfall/wodLocationData.js';
+import {
+  encodeRegionPack,
+  decodeRegionPack,
+  WOD_PACK_VERSION,
+} from '../src/world/worldOfDaggerfall/wodLocationPack.js';
 import { isMain } from './lib/isMain.mjs';
 
 /** The bundle's text assets, by the name they carry inside it, mapped
@@ -67,8 +75,9 @@ export function readWorldOfDaggerfallBundle(bytes) {
 export function readRegionFolder(entries) {
   const files = [];
   for (const { name, bytes } of [...entries].sort((a, b) => ntfsCompare(a.name, b.name))) {
-    if (!/^[\x20-\x7e]+$/.test(name)) throw new Error(`non-ASCII file name ${name}: NTFS order would need the upcase table`);
-    if (!name.endsWith('.txt')) continue;   // LocationLoader.cs:84 - file.EndsWith(".txt")
+    if (!/^[\x20-\x7e]+$/.test(name))
+      throw new Error(`non-ASCII file name ${name}: NTFS order would need the upcase table`);
+    if (!name.endsWith('.txt')) continue; // LocationLoader.cs:84 - file.EndsWith(".txt")
     const instances = loadLocationInstance(Buffer.from(bytes).toString('utf8'));
     if (instances == null) throw new Error(`${name}: no <locations> element`);
     files.push({ file: name, instances, bytes: bytes.length, sha256: sha256(bytes) });
@@ -78,8 +87,14 @@ export function readRegionFolder(entries) {
 
 if (isMain(import.meta.url)) {
   const root = process.argv[2];
-  if (!root) { console.error('usage: node tools/worldOfDaggerfallAssets.mjs <extracted archive root> [outDir]'); process.exit(1); }
-  const outDir = (process.argv[3] ?? fileURLToPath(new URL('../vendor/world-of-daggerfall/', import.meta.url))).replace(/\/$/, '');
+  if (!root) {
+    console.error('usage: node tools/worldOfDaggerfallAssets.mjs <extracted archive root> [outDir]');
+    process.exit(1);
+  }
+  const outDir = (process.argv[3] ?? fileURLToPath(new URL('../vendor/world-of-daggerfall/', import.meta.url))).replace(
+    /\/$/,
+    '',
+  );
   const write = (rel, body) => {
     const dest = `${outDir}/${rel}`;
     mkdirSync(dest.slice(0, dest.lastIndexOf('/')), { recursive: true });
@@ -91,7 +106,10 @@ if (isMain(import.meta.url)) {
   const dfmod = readFileSync(`${root}/Mods/world_of_daggerfall.dfmod`);
   console.log(`world_of_daggerfall.dfmod  ${dfmod.length} bytes  ${sha256(dfmod)}`);
   for (const a of readWorldOfDaggerfallBundle(dfmod)) {
-    if (!a.path) { console.log(`  (unmapped) ${a.name}  ${a.body.length} bytes  ${sha256(a.body)}`); continue; }
+    if (!a.path) {
+      console.log(`  (unmapped) ${a.name}  ${a.body.length} bytes  ${sha256(a.body)}`);
+      continue;
+    }
     write(a.path, a.body);
     console.log(`  ${a.path}  ${a.body.length} bytes  ${sha256(a.body)}`);
   }
@@ -115,16 +133,24 @@ if (isMain(import.meta.url)) {
   for (const d of folders.sort((a, b) => Number(a) - Number(b))) {
     if (!/^\d+$/.test(d)) throw new Error(`unexpected folder Locations/${d}`);
     const dir = `${root}/Locations/${d}`;
-    const { files } = readRegionFolder(readdirSync(dir).map((name) => ({ name, bytes: readFileSync(`${dir}/${name}`) })));
+    const { files } = readRegionFolder(
+      readdirSync(dir).map((name) => ({ name, bytes: readFileSync(`${dir}/${name}`) })),
+    );
     const pack = encodeRegionPack(Number(d), files);
-    const back = decodeRegionPack(pack);   // the pack must read back as what was written
+    const back = decodeRegionPack(pack); // the pack must read back as what was written
     if (back.count !== files.reduce((n, f) => n + f.instances.length, 0)) throw new Error(`region ${d}: round trip`);
     write(`Locations/${d}.bin`, pack);
     regions.push({
-      region: Number(d), pack: `Locations/${d}.bin`, bytes: pack.length, sha256: sha256(pack), count: back.count,
+      region: Number(d),
+      pack: `Locations/${d}.bin`,
+      bytes: pack.length,
+      sha256: sha256(pack),
+      count: back.count,
       files: files.map((f) => [f.file, f.bytes, f.instances.length, f.sha256]),
     });
-    console.log(`  Locations/${d}.bin  ${pack.length} bytes  ${back.count} instances  ${files.length} files  ${sha256(pack)}`);
+    console.log(
+      `  Locations/${d}.bin  ${pack.length} bytes  ${back.count} instances  ${files.length} files  ${sha256(pack)}`,
+    );
   }
 
   const manifest = {
@@ -142,8 +168,10 @@ if (isMain(import.meta.url)) {
     },
   };
   // One source file per line: [name, bytes, instances, sha256].
-  const json = JSON.stringify(manifest, null, 1)
-    .replace(/\[\n\s+("[^"\n]*"),\n\s+(\d+),\n\s+(\d+),\n\s+("[0-9a-f]{64}")\n\s+\]/g, '[$1, $2, $3, $4]');
+  const json = JSON.stringify(manifest, null, 1).replace(
+    /\[\n\s+("[^"\n]*"),\n\s+(\d+),\n\s+(\d+),\n\s+("[0-9a-f]{64}")\n\s+\]/g,
+    '[$1, $2, $3, $4]',
+  );
   write('locations.json', `${json}\n`);
   console.log(`  locations.json  ${JSON.stringify(manifest.totals)}`);
 }

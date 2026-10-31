@@ -1,78 +1,696 @@
 [
-  {"name": "SHIPYARDS-the-found-order-turned", "file": "src/systems/portPlaces.js", "old": "export const FOUND_KIND_ORDER = Object.freeze([...YARD_KIND_ORDER, ...PORT_PLACE_ORDER, ...CRAFT_YARD_ORDER]);", "new": "export const FOUND_KIND_ORDER = Object.freeze([...PORT_PLACE_ORDER, ...YARD_KIND_ORDER, ...CRAFT_YARD_ORDER]);", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-every-town-a-port", "file": "src/systems/portPlaces.js", "old": "isPortTownType(loc?.mapTableData?.locationType) && !!isPort;", "new": "isPortTownType(loc?.mapTableData?.locationType);", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-the-light-not-the-towns", "file": "src/systems/portPlaces.js", "old": "if (k === 'lighthouse') return town ? `The ${town} Light` : 'The Lighthouse';", "new": "if (k === 'lighthouse') return 'The Lighthouse';", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-the-crewmaster-the-shipmaster", "file": "src/systems/portPlaces.js", "old": "townKeeper(townSeed(mapId, PORT_PLACES[validPortPlace(place) ?? 'shipyard'].seed), regionIndex, people);", "new": "townKeeper(townSeed(mapId, PORT_PLACES.shipyard.seed), regionIndex, people);", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-the-rows-middle-unread", "file": "src/systems/portPlaces.js", "old": "      position: [s.x, 0, s.z], buildingKey: foundBuildingKey(kind), yard: kind,", "new": "      position: [0, 0, 0], buildingKey: foundBuildingKey(kind), yard: kind,", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-the-rowboat-a-deed", "file": "src/systems/shipyards.js", "old": "export const PARTS_HULLS = Object.freeze([0]);", "new": "export const PARTS_HULLS = Object.freeze([]);", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-a-hull-dropped", "file": "src/systems/shipyards.js", "old": "export const SHIPYARD_HULLS = Object.freeze([0, 1, 2, 4, 3]);", "new": "export const SHIPYARD_HULLS = Object.freeze([0, 1, 2, 4]);", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-the-refits-whole", "file": "src/systems/shipyards.js", "old": "return Math.max(1, Math.round((value + refitGold(rec) * REFIT_RESALE) * k));", "new": "return Math.max(1, Math.round((value + refitGold(rec)) * k));", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-a-wreck-whole", "file": "src/systems/shipyards.js", "old": "const k = SALE_FLOOR + (1 - SALE_FLOOR) * Math.max(0, Math.min(1, Number.isFinite(hullShare) ? hullShare : 1));", "new": "const k = 1;", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-bought-at-the-sale", "file": "src/systems/shipyards.js", "old": "return getTradePrice('Buy', calculateCost(Math.max(0, value), SHIPYARD_QUALITY, SHIPYARD_PRICE_INDEX), SHIPYARD_QUALITY, skills, pieces);", "new": "return getTradePrice('Sell', calculateCost(Math.max(0, value), SHIPYARD_QUALITY, SHIPYARD_PRICE_INDEX), SHIPYARD_QUALITY, skills, pieces);", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-sold-from-the-helm", "file": "src/systems/shipyards.js", "old": "  if (where === 'sailing') return 'Step away from the helm first.';\n", "new": "", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-sold-in-a-fight", "file": "src/systems/shipyards.js", "old": "  if (fighting) return 'Not while the ship is in combat.';\n", "new": "", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-sold-her-hands-ashore", "file": "src/systems/shipyards.js", "old": "  if (ashore > 0) return 'Some of the crew are ashore with you. Send them back aboard first.';\n", "new": "", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-sold-with-her-cargo", "file": "src/systems/shipyards.js", "old": "  if (hold > 0) return 'Empty the hold first. The shipmaster does not buy cargo.';\n", "new": "", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-the-general-store-buys-a-ship", "file": "src/systems/shopStock.js", "old": " && item.templateIndex !== BOAT_PARTS_TEMPLATE && item.templateIndex !== BOAT_DEED_TEMPLATE", "new": "", "tests": ["test/systems/shipyards1.test.js", "test/systems/csa_items.test.js"]},
-  {"name": "SHIPYARDS-the-hall-the-same-every-day", "file": "src/systems/crewHall.js", "old": "hash32(mapId >>> 0, Math.max(0, Math.floor(Number(day) || 0)) >>> 0, CREW_HALL_SALT)", "new": "hash32(mapId >>> 0, 0, CREW_HALL_SALT)", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-the-serving-offered", "file": "src/systems/crewHall.js", "old": "    if (!taken.has(rec.id)) out.push(rec);", "new": "    out.push(rec);", "tests": ["test/systems/shipyards1.test.js", "test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-the-deck-unread", "file": "src/systems/crewHall.js", "old": "  if (playerCrewCount(hull, next) !== n + 1) return", "new": "  if (false) return", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-past-her-whole", "file": "src/systems/crewHall.js", "old": "  const next = Math.min(maxCrew, Math.max(now, (n + 1) * CREW_PER_HAND));", "new": "  const next = Math.max(now, (n + 1) * CREW_PER_HAND);", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-paid-off-a-man", "file": "src/systems/crewHall.js", "old": "{ ok: true, crew: crew - CREW_PER_HAND }", "new": "{ ok: true, crew: crew - 1 }", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-a-first-mate-too-green", "file": "src/systems/crewHall.js", "old": "  [FIRST_MATE]: Object.freeze({ premium: 1.6, least: 2, weight: 1 }),", "new": "  [FIRST_MATE]: Object.freeze({ premium: 1.6, least: 0, weight: 1 }),", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-two-first-mates", "file": "src/systems/naval/shipCrew.js", "old": "      if (role === FIRST_MATE) for (const o of hands) if (o.role === FIRST_MATE) o.role = 'Deckhand';\n", "new": "", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-a-name-twice", "file": "src/systems/naval/shipCrew.js", "old": "!r.name || hands.some((h) => h.name === r.name)) return null;", "new": "!r.name) return null;", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-a-discharge-adds-men", "file": "src/systems/naval/navalDamage.js", "old": "discharge(crew) { if (Number.isFinite(crew)) s.crew = Math.max(0, Math.min(s.crew, crew)); },", "new": "discharge(crew) { if (Number.isFinite(crew)) s.crew = Math.max(0, crew); },", "tests": ["test/systems/shipyards1.test.js"]},
-  {"name": "SHIPYARDS-a-ship-unpaid", "file": "src/scenes/shipyardHost.js", "old": "      deps.pay?.(price);\n", "new": "", "tests": ["test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-a-sold-ships-title-kept", "file": "src/scenes/shipyardHost.js", "old": "      forgetShip(uid);\n", "new": "", "tests": ["test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-a-sold-ships-cabin-kept", "file": "src/scenes/shipyardHost.js", "old": "      deps.cabinSold?.(uid, site?.regionIndex ?? 0);\n", "new": "", "tests": ["test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-a-hand-unpaid", "file": "src/scenes/shipyardHost.js", "old": "      deps.pay?.(hireCharge(fee, r.raise ?? 0));\n", "new": "", "tests": ["test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-the-cabin-unread", "file": "src/scenes/shipyardHost.js", "old": "    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return", "new": "    if (false) return", "tests": ["test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-the-sale-unpaid", "file": "src/scenes/shipyardHost.js", "old": "      deps.credit?.(offer);\n", "new": "", "tests": ["test/systems/shipyards1_host.test.js"]},
-  {"name": "SHIPYARDS-the-face-unread", "file": "src/world/portSites.js", "old": "let score = field.kind === 'middle' ? 0 : FACE_K * Math.max(0, depth - (field.at(fx, fy) - back));", "new": "let score = 0;", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-light-beside-the-yard", "file": "src/world/portSites.js", "old": "          if (apart) score -= LIGHT_APART_K", "new": "          if (false) score -= LIGHT_APART_K", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-maps-y-unturned", "file": "src/world/portSites.js", "old": "      sx += dx * w; sz -= dy * w;", "new": "      sx += dx * w; sz += dy * w;", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-rings-one-weight", "file": "src/world/portSites.js", "old": "export const SEA_RING_WEIGHT = Object.freeze([0, 2, 1]);", "new": "export const SEA_RING_WEIGHT = Object.freeze([0, 1, 1]);", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-a-pond-the-sea", "file": "src/world/portSites.js", "old": "    if (!edge || body.length < SEA_CELLS_MIN ||", "new": "    if (body.length < SEA_CELLS_MIN ||", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-rows-unflipped", "file": "src/world/portSites.js", "old": "      const row = b.y * N + (N - 1 - y);", "new": "      const row = b.y * N + y;", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-a-house-is-water", "file": "src/world/portSites.js", "old": "        if (auto[y * N + x] !== 0) continue;", "new": "        if (false) continue;", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-gallery-to-the-town", "file": "src/world/lighthouseModel.js", "old": "  gallery: Object.freeze([T.x, GALLERY_Y, T.z - (L.r + G.parapetR) / 2]),", "new": "  gallery: Object.freeze([T.x, GALLERY_Y, T.z + (L.r + G.parapetR) / 2]),", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-crew-halls-page-lost", "file": "src/scenes/portHost.js", "old": "      const page = crew ? 'crew' : (SHIPYARD_ROWS.find((r) => r.id === verb)?.id ?? 'ships');", "new": "      const page = SHIPYARD_ROWS.find((r) => r.id === verb)?.id ?? 'ships';", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-up-facing-the-town", "file": "src/scenes/portHost.js", "old": "        const yaw = sceneYaw(p.pl, down ? [0, 1] : [0, -1]);", "new": "        const yaw = sceneYaw(p.pl, [0, 1]);", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-gallerys-feet-held", "file": "src/scenes/portHost.js", "old": "  if (q[1] < (HOLD_BACK_UP[site.kind] ?? 2.5)) return true;", "new": "  return true;", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-lit-by-day", "file": "src/scenes/portHost.js", "old": "      if (lit()) for (const pl of places.values()) {", "new": "      for (const pl of places.values()) {", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-beam-unturned", "file": "src/scenes/portHost.js", "old": "        const theta = pl.phase + (2 * Math.PI * (t % BEAM_PERIOD_S)) / BEAM_PERIOD_S;", "new": "        const theta = pl.phase;", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-no-bucket", "file": "src/scenes/portHost.js", "old": "    col.addMesh(pl.bucket, g.positions, g.indices, pl.matrix, null, null, false, g.sight);   // SIGN-PASS: its boards met by rays, by no body\n", "new": "", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-a-sailor-short", "file": "src/scenes/portHost.js", "old": "    ...P.recruits.map((p, i) =>", "new": "    ...P.recruits.slice(1).map((p, i) =>", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-the-refusal-unsaid", "file": "src/scenes/portHost.js", "old": "        if (r !== true) midText(typeof r === 'string' && r ? r : PORT_TEXT.shutStair);", "new": "        if (r !== true) midText(PORT_TEXT.shutStair);", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "PIERS-no-braces", "file": "src/systems/naval/quays.js", "old": "      braces.push([[a[0], top, a[1]], [b[0], low, b[1]]], [[a[0], low, a[1]], [b[0], top, b[1]]]);\n", "new": "", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-braced-to-the-bed", "file": "src/systems/naval/quays.js", "old": "      const low = Math.max(a[2], b[2], BRACE_LOW) + 0.1;", "new": "      const low = Math.min(a[2], b[2]) + 0.1;", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-a-fender-in-the-lane", "file": "src/systems/naval/quays.js", "old": "    if (inLane(lz, DRESS_LANE + FENDER_W / 2) || ladders.some(", "new": "    if (ladders.some(", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-ladders-short-of-the-water", "file": "src/systems/naval/quays.js", "old": "    ladders.push([lz, Math.max(LADDER_DOWN, g + 0.05)]);", "new": "    ladders.push([lz, 0.2]);", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-a-crane-at-every-berth", "file": "src/systems/naval/quays.js", "old": "  if ((index >>> 0) === 0) {", "new": "  if (true) {", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-the-jib-out-of-the-quay", "file": "src/systems/naval/quays.js", "old": "dir: -end, up: CRANE_UP,", "new": "dir: end, up: CRANE_UP,", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-no-jetty-lamps", "file": "src/systems/naval/quays.js", "old": "      jettyLanterns.push([lx, side > 0 ? jetty.z0 + 0.06 : jetty.z1 - 0.06, side]);\n", "new": "", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-hung-out-over-the-water", "file": "src/systems/naval/quays.js", "old": "[lx, deck + LANTERN_UP - LANTERN_DROP, lz + side * LANTERN_ARM];", "new": "[lx, deck + LANTERN_UP - LANTERN_DROP, lz - side * LANTERN_ARM];", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-the-jettys-lamps-unlit", "file": "src/systems/naval/quays.js", "old": "    ...(plan.jettyLanterns ?? []).map(", "new": "    ...[].map(", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-the-dress-unbuilt", "file": "src/world/quayModel.js", "old": "  pierDress(m, loose, plan);\n", "new": "", "tests": ["test/systems/naval/piers1.test.js"]},
-  {"name": "PIERS-no-docks-mark", "file": "src/scenes/quayPool.js", "old": "      out.push({ key: `docks:${q.key}`,", "new": "      if (false) out.push({ key: `docks:${q.key}`,", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-port-drawn-a-stable", "file": "src/ui/travel/travelViewHud.js", "old": "  if (kind === 'shipyard' || kind === 'lighthouse' || kind === 'docks') { portGlyph(g, x, y, kind, color); return; }", "new": "  if (false) { portGlyph(g, x, y, kind, color); return; }", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-marks-kind-lost", "file": "src/ui/travel/travelViewHud.js", "old": "  return k === 'transport' || k === 'carpenter' || k === 'shipyard' || k === 'lighthouse' || k === 'docks' ? k : 'stable';", "new": "  return k === 'transport' || k === 'carpenter' ? k : 'stable';", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-lighthouse-a-shop", "file": "src/world/merchantYards/merchantYardMap.js", "old": "lighthouse: BUILDING_TYPES.House2 });", "new": "lighthouse: BUILDING_TYPES.GeneralStore });", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-name-the-kinds", "file": "src/world/merchantYards/merchantYardMap.js", "old": ": (typeof s.name === 'string' && s.name) || portPlaceName(kind);", "new": ": portPlaceName(kind);", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-ports-not-laid", "file": "src/world/merchantYards/merchantYardMap.js", "old": "const kind = validYardKind(s?.kind) ?? validPortSite(s?.kind);", "new": "const kind = validYardKind(s?.kind);", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-rows-never-joined", "file": "src/scenes/townTalk.js", "old": "      directory.push(...portDirectoryRows(topics.ports));\n", "new": "", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-door-lays-no-port", "file": "src/ui/town/townMapDoor.js", "old": "  if (deps.ports?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) };", "new": "  if (false) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) };", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-the-people-walk-through", "file": "src/scenes/pixelBuild.js", "old": "        if (portSites?.length) carveYards(nav, portSites);", "new": "        if (false) carveYards(nav, portSites);", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-overworld-unhanded", "file": "src/scenes/travelViewMarks.js", "old": "    for (const m of host.portHost?.overworldMarks() ?? []) marks.push(m);\n", "new": "", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-FOUND-the-town-map-unhanded", "file": "src/scenes/exteriorAutomapToggle.js", "old": "      ports: b.portSites ?? null,   // SHIPYARDS-FOUND", "new": "      ports: null,   // SHIPYARDS-FOUND", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-the-stair-to-any-rider", "file": "src/scenes/world.js", "old": "onFoot: walking && isOnFoot(player.transportMode),", "new": "onFoot: true,", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-the-lamp-unwired", "file": "src/scenes/world.js", "old": "    if (portHost && lightsOnAt(minute)) portLightsInto(csaLit);", "new": "    if (false) portLightsInto(csaLit);", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-the-gallery-floorless-on-a-load", "file": "src/scenes/world.js", "old": "        portFrame();\n", "new": "", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-the-press-unhanded", "file": "src/scenes/worldModes.js", "old": "      return host.activatePort?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;", "new": "      return true;", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-TUT1-the-shipyard-pops-the-sea-fight", "file": "src/ui/naval/navalPlunderDoor.js", "old": "noteFirstUse(slot === PLUNDER ? 'naval-combat' : 'shipyard');", "new": "noteFirstUse(slot === YARD ? 'shipyard' : 'naval-combat');", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-TUT1-the-climb-pops-nothing", "file": "src/scenes/portHost.js", "old": "        else if (!down) noteFirstUse('lighthouse');", "new": "        else if (!down) void 0;", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-TUT1-the-way-down-pops-it", "file": "src/scenes/portHost.js", "old": "        else if (!down) noteFirstUse('lighthouse');", "new": "        else noteFirstUse('lighthouse');", "tests": ["test/world/shipyards1_place.test.js"]},
-  {"name": "SHIPYARDS-TUT1-the-store-sells-a-ship-again", "file": "src/systems/tutorialCatalogue.js", "old": "      'Shipyards in port towns sell ships. A rowboat comes in parts, to be put together by any water. A larger ship is laid up where you bought it; bring it round from the shipyard\\'s Your fleet page.',", "new": "      'General stores and pawn shops sell boats as parts or as a deed. Use the parts in water, or the deed near a port.',", "tests": ["test/systems/shipyards1_found.test.js"]},
-  {"name": "SHIPYARDS-the-window-not-warmed", "file": "src/ui/enhanced/enhancedChunk.js", "old": "  () => import('../shipyardWindow.js'),", "new": "  () => Promise.resolve(null),", "tests": ["test/systems/shipyards1_host.test.js"]}
+  {
+    "name": "SHIPYARDS-the-found-order-turned",
+    "file": "src/systems/portPlaces.js",
+    "old": "export const FOUND_KIND_ORDER = Object.freeze([...YARD_KIND_ORDER, ...PORT_PLACE_ORDER, ...CRAFT_YARD_ORDER]);",
+    "new": "export const FOUND_KIND_ORDER = Object.freeze([...PORT_PLACE_ORDER, ...YARD_KIND_ORDER, ...CRAFT_YARD_ORDER]);",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-every-town-a-port",
+    "file": "src/systems/portPlaces.js",
+    "old": "export const isPortTown = (loc, isPort) => isPortTownType(loc?.mapTableData?.locationType) && !!isPort;",
+    "new": "export const isPortTown = (loc, isPort) => isPortTownType(loc?.mapTableData?.locationType);",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-light-not-the-towns",
+    "file": "src/systems/portPlaces.js",
+    "old": "  if (k === 'lighthouse') return town ? `The ${town} Light` : 'The Lighthouse';",
+    "new": "  if (k === 'lighthouse') return 'The Lighthouse';",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-crewmaster-the-shipmaster",
+    "file": "src/systems/portPlaces.js",
+    "old": "  townKeeper(townSeed(mapId, PORT_PLACES[validPortPlace(place) ?? 'shipyard'].seed), regionIndex, people);",
+    "new": "  townKeeper(townSeed(mapId, PORT_PLACES.shipyard.seed), regionIndex, people);",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-rows-middle-unread",
+    "file": "src/systems/portPlaces.js",
+    "old": "      position: [s.x, 0, s.z],",
+    "new": "      position: [0, 0, 0],",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-rowboat-a-deed",
+    "file": "src/systems/shipyards.js",
+    "old": "export const PARTS_HULLS = Object.freeze([0]);",
+    "new": "export const PARTS_HULLS = Object.freeze([]);",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-hull-dropped",
+    "file": "src/systems/shipyards.js",
+    "old": "export const SHIPYARD_HULLS = Object.freeze([0, 1, 2, 4, 3]);",
+    "new": "export const SHIPYARD_HULLS = Object.freeze([0, 1, 2, 4]);",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-refits-whole",
+    "file": "src/systems/shipyards.js",
+    "old": "return Math.max(1, Math.round((value + refitGold(rec) * REFIT_RESALE) * k));",
+    "new": "return Math.max(1, Math.round((value + refitGold(rec)) * k));",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-wreck-whole",
+    "file": "src/systems/shipyards.js",
+    "old": "const k = SALE_FLOOR + (1 - SALE_FLOOR) * Math.max(0, Math.min(1, Number.isFinite(hullShare) ? hullShare : 1));",
+    "new": "const k = 1;",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-bought-at-the-sale",
+    "file": "src/systems/shipyards.js",
+    "old": "return getTradePrice('Buy', calculateCost(Math.max(0, value), SHIPYARD_QUALITY, SHIPYARD_PRICE_INDEX), SHIPYARD_QUALITY, skills, pieces);",
+    "new": "return getTradePrice('Sell', calculateCost(Math.max(0, value), SHIPYARD_QUALITY, SHIPYARD_PRICE_INDEX), SHIPYARD_QUALITY, skills, pieces);",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-sold-from-the-helm",
+    "file": "src/systems/shipyards.js",
+    "old": "  if (where === 'sailing') return 'Step away from the helm first.';\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-sold-in-a-fight",
+    "file": "src/systems/shipyards.js",
+    "old": "  if (fighting) return 'Not while the ship is in combat.';\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-sold-her-hands-ashore",
+    "file": "src/systems/shipyards.js",
+    "old": "  if (ashore > 0) return 'Some of the crew are ashore with you. Send them back aboard first.';\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-sold-with-her-cargo",
+    "file": "src/systems/shipyards.js",
+    "old": "  if (hold > 0) return 'Empty the hold first. The shipmaster does not buy cargo.';\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-general-store-buys-a-ship",
+    "file": "src/systems/shopStock.js",
+    "old": "  item.templateIndex !== BOAT_PARTS_TEMPLATE &&\n  item.templateIndex !== BOAT_DEED_TEMPLATE &&",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/csa_items.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-hall-the-same-every-day",
+    "file": "src/systems/crewHall.js",
+    "old": "  const r = mulberry32(hash32(mapId >>> 0, Math.max(0, Math.floor(Number(day) || 0)) >>> 0, CREW_HALL_SALT));",
+    "new": "  const r = mulberry32(hash32(mapId >>> 0, 0, CREW_HALL_SALT));",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-serving-offered",
+    "file": "src/systems/crewHall.js",
+    "old": "    if (!taken.has(rec.id)) out.push(rec);",
+    "new": "    out.push(rec);",
+    "tests": [
+      "test/systems/shipyards1.test.js",
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-deck-unread",
+    "file": "src/systems/crewHall.js",
+    "old": "  if (playerCrewCount(hull, next) !== n + 1) return { ok: false, full: false, why: CREW_HALL_TEXT.noPlace };",
+    "new": "  if (false) return { ok: false, full: false, why: CREW_HALL_TEXT.noPlace };",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-past-her-whole",
+    "file": "src/systems/crewHall.js",
+    "old": "  const next = Math.min(maxCrew, Math.max(now, (n + 1) * CREW_PER_HAND));",
+    "new": "  const next = Math.max(now, (n + 1) * CREW_PER_HAND);",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-paid-off-a-man",
+    "file": "src/systems/crewHall.js",
+    "old": "    ? { ok: true, crew: crew - CREW_PER_HAND }",
+    "new": "    ? { ok: true, crew: crew - 1 }",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-first-mate-too-green",
+    "file": "src/systems/crewHall.js",
+    "old": "  [FIRST_MATE]: Object.freeze({ premium: 1.6, least: 2, weight: 1 }),",
+    "new": "  [FIRST_MATE]: Object.freeze({ premium: 1.6, least: 0, weight: 1 }),",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-two-first-mates",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "      if (role === FIRST_MATE) for (const o of hands) if (o.role === FIRST_MATE) o.role = 'Deckhand';\n      /** @type {'male'|'female'} */",
+    "new": "      /** @type {'male'|'female'} */",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-name-twice",
+    "file": "src/systems/naval/shipCrew.js",
+    "old": "      if (!r || typeof r.name !== 'string' || !r.name || hands.some((h) => h.name === r.name)) return null;",
+    "new": "      if (!r || typeof r.name !== 'string' || !r.name) return null;",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-discharge-adds-men",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "      if (Number.isFinite(crew)) s.crew = Math.max(0, Math.min(s.crew, crew));",
+    "new": "      if (Number.isFinite(crew)) s.crew = Math.max(0, crew);",
+    "tests": [
+      "test/systems/shipyards1.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-ship-unpaid",
+    "file": "src/scenes/shipyardHost.js",
+    "old": "      deps.pay?.(price);\n      if (it.templateIndex === BOAT_DEED_TEMPLATE) {",
+    "new": "      if (it.templateIndex === BOAT_DEED_TEMPLATE) {",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-sold-ships-title-kept",
+    "file": "src/scenes/shipyardHost.js",
+    "old": "      forgetShip(uid);\n      (deps.forgetBoat ?? ((u) => naval()?.forgetBoat?.(u)))(uid); // AUDIT SHIPYARDS L1-6: whatever the sea fight's switch",
+    "new": "      (deps.forgetBoat ?? ((u) => naval()?.forgetBoat?.(u)))(uid); // AUDIT SHIPYARDS L1-6: whatever the sea fight's switch",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-sold-ships-cabin-kept",
+    "file": "src/scenes/shipyardHost.js",
+    "old": "      deps.cabinSold?.(uid, site?.regionIndex ?? 0);\n      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall",
+    "new": "      if (s.at.boat) for (const h of naval()?.crewHands?.(s.at.boat) ?? []) letGo(h); // CREW-SIGNED: her hands back at the hall",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-hand-unpaid",
+    "file": "src/scenes/shipyardHost.js",
+    "old": "        deps.pay?.(hireCharge(fee, r.raise ?? 0));\n        return said(true, CREW_HALL_TEXT.signed(recruit.name, r.hand.role, name));",
+    "new": "        return said(true, CREW_HALL_TEXT.signed(recruit.name, r.hand.role, name));",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-cabin-unread",
+    "file": "src/scenes/shipyardHost.js",
+    "old": "    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0)\n      return 'Empty the cabin first. Anything left in it is sold with the ship.';",
+    "new": "    if (false) return 'Empty the cabin first. Anything left in it is sold with the ship.';",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-sale-unpaid",
+    "file": "src/scenes/shipyardHost.js",
+    "old": "      deps.credit?.(offer);\n      deps.traded?.();",
+    "new": "      deps.traded?.();",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-face-unread",
+    "file": "src/world/portSites.js",
+    "old": "        let score = field.kind === 'middle' ? 0 : FACE_K * Math.max(0, depth - (field.at(fx, fy) - back));",
+    "new": "        let score = 0;",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-light-beside-the-yard",
+    "file": "src/world/portSites.js",
+    "old": "          if (apart)",
+    "new": "          if (false)",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-maps-y-unturned",
+    "file": "src/world/portSites.js",
+    "old": "      sz -= dy * w;",
+    "new": "      sz += dy * w;",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-rings-one-weight",
+    "file": "src/world/portSites.js",
+    "old": "export const SEA_RING_WEIGHT = Object.freeze([0, 2, 1]);",
+    "new": "export const SEA_RING_WEIGHT = Object.freeze([0, 1, 1]);",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-pond-the-sea",
+    "file": "src/world/portSites.js",
+    "old": "    if (!edge || body.length < SEA_CELLS_MIN || againstBearing(body, W, H, bearing)) continue;",
+    "new": "    if (body.length < SEA_CELLS_MIN || againstBearing(body, W, H, bearing)) continue;",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-rows-unflipped",
+    "file": "src/world/portSites.js",
+    "old": "      const row = b.y * N + (N - 1 - y);",
+    "new": "      const row = b.y * N + y;",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-house-is-water",
+    "file": "src/world/portSites.js",
+    "old": "        if (auto[y * N + x] !== 0) continue;",
+    "new": "        if (false) continue;",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-gallery-to-the-town",
+    "file": "src/world/lighthouseModel.js",
+    "old": "  gallery: Object.freeze([T.x, GALLERY_Y, T.z - (L.r + G.parapetR) / 2]),",
+    "new": "  gallery: Object.freeze([T.x, GALLERY_Y, T.z + (L.r + G.parapetR) / 2]),",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-crew-halls-page-lost",
+    "file": "src/scenes/portHost.js",
+    "old": "      const page = crew ? 'crew' : (SHIPYARD_ROWS.find((r) => r.id === verb)?.id ?? 'ships');",
+    "new": "      const page = SHIPYARD_ROWS.find((r) => r.id === verb)?.id ?? 'ships';",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-up-facing-the-town",
+    "file": "src/scenes/portHost.js",
+    "old": "        const yaw = sceneYaw(p.pl, down ? [0, 1] : [0, -1]);",
+    "new": "        const yaw = sceneYaw(p.pl, [0, 1]);",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-gallerys-feet-held",
+    "file": "src/scenes/portHost.js",
+    "old": "  if (q[1] < (HOLD_BACK_UP[site.kind] ?? 2.5)) return true;",
+    "new": "  return true;",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-lit-by-day",
+    "file": "src/scenes/portHost.js",
+    "old": "      if (lit()) for (const pl of places.values()) {",
+    "new": "      for (const pl of places.values()) {",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-beam-unturned",
+    "file": "src/scenes/portHost.js",
+    "old": "        const theta = pl.phase + (2 * Math.PI * (t % BEAM_PERIOD_S)) / BEAM_PERIOD_S;",
+    "new": "        const theta = pl.phase;",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-no-bucket",
+    "file": "src/scenes/portHost.js",
+    "old": "    col.addMesh(pl.bucket, g.positions, g.indices, pl.matrix, null, null, false, g.sight);   // SIGN-PASS: its boards met by rays, by no body\n",
+    "new": "",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-a-sailor-short",
+    "file": "src/scenes/portHost.js",
+    "old": "    ...P.recruits.map((p, i) =>",
+    "new": "    ...P.recruits.slice(1).map((p, i) =>",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-refusal-unsaid",
+    "file": "src/scenes/portHost.js",
+    "old": "        if (r !== true) midText(typeof r === 'string' && r ? r : PORT_TEXT.shutStair);",
+    "new": "        if (r !== true) midText(PORT_TEXT.shutStair);",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-no-braces",
+    "file": "src/systems/naval/quays.js",
+    "old": "      braces.push(\n        [\n          [a[0], top, a[1]],\n          [b[0], low, b[1]],\n        ],\n        [\n          [a[0], low, a[1]],\n          [b[0], top, b[1]],\n        ],\n      );\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-braced-to-the-bed",
+    "file": "src/systems/naval/quays.js",
+    "old": "      const low = Math.max(a[2], b[2], BRACE_LOW) + 0.1;",
+    "new": "      const low = Math.min(a[2], b[2]) + 0.1;",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-a-fender-in-the-lane",
+    "file": "src/systems/naval/quays.js",
+    "old": "    if (inLane(lz, DRESS_LANE + FENDER_W / 2) || ladders.some(([lzL]) => Math.abs(lzL - lz) < 0.8)) continue;",
+    "new": "    if (ladders.some(([lzL]) => Math.abs(lzL - lz) < 0.8)) continue;",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-ladders-short-of-the-water",
+    "file": "src/systems/naval/quays.js",
+    "old": "    ladders.push([lz, Math.max(LADDER_DOWN, g + 0.05)]);",
+    "new": "    ladders.push([lz, 0.2]);",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-a-crane-at-every-berth",
+    "file": "src/systems/naval/quays.js",
+    "old": "  if (index >>> 0 === 0) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-the-jib-out-of-the-quay",
+    "file": "src/systems/naval/quays.js",
+    "old": "      crane = { x: x1 - 0.75, z: cz, dir: -end, up: CRANE_UP, jib: CRANE_JIB, hook: CRANE_HOOK_UP }; // its jib along the quay, toward its middle",
+    "new": "      crane = { x: x1 - 0.75, z: cz, dir: end, up: CRANE_UP, jib: CRANE_JIB, hook: CRANE_HOOK_UP }; // its jib along the quay, toward its middle",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-no-jetty-lamps",
+    "file": "src/systems/naval/quays.js",
+    "old": "      jettyLanterns.push([lx, side > 0 ? jetty.z0 + 0.06 : jetty.z1 - 0.06, side]);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-hung-out-over-the-water",
+    "file": "src/systems/naval/quays.js",
+    "old": "export const jettyLanternHead = (lx, lz, side, deck) => [lx, deck + LANTERN_UP - LANTERN_DROP, lz + side * LANTERN_ARM];",
+    "new": "export const jettyLanternHead = (lx, lz, side, deck) => [lx, deck + LANTERN_UP - LANTERN_DROP, lz - side * LANTERN_ARM];",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-the-jettys-lamps-unlit",
+    "file": "src/systems/naval/quays.js",
+    "old": "    ...(plan.jettyLanterns ?? []).map(([lx, lz, side]) => at(jettyLanternHead(lx, lz, side, plan.deck))),",
+    "new": "    ...[].map(([lx, lz, side]) => at(jettyLanternHead(lx, lz, side, plan.deck))),",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-the-dress-unbuilt",
+    "file": "src/world/quayModel.js",
+    "old": "  pierDress(m, loose, plan);\n  // the cargo: crates, some stacked two high, and barrels",
+    "new": "  // the cargo: crates, some stacked two high, and barrels",
+    "tests": [
+      "test/systems/naval/piers1.test.js"
+    ]
+  },
+  {
+    "name": "PIERS-no-docks-mark",
+    "file": "src/scenes/quayPool.js",
+    "old": "      out.push({\n        key: `docks:${q.key}`,\n        at: [b.berth.pos[0], seaY + QUAY_DECK_UP + DOCKS_MARK_LIFT, b.berth.pos[1]],\n        label: portPlaceName('docks', { townName: q.name }),\n        kind: 'yard docks',\n      });",
+    "new": "      if (false)\n        out.push({\n          key: `docks:${q.key}`,\n          at: [b.berth.pos[0], seaY + QUAY_DECK_UP + DOCKS_MARK_LIFT, b.berth.pos[1]],\n          label: portPlaceName('docks', { townName: q.name }),\n          kind: 'yard docks',\n        });",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-port-drawn-a-stable",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "  if (kind === 'shipyard' || kind === 'lighthouse' || kind === 'docks') { portGlyph(g, x, y, kind, color); return; }",
+    "new": "  if (false) { portGlyph(g, x, y, kind, color); return; }",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-marks-kind-lost",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "  return k === 'transport' || k === 'carpenter' || k === 'shipyard' || k === 'lighthouse' || k === 'docks' ? k : 'stable';",
+    "new": "  return k === 'transport' || k === 'carpenter' ? k : 'stable';",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-lighthouse-a-shop",
+    "file": "src/world/merchantYards/merchantYardMap.js",
+    "old": "  lighthouse: BUILDING_TYPES.House2,",
+    "new": "  lighthouse: BUILDING_TYPES.GeneralStore,",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-name-the-kinds",
+    "file": "src/world/merchantYards/merchantYardMap.js",
+    "old": "    const name = validYardKind(kind)\n      ? yardName(kind, s.keeper?.name)\n      : (typeof s.name === 'string' && s.name) || portPlaceName(kind);",
+    "new": "    const name = validYardKind(kind) ? yardName(kind, s.keeper?.name) : portPlaceName(kind);",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-ports-not-laid",
+    "file": "src/world/merchantYards/merchantYardMap.js",
+    "old": "    const kind = validYardKind(s?.kind) ?? validPortSite(s?.kind); // SHIPYARDS-FOUND: a port town's two besides",
+    "new": "    const kind = validYardKind(s?.kind); // SHIPYARDS-FOUND: a port town's two besides",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-rows-never-joined",
+    "file": "src/scenes/townTalk.js",
+    "old": "      directory.push(...portDirectoryRows(topics.ports));\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-door-lays-no-port",
+    "file": "src/ui/town/townMapDoor.js",
+    "old": "  if (deps.ports?.length) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) }; // SHIPYARDS-FOUND: a port town's shipyard and lighthouse, the same way",
+    "new": "  if (false) deps = { ...deps, blocks: yardTownBlocks(deps.blocks ?? [], deps.ports) }; // SHIPYARDS-FOUND: a port town's shipyard and lighthouse, the same way",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-people-walk-through",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        if (portSites?.length) carveYards(nav, portSites);",
+    "new": "        if (false) carveYards(nav, portSites);",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-overworld-unhanded",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "    for (const m of host.portHost?.overworldMarks() ?? []) marks.push(m);\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-FOUND-the-town-map-unhanded",
+    "file": "src/scenes/exteriorAutomapToggle.js",
+    "old": "      ports: b.portSites ?? null,   // SHIPYARDS-FOUND",
+    "new": "      ports: null,   // SHIPYARDS-FOUND",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-stair-to-any-rider",
+    "file": "src/scenes/world.js",
+    "old": "onFoot: walking && isOnFoot(player.transportMode),",
+    "new": "onFoot: true,",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-lamp-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    if (portHost && lightsOnAt(minute)) portLightsInto(csaLit);",
+    "new": "    if (false) portLightsInto(csaLit);",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-gallery-floorless-on-a-load",
+    "file": "src/scenes/world.js",
+    "old": "        portFrame();\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-press-unhanded",
+    "file": "src/scenes/worldModes.js",
+    "old": "      return host.activatePort?.(key, getInteractionMode(), plaqueActionFor(key)) ?? true;",
+    "new": "      return true;",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-TUT1-the-shipyard-pops-the-sea-fight",
+    "file": "src/ui/naval/navalPlunderDoor.js",
+    "old": "noteFirstUse(slot === PLUNDER ? 'naval-combat' : 'shipyard');",
+    "new": "noteFirstUse(slot === YARD ? 'shipyard' : 'naval-combat');",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-TUT1-the-climb-pops-nothing",
+    "file": "src/scenes/portHost.js",
+    "old": "        else if (!down) noteFirstUse('lighthouse');",
+    "new": "        else if (!down) void 0;",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-TUT1-the-way-down-pops-it",
+    "file": "src/scenes/portHost.js",
+    "old": "        else if (!down) noteFirstUse('lighthouse');",
+    "new": "        else noteFirstUse('lighthouse');",
+    "tests": [
+      "test/world/shipyards1_place.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-TUT1-the-store-sells-a-ship-again",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "      'Shipyards in port towns sell ships. A rowboat comes in parts, to be put together by any water. A larger ship is laid up where you bought it; bring it round from the shipyard\\'s Your fleet page.',",
+    "new": "      'General stores and pawn shops sell boats as parts or as a deed. Use the parts in water, or the deed near a port.',",
+    "tests": [
+      "test/systems/shipyards1_found.test.js"
+    ]
+  },
+  {
+    "name": "SHIPYARDS-the-window-not-warmed",
+    "file": "src/ui/enhanced/enhancedChunk.js",
+    "old": "  () => import('../shipyardWindow.js'),",
+    "new": "  () => Promise.resolve(null),",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  }
 ]

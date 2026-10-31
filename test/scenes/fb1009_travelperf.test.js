@@ -98,7 +98,7 @@ test('TV-BURST the host: the view\'s first frames - twelve dungeons about the tr
   assert.equal(s.released.length, 1 + TV_DUNGEON_MODELS_MAX, 'each one released once');
   // the frame's own seams: the frame's fullyUp handed, and the view down drops them
   assert.match(WORLD, /\n {4}if \(tvf\) drawTvDungeonModels\(travelView\?\.eye \?\? null, tvf\.fullyUp, tvf\.blend\);[^\n]*\n {4}else if \(_tvDngModel\.size\) dropTvDungeonModels\(\);/);
-  assert.match(readFileSync(new URL('../../src/scenes/travelView.js', import.meta.url), 'utf8'), /blend: t, fullyUp: state === 'up', state,/, 'the view\'s frame says when it is fully up');
+  assert.match(readFileSync(new URL('../../src/scenes/travelView.js', import.meta.url), 'utf8'), /blend: t,\n\s*fullyUp: state === 'up',\n\s*state,/, 'the view\'s frame says when it is fully up');
 });
 
 // ── TV-PIN ─────────────────────────────────────────────────────────────────────────────────────────────────────────

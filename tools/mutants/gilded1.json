@@ -20,8 +20,8 @@
   {
     "name": "GILDED1-a-line-over-the-band",
     "file": "src/systems/gilded.js",
-    "old": "  templateIndex: WEAPONS.Long_Bow,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 40),",
-    "new": "  templateIndex: WEAPONS.Long_Bow,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 50),",
+    "old": "  templateIndex: WEAPONS.Long_Bow,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 40),\n    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),",
+    "new": "  templateIndex: WEAPONS.Long_Bow,\n  material: WEAPON_MATERIALS.Dwarven,\n  affixes: Object.freeze([\n    line('damage', 50),\n    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GILDED1-the-power-every",
     "file": "src/systems/gilded.js",
-    "old": "kind: 'toll', every: 3, pct: 100,",
-    "new": "kind: 'toll', every: 2, pct: 100,",
+    "old": "  every: 3,",
+    "new": "  every: 2,",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GILDED1-unknown",
     "file": "src/systems/gilded.js",
-    "old": "  item.isIdentified = true;\n  item.value =",
-    "new": "  item.isIdentified = false;\n  item.value =",
+    "old": "  item.isIdentified = true;",
+    "new": "  item.isIdentified = false;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GILDED1-the-band-let-in",
     "file": "src/systems/gilded.js",
-    "old": "(a.param ?? null) !== (w.param ?? null) || a.value !== w.value) return null;",
-    "new": "(a.param ?? null) !== (w.param ?? null) || a.value > w.value) return null;",
+    "old": "    if (a?.id !== w.id || (a.param ?? null) !== (w.param ?? null) || a.value !== w.value) return null;",
+    "new": "    if (a?.id !== w.id || (a.param ?? null) !== (w.param ?? null) || a.value > w.value) return null;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GILDED1-a-mark-let-in",
     "file": "src/systems/gilded.js",
-    "old": "  for (const k of NEVER_ON_GILDED) if (item[k] != null) return null;\n",
-    "new": "\n",
+    "old": "  for (const k of NEVER_ON_GILDED) if (item[k] != null) return null;",
+    "new": "",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GILDED1-the-salvage",
     "file": "src/systems/reforge.js",
-    "old": "  if (item.rarity === 'gilded') return 'gilded';",
-    "new": "  if (item.rarity === 'never') return 'gilded';",
+    "old": "  if (item.rarity === 'gilded') return 'gilded'; // GILDED1: a static roll is never broken down",
+    "new": "  if (item.rarity === 'never') return 'gilded'; // GILDED1: a static roll is never broken down",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "GILDED1-a-miss-counted",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "      case 'toll': if (tollDue(held, p)) pct += p.pct; break;",
-    "new": "      case 'toll': if (tollDue(held, p)) pct += p.pct; if (held) _tolls.set(held, ((_tolls.get(held) ?? 0) + 1) % p.every); break;",
+    "old": "        break; // GILDED1: the third that lands",
+    "new": "        if (held) _tolls.set(held, ((_tolls.get(held) ?? 0) + 1) % p.every);\n        break; // GILDED1: the third that lands",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "GILDED1-the-count-never-turns",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "_tolls.set(held, ((_tolls.get(held) ?? 0) + 1) % p.every); _lastToll",
-    "new": "_tolls.set(held, (_tolls.get(held) ?? 0) + 1); _lastToll",
+    "old": "          _tolls.set(held, ((_tolls.get(held) ?? 0) + 1) % p.every);",
+    "new": "          _tolls.set(held, (_tolls.get(held) ?? 0) + 1);",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "GILDED1-no-refund",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "{ addItem(me.items, isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow()); _lastToll = null; }",
-    "new": "{ _lastToll = null; }",
+    "old": "          addItem(me.items, isGunTemplate(_lastToll.weapon?.templateIndex) ? createPellets(1) : bowDamageArrow());\n          _lastToll = null;",
+    "new": "          _lastToll = null;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "GILDED1-any-kill-refunds",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "case 'toll': if (p.refund && _lastToll?.foe === foe && now",
-    "new": "case 'toll': if (p.refund && now",
+    "old": "        if (p.refund && _lastToll?.foe === foe && now - _lastToll.at <= TOLL_REFUND_S && Array.isArray(me?.items)) {",
+    "new": "        if (p.refund && now - _lastToll.at <= TOLL_REFUND_S && Array.isArray(me?.items)) {",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "GILDED1-the-codex-blind-to-it",
     "file": "src/systems/loot/lootCodex.js",
-    "old": "  if (item?.rarity === 'gilded' && typeof item.gilded === 'string' && gildedById(item.gilded)) return { kind: 'gilded', id: item.gilded };   // GILDED1\n",
-    "new": "\n",
+    "old": "  if (item?.rarity === 'gilded' && typeof item.gilded === 'string' && gildedById(item.gilded))\n    return { kind: 'gilded', id: item.gilded }; // GILDED1",
+    "new": "",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "GILDED1-the-gold-forgotten-in-a-list",
     "file": "src/systems/thunderlock.js",
-    "old": "  ? (forPaperDoll ? ART_RECORDS.gildedDoll : ART_RECORDS.gildedIcon)",
-    "new": "  ? (forPaperDoll ? ART_RECORDS.gildedDoll : ART_RECORDS.icon)",
+    "old": "      : ART_RECORDS.gildedIcon",
+    "new": "      : ART_RECORDS.icon",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "GILDED1-the-twin-never-worn",
     "file": "src/characters/ownModels/ownWeaponModels.js",
-    "old": "(item && ((item.rarity === 'gilded' && OWN_MW_GILDED[item.templateIndex]) || OWN_MW_MODELS[item.templateIndex])) || null;",
-    "new": "(item && OWN_MW_MODELS[item.templateIndex]) || null;",
+    "old": "export const ownWeaponModelFor = (item) =>\n  (item && ((item.rarity === 'gilded' && OWN_MW_GILDED[item.templateIndex]) || OWN_MW_MODELS[item.templateIndex])) ||\n  null;",
+    "new": "export const ownWeaponModelFor = (item) => (item && OWN_MW_MODELS[item.templateIndex]) || null;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

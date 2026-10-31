@@ -24,7 +24,7 @@
 // Not a DFU member. Ledger A (RAID1's row).
 import { seededRng } from './wind/wind.js';
 import { spoilsBase, magicOrBetter } from './gate/gateSpoils.js';
-import { applyRarity, lastPass, techniquePass } from './loot/lootRarity.js';   // TECH1: the technique pass, a door's last draw
+import { applyRarity, lastPass, techniquePass } from './loot/lootRarity.js'; // TECH1: the technique pass, a door's last draw
 import { rollRaidSetPiece } from './aetheric.js';
 
 /** Gold a level of the player's, before the seed's variation (0.8 to 1.2 of it) - a third of a boss's. */
@@ -39,9 +39,9 @@ export const RAID_SPOILS_SOURCE = Object.freeze({ kind: 'pile', tier: 12, luck: 
 export const RAID_SPOILS_KEYS = Object.freeze({ store: 'raid4.spoils', day: 'raid4.spoilsDay' });
 /** The words. */
 export const RAID_SPOILS_TEXT = Object.freeze({
-  granted: 'The town\'s thanks are in your pack.',
-  recovered: 'A town\'s thanks are in your pack.',
-  kept: (name) => `The town's thanks wait for ${name || 'the one who fought'}.`,   // AUDIT RAID R4: another character's
+  granted: "The town's thanks are in your pack.",
+  recovered: "A town's thanks are in your pack.",
+  kept: (name) => `The town's thanks wait for ${name || 'the one who fought'}.`, // AUDIT RAID R4: another character's
 });
 /** AUDIT RAID R8a: the town's thanks the device keeps a crash's record of - many a session, where a boss's is one a day. */
 export const RAID_SPOILS_RECORDS_MAX = 32;
@@ -63,13 +63,15 @@ export function rollRaidSpoils(seed, level, party, held = false) {
   const tier = magicOrBetter(rolls, RAID_SPOILS_SOURCE);
   applyRarity(item, tier, rolls);
   item.isIdentified = true;
-  const pieces = [{ item, tier: item.rarity ?? tier }];   // a Legendary with no record for its kind falls to Rare: read back off the item
-  const set = rollRaidSetPiece(party, rolls);   // LAST: every thanks before it stays what it was for its seed
+  const pieces = [{ item, tier: item.rarity ?? tier }]; // a Legendary with no record for its kind falls to Rare: read back off the item
+  const set = rollRaidSetPiece(party, rolls); // LAST: every thanks before it stays what it was for its seed
   if (set) pieces.push({ item: set, tier: set.rarity });
-  lastPass([item], rolls);   // LOOT2: the ladder's last pass, after the set piece - its earlier draws stay its seed's
-  techniquePass([item], rolls);   // TECH1: a weapon's technique - LAST of all (law 9)
-  if (held) {   // RAID5: the town held - one more piece, after all of it (its own ladder's last pass and technique)
-    const more = spoilsBase(lv, rolls), moreTier = magicOrBetter(rolls, RAID_SPOILS_SOURCE);
+  lastPass([item], rolls); // LOOT2: the ladder's last pass, after the set piece - its earlier draws stay its seed's
+  techniquePass([item], rolls); // TECH1: a weapon's technique - LAST of all (law 9)
+  if (held) {
+    // RAID5: the town held - one more piece, after all of it (its own ladder's last pass and technique)
+    const more = spoilsBase(lv, rolls),
+      moreTier = magicOrBetter(rolls, RAID_SPOILS_SOURCE);
     applyRarity(more, moreTier, rolls);
     more.isIdentified = true;
     lastPass([more], rolls);
@@ -82,5 +84,8 @@ export function rollRaidSpoils(seed, level, party, held = false) {
 /** The thanks as the spoils pool hands them over (scenes/spoilsPool.js's pieces): each item, then the gold. Pure. */
 export function raidSpoilsList(seed, level, party, held = false) {
   const s = rollRaidSpoils(seed, level, party, held);
-  return [...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })), { kind: 'gold', gold: s.gold, tier: 'common' }];
+  return [
+    ...s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier })),
+    { kind: 'gold', gold: s.gold, tier: 'common' },
+  ];
 }

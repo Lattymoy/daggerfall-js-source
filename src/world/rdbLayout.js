@@ -60,12 +60,12 @@ import { trs, multiply } from './mat4.js';
 
 export const RDB_SIDE = 2048 * GLOBAL_SCALE;
 
-export const EXIT_DOOR_MODEL_ID = 70300;   // DECOR-DUNGEON: the dungeons' census leaves it out too (test/systems/decor/decordungeon.test.js) - a door, though no action door
+export const EXIT_DOOR_MODEL_ID = 70300; // DECOR-DUNGEON: the dungeons' census leaves it out too (test/systems/decor/decordungeon.test.js) - a door, though no action door
 const RED_BRICK_DOOR_MODEL_ID = 72100;
 const MIN_TAPESTRY_ID = 42500;
 const MAX_TAPESTRY_ID = 42571;
 const EDITOR_FLATS_ARCHIVE = 199;
-import { RANDOM_TREASURE_ARCHIVE as FIXED_TREASURE_FLATS_ARCHIVE } from '../systems/loot/loot.js';   // single source (DaggerfallLootDataTables; audit 2026-07-06b)
+import { RANDOM_TREASURE_ARCHIVE as FIXED_TREASURE_FLATS_ARCHIVE } from '../systems/loot/loot.js'; // single source (DaggerfallLootDataTables; audit 2026-07-06b)
 
 // DFBlock.RdbActionFlags, defined members only (Enum.IsDefined parity).
 // RDBLayout.NPCFlatArchives / IsNPCFlat (RDBLayout.cs:1250-1254) - their one home is the leaf world/npcFlatArchives.js
@@ -74,48 +74,81 @@ import { isNpcFlat } from './npcFlatArchives.js';
 export { NPC_FLAT_ARCHIVES, isNpcFlat } from './npcFlatArchives.js';
 
 export const ACTION_FLAGS = Object.freeze({
-  None: 0x00, Translation: 0x01,
-  PositiveX: 0x02, NegativeX: 0x03, PositiveY: 0x04, NegativeY: 0x05,
-  PositiveZ: 0x06, NegativeZ: 0x07,
-  Rotation: 0x08, CastSpell: 0x09, ShowText: 0x0b, ShowTextWithInput: 0x0c,
-  Teleport: 0x0e, LockDoor: 0x10, UnlockDoor: 0x11, OpenDoor: 0x12,
-  CloseDoor: 0x14, Hurt21: 0x15, Hurt22: 0x16, Hurt23: 0x17, Hurt24: 0x18,
-  Hurt25: 0x19, Poison: 0x1a, Unknown27: 0x1b, DrainMagicka: 0x1c,
-  Dialogue: 0x1d, Activate: 0x1e, SetGlobalVar: 0x1f, Unknown32: 0x20,
-  Unknown50: 0x32, DoorText: 0x63,   // audit 2026-08-16: DFBlock defines both; missing here broke Enum.IsDefined parity (raw 0x32/0x63 fell to None)
-  Unknown100: 0x64,   // AUDIT 23 (wa-1): DFBlock.cs:748 - defined, delegate-less (acts as None), on 2 objects
+  None: 0x00,
+  Translation: 0x01,
+  PositiveX: 0x02,
+  NegativeX: 0x03,
+  PositiveY: 0x04,
+  NegativeY: 0x05,
+  PositiveZ: 0x06,
+  NegativeZ: 0x07,
+  Rotation: 0x08,
+  CastSpell: 0x09,
+  ShowText: 0x0b,
+  ShowTextWithInput: 0x0c,
+  Teleport: 0x0e,
+  LockDoor: 0x10,
+  UnlockDoor: 0x11,
+  OpenDoor: 0x12,
+  CloseDoor: 0x14,
+  Hurt21: 0x15,
+  Hurt22: 0x16,
+  Hurt23: 0x17,
+  Hurt24: 0x18,
+  Hurt25: 0x19,
+  Poison: 0x1a,
+  Unknown27: 0x1b,
+  DrainMagicka: 0x1c,
+  Dialogue: 0x1d,
+  Activate: 0x1e,
+  SetGlobalVar: 0x1f,
+  Unknown32: 0x20,
+  Unknown50: 0x32,
+  DoorText: 0x63, // audit 2026-08-16: DFBlock defines both; missing here broke Enum.IsDefined parity (raw 0x32/0x63 fell to None)
+  Unknown100: 0x64, // AUDIT 23 (wa-1): DFBlock.cs:748 - defined, delegate-less (acts as None), on 2 objects
 });
 
 /** The movement family DaggerfallAction routes to Move (P2/P5). */
 export const MOVE_ACTION_FLAGS = new Set([
   ACTION_FLAGS.Translation,
-  ACTION_FLAGS.PositiveX, ACTION_FLAGS.NegativeX,
-  ACTION_FLAGS.PositiveY, ACTION_FLAGS.NegativeY,
-  ACTION_FLAGS.PositiveZ, ACTION_FLAGS.NegativeZ,
+  ACTION_FLAGS.PositiveX,
+  ACTION_FLAGS.NegativeX,
+  ACTION_FLAGS.PositiveY,
+  ACTION_FLAGS.NegativeY,
+  ACTION_FLAGS.PositiveZ,
+  ACTION_FLAGS.NegativeZ,
   ACTION_FLAGS.Rotation,
 ]);
 
 // DFBlock.RdbTriggerFlags, defined members only.
 export const TRIGGER_FLAGS = Object.freeze({
-  None: 0x00, Collision01: 0x01, Direct: 0x02, Collision03: 0x03,
-  Attack: 0x05, Direct6: 0x06, MultiTrigger: 0x08, Collision09: 0x09,
+  None: 0x00,
+  Collision01: 0x01,
+  Direct: 0x02,
+  Collision03: 0x03,
+  Attack: 0x05,
+  Direct6: 0x06,
+  MultiTrigger: 0x08,
+  Collision09: 0x09,
   Door: 0x0a,
 });
 
 // DFBlock.RdbActionAxes.
 const AXES = Object.freeze({
-  None: 0, NegativeX: 1, PositiveX: 2, NegativeY: 3, PositiveY: 4,
-  NegativeZ: 5, PositiveZ: 6,
+  None: 0,
+  NegativeX: 1,
+  PositiveX: 2,
+  NegativeY: 3,
+  PositiveY: 4,
+  NegativeZ: 5,
+  PositiveZ: 6,
 });
 
 const ACTION_FLAG_VALUES = new Set(Object.values(ACTION_FLAGS));
 const TRIGGER_FLAG_VALUES = new Set(Object.values(TRIGGER_FLAGS));
 
 // AddActionDoor starting-lock table, verbatim.
-const LOCK_VALUES = [
-  0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e,
-  0x10, 0x12, 0x14, 0x19, 0x1e, 0x32, 0x80, 0xff,
-];
+const LOCK_VALUES = [0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14, 0x19, 0x1e, 0x32, 0x80, 0xff];
 
 /** Verbatim RDBLayout.GetModelMatrix: T * Rz * Rx * Ry. */
 export function getModelMatrix(obj) {
@@ -123,9 +156,7 @@ export function getModelMatrix(obj) {
   const degreesX = -mr.xRotation / ROTATION_DIVISOR;
   const degreesY = -mr.yRotation / ROTATION_DIVISOR;
   const degreesZ = -mr.zRotation / ROTATION_DIVISOR;
-  const t = trs(
-    obj.xPos * GLOBAL_SCALE, -obj.yPos * GLOBAL_SCALE, obj.zPos * GLOBAL_SCALE,
-    0, 0, 0);
+  const t = trs(obj.xPos * GLOBAL_SCALE, -obj.yPos * GLOBAL_SCALE, obj.zPos * GLOBAL_SCALE, 0, 0, 0);
   const rz = trs(0, 0, 0, 0, 0, degreesZ);
   const rx = trs(0, 0, 0, degreesX, 0, 0);
   const ry = trs(0, 0, 0, 0, degreesY, 0);
@@ -141,8 +172,7 @@ export function isActionDoor(rdb, modelReference) {
   // Door (DOR), double-door (DDR), NEW tag (55007/55024/5018 - always
   // doors), CAV cave-wall doors (like 55033 in S0000204.RDB).
   const description = rdb.modelReferenceList[modelReference].description;
-  return description === 'DOR' || description === 'DDR' ||
-    description === 'NEW' || description === 'CAV';
+  return description === 'DOR' || description === 'DDR' || description === 'NEW' || description === 'CAV';
 }
 
 /** Whether a model object acts (its action record's flags set) - DECOR-DUNGEON: the decor catalogue offers none that do. */
@@ -159,13 +189,26 @@ function rotationActionVector(action, axis) {
   const v = { x: 0, y: 0, z: 0 };
   const magnitude = action.magnitude;
   switch (axis) {
-    case AXES.NegativeX: v.x = -magnitude; break;
-    case AXES.NegativeY: v.y = -magnitude; break;
-    case AXES.NegativeZ: v.z = -magnitude; break;
-    case AXES.PositiveX: v.x = magnitude; break;
-    case AXES.PositiveY: v.y = magnitude; break;
-    case AXES.PositiveZ: v.z = magnitude; break;
-    default: break;
+    case AXES.NegativeX:
+      v.x = -magnitude;
+      break;
+    case AXES.NegativeY:
+      v.y = -magnitude;
+      break;
+    case AXES.NegativeZ:
+      v.z = -magnitude;
+      break;
+    case AXES.PositiveX:
+      v.x = magnitude;
+      break;
+    case AXES.PositiveY:
+      v.y = magnitude;
+      break;
+    case AXES.PositiveZ:
+      v.z = magnitude;
+      break;
+    default:
+      break;
   }
   action.rotation = {
     x: v.x / ROTATION_DIVISOR,
@@ -179,13 +222,26 @@ function translationActionVector(action, axis) {
   const v = { x: 0, y: 0, z: 0 };
   const magnitude = action.magnitude;
   switch (axis) {
-    case AXES.NegativeX: v.x = magnitude; break;
-    case AXES.NegativeY: v.y = -magnitude; break;
-    case AXES.NegativeZ: v.z = magnitude; break;
-    case AXES.PositiveX: v.x = -magnitude; break;
-    case AXES.PositiveY: v.y = magnitude; break;
-    case AXES.PositiveZ: v.z = -magnitude; break;
-    default: break;
+    case AXES.NegativeX:
+      v.x = magnitude;
+      break;
+    case AXES.NegativeY:
+      v.y = -magnitude;
+      break;
+    case AXES.NegativeZ:
+      v.z = magnitude;
+      break;
+    case AXES.PositiveX:
+      v.x = -magnitude;
+      break;
+    case AXES.PositiveY:
+      v.y = magnitude;
+      break;
+    case AXES.PositiveZ:
+      v.z = -magnitude;
+      break;
+    default:
+      break;
   }
   action.translation = {
     x: v.x * GLOBAL_SCALE,
@@ -254,8 +310,12 @@ function buildAction(description, soundIndex, duration, magnitude, axisRaw, trig
 
   // Quick hack for special-case rotations, verbatim DFU.
   switch (description) {
-    case 'LID': action.rotation = { x: 0, y: 0, z: -90 }; break; // Coffin lids (e.g. Scourg Barrow)
-    case 'WHE': action.rotation = { x: 0, y: -360, z: 0 }; break; // Wheels (e.g. Direnni Tower)
+    case 'LID':
+      action.rotation = { x: 0, y: 0, z: -90 };
+      break; // Coffin lids (e.g. Scourg Barrow)
+    case 'WHE':
+      action.rotation = { x: 0, y: -360, z: 0 };
+      break; // Wheels (e.g. Direnni Tower)
   }
 
   return action;
@@ -387,11 +447,19 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
         // factionOrMobileId (fixed type), soundIndex (spawn distance),
         // and the raw action byte (Passive = 99).
         const marker = {
-          record: fr.textureRecord, x, y, z, position: obj.position, action,
-          loadID: blockPosition + obj.position,   // OH-E: RDBLayout.cs:1351 - an enemy's serialized identity, the door's law
-          rawY: obj.yPos, flags: fr.flags, factionOrMobileId: fr.factionOrMobileId,
-          soundIndex: fr.soundIndex, actionByte: fr.action,
-          isCustomData: !!fr.isCustomData,   // WD1: RdbFlatResource.IsCustomData - only a world-data JSON block sets it
+          record: fr.textureRecord,
+          x,
+          y,
+          z,
+          position: obj.position,
+          action,
+          loadID: blockPosition + obj.position, // OH-E: RDBLayout.cs:1351 - an enemy's serialized identity, the door's law
+          rawY: obj.yPos,
+          flags: fr.flags,
+          factionOrMobileId: fr.factionOrMobileId,
+          soundIndex: fr.soundIndex,
+          actionByte: fr.action,
+          isCustomData: !!fr.isCustomData, // WD1: RdbFlatResource.IsCustomData - only a world-data JSON block sets it
         };
         markers.push(marker);
         if (fr.textureRecord === 10) {
@@ -441,18 +509,26 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
         // of it, which is why the people in Castle Daggerfall, Wayrest
         // and Sentinel were inert and NPC_CONTEXT.Dungeon had no writer.
         flats.push({
-          archive: fr.textureArchive, record: fr.textureRecord, x, y, z, action,
+          archive: fr.textureArchive,
+          record: fr.textureRecord,
+          x,
+          y,
+          z,
+          action,
           position: obj.position,
           npc: isNpcFlat(fr.textureArchive),
-          factionID: fr.factionOrMobileId, flags: fr.flags,
+          factionID: fr.factionOrMobileId,
+          flags: fr.flags,
           flatPosition: fr.position,
-          rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,
+          rawX: obj.xPos,
+          rawY: obj.yPos,
+          rawZ: obj.zPos,
         });
         if (acts && !actionLinks.has(obj.position)) {
           actionLinks.set(obj.position, { nextKey: fr.nextObjectOffset, prevKey: -1, action });
         }
       }
-      objectPositions.set(obj.position, { x, y, z, yawDeg: 0 });   // flats carry no rotation (a flat teleport destination faces the marker's identity)
+      objectPositions.set(obj.position, { x, y, z, yawDeg: 0 }); // flats carry no rotation (a flat teleport destination faces the marker's identity)
     }
   }
 
@@ -475,8 +551,17 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
   }
 
   return {
-    placements, actionDoors, flats, markers, startMarkers, enterMarkers,
-    exitDoors, actionLinks, objectPositions, waterLevel, castleBlock,
+    placements,
+    actionDoors,
+    flats,
+    markers,
+    startMarkers,
+    enterMarkers,
+    exitDoors,
+    actionLinks,
+    objectPositions,
+    waterLevel,
+    castleBlock,
   };
 }
 
@@ -485,7 +570,9 @@ export function layoutRdbBlock(dfBlock, blockIndex, allowExitDoors, getModel) {
  *  -yRotation / RotationDivisor - the player lands facing it). */
 function positionEntryFromMatrix(matrix, obj) {
   return {
-    x: matrix[12], y: matrix[13], z: matrix[14],
+    x: matrix[12],
+    y: matrix[13],
+    z: matrix[14],
     yawDeg: -obj.resources.modelResource.yRotation / ROTATION_DIVISOR,
   };
 }

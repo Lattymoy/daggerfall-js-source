@@ -4,7 +4,14 @@
 // asks `rrVariantPerson` as each person is listed. Five pictures ship under public/art/roleplay-realism/, two are
 // rebuilt from the player's files, each with our scale (OWN-WORK3). The Villager Variety arm (:948-978) has no
 // counterpart: `materialSet` is false and the walker's archive is taken, the C#'s else.
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS, PERSON_IDLE_RECORD, NUM_PERSON_FACE_VARIANTS, walkerRace, raceOfPeople } from '../../characters/mobile/mobilePerson.js';
+import {
+  PERSON_TEXTURES,
+  PERSON_FACE_RECORDS,
+  PERSON_IDLE_RECORD,
+  NUM_PERSON_FACE_VARIANTS,
+  walkerRace,
+  raceOfPeople,
+} from '../../characters/mobile/mobilePerson.js';
 import { getWorldClimateSettings } from '../../formats/mapsFile.js';
 import { BUILDING_TYPES, isResidence } from '../../world/buildingNames.js';
 import { isShop } from '../shopStock.js';
@@ -27,8 +34,13 @@ export const rrArtUrl = (name, root = APP_ROOT ?? globalThis.document?.baseURI ?
  *  size with its record scale, over the 197 record's size, to three places. RR_KEEPER_OF says whose. */
 export const RR_KEEPER_OF = Object.freeze({ 0: 0, 1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 2 });
 export const RR_NPC_XML_SCALE = Object.freeze({
-  0: [1.205, 0.987], 1: [1.516, 0.95], 2: [1.205, 0.938], 3: [1.237, 1.333],
-  4: [0.762, 1.036], 5: [1.471, 1.106], 6: [3.09, 0.729],
+  0: [1.205, 0.987],
+  1: [1.516, 0.95],
+  2: [1.205, 0.938],
+  3: [1.237, 1.333],
+  4: [0.762, 1.036],
+  5: [1.471, 1.106],
+  6: [3.09, 0.729],
 });
 export const RR_NPC_ARCHIVE = 197;
 export const RR_NPC_RECORDS = Object.freeze([0, 1, 2, 3, 4, 5, 6]);
@@ -63,8 +75,14 @@ export function rrShopTavernRecord(archive, record, buildingType, quality) {
 // ---- the residents (:851-1077) ---------------------------------------------
 /** GetGender182 / GetGender184 (:1037-1077): the records that are a woman
  *  or a man; anything else is -1 (not a person to replace). */
-const GENDER_182 = Object.freeze({ female: new Set([10, 12, 28, 41, 45]), male: new Set([15, 17, 19, 20, 35, 39, 46]) });
-const GENDER_184 = Object.freeze({ female: new Set([1, 7, 9, 10, 19, 22, 23, 26, 28, 29, 30, 33]), male: new Set([0, 4, 16, 17, 20, 21, 24, 25]) });
+const GENDER_182 = Object.freeze({
+  female: new Set([10, 12, 28, 41, 45]),
+  male: new Set([15, 17, 19, 20, 35, 39, 46]),
+});
+const GENDER_184 = Object.freeze({
+  female: new Set([1, 7, 9, 10, 19, 22, 23, 26, 28, 29, 30, 33]),
+  male: new Set([0, 4, 16, 17, 20, 21, 24, 25]),
+});
 export function rrResidentGender(archive, record) {
   const t = archive === 182 ? GENDER_182 : archive === 184 ? GENDER_184 : null;
   if (!t) return -1;
@@ -92,7 +110,12 @@ export function rrResidentVariant({ archive, record, factionID = 0, nameSeed = 0
   const sex = gender === 0 ? 'male' : 'female';
   const textures = PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton;
   const faces = PERSON_FACE_RECORDS[race] ?? PERSON_FACE_RECORDS.Breton;
-  return { textureArchive: textures[sex][outfitVariant], textureRecord: PERSON_IDLE_RECORD, faceIndex: faces[sex][outfitVariant] + faceVariant, gender };
+  return {
+    textureArchive: textures[sex][outfitVariant],
+    textureRecord: PERSON_IDLE_RECORD,
+    faceIndex: faces[sex][outfitVariant] + faceVariant,
+    gender,
+  };
 }
 
 /** The one decision per person as the interior lists it: the keeper's
@@ -104,16 +127,22 @@ export function rrResidentVariant({ archive, record, factionID = 0, nameSeed = 0
  *  walkers are - characters/mobile/mobilePerson.js walkerRace). Writes the face
  *  override for a resident (the C#'s flatsDict write) and answers the new
  *  archive and record, or null for the classic. */
-export function rrVariantPerson(pn, { buildingType = -1, quality = 0, nameSeed = 0, worldClimate = null, region = null } = {}) {
+export function rrVariantPerson(
+  pn,
+  { buildingType = -1, quality = 0, nameSeed = 0, worldClimate = null, region = null } = {},
+) {
   if (!pn) return null;
   if (rrModule('variantNpcs')) {
     const record = rrShopTavernRecord(pn.textureArchive, pn.textureRecord, buildingType, quality);
     if (record > -1) return { textureArchive: RR_NPC_ARCHIVE, textureRecord: record };
   }
   if (rrModule('variantResidents') && isResidence(buildingType)) {
-    const v = rrResidentVariant({ archive: pn.textureArchive, record: pn.textureRecord, factionID: pn.factionID ?? 0, nameSeed }, walkerRace(getWorldClimateSettings(worldClimate)?.people, region));   // AUDIT FB1010 C3: the street's own rule
+    const v = rrResidentVariant(
+      { archive: pn.textureArchive, record: pn.textureRecord, factionID: pn.factionID ?? 0, nameSeed },
+      walkerRace(getWorldClimateSettings(worldClimate)?.people, region),
+    ); // AUDIT FB1010 C3: the street's own rule
     if (v) {
-      setFlatFaceOverride(pn.textureArchive, pn.textureRecord, v.faceIndex);   // flatsDict[flatId] = { faceIndex } (:1017-1023), keyed by the flat the person was born as
+      setFlatFaceOverride(pn.textureArchive, pn.textureRecord, v.faceIndex); // flatsDict[flatId] = { faceIndex } (:1017-1023), keyed by the flat the person was born as
       return { textureArchive: v.textureArchive, textureRecord: v.textureRecord };
     }
   }
@@ -135,18 +164,46 @@ export { RR_DERIVED };
 export function installRoleplayRealismArt({ fetchBytes = null, art = null } = {}) {
   if (_installed) return 0;
   _installed = true;
-  const load = fetchBytes ?? (async (name) => { const r = await fetch(rrArtUrl(name)); if (!r.ok) throw new Error(`${name}: ${r.status}`); return new Uint8Array(await r.arrayBuffer()); });
+  const load =
+    fetchBytes ??
+    (async (name) => {
+      const r = await fetch(rrArtUrl(name));
+      if (!r.ok) throw new Error(`${name}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
   const built = (name) => (art ?? classicArt()).build(RR_DERIVED[name]);
   const gate = () => rrModule('variantNpcs');
-  registerBillboardXml('roleplay-realism', { [RR_NPC_ARCHIVE]: Object.fromEntries(Object.entries(RR_NPC_XML_SCALE)) }, gate);
+  registerBillboardXml(
+    'roleplay-realism',
+    { [RR_NPC_ARCHIVE]: Object.fromEntries(Object.entries(RR_NPC_XML_SCALE)) },
+    gate,
+  );
   for (const record of RR_BUTTON_RECORDS) {
     const name = `BUTTONS.RCI_${record}-0`;
-    registerButtonArt(record, () => (RR_DERIVED[name] ? built(name) : load(name)), () => rrRefinedTrainingOn());
+    registerButtonArt(
+      record,
+      () => (RR_DERIVED[name] ? built(name) : load(name)),
+      () => rrRefinedTrainingOn(),
+    );
   }
-  return addVendorTextures(RR_NPC_RECORDS.map((record) => {
-    const fileName = `${RR_NPC_ARCHIVE}_${record}-0`;
-    return { archive: RR_NPC_ARCHIVE, record, frame: 0, dye: null, map: 'Albedo', fileName, lazy: true, gate, ...(RR_DERIVED[fileName] ? { build: () => built(fileName), selfBuilt: true } : { load }) };
-  }));
+  return addVendorTextures(
+    RR_NPC_RECORDS.map((record) => {
+      const fileName = `${RR_NPC_ARCHIVE}_${record}-0`;
+      return {
+        archive: RR_NPC_ARCHIVE,
+        record,
+        frame: 0,
+        dye: null,
+        map: 'Albedo',
+        fileName,
+        lazy: true,
+        gate,
+        ...(RR_DERIVED[fileName] ? { build: () => built(fileName), selfBuilt: true } : { load }),
+      };
+    }),
+  );
 }
 /** Test seam. */
-export function _resetRoleplayRealismArt() { _installed = false; }
+export function _resetRoleplayRealismArt() {
+  _installed = false;
+}

@@ -2,8 +2,8 @@
   {
     "name": "PASS-COUNT-view-unsummed",
     "file": "src/ui/fpsCounter.js",
-    "old": "sumView += st.viewDraws ?? 0; ",
-    "new": "",
+    "old": "      sumView += st.viewDraws ?? 0;\n      sumShadow += st.shadowDraws ?? 0;",
+    "new": "      sumShadow += st.shadowDraws ?? 0;",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "PASS-COUNT-shadow-unsummed",
     "file": "src/ui/fpsCounter.js",
-    "old": "sumShadow += st.shadowDraws ?? 0; ",
-    "new": "",
+    "old": "      sumShadow += st.shadowDraws ?? 0;\n      samples++;",
+    "new": "      samples++;",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "PASS-COUNT-means-carried",
     "file": "src/ui/fpsCounter.js",
-    "old": "      sumView = 0; sumShadow = 0;   // PASS-COUNT",
-    "new": "",
+    "old": "      sumView = 0;\n      sumShadow = 0; // PASS-COUNT\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "PASS-COUNT-shell-unread",
     "file": "src/ui/fpsCounter.js",
-    "old": "paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps())",
-    "new": "paceLine(false, frameCapFps())",
+    "old": "            paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps()) + // PASS-COUNT",
+    "new": "            paceLine(false, frameCapFps()) + // PASS-COUNT",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "PASS-COUNT-cap-unread",
     "file": "src/ui/fpsCounter.js",
-    "old": "paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps())",
-    "new": "paceLine(!!globalThis.window?.daggerShell?.framesLifted, 0)",
+    "old": "            paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps()) + // PASS-COUNT",
+    "new": "            paceLine(!!globalThis.window?.daggerShell?.framesLifted, 0) + // PASS-COUNT",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PASS-COUNT-line-at-defaults",
     "file": "src/ui/fpsCounter.js",
-    "old": "  if (!lifted && !(cap > 0)) return '';",
-    "new": "",
+    "old": "  if (!lifted && !(cap > 0)) return '';\n  return `\\n${lifted ? 'vsync off' : 'vsync'}  ${cap > 0 ? `cap ${cap}` : 'no cap'}`;",
+    "new": "  return `\\n${lifted ? 'vsync off' : 'vsync'}  ${cap > 0 ? `cap ${cap}` : 'no cap'}`;",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "PASS-COUNT-shadow-threshold",
     "file": "src/ui/fpsCounter.js",
-    "old": "(shadow >= 0.5 ? `  shadow ${Math.round(shadow)}` : '')",
-    "new": "(shadow > 0 ? `  shadow ${Math.round(shadow)}` : '')",
+    "old": "    (shadow >= 0.5 ? `  shadow ${Math.round(shadow)}` : '')",
+    "new": "    (shadow > 0 ? `  shadow ${Math.round(shadow)}` : '')",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "PASS-COUNT-shadow-nullish",
     "file": "src/ui/fpsCounter.js",
-    "old": "sumShadow += st.shadowDraws ?? 0; ",
-    "new": "sumShadow += st.shadowDraws; ",
+    "old": "      sumShadow += st.shadowDraws ?? 0;",
+    "new": "      sumShadow += st.shadowDraws;",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "PASS-COUNT-view-nullish",
     "file": "src/ui/fpsCounter.js",
-    "old": "sumView += st.viewDraws ?? 0; ",
-    "new": "sumView += st.viewDraws; ",
+    "old": "      sumView += st.viewDraws ?? 0;",
+    "new": "      sumView += st.viewDraws;",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "PASS-COUNT-probe-view-null",
     "file": "src/ui/fpsCounter.js",
-    "old": "viewDraws: samples ? sumView / samples : null, ",
-    "new": "viewDraws: null, ",
+    "old": "          viewDraws: samples ? sumView / samples : null,",
+    "new": "          viewDraws: null,",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "PASS-COUNT-probe-shadow-null",
     "file": "src/ui/fpsCounter.js",
-    "old": "shadowDraws: samples ? sumShadow / samples : null,   // PASS-COUNT",
-    "new": "shadowDraws: null,   // PASS-COUNT",
+    "old": "          shadowDraws: samples ? sumShadow / samples : null, // PASS-COUNT",
+    "new": "          shadowDraws: null, // PASS-COUNT",
     "tests": [
       "test/systems/fb1018_passcount.test.js"
     ],

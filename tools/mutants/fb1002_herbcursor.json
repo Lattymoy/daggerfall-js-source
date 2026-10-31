@@ -92,8 +92,8 @@
   {
     "name": "HERB-CURSOR-late-lock-kept",
     "file": "src/player/pointerLock.js",
-    "old": "if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();",
-    "new": "if (_cursorActive && document.pointerLockElement) releaseLook();",
+    "old": "        if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();",
+    "new": "        if (_cursorActive && document.pointerLockElement) releaseLook();",
     "tests": [
       "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "HERB-CURSOR-hold-keeps-lock",
     "file": "src/player/pointerLock.js",
-    "old": "  _cursorHolds.add(hold);\n  releaseLook();",
-    "new": "  _cursorHolds.add(hold);",
+    "old": "  releaseLook();\n  return () => _cursorHolds.delete(hold) && _cursorHolds.size === 0;",
+    "new": "  return () => _cursorHolds.delete(hold) && _cursorHolds.size === 0;",
     "tests": [
       "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
@@ -119,15 +119,15 @@
   {
     "name": "HERB-CURSOR-boot-keeps-hold",
     "file": "src/player/pointerLock.js",
-    "old": "  _cursorHolds.clear();   // HERB-CURSOR: and an act's hold the last host never let go\n",
-    "new": "",
+    "old": "  _cursorHolds.clear(); // HERB-CURSOR: and an act's hold the last host never let go\n  let lastRealEscape = -Infinity; // ESC-LOCK (1), below",
+    "new": "  let lastRealEscape = -Infinity; // ESC-LOCK (1), below",
     "tests": [
       "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
     "name": "HERB-CURSOR-seam-unpassed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": " pointer: (want) => {",
     "new": " _pointer: (want) => {",
     "tests": [
@@ -136,8 +136,8 @@
   },
   {
     "name": "HERB-CURSOR-relock-under-travel-view",
-    "file": "src/scenes/world.js",
-    "old": "!overlayOpen() && !travelView?.active) requestLook(canvas); }; if (want === 'look')",
+    "file": "src/scenes/professionsHost.js",
+    "old": "!overlayOpen() && !host.travelView?.active) requestLook(canvas); }; if (want === 'look')",
     "new": "!overlayOpen()) requestLook(canvas); }; if (want === 'look')",
     "tests": [
       "test/systems/foraging/fb1002_herbcursor.test.js"

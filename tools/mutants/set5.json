@@ -2,8 +2,8 @@
   {
     "name": "SET5-a-place-off-by-one",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "if (it && setPieceKind(it) === 'armor' && setIdOf(it) === id) out[i] = true; });",
-    "new": "if (it && setPieceKind(it) === 'armor' && setIdOf(it) === id) out[i + 1] = true; });",
+    "old": "    if (it && setPieceKind(it) === 'armor' && setIdOf(it) === id) out[i] = true;",
+    "new": "    if (it && setPieceKind(it) === 'armor' && setIdOf(it) === id) out[i + 1] = true;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SET5-the-shields-place-never-lit",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  if (left && setPieceKind(left) === 'shield' && setIdOf(left) === id) out[SET_BODY_SLOTS.length] = true;\n",
-    "new": "",
+    "old": "  if (left && setPieceKind(left) === 'shield' && setIdOf(left) === id) out[SET_BODY_SLOTS.length] = true;\n  if ([right, left].some((h) => h && setPieceKind(h) === 'weapon' && setIdOf(h) === id))",
+    "new": "  if ([right, left].some((h) => h && setPieceKind(h) === 'weapon' && setIdOf(h) === id))",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SET5-the-weapons-place-never-lit",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "  if ([right, left].some((h) => h && setPieceKind(h) === 'weapon' && setIdOf(h) === id)) out[SET_BODY_SLOTS.length + 1] = true;\n",
-    "new": "",
+    "old": "  if ([right, left].some((h) => h && setPieceKind(h) === 'weapon' && setIdOf(h) === id))\n    out[SET_BODY_SLOTS.length + 1] = true;\n  return out;",
+    "new": "  return out;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SET5-the-renowns-sleep-said-offline",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "sigilRenown() == null ? 'renown'",
-    "new": "sigilRenown() == null ? 'offline'",
+    "old": "  !sigilOnline() ? 'offline' : sigilRenown() == null ? 'renown' : sigilDueling() ? 'duel' : null;",
+    "new": "  !sigilOnline() ? 'offline' : sigilRenown() == null ? 'offline' : sigilDueling() ? 'duel' : null;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SET5-the-count-of-pieces-more-off",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "` (${t.at - v.count} more)`",
-    "new": "` (${t.at} more)`",
+    "old": "        `${t.at} pieces - ${t.name}: ${t.brief}${t.recover != null ? `, every ${t.recover}s` : ''}${t.awake ? '' : v.count < t.at ? ` (${t.at - v.count} more)` : ' (inactive)'}`,",
+    "new": "        `${t.at} pieces - ${t.name}: ${t.brief}${t.recover != null ? `, every ${t.recover}s` : ''}${t.awake ? '' : v.count < t.at ? ` (${t.at} more)` : ' (inactive)'}`,",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SET5-a-window-shown-as-a-recovery",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (st.halvedLeft) out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: time(st.halvedLeft), state: 'active' });",
-    "new": "if (st.halvedLeft) out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: time(st.halvedLeft), state: 'recovering' });",
+    "old": "      out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: time(st.halvedLeft), state: 'active' });",
+    "new": "      out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: time(st.halvedLeft), state: 'recovering' });",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SET5-the-minutes-misread",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "const time = (n) => (n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}` : `${n}s`);",
-    "new": "const time = (n) => `${n}s`;",
+    "old": "  const time = (n) => (n >= 60 ? `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}` : `${n}s`);",
+    "new": "  const time = (n) => `${n}s`;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SET5-the-places-unlit",
     "file": "src/ui/setCard.js",
-    "old": "const p = el('span', `set-place${on ? ' on' : ''}`);",
-    "new": "const p = el('span', 'set-place');",
+    "old": "    const p = el('span', `set-place${on ? ' on' : ''}`);",
+    "new": "    const p = el('span', 'set-place');",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SET5-a-sleeping-tier-lit",
     "file": "src/ui/setCard.js",
-    "old": "const row = el('div', `set-tier${t.awake ? ' awake' : ''}`);",
-    "new": "const row = el('div', 'set-tier awake');",
+    "old": "    const row = el('div', `set-tier${t.awake ? ' awake' : ''}`);",
+    "new": "    const row = el('div', 'set-tier awake');",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SET5-the-stage-line-lost",
     "file": "src/ui/setCard.js",
-    "old": "  if (stage) box.append(el('p', 'set-stage', stage));\n",
-    "new": "",
+    "old": "  if (stage) box.append(el('p', 'set-stage', stage));\n  // the three tiers - the card's a row each, its brief; the Info box's the whole sentence",
+    "new": "  // the three tiers - the card's a row each, its brief; the Info box's the whole sentence",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SET5-a-pip-lit-asleep",
     "file": "src/ui/setCard.js",
-    "old": "for (const t of st.tiers) pips.append(el('i', t.awake ? 'on' : null));",
-    "new": "for (const t of st.tiers) pips.append(el('i', 'on'));",
+    "old": "    for (const t of st.tiers) pips.append(el('i', t.awake ? 'on' : null));",
+    "new": "    for (const t of st.tiers) pips.append(el('i', 'on'));",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SET5-the-press-handing-nothing",
     "file": "src/ui/setCard.js",
-    "old": "b.onclick = (e) => { e.stopPropagation(); onPick(first); };",
-    "new": "b.onclick = (e) => { e.stopPropagation(); onPick(null); };",
+    "old": "        onPick(first);",
+    "new": "        onPick(null);",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SET5-the-mark-never-taken-off",
     "file": "src/ui/setCard.js",
-    "old": "  else { delete node.dataset.set; node.style?.removeProperty?.('--set-rune'); }",
-    "new": "  else { node.style?.removeProperty?.('--set-rune'); }",
+    "old": "    delete node.dataset.set;\n    node.style?.removeProperty?.('--set-rune');",
+    "new": "    node.style?.removeProperty?.('--set-rune');",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SET5-the-rune-left-teal",
     "file": "src/ui/sigilRune.js",
-    "old": "encodeURIComponent(SIGIL_RUNE_TILE_SVG.replace('#72f0d8', c))",
-    "new": "encodeURIComponent(SIGIL_RUNE_TILE_SVG)",
+    "old": "    u = `url(\"data:image/svg+xml;utf8,${encodeURIComponent(SIGIL_RUNE_TILE_SVG.replace('#72f0d8', c))}\")`;",
+    "new": "    u = `url(\"data:image/svg+xml;utf8,${encodeURIComponent(SIGIL_RUNE_TILE_SVG)}\")`;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SET5-the-blows-words-on-armour",
     "file": "src/ui/sigilCard.js",
-    "old": "box.append(el('p', 'sigil-effect', !v.blow",
-    "new": "box.append(el('p', 'sigil-effect', false",
+    "old": "      !v.blow",
+    "new": "      false",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SET5-the-hotbars-key-blind-to-the-set",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}",
-    "new": "${validSigil(v.item.sigil) ? '*' : ''}` : ''}",
+    "old": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set",
+    "new": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}` : ''}` + // SET5: and its set",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SET5-a-sleeping-pieces-sigil-called-faint",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (inactive in a duel)'] : lines;",
-    "new": "return lines;",
+    "old": "  return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil)\n    ? ['Sigil (inactive in a duel)']\n    : lines;",
+    "new": "  return lines;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SET5-a-set-weapons-blow-unsaid-in-a-duel",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil) ? ['Sigil (inactive in a duel)'] : lines;",
-    "new": "return lines.length && sigilDueling() && setIdOf(item) ? ['Sigil (inactive in a duel)'] : lines;",
+    "old": "  return lines.length && sigilDueling() && setIdOf(item) && !sigilHasBlow(item.sigil)\n    ? ['Sigil (inactive in a duel)']\n    : lines;",
+    "new": "  return lines.length && sigilDueling() && setIdOf(item) ? ['Sigil (inactive in a duel)'] : lines;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SET5-a-duels-armour-sigil-lit",
     "file": "src/ui/sigilCard.js",
-    "old": "const duel = setPiece && !v0.blow && setsSleep() === 'duel';",
-    "new": "const duel = false;",
+    "old": "  const duel = setPiece && !v0.blow && setsSleep() === 'duel';",
+    "new": "  const duel = false;",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SET5-a-set-weapons-blow-put-to-sleep",
     "file": "src/ui/sigilCard.js",
-    "old": "const duel = setPiece && !v0.blow && setsSleep() === 'duel';",
-    "new": "const duel = setPiece && setsSleep() === 'duel';",
+    "old": "  const duel = setPiece && !v0.blow && setsSleep() === 'duel';",
+    "new": "  const duel = setPiece && setsSleep() === 'duel';",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SET5-a-ring-called-a-sets",
     "file": "src/ui/sigilCard.js",
-    "old": "? (!setPiece ? 'A sigil with no set'",
-    "new": "? (false ? 'A sigil with no set'",
+    "old": "        ? !setPiece",
+    "new": "        ? false",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SET5-the-label-on-a-bare-div",
     "file": "src/ui/setCard.js",
-    "old": "  strip.setAttribute('role', 'group');",
-    "new": "  // (no role)",
+    "old": "  strip.setAttribute('role', 'group'); // AUDIT SET U14: a label names a group, not a bare div",
+    "new": "  // (no role)   // AUDIT SET U14: a label names a group, not a bare div",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]

@@ -19,7 +19,12 @@
 // every door that draws an item's picture draws it (Starglass's law, systems/starfall/starglass.js).
 //
 // Not a DFU member. Ledger A (LOCKPICK).
-import { registerCustomTemplates, setItemFields, mintCondition, registerItemUseHandler } from '../item/itemTemplates.js';
+import {
+  registerCustomTemplates,
+  setItemFields,
+  mintCondition,
+  registerItemUseHandler,
+} from '../item/itemTemplates.js';
 import { addItem, removeOne } from '../inventory.js';
 import { registerEnemyLootExtra } from '../loot/loot.js';
 import { addVendorTextures } from '../textureReplacement.js';
@@ -33,12 +38,23 @@ import { LOCKPICK_TEMPLATE, LOCKPICK_LAW_ROW } from './lockpickRow.js';
 export { LOCKPICK_TEMPLATE };
 /** Its row: the leaf's with its name and its picture. */
 export const LOCKPICK_ROW = Object.freeze({
-  ...LOCKPICK_LAW_ROW, name: 'Lockpick', capacityOrTarget: 0, enchantmentPoints: 0, variants: 0, drawOrderOrEffect: 0,
-  isBluntWeapon: false, isLiquid: false, isOneHanded: false, isIngredient: false,
-  worldTextureArchive: LOCKPICK_ART.archive, worldTextureRecord: LOCKPICK_ART.record, playerTextureArchive: 0, playerTextureRecord: 0,
+  ...LOCKPICK_LAW_ROW,
+  name: 'Lockpick',
+  capacityOrTarget: 0,
+  enchantmentPoints: 0,
+  variants: 0,
+  drawOrderOrEffect: 0,
+  isBluntWeapon: false,
+  isLiquid: false,
+  isOneHanded: false,
+  isIngredient: false,
+  worldTextureArchive: LOCKPICK_ART.archive,
+  worldTextureRecord: LOCKPICK_ART.record,
+  playerTextureArchive: 0,
+  playerTextureRecord: 0,
 });
 registerCustomTemplates([LOCKPICK_ROW]);
-registerLockpickArt(addVendorTextures);   // the import IS the registration
+registerLockpickArt(addVendorTextures); // the import IS the registration
 
 /** The stack a General Store's or a Pawn Shop's counter keeps (ENDLESS-STOCK). */
 export const ENDLESS_LOCKPICK_STACK = 25;
@@ -49,23 +65,32 @@ export const LOCKPICK_GIFT = 1;
 /** A rogue's pockets: [mobile type, chance (0..1), the most picks] - a Burglar's and a Thief's trade, the rest's now
  *  and then. One to `most`, evenly. */
 export const ROGUE_LOCKPICKS = Object.freeze([
-  Object.freeze([MOBILE_TYPES.Burglar, 0.6, 3]), Object.freeze([MOBILE_TYPES.Thief, 0.6, 3]),
-  Object.freeze([MOBILE_TYPES.Rogue, 0.3, 2]), Object.freeze([MOBILE_TYPES.Nightblade, 0.25, 2]),
-  Object.freeze([MOBILE_TYPES.Acrobat, 0.25, 2]), Object.freeze([MOBILE_TYPES.Assassin, 0.25, 2]),
+  Object.freeze([MOBILE_TYPES.Burglar, 0.6, 3]),
+  Object.freeze([MOBILE_TYPES.Thief, 0.6, 3]),
+  Object.freeze([MOBILE_TYPES.Rogue, 0.3, 2]),
+  Object.freeze([MOBILE_TYPES.Nightblade, 0.25, 2]),
+  Object.freeze([MOBILE_TYPES.Acrobat, 0.25, 2]),
+  Object.freeze([MOBILE_TYPES.Assassin, 0.25, 2]),
   Object.freeze([MOBILE_TYPES.Bard, 0.15, 1]),
 ]);
 
 /** Whether a record IS a lockpick - its template and its group, the one spelling every rule reads. */
-export const isLockpick = (/** @type {any} */ item) => item?.templateIndex === LOCKPICK_TEMPLATE && item?.group === 'UselessItems2';
+export const isLockpick = (/** @type {any} */ item) =>
+  item?.templateIndex === LOCKPICK_TEMPLATE && item?.group === 'UselessItems2';
 /** `n` lockpicks (at least one), one stack, minted on their own row. */
 export function lockpicks(n = 1) {
-  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: LOCKPICK_TEMPLATE })), { stackCount: Math.max(1, Math.trunc(Number(n) || 1)) });
+  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: LOCKPICK_TEMPLATE })), {
+    stackCount: Math.max(1, Math.trunc(Number(n) || 1)),
+  });
 }
 /** How many lockpicks a list (the pack) holds, every stack together. */
-export const lockpickCount = (/** @type {any} */ items) => (Array.isArray(items)
-  ? items.reduce((n, it) => n + (isLockpick(it) ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0), 0) : 0);
+export const lockpickCount = (/** @type {any} */ items) =>
+  Array.isArray(items)
+    ? items.reduce((n, it) => n + (isLockpick(it) ? Math.max(1, Math.trunc(Number(it.stackCount) || 1)) : 0), 0)
+    : 0;
 /** One lockpick gone from the pack - a pick snapped in a lock. Answers whether there was one to lose. */
-export const spendLockpick = (/** @type {any} */ entity) => (Array.isArray(entity?.items) ? removeOne(entity.items, LOCKPICK_TEMPLATE, { group: 'UselessItems2' }) : false);
+export const spendLockpick = (/** @type {any} */ entity) =>
+  Array.isArray(entity?.items) ? removeOne(entity.items, LOCKPICK_TEMPLATE, { group: 'UselessItems2' }) : false;
 
 /** ENDLESS-STOCK (systems/shopStock.js): a counter's stack of lockpicks stood whole - made when it has none, filled back
  *  to ENDLESS_LOCKPICK_STACK when it holds fewer. Answers the list. */
@@ -83,7 +108,10 @@ export function ensureEndlessLockpicks(/** @type {any[]} */ items) {
 export function restockLockpicks(/** @type {any[]} */ items, /** @type {number} */ took) {
   if (!Array.isArray(items) || !(took > 0)) return 0;
   const stack = items.find(isLockpick);
-  if (!stack) { items.push(lockpicks(Math.min(ENDLESS_LOCKPICK_STACK, took))); return 1; }
+  if (!stack) {
+    items.push(lockpicks(Math.min(ENDLESS_LOCKPICK_STACK, took)));
+    return 1;
+  }
   const was = stack.stackCount ?? 1;
   if (was >= ENDLESS_LOCKPICK_STACK) return 0;
   stack.stackCount = Math.min(ENDLESS_LOCKPICK_STACK, was + took);
@@ -93,7 +121,12 @@ export function restockLockpicks(/** @type {any[]} */ items, /** @type {number} 
 /** Whether a character's class holds Lockpicking at all - primary, major or minor. */
 export function careerPicksLocks(/** @type {any} */ entity) {
   const c = entity?.career;
-  return !!c && [c.primarySkills, c.majorSkills, c.minorSkills].some((list) => Array.isArray(list) && list.includes(SKILLS.Lockpicking));
+  return (
+    !!c &&
+    [c.primarySkills, c.majorSkills, c.minorSkills].some(
+      (list) => Array.isArray(list) && list.includes(SKILLS.Lockpicking),
+    )
+  );
 }
 /** A new character's picks (startingGear.js addSurvivalProvisions): LOCKPICK_KIT for a class that holds Lockpicking,
  *  none for the rest. Answers the stack given, or null. */
@@ -124,7 +157,9 @@ export function rogueLockpicks(/** @type {any[]} */ items, /** @type {any} */ ba
   addItem(items, lockpicks(n));
   return n;
 }
-registerEnemyLootExtra('lockpick', ({ items, basics, rolls }) => { rogueLockpicks(items, basics, rolls); });
+registerEnemyLootExtra('lockpick', ({ items, basics, rolls }) => {
+  rogueLockpicks(items, basics, rolls);
+});
 
 /** Its card's lines: what it is for, read when the card is shown (Starglass's shape). */
 export const LOCKPICK_TEXT = Object.freeze({
@@ -132,7 +167,8 @@ export const LOCKPICK_TEXT = Object.freeze({
     t('lockpick.item.what', 'A thin steel pick and a tension wrench, for locks that are not yours.'),
     t('lockpick.item.use', 'In Steal mode, activate a locked door, chest or crate to pick it. A pick can snap.'),
   ],
-  use: () => t('lockpick.item.useLine', 'Switch to Steal mode and activate a locked door, chest or crate to pick its lock.'),
+  use: () =>
+    t('lockpick.item.useLine', 'Switch to Steal mode and activate a locked door, chest or crate to pick its lock.'),
 });
 /** The pack's Use: how a lock is picked (every reader shows a `text` result). */
 registerItemUseHandler(LOCKPICK_TEMPLATE, () => ({ kind: 'text', text: LOCKPICK_TEXT.use() }));

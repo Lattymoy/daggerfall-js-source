@@ -149,7 +149,7 @@ test('PVP-RULES NO SADDLE (the owner: "No horse u demoibt", "Demount"): flagged 
   assert.match(readFileSync('src/systems/effects.js', 'utf8'), /if \(spell\?\.pvpKit != null\) list\[i\]\.bundleKit = true;/, 'a bar spell\'s entry is marked');
   assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /function setMode\(mode\) \{\n\s+if \(mode === TRANSPORT_MODES\.Dragon[^\n]*\n\s+if \(refused\(mode\)\) return;/, 'the one place the mode changes refuses the saddle');   // PIN MOVED (DRAGON5): after the held dragon's check
   assert.match(readFileSync('src/player/mountRig.js', 'utf8'), /const refused = \(mode\) => \{ const barred = isRiding\(mode\) \? rideBarred\(\) : null; if \(barred\) _rideSay\?\.\(barred\); return !!barred; \};/, 'a saddle asks the bar and says its line');
-  assert.match(readFileSync('src/scenes/pvpRulesHost.js', 'utf8'), /if \(isRiding\(motor\?\.transportMode\)\) \{ rideFoot\(\);/);
+  assert.match(readFileSync('src/scenes/pvpRulesHost.js', 'utf8'), /if \(isRiding\(motor\?\.transportMode\)\) \{\n\s*rideFoot\(\);/);
   on = false;
   assert.equal(rideBarred(), null, 'off the flag a saddle is free');
   h.tick();

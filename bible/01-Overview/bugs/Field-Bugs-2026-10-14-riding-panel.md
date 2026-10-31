@@ -18,7 +18,7 @@ with no frame at all.
 buildSaddlePreview.
 
 FOUND. HUD-MOVE finds every piece it moves by a selector in one list
-(`hudLayout.js:"export const HUD_PIECES = Object.freeze(["`) - "ONE SEAM, NO HOST EDITS": the modules that build the
+(`hudLayout.js:"export const HUD_PIECES"`) - "ONE SEAM, NO HOST EDITS": the modules that build the
 pieces tell it nothing, so a piece the list does not name is never marked, framed, moved, sized or turned off. The
 saddle panel (`ui/enhanced/enhancedSaddle.js`, `10-UI/Controls.md` THE SADDLE PANEL) shipped ten days after the list and was never
 given a row in it. It stands in a layer of its own over the whole screen (`.saddlepanel`, pointer-blind), its bar
@@ -28,7 +28,7 @@ was never wrong; it was simply not one of the pieces.
 
 FIXED.
 
-- **The bar is a piece**: `hudLayout.js:"{ id: 'saddle', sel: '.saddlepanel .saddlepanel-bar'"` - "Riding panel" over
+- **The bar is a piece**: `hudLayout.js:"only when there is a ride to show, and a window over the HUD covers".."{"` - "Riding panel" over
   its corner, moved by a drag, sized by its corner square, turned off and on by its X, put back by a double-click,
   saved with the rest of the layout and put back by Reset, as every piece is. The piece is the bar, not its layer - the
   layer is the whole screen. No `dummy`: the panel is built only when there is a ride to show, and a window over the HUD
@@ -36,7 +36,7 @@ FIXED.
 - **Placed from its first frame**: the panel is built anew each time its rider mounts (`hideEnhancedSaddle` takes it
   down at the dismount, a door, the skin), and the editor's sweep runs on a 250 ms clock (PERF-HUD1). So the builder asks
   for a sweep the moment it puts the panel on the page, through the leaf MOVED-NOTICE built for the notice stack
-  (`enhancedSaddle.js:"placeHudPieces(doc);   // HUD-SADDLE"`): a moved panel never stands a frame at the sheet's place,
+  (`enhancedSaddle.js:"placeHudPieces(doc)"`): a moved panel never stands a frame at the sheet's place,
   and one turned off never shows. The leaf, not `ui/hud/hudLayout.js` itself - the editor's previews reach the gate's, the
   party's and the codex's hosts.
 - **A preview while nobody rides** (HUD-PREVIEW's law, Mac: "show in unlocked mode all notification popups and everything
@@ -45,7 +45,7 @@ FIXED.
   touches the live panel's slot. On a touch device it stands at a finger's place, where the hosts' own panel does
   (`isTouchDevice`, the very question `ui/touch/touch.js` attachTouch asks). Its stand-in is the layer and its piece the bar
   inside it, so HUD-MOVE's test for a stand-in reads a node's layer as well as the node
-  (`hudLayout.js:"const ghostOf = (n) =>"`): the whole stand-in leaves when a rider mounts or the HUD is locked, and the
+  (`hudLayout.js:"const ghostOf = (n)"`): the whole stand-in leaves when a rider mounts or the HUD is locked, and the
   next sweep never mistakes the preview's bar for a real panel.
 - **A fake that lied, told the truth** (`test/invdrag.mjs`, the pack's suites' document): its selector reader took an id
   and an attribute (`#fps-counter`, `[data-hm-ghost]`) for nothing at all, so either matched every node - and the
@@ -66,8 +66,8 @@ edited.
 THE HELM PANEL (HUD-HELM, 2026-10-15, Mac: "Yes, same branch"). The helm panel (`ui/enhanced/enhancedHelm.js`, CSA-L) is the
 saddle panel's twin - the same whole-screen layer, its bar at the same place under the compass - and stood outside
 HUD_PIECES as the saddle did. Recorded here as not changed, and Mac's word was to change it on this branch. It is the
-saddle's fix to the letter: the piece (`hudLayout.js:"{ id: 'helm', sel: '.helmpanel .helmpanel-bar'"`, "Helm panel"),
-placed on build (`enhancedHelm.js:"placeHudPieces(doc);   // HUD-HELM"`), and a preview while nobody is at a helm
+saddle's fix to the letter: the piece (`hudLayout.js:"stands under the".."{"`, "Helm panel"),
+placed on build (`enhancedHelm.js:"placeHudPieces(doc)"`), and a preview while nobody is at a helm
 (`buildHelmPreview`, its own nodes AND its own holds - a trim held on the live panel is the live panel's). Its build and
 its painting split the saddle's way (`build`, `paintHelm`); the live panel's frame is the same frame. THE SEA'S TARGET
 CARD (`ui/naval/navalHud.js`) stands under the bar wherever it is moved: it measured the bar's foot for its head already (NAV-F
@@ -111,5 +111,5 @@ climates and calories boons." So the switch is three tiers on its one key, as Cl
 horse), Boons - the default - (care earns, neglect costs nothing, never below DFU's horse) and Hard (the system as it
 stood), each player's own online as every Climates & Calories tier is. A stored Off stays Off, a stored On lands on
 Hard, and a player who never touched it plays Boons. Every door asks the tier through one accessor
-(`upkeepSwitch.js:"export const horseCareRules = () =>"`). `06-Systems/Horse-Care.md`, The tiers; pinned by
+(`upkeepSwitch.js:"export const horseCareRules"`). `06-Systems/Horse-Care.md`, The tiers; pinned by
 `test/systems/horsetiers.test.js` (7) and `tools/mutants/horsetiers.json` (20, all dead).

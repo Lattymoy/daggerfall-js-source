@@ -35,33 +35,82 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  movePlace, rotatePlace, scalePlace, movePart, rotatePart, scalePart, partWorldQuat, worldToPlace, newPart, newLight,
+  movePlace,
+  rotatePlace,
+  scalePlace,
+  movePart,
+  rotatePart,
+  scalePart,
+  partWorldQuat,
+  worldToPlace,
+  newPart,
+  newLight,
 } from '../poi/poiEdit.js';
-import { gizmoSize, gizmoShape, pickHandle, beginGizmoDrag, dragResult, POI_SNAP_DEFAULT, POI_GIZMO_PX } from '../poi/poiGizmo.js';
+import {
+  gizmoSize,
+  gizmoShape,
+  pickHandle,
+  beginGizmoDrag,
+  dragResult,
+  POI_SNAP_DEFAULT,
+  POI_GIZMO_PX,
+} from '../poi/poiGizmo.js';
 import { quatRotate } from '../world/quat.js';
 import { lookDir } from './decor/decorTool.js';
 import { rayDirFromScreen } from '../player/tapRay.js';
 import { canvasPoint } from '../player/travelPick.js';
-import { capturePointer } from '../ui/pointerCapture.js';   // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
+import { capturePointer } from '../ui/pointerCapture.js'; // RPT1026-CLIENT: a pad's synthetic pointer is refused a capture, never thrown
 
 /** The eye's speed (m/s): where it starts, its bounds, the wheel's step (a factor), Shift's and Ctrl's. */
-export const POI_EYE = Object.freeze({ speed: 12, min: 0.5, max: 600, wheel: 1.25, fast: 4, look: 0.0035, pitch: 1.55 });
+export const POI_EYE = Object.freeze({
+  speed: 12,
+  min: 0.5,
+  max: 600,
+  wheel: 1.25,
+  fast: 4,
+  look: 0.0035,
+  pitch: 1.55,
+});
 /** The registry's actions the eye flies by (systems/inputActions.js): never a raw key - a rebind reaches the editor. */
-export const POI_EYE_ACTIONS = Object.freeze(['MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight', 'Jump', 'FloatUp', 'Crouch', 'FloatDown', 'Run']);
+export const POI_EYE_ACTIONS = Object.freeze([
+  'MoveForwards',
+  'MoveBackwards',
+  'MoveLeft',
+  'MoveRight',
+  'Jump',
+  'FloatUp',
+  'Crouch',
+  'FloatDown',
+  'Run',
+]);
 /** How far a pick reaches (m) - the streamed world's far edge. */
 export const POI_PICK_REACH = 6000;
 /** A drag begins once the pointer has moved this far (CSS px) - a click that wobbled is still a click. */
 export const POI_CLICK_SLOP = 4;
 /** The handles' colours: x red, y green, z blue, the view's and all-axes white, a hovered one yellow. */
 export const POI_HANDLE_COLOR = Object.freeze({
-  x: [0.93, 0.27, 0.27, 1], y: [0.45, 0.85, 0.3, 1], z: [0.3, 0.55, 0.98, 1],
-  xy: [0.3, 0.55, 0.98, 0.9], yz: [0.93, 0.27, 0.27, 0.9], xz: [0.45, 0.85, 0.3, 0.9],
-  view: [0.95, 0.95, 0.95, 1], all: [0.95, 0.95, 0.95, 1], hover: [1, 0.86, 0.2, 1],
+  x: [0.93, 0.27, 0.27, 1],
+  y: [0.45, 0.85, 0.3, 1],
+  z: [0.3, 0.55, 0.98, 1],
+  xy: [0.3, 0.55, 0.98, 0.9],
+  yz: [0.93, 0.27, 0.27, 0.9],
+  xz: [0.45, 0.85, 0.3, 0.9],
+  view: [0.95, 0.95, 0.95, 1],
+  all: [0.95, 0.95, 0.95, 1],
+  hover: [1, 0.86, 0.2, 1],
 });
 /** A selected POI's boxes, a selected part's, and the placing mark. */
-export const POI_BOX_COLOR = Object.freeze({ poi: [1, 0.7, 0.25, 0.9], part: [1, 0.86, 0.2, 1], ghost: [0.6, 0.9, 1, 1] });
+export const POI_BOX_COLOR = Object.freeze({
+  poi: [1, 0.7, 0.25, 0.9],
+  part: [1, 0.86, 0.2, 1],
+  ghost: [0.6, 0.9, 1, 1],
+});
 
-const AXES_WORLD = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+const AXES_WORLD = [
+  [1, 0, 0],
+  [0, 1, 0],
+  [0, 0, 1],
+];
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const add = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
@@ -71,9 +120,14 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 export function boxLines(b, color) {
   const p = (i, j, k) => [i ? b[3] : b[0], j ? b[4] : b[1], k ? b[5] : b[2]];
   const out = [];
-  for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
-    out.push({ a: p(0, i, j), b: p(1, i, j), color }, { a: p(i, 0, j), b: p(i, 1, j), color }, { a: p(i, j, 0), b: p(i, j, 1), color });
-  }
+  for (let i = 0; i < 2; i++)
+    for (let j = 0; j < 2; j++) {
+      out.push(
+        { a: p(0, i, j), b: p(1, i, j), color },
+        { a: p(i, 0, j), b: p(i, 1, j), color },
+        { a: p(i, j, 0), b: p(i, j, 1), color },
+      );
+    }
   return out;
 }
 
@@ -93,7 +147,22 @@ export function boxLines(b, color) {
  *   (`[x, y, w, h]`, null the whole drawing buffer); `gone` whether the world went from under the open editor (a mode
  *   changed, a game loaded) and `onGone` its leaving then
  */
-export function createPoiEditorHost({ edit, feed, host, view, translation, sceneToPixel, groundHit, surfaceAt, onChange = () => {}, pass = null, actionOf = () => null, viewport = () => null, gone = () => false, onGone = () => {} }) {
+export function createPoiEditorHost({
+  edit,
+  feed,
+  host,
+  view,
+  translation,
+  sceneToPixel,
+  groundHit,
+  surfaceAt,
+  onChange = () => {},
+  pass = null,
+  actionOf = () => null,
+  viewport = () => null,
+  gone = () => false,
+  onGone = () => {},
+}) {
   let on = false;
   /** @type {'select' | 'move' | 'turn' | 'size'} */
   let mode = 'move';
@@ -101,7 +170,15 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
   let space = 'world';
   let snapOn = false;
   const snap = { ...POI_SNAP_DEFAULT };
-  const eye = { speed: /** @type {number} */ (POI_EYE.speed), look: false, pan: false, orbit: false, keys: new Set(), lastX: 0, lastY: 0 };
+  const eye = {
+    speed: /** @type {number} */ (POI_EYE.speed),
+    look: false,
+    pan: false,
+    orbit: false,
+    keys: new Set(),
+    lastX: 0,
+    lastY: 0,
+  };
   let ctrlHeld = false;
   /** @type {string | null} */
   let hover = null;
@@ -112,9 +189,15 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
   /** @type {null | { kind: 'poi', name: string } | { kind: 'part', asset: any, fallbackName?: string }} */
   let placing = null;
   /** @type {number[] | null} */
-  let placeAt = null;   // where the placing mark stands (scene frame)
+  let placeAt = null; // where the placing mark stands (scene frame)
   let overlayGen = -1;
-  const told = () => { try { onChange(); } catch (e) { console.warn('[poi] editor listener', e); } };
+  const told = () => {
+    try {
+      onChange();
+    } catch (e) {
+      console.warn('[poi] editor listener', e);
+    }
+  };
 
   /** The cursor's ray through the frame the world drew: `{ o, d }` or null (off the world strip). */
   function rayAt(clientX, clientY) {
@@ -132,7 +215,7 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     let ground = 0;
     if (doc.place.ground === 'snap') {
       const g = surfaceAt(t[0] + doc.place.x, t[2] + doc.place.z);
-      if (!Number.isFinite(g)) return null;   // its ground not built yet: nothing to hold
+      if (!Number.isFinite(g)) return null; // its ground not built yet: nothing to hold
       ground = g - t[1];
     }
     return [t[0] + doc.place.x, t[1] + ground + doc.place.y, t[2] + doc.place.z];
@@ -153,7 +236,8 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
       return { c: add(origin, mul(quatRotate(doc.place.r, l.t), doc.place.s)), axes: AXES_WORLD, doc, sel, light: l };
     }
     if (sel.part == null) {
-      const axes = space === 'local' || mode === 'size' ? AXES_WORLD.map((a) => quatRotate(doc.place.r, a)) : AXES_WORLD;
+      const axes =
+        space === 'local' || mode === 'size' ? AXES_WORLD.map((a) => quatRotate(doc.place.r, a)) : AXES_WORLD;
       return { c: origin, axes, doc, sel };
     }
     const part = doc.parts.find((p) => p.key === sel.part);
@@ -170,7 +254,7 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     const tg = target();
     const v = view();
     if (!tg || !v || (tg.light && mode !== 'move')) return null;
-    if (edit.shownAs?.(tg.sel.id) !== undefined) return null;   // AUDIT POI E17: another stands in its place on this screen (the approver's "Show the live one") - nothing of what is seen to hold
+    if (edit.shownAs?.(tg.sel.id) !== undefined) return null; // AUDIT POI E17: another stands in its place on this screen (the approver's "Show the live one") - nothing of what is seen to hold
     const vd = sub(tg.c, v.eye);
     const l = Math.hypot(vd[0], vd[1], vd[2]) || 1;
     const viewDir = mul(vd, 1 / l);
@@ -180,13 +264,23 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
 
   /** Apply a drag's answer to a document - absolute from the drag's start (edit.preview hands the start's copy). */
   function apply(doc, r, sel) {
-    if (sel.light != null) { const l = doc.lights?.[sel.light]; if (l && r.move) movePart(doc.place, l, r.move); return; }   // a light moves in its POI's frame, as a part does
+    if (sel.light != null) {
+      const l = doc.lights?.[sel.light];
+      if (l && r.move) movePart(doc.place, l, r.move);
+      return;
+    } // a light moves in its POI's frame, as a part does
     const part = sel.part == null ? null : doc.parts.find((p) => p.key === sel.part);
-    if (r.move) { if (part) movePart(doc.place, part, r.move); else movePlace(doc.place, r.move); }
-    if (r.turn && r.turn.deg) { if (part) rotatePart(doc.place, part, r.turn.axis, r.turn.deg); else rotatePlace(doc.place, r.turn.axis, r.turn.deg); }
+    if (r.move) {
+      if (part) movePart(doc.place, part, r.move);
+      else movePlace(doc.place, r.move);
+    }
+    if (r.turn && r.turn.deg) {
+      if (part) rotatePart(doc.place, part, r.turn.axis, r.turn.deg);
+      else rotatePlace(doc.place, r.turn.axis, r.turn.deg);
+    }
     if (r.size) {
       if (part) scalePart(part, r.size);
-      else scalePlace(doc.place, r.size.find((f) => f !== 1) ?? 1);   // the POI's one size: the dragged side's factor
+      else scalePlace(doc.place, r.size.find((f) => f !== 1) ?? 1); // the POI's one size: the dragged side's factor
     }
   }
 
@@ -196,10 +290,21 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     const ray = rayAt(clientX, clientY);
     if (!ray) return;
     const hit = host.pick(ray.o, ray.d, POI_PICK_REACH);
-    if (!hit) { if (!additive) edit.select(null); told(); return; }
+    if (!hit) {
+      if (!additive) edit.select(null);
+      told();
+      return;
+    }
     // only a POI being edited can be selected: a live one is opened for editing by the UI's word (`wantsOpen`)
-    if (!edit.has(hit.id)) { told(); api.wantsOpen?.(hit.id); return; }
-    if (edit.shownAs?.(hit.id) !== undefined) { told(); return; }   // AUDIT POI E17: what was clicked is the document shown in its place, not the one being edited
+    if (!edit.has(hit.id)) {
+      told();
+      api.wantsOpen?.(hit.id);
+      return;
+    }
+    if (edit.shownAs?.(hit.id) !== undefined) {
+      told();
+      return;
+    } // AUDIT POI E17: what was clicked is the document shown in its place, not the one being edited
     // the first click on a POI takes the POI; once it is held, a click takes the part under the cursor
     const sel = edit.selection();
     edit.select(sel?.id === hit.id ? { id: hit.id, part: hit.key } : { id: hit.id, part: null });
@@ -225,7 +330,7 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     } else {
       const asset = placing.asset;
       const sel = edit.selection();
-      if (sel ? !originOfDoc(edit.docOf(sel.id)) : !Number.isFinite(ground)) return;   // its ground not built yet: nothing to stand it from
+      if (sel ? !originOfDoc(edit.docOf(sel.id)) : !Number.isFinite(ground)) return; // its ground not built yet: nothing to stand it from
       // every part of the model at once - one step - each where it stands from the model's origin, in the POI's own frame
       // (the model turns and sizes with its POI, as one thing); a library entry's parts keep their own turn, size,
       // solidity and shadow, and its lights come with it (POI-4b)
@@ -240,8 +345,13 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
         for (const piece of pieces) {
           const off = piece.t ?? [0, 0, 0];
           const part = newPart(doc, {
-            mesh: piece.mesh, submeshes: piece.submeshes ?? piece.materials?.length ?? 1, name: piece.name, materials: piece.materials ?? null,
-            t: [local[0] + off[0], local[1] + off[1], local[2] + off[2]], r: piece.r, s: piece.s,
+            mesh: piece.mesh,
+            submeshes: piece.submeshes ?? piece.materials?.length ?? 1,
+            name: piece.name,
+            materials: piece.materials ?? null,
+            t: [local[0] + off[0], local[1] + off[1], local[2] + off[2]],
+            r: piece.r,
+            s: piece.s,
           });
           if (piece.collide) part.collide = piece.collide;
           if (typeof piece.shadow === 'boolean') part.shadow = piece.shadow;
@@ -250,28 +360,51 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
         }
         if (asset.lights?.length) doc.lights ??= [];
         // tidied as a new light's spot is (newLight), as a new part's is
-        for (const l of asset.lights ?? []) doc.lights.push({ ...structuredClone(l), t: newLight([local[0] + l.t[0], local[1] + l.t[1], local[2] + l.t[2]]).t });
+        for (const l of asset.lights ?? [])
+          doc.lights.push({
+            ...structuredClone(l),
+            t: newLight([local[0] + l.t[0], local[1] + l.t[1], local[2] + l.t[2]]).t,
+          });
       };
       const held = (id) => ({ id, part: pieces.length > 1 ? null : key });
       // no POI held: a new one stands round the model, named for it (or as the UI names a new one) - AUDIT POI E11: the
       // POI and its model ONE step, as POI-4b says (it was two: the create, then the parts)
-      if (!sel) edit.create({ px: px.px, py: px.py, x: px.x, z: px.z, y: lift, name: asset.name || placing.fallbackName || '' }, fill, held);
+      if (!sel)
+        edit.create(
+          { px: px.px, py: px.py, x: px.x, z: px.z, y: lift, name: asset.name || placing.fallbackName || '' },
+          fill,
+          held,
+        );
       else if (edit.edit(sel.id, pieces.length > 1 ? 'add parts' : 'add part', fill) && key) edit.select(held(sel.id));
     }
-    placing = null; placeAt = null;
+    placing = null;
+    placeAt = null;
     told();
   }
 
   const api = {
     active: () => on,
     /** Open the editor: the eye where the builder stands. */
-    enter() { on = true; eye.keys.clear(); told(); },
+    enter() {
+      on = true;
+      eye.keys.clear();
+      told();
+    },
     /** Close it: any drag let go, the overlay kept (the drafts are still the builder's), the eye given back. */
     exit() {
-      if (drag) { edit.cancel(); drag = null; }
-      placing = null; placeAt = null; press = null; hover = null;
-      eye.look = eye.pan = eye.orbit = false; eye.keys.clear(); ctrlHeld = false;
-      on = false; told();
+      if (drag) {
+        edit.cancel();
+        drag = null;
+      }
+      placing = null;
+      placeAt = null;
+      press = null;
+      hover = null;
+      eye.look = eye.pan = eye.orbit = false;
+      eye.keys.clear();
+      ctrlHeld = false;
+      on = false;
+      told();
     },
     /**
      * AUDIT POI E14: EVERYTHING HELD, LET GO - the release this host never heard: a button let go over a window (the world
@@ -283,8 +416,14 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
      */
     letGo() {
       const held = !!drag || eye.look || eye.pan || eye.orbit || eye.keys.size > 0 || !!press || ctrlHeld;
-      if (drag) { edit.commit(); drag = null; }
-      eye.look = eye.pan = eye.orbit = false; eye.keys.clear(); press = null; ctrlHeld = false;
+      if (drag) {
+        edit.commit();
+        drag = null;
+      }
+      eye.look = eye.pan = eye.orbit = false;
+      eye.keys.clear();
+      press = null;
+      ctrlHeld = false;
       if (held) told();
       return held;
     },
@@ -299,9 +438,16 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     wantsOpen: null,
 
     mode: () => mode,
-    setMode(/** @type {'select' | 'move' | 'turn' | 'size'} */ m) { mode = m; hover = null; told(); },
+    setMode(/** @type {'select' | 'move' | 'turn' | 'size'} */ m) {
+      mode = m;
+      hover = null;
+      told();
+    },
     space: () => space,
-    setSpace(/** @type {'world' | 'local'} */ s) { space = s; told(); },
+    setSpace(/** @type {'world' | 'local'} */ s) {
+      space = s;
+      told();
+    },
     snapOn: () => snapOn,
     setSnap(/** @type {boolean} */ v, /** @type {{ move?: number, turn?: number, size?: number }} */ steps = {}) {
       snapOn = !!v;
@@ -310,16 +456,29 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     },
     snapSteps: () => ({ ...snap }),
     eyeSpeed: () => eye.speed,
-    setEyeSpeed(/** @type {number} */ v) { eye.speed = clamp(v, POI_EYE.min, POI_EYE.max); told(); },
+    setEyeSpeed(/** @type {number} */ v) {
+      eye.speed = clamp(v, POI_EYE.min, POI_EYE.max);
+      told();
+    },
     hovered: () => hover,
     dragging: () => !!drag,
     placing: () => placing,
     /** Stand a new POI where the next click is (its name the UI's, in the builder's language). */
-    placeNew(/** @type {string} */ name) { placing = { kind: 'poi', name }; told(); },
+    placeNew(/** @type {string} */ name) {
+      placing = { kind: 'poi', name };
+      told();
+    },
     /** Stand a library asset - a model's parts (`{ name, parts }`) or one part - in the selected POI where the next click
      *  is (none selected: a new POI round it, `fallbackName` its name when the model has none). */
-    placeAsset(asset, fallbackName = '') { placing = { kind: 'part', asset, fallbackName }; told(); },
-    cancelPlacing() { placing = null; placeAt = null; told(); },
+    placeAsset(asset, fallbackName = '') {
+      placing = { kind: 'part', asset, fallbackName };
+      told();
+    },
+    cancelPlacing() {
+      placing = null;
+      placeAt = null;
+      told();
+    },
 
     /**
      * The eye this frame (the world's `cam`): flown while the right button is held.
@@ -327,8 +486,9 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
      */
     cameraFrame(dt, cam) {
       if (!on || !eye.look) return;
-      const k = eye.keys;   // the actions held (POI_EYE_ACTIONS)
-      const f = lookDir(cam.yaw, cam.pitch), r = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
+      const k = eye.keys; // the actions held (POI_EYE_ACTIONS)
+      const f = lookDir(cam.yaw, cam.pitch),
+        r = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)];
       let mv = [0, 0, 0];
       if (k.has('MoveForwards')) mv = add(mv, f);
       if (k.has('MoveBackwards')) mv = sub(mv, f);
@@ -348,7 +508,8 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
         cam.yaw += dx * POI_EYE.look;
         cam.pitch = clamp(cam.pitch - dy * POI_EYE.look, -POI_EYE.pitch, POI_EYE.pitch);
       } else if (eye.pan) {
-        const r = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)], f = lookDir(cam.yaw, cam.pitch);
+        const r = [Math.cos(cam.yaw), 0, -Math.sin(cam.yaw)],
+          f = lookDir(cam.yaw, cam.pitch);
         const u = [f[1] * r[2] - f[2] * r[1], f[2] * r[0] - f[0] * r[2], f[0] * r[1] - f[1] * r[0]];
         const k = eye.speed * 0.004;
         for (let a = 0; a < 3; a++) cam.pos[a] += -r[a] * dx * k + u[a] * dy * k;
@@ -356,12 +517,15 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
         const tg = target();
         const pivot = tg ? tg.c : null;
         if (!pivot) return;
-        const off = sub(cam.pos, pivot), dist = Math.hypot(off[0], off[1], off[2]);
+        const off = sub(cam.pos, pivot),
+          dist = Math.hypot(off[0], off[1], off[2]);
         cam.yaw += dx * POI_EYE.look;
         cam.pitch = clamp(cam.pitch - dy * POI_EYE.look, -POI_EYE.pitch, POI_EYE.pitch);
         const f = lookDir(cam.yaw, cam.pitch);
         const p = sub(pivot, mul(f, dist));
-        cam.pos[0] = p[0]; cam.pos[1] = p[1]; cam.pos[2] = p[2];
+        cam.pos[0] = p[0];
+        cam.pos[1] = p[1];
+        cam.pos[2] = p[2];
       }
     },
     /** Frame the selection: the eye backed off along its look until the selection's box fills a third of the view. */
@@ -370,28 +534,59 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
       if (!tg) return false;
       let r = 4;
       const sel = edit.selection();
-      if (sel.part != null) { const p = host.partOf(sel.id, sel.part); if (p?.box) r = Math.hypot(p.box[3] - p.box[0], p.box[4] - p.box[1], p.box[5] - p.box[2]) / 2; }
-      else {
-        let any = false; const b = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
-        for (const part of tg.doc.parts) { const p = host.partOf(sel.id, part.key); if (p?.box) { any = true; for (let i = 0; i < 3; i++) { b[i] = Math.min(b[i], p.box[i]); b[i + 3] = Math.max(b[i + 3], p.box[i + 3]); } } }
+      if (sel.part != null) {
+        const p = host.partOf(sel.id, sel.part);
+        if (p?.box) r = Math.hypot(p.box[3] - p.box[0], p.box[4] - p.box[1], p.box[5] - p.box[2]) / 2;
+      } else {
+        let any = false;
+        const b = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
+        for (const part of tg.doc.parts) {
+          const p = host.partOf(sel.id, part.key);
+          if (p?.box) {
+            any = true;
+            for (let i = 0; i < 3; i++) {
+              b[i] = Math.min(b[i], p.box[i]);
+              b[i + 3] = Math.max(b[i + 3], p.box[i + 3]);
+            }
+          }
+        }
         if (any) r = Math.hypot(b[3] - b[0], b[4] - b[1], b[5] - b[2]) / 2;
       }
-      const f = lookDir(cam.yaw, cam.pitch), d = Math.max(2, r * 3);
+      const f = lookDir(cam.yaw, cam.pitch),
+        d = Math.max(2, r * 3);
       const p = sub(tg.c, mul(f, d));
-      cam.pos[0] = p[0]; cam.pos[1] = p[1]; cam.pos[2] = p[2];
+      cam.pos[0] = p[0];
+      cam.pos[1] = p[1];
+      cam.pos[2] = p[2];
       return true;
     },
 
     /** A pointer pressed on the world (CSS client point, its button: 0 left, 1 middle, 2 right). Answers whether the
      *  editor took it. */
-    pointerDown(/** @type {{ clientX: number, clientY: number, button: number, altKey?: boolean, shiftKey?: boolean }} */ e) {
+    pointerDown(
+      /** @type {{ clientX: number, clientY: number, button: number, altKey?: boolean, shiftKey?: boolean }} */ e,
+    ) {
       if (!on) return false;
-      eye.lastX = e.clientX; eye.lastY = e.clientY;
-      if (e.button === 2) { eye.look = true; return true; }
-      if (e.button === 1) { eye.pan = true; return true; }
+      eye.lastX = e.clientX;
+      eye.lastY = e.clientY;
+      if (e.button === 2) {
+        eye.look = true;
+        return true;
+      }
+      if (e.button === 1) {
+        eye.pan = true;
+        return true;
+      }
       if (e.button !== 0) return false;
-      if (e.altKey) { eye.orbit = true; return true; }
-      if (placing) { const at = groundUnder(e.clientX, e.clientY); if (at) place(at); return true; }
+      if (e.altKey) {
+        eye.orbit = true;
+        return true;
+      }
+      if (placing) {
+        const at = groundUnder(e.clientX, e.clientY);
+        if (at) place(at);
+        return true;
+      }
       const g = gizmo();
       if (g && hover) {
         const ray = rayAt(e.clientX, e.clientY);
@@ -402,7 +597,18 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
           // recentre mid-drag (the wheel's dolly across a pixel's edge, 500 m of height) moves the eye and every pixel by
           // its offset, and the next ray, read in the new frame against the grab in the old, carried the POI ~819 m off
           const { px, py } = g.tg.doc.place;
-          drag = { handle: hover, state, id: sel.id, part: sel.part ?? null, light: sel.light ?? null, start: null, px, py, frame: translation(px, py, [0, 0, 0]), now: [0, 0, 0] };
+          drag = {
+            handle: hover,
+            state,
+            id: sel.id,
+            part: sel.part ?? null,
+            light: sel.light ?? null,
+            start: null,
+            px,
+            py,
+            frame: translation(px, py, [0, 0, 0]),
+            now: [0, 0, 0],
+          };
           told();
           return true;
         }
@@ -413,32 +619,64 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     /** The pointer moved. @param {{ clientX: number, clientY: number, ctrlKey?: boolean }} e @param {any} cam */
     pointerMove(e, cam) {
       if (!on) return false;
-      const dx = e.clientX - eye.lastX, dy = e.clientY - eye.lastY;
-      eye.lastX = e.clientX; eye.lastY = e.clientY;
+      const dx = e.clientX - eye.lastX,
+        dy = e.clientY - eye.lastY;
+      eye.lastX = e.clientX;
+      eye.lastY = e.clientY;
       ctrlHeld = !!e.ctrlKey;
-      if (eye.look || eye.pan || eye.orbit) { api.lookBy(dx, dy, cam); return true; }
+      if (eye.look || eye.pan || eye.orbit) {
+        api.lookBy(dx, dy, cam);
+        return true;
+      }
       if (drag) {
         const ray = rayAt(e.clientX, e.clientY);
-        if (ray) { translation(drag.px, drag.py, drag.now); for (let a = 0; a < 3; a++) ray.o[a] -= drag.now[a] - drag.frame[a]; }   // AUDIT POI E7: the ray read in the frame the drag began in
+        if (ray) {
+          translation(drag.px, drag.py, drag.now);
+          for (let a = 0; a < 3; a++) ray.o[a] -= drag.now[a] - drag.frame[a];
+        } // AUDIT POI E7: the ray read in the frame the drag began in
         const r = ray ? dragResult(drag.state, ray.o, ray.d, snapNow()) : null;
-        if (r) { const sel = { id: drag.id, part: drag.part, light: drag.light }; edit.preview((doc) => apply(doc, r, sel)); }
+        if (r) {
+          const sel = { id: drag.id, part: drag.part, light: drag.light };
+          edit.preview((doc) => apply(doc, r, sel));
+        }
         return true;
       }
       if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > POI_CLICK_SLOP) press.moved = true;
-      if (placing) { placeAt = groundUnder(e.clientX, e.clientY); return true; }
+      if (placing) {
+        placeAt = groundUnder(e.clientX, e.clientY);
+        return true;
+      }
       // the handle under the cursor, lit
       const g = gizmo();
       const ray = g ? rayAt(e.clientX, e.clientY) : null;
       const h = g && ray ? pickHandle(g, ray.o, ray.d) : null;
-      if (h !== hover) { hover = h; told(); }
+      if (h !== hover) {
+        hover = h;
+        told();
+      }
       return true;
     },
     pointerUp(/** @type {{ clientX: number, clientY: number, button: number, shiftKey?: boolean }} */ e) {
       if (!on) return false;
-      if (e.button === 2) { eye.look = false; eye.keys.clear(); return true; }
-      if (e.button === 1) { eye.pan = false; return true; }
-      if (eye.orbit) { eye.orbit = false; return true; }
-      if (drag) { edit.commit(); drag = null; told(); return true; }
+      if (e.button === 2) {
+        eye.look = false;
+        eye.keys.clear();
+        return true;
+      }
+      if (e.button === 1) {
+        eye.pan = false;
+        return true;
+      }
+      if (eye.orbit) {
+        eye.orbit = false;
+        return true;
+      }
+      if (drag) {
+        edit.commit();
+        drag = null;
+        told();
+        return true;
+      }
       if (press && !press.moved) pickAt(e.clientX, e.clientY, !!e.shiftKey);
       press = null;
       return true;
@@ -446,8 +684,12 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     /** The wheel: while flying, the eye's speed; else a step along the look. */
     wheel(/** @type {{ deltaY: number }} */ e, cam) {
       if (!on) return false;
-      if (eye.look) { api.setEyeSpeed(eye.speed * (e.deltaY < 0 ? POI_EYE.wheel : 1 / POI_EYE.wheel)); return true; }
-      const f = lookDir(cam.yaw, cam.pitch), step = (e.deltaY < 0 ? 1 : -1) * Math.max(0.5, eye.speed * 0.25);
+      if (eye.look) {
+        api.setEyeSpeed(eye.speed * (e.deltaY < 0 ? POI_EYE.wheel : 1 / POI_EYE.wheel));
+        return true;
+      }
+      const f = lookDir(cam.yaw, cam.pitch),
+        step = (e.deltaY < 0 ? 1 : -1) * Math.max(0.5, eye.speed * 0.25);
       for (let a = 0; a < 3; a++) cam.pos[a] += f[a] * step;
       return true;
     },
@@ -465,30 +707,77 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
       if (!on) return false;
       const mod = e.ctrlKey || e.metaKey;
       if (e.code === 'ControlLeft' || e.code === 'ControlRight') ctrlHeld = true;
-      if (eye.look) { const a = actionOf(e); if (a && POI_EYE_ACTIONS.includes(a)) { eye.keys.add(a); return true; } return false; }   // flying: the builder's own bindings, and no tool
+      if (eye.look) {
+        const a = actionOf(e);
+        if (a && POI_EYE_ACTIONS.includes(a)) {
+          eye.keys.add(a);
+          return true;
+        }
+        return false;
+      } // flying: the builder's own bindings, and no tool
       // AUDIT POI E9: Ctrl+Z or Ctrl+Y mid-drag lets the drag go and nothing more (it let go AND undid the step before
       // it, and this host's own drag stood on, previewing into a document no longer dragged)
-      if (mod && (e.code === 'KeyZ' || e.code === 'KeyY') && drag) { edit.cancel(); drag = null; told(); return true; }
-      if (mod && e.code === 'KeyZ') { if (e.shiftKey) edit.redo(); else edit.undo(); told(); return true; }
-      if (mod && e.code === 'KeyY') { edit.redo(); told(); return true; }
-      if (mod && e.code === 'KeyS') { acts.save?.(); return true; }
-      if (mod && e.code === 'KeyD') { acts.duplicate?.(); return true; }
-      if (mod || e.altKey) return false;   // AUDIT POI E16: every other chord the browser's
+      if (mod && (e.code === 'KeyZ' || e.code === 'KeyY') && drag) {
+        edit.cancel();
+        drag = null;
+        told();
+        return true;
+      }
+      if (mod && e.code === 'KeyZ') {
+        if (e.shiftKey) edit.redo();
+        else edit.undo();
+        told();
+        return true;
+      }
+      if (mod && e.code === 'KeyY') {
+        edit.redo();
+        told();
+        return true;
+      }
+      if (mod && e.code === 'KeyS') {
+        acts.save?.();
+        return true;
+      }
+      if (mod && e.code === 'KeyD') {
+        acts.duplicate?.();
+        return true;
+      }
+      if (mod || e.altKey) return false; // AUDIT POI E16: every other chord the browser's
       switch (e.code) {
-        case 'KeyQ': api.setMode('select'); return true;
-        case 'KeyW': api.setMode('move'); return true;
-        case 'KeyE': api.setMode('turn'); return true;
-        case 'KeyR': api.setMode('size'); return true;
-        case 'KeyX': api.setSpace(space === 'world' ? 'local' : 'world'); return true;
-        case 'KeyF': api.frameSelection(cam); return true;
-        case 'Delete': case 'Backspace': acts.del?.(); return true;
+        case 'KeyQ':
+          api.setMode('select');
+          return true;
+        case 'KeyW':
+          api.setMode('move');
+          return true;
+        case 'KeyE':
+          api.setMode('turn');
+          return true;
+        case 'KeyR':
+          api.setMode('size');
+          return true;
+        case 'KeyX':
+          api.setSpace(space === 'world' ? 'local' : 'world');
+          return true;
+        case 'KeyF':
+          api.frameSelection(cam);
+          return true;
+        case 'Delete':
+        case 'Backspace':
+          acts.del?.();
+          return true;
         case 'Escape':
-          if (drag) { edit.cancel(); drag = null; }
-          else if (placing) { placing = null; placeAt = null; }
-          else edit.select(null);
+          if (drag) {
+            edit.cancel();
+            drag = null;
+          } else if (placing) {
+            placing = null;
+            placeAt = null;
+          } else edit.select(null);
           told();
           return true;
-        default: return false;   // AUDIT POI E16: not the editor's - the world still hears none of it (the host stops it), the browser keeps it
+        default:
+          return false; // AUDIT POI E16: not the editor's - the world still hears none of it (the host stops it), the browser keeps it
       }
     },
     /** A key let go. Answers whether the editor acted on it (a flight key up); the world hears none, as with keyDown. */
@@ -501,9 +790,12 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
 
     /** Once a frame: the working set laid over the live POIs when it moved. */
     frame() {
-      if (api.worldGone()) return;   // AUDIT POI E14: a load under the editor (the street's frame runs on) - the editor left first
+      if (api.worldGone()) return; // AUDIT POI E14: a load under the editor (the street's frame runs on) - the editor left first
       const g = edit.generation();
-      if (g !== overlayGen) { overlayGen = g; feed.setOverlay(edit.overlay()); }
+      if (g !== overlayGen) {
+        overlayGen = g;
+        feed.setOverlay(edit.overlay());
+      }
     },
     /** Whether a draft's colliders may stand now (poiHost.js collideDrafts): not while it is dragged. */
     collideDrafts: () => !drag,
@@ -511,7 +803,8 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
     /** The lines to draw this frame: `{ inWorld, onTop }` - the selection's boxes where the models stand, the gizmo and
      *  the placing mark over everything. */
     lineSets() {
-      const inWorld = [], onTop = [];
+      const inWorld = [],
+        onTop = [];
       if (!on) return { inWorld, onTop };
       const sel = edit.selection();
       if (sel) {
@@ -520,7 +813,10 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
           const p = host.partOf(sel.id, part.key);
           if (!p?.box) continue;
           const color = sel.part === part.key ? POI_BOX_COLOR.part : POI_BOX_COLOR.poi;
-          if (sel.part == null || sel.part === part.key) { inWorld.push(...boxLines(p.box, color)); onTop.push(...boxLines(p.box, [color[0], color[1], color[2], 0.22])); }
+          if (sel.part == null || sel.part === part.key) {
+            inWorld.push(...boxLines(p.box, color));
+            onTop.push(...boxLines(p.box, [color[0], color[1], color[2], 0.22]));
+          }
         }
       }
       // the selected POI's lights, each a small star where it shines from - the one selected lit
@@ -531,7 +827,8 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
         if (doc && Number.isFinite(g0)) {
           const origin = [t0[0] + doc.place.x, t0[1] + g0 + doc.place.y, t0[2] + doc.place.z];
           (doc.lights ?? []).forEach((l, i) => {
-            const c = add(origin, mul(quatRotate(doc.place.r, l.t), doc.place.s)), k = 0.35;
+            const c = add(origin, mul(quatRotate(doc.place.r, l.t), doc.place.s)),
+              k = 0.35;
             const color = sel.light === i ? POI_HANDLE_COLOR.hover : [l.color[0], l.color[1], l.color[2], 0.9];
             for (const a of AXES_WORLD) onTop.push({ a: sub(c, mul(a, k)), b: add(c, mul(a, k)), color });
           });
@@ -541,13 +838,20 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
       if (g) {
         for (const s of gizmoShape(g.mode, g.c, g.axes, g.L, g.viewDir)) {
           if (s.hidden) continue;
-          const color = (drag ? drag.handle === s.handle : hover === s.handle) ? POI_HANDLE_COLOR.hover : POI_HANDLE_COLOR[s.handle];
+          const color = (drag ? drag.handle === s.handle : hover === s.handle)
+            ? POI_HANDLE_COLOR.hover
+            : POI_HANDLE_COLOR[s.handle];
           for (const [a, b] of s.segs) onTop.push({ a, b, color });
         }
       }
       if (placing && placeAt) {
-        const k = 0.6, c = POI_BOX_COLOR.ghost;
-        onTop.push({ a: add(placeAt, [-k, 0, 0]), b: add(placeAt, [k, 0, 0]), color: c }, { a: add(placeAt, [0, 0, -k]), b: add(placeAt, [0, 0, k]), color: c }, { a: placeAt, b: add(placeAt, [0, 2, 0]), color: c });
+        const k = 0.6,
+          c = POI_BOX_COLOR.ghost;
+        onTop.push(
+          { a: add(placeAt, [-k, 0, 0]), b: add(placeAt, [k, 0, 0]), color: c },
+          { a: add(placeAt, [0, 0, -k]), b: add(placeAt, [0, 0, k]), color: c },
+          { a: placeAt, b: add(placeAt, [0, 2, 0]), color: c },
+        );
       }
       return { inWorld, onTop };
     },
@@ -559,8 +863,11 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
       const { inWorld, onTop } = api.lineSets();
       // AUDIT POI E18: the lines' widths are pixels of the rect the world pass draws into - the strip above the docked
       // large HUD, a retro or scaled image - never the whole drawing buffer's (they drew thinner, and unequal across)
-      const vp = viewport(), vw = vp ? vp[2] : 0, vh = vp ? vp[3] : 0;
-      const a = pass.draw(proj, viewM, inWorld, { onTop: false, vw, vh }), b = pass.draw(proj, viewM, onTop, { onTop: true, vw, vh });
+      const vp = viewport(),
+        vw = vp ? vp[2] : 0,
+        vh = vp ? vp[3] : 0;
+      const a = pass.draw(proj, viewM, inWorld, { onTop: false, vw, vh }),
+        b = pass.draw(proj, viewM, onTop, { onTop: true, vw, vh });
       return a || b;
     },
     /** The selection's pivot (the gizmo's centre) - the UI's readout and a test's. */
@@ -571,7 +878,17 @@ export function createPoiEditorHost({ edit, feed, host, view, translation, scene
 
 /** The window's events the world hands the open editor, in their capture phase (scenes/world.js mountPoiEditor): the
  *  pointer and the keys, and the two a release can be lost to - the pointer's capture lost, the page's focus gone. */
-export const POI_EDITOR_EVENTS = Object.freeze(['pointerdown', 'pointermove', 'pointerup', 'wheel', 'contextmenu', 'keydown', 'keyup', 'lostpointercapture', 'blur']);
+export const POI_EDITOR_EVENTS = Object.freeze([
+  'pointerdown',
+  'pointermove',
+  'pointerup',
+  'wheel',
+  'contextmenu',
+  'keydown',
+  'keyup',
+  'lostpointercapture',
+  'blur',
+]);
 
 /**
  * THE EDITOR'S INPUT, ROUTED - what the world's window listener hands the open editor (`onEvent`, on the window's
@@ -596,27 +913,56 @@ export const POI_EDITOR_EVENTS = Object.freeze(['pointerdown', 'pointermove', 'p
 export function createPoiEditorRouter({ editor, canvas, cam, acts, owns, overlayUp, textEntry, win = globalThis }) {
   function onEvent(e) {
     if (!editor.active() || editor.worldGone()) return;
-    if (e.type === 'lostpointercapture' || e.type === 'blur') { if (e.type === 'lostpointercapture' || e.target === win) editor.letGo(); return; }
-    if (overlayUp() || owns(e.target)) { if (e.type === 'pointerup') editor.letGo(); return; }
+    if (e.type === 'lostpointercapture' || e.type === 'blur') {
+      if (e.type === 'lostpointercapture' || e.target === win) editor.letGo();
+      return;
+    }
+    if (overlayUp() || owns(e.target)) {
+      if (e.type === 'pointerup') editor.letGo();
+      return;
+    }
     let took = false;
     switch (e.type) {
-      case 'pointerdown': if (e.target !== canvas) return; took = editor.pointerDown(e); if (took) capturePointer(canvas, e.pointerId); break;
-      case 'pointermove': took = editor.pointerMove(e, cam); break;
-      case 'pointerup': took = editor.pointerUp(e); break;
-      case 'wheel': if (e.target !== canvas) return; took = editor.wheel(e, cam); break;
-      case 'contextmenu': if (e.target === canvas) { e.preventDefault?.(); took = true; } break;
-      case 'keydown': if (textEntry(e.target)) return; took = editor.keyDown(e, cam, acts()); break;
-      case 'keyup': if (textEntry(e.target)) return; took = editor.keyUp(e); break;
-      default: break;
+      case 'pointerdown':
+        if (e.target !== canvas) return;
+        took = editor.pointerDown(e);
+        if (took) capturePointer(canvas, e.pointerId);
+        break;
+      case 'pointermove':
+        took = editor.pointerMove(e, cam);
+        break;
+      case 'pointerup':
+        took = editor.pointerUp(e);
+        break;
+      case 'wheel':
+        if (e.target !== canvas) return;
+        took = editor.wheel(e, cam);
+        break;
+      case 'contextmenu':
+        if (e.target === canvas) {
+          e.preventDefault?.();
+          took = true;
+        }
+        break;
+      case 'keydown':
+        if (textEntry(e.target)) return;
+        took = editor.keyDown(e, cam, acts());
+        break;
+      case 'keyup':
+        if (textEntry(e.target)) return;
+        took = editor.keyUp(e);
+        break;
+      default:
+        break;
     }
     if (!took && e.type !== 'keydown' && e.type !== 'keyup') return;
-    e.stopImmediatePropagation?.();   // the world hears no key while the editor is open, nor a press the editor took
-    if (took && e.type !== 'pointermove') e.preventDefault?.();   // AUDIT POI E16: the browser loses what the editor acted on, and only that
+    e.stopImmediatePropagation?.(); // the world hears no key while the editor is open, nor a press the editor took
+    if (took && e.type !== 'pointermove') e.preventDefault?.(); // AUDIT POI E16: the browser loses what the editor acted on, and only that
   }
   function onPanelKey(e) {
-    if (!editor.active() || overlayUp()) return;   // a window over the world (the map the bar opened) has its keys
-    e.stopPropagation?.();   // AUDIT POI E2: nothing below the panel - the world, the mode machine - hears a key typed at it
-    if (textEntry(e.target)) return;   // a typed field keeps its key
+    if (!editor.active() || overlayUp()) return; // a window over the world (the map the bar opened) has its keys
+    e.stopPropagation?.(); // AUDIT POI E2: nothing below the panel - the world, the mode machine - hears a key typed at it
+    if (textEntry(e.target)) return; // a typed field keeps its key
     if (e.type === 'keydown' ? editor.keyDown(e, cam, acts()) : editor.keyUp(e)) e.preventDefault?.();
   }
   return { onEvent, onPanelKey };

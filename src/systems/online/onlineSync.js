@@ -23,8 +23,15 @@
 //
 // Undoable: the values it replaced are kept in the storage seam, and Undo writes them back - every sync's since the
 // last Undo (AUDIT UXB1 F2).
-import { ONLINE_FORCED_PREFS, ONLINE_FORCED_SETTINGS, ONLINE_ROOM_MOD_KEYS, ONLINE_WHOLE_MODS, onlineWholeModKey, isOnlinePage } from './onlineLane.js';
-import { featureForControl } from '../features.js';   // the registry declares its online prefs at load (declareOnlinePrefs), and names them
+import {
+  ONLINE_FORCED_PREFS,
+  ONLINE_FORCED_SETTINGS,
+  ONLINE_ROOM_MOD_KEYS,
+  ONLINE_WHOLE_MODS,
+  onlineWholeModKey,
+  isOnlinePage,
+} from './onlineLane.js';
+import { featureForControl } from '../features.js'; // the registry declares its online prefs at load (declareOnlinePrefs), and names them
 import { getPref, setPref } from '../uiPrefs.js';
 import { getString, setValue, saveSettings } from '../settings/settings.js';
 import { modSetting, setModSetting, MOD_SETTINGS } from '../modSettings.js';
@@ -43,11 +50,20 @@ export const ONLINE_LAYOUT_SETTINGS = Object.freeze({
 function modKeyLabel(vendor, key) {
   const title = MOD_SETTINGS[vendor]?.title ?? vendor;
   if (key === 'Enabled') return title;
-  const words = key.slice(key.lastIndexOf('.') + 1).replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
+  const words = key
+    .slice(key.lastIndexOf('.') + 1)
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .toLowerCase();
   return `${title} - ${words}`;
 }
 /** DFU's strings compare as bool.Parse reads them: case and whitespace aside. */
-const sameSetting = (a, b) => String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+const sameSetting = (a, b) =>
+  String(a ?? '')
+    .trim()
+    .toLowerCase() ===
+  String(b ?? '')
+    .trim()
+    .toLowerCase();
 
 /**
  * @typedef {{ id: string, store: 'prefs'|'settings'|'mods', key: string, section?: string, vendor?: string,
@@ -66,29 +82,68 @@ export function onlineSyncPlan({ search } = /** @type {{ search?: string }} */ (
   const rows = [];
   for (const [key, online] of Object.entries(ONLINE_FORCED_PREFS)) {
     const offline = getPref(key);
-    rows.push({ id: `prefs:${key}`, store: 'prefs', key, label: featureForControl('prefs', key)?.title ?? key, online, offline, same: offline === online });
+    rows.push({
+      id: `prefs:${key}`,
+      store: 'prefs',
+      key,
+      label: featureForControl('prefs', key)?.title ?? key,
+      online,
+      offline,
+      same: offline === online,
+    });
   }
   for (const table of [ONLINE_FORCED_SETTINGS, ONLINE_LAYOUT_SETTINGS]) {
     for (const [section, keys] of Object.entries(table)) {
       for (const [key, online] of Object.entries(keys)) {
         const offline = getString(section, key);
         const full = `${section}/${key}`;
-        rows.push({ id: `settings:${full}`, store: 'settings', section, key, label: labelOf(full), online, offline, same: sameSetting(offline, online) });
+        rows.push({
+          id: `settings:${full}`,
+          store: 'settings',
+          section,
+          key,
+          label: labelOf(full),
+          online,
+          offline,
+          same: sameSetting(offline, online),
+        });
       }
     }
   }
   for (const [vendor, keys] of Object.entries(ONLINE_ROOM_MOD_KEYS)) {
     for (const [key, online] of Object.entries(keys)) {
       const offline = modSetting(vendor, key);
-      rows.push({ id: `mods:${vendor}/${key}`, store: 'mods', vendor, key, label: modKeyLabel(vendor, key), online, offline, same: offline === online });
+      rows.push({
+        id: `mods:${vendor}/${key}`,
+        store: 'mods',
+        vendor,
+        key,
+        label: modKeyLabel(vendor, key),
+        online,
+        offline,
+        same: offline === online,
+      });
     }
   }
   // REALM P0.2: and every other key of a balance mod the room owns whole, at the value it reads online - its shipped default
   for (const vendor of Object.keys(ONLINE_WHOLE_MODS)) {
     for (const [key, def] of Object.entries(MOD_SETTINGS[vendor]?.keys ?? {})) {
-      if (Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor] ?? {}, key) || !onlineWholeModKey(vendor, key, undefined, { offline: true })) continue;
+      if (
+        Object.hasOwn(ONLINE_ROOM_MOD_KEYS[vendor] ?? {}, key) ||
+        !onlineWholeModKey(vendor, key, undefined, { offline: true })
+      )
+        continue;
       const offline = modSetting(vendor, key);
-      rows.push({ id: `mods:${vendor}/${key}`, store: 'mods', vendor, key, label: modKeyLabel(vendor, key), online: def.default, offline, same: offline === def.default });
+      rows.push({
+        id: `mods:${vendor}/${key}`,
+        store: 'mods',
+        vendor,
+        key,
+        label: modKeyLabel(vendor, key),
+        online: def.default,
+        offline,
+        same: offline === def.default,
+      });
     }
   }
   return rows;
@@ -118,11 +173,21 @@ export function applyOnlineSync(plan = onlineSyncPlan(), { storage = appStorage(
   if (!changed.length) return null;
   for (const r of changed) write(r, r.online);
   if (changed.some((r) => r.store === 'settings')) saveSettings();
-  const rows = changed.map(({ store, section, vendor, key, offline }) => ({ store, section, vendor, key, was: offline }));
+  const rows = changed.map(({ store, section, vendor, key, offline }) => ({
+    store,
+    section,
+    vendor,
+    key,
+    was: offline,
+  }));
   const ids = new Set(rows.map(rowId));
   const kept = (lastOnlineSync({ storage })?.rows ?? []).filter((r) => !ids.has(rowId(r)));
   const record = { at: now, rows: [...kept, ...rows] };
-  try { storage?.setItem(ONLINE_SYNC_STORE_KEY, JSON.stringify(record)); } catch { /* no storage: the sync stands, without its undo */ }
+  try {
+    storage?.setItem(ONLINE_SYNC_STORE_KEY, JSON.stringify(record));
+  } catch {
+    /* no storage: the sync stands, without its undo */
+  }
   return record;
 }
 
@@ -131,7 +196,9 @@ export function lastOnlineSync({ storage = appStorage() } = {}) {
   try {
     const rec = JSON.parse(storage?.getItem(ONLINE_SYNC_STORE_KEY) ?? 'null');
     return rec && Array.isArray(rec.rows) ? rec : null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /** Undo: the values the last sync replaced, written back; the record is spent. A row this build no longer declares
@@ -142,9 +209,18 @@ export function undoOnlineSync({ storage = appStorage() } = {}) {
   let n = 0;
   for (const r of rec.rows) {
     if (!['prefs', 'settings', 'mods'].includes(r?.store) || typeof r.key !== 'string') continue;
-    try { write(r, r.was); n++; } catch { /* no longer declared */ }
+    try {
+      write(r, r.was);
+      n++;
+    } catch {
+      /* no longer declared */
+    }
   }
   if (rec.rows.some((r) => r?.store === 'settings')) saveSettings();
-  try { storage?.removeItem(ONLINE_SYNC_STORE_KEY); } catch { /* none */ }
+  try {
+    storage?.removeItem(ONLINE_SYNC_STORE_KEY);
+  } catch {
+    /* none */
+  }
   return n;
 }

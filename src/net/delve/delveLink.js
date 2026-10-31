@@ -21,7 +21,11 @@ export const sendDelveWord = (w) => !!wire?.send(w);
 /** The host that hears the room's words, attached; answers its detaching. */
 export function attachDelveHearer(fn) {
   hearer = fn;
-  return () => { if (hearer === fn) hearer = null; };
+  return () => {
+    if (hearer === fn) hearer = null;
+  };
 }
 /** For the tests: the wire as a pin sets it. */
-export function _setDelveWireForTests(w) { wire = w; }
+export function _setDelveWireForTests(w) {
+  wire = w;
+}

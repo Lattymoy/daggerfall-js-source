@@ -33,7 +33,12 @@ export const FIELD_REFLOAT = 0.15;
 /** The order MAKE HER WHOLE buys in. */
 export const YARD_ORDER = Object.freeze(['hull', 'sail', 'crew', 'barrels']);
 /** Each row's price a piece. */
-export const YARD_PRICE = Object.freeze({ hull: REPAIR_PRICE.hull, sail: REPAIR_PRICE.sail, crew: REPAIR_PRICE.crew, barrels: BARREL_PRICE });
+export const YARD_PRICE = Object.freeze({
+  hull: REPAIR_PRICE.hull,
+  sail: REPAIR_PRICE.sail,
+  crew: REPAIR_PRICE.crew,
+  barrels: BARREL_PRICE,
+});
 
 /** CAPT-BOARD: a rank's favour off the yard's prices is never more than this. */
 export const YARD_DISCOUNT_MAX = 0.5;
@@ -56,9 +61,17 @@ export function yardOffer(damage, barrels, gold, { discount = 0 } = {}) {
     barrels: Math.max(0, BARREL.stock - Math.max(0, barrels | 0)),
   };
   const rows = YARD_ORDER.map((id) => {
-    const n = missing[id], price = Math.round(YARD_PRICE[id] * k * 100) / 100;
+    const n = missing[id],
+      price = Math.round(YARD_PRICE[id] * k * 100) / 100;
     const afford = Math.min(n, Math.floor(purse / price));
-    return { id, missing: n, price, whole: Math.ceil(n * price - 1e-9), afford, cost: Math.ceil(afford * price - 1e-9) };
+    return {
+      id,
+      missing: n,
+      price,
+      whole: Math.ceil(n * price - 1e-9),
+      afford,
+      cost: Math.ceil(afford * price - 1e-9),
+    };
   });
   return { rows, whole: rows.reduce((sum, r) => sum + r.whole, 0), gold: purse };
 }
@@ -86,7 +99,11 @@ export function yardAll(damage, barrels, gold, { discount = 0 } = {}) {
  */
 export function fieldMend(damage, dt, { crewed, crewShare, scale = 1 }) {
   // SHIP-CREW: `scale` her crew's spirits (shipCrew.js mendScaleOf)
-  const rate = FIELD_MEND_PER_S * (crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE) * Math.max(0, scale) * Math.max(0, dt);
+  const rate =
+    FIELD_MEND_PER_S *
+    (crewed ? Math.max(0, Math.min(1, crewShare)) : FIELD_MEND_ALONE) *
+    Math.max(0, scale) *
+    Math.max(0, dt);
   const part = (have, whole) => Math.max(0, Math.min(whole * FIELD_MEND_CAP - have, whole * rate));
   return { hull: part(damage.hull, damage.maxHull), sail: damage.maxSail > 0 ? part(damage.sail, damage.maxSail) : 0 };
 }
@@ -115,14 +132,15 @@ export function fieldMend(damage, dt, { crewed, crewShare, scale = 1 }) {
  *  of what the yard asks for that work. A flat 25 gold for a TENTH of any ship had ten of them make a wrecked Small
  *  Ship whole for 250 gold against the yard's 6000, in the harbour beside it. So a bigger ship needs more stores, and
  *  stores are what they cost: a yard's work carried to sea, at a carpenter's discount. */
-export const STORE_POINTS = 64;   // TOUGHER-SHIPS: 40 before - the same share of a toughened hull (navalShips.js SHIP_TOUGHNESS)
+export const STORE_POINTS = 64; // TOUGHER-SHIPS: 40 before - the same share of a toughened hull (navalShips.js SHIP_TOUGHNESS)
 export const STORE_YARD_SHARE = 0.7;
 export const SAIL_WORK = REPAIR_PRICE.sail / REPAIR_PRICE.hull;
 /** A store's price (gold). */
 export const storePrice = () => Math.round(STORE_POINTS * REPAIR_PRICE.hull * STORE_YARD_SHARE);
 export const STORE_PRICE = storePrice();
 /** The work (points) between her hurts and whole, and the stores it takes. */
-export const workToWhole = (d) => Math.max(0, d.maxHull - d.hull) + (d.maxSail > 0 ? Math.max(0, d.maxSail - d.sail) * SAIL_WORK : 0);
+export const workToWhole = (d) =>
+  Math.max(0, d.maxHull - d.hull) + (d.maxSail > 0 ? Math.max(0, d.maxSail - d.sail) * SAIL_WORK : 0);
 export const storesToWhole = (d) => Math.ceil(workToWhole(d) / STORE_POINTS - 1e-9);
 /** The least the yard fills a hold to (a hull whose wreck takes fewer). */
 export const STORES_STOCK = 10;
@@ -132,11 +150,11 @@ export const GROG_MIN = 10;
 /** The repairs at sea: this share of the whole a second at a full crew, this share of that with none aboard (AUDIT
  *  CC-D2: and with every hand of a crewed boat lost - her captain at the work alone; a crewed boat at no crew held a
  *  repair order that never did anything). */
-export const SEA_REPAIR_PER_S = 0.016;   // QUICK-REPAIRS: 0.008 before - a wreck whole in about a minute at a full crew
+export const SEA_REPAIR_PER_S = 0.016; // QUICK-REPAIRS: 0.008 before - a wreck whole in about a minute at a full crew
 export const SEA_REPAIR_ALONE = 0.5;
 /** QUICK-REPAIRS: DAMAGE CONTROL - the repairs' pace under fire (the order MAKE REPAIRS with a hostile ship near, or
  *  struck within the quiet). */
-export const SEA_REPAIR_UNDER_FIRE = 0.125;   // about a third of what a ship her size deals her (a fight's damage is a toughened hull's)
+export const SEA_REPAIR_UNDER_FIRE = 0.125; // about a third of what a ship her size deals her (a fight's damage is a toughened hull's)
 
 /** A round of grog's price for a crew of `crew`. */
 export const grogPrice = (crew) => Math.max(GROG_MIN, Math.round(Math.max(0, crew) * GROG_PER_HAND));
@@ -151,12 +169,28 @@ export function provisionOffer({ stores, stock = STORES_STOCK, morale, crew, cre
   const purse = Math.max(0, Math.floor(Number(gold) || 0));
   const rows = [];
   const n = Math.max(0, Math.max(0, stock | 0) - Math.max(0, stores | 0));
-  rows.push({ id: 'stores', missing: n, price: STORE_PRICE, whole: n * STORE_PRICE, afford: Math.min(n, Math.floor(purse / STORE_PRICE)), have: Math.max(0, stores | 0) });
+  rows.push({
+    id: 'stores',
+    missing: n,
+    price: STORE_PRICE,
+    whole: n * STORE_PRICE,
+    afford: Math.min(n, Math.floor(purse / STORE_PRICE)),
+    have: Math.max(0, stores | 0),
+  });
   if (crewed && morale != null) {
-    const price = grogPrice(crew), want = morale < 100 && !grogToday ? 1 : 0;
+    const price = grogPrice(crew),
+      want = morale < 100 && !grogToday ? 1 : 0;
     // FIELD BUGS 2026-10-14 GROG-WORD: `drunk` - no round wanted because the day's is drunk, not because her spirits are
     // at the top (the window said "as high as they go" over a crew the helm called low)
-    rows.push({ id: 'grog', missing: want, price, whole: want * price, afford: Math.min(want, Math.floor(purse / price)), have: morale, drunk: morale < 100 && !!grogToday });
+    rows.push({
+      id: 'grog',
+      missing: want,
+      price,
+      whole: want * price,
+      afford: Math.min(want, Math.floor(purse / price)),
+      have: morale,
+      drunk: morale < 100 && !!grogToday,
+    });
   }
   for (const r of rows) r.cost = r.afford * r.price;
   return { rows, gold: purse };
@@ -171,13 +205,15 @@ export function provisionOffer({ stores, stock = STORES_STOCK, morale, crew, cre
  * @param {{ crewed: boolean, crewShare: number, scale?: number, budget?: number }} o
  */
 export function seaRepair(damage, dt, { crewed, crewShare, scale = 1, budget = Infinity }) {
-  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE;   // AUDIT CC-D2
+  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE; // AUDIT CC-D2
   let left = SEA_REPAIR_PER_S * share * Math.max(0, scale) * Math.max(0, dt);
   const out = { hull: 0, sail: 0, work: 0 };
   const hullGap = damage.maxHull > 0 ? Math.max(0, 1 - damage.hull / damage.maxHull) : 0;
   const h = Math.min(hullGap, left);
-  out.hull = h * damage.maxHull; left -= h;
-  if (left > 0 && damage.maxSail > 0) out.sail = Math.min(Math.max(0, 1 - damage.sail / damage.maxSail), left) * damage.maxSail;
+  out.hull = h * damage.maxHull;
+  left -= h;
+  if (left > 0 && damage.maxSail > 0)
+    out.sail = Math.min(Math.max(0, 1 - damage.sail / damage.maxSail), left) * damage.maxSail;
   out.work = out.hull + out.sail * SAIL_WORK;
   const cap = Math.max(0, budget);
   if (out.work > cap) {
@@ -194,7 +230,13 @@ export function seaRepair(damage, dt, { crewed, crewShare, scale = 1, budget = I
  * @param {{ hull: number, maxHull: number, sail: number, maxSail: number }} damage */
 export function paidDamage(damage, { free = true } = {}) {
   const past = (have, whole) => (free && whole > 0 && have < whole * FIELD_MEND_CAP - 1e-9 ? whole : have);
-  return { hull: past(damage.hull, damage.maxHull), maxHull: damage.maxHull, sail: past(damage.sail, damage.maxSail), maxSail: damage.maxSail };
+  return {
+    hull: past(damage.hull, damage.maxHull),
+    maxHull: damage.maxHull,
+    sail: past(damage.sail, damage.maxSail),
+    maxSail: damage.maxSail,
+  };
 }
 /** Whether she wants anything the repairs make good. */
-export const wantsRepair = (damage) => damage.hull < damage.maxHull - 1e-6 || (damage.maxSail > 0 && damage.sail < damage.maxSail - 1e-6);
+export const wantsRepair = (damage) =>
+  damage.hull < damage.maxHull - 1e-6 || (damage.maxSail > 0 && damage.sail < damage.maxSail - 1e-6);

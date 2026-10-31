@@ -2,8 +2,8 @@
   {
     "name": "QA3L-END-GRACE-no-re-arm",
     "file": "src/systems/quest/machine.js",
-    "old": "        if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;\n",
-    "new": "",
+    "old": "        if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;\n        localizeDisplayName(quest); // L10N5: the save holds the quest's own name; the language names it again",
+    "new": "        localizeDisplayName(quest); // L10N5: the save holds the quest's own name; the language names it again",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "QA3L-END-GRACE-any-end-quest-line",
     "file": "src/systems/quest/machine.js",
-    "old": "a?.typeName === 'EndQuest' && a.isComplete));",
-    "new": "a?.typeName === 'EndQuest'));",
+    "old": "  [...quest.tasks.values()].some((t) => t.actions?.some((a) => a?.typeName === 'EndQuest' && a.isComplete));",
+    "new": "  [...quest.tasks.values()].some((t) => t.actions?.some((a) => a?.typeName === 'EndQuest'));",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "QA3L-END-GRACE-a-tombstone-set-ending",
     "file": "src/systems/quest/machine.js",
-    "old": "if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;",
-    "new": "if (endQuestRan(quest)) quest.ticksToEnd = 2;",
+    "old": "        if (!quest.questComplete && endQuestRan(quest)) quest.ticksToEnd = 2;",
+    "new": "        if (endQuestRan(quest)) quest.ticksToEnd = 2;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "QA3L-END-ONCE-no-guard",
     "file": "src/systems/quest/quest.js",
-    "old": "    if (this.ticksToEnd > 0) { this.ticksToEnd = 2; return; }\n",
-    "new": "",
+    "old": "    if (this.ticksToEnd > 0) {\n      this.ticksToEnd = 2;\n      return;\n    }\n    // Two ticks of grace so tasks started directly before \"end quest\"",
+    "new": "    // Two ticks of grace so tasks started directly before \"end quest\"",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "QA3L-END-ONCE-grace-not-extended",
     "file": "src/systems/quest/quest.js",
-    "old": "if (this.ticksToEnd > 0) { this.ticksToEnd = 2; return; }",
-    "new": "if (this.ticksToEnd > 0) { return; }",
+    "old": "      this.ticksToEnd = 2;\n      return;",
+    "new": "      return;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "QA3L-START-HELD-not-saved",
     "file": "src/systems/quest/machine.js",
-    "old": "      ...(this.questsToInvoke.length ? { toInvoke: this.questsToInvoke.map((q) => q.getSaveData()) } : {}),\n",
-    "new": "",
+    "old": "      ...(this.questsToInvoke.length ? { toInvoke: this.questsToInvoke.map((q) => q.getSaveData()) } : {}),\n      ...this._spineData(), // MAIN-SPINE: written once the opener begins",
+    "new": "      ...this._spineData(), // MAIN-SPINE: written once the opener begins",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "QA3L-START-HELD-field-always-written",
     "file": "src/systems/quest/machine.js",
-    "old": "...(this.questsToInvoke.length ? { toInvoke:",
-    "new": "...(true ? { toInvoke:",
+    "old": "      ...(this.questsToInvoke.length ? { toInvoke: this.questsToInvoke.map((q) => q.getSaveData()) } : {}),",
+    "new": "      ...(true ? { toInvoke: this.questsToInvoke.map((q) => q.getSaveData()) } : {}),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "QA3L-START-HELD-not-restored",
     "file": "src/systems/quest/machine.js",
-    "old": "for (const questData of Array.isArray(data.toInvoke) ? data.toInvoke : []) {",
-    "new": "for (const questData of []) {",
+    "old": "    for (const questData of Array.isArray(data.toInvoke) ? data.toInvoke : []) {",
+    "new": "    for (const questData of []) {",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "QA3L-START-HELD-scheduled-twice",
     "file": "src/systems/quest/machine.js",
-    "old": "if (!this.quests.has(quest.uid) && !this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);",
-    "new": "if (!this.quests.has(quest.uid)) this.questsToInvoke.push(quest);",
+    "old": "        if (!this.quests.has(quest.uid) && !this.questsToInvoke.some((q) => q.uid === quest.uid))\n          this.questsToInvoke.push(quest);",
+    "new": "        if (!this.quests.has(quest.uid)) this.questsToInvoke.push(quest);",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "QA3L-START-HELD-running-child-scheduled",
     "file": "src/systems/quest/machine.js",
-    "old": "if (!this.quests.has(quest.uid) && !this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);",
-    "new": "if (!this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);",
+    "old": "        if (!this.quests.has(quest.uid) && !this.questsToInvoke.some((q) => q.uid === quest.uid))\n          this.questsToInvoke.push(quest);",
+    "new": "        if (!this.questsToInvoke.some((q) => q.uid === quest.uid)) this.questsToInvoke.push(quest);",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "QA3L-PROMPT-HELD-machine-box-read-as-none",
     "file": "src/systems/quest/machine.js",
-    "old": "this.deps.showPrompt(q, message, respond) ?? true : false",
-    "new": "this.deps.showPrompt(q, message, respond) ?? false : false",
+    "old": "        this.deps.showPrompt ? (this.deps.showPrompt(q, message, respond) ?? true) : false, // PROMPT-HELD (actions.js): false - no box shown",
+    "new": "        this.deps.showPrompt ? (this.deps.showPrompt(q, message, respond) ?? false) : false, // PROMPT-HELD (actions.js): false - no box shown",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "QA3L-PROMPT-HELD-machine-no-box-read-as-up",
     "file": "src/systems/quest/machine.js",
-    "old": "this.deps.showPrompt(q, message, respond) ?? true : false",
-    "new": "this.deps.showPrompt(q, message, respond) ?? true : true",
+    "old": "        this.deps.showPrompt ? (this.deps.showPrompt(q, message, respond) ?? true) : false, // PROMPT-HELD (actions.js): false - no box shown",
+    "new": "        this.deps.showPrompt ? (this.deps.showPrompt(q, message, respond) ?? true) : true, // PROMPT-HELD (actions.js): false - no box shown",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "QA3L-PROMPT-HELD-machine-multi-box-read-as-none",
     "file": "src/systems/quest/machine.js",
-    "old": "this.deps.showPromptMulti(q, message, buttons, respond) ?? true : false",
-    "new": "this.deps.showPromptMulti(q, message, buttons, respond) ?? false : false",
+    "old": "        this.deps.showPromptMulti ? (this.deps.showPromptMulti(q, message, buttons, respond) ?? true) : false, // PROMPT-HELD",
+    "new": "        this.deps.showPromptMulti ? (this.deps.showPromptMulti(q, message, buttons, respond) ?? false) : false, // PROMPT-HELD",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "QA3L-PROMPT-HELD-machine-multi-no-box-read-as-up",
     "file": "src/systems/quest/machine.js",
-    "old": "this.deps.showPromptMulti(q, message, buttons, respond) ?? true : false",
-    "new": "this.deps.showPromptMulti(q, message, buttons, respond) ?? true : true",
+    "old": "        this.deps.showPromptMulti ? (this.deps.showPromptMulti(q, message, buttons, respond) ?? true) : false, // PROMPT-HELD",
+    "new": "        this.deps.showPromptMulti ? (this.deps.showPromptMulti(q, message, buttons, respond) ?? true) : true, // PROMPT-HELD",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "QA3L-RESTART-PAID-no-rung",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (questPaidOut(quest)) return 'paid';\n",
-    "new": "",
+    "old": "    if (questPaidOut(quest)) return 'paid';\n    // AUDIT QA3 B1: nor one whose `start quest` has run - its new copy starts that quest again (S0000008's totem to the",
+    "new": "    // AUDIT QA3 B1: nor one whose `start quest` has run - its new copy starts that quest again (S0000008's totem to the",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "QA3L-RESTART-PAID-success-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "export function questPaidOut(quest) {\n  for (const task",
-    "new": "export function questPaidOut(quest) {\n  if (quest?.questSuccess) return true;\n  for (const task",
+    "old": "  for (const task of quest?.tasks?.values?.() ?? []) {",
+    "new": "  if (quest?.questSuccess) return true;\n  for (const task of quest?.tasks?.values?.() ?? []) {",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "QA3L-RESTART-PAID-unrun-actions-read",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (!a?.isComplete) continue;\n      if (a.typeName === 'TrainPc'",
-    "new": "      if (a.typeName === 'TrainPc'",
+    "old": "      if (!a?.isComplete) continue;\n      if (a.typeName === 'TrainPc') return true;",
+    "new": "      if (a.typeName === 'TrainPc') return true;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "QA3L-RESTART-PAID-trainer-unread",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (a.typeName === 'TrainPc') return true;\n",
-    "new": "",
+    "old": "      if (a.typeName === 'TrainPc') return true;\n      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
+    "new": "      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "QA3L-RESTART-PAID-make-permanent-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "if (a.typeName === 'TrainPc') return true;",
-    "new": "if (a.typeName === 'TrainPc' || a.typeName === 'MakePermanent') return true;",
+    "old": "      if (a.typeName === 'TrainPc') return true;",
+    "new": "      if (a.typeName === 'TrainPc' || a.typeName === 'MakePermanent') return true;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "QA3L-RESTART-PAID-give-pc-unread",
     "file": "src/systems/quest/machine.js",
-    "old": "if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
-    "new": "if (!(a.typeName === 'GetItem')) continue;",
+    "old": "      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
+    "new": "      if (!(a.typeName === 'GetItem')) continue;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "QA3L-RESTART-PAID-get-item-unread",
     "file": "src/systems/quest/machine.js",
-    "old": "if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
-    "new": "if (!(a.typeName === 'GivePc' && !a.isNothing)) continue;",
+    "old": "      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
+    "new": "      if (!(a.typeName === 'GivePc' && !a.isNothing)) continue;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "QA3L-RESTART-PAID-nothing-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "(a.typeName === 'GivePc' && !a.isNothing) ||",
-    "new": "(a.typeName === 'GivePc') ||",
+    "old": "      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
+    "new": "      if (!(a.typeName === 'GivePc' || a.typeName === 'GetItem')) continue;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "QA3L-RESTART-PAID-item-permanent-unread",
     "file": "src/systems/quest/machine.js",
-    "old": "(it.madePermanent || (df && !df.questItem))",
-    "new": "((df && !df.questItem))",
+    "old": "      if (it && !(df && isGoldPieces(df)) && (it.madePermanent || (df && !df.questItem))) return true;",
+    "new": "      if (it && !(df && isGoldPieces(df)) && df && !df.questItem) return true;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "QA3L-RESTART-PAID-gold-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "if (it && !(df && isGoldPieces(df)) && (it.madePermanent",
-    "new": "if (it && (it.madePermanent",
+    "old": "      if (it && !(df && isGoldPieces(df)) && (it.madePermanent || (df && !df.questItem))) return true;",
+    "new": "      if (it && (it.madePermanent || (df && !df.questItem))) return true;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "QA3L-RESTART-PAID-any-item-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "if (it && !(df && isGoldPieces(df)) && (it.madePermanent || (df && !df.questItem))) return true;",
-    "new": "if (it) return true;",
+    "old": "      if (it && !(df && isGoldPieces(df)) && (it.madePermanent || (df && !df.questItem))) return true;",
+    "new": "      if (it) return true;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "QA3L-RESTART-PAID-released-unread",
     "file": "src/systems/quest/machine.js",
-    "old": "(it.madePermanent || (df && !df.questItem))",
-    "new": "(it.madePermanent)",
+    "old": "      if (it && !(df && isGoldPieces(df)) && (it.madePermanent || (df && !df.questItem))) return true;",
+    "new": "      if (it && !(df && isGoldPieces(df)) && it.madePermanent) return true;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "QA3L-RESTART-PAID-quest-item-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "(it.madePermanent || (df && !df.questItem))",
-    "new": "(it.madePermanent || (df))",
+    "old": "      if (it && !(df && isGoldPieces(df)) && (it.madePermanent || (df && !df.questItem))) return true;",
+    "new": "      if (it && !(df && isGoldPieces(df)) && (it.madePermanent || df)) return true;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "QA3L-RESTART-PAID-standing-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (a.typeName === 'TrainPc') return true;\n",
-    "new": "      if (a.typeName === 'TrainPc') return true;\n      if ((a.typeName === 'ChangeReputeWith' || a.typeName === 'LegalRepute') && a.amount > 0) return true;\n",
+    "old": "      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
+    "new": "      if ((a.typeName === 'ChangeReputeWith' || a.typeName === 'LegalRepute') && a.amount > 0) return true;\n      if (!((a.typeName === 'GivePc' && !a.isNothing) || a.typeName === 'GetItem')) continue;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "QA3L-RESTART-PAID-permanent-resource-read-as-paid",
     "file": "src/systems/quest/machine.js",
-    "old": "(it.madePermanent || (df && !df.questItem))) return true;\n    }\n  }\n  return false;\n}",
-    "new": "(it.madePermanent || (df && !df.questItem))) return true;\n    }\n  }\n  return [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isItem && r.madePermanent);\n}",
+    "old": "  }\n  return false;",
+    "new": "  }\n  return [...(quest?.resources?.values?.() ?? [])].some((r) => r?.isItem && r.madePermanent);",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "QA3L-RESTART-WORDS-end-keeps-the-stall",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "      rec.stalled = false;   // QUEST-AUDIT III RESTART-WORDS: a step that ended began - a restart's drop is not a stall\n",
-    "new": "",
+    "old": "      rec.stalled = false; // QUEST-AUDIT III RESTART-WORDS: a step that ended began - a restart's drop is not a stall\n      if (!good && at.index === 0) {",
+    "new": "      if (!good && at.index === 0) {",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "QA3L-RESTART-WORDS-look-keeps-the-stall",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) { rec.stalled = false; rec.wait = 0; }\n",
-    "new": "",
+    "old": "        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) {\n          rec.stalled = false;\n          rec.wait = 0;\n        }\n        // QL-OFFERED: a first step with no quest (gone without its end, or a save's line whose first step never began) is",
+    "new": "        // QL-OFFERED: a first step with no quest (gone without its end, or a save's line whose first step never began) is",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "QA3L-RESTART-WORDS-look-keeps-the-wait",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "{ rec.stalled = false; rec.wait = 0; }",
-    "new": "{ rec.stalled = false; }",
+    "old": "          rec.wait = 0;\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "QA3L-RESTART-WORDS-look-lets-a-true-stall-go",
     "file": "src/systems/questlines/qlLineRunner.js",
-    "old": "if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) {",
-    "new": "if (rec.stalled && !rec.done) {",
+    "old": "        if (rec.stalled && !rec.done && runningStep(l.steps[rec.step]?.quest)) {",
+    "new": "        if (rec.stalled && !rec.done) {",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "QA3L-NO-ASKS-clearer-does-more",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "!no.actions.every((/** @type {any} */ a) => a.typeName === 'ClearTask' && a.taskSymbols?.length",
-    "new": "!no.actions.every((/** @type {any} */ a) => a.taskSymbols?.length",
+    "old": "        a.typeName === 'ClearTask' &&\n        a.taskSymbols?.length &&\n        a.taskSymbols.every((/** @type {any} */ s) => s?.name === task.symbol.name),",
+    "new": "        a.taskSymbols?.length && a.taskSymbols.every((/** @type {any} */ s) => s?.name === task.symbol.name),",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "QA3L-NO-ASKS-clearer-clears-another",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "&& a.taskSymbols.every((/** @type {any} */ s) => s?.name === task.symbol.name))) return null;",
-    "new": ")) return null;",
+    "old": "    !no.actions.every(\n      (/** @type {any} */ a) =>\n        a.typeName === 'ClearTask' &&\n        a.taskSymbols?.length &&\n        a.taskSymbols.every((/** @type {any} */ s) => s?.name === task.symbol.name),\n    )",
+    "new": "    !no.actions.every((/** @type {any} */ a) => a.typeName === 'ClearTask' && a.taskSymbols?.length)",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "QA3L-NO-ASKS-clearer-named-twice",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "s?.name === task.symbol.name))) return null;\n  return timesNamed(quest, no.symbol.name) === 1 ? no : null;",
-    "new": "s?.name === task.symbol.name))) return null;\n  return no;",
+    "old": "    return null;\n  return timesNamed(quest, no.symbol.name) === 1 ? no : null;",
+    "new": "    return null;\n  return no;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "QA3L-NO-ASKS-clearer-a-variable",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length) return null;",
-    "new": "if (!no || no === task || no.pendingActionLines?.length) return null;",
+    "old": "  if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length) return null;",
+    "new": "  if (!no || no === task || no.pendingActionLines?.length) return null;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "QA3L-NO-ASKS-clearer-unparsed-line",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length) return null;",
-    "new": "if (!no || no === task || no.type !== TaskType.Standard) return null;",
+    "old": "  if (!no || no === task || no.type !== TaskType.Standard || no.pendingActionLines?.length) return null;",
+    "new": "  if (!no || no === task || no.type !== TaskType.Standard) return null;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "QA3L-NO-ASKS-clearer-empty",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "  if (!no.actions.length || !no.actions.every(",
-    "new": "  if (!no.actions.every(",
+    "old": "    !no.actions.length ||\n    !no.actions.every(",
+    "new": "    !no.actions.every(",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -623,8 +623,8 @@
   {
     "name": "QA3L-NO-ASKS-clears-counted-once",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "asksOnAClick(quest, task, clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0))",
-    "new": "asksOnAClick(quest, task, 1)",
+    "old": "    const clears =\n      clearer &&\n      asksOnAClick(\n        quest,\n        task,\n        clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0),\n      )\n        ? clearer\n        : null;",
+    "new": "    const clears = clearer && asksOnAClick(quest, task, 1) ? clearer : null;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "QA3L-NO-ASKS-clears-asking-unread",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "asksOnAClick(quest, task, clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0)) ? clearer : null;",
-    "new": "clearer.actions.length ? clearer : null;",
+    "old": "    const clears =\n      clearer &&\n      asksOnAClick(\n        quest,\n        task,\n        clearer.actions.reduce((n, /** @type {any} */ a) => n + a.taskSymbols.length, 0),\n      )\n        ? clearer\n        : null;",
+    "new": "    const clears = clearer && clearer.actions.length ? clearer : null;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -650,8 +650,8 @@
   {
     "name": "QA3L-NO-ASKS-clears-prompt-left-complete",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "        prompt.isComplete = false;\n        no.clear();                 // its `clear` rearms (Task.Clear), for a second No\n",
-    "new": "        no.clear();                 // its `clear` rearms (Task.Clear), for a second No\n",
+    "old": "        prompt.isComplete = false;\n        no.clear(); // its `clear` rearms (Task.Clear), for a second No",
+    "new": "        no.clear(); // its `clear` rearms (Task.Clear), for a second No",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "QA3L-NO-ASKS-clears-no-left-set",
     "file": "src/systems/quest/noAsksAgain.js",
-    "old": "        no.clear();                 // its `clear` rearms (Task.Clear), for a second No\n",
-    "new": "",
+    "old": "        no.clear(); // its `clear` rearms (Task.Clear), for a second No\n        asked++;",
+    "new": "        asked++;",
     "tests": [
       "test/systems/quest/questaudit3_life.test.js"
     ]

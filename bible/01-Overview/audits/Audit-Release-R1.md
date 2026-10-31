@@ -43,7 +43,7 @@ world or moves a server's cost. R1-1 is the one a player meets - a city's street
 ### R1-1 - a town's wall model and the Imperial City's cells (HIGH, FIXED)
 
 `townWalls.js:"export const TOWN_WALL_MODEL_BASE = 1000000;"` (was `3000000 + ((mapId >>> 0) & 0xfffff)`),
-`imperialBlocks.js:"export const IMPERIAL_FABRIC_MODEL = 7_000_000;"` (was `3_000_000` when this lane read it), `customModels.js:"export function customModelFor(id, ctx = null) {"`.
+`imperialBlocks.js:"export const IMPERIAL_FABRIC_MODEL"` (was `3_000_000` when this lane read it), `customModels.js:"export function customModelFor"`.
 AT THE MERGE (2026-10-26): IC-GRAND's own perf pass found the same overlap from the city's side and moved its fabric's and
 skylines' models to 7,000,000 and 7,100,000 (`03-World/Arena-Provinces.md` "THE ID RUNS"); with this lane's walls at
 1,000,000 the two ranges are clear from both sides, and both pins hold.
@@ -79,7 +79,7 @@ PIN MOVED (AUDIT RELEASE R1-1): `test/world/townwalls.test.js` (the walls' ids).
 
 ### R1-2 - the Travel View's ground and the land that lands after it (LOW, FIXED)
 
-`travelRoute.js:"const memoMoved = landWatch(), waterMoved = landWatch();"`, `travelRoute.js:"get isWater() { return waterNow(); },"`.
+`travelRoute.js:"const memoMoved ="`, `travelRoute.js:"get isWater() {"`.
 The route ground (`routeGround`) kept its answers past the Bay's table (`dryBeyond`, dropped only past BEYOND_CACHE_MAX),
 the sea lanes keep their water by the ground's `isWater` (planSeaLanes' `_laneGround`), and the host makes one ground a
 session (`world.js:"const tvRouteGround = () => {"`, made again only when the zone comes or goes). The land past the
@@ -100,7 +100,7 @@ non-ARENA2 pin as well).
 ### R1-3 - the roads past the Bay and the carved rivers (MED, FIXED by RIVER-FORDS - `03-World/Roads.md`)
 
 `terrainGen.js:"if (landforms && !inBay(px, py)) paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);"`,
-`tamrielRoadsWorker.js:"const wet = (x, y) => !inBay(x, y) && heightAt(x, y) <= WATER_BYTE;"`. CYRODIIL-WATERS carves
+`tamrielRoadsWorker.js:"const wet = (x, y)"`. CYRODIIL-WATERS carves
 ten rivers inside the kernel, narrower than a pixel, and paints their channels water after the roads are painted; the
 roads' worker routes on the pixels' bytes, which carry no channel (VOYAGER's own record, `03-World/Roads.md` OPEN (3)).
 Measured at 367cf11766, before SMOOTH-LAND moved the land (GROUND_ROLL_VERSION 4 lays every road again; nothing in it
@@ -120,7 +120,7 @@ a ford (or lays a bridge model) where `paintTamrielWaters` meets a road's tile.
 
 ### R1-4 - the Imperial City on the horizon stands its slices on the land's raw ground (LOW, FIXED)
 
-`capitalSkyline.js:"const px = centre.px + (s % IMPERIAL_SPAN) - R, py = centre.py + Math.floor(s / IMPERIAL_SPAN) - R, lo = lowestAround(fr, px, py);"`
+`capitalSkyline.js:"const px = centre.px"`
 (IC-GRAND's file; as found, the line read the slice's own pixel's ground, `fr.groundAt(px, py)`). The stream flattens every slice of the city to its centre's ground
 (`terrainGen.js` flattenAt); the far ring has no flatten, and each slice's landmark stands on the ring's own height at its
 pixel. On the freeware the ground under the 625 slices reads 10 to 14 bytes, the ring's heights 100 to 140 m against the
@@ -129,9 +129,9 @@ lane ran none). Proposed for IC-GRAND: stand every slice's landmark at the centr
 centre.py)`), as the stream stands it.
 
 FIXED (IC-GRAND, 2026-10-26): every slice stands at the ring's ground at the centre pixel
-(`capitalSkyline.js:"function cityGround(fr, centre) {"`), its feet - every corner at its ground, the far view lays no
+(`capitalSkyline.js:"function cityGround"`), its feet - every corner at its ground, the far view lays no
 flat quad there - down to the ring's lowest round its pixel and never above the city's
-(`capitalSkyline.js:"function lowestAround(fr, px, py) {"`), so a slice over lower land stands on a plinth to it, not in
+(`capitalSkyline.js:"function lowestAround"`), so a slice over lower land stands on a plinth to it, not in
 the air. With the centre off the ring's grid (the traveller up
 to SKYLINE_REACH out, 61 pixels against the ring's 48) the city's ground is the ring's at its slice on the grid nearest the
 centre, and every slice is stood again once the ring has the centre. Pinned in `test/world/icgrand_lod.test.js` THE CITY
@@ -140,7 +140,7 @@ ON THE HORIZON (PIN MOVED: it read each slice's foot at its own pixel's ground);
 
 ### R1-5 - the Red Ring Road and the two Lake Rumares (NOTE)
 
-`cyrodiilRoads.js:"export function ringPoints(ring, walkable, wet) {"`, `world/imperialCity.js:"lake: 10000,"`. VOYAGER-CYRODIIL
+`cyrodiilRoads.js:"export function ringPoints(ring, walkable, wet) {"`, `world/imperialCity.js:"lake: 10000, // AUDIT"`. VOYAGER-CYRODIIL
 rings the Imperial City "along Lake Rumare's shore": the first water each of twelve bearings meets past the span. IC-GRAND
 puts the city's own isle and Lake Rumare's far shore (10 km) INSIDE its 25 pixels, and the trace's ring of water (IC-RING's
 "circle river") stands 36 to 56 pixels out. On the freeware, on SMOOTH-LAND's land (ad2a8d71de), the ring's twelve points

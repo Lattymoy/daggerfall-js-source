@@ -1753,7 +1753,7 @@ The two met at
 the merge: the game's `world/imperialCity.js`, `capitalImperial.js` and `capitalShapes.js` are IC-GRAND's, and the film
 reads its own copy of the city it was shot on, `ui/intro/set/` (the three modules as main had them, their imports'
 paths and an export list the only changes), so every frame of the film stays the one pinned above
-(`ui/intro/introCity.js:"import { IMPERIAL, IMPERIAL_CELLS, IMPERIAL_CITY_PLAN, imperialDistrictAt, imperialTile, imperialTree } from './set/imperialCity.js';"`). PIN MOVED:
+(`ui/intro/introCity.js:"IC-GRAND's twenty-five".."import {"`). PIN MOVED:
 `test/ui/intro4_film.test.js` reads the landmarks off the set. The set's 23 proper names stand on the L10N4 ratchet
 where world/imperialCity.js's did (`test/systems/l10n4_hardcoded.test.js`). STILL OPEN: re-shooting the film on the
 grand city - a new camera path over a city 3.5 times as wide, without the Colosseum - is its own slice; until then the
@@ -1857,7 +1857,7 @@ does the pack's USE arm.
                         button and the pack's USE hand-off, whose
                         close-then-hand-over ordering U55 got
                         backwards. No law needs extracting first.
-    THE LOGBOOK         THREE sites: charSheetNav.js:"? () => new QuestJournalWindow",
+    THE LOGBOOK         THREE sites: charSheetNav.js:"? () =>",
     / NOTEBOOK          world.js:"MaxCharacters 80", dungeonContext.js:"U26: ui/input.js". A seam
                         wants making, as U52's and U53's did.
     HISTORY             ONE site (charSheetNav.js:"history: () => new"), and it reads
@@ -9842,7 +9842,7 @@ VALUE IT READ FOR. effectWords took a component to be there when its
 field was not zero. The Spell Maker never writes a zero there: a
 greyed-out spinner takes no value
 (DaggerfallEffectSettingsEditorWindow.InitControlState) and keeps the
-maker's floor of 1 (spellMaker.js:"export function blankEffectSettings() {",
+maker's floor of 1 (spellMaker.js:"export function blankEffectSettings",
 DefaultEffectSettings' "1 + 1 per level"), and all 99 effect slots of
 the stock SPELLS.STD hold the same 1s in each component their effect
 does not support. So every Damage Health in the game, stock or made,
@@ -9859,14 +9859,14 @@ report; their base of 1-8 printed right). The cost was right because
 spellcost.js reads the same record the DFU way
 (FormulaHelper.CalculateEffectCosts, behind the same three support
 flags - all 93 rows of the cost table agree with them), and so does the
-cast (spellcast.js:"export function rollMagnitude(effect, casterLevel, rolls = Math.random) {"); the
+cast (spellcast.js:"export function rollMagnitude"); the
 description alone misread it. The suite was green because PX23b's pin
 built its record by hand, with zeros where no producer writes one -
 TEST THE SHAPE THE PRODUCER MINTS, once more.
 
 FIXED WHERE IT READS. effectWords reads the effect the way DFU
 instantiates it (enhancedSpellbook.js:"const s = classicEffectSettings(effect);"): the settings are
-ClassicEffectRecordToEffectSettings' (spellEffects.js:"export function classicEffectSettings(e) {", MACRO-5's
+ClassicEffectRecordToEffectSettings' (spellEffects.js:"export function classicEffectSettings", MACRO-5's
 port - one DFU member, one export), a component is printed only when
 the effect class supports it (SupportDuration, SupportChance,
 SupportMagnitude - the template's three flags, the gates the settings
@@ -9923,7 +9923,7 @@ classic book here keeps that. Now the book draws through ui/domRepaint.js
 list and the page scroll each in their own column (the grimoire dress's
 book, worn plain - `.sb-shell .px-body` holds them and scrolls neither), and
 the page names the spell it shows (`data-scroll-key`, the helper's new
-word: domRepaint.js:"const key = n.getAttribute?.('data-scroll-key');"), so
+word: domRepaint.js:"const key = n.getAttribute?.('data-scroll-key')"), so
 another spell's page starts at its top - named by the spell's own index,
 never its row (AUDIT FB1018f L2-2: a delete kept the row, and the next spell
 opened at the deleted one's offset). The helper finds a saved pane by its
@@ -9931,7 +9931,7 @@ own path, walking down its indices (AUDIT FB1018f L2-4: it had mapped the
 whole rebuilt tree, quadratic - one fold in a scrolled Chronicle of 500
 notes ~400 ms, now 69 ms). The Chronicle (the same bones) lost
 its page on every fold, remove, share and abandon, and draws the same way,
-its page named by its section (enhancedChronicle.js:"body.setAttribute('data-scroll-key', section);").
+its page named by its section (enhancedChronicle.js:"body.setAttribute").
 The Reforge's Salvage page and the pack's Salvage were measured holding
 already (one scroller kept, its rows replaced). Pins:
 test/ui/enhanced/fb1018f_spellscroll.test.js (8); the layout itself is
@@ -11315,7 +11315,7 @@ to the wrong code.
   so the edge was a silent no-op and one press glued a slider to the
   pointer for the rest of the popup's life, with the runaway value then
   written by the grid's save. `ControlsWindow.release()` forwards it now,
-  the ROAD-E E1 shape `ui/item/itemMakerWindow.js:"release() { this.picker?.release"` has carried since
+  the ROAD-E E1 shape `ui/item/itemMakerWindow.js:"release() {"` has carried since
   Wave E, and it is `HorizontalSlider.cs:148-154`'s else arm.
 - **The wheel arm was dead.** `sliderScroll` ported MouseScrollUp/Down
   (:180-190) with no caller anywhere. `MouseControlsWindow.wheel(dir)`
@@ -16027,7 +16027,7 @@ status strip on a phone sits under the touch layer's two top-left buttons
 exactly as the classic did; the enhanced HUD has no arrow counter (AUDIT
 28 W2a's classic-arm feature) - not a font matter. AND THE CANVAS NATIVE
 WINDOWS, which the first record did not name: under the enhanced skin the
-death screen (`ui/deathScreen.js:"font, died, (canvas.width - measureText(font.fnt, died) * s)"`), the rest window's rows
+death screen (`ui/deathScreen.js:"const died = t('death.title', 'YOU HAVE DIED')".."font,"`), the rest window's rows
 (`ui/restWindow.js:"rows = this.endLines"`), the save window (`ui/saveWindow.js`, eight
 `shadowText` sites), the travel popup (`ui/travel/travelPopUp.js:"font, r.text ?? r"`), the quest
 journal (`ui/quest/questJournal.js:"font, line, m.ox + (lx + 1)"`), every MessageBox row
@@ -18792,11 +18792,11 @@ What the ladder says, every arm driven by a pin:
   roll that has not happened. The rows are a glance: nothing is lit, and
   the wheel and the take keys stay with the camera
   (`worldHover.js:"export const PREVIEW_KEYS = Object.freeze(['container:', 'decor:']);"`,
-  `quickLoot.js:"const take = frame?.kind === 'items' && !frame.preview;"`).
+  `quickLoot.js:"const take = frame?.kind"`).
   The press is unchanged: the private-property question, the storage
   window, and the stocking itself still happen on the click. DFU does
   not list a cupboard. The interior host builds the rung once
-  (`containerPreview.js:"export function createInteriorPeek("`, HOST-SPLIT:
+  (`containerPreview.js:"export function createInteriorPeek"`, HOST-SPLIT:
   the host wires it, it does not grow it); its getters read the room's own
   word only while the crosshair is on a cupboard or a placed chest. Pins `test/systems/containerpreview.test.js`, and the
   CONTAINER-PEEK cases in `test/systems/worldhover.test.js` and `test/systems/quickloot.test.js`.
@@ -18976,7 +18976,7 @@ with a room over the freeware's blocks and both town packs.
 
 DFU names every residence "Residence" (PlayerGPS.cs:1306-1309)
 and the mod prints it (.cs:719-728), so the port does now, whatever the verbs
-(`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`), and a nameless building of no
+(`online/onlineHomes.js:"export const homeDoorName"`), and a nameless building of no
 house type (a ship's deck) says its place. And a door of a NEIGHBOURING location (the Imperial City's next slice, a town
 across a pixel's edge) was named and discovered in the player's own town's book: the host's record now carries the
 door's own town (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`), and the plaque, the press
@@ -20619,7 +20619,7 @@ already keeps.
     the season's captains (the deepest voyage and the legends ended, off the captain's ledger) - and its foot the rule
     the three title boards share, naming them (L1/W4: "Arena Champion, Iliac Champion and Grandmaster are worn by the
     leader, once they have 10 rated bouts or games against 5 different opponents" - Spire Champion is each bracket's top
-    ten's, through the next season, and the foot had read as all five rows'). `seasonBook.js:"export const SEASON_TITLE_GAMES = 10;"`
+    ten's, through the next season, and the foot had read as all five rows'). `seasonBook.js:"export const SEASON_TITLE_GAMES"`
     is held to the arena's constants and the service's Iliac and Gambit ones alike (L13/P16). L10: before the epoch, or
     with no clock, the day holds at 1 (the arena's day wrapped while its season held).
   - THE SEATS' SEASON (`net/townSeatLaw.js` seasonOf, off the service's zero): *The Seats: Season 0, Week 3 of 4*, to its
@@ -20635,7 +20635,7 @@ already keeps.
     on the sky's nights - the Starfall says "every in-game night, about once a real hour". L6/L7: Soul Cakes are found on
     any foe (the dead and the summoned most often) and in gathering, crafting, looting and at sea, and count double on 31
     October UTC. L4: a guest is told the festival is a registered account's (`Add a username to join the festival.`).
-- **The standings** (`seasonBook.js:"function boardLine("`): each board's line in its state - *Reading the board...*
+- **The standings** (`seasonBook.js:"function boardLine"`): each board's line in its state - *Reading the board...*
   while asked, *The board can't be read right now.* on a failure with nothing kept, and the player's own line otherwise.
   AUDIT R4/L4: every board answers a guest's `me`, and no guest's game is ever kept - a guest is told *Add a username to
   be ranked.* (the game's own words for it), and no one signed in *Sign in to be ranked.*; neither is asked anything. R7:
@@ -20645,7 +20645,7 @@ already keeps.
   season's figures alone.
 - **The reads** (`scenes/seasonBookHost.js` createSeasonBook). AUDIT R1: a standing cannot move while the game is paused,
   so a board is asked when the window OPENS (its first read), at most once a minute however often it is opened
-  (`seasonBookHost.js:"export const SEASON_BOARD_FRESH_MS = 60_000;"`), never again while it stays open - and never on a
+  (`seasonBookHost.js:"export const SEASON_BOARD_FRESH_MS"`), never again while it stays open - and never on a
   hidden page, while the account service has asked to be let be (BUSY-GATE's hold, `busyUntil`), for a guest or for no
   one signed in. (The first build asked four boards from every open window: the arena every 20 seconds and three others
   a minute, two of them uncached whole-season queries on the primary - 31 times the timers window's load.) R2: every
@@ -20670,7 +20670,7 @@ already keeps.
   asks - AUDIT GROWTH LANE2-3's law) at the press, never kept from the draw. 660px wide (the timers' window is 560px -
   W15: the record had read as the timers' width) so a line wraps less; every door a 44px target (U10); a narrow screen's
   clock under its title (U7); on a phone a door under its words; a short screen's window within it.
-- **The source** (`enhancedSeason.js:"export function seasonSource(hooks, { opening = false } = {}) {"`): the hourglass's own
+- **The source** (`enhancedSeason.js:"export function seasonSource"`): the hourglass's own
   read (`hooks.timers` - the relay's clock, the seats' word and zero; its service read asked at the opening alone, R1)
   under the laurel's reads (`hooks.season`); none without a clock (offline, or before the relay's clock is heard), so no
   laurel then.

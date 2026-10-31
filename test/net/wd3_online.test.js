@@ -156,7 +156,7 @@ test('WD3 online, the client: the homes\' towns asked at the boot, before the fi
   assert.match(W, /_serverLayoutRecords = towns\.filter\(\(t\) => Array\.isArray\(t\)\)\.map\(\(\[mapId, layout\]\) => \(\{\n {6}locationKey: _layoutKeyOfMapId\.get\(Number\(mapId\) >>> 0\) \?\? null, stamp: typeof layout === 'string' \? layout : undefined, kind: 'house',/);
   assert.match(W, /const records = homeLayoutsOnline \? \(_serverLayoutRecords \?\? \[\]\) : layoutRecordsOf\(/);
   assert.match(src('src/systems/online/onlineHomes.js'), /call: \(\/\*\* @type \{any\} \*\/ at\) => homes\.claim\(\{ mapId, buildingKey, region, price, realm: at, layout, ground \}\),/);   // PIN MOVED (DECOR-ROOMY, FIELD BUGS 2026-10-29f): and the ground its price was set from
-  assert.match(src('src/systems/online/onlineHomes.js'), /layout: layout \|\| null, \.\.\.\(ground \? \{ ground: ground\[0\], townBlocks: ground\[1\] \} : \{\}\) \}\);   \/\/ DECOR-ROOMY   \/\/ WD3 \(AUDIT WD3 B2\)/, 'always said, null for Daggerfall\'s own');
+  assert.match(src('src/systems/online/onlineHomes.js'), /layout: layout \|\| null,\n\s*\.\.\.\(ground \? \{ ground: ground\[0\], townBlocks: ground\[1\] \} : \{\}\),\n\s*\}\); \/\/ DECOR-ROOMY   \/\/ WD3 \(AUDIT WD3 B2\)/, 'always said, null for Daggerfall\'s own');
 });
 
 test('WD3 online, the room (OWN-WORK3): the two town mods are retired - no switch of theirs, nothing the room forces; a home\'s stamp still names them, as the service keeps it (mutant: a switch left forced)', () => {

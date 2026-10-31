@@ -54,9 +54,9 @@
 // the chat opened tall on a laptop - it stands BESIDE the diamond
 // instead, as tall as the diamond (statPlace).
 // ═══════════════════════════════════════════════════════════════════
-import { DISEASE_NAMES, diseaseIncubating } from '../../systems/diseases.js';   // DISEASE-UNWELL: and the one law of a disease still incubating
+import { DISEASE_NAMES, diseaseIncubating } from '../../systems/diseases.js'; // DISEASE-UNWELL: and the one law of a disease still incubating
 import { HUD_NEED_WORDS, levelSaid } from '../../systems/survival/status.js';
-import { t } from '../../systems/textManager.js';   // DISEASE-UNWELL: the Unwell tile's word in the player's language, read when it is drawn
+import { t } from '../../systems/textManager.js'; // DISEASE-UNWELL: the Unwell tile's word in the player's language, read when it is drawn
 
 /** A tile's side: a 16px picture at two to one inside a 2px frame. */
 export const STAT_TILE = 36;
@@ -96,150 +96,450 @@ export const STAT_NAME_GAP = 8;
  */
 export const STATUS_GLYPHS = Object.freeze({
   // REST1: a campfire - the flame over its crossed logs - while the night interval runs (Rested)
-  rested: Object.freeze({ pal: { f: '#ffb02a', y: '#fff0a0', w: '#9a6a3a', d: '#5a3a1e' }, rows: [
-    '................', '......kkkk......', '......kffk......', '.....kkffkk.....',
-    '.....kffffk.....', '....kkfyyfkk....', '....kfyyyyfk....', '...kkfyyyyfkk...',
-    '...kfffyyfffk...', '..kkkffffffkkk..', '.kkwwkkkkkkwwkk.', 'kkwwwddkkddwwwkk',
-    'kwwkkwwddwwkkwwk', 'kkkkkkkwwkkkkkkk', '......kkkk......', '................',
-  ] }),
+  rested: Object.freeze({
+    pal: { f: '#ffb02a', y: '#fff0a0', w: '#9a6a3a', d: '#5a3a1e' },
+    rows: [
+      '................',
+      '......kkkk......',
+      '......kffk......',
+      '.....kkffkk.....',
+      '.....kffffk.....',
+      '....kkfyyfkk....',
+      '....kfyyyyfk....',
+      '...kkfyyyyfkk...',
+      '...kfffyyfffk...',
+      '..kkkffffffkkk..',
+      '.kkwwkkkkkkwwkk.',
+      'kkwwwddkkddwwwkk',
+      'kwwkkwwddwwkkwwk',
+      'kkkkkkkwwkkkkkkk',
+      '......kkkk......',
+      '................',
+    ],
+  }),
   // a drumstick: the meat up and right, the bone down and left
-  hunger: Object.freeze({ pal: { a: '#c8763a', b: '#e8a060', c: '#8a4a22', w: '#efe6cf' }, rows: [
-    '................', '......kkkkkkk...', '.....kkbbbaakk..', '....kkbbbaaaakk.',
-    '....kbbbaaaaaak.', '....kbbaaaaaaak.', '....kbaaaaaaack.', '....kaaaaaaacck.',
-    '....kaaaaaaccck.', '...kkaaaaaccckk.', '.kkkwaaaacckkk..', 'kkwwwwkkkkkk....',
-    'kwwwwkk.........', 'kwwwwk..........', 'kkwwwk..........', '.kkkkk..........',
-  ] }),
+  hunger: Object.freeze({
+    pal: { a: '#c8763a', b: '#e8a060', c: '#8a4a22', w: '#efe6cf' },
+    rows: [
+      '................',
+      '......kkkkkkk...',
+      '.....kkbbbaakk..',
+      '....kkbbbaaaakk.',
+      '....kbbbaaaaaak.',
+      '....kbbaaaaaaak.',
+      '....kbaaaaaaack.',
+      '....kaaaaaaacck.',
+      '....kaaaaaaccck.',
+      '...kkaaaaaccckk.',
+      '.kkkwaaaacckkk..',
+      'kkwwwwkkkkkk....',
+      'kwwwwkk.........',
+      'kwwwwk..........',
+      'kkwwwk..........',
+      '.kkkkk..........',
+    ],
+  }),
   // a drop of water
-  thirst: Object.freeze({ pal: { a: '#5d8fe0', b: '#b7d3ff', c: '#2f5cab' }, rows: [
-    '................', '......kkkk......', '......kaak......', '.....kkaakk.....',
-    '.....kaaaak.....', '....kkaaaakk....', '....kbaaaaak....', '...kkbaaaaakk...',
-    '..kkabaaaaaakk..', '..kaabaaaaacck..', '..kaabaaaaccck..', '..kkabaaaccckk..',
-    '...kaaaacccck...', '...kkkaccckkk...', '.....kkkkkk.....', '................',
-  ] }),
+  thirst: Object.freeze({
+    pal: { a: '#5d8fe0', b: '#b7d3ff', c: '#2f5cab' },
+    rows: [
+      '................',
+      '......kkkk......',
+      '......kaak......',
+      '.....kkaakk.....',
+      '.....kaaaak.....',
+      '....kkaaaakk....',
+      '....kbaaaaak....',
+      '...kkbaaaaakk...',
+      '..kkabaaaaaakk..',
+      '..kaabaaaaacck..',
+      '..kaabaaaaccck..',
+      '..kkabaaaccckk..',
+      '...kaaaacccck...',
+      '...kkkaccckkk...',
+      '.....kkkkkk.....',
+      '................',
+    ],
+  }),
   // a crescent moon and a z
-  sleep: Object.freeze({ pal: { a: '#e8dfa8', c: '#b8a860', z: '#b7c8ff' }, rows: [
-    '.........kkkkkkk', '.........kzzzzzk', '.........kkkkzkk', '...kkkk...kkzkk.',
-    '..kkaak..kkzkkkk', '.kkaaak..kzzzzzk', 'kkaaakk..kkkkkkk', 'kaaaak..........',
-    'kaaaakk.........', 'kaaaaakk........', 'kaaaaackk.kkk...', 'kaaaaccckkkck...',
-    'kkaaccccccckk...', '.kkcccccccck....', '..kkccccckkk....', '...kkkkkkk......',
-  ] }),
+  sleep: Object.freeze({
+    pal: { a: '#e8dfa8', c: '#b8a860', z: '#b7c8ff' },
+    rows: [
+      '.........kkkkkkk',
+      '.........kzzzzzk',
+      '.........kkkkzkk',
+      '...kkkk...kkzkk.',
+      '..kkaak..kkzkkkk',
+      '.kkaaak..kzzzzzk',
+      'kkaaakk..kkkkkkk',
+      'kaaaak..........',
+      'kaaaakk.........',
+      'kaaaaakk........',
+      'kaaaaackk.kkk...',
+      'kaaaaccckkkck...',
+      'kkaaccccccckk...',
+      '.kkcccccccck....',
+      '..kkccccckkk....',
+      '...kkkkkkk......',
+    ],
+  }),
   // a cloud and its rain
-  wet: Object.freeze({ pal: { a: '#aab4c4', b: '#dde4ee', c: '#7a8496', r: '#7fc7ff' }, rows: [
-    '................', '......kkkkkkk...', '.....kkbbbbbk...', '..kkkkbbbbbbkk..',
-    '.kkaaaaaaaaaakk.', '.kaaaaaaaaaaaak.', '.kaaaaaaaaaaaak.', '.kkaaaaaaaaaaak.',
-    '..kccccccccccck.', '..kkkkkkkkkcckk.', '...krrkkrkkkrk..', '...krkkkrkkkrk..',
-    '..kkrkkrrkkrkk..', '..krkkkrkkkrk...', '..kkk.kkk.kkk...', '................',
-  ] }),
+  wet: Object.freeze({
+    pal: { a: '#aab4c4', b: '#dde4ee', c: '#7a8496', r: '#7fc7ff' },
+    rows: [
+      '................',
+      '......kkkkkkk...',
+      '.....kkbbbbbk...',
+      '..kkkkbbbbbbkk..',
+      '.kkaaaaaaaaaakk.',
+      '.kaaaaaaaaaaaak.',
+      '.kaaaaaaaaaaaak.',
+      '.kkaaaaaaaaaaak.',
+      '..kccccccccccck.',
+      '..kkkkkkkkkcckk.',
+      '...krrkkrkkkrk..',
+      '...krkkkrkkkrk..',
+      '..kkrkkrrkkrkk..',
+      '..krkkkrkkkrk...',
+      '..kkk.kkk.kkk...',
+      '................',
+    ],
+  }),
   // a sun - warm, hot, scorching
-  hot: Object.freeze({ pal: { a: '#ffb02a', b: '#fff0a0', r: '#ff7a2a' }, rows: [
-    '......kkkk......', '......krrk......', '..kkkkkrrkkkkk..', '..krrkkkkkkrrk..',
-    '..krrkkkkkkrrk..', '..kkkkbbaakkkk..', 'kkkkkbbaaaakkkkk', 'krrkkbaaaaakkrrk',
-    'krrkkaaaaaakkrrk', 'kkkkkaaaaaakkkkk', '..kkkkaaaakkkk..', '..krrkkkkkkrrk..',
-    '..krrkkkkkkrrk..', '..kkkkkrrkkkkk..', '......krrk......', '......kkkk......',
-  ] }),
+  hot: Object.freeze({
+    pal: { a: '#ffb02a', b: '#fff0a0', r: '#ff7a2a' },
+    rows: [
+      '......kkkk......',
+      '......krrk......',
+      '..kkkkkrrkkkkk..',
+      '..krrkkkkkkrrk..',
+      '..krrkkkkkkrrk..',
+      '..kkkkbbaakkkk..',
+      'kkkkkbbaaaakkkkk',
+      'krrkkbaaaaakkrrk',
+      'krrkkaaaaaakkrrk',
+      'kkkkkaaaaaakkkkk',
+      '..kkkkaaaakkkk..',
+      '..krrkkkkkkrrk..',
+      '..krrkkkkkkrrk..',
+      '..kkkkkrrkkkkk..',
+      '......krrk......',
+      '......kkkk......',
+    ],
+  }),
   // a snowflake - cold, freezing, deadly cold
-  cold: Object.freeze({ pal: { a: '#cfeeff', b: '#ffffff' }, rows: [
-    '................', '.....kkkkkk.....', '..kkkkaaaakkkk..', '..kakkkaakkkak..',
-    '..kkakkaakkakk..', '.kkkkakaakakkkk.', '.kakkkabbakkkak.', '.kaaaabbbbaaaak.',
-    '.kaaaabbbbaaaak.', '.kakkkabbakkkak.', '.kkkkakaakakkkk.', '..kkakkaakkakk..',
-    '..kakkkaakkkak..', '..kkkkaaaakkkk..', '.....kkkkkk.....', '................',
-  ] }),
+  cold: Object.freeze({
+    pal: { a: '#cfeeff', b: '#ffffff' },
+    rows: [
+      '................',
+      '.....kkkkkk.....',
+      '..kkkkaaaakkkk..',
+      '..kakkkaakkkak..',
+      '..kkakkaakkakk..',
+      '.kkkkakaakakkkk.',
+      '.kakkkabbakkkak.',
+      '.kaaaabbbbaaaak.',
+      '.kaaaabbbbaaaak.',
+      '.kakkkabbakkkak.',
+      '.kkkkakaakakkkk.',
+      '..kkakkaakkakk..',
+      '..kakkkaakkkak..',
+      '..kkkkaaaakkkk..',
+      '.....kkkkkk.....',
+      '................',
+    ],
+  }),
   // a bone, and the ache either side of it
-  stiff: Object.freeze({ pal: { w: '#efe6cf', c: '#b8ab8c', r: '#e0584a' }, rows: [
-    '.........kkkk...', '.........kcckk..', '.........kccckk.', '...kkk...kcckckk',
-    '...krkk.kkccccck', '..kkkrkkkcccccck', '..krkkkkccckkkkk', '..kkkkkwwckk....',
-    '....kkwwwkk.....', 'kkkkkwwwkkkkk...', 'kwwwwwwkkkkrk...', 'kwwwwwkk.krkkk..',
-    'kkwkwwk..kkkrk..', '.kkwwck....kkk..', '..kkcck.........', '...kkkk.........',
-  ] }),
+  stiff: Object.freeze({
+    pal: { w: '#efe6cf', c: '#b8ab8c', r: '#e0584a' },
+    rows: [
+      '.........kkkk...',
+      '.........kcckk..',
+      '.........kccckk.',
+      '...kkk...kcckckk',
+      '...krkk.kkccccck',
+      '..kkkrkkkcccccck',
+      '..krkkkkccckkkkk',
+      '..kkkkkwwckk....',
+      '....kkwwwkk.....',
+      'kkkkkwwwkkkkk...',
+      'kwwwwwwkkkkrk...',
+      'kwwwwwkk.krkkk..',
+      'kkwkwwk..kkkrk..',
+      '.kkwwck....kkk..',
+      '..kkcck.........',
+      '...kkkk.........',
+    ],
+  }),
   // a tankard and its foam
-  drunk: Object.freeze({ pal: { a: '#c8963a', b: '#e8c070', c: '#7a5424', f: '#fff8e8' }, rows: [
-    '......kkk.......', '..kkkkkfkk......', '.kkffffffkkk....', '.kfffffffffkk...',
-    '.kffffffffffk...', '.kkfffffaffkk...', '..kbbaaaaaakkkk.', '..kccccccccaaak.',
-    '..kbbaaaaaaakak.', '..kbbaaaaaaakak.', '..kbbaaaaaaakak.', '..kbbaaaaaaaaak.',
-    '..kcccccccckkkk.', '..kbbaaaaaak....', '..kbbaaaaaak....', '..kkkkkkkkkk....',
-  ] }),
+  drunk: Object.freeze({
+    pal: { a: '#c8963a', b: '#e8c070', c: '#7a5424', f: '#fff8e8' },
+    rows: [
+      '......kkk.......',
+      '..kkkkkfkk......',
+      '.kkffffffkkk....',
+      '.kfffffffffkk...',
+      '.kffffffffffk...',
+      '.kkfffffaffkk...',
+      '..kbbaaaaaakkkk.',
+      '..kccccccccaaak.',
+      '..kbbaaaaaaakak.',
+      '..kbbaaaaaaakak.',
+      '..kbbaaaaaaakak.',
+      '..kbbaaaaaaaaak.',
+      '..kcccccccckkkk.',
+      '..kbbaaaaaak....',
+      '..kbbaaaaaak....',
+      '..kkkkkkkkkk....',
+    ],
+  }),
   // TEMP-UI: a thermometer - the HUD's temperature plate while the reading is comfortable (the sun and the snowflake
   // stand for the two ways out of it). AUDIT C&C D6: its column in the plate's own bone, neutral - it was red, the
   // colour that says a reading costs, on the one reading that is comfortable
-  thermo: Object.freeze({ pal: { g: '#cfd4dc', w: '#eef2f6', r: '#b8ab8c', h: '#efe6cf', t: '#a8b0bc' }, rows: [
-    '......kkkk......', '......kggk......', '.....kkwwkk.....', '.....kgwwgkk....',
-    '.....kgwwgtk....', '.....kgwwgkk....', '.....kgrrgtk....', '.....kgrrgkk....',
-    '.....kgrrgtk....', '.....kgrrgkk....', '....kkrrrrkk....', '....krhrrrrk....',
-    '....krrrrrrk....', '....kkrrrrkk....', '.....kkrrkk.....', '......kkkk......',
-  ] }),
+  thermo: Object.freeze({
+    pal: { g: '#cfd4dc', w: '#eef2f6', r: '#b8ab8c', h: '#efe6cf', t: '#a8b0bc' },
+    rows: [
+      '......kkkk......',
+      '......kggk......',
+      '.....kkwwkk.....',
+      '.....kgwwgkk....',
+      '.....kgwwgtk....',
+      '.....kgwwgkk....',
+      '.....kgrrgtk....',
+      '.....kgrrgkk....',
+      '.....kgrrgtk....',
+      '.....kgrrgkk....',
+      '....kkrrrrkk....',
+      '....krhrrrrk....',
+      '....krrrrrrk....',
+      '....kkrrrrkk....',
+      '.....kkrrkk.....',
+      '......kkkk......',
+    ],
+  }),
   // AUDIT SURV-BOONS C7: a flame, no logs - the Hearth boon (a lit fire beside a waking player), told apart from REST1's
   // Rested campfire, which can stand beside it online
-  hearth: Object.freeze({ pal: { o: '#ff7a2a', y: '#ffc84a', w: '#fff6c8' }, rows: [
-    '................', '......kkk.......', '.....kkok.......', '.....kookk......',
-    '....kkoookkkk...', '....kooookkokk..', '...kkoooookookk.', '...kooooyoooook.',
-    '..kkoooyyyooook.', '..koooyyyyyoook.', '..kooyyywyyyook.', '..kooyywwwyyook.',
-    '..kkoyywwwyyokk.', '...kkoyyyyyokk..', '....kkoooookk...', '.....kkkkkkk....',
-  ] }),
+  hearth: Object.freeze({
+    pal: { o: '#ff7a2a', y: '#ffc84a', w: '#fff6c8' },
+    rows: [
+      '................',
+      '......kkk.......',
+      '.....kkok.......',
+      '.....kookk......',
+      '....kkoookkkk...',
+      '....kooookkokk..',
+      '...kkoooookookk.',
+      '...kooooyoooook.',
+      '..kkoooyyyooook.',
+      '..koooyyyyyoook.',
+      '..kooyyywyyyook.',
+      '..kooyywwwyyook.',
+      '..kkoyywwwyyokk.',
+      '...kkoyyyyyokk..',
+      '....kkoooookk...',
+      '.....kkkkkkk....',
+    ],
+  }),
   // SURV-BOONS: a four-point sparkle in gold - Thriving, the boon of a body kept fed, watered and rested at once
-  thriving: Object.freeze({ pal: { a: '#ffd24a', b: '#fff6c8', c: '#c8902a' }, rows: [
-    '................', '................', '......kkkk......', '......kaak......',
-    '......kaak......', '.....kkaakk.....', '..kkkkaaaakkkk..', '..kaaaabbaccck..',
-    '..kaaaabbcccck..', '..kkkkaacckkkk..', '.....kkcckk.....', '......kcck......',
-    '......kcck......', '......kkkk......', '................', '................',
-  ] }),
+  thriving: Object.freeze({
+    pal: { a: '#ffd24a', b: '#fff6c8', c: '#c8902a' },
+    rows: [
+      '................',
+      '................',
+      '......kkkk......',
+      '......kaak......',
+      '......kaak......',
+      '.....kkaakk.....',
+      '..kkkkaaaakkkk..',
+      '..kaaaabbaccck..',
+      '..kaaaabbcccck..',
+      '..kkkkaacckkkk..',
+      '.....kkcckk.....',
+      '......kcck......',
+      '......kcck......',
+      '......kkkk......',
+      '................',
+      '................',
+    ],
+  }),
   // a skull, in the poison's green
-  poison: Object.freeze({ pal: { a: '#8fd46a', b: '#d4ffc0', c: '#4f9a3a' }, rows: [
-    '......kkkk......', '....kkkbbkkk....', '...kkbbbaaakk...', '..kkbbbaaaaakk..',
-    '..kbbbaaaaaaak..', '.kkbbaaaaaaaakk.', '.kbbkkaaaakkaak.', '.kbakkkaakkkaak.',
-    '.kkaaaaaaaaaakk.', '..kaaaakkaaack..', '..kkaaaaaaackk..', '...kkaaaaackk...',
-    '....kakaakck....', '....kaaaccck....', '....kkkkkkkk....', '................',
-  ] }),
+  poison: Object.freeze({
+    pal: { a: '#8fd46a', b: '#d4ffc0', c: '#4f9a3a' },
+    rows: [
+      '......kkkk......',
+      '....kkkbbkkk....',
+      '...kkbbbaaakk...',
+      '..kkbbbaaaaakk..',
+      '..kbbbaaaaaaak..',
+      '.kkbbaaaaaaaakk.',
+      '.kbbkkaaaakkaak.',
+      '.kbakkkaakkkaak.',
+      '.kkaaaaaaaaaakk.',
+      '..kaaaakkaaack..',
+      '..kkaaaaaaackk..',
+      '...kkaaaaackk...',
+      '....kakaakck....',
+      '....kaaaccck....',
+      '....kkkkkkkk....',
+      '................',
+    ],
+  }),
   // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 8.2, 11): two drops of blood - a sweep's BLEED, its own icon on both skins
-  bleed: Object.freeze({ pal: { a: '#c8202a', b: '#ff7a6a', c: '#7a0e14' }, rows: [
-    '....kkkk........', '....kaak........', '...kkaakk.......', '...kaaaak.......',
-    '..kkbaaakk......', '..kbaaaaak......', '.kkbaaaaakk.....', '.kbaaaaaaak.....',
-    '.kbaaaaaaak.kkk.', '.kbaaaaaackkkakk', '.kaaaaaaackkaaak', '.kkaaaaacckkaaak',
-    '..kkaaacckkkbaak', '...kkkkkkk.kacck', '...........kkkkk', '................',
-  ] }),
+  bleed: Object.freeze({
+    pal: { a: '#c8202a', b: '#ff7a6a', c: '#7a0e14' },
+    rows: [
+      '....kkkk........',
+      '....kaak........',
+      '...kkaakk.......',
+      '...kaaaak.......',
+      '..kkbaaakk......',
+      '..kbaaaaak......',
+      '.kkbaaaaakk.....',
+      '.kbaaaaaaak.....',
+      '.kbaaaaaaak.kkk.',
+      '.kbaaaaaackkkakk',
+      '.kaaaaaaackkaaak',
+      '.kkaaaaacckkaaak',
+      '..kkaaacckkkbaak',
+      '...kkkkkkk.kacck',
+      '...........kkkkk',
+      '................',
+    ],
+  }),
   // SKILL-READY (2026-10-20, Dudey: "a symbol ... left of the renown bar when skills are ready to level up"): an arrow
   // up in the level's gold - the skills a rest or a journey would raise (ui/hud/hudAdvance.js)
-  skillup: Object.freeze({ pal: { a: '#ffd24a', b: '#fff6c8', c: '#c8902a' }, rows: [
-    '................', '......kkkk......', '.....kkbckk.....', '....kkbbackk....',
-    '...kkbbaacckk...', '..kkbbaaaacckk..', '.kkbbaaaaaacckk.', '.kbbaaaaaaaacck.',
-    '.kkkkbbaacckkkk.', '....kbbaacck....', '....kbbaacck....', '....kbbaacck....',
-    '....kbbaacck....', '....kcccccck....', '....kkkkkkkk....', '................',
-  ] }),
+  skillup: Object.freeze({
+    pal: { a: '#ffd24a', b: '#fff6c8', c: '#c8902a' },
+    rows: [
+      '................',
+      '......kkkk......',
+      '.....kkbckk.....',
+      '....kkbbackk....',
+      '...kkbbaacckk...',
+      '..kkbbaaaacckk..',
+      '.kkbbaaaaaacckk.',
+      '.kbbaaaaaaaacck.',
+      '.kkkkbbaacckkkk.',
+      '....kbbaacck....',
+      '....kbbaacck....',
+      '....kbbaacck....',
+      '....kbbaacck....',
+      '....kcccccck....',
+      '....kkkkkkkk....',
+      '................',
+    ],
+  }),
   // FIRM-STARS (2026-10-20, Dudey: "a symbol ... on the right of the renown bar" while the Firmament has stars not yet
   // placed): a five-point star in the night sky's silver-blue (ui/hud/hudAdvance.js)
-  firmstar: Object.freeze({ pal: { a: '#bcd4ff', b: '#ffffff', c: '#6f8fd0' }, rows: [
-    '......kkk.......', '.....kkbkk......', '.....kbbak......', '....kkbbakk.....',
-    'kkkkkbbbaakkkkk.', 'kbbbbbbbaaaaaak.', 'kkbbbbbbaaaaakk.', '.kkaaaabaccckk..',
-    '..kkaaabccckk...', '..kkaaabccckk...', '..kaaaaacccck...', '.kkaaaakcccckk..',
-    '.kaaaakkkcccck..', '.kaakkk.kkkcck..', '.kkkk.....kkkk..', '................',
-  ] }),
+  firmstar: Object.freeze({
+    pal: { a: '#bcd4ff', b: '#ffffff', c: '#6f8fd0' },
+    rows: [
+      '......kkk.......',
+      '.....kkbkk......',
+      '.....kbbak......',
+      '....kkbbakk.....',
+      'kkkkkbbbaakkkkk.',
+      'kbbbbbbbaaaaaak.',
+      'kkbbbbbbaaaaakk.',
+      '.kkaaaabaccckk..',
+      '..kkaaabccckk...',
+      '..kkaaabccckk...',
+      '..kaaaaacccck...',
+      '.kkaaaakcccckk..',
+      '.kaaaakkkcccck..',
+      '.kaakkk.kkkcck..',
+      '.kkkk.....kkkk..',
+      '................',
+    ],
+  }),
   // a spore
-  disease: Object.freeze({ pal: { a: '#c8d24a', b: '#eef59a', c: '#6e7a18' }, rows: [
-    '....kkkkkkkk....', '...kkaakkaakk...', '...kaaakkaaak...', '.kkkkaakkaakkkk.',
-    'kkakkkabbakkkakk', 'kaaakbbbbaakaaak', 'kaaaabbbaaaaaaak', 'kkkkbbbcaaaakkkk',
-    'kkkkbbaaacaakkkk', 'kaaaaaacaaaaaaak', 'kaaakaaaaaakaaak', 'kkakkkaaaakkkakk',
-    '.kkkkaakkaakkkk.', '...kaaakkaaak...', '...kkaakkaakk...', '....kkkkkkkk....',
-  ] }),
+  disease: Object.freeze({
+    pal: { a: '#c8d24a', b: '#eef59a', c: '#6e7a18' },
+    rows: [
+      '....kkkkkkkk....',
+      '...kkaakkaakk...',
+      '...kaaakkaaak...',
+      '.kkkkaakkaakkkk.',
+      'kkakkkabbakkkakk',
+      'kaaakbbbbaakaaak',
+      'kaaaabbbaaaaaaak',
+      'kkkkbbbcaaaakkkk',
+      'kkkkbbaaacaakkkk',
+      'kaaaaaacaaaaaaak',
+      'kaaakaaaaaakaaak',
+      'kkakkkaaaakkkakk',
+      '.kkkkaakkaakkkk.',
+      '...kaaakkaaak...',
+      '...kkaakkaakk...',
+      '....kkkkkkkk....',
+    ],
+  }),
   // EVENT-RULES (systems/madeLevel.js): a heart bound across by an iron band - a world event's own rules hold here
-  rules: Object.freeze({ pal: { a: '#c8323a', b: '#ff8a8a', g: '#dfe3e8', c: '#8a9098' }, rows: [
-    '................', '..kkkk...kkkk...', '.kkbbkk.kkaakk..', '.kbbaakkkaaaakk.',
-    '.kbaaaakaaaaaak.', '.kaaaaaaaaaaaak.', 'kkaaaaaaaaaaaakk', 'kggggggggggggggk',
-    'kcccccccccccccck', 'kkkaaaaaaaaaakkk', '..kkaaaaaaaakk..', '...kkaaaaaakk...',
-    '....kkaaaakk....', '.....kkaakk.....', '......kkkk......', '................',
-  ] }),
+  rules: Object.freeze({
+    pal: { a: '#c8323a', b: '#ff8a8a', g: '#dfe3e8', c: '#8a9098' },
+    rows: [
+      '................',
+      '..kkkk...kkkk...',
+      '.kkbbkk.kkaakk..',
+      '.kbbaakkkaaaakk.',
+      '.kbaaaakaaaaaak.',
+      '.kaaaaaaaaaaaak.',
+      'kkaaaaaaaaaaaakk',
+      'kggggggggggggggk',
+      'kcccccccccccccck',
+      'kkkaaaaaaaaaakkk',
+      '..kkaaaaaaaakk..',
+      '...kkaaaaaakk...',
+      '....kkaaaakk....',
+      '.....kkaakk.....',
+      '......kkkk......',
+      '................',
+    ],
+  }),
   // WILD1 (systems/wild/wildZone.js): two blades crossed over the zone's blood - the open zone, on both skins
-  wild: Object.freeze({ pal: { a: '#cfd4dc', b: '#ffffff', g: '#c08a3e', c: '#a8241a' }, rows: [
-    'kkk..........kkk', 'kbkk........kkbk', 'kabkk......kkbak', 'kkabkk....kkbakk',
-    '.kkabkk..kkbakk.', '..kkabkkkkbakk..', '...kkabkkbakk...', '....kkabbakk....',
-    '....kkabbakk....', '...kkabkkbakk...', '.kkkabkkkkbakkk.', '.kgggkk..kkgggk.',
-    '.kkckk....kkckk.', '.kcck......kcck.', '.kkkk......kkkk.', '................',
-  ] }),
+  wild: Object.freeze({
+    pal: { a: '#cfd4dc', b: '#ffffff', g: '#c08a3e', c: '#a8241a' },
+    rows: [
+      'kkk..........kkk',
+      'kbkk........kkbk',
+      'kabkk......kkbak',
+      'kkabkk....kkbakk',
+      '.kkabkk..kkbakk.',
+      '..kkabkkkkbakk..',
+      '...kkabkkbakk...',
+      '....kkabbakk....',
+      '....kkabbakk....',
+      '...kkabkkbakk...',
+      '.kkkabkkkkbakkk.',
+      '.kgggkk..kkgggk.',
+      '.kkckk....kkckk.',
+      '.kcck......kcck.',
+      '.kkkk......kkkk.',
+      '................',
+    ],
+  }),
   // MENTOR2 (systems/mentorText.js mentorHudTile): a tall figure in gold, its arm on a smaller one's shoulder in blue
-  mentor: Object.freeze({ pal: { a: '#e8c070', b: '#fff0c8', c: '#8fb8ff', d: '#d8e6ff' }, rows: [
-    '.kkkkk..........', '.kbaak..........', '.kbaak..........', '.kaaak..........',
-    'kkkkkkk..kkkkk..', 'kbbaaak..kdcck..', 'kbaaaak..kdcck..', 'kaaaaakkkkccck..',
-    'kaaaaaaaaakkkkk.', 'kaaaaakkkddccck.', 'kkakakk.kccccck.', '.kakak..kccccck.',
-    '.kakak..kkckckk.', '.kakak...kckck..', '.kkkkk...kkkkk..', '................',
-  ] }),
+  mentor: Object.freeze({
+    pal: { a: '#e8c070', b: '#fff0c8', c: '#8fb8ff', d: '#d8e6ff' },
+    rows: [
+      '.kkkkk..........',
+      '.kbaak..........',
+      '.kbaak..........',
+      '.kaaak..........',
+      'kkkkkkk..kkkkk..',
+      'kbbaaak..kdcck..',
+      'kbaaaak..kdcck..',
+      'kaaaaakkkkccck..',
+      'kaaaaaaaaakkkkk.',
+      'kaaaaakkkddccck.',
+      'kkakakk.kccccck.',
+      '.kakak..kccccck.',
+      '.kakak..kkckckk.',
+      '.kakak...kckck..',
+      '.kkkkk...kkkkk..',
+      '................',
+    ],
+  }),
 });
 /** The kit's outline black (ui/enhanced/enhancedFrame.js FRAME_TONES.outline). */
 const OUTLINE = '#050608';
@@ -254,7 +554,8 @@ export function statusGlyphSvg(name) {
       const ch = row[x];
       let end = x + 1;
       while (end < row.length && row[end] === ch) end++;
-      if (ch !== '.') body += `<rect x="${x}" y="${y}" width="${end - x}" height="1" fill="${ch === 'k' ? OUTLINE : g.pal[ch]}"/>`;
+      if (ch !== '.')
+        body += `<rect x="${x}" y="${y}" width="${end - x}" height="1" fill="${ch === 'k' ? OUTLINE : g.pal[ch]}"/>`;
       x = end;
     }
   });
@@ -272,8 +573,12 @@ export function statusGlyphColor32(name) {
       const ch = row[x];
       if (!ch || ch === '.') continue;
       const hex = ch === 'k' ? OUTLINE : g.pal[ch];
-      const n = parseInt(hex.slice(1), 16), o = (y * 16 + x) * 4;
-      u8[o] = n >> 16; u8[o + 1] = (n >> 8) & 255; u8[o + 2] = n & 255; u8[o + 3] = 255;
+      const n = parseInt(hex.slice(1), 16),
+        o = (y * 16 + x) * 4;
+      u8[o] = n >> 16;
+      u8[o + 1] = (n >> 8) & 255;
+      u8[o + 2] = n & 255;
+      u8[o + 3] = 255;
     }
   });
   return { width: 16, height: 16, colors };
@@ -306,7 +611,8 @@ export const unwellTileText = () => t('hud.status.unwell', UNWELL_TILE_TEXT);
  */
 export function afflictionRows(entity) {
   const out = [];
-  let poisoned = false, unwell = false;
+  let poisoned = false,
+    unwell = false;
   for (const a of entity?.activeEffects ?? []) {
     if (!a || a.ended) continue;
     if (a.kind === 'poison' && a.state !== 'waiting') poisoned = true;
@@ -321,7 +627,8 @@ export function afflictionRows(entity) {
   // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 8.2): a sweep's BLEED (systems/blowEffects.js) - its ticks left at its foot,
   // the last blinking, as a spell's rounds
   const bleed = entity?.bleed;
-  if (bleed && bleed.left > 0) out.push({ key: 'bleed', name: 'Bleeding', glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });
+  if (bleed && bleed.left > 0)
+    out.push({ key: 'bleed', name: 'Bleeding', glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });
   return out;
 }
 
@@ -329,7 +636,7 @@ let _coldWords = null;
 /** A need chip's glyph: its own key's, and the temperature's by which way it runs - the cold words (read off the
  *  chips' own table, never restated) a snowflake, the warm ones the sun. */
 export function needGlyph(chip) {
-  if (typeof chip?.glyph === 'string') return Object.hasOwn(STATUS_GLYPHS, chip.glyph) ? chip.glyph : null;   // SURV-BOONS: a boon names its own
+  if (typeof chip?.glyph === 'string') return Object.hasOwn(STATUS_GLYPHS, chip.glyph) ? chip.glyph : null; // SURV-BOONS: a boon names its own
   if (chip?.key === 'temp') {
     _coldWords ??= new Set(['cold', 'freezing', 'deadly cold'].map((w) => HUD_NEED_WORDS.temp[w]));
     return _coldWords.has(chip.text) ? 'cold' : 'hot';
@@ -351,41 +658,98 @@ export function needGlyph(chip) {
  *   tile first), `rules` EVENT-RULES' made level (ui/hud/statusTips.js madeRulesTile - first), `mentor` MENTOR2's
  * @returns {StatusTile[]}
  */
-export function statusTiles({ spells = [], powers = [], afflictions = [], needs = [], rested = null, zone = null, rules = null, mentor = null } = {}) {
+export function statusTiles({
+  spells = [],
+  powers = [],
+  afflictions = [],
+  needs = [],
+  rested = null,
+  zone = null,
+  rules = null,
+  mentor = null,
+} = {}) {
   /** @type {StatusTile[]} */
   const out = [];
-  const tile = (t) => out.push({ foot: null, blink: false, item: false, recovering: false, spell: null, glyph: null, set: null, bundle: null, endable: false, say: null, cost: false, ...t });
+  const tile = (t) =>
+    out.push({
+      foot: null,
+      blink: false,
+      item: false,
+      recovering: false,
+      spell: null,
+      glyph: null,
+      set: null,
+      bundle: null,
+      endable: false,
+      say: null,
+      cost: false,
+      ...t,
+    });
   // WILD1: the open zone first - where the player stands is the first thing a glance should say there
-  if (zone) tile({ key: 'wild', kind: 'danger', name: String(zone.name ?? ''), glyph: 'wild', foot: zone.foot ?? null });
+  if (zone)
+    tile({ key: 'wild', kind: 'danger', name: String(zone.name ?? ''), glyph: 'wild', foot: zone.foot ?? null });
   // EVENT-RULES (2026-10-25, the owner: a world event's rules shown, never silent): the made level's own, first - its
   // regeneration's pause at its foot while it runs
-  if (rules) tile({ key: 'rules', kind: 'warn', name: String(rules.name ?? ''), glyph: 'rules', foot: rules.foot ?? null, level: String(rules.level ?? '') });
-  if (mentor) tile({ key: 'mentor', kind: 'buff', name: String(mentor.name ?? ''), glyph: 'mentor', foot: mentor.foot ?? null });   // MENTOR2: mentoring, or a mentor beside me
-  spells.forEach((e, i) => tile({
-    // AUDIT UI C3: a party mate's gift is a BUFF - ALLY-CAST lets a mate lay only what helps (systems/allyCast.js)
-    key: `spell${i}`, kind: e.self || e.ally ? 'buff' : 'debuff', name: String(e.name ?? ''),
-    // AUDIT UI C5: and an item's held magic has no time at its foot - it runs while the item is held, its rounds are no
-    // clock (they count down to nothing and it runs on)
-    foot: Number.isFinite(e.rounds) && !e.item ? String(e.rounds) : null,
-    blink: !!e.expiring && !e.item,   // SetIconBlinkState: an item's never blinks
-    item: !!e.item, spell: Number.isInteger(e.icon) && e.icon >= 0 ? e.icon : null,
-    bundle: e.bundleId ?? null, endable: !!e.endable && e.bundleId != null,   // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)
-  }));
-  for (const c of powers) tile({ key: `set:${c.key}`, kind: 'set', name: String(c.name ?? ''), foot: c.text ? String(c.text) : null, recovering: c.state === 'recovering', set: c.set ?? null, tier: Number.isInteger(c.tier) ? c.tier : null });   // AUDIT STAR S2: and its tier, which the card reads
-  for (const a of afflictions) tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink });   // TELL9: a bleed's ticks
+  if (rules)
+    tile({
+      key: 'rules',
+      kind: 'warn',
+      name: String(rules.name ?? ''),
+      glyph: 'rules',
+      foot: rules.foot ?? null,
+      level: String(rules.level ?? ''),
+    });
+  if (mentor)
+    tile({ key: 'mentor', kind: 'buff', name: String(mentor.name ?? ''), glyph: 'mentor', foot: mentor.foot ?? null }); // MENTOR2: mentoring, or a mentor beside me
+  spells.forEach((e, i) =>
+    tile({
+      // AUDIT UI C3: a party mate's gift is a BUFF - ALLY-CAST lets a mate lay only what helps (systems/allyCast.js)
+      key: `spell${i}`,
+      kind: e.self || e.ally ? 'buff' : 'debuff',
+      name: String(e.name ?? ''),
+      // AUDIT UI C5: and an item's held magic has no time at its foot - it runs while the item is held, its rounds are no
+      // clock (they count down to nothing and it runs on)
+      foot: Number.isFinite(e.rounds) && !e.item ? String(e.rounds) : null,
+      blink: !!e.expiring && !e.item, // SetIconBlinkState: an item's never blinks
+      item: !!e.item,
+      spell: Number.isInteger(e.icon) && e.icon >= 0 ? e.icon : null,
+      bundle: e.bundleId ?? null,
+      endable: !!e.endable && e.bundleId != null, // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)
+    }),
+  );
+  for (const c of powers)
+    tile({
+      key: `set:${c.key}`,
+      kind: 'set',
+      name: String(c.name ?? ''),
+      foot: c.text ? String(c.text) : null,
+      recovering: c.state === 'recovering',
+      set: c.set ?? null,
+      tier: Number.isInteger(c.tier) ? c.tier : null,
+    }); // AUDIT STAR S2: and its tier, which the card reads
+  for (const a of afflictions)
+    tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink }); // TELL9: a bleed's ticks
   // NEED-TIER: and how bad, at its foot ("2/3" - Hungry of Peckish, Hungry, Starving), as a spell's rounds are: the glyph
   // is one picture for every stage and the name goes where there is no room, so the foot is what says it there
   // SURV-BOONS: and a boon (level 'boon') is a buff, its own foot (a Well rested bank's hours) where it has one
   // AUDIT C&C S14: and a need says its level in words (`say`, the tile's title and label) and is marked where it costs
   // (`cost`) - the frame's colour was the only thing that told a costing need from a felt one
   for (const c of needs) {
-    tile({ key: `need:${c.key}`, kind: c.level === 'boon' ? 'buff' : c.level === 'danger' ? 'danger' : 'warn', name: String(c.text ?? ''), glyph: needGlyph(c), foot: c.foot != null ? String(c.foot) : c.tier ? `${c.tier}/${c.of}` : null,
-      say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level), cost: c.level === 'danger' });
+    tile({
+      key: `need:${c.key}`,
+      kind: c.level === 'boon' ? 'buff' : c.level === 'danger' ? 'danger' : 'warn',
+      name: String(c.text ?? ''),
+      glyph: needGlyph(c),
+      foot: c.foot != null ? String(c.foot) : c.tier ? `${c.tier}/${c.of}` : null,
+      say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level),
+      cost: c.level === 'danger',
+    });
   }
   // REST1: the night interval's real minutes left at its foot (systems/rest/restAct.js nightRealMinutesLeft), a buff.
   // AUDIT C&C (lens S): named "Next night" (REST_ACT_TEXT.rested, held equal by its pin) - REST1's "Rested" stood online
   // beside Boons' Well rested, a bank of sleep and not a countdown; this is the wait until a night can pass again
-  if (rested?.minutes > 0) tile({ key: 'rested', kind: 'buff', name: 'Next night', foot: `${rested.minutes}m`, glyph: 'rested' });
+  if (rested?.minutes > 0)
+    tile({ key: 'rested', kind: 'buff', name: 'Next night', foot: `${rested.minutes}m`, glyph: 'rested' });
   return out;
 }
 
@@ -411,13 +775,15 @@ export const statRows = (room, m = STAT_METRICS.full) => Math.max(1, Math.floor(
  */
 export function statSide({ captionTop, diamondBottom, above = 0, scale = 1 }) {
   const s = Number.isFinite(scale) && scale > 0 ? scale : 1;
-  if (!Number.isFinite(diamondBottom) || !Number.isFinite(captionTop) || diamondBottom <= captionTop) return { room: 0, offset: 0 };
+  if (!Number.isFinite(diamondBottom) || !Number.isFinite(captionTop) || diamondBottom <= captionTop)
+    return { room: 0, offset: 0 };
   const top = Math.max(captionTop, Math.max(0, Number(above) || 0) + STAT_AIR);
   return { room: Math.max(0, Math.floor((diamondBottom - top) / s)), offset: Math.round((top - captionTop) / s) };
 }
 
 /** How many columns of tiles a width holds (one at the least), at a screen's tile and column gap. */
-export const statColumns = (width, m = STAT_METRICS.full) => Math.max(1, Math.floor((width + m.colGap) / (m.tile + m.colGap)));
+export const statColumns = (width, m = STAT_METRICS.full) =>
+  Math.max(1, Math.floor((width + m.colGap) / (m.tile + m.colGap)));
 
 /**
  * Where the widget stands, in how many rows and at most how many columns: ABOVE the caption while the band there holds
@@ -433,7 +799,14 @@ export const statColumns = (width, m = STAT_METRICS.full) => Math.max(1, Math.fl
  *   aboveWidth?: number, sideWidth?: number }} band
  * @returns {{ side: boolean, rows: number, columns: number, tight: boolean, none: boolean }}
  */
-export function statPlace({ room, sideRoom = 0, count, metrics = STAT_METRICS.full, aboveWidth = Infinity, sideWidth = Infinity }) {
+export function statPlace({
+  room,
+  sideRoom = 0,
+  count,
+  metrics = STAT_METRICS.full,
+  aboveWidth = Infinity,
+  sideWidth = Infinity,
+}) {
   const n = Math.max(1, count);
   const above = room >= metrics.tile ? statRows(room, metrics) : 0;
   const beside = sideRoom >= metrics.tile ? statRows(sideRoom, metrics) : 0;
@@ -461,5 +834,23 @@ export function statOverflow(tiles, { rows, columns }) {
   if (tiles.length <= room) return tiles;
   const shown = tiles.slice(0, room - 1);
   const more = tiles.length - shown.length;
-  return [...shown, { key: 'more', kind: 'more', name: `${more} more`, foot: `+${more}`, blink: false, item: false, recovering: false, spell: null, glyph: null, set: null, bundle: null, endable: false, say: null, cost: false }];   // BUFF-END: "+N" ends nothing
+  return [
+    ...shown,
+    {
+      key: 'more',
+      kind: 'more',
+      name: `${more} more`,
+      foot: `+${more}`,
+      blink: false,
+      item: false,
+      recovering: false,
+      spell: null,
+      glyph: null,
+      set: null,
+      bundle: null,
+      endable: false,
+      say: null,
+      cost: false,
+    },
+  ]; // BUFF-END: "+N" ends nothing
 }

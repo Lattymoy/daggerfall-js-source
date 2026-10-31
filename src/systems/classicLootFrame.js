@@ -10,6 +10,10 @@ let _frame = null;
 let _lit = -1;
 let _mark = null;
 
-export function setClassicLootFrame(frame, mark = null, lit = -1) { _frame = frame ?? null; _mark = mark; _lit = frame ? lit : -1; }
+export function setClassicLootFrame(frame, mark = null, lit = -1) {
+  _frame = frame ?? null;
+  _mark = mark;
+  _lit = frame ? lit : -1;
+}
 /** The frame resolved in frame `mark`, with its lit row - or null. */
 export const classicLootFrame = (mark = null) => (_frame && _mark === mark ? { frame: _frame, lit: _lit } : null);

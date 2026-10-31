@@ -32,7 +32,7 @@ export const PAGE_CLOSE_TEXT = 'Put it away';
  * page the card SHOWS, under the name it shows - whether or not its writer is still in the room.
  */
 export function pageView({ name = null, page = null, kept = false, canKeep = true } = {}) {
-  const who = (typeof name === 'string' && name) ? name : 'Someone';
+  const who = typeof name === 'string' && name ? name : 'Someone';
   return {
     title: `${who}'s journal`,
     head: page?.head || null,
@@ -84,9 +84,22 @@ export function injectPageStyle(doc = document) {
  * `onOpen`/`onClose` its pointer door, `onKeep(peerId, view)` keeps the page the card shows in my journal and answers
  * whether it did, `above()` whether a surface stands over this one (then Escape is not ours).
  */
-export function createPageWindow({ canOpen = () => true, onOpen = null, onClose = null, onKeep = null, above = () => false, doc = document, win = globalThis } = {}) {
+export function createPageWindow({
+  canOpen = () => true,
+  onOpen = null,
+  onClose = null,
+  onKeep = null,
+  above = () => false,
+  doc = document,
+  win = globalThis,
+} = {}) {
   injectPageStyle(doc);
-  const el = (tag, cls, text) => { const n = doc.createElement(tag); n.className = cls; if (text != null) n.textContent = text; return n; };
+  const el = (tag, cls, text) => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  };
   const root = el('div', 'dfpage');
   root.dataset.state = 'closed';
   const card = el('div', 'dfpage-card');
@@ -110,7 +123,7 @@ export function createPageWindow({ canOpen = () => true, onOpen = null, onClose 
     if (view.head) head.append(el('div', 'dfpage-when', view.head));
     card.append(head);
     const leaf = el('div', 'dfpage-leaf');
-    for (const line of view.lines) leaf.append(el('p', 'dfpage-line', line));   // a blank line keeps its height: the break between two paragraphs
+    for (const line of view.lines) leaf.append(el('p', 'dfpage-line', line)); // a blank line keeps its height: the break between two paragraphs
     card.append(leaf);
     if (view.kept) card.append(el('div', 'dfpage-note', 'A copy is in your journal, under Notes.'));
     const acts = el('div', 'dfpage-acts');
@@ -128,7 +141,9 @@ export function createPageWindow({ canOpen = () => true, onOpen = null, onClose 
     }
     const close = el('button', 'dfpage-btn', PAGE_CLOSE_TEXT);
     close.type = 'button';
-    close.addEventListener('click', () => { hide(); });
+    close.addEventListener('click', () => {
+      hide();
+    });
     acts.append(close);
     card.append(acts);
   };
@@ -139,7 +154,7 @@ export function createPageWindow({ canOpen = () => true, onOpen = null, onClose 
     shownPeer = null;
     view = null;
     root.dataset.state = 'closed';
-    onClose?.();   // the host takes the pointer back - inside the gesture that closed
+    onClose?.(); // the host takes the pointer back - inside the gesture that closed
     return true;
   };
 
@@ -153,7 +168,7 @@ export function createPageWindow({ canOpen = () => true, onOpen = null, onClose 
     open = true;
     root.dataset.state = 'open';
     card.focus?.();
-    if (!was) onOpen?.();   // the pointer freed on the OPEN alone
+    if (!was) onOpen?.(); // the pointer freed on the OPEN alone
     return true;
   };
 
@@ -161,7 +176,7 @@ export function createPageWindow({ canOpen = () => true, onOpen = null, onClose 
     if (!open) return;
     if (isTextEntryTarget(e.target)) return;
     if (e.code !== 'Escape') return;
-    if (above()) return;   // a surface over this one owns the key - untouched, unstopped
+    if (above()) return; // a surface over this one owns the key - untouched, unstopped
     e.preventDefault();
     e.stopImmediatePropagation();
     hide();
@@ -169,11 +184,13 @@ export function createPageWindow({ canOpen = () => true, onOpen = null, onClose 
   win.addEventListener('keydown', onKey, true);
   // a PRESS inside the card is the card's - never a swing or a look; a RELEASE is never stopped (AUDIT CHAT C5)
   const swallow = (e) => e.stopPropagation();
-  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu']) card.addEventListener(t, swallow);
+  for (const t of ['pointerdown', 'mousedown', 'click', 'touchstart', 'wheel', 'contextmenu'])
+    card.addEventListener(t, swallow);
 
   return {
     root,
-    show, hide,
+    show,
+    hide,
     isOpen: () => open,
     /** Whose page the card stands for. */
     peerId: () => shownPeer,

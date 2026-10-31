@@ -15,14 +15,21 @@
 
 import { holdingsProvider, ensureHoldingsStyle, holdingArt, holdingMeter, farWords } from './holdingsPages.js';
 import { SHIP_NAME_MAX, UPGRADE_LINES, REFIT_NUMERALS } from '../systems/fleet.js';
-import { CREW_ROLES, veteranOf, postsOf, postWords } from '../systems/naval/shipCrew.js';   // CAPT-CREW: a hand's rank, his post's worth
-import { HERALDRY_COLOURS, HERALDRY_DEVICES, HERALDRY_DIVISIONS, HERALDRY_DIVISION_NAMES, heraldryDeviceName, heraldryOf } from '../net/heraldryLaw.js';   // SHIP-COLOURS
-import { FLAG_SHAPES, FLAG_DEFAULT, fitFlag, flownFlag } from '../systems/naval/shipFlag.js';   // SHIP-COLOURS: her flag's law
-import { flagSvg } from './flagArt.js';   // SHIP-COLOURS: and its picture
-import { SHIP_PAINTS, LIVERY_PARTS, liveryOf } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: her paint's law
-import { clothSvg, sailClothRows } from './sailClothPanel.js';   // GUILD-SHOP: her sailcloth
-import { t } from '../systems/textManager.js';   // SHIP-COLOURS: the designer's words in the player's language
-import { carvingOpen, toggleCarving, carvingShut, carvingPanel } from './figureheadPanel.js';   // FIGUREHEAD: her carving's panel
+import { CREW_ROLES, veteranOf, postsOf, postWords } from '../systems/naval/shipCrew.js'; // CAPT-CREW: a hand's rank, his post's worth
+import {
+  HERALDRY_COLOURS,
+  HERALDRY_DEVICES,
+  HERALDRY_DIVISIONS,
+  HERALDRY_DIVISION_NAMES,
+  heraldryDeviceName,
+  heraldryOf,
+} from '../net/heraldryLaw.js'; // SHIP-COLOURS
+import { FLAG_SHAPES, FLAG_DEFAULT, fitFlag, flownFlag } from '../systems/naval/shipFlag.js'; // SHIP-COLOURS: her flag's law
+import { flagSvg } from './flagArt.js'; // SHIP-COLOURS: and its picture
+import { SHIP_PAINTS, LIVERY_PARTS, liveryOf } from '../systems/naval/shipLivery.js'; // SHIP-LIVERY: her paint's law
+import { clothSvg, sailClothRows } from './sailClothPanel.js'; // GUILD-SHOP: her sailcloth
+import { t } from '../systems/textManager.js'; // SHIP-COLOURS: the designer's words in the player's language
+import { carvingOpen, toggleCarving, carvingShut, carvingPanel } from './figureheadPanel.js'; // FIGUREHEAD: her carving's panel
 
 export const FLEET_PAGE_SECTIONS = Object.freeze([Object.freeze(['fleet', 'Fleet'])]);
 /** Come Sail Away's two items' pictures: a deed's (209/5) for a ship whose title is held, her parts' (212/11) packed. */
@@ -32,32 +39,59 @@ export const PARTS_ART = Object.freeze({ archive: 212, record: 11 });
 export const fleetPageShown = () => !!holdingsProvider()?.fleet;
 
 const fleet = () => holdingsProvider()?.fleet ?? null;
-let _said = null;   // { uid, ok, text } - the last act's word, under its card
-let _open = null;   // { uid, panel: 'refit'|'rename'|'crew' } - the one panel open
+let _said = null; // { uid, ok, text } - the last act's word, under its card
+let _open = null; // { uid, panel: 'refit'|'rename'|'crew' } - the one panel open
 let _draft = '';
-let _flag = null;   // SHIP-COLOURS: the colours panel's design, while it is open
-let _paint = null;   // SHIP-LIVERY: the paint panel's livery, while it is open
+let _flag = null; // SHIP-COLOURS: the colours panel's design, while it is open
+let _paint = null; // SHIP-LIVERY: the paint panel's livery, while it is open
 
 /** Where she is, as a chip's word and a line. Pure. */
 /** QUAYS: a port's quay in words - "Wayrest's quay", or "a quay" for one with no name. */
 const quayWords = (port) => (port ? `${port}'s quay` : 'a quay');
 export function whereWords(s) {
   switch (s.where) {
-    case 'sailing': return { state: 'At your helm', tone: '', line: 'You are at the helm.' };
+    case 'sailing':
+      return { state: 'At your helm', tone: '', line: 'You are at the helm.' };
     // QUAYS: made fast at a port's quay - where she is shown, her own place; afar, the last the Fleet heard of her
-    case 'here': return s.docked != null ? { state: 'Moored', tone: '', line: `Moored at ${quayWords(s.docked)}, ${farWords(s.metres)}.` } : { state: 'Afloat', tone: '', line: `Lying ${farWords(s.metres)}.` };
+    case 'here':
+      return s.docked != null
+        ? { state: 'Moored', tone: '', line: `Moored at ${quayWords(s.docked)}, ${farWords(s.metres)}.` }
+        : { state: 'Afloat', tone: '', line: `Lying ${farWords(s.metres)}.` };
     case 'away':
-      if (s.docked != null) return { state: 'Moored', tone: 'is-away', line: `Moored at ${quayWords(s.docked)}${s.metres == null ? '' : `, ${farWords(s.metres)}${s.way ? ` to the ${s.way}` : ''}`}.` };
-      return { state: 'Afloat', tone: 'is-away', line: s.metres == null ? 'Afloat far from here.' : `Afloat ${farWords(s.metres)}${s.way ? ` to the ${s.way}` : ''}.` };
-    case 'laidup': return { state: 'Laid up', tone: 'is-away', line: s.port ? `Laid up at ${s.port}. It can be summoned to any port.` : 'Laid up. It can be summoned to any port.' };
-    case 'packed': return { state: 'Packed', tone: 'is-away', line: 'The parts are in your pack. Use them to launch the ship.' };
-    default: return { state: 'Lost', tone: 'is-lost', line: '' };
+      if (s.docked != null)
+        return {
+          state: 'Moored',
+          tone: 'is-away',
+          line: `Moored at ${quayWords(s.docked)}${s.metres == null ? '' : `, ${farWords(s.metres)}${s.way ? ` to the ${s.way}` : ''}`}.`,
+        };
+      return {
+        state: 'Afloat',
+        tone: 'is-away',
+        line:
+          s.metres == null
+            ? 'Afloat far from here.'
+            : `Afloat ${farWords(s.metres)}${s.way ? ` to the ${s.way}` : ''}.`,
+      };
+    case 'laidup':
+      return {
+        state: 'Laid up',
+        tone: 'is-away',
+        line: s.port
+          ? `Laid up at ${s.port}. It can be summoned to any port.`
+          : 'Laid up. It can be summoned to any port.',
+      };
+    case 'packed':
+      return { state: 'Packed', tone: 'is-away', line: 'The parts are in your pack. Use them to launch the ship.' };
+    default:
+      return { state: 'Lost', tone: 'is-lost', line: '' };
   }
 }
 const goldWords = (n) => `${Math.round(n).toLocaleString('en-US')} gold`;
 /** Her refits as a line ("Hold II - Rigging I"), or null with none. */
 export function refitLine(upgrades) {
-  const parts = UPGRADE_LINES.filter((l) => (upgrades?.[l.id] | 0) > 0).map((l) => `${l.label} ${REFIT_NUMERALS[upgrades[l.id]] ?? upgrades[l.id]}`);
+  const parts = UPGRADE_LINES.filter((l) => (upgrades?.[l.id] | 0) > 0).map(
+    (l) => `${l.label} ${REFIT_NUMERALS[upgrades[l.id]] ?? upgrades[l.id]}`,
+  );
   return parts.length ? parts.join(' · ') : null;
 }
 /**
@@ -69,21 +103,43 @@ export function refitLine(upgrades) {
 export function refitRowWords(r) {
   const pc = (x) => Math.round((Number(x) || 0) * 100);
   const name = r.tier ? `${r.label} ${REFIT_NUMERALS[r.tier] ?? r.tier}` : r.label;
-  if (!r.next) return { name, gain: t('naval.refit.gainDone', '{what}: +{now}%.', { what: r.what, now: pc(r.share) }), asks: null, melt: null, lock: null };
-  const mats = r.next.mats.map((m) => t('naval.refit.mat', '{n} {label} (you have {have})', { n: m.n, label: m.label, have: m.have })).join(', ');
+  if (!r.next)
+    return {
+      name,
+      gain: t('naval.refit.gainDone', '{what}: +{now}%.', { what: r.what, now: pc(r.share) }),
+      asks: null,
+      melt: null,
+      lock: null,
+    };
+  const mats = r.next.mats
+    .map((m) => t('naval.refit.mat', '{n} {label} (you have {have})', { n: m.n, label: m.label, have: m.have }))
+    .join(', ');
   const melted = r.next.mats.filter((m) => m.melt > 0);
   return {
     name,
-    gain: t('naval.refit.gain', '{what}: +{now}% now, +{next}% with the next refit.', { what: r.what, now: pc(r.share), next: pc(r.next.share) }),
+    gain: t('naval.refit.gain', '{what}: +{now}% now, +{next}% with the next refit.', {
+      what: r.what,
+      now: pc(r.share),
+      next: pc(r.next.share),
+    }),
     asks: t('naval.refit.asks', 'Next: {gold}, {mats}.', { gold: goldWords(r.next.gold), mats }),
-    melt: melted.length ? t('naval.refit.melt', 'Melts down weapons and armor you carry for {pieces}. Worn, enchanted and quest items are never used.', { pieces: melted.map((m) => `${m.melt} ${m.label}`).join(', ') }) : null,
+    melt: melted.length
+      ? t(
+          'naval.refit.melt',
+          'Melts down weapons and armor you carry for {pieces}. Worn, enchanted and quest items are never used.',
+          { pieces: melted.map((m) => `${m.melt} ${m.label}`).join(', ') },
+        )
+      : null,
     lock: r.next.locked ? t('naval.refit.locked', 'Needs captain level {level}.', { level: r.next.level }) : null,
   };
 }
 
 function button(el, label, why, onClick, cls = 'act') {
   const b = el('button', cls, label);
-  if (why) { b.title = why; b.setAttribute('aria-disabled', 'true'); }
+  if (why) {
+    b.title = why;
+    b.setAttribute('aria-disabled', 'true');
+  }
   b.onclick = onClick;
   return b;
 }
@@ -97,23 +153,56 @@ function refitPanel(el, s, rerender, act) {
   const kinds = new Map();
   for (const r of o.rows) for (const m of r.next?.mats ?? []) if (!kinds.has(m.kind)) kinds.set(m.kind, m);
   if (kinds.size) {
-    box.append(el('span', 'hld-sub', `You hold ${[...kinds.values()].map((m) => `${m.have} ${m.label}`).join(', ')} (your pack and the ship's hold), and ${goldWords(o.gold)}.`));
-    for (const m of kinds.values()) if (m.have < Math.min(...o.rows.flatMap((r) => (r.next?.mats ?? []).filter((x) => x.kind === m.kind).map((x) => x.n)))) box.append(el('span', 'hld-why', `${m.label}: ${m.hint}.`));
+    box.append(
+      el(
+        'span',
+        'hld-sub',
+        `You hold ${[...kinds.values()].map((m) => `${m.have} ${m.label}`).join(', ')} (your pack and the ship's hold), and ${goldWords(o.gold)}.`,
+      ),
+    );
+    for (const m of kinds.values())
+      if (
+        m.have <
+        Math.min(...o.rows.flatMap((r) => (r.next?.mats ?? []).filter((x) => x.kind === m.kind).map((x) => x.n)))
+      )
+        box.append(el('span', 'hld-why', `${m.label}: ${m.hint}.`));
   }
   // REFIT-ORES: past the shipwright's third refit each tier is a metal, and asks her captain's level
-  if (o.rows.some((r) => r.next && r.next.level > 1)) box.append(el('span', 'hld-sub', t('naval.refit.captain', 'Captain level {level}. Refits past grade III use metals (Steel up to Daedric) and need a captain\'s level.', { level: o.level ?? 1 })));
+  if (o.rows.some((r) => r.next && r.next.level > 1))
+    box.append(
+      el(
+        'span',
+        'hld-sub',
+        t(
+          'naval.refit.captain',
+          "Captain level {level}. Refits past grade III use metals (Steel up to Daedric) and need a captain's level.",
+          { level: o.level ?? 1 },
+        ),
+      ),
+    );
   for (const r of o.rows) {
     const w = refitRowWords(r);
     const card = el('div', 'hld-refit');
     const head = el('div', 'hld-head');
-    head.append(el('span', 'hld-name', w.name), el('span', 'hld-state', r.tier >= r.max ? 'Done' : `${r.tier} of ${r.max}`));
+    head.append(
+      el('span', 'hld-name', w.name),
+      el('span', 'hld-state', r.tier >= r.max ? 'Done' : `${r.tier} of ${r.max}`),
+    );
     card.append(head, el('span', 'hld-sub', w.gain));
     if (r.next) {
       card.append(el('span', 'hld-sub', w.asks));
       if (w.melt) card.append(el('span', 'hld-sub', w.melt));
       if (w.lock) card.append(el('span', 'hld-why', w.lock));
       const acts = el('div', 'hld-acts');
-      acts.append(button(el, 'Refit', o.why ?? w.lock ?? (r.afford ? null : 'You don\'t have the materials'), () => act('refit', r.id), 'act primary'));
+      acts.append(
+        button(
+          el,
+          'Refit',
+          o.why ?? w.lock ?? (r.afford ? null : "You don't have the materials"),
+          () => act('refit', r.id),
+          'act primary',
+        ),
+      );
       card.append(acts);
     }
     box.append(card);
@@ -125,7 +214,12 @@ function refitPanel(el, s, rerender, act) {
  *  he is its best holder ("Veteran - 9 fights won, 2 boardings - the guns reload 10% quicker"). Pure. */
 export function handService(h, holds = false) {
   const v = veteranOf(h);
-  const deeds = [h.fights ? `${h.fights} fight${h.fights === 1 ? '' : 's'} won` : '', h.boardings ? `${h.boardings} boarding${h.boardings === 1 ? '' : 's'}` : ''].filter(Boolean).join(', ');
+  const deeds = [
+    h.fights ? `${h.fights} fight${h.fights === 1 ? '' : 's'} won` : '',
+    h.boardings ? `${h.boardings} boarding${h.boardings === 1 ? '' : 's'}` : '',
+  ]
+    .filter(Boolean)
+    .join(', ');
   const worth = holds ? postWords(h.role, v.tier) : '';
   return [v.label, deeds, worth].filter(Boolean).join(' - ');
 }
@@ -134,18 +228,30 @@ export function handService(h, holds = false) {
  *  Each keeps his post's place on her deck (crewLife.js ROLE_POSTS); her Lookout her bow; one First Mate, who answers. */
 function crewPanel(el, s, act) {
   const box = el('div', 'hld-text');
-  if (!s.hands?.length) { box.append(el('span', 'hld-sub', 'This ship has no crew aboard. Hire crew at a shipwright.')); return box; }
-  box.append(el('span', 'hld-sub', 'Each crew member works at a post: the First Mate at the helm, the Bosun at the mainmast, the Carpenter by the hatch, the Cook in the galley, the Gunners at the guns and the Lookout at the bow. Experienced crew do better at their posts, and fights and boardings raise them to Seasoned, Veteran and Old Salt. A small crew fills the Bosun, Gunner and Carpenter posts first, so assign the Lookout and the Cook here.'));   // AUDIT CAPTAIN'S SEA C7
-  const posts = postsOf(s.hands, new Set(s.hands.filter((h) => h.ashore).map((h) => h.name)));   // CAPT-CREW: each post's best holder aboard - the hand whose worth she sails on (AUDIT CAPTAIN'S SEA C2: none ashore with me)
+  if (!s.hands?.length) {
+    box.append(el('span', 'hld-sub', 'This ship has no crew aboard. Hire crew at a shipwright.'));
+    return box;
+  }
+  box.append(
+    el(
+      'span',
+      'hld-sub',
+      'Each crew member works at a post: the First Mate at the helm, the Bosun at the mainmast, the Carpenter by the hatch, the Cook in the galley, the Gunners at the guns and the Lookout at the bow. Experienced crew do better at their posts, and fights and boardings raise them to Seasoned, Veteran and Old Salt. A small crew fills the Bosun, Gunner and Carpenter posts first, so assign the Lookout and the Cook here.',
+    ),
+  ); // AUDIT CAPTAIN'S SEA C7
+  const posts = postsOf(s.hands, new Set(s.hands.filter((h) => h.ashore).map((h) => h.name))); // CAPT-CREW: each post's best holder aboard - the hand whose worth she sails on (AUDIT CAPTAIN'S SEA C2: none ashore with me)
   for (const h of s.hands) {
     const row = el('div', 'hld-refit hld-hand');
     const head = el('div', 'hld-head');
     head.append(el('span', 'hld-name', h.name), el('span', 'hld-state', h.role));
     row.append(head);
-    row.append(el('span', 'hld-sub', `${handService(h, posts[h.role]?.name === h.name)}${h.ashore ? ' - ashore with you' : ''}`));
+    row.append(
+      el('span', 'hld-sub', `${handService(h, posts[h.role]?.name === h.name)}${h.ashore ? ' - ashore with you' : ''}`),
+    );
     const pick = /** @type {HTMLSelectElement} */ (el('select', 'hld-field hld-select'));
     pick.setAttribute('aria-label', `${h.name}'s post`);
-    for (const role of [...CREW_ROLES.filter((r) => !(h.bard && r === 'Lookout')), ...(h.bard ? ['Bard'] : [])]) {   // AUDIT HOLDINGS C3: a Bard keeps no lookout
+    for (const role of [...CREW_ROLES.filter((r) => !(h.bard && r === 'Lookout')), ...(h.bard ? ['Bard'] : [])]) {
+      // AUDIT HOLDINGS C3: a Bard keeps no lookout
       const o = /** @type {HTMLOptionElement} */ (el('option', null, role));
       o.value = role;
       if (role === h.role) o.selected = true;
@@ -167,23 +273,42 @@ function renamePanel(el, s, rerender, act) {
   field.value = _draft;
   field.placeholder = s.hullName;
   field.setAttribute('aria-label', 'Ship name');
-  field.oninput = () => { _draft = field.value; };
-  const save = () => { _open = null; act('rename', _draft); };
-  field.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } };
+  field.oninput = () => {
+    _draft = field.value;
+  };
+  const save = () => {
+    _open = null;
+    act('rename', _draft);
+  };
+  field.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      save();
+    }
+  };
   const acts = el('div', 'hld-acts');
   const ok = el('button', 'act primary', 'Save name');
   ok.onclick = save;
   const no = el('button', 'act', 'Keep');
-  no.onclick = () => { _open = null; rerender(); };
+  no.onclick = () => {
+    _open = null;
+    rerender();
+  };
   acts.append(ok, no);
-  box.append(el('span', 'hld-sub', 'Other players see this name over the ship. Leave it empty to use the hull type.'), field, acts);
+  box.append(
+    el('span', 'hld-sub', 'Other players see this name over the ship. Leave it empty to use the hull type.'),
+    field,
+    acts,
+  );
   return box;
 }
 
 // ── SHIP-COLOURS: THE COLOURS PANEL ─────────────────────────────────────────────────────────────────────────────────
 const SHAPE_WORDS = Object.freeze({
-  flag: () => t('naval.flag.shape.flag', 'Flag'), swallowtail: () => t('naval.flag.shape.swallowtail', 'Swallowtail'),
-  pennant: () => t('naval.flag.shape.pennant', 'Pennant'), burgee: () => t('naval.flag.shape.burgee', 'Burgee'),
+  flag: () => t('naval.flag.shape.flag', 'Flag'),
+  swallowtail: () => t('naval.flag.shape.swallowtail', 'Swallowtail'),
+  pennant: () => t('naval.flag.shape.pennant', 'Pennant'),
+  burgee: () => t('naval.flag.shape.burgee', 'Burgee'),
 });
 const colourName = (k) => HERALDRY_COLOURS.find((c) => c.key === k)?.name ?? '';
 /** A row of the heraldry's sixteen colours (and None where `none`), the one chosen ringed and named - UI-CALM's selector. */
@@ -205,21 +330,29 @@ function flagSwatches(el, word, current, choose, { none = false, not = [] } = {}
   };
   if (none) swatch(null, null, t('naval.flag.none.colour', 'None'));
   for (const c of HERALDRY_COLOURS) if (!not.includes(c.key)) swatch(c.key, c.hex, c.name);
-  row.append(set, el('span', 'hld-pickname', current == null ? t('naval.flag.none.colour', 'None') : colourName(current)));
+  row.append(
+    set,
+    el('span', 'hld-pickname', current == null ? t('naval.flag.none.colour', 'None') : colourName(current)),
+  );
   return row;
 }
 /** A stepper over `list` (‹ the one chosen ›) - a shape, a division, a device. */
 function flagStepper(el, word, list, current, nameOf, choose) {
   const row = el('div', 'hld-pick');
   row.append(el('span', 'hld-picklabel', word));
-  const i = Math.max(0, list.indexOf(current)), n = list.length;
+  const i = Math.max(0, list.indexOf(current)),
+    n = list.length;
   const step = (d, glyph, aria) => {
     const b = el('button', 'hld-step', glyph);
     b.setAttribute('aria-label', aria);
-    b.onclick = () => choose(list[((i + d) % n + n) % n]);
+    b.onclick = () => choose(list[(((i + d) % n) + n) % n]);
     return b;
   };
-  row.append(step(-1, '\u2039', `${word}: ${t('naval.flag.previous', 'previous')}`), el('span', 'hld-pickname hld-stepname', nameOf(current)), step(1, '\u203a', `${word}: ${t('naval.flag.next', 'next')}`));
+  row.append(
+    step(-1, '\u2039', `${word}: ${t('naval.flag.previous', 'previous')}`),
+    el('span', 'hld-pickname hld-stepname', nameOf(current)),
+    step(1, '\u203a', `${word}: ${t('naval.flag.next', 'next')}`),
+  );
   return row;
 }
 /**
@@ -230,30 +363,116 @@ function flagStepper(el, word, list, current, nameOf, choose) {
 function coloursPanel(el, s, rerender, act, arms) {
   const box = el('div', 'hld-text hld-colours');
   const d = fitFlag(_flag ?? s.colours ?? FLAG_DEFAULT);
-  const set = (k, v) => { _flag = { ...d, [k]: v }; rerender(); };   // made a flag as it is drawn (`d`)
+  const set = (k, v) => {
+    _flag = { ...d, [k]: v };
+    rerender();
+  }; // made a flag as it is drawn (`d`)
   const pic = el('div', 'hld-flag');
   pic.setAttribute('aria-label', t('naval.flag.preview', 'Flag preview'));
   pic.innerHTML = flagSvg(flownFlag(d, arms), { width: 150 });
   box.append(pic);
   const armed = !!heraldryOf(arms);
-  box.append(flagStepper(el, t('naval.flag.shape', 'Shape'), FLAG_SHAPES, d.shape, (k) => SHAPE_WORDS[k](), (v) => set('shape', v)));
+  box.append(
+    flagStepper(
+      el,
+      t('naval.flag.shape', 'Shape'),
+      FLAG_SHAPES,
+      d.shape,
+      (k) => SHAPE_WORDS[k](),
+      (v) => set('shape', v),
+    ),
+  );
   const guild = el('div', 'hld-acts');
-  guild.append(button(el, d.guild && armed ? t('naval.flag.guildOn', 'Flying your guild\'s arms') : t('naval.flag.guildOff', 'Fly my guild\'s arms'),
-    armed ? null : t('naval.flag.noArms', 'Your guild has no arms, or you\'re not in a guild.'), () => { if (armed) set('guild', !d.guild); }, d.guild && armed ? 'act primary' : 'act'));
+  guild.append(
+    button(
+      el,
+      d.guild && armed
+        ? t('naval.flag.guildOn', "Flying your guild's arms")
+        : t('naval.flag.guildOff', "Fly my guild's arms"),
+      armed ? null : t('naval.flag.noArms', "Your guild has no arms, or you're not in a guild."),
+      () => {
+        if (armed) set('guild', !d.guild);
+      },
+      d.guild && armed ? 'act primary' : 'act',
+    ),
+  );
   box.append(guild);
-  if (d.guild && armed) box.append(el('span', 'hld-sub', t('naval.flag.guildNote', 'The ship flies your guild\'s arms in this shape and updates when they change.')));
+  if (d.guild && armed)
+    box.append(
+      el(
+        'span',
+        'hld-sub',
+        t('naval.flag.guildNote', "The ship flies your guild's arms in this shape and updates when they change."),
+      ),
+    );
   else {
     box.append(flagSwatches(el, t('naval.flag.field', 'Field'), d.field, (v) => set('field', v)));
-    box.append(flagStepper(el, t('naval.flag.division', 'Division'), HERALDRY_DIVISIONS, d.division, (k) => HERALDRY_DIVISION_NAMES[k] ?? k, (v) => set('division', v)));
-    if (d.division !== 'plain') box.append(flagSwatches(el, t('naval.flag.field2', 'Second color'), d.field2, (v) => set('field2', v), { not: [d.field] }));
-    box.append(flagSwatches(el, t('naval.flag.border', 'Border'), d.border, (v) => set('border', v), { none: true, not: [d.field] }));
-    box.append(flagStepper(el, t('naval.flag.device', 'Device'), [null, ...HERALDRY_DEVICES], d.device, (k) => (k ? heraldryDeviceName(k) : t('naval.flag.none.device', 'None')), (v) => set('device', v)));
-    if (d.device) box.append(flagSwatches(el, t('naval.flag.charge', 'Device color'), d.charge, (v) => set('charge', v), { not: [d.field, d.field2].filter(Boolean) }));
+    box.append(
+      flagStepper(
+        el,
+        t('naval.flag.division', 'Division'),
+        HERALDRY_DIVISIONS,
+        d.division,
+        (k) => HERALDRY_DIVISION_NAMES[k] ?? k,
+        (v) => set('division', v),
+      ),
+    );
+    if (d.division !== 'plain')
+      box.append(
+        flagSwatches(el, t('naval.flag.field2', 'Second color'), d.field2, (v) => set('field2', v), { not: [d.field] }),
+      );
+    box.append(
+      flagSwatches(el, t('naval.flag.border', 'Border'), d.border, (v) => set('border', v), {
+        none: true,
+        not: [d.field],
+      }),
+    );
+    box.append(
+      flagStepper(
+        el,
+        t('naval.flag.device', 'Device'),
+        [null, ...HERALDRY_DEVICES],
+        d.device,
+        (k) => (k ? heraldryDeviceName(k) : t('naval.flag.none.device', 'None')),
+        (v) => set('device', v),
+      ),
+    );
+    if (d.device)
+      box.append(
+        flagSwatches(el, t('naval.flag.charge', 'Device color'), d.charge, (v) => set('charge', v), {
+          not: [d.field, d.field2].filter(Boolean),
+        }),
+      );
   }
   const acts = el('div', 'hld-acts');
-  acts.append(button(el, t('naval.flag.hoist', 'Raise flag'), null, () => { _open = null; _flag = null; act('colours', d); }, 'act primary'));
-  if (s.colours) acts.append(button(el, t('naval.flag.strike', 'Remove flag'), null, () => { _open = null; _flag = null; act('colours', null); }));
-  acts.append(button(el, t('naval.flag.close', 'Close'), null, () => { _open = null; _flag = null; rerender(); }));
+  acts.append(
+    button(
+      el,
+      t('naval.flag.hoist', 'Raise flag'),
+      null,
+      () => {
+        _open = null;
+        _flag = null;
+        act('colours', d);
+      },
+      'act primary',
+    ),
+  );
+  if (s.colours)
+    acts.append(
+      button(el, t('naval.flag.strike', 'Remove flag'), null, () => {
+        _open = null;
+        _flag = null;
+        act('colours', null);
+      }),
+    );
+  acts.append(
+    button(el, t('naval.flag.close', 'Close'), null, () => {
+      _open = null;
+      _flag = null;
+      rerender();
+    }),
+  );
   box.append(acts);
   return box;
 }
@@ -261,21 +480,46 @@ function coloursPanel(el, s, rerender, act, arms) {
 // ── SHIP-LIVERY: THE PAINT PANEL ────────────────────────────────────────────────────────────────────────────────────
 /** Each paint's name. */
 const PAINT_WORDS = Object.freeze({
-  oxblood: () => t('naval.paint.c.oxblood', 'Oxblood'), crimson: () => t('naval.paint.c.crimson', 'Crimson'), black: () => t('naval.paint.c.black', 'Tar black'),
-  navy: () => t('naval.paint.c.navy', 'Navy'), bay: () => t('naval.paint.c.bay', 'Bay blue'), teal: () => t('naval.paint.c.teal', 'Teal'),
-  sea: () => t('naval.paint.c.sea', 'Sea green'), forest: () => t('naval.paint.c.forest', 'Forest green'), ochre: () => t('naval.paint.c.ochre', 'Ochre'),
-  gold: () => t('naval.paint.c.gold', 'Gold leaf'), white: () => t('naval.paint.c.white', 'White lead'), grey: () => t('naval.paint.c.grey', 'Slate gray'),
-  purple: () => t('naval.paint.c.purple', 'Tyrian purple'), tan: () => t('naval.paint.c.tan', 'Tan'),
+  oxblood: () => t('naval.paint.c.oxblood', 'Oxblood'),
+  crimson: () => t('naval.paint.c.crimson', 'Crimson'),
+  black: () => t('naval.paint.c.black', 'Tar black'),
+  navy: () => t('naval.paint.c.navy', 'Navy'),
+  bay: () => t('naval.paint.c.bay', 'Bay blue'),
+  teal: () => t('naval.paint.c.teal', 'Teal'),
+  sea: () => t('naval.paint.c.sea', 'Sea green'),
+  forest: () => t('naval.paint.c.forest', 'Forest green'),
+  ochre: () => t('naval.paint.c.ochre', 'Ochre'),
+  gold: () => t('naval.paint.c.gold', 'Gold leaf'),
+  white: () => t('naval.paint.c.white', 'White lead'),
+  grey: () => t('naval.paint.c.grey', 'Slate gray'),
+  purple: () => t('naval.paint.c.purple', 'Tyrian purple'),
+  tan: () => t('naval.paint.c.tan', 'Tan'),
 });
 /** Each part's word. */
 const PART_WORDS = Object.freeze({
-  strake: () => t('naval.paint.p.strake', 'Hull strakes'), accent: () => t('naval.paint.p.accent', 'Trim and gilding'),
-  sail: () => t('naval.paint.p.sail', 'Sails'), stain: () => t('naval.paint.p.stain', 'Wood stain'),
+  strake: () => t('naval.paint.p.strake', 'Hull strakes'),
+  accent: () => t('naval.paint.p.accent', 'Trim and gilding'),
+  sail: () => t('naval.paint.p.sail', 'Sails'),
+  stain: () => t('naval.paint.p.stain', 'Wood stain'),
 });
-export const paintName = (i) => (i ? PAINT_WORDS[SHIP_PAINTS[i]?.id]?.() ?? '' : t('naval.paint.asBuilt', 'As built'));
+export const paintName = (i) =>
+  i ? (PAINT_WORDS[SHIP_PAINTS[i]?.id]?.() ?? '') : t('naval.paint.asBuilt', 'As built');
 const hexOf = (rgb) => `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 /** Her colours as built, for the picture: each hull's strake and trim (world/ships/*Art.js), the fleet's canvas and oak. */
-const BUILT = Object.freeze({ 1: [[58, 92, 70], [176, 128, 48]], 2: [[118, 34, 27], [196, 152, 62]], 4: [[46, 66, 94], [176, 128, 48]] });
+const BUILT = Object.freeze({
+  1: [
+    [58, 92, 70],
+    [176, 128, 48],
+  ],
+  2: [
+    [118, 34, 27],
+    [196, 152, 62],
+  ],
+  4: [
+    [46, 66, 94],
+    [176, 128, 48],
+  ],
+});
 /**
  * SHIP-LIVERY: her paint as a picture - a hull in profile, her strake and her trim, a mast and her sail, in the colours
  * her livery gives each (her own as built where it gives none; a stained hull's wood stained). Pure SVG.
@@ -283,20 +527,35 @@ const BUILT = Object.freeze({ 1: [[58, 92, 70], [176, 128, 48]], 2: [[118, 34, 2
 export function paintSvg(hull, livery, { width = 150, heraldry = null } = {}) {
   const l = liveryOf(livery, hull) ?? { strake: 0, accent: 0, sail: 0, stain: 0 };
   const rgbOf = (i, built) => SHIP_PAINTS[i]?.rgb ?? built;
-  const oak = [104, 72, 44], stainOf = SHIP_PAINTS[l.stain]?.rgb;
+  const oak = [104, 72, 44],
+    stainOf = SHIP_PAINTS[l.stain]?.rgb;
   const wood = stainOf ? oak.map((v, k) => Math.round(v * 0.38 + stainOf[k] * 0.62 * 0.9)) : oak;
   const built = BUILT[hull];
-  const strake = built ? rgbOf(l.strake, built[0]) : wood, trim = built ? rgbOf(l.accent, built[1]) : [196, 152, 62];
-  const sail = rgbOf(l.sail, [214, 205, 180]), sails = hull !== 0;
-  const h = Math.round(width * 2 / 3);
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100" width="${width}" height="${h}" role="img">`
-    + `<rect x="0" y="78" width="150" height="22" fill="#2b4a5c"/>`
-    + (sails ? `<rect x="73" y="10" width="4" height="62" fill="#5c3f26"/><path d="M78 14 L118 20 L114 62 L78 64 Z" fill="${hexOf(sail)}" stroke="#3a2a1a" stroke-width="1"/>` : '')
-    + (sails ? clothSvg(/** @type {any} */ (l).cloth, hexOf(rgbOf(/** @type {any} */ (l).cloth?.second ?? 0, [214, 205, 180])), heraldry) : '')   // GUILD-SHOP: her sailcloth
-    + `<path d="M12 60 L138 60 L124 84 L28 84 Z" fill="${hexOf(wood)}" stroke="#2a1a10" stroke-width="1.2"/>`
-    + `<path d="M15 62 L135 62 L131 70 L19 70 Z" fill="${hexOf(strake)}"/>`
-    + (built ? `<rect x="17" y="60" width="118" height="2" fill="${hexOf(trim)}"/><rect x="20" y="70" width="111" height="1.5" fill="${hexOf(trim)}"/>` : '')
-    + `</svg>`;
+  const strake = built ? rgbOf(l.strake, built[0]) : wood,
+    trim = built ? rgbOf(l.accent, built[1]) : [196, 152, 62];
+  const sail = rgbOf(l.sail, [214, 205, 180]),
+    sails = hull !== 0;
+  const h = Math.round((width * 2) / 3);
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 100" width="${width}" height="${h}" role="img">` +
+    `<rect x="0" y="78" width="150" height="22" fill="#2b4a5c"/>` +
+    (sails
+      ? `<rect x="73" y="10" width="4" height="62" fill="#5c3f26"/><path d="M78 14 L118 20 L114 62 L78 64 Z" fill="${hexOf(sail)}" stroke="#3a2a1a" stroke-width="1"/>`
+      : '') +
+    (sails
+      ? clothSvg(
+          /** @type {any} */ (l).cloth,
+          hexOf(rgbOf(/** @type {any} */ (l).cloth?.second ?? 0, [214, 205, 180])),
+          heraldry,
+        )
+      : '') + // GUILD-SHOP: her sailcloth
+    `<path d="M12 60 L138 60 L124 84 L28 84 Z" fill="${hexOf(wood)}" stroke="#2a1a10" stroke-width="1.2"/>` +
+    `<path d="M15 62 L135 62 L131 70 L19 70 Z" fill="${hexOf(strake)}"/>` +
+    (built
+      ? `<rect x="17" y="60" width="118" height="2" fill="${hexOf(trim)}"/><rect x="20" y="70" width="111" height="1.5" fill="${hexOf(trim)}"/>`
+      : '') +
+    `</svg>`
+  );
 }
 /** A row of the paints (and As built), the one chosen ringed and named - the colours panel's selector. */
 function paintSwatches(el, word, current, choose) {
@@ -323,25 +582,74 @@ function paintSwatches(el, word, current, choose) {
 function paintPanel(el, s, rerender, act, arms = null) {
   const box = el('div', 'hld-text hld-colours');
   const d = { strake: 0, accent: 0, sail: 0, stain: 0, ...(s.livery ?? {}), cabin: s.cabin ?? 0, ...(_paint ?? {}) };
-  const set = (k, v) => { _paint = { ...d, [k]: v }; rerender(); };
+  const set = (k, v) => {
+    _paint = { ...d, [k]: v };
+    rerender();
+  };
   const pic = el('div', 'hld-flag');
   pic.setAttribute('aria-label', t('naval.paint.preview', 'Paint preview'));
   pic.innerHTML = paintSvg(s.hull, d, { width: 150, heraldry: arms });
   box.append(pic);
-  for (const part of s.paints ?? []) box.append(paintSwatches(el, PART_WORDS[part](), d[part] ?? 0, (v) => set(part, v)));
+  for (const part of s.paints ?? [])
+    box.append(paintSwatches(el, PART_WORDS[part](), d[part] ?? 0, (v) => set(part, v)));
   // GUILD-SHOP: her sailcloth, the Guild Sailcloth's - on a hull with a sail
-  if (s.clothable) box.append(sailClothRows(el, d.cloth ?? null, (c) => set('cloth', c), { held: s.cloth ?? null, armed: !!heraldryOf(arms), swatches: paintSwatches, button }));
+  if (s.clothable)
+    box.append(
+      sailClothRows(el, d.cloth ?? null, (c) => set('cloth', c), {
+        held: s.cloth ?? null,
+        armed: !!heraldryOf(arms),
+        swatches: paintSwatches,
+        button,
+      }),
+    );
   // CABIN-LOOK: her cabin's wood, below decks - made at her next visit there
   if (s.cabin != null) {
     box.append(paintSwatches(el, t('naval.paint.p.cabin', 'Cabin wood'), d.cabin, (v) => set('cabin', v)));
-    box.append(el('span', 'hld-sub', t('naval.paint.cabinNote', 'The cabin stain applies the next time you enter the cabin.')));
+    box.append(
+      el('span', 'hld-sub', t('naval.paint.cabinNote', 'The cabin stain applies the next time you enter the cabin.')),
+    );
   }
-  box.append(el('span', 'hld-sub', t('naval.paint.note', 'Painting is free and works wherever the ship is. Other players see it.')));
+  box.append(
+    el(
+      'span',
+      'hld-sub',
+      t('naval.paint.note', 'Painting is free and works wherever the ship is. Other players see it.'),
+    ),
+  );
   const acts = el('div', 'hld-acts');
-  const chosen = { ...Object.fromEntries(LIVERY_PARTS.map((p) => [p, d[p] ?? 0])), cabin: d.cabin ?? 0, cloth: d.cloth ?? null };
-  acts.append(button(el, t('naval.paint.apply', 'Apply paint'), null, () => { _open = null; _paint = null; act('livery', chosen); }, 'act primary'));
-  if (s.livery || s.cabin) acts.append(button(el, t('naval.paint.strip', 'Remove paint'), null, () => { _open = null; _paint = null; act('livery', null); }));
-  acts.append(button(el, t('naval.flag.close', 'Close'), null, () => { _open = null; _paint = null; rerender(); }));
+  const chosen = {
+    ...Object.fromEntries(LIVERY_PARTS.map((p) => [p, d[p] ?? 0])),
+    cabin: d.cabin ?? 0,
+    cloth: d.cloth ?? null,
+  };
+  acts.append(
+    button(
+      el,
+      t('naval.paint.apply', 'Apply paint'),
+      null,
+      () => {
+        _open = null;
+        _paint = null;
+        act('livery', chosen);
+      },
+      'act primary',
+    ),
+  );
+  if (s.livery || s.cabin)
+    acts.append(
+      button(el, t('naval.paint.strip', 'Remove paint'), null, () => {
+        _open = null;
+        _paint = null;
+        act('livery', null);
+      }),
+    );
+  acts.append(
+    button(el, t('naval.flag.close', 'Close'), null, () => {
+      _open = null;
+      _paint = null;
+      rerender();
+    }),
+  );
   box.append(acts);
   return box;
 }
@@ -354,14 +662,32 @@ function shipCard(el, s, { rerender, meter, door, arms = null }) {
   const w = whereWords(s);
   head.append(el('span', 'hld-name', s.label), el('span', `hld-state${w.tone ? ` ${w.tone}` : ''}`, w.state));
   text.append(head);
-  text.append(el('span', 'hld-sub', [s.name ? `${s.hullName}` : null, `worth ${goldWords(s.value)}`, s.loan ? `the bank is owed ${goldWords(s.loan.owed)}` : null].filter(Boolean).join(' · ')));
+  text.append(
+    el(
+      'span',
+      'hld-sub',
+      [
+        s.name ? `${s.hullName}` : null,
+        `worth ${goldWords(s.value)}`,
+        s.loan ? `the bank is owed ${goldWords(s.loan.owed)}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    ),
+  );
   if (w.line) text.append(el('span', 'hld-sub', w.line));
   const st = s.status;
   if (st) {
-    text.append(holdingMeter(el, meter, 'Hull', st.hull, st.maxHull, st.hull < st.maxHull * 0.35 ? 'blood' : 'verdigris'));
+    text.append(
+      holdingMeter(el, meter, 'Hull', st.hull, st.maxHull, st.hull < st.maxHull * 0.35 ? 'blood' : 'verdigris'),
+    );
     if (st.maxSail > 0) text.append(holdingMeter(el, meter, 'Canvas', st.sail, st.maxSail, 'thin'));
     if (s.crewed) text.append(holdingMeter(el, meter, 'Crew', st.crew, st.maxCrew, 'thin'));
-    const notes = [st.wrecked ? 'Crippled' : null, st.fire ? 'On fire' : null, s.crewed || st.stores ? `${st.stores} carpenter's store${st.stores === 1 ? '' : 's'} aboard` : null].filter(Boolean);
+    const notes = [
+      st.wrecked ? 'Crippled' : null,
+      st.fire ? 'On fire' : null,
+      s.crewed || st.stores ? `${st.stores} carpenter's store${st.stores === 1 ? '' : 's'} aboard` : null,
+    ].filter(Boolean);
     if (notes.length) text.append(el('span', st.wrecked || st.fire ? 'hld-why' : 'hld-sub', notes.join(' · ')));
   }
   const refits = refitLine(s.upgrades);
@@ -372,32 +698,110 @@ function shipCard(el, s, { rerender, meter, door, arms = null }) {
     _said = { uid: s.uid, ok: r.ok, text: r.text };
     // AUDIT 2026-10-17: a door that will not open (her deck not known, no inventory) says why itself - its card never keeps
     // the word that it opened
-    if (r.ok && typeof r.door === 'function') { const run = r.door; door?.(() => { const ran = run(); if (ran === false && _said?.uid === s.uid) _said = null; return ran; }); return; }
+    if (r.ok && typeof r.door === 'function') {
+      const run = r.door;
+      door?.(() => {
+        const ran = run();
+        if (ran === false && _said?.uid === s.uid) _said = null;
+        return ran;
+      });
+      return;
+    }
     rerender();
   };
   const acts = el('div', 'hld-acts');
   const c = s.can ?? {};
-  if (s.where === 'laidup' || s.where === 'away') acts.append(button(el, 'Summon', c.summon, () => act('summon'), 'act primary'));
+  if (s.where === 'laidup' || s.where === 'away')
+    acts.append(button(el, 'Summon', c.summon, () => act('summon'), 'act primary'));
   if (s.where === 'here' || s.where === 'away') acts.append(button(el, 'Send away', c.away, () => act('away')));
   if (s.crewed && s.where !== 'packed') acts.append(button(el, 'Repair', c.repair, () => act('repair')));
   if (s.where !== 'packed' && s.where !== 'away') acts.append(button(el, 'Shipwright', c.yard, () => act('yard')));
-  if (s.hold) acts.append(button(el, 'Hold', null, () => act('hold')));   // CARGO-ANYWHERE: her hold, wherever she lies
-  acts.append(button(el, _open?.uid === s.uid && _open.panel === 'refit' ? 'Close refits' : 'Refit', null, () => { _open = _open?.uid === s.uid && _open.panel === 'refit' ? null : { uid: s.uid, panel: 'refit' }; rerender(); }));
-  acts.append(button(el, 'Rename', null, () => { _open = { uid: s.uid, panel: 'rename' }; _draft = s.name ?? ''; _said = null; rerender(); }));
+  if (s.hold) acts.append(button(el, 'Hold', null, () => act('hold'))); // CARGO-ANYWHERE: her hold, wherever she lies
+  acts.append(
+    button(el, _open?.uid === s.uid && _open.panel === 'refit' ? 'Close refits' : 'Refit', null, () => {
+      _open = _open?.uid === s.uid && _open.panel === 'refit' ? null : { uid: s.uid, panel: 'refit' };
+      rerender();
+    }),
+  );
+  acts.append(
+    button(el, 'Rename', null, () => {
+      _open = { uid: s.uid, panel: 'rename' };
+      _draft = s.name ?? '';
+      _said = null;
+      rerender();
+    }),
+  );
   // SHIP-PLAQUE: her name cut on her bows, or taken down - a named ship's (an unnamed one is told to name her first)
-  acts.append(button(el, s.plaque ? t('naval.plaque.hide', 'Hide name') : t('naval.plaque.show', 'Show name'), s.named ? null : t('naval.plaque.unnamed', 'Give the ship a name first.'), () => act('plaque', !s.plaque)));
-  if (s.crewed && s.where !== 'packed') acts.append(button(el, _open?.uid === s.uid && _open.panel === 'crew' ? 'Close crew' : 'Crew', null, () => { _open = _open?.uid === s.uid && _open.panel === 'crew' ? null : { uid: s.uid, panel: 'crew' }; rerender(); }));
+  acts.append(
+    button(
+      el,
+      s.plaque ? t('naval.plaque.hide', 'Hide name') : t('naval.plaque.show', 'Show name'),
+      s.named ? null : t('naval.plaque.unnamed', 'Give the ship a name first.'),
+      () => act('plaque', !s.plaque),
+    ),
+  );
+  if (s.crewed && s.where !== 'packed')
+    acts.append(
+      button(el, _open?.uid === s.uid && _open.panel === 'crew' ? 'Close crew' : 'Crew', null, () => {
+        _open = _open?.uid === s.uid && _open.panel === 'crew' ? null : { uid: s.uid, panel: 'crew' };
+        rerender();
+      }),
+    );
   // SHIP-COLOURS: her flag - every hull with a masthead
-  if (s.flag) acts.append(button(el, t('naval.flag.open', 'Colours'), null, () => { const open = _open?.uid === s.uid && _open.panel === 'colours'; _open = open ? null : { uid: s.uid, panel: 'colours' }; _flag = open ? null : s.colours ?? null; _said = null; rerender(); }));
+  if (s.flag)
+    acts.append(
+      button(el, t('naval.flag.open', 'Colours'), null, () => {
+        const open = _open?.uid === s.uid && _open.panel === 'colours';
+        _open = open ? null : { uid: s.uid, panel: 'colours' };
+        _flag = open ? null : (s.colours ?? null);
+        _said = null;
+        rerender();
+      }),
+    );
   // SHIP-LIVERY: her paint - every hull that takes one
-  acts.append(button(el, s.fittings ? t('naval.deck.openN', 'Deck ({n})', { n: s.fittings }) : t('naval.deck.open', 'Deck'), null, () => act('deckPlan')));   // DECK-PROPS: the plan of her deck, her fittings on it
-  if (s.paints?.length || s.cabin != null) acts.append(button(el, t('naval.paint.open', 'Paint'), null, () => { const open = _open?.uid === s.uid && _open.panel === 'paint'; _open = open ? null : { uid: s.uid, panel: 'paint' }; _paint = null; _said = null; rerender(); }));
+  acts.append(
+    button(
+      el,
+      s.fittings ? t('naval.deck.openN', 'Deck ({n})', { n: s.fittings }) : t('naval.deck.open', 'Deck'),
+      null,
+      () => act('deckPlan'),
+    ),
+  ); // DECK-PROPS: the plan of her deck, her fittings on it
+  if (s.paints?.length || s.cabin != null)
+    acts.append(
+      button(el, t('naval.paint.open', 'Paint'), null, () => {
+        const open = _open?.uid === s.uid && _open.panel === 'paint';
+        _open = open ? null : { uid: s.uid, panel: 'paint' };
+        _paint = null;
+        _said = null;
+        rerender();
+      }),
+    );
   // FIGUREHEAD: her carving at her stem - every hull with a stem for one
-  if (s.carvable) acts.append(button(el, t('naval.figurehead.open', 'Figurehead'), null, () => { _open = null; toggleCarving(s.uid); _said = null; rerender(); }));
+  if (s.carvable)
+    acts.append(
+      button(el, t('naval.figurehead.open', 'Figurehead'), null, () => {
+        _open = null;
+        toggleCarving(s.uid);
+        _said = null;
+        rerender();
+      }),
+    );
   text.append(acts);
-  if (_open?.uid === s.uid) text.append(_open.panel === 'refit' ? refitPanel(el, s, rerender, act) : _open.panel === 'crew' ? crewPanel(el, s, act) : _open.panel === 'colours' ? coloursPanel(el, s, rerender, act, arms) : _open.panel === 'paint' ? paintPanel(el, s, rerender, act, arms) : renamePanel(el, s, rerender, act));
+  if (_open?.uid === s.uid)
+    text.append(
+      _open.panel === 'refit'
+        ? refitPanel(el, s, rerender, act)
+        : _open.panel === 'crew'
+          ? crewPanel(el, s, act)
+          : _open.panel === 'colours'
+            ? coloursPanel(el, s, rerender, act, arms)
+            : _open.panel === 'paint'
+              ? paintPanel(el, s, rerender, act, arms)
+              : renamePanel(el, s, rerender, act),
+    );
   item.append(text);
-  if (carvingOpen(s.uid)) text.append(carvingPanel(el, s, rerender, act, button));   // FIGUREHEAD: under the card's acts, as the page's own panels
+  if (carvingOpen(s.uid)) text.append(carvingPanel(el, s, rerender, act, button)); // FIGUREHEAD: under the card's acts, as the page's own panels
   return item;
 }
 
@@ -407,20 +811,38 @@ function shipCard(el, s, { rerender, meter, door, arms = null }) {
  */
 export function drawFleetPage(detail, rerender, { el, divider, meter = null, door = null } = /** @type {any} */ ({})) {
   ensureHoldingsStyle();
-  if (_open) carvingShut();   // FIGUREHEAD: a panel the page opened shuts the carving's
+  if (_open) carvingShut(); // FIGUREHEAD: a panel the page opened shuts the carving's
   const m = fleet()?.model?.() ?? { ships: [], gold: 0, atPort: false };
   detail.append(divider(`Fleet (${m.ships.length})`));
   if (!m.ships.length) {
-    detail.append(el('p', 'px-note', 'You don\'t own a ship. Buy one at a port shipyard, or capture one by boarding. A ship you buy waits at the port where you bought it.'));   // AUDIT SHIPYARDS L7-1: no general store sells one
+    detail.append(
+      el(
+        'p',
+        'px-note',
+        "You don't own a ship. Buy one at a port shipyard, or capture one by boarding. A ship you buy waits at the port where you bought it.",
+      ),
+    ); // AUDIT SHIPYARDS L7-1: no general store sells one
     return;
   }
   const list = el('div', 'hld-list');
   for (const s of m.ships) list.append(shipCard(el, s, { rerender, meter, door, arms: m.guildArms ?? null }));
   detail.append(list);
-  detail.append(el('p', 'hld-foot', m.atPort
-    ? 'You are at a port. Summoned ships come to its quay, and its shipwright can repair and refit them.'
-    : 'Summon a ship to refit it at a port. The crew can repair it anywhere if there are carpenter\'s stores aboard.'));
+  detail.append(
+    el(
+      'p',
+      'hld-foot',
+      m.atPort
+        ? 'You are at a port. Summoned ships come to its quay, and its shipwright can repair and refit them.'
+        : "Summon a ship to refit it at a port. The crew can repair it anywhere if there are carpenter's stores aboard.",
+    ),
+  );
 }
 
 /** A visit's words forgotten (an act's answer, an open panel) - the pause menu's every mount. */
-export function resetFleetPage() { _said = null; _open = null; _draft = ''; _flag = null; carvingShut(); }
+export function resetFleetPage() {
+  _said = null;
+  _open = null;
+  _draft = '';
+  _flag = null;
+  carvingShut();
+}

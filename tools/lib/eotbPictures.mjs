@@ -10,12 +10,15 @@ import { createClassicPictures } from '../../src/formats/classicPictures.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const EOTB_TEXTURES = join(ROOT, 'vendor/eye-of-the-beholder/Textures');
-export const EOTB_DERIVED = Object.freeze(JSON.parse(readFileSync(join(ROOT, 'vendor/eye-of-the-beholder/derived.json'), 'utf8')));
+export const EOTB_DERIVED = Object.freeze(
+  JSON.parse(readFileSync(join(ROOT, 'vendor/eye-of-the-beholder/derived.json'), 'utf8')),
+);
 
 /** The file a sprite name stands in (`<archive>_<record>-<frame>`), whether or not it is there. */
 export const eotbFileOf = (key, dir = EOTB_TEXTURES) => join(dir, key.split('_')[0], `${key}.png`);
 /** Whether the mod has a sprite of this name: a file, or a spec. */
-export const eotbHas = (key, dir = EOTB_TEXTURES) => Object.hasOwn(EOTB_DERIVED, key) || existsSync(eotbFileOf(key, dir));
+export const eotbHas = (key, dir = EOTB_TEXTURES) =>
+  Object.hasOwn(EOTB_DERIVED, key) || existsSync(eotbFileOf(key, dir));
 
 /** A reader of the mod's sprites as top-down RGBA `{ width, height, data }`: a file as it is, a spec built from
  *  `arena2`'s TEXTURE file. A spec with no ARENA2 rejects, saying so. */

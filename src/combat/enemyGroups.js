@@ -16,11 +16,45 @@ export const ENEMY_GROUPS = Object.freeze({ None: -1, Undead: 0, Daedra: 1, Huma
  *  The four atronachs and every unlisted career are None; the horse is an animal.
  *  (Careers whose classic grouping disagrees carry DFU's own comment.) */
 const ENEMY_GROUP_BY_CAREER = Object.freeze({
-  0: 3, 3: 3, 4: 3, 5: 3, 6: 3, 11: 3, 20: 3, 34: 3, 39: 3, 40: 3,          // Animals (39/40 "grouped as undead in classic")
-  1: 2, 2: 2, 7: 2, 8: 2, 9: 2, 10: 2, 12: 2, 13: 2, 14: 2, 16: 2,          // Humanoid
-  21: 2, 22: 2, 24: 2, 41: 2, 42: 2,                                        // (41/42 "grouped as undead in classic")
-  15: 0, 17: 0, 18: 0, 19: 0, 23: 0, 28: 0, 30: 0, 32: 0, 33: 0,            // Undead (17 "grouped as animal in classic")
-  25: 1, 26: 1, 27: 1, 29: 1, 31: 1,                                        // Daedra
+  0: 3,
+  3: 3,
+  4: 3,
+  5: 3,
+  6: 3,
+  11: 3,
+  20: 3,
+  34: 3,
+  39: 3,
+  40: 3, // Animals (39/40 "grouped as undead in classic")
+  1: 2,
+  2: 2,
+  7: 2,
+  8: 2,
+  9: 2,
+  10: 2,
+  12: 2,
+  13: 2,
+  14: 2,
+  16: 2, // Humanoid
+  21: 2,
+  22: 2,
+  24: 2,
+  41: 2,
+  42: 2, // (41/42 "grouped as undead in classic")
+  15: 0,
+  17: 0,
+  18: 0,
+  19: 0,
+  23: 0,
+  28: 0,
+  30: 0,
+  32: 0,
+  33: 0, // Undead (17 "grouped as animal in classic")
+  25: 1,
+  26: 1,
+  27: 1,
+  29: 1,
+  31: 1, // Daedra
 });
 /** DEX4b (bible/04-Characters/Enemy-Expansion.md section 9): A MOD'S GROUP. DFU asks TryGetOverride
  *  ("GetEnemyEntityEnemyGroup") first (:2748-2750); Daggerfall Enemy Expansion's answers its own enemies' row and DFU's
@@ -40,4 +74,6 @@ export function enemyEntityGroup(careerIndex) {
   return ENEMY_GROUP_BY_CAREER[careerIndex] ?? ENEMY_GROUPS.None;
 }
 /** The test seam (formulas.js _resetFormulaDoors): every mod's group let go. */
-export function _resetEnemyGroups() { _groups.length = 0; }
+export function _resetEnemyGroups() {
+  _groups.length = 0;
+}

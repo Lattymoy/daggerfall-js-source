@@ -20,8 +20,8 @@
   {
     "name": "MWTEX-worker-transfers-nothing",
     "file": "src/formats/morrowind/mwTextureWorker.js",
-    "old": "post({ t: 'image', id: m.id, image }, image.mips.map((l) => l.rgba.buffer));",
-    "new": "post({ t: 'image', id: m.id, image });",
+    "old": "    post(\n      { t: 'image', id: m.id, image },\n      image.mips.map((l) => l.rgba.buffer),\n    );",
+    "new": "    post({ t: 'image', id: m.id, image });",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MWTEX-worker-drops-levels",
     "file": "src/formats/morrowind/mwTextureWorker.js",
-    "old": "m.levels == null ? undefined : { levels: m.levels }",
-    "new": "undefined",
+    "old": "    const image = decodeTextureImage(m.path, bytes, m.levels == null ? undefined : { levels: m.levels });",
+    "new": "    const image = decodeTextureImage(m.path, bytes, undefined);",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MWTEX-pool-one-worker",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "if ((!best || best.jobs.size > 0) && opened < size) return open() ?? best;",
-    "new": "if (!best && opened < size) return open() ?? best;",
+    "old": "    if ((!best || best.jobs.size > 0) && opened < size) return open() ?? best;",
+    "new": "    if (!best && opened < size) return open() ?? best;",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MWTEX-pool-transfers-the-callers-bytes",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "const copy = bytes.slice();",
-    "new": "const copy = bytes;",
+    "old": "        const copy = bytes.slice();",
+    "new": "        const copy = bytes;",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MWTEX-dead-worker-drops-its-jobs",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "for (const j of slot.jobs.values()) { stats.onThread++; here(j.path, j.bytes, j.levels).then(j.resolve, j.reject); }",
-    "new": "for (const j of slot.jobs.values()) { stats.onThread++; Promise.reject(new Error('dropped')).then(j.resolve, j.reject); }",
+    "old": "      here(j.path, j.bytes, j.levels).then(j.resolve, j.reject);",
+    "new": "      Promise.reject(new Error('dropped')).then(j.resolve, j.reject);",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "MWTEX-throwing-factory-asked-again",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "if (!slots.length) { dead = true; console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e); }",
-    "new": "if (!slots.length) { console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e); }",
+    "old": "        dead = true;\n        console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e);",
+    "new": "        console.warn('[mw textures] workers unavailable; decoding on the main thread -', e?.message ?? e);",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MWTEX-size-takes-every-core",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "return Math.max(1, Math.min(TEXTURE_WORKERS_MAX, n - 1));",
-    "new": "return Math.max(1, Math.min(TEXTURE_WORKERS_MAX, n));",
+    "old": "  return Math.max(1, Math.min(TEXTURE_WORKERS_MAX, n - 1));",
+    "new": "  return Math.max(1, Math.min(TEXTURE_WORKERS_MAX, n));",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MWTEX-escape-hatch-misspelled",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "/[?&]texturethread=off\\b/",
-    "new": "/[?&]texturethread=of\\b/",
+    "old": "    return /[?&]texturethread=off\\b/.test(search ?? '');",
+    "new": "    return /[?&]texturethread=of\\b/.test(search ?? '');",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-MWTEX-F5-a-read-in-flight-read-again",
     "file": "src/formats/morrowind/mwBsaFile.js",
-    "old": "    if (flying) return flying;\n",
-    "new": "",
+    "old": "    if (flying) return flying;\n    const start = this._dataStart + entry.offset;",
+    "new": "    const start = this._dataStart + entry.offset;",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-MWTEX-F5-a-failed-read-kept",
     "file": "src/formats/morrowind/mwBsaFile.js",
-    "old": "}).finally(() => { this._loading.delete(key); });",
-    "new": "});",
+    "old": "      })\n      .finally(() => {\n        this._loading.delete(key);\n      }); // a failed read is not kept: the next ask reads again",
+    "new": "      }); // a failed read is not kept: the next ask reads again",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-MWTEX-F6-never-let-go",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "for (const s of slots.filter((x) => x.jobs.size === 0)) {",
-    "new": "for (const s of []) {",
+    "old": "      for (const s of slots.filter((x) => x.jobs.size === 0)) {",
+    "new": "      for (const s of []) {",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-MWTEX-F6-a-retired-worker-counted-dead",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "        opened--;\n",
-    "new": "",
+    "old": "        opened--;\n        try {",
+    "new": "        try {",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-MWTEX-F6-quiet-while-a-job-is-in-hand",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "if (idle !== null || !slots.length || slots.some((s) => s.jobs.size > 0)) return;",
-    "new": "if (idle !== null || !slots.length) return;",
+    "old": "    if (idle !== null || !slots.length || slots.some((s) => s.jobs.size > 0)) return;",
+    "new": "    if (idle !== null || !slots.length) return;",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-MWTEX-F6-a-new-job-leaves-the-quiet-running",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "      wake();\n      return new Promise(",
-    "new": "      return new Promise(",
+    "old": "      wake();\n      return new Promise((resolve, reject) => {",
+    "new": "      return new Promise((resolve, reject) => {",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-MWTEX-F6-an-answer-starts-no-quiet",
     "file": "src/formats/morrowind/mwTextureClient.js",
-    "old": "        else j.reject(Object.assign(new Error(m.message ?? 'mw texture worker error'), { decoderError: true }));\n        rest();\n",
-    "new": "        else j.reject(Object.assign(new Error(m.message ?? 'mw texture worker error'), { decoderError: true }));\n",
+    "old": "        rest();\n      };",
+    "new": "      };",
     "tests": [
       "test/formats/morrowind/mwtexthread.test.js"
     ]

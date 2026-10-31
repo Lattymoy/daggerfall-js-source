@@ -92,8 +92,8 @@
   {
     "name": "CHAMP-SAID-never-at-its-blow",
     "file": "src/systems/champions.js",
-    "old": "if (damage > 0 && target?.isPlayer && !target.peer) sayChampion(attacker);",
-    "new": "if (false) sayChampion(attacker);",
+    "old": "  if (damage > 0 && target?.isPlayer && !target.peer) sayChampion(attacker);",
+    "new": "  if (false) sayChampion(attacker);",
     "tests": [
       "test/systems/loot7check.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "CHAMP-SAID-never-at-my-blow",
     "file": "src/systems/champions.js",
-    "old": "if (damage > 0 && attacker?.isPlayer && !attacker.peer) sayChampion(target);",
-    "new": "if (false) sayChampion(target);",
+    "old": "  if (damage > 0 && attacker?.isPlayer && !attacker.peer) sayChampion(target);",
+    "new": "  if (false) sayChampion(target);",
     "tests": [
       "test/systems/loot7check.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CHAMP-SAID-a-peers-copy-said",
     "file": "src/systems/champions.js",
-    "old": "if (damage > 0 && target?.isPlayer && !target.peer) sayChampion(attacker);",
-    "new": "if (damage > 0 && target?.isPlayer) sayChampion(attacker);",
+    "old": "  if (damage > 0 && target?.isPlayer && !target.peer) sayChampion(attacker);",
+    "new": "  if (damage > 0 && target?.isPlayer) sayChampion(attacker);",
     "tests": [
       "test/systems/loot7check.test.js"
     ]
@@ -129,7 +129,7 @@
     "name": "CHAMP-SAID-never-remembered",
     "file": "src/systems/champions.js",
     "old": "  _said.add(entity);",
-    "new": "  ",
+    "new": "",
     "tests": [
       "test/systems/loot7check.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "CHAMP-SAID-the-trait-unsaid",
     "file": "src/systems/champions.js",
-    "old": "[`${championName(entity, base)} stands as a champion.`, `${t.text}.`]",
-    "new": "[`${championName(entity, base)} stands as a champion.`]",
+    "old": "  return base ? [`${championName(entity, base)} stands as a champion.`, `${t.text}.`] : null;",
+    "new": "  return base ? [`${championName(entity, base)} stands as a champion.`] : null;",
     "tests": [
       "test/systems/loot7check.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "CHAMP-SAID-a-plain-foe-said",
     "file": "src/systems/champions.js",
-    "old": "  const base = t ? enemyDisplayName(entity.mobileType) : null;\n  return base ? [",
-    "new": "  const base = enemyDisplayName(entity?.mobileType);\n  return base ? [",
+    "old": "  const base = t ? enemyDisplayName(entity.mobileType) : null;",
+    "new": "  const base = enemyDisplayName(entity?.mobileType);",
     "tests": [
       "test/systems/loot7check.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CHAMP-SAID-a-peers-blow-said",
     "file": "src/systems/champions.js",
-    "old": "if (damage > 0 && attacker?.isPlayer && !attacker.peer) sayChampion(target);",
-    "new": "if (damage > 0 && attacker?.isPlayer) sayChampion(target);",
+    "old": "  if (damage > 0 && attacker?.isPlayer && !attacker.peer) sayChampion(target);",
+    "new": "  if (damage > 0 && attacker?.isPlayer) sayChampion(target);",
     "tests": [
       "test/systems/loot7check.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "FIELD-GUN14-1-the-gun-fires-arrows-again",
     "file": "src/characters/thunderlockIds.js",
-    "old": "export const orbArchiveFor = (item) =>\n  (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null);",
-    "new": "export const orbArchiveFor = () => null;",
+    "old": "export const orbArchiveFor = (item) => (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null); // PISTOLET: the Pellet flies as the same orb from either gun",
+    "new": "export const orbArchiveFor = () => null; // PISTOLET: the Pellet flies as the same orb from either gun",
     "tests": [
       "test/systems/arrowflight.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FIELD-GUN14-2-every-weapon-fires-an-orb",
     "file": "src/characters/thunderlockIds.js",
-    "old": "  (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null);",
-    "new": "  (item ? ORB_ARCHIVE : null);",
+    "old": "export const orbArchiveFor = (item) => (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null); // PISTOLET: the Pellet flies as the same orb from either gun",
+    "new": "export const orbArchiveFor = (item) => (item ? ORB_ARCHIVE : null); // PISTOLET: the Pellet flies as the same orb from either gun",
     "tests": [
       "test/systems/arrowflight.test.js"
     ]

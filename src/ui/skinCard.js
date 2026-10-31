@@ -61,21 +61,28 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { MOD_SETTINGS, modSetting, setModSetting, storedModSetting } from '../systems/modSettings.js';
-import { spriteFor, eotbSpriteUrl, isDerivedSprite, buildDerivedSprite } from '../player/eyeOfTheBeholder/eotbSprite.js';
+import {
+  spriteFor,
+  eotbSpriteUrl,
+  isDerivedSprite,
+  buildDerivedSprite,
+} from '../player/eyeOfTheBeholder/eotbSprite.js';
 import { EOTB_FOOT_SET_COUNT } from '../player/classSkins.js';
-import { layeredPreviewUrl, layeredGenderOf, LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js';   // LAYERED-GEAR
+import { layeredPreviewUrl, layeredGenderOf, LAYERED_OWN } from '../player/eyeOfTheBeholder/layeredArmor.js'; // LAYERED-GEAR
 import { t } from '../systems/textManager.js';
 
 const VENDOR = 'eye-of-the-beholder';
 const FOOT = 'Graphics.OnFoot';
 const HORSE = 'Graphics.OnHorse';
-const LAYERED = 'Graphics.LayeredGear';   // LAYERED-GEAR: 0 off, 1 female, 2 male, LAYERED_OWN the character's own (the default)
+const LAYERED = 'Graphics.LayeredGear'; // LAYERED-GEAR: 0 off, 1 female, 2 male, LAYERED_OWN the character's own (the default)
 
 /** LAYERED-GEAR: the body Layered Gearing was last worn in this session (1 female, 2 male; 0 none yet) - what turning
  *  it back on wears. */
 let lastBody = 0;
 /** The pins' reset: no body chosen yet this session. */
-export function _resetSkinCardBody() { lastBody = 0; }
+export function _resetSkinCardBody() {
+  lastBody = 0;
+}
 /** The choice turning Layered Gearing on writes: the body last chosen, else LAYERED_OWN - the character's own body,
  *  whichever character is played. */
 export const layeredBodyToWear = () => lastBody || LAYERED_OWN;
@@ -88,7 +95,11 @@ const FRONT = 0;
 const _images = new Map();
 async function pictureBlobUrl({ width, height, data }) {
   const cv = new OffscreenCanvas(width, height);
-  cv.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength), width, height), 0, 0);
+  cv.getContext('2d').putImageData(
+    new ImageData(new Uint8ClampedArray(data.buffer, data.byteOffset, data.byteLength), width, height),
+    0,
+    0,
+  );
   return URL.createObjectURL(await cv.convertToBlob({ type: 'image/png' }));
 }
 export function derivedImageUrl(url, { build = undefined, encode = pictureBlobUrl } = {}) {
@@ -96,7 +107,9 @@ export function derivedImageUrl(url, { build = undefined, encode = pictureBlobUr
   if (!p) {
     p = buildDerivedSprite(url, build).then(encode);
     _images.set(url, p);
-    p.catch(() => { if (_images.get(url) === p) _images.delete(url); });
+    p.catch(() => {
+      if (_images.get(url) === p) _images.delete(url);
+    });
   }
   return p;
 }
@@ -112,22 +125,29 @@ export function derivedImageUrl(url, { build = undefined, encode = pictureBlobUr
  */
 export function skinSets() {
   const keys = MOD_SETTINGS[VENDOR]?.keys ?? {};
-  const of = (key, table, look) => (keys[key]?.labels ?? []).map((name, index) => {
-    const s = spriteFor(table, FRONT, 0, look(index));
-    return { index, name, key: s?.key ?? null, url: s ? eotbSpriteUrl(s.key) : null };
-  });
+  const of = (key, table, look) =>
+    (keys[key]?.labels ?? []).map((name, index) => {
+      const s = spriteFor(table, FRONT, 0, look(index));
+      return { index, name, key: s?.key ?? null, url: s ? eotbSpriteUrl(s.key) : null };
+    });
   const layered = (keys[LAYERED]?.labels ?? []).map((name, index) => {
     const g = layeredGenderOf(index);
     return { index, name, key: null, url: g ? layeredPreviewUrl(g) : null };
   });
-  return { foot: of(FOOT, 'Idle', (i) => ({ onFoot: i })), horse: of(HORSE, 'IdleHorse', (i) => ({ onHorse: i })), layered };
+  return {
+    foot: of(FOOT, 'Idle', (i) => ({ onFoot: i })),
+    horse: of(HORSE, 'IdleHorse', (i) => ({ onHorse: i })),
+    layered,
+  };
 }
 
 /** What the card says the player is wearing: the set's index, and whether they ever chose it (the look sends only a
  *  chosen set - net/remotePlayers.js ownEotbSet). */
 export function wornSkin() {
   return {
-    foot: modSetting(VENDOR, FOOT), horse: modSetting(VENDOR, HORSE), layered: modSetting(VENDOR, LAYERED) ?? 0,
+    foot: modSetting(VENDOR, FOOT),
+    horse: modSetting(VENDOR, HORSE),
+    layered: modSetting(VENDOR, LAYERED) ?? 0,
     chosen: storedModSetting(VENDOR, FOOT) !== undefined,
     on: modSetting(VENDOR, 'Enabled') === true,
   };
@@ -163,7 +183,13 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
   const art = (s) => {
     const img = el('img', 'skinart');
     if (!isDerivedSprite(s.url)) img.src = s.url;
-    else imageUrl(s.url).then((u) => { if (u) img.src = u; }, () => {});   // NO-BETHESDA2: built - none where the player's data has none
+    else
+      imageUrl(s.url).then(
+        (u) => {
+          if (u) img.src = u;
+        },
+        () => {},
+      ); // NO-BETHESDA2: built - none where the player's data has none
     img.alt = '';
     img.setAttribute('draggable', 'false');
     return img;
@@ -181,7 +207,11 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
       b.title = on ? `Wearing ${s.name}` : `Wear ${s.name}`;
       if (s.url) b.append(art(s));
       b.append(el('span', 'skinname', s.name));
-      b.onclick = () => { setModSetting(VENDOR, key, s.index); open = null; paint(); };
+      b.onclick = () => {
+        setModSetting(VENDOR, key, s.index);
+        open = null;
+        paint();
+      };
       g.append(b);
     }
     return g;
@@ -201,7 +231,10 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
     words.append(el('span', 'skinname', wearing?.name ?? ''));
     head.append(words);
     head.append(el('span', 'skinchev', isOpen ? '\u25b4' : '\u25be'));
-    head.onclick = () => { open = isOpen ? null : key; paint(); };
+    head.onclick = () => {
+      open = isOpen ? null : key;
+      paint();
+    };
     p.append(head);
     if (isOpen) {
       const body = el('div', 'skinbody');
@@ -224,7 +257,10 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
     const set = el('div', 'skinmodeset');
     set.setAttribute('role', 'radiogroup');
     set.setAttribute('aria-label', word);
-    for (const [on, name] of [[false, t('skin.mode.skins', 'Skins')], [true, t('skin.mode.layered', 'Layered Gearing (WIP)')]]) {
+    for (const [on, name] of [
+      [false, t('skin.mode.skins', 'Skins')],
+      [true, t('skin.mode.layered', 'Layered Gearing (WIP)')],
+    ]) {
       const chosen = on === layeredOn;
       const b = el('button', `skinmodebtn${chosen ? ' on' : ''}`, name);
       b.type = 'button';
@@ -248,32 +284,63 @@ export function skinCard(doc, { sets: offer = skinSets, gender = () => null, ima
     const w = wornSkin();
     const sets = offer();
     if (!w.on) {
-      root.append(el('p', 'meta', 'Your third-person look comes from Eye of the Beholder, which is off. Turn it on to choose a skin.'));
+      root.append(
+        el(
+          'p',
+          'meta',
+          'Your third-person look comes from Eye of the Beholder, which is off. Turn it on to choose a skin.',
+        ),
+      );
       const acts = el('div', 'acts');
       const b = el('button', 'act primary', 'Turn it on');
       b.type = 'button';
-      b.onclick = () => { setModSetting(VENDOR, 'Enabled', true); paint(); };
+      b.onclick = () => {
+        setModSetting(VENDOR, 'Enabled', true);
+        paint();
+      };
       acts.append(b);
       root.append(acts);
       return;
     }
-    root.append(el('p', 'meta', 'How you look in third person, and to other players who don\u2019t see you in a Morrowind body.'));
+    root.append(
+      el('p', 'meta', 'How you look in third person, and to other players who don\u2019t see you in a Morrowind body.'),
+    );
     const layeredOn = w.layered > 0;
     const own = w.layered === LAYERED_OWN;
     if (w.layered === 1 || w.layered === 2) lastBody = w.layered;
     lookToggle(layeredOn);
     if (layeredOn) {
       // LAYERED-GEAR: the body, drawn in the armor worn - the On foot panel put away, Mounted as ever
-      root.append(el('p', 'meta', t('skin.layered.about', 'On foot you are drawn in the helmet, chest and leg armor you wear. On a horse you are drawn in your mounted skin.')));
+      root.append(
+        el(
+          'p',
+          'meta',
+          t(
+            'skin.layered.about',
+            'On foot you are drawn in the helmet, chest and leg armor you wear. On a horse you are drawn in your mounted skin.',
+          ),
+        ),
+      );
       const bodyWord = t('skin.layered.body', 'Body');
       root.append(el('span', 'skingroup', bodyWord));
       // LAYERED-GEAR-ON: the character's own body marks the tile it is; a tile pressed is that body from then on
       const worn = own ? (layeredGenderOf(LAYERED_OWN, gender()) === 'female' ? 1 : 2) : w.layered;
-      root.append(grid(bodyWord, (sets.layered ?? []).filter((s) => s.index === 1 || s.index === 2), LAYERED, worn));
-      if (own) root.append(el('p', 'meta skinhint', t('skin.layered.own', 'Your character\'s own body, until you choose one.')));
+      root.append(
+        grid(
+          bodyWord,
+          (sets.layered ?? []).filter((s) => s.index === 1 || s.index === 2),
+          LAYERED,
+          worn,
+        ),
+      );
+      if (own)
+        root.append(
+          el('p', 'meta skinhint', t('skin.layered.own', "Your character's own body, until you choose one.")),
+        );
     } else {
       // the look sends only a CHOSEN set, so until one is pressed the others see this player's class
-      if (!w.chosen) root.append(el('p', 'meta skinhint', 'Until you choose one, other players see you as your class.'));
+      if (!w.chosen)
+        root.append(el('p', 'meta skinhint', 'Until you choose one, other players see you as your class.'));
       panel('On foot', FOOT, sets.foot, w.foot, FOOT_GROUPS);
     }
     panel('Mounted', HORSE, sets.horse, w.horse, [{ label: '', from: 0, to: Infinity }]);

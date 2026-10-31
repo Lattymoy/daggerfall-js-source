@@ -1004,7 +1004,7 @@ all of it, and every line the maps draw is its edge.
   that label whole (answered at once - most of the frame). A land pixel naming no province is land of none
   (`NO_PROVINCE`): the coast's, never a province's. The sea has a distance of its own (the land's, turned) for the
   points where a coast meets a border.
-- **THE LINES** (`tamrielLines.js:"export function lawLines(trace)"`, LINE_BISECT 10). A line is where the law's label
+- **THE LINES** (`tamrielLines.js:"export function lawLines"`, LINE_BISECT 10). A line is where the law's label
   changes between two map pixels' centres. Each crossing is found on its edge by halving it ten times against the law
   itself - a coast's by the land's own side, a border's by the two provinces' own distances - so a point is the law's
   boundary to a thousandth of a pixel. A square of two labels joins its two crossings (a saddle by the law at its

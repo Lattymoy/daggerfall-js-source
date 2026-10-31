@@ -7,21 +7,37 @@
 // here touches a host: the install (foragingInstall.js) asks the world and hands this file the answers. Every draw is
 // UnityEngine.Random.Range(0, n) on ints (PickOneOf, IL_0dc5), taken from `rng`, a function answering [0, 1).
 
-import { FORAGING_ITEM_ROWS } from './foragingItems.js';   // OWN-WORK3: our own twelve rows
+import { FORAGING_ITEM_ROWS } from './foragingItems.js'; // OWN-WORK3: our own twelve rows
 import { CLIMATES, LOCATION_TYPES, DUNGEON_TYPES } from '../../formats/mapsFile.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { LOOT_CONTAINER_TYPES } from '../sceneCache.js';
-import { dice100 } from '../../combat/formulas.js';   // Dice100.SuccessRoll, one home
+import { dice100 } from '../../combat/formulas.js'; // Dice100.SuccessRoll, one home
 import { isPlayerInTown } from '../nearbyObjects.js';
 import { ON_EXTERIOR_WATER } from '../../player/exteriorSurface.js';
-import { SEA_REGION } from '../../net/nodeLaw.js';   // PROF8: the sea coast's region, one home
-import { TEMPLATE as CC_TEMPLATE } from '../survival/food.js';   // Climates & Calories' own ids, imported (ONE DFU MEMBER, ONE EXPORT)
+import { SEA_REGION } from '../../net/nodeLaw.js'; // PROF8: the sea coast's region, one home
+import { TEMPLATE as CC_TEMPLATE } from '../survival/food.js'; // Climates & Calories' own ids, imported (ONE DFU MEMBER, ONE EXPORT)
 // PROF1: the draws, the bands, the day and the Basket's blocks live in foragingCore.js - pure, so the account service rolls
 // the Basket's food with the IL's own tables (bible/06-Systems/Professions-Arc.md 22) - and are this module's still.
 import {
-  pickOneOf, attributeAverage, attributeBand, isForagingDaylight, isDesertClimate, isWinterMonth, basketBlock, BASKET_BLOCKS,
+  pickOneOf,
+  attributeAverage,
+  attributeBand,
+  isForagingDaylight,
+  isDesertClimate,
+  isWinterMonth,
+  basketBlock,
+  BASKET_BLOCKS,
 } from './foragingCore.js';
-export { pickOneOf, attributeAverage, attributeBand, isForagingDaylight, isDesertClimate, isWinterMonth, basketBlock, BASKET_BLOCKS };
+export {
+  pickOneOf,
+  attributeAverage,
+  attributeBand,
+  isForagingDaylight,
+  isDesertClimate,
+  isWinterMonth,
+  basketBlock,
+  BASKET_BLOCKS,
+};
 
 /** The vendor key: the Features row, the switch, the credit. */
 export const FORAGING_VENDOR = 'foraging';
@@ -32,8 +48,18 @@ export const FORAGING_QUEST_LIST = 'ForagingQuests';
 
 /** The twelve templates, by name (foragingItems.js). */
 export const FT = Object.freeze({
-  WoodAxe: 1600, PickAxe: 1601, Sickle: 1602, FishingNet: 1603, WoodBundle: 1604, Fish: 1605,
-  Spade: 1606, Basket: 1607, Apple: 1608, Orange: 1609, Mushroom: 1610, Egg: 1611,
+  WoodAxe: 1600,
+  PickAxe: 1601,
+  Sickle: 1602,
+  FishingNet: 1603,
+  WoodBundle: 1604,
+  Fish: 1605,
+  Spade: 1606,
+  Basket: 1607,
+  Apple: 1608,
+  Orange: 1609,
+  Mushroom: 1610,
+  Egg: 1611,
 });
 
 /** The twelve rows (OWN-WORK3: our own, foragingItems.js). */
@@ -49,51 +75,67 @@ export const FORAGING_TEXTURE_ARCHIVES = Object.freeze([11600, 11601, 11602, 116
 
 // ---- draws and bands -------------------------------------------------
 
-
 // ---- the six checks --------------------------------------------------
 
 /** Each tool's refusals, keyed by the check: OWN-WORK3, our own words (the build's said the same facts). */
 export const FORAGING_REFUSALS = Object.freeze({
   [FT.WoodAxe]: Object.freeze({
-    inside: 'There are no trees to cut in here.', town: 'You cannot cut trees inside a settlement.',
-    daylight: 'It is too dark to swing an axe safely.', sea: 'There are no trees to cut out here.',
-    enemies: 'You cannot cut wood with enemies close by.', encumbered: 'You are carrying too much to cut wood.',
+    inside: 'There are no trees to cut in here.',
+    town: 'You cannot cut trees inside a settlement.',
+    daylight: 'It is too dark to swing an axe safely.',
+    sea: 'There are no trees to cut out here.',
+    enemies: 'You cannot cut wood with enemies close by.',
+    encumbered: 'You are carrying too much to cut wood.',
   }),
   [FT.PickAxe]: Object.freeze({
-    inside: 'There is no rock to work in here.', town: 'You cannot dig for ore inside a settlement.',
-    daylight: 'It is too dark to see the seams in the rock.', sea: 'There is no rock to work out here.',
-    enemies: 'You cannot work the rock with enemies close by.', encumbered: 'You are carrying too much to work the rock.',
+    inside: 'There is no rock to work in here.',
+    town: 'You cannot dig for ore inside a settlement.',
+    daylight: 'It is too dark to see the seams in the rock.',
+    sea: 'There is no rock to work out here.',
+    enemies: 'You cannot work the rock with enemies close by.',
+    encumbered: 'You are carrying too much to work the rock.',
   }),
   [FT.Sickle]: Object.freeze({
-    inside: 'There are no plants to cut in here.', town: 'You cannot cut plants inside a settlement.',
-    daylight: 'It is too dark to tell one plant from another.', sea: 'There are no plants to cut out here.',
-    enemies: 'You cannot cut plants with enemies close by.', encumbered: 'You are carrying too much to cut plants.',
+    inside: 'There are no plants to cut in here.',
+    town: 'You cannot cut plants inside a settlement.',
+    daylight: 'It is too dark to tell one plant from another.',
+    sea: 'There are no plants to cut out here.',
+    enemies: 'You cannot cut plants with enemies close by.',
+    encumbered: 'You are carrying too much to cut plants.',
   }),
   [FT.FishingNet]: Object.freeze({
-    inside: 'There is no water to fish in here.', town: 'You cannot cast a net inside a settlement.',
-    daylight: 'It is too dark to see where the fish are.', enemies: 'You cannot cast a net with enemies close by.',
-    encumbered: 'You are carrying too much to cast a net.', water: 'Stand in water, or be out at sea, to cast a net.',
+    inside: 'There is no water to fish in here.',
+    town: 'You cannot cast a net inside a settlement.',
+    daylight: 'It is too dark to see where the fish are.',
+    enemies: 'You cannot cast a net with enemies close by.',
+    encumbered: 'You are carrying too much to cast a net.',
+    water: 'Stand in water, or be out at sea, to cast a net.',
   }),
   [FT.Spade]: Object.freeze({
-    inside: 'There is no grave to dig in here.', town: 'You cannot open a grave inside a settlement.',
-    cemetery: 'Graves are dug in a cemetery, not here.', enemies: 'You cannot open a grave with enemies close by.',
+    inside: 'There is no grave to dig in here.',
+    town: 'You cannot open a grave inside a settlement.',
+    cemetery: 'Graves are dug in a cemetery, not here.',
+    enemies: 'You cannot open a grave with enemies close by.',
     encumbered: 'You are carrying too much to dig.',
   }),
   [FT.Basket]: Object.freeze({
-    inside: 'There is no wild food to find in here.', town: 'You cannot gather wild food inside a settlement.',
-    daylight: 'It is too dark to find anything worth eating.', sea: 'There is no wild food to find out here.',
-    enemies: 'You cannot gather food with enemies close by.', encumbered: 'You are carrying too much to gather food.',
+    inside: 'There is no wild food to find in here.',
+    town: 'You cannot gather wild food inside a settlement.',
+    daylight: 'It is too dark to find anything worth eating.',
+    sea: 'There is no wild food to find out here.',
+    enemies: 'You cannot gather food with enemies close by.',
+    encumbered: 'You are carrying too much to gather food.',
   }),
 });
 
 /** Each tool's checks, in the order its UseItem asks them. */
 export const CHECK_ORDER = Object.freeze({
-  [FT.WoodAxe]: Object.freeze(['inside', 'town', 'daylight', 'sea', 'enemies', 'encumbered']),   // IL_0df4-IL_0f27
-  [FT.PickAxe]: Object.freeze(['inside', 'town', 'daylight', 'sea', 'enemies', 'encumbered']),   // IL_1328-IL_145b
-  [FT.Sickle]: Object.freeze(['inside', 'town', 'daylight', 'sea', 'enemies', 'encumbered']),    // IL_165c-IL_178f
-  [FT.FishingNet]: Object.freeze(['inside', 'dungeon', 'town', 'daylight', 'enemies', 'encumbered', 'water']),   // IL_1aa4-IL_1c45
-  [FT.Spade]: Object.freeze(['inside', 'town', 'cemetery', 'enemies', 'encumbered']),   // IL_20b8-IL_21b4
-  [FT.Basket]: Object.freeze(['inside', 'town', 'daylight', 'sea', 'enemies', 'encumbered']),    // IL_267e-IL_27b1
+  [FT.WoodAxe]: Object.freeze(['inside', 'town', 'daylight', 'sea', 'enemies', 'encumbered']), // IL_0df4-IL_0f27
+  [FT.PickAxe]: Object.freeze(['inside', 'town', 'daylight', 'sea', 'enemies', 'encumbered']), // IL_1328-IL_145b
+  [FT.Sickle]: Object.freeze(['inside', 'town', 'daylight', 'sea', 'enemies', 'encumbered']), // IL_165c-IL_178f
+  [FT.FishingNet]: Object.freeze(['inside', 'dungeon', 'town', 'daylight', 'enemies', 'encumbered', 'water']), // IL_1aa4-IL_1c45
+  [FT.Spade]: Object.freeze(['inside', 'town', 'cemetery', 'enemies', 'encumbered']), // IL_20b8-IL_21b4
+  [FT.Basket]: Object.freeze(['inside', 'town', 'daylight', 'sea', 'enemies', 'encumbered']), // IL_267e-IL_27b1
 });
 
 /**
@@ -119,30 +161,47 @@ export { SEA_REGION };
 
 /** The net's water (IL_1be9-IL_1c45): any one passes. */
 export function netHasWater(w) {
-  return !!w.swimming
-    || w.exteriorWater === ON_EXTERIOR_WATER.Swimming
-    || w.exteriorWater === ON_EXTERIOR_WATER.WaterWalking
-    || w.climate === CLIMATES.Ocean
-    || w.region === SEA_REGION;
+  return (
+    !!w.swimming ||
+    w.exteriorWater === ON_EXTERIOR_WATER.Swimming ||
+    w.exteriorWater === ON_EXTERIOR_WATER.WaterWalking ||
+    w.climate === CLIMATES.Ocean ||
+    w.region === SEA_REGION
+  );
 }
 
 /** Whether one check fails for this world. */
 function checkFails(check, w) {
   switch (check) {
-    case 'inside': return !!(w.inside || w.insideDungeon || w.insideCastle);
+    case 'inside':
+      return !!(w.inside || w.insideDungeon || w.insideCastle);
     // The net's first check is `IsPlayerInside || IsPlayerInsideDungeonCastle`, and its second the dungeon arm -
     // DEAD CODE (Q4): DFU sets IsPlayerInside in a dungeon too, so the first has refused already.
-    case 'dungeon': return !!w.insideDungeon && !(w.swimming && w.climate === CLIMATES.Ocean);
-    case 'town': return isPlayerInTown(w.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: !!w.inLocationRect, inside: !!w.inside });
-    case 'daylight': return !isForagingDaylight(w.hour);
-    case 'sea': return w.climate === CLIMATES.Ocean;
-    case 'enemies': return !!w.enemiesNear;
+    case 'dungeon':
+      return !!w.insideDungeon && !(w.swimming && w.climate === CLIMATES.Ocean);
+    case 'town':
+      return isPlayerInTown(w.locationType, {
+        mustBeInLocationRect: true,
+        mustBeOutside: true,
+        inLocationRect: !!w.inLocationRect,
+        inside: !!w.inside,
+      });
+    case 'daylight':
+      return !isForagingDaylight(w.hour);
+    case 'sea':
+      return w.climate === CLIMATES.Ocean;
+    case 'enemies':
+      return !!w.enemiesNear;
     // `(float)CarriedWeight < MaxEncumbrance` (blt.un) passes - and an unordered compare (NaN) passes too; only an
     // ordered not-less refuses.
-    case 'encumbered': return w.carriedWeight >= w.maxEncumbrance;
-    case 'cemetery': return !(w.inLocationRect && w.locationType === LOCATION_TYPES.Graveyard);
-    case 'water': return !netHasWater(w);
-    default: return false;
+    case 'encumbered':
+      return w.carriedWeight >= w.maxEncumbrance;
+    case 'cemetery':
+      return !(w.inLocationRect && w.locationType === LOCATION_TYPES.Graveyard);
+    case 'water':
+      return !netHasWater(w);
+    default:
+      return false;
   }
 }
 
@@ -154,9 +213,8 @@ export function foragingRefusal(templateIndex, w, skip = null) {
   if (!order) return null;
   for (const check of order) {
     if (skip?.includes(check)) continue;
-    const fails = check === 'inside' && templateIndex === FT.FishingNet
-      ? !!(w.inside || w.insideCastle)
-      : checkFails(check, w);
+    const fails =
+      check === 'inside' && templateIndex === FT.FishingNet ? !!(w.inside || w.insideCastle) : checkFails(check, w);
     if (fails) return FORAGING_REFUSALS[templateIndex][check === 'dungeon' ? 'inside' : check];
   }
   return null;
@@ -172,8 +230,22 @@ export function checksRefusal(order, lines, w) {
 
 /** The bundles drawn, by (INT + STR) / 2's band: desert (224, 225) and everywhere else. */
 export const WOOD_BUNDLE_TABLES = Object.freeze({
-  desert: Object.freeze([[0, 0, 0, 0, 1], [0, 0, 0, 1, 1], [0, 0, 1, 1, 1], [0, 1, 1, 1, 2]].map((r) => Object.freeze(r))),
-  other: Object.freeze([[0, 0, 0, 1, 2], [0, 0, 1, 2, 3], [0, 1, 2, 3, 4], [1, 2, 3, 4, 4]].map((r) => Object.freeze(r))),
+  desert: Object.freeze(
+    [
+      [0, 0, 0, 0, 1],
+      [0, 0, 0, 1, 1],
+      [0, 0, 1, 1, 1],
+      [0, 1, 1, 1, 2],
+    ].map((r) => Object.freeze(r)),
+  ),
+  other: Object.freeze(
+    [
+      [0, 0, 0, 1, 2],
+      [0, 0, 1, 2, 3],
+      [0, 1, 2, 3, 4],
+      [1, 2, 3, 4, 4],
+    ].map((r) => Object.freeze(r)),
+  ),
 });
 export function woodAxeBundles({ intelligence, strength, climate }, rng) {
   const table = isDesertClimate(climate) ? WOOD_BUNDLE_TABLES.desert : WOOD_BUNDLE_TABLES.other;
@@ -188,8 +260,14 @@ export function woodAxeMessage(n) {
 // ---- the Pick-Axe (IL_1328-IL_1622) -----------------------------------
 
 /** (INT + AGI) / 2 - the IL reads LiveAgility (IL_147a); the readme says Endurance (Q3). */
-export const MINING_QUESTS = Object.freeze(['MiningQuestWeakest', 'MiningQuestWeaker', 'MiningQuestWeak', 'MiningQuest']);
-export const pickAxeQuest = ({ intelligence, agility }) => MINING_QUESTS[attributeBand(attributeAverage(intelligence, agility))];
+export const MINING_QUESTS = Object.freeze([
+  'MiningQuestWeakest',
+  'MiningQuestWeaker',
+  'MiningQuestWeak',
+  'MiningQuest',
+]);
+export const pickAxeQuest = ({ intelligence, agility }) =>
+  MINING_QUESTS[attributeBand(attributeAverage(intelligence, agility))];
 
 // ---- the Sickle (IL_1790-IL_1a2a) -------------------------------------
 
@@ -204,8 +282,16 @@ export function sickleQuest(climate, monthValue) {
 // ---- the Fishing-Net (IL_1c4a-IL_1fb3) --------------------------------
 
 /** The fish drawn, by (INT + AGI) / 2's band. */
-export const FISH_TABLES = Object.freeze([[0, 0, 0, 1, 1, 2], [0, 0, 1, 1, 2, 2], [0, 1, 2, 2, 3, 3], [1, 2, 2, 3, 3, 4]].map((r) => Object.freeze(r)));
-export const fishingCount = ({ intelligence, agility }, rng) => pickOneOf(FISH_TABLES[attributeBand(attributeAverage(intelligence, agility))], rng);
+export const FISH_TABLES = Object.freeze(
+  [
+    [0, 0, 0, 1, 1, 2],
+    [0, 0, 1, 1, 2, 2],
+    [0, 1, 2, 2, 3, 3],
+    [1, 2, 2, 3, 3, 4],
+  ].map((r) => Object.freeze(r)),
+);
+export const fishingCount = ({ intelligence, agility }, rng) =>
+  pickOneOf(FISH_TABLES[attributeBand(attributeAverage(intelligence, agility))], rng);
 export function fishingMessage(n) {
   if (n <= 0) return 'Your net comes up empty.';
   return `Your net comes up with ${COUNT_WORDS[n]} Fish.`;
@@ -214,8 +300,18 @@ export function fishingMessage(n) {
 // ---- the Spade (IL_2280-IL_2619) --------------------------------------
 
 /** (INT + END) / 2 picks the quest; Cheb's Necromancy's family when that mod is on (never, in the port). */
-export const GRAVE_QUESTS = Object.freeze(['GraveRobbingQuestWeakest', 'GraveRobbingQuestWeaker', 'GraveRobbingQuestWeak', 'GraveRobbingQuest']);
-export const GRAVE_CN_QUESTS = Object.freeze(['GraveRobbingCNQuestWeakest', 'GraveRobbingCNQuestWeaker', 'GraveRobbingCNQuestWeak', 'GraveRobbingCNQuest']);
+export const GRAVE_QUESTS = Object.freeze([
+  'GraveRobbingQuestWeakest',
+  'GraveRobbingQuestWeaker',
+  'GraveRobbingQuestWeak',
+  'GraveRobbingQuest',
+]);
+export const GRAVE_CN_QUESTS = Object.freeze([
+  'GraveRobbingCNQuestWeakest',
+  'GraveRobbingCNQuestWeaker',
+  'GraveRobbingCNQuestWeak',
+  'GraveRobbingCNQuest',
+]);
 export const spadeQuest = ({ intelligence, endurance }, chebs = false) =>
   (chebs ? GRAVE_CN_QUESTS : GRAVE_QUESTS)[attributeBand(attributeAverage(intelligence, endurance))];
 
@@ -236,7 +332,7 @@ export function basketDraw({ intelligence, climate, monthValue }, rng) {
 export const CC_FRUIT = Object.freeze({ Apple: CC_TEMPLATE.Apple, Orange: CC_TEMPLATE.Orange });
 export const CC_RAW_FISH = CC_TEMPLATE.RawFish;
 export const fishTemplate = (cc) => (cc ? CC_RAW_FISH : FT.Fish);
-export const fruitTemplate = (fruit, cc) => (cc ? CC_FRUIT[fruit] : (fruit === 'Apple' ? FT.Apple : FT.Orange));
+export const fruitTemplate = (fruit, cc) => (cc ? CC_FRUIT[fruit] : fruit === 'Apple' ? FT.Apple : FT.Orange);
 
 /**
  * A Basket find: the template, how many, and the line. A count of 0 finds nothing.
@@ -245,7 +341,8 @@ export const fruitTemplate = (fruit, cc) => (cc ? CC_FRUIT[fruit] : (fruit === '
  */
 export function basketFind({ count, food, block }, cc) {
   if (!(count > 0) || count > 4) return { templateIndex: null, count: 0, message: 'You find nothing fit to eat.' };
-  if (food === 4) return { templateIndex: FT.Egg, count, message: `You find ${COUNT_WORDS[count]} Egg${count === 1 ? '' : 's'}.` };
+  if (food === 4)
+    return { templateIndex: FT.Egg, count, message: `You find ${COUNT_WORDS[count]} Egg${count === 1 ? '' : 's'}.` };
   const name = food === 3 ? 'Mushroom' : BASKET_BLOCKS[block].fruit;
   const templateIndex = food === 3 ? FT.Mushroom : fruitTemplate(name, cc);
   return { templateIndex, count, message: `You gather ${COUNT_WORDS[count]} ${name}${count === 1 ? '' : 's'}.` };
@@ -254,10 +351,15 @@ export function basketFind({ count, food, block }, cc) {
 // ---- after a use -----------------------------------------------------
 
 /** The quest each tool starts after its yield (the Pick-Axe, Sickle and Spade pick theirs above). */
-export const TOOL_QUESTS = Object.freeze({ [FT.WoodAxe]: 'ChopWoodQuest', [FT.FishingNet]: 'FishingQuest', [FT.Basket]: 'ForageFoodQuest' });
+export const TOOL_QUESTS = Object.freeze({
+  [FT.WoodAxe]: 'ChopWoodQuest',
+  [FT.FishingNet]: 'FishingQuest',
+  [FT.Basket]: 'ForageFoodQuest',
+});
 
 /** "Your <Tool> is worn out." - the tool's own name, as the template names it. */
-export const brokeMessage = (templateIndex, name = null) => `Your ${FORAGING_TEMPLATES.find((t) => t.index === templateIndex)?.name ?? name ?? 'tool'} is worn out.`;   // PROF7: a tool not Foraging's by its own name (the Skinning Knife)
+export const brokeMessage = (templateIndex, name = null) =>
+  `Your ${FORAGING_TEMPLATES.find((t) => t.index === templateIndex)?.name ?? name ?? 'tool'} is worn out.`; // PROF7: a tool not Foraging's by its own name (the Skinning Knife)
 
 // ---- the foods (IL_4a63-IL_4c2a) --------------------------------------
 
@@ -266,7 +368,12 @@ export const FOODS = Object.freeze({
   [FT.Fish]: Object.freeze({ text: 'You eat the Fish. You feel stronger.', fatigue: 15, health: 5, magicka: 0 }),
   [FT.Apple]: Object.freeze({ text: 'You eat the Apple. You feel refreshed.', fatigue: 10, health: 5, magicka: 0 }),
   [FT.Orange]: Object.freeze({ text: 'You eat the Orange. You feel refreshed.', fatigue: 10, health: 5, magicka: 0 }),
-  [FT.Mushroom]: Object.freeze({ text: 'You eat the Mushroom. Your mind feels clearer.', fatigue: 5, health: 0, magicka: 10 }),
+  [FT.Mushroom]: Object.freeze({
+    text: 'You eat the Mushroom. Your mind feels clearer.',
+    fatigue: 5,
+    health: 0,
+    magicka: 10,
+  }),
   [FT.Egg]: Object.freeze({ text: 'You eat the Egg. You feel stronger.', fatigue: 15, health: 10, magicka: 0 }),
 });
 
@@ -307,7 +414,8 @@ export const FORAGING_ITEM_CODES = Object.freeze([1, 2, 3, 4, 5, 6, 7]);
 export const FORAGING_ITEM_RARITIES = Object.freeze([10, 10, 10, 10, 10, 10, 10]);
 
 /** DetermineForagingItem (IL_0b9c): code 1-7 -> 1600-1604, 1606, 1607; anything else 0. */
-export const determineForagingItem = (code) => [FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.FishingNet, FT.WoodBundle, FT.Spade, FT.Basket][code - 1] ?? 0;
+export const determineForagingItem = (code) =>
+  [FT.WoodAxe, FT.PickAxe, FT.Sickle, FT.FishingNet, FT.WoodBundle, FT.Spade, FT.Basket][code - 1] ?? 0;
 
 /**
  * RollForagingItemUsed's weights (IL_0c23-IL_0d64): a code's copies in the list its pick is drawn from. The weight is
@@ -319,9 +427,12 @@ export function foragingItemCount(rarity, luck, quality) {
   const w = -(rarity * 5 - 101);
   const luckMod = Math.fround(Math.fround(luck - 50) / 5);
   const mod = quality === -1 ? luckMod : Math.fround(Math.fround(quality) + luckMod);
-  const raw = w >= 60 ? Math.fround(Math.fround(w * 2.5) + Math.fround(mod * 2))
-    : w >= 35 ? Math.fround(Math.fround(w * 1.5) + mod)
-      : Math.fround(w - mod);
+  const raw =
+    w >= 60
+      ? Math.fround(Math.fround(w * 2.5) + Math.fround(mod * 2))
+      : w >= 35
+        ? Math.fround(Math.fround(w * 1.5) + mod)
+        : Math.fround(w - mod);
   return Math.trunc(Math.min(400, Math.max(1, Math.ceil(raw))));
 }
 /** RollForagingItemUsed (IL_0bfc): each code's index FillArray'd its count times, one index drawn, its code answered. */
@@ -355,21 +466,38 @@ export function containerLootDraw({ containerType, buildingType }, rng) {
     return none;
   }
   if (containerType === LOOT_CONTAINER_TYPES.HouseContainers) {
-    if (buildingType === BUILDING_TYPES.Palace) return dice100(30, rng()) ? { ...none, count: Math.floor(rng() * 1) } : none;
+    if (buildingType === BUILDING_TYPES.Palace)
+      return dice100(30, rng()) ? { ...none, count: Math.floor(rng() * 1) } : none;
     return dice100(15, rng()) ? { ...none, count: Math.floor(rng() * 2) } : none;
   }
   return none;
 }
 
 /** ForagingLoot_OnDungeonLootSpawned's switch (IL_0873), LootTables' event, by the index GenerateLoot was given. */
-export const DUNGEON_LOOT_ARMS = Object.freeze(Object.fromEntries(/** @type {Array<[number[], { chance: number, max: number, table: readonly number[] }]>} */ ([
-  [[DUNGEON_TYPES.Prison, DUNGEON_TYPES.Mine], { chance: 25, max: 5, table: FORAGING_LOOT_TABLES.prisonMine }],
-  [[DUNGEON_TYPES.OrcStronghold, DUNGEON_TYPES.HumanStronghold, DUNGEON_TYPES.BarbarianStronghold], { chance: 20, max: 4, table: FORAGING_LOOT_TABLES.stronghold }],
-  [[DUNGEON_TYPES.Crypt, DUNGEON_TYPES.RuinedCastle, DUNGEON_TYPES.Cemetery], { chance: 15, max: 3, table: FORAGING_LOOT_TABLES.common }],
-  [[DUNGEON_TYPES.DesecratedTemple, DUNGEON_TYPES.Coven], { chance: 10, max: 2, table: FORAGING_LOOT_TABLES.templeCoven }],
-  // Range(0, 1): always 0 (Q2) - the roll is made and nothing follows it
-  [[DUNGEON_TYPES.VampireHaunt, DUNGEON_TYPES.Laboratory], { chance: 5, max: 1, table: FORAGING_LOOT_TABLES.haunt }],
-]).flatMap(([indices, arm]) => indices.map((i) => [i, Object.freeze(arm)]))));
+export const DUNGEON_LOOT_ARMS = Object.freeze(
+  Object.fromEntries(
+    /** @type {Array<[number[], { chance: number, max: number, table: readonly number[] }]>} */ ([
+      [[DUNGEON_TYPES.Prison, DUNGEON_TYPES.Mine], { chance: 25, max: 5, table: FORAGING_LOOT_TABLES.prisonMine }],
+      [
+        [DUNGEON_TYPES.OrcStronghold, DUNGEON_TYPES.HumanStronghold, DUNGEON_TYPES.BarbarianStronghold],
+        { chance: 20, max: 4, table: FORAGING_LOOT_TABLES.stronghold },
+      ],
+      [
+        [DUNGEON_TYPES.Crypt, DUNGEON_TYPES.RuinedCastle, DUNGEON_TYPES.Cemetery],
+        { chance: 15, max: 3, table: FORAGING_LOOT_TABLES.common },
+      ],
+      [
+        [DUNGEON_TYPES.DesecratedTemple, DUNGEON_TYPES.Coven],
+        { chance: 10, max: 2, table: FORAGING_LOOT_TABLES.templeCoven },
+      ],
+      // Range(0, 1): always 0 (Q2) - the roll is made and nothing follows it
+      [
+        [DUNGEON_TYPES.VampireHaunt, DUNGEON_TYPES.Laboratory],
+        { chance: 5, max: 1, table: FORAGING_LOOT_TABLES.haunt },
+      ],
+    ]).flatMap(([indices, arm]) => indices.map((i) => [i, Object.freeze(arm)])),
+  ),
+);
 /** A pile's roll then its count, `Range(0, max)`; a failed roll, or an index with no arm, is 0. */
 export function dungeonLootDraw(locationIndex, rng) {
   const arm = DUNGEON_LOOT_ARMS[locationIndex];
@@ -383,7 +511,10 @@ export function dungeonLootDraw(locationIndex, rng) {
 export const CORPSE_CLASS_CAREERS = Object.freeze([1, 8, 13, 14, 15, 16]);
 export const CORPSE_MONSTER_CAREERS = Object.freeze([7, 12, 16]);
 /** 1362 and 3918: the counts; the chance `Floor(5 x 1.0)` for a class, `Floor(5 x 0.5)` for a monster. */
-export const CORPSE_COUNTS = Object.freeze({ class: Object.freeze([1, 1, 1, 1, 2]), monster: Object.freeze([1, 1, 1, 2]) });
+export const CORPSE_COUNTS = Object.freeze({
+  class: Object.freeze([1, 1, 1, 1, 2]),
+  monster: Object.freeze([1, 1, 1, 2]),
+});
 /** The count drawn, then the roll (IL_0afc); a foe of no listed career draws nothing. */
 export function corpseLootDraw({ isClass, careerIndex }, rng) {
   const careers = isClass ? CORPSE_CLASS_CAREERS : CORPSE_MONSTER_CAREERS;
@@ -398,7 +529,7 @@ export function corpseLootDraw({ isClass, careerIndex }, rng) {
 /** RaiseTime: `WorldTime.Now.RaiseTime(H * 3600 + MM * 60)`. */
 export const raiseTimeSeconds = (hours, minutes) => Math.max(0, hours) * 3600 + Math.max(0, minutes) * 60;
 /** ReducePlayerFatigue: `max(1, (int)(CurrentFatigue - MaxFatigue * N / 100f))`, raw (x64) values. */
-export const reduceFatigueBy = (current, max, percent) => Math.max(1, Math.trunc(current - max * percent / 100));
+export const reduceFatigueBy = (current, max, percent) => Math.max(1, Math.trunc(current - (max * percent) / 100));
 
 // ---- FORAGE-FIX (FORAGE0 12): the quests' four mends ----------------
 // OWN-WORK3: the quests are our own files (quests/), and Q7, Q8, Q9 and Q13 are written into them: one Mining task

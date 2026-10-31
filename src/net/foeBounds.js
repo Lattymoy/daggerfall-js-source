@@ -32,39 +32,48 @@
 // up, whose career the relay does not hold), an ally, a companion or a crewman (the frame's own lists, which the caller
 // leaves out), a boss's relay-kept body (not on this stream). The constants each builder owns are copied here, as net/grantLaw.js copies the elite's and the champion's -
 // the relay cannot import the modules that hold them - and test/net/foebounds_law.test.js holds each equal to its home.
-import { progressionScaling, foeShare, wildernessShare, placeVeteran, wildernessThreat, DUNGEON_SHARE } from '../systems/skillSoftcap.js';
+import {
+  progressionScaling,
+  foeShare,
+  wildernessShare,
+  placeVeteran,
+  wildernessThreat,
+  DUNGEON_SHARE,
+} from '../systems/skillSoftcap.js';
 
 /** The builders' multipliers, each from its home (held equal by the test). */
 export const FOE_BOUND = Object.freeze({
-  classBase: 10,            // characters/enemy/enemyEntity.js rollEnemyClassMaxHealth's `let maxHealth = baseHealth` (10)
-  classHpPerLevel: 30,      // systems/customClass.js HP_MAX (CreateCharCustomClass.cs maxHpPerLevel)
-  elite: 5,                 // systems/eliteFoes.js ELITE_FOE_HEALTH_MULT
-  superFoe: 4,              // world/superDungeon/sdDungeon.js SUPER_HEALTH_SCALE
-  champion: 2,              // systems/champions.js CHAMPION_HEALTH
-  championTraits: Object.freeze([1, 1.5, 1, 1, 1]),   // systems/champions.js CHAMPION_TRAITS' `health` (1 where none), in the wire's order
-  championMinLevel: 3,      // systems/champions.js CHAMPION_MIN_LEVEL
-  revenantPerRank: 0.4,     // systems/revenant/revenant.js REVENANT_HEALTH_PER_RANK
-  revenantRankMax: 5,       // systems/revenant/revenant.js REVENANT_MAX_RANK
-  festerHealth: 0.1,        // systems/revenant/revenantFeud.js FESTER.HEALTH
-  wrathMax: 3,              // systems/revenant/revenantFeud.js WRATH_MAX
-  dread: 1.5,               // systems/revenant/revenantUnquiet.js DREAD.HEALTH
-  wild: 4,                  // systems/wild/wildZone.js WILD_FOE_HEALTH_MULT
-  wildRingTop: 2,           // systems/wild/wildZone.js WILD_RING_LOOT's heart
-  giant: 10,                // systems/wild/wildZone.js WILD_GIANT_HEALTH_MULT
-  giantType: 16,            // systems/wild/wildZone.js WILD_GIANT
-  zoneWatch: 10,            // systems/wild/wildZone.js ZONE_WATCH_SCALE (scenes/world.js guardScale)
-  rite: 3,                  // net/gate/gateRite.js RITE_SUMMONER_HEALTH
-  star: 2,                  // net/starfall/starfallLaw.js STAR_FOE_HEALTH
-  watch: 146,               // characters/mobile/mobileTypes.js KNIGHT_CITY_WATCH
-  hero: Object.freeze({     // systems/heroThreat.js HERO_THREAT's health
+  classBase: 10, // characters/enemy/enemyEntity.js rollEnemyClassMaxHealth's `let maxHealth = baseHealth` (10)
+  classHpPerLevel: 30, // systems/customClass.js HP_MAX (CreateCharCustomClass.cs maxHpPerLevel)
+  elite: 5, // systems/eliteFoes.js ELITE_FOE_HEALTH_MULT
+  superFoe: 4, // world/superDungeon/sdDungeon.js SUPER_HEALTH_SCALE
+  champion: 2, // systems/champions.js CHAMPION_HEALTH
+  championTraits: Object.freeze([1, 1.5, 1, 1, 1]), // systems/champions.js CHAMPION_TRAITS' `health` (1 where none), in the wire's order
+  championMinLevel: 3, // systems/champions.js CHAMPION_MIN_LEVEL
+  revenantPerRank: 0.4, // systems/revenant/revenant.js REVENANT_HEALTH_PER_RANK
+  revenantRankMax: 5, // systems/revenant/revenant.js REVENANT_MAX_RANK
+  festerHealth: 0.1, // systems/revenant/revenantFeud.js FESTER.HEALTH
+  wrathMax: 3, // systems/revenant/revenantFeud.js WRATH_MAX
+  dread: 1.5, // systems/revenant/revenantUnquiet.js DREAD.HEALTH
+  wild: 4, // systems/wild/wildZone.js WILD_FOE_HEALTH_MULT
+  wildRingTop: 2, // systems/wild/wildZone.js WILD_RING_LOOT's heart
+  giant: 10, // systems/wild/wildZone.js WILD_GIANT_HEALTH_MULT
+  giantType: 16, // systems/wild/wildZone.js WILD_GIANT
+  zoneWatch: 10, // systems/wild/wildZone.js ZONE_WATCH_SCALE (scenes/world.js guardScale)
+  rite: 3, // net/gate/gateRite.js RITE_SUMMONER_HEALTH
+  star: 2, // net/starfall/starfallLaw.js STAR_FOE_HEALTH
+  watch: 146, // characters/mobile/mobileTypes.js KNIGHT_CITY_WATCH
+  hero: Object.freeze({
+    // systems/heroThreat.js HERO_THREAT's health
     level: Object.freeze({ from: 10, to: 30, health: 1.04 }),
     renown: Object.freeze({ from: 15, to: 50, health: 1.005 }),
   }),
 });
 
 /** The hero's worst health factor: every level and every Renown that pays (systems/heroThreat.js heroThreat's top). */
-export const FOE_HERO_HEALTH_MAX = FOE_BOUND.hero.level.health ** (FOE_BOUND.hero.level.to - FOE_BOUND.hero.level.from)
-  * FOE_BOUND.hero.renown.health ** (FOE_BOUND.hero.renown.to - FOE_BOUND.hero.renown.from);
+export const FOE_HERO_HEALTH_MAX =
+  FOE_BOUND.hero.level.health ** (FOE_BOUND.hero.level.to - FOE_BOUND.hero.level.from) *
+  FOE_BOUND.hero.renown.health ** (FOE_BOUND.hero.renown.to - FOE_BOUND.hero.renown.from);
 
 /** Each monster's row at its most over the seven profiles - [type, max health, level, share level] - held equal by the
  *  test to enemyBasics.js, the Meaner Monsters folds (characters/meanerMonsters.js applyMeanerMonsters, combat/
@@ -76,27 +85,78 @@ export const FOE_HERO_HEALTH_MAX = FOE_BOUND.hero.level.health ** (FOE_BOUND.her
  *  share reads (`foeShare(basics.level)`: the table's row, vanilla or the mod's - never a mint's fold), at its most; the
  *  relay reads it here, not the table, so the bound is the same on every machine whatever it has loaded. The horse (39)
  *  has none. */
-export const FOE_BOUND_ROWS = Object.freeze(new Map([
-  [0, [35, 1, 1]], [1, [20, 2, 2]], [2, [40, 3, 3]], [3, [26, 3, 3]], [4, [110, 4, 4]], [5, [80, 4, 4]],
-  [6, [50, 4, 4]], [7, [70, 6, 5]], [8, [65, 5, 5]], [9, [66, 9, 9]], [10, [50, 6, 6]], [11, [50, 7, 7]],
-  [12, [100, 9, 7]], [13, [85, 8, 8]], [14, [120, 11, 11]], [15, [66, 9, 9]], [16, [200, 10, 10]], [17, [125, 10, 10]],
-  [18, [79, 11, 11]], [19, [190, 15, 11]], [20, [87, 12, 12]], [21, [110, 15, 13]], [22, [102, 14, 14]],
-  [23, [101, 15, 15]], [24, [150, 19, 16]], [25, [160, 17, 17]], [26, [138, 17, 17]], [27, [146, 18, 18]],
-  [28, [154, 19, 19]], [29, [146, 19, 19]], [30, [200, 20, 20]], [31, [285, 21, 20]], [32, [200, 20, 20]],
-  [33, [210, 21, 21]], [34, [146, 18, 18]], [35, [130, 21, 16]], [36, [155, 21, 16]], [37, [245, 16, 16]],
-  [38, [130, 16, 16]], [40, [250, 21, 16]], [41, [90, 16, 16]], [42, [90, 16, 16]],
-]));
+export const FOE_BOUND_ROWS = Object.freeze(
+  new Map([
+    [0, [35, 1, 1]],
+    [1, [20, 2, 2]],
+    [2, [40, 3, 3]],
+    [3, [26, 3, 3]],
+    [4, [110, 4, 4]],
+    [5, [80, 4, 4]],
+    [6, [50, 4, 4]],
+    [7, [70, 6, 5]],
+    [8, [65, 5, 5]],
+    [9, [66, 9, 9]],
+    [10, [50, 6, 6]],
+    [11, [50, 7, 7]],
+    [12, [100, 9, 7]],
+    [13, [85, 8, 8]],
+    [14, [120, 11, 11]],
+    [15, [66, 9, 9]],
+    [16, [200, 10, 10]],
+    [17, [125, 10, 10]],
+    [18, [79, 11, 11]],
+    [19, [190, 15, 11]],
+    [20, [87, 12, 12]],
+    [21, [110, 15, 13]],
+    [22, [102, 14, 14]],
+    [23, [101, 15, 15]],
+    [24, [150, 19, 16]],
+    [25, [160, 17, 17]],
+    [26, [138, 17, 17]],
+    [27, [146, 18, 18]],
+    [28, [154, 19, 19]],
+    [29, [146, 19, 19]],
+    [30, [200, 20, 20]],
+    [31, [285, 21, 20]],
+    [32, [200, 20, 20]],
+    [33, [210, 21, 21]],
+    [34, [146, 18, 18]],
+    [35, [130, 21, 16]],
+    [36, [155, 21, 16]],
+    [37, [245, 16, 16]],
+    [38, [130, 16, 16]],
+    [40, [250, 21, 16]],
+    [41, [90, 16, 16]],
+    [42, [90, 16, 16]],
+  ]),
+);
 
 const isClass = (t) => t >= 128 && t <= 146;
 /** One builder's stage: its multiplier, rounded once, never under 1. */
 const stage = (v, m) => Math.max(1, Math.round(v * m));
 /** A stage of progression at its worst for this foe, the place's worst handed in (pure: skillSoftcap's own formula). */
-const worstProgression = (t, dShare, place) => progressionScaling({ veteran: 1, edge: Number.MAX_SAFE_INTEGER }, dShare, foeShare(FOE_BOUND_ROWS.get(t)?.[2], isClass(t)), place, { health: FOE_HERO_HEALTH_MAX, damage: 1 })?.healthMult ?? 1;
-const revenantStages = (v) => stage(stage(stage(v, 1 + FOE_BOUND.revenantPerRank * FOE_BOUND.revenantRankMax), 1 + FOE_BOUND.festerHealth * FOE_BOUND.wrathMax), FOE_BOUND.dread);
+const worstProgression = (t, dShare, place) =>
+  progressionScaling(
+    { veteran: 1, edge: Number.MAX_SAFE_INTEGER },
+    dShare,
+    foeShare(FOE_BOUND_ROWS.get(t)?.[2], isClass(t)),
+    place,
+    { health: FOE_HERO_HEALTH_MAX, damage: 1 },
+  )?.healthMult ?? 1;
+const revenantStages = (v) =>
+  stage(
+    stage(
+      stage(v, 1 + FOE_BOUND.revenantPerRank * FOE_BOUND.revenantRankMax),
+      1 + FOE_BOUND.festerHealth * FOE_BOUND.wrathMax,
+    ),
+    FOE_BOUND.dread,
+  );
 
 /** A record's base: a class foe's roll at its level's worst, a monster's row - or null (no row: unverified). */
 function baseOf(r) {
-  if (isClass(r.t)) return Number.isInteger(r.l) && r.l >= 0 ? FOE_BOUND.classBase + r.l * FOE_BOUND.classHpPerLevel : null;
+  if (isClass(r.t))
+    return Number.isInteger(r.l) && r.l >= 0 ? FOE_BOUND.classBase + r.l * FOE_BOUND.classHpPerLevel : null;
   return FOE_BOUND_ROWS.get(r.t)?.[0] ?? null;
 }
 
@@ -110,13 +170,16 @@ function streetBound(r, base, wild, camp) {
   if (typeof r.nm === 'string' && r.nm) v = revenantStages(v);
   if (wild) v = stage(v, FOE_BOUND.wild * FOE_BOUND.wildRingTop);
   if (Number.isInteger(r.gg) && r.t === FOE_BOUND.giantType) v = stage(v, FOE_BOUND.giant);
-  if (camp) v = stage(v, isClass(r.t) ? Math.max(FOE_BOUND.rite, FOE_BOUND.star) : FOE_BOUND.star);   // STAR-TUNE: a fallen star's coven, any kind
+  if (camp) v = stage(v, isClass(r.t) ? Math.max(FOE_BOUND.rite, FOE_BOUND.star) : FOE_BOUND.star); // STAR-TUNE: a fallen star's coven, any kind
   return r.t === FOE_BOUND.watch ? Math.max(v, wild ? stage(base, FOE_BOUND.zoneWatch) : base) : v;
 }
 
 /** The dungeon's chain (buildFoeAt's order): a layout foe's worst, which a revenant's lair stand never reaches. */
 function dungeonBound(r, base, wild) {
-  const v = stage(stage(stage(base, FOE_BOUND.superFoe), FOE_BOUND.champion * Math.max(...FOE_BOUND.championTraits)), worstProgression(r.t, Math.max(...DUNGEON_SHARE), 1));
+  const v = stage(
+    stage(stage(base, FOE_BOUND.superFoe), FOE_BOUND.champion * Math.max(...FOE_BOUND.championTraits)),
+    worstProgression(r.t, Math.max(...DUNGEON_SHARE), 1),
+  );
   return wild ? stage(v, FOE_BOUND.wild * FOE_BOUND.wildRingTop) : v;
 }
 
@@ -150,7 +213,8 @@ export function foeStatsRefusal(r, o = {}) {
   if (!r || !Number.isInteger(r.t)) return null;
   const level = isClass(r.t) ? r.l : FOE_BOUND_ROWS.get(r.t)?.[1];
   if (r.t === FOE_BOUND.watch && (r.z === 1 || Number.isInteger(r.cp))) return { t: r.t, k: r.k ?? r.h ?? 0, mx: 0 };
-  if (Number.isInteger(r.cp) && Number.isInteger(level) && level < FOE_BOUND.championMinLevel) return { t: r.t, k: r.k ?? r.h ?? 0, mx: 0 };
+  if (Number.isInteger(r.cp) && Number.isInteger(level) && level < FOE_BOUND.championMinLevel)
+    return { t: r.t, k: r.k ?? r.h ?? 0, mx: 0 };
   const mx = foeHealthBound(r, o);
   if (mx == null) return null;
   const k = Math.max(Number.isFinite(r.k) ? r.k : 0, Number.isFinite(r.h) ? r.h : 0);

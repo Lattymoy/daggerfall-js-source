@@ -92,7 +92,7 @@
   {
     "name": "BAL9b-MENTOR2-the-real-climb-while-mentoring",
     "file": "src/systems/spell/spellPower.js",
-    "old": "export const fightingClimb = (entity, id) => effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));",
+    "old": "export const fightingClimb = (entity, id) =>\n  effectiveSkill(mentoredSkill(entity, masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id)));",
     "new": "export const fightingClimb = (entity, id) => effectiveSkill(masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id));",
     "tests": [
       "test/systems/bal9_destruction.test.js"
@@ -136,7 +136,7 @@
   },
   {
     "name": "BAL9c-potency-cap-at-40",
-    "file": "src/systems/loot/lootPowers.js",
+    "file": "src/systems/powerBlows.js",
     "old": "export const POTENCY_CAP = 30;",
     "new": "export const POTENCY_CAP = 40;",
     "tests": [
@@ -145,7 +145,7 @@
   },
   {
     "name": "BAL9c-the-whole-at-60",
-    "file": "src/systems/loot/lootPowers.js",
+    "file": "src/systems/powerBlows.js",
     "old": "export const SPELL_POWER_MOST = 50;",
     "new": "export const SPELL_POWER_MOST = 60;",
     "tests": [
@@ -155,8 +155,8 @@
   {
     "name": "BAL9c-the-surge-always",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "entity.magicka > (entity.maxMagicka * surge.above) / 100) pct += surge.pct;",
-    "new": "true) pct += surge.pct;",
+    "old": "  if (\n    surge &&\n    entity.maxMagicka > 0 &&\n    Number.isFinite(entity.magicka) &&\n    entity.magicka > (entity.maxMagicka * surge.above) / 100\n  )\n    pct += surge.pct;",
+    "new": "  if (surge && entity.maxMagicka > 0 && Number.isFinite(entity.magicka) && true) pct += surge.pct;",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "BAL9c-wellspring-uncapped",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "Math.min(WELLSPRING_CAP, wornSum(me, 'wellspring'))",
-    "new": "wornSum(me, 'wellspring')",
+    "old": "  const well = mine(me) ? Math.min(WELLSPRING_CAP, wornSum(me, 'wellspring')) : 0;",
+    "new": "  const well = mine(me) ? wornSum(me, 'wellspring') : 0;",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "BAL9c-the-rings-low-arm",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "entity.magicka < entity.maxMagicka / 2 ? well.low : well.pct",
-    "new": "entity.magicka < entity.maxMagicka / 2 ? well.pct : well.pct",
+    "old": "    gainMana(entity, (entity.maxMagicka * (entity.magicka < entity.maxMagicka / 2 ? well.low : well.pct)) / 100);",
+    "new": "    gainMana(entity, (entity.maxMagicka * (entity.magicka < entity.maxMagicka / 2 ? well.pct : well.pct)) / 100);",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "BAL9c-the-career-ignored",
     "file": "src/systems/loot/lootPowers.js",
-    "old": "    && !(hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen())) {",
-    "new": "    ) {",
+    "old": "    entity.magicka < entity.maxMagicka &&\n    !(hasSpecialAbility(entity.career, SPECIAL_ABILITY.NoRegenSpellPoints) && !restIgnoresNoRegen())",
+    "new": "    entity.magicka < entity.maxMagicka",
     "tests": [
       "test/systems/bal9_destruction.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "BAL9c-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct232';",
-    "new": "export const ACCOUNT_VERSION = 'acct120';",
+    "old": "export const ACCOUNT_VERSION = 'acct235'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
+    "new": "export const ACCOUNT_VERSION = 'acct120'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
     "tests": [
       "test/systems/tech1_roster.test.js"
     ],

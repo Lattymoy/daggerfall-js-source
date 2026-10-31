@@ -29,7 +29,7 @@ import { readFbx } from './fbxRead.mjs';
 import { bakeMesh } from './fbxMesh.mjs';
 import { unwrap, unwrapQuality } from './meshUnwrap.mjs';
 import { bakeTexture, mipChain, writeDds, GILDED_BANDS } from './meshTexture.mjs';
-import { capHoles } from './meshCap.mjs';   // THUNDERLOCK-ART: the eleven holes closed
+import { capHoles } from './meshCap.mjs'; // THUNDERLOCK-ART: the eleven holes closed
 import { meshToNif } from './nifWrite.mjs';
 import { previewSheet, uvSheet } from './meshSheets.mjs';
 import { writePng } from './pngIO.mjs';
@@ -90,16 +90,23 @@ export const OUT = Object.freeze({
   gildedTexture: 'src/assets/mw/textures/thunderlock_gilded.dds',
 });
 
-const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };
+const save = (path, bytes) => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, bytes);
+};
 
 export function bakeThunderlock(fbxBytes, { sheets = null } = {}) {
   // THUNDERLOCK-ART: CAPPED before the unwrap, so its caps take islands and occlusion of their own (tools/meshCap.mjs) -
   // the receiver's rear, which a first-person eye looks straight at, was open, and the eye saw through the gun
-  const raw = capHoles(bakeMesh(readFbx(fbxBytes), {
-    name: 'Dwarven_Thunderlock',
-    forward: SETTINGS.forward, up: SETTINGS.up,
-    units: SETTINGS.units, origin: SETTINGS.origin,
-  }));
+  const raw = capHoles(
+    bakeMesh(readFbx(fbxBytes), {
+      name: 'Dwarven_Thunderlock',
+      forward: SETTINGS.forward,
+      up: SETTINGS.up,
+      units: SETTINGS.units,
+      origin: SETTINGS.origin,
+    }),
+  );
   const before = unwrapQuality(raw);
   const mesh = unwrap(raw, { size: SETTINGS.atlas });
   const top = bakeTexture(mesh, { size: SETTINGS.atlas, rays: SETTINGS.rays });
@@ -139,8 +146,10 @@ if (isMain(import.meta.url)) {
   const b = r.mesh.bounds;
   const size = [0, 1, 2].map((k) => +(b.max[k] - b.min[k]).toFixed(2));
   console.log(`${fbx}`);
-  console.log(`  unwrap   ${r.before.coverage} -> ${u.quality.coverage} over ${u.islands} islands (1.0 fills the atlas once)`);
-  console.log(`  size     ${size.join(' x ')} units = ${(size[1] / MW_UNITS_PER_METRE * 100).toFixed(0)} cm long`);
+  console.log(
+    `  unwrap   ${r.before.coverage} -> ${u.quality.coverage} over ${u.islands} islands (1.0 fills the atlas once)`,
+  );
+  console.log(`  size     ${size.join(' x ')} units = ${((size[1] / MW_UNITS_PER_METRE) * 100).toFixed(0)} cm long`);
   console.log(`  pivot    ${SETTINGS.origin}: muzzle at +${b.max[1].toFixed(1)}, butt at ${b.min[1].toFixed(1)}`);
   console.log(`  ${OUT.mesh}  ${r.nif.length} bytes`);
   console.log(`  ${OUT.texture}  ${r.dds.length} bytes`);
@@ -148,6 +157,9 @@ if (isMain(import.meta.url)) {
   console.log(`  ${OUT.gildedMesh}  ${r.gildedNif.length} bytes`);
   console.log(`  ${OUT.gildedTexture}  ${r.gildedDds.length} bytes`);
   if (wantSheets) {
-    for (const [k, png] of Object.entries(r.sheets)) { save(`scratch/thunderlock-${k}.png`, png); console.log(`  scratch/thunderlock-${k}.png`); }
+    for (const [k, png] of Object.entries(r.sheets)) {
+      save(`scratch/thunderlock-${k}.png`, png);
+      console.log(`  scratch/thunderlock-${k}.png`);
+    }
   }
 }

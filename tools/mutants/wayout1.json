@@ -11,8 +11,8 @@
   {
     "name": "WAYOUT1-the-snap-unbounded",
     "file": "src/systems/wayOut.js",
-    "old": "  let best = -1, bestD = snap;",
-    "new": "  let best = -1, bestD = Infinity;",
+    "old": "    bestD = snap;",
+    "new": "    bestD = Infinity;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WAYOUT1-a-cliff-is-a-step",
     "file": "src/systems/wayOut.js",
-    "old": "          if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;\n          if (clear",
-    "new": "          if (seen[j]) continue;\n          if (clear",
+    "old": "          if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;",
+    "new": "          if (seen[j]) continue;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WAYOUT1-a-teleporter-both-ways",
     "file": "src/systems/wayOut.js",
-    "old": "    if (a >= 0 && b >= 0 && a !== b) { const l = back.get(b); if (l) l.push(a); else back.set(b, [a]); }",
-    "new": "    if (a >= 0 && b >= 0 && a !== b) { for (const [x, y] of [[a, b], [b, a]]) { const l = back.get(y); if (l) l.push(x); else back.set(y, [x]); } }",
+    "old": "      const l = back.get(b);\n      if (l) l.push(a);\n      else back.set(b, [a]);",
+    "new": "      for (const [x, y] of [\n        [a, b],\n        [b, a],\n      ]) {\n        const l = back.get(y);\n        if (l) l.push(x);\n        else back.set(y, [x]);\n      }",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WAYOUT1-the-jump-unmarked",
     "file": "src/systems/wayOut.js",
-    "old": "      seen[j] = 1; next[j] = i; jump[j] = 1; queue[tail++] = j;",
-    "new": "      seen[j] = 1; next[j] = i; queue[tail++] = j;",
+    "old": "      jump[j] = 1;\n      queue[tail++] = j;",
+    "new": "      queue[tail++] = j;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WAYOUT1-past-the-jump",
     "file": "src/systems/wayOut.js",
-    "old": "    if (field.jump[i] === 1) { first ??= cells.pts[i]; break; }   // the teleporter's own cell: the mark stands on it\n",
-    "new": "",
+    "old": "    if (field.jump[i] === 1) {\n      first ??= cells.pts[i];\n      break;\n    } // the teleporter's own cell: the mark stands on it\n    const j = field.next[i];",
+    "new": "    const j = field.next[i];",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WAYOUT1-at-the-door-still-marked",
     "file": "src/systems/wayOut.js",
-    "old": "      if (Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M && Math.abs(exitAt[1] - feet[1]) <= WAY_STEP_DY * 2) return null;\n",
-    "new": "",
+    "old": "      if (\n        Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M &&\n        Math.abs(exitAt[1] - feet[1]) <= WAY_STEP_DY * 2\n      )\n        return null;\n      const n = trail?.size ?? 0;",
+    "new": "      const n = trail?.size ?? 0;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WAYOUT1-no-walked-way-no-mark",
     "file": "src/systems/wayOut.js",
-    "old": "      return p ? [p[0], p[2]] : [exitAt[0], exitAt[2]];",
-    "new": "      return p ? [p[0], p[2]] : null;",
+    "old": "      return p ? [p[0], p[2]] : [exitAt[0], exitAt[2]]; // no walked way: the way in, as the crow flies",
+    "new": "      return p ? [p[0], p[2]] : null; // no walked way: the way in, as the crow flies",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "WAYOUT1-rebuilt-every-frame",
     "file": "src/systems/wayOut.js",
-    "old": "      if ((walled && nowS - builtAt >= fieldEvery) || (grown && nowS - builtAt >= refieldEvery) || (!onField(from) && nowS - builtAt >= offWait)) {",
+    "old": "      if (\n        (walled && nowS - builtAt >= fieldEvery) ||\n        (grown && nowS - builtAt >= refieldEvery) ||\n        (!onField(from) && nowS - builtAt >= offWait)\n      ) {",
     "new": "      if (true) {",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "WAYOUT1-another-run-waits",
     "file": "src/systems/wayOut.js",
-    "old": "      if (!cells || n < size || ek !== exitKey) { reset(); cells = trailCells(trail); }",
-    "new": "      if (!cells || ek !== exitKey) { reset(); cells = trailCells(trail); }",
+    "old": "      if (!cells || n < size || ek !== exitKey) {",
+    "new": "      if (!cells || ek !== exitKey) {",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-DELVE-C4-a-step-and-a-half",
     "file": "src/systems/wayOut.js",
-    "old": "if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;",
-    "new": "if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY * 1.5) continue;",
+    "old": "          if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY) continue;",
+    "new": "          if (seen[j] || Math.abs(cells.pts[j][1] - py) > WAY_STEP_DY * 1.5) continue;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-DELVE-C4-there-a-storey-up",
     "file": "src/systems/wayOut.js",
-    "old": " && Math.abs(exitAt[1] - feet[1]) <= WAY_STEP_DY * 2) return null;",
-    "new": ") return null;",
+    "old": "      if (\n        Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M &&\n        Math.abs(exitAt[1] - feet[1]) <= WAY_STEP_DY * 2\n      )\n        return null;",
+    "new": "      if (Math.hypot(exitAt[0] - feet[0], exitAt[2] - feet[2]) <= WAY_HERE_M) return null;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-DELVE-C4-the-moved-exit-kept",
     "file": "src/systems/wayOut.js",
-    "old": "      if (!cells || n < size || ek !== exitKey) { reset();",
-    "new": "      if (!cells || n < size) { reset();",
+    "old": "      if (!cells || n < size || ek !== exitKey) {",
+    "new": "      if (!cells || n < size) {",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -218,7 +218,7 @@
   {
     "name": "AUDIT-DELVE-C4-reset-forgets-nothing",
     "file": "src/systems/wayOut.js",
-    "old": "  const reset = () => {\n    size = -1; builtAt = -Infinity; exitKey = ''; portalCount = -1; covered = 0; offWait = fieldEvery; walled = false;\n    cells = null; field = null; asked = new Map(); pending = []; pendingAt = 0;\n  };",
+    "old": "  const reset = () => {\n    size = -1;\n    builtAt = -Infinity;\n    exitKey = '';\n    portalCount = -1;\n    covered = 0;\n    offWait = fieldEvery;\n    walled = false;\n    cells = null;\n    field = null;\n    asked = new Map();\n    pending = [];\n    pendingAt = 0;\n  };",
     "new": "  const reset = () => {};",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-DELVE-B3-a-walked-teleporter-waits",
     "file": "src/systems/wayOut.js",
-    "old": "      if (!field || tps.length !== portalCount",
-    "new": "      if (!field",
+    "old": "      if (!field || tps.length !== portalCount) build();",
+    "new": "      if (!field) build();",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-DELVE-C9-never-asked",
     "file": "src/systems/wayOut.js",
-    "old": "          const ok = stepClear(c.pts[i], c.pts[j]) !== false;",
-    "new": "          const ok = true;",
+    "old": "          if (asked.has(k)) continue;\n          const ok = stepClear(c.pts[i], c.pts[j]) !== false;",
+    "new": "          if (asked.has(k)) continue;\n          const ok = true;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-DELVE-C9-asked-every-build",
     "file": "src/systems/wayOut.js",
-    "old": "        if (known !== undefined) return known;\n",
-    "new": "",
+    "old": "            if (known !== undefined) return known;\n            if (!spend()) {",
+    "new": "            if (!spend()) {",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-DELVE-C9-no-budget",
     "file": "src/systems/wayOut.js",
-    "old": "        if (!spend()) { pending.push(i, j); return true; }   // asked in the aims that follow; clear until then\n",
-    "new": "",
+    "old": "            if (!spend()) {\n              pending.push(i, j);\n              return true;\n            } // asked in the aims that follow; clear until then\n            const ok = stepClear(c.pts[i], c.pts[j]) !== false;",
+    "new": "            const ok = stepClear(c.pts[i], c.pts[j]) !== false;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-DELVE-B2-built-whenever-it-grows",
     "file": "src/systems/wayOut.js",
-    "old": "|| (grown && nowS - builtAt >= refieldEvery) ||",
-    "new": "|| (grown) ||",
+    "old": "      if (\n        (walled && nowS - builtAt >= fieldEvery) ||\n        (grown && nowS - builtAt >= refieldEvery) ||\n        (!onField(from) && nowS - builtAt >= offWait)\n      ) {",
+    "new": "      if ((walled && nowS - builtAt >= fieldEvery) || grown || (!onField(from) && nowS - builtAt >= offWait)) {",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-DELVE-C9-the-cell-s-own-wall-cuts",
     "file": "src/systems/wayOut.js",
-    "old": "hit > end && hit < len - end",
-    "new": "hit < len",
+    "old": "export const stepHitCuts = (hit, len, end = WAY_STEP_END_M) => Number.isFinite(hit) && hit > end && hit < len - end;",
+    "new": "export const stepHitCuts = (hit, len, end = WAY_STEP_END_M) => Number.isFinite(hit) && hit < len;",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]

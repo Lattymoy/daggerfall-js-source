@@ -21,11 +21,17 @@
 // Pure: no clock, no DOM, no network. Both ends read it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { STORES_MAX, MATERIAL_FAMILIES, MINED_KEYS, FOOD_KEYS, PLANT_GROUP_TEMPLATES } from './professionLaw.js';   // MARKET-ANY: and the Stores' forms
-import { PROVENANCE_RE, recipeById, takesQuality, MASTERWORK, RECIPES } from './recipeLaw.js';   // BOARD-SIFT: a search's recipes
+import { STORES_MAX, MATERIAL_FAMILIES, MINED_KEYS, FOOD_KEYS, PLANT_GROUP_TEMPLATES } from './professionLaw.js'; // MARKET-ANY: and the Stores' forms
+import { PROVENANCE_RE, recipeById, takesQuality, MASTERWORK, RECIPES } from './recipeLaw.js'; // BOARD-SIFT: a search's recipes
 import { MARKS_MAX } from './marksLaw.js';
-import { witnessedFact, factConfirmed, material, pixelOk } from './nodeLaw.js';   // WW7-5: a board's pixel the world's grid's
-import { tradeableRecord, boundRecord, BOAT_TEMPLATES, GOLD_PIECES_TEMPLATE, VALUE_IS_IDENTITY_TEMPLATES } from './realm/realmTradeLaw.js';   // MARKET-ANY: the trade's own law of what may leave a record
+import { witnessedFact, factConfirmed, material, pixelOk } from './nodeLaw.js'; // WW7-5: a board's pixel the world's grid's
+import {
+  tradeableRecord,
+  boundRecord,
+  BOAT_TEMPLATES,
+  GOLD_PIECES_TEMPLATE,
+  VALUE_IS_IDENTITY_TEMPLATES,
+} from './realm/realmTradeLaw.js'; // MARKET-ANY: the trade's own law of what may leave a record
 
 /** A listing stands this long (10.2: 72 hours). */
 export const MARKET_LISTING_S = 72 * 3600;
@@ -66,17 +72,27 @@ export const WEAR_WHOLE = 1000;
 /** The Market tab's views, in its row's order (10.1; PROF5b: Auctions beside Crafted; MARKET-ANY: Goods after them - the
  *  pieces players list from their packs). */
 export const MARKET_VIEWS = Object.freeze([
-  Object.freeze(['materials', 'Materials']), Object.freeze(['crafted', 'Crafted']), Object.freeze(['auctions', 'Auctions']),
-  Object.freeze(['goods', 'Goods']), Object.freeze(['mine', 'My listings']), Object.freeze(['orders', 'Orders']),
+  Object.freeze(['materials', 'Materials']),
+  Object.freeze(['crafted', 'Crafted']),
+  Object.freeze(['auctions', 'Auctions']),
+  Object.freeze(['goods', 'Goods']),
+  Object.freeze(['mine', 'My listings']),
+  Object.freeze(['orders', 'Orders']),
   Object.freeze(['history', 'History']),
 ]);
 /** The crafted families that list - arrows carry no provenance and the siege works are never made (PROF0 25). */
 export const CRAFTED_FAMILIES = Object.freeze([
-  Object.freeze(['weapons', 'Weapons']), Object.freeze(['armour', 'Armour']), Object.freeze(['staves', 'Staves']),
-  Object.freeze(['bows', 'Bows']), Object.freeze(['tools', 'Tools']), Object.freeze(['kits', 'Repair Kits']),
+  Object.freeze(['weapons', 'Weapons']),
+  Object.freeze(['armour', 'Armour']),
+  Object.freeze(['staves', 'Staves']),
+  Object.freeze(['bows', 'Bows']),
+  Object.freeze(['tools', 'Tools']),
+  Object.freeze(['kits', 'Repair Kits']),
   Object.freeze(['furniture', 'Furniture']),
   // PROF7: the loom's - the leather armour, the clothing (its dye carried with the piece), the rugs, tapestries and skins
-  Object.freeze(['leather', 'Leather Armor']), Object.freeze(['clothing', 'Clothing']), Object.freeze(['furnishings', 'Furnishings']),
+  Object.freeze(['leather', 'Leather Armor']),
+  Object.freeze(['clothing', 'Clothing']),
+  Object.freeze(['furnishings', 'Furnishings']),
   // PROF11: the mason's bench's - the Sculptor's column, bench, font and plinth (recipeLaw STONE_DECOR)
   Object.freeze(['stonework', 'Stonework']),
   // PROF9: the fire's - the four dishes (recipeLaw DISHES), a cook's hand carried with each
@@ -109,7 +125,9 @@ export const MARKET_SORTS = Object.freeze({
 });
 /** A view's order as the service reads it - its first for anything it does not offer; null for a view with none. */
 export const marketSortOf = (view, sort) => {
-  const sorts = Object.hasOwn(MARKET_SORTS, view) ? /** @type {Record<string, ReadonlyArray<string>>} */ (MARKET_SORTS)[view] : null;
+  const sorts = Object.hasOwn(MARKET_SORTS, view)
+    ? /** @type {Record<string, ReadonlyArray<string>>} */ (MARKET_SORTS)[view]
+    : null;
   return sorts ? (sorts.includes(sort) ? sort : sorts[0]) : null;
 };
 /** A search of the pieces, at most this long: trimmed, lower-cased; '' for none. */
@@ -121,7 +139,8 @@ const tight = (/** @type {string} */ s) => s.replace(/[\s\-'’]+/g, '');
 /** AUDIT BOARD-SIFT: whether every word stands somewhere in `text` - or in it read without its spaces, hyphens and
  *  apostrophes ("shortbow" in "Short Bow", "daikatana" in "Dai-katana"). Pure; the Work tab's bar reads it too. */
 export function wordsIn(/** @type {ReadonlyArray<string>} */ words, /** @type {string} */ text) {
-  const hay = String(text ?? '').toLowerCase(), close = tight(hay);
+  const hay = String(text ?? '').toLowerCase(),
+    close = tight(hay);
   return words.every((w) => hay.includes(w) || close.includes(tight(w)));
 }
 /** The least quality a Crafted read asks (recipeLaw QUALITY_NAMES' index), 0 - any - for anything else. */
@@ -138,7 +157,9 @@ export const marketQualityOf = (n) => (Number.isSafeInteger(n) && n > 0 && n <= 
  */
 export function recipesNamed(query, families = null, shown = null) {
   const words = searchWords(query);
-  return RECIPES.filter((r) => (!families || families.includes(r.family)) && wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name)).map((r) => r.id);
+  return RECIPES.filter(
+    (r) => (!families || families.includes(r.family)) && wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name),
+  ).map((r) => r.id);
 }
 /** AUDIT BOARD-SIFT: a search's recipes as the service reads them - known recipe ids, each once; null for no search (an
  *  empty list is a search that named none). */
@@ -171,13 +192,17 @@ export const saleTaxOn = (before, total) => saleTax(before + total) - saleTax(be
 /** MARKET-AUDIT S2: the tax on a fill of `total` out of an order that has bought `before` - saleTaxOn's, except that the
  *  order's LAST units (`last`) pay their filler at least a Mark: a one-Mark order's twentieth unit, taxed whole, could never
  *  be filled (a fill pays at least a Mark - market_fills.pay). Any other fill the tax would leave paying nothing is refused. */
-export const fillTaxOn = (before, total, last = false) => { const t = saleTaxOn(before, total); return last && total >= 1 && total - t < 1 ? total - 1 : t; };
+export const fillTaxOn = (before, total, last = false) => {
+  const t = saleTaxOn(before, total);
+  return last && total >= 1 && total - t < 1 ? total - 1 : t;
+};
 /** The Tithe on a sale at `pct` hundredths, rounded down (nought until SEAT1). */
-export const saleTithe = (total, pct = MARKET_TITHE_PCT) => Math.floor((Math.max(0, total) * Math.max(0, pct)) / 100);   // AUDIT-SEATS L10: townSeatLaw.js titheOf's rule, a negative none
+export const saleTithe = (total, pct = MARKET_TITHE_PCT) => Math.floor((Math.max(0, total) * Math.max(0, pct)) / 100); // AUDIT-SEATS L10: townSeatLaw.js titheOf's rule, a negative none
 /** AUDIT-SEATS L4: the Tithe on a sale of `total` out of a listing that has already sold `before` - as saleTaxOn: the
  *  rate's share of the running total, less what the earlier sales paid at it, so a listing bought a unit at a time pays
  *  the holder what it would have bought whole (ten 9-Drake units at 10% paid 0 apiece, 9 whole). */
-export const saleTitheOn = (before, total, pct = MARKET_TITHE_PCT) => saleTithe(before + total, pct) - saleTithe(before, pct);
+export const saleTitheOn = (before, total, pct = MARKET_TITHE_PCT) =>
+  saleTithe(before + total, pct) - saleTithe(before, pct);
 /** What the seller receives of a sale: the price less the tax and the Tithe (10.4). */
 export const sellerGets = (total, tithePct = MARKET_TITHE_PCT) => total - saleTax(total) - saleTithe(total, tithePct);
 
@@ -197,14 +222,17 @@ export const currencyOk = (c) => MARKET_CURRENCIES.includes(c);
 /** The Stores' three origins: gathered or made (`own`), bought with Drakes (`bought`), bought with gold (`gold`). */
 export const STORE_ORIGINS = Object.freeze(['own', 'bought', 'gold']);
 /** The origins a listing of `currency` may take units of - its own, and what was bought in its own currency. */
-export const listableOrigins = (currency) => (currency === 'gold' ? Object.freeze(['own', 'gold']) : Object.freeze(['own', 'bought']));
+export const listableOrigins = (currency) =>
+  currency === 'gold' ? Object.freeze(['own', 'gold']) : Object.freeze(['own', 'bought']);
 /** The most gold a character's sales hold for it on the service, uncollected - ten times a Drakes balance's cap. */
 export const MARKET_GOLD_HELD_MAX = 10 * MARKS_MAX;
 /** A gold sale: its tax (5% of the listing's running total, as a Drakes sale's) and its listing fee, both burnt - a
  *  gold listing pays its fee out of each sale, 1% of it rounded up, where a Drakes listing pays it at listing (a gold
  *  seller holds no gold on the service to pay it from); `gets`, what is held for the seller. */
 export function goldSaleOf(before, total) {
-  const tax = saleTaxOn(before, total), fee = listingFee(total), tithe = saleTitheOn(before, total);
+  const tax = saleTaxOn(before, total),
+    fee = listingFee(total),
+    tithe = saleTitheOn(before, total);
   return { tax, fee, tithe, gets: Math.max(0, total - tax - fee - tithe) };
 }
 /** An amount of gold in words, as the game's own windows say it. */
@@ -217,7 +245,8 @@ export const hubPixelOk = (x, y) => pixelOk(x, y);
 export function parseHubReport(s) {
   const m = typeof s === 'string' ? /^(-?\d{1,4}),(-?\d{1,4})$/.exec(s) : null;
   if (!m) return null;
-  const x = Number(m[1]), y = Number(m[2]);
+  const x = Number(m[1]),
+    y = Number(m[2]);
   return hubPixelOk(x, y) ? { x, y } : null;
 }
 /**
@@ -228,7 +257,8 @@ export function parseHubReport(s) {
  */
 export function hubPixel(rows, own = null) {
   const f = witnessedFact(rows, parseHubReport);
-  if (f.state !== 'none' && Number.isSafeInteger(f.x)) return { x: /** @type {number} */ (f.x), y: /** @type {number} */ (f.y), confirmed: factConfirmed(f) };
+  if (f.state !== 'none' && Number.isSafeInteger(f.x))
+    return { x: /** @type {number} */ (f.x), y: /** @type {number} */ (f.y), confirmed: factConfirmed(f) };
   return own && hubPixelOk(own.x, own.y) ? { x: own.x, y: own.y, confirmed: false } : null;
 }
 /** The road between two hubs, in whole map pixels (the straight line, rounded). */
@@ -258,7 +288,8 @@ export function wearCondition(maxCondition, wear) {
   return Math.max(1, Math.min(maxCondition, Math.round((maxCondition * wear) / WEAR_WHOLE)));
 }
 /** A wear as a person reads it: "worn to 62%". Null for a whole piece. */
-export const wearText = (wear) => (wear >= WEAR_WHOLE ? null : `worn to ${Math.max(1, Math.min(99, Math.round(wear / 10)))}%`);   // AUDIT 30 L5: a worn piece never reads 100%
+export const wearText = (wear) =>
+  wear >= WEAR_WHOLE ? null : `worn to ${Math.max(1, Math.min(99, Math.round(wear / 10)))}%`; // AUDIT 30 L5: a worn piece never reads 100%
 
 /**
  * THE MEDIAN (10.2): the unit price the middle unit sold at - `rows` the day table's `{ price, units }` - weighted by
@@ -269,7 +300,14 @@ export function medianOf(rows) {
   const sorted = (rows ?? []).filter((r) => r && r.units > 0 && r.price > 0).sort((a, b) => a.price - b.price);
   const n = sorted.reduce((s, r) => s + r.units, 0);
   if (!n) return null;
-  const at = (k) => { let seen = 0; for (const r of sorted) { seen += r.units; if (seen >= k) return r.price; } return sorted[sorted.length - 1].price; };
+  const at = (k) => {
+    let seen = 0;
+    for (const r of sorted) {
+      seen += r.units;
+      if (seen >= k) return r.price;
+    }
+    return sorted[sorted.length - 1].price;
+  };
   return n % 2 ? at((n + 1) / 2) : (at(n / 2) + at(n / 2 + 1)) / 2;
 }
 /**
@@ -300,9 +338,12 @@ export const pieceListable = (recipeId) => CRAFTED_FAMILIES.some(([f]) => f === 
  *  gives a tier - each `material()`'s standing, in the families' order - less what nothing yields yet. */
 export function marketCatalogue() {
   const herbs = Object.entries(PLANT_GROUP_TEMPLATES).flatMap(([g, ts]) => ts.map((t) => `${g}:${t}`));
-  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs].filter((k) => !UNYIELDED.includes(k)).map((k) => material(k)).filter(Boolean);
+  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs]
+    .filter((k) => !UNYIELDED.includes(k))
+    .map((k) => material(k))
+    .filter(Boolean);
   const order = MATERIAL_FAMILIES.map(([f]) => f);
-  return all.sort((a, b) => (order.indexOf(a.family) - order.indexOf(b.family)) || (a.tier - b.tier));
+  return all.sort((a, b) => order.indexOf(a.family) - order.indexOf(b.family) || a.tier - b.tier);
 }
 
 /** The switch: the market is open where the board, the professions and the Marks all are (PROF0 26 - section 20
@@ -323,7 +364,8 @@ export const AUCTION_BID_MAX = MARKS_MAX;
 /** A bid's amount in whole Marks, 1 up to AUCTION_BID_MAX. */
 export const bidOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= AUCTION_BID_MAX;
 /** The least next bid: the opening while none stands, else the standing bid and its 5%, rounded up, at least 1. */
-export const auctionNext = (high, opening) => (high == null ? opening : high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100)));
+export const auctionNext = (high, opening) =>
+  high == null ? opening : high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100));
 /** An auction's end after a bid at `atS`: moved AUCTION_ADD_S on when the bid came in its last AUCTION_LATE_S. */
 export const auctionEnd = (endsAt, atS) => (endsAt - atS < AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt);
 /** AUDIT 31 S3: how long past its end a won auction waits for its seller's Marks cap to take the sale. Past it, the
@@ -332,7 +374,8 @@ export const auctionEnd = (endsAt, atS) => (endsAt - atS < AUCTION_LATE_S ? ends
 export const AUCTION_GRACE_S = 7 * 86_400;
 /** What may be auctioned (10.2: "Masterworks only"): a Masterwork of a family the market lists - a piece that takes a
  *  quality (AUDIT 31 L9: a Repair Kit takes none, so no kit is a Masterwork). */
-export const auctionable = (recipeId, quality) => quality === MASTERWORK && pieceListable(recipeId) && takesQuality(/** @type {any} */ (recipeById(recipeId)));
+export const auctionable = (recipeId, quality) =>
+  quality === MASTERWORK && pieceListable(recipeId) && takesQuality(/** @type {any} */ (recipeById(recipeId)));
 
 // ─── MARKET-ANY (FIELD BUGS 2026-10-01, the field: "The market doesn't allow you to list any item that isnt bound") ───
 //
@@ -359,14 +402,20 @@ export const MARKET_HELD_MAX = 64;
 export const GOOD_ARROW_TEMPLATE = 131;
 /** The Goods view's families, by DFU's item groups (goodFamily). */
 export const GOODS_FAMILIES = Object.freeze([
-  Object.freeze(['weapons', 'Weapons']), Object.freeze(['armour', 'Armour']), Object.freeze(['clothing', 'Clothing']),
-  Object.freeze(['jewellery', 'Jewelry and gems']), Object.freeze(['other', 'Everything else']),
+  Object.freeze(['weapons', 'Weapons']),
+  Object.freeze(['armour', 'Armour']),
+  Object.freeze(['clothing', 'Clothing']),
+  Object.freeze(['jewellery', 'Jewelry and gems']),
+  Object.freeze(['other', 'Everything else']),
 ]);
 /** One group-to-family table for both the client classifier and the service's pre-limit SQL filter. */
 export const GOOD_GROUP_FAMILIES = Object.freeze([
-  Object.freeze(['Weapons', 'weapons']), Object.freeze(['Armor', 'armour']),
-  Object.freeze(['MensClothing', 'clothing']), Object.freeze(['WomensClothing', 'clothing']),
-  Object.freeze(['Jewellery', 'jewellery']), Object.freeze(['Gems', 'jewellery']),
+  Object.freeze(['Weapons', 'weapons']),
+  Object.freeze(['Armor', 'armour']),
+  Object.freeze(['MensClothing', 'clothing']),
+  Object.freeze(['WomensClothing', 'clothing']),
+  Object.freeze(['Jewellery', 'jewellery']),
+  Object.freeze(['Gems', 'jewellery']),
 ]);
 /** A piece's family in the Goods view, by its DFU group. */
 export function goodFamily(rec) {
@@ -379,9 +428,16 @@ let _storesForms = /** @type {Set<string>|null} */ (null);
  *  Climates & Calories' or Foraging's as the client is set, and a Drake's worth of them is none. */
 export function storesForm(rec) {
   if (!_storesForms) {
-    const keys = [...MINED_KEYS, ...Object.entries(PLANT_GROUP_TEMPLATES).flatMap(([g, ts]) => ts.map((t) => `${g}:${t}`))];
-    _storesForms = new Set(keys.map((k) => material(k)).filter((m) => m && Number.isSafeInteger(m.templateIndex))
-      .map((m) => (m.group ? `${m.group}:${m.templateIndex}` : `*:${m.templateIndex}`)));
+    const keys = [
+      ...MINED_KEYS,
+      ...Object.entries(PLANT_GROUP_TEMPLATES).flatMap(([g, ts]) => ts.map((t) => `${g}:${t}`)),
+    ];
+    _storesForms = new Set(
+      keys
+        .map((k) => material(k))
+        .filter((m) => m && Number.isSafeInteger(m.templateIndex))
+        .map((m) => (m.group ? `${m.group}:${m.templateIndex}` : `*:${m.templateIndex}`)),
+    );
   }
   return _storesForms.has(`${rec?.group}:${rec?.templateIndex}`) || _storesForms.has(`*:${rec?.templateIndex}`);
 }
@@ -408,9 +464,13 @@ export function goodRefusal(rec) {
   if (BOAT_TEMPLATES.includes(rec.templateIndex)) return 'boat';
   if (rec.templateIndex === GOOD_ARROW_TEMPLATE) return 'arrows';
   if (storesForm(rec)) return 'stores';
-  if (!tradeableRecord(rec)) return 'shape';   // the trade's law, whole - nothing it refuses lists
+  if (!tradeableRecord(rec)) return 'shape'; // the trade's law, whole - nothing it refuses lists
   let text = null;
-  try { text = JSON.stringify(rec); } catch { return 'shape'; }
+  try {
+    text = JSON.stringify(rec);
+  } catch {
+    return 'shape';
+  }
   return text.length > GOOD_RECORD_MAX ? 'large' : null;
 }
 /** Each refusal in the List form's words (the piece's name before it). */
@@ -418,12 +478,12 @@ export const GOOD_REFUSAL_WORDS = Object.freeze({
   shape: 'not an item the market knows',
   worn: 'worn - take it off first',
   locked: 'locked - unlock it first',
-  quest: 'a quest\'s',
+  quest: "a quest's",
   summoned: 'summoned',
   bound: 'bound to you',
   gold: 'gold sells as gold',
   letter: 'a letter of credit is gold',
-  boat: 'a boat\'s',
+  boat: "a boat's",
   arrows: 'arrows go in a quiver',
   stores: 'a Stores material, sold only from your Stores',
   large: 'too much to write on a board',

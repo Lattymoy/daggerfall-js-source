@@ -34,9 +34,9 @@
 // One player, one pair of hands.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { frameToColor32 } from './fpsWeapon.js';   // the ONE indexed-bitmap bake
+import { frameToColor32 } from './fpsWeapon.js'; // the ONE indexed-bitmap bake
 import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';
-import { validCastRate } from '../systems/castSpeed.js';   // CAST-SPEED: the rate a cast runs at
+import { validCastRate } from '../systems/castSpeed.js'; // CAST-SPEED: the rate a cast runs at
 
 /** nativeScreenWidth / nativeScreenHeight (:44-45). NOT 320x200: the
  *  hands are laid out against a 300-wide surface, which is why they
@@ -109,11 +109,11 @@ export const ELEMENT_TYPES = Object.freeze({ Fire: 0, Cold: 1, Poison: 2, Shock:
 
 /** WeaponBasics.GetMagicAnimFilename (:187-204), verbatim. */
 export const MAGIC_ANIM_FILE = Object.freeze([
-  'FIRE00C6.CIF',   // Fire
-  'FRST00C6.CIF',   // Cold
-  'POIS00C6.CIF',   // Poison
-  'SHOK00C6.CIF',   // Shock
-  'MJIC00C6.CIF',   // Magic
+  'FIRE00C6.CIF', // Fire
+  'FRST00C6.CIF', // Cold
+  'POIS00C6.CIF', // Poison
+  'SHOK00C6.CIF', // Shock
+  'MJIC00C6.CIF', // Magic
 ]);
 
 /** GetMagicAnimFilename's default arm throws "Unsupported element
@@ -160,7 +160,7 @@ export async function loadSpellCastArt(getBytes, palette, renderer, element) {
     records.push({
       width: size.width,
       height: size.height,
-      tex: renderer.uploadTexture('img', `fpsc:${fileName}:${r}`, c32, { clamp: true }),   // HAND-SEAM: one quad, never tiled - no wrap onto the far edge (render/renderer.js textureParams)
+      tex: renderer.uploadTexture('img', `fpsc:${fileName}:${r}`, c32, { clamp: true }), // HAND-SEAM: one quad, never tiled - no wrap onto the far edge (render/renderer.js textureParams)
     });
   }
   return { element, records };
@@ -180,27 +180,35 @@ export async function loadSpellCastArt(getBytes, palette, renderer, element) {
  */
 export class SpellCastAnim {
   constructor() {
-    this.element = null;    // currentAnimType
+    this.element = null; // currentAnimType
     this.currentFrame = -1;
     this._acc = 0;
-    this._onRelease = null;   // the OnReleaseFrame subscriber (see playOneShot)
-    this._hold = null;        // MW-CAST1: the release held for the Morrowind arm's key (see playOneShot)
+    this._onRelease = null; // the OnReleaseFrame subscriber (see playOneShot)
+    this._hold = null; // MW-CAST1: the release held for the Morrowind arm's key (see playOneShot)
     this._heldAge = 0;
-    this._period = CAST_FRAME_PERIOD;   // CAST-SPEED: this cast's step, CAST_FRAME_PERIOD over its rate
-    this._recover = 0;   // CAST-RECOVER: seconds before the next cast may start
+    this._period = CAST_FRAME_PERIOD; // CAST-SPEED: this cast's step, CAST_FRAME_PERIOD over its rate
+    this._recover = 0; // CAST-RECOVER: seconds before the next cast may start
   }
 
   /** CAST-RECOVER: is the last cast's recovery still running (the hands may already be down)? */
-  get recovering() { return this._recover > 0; }
+  get recovering() {
+    return this._recover > 0;
+  }
 
   /** MW-CAST1: is a release waiting on the Morrowind arm's own key? */
-  get releaseHeld() { return !!this._hold; }
+  get releaseHeld() {
+    return !!this._hold;
+  }
 
   /** IsPlayingAnim (:71-74). */
-  get isPlayingAnim() { return this.currentFrame >= 0; }
+  get isPlayingAnim() {
+    return this.currentFrame >= 0;
+  }
 
   /** frameIndices[currentFrame] - the RECORD to draw, or -1. */
-  get frameIndex() { return this.currentFrame < 0 ? -1 : FRAME_INDICES[this.currentFrame]; }
+  get frameIndex() {
+    return this.currentFrame < 0 ? -1 : FRAME_INDICES[this.currentFrame];
+  }
 
   /**
    * PlayOneShot (:126-136), verbatim: "Do nothing if already playing
@@ -229,7 +237,7 @@ export class SpellCastAnim {
    * @returns true when a cast actually started.
    */
   playOneShot(element, onRelease = null, { hold = null, rate = 1 } = {}) {
-    if (this.isPlayingAnim || this._hold || this._recover > 0) return false;   // CAST-RECOVER: nor inside the last cast's recovery
+    if (this.isPlayingAnim || this._hold || this._recover > 0) return false; // CAST-RECOVER: nor inside the last cast's recovery
     if (!magicAnimFilename(element)) return false;
     this.element = element;
     this.currentFrame = 0;
@@ -244,7 +252,7 @@ export class SpellCastAnim {
     this._hold = typeof hold === 'function' ? hold : null;
     this._heldAge = 0;
     this._period = CAST_FRAME_PERIOD / validCastRate(rate);
-    this._recover = CAST_RECOVER_S / validCastRate(rate);   // CAST-RECOVER: from the click, at the cast's rate
+    this._recover = CAST_RECOVER_S / validCastRate(rate); // CAST-RECOVER: from the click, at the cast's rate
     return true;
   }
 
@@ -280,20 +288,30 @@ export class SpellCastAnim {
    */
   tick(dt) {
     let released = false;
-    if (this._recover > 0) this._recover = Math.max(0, this._recover - (Number.isFinite(dt) && dt > 0 ? dt : 0));   // CAST-RECOVER
+    if (this._recover > 0) this._recover = Math.max(0, this._recover - (Number.isFinite(dt) && dt > 0 ? dt : 0)); // CAST-RECOVER
     // MW-CAST1: a held release goes on the arm's key, or at the ceiling - whether or not the classic frames still run
     if (this._hold) {
       this._heldAge += dt;
-      if (this._hold() || this._heldAge >= HELD_RELEASE_MAX_S) { this._hold = null; released = true; this._raiseRelease(); }
+      if (this._hold() || this._heldAge >= HELD_RELEASE_MAX_S) {
+        this._hold = null;
+        released = true;
+        this._raiseRelease();
+      }
     }
-    if (!this.isPlayingAnim) { this._acc = 0; return released; }
+    if (!this.isPlayingAnim) {
+      this._acc = 0;
+      return released;
+    }
     this._acc += dt;
     while (this._acc >= this._period && this.currentFrame >= 0) {
       this._acc -= this._period;
       this.currentFrame++;
       // :283-284 - the raise happens ON the step, before the end-of-
       // frames wrap, and the handler runs inside the coroutine.
-      if (this.currentFrame === RELEASE_FRAME && !this._hold) { released = true; this._raiseRelease(); }
+      if (this.currentFrame === RELEASE_FRAME && !this._hold) {
+        released = true;
+        this._raiseRelease();
+      }
       if (this.currentFrame >= FRAME_INDICES.length) this.currentFrame = -1;
     }
     return released;
@@ -328,8 +346,10 @@ export function spellHandRects(canvas, rec, { frameIndex, element, offsetHeight 
   const handScaleY = canvas.height / NATIVE_SPELL_H;
   // "Frames 0 and 5 are always small frames"; "Fire frame 4 is also a
   // small frame" (:220-225).
-  const offsetWidth = (frameIndex === 0 || frameIndex === 5
-    || (element === ELEMENT_TYPES.Fire && frameIndex === 4)) ? SMALL_FRAME_ADJUST : 0;
+  const offsetWidth =
+    frameIndex === 0 || frameIndex === 5 || (element === ELEMENT_TYPES.Fire && frameIndex === 4)
+      ? SMALL_FRAME_ADJUST
+      : 0;
   const w = rec.width * handScaleX;
   const h = rec.height * handScaleY;
   const y = canvas.height - h - offsetHeight;
@@ -351,10 +371,16 @@ export const RIGHT_HAND_UV = Object.freeze({ u0: 1, v0: 0, u1: 0, v1: 1 });
  * FPSWeapon's rule word for word ("Same logic as in FPSWeapon"), so
  * it reads the one home rather than restating the gate.
  */
-export function drawSpellCastHands(renderer, canvas, art, frameIndex, {
-  offsetHeight = weaponOffsetHeight(),
-  tint = null,   // MAC-I: the room's light, as FPSWeapon.Tint carries it for the weapon beside these hands
-} = {}) {
+export function drawSpellCastHands(
+  renderer,
+  canvas,
+  art,
+  frameIndex,
+  {
+    offsetHeight = weaponOffsetHeight(),
+    tint = null, // MAC-I: the room's light, as FPSWeapon.Tint carries it for the weapon beside these hands
+  } = {},
+) {
   if (!art || frameIndex < 0) return false;
   const rec = art.records[frameIndex];
   if (!rec || !rec.width || !rec.height) return false;
@@ -383,7 +409,7 @@ export function drawSpellCastHands(renderer, canvas, art, frameIndex, {
 export const READIED_HANDS_FRAME = 0;
 export function readiedHandsFrame(spell, castPlaying) {
   if (!spell || castPlaying) return -1;
-  if (spell.rangeType === 0) return -1;   // TargetTypes.CasterOnly: cast the moment it is readied - nothing to hold
+  if (spell.rangeType === 0) return -1; // TargetTypes.CasterOnly: cast the moment it is readied - nothing to hold
   if (!magicAnimFilename(spell.element)) return -1;
   return READIED_HANDS_FRAME;
 }

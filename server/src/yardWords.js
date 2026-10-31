@@ -18,17 +18,24 @@ import { yardGate, YARD_FAN_MS, YARD_WORDS_MAX } from '../../src/net/yardWordLaw
  */
 export async function takeYardOrder(room, ws, a, m, now) {
   if (!room._spend(ws, now, yardGate, 'ydbucket', 'yddrops', 'too many yard orders')) return;
-  if (!isSocialRoom(a.key)) { room._junk(ws); return; }
+  if (!isSocialRoom(a.key)) {
+    room._junk(ws);
+    return;
+  }
   await room._loadKey();
   if (!room._verifyKey) return;
-  const r = await verifyOrder(m.order, room._verifyKey, { subtle: crypto.subtle, nowS: Math.floor(now / 1000), kind: 'yard' });
+  const r = await verifyOrder(m.order, room._verifyKey, {
+    subtle: crypto.subtle,
+    nowS: Math.floor(now / 1000),
+    kind: 'yard',
+  });
   if (!r.ok) return;
   oweYardWord(room, [r.claims.m, r.claims.c, r.claims.v], now);
 }
 
 /** A verified word owed to the next fan - the highest version of its cell kept - and the fan armed. */
 export function oweYardWord(/** @type {any} */ room, /** @type {number[]} */ word, /** @type {number} */ now) {
-  const owed = room._yardOwed ??= new Map();
+  const owed = (room._yardOwed ??= new Map());
   const key = `${word[0]}:${word[1]}`;
   if ((owed.get(key)?.[2] ?? 0) >= word[2]) return;
   owed.set(key, word);
@@ -56,6 +63,6 @@ export function yardFan(/** @type {any} */ room, /** @type {number} */ now) {
   }
   room._yardAt = now;
   const said = JSON.stringify({ t: 'yard', l: words });
-  for (const [other, b] of [...room._all()]) if (b.id) room._send(other, said);   // everyone in the hub, the carrier included
+  for (const [other, b] of [...room._all()]) if (b.id) room._send(other, said); // everyone in the hub, the carrier included
   if (owed.size) armYardFan(room, now);
 }

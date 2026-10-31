@@ -29,8 +29,8 @@
   {
     "name": "BOARD-UI-tab-counts-the-old-notes",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;",
-    "new": "if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).length || null;",
+    "old": "    if (id === 'notices')\n      return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).filter((c) => c.isNew).length || null;",
+    "new": "    if (id === 'notices') return noticeCards({ town: deps.town, board, seenAt: seenAtOpen }).length || null;",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BOARD-UI-tab-counts-every-writ",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (id === 'work' && writs) return (writs.writs ?? []).filter((w) => w.state === 'open').length",
-    "new": "if (id === 'work' && writs) return (writs.writs ?? []).length",
+    "old": "        (writs.writs ?? []).filter((w) => w.state === 'open').length +",
+    "new": "        (writs.writs ?? []).length +",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BOARD-UI-the-day-at-the-foot",
     "file": "src/ui/noticeWindow.js",
-    "old": "    body.append(el('p', 'notice-worktoday', `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`));\n    // CRAFT-WRITS: the character's crafting writs above the Court's",
-    "new": "    // CRAFT-WRITS: the character's crafting writs above the Court's",
+    "old": "    body.append(\n      el(\n        'p',\n        'notice-worktoday',\n        `Writs today: ${today.filled} of ${today.max}${writsStale ? ' - the list may be out of date' : ''}`,\n      ),\n    );\n    // CRAFT-WRITS: the character's crafting writs above the Court's - its own three, the day's count beside them. BOARD-SIFT",
+    "new": "    // CRAFT-WRITS: the character's crafting writs above the Court's - its own three, the day's count beside them. BOARD-SIFT",
     "tests": [
       "test/ui/board_ui.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "BOARD-UI-news-unnamed",
     "file": "src/ui/noticeWindow.js",
-    "old": "if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));",
-    "new": "if (news.length) body.append(gridOf(news));",
+    "old": "    if (news.length) body.append(sectionHead(BOARD_WORDS.news), gridOf(news));",
+    "new": "    if (news.length) body.append(gridOf(news));",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "BOARD-UI-notes-uncounted",
     "file": "src/ui/noticeWindow.js",
-    "old": "body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));",
-    "new": "body.append(sectionHead(BOARD_WORDS.notes));",
+    "old": "    body.append(sectionHead(BOARD_WORDS.notes, board ? notes.length : null));",
+    "new": "    body.append(sectionHead(BOARD_WORDS.notes));",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "BOARD-UI-no-market-prefetch",
     "file": "src/ui/noticeWindow.js",
-    "old": "  if (market && marketShown()) market.prefetch?.();\n",
-    "new": "",
+    "old": "  if (market && marketShown()) market.prefetch?.();\n  return {",
+    "new": "  return {",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -85,7 +85,7 @@
     "name": "BOARD-UI-the-read-after-the-settle",
     "file": "src/ui/marketTab.js",
     "old": "    await Promise.all([load(again), settling]);",
-    "new": "    await settling; await load(again);",
+    "new": "    await settling;\n    await load(again);",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "BOARD-UI-a-view-in-two-parts",
     "file": "src/ui/marketTab.js",
-    "old": "(['Sell', Object.freeze(['orders', 'mine'])]),",
-    "new": "(['Sell', Object.freeze(['orders', 'mine', 'history'])]),",
+    "old": "    /** @type {const} */ (['Sell', Object.freeze(['orders', 'mine'])]),",
+    "new": "    /** @type {const} */ (['Sell', Object.freeze(['orders', 'mine', 'history'])]),",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "BOARD-UI-the-list-press-the-lists-class",
     "file": "src/ui/marketTab.js",
-    "old": "const b = button('primary market-dolist', 'List', () => send());",
-    "new": "const b = button('primary market-list', 'List', () => send());",
+    "old": "    const b = button('primary market-dolist', 'List', () => send()); // BOARD-UI: never `market-list`, the lists' own class - its rule took the press's padding",
+    "new": "    const b = button('primary market-list', 'List', () => send()); // BOARD-UI: never `market-list`, the lists' own class - its rule took the press's padding",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "BOARD-UI-the-works-read-after",
     "file": "src/ui/seatTab.js",
-    "old": "    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;\n    const giving = book.gifts && host.giving ? Promise.resolve().then(() => book.gifts(seat.region)).catch(() => null) : null;   // DOMAIN1: asked at once too\n    let g;\n    try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }\n",
-    "new": "    const giving = book.gifts && host.giving ? Promise.resolve().then(() => book.gifts(seat.region)).catch(() => null) : null;   // DOMAIN1: asked at once too\n    let g;\n    try { r = await book.standings(seat.key, { force }); } catch { r = { data: null, error: 'offline' }; }\n    const works = book.forts ? Promise.resolve().then(() => book.forts(seat.key)).catch(() => null) : null;\n",
+    "old": "    const works = book.forts\n      ? Promise.resolve()\n          .then(() => book.forts(seat.key))\n          .catch(() => null)\n      : null;\n    const giving =\n      book.gifts && host.giving\n        ? Promise.resolve()\n            .then(() => book.gifts(seat.region))\n            .catch(() => null)\n        : null; // DOMAIN1: asked at once too\n    let g;\n    try {\n      r = await book.standings(seat.key, { force });\n    } catch {\n      r = { data: null, error: 'offline' };\n    }",
+    "new": "    const giving =\n      book.gifts && host.giving\n        ? Promise.resolve()\n            .then(() => book.gifts(seat.region))\n            .catch(() => null)\n        : null; // DOMAIN1: asked at once too\n    let g;\n    try {\n      r = await book.standings(seat.key, { force });\n    } catch {\n      r = { data: null, error: 'offline' };\n    }\n    const works = book.forts\n      ? Promise.resolve()\n          .then(() => book.forts(seat.key))\n          .catch(() => null)\n      : null;",
     "tests": [
       "test/ui/board_ui.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "BOARD-UI-the-battle-unnamed",
     "file": "src/ui/seatTab.js",
-    "old": "const b = panel(SEAT_PANELS.battle, 'seat-battlepanel');",
-    "new": "const b = panel(null, 'seat-battlepanel');",
+    "old": "        const b = panel(SEAT_PANELS.battle, 'seat-battlepanel');",
+    "new": "        const b = panel(null, 'seat-battlepanel');",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "BOARD-UI-the-strip-on-the-muster",
     "file": "src/ui/seatTab.js",
-    "old": "const li = el('li', data.phase === id ? 'on' : null, name);",
-    "new": "const li = el('li', id === 'muster' ? 'on' : null, name);",
+    "old": "        const li = el('li', data.phase === id ? 'on' : null, name);",
+    "new": "        const li = el('li', id === 'muster' ? 'on' : null, name);",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "BOARD-UI-the-bar-past-the-claim-alone",
     "file": "src/ui/seatTab.js",
-    "old": "return Number.isFinite(data?.defence) ? Math.max(need, data.defence + 1) : need;",
-    "new": "return need;",
+    "old": "    return Number.isFinite(data?.defence) ? Math.max(need, data.defence + 1) : need;",
+    "new": "    return need;",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "BOARD-UI-the-guide-a-palace-always",
     "file": "src/ui/seatTab.js",
-    "old": "whose treasury can pay ${n(CLAIM_FEE[t])} silver.",
-    "new": "whose treasury can pay ${n(CLAIM_FEE.palace)} silver.",
+    "old": "      `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE[t])} silver. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`,",
+    "new": "      `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE.palace)} silver. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`,",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "BOARD-UI-the-vendors-unnamed",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "      if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));\n",
-    "new": "",
+    "old": "      if (found.length) list.append(listHead(['Item', 'Condition', 'Price', 'Sold at']));\n      for (const r of found) list.append(...rowNodes(r, { where: true }));",
+    "new": "      for (const r of found) list.append(...rowNodes(r, { where: true }));",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "BOARD-UI-the-read-said-twice",
     "file": "src/ui/noticeWindow.js",
-    "old": "    else if (board && !notes.length) grid.append(",
-    "new": "    else if (!board && busy) grid.append(el('li', 'notice-empty', BOARD_WORDS.reading));\n    else if (board && !notes.length) grid.append(",
+    "old": "    } else if (board && !notes.length)",
+    "new": "    } else if (!board && busy) grid.append(el('li', 'notice-empty', BOARD_WORDS.reading));\n    else if (board && !notes.length)",
     "tests": [
       "test/ui/board_ui.test.js"
     ]

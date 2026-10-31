@@ -36,7 +36,8 @@ export const SPAWN_WORLD_LANE = 0x380;
  *  (its ids carry a Bay pixel's low 20, these the flag), the Abyss Dungeons' first salt (2049, 0x801) past the last. */
 export const ABYSS_WORLD_LANE = 0x600;
 const LANES = Object.freeze([SPAWN_WORLD_LANE, ABYSS_WORLD_LANE]);
-const FLAG = 0x80000, LOW = 0x7ffff;
+const FLAG = 0x80000,
+  LOW = 0x7ffff;
 
 /** A world pixel's map id in a lane. Throws for a lane that is none and a pixel off the world's grid.
  *  @param {number} lane @param {number} px @param {number} py */
@@ -64,5 +65,5 @@ export function worldLanePixel(id) {
   const lane = worldLaneOf(id);
   if (lane < 0) return null;
   const v = Number(id) >>> 0;
-  return worldPixelOfKey(((((v >>> 20) & 0xfff) - lane) * 0x80000) + (v & LOW));
+  return worldPixelOfKey((((v >>> 20) & 0xfff) - lane) * 0x80000 + (v & LOW));
 }

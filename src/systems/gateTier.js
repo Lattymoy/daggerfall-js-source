@@ -17,7 +17,11 @@
 /** The gate's three tiers, easiest first. */
 export const GATE_TIERS = Object.freeze(['regular', 'elite', 'super']);
 /** Each tier's words. */
-export const GATE_TIER_TEXT = Object.freeze({ regular: "Dagon's Breach", elite: 'Elite Breach', super: 'Abyss Breach' });
+export const GATE_TIER_TEXT = Object.freeze({
+  regular: "Dagon's Breach",
+  elite: 'Elite Breach',
+  super: 'Abyss Breach',
+});
 /** An Elite Breach's plaque's line under its title (section 2). */
 export const GATE_TIER_SUB = Object.freeze({ elite: 'The Battlespire' });
 /** An Elite Breach's room key - net/eliteGates/egLaw.js egRoomKey's `eg:<16hex>`, read here without importing the relay's law. */
@@ -39,7 +43,10 @@ export function gateTier(x) {
 }
 
 /** The tier's words for a thing, or null. */
-export const gateTierText = (x) => { const t = gateTier(x); return t ? GATE_TIER_TEXT[t] : null; };
+export const gateTierText = (x) => {
+  const t = gateTier(x);
+  return t ? GATE_TIER_TEXT[t] : null;
+};
 
 /**
  * THE ARCH'S PLAQUE (section 2): `{ title, subs }` - an Elite Breach's title and *The Battlespire* under it; to a viewer
@@ -57,10 +64,16 @@ export function eliteBreachPlaque({ opener = '', mine = false } = {}) {
  *  world/spawnedDungeons.js dungeonSightLine), for a gate's tier. */
 export function gateSightLine(metres, direction, tier = 'elite') {
   const m = Math.max(10, Math.round(metres / 10) * 10);
-  const what = tier === 'regular' ? GATE_TIER_TEXT.regular : tier === 'super' ? `an ${GATE_TIER_TEXT.super}` : `an ${GATE_TIER_TEXT.elite}`;
+  const what =
+    tier === 'regular'
+      ? GATE_TIER_TEXT.regular
+      : tier === 'super'
+        ? `an ${GATE_TIER_TEXT.super}`
+        : `an ${GATE_TIER_TEXT.elite}`;
   return `You see ${what} ${m} meters to the ${direction}!`;
 }
 
 /** THE TIMERS ROW (section 2, the company's alone): before it opens, *Elite Breach opens 4:12*; inside, *Hall 17 - 24:10
  *  left*. `clock` the count's words already made (net/eliteGates/egLaw.js egCountText). */
-export const eliteTimerText = ({ h = 0, clock = '' } = {}) => (h > 0 ? `Hall ${h} - ${clock} left` : `${GATE_TIER_TEXT.elite} opens ${clock}`);
+export const eliteTimerText = ({ h = 0, clock = '' } = {}) =>
+  h > 0 ? `Hall ${h} - ${clock} left` : `${GATE_TIER_TEXT.elite} opens ${clock}`;

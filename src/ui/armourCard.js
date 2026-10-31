@@ -18,8 +18,16 @@
 // why it is that figure).
 import { BODY_PARTS, NUMBER_BODY_PARTS } from '../systems/armorMaterials.js';
 import {
-  getEquipSlot, wearLeavers, equipTableOf, armorValuesOf, updateEquippedArmorValues, armorBodyParts,
-  isEquipped, isBrokenItem, isForbiddenEquip, EQUIP_SLOTS,
+  getEquipSlot,
+  wearLeavers,
+  equipTableOf,
+  armorValuesOf,
+  updateEquippedArmorValues,
+  armorBodyParts,
+  isEquipped,
+  isBrokenItem,
+  isForbiddenEquip,
+  EQUIP_SLOTS,
 } from '../systems/equip.js';
 import { createEquipTable } from '../characters/equipTable.js';
 import { computeEntityMods, entityArmorDisplayMod } from '../systems/entityMods.js';
@@ -27,20 +35,24 @@ import { struckBodyPartTable } from '../combat/formulas.js';
 import { itemDamageLine, weaponDamageRange } from '../systems/item/itemInfo.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
 import { armorLabelValue } from './native/nativeInventory.js';
-import { lineComparison, lootRarityOn } from '../systems/loot/lootRarity.js';   // LOOT18: the lines against what a wear replaces
+import { lineComparison, lootRarityOn } from '../systems/loot/lootRarity.js'; // LOOT18: the lines against what a wear replaces
 
 /** The seven parts in DFU's BodyParts order (ItemEnums.cs:140-150), named off the enum's own members ("RightArm" says
  *  "Right arm"), so no second list of them stands anywhere. No lookbehind in the split (SAFARI1: a Safari before 16.4
  *  cannot parse a module that carries one). */
-export const PART_NAMES = Object.freeze(Object.keys(BODY_PARTS)
-  .sort((a, b) => BODY_PARTS[a] - BODY_PARTS[b])
-  .map((k) => k.replace(/([a-z])([A-Z])/g, (_, lo, up) => `${lo} ${up.toLowerCase()}`)));
+export const PART_NAMES = Object.freeze(
+  Object.keys(BODY_PARTS)
+    .sort((a, b) => BODY_PARTS[a] - BODY_PARTS[b])
+    .map((k) => k.replace(/([a-z])([A-Z])/g, (_, lo, up) => `${lo} ${up.toLowerCase()}`)),
+);
 
 /** THE DOLL'S SEVEN NUMBERS, one a part - the classic window's labels exactly (nativeInventory.js draws
  *  `armorLabelValue(av[i] ?? 100, entityArmorDisplayMod(entity, i))`): (100 - ArmorValues[part]) / 5, plus DFU's two
  *  enchantment channels and the port's points on the part. A part with no value yet reads DFU's "no armour", 100. */
-export const dollArmour = (entity) => Array.from({ length: NUMBER_BODY_PARTS },
-  (_, part) => armorLabelValue(entity?.armorValues?.[part] ?? 100, entityArmorDisplayMod(entity, part)));
+export const dollArmour = (entity) =>
+  Array.from({ length: NUMBER_BODY_PARTS }, (_, part) =>
+    armorLabelValue(entity?.armorValues?.[part] ?? 100, entityArmorDisplayMod(entity, part)),
+  );
 
 /** How many of a struck-part table's entries name each part (FormulaHelper's twenty: 2, 3, 3, 4, 4, 3, 1). */
 export function struckCounts(table = struckBodyPartTable()) {
@@ -81,13 +93,16 @@ function foldedPoints(entity, slots) {
  *  record, a Rare's imprint, a Gilded's - systems/loot/lootPowers.js reads them). The copy had dropped the lines and kept the
  *  ids, so the unidentified Wrothgar Pass Mantle's card counted its hidden Mountain-Born and not its hidden lining (a
  *  mountain night read -85 to -53, where the cloak it shows is -85 to -73). An identified piece is itself. */
-export const asKnown = (item) => (itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null });
+export const asKnown = (item) =>
+  itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null };
 /** The entity's folded channels (systems/entityMods.js computeEntityMods) as they WOULD stand over another slot table -
  *  a stand-in wearing `slots`, the entity untouched. TEMP-UI: ONE CONSTRUCTION SEAM - the armour's points above and the
  *  wardrobe's warmth (ui/temperatureCard.js) read a wear that has not happened through this one fold. */
 export function modsForSlots(entity, slots) {
   const eq = createEquipTable();
-  slots.forEach((it, i) => { eq.slots[i] = it ?? null; });
+  slots.forEach((it, i) => {
+    eq.slots[i] = it ?? null;
+  });
   const standIn = Object.create(entity);
   standIn.equip = eq;
   return computeEntityMods(standIn);
@@ -119,7 +134,10 @@ export function wearComparison(entity, item) {
   const table = equipTableOf(entity);
   const leavers = wearLeavers(entity, item, slot);
   const replaces = [];
-  for (const s of leavers) { const it = table[s]; if (it && !replaces.includes(it)) replaces.push(it); }
+  for (const s of leavers) {
+    const it = table[s];
+    if (it && !replaces.includes(it)) replaces.push(it);
+  }
   // DFU's table, as the window's EquipItem leaves it (:1382-1390): each leaver's value given back, the piece's taken off
   const now = armorValuesOf(entity);
   const then = { armorValues: [...now] };
@@ -128,31 +146,47 @@ export function wearComparison(entity, item) {
   // the port's points, over the table as it stands and over the table the wear would leave
   const slotsThen = [...table];
   for (const s of leavers) slotsThen[s] = null;
-  slotsThen[slot] = asKnown(item);   // AUDIT C&C S6: an unidentified piece's stand-in as its card knows it
+  slotsThen[slot] = asKnown(item); // AUDIT C&C S6: an unidentified piece's stand-in as its card knows it
   const pointsNow = foldedPoints(entity, table);
   const pointsThen = foldedPoints(entity, slotsThen);
   const before = dollArmour(entity);
-  const after = before.map((v, p) => v + armorLabelValue(then.armorValues[p]) - armorLabelValue(now[p]) + pointsThen[p] - pointsNow[p]);
+  const after = before.map(
+    (v, p) => v + armorLabelValue(then.armorValues[p]) - armorLabelValue(now[p]) + pointsThen[p] - pointsNow[p],
+  );
   const covered = new Set(armorBodyParts(item));
   const parts = [];
   for (let part = 0; part < NUMBER_BODY_PARTS; part++) {
-    if (covered.has(part) || after[part] !== before[part]) parts.push({ part, before: before[part], after: after[part] });
+    if (covered.has(part) || after[part] !== before[part])
+      parts.push({ part, before: before[part], after: after[part] });
   }
-  let damage = null, hands = null;
+  let damage = null,
+    hands = null;
   if (itemDamageLine(item) != null) {
     const rival = [table[slot], ...replaces].find((it) => it && itemDamageLine(it) != null);
     if (rival) damage = { against: rival, before: weaponDamageRange(rival), after: weaponDamageRange(item) };
     // HANDS-COMPARE (2026-10-08, the owner: "Damage comparison should now show left and right hand in the item info when
     // hovering"): a weapon set against what each hand holds now - the right's and the left's, each its own row
-    hands = [['Right hand', EQUIP_SLOTS.RightHand], ['Left hand', EQUIP_SLOTS.LeftHand]].map(([label, s]) => {
+    hands = [
+      ['Right hand', EQUIP_SLOTS.RightHand],
+      ['Left hand', EQUIP_SLOTS.LeftHand],
+    ].map(([label, s]) => {
       const held = table[s];
-      return { label, held, before: held && itemDamageLine(held) != null ? weaponDamageRange(held) : null, after: weaponDamageRange(item) };
+      return {
+        label,
+        held,
+        before: held && itemDamageLine(held) != null ? weaponDamageRange(held) : null,
+        after: weaponDamageRange(item),
+      };
     });
   }
   const tableNow = struckBodyPartTable();
   return {
-    slot, replaces, parts, damage, hands,
-    worn: slotsThen,   // TEMP-UI: the table the wear would leave - the card's temperature reads it (ui/temperatureCard.js)
+    slot,
+    replaces,
+    parts,
+    damage,
+    hands,
+    worn: slotsThen, // TEMP-UI: the table the wear would leave - the card's temperature reads it (ui/temperatureCard.js)
     overall: parts.length ? { before: overallArmour(before, tableNow), after: overallArmour(after, tableNow) } : null,
   };
 }
@@ -168,7 +202,11 @@ const el = (tag, cls = null, text = null) => {
  *  where it is worse, `same` where it moves nothing. Every number here is better HIGHER. */
 function delta(d, digits = 0) {
   const r = digits ? tenth(d) : d;
-  return el('span', `cmp-d ${r > 0 ? 'up' : r < 0 ? 'down' : 'same'}`, `${r > 0 ? '+' : r < 0 ? '-' : '±'}${Math.abs(r).toFixed(digits)}`);
+  return el(
+    'span',
+    `cmp-d ${r > 0 ? 'up' : r < 0 ? 'down' : 'same'}`,
+    `${r > 0 ? '+' : r < 0 ? '-' : '±'}${Math.abs(r).toFixed(digits)}`,
+  );
 }
 
 /** THE PART'S NUMBER ON ITS PANEL - the classic doll's label standing where the enhanced pack draws that body part (the
@@ -223,7 +261,15 @@ export function lineCompareBlock(entity, item, wear = undefined) {
   for (const r of lines.rows) {
     const li = el('li', 'cmp-line');
     li.append(el('span', 'cmp-v', r.text));
-    li.append(r.delta == null ? el('span', 'cmp-d new', 'new') : el('span', `cmp-d ${r.delta > 0 ? 'up' : r.delta < 0 ? 'down' : 'same'}`, r.delta > 0 ? `▲${r.delta}` : r.delta < 0 ? `▼${-r.delta}` : '='));
+    li.append(
+      r.delta == null
+        ? el('span', 'cmp-d new', 'new')
+        : el(
+            'span',
+            `cmp-d ${r.delta > 0 ? 'up' : r.delta < 0 ? 'down' : 'same'}`,
+            r.delta > 0 ? `▲${r.delta}` : r.delta < 0 ? `▼${-r.delta}` : '=',
+          ),
+    );
     if (r.resist) li.append(el('span', 'cmp-note', `${r.resist.now}% → ${r.resist.then}% counts`));
     ul.append(li);
   }
@@ -237,16 +283,21 @@ export function lineCompareBlock(entity, item, wear = undefined) {
 }
 
 export function compareBlock(entity, item, nameOf = (it) => String(it?.name ?? 'piece'), wear = undefined) {
-  const cmp = wear === undefined ? wearComparison(entity, item) : wear;   // AUDIT LOOT II B6: or the one the card already made
+  const cmp = wear === undefined ? wearComparison(entity, item) : wear; // AUDIT LOOT II B6: or the one the card already made
   if (!cmp) return null;
   if (!cmp.parts.length && !cmp.damage && item.group !== 'Armor' && itemDamageLine(item) == null) return null;
   const box = el('div', 'cmp');
-  box.append(el('p', 'cmp-head', cmp.replaces.length ? `Replaces ${cmp.replaces.map(nameOf).join(', ')}` : 'Replaces nothing'));
+  box.append(
+    el('p', 'cmp-head', cmp.replaces.length ? `Replaces ${cmp.replaces.map(nameOf).join(', ')}` : 'Replaces nothing'),
+  );
   const dl = el('dl', 'stats cmp-rows');
   const row = (key, text, ...deltas) => {
     const dd = el('dd');
     dd.append(el('span', 'cmp-v', text));
-    deltas.forEach((d, i) => { if (i) dd.append(el('span', 'cmp-sep', '/')); dd.append(d); });
+    deltas.forEach((d, i) => {
+      if (i) dd.append(el('span', 'cmp-sep', '/'));
+      dd.append(d);
+    });
     const g = el('div', 'pair');
     g.append(el('dt', null, key), dd);
     dl.append(g);
@@ -255,15 +306,19 @@ export function compareBlock(entity, item, nameOf = (it) => String(it?.name ?? '
     // HANDS-COMPARE: against each hand - a weapon there, its range to this one's; a shield or nothing, this one's alone
     for (const h of cmp.hands) {
       const [a0, a1] = h.after;
-      if (h.before) { const [b0, b1] = h.before; row(`vs ${h.label}`, `${b0} - ${b1} → ${a0} - ${a1}`, delta(a0 - b0), delta(a1 - b1)); }
-      else row(`vs ${h.label}`, `${h.held ? nameOf(h.held) : 'empty'} → ${a0} - ${a1}`);
+      if (h.before) {
+        const [b0, b1] = h.before;
+        row(`vs ${h.label}`, `${b0} - ${b1} → ${a0} - ${a1}`, delta(a0 - b0), delta(a1 - b1));
+      } else row(`vs ${h.label}`, `${h.held ? nameOf(h.held) : 'empty'} → ${a0} - ${a1}`);
     }
   } else if (cmp.damage) {
-    const [b0, b1] = cmp.damage.before, [a0, a1] = cmp.damage.after;
+    const [b0, b1] = cmp.damage.before,
+      [a0, a1] = cmp.damage.after;
     row('Damage', `${b0} - ${b1} → ${a0} - ${a1}`, delta(a0 - b0), delta(a1 - b1));
   }
   if (cmp.overall) {
-    const b = tenth(cmp.overall.before), a = tenth(cmp.overall.after);
+    const b = tenth(cmp.overall.before),
+      a = tenth(cmp.overall.after);
     row('Overall', `${b.toFixed(1)} → ${a.toFixed(1)}`, delta(a - b, 1));
   }
   for (const { part, before, after } of cmp.parts) row(PART_NAMES[part], `${before} → ${after}`, delta(after - before));

@@ -35,7 +35,10 @@ export function wantMatches(want, type, dungeonType) {
  *   type), or null; `free` - no other place takes the pixel; `provinceAt` - the province whose land it is
  * @returns {Array<{ px: number, py: number, want: number }>}
  */
-export function startLairSites(start, { centre, rollAt, free, provinceAt, min = START_SITE_MIN, reach = START_SITE_REACH }) {
+export function startLairSites(
+  start,
+  { centre, rollAt, free, provinceAt, min = START_SITE_MIN, reach = START_SITE_REACH },
+) {
   if (!start?.province || !centre) return [];
   const found = [];
   const seen = new Set();
@@ -53,9 +56,15 @@ export function startLairSites(start, { centre, rollAt, free, provinceAt, min = 
   }
   // nearest first; a tie by the pixel itself, so every client takes the same
   found.sort((a, b) => a.d - b.d || a.py - b.py || a.px - b.px);
-  const out = [], taken = new Set();
-  const take = (f, want) => { taken.add(f); out.push({ px: f.px, py: f.py, want }); };
-  start.lair.forEach((w, i) => { for (const f of found) if (!taken.has(f) && wantMatches(w, f.type, f.dungeonType)) take(f, i); });
+  const out = [],
+    taken = new Set();
+  const take = (f, want) => {
+    taken.add(f);
+    out.push({ px: f.px, py: f.py, want });
+  };
+  start.lair.forEach((w, i) => {
+    for (const f of found) if (!taken.has(f) && wantMatches(w, f.type, f.dungeonType)) take(f, i);
+  });
   for (const f of found) if (!taken.has(f)) take(f, -1);
   return out;
 }

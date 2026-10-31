@@ -2,7 +2,7 @@
   {
     "name": "GUIDE5-resolver-throw-escapes",
     "file": "src/ui/quest/questMarks.js",
-    "old": "    try { p = pixelOf(find); } catch { p = null; }",
+    "old": "    try {\n      p = pixelOf(find);\n    } catch {\n      p = null;\n    }",
     "new": "    p = pixelOf(find);",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "GUIDE5-time-dropped",
     "file": "src/ui/quest/questMarks.js",
-    "old": "lines: [fitHead(place, '', QUEST_TIP_TEXT), left(quests[0])].filter(Boolean) }",
-    "new": "lines: [fitHead(place, '', QUEST_TIP_TEXT)] }",
+    "old": "            lines: [fitHead(place, '', QUEST_TIP_TEXT), left(quests[0])].filter(Boolean),",
+    "new": "            lines: [fitHead(place, '', QUEST_TIP_TEXT)],",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GUIDE5-several-unnamed",
     "file": "src/ui/quest/questMarks.js",
-    "old": "lines: [fitHead(place, '', QUEST_TIP_TEXT), ...listed.map(lineOf), ...(more ? [t('quest.mark.more', '+{n} more', { n: more })] : [])] },",
-    "new": "lines: [fitHead(place, '', QUEST_TIP_TEXT)] },",
+    "old": "            lines: [\n              fitHead(place, '', QUEST_TIP_TEXT),\n              ...listed.map(lineOf),\n              ...(more ? [t('quest.mark.more', '+{n} more', { n: more })] : []),\n            ],",
+    "new": "            lines: [fitHead(place, '', QUEST_TIP_TEXT)],",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -47,7 +47,7 @@
   {
     "name": "GUIDE5-off-bay-kept",
     "file": "src/ui/quest/questMarks.js",
-    "old": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "old": "    if (\n      !Number.isInteger(px) ||\n      !Number.isInteger(py) ||\n      px < box.x0 ||\n      py < box.y0 ||\n      px >= box.x0 + box.w ||\n      py >= box.y0 + box.h\n    )\n      continue;",
     "new": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0) continue;",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
@@ -56,7 +56,7 @@
   {
     "name": "GUIDE5-key-blind-to-the-followed",
     "file": "src/ui/quest/questMarks.js",
-    "old": "export const questMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.tracked ? 1 : 0}|${m.label}`).join(';');",
+    "old": "export const questMarksKey = (marks) =>\n  marks.map((m) => `${m.key}@${m.px},${m.py}|${m.tracked ? 1 : 0}|${m.label}`).join(';');",
     "new": "export const questMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}`).join(';');",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
@@ -146,8 +146,8 @@
   {
     "name": "GUIDE5-every-diamond-filled",
     "file": "src/ui/ink/inkMap.js",
-    "old": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
-    "new": "paintQuestDiamond(ctx, x, cy, r, 1, PEN.line);",
+    "old": "  paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
+    "new": "  paintQuestDiamond(ctx, x, cy, r, 1, PEN.line);",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "GUIDE5-diamond-on-the-place",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  const cy = y - (m.lift ?? QUEST_MARK_LIFT), r = 6;",
-    "new": "  const cy = y, r = 6;",
+    "old": "  const cy = y - (m.lift ?? QUEST_MARK_LIFT),",
+    "new": "  const cy = y,",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "GUIDE5-overlay-skips-quests",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);\n",
-    "new": "",
+    "old": "  for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);\n  // HOME-VENDOR: the trader's waypoint - its coin over the quests' diamonds, its town ringed in gold, under the party",
+    "new": "  // HOME-VENDOR: the trader's waypoint - its coin over the quests' diamonds, its town ringed in gold, under the party",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "GUIDE5-marks-not-a-face",
     "file": "src/ui/quest/questTracker.js",
-    "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';",
-    "new": "export const followOn = () => trackerOn() || guidanceTier() !== 'journal';",
+    "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal'; // ...and the Town tier's compass",
+    "new": "export const followOn = () => trackerOn() || guidanceTier() !== 'journal'; // ...and the Town tier's compass",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "GUIDE5-note-dropped",
     "file": "src/ui/quest/questTracker.js",
-    "old": "      note: v.words?.note ?? '',   // GUIDE5: a named place not on the map - no mark, the talk arc's answer instead",
-    "new": "      note: '',   // GUIDE5: a named place not on the map - no mark, the talk arc's answer instead",
+    "old": "      note: v.words?.note ?? '', // GUIDE5: a named place not on the map - no mark, the talk arc's answer instead",
+    "new": "      note: '', // GUIDE5: a named place not on the map - no mark, the talk arc's answer instead",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "GUIDE5-note-row-not-drawn",
     "file": "src/ui/quest/questTracker.js",
-    "old": "  moved = setText(c, 'note', c.rows.note, f.note) || moved;   // GUIDE5: the place is named but not on the map - ask around\n",
-    "new": "",
+    "old": "  moved = setText(c, 'note', c.rows.note, f.note) || moved; // GUIDE5: the place is named but not on the map - ask around\n  moved = setText(c, 'time', c.rows.time, f.time) || moved;",
+    "new": "  moved = setText(c, 'time', c.rows.time, f.time) || moved;",
     "tests": [
       "test/ui/quest/guide5_marks.test.js"
     ]

@@ -11,7 +11,7 @@
 // OWN-WORK3 (2026-10-31): Beautiful Cities is retired, and with it the layer that laid the stand onto its own gate
 // files. Every gate is Daggerfall's (TS7's walls) or a capital's, and the stand stands as drawn on each.
 
-import { isWallCarrier } from './townShape.js';   // TS7: a city walled on its outline carries its carriages
+import { isWallCarrier } from './townShape.js'; // TS7: a city walled on its outline carries its carriages
 
 /** The four gate blocks (WALLAA08-11), by a file name of theirs: `WALLAA08.RMB.json` - the gate is the name's first
  *  part (a composite on one, `WALLAA08.FARMAA00.RMB.json`, a town mod's, is read the same). */
@@ -19,7 +19,10 @@ export const IT_GATE_FILE = /^(WALLAA(?:08|09|10|11))(?:\.[A-Z0-9]+)?\.RMB\.json
 /** OW-HUBS (FIELD BUGS 2026-10-04e): whether a town stands a carriage at its gate - one of its exterior blocks is a
  *  gate the mod edits (`IT_GATE_FILE`, read off the block's own name: 'WALLAA08.RMB', or a composite on it). Pure; the
  *  mod's switch is the caller's (systems/immersiveTravel.js immersiveTravelLoaded). */
-export const hasCarriageGate = (loc) => (loc?.exterior?.exteriorData?.blockNames ?? []).some((n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n));   // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown
+export const hasCarriageGate = (loc) =>
+  (loc?.exterior?.exteriorData?.blockNames ?? []).some(
+    (n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n),
+  ); // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown
 /** CAPITAL-CARRIAGES: each gate block's frame - its gate model's (446) origin in the block's own metres (x east, z north) and
  *  its outward normal, measured on the freeware (TS7's frames: the subrecord's place, the model 1.6 m in from it). The
  *  stand is set in it, and carried from it to a capital's gate (world/capitalCarriages.js). */
@@ -51,10 +54,10 @@ export const CARRIAGE_STAND = Object.freeze([
 /** Each gate's driver: a townsperson with a face of his own in FLATS.CFG (so the talk window never stands the OOPS
  *  record), and his name seed (the flat's Position, talk's nameSeed) - four gates of one town, four names. */
 export const STAND_DRIVERS = Object.freeze({
-  WALLAA08: Object.freeze({ flat: Object.freeze([182, 14]), seed: 864208 }),   // a man in a brown hat
-  WALLAA09: Object.freeze({ flat: Object.freeze([184, 17]), seed: 864209 }),   // a brawny peasant
-  WALLAA10: Object.freeze({ flat: Object.freeze([182, 19]), seed: 864210 }),   // a man in a grey tunic
-  WALLAA11: Object.freeze({ flat: Object.freeze([182, 22]), seed: 864211 }),   // a cloaked old man
+  WALLAA08: Object.freeze({ flat: Object.freeze([182, 14]), seed: 864208 }), // a man in a brown hat
+  WALLAA09: Object.freeze({ flat: Object.freeze([184, 17]), seed: 864209 }), // a brawny peasant
+  WALLAA10: Object.freeze({ flat: Object.freeze([182, 19]), seed: 864210 }), // a man in a grey tunic
+  WALLAA11: Object.freeze({ flat: Object.freeze([182, 22]), seed: 864211 }), // a cloaked old man
 });
 /** Daggerfall's own height for each kind: 41214 at -31 (127 of its 138 classic placements), every misc flat at -4. */
 const STAND_Y = Object.freeze({ model: -31, flat: -4 });
@@ -62,20 +65,44 @@ const STAND_Y = Object.freeze({ model: -31, flat: -4 });
 /** The stand on gate `gate` (its block's name, 'WALLAA08'), as a block's records, shifted [along, out] metres by
  *  `shift`; null for another name. */
 export function standRecords(gate, shift = [0, 0]) {
-  const f = IT_GATE_FRAMES[gate], driver = STAND_DRIVERS[gate];
+  const f = IT_GATE_FRAMES[gate],
+    driver = STAND_DRIVERS[gate];
   if (!f || !driver) return null;
   const ut = [f.out[1], -f.out[0]];
   const place = ([a, b]) => {
-    const x = f.at[0] + (a + shift[0]) * ut[0] + (b + shift[1]) * f.out[0], z = f.at[1] + (a + shift[0]) * ut[1] + (b + shift[1]) * f.out[1];
+    const x = f.at[0] + (a + shift[0]) * ut[0] + (b + shift[1]) * f.out[0],
+      z = f.at[1] + (a + shift[0]) * ut[1] + (b + shift[1]) * f.out[1];
     return { XPos: Math.round(x / 0.025), ZPos: Math.round(z / 0.025) - 4096 };
   };
-  const yRotation = 0 - Math.round((Math.atan2(f.out[0], f.out[1]) * 1024) / Math.PI);   // the model's +z (its shafts) down the frame's out
+  const yRotation = 0 - Math.round((Math.atan2(f.out[0], f.out[1]) * 1024) / Math.PI); // the model's +z (its shafts) down the frame's out
   const out = { Misc3dObjectRecords: [], MiscFlatObjectRecords: [] };
   for (const s of CARRIAGE_STAND) {
     const { XPos, ZPos } = place(s.at);
-    if (s.model) { out.Misc3dObjectRecords.push({ ModelId: String(s.model), ModelIdNum: s.model, ObjectType: 0, XPos, YPos: STAND_Y.model, ZPos, XRotation: 0, YRotation: yRotation, ZRotation: 0 }); continue; }
+    if (s.model) {
+      out.Misc3dObjectRecords.push({
+        ModelId: String(s.model),
+        ModelIdNum: s.model,
+        ObjectType: 0,
+        XPos,
+        YPos: STAND_Y.model,
+        ZPos,
+        XRotation: 0,
+        YRotation: yRotation,
+        ZRotation: 0,
+      });
+      continue;
+    }
     const [archive, record] = s.what === 'driver' ? driver.flat : s.flat;
-    out.MiscFlatObjectRecords.push({ Position: s.what === 'driver' ? driver.seed : 0, XPos, YPos: STAND_Y.flat, ZPos, TextureArchive: archive, TextureRecord: record, FactionID: s.what === 'driver' ? STAND_DRIVER_FACTION : 0, Flags: 0 });
+    out.MiscFlatObjectRecords.push({
+      Position: s.what === 'driver' ? driver.seed : 0,
+      XPos,
+      YPos: STAND_Y.flat,
+      ZPos,
+      TextureArchive: archive,
+      TextureRecord: record,
+      FactionID: s.what === 'driver' ? STAND_DRIVER_FACTION : 0,
+      Flags: 0,
+    });
   }
   return out;
 }
@@ -86,7 +113,11 @@ export function standRecords(gate, shift = [0, 0]) {
 let _isOn = null;
 export function carriageRecordsOf(gateName) {
   if (!_isOn?.()) return null;
-  return standRecords(String(gateName ?? '').toUpperCase().replace(/\.RMB$/, ''));
+  return standRecords(
+    String(gateName ?? '')
+      .toUpperCase()
+      .replace(/\.RMB$/, ''),
+  );
 }
 
 /** The stand, live: `isOn` the mod's switch as loaded for the game. Answers true. OWN-WORK3: no layer is laid on a

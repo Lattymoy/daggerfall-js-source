@@ -14,7 +14,15 @@
 //
 // EVERY ALLOCATION HAS AN OWNER: each picture is an object URL, let go when the pane fills again and when the menu
 // unmounts (releaseShotsPane, ui/enhanced/enhancedMenu.js unmount); the gallery's change listener goes with them.
-import { listShots, deleteShot, setShotLoading, keepShot, onGalleryChange, shotCaption, GALLERY_MAX } from '../systems/shotGallery.js';
+import {
+  listShots,
+  deleteShot,
+  setShotLoading,
+  keepShot,
+  onGalleryChange,
+  shotCaption,
+  GALLERY_MAX,
+} from '../systems/shotGallery.js';
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { SHOT_DOWNLOAD_PREF, REVOKE_AFTER_MS } from './screenshot.js';
 import { loadingMode } from './loadingScreen.js';
@@ -22,7 +30,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { bindings } from './input.js';
 import { codeForAction } from '../systems/inputActions.js';
 import { buttonText } from '../systems/controlsConfig.js';
-import { optionPath } from './settings/settingsMap.js';   // ORG2
+import { optionPath } from './settings/settingsMap.js'; // ORG2
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -33,22 +41,28 @@ const el = (t, cls, txt) => {
 
 // AUDIT LOAD1 G3: THE PICTURES ARE KEPT ACROSS FILLS, by shot - a label changed is not 120 thumbnails reloaded - and let
 // go when their shot is gone, and when the menu unmounts.
-const thumbUrls = new Map();   // shot id -> object URL of its thumbnail
-let fullUrl = null;            // { id, url } - the picture opened large
-let unlisten = null;    // the gallery's change listener, while a pane stands
-let viewing = null;     // the id opened large, or null for the grid
-let armed = null;       // the id whose Delete was pressed once
-let fillSeq = 0;        // a fill's answer stands only if no later fill began
-let focusNext = null;   // the data-focus key the next fill puts the keyboard on, when the pressed button is gone
+const thumbUrls = new Map(); // shot id -> object URL of its thumbnail
+let fullUrl = null; // { id, url } - the picture opened large
+let unlisten = null; // the gallery's change listener, while a pane stands
+let viewing = null; // the id opened large, or null for the grid
+let armed = null; // the id whose Delete was pressed once
+let fillSeq = 0; // a fill's answer stands only if no later fill began
+let focusNext = null; // the data-focus key the next fill puts the keyboard on, when the pressed button is gone
 
 const letGo = () => {
   for (const u of thumbUrls.values()) URL.revokeObjectURL(u);
   thumbUrls.clear();
-  if (fullUrl) { URL.revokeObjectURL(fullUrl.url); fullUrl = null; }
+  if (fullUrl) {
+    URL.revokeObjectURL(fullUrl.url);
+    fullUrl = null;
+  }
 };
 const thumbUrlOf = (s) => {
   let u = thumbUrls.get(s.id);
-  if (!u) { u = URL.createObjectURL(s.thumb ?? s.blob); thumbUrls.set(s.id, u); }
+  if (!u) {
+    u = URL.createObjectURL(s.thumb ?? s.blob);
+    thumbUrls.set(s.id, u);
+  }
   return u;
 };
 const fullUrlOf = (s) => {
@@ -61,15 +75,25 @@ const fullUrlOf = (s) => {
 /** Every picture whose shot is no longer listed, let go; the open view's too once it is closed. */
 function letGoGone(shots) {
   const live = new Set(shots.map((x) => x.id));
-  for (const [id, u] of thumbUrls) if (!live.has(id)) { URL.revokeObjectURL(u); thumbUrls.delete(id); }
-  if (fullUrl && (fullUrl.id !== viewing || !live.has(fullUrl.id))) { URL.revokeObjectURL(fullUrl.url); fullUrl = null; }
+  for (const [id, u] of thumbUrls)
+    if (!live.has(id)) {
+      URL.revokeObjectURL(u);
+      thumbUrls.delete(id);
+    }
+  if (fullUrl && (fullUrl.id !== viewing || !live.has(fullUrl.id))) {
+    URL.revokeObjectURL(fullUrl.url);
+    fullUrl = null;
+  }
 }
 
 /** The menu's unmount: the pictures and the listener go with the menu. */
 export function releaseShotsPane() {
   letGo();
-  unlisten?.(); unlisten = null;
-  viewing = null; armed = null; focusNext = null;
+  unlisten?.();
+  unlisten = null;
+  viewing = null;
+  armed = null;
+  focusNext = null;
 }
 
 /** The PrintScreen key as the Controls page names it, or null when it is bound to nothing a keyboard has. */
@@ -80,7 +104,7 @@ export function shotKeyName(store = bindings()) {
 
 export const LOADING_WORDS = Object.freeze({
   shots: 'Loading screens show the screenshots marked for them below.',
-  art: `Loading screens show the night sky. Choose Your screenshots under Loading screens (${optionPath('feat:loading-screen')}) to show these.`,   // ORG2
+  art: `Loading screens show the night sky. Choose Your screenshots under Loading screens (${optionPath('feat:loading-screen')}) to show these.`, // ORG2
   off: `Loading screens are off. Turn them on in ${optionPath('feat:loading-screen')}.`,
   classic: 'Loading screens only appear with the enhanced UI. The classic UI keeps the original loading screens.',
 });
@@ -91,29 +115,40 @@ export const loadingWordsKey = () => (isEnhanced() ? loadingMode() : 'classic');
  *  last visit's, and go (the menu's own law, 0927b B5: an armed press never outlives its pane). */
 export function drawShotsPane(body) {
   injectShotsStyle();
-  viewing = null; armed = null; focusNext = null;
+  viewing = null;
+  armed = null;
+  focusNext = null;
   const root = el('div', 'shots');
   body.append(root);
   unlisten?.();
-  unlisten = onGalleryChange(() => { if (root.isConnected) fill(root); else { unlisten?.(); unlisten = null; } });
+  unlisten = onGalleryChange(() => {
+    if (root.isConnected) fill(root);
+    else {
+      unlisten?.();
+      unlisten = null;
+    }
+  });
   fill(root);
 }
 
 const keyOf = (n) => n?.getAttribute?.('data-focus') ?? null;
-const keyed = (n, key) => { n.setAttribute('data-focus', key); return n; };
+const keyed = (n, key) => {
+  n.setAttribute('data-focus', key);
+  return n;
+};
 
 async function fill(root) {
   const seq = ++fillSeq;
   if (!root.firstChild) root.append(el('p', 'shots-wait', 'Reading the gallery\u2026'));
   const shots = await listShots();
-  if (seq !== fillSeq || !root.isConnected) return;   // a later fill, or the pane is gone
+  if (seq !== fillSeq || !root.isConnected) return; // a later fill, or the pane is gone
   // AUDIT LOAD1 G3: THE KEYBOARD STAYS WHERE IT WAS (AUDIT 32 P3's law, ui/domRepaint.js) - the pressed button's key,
   // or the one its press named for after (a deleted tile hands the focus to its neighbour)
   const active = globalThis.document?.activeElement;
   const want = focusNext ?? (active && root.contains?.(active) ? keyOf(active) : null);
   focusNext = null;
   const open = viewing != null ? shots.find((s) => s.id === viewing) : null;
-  if (viewing != null && !open) viewing = null;   // deleted from under the view
+  if (viewing != null && !open) viewing = null; // deleted from under the view
   letGoGone(shots);
   root.replaceChildren(topCard(root, shots.length));
   if (open) root.append(viewCard(root, shots, open));
@@ -123,10 +158,18 @@ async function fill(root) {
 }
 
 function topCard(root, count) {
-  const c = el('div', 'card shots-top');   // no title of its own: the pane's head says Screenshots
+  const c = el('div', 'card shots-top'); // no title of its own: the pane's head says Screenshots
   const key = shotKeyName();
-  c.append(el('p', 'meta', `${count} of ${GALLERY_MAX} saved in this browser, never uploaded. `
-    + (key ? `Press ${key} in the world to take one.` : 'The Screenshot action has no key. Bind one under Settings, Controls.')));
+  c.append(
+    el(
+      'p',
+      'meta',
+      `${count} of ${GALLERY_MAX} saved in this browser, never uploaded. ` +
+        (key
+          ? `Press ${key} in the world to take one.`
+          : 'The Screenshot action has no key. Bind one under Settings, Controls.'),
+    ),
+  );
   c.append(el('p', 'meta', LOADING_WORDS[loadingWordsKey()] ?? LOADING_WORDS.shots));
   const row = el('div', 'acts');
   const pick = el('input');
@@ -134,15 +177,24 @@ function topCard(root, count) {
   pick.accept = 'image/png,image/jpeg,image/webp';
   pick.multiple = true;
   pick.hidden = true;
-  pick.onchange = () => addPictures(root, [...(pick.files ?? [])]).finally(() => { pick.value = ''; });
+  pick.onchange = () =>
+    addPictures(root, [...(pick.files ?? [])]).finally(() => {
+      pick.value = '';
+    });
   const add = keyed(el('button', 'act', 'Add pictures\u2026'), 'add');
   add.type = 'button';
   add.onclick = () => pick.click();
   const dl = getPref(SHOT_DOWNLOAD_PREF) !== false;
-  const sw = keyed(el('button', `act${dl ? ' on' : ''}`, `Also save each shot as a file: ${dl ? 'On' : 'Off'}`), 'download');
+  const sw = keyed(
+    el('button', `act${dl ? ' on' : ''}`, `Also save each shot as a file: ${dl ? 'On' : 'Off'}`),
+    'download',
+  );
   sw.type = 'button';
   sw.setAttribute('aria-pressed', String(dl));
-  sw.onclick = () => { setPref(SHOT_DOWNLOAD_PREF, !dl); fill(root); };
+  sw.onclick = () => {
+    setPref(SHOT_DOWNLOAD_PREF, !dl);
+    fill(root);
+  };
   row.append(add, sw, pick);
   c.append(row);
   return c;
@@ -151,11 +203,20 @@ function topCard(root, count) {
 /** AUDIT LOAD1 G5: pictures from the player's files - each dated by the file's own day, and every one that could not
  *  be kept SAID (a file no decoder reads, a picture past the browser's size): NEVER SILENT, the gallery's law. */
 export async function addPictures(root, files) {
-  let kept = 0, unread = 0, full = false;
+  let kept = 0,
+    unread = 0,
+    full = false;
   for (const f of files) {
-    const r = await keepShot(f, { place: '', at: Number.isFinite(f?.lastModified) && f.lastModified > 0 ? f.lastModified : Date.now() });
-    if (r === 'full') { full = true; break; }
-    if (r == null) unread++; else kept++;
+    const r = await keepShot(f, {
+      place: '',
+      at: Number.isFinite(f?.lastModified) && f.lastModified > 0 ? f.lastModified : Date.now(),
+    });
+    if (r === 'full') {
+      full = true;
+      break;
+    }
+    if (r == null) unread++;
+    else kept++;
   }
   const words = [];
   if (unread) words.push(`${unread === 1 ? 'One picture' : `${unread} pictures`} could not be read.`);
@@ -175,9 +236,15 @@ function emptyCard() {
   const e = el('div', 'empty');
   e.append(el('h3', null, 'No screenshots yet'));
   const key = shotKeyName();
-  e.append(el('p', null, key
-    ? `Press ${key} anywhere in the world. Up to ${GALLERY_MAX} shots are kept here and can be shown on loading screens.`
-    : 'Bind the Screenshot action under Settings, Controls, then take one anywhere in the world.'));
+  e.append(
+    el(
+      'p',
+      null,
+      key
+        ? `Press ${key} anywhere in the world. Up to ${GALLERY_MAX} shots are kept here and can be shown on loading screens.`
+        : 'Bind the Screenshot action under Settings, Controls, then take one anywhere in the world.',
+    ),
+  );
   return e;
 }
 
@@ -193,9 +260,18 @@ function grid(root, shots) {
     img.loading = 'lazy';
     img.src = thumbUrlOf(s);
     thumb.append(img);
-    thumb.onclick = () => { viewing = s.id; armed = null; focusNext = 'nav:grid'; fill(root); };
+    thumb.onclick = () => {
+      viewing = s.id;
+      armed = null;
+      focusNext = 'nav:grid';
+      fill(root);
+    };
     const after = shots[i + 1] ?? shots[i - 1] ?? null;
-    t.append(thumb, el('div', 'shot-cap', shotCaption(s) || 'A picture'), tileActs(root, s, after ? `thumb:${after.id}` : 'add'));
+    t.append(
+      thumb,
+      el('div', 'shot-cap', shotCaption(s) || 'A picture'),
+      tileActs(root, s, after ? `thumb:${after.id}` : 'add'),
+    );
     g.append(t);
   });
   return g;
@@ -204,17 +280,30 @@ function grid(root, shots) {
 function tileActs(root, s, focusAfterDelete) {
   const row = el('div', 'acts');
   const on = s.loading !== false;
-  const turn = keyed(el('button', `act shot-turn${on ? ' on' : ''}`, on ? 'On loading screens' : 'Not on loading screens'), `turn:${s.id}`);
+  const turn = keyed(
+    el('button', `act shot-turn${on ? ' on' : ''}`, on ? 'On loading screens' : 'Not on loading screens'),
+    `turn:${s.id}`,
+  );
   turn.type = 'button';
   turn.setAttribute('aria-pressed', String(on));
-  turn.onclick = () => { armed = null; setShotLoading(s.id, !on); };
+  turn.onclick = () => {
+    armed = null;
+    setShotLoading(s.id, !on);
+  };
   const save = keyed(el('button', 'act', 'Save'), `save:${s.id}`);
   save.type = 'button';
   save.onclick = () => saveFile(s);
-  const del = keyed(el('button', `act${armed === s.id ? ' primary' : ''}`, armed === s.id ? 'Delete it?' : 'Delete'), `del:${s.id}`);
+  const del = keyed(
+    el('button', `act${armed === s.id ? ' primary' : ''}`, armed === s.id ? 'Delete it?' : 'Delete'),
+    `del:${s.id}`,
+  );
   del.type = 'button';
   del.onclick = () => {
-    if (armed !== s.id) { armed = s.id; fill(root); return; }
+    if (armed !== s.id) {
+      armed = s.id;
+      fill(root);
+      return;
+    }
     armed = null;
     if (viewing === s.id) viewing = null;
     focusNext = focusAfterDelete;
@@ -236,10 +325,20 @@ function viewCard(root, shots, s) {
     const b = keyed(el('button', `act${primary ? ' primary' : ''}`, label), key);
     b.type = 'button';
     if (id == null) b.disabled = true;
-    else b.onclick = () => { if (id === 'grid') focusNext = `thumb:${s.id}`; viewing = id === 'grid' ? null : id; armed = null; fill(root); };
+    else
+      b.onclick = () => {
+        if (id === 'grid') focusNext = `thumb:${s.id}`;
+        viewing = id === 'grid' ? null : id;
+        armed = null;
+        fill(root);
+      };
     return b;
   };
-  nav.append(go('All screenshots', 'nav:grid', 'grid', true), go('Newer', 'nav:newer', shots[at - 1]?.id ?? null), go('Older', 'nav:older', shots[at + 1]?.id ?? null));
+  nav.append(
+    go('All screenshots', 'nav:grid', 'grid', true),
+    go('Newer', 'nav:newer', shots[at - 1]?.id ?? null),
+    go('Older', 'nav:older', shots[at + 1]?.id ?? null),
+  );
   const neighbour = shots[at + 1] ?? shots[at - 1] ?? null;
   c.append(nav, tileActs(root, s, neighbour ? `thumb:${neighbour.id}` : 'add'));
   return c;

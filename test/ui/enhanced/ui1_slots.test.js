@@ -430,7 +430,7 @@ test('UI1 wiring: every enhanced surface draws its item through the one fitted d
     assert.match(read(f), /linePicture\(line, \{ box: SLOT_BOX\.row, onReady:/, f);
     assert.doesNotMatch(read(f), /linePictureUrl/, `${f}: nothing on the unfitted door`);
   }
-  assert.match(read('src/ui/brokerWindow.js'), /requestFittedIcon\(img\.archive, img\.record, \{ box: SLOT_BOX\.broker, dpr: screenDpr\(\), dye: img\.dye, dyeTarget: img\.dyeTarget, onReady \}\)/);
+  assert.match(read('src/ui/brokerWindow.js'), /requestFittedIcon\(img\.archive, img\.record, \{\n\s*box: SLOT_BOX\.broker,\n\s*dpr: screenDpr\(\),\n\s*dye: img\.dye,\n\s*dyeTarget: img\.dyeTarget,\n\s*onReady,\n\s*\}\)/);
   assert.doesNotMatch(inv.slice(inv.indexOf('function itemTile('), inv.indexOf('export const itemStatSuffix')), /linePictureUrl|img\.width\s*=/, 'the tile: no unfitted picture, no width attribute');
 });
 

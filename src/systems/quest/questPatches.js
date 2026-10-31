@@ -21,7 +21,7 @@
 // entryTarget); the rest of the trail is DFU's. A quest saved past the reveal keeps the actions it was saved with
 // (task.js restoreSaveData restores them whole) - the entry reaches a quest begun after the deploy.
 
-import { t } from '../textManager.js';   // the entry is the port's own words
+import { t } from '../textManager.js'; // the entry is the port's own words
 
 /** @typedef {{ old: string, new: string, count: number }} TextPatch */
 
@@ -43,7 +43,8 @@ export function applyTextPatches(label, name, patches, text) {
  *  `_symbol_` names, which the quest expands), read as a quest is read: the player's language when it starts. */
 export const SHAM_TRAIL_MESSAGE = 1027;
 export const SHAM_TRAIL_STEP = 4;
-const SHAM_TRAIL_EN = 'No daedra came out of _child_ when I brought the _item_. _child_ just thanked me and ran off with it. Something is not right here. _guardian_ was staying at _tavern_, and someone there may know more.';
+const SHAM_TRAIL_EN =
+  'No daedra came out of _child_ when I brought the _item_. _child_ just thanked me and ran off with it. Something is not right here. _guardian_ was staying at _tavern_, and someone there may know more.';
 /** A journal message's source width - the script's own lines run about this long (1013, 1020, 1026). */
 export const ENTRY_WIDTH = 34;
 
@@ -53,7 +54,10 @@ export function entryLines(text, width = ENTRY_WIDTH) {
   const lines = [];
   let line = '';
   for (const word of String(text).split(/\s+/).filter(Boolean)) {
-    if (line && line.length + 1 + word.length > width) { lines.push(` ${line}`); line = word; } else line = line ? `${line} ${word}` : word;
+    if (line && line.length + 1 + word.length > width) {
+      lines.push(` ${line}`);
+      line = word;
+    } else line = line ? `${line} ${word}` : word;
   }
   if (line) lines.push(` ${line}`);
   return lines;
@@ -70,7 +74,11 @@ export const QUEST_PATCHES = Object.freeze({
   // province's start never went to sea; OWN-WORDS2 says both without it in our own file (quest/own/_BRISIEN.txt), so
   // the patch keeps only its QBN half.
   _BRISIEN: () => [
-    { old: '\tpc at PiratesHold set _exitstarter_ \n\tsay 1025 \n', new: '\tpc at PiratesHold set _exitstarter_ \n', count: 1 },
+    {
+      old: '\tpc at PiratesHold set _exitstarter_ \n\tsay 1025 \n',
+      new: '\tpc at PiratesHold set _exitstarter_ \n',
+      count: 1,
+    },
   ],
   // M0B11Y18 (Lord K'avar), AUDIT QA3 C3: `_S.10_`'s `pc at _L.00_ set _S.12_` stops K'avar's archers (`_S.12_ task: clear
   // _conhouse_`) once the player reaches his hideout - read at last (QUEST-AUDIT III DOTTED-SYMBOLS: C# never read
@@ -79,16 +87,28 @@ export const QUEST_PATCHES = Object.freeze({
   // toggles as `set` does), and that task starts `_S.12_`, which nothing clears: reached once, the waves stop for good.
   M0B11Y18: () => [
     { old: 'pc at _L.00_ set _S.12_', new: 'pc at _L.00_ set _atL00_', count: 1 },
-    { old: '_S.12_ task:\n\tclear _conhouse_ \n', new: '_atL00_ task:\n\tstart task _S.12_ \n\n_S.12_ task:\n\tclear _conhouse_ \n', count: 1 },
+    {
+      old: '_S.12_ task:\n\tclear _conhouse_ \n',
+      new: '_atL00_ task:\n\tstart task _S.12_ \n\n_S.12_ task:\n\tclear _conhouse_ \n',
+      count: 1,
+    },
   ],
   C0B00Y02: () => {
-    const entry = [`Message:  ${SHAM_TRAIL_MESSAGE}`, '%qdt:', ...entryLines(t('quest.possessedChild.shamTrail', SHAM_TRAIL_EN))].join('\n');
+    const entry = [
+      `Message:  ${SHAM_TRAIL_MESSAGE}`,
+      '%qdt:',
+      ...entryLines(t('quest.possessedChild.shamTrail', SHAM_TRAIL_EN)),
+    ].join('\n');
     return [
       // the entry, after the last of the script's messages: before the `QBN:` line, where every QRC ends. OWN-WORDS2 wrote
       // the messages again (quest/own/C0B00Y02.txt), so the patch reads none of DFU's words and the entry stays the text core's
       { old: '\nQBN:\n', new: `\n${entry}\n\nQBN:\n`, count: 1 },
       // filed by the reveal, after its own actions
-      { old: '\tplace npc _hooker_ at _tavern_ \n\tclear _talkguardian_\n', new: `\tplace npc _hooker_ at _tavern_ \n\tclear _talkguardian_\n\tlog ${SHAM_TRAIL_MESSAGE} step ${SHAM_TRAIL_STEP}\n`, count: 1 },
+      {
+        old: '\tplace npc _hooker_ at _tavern_ \n\tclear _talkguardian_\n',
+        new: `\tplace npc _hooker_ at _tavern_ \n\tclear _talkguardian_\n\tlog ${SHAM_TRAIL_MESSAGE} step ${SHAM_TRAIL_STEP}\n`,
+        count: 1,
+      },
     ];
   },
 });

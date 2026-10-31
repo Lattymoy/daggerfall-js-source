@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-RESCUE-SAVE-A1-an-offline-copy-carries-them",
     "file": "src/systems/offlineCopy.js",
-    "old": "  delete copy.realmHeld;",
-    "new": "",
+    "old": "  delete copy.realmHeld; // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none",
+    "new": "  // AUDIT RESCUE-SAVE A1: the realm's spoils records (systems/realmSaves.js REALM_HELD_FIELD) - a new character holds none",
     "tests": [
       "test/server/rescuesave.test.js"
     ]

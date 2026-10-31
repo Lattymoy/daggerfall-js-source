@@ -1,392 +1,392 @@
 [
- {
-  "name": "APF-A5-the-viewer's-place",
-  "file": "src/characters/provinceFolk.js",
-  "old": "const p = _pixelOf && _regionAt ? _pixelOf(feet) : null;",
-  "new": "const p = _pixelOf && _regionAt ? _pixelOf(null) : null;",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A5-raced-again-with-the-kit",
-  "file": "src/characters/foeBodies.js",
-  "old": "if (f._mwRaceSeed !== h) {",
-  "new": "if (true) {",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A1-the-race-unkept",
-  "file": "src/systems/revenant/revenant.js",
-  "old": "race: rec ? bodyRaceOf(rec) : null,",
-  "new": "race: null,",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A1-the-stamp-without-it",
-  "file": "src/systems/revenant/revenant.js",
-  "old": "race: r.race ?? null, dread: r.dread === true });",
-  "new": "dread: r.dread === true });",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A1-the-save-drops-it",
-  "file": "src/systems/revenant/revenant.js",
-  "old": "race: FOLK_RACE_KEYS.includes(r.race) ? r.race : null,",
-  "new": "race: null,",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A1-the-save-keeps-anything",
-  "file": "src/systems/revenant/revenant.js",
-  "old": "race: FOLK_RACE_KEYS.includes(r.race) ? r.race : null,",
-  "new": "race: r.race ?? null,",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A1-the-party-without-it",
-  "file": "src/systems/revenant/revenantCompanions.js",
-  "old": "m.folk = r.race ?? null;",
-  "new": "m.folk = null;",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A1-own-race-unread",
-  "file": "src/characters/foeBodies.js",
-  "old": "const r = f?.folk ?? f?.entity?.revenant?.race;",
-  "new": "const r = null;",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A1-the-layer-unstamped",
-  "file": "src/scenes/crewAshore.js",
-  "old": "rec.folk = c.folk ?? null;",
-  "new": "rec.folk = null;",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A3-the-home-unread",
-  "file": "src/characters/foeBodies.js",
-  "old": "home === undefined ? folkHere() : folkOfKey(home)",
-  "new": "folkHere()",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A3-the-entry's-home-dropped",
-  "file": "src/scenes/world.js",
-  "old": "seed: s.seed, home: s.home, faction: s.faction,",
-  "new": "seed: s.seed, faction: s.faction,",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A3-the-crew's-home-dropped",
-  "file": "src/scenes/naval/navalCrew.js",
-  "old": "seed: w.seed | 0, home: w.home ?? null };",
-  "new": "seed: w.seed | 0, home: null };",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A3-the-sea's-home-unsaid",
-  "file": "src/scenes/naval/navalHost.js",
-  "old": "seed: e.ship.seed, home: watersFolkKey(e), faction:",
-  "new": "seed: e.ship.seed, faction:",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A2-the-room's-context-alone",
-  "file": "src/characters/peopleBodies.js",
-  "old": "staticNpcData(pn, { ...sceneCtx, getFaction, raceOfCurrentRegion: () => regionRace ?? 0 })",
-  "new": "staticNpcData(pn, sceneCtx)",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A2-the-room-unwired",
-  "file": "src/scenes/worldModes.js",
-  "old": "return standingPersonLook(pn, staticNpcSceneCtx(pn), dict, figureCtx.race);",
-  "new": "return personLook(pn, staticNpcData(pn, staticNpcSceneCtx(pn)), dict.get(pn.factionID) ?? null);",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A10-a-Bay-faction's-race-past-the-Bay",
-  "file": "src/characters/peopleBodies.js",
-  "old": "(Number.isInteger(faction.region) && faction.region >= 0)",
-  "new": "false",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A4-the-census's-race",
-  "file": "src/scenes/legacyHost.js",
-  "old": "race: s.race || census.race, name: fullNameOf",
-  "new": "name: fullNameOf",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A7-the-race-in-the-seed",
-  "file": "src/characters/folkBodies.js",
-  "old": "const seed = mix(strHash(roll) ^ mix(shell));",
-  "new": "const seed = mix(strHash(key) ^ mix(shell));",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A9-asked-per-regular",
-  "file": "src/world/card/cardRegulars.js",
-  "old": "native === undefined ? (native = nativeHere()) : native",
-  "new": "nativeHere()",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-A9-asked-for-every-bank",
-  "file": "src/world/card/cardRegulars.js",
-  "old": "who.bank !== BANK_TYPES.Imperial ? null : native === undefined",
-  "new": "native === undefined",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-B6-a-zone-unread",
-  "file": "src/characters/provinceFolk.js",
-  "old": "export const folkAt = (px, py, region) => withZone(folkOfRegion(region), px, py);",
-  "new": "export const folkAt = (px, py, region) => folkOfRegion(region);",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-B6-the-census's-zone-unread",
-  "file": "src/systems/livingWorld/census.js",
-  "old": "  const people = withZone(town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1), town.px, town.py);",
-  "new": "  const people = town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1);",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-B6-the-Reach's-people-moved",
-  "file": "src/characters/provinceFolk.js",
-  "old": "skyrimReach: folk([['Breton', 60], ['Nord', 28],",
-  "new": "skyrimReach: folk([['Breton', 28], ['Nord', 60],",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-B6-the-hands'-zone-unread",
-  "file": "src/scenes/portHost.js",
-  "old": "folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(",
-  "new": "folkRace(folkOfRegion(",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-B6-the-keepers'-zone-unpassed",
-  "file": "src/scenes/world.js",
-  "old": "portKeeper(mapId, 'shipyard', regionIndex, folk)",
-  "new": "portKeeper(mapId, 'shipyard', regionIndex)",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-B6-the-walkers'-zone-unread",
-  "file": "src/characters/provinceFolk.js",
-  "old": "  return folkAt(p?.x, p?.y, loc?.regionIndex ?? -1);",
-  "new": "  return folkOfRegion(loc?.regionIndex ?? -1);",
-  "tests": [
-   "test/scenes/audit_provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-draw-boundary-r<=w",
-  "file": "src/characters/provinceFolk.js",
-  "old": "for (const [race, w] of people) { if (r < w) return race; r -= w; }",
-  "new": "for (const [race, w] of people) { if (r <= w) return race; r -= w; }",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-draw-salt",
-  "file": "src/characters/provinceFolk.js",
-  "old": "let r = mix((seed >>> 0) ^ 0x70f01c) % total;",
-  "new": "let r = mix((seed >>> 0) ^ 0x70f01d) % total;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-table-Morrowind-two-weights-swapped",
-  "file": "src/characters/provinceFolk.js",
-  "old": "Morrowind: folk([['DarkElf', 82], ['Imperial', 6], ['Argonian', 4],",
-  "new": "Morrowind: folk([['DarkElf', 82], ['Imperial', 4], ['Argonian', 6],",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-table-Hammerfell-a-race-swapped",
-  "file": "src/characters/provinceFolk.js",
-  "old": "['Khajiit', 3], ['Nord', 2], ['DarkElf', 2]]),",
-  "new": "['Khajiit', 3], ['Nord', 2], ['Argonian', 2]]),",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-table-Cyrodiil-a-share-moved",
-  "file": "src/characters/provinceFolk.js",
-  "old": "Imperial: folk([['Imperial', 64], ['Breton', 6], ['Nord', 6],",
-  "new": "Imperial: folk([['Imperial', 64], ['Breton', 8], ['Nord', 4],",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-guard-face-the-town's",
-  "file": "src/systems/town/townPopulation.js",
-  "old": "      this._setFaceRecord(person, GENDERS.Male, 0, sprite);",
-  "new": "      this._setFaceRecord(person, GENDERS.Male, 0);",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-census-picture-fallback-a-Breton's",
-  "file": "src/systems/livingWorld/census.js",
-  "old": "  const sprite = spriteRaceOf(race, climate);",
-  "new": "  const sprite = spriteRaceOf(race, 'Breton');",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-census-folk-salt",
-  "file": "src/systems/livingWorld/census.js",
-  "old": "lwSeed(seed, 0x666f6c6b)) ?? climate;",
-  "new": "lwSeed(seed, 0x666f6c6c)) ?? climate;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-keeper-named-by-the-region",
-  "file": "src/systems/merchantYards.js",
-  "old": "const name = seededPersonName(seed, race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender,",
-  "new": "const name = seededPersonName(seed, getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender,",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-port-hands-one-race-a-place",
-  "file": "src/scenes/portHost.js",
-  "old": "textSeed(`${site?.key ?? ''}|${p.role}|${p.i}|folk`)",
-  "new": "textSeed(`${site?.key ?? ''}|${p.role}|folk`)",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-port-crewmaster-drawn-not-read",
-  "file": "src/scenes/portHost.js",
-  "old": "  if (p.role === 'keeper' || p.role === 'crewmaster') return site?.[p.role]?.race ?? null;",
-  "new": "  if (p.role === 'keeper') return site?.[p.role]?.race ?? null;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-port-picture-the-town's",
-  "file": "src/scenes/portHost.js",
-  "old": "    const T = PERSON_TEXTURES[spriteRaceOf(p.folk, site.race)] ?? PERSON_TEXTURES.Breton;",
-  "new": "    const T = PERSON_TEXTURES[site.race] ?? PERSON_TEXTURES.Breton;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-port-body-the-town's",
-  "file": "src/scenes/portHost.js",
-  "old": "race = p.folk ?? pl.site.race ?? 'Breton', key = `${archive}|${race}`;",
-  "new": "race = pl.site.race ?? 'Breton', key = `${archive}|${race}`;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-yard-keeper-picture-the-town's",
-  "file": "src/scenes/merchantYardsHost.js",
-  "old": "    const T = PERSON_TEXTURES[spriteRaceOf(site.keeper?.race, site.race)] ?? PERSON_TEXTURES.Breton;",
-  "new": "    const T = PERSON_TEXTURES[site.race] ?? PERSON_TEXTURES.Breton;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-walker-variant-searches-own-race-last",
-  "file": "src/characters/folkBodies.js",
-  "old": "for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {",
-  "new": "for (const t of [...Object.values(PERSON_TEXTURES), PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton]) {",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ],
-  "equivalent": true,
-  "why": "the twenty-four walker pictures are one race's each (PERSON_TEXTURES' lists are disjoint), so the search's order finds the same variant"
- },
- {
-  "name": "APF-C-walker-draw-after-the-guard-roll",
-  "file": "src/systems/town/townPopulation.js",
-  "old": "const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;",
-  "new": "const own = this.folk ? folkRace(this.folk, 7) : null;",
-  "tests": [
-   "test/characters/provincefolk.test.js"
-  ]
- },
- {
-  "name": "APF-C-census-name-the-climate's",
-  "file": "src/systems/livingWorld/census.js",
-  "old": "people ? folkNameBank(race) : nameBankOfArea(",
-  "new": "people ? folkNameBank(climate) : nameBankOfArea(",
-  "tests": [
-   "test/characters/provincefolk.test.js",
-   "test/world/worldWide/ww1_world.test.js"
-  ]
- }
+  {
+    "name": "APF-A5-the-viewer's-place",
+    "file": "src/characters/provinceFolk.js",
+    "old": "  const p = _pixelOf && _regionAt ? _pixelOf(feet) : null;",
+    "new": "  const p = _pixelOf && _regionAt ? _pixelOf(null) : null;",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A5-raced-again-with-the-kit",
+    "file": "src/characters/foeBodies.js",
+    "old": "  if (f._mwRaceSeed !== h) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A1-the-race-unkept",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "race: rec ? bodyRaceOf(rec) : null,",
+    "new": "race: null,",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A1-the-stamp-without-it",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "race: r.race ?? null, dread: r.dread === true });",
+    "new": "dread: r.dread === true });",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A1-the-save-drops-it",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "race: FOLK_RACE_KEYS.includes(r.race) ? r.race : null,",
+    "new": "race: null,",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A1-the-save-keeps-anything",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "race: FOLK_RACE_KEYS.includes(r.race) ? r.race : null,",
+    "new": "race: r.race ?? null,",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A1-the-party-without-it",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  m.folk = r.race ?? null; // AUDIT PROVINCE-FOLK A1: and the race it was born in",
+    "new": "  m.folk = null; // AUDIT PROVINCE-FOLK A1: and the race it was born in",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A1-own-race-unread",
+    "file": "src/characters/foeBodies.js",
+    "old": "  const r = f?.folk ?? f?.entity?.revenant?.race;",
+    "new": "  const r = null;",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A1-the-layer-unstamped",
+    "file": "src/scenes/crewAshore.js",
+    "old": "          rec.folk = c.folk ?? null; // AUDIT PROVINCE-FOLK A1: a sworn one's race as it was born (foeBodies.js ownRace)",
+    "new": "          rec.folk = null; // AUDIT PROVINCE-FOLK A1: a sworn one's race as it was born (foeBodies.js ownRace)",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A3-the-home-unread",
+    "file": "src/characters/foeBodies.js",
+    "old": "  const bay = bayPerson(h, race ? null : home === undefined ? folkHere() : folkOfKey(home)); // AUDIT PROVINCE-FOLK A3: `home` a roster's own people (provinceFolk.js folkOfKey - a ship's waters'; null the Bay's), else the place's",
+    "new": "  const bay = bayPerson(h, race ? null : folkHere()); // AUDIT PROVINCE-FOLK A3: `home` a roster's own people (provinceFolk.js folkOfKey - a ship's waters'; null the Bay's), else the place's",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A3-the-entry's-home-dropped",
+    "file": "src/scenes/world.js",
+    "old": "seed: s.seed, home: s.home, faction: s.faction,",
+    "new": "seed: s.seed, faction: s.faction,",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A3-the-crew's-home-dropped",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "          home: w.home ?? null,",
+    "new": "          home: null,",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A3-the-sea's-home-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "seed: e.ship.seed, home: watersFolkKey(e), faction:",
+    "new": "seed: e.ship.seed, faction:",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A2-the-room's-context-alone",
+    "file": "src/characters/peopleBodies.js",
+    "old": "  return personLook(\n    pn,\n    staticNpcData(pn, { ...sceneCtx, getFaction, raceOfCurrentRegion: () => regionRace ?? 0 }),\n    getFaction(pn.factionID),\n  );",
+    "new": "  return personLook(pn, staticNpcData(pn, sceneCtx), getFaction(pn.factionID));",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A2-the-room-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "return standingPersonLook(pn, staticNpcSceneCtx(pn), dict, figureCtx.race);",
+    "new": "return personLook(pn, staticNpcData(pn, staticNpcSceneCtx(pn)), dict.get(pn.factionID) ?? null);",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A10-a-Bay-faction's-race-past-the-Bay",
+    "file": "src/characters/peopleBodies.js",
+    "old": "  const regional =\n    !faction ||\n    !Number.isInteger(faction.race) ||\n    faction.race < 0 ||\n    faction.race > 7 ||\n    (Number.isInteger(faction.region) && faction.region >= 0);",
+    "new": "  const regional = !faction || !Number.isInteger(faction.race) || faction.race < 0 || faction.race > 7 || false;",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A4-the-census's-race",
+    "file": "src/scenes/legacyHost.js",
+    "old": "race: s.race || census.race, name: fullNameOf",
+    "new": "name: fullNameOf",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A7-the-race-in-the-seed",
+    "file": "src/characters/folkBodies.js",
+    "old": "  const seed = mix(strHash(roll) ^ mix(shell)); // AUDIT PROVINCE-FOLK A7: dressed off the roll alone, as before - the race is in the key",
+    "new": "  const seed = mix(strHash(key) ^ mix(shell)); // AUDIT PROVINCE-FOLK A7: dressed off the roll alone, as before - the race is in the key",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A9-asked-per-regular",
+    "file": "src/world/card/cardRegulars.js",
+    "old": "        look: regularLook(\n          who.seed,\n          who.bank,\n          who.gender,\n          who.bank !== BANK_TYPES.Imperial ? null : native === undefined ? (native = nativeHere()) : native,\n        ),",
+    "new": "        look: regularLook(who.seed, who.bank, who.gender, who.bank !== BANK_TYPES.Imperial ? null : nativeHere()),",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-A9-asked-for-every-bank",
+    "file": "src/world/card/cardRegulars.js",
+    "old": "        look: regularLook(\n          who.seed,\n          who.bank,\n          who.gender,\n          who.bank !== BANK_TYPES.Imperial ? null : native === undefined ? (native = nativeHere()) : native,\n        ),",
+    "new": "        look: regularLook(who.seed, who.bank, who.gender, native === undefined ? (native = nativeHere()) : native),",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-B6-a-zone-unread",
+    "file": "src/characters/provinceFolk.js",
+    "old": "export const folkAt = (px, py, region) => withZone(folkOfRegion(region), px, py);",
+    "new": "export const folkAt = (px, py, region) => folkOfRegion(region);",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-B6-the-census's-zone-unread",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const people = withZone(\n    town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1),\n    town.px,\n    town.py,\n  ); // AUDIT PROVINCE-FOLK B6: its zone's",
+    "new": "  const people = town.area != null ? folkOfArea(town.area) : folkOfRegion(town.region ?? -1); // AUDIT PROVINCE-FOLK B6: its zone's",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-B6-the-Reach's-people-moved",
+    "file": "src/characters/provinceFolk.js",
+    "old": "    ['Breton', 60],\n    ['Nord', 28],",
+    "new": "    ['Breton', 28],\n    ['Nord', 60],",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-B6-the-hands'-zone-unread",
+    "file": "src/scenes/portHost.js",
+    "old": "folkRace(folkOfKey(site?.keeper?.home) ?? folkOfRegion(",
+    "new": "folkRace(folkOfRegion(",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-B6-the-keepers'-zone-unpassed",
+    "file": "src/scenes/world.js",
+    "old": "portKeeper(mapId, 'shipyard', regionIndex, folk)",
+    "new": "portKeeper(mapId, 'shipyard', regionIndex)",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-B6-the-walkers'-zone-unread",
+    "file": "src/characters/provinceFolk.js",
+    "old": "  return folkAt(p?.x, p?.y, loc?.regionIndex ?? -1);",
+    "new": "  return folkOfRegion(loc?.regionIndex ?? -1);",
+    "tests": [
+      "test/scenes/audit_provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-draw-boundary-r<=w",
+    "file": "src/characters/provinceFolk.js",
+    "old": "    if (r < w) return race;",
+    "new": "    if (r <= w) return race;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-draw-salt",
+    "file": "src/characters/provinceFolk.js",
+    "old": "  let r = mix((seed >>> 0) ^ 0x70f01c) % total;",
+    "new": "  let r = mix((seed >>> 0) ^ 0x70f01d) % total;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-table-Morrowind-two-weights-swapped",
+    "file": "src/characters/provinceFolk.js",
+    "old": "    ['Imperial', 6],\n    ['Argonian', 4],",
+    "new": "    ['Imperial', 4],\n    ['Argonian', 6],",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-table-Hammerfell-a-race-swapped",
+    "file": "src/characters/provinceFolk.js",
+    "old": "    ['Nord', 2],\n    ['DarkElf', 2],",
+    "new": "    ['Nord', 2],\n    ['Argonian', 2],",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-table-Cyrodiil-a-share-moved",
+    "file": "src/characters/provinceFolk.js",
+    "old": "    ['Breton', 6],\n    ['Nord', 6],",
+    "new": "    ['Breton', 8],\n    ['Nord', 4],",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-guard-face-the-town's",
+    "file": "src/systems/town/townPopulation.js",
+    "old": "      this._setFaceRecord(person, GENDERS.Male, 0, sprite); // the guard arm is personOutfitVariant 0 (:147-149)",
+    "new": "      this._setFaceRecord(person, GENDERS.Male, 0); // the guard arm is personOutfitVariant 0 (:147-149)",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-census-picture-fallback-a-Breton's",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const sprite = spriteRaceOf(race, climate);",
+    "new": "  const sprite = spriteRaceOf(race, 'Breton');",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-census-folk-salt",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "  const race = folkRace(people, lwSeed(seed, 0x666f6c6b)) ?? climate; // 'folk'",
+    "new": "  const race = folkRace(people, lwSeed(seed, 0x666f6c6c)) ?? climate; // 'folk'",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-keeper-named-by-the-region",
+    "file": "src/systems/merchantYards.js",
+    "old": "  const name = seededPersonName(\n    seed,\n    race ? folkNameBank(race) : getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1),\n    gender,\n    { race, region: Number.isInteger(regionIndex) ? regionIndex : -1, home: folkKeyOf(people) },\n  ); // REGION-NAMES: their people's customs, their region's",
+    "new": "  const name = seededPersonName(seed, getNameBankOfRegion(Number.isInteger(regionIndex) ? regionIndex : -1), gender, {\n    race,\n    region: Number.isInteger(regionIndex) ? regionIndex : -1,\n    home: folkKeyOf(people),\n  }); // REGION-NAMES: their people's customs, their region's",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-port-hands-one-race-a-place",
+    "file": "src/scenes/portHost.js",
+    "old": "textSeed(`${site?.key ?? ''}|${p.role}|${p.i}|folk`)",
+    "new": "textSeed(`${site?.key ?? ''}|${p.role}|folk`)",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-port-crewmaster-drawn-not-read",
+    "file": "src/scenes/portHost.js",
+    "old": "  if (p.role === 'keeper' || p.role === 'crewmaster') return site?.[p.role]?.race ?? null;",
+    "new": "  if (p.role === 'keeper') return site?.[p.role]?.race ?? null;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-port-picture-the-town's",
+    "file": "src/scenes/portHost.js",
+    "old": "    const T = PERSON_TEXTURES[spriteRaceOf(p.folk, site.race)] ?? PERSON_TEXTURES.Breton;",
+    "new": "    const T = PERSON_TEXTURES[site.race] ?? PERSON_TEXTURES.Breton;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-port-body-the-town's",
+    "file": "src/scenes/portHost.js",
+    "old": "race = p.folk ?? pl.site.race ?? 'Breton', key = `${archive}|${race}`;",
+    "new": "race = pl.site.race ?? 'Breton', key = `${archive}|${race}`;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-yard-keeper-picture-the-town's",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "    const T = PERSON_TEXTURES[spriteRaceOf(site.keeper?.race, site.race)] ?? PERSON_TEXTURES.Breton;",
+    "new": "    const T = PERSON_TEXTURES[site.race] ?? PERSON_TEXTURES.Breton;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-walker-variant-searches-own-race-last",
+    "file": "src/characters/folkBodies.js",
+    "old": "  for (const t of [PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton, ...Object.values(PERSON_TEXTURES)]) {",
+    "new": "  for (const t of [...Object.values(PERSON_TEXTURES), PERSON_TEXTURES[race] ?? PERSON_TEXTURES.Breton]) {",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ],
+    "equivalent": true,
+    "why": "the twenty-four walker pictures are one race's each (PERSON_TEXTURES' lists are disjoint), so the search's order finds the same variant"
+  },
+  {
+    "name": "APF-C-walker-draw-after-the-guard-roll",
+    "file": "src/systems/town/townPopulation.js",
+    "old": "    const own = this.folk ? folkRace(this.folk, Math.floor(this.rand() * 0x100000000)) : null;",
+    "new": "    const own = this.folk ? folkRace(this.folk, 7) : null;",
+    "tests": [
+      "test/characters/provincefolk.test.js"
+    ]
+  },
+  {
+    "name": "APF-C-census-name-the-climate's",
+    "file": "src/systems/livingWorld/census.js",
+    "old": "      people ? folkNameBank(race) : nameBankOfArea(town.area ?? town.region ?? -1),",
+    "new": "      people ? folkNameBank(climate) : nameBankOfArea(town.area ?? town.region ?? -1),",
+    "tests": [
+      "test/characters/provincefolk.test.js",
+      "test/world/worldWide/ww1_world.test.js"
+    ]
+  }
 ]

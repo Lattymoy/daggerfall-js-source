@@ -8,10 +8,14 @@
 import { modSetting } from '../modSettings.js';
 import { WEAPONS, weaponMaterialModifier } from '../../characters/weapons.js';
 import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
-import { swingFrameSeconds, swingHandling, swingHeft } from '../../characters/weaponStates.js';   // SWING-LAW: the port's swing law answers the mod's Speed
+import { swingFrameSeconds, swingHandling, swingHeft } from '../../characters/weaponStates.js'; // SWING-LAW: the port's swing law answers the mod's Speed
 
 export const RR_VENDOR = 'roleplay-realism';
-export const RR_MOD = Object.freeze({ title: 'RoleplayRealism', version: '1.8', guid: 'd828b782-46e9-40e7-8ae6-19cde308032e' });
+export const RR_MOD = Object.freeze({
+  title: 'RoleplayRealism',
+  version: '1.8',
+  guid: 'd828b782-46e9-40e7-8ae6-19cde308032e',
+});
 export const rrEnabled = () => modSetting(RR_VENDOR, 'Enabled') === true;
 /** `settings.GetBool("Modules", key)` (:77-93) - the mod's own switch,
  *  under the mod's own. */
@@ -39,7 +43,7 @@ export function rrAdjustWeaponHitChanceMod(hitChanceMod, weaponAnimTime, weapon)
   else if (weaponAnimTime < 1000) adjusted = hitChanceMod;
   else if (weaponAnimTime < 2000) adjusted += 10;
   else if (weaponAnimTime > 5000) adjusted -= 10;
-  else if (weaponAnimTime > 8000) adjusted -= 20;   // unreachable behind the arm above - the C#'s own shape
+  else if (weaponAnimTime > 8000) adjusted -= 20; // unreachable behind the arm above - the C#'s own shape
   return adjusted;
 }
 /** AdjustWeaponAttackDamage: a short draw scales the damage down by
@@ -62,15 +66,29 @@ export function rrAdjustWeaponAttackDamage(damage, weaponAnimTime, weapon) {
  *  so mid-screen; otherwise DFU's own formula, restated (skill + 30 for
  *  a Khajiit, x2 under the Climbing effect, clamped 5..95; Lerp(base,
  *  100, skill%) + Lerp(0, 10, luck%), the C# int cast). */
-export const NO_CLIMB_HOLDING_WEAPON = 'Put your weapon away to climb.';   // OWN-WORK3: our line for the release's noClimbHoldingWeapon
+export const NO_CLIMB_HOLDING_WEAPON = 'Put your weapon away to climb.'; // OWN-WORK3: our line for the release's noClimbHoldingWeapon
 /** AUDIT CLIMB1 F10: the same rule for the port's enhanced climb (player/parkour.js registerParkourGate) - a mantle
  *  or a clamber over a thin top is a climb, and the mod's own row promises "no climbing with a weapon out": a drawn
  *  weapon that is not bare hands answers the mod's line, anything else null. (A vault is a leap and is not asked.) */
 export function rrParkourRefusal({ weaponDrawn = false, weaponMelee = true } = {}) {
   return weaponDrawn && !weaponMelee ? NO_CLIMB_HOLDING_WEAPON : null;
 }
-export function rrClimbingChance(base, { climbing = 0, luck = 0, khajiit = false, enhanced = false, weaponDrawn = false, weaponMelee = true, say = null } = {}) {
-  if (weaponDrawn && !weaponMelee) { say?.(NO_CLIMB_HOLDING_WEAPON); return 0; }
+export function rrClimbingChance(
+  base,
+  {
+    climbing = 0,
+    luck = 0,
+    khajiit = false,
+    enhanced = false,
+    weaponDrawn = false,
+    weaponMelee = true,
+    say = null,
+  } = {},
+) {
+  if (weaponDrawn && !weaponMelee) {
+    say?.(NO_CLIMB_HOLDING_WEAPON);
+    return 0;
+  }
   let skill = climbing + (khajiit ? 30 : 0);
   if (enhanced) skill *= 2;
   skill = Math.min(95, Math.max(5, skill));
@@ -98,15 +116,38 @@ export function rrClimbingChance(base, { climbing = 0, luck = 0, khajiit = false
  *  swung at 0.995 s - heavy blades QUICKER than with no mod at all. `weight` is the template's base weight (the
  *  swing law's reader, combat/swingLaw.js readSwing; 0 bare-handed).
  *  BAL10: `shortBlade` - the weapon swings with Short Blade (the reader's word): the dagger's handling, whatever draws it. */
-export function rrMeleeWeaponAnimTime({ liveSpeed, liveStrength, weaponType = -1, hands = 'One', weight = 0, shortBlade = false }) {
-  let spdRatio = 0.8, strRatio = 0.2, capRatio = 0.08;
-  if (hands === 'Both') { spdRatio = 0.5; strRatio = 0.5; capRatio = 0.15; }
-  else if (shortBlade || weaponType === 4 || weaponType === 5) { spdRatio = 0.9; strRatio = 0.1; capRatio = 0.03; }   // AUDIT MARTIAL L2 F11: the dagger's blend too, whatever draws it (BAL10's departure - the mod keys on the sprite)
-  else if (weaponType === 15) { spdRatio = 1; strRatio = 0; capRatio = 0; }
+export function rrMeleeWeaponAnimTime({
+  liveSpeed,
+  liveStrength,
+  weaponType = -1,
+  hands = 'One',
+  weight = 0,
+  shortBlade = false,
+}) {
+  let spdRatio = 0.8,
+    strRatio = 0.2,
+    capRatio = 0.08;
+  if (hands === 'Both') {
+    spdRatio = 0.5;
+    strRatio = 0.5;
+    capRatio = 0.15;
+  } else if (shortBlade || weaponType === 4 || weaponType === 5) {
+    spdRatio = 0.9;
+    strRatio = 0.1;
+    capRatio = 0.03;
+  } // AUDIT MARTIAL L2 F11: the dagger's blend too, whatever draws it (BAL10's departure - the mod keys on the sprite)
+  else if (weaponType === 15) {
+    spdRatio = 1;
+    strRatio = 0;
+    capRatio = 0;
+  }
   if (liveSpeed > 70) spdRatio -= capRatio;
   if (liveStrength > 70) strRatio -= capRatio;
-  const blend = (liveSpeed * spdRatio) + (liveStrength * strRatio);
-  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling: swingHandling(weaponType, hands === 'Both', shortBlade) });
+  const blend = liveSpeed * spdRatio + liveStrength * strRatio;
+  return swingFrameSeconds(blend, {
+    heft: swingHeft(weight, liveStrength),
+    handling: swingHandling(weaponType, hands === 'Both', shortBlade),
+  });
 }
 
 // ---- weaponMaterials (:389-392) -------------------------------------------
@@ -163,7 +204,13 @@ export function rrShipAvailable({ onShip = false, locationLoaded = false, portTo
  *  (`Min(CurrentFatigue - 100, over * 100)`, raw fatigue units - which
  *  goes NEGATIVE under 100 fatigue and DecreaseFatigue then adds; the
  *  C#'s own arithmetic). Answers null under the threshold. */
-export function rrEncumbranceEffect({ carriedWeight = 0, maxEncumbrance = 1, liveSpeed = 50, permanentSpeed = 50, currentFatigue = 0 } = {}) {
+export function rrEncumbranceEffect({
+  carriedWeight = 0,
+  maxEncumbrance = 1,
+  liveSpeed = 50,
+  permanentSpeed = 50,
+  currentFatigue = 0,
+} = {}) {
   // AUDIT-RR F7: the C# is float arithmetic (:590-595) - fround at every step, or a band edge lands one off
   const encPc = Math.fround(Math.min(maxEncumbrance > 0 ? Math.fround(carriedWeight / maxEncumbrance) : 0, 1.2));
   const encOver = Math.fround(Math.fround(Math.max(Math.fround(encPc - 0.75), 0)) * ENC_EFFECT_SCALE_FACTOR);
@@ -200,8 +247,31 @@ export function rrDouseOnDungeonExit(entity, { isDay = false } = {}) {
  *  :34-46). The rows are the port's recipe shape (systems/potions.js),
  *  keyed by the same eight ingredients. */
 export const RR_POTION_RECIPES = Object.freeze([
-  Object.freeze({ name: 'cureDisease', price: 100, ingredients: [31, 56, 62], effect: '3,0', displayName: 'Cure Disease', textureRecord: 35, settings: { chanceMod: 10 } }),
-  Object.freeze({ name: 'purification', price: 500, ingredients: [3, 31, 39, 49, 56, 60, 62, 63], effect: '3,0', displayName: 'Purification', textureRecord: 35, settings: { chanceMod: 10, magnitudeBaseLow: 5, magnitudeBaseHigh: 5, magnitudeLevelBase: 19, magnitudeLevelHigh: 19 }, secondary: ['10,8', '3,1'] }),   // HealHealth (10,8), CurePoison (3,1) - CurePoison.cs:28
+  Object.freeze({
+    name: 'cureDisease',
+    price: 100,
+    ingredients: [31, 56, 62],
+    effect: '3,0',
+    displayName: 'Cure Disease',
+    textureRecord: 35,
+    settings: { chanceMod: 10 },
+  }),
+  Object.freeze({
+    name: 'purification',
+    price: 500,
+    ingredients: [3, 31, 39, 49, 56, 60, 62, 63],
+    effect: '3,0',
+    displayName: 'Purification',
+    textureRecord: 35,
+    settings: {
+      chanceMod: 10,
+      magnitudeBaseLow: 5,
+      magnitudeBaseHigh: 5,
+      magnitudeLevelBase: 19,
+      magnitudeLevelHigh: 19,
+    },
+    secondary: ['10,8', '3,1'],
+  }), // HealHealth (10,8), CurePoison (3,1) - CurePoison.cs:28
 ]);
 
 // ---- enemyAppearance (:697-773) -----------------------------------------------
@@ -214,37 +284,74 @@ export const RR_POTION_RECIPES = Object.freeze([
  *  does the port at install, keeping the originals to restore. */
 export const RR_ENEMY_APPEARANCE = Object.freeze({
   [MOBILE_TYPES.Sorcerer]: Object.freeze({
-    maleTexture: 476, femaleTexture: 475, hasRangedAttack1: false, castsMagic: true,
-    primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, 5], chanceForAttack2: 33, primaryAttackAnimFrames2: [5, 4, 3, -1, 2, 1, 0],
-    chanceForAttack3: 33, primaryAttackAnimFrames3: [0, 1, -1, 2, 2, 1, 0], hasSpellAnimation: true, spellAnimFrames: [0, 1, 2, 3, 3],
+    maleTexture: 476,
+    femaleTexture: 475,
+    hasRangedAttack1: false,
+    castsMagic: true,
+    primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, 5],
+    chanceForAttack2: 33,
+    primaryAttackAnimFrames2: [5, 4, 3, -1, 2, 1, 0],
+    chanceForAttack3: 33,
+    primaryAttackAnimFrames3: [0, 1, -1, 2, 2, 1, 0],
+    hasSpellAnimation: true,
+    spellAnimFrames: [0, 1, 2, 3, 3],
   }),
   [MOBILE_TYPES.Bard]: Object.freeze({
-    maleTexture: 482, femaleTexture: 481, primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, -1, 5],
-    chanceForAttack2: 50, primaryAttackAnimFrames2: [3, 4, -1, 5, 0], chanceForAttack3: 0,
+    maleTexture: 482,
+    femaleTexture: 481,
+    primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, -1, 5],
+    chanceForAttack2: 50,
+    primaryAttackAnimFrames2: [3, 4, -1, 5, 0],
+    chanceForAttack3: 0,
   }),
   [MOBILE_TYPES.Rogue]: Object.freeze({
-    maleTexture: 488, femaleTexture: 487, primaryAttackAnimFrames: [0, 0, 1, -1, 2, 2, 1, 0],
-    primaryAttackAnimFrames2: [0, 1, -1, 2, 3, 4, 5], primaryAttackAnimFrames3: [5, 5, 3, -1, 2, 1, 0],
+    maleTexture: 488,
+    femaleTexture: 487,
+    primaryAttackAnimFrames: [0, 0, 1, -1, 2, 2, 1, 0],
+    primaryAttackAnimFrames2: [0, 1, -1, 2, 3, 4, 5],
+    primaryAttackAnimFrames3: [5, 5, 3, -1, 2, 1, 0],
   }),
   [MOBILE_TYPES.Archer]: Object.freeze({
-    maleTexture: 480, femaleTexture: 479, primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, -1, 5, 0],
-    chanceForAttack2: 33, primaryAttackAnimFrames2: [4, 4, -1, 5, 0, 0], chanceForAttack3: 33, primaryAttackAnimFrames3: [4, -1, 5, 0, 0, 1, -1, 2, 3, 4, -1, 5, 0],
+    maleTexture: 480,
+    femaleTexture: 479,
+    primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, -1, 5, 0],
+    chanceForAttack2: 33,
+    primaryAttackAnimFrames2: [4, 4, -1, 5, 0, 0],
+    chanceForAttack3: 33,
+    primaryAttackAnimFrames3: [4, -1, 5, 0, 0, 1, -1, 2, 3, 4, -1, 5, 0],
   }),
   [MOBILE_TYPES.Ranger]: Object.freeze({
-    maleTexture: 480, femaleTexture: 479, primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, -1, 5, 0],
-    chanceForAttack2: 33, primaryAttackAnimFrames2: [4, 4, -1, 5, 0, 0], chanceForAttack3: 33, primaryAttackAnimFrames3: [4, -1, 5, 0, 0, 1, -1, 2, 3, 4, -1, 5, 0],
+    maleTexture: 480,
+    femaleTexture: 479,
+    primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, -1, 5, 0],
+    chanceForAttack2: 33,
+    primaryAttackAnimFrames2: [4, 4, -1, 5, 0, 0],
+    chanceForAttack3: 33,
+    primaryAttackAnimFrames3: [4, -1, 5, 0, 0, 1, -1, 2, 3, 4, -1, 5, 0],
   }),
   [MOBILE_TYPES.Barbarian]: Object.freeze({
-    maleTexture: 482, femaleTexture: 481, primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, -1, 5],
-    chanceForAttack2: 50, primaryAttackAnimFrames2: [3, 4, -1, 5, 0], chanceForAttack3: 0,
+    maleTexture: 482,
+    femaleTexture: 481,
+    primaryAttackAnimFrames: [0, 1, -1, 2, 3, 4, -1, 5],
+    chanceForAttack2: 50,
+    primaryAttackAnimFrames2: [3, 4, -1, 5, 0],
+    chanceForAttack3: 0,
   }),
   [MOBILE_TYPES.Warrior]: Object.freeze({
-    maleTexture: 478, femaleTexture: 477, primaryAttackAnimFrames: [0, 1, 2, -1, 3, 4, 5],
-    chanceForAttack2: 50, primaryAttackAnimFrames2: [4, 5, -1, 3, 2, 1, 0], chanceForAttack3: 0,
+    maleTexture: 478,
+    femaleTexture: 477,
+    primaryAttackAnimFrames: [0, 1, 2, -1, 3, 4, 5],
+    chanceForAttack2: 50,
+    primaryAttackAnimFrames2: [4, 5, -1, 3, 2, 1, 0],
+    chanceForAttack3: 0,
   }),
   [MOBILE_TYPES.Knight]: Object.freeze({
-    maleTexture: 478, femaleTexture: 477, primaryAttackAnimFrames: [0, 1, 2, -1, 3, 4, 5],
-    chanceForAttack2: 50, primaryAttackAnimFrames2: [4, 5, -1, 3, 2, 1, 0], chanceForAttack3: 0,
+    maleTexture: 478,
+    femaleTexture: 477,
+    primaryAttackAnimFrames: [0, 1, 2, -1, 3, 4, 5],
+    chanceForAttack2: 50,
+    primaryAttackAnimFrames2: [4, 5, -1, 3, 2, 1, 0],
+    chanceForAttack3: 0,
   }),
 });
 const _appearanceOriginals = new Map();
@@ -256,7 +363,11 @@ export function applyEnemyAppearance(basics) {
   let n = 0;
   for (const [id, row] of Object.entries(RR_ENEMY_APPEARANCE)) {
     const target = basics?.[id];
-    if (!target || Object.isFrozen(target)) { if (target) console.warn(`[rr] enemyAppearance: ENEMY_BASICS row ${id} is frozen - the mod's appearance cannot be written`); continue; }   // AUDIT-RR F10
+    if (!target || Object.isFrozen(target)) {
+      if (target)
+        console.warn(`[rr] enemyAppearance: ENEMY_BASICS row ${id} is frozen - the mod's appearance cannot be written`);
+      continue;
+    } // AUDIT-RR F10
     const saved = {};
     for (const k of Object.keys(row)) saved[k] = Object.hasOwn(target, k) ? target[k] : undefined;
     _appearanceOriginals.set(id, saved);
@@ -271,7 +382,10 @@ export function revertEnemyAppearance(basics) {
   for (const [id, saved] of _appearanceOriginals) {
     const target = basics?.[id];
     if (!target) continue;
-    for (const [k, v] of Object.entries(saved)) { if (v === undefined) delete target[k]; else target[k] = v; }
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete target[k];
+      else target[k] = v;
+    }
   }
   _appearanceOriginals.clear();
 }
@@ -287,7 +401,10 @@ export const enemyAppearanceApplied = () => _appearanceOriginals.size > 0;
 export const RR_UNDERWORLD = Object.freeze({
   ThievesGuild: Object.freeze({
     joinReputationFloor: 2,
-    squad: (level) => [{ mobileType: MOBILE_TYPES.Rogue, count: 4 + Math.trunc(level / 1.5), minDistance: 1, maxDistance: 8 }, { mobileType: MOBILE_TYPES.Thief, count: 4 + Math.trunc(level / 1.5), minDistance: 1, maxDistance: 4 }],
+    squad: (level) => [
+      { mobileType: MOBILE_TYPES.Rogue, count: 4 + Math.trunc(level / 1.5), minDistance: 1, maxDistance: 8 },
+      { mobileType: MOBILE_TYPES.Thief, count: 4 + Math.trunc(level / 1.5), minDistance: 1, maxDistance: 4 },
+    ],
     // TokensExpulsion (ThievesGuildRR.cs:24-37): five centred lines, a
     // blank one before the last; %pcn is the player's name, expanded
     // by the box (MacroHelper)
@@ -302,7 +419,10 @@ export const RR_UNDERWORLD = Object.freeze({
   }),
   DarkBrotherhood: Object.freeze({
     joinReputationFloor: 2,
-    squad: (level) => [{ mobileType: MOBILE_TYPES.Assassin, count: 4 + Math.trunc(level / 2), minDistance: 1, maxDistance: 5 }, { mobileType: MOBILE_TYPES.Nightblade, count: 4 + Math.trunc(level / 2), minDistance: 4, maxDistance: 16 }],
+    squad: (level) => [
+      { mobileType: MOBILE_TYPES.Assassin, count: 4 + Math.trunc(level / 2), minDistance: 1, maxDistance: 5 },
+      { mobileType: MOBILE_TYPES.Nightblade, count: 4 + Math.trunc(level / 2), minDistance: 4, maxDistance: 16 },
+    ],
     // TokensExpulsion (DarkBrotherhoodRR.cs:24-35): four centred lines, a
     // blank one after the second
     expulsion: Object.freeze([
@@ -314,7 +434,8 @@ export const RR_UNDERWORLD = Object.freeze({
     ]),
   }),
 });
-export const rrUnderworldRule = (guildName) => (rrModule('underworldExpulsion') ? RR_UNDERWORLD[guildName] ?? null : null);
+export const rrUnderworldRule = (guildName) =>
+  rrModule('underworldExpulsion') ? (RR_UNDERWORLD[guildName] ?? null) : null;
 
 // ---- fightersTeachHandToHand (FightersGuildRR.cs) - RETIRED -------------------------
 // FGH2H-R (2026-09-24, Mac: "retire it"): FGH2H put HandToHand in the Fighters Guild's
@@ -339,12 +460,13 @@ export const bedSleepingOn = () => rrModule('bedSleeping');
 
 // ---- EnhancedRiding.cs -------------------------------------------------
 export const RR_RIDING = Object.freeze({
-  lookPitchRatio: 2.6,      // LookPitchRatio (:17)
-  extX: 0.06, extW: 0.78,   // the neck band's texcoords (:18-19)
-  samples: 16,              // the terrain angle ring (:22)
-  pitchMaxOffset: 18,       // `PitchMaxLimit = terrainAngle + 18` (:251)
-  chargeKnockback: 100,     // `KnockbackSpeed = 100` (:199)
-  chargeFatigueMultiplier: 15,   // `DecreaseFatigue(DefaultFatigueLoss * 15)` (:205)
+  lookPitchRatio: 2.6, // LookPitchRatio (:17)
+  extX: 0.06,
+  extW: 0.78, // the neck band's texcoords (:18-19)
+  samples: 16, // the terrain angle ring (:22)
+  pitchMaxOffset: 18, // `PitchMaxLimit = terrainAngle + 18` (:251)
+  chargeKnockback: 100, // `KnockbackSpeed = 100` (:199)
+  chargeFatigueMultiplier: 15, // `DecreaseFatigue(DefaultFatigueLoss * 15)` (:205)
 });
 export const rrRidingOn = () => rrEnabled() && rrSetting('EnhancedRiding.enhancedRiding') === true;
 export const rrRidingSetting = (key) => rrSetting(`EnhancedRiding.${key}`);
@@ -377,7 +499,8 @@ export function rrTerrainFollow(samples, softenFollow = 0, following = true) {
 /** `yAdj = (Pitch - terrainAngle - 10) * LookPitchRatio` (:252) - the
  *  mount's sprite rises and falls with the look; `pitchDegrees` is
  *  PlayerMouseLook.Pitch (up negative in DFU's convention). */
-export const rrRidingYAdj = (pitchDegrees, terrainAngle) => (pitchDegrees - terrainAngle - 10) * RR_RIDING.lookPitchRatio;
+export const rrRidingYAdj = (pitchDegrees, terrainAngle) =>
+  (pitchDegrees - terrainAngle - 10) * RR_RIDING.lookPitchRatio;
 /** OnGUI's neck band (:266-278): when the sprite's bottom lifts off the
  *  screen bottom, the gap is filled with a strip of the riding texture
  *  itself (no neck CFA imported here: TryImportCifRci answers nothing
@@ -407,21 +530,28 @@ export function rrChargeDamage({ minBase = 1, maxBase = 1, agility = 50, willpow
 export function rrTrampleOutcome({ isGuard = false, female = false } = {}) {
   return isGuard
     ? { chargeGuard: true, spawnGuards: false, blood: false, clip: null, crime: 'Assault', remove: true }
-    : { chargeGuard: false, spawnGuards: true, blood: true, clip: female ? 'BretonFemalePain3' : 'BretonMalePain3', crime: 'Assault', remove: true };
+    : {
+        chargeGuard: false,
+        spawnGuards: true,
+        blood: true,
+        clip: female ? 'BretonFemalePain3' : 'BretonMalePain3',
+        crime: 'Assault',
+        remove: true,
+      };
 }
 
 // ---- GuildServiceTrainingRR.cs ---------------------------------------------
-export const RR_WEEK_BUTTON = 21;   // `weekButton = (MessageBoxButtons)21` - the mod's own BUTTONS.RCI record ("5 Days")
-export const RR_INTENSIVE_DAYS = 4;          // `RaiseTime(SecondsPerDay * 4)` then the fifth session
-export const RR_INTENSIVE_SKILL_POINTS = 4;  // `SetPermanentSkillValue(skill, value + 4)`
+export const RR_WEEK_BUTTON = 21; // `weekButton = (MessageBoxButtons)21` - the mod's own BUTTONS.RCI record ("5 Days")
+export const RR_INTENSIVE_DAYS = 4; // `RaiseTime(SecondsPerDay * 4)` then the fifth session
+export const RR_INTENSIVE_SKILL_POINTS = 4; // `SetPermanentSkillValue(skill, value + 4)`
 export const rrRefinedTrainingOn = () => rrEnabled() && rrSetting('RefinedTraining.refinedTraining') === true;
 /** TrainingSkillPicker_OnItemPicked (:62-66): `trainingCost -=
  *  (int)(trainingCost * skillOfMax / 2)` with `skillOfMax = 1 - skill /
  *  max` under variableTrainingPrice - a raw skill trains for half. */
 export function rrTrainingCost(baseCost, skillValue, trainingMax, variable = true) {
   if (!variable || !(trainingMax > 0)) return baseCost;
-  const skillOfMax = Math.fround(1 - Math.fround(skillValue / trainingMax));   // AUDIT-RR F26: float32, as the C#'s `(float)skillValue / trainingMax`
-  return baseCost - Math.trunc(Math.fround(baseCost * skillOfMax / 2));
+  const skillOfMax = Math.fround(1 - Math.fround(skillValue / trainingMax)); // AUDIT-RR F26: float32, as the C#'s `(float)skillValue / trainingMax`
+  return baseCost - Math.trunc(Math.fround((baseCost * skillOfMax) / 2));
 }
 /** `intensiveCost = (trainingCost + (Level * 8) + 72) * 5` (:71). */
 export const rrIntensiveCost = (trainingCost, level) => (trainingCost + level * 8 + 72) * 5;

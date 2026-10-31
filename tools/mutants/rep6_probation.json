@@ -56,8 +56,8 @@
   {
     "name": "REP6-the-tag-dropped",
     "file": "src/systems/affiliations.js",
-    "old": "      probation: !!membership.probation,",
-    "new": "      probation: false,",
+    "old": "      probation: !!membership.probation, // REP6: on probation - the next review below -10 expels",
+    "new": "      probation: false, // REP6: on probation - the next review below -10 expels",
     "tests": [
       "test/systems/guild/rep6_probation.test.js"
     ]

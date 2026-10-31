@@ -36,7 +36,10 @@ export function foundSalePercentage(item) {
   const current = item?.currentCondition ?? 0;
   if (!Number.isInteger(found) || !(found < current)) return conditionPercentage(item);
   const own = Math.min(Number.isInteger(item.selfMended) ? item.selfMended : 0, current - found);
-  return conditionPercentage({ currentCondition: found + Math.trunc(own * MEND_SALE_SHARE), maxCondition: item.maxCondition });
+  return conditionPercentage({
+    currentCondition: found + Math.trunc(own * MEND_SALE_SHARE),
+    maxCondition: item.maxCondition,
+  });
 }
 
 /**
@@ -63,7 +66,7 @@ export function spendOwnMends(item, at = item?.currentCondition) {
  * @param {any} item @param {number} from the condition before the mend @returns {any} the item */
 export function creditOwnMend(item, from) {
   if (!isFoundMarked(item)) return item;
-  spendOwnMends(item, from);   // RPT1026-LEDGERLAW: what wear took since the last mend is spent, never credited again
+  spendOwnMends(item, from); // RPT1026-LEDGERLAW: what wear took since the last mend is spent, never credited again
   const above = (item.currentCondition ?? 0) - Math.max(from ?? 0, item.foundCondition);
   if (above > 0) {
     const room = Math.max(0, (item.maxCondition ?? 0) - item.foundCondition);
@@ -97,8 +100,12 @@ const markedStack = (/** @type {any} */ it) => it?.group === 'Books';
 /** A found book stacks only with its like - the same condition, mark and own mends - so a worn found copy joined to a
  *  whole one is not sold whole (AUDIT MEND-THIRD L1-5, L3-3); every other stack as before.
  * @param {any} a @param {any} b @returns {boolean} */
-export const sameFoundMark = (a, b) => !markedStack(a) || (!isFoundMarked(a) && !isFoundMarked(b))
-  || (a.foundCondition === b.foundCondition && a.currentCondition === b.currentCondition && (a.selfMended ?? 0) === (b.selfMended ?? 0));
+export const sameFoundMark = (a, b) =>
+  !markedStack(a) ||
+  (!isFoundMarked(a) && !isFoundMarked(b)) ||
+  (a.foundCondition === b.foundCondition &&
+    a.currentCondition === b.currentCondition &&
+    (a.selfMended ?? 0) === (b.selfMended ?? 0));
 
 /** What a found book's split-off part keeps of its stack: its condition, maximum, mark and own mends (DFU's split mints
  *  the part whole, which handed a worn found book over whole - AUDIT MEND-THIRD L3-3). Every other stack keeps DFU's mint.
@@ -114,6 +121,7 @@ export function carryFoundMark(stack, picked) {
 /** Mark a piece handed over worn as found at its condition (a foe's worn kit, a new character's).
  * @param {any} item @returns {any} the item */
 export function markFound(item) {
-  if (Number.isFinite(item?.currentCondition) && (item.maxCondition ?? 0) > 0) item.foundCondition = Math.max(0, Math.trunc(item.currentCondition));
+  if (Number.isFinite(item?.currentCondition) && (item.maxCondition ?? 0) > 0)
+    item.foundCondition = Math.max(0, Math.trunc(item.currentCondition));
   return item;
 }

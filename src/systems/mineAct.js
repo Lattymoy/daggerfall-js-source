@@ -41,7 +41,11 @@ const MINE_REST_S = MINE_ACT.swingS * (1 - MELEE_HIT_SHARE);
 
 /** The five points on a node's face, degrees from its centre ([yaw, pitch]) - inside MINE_ACT's box. */
 export const MINE_POINTS = Object.freeze([
-  Object.freeze([0, 0]), Object.freeze([-5, 2.5]), Object.freeze([5, 2.5]), Object.freeze([-4, -2.5]), Object.freeze([4, -2.5]),
+  Object.freeze([0, 0]),
+  Object.freeze([-5, 2.5]),
+  Object.freeze([5, 2.5]),
+  Object.freeze([-4, -2.5]),
+  Object.freeze([4, -2.5]),
 ]);
 /** How far the crosshair is from a point on the face, degrees. @param {{ yaw: number, pitch: number }|null} aim
  *  @param {readonly number[]} point */
@@ -55,18 +59,33 @@ export function createMineAct({ tier, band = 1, master = false, gentle = false, 
   const glintS = (master ? MINE_ACT.masterGlintS : MINE_ACT.glintS) * band;
   const need = strikesFor(tier);
   const st = {
-    kind: 'mine', need, points: 0, strikes: 0, glints: 0, done: false, cancelled: false, gentle,
+    kind: 'mine',
+    need,
+    points: 0,
+    strikes: 0,
+    glints: 0,
+    done: false,
+    cancelled: false,
+    gentle,
     /** the glinting point, how long it has left, and the swing under way; the blows landed */
-    glint: -1, glintLeft: 0, glintS, swing: 0, landed: 0,
+    glint: -1,
+    glintLeft: 0,
+    glintS,
+    swing: 0,
+    landed: 0,
     /** the last strike: whether it was on the glint (the meter flashes it) */
     last: /** @type {null|'glint'|'plain'} */ (null),
     /** where the crosshair was on the face this frame - the meter's cursor */
     aim: /** @type {{ yaw: number, pitch: number }|null} */ (null),
   };
   const moveGlint = () => {
-    if (gentle) { st.glint = -1; return; }
+    if (gentle) {
+      st.glint = -1;
+      return;
+    }
     let g;
-    do g = Math.floor(rng() * MINE_POINTS.length); while (g === st.glint && MINE_POINTS.length > 1);
+    do g = Math.floor(rng() * MINE_POINTS.length);
+    while (g === st.glint && MINE_POINTS.length > 1);
     st.glint = g;
     st.glintLeft = glintS;
   };
@@ -75,11 +94,17 @@ export function createMineAct({ tier, band = 1, master = false, gentle = false, 
   return {
     state: st,
     /** How far the act has come, 0 to 1 - the strikes' count against the node's. */
-    get progress() { return Math.min(1, st.points / st.need); },
+    get progress() {
+      return Math.min(1, st.points / st.need);
+    },
     /** The swing's phase, 0 (none) to 1 (just struck) - the hand draws the strike's frames by it. */
-    get swing() { return st.swing > 0 ? st.swing / MINE_ACT.swingS : 0; },
+    get swing() {
+      return st.swing > 0 ? st.swing / MINE_ACT.swingS : 0;
+    },
     /** GATHER-FEEL: seconds until the swing under way lands its blow - 0 once it has, or with none under way. */
-    get landsIn() { return Math.max(0, st.swing - MINE_REST_S); },
+    get landsIn() {
+      return Math.max(0, st.swing - MINE_REST_S);
+    },
     /**
      * One frame. `attack` - attack pressed this frame (an edge); `aim` - the crosshair's bearing from the node's centre,
      * degrees `{ yaw, pitch }` (yaw to the right, pitch up).
@@ -87,11 +112,14 @@ export function createMineAct({ tier, band = 1, master = false, gentle = false, 
      */
     tick(dt, { attack = false, aim = null } = {}) {
       const aloft = st.swing > MINE_REST_S;
-      st.swing = Math.max(0, st.swing - dt);   // GATHER-FEEL: past the end too - the last swing runs out, its blow lands
-      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;   // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing
+      st.swing = Math.max(0, st.swing - dt); // GATHER-FEEL: past the end too - the last swing runs out, its blow lands
+      if (aloft && !(st.swing > MINE_REST_S)) st.landed++; // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing
       if (st.done || st.cancelled) return;
       st.aim = aim;
-      if (!gentle) { st.glintLeft -= dt; if (st.glintLeft <= 0) moveGlint(); }
+      if (!gentle) {
+        st.glintLeft -= dt;
+        if (st.glintLeft <= 0) moveGlint();
+      }
       if (!attack || st.swing > 0) return;
       st.swing = MINE_ACT.swingS;
       const onGlint = !gentle && st.glint >= 0 && aimOff(aim, MINE_POINTS[st.glint]) <= MINE_ACT.radiusDeg;
@@ -99,11 +127,16 @@ export function createMineAct({ tier, band = 1, master = false, gentle = false, 
       st.points += onGlint ? 2 : 1;
       if (onGlint) st.glints++;
       st.last = onGlint ? 'glint' : 'plain';
-      if (st.points >= st.need) { st.done = true; return; }
+      if (st.points >= st.need) {
+        st.done = true;
+        return;
+      }
       moveGlint();
     },
     /** Esc: ended, nothing lost. */
-    cancel() { st.cancelled = true; },
+    cancel() {
+      st.cancelled = true;
+    },
     /** The act's report, once it is done: `{ strikes, glints, clean }` - clean when every strike was on the glint. */
     report() {
       if (!st.done) return null;

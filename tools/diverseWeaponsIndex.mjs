@@ -31,13 +31,28 @@ export const MANIFEST = 'vendor/diverse-weapons/diverse-weapons.dfmod.json';
 export const INDEX_FILE = 'src/combat/diverseWeapons/diverseWeaponsIndex.js';
 export const DERIVED = 'vendor/diverse-weapons/derived-art.json';
 /** MetalTypes' order - itemInfo.js MATERIAL_NAMES, restated so the tool needs no src import. */
-export const METALS = Object.freeze(['Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']);
+export const METALS = Object.freeze([
+  'Iron',
+  'Steel',
+  'Silver',
+  'Elven',
+  'Dwarven',
+  'Mithril',
+  'Adamantium',
+  'Ebony',
+  'Orcish',
+  'Daedric',
+]);
 export const BARE_BIT = 1 << METALS.length;
 
 /** The manifest's PNG basenames, deduplicated (the bundle names 310 twice). */
 export function manifestSpriteNames(manifestJson) {
   const files = JSON.parse(manifestJson).Files ?? [];
-  return [...new Set(files.filter((f) => /\.png$/i.test(f)).map((f) => f.slice(f.lastIndexOf('/') + 1).replace(/\.png$/i, '')))];
+  return [
+    ...new Set(
+      files.filter((f) => /\.png$/i.test(f)).map((f) => f.slice(f.lastIndexOf('/') + 1).replace(/\.png$/i, '')),
+    ),
+  ];
 }
 
 /** The names the listing rebuilds, sorted. */
@@ -50,7 +65,10 @@ export function encodeIndex(names) {
   for (const n of names) {
     const m = /^(.*?_\d+-\d+)(?:_([A-Za-z]+))?$/.exec(n);
     const bit = !m ? -1 : m[2] === undefined ? BARE_BIT : METALS.includes(m[2]) ? 1 << METALS.indexOf(m[2]) : -1;
-    if (bit < 0) { odd.push(n); continue; }
+    if (bit < 0) {
+      odd.push(n);
+      continue;
+    }
     stems.set(m[1], (stems.get(m[1]) ?? 0) | bit);
   }
   return { stems: new Map([...stems].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))), odd: odd.sort() };
@@ -79,11 +97,14 @@ if (isMain(import.meta.url)) {
   const json = readFileSync(join(ROOT, MANIFEST), 'utf8');
   const names = manifestSpriteNames(json);
   const index = encodeIndex(names);
-  const total = [...index.stems.values()].reduce((n, b) => n + b.toString(2).split('1').length - 1, 0) + index.odd.length;
+  const total =
+    [...index.stems.values()].reduce((n, b) => n + b.toString(2).split('1').length - 1, 0) + index.odd.length;
   if (total !== names.length) throw new Error(`the index holds ${total} names, the manifest ${names.length}`);
   const derived = existsSync(join(ROOT, DERIVED)) ? derivedSpriteNames(readFileSync(join(ROOT, DERIVED), 'utf8')) : [];
   const strangers = derived.filter((n) => !names.includes(n));
   if (strangers.length) throw new Error(`${DERIVED} names sprites the manifest does not: ${strangers.join(', ')}`);
   writeFileSync(join(ROOT, INDEX_FILE), renderIndex(index, JSON.parse(json).ModVersion, derived));
-  console.log(`${INDEX_FILE}: ${index.stems.size} stems, ${index.odd.length} odd, ${names.length} names, ${derived.length} rebuilt`);
+  console.log(
+    `${INDEX_FILE}: ${index.stems.size} stems, ${index.odd.length} odd, ${names.length} names, ${derived.length} rebuilt`,
+  );
 }

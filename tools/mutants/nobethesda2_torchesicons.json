@@ -20,7 +20,7 @@
   {
     "name": "NB2-the-torch-probe-admits-no-spec",
     "file": "src/systems/handheldTorches.js",
-    "old": "export const inTorchSet = (table, file) => derivedTorchSpec(file.replace(/\\.png$/, '')) != null || inVendoredSet(table, file);",
+    "old": "export const inTorchSet = (table, file) =>\n  derivedTorchSpec(file.replace(/\\.png$/, '')) != null || inVendoredSet(table, file);",
     "new": "export const inTorchSet = (table, file) => inVendoredSet(table, file);",
     "tests": [
       "test/systems/nobethesda2_torchesicons.test.js",

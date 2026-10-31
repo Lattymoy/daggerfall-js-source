@@ -12,8 +12,8 @@
   {
     "name": "OW4-J1-flood-not-filled",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "        if (!mine[n] && peakAt(nx, ny)) { mine[n] = 1; fill.push(n); }",
-    "new": "        if (false) { mine[n] = 1; fill.push(n); }",
+    "old": "        if (!mine[n] && peakAt(nx, ny)) {",
+    "new": "        if (false) {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "MOUNTAINS-WALKABLE-ground-names-peaks",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const peak = (_x, _y) => false;   // MOUNTAINS WALKABLE: no pixel is a peak, so \"the mountains cannot be crossed\" never fires",
+    "old": "  const peak = (_x, _y) => false; // MOUNTAINS WALKABLE: no pixel is a peak, so \"the mountains cannot be crossed\" never fires",
     "new": "  const peak = (x, y) => climate[y * width + x] === TV_MOUNTAIN_CLIMATE;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js",
@@ -44,8 +44,8 @@
   {
     "name": "MOUNTAINS-WALKABLE-ground-refuses",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by);",
-    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) => ghostfenceShuts(bx, by) || (!leaving && climateOf(bx, by) === TV_MOUNTAIN_CLIMATE);",
+    "old": "  const openBlocked = (_ax, _ay, bx, by) => ghostfenceShuts(bx, by); // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not",
+    "new": "  const openBlocked = (ax, ay, bx, by, leaving = false) =>\n    ghostfenceShuts(bx, by) || (!leaving && climateOf(bx, by) === TV_MOUNTAIN_CLIMATE); // MOUNTAINS WALKABLE; AUDIT RED-MOUNTAIN G2: the fence's line is not",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js",
       "test/systems/travel/tv6_dungeons.test.js",
@@ -86,8 +86,8 @@
   {
     "name": "OW4-J3-rung-repeated",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (key === box) continue;\n",
-    "new": "",
+    "old": "    if (key === box) continue;\n    // AUDIT OW4 J3: a pick the first box could not route asks the land's pieces (routeGround `apart`) before any wider",
+    "new": "    // AUDIT OW4 J3: a pick the first box could not route asks the land's pieces (routeGround `apart`) before any wider",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -96,8 +96,8 @@
   {
     "name": "OW4-J3-pieces-never-asked",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    if (box && !best && !asked && apart && !sea) { asked = true; if (apart(from, to, { roads, tracks })) return null; }",
-    "new": "    if (false) { asked = true; if (apart(from, to, { roads, tracks })) return null; }",
+    "old": "    if (box && !best && !asked && apart && !sea) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -116,8 +116,8 @@
   {
     "name": "OW4-J3-unentered-pixels-join",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "          if (!((entered[a] && (out[a] & bit)) || (entered[b] && (out[b] & BACK_BIT[bit])))) continue;",
-    "new": "          if (!((out[a] & bit) || (out[b] & BACK_BIT[bit]))) continue;",
+    "old": "          if (!((entered[a] && out[a] & bit) || (entered[b] && out[b] & BACK_BIT[bit]))) continue;",
+    "new": "          if (!(out[a] & bit || out[b] & BACK_BIT[bit])) continue;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "OW4-J6-mwview-no-up",
     "file": "src/player/mwView.js",
-    "old": "grow: face?.grow > 1 ? face.grow : 1, up: face?.up ?? null, horse });",
-    "new": "grow: face?.grow > 1 ? face.grow : 1, horse });",
+    "old": "  return fpArm.drawThird(canvas, {\n    proj,\n    view,\n    eye,\n    feet,\n    yaw,\n    grow: face?.grow > 1 ? face.grow : 1,\n    up: face?.up ?? null,\n    horse,\n  });",
+    "new": "  return fpArm.drawThird(canvas, { proj, view, eye, feet, yaw, grow: face?.grow > 1 ? face.grow : 1, horse });",
     "tests": [
       "test/render/prbow1_bow.test.js",
       "test/formats/morrowind/prbow1b_followups.test.js"

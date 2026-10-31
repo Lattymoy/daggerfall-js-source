@@ -843,7 +843,7 @@ that was a claim once and is a pointer at a stranger now.
 - **`src/world/wagonModels.js:"FLAGGED: the Small Cart has no bench"`** - the Small Cart's driver in the saddle.
   *Mac's choice: the cart has no bench, so RIDE-POV keeps the Morrowind body in the head on it. The day it has one,
   the sentence goes.*
-- **`src/player/mwView.js:"FLAGGED: Eye Of The Beholder has no sitting art"`** - the sprite lane's driver standing.
+- **`src/player/mwView.js:"FLAGGED: Eye Of The"`** - the sprite lane's driver standing.
   *The day the lane has a sitting picture, the sentence goes.*
 - **`src/scenes/horseCartPool.js:"FLAGGED: a peer's word does not say how many horses they own"`** - another
   player's parked pair. *The relay's word carries no horse count (a new field is a relay version); the day it does,
@@ -853,11 +853,11 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by CRAFT-WRITS (2026-10-22).**
 
-- **`src/scenes/craftWritHost.js:"FLAGGED: the fixed-city bench never goes online"`** - the `?exterior` bench's crafting
+- **`src/scenes/craftWritHost.js:"scenes/exterior.js -"`** - the `?exterior` bench's crafting
   writs. *`06-Systems/Professions-Arc.md` section 49: a realm character's crafting writs are the Notice Board's Work tab
   in the streaming host; the fixed-city bench never goes online, so it posts none, as it posts no Court writ. The day it
   goes online, the sentence goes.*
-- **`src/scenes/soundscapeHost.js:"FLAGGED: the fixed-city bench stands no sea, no boats and no streamed shore"`** - the
+- **`src/scenes/soundscapeHost.js:"scenes/exterior.js -"`** - the
   `?exterior` bench's soundscape. *`08-Audio/Audio.md` SOUNDSCAPE: the deck's air, the sea's songs, the surf and the
   town's and the wild's air are the streaming host's; the fixed-city bench stands no sea, no boats and no streamed shore,
   and its ambience is DFU's. The day it streams a shore, the sentence goes.*
@@ -878,7 +878,7 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by TESA-LANDS (2026-10-27).**
 
-- **`src/scenes/landPropsHost.js:"FLAGGED: none stands the wilderness past the Bay the landmarks stand in."`** - the three
+- **`src/scenes/landPropsHost.js:"FLAGGED: none stands"`** - the three
   hosts that stand no landmark of the lands past the Bay. *`03-World/Tamriel-Lands.md`: the parasols, spires, Hists,
   reeds, vines and groves stand in the streaming host, whose wilderness the lands past the Bay are; the fixed city, the
   interiors and the dungeons stand none of it. The day one stands wilderness past the Bay, the sentence goes.*
@@ -897,7 +897,7 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by WARDEN1 (2026-10-10).**
 
-- **`src/scenes/wagon/wagonWardenHost.js:"FLAGGED: the single-town bench runs no town watch"`** - the `?exterior` bench's watch.
+- **`src/scenes/wagon/wagonWardenHost.js:"scenes/exterior.js -"`** - the `?exterior` bench's watch.
   *`06-Systems/Wagon-Warden.md`: a wagon parked too long on a town's road, or past its fourth, is thrown out of town in
   the streaming host; the single-town bench stamps no wagon and throws none. The day it runs the watch, the sentence
   goes.*
@@ -924,10 +924,10 @@ that was a claim once and is a pointer at a stranger now.
 
 **Recorded by RAID5 (2026-10-25).**
 
-- **`src/scenes/raidSitesHost.js:"FLAGGED: the fixed-city bench runs no raid"`** - the `?exterior` bench's town raids.
+- **`src/scenes/raidSitesHost.js:"scenes/exterior.js -"`** - the `?exterior` bench's town raids.
   *`03-World/Raiding-Parties.md` RAID5: a raid's kinds stand at a town's square and along its streets, which the streaming
   host's built towns hold; the fixed-city bench runs no raid at all (RAID1). The day it runs one, the sentence goes.*
-- **`src/scenes/raidSitesHost.js:"FLAGGED: a raid is the street's, and stands nothing indoors"`** - the interiors' and the
+- **`src/scenes/raidSitesHost.js:"scenes/worldModes.js and"`** - the interiors' and the
   dungeons' raids. *`03-World/Raiding-Parties.md` RAID5: a raid is the street's (RAID1), so neither indoor host is handed a
   town's sites. The day a raid follows a player indoors, the sentence goes.*
 

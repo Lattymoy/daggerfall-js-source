@@ -25,7 +25,9 @@ export function createShopRows({ say, mountInterior, mountService }) {
   function of(/** @type {unknown} */ buildingType) {
     const wardrobe = wardrobeCounter.row(buildingType);
     return {
-      ...(isShop(/** @type {number} */ (buildingType)) ? { portal: { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } } : {}),
+      ...(isShop(/** @type {number} */ (buildingType))
+        ? { portal: { label: PORTAL_TEXT.row, onBuy: () => portalCounter.ask() } }
+        : {}),
       ...(wardrobe ? { wardrobe } : {}),
     };
   }

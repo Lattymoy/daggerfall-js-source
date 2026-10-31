@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-FULLER-LW-A7-metby-window-start",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "if (stays[m].t0 < x.t0 - longest) lo = m + 1; else hi = m;",
-    "new": "if (stays[m].t0 < x.t0) lo = m + 1; else hi = m;",
+    "old": "      if (stays[m].t0 < x.t0 - longest) lo = m + 1;",
+    "new": "      if (stays[m].t0 < x.t0) lo = m + 1;",
     "tests": [
       "test/systems/livingWorld/lwperf_fuller.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-FULLER-LW-A7-metby-window-end",
     "file": "src/systems/livingWorld/stir.js",
-    "old": "for (let i = lo; i < stays.length && stays[i].t0 < x.t1; i++)",
-    "new": "for (let i = lo; i < stays.length && stays[i].t0 < x.t0; i++)",
+    "old": "    for (let i = lo; i < stays.length && stays[i].t0 < x.t1; i++) if (meets(x, stays[i])) out.push(stays[i]);",
+    "new": "    for (let i = lo; i < stays.length && stays[i].t0 < x.t0; i++) if (meets(x, stays[i])) out.push(stays[i]);",
     "tests": [
       "test/systems/livingWorld/lwperf_fuller.test.js"
     ]

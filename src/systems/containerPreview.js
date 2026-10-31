@@ -27,7 +27,11 @@ import { needsRestock } from './shopStock.js';
  * opened - whatever list it holds is a roll that is no one's word (the scene cache's, an opener's before its Yes), so the
  * plaque names it and lists nothing, as it does one that has not been stocked.
  */
-export function containerPreviewItems(key, containers, { owned = false, shut = false, hall = false, today = 0, unborn = false } = {}) {
+export function containerPreviewItems(
+  key,
+  containers,
+  { owned = false, shut = false, hall = false, today = 0, unborn = false } = {},
+) {
   if (typeof key !== 'string' || !key.startsWith('container:')) return null;
   if (shut || hall || unborn) return null;
   const c = containers?.[Number(key.slice('container:'.length))];
@@ -71,8 +75,14 @@ export function createInteriorPeek({ containers, decor, owned, shut, hall, today
     if (typeof key !== 'string' || (!key.startsWith('container:') && !key.startsWith('decor:'))) return null;
     const inHall = !!hall();
     return interiorHeldPreview(key, {
-      containers: containers(), pieceOf: (id) => decor()?.pieceOf(id), itemsOf: (id) => decor()?.itemsOf(id),
-      owned: owned(), shut: shut(), hall: inHall, today: today(), unborn: !owned() && !!unborn(key),
+      containers: containers(),
+      pieceOf: (id) => decor()?.pieceOf(id),
+      itemsOf: (id) => decor()?.itemsOf(id),
+      owned: owned(),
+      shut: shut(),
+      hall: inHall,
+      today: today(),
+      unborn: !owned() && !!unborn(key),
     });
   };
 }

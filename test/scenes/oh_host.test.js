@@ -399,7 +399,7 @@ test('OH-C the pit\'s programs take their attributes where the buffers put them:
     const body = src.match(new RegExp(`const ${vs} = \`([^\`]*)\``))[1];
     assert.doesNotMatch(body, /^in /m, `${vs}: no input left to the linker`);
   }
-  assert.match(src, /gl\.vertexAttribPointer\(0, 3, gl\.FLOAT, false, 28, 0\);\n[^\n]*gl\.vertexAttribPointer\(1, 2, gl\.FLOAT, false, 28, 12\);\n[^\n]*gl\.vertexAttribPointer\(2, 2, gl\.FLOAT, false, 28, 20\);/, 'the stream\'s three, in that order');
+  assert.match(src, /gl\.vertexAttribPointer\(0, 3, gl\.FLOAT, false, 28, 0\);\n\s*gl\.enableVertexAttribArray\(1\);\n\s*gl\.vertexAttribPointer\(1, 2, gl\.FLOAT, false, 28, 12\);\n\s*gl\.enableVertexAttribArray\(2\);\n\s*gl\.vertexAttribPointer\(2, 2, gl\.FLOAT, false, 28, 20\);/, 'the stream\'s three, in that order');
 });
 
 // AUDIT OH-F A1/A3 (2026-09-26): LoadSettings is a callback DFU raises in any mode, and indoors every terrain is

@@ -2,8 +2,8 @@
   {
     "name": "CURE-ALL-the-old-lifes-buffs-ended-again",
     "file": "src/systems/lycanthropy.js",
-    "old": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n}",
-    "new": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n  for (const a of entity.activeEffects ?? []) if (a.kind !== 'disease' && a.kind !== 'poison') a.ended = true;\n}",
+    "old": "  fillVitalSigns(entity);\n}",
+    "new": "  fillVitalSigns(entity);\n  for (const a of entity.activeEffects ?? []) if (a.kind !== 'disease' && a.kind !== 'poison') a.ended = true;\n}",
     "tests": [
       "test/systems/fb1001_regen.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CURE-ALL-no-pool-filled",
     "file": "src/systems/lycanthropy.js",
-    "old": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n}",
-    "new": "  cureAllAttributes(entity);\n}",
+    "old": "  fillVitalSigns(entity);\n}",
+    "new": "}",
     "tests": [
       "test/systems/fb1001_regen.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "CURE-ALL-the-poison-left",
     "file": "src/systems/lycanthropy.js",
-    "old": "  cureAllPoisons(entity);\n  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n  fillVitalSigns(entity);",
-    "new": "  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n  fillVitalSigns(entity);",
+    "old": "  cureAllPoisons(entity);\n  cureAllDiseases(entity);",
+    "new": "  cureAllDiseases(entity);",
     "tests": [
       "test/systems/fb1001_regen.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "CURE-ALL-the-drain-left",
     "file": "src/systems/lycanthropy.js",
-    "old": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n}",
-    "new": "  fillVitalSigns(entity);\n}",
+    "old": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);",
+    "new": "  fillVitalSigns(entity);",
     "tests": [
       "test/systems/fb1001_regen.test.js"
     ]

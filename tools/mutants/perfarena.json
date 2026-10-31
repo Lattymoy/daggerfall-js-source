@@ -56,8 +56,8 @@
   {
     "name": "PERFARENA-air-offset",
     "file": "src/render/airPass.js",
-    "old": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0);   // PERF-ARENA",
-    "new": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0);   // PERF-ARENA",
+    "old": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, b._ibOff | 0); // PERF-ARENA: a still batch's range of its arena's indices",
+    "new": "          gl.drawElements(gl.TRIANGLES, b.indexCount, gl.UNSIGNED_INT, 0); // PERF-ARENA: a still batch's range of its arena's indices",
     "tests": [
       "test/render/perfarena.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "PERFARENA-snow-on-the-arena",
     "file": "src/render/snowfallSurface.js",
-    "old": "    if (this.renderer?._bindVao) this.renderer._bindVao(null); else gl.bindVertexArray(null);\n",
-    "new": "",
+    "old": "    if (this.renderer?._bindVao) this.renderer._bindVao(null);\n    else gl.bindVertexArray(null);\n    gl.bindBuffer(gl.ARRAY_BUFFER, uv);",
+    "new": "    gl.bindBuffer(gl.ARRAY_BUFFER, uv);",
     "tests": [
       "test/render/perfarena.test.js"
     ]

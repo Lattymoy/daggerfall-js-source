@@ -16,7 +16,9 @@ import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
 import { toColor32 } from '../formats/color32Order.js';
 
 /** The facades whose ramp 1 is glass. */
-export const LIT_FACADES = Object.freeze(['facadeOchre', 'facadeBrick', 'facadeWhite', 'facadeStone', 'facadeTimber', 'groundShop'].map((k) => CAPITAL_ART[k]));
+export const LIT_FACADES = Object.freeze(
+  ['facadeOchre', 'facadeBrick', 'facadeWhite', 'facadeStone', 'facadeTimber', 'groundShop'].map((k) => CAPITAL_ART[k]),
+);
 /** The ramp a facade's glass is painted in (world/imperialArt.js: GLASS, its window's second ramp). */
 export const FACADE_GLASS_RAMP = 1;
 let _masks = null;
@@ -26,24 +28,30 @@ function masks() {
   const tones = new Map();
   // the painting's own laws, read for their ramp alone: its kit's painter answers the tone law it was handed
   imperialArt(tones, {
-    painted: (/** @type {any} */ _ramps, /** @type {Function} */ tone, /** @type {any} */ o) => ({ tone, w: o.w, h: o.h }),
+    painted: (/** @type {any} */ _ramps, /** @type {Function} */ tone, /** @type {any} */ o) => ({
+      tone,
+      w: o.w,
+      h: o.h,
+    }),
     ramp: (/** @type {any} */ stops) => stops,
     masonry: () => ({ tone: () => 0.5 }),
     noise: () => () => 0.5,
   });
   _masks = new Map();
   for (const record of LIT_FACADES) {
-    const { tone, w, h } = tones.get(record), data = new Uint8Array(w * h * 4);
-    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-      const v = tone(x, y);
-      if (Array.isArray(v) && v[1] === FACADE_GLASS_RAMP) data.fill(255, (y * w + x) * 4, (y * w + x) * 4 + 4);
-    }
+    const { tone, w, h } = tones.get(record),
+      data = new Uint8Array(w * h * 4);
+    for (let y = 0; y < h; y++)
+      for (let x = 0; x < w; x++) {
+        const v = tone(x, y);
+        if (Array.isArray(v) && v[1] === FACADE_GLASS_RAMP) data.fill(255, (y * w + x) * 4, (y * w + x) * 4 + 4);
+      }
     _masks.set(record, Object.freeze({ width: w, height: h, data }));
   }
   return _masks;
 }
 /** A facade's glass as its window mask's raster (top row first), or null for a picture of no window. */
-export const facadeGlass = (archive, record) => (archive === CAPITAL_ARCHIVE ? masks().get(record) ?? null : null);
+export const facadeGlass = (archive, record) => (archive === CAPITAL_ARCHIVE ? (masks().get(record) ?? null) : null);
 /**
  * THE WINDOW MASK A STAND-IN PICTURE CARRIES - the renderer's emission upload's shape (`{ colors, width, height }`, rows
  * bottom-up as getWindowColors32 lays them), or null.

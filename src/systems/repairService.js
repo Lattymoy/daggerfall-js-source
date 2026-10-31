@@ -32,11 +32,11 @@ import { calculateCost } from './shopStock.js';
 import { templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';
 import { isEnchantedItem } from './enchantments.js';
 import { MINUTES_PER_DAY, MINUTES_PER_HOUR } from './gameDate.js';
-import { getBool } from './settings/settings.js';   // RRI2: InstantRepairs picks the mod's repair factor
-import { conditionBasedPricesOn, conditionRepairCostBase } from './roleplayRealismItems/rriRealism.js';   // RRI2: the CalculateItemRepairCost override
-import { localizedText } from './textManager.js';   // L10N3d: the refusal, the interrupt box, the label
-import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a ticket names the smith's town and its layout
-import { spendOwnMends } from './item/foundMark.js';   // RPT1026-LEDGERLAW: a paid repair spends what wear took of a found piece's own mends
+import { getBool } from './settings/settings.js'; // RRI2: InstantRepairs picks the mod's repair factor
+import { conditionBasedPricesOn, conditionRepairCostBase } from './roleplayRealismItems/rriRealism.js'; // RRI2: the CalculateItemRepairCost override
+import { localizedText } from './textManager.js'; // L10N3d: the refusal, the interrupt box, the label
+import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js'; // WD3: a ticket names the smith's town and its layout
+import { spendOwnMends } from './item/foundMark.js'; // RPT1026-LEDGERLAW: a paid repair spends what wear took of a found piece's own mends
 
 /** CalculateItemRepairCost (:1901-1922): free at full condition; ten
  *  percent of the item's base value floored at 1, through the shop's
@@ -58,12 +58,20 @@ export function calculateItemRepairCost(baseItemValue, shopQuality, condition, m
   return cost > 0 ? Math.max(1, Math.round(cost * REPAIR_COST_SCALE)) : cost;
 }
 /** DFU's own CalculateItemRepairCost, unscaled. */
-export function dfuItemRepairCost(baseItemValue, shopQuality, condition, max, { reducedRepairCost = null, priceAdjustment = 1000, instantRepairs = getBool('Controls', 'InstantRepairs') } = {}) {
+export function dfuItemRepairCost(
+  baseItemValue,
+  shopQuality,
+  condition,
+  max,
+  { reducedRepairCost = null, priceAdjustment = 1000, instantRepairs = getBool('Controls', 'InstantRepairs') } = {},
+) {
   if (condition === max) return 0;
   // RRI2: the mod's override (RoleplayRealismItemsMod.cs:262-278) scales the
   // tenth by the damage - 0.6 (0.9 under InstantRepairs) of the missing
   // fraction - under conditionBasedPrices; the rest is DFU's own
-  let cost = conditionBasedPricesOn() ? conditionRepairCostBase(baseItemValue, condition, max, instantRepairs) : Math.trunc(10 * baseItemValue / 100);
+  let cost = conditionBasedPricesOn()
+    ? conditionRepairCostBase(baseItemValue, condition, max, instantRepairs)
+    : Math.trunc((10 * baseItemValue) / 100);
   if (cost < 1) cost = 1;
   cost = calculateCost(cost, shopQuality, priceAdjustment);
   return reducedRepairCost ? reducedRepairCost(cost) : cost;
@@ -74,7 +82,7 @@ export function dfuItemRepairCost(baseItemValue, shopQuality, condition, max, { 
  *  substitution above). */
 export function calculateItemRepairTime(condition, max) {
   const damage = max - condition;
-  const repairTime = Math.trunc(damage * MINUTES_PER_DAY / 1000);
+  const repairTime = Math.trunc((damage * MINUTES_PER_DAY) / 1000);
   return Math.max(repairTime, MINUTES_PER_DAY);
 }
 
@@ -84,8 +92,11 @@ export const isBeingRepaired = (item) => item?.repairData != null;
 /** WD3 (AUDIT WD3 S5): a ticket whose town now stands in another layout than it was left in names another building by
  *  its key - the job is handed over at ANY smith of its town (`mapId`, the shop asking), never lost, and never at a
  *  stranger's counter that only shares the key. */
-export const isBeingRepairedAt = (item, buildingKey, mapId = null) => isBeingRepaired(item)
-  && (recordStands(item.repairData) ? item.repairData.buildingKey === buildingKey : mapId != null && item.repairData.mapId === mapId);
+export const isBeingRepairedAt = (item, buildingKey, mapId = null) =>
+  isBeingRepaired(item) &&
+  (recordStands(item.repairData)
+    ? item.repairData.buildingKey === buildingKey
+    : mapId != null && item.repairData.mapId === mapId);
 export const repairTimeDone = (item) => (item.repairData?.timeStarted ?? 0) + (item.repairData?.repairTime ?? 0);
 export const isRepairFinished = (item, nowMinutes) => isBeingRepaired(item) && repairTimeDone(item) <= nowMinutes;
 
@@ -102,7 +113,9 @@ export function leaveForRepair(item, buildingKey, repairTime, nowMinutes, mapId 
 
 /** Collect (:69-76): the record leaves whole (the port's absent
  *  record IS DFU's timeStarted = 0 sentinel). */
-export function collectRepaired(item) { delete item.repairData; }
+export function collectRepaired(item) {
+  delete item.repairData;
+}
 
 /** DaysUntilRepaired's shape (:78-93): ceil of the time left in
  *  days - the label's "%d days" number. */
@@ -116,7 +129,7 @@ export const daysUntil = (timeMinutes, nowMinutes) => Math.ceil((timeMinutes - n
  *  'undamaged' TEXT.RSC 24 (doesNotNeedToBeRepairedTextId). */
 export const MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID = 33;
 export const DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID = 24;
-export const CANNOT_BE_REPAIRED_TEXT = 'This cannot be repaired.';   // Internal_Strings.csv:974 (key cannotBeRepaired), verbatim
+export const CANNOT_BE_REPAIRED_TEXT = 'This cannot be repaired.'; // Internal_Strings.csv:974 (key cannotBeRepaired), verbatim
 /** ConfirmInterruptRepairBox's line (DaggerfallTradeWindow.cs:845-848
  *  hands GetLocalizedText("interruptRepair") straight to the box, so
  *  the row IS the string: Internal_Strings.csv:819, verbatim - and
@@ -129,9 +142,10 @@ export const cannotBeRepairedText = () => localizedText('cannotBeRepaired', CANN
 export const interruptRepairText = () => localizedText('interruptRepair', INTERRUPT_REPAIR_TEXT);
 /** WAGONS4: a smith's word on a horse or a wagon - the port's own (a wagon left at a smith's counter left the pack for
  *  days, and the horse and wagon the mod stood in the world with it): a Wagon Yard mends wagons (systems/wagon/wagonUpkeep.js). */
-export const TRANSPORT_CANNOT_BE_REPAIRED_TEXT = 'A smith does not repair horses or wagons. A town\u2019s Wagon Yard repairs wagons.';
+export const TRANSPORT_CANNOT_BE_REPAIRED_TEXT =
+  'A smith does not repair horses or wagons. A town\u2019s Wagon Yard repairs wagons.';
 export function repairRefusal(item, { allowMagicRepairs = false } = {}) {
-  if (item?.templateIndex === TRANSPORT_HORSE || item?.templateIndex === TRANSPORT_SMALL_CART) return 'transport';   // WAGONS4: never left at a smith
+  if (item?.templateIndex === TRANSPORT_HORSE || item?.templateIndex === TRANSPORT_SMALL_CART) return 'transport'; // WAGONS4: never left at a smith
   if (isEnchantedItem(item) && !allowMagicRepairs) return 'magic';
   if (templateByIndex(item.templateIndex)?.isNotRepairable) return 'notRepairable';
   if ((item.currentCondition ?? 0) === (item.maxCondition ?? 0)) return 'undamaged';
@@ -151,20 +165,29 @@ export function repairRefusal(item, { allowMagicRepairs = false } = {}) {
  * whole pass (:516). Returns Map(item -> minutes) of the pass's
  * answer for every unfinished item.
  */
-export function updateRepairTimes(items, { commit = false, nowMinutes = 0, buildingKey = 0, mapId = 0, instantRepairs = false } = {}) {
+export function updateRepairTimes(
+  items,
+  { commit = false, nowMinutes = 0, buildingKey = 0, mapId = 0, instantRepairs = false } = {},
+) {
   const out = new Map();
   if (instantRepairs) return out;
-  let totalRepairTime = 0, longestRepairTime = 0;
+  let totalRepairTime = 0,
+    longestRepairTime = 0;
   let itemLongestTime = null;
   const previous = new Map();
   for (const item of items) {
-    const repairDone = isBeingRepaired(item) ? isRepairFinished(item, nowMinutes) : item.currentCondition === item.maxCondition;
+    const repairDone = isBeingRepaired(item)
+      ? isRepairFinished(item, nowMinutes)
+      : item.currentCondition === item.maxCondition;
     if (repairDone) continue;
     if (isBeingRepaired(item)) previous.set(item, item.repairData.repairTime);
     const repairTime = calculateItemRepairTime(item.currentCondition, item.maxCondition);
     if (commit && !isBeingRepaired(item)) leaveForRepair(item, buildingKey, repairTime, nowMinutes, mapId);
     totalRepairTime += repairTime;
-    if (repairTime > longestRepairTime) { longestRepairTime = repairTime; itemLongestTime = item; }
+    if (repairTime > longestRepairTime) {
+      longestRepairTime = repairTime;
+      itemLongestTime = item;
+    }
     if (commit) item.repairData.repairTime = repairTime;
     out.set(item, repairTime);
   }
@@ -229,7 +252,8 @@ export function repairCountdownText(c) {
   if (c.done) return 'Ready';
   const days = Math.ceil(c.minutesLeft / MINUTES_PER_DAY);
   const hours = Math.max(1, Math.ceil(c.minutesLeft / MINUTES_PER_HOUR));
-  const span = c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;
+  const span =
+    c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;
   return c.estimate ? `About ${span}` : `Ready in ${span}`;
 }
 
@@ -237,10 +261,12 @@ export function repairCountdownText(c) {
  *  the estimated days out. estimate = the scheduler's answer for the
  *  item (or its committed time). */
 export function repairStatusLabel(item, nowMinutes, estimateMinutes = null) {
-  const repairDone = isBeingRepaired(item) ? isRepairFinished(item, nowMinutes) : item.currentCondition === item.maxCondition;
-  if (repairDone) return localizedText('repairDone', 'DONE');   // Internal_Strings.csv:817 (key repairDone), verbatim
+  const repairDone = isBeingRepaired(item)
+    ? isRepairFinished(item, nowMinutes)
+    : item.currentCondition === item.maxCondition;
+  if (repairDone) return localizedText('repairDone', 'DONE'); // Internal_Strings.csv:817 (key repairDone), verbatim
   const doneAt = isBeingRepaired(item)
     ? repairTimeDone(item)
     : nowMinutes + (estimateMinutes ?? calculateItemRepairTime(item.currentCondition, item.maxCondition));
-  return localizedText('repairDays', '%d days').replaceAll('%d', String(daysUntil(doneAt, nowMinutes)));   // .Replace("%d", ...)
+  return localizedText('repairDays', '%d days').replaceAll('%d', String(daysUntil(doneAt, nowMinutes))); // .Replace("%d", ...)
 }

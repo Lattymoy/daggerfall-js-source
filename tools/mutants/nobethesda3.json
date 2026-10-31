@@ -32,7 +32,7 @@
   {
     "name": "NB3-a-derived-dagger-is-fetched",
     "file": "src/combat/diverseWeapons/diverseWeaponsAssets.js",
-    "old": "      if (isDerivedDiverseWeaponsSprite(name)) return derivedImage(name, art);   // NO-BETHESDA3: built, never fetched",
+    "old": "        if (isDerivedDiverseWeaponsSprite(name)) return derivedImage(name, art); // NO-BETHESDA3: built, never fetched",
     "new": "",
     "tests": [
       "test/combat/weapon/nobethesda3_dwdaggers.test.js"

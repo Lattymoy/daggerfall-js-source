@@ -13,18 +13,24 @@ import { readCsvTable, parseCsInt } from './dexCsv.js';
 import { isClassicEnemyId } from '../../characters/enemy/enemyBasics.js';
 
 /** Every mobile id the mod's tables give an enemy of its own (none of DFU's MobileTypes), ascending. */
-export const DEX_ENEMY_IDS = Object.freeze((() => {
-  const ids = new Set();
-  for (const [name, text] of Object.entries(DEX_TABLE_TEXT)) {
-    if (!name.endsWith('.mdb.csv')) continue;
-    const table = readCsvTable(text);
-    const col = table.column('ID');
-    if (col == null) continue;
-    for (const { tokens } of table.rows) {
-      let id;
-      try { id = parseCsInt(tokens[col]); } catch { continue; }   // a line the mod's read refuses registers nothing
-      if (!isClassicEnemyId(id)) ids.add(id);
+export const DEX_ENEMY_IDS = Object.freeze(
+  (() => {
+    const ids = new Set();
+    for (const [name, text] of Object.entries(DEX_TABLE_TEXT)) {
+      if (!name.endsWith('.mdb.csv')) continue;
+      const table = readCsvTable(text);
+      const col = table.column('ID');
+      if (col == null) continue;
+      for (const { tokens } of table.rows) {
+        let id;
+        try {
+          id = parseCsInt(tokens[col]);
+        } catch {
+          continue;
+        } // a line the mod's read refuses registers nothing
+        if (!isClassicEnemyId(id)) ids.add(id);
+      }
     }
-  }
-  return [...ids].sort((a, b) => a - b);
-})());
+    return [...ids].sort((a, b) => a - b);
+  })(),
+);

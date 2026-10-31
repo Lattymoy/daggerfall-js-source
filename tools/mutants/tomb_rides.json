@@ -1,32 +1,32 @@
 [
- {
-  "name": "TOMBRIDES-tomb-unread",
-  "file": "server-account/src/homes.js",
-  "old": "if (tombRead && answers.shift()?.results?.length) return { error: 'dead' };",
-  "new": "if (tombRead) answers.shift();",
-  "tests": [
-   "test/systems/online/homes_shed.test.js"
-  ],
-  "note": "the batch asks the tombstone and a dead character reads its town"
- },
- {
-  "name": "TOMBRIDES-door-asks-too",
-  "file": "server-account/src/index.js",
-  "old": "{ tomb: path !== '/v1/auth/token' && path !== '/v1/homes/town' && typeof",
-  "new": "{ tomb: path !== '/v1/auth/token' && typeof",
-  "tests": [
-   "test/systems/online/homes_shed.test.js"
-  ],
-  "note": "the door's own trip back before the batch: two round trips an ask"
- },
- {
-  "name": "TOMBRIDES-dead-a-400",
-  "file": "server-account/src/index.js",
-  "old": "no(r.error, r.error === 'dead' ? 410 : 400, origin)",
-  "new": "no(r.error, 400, origin)",
-  "tests": [
-   "test/systems/online/homes_shed.test.js"
-  ],
-  "note": "a tombstone answered as a bad shape, not the door's 410"
- }
+  {
+    "name": "TOMBRIDES-tomb-unread",
+    "file": "server-account/src/homes.js",
+    "old": "if (tombRead && answers.shift()?.results?.length) return { error: 'dead' };",
+    "new": "if (tombRead) answers.shift();",
+    "tests": [
+      "test/systems/online/homes_shed.test.js"
+    ],
+    "note": "the batch asks the tombstone and a dead character reads its town"
+  },
+  {
+    "name": "TOMBRIDES-door-asks-too",
+    "file": "server-account/src/index.js",
+    "old": "{ tomb: path !== '/v1/auth/token' && path !== '/v1/homes/town' && typeof",
+    "new": "{ tomb: path !== '/v1/auth/token' && typeof",
+    "tests": [
+      "test/systems/online/homes_shed.test.js"
+    ],
+    "note": "the door's own trip back before the batch: two round trips an ask"
+  },
+  {
+    "name": "TOMBRIDES-dead-a-400",
+    "file": "server-account/src/index.js",
+    "old": "no(r.error, r.error === 'dead' ? 410 : 400, origin)",
+    "new": "no(r.error, 400, origin)",
+    "tests": [
+      "test/systems/online/homes_shed.test.js"
+    ],
+    "note": "a tombstone answered as a bad shape, not the door's 410"
+  }
 ]

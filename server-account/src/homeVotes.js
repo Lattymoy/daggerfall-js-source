@@ -31,7 +31,14 @@
 // ═══════════════════════════════════════════════════════════════════
 import { accountKind, overRate } from './accounts.js';
 import { homeMapIdOk, homeBuildingKeyOk } from '../../src/net/homeLaw.js';
-import { homeVoteOk, homeVoteOwnerOk, homeShunned, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S, HOME_VOTE_AGE_S } from '../../src/net/homeVoteLaw.js';
+import {
+  homeVoteOk,
+  homeVoteOwnerOk,
+  homeShunned,
+  HOME_VOTES_MAX,
+  HOME_VOTES_WINDOW_S,
+  HOME_VOTE_AGE_S,
+} from '../../src/net/homeVoteLaw.js';
 
 /** HOME-VOTE: whether the account is an INSIDER of the home row `h` - its owner's account (any of its characters) for a
  *  home, an account with any character in the guild for a hall (AUDIT A5: the account, as `mine` is, never the playing
@@ -47,7 +54,10 @@ const VOTABLE = `EXISTS (SELECT 1 FROM homes h WHERE h.map_id = ? AND h.building
 
 /** A home's score - its votes summed, as the database keeps it on the home's row (AUDIT A2; 0 for none, or no home). */
 export async function homeScore(db, mapId, buildingKey) {
-  const r = await db.prepare('SELECT score FROM homes WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey).first();
+  const r = await db
+    .prepare('SELECT score FROM homes WHERE map_id = ? AND building_key = ?')
+    .bind(mapId, buildingKey)
+    .first();
   return Number(r?.score ?? 0);
 }
 
@@ -61,8 +71,10 @@ export async function homeShownTo(db, mapId, buildingKey, playerId) {
   return homeShownOf(await homeShownRead(db, mapId, buildingKey, playerId).first());
 }
 /** DECOR-BATCH: homeShownTo's one read, as a statement a caller's batch carries - its answer is homeShownOf's. */
-export const homeShownRead = (db, mapId, buildingKey, playerId) => db.prepare(`SELECT h.score AS score, ${INSIDER} AS insider FROM homes h WHERE h.map_id = ? AND h.building_key = ?`)
-  .bind(playerId ?? '', playerId ?? '', mapId, buildingKey);
+export const homeShownRead = (db, mapId, buildingKey, playerId) =>
+  db
+    .prepare(`SELECT h.score AS score, ${INSIDER} AS insider FROM homes h WHERE h.map_id = ? AND h.building_key = ?`)
+    .bind(playerId ?? '', playerId ?? '', mapId, buildingKey);
 /** DECOR-BATCH: homeShownTo's answer off its row (null: no home stands there - what stands is shown). */
 export const homeShownOf = (r) => !r || r.insider === 1 || !homeShunned(Number(r.score));
 
@@ -78,23 +90,40 @@ export const homeShownOf = (r) => !r || r.insider === 1 || !homeShunned(Number(r
  */
 export async function voteHome({ db, nowS }, player, { mapId, buildingKey, vote, owner } = {}) {
   if (accountKind(player) !== 'linked') return { error: 'homes-need-account' };
-  if (!homeMapIdOk(mapId) || !homeBuildingKeyOk(buildingKey) || !homeVoteOk(vote) || (vote !== 0 && !homeVoteOwnerOk(owner))) return { error: 'bad-vote' };
-  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S)) return { error: 'vote-young' };   // AUDIT A1
+  if (
+    !homeMapIdOk(mapId) ||
+    !homeBuildingKeyOk(buildingKey) ||
+    !homeVoteOk(vote) ||
+    (vote !== 0 && !homeVoteOwnerOk(owner))
+  )
+    return { error: 'bad-vote' };
+  if (vote !== 0 && !(Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - HOME_VOTE_AGE_S))
+    return { error: 'vote-young' }; // AUDIT A1
   // AUDIT HOME-VOTE II A2: the hour's bar is on votes cast - a vote taken back deletes the account's own row and no
   // other, and is never refused (30 presses spent, the last a slip, held a home hidden for the hour)
-  if (vote !== 0 && await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S)) return { error: 'vote-rate' };
+  if (vote !== 0 && (await overRate({ db, nowS }, `vote:${player.id}`, HOME_VOTES_MAX, HOME_VOTES_WINDOW_S)))
+    return { error: 'vote-rate' };
   // AUDIT A4: one's own vote is taken back whatever one is now - the key names the account's own row and nobody else's
-  const write = vote === 0
-    ? db.prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?').bind(mapId, buildingKey, player.id)
-    : db.prepare(`INSERT INTO home_votes (map_id, building_key, player, vote, voted_at) SELECT ?, ?, ?, ?, ? WHERE ${VOTABLE}
-      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`)
-      .bind(mapId, buildingKey, player.id, vote, nowS, mapId, buildingKey, owner, player.id, player.id);
+  const write =
+    vote === 0
+      ? db
+          .prepare('DELETE FROM home_votes WHERE map_id = ? AND building_key = ? AND player = ?')
+          .bind(mapId, buildingKey, player.id)
+      : db
+          .prepare(
+            `INSERT INTO home_votes (map_id, building_key, player, vote, voted_at) SELECT ?, ?, ?, ?, ? WHERE ${VOTABLE}
+      ON CONFLICT (map_id, building_key, player) DO UPDATE SET vote = excluded.vote, voted_at = excluded.voted_at`,
+          )
+          .bind(mapId, buildingKey, player.id, vote, nowS, mapId, buildingKey, owner, player.id, player.id);
   const r = await write.run();
   if (!r?.meta?.changes && vote !== 0) {
     // AUDIT HOME-VOTE II A5: nothing written, so the statement found no home it may vote on - the account was an insider
     // of the house its vote named, or no such house stands. Said as the write found it, never re-asked: a guild left
     // between the write and a second look answered `ok` for a vote nobody kept
-    const stands = await db.prepare(`SELECT 1 AS one FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND h.deed = 0 AND ${OWNER} = ?`).bind(mapId, buildingKey, owner).first();
+    const stands = await db
+      .prepare(`SELECT 1 AS one FROM homes h WHERE h.map_id = ? AND h.building_key = ? AND h.deed = 0 AND ${OWNER} = ?`)
+      .bind(mapId, buildingKey, owner)
+      .first();
     return { error: stands ? 'vote-own' : 'no-home' };
   }
   return { ok: true, mapId, buildingKey, vote, score: await homeScore(db, mapId, buildingKey) };
