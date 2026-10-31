@@ -1281,6 +1281,10 @@
 !/src/systems/seatEdicts.js
 !/src/systems/serpent/
 /src/systems/serpent/*/
+!/src/systems/settings/
+/src/systems/settings/*
+!/src/systems/settings/settings.js
+!/src/systems/settings/settingsText.js
 !/src/systems/shellUpdates.js
 !/src/systems/shipyards.js
 !/src/systems/shopStock.js

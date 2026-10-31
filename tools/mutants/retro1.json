@@ -462,8 +462,8 @@
   {
     "name": "RETRO1-mode-not-live",
     "file": "src/systems/settings/settings.js",
-    "old": "  'Video/RetroRenderingMode': 'src/systems/retroMode.js',\n",
-    "new": "",
+    "old": "  'Video/RetroRenderingMode': 'src/systems/retroMode.js',\n  'Video/PostProcessingInRetroMode': 'src/systems/retroMode.js',",
+    "new": "  'Video/PostProcessingInRetroMode': 'src/systems/retroMode.js',",
     "tests": [
       "test/render/retro1.test.js"
     ]

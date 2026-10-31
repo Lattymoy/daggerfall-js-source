@@ -451,8 +451,8 @@
   {
     "name": "AUDITRETRO1-E4-a-warning-a-read",
     "file": "src/systems/settings/settings.js",
-    "old": "  if (_warned.has(k)) return;\n",
-    "new": "",
+    "old": "  if (_warned.has(k)) return;\n  _warned.add(k);",
+    "new": "  _warned.add(k);",
     "tests": [
       "test/render/auditretro1.test.js"
     ]
