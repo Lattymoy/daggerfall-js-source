@@ -52,8 +52,8 @@
   {
     "name": "FAMILY-REMOVE-spare-played",
     "file": "src/systems/legacy/waitingHouses.js",
-    "old": "return (ids ?? []).filter((id) => !played.has(id));",
-    "new": "return (ids ?? []).filter((id) => played.has(id));",
+    "old": "  return (ids ?? []).filter((id) => !played.has(id));",
+    "new": "  return (ids ?? []).filter((id) => played.has(id));",
     "tests": [
       "test/systems/legacy/family_remove_menu.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-FB1029e-F2-not-kept",
     "file": "src/systems/legacy/realmLine.js",
-    "old": "'lineage-law', 'no-lineage']);",
-    "new": "'lineage-law']);",
+    "old": "  'no-lineage',\n]); // INT18: a copy that breaks the family's own law (legacyLaw.js); AUDIT FB1029e F2: a line removed from the realm",
+    "new": "]); // INT18: a copy that breaks the family's own law (legacyLaw.js); AUDIT FB1029e F2: a line removed from the realm",
     "tests": [
       "test/systems/legacy/family_remove_menu.test.js"
     ],

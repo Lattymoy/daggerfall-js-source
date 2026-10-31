@@ -202,8 +202,8 @@
   {
     "name": "INT18-blood-past-its-most",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "!Object.values(p.blood).every((v) => whole(v, BLOOD_MAX))",
-    "new": "!Object.values(p.blood).every((v) => whole(v, BLOOD_MAX + 1))",
+    "old": "        !Object.values(p.blood).every((v) => whole(v, BLOOD_MAX))",
+    "new": "        !Object.values(p.blood).every((v) => whole(v, BLOOD_MAX + 1))",
     "why": "a gift of four",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "INT18-hearth-a-skill-past",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "Number(k) < SKILL_COUNT",
-    "new": "Number(k) <= SKILL_COUNT",
+    "old": "          ([k, v]) => /^(0|[1-9]\\d?)$/.test(k) && Number(k) < SKILL_COUNT && whole(v, HEARTH_MAX),",
+    "new": "          ([k, v]) => /^(0|[1-9]\\d?)$/.test(k) && Number(k) <= SKILL_COUNT && whole(v, HEARTH_MAX),",
     "why": "a hearth on a skill the game has none of",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "INT18-hearth-past-its-most",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "&& whole(v, HEARTH_MAX))) out.add('hearth');",
-    "new": "&& whole(v, HEARTH_MAX + 1))) out.add('hearth');",
+    "old": "          ([k, v]) => /^(0|[1-9]\\d?)$/.test(k) && Number(k) < SKILL_COUNT && whole(v, HEARTH_MAX),",
+    "new": "          ([k, v]) => /^(0|[1-9]\\d?)$/.test(k) && Number(k) < SKILL_COUNT && whole(v, HEARTH_MAX + 1),",
     "why": "a hearth gift of four",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "INT18-estate-past-its-ceiling",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "!whole(record.pending.estate ?? 0, ESTATE_MAX)",
-    "new": "!whole(record.pending.estate ?? 0, ESTATE_MAX + 1)",
+    "old": "  if (record?.pending != null && !whole(record.pending.estate ?? 0, ESTATE_MAX)) out.add('estate');",
+    "new": "  if (record?.pending != null && !whole(record.pending.estate ?? 0, ESTATE_MAX + 1)) out.add('estate');",
     "why": "a waiting estate one past the birth's ceiling",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -242,7 +242,7 @@
   {
     "name": "INT18-a-death-unwritten",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "      if (was.died && !now.died && !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))) out.add('death');",
+    "old": "      if (\n        was.died &&\n        !now.died &&\n        !((was.kind ?? 'member') === 'union' && revivedOf(now).includes(Number(was.died.at)))\n      )\n        out.add('death');",
     "new": "",
     "why": "a copy that takes back a death the line recorded lands",
     "tests": [
@@ -252,8 +252,8 @@
   {
     "name": "INT18-a-retirement-unwritten",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "      if (was.retired != null && now.retired == null) out.add('retired');",
-    "new": "",
+    "old": "      if (was.retired != null && now.retired == null) out.add('retired');\n    }",
+    "new": "    }",
     "why": "an Enduring elder retired, played again",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -262,7 +262,7 @@
   {
     "name": "INT18-a-member-dropped",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "      if (!now) { out.add('member'); continue; }",
+    "old": "      if (!now) {\n        out.add('member');\n        continue;\n      }",
     "new": "      if (!now) continue;",
     "why": "a copy that loses a member lands",
     "tests": [
@@ -272,8 +272,8 @@
   {
     "name": "INT18-remains-dropped",
     "file": "src/systems/legacy/legacyLaw.js",
-    "old": "for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (!rows.has(r?.id)) out.add('remains');",
-    "new": "for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (false) out.add('remains');",
+    "old": "    for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (!rows.has(r?.id)) out.add('remains');",
+    "new": "    for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (false) out.add('remains');",
     "why": "a fallen's remains vanish from the record",
     "tests": [
       "test/server/int18_lineage_law.test.js"
@@ -312,8 +312,8 @@
   {
     "name": "INT18-the-client-sends-again",
     "file": "src/systems/legacy/realmLine.js",
-    "old": "'too-many-lineages', 'lineage-law', 'no-lineage']);",
-    "new": "'too-many-lineages', 'no-lineage']);",
+    "old": "  'lineage-law',\n  'no-lineage',",
+    "new": "  'no-lineage',",
     "why": "a copy the law refused is sent again at every write",
     "tests": [
       "test/server/int18_lineage_law.test.js"

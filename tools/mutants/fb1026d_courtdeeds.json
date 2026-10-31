@@ -102,8 +102,8 @@
   {
     "name": "COURT-DEEDS-day-dropped-at-load",
     "file": "src/systems/legacy/family.js",
-    "old": "          ...(c.deeds && typeof c.deeds === 'object' ? { deeds: Object.fromEntries(Object.entries(c.deeds).filter(([k, d]) => COURT_DEEDS.includes(k) && Number.isInteger(d))) } : {}),",
-    "new": "",
+    "old": "                  ...(c.deeds && typeof c.deeds === 'object'\n                    ? {\n                        deeds: Object.fromEntries(\n                          Object.entries(c.deeds).filter(([k, d]) => COURT_DEEDS.includes(k) && Number.isInteger(d)),\n                        ),\n                      }\n                    : {}),\n                },",
+    "new": "                },",
     "tests": [
       "test/systems/legacy/fb1026d_courtdeeds.test.js"
     ],

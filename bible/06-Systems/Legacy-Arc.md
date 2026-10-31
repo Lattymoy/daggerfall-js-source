@@ -198,7 +198,7 @@ at its own pace, roughly a dozen deaths a generation. AGELESS-CURSE (2026-10-09,
 and werewolves of this please?"): a member with the curse in the blood at the death - a vampire, a werewolf or a
 wereboar, the curse taken (`liveVampirism`, `liveLycanthropy`), not one still incubating - pays no toll and always
 rises, their span spent or not, and the rise says so ("The curse in Ysolde's blood keeps Arkay at bay. No years are
-taken." - `payToll`'s `ageless`, `age.js:"if (ageless) return { final: false"`; asked at the door,
+taken." - `payToll`'s `ageless`, `age.js:"if (ageless) return {"`; asked at the door,
 `legacyHost.js:"const cursed = !!(deps.entity"`). Their own clock still ages them. Cured, the toll is theirs again
 from the next death - a spent member cured dies of their years at it. The sheet's "your next death is your last"
 (section 11) is still said to a spent member while the curse holds. And at any time an Elder may PASS THE MANTLE from the family

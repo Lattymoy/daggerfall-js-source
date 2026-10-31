@@ -292,7 +292,7 @@
   {
     "name": "AUDIT-1019-L5-4-family-name-only",
     "file": "src/systems/legacy/family.js",
-    "old": "    career: career && (career.swapped === true || String(career.name ?? '') !== CLASS_CAREERS[idx]) ? JSON.parse(JSON.stringify(career)) : null,",
+    "old": "    career:\n      career && (career.swapped === true || String(career.name ?? '') !== CLASS_CAREERS[idx])\n        ? JSON.parse(JSON.stringify(career))\n        : null,",
     "new": "    career: career && String(career.name ?? '') !== CLASS_CAREERS[idx] ? JSON.parse(JSON.stringify(career)) : null,",
     "tests": [
       "test/systems/fb1019b_audit.test.js"

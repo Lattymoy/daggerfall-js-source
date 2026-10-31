@@ -150,7 +150,7 @@
   {
     "name": "FB1007B-SEAT-MERGED-BY-REV",
     "file": "src/systems/legacy/store.js",
-    "old": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0))) mine.seat = { ...other.seat };",
+    "old": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)))\n    mine.seat = { ...other.seat };",
     "new": "  if (!mine.seat && other.seat) mine.seat = { ...other.seat };",
     "tests": [
       "test/systems/legacy/fb1007b_familyseat.test.js"
@@ -160,8 +160,8 @@
   {
     "name": "FB1007B-SEAT-STAMP-UNREAD",
     "file": "src/systems/legacy/family.js",
-    "old": "      ...(Number(rec.seat.at) > 0 ? { at: Math.floor(Number(rec.seat.at)) } : {}) } : null,",
-    "new": "      } : null,",
+    "old": "            ...(Number(rec.seat.at) > 0 ? { at: Math.floor(Number(rec.seat.at)) } : {}),\n          }",
+    "new": "          }",
     "tests": [
       "test/systems/legacy/fb1007b_familyseat.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "FB1007B-AUDIT-T3-ANY-MOVE-WINS",
     "file": "src/systems/legacy/store.js",
-    "old": "(Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)",
-    "new": "(Number(other.seat.at) || 0) > 0",
+    "old": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > (Number(mine.seat.at) || 0)))\n    mine.seat = { ...other.seat };",
+    "new": "  if (other.seat && (!mine.seat || (Number(other.seat.at) || 0) > 0)) mine.seat = { ...other.seat };",
     "tests": [
       "test/systems/legacy/fb1007b_familyseat.test.js"
     ],

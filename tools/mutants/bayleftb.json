@@ -200,8 +200,8 @@
   {
     "name": "BAY-LEFT-B-B1-waiting-house-id",
     "file": "src/systems/legacy/waitingHouses.js",
-    "old": "place: { region: place.region, loc: place.loc, ...(Number.isInteger(mapId) ? { mapId } : {}) } };",
-    "new": "place: { region: place.region, loc: place.loc } };",
+    "old": "  return {\n    ok: true,\n    family,\n    heirId: heir.id,\n    place: { region: place.region, loc: place.loc, ...(Number.isInteger(mapId) ? { mapId } : {}) },\n  }; // RPT1026-MISC HEIR-WAITS: a newborn's id is minted here; BAY-LEFT-B: and its map id - a seat past the Bay is booted by it (places.js birthSearch's `seat`)",
+    "new": "  return { ok: true, family, heirId: heir.id, place: { region: place.region, loc: place.loc } }; // RPT1026-MISC HEIR-WAITS: a newborn's id is minted here; BAY-LEFT-B: and its map id - a seat past the Bay is booted by it (places.js birthSearch's `seat`)",
     "tests": [
       "test/systems/fb1009f.test.js"
     ]

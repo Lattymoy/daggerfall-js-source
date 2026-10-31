@@ -288,8 +288,8 @@
   {
     "name": "ACCOUNT-HOMES-line-whole-unread",
     "file": "src/systems/legacy/household.js",
-    "old": "    } else if (!took(h)) { if (!whole || holds(h)) next.push(h); }",
-    "new": "    } else if (!took(h)) { if (true) next.push(h); }",
+    "old": "      if (!whole || holds(h)) next.push(h);",
+    "new": "      if (true) next.push(h);",
     "tests": [
       "test/systems/legacy/legacy7_homes.test.js"
     ],

@@ -177,8 +177,8 @@
   {
     "name": "AUDIT-LEGACY-II-A4-stale-write-refused",
     "file": "src/systems/legacy/store.js",
-    "old": "    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) {\n      mergeFacts(family, was);",
-    "new": "    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) return false;\n    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) {\n      mergeFacts(family, was);",
+    "old": "    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) {",
+    "new": "    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) return false;\n    if (was && (base != null ? was.rev !== base : was.rev >= family.rev)) {",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "AUDIT-LEGACY-II-A4-answered-fall-retaken",
     "file": "src/systems/legacy/store.js",
-    "old": "&& knew.get(other.pending.fallenId) === false) mine.pending",
-    "new": "&& knew.has(other.pending.fallenId)) mine.pending",
+    "old": "  if (!mine.pending && other.pending && knew.get(other.pending.fallenId) === false)",
+    "new": "  if (!mine.pending && other.pending && knew.has(other.pending.fallenId))",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js"
     ]
@@ -214,7 +214,7 @@
   {
     "name": "AUDIT-LEGACY-II-A9-cycle-kept",
     "file": "src/systems/legacy/family.js",
-    "old": "  for (const p of people) p.parents = p.parents.filter((q) => q !== p.id && !(byId.has(q) && ancestorOf(byId.get(q), p.id)));",
+    "old": "  for (const p of people)\n    p.parents = p.parents.filter((q) => q !== p.id && !(byId.has(q) && ancestorOf(byId.get(q), p.id)));",
     "new": "",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js"
@@ -223,7 +223,7 @@
   {
     "name": "AUDIT-LEGACY-II-A10-first-unshaped",
     "file": "src/systems/legacy/family.js",
-    "old": "    first: Array.isArray(r.first) ? r.first.filter((it) => it && typeof it === 'object') : (Array.isArray(r.items) ? r.items.filter((it) => it && typeof it === 'object') : []),",
+    "old": "    first: Array.isArray(r.first)\n      ? r.first.filter((it) => it && typeof it === 'object')\n      : Array.isArray(r.items)\n        ? r.items.filter((it) => it && typeof it === 'object')\n        : [],",
     "new": "",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js"
@@ -259,8 +259,8 @@
   {
     "name": "AUDIT-LEGACY-II-B2-census-household",
     "file": "src/systems/legacy/household.js",
-    "old": "    household: `F${family.id}`,",
-    "new": "",
+    "old": "    household: `F${family.id}`, // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdKeyOf)",
+    "new": "    // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdKeyOf)",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js"
     ]

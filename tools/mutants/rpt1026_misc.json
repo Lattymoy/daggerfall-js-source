@@ -132,8 +132,8 @@
   {
     "name": "rpt1026-misc-heir-newborn-refused",
     "file": "src/systems/legacy/waitingHouses.js",
-    "old": "  if (newborn) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (newborn) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/legacy/rpt1026_misc_heir.test.js"
     ],

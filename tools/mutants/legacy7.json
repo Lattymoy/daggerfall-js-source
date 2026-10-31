@@ -123,8 +123,8 @@
   {
     "name": "LEGACY7-pull-overwrites",
     "file": "src/systems/legacy/realmLine.js",
-    "old": "  mergeFacts(base, other);\n",
-    "new": "",
+    "old": "  mergeFacts(base, other);\n  base.rev = Math.max(a.rev, b.rev);",
+    "new": "  base.rev = Math.max(a.rev, b.rev);",
     "tests": [
       "test/systems/legacy/legacy7_online.test.js"
     ]

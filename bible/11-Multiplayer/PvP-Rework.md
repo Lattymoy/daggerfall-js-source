@@ -356,7 +356,7 @@ DEATH-15 ("Change that to 15 second on death", "For both"; the owner chose to ke
 the zone or out of it, Enter rose once 15 s of `DEATH_RISE_MIN_S` had passed (DEATH-10 below; a rejoin's
 served time counts, `canRise`); until then the screen says only the count. The rest of the minute is for a party
 member's Resurrect, and the body still lies the minute. The raise window is the longest screen and half a minute,
-`revived.js:"export const REZ_HOLD_S = 90;"` (150 while the zone held two minutes). Relay world282. A departure: DFU
+`revived.js:"export const REZ_HOLD_S"` (150 while the zone held two minutes). Relay world282. A departure: DFU
 rises after its three seconds.
 
 DEATH-10 (2026-10-30, the owner: "give death a 10 second timer let them click respawn now but at 10 auto respawn

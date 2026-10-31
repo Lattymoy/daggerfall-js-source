@@ -2,8 +2,8 @@
   {
     "name": "REV-every-death-dropped",
     "file": "src/systems/legacy/revived.js",
-    "old": "    if (p.died && back.get(p.id)?.includes(Number(p.died.at))) { p.died = null; n++; }",
-    "new": "    if (p.died && back.has(p.id)) { p.died = null; n++; }",
+    "old": "    if (p.died && back.get(p.id)?.includes(Number(p.died.at))) {",
+    "new": "    if (p.died && back.has(p.id)) {",
     "tests": [
       "test/systems/legacy/revive.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REV-the-succession-kept",
     "file": "src/systems/legacy/revived.js",
-    "old": "  if (family.pending && back.get(family.pending.fallenId)?.includes(Number(family.pending.at))) { family.pending = null; n++; }\n",
-    "new": "",
+    "old": "  if (family.pending && back.get(family.pending.fallenId)?.includes(Number(family.pending.at))) {\n    family.pending = null;\n    n++;\n  }\n  return n > 0;",
+    "new": "  return n > 0;",
     "tests": [
       "test/systems/legacy/revive.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "REV-the-stamp-not-taken",
     "file": "src/systems/legacy/revived.js",
-    "old": "    if (p) for (const at of revivedOf(o)) stampRevived(p, at);\n",
-    "new": "",
+    "old": "    if (p) for (const at of revivedOf(o)) stampRevived(p, at);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/legacy/revive.test.js"
     ]

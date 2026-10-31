@@ -12,7 +12,7 @@
   {
     "name": "PERMADEATH-HOUSES-due-ignores-taken",
     "file": "src/systems/legacy/household.js",
-    "old": "  return (family.houses ?? []).filter((h) => heldByDead(family, h) && !taken.includes(houseKeyOf(h))).map((h) => ({ ...h }));",
+    "old": "  return (family.houses ?? [])\n    .filter((h) => heldByDead(family, h) && !taken.includes(houseKeyOf(h)))\n    .map((h) => ({ ...h }));",
     "new": "  return (family.houses ?? []).filter((h) => heldByDead(family, h)).map((h) => ({ ...h }));",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "PERMADEATH-HOUSES-due-the-dead-carry",
     "file": "src/systems/legacy/household.js",
-    "old": "  if (!family || !p || !isAlive(p)) return [];\n  const taken",
-    "new": "  if (!family || !p) return [];\n  const taken",
+    "old": "  if (!family || !p || !isAlive(p)) return [];",
+    "new": "  if (!family || !p) return [];",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "PERMADEATH-HOUSES-taken-never-rekeyed",
     "file": "src/systems/legacy/household.js",
-    "old": "    else if (holds(h)) next.push({ ...h, by: personId, from: h.by });",
-    "new": "    else if (holds(h)) next.push(h);",
+    "old": "    } else if (holds(h)) next.push({ ...h, by: personId, from: h.by });",
+    "new": "    } else if (holds(h)) next.push(h);",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ],
@@ -51,8 +51,8 @@
   {
     "name": "PERMADEATH-HOUSES-rewind-drops",
     "file": "src/systems/legacy/household.js",
-    "old": "      else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) { const { from, ...row } = h; next.push({ ...row, by: from }); }",
-    "new": "      else if (false) { const { from, ...row } = h; next.push({ ...row, by: from }); }",
+    "old": "      else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) {",
+    "new": "      else if (false) {",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ],
@@ -71,8 +71,8 @@
   {
     "name": "PERMADEATH-HOUSES-layout-dropped",
     "file": "src/systems/legacy/household.js",
-    "old": "      ...(typeof h.layout === 'string' && h.layout ? { layout: h.layout } : {}),   // PERMADEATH-HOUSES",
-    "new": "      ...({}),   // PERMADEATH-HOUSES",
+    "old": "      ...(typeof h.layout === 'string' && h.layout ? { layout: h.layout } : {}), // PERMADEATH-HOUSES: the layout the deed names its building in (WD3)",
+    "new": "      ...{}, // PERMADEATH-HOUSES: the layout the deed names its building in (WD3)",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]
@@ -80,8 +80,8 @@
   {
     "name": "PERMADEATH-HOUSES-read-drops-from",
     "file": "src/systems/legacy/family.js",
-    "old": "        ...(Number.isInteger(h.from) ? { from: h.from } : {}) })) : [],",
-    "new": "        })) : [],",
+    "old": "            ...(Number.isInteger(h.from) ? { from: h.from } : {}),\n          }))",
+    "new": "          }))",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]
@@ -89,7 +89,7 @@
   {
     "name": "PERMADEATH-HOUSES-read-drops-taken",
     "file": "src/systems/legacy/family.js",
-    "old": "    p.deedsTaken = Array.isArray(raw.deedsTaken) ? [...new Set(raw.deedsTaken.filter((k) => typeof k === 'string' && /^-?\\d+:\\d+$/.test(k)))] : [];",
+    "old": "    p.deedsTaken = Array.isArray(raw.deedsTaken)\n      ? [...new Set(raw.deedsTaken.filter((k) => typeof k === 'string' && /^-?\\d+:\\d+$/.test(k)))]\n      : [];",
     "new": "    p.deedsTaken = [];",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
@@ -109,8 +109,8 @@
   {
     "name": "PERMADEATH-HOUSES-rekey-forgets-from",
     "file": "src/systems/legacy/store.js",
-    "old": " if (Number.isInteger(h.from)) h.from = to(h.from); }",
-    "new": " }",
+    "old": "    if (Number.isInteger(h.from)) h.from = to(h.from);\n  } // PERMADEATH-HOUSES: and who left it",
+    "new": "  } // PERMADEATH-HOUSES: and who left it",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]

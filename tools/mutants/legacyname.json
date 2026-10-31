@@ -20,8 +20,8 @@
   {
     "name": "LEGACYNAME-founding-unnamed",
     "file": "src/systems/legacy/family.js",
-    "old": "  nameAtSeat(family);   // a founder with no surname of their own: the house is the seat's\n",
-    "new": "",
+    "old": "  nameAtSeat(family); // a founder with no surname of their own: the house is the seat's\n  return family;",
+    "new": "  return family;",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LEGACYNAME-the-blood-keeps-no-name",
     "file": "src/systems/legacy/family.js",
-    "old": "  for (const p of family.people ?? []) if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;\n",
-    "new": "",
+    "old": "  for (const p of family.people ?? [])\n    if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;\n}",
+    "new": "}",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LEGACYNAME-a-spouse-renamed",
     "file": "src/systems/legacy/family.js",
-    "old": "if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;",
-    "new": "if (!String(p.surname ?? '').trim()) p.surname = sur;",
+    "old": "  for (const p of family.people ?? [])\n    if ((p.kind ?? 'member') === 'member' && !String(p.surname ?? '').trim()) p.surname = sur;",
+    "new": "  for (const p of family.people ?? []) if (!String(p.surname ?? '').trim()) p.surname = sur;",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LEGACYNAME-merge-forgets-the-name",
     "file": "src/systems/legacy/store.js",
-    "old": "  nameAtSeat(mine);   // LEGACY-NAME: a nameless house is named with the seat it learned - here, from the copy that saw it\n",
-    "new": "",
+    "old": "  nameAtSeat(mine); // LEGACY-NAME: a nameless house is named with the seat it learned - here, from the copy that saw it\n  if (!mine.home && other.home) mine.home = { ...other.home };",
+    "new": "  if (!mine.home && other.home) mine.home = { ...other.home };",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]
@@ -65,7 +65,7 @@
   {
     "name": "LEGACYNAME-houseWord-raw",
     "file": "src/systems/legacy/houseName.js",
-    "old": "export const houseWord = (surname) => String(surname ?? '').trim().replace(/^of\\s+/i, '');",
+    "old": "export const houseWord = (surname) =>\n  String(surname ?? '')\n    .trim()\n    .replace(/^of\\s+/i, '');",
     "new": "export const houseWord = (surname) => String(surname ?? '').trim();",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "LEGACYNAME-wed-of-of",
     "file": "src/systems/legacy/marriage.js",
-    "old": "is of the house${houseWord(house) ? ` of ${houseWord(house)}` : ''} now.`,",
-    "new": "is of the house of ${house} now.`,",
+    "old": "  wed: (name, house) =>\n    `You and ${name} are wed. ${name} is of the house${houseWord(house) ? ` of ${houseWord(house)}` : ''} now.`,",
+    "new": "  wed: (name, house) => `You and ${name} are wed. ${name} is of the house of ${house} now.`,",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LEGACYNAME-news-of-of",
     "file": "src/systems/legacy/influence.js",
-    "old": "house: houseWord(family.surname), foe: ''",
-    "new": "house: family.surname ?? '', foe: ''",
+    "old": "      house: houseWord(family.surname),",
+    "new": "      house: family.surname ?? '',",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "LEGACYNAME-surname-at-the-last-word",
     "file": "src/systems/legacy/family.js",
-    "old": "  if (of > 0) return parts.slice(of).join(' ');\n",
-    "new": "",
+    "old": "  if (of > 0) return parts.slice(of).join(' ');\n  return parts.length > 1 ? parts[parts.length - 1] : '';",
+    "new": "  return parts.length > 1 ? parts[parts.length - 1] : '';",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LEGACYNAME-given-at-the-last-word",
     "file": "src/systems/legacy/family.js",
-    "old": "  if (of > 0) return parts.slice(0, of).join(' ');\n",
-    "new": "",
+    "old": "  if (of > 0) return parts.slice(0, of).join(' ');\n  return parts.length > 1 ? parts.slice(0, -1).join(' ') : (parts[0] ?? '');",
+    "new": "  return parts.length > 1 ? parts.slice(0, -1).join(' ') : (parts[0] ?? '');",
     "tests": [
       "test/systems/legacy/legacyname.test.js"
     ]
