@@ -110,6 +110,8 @@ test('STAFF-PANEL1: every door is listed once, beside the game\'s, and none is b
     '/v1/staff/event', '/v1/staff/events',
     // STAFF-PANEL5-FEEDS: Network bursts, Monster watch and its Flag, the bot check (the relay's /v1/staff/net-feed takes no session)
     '/v1/staff/net', '/v1/staff/monsters', '/v1/staff/monster/flag', '/v1/staff/reactions', '/v1/staff/reactions/keep',
+    // Claude's suggestions (staffClaude.js), and an order signed outside the panel with its keys (staffOrder.js)
+    '/v1/staff/claude/list', '/v1/staff/claude/decide', '/v1/staff/claude/digest', '/v1/staff/order', '/v1/staff/order-key/add', '/v1/staff/order-key/list', '/v1/staff/order-key/revoke',
     // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js) - PIN MOVED
     '/v1/staff/hide',
     // STAFF-PANEL5-FREEZE: freeze and the staff chat (staffFreeze.js)
