@@ -91,5 +91,18 @@ C1 = A1, C3 = A8, C15 is decided above, C16 = A19.
 
 ## The probe
 
-`tools/wildlifeProbe.mjs` boots the streamed world in Daggerfall at noon and jumps to Solitude. On this container's
-software GL a boot takes most of an hour; its run is written here when it ends.
+`tools/wildlifeProbe.mjs` has two ways in. The streamed world's (Daggerfall, then Solitude) never finished here: two
+container restarts ended it within its hour of booting on software GL. So the probe gained `MODE=bench`: the fixed
+city boots in about a minute, and the player is set down in an open street among the houses, found with the game's
+own collider. Run at `4a817e46b` with ARENA2 on SwiftShader, no page error either time:
+
+- **Noon** (a winter's day in-game): 36 creatures drawn - five lone sparrows, a hawk soaring, a starling flock of 16
+  forming, two squirrels - and 28 perches found on Daggerfall's roofs, twelve birds on them, sparrows that had flown
+  in among them. The renderer drew the bodies on every frame, 36 instances each. A close crop of the sky shows the
+  flock's birds as small winged shapes, hazed by the distance.
+- **22:00**: one bat, six pigeons roosting on the roofs, three rats in the streets, nothing else aloft - the law's
+  winter night in a town, whole.
+- On the same build, a second sim run in the page on the game's own world, among the houses: every perched bird
+  stood on its roof's surface exactly (0.000 m) and 5 to 13 m over the street, at 2.4 rays a frame.
+
+Past the Bay it was not run live; each province's climates are pinned in `cast`.

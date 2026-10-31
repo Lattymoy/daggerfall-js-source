@@ -57,7 +57,7 @@ roofs' birds roost and let the player come to 0.6 of the day's distance.
 Every province reads its own climate through the same ten palettes, so Skyrim's mountains have their crows and
 hawks, Elsweyr's and Hammerfell's deserts their vultures and lizards, and Black Marsh its swamp. The pins walk every
 zone of every province (`world/tamriel/tamrielBiomes.js` BIOMES) beside the Bay's climates. `tools/wildlifeProbe.mjs`
-boots in Daggerfall and jumps to Solitude; its run is recorded in the audit.
+boots in Daggerfall and jumps to Solitude, or (`MODE=bench`) stands in the fixed city's streets; its run is in the audit.
 
 The roofs are found by looking, not by a list of the Bay's buildings. Each frame one ray goes down onto a building's
 box, or anywhere within 75 m, and a surface 2.5 m over the ground is walked up to its ridge or peak. Any town, ruin or
