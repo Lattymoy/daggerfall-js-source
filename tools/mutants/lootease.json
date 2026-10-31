@@ -287,8 +287,8 @@
   {
     "name": "MAGICKA-COMMON-foe-dropped",
     "file": "src/systems/healingSupply.js",
-    "old": " maybeAddMagickaPotion(items, enemy.magicka, rolls); });",
-    "new": " });",
+    "old": "    maybeAddMagickaPotion(items, enemy.magicka, rolls);\n  });",
+    "new": "  });",
     "why": "no foe carries one",
     "tests": [
       "test/systems/potion_common.test.js"
@@ -298,8 +298,8 @@
   {
     "name": "MAGICKA-COMMON-pile-dropped",
     "file": "src/systems/healingSupply.js",
-    "old": " maybeAddMagickaPotion(items, pile.magicka, rolls); }",
-    "new": " }",
+    "old": "      maybeAddMagickaPotion(items, pile.magicka, rolls);\n    }",
+    "new": "    }",
     "why": "no pile holds one",
     "tests": [
       "test/systems/potion_common.test.js"
@@ -309,8 +309,8 @@
   {
     "name": "MAGICKA-COMMON-drawn-first",
     "file": "src/systems/healingSupply.js",
-    "old": "maybeAddHealingPotion(items, enemy.healing, rolls); maybeAddMagickaPotion(items, enemy.magicka, rolls);",
-    "new": "maybeAddMagickaPotion(items, enemy.magicka, rolls); maybeAddHealingPotion(items, enemy.healing, rolls);",
+    "old": "    maybeAddHealingPotion(items, enemy.healing, rolls);\n    maybeAddMagickaPotion(items, enemy.magicka, rolls);",
+    "new": "    maybeAddMagickaPotion(items, enemy.magicka, rolls);\n    maybeAddHealingPotion(items, enemy.healing, rolls);",
     "why": "the magicka potion's draw before the healing potion's",
     "tests": [
       "test/systems/potion_common.test.js"

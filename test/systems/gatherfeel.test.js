@@ -414,7 +414,7 @@ test('GATHER-FEEL G13: the classic skin - the switch off, each beat says the DFU
   assert.deepEqual(cues, ['strike', 'clean'], 'the clean finish DFU\'s lock click; the port\'s own beats nothing');
   assert.deepEqual(audio.shots, [], 'never a clip of ours');
   // the switch: the port's own sounds', and the clips' load
-  assert.match(src('src/systems/gatherSounds.js'), /export function createGatherEar\(\{ audio = null, on = enhancedSoundsOn, rand = Math\.random, cue = profCue, install = true \} = \{\}\) \{/);
+  assert.match(src('src/systems/gatherSounds.js'), /export function createGatherEar\(\{\n\s*audio = null,\n\s*on = enhancedSoundsOn,\n\s*rand = Math\.random,\n\s*cue = profCue,\n\s*install = true,\n\s*\} = \{\}\) \{/);
   assert.equal(typeof enhancedSoundsOn, 'function');
   const realFetch = globalThis.fetch;
   const urls = [];

@@ -195,8 +195,8 @@
   {
     "name": "RENOWN-LOOT-magicka-from-some",
     "file": "src/systems/healingSupply.js",
-    "old": "magicka: lootEased(0, MAGICKA_ENEMY_CHANCE, quarters) }",
-    "new": "magicka: lootEased(MAGICKA_ENEMY_CHANCE, MAGICKA_ENEMY_CHANCE, quarters) }",
+    "old": "      magicka: lootEased(0, MAGICKA_ENEMY_CHANCE, quarters),",
+    "new": "      magicka: lootEased(MAGICKA_ENEMY_CHANCE, MAGICKA_ENEMY_CHANCE, quarters),",
     "why": "a foe's Restore Power flat",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -205,8 +205,8 @@
   {
     "name": "RENOWN-LOOT-foe-hook-whole",
     "file": "src/systems/healingSupply.js",
-    "old": "{ const { enemy } = healingSupplyChances(quarters); maybeAddHealingPotion",
-    "new": "{ const { enemy } = healingSupplyChances(4); maybeAddHealingPotion",
+    "old": "    const { enemy } = healingSupplyChances(quarters);",
+    "new": "    const { enemy } = healingSupplyChances(4);",
     "why": "the foe's hook at LOOT-EASE's whole",
     "tests": [
       "test/systems/renownloot.test.js"
@@ -215,8 +215,8 @@
   {
     "name": "RENOWN-LOOT-pile-hook-whole",
     "file": "src/systems/healingSupply.js",
-    "old": "{ const { pile } = healingSupplyChances(quarters); maybeAddHealingPotion",
-    "new": "{ const { pile } = healingSupplyChances(4); maybeAddHealingPotion",
+    "old": "      const { pile } = healingSupplyChances(quarters);",
+    "new": "      const { pile } = healingSupplyChances(4);",
     "why": "the pile's hook at LOOT-EASE's whole",
     "tests": [
       "test/systems/renownloot.test.js"

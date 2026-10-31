@@ -421,8 +421,8 @@
   {
     "name": "RW1-medium-off-preset",
     "file": "src/systems/graphicsPresets.js",
-    "old": "'water-quality': 'simple', 'real-windows': 'rooms' }",
-    "new": "'water-quality': 'simple', 'real-windows': 'off' }",
+    "old": "      'real-windows': 'rooms',",
+    "new": "      'real-windows': 'off',",
     "tests": [
       "test/render/windows1_rooms.test.js"
     ]

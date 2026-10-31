@@ -327,8 +327,8 @@
   {
     "name": "AUDIT-NAV2-F38-tile-0-alone",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "((m.tileMapIndex ?? 0) === 0 || SHALLOW_WATER_TILES.has(m.tileMapIndex)) ? 'floor'",
-    "new": "(m.tileMapIndex ?? 0) === 0 ? 'floor'",
+    "old": "    const floor = m.deck\n      ? 'deck'\n      : m.onStaticGeometry && ((m.tileMapIndex ?? 0) === 0 || SHALLOW_WATER_TILES.has(m.tileMapIndex))\n        ? 'floor'\n        : null;",
+    "new": "    const floor = m.deck ? 'deck' : m.onStaticGeometry && (m.tileMapIndex ?? 0) === 0 ? 'floor' : null;",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]

@@ -20,8 +20,8 @@
   {
     "name": "HT-WAIST-loadsettings-never-reads-it",
     "file": "src/systems/handheldTorches.js",
-    "old": "lanternsAtWaist: !!s['Handling.LanternsAtWaist'],",
-    "new": "lanternsAtWaist: false,",
+    "old": "    lanternsAtWaist: !!s['Handling.LanternsAtWaist'], // HT-WAIST: the port's own switch on the mod's pane (Ledger A)",
+    "new": "    lanternsAtWaist: false, // HT-WAIST: the port's own switch on the mod's pane (Ledger A)",
     "tests": [
       "test/systems/htwaist_setting.test.js",
       "test/systems/htwaist_handlaw.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "HT-WAIST-no-waist-press",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if ((w.s.lanternsAtWaist || beltLanternOf(ctx?.entity)) && !hasFreeHand() && waistPress()) return true;\n",
-    "new": "",
+    "old": "    if ((w.s.lanternsAtWaist || beltLanternOf(ctx?.entity)) && !hasFreeHand() && waistPress()) return true;\n    if (w.s.lanternRelaxed) {",
+    "new": "    if (w.s.lanternRelaxed) {",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "HT-WAIST-the-throw-douses-it",
     "file": "src/systems/handheldTorches.js",
-    "old": "if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null);",
-    "new": "if (lit && !(w.s.lanternRelaxed && isLantern(lit))) setLight(null);",
+    "old": "          if (lit && !((w.s.lanternRelaxed || w.s.lanternsAtWaist) && isLantern(lit))) setLight(null); // HT-WAIST: the waist's lantern stays lit through a throw too",
+    "new": "          if (lit && !(w.s.lanternRelaxed && isLantern(lit))) setLight(null); // HT-WAIST: the waist's lantern stays lit through a throw too",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "HT-WAIST-the-hand-frames-a-waist-lantern",
     "file": "src/systems/handheldTorches.js",
-    "old": "w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1;",
-    "new": "w.offsetFrame = cur ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1;",
+    "old": "      w.offsetFrame = cur && !atWaist(cur) ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // HT-WAIST: the waist's lantern has no hand frames - the hand slides off",
+    "new": "      w.offsetFrame = cur ? (isLantern(cur) ? 4 : isTorch(cur) ? 0 : -1) : -1; // HT-WAIST: the waist's lantern has no hand frames - the hand slides off",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "HT-WAIST-the-hand-draws-a-waist-lantern",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (atWaist(held)) return false;",
-    "new": "",
+    "old": "    if (atWaist(held)) return false; // HT-WAIST: the lantern hangs at the waist - the hand holds nothing",
+    "new": "    // HT-WAIST: the lantern hangs at the waist - the hand holds nothing",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "HT-WAIST-the-remembered-torch-lit-over-the-waist-lantern",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (atWaist(l)) { w.lastLightSource = null; return; }\n",
-    "new": "",
+    "old": "    if (atWaist(l)) {\n      w.lastLightSource = null;\n      return;\n    }\n    if (!hasFreeHand() && l && !isLantern(l)) {",
+    "new": "    if (!hasFreeHand() && l && !isLantern(l)) {",
     "tests": [
       "test/systems/htwaist_handlaw.test.js"
     ]

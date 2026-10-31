@@ -20,8 +20,8 @@
   {
     "name": "HELM-WAY-no-ease",
     "file": "src/systems/helmWay.js",
-    "old": "* x * Math.exp(1 - x);",
-    "new": "* Math.min(1, x);",
+    "old": "  return HELM_WAY.steerFloor + (HELM_WAY.steerPeak - HELM_WAY.steerFloor) * x * Math.exp(1 - x);",
+    "new": "  return HELM_WAY.steerFloor + (HELM_WAY.steerPeak - HELM_WAY.steerFloor) * Math.min(1, x);",
     "tests": [
       "test/systems/naval/helmway.test.js"
     ]

@@ -302,8 +302,8 @@
   {
     "name": "REFORGE-REPLACE-a-gilded-piece-counted",
     "file": "src/systems/gilded.js",
-    "old": "'sockets', 'reforged', 'reforges', 'honed', 'exalted']);",
-    "new": "'sockets', 'reforged', 'honed', 'exalted']);",
+    "old": "  'reforges',\n  'honed',",
+    "new": "  'honed',",
     "tests": [
       "test/systems/affixlines_reforge.test.js"
     ]

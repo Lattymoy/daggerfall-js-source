@@ -42,7 +42,7 @@
   {
     "name": "L10N3d2-systems-gameDate-67-dayNames",
     "file": "src/systems/gameDate.js",
-    "old": "export const dayNames = () => localizedTextList('dayNames', ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);",
+    "old": "export const dayNames = () =>\n  localizedTextList('dayNames', ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);",
     "new": "export const dayNames = () => ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas'];",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -62,8 +62,8 @@
   {
     "name": "L10N3d2-systems-gameDate-255-dateFormatString",
     "file": "src/systems/gameDate.js",
-    "old": "export const dateString = (date) => formatText(localizedText('dateFormatString', '{0} the {1}{2} of {3:00}'),",
-    "new": "export const dateString = (date) => formatText('{0} the {1}{2} of {3:00}',",
+    "old": "  formatText(\n    localizedText('dateFormatString', '{0} the {1}{2} of {3:00}'),\n    dayName(date),\n    dayOfMonth(date),\n    daySuffix(dayOfMonth(date)),\n    monthName(date),\n  );",
+    "new": "  formatText('{0} the {1}{2} of {3:00}', dayName(date), dayOfMonth(date), daySuffix(dayOfMonth(date)), monthName(date));",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "L10N3d2-systems-gameDate-283-dateTimeFormatString",
     "file": "src/systems/gameDate.js",
-    "old": "export const dateTimeString = (d) => formatText(localizedText('dateTimeFormatString', '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'),",
-    "new": "export const dateTimeString = (d) => formatText('{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}',",
+    "old": "    localizedText('dateTimeFormatString', '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'),",
+    "new": "    '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}',",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "L10N3d2-systems-gameDate-289-midDateTimeFormatString",
     "file": "src/systems/gameDate.js",
-    "old": "export const midDateTimeString = (d) => formatText(localizedText('midDateTimeFormatString', '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}'),",
-    "new": "export const midDateTimeString = (d) => formatText('{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}',",
+    "old": "  formatText(\n    localizedText('midDateTimeFormatString', '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}'),\n    d.hour,\n    d.minute,\n    d.second,\n    d.day + 1,\n    monthName(d),\n    d.year,\n  );",
+    "new": "  formatText('{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}', d.hour, d.minute, d.second, d.day + 1, monthName(d), d.year);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"

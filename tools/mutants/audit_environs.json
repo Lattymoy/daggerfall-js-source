@@ -238,8 +238,8 @@
   {
     "name": "AUDIT-ENVIRONS-I7-layer-left-behind",
     "file": "src/systems/heatHaze.js",
-    "old": "offsetOrigin(offset) { if (offset) layerY += offset[1]; },",
-    "new": "offsetOrigin(offset) { },",
+    "old": "    offsetOrigin(offset) {\n      if (offset) layerY += offset[1];\n    },",
+    "new": "    offsetOrigin(offset) {},",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "AUDIT-ENVIRONS-W4-shimmer-on-the-real-clock",
     "file": "src/systems/heatHaze.js",
-    "old": "      seconds += Math.max(0, time);",
-    "new": "      seconds += Math.max(0, dt);",
+    "old": "      seconds += Math.max(0, time); // AUDIT ENVIRONS W4: the shimmer's clock is the game's (_Time.y), held by a pause",
+    "new": "      seconds += Math.max(0, dt); // AUDIT ENVIRONS W4: the shimmer's clock is the game's (_Time.y), held by a pause",
     "tests": [
       "test/systems/audit_environs.test.js"
     ]

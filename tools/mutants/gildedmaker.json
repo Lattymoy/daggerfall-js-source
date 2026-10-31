@@ -92,8 +92,8 @@
   {
     "name": "GMAKER-the-wire-takes-any-row",
     "file": "src/systems/gilded.js",
-    "old": "item.enchantments.some((e) => !makerLaid(e))",
-    "new": "item.enchantments.some(() => false)",
+    "old": "  if (\n    item.customEnchantments?.length ||\n    (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))\n  )",
+    "new": "  if (item.customEnchantments?.length || (Array.isArray(item.enchantments) && item.enchantments.some(() => false)))",
     "tests": [
       "test/systems/gildedmaker.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GMAKER-the-wire-refuses-the-maker",
     "file": "src/systems/gilded.js",
-    "old": "item.enchantments.some((e) => !makerLaid(e))",
-    "new": "item.enchantments.some(() => true)",
+    "old": "  if (\n    item.customEnchantments?.length ||\n    (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))\n  )",
+    "new": "  if (item.customEnchantments?.length || (Array.isArray(item.enchantments) && item.enchantments.some(() => true)))",
     "tests": [
       "test/systems/gildedmaker.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "GMAKER-a-custom-row-let-in",
     "file": "src/systems/gilded.js",
-    "old": "if (item.customEnchantments?.length || (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))) return null;",
-    "new": "if (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e))) return null;",
+    "old": "  if (\n    item.customEnchantments?.length ||\n    (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e)))\n  )\n    return null;",
+    "new": "  if (Array.isArray(item.enchantments) && item.enchantments.some((e) => !makerLaid(e))) return null;",
     "tests": [
       "test/systems/gildedmaker.test.js"
     ]

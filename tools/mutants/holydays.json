@@ -2,7 +2,7 @@
   {
     "name": "HD-everyones-day-not-kept",
     "file": "src/systems/holidays.js",
-    "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex + 1;",
+    "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xff || row.region === regionIndex + 1;",
     "new": "export const holidayKeptIn = (row, regionIndex) => row.region === regionIndex + 1;",
     "tests": [
       "test/systems/livingWorld/holydays.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "HD-region-one-off",
     "file": "src/systems/holidays.js",
-    "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex + 1;",
-    "new": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex;",
+    "old": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xff || row.region === regionIndex + 1;",
+    "new": "export const holidayKeptIn = (row, regionIndex) => row.region === 0xff || row.region === regionIndex;",
     "tests": [
       "test/systems/livingWorld/holydays.test.js"
     ]

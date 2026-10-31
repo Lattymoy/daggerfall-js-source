@@ -112,8 +112,8 @@
   {
     "name": "HT7-the-sheathed-stance-frees-a-worn-left-hand-again",
     "file": "src/systems/handheldTorches.js",
-    "old": "    if (left) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;\n    }",
-    "new": "    if (left && !sheathedNow) {\n      w.handLeft = false;\n      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;\n    }",
+    "old": "    if (left) {",
+    "new": "    if (left && !sheathedNow) {",
     "tests": [
       "test/systems/ht6_offhand.test.js",
       "test/systems/ht1_handheldtorches.test.js"
@@ -122,7 +122,7 @@
   {
     "name": "HT7-a-bare-right-hand-is-in-use-while-the-weapon-is-away",
     "file": "src/systems/handheldTorches.js",
-    "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false;   // bare right hand, in use (0x2d53) - and only with the weapon up",
+    "old": "    } else if (!sheathedNow && usingRightNow) w.handRight = false; // bare right hand, in use (0x2d53) - and only with the weapon up",
     "new": "    } else if (usingRightNow) w.handRight = false;",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js"

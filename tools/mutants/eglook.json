@@ -29,8 +29,8 @@
   {
     "name": "EGLOOK-tier-eg-reads-regular",
     "file": "src/systems/gateTier.js",
-    "old": "if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'elite';",
-    "new": "if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'regular';",
+    "old": "  if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'elite';",
+    "new": "  if (x.kind === 'eg' || (typeof x.b === 'string' && x.b.length > 0)) return 'regular';",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGLOOK-tier-regular-renamed",
     "file": "src/systems/gateTier.js",
-    "old": "regular: \"Dagon's Breach\"",
-    "new": "regular: \"Regular Breach\"",
+    "old": "  regular: \"Dagon's Breach\",",
+    "new": "  regular: 'Regular Breach',",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGLOOK-tier-own-company-named",
     "file": "src/systems/gateTier.js",
-    "old": "if (!mine && opener) subs.push(",
-    "new": "if (opener) subs.push(",
+    "old": "  if (!mine && opener) subs.push(`${opener}'s company`);",
+    "new": "  if (opener) subs.push(`${opener}'s company`);",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGLOOK-tier-sight-unrounded",
     "file": "src/systems/gateTier.js",
-    "old": "const m = Math.max(10, Math.round(metres / 10) * 10);",
-    "new": "const m = Math.round(metres);",
+    "old": "  const m = Math.max(10, Math.round(metres / 10) * 10);",
+    "new": "  const m = Math.round(metres);",
     "tests": [
       "test/world/eliteGates/eglook_registry.test.js"
     ]

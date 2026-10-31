@@ -29,8 +29,8 @@
   {
     "name": "MARKET-AUDIT2-rent-credit",
     "file": "src/systems/homeRent.js",
-    "old": "    reserve: walletReserve(wallet, cost).reserve,",
-    "new": "    reserve: () => { wallet.pay(cost); return () => wallet.credit?.(cost); },",
+    "old": "    reserve: walletReserve(wallet, cost).reserve, // MARKET-AUDIT: a refusal gives back exactly what it took",
+    "new": "    reserve: () => {\n      wallet.pay(cost);\n      return () => wallet.credit?.(cost);\n    }, // MARKET-AUDIT: a refusal gives back exactly what it took",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]

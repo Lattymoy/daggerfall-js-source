@@ -2,8 +2,8 @@
   {
     "name": "SHIP-DECK-deck-arm-dropped",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "    if (floor === 'deck') { woodFloorFootsteps(); return; }",
-    "new": "    if (false) { woodFloorFootsteps(); return; }",
+    "old": "    if (floor === 'deck') {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/deckfield.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SHIP-DECK-reread-skipped",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "    if (floor !== lastFloor) { lastFloor = floor; lastTileMapIndex = FLOOR_LEFT; }",
-    "new": "    if (floor !== lastFloor) { lastFloor = floor; }",
+    "old": "      lastTileMapIndex = FLOOR_LEFT;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/deckfield.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SHIP-DECK-every-model-a-floor",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "m.onStaticGeometry && ((m.tileMapIndex ?? 0) === 0 || SHALLOW_WATER_TILES.has(m.tileMapIndex)) ? 'floor'",
-    "new": "m.onStaticGeometry ? 'floor'",
+    "old": "    const floor = m.deck\n      ? 'deck'\n      : m.onStaticGeometry && ((m.tileMapIndex ?? 0) === 0 || SHALLOW_WATER_TILES.has(m.tileMapIndex))\n        ? 'floor'\n        : null;",
+    "new": "    const floor = m.deck ? 'deck' : m.onStaticGeometry ? 'floor' : null;",
     "tests": [
       "test/systems/deckfield.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SHIP-DECK-bridge-wades",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "    if (floor === 'floor') { checkToUseArmorFootsteps(); return; }",
-    "new": "    if (false) { checkToUseArmorFootsteps(); return; }",
+    "old": "    if (floor === 'floor') {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/deckfield.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SHIP-DECK-boots-lost",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "    if (boots && mat >= ARMOR_MATERIAL.Iron) currentClimateFootsteps = cur('PlateFootsteps');\n    else if (boots && mat >= ARMOR_MATERIAL.Chain)",
-    "new": "    if (false) currentClimateFootsteps = cur('PlateFootsteps');\n    else if (boots && mat >= ARMOR_MATERIAL.Chain)",
+    "old": "    if (boots && mat >= ARMOR_MATERIAL.Iron) currentClimateFootsteps = cur('PlateFootsteps');",
+    "new": "    if (false) currentClimateFootsteps = cur('PlateFootsteps');",
     "tests": [
       "test/systems/deckfield.test.js"
     ]

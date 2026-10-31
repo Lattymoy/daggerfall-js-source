@@ -47,8 +47,8 @@
   {
     "name": "POTION-COMMON-every-pile",
     "file": "src/systems/healingSupply.js",
-    "old": "    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances(quarters);",
-    "new": "    { const { pile } = healingSupplyChances(quarters);",
+    "old": "    if (i >= 10 && i <= 15) {",
+    "new": "    {",
     "tests": [
       "test/systems/potion_common.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "POTION-COMMON-a-fifth-rounded",
     "file": "src/systems/healingSupply.js",
-    "old": "return 2 + Math.trunc(q / 5);",
-    "new": "return 2 + Math.round(q / 5);",
+    "old": "  if (buildingType === BUILDING_TYPES.Alchemist) return 2 + Math.trunc(q / 5);",
+    "new": "  if (buildingType === BUILDING_TYPES.Alchemist) return 2 + Math.round(q / 5);",
     "tests": [
       "test/systems/potion_common.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "POTION-COMMON-a-tenth-rounded",
     "file": "src/systems/healingSupply.js",
-    "old": "return 1 + Math.trunc(q / 10);",
-    "new": "return 1 + Math.round(q / 10);",
+    "old": "  if (buildingType === BUILDING_TYPES.GeneralStore) return 1 + Math.trunc(q / 10);",
+    "new": "  if (buildingType === BUILDING_TYPES.GeneralStore) return 1 + Math.round(q / 10);",
     "tests": [
       "test/systems/potion_common.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "POTION-COMMON-I-to-P",
     "file": "src/systems/healingSupply.js",
-    "old": "    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances(quarters); maybeAddHealingPotion(",
-    "new": "    if (i >= 9 && i <= 16) { const { pile } = healingSupplyChances(quarters); maybeAddHealingPotion(",
+    "old": "    if (i >= 10 && i <= 15) {",
+    "new": "    if (i >= 9 && i <= 16) {",
     "tests": [
       "test/systems/potion_common.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "POTION-COMMON-under-the-kits-name",
     "file": "src/systems/healingSupply.js",
-    "old": "  registerTabledLootHandler('healing-potion',",
-    "new": "  registerTabledLootHandler('field-repair-kit',",
+    "old": "  registerTabledLootHandler('healing-potion', ({ key, items, rolls, quarters }) => {",
+    "new": "  registerTabledLootHandler('field-repair-kit', ({ key, items, rolls, quarters }) => {",
     "tests": [
       "test/systems/potion_common.test.js"
     ]

@@ -180,8 +180,8 @@
   {
     "name": "TE-heres-capital-unread",
     "file": "src/systems/immersiveTravel.js",
-    "old": " || (Number.isInteger(here.x) && Number.isInteger(here.y) && !inBay(here.x, here.y) && !!capitalOnPixel(here.x, here.y));",
-    "new": ";",
+    "old": "  const fromCapital =\n    isCapital(here.mapId ?? 0) ||\n    (Number.isInteger(here.x) &&\n      Number.isInteger(here.y) &&\n      !inBay(here.x, here.y) &&\n      !!capitalOnPixel(here.x, here.y)); // TRAVEL-EVERYWHERE: a capital past the Bay",
+    "new": "  const fromCapital = isCapital(here.mapId ?? 0); // TRAVEL-EVERYWHERE: a capital past the Bay",
     "tests": [
       "test/ui/travel_everywhere.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "TE-the-dests-capital-unread",
     "file": "src/systems/immersiveTravel.js",
-    "old": "(dest.capital ?? isCapital(dest.mapId))",
-    "new": "isCapital(dest.mapId)",
+    "old": "  if (fromCapital && (dest.capital ?? isCapital(dest.mapId))) return null; // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word",
+    "new": "  if (fromCapital && isCapital(dest.mapId)) return null; // IL_093f-095e: capital to capital, anywhere - TRAVEL-EVERYWHERE: a capital past the Bay by its ink's word",
     "tests": [
       "test/ui/travel_everywhere.test.js"
     ]

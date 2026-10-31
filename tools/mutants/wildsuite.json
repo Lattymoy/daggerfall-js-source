@@ -50,8 +50,8 @@
   {
     "name": "WILDSUITE-AUDIT24-the-blood-curse-takes-the-item-curse-name",
     "file": "src/systems/healCurse.js",
-    "old": "export const bearsCurse = (entity) =>",
-    "new": "export const isCursed = (entity) =>",
+    "old": "export const bearsCurse = (entity) => {",
+    "new": "export const isCursed = (entity) => {",
     "tests": [
       "test/systems/talk/audit24_onehome.test.js"
     ]

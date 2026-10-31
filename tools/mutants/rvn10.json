@@ -83,8 +83,8 @@
   {
     "name": "RVN10-judged-fight-kept",
     "file": "src/systems/harmMark.js",
-    "old": "  if (entity) _fights.delete(entity);   // RVN10: a judged foe's fight is over\n",
-    "new": "",
+    "old": "  if (entity) _fights.delete(entity); // RVN10: a judged foe's fight is over\n}",
+    "new": "}",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "RVN10-end-keeps-low",
     "file": "src/systems/harmMark.js",
-    "old": "export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; _harmAt = null; }",
-    "new": "export function endPlayerFights() { _fights = new WeakMap(); _harmAt = null; }",
+    "old": "  _lowAt = null;\n  _harmAt = null;",
+    "new": "  _harmAt = null;",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "RVN10-end-keeps-fights",
     "file": "src/systems/harmMark.js",
-    "old": "export function endPlayerFights() { _fights = new WeakMap(); _lowAt = null; _harmAt = null; }",
-    "new": "export function endPlayerFights() { _lowAt = null; _harmAt = null; }",
+    "old": "  _fights = new WeakMap();\n  _lowAt = null;",
+    "new": "  _lowAt = null;",
     "tests": [
       "test/systems/rvn10_deeds.test.js"
     ]

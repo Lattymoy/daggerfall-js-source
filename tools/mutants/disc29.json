@@ -74,8 +74,8 @@
   {
     "name": "DISC29-B-footsteps-raw-material",
     "file": "src/systems/immersiveFootsteps.js",
-    "old": "(item ? rriNativeMaterialValue(item) : -1)",
-    "new": "(item ? (item.material ?? ARMOR_MATERIAL.Leather) : -1)",
+    "old": "const nativeMaterialValue = (item) => (item ? rriNativeMaterialValue(item) : -1); // GetMaterialValueOrDefault (Main.cs:605-608)",
+    "new": "const nativeMaterialValue = (item) => (item ? (item.material ?? ARMOR_MATERIAL.Leather) : -1); // GetMaterialValueOrDefault (Main.cs:605-608)",
     "tests": [
       "test/systems/if1_immersivefootsteps.test.js"
     ]

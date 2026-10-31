@@ -441,8 +441,8 @@
   {
     "name": "PROF1-49-letting-go-finishes",
     "file": "src/systems/herbAct.js",
-    "old": "        if (!held) { st.cancelled = true; return st; }   // let go before the end: nothing lost",
-    "new": "",
+    "old": "        if (!held) {\n          st.cancelled = true;\n          return st;\n        } // let go before the end: nothing lost\n        st.from ??= { yaw: view.yaw, pitch: view.pitch, x: pos.x, z: pos.z };",
+    "new": "        st.from ??= { yaw: view.yaw, pitch: view.pitch, x: pos.x, z: pos.z };",
     "tests": [
       "test/systems/prof1_client.test.js"
     ]
@@ -459,7 +459,7 @@
   {
     "name": "PROF1-51-a-turn-the-long-way",
     "file": "src/systems/herbAct.js",
-    "old": "const turnDeg = (a, b) => { let d = (a - b) % 360; if (d > 180) d -= 360; if (d < -180) d += 360; return Math.abs(d); };",
+    "old": "const turnDeg = (a, b) => {\n  let d = (a - b) % 360;\n  if (d > 180) d -= 360;\n  if (d < -180) d += 360;\n  return Math.abs(d);\n};",
     "new": "const turnDeg = (a, b) => Math.abs(a - b);",
     "tests": [
       "test/systems/prof1_client.test.js"

@@ -534,8 +534,8 @@
   {
     "name": "AUDITTELL-U9-batch",
     "file": "src/systems/hitFlash.js",
-    "old": "  if (cur) { cur[0] = g[0]; cur[1] = g[1]; cur[2] = g[2]; cur[3] = g[3]; return; }",
-    "new": "",
+    "old": "  if (cur) {\n    cur[0] = g[0];\n    cur[1] = g[1];\n    cur[2] = g[2];\n    cur[3] = g[3];\n    return;\n  } // AUDIT TELL U9: a glint that changes every frame is rewritten in place - no array a frame",
+    "new": "  // AUDIT TELL U9: a glint that changes every frame is rewritten in place - no array a frame",
     "tests": [
       "test/scenes/audittell.test.js",
       "test/characters/enemy/tell2_tell.test.js"

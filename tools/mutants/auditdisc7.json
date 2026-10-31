@@ -2,8 +2,8 @@
   {
     "name": "C1-subscribed-only-at-birth",
     "file": "src/systems/handheldTorches.js",
-    "old": "    offLight ??= addLightSourceListener(onLight);   // AUDIT DISC7 C1: (re)armed with the frame\n",
-    "new": "",
+    "old": "    offLight ??= addLightSourceListener(onLight); // AUDIT DISC7 C1: (re)armed with the frame\n    _liveHandLaw = applyHandLaw; // HT6: this host has the player, so this component answers the equip change",
+    "new": "    _liveHandLaw = applyHandLaw; // HT6: this host has the player, so this component answers the equip change",
     "tests": [
       "test/systems/auditdisc7.test.js"
     ]

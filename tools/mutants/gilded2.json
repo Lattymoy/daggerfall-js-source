@@ -11,8 +11,8 @@
   {
     "name": "GILDED2-the-oaths-make",
     "file": "src/systems/gilded.js",
-    "old": "  templateIndex: WEAPONS.Dai_Katana,\n  material: WEAPON_MATERIALS.Daedric,",
-    "new": "  templateIndex: WEAPONS.Dai_Katana,\n  material: WEAPON_MATERIALS.Ebony,",
+    "old": "  material: WEAPON_MATERIALS.Daedric,",
+    "new": "  material: WEAPON_MATERIALS.Ebony,",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GILDED2-the-thunderlock-for-every-record",
     "file": "src/systems/gilded.js",
-    "old": "r.templateIndex === THUNDERLOCK_TEMPLATE ? createThunderlock({ material: r.material })\n    : r.templateIndex === PISTOLET_TEMPLATE ? createPistolet({ material: r.material })   // PISTOLET: the Sunken Sovereign's pistolet era; KETCH: the Ketchmaster's Word\n    : createWeapon(r.templateIndex, r.material);",
-    "new": "createThunderlock({ material: r.material });",
+    "old": "  const item =\n    r.templateIndex === THUNDERLOCK_TEMPLATE\n      ? createThunderlock({ material: r.material })\n      : r.templateIndex === PISTOLET_TEMPLATE\n        ? createPistolet({ material: r.material }) // PISTOLET: the Sunken Sovereign's pistolet era; KETCH: the Ketchmaster's Word\n        : createWeapon(r.templateIndex, r.material);",
+    "new": "  const item = createThunderlock({ material: r.material });",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

@@ -470,8 +470,8 @@
   {
     "name": "HOME-RENT-a-leftover-offered",
     "file": "src/systems/homeRent.js",
-    "old": "  if (!o.listed) return 'No longer offered to rent';",
-    "new": "  if (false) return 'No longer offered to rent';",
+    "old": "  if (!o.listed) return 'No longer offered to rent'; // AUDIT: a room taken off the offer whose tenancy ran out (it said \"Offered\")",
+    "new": "  if (false) return 'No longer offered to rent'; // AUDIT: a room taken off the offer whose tenancy ran out (it said \"Offered\")",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "HOME-RENT-a-withdrawn-room-offered-to-renew",
     "file": "src/systems/homeRent.js",
-    "old": "(rooms ?? []).filter((r) => r.listed && (!r.taken || r.yours));",
-    "new": "(rooms ?? []).filter((r) => (r.listed && !r.taken) || r.yours);",
+    "old": "export const rentable = (rooms) => (rooms ?? []).filter((r) => r.listed && (!r.taken || r.yours)); // one's own renewed while it is still offered (AUDIT: as the service allows)",
+    "new": "export const rentable = (rooms) => (rooms ?? []).filter((r) => (r.listed && !r.taken) || r.yours); // one's own renewed while it is still offered (AUDIT: as the service allows)",
     "tests": [
       "test/server/homerent.test.js"
     ]

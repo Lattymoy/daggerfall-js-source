@@ -94,8 +94,8 @@
   {
     "name": "AUDITGATHER-F7-wet-unread",
     "file": "src/systems/herbAct.js",
-    "old": "* sky * (wet ? HERB_ACT.wet : 1);",
-    "new": "* sky;",
+    "old": "  const window = HERB_ACT.steadyDeg * band * (botanist ? HERB_ACT.botanist : 1) * sky * (wet ? HERB_ACT.wet : 1);",
+    "new": "  const window = HERB_ACT.steadyDeg * band * (botanist ? HERB_ACT.botanist : 1) * sky;",
     "tests": [
       "test/systems/auditgather.test.js"
     ]

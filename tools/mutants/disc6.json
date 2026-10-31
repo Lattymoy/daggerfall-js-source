@@ -92,8 +92,8 @@
   {
     "name": "DISC6-torch-silence-noop",
     "file": "src/systems/handheldTorches.js",
-    "old": "  function silence() { w.loop?.stop?.(); w.loop = null; }",
-    "new": "  function silence() { }",
+    "old": "  function silence() {\n    w.loop?.stop?.();\n    w.loop = null;\n  }",
+    "new": "  function silence() {}",
     "tests": [
       "test/systems/disc6.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DISC6-torch-silence-keeps-handle",
     "file": "src/systems/handheldTorches.js",
-    "old": "  function silence() { w.loop?.stop?.(); w.loop = null; }",
-    "new": "  function silence() { w.loop?.stop?.(); }",
+    "old": "    w.loop?.stop?.();\n    w.loop = null;\n  }",
+    "new": "    w.loop?.stop?.();\n  }",
     "tests": [
       "test/systems/disc6.test.js"
     ]

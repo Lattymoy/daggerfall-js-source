@@ -472,8 +472,8 @@
   {
     "name": "AUDIT-HOME-PRICE-E4-the-rent-region-named",
     "file": "src/systems/homeRent.js",
-    "old": "export const rentShortLine = (cost) => `You need ${goldSum(cost)} gold, in your purse and ${EMPIRE_ACCOUNT_WORDS} together.`;",
-    "new": "export const rentShortLine = (cost) => `You need ${goldSum(cost)} gold, in your purse and this region's bank account together.`;",
+    "old": "  `You need ${goldSum(cost)} gold, in your purse and ${EMPIRE_ACCOUNT_WORDS} together.`;",
+    "new": "  `You need ${goldSum(cost)} gold, in your purse and this region's bank account together.`;",
     "tests": [
       "test/systems/homeprice.test.js"
     ]

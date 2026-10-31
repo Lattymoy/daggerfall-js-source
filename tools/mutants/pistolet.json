@@ -121,8 +121,8 @@
   {
     "name": "SE-era-for-any-template",
     "file": "src/systems/gilded.js",
-    "old": "e.id === r?.id && e.templateIndex === item?.templateIndex",
-    "new": "e.id === r?.id",
+    "old": "  return GILDED_ERAS.find((e) => e.id === r?.id && e.templateIndex === item?.templateIndex) ?? r;",
+    "new": "  return GILDED_ERAS.find((e) => e.id === r?.id) ?? r;",
     "tests": [
       "test/systems/pistolet.test.js"
     ]

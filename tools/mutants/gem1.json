@@ -338,8 +338,8 @@
   {
     "name": "GEM2-no-ingredient",
     "file": "src/systems/gems.js",
-    "old": "    isIngredient: true,\n",
-    "new": "    isIngredient: false,\n",
+    "old": "        isIngredient: true,",
+    "new": "        isIngredient: false,",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "GEM2-the-wrong-art",
     "file": "src/systems/gems.js",
-    "old": "    worldTextureRecord: dfu.worldTextureRecord,\n",
-    "new": "    worldTextureRecord: k,\n",
+    "old": "        worldTextureRecord: dfu.worldTextureRecord,",
+    "new": "        worldTextureRecord: k,",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -383,8 +383,8 @@
   {
     "name": "GEM2-a-boss-no-more",
     "file": "src/systems/gems.js",
-    "old": "  const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);\n  return Math.max(0, Math.min(GEM_FIND.cap,",
-    "new": "  const mult = SOURCE_MULT[kind] ?? 1;\n  return Math.max(0, Math.min(GEM_FIND.cap,",
+    "old": "  const mult = boss ? SOURCE_MULT.boss : (SOURCE_MULT[kind] ?? 1);",
+    "new": "  const mult = SOURCE_MULT[kind] ?? 1;",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "GEM2-luck-ignored",
     "file": "src/systems/gems.js",
-    "old": "(GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult * luckMult(luck)));",
-    "new": "(GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult));",
+    "old": "  return Math.max(\n    0,\n    Math.min(GEM_FIND.cap, (GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult * luckMult(luck)),\n  );",
+    "new": "  return Math.max(0, Math.min(GEM_FIND.cap, (GEM_FIND.base + GEM_FIND.perTier * Math.max(0, tier)) * mult));",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "GEM2-a-boss-a-rat-s-grade",
     "file": "src/systems/gems.js",
-    "old": "  for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) { const g = rollGem(BOSS_GEM_SOURCE, rolls);",
-    "new": "  for (let i = 0; i < (BOSS_GEMS[boss] ?? 0); i++) { const g = rollGem({ tier: 0 }, rolls);",
+    "old": "    const g = rollGem(BOSS_GEM_SOURCE, rolls);",
+    "new": "    const g = rollGem({ tier: 0 }, rolls);",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]
@@ -647,8 +647,8 @@
   {
     "name": "AUDIT-GEM-boss-gems-off",
     "file": "src/systems/gems.js",
-    "old": "  if (!lootRarityOn()) return [];   // AUDIT GEM (law 3)",
-    "new": "  // AUDIT GEM (law 3)",
+    "old": "  if (!lootRarityOn()) return []; // AUDIT GEM (law 3): with the ladder off no graded gem is found - a boss's last draws, so nothing before them moves",
+    "new": "  // AUDIT GEM (law 3): with the ladder off no graded gem is found - a boss's last draws, so nothing before them moves",
     "tests": [
       "test/systems/gem1_sockets.test.js"
     ]

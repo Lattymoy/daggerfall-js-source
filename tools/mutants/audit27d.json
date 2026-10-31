@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-A3-clamp-to-one",
     "file": "src/systems/gamepad.js",
-    "old": "deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 0.9),",
-    "new": "deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 1),",
+    "old": "    deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 0.9), // AUDIT PAD-SETTINGS A3: DFU's slider's own top - at 1.0 no stick moves",
+    "new": "    deadzone: getFloat('Controls', 'JoystickDeadzone', 0, 1), // AUDIT PAD-SETTINGS A3: DFU's slider's own top - at 1.0 no stick moves",
     "tests": [
       "test/ui/settings/menupad.test.js"
     ]

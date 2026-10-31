@@ -38,8 +38,8 @@
   {
     "name": "KTQ-the-constructs-lower-their-arms",
     "file": "src/systems/gilded.js",
-    "old": "and gave the last order with it. Its coil has never wound down.',",
-    "new": "and gave the last order with it. Its coil has never wound down, and the Ketch\\'s constructs still lower their arms to the sound of it.',",
+    "old": "  lore: \"The Mzunthar's master carried it on the day the Dwemer vanished, and gave the last order with it. Its coil has never wound down.\",",
+    "new": "  lore: \"The Mzunthar's master carried it on the day the Dwemer vanished, and gave the last order with it. Its coil has never wound down, and the Ketch's constructs still lower their arms to the sound of it.\",",
     "tests": [
       "test/systems/questlines/ketch_lines.test.js"
     ]

@@ -409,8 +409,8 @@
   {
     "name": "AUDIT29-C9-the-basket-mashed",
     "file": "src/systems/herbAct.js",
-    "old": "          if (!gentle && attack && st.find < BASKET_ACT.finds) st.early = true;\n",
-    "new": "",
+    "old": "          if (!gentle && attack && st.find < BASKET_ACT.finds) st.early = true;\n          st.gap -= step;",
+    "new": "          st.gap -= step;",
     "tests": [
       "test/scenes/audit29_host.test.js"
     ]

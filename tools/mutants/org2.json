@@ -38,8 +38,8 @@
   {
     "name": "ORG2-high-is-not-how-it-ships",
     "file": "src/systems/graphicsPresets.js",
-    "old": "values: Object.freeze({ 'land-view-distance': 5, grass: 1, 'cloud-quality': 'default'",
-    "new": "values: Object.freeze({ 'land-view-distance': 5, grass: 0.5, 'cloud-quality': 'default'",
+    "old": "      'land-view-distance': 5,\n      grass: 1,",
+    "new": "      'land-view-distance': 5,\n      grass: 0.5,",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ORG2-a-preset-value-off-its-row",
     "file": "src/systems/graphicsPresets.js",
-    "old": "'cloud-quality': 'hi', 'ground-sharpness': 'max'",
-    "new": "'cloud-quality': 'ultra', 'ground-sharpness': 'max'",
+    "old": "      'cloud-quality': 'hi',",
+    "new": "      'cloud-quality': 'ultra',",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ORG2-one-row-is-enough-for-a-preset",
     "file": "src/systems/graphicsPresets.js",
-    "old": "PRESET_ROWS.every((id) =>",
-    "new": "PRESET_ROWS.some((id) =>",
+    "old": "        PRESET_ROWS.every((id) => String(valueOf(id)) === String(asRead(id, p.values[id]))) &&",
+    "new": "        PRESET_ROWS.some((id) => String(valueOf(id)) === String(asRead(id, p.values[id]))) &&",
     "tests": [
       "test/systems/org2_options.test.js"
     ]

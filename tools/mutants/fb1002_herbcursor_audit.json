@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-HERB-CURSOR-C2-herb-act-unsaid",
     "file": "src/systems/herbAct.js",
-    "old": "bruised: false, window, gentle,   // AUDIT HERB-CURSOR C2",
-    "new": "bruised: false, window,   // AUDIT HERB-CURSOR C2",
+    "old": "    window,\n    gentle, // AUDIT HERB-CURSOR C2: said, as the mine's and the trace's are",
+    "new": "    window, // AUDIT HERB-CURSOR C2: said, as the mine's and the trace's are",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]

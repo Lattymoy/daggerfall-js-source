@@ -94,8 +94,8 @@
   {
     "name": "DISEASE-UNWELL-the-box-silent",
     "file": "src/systems/healthStatus.js",
-    "old": "    if (!unwell && diseaseIncubating(a)) {\n",
-    "new": "    if (false) {\n",
+    "old": "    if (!unwell && diseaseIncubating(a)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/fb1019f_unwell.test.js",
       "test/ui/enhanced/ui3_status.test.js",
@@ -105,8 +105,8 @@
   {
     "name": "DISEASE-UNWELL-the-line-a-disease",
     "file": "src/systems/healthStatus.js",
-    "old": "    if (!unwell && diseaseIncubating(a)) {\n",
-    "new": "    if (diseaseIncubating(a)) {\n",
+    "old": "    if (!unwell && diseaseIncubating(a)) {",
+    "new": "    if (diseaseIncubating(a)) {",
     "tests": [
       "test/ui/fb1019f_unwell.test.js",
       "test/ui/enhanced/ui3_status.test.js",
@@ -116,8 +116,8 @@
   {
     "name": "DISEASE-UNWELL-the-line-in-no-row-shape",
     "file": "src/systems/healthStatus.js",
-    "old": "      tokens = [...(tokens ?? []), like && typeof like === 'object' ? { ...like, text } : text];\n",
-    "new": "      tokens = [...(tokens ?? []), text];\n",
+    "old": "      tokens = [...(tokens ?? []), like && typeof like === 'object' ? { ...like, text } : text];",
+    "new": "      tokens = [...(tokens ?? []), text];",
     "tests": [
       "test/ui/fb1019f_unwell.test.js",
       "test/ui/enhanced/ui3_status.test.js",
@@ -127,8 +127,8 @@
   {
     "name": "DISEASE-UNWELL-the-line-a-literal",
     "file": "src/systems/healthStatus.js",
-    "old": "      const text = t('status.health.unwell', UNWELL_LINE_TEXT);\n",
-    "new": "      const text = UNWELL_LINE_TEXT;\n",
+    "old": "      const text = t('status.health.unwell', UNWELL_LINE_TEXT);",
+    "new": "      const text = UNWELL_LINE_TEXT;",
     "tests": [
       "test/ui/fb1019f_unwell.test.js"
     ]

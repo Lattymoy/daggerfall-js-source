@@ -245,8 +245,8 @@
   {
     "name": "DISC7-torch-listener-never-stops",
     "file": "src/systems/handheldTorches.js",
-    "old": "    w.loop.stop?.(); w.loop = null;\n  };\n  let offLight = null;",
-    "new": "  };\n  let offLight = null;",
+    "old": "    w.loop.stop?.();\n    w.loop = null;\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/disc7.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DISC7-torch-listener-leaks",
     "file": "src/systems/handheldTorches.js",
-    "old": "  function dispose() { offLight?.(); offLight = null; w.loop",
-    "new": "  function dispose() { offLight = null; w.loop",
+    "old": "    offLight?.();\n    offLight = null;",
+    "new": "    offLight = null;",
     "tests": [
       "test/systems/disc7.test.js"
     ]

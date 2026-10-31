@@ -318,8 +318,8 @@
   {
     "name": "POWER-CEILING-the-hourlocks-shock-past-the-top",
     "file": "src/systems/gilded.js",
-    "old": "    line('elemental', 10, 'shock'),\n  ]),\n  power: HOUR_TOLLS,",
-    "new": "    line('elemental', 11, 'shock'),\n  ]),\n  power: HOUR_TOLLS,",
+    "old": "    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),\n    line('elemental', 10, 'shock'),\n  ]),\n  power: HOUR_TOLLS,",
+    "new": "    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),\n    line('elemental', 11, 'shock'),\n  ]),\n  power: HOUR_TOLLS,",
     "tests": [
       "test/combat/powerceiling_walk.test.js"
     ]

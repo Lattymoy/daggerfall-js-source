@@ -137,8 +137,8 @@
   {
     "name": "MA-steady-shadows-kept-on-low",
     "file": "src/systems/graphicsPresets.js",
-    "old": "'real-windows': 'off' }), parts: Object.freeze({ steadyShadows: false })",
-    "new": "'real-windows': 'off' }), parts: Object.freeze({ steadyShadows: true })",
+    "old": "    parts: Object.freeze({ steadyShadows: false }),",
+    "new": "    parts: Object.freeze({ steadyShadows: true }),",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "MA-a-preset-reads-no-part",
     "file": "src/systems/graphicsPresets.js",
-    "old": "\n    && PRESET_PARTS.every((k) => String(partOf(k)) === String(p.parts[k]))",
-    "new": "",
+    "old": "    GRAPHICS_PRESETS.find(\n      (p) =>\n        PRESET_ROWS.every((id) => String(valueOf(id)) === String(asRead(id, p.values[id]))) &&\n        PRESET_PARTS.every((k) => String(partOf(k)) === String(p.parts[k])),\n    ) ?? null",
+    "new": "    GRAPHICS_PRESETS.find((p) => PRESET_ROWS.every((id) => String(valueOf(id)) === String(asRead(id, p.values[id])))) ??\n    null",
     "tests": [
       "test/systems/org2_options.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "MA-G3-medium-s-clouds-high",
     "file": "src/systems/graphicsPresets.js",
-    "old": "grass: 0.5, 'cloud-quality': 'lo',",
-    "new": "grass: 0.5, 'cloud-quality': 'hi',",
+    "old": "      grass: 0.5,\n      'cloud-quality': 'lo',",
+    "new": "      grass: 0.5,\n      'cloud-quality': 'hi',",
     "tests": [
       "test/systems/org2_options.test.js"
     ]

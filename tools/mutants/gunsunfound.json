@@ -31,8 +31,8 @@
   {
     "name": "GU-sovereign-still-a-pistolet",
     "file": "src/systems/gilded.js",
-    "old": "  templateIndex: WEAPONS.Saber,\n  material: WEAPON_MATERIALS.Ebony,",
-    "new": "  templateIndex: PISTOLET_TEMPLATE,\n  material: WEAPON_MATERIALS.Ebony,",
+    "old": "  templateIndex: WEAPONS.Saber,",
+    "new": "  templateIndex: PISTOLET_TEMPLATE,",
     "tests": [
       "test/systems/gilded2_world.test.js",
       "test/systems/pistolet.test.js"
@@ -41,8 +41,8 @@
   {
     "name": "GU-sovereign-archery-line",
     "file": "src/systems/gilded.js",
-    "old": "    line('skill', 30, SKILLS.LongBlade),\n    line('leech', 10),",
-    "new": "    line('skill', 30, SKILLS.Archery),\n    line('leech', 10),",
+    "old": "    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.LongBlade),",
+    "new": "    line('stat', 15, 'agility'),\n    line('skill', 30, SKILLS.Archery),",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -69,8 +69,8 @@
   {
     "name": "GU-era-for-any-record",
     "file": "src/systems/gilded.js",
-    "old": "e.id === r?.id && e.templateIndex === item?.templateIndex",
-    "new": "e.templateIndex === item?.templateIndex",
+    "old": "  return GILDED_ERAS.find((e) => e.id === r?.id && e.templateIndex === item?.templateIndex) ?? r;",
+    "new": "  return GILDED_ERAS.find((e) => e.templateIndex === item?.templateIndex) ?? r;",
     "tests": [
       "test/systems/pistolet.test.js"
     ]

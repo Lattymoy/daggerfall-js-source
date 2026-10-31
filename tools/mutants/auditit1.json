@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-IT1-W4-no-latch",
     "file": "src/systems/immersiveTravel.js",
-    "old": "export const immersiveTravelLoaded = () => modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
-    "new": "export const immersiveTravelLoaded = () => (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
+    "old": "export const immersiveTravelLoaded = () =>\n  modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true;",
+    "new": "export const immersiveTravelLoaded = () => modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true;",
     "tests": [
       "test/systems/auditit1.test.js"
     ]

@@ -39,8 +39,8 @@
   {
     "name": "D5-3ARMS-relaxed-ignores-the-swing",
     "file": "src/systems/handheldTorches.js",
-    "old": "        if (w.s.twoHandedRelaxed) { if (isBow(right) || w.attacking) w.handLeft = false; }",
-    "new": "        if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; }",
+    "old": "          if (isBow(right) || w.attacking) w.handLeft = false;",
+    "new": "          if (isBow(right)) w.handLeft = false;",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js",
       "test/systems/discord5.test.js"
@@ -49,7 +49,7 @@
   {
     "name": "D5-3ARMS-relaxed-strict-alike",
     "file": "src/systems/handheldTorches.js",
-    "old": "        if (w.s.twoHandedRelaxed) { if (isBow(right) || w.attacking) w.handLeft = false; }\n        else w.handLeft = false;",
+    "old": "        if (w.s.twoHandedRelaxed) {\n          if (isBow(right) || w.attacking) w.handLeft = false;\n        } else w.handLeft = false;",
     "new": "        if (isBow(right) || w.attacking) w.handLeft = false;",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js",
@@ -59,8 +59,8 @@
   {
     "name": "D5-3ARMS-punching-left-hand-free",
     "file": "src/systems/handheldTorches.js",
-    "old": "    } else if (!sheathedNow && !usingRightNow) w.handLeft = false;   // bare left hand",
-    "new": "    } else if (false) w.handLeft = false;   // bare left hand",
+    "old": "    } else if (!sheathedNow && !usingRightNow) w.handLeft = false; // bare left hand, in use for punching (:1315) - stance-bound like the right's below",
+    "new": "    } else if (false) w.handLeft = false; // bare left hand, in use for punching (:1315) - stance-bound like the right's below",
     "tests": [
       "test/systems/ht1_handheldtorches.test.js",
       "test/systems/audit66_handheldtorches.test.js",

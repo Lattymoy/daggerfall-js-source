@@ -25,7 +25,7 @@ FOUND. Both screenshots read the helm's panel with the sails up - its first butt
 helm (the default) a ship under sail makes nothing at exactly one wind: none. Driven over every hull, all seven Large Boat
 rigs and 24 headings at the base wind, the slowest was 1.47 m/s and no heading is in irons; a wind of a millionth still
 drives a Small Ship at 4.31 m/s; a wind of nought drives nothing, because the sails' way and their pull both read it
-(`helmWay.js:"export const seaWind = (windLen) => (windLen > 0 ? WIND_RATED * windShare(windLen) : 0);"`) - so whatever
+(`helmWay.js:"export const seaWind"`) - so whatever
 way she had when the sail went up is all she keeps. The oars read no wind, which is "Oars work fine".
 
 Where the nought comes from: Come Sail Away lays no wind indoors (`comeSailAway.js:"if (deps.isPlayerInside()) {"`, both
@@ -162,11 +162,11 @@ and the socket draws it (`enhancedInventory.js:"const item = waistLanternOf(deps
 the same way, found on the way:
 
 - O lit the pack's first lantern even with another hung on the belt - the hung one stood dark while a second hung lit
-  beside it. A press now lights the slot's lantern first (`handheldTorches.js:"const lanternFirst = () => beltLanternOf(ctx?.entity) ?? firstOf('UselessItems2', T.Lantern);"`),
+  beside it. A press now lights the slot's lantern first (`handheldTorches.js:"const lanternFirst"`),
   on the mod's ladder and its remembered-light branch alike.
 - With the switch off, a hung lantern behind a shield and a drawn sword was refused ("You can't hold a light source right
   now"): the waist branch read the switch alone. BELT-LANTERN's own word is that a hung lantern takes no hand; the branch
-  now runs with a lantern hung (`handheldTorches.js:"if ((w.s.lanternsAtWaist || beltLanternOf(ctx?.entity)) && !hasFreeHand() && waistPress()) return true;"`).
+  now runs with a lantern hung (`handheldTorches.js:"|| beltLanternOf"`).
   An unhung lantern with the switch off still asks a hand.
 - The hotbar's lantern slot took the shield off (SHIELD1's torch law) and an off-hand weapon refused it. A lantern at the
   waist takes no hand, so its slot does neither (`quickslots.js:"const atWaist = lanternAtWaist(hotbarView(entity)[i]?.item);"`);

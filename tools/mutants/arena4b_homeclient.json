@@ -101,8 +101,8 @@
   {
     "name": "ARENA4B-CLIENT-ROOM-DROPPED",
     "file": "src/systems/homeRent.js",
-    "old": "(rentAnchorOf(x?.anchor) || (x?.moved === true && x.anchor == null))",
-    "new": "rentAnchorOf(x?.anchor)",
+    "old": "    .filter(\n      (x) =>\n        rentRoomOk(x?.room) &&\n        rentPriceOk(x?.price) &&\n        (rentAnchorOf(x?.anchor) || (x?.moved === true && x.anchor == null)),\n    )",
+    "new": "    .filter((x) => rentRoomOk(x?.room) && rentPriceOk(x?.price) && rentAnchorOf(x?.anchor))",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ARENA4B-CLIENT-ROOM-MATCHED",
     "file": "src/systems/homeRent.js",
-    "old": "!used.has(x.room) && Array.isArray(x.anchor) && roomOf(",
-    "new": "!used.has(x.room) && roomOf(",
+    "old": "          Array.isArray(x.anchor) &&\n          roomOf([origin[0] + x.anchor[0], origin[1] + x.anchor[1], origin[2] + x.anchor[2]])?.id === f.id,",
+    "new": "          roomOf([origin[0] + x.anchor[0], origin[1] + x.anchor[1], origin[2] + x.anchor[2]])?.id === f.id,",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]

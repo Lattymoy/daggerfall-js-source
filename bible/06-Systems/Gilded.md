@@ -463,7 +463,7 @@ and the Sunken Sovereign glowed nothing.
 **The maker.** A Gilded piece is the item maker's, as a Rare is (`systems/enchanting.js:"export function gildedKeeps"`).
 Its record's lines stay as minted. The maker lays DFU rows beside them at the catalogue's cost, paid from the piece's own
 points - its make's, as any piece of that make has: 525 on the bow Hourlock, 2,100 on the Oath - and the player's gold,
-ten rows at most. Only the maker's own rows are lawful on it: the wire (`systems/gilded.js:"export function validGildedMarks(item) {"`)
+ten rows at most. Only the maker's own rows are lawful on it: the wire (`systems/gilded.js:"export function validGildedMarks"`)
 and the item law refuse any other row, a custom row and every mark NEVER_ON_GILDED names. The item law moved to 16 and
 the account service to acct225 (15 and acct220 on its branch). With the ladder switched off the maker is DFU's, as for a Rare (AUDIT MAKER-RARE A2).
 The Aetheric keeps its refusal and its own line.

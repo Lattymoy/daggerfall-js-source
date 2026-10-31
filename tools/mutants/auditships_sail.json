@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-SHIPS-A5-a-table-entry-off",
     "file": "src/systems/helmWay.js",
-    "old": "1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 2.131]),",
-    "new": "1: Object.freeze([1.065, 1.159, 2.071, 1.190, 1.233, 1.212, 1.643]),",
+    "old": "  1: Object.freeze([1.065, 1.159, 2.071, 1.19, 1.233, 1.212, 2.131]), // the Large Boat's seven rigs",
+    "new": "  1: Object.freeze([1.065, 1.159, 2.071, 1.19, 1.233, 1.212, 1.643]), // the Large Boat's seven rigs",
     "tests": [
       "test/systems/auditships_sail.test.js"
     ]

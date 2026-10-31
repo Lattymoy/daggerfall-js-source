@@ -74,8 +74,8 @@
   {
     "name": "BAL11-under-the-foot-pays-back",
     "file": "src/systems/heroThreat.js",
-    "old": "const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.max(0, Math.min(to, Math.trunc(/** @type {number} */ (v))) - from) : 0);",
-    "new": "const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.min(to, Math.trunc(/** @type {number} */ (v))) - from : 0);",
+    "old": "  Number.isFinite(v) ? Math.max(0, Math.min(to, Math.trunc(/** @type {number} */ (v))) - from) : 0;",
+    "new": "  Number.isFinite(v) ? Math.min(to, Math.trunc(/** @type {number} */ (v))) - from : 0;",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BAL11-a-fraction-of-a-level-pays",
     "file": "src/systems/heroThreat.js",
-    "old": "const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.max(0, Math.min(to, Math.trunc(/** @type {number} */ (v))) - from) : 0);",
-    "new": "const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.max(0, Math.min(to, /** @type {number} */ (v)) - from) : 0);",
+    "old": "  Number.isFinite(v) ? Math.max(0, Math.min(to, Math.trunc(/** @type {number} */ (v))) - from) : 0;",
+    "new": "  Number.isFinite(v) ? Math.max(0, Math.min(to, /** @type {number} */ (v)) - from) : 0;",
     "tests": [
       "test/systems/bal11_hero.test.js"
     ]

@@ -42,39 +42,64 @@ import { SEASON } from '../world/climateSwaps.js';
 import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
 import { equipTableOf } from './equip.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
-import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js';   // DISC29-B: the class's NativeMaterialValue, the port's one reader
+import { rriNativeMaterialValue } from './roleplayRealismItems/rriItems.js'; // DISC29-B: the class's NativeMaterialValue, the port's one reader
 import { isRiding } from './transport.js';
-import { modSettingsOf, modSettingIfDeclared } from './modSettings.js';   // BA1: ModCompatibilityChecking reads Better Ambience's switch
+import { modSettingsOf, modSettingIfDeclared } from './modSettings.js'; // BA1: ModCompatibilityChecking reads Better Ambience's switch
 import { audio as defaultAudio } from './audio.js';
 import { SOUND } from './soundClips.js';
 
 export const IMMERSIVE_FOOTSTEPS_VENDOR = 'immersive-footsteps';
 export const IMMERSIVE_FOOTSTEPS_MOD = Object.freeze({
-  title: 'ImmersiveFootsteps', version: '1.01', author: 'Kirk.O',
-  guid: '8c75cd21-ca71-4841-b637-7728433c99f1', dfunity: '1.0.0',
+  title: 'ImmersiveFootsteps',
+  version: '1.01',
+  author: 'Kirk.O',
+  guid: '8c75cd21-ca71-4841-b637-7728433c99f1',
+  dfunity: '1.0.0',
 });
 
-export const FIXED_DELTA_TIME = 0.02;                 // Time.fixedDeltaTime
-export const SWIM_INTERVAL = 1.75;            // Object.cs:20 swimInterval
-export const REFRESH_SLOTS_TICKS = 250;       // Object.cs:71
-export const MAX_TICKS_PER_FRAME = 5;         // the hosts' 0.1 s dt cap, in ticks
-export const SOUND_CLIP_QUALITY = Object.freeze({ Low: 0, High: 1 });   // SoundClipQuality: 0 'Low-Quality (Retro)', 1 'High-Quality'
-export const FLOOR_TYPE = Object.freeze({ Tile: 0, Stone: 1, Wood: 2 });   // Main.CurrInteriorFloorType
+export const FIXED_DELTA_TIME = 0.02; // Time.fixedDeltaTime
+export const SWIM_INTERVAL = 1.75; // Object.cs:20 swimInterval
+export const REFRESH_SLOTS_TICKS = 250; // Object.cs:71
+export const MAX_TICKS_PER_FRAME = 5; // the hosts' 0.1 s dt cap, in ticks
+export const SOUND_CLIP_QUALITY = Object.freeze({ Low: 0, High: 1 }); // SoundClipQuality: 0 'Low-Quality (Retro)', 1 'High-Quality'
+export const FLOOR_TYPE = Object.freeze({ Tile: 0, Stone: 1, Wood: 2 }); // Main.CurrInteriorFloorType
 /** SHIP-DECK: no tile's index (a tile is a byte, off the terrain -1) - stepping off a floor re-reads the ground. */
 const FLOOR_LEFT = -2;
-export const LANDING_VOLUME_SCALE = 4;        // Object.cs:504/512/519 - 4f * FootstepVolumeMulti
+export const LANDING_VOLUME_SCALE = 4; // Object.cs:504/512/519 - 4f * FootstepVolumeMulti
 /** UpdateSwayMaterialWeights (Main.cs:571-603): "0 = Head, 1 = Right-Arm,
  *  2 = Left-Arm, 3 = Chest, 4 = Gloves, 5 = Legs" - Feet is READ (WornBoots)
  *  but carries no sway weight. */
 export const SWAY_WEIGHTS = Object.freeze([2, 1, 1, 3, 1, 4]);
-export const SWAY_SLOTS = Object.freeze([EQUIP_SLOTS.Head, EQUIP_SLOTS.RightArm, EQUIP_SLOTS.LeftArm, EQUIP_SLOTS.ChestArmor, EQUIP_SLOTS.Gloves, EQUIP_SLOTS.LegsArmor]);
+export const SWAY_SLOTS = Object.freeze([
+  EQUIP_SLOTS.Head,
+  EQUIP_SLOTS.RightArm,
+  EQUIP_SLOTS.LeftArm,
+  EQUIP_SLOTS.ChestArmor,
+  EQUIP_SLOTS.Gloves,
+  EQUIP_SLOTS.LegsArmor,
+]);
 
 // --- The clip tables (Main.cs:62-117; LoadAudio :620-889) ----------------
 
-export const FOOTSTEP_SETS = Object.freeze(['Chainmail', 'Leather', 'Plate', 'Unarmored', 'DeepWater', 'Grass', 'Gravel', 'Mud', 'Path', 'Sand', 'ShallowWater', 'Snow', 'Tile', 'Wood']);
+export const FOOTSTEP_SETS = Object.freeze([
+  'Chainmail',
+  'Leather',
+  'Plate',
+  'Unarmored',
+  'DeepWater',
+  'Grass',
+  'Gravel',
+  'Mud',
+  'Path',
+  'Sand',
+  'ShallowWater',
+  'Snow',
+  'Tile',
+  'Wood',
+]);
 export const SWAY_SETS = Object.freeze(['Chainmail', 'Leather', 'Plate']);
 export const LANDING_SETS = Object.freeze(['Chainmail', 'Leather', 'Plate', 'Unarmored']);
-export const ARMOR_SETS = Object.freeze(['Chainmail', 'Leather', 'Plate', 'Unarmored']);   // the Armor_Footsteps folder
+export const ARMOR_SETS = Object.freeze(['Chainmail', 'Leather', 'Plate', 'Unarmored']); // the Armor_Footsteps folder
 const FILE_WORD = Object.freeze({ DeepWater: 'Deep_Water', ShallowWater: 'Shallow_Water' });
 const QUALITY_PREFIX = (q) => (q === SOUND_CLIP_QUALITY.High ? 'HQ' : 'LQ');
 
@@ -115,10 +140,14 @@ export const clipPath = (name) => `vendor/immersive-footsteps/Audio/${clipFolder
 // transform for it, and the pins read the files by path instead.
 const IN_BROWSER = typeof window !== 'undefined';
 const URLS = IN_BROWSER
-  ? import.meta.glob('../../vendor/immersive-footsteps/Audio/*/*/*.mp3', { eager: true, query: '?url', import: 'default' })
+  ? import.meta.glob('../../vendor/immersive-footsteps/Audio/*/*/*.mp3', {
+      eager: true,
+      query: '?url',
+      import: 'default',
+    })
   : {};
 export const clipUrl = (name) => URLS[`../../${clipPath(name)}`] ?? null;
-export const soundKey = (name) => `if:${name}`;   // the audio engine's registered-buffer key (MW-D40)
+export const soundKey = (name) => `if:${name}`; // the audio engine's registered-buffer key (MW-D40)
 
 // --- The tile and archive tables (Object.cs:365-467) ---------------------
 
@@ -126,7 +155,7 @@ export const SHALLOW_WATER_TILES = Object.freeze(new Set([5, 6, 8, 20, 21, 23, 3
 export const PATH_TILES = Object.freeze(new Set([46, 47, 55]));
 export const TEMPERATE_DIRT_TILES = Object.freeze(new Set([1, 4, 7, 10, 13, 25, 26, 28, 37, 38, 39, 51, 52, 54]));
 export const TEMPERATE_STONE_TILES = Object.freeze(new Set([3, 14, 16, 17, 24, 27, 29, 32, 43, 44, 45, 50]));
-export const MOUNTAIN_DIRT_TILES = TEMPERATE_DIRT_TILES;      // the two tables are equal, entry for entry
+export const MOUNTAIN_DIRT_TILES = TEMPERATE_DIRT_TILES; // the two tables are equal, entry for entry
 export const MOUNTAIN_STONE_TILES = TEMPERATE_STONE_TILES;
 export const DESERT_GRAVEL_TILES = Object.freeze(new Set([2, 9, 11, 12, 15, 18, 19, 22, 39, 40, 41, 42, 45, 53]));
 export const DESERT_STONE_TILES = Object.freeze(new Set([3, 14, 16, 17, 24, 26, 27, 29, 32, 38, 43, 44]));
@@ -134,25 +163,73 @@ export const SWAMP_BOG_TILES = Object.freeze(new Set([1, 4, 7, 10, 13, 25, 26, 2
 export const SWAMP_GRASS_TILES = Object.freeze(new Set([3, 14, 16, 17, 24, 27, 29, 32, 43, 44, 45]));
 export const SWAMP_SNOW_ALT_TILES = Object.freeze(new Set([1, 7, 10, 11, 13, 25, 26, 28, 37, 38, 39, 43, 48, 50, 52]));
 export const CLIMATE_TILE_TABLES = Object.freeze({
-  Shallow_Water: SHALLOW_WATER_TILES, Path: PATH_TILES,
-  Temperate_Dirt: TEMPERATE_DIRT_TILES, Temperate_Stone: TEMPERATE_STONE_TILES,
-  Mountain_Dirt: MOUNTAIN_DIRT_TILES, Mountain_Stone: MOUNTAIN_STONE_TILES,
-  Desert_Gravel: DESERT_GRAVEL_TILES, Desert_Stone: DESERT_STONE_TILES,
-  Swamp_Bog: SWAMP_BOG_TILES, Swamp_Grass: SWAMP_GRASS_TILES, Swamp_Snow_Alt: SWAMP_SNOW_ALT_TILES,
+  Shallow_Water: SHALLOW_WATER_TILES,
+  Path: PATH_TILES,
+  Temperate_Dirt: TEMPERATE_DIRT_TILES,
+  Temperate_Stone: TEMPERATE_STONE_TILES,
+  Mountain_Dirt: MOUNTAIN_DIRT_TILES,
+  Mountain_Stone: MOUNTAIN_STONE_TILES,
+  Desert_Gravel: DESERT_GRAVEL_TILES,
+  Desert_Stone: DESERT_STONE_TILES,
+  Swamp_Bog: SWAMP_BOG_TILES,
+  Swamp_Grass: SWAMP_GRASS_TILES,
+  Swamp_Snow_Alt: SWAMP_SNOW_ALT_TILES,
 });
 /** CheckClimateTileTables (Object.cs:421-434). */
 export const checkClimateTileTables = (climateKey, tileKey) => CLIMATE_TILE_TABLES[climateKey]?.has(tileKey) ?? false;
 
-export const TILE_FLOOR_ARCHIVES = Object.freeze(new Set(['16_3', '37_3', '40_3', '41_0', '41_1', '41_2', '41_3', '44_3', '63_3', '111_2', '111_3', '137_3', '141_0', '141_1', '141_2', '141_3', '144_3', '311_3', '337_3', '341_0', '341_1', '341_2', '341_3', '363_3', '411_3', '437_3', '440_3', '444_3', '463_3']));
-export const STONE_FLOOR_ARCHIVES = Object.freeze(new Set(['60_3', '140_3', '160_3', '163_3', '340_3', '360_3', '366_3', '416_3', '460_3', '466_3']));
-export const WOOD_FLOOR_ARCHIVES = Object.freeze(new Set(['28_3', '66_3', '116_3', '128_3', '166_3', '171_3', '316_3', '328_3', '344_3', '428_3']));
-export const BUILDING_FLOOR_TABLES = Object.freeze({ Tile_Floor: TILE_FLOOR_ARCHIVES, Stone_Floor: STONE_FLOOR_ARCHIVES, Wood_Floor: WOOD_FLOOR_ARCHIVES });
+export const TILE_FLOOR_ARCHIVES = Object.freeze(
+  new Set([
+    '16_3',
+    '37_3',
+    '40_3',
+    '41_0',
+    '41_1',
+    '41_2',
+    '41_3',
+    '44_3',
+    '63_3',
+    '111_2',
+    '111_3',
+    '137_3',
+    '141_0',
+    '141_1',
+    '141_2',
+    '141_3',
+    '144_3',
+    '311_3',
+    '337_3',
+    '341_0',
+    '341_1',
+    '341_2',
+    '341_3',
+    '363_3',
+    '411_3',
+    '437_3',
+    '440_3',
+    '444_3',
+    '463_3',
+  ]),
+);
+export const STONE_FLOOR_ARCHIVES = Object.freeze(
+  new Set(['60_3', '140_3', '160_3', '163_3', '340_3', '360_3', '366_3', '416_3', '460_3', '466_3']),
+);
+export const WOOD_FLOOR_ARCHIVES = Object.freeze(
+  new Set(['28_3', '66_3', '116_3', '128_3', '166_3', '171_3', '316_3', '328_3', '344_3', '428_3']),
+);
+export const BUILDING_FLOOR_TABLES = Object.freeze({
+  Tile_Floor: TILE_FLOOR_ARCHIVES,
+  Stone_Floor: STONE_FLOOR_ARCHIVES,
+  Wood_Floor: WOOD_FLOOR_ARCHIVES,
+});
 /** CheckBuildingClimateFloorTypeTables (Object.cs:454-467). */
-export const checkBuildingClimateFloorTypeTables = (floorTypeKey, archiveKey) => BUILDING_FLOOR_TABLES[floorTypeKey]?.has(archiveKey) ?? false;
+export const checkBuildingClimateFloorTypeTables = (floorTypeKey, archiveKey) =>
+  BUILDING_FLOOR_TABLES[floorTypeKey]?.has(archiveKey) ?? false;
 
 // --- Climate type checks (Object.cs:302-362) ------------------------------
 
-export const isSnowyClimate = (c) => !(c === CLIMATES.Desert || c === CLIMATES.Desert2 || c === CLIMATES.Rainforest || c === CLIMATES.Subtropical);
+export const isSnowyClimate = (c) =>
+  !(c === CLIMATES.Desert || c === CLIMATES.Desert2 || c === CLIMATES.Rainforest || c === CLIMATES.Subtropical);
 export const isGrassyClimate = (c) => c === CLIMATES.Woodlands || c === CLIMATES.HauntedWoodlands;
 export const isRockyClimate = (c) => c === CLIMATES.Mountain || c === CLIMATES.MountainWoods;
 export const isSandyClimate = (c) => c === CLIMATES.Desert || c === CLIMATES.Desert2 || c === CLIMATES.Subtropical;
@@ -165,7 +242,8 @@ export const isSwampyClimate = (c) => c === CLIMATES.Swamp || c === CLIMATES.Rai
  *  interior host builds the combined mesh's material names with this, in
  *  first-appearance order over the submeshes, so the mod's parser below
  *  reads exactly what it reads in DFU. */
-export const unityMaterialName = (archive, record) => `TEXTURE.${String(archive).padStart(3, '0')} [Index=${record}] (Instance)`;
+export const unityMaterialName = (archive, record) =>
+  `TEXTURE.${String(archive).padStart(3, '0')} [Index=${record}] (Instance)`;
 
 /** GetFormattedTextureArchiveFromMaterialName (Main.cs:310-333):
  *  "TEXTURE.067 [Index=14] (Instance)" -> "67_14"; '' on no match. */
@@ -195,15 +273,25 @@ export function interiorFloorType(materialNames) {
 export const SETTING_KEYS = Object.freeze([
   'Enabled',
   'AudioQualitySettings.SoundClipQuality',
-  'FootstepSettings.AllowFootstepSounds', 'FootstepSettings.FootstepVolumeMulti', 'FootstepSettings.FootstepFrequency',
-  'ArmorSwaySettings.AllowArmorSwaySounds', 'ArmorSwaySettings.ArmorSwayVolumeMulti', 'ArmorSwaySettings.ArmorSwayFrequency',
-  'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings', 'ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging', 'ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs',
+  'FootstepSettings.AllowFootstepSounds',
+  'FootstepSettings.FootstepVolumeMulti',
+  'FootstepSettings.FootstepFrequency',
+  'ArmorSwaySettings.AllowArmorSwaySounds',
+  'ArmorSwaySettings.ArmorSwayVolumeMulti',
+  'ArmorSwaySettings.ArmorSwayFrequency',
+  'ErrorLoggingAndCompatibilitySettings.AllowModCompatWarnings',
+  'ErrorLoggingAndCompatibilitySettings.AllowVerboseErrorLogging',
+  'ErrorLoggingAndCompatibilitySettings.DoNotSpamExceptionsLogs',
 ]);
 
 /** LoadSettings' reads, as the Mods pane resolves them. */
 export function readFootstepSettings(read = () => modSettingsOf(IMMERSIVE_FOOTSTEPS_VENDOR)) {
   let s;
-  try { s = read() ?? {}; } catch { s = {}; }
+  try {
+    s = read() ?? {};
+  } catch {
+    s = {};
+  }
   return {
     Enabled: s.Enabled !== false,
     SoundClipQuality: s['AudioQualitySettings.SoundClipQuality'] ?? SOUND_CLIP_QUALITY.Low,
@@ -267,7 +355,7 @@ async function defaultFetchClip(name) {
  *  overrides, and Roleplay & Realism: Items overrides it: brigandine boots
  *  answer leather, a mail hauberk chain. The raw `item.material` walked
  *  them in plate. */
-const nativeMaterialValue = (item) => (item ? rriNativeMaterialValue(item) : -1);   // GetMaterialValueOrDefault (Main.cs:605-608)
+const nativeMaterialValue = (item) => (item ? rriNativeMaterialValue(item) : -1); // GetMaterialValueOrDefault (Main.cs:605-608)
 
 /**
  * The two MonoBehaviours as one component.
@@ -287,34 +375,60 @@ const nativeMaterialValue = (item) => (item ? rriNativeMaterialValue(item) : -1)
  *   fallSoundSink(fallback) - applyFallLanding's `sound` callback, routed
  *   ownsStride() - DisableVanillaFootsteps has run (enabled and the audio loaded)
  */
-export function createImmersiveFootsteps({ audio = defaultAudio, settings = readFootstepSettings, random = Math.random, fetchClip = defaultFetchClip } = {}) {
+export function createImmersiveFootsteps({
+  audio = defaultAudio,
+  settings = readFootstepSettings,
+  random = Math.random,
+  fetchClip = defaultFetchClip,
+} = {}) {
   // --- ImmersiveFootstepsMain statics ---
-  let s = null;                       // the settings snapshot LoadSettings last applied
-  let stepInterval = 0.6;             // Main.cs:56-59
-  let plateSwayInterval = 0.6, chainSwayInterval = 0.6, leatherSwayInterval = 0.6;
-  let plateWornSwayWeight = 0, chainWornSwayWeight = 0, leatherWornSwayWeight = 0;
-  let lastFootstepPlayed = null, lastSwaySoundPlayed = null;
+  let s = null; // the settings snapshot LoadSettings last applied
+  let stepInterval = 0.6; // Main.cs:56-59
+  let plateSwayInterval = 0.6,
+    chainSwayInterval = 0.6,
+    leatherSwayInterval = 0.6;
+  let plateWornSwayWeight = 0,
+    chainWornSwayWeight = 0,
+    leatherWornSwayWeight = 0;
+  let lastFootstepPlayed = null,
+    lastSwaySoundPlayed = null;
   let currInteriorFloorType = FLOOR_TYPE.Tile;
-  const worn = { helmet: null, rightArm: null, leftArm: null, chestArmor: null, gloves: null, legArmor: null, boots: null };
-  let clips = null;                   // the loaded quality's clipTable
-  let loadedQuality = -1, loadingQuality = -1, loading = null, loadGen = 0;
+  const worn = {
+    helmet: null,
+    rightArm: null,
+    leftArm: null,
+    chestArmor: null,
+    gloves: null,
+    legArmor: null,
+    boots: null,
+  };
+  let clips = null; // the loaded quality's clipTable
+  let loadedQuality = -1,
+    loadingQuality = -1,
+    loading = null,
+    loadGen = 0;
   const registered = new Set();
   // --- ImmersiveFootstepsObject fields ---
-  let lastPosition = null;            // Start seeds it from the player (Object.cs:60)
+  let lastPosition = null; // Start seeds it from the player (Object.cs:60)
   let distance = 0;
-  let footstepTimer = 0, plateSwayTimer = 0, chainSwayTimer = 0, leatherSwayTimer = 0;
+  let footstepTimer = 0,
+    plateSwayTimer = 0,
+    chainSwayTimer = 0,
+    leatherSwayTimer = 0;
   let refreshSlotsTimer = 0;
-  const altStep = false;              // [verbatim] declared, never set true - every Alt table is dead (Object.cs:26)
+  const altStep = false; // [verbatim] declared, never set true - every Alt table is dead (Object.cs:26)
   let volumeScale = 1;
   let currentClimateFootsteps = null; // = PathFootstepsMain once the clips are in (Object.cs:35)
-  let lastSeason = SEASON.Summer, lastClimateIndex = CLIMATES.Ocean, lastTileMapIndex = 0;
+  let lastSeason = SEASON.Summer,
+    lastClimateIndex = CLIMATES.Ocean,
+    lastTileMapIndex = 0;
   let isInside = false;
-  let lastFloor = null;               // SHIP-DECK: the floor the last determine stood on ('deck' | 'floor' | null)
+  let lastFloor = null; // SHIP-DECK: the floor the last determine stood on ('deck' | 'floor' | null)
   // --- the port's own ---
-  let acc = 0;                        // the fixed-step accumulator
-  let lastM = null;                   // the last frame's place, for the out-of-band handlers
-  let pendingExterior = false;        // an exterior determine owed before the next frame's step
-  const played = [];                  // the last few plays, for the status line and the pins
+  let acc = 0; // the fixed-step accumulator
+  let lastM = null; // the last frame's place, for the out-of-band handlers
+  let pendingExterior = false; // an exterior determine owed before the next frame's step
+  const played = []; // the last few plays, for the status line and the pins
 
   const table = (name) => (clips ? clips[name] : null);
   const cur = (main) => (altStep ? table(`${main}Alt`) : table(`${main}Main`));
@@ -335,23 +449,29 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
     const names = clipNames(quality);
     // AUDIT-IF F3: every clip in flight at once (the first draft awaited them one by one - 105 round trips
     // in series before the mod owned the stride); each failure is its own, the AND across them is LoadAudio's
-    const results = await Promise.all(names.map(async (name) => {
-      if (registered.has(name)) return true;
-      let ok = false;
-      try {
-        const bytes = await fetchClip(name);
-        ok = !!bytes && await audio.registerSound(soundKey(name), bytes);
-      } catch { ok = false; }
-      if (ok) registered.add(name);
-      return ok;
-    }));
+    const results = await Promise.all(
+      names.map(async (name) => {
+        if (registered.has(name)) return true;
+        let ok = false;
+        try {
+          const bytes = await fetchClip(name);
+          ok = !!bytes && (await audio.registerSound(soundKey(name), bytes));
+        } catch {
+          ok = false;
+        }
+        if (ok) registered.add(name);
+        return ok;
+      }),
+    );
     const success = results.every(Boolean);
-    if (gen !== loadGen) return false;   // a later load superseded this one
+    if (gen !== loadGen) return false; // a later load superseded this one
     if (!success) {
       console.warn('[Warning] ImmersiveFootsteps: Missing sound asset');
       return false;
     }
-    const wasSet = currentClimateFootsteps ? Object.entries(clips).find(([, v]) => v === currentClimateFootsteps)?.[0] : null;
+    const wasSet = currentClimateFootsteps
+      ? Object.entries(clips).find(([, v]) => v === currentClimateFootsteps)?.[0]
+      : null;
     clips = clipTable(quality);
     loadedQuality = quality;
     currentClimateFootsteps = (wasSet && clips[wasSet]) || clips.PathFootstepsMain;
@@ -373,13 +493,24 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
       loadingQuality = s.SoundClipQuality;
       // AUDIT 68 S27-if-load-clobber: a superseded load settles its OWN marker only - it cleared the newer load's, so
       // settle() answered early and the next settings change of any kind started the whole set a third time
-      const pending = loadAudio(s.SoundClipQuality).finally(() => { if (loading === pending) { loading = null; loadingQuality = -1; } });
+      const pending = loadAudio(s.SoundClipQuality).finally(() => {
+        if (loading === pending) {
+          loading = null;
+          loadingQuality = -1;
+        }
+      });
       loading = pending;
     }
   }
-  const settle = () => { const p = loading; return p ? p.then(() => undefined) : Promise.resolve(); };
+  const settle = () => {
+    const p = loading;
+    return p ? p.then(() => undefined) : Promise.resolve();
+  };
   /** The Mods pane is the mod's settings window: a change lands at once (ModSettingsChange), whichever entry point reads next. */
-  const syncSettings = () => { const next = settings(); if (!sameSettings(s, next)) loadSettings(next); };
+  const syncSettings = () => {
+    const next = settings();
+    if (!sameSettings(s, next)) loadSettings(next);
+  };
 
   /** The wooden floor's set - Main.cs:497-503, the interior's Wood arm: iron boots and better plate, chain boots chain,
    *  any other or none the boards. SHIP-DECK: a deck's too (determineExteriorClimateFootstep). */
@@ -415,8 +546,12 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
 
   /** UpdateSwayMaterialWeights (Main.cs:571-603). */
   function updateSwayMaterialWeights() {
-    plateWornSwayWeight = 0; chainWornSwayWeight = 0; leatherWornSwayWeight = 0;
-    const materialValues = [worn.helmet, worn.rightArm, worn.leftArm, worn.chestArmor, worn.gloves, worn.legArmor].map(nativeMaterialValue);
+    plateWornSwayWeight = 0;
+    chainWornSwayWeight = 0;
+    leatherWornSwayWeight = 0;
+    const materialValues = [worn.helmet, worn.rightArm, worn.leftArm, worn.chestArmor, worn.gloves, worn.legArmor].map(
+      nativeMaterialValue,
+    );
     for (let i = 0; i < materialValues.length; i++) {
       if (materialValues[i] <= -1) continue;
       const weight = SWAY_WEIGHTS[i];
@@ -439,7 +574,11 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
   function refreshEquipmentSlotReferences(entity) {
     if (!entity) return;
     let slots;
-    try { slots = equipTableOf(entity); } catch { return; }
+    try {
+      slots = equipTableOf(entity);
+    } catch {
+      return;
+    }
     if (!slots) return;
     worn.helmet = slots[EQUIP_SLOTS.Head] ?? null;
     worn.rightArm = slots[EQUIP_SLOTS.RightArm] ?? null;
@@ -487,7 +626,8 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
   function determineInteriorClimateFootstep(m) {
     if (m.inDungeon && m.waterSurfaceY != null) {
       if (m.swimming) currentClimateFootsteps = cur('DeepWaterFootsteps');
-      else if (!m.swimming && (m.centreY - 0.57) < m.waterSurfaceY) currentClimateFootsteps = cur('ShallowWaterFootsteps');
+      else if (!m.swimming && m.centreY - 0.57 < m.waterSurfaceY)
+        currentClimateFootsteps = cur('ShallowWaterFootsteps');
       else checkToUseArmorFootsteps();
     }
   }
@@ -505,14 +645,31 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
    *  AUDIT NAV2 F38: ANY water tile - a quay or a bridge over a coast's or a river's shallow edge (SHALLOW_WATER_TILES)
    *  splashed as the tile ladder waded it; tile 0 alone was read. */
   function determineExteriorClimateFootstep(m) {
-    const floor = m.deck ? 'deck' : m.onStaticGeometry && ((m.tileMapIndex ?? 0) === 0 || SHALLOW_WATER_TILES.has(m.tileMapIndex)) ? 'floor' : null;
-    if (floor !== lastFloor) { lastFloor = floor; lastTileMapIndex = FLOOR_LEFT; }
-    if (floor === 'deck') { woodFloorFootsteps(); return; }
-    if (floor === 'floor') { checkToUseArmorFootsteps(); return; }
+    const floor = m.deck
+      ? 'deck'
+      : m.onStaticGeometry && ((m.tileMapIndex ?? 0) === 0 || SHALLOW_WATER_TILES.has(m.tileMapIndex))
+        ? 'floor'
+        : null;
+    if (floor !== lastFloor) {
+      lastFloor = floor;
+      lastTileMapIndex = FLOOR_LEFT;
+    }
+    if (floor === 'deck') {
+      woodFloorFootsteps();
+      return;
+    }
+    if (floor === 'floor') {
+      checkToUseArmorFootsteps();
+      return;
+    }
     const currentSeason = m.season ?? SEASON.Summer;
     const currentClimateIndex = m.climateIndex ?? CLIMATES.Ocean;
     const currentTileMapIndex = m.tileMapIndex ?? 0;
-    if (lastTileMapIndex !== currentTileMapIndex || lastClimateIndex !== currentClimateIndex || lastSeason !== currentSeason) {
+    if (
+      lastTileMapIndex !== currentTileMapIndex ||
+      lastClimateIndex !== currentClimateIndex ||
+      lastSeason !== currentSeason
+    ) {
       lastSeason = currentSeason;
       lastClimateIndex = currentClimateIndex;
       lastTileMapIndex = currentTileMapIndex;
@@ -520,26 +677,32 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
         // [verbatim] "Minor bug here, if you are water-walking over water tiles ... but water walking wears off, the 'shallow water' sound will still play"
         if (m.waterWalking) currentClimateFootsteps = cur('ShallowWaterFootsteps');
         else currentClimateFootsteps = cur('DeepWaterFootsteps');
-      } else if (checkClimateTileTables('Shallow_Water', currentTileMapIndex)) currentClimateFootsteps = cur('ShallowWaterFootsteps');
+      } else if (checkClimateTileTables('Shallow_Water', currentTileMapIndex))
+        currentClimateFootsteps = cur('ShallowWaterFootsteps');
       else if (checkClimateTileTables('Path', currentTileMapIndex)) checkToUseArmorFootsteps();
       else if (currentSeason === SEASON.Winter && isSnowyClimate(currentClimateIndex)) {
-        if (currentClimateIndex === CLIMATES.Swamp && checkClimateTileTables('Swamp_Snow_Alt', currentTileMapIndex)) currentClimateFootsteps = cur('MudFootsteps');
+        if (currentClimateIndex === CLIMATES.Swamp && checkClimateTileTables('Swamp_Snow_Alt', currentTileMapIndex))
+          currentClimateFootsteps = cur('MudFootsteps');
         else currentClimateFootsteps = cur('SnowFootsteps');
       } else if (isGrassyClimate(currentClimateIndex)) {
-        if (checkClimateTileTables('Temperate_Dirt', currentTileMapIndex)) currentClimateFootsteps = cur('GravelFootsteps');
+        if (checkClimateTileTables('Temperate_Dirt', currentTileMapIndex))
+          currentClimateFootsteps = cur('GravelFootsteps');
         else if (checkClimateTileTables('Temperate_Stone', currentTileMapIndex)) checkToUseArmorFootsteps();
         else currentClimateFootsteps = cur('GrassFootsteps');
       } else if (isRockyClimate(currentClimateIndex)) {
-        if (checkClimateTileTables('Mountain_Dirt', currentTileMapIndex)) currentClimateFootsteps = cur('GravelFootsteps');
+        if (checkClimateTileTables('Mountain_Dirt', currentTileMapIndex))
+          currentClimateFootsteps = cur('GravelFootsteps');
         else if (checkClimateTileTables('Mountain_Stone', currentTileMapIndex)) checkToUseArmorFootsteps();
         else currentClimateFootsteps = cur('GrassFootsteps');
       } else if (isSandyClimate(currentClimateIndex)) {
-        if (checkClimateTileTables('Desert_Gravel', currentTileMapIndex)) currentClimateFootsteps = cur('GravelFootsteps');
+        if (checkClimateTileTables('Desert_Gravel', currentTileMapIndex))
+          currentClimateFootsteps = cur('GravelFootsteps');
         else if (checkClimateTileTables('Desert_Stone', currentTileMapIndex)) checkToUseArmorFootsteps();
         else currentClimateFootsteps = cur('SandFootsteps');
       } else if (isSwampyClimate(currentClimateIndex)) {
         if (checkClimateTileTables('Swamp_Bog', currentTileMapIndex)) currentClimateFootsteps = cur('MudFootsteps');
-        else if (checkClimateTileTables('Swamp_Grass', currentTileMapIndex)) currentClimateFootsteps = cur('GrassFootsteps');
+        else if (checkClimateTileTables('Swamp_Grass', currentTileMapIndex))
+          currentClimateFootsteps = cur('GrassFootsteps');
         else currentClimateFootsteps = cur('MudFootsteps');
       }
       // an Ocean-class climate off every ladder leaves the set as it was
@@ -547,13 +710,22 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
     if (!currentClimateFootsteps || currentClimateFootsteps.length <= 0) currentClimateFootsteps = cur('PathFootsteps');
   }
 
-  const rollFootstep = (set) => { const c = rollRandomAudioClip(set, lastFootstepPlayed, random); lastFootstepPlayed = c; return c; };
-  const rollSway = (set) => { const c = rollRandomAudioClip(set, lastSwaySoundPlayed, random); lastSwaySoundPlayed = c; return c; };
-  const swayReroll = () => rangeFloat(random, s.ArmorSwayFrequency + 0.1, s.ArmorSwayFrequency + 0.4) - (leatherWornSwayWeight * 0.02);
+  const rollFootstep = (set) => {
+    const c = rollRandomAudioClip(set, lastFootstepPlayed, random);
+    lastFootstepPlayed = c;
+    return c;
+  };
+  const rollSway = (set) => {
+    const c = rollRandomAudioClip(set, lastSwaySoundPlayed, random);
+    lastSwaySoundPlayed = c;
+    return c;
+  };
+  const swayReroll = () =>
+    rangeFloat(random, s.ArmorSwayFrequency + 0.1, s.ArmorSwayFrequency + 0.4) - leatherWornSwayWeight * 0.02;
 
   /** FixedUpdate (Object.cs:63-194), one 0.02 s tick. */
   function fixedUpdate(m) {
-    if (m.paused) return;   // GameManager.IsGamePaused || LoadInProgress
+    if (m.paused) return; // GameManager.IsGamePaused || LoadInProgress
     // TravelOptionsCheck: Travel Options is not a vendored mod here, so the SendModMessage arm is the "not installed" arm (false)
     let playerSwimming = false;
     refreshSlotsTimer++;
@@ -566,37 +738,56 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
     if (m.standingStill) return;
     if (m.isRunning) {
       footstepTimer += 1.5 * FIXED_DELTA_TIME;
-      plateSwayTimer += 1.8 * FIXED_DELTA_TIME; chainSwayTimer += 1.8 * FIXED_DELTA_TIME; leatherSwayTimer += 1.8 * FIXED_DELTA_TIME;
+      plateSwayTimer += 1.8 * FIXED_DELTA_TIME;
+      chainSwayTimer += 1.8 * FIXED_DELTA_TIME;
+      leatherSwayTimer += 1.8 * FIXED_DELTA_TIME;
       volumeScale = 1.25;
     } else if (m.movingLessThanHalfSpeed) {
       footstepTimer += 0.7 * FIXED_DELTA_TIME;
-      plateSwayTimer += 0.5 * FIXED_DELTA_TIME; chainSwayTimer += 0.5 * FIXED_DELTA_TIME; leatherSwayTimer += 0.5 * FIXED_DELTA_TIME;
+      plateSwayTimer += 0.5 * FIXED_DELTA_TIME;
+      chainSwayTimer += 0.5 * FIXED_DELTA_TIME;
+      leatherSwayTimer += 0.5 * FIXED_DELTA_TIME;
       volumeScale = 0.6;
     } else {
       footstepTimer += FIXED_DELTA_TIME;
-      plateSwayTimer += FIXED_DELTA_TIME; chainSwayTimer += FIXED_DELTA_TIME; leatherSwayTimer += FIXED_DELTA_TIME;
+      plateSwayTimer += FIXED_DELTA_TIME;
+      chainSwayTimer += FIXED_DELTA_TIME;
+      leatherSwayTimer += FIXED_DELTA_TIME;
       volumeScale = 1;
     }
-    if (isRiding(m.transportMode)) footstepTimer = 0;   // DRAGON5: a rider of any mount, the dragon too
+    if (isRiding(m.transportMode)) footstepTimer = 0; // DRAGON5: a rider of any mount, the dragon too
     if (!s.AllowFootstepSounds) footstepTimer = 0;
-    if (!s.AllowArmorSwaySounds) { plateSwayTimer = 0; chainSwayTimer = 0; leatherSwayTimer = 0; }
+    if (!s.AllowArmorSwaySounds) {
+      plateSwayTimer = 0;
+      chainSwayTimer = 0;
+      leatherSwayTimer = 0;
+    }
     // SHIP-DECK: the mod's noted IsOnShip bug is answered by the host's `deck` (determineExteriorClimateFootstep)
     if (playerSwimming) {
       // GetHorizontalPosition (Object.cs:526-529) - despite the name, all three axes
       const position = [m.pos[0], m.pos[1], m.pos[2]];
-      distance += Math.hypot(position[0] - lastPosition[0], position[1] - lastPosition[1], position[2] - lastPosition[2]);
+      distance += Math.hypot(
+        position[0] - lastPosition[0],
+        position[1] - lastPosition[1],
+        position[2] - lastPosition[2],
+      );
       lastPosition = position;
       if (distance > SWIM_INTERVAL) {
         isInside = !!m.inside;
-        if (isInside) determineInteriorClimateFootstep(m); else determineExteriorClimateFootstep(m);
-        play(rollFootstep(currentClimateFootsteps), volumeScale * s.FootstepVolumeMulti);   // NOT gated on AllowFootstepSounds [verbatim]
+        if (isInside) determineInteriorClimateFootstep(m);
+        else determineExteriorClimateFootstep(m);
+        play(rollFootstep(currentClimateFootsteps), volumeScale * s.FootstepVolumeMulti); // NOT gated on AllowFootstepSounds [verbatim]
         distance = 0;
       }
-      footstepTimer = 0; plateSwayTimer = 0; chainSwayTimer = 0; leatherSwayTimer = 0;
+      footstepTimer = 0;
+      plateSwayTimer = 0;
+      chainSwayTimer = 0;
+      leatherSwayTimer = 0;
     }
     if (footstepTimer >= stepInterval) {
       isInside = !!m.inside;
-      if (isInside) determineInteriorClimateFootstep(m); else determineExteriorClimateFootstep(m);
+      if (isInside) determineInteriorClimateFootstep(m);
+      else determineExteriorClimateFootstep(m);
       if (s.AllowFootstepSounds) play(rollFootstep(currentClimateFootsteps), volumeScale * s.FootstepVolumeMulti);
       footstepTimer = 0;
     }
@@ -611,12 +802,12 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
     if (chainSwayTimer >= chainSwayInterval) {
       if (s.AllowArmorSwaySounds) play(rollSway(table('ChainmailSwaying')), volumeScale * s.ArmorSwayVolumeMulti);
       chainSwayTimer = 0;
-      leatherSwayInterval = swayReroll();   // [verbatim] Object.cs:184 re-rolls the LEATHER interval, not the chain one
+      leatherSwayInterval = swayReroll(); // [verbatim] Object.cs:184 re-rolls the LEATHER interval, not the chain one
     }
     if (plateSwayTimer >= plateSwayInterval) {
       if (s.AllowArmorSwaySounds) play(rollSway(table('PlateSwaying')), volumeScale * s.ArmorSwayVolumeMulti);
       plateSwayTimer = 0;
-      leatherSwayInterval = swayReroll();   // [verbatim] Object.cs:191 - the same slip
+      leatherSwayInterval = swayReroll(); // [verbatim] Object.cs:191 - the same slip
     }
   }
 
@@ -626,16 +817,25 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
     /** The host's frame. Reads the switches, runs the fixed step. */
     update(dt, m) {
       syncSettings();
-      if (!s.Enabled) { acc = 0; return; }
+      if (!s.Enabled) {
+        acc = 0;
+        return;
+      }
       lastM = m;
-      if (!clips) return;              // LoadAudio has not finished: the classic stride is still playing
-      if (lastPosition === null) lastPosition = [m.pos[0], m.pos[1], m.pos[2]];   // Start's seed
-      if (pendingExterior && !m.inside) { pendingExterior = false; determineExteriorClimateFootstep(m); }
+      if (!clips) return; // LoadAudio has not finished: the classic stride is still playing
+      if (lastPosition === null) lastPosition = [m.pos[0], m.pos[1], m.pos[2]]; // Start's seed
+      if (pendingExterior && !m.inside) {
+        pendingExterior = false;
+        determineExteriorClimateFootstep(m);
+      }
       acc += Math.max(0, Number(dt) || 0);
       // the ticks due, counted in integers (0.1 / 0.02 is 4.999... in floats); the hosts cap dt at 0.1 = 5 ticks,
       // and a longer stall is bounded the way Unity's maximumDeltaTime bounds a catch-up: the residue is dropped
       let ticks = Math.floor(acc / FIXED_DELTA_TIME + 1e-9);
-      if (ticks > MAX_TICKS_PER_FRAME) { ticks = MAX_TICKS_PER_FRAME; acc = 0; } else acc -= ticks * FIXED_DELTA_TIME;
+      if (ticks > MAX_TICKS_PER_FRAME) {
+        ticks = MAX_TICKS_PER_FRAME;
+        acc = 0;
+      } else acc -= ticks * FIXED_DELTA_TIME;
       if (acc < 1e-9) acc = 0;
       for (let i = 0; i < ticks; i++) fixedUpdate(m);
     },
@@ -653,7 +853,7 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
       lastM = lastM ? { ...lastM, inside: false, inDungeon: false } : null;
       currInteriorFloorType = FLOOR_TYPE.Tile;
       lastTileMapIndex = 0;
-      pendingExterior = true;   // DetermineExteriorClimateFootstep, on the first outdoor frame
+      pendingExterior = true; // DetermineExteriorClimateFootstep, on the first outdoor frame
     },
     /** UpdateFootsteps_OnTransitionDungeonInterior (Main.cs:356-370). */
     onTransitionDungeonInterior() {
@@ -668,11 +868,23 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
       if (!active()) return;
       if (s.AllowFootstepSounds || s.AllowArmorSwaySounds) refreshEquipmentSlotReferences(entity);
     },
-    refreshEquipmentSlotReferences(entity) { syncSettings(); if (active()) refreshEquipmentSlotReferences(entity); },
+    refreshEquipmentSlotReferences(entity) {
+      syncSettings();
+      if (active()) refreshEquipmentSlotReferences(entity);
+    },
     /** The three PlayerFootsteps messages the mod captures (Object.cs:498-520). Each answers whether it played. */
-    applyPlayerFallDamage() { syncSettings(); return active() && play(checkToUseHardFallSounds(true), LANDING_VOLUME_SCALE * s.FootstepVolumeMulti); },
-    hardFallAlert() { syncSettings(); return active() && play(checkToUseHardFallSounds(false), LANDING_VOLUME_SCALE * s.FootstepVolumeMulti); },
-    playLargeSplash() { syncSettings(); return active() && play(table('WaterLandingSound')?.[0], LANDING_VOLUME_SCALE * s.FootstepVolumeMulti); },
+    applyPlayerFallDamage() {
+      syncSettings();
+      return active() && play(checkToUseHardFallSounds(true), LANDING_VOLUME_SCALE * s.FootstepVolumeMulti);
+    },
+    hardFallAlert() {
+      syncSettings();
+      return active() && play(checkToUseHardFallSounds(false), LANDING_VOLUME_SCALE * s.FootstepVolumeMulti);
+    },
+    playLargeSplash() {
+      syncSettings();
+      return active() && play(table('WaterLandingSound')?.[0], LANDING_VOLUME_SCALE * s.FootstepVolumeMulti);
+    },
     /** applyFallLanding's `sound` callback: the mod's landing when it owns
      *  the stride, the host's classic play otherwise. */
     fallSoundSink(fallback) {
@@ -688,15 +900,36 @@ export function createImmersiveFootsteps({ audio = defaultAudio, settings = read
     /** For the pins and the status line. */
     status() {
       return {
-        enabled: !!s?.Enabled, loaded: !!clips, quality: loadedQuality,
-        currentSet: currentClimateFootsteps ? Object.entries(clips ?? {}).find(([, v]) => v === currentClimateFootsteps)?.[0] ?? null : null,
+        enabled: !!s?.Enabled,
+        loaded: !!clips,
+        quality: loadedQuality,
+        currentSet: currentClimateFootsteps
+          ? (Object.entries(clips ?? {}).find(([, v]) => v === currentClimateFootsteps)?.[0] ?? null)
+          : null,
         floorType: currInteriorFloorType,
         weights: { plate: plateWornSwayWeight, chain: chainWornSwayWeight, leather: leatherWornSwayWeight },
-        intervals: { step: stepInterval, plate: plateSwayInterval, chain: chainSwayInterval, leather: leatherSwayInterval },
-        timers: { footstep: footstepTimer, plate: plateSwayTimer, chain: chainSwayTimer, leather: leatherSwayTimer, refresh: refreshSlotsTimer },
-        distance, lastTileMapIndex, lastClimateIndex, lastSeason, volumeScale, floor: lastFloor,
+        intervals: {
+          step: stepInterval,
+          plate: plateSwayInterval,
+          chain: chainSwayInterval,
+          leather: leatherSwayInterval,
+        },
+        timers: {
+          footstep: footstepTimer,
+          plate: plateSwayTimer,
+          chain: chainSwayTimer,
+          leather: leatherSwayTimer,
+          refresh: refreshSlotsTimer,
+        },
+        distance,
+        lastTileMapIndex,
+        lastClimateIndex,
+        lastSeason,
+        volumeScale,
+        floor: lastFloor,
         worn: { ...worn },
-        lastFootstepPlayed, lastSwaySoundPlayed,
+        lastFootstepPlayed,
+        lastSwaySoundPlayed,
         played: played.slice(),
       };
     },
@@ -711,14 +944,20 @@ export const immersiveFootsteps = createImmersiveFootsteps();
 // --- ModCompatibilityChecking / ReportModCompatibilityIssues (Main.cs:216-236, :400-449) ---
 // BA1: Better Ambience is vendored now, so the arm IF1 recorded as "no twin" has one.
 
-export const BETTER_AMBIENCE_GUID = 'd5655077-ba38-4dbc-a41f-2b358cb1d680';   // Main.cs:219
+export const BETTER_AMBIENCE_GUID = 'd5655077-ba38-4dbc-a41f-2b358cb1d680'; // Main.cs:219
 /** ModCompatibilityChecking (:216-236): Better Ambience installed, and its "Better Footsteps" module on.
  *  Tempered Interiors and Travel Options are not vendored: those two checks stay false. */
 export function modCompatibilityChecking(read = modSettingIfDeclared) {
   const enabled = read('better-ambience', 'Enabled');
-  const betterAmbienceCheck = enabled === true;   // GetModFromGUID answers null for a mod that is not loaded
-  const betterAmbienceFootstepsModuleCheck = betterAmbienceCheck && read('better-ambience', 'Better Footsteps.enable') === true;
-  return { betterAmbienceCheck, betterAmbienceFootstepsModuleCheck, temperedInteriorsCheck: false, travelOptionsCheck: false };
+  const betterAmbienceCheck = enabled === true; // GetModFromGUID answers null for a mod that is not loaded
+  const betterAmbienceFootstepsModuleCheck =
+    betterAmbienceCheck && read('better-ambience', 'Better Footsteps.enable') === true;
+  return {
+    betterAmbienceCheck,
+    betterAmbienceFootstepsModuleCheck,
+    temperedInteriorsCheck: false,
+    travelOptionsCheck: false,
+  };
 }
 /** The box's tokens (:430-441), JustifyCenter, ClickAnywhereToClose. */
 export const COMPAT_WARNING_LINES = Object.freeze([
@@ -726,21 +965,26 @@ export const COMPAT_WARNING_LINES = Object.freeze([
   'Compatibility Issue Detected',
   'Immersive Footsteps:',
   '',
-  'Disable the \'Better Footsteps\' setting for the Better Ambience mod.',
+  "Disable the 'Better Footsteps' setting for the Better Ambience mod.",
   'Otherwise footstep sounds will be constantly overlapping each other.',
   '',
   '(These automatic warnings can be disabled in Immersive Footsteps settings)',
 ]);
 export const COMPAT_WARNING_LOG = Object.freeze([
-  '[Warning] Immersive Footsteps: The \'Better Ambience\' mod is currently active, more importantly, the \'Better Footsteps\' module for that mod is also enabled.',
-  'While using the Immersive Footsteps mod, you should always have Better Ambience\'s \'Better Footsteps\' setting disabled, otherwise you will be constantly...',
-  'hearing overlapping footstep sounds, turn this feature off in Better Ambience\'s settings to resolve this issue.',
-  'You can also turn these warnings off in \'Immersive Footsteps\' settings, if you wish.',
+  "[Warning] Immersive Footsteps: The 'Better Ambience' mod is currently active, more importantly, the 'Better Footsteps' module for that mod is also enabled.",
+  "While using the Immersive Footsteps mod, you should always have Better Ambience's 'Better Footsteps' setting disabled, otherwise you will be constantly...",
+  "hearing overlapping footstep sounds, turn this feature off in Better Ambience's settings to resolve this issue.",
+  "You can also turn these warnings off in 'Immersive Footsteps' settings, if you wish.",
 ]);
 /** ReportModCompatibilityIssues (:424-449), raised by OnStartGame and OnLoad (:400-422): the four log lines
  *  and the message box, when the mod is on, AllowModCompatWarnings is on, and Better Ambience's module is on.
  *  `showText(lines)` is the host's DaggerfallUI.MessageBox; `log` is Debug.Log. Answers whether it fired. */
-export function reportModCompatibilityIssues({ showText, log = (l) => console.log(l), read = modSettingIfDeclared, settings = readFootstepSettings } = {}) {
+export function reportModCompatibilityIssues({
+  showText,
+  log = (l) => console.log(l),
+  read = modSettingIfDeclared,
+  settings = readFootstepSettings,
+} = {}) {
   const s = settings();
   if (!s.Enabled || !s.AllowCompatibilityWarnings) return false;
   const c = modCompatibilityChecking(read);

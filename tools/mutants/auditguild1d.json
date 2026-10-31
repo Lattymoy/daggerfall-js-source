@@ -212,8 +212,8 @@
   {
     "name": "AUDIT-GUILD1d-A1-hall-bed-no-scene",
     "file": "src/systems/homeRent.js",
-    "old": "home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0",
-    "new": "home.own === true || rentDaysLeft(home.tenant, nowS) > 0",
+    "old": "export const homeBedIsMine = (home, nowS) =>\n  !!home && (home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
+    "new": "export const homeBedIsMine = (home, nowS) => !!home && (home.own === true || rentDaysLeft(home.tenant, nowS) > 0); // GUILD1d (merged past RENT-REST): a member rests in their guild's hall as in their own home",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]

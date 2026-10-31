@@ -546,8 +546,8 @@
   {
     "name": "PROF3-heat-cancel-strikes-on",
     "file": "src/systems/heatAct.js",
-    "old": "    cancel() { st.done = true; },",
-    "new": "    cancel() { },",
+    "old": "    cancel() {\n      st.done = true;\n    },",
+    "new": "    cancel() {},",
     "tests": [
       "test/systems/prof3_client.test.js"
     ]

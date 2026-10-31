@@ -356,8 +356,8 @@
   {
     "name": "TELL2-glint-rewritten",
     "file": "src/systems/hitFlash.js",
-    "old": "  if (cur && cur[0] === g[0] && cur[1] === g[1] && cur[2] === g[2] && cur[3] === g[3]) return;\n",
-    "new": "",
+    "old": "  if (cur && cur[0] === g[0] && cur[1] === g[1] && cur[2] === g[2] && cur[3] === g[3]) return;\n  if (cur) {",
+    "new": "  if (cur) {",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]
@@ -365,7 +365,7 @@
   {
     "name": "TELL2-glint-never-cleared",
     "file": "src/systems/hitFlash.js",
-    "old": "  if (!g || !(g[3] > 0)) { if (cur) batch.glint = undefined; return; }",
+    "old": "  if (!g || !(g[3] > 0)) {\n    if (cur) batch.glint = undefined;\n    return;\n  }",
     "new": "  if (!g || !(g[3] > 0)) return;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
@@ -374,8 +374,8 @@
   {
     "name": "TELL2-reduced-uncached",
     "file": "src/systems/hitFlash.js",
-    "old": "  if (nowMs - _reducedAt < 1000) return _reduced;\n",
-    "new": "",
+    "old": "  if (nowMs - _reducedAt < 1000) return _reduced;\n  _reducedAt = nowMs;",
+    "new": "  _reducedAt = nowMs;",
     "tests": [
       "test/characters/enemy/tell2_tell.test.js"
     ]

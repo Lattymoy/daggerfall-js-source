@@ -35,7 +35,7 @@ test('FIELD-CONSOLE1: the region read townTalk makes at load is a hoisted declar
 
 test('FIELD-CONSOLE1: a torch frame the vendored set does not carry is a miss, never a fetch', async () => {
   const ht = read('src/systems/handheldTorches.js');
-  assert.match(ht, /const VENDORED_TEXTURES = typeof window !== 'undefined'\n\s*\? import\.meta\.glob\('\.\.\/\.\.\/vendor\/handheld-torches\/Textures\/\*\.png', \{ eager: true, query: '\?url', import: 'default' \}\)\n\s*: null;/);
+  assert.match(ht, /const VENDORED_TEXTURES =\n\s*typeof window !== 'undefined'\n\s*\? import\.meta\.glob\('\.\.\/\.\.\/vendor\/handheld-torches\/Textures\/\*\.png', \{\n\s*eager: true,\n\s*query: '\?url',\n\s*import: 'default',\n\s*\}\)\n\s*: null;/);
   assert.match(ht, /async function defaultLoadSprite\(record, frame\) \{\n\s*if \(!vendoredTexture\(`\$\{SPRITE_ARCHIVE\}_\$\{record\}-\$\{frame\}\.png`\)\) return null;/);
   const dt = read('src/scenes/droppedTorches.js');
   assert.match(dt, /async function defaultLoadTexture\(record, frame\) \{\n\s*if \(!vendoredTexture\(`\$\{DROPPED_ARCHIVE\}_\$\{record\}-\$\{frame\}\.png`\)\) return null;/);

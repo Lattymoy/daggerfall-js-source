@@ -2,8 +2,8 @@
   {
     "name": "GF2-BLOWSHAKE-a-blow-looks-up",
     "file": "src/systems/gatherBlow.js",
-    "old": "plain: f({ cam: f({ pitch: -0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
-    "new": "plain: f({ cam: f({ pitch: 0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
+    "old": "    plain: f({ cam: f({ pitch: -0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
+    "new": "    plain: f({ cam: f({ pitch: 0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GF2-BLOWSHAKE-the-clean-one-no-deeper",
     "file": "src/systems/gatherBlow.js",
-    "old": "clean: f({ cam: f({ pitch: -0.7, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
-    "new": "clean: f({ cam: f({ pitch: -0.5, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
+    "old": "    clean: f({ cam: f({ pitch: -0.7, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
+    "new": "    clean: f({ cam: f({ pitch: -0.5, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GF2-BLOWSHAKE-a-shake-on-a-tool",
     "file": "src/systems/gatherBlow.js",
-    "old": "plain: f({ cam: f({ pitch: -0.5, eye: -0.014 }), hands: f({ y: 0.025 }) }),",
-    "new": "plain: f({ cam: f({ pitch: -0.5, eye: -0.014 }), hands: f({ y: 0.025 }), shake: 1 }),",
+    "old": "    plain: f({ cam: f({ pitch: -0.5, eye: -0.014 }), hands: f({ y: 0.025 }) }),",
+    "new": "    plain: f({ cam: f({ pitch: -0.5, eye: -0.014 }), hands: f({ y: 0.025 }), shake: 1 }),",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GF2-BLOWSHAKE-the-skin-unread",
     "file": "src/systems/gatherBlow.js",
-    "old": "if (!row || !enhanced() || reduced()) return false;",
-    "new": "if (!row || reduced()) return false;",
+    "old": "  if (!row || !enhanced() || reduced()) return false;",
+    "new": "  if (!row || reduced()) return false;",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GF2-BLOWSHAKE-reduced-motion-unread",
     "file": "src/systems/gatherBlow.js",
-    "old": "if (!row || !enhanced() || reduced()) return false;",
-    "new": "if (!row || !enhanced()) return false;",
+    "old": "  if (!row || !enhanced() || reduced()) return false;",
+    "new": "  if (!row || !enhanced()) return false;",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GF2-BLOWSHAKE-the-motion-unscaled",
     "file": "src/systems/gatherBlow.js",
-    "old": "  kick(row.cam, row.hands, m);\n",
-    "new": "  kick(row.cam, row.hands, 1);\n",
+    "old": "  kick(row.cam, row.hands, m);",
+    "new": "  kick(row.cam, row.hands, 1);",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GF2-BLOWSHAKE-off-moves-it",
     "file": "src/systems/gatherBlow.js",
-    "old": "  if (!(m > 0)) return false;\n",
-    "new": "  if (m < 0) return false;\n",
+    "old": "  if (!(m > 0)) return false;",
+    "new": "  if (m < 0) return false;",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GF2-BLOWSHAKE-the-clean-row-crossed",
     "file": "src/systems/gatherBlow.js",
-    "old": "?.[clean ? 'clean' : 'plain'];",
-    "new": "?.[clean ? 'plain' : 'clean'];",
+    "old": "  const row = GATHER_BLOW_FEEL[/** @type {keyof typeof GATHER_BLOW_FEEL} */ (kind)]?.[clean ? 'clean' : 'plain'];",
+    "new": "  const row = GATHER_BLOW_FEEL[/** @type {keyof typeof GATHER_BLOW_FEEL} */ (kind)]?.[clean ? 'plain' : 'clean'];",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GF2-BLOWSHAKE-the-glint-read-plain",
     "file": "src/systems/gatherBlow.js",
-    "old": "clean: st?.last === 'clean' || st?.last === 'glint' });",
-    "new": "clean: st?.last === 'clean' });",
+    "old": "export const landedBlow = (st) => ({ kind: st?.kind ?? null, clean: st?.last === 'clean' || st?.last === 'glint' });",
+    "new": "export const landedBlow = (st) => ({ kind: st?.kind ?? null, clean: st?.last === 'clean' });",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "GF2-BLOWSHAKE-the-clean-cut-read-plain",
     "file": "src/systems/gatherBlow.js",
-    "old": "clean: st?.last === 'clean' || st?.last === 'glint' });",
-    "new": "clean: st?.last === 'glint' });",
+    "old": "export const landedBlow = (st) => ({ kind: st?.kind ?? null, clean: st?.last === 'clean' || st?.last === 'glint' });",
+    "new": "export const landedBlow = (st) => ({ kind: st?.kind ?? null, clean: st?.last === 'glint' });",
     "tests": [
       "test/systems/gf2_blowshake.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "GF2-VEINCRACKS-through-the-floor",
     "file": "src/systems/gatherBlow.js",
-    "old": "    if (left > dt) { c.t += s; return true; }",
-    "new": "    if (true) { c.t += s; return true; }",
+    "old": "    if (left > dt) {",
+    "new": "    if (true) {",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "GF2-VEINCRACKS-the-sink-never",
     "file": "src/systems/gatherBlow.js",
-    "old": "export const chunkSink = (c, h) => (c.rest < VEIN_CHUNKS.restS ? 0 :",
-    "new": "export const chunkSink = (c, h) => (true ? 0 :",
+    "old": "export const chunkSink = (c, h) =>\n  c.rest < VEIN_CHUNKS.restS ? 0 : Math.min(1, (c.rest - VEIN_CHUNKS.restS) / VEIN_CHUNKS.sinkS) * h;",
+    "new": "export const chunkSink = (c, h) => (true ? 0 : Math.min(1, (c.rest - VEIN_CHUNKS.restS) / VEIN_CHUNKS.sinkS) * h);",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "GF2-VEINCRACKS-the-breaking-count",
     "file": "src/systems/gatherBlow.js",
-    "old": "  plain: 3, clean: 5, last: 7,",
-    "new": "  plain: 3, clean: 5, last: 5,",
+    "old": "  last: 7,",
+    "new": "  last: 5,",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
     ]
@@ -525,7 +525,7 @@
   {
     "name": "GF2-VEINCRACKS-the-landing-at-the-steps-end",
     "file": "src/systems/gatherBlow.js",
-    "old": "    const s = left <= dt ? Math.max(0, left) : dt;   // the step's time aloft, at most to its landing",
+    "old": "    const s = left <= dt ? Math.max(0, left) : dt; // the step's time aloft, at most to its landing",
     "new": "    const s = dt;",
     "tests": [
       "test/systems/gf2_veincracks.test.js"
