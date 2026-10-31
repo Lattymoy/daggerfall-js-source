@@ -2,8 +2,8 @@
   {
     "name": "AUDIT657-T1-the-innocent-never-read-out",
     "file": "src/net/nameFilter.js",
-    "old": "return holds(flat) && holds(INNOCENT.reduce((s, w) => s.split(w).join(' '), flat));",
-    "new": "return holds(flat);",
+    "old": "  return holds(flat) && holds(INNOCENT.reduce((s, w) => s.split(w).join(' '), flat));",
+    "new": "  return holds(flat);",
     "tests": [
       "test/net/audit657_filter.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT657-T1-a-sentences-innocent-word-read",
     "file": "src/net/nameFilter.js",
-    "old": "if (!flat || INNOCENT.includes(flat)) return null;   // AUDIT 657 T1: an ordinary word, read as itself",
-    "new": "if (!flat) return null;",
+    "old": "  if (!flat || INNOCENT.includes(flat)) return null; // AUDIT 657 T1: an ordinary word, read as itself",
+    "new": "  if (!flat) return null;",
     "tests": [
       "test/net/audit657_filter.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT657-T1-an-innocent-word-lost",
     "file": "src/net/nameFilter.js",
-    "old": "'snigger', 'niggard', 'spicy', 'spiced', 'spices',",
-    "new": "'snigger', 'niggard', 'spicy', 'spices',",
+    "old": "  'spiced',\n  'spices',",
+    "new": "  'spices',",
     "tests": [
       "test/net/audit657_filter.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "AUDIT657-T2-an-accented-letter-no-spelled-letter",
     "file": "src/net/nameFilter.js",
-    "old": "/^\\p{L}\\p{M}*$/u.test(letterOf(words[k]))",
-    "new": "/^\\p{L}$/u.test(letterOf(words[k]))",
+    "old": "  const single = (k) => k < words.length && !taken.has(k) && /^\\p{L}\\p{M}*$/u.test(letterOf(words[k]));",
+    "new": "  const single = (k) => k < words.length && !taken.has(k) && /^\\p{L}$/u.test(letterOf(words[k]));",
     "tests": [
       "test/net/audit657_filter.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "AUDIT657-T5-every-window-read",
     "file": "src/net/nameFilter.js",
-    "old": "if (mayHold(words.slice(i, last).map(letterOf).join(''))) {",
-    "new": "if (true) {",
+    "old": "      if (mayHold(words.slice(i, last).map(letterOf).join(''))) {",
+    "new": "      if (true) {",
     "tests": [
       "test/net/audit657_filter.test.js"
     ],

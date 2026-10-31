@@ -448,6 +448,7 @@
 !/src/net/moderation.js
 !/src/net/motherlodeBook.js
 !/src/net/motherlodeLaw.js
+!/src/net/nameFilter.js
 !/src/net/nodeLaw.js
 !/src/net/noticeBook.js
 !/src/net/npcChapterLaw.js
