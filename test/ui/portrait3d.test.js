@@ -369,7 +369,7 @@ test('PORTRAIT3D: the faces of the record - the party\'s plate, the family\'s ca
   const party = src('src/ui/partyPanel.js');
   const loader = party.slice(party.indexOf('export function createFaceLoader('));
   assert.ok(loader.indexOf('await morrowindFaceOf(pose)') < loader.indexOf('if (!fetchBytes || !palette) return null;'), 'the head first, before the record\'s data is asked');
-  assert.match(party, /poseHeadImage\(pose, \{ px: HEAD_RECORD\.w \* HEAD_RECORD\.scale, ph: HEAD_RECORD\.h \* HEAD_RECORD\.scale \}\)/);
+  assert.match(party, /poseHeadImage\(pose, \{\n\s*px: HEAD_RECORD\.w \* HEAD_RECORD\.scale,\n\s*ph: HEAD_RECORD\.h \* HEAD_RECORD\.scale,\n\s*\}\)/);
   // the plate: a head is drawn its picture's scale smaller, smooth; a record at whole pixels, square
   const social = new SocialState({ now: () => 1e12 });
   const m = (n) => ({ acct: `acct-${n}`, name: n, online: true, seen: 1e12, peers: [`peer-${n}`], p: null });

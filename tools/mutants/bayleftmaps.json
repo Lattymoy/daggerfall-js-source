@@ -85,8 +85,8 @@
   {
     "name": "BLM-C1-the-party-box-far-edge-in",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
-    "new": "    if (px < box.x0 || py < box.y0 || px > box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "    if (px < box.x0 || py < box.y0 || px > box.x0 + box.w || py >= box.y0 + box.h) continue;",
     "tests": [
       "test/ui/bayleft_marks.test.js",
       "test/ui/soc6_partymap.test.js"
@@ -95,8 +95,8 @@
   {
     "name": "BLM-C1-the-party-box-west-the-bay's",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
-    "new": "    if (px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "    if (px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "BLM-C1-the-travellers-box-west-the-bay's",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (!Number.isFinite(px) || !Number.isFinite(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
-    "new": "    if (!Number.isFinite(px) || !Number.isFinite(py) || px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "old": "      px < box.x0 ||",
+    "new": "      px < 0 ||",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]

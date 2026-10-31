@@ -146,8 +146,8 @@
   {
     "name": "PARTY-BUFFS-card-heal-never-floats",
     "file": "src/ui/partyPanel.js",
-    "old": "    if (healed > 0) floatHeal(card, healed);\n",
-    "new": "",
+    "old": "    if (healed > 0) floatHeal(card, healed);\n    card.hpH = h;",
+    "new": "    card.hpH = h;",
     "tests": [
       "test/ui/partybuffs.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "PARTY-BUFFS-card-heal-left-behind",
     "file": "src/ui/partyPanel.js",
-    "old": "    node.addEventListener?.('animationend', gone);\n",
-    "new": "",
+    "old": "    node.addEventListener?.('animationend', gone);\n    setTimeout(gone, 1500);",
+    "new": "    setTimeout(gone, 1500);",
     "tests": [
       "test/ui/partybuffs.test.js"
     ]

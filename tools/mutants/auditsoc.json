@@ -473,8 +473,8 @@
   {
     "name": "B8-hud-clock-never-ticks",
     "file": "src/ui/partyPanel.js",
-    "old": "if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { paintLive(); return; }",
-    "new": "if (social.version === painted && (social.poseVersion ?? 0) === paintedPose) { return; }",
+    "old": "        paintLive();\n        return;",
+    "new": "        return;",
     "tests": [
       "test/net/soc4_partyhud.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "C6-hud-on-the-fps-counter",
     "file": "src/ui/partyPanel.js",
-    "old": "top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
-    "new": "top: calc(40px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
+    "old": ".dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
+    "new": ".dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(40px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
     "tests": [
       "test/net/soc4_partyhud.test.js"
     ]

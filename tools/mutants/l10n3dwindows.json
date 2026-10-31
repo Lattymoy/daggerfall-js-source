@@ -382,8 +382,8 @@
   {
     "name": "L10N3d2-ui-pauseWindow-293-cannotSaveNow",
     "file": "src/ui/pauseWindow.js",
-    "old": "        this._noteRows = [localizedText('cannotSaveNow', 'You cannot save now.')];   // cannotSaveNow (Internal_Strings, recovered)",
-    "new": "        this._noteRows = ['You cannot save now.'];   // cannotSaveNow (Internal_Strings, recovered)",
+    "old": "        this._noteRows = [localizedText('cannotSaveNow', 'You cannot save now.')]; // cannotSaveNow (Internal_Strings, recovered)",
+    "new": "        this._noteRows = ['You cannot save now.']; // cannotSaveNow (Internal_Strings, recovered)",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"

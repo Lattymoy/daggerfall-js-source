@@ -417,8 +417,8 @@
   {
     "name": "GUIDE4-party-list-over-the-card",
     "file": "src/ui/partyPanel.js",
-    "old": "top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
-    "new": "top: calc(92px + env(safe-area-inset-top, 0px));",
+    "old": ".dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
+    "new": ".dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + env(safe-area-inset-top, 0px));",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js",
       "test/net/soc4_partyhud.test.js"

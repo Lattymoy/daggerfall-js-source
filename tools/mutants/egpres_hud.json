@@ -308,8 +308,8 @@
   {
     "name": "EGPRES-the-place-line-never-given-back",
     "file": "src/ui/partyPanel.js",
-    "old": "else if (card.egWhere) { card.egWhere = false; painted = -1; }",
-    "new": "else if (card.egWhere) { card.egWhere = false; }",
+    "old": "        painted = -1;\n      }",
+    "new": "      }",
     "tests": [
       "test/net/eliteGates/egpres_hud.test.js"
     ]

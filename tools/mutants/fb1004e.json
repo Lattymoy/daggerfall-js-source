@@ -722,8 +722,8 @@
   {
     "name": "OWKIN-the-travel-map-forgets-the-kin",
     "file": "src/ui/partyMapMarks.js",
-    "old": "kin: r.kin === 'friend' || r.kin === 'guild' ? r.kin : null, lv:",
-    "new": "kin: null, lv:",
+    "old": "      kin: r.kin === 'friend' || r.kin === 'guild' ? r.kin : null,",
+    "new": "      kin: null,",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],

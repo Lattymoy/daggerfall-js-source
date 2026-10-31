@@ -119,8 +119,8 @@
   {
     "name": "QA3L2-B7-held-unread",
     "file": "src/ui/pendingOffer.js",
-    "old": " || (s.parentQuest?.tasks && !held(s.parentQuest))",
-    "new": "",
+    "old": "    (s.isComplete ||\n      s.parentQuest?.questComplete ||\n      s.parentQuest?.questTombstoned ||\n      s.parentQuest?.shelvedAt != null ||\n      (s.parentQuest?.tasks && !held(s.parentQuest)))",
+    "new": "    (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null)",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "QA3L2-B7-any-task-holds-it",
     "file": "src/ui/pendingOffer.js",
-    "old": "some((t) => t.actions?.includes(s));",
-    "new": "some((t) => !!t.actions);",
+    "old": "  const held = (q) => [...(q?.tasks?.values?.() ?? [])].some((t) => t.actions?.includes(s));",
+    "new": "  const held = (q) => [...(q?.tasks?.values?.() ?? [])].some((t) => !!t.actions);",
     "tests": [
       "test/systems/quest/auditqa3_life.test.js"
     ]

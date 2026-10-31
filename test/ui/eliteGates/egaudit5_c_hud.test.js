@@ -143,7 +143,7 @@ test('AUDIT EG V L7-7 THE WITNESS\'S SEAT (section 16.5 - "the HUD: the count, t
   assert.equal(R.client.watchMember(ME), false);
   assert.match(EG_PARTY_CSS, /\.dfparty-card\.eg-tap \{ pointer-events: auto; cursor: pointer; \}/);
   const P = rd('src/ui/partyPanel.js');
-  assert.match(P, /card\.node\.addEventListener\?\.\('click', \(\) => \{ if \(String\(card\.node\.className\)\.split\(\/\\s\+\/\)\.includes\('eg-tap'\)\) spireTap\?\.\(acct\); \}\);/);
+  assert.match(P, /card\.node\.addEventListener\?\.\('click', \(\) => \{\n\s*if \(String\(card\.node\.className\)\.split\(\/\\s\+\/\)\.includes\('eg-tap'\)\) spireTap\?\.\(acct\);\n\s*\}\);/);
   assert.match(rd('src/scenes/world.js'), /partyPanel\.setSpire\(\(\) => egClient\?\.partyRows\(\) \?\? null, \(acct\) => egClient\?\.watchMember\(acct\)\);/);
   assert.match(rd('src/scenes/world.js'), /party: \(\) => \(social\?\.party\?\.members \?\? \[\]\)\.map\(\(m\) => \(\{ sub: m\.acct, name: m\.name, h: m\.p\?\.h, hm: m\.p\?\.hm \}\)\)/);
   // a living member's buttons hold no ping

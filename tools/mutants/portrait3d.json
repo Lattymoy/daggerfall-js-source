@@ -212,8 +212,8 @@
   {
     "name": "PORTRAIT3D-the-plate-stretched",
     "file": "src/ui/partyPanel.js",
-    "old": "    const s = img.scale > 0 ? 1 / img.scale : Math.max(1,",
-    "new": "    const s = Math.max(1,",
+    "old": "    const s =\n      img.scale > 0\n        ? 1 / img.scale\n        : Math.max(1, Math.min(Math.floor(FACE_BOX_W / img.width), Math.floor(FACE_BOX_H / img.height)));",
+    "new": "    const s = Math.max(1, Math.min(Math.floor(FACE_BOX_W / img.width), Math.floor(FACE_BOX_H / img.height)));",
     "tests": [
       "test/ui/portrait3d.test.js"
     ],

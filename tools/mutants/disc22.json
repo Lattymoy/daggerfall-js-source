@@ -59,8 +59,8 @@
     "tests": [
       "test/systems/disc22b_pause_settings.test.js"
     ],
-    "old": "    openControls: hooks.openSettings ?? (controlsArtLoaded()",
-    "new": "    openControls: (controlsArtLoaded()"
+    "old": "    openControls:\n      hooks.openSettings ??\n      (controlsArtLoaded()\n        ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))\n        : null),",
+    "new": "    openControls: controlsArtLoaded()\n      ? () => show(new ControlsWindow({ onBack: () => openClassicPauseFlow(show, hooks) }))\n      : null,"
   },
   {
     "name": "D22B-resume-relocks",

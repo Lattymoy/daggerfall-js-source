@@ -400,7 +400,7 @@ test('AUDIT PARTY8 + PARTY-REST by source: world.js\'s seams - the mirror\'s key
   assert.match(rd('src/scenes/dungeonContext.js'), /restEnemiesNearby: \(\) => _restDeps\.enemiesNearby\(\),/);
   assert.match(rd('src/ui/restDoor.js'), /unregister = registerOverlay\(\(\) => \{ if \(!overlay\.stopOrClose\?\.\(\)\) overlay\.dispose\(\); \}\);/);
   assert.match(rd('src/ui/socialPanel.js'), /if \(n\.subNode\) liveSubs\.push\(\{ el: n\.subNode, of: \(\) => partyPoseText\(m\.p\) \}\);/, 'a pose writes its row\'s line in place');
-  assert.match(rd('src/ui/partyPanel.js'), /if \(social\.version === painted && \(social\.poseVersion \?\? 0\) === paintedPose\) \{ paintLive\(\); return; \}/, 'the HUD watches the pose version');
+  assert.match(rd('src/ui/partyPanel.js'), /if \(social\.version === painted && \(social\.poseVersion \?\? 0\) === paintedPose\) \{\n\s*paintLive\(\);\n\s*return;\n\s*\}/, 'the HUD watches the pose version');
   const hub = rd('server/src/index.js');
   assert.match(hub, /const bytes = byteGate\(this\._roomQuestBytes, now, out\.length \* targets\.length, QUEST_ROOM_BYTES_PER_S, true\);/, 'the quest fan pays in bytes');
   assert.match(hub, /party = await this\._partyOut\(id, party, now, 'party\.lapsed', rec\?\.name \?\? null, \{ leaderNote: false \}\);/);

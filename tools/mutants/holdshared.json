@@ -32,8 +32,8 @@
   {
     "name": "HOLD-SHARED-WITH-ME-APART-BACK",
     "file": "src/ui/partyPanel.js",
-    "old": "  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));",
-    "new": "  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null))\n  && !((p.in ?? 0) === 1 && p.px === 109 && p.py === 158);",
+    "old": "  ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));",
+    "new": "  ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null)) &&\n  !((p.in ?? 0) === 1 && p.px === 109 && p.py === 158);",
     "tests": [
       "test/net/holdshared.test.js"
     ],

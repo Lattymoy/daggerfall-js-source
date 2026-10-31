@@ -110,8 +110,8 @@
   {
     "name": "D23A-reader-keeps-nan",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;\n",
-    "new": "",
+    "old": "    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;\n    const yaw = Number(r.yaw);",
+    "new": "    const yaw = Number(r.yaw);",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "D23A-nameless-blank",
     "file": "src/ui/partyMapMarks.js",
-    "old": "name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT, feet: [x, y, z]",
-    "new": "name: String(r.name ?? '').trim(), feet: [x, y, z]",
+    "old": "      name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT,",
+    "new": "      name: String(r.name ?? '').trim(),",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]

@@ -173,8 +173,8 @@
   {
     "name": "QA3S-OFFER-STALE-dropped",
     "file": "src/ui/pendingOffer.js",
-    "old": "  if (s != null && (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
-    "new": "",
+    "old": "  if (\n    s != null &&\n    (s.isComplete ||\n      s.parentQuest?.questComplete ||\n      s.parentQuest?.questTombstoned ||\n      s.parentQuest?.shelvedAt != null ||\n      (s.parentQuest?.tasks && !held(s.parentQuest)))\n  )\n    lastPendingOfferSender = null;\n  if (lastPendingOfferSender != null) {",
+    "new": "  if (lastPendingOfferSender != null) {",
     "tests": [
       "test/systems/quest/questaudit3_scene.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "QA3S-OFFER-STALE-given-kept",
     "file": "src/ui/pendingOffer.js",
-    "old": "  if (s != null && (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
-    "new": "  if (s != null && (s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
+    "old": "    (s.isComplete ||\n      s.parentQuest?.questComplete ||",
+    "new": "    (s.parentQuest?.questComplete ||",
     "tests": [
       "test/systems/quest/questaudit3_scene.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "QA3S-OFFER-STALE-ended-kept",
     "file": "src/ui/pendingOffer.js",
-    "old": "  if (s != null && (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
-    "new": "  if (s != null && (s.isComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
+    "old": "      s.parentQuest?.questComplete ||\n      s.parentQuest?.questTombstoned ||",
+    "new": "      s.parentQuest?.questTombstoned ||",
     "tests": [
       "test/systems/quest/questaudit3_scene.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "QA3S-OFFER-STALE-tombstoned-kept",
     "file": "src/ui/pendingOffer.js",
-    "old": "  if (s != null && (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
-    "new": "  if (s != null && (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
+    "old": "      s.parentQuest?.questTombstoned ||\n      s.parentQuest?.shelvedAt != null ||",
+    "new": "      s.parentQuest?.shelvedAt != null ||",
     "tests": [
       "test/systems/quest/questaudit3_scene.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "QA3S-OFFER-STALE-shelved-kept",
     "file": "src/ui/pendingOffer.js",
-    "old": "  if (s != null && (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || s.parentQuest?.shelvedAt != null || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
-    "new": "  if (s != null && (s.isComplete || s.parentQuest?.questComplete || s.parentQuest?.questTombstoned || (s.parentQuest?.tasks && !held(s.parentQuest)))) lastPendingOfferSender = null;\n",
+    "old": "      s.parentQuest?.shelvedAt != null ||\n      (s.parentQuest?.tasks && !held(s.parentQuest)))",
+    "new": "      (s.parentQuest?.tasks && !held(s.parentQuest)))",
     "tests": [
       "test/systems/quest/questaudit3_scene.test.js"
     ]

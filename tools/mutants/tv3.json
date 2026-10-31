@@ -172,8 +172,8 @@
   {
     "name": "TV3-map-fraction-not-turned",
     "file": "src/ui/partyMapMarks.js",
-    "old": "x: px + (fx + 0.5) / 256, y: py + 1 - (fy + 0.5) / 256,",
-    "new": "x: px + (fx + 0.5) / 256, y: py + (fy + 0.5) / 256,",
+    "old": "      y: py + 1 - (fy + 0.5) / 256,",
+    "new": "      y: py + (fy + 0.5) / 256,",
     "tests": [
       "test/scenes/tv3_travellers.test.js"
     ],

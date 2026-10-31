@@ -486,7 +486,7 @@
   {
     "name": "JRN-window-escape-under-a-surface",
     "file": "src/ui/pageWindow.js",
-    "old": "    if (above()) return;   // a surface over this one owns the key - untouched, unstopped",
+    "old": "    if (above()) return; // a surface over this one owns the key - untouched, unstopped",
     "new": "",
     "tests": [
       "test/net/journal1.test.js"

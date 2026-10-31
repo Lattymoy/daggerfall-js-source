@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-B8-covered-card-remembers",
     "file": "src/ui/partyPanel.js",
-    "old": "    if (covered) for (const c of cards.values()) c.hpH = null;\n",
-    "new": "",
+    "old": "    if (covered) for (const c of cards.values()) c.hpH = null;\n    // AUDIT WK-U1: ...and THE COVER LIFTED IS A REPAINT. B8's forgetting is answered by the card's next paint, and a",
+    "new": "    // AUDIT WK-U1: ...and THE COVER LIFTED IS A REPAINT. B8's forgetting is answered by the card's next paint, and a",
     "tests": [
       "test/ui/partybuffs.test.js"
     ]

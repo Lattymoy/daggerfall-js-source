@@ -313,7 +313,7 @@
   {
     "name": "CK-panel-hidden-offline",
     "file": "src/ui/partyPanel.js",
-    "old": "      if (!social) { if (ck !== compPainted) paint(); return; }",
+    "old": "      if (!social) {\n        if (ck !== compPainted) paint();\n        return;\n      }",
     "new": "      if (!social) return;",
     "tests": [
       "test/systems/companionkit.test.js"
@@ -349,7 +349,7 @@
   {
     "name": "CK-panel-no-cards",
     "file": "src/ui/partyPanel.js",
-    "old": "    const mates = comps();   // COMPANION-KIT",
+    "old": "    const mates = comps(); // COMPANION-KIT",
     "new": "    const mates = [];",
     "tests": [
       "test/systems/companionkit.test.js"
@@ -358,8 +358,8 @@
   {
     "name": "CK-panel-seam-lost",
     "file": "src/ui/partyPanel.js",
-    "old": "    setCompanions(fn) { companions = typeof fn === 'function' ? fn : null; compPainted = null; },",
-    "new": "    setCompanions(fn) { void fn; },",
+    "old": "      companions = typeof fn === 'function' ? fn : null;\n      compPainted = null;",
+    "new": "      void fn;",
     "tests": [
       "test/systems/companionkit.test.js"
     ]
@@ -367,8 +367,8 @@
   {
     "name": "CK-panel-mark",
     "file": "src/ui/partyPanel.js",
-    "old": "    if (card.facemark && card.facemark.textContent !== mark) card.facemark.textContent = mark;\n",
-    "new": "",
+    "old": "    if (card.facemark && card.facemark.textContent !== mark) card.facemark.textContent = mark;\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/companionkit.test.js"
     ]

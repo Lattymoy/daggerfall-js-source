@@ -66,8 +66,8 @@
   {
     "name": "party-hud-five-face-dropped",
     "file": "src/ui/partyPanel.js",
-    "old": "export const PARTY_CSS = `\n${PIXELIFY_FIVE_FACE}",
-    "new": "export const PARTY_CSS = `",
+    "old": "${PIXELIFY_FIVE_FACE}\n/* AUDIT SOC C6: 92, NOT 40. The FPS read-out is the other thing in this corner (ui/fpsCounter.js: top 8, z 9) and",
+    "new": "/* AUDIT SOC C6: 92, NOT 40. The FPS read-out is the other thing in this corner (ui/fpsCounter.js: top 8, z 9) and",
     "tests": [
       "test/net/soc4_partyhud.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "party-name-back-to-14px",
     "file": "src/ui/partyPanel.js",
-    "old": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px;",
-    "new": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px;",
+    "old": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 12px; line-height: 1.2;",
+    "new": ".dfparty-name { min-width: 0; flex: 0 1 auto; font-weight: 600; font-size: 14px; line-height: 1.2;",
     "tests": [
       "test/net/soc4_partyhud.test.js"
     ]

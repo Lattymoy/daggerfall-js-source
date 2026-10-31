@@ -1921,6 +1921,14 @@
 !/src/ui/packPages.js
 !/src/ui/packPicker.js
 !/src/ui/padGlyphs.js
+!/src/ui/padGlyphsHD.js
+!/src/ui/pageWindow.js
+!/src/ui/paintingImage.js
+!/src/ui/partyMapMarks.js
+!/src/ui/partyPanel.js
+!/src/ui/pauseWindow.js
+!/src/ui/peerMenuBindCard.js
+!/src/ui/pendingOffer.js
 !/src/ui/plus/
 /src/ui/plus/*
 !/src/ui/plus/plusCursor.js
