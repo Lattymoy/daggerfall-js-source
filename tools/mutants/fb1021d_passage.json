@@ -124,7 +124,7 @@
   {
     "name": "PASSAGE-IN-mark-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const read = leg.kind === 'sea' ? seaLegMark(w, deps.seaWaterAt) : null;",
+    "old": "    const read = leg.kind === 'sea' && !leg.at ? seaLegMark(w, deps.seaWaterAt) : null;",
     "new": "    const read = null;",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"

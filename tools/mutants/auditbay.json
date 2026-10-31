@@ -356,8 +356,8 @@
   {
     "name": "BAY-A6-arrival-never",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (p.left > LINER_PORT_M) { s.errand = null; s.course = [p.x, p.z]; return; }",
-    "new": "    if (p.left >= 0) { s.errand = null; s.course = [p.x, p.z]; return; }",
+    "old": "if (p.left > LINER_PORT_M) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }",
+    "new": "if (p.left >= 0) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js",
       "test/systems/naval/sealanes.test.js"
@@ -366,8 +366,8 @@
   {
     "name": "BAY-A6-arrival-at-once",
     "file": "src/scenes/naval/navalHost.js",
-    "old": "    if (p.left > LINER_PORT_M) { s.errand = null; s.course = [p.x, p.z]; return; }",
-    "new": "    if (p.left > LINER_PORT_M * 100) { s.errand = null; s.course = [p.x, p.z]; return; }",
+    "old": "if (p.left > LINER_PORT_M) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }",
+    "new": "if (p.left > LINER_PORT_M * 100) { s.errand = null; s.course = courseVia(gridOf(s.hull), s, [p.x, p.z]); return; }",
     "tests": [
       "test/systems/naval/auditbay_lanes.test.js",
       "test/systems/naval/sealanes.test.js"
