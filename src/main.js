@@ -54,6 +54,7 @@ import { loseGlContext, onPageGone, releaseGlContexts } from './render/glRelease
 
 async function boot() {
   installFramePacer();   // FPS-VSYNC: first, before any loop asks for a frame - a no-op but in the app with the wait lifted
+  import('./systems/item/lockRules.js');   // LOCK-RULES: the always-locked names bind the lock from the first frame (dynamic: the entry's static reach is counted, BOOT2)
   installCursor();   // CLASSIC-CURSOR: DFU's own arrow on the classic skin, from the first frame - it needs no game data
   const canvas = document.getElementById('c');
   // GPU-TRAIL (render/gpuTrail.js): the desktop shell keeps the GPU's last samples with a crash, so the canvas is counted

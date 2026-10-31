@@ -10,8 +10,12 @@
 //
 // Not a DFU member: Daggerfall has no lock. Ledger A.
 
-/** Whether a piece is locked. */
-export const isLocked = (/** @type {any} */ item) => item?.locked === true;
+/** @type {((item: any) => boolean) | null} */
+let _alwaysLocked = null;   // ALWAYS-LOCK: the list's rule, which systems/item/lockRules.js registers (this file imports nothing)
+export function setAlwaysLockedResolver(/** @type {((item: any) => boolean) | null} */ fn) { _alwaysLocked = fn; }
+
+/** Whether a piece is locked: the flag on it, or its name kept locked (always lock). */
+export const isLocked = (/** @type {any} */ item) => item?.locked === true || (_alwaysLocked !== null && _alwaysLocked(item) === true);
 
 /** Lock or unlock a piece; answers whether it could (an item record to write on). Unlocked is the field ABSENT, so
  *  a save of a pack with nothing locked carries not one extra byte. */

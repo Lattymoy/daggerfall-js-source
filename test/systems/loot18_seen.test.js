@@ -98,7 +98,7 @@ test('LOOT18: the pack\'s card - Junk beside the lock on gear in the pack, its l
     const acts = () => (q('packdetail')?.querySelectorAll('.acts')[0]?.querySelectorAll('.act') ?? []);
     const labels = () => acts().map((b) => b.textContent);
     assert.ok(labels().includes('Junk'), `the card offers it (${labels().join(', ')})`);
-    assert.equal(labels().indexOf('Junk'), labels().indexOf('Lock') + 1, 'beside the lock');
+    assert.equal(labels().indexOf('Junk'), labels().indexOf('Always lock') + 1, 'beside the lock and its Always lock');
     acts().find((b) => b.textContent === 'Junk').onclick({});
     assert.equal(isJunk(s), true);
     assert.ok(labels().includes('Not junk'), 'and it says so');
@@ -107,8 +107,8 @@ test('LOOT18: the pack\'s card - Junk beside the lock on gear in the pack, its l
     acts().find((b) => b.textContent === 'Lock').onclick({});
     assert.deepEqual([isLocked(s), isJunk(s)], [true, false], 'the lock lifts the mark');
   });
-  // a worn piece takes none, nor anything but gear (a bandage's card stands as DISC13 pins it)
-  assert.match(read('src/ui/enhanced/enhancedInventory.js'), /if \(side === 'local' && !line\.equipped && junkable\(picked\)\) \{\n\s+const j = el\('button', 'act', isJunk\(picked\) \? 'Not junk' : 'Junk'\);/, 'local, unworn gear alone');
+  // a worn piece takes none, nor a piece the pack may not let go of (a bandage's card stands as DISC13 pins it)
+  assert.match(read('src/ui/enhanced/enhancedInventory.js'), /if \(side === 'local' && !line\.equipped && canJunk\(picked\) && !isAlwaysLocked\(picked\)\) \{\n\s+if \(!isAlwaysJunk\(picked\)\) \{\n\s+const j = el\('button', 'act', isJunk\(picked\) \? 'Not junk' : 'Junk'\);/, 'local, unworn, and only a piece the pack may let go of');
   assert.match(read('src/ui/enhanced/enhancedPlusStyle.js'), /\.pack-shell \[data-junk\] \.tile > \*/, 'the sheet dims the mark\'s picture');
   _resetForTests();
 });
@@ -216,7 +216,8 @@ function takeAll(items, tier) {
 test('LOOT18: quick loot by tier - the take-all leaves gear under the row\'s part and every junk piece; gold, supplies, a quest\'s item and DFU\'s own magic always taken; the ladder off, no tier; the line says what stayed; a lit row is taken whatever it is', () => {
   on();
   const row = FEATURES.find((f) => f.id === 'quick-loot');
-  assert.deepEqual(row.control.parts, [{ key: 'quickLootTier', label: 'Take gear', tiers: [['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']] }]);
+  assert.deepEqual(row.control.parts.filter((pt) => pt.key === 'quickLootTier'), [{ key: 'quickLootTier', label: 'Take gear', tiers: [['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']] }]);
+  assert.deepEqual(row.control.parts.filter((pt) => pt.key !== 'quickLootTier').map((pt) => [pt.key, pt.list]), [['junkAlways', 'names'], ['lockAlways', 'lock-names']], 'and the names always junk and always locked, lists in the drawer');
   assert.equal(PREF_DEFAULTS.quickLootTier, 'all', 'All by default - the take-all as it was');
   assert.deepEqual(QUICK_LOOT_FLOORS, { all: 0, magic: 1, rare: 2 });
   const pile = () => {

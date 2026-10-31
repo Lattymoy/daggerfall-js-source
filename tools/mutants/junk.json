@@ -1,0 +1,92 @@
+[
+  {
+    "name": "JUNK-RULES-name-matched-case-sensitive",
+    "file": "src/systems/item/junkRules.js",
+    "old": "a.toLowerCase() === b.toLowerCase()",
+    "new": "a === b",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "JUNK-RULES-batch-lifts-a-lock",
+    "file": "src/systems/item/junkRules.js",
+    "old": "canJunk(item) && !isLocked(item)",
+    "new": "canJunk(item)",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "JUNK-RULES-name-junks-a-quest-item",
+    "file": "src/systems/item/junkRules.js",
+    "old": "(isAlwaysJunk(item) && canJunk(item))",
+    "new": "isAlwaysJunk(item)",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "JUNK-RULES-quest-item-listed",
+    "file": "src/systems/item/junkRules.js",
+    "old": "if (on && canJunk(item) && rest.length",
+    "new": "if (on && rest.length",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-JUNK-rarity-ignored",
+    "file": "src/ui/enhanced/junkBatchPanel.js",
+    "old": "if (rarityOn && !sel.rarities.has(rarityOf(it))) continue;",
+    "new": "",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-JUNK-page-ignored",
+    "file": "src/ui/enhanced/junkBatchPanel.js",
+    "old": "if (!it || !sel.pages.has(pageOf(it))) continue;",
+    "new": "if (!it) continue;",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "JUNK-RULES-list-not-empty-by-default",
+    "file": "src/systems/features.js",
+    "old": "key: 'junkAlways', initial: Object.freeze([])",
+    "new": "key: 'junkAlways', initial: Object.freeze(['x'])",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "JUNK-RULES-counter-reads-the-old-mark",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "filter((it) => isJunkNow(it) && !equipped(it)",
+    "new": "filter((it) => isJunk(it) && !equipped(it)",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-JUNK-locked-junk-piece-in-the-clear-list",
+    "file": "src/ui/enhanced/junkBatchPanel.js",
+    "old": "      if (isLocked(it)) skipped.locked = (skipped.locked ?? 0) + 1;",
+    "new": "      if (false) skipped.locked = (skipped.locked ?? 0) + 1;",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-JUNK-clear-ignores-the-lock",
+    "file": "src/ui/enhanced/junkBatchPanel.js",
+    "old": "if (isJunk(it) && !isLocked(it)) { setJunk(it, false); n++; }",
+    "new": "if (isJunk(it)) { setJunk(it, false); n++; }",
+    "tests": [
+      "test/ui/junkbatch.test.js"
+    ]
+  }
+]

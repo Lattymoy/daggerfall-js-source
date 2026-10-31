@@ -5032,6 +5032,18 @@ ${paceControlsCss('tview')}
 .pack-shell .itemrow .salv-mark { position: absolute; right: 2px; top: 1px; z-index: 3; color: rgb(243,239,44); font-size: 12px;   /* AUDIT BATCH C7: over the Plus face's sigil rune (z-index 2) */
   text-shadow: 2px 2px 0 rgba(0,0,0,0.85); }
 .inv-salvage-many .salvagenames { color: #9c937d; font-size: 13px; }
+/* BATCH-JUNK: the panel's categories and rarities as ticks, the count under them */
+.inv-junkbatch .card { max-width: min(560px, calc(100vw - 32px)); }
+.inv-junkbatch .jb-hint { color: #9c937d; font-size: 13px; }
+.inv-junkbatch .jb-body { display: flex; flex-direction: column; gap: 10px; padding: 6px 14px 0; }
+.inv-junkbatch .jb-head { display: flex; gap: 6px; align-items: center; margin-bottom: 4px; }
+.inv-junkbatch .jb-title { flex: 1; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: #a89f88; }
+.inv-junkbatch .jb-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.inv-junkbatch .jb-chip, .inv-junkbatch .jb-mini { min-height: 28px; padding: 3px 9px; font-size: 13px; }
+.inv-junkbatch .jb-mini { min-height: 22px; font-size: 11px; opacity: 0.85; }
+.inv-junkbatch .jb-count { color: #d8cfae; font-size: 14px; margin: 2px 0 0; }
+.inv-junkbatch .jb-why, .inv-junkbatch .jb-careful { color: #9c937d; font-size: 12px; margin: 0; }
+.inv-junkbatch .jb-careful { color: #e0a24a; }
 /* The dock's rows are the reference's TILE GRID: square panels, the
    monogram carrying the item, the count in the corner, the name in
    the title and the plaque. The tiles live directly in .packcol -
@@ -6169,6 +6181,10 @@ ${tierMarkCss({ wash: (k) => TIER_MARKS[k], washAlpha: 0.2, edge: '#0b0805', sel
 .ft-tile-drawer { border-top: 1px solid var(--iron); padding-top: 7px; display: flex; flex-direction: column; gap: 6px; }
 .ft-drawer-label { font-family: var(--data); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
 .ft-chipset { display: flex; flex-wrap: wrap; gap: 4px; }
+/* JUNK-RULES: the always-junk names, one per line with its remove */
+.ft-names { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.ft-names-entry { display: flex; gap: 8px; align-items: center; font-family: var(--data); font-size: 12px; color: var(--bone); }
+.ft-names-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ft-mchip { font-family: var(--data); font-size: 11px; background: var(--ink); color: var(--dim);
   border: 1px solid var(--iron); padding: 2px 6px; cursor: pointer; }
 .ft-mchip[aria-pressed="true"] { color: var(--verdigris); border-color: var(--verdigris); }

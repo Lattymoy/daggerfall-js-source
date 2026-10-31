@@ -1,0 +1,83 @@
+[
+  {
+    "name": "LOCK-RULES-name-matched-case-sensitive",
+    "file": "src/systems/item/lockRules.js",
+    "old": "alwaysLockNames().some((n) => n.toLowerCase() === name)",
+    "new": "alwaysLockNames().some((n) => n === name)",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-resolver-unasked",
+    "file": "src/systems/item/itemLock.js",
+    "old": "item?.locked === true || (_alwaysLocked !== null && _alwaysLocked(item) === true)",
+    "new": "item?.locked === true",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-name-stays-always-junk",
+    "file": "src/systems/item/lockRules.js",
+    "old": "    forgetAlwaysJunk(name);",
+    "new": "    ",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-piece-keeps-its-mark",
+    "file": "src/systems/item/lockRules.js",
+    "old": "    setJunk(item, false);",
+    "new": "    ",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-answer-kept-past-a-change",
+    "file": "src/systems/item/lockRules.js",
+    "old": "if (hit && hit.list === list && hit.name === name) return hit.locked;",
+    "new": "if (hit) return hit.locked;",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-junk-offered-over-a-locked-name",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "canJunk(picked) && !isAlwaysLocked(picked)",
+    "new": "canJunk(picked)",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-rule-not-installed",
+    "file": "src/main.js",
+    "old": "  import('./systems/item/lockRules.js');",
+    "new": "  ",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-list-not-empty-by-default",
+    "file": "src/systems/features.js",
+    "old": "key: 'lockAlways', initial: Object.freeze([])",
+    "new": "key: 'lockAlways', initial: Object.freeze(['x'])",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  },
+  {
+    "name": "LOCK-RULES-answer-kept-past-a-rename",
+    "file": "src/systems/item/lockRules.js",
+    "old": "if (hit && hit.list === list && hit.name === name) return hit.locked;",
+    "new": "if (hit && hit.list === list) return hit.locked;",
+    "tests": [
+      "test/ui/lockrules.test.js"
+    ]
+  }
+]

@@ -13899,6 +13899,26 @@
   "tr": "f54d58176b98",
   "by": "claude-in-session"
  },
+ "features.quickLoot.junkAlways": {
+  "en": "cc4afd0c76ba",
+  "tr": "7a6647241754",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.junkAlwaysGroup": {
+  "en": "a4658aaa9125",
+  "tr": "618b64123e6d",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.lockAlways": {
+  "en": "bafac09b7034",
+  "tr": "63d70f6faa31",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.lockAlwaysGroup": {
+  "en": "fccb9ea10f83",
+  "tr": "89c250b4b0b7",
+  "by": "claude-in-session"
+ },
  "features.quickLoot.note": {
   "en": "b1f409208ec7",
   "tr": "eb8b1146c1ee",
@@ -18149,6 +18169,156 @@
   "tr": "8ce5e2e615d1",
   "by": "claude-in-session"
  },
+ "inventory.junkAlways.line": {
+  "en": "1a94c5efe3b9",
+  "tr": "6642c5988d0f",
+  "by": "claude-in-session"
+ },
+ "inventory.junkAlways.start": {
+  "en": "cc4afd0c76ba",
+  "tr": "7a6647241754",
+  "by": "claude-in-session"
+ },
+ "inventory.junkAlways.stop": {
+  "en": "593d39e746a6",
+  "tr": "20684f5b73ea",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.all": {
+  "en": "6a72085653e4",
+  "tr": "4c7a986ffe2b",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.already": {
+  "en": "a7043f60efaa",
+  "tr": "9f847f716a1d",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.careful": {
+  "en": "1ef580af8a53",
+  "tr": "2243963b39b4",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.clear": {
+  "en": "28ca249b5793",
+  "tr": "c28a940ab427",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.cleared": {
+  "en": "125d898ec458",
+  "tr": "68fb1f747560",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.close": {
+  "en": "bbfa773e5a63",
+  "tr": "44424b18700e",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.done": {
+  "en": "c19ef5c014cc",
+  "tr": "2e5186f53cc4",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.hint": {
+  "en": "3ea0a5dcb40b",
+  "tr": "cbb998eb7e56",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.label": {
+  "en": "0a5d6a3b408b",
+  "tr": "4af112618910",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.mark": {
+  "en": "af424a6aff5c",
+  "tr": "85a03ed308a8",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.none": {
+  "en": "6eef6648406c",
+  "tr": "3ce60e7427c1",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.nothing": {
+  "en": "1ae9839f0c8d",
+  "tr": "f4feca9a79d0",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.pages": {
+  "en": "6ccb60071be8",
+  "tr": "4e1e15e17610",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.passed": {
+  "en": "9940954bb8a2",
+  "tr": "3703755696f1",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.rarities": {
+  "en": "5d192e2a8cc0",
+  "tr": "7fac99e18f4a",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.toMark": {
+  "en": "8cb3a2f7c331",
+  "tr": "dc4de4011321",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.bound": {
+  "en": "1dc3afe88659",
+  "tr": "71a4860015fa",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.locked": {
+  "en": "4c817a3eaf07",
+  "tr": "056ab80304bd",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.other": {
+  "en": "51ca1fb979dd",
+  "tr": "a9cfad174e9a",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.quest": {
+  "en": "aa8669c4c5e9",
+  "tr": "dfa9f4c241d1",
+  "by": "claude-in-session"
+ },
+ "inventory.junkBatch.why.worn": {
+  "en": "94c6d9441859",
+  "tr": "ecce95bbc9de",
+  "by": "claude-in-session"
+ },
+ "inventory.junkRules.gold": {
+  "en": "93d604f56a33",
+  "tr": "4a6608fb1cbd",
+  "by": "claude-in-session"
+ },
+ "inventory.junkRules.notItem": {
+  "en": "85e19dd228d3",
+  "tr": "d372fe87ac99",
+  "by": "claude-in-session"
+ },
+ "inventory.junkRules.spellbook": {
+  "en": "1013fff657b4",
+  "tr": "3ff3859bdab7",
+  "by": "claude-in-session"
+ },
+ "inventory.lockAlways.line": {
+  "en": "4fc96df061d6",
+  "tr": "edff0cb8c349",
+  "by": "claude-in-session"
+ },
+ "inventory.lockAlways.start": {
+  "en": "bafac09b7034",
+  "tr": "b5cf45aa78c2",
+  "by": "claude-in-session"
+ },
+ "inventory.lockAlways.stop": {
+  "en": "02517cc97e13",
+  "tr": "2bf64ab0c7ec",
+  "by": "claude-in-session"
+ },
  "inventory.quest.item": {
   "en": "18d4da5c6380",
   "tr": "b4f5b9f48dc8",
@@ -21974,6 +22144,11 @@
   "tr": "0b7f1fa39eb2",
   "by": "claude-in-session"
  },
+ "menu.features.junkNone": {
+  "en": "aab952cea892",
+  "tr": "44cd3b833d36",
+  "by": "claude-in-session"
+ },
  "menu.features.keys": {
   "en": "242c24f91695",
   "tr": "85a14e4a9821",
@@ -21994,6 +22169,11 @@
   "tr": "08f44a222c3a",
   "by": "claude-in-session"
  },
+ "menu.features.lockNone": {
+  "en": "5ce7a836fa54",
+  "tr": "149e18cd7f9a",
+  "by": "claude-in-session"
+ },
  "menu.features.modules": {
   "en": "ac35ed35f8a0",
   "tr": "32374a5eb68a",
@@ -22002,6 +22182,11 @@
  "menu.features.modulesLabel": {
   "en": "04e9462c0ff0",
   "tr": "b8ff02892916",
+  "by": "claude-in-session"
+ },
+ "menu.features.namesRemove": {
+  "en": "e963907dac5c",
+  "tr": "f78b6376e028",
   "by": "claude-in-session"
  },
  "menu.features.onlineLock": {
