@@ -425,9 +425,9 @@ RAID5).
 
 | Kind | Its name | What the town asks | How it runs (`systems/raidingParties.js`) |
 |---|---|---|---|
-| `classic` | Raid | - | RAID1's raid: one raider at a time, out of view, the watch beside you |
+| `classic` | Raid | - | RAID1's raid, the watch beside you; its raiders in packs about each player (RAID-PACKS below) |
 | `waves` | Assault | "They come in waves. Hold until their leader falls." | the target less one shared over three waves (four from a target of 21, `raidWavePlan`), each in packs of 3-5; a 12 s breather between (`RAID_WAVE_BREATHER_S`), each wave said; the last the party's LEADER alone - the knights' Knight-Captain, the bandits' Bandit Chief, the orcs' Orc Warlord - an elite with two boss traits (`05-Combat/Boss-Traits.md`), its fall the target's last death |
-| `defend` | Siege of the Standard | "Keep the Standard-Bearer of {town} alive in the square." | a watchman of the town stood at its square (`scenes/cityGuards.js standBearer`, eight times as hardy, leashed 4 m to his post); the raiders come at him in packs of 2-3 from 40 m out, each sent at him; KILLED (a walk-off is no fall - another is raised) he sacks the town: said, none raised again, the raid goes on |
+| `defend` | Siege of the Standard | "Keep the Standard-Bearer of {town} alive in the square." | a watchman of the town stood at its square (`scenes/cityGuards.js standBearer`, eight times as hardy, leashed 4 m to his post); the raiders come at him in packs of 3-5 every 4 s (RAID-BANNER below) from 40 m out, each sent at him; KILLED (a walk-off is no fall - another is raised) he sacks the town: said, none raised again, the raid goes on |
 | `escort` | Exodus | "Refugees flee to the square of {town}. See them there safely." | three refugees (a temple's Healer of the street's pool, the player's allies, four times as hardy) walk the town's streets from its edge to its square behind a guide that waits for them; the raiders come in packs ahead of them and hunt them; each arriving is saved and goes out of sight, each fallen lost, both said; when all three are saved or lost the rest of the raid is the classic one |
 
 **Held.** A town whose objective is kept to its cleanse is HELD: an assault whose leader fell, a standard still
@@ -535,3 +535,25 @@ AUDIT TAMRIEL-WIDE II R1 (2026-10-29): the hello says the list newest first. A b
 64, and the hub keeps them oldest first, so on release day an older tab kept yesterday's and read today's cleansed raids
 as standing. The client's read keeps every one whatever their order. Pinned in the same B5 test; mutant: the hello oldest
 first.
+
+## RAID-PACKS - a town raid stands its raiders as a staff event does (2026-10-31)
+
+> The owner, 2026-10-31: "make sure my fixes for staff raid are carried over to town raid", "Address spawn in the wall
+> of mobs by checking pathfinding", "Increase spawn rate for banner raid".
+
+The staff event's pack fixes now run the town's raids too (`systems/raidingParties.js`):
+
+- RAID-PACKS: a classic raid stands packs of 3-5 (`RAID_CLASSIC_PACK_MIN`/`MAX`), each about the next player in the
+  town in turn (PACK-SPREAD), the mod's mean wait a raider (`raidClassicGapS`, 5.5 s; an orc raid's 4.5) a pack. The
+  mod stood one raider each 1-10 s about the runner alone: a departure (Ledger A, RAID-PACKS).
+- RAID-SCALE: every kind's cap is PACK-SCALE's - 25 alone, 5 more each other player, to 40.
+- RAID-STALL: a pack's leader with no spot `STAFF_PACK_LEADER_TRIES` times goes to the next player, or another side of
+  the square (PACK-STALL).
+- RAID-BANNER: the Standard's packs are 3-5 every 4 s (`RAID_DEFEND_PACK_*`), about three times the old 2-3 every 9 s.
+  It counts every third death (`RAID_BANNER_KILLS_X`): each machine says a third of its deaths, so the relay's target of
+  15-25 stands for 45-75 deaths and the relay is unchanged. The board and the map show deaths.
+- RAID-REACH: a raid's or an event's spot stands only on a street of the town's walk grid that meets its player's
+  (`scenes/raidSitesHost.js` `reachable`, the street net's labels) - never in a wall, a building or a closed yard. Off a
+  town's grid any spot stands.
+
+Pins: `test/systems/raidpacks_town.test.js` (6).

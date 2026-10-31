@@ -334,7 +334,7 @@ test('COLLECTIONS-II THE PAGE: six tiles, each its part\'s name over its count a
   const p = page({ flow, player: me });
   await settle();
   const tiles = cls(p.root, 'coll-part');
-  assert.deepEqual(tiles.map((b) => b.attrs['data-focus']), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'codex', 'cards', 'trophies', 'fish', 'annals'].map((id) => `coll-part-${id}`));   // PIN MOVED (ARMORY): the Aura Armory after the auras; PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part, first of the character's
+  assert.deepEqual(tiles.map((b) => b.attrs['data-focus']), ['titles', 'auras', 'armory', 'icons', 'glyphs', 'appearances', 'codex', 'cards', 'trophies', 'fish', 'tunes', 'annals'].map((id) => `coll-part-${id}`));   // PIN MOVED (ARMORY): the Aura Armory after the auras; PIN MOVED (HUNTERS-MARK): the gathered parts after them, always shown; PIN MOVED (APPEARANCES): the looks' part, first of the character's; PIN MOVED (MUSIC-BOX): the Tunes after the fish
   assert.equal(tiles[0].children[1].textContent, `3 / ${TITLES.length - 1}`);
   assert.equal(cls(tiles[0], 'px-meter')[0].textContent, `3/${TITLES.length - 1}`, 'the meter, held of all');
   assert.equal(tiles[0].attrs['aria-pressed'], 'true');

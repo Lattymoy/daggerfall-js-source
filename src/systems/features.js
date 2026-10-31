@@ -895,6 +895,18 @@ export const FEATURES = Object.freeze([
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({ store: 'prefs', key: 'soundEnhancements', initial: true, online: 'player' }),   // ES1: systems/enhancedSounds.js enhancedSoundsOn; windAudio.js windSoundOn rides it
   }),
+  // AMBIENT-LIFE (2026-10-31, bible/07-Rendering/Ambient-Life.md): the birds, bats and small animals outdoors - a look,
+  // nothing the room shares, so each player's own online. Kill door `?wildlife=off` (scenes/ambientLifeHost.js).
+  Object.freeze({
+    id: 'wildlife',
+    group: 'sight',
+    get title() { return t('features.wildlife.title', 'Wildlife'); },
+    get note() { return t('features.wildlife.note', 'Birds, bats and small animals live outdoors. Flocks cross the sky, birds sit on roofs and fly off '
+      + 'as you come near, and small animals run from your feet.'); },
+    get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
+    kinds: Object.freeze(['enhanced']),
+    control: Object.freeze({ store: 'prefs', key: 'ambientLife', initial: true, online: 'player' }),   // AMBIENT-LIFE: scenes/ambientLifeHost.js wildlifeDensity
+  }),
   // MAC-I + MAC-P (2026-09-17, Mac: "The classic sprite should react to
   // lighting (first person)" and "morrowind's first person view also
   // doesn't receive lighting and is consistently dark"): the viewmodel

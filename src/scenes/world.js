@@ -249,6 +249,7 @@ import { WindWispsRenderer, wispsOn } from '../render/windWisps.js'; import { Dr
 import { HeatHazeRenderer } from '../render/heatHaze.js';   // HAZE1: Heat Haze's ring, drawn
 import { createHeatHaze, hazeFrameSettings } from '../systems/heatHaze.js';   // HAZE1: Heat Haze's law (demifiend000, vendor/heat-haze/)
 import { createWindfallHost } from './windfallHost.js';   // WINDFALL1: Windfall (demifiend000, vendor/windfall/) - its wind, its sounds, its leaves
+import { createAmbientLifeHost, streamedWorld } from './ambientLifeHost.js';   // AMBIENT-LIFE: the birds, bats and small animals outdoors
 import { createSnowfallHost } from './snowfallHost.js';   // SNOWFALL1: Snowfall (demifiend000, vendor/snowfall/) - the snow on the ground, its tracks
 import { createWindAudio, windSoundOn } from '../systems/wind/windAudio.js';   // WIND3: the wind, heard
 import { placeFoeFreely } from '../systems/quest/sceneMount.js';   // B1: CreateFoe's raycast ring
@@ -1199,6 +1200,7 @@ import { setItemFields, mintCondition } from '../systems/item/itemTemplates.js';
 import { registerItemUseHandler } from '../systems/item/itemTemplates.js';   // CSA-H: the boat items' UseItem on the item-use door
 import { mintBoatItem, mintShelfBoatUids, assignVariantsToShopItems, cargoLootTarget, BOAT_PARTS_TEMPLATE as CSA_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE as CSA_DEED_TEMPLATE } from '../systems/comeSailAway/comeSailAwayItems.js';   // CSA-H: the two items, their shelf
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // CSA-H: the boat's variant picker
+import { createMusicBoxScore } from '../systems/musicBox.js';   // MUSIC-BOX: a house's music box holds the music in its room
 import { mustSpawnOnFloor, alignFloorEnemyY, spawnRevealDistance, enemyRoster } from '../world/underwater/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform; DW-E5: SpawnRevealDistance
 import { puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
@@ -1249,6 +1251,7 @@ import { createWildSeizeHost } from './wildSeizeHost.js';   // HOST-SPLIT
 import { createWildRejoin } from '../systems/wild/wildRejoin.js';   // WILD-REJOIN: a fall that outlives its page
 import { windowHoldsDungeon } from './windowWorld.js';   // RPT1026-FIGHTS (WINDOW-ONLINE): a dungeon's window holds its foes offline alone
 import { createPortalStoneHost } from './portalStoneHost.js';   // HOST-SPLIT
+import { createPortalBookHost } from './portalBookHost.js'; import { isPortalBook } from '../systems/gate/gateSpoils.js';   // PORTAL-BOOK: the kept house doors
 import { createWildDropHost } from './wildDropHost.js';   // HOST-SPLIT
 import { createWildInsureBook, setWildInsureBook } from '../net/wild/wildInsureBook.js';   // WILD-INSURE: my policies on my gear
 import { createWildGrace } from '../systems/wild/wildGrace.js';   // ZONE-GRACE: safe passage, as the referee says it
@@ -12361,7 +12364,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const packDoors = {
     openBook: openBookHook,   // B1: the use-mode book arm
     placeCamp: (item, list) => camps.placeItem(item, list ?? playerEntity.items ?? []),   // SURV3: Camping Equipment and the Campfire Kit are placed on this host's ground - AUDIT SURV-TIERS: off the list they were used from (the pack or the wagon)
-    openPortal: (item, list) => openPortalStone(item, list),   // PORTAL1: a Portal Stone - the travel map in teleport mode, a portal where the player stands (a building's pack is this one too, and says why not)
+    openPortal: (item, list) => (isPortalBook(item) ? portalBook.open() : openPortalStone(item, list)),   // PORTAL-BOOK: the book's window; PORTAL1: a Portal Stone - the travel map in teleport mode, a portal where the player stands (a building's pack is this one too, and says why not)
     // U42: USING the Spellbook item opens the book
     // (DaggerfallInventoryWindow.cs:1748-1764). showOverlay REPLACES
     // the slot, so this bypasses toggleSpellbook's already-open guard
@@ -13058,6 +13061,8 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     return { tile: built_.tilemap[tx + ty * TERRAIN_TILE_DIM], feet: [u - tx, v - ty] };
   };
   const playerGroundTile = () => playerGroundSample()?.tile ?? null;
+  // AMBIENT-LIFE (scenes/ambientLifeHost.js): the creatures on this host's ground, sea and lakes, roofs and buildings
+  const ambientLife = createAmbientLifeHost({ gl: renderer.gl, enhanced: !!sky.enhanced, world: streamedWorld(heightAt, tvSeaY, groundSampleAt, collider, built, state) });
   const footsteps = new FootstepMachine();   // FS-slice
   // PEER-FS1 (Mac, 2026-09-18: "footstep sounds depending where they walk
   // on... like you have" for online peers): the kind computed below at the
@@ -13335,6 +13340,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     windfall.offsetOrigin(state.initOffset);
     hazeGl?.offsetOrigin(state.initOffset);
     heatHaze.reset();
+    ambientLife.offsetOrigin(state.initOffset);   // AMBIENT-LIFE: the creatures stand on the land
     _streamSince = null;   // PERF-EXT24 (the review): the sweep ended the old world's stream - the new one's two seconds start at its first pump
     // RESPAWN-GROUND (FIELD BUGS 2026-09-30, "Respawning high in the air after death"): THE EYE STANDS ON THE NEW PIXEL
     // WHILE IT BUILDS. The frames of the awaits below feed `cam.pos` to the streamer, which reads it in the new frame -
@@ -15653,7 +15659,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     win?.activateTeleportationTravel();
     return win;
   }
-  const { openPortalStone, portalArrive, portalHoldNow } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
+  const { openPortalStone, portalArrive, portalHoldNow, openToSpot } = createPortalStoneHost({   // HOST-SPLIT: src/scenes/portalStoneHost.js
     _mode, buildTravelMapWindow, cam, cityGuards, collider, csaBoatUnderMe, duelEnemyNear, exteriorFoes,
     hccRuntimeOn, navalHostileNear, player, playerTravelPixel, portalGates, teleportTo, townTalk, walkMode,
     worldMoveBusy,
@@ -15665,6 +15671,12 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
     get travelView() { return travelView; },
     get veilRefused() { return veilRefused; },
     get wildTravelGate() { return wildTravelGate; },   // PORTAL-BAY: the teleport's gate, asked at the pick and the step
+    get modes() { return modes; }, get campToScene() { return campToScene; },   // PORTAL-BOOK: the landing at a kept door
+  });
+  const portalBook = createPortalBookHost({   // PORTAL-BOOK (scenes/portalBookHost.js): the Portal Book's window
+    townTalk, playerEntity, mode: _mode, house: () => modes?.portalBookHere?.() ?? null, pixel: () => playerTravelPixel(),
+    townName: (px) => portalGates.destOf(px.x, px.y)?.name ?? null, campToWire: (p) => campToWire(p),
+    openToSpot: (spot) => openToSpot(spot), saved: () => saveSoon.changed(),
   });
 
   // ── TO1: TRAVEL OPTIONS ────────────────────────────────────────────
@@ -19444,7 +19456,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
   const auraHost = createAuraHost({
     renderer, online: () => online, travelActive: () => !!travelView?.active, quiet: () => !!egClient?.quiet?.(), player: () => player, camYaw: () => cam.yaw,
     spawned: () => playerSpawned, beast: () => !!liveLycanthropy(playerEntity)?.isTransformed, veiled: (id) => _veils.has(id), toScene: (shown) => onlineToScene(shown),
-    sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies, selfLift: () => dragonView.auraLift(), peerLift: (d) => (d.shown?.rd === POSE_RIDE.Dragon ? dragonAuraLift(remotePlayers?.spriteHeightOf(d.id) ?? 0) : 0),   // AURA-ON-DRAGON: mine on my dragon out of the head, and a peer's on theirs, worn in its seat; CAPE-CARD: `sprites`, every layer that draws a peer as a picture (remotePlayers' paperdolls and class sprites with the sets')
+    sprites: () => [peerWalkers, peerRiders, remotePlayers], bodies: () => peerBodies, selfLift: () => dragonView.auraLift(), peerLift: (d) => (d.shown?.rd === POSE_RIDE.Dragon ? dragonAuraLift(remotePlayers?.spriteHeightOf(d.id) ?? 0, remotePlayers?.spriteRecordOf(d.id)) : 0),   // AURA-ON-DRAGON: mine on my dragon out of the head, and a peer's on theirs, worn in its seat; CAPE-CARD: `sprites`, every layer that draws a peer as a picture (remotePlayers' paperdolls and class sprites with the sets')
   });
   const renownXpAdopt = (xp) => {
     if (onlineOn && Number.isSafeInteger(xp) && xp >= 0 && (renownXp === null || xp > renownXp)) renownXp = xp;
@@ -23532,6 +23544,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  death); where I stand held a few metres past each change (A10, sdScorePlace's `was`). */
   let _hourScoreHeld = false, _hourScoreMade = false, _hourPlace = null;
   const _hourScore = createHourScore();
+  const musicBoxScore = createMusicBoxScore({ music, here: (id) => modes?.musicBoxHere?.(id) === true });   // MUSIC-BOX (systems/musicBox.js): last of the scores, before the director
   const _spireScore = createSpireScoreHost({ music, now: () => Date.now() + _sharedOffsetMs });   // EG-G2: the Spire's score holds the music before the Hour's (systems/eliteGates/egScore.js)
   const sdScoreWhere = () => {
     if ((modes?.mode ?? 'exterior') !== 'dungeon') return (_hourPlace = null);
@@ -31079,6 +31092,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // AUDIT 28 W10: HeadBobber.Update - the walk bob and nod, the landing
     // dip; the position rides player.eye as a world offset, the nod is a
     // per-frame offset on the look (removed and re-applied each frame).
+    const frameHeadBob = () => {   // PERF-V8 (AMBIENT-LIFE: the creatures' three calls put the host's frame past three quarters of the ceiling)
     {
       const bob = headBobber.update(dt, cam, {
         health: playerEntity.health, paused: gamePaused(), climbing: !!player.climb?.isClimbing, grounded: !!player.grounded,
@@ -31088,6 +31102,8 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw);   // HANDEDNESS (mat4's law): right = (cos, 0, -sin)
       player.bobOffset = [cy * bob[0], bob[1], -sy * bob[0]];
     }
+    };
+    frameHeadBob();
     last = now;
     meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU
     // OH-D: OceanHoles' clock (Time.time, held by a pause) and its Update's dungeon half - ABOVE THE MODAL GATE, as a
@@ -31142,7 +31158,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
     const frameMusic = () => {   // PERF-V8 (AUDIT SOUNDSCAPE: the sea's score in the chain put the host's frame past three quarters of the ceiling)
-    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
+    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),
@@ -32219,6 +32235,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
       hazeGl?.offsetOrigin(r.offset);   // HAZE1: the shimmer's noise stands on the land, not the scene
       heatHaze.offsetOrigin(r.offset);   // HAZE1 (AUDIT ENVIRONS I7): and the ring's layer, held while airborne, with it
       windfall.offsetOrigin(r.offset);   // WINDFALL1: the trees' places in the mod's wind, and its leaves, stand on the land
+      ambientLife.offsetOrigin(r.offset);   // AMBIENT-LIFE: and the creatures, their perches and their flocks' anchors
       snowfall.offsetOrigin(r.offset);   // SNOWFALL1: FloatingOrigin.OnPositionUpdate - the tiers' centres, their tracks and their pending stamps stand on the land
       droppedLoot.offsetAll(r.offset);
       dwFish?.offsetAll(r.offset);   // DW-E3: the fish and their schools' centres (Port-Ledger A, the Iliac Puddle row)
@@ -32548,6 +32565,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const _wfPx = playerTravelPixel();
     const windfallLaw = windfall.frame({ dt: gamePaused() ? 0 : dt * worldTimeScale(), outside: true, weather, minutes: skyMinutes(), climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), mapPixel: _wfPx,
       heading: wd.on ? wd.dir : null, feet: walkMode && playerSpawned ? player.pos : cam.pos, height: player.height });   // WINDFALL1: the mod's frame - its sounds and leaves, and the law the flora lean by (one wind: WIND1's heading); AUDIT ENVIRONS W1: WindMod.Update's Time.deltaTime, held by a pause and scaled with the world
+    if (!tvf) ambientLife.frame(gamePaused() ? 0 : dt * worldTimeScale(), walkMode && playerSpawned ? player.pos : cam.pos, minute, ambientWord, weather, maps.getClimateIndex(_wfPx.x, _wfPx.y), season === SEASON.Winter);   // AMBIENT-LIFE: the birds fly when DFU's ambience hears them (presetForExterior on the same word); none under the travel view's camera
     soundscape.frame(dt, { wd, weather: ambientWord, minute, climate: maps.getClimateIndex(_wfPx.x, _wfPx.y), winter: season === SEASON.Winter, paused: gamePaused() });   // SOUNDSCAPE: beside the wind and DFU's ambience, never inside it - its ear the listener's, set above
     meterFor(renderer.gl)?.markCpu('snow');   // PERF-SIM1: the snow layer's frame
     _snowPixels.clear();
@@ -33763,6 +33781,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // WINDFALL1: WINDFALL's LEAVES AND SNOW - cutouts that write depth, so with the opaque world and before the haze grabs
     // it; lit as the flats round the player are. Not under the travel view's camera (they ride the player's place).
     if (windfall.particles && !tvf && windfall.draw(proj, view, renderer.flatLightAt(walkMode && playerSpawned ? player.pos : cam.pos))) renderer.markForeignPass();
+    if (!tvf && ambientLife.draw(renderer, proj, view, walkMode && playerSpawned ? player.pos : cam.pos, false)) renderer.markForeignPass();   // AMBIENT-LIFE: the creatures, opaque and lit as the flats round the player - their lights after the blended passes, below
     const frameHaze = () => {   // PERF-V8
     if (hazeGl) {
       const _hzFoot = walkMode && playerSpawned ? player.pos : cam.pos;
@@ -33785,6 +33804,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     folkStreet.drawVeiled();   // MWNPC7: and the walkers'
     drawVeiledPeerBodies();   // INVIS-LOOK: the concealed peers' bodies, translucent - after the opaque world, the flats and the grass
     hcc.drawVeiled3d();   // AUDIT COATS3D A5: and a concealed owner's 3D horses beside them
+    if (!tvf && ambientLife.drawLights(renderer, proj, view)) renderer.markForeignPass();   // AMBIENT-LIFE (AUDIT B7): the fireflies' light, added once the blended flats and the veiled bodies stand, which would paint over it
     // DUEL1: THE RINGS' WALLS - my own duel's, rising in and dying away, and every duel the cells around me say stands
     // (each once: both duellists say it). After the grass, from the view's own eye (mwv.eye, the bolts' law), fogged as
     // the ground is; a foreign pass.

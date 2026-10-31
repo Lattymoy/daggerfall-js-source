@@ -108,7 +108,7 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct236"
+ACCOUNT_VERSION = "acct238"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
 # Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
@@ -492,25 +492,26 @@ PATREON_CAMPAIGN_ID = ""
 # says what the daily wares may draw from too.
 SHOP_ON_SALE = "title:genesis,glyph:origin,aura:eternal,armory:eternalset,armory:eternalhalo,armory:eternalsigil,armory:eternalarmlets,armory:eternalgreaves,armory:eternaledge,kill:ashen,kill:voidrend,kill:pyre,portal:runic,portal:daedric,portal:aetheric,mount:spectral,mount:dawnfire,mount:warhorse,title:dawnbringer,title:voidwalker,title:eternalchampion,bundle:daedricchampion,bundle:portalmaster,bundle:lordofoblivion,aurum:500,aurum:1100,aurum:2400,aurum:3900,icon:gatefire,icon:aurbis,icon:elderscroll,icon:azurastar,icon:redmountain,icon:hourglass,icon:sanguinerose,icon:whitegold"
 # STOREFRONT: THE LAUNCH WINDOWS - what the shop's carousel features and when, a line a window: `<ware> <from> <to>`, UTC
-# days, the last day inside; `limited` after it sells the ware only inside that window. A ware is never sold before its
-# first window opens. One drop a fortnight, as the developer asked ("every step in Donate Shop should be rethinked 5
-# times before ship and in exact right moment").
+# days, the last day inside; `limited` after it sells the ware only inside that window. One feature a fortnight, as the
+# developer asked ("every step in Donate Shop should be rethinked 5 times before ship and in exact right moment").
+# OPEN-ALL (2026-10-31, the owner: "Why not just open everything?"): every ware on SHOP_ON_SALE sells now. A window only
+# features its ware, and no bundle is limited. The portal skins are featured from 31 October, not 13 November.
 SHOP_FEATURED = """
 kill:ashen 2026-10-30 2026-11-12
 kill:voidrend 2026-10-30 2026-11-12
 kill:pyre 2026-10-30 2026-11-12
-portal:runic 2026-11-13 2026-11-26
-portal:daedric 2026-11-13 2026-11-26
-portal:aetheric 2026-11-13 2026-11-26
+portal:runic 2026-10-31 2026-11-26
+portal:daedric 2026-10-31 2026-11-26
+portal:aetheric 2026-10-31 2026-11-26
 title:dawnbringer 2026-11-27 2026-12-10
 title:voidwalker 2026-11-27 2026-12-10
 title:eternalchampion 2026-11-27 2026-12-10
-bundle:portalmaster 2026-11-27 2026-12-10 limited
+bundle:portalmaster 2026-11-27 2026-12-10
 mount:spectral 2026-12-11 2026-12-24
 mount:dawnfire 2026-12-11 2026-12-24
 mount:warhorse 2026-12-11 2026-12-24
-bundle:daedricchampion 2026-12-25 2027-01-08 limited
-bundle:lordofoblivion 2026-12-25 2027-01-08 limited
+bundle:daedricchampion 2026-12-25 2027-01-08
+bundle:lordofoblivion 2026-12-25 2027-01-08
 """
 
 [[d1_databases]]

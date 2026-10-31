@@ -141,7 +141,7 @@ time, under any switch, even after the festival; the bowl and its cakes come bac
 **BOUND-DESTROY (2026-10-31; #feature-feedback: "Soulbound items need to be disposable, certain aetheric sets and hearth
 offerings.").** The pack's Destroy lets cakes or bowls go (`11-Multiplayer/Sigil-Sets.md` BOUND-DESTROY). The pack's
 stacks are the counts' face, so a stack removed on the client alone came back with the next answer. The service lets
-them go: `/v1/festival/discard` (acct233; `festival.js` `discardFestival`) takes `{ kind, n, rid }`. The request id's own row
+them go: `/v1/festival/discard` (acct235; `festival.js` `discardFestival`) takes `{ kind, n, rid }`. The request id's own row
 (`fest_discards`, migration 0204) is laid only while the count holds n, and the count goes down where it was laid, so
 an id asked twice is one let-go, answered `repeat`. It works on any day and under any switch, as a take-in does, never
 for a guest. The client (`festivalClient.js` `discardFaces`) keeps an unanswered ask's id until a count heard since

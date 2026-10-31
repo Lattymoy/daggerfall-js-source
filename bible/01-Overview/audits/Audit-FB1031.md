@@ -42,7 +42,7 @@ took a free piece to the roof in 4,309 of 6,016 houses. It reads the house's gro
 under a roof or against a face. **Y2.** A Duplicate of a lantern on a -z wall, and a flipped picture moved onto a wall,
 hung upside down. **Y3.** The catalog (with P5). **Y4, OPEN.** The service knows no lots, so a crafted client can
 stand a free piece to 8 m. **Y5.** Imperial City courts keep 4 m: each stands 0.3 m off its house. **Y6.** The service
-stored a crafted hung tree; neither end takes one (acct234). **Y7, Y8.** The record's mixed versions and measures.
+stored a crafted hung tree; neither end takes one (acct236). **Y7, Y8.** The record's mixed versions and measures.
 
 ## FOES
 
@@ -76,7 +76,7 @@ names `itemBound.js` since.
 map's ask was said to cost no scan; past the board's 10-minute keep, and on any empty region, it scanned the witness
 rows on the primary. **W4.** A province is one region past the Bay, and the sea there is region 0, so the 8,192-pixel
 cap cut them north first, unsaid. All three by one change: the day's confirmed ground is laid once as 64-pixel tiles,
-keyed by the world pixel (`witnessTiles.js`, migration 0205, acct236), and the map reads every tile in view by its key
+keyed by the world pixel (`witnessTiles.js`, migration 0205, acct238), and the map reads every tile in view by its key
 from a replica.
 
 **W2.** The wash was painted on every pulse and pan frame (49,152 pixels, 84 ms); it is a kept bitmap,

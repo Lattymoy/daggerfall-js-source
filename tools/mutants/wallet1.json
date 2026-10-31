@@ -262,8 +262,8 @@
   {
     "name": "WALLET1-realm-blind",
     "file": "src/net/realm/realmTradeLaw.js",
-    "old": "Object.freeze([570, 571, 572, 575, 580, 582, 1820, 2000, 2001]);",
-    "new": "Object.freeze([570, 571, 572, 575, 582, 1820, 2000, 2001]);",
+    "old": "Object.freeze([570, 571, 572, 575, 577, 580, 582, 1820, 2000, 2001]);   // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -",
+    "new": "Object.freeze([570, 571, 572, 575, 577, 582, 1820, 2000, 2001]);   // PORTAL-BOOK: the Portal Book's (577, systems/gate/gateSpoils.js) -",
     "why": "the realm's trade service takes a wallet",
     "tests": [
       "test/systems/wallet1.test.js",

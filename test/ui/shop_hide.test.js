@@ -38,3 +38,17 @@ test('SHOP-HIDE: its row on the Interface tab under Shop, its words through the 
   const m = rd('src/ui/enhanced/enhancedMenu.js');
   assert.ok(m.includes("out.push(prefRow('shopHidden', t('menu.shop.hide', 'Hide the shop'),"), 'its row, its words through t()');
 });
+
+test('SHOP-REREAD (2026-10-31): a signed-in account is read again at every press of the gem and at the window\'s focus - a card an older service answered (a deploy\'s gap: no Aurum, no Folios) mends at the next open; nobody signed in, nothing asked (mutants: the gem reads nothing, the stage unread)', async () => {
+  const { shopReread } = await import('../../src/ui/enhanced/enhancedShop.js');
+  let asked = 0;
+  const flow = (stage) => ({ stage, refresh: async () => { asked++; } });
+  assert.equal(shopReread(flow('in')), true);
+  assert.equal(asked, 1, 'read again');
+  for (const f of [flow('out'), flow('loading'), null, { stage: 'in' }]) assert.equal(shopReread(f), false);
+  assert.equal(asked, 1, 'nothing asked for nobody');
+  assert.equal(shopReread({ stage: 'in', refresh: async () => { throw new Error('offline'); } }), true, 'a failed read never throws');
+  const m = rd('src/ui/enhanced/enhancedMenu.js'), s = rd('src/ui/enhanced/enhancedShop.js');
+  assert.ok(m.includes('onOpen: () => { shopOpen = true; shopFocusIn = true; shopReread(shopFlow); render(); }'), 'the gem\'s press');
+  assert.ok(s.includes('const onFocus = () => { if (win.isConnected) shopReread(f()); };'), 'the window\'s focus, one home');
+});

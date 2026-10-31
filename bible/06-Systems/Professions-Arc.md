@@ -6828,9 +6828,9 @@ new one answers again keeps its row's word. AUDIT FB1031 C1: a Stores row asked 
 a rollback) names no meat, since that build mints any `extra` it hears; its Stores count comes with the next read. A
 Butcher's meat still spoils half as fast when it is withdrawn (29).
 
-ACCOUNT_VERSION acct232 (acct231 on its branch; SMITH-RRI's recipes, section 59, in the same release); migration 0203, applied by the deploy
+ACCOUNT_VERSION acct234 (acct231 then acct232 on its branch; SMITH-RRI's recipes, section 59, in the same release); migration 0203, applied by the deploy
 before the Worker; no relay change. Pins: `test/net/butcherstores.test.js`, `tools/mutants/butcherstores.json`; the
-version pins moved to acct232.
+version pins moved to acct234.
 ## 61. WITNESS-MAP - the witnessed ground on the held map (BUILT 2026-10-31)
 
 Sammy in #feature-feedback: "Display on the world map 'witnessed areas' for stuff like ores and pearls." It is the
@@ -6854,8 +6854,8 @@ true, tiles: [[tx, ty, px]...] }` (a tile asked and not answered holds none), or
 is laid. A pixel is two characters, its row and its column in the tile
 (`src/net/witnessTileLaw.js:"export function packTile"`). The read is two primary-key reads in one round trip and
 never touches `world_witness`. It writes nothing and keeps nothing an isolate shares, so it is a replica route as well
-as a busy read (`busyLaw.js` BUSY_READS). The service is acct236 with migration 0205, and deploys before the site. The
-writ board's kept ground is as it was before acct235.
+as a busy read (`busyLaw.js` BUSY_READS). The service is acct238 with migration 0205, and deploys before the site. The
+writ board's kept ground is as it was before acct237.
 
 **On the client**: the professions' book keeps each tile for its UTC day (`src/net/profBook.js:"async askGround(list)"`):
 64 tiles an ask, one read in flight, and none for PROF_REFRESH_BACKOFF_MS after a read that failed, came before the day
@@ -6897,7 +6897,7 @@ book; a pixel heard; the reader over the Bay, Morrowind and the sea; the kept wa
 switch in the save and the key; ARENA2: the sea and Morrowind as the host's maps read them). Mutants
 `tools/mutants/fb1031_witness.json` (49, all dead). `test/ui/witness_map.test.js` keeps the held map's two pins and
 `tools/mutants/witness_map.json` 14 records (22 retired with the code they named). PIN MOVED: the account version's
-pins and `test/server/auditscale2_acct.test.js`'s history (acct236), `test/net/busy_gate.test.js` and
+pins and `test/server/auditscale2_acct.test.js`'s history (acct238), `test/net/busy_gate.test.js` and
 `test/server/scale4g.test.js` (a replica's read), `test/server/accountworker.test.js` (the two tables),
 `test/ui/mappan.test.js` (the marks' key); twelve version mutant records re-aimed by content. The account deploy's
 paths name `src/net/witnessTileLaw.js`.

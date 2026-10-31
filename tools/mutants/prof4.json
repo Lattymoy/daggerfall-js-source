@@ -815,7 +815,7 @@
   {
     "name": "PROF4-no-workbench-station",
     "file": "src/net/decorLaw.js",
-    "old": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "old": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'cooking', 'music', 'loom', 'mason', 'jeweller', 'vendor']);",
     "new": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
     "tests": [
       "test/ui/homestations.test.js",

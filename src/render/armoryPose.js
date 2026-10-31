@@ -31,6 +31,19 @@ export const REST_POINTS = Object.freeze([
   -0.09, 0.9, 0, 0.09, 0.9, 0, -0.09, 0.46, 0.02, 0.09, 0.46, 0.02, -0.09, 0.06, 0, 0.09, 0.06, 0,
 ]);
 
+/** WOLF-KIT (2026-10-30, mob: "get the feet chest and arm and hand cosmetic to work on werewolf form"): how much thicker
+ *  than a person's the wolf's limbs and chest stand - a turned wearer's pose scale (poseFromBones' `beast`), each piece's
+ *  rings and decals that much wider round the fur. */
+export const ARMORY_BEAST_FIT = 1.35;
+/** WOLF-KIT (mob: "chest need more center"): the wolf's chest, hunched and turned in its idle - centred between its
+ *  shoulders, not on its spine's bone (which leans to one side), its face this far forward of them (m; a person's a hand
+ *  forward of the spine, 0.12), `down` m under the spine's bone, and its back this far behind the face (`back`, m - the
+ *  chest's back piece; a person's the pass's own). */
+export const ARMORY_BEAST_CHEST = Object.freeze({ face: 0.08, back: 0.55, down: 0.1 });
+/** WOLF-KIT (mob: "they clip through on the arms"): the wolf's arms thicker again than its fit - a band's rings `arm`
+ *  times wider round them. They stop at the wrist (mob: "the wrist stick out to far"): the claws wear the weapon glow. */
+export const ARMORY_BEAST_ARM = Object.freeze({ arm: 1.25 });
+
 /** THE SPRITE'S POINTS BY THE PIXEL - a sprite figure's rows over the frame's foot (EOTB_FIGURE's own for the shoulder,
  *  neck and head; the rest measured off the sets' idle frames - 112364, 112365, 112370, 112372 front and back) and how
  *  far out from its axis each stands, in the sets' pixels. Its chest stands forward of the axis by `chestFwd` m. */
@@ -39,7 +52,7 @@ const SPRITE_ROWS_CHEST = SPRITE_ROWS.chest, SPRITE_ROWS_PELVIS = SPRITE_ROWS.pe
 
 /** A fresh pose - its points the rest pose's; `dx` each point's offset along a sprite card's right (m), 0 on a rig. */
 export function newPose() {
-  return { pts: Float32Array.from(REST_POINTS), dx: new Float32Array(POSE_POINTS.length), card: false, limbs: 'full', sunk: false, scale: 1, armsTurned: false, bands: null, flank: null };
+  return { pts: Float32Array.from(REST_POINTS), dx: new Float32Array(POSE_POINTS.length), card: false, limbs: 'full', sunk: false, scale: 1, armsTurned: false, bands: null, flank: null, back: 0, arm: 1, hock: false };
 }
 
 /** THE ROWS a picture's marks are read at, in the sets' pixels over the frame's foot (EOTB_FIGURE's and SPRITE_ROWS'). */
@@ -234,12 +247,13 @@ const set = (/** @type {Float32Array} */ pts, /** @type {string} */ name, /** @t
 
 /**
  * THE POSE OFF A RIG'S BONES (`bones` as fpArm.thirdBones answers: each bone's origin [right, up, forward] m about the
- * feet, null where its skeleton lacks one), written into `out` - or false when the head or a shoulder is missing (the
- * wolf's skeleton), and `out` is left as it was. A bone's origin is its joint: the upper arm's the shoulder, the forearm's
- * the elbow, the hand's the wrist, the thigh's the hip, the calf's the knee, the foot's the ankle. A limb's missing bone is
- * the rest pose's point, moved with the shoulder or hip it hangs from. Pure but for `out`.
+ * feet, null where its skeleton lacks one), written into `out` - or false when the head or a shoulder is missing, and
+ * `out` is left as it was. A bone's origin is its joint: upper arm = shoulder, forearm = elbow, hand = wrist, thigh =
+ * hip, calf = knee, foot = ankle. A missing limb bone is the rest pose's point, moved with its shoulder or hip.
+ * WOLF-KIT: `beast` - Bloodmoon's wolf has every bone, but thicker limbs and chest: the pose's scale is
+ * ARMORY_BEAST_FIT, so a band, a greave and the chest piece sit on the fur, not inside it. Pure but for `out`.
  */
-export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out) {
+export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out, beast = false) {
   const H = bones?.['bip01 head'], L = bones?.['bip01 l upperarm'], R = bones?.['bip01 r upperarm'];
   if (!H || !L || !R) return false;
   const pts = out.pts, N = bones['bip01 neck'];
@@ -249,7 +263,9 @@ export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out) 
   set(pts, 'neck', N ?? [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2 + 0.06, (L[2] + R[2]) / 2]);
   set(pts, 'shL', L); set(pts, 'shR', R);
   const spine = bones['bip01 spine2'];
-  set(pts, 'chest', spine ? [spine[0], spine[1], spine[2] + 0.12] : [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2 - 0.2, (L[2] + R[2]) / 2 + 0.12]);   // the chest's face, a hand forward of the spine
+  const k = beast ? ARMORY_BEAST_FIT : 1, face = beast ? ARMORY_BEAST_CHEST.face : 0.12;
+  const drop = beast ? ARMORY_BEAST_CHEST.down : 0;
+  set(pts, 'chest', beast && spine ? [(L[0] + R[0]) / 2, spine[1] - drop, (L[2] + R[2]) / 2 + face] : spine ? [spine[0], spine[1] - drop, spine[2] + face] : [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2 - 0.2, (L[2] + R[2]) / 2 + face]);   // the chest's face, a hand forward of the spine (WOLF-KIT: the wolf's deeper)
   const hang = (/** @type {string} */ name, /** @type {any} */ v, /** @type {string} */ from, /** @type {ArrayLike<number>} */ root) => {
     if (v) { set(pts, name, v); return; }
     const r = POSE_AT[from], i = POSE_AT[name];
@@ -263,7 +279,7 @@ export function poseFromBones(/** @type {any} */ bones, /** @type {any} */ out) 
   hang('hipL', bones['bip01 l thigh'], 'pelvis', pv); hang('hipR', bones['bip01 r thigh'], 'pelvis', pv);
   hang('knL', bones['bip01 l calf'], 'pelvis', pv); hang('knR', bones['bip01 r calf'], 'pelvis', pv);
   hang('ftL', bones['bip01 l foot'], 'pelvis', pv); hang('ftR', bones['bip01 r foot'], 'pelvis', pv);
-  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = 1; out.dx.fill(0);
+  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = beast ? ARMORY_BEAST_CHEST.back : 0; out.arm = beast ? ARMORY_BEAST_ARM.arm : 1; out.hock = beast; out.dx.fill(0);
   return true;
 }
 
@@ -315,7 +331,7 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
       out.dx[POSE_AT[`kn${S}`] / 3] = off(legs.knee[i]); out.dx[POSE_AT[`ft${S}`] / 3] = off(legs.ankle[i]);
     });
   }
-  out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp;
+  out.card = true; out.limbs = 'upper'; out.sunk = at(EOTB_FIGURE.shoulder) < CLOAK_SHOULDER_Y * 0.4; out.scale = m / EOTB_FIGURE.mpp; out.back = 0; out.arm = 1; out.hock = false;
   out.armsTurned = !arms;   // ARMORY-MIRROR: no arms read - the sets' rows turned with the body, its own sides (armoryPass.js armletSide)
   // ARMORY-MIRROR: each arm's band where the picture paints it clear of the body: its height, its offset across, its width (m)
   const bandOf = (/** @type {any} */ b) => (b ? { y: at(b.row), dx: off(b.c), w: b.wd * fig.mpp } : null);
@@ -326,12 +342,13 @@ export function poseFromFigure(/** @type {any} */ fig, /** @type {any} */ out) {
   return true;
 }
 
+
 /** THE REST POSE written into `out`, pressed down to `crouch` (the body's height over its standing height, 1 standing)
  *  and lifted onto a saddle for a rider. Pure but for `out`. */
 export function poseAtRest(/** @type {any} */ out, crouch = 1, mounted = false) {
   const k = Number.isFinite(crouch) ? Math.max(0.4, Math.min(1, crouch)) : 1, lift = mounted ? AURA_SADDLE_M : 0;
   for (let i = 0; i < REST_POINTS.length; i += 3) { out.pts[i] = REST_POINTS[i]; out.pts[i + 1] = REST_POINTS[i + 1] * k + lift; out.pts[i + 2] = REST_POINTS[i + 2]; }
-  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.dx.fill(0);
+  out.card = false; out.limbs = 'full'; out.sunk = false; out.scale = k; out.back = 0; out.arm = 1; out.hock = false; out.dx.fill(0);
   return out;
 }
 

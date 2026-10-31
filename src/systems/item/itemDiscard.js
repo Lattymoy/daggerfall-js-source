@@ -25,7 +25,7 @@ export const countedKind = (/** @type {any} */ item) => (item?.group === 'Useles
 /**
  * Why a piece may not be destroyed now, or null. 'not': no mark binds it (it has the usual ways out). 'kept': its ROW
  * binds it - the game's tokens: the Embers, Shards and Portal Stones are coin each spent where it pays; the Wallet, the
- * Card Binder and the Dwarven Dragon are one each and hold what they hold; a Weir Key is the service's count. 'dismantle':
+ * Card Binder, the Dwarven Dragon and the Portal Book are one each and hold what they hold; a Weir Key is the service's count. 'dismantle':
  * the Broker pays for it, offered instead. 'quest', 'worn' (taken off first) and 'locked' (LOCK1, the player's word).
  * @param {any} item
  */

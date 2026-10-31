@@ -48,7 +48,7 @@ test('DECOR-USE the law: a placed fire one stands over (the world\'s own cooking
 test('DECOR-USE the cooking station: a tenth station, before the loom, at the crafts\' own licence (STATION-FEES: 50,000), named so; made on a piece the service\'s own law keeps it; offered online and offline, in a home, a caravan and a ship alike - Climates & Calories cooks offline (mutants: no cooking station; its licence cheap)', () => {
   assert.equal(COOKING_STATION, 'cooking');
   assert.ok(DECOR_STATIONS.includes(COOKING_STATION));
-  assert.equal(DECOR_STATIONS.indexOf('cooking'), DECOR_STATIONS.indexOf('loom') - 1, 'before the loom, so the stations counted from the end stand');
+  assert.equal(DECOR_STATIONS.indexOf('cooking'), DECOR_STATIONS.indexOf('loom') - 2, 'before the loom, so the stations counted from the end stand');   // PIN MOVED (MUSIC-BOX): the music box between them
   assert.equal(DECOR_STATION_FEES.cooking, 50_000);
   assert.equal(DECOR_STATION_NAMES.cooking, 'Cooking station');
   assert.deepEqual(decorStationWords(null, 'cooking'), { pick: 'Station: Cooking >', act: 'Make station - 50,000 gold', what: 'station:cooking' });
@@ -112,7 +112,7 @@ test('DECOR-USE the room: its placed fires are hearths by their flame - a pictur
 test('DECOR-USE the host: the interior\'s camps hear the room\'s placed fires beside its own, and a placed piece\'s own use is pressed before a station\'s craft - after a trader, whose press is anyone\'s (mutants: the host\'s fires unhanded; the use unwired)', () => {
   const wm = src('src/scenes/worldModes.js');
   assert.match(wm, /const interiorCamps = createCamps\(\{\n\s+entity: playerEntity,\n\s+hearths: \(\) => \[\.\.\.interiorHearths, \.\.\.interiorDecor\.hearths\(\)\],/);
-  assert.match(wm, /if \(piece\?\.station === VENDOR_STATION\) \{ openHomeVendor\(piece, id\); return; \}[^\n]*\n\s+if \(useDecorPiece\(piece, interiorCamps, getInteractionMode, restFromInteriorBed, \(\) => forgeOffered\(\) && \(interiorKeyCtx\.togglePause\(\{ at: stationDoorAt\('fire'\) \}\), true\)\)\) return;[^\n]*\n\s+if \(piece\?\.station\) \{ useDecorStation\(piece\); return; \}/);
+  assert.match(wm, /if \(piece\?\.station === VENDOR_STATION\) \{ openHomeVendor\(piece, id\); return; \}[^\n]*\n\s+if \(useDecorPiece\(piece, interiorCamps, getInteractionMode, restFromInteriorBed, \(\) => forgeOffered\(\) && \(interiorKeyCtx\.togglePause\(\{ at: stationDoorAt\('fire'\) \}\), true\)\)\) return;[^\n]*\n(?:\s+if \(piece\?\.station === MUSIC_STATION\)[^\n]*\n)?\s+if \(piece\?\.station\) \{ useDecorStation\(piece\); return; \}/);   // PIN MOVED (MUSIC-BOX): a music box's press between them
   // AUDIT DECOR-USE D2: and The Fire is a station's head the press lands on - PIN MOVED (CRAFT-HALL): the press lands on
   // the Crafting page at the fire (profPages.js stationDoorAt), where it landed on the Stores page
   assert.match(src('src/ui/professions/profPages.js'), /detail\.append\(stationHead\(divider, t\('prof\.page\.fire', 'The Fire'\), 'fire'\)\);/);

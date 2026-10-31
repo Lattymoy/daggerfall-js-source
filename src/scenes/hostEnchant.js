@@ -67,7 +67,7 @@ export const LOOSE_FOE_PLACE_ATTEMPTS = 12;
  *  `spawn(mobileType, pos, { yawRad, allied })` is the host's own pool
  *  door - the placement is shared, the pool never is. */
 export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn },
-  mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS, open = false } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
+  mobileType, { allied = false, lineOfSightCheck = true, minDistance = 4, maxDistance = 20, attempts = LOOSE_FOE_PLACE_ATTEMPTS, open = false, reach = null } = {}) {   // AUDIT-RR F4: CreateFoeSpawner's own distances and its attempt budget ride in (GameObjectHelper.cs:1314 - the defaults are its own)
   if (!feet || !collider || !spawn) return null;
   const pending = heldSpots(collider);
   const env = placeFoeEnv({
@@ -83,6 +83,7 @@ export function standLooseFoe({ collider, feet, yawRad, fovDegrees, foes, spawn 
   for (let i = 0; i < attempts && !spot; i++) {
     spot = placeFoeFreely(env, { minDistance, maxDistance, lineOfSightCheck });
     if (spot && open && !raidSpotOpen(collider, spot)) spot = null;   // PACK-OPEN (mob: "make sure they dont spawn in houses"): a spot in a building is another attempt
+    if (spot && reach && !reach([spot.x, spot.y, spot.z])) spot = null;   // RAID-REACH: a spot with no street to its player (in a wall, a closed yard) is another attempt
   }
   if (!spot) return null;
   // FinalizeFoe (FoeSpawner.cs:210-226): a FLYING foe lifts 1.5 from

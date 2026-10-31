@@ -11,7 +11,7 @@ import {
   destroyAct, destroyAsk, destroyInstead, destroyedText, destroyRefusalText,
 } from '../../../src/systems/item/itemDiscard.js';
 import { BOUND_TEMPLATES } from '../../../src/net/realm/realmTradeLaw.js';
-import { sigilStone, welkyndShards, portalStones } from '../../../src/systems/gate/gateSpoils.js';
+import { sigilStone, welkyndShards, portalStones, mintPortalBook } from '../../../src/systems/gate/gateSpoils.js';
 import { mintWallet } from '../../../src/systems/walletItem.js';
 import { mintBinder } from '../../../src/systems/iliac/iliacItems.js';
 import { weirKeys } from '../../../src/systems/eliteGates/weirKey.js';
@@ -92,7 +92,7 @@ test('BOUND-DESTROY the law: gear bound by its own mark and the two festival fac
   assert.equal(discardRefusal(hearthOffering(2)), null, 'Hearth Offerings');
   // every row that binds: the tokens kept, the two faces let go
   const rowMinted = {
-    570: sigilStone(), 571: welkyndShards(3), 572: portalStones(2), 575: weirKeys(2), 580: mintWallet(), 582: mintBinder(),
+    570: sigilStone(), 571: welkyndShards(3), 572: portalStones(2), 575: weirKeys(2), 577: mintPortalBook(), 580: mintWallet(), 582: mintBinder(),
     1820: newDragonMount({ id: 'dg0123456789abcdef' }), 2000: soulCakes(1), 2001: hearthOffering(1),
   };
   assert.deepEqual(Object.keys(rowMinted).map(Number), [...BOUND_TEMPLATES], 'every bound row has its piece here');
