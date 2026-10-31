@@ -176,6 +176,11 @@ SHIELD_ARM = {
     ('female', '6-3'): [[(68, 70), (74, 66), (80, 63.5), (82, 68), (78, 74), (73, 80), (66, 85), (61.5, 85), (62, 80)]],
     ('female', '7-3'): [[(57.5, 85.5), (61.5, 81.5), (65.5, 78.5), (69.5, 75.5), (73.5, 71.5), (80, 67.5), (84.5, 69.5), (80.5, 75.5), (74.5, 80.5), (68.5, 85.5), (64.5, 90.5), (60, 93.5), (55.5, 91.5)]],
 }
+# What the hole's fill never copies (arm_sources): beside female 6-3's hole the face, which it drew a second of on the
+# chest, and the near arm.
+SHIELD_FILL_NOT = {
+    ('female', '6-3'): [[(50, 53.5), (67.5, 53.5), (67.5, 70.5), (50, 70.5)], [(48, 71), (62, 71), (62, 87), (48, 87)]],
+}
 # The idle's free arm, which a front swing takes back (`sp`): its outline from under the shoulder to the hand.
 SHIELD_ARM_OF_IDLE = {
     ('male', '15-0'): [[(46.5, 24), (53, 22.5), (55.5, 30), (57, 40), (57.5, 50), (57.5, 58), (57, 66), (55, 69.5), (51.5, 69.5), (50.5, 60), (48.5, 52), (47, 44), (45.5, 34)]],
@@ -442,13 +447,15 @@ def exemplar(imgs, m, R=16, worst=220, mirror=False):
         cost = cost / len(imgs) + bad * 6
         if best is None or cost < best[0]: best = (cost, mode, a, dy)
     return [best[1], best[2], best[3]] if best and (mirror or best[0] <= worst) else 0
-def inpaint(imgs, m, bp, R=11, P=2):
+def inpaint(imgs, m, bp, R=11, P=2, nosrc=None):
     """Each body px of the hole, the px to copy it from (dx, dy): from the hole's edge in, the source whose neighbourhood
     best matches what is known round it over the family's outfits - a neighbour's own source kept where it is nearly as
-    good, so a patch carries on whole. Only a px every outfit draws, off the hole, is a source."""
+    good, so a patch carries on whole. Only a px every outfit draws, off the hole, is a source - and none in `nosrc`,
+    which is no guide either."""
     H, W = m.shape
     A = np.stack([im[..., :3].astype(np.float32) for im in imgs])
     src_ok = np.all([im[..., 3] > 0 for im in imgs], axis=0) & ~m
+    if nosrc is not None: src_ok &= ~nosrc
     known = src_ok.copy(); C = A.copy()
     off = np.zeros((H, W, 2), np.int16); has = np.zeros((H, W), bool)
     cy, cx = np.mgrid[-R:R + 1, -R:R + 1]; cdx, cdy = cx.ravel(), cy.ravel(); keep = (cdx != 0) | (cdy != 0); cdx, cdy = cdx[keep], cdy[keep]
@@ -501,7 +508,8 @@ def arm_sources(body, rf):
         _, L, st = stable(body, rf, fam); imgs = [st[i] for i in range(st.shape[0])]
         ham = ham_all[:, k * tw:(k + 1) * tw, 3] > 0
         arm = poly_mask(ham.shape, SHIELD_ARM[(body, rf)]) & np.any([im[..., 3] > 0 for im in imgs], axis=0)
-        off, has = inpaint(imgs, arm | ham, body_side(L, arm) & ~ham)
+        nosrc = poly_mask(ham.shape, SHIELD_FILL_NOT[(body, rf)]) if (body, rf) in SHIELD_FILL_NOT else None
+        off, has = inpaint(imgs, arm | ham, body_side(L, arm) & ~ham, nosrc=nosrc)
         tile = np.zeros(ham.shape + (4,), np.uint8)
         tile[has, 0] = off[has, 0] + 128; tile[has, 1] = off[has, 1] + 128; tile[has, 2] = 255; tile[has, 3] = 255
         tiles.append(tile)
