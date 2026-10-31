@@ -28,18 +28,36 @@
 // watchdog - the same law the notice panel keeps).
 
 import { injectEnhancedStyle } from './enhancedStyle.js';
-import { inClassicScope } from './enhancedScope.js';   // PORT0: the classic travel map keeps its own boxes
-import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';   // DISC29-D: the watchdog counts frames, not milliseconds
-import { windowCovered } from '../windowStack.js';   // PLEA-LOOP: a keyed menu's press is the top window's alone
+import { inClassicScope } from './enhancedScope.js'; // PORT0: the classic travel map keeps its own boxes
+import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js'; // DISC29-D: the watchdog counts frames, not milliseconds
+import { windowCovered } from '../windowStack.js'; // PLEA-LOOP: a keyed menu's press is the top window's alone
 
 /** MessageBoxButtons (DaggerfallMessageBox.cs:67-90), in words. The
  *  numbers are ui/messageBox.js MB_BUTTONS (not imported: that module
  *  imports this one). 21 is Realistic Rest's week button ("5 Days"). */
 export const BUTTON_LABELS = Object.freeze({
-  0: 'Accept', 1: 'Reject', 2: 'Cancel', 3: 'Yes', 4: 'No', 5: 'OK',
-  6: 'Male', 7: 'Female', 8: 'Add', 9: 'Delete', 10: 'Edit', 11: 'Counter',
-  12: '12 Months', 13: '36 Months', 14: 'Copy', 15: 'Guilty', 16: 'Not Guilty',
-  17: 'Debate', 18: 'Lie', 19: 'Anchor', 20: 'Teleport', 21: '5 Days',
+  0: 'Accept',
+  1: 'Reject',
+  2: 'Cancel',
+  3: 'Yes',
+  4: 'No',
+  5: 'OK',
+  6: 'Male',
+  7: 'Female',
+  8: 'Add',
+  9: 'Delete',
+  10: 'Edit',
+  11: 'Counter',
+  12: '12 Months',
+  13: '36 Months',
+  14: 'Copy',
+  15: 'Guilty',
+  16: 'Not Guilty',
+  17: 'Debate',
+  18: 'Lie',
+  19: 'Anchor',
+  20: 'Teleport',
+  21: '5 Days',
 });
 /** The key each window already answers to, shown on its button. */
 export const BUTTON_KEYS = Object.freeze({ 3: 'Y', 4: 'N' });
@@ -48,7 +66,7 @@ export const PRIMARY_BUTTONS = new Set([0, 3, 5]);
 /** How long after its last draw a dialog is taken to be gone (ms). */
 export const DIALOG_WATCHDOG_MS = 150;
 
-let active = null;   // { sig, shell, box, m, canvas, watchdog }
+let active = null; // { sig, shell, box, m, canvas, watchdog }
 
 /** A box is drawn here only if every one of its buttons has words, and
  *  it carries no painting (the painting arm stays on the canvas). */
@@ -58,10 +76,11 @@ export function dialogFits(box, opts = {}) {
 }
 
 /** What a box says and offers - its identity across re-layouts. */
-export const dialogSig = (box) => JSON.stringify([
-  (box.rows ?? []).map((r) => (r.cells ? r.cells.map((c) => c.text).join('\t') : r.text)),
-  box.buttons.map((b) => b.button),
-]);
+export const dialogSig = (box) =>
+  JSON.stringify([
+    (box.rows ?? []).map((r) => (r.cells ? r.cells.map((c) => c.text).join('\t') : r.text)),
+    box.buttons.map((b) => b.button),
+  ]);
 
 const el = (doc, tag, cls, text) => {
   const n = doc.createElement(tag);
@@ -87,20 +106,32 @@ function build(doc, box) {
   for (const b of box.buttons) {
     const btn = el(doc, 'button', `dlg-btn${PRIMARY_BUTTONS.has(b.button) ? ' primary' : ''}`);
     btn.type = 'button';
-    btn.tabIndex = -1;   // the keys are the game's; a focused button would eat Enter/Space
+    btn.tabIndex = -1; // the keys are the game's; a focused button would eat Enter/Space
     const key = BUTTON_KEYS[b.button];
     if (key) btn.append(el(doc, 'span', 'dlg-key', key));
     btn.append(el(doc, 'span', 'dlg-label', BUTTON_LABELS[b.button]));
-    btn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
+    btn.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
     // DROPS-AUDIT F2: ONE press per dialog - it is spent and put away at once, so a double-click's second press can
     // never replay onto the window that is on top by then (the next frame builds it again if the box stands)
-    btn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); if (!active || active.spent) return; active.spent = true; press(b.button); closeEnhancedDialog(); });
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!active || active.spent) return;
+      active.spent = true;
+      press(b.button);
+      closeEnhancedDialog();
+    });
     acts.append(btn);
   }
   win.append(body, acts);
   shell.append(win);
   // a press on the scrim is not an answer, and must not reach the world
-  shell.addEventListener('pointerdown', (e) => { if (e.target === shell) e.stopPropagation(); });
+  shell.addEventListener('pointerdown', (e) => {
+    if (e.target === shell) e.stopPropagation();
+  });
   doc.body.append(shell);
   return shell;
 }
@@ -113,10 +144,21 @@ function build(doc, box) {
 export function replayClick(canvas, m, vx, vy) {
   if (!canvas?.getBoundingClientRect || !m) return false;
   const r = canvas.getBoundingClientRect();
-  const kx = r.width / (canvas.width || r.width), ky = r.height / (canvas.height || r.height);
+  const kx = r.width / (canvas.width || r.width),
+    ky = r.height / (canvas.height || r.height);
   const clientX = r.left + (m.ox + vx * m.s) * kx;
   const clientY = r.top + (m.oy + vy * m.s) * ky;
-  const init = { clientX, clientY, button: 0, buttons: 1, bubbles: true, cancelable: true, pointerType: 'mouse', isPrimary: true, pointerId: 1 };
+  const init = {
+    clientX,
+    clientY,
+    button: 0,
+    buttons: 1,
+    bubbles: true,
+    cancelable: true,
+    pointerType: 'mouse',
+    isPrimary: true,
+    pointerId: 1,
+  };
   const P = globalThis.PointerEvent ?? globalThis.MouseEvent;
   canvas.dispatchEvent(new P('pointerdown', init));
   (canvas.ownerDocument?.defaultView ?? globalThis).dispatchEvent(new P('pointerup', { ...init, buttons: 0 }));
@@ -136,7 +178,11 @@ export function press(record, a = active) {
 export function closeEnhancedDialog() {
   if (!active) return;
   disarmDraw(active.watchdog);
-  try { active.shell.remove(); } catch { /* gone */ }
+  try {
+    active.shell.remove();
+  } catch {
+    /* gone */
+  }
   active = null;
 }
 
@@ -152,14 +198,18 @@ export function drawEnhancedDialog(renderer, m, box, opts = {}, doc = globalThis
   if (active && active.sig !== sig) closeEnhancedDialog();
   if (!active) {
     let shell = null;
-    try { shell = build(doc, box); } catch { return false; }   // a DOM that cannot hold it: the parchment, as before
+    try {
+      shell = build(doc, box);
+    } catch {
+      return false;
+    } // a DOM that cannot hold it: the parchment, as before
     active = { sig, shell };
   }
   active.box = box;
   active.m = m;
   active.canvas = renderer?.canvas ?? active.canvas ?? null;
   disarmDraw(active.watchdog);
-  active.watchdog = armDrawWatchdog(DIALOG_WATCHDOG_MS, closeEnhancedDialog);   // DISC29-D: a frame undrawn, not a slow one
+  active.watchdog = armDrawWatchdog(DIALOG_WATCHDOG_MS, closeEnhancedDialog); // DISC29-D: a frame undrawn, not a slow one
   return true;
 }
 
@@ -197,7 +247,7 @@ export function choiceLabel(text) {
   return m ? { key: m[1], label: word(m[2]) } : { key: null, label: word(String(text ?? '')) };
 }
 
-let choice = null;   // { owner, sig, shell, watchdog, covered }
+let choice = null; // { owner, sig, shell, watchdog, covered }
 
 /** PLEA-LOOP: the class a covered keyed menu wears - ui/enhanced/enhancedDialogStyle.js gives it no pointer. */
 export const COVERED_CLASS = 'dlg-covered';
@@ -206,7 +256,11 @@ const CHOICE_CLASS = 'dlg-shell dlg-choice';
 export function closeEnhancedChoice(owner) {
   if (!choice || (owner && choice.owner !== owner)) return;
   disarmDraw(choice.watchdog);
-  try { choice.shell.remove(); } catch { /* gone */ }
+  try {
+    choice.shell.remove();
+  } catch {
+    /* gone */
+  }
   choice = null;
 }
 
@@ -236,10 +290,14 @@ export function drawEnhancedChoice(owner, lines, options, doc = globalThis.docum
         btn.tabIndex = -1;
         if (key) btn.append(el(doc, 'span', 'dlg-key', key));
         btn.append(el(doc, 'span', 'dlg-label', label));
-        btn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
+        btn.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        });
         btn.addEventListener('click', (e) => {
-          e.preventDefault(); e.stopPropagation();
-          if (windowCovered(owner)) return;   // PLEA-LOOP: asked at the press - a covered window answers nothing
+          e.preventDefault();
+          e.stopPropagation();
+          if (windowCovered(owner)) return; // PLEA-LOOP: asked at the press - a covered window answers nothing
           closeEnhancedChoice();
           owner.input(o.code);
         });
@@ -247,10 +305,14 @@ export function drawEnhancedChoice(owner, lines, options, doc = globalThis.docum
       }
       win.append(body, acts);
       shell.append(win);
-      shell.addEventListener('pointerdown', (e) => { if (e.target === shell) e.stopPropagation(); });
+      shell.addEventListener('pointerdown', (e) => {
+        if (e.target === shell) e.stopPropagation();
+      });
       doc.body.append(shell);
       choice = { owner, sig, shell, watchdog: null, covered: false };
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
   // PLEA-LOOP: painted under another window, it takes no pointer - written only when it changes, not every frame
   const covered = windowCovered(owner);
@@ -259,7 +321,7 @@ export function drawEnhancedChoice(owner, lines, options, doc = globalThis.docum
     choice.shell.className = covered ? `${CHOICE_CLASS} ${COVERED_CLASS}` : CHOICE_CLASS;
   }
   disarmDraw(choice.watchdog);
-  choice.watchdog = armDrawWatchdog(DIALOG_WATCHDOG_MS, () => closeEnhancedChoice());   // DISC29-D
+  choice.watchdog = armDrawWatchdog(DIALOG_WATCHDOG_MS, () => closeEnhancedChoice()); // DISC29-D
   return true;
 }
 

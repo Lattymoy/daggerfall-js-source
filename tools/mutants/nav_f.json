@@ -156,8 +156,8 @@
   {
     "name": "NAV-F-the-scuttle-undressed",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "  warn: ['body .lk-acts .lk-auto',   /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn', 'body .dfprofile-duel',\n    'body .dfnaval-scuttle',",
-    "new": "  warn: ['body .lk-acts .lk-auto',   /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn', 'body .dfprofile-duel',",
+    "old": "    'body .dfprofile-duel',\n    'body .dfnaval-scuttle', // NAV-F: scuttling a prize - she and what is left in her go down",
+    "new": "    'body .dfprofile-duel', // NAV-F: scuttling a prize - she and what is left in her go down",
     "tests": [
       "test/ui/naval/nav_f_ui.test.js",
       "test/ui/plusdress1.test.js"

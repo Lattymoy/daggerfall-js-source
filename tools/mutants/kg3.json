@@ -648,8 +648,8 @@
   {
     "name": "KG3-P-role-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfgambit-unit', 'body .dfgambit-stake', 'body .dfgambit-crown',",
-    "new": "    'body .dfgambit-stake', 'body .dfgambit-crown',",
+    "old": "    'body .dfgambit-unit',\n    'body .dfgambit-stake',",
+    "new": "    'body .dfgambit-stake',",
     "tests": [
       "test/systems/kg3_panel.test.js"
     ]

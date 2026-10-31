@@ -20,8 +20,8 @@
   {
     "name": "L10N3g-ui-enhancedCharSheet-118-grammar",
     "file": "src/ui/enhanced/enhancedCharSheet.js",
-    "old": "    race: processGrammar(liveRaceName(e) || 'Breton'),   // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)",
-    "new": "    race: (liveRaceName(e) || 'Breton'),   // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)",
+    "old": "    race: processGrammar(liveRaceName(e) || 'Breton'), // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)",
+    "new": "    race: liveRaceName(e) || 'Breton', // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)",
     "tests": [
       "test/ui/l10n3g_wiring.test.js"
     ]

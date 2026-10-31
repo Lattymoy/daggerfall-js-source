@@ -854,8 +854,8 @@
   {
     "name": "NAVP-helm-bar-half-screen",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "padding: 8px 12px; width: max-content; max-width: calc(100vw - 24px);",
-    "new": "padding: 8px 12px; max-width: calc(100vw - 24px);",
+    "old": "  align-items: center; gap: 6px; padding: 8px 12px; width: max-content; max-width: calc(100vw - 24px); box-sizing: border-box; border: 2px solid; border-radius: 0; }",
+    "new": "  align-items: center; gap: 6px; padding: 8px 12px; max-width: calc(100vw - 24px); box-sizing: border-box; border: 2px solid; border-radius: 0; }",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]
@@ -863,8 +863,8 @@
   {
     "name": "NAVP-touch-bar-over-the-menu",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "max-width: calc(100vw - 144px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); }",
-    "new": "max-width: calc(100vw - 120px); }",
+    "old": "  max-width: calc(100vw - 144px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); }",
+    "new": "  max-width: calc(100vw - 120px); }",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]

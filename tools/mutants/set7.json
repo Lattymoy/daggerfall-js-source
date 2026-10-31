@@ -593,8 +593,8 @@
   {
     "name": "SET7-AUDIT-U1-a-comma-inside-parentheses-split",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    if (c === '(') depth++; else if (c === ')') depth--;\n    else if (c === ',' && depth === 0)",
-    "new": "    if (c === ',')",
+    "old": "    if (c === '(') depth++;\n    else if (c === ')') depth--;\n    else if (c === ',' && depth === 0) {",
+    "new": "    if (c === ',') {",
     "tests": [
       "test/systems/item/set7_broker.test.js"
     ]

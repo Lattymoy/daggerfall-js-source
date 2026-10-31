@@ -67,7 +67,7 @@ THE HELM PANEL (HUD-HELM, 2026-10-15, Mac: "Yes, same branch"). The helm panel (
 saddle panel's twin - the same whole-screen layer, its bar at the same place under the compass - and stood outside
 HUD_PIECES as the saddle did. Recorded here as not changed, and Mac's word was to change it on this branch. It is the
 saddle's fix to the letter: the piece (`hudLayout.js:"{ id: 'helm', sel: '.helmpanel .helmpanel-bar'"`, "Helm panel"),
-placed on build (`enhancedHelm.js:"placeHudPieces(doc);   // HUD-HELM"`), and a preview while nobody is at a helm
+placed on build (`enhancedHelm.js:"placeHudPieces(doc)"`), and a preview while nobody is at a helm
 (`buildHelmPreview`, its own nodes AND its own holds - a trim held on the live panel is the live panel's). Its build and
 its painting split the saddle's way (`build`, `paintHelm`); the live panel's frame is the same frame. THE SEA'S TARGET
 CARD (`ui/naval/navalHud.js`) stands under the bar wherever it is moved: it measured the bar's foot for its head already (NAV-F

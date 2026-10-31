@@ -152,8 +152,8 @@
   {
     "name": "LEGACY-CHOICE-narrow-popup",
     "file": "src/ui/enhanced/enhancedLevelingChoice.js",
-    "old": "owner.options.length >= 3 ? 'px-win lvl-win lvl-three' : 'px-win lvl-win'",
-    "new": "'px-win lvl-win'",
+    "old": "  const win = el(doc, 'div', owner.options.length >= 3 ? 'px-win lvl-win lvl-three' : 'px-win lvl-win');",
+    "new": "  const win = el(doc, 'div', 'px-win lvl-win');",
     "tests": [
       "test/systems/legacychoice.test.js"
     ],

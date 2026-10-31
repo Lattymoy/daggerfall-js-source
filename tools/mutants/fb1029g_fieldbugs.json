@@ -225,8 +225,8 @@
   {
     "name": "NOTICE-PANEL-the-kit-press-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dftown-panel .dftown-btn'],   // NOTICE-PANEL: the town panel's Notice Board and Bounty Board",
-    "new": "    ],   // NOTICE-PANEL: the town panel's Notice Board and Bounty Board",
+    "old": "    'body .dftown-panel .dftown-btn',\n  ], // NOTICE-PANEL: the town panel's Notice Board and Bounty Board",
+    "new": "  ], // NOTICE-PANEL: the town panel's Notice Board and Bounty Board",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],

@@ -198,8 +198,8 @@
   {
     "name": "ENH-NOTICE3-the-panel-rebuilt-every-frame",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "  if (!p) { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }",
-    "new": "  { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }",
+    "old": "  if (!p) {",
+    "new": "  {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js",
       "test/ui/enhancedNotice.test.js"
@@ -433,8 +433,8 @@
   {
     "name": "AUDIT-FONT-F1-the-hide-door-blanks-every-model",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "  let mine = toasts.get(key);\n  if (!mine && !ids.length) return [];",
-    "new": "  let mine = toasts.values().next().value;\n  if (!mine && !ids.length) return [];",
+    "old": "  let mine = toasts.get(key);",
+    "new": "  let mine = toasts.values().next().value;",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -451,8 +451,8 @@
   {
     "name": "AUDIT-FONT-F1-the-stack-outlives-its-last-column",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "    if (!panels.size) { try { stack?.remove(); } catch { /* already gone */ } stack = null; }",
-    "new": "    if (false) { stack = null; }",
+    "old": "    if (!panels.size) {\n      try {\n        stack?.remove();\n      } catch {\n        /* already gone */\n      }",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js",
       "test/ui/enhancedNotice.test.js"
@@ -488,8 +488,8 @@
   {
     "name": "ENH-NOTICE3-the-toasts-ignore-the-hide",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "    const host = drawEnhancedNotice({ rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));",
-    "new": "    const host = drawEnhancedNotice({ rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible: true, toast: true }, doc, toastKey(key, ids[i]));",
+    "old": "      { rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible, toast: true },",
+    "new": "      { rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible: true, toast: true },",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -634,7 +634,7 @@
   {
     "name": "ENH-NOTICE3-a-hint-on-a-toast",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);",
+    "old": "  const caption = toast ? false : hint === undefined ? NOTICE_HINT : hint;",
     "new": "  const caption = hint === undefined ? NOTICE_HINT : hint;",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
@@ -652,8 +652,8 @@
   {
     "name": "ENH-NOTICE3-hide-releases-the-toasts",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "    if (!visible && !ids.length) { drawEnhancedNotice({ visible: false, toast: true }, doc, toastKey(key, id)); out.push(panels.get(toastKey(key, id))?.host); continue; }",
-    "new": "    if (false) { continue; }",
+    "old": "    if (!visible && !ids.length) {\n      drawEnhancedNotice({ visible: false, toast: true }, doc, toastKey(key, id));\n      out.push(panels.get(toastKey(key, id))?.host);",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -688,7 +688,7 @@
   {
     "name": "ENH-NOTICE3-a-toast-never-recorded-as-the-owner-s",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "      mine.add(ids[i]); out.push(host);",
+    "old": "      mine.add(ids[i]);\n      out.push(host);",
     "new": "      out.push(host);",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"

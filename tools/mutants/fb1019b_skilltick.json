@@ -102,8 +102,8 @@
   {
     "name": "SKILL-TICK-model-dropped",
     "file": "src/ui/enhanced/enhancedCharSheet.js",
-    "old": "    progress: (id, now = null) => skillAdvanceProgress(e, id, { now }),",
-    "new": "    progress: undefined,",
+    "old": "    progress: (id, now = null) => skillAdvanceProgress(e, id, { now }), // AUDIT SUGGESTIONS-1019 L3-1: `now` the character's own clock, for the gate",
+    "new": "    progress: undefined, // AUDIT SUGGESTIONS-1019 L3-1: `now` the character's own clock, for the gate",
     "tests": [
       "test/systems/fb1019b_skilltick.test.js"
     ],

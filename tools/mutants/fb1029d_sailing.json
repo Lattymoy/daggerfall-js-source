@@ -102,8 +102,8 @@
   {
     "name": "HEAVY-HINT-unsaid",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.heavy) return helmHeavyText();",
-    "new": "",
+    "old": "  if (h.heavy) return helmHeavyText(); // HEAVY-HINT: said while it holds her, not once as the helm is taken",
+    "new": "  // HEAVY-HINT: said while it holds her, not once as the helm is taken",
     "tests": [
       "test/systems/comeSailAway/fb1029d_sailing.test.js"
     ],

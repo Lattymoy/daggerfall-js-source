@@ -209,8 +209,8 @@
   {
     "name": "CAPE-not-a-tile-of-the-frame",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "'.pack-shell .wornmap .worncape', ",
-    "new": "",
+    "old": "    '.pack-shell .wornmap .worncape',\n    '.pack-shell .wornsock', // CAPE-TOGGLE: the Cloaks panel's eye, a press on the panel's wood",
+    "new": "    '.pack-shell .wornsock', // CAPE-TOGGLE: the Cloaks panel's eye, a press on the panel's wood",
     "tests": [
       "test/ui/capetoggle.test.js"
     ]

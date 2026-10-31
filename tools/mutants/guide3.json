@@ -362,7 +362,7 @@
   {
     "name": "GUIDE3-toast-rows-flattened",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "    const host = drawEnhancedNotice({ rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));",
+    "old": "    const host = drawEnhancedNotice(\n      { rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible, toast: true },\n      doc,\n      toastKey(key, ids[i]),\n    );",
     "new": "    const host = drawEnhancedNotice({ rows: [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));",
     "tests": [
       "test/ui/quest/guide3_herald.test.js",
@@ -372,8 +372,8 @@
   {
     "name": "GUIDE3-row-class-dropped",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "${Array.isArray(rec.cells) ? ' cells' : ''}${rec.cls ? ` ${rec.cls}` : ''}`;",
-    "new": "${Array.isArray(rec.cells) ? ' cells' : ''}`;",
+    "old": "  const cls = `notice-row${rec.center ? ' center' : ''}${rec.highlight ? ' highlight' : ''}${Array.isArray(rec.cells) ? ' cells' : ''}${rec.cls ? ` ${rec.cls}` : ''}`;",
+    "new": "  const cls = `notice-row${rec.center ? ' center' : ''}${rec.highlight ? ' highlight' : ''}${Array.isArray(rec.cells) ? ' cells' : ''}`;",
     "tests": [
       "test/ui/quest/guide3_herald.test.js",
       "test/ui/enhancedNotice.test.js"

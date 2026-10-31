@@ -119,8 +119,8 @@
   {
     "name": "DYE-ICON-the-enhanced-door-asking-undyed",
     "file": "src/ui/enhanced/enhancedArt.js",
-    "old": "{ scale: 2, dye: img.dye, dyeTarget: img.dyeTarget }",
-    "new": "{ scale: 2, dye: img.dye }",
+    "old": "  return img?.archive != null\n    ? requestIcon(img.archive, img.record, { scale: 2, dye: img.dye, dyeTarget: img.dyeTarget })\n    : null;",
+    "new": "  return img?.archive != null ? requestIcon(img.archive, img.record, { scale: 2, dye: img.dye }) : null;",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]

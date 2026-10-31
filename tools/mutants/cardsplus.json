@@ -2,8 +2,8 @@
   {
     "name": "CP-window-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfcards', 'body .dfiliac',\n",
-    "new": "    'body .dfiliac',\n",
+    "old": "    'body .dfcards',\n    'body .dfiliac',",
+    "new": "    'body .dfiliac',",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "CP-warn-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfiliac button[data-kind=\"warn\"]',   // CARDS-PLUS",
-    "new": "    'body .dfiliac button[data-kind=\"danger\"]',   // CARDS-PLUS",
+    "old": "    'body .dfiliac button[data-kind=\"warn\"]', // CARDS-PLUS: Iliac Hand's Concede and stand - the staked card or the ranked game given up",
+    "new": "    'body .dfiliac button[data-kind=\"danger\"]', // CARDS-PLUS: Iliac Hand's Concede and stand - the staked card or the ranked game given up",
     "tests": [
       "test/ui/cardsplus.test.js",
       "test/ui/plusdress1.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "CP-tile-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfiliac .opt',   // CARDS-PLUS",
-    "new": "    'body .dfiliac .optx',   // CARDS-PLUS",
+    "old": "    'body .dfiliac .opt', // CARDS-PLUS: Iliac Hand's setup - a deck, a regular, a box ticked - the one chosen brass",
+    "new": "    'body .dfiliac .optx', // CARDS-PLUS: Iliac Hand's setup - a deck, a regular, a box ticked - the one chosen brass",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "CP-switch-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.px-sys .coll-part', '.px-sys .binder-filter', '.px-sys .binder-chip',\n",
-    "new": "    '.px-sys .binder-filter', '.px-sys .binder-chip',\n",
+    "old": "    '.px-sys .coll-part',\n    '.px-sys .binder-filter',",
+    "new": "    '.px-sys .binder-filter',",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "CP-chip-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfcards .pot', 'body .dfiliac .pw',   // CARDS-PLUS",
-    "new": "    'body .dfcards .pot',   // CARDS-PLUS",
+    "old": "    'body .dfcards .pot',\n    'body .dfiliac .pw', // CARDS-PLUS: the pot, and a holding's power each way - readouts",
+    "new": "    'body .dfcards .pot', // CARDS-PLUS: the pot, and a holding's power each way - readouts",
     "tests": [
       "test/ui/cardsplus.test.js"
     ]

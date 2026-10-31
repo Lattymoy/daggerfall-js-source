@@ -914,7 +914,7 @@ tops named once beside the ones that ask (`const NOTES = Object.freeze(['noSpell
 `ASKS` the delete, the sort and the trade, which the draw's buttons and the click's Yes/No hit-test now share), BOX1's
 single read unchanged, the panel released when the box clears (the next draw) and in `_close`. And the port's dismiss
 asks the seam rather than a field: `enhancedPort.js:"if (noticeShown(win)) { win.click?.(-1, -1); return; }"` - the
-notice is the panel the window raised (`enhancedNotice.js:"export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);"`),
+notice is the panel the window raised (`enhancedNotice.js:"export const noticeShown"`),
 up exactly while the player can read it, whatever field holds the box; so the guild's and the coven's notices take the
 first click too, and nothing under any notice acts. The four windows that kept `box` answer as before. No DFU behaviour
 changes (DFU shows each box; the notice at the edge is ENH-NOTICE1's Ledger A row).

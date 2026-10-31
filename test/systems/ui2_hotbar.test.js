@@ -276,7 +276,7 @@ test('UI2 wiring: the bar\'s slots draw fitted pictures at a measured box - an i
   assert.match(hud, /const QUICK_BOX = 40, QUICK_BOX_NARROW = 28;\nconst QUICK_NARROW = '\(max-width: 860px\)';/);
   assert.match(hud, /const key = `\$\{iconKeyOf\(item\)\}@\$\{box\}x\$\{dpr\}`;/, 'a new size or scale draws it anew');
   const art = read('src/ui/enhanced/enhancedArt.js');
-  assert.match(art, /return requestFittedPicture\(`spellicon\$\{index\}`, \(wake\) => sheetCutUrl\('ICON00I0\.IMG', rect, 1, wake\), \{ box, dpr, trim: false, onReady \}\);/);
+  assert.match(art, /return requestFittedPicture\(`spellicon\$\{index\}`, \(wake\) => sheetCutUrl\('ICON00I0\.IMG', rect, 1, wake\), \{\n\s*box,\n\s*dpr,\n\s*trim: false,\n\s*onReady,\n\s*\}\);/);
 });
 
 test('UI2 the sheet cutter tells every screen that waited on it: a spell icon is cut from ICON00I0 once its sheet lands, and each asker hears it once - a fitted icon asks second (mutant: a waiter not heard)', async () => {

@@ -155,8 +155,8 @@
   {
     "name": "CK-the-merchant-panel-listens-past-the-door",
     "file": "src/ui/enhanced/enhancedMerchantPanel.js",
-    "old": "listenWindowKeys(owner, onKey)",
-    "new": "listenWindowKeys(null, onKey)",
+    "old": "  unlistenKeys = listenWindowKeys(owner, onKey);",
+    "new": "  unlistenKeys = listenWindowKeys(null, onKey);",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

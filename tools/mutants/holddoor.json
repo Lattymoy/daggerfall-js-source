@@ -110,8 +110,8 @@
   {
     "name": "HOLD-helm-button-unshown",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.cargo) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' });",
-    "new": "  if (false) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' });",
+    "old": "  if (h.cargo) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' }); // CARGO-ANYWHERE: her hold, from the wheel (scenes/holdDoor.js)",
+    "new": "  if (false) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' }); // CARGO-ANYWHERE: her hold, from the wheel (scenes/holdDoor.js)",
     "tests": [
       "test/scenes/holddoor.test.js"
     ]

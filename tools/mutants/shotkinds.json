@@ -560,8 +560,8 @@
   {
     "name": "SHOT-helm-no-button",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.shot) out.push({ act: 'shot', label: h.shot, kind: 'hook' });",
-    "new": "",
+    "old": "  if (h.shot) out.push({ act: 'shot', label: h.shot, kind: 'hook' }); // SHOT-KINDS: her guns' load, stepped on (scenes/naval/navalLoads.js - its label)",
+    "new": "  // SHOT-KINDS: her guns' load, stepped on (scenes/naval/navalLoads.js - its label)",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]

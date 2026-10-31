@@ -582,8 +582,8 @@
   {
     "name": "CSAL-buttons-square-any",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "if (h.squareToggle) out.push(",
-    "new": "if (h.hasSquare) out.push(",
+    "old": "    out.push({ act: 'sails', label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: A.sail });\n  if (h.squareToggle)",
+    "new": "    out.push({ act: 'sails', label: h.sailsUp ? 'Stow sails' : 'Raise sails', kind: 'tap', action: A.sail });\n  if (h.hasSquare)",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -591,8 +591,8 @@
   {
     "name": "CSAL-buttons-trim-auto",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "if (h.manualTrim && h.hasSails) {\n    out.push(",
-    "new": "if (h.hasSails) {\n    out.push(",
+    "old": "    });\n  if (h.manualTrim && h.hasSails) {",
+    "new": "    });\n  if (h.hasSails) {",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -600,8 +600,8 @@
   {
     "name": "CSAL-buttons-square-rig",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "if (h.hasSquare && !h.squareOnly) out.push(",
-    "new": "if (h.hasSquare) out.push(",
+    "old": "    if (h.hasSquare && !h.squareOnly)",
+    "new": "    if (h.hasSquare)",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -609,8 +609,8 @@
   {
     "name": "CSAL-buttons-slower-at-one",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) > 0) },",
-    "new": "kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) >= 0) },",
+    "old": "    { act: 'slower', label: '−', kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) > 0) },",
+    "new": "    { act: 'slower', label: '−', kind: 'tap', action: A.slower, disabled: !(Number(h.timeScaleIndex) >= 0) },",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -618,8 +618,8 @@
   {
     "name": "CSAL-buttons-faster-at-top",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "disabled: !(Number(h.timeScaleIndex) < Number(h.timeScaleMax)) }];",
-    "new": "disabled: !(Number(h.timeScaleIndex) <= Number(h.timeScaleMax)) }];",
+    "old": "      disabled: !(Number(h.timeScaleIndex) < Number(h.timeScaleMax)),",
+    "new": "      disabled: !(Number(h.timeScaleIndex) <= Number(h.timeScaleMax)),",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -627,8 +627,8 @@
   {
     "name": "CSAL-panel-chord-dropped",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "else hooks.press?.(b.action, b.withHeld ?? null);",
-    "new": "else hooks.press?.(b.action, null);",
+    "old": "        else hooks.press?.(b.action, b.withHeld ?? null);",
+    "new": "        else hooks.press?.(b.action, null);",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -645,8 +645,8 @@
   {
     "name": "CSAL-panel-covered-keeps-holds",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "if (last.covered !== true) { last.covered = true; parts.root.style.display = 'none'; releaseAll(); }",
-    "new": "if (last.covered !== true) { last.covered = true; parts.root.style.display = 'none'; }",
+    "old": "      releaseAll();\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -654,8 +654,8 @@
   {
     "name": "CSAL-panel-hide-keeps-holds",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (!host) return;\n  releaseAll();\n  try { host.remove(); }",
-    "new": "  if (!host) return;\n  try { host.remove(); }",
+    "old": "  releaseAll();\n  try {",
+    "new": "  try {",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -663,8 +663,8 @@
   {
     "name": "CSAL-panel-disabled-pressed",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "        if (n.disabled) return;\n        if (b.kind === 'hook')",
-    "new": "        if (b.kind === 'hook')",
+    "old": "        if (n.disabled) return;\n        if (b.kind === 'hook') hooks[b.act]?.();",
+    "new": "        if (b.kind === 'hook') hooks[b.act]?.();",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -681,8 +681,8 @@
   {
     "name": "CSAL-panel-keys-on-finger",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "const key = b.action && !state.touch ? (state.keyOf?.(b.action) ?? '') : '';",
-    "new": "const key = b.action ? (state.keyOf?.(b.action) ?? '') : '';",
+    "old": "    const key = b.action && !state.touch ? (state.keyOf?.(b.action) ?? '') : '';",
+    "new": "    const key = b.action ? (state.keyOf?.(b.action) ?? '') : '';",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -690,8 +690,8 @@
   {
     "name": "CSAL-panel-aboard-whose",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "`Aboard ${aboard.owner ? `${aboard.owner}'s` : \"another player's\"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`",
-    "new": "`Aboard ${HULL_NAMES[aboard.hull] ?? 'boat'}`",
+    "old": "      : `Aboard ${aboard.owner ? `${aboard.owner}'s` : \"another player's\"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;",
+    "new": "      : `Aboard ${HULL_NAMES[aboard.hull] ?? 'boat'}`;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "CSAL-css-buttons-dead",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": ".helmpanel-btn { pointer-events: auto;",
-    "new": ".helmpanel-btn { pointer-events: none;",
+    "old": ".helmpanel-btn { pointer-events: auto; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px;",
+    "new": ".helmpanel-btn { pointer-events: none; display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 4px 10px;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -789,8 +789,8 @@
   {
     "name": "CSAL-gesture-down-hold",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (dir === 'down') { press(A.disembark); return false; }",
-    "new": "  if (dir === 'down') { press(A.light); return false; }",
+    "old": "    press(A.disembark);",
+    "new": "    press(A.light);",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "CSAL-gesture-trim-held",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.manualTrim && h.hasSails) { hold(trim, true); return true; }",
-    "new": "  if (h.manualTrim && h.hasSails) { hold(trim, true); return false; }",
+    "old": "    return true;",
+    "new": "    return false;",
     "tests": [
       "test/systems/csa_together.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "CSAL-gesture-left-normal",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (dir === 'left') press(A.normal); else press(A.faster);",
-    "new": "  if (dir === 'left') press(A.slower); else press(A.faster);",
+    "old": "  if (dir === 'left') press(A.normal);",
+    "new": "  if (dir === 'left') press(A.slower);",
     "tests": [
       "test/systems/csa_together.test.js"
     ]

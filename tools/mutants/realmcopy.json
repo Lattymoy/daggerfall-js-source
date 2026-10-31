@@ -29,8 +29,8 @@
   {
     "name": "REALM-COPY-the-copys-button-live",
     "file": "src/ui/enhanced/bringOnlineButton.js",
-    "old": "  if (realmCopy) return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: true };",
-    "new": "  if (realmCopy) return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: false };",
+    "old": "    return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: true };",
+    "new": "    return { label: t('menu.online.realmCopyOffline', 'Copied from online: offline only'), offlineOnly: false };",
     "tests": [
       "test/systems/realm_copy_mark.test.js"
     ]

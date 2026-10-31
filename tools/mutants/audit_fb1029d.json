@@ -212,8 +212,8 @@
   {
     "name": "B5-line-unpainted",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  const hint = h ? helmHint(h, state) : aboard?.passage && aboard.heavy ? helmHeavyText() : '';",
-    "new": "  const hint = h ? helmHint(h, state) : '';",
+    "old": "  const hint = h ? helmHint(h, state) : aboard?.passage && aboard.heavy ? helmHeavyText() : ''; // AUDIT FB1029d B5: a passenger's load",
+    "new": "  const hint = h ? helmHint(h, state) : ''; // AUDIT FB1029d B5: a passenger's load",
     "tests": [
       "test/systems/comeSailAway/audit_fb1029d.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "C3-preview-heavy",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  inIrons: false, way: 0, heavy: false,",
-    "new": "  inIrons: false, way: 0, heavy: true,",
+    "old": "  heavy: false,",
+    "new": "  heavy: true,",
     "tests": [
       "test/systems/comeSailAway/audit_fb1029d.test.js"
     ],

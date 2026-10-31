@@ -18,7 +18,7 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { closeOnOutsideTap } from './enhancedOverlays.js';
 import { overlayAction } from '../input.js';
-import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
+import { listenWindowKeys } from '../windowStack.js'; // COVERED-KEYS: the window's keys, gated while a box covers it
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -28,7 +28,13 @@ const el = (tag, cls, text) => {
 };
 
 /** MENU-ORDER (2026-10-12): a merchant's presses, each its picture (ui/menu/menuGlyphs.js), by its word. */
-export const MERCHANT_ICONS = Object.freeze({ Talk: 'talk', Sell: 'treasure', Banking: 'treasure', 'Repair item': 'anvil', Exit: 'back' });
+export const MERCHANT_ICONS = Object.freeze({
+  Talk: 'talk',
+  Sell: 'treasure',
+  Banking: 'treasure',
+  'Repair item': 'anvil',
+  Exit: 'back',
+});
 
 let host = null;
 let title = '';
@@ -54,7 +60,7 @@ function render() {
   const wrap = el('div', 'tavern-menu-acts');
   for (const b of buttons) {
     const btn = el('button', 'act tavern-act', b.label);
-    const icon = b.icon ?? MERCHANT_ICONS[b.label];   // MENU-ORDER: each press its picture; APPEARANCES: a press may name its own (its word is the player's language)
+    const icon = b.icon ?? MERCHANT_ICONS[b.label]; // MENU-ORDER: each press its picture; APPEARANCES: a press may name its own (its word is the player's language)
     if (icon) btn.setAttribute('data-dficon', icon);
     btn.onclick = b.onClick;
     wrap.append(btn);
@@ -70,7 +76,10 @@ function render() {
 
 function onKey(e) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  if (overlayAction(e) === 'back') { e.preventDefault(); onExit(); }
+  if (overlayAction(e) === 'back') {
+    e.preventDefault();
+    onExit();
+  }
 }
 
 /**
@@ -87,7 +96,7 @@ export function mountEnhancedMerchantPanel(hostEl, { title: t, buttons: btns, on
   buttons = btns;
   onExit = exit ?? (() => {});
   render();
-  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys?.(); // a mount over a mount lays one listener, as the window's own addEventListener of one function did
   unlistenKeys = listenWindowKeys(owner, onKey);
   return {
     repaint: render,

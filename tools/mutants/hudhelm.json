@@ -11,8 +11,8 @@
   {
     "name": "HUD-HELM-the-builds-placing-dropped",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "    placeHudPieces(doc);   // HUD-HELM:",
-    "new": "    // HUD-HELM:",
+    "old": "    placeHudPieces(doc); // HUD-HELM: where the player moved it (or turned it off) from its first frame - not at the next sweep",
+    "new": "    // HUD-HELM: where the player moved it (or turned it off) from its first frame - not at the next sweep",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HUD-HELM-the-preview-mounted-as-the-live-panel",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  const p = build(doc);\n  paintHelm(doc, p, {},",
-    "new": "  const p = build(doc); p.root.id = ENHANCED_HELM_ID;\n  paintHelm(doc, p, {},",
+    "old": "  const p = build(doc);\n  paintHelm(",
+    "new": "  const p = build(doc);\n  p.root.id = ENHANCED_HELM_ID;\n  paintHelm(",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HUD-HELM-the-preview-never-a-fingers",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "touch: isTouchDevice(doc.defaultView ?? globalThis.window), mouseFree: true }, {}, new Map());",
-    "new": "touch: false, mouseFree: true }, {}, new Map());",
+    "old": "  paintHelm(\n    doc,\n    p,\n    {},\n    { helm: HELM_PREVIEW, touch: isTouchDevice(doc.defaultView ?? globalThis.window), mouseFree: true },\n    {},\n    new Map(),\n  );",
+    "new": "  paintHelm(doc, p, {}, { helm: HELM_PREVIEW, touch: false, mouseFree: true }, {}, new Map());",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "HUD-HELM-keys-from-the-sea",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAwayActions.js';",
-    "new": "import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAway.js';",
+    "old": "import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAwayActions.js'; // this module, and AUDIT GUIDE O6 keeps the quest machine off the HUD",
+    "new": "import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAway.js'; // this module, and AUDIT GUIDE O6 keeps the quest machine off the HUD",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js",
       "test/ui/quest/audit_guide.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "HUD-HELM-names-from-the-boat",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "import { HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayHulls.js';",
-    "new": "import { HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayBoat.js';",
+    "old": "import { HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayHulls.js'; // HUD-HELM: the leaves, not the boat and the sea - the HUD's preview reaches",
+    "new": "import { HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayBoat.js'; // HUD-HELM: the leaves, not the boat and the sea - the HUD's preview reaches",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js"
     ]

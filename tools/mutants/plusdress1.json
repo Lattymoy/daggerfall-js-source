@@ -2,8 +2,8 @@
   {
     "name": "PLUS-DRESS-a-screen-left-out",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfpage-card', 'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar',",
-    "new": "    'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar',",
+    "old": "    'body .dfpage-card',\n    'body .dfpeer-card',",
+    "new": "    'body .dfpeer-card',",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PLUS-DRESS-a-role-naming-nothing",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .dfsocial-row'],",
-    "new": "    'body .dfsocial-row', 'body .dfsocial-rowz'],",
+    "old": "  ], // PLUS-DRESS: a friend's, a party seat's, a guild member's row - an engraved line under each",
+    "new": "    'body .dfsocial-rowz',\n  ], // PLUS-DRESS: a friend's, a party seat's, a guild member's row - an engraved line under each",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PLUS-DRESS-brass-on-a-warns-hover",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "${list(r.warn, ':focus-visible')} { border-color: ${BLOOD_HI};",
-    "new": "${list(r.warn, ':focus-visible')} { border-color: ${BRASS};",
+    "old": "${list(r.warn, ':hover:not(:disabled)')}, ${list(r.warn, ':focus-visible')} { border-color: ${BLOOD_HI}; background-color: #321b19; background-image: ${LIT_BAND}; color: #fff3ee; }",
+    "new": "${list(r.warn, ':hover:not(:disabled)')}, ${list(r.warn, ':focus-visible')} { border-color: ${BRASS}; background-color: #321b19; background-image: ${LIT_BAND}; color: #fff3ee; }",
     "tests": [
       "test/ui/plusdress1.test.js"
     ]

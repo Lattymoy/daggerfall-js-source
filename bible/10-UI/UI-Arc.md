@@ -800,7 +800,7 @@ that calls the window's own method (Heal Curse, the Reforge, the
 lifting) acted under it. So the port's dismiss asks the seam rather
 than a field: `enhancedPort.js:"if (noticeShown(win)) { win.click?.(-1, -1); return; }"`
 - the notice is the panel the window raised
-(`enhancedNotice.js:"export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);"`),
+(`enhancedNotice.js:"export const noticeShown"`),
 whatever field holds its box, and it is up exactly while the player
 can read it. The bank, the potion maker, the item maker and the spell
 maker, which kept `box`, answer as before. The other ported windows

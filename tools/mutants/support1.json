@@ -226,8 +226,8 @@
   {
     "name": "SUPPORT1-no-plus-frame",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.px-support',   // SUPPORT1",
-    "new": "    // SUPPORT1",
+    "old": "    '.px-support', // SUPPORT1: the door's asks - the About plaque's and the profile mark's carved frame",
+    "new": "    // SUPPORT1: the door's asks - the About plaque's and the profile mark's carved frame",
     "tests": [
       "test/ui/enhanced/support1_asks.test.js"
     ],

@@ -19,11 +19,11 @@ import { injectEnhancedStyle } from './enhancedStyle.js';
 import { inClassicScope } from './enhancedScope.js';
 import { replayClick } from './enhancedDialog.js';
 import { nativeMetrics } from '../native/nativePanel.js';
-import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';   // DISC29-D: the watchdog counts frames, not milliseconds
+import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js'; // DISC29-D: the watchdog counts frames, not milliseconds
 
 export const PICKER_WATCHDOG_MS = 150;
 
-let active = null;   // { picker, shell, list, canvas, m, sig, watchdog }
+let active = null; // { picker, shell, list, canvas, m, sig, watchdog }
 
 const el = (doc, tag, cls, text) => {
   const n = doc.createElement(tag);
@@ -35,7 +35,11 @@ const el = (doc, tag, cls, text) => {
 export function closeEnhancedPicker() {
   if (!active) return;
   disarmDraw(active.watchdog);
-  try { active.shell.remove(); } catch { /* gone */ }
+  try {
+    active.shell.remove();
+  } catch {
+    /* gone */
+  }
   active = null;
 }
 
@@ -44,13 +48,14 @@ export function pickRow(a, index, geo) {
   const p = a.picker;
   if (!p || index < 0 || index >= p.items.length) return false;
   const rows = p.rowsDisplayed;
-  if (index < p.scrollIndex || index >= p.scrollIndex + rows) p.scrollIndex = Math.max(0, Math.min(index, p.items.length - rows));
+  if (index < p.scrollIndex || index >= p.scrollIndex + rows)
+    p.scrollIndex = Math.max(0, Math.min(index, p.items.length - rows));
   const rh = p.rowHeight(p.pickerFont ?? p._font);
   const row = index - p.scrollIndex;
   const vx = geo.x + geo.list[0] + 10;
   const vy = geo.y + geo.list[1] + row * rh + Math.max(1, Math.floor(rh / 2));
   replayClick(a.canvas, a.m, vx, vy);
-  return replayClick(a.canvas, a.m, vx, vy);   // the second press inside the double-click delay uses the row
+  return replayClick(a.canvas, a.m, vx, vy); // the second press inside the double-click delay uses the row
 }
 
 function build(doc, picker, geo) {
@@ -65,8 +70,17 @@ function build(doc, picker, geo) {
     b.tabIndex = -1;
     b.append(el(doc, 'span', 'pick-mark', '\u25c6'), el(doc, 'span', 'pick-label', String(label ?? '')));
     if (i < 9) b.append(el(doc, 'span', 'pick-num', String(i + 1)));
-    b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
-    b.addEventListener('click', (e) => { e.stopPropagation(); if (!active || active.spent) return; active.spent = true; pickRow(active, i, geo); closeEnhancedPicker(); });   // DROPS-AUDIT F2: one pick, then gone - a double-click's second press never replays onto the window beneath
+    b.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!active || active.spent) return;
+      active.spent = true;
+      pickRow(active, i, geo);
+      closeEnhancedPicker();
+    }); // DROPS-AUDIT F2: one pick, then gone - a double-click's second press never replays onto the window beneath
     list.append(b);
     return b;
   });
@@ -76,13 +90,24 @@ function build(doc, picker, geo) {
     cancel.type = 'button';
     cancel.tabIndex = -1;
     cancel.append(el(doc, 'span', 'dlg-key', 'Esc'), el(doc, 'span', 'dlg-label', 'Cancel'));
-    cancel.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); });
-    cancel.addEventListener('click', (e) => { e.stopPropagation(); if (!active || active.spent) return; active.spent = true; replayClick(active.canvas, active.m, 1, 1); closeEnhancedPicker(); });   // DROPS-AUDIT F2
+    cancel.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    cancel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!active || active.spent) return;
+      active.spent = true;
+      replayClick(active.canvas, active.m, 1, 1);
+      closeEnhancedPicker();
+    }); // DROPS-AUDIT F2
     acts.append(cancel);
   }
   win.append(list, acts);
   shell.append(win);
-  shell.addEventListener('pointerdown', (e) => { if (e.target === shell) e.stopPropagation(); });
+  shell.addEventListener('pointerdown', (e) => {
+    if (e.target === shell) e.stopPropagation();
+  });
   doc.body.append(shell);
   return { shell, list, rows };
 }
@@ -98,7 +123,11 @@ export function drawEnhancedPicker(picker, renderer, canvas, geo, doc = globalTh
   if (active && (active.picker !== picker || active.sig !== sig)) closeEnhancedPicker();
   if (!active) {
     let built = null;
-    try { built = build(doc, picker, geo); } catch { return false; }   // a DOM that cannot hold it: the classic list
+    try {
+      built = build(doc, picker, geo);
+    } catch {
+      return false;
+    } // a DOM that cannot hold it: the classic list
     active = { picker, sig, ...built };
   }
   active.canvas = renderer?.canvas ?? (canvas?.getBoundingClientRect ? canvas : active.canvas);
@@ -112,6 +141,6 @@ export function drawEnhancedPicker(picker, renderer, canvas, geo, doc = globalTh
     active.sel = sel;
   }
   disarmDraw(active.watchdog);
-  active.watchdog = armDrawWatchdog(PICKER_WATCHDOG_MS, closeEnhancedPicker);   // DISC29-D: a frame undrawn, not a slow one
+  active.watchdog = armDrawWatchdog(PICKER_WATCHDOG_MS, closeEnhancedPicker); // DISC29-D: a frame undrawn, not a slow one
   return true;
 }

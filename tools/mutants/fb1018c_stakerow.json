@@ -115,8 +115,8 @@
   {
     "name": "AUDIT-STAKE-ROW-L2-1-pickrow-one-press",
     "file": "src/ui/enhanced/enhancedPicker.js",
-    "old": "  replayClick(a.canvas, a.m, vx, vy);\n  return replayClick(a.canvas, a.m, vx, vy);",
-    "new": "  return replayClick(a.canvas, a.m, vx, vy);",
+    "old": "  replayClick(a.canvas, a.m, vx, vy);\n  return replayClick(a.canvas, a.m, vx, vy); // the second press inside the double-click delay uses the row",
+    "new": "  return replayClick(a.canvas, a.m, vx, vy); // the second press inside the double-click delay uses the row",
     "tests": [
       "test/ui/eliteGates/fb1018c_stakerow.test.js"
     ],

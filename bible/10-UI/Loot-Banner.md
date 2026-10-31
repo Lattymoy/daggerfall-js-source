@@ -76,7 +76,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
   layer moves the stack like any HUD piece (`hudLayout.js:"{ id: 'loot', sel: '.lootbanner-stack'"`, "Loot banners",
   with a preview while the UI is unlocked); moved, it fades where it stands rather than sliding from the edge.
 - **The dress** is the pickup feed's - its veil, stone bevel and ring, tinted per Plus theme through the shared veil law
-  (`enhancedFrame.js:"export const hudVeil = (th) =>"`, moved there from the pickup feed, its first reader). The tier
+  (`enhancedFrame.js:"export const hudVeil"`, moved there from the pickup feed, its first reader). The tier
   colours are the RARITY-UI table's.
 - **Classic skin.** Nothing is built - no node, no sheet (AUDIT 39's law). The watcher still reads and marks.
 - **Reduced motion:** no slide, no sweep, no glow.

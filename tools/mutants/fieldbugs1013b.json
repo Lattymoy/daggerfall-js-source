@@ -2,8 +2,8 @@
   {
     "name": "PLEA-LOOP-the-press-ignores-the-stack",
     "file": "src/ui/enhanced/enhancedDialog.js",
-    "old": "          if (windowCovered(owner)) return;   // PLEA-LOOP: asked at the press - a covered window answers nothing\n",
-    "new": "",
+    "old": "          if (windowCovered(owner)) return; // PLEA-LOOP: asked at the press - a covered window answers nothing\n          closeEnhancedChoice();",
+    "new": "          closeEnhancedChoice();",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]

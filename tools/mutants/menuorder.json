@@ -389,8 +389,8 @@
   {
     "name": "MENUORDER-merchant-bare",
     "file": "src/ui/enhanced/enhancedMerchantPanel.js",
-    "old": "    if (icon) btn.setAttribute('data-dficon', icon);\n",
-    "new": "",
+    "old": "    if (icon) btn.setAttribute('data-dficon', icon);\n    btn.onclick = b.onClick;",
+    "new": "    btn.onclick = b.onClick;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

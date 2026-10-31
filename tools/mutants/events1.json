@@ -613,8 +613,8 @@
   {
     "name": "EVENTS1-undressed",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .evboard',\n",
-    "new": "",
+    "old": "    'body .evboard',\n    'body .dftown-panel', // NOTICE-PANEL: the town's panel under the compass (ui/hud/townPanel.js)",
+    "new": "    'body .dftown-panel', // NOTICE-PANEL: the town's panel under the compass (ui/hud/townPanel.js)",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]

@@ -183,8 +183,8 @@
   {
     "name": "C2-a-role-dropped",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    '.px-sys .coll-row',   // COLLECTIONS-II",
-    "new": "    // COLLECTIONS-II",
+    "old": "    '.px-sys .coll-row', // COLLECTIONS-II: a title, an aura, an icon or a glyph, a line each - the one opened brass",
+    "new": "    // COLLECTIONS-II: a title, an aura, an icon or a glyph, a line each - the one opened brass",
     "tests": [
       "test/ui/collections2.test.js"
     ]

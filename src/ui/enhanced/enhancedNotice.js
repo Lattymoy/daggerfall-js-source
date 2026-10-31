@@ -58,13 +58,15 @@
 // watchdog - until it releases it.
 
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { isEnhanced, isEnhancedPlus } from '../../systems/uiSkin.js';   // PLUS1: the toast's fade is Enhanced Plus's
-import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';   // DISC29-D: the watchdog counts frames, not milliseconds
-import { placeHudPieces } from '../hud/hudPlacer.js';   // MOVED-NOTICE: a new stack stands where HUD-MOVE put it from its first frame
+import { isEnhanced, isEnhancedPlus } from '../../systems/uiSkin.js'; // PLUS1: the toast's fade is Enhanced Plus's
+import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js'; // DISC29-D: the watchdog counts frames, not milliseconds
+import { placeHudPieces } from '../hud/hudPlacer.js'; // MOVED-NOTICE: a new stack stands where HUD-MOVE put it from its first frame
 
 export const ENHANCED_NOTICE_ID = 'enhanced-notice';
 /** The sheet's transition length (ui/enhanced/enhancedStyle.js .notice), in ms. */
-export const NOTICE_SLIDE_MS = 260;  import { TOAST_FADE_MS } from './enhancedFrame.js'; export { TOAST_FADE_MS };   // TOAST2: a HUD line (a skill up, a tally) fades where it stands, over the kit's time
+export const NOTICE_SLIDE_MS = 260;
+import { TOAST_FADE_MS } from './enhancedFrame.js';
+export { TOAST_FADE_MS }; // TOAST2: a HUD line (a skill up, a tally) fades where it stands, over the kit's time
 /** A box that has not drawn for this long is gone: slide its panel out. */
 export const NOTICE_WATCHDOG_MS = 400;
 /** ClickAnywhereToClose, said the enhanced way - a quiet caption under the text. */
@@ -74,9 +76,14 @@ let stack = null;
 /** key -> { host, rows, last, watchdog } - one entry per live box. */
 const panels = new Map();
 let schedule = (fn, ms) => (typeof setTimeout === 'function' ? setTimeout(fn, ms) : null);
-let cancel = (t) => { if (t != null && typeof clearTimeout === 'function') clearTimeout(t); };
+let cancel = (t) => {
+  if (t != null && typeof clearTimeout === 'function') clearTimeout(t);
+};
 /** Tests replace the two clocks so a slide-out can be observed at once. */
-export function _setNoticeClockForTests(s, c) { schedule = s ?? schedule; cancel = c ?? cancel; }
+export function _setNoticeClockForTests(s, c) {
+  schedule = s ?? schedule;
+  cancel = c ?? cancel;
+}
 
 function buildStack(doc) {
   injectEnhancedStyle(doc);
@@ -84,7 +91,7 @@ function buildStack(doc) {
   const root = doc.createElement('div');
   root.id = ENHANCED_NOTICE_ID;
   root.className = 'notice-stack';
-  root.setAttribute('aria-live', 'polite');   // the box's words, read out where the parchment could not be
+  root.setAttribute('aria-live', 'polite'); // the box's words, read out where the parchment could not be
   doc.body.append(root);
   // MOVED-NOTICE (FIELD BUGS 2026-10-03): placed where the player moved it AT ONCE - before the first panel's resting
   // style is flushed - as revenantCard's ensure() places its stack. The stack is rebuilt for every burst, and left to
@@ -109,7 +116,7 @@ function buildPanel(doc, key, toast = false, hint = undefined) {
   // the held map's refusals (the next action) - says so or says
   // nothing (`hint` false, or its own caption), never a promise the
   // page does not keep.
-  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);
+  const caption = toast ? false : hint === undefined ? NOTICE_HINT : hint;
   let hintNode = null;
   if (caption) {
     hintNode = doc.createElement('div');
@@ -123,9 +130,14 @@ function buildPanel(doc, key, toast = false, hint = undefined) {
   // foot of the column. A toast joins at the foot; a box goes in
   // front of the first toast (a fake document with no insertBefore
   // appends, which the order pin's own document does not).
-  const firstToast = !toast && typeof stack.insertBefore === 'function'
-    ? (stack.children ? [...stack.children].find((c) => c.className?.includes?.('notice-toast')) : null) : null;
-  if (firstToast) stack.insertBefore(host, firstToast); else stack.append(host);
+  const firstToast =
+    !toast && typeof stack.insertBefore === 'function'
+      ? stack.children
+        ? [...stack.children].find((c) => c.className?.includes?.('notice-toast'))
+        : null
+      : null;
+  if (firstToast) stack.insertBefore(host, firstToast);
+  else stack.append(host);
   // Appended off-screen, and the browser must COMPUTE that resting
   // style before the class changes it, or there is no "before" for
   // the transition to start from and the panel simply appears (a
@@ -150,7 +162,11 @@ function paintRow(doc, node, row) {
   if (Array.isArray(rec.cells)) {
     const want = rec.cells.map((c) => c?.text ?? '');
     const have = node.children ?? [];
-    while (have.length < want.length) { const s = doc.createElement('span'); s.className = 'notice-cell'; node.append(s); }
+    while (have.length < want.length) {
+      const s = doc.createElement('span');
+      s.className = 'notice-cell';
+      node.append(s);
+    }
     for (let i = 0; i < have.length; i++) {
       const s = have[i];
       const t = want[i] ?? '';
@@ -160,7 +176,9 @@ function paintRow(doc, node, row) {
     return;
   }
   const t = rec.text ?? '';
-  if (node.children?.length) { for (const c of [...node.children]) c.remove(); }
+  if (node.children?.length) {
+    for (const c of [...node.children]) c.remove();
+  }
   if (node.textContent !== t) node.textContent = t;
 }
 
@@ -177,22 +195,37 @@ function paintRow(doc, node, row) {
  * two boxes never share a panel. Returns the panel (or null off a
  * document) so a test can read what was painted.
  */
-export function drawEnhancedNotice(frame, doc = (typeof document === 'undefined' ? null : document), key = 'box') {
+export function drawEnhancedNotice(frame, doc = typeof document === 'undefined' ? null : document, key = 'box') {
   if (!doc) return null;
   const lines = frame?.visible === false ? [] : (frame?.rows ?? []);
   let p = panels.get(key);
   if (!p && !lines.length) return null;
   if (!stack) stack = buildStack(doc);
-  if (!p) { p = buildPanel(doc, key, !!frame?.toast, frame?.hint); panels.set(key, p); }
+  if (!p) {
+    p = buildPanel(doc, key, !!frame?.toast, frame?.hint);
+    panels.set(key, p);
+  }
   const { host, body, rows, last } = p;
-  if (p.hintNode && typeof frame?.hint === 'string' && p.hintNode.textContent !== frame.hint) p.hintNode.textContent = frame.hint;
+  if (p.hintNode && typeof frame?.hint === 'string' && p.hintNode.textContent !== frame.hint)
+    p.hintNode.textContent = frame.hint;
   // the watchdog: re-armed on every draw, fires only when the draws stop - DISC29-D: a frame that came and went
   // without one, never a frame slower than the timer (ui/drawWatchdog.js)
   disarmDraw(p.watchdog);
-  p.watchdog = frame?.hold ? null : armDrawWatchdog(NOTICE_WATCHDOG_MS, () => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, { schedule, cancel });
+  p.watchdog = frame?.hold
+    ? null
+    : armDrawWatchdog(
+        NOTICE_WATCHDOG_MS,
+        () => {
+          if (panels.get(key) === p) releaseEnhancedNotice(key);
+        },
+        { schedule, cancel },
+      );
 
   const shown = lines.length > 0;
-  if (last.on !== shown) { last.on = shown; host.style.display = shown ? '' : 'none'; }
+  if (last.on !== shown) {
+    last.on = shown;
+    host.style.display = shown ? '' : 'none';
+  }
   if (!shown) return host;
   while (rows.length < lines.length) {
     const n = doc.createElement('div');
@@ -202,7 +235,10 @@ export function drawEnhancedNotice(frame, doc = (typeof document === 'undefined'
   }
   for (let i = 0; i < rows.length; i++) {
     const n = rows[i];
-    if (i >= lines.length) { if (n.style.display !== 'none') n.style.display = 'none'; continue; }
+    if (i >= lines.length) {
+      if (n.style.display !== 'none') n.style.display = 'none';
+      continue;
+    }
     if (n.style.display === 'none') n.style.display = '';
     paintRow(doc, n, lines[i]);
   }
@@ -222,14 +258,28 @@ export function releaseEnhancedNotice(key) {
   // as garbage and a resumed draw counts a row it has no panel for.
   if (p.toast && p.toastOwner != null) {
     const mine = toasts.get(p.toastOwner);
-    if (mine) { mine.delete(p.rowId); if (!mine.size) toasts.delete(p.toastOwner); }
+    if (mine) {
+      mine.delete(p.rowId);
+      if (!mine.size) toasts.delete(p.toastOwner);
+    }
   }
   p.host.className = p.toast ? 'notice notice-toast notice-out' : 'notice notice-out';
   const gone = () => {
-    try { p.host.remove(); } catch { /* already gone */ }
-    if (!panels.size) { try { stack?.remove(); } catch { /* already gone */ } stack = null; }
+    try {
+      p.host.remove();
+    } catch {
+      /* already gone */
+    }
+    if (!panels.size) {
+      try {
+        stack?.remove();
+      } catch {
+        /* already gone */
+      }
+      stack = null;
+    }
   };
-  if (schedule(gone, p.toast && isEnhancedPlus() ? TOAST_FADE_MS : NOTICE_SLIDE_MS) == null) gone();   // TOAST2: a toast's fade is longer than a box's slide
+  if (schedule(gone, p.toast && isEnhancedPlus() ? TOAST_FADE_MS : NOTICE_SLIDE_MS) == null) gone(); // TOAST2: a toast's fade is longer than a box's slide
 }
 
 let seq = 0;
@@ -284,7 +334,10 @@ export function noticeRelease(owner) {
  * to a Yes/No step, or a box that clears, leaves on the next draw.
  */
 export function noticeFrame(owner, rows, { hint = undefined } = {}) {
-  if (!rows || !isEnhanced()) { noticeRelease(owner); return false; }
+  if (!rows || !isEnhanced()) {
+    noticeRelease(owner);
+    return false;
+  }
   owner._noticeKey ??= noticeKey();
   return drawEnhancedNotice({ rows, hint }, undefined, owner._noticeKey) != null;
 }
@@ -310,7 +363,10 @@ export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(ow
  * windows keep theirs under noticeFrame. True: the panel is up.
  */
 export function noticeHold(owner, rows, { hint = undefined } = {}) {
-  if (!rows || !isEnhanced()) { noticeRelease(owner); return false; }
+  if (!rows || !isEnhanced()) {
+    noticeRelease(owner);
+    return false;
+  }
   owner._noticeKey ??= noticeKey();
   return drawEnhancedNotice({ rows, hold: true, hint }, undefined, owner._noticeKey) != null;
 }
@@ -333,31 +389,47 @@ const toastKey = (owner, id) => `${owner}:${id}`;
  * queue is untouched, as it always was. Returns the owner's live
  * panels, for a test.
  */
-export function drawEnhancedToasts(frame, doc = (typeof document === 'undefined' ? null : document), key = 'hud') {
+export function drawEnhancedToasts(frame, doc = typeof document === 'undefined' ? null : document, key = 'hud') {
   if (!doc) return [];
   const ids = frame?.ids ?? [];
   const rows = frame?.rows ?? [];
   const visible = frame?.visible !== false;
   let mine = toasts.get(key);
   if (!mine && !ids.length) return [];
-  if (!mine) { mine = new Set(); toasts.set(key, mine); }
+  if (!mine) {
+    mine = new Set();
+    toasts.set(key, mine);
+  }
   const out = [];
   for (let i = 0; i < ids.length; i++) {
-    const host = drawEnhancedNotice({ rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));
+    const host = drawEnhancedNotice(
+      { rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible, toast: true },
+      doc,
+      toastKey(key, ids[i]),
+    );
     // AUDIT GUIDE H3: an owner that speaks its news itself (the quest herald's own live region) keeps its toasts out of
     // the stack's - said once and whole there, never twice, never a merged row alone
-    if (host && frame?.silent && host.getAttribute?.('aria-hidden') !== 'true') host.setAttribute?.('aria-hidden', 'true');
+    if (host && frame?.silent && host.getAttribute?.('aria-hidden') !== 'true')
+      host.setAttribute?.('aria-hidden', 'true');
     if (host) {
       const p = panels.get(toastKey(key, ids[i]));
-      if (p) { p.toastOwner = key; p.rowId = ids[i]; }   // AUDIT ENH-NOTICE3 A2: the watchdog's release finds the owner's set through these
-      mine.add(ids[i]); out.push(host);
+      if (p) {
+        p.toastOwner = key;
+        p.rowId = ids[i];
+      } // AUDIT ENH-NOTICE3 A2: the watchdog's release finds the owner's set through these
+      mine.add(ids[i]);
+      out.push(host);
     }
   }
   for (const id of [...mine]) {
     if (ids.includes(id)) continue;
     // popped by the model (gone from the frame) - or hidden with an
     // empty frame, which is the same hide as above, not a release
-    if (!visible && !ids.length) { drawEnhancedNotice({ visible: false, toast: true }, doc, toastKey(key, id)); out.push(panels.get(toastKey(key, id))?.host); continue; }
+    if (!visible && !ids.length) {
+      drawEnhancedNotice({ visible: false, toast: true }, doc, toastKey(key, id));
+      out.push(panels.get(toastKey(key, id))?.host);
+      continue;
+    }
     releaseEnhancedNotice(toastKey(key, id));
     mine.delete(id);
   }
@@ -382,9 +454,20 @@ export const enhancedToastOwners = () => [...toasts.keys()];
 
 /** Tests: drop everything at once. */
 export function destroyEnhancedNotice() {
-  for (const p of panels.values()) { disarmDraw(p.watchdog); try { p.host.remove(); } catch { /* gone */ } }
+  for (const p of panels.values()) {
+    disarmDraw(p.watchdog);
+    try {
+      p.host.remove();
+    } catch {
+      /* gone */
+    }
+  }
   panels.clear();
   toasts.clear();
-  try { stack?.remove(); } catch { /* gone */ }
+  try {
+    stack?.remove();
+  } catch {
+    /* gone */
+  }
   stack = null;
 }

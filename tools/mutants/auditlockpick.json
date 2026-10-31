@@ -165,8 +165,8 @@
   {
     "name": "AUDITLOCK-C1-window-role",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .lk-win',   // AUDIT LOCKPICK C1",
-    "new": "    // AUDIT LOCKPICK C1",
+    "old": "    'body .lk-win', // AUDIT LOCKPICK C1: the lock's window - the Broker's carved frame (ui/lockpickWindow.js)",
+    "new": "    // AUDIT LOCKPICK C1: the lock's window - the Broker's carved frame (ui/lockpickWindow.js)",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]
@@ -302,8 +302,8 @@
   {
     "name": "AUDITLOCK-C6-auto-plain",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "warn: ['body .lk-acts .lk-auto',",
-    "new": "warn: [",
+    "old": "    'body .lk-acts .lk-auto',\n    /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn',",
+    "new": "    /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn',",
     "tests": [
       "test/systems/lockpick/lockpick_ui.test.js"
     ]

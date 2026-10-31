@@ -352,8 +352,8 @@
   {
     "name": "SCW-panel-orders-off",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.orders) out.push({ act: 'orders', label: 'Orders', kind: 'hook' });",
-    "new": "",
+    "old": "  if (h.orders) out.push({ act: 'orders', label: 'Orders', kind: 'hook' }); // SHIP-CREW: her captain's orders (the naval arc on)",
+    "new": "  // SHIP-CREW: her captain's orders (the naval arc on)",
     "tests": [
       "test/systems/naval/shipcrew.test.js"
     ]

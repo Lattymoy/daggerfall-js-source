@@ -164,8 +164,8 @@
   {
     "name": "UI2-a-spell-icon-trimmed",
     "file": "src/ui/enhanced/enhancedArt.js",
-    "old": "{ box, dpr, trim: false, onReady }",
-    "new": "{ box, dpr, onReady }",
+    "old": "    trim: false,\n    onReady,",
+    "new": "    onReady,",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "UI2-a-waiter-not-heard",
     "file": "src/ui/enhanced/enhancedArt.js",
-    "old": "    if (onReady && wait && wait.size < CUT_WAKE_MAX) wait.add(onReady);\n",
-    "new": "",
+    "old": "    if (onReady && wait && wait.size < CUT_WAKE_MAX) wait.add(onReady);\n    return cuts.get(key);",
+    "new": "    return cuts.get(key);",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]

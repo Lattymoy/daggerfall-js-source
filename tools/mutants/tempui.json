@@ -314,8 +314,8 @@
   {
     "name": "TEMPUI-the-plate-off-the-kit",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "'.hud-qspell', '.hud-temp', '.pack-shell .sf-tile',",
-    "new": "'.hud-qspell', '.pack-shell .sf-tile',",
+    "old": "    '.hud-temp',\n    '.pack-shell .sf-tile',",
+    "new": "    '.pack-shell .sf-tile',",
     "why": "the plate undressed by every dress",
     "tests": [
       "test/systems/survival/tempui.test.js"

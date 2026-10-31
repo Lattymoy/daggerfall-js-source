@@ -11,7 +11,7 @@
 // closes it. It draws per frame from the box's own `draw` and is taken down by the box's close, or by a watchdog
 // when the draws stop (a host gone without closing it) - the notice's own lifecycle, one box at a time.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js';   // DISC29-D: the watchdog counts frames, not milliseconds
+import { armDrawWatchdog, disarmDraw } from '../drawWatchdog.js'; // DISC29-D: the watchdog counts frames, not milliseconds
 
 export const ENHANCED_INPUT_BOX_ID = 'enhanced-inputbox';
 export const INPUT_BOX_WATCHDOG_MS = 400;
@@ -21,8 +21,13 @@ let owner = null;
 let watchdog = null;
 const last = {};
 let schedule = (fn, ms) => (typeof setTimeout === 'function' ? setTimeout(fn, ms) : null);
-let cancel = (t) => { if (t != null && typeof clearTimeout === 'function') clearTimeout(t); };
-export function _setInputBoxClockForTests(s, c) { schedule = s ?? schedule; cancel = c ?? cancel; }
+let cancel = (t) => {
+  if (t != null && typeof clearTimeout === 'function') clearTimeout(t);
+};
+export function _setInputBoxClockForTests(s, c) {
+  schedule = s ?? schedule;
+  cancel = c ?? cancel;
+}
 
 function build(doc) {
   injectEnhancedStyle(doc);
@@ -31,14 +36,19 @@ function build(doc) {
   root.id = ENHANCED_INPUT_BOX_ID;
   root.className = 'inputbox';
   root.setAttribute('role', 'dialog');
-  const rows = doc.createElement('div'); rows.className = 'inputbox-rows';
-  const field = doc.createElement('div'); field.className = 'inputbox-field';
-  const label = doc.createElement('span'); label.className = 'inputbox-label';
+  const rows = doc.createElement('div');
+  rows.className = 'inputbox-rows';
+  const field = doc.createElement('div');
+  field.className = 'inputbox-field';
+  const label = doc.createElement('span');
+  label.className = 'inputbox-label';
   const before = doc.createElement('span');
-  const caret = doc.createElement('span'); caret.className = 'inputbox-caret';
+  const caret = doc.createElement('span');
+  caret.className = 'inputbox-caret';
   const after = doc.createElement('span');
   field.append(label, before, caret, after);
-  const hint = doc.createElement('div'); hint.className = 'notice-hint';
+  const hint = doc.createElement('div');
+  hint.className = 'notice-hint';
   root.append(rows, field, hint);
   doc.body.append(root);
   return { root, rows, field, label, before, caret, after, hint, rowNodes: [] };
@@ -48,42 +58,82 @@ function build(doc) {
  * One frame of the box. `frame` = { key, rows: string[], label, value, cursor, atTop, hint }. The key is the box
  * (one window at a time; a second box replaces the first's face). Returns the root (null off a document).
  */
-export function drawEnhancedInputBox(frame, doc = (typeof document === 'undefined' ? null : document)) {
+export function drawEnhancedInputBox(frame, doc = typeof document === 'undefined' ? null : document) {
   if (!doc || !frame) return null;
   if (!host) host = build(doc);
-  if (owner !== frame.key) { owner = frame.key; for (const k of Object.keys(last)) delete last[k]; }
+  if (owner !== frame.key) {
+    owner = frame.key;
+    for (const k of Object.keys(last)) delete last[k];
+  }
   disarmDraw(watchdog);
   const key = frame.key;
-  watchdog = armDrawWatchdog(INPUT_BOX_WATCHDOG_MS, () => { if (owner === key) releaseEnhancedInputBox(key); }, { schedule, cancel });   // DISC29-D: a frame undrawn, not a slow one
+  watchdog = armDrawWatchdog(
+    INPUT_BOX_WATCHDOG_MS,
+    () => {
+      if (owner === key) releaseEnhancedInputBox(key);
+    },
+    { schedule, cancel },
+  ); // DISC29-D: a frame undrawn, not a slow one
   const rows = Array.isArray(frame.rows) ? frame.rows.map((r) => String(r ?? '')) : [];
   const rk = rows.join('\n');
   if (last.rows !== rk) {
     last.rows = rk;
-    while (host.rowNodes.length < rows.length) { const n = doc.createElement('div'); n.className = 'notice-row center'; host.rows.append(n); host.rowNodes.push(n); }
-    host.rowNodes.forEach((n, i) => { n.style.display = i < rows.length ? '' : 'none'; if (i < rows.length && n.textContent !== rows[i]) n.textContent = rows[i]; });
+    while (host.rowNodes.length < rows.length) {
+      const n = doc.createElement('div');
+      n.className = 'notice-row center';
+      host.rows.append(n);
+      host.rowNodes.push(n);
+    }
+    host.rowNodes.forEach((n, i) => {
+      n.style.display = i < rows.length ? '' : 'none';
+      if (i < rows.length && n.textContent !== rows[i]) n.textContent = rows[i];
+    });
     host.rows.style.display = rows.length ? '' : 'none';
   }
   const value = String(frame.value ?? '');
   const cur = Math.max(0, Math.min(value.length, Number.isInteger(frame.cursor) ? frame.cursor : value.length));
   const label = String(frame.label ?? '');
-  if (last.label !== label) { last.label = label; host.label.textContent = label; }
-  const b = value.slice(0, cur), a = value.slice(cur);
-  if (last.before !== b) { last.before = b; host.before.textContent = b; }
-  if (last.after !== a) { last.after = a; host.after.textContent = a; }
+  if (last.label !== label) {
+    last.label = label;
+    host.label.textContent = label;
+  }
+  const b = value.slice(0, cur),
+    a = value.slice(cur);
+  if (last.before !== b) {
+    last.before = b;
+    host.before.textContent = b;
+  }
+  if (last.after !== a) {
+    last.after = a;
+    host.after.textContent = a;
+  }
   const hint = String(frame.hint ?? '');
-  if (last.hint !== hint) { last.hint = hint; host.hint.textContent = hint; host.hint.style.display = hint ? '' : 'none'; }
+  if (last.hint !== hint) {
+    last.hint = hint;
+    host.hint.textContent = hint;
+    host.hint.style.display = hint ? '' : 'none';
+  }
   const cls = frame.atTop ? 'inputbox top' : 'inputbox';
   if (host.root.className !== cls) host.root.className = cls;
-  if (last.on !== true) { last.on = true; host.root.style.display = ''; }
+  if (last.on !== true) {
+    last.on = true;
+    host.root.style.display = '';
+  }
   return host.root;
 }
 
 /** The box closed (or its draws stopped): the window goes. A no-op for a key that is not the one up. */
 export function releaseEnhancedInputBox(key) {
   if (!host || owner !== key) return;
-  disarmDraw(watchdog); watchdog = null;
-  try { host.root.remove(); } catch { /* already gone */ }
-  host = null; owner = null;
+  disarmDraw(watchdog);
+  watchdog = null;
+  try {
+    host.root.remove();
+  } catch {
+    /* already gone */
+  }
+  host = null;
+  owner = null;
   for (const k of Object.keys(last)) delete last[k];
 }
 

@@ -305,7 +305,7 @@
   {
     "name": "AUDIT-GUIDE-H3-the-toasts-speak-too",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "    if (host && frame?.silent && host.getAttribute?.('aria-hidden') !== 'true') host.setAttribute?.('aria-hidden', 'true');",
+    "old": "    if (host && frame?.silent && host.getAttribute?.('aria-hidden') !== 'true')\n      host.setAttribute?.('aria-hidden', 'true');",
     "new": "    /* heard twice */",
     "tests": [
       "test/ui/quest/audit_guide.test.js",

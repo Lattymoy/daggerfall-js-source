@@ -386,8 +386,8 @@
   {
     "name": "DISC10-D-V5-the-enhanced-sheet-reads-the-birth-race",
     "file": "src/ui/enhanced/enhancedCharSheet.js",
-    "old": "    race: processGrammar(liveRaceName(e) || 'Breton'),",
-    "new": "    race: processGrammar(e.race ?? 'Breton'),",
+    "old": "    race: processGrammar(liveRaceName(e) || 'Breton'), // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)",
+    "new": "    race: processGrammar(e.race ?? 'Breton'), // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)",
     "tests": [
       "test/systems/disc10_vampire.test.js"
     ]

@@ -683,7 +683,7 @@ The family. Earlier fixes each wrote the rule out for themselves, and no helper 
 - STEED-UI's saddle and helm panels (`enhancedSaddle.js:"// AUDIT STEED-UI: a button never keeps the keyboard's focus"`);
 - the held map's filters (`heldMap.js:"// NEVER THE FOCUS - out of the tab order"`) and the wild map's buttons;
 - the pace steppers (`travelPaceControls.js:"b.tabIndex = -1;   // never the focus"`);
-- the enhanced dialog and port (`enhancedDialog.js:"btn.tabIndex = -1;   // the keys are the game's"`).
+- the enhanced dialog and port (`enhancedDialog.js:"btn.tabIndex = -1; //"`).
 
 The chat's own field already kept Tab (C7, `chatPanel.js:"else if (e.code === 'Tab') e.preventDefault();   // C7"`).
 AUDIT LEGACY III U2 wrote the law down: with the focus on the page's body "every Tab was the game's". The pause door

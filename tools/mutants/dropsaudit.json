@@ -74,8 +74,8 @@
   {
     "name": "DA-F2-dialog-double-press",
     "file": "src/ui/enhanced/enhancedDialog.js",
-    "old": "if (!active || active.spent) return; active.spent = true; press(b.button); closeEnhancedDialog();",
-    "new": "press(b.button);",
+    "old": "      if (!active || active.spent) return;\n      active.spent = true;\n      press(b.button);\n      closeEnhancedDialog();",
+    "new": "      press(b.button);",
     "tests": [
       "test/ui/enhanced/dropsaudit.test.js"
     ]

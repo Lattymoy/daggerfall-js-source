@@ -2,8 +2,8 @@
   {
     "name": "EGPLUS-role-forgotten",
     "file": "src/ui/enhanced/enhancedFrame.js",
-    "old": "    'body .eg-k-tile'],   // EG-PLUS",
-    "new": "    ],   // EG-PLUS",
+    "old": "    'body .eg-k-tile',\n  ], // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards",
+    "new": "  ], // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards",
     "tests": [
       "test/ui/eliteGates/egplus_ui.test.js"
     ]

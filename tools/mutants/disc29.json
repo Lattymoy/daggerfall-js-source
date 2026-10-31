@@ -272,8 +272,8 @@
   {
     "name": "DISC29-D-notice-wall-clock",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "armDrawWatchdog(NOTICE_WATCHDOG_MS, () => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, { schedule, cancel });",
-    "new": "schedule(() => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, NOTICE_WATCHDOG_MS);",
+    "old": "    : armDrawWatchdog(\n        NOTICE_WATCHDOG_MS,\n        () => {\n          if (panels.get(key) === p) releaseEnhancedNotice(key);\n        },\n        { schedule, cancel },\n      );",
+    "new": "    : schedule(() => {\n        if (panels.get(key) === p) releaseEnhancedNotice(key);\n      }, NOTICE_WATCHDOG_MS);",
     "tests": [
       "test/ui/enhancedNotice.test.js"
     ]

@@ -46,12 +46,23 @@
 /** The palette, named for what it is. Light falls from the top left. */
 export const FRAME_TONES = {
   outline: '#050608',
-  stoneHi: '#c2b79a', stoneLit: '#9a9079', stoneMid: '#7a7260', stoneLo: '#5a5446',
-  stoneDim: '#3a352a', stoneDark: '#25221b',
-  brassHi: '#f3cf86', brass: '#c08a3e', brassLo: '#7a5424', brassDark: '#3d2a12',
-  ground: 'rgba(12,14,18,0.93)', groundPanel: 'rgba(15,17,22,0.92)',
-  groundButton: '#1c1f26', groundButtonHi: '#262a33', groundChip: 'rgba(12,14,18,0.84)',
-  gold: 'rgb(243,239,44)', groove: 'rgba(163,152,128,0.26)',
+  stoneHi: '#c2b79a',
+  stoneLit: '#9a9079',
+  stoneMid: '#7a7260',
+  stoneLo: '#5a5446',
+  stoneDim: '#3a352a',
+  stoneDark: '#25221b',
+  brassHi: '#f3cf86',
+  brass: '#c08a3e',
+  brassLo: '#7a5424',
+  brassDark: '#3d2a12',
+  ground: 'rgba(12,14,18,0.93)',
+  groundPanel: 'rgba(15,17,22,0.92)',
+  groundButton: '#1c1f26',
+  groundButtonHi: '#262a33',
+  groundChip: 'rgba(12,14,18,0.84)',
+  gold: 'rgb(243,239,44)',
+  groove: 'rgba(163,152,128,0.26)',
 };
 const T = FRAME_TONES;
 /** TOAST2: how long a HUD line takes to fade out (ui/enhanced/enhancedNotice.js removes it after this). */
@@ -60,13 +71,24 @@ export const TOAST_FADE_MS = 700;
 /** Which selectors play which role. Selectors are the screens' own, one
  *  per entry, exactly as their rules write them. */
 export const FRAME_ROLES = {
-  window: ['.dlg-win', '.px-win', '.pack-win', '.loot-win', '.px-about', '.px-profile', '.hmbox',
-    '.px-support',   // SUPPORT1: the door's asks - the About plaque's and the profile mark's carved frame
+  window: [
+    '.dlg-win',
+    '.px-win',
+    '.pack-win',
+    '.loot-win',
+    '.px-about',
+    '.px-profile',
+    '.hmbox',
+    '.px-support', // SUPPORT1: the door's asks - the About plaque's and the profile mark's carved frame
     // PLUS8: the journey's bar (ui/enhanced/enhancedTravelControl.js) - carved stone, brass fittings, the theme's ground
     '.travelpanel-bar',
     // OW-THEME (2026-09-28, Mac: "The overworld ui needs to follow enhanced ui theme"): the Overworld's bar - the
     // journey bar's own carved stone and brass, in the theme's ground
-    '.tview-bar', '.tview-side', '.tview-confirm', '#wp-menu', '#travel-pace-box',   // OW-BLOCK: the Overworld's block; FILTERS-LEFT: its filters, their own block at the bottom left; OW-CONFIRM: its question; WAYPOINTS: the right-click menu; PACE-DIALS: the other skins' dials
+    '.tview-bar',
+    '.tview-side',
+    '.tview-confirm',
+    '#wp-menu',
+    '#travel-pace-box', // OW-BLOCK: the Overworld's block; FILTERS-LEFT: its filters, their own block at the bottom left; OW-CONFIRM: its question; WAYPOINTS: the right-click menu; PACE-DIALS: the other skins' dials
     // CSA-L: the helm's bar (ui/enhanced/enhancedHelm.js) - the journey bar's kind, under the compass where it stands
     '.helmpanel-bar',
     // STEED-UI: the saddle's bar (ui/enhanced/enhancedSaddle.js) - the helm's kind, where the helm stands (the two never up together)
@@ -78,35 +100,64 @@ export const FRAME_ROLES = {
     'body .dfdecor-card',
     // SET7: the Sigil Broker's window - a shop over the world, the pack's own carved frame
     'body .broker-win',
-    'body .lk-win',   // AUDIT LOCKPICK C1: the lock's window - the Broker's carved frame (ui/lockpickWindow.js)
+    'body .lk-win', // AUDIT LOCKPICK C1: the lock's window - the Broker's carved frame (ui/lockpickWindow.js)
     // NAV-F: a taken ship's plunder window (ui/naval/navalPlunderWindow.js) - a whole window over the sea
     'body .dfnaval-win',
     // BOUNTY1: the bounty board and its payday notice - the Broker's carved frame
     'body .bounty-win',
     // NOTICE1: the Notice Board - the cork sits inside the same carved frame
     'body .notice-win',
-    'body .aw-win',   // ARENA3: the Arena window - the Notice Board's carved frame
+    'body .aw-win', // ARENA3: the Arena window - the Notice Board's carved frame
     // CARDS-PLUS: the card tables' panels (ui/card/cardTableHud.js, ui/iliacTableHud.js) - carved windows over the room, the
     // game going on under them, as the helm's and the saddle's bars stand over the world
-    'body .dfcards', 'body .dfiliac',
-    'body .dfgambit',   // KG3: The King's Gambit's panel, the third card table's (Kings-Gambit.md section 14.1)
-    'body .lgs-win',   // LEGACY3: the Succession - who carries the line on
+    'body .dfcards',
+    'body .dfiliac',
+    'body .dfgambit', // KG3: The King's Gambit's panel, the third card table's (Kings-Gambit.md section 14.1)
+    'body .lgs-win', // LEGACY3: the Succession - who carries the line on
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
-    'body .fmt-bar', 'body .fmt-side', 'body .fmt-confirmbox',
+    'body .fmt-bar',
+    'body .fmt-side',
+    'body .fmt-confirmbox',
     // EG-PLUS: the Elite Breach's windows (ui/eliteGates/egKit.js) - the breach's panel, the boards and the start window
-    'body .eg-win'],
+    'body .eg-win',
+  ],
   // the talk panel is a .px-win whose own ground rule outweighs .px-win's
   windowGround: ['.talk-shell .talk-panel'],
   // REVENANT-PAGE / COMPANION-ROSTER: a row is a card, never a press (the 2026-10-02 audit: the tile's hover and its sink);
   // HOLDINGS: a horse's, a wagon's, a ship's card and a refit's - cards, never presses. AUDIT HOLDINGS C1: each note on a
   // line of its own - one written mid-line made every selector after it a comment
-  panel: ['body .rvncard', '.pack-shell .fate-confirm', '.px-sys .rvn-row', '.px-sys .cmp-row', '.px-sys .hld-row', '.px-sys .hld-refit', '.px-sys .fam-node', '.px-sys .fam-card', '.px-sys .fam-hallrow', 'body .lgs-card',   // LEGACY3: a person's plate, their card, a house in the Hall
-     '.port-host .port-card', '.pack-shell .statflip-back', '.pack-shell .packdetail .card', '.pack-shell .card', '.hmcard', '.px-sys .card', '.px-sys .dcard',
-    '.shell .card', '.shell .dcard', '.notice', '.inputbox', '.lv-note', '.cr-shell .cr-entry',
-    '.cr-shell .cr-sharebox', '.shell .ft-rail', '.shell .look-panel',
+  panel: [
+    'body .rvncard',
+    '.pack-shell .fate-confirm',
+    '.px-sys .rvn-row',
+    '.px-sys .cmp-row',
+    '.px-sys .hld-row',
+    '.px-sys .hld-refit',
+    '.px-sys .fam-node',
+    '.px-sys .fam-card',
+    '.px-sys .fam-hallrow',
+    'body .lgs-card', // LEGACY3: a person's plate, their card, a house in the Hall
+    '.port-host .port-card',
+    '.pack-shell .statflip-back',
+    '.pack-shell .packdetail .card',
+    '.pack-shell .card',
+    '.hmcard',
+    '.px-sys .card',
+    '.px-sys .dcard',
+    '.shell .card',
+    '.shell .dcard',
+    '.notice',
+    '.inputbox',
+    '.lv-note',
+    '.cr-shell .cr-entry',
+    '.cr-shell .cr-sharebox',
+    '.shell .ft-rail',
+    '.shell .look-panel',
     // PLUS3: the trade counter's item-detail readout and the trade/tavern confirm boxes - the same
     // "box inside a window" role every other .card already plays, just under a shell of their own
-    '.trade-shell .trade-detail', '.trade-shell .sb-ask .card', '.tavern-shell .sb-ask .card',
+    '.trade-shell .trade-detail',
+    '.trade-shell .sb-ask .card',
+    '.tavern-shell .sb-ask .card',
     // PLUS4: the shop's own two columns - "On the shelf" and the basket beside it - never carried a
     // box at all (packcol's base rule sets a flat background and nothing else); one selector catches
     // both, since the remote column is `.packcol.packremote` too. Paint only: packcol's own border
@@ -117,73 +168,124 @@ export const FRAME_ROLES = {
     // theme must keep it translucent rather than paint it solid (see the dedicated rule below).
     // the online lane's own sheets are injected after this one, so their
     // selectors carry a leading body to outweigh them
-    'body .dfsocial', 'body .dfprofile-card', 'body .dfchat-box',
+    'body .dfsocial',
+    'body .dfprofile-card',
+    'body .dfchat-box',
     // PLUS7: the inventory's hover card and right-click menu
-    '.inv-tip > .card', '.inv-menu', '.inv-info > .card', '.pbind > .card',   // PLUS10: and the Info box; PADPLUS10: the bindings window
+    '.inv-tip > .card',
+    '.inv-menu',
+    '.inv-info > .card',
+    '.pbind > .card', // PLUS10: and the Info box; PADPLUS10: the bindings window
     // PLUS-DRESS: the online lane's newer boxes - a journal page held out (JOURNAL1), the F-menu, the party
     // invitation and the duel challenge over the screen (DUEL1), and the decorator's placing bar
-    'body .dfpage-card', 'body .dfpeer-card', 'body .dfsocial-toast', 'body .dfduel-toast', 'body .dfdecor-bar',
+    'body .dfpage-card',
+    'body .dfpeer-card',
+    'body .dfsocial-toast',
+    'body .dfduel-toast',
+    'body .dfdecor-bar',
     // SET7: the Broker's card - the offer, whole, beside the list
     'body .broker-card',
     // NAV-F: the helm's readout (ui/naval/navalHud.js) - the ship's plate and the target card, boxes over the sea
-    'body .dfnaval-plate', 'body .dfnaval-card',
-    'body .bounty-card',   // BOUNTY1: the notice read whole, the reward box
-    'body .arena-plate',   // ARENA2: the versus bar's plate - a stone panel over the sand
+    'body .dfnaval-plate',
+    'body .dfnaval-card',
+    'body .bounty-card', // BOUNTY1: the notice read whole, the reward box
+    'body .arena-plate', // ARENA2: the versus bar's plate - a stone panel over the sand
     'body .aw-card',
     // CARDS-PLUS: a Hold'em seat and an Iliac Hand holding - boxes inside the table's window; COLLECTIONS: a deck in
     // the binder, a row a deck
-    'body .dfcards .seat', 'body .dfiliac .hold', '.px-sys .binder-deck',
-    'body .dfgambit-sec', 'body .dfgambit-info', 'body .dfgambit-result',   // KG3: a section, the information box, the result
-    '.px-win .card.acctin ul.acctfacts.acctrecord li',   // PROFILE-MENU: the profile's record, a tile a deed   // ARENA3: the Arena window's cards - a bout, a tier, a banner, a board, a rule   // ARENA2: the versus bar's plate - a stone panel over the sand
+    'body .dfcards .seat',
+    'body .dfiliac .hold',
+    '.px-sys .binder-deck',
+    'body .dfgambit-sec',
+    'body .dfgambit-info',
+    'body .dfgambit-result', // KG3: a section, the information box, the result
+    '.px-win .card.acctin ul.acctfacts.acctrecord li', // PROFILE-MENU: the profile's record, a tile a deed   // ARENA3: the Arena window's cards - a bout, a tier, a banner, a board, a rule   // ARENA2: the versus bar's plate - a stone panel over the sand
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its card, its word, its hint (under the Grimoire the card
     // and the word are scrolls of its own)
-    'body .fmt-tip', 'body .fmt-say', 'body .fmt-hint',
+    'body .fmt-tip',
+    'body .fmt-say',
+    'body .fmt-hint',
     // EG-PLUS: the call's tracker, a plate over the world, and a section inside a breach window
-    'body .eg-hud', 'body .eg-k-sec',
+    'body .eg-hud',
+    'body .eg-k-sec',
     // STAR6: the fallen star's tracker, a plate over the world (ui/starfall/starTracker.js)
     'body .star-hud',
     // EVENTS1: the event board, a plate over the world (ui/eventBoard.js) - its news inside it
     'body .evboard',
-    'body .dftown-panel',   // NOTICE-PANEL: the town's panel under the compass (ui/hud/townPanel.js)
-    '.px-sys .cmp-sheet',   // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
-    '.px-sys .coll-whole',   // COLLECTIONS-II: a wardrobe row opened whole - a box under its line
-    '.px-sys .codex-whole'],   // AUDIT COLLECTIONS-II (lane 3): and a codex row opened whole - the same box, where it was a bare list
+    'body .dftown-panel', // NOTICE-PANEL: the town's panel under the compass (ui/hud/townPanel.js)
+    '.px-sys .cmp-sheet', // RVN-GEAR / RVN-ERRAND: a sworn one's kit and its errand, a box under its card
+    '.px-sys .coll-whole', // COLLECTIONS-II: a wardrobe row opened whole - a box under its line
+    '.px-sys .codex-whole',
+  ], // AUDIT COLLECTIONS-II (lane 3): and a codex row opened whole - the same box, where it was a bare list
   // panels that carry a brass edge on the left as their own mark
-  panelAccent: ['body .rvncard', '.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'],   // PLUS-DRESS: the two that wore a brass line
-  button: ['.port-host .port-btn', '.pack-shell .statflip-btn', '.inv-info .act', '.pbind .act', '.px-sys .act', '.shell .act', '.px-win .card .act', '.pack-shell .act', '.px-setwrap .act',
-    '.px-setwrap .step', '.shell .step', '.wizard .bigbtn', '.wizard .reflexbtn', '.lv-pick .lv-arrow',
-    '.lv-pick .lv-press', '.shell .look-arrow', '.cr-shell .cr-rm', '.px-winclose', '.talk-head .act', '.talk-say .act',
-    '.px-qwhere .act', '.px-qentry-where .act', '.cr-shell .cr-where .act',   // GUIDE2: the journal's way there
-    '.px-qmeta .act',   // GUIDE4: the Quests tab's Track toggle (the chronicle's rides .cr-where's)
-    '.px-qoffer .act',   // QL3: a reward waiting's Take (ui/questlines/qlJournal.js)
-    'body .dfsocial-btn', 'body .dfsocial-close', 'body .dfprofile-close', '.dlg-shell .dlg-btn',
-    'body .broker-shell .act',   // SET7: the Broker's Buy and Close
-    'body .lk-acts button',   // AUDIT LOCKPICK C1: the lock's Auto attempt and Leave - the Auto a warn as well (C6), Leave plain: leaving costs nothing
-    'body .bounty-shell .act',   // BOUNTY1: Take, Give up, Share, Close, Take the reward
-    'body .lgs-shell .act',   // LEGACY3: the Succession's choices and the line's end
-    'body .notice-shell .act',   // NOTICE1: Pin a note, Pin it up, Report, Take it down, Close
-    'body .aw-shell .act',   // ARENA3: the Arena window's tabs, Watch, Wager, Fight, the stakes, Close
-    'body .arena-shout',   // ARENA4b: the stands' Cheer and Boo under the versus bar (ui/arena/arenaHud.js)
+  panelAccent: ['body .rvncard', '.notice', '.inputbox', 'body .dfsocial-toast', 'body .dfdecor-bar'], // PLUS-DRESS: the two that wore a brass line
+  button: [
+    '.port-host .port-btn',
+    '.pack-shell .statflip-btn',
+    '.inv-info .act',
+    '.pbind .act',
+    '.px-sys .act',
+    '.shell .act',
+    '.px-win .card .act',
+    '.pack-shell .act',
+    '.px-setwrap .act',
+    '.px-setwrap .step',
+    '.shell .step',
+    '.wizard .bigbtn',
+    '.wizard .reflexbtn',
+    '.lv-pick .lv-arrow',
+    '.lv-pick .lv-press',
+    '.shell .look-arrow',
+    '.cr-shell .cr-rm',
+    '.px-winclose',
+    '.talk-head .act',
+    '.talk-say .act',
+    '.px-qwhere .act',
+    '.px-qentry-where .act',
+    '.cr-shell .cr-where .act', // GUIDE2: the journal's way there
+    '.px-qmeta .act', // GUIDE4: the Quests tab's Track toggle (the chronicle's rides .cr-where's)
+    '.px-qoffer .act', // QL3: a reward waiting's Take (ui/questlines/qlJournal.js)
+    'body .dfsocial-btn',
+    'body .dfsocial-close',
+    'body .dfprofile-close',
+    '.dlg-shell .dlg-btn',
+    'body .broker-shell .act', // SET7: the Broker's Buy and Close
+    'body .lk-acts button', // AUDIT LOCKPICK C1: the lock's Auto attempt and Leave - the Auto a warn as well (C6), Leave plain: leaving costs nothing
+    'body .bounty-shell .act', // BOUNTY1: Take, Give up, Share, Close, Take the reward
+    'body .lgs-shell .act', // LEGACY3: the Succession's choices and the line's end
+    'body .notice-shell .act', // NOTICE1: Pin a note, Pin it up, Report, Take it down, Close
+    'body .aw-shell .act', // ARENA3: the Arena window's tabs, Watch, Wager, Fight, the stakes, Close
+    'body .arena-shout', // ARENA4b: the stands' Cheer and Boo under the versus bar (ui/arena/arenaHud.js)
     // PLUS3: the trade counter and the tavern panel (and the merchant/repair popup, which shares
     // .tavern-shell) never picked up a scoped role - their `.act` buttons fell through to the bare
     // base rule (flat outline, no bevel), which is the "still looks native" the shelf and the
     // four-button menu were reported in
-    '.trade-shell .act', '.tavern-shell .act',
+    '.trade-shell .act',
+    '.tavern-shell .act',
     // PLUS4: the spellbook and the chronicle - their OWN acts (Close in sb-top, Ready/Rename/
     // Delete/hotbar in sb-acts) were only ever named in the LAYOUT arrays below (ACTION_ROWS/
     // ACTION_BUTTONS: centring, minimum width) and never in this paint role, so the buttons sat
     // centred and evenly sized but flat-outlined - the Close button the spellbook was reported with
-    '.sb-shell .act', '.cr-shell .act',
+    '.sb-shell .act',
+    '.cr-shell .act',
     // PLUS6: the shop's category tabs are buttons now (the examples' stone buttons), the chosen one brass
     '.trade-shell .packtab',
     // PLUS8: the journey bar's Map / Camp / Exit (RATE-LAW: the time stepper's two presses are gone)
     '.travelpanel-act',
     // OW-THEME: the Overworld's Return; OW-PATH: and its Roads / Free switch
-    '.tview-back', '.tview-mode', '.tview-filter', '.tview-map',
+    '.tview-back',
+    '.tview-mode',
+    '.tview-filter',
+    '.tview-map',
     // PACE-DIALS: the speed dials' steps (the Overworld's block, the journey bar, the other skins' box); WAYPOINTS: the
     // followed rows' Go and unfollow, the right-click menu's presses, its kinds and its swatches
-    '.tview-pace-step', '.travelpanel-pace-step', '.pbox-pace-step', '.tview-wp-go', '.tview-wp-x',
-    '#wp-menu .wpm-btn', '#wp-menu .wpm-kind',
+    '.tview-pace-step',
+    '.travelpanel-pace-step',
+    '.pbox-pace-step',
+    '.tview-wp-go',
+    '.tview-wp-x',
+    '#wp-menu .wpm-btn',
+    '#wp-menu .wpm-kind',
     // CSA-L: the helm's presses - the sails, the trim, the lanterns, the time, the position, leaving
     '.helmpanel-btn',
     // STEED-UI: the saddle's presses - the feed, the apple, the kit, the cargo, the Stable, the view, getting down
@@ -191,12 +293,21 @@ export const FRAME_ROLES = {
     // PLUS-MAP: the 3D map's turn, tilt, floor and view buttons
     '.hmroot .hmtool',
     // PLUS-DRESS: the page's, the F-menu's (its Cancel stays a line of text), the duel's and the decorator's
-    'body .dfpage-btn', 'body .dfpeer-btn:not(.cancel)', 'body .dfduel-btn', 'body .dfprofile-duel', 'body .dfdecor-btn', 'body .dfdecor-open',
-    'body .dfprofile-wed',   // LEGACY7 part three: the inspect card's Propose
-    'body .dfnaval-btn',   // NAV-F: the plunder window's presses
+    'body .dfpage-btn',
+    'body .dfpeer-btn:not(.cancel)',
+    'body .dfduel-btn',
+    'body .dfprofile-duel',
+    'body .dfdecor-btn',
+    'body .dfdecor-open',
+    'body .dfprofile-wed', // LEGACY7 part three: the inspect card's Propose
+    'body .dfnaval-btn', // NAV-F: the plunder window's presses
     // CARDS-PLUS: the card tables' presses, and the fold that puts a table's words away so the cloth shows
-    'body .dfcards button', 'body .dfcards .fold', 'body .dfiliac button', 'body .dfiliac .fold',
-    'body .dfgambit button', 'body .dfgambit .fold',   // KG3
+    'body .dfcards button',
+    'body .dfcards .fold',
+    'body .dfiliac button',
+    'body .dfiliac .fold',
+    'body .dfgambit button',
+    'body .dfgambit .fold', // KG3
     // PLUS-MENU (2026-10-07, Mac: "give the main menu the enhanced plus UI treatment"): the front door's doors - stone
     // slabs that go brass under the pointer, as every other Plus press does (AUDIT PLUS-MENU M3: the System tab's list
     // named beside them was `.px-menu.px-compact`, which nothing builds - that list is the rail's rows, the qrow role)
@@ -204,147 +315,342 @@ export const FRAME_ROLES = {
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
     'body .fmt-btn',
     // EG-PLUS: a breach window's presses and its close; the Spire HUD's decrees press and its touch buttons
-    'body .eg-k-btn', 'body .eg-k-x', 'body .eg-spire.enhanced .eg-fold', 'body .eg-spire.enhanced .eg-touch button',
-    'body .dftown-panel .dftown-btn'],   // NOTICE-PANEL: the town panel's Notice Board and Bounty Board
-  primary: ['body .dftown-panel .dftown-btn.primary',   // NOTICE-PANEL: the Notice Board - what the panel is for
-    '.lv-ok', '.hmroot .act:not(.hmtool)', 'body .dfdecor-place', 'body .bounty-shell .act.primary', 'body .lgs-shell .act.primary', 'body .notice-shell .act.primary',
-    'body .aw-shell .act.primary',   // ARENA3: Fight and the wager placed - what the window is for   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
-    'body .dfnaval-take',   // NAV-F: Take all (and a raid's Sail on) - what the plunder window is for
-    'body .dfcards button[data-kind="primary"]', 'body .dfiliac button[data-kind="primary"]',   // CARDS-PLUS: Deal me in, Check and Call; Deal, Commit and Play again
-    'body .dfgambit button[data-kind="primary"]',   // KG3: Build your army, Start the battle, End turn, Play again
+    'body .eg-k-btn',
+    'body .eg-k-x',
+    'body .eg-spire.enhanced .eg-fold',
+    'body .eg-spire.enhanced .eg-touch button',
+    'body .dftown-panel .dftown-btn',
+  ], // NOTICE-PANEL: the town panel's Notice Board and Bounty Board
+  primary: [
+    'body .dftown-panel .dftown-btn.primary', // NOTICE-PANEL: the Notice Board - what the panel is for
+    '.lv-ok',
+    '.hmroot .act:not(.hmtool)',
+    'body .dfdecor-place',
+    'body .bounty-shell .act.primary',
+    'body .lgs-shell .act.primary',
+    'body .notice-shell .act.primary',
+    'body .aw-shell .act.primary', // ARENA3: Fight and the wager placed - what the window is for   // BOUNTY1: Take bounty and Take the reward in brass   // PLUS-MAP: the map's tools are plain stone   // PLUS-DRESS: Place is what the decorator is for
+    'body .dfnaval-take', // NAV-F: Take all (and a raid's Sail on) - what the plunder window is for
+    'body .dfcards button[data-kind="primary"]',
+    'body .dfiliac button[data-kind="primary"]', // CARDS-PLUS: Deal me in, Check and Call; Deal, Commit and Play again
+    'body .dfgambit button[data-kind="primary"]', // KG3: Build your army, Start the battle, End turn, Play again
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
     'body .fmt-btn.fmt-go',
-    'body .eg-k-btn[data-kind="primary"]'],   // EG-PLUS: Open the breach, Close a recap - what the window is for
+    'body .eg-k-btn[data-kind="primary"]',
+  ], // EG-PLUS: Open the breach, Close a recap - what the window is for
   // PLUS-DRESS: a press that COSTS something - leave or disband a guild, remove a member, challenge a player - the
   // button in blood rather than brass (the low-health frame's red). Each is a button above as well; this is its edge.
-  warn: ['body .lk-acts .lk-auto',   /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn', 'body .dfprofile-duel',
-    'body .dfnaval-scuttle',   // NAV-F: scuttling a prize - she and what is left in her go down
-    '.pack-shell .fate-confirm .act.warn', '.px-sys .cmp-acts .act.warn',   // REVENANT-FATE: Execute; COMPANION-ROSTER: Release, confirmed
-    'body .dfdecor-btn.warn',   // MENU-ORDER: the decorator's Remove - its piece and half its price go
-    '.trade-shell .act.trade-steal',   // MENU-ORDER: the counter's Steal - a crime, if the keeper sees it
-    'body .dfiliac button[data-kind="warn"]',   // CARDS-PLUS: Iliac Hand's Concede and stand - the staked card or the ranked game given up
-    'body .dfgambit button[data-kind="warn"]',   // KG3: Forfeit, and Stand up mid-game - the stake given up
+  warn: [
+    'body .lk-acts .lk-auto',
+    /* AUDIT LOCKPICK C6: the Auto attempt - a failed roll snaps a pick */ 'body .dfsocial-btn.warn',
+    'body .dfprofile-duel',
+    'body .dfnaval-scuttle', // NAV-F: scuttling a prize - she and what is left in her go down
+    '.pack-shell .fate-confirm .act.warn',
+    '.px-sys .cmp-acts .act.warn', // REVENANT-FATE: Execute; COMPANION-ROSTER: Release, confirmed
+    'body .dfdecor-btn.warn', // MENU-ORDER: the decorator's Remove - its piece and half its price go
+    '.trade-shell .act.trade-steal', // MENU-ORDER: the counter's Steal - a crime, if the keeper sees it
+    'body .dfiliac button[data-kind="warn"]', // CARDS-PLUS: Iliac Hand's Concede and stand - the staked card or the ranked game given up
+    'body .dfgambit button[data-kind="warn"]', // KG3: Forfeit, and Stand up mid-game - the stake given up
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
-    'body .fmt-btn.fmt-exit'],
-  tile: ['.px-qoffer .px-qpiece',   // QL3: a reward waiting's piece
-    '.port-host .port-tile', '.pack-shell .sf-chip', '.port-host .port-iconcell', '.pack-shell .itemrow', '.pack-shell .equipped .wornrow', '.pack-shell .wornmap .worncape', '.pack-shell .wornsock',   // CAPE-TOGGLE: the Cloaks panel's eye, a press on the panel's wood
+    'body .fmt-btn.fmt-exit',
+  ],
+  tile: [
+    '.px-qoffer .px-qpiece', // QL3: a reward waiting's piece
+    '.port-host .port-tile',
+    '.pack-shell .sf-chip',
+    '.port-host .port-iconcell',
+    '.pack-shell .itemrow',
+    '.pack-shell .equipped .wornrow',
+    '.pack-shell .wornmap .worncape',
+    '.pack-shell .wornsock', // CAPE-TOGGLE: the Cloaks panel's eye, a press on the panel's wood
     '.wizard .racegrid button',
-    '.wizard .facegrid button', '.shell .ft-tile', '.shell .ft-seg', '.shell .ft-mchip', '.shell .ft-tile-more',   // FT18: a condensed tile's parts toggle
-    '.sb-shell .sb-chip', '.cr-shell .sb-chip', '.piletab',
+    '.wizard .facegrid button',
+    '.shell .ft-tile',
+    '.shell .ft-seg',
+    '.shell .ft-mchip',
+    '.shell .ft-tile-more', // FT18: a condensed tile's parts toggle
+    '.sb-shell .sb-chip',
+    '.cr-shell .sb-chip',
+    '.piletab',
     // PLUS3: the shop's shelf rows and the tavern's food & drink rows - the same `.itemrow` the pack
     // wears as a tile, under the trade/tavern shells that role list never named
     // PLUS6: the shop's shelf rows and the tavern's dishes left this role - they are the lines of a list (listRow below)
     // PLUS4: the held map's own pair of options (Speed/Passage/Rest) - a pickable cell in a row of
     // two, same as any other tile; its OWN .on state keeps its brass mark (below), not the kit's
     '.hmpick',
-    'body .dfdecor-chip',   // PLUS-DRESS: the decorator's filters and modes - pickable cells, the chosen one brass
-    'body .dfnaval-choice',   // NAV-F: the captor's three choices - the one taken brass
-    'body .dfiliac .opt',   // CARDS-PLUS: Iliac Hand's setup - a deck, a regular, a box ticked - the one chosen brass
-    'body .dfgambit-unit', 'body .dfgambit-stake', 'body .dfgambit-crown',   // KG3: a unit of the grid, a stake, a crown
-    '.px-sys .cmp-vent',   // RVN-ERRAND: the errand's venture - the one chosen brass
-    '.px-sys .coll-part', '.px-sys .binder-filter', '.px-sys .binder-chip',
-    '.px-sys .coll-filter', '.px-sys .coll-with', '.px-sys .coll-retry',   // COLLECTIONS-II: the wardrobe's filters, and a "comes with" press - AUDIT COLLECTIONS-II: and a failed read's Try again
-    'body .eg-k-tile'],   // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards
+    'body .dfdecor-chip', // PLUS-DRESS: the decorator's filters and modes - pickable cells, the chosen one brass
+    'body .dfnaval-choice', // NAV-F: the captor's three choices - the one taken brass
+    'body .dfiliac .opt', // CARDS-PLUS: Iliac Hand's setup - a deck, a regular, a box ticked - the one chosen brass
+    'body .dfgambit-unit',
+    'body .dfgambit-stake',
+    'body .dfgambit-crown', // KG3: a unit of the grid, a stake, a crown
+    '.px-sys .cmp-vent', // RVN-ERRAND: the errand's venture - the one chosen brass
+    '.px-sys .coll-part',
+    '.px-sys .binder-filter',
+    '.px-sys .binder-chip',
+    '.px-sys .coll-filter',
+    '.px-sys .coll-with',
+    '.px-sys .coll-retry', // COLLECTIONS-II: the wardrobe's filters, and a "comes with" press - AUDIT COLLECTIONS-II: and a failed read's Try again
+    'body .eg-k-tile',
+  ], // EG-PLUS: a Vestige offered, a start, a decree for the Wager - the one taken brass   // COLLECTIONS (CARDS-PLUS): the Codex | Cards switch, the binder's kinds, a deck's cards
   // HOLDINGS: where a holding is (`.hld-state`)
-  chip: ['body .lk-meta > span',   /* AUDIT LOCKPICK C1: the picks, the pins set, the skill - read, never pressed */ 'body .rvncard-rank', '.px-sys .rvn-rank', '.px-sys .hld-state', '.px-sys .fam-chip',   // LEGACY3: a person's state
-     'body .dfgambit-chip',   // KG3: the table's readouts - points, units, actions, potions, fallen, a unit's numbers
-     'body .rvncard-mood', '.px-sys .rvn-mood', '.pack-shell .fate-mood', '.px-sys .cmp-rank', '.px-sys .cmp-mood', '.hud-qspell', '.hud-temp', '.pack-shell .sf-tile', '.pack-shell .sf-pill', '.hud-qstag', '.hud-readied', '.lv-note-key',   // (UI3: the effect and need chips are the status widget's tiles now)
-    '.shell .subbtn .count', '.hb .hb-caption',
-    'body .dfnaval-chip', 'body .dfnaval-gun',   // NAV-F: the plate's fire/brace chips and the battery rose - readouts, never pressed
-    'body .arena-timer', 'body .arena-tag',
-    'body .aw-chip',   // ARENA3: the Arena window's titles, banners, laurels, odds and states - readouts   // ARENA2: the bout's clock and the crowd's darling/villain marks - readouts
-    'body .dfcards .pot', 'body .dfiliac .pw',   // CARDS-PLUS: the pot, and a holding's power each way - readouts
+  chip: [
+    'body .lk-meta > span',
+    /* AUDIT LOCKPICK C1: the picks, the pins set, the skill - read, never pressed */ 'body .rvncard-rank',
+    '.px-sys .rvn-rank',
+    '.px-sys .hld-state',
+    '.px-sys .fam-chip', // LEGACY3: a person's state
+    'body .dfgambit-chip', // KG3: the table's readouts - points, units, actions, potions, fallen, a unit's numbers
+    'body .rvncard-mood',
+    '.px-sys .rvn-mood',
+    '.pack-shell .fate-mood',
+    '.px-sys .cmp-rank',
+    '.px-sys .cmp-mood',
+    '.hud-qspell',
+    '.hud-temp',
+    '.pack-shell .sf-tile',
+    '.pack-shell .sf-pill',
+    '.hud-qstag',
+    '.hud-readied',
+    '.lv-note-key', // (UI3: the effect and need chips are the status widget's tiles now)
+    '.shell .subbtn .count',
+    '.hb .hb-caption',
+    'body .dfnaval-chip',
+    'body .dfnaval-gun', // NAV-F: the plate's fire/brace chips and the battery rose - readouts, never pressed
+    'body .arena-timer',
+    'body .arena-tag',
+    'body .aw-chip', // ARENA3: the Arena window's titles, banners, laurels, odds and states - readouts   // ARENA2: the bout's clock and the crowd's darling/villain marks - readouts
+    'body .dfcards .pot',
+    'body .dfiliac .pw', // CARDS-PLUS: the pot, and a holding's power each way - readouts
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
     'body .fmt-purse',
     '.px-sys .cmp-odds',
-    '.px-sys .coll-tag',   // COLLECTIONS-II: a row's readouts - whose it is, whether it can be had
-    'body .eg-k-chip', 'body .eg-spire.enhanced .eg-chip'],   // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout
+    '.px-sys .coll-tag', // COLLECTIONS-II: a row's readouts - whose it is, whether it can be had
+    'body .eg-k-chip',
+    'body .eg-spire.enhanced .eg-chip',
+  ], // EG-PLUS: a breach window's readouts, and the Spire HUD's chips   // RVN-ERRAND: an errand's odds - a readout
   // HOLDINGS: a holding's picture, a name's field (`.hld-art`, `.hld-field`)
-  well: ['body .lk-canvas',   /* AUDIT LOCKPICK C1: the lock itself, sunk in the window */ 'body .rvncard-face', '.px-sys .rvn-face', '.px-sys .hld-art', '.px-sys .hld-field', '.px-sys .fam-view', '.px-sys .fam-card .fam-face', 'body .lgs-face',   // LEGACY3: the tree's ground, the card's portrait
-     '.pack-shell .fate-face', '.px-sys .cmp-face', '.px-sys .cmp-slot', '.px-sys .cmp-gslot', '.trade-shell .packcol', '.pack-shell .sf-sec', '.shell .opt-search', '.shell .ft-tile-drawer',   // FT18: the Features search and a tile's opened drawer
-    '.port-host .port-field', '.port-host .port-canvas', '.port-host .port-picture img', '.port-host .port-pictureword', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
-    '.talk-face', '.pack-shell .figure-doll', '.pack-shell .wornmap-doll.noart', '.shell .look-pic',
-    '.shell .dcard code', '.px-setwrap .dcard code', '.px-meter', '.shell .swatch', '.px-setwrap .swatch',
+  well: [
+    'body .lk-canvas',
+    /* AUDIT LOCKPICK C1: the lock itself, sunk in the window */ 'body .rvncard-face',
+    '.px-sys .rvn-face',
+    '.px-sys .hld-art',
+    '.px-sys .hld-field',
+    '.px-sys .fam-view',
+    '.px-sys .fam-card .fam-face',
+    'body .lgs-face', // LEGACY3: the tree's ground, the card's portrait
+    '.pack-shell .fate-face',
+    '.px-sys .cmp-face',
+    '.px-sys .cmp-slot',
+    '.px-sys .cmp-gslot',
+    '.trade-shell .packcol',
+    '.pack-shell .sf-sec',
+    '.shell .opt-search',
+    '.shell .ft-tile-drawer', // FT18: the Features search and a tile's opened drawer
+    '.port-host .port-field',
+    '.port-host .port-canvas',
+    '.port-host .port-picture img',
+    '.port-host .port-pictureword',
+    '.wizard .namebox',
+    '.sb-shell .sb-rename input',
+    '.cr-shell .cr-compose input',
+    '.hmsearch input',
+    '.talk-face',
+    '.pack-shell .figure-doll',
+    '.pack-shell .wornmap-doll.noart',
+    '.shell .look-pic',
+    '.shell .dcard code',
+    '.px-setwrap .dcard code',
+    '.px-meter',
+    '.shell .swatch',
+    '.px-setwrap .swatch',
     // PLUS8: the journey bar's time readout - the x100 sits in a socket (RATE-LAW: its two presses are gone)
     '.travelpanel-accel',
     // PACE-DIALS: the speed dials' rate, in the same socket
-    '.tview-pace-num', '.travelpanel-pace-num', '.pbox-pace-num',
+    '.tview-pace-num',
+    '.travelpanel-pace-num',
+    '.pbox-pace-num',
     // OW-THEME: the Overworld's compass - its needle sunk in a socket, as the journey bar's clock is
     '.tview-compass',
     // PLUS-DRESS: the page's leaf, the decorator's list, preview, thumbnails and search, the party's portraits
-    'body .dfpage-leaf', 'body .dfdecor-list', 'body .dfdecor-preview', 'body .dfdecor-thumb', 'body .dfdecor-search', 'body .dfparty-face',
-    'body .dfnaval-holdlist',   // NAV-F: a taken ship's hold, sunk into her window
-    'body .dfcards .board', 'body .dfiliac .tray', 'body .dfiliac .season',   // CARDS-PLUS: the board's cards, the hand held and the season's board, sunk into the stone
-    'body .dfgambit-face', 'body .dfgambit-meter',   // KG3: the unit shown large, a piece's health well
-    '.px-sys .binder-edit input'],   // COLLECTIONS (CARDS-PLUS): a deck's name
-  input: ['.shell .opt-search', '.wizard .namebox', '.sb-shell .sb-rename input', '.cr-shell .cr-compose input', '.hmsearch input',
-    'body .dfsocial-field', 'body .dfchat-input', 'body .dfdecor-search',
-    '.tview-wp-pick', '#wp-menu input.wpm-name',   // WAYPOINTS: the follow dropdown and the menu's name
-    '.px-sys .binder-edit input',   // COLLECTIONS (CARDS-PLUS): a deck's name
+    'body .dfpage-leaf',
+    'body .dfdecor-list',
+    'body .dfdecor-preview',
+    'body .dfdecor-thumb',
+    'body .dfdecor-search',
+    'body .dfparty-face',
+    'body .dfnaval-holdlist', // NAV-F: a taken ship's hold, sunk into her window
+    'body .dfcards .board',
+    'body .dfiliac .tray',
+    'body .dfiliac .season', // CARDS-PLUS: the board's cards, the hand held and the season's board, sunk into the stone
+    'body .dfgambit-face',
+    'body .dfgambit-meter', // KG3: the unit shown large, a piece's health well
+    '.px-sys .binder-edit input',
+  ], // COLLECTIONS (CARDS-PLUS): a deck's name
+  input: [
+    '.shell .opt-search',
+    '.wizard .namebox',
+    '.sb-shell .sb-rename input',
+    '.cr-shell .cr-compose input',
+    '.hmsearch input',
+    'body .dfsocial-field',
+    'body .dfchat-input',
+    'body .dfdecor-search',
+    '.tview-wp-pick',
+    '#wp-menu input.wpm-name', // WAYPOINTS: the follow dropdown and the menu's name
+    '.px-sys .binder-edit input', // COLLECTIONS (CARDS-PLUS): a deck's name
     // FIRM1: the Firmament's window (ui/firmamentWindow.js) - its bar, its panels, its presses
-    'body .fmt-find'],
-  meterFill: ['.px-fill', 'body .dfgambit-fill'],   // KG3: a piece's health, banded like the vitals
-  header: ['.port-host .port-head', '.px-win .px-tabs', '.talk-head', '.sb-shell .sb-top', '.cr-shell .sb-top', '.trade-shell .sb-top',
-    'body .broker-head',   // SET7: the Broker's header - who, the purse, the turn of the day
-    'body .lk-head',   // AUDIT LOCKPICK C1: the lock's header - what is picked, DFU's look-at line
-    'body .dfnaval-winhead',   // NAV-F: the prize's name, her colours and her captain
-    'body .bounty-head',   // BOUNTY1: the board's header - the town, the day's turn
-    'body .notice-head',   // NOTICE1: the Notice Board's header - the town, the notes up
-    'body .aw-head',   // ARENA3: the Arena window's header - the season, your name, your title and banner
-    '.tavern-shell .sb-top', '.pack-shell .pack-id', '.hmbox-title', '.loot-win .remotehead',
+    'body .fmt-find',
+  ],
+  meterFill: ['.px-fill', 'body .dfgambit-fill'], // KG3: a piece's health, banded like the vitals
+  header: [
+    '.port-host .port-head',
+    '.px-win .px-tabs',
+    '.talk-head',
+    '.sb-shell .sb-top',
+    '.cr-shell .sb-top',
+    '.trade-shell .sb-top',
+    'body .broker-head', // SET7: the Broker's header - who, the purse, the turn of the day
+    'body .lk-head', // AUDIT LOCKPICK C1: the lock's header - what is picked, DFU's look-at line
+    'body .dfnaval-winhead', // NAV-F: the prize's name, her colours and her captain
+    'body .bounty-head', // BOUNTY1: the board's header - the town, the day's turn
+    'body .notice-head', // NOTICE1: the Notice Board's header - the town, the notes up
+    'body .aw-head', // ARENA3: the Arena window's header - the season, your name, your title and banner
+    '.tavern-shell .sb-top',
+    '.pack-shell .pack-id',
+    '.hmbox-title',
+    '.loot-win .remotehead',
     // PLUS4: the shelf's own "On the shelf / N items" band - the same header a loot window's
     // remotehead already wears, just never scoped for the trade counter's own copy of that markup
     '.trade-shell .remotehead',
-    'body .dfsocial-head', 'body .dfchat-tabs', 'body .dfsocial-tabs',
-    'body .dfcards .tablehead', 'body .dfiliac .tablehead', 'body .dfgambit .tablehead',
-    'body .eg-k-head'],   // EG-PLUS: the band that names a breach window   // CARDS-PLUS: the band that names a card table's panel
-  headerRule: ['body .rvncard-name', '.shell .ft-drawer-label', '.pack-shell .sf-sec h4', '.pack-shell .card h3', '.hmcard h3', '.hmcard h2', '.lv-crown', '.talk-modes', '.talk-cats',
-    'body .dfsocial-sec', 'body .dfpeer-name', 'body .dfdecor-head',   // PLUS-DRESS: the Social panel's section heads (the Guild tab's), the F-menu's name
-    'body .dfnaval-sechead',   // NAV-F: the plunder window's three heads
-    'body .dfgambit-sec > summary', 'body .dfgambit-sec > h3',
-    'body .eg-k-sechead'],   // EG-PLUS: a breach window's section head   // KG3: a section's head
-  footer: ['.port-host .port-foot', '.dlg-shell .dlg-acts', '.trade-shell .trade-footer', '.pack-shell .pack-dock', '.pack-shell .packbar', '.talk-say',
-    'body .eg-k-dock'],   // EG-PLUS: the band a breach window's presses stand on
+    'body .dfsocial-head',
+    'body .dfchat-tabs',
+    'body .dfsocial-tabs',
+    'body .dfcards .tablehead',
+    'body .dfiliac .tablehead',
+    'body .dfgambit .tablehead',
+    'body .eg-k-head',
+  ], // EG-PLUS: the band that names a breach window   // CARDS-PLUS: the band that names a card table's panel
+  headerRule: [
+    'body .rvncard-name',
+    '.shell .ft-drawer-label',
+    '.pack-shell .sf-sec h4',
+    '.pack-shell .card h3',
+    '.hmcard h3',
+    '.hmcard h2',
+    '.lv-crown',
+    '.talk-modes',
+    '.talk-cats',
+    'body .dfsocial-sec',
+    'body .dfpeer-name',
+    'body .dfdecor-head', // PLUS-DRESS: the Social panel's section heads (the Guild tab's), the F-menu's name
+    'body .dfnaval-sechead', // NAV-F: the plunder window's three heads
+    'body .dfgambit-sec > summary',
+    'body .dfgambit-sec > h3',
+    'body .eg-k-sechead',
+  ], // EG-PLUS: a breach window's section head   // KG3: a section's head
+  footer: [
+    '.port-host .port-foot',
+    '.dlg-shell .dlg-acts',
+    '.trade-shell .trade-footer',
+    '.pack-shell .pack-dock',
+    '.pack-shell .packbar',
+    '.talk-say',
+    'body .eg-k-dock',
+  ], // EG-PLUS: the band a breach window's presses stand on
   footerRule: ['.lv-foot', '.wizard .actionbar'],
-  rule: ['.port-host .port-stat', '.pack-shell .sf-row', '.pack-shell .sf-th', '.px-stat', '.px-sys .row', '.shell .row', '.px-setwrap .row', '.hmresult', '.hmpair', '.cr-shell .cr-head',
-    'body .dfprofile-head', 'body .dfsocial-letterhead',
-    'body .dfsocial-row'],   // PLUS-DRESS: a friend's, a party seat's, a guild member's row - an engraved line under each
+  rule: [
+    '.port-host .port-stat',
+    '.pack-shell .sf-row',
+    '.pack-shell .sf-th',
+    '.px-stat',
+    '.px-sys .row',
+    '.shell .row',
+    '.px-setwrap .row',
+    '.hmresult',
+    '.hmpair',
+    '.cr-shell .cr-head',
+    'body .dfprofile-head',
+    'body .dfsocial-letterhead',
+    'body .dfsocial-row',
+  ], // PLUS-DRESS: a friend's, a party seat's, a guild member's row - an engraved line under each
   // rules that sit ABOVE their content
-  ruleTop: ['.px-qarch', '.wplaque-list', 'body .dfchat-form', 'body .dfcards .log', 'body .dfiliac .log', 'body .dfgambit .log',
-    'body .eg-k-foot'],   // EG-PLUS: a breach window's foot, its keys   // CARDS-PLUS: a card table's log under its presses
+  ruleTop: [
+    '.px-qarch',
+    '.wplaque-list',
+    'body .dfchat-form',
+    'body .dfcards .log',
+    'body .dfiliac .log',
+    'body .dfgambit .log',
+    'body .eg-k-foot',
+  ], // EG-PLUS: a breach window's foot, its keys   // CARDS-PLUS: a card table's log under its presses
   // a list whose rows are lines, not boxes: the loot window's rows
   // (they are .pack-shell .itemrow too, so this outweighs the tile role)
-  listRow: ['.pack-shell .loot-win .itemrow', '.trade-shell .itemrow',   // PLUS6: the shop's shelf and basket rows too
-    'body .dfdecor-row',   // PLUS-DRESS: the decorator's catalogue
-    'body .broker-offer',   // SET7: the Broker's offers
-    'body .wardrobe-look',   // APPEARANCES: a look on the Wardrobe's card, a line each - the one worn brass
-    'body .dfnaval-item',   // NAV-F: a taken ship's hold, a line a piece
-    'body .bounty-post',   // BOUNTY1: the board's notices
-    'body .aw-tier',   // ARENA3: the ladder's ten tiers, a line each
-    '.px-sys .codex-line',   // COLLECTIONS (CARDS-PLUS): the codex's Legendaries, a line each - the one opened brass
-    '.px-sys .coll-row',   // COLLECTIONS-II: a title, an aura, an icon or a glyph, a line each - the one opened brass
-    'body .dfgambit-regular', 'body .dfgambit-armyrow', 'body .dfgambit-piece',
-    'body .eg-k-row'],   // EG-PLUS: a board's line, a recap's member - the reader's own brass   // KG3: a regular, a unit of your army, a piece
+  listRow: [
+    '.pack-shell .loot-win .itemrow',
+    '.trade-shell .itemrow', // PLUS6: the shop's shelf and basket rows too
+    'body .dfdecor-row', // PLUS-DRESS: the decorator's catalogue
+    'body .broker-offer', // SET7: the Broker's offers
+    'body .wardrobe-look', // APPEARANCES: a look on the Wardrobe's card, a line each - the one worn brass
+    'body .dfnaval-item', // NAV-F: a taken ship's hold, a line a piece
+    'body .bounty-post', // BOUNTY1: the board's notices
+    'body .aw-tier', // ARENA3: the ladder's ten tiers, a line each
+    '.px-sys .codex-line', // COLLECTIONS (CARDS-PLUS): the codex's Legendaries, a line each - the one opened brass
+    '.px-sys .coll-row', // COLLECTIONS-II: a title, an aura, an icon or a glyph, a line each - the one opened brass
+    'body .dfgambit-regular',
+    'body .dfgambit-armyrow',
+    'body .dfgambit-piece',
+    'body .eg-k-row',
+  ], // EG-PLUS: a board's line, a recap's member - the reader's own brass   // KG3: a regular, a unit of your army, a piece
   // the fading wing rules and dividers of the quest page
   wing: ['.px-qwing'],
   wingFlip: ['.px-qwing.px-flip'],
   railRight: ['.px-qrail', '.shell .side', '.shell .subrail'],
   railLeft: ['.talk-topics', '.shell .detail', 'body .dfchat-who'],
-  tabs: ['.px-tabs button', '.talk-mode', 'body .dfsocial-tab', 'body .dfchat-tab', 'body .eg-k-tab'],   // EG-PLUS: the boards' tabs
+  tabs: ['.px-tabs button', '.talk-mode', 'body .dfsocial-tab', 'body .dfchat-tab', 'body .eg-k-tab'], // EG-PLUS: the boards' tabs
   // the CHOSEN option of a row of several (Cloud quality: Default / Low / High, and
   // every tier row like it) - filled green, the colour of a switch that is on.
   // On/off switches already carry their own green and red (.ft-seg-switch).
-  chosen: ['.ft-seg:not(.ft-seg-switch) .ft-segb[aria-pressed="true"]', '.ft-seg.ft-seg-switch .ft-segb:not(.off)[aria-pressed="true"]'],
+  chosen: [
+    '.ft-seg:not(.ft-seg-switch) .ft-segb[aria-pressed="true"]',
+    '.ft-seg.ft-seg-switch .ft-segb:not(.off)[aria-pressed="true"]',
+  ],
   chosenLocked: ['.ft-seg.locked:not(.ft-seg-switch) .ft-segb[aria-pressed="true"]'],
   qrow: ['.port-host .port-row', '.pack-shell .sf-tr', '.pick-shell .pick-row', '.px-qrow', '.talk-row'],
   // everything in the online lane's panels that was rounded
-  square: ['body .dfsocial', 'body .dfprofile-card', 'body .dfchat-box', 'body .dfsocial-btn', 'body .dfsocial-close',
-    'body .dfprofile-close', 'body .dfsocial-field', 'body .dfchat-input',
+  square: [
+    'body .dfsocial',
+    'body .dfprofile-card',
+    'body .dfchat-box',
+    'body .dfsocial-btn',
+    'body .dfsocial-close',
+    'body .dfprofile-close',
+    'body .dfsocial-field',
+    'body .dfchat-input',
     // PLUS-DRESS: and everything the lane grew since
-    'body .dfsocial-toast', 'body .dfsocial-badge', 'body .dfsocial-letter', 'body .dfprofile-renown', 'body .dfprofile-duel', 'body .dfprofile-wed',
-    'body .dfpage-card', 'body .dfpage-leaf', 'body .dfpage-btn', 'body .dfpeer-card', 'body .dfpeer-btn',
-    'body .dfduel-toast', 'body .dfduel-btn', 'body .dfdecor-card', 'body .dfdecor-open', 'body .dfdecor-search', 'body .dfdecor-chip',
-    'body .dfdecor-list', 'body .dfdecor-thumb', 'body .dfdecor-preview', 'body .dfdecor-btn', 'body .dfdecor-bar'],
+    'body .dfsocial-toast',
+    'body .dfsocial-badge',
+    'body .dfsocial-letter',
+    'body .dfprofile-renown',
+    'body .dfprofile-duel',
+    'body .dfprofile-wed',
+    'body .dfpage-card',
+    'body .dfpage-leaf',
+    'body .dfpage-btn',
+    'body .dfpeer-card',
+    'body .dfpeer-btn',
+    'body .dfduel-toast',
+    'body .dfduel-btn',
+    'body .dfdecor-card',
+    'body .dfdecor-open',
+    'body .dfdecor-search',
+    'body .dfdecor-chip',
+    'body .dfdecor-list',
+    'body .dfdecor-thumb',
+    'body .dfdecor-preview',
+    'body .dfdecor-btn',
+    'body .dfdecor-bar',
+  ],
 };
 
 const list = (sels, suffix = '') => sels.map((s) => `${s}${suffix}`).join(',\n');
@@ -368,19 +674,21 @@ export function frameSvg(t = T) {
   // one row of a TOP (lit) and a BOTTOM (shaded) edge, outside to in
   const lit = [t.outline, t.stoneHi, t.stoneLit, t.stoneMid, t.stoneLo, t.outline, '#16140f', '#0c0d10'];
   const shade = [t.outline, t.stoneDark, t.stoneDim, '#443e31', '#4f4838', t.outline, t.stoneLo, '#1c1a15'];
-  const F = 11;   // the fitting's size, a square with a clipped inner corner
+  const F = 11; // the fitting's size, a square with a clipped inner corner
   const rects = [];
-  const px = (x, y, c) => { if (c) rects.push(`<rect x='${x}' y='${y}' width='1' height='1' fill='${c}'/>`); };
+  const px = (x, y, c) => {
+    if (c) rects.push(`<rect x='${x}' y='${y}' width='1' height='1' fill='${c}'/>`);
+  };
   // i, j: distance from the corner's two OUTER edges. Returns null where
   // the fitting does not reach, so the stone edge shows through.
   const fitting = (i, j) => {
     if (i >= F || j >= F) return null;
-    if (i + j > F + 4) return null;                 // the clipped inner corner
+    if (i + j > F + 4) return null; // the clipped inner corner
     if (i === 0 || j === 0 || i === F - 1 || j === F - 1 || i + j === F + 4) return t.outline;
-    const r = 4;                                    // the rivet, 3x3 with a lit pixel
+    const r = 4; // the rivet, 3x3 with a lit pixel
     if (i >= r && i <= r + 2 && j >= r && j <= r + 2) {
       if (i === r + 1 && j === r + 1) return t.brassHi;
-      return (i === r || j === r) ? t.brassDark : t.brassLo;
+      return i === r || j === r ? t.brassDark : t.brassLo;
     }
     if (i === 1 || j === 1) return t.brassHi;
     if (i === F - 2 || j === F - 2 || i + j === F + 3) return t.brassLo;
@@ -388,20 +696,36 @@ export function frameSvg(t = T) {
   };
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
-      const inL = x < BAND, inR = x > BAND, inT = y < BAND, inB = y > BAND;
-      const dt = y, db = N - 1 - y, dl = x, dr = N - 1 - x;
+      const inL = x < BAND,
+        inR = x > BAND,
+        inT = y < BAND,
+        inB = y > BAND;
+      const dt = y,
+        db = N - 1 - y,
+        dl = x,
+        dr = N - 1 - x;
       if ((inL || inR) && (inT || inB)) {
-        const i = inT ? dt : db, j = inL ? dl : dr;
+        const i = inT ? dt : db,
+          j = inL ? dl : dr;
         const f = fitting(i, j);
-        if (f) { px(x, y, f); continue; }
+        if (f) {
+          px(x, y, f);
+          continue;
+        }
         // under the fitting's clipped corner: the two edges meet
-        if (i < EDGE && j < EDGE) px(x, y, i <= j ? (inT ? lit[i] : shade[i]) : (inL ? lit[j] : shade[j]));   // a mitre
+        if (i < EDGE && j < EDGE)
+          px(x, y, i <= j ? (inT ? lit[i] : shade[i]) : inL ? lit[j] : shade[j]); // a mitre
         else if (i < EDGE) px(x, y, inT ? lit[i] : shade[i]);
         else if (j < EDGE) px(x, y, inL ? lit[j] : shade[j]);
-      } else if (inT) { if (dt < EDGE) px(x, y, lit[dt]); }
-      else if (inB) { if (db < EDGE) px(x, y, shade[db]); }
-      else if (inL) { if (dl < EDGE) px(x, y, lit[dl]); }
-      else if (inR) { if (dr < EDGE) px(x, y, shade[dr]); }
+      } else if (inT) {
+        if (dt < EDGE) px(x, y, lit[dt]);
+      } else if (inB) {
+        if (db < EDGE) px(x, y, shade[db]);
+      } else if (inL) {
+        if (dl < EDGE) px(x, y, lit[dl]);
+      } else if (inR) {
+        if (dr < EDGE) px(x, y, shade[dr]);
+      }
     }
   }
   return `<svg xmlns='http://www.w3.org/2000/svg' width='${N}' height='${N}' shape-rendering='crispEdges'>${rects.join('')}</svg>`;
@@ -421,7 +745,8 @@ const BLOOD = '#e0584a #5a130f #3d0d0a #b83a2e';
 const BLOOD_HI = '#ff8a76 #7a1d16 #5a130f #e0584a';
 const BLOOD_SUNK = '#3d0d0a #b83a2e #e0584a #5a130f';
 const RING = `0 0 0 1px ${T.outline}`;
-const LIT_BAND = 'linear-gradient(180deg, rgba(255,255,255,0.08) 0 2px, transparent 2px calc(100% - 3px), rgba(0,0,0,0.32) calc(100% - 3px))';
+const LIT_BAND =
+  'linear-gradient(180deg, rgba(255,255,255,0.08) 0 2px, transparent 2px calc(100% - 3px), rgba(0,0,0,0.32) calc(100% - 3px))';
 /** UI-CALM II: a window's carved frame and ground, for a surface that is a window by look but not by role (the
  *  character walk's list and card - ui/uiCalmStyle.js), so the two never drift apart. */
 export const WINDOW_FRAME = Object.freeze({
@@ -640,11 +965,16 @@ ${list(r.chosenLocked)} { color: ${T.brassHi}; }
 /** A selector list split at its top-level commas (never inside `:is(...)`/`:not(...)`). */
 function splitSelectors(prelude) {
   const out = [];
-  let depth = 0, at = 0;
+  let depth = 0,
+    at = 0;
   for (let i = 0; i < prelude.length; i++) {
     const c = prelude[i];
-    if (c === '(') depth++; else if (c === ')') depth--;
-    else if (c === ',' && depth === 0) { out.push(prelude.slice(at, i).trim()); at = i + 1; }
+    if (c === '(') depth++;
+    else if (c === ')') depth--;
+    else if (c === ',' && depth === 0) {
+      out.push(prelude.slice(at, i).trim());
+      at = i + 1;
+    }
   }
   out.push(prelude.slice(at).trim());
   return out.filter(Boolean);
@@ -656,17 +986,28 @@ function splitSelectors(prelude) {
  *  window theirs (NAV-F). Kept here, with the kit it cuts, so a surface in the main bundle needs no window's chunk. */
 export function scopeRules(css, keep) {
   const text = String(css).replace(/\/\*[\s\S]*?\*\//g, '');
-  let out = '', i = 0;
+  let out = '',
+    i = 0;
   while (i < text.length) {
     const open = text.indexOf('{', i);
     if (open < 0) break;
     const prelude = text.slice(i, open).trim();
-    let depth = 1, j = open + 1;
-    while (j < text.length && depth) { if (text[j] === '{') depth++; else if (text[j] === '}') depth--; j++; }
+    let depth = 1,
+      j = open + 1;
+    while (j < text.length && depth) {
+      if (text[j] === '{') depth++;
+      else if (text[j] === '}') depth--;
+      j++;
+    }
     const inner = text.slice(open + 1, j - 1);
-    if (/^@(media|supports)\b/.test(prelude)) { const kept = scopeRules(inner, keep); if (kept) out += `${prelude} {\n${kept}}\n`; }
-    else if (prelude.startsWith('@')) out += `${prelude} {${inner}}\n`;
-    else { const sels = splitSelectors(prelude).filter(keep); if (sels.length) out += `${sels.join(',\n')} {${inner}}\n`; }
+    if (/^@(media|supports)\b/.test(prelude)) {
+      const kept = scopeRules(inner, keep);
+      if (kept) out += `${prelude} {\n${kept}}\n`;
+    } else if (prelude.startsWith('@')) out += `${prelude} {${inner}}\n`;
+    else {
+      const sels = splitSelectors(prelude).filter(keep);
+      if (sels.length) out += `${sels.join(',\n')} {${inner}}\n`;
+    }
     i = j;
   }
   return out;
@@ -685,13 +1026,15 @@ export function scopeRules(css, keep) {
 // surface wider than one tile, worst in the middle of a panel where a repeat boundary lands. The
 // filter region has to be pinned to the tile's own pixel box (x/y/width/height, not the default
 // -10%..120%) for `stitchTiles="stitch"` to actually close the loop at that box's edges.
-const MARBLE = (tone, a) => `url("data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='m' x='0%' y='0%' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.022 0.05' numOctaves='5' seed='7' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 ${tone} 0 0 0 0 ${tone} 0 0 0 0 ${tone} 0 0 0 ${a} 0'/></filter><rect width='220' height='220' filter='url(%23m)'/></svg>`,
-).replace(/%2523/g, '%23')}") 0 0 / 220px 220px`;
+const MARBLE = (tone, a) =>
+  `url("data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='m' x='0%' y='0%' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.022 0.05' numOctaves='5' seed='7' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 ${tone} 0 0 0 0 ${tone} 0 0 0 0 ${tone} 0 0 0 ${a} 0'/></filter><rect width='220' height='220' filter='url(%23m)'/></svg>`,
+  ).replace(/%2523/g, '%23')}") 0 0 / 220px 220px`;
 /** PLUS2b: the grit - a fine, hard-grained noise over the marble, so the stone reads rough rather than smooth. */
-const GRIT = (a) => `url("data:image/svg+xml,${encodeURIComponent(
-  `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><filter id='g' x='0%' y='0%' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ${a} 0'/></filter><rect width='96' height='96' filter='url(%23g)'/></svg>`,
-).replace(/%2523/g, '%23')}")`;
+const GRIT = (a) =>
+  `url("data:image/svg+xml,${encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><filter id='g' x='0%' y='0%' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ${a} 0'/></filter><rect width='96' height='96' filter='url(%23g)'/></svg>`,
+  ).replace(/%2523/g, '%23')}")`;
 /** PLUS2d: hex -> "r, g, b", for a theme colour that needs to keep an alpha channel
  *  (the crosshair plaque, the Ascend screen's crown/foot) rather than paint solid. */
 const rgbOf = (hex) => {
@@ -704,25 +1047,83 @@ const rgbOf = (hex) => {
 export const HUD_VEIL_LIGHT = 0.06;
 /** A colour's relative luminance (WCAG). */
 const luminance = (hex) => {
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  const [r, g, b] = [1, 3, 5]
+    .map((i) => parseInt(String(hex).slice(i, i + 2), 16) / 255)
+    .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 };
 /** The veil a theme lays under a HUD surface's words: its panel, or its ink where the panel is too light. */
 export const hudVeil = (th) => (th.ink && luminance(th.panel) > HUD_VEIL_LIGHT ? th.ink : th.panel);
 
 export const PLUS_THEMES = Object.freeze({
-  slate: { name: 'Slate', swatch: '#171b21' },   // the kit as it stands
-  stone: { name: 'Stone', swatch: '#6a6a64', ink: '#3c3c38', slate: '#4a4a45', iron: '#77776f',
-    ground: '#51514c', panel: '#5a5a54', button: '#4a4a45', buttonHi: '#5f5f58', chip: 'rgba(60,60,56,0.9)',
-    input: 'rgba(30,30,28,0.75)', marble: MARBLE(1, 0.2), grit: GRIT(0.55) },
-  iron: { name: 'Iron', swatch: '#2f3844', ink: '#161b22', slate: '#1f262f', iron: '#3a4552',
-    ground: '#232a33', panel: '#28303a', button: '#2c3440', buttonHi: '#36404d', chip: 'rgba(28,34,42,0.9)', input: 'rgba(8,10,14,0.75)' },
-  ember: { name: 'Ember', swatch: '#3a1a14', ink: '#1a0d0a', slate: '#24110d', iron: '#4a2a22',
-    ground: '#2a1510', panel: '#301914', button: '#3a1d16', buttonHi: '#4a261c', chip: 'rgba(40,20,15,0.9)', input: 'rgba(14,6,4,0.75)' },
-  forest: { name: 'Forest', swatch: '#1c2e22', ink: '#0c140f', slate: '#122018', iron: '#2c4234',
-    ground: '#15231a', panel: '#1a2b20', button: '#1f3226', buttonHi: '#284030', chip: 'rgba(20,34,25,0.9)', input: 'rgba(5,10,7,0.75)' },
-  night: { name: 'Night', swatch: '#18203a', ink: '#0b0f1c', slate: '#121831', iron: '#2c3656',
-    ground: '#131a30', panel: '#182038', button: '#1c2542', buttonHi: '#263052', chip: 'rgba(20,26,48,0.9)', input: 'rgba(5,7,14,0.75)' },
+  slate: { name: 'Slate', swatch: '#171b21' }, // the kit as it stands
+  stone: {
+    name: 'Stone',
+    swatch: '#6a6a64',
+    ink: '#3c3c38',
+    slate: '#4a4a45',
+    iron: '#77776f',
+    ground: '#51514c',
+    panel: '#5a5a54',
+    button: '#4a4a45',
+    buttonHi: '#5f5f58',
+    chip: 'rgba(60,60,56,0.9)',
+    input: 'rgba(30,30,28,0.75)',
+    marble: MARBLE(1, 0.2),
+    grit: GRIT(0.55),
+  },
+  iron: {
+    name: 'Iron',
+    swatch: '#2f3844',
+    ink: '#161b22',
+    slate: '#1f262f',
+    iron: '#3a4552',
+    ground: '#232a33',
+    panel: '#28303a',
+    button: '#2c3440',
+    buttonHi: '#36404d',
+    chip: 'rgba(28,34,42,0.9)',
+    input: 'rgba(8,10,14,0.75)',
+  },
+  ember: {
+    name: 'Ember',
+    swatch: '#3a1a14',
+    ink: '#1a0d0a',
+    slate: '#24110d',
+    iron: '#4a2a22',
+    ground: '#2a1510',
+    panel: '#301914',
+    button: '#3a1d16',
+    buttonHi: '#4a261c',
+    chip: 'rgba(40,20,15,0.9)',
+    input: 'rgba(14,6,4,0.75)',
+  },
+  forest: {
+    name: 'Forest',
+    swatch: '#1c2e22',
+    ink: '#0c140f',
+    slate: '#122018',
+    iron: '#2c4234',
+    ground: '#15231a',
+    panel: '#1a2b20',
+    button: '#1f3226',
+    buttonHi: '#284030',
+    chip: 'rgba(20,34,25,0.9)',
+    input: 'rgba(5,10,7,0.75)',
+  },
+  night: {
+    name: 'Night',
+    swatch: '#18203a',
+    ink: '#0b0f1c',
+    slate: '#121831',
+    iron: '#2c3656',
+    ground: '#131a30',
+    panel: '#182038',
+    button: '#1c2542',
+    buttonHi: '#263052',
+    chip: 'rgba(20,26,48,0.9)',
+    input: 'rgba(5,7,14,0.75)',
+  },
 });
 export const DEFAULT_PLUS_THEME = 'slate';
 export function themeCss(id, th, r = FRAME_ROLES) {
@@ -734,7 +1135,10 @@ export function themeCss(id, th, r = FRAME_ROLES) {
   const img = th.marble ? `${th.grit}, ${th.marble.replace(/ 0 0 \/ .*$/, '')}` : '';
   const sizes = th.marble ? '96px 96px, 220px 220px' : '';
   const tex = th.marble ? `${th.grit} 0 0 / 96px 96px, ${th.marble}, ` : '';
-  const textured = (sels, band) => (th.marble ? `${at(sels)} { background-image: ${band ? `${band}, ` : ''}${img}; background-size: ${band ? 'auto, ' : ''}${sizes}; }\n` : '');
+  const textured = (sels, band) =>
+    th.marble
+      ? `${at(sels)} { background-image: ${band ? `${band}, ` : ''}${img}; background-size: ${band ? 'auto, ' : ''}${sizes}; }\n`
+      : '';
   return `
 /* PLUS2: ${th.name} */
 :root[data-plus-theme="${id}"] { --ink: ${th.ink}; --slate: ${th.slate}; --iron: ${th.iron}; }
@@ -770,11 +1174,15 @@ ${at(r.input)} { background-color: ${th.input}; }
    (Hungry, Dehydrated...) - the chip role's colour, and on a textured theme its grit and marble too - one rock */
 :root[data-plus-theme="${id}"] .hb .hb-slot { background-color: ${th.chip}; ${th.marble ? `background-image: ${img}; background-size: ${sizes};` : 'background-image: none;'} }
 :root[data-plus-theme="${id}"] .hud-qdiamond .hud-qground { background: ${tex}${th.chip}; }
-${th.marble ? `/* PLUS6: on a TEXTURED theme (Stone) the hotbar's sockets and the quickslot diamond wear the very ground the
+${
+  th.marble
+    ? `/* PLUS6: on a TEXTURED theme (Stone) the hotbar's sockets and the quickslot diamond wear the very ground the
    status blocks under the vitals do (Hungry, Dehydrated - the chip role): the chip's own colour with the grit and
    the marble over it. Only a textured theme writes this; every other theme keeps its own tint above. */
 :root[data-plus-theme="${id}"] .hb .hb-slot { background-color: ${th.chip}; background-image: ${img}; background-size: ${sizes}; }
-:root[data-plus-theme="${id}"] .hud-qdiamond .hud-qground { background: ${tex}${th.chip}; }` : ''}
+:root[data-plus-theme="${id}"] .hud-qdiamond .hud-qground { background: ${tex}${th.chip}; }`
+    : ''
+}
 :root[data-plus-theme="${id}"] .hud-qdiamond .hud-qground {
   background: linear-gradient(135deg, rgba(${rgbOf(th.ink)},0.92) 0%, rgba(${rgbOf(th.panel)},0.86) 55%, rgba(${rgbOf(th.button)},0.84) 100%); }
 /* PLUS2c: the Ascend screen's crown and foot bars, in the theme's own stone rather than Slate's
@@ -784,12 +1192,16 @@ ${th.marble ? `/* PLUS6: on a TEXTURED theme (Stone) the hotbar's sockets and th
 /* PLUS2b: the rails and the backdrop - a textured stone is the WHOLE screen (the dark starfield put away, the page
    itself the rock); a coloured one tints the starfield from the page's own ink beneath it. */
 ${at([...r.railRight, ...r.railLeft, '.shell > .side', 'aside.side'])} { background-color: ${th.slate}; }
-${textured([...r.railRight, ...r.railLeft, '.shell > .side', 'aside.side'])}${th.marble
-    ? `:root[data-plus-theme="${id}"] .px-ground { opacity: 0; }
+${textured([...r.railRight, ...r.railLeft, '.shell > .side', 'aside.side'])}${
+    th.marble
+      ? `:root[data-plus-theme="${id}"] .px-ground { opacity: 0; }
 :root[data-plus-theme="${id}"] body { background: ${tex}${th.ink}; }`
-    : `:root[data-plus-theme="${id}"] .px-ground { opacity: 0.4; }`}`;
+      : `:root[data-plus-theme="${id}"] .px-ground { opacity: 0.4; }`
+  }`;
 }
-export const THEME_CSS = Object.entries(PLUS_THEMES).map(([id, th]) => themeCss(id, th)).join('\n');
+export const THEME_CSS = Object.entries(PLUS_THEMES)
+  .map(([id, th]) => themeCss(id, th))
+  .join('\n');
 
 export const FRAME_CSS = `${frameCss()}
 /* ── PLUS2: THE COLOURS (after the kit, so a theme's ground wins by the page attribute) ── */
@@ -828,17 +1240,26 @@ export const SITE_FITTING = 16;
 const fittingAt = (x, y, t = T) => {
   const F = SITE_FITTING;
   const at = (c, dx, dy, w, h) => `linear-gradient(${c}, ${c}) ${x} ${dx}px ${y} ${dy}px / ${w}px ${h}px no-repeat`;
-  const r = F / 2 - 3;   // the rivet's ring, 6px, centred
+  const r = F / 2 - 3; // the rivet's ring, 6px, centred
   return [
-    at(t.brassHi, r + 2, r + 2, 2, 2), at(t.brassDark, r, r, 6, 6),
-    at(t.brassHi, 1, 1, F - 2, 2), at(t.brassHi, 1, 1, 2, F - 2),
-    at(t.brassLo, 1, F - 3, F - 2, 2), at(t.brassLo, F - 3, 1, 2, F - 2),
-    at(t.brass, 1, 1, F - 2, F - 2), at(t.outline, 0, 0, F, F),
+    at(t.brassHi, r + 2, r + 2, 2, 2),
+    at(t.brassDark, r, r, 6, 6),
+    at(t.brassHi, 1, 1, F - 2, 2),
+    at(t.brassHi, 1, 1, 2, F - 2),
+    at(t.brassLo, 1, F - 3, F - 2, 2),
+    at(t.brassLo, F - 3, 1, 2, F - 2),
+    at(t.brass, 1, 1, F - 2, F - 2),
+    at(t.outline, 0, 0, F, F),
   ];
 };
 export function siteKitCss(r = SITE_ROLES, t = T) {
   const pressable = [...r.button, ...r.primary];
-  const fittings = [['left', 'top'], ['right', 'top'], ['left', 'bottom'], ['right', 'bottom']].flatMap(([x, y]) => fittingAt(x, y, t));
+  const fittings = [
+    ['left', 'top'],
+    ['right', 'top'],
+    ['left', 'bottom'],
+    ['right', 'bottom'],
+  ].flatMap(([x, y]) => fittingAt(x, y, t));
   return `/* ── PLUS-SITE: THE STONE-AND-BRASS KIT (ui/enhanced/enhancedFrame.js siteKitCss), the game's tones ── */
 /* WINDOW - carved stone: the bevel lit from the top left, the outline, the engraved line inside, the hard drop */
 ${list(r.window)} {
@@ -884,10 +1305,26 @@ export const SITE_KIT_CSS = siteKitCss();
  * the middle - so OK, Yes and Cancel line up the same on every screen.
  */
 export const ONE_PANE = ['.rest-shell .px-body > .card'];
-export const ACTION_ROWS = ['.px-sys .acts', '.px-win .card .acts', '.pack-shell .acts', '.sb-shell .sb-acts',
-  '.cr-shell .sb-acts', '.hmacts', '.lv-acts'];
-export const ACTION_BUTTONS = ['.px-sys .act', '.px-win .card .act', '.pack-shell .act', '.sb-shell .sb-acts .act',
-  '.cr-shell .sb-acts .act', '.hmroot .act:not(.hmtool)', '.lv-ok', '.talk-head .act', '.talk-say .act'];
+export const ACTION_ROWS = [
+  '.px-sys .acts',
+  '.px-win .card .acts',
+  '.pack-shell .acts',
+  '.sb-shell .sb-acts',
+  '.cr-shell .sb-acts',
+  '.hmacts',
+  '.lv-acts',
+];
+export const ACTION_BUTTONS = [
+  '.px-sys .act',
+  '.px-win .card .act',
+  '.pack-shell .act',
+  '.sb-shell .sb-acts .act',
+  '.cr-shell .sb-acts .act',
+  '.hmroot .act:not(.hmtool)',
+  '.lv-ok',
+  '.talk-head .act',
+  '.talk-say .act',
+];
 export const LAYOUT_CSS = `
 /* ── LAYOUT1: BUTTON ROWS (ui/enhanced/enhancedFrame.js) ─────────────────── */
 ${list(ACTION_ROWS)} { justify-content: center; gap: 10px; }

@@ -284,8 +284,8 @@
   {
     "name": "PASSAGE-HANDS-card-untitled",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": " : aboard.passage ? passengerTitle(aboard.passage) : ",
-    "new": " : ",
+    "old": "    : aboard.passage\n      ? passengerTitle(aboard.passage)\n      : `Aboard ${aboard.owner ? `${aboard.owner}'s` : \"another player's\"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;",
+    "new": "    : `Aboard ${aboard.owner ? `${aboard.owner}'s` : \"another player's\"} ${HULL_NAMES[aboard.hull] ?? 'boat'}`;",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
     ],
