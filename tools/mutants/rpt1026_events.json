@@ -193,8 +193,8 @@
   {
     "name": "GATE-WAY-peer-word-believed",
     "file": "src/scenes/portalGates.js",
-    "old": "    if (offGround(toScene(r.p))) return false;",
-    "new": "    void 0;",
+    "old": "    if (offGround(toScene(r.p))) return false; // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here",
+    "new": "    void 0; // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "GATE-WAY-standing-left-open",
     "file": "src/scenes/portalGates.js",
-    "old": "      if (offGround(at)) { drop(g); continue; }",
-    "new": "      void 0;",
+    "old": "      if (offGround(at)) {\n        drop(g);\n        continue;\n      } // RPT1026-EVENTS GATE-WAY: a gate risen beside it closes it - it takes nobody running to the fire",
+    "new": "      void 0; // RPT1026-EVENTS GATE-WAY: a gate risen beside it closes it - it takes nobody running to the fire",
     "tests": [
       "test/scenes/rpt1026_events_gateway.test.js"
     ],

@@ -869,6 +869,7 @@
 !/src/scenes/poiEditorMount.js
 !/src/scenes/portalCounter.js
 !/src/scenes/portalFx.js
+!/src/scenes/portalGates.js
 !/src/scenes/potionMakerHost.js
 !/src/scenes/puppetLead.js
 !/src/scenes/pvpFlagHost.js

@@ -21,10 +21,17 @@
 
 import { createPortalSet, PORTAL_MS } from './portalFx.js';
 import {
-  PORTAL_OPEN_MS, PORTAL_SAY_REACH, PORTAL_PEER_REACH, PORTAL_REGROUND, PORTAL_STEP_GAP_MS, PORTAL_STEP_JUMP,
-  portalWire, validPortalRecord, portalStepIn,
+  PORTAL_OPEN_MS,
+  PORTAL_SAY_REACH,
+  PORTAL_PEER_REACH,
+  PORTAL_REGROUND,
+  PORTAL_STEP_GAP_MS,
+  PORTAL_STEP_JUMP,
+  portalWire,
+  validPortalRecord,
+  portalStepIn,
 } from '../systems/portalStone.js';
-import { eventGroundAt } from '../systems/eventGround.js';   // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
+import { eventGroundAt } from '../systems/eventGround.js'; // RPT1026-EVENTS GATE-WAY: no portal on an event's gate's ground
 
 const across = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
 
@@ -39,8 +46,15 @@ const across = (a, b) => Math.hypot(a[0] - b[0], a[2] - b[2]);
  *           onEnter?: (gate: any) => void, onRefused?: (hold: string, gate: any) => void, eventGround?: boolean }} [deps]
  */
 export function createPortalGates({
-  renderer = null, audio = null, now = () => performance.now(),
-  toScene = (p) => p, toWire = (p) => p, destOf = () => null, groundAt = null, onEnter = () => {}, onRefused = () => {},
+  renderer = null,
+  audio = null,
+  now = () => performance.now(),
+  toScene = (p) => p,
+  toWire = (p) => p,
+  destOf = () => null,
+  groundAt = null,
+  onEnter = () => {},
+  onRefused = () => {},
   eventGround = true,
 } = {}) {
   /** RPT1026-EVENTS GATE-WAY: the place a portal of this pool may not stand - an event's gate's ground (the Portal Stone's
@@ -50,11 +64,14 @@ export function createPortalGates({
   /** @type {{ id: string, owner: string | null, native: number[], dest: { pixel: { x: number, y: number }, name: string }, until: number, fx: any, was: boolean | null, grounded: boolean }[]} */
   const gates = [];
   let _seq = 0;
-  let _lastTick = null, _lastFeet = null;
-  let _also = null;   // EG-F: another pool's portals, drawn with these (drawAlso)
+  let _lastTick = null,
+    _lastFeet = null;
+  let _also = null; // EG-F: another pool's portals, drawn with these (drawAlso)
   const holdFor = (ms) => Math.max(0, ms - PORTAL_MS.open - PORTAL_MS.close);
 
-  function stand(g) { g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: true }); }
+  function stand(g) {
+    g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: true });
+  }
   function drop(g) {
     if (g.fx) fx.remove(g.fx);
     g.fx = null;
@@ -65,7 +82,16 @@ export function createPortalGates({
   /** MINE: a portal opened at `pos` (the scene's, on the ground portalPlace found) to `dest` - one of mine at a time. */
   function open(pos, dest) {
     for (const g of gates.filter((x) => x.owner === null)) drop(g);
-    const g = { id: `${Math.floor(now()).toString(36)}${(_seq++).toString(36)}`, owner: null, native: toWire(pos), dest, until: now() + PORTAL_OPEN_MS, fx: null, was: null, grounded: true };
+    const g = {
+      id: `${Math.floor(now()).toString(36)}${(_seq++).toString(36)}`,
+      owner: null,
+      native: toWire(pos),
+      dest,
+      until: now() + PORTAL_OPEN_MS,
+      fx: null,
+      was: null,
+      grounded: true,
+    };
     gates.push(g);
     stand(g);
     return g;
@@ -82,11 +108,11 @@ export function createPortalGates({
     const dest = r ? destOf(r.d[0], r.d[1]) : null;
     if (!r || !dest) return false;
     if (across(toScene(r.p), from) > PORTAL_PEER_REACH) return false;
-    if (offGround(toScene(r.p))) return false;   // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here
+    if (offGround(toScene(r.p))) return false; // RPT1026-EVENTS GATE-WAY: never believed before an event's gate - its opener's own pick refuses it there, and a modded one is refused here
     const old = gates.find((g) => g.owner === owner);
     if (old && now() < old.until) {
-      if (old.id !== r.i) return false;   // one an opener: the first stands its time
-      old.until = Math.min(old.until, now() + r.r);   // said again: never longer than first said
+      if (old.id !== r.i) return false; // one an opener: the first stands its time
+      old.until = Math.min(old.until, now() + r.r); // said again: never longer than first said
       return true;
     }
     if (old) drop(old);
@@ -97,31 +123,52 @@ export function createPortalGates({
   }
 
   /** The step forgotten - the host's change of place (a door, a mode, a load). */
-  function forgetSteps() { for (const g of gates) g.was = null; _lastFeet = null; }
+  function forgetSteps() {
+    for (const g of gates) g.was = null;
+    _lastFeet = null;
+  }
 
   /** One frame: the portals run out, a peer's finds this player's ground, the vortex stands in this frame, and the feet
    *  (the scene's, or null - not walking the open world) step in. `hold()` the host's word on a step (portalHold's).
    *  Answers the portal entered, or null. */
   function tick(feet, { hold = () => null } = {}) {
     const t = now();
-    const gap = _lastTick == null || t - _lastTick > PORTAL_STEP_GAP_MS || !feet || !_lastFeet || across(feet, _lastFeet) > PORTAL_STEP_JUMP
-      || Math.abs(feet[1] - _lastFeet[1]) > PORTAL_STEP_JUMP;
+    const gap =
+      _lastTick == null ||
+      t - _lastTick > PORTAL_STEP_GAP_MS ||
+      !feet ||
+      !_lastFeet ||
+      across(feet, _lastFeet) > PORTAL_STEP_JUMP ||
+      Math.abs(feet[1] - _lastFeet[1]) > PORTAL_STEP_JUMP;
     _lastTick = t;
     _lastFeet = feet ? [feet[0], feet[1], feet[2]] : null;
     if (gap) for (const g of gates) g.was = null;
     for (let i = gates.length - 1; i >= 0; i--) {
       const g = gates[i];
-      if (t >= g.until) { drop(g); continue; }
+      if (t >= g.until) {
+        drop(g);
+        continue;
+      }
       let at = toScene(g.native);
-      if (offGround(at)) { drop(g); continue; }   // RPT1026-EVENTS GATE-WAY: a gate risen beside it closes it - it takes nobody running to the fire
+      if (offGround(at)) {
+        drop(g);
+        continue;
+      } // RPT1026-EVENTS GATE-WAY: a gate risen beside it closes it - it takes nobody running to the fire
       if (!g.grounded && groundAt) {
         const y = groundAt(at);
         if (Number.isFinite(y)) {
-          if (Math.abs(/** @type {number} */ (y) - at[1]) <= PORTAL_REGROUND) { at = [at[0], /** @type {number} */ (y), at[2]]; g.native = toWire(at); }
+          if (Math.abs(/** @type {number} */ (y) - at[1]) <= PORTAL_REGROUND) {
+            at = [at[0], /** @type {number} */ (y), at[2]];
+            g.native = toWire(at);
+          }
           g.grounded = true;
         }
       }
-      if (g.fx) { g.fx.feet[0] = at[0]; g.fx.feet[1] = at[1] - 0.05; g.fx.feet[2] = at[2]; }
+      if (g.fx) {
+        g.fx.feet[0] = at[0];
+        g.fx.feet[1] = at[1] - 0.05;
+        g.fx.feet[2] = at[2];
+      }
     }
     fx.tick(null);
     if (!feet) return null;
@@ -129,11 +176,14 @@ export function createPortalGates({
     for (const g of gates) {
       const step = portalStepIn(g.was, feet, toScene(g.native));
       g.was = step.inside;
-      if (!entered && step.entered && t < g.until - PORTAL_MS.close) entered = g;   // a sealing portal takes nobody
+      if (!entered && step.entered && t < g.until - PORTAL_MS.close) entered = g; // a sealing portal takes nobody
     }
     if (!entered) return null;
     const why = hold();
-    if (why) { if (why !== 'busy') onRefused(why, entered); return null; }
+    if (why) {
+      if (why !== 'busy') onRefused(why, entered);
+      return null;
+    }
     onEnter(entered);
     return entered;
   }
@@ -146,14 +196,31 @@ export function createPortalGates({
   }
 
   return {
-    open, mine, applyOwner, tick, wireRecord, forgetSteps,
+    open,
+    mine,
+    applyOwner,
+    tick,
+    wireRecord,
+    forgetSteps,
     /** The vortexes, drawn with the street's flats. */
-    batches: () => { const more = _also?.(); return more?.length ? [...fx.batches(), ...more] : fx.batches(); },
+    batches: () => {
+      const more = _also?.();
+      return more?.length ? [...fx.batches(), ...more] : fx.batches();
+    },
     /** EG-F: another pool's portals drawn with these, on the same axis - the Elite call's (scenes/eliteGates/egCall.js). */
-    drawAlso(batchesOf) { _also = batchesOf; },
+    drawAlso(batchesOf) {
+      _also = batchesOf;
+    },
     /** Every portal, for the tests. */
-    get gates() { return gates; },
+    get gates() {
+      return gates;
+    },
     /** A teardown: every portal and its batch gone. */
-    clear() { fx.clear(); for (const g of gates) g.fx = null; gates.length = 0; _lastFeet = null; },
+    clear() {
+      fx.clear();
+      for (const g of gates) g.fx = null;
+      gates.length = 0;
+      _lastFeet = null;
+    },
   };
 }

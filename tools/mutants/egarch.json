@@ -560,7 +560,7 @@
   {
     "name": "EGF-the-call-s-portal-never-drawn",
     "file": "src/scenes/portalGates.js",
-    "old": "    batches: () => { const more = _also?.(); return more?.length ? [...fx.batches(), ...more] : fx.batches(); },",
+    "old": "    batches: () => {\n      const more = _also?.();\n      return more?.length ? [...fx.batches(), ...more] : fx.batches();\n    },",
     "new": "    batches: () => fx.batches(),",
     "tests": [
       "test/net/eliteGates/egarch_client.test.js"
