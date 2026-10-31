@@ -2,8 +2,8 @@
   {
     "name": "ROAD-BEYOND-the-box-stops-at-the-end",
     "file": "src/systems/travel/travelRoute.js",
-    "old": "    past",
-    "new": "    false",
+    "old": "      past",
+    "new": "      false",
     "tests": [
       "test/systems/travel/road_beyond.test.js"
     ]

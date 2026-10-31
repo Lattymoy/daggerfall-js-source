@@ -62,6 +62,12 @@ and walked on the road's curves (`src/systems/travel/roadLine.js`). A trip with 
 boat) is refused at once from the land's pieces (`src/systems/travel/landPieces.js`). A long voyage from a province uses
 the sea lanes.
 
+**At sea.** A sailed leg arrives anywhere in its window, and a leg across the kernel's land gets marks of its own round
+it (`src/systems/travel/seaLegsMend.js`). In the Eltheric Ocean a byte over the sea's height is land, a port isle with
+no dry ground in reach is landed on itself, and a plan with one end past the Veil is none. Ashore with a boat to hand,
+a plan may walk to the nearest shore and sail the lanes; a boat plan that finds nothing is planned again on foot. The
+no-way clock follows a detour, and a dead end ends after 900 game seconds of detours (`src/systems/seaHelm.js`).
+
 **First-person travel.** `GeneralOptions.FirstPersonTravel` (off) brings back Travel Options' accelerated first-person
 journey instead of the Overworld; `GeneralOptions.FirstPersonTravelFollowsRoads` (off) makes that journey follow the
 roads, as the Overworld's does. Both are on the Travel Options tile and read live.

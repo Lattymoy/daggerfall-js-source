@@ -28,7 +28,11 @@ Bay's edge, as the same life the Bay has.
   Oblivion Gate a game day in each theatre that holds ground for one, lane = theatre; each gate's omen, ring, plaque,
   chat, timers and board are its own.
 - **The sea** (`src/world/worldWide/worldPorts.js`, `src/scenes/naval/worldLanes.js`). Packet lanes over the registry's
-  ports on the world's water; the raiders' and the director's sea world-wide; a harbourmaster at every port.
+  ports on the world's water; the raiders' and the director's sea world-wide; a harbourmaster at every port. On the Bay
+  a lane's water is sea at a pixel's four corners by CLIMATE.PAK's own climate; past it, the picture's open sea. Every
+  leg and every raider keeps to the kernel's own ground (`src/world/water/kernelSea.js`). A port with none in reach
+  runs to its nearest that a way joins; a lane with no way under its cap is sought over the whole sea and runs at its
+  own length. A lane sails at most 400 packets.
 - **Gathering** (`src/net/nodeLaw.js`, `src/net/provinceNodes.js`). Each province's ground has its own abundant
   resources with others sprinkled in.
 - **Cyrodiil the open zone** (`src/systems/wild/cyrodiilZone.js`). Cyrodiil is the open PvP area with every abundant

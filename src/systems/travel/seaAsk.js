@@ -10,7 +10,11 @@
  *  steps never sail is planned again on land (`replan`), and that one taken when there is one: the boat left where it
  *  lies. Null: keep the plan as it is. */
 export function tvMooredDry(means, plan, replan) {
-  if (means?.how !== 'moored' || !plan || plan.kinds.includes('sea')) return null;
+  if (!means || means.voyage) return null;
+  // a boat to hand that finds no plan at all is planned again on foot - the search afloat and ashore
+  // spent its count where the walk alone finds its way (Wayrest to Markarth, Daggerfall to Farrun, boat parts packed)
+  if (!plan) return replan();
+  if (means.how !== 'moored' || plan.kinds.includes('sea')) return null;
   return replan();
 }
 /** The planner's ask: where the traveller starts, whether a landfall packs the boat, where the journey ends - and
