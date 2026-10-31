@@ -139,6 +139,7 @@ import { exportSavesZip, collectSlots, importSlots, entriesFromFiles, slotPathOf
 import { appStorage, tabStorage } from '../../systems/appStorage.js';   // SP1: the store under this build - the browser's on the site, the file store in the app   // SAV4: the slot store; SLOTS1: every slot
 import { uiSkin, SKIN_NAMES, isEnhanced } from '../../systems/uiSkin.js';   // FD1: which boot rail
 import { getPref, setPref, isOpen, setOpen, PREF_DEFAULTS } from '../../systems/uiPrefs.js';
+import { QL_SKIP_MODES, QL_SKIP_MAX, QL_SKIP_TEXT_MAX, skipList, validSkipEntry } from '../../systems/quickLootFilter.js';   // QUICK-LOOT-FILTER: the skip list's modes, bounds and entries
 import { EG_DANGER_PALETTES, EG_DANGER_PALETTE_KEYS } from '../eliteGates/egAccess.js';   // EG-G1: the Spire's danger palettes, named once
 import { TOUCH_BUTTON_SLOTS, touchButtonSlots, nextTouchButton, touchButtonChoices } from '../touch/touchButtons.js';   // TOUCH-BUTTONS: the corner's three slots
 import { DEFAULT_SERVER } from '../../net/online.js';   // ONLINE1: the relay this port hosts, the field's placeholder   // R7: the port's own switches; SO1: the folded tiers' memory
@@ -3897,7 +3898,7 @@ export function featureTile(f) {
     const b = el('button', 'ft-tile-more');
     b.type = 'button';
     b.setAttribute('aria-expanded', String(open));
-    b.append(el('span', `ft-tile-car${open ? ' open' : ''}`, '\u203a'), document.createTextNode(` ${parts.map((pt) => pt.label).join(' \u00b7 ')}`));
+    b.append(el('span', `ft-tile-car${open ? ' open' : ''}`, '\u203a'), document.createTextNode(` ${partsSummary(parts)}`));
     b.onclick = (e) => { e.stopPropagation(); featureOpen = open ? null : f.id; render(); };
     tile.append(b);
     if (open) tile.append(featurePartsDrawer(parts));
@@ -3917,15 +3918,60 @@ function openControls() {
   go('settings');
 }
 
+/** QUICK-LOOT-FILTER: the words on a row's parts button - the parts' own names, joined, unless they stand in groups: then how many
+ *  groups ("4 filters"), as a mod's dials say "10 dials", so a long row is a short button. */
+function partsSummary(parts) {
+  const groups = new Set(parts.filter((pt) => pt.group).map((pt) => pt.group));
+  return groups.size ? t('menu.features.filters', '{n, plural, one {# filter} other {# filters}}', { n: groups.size }) : parts.map((pt) => pt.label).join(' \u00b7 ');
+}
+/** QUICK-LOOT-FILTER: the skip list's draft - the mode the next entry is added in (the screen draws again at each press). */
+let skipMode = 'contains';
+const skipModeLabel = (/** @type {string} */ m) => m === 'exact' ? t('menu.features.skipExact', 'Exact') : m === 'regex' ? t('menu.features.skipRegex', 'Regex') : t('menu.features.skipContains', 'Contains');
+/** The skip list part: its input, its mode and Add, then each entry with its remove. Writes the pref as a copy. */
+function skipListPart(pt) {
+  const box = el('div', 'ft-skip');
+  if (pt.group) box.append(el('div', 'ft-drawer-label', pt.group));
+  const row = el('div', 'ft-skip-add');
+  const input = el('input', 'ft-skip-input');
+  input.type = 'text'; input.placeholder = t('menu.features.skipPlaceholder', 'Name to skip'); input.maxLength = QL_SKIP_TEXT_MAX;
+  const mode = el('select', 'ft-skip-mode');
+  for (const [v] of QL_SKIP_MODES) { const o = el('option', null, skipModeLabel(v)); o.value = v; if (v === skipMode) o.selected = true; mode.append(o); }
+  mode.onchange = () => { skipMode = mode.value; };
+  const add = el('button', 'ft-mchip', t('menu.features.skipAdd', 'Add'));
+  add.type = 'button';
+  const submit = () => {
+    const entry = { mode: mode.value, text: input.value.trim() };
+    const list = skipList();
+    if (!validSkipEntry(entry) || list.length >= QL_SKIP_MAX || list.some((x) => x.mode === entry.mode && x.text.toLowerCase() === entry.text.toLowerCase())) { input.classList.add('bad'); return; }
+    setPref(pt.key, [...list, entry]); render();
+  };
+  add.onclick = submit;
+  input.onkeydown = (ev) => { ev.stopPropagation(); if (ev.key === 'Enter') { ev.preventDefault(); submit(); } };   // a typed key is the box's, never a game key's
+  row.append(input, mode, add);
+  box.append(row);
+  for (const [i, e] of skipList().entries()) {
+    const line = el('div', 'ft-skip-entry');
+    const rm = el('button', 'ft-mchip', '\u00d7');
+    rm.type = 'button'; rm.title = t('menu.features.skipRemove', 'Remove');
+    rm.onclick = () => { setPref(pt.key, skipList().filter((_, j) => j !== i)); render(); };
+    line.append(el('span', 'ft-skip-mode-word', skipModeLabel(e.mode)), el('span', 'ft-skip-text', e.text), rm);
+    box.append(line);
+  }
+  return box;
+}
+
 /** FT18: what a condensed row's tile opens - its switch parts as chips (the modules' shape), its choice parts as
  *  bars (the tile's own shape). Each writes its own pref, as the row it came from did. */
 function featurePartsDrawer(parts) {
   const d = el('div', 'ft-tile-drawer');
   d.onclick = (e) => e.stopPropagation();
-  const chips = parts.filter((pt) => !pt.tiers);
-  if (chips.length) {
+  for (const pt of parts.filter((x) => x.list)) d.append(skipListPart(pt));
+  const chips = parts.filter((pt) => !pt.tiers && !pt.list);
+  // QUICK-LOOT-FILTER: chips with a `group` stand in a box of their own under its label, in the order the row gives them
+  for (const group of [...new Set(chips.map((pt) => pt.group ?? ''))]) {
     const box = el('div', 'ft-chipset');
-    for (const pt of chips) {
+    if (group) d.append(el('div', 'ft-drawer-label', group));
+    for (const pt of chips.filter((x) => (x.group ?? '') === group)) {
       const on = getPref(pt.key) !== false;
       const b = el('button', 'ft-mchip', pt.label);
       b.type = 'button';

@@ -329,6 +329,35 @@ export const modModules = (vendor) =>
 export const modDials = (vendor) =>
   (MOD_CURATED[vendor] ?? []).filter((k) => MOD_SETTINGS[vendor]?.keys?.[k] !== undefined);
 
+// QUICK-LOOT-FILTER (systems/quickLootFilter.js): the Quick loot row's boxes, each its own pref and a part of the row.
+// The lists are the ladder's (loot/lootRarity.js RARITY_ORDER) and the items' (item/itemInfo.js MATERIAL_NAMES with Leather
+// and Chain); test/systems/quicklootfilter.test.js pins them to those homes, which this file cannot import (uiPrefs reads it).
+// A tier and a material keep the item's own name; each group and each other box is a getter over t().
+const QL_RARITY_BOXES = Object.freeze([['common', 'Common'], ['magic', 'Magic'], ['rare', 'Rare'], ['legendary', 'Legendary'], ['aetheric', 'Aetheric'], ['artifact', 'Artifact'], ['gilded', 'Gilded']]);
+const QL_MATERIAL_BOXES = Object.freeze(['Leather', 'Chain', 'Iron', 'Steel', 'Silver', 'Elven', 'Dwarven', 'Mithril', 'Adamantium', 'Ebony', 'Orcish', 'Daedric']);
+const qlPref = (key, initial) => Object.freeze({ store: 'prefs', key, initial, online: 'player' });
+const QL_FILTER_ALSO = Object.freeze([
+  ...QL_RARITY_BOXES.map(([id]) => qlPref(`quickLootRar_${id}`, true)),
+  ...QL_MATERIAL_BOXES.map((name) => qlPref(`quickLootMat_${name}`, true)),
+  qlPref('quickLootMatCommon', false), qlPref('quickLootHideEmpty', false), qlPref('quickLootHideDull', false), qlPref('quickLootHideDrops', false),
+  qlPref('quickLootHideLeft', false), qlPref('quickLootSkip', Object.freeze([])),
+]);
+const qlGroupRarity = () => t('features.quickLoot.groupRarity', 'Take these rarities');
+const qlGroupMaterial = () => t('features.quickLoot.groupMaterial', 'Take these materials');
+const qlGroupHide = () => t('features.quickLoot.groupHide', 'Hide from view');
+const qlGroupSkip = () => t('features.quickLoot.groupSkip', 'Skip items by name');
+const qlPart = (key, label, group, more = {}) => Object.freeze({ key, get label() { return typeof label === 'function' ? label() : label; }, get group() { return group(); }, ...more });
+const QL_FILTER_PARTS = Object.freeze([
+  ...QL_RARITY_BOXES.map(([id, label]) => qlPart(`quickLootRar_${id}`, label, qlGroupRarity)),
+  ...QL_MATERIAL_BOXES.map((name) => qlPart(`quickLootMat_${name}`, name, qlGroupMaterial)),
+  qlPart('quickLootMatCommon', () => t('features.quickLoot.matCommon', 'Materials limit Common gear only'), qlGroupMaterial),
+  qlPart('quickLootHideEmpty', () => t('features.quickLoot.hideEmpty', 'Empty bodies'), qlGroupHide),
+  qlPart('quickLootHideDull', () => t('features.quickLoot.hideDull', 'Bodies with nothing I take'), qlGroupHide),
+  qlPart('quickLootHideDrops', () => t('features.quickLoot.hideDrops', 'Ground items I would leave'), qlGroupHide),
+  qlPart('quickLootHideLeft', () => t('features.quickLoot.hideLeft', 'Filtered items inside the list'), qlGroupHide),
+  qlPart('quickLootSkip', qlGroupSkip, qlGroupSkip, { list: true }),   // a list part: the drawer draws its input and its entries
+]);
+
 /** The rows. Shape:
  *    { id, title, note, effect?, kinds: [kind, ...],
  *      control: { store: 'prefs',    key, tiers?: [[value, label], ...], default?: value, read?: () => value, write?: (value) => void }
@@ -813,14 +842,15 @@ export const FEATURES = Object.freeze([
     group: 'loot',
     get title() { return t('features.quickLoot.title', 'Quick loot'); },
     get note() { return t('features.quickLoot.note', 'Loot without opening a window: the mouse wheel moves through the list, Activate takes one item, and the Take '
-      + 'everything key takes all but junk (Take gear sets which gear). Off uses the inventory window.'); },   // LOOT18: the take-all's tier and the junk, in the FT15 budget
+      + 'everything key takes all but junk (the boxes set what stays). Off uses the inventory window.'); },   // LOOT18: the take-all's tier and the junk, in the FT15 budget
     get effect() { return t('features.effect.atOnce', 'Takes effect at once.'); },
     kinds: Object.freeze(['enhanced']),
     control: Object.freeze({
       store: 'prefs', key: 'quickLoot', initial: true, online: 'player',   // the player's own: it stands nothing, rolls nothing and is not on the wire - the same category chatHidden is (OL1)
       // LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): the take-all's tier - a part, the player's own
-      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' })]),
-      parts: Object.freeze([Object.freeze({ key: 'quickLootTier', label: 'Take gear', tiers: Object.freeze([['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']]) })]),
+      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' }), ...QL_FILTER_ALSO]),
+      // the old Take gear bar (quickLootTier) is no part now - the rarity boxes say it, and a stored word is carried over once (quickLootFilter.js migrateQuickLootTier)
+      parts: QL_FILTER_PARTS,
     }),
   }),
   // LR1 (2026-09-14): LOOT RARITY - the port's own item ladder

@@ -538,6 +538,39 @@ and only the junk is left. What the filter left is said as the rows that stayed 
 filter.", `QUICK_LOOT_LEFT`), and a press that took nothing is handled - no window opens over a pile the player's own
 filter left. A row the player lights and takes is taken whatever it is: the part is the take-all's.
 
+**QUICK-LOOT-FILTER: the boxes, and what draws no window** (a player's ask: rarities and materials as checkboxes, a material
+filter that may bind Common gear alone, and, as Path of Exile's loot filter does, no announcement of what would be left).
+`src/systems/quickLootFilter.js` is the law and the quick-loot row's drawer is the panel (`features.js` `QL_FILTER_PARTS`,
+chips grouped by a part's `group` in `ui/enhanced/enhancedMenu.js` `featurePartsDrawer`). Every box is the player's own pref,
+ticked by default, so the take-all is what it was until a box is unticked.
+
+**The take-all.** There is a box a tier (`quickLootRar_<tier>`, the ladder's seven: an unticked tier's gear is left, with the
+ladder on) and a box a material (`quickLootMat_<name>`: Leather and Chain beside the ten metals, for a weapon or a piece of
+armour). A material box binds every tier unless **Materials limit Common gear only** (`quickLootMatCommon`) is on. So "every
+rarity, but Common only in Daedric" is all tiers ticked, only Daedric ticked and that box on. `takeAllLeaves` asks the old tier
+part and the junk mark first, then `filterLeaves`. Gold, supplies, a quest's items, jewels and clothes (no material) and DFU's
+own untiered magic items are never left by a box.
+
+**The plaque.** Three more boxes keep the hover plaque down (`hoverHidden`, asked by `systems/worldHover.js` `resolveHover`
+through `setTakeAllLeaves`, so the plaque and the take-all cannot disagree): **empty bodies**, **bodies with nothing I take**
+(every piece the take-all would leave) and **ground items I would leave** (`droppedLoot:` and a boss's `spoil:`). A plaque that
+does not draw leaves quick loot nothing to light. A body the plaque stays down for is out of the pick as well (`bodyHidden`, a
+target's `skip`, asked by `player/activate.js` `pickActivatableHit` and set by `scenes/corpseMarker.js` `corpseLootTargets` and
+the dungeon's own body targets). The ray passes through it to the next body of a pile (LOOT-STACK). A body whose list this
+reader has not heard (another player's) is never skipped.
+
+**The list.** A fourth hide box, **Filtered items inside the list** (`quickLootHideLeft`), takes the pieces the take-all would
+leave out of a pile's list as well (`hoverVisible`, the one walk `worldHover.js` `hoverItemAt` and `hoverLines` share, so the lit
+row is the piece the take moves). A pile whose every piece is left reads "Nothing you take", not "Empty". A cupboard's glance and
+the classic window still list everything. The item's picture on the ground is still drawn, and a dropped piece or a spoil stays
+pressable.
+
+**Skip by name, and the old bar.** **Skip items by name** (`quickLootSkip`, a list part of `{ mode: contains | exact | regex,
+text }` entries, without regard to case) leaves any piece but a quest's item whose name matches, ahead of every box. A Raw meat is
+no gear. The old **Take gear** bar is no part of the row: a stored Magic+ or Rare+ is carried to the rarity boxes once
+(`migrateQuickLootTier`) and the bar is set to All. The row's button says "4 filters", as a mod's says "10 dials". Pins:
+`test/systems/quicklootfilter.test.js`. Mutants: `tools/mutants/quicklootfilter.json`.
+
 **What moved.** One record was re-aimed by content (`quickloot.json` QUICK-LOOT-the-bulk-take-walks-the-list-it-is-
 splicing: the filter stands between the walk and its take), its law unmoved. LOOT17's hone had copied five of LOOT9's
 anchored lines (the refusal's unknown, shards and gold, the press's payment, the price's move); they are written in

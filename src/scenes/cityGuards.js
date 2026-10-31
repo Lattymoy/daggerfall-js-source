@@ -97,6 +97,7 @@ import { WEAPON_REACH } from '../combat/playerWeapon.js';
 import { getBool } from '../systems/settings/settings.js';   // AUDIT DISC19: MeleeAttackFriendlyProtection, which the defenders' cross-pool sparing is
 import { rayPersonDistance } from './townTalk.js';
 import { mintCorpseMarker, playBodyFall, playRareDrop, corpseLootTargets, physicalCorpseSources, corpseEntryFor, corpseContents, openCorpseLoot, pileBody, sayEnemyDied, raiseEnemyDeath, corpseEntityName } from './corpseMarker.js';
+import { bodyHidden } from '../systems/quickLootFilter.js';   // QUICK-LOOT-FILTER: a body the filter hides is out of the pick
 import { rollCorpseKit } from '../systems/foeLootCap.js';   // KIT-ROLL: a plain foe's kit, laddered at its death by every body door
 import { liveFoeTargets, liveFoeFor } from '../player/activate.js';   // WORLD-HOVER H2: the LIVE bodies, in the shape the hover's one seam takes
 import { corpseName, mobileEntityName, liveEntityName } from '../systems/worldTooltips.js';   // WORLD-HOVER: "<who> (dead)", the mod's own word (.cs:526); H2: and a LIVE one's, when it is not hostile (.cs:304-312)
@@ -1707,7 +1708,7 @@ export function createCityGuards({ renderer, collider, fetchBytes, getTexture, u
     idOf,
   };
   function lootTargets() {
-    return corpseLootTargets(guards, 'guardCorpse', corpseLens);
+    return corpseLootTargets(guards, 'guardCorpse', corpseLens, (key, e) => bodyHidden(key, corpseContents(e)));   // QUICK-LOOT-FILTER: out of the pick when its plaque is down
   }
   /** WORLD-HOVER: as the encounter pool's - one namer beside the one
    *  producer, so the watch's bodies and the encounter pool's can never

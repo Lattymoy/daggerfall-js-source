@@ -305,7 +305,7 @@ test('LOOT-STACK the key is gone: no NextBody action, no default on ] but Come S
   }
   const act = rd('src/player/activate.js');
   // PR-WAGON1: the winner is the firm answer first (another player's team yields), and the note is still taken over it
-  assert.match(act, /export function pickActivatableHit\(eye, dir, targets, collider\) \{\n {2}const nearest = \(list\) => nearestActivatableHit\(eye, dir, list, collider\);\n {2}return noteBodyStack\(firmFirst\(targets, nearest\), targets, nearest\);[^\n]*\n\}/);
+  assert.match(act, /export function pickActivatableHit\(eye, dir, targets, collider\) \{\n {2}const live = targets\.some\(\(t\) => t\?\.skip\) \? targets\.filter\(\(t\) => !t\?\.skip\?\.\(\)\) : targets;[^\n]*\n {2}const nearest = \(list\) => nearestActivatableHit\(eye, dir, list, collider\);\n {2}return noteBodyStack\(firmFirst\(live, nearest\), live, nearest\);[^\n]*\n\}/);   // QUICK-LOOT-FILTER: a body its producer says is out of the pick is no target, and the stack is the live ones
   assert.doesNotMatch(act, /export function nearestActivatableHit/, 'the raw pick stays private, so no reader asks the ray without the note');
 });
 
@@ -315,7 +315,7 @@ test('LOOT-STACK the producers say which targets are bodies: the two surface poo
   const t = corpseLootTargets([{ corpse: true }], 'foeCorpse', { isCorpse: () => true, feetOf: () => [0, 0, 0] });
   assert.equal(t[0].body, true);
   const dc = rd('src/scenes/dungeonContext.js');
-  assert.match(dc, /targets\.push\(\{ key: `corpse:\$\{i\}`, [^\n]*reach: CORPSE_ACTIVATION_DISTANCE, body: true \}\);/, 'the dungeon\'s corpse mint');
+  assert.match(dc, /targets\.push\(\{ key: `corpse:\$\{i\}`, [^\n]*reach: CORPSE_ACTIVATION_DISTANCE, (?:body: true|\.\.\.bodyTarget\(`corpse:\$\{i\}`, api\.lootContents\)) \}\);/, 'the dungeon\'s corpse mint');
   assert.match(dc, /targets\.push\(\{ key: `loot:\$\{i\}`, [^\n]*reach: TREASURE_ACTIVATION_DISTANCE \}\);/, 'the dungeon\'s treasure piles carry no such word');
   const ls = rd('src/player/lootStack.js');
   assert.doesNotMatch(ls.replace(/\/\/[^\n]*|\/\*[\s\S]*?\*\//g, ''), /startsWith|Corpse:|corpse:/, 'the law names no key vocabulary');

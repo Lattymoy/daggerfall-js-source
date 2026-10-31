@@ -6169,6 +6169,15 @@ ${tierMarkCss({ wash: (k) => TIER_MARKS[k], washAlpha: 0.2, edge: '#0b0805', sel
 .ft-tile-drawer { border-top: 1px solid var(--iron); padding-top: 7px; display: flex; flex-direction: column; gap: 6px; }
 .ft-drawer-label { font-family: var(--data); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--dim); }
 .ft-chipset { display: flex; flex-wrap: wrap; gap: 4px; }
+/* QUICK-LOOT-FILTER: the skip list - an input, its mode and Add on one line, each entry under it with its remove */
+.ft-skip { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+.ft-skip-add { display: flex; gap: 4px; align-items: stretch; }
+.ft-skip-input { flex: 1; min-width: 0; font-family: var(--data); font-size: 12px; background: var(--ink); color: var(--bone); border: 1px solid rgba(125,116,96,0.5); padding: 3px 6px; }
+.ft-skip-input.bad { border-color: #b0443a; }
+.ft-skip-mode { font-family: var(--data); font-size: 12px; background: var(--ink); color: var(--bone); border: 1px solid rgba(125,116,96,0.5); }
+.ft-skip-entry { display: flex; gap: 8px; align-items: center; font-family: var(--data); font-size: 12px; color: var(--bone); }
+.ft-skip-mode-word { color: var(--dim); min-width: 62px; }
+.ft-skip-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ft-mchip { font-family: var(--data); font-size: 11px; background: var(--ink); color: var(--dim);
   border: 1px solid var(--iron); padding: 2px 6px; cursor: pointer; }
 .ft-mchip[aria-pressed="true"] { color: var(--verdigris); border-color: var(--verdigris); }

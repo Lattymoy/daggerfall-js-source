@@ -5534,9 +5534,54 @@
   "tr": "6c4300cdcb8f",
   "by": "claude-in-session"
  },
+ "features.quickLoot.groupHide": {
+  "en": "7a72853e8edd",
+  "tr": "08e537939ff1",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.groupMaterial": {
+  "en": "70c47e25da2e",
+  "tr": "b18d1d0ffa27",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.groupRarity": {
+  "en": "f47449013ba8",
+  "tr": "6d6f026691d2",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.groupSkip": {
+  "en": "892e0f8216df",
+  "tr": "3ee2c5e02d68",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.hideDrops": {
+  "en": "8532b17fecce",
+  "tr": "93ef9d1acd4d",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.hideDull": {
+  "en": "ff465e9b543a",
+  "tr": "e90c7792c5bd",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.hideEmpty": {
+  "en": "80b318aaa41c",
+  "tr": "7fd27de713f4",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.hideLeft": {
+  "en": "0bfc8186cdfd",
+  "tr": "eaadbd0791bb",
+  "by": "claude-in-session"
+ },
+ "features.quickLoot.matCommon": {
+  "en": "3070c395e260",
+  "tr": "ac20ac1ff170",
+  "by": "claude-in-session"
+ },
  "features.quickLoot.note": {
-  "en": "b1f409208ec7",
-  "tr": "7b3c35855948",
+  "en": "d7c75ddeb431",
+  "tr": "318d0d0a3b59",
   "by": "claude-in-session"
  },
  "features.quickLoot.title": {
@@ -6062,6 +6107,11 @@
  "home.mute.undone": {
   "en": "5b03bedff4c8",
   "tr": "30020e927dfe",
+  "by": "claude-in-session"
+ },
+ "hover.nothingYouTake": {
+  "en": "6b90f7bf11b8",
+  "tr": "cef67c300770",
   "by": "claude-in-session"
  },
  "input.action.pvpFlag": {
@@ -7794,6 +7844,11 @@
   "tr": "fe8a1d640af3",
   "by": "claude-in-session"
  },
+ "menu.features.filters": {
+  "en": "48a0e3c9a8cf",
+  "tr": "6e7b6de20589",
+  "by": "claude-in-session"
+ },
  "menu.features.keys": {
   "en": "242c24f91695",
   "tr": "091e845e0c62",
@@ -7832,6 +7887,36 @@
  "menu.features.restore": {
   "en": "3cbe6d6b9a8d",
   "tr": "2856b7321119",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipAdd": {
+  "en": "61cc55aa0453",
+  "tr": "3d3e11caf000",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipContains": {
+  "en": "33e15d008d51",
+  "tr": "60e2fd268360",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipExact": {
+  "en": "0cae74747ce9",
+  "tr": "add6657527d4",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipPlaceholder": {
+  "en": "3318251a51da",
+  "tr": "a78664cde8e2",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipRegex": {
+  "en": "6e6819357612",
+  "tr": "ce7b4cb2312c",
+  "by": "claude-in-session"
+ },
+ "menu.features.skipRemove": {
+  "en": "e963907dac5c",
+  "tr": "e0001c0974fc",
   "by": "claude-in-session"
  },
  "menu.features.toControls": {

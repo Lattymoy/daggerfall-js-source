@@ -448,8 +448,9 @@ export function rayObb(origin, dir, m, box) {
 }
 
 export function pickActivatableHit(eye, dir, targets, collider) {
+  const live = targets.some((t) => t?.skip) ? targets.filter((t) => !t?.skip?.()) : targets;   // QUICK-LOOT-FILTER: a body its producer says is out of the pick (quickLootFilter.js bodyHidden) is no target - the ray goes through it
   const nearest = (list) => nearestActivatableHit(eye, dir, list, collider);
-  return noteBodyStack(firmFirst(targets, nearest), targets, nearest);   // PR-WAGON1: another player's team yields
+  return noteBodyStack(firmFirst(live, nearest), live, nearest);   // PR-WAGON1: another player's team yields
 }
 
 /** PR-WAGON1: does this target - or the hit it won - yield the ray? Its

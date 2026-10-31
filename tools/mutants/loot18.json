@@ -211,8 +211,8 @@
   {
     "name": "LOOT18-the-tier-with-the-ladder-off",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
-    "new": "  if (!(floor > 0) || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
+    "old": "  if (floor > 0 && lootRarityOn() && rarityRank(item) < floor) return true;",
+    "new": "  if (floor > 0 && rarityRank(item) < floor) return true;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "LOOT18-gold-left",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
-    "new": "  if (!(floor > 0) || !lootRarityOn() || isAmmunition(item)) return false;",
+    "old": "  if (!JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
+    "new": "  if (isAmmunition(item)) return false;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "LOOT18-a-quiver-left",
     "file": "src/systems/quickLoot.js",
-    "old": "  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
-    "new": "  if (!(floor > 0) || !lootRarityOn() || !JUNK_GROUPS.includes(item.group)) return false;",
+    "old": "  if (!JUNK_GROUPS.includes(item.group) || isAmmunition(item)) return false;",
+    "new": "  if (!JUNK_GROUPS.includes(item.group)) return false;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "LOOT18-the-floor-itself-left",
     "file": "src/systems/quickLoot.js",
-    "old": "  return rarityRank(item) < floor;",
-    "new": "  return rarityRank(item) <= floor;",
+    "old": "rarityRank(item) < floor) return true;",
+    "new": "rarityRank(item) <= floor) return true;",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "LOOT18-the-part-magic-first",
     "file": "src/systems/features.js",
-    "old": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'all', online: 'player' })]),",
-    "new": "      also: Object.freeze([Object.freeze({ store: 'prefs', key: 'quickLootTier', initial: 'magic', online: 'player' })]),",
+    "old": "key: 'quickLootTier', initial: 'all'",
+    "new": "key: 'quickLootTier', initial: 'magic'",
     "tests": [
       "test/systems/loot18_seen.test.js"
     ]

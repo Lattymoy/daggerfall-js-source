@@ -216,7 +216,9 @@ function takeAll(items, tier) {
 test('LOOT18: quick loot by tier - the take-all leaves gear under the row\'s part and every junk piece; gold, supplies, a quest\'s item and DFU\'s own magic always taken; the ladder off, no tier; the line says what stayed; a lit row is taken whatever it is', () => {
   on();
   const row = FEATURES.find((f) => f.id === 'quick-loot');
-  assert.deepEqual(row.control.parts, [{ key: 'quickLootTier', label: 'Take gear', tiers: [['all', 'All'], ['magic', 'Magic+'], ['rare', 'Rare+']] }]);
+  // QUICK-LOOT-FILTER: the bar is no part of the row now (the rarity boxes say it); its pref stands and a stored word is carried over once
+  assert.ok(!row.control.parts.some((p) => p.key === 'quickLootTier'), 'the Take gear bar is gone from the row');
+  assert.ok(row.control.also.some((a) => a.key === 'quickLootTier' && a.initial === 'all'), 'its pref stands, All by default');
   assert.equal(PREF_DEFAULTS.quickLootTier, 'all', 'All by default - the take-all as it was');
   assert.deepEqual(QUICK_LOOT_FLOORS, { all: 0, magic: 1, rare: 2 });
   const pile = () => {
