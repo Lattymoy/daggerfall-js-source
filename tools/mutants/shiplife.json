@@ -287,8 +287,8 @@
   {
     "name": "SHIPLIFE-WORLD-no-harbour-door",
     "file": "src/scenes/harbourHost.js",
-    "old": "    harbourNear: navalHarbourNear,\n    isWater: navalIsWater,\n",
-    "new": "    harbourNearX: navalHarbourNear,\n    isWater: navalIsWater,\n",
+    "old": "    harbourNear: navalHarbourNear,",
+    "new": "    harbourNearX: navalHarbourNear,",
     "tests": [
       "test/systems/naval/shiplife.test.js"
     ],

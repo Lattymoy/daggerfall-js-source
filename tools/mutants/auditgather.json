@@ -112,8 +112,8 @@
   {
     "name": "AUDITGATHER-F7-thunder-dry",
     "file": "src/scenes/herbHost.js",
-    "old": "weather === 'rain' || weather === 'thunder';",
-    "new": "weather === 'rain';",
+    "old": "export const herbsWet = (weather = fallingWeather().word) => weather === 'rain' || weather === 'thunder';",
+    "new": "export const herbsWet = (weather = fallingWeather().word) => weather === 'rain';",
     "tests": [
       "test/systems/auditgather.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "AUDITGATHER-F7-host-dry",
     "file": "src/scenes/herbHost.js",
-    "old": "gentle: getPref('gentleActs') === true, wet: herbsWet() }),",
-    "new": "gentle: getPref('gentleActs') === true }),",
+    "old": "          wet: herbsWet(),\n        }),",
+    "new": "        }),",
     "tests": [
       "test/systems/auditgather.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "AUDITGATHER-F7-sim-word",
     "file": "src/scenes/herbHost.js",
-    "old": "export const herbsWet = (weather = fallingWeather().word) =>",
-    "new": "export const herbsWet = (weather = 'rain') =>",
+    "old": "export const herbsWet = (weather = fallingWeather().word) => weather === 'rain' || weather === 'thunder';",
+    "new": "export const herbsWet = (weather = 'rain') => weather === 'rain' || weather === 'thunder';",
     "tests": [
       "test/systems/auditgather.test.js"
     ]

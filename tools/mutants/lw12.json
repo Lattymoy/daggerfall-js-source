@@ -389,8 +389,8 @@
   {
     "name": "LW12-host-keep",
     "file": "src/scenes/hideouts.js",
-    "old": "        if (d > BAND_KEEP_M && !stood.foes.some(",
-    "new": "        if (d > BAND_KEEP_M * 10 && !stood.foes.some(",
+    "old": "        if (d > BAND_KEEP_M && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) {",
+    "new": "        if (d > BAND_KEEP_M * 10 && !stood.foes.some((/** @type {any} */ rec) => !rec.dead && deps.engaged?.(rec))) {",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "LW12-host-owner",
     "file": "src/scenes/hideouts.js",
-    "old": "stand(near.h, t, deps.owner(deps.sceneOf(near.h.x, near.h.z)));",
-    "new": "stand(near.h, t, true);",
+    "old": "      stand(near.h, t, deps.owner(deps.sceneOf(near.h.x, near.h.z)));",
+    "new": "      stand(near.h, t, true);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "LW12-host-name",
     "file": "src/scenes/hideouts.js",
-    "old": "        if (rec.entity) rec.entity.name = p.name;\n",
-    "new": "",
+    "old": "          if (rec.entity) rec.entity.name = p.name;\n          rec.living = { outlaw: p.id };",
+    "new": "          rec.living = { outlaw: p.id };",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "LW12-host-looted-read",
     "file": "src/scenes/hideouts.js",
-    "old": "if (!rel()?.turns?.()?.looted?.has(s.band.key) && c.items.length) {",
-    "new": "if (c.items.length) {",
+    "old": "    if (!rel()?.turns?.()?.looted?.has(s.band.key) && c.items.length) {",
+    "new": "    if (c.items.length) {",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "LW12-host-takeout",
     "file": "src/scenes/hideouts.js",
-    "old": "    for (const rec of s.foes) if (!rec.dead) takeOut(rec);\n",
-    "new": "",
+    "old": "    for (const rec of s.foes) if (!rec.dead) takeOut(rec);\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "LW12-host-rout-all",
     "file": "src/scenes/hideouts.js",
-    "old": "if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
-    "new": "if (stood.foes.some((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
+    "old": "          if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
+    "new": "          if (stood.foes.some((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "LW12-host-rout-once",
     "file": "src/scenes/hideouts.js",
-    "old": "if (stood.band && stood.owned && !stood.routed && !stood.spawning",
-    "new": "if (stood.band && stood.owned && !stood.spawning",
+    "old": "        if (stood.band && stood.owned && !stood.routed && !stood.spawning && (stood.foes.length || stood.allDown)) {",
+    "new": "        if (stood.band && stood.owned && !stood.spawning && (stood.foes.length || stood.allDown)) {",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "LW12-host-rout-key",
     "file": "src/scenes/hideouts.js",
-    "old": "r?.turn?.('routed', `${s.h.key}@${s.band.gen}.${s.band.heir}`, { t, who: s.band.name });",
-    "new": "r?.turn?.('routed', `${s.h.key}@${s.band.gen}.0`, { t, who: s.band.name });",
+    "old": "    r?.turn?.('routed', `${s.h.key}@${s.band.gen}.${s.band.heir}`, { t, who: s.band.name });",
+    "new": "    r?.turn?.('routed', `${s.h.key}@${s.band.gen}.0`, { t, who: s.band.name });",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "LW12-host-thanks",
     "file": "src/scenes/hideouts.js",
-    "old": "if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }",
-    "new": "if (!thanked.has(m.id)) { thanked.add(m.id); }",
+    "old": "          r?.note?.(m.id, 'helped', day);\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "LW12-host-heard-far",
     "file": "src/scenes/hideouts.js",
-    "old": "        if (Math.max(Math.abs(h.x - x), Math.abs(h.z - z)) > HEARD_PX * NATIVE_PIXEL) continue;\n",
-    "new": "",
+    "old": "        if (Math.max(Math.abs(h.x - x), Math.abs(h.z - z)) > HEARD_PX * NATIVE_PIXEL) continue;\n        const band = deps.bandAt(h, t);",
+    "new": "        const band = deps.bandAt(h, t);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -632,8 +632,8 @@
   {
     "name": "LW12-wire-gen",
     "file": "src/scenes/hideouts.js",
-    "old": "    if (deps.generation() !== gen) { kept.clear(); waiting.clear(); gen = deps.generation(); }",
-    "new": "    if (deps.generation() !== gen) { gen = deps.generation(); }",
+    "old": "      kept.clear();\n      waiting.clear();\n      gen = deps.generation();",
+    "new": "      gen = deps.generation();",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "LW12-AUDIT-C2-frame",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (stood) lootedYet(stood);\n",
-    "new": "",
+    "old": "      if (stood) lootedYet(stood);\n      if (stood?.chest) workChest(stood, CHEST_SLICE_MS); // AUDIT LW-II-2 C5: the chest's take, a slice a frame",
+    "new": "      if (stood?.chest) workChest(stood, CHEST_SLICE_MS); // AUDIT LW-II-2 C5: the chest's take, a slice a frame",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "LW12-AUDIT-C2-pieces",
     "file": "src/scenes/hideouts.js",
-    "old": "minted.every(([it, n]) => items.includes(it) && it?.stackCount === n)",
-    "new": "minted.every(() => true)",
+    "old": "  return items.length === minted.length && minted.every(([it, n]) => items.includes(it) && it?.stackCount === n);",
+    "new": "  return items.length === minted.length && minted.every(() => true);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "LW12-AUDIT-C2-counts",
     "file": "src/scenes/hideouts.js",
-    "old": "items.includes(it) && it?.stackCount === n",
-    "new": "items.includes(it)",
+    "old": "  return items.length === minted.length && minted.every(([it, n]) => items.includes(it) && it?.stackCount === n);",
+    "new": "  return items.length === minted.length && minted.every(([it, n]) => items.includes(it));",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -713,8 +713,8 @@
   {
     "name": "LW12-AUDIT-C11c-identity",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (stood && rel() !== stood.rel) letGo();\n",
-    "new": "",
+    "old": "      if (stood && rel() !== stood.rel) letGo();\n      if (rel() !== downsRel) {",
+    "new": "      if (rel() !== downsRel) {",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "LW12-AUDIT-C3-latch",
     "file": "src/scenes/hideouts.js",
-    "old": "if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
-    "new": "if (stood.foes.every((/** @type {any} */ rec) => killed(rec))) rout(stood, t);",
+    "old": "          if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
+    "new": "          if (stood.foes.every((/** @type {any} */ rec) => killed(rec))) rout(stood, t);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -749,8 +749,8 @@
   {
     "name": "LW12-AUDIT-C3-thanks",
     "file": "src/scenes/hideouts.js",
-    "old": "s.robbed = c.robbed;   // its robbed parties, looted or not",
-    "new": "s.robbed = rel()?.turns?.()?.looted?.has(s.band.key) ? [] : c.robbed;   // its robbed parties, looted or not",
+    "old": "    s.robbed = c.robbed; // its robbed parties, looted or not: the rout's thanks",
+    "new": "    s.robbed = rel()?.turns?.()?.looted?.has(s.band.key) ? [] : c.robbed; // its robbed parties, looted or not: the rout's thanks",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "LW12-AUDIT-C8-ask",
     "file": "src/scenes/hideouts.js",
-    "old": "    if (at != null && ms - at < HIDEOUTS_ASK_MS) return [];\n",
-    "new": "",
+    "old": "    if (at != null && ms - at < HIDEOUTS_ASK_MS) return [];\n    const h = deps.of(region);",
+    "new": "    const h = deps.of(region);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "LW12-AUDIT-C8-told",
     "file": "src/scenes/hideouts.js",
-    "old": "    if (waiting.delete(region) && h.length) deps.resolved?.(region);\n",
-    "new": "",
+    "old": "    if (waiting.delete(region) && h.length) deps.resolved?.(region);\n    return h;",
+    "new": "    return h;",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "LW12-AUDIT-C8-told-once",
     "file": "src/scenes/hideouts.js",
-    "old": "if (waiting.delete(region) && h.length) deps.resolved?.(region);",
-    "new": "if (h.length) deps.resolved?.(region);",
+    "old": "    if (waiting.delete(region) && h.length) deps.resolved?.(region);",
+    "new": "    if (h.length) deps.resolved?.(region);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -812,8 +812,8 @@
   {
     "name": "LW12-AUDIT-C11b-camp",
     "file": "src/scenes/hideouts.js",
-    "old": "      if (!near) return;\n",
-    "new": "      if (!near || !deps.owner(deps.sceneOf(near.h.x, near.h.z))) return;\n",
+    "old": "      if (!near) return;",
+    "new": "      if (!near || !deps.owner(deps.sceneOf(near.h.x, near.h.z))) return;",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "LW12-AUDIT-C11b-takeup",
     "file": "src/scenes/hideouts.js",
-    "old": "          if (mine && !stood.owned) standPeople(stood, t);\n",
-    "new": "          if (mine && !stood.owned) void t;\n",
+    "old": "          if (mine && !stood.owned) standPeople(stood, t);",
+    "new": "          if (mine && !stood.owned) void t;",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "LW12-AUDIT-C11b-once",
     "file": "src/scenes/hideouts.js",
-    "old": "if (mine && !stood.owned) standPeople(stood, t);",
-    "new": "if (mine) standPeople(stood, t);",
+    "old": "          if (mine && !stood.owned) standPeople(stood, t);",
+    "new": "          if (mine) standPeople(stood, t);",
     "tests": [
       "test/systems/livingWorld/lw12_outlaws.test.js"
     ]

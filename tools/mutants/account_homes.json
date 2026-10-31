@@ -248,8 +248,8 @@
   {
     "name": "ACCOUNT-HOMES-sweep-ownNow-unwired",
     "file": "src/scenes/homesBootHost.js",
-    "old": "r.data.homes, { ownNow: (m, k) => !!onlineHomes?.homeAt(m, k)?.own });",
-    "new": "r.data.homes, {});",
+    "old": "      const swept = homesGoneFrom((p.sceneCache ??= createSceneCache()), r.data.homes, {\n        ownNow: (m, k) => !!onlineHomes?.homeAt(m, k)?.own,\n      }); // never one bought while the list was read",
+    "new": "      const swept = homesGoneFrom((p.sceneCache ??= createSceneCache()), r.data.homes, {}); // never one bought while the list was read",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -258,8 +258,8 @@
   {
     "name": "ACCOUNT-HOMES-boot-stand-in-swept",
     "file": "src/scenes/homesBootHost.js",
-    "old": "    if (!await standing()) { goneAsked = false; return null; }",
-    "new": "    await standing();",
+    "old": "    if (!(await standing())) {\n      goneAsked = false;\n      return null;\n    } // never the boot's stand-in character - asked again at the next landing",
+    "new": "    await standing(); // never the boot's stand-in character - asked again at the next landing",
     "tests": [
       "test/server/account_homes.test.js"
     ],
@@ -268,8 +268,8 @@
   {
     "name": "ACCOUNT-HOMES-boot-latch-unset",
     "file": "src/scenes/homesBootHost.js",
-    "old": "    goneAsked = true;\n",
-    "new": "",
+    "old": "    goneAsked = true;\n    if (!(await standing())) {",
+    "new": "    if (!(await standing())) {",
     "tests": [
       "test/server/account_homes.test.js"
     ],

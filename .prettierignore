@@ -794,6 +794,14 @@
 !/src/scenes/grantHost.js
 !/src/scenes/groundFrameHost.js
 !/src/scenes/guildHallPress.js
+!/src/scenes/hallBanners.js
+!/src/scenes/hallSaleDoor.js
+!/src/scenes/harbourHost.js
+!/src/scenes/harbourOffice.js
+!/src/scenes/herbHost.js
+!/src/scenes/hideouts.js
+!/src/scenes/holdDoor.js
+!/src/scenes/homesBootHost.js
 !/src/scenes/ketch/
 /src/scenes/ketch/*
 !/src/scenes/ketch/ketchClient.js

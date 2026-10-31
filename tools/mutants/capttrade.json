@@ -173,8 +173,8 @@
   {
     "name": "OFFICE-buy-undealt",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.deal(port.key, day, id, k, 'bought');\n",
-    "new": "",
+    "old": "    L.deal(port.key, day, id, k, 'bought');\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/capttrade.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "OFFICE-sell-unlogged",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.note('traded', k * r.buy);\n",
-    "new": "",
+    "old": "    L.note('traded', k * r.buy);\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/capttrade.test.js"
     ]
@@ -308,7 +308,7 @@
   {
     "name": "OFFICE-cache-unsited",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    sites: () => [...contractSites(L.contracts()), ...L.charts().map((c) => ({ id: c.id, kind: 'cache', px: c.px, py: c.py, seed: c.seed, n: 1 }))],",
+    "old": "    sites: () => [\n      ...contractSites(L.contracts()),\n      ...L.charts().map((c) => ({ id: c.id, kind: 'cache', px: c.px, py: c.py, seed: c.seed, n: 1 })),\n    ],",
     "new": "    sites: () => [...contractSites(L.contracts())],",
     "tests": [
       "test/systems/naval/capttrade.test.js"

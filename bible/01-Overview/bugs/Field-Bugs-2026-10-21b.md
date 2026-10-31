@@ -103,7 +103,7 @@ THE LAW NOW.
 
 - She sailed from where she last LAY STILL: a berth now says whether she lies still - her own way under BERTH_STILL
   (0.5 m/s, the current none of it), or the helm let go - and only a still berth moves the departure
-  (`harbourOffice.js:"if (!from || ev.still !== false) log.departed = { port: ev.port, sailed };"`). A slow berth under way
+  (`harbourOffice.js:"if (!from || ev.still !== false)"`). A slow berth under way
   is checked against the departure and moves nothing, so a Rowboat rowing out of one port and into the next is counted
   from the quay she lay at. A berth at another port a quarter league on is the port reached, and she lies there from then.
   A boat drifting where two ports' waters meet lies still in each in turn and never makes the quarter league between them;

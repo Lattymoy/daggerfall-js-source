@@ -67,8 +67,8 @@
   {
     "name": "PORT-TOWNS-an-empty-list-voids-all",
     "file": "src/scenes/harbourOffice.js",
-    "old": "if (ports.length && typeof deps.seaAt === 'function') {",
-    "new": "if (typeof deps.seaAt === 'function') {",
+    "old": "    if (ports.length && typeof deps.seaAt === 'function') {",
+    "new": "    if (typeof deps.seaAt === 'function') {",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "PORT-TOWNS-no-sea-law-voids-all",
     "file": "src/scenes/harbourOffice.js",
-    "old": "ports.length && typeof deps.seaAt === 'function'",
-    "new": "ports.length",
+    "old": "    if (ports.length && typeof deps.seaAt === 'function') {",
+    "new": "    if (ports.length) {",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "PORT-TOWNS-the-list-not-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "(ports.some((p) => p.key === c.to?.key) && deliveryPort(c.to, deps.seaAt))",
-    "new": "deliveryPort(c.to, deps.seaAt)",
+    "old": "        if (c.kind !== 'delivery' || (ports.some((p) => p.key === c.to?.key) && deliveryPort(c.to, deps.seaAt)))\n          continue;",
+    "new": "        if (c.kind !== 'delivery' || deliveryPort(c.to, deps.seaAt)) continue;",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "PORT-TOWNS-the-held-cargo's-sea-not-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "(ports.some((p) => p.key === c.to?.key) && deliveryPort(c.to, deps.seaAt))",
-    "new": "ports.some((p) => p.key === c.to?.key)",
+    "old": "        if (c.kind !== 'delivery' || (ports.some((p) => p.key === c.to?.key) && deliveryPort(c.to, deps.seaAt)))\n          continue;",
+    "new": "        if (c.kind !== 'delivery' || ports.some((p) => p.key === c.to?.key)) continue;",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "PORT-TOWNS-said-as-a-bounty",
     "file": "src/scenes/harbourOffice.js",
-    "old": "deps.mid?.(c.kind === 'delivery' ? cargoVoidWords(c) : ",
-    "new": "deps.mid?.(",
+    "old": "    for (const c of r.voided ?? [])\n      deps.mid?.(c.kind === 'delivery' ? cargoVoidWords(c) : `Bounty void - ${c.title}. Someone else sank it.`, 5); // AUDIT CAPTAIN'S SEA B4; FIELD BUGS 2026-10-13c PORT-TOWNS",
+    "new": "    for (const c of r.voided ?? []) deps.mid?.(`Bounty void - ${c.title}. Someone else sank it.`, 5); // AUDIT CAPTAIN'S SEA B4; FIELD BUGS 2026-10-13c PORT-TOWNS",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js"
     ]
@@ -112,7 +112,7 @@
   {
     "name": "PORT-TOWNS-the-words-English-always",
     "file": "src/scenes/harbourOffice.js",
-    "old": "const cargoVoidWords = (c) => t('sea.board.cargoVoid', 'Contract void - {title}. No ship can make port there.', { title: c.title });",
+    "old": "const cargoVoidWords = (c) =>\n  t('sea.board.cargoVoid', 'Contract void - {title}. No ship can make port there.', { title: c.title });",
     "new": "const cargoVoidWords = (c) => `Contract void - ${c.title}. No ship can make port there.`;",
     "tests": [
       "test/systems/naval/fb1013c_porttowns.test.js"

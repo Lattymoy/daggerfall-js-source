@@ -317,8 +317,8 @@
   {
     "name": "PORT-harbour",
     "file": "src/scenes/harbourHost.js",
-    "old": "      if (loc?.exterior?.exteriorData) add({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH });",
-    "new": "",
+    "old": "      if (loc?.exterior?.exteriorData)\n        add({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH }); // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town",
+    "new": "      // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town",
     "tests": [
       "test/world/etherplaces.test.js"
     ]

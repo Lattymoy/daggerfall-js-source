@@ -92,8 +92,8 @@
   {
     "name": "SETTLE-SAID-the-patch-never-asks",
     "file": "src/scenes/herbHost.js",
-    "old": "    where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS),   // SETTLE-SAID\n",
-    "new": "",
+    "old": "    where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS), // SETTLE-SAID\n    /** PROF-MENU: the menu's title - the patch's herb. */",
+    "new": "    /** PROF-MENU: the menu's title - the patch's herb. */",
     "tests": [
       "test/scenes/fb1001_settlesaid.test.js"
     ]

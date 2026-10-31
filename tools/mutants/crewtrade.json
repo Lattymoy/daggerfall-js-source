@@ -203,8 +203,8 @@
   {
     "name": "CREW-TRADE-office-row-unlisted",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (hands?.crewed && !hands.charter) rows.unshift(",
-    "new": "    if (false) rows.unshift(",
+    "old": "    if (hands?.crewed && !hands.charter)",
+    "new": "    if (false)",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "CREW-TRADE-office-hold-unasked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "hold = (typeof boat?.cargo === 'function' ? boat.cargo() : boat?.cargo) ?? null,",
-    "new": "hold = boat?.cargo ?? null,",
+    "old": "      hold = (typeof boat?.cargo === 'function' ? boat.cargo() : boat?.cargo) ?? null,",
+    "new": "      hold = boat?.cargo ?? null,",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -240,8 +240,8 @@
   {
     "name": "CREW-TRADE-office-full",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (s.room <= 0) return { ok: false, text: CREW_TRADE_TEXT.full };\n",
-    "new": "",
+    "old": "    if (s.room <= 0) return { ok: false, text: CREW_TRADE_TEXT.full };\n    const k = Math.min(asked(n), r.sells, Math.floor((deps.gold?.() ?? 0) / r.sell));",
+    "new": "    const k = Math.min(asked(n), r.sells, Math.floor((deps.gold?.() ?? 0) / r.sell));",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -249,8 +249,8 @@
   {
     "name": "CREW-TRADE-office-pay",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    deps.pay?.(got * r.sell);\n",
-    "new": "",
+    "old": "    deps.pay?.(got * r.sell);\n    L.deal(port.key, day, CREW.id, got, 'bought');",
+    "new": "    L.deal(port.key, day, CREW.id, got, 'bought');",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -258,8 +258,8 @@
   {
     "name": "CREW-TRADE-office-bought-unkept",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.deal(port.key, day, CREW.id, got, 'bought');\n",
-    "new": "",
+    "old": "    L.deal(port.key, day, CREW.id, got, 'bought');\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "CREW-TRADE-office-spare",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (s.spare <= 0) return { ok: false, text: s.why };\n",
-    "new": "",
+    "old": "    if (s.spare <= 0) return { ok: false, text: s.why };\n    const r = crewRow(port, day);",
+    "new": "    const r = crewRow(port, day);",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "CREW-TRADE-office-stock-off",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    const off = deal.signOff(Math.min(asked(n), r.buys)), gone = off.n;",
-    "new": "    const off = deal.signOff(asked(n)), gone = off.n;",
+    "old": "    const off = deal.signOff(Math.min(asked(n), r.buys)),",
+    "new": "    const off = deal.signOff(asked(n)),",
     "note": "Re-aimed by content (AUDIT CREW-TRADE H1): signOff answers the men and the hands who left",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
@@ -286,8 +286,8 @@
   {
     "name": "CREW-TRADE-office-credit",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    deps.credit?.(gone * r.buy);\n",
-    "new": "",
+    "old": "    deps.credit?.(gone * r.buy);\n    L.deal(port.key, day, CREW.id, gone, 'sold');",
+    "new": "    L.deal(port.key, day, CREW.id, gone, 'sold');",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "CREW-TRADE-office-sold-unkept",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.deal(port.key, day, CREW.id, gone, 'sold');\n",
-    "new": "",
+    "old": "    L.deal(port.key, day, CREW.id, gone, 'sold');\n    L.note('traded', gone * r.buy);",
+    "new": "    L.note('traded', gone * r.buy);",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "CREW-TRADE-office-traded",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.note('traded', gone * r.buy);\n",
-    "new": "",
+    "old": "    L.note('traded', gone * r.buy);\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -313,8 +313,8 @@
   {
     "name": "CREW-TRADE-office-fight",
     "file": "src/scenes/harbourOffice.js",
-    "old": "s.fighting ? CREW_TRADE_TEXT.fighting : null);",
-    "new": "null);",
+    "old": "  const crewRefused = (s) =>\n    !s?.crewed\n      ? CREW_TRADE_TEXT.noCrew\n      : s.charter\n        ? CREW_TRADE_TEXT.charter\n        : s.fighting\n          ? CREW_TRADE_TEXT.fighting\n          : null;",
+    "new": "  const crewRefused = (s) => (!s?.crewed ? CREW_TRADE_TEXT.noCrew : s.charter ? CREW_TRADE_TEXT.charter : null);",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "CREW-TRADE-office-discount-unread",
     "file": "src/scenes/harbourOffice.js",
-    "old": "discount: perksHere().yard });",
-    "new": "discount: 0 });",
+    "old": "    crewRowOf(port, day, {\n      dealt: L.dealtAt(port.key, day),\n      edge: L.stats?.().trade,\n      town: townAt(port),\n      discount: perksHere().yard,\n    });",
+    "new": "    crewRowOf(port, day, { dealt: L.dealtAt(port.key, day), edge: L.stats?.().trade, town: townAt(port), discount: 0 });",
     "tests": [
       "test/systems/naval/crewtrade.test.js"
     ]

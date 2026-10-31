@@ -110,8 +110,8 @@
   {
     "name": "PORTSHIPS-host-keep-unhanded",
     "file": "src/scenes/harbourHost.js",
-    "old": "return { ...h, keep: harbourKeep(t.loc, h.rect) };",
-    "new": "return { ...h };",
+    "old": "      return { ...h, keep: harbourKeep(t.loc, h.rect) };",
+    "new": "      return { ...h };",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "PORTSHIPS-host-ground-unhanded",
     "file": "src/scenes/harbourHost.js",
-    "old": "    ground: (x, z) => surfaceAt(x, z) - tvSeaY(),",
-    "new": "    ground: undefined,",
+    "old": "    ground: (x, z) => surfaceAt(x, z) - tvSeaY(), // PORT-SHIPS: the ground over the sea's top - a berth's ship stands afloat (shipLife.js berthStands)",
+    "new": "    ground: undefined, // PORT-SHIPS: the ground over the sea's top - a berth's ship stands afloat (shipLife.js berthStands)",
     "tests": [
       "test/systems/naval/portships.test.js"
     ]

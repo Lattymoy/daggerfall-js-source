@@ -2,8 +2,8 @@
   {
     "name": "NODE-MARKS-the-herbs-never-marked",
     "file": "src/scenes/herbHost.js",
-    "old": "    mark: (p) => (gone(p) ? null : PATCH_MARK),",
-    "new": "    mark: () => null,",
+    "old": "    mark: (p) => (gone(p) ? null : PATCH_MARK), // NODE-MARKS: on the compass and lit while either harvest stands",
+    "new": "    mark: () => null, // NODE-MARKS: on the compass and lit while either harvest stands",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "NODE-MARKS-a-half-taken-patch-dropped",
     "file": "src/scenes/herbHost.js",
-    "old": "  const gone = (p) => goneIn(book, p.key, 'herbs') && goneIn(book, p.key, 'food');",
-    "new": "  const gone = (p) => goneIn(book, p.key, 'herbs') || goneIn(book, p.key, 'food');",
+    "old": "  const gone = (p) => goneIn(book, p.key, 'herbs') && goneIn(book, p.key, 'food'); // GATHER-SPEED: or being counted",
+    "new": "  const gone = (p) => goneIn(book, p.key, 'herbs') || goneIn(book, p.key, 'food'); // GATHER-SPEED: or being counted",
     "tests": [
       "test/scenes/nodemarks.test.js"
     ],

@@ -92,8 +92,8 @@
   {
     "name": "TOWNECON4-good-unmarked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    markCounterBought([goods], { price: k * r.sell });",
-    "new": "    void markCounterBought;",
+    "old": "    markCounterBought([goods], { price: k * r.sell }); // SEA-TRADE: online, what it cost rides it (before a stack's merge takes it)",
+    "new": "    void markCounterBought; // SEA-TRADE: online, what it cost rides it (before a stack's merge takes it)",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "TOWNECON4-office-unpriced",
     "file": "src/scenes/harbourOffice.js",
-    "old": "const townAt = (port) => deps.town?.exchangeAt?.(port) ?? null;",
-    "new": "const townAt = (port) => null && port;",
+    "old": "  const townAt = (port) => deps.town?.exchangeAt?.(port) ?? null;",
+    "new": "  const townAt = (port) => null && port;",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "TOWNECON4-deal-untold",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.note('traded', k * r.buy);\n    deps.town?.seaDeal?.(port);",
-    "new": "    L.note('traded', k * r.buy);",
+    "old": "    L.note('traded', k * r.buy);\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    L.note('traded', k * r.buy); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/townecon_sea.test.js"
     ],

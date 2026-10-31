@@ -22,8 +22,8 @@
   {
     "name": "VOYAGE-HOLD-old-shape-not-still",
     "file": "src/scenes/harbourOffice.js",
-    "old": "ev.still !== false) log.departed",
-    "new": "ev.still === true) log.departed",
+    "old": "    if (!from || ev.still !== false) log.departed = { port: ev.port, sailed };",
+    "new": "    if (!from || ev.still === true) log.departed = { port: ev.port, sailed };",
     "tests": [
       "test/systems/questlines/ql11_acts.test.js"
     ],

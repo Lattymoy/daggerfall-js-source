@@ -92,8 +92,8 @@
   {
     "name": "STORES-ROOM-the-patch-reads-held",
     "file": "src/scenes/herbHost.js",
-    "old": "storesFull: (key) => storesFullIn(book, key),",
-    "new": "storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),",
+    "old": "      storesFull: (key) => storesFullIn(book, key),",
+    "new": "      storesFull: (key) => book.held(key) >= (book.state.caps?.stores ?? 5000),",
     "tests": [
       "test/net/fb1001_ground.test.js"
     ]

@@ -72,8 +72,8 @@
   {
     "name": "ACT-H1-paid-off-unsaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "off.left.length ? CREW_TRADE_TEXT.paidOff(handsNamed(off.left)) : ''",
-    "new": "''",
+    "old": "    return {\n      ok: true,\n      text: [\n        CREW_TRADE_TEXT.sold(gone, gone * r.buy),\n        off.left.length ? CREW_TRADE_TEXT.paidOff(handsNamed(off.left)) : '',\n      ]\n        .filter(Boolean)\n        .join(' '),\n    }; // AUDIT CREW-TRADE H1: who left her",
+    "new": "    return { ok: true, text: [CREW_TRADE_TEXT.sold(gone, gone * r.buy), ''].filter(Boolean).join(' ') }; // AUDIT CREW-TRADE H1: who left her",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "ACT-H3-joined-unsaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "on.joined.length ? CREW_TRADE_TEXT.signedOn(handsNamed(on.joined)) : ''",
-    "new": "''",
+    "old": "    return {\n      ok: true,\n      text: [\n        CREW_TRADE_TEXT.bought(got, got * r.sell),\n        on.joined.length ? CREW_TRADE_TEXT.signedOn(handsNamed(on.joined)) : '',\n      ]\n        .filter(Boolean)\n        .join(' '),\n    }; // AUDIT CREW-TRADE H3: who joined her",
+    "new": "    return { ok: true, text: [CREW_TRADE_TEXT.bought(got, got * r.sell), ''].filter(Boolean).join(' ') }; // AUDIT CREW-TRADE H3: who joined her",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "ACT-E1-charter-row-listed",
     "file": "src/scenes/harbourOffice.js",
-    "old": "if (hands?.crewed && !hands.charter) rows.unshift(",
-    "new": "if (hands?.crewed) rows.unshift(",
+    "old": "    if (hands?.crewed && !hands.charter)",
+    "new": "    if (hands?.crewed)",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "ACT-E1-fight-before-charter",
     "file": "src/scenes/harbourOffice.js",
-    "old": "s.charter ? CREW_TRADE_TEXT.charter : s.fighting ? CREW_TRADE_TEXT.fighting : null",
-    "new": "s.fighting ? CREW_TRADE_TEXT.fighting : s.charter ? CREW_TRADE_TEXT.charter : null",
+    "old": "      : s.charter\n        ? CREW_TRADE_TEXT.charter\n        : s.fighting\n          ? CREW_TRADE_TEXT.fighting",
+    "new": "      : s.fighting\n        ? CREW_TRADE_TEXT.fighting\n        : s.charter\n          ? CREW_TRADE_TEXT.charter",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "ACT-O1-why-uncarried",
     "file": "src/scenes/harbourOffice.js",
-    "old": "spare: hands.spare, why: hands.why });",
-    "new": "spare: hands.spare });",
+    "old": "        why: hands.why,\n      }); // AUDIT CREW-TRADE E1: never a booked passage's; O1: why none may leave her",
+    "new": "      }); // AUDIT CREW-TRADE E1: never a booked passage's; O1: why none may leave her",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "ACT-O2-gold-a-string",
     "file": "src/scenes/harbourOffice.js",
-    "old": "CREW_TRADE_TEXT.sold(gone, gone * r.buy)",
-    "new": "CREW_TRADE_TEXT.sold(gone, gold(gone * r.buy))",
+    "old": "        CREW_TRADE_TEXT.sold(gone, gone * r.buy),",
+    "new": "        CREW_TRADE_TEXT.sold(gone, gold(gone * r.buy)),",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "ACT-O3-title-english",
     "file": "src/scenes/harbourOffice.js",
-    "old": "name: CREW_TRADE_TEXT.title, ",
-    "new": "",
+    "old": "        name: CREW_TRADE_TEXT.title,\n        have: hands.crew,",
+    "new": "        have: hands.crew,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "ACT-P1-buy-text-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "CREW_TRADE_TEXT.bought(got, got * r.sell)",
-    "new": "CREW_TRADE_TEXT.bought(k, k * r.sell)",
+    "old": "        CREW_TRADE_TEXT.bought(got, got * r.sell),",
+    "new": "        CREW_TRADE_TEXT.bought(k, k * r.sell),",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "ACT-P1-sell-credit-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    deps.credit?.(gone * r.buy);\n    L.deal(port.key, day, CREW.id, gone, 'sold');",
-    "new": "    deps.credit?.(Math.min(asked(n), r.buys) * r.buy);\n    L.deal(port.key, day, CREW.id, gone, 'sold');",
+    "old": "    deps.credit?.(gone * r.buy);",
+    "new": "    deps.credit?.(Math.min(asked(n), r.buys) * r.buy);",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "ACT-P1-sell-ledger-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "L.deal(port.key, day, CREW.id, gone, 'sold');",
-    "new": "L.deal(port.key, day, CREW.id, Math.min(asked(n), r.buys), 'sold');",
+    "old": "    L.deal(port.key, day, CREW.id, gone, 'sold');",
+    "new": "    L.deal(port.key, day, CREW.id, Math.min(asked(n), r.buys), 'sold');",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "ACT-P1-sell-traded-asked",
     "file": "src/scenes/harbourOffice.js",
-    "old": "L.note('traded', gone * r.buy);",
-    "new": "L.note('traded', Math.min(asked(n), r.buys) * r.buy);",
+    "old": "    L.note('traded', gone * r.buy);",
+    "new": "    L.note('traded', Math.min(asked(n), r.buys) * r.buy);",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -322,8 +322,8 @@
   {
     "name": "ACT-P4-office-stars-unread",
     "file": "src/scenes/harbourOffice.js",
-    "old": "edge: L.stats?.().trade, town: townAt(port), discount: perksHere().yard",
-    "new": "edge: 0, town: townAt(port), discount: perksHere().yard",
+    "old": "    crewRowOf(port, day, {\n      dealt: L.dealtAt(port.key, day),\n      edge: L.stats?.().trade,\n      town: townAt(port),\n      discount: perksHere().yard,\n    });",
+    "new": "    crewRowOf(port, day, { dealt: L.dealtAt(port.key, day), edge: 0, town: townAt(port), discount: perksHere().yard });",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -332,8 +332,8 @@
   {
     "name": "ACT-P4-office-town-unread",
     "file": "src/scenes/harbourOffice.js",
-    "old": "edge: L.stats?.().trade, town: townAt(port), discount: perksHere().yard",
-    "new": "edge: L.stats?.().trade, town: null, discount: perksHere().yard",
+    "old": "      town: townAt(port),",
+    "new": "      town: null,",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "ACT-P5-buy-untold",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.deal(port.key, day, CREW.id, got, 'bought');\n    deps.town?.seaDeal?.(port);",
-    "new": "    L.deal(port.key, day, CREW.id, got, 'bought');",
+    "old": "    L.deal(port.key, day, CREW.id, got, 'bought');\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    L.deal(port.key, day, CREW.id, got, 'bought'); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "ACT-P5-sell-untold",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    L.note('traded', gone * r.buy);\n    deps.town?.seaDeal?.(port);",
-    "new": "    L.note('traded', gone * r.buy);",
+    "old": "    L.note('traded', gone * r.buy);\n    deps.town?.seaDeal?.(port); // SEA-TRADE: a dealing at the port's exchange",
+    "new": "    L.note('traded', gone * r.buy); // SEA-TRADE: a dealing at the port's exchange",
     "tests": [
       "test/systems/naval/auditcrewtrade.test.js",
       "test/systems/naval/crewtrade.test.js"

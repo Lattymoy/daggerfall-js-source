@@ -11,8 +11,8 @@
   {
     "name": "NODE-CLEAR-the-patch-inside-taken",
     "file": "src/scenes/herbHost.js",
-    "old": "    if (!base || insideRocks(rocks, base.x, base.z)) continue;   // NODE-CLEAR",
-    "new": "    if (!base) continue;   // NODE-CLEAR",
+    "old": "    if (!base || insideRocks(rocks, base.x, base.z)) continue; // NODE-CLEAR",
+    "new": "    if (!base) continue; // NODE-CLEAR",
     "tests": [
       "test/scenes/fb1001_nodes.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "NODE-CLEAR-the-patches-handed-no-rocks",
     "file": "src/scenes/herbHost.js",
-    "old": "        rocks: [...(entry.rocks ?? []), ...(near ?? [])],   // NODE-CLEAR: and never inside a rock piece; ROCK-NEAR: a neighbour's reaching in too\n",
-    "new": "",
+    "old": "        rocks: [...(entry.rocks ?? []), ...(near ?? [])], // NODE-CLEAR: and never inside a rock piece; ROCK-NEAR: a neighbour's reaching in too\n        verge: entry.verge ?? null, // VERGE1: nor over a road",
+    "new": "        verge: entry.verge ?? null, // VERGE1: nor over a road",
     "tests": [
       "test/scenes/fb1001_nodes.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "STEADY-SAID-the-key-never-named",
     "file": "src/scenes/herbHost.js",
-    "old": "label: plan.harvest === 'food' ? 'click the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
-    "new": "label: plan.harvest === 'food' ? 'click the glint' : '',",
+    "old": "        label: plan.harvest === 'food' ? 'click the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
+    "new": "        label: plan.harvest === 'food' ? 'click the glint' : '',",
     "tests": [
       "test/scenes/fb1001_nodes.test.js"
     ]

@@ -272,8 +272,8 @@
   {
     "name": "CT-trade-office-unread",
     "file": "src/scenes/harbourOffice.js",
-    "old": "const rows = exchangeOf(port, day, L.dealtAt(port.key, day), L.stats?.().trade, townAt(port))",
-    "new": "const rows = exchangeOf(port, day, L.dealtAt(port.key, day), 0, townAt(port))",
+    "old": "    const rows = exchangeOf(port, day, L.dealtAt(port.key, day), L.stats?.().trade, townAt(port))",
+    "new": "    const rows = exchangeOf(port, day, L.dealtAt(port.key, day), 0, townAt(port))",
     "tests": [
       "test/systems/naval/captaintree.test.js"
     ]

@@ -164,8 +164,8 @@
   {
     "name": "CASTLE-GATE-G1-normal-translated",
     "file": "src/scenes/hallBanners.js",
-    "old": "  const v = [m[0] * n.x + m[4] * n.y + m[8] * n.z,",
-    "new": "  const v = [m[0] * n.x + m[4] * n.y + m[8] * n.z + m[12],",
+    "old": "    m[0] * n.x + m[4] * n.y + m[8] * n.z,",
+    "new": "    m[0] * n.x + m[4] * n.y + m[8] * n.z + m[12],",
     "tests": [
       "test/scenes/castle_gate.test.js"
     ]

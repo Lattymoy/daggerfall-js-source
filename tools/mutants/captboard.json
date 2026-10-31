@@ -443,8 +443,8 @@
   {
     "name": "OFFICE-done-unpaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    for (const c of r.done) { deps.credit?.(c.pay);",
-    "new": "    for (const c of r.done) {",
+    "old": "      deps.credit?.(c.pay);\n      deps.mid?.(`Contract done - ${c.title}. ${gold(c.pay)} paid by ${c.port?.name ?? c.crown}'s harbormaster.`, 5);",
+    "new": "      deps.mid?.(`Contract done - ${c.title}. ${gold(c.pay)} paid by ${c.port?.name ?? c.crown}'s harbormaster.`, 5);",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "OFFICE-cargo-no-boat",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (o.kind === 'delivery' && boat?.uid == null) return { ok: false, text: 'A cargo needs a ship of your own to carry it.' };\n",
-    "new": "",
+    "old": "    if (o.kind === 'delivery' && boat?.uid == null)\n      return { ok: false, text: 'A cargo needs a ship of your own to carry it.' };\n    const c = takeContract(o, { now: now(), boat: o.kind === 'delivery' ? boat.uid : null });",
+    "new": "    const c = takeContract(o, { now: now(), boat: o.kind === 'delivery' ? boat.uid : null });",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]
@@ -470,7 +470,7 @@
   {
     "name": "OFFICE-carrack-untitled",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (!deps.carrack?.(o.price, port)) return { ok: false, text: 'The Admiralty\\'s yard has no carrack to give today.' };",
+    "old": "    if (!deps.carrack?.(o.price, port))\n      return { ok: false, text: \"The Admiralty's yard has no carrack to give today.\" };",
     "new": "    if (false) return { ok: false, text: '' };",
     "tests": [
       "test/systems/naval/captboard.test.js"
@@ -488,8 +488,8 @@
   {
     "name": "OFFICE-tick-unsaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    for (const c of failed) deps.mid?.(`Contract failed - ${c.title}. Its term ran out.`, 5);\n",
-    "new": "",
+    "old": "    for (const c of failed) deps.mid?.(`Contract failed - ${c.title}. Its term ran out.`, 5);\n    const ports = deps.ports?.() ?? [];",
+    "new": "    const ports = deps.ports?.() ?? [];",
     "tests": [
       "test/systems/naval/captboard.test.js"
     ]

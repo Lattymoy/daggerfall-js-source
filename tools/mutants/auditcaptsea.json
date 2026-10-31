@@ -20,8 +20,8 @@
   {
     "name": "ACS-B16-office-words",
     "file": "src/scenes/harbourOffice.js",
-    "old": "text: r?.exotic ? `${r.name} is not sold here.` : `The exchange sells",
-    "new": "text: `The exchange sells",
+    "old": "      return {\n        ok: false,\n        text: r?.exotic\n          ? `${r.name} is not sold here.`\n          : `The exchange sells no more ${goodById(id)?.name ?? 'of that'} today.`,\n      };",
+    "new": "      return { ok: false, text: `The exchange sells no more ${goodById(id)?.name ?? 'of that'} today.` };",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/capttrade.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "ACS-B16-list",
     "file": "src/scenes/harbourOffice.js",
-    "old": ".filter((r) => others || !r.exotic || r.have > 0);",
-    "new": ";",
+    "old": "    const rows = exchangeOf(port, day, L.dealtAt(port.key, day), L.stats?.().trade, townAt(port))\n      .map((r) => ({ ...r, have: goodIn(hold, r.id) }))\n      .filter((r) => others || !r.exotic || r.have > 0);",
+    "new": "    const rows = exchangeOf(port, day, L.dealtAt(port.key, day), L.stats?.().trade, townAt(port)).map((r) => ({\n      ...r,\n      have: goodIn(hold, r.id),\n    }));",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "ACS-B16-carried",
     "file": "src/scenes/harbourOffice.js",
-    "old": ".filter((r) => others || !r.exotic || r.have > 0);",
-    "new": ".filter((r) => others || !r.exotic);",
+    "old": "      .filter((r) => others || !r.exotic || r.have > 0);",
+    "new": "      .filter((r) => others || !r.exotic);",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -159,8 +159,8 @@
   {
     "name": "ACS-B4-said",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    for (const c of r.voided ?? []) deps.mid?.(c.kind === 'delivery' ? cargoVoidWords(c) : `Bounty void - ${c.title}. Someone else sank it.`, 5);",
-    "new": "    void r;",
+    "old": "    for (const c of r.voided ?? [])\n      deps.mid?.(c.kind === 'delivery' ? cargoVoidWords(c) : `Bounty void - ${c.title}. Someone else sank it.`, 5); // AUDIT CAPTAIN'S SEA B4; FIELD BUGS 2026-10-13c PORT-TOWNS",
+    "new": "    void r; // AUDIT CAPTAIN'S SEA B4; FIELD BUGS 2026-10-13c PORT-TOWNS",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/naval/captboard.test.js"
@@ -196,8 +196,8 @@
   {
     "name": "ACS-B8-raised",
     "file": "src/scenes/harbourOffice.js",
-    "old": "if (L.wasRaised?.(site.id)) return { ok: true, text: `This cache was raised long ago",
-    "new": "if (false) return { ok: true, text: `This cache was raised long ago",
+    "old": "    if (L.wasRaised?.(site.id))",
+    "new": "    if (false)",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -251,7 +251,7 @@
   {
     "name": "ACS-B11-room-refusal",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (fit <= 0) return { ok: false, text: 'The ship can\\'t carry any more.' };",
+    "old": "    if (fit <= 0) return { ok: false, text: \"The ship can't carry any more.\" };",
     "new": "    void fit;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
@@ -260,8 +260,8 @@
   {
     "name": "ACS-B11-room-sum",
     "file": "src/scenes/harbourOffice.js",
-    "old": "Math.max(0, Math.floor((room.stops - room.load - 1e-6) / Math.max(1e-6, kg)))",
-    "new": "Math.max(0, Math.ceil((room.stops - room.load) / Math.max(1e-6, kg)))",
+    "old": "      ? Math.max(0, Math.floor((room.stops - room.load - 1e-6) / Math.max(1e-6, kg)))",
+    "new": "      ? Math.max(0, Math.ceil((room.stops - room.load) / Math.max(1e-6, kg)))",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "ACS-B11-room-shown",
     "file": "src/scenes/harbourOffice.js",
-    "old": "room: rm && Number.isFinite(rm.stops) && Number.isFinite(rm.load) ? Math.max(0, Math.floor(rm.stops - rm.load)) : null,",
-    "new": "room: null,",
+    "old": "      room:\n        rm && Number.isFinite(rm.stops) && Number.isFinite(rm.load)\n          ? Math.max(0, Math.floor(rm.stops - rm.load))\n          : null,",
+    "new": "      room: null,",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1216,8 +1216,8 @@
   {
     "name": "ACS-H1-host-town",
     "file": "src/scenes/harbourHost.js",
-    "old": "name: isle.name, reach: ETHER_HARBOUR_REACH });",
-    "new": "name: isle.name });",
+    "old": "      if (loc?.exterior?.exteriorData)\n        add({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name, reach: ETHER_HARBOUR_REACH }); // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town",
+    "new": "      if (loc?.exterior?.exteriorData) add({ id: `ether:${isle.key}`, loc, x: isle.px, y: isle.py, name: isle.name }); // AUDIT CAPTAIN'S SEA H1/P2: its isle's shore, ETHER_PORT_SHORE_M about the town",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

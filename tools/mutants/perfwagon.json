@@ -146,8 +146,8 @@
   {
     "name": "PERF-WAGON-q-the-hideout-tent-box-unmade",
     "file": "src/scenes/hideouts.js",
-    "old": "cull ? sphereAabb(tent.gpu.bounds, m) : null",
-    "new": "null",
+    "old": "        if (drawSeen(r, cull, cull ? sphereAabb(tent.gpu.bounds, m) : null, tent.gpu, m, texRemap)) n++;",
+    "new": "        if (drawSeen(r, cull, null, tent.gpu, m, texRemap)) n++;",
     "tests": [
       "test/systems/livingWorld/perfwagon.test.js"
     ]

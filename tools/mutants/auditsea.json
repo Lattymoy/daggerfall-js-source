@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-SEA-B3-door-open",
     "file": "src/scenes/holdDoor.js",
-    "old": "    if (seaHoldShut(boat.uid)) return said(false, seaHoldShutText());\n",
-    "new": "",
+    "old": "    if (seaHoldShut(boat.uid)) return said(false, seaHoldShutText());\n    return !!deps.openHold?.({ ...cargoLootTarget(boat.Cargo), title: titleOf(boat.uid) });",
+    "new": "    return !!deps.openHold?.({ ...cargoLootTarget(boat.Cargo), title: titleOf(boat.uid) });",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

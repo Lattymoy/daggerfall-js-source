@@ -579,8 +579,8 @@
   {
     "name": "BLS-rout-untold",
     "file": "src/scenes/hideouts.js",
-    "old": "    deps.routed?.(s.h);   // BAY-LEFT-SEA",
-    "new": "    void s.h;   // BAY-LEFT-SEA",
+    "old": "    deps.routed?.(s.h); // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js hideoutRouted)",
+    "new": "    void s.h; // BAY-LEFT-SEA: a den cleared - a Bounty past the Bay pays for it (systems/seatEdicts.js hideoutRouted)",
     "tests": [
       "test/net/bayleftsea_bounty.test.js"
     ]

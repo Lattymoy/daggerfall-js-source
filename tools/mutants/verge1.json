@@ -130,8 +130,8 @@
   {
     "name": "VERGE1-herb-reach-wrong",
     "file": "src/scenes/herbHost.js",
-    "old": "const clear = verge ? (x, z) => verge(x, z, PATCH_MARK.w / 2) : null;",
-    "new": "const clear = verge ? (x, z) => verge(x, z, PATCH_MARK.h / 2) : null;",
+    "old": "  const clear = verge ? (x, z) => verge(x, z, PATCH_MARK.w / 2) : null;",
+    "new": "  const clear = verge ? (x, z) => verge(x, z, PATCH_MARK.h / 2) : null;",
     "tests": [
       "test/world/road/verge1.test.js"
     ]

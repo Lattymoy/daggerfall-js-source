@@ -322,8 +322,8 @@
   {
     "name": "GUILD1d-banners-version-unread",
     "file": "src/scenes/hallBanners.js",
-    "old": "      if (lv !== seen || now() - at >= BANNER_REFRESH_MS)",
-    "new": "      if (now() - at >= BANNER_REFRESH_MS)",
+    "old": "      if (lv !== seen || now() - at >= BANNER_REFRESH_MS) {",
+    "new": "      if (now() - at >= BANNER_REFRESH_MS) {",
     "tests": [
       "test/net/guild1d_client.test.js"
     ]

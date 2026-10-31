@@ -275,8 +275,8 @@
   {
     "name": "AUDIT-TESA-A4-F2-harbour-arena-first",
     "file": "src/scenes/harbourHost.js",
-    "old": "const aloc = aq ? capitalLocationAt(aq.bx, aq.by) || arenaLocationAt(aq.bx, aq.by) : null;",
-    "new": "const aloc = aq ? arenaLocationAt(aq.bx, aq.by) : null;",
+    "old": "      const aloc = aq ? capitalLocationAt(aq.bx, aq.by) || arenaLocationAt(aq.bx, aq.by) : null; // AUDIT-TESA A4-F2: a capital's own",
+    "new": "      const aloc = aq ? arenaLocationAt(aq.bx, aq.by) : null; // AUDIT-TESA A4-F2: a capital's own",
     "tests": [
       "test/audit_tesa.test.js"
     ]

@@ -354,8 +354,8 @@
   {
     "name": "A2-hold-parts-lost",
     "file": "src/scenes/holdDoor.js",
-    "old": "      if (at >= 0) { items.splice(at, 1); deps.toPack?.(parts); }\n",
-    "new": "",
+    "old": "          if (at >= 0) {\n            items.splice(at, 1);\n            deps.toPack?.(parts);\n          }\n        }",
+    "new": "        }",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "A2-key-doorless",
     "file": "src/scenes/holdDoor.js",
-    "old": " && (afloat(s.uid) || deps.partsOf?.(s.uid) || titleDeedOf(s.uid)));",
-    "new": ");",
+    "old": "      const mine = ships().filter(\n        (s) => holdsCargo(s.hull) && (afloat(s.uid) || deps.partsOf?.(s.uid) || titleDeedOf(s.uid)),\n      );",
+    "new": "      const mine = ships().filter((s) => holdsCargo(s.hull));",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]

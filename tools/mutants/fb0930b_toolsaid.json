@@ -238,8 +238,8 @@
   {
     "name": "TOOL-USE-the-basket-is-no-tool-of-the-patch",
     "file": "src/scenes/herbHost.js",
-    "old": "    tools: Object.freeze([FT.Sickle, FT.Basket]),   // TOOL-USE",
-    "new": "    tools: Object.freeze([FT.Sickle]),   // TOOL-USE",
+    "old": "    tools: Object.freeze([FT.Sickle, FT.Basket]), // TOOL-USE",
+    "new": "    tools: Object.freeze([FT.Sickle]), // TOOL-USE",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "TOOL-USE-the-basket-follows-the-choice",
     "file": "src/scenes/herbHost.js",
-    "old": "const only = tool === FT.Sickle ? 'herbs' : tool === FT.Basket ? 'food' : null;",
-    "new": "const only = tool === FT.Sickle ? 'herbs' : null;",
+    "old": "      const only = tool === FT.Sickle ? 'herbs' : tool === FT.Basket ? 'food' : null;",
+    "new": "      const only = tool === FT.Sickle ? 'herbs' : null;",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "TOOL-USE-the-sickle-follows-the-choice",
     "file": "src/scenes/herbHost.js",
-    "old": "const only = tool === FT.Sickle ? 'herbs' : tool === FT.Basket ? 'food' : null;",
-    "new": "const only = tool === FT.Basket ? 'food' : null;",
+    "old": "      const only = tool === FT.Sickle ? 'herbs' : tool === FT.Basket ? 'food' : null;",
+    "new": "      const only = tool === FT.Basket ? 'food' : null;",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "TOOL-USE-the-choice-decides",
     "file": "src/scenes/herbHost.js",
-    "old": "return planOf(p, { entity, info, rank }, only ? only === 'food' : false, !!only);",
-    "new": "return planOf(p, { entity, info, rank }, false, !!only);",
+    "old": "      return planOf(p, { entity, info, rank }, only ? only === 'food' : false, !!only);",
+    "new": "      return planOf(p, { entity, info, rank }, false, !!only);",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "TOOL-USE-the-other-harvest-taken-over",
     "file": "src/scenes/herbHost.js",
-    "old": "return planOf(p, { entity, info, rank }, only ? only === 'food' : false, !!only);",
-    "new": "return planOf(p, { entity, info, rank }, only ? only === 'food' : false, false);",
+    "old": "      return planOf(p, { entity, info, rank }, only ? only === 'food' : false, !!only);",
+    "new": "      return planOf(p, { entity, info, rank }, only ? only === 'food' : false, false);",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]
@@ -328,7 +328,7 @@
   {
     "name": "TOOL-USE-a-taken-harvest-worked-again",
     "file": "src/scenes/herbHost.js",
-    "old": "  if (!(kind === 'food' ? foodLeft : herbsLeft)) return { kind, verb: kind === 'food' ? 'Search with the Basket' : `Pick ${name}`, rest: counting(kind) ? 'being counted' : 'gathered today', ready: false, both };",
+    "old": "  if (!(kind === 'food' ? foodLeft : herbsLeft))\n    return {\n      kind,\n      verb: kind === 'food' ? 'Search with the Basket' : `Pick ${name}`,\n      rest: counting(kind) ? 'being counted' : 'gathered today',\n      ready: false,\n      both,\n    };",
     "new": "",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
@@ -337,8 +337,8 @@
   {
     "name": "TOOL-USE-a-counted-harvest-said-gathered",
     "file": "src/scenes/herbHost.js",
-    "old": "rest: counting(kind) ? 'being counted' : 'gathered today', ready: false, both };",
-    "new": "rest: 'gathered today', ready: false, both };",
+    "old": "      rest: counting(kind) ? 'being counted' : 'gathered today',",
+    "new": "      rest: 'gathered today',",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "TOOL-USE-the-sickle-holds-nothing",
     "file": "src/scenes/herbHost.js",
-    "old": "        heldByUse: !!used && kind === 'steady',",
-    "new": "        heldByUse: false,",
+    "old": "        heldByUse: !!used && kind === 'steady', // TOOL-USE: the Sickle's Use holds the steady hand - keep still, no E held",
+    "new": "        heldByUse: false, // TOOL-USE: the Sickle's Use holds the steady hand - keep still, no E held",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "TOOL-USE-e-held-by-the-use",
     "file": "src/scenes/herbHost.js",
-    "old": "        heldByUse: !!used && kind === 'steady',",
-    "new": "        heldByUse: kind === 'steady',",
+    "old": "        heldByUse: !!used && kind === 'steady', // TOOL-USE: the Sickle's Use holds the steady hand - keep still, no E held",
+    "new": "        heldByUse: kind === 'steady', // TOOL-USE: the Sickle's Use holds the steady hand - keep still, no E held",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js"
     ]

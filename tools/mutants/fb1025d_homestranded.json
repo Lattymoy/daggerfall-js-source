@@ -49,8 +49,8 @@
   {
     "name": "FB1025D-STRANDED-NOT-KEPT-AT-BOOT",
     "file": "src/scenes/homesBootHost.js",
-    "old": "      for (const name of keepStrandedHomes(p.sceneCache, r.data.homes)) console.log",
-    "new": "      for (const name of []) console.log",
+    "old": "      for (const name of keepStrandedHomes(p.sceneCache, r.data.homes))\n        console.log(`[homes] ${name}: stranded chest goods kept for the owner's next visit`);",
+    "new": "      for (const name of []) console.log(`[homes] ${name}: stranded chest goods kept for the owner's next visit`);",
     "tests": [
       "test/systems/decor/fb1025d_homestranded.test.js"
     ],

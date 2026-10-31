@@ -145,8 +145,8 @@
   {
     "name": "PROFMENU-herb-food-row",
     "file": "src/scenes/herbHost.js",
-    "old": "return [{ ...herbs, id: 'herbs' }, { ...food, id: 'food' }];",
-    "new": "return [{ ...herbs, id: 'herbs' }];",
+    "old": "      return [\n        { ...herbs, id: 'herbs' },\n        { ...food, id: 'food' },\n      ];",
+    "new": "      return [{ ...herbs, id: 'herbs' }];",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js",
       "test/scenes/audit32_client.test.js",
@@ -167,8 +167,8 @@
   {
     "name": "PROFMENU-herb-press-unheld",
     "file": "src/scenes/herbHost.js",
-    "old": "const used = usedTool ?? (byPress || null);",
-    "new": "const used = usedTool;",
+    "old": "      const used = usedTool ?? (byPress || null); // PROF-MENU: a click's or a list's press holds the act as a tool's Use does",
+    "new": "      const used = usedTool; // PROF-MENU: a click's or a list's press holds the act as a tool's Use does",
     "tests": [
       "test/systems/fb0930b_toolsaid.test.js",
       "test/scenes/audit32_client.test.js",

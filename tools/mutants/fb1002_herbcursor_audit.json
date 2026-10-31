@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-HERB-CURSOR-C3-the-old-words",
     "file": "src/scenes/herbHost.js",
-    "old": "label: plan.harvest === 'food' ? 'click the glint' :",
-    "new": "label: plan.harvest === 'food' ? 'tap the glint' :",
+    "old": "        label: plan.harvest === 'food' ? 'click the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
+    "new": "        label: plan.harvest === 'food' ? 'tap the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
     "tests": [
       "test/systems/fb1002_herbcursor_audit.test.js"
     ]

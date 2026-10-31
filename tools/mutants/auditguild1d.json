@@ -302,8 +302,8 @@
   {
     "name": "AUDIT-GUILD1d-R4-width-off-the-record",
     "file": "src/scenes/hallBanners.js",
-    "old": "  rx = 0 - oz; rz = ox + 0;   // (+0: never a signed zero)\n",
-    "new": "",
+    "old": "  rx = 0 - oz;\n  rz = ox + 0; // (+0: never a signed zero)\n  const side = w / 2 + BANNER_SIDE_GAP_M + BANNER_W_M / 2;",
+    "new": "  const side = w / 2 + BANNER_SIDE_GAP_M + BANNER_W_M / 2;",
     "tests": [
       "test/net/auditguild1d.test.js"
     ]
