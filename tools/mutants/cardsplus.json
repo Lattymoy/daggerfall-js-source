@@ -336,8 +336,8 @@
   {
     "name": "CP-scan-selector-any-token",
     "file": "tools/l10nHardcoded.mjs",
-    "old": ".every((p) => p && COMPOUND_SELECTOR.test(p))",
-    "new": ".every((p) => !!p)",
+    "old": "    if (parts.every((p) => p && COMPOUND_SELECTOR.test(p)) && parts.some((p) => HAS_CLASS.test(p))) return false; // selectors",
+    "new": "    if (parts.every((p) => !!p) && parts.some((p) => HAS_CLASS.test(p))) return false; // selectors",
     "tests": [
       "test/systems/l10n4_hardcoded.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "CP-scan-selector-no-class",
     "file": "tools/l10nHardcoded.mjs",
-    "old": " && parts.some((p) => HAS_CLASS.test(p))) return false;",
-    "new": ") return false;",
+    "old": "    if (parts.every((p) => p && COMPOUND_SELECTOR.test(p)) && parts.some((p) => HAS_CLASS.test(p))) return false; // selectors",
+    "new": "    if (parts.every((p) => p && COMPOUND_SELECTOR.test(p))) return false; // selectors",
     "tests": [
       "test/systems/l10n4_hardcoded.test.js"
     ]

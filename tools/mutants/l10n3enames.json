@@ -39,8 +39,8 @@
   {
     "name": "L10N3e-scan-loose-unmarked",
     "file": "tools/l10nRouted.mjs",
-    "old": "      if (n.type === 'CallExpression' && local.has(n.callee?.name)) out.push({ file, line: n.loc.start.line, via: local.get(n.callee.name), loose: !inFn });",
-    "new": "      if (n.type === 'CallExpression' && local.has(n.callee?.name)) out.push({ file, line: n.loc.start.line, via: local.get(n.callee.name), loose: false });",
+    "old": "        out.push({ file, line: n.loc.start.line, via: local.get(n.callee.name), loose: !inFn });",
+    "new": "        out.push({ file, line: n.loc.start.line, via: local.get(n.callee.name), loose: false });",
     "tests": [
       "test/systems/l10n3e_names.test.js"
     ]

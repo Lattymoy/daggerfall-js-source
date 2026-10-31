@@ -146,7 +146,7 @@ const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
 };
 /** A seeded walk, so two runs of this probe are the same two runs. */
-const rng = (seed) => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+const rng = (seed) => () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
 
 const vite = await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1' }, logLevel: 'error' });
 await vite.listen();
@@ -156,17 +156,24 @@ const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: p
 /** A phone with a phone's pixel ratio - the whole question is whether
  *  the browser's slop is in CSS px or device px, and a 1x page cannot
  *  tell you. */
-const phone = (deviceScaleFactor) => ({ viewport: { width: 430, height: 860 }, hasTouch: true, isMobile: true, deviceScaleFactor });
-const finger = (cdp) => (type, x, y) => cdp.send('Input.dispatchTouchEvent', {
-  type, touchPoints: type === 'touchEnd' ? [] : [{ x, y, radiusX: 14, radiusY: 14, force: 1, id: 1 }],
+const phone = (deviceScaleFactor) => ({
+  viewport: { width: 430, height: 860 },
+  hasTouch: true,
+  isMobile: true,
+  deviceScaleFactor,
 });
+const finger = (cdp) => (type, x, y) =>
+  cdp.send('Input.dispatchTouchEvent', {
+    type,
+    touchPoints: type === 'touchEnd' ? [] : [{ x, y, radiusX: 14, radiusY: 14, force: 1, id: 1 }],
+  });
 
 try {
   // AUDIT 68 X2-probe-tmp-page-leak: written inside the try, so the finally that unlinks it always runs.
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   await writeFile(join(ROOT, `tools/${BARE_NAME}`), BARE);
   // ── WHAT THE BROWSER ITSELF ALLOWS ───────────────────────────────
-  console.log('CHROMIUM\'S OWN SCROLL-START SLOP, off a bare pan-y tile');
+  console.log("CHROMIUM'S OWN SCROLL-START SLOP, off a bare pan-y tile");
   const ceiling = {};
   for (const dpr of [1, 2, 3]) {
     const ctx = await browser.newContext(phone(dpr));
@@ -188,16 +195,24 @@ try {
       return ev.includes('pointercancel');
     };
     let vert = null;
-    for (const d of [4, 8, 10, 12, 13, 14, 15, 16, 18, 20, 24]) if (vert === null && await takes(0, d)) vert = d;
+    for (const d of [4, 8, 10, 12, 13, 14, 15, 16, 18, 20, 24]) if (vert === null && (await takes(0, d))) vert = d;
     let horz = null;
-    for (const d of [16, 24, 40, 80, 160]) if (horz === null && await takes(d, 0)) horz = d;
+    for (const d of [16, 24, 40, 80, 160]) if (horz === null && (await takes(d, 0))) horz = d;
     ceiling[dpr] = { vert, horz };
-    console.log(`   dpr ${dpr}: takes the gesture at ${vert}px VERTICAL; horizontal out to 160px: ${horz === null ? 'never' : `${horz}px`}`);
+    console.log(
+      `   dpr ${dpr}: takes the gesture at ${vert}px VERTICAL; horizontal out to 160px: ${horz === null ? 'never' : `${horz}px`}`,
+    );
     await ctx.close();
   }
-  check('the browser\'s slop is CSS px, not device px', ceiling[1].vert === ceiling[3].vert,
-    `dpr1 ${ceiling[1].vert}, dpr2 ${ceiling[2].vert}, dpr3 ${ceiling[3].vert}`);
-  check('and a pan-y surface never loses a HORIZONTAL gesture', [1, 2, 3].every((d) => ceiling[d].horz === null));
+  check(
+    "the browser's slop is CSS px, not device px",
+    ceiling[1].vert === ceiling[3].vert,
+    `dpr1 ${ceiling[1].vert}, dpr2 ${ceiling[2].vert}, dpr3 ${ceiling[3].vert}`,
+  );
+  check(
+    'and a pan-y surface never loses a HORIZONTAL gesture',
+    [1, 2, 3].every((d) => ceiling[d].horz === null),
+  );
 
   // ── AND WHAT THE PANE DOES UNDER A FINGER ────────────────────────
   for (const dpr of [1, 3]) {
@@ -205,7 +220,10 @@ try {
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (er) => errors.push(er.message));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts`, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?nofonts`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
     await page.waitForFunction(() => !!globalThis.__probe, null, { timeout: 30000 });
     const cdp = await ctx.newCDPSession(page);
     const send = finger(cdp);
@@ -228,7 +246,9 @@ try {
     };
 
     console.log(`\n══ the pack on a 430x860 phone, devicePixelRatio ${dpr} ══`);
-    console.log(`   ${await P(() => globalThis.__probe.items())} tiles, ${await P(() => globalThis.__probe.room())}px of scroll under them`);
+    console.log(
+      `   ${await P(() => globalThis.__probe.items())} tiles, ${await P(() => globalThis.__probe.room())}px of scroll under them`,
+    );
 
     /** One hold: press a tile, let the contact patch wander `amp` px
      *  about the point it came down on for 420ms, read the ghost. */
@@ -252,9 +272,16 @@ try {
 
     console.log('   HOW OFTEN THE HOLD SURVIVES A DRIFTING FINGER');
     for (const amp of [0, 2, 4, 6, 8, 10, 12, 16, 24]) {
-      let up = 0; let cancels = 0;
-      for (let i = 0; i < TRIALS; i++) { const r = await hold(amp, wander); if (r.ghost) up++; if (r.cancel) cancels++; }
-      console.log(`     drift +/-${String(amp).padStart(2)}px: ghost ${String(up).padStart(2)}/${TRIALS}   the browser took it ${cancels}/${TRIALS}`);
+      let up = 0;
+      let cancels = 0;
+      for (let i = 0; i < TRIALS; i++) {
+        const r = await hold(amp, wander);
+        if (r.ghost) up++;
+        if (r.cancel) cancels++;
+      }
+      console.log(
+        `     drift +/-${String(amp).padStart(2)}px: ghost ${String(up).padStart(2)}/${TRIALS}   the browser took it ${cancels}/${TRIALS}`,
+      );
       if (amp <= 10) check(`dpr ${dpr}: a finger drifting +/-${amp}px picks up`, up === TRIALS, `${up}/${TRIALS}`);
       if (amp === 24) check(`dpr ${dpr}: a finger that TRAVELS +/-24px does not`, up === 0, `${up}/${TRIALS}`);
     }
@@ -274,7 +301,11 @@ try {
 
     // ── THE LAWS (AUDIT INV2 A1) ───────────────────────────────────
     const ft = await settle();
-    if (!ft) { fails.push(`dpr ${dpr}: the list would not settle - no tile to press`); await ctx.close(); continue; }
+    if (!ft) {
+      fails.push(`dpr ${dpr}: the list would not settle - no tile to press`);
+      await ctx.close();
+      continue;
+    }
     const before = await P(() => globalThis.__probe.top());
     await send('touchStart', ft.x, ft.y);
     let sawGhost = false;
@@ -292,19 +323,28 @@ try {
 
     // AND AN ARMED HOLD CARRIES. It arms under the FINGER, not under the
     // point the finger landed on 320ms ago.
-    const ht = await settle() ?? ft;
+    const ht = (await settle()) ?? ft;
     await send('touchStart', ht.x, ht.y);
     await sleep(60);
-    await send('touchMove', ht.x + 9, ht.y + 9);   // inside the slop, both axes
+    await send('touchMove', ht.x + 9, ht.y + 9); // inside the slop, both axes
     await sleep(380);
     check(`dpr ${dpr}: the hold arms`, await P(() => globalThis.__probe.ghost()));
     check(`dpr ${dpr}: and takes the pan back`, await P(() => globalThis.__probe.lock()));
     const gx = await P(() => globalThis.__probe.ghostAt());
-    check(`dpr ${dpr}: and it arms under the FINGER, not under where it landed`,
-      !!gx && Math.abs(gx.x - (ht.x + 9)) < 4, `ghost x ${gx?.x}, finger x ${ht.x + 9}, landed x ${ht.x}`);
-    for (let i = 1; i <= 8; i++) { await send('touchMove', ht.x + 9 + i * 18, ht.y + 9 - i * 12); await sleep(12); }
-    check(`dpr ${dpr}: the ghost survives the carry`, await P(() => globalThis.__probe.ghost()),
-      `verb ${JSON.stringify(await P(() => globalThis.__probe.verb()))}`);
+    check(
+      `dpr ${dpr}: and it arms under the FINGER, not under where it landed`,
+      !!gx && Math.abs(gx.x - (ht.x + 9)) < 4,
+      `ghost x ${gx?.x}, finger x ${ht.x + 9}, landed x ${ht.x}`,
+    );
+    for (let i = 1; i <= 8; i++) {
+      await send('touchMove', ht.x + 9 + i * 18, ht.y + 9 - i * 12);
+      await sleep(12);
+    }
+    check(
+      `dpr ${dpr}: the ghost survives the carry`,
+      await P(() => globalThis.__probe.ghost()),
+      `verb ${JSON.stringify(await P(() => globalThis.__probe.verb()))}`,
+    );
     await send('touchEnd', ht.x + 153, ht.y - 87);
     await sleep(80);
     check(`dpr ${dpr}: the release puts it down`, !(await P(() => globalThis.__probe.ghost())));
@@ -319,17 +359,25 @@ try {
     // partway down, so a downward carry has somewhere to scroll TO -
     // at the top of the list there is nothing to steal and the bug hides
     await P(() => globalThis.__probe.scrollTo(80));
-    const ct = await P(() => globalThis.__probe.tile()) ?? ft;
+    const ct = (await P(() => globalThis.__probe.tile())) ?? ft;
     await send('touchStart', ct.x, ct.y);
     await sleep(380);
     const armed = await P(() => globalThis.__probe.ghost());
     const wasTop = await P(() => globalThis.__probe.top());
-    for (let i = 1; i <= 8; i++) { await send('touchMove', ct.x, ct.y + i * 16); await sleep(20); }
-    check(`dpr ${dpr}: a carry STRAIGHT DOWN a scrollable list keeps the item`,
-      armed && await P(() => globalThis.__probe.ghost()),
-      `armed ${armed}, events ${await P(() => globalThis.__probe.ev())}`);
-    check(`dpr ${dpr}: and the list stays where it was`, (await P(() => globalThis.__probe.top())) === wasTop,
-      `${wasTop} -> ${await P(() => globalThis.__probe.top())}`);
+    for (let i = 1; i <= 8; i++) {
+      await send('touchMove', ct.x, ct.y + i * 16);
+      await sleep(20);
+    }
+    check(
+      `dpr ${dpr}: a carry STRAIGHT DOWN a scrollable list keeps the item`,
+      armed && (await P(() => globalThis.__probe.ghost())),
+      `armed ${armed}, events ${await P(() => globalThis.__probe.ev())}`,
+    );
+    check(
+      `dpr ${dpr}: and the list stays where it was`,
+      (await P(() => globalThis.__probe.top())) === wasTop,
+      `${wasTop} -> ${await P(() => globalThis.__probe.top())}`,
+    );
     await send('touchEnd', ct.x, ct.y + 128);
     await sleep(80);
 
@@ -339,13 +387,19 @@ try {
     else {
       await settle();
       await send('touchStart', worn.x, worn.y);
-      for (let i = 1; i <= 7; i++) { await sleep(52); await send('touchMove', worn.x + Math.cos(i) * 8, worn.y + Math.sin(i * 1.7) * 8); }
+      for (let i = 1; i <= 7; i++) {
+        await sleep(52);
+        await send('touchMove', worn.x + Math.cos(i) * 8, worn.y + Math.sin(i * 1.7) * 8);
+      }
       check(`dpr ${dpr}: a hold on the BODY picks the piece up too`, await P(() => globalThis.__probe.ghost()));
       const dock = await P(() => globalThis.__probe.dock());
       await send('touchMove', dock.x, dock.y);
       await sleep(60);
-      check(`dpr ${dpr}: and over the dock it says what the release does`,
-        (await P(() => globalThis.__probe.verb())) === 'Take off', JSON.stringify(await P(() => globalThis.__probe.verb())));
+      check(
+        `dpr ${dpr}: and over the dock it says what the release does`,
+        (await P(() => globalThis.__probe.verb())) === 'Take off',
+        JSON.stringify(await P(() => globalThis.__probe.verb())),
+      );
       await send('touchEnd', dock.x, dock.y);
       await sleep(80);
     }
@@ -360,5 +414,9 @@ try {
   await unlink(join(ROOT, `tools/${BARE_NAME}`)).catch(() => {});
 }
 
-if (fails.length) { console.log('\nFAILED:'); for (const f of fails) console.log(`  - ${f}`); process.exit(1); }
+if (fails.length) {
+  console.log('\nFAILED:');
+  for (const f of fails) console.log(`  - ${f}`);
+  process.exit(1);
+}
 console.log('\nall clear');

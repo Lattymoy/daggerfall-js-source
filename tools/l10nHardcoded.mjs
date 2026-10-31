@@ -20,29 +20,52 @@ import { isMain } from './lib/isMain.mjs';
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** The text core's calls whose string arguments are already the player's language's (or DFU's keys). */
-const ROUTED = new Set(['t', 'tIn', 'localizedText', 'localizedTextList', 'localizedStrings', 'localizedTable', 'formatText',
-  'getLocalizedText', 'getLocalizedTextWithReversion', 'getLocalizedTextList', 'databaseText', 'gameSettingsText']);
+const ROUTED = new Set([
+  't',
+  'tIn',
+  'localizedText',
+  'localizedTextList',
+  'localizedStrings',
+  'localizedTable',
+  'formatText',
+  'getLocalizedText',
+  'getLocalizedTextWithReversion',
+  'getLocalizedTextList',
+  'databaseText',
+  'gameSettingsText',
+]);
 /** Files the scan skips: the text core itself (its English is the fallback law's own) and the grammar rules (French). */
 const SKIP = [/^src\/systems\/textManager\.js$/, /^src\/systems\/grammar\//];
 
 const walk = (d, out = []) => {
-  for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) walk(p, out); else if (p.endsWith('.js')) out.push(p); }
+  for (const f of readdirSync(d)) {
+    const p = join(d, f);
+    if (statSync(p).isDirectory()) walk(p, out);
+    else if (p.endsWith('.js')) out.push(p);
+  }
   return out;
 };
 
 /** A CSS identifier - a class's, an id's, an attribute's or a pseudo-class's name: never a digit first (`#1` is no id). */
 const CSS_IDENT = String.raw`-?[A-Za-z_][\w-]*`;
 /** A compound selector: a type (or *), then its classes, ids, attributes and pseudo-classes. */
-const COMPOUND_SELECTOR = new RegExp(String.raw`^(?:[a-z][\w-]*|\*)?(?:[.#]${CSS_IDENT}|\[${CSS_IDENT}(?:[~|^$*]?=(?:"[^"]*"|'[^']*'|[\w-]+))?\]|::?${CSS_IDENT}(?:\([^()\s]*\))?)*$`);
+const COMPOUND_SELECTOR = new RegExp(
+  String.raw`^(?:[a-z][\w-]*|\*)?(?:[.#]${CSS_IDENT}|\[${CSS_IDENT}(?:[~|^$*]?=(?:"[^"]*"|'[^']*'|[\w-]+))?\]|::?${CSS_IDENT}(?:\([^()\s]*\))?)*$`,
+);
 /** A class in a compound - every selector the port writes into its code names one. */
 const HAS_CLASS = new RegExp(String.raw`\.${CSS_IDENT}`);
 /** Prose: two words of two letters or more, not a CSS value, a selector, a path, code or a URL. */
 export function isProse(s) {
   if (!/[A-Za-z]{2,}[\s\u00a0]+[A-Za-z]{2,}/.test(s)) return false;
-  if (/(^|\s)(px|em|rem|vh|vw)(\s|;|$)|\d(px|em|rem|vh|vw|ms|deg)\b|rgba?\(|hsla?\(|var\(--|calc\(|linear-gradient|;\s*$|=>|\bfunction\b|\bimport\b|\bconst\b|\breturn\b|https?:|\.(js|mjs|json|png|wav|ttf|glb|bsa|img|cif)\b/i.test(s)) return false;
-  if (/^[a-z]+(-[a-z0-9]+)+( [a-z]+(-[a-z0-9]+)*)*$/.test(s)) return false;   // class lists
+  if (
+    /(^|\s)(px|em|rem|vh|vw)(\s|;|$)|\d(px|em|rem|vh|vw|ms|deg)\b|rgba?\(|hsla?\(|var\(--|calc\(|linear-gradient|;\s*$|=>|\bfunction\b|\bimport\b|\bconst\b|\breturn\b|https?:|\.(js|mjs|json|png|wav|ttf|glb|bsa|img|cif)\b/i.test(
+      s,
+    )
+  )
+    return false;
+  if (/^[a-z]+(-[a-z0-9]+)+( [a-z]+(-[a-z0-9]+)*)*$/.test(s)) return false; // class lists
   const english = /\s(a|an|the|of|to|is|in|on|and|or|you|your)\s/i.test(` ${s} `);
-  if (/^[\w$.-]+( [\w$.-]+)*$/.test(s) && !/[A-Z]/.test(s[0]) && !english) return false;   // identifier runs
+  if (/^[\w$.-]+( [\w$.-]+)*$/.test(s) && !/[A-Z]/.test(s[0]) && !english) return false; // identifier runs
   // CARDS-PLUS (2026-10-13): a selector naming an id, an attribute or a pseudo-class (`#wp-menu input.wpm-name`,
   // `body .dfiliac button[data-kind="warn"]`, `:scope > .px-tabs button`) - the identifier runs above read only words
   // and dots, so a kit role written this way was counted as a sentence. AUDIT CARDS-PLUS D1: every part a compound of
@@ -50,7 +73,7 @@ export function isProse(s) {
   // "item:sword equipped" read as selectors and English slipped past the ratchet
   if (/[#[:]/.test(s) && !english) {
     const parts = s.trim().split(/\s*[,>+~]\s*|\s+/);
-    if (parts.every((p) => p && COMPOUND_SELECTOR.test(p)) && parts.some((p) => HAS_CLASS.test(p))) return false;   // selectors
+    if (parts.every((p) => p && COMPOUND_SELECTOR.test(p)) && parts.some((p) => HAS_CLASS.test(p))) return false; // selectors
   }
   return true;
 }
@@ -63,7 +86,11 @@ export function hardcodedStrings(root = ROOT) {
     if (SKIP.some((re) => re.test(file))) continue;
     const text = readFileSync(path, 'utf8');
     let ast;
-    try { ast = parse(text, { ecmaVersion: 'latest', sourceType: 'module', locations: true }); } catch { continue; }
+    try {
+      ast = parse(text, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
+    } catch {
+      continue;
+    }
     // L10N4: a top-level const whose name a text-core call takes (`t('k', NO_PARTY_TEXT)`, `localizedText('k', X)`) is
     // that call's English - routed where it is read, so its words are not counted where they are written
     const routedNames = new Set();
@@ -72,17 +99,28 @@ export function hardcodedStrings(root = ROOT) {
       if (n.type === 'CallExpression' && n.callee?.type === 'Identifier' && ROUTED.has(n.callee.name)) {
         for (const a of n.arguments) if (a?.type === 'Identifier') routedNames.add(a.name);
       }
-      for (const k of Object.keys(n)) { if (k === 'loc') continue; const v = n[k]; if (Array.isArray(v)) v.forEach(find); else if (v && typeof v.type === 'string') find(v); }
+      for (const k of Object.keys(n)) {
+        if (k === 'loc') continue;
+        const v = n[k];
+        if (Array.isArray(v)) v.forEach(find);
+        else if (v && typeof v.type === 'string') find(v);
+      }
     })(ast);
     const routedInits = new Set();
     for (const node of ast.body) {
       const decl = node.type === 'ExportNamedDeclaration' ? node.declaration : node;
       if (decl?.type !== 'VariableDeclaration') continue;
-      for (const d of decl.declarations) if (d.id?.type === 'Identifier' && routedNames.has(d.id.name) && d.init) routedInits.add(d.init);
+      for (const d of decl.declarations)
+        if (d.id?.type === 'Identifier' && routedNames.has(d.id.name) && d.init) routedInits.add(d.init);
     }
     const visit = (n, quiet) => {
       if (!n || typeof n.type !== 'string') return;
-      if (n.type === 'ImportDeclaration' || n.type === 'ExportAllDeclaration' || n.type === 'ExportNamedDeclaration' && n.source) return;
+      if (
+        n.type === 'ImportDeclaration' ||
+        n.type === 'ExportAllDeclaration' ||
+        (n.type === 'ExportNamedDeclaration' && n.source)
+      )
+        return;
       let q = quiet || routedInits.has(n);
       if (n.type === 'CallExpression') {
         const c = n.callee;
@@ -91,7 +129,8 @@ export function hardcodedStrings(root = ROOT) {
       }
       if (n.type === 'ThrowStatement' || (n.type === 'NewExpression' && /Error$/.test(n.callee?.name ?? ''))) q = true;
       if (!q) {
-        if (n.type === 'Literal' && typeof n.value === 'string' && isProse(n.value)) out.push({ file, line: n.loc.start.line, text: n.value });
+        if (n.type === 'Literal' && typeof n.value === 'string' && isProse(n.value))
+          out.push({ file, line: n.loc.start.line, text: n.value });
         if (n.type === 'TemplateLiteral') {
           const s = n.quasis.map((x) => x.value.cooked ?? '').join(' {} ');
           if (isProse(s)) out.push({ file, line: n.loc.start.line, text: s });
@@ -99,9 +138,15 @@ export function hardcodedStrings(root = ROOT) {
       }
       for (const k of Object.keys(n)) {
         if (k === 'loc') continue;
-        if (k === 'key' && (n.type === 'Property' || n.type === 'MethodDefinition' || n.type === 'PropertyDefinition') && !n.computed) continue;
+        if (
+          k === 'key' &&
+          (n.type === 'Property' || n.type === 'MethodDefinition' || n.type === 'PropertyDefinition') &&
+          !n.computed
+        )
+          continue;
         const v = n[k];
-        if (Array.isArray(v)) v.forEach((x) => visit(x, q)); else if (v && typeof v.type === 'string') visit(v, q);
+        if (Array.isArray(v)) v.forEach((x) => visit(x, q));
+        else if (v && typeof v.type === 'string') visit(v, q);
       }
     };
     visit(ast, false);
@@ -119,12 +164,15 @@ export function hardcodedCounts(root = ROOT) {
 if (isMain(import.meta.url)) {
   const only = process.argv[2];
   if (only) {
-    for (const s of hardcodedStrings().filter((x) => x.file === only)) console.log(`${s.line}\t${JSON.stringify(s.text).slice(0, 160)}`);
+    for (const s of hardcodedStrings().filter((x) => x.file === only))
+      console.log(`${s.line}\t${JSON.stringify(s.text).slice(0, 160)}`);
   } else {
     const counts = hardcodedCounts();
     console.log('const HARDCODED = {');
     for (const f of Object.keys(counts).sort()) console.log(`  '${f}': ${counts[f]},`);
     console.log('};');
-    console.log(`${Object.values(counts).reduce((a, b) => a + b, 0)} hard-coded prose literals in ${Object.keys(counts).length} files`);
+    console.log(
+      `${Object.values(counts).reduce((a, b) => a + b, 0)} hard-coded prose literals in ${Object.keys(counts).length} files`,
+    );
   }
 }

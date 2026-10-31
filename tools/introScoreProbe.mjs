@@ -17,14 +17,18 @@ import http from 'node:http';
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CLOUD_REVEAL_TIME, CREST_TIME as TITLE_IMPACT_TIME } from '../src/ui/intro/introCue.js';   // INTRO4: the score's impact is the 19 s beat, the film's crest
+import { CLOUD_REVEAL_TIME, CREST_TIME as TITLE_IMPACT_TIME } from '../src/ui/intro/introCue.js'; // INTRO4: the score's impact is the 19 s beat, the film's crest
 import { introThemeSong, INTRO_CHANNELS, INTRO_SECONDS_PER_TICK } from '../src/systems/introScore.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (k) => (process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : null);
 const wavAt = arg('--wav');
 const SECONDS = Number(arg('--seconds') ?? 170);
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 // The recording INTRO3 replaced (assets/intro/theme.mp3, 164.3 s), measured the same way before it left the tree: its
 // loudness from 24 s to 160 s, a second at a time, stereo RMS at full scale times the 0.82 the intro played it at and
@@ -91,49 +95,105 @@ window.ready = true;
 function wav(pcmB64, rate) {
   const data = Buffer.from(pcmB64, 'base64');
   const h = Buffer.alloc(44);
-  h.write('RIFF', 0); h.writeUInt32LE(36 + data.length, 4); h.write('WAVE', 8); h.write('fmt ', 12);
-  h.writeUInt32LE(16, 16); h.writeUInt16LE(1, 20); h.writeUInt16LE(2, 22); h.writeUInt32LE(rate, 24); h.writeUInt32LE(rate * 4, 28); h.writeUInt16LE(4, 32); h.writeUInt16LE(16, 34);
-  h.write('data', 36); h.writeUInt32LE(data.length, 40);
+  h.write('RIFF', 0);
+  h.writeUInt32LE(36 + data.length, 4);
+  h.write('WAVE', 8);
+  h.write('fmt ', 12);
+  h.writeUInt32LE(16, 16);
+  h.writeUInt16LE(1, 20);
+  h.writeUInt16LE(2, 22);
+  h.writeUInt32LE(rate, 24);
+  h.writeUInt32LE(rate * 4, 28);
+  h.writeUInt16LE(4, 32);
+  h.writeUInt16LE(16, 34);
+  h.write('data', 36);
+  h.writeUInt32LE(data.length, 40);
   return Buffer.concat([h, data]);
 }
 
 /** Positive spectral flux over a local mean (tools/introAudioCheck.mjs): Hann 1024, hop 128, 12 kHz, peak centre. */
 function onsets(pcm, rate = 12000, size = 1024, hop = 128) {
-  const count = 1 + Math.floor((pcm.length - size) / hop), flux = new Float64Array(count);
+  const count = 1 + Math.floor((pcm.length - size) / hop),
+    flux = new Float64Array(count);
   let previous = null;
   for (let i = 0; i < count; i++) {
-    const real = new Float64Array(size), imag = new Float64Array(size);
-    for (let n = 0; n < size; n++) real[n] = pcm[i * hop + n] * (0.5 - 0.5 * Math.cos(2 * Math.PI * n / (size - 1)));
-    for (let a = 1, j = 0; a < size; a++) { let bit = size >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (a < j) { [real[a], real[j]] = [real[j], real[a]]; [imag[a], imag[j]] = [imag[j], imag[a]]; } }
-    for (let n = 2; n <= size; n <<= 1) {
-      const angle = -2 * Math.PI / n;
-      for (let a = 0; a < size; a += n) for (let j = 0; j < n / 2; j++) {
-        const x = a + j, y = x + n / 2, c = Math.cos(angle * j), s = Math.sin(angle * j);
-        const r = real[y] * c - imag[y] * s, v = real[y] * s + imag[y] * c;
-        real[y] = real[x] - r; imag[y] = imag[x] - v; real[x] += r; imag[x] += v;
+    const real = new Float64Array(size),
+      imag = new Float64Array(size);
+    for (let n = 0; n < size; n++) real[n] = pcm[i * hop + n] * (0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (size - 1)));
+    for (let a = 1, j = 0; a < size; a++) {
+      let bit = size >> 1;
+      for (; j & bit; bit >>= 1) j ^= bit;
+      j ^= bit;
+      if (a < j) {
+        [real[a], real[j]] = [real[j], real[a]];
+        [imag[a], imag[j]] = [imag[j], imag[a]];
       }
     }
-    const m = new Float64Array(size / 2 + 1); for (let b = 0; b <= size / 2; b++) m[b] = Math.hypot(real[b], imag[b]);
+    for (let n = 2; n <= size; n <<= 1) {
+      const angle = (-2 * Math.PI) / n;
+      for (let a = 0; a < size; a += n)
+        for (let j = 0; j < n / 2; j++) {
+          const x = a + j,
+            y = x + n / 2,
+            c = Math.cos(angle * j),
+            s = Math.sin(angle * j);
+          const r = real[y] * c - imag[y] * s,
+            v = real[y] * s + imag[y] * c;
+          real[y] = real[x] - r;
+          imag[y] = imag[x] - v;
+          real[x] += r;
+          imag[x] += v;
+        }
+    }
+    const m = new Float64Array(size / 2 + 1);
+    for (let b = 0; b <= size / 2; b++) m[b] = Math.hypot(real[b], imag[b]);
     if (previous) for (let b = 0; b < m.length; b++) flux[i] += Math.max(0, m[b] - previous[b]);
     previous = m;
   }
-  const radius = Math.floor(0.5 * rate / hop);
-  const norm = flux.map((f, i) => { let sum = 0; for (let j = Math.max(0, i - radius); j <= Math.min(count - 1, i + radius); j++) sum += flux[j]; return f / Math.max(1e-9, sum / (radius * 2 + 1)); });
-  const peakBetween = (from, to) => { let best = -1; for (let i = 0; i < count; i++) { const t = (i * hop + size / 2) / rate; if (t >= from && t <= to && (best < 0 || norm[i] > norm[best])) best = i; } return { time: (best * hop + size / 2) / rate, strength: norm[best] }; };
+  const radius = Math.floor((0.5 * rate) / hop);
+  const norm = flux.map((f, i) => {
+    let sum = 0;
+    for (let j = Math.max(0, i - radius); j <= Math.min(count - 1, i + radius); j++) sum += flux[j];
+    return f / Math.max(1e-9, sum / (radius * 2 + 1));
+  });
+  const peakBetween = (from, to) => {
+    let best = -1;
+    for (let i = 0; i < count; i++) {
+      const t = (i * hop + size / 2) / rate;
+      if (t >= from && t <= to && (best < 0 || norm[i] > norm[best])) best = i;
+    }
+    return { time: (best * hop + size / 2) / rate, strength: norm[best] };
+  };
   return { peakBetween };
 }
 
 /** A radix-2 FFT in place (real and imag, a power of two long). */
 function fft(real, imag) {
   const size = real.length;
-  for (let a = 1, j = 0; a < size; a++) { let bit = size >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit; if (a < j) { [real[a], real[j]] = [real[j], real[a]]; [imag[a], imag[j]] = [imag[j], imag[a]]; } }
-  for (let n = 2; n <= size; n <<= 1) {
-    const angle = -2 * Math.PI / n;
-    for (let a = 0; a < size; a += n) for (let j = 0; j < n / 2; j++) {
-      const x = a + j, y = x + n / 2, c = Math.cos(angle * j), s = Math.sin(angle * j);
-      const r = real[y] * c - imag[y] * s, v = real[y] * s + imag[y] * c;
-      real[y] = real[x] - r; imag[y] = imag[x] - v; real[x] += r; imag[x] += v;
+  for (let a = 1, j = 0; a < size; a++) {
+    let bit = size >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (a < j) {
+      [real[a], real[j]] = [real[j], real[a]];
+      [imag[a], imag[j]] = [imag[j], imag[a]];
     }
+  }
+  for (let n = 2; n <= size; n <<= 1) {
+    const angle = (-2 * Math.PI) / n;
+    for (let a = 0; a < size; a += n)
+      for (let j = 0; j < n / 2; j++) {
+        const x = a + j,
+          y = x + n / 2,
+          c = Math.cos(angle * j),
+          s = Math.sin(angle * j);
+        const r = real[y] * c - imag[y] * s,
+          v = real[y] * s + imag[y] * c;
+        real[y] = real[x] - r;
+        imag[y] = imag[x] - v;
+        real[x] += r;
+        imag[x] += v;
+      }
   }
 }
 
@@ -144,20 +204,28 @@ function spectrum(pcm, rate = 12000, from = 1, size = 4096, hop = 2048) {
   const power = new Float64Array(size / 2 + 1);
   let frames = 0;
   for (let start = Math.round(from * rate); start + size <= pcm.length; start += hop) {
-    const real = new Float64Array(size), imag = new Float64Array(size);
-    for (let n = 0; n < size; n++) real[n] = pcm[start + n] * (0.5 - 0.5 * Math.cos(2 * Math.PI * n / (size - 1)));
+    const real = new Float64Array(size),
+      imag = new Float64Array(size);
+    for (let n = 0; n < size; n++) real[n] = pcm[start + n] * (0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (size - 1)));
     fft(real, imag);
     for (let b = 0; b <= size / 2; b++) power[b] += real[b] * real[b] + imag[b] * imag[b];
     frames++;
   }
-  let total = 0, weighted = 0, high = 0;
+  let total = 0,
+    weighted = 0,
+    high = 0;
   for (let b = 1; b <= size / 2; b++) {
     const hz = (b * rate) / size;
     if (hz < 20) continue;
-    total += power[b]; weighted += power[b] * hz;
+    total += power[b];
+    weighted += power[b] * hz;
     if (hz >= 2000) high += power[b];
   }
-  return { frames, centroid: total > 0 ? weighted / total : 0, presenceDb: total > 0 ? 10 * Math.log10(Math.max(1e-18, high / total)) : -Infinity };
+  return {
+    frames,
+    centroid: total > 0 ? weighted / total : 0,
+    presenceDb: total > 0 ? 10 * Math.log10(Math.max(1e-18, high / total)) : -Infinity,
+  };
 }
 
 /** INTRO3c (the owner: "I dont like the high pitch whine" ... "Its not natural"): THE SHAPE OF A HELD CHORD - what the
@@ -171,33 +239,54 @@ function spectrum(pcm, rate = 12000, from = 1, size = 4096, hop = 2048) {
  *  at 12 kHz (2.9 Hz a bin; a pure line reads 6 to 12 cents at these pitches). */
 function chordShape(pcm, rate = 12000, size = 4096, hop = 1024) {
   const song = introThemeSong();
-  const first = song.events.find((e) => e.type === 'noteOn' && e.channel === INTRO_CHANNELS.strings && e.tick * INTRO_SECONDS_PER_TICK >= 2);
-  const chord = song.events.filter((e) => e.type === 'noteOn' && e.channel === INTRO_CHANNELS.strings && e.tick === first.tick);
-  const top = Math.max(...chord.map((e) => e.note)), hz = 440 * Math.pow(2, (top - 69) / 12);
-  const from = first.tick * INTRO_SECONDS_PER_TICK + 0.1, to = (first.tick + first.duration) * INTRO_SECONDS_PER_TICK - 0.1;
-  const half = size / 2, power = new Float64Array(half + 1);
+  const first = song.events.find(
+    (e) => e.type === 'noteOn' && e.channel === INTRO_CHANNELS.strings && e.tick * INTRO_SECONDS_PER_TICK >= 2,
+  );
+  const chord = song.events.filter(
+    (e) => e.type === 'noteOn' && e.channel === INTRO_CHANNELS.strings && e.tick === first.tick,
+  );
+  const top = Math.max(...chord.map((e) => e.note)),
+    hz = 440 * Math.pow(2, (top - 69) / 12);
+  const from = first.tick * INTRO_SECONDS_PER_TICK + 0.1,
+    to = (first.tick + first.duration) * INTRO_SECONDS_PER_TICK - 0.1;
+  const half = size / 2,
+    power = new Float64Array(half + 1);
   let frames = 0;
   for (let start = Math.round(from * rate); start + size <= Math.min(pcm.length, Math.round(to * rate)); start += hop) {
-    const real = new Float64Array(size), imag = new Float64Array(size);
-    for (let n = 0; n < size; n++) real[n] = pcm[start + n] * (0.5 - 0.5 * Math.cos(2 * Math.PI * n / (size - 1)));
+    const real = new Float64Array(size),
+      imag = new Float64Array(size);
+    for (let n = 0; n < size; n++) real[n] = pcm[start + n] * (0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (size - 1)));
     fft(real, imag);
     for (let b = 0; b <= half; b++) power[b] += real[b] * real[b] + imag[b] * imag[b];
     frames++;
   }
   const db = (b) => 10 * Math.log10(power[b] / Math.max(1, frames) + 1e-18);
-  const levels = [], widths = [];
+  const levels = [],
+    widths = [];
   for (let n = 1; n <= 9; n++) {
-    const lo = Math.round((hz * n * 0.97) * size / rate), hi = Math.min(half, Math.round((hz * n * 1.03) * size / rate));
+    const lo = Math.round((hz * n * 0.97 * size) / rate),
+      hi = Math.min(half, Math.round((hz * n * 1.03 * size) / rate));
     let peak = lo;
     for (let b = lo; b <= hi; b++) if (power[b] > power[peak]) peak = b;
     const top6 = db(peak) - 6;
-    let a = peak, z = peak;
+    let a = peak,
+      z = peak;
     while (a > 1 && db(a) > top6) a--;
     while (z < half - 1 && db(z) > top6) z++;
-    levels.push(db(peak)); widths.push(1200 * Math.log2(z / a));
+    levels.push(db(peak));
+    widths.push(1200 * Math.log2(z / a));
   }
   const loudest = Math.max(...levels);
-  return { note: top, from, to, frames, levels: levels.map((l) => l - loudest), widths, isolated: Math.max(...levels.slice(3)) - loudest, meanWidth: widths.slice(2, 6).reduce((x, y) => x + y, 0) / 4 };
+  return {
+    note: top,
+    from,
+    to,
+    frames,
+    levels: levels.map((l) => l - loudest),
+    widths,
+    isolated: Math.max(...levels.slice(3)) - loudest,
+    meanWidth: widths.slice(2, 6).reduce((x, y) => x + y, 0) / 4,
+  };
 }
 
 /** INTRO3c (the owner: "Theres still a high pitch whine in the build up leading to the title drop"): THE BUILD-UP - over the
@@ -206,24 +295,36 @@ function chordShape(pcm, rate = 12000, size = 4096, hop = 1024) {
  *  the chord); INTRO3b's FM riser put its sidebands at +17 (4.4 kHz) and +14 (2.9 and 5.1 kHz), where no harmonic of
  *  the chord falls; a cymbal's roll is a band of noise and puts none. Hann 2048 at 12 kHz (5.9 Hz a bin). */
 function riserShape(pcm, impactAt, rate = 12000, size = 2048, hop = 512) {
-  const beat = 60 / introThemeSong().beatsPerMinute, from = impactAt - 4 * beat + 0.05, to = impactAt - 0.05;
-  const half = size / 2, power = new Float64Array(half + 1);
+  const beat = 60 / introThemeSong().beatsPerMinute,
+    from = impactAt - 4 * beat + 0.05,
+    to = impactAt - 0.05;
+  const half = size / 2,
+    power = new Float64Array(half + 1);
   let frames = 0;
   for (let start = Math.round(from * rate); start + size <= Math.min(pcm.length, Math.round(to * rate)); start += hop) {
-    const real = new Float64Array(size), imag = new Float64Array(size);
-    for (let n = 0; n < size; n++) real[n] = pcm[start + n] * (0.5 - 0.5 * Math.cos(2 * Math.PI * n / (size - 1)));
+    const real = new Float64Array(size),
+      imag = new Float64Array(size);
+    for (let n = 0; n < size; n++) real[n] = pcm[start + n] * (0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (size - 1)));
     fft(real, imag);
     for (let b = 0; b <= half; b++) power[b] += real[b] * real[b] + imag[b] * imag[b];
     frames++;
   }
-  const radius = Math.round(300 * size / rate);
-  let worst = -Infinity, hz = 0;
-  for (let b = Math.round(2500 * size / rate); b < half - 1; b++) {
+  const radius = Math.round((300 * size) / rate);
+  let worst = -Infinity,
+    hz = 0;
+  for (let b = Math.round((2500 * size) / rate); b < half - 1; b++) {
     if (power[b] < power[b - 1] || power[b] < power[b + 1]) continue;
-    let sum = 0, n = 0;
-    for (let k = Math.max(1, b - radius); k <= Math.min(half, b + radius); k++) { sum += power[k]; n++; }
+    let sum = 0,
+      n = 0;
+    for (let k = Math.max(1, b - radius); k <= Math.min(half, b + radius); k++) {
+      sum += power[k];
+      n++;
+    }
     const prom = 10 * Math.log10((power[b] + 1e-18) / (sum / n + 1e-18));
-    if (prom > worst) { worst = prom; hz = b * rate / size; }
+    if (prom > worst) {
+      worst = prom;
+      hz = (b * rate) / size;
+    }
   }
   return { from, to, frames, worst, hz };
 }
@@ -236,27 +337,59 @@ function riserShape(pcm, impactAt, rate = 12000, size = 2048, hop = 512) {
  *  1.6 over), still 18% and 49% - a held sawtooth pedal with no arc, raised by the tone. INTRO3c's bed, with the bow's arc
  *  and the sway and the bass brought down: -9.8 and -7.9 dB, still 17% and 31%. */
 function bassShape(pcm, from, to, rate = 12000, size = 4096, hop = 1024, lo = 40, hi = 120) {
-  const half = size / 2, levels = [];
-  let bass = 0, total = 0;
+  const half = size / 2,
+    levels = [];
+  let bass = 0,
+    total = 0;
   for (let start = Math.round(from * rate); start + size <= Math.min(pcm.length, Math.round(to * rate)); start += hop) {
-    const real = new Float64Array(size), imag = new Float64Array(size);
-    for (let n = 0; n < size; n++) real[n] = pcm[start + n] * (0.5 - 0.5 * Math.cos(2 * Math.PI * n / (size - 1)));
+    const real = new Float64Array(size),
+      imag = new Float64Array(size);
+    for (let n = 0; n < size; n++) real[n] = pcm[start + n] * (0.5 - 0.5 * Math.cos((2 * Math.PI * n) / (size - 1)));
     fft(real, imag);
-    let b = 0, t = 0;
-    for (let k = 1; k <= half; k++) { const hz = k * rate / size, p = real[k] * real[k] + imag[k] * imag[k]; if (hz >= 20) t += p; if (hz >= lo && hz <= hi) b += p; }
-    bass += b; total += t; levels.push(10 * Math.log10(b + 1e-18));
+    let b = 0,
+      t = 0;
+    for (let k = 1; k <= half; k++) {
+      const hz = (k * rate) / size,
+        p = real[k] * real[k] + imag[k] * imag[k];
+      if (hz >= 20) t += p;
+      if (hz >= lo && hz <= hi) b += p;
+    }
+    bass += b;
+    total += t;
+    levels.push(10 * Math.log10(b + 1e-18));
   }
-  const sorted = [...levels].sort((a, c) => a - c), median = sorted[Math.floor(sorted.length / 2)];
+  const sorted = [...levels].sort((a, c) => a - c),
+    median = sorted[Math.floor(sorted.length / 2)];
   const p = (q) => sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))];
-  return { frames: levels.length, shareDb: 10 * Math.log10((bass + 1e-18) / (total + 1e-18)), spreadDb: p(0.9) - p(0.1), still: levels.filter((l) => Math.abs(l - median) < 1.5).length / levels.length };
+  return {
+    frames: levels.length,
+    shareDb: 10 * Math.log10((bass + 1e-18) / (total + 1e-18)),
+    spreadDb: p(0.9) - p(0.1),
+    still: levels.filter((l) => Math.abs(l - median) < 1.5).length / levels.length,
+  };
 }
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -264,25 +397,60 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
   const db = (x) => (x > 0 ? 20 * Math.log10(x) : -Infinity);
   const r = await page.evaluate((s) => window.render(s), SECONDS);
   if (wavAt) writeFileSync(wavAt, wav(r.pcm, r.rate));
-  const body = r.rms.slice(24, 160), meanDb = body.length ? db(body.reduce((a, b) => a + b, 0) / body.length) : -Infinity;
-  console.log(`     ${r.secs.toFixed(1)} s, peak ${db(r.peak).toFixed(1)} dBFS, loudness ${meanDb.toFixed(1)} dBFS (24-160 s) at MusicVolume 0.5 and the intro's ${r.gain}`);
-  check('it plays - every second of it sounding, no NaN', r.nan === 0 && r.rms.slice(1, Math.floor(r.secs) - 1).every((x) => x > 1e-4), r.rms.map((x) => db(x).toFixed(0)).join(' '));
+  const body = r.rms.slice(24, 160),
+    meanDb = body.length ? db(body.reduce((a, b) => a + b, 0) / body.length) : -Infinity;
+  console.log(
+    `     ${r.secs.toFixed(1)} s, peak ${db(r.peak).toFixed(1)} dBFS, loudness ${meanDb.toFixed(1)} dBFS (24-160 s) at MusicVolume 0.5 and the intro's ${r.gain}`,
+  );
+  check(
+    'it plays - every second of it sounding, no NaN',
+    r.nan === 0 && r.rms.slice(1, Math.floor(r.secs) - 1).every((x) => x > 1e-4),
+    r.rms.map((x) => db(x).toFixed(0)).join(' '),
+  );
   // at the highest MusicVolume (twice the 0.5 this renders at: +6 dB) the intro's level of the press's ceiling
-  check(`never clipping, under its ceiling of ${r.ceiling} dBFS even at the highest MusicVolume`, db(r.peak) + 6.02 <= r.ceiling + 0.05, `${(db(r.peak) + 6.02).toFixed(2)} dBFS at full volume`);
-  if (r.rms.length >= 160) check(`as loud as the recording it replaced (${RECORDING_DB} dBFS, within 2 dB)`, Math.abs(meanDb - RECORDING_DB) <= 2, `${meanDb.toFixed(1)} dBFS`);
-  else console.log(`     (the loudness against the recording needs 160 s rendered; this render is ${r.secs.toFixed(0)} s)`);
+  check(
+    `never clipping, under its ceiling of ${r.ceiling} dBFS even at the highest MusicVolume`,
+    db(r.peak) + 6.02 <= r.ceiling + 0.05,
+    `${(db(r.peak) + 6.02).toFixed(2)} dBFS at full volume`,
+  );
+  if (r.rms.length >= 160)
+    check(
+      `as loud as the recording it replaced (${RECORDING_DB} dBFS, within 2 dB)`,
+      Math.abs(meanDb - RECORDING_DB) <= 2,
+      `${meanDb.toFixed(1)} dBFS`,
+    );
+  else
+    console.log(
+      `     (the loudness against the recording needs 160 s rendered; this render is ${r.secs.toFixed(0)} s)`,
+    );
   // the opening swells from nothing, and the cloud break and the impact are the loudest moments of the film's first 22 s
-  check('the opening swells from quiet', r.rms[1] < r.rms[7] * 0.5, r.rms.slice(0, 9).map((x) => db(x).toFixed(0)).join(' '));
+  check(
+    'the opening swells from quiet',
+    r.rms[1] < r.rms[7] * 0.5,
+    r.rms
+      .slice(0, 9)
+      .map((x) => db(x).toFixed(0))
+      .join(' '),
+  );
   const { peakBetween } = onsets(Float32Array.from(r.mono));
-  for (const [name, at] of [['cloud break', CLOUD_REVEAL_TIME], ['impact', TITLE_IMPACT_TIME]]) {
-    const near = peakBetween(at - 0.25, at + 0.25), wide = peakBetween(at - 2, at + 1);
-    check(`the ${name} is heard on its cue (${at.toFixed(3)} s): the strongest onset from 2 s before it, within 25 ms`, Math.abs(near.time - at) <= 0.025 && Math.abs(wide.time - near.time) < 1e-9, `onset at ${near.time.toFixed(3)} s, ${((near.time - at) * 1000).toFixed(1)} ms, strength ${near.strength.toFixed(2)}`);
+  for (const [name, at] of [
+    ['cloud break', CLOUD_REVEAL_TIME],
+    ['impact', TITLE_IMPACT_TIME],
+  ]) {
+    const near = peakBetween(at - 0.25, at + 0.25),
+      wide = peakBetween(at - 2, at + 1);
+    check(
+      `the ${name} is heard on its cue (${at.toFixed(3)} s): the strongest onset from 2 s before it, within 25 ms`,
+      Math.abs(near.time - at) <= 0.025 && Math.abs(wide.time - near.time) < 1e-9,
+      `onset at ${near.time.toFixed(3)} s, ${((near.time - at) * 1000).toFixed(1)} ms, strength ${near.strength.toFixed(2)}`,
+    );
   }
   // INTRO3b: not flat - wide (the two channels are not one: the recording's L/R correlation is 0.33 over the film, 0.59
   // over its body; the dry render's was 0.985, INTRO3b's 0.61) and present (the spectrum's centre of weight and its
@@ -290,14 +458,36 @@ try {
   // 305 Hz and -25.0 dB, INTRO3b's 483 Hz and -14.7, INTRO3c's 483 Hz and -13.3 over the film - the pins a margin under
   // where it lands); INTRO3c: and no whine - the held chord's shape (chordShape): the recording's loudest harmonic above
   // the third -12 dB with partials 38 cents wide, the FM render's 0 dB and 8.5 cents, the bowed render's -13 and 27
-  const sp = spectrum(Float32Array.from(r.mono)), shape = chordShape(Float32Array.from(r.mono));
-  check('wide: the two channels are not one (L/R correlation under 0.8)', r.corr < 0.8, `correlation ${r.corr.toFixed(3)}`);
-  check('present: the spectrum’s centre of weight over 400 Hz and its share from 2 kHz up over -18 dB', sp.centroid > 400 && sp.presenceDb > -18, `centroid ${sp.centroid.toFixed(0)} Hz, 2 kHz up ${sp.presenceDb.toFixed(1)} dB over ${sp.frames} frames`);
-  check('no whine: over the opening’s first held chord no harmonic of its top note above the third stands within 8 dB of the loudest, and its partials are bands, not lines (the 3rd to the 6th 12 cents wide or more, the mean)', shape.isolated <= -8 && shape.meanWidth >= 12, `note ${shape.note} over ${shape.from.toFixed(2)}-${shape.to.toFixed(2)} s: harmonics ${shape.levels.map((l) => l.toFixed(0)).join(' ')} dB, widths ${shape.widths.map((w) => w.toFixed(0)).join(' ')} cents - isolated ${shape.isolated.toFixed(1)} dB, mean width ${shape.meanWidth.toFixed(1)} cents`);
+  const sp = spectrum(Float32Array.from(r.mono)),
+    shape = chordShape(Float32Array.from(r.mono));
+  check(
+    'wide: the two channels are not one (L/R correlation under 0.8)',
+    r.corr < 0.8,
+    `correlation ${r.corr.toFixed(3)}`,
+  );
+  check(
+    'present: the spectrum’s centre of weight over 400 Hz and its share from 2 kHz up over -18 dB',
+    sp.centroid > 400 && sp.presenceDb > -18,
+    `centroid ${sp.centroid.toFixed(0)} Hz, 2 kHz up ${sp.presenceDb.toFixed(1)} dB over ${sp.frames} frames`,
+  );
+  check(
+    'no whine: over the opening’s first held chord no harmonic of its top note above the third stands within 8 dB of the loudest, and its partials are bands, not lines (the 3rd to the 6th 12 cents wide or more, the mean)',
+    shape.isolated <= -8 && shape.meanWidth >= 12,
+    `note ${shape.note} over ${shape.from.toFixed(2)}-${shape.to.toFixed(2)} s: harmonics ${shape.levels.map((l) => l.toFixed(0)).join(' ')} dB, widths ${shape.widths.map((w) => w.toFixed(0)).join(' ')} cents - isolated ${shape.isolated.toFixed(1)} dB, mean width ${shape.meanWidth.toFixed(1)} cents`,
+  );
   const riser = riserShape(Float32Array.from(r.mono), TITLE_IMPACT_TIME);
-  check('no whine in the build-up: over the four beats before the impact no narrow peak from 2.5 kHz up stands more than 13 dB over its surroundings', riser.worst < 13, `the worst ${riser.hz.toFixed(0)} Hz at +${riser.worst.toFixed(1)} dB over ${riser.from.toFixed(2)}-${riser.to.toFixed(2)} s (${riser.frames} frames)`);
-  const bassOpen = bassShape(Float32Array.from(r.mono), 0.5, CLOUD_REVEAL_TIME), bassBody = bassShape(Float32Array.from(r.mono), CLOUD_REVEAL_TIME, Math.min(27, r.secs));
-  check('no hum: the bass sits where the recording’s does and moves as it does - its share of the whole over the body within 2.5 dB of the recording’s -5.9 dB and under -6 dB over the opening, and within 1.5 dB of its median in under 40% of the body’s frames', Math.abs(bassBody.shareDb + 5.9) <= 2.5 && bassOpen.shareDb <= -6 && bassBody.still < 0.4, `opening ${bassOpen.shareDb.toFixed(1)} dB (still ${(100 * bassOpen.still).toFixed(0)}%), body ${bassBody.shareDb.toFixed(1)} dB, spread ${bassBody.spreadDb.toFixed(1)} dB, still ${(100 * bassBody.still).toFixed(0)}% of ${bassBody.frames} frames`);
+  check(
+    'no whine in the build-up: over the four beats before the impact no narrow peak from 2.5 kHz up stands more than 13 dB over its surroundings',
+    riser.worst < 13,
+    `the worst ${riser.hz.toFixed(0)} Hz at +${riser.worst.toFixed(1)} dB over ${riser.from.toFixed(2)}-${riser.to.toFixed(2)} s (${riser.frames} frames)`,
+  );
+  const bassOpen = bassShape(Float32Array.from(r.mono), 0.5, CLOUD_REVEAL_TIME),
+    bassBody = bassShape(Float32Array.from(r.mono), CLOUD_REVEAL_TIME, Math.min(27, r.secs));
+  check(
+    'no hum: the bass sits where the recording’s does and moves as it does - its share of the whole over the body within 2.5 dB of the recording’s -5.9 dB and under -6 dB over the opening, and within 1.5 dB of its median in under 40% of the body’s frames',
+    Math.abs(bassBody.shareDb + 5.9) <= 2.5 && bassOpen.shareDb <= -6 && bassBody.still < 0.4,
+    `opening ${bassOpen.shareDb.toFixed(1)} dB (still ${(100 * bassOpen.still).toFixed(0)}%), body ${bassBody.shareDb.toFixed(1)} dB, spread ${bassBody.spreadDb.toFixed(1)} dB, still ${(100 * bassBody.still).toFixed(0)}% of ${bassBody.frames} frames`,
+  );
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

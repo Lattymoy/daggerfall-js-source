@@ -74,8 +74,8 @@
   {
     "name": "L10N3d-scan-alias-lost",
     "file": "tools/l10nRouted.mjs",
-    "old": "local.set(sp.local.name, sp.imported.name);",
-    "new": "local.set(sp.imported.name, sp.imported.name);",
+    "old": "        if (sp.type === 'ImportSpecifier' && names.has(sp.imported.name)) local.set(sp.local.name, sp.imported.name);",
+    "new": "        if (sp.type === 'ImportSpecifier' && names.has(sp.imported.name)) local.set(sp.imported.name, sp.imported.name);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_names.test.js"
@@ -103,7 +103,7 @@
   {
     "name": "L10N3d-scan-collection-default",
     "file": "tools/l10nRouted.mjs",
-    "old": "const collectionOf = (n) => (n?.type === 'MemberExpression' && n.object?.name === 'TextCollections' ? n.property.name : n ? null : 'Internal');",
+    "old": "const collectionOf = (n) =>\n  n?.type === 'MemberExpression' && n.object?.name === 'TextCollections' ? n.property.name : n ? null : 'Internal';",
     "new": "const collectionOf = () => 'Internal';",
     "tests": [
       "test/systems/l10n3d_sites.test.js"
