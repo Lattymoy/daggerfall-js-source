@@ -389,7 +389,8 @@ test('LAYERED-GLOW (my sprite, the others): drawn, a worn-armour body\'s glow st
   assert.equal([...rr.textures.get(wg[0].key).colors].filter(Boolean).length, 30);
   // let go with the look: the body's picture and its weapon's - where one was uploaded
   for (const src of [read('src/player/eyeOfTheBeholder/eotbBody.js'), read('src/net/peer/peerRiders.js')]) {
-    assert.match(src, /evictHeld\(renderer, (?:k|key)\.replace\(':', '_'\)\)/, 'the weapon\'s picture goes with the body\'s');
+    // the release itself: the body's picture let go and its weapon's beside it (the retry's evictHeld is another door)
+    assert.match(src, /evictTexture\?\.\((?:k|key)\.replace\(':', '_'\)\);(?:\s*\/\/[^\n]*\n\s*|\s*)evictHeld\(renderer, (?:k|key)\.replace\(':', '_'\)\)/, 'the weapon\'s picture goes with the body\'s');
   }
   const gone = [];
   const kept = { textures: new Map([[`1700_a${HELD_SUFFIX}`, {}]]), evictTexture(k) { gone.push(k); this.textures.delete(k); } };

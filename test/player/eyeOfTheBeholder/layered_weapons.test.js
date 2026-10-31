@@ -619,7 +619,7 @@ test('the loose\'s frames hold the art\'s own bow: with no bow in hand they are 
 
 // ── LAYERED-DUAL ───────────────────────────────────────────────────────────────────────────────────────────────────
 test('LAYERED-DUAL (2026-10-30, the owner: "We need to find a way to implement duel wielding perfectly"): a pair is both codes, the line\'s first; the art\'s hammer line holds the right weapon, the left\'s once flipped, the striking hand\'s in a swing; sheathed, a bow or empty hands hold no pair', () => {
-  assert.deepEqual(outfitPieces('p6cl@ls1+dg3'), { head: 'p6', top: 'c', legs: 'l', cloak: null, weapon: 'ls1', offhand: 'dg3', spell: null });
+  assert.deepEqual(outfitPieces('p6cl@ls1+dg3'), { head: 'p6', top: 'c', legs: 'l', cloak: null, shield: null, weapon: 'ls1', offhand: 'dg3', spell: null, stage: null });   // PIN MOVED (LAYERED-SHIELD): a shield and a cast's stage
   assert.equal(outfitPieces('lll@ls1+'), null, 'a pair names its second');
   const look = (o = {}) => ({ outfit: 'lll', gender: 'male', weapon: 'ls1', offhand: 'dg3', ...o });
   const held = (table, o = {}, mirror = false, offset = 2) => layeredSprite(table, offset, 0, 4, look(o), mirror).key.split(':')[4].split('@')[1];
@@ -989,5 +989,5 @@ test('SHEETS a flinch holds the bow in the hammer\'s fist; a frame drawn before 
   assert.match(bodySrc, /chooseTable\(\{ \.\.\.last, sheathed: last\.sheathed && !last\.toolInHand,/);
   assert.match(bodySrc, /const drawn = grow === 1 && !FP && !last\.sheathed && !last\.toolInHand &&/, 'no weapon glow on the tool');
   // a cast's frames are the outfit's with its hands: kept when another outfit goes
-  assert.match(bodySrc, /held = cast\?\.replace\(\/!\\d\$\/, ''\)/);
+  assert.match(bodySrc, /held = cast\?\.replace\(\/!\\d\\d\?\$\/, ''\)/);   // PIN MOVED (LAYERED-SHIELD): and a cast's stage
 });

@@ -229,7 +229,7 @@ what the hands show (`p6cl~2@ls7`, `@0` empty), so the pictures of each are thei
 go with its outfit's (`releaseOutfits`).
 
 **Known limits.** The body has the hammer's one two-handed swing; each weapon plays its own cut of it (above), and new
-motion needs new frames in every outfit. An attack frame whose hammer points
+motion needs new frames in every outfit (a shield-bearer's is one-handed: "The shield", below). An attack frame whose hammer points
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
 shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
@@ -248,6 +248,34 @@ cast's frames with its outfit's.
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
 `test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
 (147 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+
+## The shield (LAYERED-SHIELD, 2026-10-31)
+
+The owner: "Any way we can do shields?", then, of a shield held in the two-handed swing, "Lets try #1" and "Please take
+your time and do this right". A shield worn in the left hand rides in the outfit code after `^` (`p6cl^k7`: shape b, r,
+k or t, then l leather, c chain or the plate metal 0-9; `layeredShield.js` `layeredShieldOf`, read in
+`layeredArmor.js` `outfitOfSlots`), so my body takes it from the equip table and a walker from its look's items, with
+nothing new on the wire. It is drawn in every frame but the loose's, never beside a pair or a bow.
+
+**The picture.** The paper doll's own shield (`loadShieldPicture`), its grip at the free hand: the rig's `sh` per frame
+(`tools/layered-armor/build_weapon_rig.py` SHIELD_GRIP, else the bow's hand). From the front and three quarters before,
+its face, over the body. From aside the free arm is the far one: its inside, before the chest, behind the body. From
+behind, its inside turned round, at the body's left edge, in open air only (`SHIELD_VIEWS`). The inside is boards, the
+face's rim and two straps (`shieldPicture`). A shield past a canvas widens it evenly and upward, so the body stands
+where it was (`padFrame`).
+
+**One-handed.** The art's one attack holds the hammer in both fists. The rig names the free arm's outline in each swing
+frame it reaches into (SHIELD_ARM, `sa`); it comes out, filled as a hammer's hole (`removeShieldArm`). A fill no body
+joins, and a scrap of the arm's edge left floating, are open air. A view plays only the frames whose sword arm swings
+on its own side (`SHIELD_CUTS`): from three quarters before 0-3, from the front and from behind 0-2 (after the strike the
+arms cross to the shield), from aside all six, the far arm's crossing (7-3) taken out. A cast keeps to them, a held throw
+carrying its stage (`!03`, `SHIELD_CAST`); a shot too (`SHIELD_GUN`). The far hand that shows behind the back from aside
+(male 2-2 and 17-0, female 2-0 and 17-0) comes out, as the shield is before the body there.
+
+**What it leaves alone.** The weapon is drawn after the shield: before it, or behind it where it is behind the body; its
+glow is the weapon's alone. Where the body stands in its picture (ARMORY's marks) is read without the air the shield
+fills (`withoutShield`). A bare walk's twin is the armed one, unturned, so the shield keeps its arm. Verified by
+`test/player/eyeOfTheBeholder/layered_shield.test.js` and `tools/mutants/layered_shield.json` (28 mutants, all dead).
 
 ## The art - the doctrine's third exception
 

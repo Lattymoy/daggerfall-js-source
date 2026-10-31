@@ -89,9 +89,13 @@ export function thrustRigOf(fr, code, view, frame, len = rig.male.len) {
 /** The cut a weapon code swings - a short blade's and a bare fist's thrust, a long blade's slash, else the chop; `back`
  *  (a pair's left hand) plays it the other way round, a rising backhand. */
 export function swingCutOf(code, back = false) {
-  const head = String(code ?? '0').slice(0, 2);
-  const cut = THRUSTS.has(head) || head === '0' ? SWING_CUTS.thrust : SLASHES.has(head) ? SWING_CUTS.slash : SWING_CUTS.chop;
+  const cut = SWING_CUTS[swingKindOf(code)];
   return back ? [...cut].reverse() : cut;
+}
+/** SWING-CUTS: the cut a weapon code's swing is - 'thrust', 'slash' or 'chop'. */
+export function swingKindOf(code) {
+  const head = String(code ?? '0').slice(0, 2);
+  return THRUSTS.has(head) || head === '0' ? 'thrust' : SLASHES.has(head) ? 'slash' : 'chop';
 }
 
 /** A frame whose arm the hammer hid is drawn as another of its walk: empty-handed, its mirror twin (the front walk's

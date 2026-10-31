@@ -72,6 +72,9 @@ HEADS = {
 # Hole px that are open air whatever their edge says (x0, y0, x1, y1 inclusive): a head out past the hand, over a dark
 # lining the fill would carry up into it. The tile's blue is 64 there, and the runtime clears them.
 AIR = {('female', '4-0'): [(76, 79, 93, 101)]}
+# Boxes where the trace left the hammer's haft: every px there that each outfit draws the same, skin aside, is the
+# hammer's - the body's own differs by outfit (2026-10-31, the shields' survey: male 5-3's butt below the fists).
+STEADY = {('male', '5-3'): [(86, 62, 95, 74), (83, 87, 93, 99)]}
 CUT = {('female', '1-1'): [(76, 83, 81, 90)], ('female', '5-1'): [(57, 34, 63, 41)]}
 EXTRA = {('male', '1-0'): [(36, 64, 41, 66)], ('male', '1-1'): [(33, 60, 41, 62), (42, 62, 46, 64)],
          ('male', '1-2'): [(48, 64, 49, 66)], ('male', '1-3'): [(36, 61, 41, 63), (42, 61, 42, 61)],
@@ -146,6 +149,49 @@ BOW_HAND = {
                '4-0': (44.0, 91.0, 0), '4-1': (39.8, 86.8, 0), '4-2': (43.4, 91.8, 0), '4-3': (39.2, 86.2, 0),
                '15-0': (88.7, 90.5, 1), '16-0': (98.1, 90.3, 1),
                '19-0': (40.0, 89.5, 0)},
+}
+# LAYERED-SHIELD: a shield-bearer swings one-handed. The free arm's outline in each swing frame it shows in, read by eye
+# on every chest ([(x, y), ...] each), taken out and filled at runtime (`sa`); a view plays only the frames whose sword
+# arm swings on its own side (layeredShield.js SHIELD_CUTS). From aside, the far hand where it shows behind the back: the
+# shield is before the body there.
+SHIELD_ARM = {
+    ('male', '5-0'): [[(54.5, 30.5), (56, 26), (59.5, 25.5), (62, 29), (66, 35), (70, 41), (73, 44.5), (84, 46), (93, 48.5), (94, 53.5), (78, 54), (68, 53), (63, 48), (60, 43), (57, 37)]],
+    ('male', '5-1'): [[(55, 36), (60, 34.5), (64, 38), (68, 43), (72, 47.5), (82, 48.5), (94, 50), (95, 57), (80, 57.5), (72, 56), (66, 52), (62, 47), (58, 42)]],
+    ('male', '5-2'): [[(99, 57), (99, 66), (90, 67.5), (81, 70.5), (73, 74), (62, 75), (51, 74.5), (50, 70.5), (57, 69.5), (63, 67), (70, 66), (78, 64.5), (85, 62), (88, 58)]],
+    ('male', '6-0'): [[(52, 24.5), (60, 24.5), (60.5, 29), (62.5, 34), (65.5, 39.5), (68.5, 44), (80, 45.5), (83, 47.5), (82, 51.5), (72, 51.5), (66, 50), (62, 45.5), (58.5, 41), (55, 36), (51.5, 31)]],
+    ('male', '6-1'): [[(52, 32), (56, 33), (60, 37), (64, 41.5), (68, 45), (78, 45.5), (88, 47), (89, 53), (75, 53.5), (66, 51), (61, 47), (56, 43), (51.5, 39.5), (50, 36)]],
+    ('male', '6-2'): [[(97, 53), (97, 63.5), (76, 64.2), (60, 64.2), (47, 65), (40, 67.5), (33, 66.5), (33, 61), (41, 59), (50, 56.5), (60, 56), (76, 55.5), (86, 54)]],
+    ('male', '6-3'): [[(97, 62), (97, 70), (89, 78), (81, 88), (79, 93), (69, 93), (69, 86), (77, 78), (85, 67), (91, 62)]],
+    ('male', '7-3'): [[(57, 60.5), (64.5, 59.5), (67.5, 63), (64.5, 70.5), (59, 75.5), (53, 80), (50, 85.5), (44, 85), (41.5, 81), (45.5, 76.5), (51.5, 71.5), (55.5, 65.5)]],
+    ('male', '2-2'): [[(68, 61.5), (76, 61.5), (76, 68.5), (68, 68.5)]],
+    ('male', '17-0'): [[(67, 56), (77, 55), (81.5, 58), (81.5, 66), (80, 72), (75, 73), (70, 72), (66, 66)]],
+    ('female', '2-0'): [[(97, 94), (106, 94), (106, 100), (97, 100)]],
+    ('female', '17-0'): [[(87, 85), (95, 84), (99.5, 88), (100.5, 95), (97.5, 102), (91, 102), (87, 96)]],
+    ('female', '5-0'): [[(64.5, 31.5), (68, 28), (71, 30), (75, 35), (79, 40), (81, 43.5), (90, 44), (96, 46), (96, 51), (85, 51.5), (79, 49), (75, 46.5), (70, 42), (66, 37.5)]],
+    ('female', '5-1'): [[(58, 34), (61, 32.5), (67, 33), (69, 37), (72, 40), (78, 43), (85, 45), (95, 46), (95, 51), (85, 51), (79, 49), (73, 47), (66, 44.5), (61, 41), (57.5, 38)]],
+    ('female', '5-2'): [[(64, 59.5), (72, 57.5), (82, 55.5), (92, 52.5), (101, 51.5), (102, 58.5), (94, 60), (85, 62.5), (76, 64.5), (68, 64.5), (64, 63.5)]],
+    ('female', '6-0'): [[(53, 32), (55, 30.5), (57.5, 33), (59.5, 37), (61.5, 41), (64, 43.5), (72, 44), (76, 46.5), (75, 50), (65, 50.5), (60, 48), (57, 44.5), (55, 40), (53.5, 36)]],
+    ('female', '6-1'): [[(47, 38), (51, 37.5), (55, 40.5), (59, 44), (63, 46.5), (72, 47), (75, 49.5), (73, 53), (62, 53), (57, 50.5), (53, 47), (49, 43.5), (46.5, 41)]],
+    ('female', '6-2'): [[(38, 61), (45, 59), (55, 57.5), (65, 56), (72, 56.5), (73, 61), (65, 62), (55, 63.5), (45, 65), (39, 66)]],
+    ('female', '6-3'): [[(68, 70), (74, 66), (80, 63.5), (82, 68), (78, 74), (73, 80), (66, 85), (61.5, 85), (62, 80)]],
+    ('female', '7-3'): [[(57.5, 85.5), (61.5, 81.5), (65.5, 78.5), (69.5, 75.5), (73.5, 71.5), (80, 67.5), (84.5, 69.5), (80.5, 75.5), (74.5, 80.5), (68.5, 85.5), (64.5, 90.5), (60, 93.5), (55.5, 91.5)]],
+}
+# Where the shield's grip goes (`sh`): the free hand where BOW_HAND has it; else read by eye - from aside before the
+# chest (the far arm's, behind the body), from behind at the body's left edge, the hand flung out in a flinch, and in a
+# swing the guard over the arm taken out. A third entry is the width share where the frame turns it otherwise.
+SHIELD_GRIP = {
+    'male': {'2-0': (45, 58), '2-1': (44, 56), '2-2': (43, 57), '2-3': (44, 56), '17-0': (49, 58), '18-0': (26, 62),
+             '10-0': (100, 64), '11-0': (62, 62), '12-0': (40, 66), '13-0': (14, 67), '14-0': (16, 65),
+             '5-0': (87, 64), '5-1': (88, 66), '5-2': (92, 72),
+             '6-0': (78, 62), '6-1': (82, 64), '6-2': (88, 70), '6-3': (88, 76),
+             '7-0': (68, 62), '7-1': (67, 63), '7-2': (68, 68), '7-3': (60, 66), '7-4': (63, 70), '7-5': (67, 62),
+             '8-0': (55, 64), '8-1': (55, 64), '8-2': (50, 64), '9-0': (40, 64), '9-1': (40, 64), '9-2': (38, 66)},
+    'female': {'2-0': (71, 86), '2-1': (72, 84), '2-2': (71, 86), '2-3': (72, 84), '17-0': (69, 82), '18-0': (62, 90),
+               '3-2': (60, 92), '10-0': (98, 66), '11-0': (88, 58), '12-0': (48, 66), '13-0': (24, 63), '14-0': (28, 62),
+               '5-0': (90, 62), '5-1': (89, 62), '5-2': (95, 68),
+               '6-0': (72, 62), '6-1': (71, 65), '6-2': (70, 70), '6-3': (78, 76),
+               '7-0': (74, 66), '7-1': (73, 68), '7-2': (72, 76), '7-3': (66, 72), '7-4': (72, 72), '7-5': (72, 66),
+               '8-0': (66, 78), '8-1': (66, 78), '8-2': (61, 80), '9-0': (38, 80), '9-1': (37, 80), '9-2': (34, 80)},
 }
 # The bow is in the left hand. Where the art hides the free hand and holds the hammer in the near one - the side views -
 # the near hand is the left: the bow is there. The back-3/4 idle and the female's 3-2 press that hand flat to the body
@@ -256,6 +302,7 @@ def trace(body, rf, fam, cap=16):
         vx, vy = sx1 - sx0, sy1 - sy0; ln = math.hypot(vx, vy); vx, vy = vx / ln, vy / ln
         tt = (xx - sx0) * vx + (yy - sy0) * vy; ee = np.abs((xx - sx0) * -vy + (yy - sy0) * vx)
         m |= opq & ~sk & (tt >= -1) & (tt <= ln + 1) & (ee <= ex[4])
+    for x0, y0, x1, y1 in STEADY.get((body, rf), []): m |= stab & ~sk & (xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1)
     for x0, y0, x1, y1 in CUT.get((body, rf), []): m &= ~((xx >= x0) & (xx <= x1) & (yy >= y0) & (yy <= y1))
     rest = opq & ~m                                               # a piece left floating is the hammer's too
     lab3, k3 = nd.label(rest, structure=K8)
@@ -517,6 +564,12 @@ def main(only=None):
                     hx, hy, front = free; vx, vy = (-ux, uy) if rec % 5 in (0, 4) else (ux, uy)
                     blade = 'x' if rec % 5 == 4 else 'f' if front else 'b'
                     p['off'] = [hx, hy, round(hx + vx * D, 1), round(hy + vy * D, 1), blade]
+        for rf, per in frames.items():   # LAYERED-SHIELD: the free arm out of a swing (`sa`), the shield's grip (`sh`)
+            g = SHIELD_GRIP[body].get(rf) or BOW_HAND[body].get(rf, ())[:2]
+            for p in per:
+                p.pop('sa', None); p.pop('sh', None)
+                if g: p['sh'] = [float(v) for v in g]
+                if (body, rf) in SHIELD_ARM: p['sa'] = [[[float(x), float(y)] for x, y in P] for P in SHIELD_ARM[(body, rf)]]
         for rf, per in frames.items():   # a flail's chain lags the hand: the head's move since the frame before (`cv`, px)
             rec, i = map(int, rf.split('-')); n = sum(1 for k in frames if k.startswith(f'{rec}-'))
             prev = f'{rec}-{(i - 1) % n}' if rec <= 4 else f'{rec}-{i - 1}' if i > 0 else None   # a walk loops, a swing starts at rest

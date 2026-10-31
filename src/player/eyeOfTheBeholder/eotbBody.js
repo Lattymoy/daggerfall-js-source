@@ -56,6 +56,7 @@ import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP:
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
 import { layeredHands } from './layeredWeapon.js';   // LAYERED-WEAPONS: and the weapon it holds (LAYERED-DUAL: or the pair)
+import { withoutShield } from './layeredShield.js';   // LAYERED-SHIELD: the body's marks are read without the shield it carries
 import { playerEntity } from '../../characters/playerEntity.js';   // WORN-ARMOUR: whose armour
 import { drawnEquipTable } from '../../systems/capeShown.js';   // WORN-ARMOUR: what they wear; CAPE-TOGGLE: as it is drawn
 import { horseLookCode, horseLookOfCode, lookSuffix } from '../../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
@@ -464,7 +465,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // is its own pixels under its own key (`s.rec`, EOTB5)
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldGlowPx(px, img.held, width, height, s.mirror), heldOff: heldGlowPx(px, img.held, width, height, s.mirror, 2), ...(img.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px (AUDIT: a pair's second, its own)
+      return { w: width, h: height, marks: spriteMarks(withoutShield(px, img.shield, width, height, s.mirror), width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldGlowPx(px, img.held, width, height, s.mirror), heldOff: heldGlowPx(px, img.held, width, height, s.mirror, 2), ...(img.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px (AUDIT: a pair's second, its own)
     })();
     tex.set(cacheKey(s), p);
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },
@@ -486,11 +487,11 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     const had = outfitUp;
     outfitUp = now;
     if (had == null) return;
-    const plain = String(lk.outfit ?? '').split('~')[0];
+    const plain = String(lk.outfit ?? '').replace(/~\d/, '');   // LAYERED-SHIELD: a shield stays in it
     // LAYERED-WEAPONS: an outfit's pictures stand in every hand the weapon held now shows - empty, the weapon, the art's own
     const hands = new Set([undefined, '0', lk.weapon ?? undefined]), pair = new Set([lk.weapon, lk.offhand].filter(Boolean));
     const stands = (archive, code) => {
-      const [worn, cast] = String(code).split('@'), held = cast?.replace(/!\d$/, ''), [a, b] = String(held).split('+');   // LAYERED-DUAL: a pair's, either way round; AUDIT: a cast's frames with its hands
+      const [worn, cast] = String(code).split('@'), held = cast?.replace(/!\d\d?$/, ''), [a, b] = String(held).split('+');   // LAYERED-DUAL: a pair's, either way round; AUDIT: a cast's frames with its hands
       return layered && archive === s.archive && (worn === lk.outfit || worn === plain) && (b === undefined ? hands.has(held) : pair.has(a) && pair.has(b));
     };
     for (const k of [...tex.keys()]) {
