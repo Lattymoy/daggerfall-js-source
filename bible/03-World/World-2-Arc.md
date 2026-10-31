@@ -87,10 +87,14 @@ drawn by hand, and a bake that takes a document as its authored overrides (`tool
 ## Phases 5 to 7 - what this arc built of them, and what waits
 
 Built: the services each role carries, the home key lane, the protected-property guard and its refusal, resource sites
-with stable ids, the ground law's binding, and a profile for every province. Waiting, each its own slice: a generated
-town's doors and interiors in the streamed world, NPC navigation over a published region, a continental drainage pass
-for inflow at a region's edge, published regions (the owner's call), and province-wide bakes. Two tunings seen in the
-editor: a river across a filled flat runs straight (the flood's grading), and a range's ridges read streaky.
+with stable ids, the ground law's binding, and a profile for every province. Since: the continent's inflow, province
+tiles and the two tunings the editor showed (straight rivers on filled flats, streaky ridges). Waiting, each its own
+slice: a generated town's doors and interiors in the streamed world, NPC navigation over a published region, and
+published regions (the owner's call).
+
+Seen in the game (2026-10-31, `?wg2=hammerfell-test`, headless): the region installs on every thread, the ground's
+bytes at (1100, 430) move from 55-58 to 83-89, and the pixel builds and stands with no error. The editor's close-ups
+showed lake shores straight along cell edges and dune steps up to 5 m; the sampler now reads both between cells.
 
 ## THE FOUR HOSTS (Home.md)
 
