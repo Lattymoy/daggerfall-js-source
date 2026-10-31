@@ -132,6 +132,8 @@ complementary screen-door shares over the port's one `bayer4`
 (`render/lowPolyTreesGlsl.js`) - every pixel one of the two, never both,
 never neither - and a handle not drawn this frame keeps its far picture
 whole (`frame.cut` names only the handles drawn).
+Under the travel view a 3D tree between the eye and the traveller is
+seen through by the same screen-door (CANOPY-SEE, `06-Systems/Travel-View.md`).
 
 **What the flat still is.** The flat's cover (TACT1), its sway share
 (WIND3), its Logging node, its forest (PROF4) and the far rings' rule

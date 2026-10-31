@@ -120,9 +120,8 @@ A module the jungle's host builds wherever the zones are known (past the Bay) an
   so on the enhanced lane the floor, the buildings and the jungle under them stand in their crowns' shade and their
   gaps' light, and the lane's own sun shafts (`render/airPass.js`, its mask the sky the frame left) shine down through
   the gaps where the sun is.
-- **The travel view's well**: while the travel view holds its focus (its eye 150-450 m over the traveller), a tree whose
-  crown stands between the eye and the traveller (`crownBlocks` - the upright cylinder of its crown at GRAHT_DRAW.well,
-  85%, of its reach) is not drawn - it still casts - so the traveller is seen walking under the canopy.
+- **Under the travel view** every tree is drawn, and a crown between the eye and the traveller is seen through by the
+  trees' fragment half (`06-Systems/Travel-View.md` CANOPY-SEE); it still casts.
 - **The teardown** (`destroy`): the buffers, the pictures and the casters. The world holds the host for the session, as
   it holds the trees' doors; destroy is the test host's, and a host torn down while its GPU is made makes none.
 

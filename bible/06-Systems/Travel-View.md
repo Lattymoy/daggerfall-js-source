@@ -4105,3 +4105,31 @@ too.
 Pins `test/characters/fb1031_foes.test.js` (B1: the lifted bandStand on the real campAnchorSpot), `tools/mutants/fb1031_foes.json`.
 PIN MOVED: the lifted bandStand runs in `tv7_bands.test.js`, `bandnear.test.js` and `wildalertfix.test.js` hand it a
 camera turned off every bearing they try, so each keeps its own.
+
+## CANOPY-SEE - the traveller seen through the trees (2026-10-31, Mac)
+
+Mac, 2026-10-31: *"Can you also add a sort of transparency when your overworld traveling in valenwood. Under the tall
+trees"*.
+
+**Found.** From 150-450 m up, Valenwood's trees stand between the eye and the traveller: the graht-oaks' crowns (134-215
+m, `03-World/Graht-Oaks.md`) and the jungle's storeys under them. GRAHT1's well left a crown on the sight line undrawn,
+so it popped out whole as the view turned. Nothing cut the jungle's trees or a landmark.
+
+**Fixed.** The trees' fragment half sees through them (`render/lowPolyTreesGlsl.js` TREE_SEE, both lanes' billboard
+shaders): a cone from the eye about its sight line to the traveller (uFocus), open to 0.11 rad and shut by 0.17, from
+the eye to 12 m short of the traveller, easing whole by 2 m short. A 3D tree in it keeps 4 of 16 fragments by `bayer4`'s
+screen-door, as EG-ZN's occluders do. Every crown is drawn and still casts; the well is retired.
+
+**Where.** Every 3D tree and landmark on the trees' slots, so every province: Valenwood's graht-oaks and jungle, Low
+Poly Trees in the Bay, Vvardenfell's parasols and the hist. It reads the camera and the traveller, never the place.
+THE FOUR HOSTS: `scenes/world.js` WIRED, through its travel view's focus, with no line of its own. `scenes/exterior.js`,
+`worldModes.js` and `dungeonContext.js` FLAGGED: none holds a travel view. Not a DFU member: DFU has no travel view.
+
+**Not changed.** A flat (Daggerfall's own trees, a 3D tree's far picture) is drawn whole: from the air it is low and
+thin. A node's glint is never drawn under the travel view.
+
+**Pins.** `test/render/canopysee.test.js` (4, on the shader's own text: on and off the line, the rim, the near end,
+the handover, both lanes' declarations), `test/world/graht1_oaks.test.js` (PIN MOVED: every crown drawn under the
+focus), `tools/mutants/canopysee.json` (13, all dead; G-63 and G-71 retired from `graht1.json` with the well).
+`tools/canopySeeProbe.mjs` drew it in real WebGL2 on both lanes: a traveller under a crown showed 24 of 108 pixels
+without the focus, 87 with it, and a crown off the line stayed whole.

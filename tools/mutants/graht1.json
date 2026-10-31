@@ -369,15 +369,6 @@
     ]
   },
   {
-    "name": "G-63-no-well",
-    "file": "src/scenes/grahtHost.js",
-    "old": "if (focus && crownBlocks(eye, focus, x, y, z, m, s)) continue;",
-    "new": "if (false) continue;",
-    "tests": [
-      "test/world/graht1_oaks.test.js"
-    ]
-  },
-  {
     "name": "G-64-lod-scale",
     "file": "src/scenes/grahtHost.js",
     "old": "grahtLodOf(Math.hypot(dh, y - ey) / s)",
@@ -436,24 +427,6 @@
     "file": "src/scenes/grahtHost.js",
     "old": "if (mode === 1) return r._fogRange?.[1] > 0 ? r._fogRange[1] : Infinity;",
     "new": "if (mode === 1) return r._fogRange?.[1] > 0 ? r._fogRange[0] : Infinity;",
-    "tests": [
-      "test/world/graht1_oaks.test.js"
-    ]
-  },
-  {
-    "name": "G-71-well-whole",
-    "file": "src/scenes/grahtHost.js",
-    "old": "R = m.crownR * s * GRAHT_DRAW.well;",
-    "new": "R = m.crownR * s;",
-    "tests": [
-      "test/world/graht1_oaks.test.js"
-    ]
-  },
-  {
-    "name": "G-72-well-unheighted",
-    "file": "src/scenes/grahtHost.js",
-    "old": "t0 = Math.max(0, Math.min(a, b)); t1 = Math.min(1, Math.max(a, b));",
-    "new": "t0 = 0; t1 = 1;",
     "tests": [
       "test/world/graht1_oaks.test.js"
     ]

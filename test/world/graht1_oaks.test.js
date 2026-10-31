@@ -13,7 +13,7 @@ import {
   GRAHT, GRAHT_MEASURES, GRAHT_FOOT_MAX, GRAHT_TREE_FLOATS, GRAHT_FIN_BODY_R, GRAHT_LAND_RECORDS, grahtSites, grahtFootMask, grahtBodies, grahtLodOf,
 } from '../../src/world/jungle/grahtOaks.js';
 import { barkPicture, leavesPicture, cardsPicture, mipChain, GRAHT_ART } from '../../src/render/grahtOakArt.js';
-import { createGrahtHost, grahtOaksOn, packGrahtMeshes, crownBlocks, fogReach, GRAHT_SLOT, GRAHT_DRAW } from '../../src/scenes/grahtHost.js';
+import { createGrahtHost, grahtOaksOn, packGrahtMeshes, fogReach, GRAHT_SLOT, GRAHT_DRAW } from '../../src/scenes/grahtHost.js';
 import { jungleLayout, JUNGLE_PALMS, JUNGLE } from '../../src/world/terrain/jungleNature.js';
 import { createJungleHost } from '../../src/scenes/jungleHost.js';
 import { LowPolyTreesGpu } from '../../src/render/lowPolyTreesRender.js';
@@ -406,7 +406,7 @@ function fakeRenderer(over = {}) {
   return r;
 }
 
-test('GRAHT1: the host - a pixel\'s trees stood whole by the keep, their bodies with them; the GPU made on the slice clock; the frame buckets every visible tree a run a variant and LOD on the third slot, culled by the view, the fog and the haze, the travel view\'s well; the nearest cast, as the mesh turns; destroy gives it all back', async () => {
+test('GRAHT1: the host - a pixel\'s trees stood whole by the keep, their bodies with them; the GPU made on the slice clock; the frame buckets every visible tree a run a variant and LOD on the third slot, culled by the view, the fog and the haze, never by the travel view; the nearest cast, as the mesh turns; destroy gives it all back', async () => {
   const r = fakeRenderer();
   let breaths = 0, hidden = null;
   const host = createGrahtHost({ renderer: r, breathe: async () => { breaths++; }, hides: (box) => hidden?.(box) ?? false });
@@ -448,7 +448,7 @@ test('GRAHT1: the host - a pixel\'s trees stood whole by the keep, their bodies 
   const M = c0[1], tree = kept.set.trees.subarray(6, 12), pt = [3, 7, -2], w = turn(pt, tree[3], tree[4]);
   const mp = [M[0] * pt[0] + M[4] * pt[1] + M[8] * pt[2] + M[12], M[1] * pt[0] + M[5] * pt[1] + M[9] * pt[2] + M[13], M[2] * pt[0] + M[6] * pt[1] + M[10] * pt[2] + M[14]];
   for (let q = 0; q < 3; q++) assert.ok(Math.abs(mp[q] - (w[q] + [tree[0] + 10, tree[1], tree[2] - 20][q])) < 1e-3, 'the caster where the tree is drawn');
-  // culled: by the view (a plane behind every tree), the fog's reach, the haze; the travel view's well
+  // culled: by the view (a plane behind every tree), the fog's reach, the haze - and never by the travel view (CANOPY-SEE)
   r.cast.length = 0;
   host.frame([p], [110, 2, 60], new Float32Array([0, 0, 1, -5000, 0, 0, 1, 1e6, 0, 0, 1, 1e6, 0, 0, 1, 1e6, 0, 0, 1, 1e6, 0, 0, 1, 1e6]));
   assert.equal(host.stats.drawn, 0, 'the view culls');
@@ -464,7 +464,7 @@ test('GRAHT1: the host - a pixel\'s trees stood whole by the keep, their bodies 
   hidden = null;
   r._focus = new Float32Array([110, 5, 100, 1]);
   host.frame([p], [110, 400, -150], null);
-  assert.equal(host.stats.drawn, 2, 'the travel view\'s well: the crown between the eye and the traveller undrawn');
+  assert.equal(host.stats.drawn, 3, 'CANOPY-SEE: the crown between the eye and the traveller drawn - the trees\' fragment half sees through it (render/lowPolyTreesGlsl.js)');
   r._focus = null;
   // nothing standing: the slot emptied once
   host.frame([], [0, 0, 0], null);
@@ -491,13 +491,7 @@ test('GRAHT1: the host - a pixel\'s trees stood whole by the keep, their bodies 
   assert.equal(r2.made.length, 0, 'a host torn down while its GPU was made makes none');
 });
 
-test('GRAHT1: the travel view\'s well and the fog\'s reach, exactly', () => {
-  const m = { crownFrom: 80, height: 170, crownR: 80 };
-  assert.ok(crownBlocks([0, 300, -300], [0, 0, 0], 0, 0, -100, m, 1), 'the crown a third of the way back stands in the line');
-  assert.ok(!crownBlocks([0, 300, -300], [0, 0, 0], 200, 0, -100, m, 1), 'one beside it does not');
-  assert.ok(!crownBlocks([0, 300, -300], [0, 0, 0], 0, 0, -290, m, 1), 'nor one past the line\'s crossing of the crowns');
-  assert.ok(!crownBlocks([0, 60, -10], [0, 0, 0], 0, 0, -5, m, 1), 'an eye under the crowns looks under them');
-  assert.ok(crownBlocks([0, 300, -300], [0, 0, 0], 0, 0, -100 + 80 * GRAHT_DRAW.well - 2, m, 1) && !crownBlocks([0, 300, -300], [0, 0, 0], 0, 0, -100 + 80 * GRAHT_DRAW.well + 22, m, 1), 'its reach the crown\'s, by the well\'s share');
+test('GRAHT1: the fog\'s reach, exactly', () => {
   assert.equal(fogReach({ _fogMode: 1, _fogRange: [10, 2400] }), 2400);
   assert.ok(Math.abs(fogReach({ _fogMode: 2, _fogDensity: 0.002 }) - Math.log(256) / 0.002) < 1e-9);
   assert.ok(Math.abs(fogReach({ _fogMode: 3, _fogDensity: 0.002 }) - Math.sqrt(Math.log(256)) / 0.002) < 1e-9);
