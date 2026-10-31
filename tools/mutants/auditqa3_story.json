@@ -165,8 +165,8 @@
   {
     "name": "AQA3-STORY-the-chronicle-unarmed",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "        if (bountyArmed !== `st:${s.questName}`) { bountyArmed = `st:${s.questName}`; render(); return; }\n",
-    "new": "",
+    "old": "        if (bountyArmed !== `st:${s.questName}`) {\n          bountyArmed = `st:${s.questName}`;\n          render();\n          return;\n        }\n        bountyArmed = null;",
+    "new": "        bountyArmed = null;",
     "tests": [
       "test/systems/quest/auditqa3_story.test.js"
     ]

@@ -75,7 +75,7 @@
     "name": "L10N3e-shown-ui-enhancedHotbar-80-Spell",
     "file": "src/ui/enhanced/enhancedHotbar.js",
     "old": "const entryName = (e) => (e?.type === 'spell' ? shownSpellName(e) : e?.name);",
-    "new": "const entryName = (e) => (e?.type === 'spell' ? (e).name : e?.name);",
+    "new": "const entryName = (e) => (e?.type === 'spell' ? e.name : e?.name);",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "L10N3e-shown-ui-enhancedHotbar-618-Spell",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(shownSpellName(sp) ?? 'It'); }",
-    "new": "  if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed((sp).name ?? 'It'); }",
+    "old": "    return HOTBAR_TEXT.removed(shownSpellName(sp) ?? 'It');",
+    "new": "    return HOTBAR_TEXT.removed(sp.name ?? 'It');",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]
@@ -93,7 +93,7 @@
     "name": "L10N3e-shown-ui-enhancedHotbar-622-Spell",
     "file": "src/ui/enhanced/enhancedHotbar.js",
     "old": "  return HOTBAR_TEXT.added(shownSpellName(sp) ?? 'It', free + 1);",
-    "new": "  return HOTBAR_TEXT.added((sp).name ?? 'It', free + 1);",
+    "new": "  return HOTBAR_TEXT.added(sp.name ?? 'It', free + 1);",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]

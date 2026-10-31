@@ -1766,10 +1766,15 @@
 !/src/ui/enhanced/bringOnlineButton.js
 !/src/ui/enhanced/enhancedArt.js
 !/src/ui/enhanced/enhancedCharSheet.js
+!/src/ui/enhanced/enhancedChronicle.js
+!/src/ui/enhanced/enhancedChunk.js
+!/src/ui/enhanced/enhancedDeath.js
 !/src/ui/enhanced/enhancedDialog.js
 !/src/ui/enhanced/enhancedDialogStyle.js
 !/src/ui/enhanced/enhancedFrame.js
 !/src/ui/enhanced/enhancedHelm.js
+!/src/ui/enhanced/enhancedHotbar.js
+!/src/ui/enhanced/enhancedHudText.js
 !/src/ui/enhanced/enhancedInputBox.js
 !/src/ui/enhanced/enhancedLevelingChoice.js
 !/src/ui/enhanced/enhancedMerchantPanel.js

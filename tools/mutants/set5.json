@@ -173,8 +173,8 @@
   {
     "name": "SET5-the-hotbars-key-blind-to-the-set",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}",
-    "new": "${validSigil(v.item.sigil) ? '*' : ''}` : ''}",
+    "old": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set",
+    "new": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}` : ''}` + // SET5: and its set",
     "tests": [
       "test/systems/set5_ui.test.js"
     ]

@@ -52,8 +52,8 @@
   {
     "name": "JRN-composer-hands-the-raw-text",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "deps.notebook().addNote(breakableNote(text));",
-    "new": "deps.notebook().addNote(text);",
+    "old": "        deps.notebook().addNote(breakableNote(text));",
+    "new": "        deps.notebook().addNote(text);",
     "tests": [
       "test/net/journal1.test.js",
       "test/ui/enhanced/enhancedChronicle.test.js"
@@ -546,8 +546,8 @@
   {
     "name": "JRN-share-the-cards-place",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "entry.append(shareStrip(share, e.index));",
-    "new": "entry.append(shareStrip(share, i));",
+    "old": "        if (share && sharing === e.index) entry.append(shareStrip(share, e.index));",
+    "new": "        if (share && sharing === e.index) entry.append(shareStrip(share, i));",
     "tests": [
       "test/net/journal1.test.js"
     ],
@@ -556,8 +556,8 @@
   {
     "name": "JRN-remove-the-cards-place",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "deps.notebook().removeNote(e.index);",
-    "new": "deps.notebook().removeNote(i);",
+    "old": "            deps.notebook().removeNote(e.index);",
+    "new": "            deps.notebook().removeNote(i);",
     "tests": [
       "test/net/journal1.test.js",
       "test/ui/enhanced/enhancedChronicle.test.js"
@@ -567,8 +567,8 @@
   {
     "name": "JRN-letter-left-standing",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "      if (w === true) { onExit(); return; }",
-    "new": "      if (w === true) { return; }",
+    "old": "        onExit();\n        return;",
+    "new": "        return;",
     "tests": [
       "test/net/journal1.test.js"
     ],

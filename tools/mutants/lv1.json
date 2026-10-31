@@ -272,7 +272,7 @@
   {
     "name": "the-chronicle-forgets-the-key-it-is-named-after",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  if (eventMeans(e, 'LogBook')) {   // UXB1-S: its key, shared or not",
+    "old": "  if (eventMeans(e, 'LogBook')) {\n    // UXB1-S: its key, shared or not",
     "new": "  if (false) {",
     "tests": [
       "test/ui/enhancedLevelUp.test.js"
@@ -282,7 +282,7 @@
   {
     "name": "the-chronicle-reads-the-literal-instead-of-the-registry",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  if (eventMeans(e, 'LogBook')) {   // UXB1-S: its key, shared or not",
+    "old": "  if (eventMeans(e, 'LogBook')) {\n    // UXB1-S: its key, shared or not",
     "new": "  if (e.code === 'KeyL') {",
     "tests": [
       "test/ui/enhancedLevelUp.test.js"

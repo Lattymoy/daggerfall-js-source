@@ -247,8 +247,8 @@
   {
     "name": "BOARD-UI-the-board-left-cold",
     "file": "src/ui/enhanced/enhancedChunk.js",
-    "old": "  () => import('../noticeWindow.js'),   // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it\n",
-    "new": "",
+    "old": "  () => import('../noticeWindow.js'), // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it\n  () => import('../brokerWindow.js'), // SET7: the Sigil Broker's window - online's, and last: the gate is the rarest door",
+    "new": "  () => import('../brokerWindow.js'), // SET7: the Sigil Broker's window - online's, and last: the gate is the rarest door",
     "tests": [
       "test/ui/board_ui.test.js"
     ]

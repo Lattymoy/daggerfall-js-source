@@ -325,8 +325,8 @@
   {
     "name": "midscreen-label-never-blanks",
     "file": "src/ui/enhanced/enhancedHudText.js",
-    "old": "  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = shown ? '' : 'none'; }",
-    "new": "  if (lastMid.on !== shown) { lastMid.on = shown; midHost.style.display = ''; }",
+    "old": "    midHost.style.display = shown ? '' : 'none';",
+    "new": "    midHost.style.display = '';",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "midscreen-a-node-per-message",
     "file": "src/ui/enhanced/enhancedHudText.js",
-    "old": "  if (!midHost) {\n    injectEnhancedStyle(doc);",
-    "new": "  {\n    injectEnhancedStyle(doc);",
+    "old": "  if (!midHost) {",
+    "new": "  {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "status-strip-never-clears",
     "file": "src/ui/enhanced/enhancedHudText.js",
-    "old": "  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = shown ? '' : 'none'; }",
-    "new": "  if (lastStatus.on !== shown) { lastStatus.on = shown; statusHost.style.display = ''; }",
+    "old": "    statusHost.style.display = shown ? '' : 'none';",
+    "new": "    statusHost.style.display = '';",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -397,8 +397,8 @@
   {
     "name": "status-strip-a-node-per-message",
     "file": "src/ui/enhanced/enhancedHudText.js",
-    "old": "  if (!statusHost) {\n    injectEnhancedStyle(doc);",
-    "new": "  {\n    injectEnhancedStyle(doc);",
+    "old": "  if (!statusHost) {",
+    "new": "  {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -716,7 +716,7 @@
     "name": "AUDIT-FONT-F11-the-native-scale-stops-being-floored",
     "file": "src/ui/enhanced/enhancedHudText.js",
     "old": "  const m = nativeMetrics(canvas);\n  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (m.oy + y * m.s) / dpr;",
-    "new": "  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (canvas.height * y / 200) / dpr;",
+    "new": "  const dpr = canvas.clientWidth > 0 ? canvas.width / canvas.clientWidth : 1;\n  return (canvas.height * y) / 200 / dpr;",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]

@@ -218,8 +218,8 @@
   {
     "name": "PVP-HUD-the-head-unread-enhanced",
     "file": "src/ui/enhanced/enhancedDeath.js",
-    "old": "lines = [slain, ...wildDeathLines(screen.wild ?? null)]",
-    "new": "lines = [...wildDeathLines(screen.wild ?? null)]",
+    "old": "    lines = [slain, ...wildDeathLines(screen.wild ?? null)].filter(Boolean); // PVP-HUD: \"Slain by\" first",
+    "new": "    lines = [...wildDeathLines(screen.wild ?? null)].filter(Boolean); // PVP-HUD: \"Slain by\" first",
     "tests": [
       "test/ui/pvphud.test.js"
     ]

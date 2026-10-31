@@ -97,8 +97,8 @@
   {
     "name": "AUDIT-TW-D4-the-tale-in-the-bay",
     "file": "src/ui/enhanced/enhancedDeath.js",
-    "old": "t('death.line', 'Your tale ends here.')",
-    "new": "t('death.line', 'Your tale in the Iliac Bay ends here.')",
+    "old": "        : t('death.line', 'Your tale ends here.')),",
+    "new": "        : t('death.line', 'Your tale in the Iliac Bay ends here.')),",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/systems/bal_arc.test.js"
@@ -108,8 +108,8 @@
   {
     "name": "AUDIT-TW-D4-the-rise-in-the-bay",
     "file": "src/ui/enhanced/enhancedDeath.js",
-    "old": "'Your body falls. The world is not done with you yet.'",
-    "new": "'Your body falls. The Bay is not done with you yet.'",
+    "old": "        ? t('death.lineOnline', 'Your body falls. The world is not done with you yet.')",
+    "new": "        ? t('death.lineOnline', 'Your body falls. The Bay is not done with you yet.')",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_text.test.js",
       "test/systems/bal_arc.test.js"

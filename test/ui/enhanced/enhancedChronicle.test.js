@@ -83,7 +83,7 @@ test('PX24 model: each section from its own source, and the orders differ on pur
   // you were told is what you opened this for); NOTES keep the
   // player's own order, because MoveNote is a law they arranged.
   const cr = read('src/ui/enhanced/enhancedChronicle.js');
-  assert.match(cr, /const list = section === 'messages'\n\s*\? rows\.map\(\(e, i\) => \(\{ e, i \}\)\)\.reverse\(\)/,
+  assert.match(cr, /const list = section === 'messages' \? rows\.map\(\(e, i\) => \(\{ e, i \}\)\)\.reverse\(\)/,
     'and the index rides along, because remove needs the TRUE position');
   assert.match(read('src/systems/notebook.js'), /MoveNote/);
 });
@@ -163,7 +163,7 @@ test('PX24b: the player may WRITE - the first draft was read-only, which is a lo
   // The draft survives a re-render, or every keystroke that triggers
   // one would eat what was typed.
   assert.match(cr, /^let draft = '';/m);
-  assert.match(cr, /input\.oninput = \(\) => \{ draft = input\.value; \};/);
+  assert.match(cr, /input\.oninput = \(\) => \{\n\s*draft = input\.value;\n\s*\};/);
   // A thumb can reach the remove.
   assert.match(read('src/ui/enhanced/enhancedStyle.js'), /@media \(pointer: coarse\) \{ \.cr-shell \.cr-rm \{ min-width: 44px; min-height: 44px; \} \}/);
 });
@@ -178,7 +178,7 @@ test('PX24c: a message has NO head, and PX24b printed a lie on every one', () =>
   const nb = read('src/systems/notebook.js');
   assert.match(nb, /const message = \[\n\s*\{ formatting: 'center', text: '' \},\n\s*\{ formatting: 'text', text: str \},\n\s*\];/);
   const cr = read('src/ui/enhanced/enhancedChronicle.js');
-  assert.match(cr, /const head = e\.head \?\? \(section === 'messages'\n\s*\? \(i === rows\.length - 1 \? 'Most recent' : null\)\n\s*: '\\u2014 continued \\u2014'\);/,
+  assert.match(cr, /const head =\n\s*e\.head \?\?\n\s*\(section === 'messages' \? \(i === rows\.length - 1 \? 'Most recent' : null\) : '\\u2014 continued \\u2014'\);/,
     'the continued fallback is the NOTE\'s alone');
   assert.match(cr, /if \(!head\) top\.classList\.add\('cr-headless'\);/);
   assert.match(read('src/ui/enhanced/enhancedStyle.js'), /\.cr-shell \.cr-head\.cr-headless \{ padding-bottom: 0;/);

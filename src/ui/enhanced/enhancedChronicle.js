@@ -21,19 +21,24 @@
 // a COUNT beside each name, because "Notes 0" answers the question a
 // player opens this window with before they have clicked anything.
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { repaintKeepingScroll } from '../domRepaint.js';   // FB1018f SPELL-SCROLL: a press keeps the page where it was
-import { closeOnOutsideTap } from './enhancedOverlays.js';   // OT1
-import { overlayAction, eventMeans } from '../input.js';   // LV1's audit: the REGISTRY's answer (AUDIT KB1: `eventAction`, the event's own read) for the key this window is named after
-import { questRail, questTitleOf, remainWords, QUEST_URGENT_SECONDS } from '../quest/questRail.js';   // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
-import { qlObjectivesBlock } from '../questlines/qlJournal.js';   // QL2: a stamped quest's objectives, as the pause tab draws them
-import { entryTarget, targetWords, WHERE_TEXT } from '../quest/questLens.js';   // GUIDE2: where a quest points, said the way every face says it
-import { followOn, trackButton } from '../quest/questTracker.js';   // GUIDE4: the HUD's card - the Track toggle's one home
-import { breakableNote, filedOutcome } from '../../systems/notebook.js';   // JOURNAL1: a note the notebook's wrap can take, whatever was typed; AUDIT QUESTLINES UI-5: an archived quest's outcome
-import { pageOfNote, pageRefusalText } from '../../net/journalPage.js';   // JOURNAL1: a note as the page it would be shown as, or why it cannot be
-import { isBountyQuestId, abandonBountyQuest, shareBountyQuest, bountyQuestShareable } from '../../systems/bounty/bountyJournal.js';   // BOUNTY1: a bounty's Abandon and Share
-import { isHuntQuestId, abandonHuntQuest } from '../../systems/huntJournal.js';   // RVN7c: a revenant's hunt - its Abandon
-import { listenWindowKeys } from '../windowStack.js';   // COVERED-KEYS: the window's keys, gated while a box covers it
-import { t } from '../../systems/textManager.js';   // L10N4: QUEST-SHELF-MAIN's words in the player's language, read when they are drawn
+import { repaintKeepingScroll } from '../domRepaint.js'; // FB1018f SPELL-SCROLL: a press keeps the page where it was
+import { closeOnOutsideTap } from './enhancedOverlays.js'; // OT1
+import { overlayAction, eventMeans } from '../input.js'; // LV1's audit: the REGISTRY's answer (AUDIT KB1: `eventAction`, the event's own read) for the key this window is named after
+import { questRail, questTitleOf, remainWords, QUEST_URGENT_SECONDS } from '../quest/questRail.js'; // MAC-K2: the ONE quest walk, shared with the pause window's Quests tab
+import { qlObjectivesBlock } from '../questlines/qlJournal.js'; // QL2: a stamped quest's objectives, as the pause tab draws them
+import { entryTarget, targetWords, WHERE_TEXT } from '../quest/questLens.js'; // GUIDE2: where a quest points, said the way every face says it
+import { followOn, trackButton } from '../quest/questTracker.js'; // GUIDE4: the HUD's card - the Track toggle's one home
+import { breakableNote, filedOutcome } from '../../systems/notebook.js'; // JOURNAL1: a note the notebook's wrap can take, whatever was typed; AUDIT QUESTLINES UI-5: an archived quest's outcome
+import { pageOfNote, pageRefusalText } from '../../net/journalPage.js'; // JOURNAL1: a note as the page it would be shown as, or why it cannot be
+import {
+  isBountyQuestId,
+  abandonBountyQuest,
+  shareBountyQuest,
+  bountyQuestShareable,
+} from '../../systems/bounty/bountyJournal.js'; // BOUNTY1: a bounty's Abandon and Share
+import { isHuntQuestId, abandonHuntQuest } from '../../systems/huntJournal.js'; // RVN7c: a revenant's hunt - its Abandon
+import { listenWindowKeys } from '../windowStack.js'; // COVERED-KEYS: the window's keys, gated while a box covers it
+import { t } from '../../systems/textManager.js'; // L10N4: QUEST-SHELF-MAIN's words in the player's language, read when they are drawn
 
 const el = (tag, cls, text) => {
   const n = document.createElement(tag);
@@ -47,13 +52,13 @@ let deps = {};
 let unlistenKeys = () => {};
 let onExit = () => {};
 let section = 'notes';
-let draft = '';   // PX24b: the note being written, kept across renders
+let draft = ''; // PX24b: the note being written, kept across renders
 // JOURNAL1: WHICH NOTE'S SHARE IS OPEN (its notebook index, or null), and what the last share said - a reading
 // position like a fold: kept across renders, cleared on mount.
 let sharing = null;
 let shareWord = '';
-let bountyArmed = null;   // BOUNTY1: the bounty whose Abandon was pressed once
-let shelfWord = '';   // QUEST-SHELF-MAIN: what the last Abandon said ("Abandoned: ..." or why not), above the quests
+let bountyArmed = null; // BOUNTY1: the bounty whose Abandon was pressed once
+let shelfWord = ''; // QUEST-SHELF-MAIN: what the last Abandon said ("Abandoned: ..." or why not), above the quests
 // MAC-F (Mac: "Quests and their tabs should be able to be minimized").
 // WHICH CARDS THE PLAYER HAS SHUT, as `section:index`. A quest's whole
 // trail is its body and twelve of them is a wall of text; the classic
@@ -66,7 +71,7 @@ const folded = new Set();
 // read again for each running clock (the walk alone - no entry's text is read for it) and the words rewritten in place.
 // One owner: cleared by every render and by destroy.
 let clockTimer = null;
-const clockSpans = new Map();   // quest id -> its timer span, this render's
+const clockSpans = new Map(); // quest id -> its timer span, this render's
 
 // MAC-K2 (Mac: "Logbook not reflecting quests"). QUESTS GOES FIRST,
 // and it is the section this window was missing entirely. The L key
@@ -80,7 +85,10 @@ const clockSpans = new Map();   // quest id -> its timer span, this render's
 // It leads because it is what the key is FOR. Notes, Messages and
 // History keep their order behind it.
 export const CHRONICLE_SECTIONS = Object.freeze([
-  ['quests', 'Quests'], ['notes', 'Notes'], ['messages', 'Messages'], ['history', 'History'],
+  ['quests', 'Quests'],
+  ['notes', 'Notes'],
+  ['messages', 'Messages'],
+  ['history', 'History'],
 ]);
 // LW7c (bible/06-Systems/Living-World.md "LW7c", Mac: "make friends or enemies"): THE PEOPLE WHO KNOW YOU - the living
 // world's residents the character has met (systems/livingWorld/people.js peoplePage), a section of its own where the
@@ -146,7 +154,8 @@ export function chronicleModel(d = {}) {
   // JOURNAL1: each entry keeps its INDEX IN THE NOTEBOOK. An empty entry is dropped from the drawing, so a card's
   // place in the list is not the note's place in the notebook once one is - and the remove (and the share) must act
   // on the note the card draws, not on the one that happens to sit at the card's position.
-  const entries = (list) => (list ?? []).map((t, index) => ({ ...chronicleEntry(t), index })).filter((e) => e.head || e.body.length);
+  const entries = (list) =>
+    (list ?? []).map((t, index) => ({ ...chronicleEntry(t), index })).filter((e) => e.head || e.body.length);
   const notes = entries(nb?.getNotes?.());
   const messages = entries(nb?.getMessages?.());
   // MAC-K2: the quests, through the SAME walk the pause window's
@@ -165,7 +174,12 @@ export function chronicleModel(d = {}) {
       // GetLastPlaceMentionedInMessage, and of that place only the names the entry says or DFU's find-place box would),
       // in the words every face says it in, with the door's payload; and the deadline the pause tab has carried since
       // PX5, which this window - the one the L key opens - never showed.
-      const said = targetWords(entryTarget(q.written.at(-1)?.message, { canFindPlace: d.canFindPlace, currentLocationName: d.currentLocationName }));
+      const said = targetWords(
+        entryTarget(q.written.at(-1)?.message, {
+          canFindPlace: d.canFindPlace,
+          currentLocationName: d.currentLocationName,
+        }),
+      );
       return {
         head: questTitleOf(q.name),
         body: [...q.entries].reverse().flat(),
@@ -176,7 +190,7 @@ export function chronicleModel(d = {}) {
         note: said?.note ?? null,
         find: said?.find ?? null,
         clockSeconds: q.clockSeconds,
-        ql: q.ql ?? null,   // QL2: a stamped quest's objectives, choices and outcome - the pause tab's own block (ui/questlines/qlJournal.js)
+        ql: q.ql ?? null, // QL2: a stamped quest's objectives, choices and outcome - the pause tab's own block (ui/questlines/qlJournal.js)
       };
     }),
     ...rail.finished.map((q) => {
@@ -193,7 +207,13 @@ export function chronicleModel(d = {}) {
   // strings, and playerHistory.js reads exactly this.
   const history = (d.entity?.backStory ?? []).map((l) => String(l ?? '')).filter((l) => l.length);
   // LW7c: the people, only where the host hands their page over (people.js peoplePage's shape)
-  return { quests, notes, messages, history, ...(d.people ? { people: d.people() ?? { friends: [], enemies: [], known: [] } } : {}) };
+  return {
+    quests,
+    notes,
+    messages,
+    history,
+    ...(d.people ? { people: d.people() ?? { friends: [], enemies: [], known: [] } } : {}),
+  };
 }
 
 /** MAC-F: the fold laws, kept pure so a node test can drive them with
@@ -202,7 +222,8 @@ export const foldKey = (sec, index) => `${sec}:${index}`;
 export const isFolded = (store, sec, index) => !!store?.has(foldKey(sec, index));
 export function toggleFold(store, sec, index) {
   const k = foldKey(sec, index);
-  if (store.has(k)) store.delete(k); else store.add(k);
+  if (store.has(k)) store.delete(k);
+  else store.add(k);
   return store;
 }
 /** Whether EVERY card in a section is shut - which is what decides
@@ -213,7 +234,8 @@ export const allFolded = (store, sec, count) =>
 /** Fold or unfold a whole section at once. */
 export function setSectionFold(store, sec, count, shut) {
   for (let i = 0; i < count; i++) {
-    if (shut) store.add(foldKey(sec, i)); else store.delete(foldKey(sec, i));
+    if (shut) store.add(foldKey(sec, i));
+    else store.delete(foldKey(sec, i));
   }
   return store;
 }
@@ -239,7 +261,10 @@ function shareStrip(share, index) {
       const b = el('button', 'act', p.name);
       b.type = 'button';
       b.title = `Hold this page out to ${p.name}`;
-      b.onclick = () => { shareWord = share.show?.(p.id, r.page) ?? ''; render(); };
+      b.onclick = () => {
+        shareWord = share.show?.(p.id, r.page) ?? '';
+        render();
+      };
       row.append(b);
     }
   } else {
@@ -252,7 +277,10 @@ function shareStrip(share, index) {
     b.title = 'Write this page into a letter, to anyone';
     b.onclick = () => {
       const w = share.letter(r.page);
-      if (w === true) { onExit(); return; }   // the letters open on the page once this window is down
+      if (w === true) {
+        onExit();
+        return;
+      } // the letters open on the page once this window is down
       shareWord = typeof w === 'string' ? w : '';
       render();
     };
@@ -268,7 +296,7 @@ function shareStrip(share, index) {
  *  the host has a map to open, the note when the player's map is known not to have it, and the deadline. Null when
  *  there is none of it to say. */
 function questState(e) {
-  const track = followOn() && e.uid != null;   // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')
+  const track = followOn() && e.uid != null; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')
   if (!e.where && e.clockSeconds == null && !track) return null;
   const box = el('div', 'cr-where');
   if (e.where) {
@@ -284,20 +312,27 @@ function questState(e) {
       go.title = WHERE_TEXT.showLabel(e.where);
       go.setAttribute('aria-label', WHERE_TEXT.showLabel(e.where));
       const find = e.find;
-      go.onclick = () => { onExit(); door(find); };
+      go.onclick = () => {
+        onExit();
+        door(find);
+      };
       box.append(go);
     }
     if (e.note) box.append(el('span', 'cr-wherenote', e.note));
   }
   if (e.clockSeconds != null) {
     // QUEST-AUDIT III SHELF-WORDS: the pause tab's own words (pause.journal.timeRemains), in the player's language
-    const span = el('span', `cr-timer${e.clockSeconds < QUEST_URGENT_SECONDS ? ' urgent' : ''}`, t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(e.clockSeconds) }));
+    const span = el(
+      'span',
+      `cr-timer${e.clockSeconds < QUEST_URGENT_SECONDS ? ' urgent' : ''}`,
+      t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(e.clockSeconds) }),
+    );
     clockSpans.set(String(e.uid), span);
     box.append(span);
   }
   // GUIDE4: TRACK THIS QUEST on the HUD's card (ui/quest/questTracker.js) - the card follows the quest the journal last
   // changed until the player chooses one, here or in the pause window's Quests tab (the same toggle, one home).
-  if (track) box.append(trackButton(document, e.uid, e.head));   // AUDIT GUIDE T5/U3: changed in place - the focus and the scroll stay
+  if (track) box.append(trackButton(document, e.uid, e.head)); // AUDIT GUIDE T5/U3: changed in place - the focus and the scroll stay
   return box;
 }
 
@@ -309,14 +344,20 @@ function armClocks() {
     const live = new Map((deps.questLog?.()?.active ?? []).map((q) => [String(q.id), q.clockSeconds]));
     for (const [id, span] of clockSpans) {
       const left = live.get(id);
-      if (!Number.isFinite(left)) { render(); return; }
+      if (!Number.isFinite(left)) {
+        render();
+        return;
+      }
       span.textContent = t('pause.journal.timeRemains', 'Time remains: {left}', { left: remainWords(left) });
       span.className = `cr-timer${left < QUEST_URGENT_SECONDS ? ' urgent' : ''}`;
     }
   }, 1000);
 }
 function disarmClocks() {
-  if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
+  if (clockTimer) {
+    clearInterval(clockTimer);
+    clockTimer = null;
+  }
   clockSpans.clear();
 }
 
@@ -325,7 +366,7 @@ function disarmClocks() {
  *  pressed scrolled away. Drawn through the house's one repaint (ui/domRepaint.js), as the pause window's journal pages
  *  are; the page names its section, so another section starts at its top. */
 function render() {
-  disarmClocks();   // GUIDE2: this render's spans replace the last one's
+  disarmClocks(); // GUIDE2: this render's spans replace the last one's
   if (!host) return;
   repaintKeepingScroll(host, paint);
 }
@@ -333,8 +374,13 @@ function render() {
 function paint() {
   host.innerHTML = '';
   const model = chronicleModel(deps);
-  const counts = { quests: model.quests.length, notes: model.notes.length, messages: model.messages.length, history: model.history.length,
-    people: model.people ? model.people.friends.length + model.people.enemies.length + model.people.known.length : 0 };   // LW7c
+  const counts = {
+    quests: model.quests.length,
+    notes: model.notes.length,
+    messages: model.messages.length,
+    history: model.history.length,
+    people: model.people ? model.people.friends.length + model.people.enemies.length + model.people.known.length : 0,
+  }; // LW7c
   const sections = chronicleSections(deps);
 
   const shell = el('div', 'px-home px-over cr-shell');
@@ -353,14 +399,17 @@ function paint() {
   win.append(head);
 
   const body = el('div', 'px-body');
-  body.setAttribute('data-scroll-key', section);   // FB1018f SPELL-SCROLL: a press keeps the page; another section starts at its top
+  body.setAttribute('data-scroll-key', section); // FB1018f SPELL-SCROLL: a press keeps the page; another section starts at its top
   const wrap = el('div', 'px-journal');
   const rail = el('div', 'px-qrail');
   for (const [id, label] of sections) {
     const b = el('button', `px-qrow cr-row${id === section ? ' on' : ''}`);
     b.append(el('span', 'px-c', '\u25c6'), document.createTextNode(label));
     b.append(el('span', 'sb-cost', String(counts[id])));
-    b.onclick = () => { section = id; render(); };
+    b.onclick = () => {
+      section = id;
+      render();
+    };
     rail.append(b);
   }
   wrap.append(rail);
@@ -376,7 +425,11 @@ function paint() {
     // they are to the player (the page's own words - people.js personWords: their fate, their standing, when last seen)
     const page = model.people ?? { friends: [], enemies: [], known: [] };
     if (!counts.people) detail.append(el('p', 'px-note', 'No one knows you yet.'));
-    for (const [group, rows] of /** @type {[string, any[]][]} */ ([['Friends', page.friends], ['Enemies', page.enemies], ['Known', page.known]])) {
+    for (const [group, rows] of /** @type {[string, any[]][]} */ ([
+      ['Friends', page.friends],
+      ['Enemies', page.enemies],
+      ['Known', page.known],
+    ])) {
       if (!rows.length) continue;
       const line = el('div', 'sb-frame');
       line.append(el('span', 'sb-chip', `${group} \u00b7 ${rows.length}`));
@@ -387,7 +440,7 @@ function paint() {
         const top = el('div', 'cr-head');
         top.append(el('span', 'cr-when', p.name));
         if (p.town) top.append(el('span', 'sb-chip', p.town));
-        if (p.company) top.append(el('span', 'sb-chip', p.company));   // LW13: the company they walk with
+        if (p.company) top.append(el('span', 'sb-chip', p.company)); // LW13: the company they walk with
         card.append(top);
         const words = el('div', 'cr-prose');
         words.append(el('p', null, p.words ?? ''));
@@ -456,7 +509,9 @@ function paint() {
       input.placeholder = 'Write a note';
       input.maxLength = 200;
       input.value = draft;
-      input.oninput = () => { draft = input.value; };
+      input.oninput = () => {
+        draft = input.value;
+      };
       const add = el('button', 'act primary', 'Add');
       add.type = 'submit';
       compose.onsubmit = (e) => {
@@ -476,38 +531,59 @@ function paint() {
       compose.append(input, add);
       detail.append(compose);
     }
-    if (section === 'quests' && shelfWord) detail.append(el('p', 'px-note cr-shelfword', shelfWord));   // QUEST-SHELF-MAIN
+    if (section === 'quests' && shelfWord) detail.append(el('p', 'px-note cr-shelfword', shelfWord)); // QUEST-SHELF-MAIN
     // STORY-AGAIN (#982): a step of the main story that failed, above the quests - what happened and its one press (twice,
     // the arming Abandon uses): started again from its first step (scenes/quest/questBridge.js journalClean.startStoryAgain)
-    const storyDoor = section === 'quests' ? deps.shelfDoor?.() ?? null : null;
+    const storyDoor = section === 'quests' ? (deps.shelfDoor?.() ?? null) : null;
     for (const s of (storyDoor?.startStoryAgain && storyDoor.storyAgain?.()) || []) {
       const card = el('div', 'cr-entry cr-story');
       const top = el('div', 'cr-head');
       top.append(el('span', 'cr-date', s.title));
       const armed = bountyArmed === `st:${s.questName}`;
-      const go = el('button', 'cr-rm cr-share', armed ? t('chronicle.quests.restartArmed', 'Click again') : t('quest.story.again', 'Take it up again'));
-      go.title = t('quest.story.againTitle', 'Start this step of the main story again from the beginning, so the story can go on');
+      const go = el(
+        'button',
+        'cr-rm cr-share',
+        armed ? t('chronicle.quests.restartArmed', 'Click again') : t('quest.story.again', 'Take it up again'),
+      );
+      go.title = t(
+        'quest.story.againTitle',
+        'Start this step of the main story again from the beginning, so the story can go on',
+      );
       go.onclick = () => {
-        if (bountyArmed !== `st:${s.questName}`) { bountyArmed = `st:${s.questName}`; render(); return; }
+        if (bountyArmed !== `st:${s.questName}`) {
+          bountyArmed = `st:${s.questName}`;
+          render();
+          return;
+        }
         bountyArmed = null;
         shelfWord = storyDoor.startStoryAgain(s.questName)?.text ?? '';
         render();
       };
       top.append(go);
-      card.append(top, el('p', null, t('quest.story.stalled', 'This step of the main story ended before the story could go on.')));
+      card.append(
+        top,
+        el('p', null, t('quest.story.stalled', 'This step of the main story ended before the story could go on.')),
+      );
       detail.append(card);
     }
     if (!rows.length) {
-      detail.append(el('p', 'px-note', section === 'notes' ? 'Nothing written yet.'
-        : (section === 'quests' ? 'No active quests.' : 'No messages yet.')));
+      detail.append(
+        el(
+          'p',
+          'px-note',
+          section === 'notes'
+            ? 'Nothing written yet.'
+            : section === 'quests'
+              ? 'No active quests.'
+              : 'No messages yet.',
+        ),
+      );
     } else {
       // NEWEST FIRST for messages (the ring's own order is oldest
       // first and the last thing you were told is the thing you
       // opened this for); notes keep the player's OWN order, because
       // they arranged them (MoveNote is a law, notebook.js:"getNotes()").
-      const list = section === 'messages'
-        ? rows.map((e, i) => ({ e, i })).reverse()
-        : rows.map((e, i) => ({ e, i }));
+      const list = section === 'messages' ? rows.map((e, i) => ({ e, i })).reverse() : rows.map((e, i) => ({ e, i }));
       // MAC-F: THE WHOLE TAB AT ONCE. Folding twelve quests one at a
       // time to see the twelve titles is the wall of text again with
       // extra clicks in it, so the section carries the same control
@@ -515,9 +591,14 @@ function paint() {
       // flag of its own, so folding the last one by hand flips it.
       const shutAll = allFolded(folded, section, rows.length);
       const every = el('button', 'px-qrow cr-foldall');
-      every.append(el('span', 'px-c', shutAll ? '\u25b8' : '\u25be'),
-        document.createTextNode(shutAll ? 'Expand all' : 'Collapse all'));
-      every.onclick = () => { setSectionFold(folded, section, rows.length, !shutAll); render(); };
+      every.append(
+        el('span', 'px-c', shutAll ? '\u25b8' : '\u25be'),
+        document.createTextNode(shutAll ? 'Expand all' : 'Collapse all'),
+      );
+      every.onclick = () => {
+        setSectionFold(folded, section, rows.length, !shutAll);
+        render();
+      };
       detail.append(every);
       const box = el('div', 'cr-entries');
       for (const { e, i } of list) {
@@ -531,9 +612,9 @@ function paint() {
         // whose page split files with no header (notebook.js:"if (note.length - 2 >= MAX_LINES_SMALL * 2)".."this.notes.push(note);")
         // and says so; a MESSAGE never has one at all, so it gets the
         // only true thing there is to say - which of them is newest.
-        const head = e.head ?? (section === 'messages'
-          ? (i === rows.length - 1 ? 'Most recent' : null)
-          : '\u2014 continued \u2014');
+        const head =
+          e.head ??
+          (section === 'messages' ? (i === rows.length - 1 ? 'Most recent' : null) : '\u2014 continued \u2014');
         // MAC-F: THE HEAD IS THE HANDLE. The caret and the date are one
         // button - a card folds by clicking the thing you were already
         // reading, and the remove stays its own control beside it
@@ -544,7 +625,10 @@ function paint() {
         fold.append(el('span', 'cr-when', head ?? ''));
         fold.setAttribute('aria-expanded', String(!shut));
         fold.title = shut ? 'Expand this entry' : 'Collapse this entry';
-        fold.onclick = () => { toggleFold(folded, section, i); render(); };
+        fold.onclick = () => {
+          toggleFold(folded, section, i);
+          render();
+        };
         top.append(fold);
         if (!head) top.classList.add('cr-headless');
         // JOURNAL1 (Addison Knox: "Player journals ... shared in-world for storytelling"): a note's Share - never DFU's.
@@ -555,14 +639,22 @@ function paint() {
           sh.title = 'Show this page to someone near you, or send it as a letter';
           sh.setAttribute('aria-label', 'Share this page');
           sh.setAttribute('aria-expanded', String(sharing === e.index));
-          sh.onclick = () => { sharing = sharing === e.index ? null : e.index; shareWord = ''; render(); };
+          sh.onclick = () => {
+            sharing = sharing === e.index ? null : e.index;
+            shareWord = '';
+            render();
+          };
           top.append(sh);
         }
         if (section === 'notes' && deps.notebook?.()) {
           const rm = el('button', 'cr-rm', '\u00d7');
           rm.title = 'Remove this note';
           rm.setAttribute('aria-label', 'Remove this note');
-          rm.onclick = () => { deps.notebook().removeNote(e.index); sharing = null; render(); };
+          rm.onclick = () => {
+            deps.notebook().removeNote(e.index);
+            sharing = null;
+            render();
+          };
           top.append(rm);
         }
         // QUEST1: the share button - never DFU's. Lives in every quest's
@@ -579,7 +671,10 @@ function paint() {
           if (bountyQuestShareable(e.uid)) {
             const bs = el('button', 'cr-rm cr-share', 'Share');
             bs.title = 'Share this bounty with your party';
-            bs.onclick = () => { shareBountyQuest(e.uid); render(); };
+            bs.onclick = () => {
+              shareBountyQuest(e.uid);
+              render();
+            };
             top.append(bs);
           }
           const armed = bountyArmed === e.uid;
@@ -587,7 +682,11 @@ function paint() {
           ab.title = 'Give up this bounty';
           ab.setAttribute('aria-label', armed ? 'Click again to give up this bounty' : 'Abandon this bounty');
           ab.onclick = () => {
-            if (bountyArmed !== e.uid) { bountyArmed = e.uid; render(); return; }
+            if (bountyArmed !== e.uid) {
+              bountyArmed = e.uid;
+              render();
+              return;
+            }
             bountyArmed = null;
             abandonBountyQuest(e.uid);
             render();
@@ -601,7 +700,11 @@ function paint() {
           ab.title = 'Give up this hunt';
           ab.setAttribute('aria-label', armed ? 'Click again to give up this hunt' : 'Abandon this hunt');
           ab.onclick = () => {
-            if (bountyArmed !== e.uid) { bountyArmed = e.uid; render(); return; }
+            if (bountyArmed !== e.uid) {
+              bountyArmed = e.uid;
+              render();
+              return;
+            }
             bountyArmed = null;
             abandonHuntQuest(e.uid);
             render();
@@ -612,15 +715,33 @@ function paint() {
         // quest's Abandon (twice, BOUNTY1's arming) - QUEST-SHELF's own door (scenes/quest/questBridge.js journalClean.abandon:
         // set aside, kept, reclaimed from the pause window's Quests tab), drawn where it may be (`canAbandon` - never the
         // main story's, a raid the sea runs, or one ending). A bounty's and a hunt's keep their own above.
-        const clean = section === 'quests' && e.uid != null && !e.main && !isHuntQuestId(e.uid) && !isBountyQuestId(e.uid)
-          ? deps.shelfDoor?.() : null;
+        const clean =
+          section === 'quests' && e.uid != null && !e.main && !isHuntQuestId(e.uid) && !isBountyQuestId(e.uid)
+            ? deps.shelfDoor?.()
+            : null;
         if (clean?.abandon && clean.canAbandon?.(e.uid)) {
           const armed = bountyArmed === `q:${e.uid}`;
-          const ab = el('button', 'cr-rm cr-share', armed ? t('chronicle.quests.abandonArmed', 'Click again') : t('chronicle.quests.abandon', 'Abandon'));
-          ab.title = t('chronicle.quests.abandonTitle', 'Give up this quest for now. You can reclaim it from the pause menu\'s Quests tab');
-          ab.setAttribute('aria-label', armed ? t('chronicle.quests.abandonArmedLabel', 'Click again to abandon this quest') : t('chronicle.quests.abandonLabel', 'Abandon this quest'));
+          const ab = el(
+            'button',
+            'cr-rm cr-share',
+            armed ? t('chronicle.quests.abandonArmed', 'Click again') : t('chronicle.quests.abandon', 'Abandon'),
+          );
+          ab.title = t(
+            'chronicle.quests.abandonTitle',
+            "Give up this quest for now. You can reclaim it from the pause menu's Quests tab",
+          );
+          ab.setAttribute(
+            'aria-label',
+            armed
+              ? t('chronicle.quests.abandonArmedLabel', 'Click again to abandon this quest')
+              : t('chronicle.quests.abandonLabel', 'Abandon this quest'),
+          );
           ab.onclick = () => {
-            if (bountyArmed !== `q:${e.uid}`) { bountyArmed = `q:${e.uid}`; render(); return; }
+            if (bountyArmed !== `q:${e.uid}`) {
+              bountyArmed = `q:${e.uid}`;
+              render();
+              return;
+            }
             bountyArmed = null;
             shelfWord = clean.abandon(e.uid)?.text ?? '';
             render();
@@ -630,26 +751,53 @@ function paint() {
         // QUEST-RESET (LostMyLeg: "an option that can fully reset a quest"): a running quest's Restart (twice, the same
         // arming) - the quest started again from its first step (scenes/quest/questBridge.js journalClean.restart), drawn where
         // it may be (`canRestart` - the main story's steps among them; never one a questor gave, nor the world's own)
-        const reset = section === 'quests' && e.uid != null && !isHuntQuestId(e.uid) && !isBountyQuestId(e.uid) ? deps.shelfDoor?.() ?? null : null;
+        const reset =
+          section === 'quests' && e.uid != null && !isHuntQuestId(e.uid) && !isBountyQuestId(e.uid)
+            ? (deps.shelfDoor?.() ?? null)
+            : null;
         if (reset?.restart && reset.canRestart?.(e.uid)) {
           const armed = bountyArmed === `r:${e.uid}`;
-          const rs = el('button', 'cr-rm cr-share', armed ? t('chronicle.quests.restartArmed', 'Click again') : t('chronicle.quests.restart', 'Restart'));
-          rs.title = t('chronicle.quests.restartTitle', 'Start this quest again from the beginning. Anything it placed or gave you is taken back');
-          rs.setAttribute('aria-label', armed ? t('chronicle.quests.restartArmedLabel', 'Click again to restart this quest') : t('chronicle.quests.restartLabel', 'Restart this quest'));
+          const rs = el(
+            'button',
+            'cr-rm cr-share',
+            armed ? t('chronicle.quests.restartArmed', 'Click again') : t('chronicle.quests.restart', 'Restart'),
+          );
+          rs.title = t(
+            'chronicle.quests.restartTitle',
+            'Start this quest again from the beginning. Anything it placed or gave you is taken back',
+          );
+          rs.setAttribute(
+            'aria-label',
+            armed
+              ? t('chronicle.quests.restartArmedLabel', 'Click again to restart this quest')
+              : t('chronicle.quests.restartLabel', 'Restart this quest'),
+          );
           rs.onclick = () => {
-            if (bountyArmed !== `r:${e.uid}`) { bountyArmed = `r:${e.uid}`; render(); return; }
+            if (bountyArmed !== `r:${e.uid}`) {
+              bountyArmed = `r:${e.uid}`;
+              render();
+              return;
+            }
             bountyArmed = null;
             shelfWord = reset.restart(e.uid)?.text ?? '';
             render();
           };
           top.append(rs);
         }
-        if (section === 'quests' && e.uid != null && !e.main && !isBountyQuestId(e.uid) && !isHuntQuestId(e.uid)
-          && (deps.partyMembers?.() ?? []).length) {
+        if (
+          section === 'quests' &&
+          e.uid != null &&
+          !e.main &&
+          !isBountyQuestId(e.uid) &&
+          !isHuntQuestId(e.uid) &&
+          (deps.partyMembers?.() ?? []).length
+        ) {
           const share = el('button', 'cr-rm cr-share', 'Share');
           share.title = 'Share this quest with your party';
           share.setAttribute('aria-label', 'Share this quest with your party');
-          share.onclick = () => { deps.shareQuest?.(e.uid, e.questName, e.head); };
+          share.onclick = () => {
+            deps.shareQuest?.(e.uid, e.questName, e.head);
+          };
           top.append(share);
         }
         entry.append(top);
@@ -662,7 +810,10 @@ function paint() {
         if (share && sharing === e.index) entry.append(shareStrip(share, e.index));
         if (!isFolded(folded, section, i)) {
           // QL2: what the quest asks now, above its journal - the pause tab's block, one home (ui/questlines/qlJournal.js)
-          if (section === 'quests') { const block = qlObjectivesBlock(document, e.ql); if (block) entry.append(block); }
+          if (section === 'quests') {
+            const block = qlObjectivesBlock(document, e.ql);
+            if (block) entry.append(block);
+          }
           for (const line of e.body) entry.append(el('p', null, line));
         }
         box.append(entry);
@@ -675,8 +826,8 @@ function paint() {
   win.append(body);
   shell.append(win);
   host.append(shell);
-  closeOnOutsideTap(shell, '.px-win', () => onExit());   // OT1 (Mac: a tap outside the window closes it)
-  armClocks();   // GUIDE2: after the spans exist
+  closeOnOutsideTap(shell, '.px-win', () => onExit()); // OT1 (Mac: a tap outside the window closes it)
+  armClocks(); // GUIDE2: after the spans exist
 }
 
 function onKey(e) {
@@ -684,8 +835,9 @@ function onKey(e) {
   const t = e.target;
   if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-    e.preventDefault(); e.stopPropagation();
-    const list = chronicleSections(deps);   // AUDIT-G4: the sections the window shows - LW7c's People among them (the four alone never reached it)
+    e.preventDefault();
+    e.stopPropagation();
+    const list = chronicleSections(deps); // AUDIT-G4: the sections the window shows - LW7c's People among them (the four alone never reached it)
     const i = list.findIndex(([id]) => id === section);
     const n = list.length;
     section = list[(i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n][0];
@@ -711,10 +863,11 @@ function onKey(e) {
   // before it). A text field keeps its own keys - the note composer is
   // a real <input> and 'l' belongs to it (CG2) - which the guard at
   // the top of this handler already ensures.
-  if (eventMeans(e, 'LogBook')) {   // UXB1-S: its key, shared or not
+  if (eventMeans(e, 'LogBook')) {
+    // UXB1-S: its key, shared or not
     e.preventDefault();
     e.stopPropagation();
-    if (!e.repeat) onExit();   // AUDIT KB1: the press closes; a held key's repeat is swallowed, not an open-shut flicker
+    if (!e.repeat) onExit(); // AUDIT KB1: the press closes; a held key's repeat is swallowed, not an open-shut flicker
     return;
   }
   if (overlayAction(e) !== 'back') return;
@@ -731,19 +884,27 @@ export function mountEnhancedChronicle(hostEl, d = {}) {
   onExit = d.onExit ?? (() => {});
   section = chronicleSections(d).some(([id]) => id === d.section) ? d.section : 'quests';
   draft = '';
-  sharing = null; shareWord = '';   // JOURNAL1: a fresh open shares nothing yet
-  bountyArmed = null;   // AUDIT 28 B11: an armed Abandon never outlives the visit it was armed on
-  shelfWord = '';   // QUEST-SHELF-MAIN: nor what the last one said
-  folded.clear();   // MAC-F: a fresh open reads whole, as it always has
+  sharing = null;
+  shareWord = ''; // JOURNAL1: a fresh open shares nothing yet
+  bountyArmed = null; // AUDIT 28 B11: an armed Abandon never outlives the visit it was armed on
+  shelfWord = ''; // QUEST-SHELF-MAIN: nor what the last one said
+  folded.clear(); // MAC-F: a fresh open reads whole, as it always has
   render();
-  unlistenKeys?.();   // a mount over a mount lays one listener, as the window's own addEventListener of one function did
-  unlistenKeys = listenWindowKeys(d.owner, onKey);   // COVERED-KEYS: d.owner, the chronicle's window (ui/chronicleDoor.js)
+  unlistenKeys?.(); // a mount over a mount lays one listener, as the window's own addEventListener of one function did
+  unlistenKeys = listenWindowKeys(d.owner, onKey); // COVERED-KEYS: d.owner, the chronicle's window (ui/chronicleDoor.js)
   return {
     render,
     destroy() {
       disarmClocks();
       unlistenKeys();
-      host = null; deps = {}; section = 'notes'; draft = ''; folded.clear(); sharing = null; shareWord = ''; bountyArmed = null;
+      host = null;
+      deps = {};
+      section = 'notes';
+      draft = '';
+      folded.clear();
+      sharing = null;
+      shareWord = '';
+      bountyArmed = null;
     },
   };
 }

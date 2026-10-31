@@ -38,42 +38,54 @@
 import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
 import { PIXEL_STACK } from '../pixelifyFive.js';
 import { getPref } from '../../systems/uiPrefs.js';
-import { HOTBAR_STYLES, hotbarForced } from '../../systems/uiSkin.js';   // DIAMOND-HB: the styles that are this bar; PVP-SET: held up under the flag
-import { isTextEntryTarget, bindings, eventActions, mouseCode, hostPaused } from '../input.js';   // AUDIT FB1018f L2-5: and the host's pause, at the press
-import { HOTBAR_SLOT_ACTIONS } from '../../systems/inputActions.js';   // KB1: the ten slots are ten registry actions
-import { quickslotTag } from '../quickslotTags.js';   // KB1: a slot's chip names the key its action is bound to
+import { HOTBAR_STYLES, hotbarForced } from '../../systems/uiSkin.js'; // DIAMOND-HB: the styles that are this bar; PVP-SET: held up under the flag
+import { isTextEntryTarget, bindings, eventActions, mouseCode, hostPaused } from '../input.js'; // AUDIT FB1018f L2-5: and the host's pause, at the press
+import { HOTBAR_SLOT_ACTIONS } from '../../systems/inputActions.js'; // KB1: the ten slots are ten registry actions
+import { quickslotTag } from '../quickslotTags.js'; // KB1: a slot's chip names the key its action is bound to
 import {
-  HOTBAR_SIZE, HOTBAR_TEXT, hotbarView, hotbarRevision, hotbarPress, hotbarReady,
-  hotbarEntryForItem, hotbarEntryForSpell, setHotbarSlot, clearHotbarSlot, swapHotbarSlots, hotbarEntry,
-  hotbarSlotOf, firstFreeHotbarSlot, hotbarKindOf,
+  HOTBAR_SIZE,
+  HOTBAR_TEXT,
+  hotbarView,
+  hotbarRevision,
+  hotbarPress,
+  hotbarReady,
+  hotbarEntryForItem,
+  hotbarEntryForSpell,
+  setHotbarSlot,
+  clearHotbarSlot,
+  swapHotbarSlots,
+  hotbarEntry,
+  hotbarSlotOf,
+  firstFreeHotbarSlot,
+  hotbarKindOf,
 } from '../../systems/quickslots.js';
-import { hotbarSetName } from '../../systems/quickslots.js';   // PVP-SET
-import { shownSpellName } from '../../systems/loot/loot.js';   // L10N3e: a spell's name as the book shows it
+import { hotbarSetName } from '../../systems/quickslots.js'; // PVP-SET
+import { shownSpellName } from '../../systems/loot/loot.js'; // L10N3e: a spell's name as the book shows it
 import { modelIconUrl } from '../item/itemIconUrl.js';
 import { fpArm } from '../../combat/fpArm.js';
-import { requestFittedIcon, showFitted, fittedImg, iconName } from '../textureCanvas.js';   // UI2: a slot's picture fitted to it
-import { spellIconPicture } from './enhancedArt.js';   // UI2: a spell's own ICON00I0 icon
+import { requestFittedIcon, showFitted, fittedImg, iconName } from '../textureCanvas.js'; // UI2: a slot's picture fitted to it
+import { spellIconPicture } from './enhancedArt.js'; // UI2: a spell's own ICON00I0 icon
 import { clampDpr, screenDpr } from '../iconFit.js';
 import { inventoryItemImage } from '../../systems/item/itemTemplates.js';
-import { itemDyeColor } from '../../systems/item/itemDye.js';   // AUDIT FINAL F2: a garment's own dye repaints its slot
-import { cursorActive } from '../../player/pointerLock.js';   // HB1c: the freed mouse (Enter / FreeMouse)
+import { itemDyeColor } from '../../systems/item/itemDye.js'; // AUDIT FINAL F2: a garment's own dye repaints its slot
+import { cursorActive } from '../../player/pointerLock.js'; // HB1c: the freed mouse (Enter / FreeMouse)
 import { overlayOpen } from './enhancedOverlays.js';
-import { controllerLook } from '../../player/lookFilter.js';   // PADPLUS4: the pad is the live device
+import { controllerLook } from '../../player/lookFilter.js'; // PADPLUS4: the pad is the live device
 // PADPLUS1: THE CROSSBAR (Enhanced Plus) - the same bar, grown to sixteen and laid out as two sets under LB and RB
 import { HOTBAR_CAPACITY } from '../../systems/quickslots.js';
 import { isEnhancedPlus } from '../../systems/uiSkin.js';
-import { rarityAttr } from '../../systems/loot/lootRarity.js';   // RARITY-UI: a slot's frame wears its item's tier
-import { validSigil } from '../../systems/sigil/sigil.js';   // SIGIL-UI: and a sigil weapon's rune
-import { markSetFrame } from '../setCard.js';   // SET5: a set piece's rune in its set's colour
+import { rarityAttr } from '../../systems/loot/lootRarity.js'; // RARITY-UI: a slot's frame wears its item's tier
+import { validSigil } from '../../systems/sigil/sigil.js'; // SIGIL-UI: and a sigil weapon's rune
+import { markSetFrame } from '../setCard.js'; // SET5: a set piece's rune in its set's colour
 import { setIdOf } from '../../systems/sigil/sigilSets.js';
 import { padFamily } from '../padGlyphs.js';
 import { hdGlyphSvg, hdGlyphName } from '../padGlyphsHD.js';
 import { registerCrossbar, plusCrossbarMode, crossbarCodeOf, CROSSBAR_SET, CROSSBAR_HOLD } from '../plus/plusPad.js';
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** The pref and its two words (systems/features.js 'quickbar-style'). */
 export const HOTBAR_PREF = 'quickbarStyle';
-export const hotbarMode = () => hotbarForced() || HOTBAR_STYLES.includes(getPref(HOTBAR_PREF));   // DIAMOND-HB: the row of ten, or the diamond's four
+export const hotbarMode = () => hotbarForced() || HOTBAR_STYLES.includes(getPref(HOTBAR_PREF)); // DIAMOND-HB: the row of ten, or the diamond's four
 /** DIAMOND-HB: the diamond - the bar's first four slots, laid out as the quickslot diamond. */
 export const DIAMOND_SIZE = 4;
 export const hotbarDiamond = () => getPref(HOTBAR_PREF) === 'diamond';
@@ -102,36 +114,36 @@ const el = (tag, cls, text) => {
  *  canonical one), an item by the name the bar took when it was slotted. */
 const entryName = (e) => (e?.type === 'spell' ? shownSpellName(e) : e?.name);
 
-let bar = null;          // the one .hb node
-let hbTook = null;       // AUDIT 27h B1: the press a socket stopped ({ node, button }), until the next press anywhere
-let slots = [];          // per slot: { node, icon, glyph, count, key, wear, wearFill, pip }
+let bar = null; // the one .hb node
+let hbTook = null; // AUDIT 27h B1: the press a socket stopped ({ node, button }), until the next press anywhere
+let slots = []; // per slot: { node, icon, glyph, count, key, wear, wearFill, pip }
 let caption = null;
 let hint = null;
-let pvpBtn = null;   // PVP-SET
-let dock = null;         // the HUD's own place for it
-let quadDock = null;     // DIAMOND-HB: HUD container for the diamond layout (bottom-left)
-let barShape = 'row';    // DIAMOND-HB: current layout: 'row', 'xb' (crossbar) or 'quad' (diamond)
-let gemKey = '';         // DIAMOND-HB: which diamond-slot classes are set ('', 'quad' or 'row')
-const pickers = new Map();   // DIAMOND-HB: owner -> { selected(), changed() }, see setHotbarPick
-let pointerAt = null;    // DIAMOND-HB: last mouse position, to find the hovered item
-let dropLayer = null;    // the body-level place, while a window is up
+let pvpBtn = null; // PVP-SET
+let dock = null; // the HUD's own place for it
+let quadDock = null; // DIAMOND-HB: HUD container for the diamond layout (bottom-left)
+let barShape = 'row'; // DIAMOND-HB: current layout: 'row', 'xb' (crossbar) or 'quad' (diamond)
+let gemKey = ''; // DIAMOND-HB: which diamond-slot classes are set ('', 'quad' or 'row')
+const pickers = new Map(); // DIAMOND-HB: owner -> { selected(), changed() }, see setHotbarPick
+let pointerAt = null; // DIAMOND-HB: last mouse position, to find the hovered item
+let dropLayer = null; // the body-level place, while a window is up
 const dropOwners = new Set();
 let dropEntity = null;
 let liveOpts = {};
 let liveEntity = null;
 let lastHidden = true;
-let lastPaused = true;   // AUDIT CONTRIB H1: a window or the freed cursor - the keys are not the player's
+let lastPaused = true; // AUDIT CONTRIB H1: a window or the freed cursor - the keys are not the player's
 /** AUDIT FB1018f L2-5: ARE THE KEYS A WINDOW'S - asked at the press, of the host itself (ui/input.js hostPaused: the
  *  hooks the finger and the pad ask, so the three hands agree), and the HUD's last frame's word only on a page whose
  *  host handed none. That word is a frame old: a window opened by one key and a digit before the next frame gave the
  *  digit to the bar - slot 1's potion drunk behind the use-magic-item list - and a window no frame of the bar's host
  *  saw (the street's slot over ?world's dungeon arm) left the bar its keys under it. */
 const keysPaused = () => hostPaused() ?? lastPaused;
-let keysRev = -1;   // KB1: the bindings revision the chips were named at
+let keysRev = -1; // KB1: the bindings revision the chips were named at
 let lastSig = null;
 let keysBound = false;
 let captionTimer = null;
-const iconKeys = [];     // per slot: the kind whose picture is drawn
+const iconKeys = []; // per slot: the kind whose picture is drawn
 
 /** PADPLUS5: THE BAR TUCKS AWAY UNDER A WINDOW (Enhanced Plus). As a drop target it stood over the foot of every
  *  window the whole time one was open - the crossbar's two sets cover a good part of the pack. Under Plus it is
@@ -142,18 +154,58 @@ let extDragging = false;
 // PVP-SET (ui/pvpSpellMenu.js): the PvP set is shown in these same slots. Its module hands each slot's marks (cost,
 // short of magicka, last cast, the cast clock, the combat padlock), the lock line and the menu's door.
 let second = /** @type {any} */ (null);
-let armed = /** @type {null | { kit: any, name: string }} */ (null);   // a toolkit spell picked in the menu, put down by a click
-export function setHotbarSecondSet(p) { second = p && typeof p === 'object' ? p : null; lastSig = null; }
-const secondOn = () => { try { return !!second?.on() && hotbarSetName() === 'pvp'; } catch { return false; } };
-const secondRaised = () => { try { return !!second?.raised?.(); } catch { return false; } };
-const lockLine = () => { try { return secondOn() ? second.lockLine?.() ?? null : null; } catch { return null; } };
-const refuseLocked = () => { const why = lockLine(); if (why) showCaption(why, true); return !!why; };
+let armed = /** @type {null | { kit: any, name: string }} */ (null); // a toolkit spell picked in the menu, put down by a click
+export function setHotbarSecondSet(p) {
+  second = p && typeof p === 'object' ? p : null;
+  lastSig = null;
+}
+const secondOn = () => {
+  try {
+    return !!second?.on() && hotbarSetName() === 'pvp';
+  } catch {
+    return false;
+  }
+};
+const secondRaised = () => {
+  try {
+    return !!second?.raised?.();
+  } catch {
+    return false;
+  }
+};
+const lockLine = () => {
+  try {
+    return secondOn() ? (second.lockLine?.() ?? null) : null;
+  } catch {
+    return null;
+  }
+};
+const refuseLocked = () => {
+  const why = lockLine();
+  if (why) showCaption(why, true);
+  return !!why;
+};
 /** The PvP menu's door, for the spellbook's button; false with no PvP set here. */
-export const openHotbarSecondSet = () => { try { return second?.open?.() === true; } catch { return false; } };
+export const openHotbarSecondSet = () => {
+  try {
+    return second?.open?.() === true;
+  } catch {
+    return false;
+  }
+};
 export const hotbarHasSecondSet = () => !!second;
-export const hotbarSecondSetLabel = () => { try { return String(second?.label?.() ?? ''); } catch { return ''; } };
+export const hotbarSecondSetLabel = () => {
+  try {
+    return String(second?.label?.() ?? '');
+  } catch {
+    return '';
+  }
+};
 /** A toolkit spell picked in the menu: the next click on a slot puts it there (null lets go). */
-export function armHotbarKit(kit, name = '') { armed = kit ? { kit, name } : null; raiseSync(); }
+export function armHotbarKit(kit, name = '') {
+  armed = kit ? { kit, name } : null;
+  raiseSync();
+}
 export const hotbarArmedKit = () => armed;
 export function setHotbarDragging(on) {
   extDragging = !!on;
@@ -178,34 +230,46 @@ export function setHotbarDragging(on) {
 // The last window closing lets go of whatever is in hand, and so does the mouse or the keyboard taking the hands back
 // (the bar would stand raised over the pack's foot with nothing able to lower it but the window's close). The mouse and
 // the finger are unchanged: they drag.
-let hand = null;         // { kind: 'item', item, name } | { kind: 'spell', spell, name } | { kind: 'slot', slot, name }
-let arranging = false;   // the bar raised under a window by LT
-let handPress = -1;      // the slot a press began on while something was in hand - put down on that press's click
-const padInHand = () => { try { return controllerLook(); } catch { return false; } };
+let hand = null; // { kind: 'item', item, name } | { kind: 'spell', spell, name } | { kind: 'slot', slot, name }
+let arranging = false; // the bar raised under a window by LT
+let handPress = -1; // the slot a press began on while something was in hand - put down on that press's click
+const padInHand = () => {
+  try {
+    return controllerLook();
+  } catch {
+    return false;
+  }
+};
 // The words name no button: the prompt bar under the window draws each in the live pad's own glyph (a PlayStation
 // pad's, a rebound Select's), and the bar's hint stands beside it.
 export const PAD_ARRANGE_TEXT = Object.freeze({
   choose: (name) => `Choose a hotbar slot for ${name}.`,
   picked: (name) => `${name} is in hand. Choose a slot for it.`,
   hint: 'Select a slot to take it in hand, then another to put it there. Options clears a slot.',
-  hintHand: 'Choose a slot, or hold a bumper and press the slot\'s button.',
+  hintHand: "Choose a slot, or hold a bumper and press the slot's button.",
   hintHandRow: 'Select a slot to choose it.',
 });
 /** The bar's raise and its picked slot, from every reason it may be up under a window. */
 function raiseSync() {
   if (!bar) return;
-  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand || secondRaised());   // PVP-SET: and the PvP menu
+  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand || secondRaised()); // PVP-SET: and the PvP menu
   bar.classList.toggle('arranging', arranging || !!hand);
   slots.forEach((s, i) => s.node.classList.toggle('hb-inhand', hand?.kind === 'slot' && hand.slot === i));
 }
 /** What is in hand, for a pin and the prompts: { kind, name, slot } or null. */
-export const hotbarHand = () => (hand ? { kind: hand.kind, name: hand.name, slot: hand.kind === 'slot' ? hand.slot : null } : null);
+export const hotbarHand = () =>
+  hand ? { kind: hand.kind, name: hand.name, slot: hand.kind === 'slot' ? hand.slot : null } : null;
 export const hotbarArranging = () => arranging || !!hand;
 /** LT under a window: raise the bar to be arranged, or lower it (and let go of the hand). Answers the new state. */
 export function toggleHotbarArrange() {
   if (!hotbarAcceptsDrops()) return false;
-  if (arranging || hand) { arranging = false; hand = null; } else arranging = true;
-  raiseSync(); lastSig = null; paint();
+  if (arranging || hand) {
+    arranging = false;
+    hand = null;
+  } else arranging = true;
+  raiseSync();
+  lastSig = null;
+  paint();
   return arranging;
 }
 /** Put what is in hand on slot `i`. A slot in hand onto itself is put back; onto another, the two swap. */
@@ -216,16 +280,23 @@ export function placeHotbarHand(i) {
   handPress = -1;
   let ok = true;
   if (h.kind === 'slot') {
-    if (i !== h.slot) { swapHotbarSlots(h.slot, i); strike(i, true); showCaption(HOTBAR_TEXT.added(h.name, i + 1)); }
+    if (i !== h.slot) {
+      swapHotbarSlots(h.slot, i);
+      strike(i, true);
+      showCaption(HOTBAR_TEXT.added(h.name, i + 1));
+    }
   } else ok = h.kind === 'item' ? hotbarDropItem(i, h.item) : hotbarDropSpell(i, h.spell);
-  lastSig = null; raiseSync(); paint();
+  lastSig = null;
+  raiseSync();
+  paint();
   return ok;
 }
 function takeHotbarHand(i) {
   const e = hotbarEntry(i);
   if (!e) return false;
   hand = { kind: 'slot', slot: i, name: e.name };
-  raiseSync(); showCaption(PAD_ARRANGE_TEXT.picked(e.name));
+  raiseSync();
+  showCaption(PAD_ARRANGE_TEXT.picked(e.name));
   return true;
 }
 
@@ -235,42 +306,61 @@ function takeHotbarHand(i) {
  *  moves a slot, a drag off the bar or a right-click clears it, and a
  *  plain click presses it the way its key would. With the look held the
  *  bar is pointer-transparent again, as the whole HUD is. */
-const mouseMode = () => !!bar && hotbarMode() && !lastHidden && !dropOwners.size && cursorActive() && !overlayOpen()
-  && !controllerLook();   // PADPLUS4: with the pad in hand the bar is not the mouse's to edit - no edit hint, no pointer over it
+const mouseMode = () =>
+  !!bar && hotbarMode() && !lastHidden && !dropOwners.size && cursorActive() && !overlayOpen() && !controllerLook(); // PADPLUS4: with the pad in hand the bar is not the mouse's to edit - no edit hint, no pointer over it
 /** Can the sockets be dragged right now - under a window, or in mouse mode? */
 const editable = () => hotbarAcceptsDrops() || mouseMode();
-const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.';   // UI2: any item
+const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.'; // UI2: any item
 const HINT_EDIT = 'Click a slot to use it. Drag to move it, drag it off the bar or right-click to clear it.';
-const HINT_XB = 'Drag onto a slot. In play, hold LB or RB and press the button the slot shows. The d-pad alone never uses a slot.';
+const HINT_XB =
+  'Drag onto a slot. In play, hold LB or RB and press the button the slot shows. The d-pad alone never uses a slot.';
 
 // ── PADPLUS1: THE CROSSBAR ────────────────────────────────────────
 /** Is the bar a crossbar right now: Enhanced Plus, the hotbar chosen, and the Plus card's Crossbar switch - Auto
  *  (a pad is connected), On, or Off. Never throws. */
 /** PADPLUS5: under Plus the bar hides beneath windows until a drag. */
-const tuckUnderWindows = () => { try { return isEnhancedPlus(); } catch { return false; } };
+const tuckUnderWindows = () => {
+  try {
+    return isEnhancedPlus();
+  } catch {
+    return false;
+  }
+};
 
 export function crossbarMode() {
   try {
-    if (!isEnhancedPlus() || getPref(HOTBAR_PREF) !== 'hotbar') return false;   // DIAMOND-HB: the diamond is never a crossbar
+    if (!isEnhancedPlus() || getPref(HOTBAR_PREF) !== 'hotbar') return false; // DIAMOND-HB: the diamond is never a crossbar
     const m = plusCrossbarMode();
     return m === 'on' || (m === 'auto' && padFamily() != null);
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
-let xbOn = false;        // the layout the nodes stand in
-let xbFamily = null;     // the glyph family the badges were drawn in
-let xbWrap = null;       // the crossbar's own container
-let rowHold = null;      // slots 11-16 while the bar is a row
-const xbSets = [];       // per set: its section node
+let xbOn = false; // the layout the nodes stand in
+let xbFamily = null; // the glyph family the badges were drawn in
+let xbWrap = null; // the crossbar's own container
+let rowHold = null; // slots 11-16 while the bar is a row
+const xbSets = []; // per set: its section node
 /** Where each position of a set stands in its 3 x 3 cluster: [cluster, row, column]. */
-const XB_GRID = Object.freeze([['dpad', 1, 2], ['dpad', 3, 2], ['dpad', 2, 1], ['dpad', 2, 3],
-  ['face', 1, 2], ['face', 2, 3], ['face', 3, 2], ['face', 2, 1]]);
+const XB_GRID = Object.freeze([
+  ['dpad', 1, 2],
+  ['dpad', 3, 2],
+  ['dpad', 2, 1],
+  ['dpad', 2, 3],
+  ['face', 1, 2],
+  ['face', 2, 3],
+  ['face', 3, 2],
+  ['face', 2, 1],
+]);
 function setActiveSet(set) {
   if (!bar) return;
   bar.dataset.xbset = set == null ? '' : String(set);
 }
 registerCrossbar({
-  inForce: () => !!bar && xbOn && crossbarMode() && !keysPaused() && !dropOwners.size,   // AUDIT FB1018f L2-5: the keys' one gate
-  press: (i) => { if (i >= 0 && i < HOTBAR_CAPACITY) pressHotbar(i); },
+  inForce: () => !!bar && xbOn && crossbarMode() && !keysPaused() && !dropOwners.size, // AUDIT FB1018f L2-5: the keys' one gate
+  press: (i) => {
+    if (i >= 0 && i < HOTBAR_CAPACITY) pressHotbar(i);
+  },
   setActive: setActiveSet,
   // PAD-ARRANGE: the bar under a window, for the pad (gamepadInput.js plusFrame's window branch)
   canArrange: () => hotbarAcceptsDrops(),
@@ -287,13 +377,16 @@ function buildCrossbar() {
     const sec = el('section', 'xb-set');
     sec.dataset.set = String(set);
     const head = el('div', 'xb-head');
-    const g = el('img', 'xb-headglyph'); g.alt = ''; g.draggable = false;
+    const g = el('img', 'xb-headglyph');
+    g.alt = '';
+    g.draggable = false;
     head.append(g, el('span', 'xb-headword', 'Hold'));
     const body = el('div', 'xb-body');
     const clusters = { dpad: el('div', 'xb-cluster xb-dpad'), face: el('div', 'xb-cluster xb-face') };
     body.append(clusters.dpad, clusters.face);
     sec.append(head, body);
-    sec._clusters = clusters; sec._glyph = g;
+    sec._clusters = clusters;
+    sec._glyph = g;
     xbSets.push(sec);
     xbWrap.append(sec);
   }
@@ -301,15 +394,17 @@ function buildCrossbar() {
 /** Stand the sixteen nodes where the mode says: a row of ten, two sets of eight, or (DIAMOND-HB) the diamond's four. */
 function layout(shape) {
   if (!bar) return;
-  refit();   // UI2: a crossbar's slot is another size
+  refit(); // UI2: a crossbar's slot is another size
   const row = bar.querySelector('.hb-row');
   const on = shape === 'xb';
   if (on) {
     if (!xbWrap) buildCrossbar();
     for (let i = 0; i < HOTBAR_CAPACITY; i++) {
-      const set = Math.floor(i / CROSSBAR_SET), [cl, r, c] = XB_GRID[i % CROSSBAR_SET];
+      const set = Math.floor(i / CROSSBAR_SET),
+        [cl, r, c] = XB_GRID[i % CROSSBAR_SET];
       const n = slots[i].node;
-      n.style.gridRow = String(r); n.style.gridColumn = String(c);
+      n.style.gridRow = String(r);
+      n.style.gridColumn = String(c);
       xbSets[set]._clusters[cl].append(n);
     }
     if (xbWrap.parentNode !== bar) row.after(xbWrap);
@@ -317,14 +412,16 @@ function layout(shape) {
     const shown = shape === 'quad' ? DIAMOND_SIZE : HOTBAR_SIZE;
     for (let i = 0; i < HOTBAR_CAPACITY; i++) {
       const n = slots[i].node;
-      n.style.gridRow = ''; n.style.gridColumn = '';
-      if (shape === 'quad' && i < DIAMOND_SIZE) n.dataset.pos = DIAMOND_POS[i]; else delete n.dataset.pos;   // DIAMOND-HB
+      n.style.gridRow = '';
+      n.style.gridColumn = '';
+      if (shape === 'quad' && i < DIAMOND_SIZE) n.dataset.pos = DIAMOND_POS[i];
+      else delete n.dataset.pos; // DIAMOND-HB
       (i < shown ? row : rowHold).append(n);
     }
     xbWrap?.remove();
   }
   bar.classList.toggle('xb', on);
-  bar.classList.toggle('hb-quad', shape === 'quad');   // DIAMOND-HB
+  bar.classList.toggle('hb-quad', shape === 'quad'); // DIAMOND-HB
   xbFamily = null;
   lastSig = null;
 }
@@ -339,7 +436,10 @@ function paintBadges() {
     b.src = code ? (hdGlyphSvg(fam, code, { size: 40 }) ?? '') : '';
     b.alt = code ? hdGlyphName(fam, code) : '';
   }
-  xbSets.forEach((sec, set) => { sec._glyph.src = hdGlyphSvg(fam, CROSSBAR_HOLD[set], { size: 48 }) ?? ''; sec._glyph.alt = hdGlyphName(fam, CROSSBAR_HOLD[set]); });
+  xbSets.forEach((sec, set) => {
+    sec._glyph.src = hdGlyphSvg(fam, CROSSBAR_HOLD[set], { size: 48 }) ?? '';
+    sec._glyph.alt = hdGlyphName(fam, CROSSBAR_HOLD[set]);
+  });
 }
 
 // ── SPELL GLYPHS ──────────────────────────────────────────────────
@@ -349,21 +449,37 @@ function paintBadges() {
  *  name. The ELEMENT colours the stone, which is the thing a player
  *  scanning ten slots mid-fight reads first. */
 export function spellSigil(name) {
-  const words = String(name ?? '').replace(/['\u2019]s\b/gi, '').split(/[\s-]+/).filter((w) => /[a-z0-9]/i.test(w));
+  const words = String(name ?? '')
+    .replace(/['\u2019]s\b/gi, '')
+    .split(/[\s-]+/)
+    .filter((w) => /[a-z0-9]/i.test(w));
   if (!words.length) return '?';
   if (words.length === 1) {
     const w = words[0].replace(/[^a-z0-9]/gi, '');
     return (w[0] ?? '?').toUpperCase() + (w[1] ?? '').toLowerCase();
   }
-  return words.slice(0, 3).map((w) => w.replace(/[^a-z0-9]/gi, '')[0] ?? '').join('').toUpperCase();
+  return words
+    .slice(0, 3)
+    .map((w) => w.replace(/[^a-z0-9]/gi, '')[0] ?? '')
+    .join('')
+    .toUpperCase();
 }
 /** NO-ICON: a spell the player set to "No icon" wears the first letter of its first two words (one word: its first letter). */
 export function spellInitials(name) {
-  const words = String(name ?? '').split(/[\s-]+/).map((w) => w.replace(/[^a-z0-9]/gi, '')).filter(Boolean);
-  return words.slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?';
+  const words = String(name ?? '')
+    .split(/[\s-]+/)
+    .map((w) => w.replace(/[^a-z0-9]/gi, ''))
+    .filter(Boolean);
+  return (
+    words
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join('')
+      .toUpperCase() || '?'
+  );
 }
 const ELEMENT_CLASS = ['fire', 'frost', 'poison', 'shock', 'magic'];
-const RANGE_MARK = ['\u25cf', '\u270b', '\u2192', '\u25ce', '\u2735'];   // self, touch, target, area, area-at-range
+const RANGE_MARK = ['\u25cf', '\u270b', '\u2192', '\u25ce', '\u2735']; // self, touch, target, area, area-at-range
 const RANGE_WORD = ['Caster only', 'Touch', 'Target at range', 'Area around caster', 'Area at range'];
 
 // ── BUILD ─────────────────────────────────────────────────────────
@@ -378,7 +494,8 @@ function build() {
   caption.setAttribute('aria-live', 'polite');
   const row = el('div', 'hb-row');
   slots = [];
-  for (let i = 0; i < HOTBAR_CAPACITY; i++) {   // PADPLUS1: sixteen nodes; the row shows ten, the crossbar all
+  for (let i = 0; i < HOTBAR_CAPACITY; i++) {
+    // PADPLUS1: sixteen nodes; the row shows ten, the crossbar all
     const node = el('div', 'hb-slot hb-empty');
     node.dataset.slot = String(i);
     const frame = el('i', 'hb-frame');
@@ -395,21 +512,26 @@ function build() {
     const wearFill = el('i', 'hb-wearfill');
     wear.append(wearFill);
     const flash = el('i', 'hb-flash');
-    const badge = el('img', 'xb-badge');   // PADPLUS1: the crossbar's button glyph
-    badge.alt = ''; badge.draggable = false;
-    const cd = el('i', 'hb-cd'), lock = el('i', 'hb-lock');   // PVP-SET: the cast clock's shade, the combat padlock
+    const badge = el('img', 'xb-badge'); // PADPLUS1: the crossbar's button glyph
+    badge.alt = '';
+    badge.draggable = false;
+    const cd = el('i', 'hb-cd'),
+      lock = el('i', 'hb-lock'); // PVP-SET: the cast clock's shade, the combat padlock
     node.append(frame, face, cd, wear, count, pip, key, flash, badge, lock);
     bindSlot(node, i);
     if (i < HOTBAR_SIZE) row.append(node);
     slots.push({ node, face, icon, glyph, count, key, wear, wearFill, pip, badge, cd });
     iconKeys[i] = null;
   }
-  rowHold = el('div', 'xb-hold');   // DIAMOND-HB: holds the slot nodes the current layout does not show
+  rowHold = el('div', 'xb-hold'); // DIAMOND-HB: holds the slot nodes the current layout does not show
   for (let i = HOTBAR_SIZE; i < HOTBAR_CAPACITY; i++) rowHold.append(slots[i].node);
   hint = el('div', 'hb-hint', HINT_DROP);
-  pvpBtn = el('button', 'hb-pvpbtn');   // PVP-SET: the PvP menu's door on the bar
+  pvpBtn = el('button', 'hb-pvpbtn'); // PVP-SET: the PvP menu's door on the bar
   pvpBtn.type = 'button';
-  pvpBtn.addEventListener('click', (e) => { e.stopPropagation(); openHotbarSecondSet(); });
+  pvpBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openHotbarSecondSet();
+  });
   bar.append(caption, row, hint, pvpBtn);
 }
 
@@ -429,13 +551,15 @@ export function mountHotbarDock(dockEl, diamondEl = null) {
 const homeDock = () => (hotbarDiamond() && quadDock ? quadDock : dock);
 
 function bindKeys() {
-  if (keysBound || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;   // DIAMOND-HB: also called from setHotbarDropMode, where a test's window may be bare
+  if (keysBound || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return; // DIAMOND-HB: also called from setHotbarDropMode, where a test's window may be bare
   keysBound = true;
   window.addEventListener('keydown', onKey, true);
-  window.addEventListener('mousedown', onMouse, true);   // AUDIT KB1: a slot bound to a mouse button
-  window.addEventListener('pointermove', onPointerAt, { capture: true, passive: true });   // DIAMOND-HB: track the mouse for hover + key
+  window.addEventListener('mousedown', onMouse, true); // AUDIT KB1: a slot bound to a mouse button
+  window.addEventListener('pointermove', onPointerAt, { capture: true, passive: true }); // DIAMOND-HB: track the mouse for hover + key
 }
-const onPointerAt = (e) => { pointerAt = { x: e.clientX, y: e.clientY }; };
+const onPointerAt = (e) => {
+  pointerAt = { x: e.clientX, y: e.clientY };
+};
 
 // ── THE FRAME ─────────────────────────────────────────────────────
 /**
@@ -447,8 +571,11 @@ const onPointerAt = (e) => { pointerAt = { x: e.clientX, y: e.clientY }; };
 export function drawEnhancedHotbar(entity, opts = {}) {
   if (!bar) return;
   lastHidden = !!opts.hidden;
-  lastPaused = opts.paused ?? !!opts.hidden;   // an older caller that says only `hidden` keeps its old gate
-  if (!lastPaused) { liveOpts = opts; liveEntity = entity ?? null; }
+  lastPaused = opts.paused ?? !!opts.hidden; // an older caller that says only `hidden` keeps its old gate
+  if (!lastPaused) {
+    liveOpts = opts;
+    liveEntity = entity ?? null;
+  }
   paint();
 }
 
@@ -458,27 +585,43 @@ export function drawEnhancedHotbar(entity, opts = {}) {
 function paint() {
   if (!bar) return;
   // PAD-ARRANGE: the mouse or the keyboard took the hands back - the pad's hand and its raised bar go with the pad
-  if ((hand || arranging) && !padInHand()) { hand = null; arranging = false; handPress = -1; raiseSync(); }
+  if ((hand || arranging) && !padInHand()) {
+    hand = null;
+    arranging = false;
+    handPress = -1;
+    raiseSync();
+  }
   const on = hotbarMode();
   const dropping = on && dropOwners.size > 0;
   const shown = on && (dropping || !lastHidden);
   if (dropping) {
-    if (!dropLayer) { dropLayer = el('div', 'hb-droplayer'); document.body.append(dropLayer); }
-    if (bar.parentNode !== dropLayer) { dropLayer.append(bar); refit(); }   // UI2: out from under the HUD's scale
+    if (!dropLayer) {
+      dropLayer = el('div', 'hb-droplayer');
+      document.body.append(dropLayer);
+    }
+    if (bar.parentNode !== dropLayer) {
+      dropLayer.append(bar);
+      refit();
+    } // UI2: out from under the HUD's scale
   } else {
-    const home = homeDock();   // DIAMOND-HB: the diamond's corner, or the column over the vitals
+    const home = homeDock(); // DIAMOND-HB: the diamond's corner, or the column over the vitals
     if (home && bar.parentNode !== home) {
       home.append(bar);
       refit();
-      dropLayer?.remove(); dropLayer = null;
+      dropLayer?.remove();
+      dropLayer = null;
     }
   }
   bar.classList.toggle('on', shown);
   bar.classList.toggle('dropping', dropping);
-  bar.classList.toggle('tuck', dropping && tuckUnderWindows());   // PADPLUS5
-  const xb = crossbarMode();   // PADPLUS1
-  const shape = xb ? 'xb' : on && hotbarDiamond() ? 'quad' : 'row';   // DIAMOND-HB: and the diamond's four
-  if (shape !== barShape) { barShape = shape; xbOn = xb; layout(shape); }
+  bar.classList.toggle('tuck', dropping && tuckUnderWindows()); // PADPLUS5
+  const xb = crossbarMode(); // PADPLUS1
+  const shape = xb ? 'xb' : on && hotbarDiamond() ? 'quad' : 'row'; // DIAMOND-HB: and the diamond's four
+  if (shape !== barShape) {
+    barShape = shape;
+    xbOn = xb;
+    layout(shape);
+  }
   if (xb) paintBadges();
   // DIAMOND-HB: diamond sockets - the diamond's always, the row's when Diamonds is chosen
   const gems = shape === 'quad' ? 'quad' : shape === 'row' && hotbarGems() ? 'row' : '';
@@ -486,45 +629,75 @@ function paint() {
     gemKey = gems;
     bar.classList.toggle('hb-gem', !!gems);
     bar.classList.toggle('hb-gemrow', gems === 'row');
-    refit(); lastSig = null;
-    for (let k = 0; k < iconKeys.length; k++) iconKeys[k] = null;   // slot size changed: redraw icons
+    refit();
+    lastSig = null;
+    for (let k = 0; k < iconKeys.length; k++) iconKeys[k] = null; // slot size changed: redraw icons
   }
   const editing = shown && !dropping && mouseMode();
   if (bar.classList.contains('editing') !== editing) {
     bar.classList.toggle('editing', editing);
-    if (!editing && hbDrag) dragEnd(false);   // the look taken back mid-drag: never mind
+    if (!editing && hbDrag) dragEnd(false); // the look taken back mid-drag: never mind
   }
   const pvp = secondOn();
-  if (second) raiseSync();   // PVP-SET: the menu's raise
+  if (second) raiseSync(); // PVP-SET: the menu's raise
   bar.classList.toggle('hb-pvp', pvp);
   const label = pvp ? String(second.label?.() ?? '') : '';
   if (pvpBtn && pvpBtn.textContent !== label) pvpBtn.textContent = label;
-  const hintText = (pvp && dropping && second.hint?.()) || (hand ? (xbOn ? PAD_ARRANGE_TEXT.hintHand : PAD_ARRANGE_TEXT.hintHandRow) : arranging ? PAD_ARRANGE_TEXT.hint
-    : xbOn ? HINT_XB : editing ? HINT_EDIT : HINT_DROP);   // PAD-ARRANGE; PVP-SET: the menu's own
+  const hintText =
+    (pvp && dropping && second.hint?.()) ||
+    (hand
+      ? xbOn
+        ? PAD_ARRANGE_TEXT.hintHand
+        : PAD_ARRANGE_TEXT.hintHandRow
+      : arranging
+        ? PAD_ARRANGE_TEXT.hint
+        : xbOn
+          ? HINT_XB
+          : editing
+            ? HINT_EDIT
+            : HINT_DROP); // PAD-ARRANGE; PVP-SET: the menu's own
   if (hint && hint.textContent !== hintText) hint.textContent = hintText;
   if (!shown) return;
   const entity = dropping ? (dropEntity ?? liveEntity) : liveEntity;
   const readiedIndex = liveOpts.readied?.index ?? null;
   const view = hotbarView(entity, { readiedIndex, size: HOTBAR_CAPACITY });
-  const fit = slotFit();   // UI2: the box a slot's picture is fitted to - a change of it redraws the pictures
-  const marks = view.map((v) => (pvp ? slotMarks(v, entity) : null));   // PVP-SET
+  const fit = slotFit(); // UI2: the box a slot's picture is fitted to - a change of it redraws the pictures
+  const marks = view.map((v) => (pvp ? slotMarks(v, entity) : null)); // PVP-SET
   const rev = bindings().rev;
-  if (rev !== keysRev) { keysRev = rev; slots.forEach((sl, i) => { const t = hotbarKeyOf(i) ?? ''; if (sl.key.textContent !== t) sl.key.textContent = t; }); }   // KB1: a rebind renames the chips
-  const sig = `${hotbarRevision()}|${dropping ? 1 : 0}|${fit.box}x${fit.dpr}|${view.map((v) => (v.empty ? '-'
-    : `${v.name}|${v.count ?? ''}|${Number.isFinite(v.condition) ? Math.round(v.condition) : ''}|${v.ghost ? 1 : 0}|${v.active ? 1 : 0}|${v.item ? 1 : 0}|${v.icon ?? ''}|${v.noIcon ? 'n' : ''}`
-      // AUDIT MERGE-PLUS C8: and the frame the slot wears (RARITY-UI's tier, SIGIL-UI's rune) - Loot Rarity switched,
-      // an item identified or a sigil grown in, and the slot kept its old colour until something else moved
-      + `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}`   // SET5: and its set
-      // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind
-      + `|${v.item && v.type !== 'spell' ? itemDyeColor(v.item) ?? '' : ''}`)).join('~')}|${marks.map(markSig).join('~')}`;   // PVP-SET: and its marks
+  if (rev !== keysRev) {
+    keysRev = rev;
+    slots.forEach((sl, i) => {
+      const t = hotbarKeyOf(i) ?? '';
+      if (sl.key.textContent !== t) sl.key.textContent = t;
+    });
+  } // KB1: a rebind renames the chips
+  const sig = `${hotbarRevision()}|${dropping ? 1 : 0}|${fit.box}x${fit.dpr}|${view
+    .map((v) =>
+      v.empty
+        ? '-'
+        : `${v.name}|${v.count ?? ''}|${Number.isFinite(v.condition) ? Math.round(v.condition) : ''}|${v.ghost ? 1 : 0}|${v.active ? 1 : 0}|${v.item ? 1 : 0}|${v.icon ?? ''}|${v.noIcon ? 'n' : ''}` +
+          // AUDIT MERGE-PLUS C8: and the frame the slot wears (RARITY-UI's tier, SIGIL-UI's rune) - Loot Rarity switched,
+          // an item identified or a sigil grown in, and the slot kept its old colour until something else moved
+          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set
+          // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind
+          `|${v.item && v.type !== 'spell' ? (itemDyeColor(v.item) ?? '') : ''}`,
+    )
+    .join('~')}|${marks.map(markSig).join('~')}`; // PVP-SET: and its marks
   if (sig === lastSig) return;
   lastSig = sig;
   view.forEach((v, k) => paintSlot(slots[v.slot], v, entity, marks[k]));
 }
 
 /** PVP-SET: a slot's marks from the PvP set's module, or null. */
-function slotMarks(v, entity) { try { return second?.marks?.(v, entity) ?? null; } catch { return null; } }
-const markSig = (m) => (m ? `${m.cost ?? ''}|${m.short ? 1 : 0}|${m.last ? 1 : 0}|${Math.round((m.cd ?? 0) * 20)}|${m.lock ? 1 : 0}` : '');
+function slotMarks(v, entity) {
+  try {
+    return second?.marks?.(v, entity) ?? null;
+  } catch {
+    return null;
+  }
+}
+const markSig = (m) =>
+  m ? `${m.cost ?? ''}|${m.short ? 1 : 0}|${m.last ? 1 : 0}|${Math.round((m.cd ?? 0) * 20)}|${m.lock ? 1 : 0}` : '';
 function paintMarks(s, m) {
   const n = s.node;
   n.classList.toggle('hb-last', !!m?.last);
@@ -536,21 +709,25 @@ function paintMarks(s, m) {
 
 function paintSlot(s, v, entity, m = null) {
   const n = s.node;
-  paintMarks(s, m);   // PVP-SET
+  paintMarks(s, m); // PVP-SET
   // RARITY-UI / SIGIL-UI: the slot's frame wears its item's tier (the Plus sheet's [data-rarity] rules) and a sigil
   // weapon its rune - a slot outlives its item, so both are taken off when the kind changes
   const it = !v.empty && v.type !== 'spell' ? v.item : null;
   const rar = it ? rarityAttr(it) : null;
-  if (rar) n.dataset.rarity = rar; else delete n.dataset.rarity;
-  if (it && validSigil(it.sigil)) n.dataset.sigil = ''; else delete n.dataset.sigil;
-  markSetFrame(n, it);   // SET5: a set piece's rune in its set's colour
+  if (rar) n.dataset.rarity = rar;
+  else delete n.dataset.rarity;
+  if (it && validSigil(it.sigil)) n.dataset.sigil = '';
+  else delete n.dataset.sigil;
+  markSetFrame(n, it); // SET5: a set piece's rune in its set's colour
   n.classList.toggle('hb-empty', !!v.empty);
   n.classList.toggle('hb-gone', !!v.ghost);
   n.classList.toggle('hb-active', !!v.active);
-  const spellish = v.type === 'spell' || v.type === 'kit';   // PVP-SET: a toolkit spell wears a spell's stone
+  const spellish = v.type === 'spell' || v.type === 'kit'; // PVP-SET: a toolkit spell wears a spell's stone
   n.classList.toggle('hb-spell', spellish);
   for (const c of ELEMENT_CLASS) n.classList.toggle(`el-${c}`, spellish && ELEMENT_CLASS[v.element] === c);
-  n.title = v.empty ? `Slot ${v.slot + 1}` : `${v.name}${v.type === 'spell' && RANGE_WORD[v.rangeType] ? ` (${RANGE_WORD[v.rangeType]})` : ''}`;
+  n.title = v.empty
+    ? `Slot ${v.slot + 1}`
+    : `${v.name}${v.type === 'spell' && RANGE_WORD[v.rangeType] ? ` (${RANGE_WORD[v.rangeType]})` : ''}`;
   if (v.empty) {
     iconFor(s, v.slot, null, entity);
     s.glyph.textContent = '';
@@ -559,7 +736,8 @@ function paintSlot(s, v, entity, m = null) {
     n.classList.remove('hb-hasbar', 'hb-worn');
     return;
   }
-  if (v.type === 'kit') {   // PVP-SET: its icon, its cost in the count's corner
+  if (v.type === 'kit') {
+    // PVP-SET: its icon, its cost in the count's corner
     const drew = iconFor(s, v.slot, null, entity, v.icon);
     s.glyph.textContent = drew ? '' : spellSigil(v.name);
     s.count.textContent = m?.cost != null ? String(m.cost) : '';
@@ -571,7 +749,7 @@ function paintSlot(s, v, entity, m = null) {
     // UI2 (Mac: "The hotbar also is missing sprite icons like spells"): THE SPELL'S OWN ICON - ICON00I0's, the one its
     // record names (a spell gone from the book keeps the one it was slotted with) - its initials only while the sheet
     // loads and for a spell with no icon at all
-    const drew = iconFor(s, v.slot, null, entity, v.noIcon ? null : v.icon);   // NO-ICON: none asked, none drawn
+    const drew = iconFor(s, v.slot, null, entity, v.noIcon ? null : v.icon); // NO-ICON: none asked, none drawn
     const sig = v.noIcon ? spellInitials(v.name) : spellSigil(v.name);
     s.glyph.textContent = drew ? '' : sig;
     s.glyph.dataset.len = String(sig.length);
@@ -594,7 +772,14 @@ function paintSlot(s, v, entity, m = null) {
   }
 }
 
-const initialsOf = (name) => String(name ?? '').split(/\s+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+const initialsOf = (name) =>
+  String(name ?? '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
 /** The enhanced HUD's own picture ladder (quickIcon): the Morrowind
  *  ground mesh, else the classic icon, else nothing (the initials show).
@@ -607,23 +792,44 @@ function iconFor(s, i, item, entity, spellIcon = null) {
   // AUDIT FINAL F2 (UI2 x DYE-ICON): the picture's own name in the key - a garment's dye is its own and not its kind's
   // (Blue Straps and Red Straps are one quickslot key), and DYE-ICON dyes the cloth: the slot kept the first one's colour
   const image = item ? inventoryItemImage(item, entity ?? undefined) : null;
-  const kind = item ? `${hotbarEntryForItem(item)?.key ?? ''}${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}` : spellIcon != null ? `spell:${spellIcon}` : '';
+  const kind = item
+    ? `${hotbarEntryForItem(item)?.key ?? ''}${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}`
+    : spellIcon != null
+      ? `spell:${spellIcon}`
+      : '';
   const key = kind ? `${kind}@${fit.box}x${fit.dpr}` : '';
   if (iconKeys[i] === key) return !!s.icon.getAttribute('src');
   iconKeys[i] = key;
-  const again = () => { iconKeys[i] = null; lastSig = null; paint(); };
+  const again = () => {
+    iconKeys[i] = null;
+    lastSig = null;
+    paint();
+  };
   let pic = null;
   if (item) {
     const mw = modelIconUrl(item, Math.round(fit.box * fit.dpr), fpArm);
     if (mw) pic = { src: mw, w: fit.box, h: fit.box, smooth: true };
     else {
-      pic = image ? requestFittedIcon(image.archive, image.record, { box: fit.box, dpr: fit.dpr, dye: image.dye, dyeTarget: image.dyeTarget, onReady: again }) : null;   // AUDIT CONTRIB H5: DW3's dye, as the diamond and the pack ask
+      pic = image
+        ? requestFittedIcon(image.archive, image.record, {
+            box: fit.box,
+            dpr: fit.dpr,
+            dye: image.dye,
+            dyeTarget: image.dyeTarget,
+            onReady: again,
+          })
+        : null; // AUDIT CONTRIB H5: DW3's dye, as the diamond and the pack ask
     }
   } else if (spellIcon != null) {
     pic = spellIconPicture(spellIcon, { box: fit.box, dpr: fit.dpr, onReady: again });
   }
-  if (pic) { showFitted(s.icon, pic); s.icon.style.display = ''; }
-  else { s.icon.removeAttribute('src'); s.icon.style.display = 'none'; }
+  if (pic) {
+    showFitted(s.icon, pic);
+    s.icon.style.display = '';
+  } else {
+    s.icon.removeAttribute('src');
+    s.icon.style.display = 'none';
+  }
   return !!pic;
 }
 
@@ -635,8 +841,10 @@ function iconFor(s, i, item, entity, spellIcon = null) {
  *  Read again every FIT_TTL frames and after a layout change; a bar not yet laid out takes the row's own cells (50px: a
  *  38px box, a spell's 34) at the screen's ratio. */
 const FIT_TTL = 60;
-const FIT_DEFAULT_BOX = 38, FIT_DEFAULT_SPELL_BOX = 34;
-const faceFit = { item: null, spell: null }, faceFitAge = { item: 0, spell: 0 };
+const FIT_DEFAULT_BOX = 38,
+  FIT_DEFAULT_SPELL_BOX = 34;
+const faceFit = { item: null, spell: null },
+  faceFitAge = { item: 0, spell: 0 };
 function slotFit(spell = false) {
   const k = spell ? 'spell' : 'item';
   if (faceFit[k] && faceFitAge[k]-- > 0) return faceFit[k];
@@ -646,17 +854,25 @@ function slotFit(spell = false) {
   const barShown = barLayout > 0 ? (bar.getBoundingClientRect?.().width ?? barLayout) : 0;
   const scale = barLayout > 0 && barShown > 0 ? barShown / barLayout : 1;
   const dpr = Math.round(clampDpr(screenDpr() * scale) * 1000) / 1000;
-  if (!s) { faceFitAge[k] = 0; faceFit[k] = { box: spell ? FIT_DEFAULT_SPELL_BOX : FIT_DEFAULT_BOX, dpr }; return faceFit[k]; }
+  if (!s) {
+    faceFitAge[k] = 0;
+    faceFit[k] = { box: spell ? FIT_DEFAULT_SPELL_BOX : FIT_DEFAULT_BOX, dpr };
+    return faceFit[k];
+  }
   const layout = s.face.offsetWidth;
   faceFit[k] = { box: Math.max(8, layout - 4), dpr };
   return faceFit[k];
 }
 /** A layout change (the crossbar laid out, the bar carried under a window) measures the slot anew. */
-function refit() { faceFit.item = null; faceFit.spell = null; }
+function refit() {
+  faceFit.item = null;
+  faceFit.spell = null;
+}
 /** UI2: the picture a slot shows, as a fitted picture - its source and the size it is drawn at - or null. */
 function slotPicture(img) {
   const src = img?.getAttribute?.('src');
-  const w = parseFloat(img?.style?.width), h = parseFloat(img?.style?.height);
+  const w = parseFloat(img?.style?.width),
+    h = parseFloat(img?.style?.height);
   return src && w > 0 && h > 0 ? { src, w, h, smooth: !!img.classList?.contains('smooth') } : null;
 }
 
@@ -666,13 +882,19 @@ function slotPicture(img) {
  *  well as in words - a key that looks pressed and did nothing is the
  *  drawn door this UI does not draw. */
 export function pressHotbar(i) {
-  noteFirstUse('quickslots');   // TUT1
+  noteFirstUse('quickslots'); // TUT1
   if (!bar) return;
   const entity = liveEntity;
   const ok = hotbarReady(entity, i);
   let said = null;
-  const res = hotbarPress(i, { entity, doors: liveOpts, say: (l) => { said = l; } });
-  const good = ok && res.kind !== 'none' && res.kind !== 'refused' && res.kind !== 'empty';   // AUDIT CONTRIB H3: the performer's own answer (hotbarPress)
+  const res = hotbarPress(i, {
+    entity,
+    doors: liveOpts,
+    say: (l) => {
+      said = l;
+    },
+  });
+  const good = ok && res.kind !== 'none' && res.kind !== 'refused' && res.kind !== 'empty'; // AUDIT CONTRIB H3: the performer's own answer (hotbarPress)
   strike(i, good);
   const e = hotbarEntry(i);
   showCaption(said ?? (e ? entryName(e) : HOTBAR_TEXT.emptySlot), !good);
@@ -685,13 +907,13 @@ function strike(i, good) {
   if (!s) return;
   const n = s.node;
   n.classList.remove('hb-strike', 'hb-deny');
-  void n.offsetWidth;   // restart the animation on a second press inside the first
+  void n.offsetWidth; // restart the animation on a second press inside the first
   n.classList.add(good ? 'hb-strike' : 'hb-deny');
   if (good) {
     const ring = el('i', 'hb-ring');
     n.append(ring);
     ring.addEventListener('animationend', () => ring.remove(), { once: true });
-    setTimeout(() => ring.remove(), 700);   // reduced motion fires no animationend
+    setTimeout(() => ring.remove(), 700); // reduced motion fires no animationend
   }
   clearTimeout(n._hbT);
   n._hbT = setTimeout(() => n.classList.remove('hb-strike', 'hb-deny'), 460);
@@ -700,7 +922,12 @@ function strike(i, good) {
 /** HOTBAR-LAG: the caption's fade - the sheet's own `hb-cap` keyframes (HOTBAR_CSS), played by the browser's animation
  *  where it has one; the class (`hb-cap-on`, the keyframes' rule) where it has not. */
 export const CAPTION_ON = 'hb-cap-on';
-export const CAPTION_FADE = Object.freeze([{ opacity: 0, offset: 0 }, { opacity: 1, offset: 0.08 }, { opacity: 1, offset: 0.75 }, { opacity: 0, offset: 1 }]);
+export const CAPTION_FADE = Object.freeze([
+  { opacity: 0, offset: 0 },
+  { opacity: 1, offset: 0.08 },
+  { opacity: 1, offset: 0.75 },
+  { opacity: 0, offset: 1 },
+]);
 let captionFade = null;
 function showCaption(text, bad = false) {
   if (!caption) return;
@@ -738,7 +965,9 @@ const keyHolds = new Set();
 export function holdHotbarKeys() {
   const hold = {};
   keyHolds.add(hold);
-  return () => { keyHolds.delete(hold); };
+  return () => {
+    keyHolds.delete(hold);
+  };
 }
 /** The decorator's own bar is up: this one is taken out of the column and takes no pointer.
  *  Answers the column it stood in, so the decorator's bar can stand there and take the HUD's scale. */
@@ -748,27 +977,32 @@ export function coverHotbar(on) {
   return on ? (dock ?? bar.parentNode ?? null) : null;
 }
 /** The bar's skin, so a second bar of the same sockets can stand before the HUD has built this one. */
-export function ensureHotbarSkin(doc) { injectHotbarStyle(doc); }
+export function ensureHotbarSkin(doc) {
+  injectHotbarStyle(doc);
+}
 function onKey(e) {
   // AUDIT CONTRIB H1: gated on the GAME's pause, not the HUD's visibility - with the HUD toggled off the keys fell
   // through to the diamond the hotbar replaces (1 drank the diamond's potion), and 5-0 did nothing. AUDIT FB1018f
   // L2-5: the pause at this press, the host's (keysPaused) - never the last frame's while a host can answer
   if (!bar || !hotbarMode()) return;
-  if (dropOwners.size) { pickKey(e); return; }   // DIAMOND-HB: pack or spellbook open: slot key adds the hovered thing
+  if (dropOwners.size) {
+    pickKey(e);
+    return;
+  } // DIAMOND-HB: pack or spellbook open: slot key adds the hovered thing
   if (keysPaused()) return;
-  if (keyHolds.size) return;   // AUDIT POI E1: a surface that owns the keys is up
+  if (keyHolds.size) return; // AUDIT POI E1: a surface that owns the keys is up
   if (e.metaKey || isTextEntryTarget(e.target)) return;
   // KB1: THE SLOTS ARE REGISTRY ACTIONS. This read `Digit1`-`Digit0` off the event and stepped aside for any digit
   // someone else held - a table of its own beside the controls pane's. The slot is whatever the key MEANS now: a
   // player who moved slot 7 to a mouse button, or a pad's d-pad on slots 1-4, presses it; a digit bound to anything
   // else is simply not a slot.
-  const i = slotOfActions(eventActions(e));   // AUDIT KB1: the event's own read - a listener writes no latch
-  if (i < 0 || i >= hotbarSize()) return;   // DIAMOND-HB: only keys of shown slots (1-4 for the diamond)
+  const i = slotOfActions(eventActions(e)); // AUDIT KB1: the event's own read - a listener writes no latch
+  if (i < 0 || i >= hotbarSize()) return; // DIAMOND-HB: only keys of shown slots (1-4 for the diamond)
   // The hotbar owns the digit: no host ladder below may read it too
   // (keys 1-4 are the diamond's by default, and the diamond is put away).
   e.preventDefault();
   e.stopImmediatePropagation();
-  if (e.repeat) return;   // a held key presses once, as the diamond's keys do (MAC-R2)
+  if (e.repeat) return; // a held key presses once, as the diamond's keys do (MAC-R2)
   pressHotbar(i);
 }
 
@@ -778,15 +1012,15 @@ function onKey(e) {
  *  hotbarInForce). The button means what the registry says, read the same way as a key; only while the game has the
  *  mouse (the pointer locked), because a click with the cursor free is a click on the page. */
 function onMouse(e) {
-  hbTook = null;   // AUDIT 27h B1 (HB1c's twin): every press anywhere, before a socket's own - no press of the world's inherits a socket's
-  if (!bar || !hotbarMode() || dropOwners.size || keysPaused()) return;   // AUDIT FB1018f L2-5: the keys' one gate
+  hbTook = null; // AUDIT 27h B1 (HB1c's twin): every press anywhere, before a socket's own - no press of the world's inherits a socket's
+  if (!bar || !hotbarMode() || dropOwners.size || keysPaused()) return; // AUDIT FB1018f L2-5: the keys' one gate
   if (typeof document === 'undefined' || !document.pointerLockElement) return;
   const code = mouseCode(e.button);
   if (!code) return;
   const i = slotOfActions(eventActions({ code, shiftKey: e.shiftKey, ctrlKey: e.ctrlKey, altKey: e.altKey }));
-  if (i < 0 || i >= hotbarSize()) return;   // DIAMOND-HB
+  if (i < 0 || i >= hotbarSize()) return; // DIAMOND-HB
   e.preventDefault();
-  e.stopImmediatePropagation();   // the hosts' mousedown (the swing, the activate) never sees a button a slot took
+  e.stopImmediatePropagation(); // the hosts' mousedown (the swing, the activate) never sees a button a slot took
   pressHotbar(i);
 }
 
@@ -813,7 +1047,11 @@ export function hotbarPickNow() {
   if (pointed) return pointed;
   for (const p of [...pickers.values()].reverse()) {
     let got = null;
-    try { got = p.selected(); } catch { got = null; }
+    try {
+      got = p.selected();
+    } catch {
+      got = null;
+    }
     if (got && (got.kind === 'item' ? !!got.item : got.kind === 'spell' && !!got.spell)) return got;
   }
   return null;
@@ -827,10 +1065,17 @@ function pickKey(e) {
   const pick = hotbarPickNow();
   if (!pick) return;
   e.preventDefault();
-  e.stopImmediatePropagation();   // the window does not also handle this key
+  e.stopImmediatePropagation(); // the window does not also handle this key
   if (e.repeat) return;
   const ok = pick.kind === 'spell' ? hotbarDropSpell(i, pick.spell) : hotbarDropItem(i, pick.item);
-  if (ok) for (const p of pickers.values()) { try { p.changed?.(); } catch (err) { console.warn('[hotbar] pick', err?.message ?? err); } }
+  if (ok)
+    for (const p of pickers.values()) {
+      try {
+        p.changed?.();
+      } catch (err) {
+        console.warn('[hotbar] pick', err?.message ?? err);
+      }
+    }
 }
 
 // ── THE DROP ──────────────────────────────────────────────────────
@@ -841,12 +1086,24 @@ function pickKey(e) {
  * down under the other.
  */
 export function setHotbarDropMode(owner, on, entity = null) {
-  if (on) { dropOwners.add(owner); if (entity) dropEntity = entity; }
-  else { dropOwners.delete(owner); pickers.delete(owner); }   // DIAMOND-HB: drop the window's picker when it closes
-  if (!dropOwners.size) { dropEntity = null; dragEnd(false); hand = null; arranging = false; handPress = -1; raiseSync(); }   // PAD-ARRANGE: the last window lets go
+  if (on) {
+    dropOwners.add(owner);
+    if (entity) dropEntity = entity;
+  } else {
+    dropOwners.delete(owner);
+    pickers.delete(owner);
+  } // DIAMOND-HB: drop the window's picker when it closes
+  if (!dropOwners.size) {
+    dropEntity = null;
+    dragEnd(false);
+    hand = null;
+    arranging = false;
+    handPress = -1;
+    raiseSync();
+  } // PAD-ARRANGE: the last window lets go
   lastSig = null;
   if (!bar && on && hotbarMode() && typeof document !== 'undefined') build();
-  if (bar && on) bindKeys();   // DIAMOND-HB: listen for keys even if the HUD has not drawn yet
+  if (bar && on) bindKeys(); // DIAMOND-HB: listen for keys even if the HUD has not drawn yet
   paint();
 }
 
@@ -869,7 +1126,9 @@ export function hotbarSlotNode(target) {
 export function hotbarDropKit(i, kit, name = '') {
   if (refuseLocked()) return false;
   if (!setHotbarSlot(i, { type: 'kit', kit, name })) return false;
-  lastSig = null; paint(); strike(i, true);
+  lastSig = null;
+  paint();
+  strike(i, true);
   showCaption(HOTBAR_TEXT.added(name, i + 1));
   return true;
 }
@@ -878,19 +1137,26 @@ export function hotbarDropKit(i, kit, name = '') {
 export const hotbarTakesItem = (item) => !!hotbarKindOf(item);
 
 export function hotbarDropItem(i, item) {
-  if (refuseLocked()) return false;   // PVP-SET: the PvP set is fixed in combat
+  if (refuseLocked()) return false; // PVP-SET: the PvP set is fixed in combat
   const e = hotbarEntryForItem(item);
   if (!e || !setHotbarSlot(i, e)) return false;
-  lastSig = null; paint(); strike(i, true);
+  lastSig = null;
+  paint();
+  strike(i, true);
   showCaption(HOTBAR_TEXT.added(e.name, i + 1));
   return true;
 }
 export function hotbarDropSpell(i, sp) {
-  if (refuseLocked()) return false;   // PVP-SET
+  if (refuseLocked()) return false; // PVP-SET
   const e = hotbarEntryForSpell(sp);
-  if (e && secondOn() && !setHotbarSlot(i, e)) { showCaption(second.bookLine?.() ?? '', true); return false; }   // PVP-SET: no book spell in the PvP set
+  if (e && secondOn() && !setHotbarSlot(i, e)) {
+    showCaption(second.bookLine?.() ?? '', true);
+    return false;
+  } // PVP-SET: no book spell in the PvP set
   if (!e || !setHotbarSlot(i, e)) return false;
-  lastSig = null; paint(); strike(i, true);
+  lastSig = null;
+  paint();
+  strike(i, true);
   showCaption(HOTBAR_TEXT.added(entryName(e), i + 1));
   return true;
 }
@@ -907,23 +1173,45 @@ export function hotbarShownSlotOf(thing, opts = {}) {
 
 export function toggleHotbarItem(item) {
   const at = hotbarShownSlotOf(item);
-  if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(hotbarEntryForItem(item)?.name ?? 'It'); }
+  if (at >= 0) {
+    clearHotbarSlot(at);
+    lastSig = null;
+    paint();
+    return HOTBAR_TEXT.removed(hotbarEntryForItem(item)?.name ?? 'It');
+  }
   // PAD-ARRANGE: with the pad in hand the new entry goes IN HAND, and the player chooses its slot
   const e = padInHand() && hotbarAcceptsDrops() ? hotbarEntryForItem(item) : null;
-  if (e) { hand = { kind: 'item', item, name: e.name }; lastSig = null; raiseSync(); paint(); return PAD_ARRANGE_TEXT.choose(e.name); }
-  const free = firstFreeHotbarSlot(hotbarSize());   // DIAMOND-HB: the diamond's four
+  if (e) {
+    hand = { kind: 'item', item, name: e.name };
+    lastSig = null;
+    raiseSync();
+    paint();
+    return PAD_ARRANGE_TEXT.choose(e.name);
+  }
+  const free = firstFreeHotbarSlot(hotbarSize()); // DIAMOND-HB: the diamond's four
   if (free < 0) return HOTBAR_TEXT.full;
-  if (!hotbarDropItem(free, item)) return lockLine() ?? HOTBAR_TEXT.full;   // PVP-SET
+  if (!hotbarDropItem(free, item)) return lockLine() ?? HOTBAR_TEXT.full; // PVP-SET
   return HOTBAR_TEXT.added(hotbarEntryForItem(item)?.name ?? 'It', free + 1);
 }
 export function toggleHotbarSpell(sp) {
   const at = hotbarShownSlotOf(sp, { spell: true });
-  if (at >= 0) { clearHotbarSlot(at); lastSig = null; paint(); return HOTBAR_TEXT.removed(shownSpellName(sp) ?? 'It'); }
-  const e = padInHand() && hotbarAcceptsDrops() ? hotbarEntryForSpell(sp) : null;   // PAD-ARRANGE: and a spell
-  if (e) { hand = { kind: 'spell', spell: sp, name: e.name }; lastSig = null; raiseSync(); paint(); return PAD_ARRANGE_TEXT.choose(entryName(e)); }   // L10N3e: its name as the book shows it
-  const free = firstFreeHotbarSlot(hotbarSize());   // DIAMOND-HB
+  if (at >= 0) {
+    clearHotbarSlot(at);
+    lastSig = null;
+    paint();
+    return HOTBAR_TEXT.removed(shownSpellName(sp) ?? 'It');
+  }
+  const e = padInHand() && hotbarAcceptsDrops() ? hotbarEntryForSpell(sp) : null; // PAD-ARRANGE: and a spell
+  if (e) {
+    hand = { kind: 'spell', spell: sp, name: e.name };
+    lastSig = null;
+    raiseSync();
+    paint();
+    return PAD_ARRANGE_TEXT.choose(entryName(e));
+  } // L10N3e: its name as the book shows it
+  const free = firstFreeHotbarSlot(hotbarSize()); // DIAMOND-HB
   if (free < 0) return HOTBAR_TEXT.full;
-  if (!hotbarDropSpell(free, sp)) return lockLine() ?? second?.bookLine?.() ?? HOTBAR_TEXT.full;   // PVP-SET: the PvP set takes no book spell
+  if (!hotbarDropSpell(free, sp)) return lockLine() ?? second?.bookLine?.() ?? HOTBAR_TEXT.full; // PVP-SET: the PvP set takes no book spell
   return HOTBAR_TEXT.added(shownSpellName(sp) ?? 'It', free + 1);
 }
 /** KB1: the key a slot answers to, as its chip names it - the slot's registry action through the diamond's own tag
@@ -949,31 +1237,67 @@ export const hotbarKeyOf = (i) => {
  */
 let hbDrag = null;
 let hbDragged = false;
-export const takeHotbarDragClick = () => { const was = hbDragged; hbDragged = false; return was; };
+export const takeHotbarDragClick = () => {
+  const was = hbDragged;
+  hbDragged = false;
+  return was;
+};
 
-export function beginHotbarDrag(e, payload, { label = '', sigil = null, element = null, iconSrc = null, icon = null } = {}) {
+export function beginHotbarDrag(
+  e,
+  payload,
+  { label = '', sigil = null, element = null, iconSrc = null, icon = null } = {},
+) {
   if (hbDrag || (e.button ?? 0) > 0) return;
   const touch = e.pointerType === 'touch' || e.pointerType === 'pen';
-  hbDrag = { id: e.pointerId, payload, label, sigil, element, iconSrc, icon, ox: e.clientX, oy: e.clientY,
-    x: e.clientX, y: e.clientY, moved: false, touch, hold: null, ghost: null };
-  if (touch) hbDrag.hold = setTimeout(() => { if (hbDrag && !hbDrag.moved) arm(); }, TOUCH_HOLD_MS);
+  hbDrag = {
+    id: e.pointerId,
+    payload,
+    label,
+    sigil,
+    element,
+    iconSrc,
+    icon,
+    ox: e.clientX,
+    oy: e.clientY,
+    x: e.clientX,
+    y: e.clientY,
+    moved: false,
+    touch,
+    hold: null,
+    ghost: null,
+  };
+  if (touch)
+    hbDrag.hold = setTimeout(() => {
+      if (hbDrag && !hbDrag.moved) arm();
+    }, TOUCH_HOLD_MS);
   window.addEventListener('pointermove', onMove, true);
   window.addEventListener('pointerup', onUp, true);
   window.addEventListener('pointercancel', onCancel, true);
   window.addEventListener('touchmove', onTouchHold, { passive: false, capture: true });
-  window.addEventListener('dragstart', onNativeDrag, true);   // HB1b: the browser's own drag never takes the press
+  window.addEventListener('dragstart', onNativeDrag, true); // HB1b: the browser's own drag never takes the press
 }
-const onNativeDrag = (e) => { if (hbDrag && e.cancelable) e.preventDefault(); };
+const onNativeDrag = (e) => {
+  if (hbDrag && e.cancelable) e.preventDefault();
+};
 
 function arm() {
   if (!hbDrag) return;
   hbDrag.moved = true;
-  bar?.classList.add('dragging');   // PADPLUS5: the tucked bar rises for the drop
+  bar?.classList.add('dragging'); // PADPLUS5: the tucked bar rises for the drop
   const g = el('div', 'hb-ghost');
   const tile = el('div', 'hb-ghosttile');
-  if (hbDrag.icon?.src) tile.append(fittedImg(hbDrag.icon));   // UI2: a fitted picture carries its own size
-  else if (hbDrag.iconSrc) { const im = el('img'); im.src = hbDrag.iconSrc; tile.append(im); }
-  else { const s = el('span', 'hb-glyph', hbDrag.sigil ?? ''); s.dataset.len = String((hbDrag.sigil ?? '').length); tile.append(s); }
+  if (hbDrag.icon?.src)
+    tile.append(fittedImg(hbDrag.icon)); // UI2: a fitted picture carries its own size
+  else if (hbDrag.iconSrc) {
+    const im = el('img');
+    im.src = hbDrag.iconSrc;
+    tile.append(im);
+  } else {
+    const s = el('span', 'hb-glyph', hbDrag.sigil ?? '');
+    s.dataset.len = String((hbDrag.sigil ?? '').length);
+    tile.append(s);
+  }
   if (hbDrag.element != null && ELEMENT_CLASS[hbDrag.element]) g.classList.add(`el-${ELEMENT_CLASS[hbDrag.element]}`);
   const verb = el('span', 'hb-ghostverb', '');
   g.append(tile, verb);
@@ -984,7 +1308,8 @@ function arm() {
 
 function track(x, y) {
   if (!hbDrag?.ghost) return;
-  hbDrag.x = x; hbDrag.y = y;
+  hbDrag.x = x;
+  hbDrag.y = y;
   const lift = hbDrag.touch ? 52 : 0;
   hbDrag.ghost.style.left = `${x}px`;
   hbDrag.ghost.style.top = `${y - lift}px`;
@@ -1003,11 +1328,16 @@ function track(x, y) {
 
 function onMove(e) {
   if (!hbDrag || e.pointerId !== hbDrag.id) return;
-  const dx = e.clientX - hbDrag.ox; const dy = e.clientY - hbDrag.oy;
+  const dx = e.clientX - hbDrag.ox;
+  const dy = e.clientY - hbDrag.oy;
   if (!hbDrag.moved) {
     if (hbDrag.touch) {
-      if (Math.abs(dy) > TOUCH_SLOP || Math.abs(dx) > TOUCH_SLOP * 2) { dragEnd(false); return; }
-      hbDrag.x = e.clientX; hbDrag.y = e.clientY;
+      if (Math.abs(dy) > TOUCH_SLOP || Math.abs(dx) > TOUCH_SLOP * 2) {
+        dragEnd(false);
+        return;
+      }
+      hbDrag.x = e.clientX;
+      hbDrag.y = e.clientY;
       return;
     }
     if (Math.abs(dx) + Math.abs(dy) <= MOUSE_SLOP) return;
@@ -1015,9 +1345,15 @@ function onMove(e) {
   }
   track(e.clientX, e.clientY);
 }
-const onUp = (e) => { if (hbDrag && e.pointerId === hbDrag.id) dragEnd(true); };
-const onCancel = (e) => { if (hbDrag && (e.pointerId === undefined || e.pointerId === hbDrag.id)) dragEnd(false); };
-const onTouchHold = (e) => { if (hbDrag?.moved && hbDrag.touch && e.cancelable) e.preventDefault(); };
+const onUp = (e) => {
+  if (hbDrag && e.pointerId === hbDrag.id) dragEnd(true);
+};
+const onCancel = (e) => {
+  if (hbDrag && (e.pointerId === undefined || e.pointerId === hbDrag.id)) dragEnd(false);
+};
+const onTouchHold = (e) => {
+  if (hbDrag?.moved && hbDrag.touch && e.cancelable) e.preventDefault();
+};
 
 function dragEnd(commit) {
   const d = hbDrag;
@@ -1035,27 +1371,37 @@ function dragEnd(commit) {
   // pointer-events: none at once, and elementFromPoint never answers a node that takes no pointer - so the drop
   // looked through the bar at the window under it and every spell (and slot move) landed nowhere.
   const dropAt = d.moved && commit ? hotbarSlotAt(d.x, d.y) : -1;
-  raiseSync();   // PADPLUS5: down again, unless something else holds it up (PAD-ARRANGE)
+  raiseSync(); // PADPLUS5: down again, unless something else holds it up (PAD-ARRANGE)
   if (!d.moved) {
     // HB1c: a click in mouse mode that never became a drag is a PRESS.
     if (commit && d.payload.tapPress) pressHotbar(d.payload.slot);
-    else if (commit && d.payload.tapPick) takeHotbarHand(d.payload.slot);   // PAD-ARRANGE: the pad's A takes it in hand
+    else if (commit && d.payload.tapPick) takeHotbarHand(d.payload.slot); // PAD-ARRANGE: the pad's A takes it in hand
     return;
   }
-  hbDragged = true;   // the click the release raises is not a pick
+  hbDragged = true; // the click the release raises is not a pick
   if (!commit) return;
   const i = dropAt;
-  if (d.payload.kind === 'spell') { if (i >= 0) hotbarDropSpell(i, d.payload.spell); return; }
-  if (d.payload.kind === 'kit') { if (i >= 0) hotbarDropKit(i, d.payload.kit, d.payload.name); return; }   // PVP-SET: a row of the PvP menu
+  if (d.payload.kind === 'spell') {
+    if (i >= 0) hotbarDropSpell(i, d.payload.spell);
+    return;
+  }
+  if (d.payload.kind === 'kit') {
+    if (i >= 0) hotbarDropKit(i, d.payload.kit, d.payload.name);
+    return;
+  } // PVP-SET: a row of the PvP menu
   if (d.payload.kind === 'slot') {
-    if (refuseLocked()) return;   // PVP-SET
+    if (refuseLocked()) return; // PVP-SET
     const from = d.payload.slot;
     if (i < 0) {
       const name = entryName(hotbarEntry(from));
       clearHotbarSlot(from);
       if (name) showCaption(HOTBAR_TEXT.removed(name));
-    } else if (i !== from) { swapHotbarSlots(from, i); strike(i, true); }
-    lastSig = null; paint();
+    } else if (i !== from) {
+      swapHotbarSlots(from, i);
+      strike(i, true);
+    }
+    lastSig = null;
+    paint();
   }
 }
 
@@ -1066,15 +1412,33 @@ function dragEnd(commit) {
 function bindSlot(node, i) {
   node.addEventListener('pointerdown', (e) => {
     if (editable()) {
-      if (hand && (e.button ?? 0) === 0) { e.preventDefault(); handPress = i; return; }   // PAD-ARRANGE: the hand is put down on this press's click
-      if (armed && (e.button ?? 0) === 0) { e.preventDefault(); const a = armed; armed = null; hotbarDropKit(i, a.kit, a.name); raiseSync(); second?.changed?.(); return; }   // PVP-SET: the picked row put down
+      if (hand && (e.button ?? 0) === 0) {
+        e.preventDefault();
+        handPress = i;
+        return;
+      } // PAD-ARRANGE: the hand is put down on this press's click
+      if (armed && (e.button ?? 0) === 0) {
+        e.preventDefault();
+        const a = armed;
+        armed = null;
+        hotbarDropKit(i, a.kit, a.name);
+        raiseSync();
+        second?.changed?.();
+        return;
+      } // PVP-SET: the picked row put down
       if (!hotbarEntry(i)) return;
       const s = slots[i];
-      e.preventDefault();   // no text selection, no focus theft - the press is the bar's
-      beginHotbarDrag(e, { kind: 'slot', slot: i, tapPress: mouseMode(), tapPick: !mouseMode() && padInHand() }, {
-        sigil: s.glyph.textContent || null, iconSrc: s.icon.getAttribute('src'), icon: slotPicture(s.icon),   // UI2: the slot's own fitted picture, lifted
-        element: ELEMENT_CLASS.findIndex((c) => node.classList.contains(`el-${c}`)),
-      });
+      e.preventDefault(); // no text selection, no focus theft - the press is the bar's
+      beginHotbarDrag(
+        e,
+        { kind: 'slot', slot: i, tapPress: mouseMode(), tapPick: !mouseMode() && padInHand() },
+        {
+          sigil: s.glyph.textContent || null,
+          iconSrc: s.icon.getAttribute('src'),
+          icon: slotPicture(s.icon), // UI2: the slot's own fitted picture, lifted
+          element: ELEMENT_CLASS.findIndex((c) => node.classList.contains(`el-${c}`)),
+        },
+      );
       return;
     }
     const finger = e.pointerType === 'touch' || e.pointerType === 'pen';
@@ -1094,7 +1458,9 @@ function bindSlot(node, i) {
     hbTook = { node, button: e.button };
     e.stopPropagation();
   });
-  node.addEventListener('mouseup', (e) => { if (hbTook?.node === node && hbTook.button === e.button) e.stopPropagation(); });
+  node.addEventListener('mouseup', (e) => {
+    if (hbTook?.node === node && hbTook.button === e.button) e.stopPropagation();
+  });
   // PAD-ARRANGE: the press that began on this slot with something in hand puts it down here, on its click - the bar still
   // raised under the cursor, so the release and its click are the slot's and never the window's beneath it
   node.addEventListener('click', (e) => {
@@ -1106,11 +1472,16 @@ function bindSlot(node, i) {
     if (!editable()) return;
     e.preventDefault();
     const name = entryName(hotbarEntry(i));
-    if (!name || refuseLocked()) return;   // PVP-SET: fixed in combat
+    if (!name || refuseLocked()) return; // PVP-SET: fixed in combat
     clearHotbarSlot(i);
-    if (hand?.kind === 'slot' && hand.slot === i) { hand = null; handPress = -1; raiseSync(); }   // PAD-ARRANGE: the slot in hand cleared
+    if (hand?.kind === 'slot' && hand.slot === i) {
+      hand = null;
+      handPress = -1;
+      raiseSync();
+    } // PAD-ARRANGE: the slot in hand cleared
     showCaption(HOTBAR_TEXT.removed(name));
-    lastSig = null; paint();
+    lastSig = null;
+    paint();
   });
 }
 
@@ -1119,9 +1490,13 @@ function bindSlot(node, i) {
 export function detachHotbarDock() {
   dragEnd(false);
   if (bar && bar.parentNode === dock) bar.remove();
-  if (bar && bar.parentNode === quadDock) bar.remove();   // DIAMOND-HB
-  dock = null; quadDock = null;
-  liveOpts = {}; liveEntity = null; lastHidden = true; lastSig = null;
+  if (bar && bar.parentNode === quadDock) bar.remove(); // DIAMOND-HB
+  dock = null;
+  quadDock = null;
+  liveOpts = {};
+  liveEntity = null;
+  lastHidden = true;
+  lastSig = null;
 }
 
 // ── THE LOOK ──────────────────────────────────────────────────────
@@ -1197,7 +1572,8 @@ const CROSSBAR_CSS = `
  *  Rim colours come from variables a dress sets on .hb, the way it dressed the old diamond's rim: --gem-rim,
  *  --gem-rim-empty, --gem-rim-active, --gem-rim-strike (ui/enhanced/enhancedFrame.js for Plus, ui/grimoireDress.js
  *  for DFO Grimoire). A rarity tier uses the old diamond's tier gradient. */
-const GEM_RING = 'polygon(evenodd, 50% 0, 100% 50%, 50% 100%, 0 50%, 50% 0, 50% 3px, 3px 50%, 50% calc(100% - 3px), calc(100% - 3px) 50%, 50% 3px)';
+const GEM_RING =
+  'polygon(evenodd, 50% 0, 100% 50%, 50% 100%, 0 50%, 50% 0, 50% 3px, 3px 50%, 50% calc(100% - 3px), calc(100% - 3px) 50%, 50% 3px)';
 const GEM_CSS = `
 .hb.hb-gem .hb-slot { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); box-shadow: none; }
 .hb.hb-gem .hb-frame { border: 0 !important; box-shadow: none !important; clip-path: ${GEM_RING};

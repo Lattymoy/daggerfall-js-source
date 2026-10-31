@@ -240,8 +240,8 @@
   {
     "name": "AUDIT-GUIDE-T5-the-face-rebuilt",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  if (track) box.append(trackButton(document, e.uid, e.head));",
-    "new": "  if (track) { const t = trackButton(document, e.uid, e.head); t.querySelector('.qtrack-pin')?.addEventListener('click', () => render()); box.append(t); }",
+    "old": "  if (track) box.append(trackButton(document, e.uid, e.head)); // AUDIT GUIDE T5/U3: changed in place - the focus and the scroll stay",
+    "new": "  if (track) {\n    const t = trackButton(document, e.uid, e.head);\n    t.querySelector('.qtrack-pin')?.addEventListener('click', () => render());\n    box.append(t);\n  } // AUDIT GUIDE T5/U3: changed in place - the focus and the scroll stay",
     "tests": [
       "test/ui/quest/audit_guide.test.js"
     ]

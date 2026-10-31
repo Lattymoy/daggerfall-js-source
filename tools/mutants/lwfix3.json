@@ -96,8 +96,8 @@
   {
     "name": "LW-FIX3-sections",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "    const list = chronicleSections(deps);",
-    "new": "    const list = CHRONICLE_SECTIONS;",
+    "old": "    const list = chronicleSections(deps); // AUDIT-G4: the sections the window shows - LW7c's People among them (the four alone never reached it)",
+    "new": "    const list = CHRONICLE_SECTIONS; // AUDIT-G4: the sections the window shows - LW7c's People among them (the four alone never reached it)",
     "tests": [
       "test/systems/livingWorld/lwfix3_town.test.js",
       "test/systems/livingWorld/lw2_livingTown.test.js"

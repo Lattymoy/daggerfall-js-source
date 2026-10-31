@@ -156,7 +156,7 @@ test('RVN7c THE FACES AND THE HOST: the pause window\'s Quests tab and the chron
   assert.match(m, /if \(sel\.entries && isHuntQuestId\(sel\.id\)\) \{[\s\S]{0,400}const ab = el\('button', 'act', armed \? t\('pause\.journal\.abandonArmed', 'Click again to abandon'\) : t\('pause\.journal\.abandonHunt', 'Abandon hunt'\)\);[\s\S]{0,200}abandonHuntQuest\(sel\.id\);/);
   const c = read('src/ui/enhanced/enhancedChronicle.js');
   assert.match(c, /if \(section === 'quests' && isHuntQuestId\(e\.uid\)\) \{[\s\S]{0,500}abandonHuntQuest\(e\.uid\);/);
-  assert.match(c, /!e\.main && !isBountyQuestId\(e\.uid\) && !isHuntQuestId\(e\.uid\)/, 'never the quest share');
+  assert.match(c, /!e\.main &&\n\s*!isBountyQuestId\(e\.uid\) &&\n\s*!isHuntQuestId\(e\.uid\)/, 'never the quest share');
   assert.match(read('src/scenes/world.js'), /const extra = \[\.\.\.\(bountyHost\?\.questLogEntries\?\.\(\) \?\? \[\]\), \.\.\.revenantHuntEntries\(rumorHere\(\)\), \.\.\.\(legacyHost\?\.questLogEntries\(\) \?\? \[\]\)\];/);   // LEGACY4: the death quests after them
 });
 

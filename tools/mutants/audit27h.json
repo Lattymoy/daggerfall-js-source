@@ -403,8 +403,8 @@
   {
     "name": "B1-hotbar-socket-inherits-a-world-press",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  hbTook = null;   // AUDIT 27h B1 (HB1c's twin)",
-    "new": "  // AUDIT 27h B1 (HB1c's twin)",
+    "old": "  hbTook = null; // AUDIT 27h B1 (HB1c's twin): every press anywhere, before a socket's own - no press of the world's inherits a socket's",
+    "new": "  // AUDIT 27h B1 (HB1c's twin): every press anywhere, before a socket's own - no press of the world's inherits a socket's",
     "tests": [
       "test/ui/enhanced/audit27h.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "B1-hotbar-socket-swallows-any-release",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "node.addEventListener('mouseup', (e) => { if (hbTook?.node === node && hbTook.button === e.button) e.stopPropagation(); });",
-    "new": "node.addEventListener('mouseup', (e) => { if (editable()) e.stopPropagation(); });",
+    "old": "    if (hbTook?.node === node && hbTook.button === e.button) e.stopPropagation();",
+    "new": "    if (editable()) e.stopPropagation();",
     "tests": [
       "test/ui/enhanced/audit27h.test.js"
     ]

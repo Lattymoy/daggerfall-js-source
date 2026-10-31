@@ -44,7 +44,7 @@
 //     reloading and by nothing else, and the player is the one who
 //     decides when to spend their unsaved progress on it.
 
-import { PIXEL_FAMILIES } from '../pixelifyFive.js';   // FONT3: a leaf of constants in the entry bundle - it cannot be the chunk that failed
+import { PIXEL_FAMILIES } from '../pixelifyFive.js'; // FONT3: a leaf of constants in the entry bundle - it cannot be the chunk that failed
 
 /** Is this rejection a module that could not be fetched (a deploy took
  *  it), rather than one that threw while evaluating? The two want
@@ -54,10 +54,13 @@ import { PIXEL_FAMILIES } from '../pixelifyFive.js';   // FONT3: a leaf of const
  *  they agree on rather than any one message. */
 export function isChunkLoadError(err) {
   const m = String(err?.message ?? err ?? '');
-  return /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|dynamically imported module/i.test(m);
+  return /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|dynamically imported module/i.test(
+    m,
+  );
 }
 
-export const RELOAD_TEXT = 'The game was updated while this tab was open, so this screen could not load. Reload the page to fix it.';
+export const RELOAD_TEXT =
+  'The game was updated while this tab was open, so this screen could not load. Reload the page to fix it.';
 export const BROKEN_TEXT = 'This screen could not be loaded.';
 
 /** The notice, painted into the door's own host element with inline
@@ -72,17 +75,31 @@ export function paintChunkNotice(host, { err, onDismiss, reload = () => globalTh
     if (text != null) n.textContent = text;
     return n;
   };
-  const scrim = el('div', 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;'
-    + `background:rgba(8,9,11,.72);z-index:30;font:500 14px/1.5 ${PIXEL_FAMILIES},system-ui,sans-serif;letter-spacing:0.5px;color:#e9e4d9;padding:16px`);   // FONT3: the enhanced face named first - nothing loads for it; the system face stands if the request never came
-  const card = el('div', 'max-width:420px;width:100%;background:#14161a;border:1px solid #2b323b;border-radius:8px;padding:18px');
+  const scrim = el(
+    'div',
+    'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;' +
+      `background:rgba(8,9,11,.72);z-index:30;font:500 14px/1.5 ${PIXEL_FAMILIES},system-ui,sans-serif;letter-spacing:0.5px;color:#e9e4d9;padding:16px`,
+  ); // FONT3: the enhanced face named first - nothing loads for it; the system face stands if the request never came
+  const card = el(
+    'div',
+    'max-width:420px;width:100%;background:#14161a;border:1px solid #2b323b;border-radius:8px;padding:18px',
+  );
   card.append(el('p', 'margin:0 0 14px', isChunkLoadError(err) ? RELOAD_TEXT : BROKEN_TEXT));
   const row = el('div', 'display:flex;gap:8px;justify-content:flex-end');
-  const dismiss = el('button', 'background:#2b323b;color:#e9e4d9;border:0;border-radius:4px;padding:8px 14px;font:inherit;cursor:pointer', 'Close');
+  const dismiss = el(
+    'button',
+    'background:#2b323b;color:#e9e4d9;border:0;border-radius:4px;padding:8px 14px;font:inherit;cursor:pointer',
+    'Close',
+  );
   dismiss.type = 'button';
   dismiss.addEventListener('click', () => onDismiss?.());
   row.append(dismiss);
   if (isChunkLoadError(err)) {
-    const again = el('button', 'background:#c08a3e;color:#0e1013;border:0;border-radius:4px;padding:8px 14px;font:inherit;cursor:pointer', 'Reload');
+    const again = el(
+      'button',
+      'background:#c08a3e;color:#0e1013;border:0;border-radius:4px;padding:8px 14px;font:inherit;cursor:pointer',
+      'Reload',
+    );
     again.type = 'button';
     again.addEventListener('click', () => reload());
     row.append(again);
@@ -105,7 +122,18 @@ export function paintChunkNotice(host, { err, onDismiss, reload = () => globalTh
  * @param {() => void} o.onDismiss      the door's close, run when the player dismisses the notice
  * @param {string} o.label              for the console line
  */
-export async function mountEnhancedChunk({ load, mount, alive = () => true, host, onDismiss, label = 'menu', retries = 1, wait = (ms) => new Promise((r) => setTimeout(r, ms)), retryMs = 400, notice = paintChunkNotice }) {
+export async function mountEnhancedChunk({
+  load,
+  mount,
+  alive = () => true,
+  host,
+  onDismiss,
+  label = 'menu',
+  retries = 1,
+  wait = (ms) => new Promise((r) => setTimeout(r, ms)),
+  retryMs = 400,
+  notice = paintChunkNotice,
+}) {
   let err = null;
   for (let attempt = 0; attempt <= retries; attempt++) {
     if (!alive()) return false;
@@ -183,11 +211,11 @@ export const WARM_CHUNKS = Object.freeze([
   () => import('./enhancedTrade.js'),
   () => import('./enhancedTavern.js'),
   () => import('./enhancedMerchantPanel.js'),
-  () => import('../noticeWindow.js'),   // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it
-  () => import('../brokerWindow.js'),   // SET7: the Sigil Broker's window - online's, and last: the gate is the rarest door
-  () => import('../naval/navalPlunderWindow.js'),   // NAV-F: a taken ship's plunder window - rarer still: a prize is a won sea fight
-  () => import('../naval/navalYardWindow.js'),   // AUDIT NAV1: the shipwright's - a port's, after a fight
-  () => import('../shipyardWindow.js'),   // SHIPYARDS: the shipmaster's - a port's shipyard, its fleet and its crew hall
+  () => import('../noticeWindow.js'), // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it
+  () => import('../brokerWindow.js'), // SET7: the Sigil Broker's window - online's, and last: the gate is the rarest door
+  () => import('../naval/navalPlunderWindow.js'), // NAV-F: a taken ship's plunder window - rarer still: a prize is a won sea fight
+  () => import('../naval/navalYardWindow.js'), // AUDIT NAV1: the shipwright's - a port's, after a fight
+  () => import('../shipyardWindow.js'), // SHIPYARDS: the shipmaster's - a port's shipyard, its fleet and its crew hall
 ]);
 
 let warmed = false;
@@ -197,9 +225,8 @@ let warmed = false;
  *  (the tests drive it with their own scheduler and loaders). */
 export async function warmEnhancedChunks({
   chunks = WARM_CHUNKS,
-  idle = (fn) => (globalThis.requestIdleCallback
-    ? globalThis.requestIdleCallback(fn, { timeout: 4000 })
-    : setTimeout(fn, 1500)),
+  idle = (fn) =>
+    globalThis.requestIdleCallback ? globalThis.requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500),
   alive = () => true,
 } = {}) {
   if (warmed) return 0;
@@ -211,10 +238,17 @@ export async function warmEnhancedChunks({
     // once would be the stall this exists to remove.
     await new Promise((resolve) => idle(resolve));
     if (!alive()) break;
-    try { await load(); done++; } catch { /* MENU1's notice is the door's to show, not a warm's */ }
+    try {
+      await load();
+      done++;
+    } catch {
+      /* MENU1's notice is the door's to show, not a warm's */
+    }
   }
   return done;
 }
 
 /** Tests only: the latch is a session's. */
-export function _resetChunkWarmForTests() { warmed = false; }
+export function _resetChunkWarmForTests() {
+  warmed = false;
+}

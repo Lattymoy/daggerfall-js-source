@@ -82,8 +82,8 @@
   {
     "name": "PADARRANGE-the-bar-stays-tucked",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand || secondRaised());",
-    "new": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || secondRaised());",
+    "old": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand || secondRaised()); // PVP-SET: and the PvP menu",
+    "new": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || secondRaised()); // PVP-SET: and the PvP menu",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "PADARRANGE-the-tap-picks-nothing",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "    else if (commit && d.payload.tapPick) takeHotbarHand(d.payload.slot);",
-    "new": "",
+    "old": "    else if (commit && d.payload.tapPick) takeHotbarHand(d.payload.slot); // PAD-ARRANGE: the pad's A takes it in hand",
+    "new": "    // PAD-ARRANGE: the pad's A takes it in hand",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "PADARRANGE-the-hand-outlives-the-window",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "dragEnd(false); hand = null; arranging = false; handPress = -1; raiseSync(); }",
-    "new": "dragEnd(false); raiseSync(); }",
+    "old": "    dragEnd(false);\n    hand = null;\n    arranging = false;\n    handPress = -1;\n    raiseSync();",
+    "new": "    dragEnd(false);\n    raiseSync();",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "PADARRANGE-put-down-on-the-press",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "{ e.preventDefault(); handPress = i; return; }",
-    "new": "{ e.preventDefault(); placeHotbarHand(i); return; }",
+    "old": "        handPress = i;",
+    "new": "        placeHotbarHand(i);",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "PADARRANGE-the-cleared-slot-kept-in-hand",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "    if (hand?.kind === 'slot' && hand.slot === i) { hand = null; handPress = -1; raiseSync(); }",
-    "new": "",
+    "old": "    if (hand?.kind === 'slot' && hand.slot === i) {\n      hand = null;\n      handPress = -1;\n      raiseSync();\n    } // PAD-ARRANGE: the slot in hand cleared",
+    "new": "    // PAD-ARRANGE: the slot in hand cleared",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "PADARRANGE-the-hand-kept-off-the-pad",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if ((hand || arranging) && !padInHand()) { hand = null; arranging = false; handPress = -1; raiseSync(); }\n",
-    "new": "",
+    "old": "  if ((hand || arranging) && !padInHand()) {\n    hand = null;\n    arranging = false;\n    handPress = -1;\n    raiseSync();\n  }\n  const on = hotbarMode();",
+    "new": "  const on = hotbarMode();",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],

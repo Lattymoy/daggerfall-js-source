@@ -112,8 +112,8 @@
   {
     "name": "GUIDE2-chronicle-door-read-after-the-close",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "      go.onclick = () => { onExit(); door(find); };",
-    "new": "      go.onclick = () => { onExit(); deps.showQuestPlace?.(find); };",
+    "old": "        door(find);",
+    "new": "        deps.showQuestPlace?.(find);",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "GUIDE2-chronicle-map-before-the-close",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "      go.onclick = () => { onExit(); door(find); };",
-    "new": "      go.onclick = () => { door(find); onExit(); };",
+    "old": "        onExit();\n        door(find);",
+    "new": "        door(find);\n        onExit();",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "GUIDE2-chronicle-line-hidden-when-shut",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "        if (section === 'quests' && e.uid != null) {\n          const state = questState(e);",
-    "new": "        if (section === 'quests' && e.uid != null && !isFolded(folded, section, i)) {\n          const state = questState(e);",
+    "old": "        if (section === 'quests' && e.uid != null) {",
+    "new": "        if (section === 'quests' && e.uid != null && !isFolded(folded, section, i)) {",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "GUIDE2-chronicle-timer-never-armed",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  armClocks();   // GUIDE2: after the spans exist\n",
-    "new": "",
+    "old": "  armClocks(); // GUIDE2: after the spans exist\n}",
+    "new": "}",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "GUIDE2-chronicle-interval-outlives-the-window",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "    destroy() {\n      disarmClocks();\n",
-    "new": "    destroy() {\n",
+    "old": "      disarmClocks();\n      unlistenKeys();",
+    "new": "      unlistenKeys();",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"
     ]
@@ -166,7 +166,7 @@
   {
     "name": "GUIDE2-chronicle-stopped-clock-left-standing",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "      if (!Number.isFinite(left)) { render(); return; }",
+    "old": "      if (!Number.isFinite(left)) {\n        render();\n        return;\n      }",
     "new": "      if (!Number.isFinite(left)) continue;",
     "tests": [
       "test/ui/enhanced/guide2_wayThere.test.js"

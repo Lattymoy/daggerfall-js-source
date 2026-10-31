@@ -291,8 +291,8 @@
   {
     "name": "RVN7c-chronicle-unwired",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "            abandonHuntQuest(e.uid);\n",
-    "new": "",
+    "old": "            abandonHuntQuest(e.uid);\n            render();",
+    "new": "            render();",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "RVN7c-chronicle-shares-a-hunt",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "!e.main && !isBountyQuestId(e.uid) && !isHuntQuestId(e.uid)",
-    "new": "!e.main && !isBountyQuestId(e.uid)",
+    "old": "          !isHuntQuestId(e.uid) &&\n          (deps.partyMembers?.() ?? []).length",
+    "new": "          (deps.partyMembers?.() ?? []).length",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]

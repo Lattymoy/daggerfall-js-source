@@ -56,8 +56,8 @@
   {
     "name": "CK-the-chronicle-listens-past-the-door",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "listenWindowKeys(d.owner, onKey)",
-    "new": "listenWindowKeys(null, onKey)",
+    "old": "  unlistenKeys = listenWindowKeys(d.owner, onKey); // COVERED-KEYS: d.owner, the chronicle's window (ui/chronicleDoor.js)",
+    "new": "  unlistenKeys = listenWindowKeys(null, onKey); // COVERED-KEYS: d.owner, the chronicle's window (ui/chronicleDoor.js)",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

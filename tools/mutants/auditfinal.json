@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-FINAL-F2-the-picture-keyed-by-its-kind-alone",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}",
-    "new": "",
+    "old": "  const kind = item\n    ? `${hotbarEntryForItem(item)?.key ?? ''}${image ? `#${iconName(image.archive, image.record, image.dye, image.dyeTarget)}` : ''}`\n    : spellIcon != null\n      ? `spell:${spellIcon}`\n      : '';",
+    "new": "  const kind = item ? `${hotbarEntryForItem(item)?.key ?? ''}` : spellIcon != null ? `spell:${spellIcon}` : '';",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-FINAL-F2-the-dye-out-of-the-bar-s-signature",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "      + `|${v.item && v.type !== 'spell' ? itemDyeColor(v.item) ?? '' : ''}`",
-    "new": "",
+    "old": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}` + // SET5: and its set\n          // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind\n          `|${v.item && v.type !== 'spell' ? (itemDyeColor(v.item) ?? '') : ''}`,",
+    "new": "          `|${v.item && v.type !== 'spell' ? `${rarityAttr(v.item) ?? ''}${validSigil(v.item.sigil) ? '*' : ''}${setIdOf(v.item) ?? ''}` : ''}`, // SET5: and its set\n      // AUDIT FINAL F2: and the item's own dye - Blue Straps and Red Straps are one name, one kind",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]

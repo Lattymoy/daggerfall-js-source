@@ -56,7 +56,7 @@
   {
     "name": "RARITY-UI-the-hotbar-unmarked",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if (rar) n.dataset.rarity = rar; else delete n.dataset.rarity;",
+    "old": "  if (rar) n.dataset.rarity = rar;\n  else delete n.dataset.rarity;",
     "new": "  delete n.dataset.rarity;",
     "tests": [
       "test/ui/enhanced/sigilui1.test.js"

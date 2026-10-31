@@ -227,8 +227,8 @@
   {
     "name": "UI2-the-hint-says-four-kinds",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.';",
-    "new": "const HINT_DROP = 'Drag a weapon, shield, potion, torch or spell onto a slot. Drag a slot off the bar to clear it.';",
+    "old": "const HINT_DROP = 'Drag any item or a spell onto a slot. Drag a slot off the bar to clear it.'; // UI2: any item",
+    "new": "const HINT_DROP = 'Drag a weapon, shield, potion, torch or spell onto a slot. Drag a slot off the bar to clear it.'; // UI2: any item",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-UI-B2-every-picture-at-slot-1-s-box",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "const s = slots.find((x) => x.face?.offsetWidth > 0 && !!x.node.classList?.contains('hb-spell') === spell);",
-    "new": "const s = slots.find((x) => x.face?.offsetWidth > 0);",
+    "old": "  const s = slots.find((x) => x.face?.offsetWidth > 0 && !!x.node.classList?.contains('hb-spell') === spell);",
+    "new": "  const s = slots.find((x) => x.face?.offsetWidth > 0);",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-UI-B2-a-spell-fitted-at-an-item-s-box",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "const fit = slotFit(!item && spellIcon != null);",
-    "new": "const fit = slotFit();",
+    "old": "  const fit = slotFit(!item && spellIcon != null);",
+    "new": "  const fit = slotFit();",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-UI-B3-the-ratio-off-a-slot",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "const barShown = barLayout > 0 ? (bar.getBoundingClientRect?.().width ?? barLayout) : 0;",
-    "new": "const barShown = barLayout > 0 ? (s?.face.getBoundingClientRect?.().width ?? barLayout) : 0;",
+    "old": "  const barShown = barLayout > 0 ? (bar.getBoundingClientRect?.().width ?? barLayout) : 0;",
+    "new": "  const barShown = barLayout > 0 ? (s?.face.getBoundingClientRect?.().width ?? barLayout) : 0;",
     "tests": [
       "test/systems/ui2_hotbar.test.js"
     ]

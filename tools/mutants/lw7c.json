@@ -182,8 +182,8 @@
   {
     "name": "LW7c-model-people",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "...(d.people ? { people: d.people() ?? { friends: [], enemies: [], known: [] } } : {}) };",
-    "new": "...({}) };",
+    "old": "  return {\n    quests,\n    notes,\n    messages,\n    history,\n    ...(d.people ? { people: d.people() ?? { friends: [], enemies: [], known: [] } } : {}),\n  };",
+    "new": "  return { quests, notes, messages, history, ...{} };",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LW7c-count",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "    people: model.people ? model.people.friends.length + model.people.enemies.length + model.people.known.length : 0 };   // LW7c",
-    "new": "    people: 0 };   // LW7c",
+    "old": "    people: model.people ? model.people.friends.length + model.people.enemies.length + model.people.known.length : 0,",
+    "new": "    people: 0,",
     "tests": [
       "test/systems/livingWorld/lw7c_people.test.js"
     ]

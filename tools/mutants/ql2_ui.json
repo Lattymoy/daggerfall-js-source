@@ -58,8 +58,8 @@
   {
     "name": "AUDIT-QL-UI-5-chronicle-drops-it",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "        body: outcome ? [...q.lines, t('quest.outcome.filed'",
-    "new": "        body: false ? [...q.lines, t('quest.outcome.filed'",
+    "old": "        body: outcome ? [...q.lines, t('quest.outcome.filed', 'Outcome: {text}', { text: outcome })] : [...q.lines],",
+    "new": "        body: false ? [...q.lines, t('quest.outcome.filed', 'Outcome: {text}', { text: outcome })] : [...q.lines],",
     "tests": [
       "test/ui/questlines/ql2_pause.test.js"
     ]

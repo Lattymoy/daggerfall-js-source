@@ -62,8 +62,8 @@
   {
     "name": "SPELL-SCROLL-section-unnamed",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  body.setAttribute('data-scroll-key', section);",
-    "new": "  void 0;",
+    "old": "  body.setAttribute('data-scroll-key', section); // FB1018f SPELL-SCROLL: a press keeps the page; another section starts at its top",
+    "new": "  void 0; // FB1018f SPELL-SCROLL: a press keeps the page; another section starts at its top",
     "tests": [
       "test/ui/enhanced/fb1018f_spellscroll.test.js"
     ],

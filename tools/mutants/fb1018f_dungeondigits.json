@@ -123,8 +123,8 @@
   {
     "name": "DUNGEON-DIGITS-L2-5-key-gate-the-frame",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if (keysPaused()) return;\n  if (keyHolds.size) return;",
-    "new": "  if (lastPaused) return;\n  if (keyHolds.size) return;",
+    "old": "  if (keysPaused()) return;",
+    "new": "  if (lastPaused) return;",
     "tests": [
       "test/ui/hud/fb1018f_dungeondigits.test.js"
     ],
@@ -133,7 +133,7 @@
   {
     "name": "DUNGEON-DIGITS-L2-5-mouse-slot-reads-the-frame",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if (!bar || !hotbarMode() || dropOwners.size || keysPaused()) return;   // AUDIT FB1018f L2-5: the keys' one gate",
+    "old": "  if (!bar || !hotbarMode() || dropOwners.size || keysPaused()) return; // AUDIT FB1018f L2-5: the keys' one gate",
     "new": "  if (!bar || !hotbarMode() || dropOwners.size || lastPaused) return;",
     "tests": [
       "test/ui/hud/fb1018f_dungeondigits.test.js"
@@ -143,8 +143,8 @@
   {
     "name": "DUNGEON-DIGITS-L2-5-crossbar-reads-the-frame",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "crossbarMode() && !keysPaused() && !dropOwners.size,",
-    "new": "crossbarMode() && !lastPaused && !dropOwners.size,",
+    "old": "  inForce: () => !!bar && xbOn && crossbarMode() && !keysPaused() && !dropOwners.size, // AUDIT FB1018f L2-5: the keys' one gate",
+    "new": "  inForce: () => !!bar && xbOn && crossbarMode() && !lastPaused && !dropOwners.size, // AUDIT FB1018f L2-5: the keys' one gate",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],

@@ -344,8 +344,8 @@
   {
     "name": "LW13-chronicle",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "        if (p.company) top.append(el('span', 'sb-chip', p.company));   // LW13: the company they walk with\n",
-    "new": "",
+    "old": "        if (p.company) top.append(el('span', 'sb-chip', p.company)); // LW13: the company they walk with\n        card.append(top);",
+    "new": "        card.append(top);",
     "tests": [
       "test/systems/livingWorld/lw13_companies.test.js"
     ]

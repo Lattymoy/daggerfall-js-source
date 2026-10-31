@@ -20,8 +20,8 @@
   {
     "name": "AUDITPOI-E1-the-bar-s-hold-unread",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if (keyHolds.size) return;   // AUDIT POI E1",
-    "new": "  // AUDIT POI E1",
+    "old": "  if (keyHolds.size) return; // AUDIT POI E1: a surface that owns the keys is up",
+    "new": "  // AUDIT POI E1: a surface that owns the keys is up",
     "tests": [
       "test/scenes/auditpoi_editor.test.js"
     ]

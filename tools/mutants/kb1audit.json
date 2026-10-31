@@ -141,7 +141,7 @@
   {
     "name": "AUDIT-KB1-UI5-no-mouse-listener",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  window.addEventListener('mousedown', onMouse, true);   // AUDIT KB1: a slot bound to a mouse button",
+    "old": "  window.addEventListener('mousedown', onMouse, true); // AUDIT KB1: a slot bound to a mouse button",
     "new": "",
     "tests": [
       "test/ui/kb1_audit.test.js"

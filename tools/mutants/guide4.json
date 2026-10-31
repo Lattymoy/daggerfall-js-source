@@ -318,8 +318,8 @@
   {
     "name": "GUIDE4-chronicle-only-where-a-place",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  const track = followOn() && e.uid != null;",
-    "new": "  const track = followOn() && e.uid != null && !!e.where;",
+    "old": "  const track = followOn() && e.uid != null; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')",
+    "new": "  const track = followOn() && e.uid != null && !!e.where; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "GUIDE4-chronicle-without-the-switch",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "  const track = followOn() && e.uid != null;",
-    "new": "  const track = e.uid != null;",
+    "old": "  const track = followOn() && e.uid != null; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')",
+    "new": "  const track = e.uid != null; // GUIDE4: every live card can be the HUD's (AUDIT GUIDE T2: the card's or the marks')",
     "tests": [
       "test/ui/quest/guide4_tracker.test.js"
     ]

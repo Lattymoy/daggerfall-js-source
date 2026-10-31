@@ -9931,7 +9931,7 @@ own path, walking down its indices (AUDIT FB1018f L2-4: it had mapped the
 whole rebuilt tree, quadratic - one fold in a scrolled Chronicle of 500
 notes ~400 ms, now 69 ms). The Chronicle (the same bones) lost
 its page on every fold, remove, share and abandon, and draws the same way,
-its page named by its section (enhancedChronicle.js:"body.setAttribute('data-scroll-key', section);").
+its page named by its section (enhancedChronicle.js:"body.setAttribute").
 The Reforge's Salvage page and the pack's Salvage were measured holding
 already (one scroller kept, its rows replaced). Pins:
 test/ui/enhanced/fb1018f_spellscroll.test.js (8); the layout itself is

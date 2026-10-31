@@ -105,7 +105,7 @@ press's own cost.
 
 THE SIBLINGS. The Chronicle (the same bones) lost its page on every fold, remove, share, abandon and run-out deadline
 (measured 900 -> 0); drawn the same way, its page named by its section
-(`enhancedChronicle.js:"body.setAttribute('data-scroll-key', section);"`). BioGud's "same with magic items salvaging" is NOT
+(`enhancedChronicle.js:"body.setAttribute"`). BioGud's "same with magic items salvaging" is NOT
 REPRODUCED: the Reforge's Salvage page keeps one scroller and replaces only its rows (measured 900 -> 900 through Salvage
 and Break it), the pack's Salvage repaints through domRepaint with PX22's memo (measured holding), the Stores page's
 Disenchant draws in the pause window (domRepaint). What would find it: which window (its title, a screenshot), the skin
@@ -183,7 +183,7 @@ game.
   a native window is handed the raw code (`input.js:"if (ctx.overlayIsNative) { ctx.overlayInput(e.code, e); return true; }"`).
 - **The bar takes the digits first.** The hotbar (the default quickbar since HB-LYCFREE) listens on the window's
   capture phase, ahead of every host's ladder, takes a key whose action is one of its ten slots and stops it
-  (`enhancedHotbar.js:"function onKey(e) {"`). It stands down only while the HUD's last frame said the game is paused
+  (`enhancedHotbar.js:"function onKey(e)"`). It stands down only while the HUD's last frame said the game is paused
   (`hud.js:"paused: !!cursorActive,"`).
 - **Underground no frame said so.** Both dungeon hosts return above `drawFoes` while a window pauses the game
   (`worldModes.js:"if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.();"`, `dungeon.js:"ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);"`),

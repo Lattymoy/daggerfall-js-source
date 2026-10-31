@@ -83,7 +83,7 @@
   {
     "name": "QRESET-chronicle-unarmed",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "            if (bountyArmed !== `r:${e.uid}`) { bountyArmed = `r:${e.uid}`; render(); return; }",
+    "old": "            if (bountyArmed !== `r:${e.uid}`) {\n              bountyArmed = `r:${e.uid}`;\n              render();\n              return;\n            }",
     "new": "            void 0;",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "QRESET-chronicle-label-english",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "t('chronicle.quests.restartLabel', 'Restart this quest')",
-    "new": "'Restart'",
+    "old": "            armed\n              ? t('chronicle.quests.restartArmedLabel', 'Click again to restart this quest')\n              : t('chronicle.quests.restartLabel', 'Restart this quest'),",
+    "new": "            armed ? t('chronicle.quests.restartArmedLabel', 'Click again to restart this quest') : 'Restart',",
     "tests": [
       "test/scenes/quest/questreset1.test.js"
     ]

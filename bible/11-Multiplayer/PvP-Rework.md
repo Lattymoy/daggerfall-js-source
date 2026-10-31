@@ -279,7 +279,7 @@ spells and items, never a book spell; the save keeps the normal set alone. It li
 
 The menu (the PvP spells button on the bar, or the spellbook's) makes a spell from its kind, its element or attribute
 and its icon, and lists it with its cost and where it lands. A row is dragged onto a slot, or clicked and then a slot
-clicked (`enhancedHotbar.js:"export function hotbarDropKit(i, kit, name = '') {"`); a slot dragged off or right-clicked
+clicked (`enhancedHotbar.js:"export function hotbarDropKit"`); a slot dragged off or right-clicked
 clears.
 
 Each slot shows its key, the cost a cast charges now, armour and all (`pvpSpellMenu.js:"export const kitCastCost"`),

@@ -393,7 +393,7 @@ Pinned: `test/systems/hb_lycfree.test.js` (8). The diamond's own suites choose t
 
 **The bar took them.** The hotbar listens on the window's capture phase, ahead of every host's ladder, and takes a key
 whose action is one of its ten slots (Digit1-Digit0 by default) - stopped, so nothing after it hears the key
-(`enhancedHotbar.js:"function onKey(e) {"`). It stands down while the HUD's last frame said the game is paused: drawHud
+(`enhancedHotbar.js:"function onKey(e)"`). It stands down while the HUD's last frame said the game is paused: drawHud
 hands it `paused: !!cursorActive` (AUDIT CONTRIB H1), and nothing else writes that word. The street, the fixed city and
 a building draw the HUD on every frame, a window up or not. Both dungeon hosts return above `drawFoes` while a window
 pauses the game, and `drawFoes` is their only drawHud, so underground the bar heard the last frame of play for the whole

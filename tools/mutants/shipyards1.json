@@ -687,8 +687,8 @@
   {
     "name": "SHIPYARDS-the-window-not-warmed",
     "file": "src/ui/enhanced/enhancedChunk.js",
-    "old": "  () => import('../shipyardWindow.js'),",
-    "new": "  () => Promise.resolve(null),",
+    "old": "  () => import('../shipyardWindow.js'), // SHIPYARDS: the shipmaster's - a port's shipyard, its fleet and its crew hall",
+    "new": "  () => Promise.resolve(null), // SHIPYARDS: the shipmaster's - a port's shipyard, its fleet and its crew hall",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]

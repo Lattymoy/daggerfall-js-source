@@ -824,8 +824,8 @@
   {
     "name": "NAV1H-the-yard-chunk-cold",
     "file": "src/ui/enhanced/enhancedChunk.js",
-    "old": "  () => import('../naval/navalYardWindow.js'),   // AUDIT NAV1: the shipwright's - a port's, after a fight\n",
-    "new": "",
+    "old": "  () => import('../naval/navalYardWindow.js'), // AUDIT NAV1: the shipwright's - a port's, after a fight\n  () => import('../shipyardWindow.js'), // SHIPYARDS: the shipmaster's - a port's shipyard, its fleet and its crew hall",
+    "new": "  () => import('../shipyardWindow.js'), // SHIPYARDS: the shipmaster's - a port's shipyard, its fleet and its crew hall",
     "tests": [
       "test/systems/naval/navaudit_helm.test.js"
     ]
