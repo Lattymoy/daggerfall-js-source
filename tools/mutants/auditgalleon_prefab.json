@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-GALLEON-P6-the-fit-one-side",
     "file": "tools/galleonLidFit.mjs",
-    "old": "Math.round(Math.max(x, port[i][r][k]) * 1000) / 1000",
-    "new": "Math.round(x * 1000) / 1000",
+    "old": "  const fit = starboard.map((rows, i) =>\n    rows.map((row, r) => row.map((x, k) => Math.round(Math.max(x, port[i][r][k]) * 1000) / 1000)),\n  );",
+    "new": "  const fit = starboard.map((rows, i) => rows.map((row, r) => row.map((x, k) => Math.round(x * 1000) / 1000)));",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],

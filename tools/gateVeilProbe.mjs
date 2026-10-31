@@ -16,8 +16,13 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
-const W = 640, H = 360;
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
+const W = 640,
+  H = 360;
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#1a2a3a"><canvas id=c width=${W} height=${H}></canvas><script type=module>
 import { GateVeilRenderer, veilAt, VEIL_CLOSE_S, VEIL_OPEN_S } from '/src/render/gate/gateVeil.js';
@@ -52,10 +57,25 @@ window.ready = true;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : extname(f) === '.json' ? 'application/json' : 'application/octet-stream' });
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type':
+      extname(f) === '.js'
+        ? 'text/javascript'
+        : extname(f) === '.json'
+          ? 'application/json'
+          : 'application/octet-stream',
+  });
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -63,7 +83,8 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: W, height: H } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 60000 });
   const p = await page.evaluate(() => window.probe);
@@ -72,22 +93,54 @@ try {
   const a = (c) => c[3];
   const start = await page.evaluate(() => window.draw('closing', 0, 0.5));
   check('no GL error drawing it', start.error === 0, `error ${start.error}`);
-  check('before it closes, the screen is clear - the corners and the middle', start.corners.every((c) => a(c) < 8) && a(start.centre) < 8, JSON.stringify([start.centre, ...start.corners].map(a)));
+  check(
+    'before it closes, the screen is clear - the corners and the middle',
+    start.corners.every((c) => a(c) < 8) && a(start.centre) < 8,
+    JSON.stringify([start.centre, ...start.corners].map(a)),
+  );
   const mid = await page.evaluate(() => window.draw('closing', 0.8, 0.9));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'closing.png') });
-  check('closing, the corners are taken first - fire - and the middle is still the world\'s, reddened', mid.corners.every((c) => a(c) > 240 && c[0] > c[2]) && a(mid.centre) < 200, JSON.stringify({ centre: mid.centre, corners: mid.corners }));
+  check(
+    "closing, the corners are taken first - fire - and the middle is still the world's, reddened",
+    mid.corners.every((c) => a(c) > 240 && c[0] > c[2]) && a(mid.centre) < 200,
+    JSON.stringify({ centre: mid.centre, corners: mid.corners }),
+  );
   const shut = await page.evaluate(() => window.draw('shut', 0.3, 1.6));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'shut.png') });
-  check('shut, all of it fire', [shut.centre, ...shut.corners].every((c) => a(c) > 250), JSON.stringify([shut.centre, ...shut.corners].map(a)));
-  check('the eye burns at the middle, brighter than the corners', shut.centre[0] + shut.centre[1] + shut.centre[2] > Math.max(...shut.corners.map((c) => c[0] + c[1] + c[2])) + 150, JSON.stringify({ centre: shut.centre, corners: shut.corners }));
+  check(
+    'shut, all of it fire',
+    [shut.centre, ...shut.corners].every((c) => a(c) > 250),
+    JSON.stringify([shut.centre, ...shut.corners].map(a)),
+  );
+  check(
+    'the eye burns at the middle, brighter than the corners',
+    shut.centre[0] + shut.centre[1] + shut.centre[2] > Math.max(...shut.corners.map((c) => c[0] + c[1] + c[2])) + 150,
+    JSON.stringify({ centre: shut.centre, corners: shut.corners }),
+  );
   const opening = await page.evaluate(() => window.draw('opening', 0.5, 2.3));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'opening.png') });
-  check('opening, the middle first - the new place through the eye, the fire\'s red on it fading as the cover goes - the corners still fire', a(opening.centre) < 0.5 * 255 * opening.v.cover + 8 && opening.corners.some((c) => a(c) > 200), JSON.stringify({ centre: opening.centre, cover: opening.v.cover, corners: opening.corners.map(a) }));
+  check(
+    "opening, the middle first - the new place through the eye, the fire's red on it fading as the cover goes - the corners still fire",
+    a(opening.centre) < 0.5 * 255 * opening.v.cover + 8 && opening.corners.some((c) => a(c) > 200),
+    JSON.stringify({ centre: opening.centre, cover: opening.v.cover, corners: opening.corners.map(a) }),
+  );
   const done = await page.evaluate(() => window.draw('opening', 1.7, 3.2));
-  check('opened, the screen is clear again', done.corners.every((c) => a(c) < 8) && a(done.centre) < 8, JSON.stringify([done.centre, ...done.corners].map(a)));
+  check(
+    'opened, the screen is clear again',
+    done.corners.every((c) => a(c) < 8) && a(done.centre) < 8,
+    JSON.stringify([done.centre, ...done.corners].map(a)),
+  );
   const step = await page.evaluate(() => window.step());
-  check('the layer on a real page: the fire closes and the promise answers when it has', step.shut === true && step.phaseShut === 'shut' && step.closedIn >= step.VEIL_CLOSE_S - 0.05, JSON.stringify(step));
-  check('shown while it stands, over the world under the chat, never a pointer', step.shown === 'block' && step.z === '4' && step.pointer === 'none', JSON.stringify(step));
+  check(
+    'the layer on a real page: the fire closes and the promise answers when it has',
+    step.shut === true && step.phaseShut === 'shut' && step.closedIn >= step.VEIL_CLOSE_S - 0.05,
+    JSON.stringify(step),
+  );
+  check(
+    'shown while it stands, over the world under the chat, never a pointer',
+    step.shown === 'block' && step.z === '4' && step.pointer === 'none',
+    JSON.stringify(step),
+  );
   check('it opens and hides', step.hidden === 'none' && step.openedIn >= step.VEIL_OPEN_S - 0.05, JSON.stringify(step));
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {

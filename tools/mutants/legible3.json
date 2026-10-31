@@ -2,8 +2,8 @@
   {
     "name": "LEGIBLE3-the-wait-dropped",
     "file": "tools/format.mjs",
-    "old": "  Atomics.wait(signal, 0, 0);\n",
-    "new": "",
+    "old": "  Atomics.wait(signal, 0, 0);\n  const reply = receiveMessageOnPort(port).message;",
+    "new": "  const reply = receiveMessageOnPort(port).message;",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LEGIBLE3-the-check-unread",
     "file": "tools/format.mjs",
-    "old": "    if (!(await prettier.check(readFileSync(path, 'utf8'), { ...options, filepath: path }))) out.push(f);\n",
-    "new": "",
+    "old": "    if (!(await prettier.check(readFileSync(path, 'utf8'), { ...options, filepath: path }))) out.push(f);\n  }",
+    "new": "  }",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LEGIBLE3-a-parent-left-shut",
     "file": "tools/format.mjs",
-    "old": "      lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);\n",
-    "new": "      if (folders.includes(path)) lines.push(`/${path}/*/`);\n",
+    "old": "      lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);",
+    "new": "      if (folders.includes(path)) lines.push(`/${path}/*/`);",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LEGIBLE3-a-listed-folders-subfolders-opened",
     "file": "tools/format.mjs",
-    "old": "folders.includes(path) ? `/${path}/*/` : `/${path}/*`",
-    "new": "folders.includes(path) ? `/${path}/x/` : `/${path}/*`",
+    "old": "      lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);",
+    "new": "      lines.push(folders.includes(path) ? `/${path}/x/` : `/${path}/*`);",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LEGIBLE3-a-subfolder-walked",
     "file": "tools/format.mjs",
-    "old": "readdirSync(join(root, d), { withFileTypes: true })\n    .filter((e) => e.isFile() && /\\.m?js$/.test(e.name))\n    .map((e) => `${d}/${e.name}`)",
-    "new": "readdirSync(join(root, d), { recursive: true })\n    .filter((e) => /\\.m?js$/.test(e))\n    .map((e) => `${d}/${String(e)}`)",
+    "old": "        : readdirSync(join(root, d), { withFileTypes: true })\n            .filter((e) => e.isFile() && /\\.m?js$/.test(e.name))\n            .map((e) => `${d}/${e.name}`),",
+    "new": "        : readdirSync(join(root, d), { recursive: true })\n            .filter((e) => /\\.m?js$/.test(e))\n            .map((e) => `${d}/${String(e)}`),",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LEGIBLE3-a-file-entry-read-as-a-folder",
     "file": "tools/format.mjs",
-    "old": "(isFileEntry(d) ? [d] : readdirSync",
-    "new": "(false ? [d] : readdirSync",
+    "old": "      isFileEntry(d)",
+    "new": "      false",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LEGIBLE3-a-file-entry-opened-as-a-folder",
     "file": "tools/format.mjs",
-    "old": "      if (i === parts.length && isFileEntry(path)) { lines.push(`!/${path}`); continue; }\n",
-    "new": "",
+    "old": "      if (i === parts.length && isFileEntry(path)) {\n        lines.push(`!/${path}`);\n        continue;\n      }\n      lines.push(`!/${path}/`);",
+    "new": "      lines.push(`!/${path}/`);",
     "tests": [
       "test/tooling/legible3_format.test.js"
     ]

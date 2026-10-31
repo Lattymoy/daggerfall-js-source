@@ -98,7 +98,7 @@ test('GATHER-FEEL G2: the fall is the felled tree\'s - its first crack at the cl
   const peak = Math.max(...x.map(Math.abs));
   assert.ok(x.slice(0, Math.round(11025 * 0.02)).some((v) => Math.abs(v) > 0.1 * peak), 'the first crack at once');
   assert.match(src('tools/gatherSfx.mjs'), /import \{ FALL_S \} from '\.\.\/src\/scenes\/treeHost\.js';/);
-  assert.match(src('tools/gatherSfx.mjs'), /const LEN = 2\.75, HIT = FALL_S;/);
+  assert.match(src('tools/gatherSfx.mjs'), /const LEN = 2\.75,\n\s*HIT = FALL_S;/);
 });
 
 test('GATHER-FEEL G3: the clips register on the bus once - under their keys, a clip that will not load is silence and the rest still take, and a bus with no door loads nothing', async () => {

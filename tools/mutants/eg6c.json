@@ -948,8 +948,8 @@
   {
     "name": "EG6C-the-port-s-writer-on-one-word",
     "file": "tools/fragBake.mjs",
-    "old": "if (names.every((n) => n === FRAG_REF_WRITER)) return",
-    "new": "if (names.some((n) => n === FRAG_REF_WRITER)) return",
+    "old": "  if (names.every((n) => n === FRAG_REF_WRITER)) return 'port';",
+    "new": "  if (names.some((n) => n === FRAG_REF_WRITER)) return 'port';",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -957,8 +957,8 @@
   {
     "name": "EG6C-every-writer-a-blender",
     "file": "tools/fragBake.mjs",
-    "old": "  if (names.every((n) => n === FRAG_REF_WRITER)) return 'port';\n",
-    "new": "",
+    "old": "  if (names.every((n) => n === FRAG_REF_WRITER)) return 'port';\n  assertBlenderFill(tree);",
+    "new": "  assertBlenderFill(tree);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -966,8 +966,8 @@
   {
     "name": "EG6C-the-copy-suffix-kept",
     "file": "tools/fragBake.mjs",
-    "old": "const t = name.replace(BLENDER_COPY, '').split('.');",
-    "new": "const t = name.split('.');",
+    "old": "  const t = name.replace(BLENDER_COPY, '').split('.');",
+    "new": "  const t = name.split('.');",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -975,8 +975,8 @@
   {
     "name": "EG6C-any-label",
     "file": "tools/fragBake.mjs",
-    "old": "const label = (s) => (s !== undefined && LABEL.test(s) ? s",
-    "new": "const label = (s) => (s !== undefined ? s",
+    "old": "  const label = (s) =>\n    s !== undefined && LABEL.test(s) ? s : bad(`\"${s ?? ''}\" is no label (letters, digits, _ and -)`);",
+    "new": "  const label = (s) => (s !== undefined ? s : bad(`\"${s ?? ''}\" is no label (letters, digits, _ and -)`));",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -984,8 +984,8 @@
   {
     "name": "EG6C-any-word-count",
     "file": "tools/fragBake.mjs",
-    "old": "const only = (n) => { if (t.length !== n) bad(",
-    "new": "const only = (n) => { if (false) bad(",
+    "old": "    if (t.length !== n) bad(`a ${t[0]} marker is ${n} words`);",
+    "new": "    if (false) bad(`a ${t[0]} marker is ${n} words`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -993,8 +993,8 @@
   {
     "name": "EG6C-any-kind",
     "file": "tools/fragBake.mjs",
-    "old": "const of = (list) => (list.includes(t[1]) ? t[1]",
-    "new": "const of = (list) => (true ? t[1]",
+    "old": "  const of = (list) => (list.includes(t[1]) ? t[1] : bad(`\"${t[1] ?? ''}\" is not one of ${list.join(', ')}`));",
+    "new": "  const of = (list) => (true ? t[1] : bad(`\"${t[1] ?? ''}\" is not one of ${list.join(', ')}`));",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1002,8 +1002,8 @@
   {
     "name": "EG6C-a-clock-word-let-through",
     "file": "tools/fragBake.mjs",
-    "old": "if (!m || !may.includes(m[1])) bad(",
-    "new": "if (!m) bad(",
+    "old": "      if (!m || !may.includes(m[1]))",
+    "new": "      if (!m)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1011,8 +1011,8 @@
   {
     "name": "EG6C-a-word-twice",
     "file": "tools/fragBake.mjs",
-    "old": "if (m[1] in o) bad(",
-    "new": "if (false) bad(",
+    "old": "      if (m[1] in o) bad(`\"${m[1]}\" said twice`);",
+    "new": "      if (false) bad(`\"${m[1]}\" said twice`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1020,8 +1020,8 @@
   {
     "name": "EG6C-a-wisp-with-no-cycle",
     "file": "tools/fragBake.mjs",
-    "old": "if (EG_HAZARD_SHAPES[k] === 'path' && !('per' in clock)) bad(",
-    "new": "if (false) bad(",
+    "old": "      if (EG_HAZARD_SHAPES[k] === 'path' && !('per' in clock)) bad(`a ${k} says its cycle (per<ms>)`);",
+    "new": "      if (false) bad(`a ${k} says its cycle (per<ms>)`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1029,8 +1029,8 @@
   {
     "name": "EG6C-a-piece-s-need-unasked",
     "file": "tools/fragBake.mjs",
-    "old": "for (const w of c.need) if (!(w in clock)) bad(",
-    "new": "for (const w of c.need) if (false) bad(",
+    "old": "      for (const w of c.need) if (!(w in clock)) bad(`a ${k} says its ${w}<n>`);",
+    "new": "      for (const w of c.need) if (false) bad(`a ${k} says its ${w}<n>`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1038,8 +1038,8 @@
   {
     "name": "EG6C-a-drum-may-say-its-pace",
     "file": "tools/fragBake.mjs",
-    "old": "drum: { need: ['amp'], may: ['ph'] }",
-    "new": "drum: { need: ['amp'], may: ['ph', 'per'] }",
+    "old": "  drum: { need: ['amp'], may: ['ph'] },",
+    "new": "  drum: { need: ['amp'], may: ['ph', 'per'] },",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1047,8 +1047,8 @@
   {
     "name": "EG6C-a-drift-without-its-period",
     "file": "tools/fragBake.mjs",
-    "old": "drift: { need: ['amp', 'per'], may: ['ph'] }",
-    "new": "drift: { need: ['amp'], may: ['ph', 'per'] }",
+    "old": "  drift: { need: ['amp', 'per'], may: ['ph'] },",
+    "new": "  drift: { need: ['amp'], may: ['ph', 'per'] },",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1056,7 +1056,7 @@
   {
     "name": "EG6C-a-socket-in-any-word",
     "file": "tools/fragBake.mjs",
-    "old": "if (t[1] !== 'out') bad('a socket is socket.in or socket.out.<label>');",
+    "old": "      if (t[1] !== 'out') bad('a socket is socket.in or socket.out.<label>');",
     "new": "",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
@@ -1074,8 +1074,8 @@
   {
     "name": "EG6C-a-hole-let-be",
     "file": "tools/fragBake.mjs",
-    "old": "for (const [u, vs] of next) if (vs.length !== 2) throw",
-    "new": "for (const [u, vs] of next) if (vs.length > 4) throw",
+    "old": "    if (vs.length !== 2)",
+    "new": "    if (vs.length > 4)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1083,8 +1083,8 @@
   {
     "name": "EG6C-another-loop-let-be",
     "file": "tools/fragBake.mjs",
-    "old": "if (loop.length !== next.size) throw",
-    "new": "if (false) throw",
+    "old": "  if (loop.length !== next.size)",
+    "new": "  if (false)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1092,7 +1092,7 @@
   {
     "name": "EG6C-an-outline-wound-backward",
     "file": "tools/fragBake.mjs",
-    "old": "if (egFragArea2(ring.map((p) => [p[0], p[2]])) < 0) ring.reverse();",
+    "old": "  if (egFragArea2(ring.map((p) => [p[0], p[2]])) < 0) ring.reverse();",
     "new": "",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
@@ -1101,8 +1101,8 @@
   {
     "name": "EG6C-the-line-s-corners-kept",
     "file": "tools/fragBake.mjs",
-    "old": "{ ring.splice(i, 1); changed = true; break; }",
-    "new": "{ changed = false; break; }",
+    "old": "        ring.splice(i, 1);\n        changed = true;",
+    "new": "        changed = false;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1110,8 +1110,8 @@
   {
     "name": "EG6C-a-tilted-floor-let-be",
     "file": "tools/fragBake.mjs",
-    "old": "if (Math.max(...ys) - Math.min(...ys) > 1) throw",
-    "new": "if (Math.max(...ys) - Math.min(...ys) > 10) throw",
+    "old": "  if (Math.max(...ys) - Math.min(...ys) > 1)",
+    "new": "  if (Math.max(...ys) - Math.min(...ys) > 10)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1119,8 +1119,8 @@
   {
     "name": "EG6C-any-four-corners-a-rectangle",
     "file": "tools/fragBake.mjs",
-    "old": "if (Math.abs(e[0][0] * e[1][0] + e[0][1] * e[1][1]) > (0.02 + 1.5 / Math.min(L[0], L[1])) * L[0] * L[1] || Math.abs(L[0] - L[2]) > 2 || Math.abs(L[1] - L[3]) > 2) throw",
-    "new": "if (false) throw",
+    "old": "  if (\n    Math.abs(e[0][0] * e[1][0] + e[0][1] * e[1][1]) > (0.02 + 1.5 / Math.min(L[0], L[1])) * L[0] * L[1] ||\n    Math.abs(L[0] - L[2]) > 2 ||\n    Math.abs(L[1] - L[3]) > 2\n  )\n    throw new Error(`${o.name}: not a rectangle`);",
+    "new": "  if (false) throw new Error(`${o.name}: not a rectangle`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1128,8 +1128,8 @@
   {
     "name": "EG6C-the-length-taken-for-the-width",
     "file": "tools/fragBake.mjs",
-    "old": "const alongFirst = L[0] < L[1];",
-    "new": "const alongFirst = L[0] > L[1];",
+    "old": "  const alongFirst = L[0] < L[1];",
+    "new": "  const alongFirst = L[0] > L[1];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1137,8 +1137,8 @@
   {
     "name": "EG6C-the-far-end-first",
     "file": "tools/fragBake.mjs",
-    "old": "if (b[2] < a[2] || (b[2] === a[2] && b[0] < a[0])) [a, b] = [b, a];",
-    "new": "if (b[2] > a[2]) [a, b] = [b, a];",
+    "old": "  if (b[2] < a[2] || (b[2] === a[2] && b[0] < a[0])) [a, b] = [b, a];",
+    "new": "  if (b[2] > a[2]) [a, b] = [b, a];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1146,8 +1146,8 @@
   {
     "name": "EG6C-a-lane-across-the-other-way",
     "file": "tools/fragBake.mjs",
-    "old": "if (b[2] < a[2] || (b[2] === a[2] && b[0] < a[0])) [a, b] = [b, a];",
-    "new": "if (b[2] < a[2]) [a, b] = [b, a];",
+    "old": "  if (b[2] < a[2] || (b[2] === a[2] && b[0] < a[0])) [a, b] = [b, a];",
+    "new": "  if (b[2] < a[2]) [a, b] = [b, a];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1155,8 +1155,8 @@
   {
     "name": "EG6C-an-oval-a-disc",
     "file": "tools/fragBake.mjs",
-    "old": "if (Math.abs((b[3] - b[0]) - (b[5] - b[2])) > FRAG_ROUND_CM) throw",
-    "new": "if (false) throw",
+    "old": "  if (Math.abs(b[3] - b[0] - (b[5] - b[2])) > FRAG_ROUND_CM)\n    throw new Error(`${o.name}: not a disc (${b[3] - b[0]} by ${b[5] - b[2]} cm)`);",
+    "new": "  if (false) throw new Error(`${o.name}: not a disc (${b[3] - b[0]} by ${b[5] - b[2]} cm)`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1164,8 +1164,8 @@
   {
     "name": "EG6C-a-lane-not-drawn-in",
     "file": "tools/fragBake.mjs",
-    "old": "k = len > r.w ? r.w / 2 / len : 0.5;",
-    "new": "k = 0;",
+    "old": "    k = len > r.w ? r.w / 2 / len : 0.5;",
+    "new": "    k = 0;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1173,8 +1173,8 @@
   {
     "name": "EG6C-two-sizes-one",
     "file": "tools/fragBake.mjs",
-    "old": "if (Math.max(...sizes) - Math.min(...sizes) > FRAG_ROUND_CM) throw",
-    "new": "if (false) throw",
+    "old": "  if (Math.max(...sizes) - Math.min(...sizes) > FRAG_ROUND_CM)\n    throw new Error(`${o.name}: its parts are not one size (${sizes.join(', ')} cm)`);",
+    "new": "  if (false) throw new Error(`${o.name}: its parts are not one size (${sizes.join(', ')} cm)`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1182,8 +1182,8 @@
   {
     "name": "EG6C-one-of-several-taken",
     "file": "tools/fragBake.mjs",
-    "old": "if (isles.length !== 1) throw new Error(`${o.name}: a ${mk.of} is one ${shape}",
-    "new": "if (false) throw new Error(`${o.name}: a ${mk.of} is one ${shape}",
+    "old": "    if (isles.length !== 1) throw new Error(`${o.name}: a ${mk.of} is one ${shape} (${isles.length} parts)`);",
+    "new": "    if (false) throw new Error(`${o.name}: a ${mk.of} is one ${shape} (${isles.length} parts)`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1191,8 +1191,8 @@
   {
     "name": "EG6C-the-cascade-unordered",
     "file": "tools/fragBake.mjs",
-    "old": ".sort((a, b) => (a.line[1] + a.line[3]) - (b.line[1] + b.line[3]) || (a.line[0] + a.line[2]) - (b.line[0] + b.line[2]));",
-    "new": ";",
+    "old": "    const rs = isles\n      .map((f) => {\n        const ring = outlineOf(o, pts, f);\n        return { ...rectangleOf(o, ring), y: flatY(o, ring) };\n      })\n      .sort(\n        (a, b) => a.line[1] + a.line[3] - (b.line[1] + b.line[3]) || a.line[0] + a.line[2] - (b.line[0] + b.line[2]),\n      );",
+    "new": "    const rs = isles.map((f) => {\n      const ring = outlineOf(o, pts, f);\n      return { ...rectangleOf(o, ring), y: flatY(o, ring) };\n    });",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1200,8 +1200,8 @@
   {
     "name": "EG6C-the-spots-unordered",
     "file": "tools/fragBake.mjs",
-    "old": "const ds = isles.map((f) => discOf(o, pts, f)).sort((a, b) => a.z - b.z || a.x - b.x);",
-    "new": "const ds = isles.map((f) => discOf(o, pts, f));",
+    "old": "    const ds = isles.map((f) => discOf(o, pts, f)).sort((a, b) => a.z - b.z || a.x - b.x);",
+    "new": "    const ds = isles.map((f) => discOf(o, pts, f));",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1209,8 +1209,8 @@
   {
     "name": "EG6C-a-path-s-swing-whole",
     "file": "tools/fragBake.mjs",
-    "old": "Math.round((b[3] - b[0]) / 2), Math.round((b[5] - b[2]) / 2)]; h.y = b[1];",
-    "new": "b[3] - b[0], Math.round((b[5] - b[2]) / 2)]; h.y = b[1];",
+    "old": "    h.path = [\n      Math.round((b[0] + b[3]) / 2),\n      Math.round((b[2] + b[5]) / 2),\n      Math.round((b[3] - b[0]) / 2),\n      Math.round((b[5] - b[2]) / 2),\n    ];",
+    "new": "    h.path = [Math.round((b[0] + b[3]) / 2), Math.round((b[2] + b[5]) / 2), b[3] - b[0], Math.round((b[5] - b[2]) / 2)];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1218,8 +1218,8 @@
   {
     "name": "EG6C-the-mist-at-its-top",
     "file": "tools/fragBake.mjs",
-    "old": "else if (shape === 'level') h.y = extentOf(pts)[1];",
-    "new": "else if (shape === 'level') h.y = extentOf(pts)[4] + 1;",
+    "old": "  } else if (shape === 'level') h.y = extentOf(pts)[1];",
+    "new": "  } else if (shape === 'level') h.y = extentOf(pts)[4] + 1;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1227,8 +1227,8 @@
   {
     "name": "EG6C-a-ring-taken-for-a-reach",
     "file": "tools/fragBake.mjs",
-    "old": "if (shape === 'disc') h.r = d.r; else h.ring = d.r;",
-    "new": "h.r = d.r;",
+    "old": "    if (shape === 'disc') h.r = d.r;\n    else h.ring = d.r;",
+    "new": "    h.r = d.r;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1236,8 +1236,8 @@
   {
     "name": "EG6C-a-drum-at-its-own-pace",
     "file": "tools/fragBake.mjs",
-    "old": "if (mk.of === 'drum') piece.period = Math.trunc((4 * piece.amp * 1000) / (EG_DRUM_MPS * 100));",
-    "new": "",
+    "old": "  if (mk.of === 'drum') piece.period = Math.trunc((4 * piece.amp * 1000) / (EG_DRUM_MPS * 100)); // net/eliteGates/egFragLaw.js egFragPassage's roll",
+    "new": "  // net/eliteGates/egFragLaw.js egFragPassage's roll",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1245,7 +1245,7 @@
   {
     "name": "EG6C-a-moon-with-no-period",
     "file": "tools/fragBake.mjs",
-    "old": "if (mk.of === 'moon') piece.period = EG_MOON_EVERY_S * 1000;",
+    "old": "  if (mk.of === 'moon') piece.period = EG_MOON_EVERY_S * 1000;",
     "new": "",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
@@ -1254,8 +1254,8 @@
   {
     "name": "EG6C-the-slag-s-lanes-unspread",
     "file": "tools/fragBake.mjs",
-    "old": "if (mk.of === 'slag') { piece.amp = EG_SLAG_LANE_CM; piece.period = EG_SLAG_CYCLE_S * 1000; }",
-    "new": "if (mk.of === 'slag') { piece.period = EG_SLAG_CYCLE_S * 1000; }",
+    "old": "    piece.amp = EG_SLAG_LANE_CM;\n    piece.period = EG_SLAG_CYCLE_S * 1000;",
+    "new": "    piece.period = EG_SLAG_CYCLE_S * 1000;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1263,8 +1263,8 @@
   {
     "name": "EG6C-the-piece-s-top-its-foot",
     "file": "tools/fragBake.mjs",
-    "old": "x, y: b[4], z, w, d, amp: c.amp ?? 0",
-    "new": "x, y: b[1], z, w, d, amp: c.amp ?? 0",
+    "old": "    y: b[4],",
+    "new": "    y: b[1],",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1272,8 +1272,8 @@
   {
     "name": "EG6C-two-mouths",
     "file": "tools/fragBake.mjs",
-    "old": "if (mouths.length !== 1) throw",
-    "new": "if (mouths.length < 1) throw",
+    "old": "  if (mouths.length !== 1) throw new Error(`a fragment has one mouth (socket.in) and this scene has ${mouths.length}`);",
+    "new": "  if (mouths.length < 1) throw new Error(`a fragment has one mouth (socket.in) and this scene has ${mouths.length}`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1281,8 +1281,8 @@
   {
     "name": "EG6C-the-origin-the-mouth-s-top",
     "file": "tools/fragBake.mjs",
-    "old": "const origin = [(mb[0][0] + mb[0][1]) / 2, (mb[1][0] + mb[1][1]) / 2, mb[2][0]];",
-    "new": "const origin = [(mb[0][0] + mb[0][1]) / 2, (mb[1][0] + mb[1][1]) / 2, mb[2][1]];",
+    "old": "  const origin = [(mb[0][0] + mb[0][1]) / 2, (mb[1][0] + mb[1][1]) / 2, mb[2][0]];",
+    "new": "  const origin = [(mb[0][0] + mb[0][1]) / 2, (mb[1][0] + mb[1][1]) / 2, mb[2][1]];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1290,8 +1290,8 @@
   {
     "name": "EG6C-no-mirror",
     "file": "tools/fragBake.mjs",
-    "old": "const toFrag = (p) => [p[0] - origin[0], p[2] - origin[2], p[1] - origin[1]];",
-    "new": "const toFrag = (p) => [p[0] - origin[0], p[1] - origin[1], p[2] - origin[2]];",
+    "old": "  const toFrag = (p) => [p[0] - origin[0], p[2] - origin[2], p[1] - origin[1]];",
+    "new": "  const toFrag = (p) => [p[0] - origin[0], p[1] - origin[1], p[2] - origin[2]];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1299,8 +1299,8 @@
   {
     "name": "EG6C-an-unknown-kit-baked",
     "file": "tools/fragBake.mjs",
-    "old": "if (!F) throw new Error(`kit ${spec.kit}: no such fragment",
-    "new": "if (false) throw new Error(`kit ${spec.kit}: no such fragment",
+    "old": "  if (!F) throw new Error(`kit ${spec.kit}: no such fragment (net/eliteGates/egFragLaw.js EG_FRAGS)`);",
+    "new": "  if (false) throw new Error(`kit ${spec.kit}: no such fragment (net/eliteGates/egFragLaw.js EG_FRAGS)`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1308,8 +1308,8 @@
   {
     "name": "EG6C-a-socket-lying-down",
     "file": "tools/fragBake.mjs",
-    "old": "if (b[5] - b[2] > 1) throw new Error(`${m.o.name}: a socket stands upright",
-    "new": "if (false) throw new Error(`${m.o.name}: a socket stands upright",
+    "old": "    if (b[5] - b[2] > 1)",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1317,8 +1317,8 @@
   {
     "name": "EG6C-an-opening-from-its-middle",
     "file": "tools/fragBake.mjs",
-    "old": "return { x, y: b[1], z: Math.round((b[2] + b[5]) / 2), yaw, w, h: b[4] - b[1] };",
-    "new": "return { x, y: b[1], z: Math.round((b[2] + b[5]) / 2), yaw, w, h: b[4] - b[1] + 1 };",
+    "old": "    return { x, y: b[1], z: Math.round((b[2] + b[5]) / 2), yaw, w, h: b[4] - b[1] };",
+    "new": "    return { x, y: b[1], z: Math.round((b[2] + b[5]) / 2), yaw, w, h: b[4] - b[1] + 1 };",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1335,8 +1335,8 @@
   {
     "name": "EG6C-an-open-marker-at-any-height",
     "file": "tools/fragBake.mjs",
-    "old": "&& f.y >= u.b[1] - T && f.y <= u.b[4] + T);",
-    "new": ");",
+    "old": "      const under = opens.filter(\n        (u) =>\n          [p, q].every((c) => c[0] >= u.b[0] - T && c[0] <= u.b[3] + T && c[1] >= u.b[2] - T && c[1] <= u.b[5] + T) &&\n          f.y >= u.b[1] - T &&\n          f.y <= u.b[4] + T,",
+    "new": "      const under = opens.filter((u) =>\n        [p, q].every((c) => c[0] >= u.b[0] - T && c[0] <= u.b[3] + T && c[1] >= u.b[2] - T && c[1] <= u.b[5] + T),",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1344,8 +1344,8 @@
   {
     "name": "EG6C-a-floor-never-runs-on",
     "file": "tools/fragBake.mjs",
-    "old": "    if (under.length || runsOn) open.push([fi, e]);",
-    "new": "    if (under.length) open.push([fi, e]);",
+    "old": "      if (under.length || runsOn) open.push([fi, e]);",
+    "new": "      if (under.length) open.push([fi, e]);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1353,8 +1353,8 @@
   {
     "name": "EG6C-runs-on-at-any-height",
     "file": "tools/fragBake.mjs",
-    "old": "floors.some((g, gi) => gi !== fi && g.y === f.y && [p, q, mid]",
-    "new": "floors.some((g, gi) => gi !== fi && [p, q, mid]",
+    "old": "      const runsOn = floors.some(\n        (g, gi) => gi !== fi && g.y === f.y && [p, q, mid].every((c) => egFragInPoly(g.poly, c[0], c[1])),\n      );",
+    "new": "      const runsOn = floors.some((g, gi) => gi !== fi && [p, q, mid].every((c) => egFragInPoly(g.poly, c[0], c[1])));",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1362,8 +1362,8 @@
   {
     "name": "EG6C-an-idle-open-marker",
     "file": "tools/fragBake.mjs",
-    "old": "for (const u of opens) if (!u.used) throw",
-    "new": "for (const u of opens) if (false) throw",
+    "old": "    if (!u.used)",
+    "new": "    if (false)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1371,8 +1371,8 @@
   {
     "name": "EG6C-a-node-s-height-unasked",
     "file": "tools/fragBake.mjs",
-    "old": "&& Math.abs(p[1] - n[1]) <= 100 ? i : -1)",
-    "new": "? i : -1)",
+    "old": "        const hit = nodes\n          .map((n, i) => (Math.hypot(p[0] - n[0], p[2] - n[2]) <= n[3] && Math.abs(p[1] - n[1]) <= 100 ? i : -1))\n          .filter((i) => i >= 0);",
+    "new": "        const hit = nodes.map((n, i) => (Math.hypot(p[0] - n[0], p[2] - n[2]) <= n[3] ? i : -1)).filter((i) => i >= 0);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1380,8 +1380,8 @@
   {
     "name": "EG6C-an-edge-meets-two",
     "file": "tools/fragBake.mjs",
-    "old": "if (hit.length !== 1) throw new Error(`${m.o.name}: an end of it meets",
-    "new": "if (hit.length < 1) throw new Error(`${m.o.name}: an end of it meets",
+    "old": "        if (hit.length !== 1)",
+    "new": "        if (hit.length < 1)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1389,8 +1389,8 @@
   {
     "name": "EG6C-an-edge-to-itself",
     "file": "tools/fragBake.mjs",
-    "old": "if (ends[0] === ends[1]) throw new Error(",
-    "new": "if (false) throw new Error(",
+    "old": "      if (ends[0] === ends[1]) throw new Error(`${m.o.name}: both its ends on one node`);",
+    "new": "      if (false) throw new Error(`${m.o.name}: both its ends on one node`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1398,8 +1398,8 @@
   {
     "name": "EG6C-an-edge-unordered",
     "file": "tools/fragBake.mjs",
-    "old": "return ends[0] < ends[1] ? ends : [ends[1], ends[0]];",
-    "new": "return ends;",
+    "old": "      return ends[0] < ends[1] ? ends : [ends[1], ends[0]];",
+    "new": "      return ends;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1407,8 +1407,8 @@
   {
     "name": "EG6C-an-anchor-at-its-top",
     "file": "tools/fragBake.mjs",
-    "old": "anchors[m.mk.of].push([Math.round((b[0] + b[3]) / 2), b[1], Math.round((b[2] + b[5]) / 2)]);",
-    "new": "anchors[m.mk.of].push([Math.round((b[0] + b[3]) / 2), b[4], Math.round((b[2] + b[5]) / 2)]);",
+    "old": "    anchors[m.mk.of].push([Math.round((b[0] + b[3]) / 2), b[1], Math.round((b[2] + b[5]) / 2)]);",
+    "new": "    anchors[m.mk.of].push([Math.round((b[0] + b[3]) / 2), b[4], Math.round((b[2] + b[5]) / 2)]);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1416,8 +1416,8 @@
   {
     "name": "EG6C-a-gap-from-the-mouth",
     "file": "tools/fragBake.mjs",
-    "old": "...groundEnds.map(([, z1]) => (z1 <= near ? z1 : -Infinity)), sockets.in.z",
-    "new": "sockets.in.z",
+    "old": "    const before = Math.max(\n      prev ? prev.z + prev.d / 2 : -Infinity,\n      ...groundEnds.map(([, z1]) => (z1 <= near ? z1 : -Infinity)),\n      sockets.in.z <= near ? sockets.in.z : -Infinity,\n    );",
+    "new": "    const before = Math.max(prev ? prev.z + prev.d / 2 : -Infinity, sockets.in.z <= near ? sockets.in.z : -Infinity);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1425,8 +1425,8 @@
   {
     "name": "EG6C-the-ground-after-from-the-exits",
     "file": "tools/fragBake.mjs",
-    "old": "const after = Math.min(...groundEnds.map(([z0]) => (z0 >= far ? z0 : Infinity)), ...sockets.out",
-    "new": "const after = Math.min(...sockets.out",
+    "old": "    const after = Math.min(\n      ...groundEnds.map(([z0]) => (z0 >= far ? z0 : Infinity)),\n      ...sockets.out.map((s) => (s.z >= far ? s.z : Infinity)),\n    );",
+    "new": "    const after = Math.min(...sockets.out.map((s) => (s.z >= far ? s.z : Infinity)));",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1434,8 +1434,8 @@
   {
     "name": "EG6C-nothing-before-let-be",
     "file": "tools/fragBake.mjs",
-    "old": "if (!(before > -Infinity)) throw",
-    "new": "if (false) throw",
+    "old": "    if (!(before > -Infinity)) throw new Error(`course.${c.kind}: nothing before it to leave from`);",
+    "new": "    if (false) throw new Error(`course.${c.kind}: nothing before it to leave from`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1443,8 +1443,8 @@
   {
     "name": "EG6C-every-piece-ends-a-run",
     "file": "tools/fragBake.mjs",
-    "old": "if (!next || next.z - next.d / 2 > after) {",
-    "new": "if (true) {",
+    "old": "    if (!next || next.z - next.d / 2 > after) {",
+    "new": "    if (true) {",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1452,8 +1452,8 @@
   {
     "name": "EG6C-no-ground-after-let-be",
     "file": "tools/fragBake.mjs",
-    "old": "if (!(after < Infinity)) throw",
-    "new": "if (false) throw",
+    "old": "      if (!(after < Infinity)) throw new Error(`course.${c.kind}: no ground after it to land on`);",
+    "new": "      if (false) throw new Error(`course.${c.kind}: no ground after it to land on`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1461,8 +1461,8 @@
   {
     "name": "EG6C-an-alcove-on-the-line",
     "file": "tools/fragBake.mjs",
-    "old": "if (x === 0) throw new Error(`${m.o.name}: an alcove stands",
-    "new": "if (false) throw new Error(`${m.o.name}: an alcove stands",
+    "old": "    if (x === 0) throw new Error(`${m.o.name}: an alcove stands to one side of the course`);",
+    "new": "    if (false) throw new Error(`${m.o.name}: an alcove stands to one side of the course`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1470,8 +1470,8 @@
   {
     "name": "EG6C-a-light-at-its-foot",
     "file": "tools/fragBake.mjs",
-    "old": "[Math.round((b[0] + b[3]) / 2), Math.round((b[1] + b[4]) / 2), Math.round((b[2] + b[5]) / 2), m.mk.of]",
-    "new": "[Math.round((b[0] + b[3]) / 2), b[1], Math.round((b[2] + b[5]) / 2), m.mk.of]",
+    "old": "    return [Math.round((b[0] + b[3]) / 2), Math.round((b[1] + b[4]) / 2), Math.round((b[2] + b[5]) / 2), m.mk.of];",
+    "new": "    return [Math.round((b[0] + b[3]) / 2), b[1], Math.round((b[2] + b[5]) / 2), m.mk.of];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1479,8 +1479,8 @@
   {
     "name": "EG6C-art-without-normals",
     "file": "tools/fragBake.mjs",
-    "old": "if (!readNormal || !readUv) throw",
-    "new": "if (!readUv) throw",
+    "old": "    if (!readNormal || !readUv)",
+    "new": "    if (!readUv)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1488,8 +1488,8 @@
   {
     "name": "EG6C-art-without-uvs",
     "file": "tools/fragBake.mjs",
-    "old": "if (!readNormal || !readUv) throw",
-    "new": "if (!readNormal) throw",
+    "old": "    if (!readNormal || !readUv)",
+    "new": "    if (!readNormal)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1497,8 +1497,8 @@
   {
     "name": "EG6C-the-normals-unmirrored",
     "file": "tools/fragBake.mjs",
-    "old": "normal: (n) => { const v = o.normal(n); return [v[0], v[2], v[1]]; } });",
-    "new": "normal: (n) => { const v = o.normal(n); return [v[0], v[1], v[2]]; } });",
+    "old": "        return [v[0], v[2], v[1]];",
+    "new": "        return [v[0], v[1], v[2]];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1506,8 +1506,8 @@
   {
     "name": "EG6C-the-copy-suffix-kept-on-a-material",
     "file": "tools/fragBake.mjs",
-    "old": "const dress = name?.replace(BLENDER_COPY, '');",
-    "new": "const dress = name;",
+    "old": "      const dress = name?.replace(BLENDER_COPY, '');",
+    "new": "      const dress = name;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1515,8 +1515,8 @@
   {
     "name": "EG6C-any-material-dress",
     "file": "tools/fragBake.mjs",
-    "old": "if (!dress || !Object.hasOwn(EG_DRESS, dress)) throw",
-    "new": "if (!dress) throw",
+    "old": "      if (!dress || !Object.hasOwn(EG_DRESS, dress))",
+    "new": "      if (!dress)",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1524,8 +1524,8 @@
   {
     "name": "EG6C-the-corners-unrun",
     "file": "tools/fragBake.mjs",
-    "old": "      corner += poly.length;\n",
-    "new": "",
+    "old": "      corner += poly.length;\n      const rec = EG_DRESS[dress];",
+    "new": "      const rec = EG_DRESS[dress];",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1533,8 +1533,8 @@
   {
     "name": "EG6C-the-mirror-s-winding-kept",
     "file": "tools/fragBake.mjs",
-    "old": "byRecord.get(rec).indices.push(ring[a], ring[c], ring[b]); tris++; }",
-    "new": "byRecord.get(rec).indices.push(ring[a], ring[b], ring[c]); tris++; }",
+    "old": "        byRecord.get(rec).indices.push(ring[a], ring[c], ring[b]);",
+    "new": "        byRecord.get(rec).indices.push(ring[a], ring[b], ring[c]);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1542,8 +1542,8 @@
   {
     "name": "EG6C-the-sub-meshes-unsorted",
     "file": "tools/fragBake.mjs",
-    "old": "for (const rec of [...byRecord.keys()].sort((a, b) => a - b)) {",
-    "new": "for (const rec of [...byRecord.keys()]) {",
+    "old": "  for (const rec of [...byRecord.keys()].sort((a, b) => a - b)) {",
+    "new": "  for (const rec of [...byRecord.keys()]) {",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1551,8 +1551,8 @@
   {
     "name": "EG6C-the-collider-s-winding-kept",
     "file": "tools/fragBake.mjs",
-    "old": "for (const vi of [poly[a], poly[c], poly[b]]) collider.push(",
-    "new": "for (const vi of [poly[a], poly[b], poly[c]]) collider.push(",
+    "old": "        for (const vi of [poly[a], poly[c], poly[b]]) collider.push(...toFrag(o.scene[vi]).map(round4));",
+    "new": "        for (const vi of [poly[a], poly[b], poly[c]]) collider.push(...toFrag(o.scene[vi]).map(round4));",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1560,7 +1560,7 @@
   {
     "name": "EG6C-the-box-without-the-art",
     "file": "tools/fragBake.mjs",
-    "old": "for (let i = 0; i < positions.length; i += 3) all.push([cm(positions[i]), cm(positions[i + 1]), cm(positions[i + 2])]);",
+    "old": "  for (let i = 0; i < positions.length; i += 3)\n    all.push([cm(positions[i]), cm(positions[i + 1]), cm(positions[i + 2])]);",
     "new": "",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
@@ -1569,7 +1569,7 @@
   {
     "name": "EG6C-the-box-without-the-swing",
     "file": "tools/fragBake.mjs",
-    "old": "for (const c of course) { const s = egFragSwept(c); all.push([s[0], s[1], s[2]], [s[3], s[4], s[5]]); }",
+    "old": "  for (const c of course) {\n    const s = egFragSwept(c);\n    all.push([s[0], s[1], s[2]], [s[3], s[4], s[5]]);\n  }",
     "new": "",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
@@ -1578,8 +1578,8 @@
   {
     "name": "EG6C-the-box-without-the-sockets",
     "file": "tools/fragBake.mjs",
-    "old": "for (const s of [sockets.in, ...sockets.out]) all.push(",
-    "new": "for (const s of []) all.push(",
+    "old": "  for (const s of [sockets.in, ...sockets.out]) all.push([s.x - s.w / 2, s.y, s.z], [s.x + s.w / 2, s.y + s.h, s.z]);",
+    "new": "  for (const s of []) all.push([s.x - s.w / 2, s.y, s.z], [s.x + s.w / 2, s.y + s.h, s.z]);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1587,8 +1587,8 @@
   {
     "name": "EG6C-the-box-without-the-hazards",
     "file": "tools/fragBake.mjs",
-    "old": "for (const h of hazards) { const p = egFragHazardPlan(h); if (p) all.push(",
-    "new": "for (const h of []) { const p = egFragHazardPlan(h); if (p) all.push(",
+    "old": "  for (const h of hazards) {",
+    "new": "  for (const h of []) {",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1596,8 +1596,8 @@
   {
     "name": "EG6C-a-sky-of-no-ceilings",
     "file": "tools/fragBake.mjs",
-    "old": "ceil: ceils.length ? ceils : null,",
-    "new": "ceil: ceils,",
+    "old": "    ceil: ceils.length ? ceils : null,",
+    "new": "    ceil: ceils,",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1605,8 +1605,8 @@
   {
     "name": "EG6C-the-solver-unasked",
     "file": "tools/fragBake.mjs",
-    "old": "if (!P.ok) throw new Error(`${spec.id}: its inner course is not proven",
-    "new": "if (false) throw new Error(`${spec.id}: its inner course is not proven",
+    "old": "    if (!P.ok) throw new Error(`${spec.id}: its inner course is not proven - ${P.why.join('; ')}`);",
+    "new": "    if (false) throw new Error(`${spec.id}: its inner course is not proven - ${P.why.join('; ')}`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1614,8 +1614,8 @@
   {
     "name": "EG6C-the-proof-the-fastest-twice",
     "file": "tools/fragBake.mjs",
-    "old": "crossSlow: Math.round(c.median * 1000), moves: c.n };",
-    "new": "crossSlow: Math.round(c.fast * 1000) + 1, moves: c.n };",
+    "old": "    law.proof = { crossFast: Math.round(c.fast * 1000), crossSlow: Math.round(c.median * 1000), moves: c.n };",
+    "new": "    law.proof = { crossFast: Math.round(c.fast * 1000), crossSlow: Math.round(c.fast * 1000) + 1, moves: c.n };",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1623,8 +1623,8 @@
   {
     "name": "EG6C-the-reader-unasked",
     "file": "tools/fragBake.mjs",
-    "old": "if (faults.length) throw new Error(`${spec.id}: the law half is refused",
-    "new": "if (false) throw new Error(`${spec.id}: the law half is refused",
+    "old": "  if (faults.length) throw new Error(`${spec.id}: the law half is refused - ${faults.join('; ')}`);",
+    "new": "  if (false) throw new Error(`${spec.id}: the law half is refused - ${faults.join('; ')}`);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1632,8 +1632,8 @@
   {
     "name": "EG6C-a-key-a-line-no-more",
     "file": "tools/fragBake.mjs",
-    "old": ".join(',\\n')}\\n}\\n`;",
-    "new": ".join(', ')}\\n}\\n`;",
+    "old": "    .join(',\\n')}\\n}\\n`;",
+    "new": "    .join(', ')}\\n}\\n`;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1641,8 +1641,8 @@
   {
     "name": "EG6C-the-list-calls-art-a-marker",
     "file": "tools/fragBake.mjs",
-    "old": "return `${o.name.padEnd(28)} ${mk ? `${mk.kind}",
-    "new": "return `${o.name.padEnd(28)} ${true ? `${mk?.kind}",
+    "old": "    return `${o.name.padEnd(28)} ${mk ? `${mk.kind}${mk.of ? ` ${mk.of}` : ''}${mk.fight ? ' (fight)' : ''}` : `art: ${[...new Set(o.materials)].join(', ') || 'no material'}`}  ${o.polygons.length} faces`;",
+    "new": "    return `${o.name.padEnd(28)} ${true ? `${mk?.kind}${mk.of ? ` ${mk.of}` : ''}${mk.fight ? ' (fight)' : ''}` : `art: ${[...new Set(o.materials)].join(', ') || 'no material'}`}  ${o.polygons.length} faces`;",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1814,8 +1814,8 @@
   {
     "name": "EG6C-an-int64-off-by-one",
     "file": "tools/fbxWrite.mjs",
-    "old": "b.writeBigInt64LE(BigInt(p.v));",
-    "new": "b.writeBigInt64LE(BigInt(p.v) + 1n);",
+    "old": "    b.writeBigInt64LE(BigInt(p.v));",
+    "new": "    b.writeBigInt64LE(BigInt(p.v) + 1n);",
     "tests": [
       "test/tooling/eg6c_bake.test.js"
     ]
@@ -1823,8 +1823,8 @@
   {
     "name": "EG6C-a-raw-array-said-deflated",
     "file": "tools/fbxWrite.mjs",
-    "old": "meta.writeUInt32LE(0, 4);",
-    "new": "meta.writeUInt32LE(1, 4);",
+    "old": "  meta.writeUInt32LE(0, 4);",
+    "new": "  meta.writeUInt32LE(1, 4);",
     "tests": [
       "test/tooling/eg6c_bake.test.js",
       "test/tooling/fbxmesh.test.js"

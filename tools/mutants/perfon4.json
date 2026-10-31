@@ -20,8 +20,8 @@
   {
     "name": "PERF-ON4-the-plugin-passing-a-missed-needle",
     "file": "tools/frameProbe.mjs",
-    "old": "      if (n !== 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
-    "new": "      if (n > 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
+    "old": "      if (n !== 1)",
+    "new": "      if (n > 1)",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PERF-ON4-the-plugin-passing-a-doubled-needle",
     "file": "tools/frameProbe.mjs",
-    "old": "      if (n !== 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
-    "new": "      if (n < 1) throw new Error(`${name}: ${row.file} needle ${n ? `found ${n} times` : 'missed'}: ${needle.slice(0, 80)}`);",
+    "old": "      if (n !== 1)",
+    "new": "      if (n < 1)",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ],

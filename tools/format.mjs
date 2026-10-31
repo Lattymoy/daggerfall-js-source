@@ -21,9 +21,15 @@ export const formattedFolders = (root = ROOT) => JSON.parse(readFileSync(join(ro
 
 /** Every .js/.mjs file directly in a listed folder, repo-relative and sorted - a subfolder is listed on its own. */
 export function formattedFiles(root = ROOT) {
-  return formattedFolders(root).flatMap((d) => (isFileEntry(d) ? [d] : readdirSync(join(root, d), { withFileTypes: true })
-    .filter((e) => e.isFile() && /\.m?js$/.test(e.name))
-    .map((e) => `${d}/${e.name}`))).sort();
+  return formattedFolders(root)
+    .flatMap((d) =>
+      isFileEntry(d)
+        ? [d]
+        : readdirSync(join(root, d), { withFileTypes: true })
+            .filter((e) => e.isFile() && /\.m?js$/.test(e.name))
+            .map((e) => `${d}/${e.name}`),
+    )
+    .sort();
 }
 
 /** An entry that names one file - a folder whose other files are not formatted yet lists its formatted ones. */
@@ -40,7 +46,10 @@ export function ignoreText(folders) {
       const path = parts.slice(0, i).join('/');
       if (opened.has(path)) continue;
       opened.add(path);
-      if (i === parts.length && isFileEntry(path)) { lines.push(`!/${path}`); continue; }
+      if (i === parts.length && isFileEntry(path)) {
+        lines.push(`!/${path}`);
+        continue;
+      }
       lines.push(`!/${path}/`);
       lines.push(folders.includes(path) ? `/${path}/*/` : `/${path}/*`);
     }
@@ -112,7 +121,8 @@ if (isMainThread && isMain(import.meta.url)) {
     const bad = await unformatted();
     for (const d of missing) console.log(`MISSING  ${d}`);
     for (const f of bad) console.log(`UNFORMATTED  ${f}`);
-    if (!missing.length && !bad.length) console.log(`formatted: ${formattedFiles().length} files in ${formattedFolders().length} folder(s)`);
+    if (!missing.length && !bad.length)
+      console.log(`formatted: ${formattedFiles().length} files in ${formattedFolders().length} folder(s)`);
     process.exitCode = missing.length || bad.length ? 1 : 0;
   } else {
     console.error('usage: node tools/format.mjs --check | --ignore');

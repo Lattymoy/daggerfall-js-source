@@ -2,7 +2,7 @@
   {
     "name": "CI-TIMES-name-unread",
     "file": "tools/fileTimes.mjs",
-    "old": "export const fileEvent = (data, cwd = process.cwd()) => data?.nesting === 0 && !!data.file\n  && repoPath(data.file, cwd) === repoPath(resolve(cwd, String(data.name ?? '')), cwd);",
+    "old": "export const fileEvent = (data, cwd = process.cwd()) =>\n  data?.nesting === 0 &&\n  !!data.file &&\n  repoPath(data.file, cwd) === repoPath(resolve(cwd, String(data.name ?? '')), cwd);",
     "new": "export const fileEvent = (data, cwd = process.cwd()) => data?.nesting === 0 && !!data.file;",
     "tests": [
       "test/tooling/citimes.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "CI-TIMES-any-nesting",
     "file": "tools/fileTimes.mjs",
-    "old": "data?.nesting === 0 && !!data.file",
-    "new": "data?.nesting >= 0 && !!data.file",
+    "old": "  data?.nesting === 0 &&",
+    "new": "  data?.nesting >= 0 &&",
     "tests": [
       "test/tooling/citimes.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CI-TIMES-unrounded",
     "file": "tools/fileTimes.mjs",
-    "old": "[repoPath(ev.data.file, cwd), Math.round(ms)]",
-    "new": "[repoPath(ev.data.file, cwd), ms]",
+    "old": "  return Number.isFinite(ms) && ms >= 0 ? [repoPath(ev.data.file, cwd), Math.round(ms)] : null;",
+    "new": "  return Number.isFinite(ms) && ms >= 0 ? [repoPath(ev.data.file, cwd), ms] : null;",
     "tests": [
       "test/tooling/citimes.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "CI-TIMES-negative-time",
     "file": "tools/fileTimes.mjs",
-    "old": "  return Number.isFinite(ms) && ms >= 0 ?",
-    "new": "  return Number.isFinite(ms) ?",
+    "old": "  return Number.isFinite(ms) && ms >= 0 ? [repoPath(ev.data.file, cwd), Math.round(ms)] : null;",
+    "new": "  return Number.isFinite(ms) ? [repoPath(ev.data.file, cwd), Math.round(ms)] : null;",
     "tests": [
       "test/tooling/citimes.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "CI-TIMES-unsorted",
     "file": "tools/fileTimes.mjs",
-    "old": "Object.fromEntries(Object.keys(all).sort().map(",
-    "new": "Object.fromEntries(Object.keys(all).map(",
+    "old": "  writeFileSync(\n    path,\n    JSON.stringify(\n      Object.fromEntries(\n        Object.keys(all)\n          .sort()\n          .map((k) => [k, all[k]]),\n      ),\n      null,\n      1,\n    ) + '\\n',\n  );",
+    "new": "  writeFileSync(path, JSON.stringify(Object.fromEntries(Object.keys(all).map((k) => [k, all[k]])), null, 1) + '\\n');",
     "tests": [
       "test/tooling/citimes.test.js"
     ],

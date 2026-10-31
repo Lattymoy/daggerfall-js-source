@@ -21,22 +21,57 @@ import { FIGUREHEADS } from '../src/systems/naval/figurehead.js';
 
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
 const mod = process.argv.includes('--mod');
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 const { pool, restore } = mod ? await modShipsPool() : { pool: await freshPool(), restore: () => {} };
 /** A hull's surface as triangles, each mesh's own, and a carving stood on its mount - plain arrays for the page. */
 function scene(hull, n, paint) {
-  const surface = pool.hullSurface(hull), build = hullBuild(hull), pi = plankingOf(surface, build), mount = fitCarving(surface, build);
-  const hullTris = surface.map((m, i) => ({ plank: i === pi, p: Array.from(m.indices, (k) => [m.positions[k * 3], m.positions[k * 3 + 1], m.positions[k * 3 + 2]]).flat() }));
+  const surface = pool.hullSurface(hull),
+    build = hullBuild(hull),
+    pi = plankingOf(surface, build),
+    mount = fitCarving(surface, build);
+  const hullTris = surface.map((m, i) => ({
+    plank: i === pi,
+    p: Array.from(m.indices, (k) => [m.positions[k * 3], m.positions[k * 3 + 1], m.positions[k * 3 + 2]]).flat(),
+  }));
   if (!mount) return { hullTris, mount: null };
-  const m = paintedCarving(FIGUREHEADS[n], paint), M = mount.matrix;
-  const at = (i) => { const x = m.positions[i * 3], y = m.positions[i * 3 + 1], z = m.positions[i * 3 + 2]; return [M[0] * x + M[4] * y + M[8] * z + M[12], M[1] * x + M[5] * y + M[9] * z + M[13], M[2] * x + M[6] * y + M[10] * z + M[14]]; };
-  const dir = (i) => { const x = m.normals[i * 3], y = m.normals[i * 3 + 1], z = m.normals[i * 3 + 2]; return [M[0] * x + M[4] * y + M[8] * z, M[1] * x + M[5] * y + M[9] * z, M[2] * x + M[6] * y + M[10] * z]; };
+  const m = paintedCarving(FIGUREHEADS[n], paint),
+    M = mount.matrix;
+  const at = (i) => {
+    const x = m.positions[i * 3],
+      y = m.positions[i * 3 + 1],
+      z = m.positions[i * 3 + 2];
+    return [
+      M[0] * x + M[4] * y + M[8] * z + M[12],
+      M[1] * x + M[5] * y + M[9] * z + M[13],
+      M[2] * x + M[6] * y + M[10] * z + M[14],
+    ];
+  };
+  const dir = (i) => {
+    const x = m.normals[i * 3],
+      y = m.normals[i * 3 + 1],
+      z = m.normals[i * 3 + 2];
+    return [M[0] * x + M[4] * y + M[8] * z, M[1] * x + M[5] * y + M[9] * z, M[2] * x + M[6] * y + M[10] * z];
+  };
   const groups = m.subMeshes.map((s) => {
     const idx = Array.from(m.indices.slice(s.startIndex, s.startIndex + s.primitiveCount * 3));
-    return { rec: s.textureRecord, p: idx.flatMap(at), n: idx.flatMap(dir), uv: idx.flatMap((i) => [m.uvs[i * 2], m.uvs[i * 2 + 1]]) };
+    return {
+      rec: s.textureRecord,
+      p: idx.flatMap(at),
+      n: idx.flatMap(dir),
+      uv: idx.flatMap((i) => [m.uvs[i * 2], m.uvs[i * 2 + 1]]),
+    };
   });
-  return { hullTris, mount: { at: mount.at, size: mount.size, lean: mount.lean }, groups, build: { bowZ: build.bowZ, aftZ: build.aftZ, top: build.top } };
+  return {
+    hullTris,
+    mount: { at: mount.at, size: mount.size, lean: mount.lean },
+    groups,
+    build: { bowZ: build.bowZ, aftZ: build.aftZ, top: build.top },
+  };
 }
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
@@ -93,9 +128,17 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  }
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
   res.writeHead(200, { 'content-type': extname(f) === '.js' ? 'text/javascript' : 'application/octet-stream' });
   res.end(readFileSync(f));
 });
@@ -103,27 +146,53 @@ await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${server.address().port}/probe/`);
-  await page.waitForFunction(() => window.ready === true, null, { timeout: 20000 }).catch((e) => { throw new Error(`${e.message}: ${errs.join('; ')}`); });
-  await page.evaluate((list) => window.art(list), carvingArt().map(([rec, pic]) => [rec, pic.width, pic.height, Array.from(pic.colors)]));
+  await page
+    .waitForFunction(() => window.ready === true, null, { timeout: 20000 })
+    .catch((e) => {
+      throw new Error(`${e.message}: ${errs.join('; ')}`);
+    });
+  await page.evaluate(
+    (list) => window.art(list),
+    carvingArt().map(([rec, pic]) => [rec, pic.width, pic.height, Array.from(pic.colors)]),
+  );
   const hulls = mod ? [1, 4] : [1, 2, 3, 4];
   for (const hull of hulls) {
     for (let n = 1; n < FIGUREHEADS.length; n++) {
-      const paint = n % 3 === 1 ? 0 : n % 3 === 2 ? 2 : 5;   // as built, crimson, Bay blue in turn
+      const paint = n % 3 === 1 ? 0 : n % 3 === 2 ? 2 : 5; // as built, crimson, Bay blue in turn
       const s = scene(hull, n, paint);
-      check(`hull ${hull}: a mount at her stem`, !!s.mount, s.mount ? `at ${s.mount.at.map((v) => v.toFixed(2))}, size ${s.mount.size.toFixed(2)}` : '');
+      check(
+        `hull ${hull}: a mount at her stem`,
+        !!s.mount,
+        s.mount ? `at ${s.mount.at.map((v) => v.toFixed(2))}, size ${s.mount.size.toFixed(2)}` : '',
+      );
       if (!s.mount) continue;
-      const S = s.mount.size, a = s.mount.at;
+      const S = s.mount.size,
+        a = s.mount.at;
       // from her starboard bow, a few of its sizes off, and looking at it
-      const eye = [a[0] + 3.2 * S, a[1] + 0.9 * S, a[2] + 2.6 * S], centre = [0, a[1] + 0.45 * S, a[2] + 0.45 * S];
+      const eye = [a[0] + 3.2 * S, a[1] + 0.9 * S, a[2] + 2.6 * S],
+        centre = [0, a[1] + 0.45 * S, a[2] + 0.45 * S];
       const r = await page.evaluate(({ s, eye, centre }) => window.carved(s, { eye, centre }), { s, eye, centre });
       check(`hull ${hull} ${FIGUREHEADS[n]}: no GL error`, r.error === 0, `error ${r.error}`);
-      check(`hull ${hull} ${FIGUREHEADS[n]}: drawn where it stands, a share of the frame`, r.changed > 640 * 480 * 0.02, `${r.changed} pixels`);
-      if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, `${mod ? 'mod-' : ''}hull${hull}-${FIGUREHEADS[n]}.png`) });
-      if (n === 1 && shotsAt) {   // and the whole of her, from abeam her bow
+      check(
+        `hull ${hull} ${FIGUREHEADS[n]}: drawn where it stands, a share of the frame`,
+        r.changed > 640 * 480 * 0.02,
+        `${r.changed} pixels`,
+      );
+      if (shotsAt)
+        await page
+          .locator('#c')
+          .screenshot({ path: join(shotsAt, `${mod ? 'mod-' : ''}hull${hull}-${FIGUREHEADS[n]}.png`) });
+      if (n === 1 && shotsAt) {
+        // and the whole of her, from abeam her bow
         const L = s.build.bowZ - s.build.aftZ;
-        await page.evaluate(({ s, eye, centre }) => window.draw(s, { eye, centre, fov: 0.8 }), { s, eye: [L * 0.9, s.build.top * 0.9, a[2] + L * 0.15], centre: [0, s.build.top * 0.35, a[2] - L * 0.35] });
+        await page.evaluate(({ s, eye, centre }) => window.draw(s, { eye, centre, fov: 0.8 }), {
+          s,
+          eye: [L * 0.9, s.build.top * 0.9, a[2] + L * 0.15],
+          centre: [0, s.build.top * 0.35, a[2] - L * 0.35],
+        });
         await page.locator('#c').screenshot({ path: join(shotsAt, `${mod ? 'mod-' : ''}hull${hull}-whole.png`) });
       }
     }
