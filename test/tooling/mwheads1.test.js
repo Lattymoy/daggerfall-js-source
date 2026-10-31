@@ -269,7 +269,7 @@ test('MW-HEADS1: the Breton men\'s pools are the port\'s own wherever a PLAYER\'
   const her = playerBodyRows(data, 'breton', true, { faceIndex: 5 });
   assert.equal(her.find((r) => r.slot === 'head').record.id, 'b_n_breton_f_head_01');
   // the viewer's face sheet - the page the table is authored against - sheets no race and sex the port's own stand for
-  assert.match(rd('src/tools/mwViewer.js'), /\n {6}if \(ownFacePools\(race\.id, female\)\) \{ own\.push\(`\$\{race\.id\} \$\{female \? 'female' : 'male'\}`\); continue; \}\n/);
+  assert.match(rd('src/tools/mwViewer.js'), /if \(ownFacePools\(race\.id, female\)\) \{\n\s*own\.push\(`\$\{race\.id\} \$\{female \? 'female' : 'male'\}`\);\n\s*continue;\n\s*\}/);
 });
 
 test('MW-HEADS1: through the binder a retail head takes - every head and hair a rigid part under the Head node, unmirrored, its own geometry, no note', async () => {

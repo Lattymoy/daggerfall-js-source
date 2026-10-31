@@ -371,8 +371,8 @@
   {
     "name": "ROOMS-the-main-way-unmarked",
     "file": "src/tools/spireMap.js",
-    "old": "main: onMain.has(`${l.a}:${l.b}`) }));",
-    "new": "main: false }));",
+    "old": "  const links = R.links.map((l) => ({\n    a: R.nodes[l.a],\n    b: R.nodes[l.b],\n    kind: l.kind,\n    road: l.road,\n    main: onMain.has(`${l.a}:${l.b}`),\n  }));",
+    "new": "  const links = R.links.map((l) => ({ a: R.nodes[l.a], b: R.nodes[l.b], kind: l.kind, road: l.road, main: false }));",
     "tests": [
       "test/net/eliteGates/law9_rooms.test.js"
     ]

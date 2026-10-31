@@ -82,8 +82,8 @@
   {
     "name": "MWHEADS1-the-viewer-sheets-the-data",
     "file": "src/tools/mwViewer.js",
-    "old": "      if (ownFacePools(race.id, female)) { own.push(`${race.id} ${female ? 'female' : 'male'}`); continue; }\n",
-    "new": "",
+    "old": "      if (ownFacePools(race.id, female)) {\n        own.push(`${race.id} ${female ? 'female' : 'male'}`);\n        continue;\n      }\n      const heads = pool(race.id, female, 0);",
+    "new": "      const heads = pool(race.id, female, 0);",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],

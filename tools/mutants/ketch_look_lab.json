@@ -74,8 +74,8 @@
   {
     "name": "KTL-top-out-in-the-shaft",
     "file": "src/tools/ketchLabViews.js",
-    "old": "'top-out': Object.freeze({ at: Object.freeze([12.6, 17.7, 53.6]), yaw: 55, pitch: -8 }),",
-    "new": "'top-out': Object.freeze({ at: Object.freeze([9, 17.7, 57]), yaw: 55, pitch: -8 }),",
+    "old": "  'top-out': Object.freeze({ at: Object.freeze([12.6, 17.7, 53.6]), yaw: 55, pitch: -8 }),",
+    "new": "  'top-out': Object.freeze({ at: Object.freeze([9, 17.7, 57]), yaw: 55, pitch: -8 }),",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]

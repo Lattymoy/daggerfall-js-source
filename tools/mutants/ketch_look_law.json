@@ -283,8 +283,8 @@
   {
     "name": "KTL3-a-cradle-knob-unread",
     "file": "src/tools/ketchLabLink.js",
-    "old": "spotAt(cr[j] ?? (j === 2 ? 10 : 1), now0)",
-    "new": "spotAt(j === 2 ? 10 : 1, now0)",
+    "old": "      cr: Array.from({ length: 6 }, (_, j) => spotAt(cr[j] ?? (j === 2 ? 10 : 1), now0)),",
+    "new": "      cr: Array.from({ length: 6 }, (_, j) => spotAt(j === 2 ? 10 : 1, now0)),",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "KTL3-a-sections-moment-turned",
     "file": "src/tools/ketchLabLink.js",
-    "old": "const at = now + Math.round(s * 1000); return { k: clamp(Math.round(k), 0, 7), at,",
-    "new": "const at = now - Math.round(s * 1000); return { k: clamp(Math.round(k), 0, 7), at,",
+    "old": "      const at = now + Math.round(s * 1000);",
+    "new": "      const at = now - Math.round(s * 1000);",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "KTL3-a-lab-blow-unfloored",
     "file": "src/tools/ketchLabLink.js",
-    "old": "const wu = egFloorWindup(Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1)), s);",
-    "new": "const wu = Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1));",
+    "old": "  const wu = egFloorWindup(Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1)), s);",
+    "new": "  const wu = Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1));",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "KTL3-the-lab-waves-left-off",
     "file": "src/tools/ketchLabLink.js",
-    "old": "  if (A.wave) { const V = A.wave;",
-    "new": "  if (false) { const V = A.wave;",
+    "old": "  if (A.wave) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]

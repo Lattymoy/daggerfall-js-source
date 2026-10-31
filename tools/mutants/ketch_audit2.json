@@ -102,8 +102,8 @@
   {
     "name": "KT2-the-lab-waves-three",
     "file": "src/tools/ketchLabLink.js",
-    "old": "wv: clamp(Math.round(num(p.get('wv'), 0)), 0, KT_WATCH_WAVES),",
-    "new": "wv: clamp(Math.round(num(p.get('wv'), 0)), 0, 3),",
+    "old": "    wv: clamp(Math.round(num(p.get('wv'), 0)), 0, KT_WATCH_WAVES),",
+    "new": "    wv: clamp(Math.round(num(p.get('wv'), 0)), 0, 3),",
     "note": "The lab's waves stop at three.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "KT2-the-lab-old-need",
     "file": "src/tools/ketchLabLink.js",
-    "old": "num(p.get('nd'), engineNeeds(KT_LAB_CREW))",
-    "new": "num(p.get('nd'), 5)",
+    "old": "  const nd = clamp(Math.round(num(p.get('nd'), engineNeeds(KT_LAB_CREW))), 0, 7); // AUDIT KETCH II L5-6: the engine's appetite for the lab's crew (5 was KETCH-LONGER's before)",
+    "new": "  const nd = clamp(Math.round(num(p.get('nd'), 5)), 0, 7); // AUDIT KETCH II L5-6: the engine's appetite for the lab's crew (5 was KETCH-LONGER's before)",
     "note": "The lab's engine at the old appetite.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
