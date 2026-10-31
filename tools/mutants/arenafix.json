@@ -328,8 +328,8 @@
   {
     "name": "ARENAFIX-RESOLUTION-PLAYER-ONLY",
     "file": "src/combat/formulas.js",
-    "old": "    if (_resolutionListeners.size)",
-    "new": "    if (_resolutionListeners.size && attacker.isPlayer)",
+    "old": "    if (_resolutionListeners.size) for (const fn of _resolutionListeners.values())",
+    "new": "    if (_resolutionListeners.size && attacker.isPlayer) for (const fn of _resolutionListeners.values())",
     "tests": [
       "test/systems/arena/arena_fix.test.js"
     ]

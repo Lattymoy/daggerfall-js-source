@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-CC-I5-the-putrid-card-nourishes",
     "file": "src/systems/item/itemInfo.js",
-    "old": "        s >= FOOD_STAGE.Putrid",
-    "new": "        s > FOOD_STAGE.Putrid",
+    "old": "text: s >= FOOD_STAGE.Putrid ? 'Putrid. Too disgusting to force down.'",
+    "new": "text: s > FOOD_STAGE.Putrid ? 'Putrid. Too disgusting to force down.'",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-CC-I7-the-fallback-hands-no-character",
     "file": "src/systems/equip.js",
-    "old": "  if (survivalOn()) for (const it of startingProvisions(entity)) entity.items.push(it);",
-    "new": "  if (survivalOn()) for (const it of startingProvisions()) entity.items.push(it);",
+    "old": "for (const it of startingProvisions(entity)) entity.items.push(it);",
+    "new": "for (const it of startingProvisions()) entity.items.push(it);",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "AUDIT-CC-I7-boons-falls-back-bare",
     "file": "src/systems/equip.js",
-    "old": "import { survivalOn } from './survival/switch.js'; // SURV2: the one switch",
-    "new": "import { survivalTier } from './survival/switch.js';\nconst survivalOn = () => survivalTier() !== 'off' && survivalTier() !== 'boons'; // SURV2: the one switch",
+    "old": "import { survivalOn } from './survival/switch.js';",
+    "new": "import { survivalTier } from './survival/switch.js'; const survivalOn = () => survivalTier() !== 'off' && survivalTier() !== 'boons';",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],

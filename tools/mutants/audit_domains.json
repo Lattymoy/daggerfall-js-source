@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-DOMAINS-S4-a-line-of-nothing",
     "file": "server-account/src/castles.js",
-    "old": "        AND MIN(?3, ?4 - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0)) > 0\n        AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10 AND guild_id = ?1 AND rank IN (${CASTLE_POWERS.sell.join(', ')}))",
-    "new": "        AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10 AND guild_id = ?1 AND rank IN (${CASTLE_POWERS.sell.join(', ')}))",
+    "old": "        AND MIN(?3, ?4 - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?1), 0)) > 0\n        AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10",
+    "new": "        AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?10",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-DOMAINS-S5-the-row-forgets",
     "file": "server-account/src/castles.js",
-    "old": "  if (\n    await db\n      .prepare('SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?2')\n      .bind(player.id, `${rid}:castle`)\n      .first()\n  )\n    return { ok: true, repeat: true, region, ...(await castleViewOf(db, g, Number(a.me.rank), nowS)) };",
-    "new": "  if (false) return { ok: true, repeat: true, region, ...(await castleViewOf(db, g, Number(a.me.rank), nowS)) };",
+    "old": "  if (await db.prepare('SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?2').bind(player.id, `${rid}:castle`).first()) return",
+    "new": "  if (false) return",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-DOMAINS-S6-sold-unheld",
     "file": "server-account/src/castles.js",
-    "old": "      WHERE EXISTS (SELECT 1 FROM guild_castles c WHERE c.region = ?2 AND c.guild_id = ?1 AND ${HELD_SQL('c')})",
-    "new": "      WHERE EXISTS (SELECT 1 FROM guild_castles c WHERE c.region = ?2 AND c.guild_id = ?1)",
+    "old": "WHERE EXISTS (SELECT 1 FROM guild_castles c WHERE c.region = ?2 AND c.guild_id = ?1 AND ${HELD_SQL('c')})",
+    "new": "WHERE EXISTS (SELECT 1 FROM guild_castles c WHERE c.region = ?2 AND c.guild_id = ?1)",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-DOMAINS-R2-any-key-sold",
     "file": "server-account/src/castles.js",
-    "old": "  if (!castleKeyOk(Number(hold.key))) return { error: 'castle-none' }; // AUDIT DOMAINS R2: a castle the relay admits its guild to",
-    "new": "  // AUDIT DOMAINS R2: a castle the relay admits its guild to",
+    "old": "  if (!castleKeyOk(Number(hold.key))) return { error: 'castle-none' };",
+    "new": "",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-DOMAINS-C3-the-repeat-says-nothing",
     "file": "server-account/src/castles.js",
-    "old": "  if (done)\n    return {\n      ok: true,\n      repeat: true,\n      region,\n      back: Number(done.amount),\n      ...(await castleViewOf(db, g, Number(a.me.rank), nowS)),\n    };",
-    "new": "  if (done) return { ok: true, repeat: true, region, ...(await castleViewOf(db, g, Number(a.me.rank), nowS)) };",
+    "old": "return { ok: true, repeat: true, region, back: Number(done.amount),",
+    "new": "return { ok: true, repeat: true, region,",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

@@ -232,8 +232,8 @@
   {
     "name": "SHIPS2-C-a-picture-seeded-off-the-clock",
     "file": "src/world/ships/carrackArt.js",
-    "old": "    seed: 0xc52,",
-    "new": "    seed: Math.floor(Math.random() * 1e6),",
+    "old": "ph: 7, seed: 0xc52,",
+    "new": "ph: 7, seed: Math.floor(Math.random() * 1e6),",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "SHIPS2-C-registered-twice",
     "file": "src/world/ships/carrackArt.js",
-    "old": "  if (_registered) return 0;\n  _registered = true;\n  const made = new Map();",
-    "new": "  const made = new Map();",
+    "old": "  if (_registered) return 0;\n  _registered = true;\n",
+    "new": "",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],
@@ -253,7 +253,7 @@
     "name": "SHIPS2-C-the-glow-everywhere",
     "file": "src/world/ships/carrackArt.js",
     "old": "  const k = BANDS.transom.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record);",
-    "new": "  const k = Math.max(\n    0,\n    BANDS.transom.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record),\n  );",
+    "new": "  const k = Math.max(0, BANDS.transom.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record));",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js"
     ],

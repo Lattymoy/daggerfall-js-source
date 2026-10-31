@@ -11,8 +11,8 @@
   {
     "name": "PROMO-NOW-every-review-run-without-the-wait",
     "file": "src/systems/guild/guilds.js",
-    "old": "  if (!waited && !(newRank > m.rank)) return null; // PROMO-NOW: inside the 28 days, a promotion alone\n  // REP6 (the reputation overhaul, 2026-09-29 - \"Guilds: probation below 0, and expulsion only below -10, with a warning",
-    "new": "  // REP6 (the reputation overhaul, 2026-09-29 - \"Guilds: probation below 0, and expulsion only below -10, with a warning",
+    "old": "  if (!waited && !(newRank > m.rank)) return null;   // PROMO-NOW: inside the 28 days, a promotion alone\n",
+    "new": "",
     "tests": [
       "test/systems/guild/fb1015_promonow.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PROMO-NOW-the-line-not-drawn",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "        ...(needs ? [{ type: 'text', rows: needs, scroll: true }] : []),\n        {",
-    "new": "        {",
+    "old": "      blocks: [...(needs ? [{ type: 'text', rows: needs, scroll: true }] : []), { type: 'actions', ",
+    "new": "      blocks: [{ type: 'actions', ",
     "tests": [
       "test/systems/guild/fb1015_promonow.test.js"
     ]

@@ -272,8 +272,8 @@
   {
     "name": "SD20E-T15-the-cast-out-the-hollows",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "export const SD_CAST_OUT_LINE = 'The Hour closes, and the Abyss Dungeon folds in on itself behind you.'; // AUDIT SD III (T15): the player's word for it (ABYSS-NAME) - it said \"the Hollow\"",
-    "new": "export const SD_CAST_OUT_LINE = 'The Hour closes, and the Hollow folds in on itself behind you.'; // AUDIT SD III (T15): the player's word for it (ABYSS-NAME) - it said \"the Hollow\"",
+    "old": "'The Hour closes, and the Abyss Dungeon folds in on itself behind you.'",
+    "new": "'The Hour closes, and the Hollow folds in on itself behind you.'",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SD20E-T15-the-way-back-the-hollows",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  wayBack: 'To the Abyss Dungeon', // AUDIT SD III (T15): the player's word for it",
-    "new": "  wayBack: 'To the Hollow', // AUDIT SD III (T15): the player's word for it",
+    "old": "wayBack: 'To the Abyss Dungeon',",
+    "new": "wayBack: 'To the Hollow',",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]
@@ -345,8 +345,8 @@
     "name": "SD20E-T19-the-region-after-near",
     "file": "src/net/superDungeon/sdLaw.js",
     "note": "WW5 (2026-10-27): re-aimed by content - the law moved with the Hollows' and the stars' lanes (bible/03-World/World-Wide.md WW5).",
-    "old": "  near ? `near ${near}` : region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME; // WW5: a province's Hollow is in its province (`province` - its name)",
-    "new": "  near ? `near ${near}` : region ? `near ${region}` : province ? 'in ' + province : 'near ' + SD_BAY_NAME; // WW5: a province's Hollow is in its province (`province` - its name)",
+    "old": "region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME",
+    "new": "region ? `near ${region}` : province ? 'in ' + province : 'near ' + SD_BAY_NAME",
     "tests": [
       "test/ui/gate/sd20e_text.test.js"
     ]

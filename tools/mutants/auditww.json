@@ -11,8 +11,8 @@
   {
     "name": "AUDITWW-F1-the-discovery-guard",
     "file": "src/systems/discovery.js",
-    "old": "  if (isHallMapId(mapId)) return false;\n  const key = discoveryKeyOf(mapId); // AUDIT TESA II P6",
-    "new": "  const key = discoveryKeyOf(mapId); // AUDIT TESA II P6",
+    "old": "  if (isHallMapId(mapId)) return false;\n  const key = discoveryKeyOf(mapId);",
+    "new": "  const key = discoveryKeyOf(mapId);",
     "tests": [
       "test/world/worldWide/auditww.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDITWW-F1-the-found-guard",
     "file": "src/systems/discovery.js",
-    "old": "  return !isHallMapId(mapId) && _locations.has(discoveryKeyOf(mapId)); // AUDIT TESA II P6",
-    "new": "  return _locations.has(discoveryKeyOf(mapId)); // AUDIT TESA II P6",
+    "old": "return !isHallMapId(mapId) && _locations.has(discoveryKeyOf(mapId));",
+    "new": "return _locations.has(discoveryKeyOf(mapId));",
     "tests": [
       "test/world/worldWide/auditww.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITWW-F1-the-carriage-guard",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "    if (!immersiveTravelLoaded() || !Number.isFinite(mapId) || isHallMapId(mapId)) return false; // AUDIT WW F1: a zone hall's id is no Bay town's",
-    "new": "    if (!immersiveTravelLoaded() || !Number.isFinite(mapId)) return false; // AUDIT WW F1: a zone hall's id is no Bay town's",
+    "old": "!Number.isFinite(mapId) || isHallMapId(mapId)) return false;",
+    "new": "!Number.isFinite(mapId)) return false;",
     "tests": [
       "test/world/worldWide/auditww.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITWW-F2-the-admission-unbounded",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt;",
-    "new": "  return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt;",
+    "old": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt;",
+    "new": "return isGateDay(day) && nowMs >= t.openAt && nowMs < t.sealAt;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITWW-F2-the-hold-unbounded",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
-    "new": "  return isGateDay(day) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
+    "old": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
+    "new": "return isGateDay(day) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDITWW-F2-the-client-lanes-unbounded",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "  const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
-    "new": "  const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres()] : [BAY_THEATRE]);",
+    "old": "[BAY_THEATRE, ...scans.theatres().filter(open)]",
+    "new": "[BAY_THEATRE, ...scans.theatres()]",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

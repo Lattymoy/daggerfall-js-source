@@ -2,8 +2,8 @@
   {
     "name": "TOMBRIDES-tomb-unread",
     "file": "server-account/src/homes.js",
-    "old": "  if (tombRead && answers.shift()?.results?.length) return { error: 'dead' };",
-    "new": "  if (tombRead) answers.shift();",
+    "old": "if (tombRead && answers.shift()?.results?.length) return { error: 'dead' };",
+    "new": "if (tombRead) answers.shift();",
     "tests": [
       "test/systems/online/homes_shed.test.js"
     ],

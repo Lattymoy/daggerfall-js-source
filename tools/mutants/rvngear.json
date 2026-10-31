@@ -182,8 +182,8 @@
   {
     "name": "RVN-GEAR-broken-blade-swung",
     "file": "src/systems/equip.js",
-    "old": "  if (owner && owner.weapon === item) owner.weapon = null;\n  // PCO1: LowerCondition's third parameter, `removeFromCollectionWhenBreaks`",
-    "new": "  // PCO1: LowerCondition's third parameter, `removeFromCollectionWhenBreaks`",
+    "old": "  if (owner && owner.weapon === item) owner.weapon = null;\n",
+    "new": "",
     "tests": [
       "test/systems/revenant/rvngear.test.js"
     ]

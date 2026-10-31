@@ -20,8 +20,8 @@
   {
     "name": "WW2-a-lane-past-the-last",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  gateLaneOf(n) < GATE_LANES &&",
-    "new": "  gateLaneOf(n) <= GATE_LANES &&",
+    "old": "n >= 0 && gateLaneOf(n) < GATE_LANES &&",
+    "new": "n >= 0 && gateLaneOf(n) <= GATE_LANES &&",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WW2-the-stagger-on-the-bays-lane",
     "file": "src/net/gate/gateLaw.js",
-    "old": "export const gateBaseMinute = (n) => gateDayOf(n) * GATE_DAY_MINUTES + gateLaneOf(n) * GATE_LANE_STAGGER;",
-    "new": "export const gateBaseMinute = (n) => gateDayOf(n) * GATE_DAY_MINUTES + (gateLaneOf(n) + 1) * GATE_LANE_STAGGER;",
+    "old": "gateDayOf(n) * GATE_DAY_MINUTES + gateLaneOf(n) * GATE_LANE_STAGGER;",
+    "new": "gateDayOf(n) * GATE_DAY_MINUTES + (gateLaneOf(n) + 1) * GATE_LANE_STAGGER;",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WW2-the-lanes-today-the-bays",
     "file": "src/net/gate/gateLaw.js",
-    "old": "export const gameDayAt = (nowMs, lane = 0) =>\n  Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
-    "new": "export const gameDayAt = (nowMs, lane = 0) => Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
+    "old": "Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);",
+    "new": "Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WW2-the-order-by-number",
     "file": "src/net/gate/gateLaw.js",
-    "old": "export const gateOrder = (a, b) => gateTimes(a).openAt - gateTimes(b).openAt || a - b;",
-    "new": "export const gateOrder = (a, b) => a - b;",
+    "old": "export const gateOrder = (a, b) => (gateTimes(a).openAt - gateTimes(b).openAt) || (a - b);",
+    "new": "export const gateOrder = (a, b) => (a - b);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "WW2-the-scans-generation",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "    if (places.generation() !== gen || land() !== ver) {",
-    "new": "    if (land() !== ver) {",
+    "old": "if (places.generation() !== gen || land() !== ver)",
+    "new": "if (land() !== ver)",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "WW2-the-scans-picture",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "    if (places.generation() !== gen || land() !== ver) {",
-    "new": "    if (places.generation() !== gen) {",
+    "old": "if (places.generation() !== gen || land() !== ver)",
+    "new": "if (places.generation() !== gen)",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "WW2-the-lanes-ungated",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "  const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
-    "new": "  const lanes = () => (scans ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
+    "old": "const lanes = () => (scans && lanesOk() ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
+    "new": "const lanes = () => (scans ? [BAY_THEATRE, ...scans.theatres().filter(open)] : [BAY_THEATRE]);",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "WW2-the-nearest-by-lane",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "      if (d < bestD || !best) {",
-    "new": "      if (!best) {",
+    "old": "if (d < bestD || !best) { best = v; bestD = d; }",
+    "new": "if (!best) { best = v; bestD = d; }",
     "tests": [
       "test/world/worldWide/ww2_gates.test.js"
     ]

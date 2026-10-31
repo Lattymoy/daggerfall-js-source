@@ -17,14 +17,14 @@
 // combat/gun/gunSheet.js), kept for it.
 
 import { contentBox } from './gun/gunSheet.js';
-import { stripCellRect, hardenAlpha, cropImage } from './gun/pistolStrip.js'; // THUNDERLOCK-ART2: the strip's cut - the Pistolet's laws, a leaf's
-import { THUNDERLOCK_STRIP } from './gun/thunderlockStrip.js'; // the strip's shape, a leaf's (the anim table and the machine read it too)
-import { FLASH_LUMA, flashMask, flashBodyPoint } from './gun/gunFlash.js'; // the flash's laws, the Pistolet's too - one home
+import { stripCellRect, hardenAlpha, cropImage } from './gun/pistolStrip.js';   // THUNDERLOCK-ART2: the strip's cut - the Pistolet's laws, a leaf's
+import { THUNDERLOCK_STRIP } from './gun/thunderlockStrip.js';   // the strip's shape, a leaf's (the anim table and the machine read it too)
+import { FLASH_LUMA, flashMask, flashBodyPoint } from './gun/gunFlash.js';   // the flash's laws, the Pistolet's too - one home
 import { decodePng } from '../systems/textureReplacement.js';
-import { toScreenOrder } from '../formats/color32Order.js'; // FIELD-GUN3: HT3's law - a SCREEN QUAD's PNG keeps its rows
+import { toScreenOrder } from '../formats/color32Order.js';   // FIELD-GUN3: HT3's law - a SCREEN QUAD's PNG keeps its rows
 import { WEAPON_TYPES, getWeaponAnims } from './fpsWeapon.js';
-import { GUN_FEEL } from './gun/gunFeel.js'; // FIELD-GUN7: the lab's settled pose, one home
-import { APP_ROOT } from '../systems/appRoot.js'; // AUDIT-THUNDERLOCK F7: the SITE root, not the document's
+import { GUN_FEEL } from './gun/gunFeel.js';   // FIELD-GUN7: the lab's settled pose, one home
+import { APP_ROOT } from '../systems/appRoot.js';   // AUDIT-THUNDERLOCK F7: the SITE root, not the document's
 
 /** The art, off the SITE ROOT rather than the document.
  *
@@ -57,7 +57,7 @@ export const sheetUrl = (file = `art/${THUNDERLOCK_STRIP.file}`) =>
  * the top of the range, goes white-blue, which is what tells the
  * player at a glance that this one is enchanted.
  */
-export const MAGIC_TINT = Object.freeze({ r: 0.42, g: 0.7, b: 1.85, lift: 64, pull: 0.88 });
+export const MAGIC_TINT = Object.freeze({ r: 0.42, g: 0.70, b: 1.85, lift: 64, pull: 0.88 });
 
 export function shimmer(rgba) {
   const d = rgba.data;
@@ -65,7 +65,7 @@ export function shimmer(rgba) {
   for (let i = 0; i < d.length; i += 4) {
     if (d[i + 3] === 0) continue;
     const lum = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / 255;
-    const k = pull * (0.35 + 0.65 * lum); // the bright parts take it hardest
+    const k = pull * (0.35 + 0.65 * lum);   // the bright parts take it hardest
     const glow = lift * lum * lum;
     d[i] = d[i] * (1 - k) + (d[i] * tr + glow) * k;
     d[i + 1] = d[i + 1] * (1 - k) + (d[i + 1] * tg + glow) * k;
@@ -78,27 +78,17 @@ export function shimmer(rgba) {
  *  the glove too, and a gold-plated fist is not a gilded gun. Which pixels are the gun's is the art's own question
  *  (thunderlockGildKeep, below; the Pistolet's pistoletGildKeep); this is the gold they are laid in. */
 /** GOLD LEAF, darkest to brightest - the Gilded rung's ramp (tools/gunIcons.mjs carries the list pictures' own). */
-export const GILD_RAMP = Object.freeze([
-  [52, 30, 4],
-  [110, 72, 10],
-  [172, 122, 24],
-  [226, 176, 46],
-  [252, 214, 90],
-  [255, 240, 160],
-  [255, 255, 236],
-]);
+export const GILD_RAMP = Object.freeze([[52, 30, 4], [110, 72, 10], [172, 122, 24], [226, 176, 46], [252, 214, 90], [255, 240, 160], [255, 255, 236]]);
 const goldAt = (t, out) => {
   const u = Math.max(0, Math.min(1, t)) * (GILD_RAMP.length - 1);
-  const i = Math.min(GILD_RAMP.length - 2, Math.floor(u)),
-    f = u - i;
+  const i = Math.min(GILD_RAMP.length - 2, Math.floor(u)), f = u - i;
   for (let k = 0; k < 3; k++) out[k] = GILD_RAMP[i][k] * (1 - f) + GILD_RAMP[i + 1][k] * f;
   return out;
 };
 /** GILD one frame IN PLACE: every pixel `keep` names (the gun's own) pulled toward the gold ramp by its lightness, the
  *  bright parts pulled hardest; alpha is never written. Answers the frame. */
 export function gildFrame(rgba, keep) {
-  const d = rgba.data,
-    c = [0, 0, 0];
+  const d = rgba.data, c = [0, 0, 0];
   for (let i = 0, n = rgba.width * rgba.height; i < n; i++) {
     const o = i * 4;
     if (!keep[i] || d[o + 3] === 0) continue;
@@ -132,21 +122,10 @@ export function gildFrame(rgba, keep) {
  *     ENCHANTED: the shimmer on the gun and what is drawn bright, the hands left be (thunderlockShimmer).
  */
 export { THUNDERLOCK_STRIP };
-export const THUNDERLOCK_ART = Object.freeze({
-  widthPct: 0.44,
-  scale: (0.44 * 320) / THUNDERLOCK_STRIP.cellW,
-  offset: 0.085,
-  raise: -11,
-  alphaCut: 128,
-}); // THUNDERLOCK-PLACE (the owner, off the lab: 0.085 offset, 44 size, -11 raise)
+export const THUNDERLOCK_ART = Object.freeze({ widthPct: 0.44, scale: 0.44 * 320 / THUNDERLOCK_STRIP.cellW, offset: 0.085, raise: -11, alphaCut: 128 });   // THUNDERLOCK-PLACE (the owner, off the lab: 0.085 offset, 44 size, -11 raise)
 const hsl = (d, o) => {
-  const r = d[o] / 255,
-    g = d[o + 1] / 255,
-    b = d[o + 2] / 255;
-  const mx = Math.max(r, g, b),
-    mn = Math.min(r, g, b),
-    l = (mx + mn) / 2,
-    dl = mx - mn;
+  const r = d[o] / 255, g = d[o + 1] / 255, b = d[o + 2] / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, dl = mx - mn;
   if (!dl) return [0, 0, l];
   const s = l > 0.5 ? dl / (2 - mx - mn) : dl / (mx + mn);
   const h = (mx === r ? (g - b) / dl + (g < b ? 6 : 0) : mx === g ? (b - r) / dl + 2 : (r - g) / dl + 4) * 60;
@@ -158,8 +137,7 @@ const luma = (d, o) => d[o] * 0.299 + d[o + 1] * 0.587 + d[o + 2] * 0.114;
  *  and darker, the sleeve grey) - never the flash: its white-hot texels, nor the flame grown out of its core (flashMask -
  *  the painted orange glow round the ball reads as brass by hue alone), nor the smoke. Pure. */
 export function thunderlockGildKeep(img) {
-  const { width: w, height: h, data } = img,
-    flame = flashMask(img);
+  const { width: w, height: h, data } = img, flame = flashMask(img);
   const keep = new Uint8Array(w * h);
   for (let i = 0; i < w * h; i++) {
     const o = i * 4;
@@ -174,16 +152,11 @@ export function thunderlockGildKeep(img) {
  *  flash, the bolt, the smoke - never the gloves or the grey sleeve, which a whole-frame shimmer turned blue. Answers it. */
 export const TL_SHIMMER_LUMA = 160;
 export function thunderlockShimmer(img) {
-  const keep = thunderlockGildKeep(img),
-    d = img.data;
+  const keep = thunderlockGildKeep(img), d = img.data;
   const sh = shimmer({ width: img.width, height: img.height, data: new Uint8ClampedArray(d) }).data;
   for (let i = 0, n = img.width * img.height; i < n; i++) {
     const o = i * 4;
-    if (d[o + 3] && (keep[i] || luma(d, o) >= TL_SHIMMER_LUMA)) {
-      d[o] = sh[o];
-      d[o + 1] = sh[o + 1];
-      d[o + 2] = sh[o + 2];
-    }
+    if (d[o + 3] && (keep[i] || luma(d, o) >= TL_SHIMMER_LUMA)) { d[o] = sh[o]; d[o + 1] = sh[o + 1]; d[o + 2] = sh[o + 2]; }
   }
   return img;
 }
@@ -195,14 +168,9 @@ export function thunderlockShimmer(img) {
  * @param {{ width: number, height: number, data: ArrayLike<number> }} strip
  */
 export function thunderlockFrames(strip, { gilded = false, magic = false } = {}) {
-  const S = THUNDERLOCK_STRIP,
-    A = THUNDERLOCK_ART;
-  if (!strip?.data || strip.width !== S.frames * S.cellW || strip.height !== S.cellH) return null; // exactly the owner's seven - an eighth frame or a padded strip is refused, never cut short
-  const cells = Array.from({ length: S.frames }, (_, i) => {
-    const c = cropImage(strip, stripCellRect(i, S));
-    hardenAlpha(c, A.alphaCut);
-    return c;
-  });
+  const S = THUNDERLOCK_STRIP, A = THUNDERLOCK_ART;
+  if (!strip?.data || strip.width !== S.frames * S.cellW || strip.height !== S.cellH) return null;   // exactly the owner's seven - an eighth frame or a padded strip is refused, never cut short
+  const cells = Array.from({ length: S.frames }, (_, i) => { const c = cropImage(strip, stripCellRect(i, S)); hardenAlpha(c, A.alphaCut); return c; });
   if (!contentBox(cells[0])) return null;
   const frames = cells.map((c) => {
     const own = gilded || magic ? { width: c.width, height: c.height, data: new Uint8ClampedArray(c.data) } : c;
@@ -220,43 +188,36 @@ export function thunderlockFrames(strip, { gilded = false, magic = false } = {})
  * textures' own size, `muzzle`, and `pose` - the width and raise the rig places it by.
  * @returns the art, or null.
  */
-export async function loadThunderlockArt(
-  renderer,
-  { fetch: fetchStrip = null, decode = decodePng, magic = false, gilded = false } = {},
-) {
+export async function loadThunderlockArt(renderer, { fetch: fetchStrip = null, decode = decodePng, magic = false, gilded = false } = {}) {
   const file = `art/${THUNDERLOCK_STRIP.file}`;
   const bytes = fetchStrip
     ? await fetchStrip(file)
     : await (async () => {
-        const r = await fetch(sheetUrl(file));
-        if (!r.ok) throw new Error(`${file}: ${r.status}`);
-        return new Uint8Array(await r.arrayBuffer());
-      })();
+      const r = await fetch(sheetUrl(file));
+      if (!r.ok) throw new Error(`${file}: ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    })();
   const set = thunderlockFrames(await decode(bytes), { gilded, magic });
   if (!set) return null;
-  const { frames, anchor, union, muzzle } = set,
-    k = THUNDERLOCK_ART.scale;
+  const { frames, anchor, union, muzzle } = set, k = THUNDERLOCK_ART.scale;
   const type = magic ? WEAPON_TYPES.Thunderlock_Magic : WEAPON_TYPES.Thunderlock;
   const look = gilded ? ':gilded' : magic ? ':magic' : '';
   // FIELD-GUN3 (Mac, from play: "The sprite is upside down"): HT3's law - drawFpsWeapon ends in drawScreenQuad, whose
   // rect's top takes v0 with no flip at upload, so a decoded PNG keeps its rows (toScreenOrder, never toColor32's flip)
-  const textures = frames.map((rgba, i) =>
-    renderer.uploadTexture('img', `thunderlock${look}:${i}`, toScreenOrder(rgba)),
-  );
-  const anchorW = anchor.w * k,
-    anchorH = anchor.h * k;
+  const textures = frames.map((rgba, i) => renderer.uploadTexture('img', `thunderlock${look}:${i}`, toScreenOrder(rgba)));
+  const anchorW = anchor.w * k, anchorH = anchor.h * k;
   return {
     weaponType: type,
     anims: getWeaponAnims(type),
     // FIELD-GUN11: THE RECORD IS THE GUN, NOT THE GUN PLUS WHAT HANGS OFF IT - the anchor's size; both draw sites expand
     // it back to the union at the moment of drawing (gunFrameRect)
     records: [
-      { width: anchorW, height: anchorH, frames: [textures[0]] }, // 0: idle
-      { width: anchorW, height: anchorH, frames: textures }, // 1: the fire cycle
+      { width: anchorW, height: anchorH, frames: [textures[0]] },   // 0: idle
+      { width: anchorW, height: anchorH, frames: textures },        // 1: the fire cycle
     ],
     anchor: { x: anchor.x * k, y: anchor.y * k, w: anchorW, h: anchorH },
     unionBox: { x: 0, y: 0, w: union.w * k, h: union.h * k },
-    native: { w: union.w, h: union.h }, // the glow's field is laid in the textures' own texels (AUDIT PISTOLET B4's law)
+    native: { w: union.w, h: union.h },   // the glow's field is laid in the textures' own texels (AUDIT PISTOLET B4's law)
     // FIELD-GUN17: where the barrel ends, as fractions of the UNION box
     muzzle,
     pose: { widthPct: THUNDERLOCK_ART.widthPct, raise: THUNDERLOCK_ART.raise, offset: THUNDERLOCK_ART.offset },

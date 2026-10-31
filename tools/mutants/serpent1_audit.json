@@ -597,8 +597,8 @@
   {
     "name": "AUDIT-SERPENT-B10-hoard-pack",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "  granted: (boss) => `${boss.name}'s hoard is yours. It is in your pack.`,",
-    "new": "  granted: (boss) => `${boss.name}'s hoard is in your hold. And your pack.`,",
+    "old": "granted: (boss) => `${boss.name}'s hoard is yours. It is in your pack.`,",
+    "new": "granted: (boss) => `${boss.name}'s hoard is in your hold. And your pack.`,",
     "tests": [
       "test/net/serpent/serpent1_auditclient.test.js"
     ]

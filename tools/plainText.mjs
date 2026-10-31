@@ -125,6 +125,8 @@ export function commentExcess(text) {
       c = true;
       if (t.includes('*/')) inBlock = false;
     } else if (t.startsWith('//')) c = true;
+    else if (/^\/\*[^]*?\*\/\s*\S/.test(t) && !/^\/\*[^]*?\*\/\s*\/[/*]/.test(t))
+      c = false; // a JSDoc cast opening a code line is code (LEGIBLE 3)
     else if (t.startsWith('/*')) {
       c = true;
       if (!t.includes('*/')) inBlock = true;
@@ -141,8 +143,13 @@ export function commentExcess(text) {
 
 /** A bible page's words past PARAGRAPH_WORDS_MAX, summed over its paragraphs (tables and code blocks aside). A top-level
  *  list item is a paragraph of its own: an index page is one list, and its next entry is not its last one grown. */
+/** A cite into our code (`world.js:"const a = 1"`, a range's `.."}"` with it): an address, not prose - its quote is the
+ *  code's own words, and a layout change that moves the code lengthens the quote (LEGIBLE 3). */
+export const CITE_ANCHOR = /[\w./-]+\.m?js:"(?:[^"\\\n]|\\.)*"(?:\.\."(?:[^"\\\n]|\\.)*")?/g;
+
 export function paragraphExcess(text) {
   return String(text)
+    .replace(CITE_ANCHOR, 'cite')
     .split(/\n\s*\n/)
     .filter((p) => !/^\s*(\||```)/.test(p))
     .flatMap((p) => p.split(/\n(?=(?:[-*+]|\d+\.) )/))

@@ -29,8 +29,8 @@
   {
     "name": "PERF-SAILS4-walk-read-for-a-hung-root",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    const seen = root?.parent === null ? stamp : -1; // PERF-SAILS4: a root hung under something walks a frame of its own - never read for her nodes' worldMatrix",
-    "new": "    const seen = stamp; // PERF-SAILS4: a root hung under something walks a frame of its own - never read for her nodes' worldMatrix",
+    "old": "    const seen = root?.parent === null ? stamp : -1;",
+    "new": "    const seen = stamp;",
     "tests": [
       "test/systems/comeSailAway/perfsails4.test.js"
     ]

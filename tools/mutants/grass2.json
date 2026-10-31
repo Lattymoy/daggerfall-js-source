@@ -31,8 +31,8 @@
   {
     "name": "GRASS2-the-shader-is-told-the-PREFIX-count-so-it-thins-over-the-wrong-denominator",
     "file": "src/render/labGrass.js",
-    "old": "      gl.uniform1f(this.u.uSlotN, m); // the fraction is over the CELL (or its half), not over the prefix",
-    "new": "      gl.uniform1f(this.u.uSlotN, budget); // the fraction is over the CELL (or its half), not over the prefix",
+    "old": "      gl.uniform1f(this.u.uSlotN, m);   // the fraction is over the CELL (or its half), not over the prefix",
+    "new": "      gl.uniform1f(this.u.uSlotN, budget);   // the fraction is over the CELL (or its half), not over the prefix",
     "tests": [
       "test/render/perf2.test.js"
     ],
@@ -41,7 +41,7 @@
   {
     "name": "GRASS2-every-cell-keeps-the-five-quad-blade",
     "file": "src/render/labGrass.js",
-    "old": "      const far = this._oneQuad || dn > range * GRASS_FAR_AT; // GRASS-PX2: the pixel style is one quad everywhere",
+    "old": "      const far = this._oneQuad || dn > range * GRASS_FAR_AT;   // GRASS-PX2: the pixel style is one quad everywhere",
     "new": "      const far = this._oneQuad || false;",
     "tests": [
       "test/render/perf2.test.js"
@@ -80,8 +80,8 @@
   {
     "name": "GRASS2-the-window-is-not-a-whole-number-of-cells-so-its-edges-fall-out-of-phase",
     "file": "src/render/labGrass.js",
-    "old": "  span: 315,",
-    "new": "  span: 310,",
+    "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
+    "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 310, densitySpan: 210, seed: 0x2f6e2b1 });",
     "tests": [
       "test/render/labGrass.test.js"
     ],
@@ -90,8 +90,8 @@
   {
     "name": "GRASS2-the-tint-is-per-blade-noise-again-so-the-field-is-a-flat-carpet",
     "file": "src/render/labGrass.js",
-    "old": "    const tint = bakedTint(tRnd, fx, fz); // GRASS6: pulled toward the patch it stands in; GRASS AUDIT 1: only for a blade that STANDS - the noise is 0.43 ms a cell and a road cell refuses most of its candidates; PERF-EXT21: the FIELD's patch, which no shift moves",
-    "new": "    const tint = tRnd; // GRASS6: pulled toward the patch it stands in; GRASS AUDIT 1: only for a blade that STANDS - the noise is 0.43 ms a cell and a road cell refuses most of its candidates; PERF-EXT21: the FIELD's patch, which no shift moves",
+    "old": "    const tint = bakedTint(tRnd, fx, fz);   // GRASS6: pulled toward the patch it stands in;",
+    "new": "    const tint = tRnd;   // GRASS6: pulled toward the patch it stands in;",
     "tests": [
       "test/render/labGrass.test.js"
     ],
@@ -100,8 +100,8 @@
   {
     "name": "GRASS2-the-blade-is-the-labs-height-again",
     "file": "src/render/labGrass.js",
-    "old": "  height: 38,",
-    "new": "  height: 54,",
+    "old": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 38, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
+    "new": "export const LAB_GRASS = Object.freeze({ density: 1200000, height: 54, range: 300, span: 315, densitySpan: 210, seed: 0x2f6e2b1 });",
     "tests": [
       "test/render/labGrass.test.js"
     ],

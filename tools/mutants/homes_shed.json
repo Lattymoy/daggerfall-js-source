@@ -2,8 +2,8 @@
   {
     "name": "HOMESSHED-gates-own-trip",
     "file": "server-account/src/homes.js",
-    "old": "  const answers = reads.length > 1 ? await db.batch(reads) : [await homesRead.all()];",
-    "new": "  const answers = reads.length > 1 ? await Promise.all(reads.map((st) => st.all())) : [await homesRead.all()];",
+    "old": "const answers = reads.length > 1 ? await db.batch(reads) : [await homesRead.all()];",
+    "new": "const answers = reads.length > 1 ? await Promise.all(reads.map((st) => st.all())) : [await homesRead.all()];",
     "tests": [
       "test/systems/online/homes_shed.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HOMESSHED-gates-unread",
     "file": "server-account/src/homes.js",
-    "old": "  const open = !!gates?.results?.length;",
-    "new": "  const open = false;",
+    "old": "const open = !!gates?.results?.length;",
+    "new": "const open = false;",
     "tests": [
       "test/systems/online/homes_shed.test.js"
     ],

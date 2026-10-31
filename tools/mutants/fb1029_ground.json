@@ -305,8 +305,8 @@
   {
     "name": "MEET-move-dropped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    y += meet; // ACROSS-EDGE: the meets' move\n    const now = landform ? landformLiftAt(x, z) : 0;",
-    "new": "    const now = landform ? landformLiftAt(x, z) : 0;",
+    "old": "    y += meet;   // ACROSS-EDGE: the meets' move\n",
+    "new": "",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -315,8 +315,8 @@
   {
     "name": "MEET-move-dropped-off",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet;",
-    "new": "    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief);",
+    "old": "return y + relief + town(y + relief) + meet;",
+    "new": "return y + relief + town(y + relief);",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -325,8 +325,8 @@
   {
     "name": "MEET-move-stamped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    const meet = meetMovedAt && Number.isFinite(y) && !(frame >= MEET_FRAME_LAW) ? meetMovedAt(x, z) : 0;",
-    "new": "    const meet = meetMovedAt && Number.isFinite(y) ? meetMovedAt(x, z) : 0;",
+    "old": "const meet = meetMovedAt && Number.isFinite(y) && !(frame >= MEET_FRAME_LAW) ? meetMovedAt(x, z) : 0;",
+    "new": "const meet = meetMovedAt && Number.isFinite(y) ? meetMovedAt(x, z) : 0;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -335,8 +335,8 @@
   {
     "name": "MEET-town-test-met",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    const g = h - state.compensation[1] - (landform ? landformLiftAt(x, z) : 0) - meet;",
-    "new": "    const g = h - state.compensation[1] - (landform ? landformLiftAt(x, z) : 0);",
+    "old": "(landform ? landformLiftAt(x, z) : 0) - meet;",
+    "new": "(landform ? landformLiftAt(x, z) : 0);",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -345,8 +345,8 @@
   {
     "name": "MEET-frame-lift-unasked",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "      field = landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere({ before }), about);",
-    "new": "      field = landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere({ before }));",
+    "old": "landformsHere({ before }), about);",
+    "new": "landformsHere({ before }));",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/world/terrain/bayleftground_frame.test.js"
@@ -356,8 +356,8 @@
   {
     "name": "MEET-frame-move-unhanded",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    meetMovedAt,\n  });",
-    "new": "  });",
+    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt });",
+    "new": "movedAt: groundMovedAt, townMovedAt });",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],

@@ -222,8 +222,8 @@
   {
     "name": "AUDITMWCLOAK-the-hook-never-run",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  // cloak (formats/morrowind/mwCloakFit.js followCloak), which reads the cloak where this pose just put it\n  if (assembly.afterPose) assembly.afterPose(assembly);",
-    "new": "  // cloak (formats/morrowind/mwCloakFit.js followCloak), which reads the cloak where this pose just put it\n  if (false) assembly.afterPose(assembly);",
+    "old": "which reads the cloak where this pose just put it\n  if (assembly.afterPose) assembly.afterPose(assembly);",
+    "new": "which reads the cloak where this pose just put it\n  if (false) assembly.afterPose(assembly);",
     "tests": [
       "test/formats/morrowind/auditmwcloak.test.js",
       "test/tooling/mwcloak1.test.js"

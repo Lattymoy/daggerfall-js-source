@@ -402,8 +402,8 @@
   {
     "name": "STAFF-PANEL3-DESK-unwired",
     "file": "server-account/src/staff.js",
-    "old": "  if (DESK_ROUTES.includes(path)) return staffDesk(ctx, env, path, body, who, audit); // STAFF-PANEL3-DESK (staffDesk.js): each door checks its role",
-    "new": "  if (false) return staffDesk(ctx, env, path, body, who, audit); // STAFF-PANEL3-DESK (staffDesk.js): each door checks its role",
+    "old": "  if (DESK_ROUTES.includes(path)) return staffDesk(ctx, env, path, body, who, audit);",
+    "new": "  if (false) return staffDesk(ctx, env, path, body, who, audit);",
     "why": "the desk's doors fall through to the owners' audit read",
     "tests": [
       "test/server/staffpanel3desk.test.js"
@@ -412,8 +412,8 @@
   {
     "name": "STAFF-PANEL3-DESK-status",
     "file": "server-account/src/staff.js",
-    "old": "  'watch-full': 409,\n  'not-watched': 404,",
-    "new": "  'not-watched': 404,",
+    "old": "'watch-full': 409, 'not-watched': 404, 'no-note': 404,",
+    "new": "'not-watched': 404, 'no-note': 404,",
     "why": "a full watchlist answered 400",
     "tests": [
       "test/server/staffpanel3desk.test.js"

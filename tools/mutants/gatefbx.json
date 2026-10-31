@@ -264,8 +264,8 @@
   {
     "name": "AUDIT-GATE-FBX-G4-the-street-gate-tinted",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "        renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true }); // AUDIT GATE-FBX G4: its fire its own colour, never the window's",
-    "new": "        renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission); // AUDIT GATE-FBX G4: its fire its own colour, never the window's",
+    "old": "        renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true });",
+    "new": "        renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission);",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "AUDIT-GATE-FBX-E3-the-ends-unasked",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "  if (rise < 1 && !coarse)",
-    "new": "  if (false)",
+    "old": "  if (rise < 1 && !coarse) for (const e of [-GATE_HALF_W, GATE_HALF_W]) {",
+    "new": "  if (false) for (const e of [-GATE_HALF_W, GATE_HALF_W]) {",
     "tests": [
       "test/tooling/gatefbx.test.js"
     ]

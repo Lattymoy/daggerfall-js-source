@@ -245,8 +245,8 @@
   {
     "name": "GUILD1-the-renown-unread",
     "file": "server-account/src/guilds.js",
-    "old": "  if ((track?.level ?? 1) < GUILD_FOUND_RENOWN) return { error: 'guild-renown' };",
-    "new": "  if (false) return { error: 'guild-renown' };",
+    "old": "if ((track?.level ?? 1) < GUILD_FOUND_RENOWN) return { error: 'guild-renown' };",
+    "new": "if (false) return { error: 'guild-renown' };",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "GUILD1-the-founder-a-recruit",
     "file": "server-account/src/guilds.js",
-    "old": "          `INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, ${GUILD_RANK_MASTER}, ?, ?)`,",
-    "new": "          `INSERT INTO guild_members (player, char_id, guild_id, rank, name, joined_at) VALUES (?, ?, ?, ${GUILD_RANK_RECRUIT}, ?, ?)`,",
+    "old": "VALUES (?, ?, ?, ${GUILD_RANK_MASTER}, ?, ?)`)",
+    "new": "VALUES (?, ?, ?, ${GUILD_RANK_RECRUIT}, ?, ?)`)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "GUILD1-an-orphaned-name-held",
     "file": "server-account/src/guilds.js",
-    "old": "  await db\n    .prepare(\n      `DELETE FROM guilds WHERE (name_key = ?1 OR tag = ?2) AND NOT EXISTS (SELECT 1 FROM guild_members m WHERE m.guild_id = guilds.id)\n    AND treasury = 0 AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = guilds.id AND balance > 0) AND NOT ${guildKeepsSql('guilds.id')}`,\n    )\n    .bind(key, t)\n    .run();\n  const id = mintGuildId(rand);",
-    "new": "  const id = mintGuildId(rand);",
+    "old": "  await db.prepare(`DELETE FROM guilds WHERE (name_key = ?1 OR tag = ?2) AND NOT EXISTS (SELECT 1 FROM guild_members m WHERE m.guild_id = guilds.id)\n    AND treasury = 0 AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = guilds.id AND balance > 0) AND NOT ${guildKeepsSql('guilds.id')}`).bind(key, t).run();\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "GUILD1-a-living-guilds-name-taken",
     "file": "server-account/src/guilds.js",
-    "old": "      `DELETE FROM guilds WHERE (name_key = ?1 OR tag = ?2) AND NOT EXISTS (SELECT 1 FROM guild_members m WHERE m.guild_id = guilds.id)",
-    "new": "      `DELETE FROM guilds WHERE (name_key = ?1 OR tag = ?2)",
+    "old": "DELETE FROM guilds WHERE (name_key = ?1 OR tag = ?2) AND NOT EXISTS (SELECT 1 FROM guild_members m WHERE m.guild_id = guilds.id)\n    AND treasury",
+    "new": "DELETE FROM guilds WHERE (name_key = ?1 OR tag = ?2)\n    AND treasury",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "GUILD1-the-wrong-uniqueness-named",
     "file": "server-account/src/guilds.js",
-    "old": "    if (await db.prepare('SELECT 1 FROM guilds WHERE name_key = ?').bind(key).first())\n      return { error: 'guild-name-taken' };",
-    "new": "    if (await db.prepare('SELECT 1 FROM guilds WHERE name_key = ?').bind(key).first())\n      return { error: 'guild-tag-taken' };",
+    "old": "    if (await db.prepare('SELECT 1 FROM guilds WHERE name_key = ?').bind(key).first()) return { error: 'guild-name-taken' };",
+    "new": "    if (await db.prepare('SELECT 1 FROM guilds WHERE name_key = ?').bind(key).first()) return { error: 'guild-tag-taken' };",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "GUILD1-a-recruit-inviting",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMay(a.me.rank, 'invite', a.powers)) return { error: 'guild-rank' };\n  if (typeof handle !== 'string' || !HANDLE_RE.test(handle)) return { error: 'no-player' };",
-    "new": "  if (typeof handle !== 'string' || !HANDLE_RE.test(handle)) return { error: 'no-player' };",
+    "old": "  if (!guildMay(a.me.rank, 'invite', a.powers)) return { error: 'guild-rank' };\n  if (typeof handle",
+    "new": "  if (typeof handle",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "GUILD1-the-cap-unread-at-the-invite",
     "file": "server-account/src/guilds.js",
-    "old": "  if ((n?.n ?? 0) >= GUILD_MEMBERS_MAX) return { error: 'guild-full' };",
-    "new": "  if ((n?.n ?? 0) > GUILD_MEMBERS_MAX) return { error: 'guild-full' };",
+    "old": "if ((n?.n ?? 0) >= GUILD_MEMBERS_MAX) return { error: 'guild-full' };",
+    "new": "if ((n?.n ?? 0) > GUILD_MEMBERS_MAX) return { error: 'guild-full' };",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "GUILD1-the-sweep-taking-a-live-one",
     "file": "server-account/src/guilds.js",
-    "old": "    db\n      .prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?')\n      .bind(a.me.guild_id, nowS - GUILD_INVITE_TTL_S),",
-    "new": "    db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?').bind(a.me.guild_id, nowS),",
+    "old": "db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?').bind(a.me.guild_id, nowS - GUILD_INVITE_TTL_S),",
+    "new": "db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?').bind(a.me.guild_id, nowS),",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "GUILD1-the-sweep-dropped",
     "file": "server-account/src/guilds.js",
-    "old": "      .prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?')\n      .bind(a.me.guild_id, nowS - GUILD_INVITE_TTL_S),\n    db\n      .prepare('INSERT OR REPLACE INTO guild_invites (guild_id, player, by_name, at) VALUES (?, ?, ?, ?)')",
-    "new": "      .prepare('INSERT OR REPLACE INTO guild_invites (guild_id, player, by_name, at) VALUES (?, ?, ?, ?)')",
+    "old": "    db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND at <= ?').bind(a.me.guild_id, nowS - GUILD_INVITE_TTL_S),\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "GUILD1-a-declined-one-kept",
     "file": "server-account/src/guilds.js",
-    "old": "      .prepare('DELETE FROM guild_invites WHERE guild_id = ? AND player = ? AND at > ? RETURNING guild_id')",
-    "new": "      .prepare('SELECT guild_id FROM guild_invites WHERE guild_id = ? AND player = ? AND at > ?')",
+    "old": "const gone = await db.prepare('DELETE FROM guild_invites WHERE guild_id = ? AND player = ? AND at > ? RETURNING guild_id')",
+    "new": "const gone = await db.prepare('SELECT guild_id FROM guild_invites WHERE guild_id = ? AND player = ? AND at > ?')",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "GUILD1-a-bad-character-joining",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!charOk(character)) return { error: 'guild-character' };\n  const standing = () =>",
-    "new": "  const standing = () =>",
+    "old": "  if (!charOk(character)) return { error: 'guild-character' };\n  const standing",
+    "new": "  const standing",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "GUILD1-an-invitation-answered-twice",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!(await standing())) return { error: 'no-invite' };\n  const was = await memberRow(db, player.id, character);",
-    "new": "  const was = await memberRow(db, player.id, character);",
+    "old": "  if (!(await standing())) return { error: 'no-invite' };\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "GUILD1-a-joiner-not-a-recruit",
     "file": "server-account/src/guilds.js",
-    "old": "        SELECT ?1, ?2, ?3, ${lowestRankSql('?3')}, ?4, ?5",
-    "new": "        SELECT ?1, ?2, ?3, ${GUILD_RANK_OFFICER}, ?4, ?5",
+    "old": "SELECT ?1, ?2, ?3, ${lowestRankSql('?3')}, ?4, ?5",
+    "new": "SELECT ?1, ?2, ?3, ${GUILD_RANK_OFFICER}, ?4, ?5",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "GUILD1-the-cap-unread-at-the-join",
     "file": "server-account/src/guilds.js",
-    "old": "          AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?3) < ?7`,",
-    "new": "          AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?3) <= ?7`,",
+    "old": "AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?3) < ?7`)",
+    "new": "AND (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?3) <= ?7`)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "GUILD1-a-withdrawn-invitation-answered",
     "file": "server-account/src/guilds.js",
-    "old": "        WHERE EXISTS (SELECT 1 FROM guild_invites WHERE guild_id = ?3 AND player = ?1 AND at > ?6)",
-    "new": "        WHERE ?6 IS NOT NULL",
+    "old": "WHERE EXISTS (SELECT 1 FROM guild_invites WHERE guild_id = ?3 AND player = ?1 AND at > ?6)\n          AND",
+    "new": "WHERE ?6 IS NOT NULL\n          AND",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "GUILD1-a-refused-join-spending-it",
     "file": "server-account/src/guilds.js",
-    "old": "        .prepare(\n          'DELETE FROM guild_invites WHERE guild_id = ?1 AND player = ?2 AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?2 AND char_id = ?3 AND guild_id = ?1)',\n        )",
-    "new": "        .prepare('DELETE FROM guild_invites WHERE guild_id = ?1 AND player = ?2 AND ?3 IS NOT NULL')",
+    "old": "AND EXISTS (SELECT 1 FROM guild_members WHERE player = ?2 AND char_id = ?3 AND guild_id = ?1)')",
+    "new": "AND ?3 IS NOT NULL')",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "GUILD1-a-full-guild-said-gone",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!joined?.meta?.changes) return { error: (await standing()) ? 'guild-full' : 'no-invite' };",
-    "new": "  if (!joined?.meta?.changes) return { error: 'no-invite' };",
+    "old": "return { error: (await standing()) ? 'guild-full' : 'no-invite' };",
+    "new": "return { error: 'no-invite' };",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "GUILD1-the-treasury-left-to-vanish",
     "file": "server-account/src/guilds.js",
-    "old": "        `DELETE FROM guilds WHERE id = ?1 AND treasury = 0 AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = ?1 AND balance > 0)",
-    "new": "        `DELETE FROM guilds WHERE id = ?1 AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = ?1 AND balance > 0)",
+    "old": "    db.prepare(`DELETE FROM guilds WHERE id = ?1 AND treasury = 0 AND NOT EXISTS",
+    "new": "    db.prepare(`DELETE FROM guilds WHERE id = ?1 AND NOT EXISTS",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "GUILD1-the-leaving-refusal-misnamed",
     "file": "server-account/src/guilds.js",
-    "old": "    if ((n?.n ?? 0) > 1) keeps.push('guild-master-leaves');\n  }",
-    "new": "  }",
+    "old": "    if ((n?.n ?? 0) > 1) keeps.push('guild-master-leaves');\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "GUILD1-a-removal-upward",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMay(a.me.rank, 'remove', a.powers) || !guildOutranks(a.me.rank, t.rank)) return { error: 'guild-rank' };",
-    "new": "  if (!guildMay(a.me.rank, 'remove', a.powers)) return { error: 'guild-rank' };",
+    "old": "if (!guildMay(a.me.rank, 'remove', a.powers) || !guildOutranks(a.me.rank, t.rank)) return { error: 'guild-rank' };",
+    "new": "if (!guildMay(a.me.rank, 'remove', a.powers)) return { error: 'guild-rank' };",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "GUILD1-a-removal-from-a-stale-rank",
     "file": "server-account/src/guilds.js",
-    "old": "    .prepare('DELETE FROM guild_members WHERE rowid = ? AND guild_id = ? AND rank = ?')",
-    "new": "    .prepare('DELETE FROM guild_members WHERE rowid = ? AND guild_id = ? AND ? IS NOT NULL')",
+    "old": "'DELETE FROM guild_members WHERE rowid = ? AND guild_id = ? AND rank = ?').bind(t.rid, a.me.guild_id, t.rank)",
+    "new": "'DELETE FROM guild_members WHERE rowid = ? AND guild_id = ? AND ? IS NOT NULL').bind(t.rid, a.me.guild_id, t.rank)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "GUILD1-any-rank-moved",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMayMove(a.me.rank, t.rank, rank, a.powers, a.ranks)) return { error: 'guild-rank' };\n  if (await spend(ctx, player)) return { error: 'guild-rate' };",
-    "new": "  if (await spend(ctx, player)) return { error: 'guild-rate' };",
+    "old": "  if (!guildMayMove(a.me.rank, t.rank, rank, a.powers, a.ranks)) return { error: 'guild-rank' };\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "GUILD1-a-move-from-a-stale-rank",
     "file": "server-account/src/guilds.js",
-    "old": "      `UPDATE guild_members SET rank = ?1 WHERE rowid = ?2 AND guild_id = ?3 AND rank = ?4 AND ?1 <= ${lowestRankSql('?3')}",
-    "new": "      `UPDATE guild_members SET rank = ?1 WHERE rowid = ?2 AND guild_id = ?3 AND ?4 IS NOT NULL AND ?1 <= ${lowestRankSql('?3')}",
+    "old": "WHERE rowid = ?2 AND guild_id = ?3 AND rank = ?4 AND ?1 <=",
+    "new": "WHERE rowid = ?2 AND guild_id = ?3 AND ?4 IS NOT NULL AND ?1 <=",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "GUILD1-a-bad-set-of-names-kept",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!names) return { error: 'bad-ranks' };\n  // TEXT-F1 (2026-10-07): a rank's name is a name the guild's members wear - its words read as a name's, the word caught",
-    "new": "  // TEXT-F1 (2026-10-07): a rank's name is a name the guild's members wear - its words read as a name's, the word caught",
+    "old": "  if (!names) return { error: 'bad-ranks' };\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "GUILD1-past-the-cap",
     "file": "server-account/src/guilds.js",
-    "old": "            'UPDATE guilds SET treasury = treasury + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3 RETURNING treasury',",
-    "new": "            'UPDATE guilds SET treasury = treasury + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND ?3 > 0 RETURNING treasury',",
+    "old": "WHERE id = ?2 AND treasury + ?1 <= ?3 RETURNING treasury')",
+    "new": "WHERE id = ?2 AND ?3 > 0 RETURNING treasury')",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "GUILD1-an-overdraft",
     "file": "server-account/src/guilds.js",
-    "old": "            `UPDATE guilds SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1",
-    "new": "            `UPDATE guilds SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by = ?3, moved_at = ?4 WHERE id = ?2",
+    "old": "WHERE id = ?2 AND treasury >= ?1\n        AND ${withdrawerSql('?5', '?6')} RETURNING treasury`)",
+    "new": "WHERE id = ?2\n        AND ${withdrawerSql('?5', '?6')} RETURNING treasury`)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "GUILD1-an-officer-taking-gold",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMay(a.me.rank, 'withdraw', a.powers)) return { error: 'guild-rank' };\n  if (!guildGoldOk(gold)) return { error: 'bad-gold' };",
-    "new": "  if (!guildGoldOk(gold)) return { error: 'bad-gold' };",
+    "old": "  if (!guildMay(a.me.rank, 'withdraw', a.powers)) return { error: 'guild-rank' };\n  if (!guildGoldOk(gold)) return { error: 'bad-gold' };\n  if (await spend(ctx, player)) return { error: 'guild-rate' };\n  if (side.at) return realmTreasury(ctx, player, a.me, side.at, 'withdraw'",
+    "new": "  if (!guildGoldOk(gold)) return { error: 'bad-gold' };\n  if (await spend(ctx, player)) return { error: 'guild-rate' };\n  if (side.at) return realmTreasury(ctx, player, a.me, side.at, 'withdraw'",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "GUILD1-the-mover-unnamed",
     "file": "server-account/src/guilds.js",
-    "old": "          .bind(gold, me.guild_id, GUILD_TREASURY_MAX, who, nowS)",
-    "new": "          .bind(gold, me.guild_id, GUILD_TREASURY_MAX, 'Someone', nowS)",
+    "old": ".bind(gold, me.guild_id, GUILD_TREASURY_MAX, who, nowS).first()",
+    "new": ".bind(gold, me.guild_id, GUILD_TREASURY_MAX, 'Someone', nowS).first()",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "GUILD1-the-moment-lost",
     "file": "server-account/src/guilds.js",
-    "old": "          .bind(gold, me.guild_id, who, nowS, me.rid, me.rank)",
-    "new": "          .bind(gold, me.guild_id, who, 0, me.rid, me.rank)",
+    "old": ".bind(gold, me.guild_id, who, nowS, me.rid, me.rank).first();",
+    "new": ".bind(gold, me.guild_id, who, 0, me.rid, me.rank).first();",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "GUILD1-an-officer-handing-it-on",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMay(a.me.rank, 'handOver')) return { error: 'guild-rank' };\n  const t = await targetOf(db, a.me, member);",
-    "new": "  const t = await targetOf(db, a.me, member);",
+    "old": "  if (!guildMay(a.me.rank, 'handOver')) return { error: 'guild-rank' };\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "GUILD1-handed-to-oneself",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!t || t.rid === a.me.rid) return { error: 'no-member' };",
-    "new": "  if (!t) return { error: 'no-member' };",
+    "old": "if (!t || t.rid === a.me.rid) return { error: 'no-member' };",
+    "new": "if (!t) return { error: 'no-member' };",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "GUILD1-handed-on-by-one-who-no-longer-holds-it",
     "file": "server-account/src/guilds.js",
-    "old": "        `UPDATE guild_members SET rank = ${GUILD_RANK_MASTER} WHERE rowid = ?1 AND guild_id = ?2\n      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank = ${GUILD_RANK_MASTER})`,",
-    "new": "        `UPDATE guild_members SET rank = ${GUILD_RANK_MASTER} WHERE rowid = ?1 AND guild_id = ?2\n      AND ?3 IS NOT NULL`,",
+    "old": "WHERE rowid = ?1 AND guild_id = ?2\n      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank = ${GUILD_RANK_MASTER})`).bind(t.rid, a.me.guild_id, a.me.rid),",
+    "new": "WHERE rowid = ?1 AND guild_id = ?2\n      AND ?3 IS NOT NULL`).bind(t.rid, a.me.guild_id, a.me.rid),",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "GUILD1-the-giver-stepping-down-to-nobody",
     "file": "server-account/src/guilds.js",
-    "old": "        `UPDATE guild_members SET rank = ${GUILD_RANK_OFFICER} WHERE rowid = ?1 AND guild_id = ?2\n      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank = ${GUILD_RANK_MASTER})`,",
-    "new": "        `UPDATE guild_members SET rank = ${GUILD_RANK_OFFICER} WHERE rowid = ?1 AND guild_id = ?2\n      AND ?3 IS NOT NULL`,",
+    "old": "WHERE rowid = ?1 AND guild_id = ?2\n      AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?3 AND guild_id = ?2 AND rank = ${GUILD_RANK_MASTER})`).bind(a.me.rid, a.me.guild_id, t.rid),",
+    "new": "WHERE rowid = ?1 AND guild_id = ?2\n      AND ?3 IS NOT NULL`).bind(a.me.rid, a.me.guild_id, t.rid),",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "GUILD1-a-hand-over-said-done",
     "file": "server-account/src/guilds.js",
-    "old": "  return given?.meta?.changes ? { ok: true } : { error: 'no-member' };",
-    "new": "  return { ok: true };",
+    "old": "return given?.meta?.changes ? { ok: true } : { error: 'no-member' };",
+    "new": "return { ok: true };",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "GUILD1-a-disband-by-an-officer",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!guildMay(a.me.rank, 'disband')) return { error: 'guild-rank' };\n  const r = await endGuild(db, a.me.guild_id, player, nowS);",
-    "new": "  const r = await endGuild(db, a.me.guild_id, player, nowS);",
+    "old": "  if (!guildMay(a.me.rank, 'disband')) return { error: 'guild-rank' };\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "GUILD1-a-disband-with-gold-in-it",
     "file": "server-account/src/marks.js",
-    "old": "      AND EXISTS (SELECT 1 FROM guilds WHERE id = ?1 AND treasury = 0)\n      AND NOT ${guildKeepsSql('?1')}   -- PROF6: a guild that keeps its Stores or a writ does not go, so its Marks stay",
-    "new": "      AND NOT ${guildKeepsSql('?1')}   -- PROF6: a guild that keeps its Stores or a writ does not go, so its Marks stay",
+    "old": "      AND EXISTS (SELECT 1 FROM guilds WHERE id = ?1 AND treasury = 0)\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js",
       "test/net/audit28_marks.test.js"
@@ -597,8 +597,8 @@
   {
     "name": "GUILD1-succession-skipped",
     "file": "server-account/src/guilds.js",
-    "old": "  await succeed(db, first.guild_id);\n  const me = first.rank === GUILD_RANK_MASTER ? first : await memberRow(db, player.id, character);",
-    "new": "  const me = first.rank === GUILD_RANK_MASTER ? first : await memberRow(db, player.id, character);",
+    "old": "  await succeed(db, first.guild_id);\n",
+    "new": "",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -606,8 +606,8 @@
   {
     "name": "GUILD1-the-lowest-rank-succeeding",
     "file": "server-account/src/guilds.js",
-    "old": "    WHERE rowid = (SELECT rowid FROM guild_members WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1) AND rank <> ${GUILD_RANK_MASTER}`,",
-    "new": "    WHERE rowid = (SELECT rowid FROM guild_members WHERE guild_id = ? ORDER BY rank DESC, joined_at, rowid LIMIT 1) AND rank <> ${GUILD_RANK_MASTER}`,",
+    "old": "WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1)",
+    "new": "WHERE guild_id = ? ORDER BY rank DESC, joined_at, rowid LIMIT 1)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "GUILD1-the-newest-succeeding",
     "file": "server-account/src/guilds.js",
-    "old": "    WHERE rowid = (SELECT rowid FROM guild_members WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1) AND rank <> ${GUILD_RANK_MASTER}`,",
-    "new": "    WHERE rowid = (SELECT rowid FROM guild_members WHERE guild_id = ? ORDER BY rank, joined_at DESC, rowid LIMIT 1) AND rank <> ${GUILD_RANK_MASTER}`,",
+    "old": "WHERE guild_id = ? ORDER BY rank, joined_at, rowid LIMIT 1)",
+    "new": "WHERE guild_id = ? ORDER BY rank, joined_at DESC, rowid LIMIT 1)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -624,8 +624,8 @@
   {
     "name": "GUILD1-the-promoted-actor-read-stale",
     "file": "server-account/src/guilds.js",
-    "old": "  const me = first.rank === GUILD_RANK_MASTER ? first : await memberRow(db, player.id, character);",
-    "new": "  const me = first;",
+    "old": "const me = first.rank === GUILD_RANK_MASTER ? first : await memberRow(db, player.id, character);",
+    "new": "const me = first;",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -633,8 +633,8 @@
   {
     "name": "GUILD1-a-recruit-seeing-the-invitations",
     "file": "server-account/src/guilds.js",
-    "old": "  const asks = guildMay(me.rank, 'invite', powers);",
-    "new": "  const asks = true;",
+    "old": "  const asks = guildMay(me.rank, 'invite', powers);\n",
+    "new": "  const asks = true;\n",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "GUILD1-both-characters-you",
     "file": "server-account/src/guilds.js",
-    "old": "      const you = m.player === me.player && m.char_id === me.char_id,",
-    "new": "      const you = m.player === me.player,",
+    "old": "const you = m.player === me.player && m.char_id === me.char_id,",
+    "new": "const you = m.player === me.player,",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "GUILD1-the-ledger-oldest-first",
     "file": "server-account/src/guilds.js",
-    "old": "    .prepare('SELECT at, who, kind, amount, balance FROM guild_ledger WHERE guild_id = ? ORDER BY seq DESC LIMIT ?')",
-    "new": "    .prepare('SELECT at, who, kind, amount, balance FROM guild_ledger WHERE guild_id = ? ORDER BY seq LIMIT ?')",
+    "old": "ORDER BY seq DESC LIMIT ?').bind(guildId, GUILD_LEDGER_SHOWN)",
+    "new": "ORDER BY seq LIMIT ?').bind(guildId, GUILD_LEDGER_SHOWN)",
     "tests": [
       "test/server/guild1.test.js"
     ]
@@ -660,8 +660,8 @@
   {
     "name": "GUILD1-the-roster-unranked",
     "file": "server-account/src/guilds.js",
-    "old": "    COALESCE(p.played_at, p.last_seen) AS seen_at FROM guild_members m LEFT JOIN players p ON p.id = m.player WHERE m.guild_id = ? ORDER BY m.rank, m.joined_at, m.rowid`,",
-    "new": "    COALESCE(p.played_at, p.last_seen) AS seen_at FROM guild_members m LEFT JOIN players p ON p.id = m.player WHERE m.guild_id = ? ORDER BY m.rowid`,",
+    "old": "WHERE m.guild_id = ? ORDER BY m.rank, m.joined_at, m.rowid`)",
+    "new": "WHERE m.guild_id = ? ORDER BY m.rowid`)",
     "tests": [
       "test/server/guild1.test.js"
     ],
@@ -670,8 +670,8 @@
   {
     "name": "GUILD1-a-stale-invitation-read",
     "file": "server-account/src/guilds.js",
-    "old": "    .bind(player.id, nowS - GUILD_INVITE_TTL_S)",
-    "new": "    .bind(player.id, 0)",
+    "old": ".bind(player.id, nowS - GUILD_INVITE_TTL_S).all();",
+    "new": ".bind(player.id, 0).all();",
     "tests": [
       "test/server/guild1.test.js"
     ]

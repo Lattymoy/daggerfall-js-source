@@ -2,8 +2,8 @@
   {
     "name": "ONEBAG-the-refusal-gone",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item))\n    return { ok: false, refusal: REFUSAL.secondBag };\n  // QUEST-AUDIT III SHELF-TWIN: a quest's item abandoned onto the ground is handed back when the quest is reclaimed",
-    "new": "  // QUEST-AUDIT III SHELF-TWIN: a quest's item abandoned onto the ground is handed back when the quest is reclaimed",
+    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return { ok: false, refusal: REFUSAL.secondBag };\n",
+    "new": "",
     "tests": [
       "test/systems/professions/fb1004_onebag.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ONEBAG-the-wagon-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item))\n    return { ok: false, refusal: REFUSAL.secondBag };",
-    "new": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag], item)) return { ok: false, refusal: REFUSAL.secondBag };",
+    "old": "holdsOtherBag([bag, entity?.wagonItems], item)",
+    "new": "holdsOtherBag([bag], item)",
     "tests": [
       "test/systems/professions/fb1004_onebag.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ONEBAG-every-take-refused",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item))\n    return { ok: false, refusal: REFUSAL.secondBag };",
-    "new": "  if (!ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return { ok: false, refusal: REFUSAL.secondBag };",
+    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return",
+    "new": "  if (!ownWagon && holdsOtherBag([bag, entity?.wagonItems], item)) return",
     "tests": [
       "test/systems/professions/fb1004_onebag.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ONEBAG-the-wagons-own-refused",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag([bag, entity?.wagonItems], item))",
-    "new": "  if (isBagItem(item) && holdsOtherBag([bag, entity?.wagonItems], item))",
+    "old": "  if (isBagItem(item) && !ownWagon && holdsOtherBag(",
+    "new": "  if (isBagItem(item) && holdsOtherBag(",
     "tests": [
       "test/systems/professions/fb1004_onebag.test.js"
     ]

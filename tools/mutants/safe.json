@@ -258,8 +258,8 @@
   {
     "name": "SAFE1-a-blocked-line-kept",
     "file": "src/net/chat.js",
-    "old": "    if (!fields.mine && typeof fields.sub === 'string' && fields.sub && this.hears && !this.hears(fields.sub))\n      return null; // SAFE1: a blocked speaker\n    const line = tab ? this._line(fields, tab.id) : null;",
-    "new": "    const line = tab ? this._line(fields, tab.id) : null;",
+    "old": "    if (!fields.mine && typeof fields.sub === 'string' && fields.sub && this.hears && !this.hears(fields.sub)) return null;   // SAFE1: a blocked speaker\n",
+    "new": "",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],

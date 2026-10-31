@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-SD-C5-the-long-way-out",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "    if (half - Math.abs(dx) < half - Math.abs(dz)) x = px + (dx < 0 ? -half : half);",
-    "new": "    if (half - Math.abs(dx) > half - Math.abs(dz)) x = px + (dx < 0 ? -half : half);",
+    "old": "    if (half - Math.abs(dx) < half - Math.abs(dz)) x = px",
+    "new": "    if (half - Math.abs(dx) > half - Math.abs(dz)) x = px",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-SD-C5-the-spew-from-inside",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3); // AUDIT SD: never out of a pillar's inside",
-    "new": "          const [px, pz] = [pose.x, pose.z]; // AUDIT SD: never out of a pillar's inside",
+    "old": "const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3);",
+    "new": "const [px, pz] = [pose.x, pose.z];",
     "tests": [
       "test/net/superDungeon/sd10b_audit.test.js"
     ]

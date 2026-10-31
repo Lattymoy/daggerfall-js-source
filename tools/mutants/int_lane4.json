@@ -312,8 +312,8 @@
   {
     "name": "INT18-the-client-sends-again",
     "file": "src/systems/legacy/realmLine.js",
-    "old": "  'lineage-law',\n  'no-lineage',",
-    "new": "  'no-lineage',",
+    "old": "'too-many-lineages', 'lineage-law', 'no-lineage']);",
+    "new": "'too-many-lineages', 'no-lineage']);",
     "why": "a copy the law refused is sent again at every write",
     "tests": [
       "test/server/int18_lineage_law.test.js"

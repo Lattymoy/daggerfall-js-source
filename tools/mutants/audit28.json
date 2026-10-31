@@ -38,7 +38,7 @@
   {
     "name": "AUDIT28-M2-the-switch-asked-before-the-line",
     "file": "server-account/src/marks.js",
-    "old": "  const prior = await lineOf(db, player.id, rid);\n  if (prior) return repeat(prior); // AUDIT 28 M2: before the switch - a sale made is a sale answered\n  const closed = shut(player, env);\n  if (closed) return closed;",
+    "old": "  const prior = await lineOf(db, player.id, rid);\n  if (prior) return repeat(prior);   // AUDIT 28 M2: before the switch - a sale made is a sale answered\n  const closed = shut(player, env);\n  if (closed) return closed;",
     "new": "  const closed = shut(player, env);\n  if (closed) return closed;\n  const prior = await lineOf(db, player.id, rid);\n  if (prior) return repeat(prior);",
     "tests": [
       "test/net/audit28_marks.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT28-M3-a-going-guild-sweeps-nothing",
     "file": "server-account/src/guilds.js",
-    "old": "    guildMarksSweep(db, guildId, player, nowS, { alone }),\n    db",
-    "new": "    db",
+    "old": "    guildMarksSweep(db, guildId, player, nowS, { alone }),\n",
+    "new": "",
     "tests": [
       "test/net/audit28_marks.test.js",
       "test/net/marks1.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "AUDIT28-M4-the-strike-outside-the-rows-batch",
     "file": "server-account/src/accounts.js",
-    "old": "      ? await db.batch([kill, ...(roll ? [roll] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])])",
-    "new": "      ? [\n          await kill.run(),\n          ...(roll ? [await roll.run()] : []),\n          stmt ? await stmt.run() : null,\n          ...(deed ? await db.batch(deed) : []),\n        ]",
+    "old": "  const [r, ...rest] = stmt || deed || roll ? await db.batch([kill, ...(roll ? [roll] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])]) : [await kill.run(), null];",
+    "new": "  const [r, ...rest] = stmt || deed || roll ? [await kill.run(), ...(roll ? [await roll.run()] : []), stmt ? await stmt.run() : null, ...(deed ? await db.batch(deed) : [])] : [await kill.run(), null];",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "AUDIT28-M5-the-marks-shown-behind-a-shut-switch",
     "file": "server-account/src/guilds.js",
-    "old": "    ...(marksOpen",
-    "new": "    ...(true",
+    "old": "    ...(marksOpen ? {\n      marks:",
+    "new": "    ...(true ? {\n      marks:",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT28-M10-the-report-counts-account-days",
     "file": "server-account/src/marks.js",
-    "old": "    .prepare(\n      `SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d FROM (SELECT dst_id FROM marks_ledger",
-    "new": "    .prepare(\n      `SELECT COUNT(*) AS n, COUNT(*) AS d FROM (SELECT dst_id FROM marks_ledger",
+    "old": "const combatCapped = await db.prepare(`SELECT COUNT(DISTINCT dst_id) AS n, COUNT(*) AS d",
+    "new": "const combatCapped = await db.prepare(`SELECT COUNT(*) AS n, COUNT(*) AS d",
     "tests": [
       "test/net/audit28_marks.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "AUDIT28-N2-the-author-not-told-it-is-hidden",
     "file": "server-account/src/board.js",
-    "old": "    ...(mod\n      ? { hidden: n.hidden === 1, restored: n.hidden === 2, reports }\n      : mine && n.hidden === 1\n        ? { hidden: true }\n        : {}),",
-    "new": "    ...(mod ? { hidden: n.hidden === 1, restored: n.hidden === 2, reports } : {}),",
+    "old": ": mine && n.hidden === 1 ? { hidden: true } : {}),",
+    "new": ": {}),",
     "tests": [
       "test/net/audit28_notice.test.js",
       "test/net/notice1.test.js"
@@ -158,8 +158,8 @@
   {
     "name": "AUDIT28-N3-a-sprouts-report-counts",
     "file": "server-account/src/board.js",
-    "old": "      WHERE r.note_id = ?1 AND COALESCE(p.muted_until, 0) <= ?2 AND p.created_at <= ?2 - ?4) >= ?3`,",
-    "new": "      WHERE r.note_id = ?1 AND COALESCE(p.muted_until, 0) <= ?2) >= ?3`,",
+    "old": " AND p.created_at <= ?2 - ?4) >= ?3`)",
+    "new": ") >= ?3`)",
     "tests": [
       "test/net/audit28_notice.test.js",
       "test/net/notice1.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "AUDIT28-N3-a-muted-report-counts",
     "file": "server-account/src/board.js",
-    "old": "      WHERE r.note_id = ?1 AND COALESCE(p.muted_until, 0) <= ?2 AND p.created_at <= ?2 - ?4) >= ?3`,",
-    "new": "      WHERE r.note_id = ?1 AND p.created_at <= ?2 - ?4) >= ?3`,",
+    "old": "WHERE r.note_id = ?1 AND COALESCE(p.muted_until, 0) <= ?2 AND",
+    "new": "WHERE r.note_id = ?1 AND",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "AUDIT28-N4-a-note-recruits-for-a-guild-its-author-left",
     "file": "server-account/src/board.js",
-    "old": "const recruits = (n) =>\n  !!n.guild_name &&\n  n.author_rank != null &&\n  guildMay(Number(n.author_rank), 'invite', guildPowersOfRow({ ranks: n.guild_ranks, powers: n.guild_powers })); // GUILD-RANKS",
-    "new": "const recruits = (n) => !!n.guild_name; // GUILD-RANKS",
+    "old": "const recruits = (n) => !!n.guild_name && n.author_rank != null && guildMay(Number(n.author_rank), 'invite', guildPowersOfRow({ ranks: n.guild_ranks, powers: n.guild_powers }));",
+    "new": "const recruits = (n) => !!n.guild_name;",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "AUDIT28-N7-a-notice-posted-twice",
     "file": "server-account/src/board.js",
-    "old": "      'INSERT OR IGNORE INTO board_notices (id, subject, body, author, author_name, at, expires_at, rid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',",
-    "new": "      'INSERT INTO board_notices (id, subject, body, author, author_name, at, expires_at, rid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',",
+    "old": "  const r = await db.prepare('INSERT OR IGNORE INTO board_notices",
+    "new": "  const r = await db.prepare('INSERT INTO board_notices",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "AUDIT28-N8-any-failure-is-notes-full",
     "file": "server-account/src/board.js",
-    "old": "    if (!/UNIQUE/i.test(String(/** @type {any} */ (e)?.message ?? e))) throw e;\n    r = null;",
-    "new": "    r = null;",
+    "old": "    if (!/UNIQUE/i.test(String(/** @type {any} */ (e)?.message ?? e))) throw e;\n",
+    "new": "",
     "tests": [
       "test/net/audit28_notice.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "AUDIT28-B1-a-cleared-hunt-taken",
     "file": "src/scenes/bountyHost.js",
-    "old": "    if (mateCleared(bountyHuntKey(id))) return { ok: false, text: BOUNTY_REFUSALS.party };\n    const done = takeBounty(ledger, id, deps.now());",
-    "new": "    const done = takeBounty(ledger, id, deps.now());",
+    "old": "    if (mateCleared(bountyHuntKey(id))) return { ok: false, text: BOUNTY_REFUSALS.party };\n",
+    "new": "",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT28-B2-a-retake-stands-a-second-pack",
     "file": "src/scenes/bountyHost.js",
-    "old": "    if (b) adopt(b.slotKey, id);\n    const p = postingOf(id);",
-    "new": "    const p = postingOf(id);",
+    "old": "    if (b) adopt(b.slotKey, id);\n",
+    "new": "",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -331,8 +331,8 @@
   {
     "name": "AUDIT28-B3-a-standing-pack-owns-nothing",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  if (standing.length) return standing[0];\n  let owner = me;",
-    "new": "  let owner = me;",
+    "old": "  if (standing.length) return standing[0];\n",
+    "new": "",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -340,8 +340,8 @@
   {
     "name": "AUDIT28-B3-the-gone-and-the-dead-own-it",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  const live = (mates ?? []).filter((m) => m?.acct && m.p && m.online !== false && !(m.p.h === 0)); // the dead and the gone stand nothing",
-    "new": "  const live = (mates ?? []).filter((m) => m?.acct && m.p); // the dead and the gone stand nothing",
+    "old": "m.p && m.online !== false && !(m.p.h === 0));",
+    "new": "m.p);",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -358,8 +358,8 @@
   {
     "name": "AUDIT28-B4-a-mates-kills-unheard",
     "file": "src/scenes/bountyHost.js",
-    "old": "      if (k > h.killed) {",
-    "new": "      if (false) {",
+    "old": "      if (k > h.killed) { h.killed = k; repaint(); }",
+    "new": "      if (false) { h.killed = k; repaint(); }",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -386,7 +386,7 @@
   {
     "name": "AUDIT28-B6-a-load-forgets-a-standing-pack",
     "file": "src/scenes/bountyHost.js",
-    "old": "    for (const k of [...packs.keys()])\n      if (k.startsWith('retry:') || !ledger.held.some((h) => h.id === k)) packs.delete(k);",
+    "old": "    for (const k of [...packs.keys()]) if (k.startsWith('retry:') || !ledger.held.some((h) => h.id === k)) packs.delete(k);",
     "new": "    packs.clear();",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
@@ -395,8 +395,8 @@
   {
     "name": "AUDIT28-B7-the-oldest-clears-first",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "    .sort((a, b) => b.t - a.t);",
-    "new": "    .sort((a, b) => a.t - b.t);",
+    "old": ".sort((a, b) => b.t - a.t);",
+    "new": ".sort((a, b) => a.t - b.t);",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "AUDIT28-B10-a-future-take-runs-for-days",
     "file": "src/scenes/bountyHost.js",
-    "old": "    for (const h of ledger.held) if (h.takenAt > now) h.takenAt = now;\n    for (const gone of lapseBounties(ledger, now)) {",
-    "new": "    for (const gone of lapseBounties(ledger, now)) {",
+    "old": "    for (const h of ledger.held) if (h.takenAt > now) h.takenAt = now;\n",
+    "new": "",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]
@@ -422,7 +422,7 @@
   {
     "name": "AUDIT28-B12-a-share-at-the-sharers-level",
     "file": "src/scenes/bountyHost.js",
-    "old": "  const mine = (id) => {\n    const lv = deps.level();\n    return bountyTierFits(id, lv) ? (bountyIdAtLevel(id, lv) ?? id) : id;\n  };",
+    "old": "  const mine = (id) => { const lv = deps.level(); return bountyTierFits(id, lv) ? (bountyIdAtLevel(id, lv) ?? id) : id; };",
     "new": "  const mine = (id) => id;",
     "tests": [
       "test/scenes/audit28_bounty.test.js",
@@ -516,7 +516,7 @@
   {
     "name": "AUDIT28-H12-an-unread-notice-dropped",
     "file": "src/scenes/bountyHost.js",
-    "old": "    requeue: (n) => {\n      if (n && !notices.includes(n)) notices.unshift(n);\n    },",
+    "old": "    requeue: (n) => { if (n && !notices.includes(n)) notices.unshift(n); },",
     "new": "    requeue: () => {},",
     "tests": [
       "test/systems/audit28_forage.test.js"
@@ -525,8 +525,8 @@
   {
     "name": "AUDIT28-B8-the-owner-asked-on-the-dungeons-own-pixel",
     "file": "src/scenes/bountyHost.js",
-    "old": "        pose ? { px: pose.x, py: pose.y } : p.target,",
-    "new": "        p.target,",
+    "old": "pose ? { px: pose.x, py: pose.y } : p.target",
+    "new": "p.target",
     "tests": [
       "test/scenes/audit28_bounty.test.js"
     ]

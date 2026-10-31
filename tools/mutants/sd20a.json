@@ -38,8 +38,8 @@
   {
     "name": "SD20A-F2-held-whoever-stands-there",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  !!joined && Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r;",
-    "new": "  Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r;",
+    "old": "export const arenaHolds = (joined, x, z) => !!joined && Number.isFinite(x)",
+    "new": "export const arenaHolds = (joined, x, z) => Number.isFinite(x)",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD20A-F2-held-from-anywhere",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  !!joined && Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r;",
-    "new": "  !!joined && Number.isFinite(x) && Number.isFinite(z) && Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= Infinity;",
+    "old": "Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= SD_ARENA.r;",
+    "new": "Math.hypot(x - SD_ARENA.x, z - SD_ARENA.z) <= Infinity;",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]
@@ -57,7 +57,7 @@
     "name": "SD20A-F2-the-band-held-too",
     "file": "src/world/superDungeon/sdRealm.js",
     "old": "export const SD_ARENA_FLOORS = Object.freeze([Object.freeze({ kind: 'disc', ...SD_ARENA })]);",
-    "new": "export const SD_ARENA_FLOORS = Object.freeze([\n  Object.freeze({ kind: 'disc', ...SD_ARENA }),\n  Object.freeze({ kind: 'band', x: 0, z0: 0, z1: SD_ARENA.z, halfW: 40 }),\n]);",
+    "new": "export const SD_ARENA_FLOORS = Object.freeze([Object.freeze({ kind: 'disc', ...SD_ARENA }), Object.freeze({ kind: 'band', x: 0, z0: 0, z1: SD_ARENA.z, halfW: 40 })]);",
     "tests": [
       "test/net/superDungeon/sd20a_fight.test.js"
     ]

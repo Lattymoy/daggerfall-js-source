@@ -395,8 +395,8 @@
   {
     "name": "AUDITTESA2G-J5-the-word-unwitnessed",
     "file": "src/net/nodeLaw.js",
-    "old": "  banthaAreaHas(x, y) || (confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region));",
-    "new": "  banthaAreaHas(x, y) || (jungle === true && jungleGroundOk(x, y, climate, region));",
+    "old": "(confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region))",
+    "new": "(jungle === true && jungleGroundOk(x, y, climate, region))",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "AUDITTESA2G-J5-the-ground-unbounded",
     "file": "src/net/nodeLaw.js",
-    "old": "  banthaAreaHas(x, y) || (confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region));",
-    "new": "  banthaAreaHas(x, y) || (confirmed === true && jungle === true);",
+    "old": "(confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region))",
+    "new": "(confirmed === true && jungle === true)",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "AUDITTESA2G-J5-the-word-unread",
     "file": "src/net/nodeLaw.js",
-    "old": "  banthaAreaHas(x, y) || (confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region));",
-    "new": "  banthaAreaHas(x, y) || (confirmed === true && jungleGroundOk(x, y, climate, region));",
+    "old": "(confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region))",
+    "new": "(confirmed === true && jungleGroundOk(x, y, climate, region))",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "AUDITTESA2G-J5-the-bay-a-jungle-s",
     "file": "src/net/nodeLaw.js",
-    "old": "  !(x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) &&\n  JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) &&",
-    "new": "  JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) &&",
+    "old": "isProvinceRegion(region) && !(x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y)",
+    "new": "isProvinceRegion(region)",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "AUDITTESA2G-J5-any-province-s",
     "file": "src/net/nodeLaw.js",
-    "old": "  JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) &&\n  JUNGLE_GROUND.climates.includes(climate);",
-    "new": "  JUNGLE_GROUND.climates.includes(climate);",
+    "old": "  && JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) && JUNGLE_GROUND.climates.includes(climate);",
+    "new": "  && JUNGLE_GROUND.climates.includes(climate);",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "AUDITTESA2G-J5-any-climate-s",
     "file": "src/net/nodeLaw.js",
-    "old": "  JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) &&\n  JUNGLE_GROUND.climates.includes(climate);",
-    "new": "  JUNGLE_GROUND.theatres.includes(theatreOfRegion(region));",
+    "old": "  && JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) && JUNGLE_GROUND.climates.includes(climate);",
+    "new": "  && JUNGLE_GROUND.theatres.includes(theatreOfRegion(region));",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "AUDITTESA2G-J5-the-theatres-short",
     "file": "src/net/nodeLaw.js",
-    "old": "  theatres: Object.freeze([6, 8, 9]),",
-    "new": "  theatres: Object.freeze([8, 9]),",
+    "old": "theatres: Object.freeze([6, 8, 9])",
+    "new": "theatres: Object.freeze([8, 9])",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "AUDITTESA2G-J5-the-report-s-bit-dropped",
     "file": "src/net/nodeLaw.js",
-    "old": "export const pixelReport = (climate, region, jungle = false) => `${climate},${region}${jungle === true ? ',1' : ''}`;",
-    "new": "export const pixelReport = (climate, region, jungle = false) => `${climate},${region}`;",
+    "old": "`${climate},${region}${jungle === true ? ',1' : ''}`",
+    "new": "`${climate},${region}`",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "AUDITTESA2G-J5-every-report-a-jungle-s",
     "file": "src/net/nodeLaw.js",
-    "old": "export const pixelReport = (climate, region, jungle = false) => `${climate},${region}${jungle === true ? ',1' : ''}`;",
-    "new": "export const pixelReport = (climate, region, jungle = false) => `${climate},${region},1`;",
+    "old": "`${climate},${region}${jungle === true ? ',1' : ''}`",
+    "new": "`${climate},${region},1`",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -476,8 +476,8 @@
   {
     "name": "AUDITTESA2G-J5-the-bit-unparsed",
     "file": "src/net/nodeLaw.js",
-    "old": "  return m ? { climate: Number(m[1]), region: Number(m[2]), ...(m[3] ? { jungle: true } : {}) } : null;",
-    "new": "  return m ? { climate: Number(m[1]), region: Number(m[2]) } : null;",
+    "old": "...(m[3] ? { jungle: true } : {})",
+    "new": "",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -485,8 +485,8 @@
   {
     "name": "AUDITTESA2G-J5-the-bit-refused",
     "file": "src/net/nodeLaw.js",
-    "old": "  const m = typeof s === 'string' ? /^(\\d{3}),(\\d{1,2})(,1)?$/.exec(s) : null;",
-    "new": "  const m = typeof s === 'string' ? /^(\\d{3}),(\\d{1,2})$/.exec(s) : null;",
+    "old": "/^(\\d{3}),(\\d{1,2})(,1)?$/",
+    "new": "/^(\\d{3}),(\\d{1,2})$/",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "AUDITTESA2G-J5-the-slots-blind",
     "file": "src/net/nodeLaw.js",
-    "old": "      : jungleWoods({ x, y, climate, region, confirmed, jungle })",
-    "new": "      : jungleWoods({ x, y, climate, region, confirmed, jungle: false })",
+    "old": "  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : jungleWoods({ x, y, climate, region, confirmed, jungle }) ?",
+    "new": "  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : jungleWoods({ x, y, climate, region, confirmed, jungle: false }) ?",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "AUDITTESA2G-J5-the-tree-s-bound-blind",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (\n    !table ||\n    !Number.isSafeInteger(slot) ||\n    slot < 0 ||\n    slot >= treeSlots({ x, y, climate, region, confirmed, jungle })\n  )",
-    "new": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= treeSlots({ x, y, climate, region, confirmed }))",
+    "old": "slot >= treeSlots({ x, y, climate, region, confirmed, jungle })) return null;",
+    "new": "slot >= treeSlots({ x, y, climate, region, confirmed })) return null;",
     "tests": [
       "test/net/audittesa2g_jungle.test.js"
     ]

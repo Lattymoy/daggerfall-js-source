@@ -383,8 +383,8 @@
   {
     "name": "AUDIT-CC-N3-the-sentence-walked-in-the-street",
     "file": "src/scenes/arrestFlow.js",
-    "old": "              if (playerEntity.survival) alignSurvival(playerEntity, Math.floor(ownMinutes()), null);",
-    "new": "              if (false) alignSurvival(playerEntity, Math.floor(ownMinutes()), null);",
+    "old": "          if (playerEntity.survival) alignSurvival(playerEntity, Math.floor(ownMinutes()), null);",
+    "new": "          if (false) alignSurvival(playerEntity, Math.floor(ownMinutes()), null);",
     "tests": [
       "test/systems/auditcc.test.js"
     ],

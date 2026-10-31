@@ -220,8 +220,8 @@
   {
     "name": "DC-bad-roll-kept",
     "file": "src/net/chat.js",
-    "old": "    if (roll && !rolled) return null;\n    if (rolled) text = rollText(rolled);",
-    "new": "    if (rolled) text = rollText(rolled);",
+    "old": "    if (roll && !rolled) return null;\n",
+    "new": "",
     "tests": [
       "test/net/dice1.test.js"
     ]

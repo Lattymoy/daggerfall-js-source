@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-DRAGON-the-bar-over-the-serpents",
     "file": "src/scenes/dragonHost.js",
-    "old": "      if ((bar || barUp) && !barBlocked()) {",
-    "new": "      if (bar || barUp) {",
+    "old": "      if ((bar || barUp) && !barBlocked()) { drawBar(bar, { hidden: barHidden() }); barUp = !!bar; }",
+    "new": "      if (bar || barUp) { drawBar(bar, { hidden: barHidden() }); barUp = !!bar; }",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-DRAGON-the-bar-left-up",
     "file": "src/scenes/dragonHost.js",
-    "old": "      if (barUp) {\n        drawBar(null);\n        barUp = false;\n      }\n      host.leave(offline);",
-    "new": "      host.leave(offline);",
+    "old": "    away(offline) { if (barUp) { drawBar(null); barUp = false; } host.leave(offline); },",
+    "new": "    away(offline) { host.leave(offline); },",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-DRAGON-the-fight-off-the-street",
     "file": "src/scenes/dragonHost.js",
-    "old": "        fight = street() ? host.frame() : (host.leave(), false);",
-    "new": "        fight = host.frame();",
+    "old": "      try { fight = street() ? host.frame() : (host.leave(), false); }",
+    "new": "      try { fight = host.frame(); }",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]

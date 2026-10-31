@@ -319,8 +319,8 @@
   {
     "name": "ASL-KIND-drop",
     "file": "src/net/marksLaw.js",
-    "old": "  'fealty-tribute': 'move', // CROWN2: a vassal's 5% of its Tithe to its liege\n  'gate-incursion': 'mint', // AUDIT-SEATS: a Daedric Incursion's second half of a gate's Marks, once three claims agree (9.3)",
-    "new": "  'gate-incursion': 'mint', // AUDIT-SEATS: a Daedric Incursion's second half of a gate's Marks, once three claims agree (9.3)",
+    "old": "  'fealty-tribute': 'move',   // CROWN2: a vassal's 5% of its Tithe to its liege\n",
+    "new": "",
     "tests": [
       "test/net/audit_seats_law.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "ASL-KIND-mint",
     "file": "src/net/marksLaw.js",
-    "old": "  'siege-honours': 'mint', // SEAT2a: a siege's Honours, off the fighter's relay-signed receipt (Seats-Arc 6.8)",
-    "new": "  'siege-honours': 'move', // SEAT2a: a siege's Honours, off the fighter's relay-signed receipt (Seats-Arc 6.8)",
+    "old": "  'siege-honours': 'mint',",
+    "new": "  'siege-honours': 'move',",
     "tests": [
       "test/net/audit_seats_law.test.js",
       "test/net/marks1.test.js"

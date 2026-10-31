@@ -2,8 +2,8 @@
   {
     "name": "PERF-EXT20-the-memo-is-never-written-so-every-field-sweeps-again",
     "file": "src/render/labGrass.js",
-    "old": "    _discMemo.set(key, n);\n  }",
-    "new": "  }",
+    "old": "  if (n === undefined) { n = discSweep(radius, cell, steps); _discMemo.set(key, n); }",
+    "new": "  if (n === undefined) { n = discSweep(radius, cell, steps); }",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -57,7 +57,7 @@
   {
     "name": "PERF-EXT21-the-grid-does-not-follow-the-origin-east-west",
     "file": "src/render/labGrass.js",
-    "old": "      gx += offset[0];\n      gz += offset[2];",
+    "old": "      gx += offset[0]; gz += offset[2];",
     "new": "      gz += offset[2];",
     "tests": [
       "test/world/terrain/grassshift.test.js"
@@ -66,8 +66,8 @@
   {
     "name": "PERF-EXT21-the-grid-does-not-follow-the-origin-north-south",
     "file": "src/render/labGrass.js",
-    "old": "      gz += offset[2];\n      lastX += offset[0];",
-    "new": "      lastX += offset[0];",
+    "old": "      gx += offset[0]; gz += offset[2];",
+    "new": "      gx += offset[0];",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "PERF-EXT21-a-vertical-recentre-leaves-the-height-floor-behind",
     "file": "src/render/labGrass.js",
-    "old": "      F[s * 4 + 2] += dy;\n      const b = this.slotBox[s];",
-    "new": "      const b = this.slotBox[s];",
+    "old": "      F[s * 4] += dx; F[s * 4 + 1] += dz; F[s * 4 + 2] += dy;",
+    "new": "      F[s * 4] += dx; F[s * 4 + 1] += dz;",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "PERF-EXT21-the-culling-boxes-stay-where-the-cells-were",
     "file": "src/render/labGrass.js",
-    "old": "        b[0] += dx;\n        b[1] += dy;\n        b[2] += dz;\n        b[3] += dx;\n        b[4] += dy;\n        b[5] += dz;",
-    "new": "        b[1] += dy;\n        b[4] += dy;",
+    "old": "      if (b) { b[0] += dx; b[1] += dy; b[2] += dz; b[3] += dx; b[4] += dy; b[5] += dz; }",
+    "new": "      if (b) { b[1] += dy; b[4] += dy; }",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "PERF-EXT21-invalidate-asks-the-scene-rect-of-the-field-grid-unconverted",
     "file": "src/render/labGrass.js",
-    "old": "      const cx0 = Math.floor((x0 - gx) / cell),\n        cx1 = Math.floor((x1 - gx) / cell);",
-    "new": "      const cx0 = Math.floor(x0 / cell),\n        cx1 = Math.floor(x1 / cell);",
+    "old": "      const cx0 = Math.floor((x0 - gx) / cell), cx1 = Math.floor((x1 - gx) / cell);",
+    "new": "      const cx0 = Math.floor(x0 / cell), cx1 = Math.floor(x1 / cell);",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "PERF-EXT21-the-eye-is-found-on-the-scene-grid-not-the-fields",
     "file": "src/render/labGrass.js",
-    "old": "      const ecx = Math.floor((ex - gx) / cell),\n        ecz = Math.floor((ez - gz) / cell); // PERF-EXT21: the eye's cell on the field's grid",
-    "new": "      const ecx = Math.floor(ex / cell),\n        ecz = Math.floor(ez / cell); // PERF-EXT21: the eye's cell on the field's grid",
+    "old": "      const ecx = Math.floor((ex - gx) / cell), ecz = Math.floor((ez - gz) / cell);",
+    "new": "      const ecx = Math.floor(ex / cell), ecz = Math.floor(ez / cell);",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "PERF-EXT21-a-blade-is-asked-about-at-its-field-position-not-its-scene-one",
     "file": "src/render/labGrass.js",
-    "old": "    const x = fx + originX,\n      z = fz + originZ; // PERF-EXT21: in the scene's",
-    "new": "    const x = fx,\n      z = fz; // PERF-EXT21: in the scene's",
+    "old": "    const x = fx + originX, z = fz + originZ;   // PERF-EXT21: in the scene's",
+    "new": "    const x = fx, z = fz;   // PERF-EXT21: in the scene's",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "PERF-EXT21-the-tint-is-the-scenes-patch-so-a-crossing-recolours-the-field",
     "file": "src/render/labGrass.js",
-    "old": "    const tint = bakedTint(tRnd, fx, fz); // GRASS6: pulled toward the patch it stands in; GRASS AUDIT 1: only for a blade that STANDS - the noise is 0.43 ms a cell and a road cell refuses most of its candidates; PERF-EXT21: the FIELD's patch, which no shift moves",
-    "new": "    const tint = bakedTint(tRnd, x, z); // GRASS6: pulled toward the patch it stands in; GRASS AUDIT 1: only for a blade that STANDS - the noise is 0.43 ms a cell and a road cell refuses most of its candidates; PERF-EXT21: the FIELD's patch, which no shift moves",
+    "old": "    const tint = bakedTint(tRnd, fx, fz);",
+    "new": "    const tint = bakedTint(tRnd, x, z);",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "PERF-EXT21-the-field-places-its-cells-at-the-scene-origin",
     "file": "src/render/labGrass.js",
-    "old": "          originX: gx,\n          originZ: gz,\n          reuse: wholeSpare,",
-    "new": "          reuse: wholeSpare,",
+    "old": "seed, cell, originX: gx, originZ: gz, reuse: wholeSpare });   // PERF-EXT21",
+    "new": "seed, cell, reuse: wholeSpare });   // PERF-EXT21",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "PERF-EXT22-a-begun-rim-cell-is-placed-whole-on-the-frame-it-arrives",
     "file": "src/render/labGrass.js",
-    "old": "          first ? GRASS_SLICE : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)),",
-    "new": "          first ? perCell : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)),",
+    "old": "        const finished = stepGrassCell(st, first ? GRASS_SLICE : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)), ask);",
+    "new": "        const finished = stepGrassCell(st, first ? perCell : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)), ask);",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -186,8 +186,8 @@
   {
     "name": "PERF-EXT22-the-cell-in-progress-takes-its-whole-rest-on-a-walk",
     "file": "src/render/labGrass.js",
-    "old": "          first ? GRASS_SLICE : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)),",
-    "new": "          first ? (i0 > 0 ? perCell : GRASS_SLICE) : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)),",
+    "old": "        const finished = stepGrassCell(st, first ? GRASS_SLICE : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)), ask);",
+    "new": "        const finished = stepGrassCell(st, first ? (i0 > 0 ? perCell : GRASS_SLICE) : now ? GRASS_STEP : Math.min(GRASS_STEP, Math.ceil(need - done)), ask);",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -195,8 +195,8 @@
   {
     "name": "PERF-EXT22-a-slice-forgets-the-xorshift-word-so-the-rest-of-the-cell-is-another-cells",
     "file": "src/render/labGrass.js",
-    "old": "  st.s = _xs[0];\n  st.i = end;",
-    "new": "  st.i = end;",
+    "old": "  st.s = _xs[0]; st.i = end; st.n = n; st.count = n;",
+    "new": "  st.i = end; st.n = n; st.count = n;",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "PERF-EXT22-a-slice-forgets-how-many-stood-so-the-next-overwrites-them",
     "file": "src/render/labGrass.js",
-    "old": "  st.n = n;\n  st.count = n;",
-    "new": "  st.count = n;",
+    "old": "  st.s = _xs[0]; st.i = end; st.n = n; st.count = n;",
+    "new": "  st.s = _xs[0]; st.i = end; st.count = n;",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "PERF-EXT22-a-cell-inside-the-fade-is-sliced-too",
     "file": "src/render/labGrass.js",
-    "old": "      const wholeR2 = wholeR * wholeR,",
-    "new": "      const wholeR2 = 0,",
+    "old": "      const wholeR2 = wholeR * wholeR, dueR2 = dueR * dueR;",
+    "new": "      const wholeR2 = 0, dueR2 = dueR * dueR;",
     "tests": [
       "test/world/terrain/grassshift.test.js",
       "test/render/fb1021b_grass.test.js"
@@ -241,8 +241,8 @@
   {
     "name": "PERF-EXT22-the-field-never-catches-up-so-a-boot-slices-its-whole-rim",
     "file": "src/render/labGrass.js",
-    "old": "        now = late.length > 0; // the candidates owed in this order, the least pace meeting every deadline, a cell due now",
-    "new": "        now = false; // the candidates owed in this order, the least pace meeting every deadline, a cell due now",
+    "old": "      let owed = 0, need = 0, now = late.length > 0;",
+    "new": "      let owed = 0, need = 0, now = false;",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -250,8 +250,8 @@
   {
     "name": "PERF-EXT22-the-field-always-catches-up-so-the-walk-spikes-again",
     "file": "src/render/labGrass.js",
-    "old": "        now = late.length > 0; // the candidates owed in this order, the least pace meeting every deadline, a cell due now",
-    "new": "        now = true; // the candidates owed in this order, the least pace meeting every deadline, a cell due now",
+    "old": "      let owed = 0, need = 0, now = late.length > 0;",
+    "new": "      let owed = 0, need = 0, now = true;",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -259,8 +259,8 @@
   {
     "name": "PERF-EXT22-a-shift-keeps-a-half-placed-cell-of-the-old-frame",
     "file": "src/render/labGrass.js",
-    "old": "      pending = null; // PERF-EXT22: a half-placed cell holds scene positions of the old frame - it starts again in the new one",
-    "new": "      void pending; // PERF-EXT22: a half-placed cell holds scene positions of the old frame - it starts again in the new one",
+    "old": "      pending = null;   // PERF-EXT22: a half-placed cell holds scene positions of the old frame",
+    "new": "      void pending;   // PERF-EXT22: a half-placed cell holds scene positions of the old frame",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -277,8 +277,8 @@
   {
     "name": "PERF-EXT22-a-cell-the-eye-walked-away-from-is-still-finished-and-written",
     "file": "src/render/labGrass.js",
-    "old": "      if (pending && nearSq(pending.cx, pending.cz, ex, ez) > fillR2) pending = null; // PERF-EXT22: walked out of reach before it was done - it would not be begun now either",
-    "new": "      if (false) pending = null; // PERF-EXT22: walked out of reach before it was done - it would not be begun now either",
+    "old": "      if (pending && nearSq(pending.cx, pending.cz, ex, ez) > fillR2) pending = null;",
+    "new": "      if (false) pending = null;",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "PERF-EXT22-a-begun-cell-is-placed-at-the-scene-origin",
     "file": "src/render/labGrass.js",
-    "old": "          rimSpare = beginGrassCell(w.cx, w.cz, { perCell, seed, cell, originX: gx, originZ: gz, reuse: rimSpare }); // OW-HITCH: into the last rim cell's arrays - begun only when none is in progress",
-    "new": "          rimSpare = beginGrassCell(w.cx, w.cz, { perCell, seed, cell, originX: 0, originZ: 0, reuse: rimSpare }); // OW-HITCH: into the last rim cell's arrays - begun only when none is in progress",
+    "old": "          rimSpare = beginGrassCell(w.cx, w.cz, { perCell, seed, cell, originX: gx, originZ: gz, reuse: rimSpare });",
+    "new": "          rimSpare = beginGrassCell(w.cx, w.cz, { perCell, seed, cell, originX: 0, originZ: 0, reuse: rimSpare });",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]
@@ -305,7 +305,7 @@
     "name": "PERF-EXT22-a-finished-cell-is-thrown-away-and-placed-again-whole",
     "file": "src/render/labGrass.js",
     "old": "        write(cur, slot, st);",
-    "new": "        write(\n          cur,\n          slot,\n          placeLabGrassCell(cur.cx, cur.cz, {\n            keep: keepNow,\n            ground: groundNow,\n            slope: slopeNow,\n            perCell,\n            height,\n            seed,\n            cell,\n            originX: gx,\n            originZ: gz,\n          }),\n        );",
+    "new": "        write(cur, slot, placeLabGrassCell(cur.cx, cur.cz, { keep: keepNow, ground: groundNow, slope: slopeNow, perCell, height, seed, cell, originX: gx, originZ: gz }));",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]

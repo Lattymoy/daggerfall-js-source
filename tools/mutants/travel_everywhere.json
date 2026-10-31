@@ -198,8 +198,8 @@
   {
     "name": "TE-the-law-unpublished",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "  setPastBayPlaceLaw(tvPlaceSummary); // TRAVEL-EVERYWHERE: the held map's places past the Bay are this law's (world/pastBayPlaces.js)",
-    "new": "  // TRAVEL-EVERYWHERE: the held map's places past the Bay are this law's (world/pastBayPlaces.js)",
+    "old": "  setPastBayPlaceLaw(tvPlaceSummary);",
+    "new": "",
     "tests": [
       "test/ui/travel_everywhere.test.js"
     ]

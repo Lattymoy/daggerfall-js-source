@@ -12,8 +12,8 @@
   {
     "name": "HANDLE-EMAIL-refusal",
     "file": "server-account/src/accounts.js",
-    "old": "  if (handleLooksLikeEmail(h)) return 'email'; // HANDLE-EMAIL: a username is never an email address",
-    "new": "  if (false) return 'email'; // HANDLE-EMAIL: a username is never an email address",
+    "old": "  if (handleLooksLikeEmail(h)) return 'email';",
+    "new": "  if (false) return 'email';",
     "tests": [
       "test/net/handleemail.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HANDLE-EMAIL-order",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!isHandleShaped(h)) return 'shape';",
-    "new": "  if (handleLooksLikeEmail(h)) return 'email';\n  if (!isHandleShaped(h)) return 'shape';",
+    "old": "  if (!isHandleShaped(h)) return 'shape';\n",
+    "new": "  if (handleLooksLikeEmail(h)) return 'email';\n  if (!isHandleShaped(h)) return 'shape';\n",
     "tests": [
       "test/net/handleemail.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HANDLE-EMAIL-display",
     "file": "server-account/src/accounts.js",
-    "old": "  if (typeof handle === 'string' && handle.length > 0 && !handleLooksLikeEmail(handle)) return handle; // HANDLE-EMAIL: an address is never read out",
-    "new": "  if (typeof handle === 'string' && handle.length > 0) return handle; // HANDLE-EMAIL: an address is never read out",
+    "old": "handle.length > 0 && !handleLooksLikeEmail(handle)) return handle;",
+    "new": "handle.length > 0) return handle;",
     "tests": [
       "test/net/handleemail.test.js"
     ],

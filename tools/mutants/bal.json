@@ -342,8 +342,8 @@
   {
     "name": "BAL4-the-plate-says-end-the-journey",
     "file": "src/ui/enhanced/enhancedDeath.js",
-    "old": "  const keys = [\n    {\n      key: 'Enter',\n      word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End your tale'),\n      confirm: true,\n    },\n  ];",
-    "new": "  const keys = [{ key: 'Enter', word: t('death.key.end', 'End your tale'), confirm: true }];",
+    "old": "word: rises ? t('death.key.riseLegacy', 'Rise') : t('death.key.end', 'End your tale')",
+    "new": "word: t('death.key.end', 'End your tale')",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "BAL4-the-line-says-the-tale-ends",
     "file": "src/ui/enhanced/enhancedDeath.js",
-    "old": "      (online || screen.rises",
-    "new": "      (online",
+    "old": "lossLine || (online || screen.rises",
+    "new": "lossLine || (online",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "AUDIT-BAL-the-enhanced-face-hears-no-rise",
     "file": "src/ui/enhanced/enhancedDeath.js",
-    "old": "  for (const k of deathKeys(screen.hint, online, !!screen.rises)) {",
-    "new": "  for (const k of deathKeys(screen.hint, online)) {",
+    "old": "for (const k of deathKeys(screen.hint, online, !!screen.rises)) {",
+    "new": "for (const k of deathKeys(screen.hint, online)) {",
     "tests": [
       "test/systems/bal_arc.test.js"
     ]

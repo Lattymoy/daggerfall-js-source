@@ -77,8 +77,8 @@
   {
     "name": "MINE-PERKS-surveyed-unread",
     "file": "src/net/nodeLaw.js",
-    "old": "    confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER,",
-    "new": "    confirmed ? 7 : UNCONFIRMED_VEIN_TIER,",
+    "old": "4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);",
+    "new": "4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);",
     "tests": [
       "test/ui/mineperks.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "MINE-PERKS-surveyed-signature",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed }))",
-    "new": "  if (\n    !table ||\n    !Number.isSafeInteger(slot) ||\n    slot < 0 ||\n    slot >= veinSlots({ climate, region, confirmed: confirmed || surveyed })\n  )",
+    "old": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed })) return null;",
+    "new": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed: confirmed || surveyed })) return null;",
     "tests": [
       "test/ui/mineperks.test.js"
     ]

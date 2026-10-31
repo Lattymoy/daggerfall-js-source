@@ -56,8 +56,8 @@
   {
     "name": "TWO-HANDS-MIRROR-BIND-pieces-not-read",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  if (assembly.mirrorBinds?.n !== n)\n    assembly.mirrorBinds = {\n      n,\n      binds: [...(assembly.skinBinds ?? []), ...mirrorBindSources({ pieces: assembly.pieces })],\n    };",
-    "new": "  if (assembly.mirrorBinds?.n !== n) assembly.mirrorBinds = { n, binds: [...(assembly.skinBinds ?? [])] };",
+    "old": "binds: [...(assembly.skinBinds ?? []), ...mirrorBindSources({ pieces: assembly.pieces })] };",
+    "new": "binds: [...(assembly.skinBinds ?? [])] };",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TWO-HANDS-MIRROR-BIND-file-not-read",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    skinBinds: offWeaponBone ? mirrorBindSources({ nif: skeletonFile }) : null, // MIRROR-BIND: the skeleton file's own skins (retail's Tri Shadow), for the picture's mirror (mirrorBindsOf)",
-    "new": "    skinBinds: null, // MIRROR-BIND: the skeleton file's own skins (retail's Tri Shadow), for the picture's mirror (mirrorBindsOf)",
+    "old": "    skinBinds: offWeaponBone ? mirrorBindSources({ nif: skeletonFile }) : null,",
+    "new": "    skinBinds: null,",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]

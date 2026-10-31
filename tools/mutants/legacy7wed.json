@@ -2,8 +2,8 @@
   {
     "name": "LEGACY7W-partner-not-named",
     "file": "server-account/src/legacy.js",
-    "old": "    .prepare('SELECT char_id, partner_char FROM realm_wed_halves WHERE sid = ? AND player = ? AND partner = ?')",
-    "new": "    .prepare('SELECT char_id, partner_char FROM realm_wed_halves WHERE sid = ? AND player = ? AND partner != ?')",
+    "old": "WHERE sid = ? AND player = ? AND partner = ?').bind(sid, partner, playerId)",
+    "new": "WHERE sid = ? AND player = ? AND partner != ?').bind(sid, partner, playerId)",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LEGACY7W-half-never-lapses",
     "file": "server-account/src/legacy.js",
-    "old": "    .bind(nowS - WED_HALF_LIFE_S, playerId, sid)",
-    "new": "    .bind(0, playerId, sid)",
+    "old": ".bind(nowS - WED_HALF_LIFE_S, playerId, sid).run();",
+    "new": ".bind(0, playerId, sid).run();",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LEGACY7W-many-halves",
     "file": "server-account/src/legacy.js",
-    "old": "    .bind(nowS - WED_HALF_LIFE_S, playerId, sid)",
-    "new": "    .bind(nowS - WED_HALF_LIFE_S, '', sid)",
+    "old": ".bind(nowS - WED_HALF_LIFE_S, playerId, sid).run();",
+    "new": ".bind(nowS - WED_HALF_LIFE_S, '', sid).run();",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LEGACY7W-partner-dead-or-lineless",
     "file": "server-account/src/legacy.js",
-    "old": "  if (!them) return { error: 'wed-partner' };\n  const [theirCard, myCard] = await Promise.all([wedCardOf(db, partner, other.char_id), wedCardOf(db, playerId, id)]);",
-    "new": "  const [theirCard, myCard] = await Promise.all([wedCardOf(db, partner, other.char_id), wedCardOf(db, playerId, id)]);",
+    "old": "  if (!them) return { error: 'wed-partner' };\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LEGACY7W-wed-over-a-union",
     "file": "server-account/src/legacy.js",
-    "old": "        ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char IN (?, ?) OR b_char IN (?, ?)))' +",
-    "new": "        ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND 0 AND (a_char IN (?, ?) OR b_char IN (?, ?)))' +",
+    "old": "    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND (a_char IN (?, ?) OR b_char IN (?, ?)))'",
+    "new": "    + ' WHERE NOT EXISTS (SELECT 1 FROM realm_unions WHERE ended_at IS NULL AND 0 AND (a_char IN (?, ?) OR b_char IN (?, ?)))'",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "LEGACY7W-mine-wed-unchecked",
     "file": "server-account/src/legacy.js",
-    "old": "  if (await openUnionOf(db, id)) return { error: 'wed-already' };\n  // a half older than its life is nobody's word any more - swept before mine is written and theirs is looked for; and",
-    "new": "  // a half older than its life is nobody's word any more - swept before mine is written and theirs is looked for; and",
+    "old": "  if (!me.lineage_id) return { error: 'wed-no-line' };\n  if (await openUnionOf(db, id)) return { error: 'wed-already' };\n",
+    "new": "  if (!me.lineage_id) return { error: 'wed-no-line' };\n",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "LEGACY7W-no-line-weds",
     "file": "server-account/src/legacy.js",
-    "old": "  if (!me.lineage_id) return { error: 'wed-no-line' };\n  if (await openUnionOf(db, id)) return { error: 'wed-already' };",
-    "new": "  if (await openUnionOf(db, id)) return { error: 'wed-already' };",
+    "old": "  if (!me.lineage_id) return { error: 'wed-no-line' };\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "LEGACY7W-lease-unchecked",
     "file": "server-account/src/legacy.js",
-    "old": "  if (me.lease !== lease) return { error: 'lease' };\n  if (!me.lineage_id) return { error: 'wed-no-line' };",
-    "new": "  if (!me.lineage_id) return { error: 'wed-no-line' };",
+    "old": "  if (me.lease !== lease) return { error: 'lease' };\n  if (!me.lineage_id)",
+    "new": "  if (!me.lineage_id)",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LEGACY7W-dead-weds",
     "file": "server-account/src/legacy.js",
-    "old": "  if (me.dead_at != null) return { error: 'dead' };\n  if (me.lease !== lease) return { error: 'lease' };",
-    "new": "  if (me.lease !== lease) return { error: 'lease' };",
+    "old": "  if (me.dead_at != null) return { error: 'dead' };\n  if (me.lease !== lease)",
+    "new": "  if (me.lease !== lease)",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LEGACY7W-sid-anyones",
     "file": "server-account/src/legacy.js",
-    "old": "  if (had) return mineOf(had) ? { ok: true, wed: true, union: unionView(had, playerId) } : { error: 'wed-spent' };",
-    "new": "  if (had)\n    return mineOf(had)\n      ? { ok: true, wed: true, union: unionView(had, playerId) }\n      : { ok: true, wed: true, union: unionView(had, playerId) };",
+    "old": "? { ok: true, wed: true, union: unionView(had, playerId) } : { error: 'wed-spent' };",
+    "new": "? { ok: true, wed: true, union: unionView(had, playerId) } : { ok: true, wed: true, union: unionView(had, playerId) };",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LEGACY7W-self-wed",
     "file": "server-account/src/legacy.js",
-    "old": "  if (\n    typeof sid !== 'string' ||\n    !WED_SID_RE.test(sid) ||\n    typeof partner !== 'string' ||\n    !ID_RE.test(partner) ||\n    partner === playerId\n  )",
-    "new": "  if (typeof sid !== 'string' || !WED_SID_RE.test(sid) || typeof partner !== 'string' || !ID_RE.test(partner))",
+    "old": " || !ID_RE.test(partner) || partner === playerId) return { error: 'body' };",
+    "new": " || !ID_RE.test(partner)) return { error: 'body' };",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LEGACY7W-death-keeps-union",
     "file": "server-account/src/legacy.js",
-    "old": "  if (why === 'fell') await endUnionsOf(db, id, atS, 'died').run();\n  await db.batch(releaseSteps(db, id, atS)); // INT4: its claims withdrawn, what it held no record's now",
-    "new": "  await db.batch(releaseSteps(db, id, atS)); // INT4: its claims withdrawn, what it held no record's now",
+    "old": "  if (why === 'fell') await endUnionsOf(db, id, atS, 'died').run();\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LEGACY7W-why-unchecked",
     "file": "server-account/src/legacy.js",
-    "old": "  if ((why !== 'fell' && why !== 'retired') || typeof hold !== 'boolean') return { error: 'body' };",
-    "new": "  if (typeof hold !== 'boolean') return { error: 'body' };",
+    "old": "  if ((why !== 'fell' && why !== 'retired') || typeof hold !== 'boolean') return { error: 'body' };\n",
+    "new": "  if (typeof hold !== 'boolean') return { error: 'body' };\n",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "LEGACY7W-cards-swapped",
     "file": "server-account/src/legacy.js",
-    "old": "      JSON.stringify(theirCard),\n      JSON.stringify(myCard),",
-    "new": "      JSON.stringify(myCard),\n      JSON.stringify(theirCard),",
+    "old": "JSON.stringify(theirCard), JSON.stringify(myCard), nowS,",
+    "new": "JSON.stringify(myCard), JSON.stringify(theirCard), nowS,",
     "tests": [
       "test/systems/legacy/legacy7_wed.test.js"
     ]

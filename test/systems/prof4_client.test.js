@@ -492,7 +492,7 @@ test('PROF4 wiring: a built pixel keeps its forest (the tree flats by World of D
   assert.match(r, /if \(uTip\.z != 0\.0\) \{/);
   assert.match(r, /if \(tp \|\| this\._bbTipOn\) \{ gl\.uniform3f\(this\.bbUTip, tp \? tp\[0\] : 0, tp \? tp\[1\] : 0, tp \? tp\[2\] : 0\); this\._bbTipOn = !!tp; \}/);
   const d = src('server-account/src/decor.js');
-  assert.match(d, /const ours =\n\s*row && row\.owner === player\.id && Number\(row\.template\) === p\.item\.t && Number\(row\.listed\) === 0 && !elsewhere;/);   // AUDIT 30 S6: and not on the market, and not standing twice
+  assert.match(d, /const ours = row && row\.owner === player\.id && Number\(row\.template\) === p\.item\.t && Number\(row\.listed\) === 0 && !elsewhere;/);   // AUDIT 30 S6: and not on the market, and not standing twice
   assert.match(d, /delete plain\.mk;/);
   const g = src('src/scenes/gatherHost.js');
   // PIN MOVED (AUDIT GATHER-FEEL F1): the kinds told which nodes' last blow is still in the air, and a node gone once it has landed

@@ -213,8 +213,8 @@
   {
     "name": "WITCH1-offline-the-bowls-stay",
     "file": "src/scenes/witchesHost.js",
-    "old": "      for (const k of [...stood.keys()]) unstand(k);\n      if (who && who === heardFor && pendingSale()) {",
-    "new": "      if (who && who === heardFor && pendingSale()) {",
+    "old": "      account = who; towns.clear(); for (const k of [...stood.keys()]) unstand(k);",
+    "new": "      account = who; towns.clear();",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "WITCH1-the-owner-takes",
     "file": "src/scenes/witchesHost.js",
-    "old": "        subs = [cakesText(r.o.stock)];\n      if (ownsHome(s, r))",
-    "new": "        subs = [cakesText(r.o.stock)];\n      if (false && ownsHome(s, r))",
+    "old": "      if (ownsHome(s, r)) return { title, subs, actions:",
+    "new": "      if (false && ownsHome(s, r)) return { title, subs, actions:",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "WITCH1-set-out-from-the-street",
     "file": "src/scenes/witchesHost.js",
-    "old": "      if (!front || Math.hypot(front.c[0] + tr[0] - feet[0], front.c[1] + tr[2] - feet[2]) > OFFERING_SET_REACH)",
-    "new": "      if (!front || Math.hypot(front.c[0] + tr[0] - feet[0], front.c[1] + tr[2] - feet[2]) > OFFERING_SET_REACH * 10)",
+    "old": "tr[2] - feet[2]) > OFFERING_SET_REACH) continue;",
+    "new": "tr[2] - feet[2]) > OFFERING_SET_REACH * 10) continue;",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ],
@@ -524,8 +524,8 @@
   {
     "name": "WITCH1-AUDIT-town-asked-all-year",
     "file": "src/scenes/witchesHost.js",
-    "old": "    festivalLive() ||\n    (festivalShut() !== 'guest' && festivalState().offerings.some((/** @type {any} */ o) => o.mapId === mapId));",
-    "new": "    true || (festivalShut() !== 'guest' && festivalState().offerings.some((/** @type {any} */ o) => o.mapId === mapId));",
+    "old": "const asks = (/** @type {number} */ mapId) => festivalLive() ||",
+    "new": "const asks = (/** @type {number} */ mapId) => true ||",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ],
@@ -534,8 +534,8 @@
   {
     "name": "WITCH1-AUDIT-bowl-at-a-refused-spot",
     "file": "src/scenes/witchesHost.js",
-    "old": "    if (entry.witchHomes instanceof Map) return entry.witchHomes.get(bk) ?? null;\n    const xz = offeringSpot(entry.homeFrames?.get?.(bk), mapId, bk);",
-    "new": "    const xz = offeringSpot(entry.homeFrames?.get?.(bk), mapId, bk);",
+    "old": "    if (entry.witchHomes instanceof Map) return entry.witchHomes.get(bk) ?? null;\n",
+    "new": "",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ],

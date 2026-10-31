@@ -2,8 +2,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-search-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    const [found] = await db.batch([\n      db.prepare(sql).bind(...args),\n      audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S }),\n    ]);",
-    "new": "    const [found] = await db.batch([db.prepare(sql).bind(...args)]);\n    await audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S }).run();",
+    "old": "const [found] = await db.batch([db.prepare(sql).bind(...args), audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S })]);",
+    "new": "const [found] = await db.batch([db.prepare(sql).bind(...args)]); await audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S }).run();",
     "why": "the search's audit row a trip after its page",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-profile-chars-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "  const byId = path === '/v1/staff/player' && typeof body.target === 'string' && ID_RE.test(body.target);",
-    "new": "  const byId = false && path === '/v1/staff/player' && typeof body.target === 'string' && ID_RE.test(body.target);",
+    "old": "const byId = path === '/v1/staff/player' && typeof body.target",
+    "new": "const byId = false && path === '/v1/staff/player' && typeof body.target",
     "why": "a profile asked by id reads its characters a trip after the account, as a name's does",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-overview-strikes-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    const [[guilds, renown, devices, open], strikes] = await Promise.all([\n      db.batch([",
-    "new": "    const [[guilds, renown, devices, open], strikes] = await Promise.all([\n      await db.batch([",
+    "old": "const [[guilds, renown, devices, open], strikes] = await Promise.all([db.batch([",
+    "new": "const [[guilds, renown, devices, open], strikes] = await Promise.all([await db.batch([",
     "why": "the Overview's strikes read a trip after its batch",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-overview-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "        row,\n      ]),\n      strikesOf(db, p.id, nowS),\n    ]);",
-    "new": "      ]),\n      strikesOf(db, p.id, nowS),\n    ]);\n    await row.run();",
+    "old": "      row,\n    ]), strikesOf(db, p.id, nowS)]);",
+    "new": "    ]), strikesOf(db, p.id, nowS)]); await row.run();",
     "why": "the Overview's audit row a trip after its reads",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-no-character-unaudited",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    if (!c) {\n      await row.run();\n      return { character: null };\n    }",
-    "new": "    if (!c) return { character: null };",
+    "old": "if (!c) { await row.run(); return { character: null }; }",
+    "new": "if (!c) return { character: null };",
     "why": "a Skills, Equipment or Inventories tab of an account with no character answered without its audit row (the tab's row is no longer one site after tabOf)",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-law-before-batch",
     "file": "server-account/src/staffPlayers.js",
-    "old": "      lawOf(db, c),",
-    "new": "      await lawOf(db, c),",
+    "old": "const [view, law, got] = await Promise.all([viewOf(bucket, c), lawOf(db, c),",
+    "new": "const [view, law, got] = await Promise.all([viewOf(bucket, c), await lawOf(db, c),",
     "why": "Skills, Equipment and Inventories read the law finding a trip before the rest",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-inventories-held-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "        ...service,\n        row,\n      ]),\n    ]);",
-    "new": "        row,\n      ]),\n    ]);\n    if (service.length) got.splice(1, 0, ...(await db.batch(service)));",
+    "old": "...service, row])]);",
+    "new": "row])]);\n    if (service.length) got.splice(1, 0, ...await db.batch(service));",
     "why": "Inventories read what the service holds a trip after the save's batch, as before the fold",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-sections-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    row,\n  ]);",
-    "new": "  ]);\n  await row.run();",
+    "old": ".bind(...defs[k][1])), row]);",
+    "new": ".bind(...defs[k][1]))]); await row.run();",
     "why": "Market and History's audit row a trip after their sections",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-trades-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "        .bind(p.id),\n      row,\n    ]);",
-    "new": "        .bind(p.id),\n    ]);\n    await row.run();",
+    "old": "OFFSET ${from}`).bind(p.id), row]);",
+    "new": "OFFSET ${from}`).bind(p.id)]); await row.run();",
     "why": "the Trades tab's audit row a trip after its read",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-economy-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "        .bind(...ids, since),\n      row,\n    ]);",
-    "new": "        .bind(...ids, since),\n    ]);\n    await row.run();",
+    "old": ".bind(...ids, since),\n      row,\n    ]);",
+    "new": ".bind(...ids, since),\n    ]); await row.run();",
     "why": "the Economy tab's audit row a trip after its batch",
     "tests": [
       "test/server/staffspeed_players.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-SPEED-PLAYERS-devices-row-after",
     "file": "server-account/src/staffPlayers.js",
-    "old": "      devicesOf(ctx, p.id),",
-    "new": "      await devicesOf(ctx, p.id),",
+    "old": "const [devices] = await Promise.all([devicesOf(ctx, p.id), audit(",
+    "new": "const [devices] = await Promise.all([await devicesOf(ctx, p.id), audit(",
     "why": "the devices' audit row a trip after their read",
     "tests": [
       "test/server/staffspeed_players.test.js"

@@ -110,8 +110,8 @@
   {
     "name": "SB-FX-the-shop-reads-its-own-words",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "      const wd = effectWords(e);",
-    "new": "      const wd = { group: 'Damage', subgroup: 'Health', parts: [`${e.magnitudeBaseLow}-${e.magnitudeBaseHigh}`] };",
+    "old": "    const wd = effectWords(e);",
+    "new": "    const wd = { group: 'Damage', subgroup: 'Health', parts: [`${e.magnitudeBaseLow}-${e.magnitudeBaseHigh}`] };",
     "tests": [
       "test/ui/shopplus_spellshop.test.js"
     ]

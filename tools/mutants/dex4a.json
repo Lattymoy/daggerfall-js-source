@@ -2,7 +2,7 @@
   {
     "name": "DEX4a-the-merge-never-matches",
     "file": "src/systems/spell/standardSpells.js",
-    "old": "      const at = records.findIndex((r) => r.index === item.index); // isItemData: record.index == data[\"index\"]",
+    "old": "      const at = records.findIndex((r) => r.index === item.index);   // isItemData: record.index == data[\"index\"]",
     "new": "      const at = -1;",
     "why": "every item a new record - a mod's edit of a SPELLS.STD spell appended behind it and never read",
     "tests": [
@@ -12,8 +12,8 @@
   {
     "name": "DEX4a-the-base-forgotten",
     "file": "src/systems/spell/standardSpells.js",
-    "old": "  const r = base",
-    "new": "  const r = false",
+    "old": "  const r = base ? structuredClone(base) : { effects:",
+    "new": "  const r = false ? structuredClone(base) : { effects:",
     "why": "a matched record loses every field the item does not name",
     "tests": [
       "test/systems/enemyExpansion/dex4a_spells.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "DEX4a-the-default-cost-nought",
     "file": "src/systems/spell/standardSpells.js",
-    "old": "        cost: -1,",
-    "new": "        cost: 0,",
+    "old": "element: -1, rangeType: -1, cost: -1, name: '', icon: -1, index: -1 };",
+    "new": "element: -1, rangeType: -1, cost: 0, name: '', icon: -1, index: -1 };",
     "why": "SpellRecordData's cost defaults -1",
     "tests": [
       "test/systems/enemyExpansion/dex4a_spells.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "DEX4a-the-name-unmapped",
     "file": "src/systems/spell/standardSpells.js",
-    "old": "  spellName: 'name',",
-    "new": "  spellName: 'spellName',",
+    "old": "const RECORD_FIELDS = Object.freeze({ spellName: 'name',",
+    "new": "const RECORD_FIELDS = Object.freeze({ spellName: 'spellName',",
     "why": "DFU's spellName lands beside the record's name, never in it",
     "tests": [
       "test/systems/enemyExpansion/dex4a_spells.test.js"

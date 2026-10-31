@@ -2,8 +2,8 @@
   {
     "name": "ACCOMPARE-the-two-handers-arm-clears-one-hand",
     "file": "src/systems/equip.js",
-    "old": "  if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both)\n    out.push(EQUIP_SLOTS.LeftHand, EQUIP_SLOTS.RightHand); // 2H clears both hands",
-    "new": "  if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand); // 2H clears both hands",
+    "old": "if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.LeftHand, EQUIP_SLOTS.RightHand);",
+    "new": "if (item.group === 'Weapons' && getItemHands(item) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);",
     "tests": [
       "test/systems/fb0929d_accompare.test.js",
       "test/ui/equipmechanics.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "ACCOMPARE-a-shield-bumps-any-right-hand",
     "file": "src/systems/equip.js",
-    "old": "    if (right && getItemHands(right) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand); // a shield bumps a held 2H",
-    "new": "    if (right) out.push(EQUIP_SLOTS.RightHand); // a shield bumps a held 2H",
+    "old": "if (right && getItemHands(right) === ITEM_HANDS.Both) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H",
+    "new": "if (right) out.push(EQUIP_SLOTS.RightHand);   // a shield bumps a held 2H",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "ACCOMPARE-the-occupant-never-swapped",
     "file": "src/systems/equip.js",
-    "old": "  out.push(slot); // swap the occupant out (alwaysEquip)\n  return out;",
-    "new": "  return out;",
+    "old": "  out.push(slot);   // swap the occupant out (alwaysEquip)\n",
+    "new": "",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "ACCOMPARE-equipItem-off-its-own-leavers",
     "file": "src/systems/equip.js",
-    "old": "    for (const s of wearLeavers(entity, item, slot)) {",
-    "new": "    for (const s of [slot]) {",
+    "old": "for (const s of wearLeavers(entity, item, slot)) {",
+    "new": "for (const s of [slot]) {",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "ACCOMPARE-a-struck-table-entry-moved",
     "file": "src/combat/formulas.js",
-    "old": "export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6]);",
-    "new": "export const STRUCK_BODY_PARTS = Object.freeze([0, 1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6]);",
+    "old": "export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1,",
+    "new": "export const STRUCK_BODY_PARTS = Object.freeze([0, 1, 1, 1, 1,",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "ACCOMPARE-the-formulas-read-the-wrong-name",
     "file": "src/combat/formulas.js",
-    "old": "export const struckBodyPartTable = () => _overrides.get('struckBodyPartTable')?.() ?? STRUCK_BODY_PARTS;",
-    "new": "export const struckBodyPartTable = () => _overrides.get('struckBodyParts')?.() ?? STRUCK_BODY_PARTS;",
+    "old": "_overrides.get('struckBodyPartTable')?.()",
+    "new": "_overrides.get('struckBodyParts')?.()",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "ACCOMPARE-wdm-min-without-its-material",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  return [weaponMinDamage(item.templateIndex) + mod, weaponMaxDamage(item.templateIndex) + mod];",
-    "new": "  return [weaponMinDamage(item.templateIndex), weaponMaxDamage(item.templateIndex) + mod];",
+    "old": "return [weaponMinDamage(item.templateIndex) + mod, weaponMaxDamage(item.templateIndex) + mod];",
+    "new": "return [weaponMinDamage(item.templateIndex), weaponMaxDamage(item.templateIndex) + mod];",
     "tests": [
       "test/systems/fb0929d_accompare.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "PORTAL1-stone-unbound",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    bound: true,\n    stackable: true, // the shard's two laws",
-    "new": "    stackable: true, // the shard's two laws",
+    "old": "  bound: true, stackable: true,   // the shard's two laws",
+    "new": "  stackable: true,   // the shard's two laws",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PORTAL1-stone-unstacked",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    bound: true,\n    stackable: true, // the shard's two laws",
-    "new": "    bound: true, // the shard's two laws",
+    "old": "  bound: true, stackable: true,   // the shard's two laws",
+    "new": "  bound: true,   // the shard's two laws",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PORTAL1-stone-a-gem",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  return Object.assign(mintCondition(setItemFields({ group: 'UselessItems2', templateIndex: PORTAL_STONE_TEMPLATE })), {",
-    "new": "  return Object.assign(mintCondition(setItemFields({ group: 'Gems', templateIndex: PORTAL_STONE_TEMPLATE })), {",
+    "old": "group: 'UselessItems2', templateIndex: PORTAL_STONE_TEMPLATE",
+    "new": "group: 'Gems', templateIndex: PORTAL_STONE_TEMPLATE",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "PORTAL1-stone-heavier-than-its-shards",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    name: PORTAL_STONE.name,\n    baseWeight: 0.25,",
-    "new": "    name: PORTAL_STONE.name,\n    baseWeight: 0.6,",
+    "old": "  baseWeight: 0.25,\n  hitPoints: 1000,\n  basePrice: PORTAL_STONE.value,",
+    "new": "  baseWeight: 0.6,\n  hitPoints: 1000,\n  basePrice: PORTAL_STONE.value,",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "PORTAL1-classic-card-silent",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isPortalStone(item))\n    for (const text of portalStoneLines()) out.push({ text, center: true }); // PORTAL1\n  else if (isWeirKey(item))",
-    "new": "  else if (isWeirKey(item))",
+    "old": "  else if (isPortalStone(item)) for (const text of portalStoneLines()) out.push({ text, center: true });   // PORTAL1",
+    "new": "",
     "tests": [
       "test/systems/portal1_stone.test.js"
     ]
@@ -755,8 +755,8 @@
   {
     "name": "PORTAL-GIFT-every-load",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  if ((Number.isSafeInteger(entity.portalGift) ? entity.portalGift : 0) >= PORTAL_GIFT) return 0;\n  entity.portalGift = PORTAL_GIFT;",
-    "new": "  entity.portalGift = PORTAL_GIFT;",
+    "old": "  if ((Number.isSafeInteger(entity.portalGift) ? entity.portalGift : 0) >= PORTAL_GIFT) return 0;\n",
+    "new": "",
     "tests": [
       "test/systems/portal1_gift.test.js"
     ]
@@ -809,7 +809,7 @@
   {
     "name": "PORTAL-GIFT-said-every-ask",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "export const takePortalGiftNotice = () => {\n  const n = _giftNotice;\n  _giftNotice = 0;\n  return n;\n};",
+    "old": "export const takePortalGiftNotice = () => { const n = _giftNotice; _giftNotice = 0; return n; };",
     "new": "export const takePortalGiftNotice = () => _giftNotice;",
     "tests": [
       "test/systems/portal1_gift.test.js"

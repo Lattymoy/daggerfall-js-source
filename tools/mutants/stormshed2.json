@@ -157,8 +157,8 @@
   {
     "name": "STORMSHED2-C-unshared",
     "file": "server-account/src/homes.js",
-    "old": "  if (asking && asking.gen === gen) return asking.ask;\n  const ask = homeLayouts(ctx)",
-    "new": "  const ask = homeLayouts(ctx)",
+    "old": "  if (asking && asking.gen === gen) return asking.ask;\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/stormshed2.test.js"
     ],
@@ -228,8 +228,8 @@
   {
     "name": "STORMSHED2-C-kept-per-request",
     "file": "server-account/src/homes.js",
-    "old": "  const root = ctx.db?.[DB_ROOT] ?? ctx.db;",
-    "new": "  const root = ctx.db;",
+    "old": "  const root = ctx.db?.[DB_ROOT] ?? ctx.db;\n  const gen = Number(",
+    "new": "  const root = ctx.db;\n  const gen = Number(",
     "tests": [
       "test/systems/legacy/stormshed2.test.js"
     ],

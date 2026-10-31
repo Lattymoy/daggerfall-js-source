@@ -33,7 +33,7 @@
 import { getPref } from './uiPrefs.js';
 import { hudText } from './notify.js';
 import { isEnhanced } from './uiSkin.js';
-import { EVENT_KIND_ORDER, eventKindPref } from './features.js'; // EVENTS2: the kinds' one home
+import { EVENT_KIND_ORDER, eventKindPref } from './features.js';   // EVENTS2: the kinds' one home
 
 /** The kinds a line may say itself under (systems/features.js EVENT_KINDS, the kinds' one home); any other is the gate's. */
 export const EVENT_NOTICE_KINDS = EVENT_KIND_ORDER;
@@ -59,31 +59,19 @@ export const eventBoardOn = () => {
   try {
     if (getPref(EVENT_BOARD_PREF) === false) return false;
     return !(isEnhanced() && getPref('hudLayout')?.[EVENT_BOARD_PIECE]?.off === true);
-  } catch {
-    return true;
-  }
+  } catch { return true; }
 };
 
 /** EVENTS2: whether a kind's events show on the board and in its news - its chip on the Event board row (on unless set
  *  off). The Timers window lists every kind whatever this says. */
 export const eventKindShown = (/** @type {string} */ kind) => {
-  try {
-    return getPref(eventKindPref(kind)) !== false;
-  } catch {
-    return true;
-  }
+  try { return getPref(eventKindPref(kind)) !== false; } catch { return true; }
 };
 
 /** A line said where it went before the board (the board off, or a line it had taken when it was switched off -
  *  `filed`, the door having filed it already). */
 export function eventNoticeElsewhere(kind, text, filed = false) {
-  try {
-    if (_off && kind !== 'raid') _off(text);
-    else if (filed) eventHudLine(text);
-    else hudText(text);
-  } catch {
-    /* a sink that throws loses one line, never the caller's frame */
-  }
+  try { if (_off && kind !== 'raid') _off(text); else if (filed) eventHudLine(text); else hudText(text); } catch { /* a sink that throws loses one line, never the caller's frame */ }
 }
 
 /** A line on the HUD's line that the journal already holds (the door filed it; the board had no room for its news, or
@@ -93,11 +81,7 @@ export function eventHudLine(text) {
   const holder = _log && typeof _log === 'object' ? _log : null;
   const sink = holder?.hudMessageSink ?? null;
   if (sink) holder.hudMessageSink = null;
-  try {
-    hudText(text);
-  } finally {
-    if (sink) holder.hudMessageSink = sink;
-  }
+  try { hudText(text); } finally { if (sink) holder.hudMessageSink = sink; }
 }
 
 /**
@@ -110,18 +94,10 @@ export function eventHudLine(text) {
 export function eventNotice(kind, text, id = null) {
   const s = typeof text === 'string' ? text.trim() : '';
   if (!s) return false;
-  if (!eventBoardOn()) {
-    eventNoticeElsewhere(kind, s);
-    return true;
-  }
-  try {
-    if (typeof _log === 'function') _log(s);
-    else _log?.hudMessageSink?.(s);
-  } catch {
-    /* the log refusing a line never costs the board it */
-  }
+  if (!eventBoardOn()) { eventNoticeElsewhere(kind, s); return true; }
+  try { if (typeof _log === 'function') _log(s); else _log?.hudMessageSink?.(s); } catch { /* the log refusing a line never costs the board it */ }
   const k = EVENT_NOTICE_KINDS.includes(kind) ? kind : 'gate';
-  if (!eventKindShown(k)) return true; // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else
+  if (!eventKindShown(k)) return true;   // EVENTS2: a kind the player turned off - filed in the journal, and nowhere else
   _waiting.push({ kind: k, text: s, at: Date.now(), id: typeof id === 'string' && id ? id : null });
   if (_waiting.length > EVENT_NOTICES_KEPT) _waiting = _waiting.slice(-EVENT_NOTICES_KEPT);
   return true;
@@ -153,17 +129,8 @@ export function seatEventBoard(source, off = null, log = null) {
 
 /** The source's read now - the relay's clock and what the host holds - or null (none seated, offline, or it threw). */
 export function eventBoardSource() {
-  try {
-    return _source ? (_source() ?? null) : null;
-  } catch {
-    return null;
-  }
+  try { return _source ? _source() ?? null : null; } catch { return null; }
 }
 
 /** For the tests: nothing waiting, nothing seated. */
-export function _resetEventNotices() {
-  _waiting = [];
-  _source = null;
-  _off = null;
-  _log = null;
-}
+export function _resetEventNotices() { _waiting = []; _source = null; _off = null; _log = null; }

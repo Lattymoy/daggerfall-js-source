@@ -2,8 +2,8 @@
   {
     "name": "EN-bay-alone",
     "file": "src/net/nodeLaw.js",
-    "old": "  Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y);",
-    "new": "  Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && y >= 0 && x < 1000 && y < 500;",
+    "old": "&& worldPixelOk(x) && worldPixelOk(y);",
+    "new": "&& x >= 0 && y >= 0 && x < 1000 && y < 500;",
     "tests": [
       "test/net/ether_nodes.test.js"
     ],
@@ -13,7 +13,7 @@
     "name": "EN-law-margin",
     "file": "src/world/ethericSea.js",
     "old": "export const onBayOrEther = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) || inEther(x, y);",
-    "new": "export const onBayOrEther = (x, y) =>\n  (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) || inEtherLaw(x, y);",
+    "new": "export const onBayOrEther = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) || inEtherLaw(x, y);",
     "tests": [
       "test/net/ether_nodes.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "EN-node-three-digits",
     "file": "src/net/nodeLaw.js",
-    "old": "const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\\d{1,4}):(-?\\d{1,4}):(\\d{1,6}):(\\d{1,2})$/; // ETHER-NODES: the Eltheric's x to 8127 and its y north of the map's 0",
-    "new": "const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\\d{1,3}):(-?\\d{1,4}):(\\d{1,6}):(\\d{1,2})$/; // ETHER-NODES: the Eltheric's x to 8127 and its y north of the map's 0",
+    "old": "const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\\d{1,4}):(-?\\d{1,4}):",
+    "new": "const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\\d{1,3}):(-?\\d{1,4}):",
     "tests": [
       "test/net/ether_nodes.test.js"
     ]
@@ -31,8 +31,8 @@
   {
     "name": "EN-node-no-sign",
     "file": "src/net/nodeLaw.js",
-    "old": "const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\\d{1,4}):(-?\\d{1,4}):(\\d{1,6}):(\\d{1,2})$/; // ETHER-NODES: the Eltheric's x to 8127 and its y north of the map's 0",
-    "new": "const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\\d{1,4}):(\\d{1,4}):(\\d{1,6}):(\\d{1,2})$/; // ETHER-NODES: the Eltheric's x to 8127 and its y north of the map's 0",
+    "old": "const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\\d{1,4}):(-?\\d{1,4}):",
+    "new": "const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\\d{1,4}):(\\d{1,4}):",
     "tests": [
       "test/net/ether_nodes.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "EN-haul-no-sign",
     "file": "src/net/nodeLaw.js",
-    "old": "const HAUL_KEY_RE = /^haul:(-?\\d{1,4}):(-?\\d{1,4}):(\\d{1,6}):([0-9a-f]{12})$/; // ETHER-NODES: as a node's",
-    "new": "const HAUL_KEY_RE = /^haul:(-?\\d{1,4}):(\\d{1,4}):(\\d{1,6}):([0-9a-f]{12})$/; // ETHER-NODES: as a node's",
+    "old": "const HAUL_KEY_RE = /^haul:(-?\\d{1,4}):(-?\\d{1,4}):",
+    "new": "const HAUL_KEY_RE = /^haul:(-?\\d{1,4}):(\\d{1,4}):",
     "tests": [
       "test/net/ether_nodes.test.js"
     ]

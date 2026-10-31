@@ -1093,7 +1093,7 @@ crossing's join (TESA5) carries a Bay road out to them as one road. FREE mode (n
 The reference: the "Province of Cyrodiil, 3E 433" map (Natalia Dravarol, cartographer - another game's published art),
 named by KPbICA. Read as a REFERENCE for which road joins which cities and nothing else: the image is not in the
 repository, and nothing is traced or rendered from it. What it gave is the table
-(`cyrodiilRoads.js:"export const CYRODIIL_ROADS"`), the port's own data on the port's own geography
+(`cyrodiilRoads.js:"export const CYRODIIL_ROADS = Object.freeze(["`), the port's own data on the port's own geography
 (TAMRIEL1's cities where `arenaPlaces.js` stands them, the Imperial City the capital `tamrielCapitals.js` builds):
 
 | Road | Runs |
@@ -1107,7 +1107,7 @@ repository, and nothing is traced or rendered from it. What it gave is the table
 | Yellow Road | the ring - the Niben's east bank (one point of its course, in the port's picture units) - Leyawiin |
 | Green Road | the ring - Bravil - Leyawiin |
 
-- **The ring** (`cyrodiilRoads.js:"export function ringPoints"`): twelve points on bearings
+- **The ring** (`cyrodiilRoads.js:"export function ringPoints(ring, walkable, wet) {"`): twelve points on bearings
   clockwise from north, each RING_SHORE_GAP (2) pixels short of the first water a ray from the city meets within
   RING_REACH (80) past the span's half and RING_GAP (3) - Lake Rumare's inner shore, whatever shape the land gives the
   lake; a bearing that meets none (the lake's open side) takes the radius between its nearest neighbours' that do, each
@@ -1122,7 +1122,7 @@ repository, and nothing is traced or rendered from it. What it gave is the table
   (`tamrielRoadsHost.js:"export function cyrodiilTrunksFor(pixels, walkable) {"`: capitalSpan, capitalGates walked,
   capitalCentrePixel) - none written here, so the plan moving its gates moves the roads with it.
 - **The roads out** start at the ring's point nearest the bearing of their first city and run city to city.
-- **The course** (`cyrodiilRoads.js:"export function courseLegs"`): planned first on
+- **The course** (`cyrodiilRoads.js:"export function courseLegs(a, b, { heightAt, walkable }) {"`): planned first on
   4-pixel cells by the land's law at that scale (round a lake, through a pass) and cut along that plan every 60 pixels
   into legs of no more than LEG_MAX (80), each snapped to land - so each leg's two ends lie in one region's grid. A plan
   the first box (COARSE_MARGIN, 96 pixels past the two) cannot hold is asked over one three times as wide - the Silver

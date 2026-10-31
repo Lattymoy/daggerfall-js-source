@@ -173,8 +173,8 @@
   {
     "name": "TVD-WORLD-the-models'-key-without-the-gen",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      n = `${host._locIndexGen}:${tvDungeonRowsAt.gen?.() ?? 0}`; // AUDIT ETHER-OW C2-2: the finds and the charts; TVD-WORLD: and the lairs past the Bay still owed",
-    "new": "      n = host._locIndexGen; // AUDIT ETHER-OW C2-2: the finds and the charts; TVD-WORLD: and the lairs past the Bay still owed",
+    "old": "n = `${host._locIndexGen}:${tvDungeonRowsAt.gen?.() ?? 0}`;",
+    "new": "n = host._locIndexGen;",
     "tests": [
       "test/systems/travel/tvdworld.test.js"
     ],

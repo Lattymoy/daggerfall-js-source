@@ -35,7 +35,7 @@ test('EB1 door: the reader has ONE construction site, the hook lives there, and 
   assert.match(door, /import\('\.\/enhanced\/enhancedBook\.js'\)/, 'dynamic: classic pays nothing');
   assert.match(door, /unregister = registerOverlay\(exit\);/, 'PX28: Tab closes the book');
   assert.match(door, /z-index:14;image-rendering:pixelated/, 'above the enhanced pack (13): the inventory hands over THEN closes');
-  assert.match(door, /const relock = \(\) => \{\n\s*if \(hostCanvas\) requestLook\(hostCanvas\);\n\s*\};/, 'MAC1: the relock, on the canvas draw() taught it');
+  assert.match(door, /const relock = \(\) => \{ if \(hostCanvas\) requestLook\(hostCanvas\); \};/, 'MAC1: the relock, on the canvas draw() taught it');
   assert.doesNotMatch(read('src/ui/bookReader.js'), /export function makeOpenBookHook|new BookReaderWindow\(/, 'the window file no longer opens itself');
   for (const f of ['src/scenes/world.js', 'src/scenes/exterior.js', 'src/scenes/dungeonContext.js', 'src/scenes/worldModes.js']) {
     assert.match(read(f), /import \{ makeOpenBookHook \} from '\.\.\/ui\/bookDoor\.js';/, `${f} opens through the door`);

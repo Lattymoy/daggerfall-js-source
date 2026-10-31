@@ -140,7 +140,7 @@ ON THE HORIZON (PIN MOVED: it read each slice's foot at its own pixel's ground);
 
 ### R1-5 - the Red Ring Road and the two Lake Rumares (NOTE)
 
-`cyrodiilRoads.js:"export function ringPoints"`, `world/imperialCity.js:"lake: 10000, // AUDIT"`. VOYAGER-CYRODIIL
+`cyrodiilRoads.js:"export function ringPoints(ring, walkable, wet) {"`, `world/imperialCity.js:"lake: 10000, // AUDIT"`. VOYAGER-CYRODIIL
 rings the Imperial City "along Lake Rumare's shore": the first water each of twelve bearings meets past the span. IC-GRAND
 puts the city's own isle and Lake Rumare's far shore (10 km) INSIDE its 25 pixels, and the trace's ring of water (IC-RING's
 "circle river") stands 36 to 56 pixels out. On the freeware, on SMOOTH-LAND's land (ad2a8d71de), the ring's twelve points

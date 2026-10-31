@@ -400,8 +400,8 @@
   {
     "name": "D25F-parse-lenient",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (!/^[+-]?\\d+$/.test(t)) return null;\n  const count = Number(t);",
-    "new": "  const count = Number(t);",
+    "old": "  if (!/^[+-]?\\d+$/.test(t)) return null;\n",
+    "new": "",
     "tests": [
       "test/ui/enhanced/disc25f_stack_split.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "D25F-parse-zero-ok",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  return Number.isInteger(count) && count >= 1 && count <= max ? count : null;",
-    "new": "  return Number.isInteger(count) && count >= 0 && count <= max ? count : null;",
+    "old": "return Number.isInteger(count) && count >= 1 && count <= max ? count : null;",
+    "new": "return Number.isInteger(count) && count >= 0 && count <= max ? count : null;",
     "tests": [
       "test/ui/enhanced/disc25f_stack_split.test.js"
     ]

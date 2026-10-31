@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-STAR8-T1-the-act-unsaid",
     "file": "src/scenes/witchesHost.js",
-    "old": "    noteAct('wyrd-met'); // AUDIT STAR8 T1: her window opened - a questline's letter waits on it, never a find\n    return true;",
-    "new": "    return true;",
+    "old": "    noteAct('wyrd-met');   // AUDIT STAR8 T1: her window opened - a questline's letter waits on it, never a find\n",
+    "new": "",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-STAR8-T1-said-with-no-window",
     "file": "src/scenes/witchesHost.js",
-    "old": "    if (!win) return false;",
-    "new": "    noteAct('wyrd-met');\n    if (!win) return false;",
+    "old": "    if (!win) return false;\n    townTalk?.showOverlay?.(win);",
+    "new": "    noteAct('wyrd-met');\n    if (!win) return false;\n    townTalk?.showOverlay?.(win);",
     "tests": [
       "test/scenes/witch1_host.test.js"
     ]

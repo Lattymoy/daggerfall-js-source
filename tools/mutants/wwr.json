@@ -47,8 +47,8 @@
   {
     "name": "WWR-the-clamp-the-bays",
     "file": "src/formats/mapsFile.js",
-    "old": "    if (result < 0 || result >= REGION_NAMES.length) result = 0; // clamp out of range - WW-R: a province's region past the Bay is in range (its politic world/tamriel/tamrielGround.js groundPoliticIndex's)",
-    "new": "    if (result < 0 || result >= 62) result = 0; // clamp out of range - WW-R: a province's region past the Bay is in range (its politic world/tamriel/tamrielGround.js groundPoliticIndex's)",
+    "old": "if (result < 0 || result >= REGION_NAMES.length) result = 0;",
+    "new": "if (result < 0 || result >= 62) result = 0;",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js",
       "test/formats/audit24_formats.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "WWR-a-provinces-name-unread",
     "file": "src/formats/mapsFile.js",
-    "old": "    if (isProvinceRegion(region)) return REGION_NAMES[region];\n    if (region < 0 || region >= this.regionCount) return ''; // BAY-OWN: MAPS.BSA's own regions, a province's answered above",
-    "new": "    if (region < 0 || region >= this.regionCount) return ''; // BAY-OWN: MAPS.BSA's own regions, a province's answered above",
+    "old": "    if (isProvinceRegion(region)) return REGION_NAMES[region];\n",
+    "new": "",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "WWR-a-provinces-index-unfound",
     "file": "src/formats/mapsFile.js",
-    "old": "    for (let i = BAY_REGION_COUNT; i < REGION_NAMES.length; i++) if (REGION_NAMES[i] === name) return i;\n    return -1;",
-    "new": "    return -1;",
+    "old": "    for (let i = BAY_REGION_COUNT; i < REGION_NAMES.length; i++) if (REGION_NAMES[i] === name) return i;\n",
+    "new": "",
     "tests": [
       "test/world/worldWide/wwr_regions.test.js"
     ]
@@ -294,8 +294,8 @@
   {
     "name": "WWR-the-temples-the-bays",
     "file": "src/formats/mapsFile.js",
-    "old": "  106,\n  82,\n  0,\n  0,\n  0,\n  98,\n  0,\n  0,\n  0,\n  92,\n  0,\n  106,\n  0,\n  0,\n  0,\n  84,\n  36,\n  36,\n  84,\n  88,\n  82,\n  88,\n  98,\n  92,\n  0,\n  0,\n  82,\n  0,\n  0,\n  0,\n  0,\n  0,\n  88,\n  94,\n  36,\n  94,\n  106,\n  84,\n  106,\n  106,\n  88,\n  98,\n  82,\n  98,\n  84,\n  94,\n  36,\n  88,\n  94,\n  36,\n  98,\n  84,\n  106,\n  88,\n  106,\n  88,\n  92,\n  84,\n  98,\n  88,\n  82,\n  94,\n  0,\n  0,\n  0,\n  0,\n  0,\n  0,\n  0,\n  0,\n  0, // WW-R: the provinces past the Bay - FALL.EXE names none of their temples",
-    "new": "  106, 82, 0, 0, 0, 98, 0, 0, 0, 92, 0, 106, 0, 0, 0, 84, 36, 36, 84, 88, 82, 88, 98, 92, 0, 0, 82, 0, 0, 0, 0, 0, 88,\n  94, 36, 94, 106, 84, 106, 106, 88, 98, 82, 98, 84, 94, 36, 88, 94, 36, 98, 84, 106, 88, 106, 88, 92, 84, 98, 88, 82,\n  94,",
+    "old": "  0, 0, 0, 0, 0, 0, 0, 0, 0,   // WW-R: the provinces past the Bay - FALL.EXE names none of their temples\n",
+    "new": "",
     "tests": [
       "test/formats/maps.test.js"
     ]

@@ -33,29 +33,18 @@ function parseSpellRecordAt(v, o) {
   const effects = [];
   for (let i = 0; i < 3; i++) {
     const type = v.getInt8(o++);
-    const subType = v.getInt8(o++); // always read (see the dead-branch note above)
+    const subType = v.getInt8(o++);   // always read (see the dead-branch note above)
     effects.push({ type, subType });
   }
   const element = v.getUint8(o++);
   const rangeType = v.getUint8(o++);
-  const cost = v.getUint16(o, true);
-  o += 2;
+  const cost = v.getUint16(o, true); o += 2;
   o += 4;
+  for (const e of effects) { e.durationBase = v.getUint8(o++); e.durationMod = v.getUint8(o++); e.durationPerLevel = v.getUint8(o++); }
+  for (const e of effects) { e.chanceBase = v.getUint8(o++); e.chanceMod = v.getUint8(o++); e.chancePerLevel = v.getUint8(o++); }
   for (const e of effects) {
-    e.durationBase = v.getUint8(o++);
-    e.durationMod = v.getUint8(o++);
-    e.durationPerLevel = v.getUint8(o++);
-  }
-  for (const e of effects) {
-    e.chanceBase = v.getUint8(o++);
-    e.chanceMod = v.getUint8(o++);
-    e.chancePerLevel = v.getUint8(o++);
-  }
-  for (const e of effects) {
-    e.magnitudeBaseLow = v.getUint8(o++);
-    e.magnitudeBaseHigh = v.getUint8(o++);
-    e.magnitudeLevelBase = v.getUint8(o++);
-    e.magnitudeLevelHigh = v.getUint8(o++);
+    e.magnitudeBaseLow = v.getUint8(o++); e.magnitudeBaseHigh = v.getUint8(o++);
+    e.magnitudeLevelBase = v.getUint8(o++); e.magnitudeLevelHigh = v.getUint8(o++);
     e.magnitudePerLevel = v.getUint8(o++);
   }
   let name = '';

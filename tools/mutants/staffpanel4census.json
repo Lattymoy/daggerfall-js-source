@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-wired-out",
     "file": "server-account/src/staff.js",
-    "old": "  if (CENSUS_ROUTES.includes(path)) return staffCensus(ctx, env, path, body, who, audit); // STAFF-PANEL4-CENSUS: Admin only",
-    "new": "  if (false) return staffCensus(ctx, env, path, body, who, audit); // STAFF-PANEL4-CENSUS: Admin only",
+    "old": "  if (CENSUS_ROUTES.includes(path)) return staffCensus(",
+    "new": "  if (false) return staffCensus(",
     "why": "the census's doors answer nothing",
     "tests": [
       "test/server/staffpanel4census.test.js"

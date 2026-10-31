@@ -396,7 +396,7 @@ in the pool of the host the player stands in: the street's, a building's (`world
 dungeon's (`dungeonContext.js:"droppedPool: () => droppedLoot,"`). A take goes through the window every pile opens with,
 and the book asks the room for what the window moved. Traced end to end on the real code: the account service's
 `/v1/wild/fall`, the relay's Room driven in-process (`server/src/index.js:"async _wildWord(ws, a, d, now) {"`), the street's pool
-(`droppedLoot.js:"function seedPile("`) and the window's take (`itemTransfer.js:"export function planTake"` and
+(`droppedLoot.js:"function seedPile("`) and the window's take (`itemTransfer.js:"export function planTake(item, {"` and
 `applyTransfer`, called as `enhancedInventory.js`'s `take()` calls them, through the encumbrance gate). Two faults:
 
 - A TAKE OF PART OF THE PILE (REMAINS-TAKE). The window takes only what the pack has room for: CanCarryAmount caps it
@@ -646,7 +646,7 @@ Before the deploy, how many players this touched (the disenchants 0142 renames),
 `src/ui/input.js` (`isPageTarget`, `isPageFocusWalk` and `neverTheFocus`, plus the walk added to `swallowBrowserKey`),
 `src/ui/chatPanel.js` (the controls the chat stands over the world).
 
-FOUND. The game's Tab is the QuickDial (`inputActions.js:"['Tab', 'QuickDial']"`, KB1). Daggerfall Unity binds nothing
+FOUND. The game's Tab is the QuickDial (`inputActions.js:"['Tab', 'QuickDial'],"`, KB1). Daggerfall Unity binds nothing
 to Tab. ResetDefaults (InputManager.cs:954-1048) sets no KeyCode.Tab, and the only Tab DFU reads is a window's own: the
 advanced settings' page turn (DaggerfallAdvancedSettingsWindow.cs:224). A host prevented Tab only when the dial answered
 it: `world.js:"if (act === 'QuickDial' && hudCtx.toggleDial()) { e.preventDefault(); return true; }"` (PX17b: "preventDefault
@@ -683,7 +683,7 @@ The family. Earlier fixes each wrote the rule out for themselves, and no helper 
 - STEED-UI's saddle and helm panels (`enhancedSaddle.js:"AUDIT STEED-UI: a"`);
 - the held map's filters (`heldMap.js:"// NEVER THE FOCUS - out of the tab order"`) and the wild map's buttons;
 - the pace steppers (`travelPaceControls.js:"b.tabIndex = -1;"`);
-- the enhanced dialog and port (`enhancedDialog.js:"btn.tabIndex = -1; //"`).
+- the enhanced dialog and port (`enhancedDialog.js:"btn.tabIndex = -1;   // the keys are the game's"`).
 
 The chat's own field already kept Tab (C7, `chatPanel.js:"else if (e.code === 'Tab') e.preventDefault();   // C7"`).
 AUDIT LEGACY III U2 wrote the law down: with the focus on the page's body "every Tab was the game's". The pause door
@@ -797,12 +797,12 @@ trap's kill door hands the foe's own mobile id to the trap
 and the gem takes it (`mysticism.js:"trap.trappedSoulType"`) - DFU's own law: EnemyEntity.cs:217 hands
 `SoulTrap.FillEmptyTrapItem((MobileTypes)mobileEnemy.ID)` and SoulTrap.cs:158 writes it. With the mod installed DFU's
 EnemyBasics holds the custom id, and ItemHelper.cs:352-368 names the gem "Soul Trap (Ogre)", as the port does
-(`itemInfo.js:"const shownSoulName"`).
+(`itemInfo.js:"const shownSoulName = (soul) => getLocalizedEnemyName(soul, enemyDisplayName(soul));"`).
 
 Item law 8 took only DFU's ranges (`itemLaw.js:"const soulLawful = "`: 0-42 and 128-146), so a gem holding any of the
 fifty was a `soul` finding (`itemLaw.js:"&& soulLawful(item.trappedSoulType))) out.add('soul');"`). The account service
 judges every realm checkpoint headless with that law
-(`judge.js:"for (const code of findingsOf(it))"`), the
+(`judge.js:"for (const code of findingsOf(it)) keep({ code, list: li, at: i, t: it?.templateIndex ?? null });"`), the
 verdict holds the character and adds a strike (`verdict.js:"if (law > 0 || (until != null && until > nowS))"`),
 and the client announces the hold (`realmHoldHost.js:"session.onTradeHeld"`) by the template's name
 (`itemIds.js:"const name = now"`). Reproduced word for word through

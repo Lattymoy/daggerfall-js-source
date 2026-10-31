@@ -11,8 +11,8 @@
   {
     "name": "RS-one-code-hashed-eight-times",
     "file": "server-account/src/password.js",
-    "old": "    await Promise.all(codes.map((c) => hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS))),",
-    "new": "    await Promise.all(codes.map(() => hashPassword(codeForHashing(codes[0]), { subtle, rand }, RECOVERY_CODE_ITERS))),",
+    "old": "codes.map((c) => hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS))",
+    "new": "codes.map(() => hashPassword(codeForHashing(codes[0]), { subtle, rand }, RECOVERY_CODE_ITERS))",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RS-the-single-code-counted-as-none",
     "file": "server-account/src/password.js",
-    "old": "  return parseStored(stored) ? 1 : null;",
-    "new": "  return null;",
+    "old": "  return parseStored(stored) ? 1 : null;\n}",
+    "new": "  return null;\n}",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "RS-a-broken-set-counted",
     "file": "server-account/src/password.js",
-    "old": "  return hashes.every((h) => parseStored(h)) ? hashes : null;",
-    "new": "  return hashes;",
+    "old": "return hashes.every((h) => parseStored(h)) ? hashes : null;",
+    "new": "return hashes;",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "RS-rest-keeps-the-spent-one",
     "file": "server-account/src/password.js",
-    "old": "  return i < 0 ? { ok: false, rest: null } : { ok: true, rest: set.filter((_, j) => j !== i) };",
-    "new": "  return i < 0 ? { ok: false, rest: null } : { ok: true, rest: set };",
+    "old": "{ ok: true, rest: set.filter((_, j) => j !== i) }",
+    "new": "{ ok: true, rest: set }",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "RS-the-throwaway-skipped-for-a-set",
     "file": "server-account/src/password.js",
-    "old": "    verifyPassword(guess, set ? null : stored, { subtle }),",
-    "new": "    set ? false : verifyPassword(guess, stored, { subtle }),",
+    "old": "    verifyPassword(guess, set ? null : stored, { subtle }),\n",
+    "new": "    set ? false : verifyPassword(guess, stored, { subtle }),\n",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "RS-the-slots-only-the-sets",
     "file": "server-account/src/password.js",
-    "old": "  const slots = Array.from({ length: Math.max(RECOVERY_SET_SIZE, set?.length ?? 0) }, (_, i) => set?.[i] ?? null);",
-    "new": "  const slots = Array.from({ length: set?.length ?? 0 }, (_, i) => set?.[i] ?? null);",
+    "old": "Array.from({ length: Math.max(RECOVERY_SET_SIZE, set?.length ?? 0) }",
+    "new": "Array.from({ length: set?.length ?? 0 }",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "RS-a-throwaway-at-the-passwords-cost",
     "file": "server-account/src/password.js",
-    "old": "    ...slots.map((h) => verifyPassword(guess, h, { subtle }, RECOVERY_CODE_ITERS)),",
-    "new": "    ...slots.map((h) => verifyPassword(guess, h, { subtle })),",
+    "old": "...slots.map((h) => verifyPassword(guess, h, { subtle }, RECOVERY_CODE_ITERS)),",
+    "new": "...slots.map((h) => verifyPassword(guess, h, { subtle })),",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "RS-the-throwaway-at-its-row",
     "file": "server-account/src/password.js",
-    "old": "  const iters = parsed?.iters ?? throwawayIters; // RECOVERY-SET: a throwaway costs what the row it stands for would",
-    "new": "  const iters = parsed?.iters ?? PBKDF2_ITERS; // RECOVERY-SET: a throwaway costs what the row it stands for would",
+    "old": "  const iters = parsed?.iters ?? throwawayIters;",
+    "new": "  const iters = parsed?.iters ?? PBKDF2_ITERS;",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RS-a-spent-code-still-opens",
     "file": "server-account/src/accounts.js",
-    "old": "        : joinRecoverySet(rest),",
-    "new": "        : player.recovery_hash,",
+    "old": "fresh ? hashRecoverySet(fresh, { subtle, rand }) : joinRecoverySet(rest),",
+    "new": "fresh ? hashRecoverySet(fresh, { subtle, rand }) : player.recovery_hash,",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "RS-no-password-asked",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!(await verifyPassword(password, player.password, { subtle }))) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);",
-    "new": "  await clearRate({ db }, `login:${player.handle_lc}`);",
+    "old": "  if (!await verifyPassword(password, player.password, { subtle })) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "new": "  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "RS-the-old-set-kept",
     "file": "server-account/src/accounts.js",
-    "old": "    .bind(rc, player.id, player.recovery_hash ?? null)",
-    "new": "    .bind(player.recovery_hash ?? null, player.id, player.recovery_hash ?? null)",
+    "old": ".bind(rc, player.id, player.recovery_hash ?? null).run();",
+    "new": ".bind(player.recovery_hash ?? null, player.id, player.recovery_hash ?? null).run();",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RS-no-rate",
     "file": "server-account/src/accounts.js",
-    "old": "  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };\n  if (!(await verifyPassword(password, player.password, { subtle }))) return { error: 'bad-login' };",
-    "new": "  if (!(await verifyPassword(password, player.password, { subtle }))) return { error: 'bad-login' };",
+    "old": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };\n  if (!await verifyPassword(password,",
+    "new": "  if (!player.password) return { error: 'not-registered' };\n  if (!await verifyPassword(password,",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "RS-the-write-unguarded",
     "file": "server-account/src/accounts.js",
-    "old": "  const wrote = await db\n    .prepare('UPDATE players SET recovery_hash = ? WHERE id = ? AND recovery_hash IS ?')\n    .bind(rc, player.id, player.recovery_hash ?? null)\n    .run();",
-    "new": "  const wrote = await db.prepare('UPDATE players SET recovery_hash = ? WHERE id = ?').bind(rc, player.id).run();",
+    "old": "'UPDATE players SET recovery_hash = ? WHERE id = ? AND recovery_hash IS ?').bind(rc, player.id, player.recovery_hash ?? null)",
+    "new": "'UPDATE players SET recovery_hash = ? WHERE id = ?').bind(rc, player.id)",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "RS-the-view-says-no-count",
     "file": "server-account/src/accounts.js",
-    "old": "    recoveryLeft: recoveryLeft(player.recovery_hash),\n  };",
-    "new": "  };",
+    "old": "    recoveryLeft: recoveryLeft(player.recovery_hash),\n",
+    "new": "",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "RS-one-salt",
     "file": "server-account/src/password.js",
-    "old": "    await Promise.all(codes.map((c) => hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS))),",
-    "new": "    await Promise.all(\n      codes.map((c) => hashPassword(codeForHashing(c), { subtle, rand: () => {} }, RECOVERY_CODE_ITERS)),\n    ),",
+    "old": "hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS)",
+    "new": "hashPassword(codeForHashing(c), { subtle, rand: () => {} }, RECOVERY_CODE_ITERS)",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -423,8 +423,8 @@
   {
     "name": "RS-a-longer-set-read-short",
     "file": "server-account/src/password.js",
-    "old": "  const slots = Array.from({ length: Math.max(RECOVERY_SET_SIZE, set?.length ?? 0) }, (_, i) => set?.[i] ?? null);",
-    "new": "  const slots = Array.from({ length: RECOVERY_SET_SIZE }, (_, i) => set?.[i] ?? null);",
+    "old": "Array.from({ length: Math.max(RECOVERY_SET_SIZE, set?.length ?? 0) }",
+    "new": "Array.from({ length: RECOVERY_SET_SIZE }",
     "tests": [
       "test/server/recoveryset.test.js"
     ],

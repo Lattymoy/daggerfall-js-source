@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-DYE-ICON-1-the-shape-without-its-item",
     "file": "src/ui/decorPanel.js",
-    "old": "      item: it.piece.item ?? null,\n      kind: 'decor',",
-    "new": "      kind: 'decor',",
+    "old": "flat: it.piece.flat, item: it.piece.item ?? null, kind: 'decor',",
+    "new": "flat: it.piece.flat, kind: 'decor',",
     "tests": [
       "test/systems/item/dyeicon.test.js"
     ]

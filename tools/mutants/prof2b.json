@@ -59,8 +59,8 @@
   {
     "name": "PROF2b-law-one-third",
     "file": "src/net/motherlodeLaw.js",
-    "old": "  const opensAt =\n    day * 86400 + k * MOTHERLODE_THIRD_S + Math.floor((unit(day, k, 1) * MOTHERLODE_RISE_SPREAD_S) / 60) * 60;",
-    "new": "  const opensAt = day * 86400 + Math.floor((unit(day, k, 1) * MOTHERLODE_RISE_SPREAD_S) / 60) * 60;",
+    "old": "const opensAt = day * 86400 + k * MOTHERLODE_THIRD_S +",
+    "new": "const opensAt = day * 86400 +",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "PROF2b-law-rich-unread",
     "file": "src/net/motherlodeLaw.js",
-    "old": "  const pool = (rich.length >= MOTHERLODES_A_DAY ? rich : all).slice();",
-    "new": "  const pool = all.slice();",
+    "old": "const pool = (rich.length >= MOTHERLODES_A_DAY ? rich : all).slice();",
+    "new": "const pool = all.slice();",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "PROF2b-law-order-unread",
     "file": "src/net/motherlodeLaw.js",
-    "old": "  const all = (candidates ?? [])\n    .filter((c) => c && watchPixelOk(c.x, c.y) && motherlodeGround(c.climate)) // AUDIT ETHER-OW C2-1: never past the Veil - a strike asks a Watch receipt of the site's pixel\n    .sort((a, b) => a.y - b.y || a.x - b.x);",
-    "new": "  const all = (candidates ?? []).filter((c) => c && watchPixelOk(c.x, c.y) && motherlodeGround(c.climate)); // AUDIT ETHER-OW C2-1: never past the Veil - a strike asks a Watch receipt of the site's pixel;",
+    "old": "\n    .sort((a, b) => a.y - b.y || a.x - b.x);",
+    "new": ";",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "PROF2b-law-signature-unread",
     "file": "src/net/motherlodeLaw.js",
-    "old": "  if (sig && MOTHERLODE_ORES.includes(sig)) return sig;\n  return MOTHERLODE_ORES[Math.min(MOTHERLODE_ORES.length - 1, Math.floor(unit(day, k, 2) * MOTHERLODE_ORES.length))];",
-    "new": "  return MOTHERLODE_ORES[Math.min(MOTHERLODE_ORES.length - 1, Math.floor(unit(day, k, 2) * MOTHERLODE_ORES.length))];",
+    "old": "  if (sig && MOTHERLODE_ORES.includes(sig)) return sig;\n",
+    "new": "",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "PROF2b-law-clean-unread",
     "file": "src/net/motherlodeLaw.js",
-    "old": "  return clean ? Math.floor(base * 1.5) : base;",
-    "new": "  return base;",
+    "old": "return clean ? Math.floor(base * 1.5) : base;",
+    "new": "return base;",
     "tests": [
       "test/net/prof2b_motherlode.test.js"
     ]

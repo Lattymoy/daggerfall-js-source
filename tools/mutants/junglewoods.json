@@ -20,8 +20,8 @@
   {
     "name": "JUNGLE-WOODS-the-area-unread",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (kind === 'tree')\n    return !WOOD_TABLES[climate]\n      ? 0\n      : jungleWoods({ x, y, climate, region, confirmed, jungle })\n        ? JUNGLE_TREE_SLOTS\n        : richCount('tree', climate, region, confirmed);",
-    "new": "  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : richCount('tree', climate, region, confirmed);",
+    "old": "jungleWoods({ x, y, climate, region, confirmed, jungle }) ? JUNGLE_TREE_SLOTS : richCount('tree', climate, region, confirmed);",
+    "new": "richCount('tree', climate, region, confirmed);",
     "tests": [
       "test/net/junglewoods.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "JUNGLE-WOODS-the-woods-unasked",
     "file": "src/net/nodeLaw.js",
-    "old": "    return !WOOD_TABLES[climate]\n      ? 0\n      : jungleWoods({ x, y, climate, region, confirmed, jungle })\n        ? JUNGLE_TREE_SLOTS\n        : richCount('tree', climate, region, confirmed);",
-    "new": "    return jungleWoods({ x, y, climate, region, confirmed, jungle })\n      ? JUNGLE_TREE_SLOTS\n      : richCount('tree', climate, region, confirmed);",
+    "old": "  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : jungleWoods",
+    "new": "  if (kind === 'tree') return jungleWoods",
     "tests": [
       "test/net/junglewoods.test.js"
     ],
@@ -40,8 +40,8 @@
   {
     "name": "JUNGLE-WOODS-the-law-s-bound-the-climate-s",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (\n    !table ||\n    !Number.isSafeInteger(slot) ||\n    slot < 0 ||\n    slot >= treeSlots({ x, y, climate, region, confirmed, jungle })\n  )\n    return null;",
-    "new": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= nodeCount(climate, 'tree')) return null;",
+    "old": "slot >= treeSlots({ x, y, climate, region, confirmed, jungle })) return null;",
+    "new": "slot >= nodeCount(climate, 'tree')) return null;",
     "tests": [
       "test/net/junglewoods.test.js"
     ],
@@ -50,8 +50,8 @@
   {
     "name": "JUNGLE-WOODS-the-day-the-climate-s",
     "file": "src/net/nodeLaw.js",
-    "old": "  for (let slot = 0; slot < treeSlots(p); slot++) {",
-    "new": "  for (let slot = 0; slot < nodeCount(p.climate, 'tree'); slot++) {",
+    "old": "  for (let slot = 0; slot < treeSlots(p); slot++) { const n = tree({ ...p, slot }); if (n) out.push(n); }",
+    "new": "  for (let slot = 0; slot < nodeCount(p.climate, 'tree'); slot++) { const n = tree({ ...p, slot }); if (n) out.push(n); }",
     "tests": [
       "test/net/junglewoods.test.js"
     ]
@@ -59,7 +59,7 @@
   {
     "name": "JUNGLE-WOODS-the-fill-gone",
     "file": "src/net/nodeLaw.js",
-    "old": "  return jungleWoods({ x, y, climate, region, confirmed, jungle })\n    ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }\n    : null;",
+    "old": "  return jungleWoods({ x, y, climate, region, confirmed, jungle }) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;",
     "new": "  return null;",
     "tests": [
       "test/net/junglewoods.test.js"
@@ -68,7 +68,7 @@
   {
     "name": "JUNGLE-WOODS-the-fill-everywhere",
     "file": "src/net/nodeLaw.js",
-    "old": "  return jungleWoods({ x, y, climate, region, confirmed, jungle })\n    ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }\n    : null;",
+    "old": "  return jungleWoods({ x, y, climate, region, confirmed, jungle }) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;",
     "new": "  return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };",
     "tests": [
       "test/net/junglewoods.test.js",
@@ -78,8 +78,8 @@
   {
     "name": "JUNGLE-WOODS-the-fill-past-tier-one",
     "file": "src/net/nodeLaw.js",
-    "old": "    ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }",
-    "new": "    ? { slot, u, v, tier: 4, material: 'log:teak', rare: false }",
+    "old": "  return jungleWoods({ x, y, climate, region, confirmed, jungle }) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;",
+    "new": "  return jungleWoods({ x, y, climate, region, confirmed, jungle }) ? { slot, u, v, tier: 4, material: 'log:teak', rare: false } : null;",
     "tests": [
       "test/net/junglewoods.test.js"
     ]

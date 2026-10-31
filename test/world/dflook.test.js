@@ -181,7 +181,7 @@ test('DF-LOOK L8: EVERY DOOR LAYS IT ON - the galleon\'s stand-ins build her pic
     ['world/wagonModels.js', /toColor32\(dfLook\(pic, lookSeed\(WAGON_ARCHIVE, rec\)\)\)/],
     ['scenes/merchantYardsHost.js', /wearPainted\(YARD_ARCHIVE, rec, \(\) => dfLook\(art, lookSeed\(YARD_ARCHIVE, rec\)\), \(pic, \{ late \}\) => \{ if \(late\) renderer\.releaseTexture\?\.\(YARD_ARCHIVE, rec\); renderer\.uploadTexture\?\.\(YARD_ARCHIVE, rec, pic\); \}/],
     ['scenes/portHost.js', /wearPainted\(PORT_ARCHIVE, rec, \(\) => dfLook\(pic, lookSeed\(PORT_ARCHIVE, rec\)\), \(art, \{ replaced, late \}\) => \{[\s\S]{0,400}?renderer\.uploadTexture\?\.\(PORT_ARCHIVE, rec, art, /],
-    ['scenes/lefayMonumentHost.js', /wearPainted\(\n\s*LEFAY_ARCHIVE,\n\s*rec,\n\s*\(\) => dfLook\(art, lookSeed\(LEFAY_ARCHIVE, rec\)\),\n\s*\(pic, \{ late \}\) => \{\n\s*if \(late\) renderer\.releaseTexture\?\.\(LEFAY_ARCHIVE, rec\);\n\s*renderer\.uploadTexture\?\.\(LEFAY_ARCHIVE, rec, pic\);\n\s*\}/],
+    ['scenes/lefayMonumentHost.js', /wearPainted\(LEFAY_ARCHIVE, rec, \(\) => dfLook\(art, lookSeed\(LEFAY_ARCHIVE, rec\)\), \(pic, \{ late \}\) => \{ if \(late\) renderer\.releaseTexture\?\.\(LEFAY_ARCHIVE, rec\); renderer\.uploadTexture\?\.\(LEFAY_ARCHIVE, rec, pic\); \}/],
   ];
   for (const [f, re] of doors) assert.match(read(f), re, `${f}: its pictures go up looked`);
   for (const [f, re] of [['scenes/merchantYardsHost.js', /uploadTexture\?\.\(YARD_ARCHIVE, rec, art\)/], ['scenes/portHost.js', /uploadTexture\?\.\(PORT_ARCHIVE, rec, pic,/], ['scenes/lefayMonumentHost.js', /uploadTexture\?\.\(LEFAY_ARCHIVE, rec, art\)/]]) {

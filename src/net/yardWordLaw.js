@@ -23,11 +23,9 @@ export const YARD_IN_HZ_MAX = 2;
 export const YARD_WELCOME_FIELD = 'yd';
 
 /** A carrier's yard orders at the hub, YARD_ORDER_HZ_MAX a second (metered before the signature is asked). */
-export const yardGate = (/** @type {any} */ bucket, /** @type {number} */ nowMs) =>
-  tokenGate(bucket, nowMs, YARD_ORDER_HZ_MAX);
+export const yardGate = (/** @type {any} */ bucket, /** @type {number} */ nowMs) => tokenGate(bucket, nowMs, YARD_ORDER_HZ_MAX);
 /** A page's intake of the hub's yard frames. */
-export const yardInGate = (/** @type {any} */ bucket, /** @type {number} */ nowMs) =>
-  tokenGate(bucket, nowMs, YARD_IN_HZ_MAX);
+export const yardInGate = (/** @type {any} */ bucket, /** @type {number} */ nowMs) => tokenGate(bucket, nowMs, YARD_IN_HZ_MAX);
 
 /** The widest cell (net/yardCellLaw.js YARD_CELL_MAX), read off homeLaw.js alone so the relay's graph does not take
  *  in decorLaw.js. */

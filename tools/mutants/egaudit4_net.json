@@ -443,7 +443,7 @@
   {
     "name": "AUDIT-EG-IV-net-weir-never-in-the-batch",
     "file": "server-account/src/accounts.js",
-    "old": "  const roll = c.x === 'rite' ? null : (weir?.(c) ?? null);",
+    "old": "  const roll = c.x === 'rite' ? null : weir?.(c) ?? null;",
     "new": "  const roll = null;",
     "tests": [
       "test/net/eliteGates/egaudit4_net_service.test.js"

@@ -84,8 +84,8 @@
   {
     "name": "FB1005C-flat-relay-mark-dropped",
     "file": "src/world/actionSystem.js",
-    "old": "      isFlat: action.isFlat === true,\n      activationCount: 0,",
-    "new": "      activationCount: 0,",
+    "old": "      isFlat: action.isFlat === true,\n      activationCount: 0,\n      state: 'start',",
+    "new": "      activationCount: 0,\n      state: 'start',",
     "tests": [
       "test/player/audit0929_actions.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "FB1005C-flat-relay-every-relay-flat",
     "file": "src/world/actionSystem.js",
-    "old": "      isFlat: action.isFlat === true,",
-    "new": "      isFlat: true,",
+    "old": "      isFlat: action.isFlat === true,\n      activationCount: 0,\n      state: 'start',",
+    "new": "      isFlat: true,\n      activationCount: 0,\n      state: 'start',",
     "tests": [
       "test/player/audit0929_actions.test.js"
     ]

@@ -2242,7 +2242,7 @@ should stop casting (composed carried, they cost nothing and cast nothing) and c
 engine.
 
 **THE ONE CONSTRUCTION SEAM** (`render/lightId.js`). A light's identity is its producer's record's: minted on first ask
-(`src/render/lightId.js:"export function lightIdOf"`) under a Symbol defined not enumerable - the record's fields,
+(`src/render/lightId.js:"export function lightIdOf(l)"`) under a Symbol defined not enumerable - the record's fields,
 its deep-equal, a spread of it and its JSON are what they were - and a frozen record (the court's braziers) keeps one in
 a WeakMap. A copy is another record: the two that stand for their light each frame adopt it (worldModes.js's dungeon
 flame tint, `_dgTint`, and the abyss's candle, `abyssCandle`). Every list a frame hands the renderer
@@ -2313,12 +2313,12 @@ bounds the beam and the glow in the glass's own frame, and `buildLightClusterBox
 half-axes under the sphere's rules (`src/render/lightClusters.js:"export function cellsOfViewBox"`).
 
 **Farther from the source.** A window's lamp reaches 12 m (`WL_LAMP_RANGE`, WL1's 8). On the lane a town lantern
-reaches 27 (`src/world/city/cityLights.js:"export const STREET_LIGHT_REACH"`, half again the prefab's 18), its
+reaches 27 (`src/world/city/cityLights.js:"export const STREET_LIGHT_REACH = 1.5;"`, half again the prefab's 18), its
 flicker's variance and step scaled with it, so it flickers by the same share of its range. The classic set keeps DFU's
 18 and DaggerfallLight's Animate exactly. A yard's lamp-post rides the town's flicker and reaches with it; a yard's
 candle reaches as its room's (AUDIT LIGHT-REACH S1). The harbour's lamps lit beside the town's, in their hours and
 colour - the quays' lanterns, the shipyard's office lantern, the lighthouse's lamp - take the same share, so each keeps
-its size to its neighbours (S5, `src/world/city/cityLights.js:"export const streetLightReach"`).
+its size to its neighbours (S5, `src/world/city/cityLights.js:"export const streetLightReach = (lane) => (lane ? STREET_LIGHT_REACH : 1);"`).
 
 **What the lanterns' reach costs, and what pays for it.** Half again the reach is more than twice the lit area, and
 the cells listing a lantern doubled with it. A sphere is listed in each depth slice only by the tiles of its widest

@@ -358,8 +358,8 @@
   {
     "name": "INT8-SVC-A-STRANGERS-CLAIM",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n  const winner = c.f[c.w],",
-    "new": "  const winner = c.f[c.w],",
+    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n",
+    "new": "",
     "tests": [
       "test/server/duel_record.test.js"
     ]

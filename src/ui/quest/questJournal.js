@@ -14,34 +14,20 @@
 // and cites THIS window's :34-35 for them - the notebook was ported
 // against a screen that did not exist yet. It exists now, and imports
 // those constants from their one home rather than restating them.
-import {
-  loadImg,
-  nativeMetrics,
-  drawImg,
-  shadowText,
-  DEFAULT_TEXT_COLOR,
-  DEFAULT_SHADOW_COLOR,
-} from '../native/nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR } from '../native/nativePanel.js';
 import { drawText, measureText, makeFont } from '../text.js';
 import { FntFile } from '../../formats/fntFile.js';
 import { drawScreenDimBackdrop } from '../chargenArt.js';
 import { MAX_LINES_QUESTS, MAX_LINES_SMALL, MAX_LINE_LENGTH } from '../../systems/notebook.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS, messageBoxArtLoaded } from '../messageBox.js';
-import { lastPlaceMentionedInMessage, locationInRegionText } from './questLens.js'; // GetLastPlaceMentionedInMessage (:470-485) - GUIDE1: its one home, shared with the quest lens; GUIDE2: and locationInRegionProvince's
+import { lastPlaceMentionedInMessage, locationInRegionText } from './questLens.js';   // GetLastPlaceMentionedInMessage (:470-485) - GUIDE1: its one home, shared with the quest lens; GUIDE2: and locationInRegionProvince's
 import { REGION_NAMES, patchRegionIndex } from '../../formats/mapsFile.js';
 import { audio } from '../../systems/audio.js';
 import { SOUND } from '../../systems/soundClips.js';
-import { InputMessageBoxWindow } from '../inputMessageBox.js'; // NOTE-KEYS: EnterNote's DaggerfallInputMessageBox, the one home (CM3)
-import { hotkeyHit } from '../../systems/dialogShortcuts.js'; // NOTE-KEYS: the confirm box's Yes 'Y' and No 'N', off either host's alphabet
-import { ToolTip } from '../toolTip.js'; // U37's shared component - this window points two panels at it
-import {
-  localizedStrings,
-  localizedTable,
-  localizedText,
-  formatText,
-  getLocalizedLocationName,
-  getLocalizedRegionName,
-} from '../../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
+import { InputMessageBoxWindow } from '../inputMessageBox.js';   // NOTE-KEYS: EnterNote's DaggerfallInputMessageBox, the one home (CM3)
+import { hotkeyHit } from '../../systems/dialogShortcuts.js';   // NOTE-KEYS: the confirm box's Yes 'Y' and No 'N', off either host's alphabet
+import { ToolTip } from '../toolTip.js';   // U37's shared component - this window points two panels at it
+import { localizedStrings, localizedTable, localizedText, formatText, getLocalizedLocationName, getLocalizedRegionName } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
 
 let _art = null;
 // AUDIT 24 (wave 40): DaggerfallQuestJournalWindow.cs:161-163 builds
@@ -60,21 +46,15 @@ let _largeFont = null;
  *  (DaggerfallSpellMakerWindow.cs:272-276). */
 export async function preloadLargeFont(deps) {
   if (_largeFont) return _largeFont;
-  try {
-    _largeFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0000.FNT')), 'FONT0000');
-  } catch {
-    console.warn('[journal] FONT0000.FNT unavailable; the title falls back to the host font');
-  }
+  try { _largeFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0000.FNT')), 'FONT0000'); }
+  catch { console.warn('[journal] FONT0000.FNT unavailable; the title falls back to the host font'); }
   return _largeFont;
 }
 export async function preloadQuestJournalArt(deps) {
   await preloadLargeFont(deps);
   if (_art) return;
-  try {
-    _art = await loadImg(deps, 'LGBK00I0.IMG');
-  } catch {
-    console.warn('[journal] LGBK00I0.IMG unavailable; the logbook falls back to text');
-  }
+  try { _art = await loadImg(deps, 'LGBK00I0.IMG'); }
+  catch { console.warn('[journal] LGBK00I0.IMG unavailable; the logbook falls back to text'); }
 }
 export const questJournalArtLoaded = () => !!_art;
 export const questJournalLargeFont = () => _largeFont;
@@ -86,7 +66,7 @@ const TEXT_SCALE_SMALL = 0.8;
 
 /** The window's Buttons and panels (:113-160), verbatim. */
 export const JOURNAL_RECTS = Object.freeze({
-  dialog: [32, 187, 68, 10], // cycles the category
+  dialog: [32, 187, 68, 10],      // cycles the category
   upArrow: [181, 188, 13, 7],
   downArrow: [209, 188, 13, 7],
   exit: [278, 187, 30, 9],
@@ -139,9 +119,9 @@ export const JOURNAL_TOOLTIP_DELAY = 1;
 export const JOURNAL_COLORS = Object.freeze({
   text: DEFAULT_TEXT_COLOR,
   newline: DEFAULT_TEXT_COLOR,
-  highlight: [1, 1, 1, 1], // Color.white, this window's override
-  question: [0.698, 0.812, 1.0, 1], // DaggerfallQuestionTextColor
-  answer: [227 / 255, 223 / 255, 0, 1], // DaggerfallDefaultInputTextColor
+  highlight: [1, 1, 1, 1],                          // Color.white, this window's override
+  question: [0.698, 0.812, 1.0, 1],                 // DaggerfallQuestionTextColor
+  answer: [227 / 255, 223 / 255, 0, 1],             // DaggerfallDefaultInputTextColor
 });
 
 /** The four page titles, verbatim from Internal_Strings_en (ids 628,
@@ -176,8 +156,7 @@ export { locationInRegionText };
 /** F160: CreateDialogBox's six strings and the note prompt -
  *  Internal_Strings_en verbatim (m_Id 636-641, 645), the same table
  *  FIND_PLACE_TEXT came from. */
-export const CONFIRM_TEXT = localizedTable({
-  // L10N3d: baseKey "confirmMove" / "confirmRemove" + "Head", "", "2" (:417, :489-491)
+export const CONFIRM_TEXT = localizedTable({   // L10N3d: baseKey "confirmMove" / "confirmRemove" + "Head", "", "2" (:417, :489-491)
   moveHead: ['confirmMoveHead', 'Move entry'],
   move: ['confirmMove', 'Do you want to change the position of this entry?'],
   move2: ['confirmMove2', '(It will be moved to before the next entry clicked)'],
@@ -201,18 +180,14 @@ export class QuestJournalWindow {
    *   mode            - the DisplayMode the window opens on
    */
   constructor({
-    questMessages = () => [],
-    notebook = () => null,
-    mode = 'activeQuests',
+    questMessages = () => [], notebook = () => null, mode = 'activeQuests',
     // HandleQuestClicks' three world questions (:439-466). PlayerGPS's
     // current location name, DfTravelMapWindow.CanFindPlace (:1134-1146)
     // and GotoPlace (:214-217) - the last is the HOST's, because only a
     // host that owns a travel map can be sent to one. A host without one
     // leaves it null and the find dialog is never offered, which is the
     // same nothing DFU does when CanFindPlace says no.
-    currentLocationName = () => '',
-    canFindPlace = () => false,
-    gotoPlace = null,
+    currentLocationName = () => '', canFindPlace = () => false, gotoPlace = null,
   } = {}) {
     this.deps = { questMessages, notebook, currentLocationName, canFindPlace, gotoPlace };
     this.done = false;
@@ -252,28 +227,18 @@ export class QuestJournalWindow {
    *  button (:120-121) and the title label (:165-166, re-pointed at
    *  :571/:615/:625/:635). Anything else clears it. */
   hover(vx, vy) {
-    if (inRect(JOURNAL_RECTS.dialog, vx, vy)) {
-      this.tip.show(JOURNAL_TIPS.dialog, vx, vy);
-      return;
-    }
-    if (inRect(JOURNAL_RECTS.title, vx, vy)) {
-      this.tip.show(JOURNAL_TIPS[this.mode], vx, vy);
-      return;
-    }
+    if (inRect(JOURNAL_RECTS.dialog, vx, vy)) { this.tip.show(JOURNAL_TIPS.dialog, vx, vy); return; }
+    if (inRect(JOURNAL_RECTS.title, vx, vy)) { this.tip.show(JOURNAL_TIPS[this.mode], vx, vy); return; }
     this.tip.hide();
   }
 
   /** The rest clock, driven by whichever host mounted the window - the
    *  overlay seams all forward `tick`. */
-  tick(dt) {
-    this.tip.update(dt);
-  }
+  tick(dt) { this.tip.update(dt); }
 
   /** questLogLabel.LineHeight - the pitch the page was last drawn at,
    *  which is what HandleClick divides by (:391). */
-  get lineHeight() {
-    return Math.trunc((this._font?.fnt?.fixedHeight ?? 0) * this.textScale);
-  }
+  get lineHeight() { return Math.trunc((this._font?.fnt?.fixedHeight ?? 0) * this.textScale); }
 
   /** The entries backing the current page, each a token[]. */
   entries() {
@@ -292,19 +257,15 @@ export class QuestJournalWindow {
     return Array.isArray(t) ? t : [];
   }
 
-  get maxLines() {
-    return this.mode === 'activeQuests' || this.mode === 'finishedQuests' ? MAX_LINES_QUESTS : MAX_LINES_SMALL;
-  }
-  get textScale() {
-    return this.mode === 'activeQuests' || this.mode === 'finishedQuests' ? 1 : TEXT_SCALE_SMALL;
-  }
+  get maxLines() { return (this.mode === 'activeQuests' || this.mode === 'finishedQuests') ? MAX_LINES_QUESTS : MAX_LINES_SMALL; }
+  get textScale() { return (this.mode === 'activeQuests' || this.mode === 'finishedQuests') ? 1 : TEXT_SCALE_SMALL; }
 
   /** DialogButton_OnMouseClick (:248-269): cycle, and reset the page. */
   nextCategory() {
     const i = JOURNAL_MODES.indexOf(this.mode);
     this.mode = JOURNAL_MODES[(i + 1) % JOURNAL_MODES.length];
     this.currentMessageIndex = 0;
-    this.selectedEntry = null; // F160: DialogButton resets it (:267) - a stale pick must not arm a move
+    this.selectedEntry = null;   // F160: DialogButton resets it (:267) - a stale pick must not arm a move
     audio.playOneShot(SOUND.OpenBook, 1);
     return true;
   }
@@ -314,26 +275,17 @@ export class QuestJournalWindow {
    *  history window's paging. Neither end wraps. */
   scrollUp(sound = true) {
     if (sound) audio.playOneShot(SOUND.PageTurn, 1);
-    if (this.currentMessageIndex - 1 >= 0) {
-      this.currentMessageIndex -= 1;
-      return true;
-    }
+    if (this.currentMessageIndex - 1 >= 0) { this.currentMessageIndex -= 1; return true; }
     return false;
   }
 
   scrollDown(sound = true) {
     if (sound) audio.playOneShot(SOUND.PageTurn, 1);
-    if (this.currentMessageIndex + 1 < this.messageCount) {
-      this.currentMessageIndex += 1;
-      return true;
-    }
+    if (this.currentMessageIndex + 1 < this.messageCount) { this.currentMessageIndex += 1; return true; }
     return false;
   }
 
-  close() {
-    audio.playOneShot(SOUND.ButtonClick, 1);
-    this.done = true;
-  }
+  close() { audio.playOneShot(SOUND.ButtonClick, 1); this.done = true; }
 
   input(action, e = null) {
     const code = e?.code ?? action;
@@ -356,10 +308,8 @@ export class QuestJournalWindow {
       // NOTE-KEYS: Y and N are the message box's own buttons' shortcuts (DialogShortcuts.txt Yes 'Y', No 'N'), read off
       // either host's alphabet by the table's one reader (systems/dialogShortcuts.js hotkeyHit) - a native window's
       // key is `KeyY`, the dungeon's `char:y`
-      if (action === 'confirm' || code === 'Enter' || hotkeyHit('Yes', action, e))
-        return this.answerMoveRemove(MB_BUTTONS.Yes);
-      if (action === 'back' || code === 'Escape' || hotkeyHit('No', action, e))
-        return this.answerMoveRemove(MB_BUTTONS.No);
+      if (action === 'confirm' || code === 'Enter' || hotkeyHit('Yes', action, e)) return this.answerMoveRemove(MB_BUTTONS.Yes);
+      if (action === 'back' || code === 'Escape' || hotkeyHit('No', action, e)) return this.answerMoveRemove(MB_BUTTONS.No);
       return true;
     }
     if (this.findBox) {
@@ -367,10 +317,7 @@ export class QuestJournalWindow {
       if (action === 'confirm' || code === 'Enter') return this.answerFindPlace(MB_BUTTONS.Yes);
       return true;
     }
-    if (action === 'confirm' || action === 'back' || code === 'Escape' || code === 'Enter') {
-      this.close();
-      return true;
-    }
+    if (action === 'confirm' || action === 'back' || code === 'Escape' || code === 'Enter') { this.close(); return true; }
     if (code === 'ArrowDown' || action === 'ArrowDown') return this.scrollDown();
     if (code === 'ArrowUp' || action === 'ArrowUp') return this.scrollUp();
     if (code === 'Tab' || action === 'Tab') return this.nextCategory();
@@ -379,9 +326,7 @@ export class QuestJournalWindow {
 
   /** MainPanel scroll (:285-297) - no sound on the wheel, unlike the
    *  arrow buttons. */
-  wheel(dy) {
-    return dy > 0 ? this.scrollDown(false) : this.scrollUp(false);
-  }
+  wheel(dy) { return dy > 0 ? this.scrollDown(false) : this.scrollUp(false); }
 
   click(vx, vy, right = false) {
     const R = JOURNAL_RECTS;
@@ -392,7 +337,7 @@ export class QuestJournalWindow {
       if (hit !== null) return this.answerMoveRemove(hit);
       return true;
     }
-    if (this.noteBox) return true; // keys drive the note field
+    if (this.noteBox) return true;   // keys drive the note field
     if (this.findBox) {
       // A box the popup art could not draw has no buttons to hit, so a
       // click dismisses it rather than trapping the window - the same
@@ -400,37 +345,19 @@ export class QuestJournalWindow {
       if (!this.findBox.box) return this.answerFindPlace(MB_BUTTONS.No);
       const hit = messageBoxHit(this.findBox.box, vx, vy);
       if (hit !== null) return this.answerFindPlace(hit);
-      return true; // a modal box eats what misses its buttons
+      return true;   // a modal box eats what misses its buttons
     }
-    if (inRect(R.exit, vx, vy)) {
-      this.close();
-      return true;
-    }
-    if (inRect(R.dialog, vx, vy)) {
-      this.nextCategory();
-      return true;
-    }
-    if (inRect(R.upArrow, vx, vy)) {
-      this.scrollUp();
-      return true;
-    }
-    if (inRect(R.downArrow, vx, vy)) {
-      this.scrollDown();
-      return true;
-    }
+    if (inRect(R.exit, vx, vy)) { this.close(); return true; }
+    if (inRect(R.dialog, vx, vy)) { this.nextCategory(); return true; }
+    if (inRect(R.upArrow, vx, vy)) { this.scrollUp(); return true; }
+    if (inRect(R.downArrow, vx, vy)) { this.scrollDown(); return true; }
     // QuestLogLabel_OnMouseClick (:322-325) - the log panel's click is
     // the journal's one navigation aid, and it was consumed and dropped.
-    if (inRect(R.log, vx, vy)) {
-      this.handleClick(vy, right);
-      return true;
-    } // F160: the remove gesture rides the button
+    if (inRect(R.log, vx, vy)) { this.handleClick(vy, right); return true; }   // F160: the remove gesture rides the button
     // Every other rect on the page is consumed rather than allowed to
     // fall through to the host's pointer-lock request.
     // F160: TitlePanel_OnMouseClick (:297-300) - EnterNote(0).
-    if (inRect(R.title, vx, vy)) {
-      this.enterNote(0);
-      return true;
-    }
+    if (inRect(R.title, vx, vy)) { this.enterNote(0); return true; }
     return false;
   }
 
@@ -479,7 +406,7 @@ export class QuestJournalWindow {
         }
       }
       if (out.length >= this.maxLines) break;
-      out.push({ text: '', color: DEFAULT_TEXT_COLOR }); // the NewLineToken between entries (:602, :672)
+      out.push({ text: '', color: DEFAULT_TEXT_COLOR });   // the NewLineToken between entries (:602, :672)
       map.push(this.mode === 'activeQuests' ? i : --boundary);
     }
     this.entryLineMap = map;
@@ -507,14 +434,15 @@ export class QuestJournalWindow {
     // set value here is an ARMED move (confirmMove answered Yes).
     const moveSrcIdx = this.selectedEntry;
     const line = Math.trunc((vy - JOURNAL_RECTS.log[1]) / pitch);
-    this.selectedEntry =
-      line < this.entryLineMap.length ? this.entryLineMap[line] : this.entryLineMap[this.entryLineMap.length - 1];
+    this.selectedEntry = line < this.entryLineMap.length
+      ? this.entryLineMap[line]
+      : this.entryLineMap[this.entryLineMap.length - 1];
     if (this.mode === 'activeQuests') {
       return this._handleQuestClicks(this.questMessages[this.selectedEntry] ?? null);
     }
     // F160: the finished-quest and notebook arms (:403-435).
     if (moveSrcIdx == null) {
-      if (this.selectedEntry < 0) return this.enterNote(this.selectedEntry); // add between (:408-411)
+      if (this.selectedEntry < 0) return this.enterNote(this.selectedEntry);   // add between (:408-411)
       const entry = this.getEntry(this.selectedEntry);
       if (entry && entry.length > 0) {
         // CreateDialogBox (:487-505): heading centred, the action
@@ -540,7 +468,7 @@ export class QuestJournalWindow {
     if (this.selectedEntry < 0) this.selectedEntry = -this.selectedEntry + this.currentMessageIndex;
     this.moveEntry(moveSrcIdx, this.selectedEntry);
     this.selectedEntry = null;
-    audio.playOneShot(SOUND.PageTurn, 1); // editNotebook = SoundClips.PageTurn (:31)
+    audio.playOneShot(SOUND.PageTurn, 1);   // editNotebook = SoundClips.PageTurn (:31)
     return true;
   }
 
@@ -576,7 +504,7 @@ export class QuestJournalWindow {
     if (b.remove) {
       if (button === MB_BUTTONS.Yes) {
         this.removeEntry(this.selectedEntry);
-        if (this.currentMessageIndex === this.selectedEntry) this.currentMessageIndex = 0; // :337-338
+        if (this.currentMessageIndex === this.selectedEntry) this.currentMessageIndex = 0;   // :337-338
         audio.playOneShot(SOUND.PageTurn, 1);
       }
       this.selectedEntry = null;
@@ -595,15 +523,10 @@ export class QuestJournalWindow {
     // NOTE-KEYS: the one DaggerfallInputMessageBox (CM3) - the prompt above the entry line in one parchment box, the
     // box as wide as WidthOverride (:521) whatever the note's length. Escape closes it and the pick clears with it.
     this.noteBox = new InputMessageBoxWindow({
-      lines: [{ text: enterNotePrompt(), center: false }],
-      label: ENTER_NOTE_LABEL,
-      maxCharacters: MAX_LINE_LENGTH,
-      widthOverride: ENTER_NOTE_WIDTH_OVERRIDE,
+      lines: [{ text: enterNotePrompt(), center: false }], label: ENTER_NOTE_LABEL,
+      maxCharacters: MAX_LINE_LENGTH, widthOverride: ENTER_NOTE_WIDTH_OVERRIDE,
       onSubmit: (text) => this._submitNote(text),
-      onCancel: () => {
-        this.noteBox = null;
-        this.selectedEntry = null;
-      },
+      onCancel: () => { this.noteBox = null; this.selectedEntry = null; },
     });
     return true;
   }
@@ -614,7 +537,7 @@ export class QuestJournalWindow {
     this.noteBox = null;
     if (text.length) {
       this.deps.notebook()?.addNote(text, this.selectedEntry);
-      audio.playOneShot(SOUND.PageTurn, 1); // editNotebook
+      audio.playOneShot(SOUND.PageTurn, 1);   // editNotebook
     }
     this.selectedEntry = null;
     return true;
@@ -625,12 +548,12 @@ export class QuestJournalWindow {
    *  not the one the player is standing in - then CanFindPlace decides,
    *  through the CANONICAL name, whether the map can even show it. */
   _handleQuestClicks(message) {
-    const place = lastPlaceMentionedInMessage(message); // GUIDE1: ui/quest/questLens.js, the member's one home
+    const place = lastPlaceMentionedInMessage(message);   // GUIDE1: ui/quest/questLens.js, the member's one home
     const site = place?.siteDetails ?? null;
     if (!site?.locationName) return false;
     if (site.locationName === this.deps.currentLocationName()) return false;
     if (!this.deps.gotoPlace) return false;
-    if (!this.deps.canFindPlace(site.regionName, site.locationName, site)) return false; // START3: the site, for its pixel past the Bay
+    if (!this.deps.canFindPlace(site.regionName, site.locationName, site)) return false;   // START3: the site, for its pixel past the Bay
     this.findPlace = place;
     // :455-456 - the workaround for saves written before SiteDetails   (AUDIT GUIDE D4: the cite corrected)
     // carried a regionIndex, and the region NAME the dialog shows comes
@@ -638,10 +561,8 @@ export class QuestJournalWindow {
     // (:459-462) - the place by its map id, the region by that index;
     // the canonical names above stay the gates' keys.
     const regionIndex = patchRegionIndex(site.regionIndex ?? 0, site.regionName ?? '');
-    const entryStr = locationInRegionText(
-      getLocalizedLocationName(site.mapId, site.locationName),
-      getLocalizedRegionName(regionIndex, (i) => REGION_NAMES[i] ?? site.regionName ?? ''),
-    );
+    const entryStr = locationInRegionText(getLocalizedLocationName(site.mapId, site.locationName),
+      getLocalizedRegionName(regionIndex, (i) => REGION_NAMES[i] ?? site.regionName ?? ''));
     // CreateDialogBox (:486-504): heading, the action line, a blank, the
     // entry in TextHighlight, then the explanation - and Yes/No.
     this.findBox = {
@@ -696,7 +617,7 @@ export class QuestJournalWindow {
   // to the one shape.
   draw(renderer, canvas, font) {
     const m = nativeMetrics(canvas);
-    this._font = font; // questLogLabel's own font, and its LineHeight
+    this._font = font;   // questLogLabel's own font, and its LineHeight
     // AUDIT 24 ui: this window's Setup assigns
     // `ParentPanel.BackgroundColor = ScreenDimColor` (DaggerfallQuestJournalWindow.cs:95),
     // which is Color.clear - the letterbox is NOT painted.
@@ -706,7 +627,7 @@ export class QuestJournalWindow {
     // The title, centred in its panel, in the LARGE font when the host
     // has one (:203-210).
     const [tx, ty, tw] = JOURNAL_RECTS.title;
-    const tf = _largeFont ?? font; // :163 Font = DaggerfallUI.LargeFont (FONT0000)
+    const tf = _largeFont ?? font;   // :163 Font = DaggerfallUI.LargeFont (FONT0000)
     const title = TITLES[this.mode];
     const titleW = measureText(tf.fnt, title);
     drawText(renderer, tf, title, m.ox + (tx + (tw - titleW) / 2 + 1) * m.s, m.oy + (ty + 1) * m.s, m.s, TITLE_SHADOW);
@@ -745,14 +666,7 @@ export class QuestJournalWindow {
     // so this fallback went unreachable the same day it was written.
     // A page of nothing but empty rows drew a blank book again.
     if (!lines.some((l) => l.text)) {
-      shadowText(
-        renderer,
-        font,
-        this.mode === 'activeQuests' ? 'You have no active quests.' : 'Nothing is written here yet.',
-        m,
-        lx,
-        ly,
-      );
+      shadowText(renderer, font, this.mode === 'activeQuests' ? 'You have no active quests.' : 'Nothing is written here yet.', m, lx, ly);
     }
 
     // The find-place dialog, over the page it was raised from. A host
@@ -770,7 +684,7 @@ export class QuestJournalWindow {
       this.findBox.box = layoutMessageBox(font, this.findBox.rows, [MB_BUTTONS.Yes, MB_BUTTONS.No]);
       drawMessageBox(renderer, m, font, this.findBox.box);
     }
-    this.tip.draw(renderer, m, font); // AUDIT 58: LAST - DFU's final-component order
+    this.tip.draw(renderer, m, font);   // AUDIT 58: LAST - DFU's final-component order
     return true;
   }
 }

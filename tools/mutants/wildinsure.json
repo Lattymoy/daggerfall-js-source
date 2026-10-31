@@ -112,8 +112,8 @@
   {
     "name": "WILD-INSURE-a-second-policy-on-one-piece",
     "file": "server-account/src/wildInsure.js",
-    "old": "  if (keys.some((k) => held.has(k))) return { error: 'insure-held' };\n  const region = Number.isSafeInteger(body?.region) ? body.region : null;",
-    "new": "  const region = Number.isSafeInteger(body?.region) ? body.region : null;",
+    "old": "  if (keys.some((k) => held.has(k))) return { error: 'insure-held' };\n",
+    "new": "",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]

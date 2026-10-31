@@ -146,8 +146,8 @@
   {
     "name": "DRAGON4-the-receipt-unheard",
     "file": "src/scenes/dragonHost.js",
-    "old": "    onReceipt: (r) => host?.receipt(r),\n  });",
-    "new": "  });",
+    "old": ", onReceipt: (r) => host?.receipt(r) })",
+    "new": " })",
     "tests": [
       "test/net/dragon/dragon4_claims.test.js"
     ]

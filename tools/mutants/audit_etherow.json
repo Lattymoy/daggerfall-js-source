@@ -122,8 +122,8 @@
   {
     "name": "AEOW-C2-1-sites-anywhere",
     "file": "src/net/motherlodeLaw.js",
-    "old": "    .filter((c) => c && watchPixelOk(c.x, c.y) && motherlodeGround(c.climate)) // AUDIT ETHER-OW C2-1: never past the Veil - a strike asks a Watch receipt of the site's pixel",
-    "new": "    .filter((c) => c && motherlodeGround(c.climate)) // AUDIT ETHER-OW C2-1: never past the Veil - a strike asks a Watch receipt of the site's pixel",
+    "old": ".filter((c) => c && watchPixelOk(c.x, c.y) && motherlodeGround(c.climate))",
+    "new": ".filter((c) => c && motherlodeGround(c.climate))",
     "tests": [
       "test/systems/audit_etherow.test.js",
       "test/net/prof2b_motherlode.test.js"
@@ -293,8 +293,8 @@
   {
     "name": "AEOW-T-models-rows-bay",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      dungeons: tvDungeonRowsAt(at),",
-    "new": "      dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)),",
+    "old": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
+    "new": "    const near = nearDungeons({ at, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],
@@ -303,8 +303,8 @@
   {
     "name": "AEOW-T-models-loc-index",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      locAt: tvDungeonAt,",
-    "new": "      locAt: (x, y) => locationIndex.get(`${x},${y}`),",
+    "old": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
+    "new": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y),",
     "tests": [
       "test/systems/travel/ether_ow.test.js"
     ],

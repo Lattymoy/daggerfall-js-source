@@ -2,8 +2,8 @@
   {
     "name": "KEEP-SPELLBOOK-the-store-rung-gone",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook }; // KEEP-SPELLBOOK: the own wagon takes it, nothing else",
-    "new": "  // KEEP-SPELLBOOK: the own wagon takes it, nothing else",
+    "old": "  if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook };",
+    "new": "",
     "tests": [
       "test/systems/pvpdungeons_game.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KEEP-SPELLBOOK-the-wagon-refused",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook }; // KEEP-SPELLBOOK: the own wagon takes it, nothing else",
-    "new": "  if (isKeptSpellbook(item)) return { ok: false, refusal: REFUSAL.spellbook }; // KEEP-SPELLBOOK: the own wagon takes it, nothing else",
+    "old": "  if (isKeptSpellbook(item) && !usingWagon) return { ok: false, refusal: REFUSAL.spellbook };",
+    "new": "  if (isKeptSpellbook(item)) return { ok: false, refusal: REFUSAL.spellbook };",
     "tests": [
       "test/systems/pvpdungeons_game.test.js"
     ]

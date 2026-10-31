@@ -179,7 +179,7 @@ FOUND. Reproduced in Node on the real modules (the real drawHud and enhanced HUD
 the use-magic-item window in the dungeon's slot, `routeKey`, `useQuickslot`): under the window underground, Digit1 was
 stopped by the hotbar, the list never heard it, and the bar's slot 1 (a Potion of Healing) was drunk behind the paused
 game.
-- **The list was never it.** `listPicker.js:"if (d) this._pick"` in every host, and
+- **The list was never it.** `listPicker.js:"if (d) this._pick(this.scrollIndex + Number(d[1]) - 1);"` in every host, and
   a native window is handed the raw code (`input.js:"if (ctx.overlayIsNative) { ctx.overlayInput(e.code, e); return true; }"`).
 - **The bar takes the digits first.** The hotbar (the default quickbar since HB-LYCFREE) listens on the window's
   capture phase, ahead of every host's ladder, takes a key whose action is one of its ten slots and stops it

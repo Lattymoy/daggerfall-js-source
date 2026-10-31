@@ -24,50 +24,21 @@
 // Pure: no clock of its own, no DOM, no network. Both ends read it.
 // ═══════════════════════════════════════════════════════════════════
 
-import { gateHash } from './gate/gateLaw.js'; // the one mix every clock-law in the world rolls with
-import { skyClassicMinutes } from './skyLaw.js'; // TIME1: a UTC day's season and month are the SKY's (bible/06-Systems/Online-Time-Arc.md section 4)
-import {
-  CLIMATES,
-  REGION_NAMES,
-  BAY_REGION_COUNT,
-  MAX_MAP_PIXEL_X,
-  MAX_MAP_PIXEL_Y,
-  isProvinceRegion,
-  theatreOfRegion,
-} from '../formats/mapsTables.js';
+import { gateHash } from './gate/gateLaw.js';   // the one mix every clock-law in the world rolls with
+import { skyClassicMinutes } from './skyLaw.js';   // TIME1: a UTC day's season and month are the SKY's (bible/06-Systems/Online-Time-Arc.md section 4)
+import { CLIMATES, REGION_NAMES, BAY_REGION_COUNT, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y, isProvinceRegion, theatreOfRegion } from '../formats/mapsTables.js';
 import { SEASONS, seasonValue, dateFromClassicMinutes } from '../systems/gameDate.js';
-import { basketBlock, BASKET_BLOCKS } from '../systems/foraging/foragingCore.js'; // the Basket's blocks and foods - the IL's, one home
+import { basketBlock, BASKET_BLOCKS } from '../systems/foraging/foragingCore.js';   // the Basket's blocks and foods - the IL's, one home
 import {
-  herbKey,
-  materialOf,
-  foodKey,
-  WRIT_UNITS,
-  WRIT_TIER_WEIGHTS,
-  writPay,
-  writRenown,
-  minedMaterial,
-  CUT_RATIO,
-  DEEP_DELVER_MULT,
-  GEM_CHANCE,
-  PROSPECTOR_GEM,
-  HEARTWOOD_CHANCE,
-  FORESTER_MULT,
-  RESIN_CHANCE,
-  RESIN,
-  HEARTWOOD,
-  HIDE_YIELD,
-  ACT_YIELD_MAX,
-  PART_CHANCE,
-  BUTCHERY,
-  PEARL,
-  SLAUGHTERFISH_SCALES,
-  SCHOOL_FISH,
-  FISH_CHANCE, // PROF8
+  herbKey, materialOf, foodKey, WRIT_UNITS, WRIT_TIER_WEIGHTS, writPay, writRenown, minedMaterial, CUT_RATIO,
+  DEEP_DELVER_MULT, GEM_CHANCE, PROSPECTOR_GEM, HEARTWOOD_CHANCE, FORESTER_MULT, RESIN_CHANCE, RESIN, HEARTWOOD,
+  HIDE_YIELD, ACT_YIELD_MAX, PART_CHANCE, BUTCHERY,
+  PEARL, SLAUGHTERFISH_SCALES, SCHOOL_FISH, FISH_CHANCE,   // PROF8
 } from './professionLaw.js';
-import { kingdomOf, FREE_LANDS, MARCH_REGIONS, isMarch } from './kingdomLaw.js'; // SEAT0 4.3's map, one home (PROF2)
-import { banthaAreaHas } from '../world/jungle/banthaArea.js'; // JUNGLE-WOODS: the owner's jungle, one home (pure: its rows alone)
-import { richness, provinceOres, richClimates } from './provinceNodes.js'; // WW-C1: the provinces' ground, one home (pure: formats/ alone)
-import { worldPixelOk } from './wire.js'; // WW-C1: the world's grid, the wire's own bound (wire.js imports nothing of this file)
+import { kingdomOf, FREE_LANDS, MARCH_REGIONS, isMarch } from './kingdomLaw.js';   // SEAT0 4.3's map, one home (PROF2)
+import { banthaAreaHas } from '../world/jungle/banthaArea.js';   // JUNGLE-WOODS: the owner's jungle, one home (pure: its rows alone)
+import { richness, provinceOres, richClimates } from './provinceNodes.js';   // WW-C1: the provinces' ground, one home (pure: formats/ alone)
+import { worldPixelOk } from './wire.js';   // WW-C1: the world's grid, the wire's own bound (wire.js imports nothing of this file)
 
 /** The one salt every client stands a day's nodes with. Changing it moves every node in the world. */
 export const NODE_SALT = 0x5e3d;
@@ -103,28 +74,20 @@ export const nodeCount = (climate, kind) => NODE_COUNTS[climate]?.[kind] ?? 0;
 
 /** How many of `kind` a pixel's own tables stand: its climate's count, times its province's richness on ground the
  *  witnesses confirmed (provinceNodes.js richness - 1 on the Bay, and on ground unconfirmed). */
-const richCount = (kind, climate, region, confirmed) =>
-  nodeCount(climate, kind) * (confirmed && region !== null ? richness(region, kind) : 1);
+const richCount = (kind, climate, region, confirmed) => nodeCount(climate, kind) * (confirmed && region !== null ? richness(region, kind) : 1);
 /** JUNGLE-WOODS' GROUND (AUDIT TESA II J5): the owner's area (banthaArea.js - the Bay's, a law both ends compute), or a
  *  pixel past the Bay the witnesses confirmed a jungle zone's (world/tamriel/tamrielBiomes.js `jungle` - Cyrodiil's,
  *  Blackwood's and Valenwood's forest): the service holds no trace to read the zones by, so the client's word is
  *  witnessed with the pixel's climate and region (pixelReport's jungle bit) and stands on confirmed ground alone - an
  *  unconfirmed jungle pixel stands its climate's count, the least its kind allows. */
-export const jungleWoods = ({ x, y, climate, region, confirmed, jungle }) =>
-  banthaAreaHas(x, y) || (confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region));
+export const jungleWoods = ({ x, y, climate, region, confirmed, jungle }) => banthaAreaHas(x, y) || (confirmed === true && jungle === true && jungleGroundOk(x, y, climate, region));
 /** AUDIT TESA II J5: WHERE A JUNGLE ZONE MAY STAND past the Bay - a pixel off the Bay's map, of a province whose zones
  *  stand one (Valenwood's, Black Marsh's and Cyrodiil's theatres) and of a jungle's climates (the Rainforest, the Swamp):
  *  world/tamriel/tamrielBiomes.js BIOMES' `jungle` zones, held to them by test/net/audittesa2g_jungle.test.js (the account
  *  service holds no world module to read them by). A jungle word anywhere else is no ground's. */
-export const JUNGLE_GROUND = Object.freeze({
-  theatres: Object.freeze([6, 8, 9]),
-  climates: Object.freeze([CLIMATES.Rainforest, CLIMATES.Swamp]),
-});
-export const jungleGroundOk = (x, y, climate, region) =>
-  isProvinceRegion(region) &&
-  !(x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) &&
-  JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) &&
-  JUNGLE_GROUND.climates.includes(climate);
+export const JUNGLE_GROUND = Object.freeze({ theatres: Object.freeze([6, 8, 9]), climates: Object.freeze([CLIMATES.Rainforest, CLIMATES.Swamp]) });
+export const jungleGroundOk = (x, y, climate, region) => isProvinceRegion(region) && !(x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y)
+  && JUNGLE_GROUND.theatres.includes(theatreOfRegion(region)) && JUNGLE_GROUND.climates.includes(climate);
 /**
  * WW-C1: HOW MANY NODES OF `kind` A PIXEL'S DAY HOLDS - one law, the client's stand and the service's bound alike. A
  * tree's none where its climate grows no wood, and the jungle's on JUNGLE-WOODS' ground (jungleWoods - AUDIT TESA II J5:
@@ -134,16 +97,8 @@ export const jungleGroundOk = (x, y, climate, region) =>
  * @param {{ x?: number, y?: number, climate: number, region?: number|null, confirmed?: boolean, jungle?: boolean }} p
  */
 export function nodeSlots(kind, { x = 0, y = 0, climate, region = null, confirmed = false, jungle = false }) {
-  if (kind === 'tree')
-    return !WOOD_TABLES[climate]
-      ? 0
-      : jungleWoods({ x, y, climate, region, confirmed, jungle })
-        ? JUNGLE_TREE_SLOTS
-        : richCount('tree', climate, region, confirmed);
-  if (kind === 'vein')
-    return !VEIN_TABLES[climate]
-      ? 0
-      : richCount('vein', climate, region, confirmed) + signatureOres(region, confirmed).length;
+  if (kind === 'tree') return !WOOD_TABLES[climate] ? 0 : jungleWoods({ x, y, climate, region, confirmed, jungle }) ? JUNGLE_TREE_SLOTS : richCount('tree', climate, region, confirmed);
+  if (kind === 'vein') return !VEIN_TABLES[climate] ? 0 : richCount('vein', climate, region, confirmed) + signatureOres(region, confirmed).length;
   return richCount(kind, climate, region, confirmed);
 }
 /** @type {Map<string, any>} */
@@ -173,8 +128,7 @@ function richTable(tables, kind, climate, region, confirmed) {
 }
 /** WW-C1: the metals a pixel's veins draw over (richTable's - the held map's ore card reads it, ui/oreMapTip.js).
  *  @param {{ climate: number, region?: number|null, confirmed?: boolean }} p */
-export const veinTable = ({ climate, region = null, confirmed = false }) =>
-  richTable(VEIN_TABLES, 'vein', climate, region, confirmed);
+export const veinTable = ({ climate, region = null, confirmed = false }) => richTable(VEIN_TABLES, 'vein', climate, region, confirmed);
 /** A node's tier weights, tier 1 first (40 / 25 / 15 / 10 / 6 / 4 %). */
 export const NODE_TIER_WEIGHTS = Object.freeze([40, 25, 15, 10, 6, 4]);
 
@@ -202,8 +156,7 @@ export const HERB_TIERS = 3;
 export function herbTier(templateIndex) {
   let best = null;
   for (const table of Object.values(HERB_TABLES)) {
-    for (let t = 0; t < table.length; t++)
-      if (table[t].includes(templateIndex) && (best === null || t + 1 < best)) best = t + 1;
+    for (let t = 0; t < table.length; t++) if (table[t].includes(templateIndex) && (best === null || t + 1 < best)) best = t + 1;
   }
   return best;
 }
@@ -225,13 +178,9 @@ export const AUTUMN_FRUIT = HERB_BERRIES;
 export const SEASON_MULT = 1.5;
 /** A Seasonal Eye's off-season herb (PROF0 3.3): half the yield. */
 export const OFF_SEASON_MULT = 0.5;
-export const herbInSeason = (templateIndex, season) =>
-  season !== SEASONS.Winter || !WINTER_BARE.includes(templateIndex);
+export const herbInSeason = (templateIndex, season) => season !== SEASONS.Winter || !WINTER_BARE.includes(templateIndex);
 export const herbSeasonMult = (templateIndex, season) =>
-  (season === SEASONS.Spring && SPRING_BLOOM.includes(templateIndex)) ||
-  (season === SEASONS.Fall && AUTUMN_FRUIT.includes(templateIndex))
-    ? SEASON_MULT
-    : 1;
+  ((season === SEASONS.Spring && SPRING_BLOOM.includes(templateIndex)) || (season === SEASONS.Fall && AUTUMN_FRUIT.includes(templateIndex)) ? SEASON_MULT : 1);
 
 /** The UTC day an instant (ms) falls in. */
 export const utcDayOfMs = (ms) => Math.floor(ms / 86_400_000);
@@ -251,13 +200,11 @@ export const dayMonth = (day) => dayDate(day).month;
  *  was refused (`bad-node`), and every ask after its pixels' witnesses (`bad-pixels`) - and WW-C1 (bible/03-World/
  *  World-Wide.md WW-C) the provinces past the Bay: the world's whole grid (net/wire.js worldPixelOk, the Bay's map and the
  *  sea's box inside it), so a province's ground stands its nodes and is witnessed as the Bay's is. */
-export const pixelOk = (x, y) =>
-  Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y);
+export const pixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y);
 /** WW-C1: whether a pixel may be claimed for `region` - never a province's on the Bay's own map (the cheapest lie a
  *  province's richness would pay: the Bay's ground claimed Cyrodiil's). Past the map any region the client derived
  *  (the provinces', the sea's and the Ether's own reads) - the witnesses settle which. */
-export const regionOnPixel = (region, x, y) =>
-  !(isProvinceRegion(region) && x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y);
+export const regionOnPixel = (region, x, y) => !(isProvinceRegion(region) && x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y);
 /** Whether `r` is a region index - WW-R (bible/03-World/World-Wide.md WW-R): the Bay's and the provinces' past it
  *  (formats/mapsTables.js REGION_NAMES), the ground a node reads. */
 export const regionOk = (r) => Number.isSafeInteger(r) && r >= 0 && r < REGION_NAMES.length;
@@ -275,15 +222,15 @@ export const dveinKey = ({ dungeon, day, slot }) => `dvein:${dungeon}:${day}:${s
  *  none of it but the day. */
 export const bodyKey = ({ day, id }) => `body:${day}:${id}`;
 export const BODY_ID_RE = /^[0-9a-f]{12}$/;
-const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\d{1,4}):(-?\d{1,4}):(\d{1,6}):(\d{1,2})$/; // ETHER-NODES: the Eltheric's x to 8127 and its y north of the map's 0
-const DVEIN_KEY_RE = /^dvein:(\d{1,10}):(\d{1,6}):(\d{1,2})$/; // AUDIT TAMRIEL-WIDE C3: a dungeon past the Bay by its whole id
+const NODE_KEY_RE = /^(tree|herb|vein|boulder):(-?\d{1,4}):(-?\d{1,4}):(\d{1,6}):(\d{1,2})$/;   // ETHER-NODES: the Eltheric's x to 8127 and its y north of the map's 0
+const DVEIN_KEY_RE = /^dvein:(\d{1,10}):(\d{1,6}):(\d{1,2})$/;   // AUDIT TAMRIEL-WIDE C3: a dungeon past the Bay by its whole id
 const BODY_KEY_RE = /^body:(\d{1,6}):([0-9a-f]{12})$/;
 /** PROF8: a haul's id - `haul:<x>:<y>:<day>:<id>`, the map pixel the net was cast from, its UTC day and twelve hex
  *  digits the angler's client drew at the cast (scenes/fishHost.js). Fishing is bounded, not witnessed (PROF0 6): the
  *  pixel is the client's word, read for its ground (the sea's finds are a confirmed pixel's) and its day - the hour's
  *  writes the bound (CAP-OFF: the day's forty hauls are gone). */
 export const haulKey = ({ x, y, day, id }) => `haul:${x}:${y}:${day}:${id}`;
-const HAUL_KEY_RE = /^haul:(-?\d{1,4}):(-?\d{1,4}):(\d{1,6}):([0-9a-f]{12})$/; // ETHER-NODES: as a node's
+const HAUL_KEY_RE = /^haul:(-?\d{1,4}):(-?\d{1,4}):(\d{1,6}):([0-9a-f]{12})$/;   // ETHER-NODES: as a node's
 /** A dungeon's identity (scenes/dungeonIdentity.js): DFU's `MapTableData.MapId & 0xfffff` on the Bay, the whole map id
  *  past it - AUDIT TAMRIEL-WIDE C3: past the Bay the low 20 bits named a ruin and a lair alike. An unsigned 32-bit id. */
 export const DUNGEON_ID_MAX = 0xffffffff;
@@ -319,10 +266,7 @@ export function drawTier(u, tiers) {
   const w = NODE_TIER_WEIGHTS.slice(0, tiers);
   const total = w.reduce((a, b) => a + b, 0);
   let at = u * total;
-  for (let t = 0; t < w.length; t++) {
-    if (at < w[t]) return t + 1;
-    at -= w[t];
-  }
+  for (let t = 0; t < w.length; t++) { if (at < w[t]) return t + 1; at -= w[t]; }
   return w.length;
 }
 
@@ -348,15 +292,7 @@ export function herbPatch({ x, y, day, slot, climate, region = null, confirmed =
   if (seasonalEye) return { slot, u, v, tier, herb: first, offSeason: true };
   for (let t = tier; t >= 1; t--) {
     const grow = table[t - 1].filter((h) => herbInSeason(h, season));
-    if (grow.length)
-      return {
-        slot,
-        u,
-        v,
-        tier: t,
-        herb: grow[Math.floor(unit('herb', x, y, day, slot, 5) * grow.length)],
-        offSeason: false,
-      };
+    if (grow.length) return { slot, u, v, tier: t, herb: grow[Math.floor(unit('herb', x, y, day, slot, 5) * grow.length)], offSeason: false };
   }
   return null;
 }
@@ -390,8 +326,7 @@ export const VEIN_TABLES = Object.freeze({
  *  and Moonstone in a Woodlands or HauntedWoodlands dungeon (4.1's deep veins). */
 export const DUNGEON_VEINS = row('metal:silver', 'metal:gold', 'ore:dwarven', 'metal:platinum', 'ore:adamantium');
 export const DEEP_MOONSTONE_CLIMATES = Object.freeze([CLIMATES.Woodlands, CLIMATES.HauntedWoodlands]);
-export const dungeonVeinTable = (climate) =>
-  DEEP_MOONSTONE_CLIMATES.includes(climate) ? [...DUNGEON_VEINS, 'ore:moonstone'] : [...DUNGEON_VEINS];
+export const dungeonVeinTable = (climate) => (DEEP_MOONSTONE_CLIMATES.includes(climate) ? [...DUNGEON_VEINS, 'ore:moonstone'] : [...DUNGEON_VEINS]);
 /** DEEP-OPEN (Professions-Arc.md section 53): THE DEEP ORES A DUNGEON'S CLIMATE ADDS to the table every dungeon holds -
  *  the Moonstone of a Woodlands or HauntedWoodlands dungeon - the one claim a dungeon's veins still wait on the witnesses
  *  for (dungeonVein): the climate is the client's word until three agree. None for any other climate. */
@@ -424,8 +359,7 @@ export function regionSignature(region) {
 }
 /** The ores a pixel's veins hold beside its climate's, one a slot: its region's signature (regionSignature), on
  *  confirmed ground alone. */
-const signatureOres = (region, confirmed) =>
-  confirmed && region !== null ? (regionSignature(region)?.ores ?? []) : [];
+const signatureOres = (region, confirmed) => (confirmed && region !== null ? regionSignature(region)?.ores ?? [] : []);
 const tierOfKey = (key) => minedMaterial(key)?.tier ?? 0;
 /**
  * A tier drawn by `u` over the tiers `table` holds, by NODE_TIER_WEIGHTS renormalised - at most `cap` - then a metal of
@@ -438,20 +372,13 @@ export function drawFromTable(table, u, v, cap = 7) {
   const w = tiers.map((t) => NODE_TIER_WEIGHTS[t - 1] ?? NODE_TIER_WEIGHTS[NODE_TIER_WEIGHTS.length - 1]);
   let at = u * w.reduce((a, b) => a + b, 0);
   let tier = tiers[tiers.length - 1];
-  for (let i = 0; i < tiers.length; i++) {
-    if (at < w[i]) {
-      tier = tiers[i];
-      break;
-    }
-    at -= w[i];
-  }
+  for (let i = 0; i < tiers.length; i++) { if (at < w[i]) { tier = tiers[i]; break; } at -= w[i]; }
   const of = table.filter((k) => tierOfKey(k) === tier);
   return { tier, material: of[Math.min(of.length - 1, Math.floor(v * of.length))] };
 }
 /** How many veins a pixel's day holds: its climate's, and on a confirmed pixel of a signature region the signature's
  *  own beside them (AUDIT 29 A6) - WW-C1: nodeSlots'. */
-export const veinSlots = ({ climate, region = null, confirmed = false }) =>
-  nodeSlots('vein', { x: 0, y: 0, climate, region, confirmed });
+export const veinSlots = ({ climate, region = null, confirmed = false }) => nodeSlots('vein', { x: 0, y: 0, climate, region, confirmed });
 /**
  * ONE VEIN of a pixel's day: its law point (`u`, `v`), its tier and metal. A pixel not confirmed is held to
  * UNCONFIRMED_VEIN_TIER (3 - UNWITNESSED-ORE; it was 2) and takes no signature. A confirmed one of a signature region holds its signature ore BESIDE the climate's veins, in the
@@ -465,52 +392,33 @@ export const veinSlots = ({ climate, region = null, confirmed = false }) =>
  */
 export function vein({ x, y, day, slot, climate, region = null, confirmed = false, surveyed = false }) {
   const table = richTable(VEIN_TABLES, 'vein', climate, region, confirmed);
-  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed }))
-    return null;
+  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed })) return null;
   const u = 0.04 + 0.92 * unit('vein', x, y, day, slot, 1);
   const v = 0.04 + 0.92 * unit('vein', x, y, day, slot, 2);
-  const own = richCount('vein', climate, region, confirmed); // WW-C1: the climate's veins, a province's richness times
+  const own = richCount('vein', climate, region, confirmed);   // WW-C1: the climate's veins, a province's richness times
   if (slot >= own) {
     const ore = signatureOres(region, confirmed)[slot - own];
     return { slot, u, v, tier: tierOfKey(ore), material: ore, signature: true };
   }
-  const d = drawFromTable(
-    table,
-    unit('vein', x, y, day, slot, 3),
-    unit('vein', x, y, day, slot, 4),
-    confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER,
-  );
+  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);
   return d ? { slot, u, v, tier: d.tier, material: d.material, signature: false } : null;
 }
 /** Every vein of a pixel's day, slot 0 first - the climate's, then a signature's. */
 export function veins(p) {
   const out = [];
-  for (let slot = 0; slot < veinSlots(p); slot++) {
-    const n = vein({ ...p, slot });
-    if (n) out.push(n);
-  }
+  for (let slot = 0; slot < veinSlots(p); slot++) { const n = vein({ ...p, slot }); if (n) out.push(n); }
   return out;
 }
 /** ONE BOULDER of a pixel's day (PROF0 4.5, 23): its law point, tier 1 (Rough Stone's). Null past the day's count
  *  (WW-C1: nodeSlots' - a stone-rich province's richness on confirmed ground).
  *  @param {{ x: number, y: number, day: number, slot: number, climate: number, region?: number|null, confirmed?: boolean }} p */
 export function boulder({ x, y, day, slot, climate, region = null, confirmed = false }) {
-  if (!Number.isSafeInteger(slot) || slot < 0 || slot >= nodeSlots('boulder', { x, y, climate, region, confirmed }))
-    return null;
-  return {
-    slot,
-    u: 0.04 + 0.92 * unit('boulder', x, y, day, slot, 1),
-    v: 0.04 + 0.92 * unit('boulder', x, y, day, slot, 2),
-    tier: 1,
-    material: 'stone:rough',
-  };
+  if (!Number.isSafeInteger(slot) || slot < 0 || slot >= nodeSlots('boulder', { x, y, climate, region, confirmed })) return null;
+  return { slot, u: 0.04 + 0.92 * unit('boulder', x, y, day, slot, 1), v: 0.04 + 0.92 * unit('boulder', x, y, day, slot, 2), tier: 1, material: 'stone:rough' };
 }
 export function boulders(p) {
   const out = [];
-  for (let slot = 0; slot < nodeSlots('boulder', p); slot++) {
-    const n = boulder({ ...p, slot });
-    if (n) out.push(n);
-  }
+  for (let slot = 0; slot < nodeSlots('boulder', p); slot++) { const n = boulder({ ...p, slot }); if (n) out.push(n); }
   return out;
 }
 /** How many veins a dungeon holds on a day: 1 + hash % 4. */
@@ -530,20 +438,11 @@ export function dungeonVein({ dungeon, day, slot, climate, confirmed = false }) 
   const table = confirmed ? dungeonVeinTable(climate) : DUNGEON_VEINS;
   const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4));
   if (!d) return null;
-  return {
-    slot,
-    tier: d.tier,
-    material: d.material,
-    marker: unit('dvein', dungeon, 0, day, slot, 1),
-    bearing: 2 * Math.PI * unit('dvein', dungeon, 0, day, slot, 2),
-  };
+  return { slot, tier: d.tier, material: d.material, marker: unit('dvein', dungeon, 0, day, slot, 1), bearing: 2 * Math.PI * unit('dvein', dungeon, 0, day, slot, 2) };
 }
 export function dungeonVeins(p) {
   const out = [];
-  for (let slot = 0; slot < dungeonVeinCount(p.dungeon, p.day); slot++) {
-    const n = dungeonVein({ ...p, slot });
-    if (n) out.push(n);
-  }
+  for (let slot = 0; slot < dungeonVeinCount(p.dungeon, p.day); slot++) { const n = dungeonVein({ ...p, slot }); if (n) out.push(n); }
   return out;
 }
 
@@ -562,10 +461,7 @@ export const WOOD_TABLES = Object.freeze({
   [CLIMATES.Subtropical]: row('log:cherry', 'log:teak'),
 });
 /** The rare woods (4.2): one tree in twenty of their climate's, on a confirmed pixel only. */
-export const RARE_WOODS = Object.freeze({
-  [CLIMATES.Rainforest]: 'log:ironwood',
-  [CLIMATES.HauntedWoodlands]: 'log:ghostwood',
-});
+export const RARE_WOODS = Object.freeze({ [CLIMATES.Rainforest]: 'log:ironwood', [CLIMATES.HauntedWoodlands]: 'log:ghostwood' });
 export const RARE_WOOD_CHANCE = 1 / 20;
 /** PINE-SHARE (2026-09-30, Mac: "2 in 5 trees Pine"): the one tier-1 wood (4.2), and its share of a forest whose own
  *  woods hold no tier 1 - section 6's tier-1 weight, 2 trees in 5. Woodlands, Haunted Woodlands and Swamp stood only
@@ -582,14 +478,11 @@ const needsPine = (table) => !!table && !table.some((k) => tierOfKey(k) === 1);
 export const JUNGLE_TREE_SLOTS = 48;
 /** How many trees a pixel's day holds: none where its climate grows no wood; the jungle's in the owner's area (each one
  *  standing - `tree`); else its climate's count (WW-C1: nodeSlots' - a forest province's richness on confirmed ground). */
-export const treeSlots = ({ x, y, climate, region = null, confirmed = false, jungle = false }) =>
-  nodeSlots('tree', { x, y, climate, region, confirmed, jungle });
+export const treeSlots = ({ x, y, climate, region = null, confirmed = false, jungle = false }) => nodeSlots('tree', { x, y, climate, region, confirmed, jungle });
 /** WW-C1: the rare woods a pixel stands one tree in twenty of, on confirmed ground: its climate's (RARE_WOODS), and on
  *  Cyrodiil's every forest province's. */
-const rareWoods = (climate, region, confirmed) =>
-  (confirmed && region !== null ? richClimates(region, 'tree', climate) : [climate])
-    .map((c) => RARE_WOODS[c])
-    .filter(Boolean);
+const rareWoods = (climate, region, confirmed) => (confirmed && region !== null ? richClimates(region, 'tree', climate) : [climate])
+  .map((c) => RARE_WOODS[c]).filter(Boolean);
 /**
  * ONE TREE of a pixel's day: its law point (`u`, `v`), its tier and wood. A rare wood's one in twenty is its own roll,
  * first, on a confirmed pixel; then, in a forest whose own woods hold no tier 1, PINE_SHARE of its trees are Pine, on
@@ -602,37 +495,24 @@ const rareWoods = (climate, region, confirmed) =>
  */
 export function tree({ x, y, day, slot, climate, region = null, confirmed = false, jungle = false }) {
   const table = richTable(WOOD_TABLES, 'tree', climate, region, confirmed);
-  if (
-    !table ||
-    !Number.isSafeInteger(slot) ||
-    slot < 0 ||
-    slot >= treeSlots({ x, y, climate, region, confirmed, jungle })
-  )
-    return null;
+  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= treeSlots({ x, y, climate, region, confirmed, jungle })) return null;
   const u = 0.04 + 0.92 * unit('tree', x, y, day, slot, 1);
   const v = 0.04 + 0.92 * unit('tree', x, y, day, slot, 2);
   const rares = rareWoods(climate, region, confirmed);
   const rare = rares[Math.floor(unit('tree', x, y, day, slot, 7) * rares.length)];
-  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE)
-    return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };
-  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE)
-    return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }; // PINE-SHARE
+  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };
+  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };   // PINE-SHARE
   const d = drawFromTable(table, unit('tree', x, y, day, slot, 3), unit('tree', x, y, day, slot, 4), confirmed ? 7 : 2);
   if (d) return { slot, u, v, tier: d.tier, material: d.material, rare: false };
   // JUNGLE-WOODS: every slot of the jungle stands a tree - a slot whose wood waits on the witnesses (the Rainforest's Teak
   // and Mahogany, past tier 2) stands Pine there, where elsewhere it stands nothing (3 in 5 of an unconfirmed
   // Rainforest's slots)
-  return jungleWoods({ x, y, climate, region, confirmed, jungle })
-    ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }
-    : null;
+  return jungleWoods({ x, y, climate, region, confirmed, jungle }) ? { slot, u, v, tier: 1, material: PINE_WOOD, rare: false } : null;
 }
 /** Every tree of a pixel's day, slot 0 first. */
 export function trees(p) {
   const out = [];
-  for (let slot = 0; slot < treeSlots(p); slot++) {
-    const n = tree({ ...p, slot });
-    if (n) out.push(n);
-  }
+  for (let slot = 0; slot < treeSlots(p); slot++) { const n = tree({ ...p, slot }); if (n) out.push(n); }
   return out;
 }
 /** A tree's base roll (the service's dice): 2 to 4 logs. */
@@ -641,7 +521,7 @@ export const TREE_YIELD = Object.freeze([2, 4]);
 export function treeYield({ roll, march = false, tideMult = 1 }, chance) {
   let y = roll;
   if (march) y *= MARCH_MULT;
-  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
+  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
   return Math.max(1, wholeYield(y, chance));
 }
 /**
@@ -654,11 +534,7 @@ export function treeFinds({ cuts, confirmed, forester = false }, dice) {
   let heartwood = null;
   if (confirmed) {
     const chance = HEARTWOOD_CHANCE * (forester ? FORESTER_MULT : 1);
-    for (let i = 0; i < cuts; i++)
-      if (dice() < chance) {
-        heartwood = HEARTWOOD.key;
-        break;
-      }
+    for (let i = 0; i < cuts; i++) if (dice() < chance) { heartwood = HEARTWOOD.key; break; }
   }
   return { resin, heartwood };
 }
@@ -666,18 +542,15 @@ export function treeFinds({ cuts, confirmed, forester = false }, dice) {
 /** The gem a climate's veins give (PROF0 4.6): Amber (Woodlands), Jade (Rainforest), Turquoise (the deserts),
  *  Malachite (Swamp), Ruby, Sapphire or Emerald (Mountain); none elsewhere. A dungeon's vein gives a Diamond. */
 export const VEIN_GEMS = Object.freeze({
-  [CLIMATES.Woodlands]: row('gem:amber'),
-  [CLIMATES.Rainforest]: row('gem:jade'),
-  [CLIMATES.Desert]: row('gem:turquoise'),
-  [CLIMATES.Desert2]: row('gem:turquoise'),
-  [CLIMATES.Swamp]: row('gem:malachite'),
-  [CLIMATES.Mountain]: row('gem:ruby', 'gem:sapphire', 'gem:emerald'),
+  [CLIMATES.Woodlands]: row('gem:amber'), [CLIMATES.Rainforest]: row('gem:jade'),
+  [CLIMATES.Desert]: row('gem:turquoise'), [CLIMATES.Desert2]: row('gem:turquoise'),
+  [CLIMATES.Swamp]: row('gem:malachite'), [CLIMATES.Mountain]: row('gem:ruby', 'gem:sapphire', 'gem:emerald'),
 });
 export const DUNGEON_GEM = 'gem:diamond';
 /** The gem a node gives, `u` choosing among its climate's, or null. */
 export function gemOf({ kind, climate }, u) {
   if (kind === 'dvein') return DUNGEON_GEM;
-  if (kind !== 'vein') return null; // a boulder is stone
+  if (kind !== 'vein') return null;   // a boulder is stone
   const list = VEIN_GEMS[climate];
   return list ? list[Math.min(list.length - 1, Math.floor(u * list.length))] : null;
 }
@@ -702,13 +575,7 @@ export function veinGem({ kind, climate, glints, confirmed, prospector = false }
 /** An herb's base roll (the service's dice): 1 to 3. */
 export const HERB_YIELD = Object.freeze([1, 3]);
 /** The Basket's food by the patch's block (FORAGE0 14.6): one in a desert, 1-2 in B and D, 1-3 in C and E. */
-export const FOOD_YIELD = Object.freeze({
-  A: Object.freeze([1, 1]),
-  B: Object.freeze([1, 2]),
-  C: Object.freeze([1, 3]),
-  D: Object.freeze([1, 2]),
-  E: Object.freeze([1, 3]),
-});
+export const FOOD_YIELD = Object.freeze({ A: Object.freeze([1, 1]), B: Object.freeze([1, 2]), C: Object.freeze([1, 3]), D: Object.freeze([1, 2]), E: Object.freeze([1, 3]) });
 /** The Marches - Betony, Anticlere, Lainlyn (PROF0 4.7): every node +25%, on a confirmed pixel. The regions are
  *  kingdomLaw's (SEAT0 4.3), one home. */
 export { MARCH_REGIONS, isMarch };
@@ -720,8 +587,7 @@ export function wholeYield(y, chance) {
 }
 /** PROF7 - A BODY'S HIDE (PROF0 6, 29): one, a clean pelt's x1.5 (the act's bound), the fraction a chance - no march
  *  and no Tide: a body names no ground. */
-export const hideYield = ({ clean = false }, chance) =>
-  Math.max(1, wholeYield(HIDE_YIELD * (clean ? ACT_YIELD_MAX : 1), chance));
+export const hideYield = ({ clean = false }, chance) => Math.max(1, wholeYield(HIDE_YIELD * (clean ? ACT_YIELD_MAX : 1), chance));
 /**
  * PROF7 - A BODY'S FINDS beside its hide (PROF0 4.4, 29): its DFU part one body in four - lost with a torn pelt - and its
  * butchery, a Raw Meat (a Butcher's two) or a Slaughterfish's Raw Fish, where the foe gives any. `dice()` the service's.
@@ -737,13 +603,10 @@ export function bodyFinds({ hide, torn = false, butcher = false }, dice) {
  * march's +25% on confirmed ground, a school's fish (a Netter's two), a Slaughterfish's weight (a fish more); the fraction
  * a chance. At least one.
  */
-export function haulYield(
-  { roll, clean = false, march = false, school = false, netter = false, slaughterfish = false, tideMult = 1 },
-  chance,
-) {
+export function haulYield({ roll, clean = false, march = false, school = false, netter = false, slaughterfish = false, tideMult = 1 }, chance) {
   let y = roll * (clean ? ACT_YIELD_MAX : 1);
   if (march) y *= MARCH_MULT;
-  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
+  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
   if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;
   if (slaughterfish) y += 1;
   return Math.max(1, wholeYield(y, chance));
@@ -759,9 +622,7 @@ export const haulAtSea = (climate, region) => climate === CLIMATES.Ocean || regi
  */
 export function haulFinds({ sea = false, confirmed = false, pearlDiver = false, deepSea = false }, dice) {
   const open = sea && confirmed;
-  const pearl =
-    open &&
-    dice() < FISH_CHANCE.pearl * (pearlDiver ? FISH_CHANCE.pearlDiver : 1) * (deepSea ? FISH_CHANCE.deepSea : 1);
+  const pearl = open && dice() < FISH_CHANCE.pearl * (pearlDiver ? FISH_CHANCE.pearlDiver : 1) * (deepSea ? FISH_CHANCE.deepSea : 1);
   const slaughterfish = open && dice() < FISH_CHANCE.slaughterfish * (deepSea ? FISH_CHANCE.deepSea : 1);
   const trophy = dice() < FISH_CHANCE.trophy;
   return { pearl: pearl ? PEARL.key : null, scales: slaughterfish ? SLAUGHTERFISH_SCALES : null, trophy };
@@ -777,10 +638,7 @@ const SCHOOL_KIND = 6;
 export function schoolSpots(x, y, day, k) {
   const out = [];
   for (let j = 0; j < SCHOOL_SPOTS; j++) {
-    out.push({
-      u: gateHash(NODE_SALT, x, y, day, SCHOOL_KIND, k, 2 * j) / 4294967296,
-      v: gateHash(NODE_SALT, x, y, day, SCHOOL_KIND, k, 2 * j + 1) / 4294967296,
-    });
+    out.push({ u: gateHash(NODE_SALT, x, y, day, SCHOOL_KIND, k, 2 * j) / 4294967296, v: gateHash(NODE_SALT, x, y, day, SCHOOL_KIND, k, 2 * j + 1) / 4294967296 });
   }
   return out;
 }
@@ -789,32 +647,20 @@ export function schoolSpots(x, y, day, k) {
  * autumn's berries x1.5; a Seasonal Eye's off-season herb x0.5); the act's step - a bruised herb one less, at least one;
  * a march's +25%; the fraction a chance.
  */
-export function herbYield(
-  {
-    roll,
-    common = false,
-    gardener = false,
-    seasonMult = 1,
-    offSeason = false,
-    bruised = false,
-    march = false,
-    tideMult = 1,
-  },
-  chance,
-) {
+export function herbYield({ roll, common = false, gardener = false, seasonMult = 1, offSeason = false, bruised = false, march = false, tideMult = 1 }, chance) {
   let y = roll + (common && gardener ? 1 : 0);
   y *= seasonMult;
   if (offSeason) y *= OFF_SEASON_MULT;
   if (bruised) y = Math.max(1, y - 1);
   if (march) y *= MARCH_MULT;
-  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
+  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
   return Math.max(1, wholeYield(y, chance));
 }
 /** THE BASKET'S YIELD: the block's roll, the search's step (x1.5 all three, x1.25 two), a march's +25%, the fraction. */
 export function foodYield({ roll, step = 1, march = false, tideMult = 1 }, chance) {
   let y = roll * step;
   if (march) y *= MARCH_MULT;
-  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
+  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
   return Math.max(1, wholeYield(y, chance));
 }
 /** A vein's base roll (the service's dice): 2 to 3 ore. A boulder's: 3 to 5 Rough Stone. */
@@ -829,7 +675,7 @@ export function veinYield({ roll, deep = false, deepDelver = false, march = fals
   let y = roll;
   if (deep && deepDelver) y *= DEEP_DELVER_MULT;
   if (march) y *= MARCH_MULT;
-  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
+  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
   return Math.max(1, wholeYield(y, chance));
 }
 /**
@@ -840,7 +686,7 @@ export function veinYield({ roll, deep = false, deepDelver = false, march = fals
 export function boulderYield({ roll, march = false, cut = false, tideMult = 1 }, chance) {
   let y = roll;
   if (march) y *= MARCH_MULT;
-  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
+  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)
   if (cut) return { material: 'stone:cut', qty: Math.max(1, wholeYield(y / CUT_RATIO, chance)) };
   return { material: 'stone:rough', qty: Math.max(1, wholeYield(y, chance)) };
 }
@@ -878,15 +724,12 @@ export function parseReport(s) {
  * @returns {{ state: 'none'|'unconfirmed'|'confirmed'|'disputed', climate?: number|null, region?: number|null, x?: number, y?: number }}
  */
 export function witnessedFact(rows, parse = parseReport) {
-  const sorted = [...(rows ?? [])]
-    .filter((r) => parse(r?.report))
-    .sort((a, b) => a.at - b.at || (a.account < b.account ? -1 : a.account > b.account ? 1 : 0));
+  const sorted = [...(rows ?? [])].filter((r) => parse(r?.report)).sort((a, b) => (a.at - b.at) || (a.account < b.account ? -1 : a.account > b.account ? 1 : 0));
   if (!sorted.length) return { state: 'none', climate: null, region: null };
   const byReport = new Map();
   /** AUDIT 29 A9: the other answers given AFTER the confirmation - a dissent before it is no dispute of it */
   const after = new Map();
-  let confirmed = null,
-    disputed = false;
+  let confirmed = null, disputed = false;
   for (const r of sorted) {
     if (!confirmed) {
       const seen = byReport.get(r.report) ?? new Set();
@@ -901,13 +744,8 @@ export function witnessedFact(rows, parse = parseReport) {
     }
   }
   if (confirmed) return { state: disputed ? 'disputed' : 'confirmed', ...parse(confirmed) };
-  let best = null,
-    bestN = 0;
-  for (const [report, seen] of byReport)
-    if (seen.size > bestN) {
-      best = report;
-      bestN = seen.size;
-    }
+  let best = null, bestN = 0;
+  for (const [report, seen] of byReport) if (seen.size > bestN) { best = report; bestN = seen.size; }
   return { state: 'unconfirmed', ...parse(best) };
 }
 /** A confirmed answer stands for a disputed pixel too. */
@@ -933,18 +771,13 @@ export function regionWritTable(region, pixels, season) {
     if (!table) continue;
     const upTo = p.confirmed ? HERB_TIERS : 2;
     for (let t = 0; t < upTo; t++) {
-      for (const h of table[t])
-        if (herbInSeason(h, season)) {
-          const k = herbKey(h, region);
-          if (k) keys.add(k);
-        }
+      for (const h of table[t]) if (herbInSeason(h, season)) { const k = herbKey(h, region); if (k) keys.add(k); }
     }
     // PROF2: the ground's metal and stone - its veins' (a confirmed pixel's every tier, an unconfirmed one's to
     // UNCONFIRMED_VEIN_TIER - UNWITNESSED-ORE: the Court asks what the vein stands), its region's signature on a
     // confirmed pixel, and Rough Stone where the climate has boulders. Never an ingot, Cut Stone or a gem: those are
     // smelted, cut or found, not the ground's.
-    for (const k of VEIN_TABLES[p.climate] ?? [])
-      if (tierOfKey(k) <= (p.confirmed ? 7 : UNCONFIRMED_VEIN_TIER)) keys.add(k);
+    for (const k of VEIN_TABLES[p.climate] ?? []) if (tierOfKey(k) <= (p.confirmed ? 7 : UNCONFIRMED_VEIN_TIER)) keys.add(k);
     if (sig && p.confirmed) keys.add(sig.ore);
     if (nodeCount(p.climate, 'boulder') > 0) keys.add('stone:rough');
     // PROF4: the ground's woods - its trees' logs by the same rule, its rare wood on a confirmed pixel. Never a plank,
@@ -952,13 +785,10 @@ export function regionWritTable(region, pixels, season) {
     if (nodeCount(p.climate, 'tree') > 0) {
       for (const k of WOOD_TABLES[p.climate] ?? []) if (tierOfKey(k) <= (p.confirmed ? 7 : 2)) keys.add(k);
       if (p.confirmed && RARE_WOODS[p.climate]) keys.add(RARE_WOODS[p.climate]);
-      if (needsPine(WOOD_TABLES[p.climate])) keys.add(PINE_WOOD); // PINE-SHARE: the Pine its forest stands
+      if (needsPine(WOOD_TABLES[p.climate])) keys.add(PINE_WOOD);   // PINE-SHARE: the Pine its forest stands
     }
   }
-  return [...keys].sort().map((key) => {
-    const m = material(key);
-    return { material: key, tier: m.tier, value: m.value };
-  });
+  return [...keys].sort().map((key) => { const m = material(key); return { material: key, tier: m.tier, value: m.value }; });
 }
 const writUnit = (day, region, slot, k) => gateHash(WRIT_SALT, day, region, slot, k) / 4294967296;
 /**
@@ -971,13 +801,7 @@ const writUnit = (day, region, slot, k) => gateHash(WRIT_SALT, day, region, slot
  */
 /** CHAP2a: `draw(slot, k)` the writ's own dice - the Court's by default; a chapter's hall writs (npcChapterLaw.js
  *  hallWrits) draw the same law from their own salt and faction. */
-export function courtWrits(
-  day,
-  region,
-  count,
-  table,
-  draw = (/** @type {number} */ slot, /** @type {number} */ k) => writUnit(day, region, slot, k),
-) {
+export function courtWrits(day, region, count, table, draw = (/** @type {number} */ slot, /** @type {number} */ k) => writUnit(day, region, slot, k)) {
   if (!table?.length) return [];
   const tiers = [...new Set(table.map((m) => m.tier))].sort((a, b) => a - b);
   const high = tiers.filter((t) => t >= 5);
@@ -985,33 +809,19 @@ export function courtWrits(
   const out = [];
   for (let slot = 0; slot < count; slot++) {
     let tier;
-    if (slot === 0 || !low.length)
-      tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1]; // AUDIT 29 A10: the highest, as said
+    if (slot === 0 || !low.length) tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];   // AUDIT 29 A10: the highest, as said
     else {
       const w = low.map((t) => WRIT_TIER_WEIGHTS[t - 1]);
       let at = draw(slot, 1) * w.reduce((a, b) => a + b, 0);
       tier = low[low.length - 1];
-      for (let i = 0; i < low.length; i++) {
-        if (at < w[i]) {
-          tier = low[i];
-          break;
-        }
-        at -= w[i];
-      }
+      for (let i = 0; i < low.length; i++) { if (at < w[i]) { tier = low[i]; break; } at -= w[i]; }
     }
     const of = table.filter((m) => m.tier === tier);
     const m = of[Math.floor(draw(slot, 2) * of.length)];
     const [lo, hi] = WRIT_UNITS[tier];
     const steps = (hi - lo) / 10 + 1;
     const units = lo + 10 * Math.floor(draw(slot, 3) * steps);
-    out.push({
-      slot,
-      material: m.material,
-      tier,
-      units,
-      pay: writPay(units, m.value),
-      renown: writRenown(tier, units),
-    });
+    out.push({ slot, material: m.material, tier, units, pay: writPay(units, m.value), renown: writRenown(tier, units) });
   }
   return out;
 }

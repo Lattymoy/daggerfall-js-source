@@ -328,8 +328,8 @@
   {
     "name": "FB1028-frame-town-move-by-law-3",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "      townMovedAt && Number.isFinite(y) && !(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0;",
-    "new": "      townMovedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) ? townMove(yy, x, z, meet) : 0;",
+    "old": "!(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
+    "new": "!(frame >= RELIEF_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ],
@@ -338,8 +338,8 @@
   {
     "name": "FB1028-frame-town-move-past-the-bay-alone",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "      townMovedAt && Number.isFinite(y) && !(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0;",
-    "new": "      townMovedAt && Number.isFinite(y) && !(frame >= TOWN_FRAME_LAW) && !bayAt(x, z) ? townMove(yy, x, z, meet) : 0;",
+    "old": "!(frame >= TOWN_FRAME_LAW) ? townMove(yy, x, z, meet) : 0)",
+    "new": "!(frame >= TOWN_FRAME_LAW) && !bayAt(x, z) ? townMove(yy, x, z, meet) : 0)",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ],
@@ -348,8 +348,8 @@
   {
     "name": "FB1028-frame-town-move-unhanded",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    townMovedAt,\n    meetMovedAt,",
-    "new": "    meetMovedAt,",
+    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt });",
+    "new": "movedAt: groundMovedAt, meetMovedAt });",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "AUDIT-FB1028-a-record-on-todays-ground-moved",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    return Math.abs(yy - g) < Math.abs(yy - (g - d)) ? 0 : d;",
-    "new": "    return d;",
+    "old": "return Math.abs(yy - g) < Math.abs(yy - (g - d)) ? 0 : d;",
+    "new": "return d;",
     "tests": [
       "test/world/terrain/fb1028_townground_frame.test.js"
     ]

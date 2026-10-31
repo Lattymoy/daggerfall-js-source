@@ -110,8 +110,8 @@
   {
     "name": "TEXT-F1-the-board-read-raw",
     "file": "server-account/src/board.js",
-    "old": "    subject: maskText(n.subject),\n    body: maskText(n.body),",
-    "new": "    subject: n.subject,\n    body: n.body,",
+    "old": "subject: maskText(n.subject), body: maskText(n.body),",
+    "new": "subject: n.subject, body: n.body,",
     "tests": [
       "test/net/text_filter.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TEXT-F1-the-notices-read-raw",
     "file": "server-account/src/board.js",
-    "old": "      subject: maskText(x.subject),\n      body: maskText(x.body),",
-    "new": "      subject: x.subject,\n      body: x.body,",
+    "old": "subject: maskText(x.subject), body: maskText(x.body),",
+    "new": "subject: x.subject, body: x.body,",
     "tests": [
       "test/net/text_filter.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TEXT-F1-the-rank-word-let-pass",
     "file": "server-account/src/guilds.js",
-    "old": "  if (caught) return { error: 'guild-rank-word', word: caught };\n  if (await spend(ctx, player)) return { error: 'guild-rate' };",
-    "new": "  if (await spend(ctx, player)) return { error: 'guild-rate' };",
+    "old": "  if (caught) return { error: 'guild-rank-word', word: caught };\n",
+    "new": "",
     "tests": [
       "test/net/text_filter.test.js"
     ]

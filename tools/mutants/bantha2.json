@@ -182,8 +182,8 @@
   {
     "name": "BANTHA2-FLOOR-drawn-with-the-meadow-s-ladders",
     "file": "src/render/labGrass.js",
-    "old": "          meadowVsEdits(art),",
-    "new": "          meadowVsEdits(MEADOW_ART),",
+    "old": "GRASSLIT_VS_EDITS), meadowVsEdits(art)), fs: GAME_GRASS_FS });",
+    "new": "GRASSLIT_VS_EDITS), meadowVsEdits(MEADOW_ART)), fs: GAME_GRASS_FS });",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "BANTHA2-FLOOR-the-dirt-not-the-floor-s",
     "file": "src/render/labGrass.js",
-    "old": "      if ((best === 1 || best === 2) && bd < 42 * 42) g++;",
-    "new": "      if (best === 2 && bd < 42 * 42) g++;",
+    "old": "if ((best === 1 || best === 2) && bd < 42 * 42) g++;",
+    "new": "if (best === 2 && bd < 42 * 42) g++;",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "BANTHA2-FLOOR-a-road-let-in",
     "file": "src/render/labGrass.js",
-    "old": "  for (let rec = 4; rec < layers.length; rec++) {\n    if (roadRecords.has(rec)) continue;\n    const l = layers[rec];",
-    "new": "  for (let rec = 4; rec < layers.length; rec++) {\n    const l = layers[rec];",
+    "old": "  for (let rec = 4; rec < layers.length; rec++) {\n    if (roadRecords.has(rec)) continue;",
+    "new": "  for (let rec = 4; rec < layers.length; rec++) {",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "BANTHA2-FLOOR-the-grass-base-by-colour",
     "file": "src/render/labGrass.js",
-    "old": "  const out = new Set([1, 2]); // the dirt and the grass, by their place",
-    "new": "  const out = new Set([1]); // the dirt and the grass, by their place",
+    "old": "const out = new Set([1, 2]);   // the dirt and the grass, by their place",
+    "new": "const out = new Set([1]);   // the dirt and the grass, by their place",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "BANTHA2-FLOOR-the-green-stone-let-in",
     "file": "src/render/labGrass.js",
-    "old": "      if ((best === 1 || best === 2) && bd < 42 * 42) g++;",
-    "new": "      if (best !== 0 && bd < 42 * 42) g++;",
+    "old": "if ((best === 1 || best === 2) && bd < 42 * 42) g++;",
+    "new": "if (best !== 0 && bd < 42 * 42) g++;",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "BANTHA2-FLOOR-the-hue-s-share-never-uploaded",
     "file": "src/render/labGrass.js",
-    "old": "    gl.uniform1f(u.uArtHue, this.art.hue); // BANTHA2: its set's share of the ground's hue",
-    "new": "    // BANTHA2: its set's share of the ground's hue",
+    "old": "    gl.uniform1f(u.uArtHue, this.art.hue);",
+    "new": "",
     "tests": [
       "test/world/bantha2_floor.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "BANTHA2-FLOOR-the-stage-takes-the-whole-hue",
     "file": "src/render/labGrass.js",
-    "old": "      `c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS, clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0) * uArtHue); }   // MEADOW1: his green, the tile's own; his petals his own\\n`,",
-    "new": "      `c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS, clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0)); }   // MEADOW1: his green, the tile's own; his petals his own\\n`,",
+    "old": ", 0.0, 1.0) * uArtHue); }",
+    "new": ", 0.0, 1.0)); }",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]

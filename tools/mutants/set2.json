@@ -2,8 +2,8 @@
   {
     "name": "SET2-the-word-dropped-at-the-formula",
     "file": "src/combat/formulas.js",
-    "old": "        damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, {\n          unaware: !!unaware,",
-    "new": "        damage = weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, {\n          unaware: false,",
+    "old": "weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, { unaware: !!unaware });",
+    "new": "weaponAttackDamage(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, { unaware: false });",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SET2-the-shafts-word-missing",
     "file": "src/combat/arrowFlight.js",
-    "old": "    unaware: foeUnaware(foe), // SET2: a shaft at a foe that had not noticed me - Nightfall Strike's \"arrows too\"\n  });",
-    "new": "  });",
+    "old": "    unaware: foeUnaware(foe),   // SET2: a shaft at a foe that had not noticed me - Nightfall Strike's \"arrows too\"\n",
+    "new": "",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SET2-the-core-not-handed-the-word",
     "file": "src/combat/formulas.js",
-    "old": "        unaware,\n        blowShare,",
-    "new": "        blowShare,",
+    "old": "playerReflexes, notes, onStruck: (part) => (struckPart = part), unaware, blowShare })",
+    "new": "playerReflexes, notes, onStruck: (part) => (struckPart = part), blowShare })",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SET2-the-struck-listeners-never-told",
     "file": "src/combat/formulas.js",
-    "old": "    for (const fn of _playerStruckListeners.values()) {\n      try {\n        fn(attacker, target, damage);\n      } catch {\n        /* a set is not the blow's problem */\n      }\n    }\n  }",
-    "new": "  }",
+    "old": "    for (const fn of _playerStruckListeners.values()) { try { fn(attacker, target, damage); } catch { /* a set is not the blow's problem */ } }\n",
+    "new": "",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SET2-the-strike-listeners-never-told",
     "file": "src/combat/formulas.js",
-    "old": "    for (const fn of _playerStrikeListeners.values()) {\n      try {\n        fn(attacker, target, damage, weapon, info);\n      } catch {\n        /* a set is not the blow's problem */\n      }\n    }\n  }",
-    "new": "  }",
+    "old": "    for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon, info); } catch { /* a set is not the blow's problem */ } }\n",
+    "new": "",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SET2-a-miss-told",
     "file": "src/combat/formulas.js",
-    "old": "  if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
-    "new": "  if (attacker.isPlayer && !attacker.peer && !target.isPlayer) {",
+    "old": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
+    "new": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer) {",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SET2-a-blow-at-a-player-told",
     "file": "src/combat/formulas.js",
-    "old": "  if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
-    "new": "  if (attacker.isPlayer && !attacker.peer && damage > 0) {",
+    "old": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
+    "new": "if (attacker.isPlayer && !attacker.peer && damage > 0) {",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SET2-a-peers-blow-told",
     "file": "src/combat/formulas.js",
-    "old": "  if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
-    "new": "  if (attacker.isPlayer && !target.isPlayer && damage > 0) {",
+    "old": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
+    "new": "if (attacker.isPlayer && !target.isPlayer && damage > 0) {",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SET2-a-foes-blow-told",
     "file": "src/combat/formulas.js",
-    "old": "  if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
-    "new": "  if (!attacker.peer && !target.isPlayer && damage > 0) {",
+    "old": "if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {",
+    "new": "if (!attacker.peer && !target.isPlayer && damage > 0) {",
     "tests": [
       "test/systems/set2_seams.test.js"
     ]

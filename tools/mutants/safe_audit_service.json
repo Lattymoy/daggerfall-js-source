@@ -437,8 +437,8 @@
   {
     "name": "AUDIT-SAFE-S7-login-unchecked",
     "file": "server-account/src/accounts.js",
-    "old": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (bannedNow(player, nowS))\n    return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };",
-    "new": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (false) return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };",
+    "old": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (bannedNow(player, nowS)) return",
+    "new": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (false) return",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "AUDIT-SAFE-S7-recover-unchecked",
     "file": "server-account/src/accounts.js",
-    "old": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (bannedNow(player, nowS))\n    return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };",
-    "new": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (false) return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };",
+    "old": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (bannedNow(player, nowS)) return",
+    "new": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (false) return",
     "tests": [
       "test/server/safe_audit.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "AUDIT-SAFE-C7-letter-delivered",
     "file": "server-account/src/letters.js",
-    "old": "  if (\n    await db.prepare('SELECT 1 AS y FROM blocks WHERE player = ?1 AND blocked = ?2').bind(reader.id, sender.id).first()\n  )\n    return { ok: true, id, to: account ? displayName(reader) : reader.handle };",
-    "new": "  if (false) return { ok: true, id, to: account ? displayName(reader) : reader.handle };",
+    "old": "  if (await db.prepare('SELECT 1 AS y FROM blocks WHERE player = ?1 AND blocked = ?2').bind(reader.id, sender.id).first()) return",
+    "new": "  if (false) return",
     "tests": [
       "test/server/safe_audit.test.js"
     ]

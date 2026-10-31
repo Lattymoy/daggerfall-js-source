@@ -85,9 +85,9 @@ test('ACT-MENU: the plaque draws the verbs as the loot list\'s rows, the lit one
   const plaque = rd('src/ui/worldPlaque.js');
   assert.match(plaque, /if \(f\.kind === 'actions'\) \{[\s\S]*?row\.className = 'wplaque-row wplaque-act';\s*\n\s*if \(i === sel\) row\.classList\.add\('sel'\);/);
   assert.match(plaque, /export function hideWorldPlaque\(\) \{[\s\S]{0,700}?_watchdog = null;\n(?:\s*clearPickupFeed\(\);[^\n]*\n)?\s*foldQuickLoot\(null\);/, 'AUDIT DISC7 A8: every hide folds nothing - the skin gate, the hosts\' branches');   // PICKUP-FEED: the take's cards come down by the same door, one line above
-  assert.match(plaque, /foldQuickLoot\(null\); \/\/ AUDIT DISC7 A8: a contained fault lights nothing - a click must not press the last good frame's verb\n\s*try \{\n\s*showWorldPlaque\(null\);\n\s*\}/, 'and the contained fault');
+  assert.match(plaque, /foldQuickLoot\(null\);   \/\/ AUDIT DISC7 A8: a contained fault lights nothing - a click must not press the last good frame's verb\n\s*try \{ showWorldPlaque\(null\); \}/, 'and the contained fault');
   // DISC22-C: the classic panel's frame is cleared with the highlight, and the DOM hide is the DOM face's
-  assert.match(plaque, /if \(cursorActive \|\| !eye \|\| !dir \|\| !collider\) \{\n\s*foldQuickLoot\(null\);\n\s*setClassicLootFrame\(null\);\n\s*if \(dom\) showWorldPlaque\(null\);\n\s*return null;\n\s*\}/);
+  assert.match(plaque, /if \(cursorActive \|\| !eye \|\| !dir \|\| !collider\) \{ foldQuickLoot\(null\); setClassicLootFrame\(null\); if \(dom\) showWorldPlaque\(null\); return null; \}/);
   for (const host of ['src/scenes/world.js', 'src/scenes/exterior.js']) {
     assert.match(rd(host), /hcc\.activate\(_hccPick\.key, _hccPick\.distance, \(l\) => townTalk\.say\(l\), \(\) => setMidScreenText\(tooFarAwayText\(\)\), plaqueActionFor\(_hccPick\.key\)\);/, host);
   }

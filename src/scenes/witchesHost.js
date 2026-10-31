@@ -25,34 +25,12 @@
 // stands none (the ?exterior bench builds its own street and runs no account service - no festival there);
 // dungeonContext.js stands no street. Not a DFU member. Ledger A (THE WITCHES' FESTIVAL).
 import {
-  bindFestival,
-  festivalLive,
-  festivalShut,
-  festivalAccount,
-  festivalState,
-  festivalFindsToday,
-  festivalWardrobe,
-  hearFestival,
-  offeringMove,
-  townOfferings,
-  refreshFestival,
-  pendingSale,
-  buyWare,
-  wearWare,
-  wearAccount,
-  wareItem,
-  loadWardrobe,
+  bindFestival, festivalLive, festivalShut, festivalAccount, festivalState, festivalFindsToday, festivalWardrobe, hearFestival, offeringMove, townOfferings,
+  refreshFestival, pendingSale, buyWare, wearWare, wearAccount, wareItem, loadWardrobe,
 } from '../systems/festival/festivalClient.js';
 import { setOfferingPlacer, hearthOffering } from '../systems/festival/soulCake.js';
-import {
-  cakesText,
-  cakesFoundText,
-  festivalRefusalText,
-  festivalNotice,
-  festivalNightText,
-  lastDayText,
-} from '../systems/festival/festivalWords.js';
-import { eventNotice } from '../systems/eventNotices.js'; // EVENTS1: the festival's word in the event board's news
+import { cakesText, cakesFoundText, festivalRefusalText, festivalNotice, festivalNightText, lastDayText } from '../systems/festival/festivalWords.js';
+import { eventNotice } from '../systems/eventNotices.js';   // EVENTS1: the festival's word in the event board's news
 import { festivalOpen, festivalNext, deadWalk, accountWare, bowlWare, wareById } from '../net/festivalLaw.js';
 import { doorFront, offeringSpot } from '../world/witchesDecor.js';
 import { FESTIVAL_ARCHIVE, FESTIVAL_ART } from '../world/festivalArt.js';
@@ -65,7 +43,7 @@ import { itemLongName } from '../systems/item/itemInfo.js';
 import { skyMinutes } from '../systems/worldTick.js';
 import { dayOfYearFromMinutes } from '../systems/gameDate.js';
 import { createWyrdOverlay } from '../ui/wyrdDoor.js';
-import { noteAct } from '../systems/questlines/qlActs.js'; // AUDIT STAR8 T1: a Wyrd Sister met - Morwen's letter
+import { noteAct } from '../systems/questlines/qlActs.js';   // AUDIT STAR8 T1: a Wyrd Sister met - Morwen's letter
 import { t } from '../systems/textManager.js';
 
 /** How often the town the player stands in is asked for its offerings again (and after every move of mine, at once) -
@@ -77,8 +55,7 @@ export const OFFERING_SET_REACH = 4;
  *  23 of 101 texels on a 1.7 m picture). */
 export const OFFERING_LIGHT_DROP = 0.39;
 /** An offering's target key: `witch:<mapId>:<buildingKey>`. */
-export const offeringKey = (/** @type {number} */ mapId, /** @type {number} */ buildingKey) =>
-  `witch:${mapId}:${buildingKey}`;
+export const offeringKey = (/** @type {number} */ mapId, /** @type {number} */ buildingKey) => `witch:${mapId}:${buildingKey}`;
 
 /** The offering's words, read when they are shown. */
 export const OFFERING_TEXT = Object.freeze({
@@ -86,16 +63,8 @@ export const OFFERING_TEXT = Object.freeze({
   take: () => t('festival.offering.take', 'Take a Soul Cake'),
   fill: () => t('festival.offering.fill', 'Fill'),
   takeIn: () => t('festival.offering.takeIn', 'Take in'),
-  filled: (/** @type {number} */ n) =>
-    t('festival.offering.filled', 'The bowl holds {n, plural, one {# Soul Cake} other {# Soul Cakes}}.', { n }),
-  tookIn: (/** @type {number} */ n) =>
-    n > 0
-      ? t(
-          'festival.offering.tookIn',
-          'You take in your offering. +{n, plural, one {# Soul Cake} other {# Soul Cakes}}',
-          { n },
-        )
-      : t('festival.offering.tookInEmpty', 'You take in your offering.'),
+  filled: (/** @type {number} */ n) => t('festival.offering.filled', 'The bowl holds {n, plural, one {# Soul Cake} other {# Soul Cakes}}.', { n }),
+  tookIn: (/** @type {number} */ n) => (n > 0 ? t('festival.offering.tookIn', 'You take in your offering. +{n, plural, one {# Soul Cake} other {# Soul Cakes}}', { n }) : t('festival.offering.tookInEmpty', 'You take in your offering.')),
   setOut: () => t('festival.offering.setOut', 'You set out your Hearth Offering. Use Fill to put cakes in it.'),
   steal: () => t('festival.offering.steal', 'The Wyrd watch over offerings.'),
 });
@@ -111,27 +80,10 @@ export const OFFERING_TEXT = Object.freeze({
 export function createWitchesHost(deps) {
   const { built, renderer, pipeline, onlineHomes, townTalk, state, player, saveSoon } = deps;
   const room = () => deps.online ?? null;
-  const online = () => {
-    const o = room();
-    return !!o && o.status === 'open';
-  };
-  const say = (/** @type {string} */ l) => {
-    if (l) townTalk?.say?.(l);
-  };
-  const nowMs = () => {
-    const o = room();
-    return Date.now() + (o?.clockRead ? (o.clockOffsetMs ?? 0) : 0);
-  }; // the relay's clock (net/online.js WORLD5)
-  bindFestival({
-    online,
-    entity: () => playerEntity,
-    say: (/** @type {string} */ l) => deps.chatNotice?.(l),
-    selfId: () => room()?.id ?? null,
-    saved: () => saveSoon?.changed?.(),
-    room,
-    nowMs,
-    ...(deps.api ? { api: deps.api } : {}),
-  });
+  const online = () => { const o = room(); return !!o && o.status === 'open'; };
+  const say = (/** @type {string} */ l) => { if (l) townTalk?.say?.(l); };
+  const nowMs = () => { const o = room(); return Date.now() + (o?.clockRead ? o.clockOffsetMs ?? 0 : 0); };   // the relay's clock (net/online.js WORLD5)
+  bindFestival({ online, entity: () => playerEntity, say: (/** @type {string} */ l) => deps.chatNotice?.(l), selfId: () => room()?.id ?? null, saved: () => saveSoon?.changed?.(), room, nowMs, ...(deps.api ? { api: deps.api } : {}) });
 
   /** mapId -> the town's offerings as last heard: `{ at, list, asking }` */
   const towns = new Map();
@@ -141,18 +93,13 @@ export function createWitchesHost(deps) {
   const standing = new Map();
   // OVERLOAD-EASE (2026-10-29): the account's festival is asked once a sign-in, not at every relay reconnect - a failed
   // ask again after OFFERING_REFRESH_MS, never every frame
-  let heardFor = /** @type {string|null} */ (null),
-    mineAt = -Infinity,
-    mineAsking = false;
-  let noticed = false,
-    nightSaid = -1,
-    account = /** @type {string|null} */ (null);
+  let heardFor = /** @type {string|null} */ (null), mineAt = -Infinity, mineAsking = false;
+  let noticed = false, nightSaid = -1, account = /** @type {string|null} */ (null);
 
   const pixelKey = (/** @type {any} */ e) => `${e.px},${e.py}`;
   /** The street's ray's list, filled in place a frame - each box the ray's `{ min, max }` (FB1020e OFFERING-RAY: the
    *  culling box's 6-array threw on every press in the street) - and the one translation array the host reads pixels into. */
-  const _targets = /** @type {import('../player/activate.js').RayTarget[]} */ ([]),
-    _tr = [0, 0, 0];
+  const _targets = /** @type {import('../player/activate.js').RayTarget[]} */ ([]), _tr = [0, 0, 0];
   const here = () => {
     const c = state?.current;
     const entry = c ? built.get(`${c.x},${c.y}`) : null;
@@ -182,9 +129,9 @@ export function createWitchesHost(deps) {
     const key = pixelKey(entry);
     standing.set(key, list);
     const tex = await pipeline.getTexture(FESTIVAL_ARCHIVE).catch(() => null);
-    if (standing.get(key) !== list) return; // asked again meanwhile
+    if (standing.get(key) !== list) return;   // asked again meanwhile
     standing.delete(key);
-    if (built.get(key) !== entry) return; // torn down during the await - its list went with it
+    if (built.get(key) !== entry) return;   // torn down during the await - its list went with it
     unstand(key);
     const record = FESTIVAL_ART.offering;
     if (!tex || record >= tex.recordCount) return;
@@ -210,18 +157,8 @@ export function createWitchesHost(deps) {
     t.asking = true;
     const town = t;
     // a list that says what the last said is the last's: the bowls stand on, never torn down and built again
-    townOfferings(mapId)
-      .then(
-        (d) => {
-          if (Array.isArray(d?.offerings) && JSON.stringify(d.offerings) !== JSON.stringify(town.list))
-            town.list = d.offerings;
-        },
-        () => {},
-      )
-      .finally(() => {
-        town.at = Date.now();
-        town.asking = false;
-      });
+    townOfferings(mapId).then((d) => { if (Array.isArray(d?.offerings) && JSON.stringify(d.offerings) !== JSON.stringify(town.list)) town.list = d.offerings; }, () => {})
+      .finally(() => { town.at = Date.now(); town.asking = false; });
   }
   /** The festival's word: once a session, and once a night the dead walk (the sky's own day, or the festival's own
    *  night) while finds are asked here - offline, or a guest, nothing doubles, so nothing is promised. EVENTS1: on the
@@ -230,74 +167,43 @@ export function createWitchesHost(deps) {
   function notice() {
     const now = Date.now();
     if (!festivalOpen(now)) return;
-    if (!noticed) {
-      noticed = true;
-      herald(festivalNotice(lastDayText(festivalNext(now))));
-    }
-    const day = dayOfYearFromMinutes(Math.floor(skyMinutes())),
-      night = deadWalk(day, nowMs()) ? day : -1;
-    if (night >= 0 && nightSaid !== night && festivalLive()) {
-      nightSaid = night;
-      herald(festivalNightText());
-    }
+    if (!noticed) { noticed = true; herald(festivalNotice(lastDayText(festivalNext(now)))); }
+    const day = dayOfYearFromMinutes(Math.floor(skyMinutes())), night = deadWalk(day, nowMs()) ? day : -1;
+    if (night >= 0 && nightSaid !== night && festivalLive()) { nightSaid = night; herald(festivalNightText()); }
   }
   /** Whether the town is asked for its offerings: while the festival is live here, or while one of the account's own
    *  stands in it (the town then shows its owner theirs alone, to take in). */
-  const asks = (/** @type {number} */ mapId) =>
-    festivalLive() ||
-    (festivalShut() !== 'guest' && festivalState().offerings.some((/** @type {any} */ o) => o.mapId === mapId));
+  const asks = (/** @type {number} */ mapId) => festivalLive() || (festivalShut() !== 'guest' && festivalState().offerings.some((/** @type {any} */ o) => o.mapId === mapId));
   function tick() {
-    for (const [k, s] of stood) if (built.get(k) !== s.entry) stood.delete(k); // streamed out: its batches went with it
+    for (const [k, s] of stood) if (built.get(k) !== s.entry) stood.delete(k);   // streamed out: its batches went with it
     if (deps.mode?.() !== 'exterior') return;
     // offline, or another account signed in: nothing anyone's machine stood stands on (every pixel's, not this one's alone)
     const who = online() ? festivalAccount() : null;
     if (who !== account) {
-      account = who;
-      towns.clear();
-      for (const k of [...stood.keys()]) unstand(k);
-      if (who && who === heardFor && pendingSale()) {
-        heardFor = null;
-        mineAt = -Infinity;
-      } // a sale whose answer was lost lands
+      account = who; towns.clear(); for (const k of [...stood.keys()]) unstand(k);
+      if (who && who === heardFor && pendingSale()) { heardFor = null; mineAt = -Infinity; }   // a sale whose answer was lost lands
     }
     const entry = here();
     if (!entry) return;
-    if (entry.witchHomes) notice(); // a town the festival dressed
+    if (entry.witchHomes) notice();   // a town the festival dressed
     if (!online()) return;
     if (heardFor !== account && !mineAsking && Date.now() - mineAt >= OFFERING_REFRESH_MS) {
       const asked = account;
-      mineAsking = true;
-      mineAt = Date.now();
-      refreshFestival()
-        .then(
-          (ok) => {
-            if (ok && asked === account) heardFor = asked;
-          },
-          () => {},
-        )
-        .finally(() => {
-          mineAsking = false;
-        });
+      mineAsking = true; mineAt = Date.now();
+      refreshFestival().then((ok) => { if (ok && asked === account) heardFor = asked; }, () => {}).finally(() => { mineAsking = false; });
     }
-    const key = pixelKey(entry),
-      mapId = entry.homeTown;
-    if (!asks(mapId)) {
-      towns.delete(mapId);
-      if (stood.has(key)) unstand(key);
-      return;
-    }
+    const key = pixelKey(entry), mapId = entry.homeTown;
+    if (!asks(mapId)) { towns.delete(mapId); if (stood.has(key)) unstand(key); return; }
     const t = towns.get(mapId);
     if (!t || (!t.asking && Date.now() - t.at >= OFFERING_REFRESH_MS)) ask(mapId);
-    if (t?.list && stood.get(key)?.list !== t.list && standing.get(key) !== t.list)
-      stand(entry, mapId, t.list).catch(() => {});
+    if (t?.list && stood.get(key)?.list !== t.list && standing.get(key) !== t.list) stand(entry, mapId, t.list).catch(() => {});
   }
 
   /** The offering a key names, standing now: `{ s, r }`, or null. */
   function offeringOf(/** @type {unknown} */ key) {
     if (typeof key !== 'string' || !key.startsWith('witch:')) return null;
     const [, m, b] = key.split(':');
-    const mapId = Number(m),
-      bk = Number(b);
+    const mapId = Number(m), bk = Number(b);
     for (const s of stood.values()) {
       if (s.mapId !== mapId || built.get(pixelKey(s.entry)) !== s.entry) continue;
       const r = s.rows.find((x) => x.o.buildingKey === bk);
@@ -306,35 +212,18 @@ export function createWitchesHost(deps) {
     return null;
   }
   /** Whether the playing character owns the offering's home (its Fill and its Take in). */
-  const ownsHome = (/** @type {any} */ s, /** @type {any} */ r) =>
-    !!onlineHomes?.homeAt?.(s.mapId, r.o.buildingKey)?.own;
-  const townAgain = (/** @type {number} */ mapId) => {
-    const t = towns.get(mapId);
-    if (t) t.at = 0;
-  };
+  const ownsHome = (/** @type {any} */ s, /** @type {any} */ r) => !!onlineHomes?.homeAt?.(s.mapId, r.o.buildingKey)?.own;
+  const townAgain = (/** @type {number} */ mapId) => { const t = towns.get(mapId); if (t) t.at = 0; };
   /** A move on an offering, queued behind the one in flight (ASYNC NEVER DROPS: a second press is asked after the first
    *  is answered - a take twice is refused `taken` by the service, never lost on the way). */
   let moves = Promise.resolve();
   function move(/** @type {'take'|'fill'|'takeIn'} */ m, /** @type {any} */ s, /** @type {any} */ r) {
     const run = async () => {
-      const at = {
-        mapId: s.mapId,
-        buildingKey: r.o.buildingKey,
-        ...(m === 'take' ? {} : { character: characterIdOf(playerEntity) }),
-      };
+      const at = { mapId: s.mapId, buildingKey: r.o.buildingKey, ...(m === 'take' ? {} : { character: characterIdOf(playerEntity) }) };
       const res = await offeringMove(m, at).catch(() => null);
       townAgain(s.mapId);
-      if (!res?.ok) {
-        say(res?.text ?? festivalRefusalText('offline'));
-        return;
-      }
-      say(
-        m === 'take'
-          ? cakesFoundText(1)
-          : m === 'fill'
-            ? OFFERING_TEXT.filled(res.data?.stock ?? 0)
-            : OFFERING_TEXT.tookIn(res.data?.returned ?? 0),
-      );
+      if (!res?.ok) { say(res?.text ?? festivalRefusalText('offline')); return; }
+      say(m === 'take' ? cakesFoundText(1) : m === 'fill' ? OFFERING_TEXT.filled(res.data?.stock ?? 0) : OFFERING_TEXT.tookIn(res.data?.returned ?? 0));
     };
     moves = moves.then(run, run);
     return moves;
@@ -347,34 +236,20 @@ export function createWitchesHost(deps) {
     const entry = here();
     if (deps.mode?.() !== 'exterior' || player?.riding || !entry) return festivalRefusalText('home');
     const mapId = entry.homeTown;
-    if (!onlineHomes?.known?.(mapId)) {
-      onlineHomes?.ensure?.(mapId);
-      return festivalRefusalText('offline');
-    }
-    const feet = player.feetAt(),
-      tr = state.pixelTranslation(entry.px, entry.py, _tr);
-    let at = null,
-      cramped = false;
+    if (!onlineHomes?.known?.(mapId)) { onlineHomes?.ensure?.(mapId); return festivalRefusalText('offline'); }
+    const feet = player.feetAt(), tr = state.pixelTranslation(entry.px, entry.py, _tr);
+    let at = null, cramped = false;
     for (const [bk, f] of entry.homeFrames ?? []) {
       const h = onlineHomes.homeAt(mapId, bk);
       const front = h?.own && !h.hall ? doorFront(f) : null;
-      if (!front || Math.hypot(front.c[0] + tr[0] - feet[0], front.c[1] + tr[2] - feet[2]) > OFFERING_SET_REACH)
-        continue;
-      if (!spotOf(entry, mapId, bk)) {
-        cramped = true;
-        continue;
-      } // the build found no room by this door
+      if (!front || Math.hypot(front.c[0] + tr[0] - feet[0], front.c[1] + tr[2] - feet[2]) > OFFERING_SET_REACH) continue;
+      if (!spotOf(entry, mapId, bk)) { cramped = true; continue; }   // the build found no room by this door
       at = bk;
       break;
     }
     if (at == null) return festivalRefusalText(cramped ? 'room' : 'home');
-    offeringMove('set', { mapId, buildingKey: at, character: characterIdOf(playerEntity) }).then(
-      (r) => {
-        say(r.ok ? OFFERING_TEXT.setOut() : r.text);
-        townAgain(mapId);
-      },
-      () => {},
-    );
+    offeringMove('set', { mapId, buildingKey: at, character: characterIdOf(playerEntity) })
+      .then((r) => { say(r.ok ? OFFERING_TEXT.setOut() : r.text); townAgain(mapId); }, () => {});
     return '';
   }
   setOfferingPlacer(place);
@@ -382,36 +257,24 @@ export function createWitchesHost(deps) {
   /** THE WYRD SISTER'S WINDOW - her wares as the account holds them, bought and worn through the festival's client. */
   function shop() {
     const win = createWyrdOverlay({
-      state: () => festivalState(),
-      worn: () => festivalWardrobe(),
-      shut: () => festivalShut(),
-      today: () => festivalFindsToday(), // CAKE-CAP-SAID
+      state: () => festivalState(), worn: () => festivalWardrobe(), shut: () => festivalShut(), today: () => festivalFindsToday(),   // CAKE-CAP-SAID
       lastDay: () => lastDayText(festivalNext(Date.now())),
       night: () => deadWalk(dayOfYearFromMinutes(Math.floor(skyMinutes())), nowMs()),
-      itemOf: (/** @type {any} */ w) => wareItem(w) ?? (bowlWare(w) ? hearthOffering() : null),
-      nameOf: (/** @type {any} */ item) => itemLongName(item),
-      wearer: playerEntity,
+      itemOf: (/** @type {any} */ w) => wareItem(w) ?? (bowlWare(w) ? hearthOffering() : null), nameOf: (/** @type {any} */ item) => itemLongName(item), wearer: playerEntity,
       buy: (/** @type {string} */ id) => buyWare(id),
-      wear: (/** @type {any} */ row) =>
-        accountWare(wareById(row.id)) ? wearWare(row.id, !row.worn) : wearAccount(row.kind, row.key, !row.worn),
+      wear: (/** @type {any} */ row) => (accountWare(wareById(row.id)) ? wearWare(row.id, !row.worn) : wearAccount(row.kind, row.key, !row.worn)),
       load: () => Promise.all([refreshFestival(), loadWardrobe()]),
       hear: (/** @type {() => void} */ fn) => hearFestival(fn),
     });
     if (!win) return false;
     townTalk?.showOverlay?.(win);
-    noteAct('wyrd-met'); // AUDIT STAR8 T1: her window opened - a questline's letter waits on it, never a find
+    noteAct('wyrd-met');   // AUDIT STAR8 T1: her window opened - a questline's letter waits on it, never a find
     return true;
   }
 
   return {
     /** The frame: the town underfoot asked and its offerings stood; the festival's notice. Never throws. */
-    frame() {
-      try {
-        tick();
-      } catch (e) {
-        console.warn('[witches] frame', /** @type {any} */ (e)?.message ?? e);
-      }
-    },
+    frame() { try { tick(); } catch (e) { console.warn('[witches] frame', /** @type {any} */ (e)?.message ?? e); } },
     /** The offerings' boxes in the street's one ray, a static door's reach beside it. */
     targets() {
       _targets.length = 0;
@@ -420,13 +283,8 @@ export function createWitchesHost(deps) {
         if (built.get(k) !== s.entry) continue;
         const tr = state.pixelTranslation(s.entry.px, s.entry.py, _tr);
         for (const r of s.rows) {
-          const x = r.batch._box; // the culling box's 6-array, in the pixel's frame: its corners, into the scene's
-          _targets.push({
-            key: offeringKey(s.mapId, r.o.buildingKey),
-            aabb: { min: [x[0] + tr[0], x[1] + tr[1], x[2] + tr[2]], max: [x[3] + tr[0], x[4] + tr[1], x[5] + tr[2]] },
-            distance: RAY_DISTANCE,
-            reach: DEFAULT_ACTIVATION_DISTANCE,
-          });
+          const x = r.batch._box;   // the culling box's 6-array, in the pixel's frame: its corners, into the scene's
+          _targets.push({ key: offeringKey(s.mapId, r.o.buildingKey), aabb: { min: [x[0] + tr[0], x[1] + tr[1], x[2] + tr[2]], max: [x[3] + tr[0], x[4] + tr[1], x[5] + tr[2]] }, distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });
         }
       }
       return _targets;
@@ -436,46 +294,21 @@ export function createWitchesHost(deps) {
       const hit = offeringOf(key);
       if (!hit) return null;
       const { s, r } = hit;
-      const title = OFFERING_TEXT.whose(r.o.owner),
-        subs = [cakesText(r.o.stock)];
-      if (ownsHome(s, r))
-        return {
-          title,
-          subs,
-          actions: [
-            ...(festivalLive() ? [{ id: 'fill', label: OFFERING_TEXT.fill() }] : []),
-            { id: 'takeIn', label: OFFERING_TEXT.takeIn() },
-          ],
-        }; // after the festival, its Take in alone
+      const title = OFFERING_TEXT.whose(r.o.owner), subs = [cakesText(r.o.stock)];
+      if (ownsHome(s, r)) return { title, subs, actions: [...(festivalLive() ? [{ id: 'fill', label: OFFERING_TEXT.fill() }] : []), { id: 'takeIn', label: OFFERING_TEXT.takeIn() }] };   // after the festival, its Take in alone
       if (r.o.mine) return { title, subs: [...subs, festivalRefusalText('own')] };
       const why = r.o.taken ? 'taken' : r.o.stock < 1 ? 'empty' : null;
-      return {
-        title,
-        subs,
-        actions: [{ id: 'take', label: why ? festivalRefusalText(why) : OFFERING_TEXT.take(), disabled: !!why }],
-      };
+      return { title, subs, actions: [{ id: 'take', label: why ? festivalRefusalText(why) : OFFERING_TEXT.take(), disabled: !!why }] };
     },
     /** A press on an offering: Info names it, Steal is refused, the owner's Fill (or the lit Take in), another's take. */
     activate(/** @type {unknown} */ key, mode = 'grab', /** @type {string|null} */ verb = null) {
       const hit = offeringOf(key);
       if (!hit) return false;
       const { s, r } = hit;
-      if (verb == null && mode === 'info') {
-        say(presentNpcInfoText(OFFERING_TEXT.whose(r.o.owner)));
-        return true;
-      }
-      if (verb == null && mode === 'steal') {
-        say(OFFERING_TEXT.steal());
-        return true;
-      }
-      if (ownsHome(s, r)) {
-        void move(verb === 'takeIn' || !festivalLive() ? 'takeIn' : 'fill', s, r);
-        return true;
-      }
-      if (r.o.mine) {
-        say(festivalRefusalText('own'));
-        return true;
-      }
+      if (verb == null && mode === 'info') { say(presentNpcInfoText(OFFERING_TEXT.whose(r.o.owner))); return true; }
+      if (verb == null && mode === 'steal') { say(OFFERING_TEXT.steal()); return true; }
+      if (ownsHome(s, r)) { void move(verb === 'takeIn' || !festivalLive() ? 'takeIn' : 'fill', s, r); return true; }
+      if (r.o.mine) { say(festivalRefusalText('own')); return true; }
       void move('take', s, r);
       return true;
     },

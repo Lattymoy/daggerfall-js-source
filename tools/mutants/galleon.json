@@ -85,8 +85,8 @@
   {
     "name": "GALLEON-art-registered-twice",
     "file": "src/world/ships/galleonArt.js",
-    "old": "  if (_registered) return 0;\n  _registered = true;",
-    "new": "  _registered = true;",
+    "old": "  if (_registered) return 0;\n",
+    "new": "",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "GALLEON-glow-everywhere",
     "file": "src/world/ships/galleonArt.js",
-    "old": "  const k = BANDS.sternWindows.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record);",
-    "new": "  const k = Math.max(\n    0,\n    BANDS.sternWindows.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record),\n  );",
+    "old": "  const k = BANDS.sternWindows.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record);\n",
+    "new": "  const k = Math.max(0, BANDS.sternWindows.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record));\n",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "GALLEON2-slices-out-of-order",
     "file": "src/world/ships/galleonArt.js",
-    "old": "  const cut = (band, livery) => band.recs.map((rec, k) => [rec, sliceOf(livery, k)]);",
-    "new": "  const cut = (band, livery) => band.recs.map((rec, k) => [rec, sliceOf(livery, band.recs.length - 1 - k)]);",
+    "old": "band.recs.map((rec, k) => [rec, sliceOf(livery, k)])",
+    "new": "band.recs.map((rec, k) => [rec, sliceOf(livery, band.recs.length - 1 - k)])",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "GALLEON2-picture-off-64",
     "file": "src/world/ships/galleonArt.js",
-    "old": "export function canvasArt() {\n  const S = GALLEON_TEX_SIZE,",
-    "new": "export function canvasArt() {\n  const S = 128,",
+    "old": "  const S = GALLEON_TEX_SIZE, img = picture(S, S);\n  const n = noise(0xca9, S, S, 8, 8);\n",
+    "new": "  const S = 128, img = picture(S, S);\n  const n = noise(0xca9, S, S, 8, 8);\n",
     "tests": [
       "test/world/ships/galleon_model.test.js"
     ],

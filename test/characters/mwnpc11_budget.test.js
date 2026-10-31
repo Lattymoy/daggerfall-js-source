@@ -159,7 +159,7 @@ test('MWNPC11-4 the frame\'s tiers sit below what MWNPC7 summed for the foes, th
   assert.deepEqual({ ...NPC_FRAME_TIERS.all }, { bodies: 48, skins: 16 });
   assert.equal(NPC_FRAME_TIERS.off, null);
   const n = rd('src/characters/npcBodies.js');
-  assert.ok(n.includes("tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT,\n    collider,\n    tiers,\n    budget: NPC_FRAME_BUDGET,\n  });"), 'every host\'s lane on the page\'s one budget');
+  assert.ok(n.includes("tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider, tiers, budget: NPC_FRAME_BUDGET });"), 'every host\'s lane on the page\'s one budget');
 });
 
 test('MWNPC11-5 a lane reports what it could stand - its nearest within its range, to its cap, in whatever order it offers them: the six nearest stand from a shuffled crowd; a lane whose people are all past its range takes no skin of the frame\'s', async () => {

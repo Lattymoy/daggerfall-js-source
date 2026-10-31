@@ -65,11 +65,7 @@ export const VEIL_X = ETHER_BOX.x1 - VEIL_PX;
 /** Is the pixel (any number: the scene's own is fine) in the Eltheric Ocean's box? */
 export const inEther = (x, y) => x >= ETHER_BOX.x0 && x < ETHER_BOX.x1 && y >= ETHER_BOX.y0 && y < ETHER_BOX.y1;
 /** ...in the box or its margin - where the law answers the ground. */
-export const inEtherLaw = (x, y) =>
-  x >= ETHER_BOX.x0 - ETHER_MARGIN &&
-  x < ETHER_BOX.x1 + ETHER_MARGIN &&
-  y >= ETHER_BOX.y0 - ETHER_MARGIN &&
-  y < ETHER_BOX.y1 + ETHER_MARGIN;
+export const inEtherLaw = (x, y) => x >= ETHER_BOX.x0 - ETHER_MARGIN && x < ETHER_BOX.x1 + ETHER_MARGIN && y >= ETHER_BOX.y0 - ETHER_MARGIN && y < ETHER_BOX.y1 + ETHER_MARGIN;
 /** ETHER-OW (2026-10-13): THE GROUND THE WORLD'S SEEDED THINGS STAND ON - the Bay's map, or the Eltheric Ocean's box: the
  *  professions' nodes (net/nodeLaw.js pixelOk - ETHER-NODES) and the Overworld's roaming bands and raiders
  *  (scenes/world.js bandOk, tvRaidOpen, tvRaidSea). Past both, the world streams nothing these are born of. */
@@ -77,12 +73,7 @@ export const onBayOrEther = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X &
 /** ...in the Veil. */
 export const inVeil = (x, y) => inEther(x, y) && x >= VEIL_X;
 /** The box as the stream's frames hold one (world/streamingWorld.js StreamingWorldState.frames): `{ x0, y0, w, h }`. */
-export const etherFrame = () => ({
-  x0: ETHER_BOX.x0,
-  y0: ETHER_BOX.y0,
-  w: ETHER_BOX.x1 - ETHER_BOX.x0,
-  h: ETHER_BOX.y1 - ETHER_BOX.y0,
-});
+export const etherFrame = () => ({ x0: ETHER_BOX.x0, y0: ETHER_BOX.y0, w: ETHER_BOX.x1 - ETHER_BOX.x0, h: ETHER_BOX.y1 - ETHER_BOX.y0 });
 
 /**
  * THE BANDS, by depth (leagues west of the Veil): `from` where each begins; `chance` a cell's share of an isle, `kinds`
@@ -91,50 +82,10 @@ export const etherFrame = () => ({
  * over the traders'. The naval director and the host read them (navalHost.js).
  */
 export const BANDS = Object.freeze([
-  Object.freeze({
-    id: 'shallows',
-    name: 'the Shallows',
-    from: 0,
-    chance: 0.5,
-    kinds: Object.freeze({ port: 30, wild: 30, ruin: 14, rock: 26 }),
-    lift: 0,
-    level: 1,
-    tier: 1,
-    pirate: 1,
-  }),
-  Object.freeze({
-    id: 'reaches',
-    name: 'the Reaches',
-    from: 12,
-    chance: 0.48,
-    kinds: Object.freeze({ port: 18, wild: 32, ruin: 25, rock: 25 }),
-    lift: 0.2,
-    level: 3,
-    tier: 2,
-    pirate: 1.6,
-  }),
-  Object.freeze({
-    id: 'deep',
-    name: 'the Deep Aether',
-    from: 45,
-    chance: 0.42,
-    kinds: Object.freeze({ port: 11, wild: 32, ruin: 33, rock: 24 }),
-    lift: 0.45,
-    level: 6,
-    tier: 3,
-    pirate: 2.4,
-  }),
-  Object.freeze({
-    id: 'abyss',
-    name: 'the Abyss',
-    from: 140,
-    chance: 0.36,
-    kinds: Object.freeze({ port: 6, wild: 32, ruin: 40, rock: 22 }),
-    lift: 0.7,
-    level: 9,
-    tier: 4,
-    pirate: 3.4,
-  }),
+  Object.freeze({ id: 'shallows', name: 'the Shallows', from: 0, chance: 0.5, kinds: Object.freeze({ port: 30, wild: 30, ruin: 14, rock: 26 }), lift: 0, level: 1, tier: 1, pirate: 1 }),
+  Object.freeze({ id: 'reaches', name: 'the Reaches', from: 12, chance: 0.48, kinds: Object.freeze({ port: 18, wild: 32, ruin: 25, rock: 25 }), lift: 0.2, level: 3, tier: 2, pirate: 1.6 }),
+  Object.freeze({ id: 'deep', name: 'the Deep Aether', from: 45, chance: 0.42, kinds: Object.freeze({ port: 11, wild: 32, ruin: 33, rock: 24 }), lift: 0.45, level: 6, tier: 3, pirate: 2.4 }),
+  Object.freeze({ id: 'abyss', name: 'the Abyss', from: 140, chance: 0.36, kinds: Object.freeze({ port: 6, wild: 32, ruin: 40, rock: 22 }), lift: 0.7, level: 9, tier: 4, pirate: 3.4 }),
 ]);
 /** Depth at a pixel: leagues west of the Veil (0 in it and east of it). */
 export const etherDepthAt = (x) => Math.max(0, VEIL_X - x) / LEAGUE_PX;
@@ -183,36 +134,10 @@ export const ISLE_CELL_PX = 10;
  *  shore lies ETHER_PORT_SHORE_M about it, where its harbour is sounded (ETHER_HARBOUR_REACH); an isle of two
  *  kilometres put the water past any harbour's reach, and no quay stood at any port of the sea. */
 export const ISLE_KINDS = Object.freeze({
-  port: Object.freeze({
-    r: Object.freeze([0.9, 1.1]),
-    peak: Object.freeze([10, 15]),
-    fall: 1,
-    climates: Object.freeze([CLIMATES.Subtropical, CLIMATES.Woodlands, CLIMATES.Rainforest]),
-  }),
-  ruin: Object.freeze({
-    r: Object.freeze([1.4, 2.4]),
-    peak: Object.freeze([15, 34]),
-    fall: 1.5,
-    climates: Object.freeze([CLIMATES.Mountain, CLIMATES.HauntedWoodlands, CLIMATES.Swamp, CLIMATES.Desert]),
-  }),
-  wild: Object.freeze({
-    r: Object.freeze([1.0, 2.8]),
-    peak: Object.freeze([10, 40]),
-    fall: 1.5,
-    climates: Object.freeze([
-      CLIMATES.Rainforest,
-      CLIMATES.Subtropical,
-      CLIMATES.Swamp,
-      CLIMATES.Desert2,
-      CLIMATES.MountainWoods,
-    ]),
-  }),
-  rock: Object.freeze({
-    r: Object.freeze([0.6, 1.1]),
-    peak: Object.freeze([8, 18]),
-    fall: 1.5,
-    climates: Object.freeze([CLIMATES.Mountain, CLIMATES.Desert]),
-  }),
+  port: Object.freeze({ r: Object.freeze([0.9, 1.1]), peak: Object.freeze([10, 15]), fall: 1, climates: Object.freeze([CLIMATES.Subtropical, CLIMATES.Woodlands, CLIMATES.Rainforest]) }),
+  ruin: Object.freeze({ r: Object.freeze([1.4, 2.4]), peak: Object.freeze([15, 34]), fall: 1.5, climates: Object.freeze([CLIMATES.Mountain, CLIMATES.HauntedWoodlands, CLIMATES.Swamp, CLIMATES.Desert]) }),
+  wild: Object.freeze({ r: Object.freeze([1.0, 2.8]), peak: Object.freeze([10, 40]), fall: 1.5, climates: Object.freeze([CLIMATES.Rainforest, CLIMATES.Subtropical, CLIMATES.Swamp, CLIMATES.Desert2, CLIMATES.MountainWoods]) }),
+  rock: Object.freeze({ r: Object.freeze([0.6, 1.1]), peak: Object.freeze([8, 18]), fall: 1.5, climates: Object.freeze([CLIMATES.Mountain, CLIMATES.Desert]) }),
 });
 export const KIND_IDS = Object.freeze(Object.keys(ISLE_KINDS));
 /** The Eltheric goods a wild isle may bear (systems/naval/tradeGoods.js GOODS' `ether` rows - pinned equal). */
@@ -234,17 +159,11 @@ export const ETHER_HARBOUR_REACH = 900;
 export const landCentre = (kind, px, py) => (kind === 'port' ? [px - 0.5, py - 0.5] : [px, py]);
 
 /** A cell's column and row (the lattice's, from the box's corner). */
-export const etherCellOf = (x, y) => [
-  Math.floor((x - ETHER_BOX.x0) / ISLE_CELL_PX),
-  Math.floor((y - ETHER_BOX.y0) / ISLE_CELL_PX),
-];
+export const etherCellOf = (x, y) => [Math.floor((x - ETHER_BOX.x0) / ISLE_CELL_PX), Math.floor((y - ETHER_BOX.y0) / ISLE_CELL_PX)];
 export const CELLS_W = Math.floor((ETHER_BOX.x1 - ETHER_BOX.x0) / ISLE_CELL_PX);
 export const CELLS_H = Math.floor((ETHER_BOX.y1 - ETHER_BOX.y0) / ISLE_CELL_PX);
 /** VEILHAVEN, the landfall: its cell (a few cells west of the Veil, on the box's middle row) and its own isle. */
-export const VEILHAVEN_CELL = Object.freeze([
-  Math.floor((VEIL_X - ETHER_BOX.x0) / ISLE_CELL_PX) - 4,
-  Math.floor(CELLS_H / 2),
-]);
+export const VEILHAVEN_CELL = Object.freeze([Math.floor((VEIL_X - ETHER_BOX.x0) / ISLE_CELL_PX) - 4, Math.floor(CELLS_H / 2)]);
 export const VEILHAVEN_NAME = 'Veilhaven';
 /** Where Veilhaven's centre pixel stands in its cell (from its corner): (8068, -5185), where the crossing has always made
  *  its landfall beside it - never moved by the size its isle is. */
@@ -272,9 +191,7 @@ function pick(weights, u) {
   const keys = Object.keys(weights).filter((k) => weights[k] > 0);
   const total = keys.reduce((s, k) => s + weights[k], 0);
   let x = Math.max(0, Math.min(0.999999, u)) * total;
-  for (const k of keys) {
-    if ((x -= weights[k]) < 0) return k;
-  }
+  for (const k of keys) { if ((x -= weights[k]) < 0) return k; }
   return keys[keys.length - 1];
 }
 
@@ -301,41 +218,20 @@ function makeIsle(cx, cy, key) {
   if (!haven && openCell(cx, cy)) return null;
   const seed = etherHash(cx, cy, 1);
   const r = etherRng(seed);
-  const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX,
-    y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;
+  const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX, y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;
   const band = etherBandAt(x0 + ISLE_CELL_PX / 2);
   if (!haven && !(r() < band.chance)) return null;
   const kind = haven ? 'port' : pick(band.kinds, r());
   const k = ISLE_KINDS[kind];
-  const radius = haven ? 1 : lerp(k.r[0], k.r[1], r()); // AUDIT CAPTAIN'S SEA H1: Veilhaven a port's, the haven's town on its four bytes
-  const peak = haven ? 12 : Math.round(lerp(k.peak[0], k.peak[1], r()) * (kind === 'port' ? 1 : 1 + band.lift)); // a port's town stays a short climb from the water
-  const margin = Math.ceil(radius) + 1; // its land, and the kernel's pixel past it, inside the cell
+  const radius = haven ? 1 : lerp(k.r[0], k.r[1], r());   // AUDIT CAPTAIN'S SEA H1: Veilhaven a port's, the haven's town on its four bytes
+  const peak = haven ? 12 : Math.round(lerp(k.peak[0], k.peak[1], r()) * (kind === 'port' ? 1 : 1 + band.lift));   // a port's town stays a short climb from the water
+  const margin = Math.ceil(radius) + 1;   // its land, and the kernel's pixel past it, inside the cell
   const span = Math.max(1, ISLE_CELL_PX - 2 * margin);
-  const [px, py] = haven
-    ? [x0 + VEILHAVEN_AT[0], y0 + VEILHAVEN_AT[1]]
-    : [x0 + margin + Math.floor(r() * span), y0 + margin + Math.floor(r() * span)];
+  const [px, py] = haven ? [x0 + VEILHAVEN_AT[0], y0 + VEILHAVEN_AT[1]] : [x0 + margin + Math.floor(r() * span), y0 + margin + Math.floor(r() * span)];
   const climate = haven ? CLIMATES.Subtropical : k.climates[Math.floor(r() * k.climates.length) % k.climates.length];
   const good = kind === 'wild' ? ETHER_GOODS[Math.floor(r() * ETHER_GOODS.length) % ETHER_GOODS.length] : null;
   const [lx, ly] = landCentre(kind, px, py);
-  const isle = {
-    key,
-    cx,
-    cy,
-    px,
-    py,
-    lx,
-    ly,
-    kind,
-    r: radius,
-    peak,
-    fall: k.fall,
-    climate,
-    seed,
-    band: band.id,
-    good,
-    name: '',
-    haven,
-  };
+  const isle = { key, cx, cy, px, py, lx, ly, kind, r: radius, peak, fall: k.fall, climate, seed, band: band.id, good, name: '', haven };
   isle.name = haven ? VEILHAVEN_NAME : isleName(isle);
   return Object.freeze(isle);
 }
@@ -350,13 +246,11 @@ export function isleAt(x, y) {
 /** The isles whose centres lie within `reach` pixels (Chebyshev) of a pixel - nearest first. */
 export function islesNear(x, y, reach) {
   const out = [];
-  const [c0, r0] = etherCellOf(x - reach, y - reach),
-    [c1, r1] = etherCellOf(x + reach, y + reach);
-  for (let cy = r0; cy <= r1; cy++)
-    for (let cx = c0; cx <= c1; cx++) {
-      const isle = isleOfCell(cx, cy);
-      if (isle && Math.max(Math.abs(isle.px - x), Math.abs(isle.py - y)) <= reach) out.push(isle);
-    }
+  const [c0, r0] = etherCellOf(x - reach, y - reach), [c1, r1] = etherCellOf(x + reach, y + reach);
+  for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
+    const isle = isleOfCell(cx, cy);
+    if (isle && Math.max(Math.abs(isle.px - x), Math.abs(isle.py - y)) <= reach) out.push(isle);
+  }
   return out.sort((a, b) => Math.hypot(a.px - x, a.py - y) - Math.hypot(b.px - x, b.py - y));
 }
 
@@ -373,118 +267,18 @@ export const veilhaven = () => /** @type {Isle} */ (isleOfCell(VEILHAVEN_CELL[0]
 /** The isles' names: a head, a middle on half of them, a tail - some sixteen thousand roots, and the forms each kind is
  *  called by (AUDIT CAPTAIN'S SEA G11: of fifty places charted, two share a name about one time in twenty - measured over
  *  every place of the sea). Ours - no table of the game's. */
-export const NAME_HEADS = Object.freeze([
-  'Ael',
-  'Vael',
-  'Syr',
-  'Oru',
-  'Mir',
-  'Thal',
-  'Ves',
-  'Ish',
-  'Cael',
-  'Nym',
-  'Ery',
-  'Lun',
-  'Zeph',
-  'Ora',
-  'Sar',
-  'Ith',
-  'Quel',
-  'Xan',
-  'Eth',
-  'Ul',
-  'Kor',
-  'Bel',
-  'Dra',
-  'Hal',
-  'Ost',
-  'Rhy',
-  'Tor',
-  'Vey',
-  'Wen',
-  'Aur',
-  'Cyr',
-  'Fen',
-  'Gal',
-  'Ione',
-  'Jor',
-  'Mael',
-  'Nor',
-  'Pell',
-  'Sel',
-  'Tey',
-]);
+export const NAME_HEADS = Object.freeze(['Ael', 'Vael', 'Syr', 'Oru', 'Mir', 'Thal', 'Ves', 'Ish', 'Cael', 'Nym', 'Ery', 'Lun', 'Zeph', 'Ora', 'Sar', 'Ith', 'Quel', 'Xan', 'Eth', 'Ul', 'Kor', 'Bel', 'Dra', 'Hal', 'Ost', 'Rhy', 'Tor', 'Vey', 'Wen', 'Aur', 'Cyr', 'Fen', 'Gal', 'Ione', 'Jor', 'Mael', 'Nor', 'Pell', 'Sel', 'Tey']);
 export const NAME_MIDS = Object.freeze(['a', 'e', 'i', 'o', 'u', 'ae', 'ar', 'el', 'in', 'or', 'ul', 'ys']);
-export const NAME_TAILS = Object.freeze([
-  'dra',
-  'mere',
-  'sol',
-  'veth',
-  'oria',
-  'anth',
-  'is',
-  'el',
-  'yne',
-  'ara',
-  'ond',
-  'ith',
-  'ael',
-  'orn',
-  'esse',
-  'ivar',
-  'oth',
-  'una',
-  'ys',
-  'ent',
-  'alis',
-  'ume',
-  'ior',
-  'ast',
-  'en',
-  'wyn',
-  'mor',
-  'thas',
-  'rel',
-  'gard',
-]);
+export const NAME_TAILS = Object.freeze(['dra', 'mere', 'sol', 'veth', 'oria', 'anth', 'is', 'el', 'yne', 'ara', 'ond', 'ith', 'ael', 'orn', 'esse', 'ivar', 'oth', 'una', 'ys', 'ent', 'alis', 'ume', 'ior', 'ast', 'en', 'wyn', 'mor', 'thas', 'rel', 'gard']);
 const NAME_WORDS = Object.freeze({
-  adj: Object.freeze([
-    'Weeping',
-    'Glass',
-    'Silent',
-    'Drowned',
-    'Burning',
-    'Pale',
-    'Hollow',
-    'Singing',
-    'Starlit',
-    'Broken',
-    'Twin',
-    'Black',
-    'Amber',
-    'Moonless',
-    'Shivering',
-    'Lantern',
-  ]),
+  adj: Object.freeze(['Weeping', 'Glass', 'Silent', 'Drowned', 'Burning', 'Pale', 'Hollow', 'Singing', 'Starlit', 'Broken', 'Twin', 'Black', 'Amber', 'Moonless', 'Shivering', 'Lantern']),
   rock: Object.freeze(['Stack', 'Teeth', 'Rocks', 'Spire', 'Fang', 'Skerry', 'Crag', 'Needles', 'Anvil', 'Crown']),
   ruin: Object.freeze(['Grave', 'Barrow', 'Hollow', 'Tomb', 'Sepulchre', 'Vault']),
 });
 const FORMS = Object.freeze({
-  port: Object.freeze([
-    (n) => `Port ${n}`,
-    (n) => `${n}haven`,
-    (n) => `${n} Landing`,
-    (n) => `${n}'s Anchorage`,
-    (n) => `${n}mouth`,
-  ]),
+  port: Object.freeze([(n) => `Port ${n}`, (n) => `${n}haven`, (n) => `${n} Landing`, (n) => `${n}'s Anchorage`, (n) => `${n}mouth`]),
   wild: Object.freeze([(n) => n, (n) => `${n} Isle`, (n) => `the Isle of ${n}`, (n, w) => `the ${w.adj} Isle`]),
-  ruin: Object.freeze([
-    (n) => `the Isle of ${n}`,
-    (n, w) => `${n}'s ${w.ruin}`,
-    (n) => `Old ${n}`,
-    (n, w) => `the ${w.ruin} of ${n}`,
-  ]), // a place's name: its root always (the automap's key)
+  ruin: Object.freeze([(n) => `the Isle of ${n}`, (n, w) => `${n}'s ${w.ruin}`, (n) => `Old ${n}`, (n, w) => `the ${w.ruin} of ${n}`]),   // a place's name: its root always (the automap's key)
   rock: Object.freeze([(n, w) => `the ${w.adj} ${w.rock}`, (n, w) => `${n} ${w.rock}`]),
 });
 const draw = (list, r) => list[Math.floor(r() * list.length) % list.length];
@@ -498,30 +292,13 @@ export function isleName(isle) {
 /** The words an isle's kind is called by on the chart and in the log. */
 export const KIND_WORDS = Object.freeze({ port: 'a port', ruin: 'a ruin', wild: 'a wild isle', rock: 'a bare rock' });
 /** The sixteen points, north first. */
-const POINTS = Object.freeze([
-  'north',
-  'north-north-east',
-  'north-east',
-  'east-north-east',
-  'east',
-  'east-south-east',
-  'south-east',
-  'south-south-east',
-  'south',
-  'south-south-west',
-  'south-west',
-  'west-south-west',
-  'west',
-  'west-north-west',
-  'north-west',
-  'north-north-west',
-]);
+const POINTS = Object.freeze(['north', 'north-north-east', 'north-east', 'east-north-east', 'east', 'east-south-east', 'south-east', 'south-south-east', 'south', 'south-south-west', 'south-west', 'west-south-west', 'west', 'west-north-west', 'north-west', 'north-north-west']);
 /** The point of the compass a map-pixel offset lies toward, in words - "west-north-west" (map y runs south): the chart's
  *  ways and the harbourmasters' rumours alike. AUDIT CAPTAIN'S SEA G12: none for no offset (null) - atan2 made (0, 0)
  *  "south" and (0, -0) "north". */
 export function compassPoint(dx, dy) {
   if (!dx && !dy) return null;
-  const a = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;
+  const a = (Math.atan2(dx, -dy) * 180 / Math.PI + 360) % 360;
   return POINTS[Math.round(a / 22.5) % 16];
 }
 
@@ -574,14 +351,10 @@ export function etherClimateAt(x, y) {
  */
 export function etherWoods(woods) {
   const ground = Object.create(woods);
-  ground.getHeightMapValue = function (x, y) {
-    return inEtherLaw(x, y) ? etherHeightByte(x, y) : woods.getHeightMapValue(x, y);
-  };
-  ground.getLargeMapData = function (x, y) {
-    return inEtherLaw(x, y) ? etherLargeMap(x, y) : woods.getLargeMapData(x, y);
-  };
+  ground.getHeightMapValue = function (x, y) { return inEtherLaw(x, y) ? etherHeightByte(x, y) : woods.getHeightMapValue(x, y); };
+  ground.getLargeMapData = function (x, y) { return inEtherLaw(x, y) ? etherLargeMap(x, y) : woods.getLargeMapData(x, y); };
   ground.isEtherGround = true;
-  ground.etherLaw = inEtherLaw; // AUDIT CAPTAIN'S SEA G5: where the composition answers the ground itself (the Overworld's water law asks)
+  ground.etherLaw = inEtherLaw;   // AUDIT CAPTAIN'S SEA G5: where the composition answers the ground itself (the Overworld's water law asks)
   ground.under = woods;
   return ground;
 }
@@ -623,13 +396,9 @@ export const CROSS_LAND_PX = 20;
 export const CROSS_SEA_PX = 20;
 /** Is a pixel crossing waters (`landPx` its distance to the nearest land, `seaPx` to the world's sailed sea - pixels, the
  *  host's)? A distance nobody measured (null, NaN) is none. */
-export const crossingWaters = (x, y, landPx, seaPx) =>
-  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach
+export const crossingWaters = (x, y, landPx, seaPx) => !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX;   // Infinity: none in reach
 /** Where a crossing home comes out when the captain's way out is not kept: the open Abecean off the Bay's mouth. */
 export const HOME_WATERS = Object.freeze({ px: 180, py: 300 });
 /** Where a crossing out makes landfall: the open water this many pixels east of Veilhaven, her bow to its quay. */
 export const LANDFALL_OFF_PX = 4;
-export const landfall = () => {
-  const h = veilhaven();
-  return { px: h.px + LANDFALL_OFF_PX, py: h.py };
-};
+export const landfall = () => { const h = veilhaven(); return { px: h.px + LANDFALL_OFF_PX, py: h.py }; };

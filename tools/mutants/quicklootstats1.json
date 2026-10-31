@@ -31,8 +31,8 @@
   {
     "name": "a-survival-item-gets-a-condition-row-too",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);",
-    "new": "  if ((item.maxCondition ?? 0) > 0) push('Condition', `${conditionWord(item)} (${conditionPercentage(item)}%)`);",
+    "old": "  if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);\n  else if ((item.maxCondition ?? 0) > 0)",
+    "new": "  if (survival) for (const t of survivalInfoTokens(item).slice(2)) push('', t.text);\n  if ((item.maxCondition ?? 0) > 0)",
     "tests": [
       "test/systems/quicklootstats.test.js"
     ]

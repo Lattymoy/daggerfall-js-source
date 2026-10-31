@@ -26,8 +26,8 @@
   {
     "name": "GRASSLIT-lane-pipeline",
     "file": "src/render/labGrass.js",
-    "old": "      \"  c = uLane > 0.5 ? elEncode(elTonemapRGB(elDecode(c) * light * (uELExposure * elAdapt()))) : c * light;   // GRASS-LIT: the lane's pipeline, as EL_TERRAIN_FS runs it\",",
-    "new": "      \"  c = c * light;   // GRASS-LIT: the lane's pipeline, as EL_TERRAIN_FS runs it\",",
+    "old": "  c = uLane > 0.5 ? elEncode(elTonemapRGB(elDecode(c) * light * (uELExposure * elAdapt()))) : c * light;",
+    "new": "  c = c * light;",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -38,8 +38,8 @@
   {
     "name": "GRASSLIT-sun-at-the-root",
     "file": "src/render/labGrass.js",
-    "old": "      `  vec3 light = uAmb * (${GRASS_SWARD} + ${(1 - GRASS_SWARD).toFixed(2)}*t) + uSunCol * (uSunScale * vLam * vSun) + uMoonCol * (uMoonScale * vMoonLam) + vNear + vPoint;   // GRASS-LIT; GRASS-LIT2: and the lanterns\\n` +",
-    "new": "      `  vec3 light = uAmb * (${GRASS_SWARD} + ${(1 - GRASS_SWARD).toFixed(2)}*t) + uSunCol * (uSunScale * vLam) + uMoonCol * (uMoonScale * vMoonLam) + vNear + vPoint;   // GRASS-LIT; GRASS-LIT2: and the lanterns\\n` +",
+    "old": "uSunCol * (uSunScale * vLam * vSun)",
+    "new": "uSunCol * (uSunScale * vLam)",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -50,8 +50,8 @@
   {
     "name": "GRASSLIT-rim-in-the-sun",
     "file": "src/render/labGrass.js",
-    "old": "    to: '  c += uSunCol * (uSunScale * 0.12) * mix(smoothstep(0.86,1.0,t), step(3.5, pxTone), uPixel) * vLam * vSun;   // GRASS-PX; GRASS-LIT: under the deck and the map',",
-    "new": "    to: '  c += uSunCol * (uSunScale * 0.12) * mix(smoothstep(0.86,1.0,t), step(3.5, pxTone), uPixel) * vLam;   // GRASS-PX; GRASS-LIT: under the deck and the map',",
+    "old": "* vLam * vSun;   // GRASS-PX; GRASS-LIT",
+    "new": "* vLam;   // GRASS-PX; GRASS-LIT",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -62,8 +62,8 @@
   {
     "name": "GRASSLIT-far-blend",
     "file": "src/render/labGrass.js",
-    "old": "    to:\n      \"  c = mix(c, vGround, vFar);   // GRASS-LIT: the far field is the ground's colour\\n\" +\n      '  // wet grass is DARKER; snow-laden grass is pale and cold\\n',",
-    "new": "    to: '' + '  // wet grass is DARKER; snow-laden grass is pale and cold\\n',",
+    "old": "    to: '  c = mix(c, vGround, vFar);   // GRASS-LIT: the far field is the ground\\'s colour\\n'\n",
+    "new": "    to: ''\n",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -86,8 +86,8 @@
   {
     "name": "GRASSLIT-decoded-under-the-lane",
     "file": "src/render/labGrass.js",
-    "old": "    const c3 = (c, out) => (lane && c ? lane.decode3(c, out) : c);",
-    "new": "    const c3 = (c) => c;",
+    "old": "const c3 = (c, out) => (lane && c ? lane.decode3(c, out) : c);",
+    "new": "const c3 = (c) => c;",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -98,8 +98,8 @@
   {
     "name": "GRASSLIT-sun-map-bound",
     "file": "src/render/labGrass.js",
-    "old": "    if (light.shadows) light.shadows.upload(this.shadowLoc);",
-    "new": "    if (false) light.shadows.upload(this.shadowLoc);",
+    "old": "if (light.shadows) light.shadows.upload(this.shadowLoc);",
+    "new": "if (false) light.shadows.upload(this.shadowLoc);",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -110,8 +110,8 @@
   {
     "name": "GRASSLIT-deck-bound",
     "file": "src/render/labGrass.js",
-    "old": "    gl.uniform4fv(u.uCloudShadowRect, cs ? cs.rect : NO_DECK);",
-    "new": "    gl.uniform4fv(u.uCloudShadowRect, NO_DECK);",
+    "old": "gl.uniform4fv(u.uCloudShadowRect, cs ? cs.rect : NO_DECK);",
+    "new": "gl.uniform4fv(u.uCloudShadowRect, NO_DECK);",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -122,8 +122,8 @@
   {
     "name": "GRASSLIT-tones-uploaded",
     "file": "src/render/labGrass.js",
-    "old": "    gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic); // GRASS-LIT2: each lane its own\n    gl.uniform3fv(u.uArtGround, lane ? this.artGround : this.artGroundClassic); // MEADOW1: and the meadow's art its own ground",
-    "new": "    gl.uniform3fv(u.uArtGround, lane ? this.artGround : this.artGroundClassic); // MEADOW1: and the meadow's art its own ground",
+    "old": "    gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic);   // GRASS-LIT2: each lane its own\n",
+    "new": "",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -134,8 +134,8 @@
   {
     "name": "GRASSLIT-player-light",
     "file": "src/render/labGrass.js",
-    "old": "      `  vec3 light = uAmb * (${GRASS_SWARD} + ${(1 - GRASS_SWARD).toFixed(2)}*t) + uSunCol * (uSunScale * vLam * vSun) + uMoonCol * (uMoonScale * vMoonLam) + vNear + vPoint;   // GRASS-LIT; GRASS-LIT2: and the lanterns\\n` +",
-    "new": "      `  vec3 light = uAmb * (${GRASS_SWARD} + ${(1 - GRASS_SWARD).toFixed(2)}*t) + uSunCol * (uSunScale * vLam * vSun) + uMoonCol * (uMoonScale * vMoonLam) + vPoint;   // GRASS-LIT; GRASS-LIT2: and the lanterns\\n` +",
+    "old": "+ vNear + vPoint;   // GRASS-LIT; GRASS-LIT2",
+    "new": "+ vPoint;   // GRASS-LIT; GRASS-LIT2",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -146,8 +146,8 @@
   {
     "name": "GRASSLIT-blade-normal",
     "file": "src/render/labGrass.js",
-    "old": "    to: \"  vec3 nrm = normalize(vec3(-lean.y, 0.0, lean.x) + 1.2 * gN);   // GRASS-LIT; GRASS-LIT2: about the ground's own normal - level ground's is the up the blade stood about\",",
-    "new": "    to: \"  vec3 nrm = normalize(vec3(-lean.y, 0.0, lean.x) + 0.6 * gN);   // GRASS-LIT; GRASS-LIT2: about the ground's own normal - level ground's is the up the blade stood about\",",
+    "old": "to: '  vec3 nrm = normalize(vec3(-lean.y, 0.0, lean.x) + 1.2 * gN);",
+    "new": "to: '  vec3 nrm = normalize(vec3(-lean.y, 0.0, lean.x) + 0.6 * gN);",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -206,8 +206,8 @@
   {
     "name": "GRASSLIT-sun-read-once-a-triangle",
     "file": "src/render/labGrass.js",
-    "old": "      `  vSun = (gl_VertexID % 3 == 2 && uSunScale > 0.0) ? cloudShadowAt(rootW) * sunShadowAt(rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0, 1.0, 0.0)) : 0.0;   // off the ground's own depth: a tree's shade, never the ground's acne\\n` +",
-    "new": "      `  vSun = (uSunScale > 0.0) ? cloudShadowAt(rootW) * sunShadowAt(rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0, 1.0, 0.0)) : 0.0;   // off the ground's own depth: a tree's shade, never the ground's acne\\n` +",
+    "old": "(gl_VertexID % 3 == 2 && uSunScale > 0.0) ?",
+    "new": "(uSunScale > 0.0) ?",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",
@@ -218,8 +218,8 @@
   {
     "name": "GRASSLIT-sun-handed-flat",
     "file": "src/render/labGrass.js",
-    "old": "      \"flat out float vSun;                    // GRASS-LIT: the sun that reaches the root - the deck's and the map's, one value a triangle\\n\" +",
-    "new": "      \"out float vSun;                    // GRASS-LIT: the sun that reaches the root - the deck's and the map's, one value a triangle\\n\" +",
+    "old": "+ 'flat out float vSun;",
+    "new": "+ 'out float vSun;",
     "tests": [
       "test/render/grasslit.test.js",
       "test/render/grasspx.test.js",

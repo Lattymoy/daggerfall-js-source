@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-REALM2-S2-any-id-buys-a-house",
     "file": "server-account/src/homes.js",
-    "old": "  if (!REALM_ID_RE.test(character)) return { error: 'realm-only' };\n  const side = await realmActFirst(db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, before the hour's claims",
-    "new": "  const side = await realmActFirst(db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, before the hour's claims",
+    "old": "  if (!REALM_ID_RE.test(character)) return { error: 'realm-only' };\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-REALM2-S2-any-id-places-a-piece",
     "file": "server-account/src/decor.js",
-    "old": "  if (realmOnly && !REALM_ID_RE.test(character)) return 'realm-only';\n  if (await overRate({ db, nowS }, `decor:${player.id}`, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S)) return 'decor-rate';",
-    "new": "  if (await overRate({ db, nowS }, `decor:${player.id}`, DECOR_OPS_MAX, DECOR_OPS_WINDOW_S)) return 'decor-rate';",
+    "old": "  if (realmOnly && !REALM_ID_RE.test(character)) return 'realm-only';\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-REALM2-S2-any-id-founds-a-guild",
     "file": "server-account/src/guilds.js",
-    "old": "  if (!REALM_ID_RE.test(character)) return { error: 'realm-only' };\n  const side = await realmActFirst(db, player.id, character, realm); // REALM P2.2; AUDIT REALM L1-F2: where the record stands, before any other word",
-    "new": "  const side = await realmActFirst(db, player.id, character, realm); // REALM P2.2; AUDIT REALM L1-F2: where the record stands, before any other word",
+    "old": "  if (!REALM_ID_RE.test(character)) return { error: 'realm-only' };\n",
+    "new": "",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-REALM2-S3-the-settle-drops-both-unread",
     "file": "server-account/src/realmTrade.js",
-    "old": "    await dropIfUnnamed(db, bucket, t.a_player, t.a_char, keyA);\n    await dropIfUnnamed(db, bucket, playerId, id, keyB);",
-    "new": "    await dropObjects(bucket, [keyA, keyB]);",
+    "old": "    await dropIfUnnamed(db, bucket, t.a_player, t.a_char, keyA);\n    await dropIfUnnamed(db, bucket, playerId, id, keyB);\n",
+    "new": "    await dropObjects(bucket, [keyA, keyB]);\n",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-REALM2-S5-halves-pile-up",
     "file": "server-account/src/realmTrade.js",
-    "old": "        .prepare(\"DELETE FROM realm_trades WHERE a_player = ? AND a_char = ? AND state = 'waiting' AND sid != ?\")",
-    "new": "        .prepare(\"DELETE FROM realm_trades WHERE a_player = ? AND a_char = ? AND state = 'kept' AND sid != ?\")",
+    "old": "AND a_char = ? AND state = 'waiting' AND sid != ?\")",
+    "new": "AND a_char = ? AND state = 'kept' AND sid != ?\")",
     "tests": [
       "test/systems/auditrealm2_service.test.js"
     ]

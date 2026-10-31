@@ -164,8 +164,8 @@
   {
     "name": "HU-AUDIT-C1-the-beat-said-whole",
     "file": "server-account/src/guilds.js",
-    "old": "        seenAt: Number.isSafeInteger(m.seen_at) ? (hid == null ? m.seen_at : Math.min(m.seen_at, hid)) : null, // GUILD-SEEN: this service's seconds - the Members page's \"last online\"; AUDIT HIDDEN-UNCOUNTED C1: a hidden member's the moment they hid",
-    "new": "        seenAt: Number.isSafeInteger(m.seen_at) ? m.seen_at : null, // GUILD-SEEN: this service's seconds - the Members page's \"last online\"; AUDIT HIDDEN-UNCOUNTED C1: a hidden member's the moment they hid",
+    "old": "(hid == null ? m.seen_at : Math.min(m.seen_at, hid))",
+    "new": "m.seen_at",
     "tests": [
       "test/server/hiddenuncounted_guild.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "HU-AUDIT-C1-hidden-said-of-another",
     "file": "server-account/src/guilds.js",
-    "old": "        ...(you && hid != null ? { hidden: true } : {}), // AUDIT HIDDEN-UNCOUNTED C1: said to the reader of their own row alone - never of another member",
-    "new": "        ...(hid != null ? { hidden: true } : {}), // AUDIT HIDDEN-UNCOUNTED C1: said to the reader of their own row alone - never of another member",
+    "old": "...(you && hid != null ? { hidden: true } : {})",
+    "new": "...(hid != null ? { hidden: true } : {})",
     "tests": [
       "test/server/hiddenuncounted_guild.test.js"
     ]

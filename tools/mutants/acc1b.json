@@ -2,8 +2,8 @@
   {
     "name": "ACC1b-1-the-secret-is-stored-raw",
     "file": "server-account/src/accounts.js",
-    "old": "  const sessionId = mintId(rand);\n  const hash = await hashSecret(secret, { subtle });",
-    "new": "  const sessionId = mintId(rand);\n  const hash = secret;",
+    "old": "  const hash = await hashSecret(secret, { subtle });\n  // A label is for a human reading a device list. It is truncated and",
+    "new": "  const hash = secret;\n  // A label is for a human reading a device list. It is truncated and",
     "tests": [
       "test/server/accountworker.test.js"
     ],
@@ -13,7 +13,7 @@
     "name": "ACC1b-2-signing-out-one-device-signs-out-all",
     "file": "server-account/src/accounts.js",
     "old": "  const r = await db.prepare('DELETE FROM sessions WHERE id = ?').bind(sessionId).run();",
-    "new": "  const r = await db\n    .prepare('DELETE FROM sessions WHERE player_id = (SELECT player_id FROM sessions WHERE id = ?)')\n    .bind(sessionId)\n    .run();",
+    "new": "  const r = await db.prepare('DELETE FROM sessions WHERE player_id = (SELECT player_id FROM sessions WHERE id = ?)').bind(sessionId).run();",
     "tests": [
       "test/server/accountworker.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "ACC1b-3-a-handle-is-ignored-for-the-displayed-name",
     "file": "server-account/src/accounts.js",
-    "old": "  if (typeof handle === 'string' && handle.length > 0 && !handleLooksLikeEmail(handle)) return handle; // HANDLE-EMAIL: an address is never read out",
-    "new": "  if (false) return handle; // HANDLE-EMAIL: an address is never read out",
+    "old": "  if (typeof handle === 'string' && handle.length > 0 && !handleLooksLikeEmail(handle)) return handle;",
+    "new": "  if (false) return handle;",
     "tests": [
       "test/server/accountworker.test.js"
     ],
@@ -52,7 +52,7 @@
   {
     "name": "ACC1b-6-a-credential-shadow-ships-to-the-client",
     "file": "server-account/src/accounts.js",
-    "old": "  return (r?.results ?? []).map((s) => ({\n    sessionId: s.id,\n    label: s.device_label ?? null,\n    createdAt: s.created_at,\n    lastSeen: s.last_seen,\n  }));",
+    "old": "  return (r?.results ?? []).map((s) => ({\n    sessionId: s.id, label: s.device_label ?? null, createdAt: s.created_at, lastSeen: s.last_seen,\n  }));",
     "new": "  return r?.results ?? [];",
     "tests": [
       "test/server/accountworker.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "ACC1b-17-a-session-never-expires",
     "file": "server-account/src/accounts.js",
-    "old": "    Number.isSafeInteger(nowS) &&",
-    "new": "    false &&\n    Number.isSafeInteger(nowS) &&",
+    "old": "  if (Number.isSafeInteger(nowS) && Number.isSafeInteger(session.last_seen)\n      && nowS - session.last_seen > SESSION_IDLE_S) {",
+    "new": "  if (false && Number.isSafeInteger(nowS) && Number.isSafeInteger(session.last_seen)\n      && nowS - session.last_seen > SESSION_IDLE_S) {",
     "tests": [
       "test/server/accountworker.test.js"
     ],
@@ -184,7 +184,7 @@
   {
     "name": "ACC1b-19-a-failed-touch-fails-the-request",
     "file": "server-account/src/accounts.js",
-    "old": "    try {\n      await db.batch([\n        db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id),\n        db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id),\n      ]);\n    } catch {\n      /* cosmetic: the caller is authorised either way */\n    }",
+    "old": "    try {\n      await db.batch([\n        db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id),\n        db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id),\n      ]);\n    } catch { /* cosmetic: the caller is authorised either way */ }",
     "new": "    await db.batch([\n      db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id),\n      db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id),\n    ]);",
     "tests": [
       "test/server/accountworker.test.js",

@@ -354,8 +354,8 @@
   {
     "name": "AUDIT-DISC19-W4-shaft-strikes-defender",
     "file": "src/combat/arrowFlight.js",
-    "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue; // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)",
-    "new": "          if (m.fromPlayer && sparedByPlayer(t.ref) && t.ref?.defender !== true) continue; // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)",
+    "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue;",
+    "new": "          if (m.fromPlayer && sparedByPlayer(t.ref) && t.ref?.defender !== true) continue;",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "AUDIT-DISC19-W4-enemy-shaft-passes-too",
     "file": "src/combat/arrowFlight.js",
-    "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue; // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)",
-    "new": "          if (sparedByPlayer(t.ref)) continue; // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)",
+    "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue;",
+    "new": "          if (sparedByPlayer(t.ref)) continue;",
     "tests": [
       "test/systems/auditdisc19.test.js"
     ]

@@ -91,7 +91,7 @@ test('GATE-UX 2 under his health no phase is said - the foot says the court\'s f
 test('GATE-UX 3 the pool asks for no feet and takes nothing underfoot; the host hands it none; the press is its one hand (mutants: the walk-over back; the host still wiring feet)', () => {
   const pool = read('src/scenes/spoilsPool.js');
   assert.doesNotMatch(pool, /export const SPOILS_TAKE_|const f0 = feet\(\)|feet = \(\) => null|takeOne\(f\);\n\s*\}\);\n\s*\},/);
-  assert.match(pool, /pick\(key\) \{\n\s*const f = pieceAt\(key\);\n\s*if \(!f\) return false;\n\s*takeOne\(f\);\n\s*return true;\n\s*\}/);
+  assert.match(pool, /pick\(key\) \{ const f = pieceAt\(key\); if \(!f\) return false; takeOne\(f\); return true; \}/);
   const w = read('src/scenes/world.js');
   const made = /const spoilsPool = createSpoilsPool\(\{[\s\S]*?\n {2}\}\);/.exec(w)?.[0];
   assert.ok(made);

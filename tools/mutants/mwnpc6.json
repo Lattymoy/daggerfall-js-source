@@ -11,8 +11,8 @@
   {
     "name": "MWNPC6-watch-near-as-foes",
     "file": "src/characters/npcBodies.js",
-    "old": "  near: Object.freeze({ max: 4, range: 30, skinBudget: 2, spareMax: 2 }),",
-    "new": "  near: Object.freeze({ max: 12, range: 30, skinBudget: 2, spareMax: 2 }),",
+    "old": "  near: Object.freeze({ max: 4, range: 30, skinBudget: 2, spareMax: 2 }),\n  all: Object.freeze({ max: 8,",
+    "new": "  near: Object.freeze({ max: 12, range: 30, skinBudget: 2, spareMax: 2 }),\n  all: Object.freeze({ max: 8,",
     "tests": [
       "test/characters/mwnpc6_watch.test.js"
     ]

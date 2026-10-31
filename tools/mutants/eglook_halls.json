@@ -2,8 +2,8 @@
   {
     "name": "EGLOOK-HALLS-teeth-off-by-default",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  { uvOf = tileUv, y: y0 = 0, bands = 0, teeth = true, floor = true } = {},",
-    "new": "  { uvOf = tileUv, y: y0 = 0, bands = 0, teeth = false, floor = true } = {},",
+    "old": "bands = 0, teeth = true, floor = true } = {}) {",
+    "new": "bands = 0, teeth = false, floor = true } = {}) {",
     "tests": [
       "test/world/eliteGates/eglook_halls.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGLOOK-HALLS-floor-laid-anyway",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    } else if (floor)",
-    "new": "    } else",
+    "old": "} else if (floor) f.tri(rec, C(0, 0, 0)",
+    "new": "} else f.tri(rec, C(0, 0, 0)",
     "tests": [
       "test/world/eliteGates/eglook_halls.test.js"
     ]

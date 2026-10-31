@@ -3417,7 +3417,7 @@ export async function buildDungeonContext(deps, dfLocation, blocks, climateBaseT
    *  There is no closeSpellWindow twin, for the same reason worldModes
    *  makes its dungeon arm a deliberate no-op (:857): both windows
    *  raise `done` from inside their own pick/cancel/close
-   *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:"ListBox.ScrollIndex's"ui/listPicker.js:"window. DaggerfallListPickerWindow's";
+   *  (ListPickerWindow._pick/_cancel, ui/listPicker.js:"ListBox.ScrollIndex's"/ui/listPicker.js:"window. DaggerfallListPickerWindow's";
    *  NativeTradeWindow's close, ui/native/nativeTrade.js:"while (this.basket.length)".."const now = this.hooks.nowMinutes?.() ?? 0;"), and
    *  tickOverlay drains the slot and reconciles the stack. A second
    *  clear here would only race that drain. */

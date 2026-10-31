@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-WB14-WIRE-6-the-claim-forgets-them",
     "file": "server-account/src/accounts.js",
-    "old": "      ...(c.p > 0 ? { portent: c.p } : {}),\n      ...(c.x === 'rite' ? { rite: true } : {}),",
-    "new": "      ...(c.x === 'rite' ? { rite: true } : {}),",
+    "old": "...(c.p > 0 ? { portent: c.p } : {}), ...(c.x === 'rite'",
+    "new": "...(c.x === 'rite'",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -353,7 +353,7 @@
   {
     "name": "AUDIT-WB14-PLAY-7-the-passes-skipped",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    lastPass(items, rolls);\n    socketPass(items, rolls);\n    weaponSocketPass(items, rolls);\n    techniquePass(items, rolls);",
+    "old": "    lastPass(items, rolls); socketPass(items, rolls); weaponSocketPass(items, rolls); techniquePass(items, rolls);",
     "new": "    void items;",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-11-the-first-court-s-alone",
     "file": "src/world/gate/gateArena.js",
-    "old": "  if (k === 0 || k === plan.root) out.push(Math.PI / 2); // the bridge the players came by - AUDIT WB14 (SCREEN-11): and the night's arrival (the Vanguard's Bridgehead: no brazier behind its way in)",
-    "new": "  if (k === 0) out.push(Math.PI / 2); // the bridge the players came by - AUDIT WB14 (SCREEN-11): and the night's arrival (the Vanguard's Bridgehead: no brazier behind its way in)",
+    "old": "  if (k === 0 || k === plan.root) out.push(Math.PI / 2);",
+    "new": "  if (k === 0) out.push(Math.PI / 2);",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]

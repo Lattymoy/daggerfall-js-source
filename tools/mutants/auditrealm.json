@@ -149,8 +149,8 @@
   {
     "name": "AUDIT-REALM-L1F4-the-trade-read-first",
     "file": "server-account/src/realmTrade.js",
-    "old": "  const row = await db\n    .prepare(\n      'SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?',\n    )\n    .bind(id, playerId)\n    .first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n  // AN OUTCOME IS ANSWERED to the half that made it, whatever the record's sequence now - a settled trade moved it\n  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();",
-    "new": "  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n  const row = await db\n    .prepare(\n      'SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?',\n    )\n    .bind(id, playerId)\n    .first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };",
+    "old": "  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n  // AN OUTCOME IS ANSWERED to the half that made it, whatever the record's sequence now - a settled trade moved it\n  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n",
+    "new": "  let t = await db.prepare('SELECT * FROM realm_trades WHERE sid = ?').bind(sid).first();\n  const row = await db.prepare('SELECT seq, lease, bytes, obj, prev, held, judged_seq, clean_obj FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();\n  if (!row) return { error: 'no-realm-character' };\n  if (row.lease !== lease) return { error: 'lease' };\n",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -158,8 +158,8 @@
   {
     "name": "AUDIT-REALM-L1F6-any-first-half-told",
     "file": "server-account/src/realmTrade.js",
-    "old": "    t.a_player === playerId && t.a_char === id && t.a_seq === seq && t.a_half === said",
-    "new": "    t.a_player === playerId && t.a_char === id",
+    "old": "t.a_char === id && t.a_seq === seq && t.a_half === said ? 'a'",
+    "new": "t.a_char === id ? 'a'",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "AUDIT-REALM-L1F6-any-second-half-told",
     "file": "server-account/src/realmTrade.js",
-    "old": "      : t.b_player === playerId && t.b_char === id && t.b_seq === seq && t.b_half === said",
-    "new": "      : t.b_player === playerId && t.b_char === id",
+    "old": "t.b_char === id && t.b_seq === seq && t.b_half === said ? 'b'",
+    "new": "t.b_char === id ? 'b'",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "AUDIT-REALM-L1F6-the-settled-second-half-unsaid",
     "file": "server-account/src/realmTrade.js",
-    "old": "        .bind(result, playerId, id, seq, canon(half), sid),",
-    "new": "        .bind(result, playerId, id, null, null, sid),",
+    "old": "b_player = ?, b_char = ?, b_seq = ?, b_half = ? WHERE sid = ? AND state = 'waiting'\").bind(result, playerId, id, seq, canon(half), sid),",
+    "new": "b_player = ?, b_char = ?, b_seq = ?, b_half = ? WHERE sid = ? AND state = 'waiting'\").bind(result, playerId, id, null, null, sid),",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/net/realm4.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-realm-claim-paid-nothing",
     "file": "server-account/src/homes.js",
-    "old": "      claimStatement(db, player, claim, nowS, claim.price),",
-    "new": "      claimStatement(db, player, claim, nowS),",
+    "old": "claimStatement(db, player, claim, nowS, claim.price)",
+    "new": "claimStatement(db, player, claim, nowS)",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-pieces-client-cost",
     "file": "server-account/src/homes.js",
-    "old": "      COALESCE(SUM(CASE WHEN json_valid(place) THEN paid / 2 ELSE 0 END), 0) AS back",
-    "new": "      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
+    "old": "THEN paid / 2 ELSE 0 END), 0) AS back",
+    "new": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
     "tests": [
       "test/systems/auditrealm.test.js",
       "test/server/account_homes.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-old-treasury-withdrawn",
     "file": "server-account/src/guilds.js",
-    "old": "            `UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1",
-    "new": "            `UPDATE guilds SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1",
+    "old": " WHERE id = ?2 AND treasury >= ?1 AND realm_gold >= ?1\n",
+    "new": " WHERE id = ?2 AND treasury >= ?1\n",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "AUDIT-REALM-L1F3-a-realm-deposit-uncounted",
     "file": "server-account/src/guilds.js",
-    "old": "            'UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3',",
-    "new": "            'UPDATE guilds SET treasury = treasury + ?1, moved_by = ?4, moved_at = ?5 WHERE id = ?2 AND treasury + ?1 <= ?3',",
+    "old": "UPDATE guilds SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by",
+    "new": "UPDATE guilds SET treasury = treasury + ?1, moved_by",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-old-lane-leaves-the-realm-part",
     "file": "server-account/src/guilds.js",
-    "old": "            `UPDATE guilds SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1",
-    "new": "            `UPDATE guilds SET treasury = treasury - ?1, moved_by = ?3, moved_at = ?4 WHERE id = ?2 AND treasury >= ?1",
+    "old": "SET treasury = treasury - ?1, realm_gold = MIN(realm_gold, treasury - ?1), moved_by",
+    "new": "SET treasury = treasury - ?1, moved_by",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

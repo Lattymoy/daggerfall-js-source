@@ -41,31 +41,18 @@
 //     piles it dropped - picked up again, a pile is no gain). INT5's budget reads it.
 // ═══════════════════════════════════════════════════════════════════
 
-import {
-  itemFindings,
-  itemWorth,
-  lawTemplate,
-  classicPiece,
-  PROVENANCE_RE,
-  ITEM_LAW_VERSION,
-  GOLD_INT_MAX,
-} from '../../src/systems/item/itemLaw.js';
+import { itemFindings, itemWorth, lawTemplate, classicPiece, PROVENANCE_RE, ITEM_LAW_VERSION, GOLD_INT_MAX } from '../../src/systems/item/itemLaw.js';
 import { ledgerKeyOf } from '../../src/systems/item/itemIds.js';
-import { armsOf } from '../../src/net/siege/siegeRef.js'; // INT7: the arms the token signs
+import { armsOf } from '../../src/net/siege/siegeRef.js';   // INT7: the arms the token signs
 import { liquidWorthOf, deedsOf } from '../../src/net/realm/realmGoldLaw.js';
-import { possessedItemLists } from '../../src/systems/item/possessedItems.js'; // AUDIT AUTO-HOLD: one home, the client's shelf reads it too
+import { possessedItemLists } from '../../src/systems/item/possessedItems.js';   // AUDIT AUTO-HOLD: one home, the client's shelf reads it too
 import { MAX_STAT_VALUE } from '../../src/systems/statMods.js';
 import { SKILL_HARD_CAP } from '../../src/systems/skillSoftcap.js';
 import { STAT_KEYS_ORDER } from '../../src/systems/statMods.js';
-import { pathFindings } from '../../src/systems/arcanePaths.js'; // SCHOOLS5: a save's specialisation
-import { isMasterWork, masterSignature, masterLinesOfRecord } from '../../src/net/masterLaw.js'; // MASTER-ART: a Master's work's lines, its record's
+import { pathFindings } from '../../src/systems/arcanePaths.js';   // SCHOOLS5: a save's specialisation
+import { isMasterWork, masterSignature, masterLinesOfRecord } from '../../src/net/masterLaw.js';   // MASTER-ART: a Master's work's lines, its record's
 import { readProductRecord } from '../../src/net/productRecord.js';
-import {
-  DRAGON_MOUNT_TEMPLATE,
-  isDragonMount,
-  dragonMountWellFormed,
-  dragonLookOfItem,
-} from '../../src/systems/dragon/dragonMount.js'; // DRAGON5: a tamed dragon's provenance
+import { DRAGON_MOUNT_TEMPLATE, isDragonMount, dragonMountWellFormed, dragonLookOfItem } from '../../src/systems/dragon/dragonMount.js';   // DRAGON5: a tamed dragon's provenance
 
 /** The judge's version: the item law's, and its own character law beside it. */
 export const JUDGE_VERSION = ITEM_LAW_VERSION;
@@ -88,8 +75,7 @@ const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
 const arrayOf = (/** @type {unknown} */ x) => (Array.isArray(x) ? x : []);
 /** A count of gold in a save: a whole number, never below nothing - any other word (a fraction, Infinity, a string) is
  *  nothing (AUDIT INT: `goldPieces: 1e999` read as Infinity, and the verdict's NOT NULL threw the save away). */
-export const goldOf = (/** @type {unknown} */ v) =>
-  Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0;
+export const goldOf = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);
 
 /** THE LISTS THE CHARACTER HOLDS (possessedItemLists) - systems/item/possessedItems.js, their one home since AUDIT AUTO-HOLD
  *  (the client's shelf reads them too: a piece stowed in a ship's hold came back to its holder off a stale shelf), handed
@@ -101,11 +87,8 @@ export { possessedItemLists };
  *  pile up, and the piece is then theirs). */
 export function groundItemLists(/** @type {any} */ save) {
   const out = [];
-  for (const scene of arrayOf(save?.sceneCache?.scenes))
-    for (const pile of arrayOf(/** @type {any} */ (scene)?.droppedPiles))
-      out.push(...lists(/** @type {any} */ (pile)?.items));
-  for (const pile of [...arrayOf(save?.world?.piles), ...arrayOf(save?.world?.droppedLoot)])
-    out.push(...lists(/** @type {any} */ (pile)?.items));
+  for (const scene of arrayOf(save?.sceneCache?.scenes)) for (const pile of arrayOf(/** @type {any} */ (scene)?.droppedPiles)) out.push(...lists(/** @type {any} */ (pile)?.items));
+  for (const pile of [...arrayOf(save?.world?.piles), ...arrayOf(save?.world?.droppedLoot)]) out.push(...lists(/** @type {any} */ (pile)?.items));
   return out;
 }
 
@@ -114,19 +97,16 @@ export function groundItemLists(/** @type {any} */ save) {
  *  loan and its tenth (calculateBankLoanRepayment) - pinned equal by test/server/int2_judge.test.js; the Worker bundles no
  *  banking.js. A loan the save claims past it lends the wealth nothing (AUDIT INT: a forged loan of ten million hid ten
  *  million of forged gold from the budget). */
-export const realmLoanOwedMax = (/** @type {number} */ level) =>
-  Math.trunc(Math.max(1, Math.trunc(level) || 1) * 5_000 * 1.1);
+export const realmLoanOwedMax = (/** @type {number} */ level) => Math.trunc(Math.max(1, Math.trunc(level) || 1) * 5_000 * 1.1);
 
 /** Whether a piece is worth nothing to the economy: bound to its owner (the Broker's wares, a Sigil Stone - never sold or
  *  handed over, systems/item/itemBound.js) or a quest's (never sold). */
-const worthless = (/** @type {any} */ it) =>
-  it?.bound === true || lawTemplate(it?.templateIndex)?.bound === true || it?.questItem === true;
+const worthless = (/** @type {any} */ it) => it?.bound === true || lawTemplate(it?.templateIndex)?.bound === true || it?.questItem === true;
 
 /** The pieces wealthOf counts - every one the character holds or laid on the ground - and each as it counts it: a coin or
  *  a letter at its gold (`liquid`), a bound or quest piece at nothing, any other at its worth. */
 const wealthLists = (/** @type {any} */ save) => [...possessedItemLists(save), ...groundItemLists(save)];
-const pieceWealth = (/** @type {any} */ it, liquid = liquidWorthOf(it)) =>
-  liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it);
+const pieceWealth = (/** @type {any} */ it, liquid = liquidWorthOf(it)) => (liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it));
 
 /**
  * THE CHARACTER'S WEALTH: the purse, every bank account less what it owes (the debt counted no further than
@@ -138,12 +118,8 @@ const pieceWealth = (/** @type {any} */ it, liquid = liquidWorthOf(it)) =>
 export function wealthOf(save, { level = save?.level } = {}) {
   if (!save || typeof save !== 'object') return 0;
   const purse = goldOf(save.goldPieces);
-  let banks = 0,
-    owed = 0;
-  for (const a of arrayOf(save.bankAccounts)) {
-    banks += goldOf(/** @type {any} */ (a)?.accountGold);
-    owed += goldOf(/** @type {any} */ (a)?.loanTotal);
-  }
+  let banks = 0, owed = 0;
+  for (const a of arrayOf(save.bankAccounts)) { banks += goldOf(/** @type {any} */ (a)?.accountGold); owed += goldOf(/** @type {any} */ (a)?.loanTotal); }
   const deeds = deedsOf(save).reduce((s, d) => s + d.value, 0);
   let goods = 0;
   for (const list of wealthLists(save)) for (const it of list) goods += pieceWealth(it);
@@ -156,8 +132,7 @@ export function wealthOf(save, { level = save?.level } = {}) {
 export function goodsOf(save) {
   if (!save || typeof save !== 'object') return 0;
   let goods = 0;
-  for (const list of wealthLists(save))
-    for (const it of list) if (!(liquidWorthOf(it) > 0)) goods += pieceWealth(it, 0);
+  for (const list of wealthLists(save)) for (const it of list) if (!(liquidWorthOf(it) > 0)) goods += pieceWealth(it, 0);
   return Math.trunc(goods);
 }
 
@@ -190,11 +165,10 @@ export function characterFindings(save, summary) {
   }
   if (Array.isArray(save?.skills)) {
     save.skills.forEach((/** @type {unknown} */ v, /** @type {number} */ i) => {
-      if (v != null && !(typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= SKILL_HARD_CAP))
-        out.push({ code: 'skill', at: i });
+      if (v != null && !(typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= SKILL_HARD_CAP)) out.push({ code: 'skill', at: i });
     });
   }
-  for (const f of pathFindings(save)) out.push(f); // SCHOOLS5: an honest save never breaks it - only the choice writes the path
+  for (const f of pathFindings(save)) out.push(f);   // SCHOOLS5: an honest save never breaks it - only the choice writes the path
   return out;
 }
 
@@ -205,10 +179,7 @@ function lawValueOf(/** @type {any} */ save, /** @type {any} */ summary, /** @ty
   if (f.code === 'level') return save?.level;
   if (f.code === 'level-claim') return [save?.level, summary?.level];
   if (f.code === 'gold') return save?.goldPieces;
-  if (f.code === 'bank') {
-    const a = arrayOf(save?.bankAccounts)[f.at];
-    return [a?.accountGold, a?.loanTotal];
-  }
+  if (f.code === 'bank') { const a = arrayOf(save?.bankAccounts)[f.at]; return [a?.accountGold, a?.loanTotal]; }
   if (f.code === 'stat') return save?.stats?.[f.at];
   if (f.code === 'skill') return save?.skills?.[f.at];
   if (f.code === 'path') return save?.arcanePath;
@@ -225,31 +196,18 @@ function lawValueOf(/** @type {any} */ save, /** @type {any} */ summary, /** @ty
 export function lawValuesOf(save, summary) {
   const found = characterFindings(save, summary);
   if (!found.length) return null;
-  return cutOf(
-    found
-      .map((f) => `${f.code}@${f.at ?? ''}=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`)
-      .sort()
-      .join(','),
-    LAW_VALUES_MAX,
-  );
+  return cutOf(found.map((f) => `${f.code}@${f.at ?? ''}=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`).sort().join(','), LAW_VALUES_MAX);
 }
 /** AUDIT RPT1026 C5: THE MARK A JUDGEMENT'S VALUES CARRY WHERE THEY WERE CUT (a value past 40 characters, the whole past
  *  LAW_VALUES_MAX). They were cut silently, so a state past the cut - eighty bank accounts below nothing ahead of the
  *  purse in the sort - read the same whatever stood past it, and a clear of it excused every purse after it. A state
  *  cut is no state an excuse can name (verdict.js lawExcused): staff mend it (PURSE-MEND, STAFF-SET-BANK). */
 export const LAW_VALUES_CUT = '\u2026';
-const cutOf = (/** @type {string} */ s, /** @type {number} */ n) =>
-  s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s;
+const cutOf = (/** @type {string} */ s, /** @type {number} */ n) => (s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s);
 
 /** A law finding's item codes, safe: a piece the law cannot read without throwing (AUDIT INT: `enchantments: [null]`
  *  threw, and the checkpoint answered 500) is a piece of no shape the game writes. */
-const findingsOf = (/** @type {any} */ it) => {
-  try {
-    return itemFindings(it);
-  } catch {
-    return ['shape'];
-  }
-};
+const findingsOf = (/** @type {any} */ it) => { try { return itemFindings(it); } catch { return ['shape']; } };
 
 /**
  * ONE SAVE JUDGED, with no database: the character law and the item law over every list it holds. Answers `{ findings,
@@ -263,41 +221,20 @@ export function judgeSave(save, summary = null, o = {}) {
   /** @type {any[]} */
   const findings = [];
   let count = 0;
-  const keep = (/** @type {any} */ f) => {
-    count++;
-    if (findings.length < FINDINGS_KEPT) findings.push(f);
-  };
-  if (!save || typeof save !== 'object' || Array.isArray(save))
-    return {
-      findings: [{ code: 'save' }],
-      count: 1,
-      wealth: 0,
-      items: 0,
-      provenances: [],
-      pieces: [],
-      arms: [0, 0],
-      dragons: [],
-    };
+  const keep = (/** @type {any} */ f) => { count++; if (findings.length < FINDINGS_KEPT) findings.push(f); };
+  if (!save || typeof save !== 'object' || Array.isArray(save)) return { findings: [{ code: 'save' }], count: 1, wealth: 0, items: 0, provenances: [], pieces: [], arms: [0, 0], dragons: [] };
   for (const f of characterFindings(save, summary)) keep(f);
   let items = 0;
   /** @type {{ provenance: string, t: number, m: unknown, q: unknown, w: number, l?: string }[]} */
   const provenances = [];
   /** @type {{ id: string, look: number }[]} */
-  const dragons = []; // DRAGON5: every tamed dragon it holds (judgeDragons reads them)
+  const dragons = [];   // DRAGON5: every tamed dragon it holds (judgeDragons reads them)
   possessedItemLists(save).forEach((list, li) => {
     list.forEach((/** @type {any} */ it, /** @type {number} */ i) => {
       items++;
       for (const code of findingsOf(it)) keep({ code, list: li, at: i, t: it?.templateIndex ?? null });
       if (isDragonMount(it) && dragonMountWellFormed(it)) dragons.push({ id: it.dragonId, look: dragonLookOfItem(it) });
-      if (typeof it?.provenance === 'string' && PROVENANCE_RE.test(it.provenance))
-        provenances.push({
-          provenance: it.provenance,
-          t: it.templateIndex,
-          m: it.material,
-          q: it.quality,
-          w: worthless(it) ? 0 : itemWorth(it),
-          ...(isMasterWork(it) ? { l: masterSignature(it.affixes) } : {}),
-        }); // MASTER-ART: a Master's work's lines
+      if (typeof it?.provenance === 'string' && PROVENANCE_RE.test(it.provenance)) provenances.push({ provenance: it.provenance, t: it.templateIndex, m: it.material, q: it.quality, w: worthless(it) ? 0 : itemWorth(it), ...(isMasterWork(it) ? { l: masterSignature(it.affixes) } : {}) });   // MASTER-ART: a Master's work's lines
     });
   });
   // INT7: THE ARMS - the most reach of the weapons in the pack the law takes, and whether a lawful bow is among them
@@ -311,13 +248,11 @@ export function judgeSave(save, summary = null, o = {}) {
 export { ledgerKeyOf };
 /** What a piece IS, as the ledger keeps it beside its key: its template and its material - an id on another piece is no
  *  claim to the piece the id was minted for. */
-export const ledgerPrintOf = (/** @type {any} */ it) =>
-  `${Number.isSafeInteger(it?.templateIndex) ? it.templateIndex : '-'}:${Number.isSafeInteger(it?.material) ? it.material : '-'}`;
+export const ledgerPrintOf = (/** @type {any} */ it) => `${Number.isSafeInteger(it?.templateIndex) ? it.templateIndex : '-'}:${Number.isSafeInteger(it?.material) ? it.material : '-'}`;
 
 /** How many classic save's pieces the character holds (itemLaw.js classicPiece) - a route that would leave it fewer hands
  *  one to another player, and none does ('piece-legacy'). */
-export const classicCount = (/** @type {any} */ save) =>
-  possessedItemLists(save).reduce((n, list) => n + list.filter(classicPiece).length, 0);
+export const classicCount = (/** @type {any} */ save) => possessedItemLists(save).reduce((n, list) => n + list.filter(classicPiece).length, 0);
 
 /** INT4: every valuable piece the character holds (possessedItemLists), as `{ key, fp }`, in order, repeats kept - the
  *  ledger reads a repeat as a copy inside one record. */
@@ -368,25 +303,17 @@ export async function judgeProducts(db, provenances, player = null) {
   const have = new Map();
   for (let i = 0; i < ids.length; i += PROVENANCE_CHUNK) {
     const chunk = ids.slice(i, i + PROVENANCE_CHUNK);
-    const rows = await db
-      .prepare(
-        `SELECT provenance, template, material, quality, owner, credited, record FROM products WHERE provenance IN (${chunk.map(() => '?').join(', ')})`,
-      )
-      .bind(...chunk)
-      .all();
+    const rows = await db.prepare(`SELECT provenance, template, material, quality, owner, credited, record FROM products WHERE provenance IN (${chunk.map(() => '?').join(', ')})`).bind(...chunk).all();
     for (const r of rows?.results ?? []) have.set(r.provenance, r);
   }
   for (const [p, piece] of want) {
     const row = have.get(p);
-    const lawful =
-      !!row &&
-      row.template === piece.t &&
-      (piece.m == null || row.material == null || Number(row.material) === piece.m) &&
-      (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality))) &&
-      (piece.l === undefined || piece.l === recordLines(row.record)); // MASTER-ART: a Master's lines are its record's
+    const lawful = !!row && row.template === piece.t
+      && (piece.m == null || row.material == null || Number(row.material) === piece.m)
+      && (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality)))
+      && (piece.l === undefined || piece.l === recordLines(row.record));   // MASTER-ART: a Master's lines are its record's
     if (!lawful) out.push({ code: 'provenance', at: p, t: piece.t });
-    else if (player != null && row.owner === player && Number(row.credited) === 0)
-      arrived.push({ provenance: p, w: Number.isSafeInteger(piece.w) ? /** @type {number} */ (piece.w) : 0 });
+    else if (player != null && row.owner === player && Number(row.credited) === 0) arrived.push({ provenance: p, w: Number.isSafeInteger(piece.w) ? /** @type {number} */ (piece.w) : 0 });
   }
   return { findings: out, arrived };
 }
@@ -396,17 +323,9 @@ export async function judgeProducts(db, provenances, player = null) {
  *  another look, or held twice, is no tame ('dragon-tame').
  *  @param {any} db @param {{ id: string, look: number }[]} dragons @param {string} player @param {string} char */
 export async function judgeDragons(db, dragons, player, char) {
-  const r = await db
-    .prepare('SELECT id, look FROM dragon_mounts WHERE account = ?1 AND char_id = ?2')
-    .bind(player, char)
-    .all();
+  const r = await db.prepare('SELECT id, look FROM dragon_mounts WHERE account = ?1 AND char_id = ?2').bind(player, char).all();
   const have = new Map((r?.results ?? []).map((/** @type {any} */ m) => [m.id, Number(m.look) || 0]));
   const seen = new Set();
-  return dragons
-    .filter((d) => {
-      const ok = have.get(d.id) === d.look && !seen.has(d.id);
-      seen.add(d.id);
-      return !ok;
-    })
+  return dragons.filter((d) => { const ok = have.get(d.id) === d.look && !seen.has(d.id); seen.add(d.id); return !ok; })
     .map((d) => ({ code: 'dragon-tame', at: d.id, t: DRAGON_MOUNT_TEMPLATE }));
 }

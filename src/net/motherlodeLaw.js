@@ -27,11 +27,11 @@
 // in the MOTHERLODE_WATCH_S before the act's end. A pose is the client's
 // claim, so this is a bound, not a proof (PROF0 6) - the cap is the rest.
 // ═══════════════════════════════════════════════════════════════════
-import { gateHash } from './gate/gateLaw.js'; // the one mix every clock-law rolls with
+import { gateHash } from './gate/gateLaw.js';   // the one mix every clock-law rolls with
 import { VEIN_TABLES, regionSignature } from './nodeLaw.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 import { MARKS_FAUCETS } from './marksLaw.js';
-import { watchPixelOk } from './watchReceipt.js'; // AUDIT ETHER-OW C2-1: a site the Watch can vouch for
+import { watchPixelOk } from './watchReceipt.js';   // AUDIT ETHER-OW C2-1: a site the Watch can vouch for
 
 export const MOTHERLODE_SALT = 0x6d1d;
 /** The Motherlodes a UTC day, server-wide. */
@@ -62,14 +62,11 @@ export const MOTHERLODE_WATCH_S = 600;
  *  relay issued after the Motherlode had gone - a miner who reached it late struck it anyway. */
 export const MOTHERLODE_WATCH_AHEAD_S = 30;
 /** Whether a Watch receipt issued at `i` stands for a strike whose act ended at `at` (both epoch seconds). */
-export const motherlodeWatchOk = (i, at) =>
-  Number.isSafeInteger(i) && i >= at - MOTHERLODE_WATCH_S && i <= at + MOTHERLODE_WATCH_AHEAD_S;
+export const motherlodeWatchOk = (i, at) => Number.isSafeInteger(i) && i >= at - MOTHERLODE_WATCH_S && i <= at + MOTHERLODE_WATCH_AHEAD_S;
 /** The tier-6 ores a Motherlode yields - a region's own where its signature is one of them (PROF0 4.7). */
 export const MOTHERLODE_ORES = Object.freeze(['ore:adamantium', 'ore:ebony', 'ore:orichalcum']);
 /** The climates a Motherlode rises in first: the mountains' and the deserts' (the richest veins, PROF0 6's table). */
-export const MOTHERLODE_CLIMATES = Object.freeze(
-  /** @type {number[]} */ ([CLIMATES.Mountain, CLIMATES.MountainWoods, CLIMATES.Desert, CLIMATES.Desert2]),
-);
+export const MOTHERLODE_CLIMATES = Object.freeze(/** @type {number[]} */ ([CLIMATES.Mountain, CLIMATES.MountainWoods, CLIMATES.Desert, CLIMATES.Desert2]));
 /** A strike's ore: 4 to 6, half again for a clean act (every strike on the glint) - twice a vein's (2-3), the act's
  *  bound (+50%) as every harvest's. */
 export const MOTHERLODE_YIELD = Object.freeze([4, 6]);
@@ -86,13 +83,12 @@ const unit = (day, k, j) => gateHash(MOTHERLODE_SALT, day, k, j) / 4294967296;
 
 /** When the day's `k`th rises and goes - epoch seconds, a whole minute. */
 export function motherlodeTimes(day, k) {
-  const opensAt =
-    day * 86400 + k * MOTHERLODE_THIRD_S + Math.floor((unit(day, k, 1) * MOTHERLODE_RISE_SPREAD_S) / 60) * 60;
+  const opensAt = day * 86400 + k * MOTHERLODE_THIRD_S + Math.floor((unit(day, k, 1) * MOTHERLODE_RISE_SPREAD_S) / 60) * 60;
   return { opensAt, closesAt: opensAt + MOTHERLODE_OPEN_S };
 }
 /** A Motherlode's ore: its region's signature where that is a tier-6 ore, else one of the three by the day's roll. */
 export function motherlodeOre(day, k, region) {
-  const sig = region == null ? null : (regionSignature(region)?.ore ?? null);
+  const sig = region == null ? null : regionSignature(region)?.ore ?? null;
   if (sig && MOTHERLODE_ORES.includes(sig)) return sig;
   return MOTHERLODE_ORES[Math.min(MOTHERLODE_ORES.length - 1, Math.floor(unit(day, k, 2) * MOTHERLODE_ORES.length))];
 }
@@ -108,8 +104,7 @@ export const motherlodeGround = (climate) => !!VEIN_TABLES[climate];
  * @param {number} day @param {Array<{ x: number, y: number, climate: number, region: number }>} candidates
  */
 export function motherlodeSites(day, candidates) {
-  const all = (candidates ?? [])
-    .filter((c) => c && watchPixelOk(c.x, c.y) && motherlodeGround(c.climate)) // AUDIT ETHER-OW C2-1: never past the Veil - a strike asks a Watch receipt of the site's pixel
+  const all = (candidates ?? []).filter((c) => c && watchPixelOk(c.x, c.y) && motherlodeGround(c.climate))   // AUDIT ETHER-OW C2-1: never past the Veil - a strike asks a Watch receipt of the site's pixel
     .sort((a, b) => a.y - b.y || a.x - b.x);
   const rich = all.filter((c) => MOTHERLODE_CLIMATES.includes(c.climate));
   const pool = (rich.length >= MOTHERLODES_A_DAY ? rich : all).slice();
@@ -117,16 +112,7 @@ export function motherlodeSites(day, candidates) {
   for (let k = 0; k < MOTHERLODES_A_DAY && pool.length; k++) {
     const i = Math.min(pool.length - 1, Math.floor(unit(day, k, 0) * pool.length));
     const [c] = pool.splice(i, 1);
-    out.push({
-      k,
-      key: motherlodeKey(day, k),
-      x: c.x,
-      y: c.y,
-      climate: c.climate,
-      region: c.region,
-      material: motherlodeOre(day, k, c.region),
-      ...motherlodeTimes(day, k),
-    });
+    out.push({ k, key: motherlodeKey(day, k), x: c.x, y: c.y, climate: c.climate, region: c.region, material: motherlodeOre(day, k, c.region), ...motherlodeTimes(day, k) });
   }
   return out;
 }

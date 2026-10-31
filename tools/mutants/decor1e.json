@@ -11,8 +11,8 @@
   {
     "name": "DECOR1e-a-full-piece-unheld",
     "file": "src/ui/decorPanel.js",
-    "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || !!it.piece.station || door; // HOME-STATIONS: a station holds nothing",
-    "new": "    storeBtn.disabled = !it || !!it.piece.item || !!it.piece.station || door; // HOME-STATIONS: a station holds nothing",
+    "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || !!it.piece.station || door;",
+    "new": "    storeBtn.disabled = !it || !!it.piece.item || !!it.piece.station || door;",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DECOR1e-move-under-the-panel",
     "file": "src/ui/decorPanel.js",
-    "old": "      hide();\n      onMove(it.piece);",
-    "new": "      onMove(it.piece);",
+    "old": "if (it && !moveBtn.disabled) { hide(); onMove(it.piece); }",
+    "new": "if (it && !moveBtn.disabled) { onMove(it.piece); }",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DECOR1e-the-light-unread-by-the-list",
     "file": "src/ui/decorPanel.js",
-    "old": "            `${it.piece.id}:${it.piece.paid}:${it.piece.light ? 1 : 0}:${it.piece.storage ? 1 : 0}:${it.holds ? 1 : 0}:${it.piece.station ?? ''}:${it.piece.item ? 1 : 0}:${it.piece.name ?? ''}:${it.room ?? ''}`,",
-    "new": "            `${it.piece.id}:${it.piece.paid}:${it.piece.storage ? 1 : 0}:${it.holds ? 1 : 0}:${it.piece.station ?? ''}:${it.piece.item ? 1 : 0}:${it.piece.name ?? ''}:${it.room ?? ''}`,",
+    "old": ":${it.piece.light ? 1 : 0}:${it.piece.storage",
+    "new": ":${it.piece.storage",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "DECOR1e-the-count-unsaid",
     "file": "src/ui/decorPanel.js",
-    "old": "      chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'room'),",
-    "new": "      chip(`In this room`, mode === 'room', () => setMode('room'), 'room'),",
+    "old": "chip(`In this room (${n})`, ",
+    "new": "chip(`In this room`, ",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "DECOR1e-the-room-view-drawing-the-catalogue",
     "file": "src/ui/decorPanel.js",
-    "old": "      ); // RENT-ORPHANS: while the rooms are found, it says so\n    } else if (mode === 'room') {",
-    "new": "      ); // RENT-ORPHANS: while the rooms are found, it says so\n    } else if (false) {",
+    "old": "} else if (mode === 'room') {\n      const placed = roomed(view.placed ?? []);",
+    "new": "} else if (false) {\n      const placed = roomed(view.placed ?? []);",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "DECOR1e-the-chosen-piece-unchosen",
     "file": "src/ui/decorPanel.js",
-    "old": "      placedId = id ?? placedId;\n      if (mode === 'room') redraw();",
-    "new": "      if (mode === 'room') redraw();",
+    "old": "    showRoom(id = null) { placedId = id ?? placedId;",
+    "new": "    showRoom(id = null) {",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DECOR1e-the-shape-lost",
     "file": "src/ui/decorPanel.js",
-    "old": "    it.entry ?? {",
-    "new": "    it.entry ??\n    null ??\n    void {",
+    "old": "const placedShape = (it) => it.entry ?? {",
+    "new": "const placedShape = (it) => it.entry ?? null ?? void {",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DECOR1e-the-tabs-idle",
     "file": "src/ui/decorPanel.js",
-    "old": "    tabs.replaceChildren(\n      chip('Catalog', mode === 'catalogue', () => setMode('catalogue'), 'all'),",
-    "new": "    tabs.replaceChildren(\n      chip('Catalog', mode === 'catalogue', () => {}, 'all'),",
+    "old": "chip('Catalog', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this room",
+    "new": "chip('Catalog', mode === 'catalogue', () => {}, 'all'), chip(`In this room",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DECOR1e-the-hold-never-let-go",
     "file": "src/ui/decorPanel.js",
-    "old": "    for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'])",
-    "new": "    for (const t of ['pointerup'])",
+    "old": "for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'])",
+    "new": "for (const t of ['pointerup'])",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DECOR1e-a-window-keeping-it-held",
     "file": "src/ui/decorPanel.js",
-    "old": "      flyTo(0);\n      if (alive && root.dataset.up !== '0') root.dataset.up = '0';",
-    "new": "      if (alive && root.dataset.up !== '0') root.dataset.up = '0';",
+    "old": "    hide() { flyTo(0); if (alive",
+    "new": "    hide() { if (alive",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "DECOR1e-the-half-of-the-sum",
     "file": "server-account/src/homes.js",
-    "old": "      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
-    "new": "      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) ELSE 0 END), 0) / 2 AS back",
+    "old": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
+    "new": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) ELSE 0 END), 0) / 2 AS back",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "DECOR1e-the-bad-record-counted",
     "file": "server-account/src/homes.js",
-    "old": "    .prepare(\n      `SELECT COALESCE(SUM(CASE WHEN json_valid(place) THEN 1 ELSE 0 END), 0) AS n,\n      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
-    "new": "    .prepare(\n      `SELECT COUNT(*) AS n,\n      COALESCE(SUM(CASE WHEN json_valid(place) THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
+    "old": "const decorBackStatement = (db, mapId, buildingKey) => db.prepare(`SELECT COALESCE(SUM(CASE WHEN json_valid(place) THEN 1 ELSE 0 END), 0) AS n,",
+    "new": "const decorBackStatement = (db, mapId, buildingKey) => db.prepare(`SELECT COUNT(*) AS n,",
     "tests": [
       "test/server/decor1.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "DECOR1e-the-release-count-dropped",
     "file": "server-account/src/homes.js",
-    "old": "    decorCount: Number(d?.n) || 0,",
-    "new": "    decorCount: 0,",
+    "old": "decorCount: Number(d?.n) || 0,",
+    "new": "decorCount: 0,",
     "tests": [
       "test/server/decor1.test.js"
     ]

@@ -93,8 +93,8 @@
   {
     "name": "LEGACY7-house-unfiltered",
     "file": "server-account/src/legacy.js",
-    "old": "  if (!h || !checkName(h.hn).ok) return null;",
-    "new": "  if (!h) return null;",
+    "old": "  if (!h || !checkName(h.hn).ok) return null;\n  if (h.hc",
+    "new": "  if (!h) return null;\n  if (h.hc",
     "tests": [
       "test/net/legacy7_house.test.js"
     ]

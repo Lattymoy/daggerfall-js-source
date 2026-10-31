@@ -67,8 +67,8 @@
   {
     "name": "GRASSPX-the-tuft-index-is-unclamped-so-a-phase-of-one-samples-past-the-sheet",
     "file": "src/render/labGrass.js",
-    "old": "      \"  vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude's hash, its float32 fract honest; AUDIT MEADOW1: of the cell's lane, not the scene's root - every tuft re-rolled at each map pixel crossed\",",
-    "new": "      \"  vVar = floor(hash(aPA.xy * 64.0) * uPxVariants);   // GRASS AUDIT 1: the prelude's hash, its float32 fract honest; AUDIT MEADOW1: of the cell's lane, not the scene's root - every tuft re-rolled at each map pixel crossed\",",
+    "old": "      + '  vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude\\'s hash, its float32 fract honest; AUDIT MEADOW1: of the cell\\'s lane, not the scene\\'s root - every tuft re-rolled at each map pixel crossed',",
+    "new": "      + '  vVar = floor(hash(aPA.xy * 64.0) * uPxVariants);   // GRASS AUDIT 1: the prelude\\'s hash, its float32 fract honest; AUDIT MEADOW1: of the cell\\'s lane, not the scene\\'s root - every tuft re-rolled at each map pixel crossed',",
     "tests": [
       "test/render/grasspx.test.js"
     ],
@@ -77,8 +77,8 @@
   {
     "name": "GRASSPX-the-air-texel-is-not-discarded",
     "file": "src/render/labGrass.js",
-    "old": "      '    if (px.a < 0.5 || vFade < bayer4(gl_FragCoord.xy)) discard;\\n' +",
-    "new": "      '    if (vFade < bayer4(gl_FragCoord.xy)) discard;\\n' +",
+    "old": "      + '    if (px.a < 0.5 || vFade < bayer4(gl_FragCoord.xy)) discard;\\n'",
+    "new": "      + '    if (vFade < bayer4(gl_FragCoord.xy)) discard;\\n'",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "GRASSPX-the-sheet-is-sampled-upside-down",
     "file": "src/render/labGrass.js",
-    "old": "      '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, vUV.y));\\n' +",
-    "new": "      '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, 1.0 - vUV.y));\\n' +",
+    "old": "      + '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, vUV.y));\\n'",
+    "new": "      + '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, 1.0 - vUV.y));\\n'",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "GRASSPX-the-bayer-form-is-wrong-in-one-bit",
     "file": "src/render/labGrass.js",
-    "old": "      '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | (x & 2) | ((q.y & 2) >> 1);\\n' +",
-    "new": "      '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | ((x & 2) << 1) | ((q.y & 2) >> 1);\\n' +",
+    "old": "      + '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | (x & 2) | ((q.y & 2) >> 1);\\n'",
+    "new": "      + '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | ((x & 2) << 1) | ((q.y & 2) >> 1);\\n'",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "GRASSPX-only-the-first-level-is-uploaded-so-the-texture-is-incomplete",
     "file": "src/render/labGrass.js",
-    "old": "    for (let i = 0; i < mips.length; i++)",
-    "new": "    for (let i = 0; i < 1; i++)",
+    "old": "    for (let i = 0; i < mips.length; i++) gl.texImage2D(",
+    "new": "    for (let i = 0; i < 1; i++) gl.texImage2D(",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -149,8 +149,8 @@
   {
     "name": "GRASSPX-the-sheet-rides-the-zero-fields-unit",
     "file": "src/render/labGrass.js",
-    "old": "      gl.activeTexture(gl.TEXTURE4);\n      gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);\n      gl.uniform1i(u.uPxSheet, 4);",
-    "new": "      gl.activeTexture(gl.TEXTURE3);\n      gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);\n      gl.uniform1i(u.uPxSheet, 3);",
+    "old": "      gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);\n      gl.uniform1i(u.uPxSheet, 4);",
+    "new": "      gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);\n      gl.uniform1i(u.uPxSheet, 3);",
     "tests": [
       "test/render/grasspx.test.js"
     ],
@@ -178,8 +178,8 @@
   {
     "name": "GRASSPX-the-renderer-compiles-the-labs-text-so-the-pixel-uniforms-do-not-exist",
     "file": "src/render/labGrass.js",
-    "old": "    ? { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }",
-    "new": "    ? { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS }",
+    "old": "(art === MEADOW_ART ? { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }",
+    "new": "(art === MEADOW_ART ? { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS }",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "GRASSPX2-the-pixel-style-keeps-the-five-quad-near-blade",
     "file": "src/render/labGrass.js",
-    "old": "      const far = this._oneQuad || dn > range * GRASS_FAR_AT; // GRASS-PX2: the pixel style is one quad everywhere",
-    "new": "      const far = dn > range * GRASS_FAR_AT; // GRASS-PX2: the pixel style is one quad everywhere",
+    "old": "      const far = this._oneQuad || dn > range * GRASS_FAR_AT;",
+    "new": "      const far = dn > range * GRASS_FAR_AT;",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-GRASSPX-the-ramp-has-a-zero-rung-again",
     "file": "src/render/labGrass.js",
-    "old": "      '  if (uPixel > 0.5) { float l = max(dot(c, vec3(0.299, 0.587, 0.114)), 1e-4); float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps; c *= pow(g, 2.2) / l; }   // GRASS-PX: the ramp\\n' +",
-    "new": "      '  if (uPixel > 0.5) { float l = max(dot(c, vec3(0.299, 0.587, 0.114)), 1e-4); float g = floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5) / uPxSteps; c *= pow(g, 2.2) / l; }   // GRASS-PX: the ramp\\n' +",
+    "old": "float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps;",
+    "new": "float g = floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5) / uPxSteps;",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-GRASSPX-the-ramp-is-linear-so-a-moonlit-night-is-noon",
     "file": "src/render/labGrass.js",
-    "old": "      '  if (uPixel > 0.5) { float l = max(dot(c, vec3(0.299, 0.587, 0.114)), 1e-4); float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps; c *= pow(g, 2.2) / l; }   // GRASS-PX: the ramp\\n' +",
-    "new": "      '  if (uPixel > 0.5) { float l = max(dot(c, vec3(0.299, 0.587, 0.114)), 1e-4); float g = max(1.0, floor(l * uPxSteps + 0.5)) / uPxSteps; c *= g / l; }   // GRASS-PX: the ramp\\n' +",
+    "old": "float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps; c *= pow(g, 2.2) / l;",
+    "new": "float g = max(1.0, floor(l * uPxSteps + 0.5)) / uPxSteps; c *= g / l;",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "AUDIT-GRASSPX-the-tint-band-truncates",
     "file": "src/render/labGrass.js",
-    "old": "      '  c *= 0.80 + mix(vTint, floor(vTint * (uPxTintBands - 1.0) + 0.5) / (uPxTintBands - 1.0), uPixel) * 0.42;   // GRASS-PX: the patch tint in bands; GRASS AUDIT 1: rounded to band CENTRES, so the mean holds and the top band is 1',",
-    "new": "      '  c *= 0.80 + mix(vTint, floor(vTint * uPxTintBands) / uPxTintBands, uPixel) * 0.42;   // GRASS-PX: the patch tint in bands; GRASS AUDIT 1: rounded to band CENTRES, so the mean holds and the top band is 1',",
+    "old": "floor(vTint * (uPxTintBands - 1.0) + 0.5) / (uPxTintBands - 1.0)",
+    "new": "floor(vTint * uPxTintBands) / uPxTintBands",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "AUDIT-GRASSPX-the-width-ignores-the-drawn-height",
     "file": "src/render/labGrass.js",
-    "old": "    to: \"  p.xz += side * (aCorner.x-0.5) * mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel);   // GRASS-PX; GRASS AUDIT 1: the width is the height's, per blade\",",
-    "new": "    to: \"  p.xz += side * (aCorner.x-0.5) * mix(aInst2.w * (1.0 - vT*0.75), aInst2.w * 3.0, uPixel);   // GRASS-PX; GRASS AUDIT 1: the width is the height's, per blade\",",
+    "old": "mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel)",
+    "new": "mix(aInst2.w * (1.0 - vT*0.75), aInst2.w * 3.0, uPixel)",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -241,8 +241,8 @@
   {
     "name": "AUDIT-GRASSPX-the-sprite-is-the-gust-phase",
     "file": "src/render/labGrass.js",
-    "old": "      \"  vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude's hash, its float32 fract honest; AUDIT MEADOW1: of the cell's lane, not the scene's root - every tuft re-rolled at each map pixel crossed\",",
-    "new": "      \"  vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude's hash, its float32 fract honest; AUDIT MEADOW1: of the cell's lane, not the scene's root - every tuft re-rolled at each map pixel crossed\",",
+    "old": "vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);",
+    "new": "vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);",
     "tests": [
       "test/render/grasspx.test.js"
     ],
@@ -252,7 +252,7 @@
     "name": "AUDIT-GRASSPX-the-step-counts-are-gated-so-smooth-is-NaN",
     "file": "src/render/labGrass.js",
     "old": "    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);\n    if (pixel) {",
-    "new": "    if (pixel) {\n      gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n      gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n      gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);",
+    "new": "    if (pixel) {\n    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);",
     "tests": [
       "test/render/grasspx.test.js"
     ],
@@ -261,8 +261,8 @@
   {
     "name": "AUDIT-GRASSPX-the-smooth-style-binds-the-sheet",
     "file": "src/render/labGrass.js",
-    "old": "    if (pixel) {",
-    "new": "    if (pixel || true) {",
+    "old": "    if (pixel) {\n      gl.activeTexture(gl.TEXTURE4);",
+    "new": "    if (pixel || true) {\n      gl.activeTexture(gl.TEXTURE4);",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "AUDIT-GRASSPX-the-fade-fraction-is-over-the-whole-cell-not-the-half",
     "file": "src/render/labGrass.js",
-    "old": "      gl.uniform1f(this.u.uSlotN, m); // the fraction is over the CELL (or its half), not over the prefix",
-    "new": "      gl.uniform1f(this.u.uSlotN, n); // the fraction is over the CELL (or its half), not over the prefix",
+    "old": "      gl.uniform1f(this.u.uSlotN, m);",
+    "new": "      gl.uniform1f(this.u.uSlotN, n);",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT-GRASSPX-the-renderer-ignores-the-stages-it-is-handed",
     "file": "src/render/labGrass.js",
-    "old": "  [LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs],",
-    "new": "  [LAB_GRASS_HEAD + GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + GAME_GRASS_FS],",
+    "old": ", LAB_GRASS_HEAD + stages.fs]];",
+    "new": ", LAB_GRASS_HEAD + GAME_GRASS_FS]];",
     "tests": [
       "test/render/grasspx.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "GRASSPX3-the-sway-is-stepped-again",
     "file": "src/render/labGrass.js",
-    "old": "    why: 'the pixel quad is not tapered - the sprite carries the shape - and it is HALF ITS DRAWN HEIGHT wide, so a 2:1 tuft (16x32 then, 8x16 since GRASS-PX4) is square texels on every blade, buried or not',",
-    "new": "    why: 'GRASS-PX3 mutant: the clock stepped',\n    from: '  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n    to: '  float gust = sin((floor(uTime * 8.0) / 8.0)*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n  }),\n  Object.freeze({\n    why: 'the pixel quad is not tapered - the sprite carries the shape - and it is HALF ITS DRAWN HEIGHT wide, so a 2:1 tuft (16x32 then, 8x16 since GRASS-PX4) is square texels on every blade, buried or not',",
+    "old": "  Object.freeze({\n    why: 'the pixel quad is not tapered",
+    "new": "  Object.freeze({\n    why: 'GRASS-PX3 mutant: the clock stepped',\n    from: '  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n    to: '  float gust = sin((floor(uTime * 8.0) / 8.0)*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n  }),\n  Object.freeze({\n    why: 'the pixel quad is not tapered",
     "tests": [
       "test/render/grasspx.test.js"
     ]

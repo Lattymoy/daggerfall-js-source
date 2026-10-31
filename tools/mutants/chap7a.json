@@ -164,8 +164,8 @@
   {
     "name": "CHAP7A-KINDS",
     "file": "src/net/marksLaw.js",
-    "old": "  patron: 'burn', // CHAP7a: the winning bid, burnt at the Turning that opens its Season (Chapters-Arc 8, CALL 6)",
-    "new": "  patron: 'move', // CHAP7a: the winning bid, burnt at the Turning that opens its Season (Chapters-Arc 8, CALL 6)",
+    "old": "  patron: 'burn',             // CHAP7a",
+    "new": "  patron: 'move',             // CHAP7a",
     "tests": [
       "test/net/chap7a_patrons.test.js"
     ]

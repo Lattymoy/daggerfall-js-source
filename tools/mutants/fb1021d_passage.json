@@ -344,8 +344,8 @@
   {
     "name": "PASSAGE-IN-dry-leg-sailed",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (read === SEA_LEG_DRY && r.i < r.legs.length - 1) {\n      r.i++;\n      startRouteLeg();\n      return;\n    }\n    r.seaUnbuilt = read === SEA_LEG_UNBUILT ? r.i : null;",
-    "new": "    r.seaUnbuilt = read === SEA_LEG_UNBUILT ? r.i : null;",
+    "old": "    if (read === SEA_LEG_DRY && r.i < r.legs.length - 1) { r.i++; startRouteLeg(); return; }\n",
+    "new": "",
     "why": "AUDIT FB1021d PS-1: a pixel with no water built aimed at its middle - land",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"
@@ -354,8 +354,8 @@
   {
     "name": "PASSAGE-IN-unbuilt-never-again",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.autopilot && st.route && st.route.seaUnbuilt === st.route.i && seaLegBuilt(st.route.legs[st.route.i]))\n      startRouteLeg();\n    // OW-TOWN-WALK: THE GATES SHUT - the way out of a walled city lies behind its gates at night (offline: DaggerfallCityGate",
-    "new": "    // OW-TOWN-WALK: THE GATES SHUT - the way out of a walled city lies behind its gates at night (offline: DaggerfallCityGate",
+    "old": "    if (st.autopilot && st.route && st.route.seaUnbuilt === st.route.i && seaLegBuilt(st.route.legs[st.route.i])) startRouteLeg();\n",
+    "new": "",
     "why": "AUDIT FB1021d PS-1: a leg begun with its pixel unbuilt keeps its middle, whatever is built there",
     "tests": [
       "test/scenes/naval/fb1021d_passage.test.js"

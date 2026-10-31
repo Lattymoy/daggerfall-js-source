@@ -42,8 +42,8 @@
   {
     "name": "GC-never-joined",
     "file": "src/net/gate/gateCourts.js",
-    "old": "    if (had[0] === asked && can) had[2] = 1;\n    return had[0];",
-    "new": "    return had[0];",
+    "old": "    if (had[0] === asked && can) had[2] = 1;\n",
+    "new": "",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "GC-the-slack-ignored",
     "file": "src/net/gate/gateCourts.js",
-    "old": "    if (s && seatLive(s, now) && open(s[0], GATE_COURT_FIGHTERS + GATE_PARTY_SLACK) && (court === null || s[0] < court))\n      court = s[0];",
-    "new": "    if (s && seatLive(s, now) && open(s[0], GATE_COURT_FIGHTERS) && (court === null || s[0] < court)) court = s[0];",
+    "old": "open(s[0], GATE_COURT_FIGHTERS + GATE_PARTY_SLACK)",
+    "new": "open(s[0], GATE_COURT_FIGHTERS)",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "GC-the-highest-mate",
     "file": "src/net/gate/gateCourts.js",
-    "old": "    if (s && seatLive(s, now) && open(s[0], GATE_COURT_FIGHTERS + GATE_PARTY_SLACK) && (court === null || s[0] < court))",
-    "new": "    if (s && seatLive(s, now) && open(s[0], GATE_COURT_FIGHTERS + GATE_PARTY_SLACK) && (court === null || s[0] > court))",
+    "old": "(court === null || s[0] < court)",
+    "new": "(court === null || s[0] > court)",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "GC-the-night-before-the-seal",
     "file": "src/net/gate/gateCourts.js",
-    "old": "  if (now < t.sealAt) return false;\n  for (const c of courtsJoined(book)) if (!book.f[c]) return false;",
-    "new": "  for (const c of courtsJoined(book)) if (!book.f[c]) return false;",
+    "old": "  if (now < t.sealAt) return false;\n",
+    "new": "",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -102,7 +102,7 @@
   {
     "name": "GC-a-pending-court-counted",
     "file": "src/net/gate/gateCourts.js",
-    "old": "export const courtsJoined = (book) =>\n  new Set(\n    Object.values(book.s)\n      .filter((s) => s[2] === 1)\n      .map((s) => s[0]),\n  );",
+    "old": "export const courtsJoined = (book) => new Set(Object.values(book.s).filter((s) => s[2] === 1).map((s) => s[0]));",
     "new": "export const courtsJoined = (book) => new Set(Object.values(book.s).map((s) => s[0]));",
     "tests": [
       "test/net/gate/gatecourts.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "GC-the-wrath-unread",
     "file": "src/net/gate/gateCourts.js",
-    "old": "  if (now >= t.wrathAt + GATE_NIGHT_GRACE_MS) return true;\n  if (now < t.sealAt) return false;",
-    "new": "  if (now < t.sealAt) return false;",
+    "old": "  if (now >= t.wrathAt + GATE_NIGHT_GRACE_MS) return true;\n",
+    "new": "",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "GC-the-sum",
     "file": "src/net/gate/gateCourts.js",
-    "old": "    n: falls.reduce((s, f) => s + f.n, 0),",
-    "new": "    n: falls[0]?.n ?? 0,",
+    "old": "n: falls.reduce((s, f) => s + f.n, 0)",
+    "new": "n: falls[0]?.n ?? 0",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "GC-a-court-past-the-last",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  `^gate:(?:0|[1-9]\\\\d{0,8})(?:\\\\.(?:${Array.from({ length: GATE_COURTS_MAX - 1 }, (_, i) => i + 1).join('|')}))?$`,",
-    "new": "  `^gate:(?:0|[1-9]\\\\d{0,8})(?:\\\\.(?:${Array.from({ length: GATE_COURTS_MAX }, (_, i) => i + 1).join('|')}))?$`,",
+    "old": "Array.from({ length: GATE_COURTS_MAX - 1 }, (_, i) => i + 1)",
+    "new": "Array.from({ length: GATE_COURTS_MAX }, (_, i) => i + 1)",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -502,8 +502,8 @@
   {
     "name": "GCA-the-grace-unbeaten",
     "file": "src/net/gate/gateCourts.js",
-    "old": "  book.end\n    ? null\n    : now < t.sealAt\n      ? t.sealAt\n      : now < t.wrathAt + GATE_NIGHT_GRACE_MS\n        ? t.wrathAt + GATE_NIGHT_GRACE_MS\n        : null;",
-    "new": "  book.end ? null : now < t.sealAt ? t.sealAt : now < t.wrathAt ? t.wrathAt : null;",
+    "old": "now < t.wrathAt + GATE_NIGHT_GRACE_MS ? t.wrathAt + GATE_NIGHT_GRACE_MS : null",
+    "new": "now < t.wrathAt ? t.wrathAt : null",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -572,8 +572,8 @@
   {
     "name": "GCA-a-new-seat-joined-whatever-the-fight",
     "file": "src/net/gate/gateCourts.js",
-    "old": "  book.s[sub] = [court, now, court === asked && can ? 1 : 0];",
-    "new": "  book.s[sub] = [court, now, court === asked ? 1 : 0];",
+    "old": "book.s[sub] = [court, now, court === asked && can ? 1 : 0];",
+    "new": "book.s[sub] = [court, now, court === asked ? 1 : 0];",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],
@@ -582,8 +582,8 @@
   {
     "name": "GCA-a-new-seat-joined-unasked",
     "file": "src/net/gate/gateCourts.js",
-    "old": "  book.s[sub] = [court, now, court === asked && can ? 1 : 0];",
-    "new": "  book.s[sub] = [court, now, can ? 1 : 0];",
+    "old": "book.s[sub] = [court, now, court === asked && can ? 1 : 0];",
+    "new": "book.s[sub] = [court, now, can ? 1 : 0];",
     "tests": [
       "test/net/gate/gatecourts.test.js"
     ],

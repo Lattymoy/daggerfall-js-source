@@ -606,15 +606,13 @@ function nearestActivatableHit(eye, dir, targets, collider) {
       // model with no geometry to collide) is still met at its box, as before.
       if (firstHit.key === target.key) d = Math.max(d, firstHit.dist);
     } else if (target.surface === true && collider.raycastHit && d <= bestDist) {
-      // a box entered past the best can lose only further: no cast
-      // WHERE-ROBES (FIELD BUGS 2026-10-04c): CASTLE1's law again, for a box merely ENTERED whose model's triangles sit
-      // in the collider's SHARED bucket (a building's furniture, filed under the interior's own key, so no key names
-      // it). DFU meets furniture only at its mesh (PlayerActivate.cs:314), and the box standing in for it is mostly
-      // air: a shelf's open front, the space over a mattress under its headboard, a dresser's top under its mirror. A
-      // quest item standing there is a trigger sphere (GameObjectHelper.cs:1158) that DFU's ray reaches FIRST, and the
-      // box's entry beat it on every press - O0A0AL00's robes could not be picked up off a bed or a dresser. So the
-      // furniture is struck at the first surface the ray meets, and only when that surface lies inside its box (a
-      // triangle's home is its own AABB): a ray that crosses the box and meets nothing of it never struck it.
+      // A box entered past the best can lose only further: no cast. WHERE-ROBES (FIELD BUGS 2026-10-04c): CASTLE1's law
+      // for a box merely ENTERED whose triangles sit in the collider's SHARED bucket (a building's furniture, filed
+      // under the interior's key). DFU meets furniture only at its mesh (PlayerActivate.cs:314); the box is mostly air
+      // - a shelf's open front, the space over a mattress - and a quest item there is a trigger sphere
+      // (GameObjectHelper.cs:1158) DFU's ray reaches FIRST, so O0A0AL00's robes could not be picked up off a bed. The
+      // furniture is struck at the first surface the ray meets, only inside its box: a ray that crosses the box and
+      // meets nothing of it never struck it.
       firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); // the one cast, DISC19-E's arm's too
       if (!Number.isFinite(firstHit.dist)) continue;
       if (

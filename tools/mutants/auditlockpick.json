@@ -111,8 +111,8 @@
   {
     "name": "AUDITLOCK-B2-classic-card",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    isStarglass(item) ||\n    isLockpick(item)",
-    "new": "    isStarglass(item)",
+    "old": "|| isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+    "new": "|| isStarglass(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AUDITLOCK-B2-stat-rows",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    isWagonKitItem(item) ||\n    isLockpick(item); // AUDIT LOCKPICK B2: and the Lockpick's lines   // STEED1/WAGONS4: the oats' and the kit's lines   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's",
-    "new": "    isWagonKitItem(item); // AUDIT LOCKPICK B2: and the Lockpick's lines   // STEED1/WAGONS4: the oats' and the kit's lines   // AUDIT CARDS-6 A5: and the pack's; CARDS8   // REST6: the seven's lines too; PORTAL1: and the Portal Stone's; WALLET1: and the wallet's",
+    "old": "|| isWagonKitItem(item) || isLockpick(item);",
+    "new": "|| isWagonKitItem(item);",
     "tests": [
       "test/systems/lockpick/lockpick_audit.test.js"
     ]

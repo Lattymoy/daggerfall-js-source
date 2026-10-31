@@ -12,37 +12,13 @@
 import { readSpellsStd, spellsByIndexMap } from '../../formats/spellsStd.js';
 
 /** EffectRecordData's fields the port's records carry (SpellRecord.cs:77-94), a struct's zeros where unnamed. */
-const EFFECT_FIELDS = Object.freeze([
-  'type',
-  'subType',
-  'durationBase',
-  'durationMod',
-  'durationPerLevel',
-  'chanceBase',
-  'chanceMod',
-  'chancePerLevel',
-  'magnitudeBaseLow',
-  'magnitudeBaseHigh',
-  'magnitudeLevelBase',
-  'magnitudeLevelHigh',
-  'magnitudePerLevel',
-]);
+const EFFECT_FIELDS = Object.freeze(['type', 'subType', 'durationBase', 'durationMod', 'durationPerLevel', 'chanceBase', 'chanceMod',
+  'chancePerLevel', 'magnitudeBaseLow', 'magnitudeBaseHigh', 'magnitudeLevelBase', 'magnitudeLevelHigh', 'magnitudePerLevel']);
 /** SpellRecordData's own (SpellRecord.cs:58-75) under the port's names - `spellName` is the record's `name`. */
-const RECORD_FIELDS = Object.freeze({
-  spellName: 'name',
-  element: 'element',
-  rangeType: 'rangeType',
-  cost: 'cost',
-  index: 'index',
-  icon: 'icon',
-});
+const RECORD_FIELDS = Object.freeze({ spellName: 'name', element: 'element', rangeType: 'rangeType', cost: 'cost', index: 'index', icon: 'icon' });
 
 const blankEffect = () => Object.fromEntries(EFFECT_FIELDS.map((k) => [k, 0]));
-const effectOf = (item) => {
-  const e = blankEffect();
-  for (const k of EFFECT_FIELDS) if (Number.isInteger(item?.[k])) e[k] = item[k];
-  return e;
-};
+const effectOf = (item) => { const e = blankEffect(); for (const k of EFFECT_FIELDS) if (Number.isInteger(item?.[k])) e[k] = item[k]; return e; };
 
 const _assets = [];
 /** A mod's `SpellRecords.json` (its parsed list), merged in the order mods register - DFU's mod order. */
@@ -51,23 +27,11 @@ export function registerSpellRecordsAsset(source, items) {
   _assets.push({ source, items });
 }
 /** The test seam. */
-export function _resetSpellRecordsAssets() {
-  _assets.length = 0;
-}
+export function _resetSpellRecordsAssets() { _assets.length = 0; }
 
 /** One item deserialised onto `base` (a copy), or onto SpellRecordData's defaults. */
 export function spellRecordFromJson(item, base = null) {
-  const r = base
-    ? structuredClone(base)
-    : {
-        effects: [blankEffect(), blankEffect(), blankEffect()],
-        element: -1,
-        rangeType: -1,
-        cost: -1,
-        name: '',
-        icon: -1,
-        index: -1,
-      };
+  const r = base ? structuredClone(base) : { effects: [blankEffect(), blankEffect(), blankEffect()], element: -1, rangeType: -1, cost: -1, name: '', icon: -1, index: -1 };
   for (const [json, field] of Object.entries(RECORD_FIELDS)) {
     if (!(json in item)) continue;
     r[field] = field === 'name' ? String(item[json]) : item[json];
@@ -81,7 +45,7 @@ export function mergeSpellRecords(records) {
   for (const { items } of _assets) {
     for (const item of items) {
       if (!item || typeof item !== 'object') continue;
-      const at = records.findIndex((r) => r.index === item.index); // isItemData: record.index == data["index"]
+      const at = records.findIndex((r) => r.index === item.index);   // isItemData: record.index == data["index"]
       if (at !== -1) records[at] = spellRecordFromJson(item, records[at]);
       else records.push(spellRecordFromJson(item));
     }

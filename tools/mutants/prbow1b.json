@@ -2,8 +2,8 @@
   {
     "name": "pose-folds-no-piece-boxes",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  assembly.bounds = pieces.length ? foldPieceBounds(pieces) : null; // PR-BOW1b: and each piece's own box, in the same walk",
-    "new": "  assembly.bounds = pieces.length ? meshBounds(pieces) : null; // PR-BOW1b: and each piece's own box, in the same walk",
+    "old": "  assembly.bounds = pieces.length ? foldPieceBounds(pieces) : null;",
+    "new": "  assembly.bounds = pieces.length ? meshBounds(pieces) : null;",
     "tests": [
       "test/formats/morrowind/prbow1b_followups.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "piece-box-top-is-its-bottom",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    b.maxZ = bZ;",
-    "new": "    b.maxZ = aZ;",
+    "old": "    b.minX = aX; b.minY = aY; b.minZ = aZ; b.maxX = bX; b.maxY = bY; b.maxZ = bZ;",
+    "new": "    b.minX = aX; b.minY = aY; b.minZ = aZ; b.maxX = bX; b.maxY = bY; b.maxZ = aZ;",
     "tests": [
       "test/formats/morrowind/prbow1b_followups.test.js",
       "test/render/prbow1_bow.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "union-drops-the-top",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    if (bZ > maxZ) maxZ = bZ;\n  }",
-    "new": "  }",
+    "old": "    if (aZ < minZ) minZ = aZ; if (bZ > maxZ) maxZ = bZ;",
+    "new": "    if (aZ < minZ) minZ = aZ;",
     "tests": [
       "test/formats/morrowind/prbow1b_followups.test.js"
     ]

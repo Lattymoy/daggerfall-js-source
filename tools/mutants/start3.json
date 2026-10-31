@@ -148,8 +148,8 @@
   {
     "name": "START3-journal-site-unpassed",
     "file": "src/ui/quest/questJournal.js",
-    "old": "    if (!this.deps.canFindPlace(site.regionName, site.locationName, site)) return false; // START3: the site, for its pixel past the Bay",
-    "new": "    if (!this.deps.canFindPlace(site.regionName, site.locationName)) return false; // START3: the site, for its pixel past the Bay",
+    "old": "this.deps.canFindPlace(site.regionName, site.locationName, site)",
+    "new": "this.deps.canFindPlace(site.regionName, site.locationName)",
     "tests": [
       "test/systems/starts/start3_pastbay_marks.test.js"
     ]

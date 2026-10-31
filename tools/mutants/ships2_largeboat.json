@@ -212,8 +212,8 @@
   {
     "name": "SHIPS2-L-a-picture-seeded-off-the-clock",
     "file": "src/world/ships/largeBoatArt.js",
-    "old": "  const weed = noise(0xb51, S, S, 8, 8);",
-    "new": "  const weed = noise(Math.floor(Math.random() * 1e6), S, S, 8, 8);",
+    "old": "const weed = noise(0xb51, S, S, 8, 8);",
+    "new": "const weed = noise(Math.floor(Math.random() * 1e6), S, S, 8, 8);",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "SHIPS2-L-registered-twice",
     "file": "src/world/ships/largeBoatArt.js",
-    "old": "  if (_registered) return 0;\n  _registered = true;\n  const made = new Map();",
-    "new": "  const made = new Map();",
+    "old": "  if (_registered) return 0;\n  _registered = true;\n",
+    "new": "",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "SHIPS2-L-a-picture-off-64",
     "file": "src/world/ships/largeBoatArt.js",
-    "old": "    [TEX.transom0, transomArt()],",
-    "new": "    [TEX.transom0, picture(32, 32)],",
+    "old": "[TEX.transom0, transomArt()]",
+    "new": "[TEX.transom0, picture(32, 32)]",
     "tests": [
       "test/world/ships/ships2_largeboat.test.js"
     ],

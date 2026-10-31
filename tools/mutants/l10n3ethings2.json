@@ -3,7 +3,7 @@
     "name": "L10N3e-shown-systems-itemInfo-561-Item",
     "file": "src/systems/item/itemInfo.js",
     "old": "  const short = shownItemName(item) ?? templateName;",
-    "new": "  const short = item.name ?? templateName;",
+    "new": "  const short = (item).name ?? templateName;",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "L10N3e-shown-systems-itemInfo-652-Item",
     "file": "src/systems/item/itemInfo.js",
-    "old": "      ? (bookTitle(item?.message ?? -1) ?? name ?? shownItemName(item) ?? templateText(t))",
-    "new": "      ? (bookTitle(item?.message ?? -1) ?? name ?? item.name ?? templateText(t))",
+    "old": "    : item?.group === 'Books' ? (bookTitle(item?.message ?? -1) ?? name ?? shownItemName(item) ?? templateText(t))",
+    "new": "    : item?.group === 'Books' ? (bookTitle(item?.message ?? -1) ?? name ?? (item).name ?? templateText(t))",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]
@@ -21,7 +21,7 @@
     "name": "L10N3e-shown-systems-itemInfo-653-Item",
     "file": "src/systems/item/itemInfo.js",
     "old": "      : (name ?? shownItemName(item) ?? templateText(t)) + soulTrapNameSuffix(item, shownSoulName);",
-    "new": "      : (name ?? item.name ?? templateText(t)) + soulTrapNameSuffix(item, shownSoulName);",
+    "new": "      : (name ?? (item).name ?? templateText(t)) + soulTrapNameSuffix(item, shownSoulName);",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]

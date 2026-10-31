@@ -410,8 +410,8 @@
   {
     "name": "LOCKPICK-door-hook-above-magic",
     "file": "src/world/actionSystem.js",
-    "old": "    if (this.onLockpickAttempt && o.currentLockValue < MAGIC_LOCK_THRESHOLD) {",
-    "new": "    if (this.onLockpickAttempt) {",
+    "old": "if (this.onLockpickAttempt && o.currentLockValue < MAGIC_LOCK_THRESHOLD)",
+    "new": "if (this.onLockpickAttempt)",
     "tests": [
       "test/systems/lockpick/lockpick.test.js"
     ]
@@ -419,8 +419,8 @@
   {
     "name": "LOCKPICK-picked-twice",
     "file": "src/world/actionSystem.js",
-    "old": "    if (!o || o.state === 'forward' || o.state === 'reverse' || o.currentLockValue <= 0) return false;",
-    "new": "    if (!o || o.state === 'forward' || o.state === 'reverse') return false;",
+    "old": "if (!o || o.state === 'forward' || o.state === 'reverse' || o.currentLockValue <= 0) return false;\n    o.currentLockValue = 0;",
+    "new": "if (!o || o.state === 'forward' || o.state === 'reverse') return false;\n    o.currentLockValue = 0;",
     "tests": [
       "test/systems/lockpick/lockpick.test.js",
       "test/net/world3.test.js"
@@ -429,8 +429,8 @@
   {
     "name": "LOCKPICK-picked-off-the-seam",
     "file": "src/world/actionSystem.js",
-    "old": "for (const name of ['activate', 'attemptBash', 'toggleDoor', 'receive', 'attemptLockpicking', 'lockpicked']) {",
-    "new": "for (const name of ['activate', 'attemptBash', 'toggleDoor', 'receive', 'attemptLockpicking']) {",
+    "old": "'attemptLockpicking', 'lockpicked']",
+    "new": "'attemptLockpicking']",
     "tests": [
       "test/net/world3.test.js"
     ]

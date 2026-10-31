@@ -37,7 +37,7 @@
 //
 // Not a DFU member: Daggerfall Unity has no letters between players. Ledger A row (ONLINE).
 // ═══════════════════════════════════════════════════════════════════
-import { wordsLine, foldBlankLines } from './wire.js'; // JOURNAL1: a line of a player's words, and their layout - one home with the journal page's law
+import { wordsLine, foldBlankLines } from './wire.js';   // JOURNAL1: a line of a player's words, and their layout - one home with the journal page's law
 
 /** A subject's longest, in UTF-16 units (a field's maxlength counts the same units). */
 export const LETTER_SUBJECT_MAX = 60;
@@ -68,21 +68,13 @@ const LINE_BREAK = /\r\n|\r|\n|\u2028|\u2029/;
 /** A subject as the service keeps it: one line, cleaned (wire.js wordsLine - a line of a player's words, the journal
  *  page's law too). '' when nothing is left. */
 export function cleanSubject(text) {
-  return wordsLine(
-    String(text ?? '')
-      .split(LINE_BREAK)
-      .join(' '),
-  );
+  return wordsLine(String(text ?? '').split(LINE_BREAK).join(' '));
 }
 
 /** A body as the service keeps it: its lines cleaned, a run of blank lines one blank line, none at either end (wire.js
  *  foldBlankLines). '' when nothing is left. Idempotent, so what the form shows after a send is what the reader gets. */
 export function cleanBody(text) {
-  return foldBlankLines(
-    String(text ?? '')
-      .split(LINE_BREAK)
-      .map(wordsLine),
-  ).join('\n');
+  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join('\n');
 }
 
 /**

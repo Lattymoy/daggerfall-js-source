@@ -93,8 +93,8 @@
   {
     "name": "GRANT2-unknown-setting-enforces",
     "file": "src/net/grantLaw.js",
-    "old": "export const grantModeOf = (v) => (v === 'off' || v === 'enforce' ? v : 'measure');",
-    "new": "export const grantModeOf = (v) => (v === 'off' || v === 'measure' ? v : 'enforce');",
+    "old": "(v === 'off' || v === 'enforce' ? v : 'measure')",
+    "new": "(v === 'off' || v === 'measure' ? v : 'enforce')",
     "why": "a setting nobody wrote enforces",
     "tests": [
       "test/net/grant2_relay.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "GRANT2-ask-most-ignored",
     "file": "src/net/grantLaw.js",
-    "old": "    if (!intIn(m.n, 1, GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (m.kind)].max)) return null;",
-    "new": "    if (!intIn(m.n, 1, 8)) return null;",
+    "old": "  if (!intIn(m.n, 1, GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (m.kind)].max)) return null;",
+    "new": "  if (!intIn(m.n, 1, 8)) return null;",
     "why": "an encounter of five asked",
     "tests": [
       "test/net/grant2_relay.test.js"

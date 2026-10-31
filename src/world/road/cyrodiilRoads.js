@@ -40,9 +40,9 @@ export const CYRODIIL_ROADS = Object.freeze([
   Object.freeze({ name: 'Gold Road', fromRing: true, stops: Object.freeze(['Skingrad', 'Kvatch', 'Anvil']) }),
   Object.freeze({ name: 'Black Road', fromRing: true, stops: Object.freeze(['Chorrol']) }),
   Object.freeze({ name: 'Silver Road', fromRing: true, stops: Object.freeze(['Bruma']) }),
-  Object.freeze({ name: 'Orange Road', fromRing: false, stops: Object.freeze(['Chorrol', 'Bruma']) }), // to the Silver Road below Bruma: routed after it, it takes its last stretch
+  Object.freeze({ name: 'Orange Road', fromRing: false, stops: Object.freeze(['Chorrol', 'Bruma']) }),   // to the Silver Road below Bruma: routed after it, it takes its last stretch
   Object.freeze({ name: 'Blue Road', fromRing: true, stops: Object.freeze(['Cheydinhal']) }),
-  Object.freeze({ name: 'Yellow Road', fromRing: true, stops: Object.freeze([Object.freeze([191, 106]), 'Leyawiin']) }), // the Niben's east bank
+  Object.freeze({ name: 'Yellow Road', fromRing: true, stops: Object.freeze([Object.freeze([191, 106]), 'Leyawiin']) }),   // the Niben's east bank
   Object.freeze({ name: 'Green Road', fromRing: true, stops: Object.freeze(['Bravil', 'Leyawiin']) }),
 ]);
 /** The Red Ring Road's points about the city, clockwise from north. */
@@ -82,24 +82,16 @@ export function cyrodiilTrunkSpec({ cityAt, pictureAt, capital }) {
     if (r.ring ? !capital : (r.fromRing && !capital) || stops.length < (r.fromRing ? 1 : 2)) continue;
     roads.push({ name: r.name, fromRing: !!r.fromRing, ring: !!r.ring, stops });
   }
-  return roads.length
-    ? {
-        ring: capital
-          ? { centre: [...capital.centre], half: capital.half, gates: capital.gates.map((g) => [g[0], g[1]]) }
-          : null,
-        roads,
-      }
-    : null;
+  return roads.length ? { ring: capital ? { centre: [...capital.centre], half: capital.half, gates: capital.gates.map((g) => [g[0], g[1]]) } : null, roads } : null;
 }
 
 /** The nearest pixel within LEG_SNAP_REACH (ring by ring, in each ring row then column) that `walkable` takes, or null. */
 function snap(p, walkable) {
   if (walkable(p[0], p[1])) return p;
   for (let r = 1; r <= LEG_SNAP_REACH; r++) {
-    for (let dy = -r; dy <= r; dy++)
-      for (let dx = -r; dx <= r; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) === r && walkable(p[0] + dx, p[1] + dy)) return [p[0] + dx, p[1] + dy];
-      }
+    for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) === r && walkable(p[0] + dx, p[1] + dy)) return [p[0] + dx, p[1] + dy];
+    }
   }
   return null;
 }
@@ -125,10 +117,7 @@ export function ringPoints(ring, walkable, wet) {
     let shore = -1;
     for (let r = r0; r <= r0 + RING_REACH; r++) {
       const [x, y] = on(r);
-      if (wet(x, y)) {
-        shore = Math.max(r0, r - RING_SHORE_GAP);
-        break;
-      }
+      if (wet(x, y)) { shore = Math.max(r0, r - RING_SHORE_GAP); break; }
     }
     rays.push({ on, shore });
   }
@@ -137,18 +126,9 @@ export function ringPoints(ring, walkable, wet) {
     let r = ry.shore;
     if (r < 0 && !any) r = r0;
     else if (r < 0) {
-      let a = k,
-        da = 0,
-        b = k,
-        db = 0;
-      do {
-        a = (a + RING_POINTS - 1) % RING_POINTS;
-        da++;
-      } while (rays[a].shore < 0);
-      do {
-        b = (b + 1) % RING_POINTS;
-        db++;
-      } while (rays[b].shore < 0);
+      let a = k, da = 0, b = k, db = 0;
+      do { a = (a + RING_POINTS - 1) % RING_POINTS; da++; } while (rays[a].shore < 0);
+      do { b = (b + 1) % RING_POINTS; db++; } while (rays[b].shore < 0);
       r = Math.round((rays[a].shore * db + rays[b].shore * da) / (da + db));
     }
     return snap(ry.on(r), walkable);
@@ -159,20 +139,7 @@ export function ringPoints(ring, walkable, wet) {
 const roundOut = (v) => (v < 0 ? -Math.round(-v) : Math.round(v));
 /** sin and cos of each twelfth of a turn from north, clockwise - as numbers written out, the same on every client. */
 const H3 = 0.8660254037844386;
-const RING_UNIT = Object.freeze([
-  [0, 1],
-  [0.5, H3],
-  [H3, 0.5],
-  [1, 0],
-  [H3, -0.5],
-  [0.5, -H3],
-  [0, -1],
-  [-0.5, -H3],
-  [-H3, -0.5],
-  [-1, 0],
-  [-H3, 0.5],
-  [-0.5, H3],
-]);
+const RING_UNIT = Object.freeze([[0, 1], [0.5, H3], [H3, 0.5], [1, 0], [H3, -0.5], [0.5, -H3], [0, -1], [-0.5, -H3], [-H3, -0.5], [-1, 0], [-H3, 0.5], [-0.5, H3]]);
 
 const cheb = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
 
@@ -187,8 +154,7 @@ const cheb = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
  */
 export function courseLegs(a, b, { heightAt, walkable }) {
   if (cheb(a, b) <= LEG_MAX) return [[a, b]];
-  const plan =
-    coursePlan(a, b, heightAt, walkable, COARSE_MARGIN) ?? coursePlan(a, b, heightAt, walkable, COARSE_MARGIN * 3);
+  const plan = coursePlan(a, b, heightAt, walkable, COARSE_MARGIN) ?? coursePlan(a, b, heightAt, walkable, COARSE_MARGIN * 3);
   const legs = [];
   let last = a;
   const cut = (p) => {
@@ -201,8 +167,7 @@ export function courseLegs(a, b, { heightAt, walkable }) {
     for (let k = 1; k < plan.length - 1; k++) if (cheb(last, plan[k]) >= (LEG_MAX * 3) >> 2) cut(plan[k]);
   } else {
     const n = Math.ceil(cheb(a, b) / ((LEG_MAX * 3) >> 2));
-    for (let k = 1; k < n; k++)
-      cut([a[0] + Math.round(((b[0] - a[0]) * k) / n), a[1] + Math.round(((b[1] - a[1]) * k) / n)]);
+    for (let k = 1; k < n; k++) cut([a[0] + Math.round(((b[0] - a[0]) * k) / n), a[1] + Math.round(((b[1] - a[1]) * k) / n)]);
   }
   legs.push([last, b]);
   return legs;
@@ -210,47 +175,28 @@ export function courseLegs(a, b, { heightAt, walkable }) {
 
 /** The coarse plan between two points over a box `margin` past them: its cells' centres, Bay pixels, or null. */
 function coursePlan(a, b, heightAt, walkable, margin) {
-  const x0 = Math.min(a[0], b[0]) - margin,
-    y0 = Math.min(a[1], b[1]) - margin;
+  const x0 = Math.min(a[0], b[0]) - margin, y0 = Math.min(a[1], b[1]) - margin;
   const W = Math.min(MAP_W, Math.ceil((Math.max(a[0], b[0]) + margin - x0) / COARSE) + 1);
   const H = Math.min(MAP_H, Math.ceil((Math.max(a[1], b[1]) + margin - y0) / COARSE) + 1);
-  const cellOf = (p) => ({
-    x: Math.min(W - 1, Math.floor((p[0] - x0) / COARSE)),
-    y: Math.min(H - 1, Math.floor((p[1] - y0) / COARSE)),
-  });
+  const cellOf = (p) => ({ x: Math.min(W - 1, Math.floor((p[0] - x0) / COARSE)), y: Math.min(H - 1, Math.floor((p[1] - y0) / COARSE)) });
   const mid = (c) => [x0 + c.x * COARSE + (COARSE >> 1), y0 + c.y * COARSE + (COARSE >> 1)];
-  const heights = new Uint8Array(MAP_W * MAP_H),
-    water = new Uint8Array(MAP_W * MAP_H),
-    keep = new Uint8Array(MAP_W * MAP_H);
+  const heights = new Uint8Array(MAP_W * MAP_H), water = new Uint8Array(MAP_W * MAP_H), keep = new Uint8Array(MAP_W * MAP_H);
   for (let v = 0; v < MAP_H; v++) {
     for (let u = 0; u < MAP_W; u++) {
       const i = v * MAP_W + u;
-      if (u >= W || v >= H) {
-        water[i] = 1;
-        keep[i] = 1;
-        continue;
-      }
+      if (u >= W || v >= H) { water[i] = 1; keep[i] = 1; continue; }
       const [x, y] = mid({ x: u, y: v });
-      if (walkable(x, y)) heights[i] = heightAt(x, y);
-      else water[i] = 1;
+      if (walkable(x, y)) heights[i] = heightAt(x, y); else water[i] = 1;
     }
   }
-  const from = cellOf(a),
-    to = cellOf(b);
-  water[from.y * MAP_W + from.x] = 0;
-  water[to.y * MAP_W + to.x] = 0;
+  const from = cellOf(a), to = cellOf(b);
+  water[from.y * MAP_W + from.x] = 0; water[to.y * MAP_W + to.x] = 0;
   // the land's law at the cell's scale: a cell's rise over COARSE pixels, so the grade's price per pixel is its own
   const d = { ...VOYAGER_DIALS, gradeCost: VOYAGER_DIALS.gradeCost / (COARSE * COARSE), smoothR: 1 };
-  const land = landForRoutes(heights, water, keep, MAP_W, MAP_H, d, (u, v) => {
-    const [x, y] = mid({ x: u, y: v });
-    return landGrain(x, y);
-  });
+  const land = landForRoutes(heights, water, keep, MAP_W, MAP_H, d, (u, v) => { const [x, y] = mid({ x: u, y: v }); return landGrain(x, y); });
   const path = route(from, to, {
-    heightAt: (u, v) => heights[v * MAP_W + u],
-    isWater: (u, v) => water[v * MAP_W + u] === 1 && land.ford[v * MAP_W + u] === 0,
-    existing: new Uint8Array(MAP_W * MAP_H),
-    d: ROAD_DIALS,
-    terrain: land,
+    heightAt: (u, v) => heights[v * MAP_W + u], isWater: (u, v) => water[v * MAP_W + u] === 1 && land.ford[v * MAP_W + u] === 0,
+    existing: new Uint8Array(MAP_W * MAP_H), d: ROAD_DIALS, terrain: land,
   });
   return path ? path.map(mid) : null;
 }
@@ -272,8 +218,7 @@ export function planTrunkLegs(spec, { heightAt, walkable, wet }) {
   for (const road of spec.roads) {
     if (road.ring) {
       // point to point round, closed over a bearing that has no point (no land in reach of it)
-      for (let k = 0; k < onRing.length && onRing.length > 2; k++)
-        legs.push(...courseLegs(onRing[k], onRing[(k + 1) % onRing.length], { heightAt, walkable }));
+      for (let k = 0; k < onRing.length && onRing.length > 2; k++) legs.push(...courseLegs(onRing[k], onRing[(k + 1) % onRing.length], { heightAt, walkable }));
       for (const g of spec.ring?.gates ?? []) {
         const near = onRing.reduce((m, p) => (m && cheb(m, g) <= cheb(p, g) ? m : p), null);
         if (near) legs.push(...courseLegs(g, near, { heightAt, walkable }));
@@ -284,29 +229,17 @@ export function planTrunkLegs(spec, { heightAt, walkable, wet }) {
     const cut = stops.indexOf(null);
     const course = cut < 0 ? stops : stops.slice(0, cut);
     if (road.fromRing && course.length) {
-      const c = /** @type {any} */ (spec.ring).centre,
-        s = course[0];
+      const c = /** @type {any} */ (spec.ring).centre, s = course[0];
       // the ring's point nearest the first stop's bearing: the greatest cosine to it, ties to the first
-      let best = null,
-        bc = -Infinity;
+      let best = null, bc = -Infinity;
       for (const p of onRing) {
-        const ax = p[0] - c[0],
-          ay = p[1] - c[1],
-          bx = s[0] - c[0],
-          by = s[1] - c[1];
+        const ax = p[0] - c[0], ay = p[1] - c[1], bx = s[0] - c[0], by = s[1] - c[1];
         const cos = (ax * bx + ay * by) / Math.sqrt((ax * ax + ay * ay) * (bx * bx + by * by) || 1);
-        if (cos > bc) {
-          bc = cos;
-          best = p;
-        }
+        if (cos > bc) { bc = cos; best = p; }
       }
       if (best) course.unshift(best);
     }
-    for (let k = 0; k + 1 < course.length; k++)
-      legs.push(...courseLegs(course[k], course[k + 1], { heightAt, walkable }));
+    for (let k = 0; k + 1 < course.length; k++) legs.push(...courseLegs(course[k], course[k + 1], { heightAt, walkable }));
   }
-  return legs.map(([p, q]) => [
-    [p[0], p[1]],
-    [q[0], q[1]],
-  ]);
+  return legs.map(([p, q]) => [[p[0], p[1]], [q[0], q[1]]]);
 }

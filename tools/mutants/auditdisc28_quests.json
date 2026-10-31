@@ -123,8 +123,8 @@
   {
     "name": "AD28Q-K1-player-marks-wiped",
     "file": "src/systems/discovery.js",
-    "old": "  rec.isOverrideName = rec.oldDisplayName !== rec.displayName; // the flag, and the collapse when the names agree",
-    "new": "  rec.customUserDisplayName = '';\n  rec.lastLockpickAttempt = 0;\n  rec.isOverrideName = rec.oldDisplayName !== rec.displayName; // the flag, and the collapse when the names agree",
+    "old": "  rec.displayName = renamed;\n",
+    "new": "  rec.displayName = renamed; rec.customUserDisplayName = ''; rec.lastLockpickAttempt = 0;\n",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]
@@ -132,8 +132,8 @@
   {
     "name": "AD28Q-K1-owned-house-restamped",
     "file": "src/systems/discovery.js",
-    "old": "  if (questSource?.ownsHouse?.(rec.buildingKey)) return false;\n  rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName; // the building's own name",
-    "new": "  rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName; // the building's own name",
+    "old": "  if (questSource?.ownsHouse?.(rec.buildingKey)) return false;\n",
+    "new": "",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]
@@ -141,8 +141,8 @@
   {
     "name": "AD28Q-K1-displaced-name-lost",
     "file": "src/systems/discovery.js",
-    "old": "  rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName; // the building's own name",
-    "new": "  rec.oldDisplayName = rec.displayName; // the building's own name",
+    "old": "  rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName;",
+    "new": "  rec.oldDisplayName = rec.displayName;",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js",
       "test/systems/disc28_names.test.js"
@@ -169,8 +169,8 @@
   {
     "name": "AD28Q-K2-restamp-walks-nothing",
     "file": "src/systems/discovery.js",
-    "old": "  for (const rec of _discovered.get(locationId)?.values() ?? []) if (restampQuestName(rec, questSource)) n++;\n  return n;",
-    "new": "  return n;",
+    "old": "  for (const rec of _discovered.get(locationId)?.values() ?? []) if (restampQuestName(rec, questSource)) n++;\n",
+    "new": "",
     "tests": [
       "test/systems/quest/auditdisc28_quests.test.js"
     ]

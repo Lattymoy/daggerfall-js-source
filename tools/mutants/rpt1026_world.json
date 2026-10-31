@@ -95,7 +95,7 @@
   {
     "name": "RPT1026-WAGON-OUT-landing-unasked",
     "file": "src/scenes/caravanRoom.js",
-    "old": "  return heldInSolid(collider, at)\n    ? (openGroundNear(collider, p[0], p[2], { dry: seaY ? (floor) => floor >= seaY() : null }) ?? at)\n    : at;",
+    "old": "  return heldInSolid(collider, at) ? openGroundNear(collider, p[0], p[2], { dry: seaY ? (floor) => floor >= seaY() : null }) ?? at : at;",
     "new": "  return at;",
     "tests": [
       "test/scenes/rpt1026_world_wagonout.test.js"
@@ -105,8 +105,8 @@
   {
     "name": "RPT1026-WAGON-OUT-the-sea-is-ground",
     "file": "src/scenes/caravanRoom.js",
-    "old": "  return heldInSolid(collider, at)\n    ? (openGroundNear(collider, p[0], p[2], { dry: seaY ? (floor) => floor >= seaY() : null }) ?? at)\n    : at;",
-    "new": "  return heldInSolid(collider, at) ? (openGroundNear(collider, p[0], p[2], { dry: null }) ?? at) : at;",
+    "old": "{ dry: seaY ? (floor) => floor >= seaY() : null }",
+    "new": "{ dry: null }",
     "tests": [
       "test/scenes/rpt1026_world_wagonout.test.js"
     ],
@@ -397,8 +397,8 @@
   {
     "name": "RPT1026-DECOR-VERBS-the-whole-list",
     "file": "src/ui/worldPlaque.js",
-    "old": "    foldQuickLoot(verbs ? decorPressFrame(frame) : frame);",
-    "new": "    foldQuickLoot(frame);",
+    "old": "foldQuickLoot(verbs ? decorPressFrame(frame) : frame);",
+    "new": "foldQuickLoot(frame);",
     "tests": [
       "test/scenes/decor/rpt1026_world_decor.test.js"
     ],

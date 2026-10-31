@@ -243,8 +243,8 @@
   {
     "name": "PROF7-body-any-spelling",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (b) return bodyKey({ day: Number(b[1]), id: b[2] }) === s ? { kind: 'body', day: Number(b[1]), id: b[2] } : null;",
-    "new": "  if (b) return { kind: 'body', day: Number(b[1]), id: b[2] };",
+    "old": "if (b) return bodyKey({ day: Number(b[1]), id: b[2] }) === s ? { kind: 'body', day: Number(b[1]), id: b[2] } : null;",
+    "new": "if (b) return { kind: 'body', day: Number(b[1]), id: b[2] };",
     "tests": [
       "test/net/prof7_law.test.js"
     ]
@@ -252,8 +252,8 @@
   {
     "name": "PROF7-clean-pelt-plain",
     "file": "src/net/nodeLaw.js",
-    "old": "export const hideYield = ({ clean = false }, chance) =>\n  Math.max(1, wholeYield(HIDE_YIELD * (clean ? ACT_YIELD_MAX : 1), chance));",
-    "new": "export const hideYield = ({ clean = false }, chance) => Math.max(1, wholeYield(HIDE_YIELD, chance));",
+    "old": "wholeYield(HIDE_YIELD * (clean ? ACT_YIELD_MAX : 1), chance)",
+    "new": "wholeYield(HIDE_YIELD, chance)",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "PROF7-torn-keeps-part",
     "file": "src/net/nodeLaw.js",
-    "old": "  const part = hide.part && !torn && dice() < PART_CHANCE ? hide.part : null;",
-    "new": "  const part = hide.part && dice() < PART_CHANCE ? hide.part : null;",
+    "old": "const part = hide.part && !torn && dice() < PART_CHANCE ? hide.part : null;",
+    "new": "const part = hide.part && dice() < PART_CHANCE ? hide.part : null;",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "PROF7-part-roll-inverted",
     "file": "src/net/nodeLaw.js",
-    "old": "  const part = hide.part && !torn && dice() < PART_CHANCE ? hide.part : null;",
-    "new": "  const part = hide.part && !torn && dice() >= PART_CHANCE ? hide.part : null;",
+    "old": "&& !torn && dice() < PART_CHANCE",
+    "new": "&& !torn && dice() >= PART_CHANCE",
     "tests": [
       "test/net/prof7_law.test.js",
       "test/net/prof7_service.test.js"

@@ -128,8 +128,8 @@
   {
     "name": "HD-list-unstamped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        list.at = walk.stamp;\n      }",
-    "new": "      }",
+    "old": "        list.at = walk.stamp;\n",
+    "new": "",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "HD-alone-unlisted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          list.alone.push(e);\n          one(gpu, placed(rec), paint);",
-    "new": "          one(gpu, placed(rec), paint);",
+    "old": "          list.alone.push(e);\n",
+    "new": "",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js",
       "test/systems/comeSailAway/fb1021_boats.test.js"
@@ -147,8 +147,8 @@
   {
     "name": "HD-held-alone-unmade",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint); // BOAT-OWN: held - her parts drawn on their own, as that draw found them",
-    "new": "        for (const e of list.alone) one(e.gpu, recs[e.i].m, paint); // BOAT-OWN: held - her parts drawn on their own, as that draw found them",
+    "old": "one(e.gpu, placed(recs[e.i]), paint);",
+    "new": "one(e.gpu, recs[e.i].m, paint);",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js",
       "test/systems/comeSailAway/fb1021_boats.test.js",
@@ -176,8 +176,8 @@
   {
     "name": "HF-scale-unstamped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          e.at = walk.stamp;\n        }",
-    "new": "        }",
+    "old": "e.sy = Math.abs(s[1]); e.at = walk.stamp; }",
+    "new": "e.sy = Math.abs(s[1]); }",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "HF-place-a-term",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      _placedAt[12 + row] = 0 + a[row] * m[12] + a[4 + row] * m[13] + a[8 + row] * m[14] + a[12 + row] * m[15];",
-    "new": "      _placedAt[12 + row] = 0 + a[row] * m[12] + a[4 + row] * m[14] + a[8 + row] * m[14] + a[12 + row] * m[15];",
+    "old": "a[4 + row] * m[13]",
+    "new": "a[4 + row] * m[14]",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -194,8 +194,8 @@
   {
     "name": "HF-place-unrounded",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  const _placedAt = new Float32Array(16);",
-    "new": "  const _placedAt = new Float64Array(16);",
+    "old": "const _placedAt = new Float32Array(16);",
+    "new": "const _placedAt = new Float64Array(16);",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -203,8 +203,8 @@
   {
     "name": "HF-place-a-row-short",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    for (let row = 0; row < 3; row++)",
-    "new": "    for (let row = 0; row < 2; row++)",
+    "old": "for (let row = 0; row < 3; row++) _placedAt",
+    "new": "for (let row = 0; row < 2; row++) _placedAt",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "HF-place-unshifted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (a === null) return m;",
-    "new": "    return m;",
+    "old": "    if (a === null) return m;\n",
+    "new": "    return m;\n",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "HD-AUDIT-held-paint-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint); // BOAT-OWN: held - her parts drawn on their own, as that draw found them",
-    "new": "        for (const e of list.alone) one(e.gpu, placed(recs[e.i])); // BOAT-OWN: held - her parts drawn on their own, as that draw found them",
+    "old": "for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint);",
+    "new": "for (const e of list.alone) one(e.gpu, placed(recs[e.i]));",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "HF-AUDIT-height-off-the-width",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          e.sy = Math.abs(s[1]);",
-    "new": "          e.sy = Math.abs(s[0]);",
+    "old": "e.sy = Math.abs(s[1]); e.at = walk.stamp; }",
+    "new": "e.sy = Math.abs(s[0]); e.at = walk.stamp; }",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "HF-AUDIT-place-zero-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      _placedAt[12 + row] = 0 + a[row] * m[12] + a[4 + row] * m[13] + a[8 + row] * m[14] + a[12 + row] * m[15];",
-    "new": "      _placedAt[12 + row] = a[row] * m[12] + a[4 + row] * m[13] + a[8 + row] * m[14] + a[12 + row] * m[15];",
+    "old": "_placedAt[12 + row] = 0 + a[row] * m[12]",
+    "new": "_placedAt[12 + row] = a[row] * m[12]",
     "tests": [
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ],

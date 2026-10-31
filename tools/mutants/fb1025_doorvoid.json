@@ -2,8 +2,8 @@
   {
     "name": "FB1025-DOORVOID-open-past-the-seal",
     "file": "src/world/actionSystem.js",
-    "old": "    if (o.sealed) {",
-    "new": "    if (false) {",
+    "old": "    if (o.sealed) {\n      if (byPlayer) this.onSealedDoor?.(o);\n      return false;\n    }",
+    "new": "    if (false) {\n      if (byPlayer) this.onSealedDoor?.(o);\n      return false;\n    }",
     "tests": [
       "test/world/fb1025_doorvoid.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FB1025-DOORVOID-activation-spends-the-spell",
     "file": "src/world/actionSystem.js",
-    "old": "    if (o.kind === 'door' && o.sealed) {",
-    "new": "    if (false) {",
+    "old": "if (o.kind === 'door' && o.sealed) {",
+    "new": "if (false) {",
     "tests": [
       "test/world/fb1025_doorvoid.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FB1025-DOORVOID-bash-bursts-the-seal",
     "file": "src/world/actionSystem.js",
-    "old": "    if (o.sealed) return false; // DOOR-VOID: struck, heard, and never burst\n    if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) return false; // magically held: cannot bash",
-    "new": "    if (o.currentLockValue >= MAGIC_LOCK_THRESHOLD) return false; // magically held: cannot bash",
+    "old": "    if (o.sealed) return false;   // DOOR-VOID: struck, heard, and never burst\n",
+    "new": "",
     "tests": [
       "test/world/fb1025_doorvoid.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FB1025-DOORVOID-restore-stands-it-open",
     "file": "src/world/actionSystem.js",
-    "old": "      if (o.sealed) return; // DOOR-VOID: shut whatever a save from before the seal, or a peer, says\n      o.state = sa.state;",
-    "new": "      o.state = sa.state;",
+    "old": "      if (o.sealed) return;   // DOOR-VOID: shut whatever a save from before the seal, or a peer, says\n",
+    "new": "",
     "tests": [
       "test/world/fb1025_doorvoid.test.js"
     ]

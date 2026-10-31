@@ -102,8 +102,8 @@
   {
     "name": "DECOR1d-the-cap-unread",
     "file": "src/ui/decorPanel.js",
-    "old": "  if (count >= cap)\n    return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
-    "new": "  if (false) return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
+    "old": "  if (count >= cap) return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`;",
+    "new": "  if (false) return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`;",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "DECOR1d-a-hidden-button-opening",
     "file": "src/ui/decorPanel.js",
-    "old": "  btn.addEventListener('click', () => {\n    if (btn.dataset.up === '1') onPress();\n  });",
-    "new": "  btn.addEventListener('click', () => onPress());",
+    "old": "btn.addEventListener('click', () => { if (btn.dataset.up === '1') onPress(); });",
+    "new": "btn.addEventListener('click', () => onPress());",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "DECOR1d-the-host-never-told",
     "file": "src/ui/decorPanel.js",
-    "old": "      onPoint(e);\n    }",
-    "new": "    }",
+    "old": "    if (key !== pointedKey) { pointedKey = key; onPoint(e); }",
+    "new": "    if (key !== pointedKey) { pointedKey = key; }",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ]
@@ -300,7 +300,7 @@
   {
     "name": "DECOR1d-every-picture-at-once",
     "file": "src/ui/decorPanel.js",
-    "old": "      else if (watcher) {\n        r.decorThumb = () => askThumb(e, img);\n        watcher.observe(r);\n      } else askThumb(e, img);",
+    "old": "      else if (watcher) { r.decorThumb = () => askThumb(e, img); watcher.observe(r); } else askThumb(e, img);",
     "new": "      else askThumb(e, img);",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
@@ -309,8 +309,8 @@
   {
     "name": "DECOR1d-the-chosen-piece-pictureless",
     "file": "src/ui/decorPanel.js",
-    "old": "      if (e.flat && !thumbs.has(thumbKeyOf(e))) askThumb(e); // chosen out of view: its picture all the same",
-    "new": "      void 0; // chosen out of view: its picture all the same",
+    "old": "      if (e.flat && !thumbs.has(thumbKeyOf(e))) askThumb(e);",
+    "new": "      void 0;",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
     ]

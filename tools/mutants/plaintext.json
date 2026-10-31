@@ -228,5 +228,23 @@
       "test/tooling/plaintext.test.js"
     ],
     "note": "AUDIT HORIZONTAL PT6: a version log measured as one comment block - every bump grows it"
+  },
+  {
+    "name": "PLAIN-TEXT-LEGIBLE3-the-anchor-counted",
+    "file": "tools/plainText.mjs",
+    "old": "    .replace(CITE_ANCHOR, 'cite')\n",
+    "new": "",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ]
+  },
+  {
+    "name": "PLAIN-TEXT-LEGIBLE3-the-cast-read-as-comment",
+    "file": "tools/plainText.mjs",
+    "old": "      c = false; // a JSDoc cast opening a code line is code (LEGIBLE 3)",
+    "new": "      c = true;",
+    "tests": [
+      "test/tooling/plaintext.test.js"
+    ]
   }
 ]

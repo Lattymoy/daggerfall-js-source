@@ -96,8 +96,8 @@
   {
     "name": "LEASE1-the-freeze-unread",
     "file": "server/src/staffFreeze.js",
-    "old": "  if (frozenAt(a, nowS) && m.t !== 'ping') {",
-    "new": "  if (m.t === 'never') {",
+    "old": "if (frozenAt(a, nowS) && m.t !== 'ping') {",
+    "new": "if (m.t === 'never') {",
     "why": "a frozen socket heard (STAFF-PANEL5-FREEZE: the gate moved to server/src/staffFreeze.js frozenFrame)",
     "tests": [
       "test/net/lease1.test.js"
@@ -552,8 +552,8 @@
   {
     "name": "LEASE1-the-ping-dropped",
     "file": "server/src/staffFreeze.js",
-    "old": "  if (frozenAt(a, nowS) && m.t !== 'ping') {",
-    "new": "  if (frozenAt(a, nowS)) {",
+    "old": "if (frozenAt(a, nowS) && m.t !== 'ping') {",
+    "new": "if (frozenAt(a, nowS)) {",
     "why": "a frozen socket's ping unanswered (STAFF-PANEL5-FREEZE: the gate moved to server/src/staffFreeze.js frozenFrame)",
     "tests": [
       "test/net/lease1.test.js"

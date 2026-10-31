@@ -2246,7 +2246,7 @@ in the swell, a profile put the draw's own loop and `stillBatch` at a fifth of t
 the frame held, where nothing those reads answer had moved.
 
 **HELD-DRAW** (`comeSailAwayPool.js` `draw`, the walk's `draws`). On a frame that holds her, her parts are drawn from the
-list the draw over this walk made (`comeSailAwayPool.js:"if (walk.heldAt === walkStamp && list.at === walk.stamp)"`):
+list the draw over this walk made (`comeSailAwayPool.js:"if (walk.heldAt === walkStamp && list.at === walk.stamp) {"`):
 which parts draw, with which mesh, alone or in her hull's frame. Nothing a part is read for there moves between her
 lives: her switches and her shape end a hold (`lifeOf`), her bakes step as she lives, a part's meshes and materials are
 her build's (`applyRuntimeMaterials`, `applyGameTextures`; a re-dress drops her walk). Where each stands is made every
@@ -2260,8 +2260,8 @@ as a crew stands in their places, and `standDown` puts each back - and the draw 
 `syncFlats` reads a flat's `m_Enabled` every frame, held or walked.
 
 **HELD-FLATS** (`comeSailAwayPool.js` `syncFlats`, `placedAt`). A flat she stood on the frame that walked her keeps the
-scale that frame found (`comeSailAwayPool.js:"const kept = e.at"`), and only its place is made:
-`comeSailAwayPool.js:"function placedAt"` is `placed()`'s translation alone - the same products summed in the same
+scale that frame found (`comeSailAwayPool.js:"const kept = e.at === walk.stamp;"`), and only its place is made:
+`comeSailAwayPool.js:"function placedAt(r) {"` is `placed()`'s translation alone - the same products summed in the same
 order, rounded as mat4.js `multiply`'s scratch rounds them - so a held flat stands where it stood, to the bit. Its size
 is her walk's frame's own, as its place is: both come from her held walk. Not because nothing moves her nodes between
 her lives - since BOAT-OWN an Animator of hers steps on a stride of its own (mine on `createBoatLives`' `seq`, a peer's
@@ -2308,7 +2308,7 @@ flats' records of `audit0928_online`, `csa_boats`, `csa_waves`, `navaudit_frame`
 
 **AUDIT HELD-DRAW and HELD-FLATS (the same day).** Three lines no pin held, and the record's two reasons.
 1. *Her livery on a held frame.* A held boat's lone parts are drawn in her paint
-   (`comeSailAwayPool.js:"for (const e of list.alone)"`); a mutant that dropped
+   (`comeSailAwayPool.js:"for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint);"`); a mutant that dropped
    `paint` there - a painted far boat drawn as built on every frame the pool held her - survived every pin: the stand-in
    renderer recorded no remap, and no boat wore a livery. The HELD-DRAW pin's far galley wears one now (her planks
    stained and her sails tinted, over the stand-in's planks), her paint is on a part of hers drawn on its own, and on a

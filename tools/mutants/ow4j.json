@@ -56,8 +56,8 @@
   {
     "name": "OW4-J2-route-not-held",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const route = st.route; // AUDIT OW4 J2: held before the panel's Camp - a spot's route dies in interruptTravel",
-    "new": "    const route = null; // AUDIT OW4 J2: held before the panel's Camp - a spot's route dies in interruptTravel",
+    "old": "    const route = st.route;   // AUDIT OW4 J2",
+    "new": "    const route = null;   // AUDIT OW4 J2",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "OW4-J2-not-resumed",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (route) {",
-    "new": "      if (false) {",
+    "old": "      if (route) { st.route = route; resumeRoute(); }",
+    "new": "      if (false) { st.route = route; resumeRoute(); }",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -247,8 +247,8 @@
   {
     "name": "OW4-J7-bare-interrupt",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          if (ui?.isShowing) ui.closeWindow();\n          if (st.autopilot) interruptTravel();",
-    "new": "          interruptTravel();",
+    "old": "        if (dc > st.diseaseCount) { if (ui?.isShowing) ui.closeWindow(); if (st.autopilot) interruptTravel(); deps.showHealthStatus?.(); }",
+    "new": "        if (dc > st.diseaseCount) { interruptTravel(); deps.showHealthStatus?.(); }",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ],
@@ -257,8 +257,8 @@
   {
     "name": "OW4-J7-no-guard",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          if (st.autopilot) interruptTravel();\n          deps.showHealthStatus?.();",
-    "new": "          deps.showHealthStatus?.();",
+    "old": "if (ui?.isShowing) ui.closeWindow(); if (st.autopilot) interruptTravel(); deps.showHealthStatus?.();",
+    "new": "if (ui?.isShowing) ui.closeWindow(); deps.showHealthStatus?.();",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ],

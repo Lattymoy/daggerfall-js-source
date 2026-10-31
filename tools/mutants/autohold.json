@@ -535,8 +535,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-by-a-trade",
     "file": "server-account/src/realmTrade.js",
-    "old": "    (leftA.twice.length || leftB.twice.length ? 'piece-dupe' : null) ??\n    (await piecesRefusal(db, t.a_char, leftA.leaving)) ??",
-    "new": "    (await piecesRefusal(db, t.a_char, leftA.leaving)) ??",
+    "old": "    ?? (leftA.twice.length || leftB.twice.length ? 'piece-dupe' : null)\n",
+    "new": "",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -544,8 +544,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-of-the-first-half",
     "file": "server-account/src/realmTrade.js",
-    "old": "    (leftA.twice.length || leftB.twice.length ? 'piece-dupe' : null) ??",
-    "new": "    (leftB.twice.length ? 'piece-dupe' : null) ??",
+    "old": "(leftA.twice.length || leftB.twice.length ?",
+    "new": "(leftB.twice.length ?",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -553,8 +553,8 @@
   {
     "name": "AUTOHOLD-AUDIT-twice-unasked-of-the-second-half",
     "file": "server-account/src/realmTrade.js",
-    "old": "    (leftA.twice.length || leftB.twice.length ? 'piece-dupe' : null) ??",
-    "new": "    (leftA.twice.length ? 'piece-dupe' : null) ??",
+    "old": "(leftA.twice.length || leftB.twice.length ?",
+    "new": "(leftA.twice.length ?",
     "tests": [
       "test/server/autohold.test.js"
     ]

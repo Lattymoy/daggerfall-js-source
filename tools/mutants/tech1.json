@@ -352,8 +352,8 @@
   {
     "name": "TECH1-the-shaft-weight-unread",
     "file": "src/combat/arrowFlight.js",
-    "old": "  const dmg = bowFastDamage(\n    m,\n    m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled,\n  ); // BOW-FAST",
-    "new": "  const dmg = bowFastDamage(m, rolled); // BOW-FAST",
+    "old": "const dmg = bowFastDamage(m, m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled);",
+    "new": "const dmg = bowFastDamage(m, rolled);",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -361,8 +361,8 @@
   {
     "name": "TECH1-the-shaft-at-a-player",
     "file": "src/combat/arrowFlight.js",
-    "old": "          if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue; // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck",
-    "new": "          if (m.technique && m.technique.struck?.includes(t.ref)) continue; // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck",
+    "old": "if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue;",
+    "new": "if (m.technique && m.technique.struck?.includes(t.ref)) continue;",
     "tests": [
       "test/systems/tech1_runner.test.js"
     ]
@@ -985,8 +985,8 @@
   {
     "name": "TECH1-AUDIT-the-shaft-each-body",
     "file": "src/combat/arrowFlight.js",
-    "old": "  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;",
-    "new": "  t.seq = q;",
+    "old": "  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;\n",
+    "new": "  t.seq = q;\n",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]
@@ -994,8 +994,8 @@
   {
     "name": "TECH1-AUDIT-the-newest-unasked",
     "file": "src/combat/arrowFlight.js",
-    "old": "  t.seq = t.struck?.length > 0 && t.seq === back ? back : q;",
-    "new": "  t.seq = t.struck?.length > 0 ? t.seq : q;",
+    "old": "t.struck?.length > 0 && t.seq === back ? back : q;",
+    "new": "t.struck?.length > 0 ? t.seq : q;",
     "tests": [
       "test/systems/tech1_audit.test.js"
     ]

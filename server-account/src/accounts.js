@@ -36,45 +36,26 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { guestName, isHandleShaped, isGuestShaped } from './guestName.js';
-import { handleLooksLikeEmail } from '../../src/net/handleShape.js'; // HANDLE-EMAIL: a username is never an address
-import { NAME_MAX } from '../../src/net/wire.js'; // NAME-AS: the wire's bound on a name, a worn character's among them
-import { checkName } from '../../src/net/nameFilter.js'; // NAME-AS: which word a character's name was refused for (NAME-F: a refusal names it)
-import { armoryKitWith, armoryKitOk, armoryKitPieces } from '../../src/net/armoryLaw.js'; // ARMORY: the kit with one slot changed, or a whole kit
-import {
-  wardrobeOf,
-  equipRefusal,
-  canModerate,
-  isDeveloper,
-  auraRefusal,
-  glyphRefusal,
-  glyphsHidden,
-  iconRefusal,
-  armoryRefusal,
-  armoryWorn,
-} from './titles.js'; // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
-import { brokerRidOk, brokerSaleOf, brokerSaleWrite, brokerRidFreeSql } from './brokerSales.js'; // AUDIT FB1024 (BROKER-RID): a press by its request id
-import { insigniaById, insigniaHeld } from '../../src/net/insignia.js'; // WB9g: the Broker's insignia - one law both ends
+import { handleLooksLikeEmail } from '../../src/net/handleShape.js';   // HANDLE-EMAIL: a username is never an address
+import { NAME_MAX } from '../../src/net/wire.js';   // NAME-AS: the wire's bound on a name, a worn character's among them
+import { checkName } from '../../src/net/nameFilter.js';   // NAME-AS: which word a character's name was refused for (NAME-F: a refusal names it)
+import { armoryKitWith, armoryKitOk, armoryKitPieces } from '../../src/net/armoryLaw.js';   // ARMORY: the kit with one slot changed, or a whole kit
+import { wardrobeOf, equipRefusal, canModerate, isDeveloper, auraRefusal, glyphRefusal, glyphsHidden, iconRefusal, armoryRefusal, armoryWorn } from './titles.js';   // ACC3: what a player holds, wears and is true of - all four derived; WB9g: and the aura worn
+import { brokerRidOk, brokerSaleOf, brokerSaleWrite, brokerRidFreeSql } from './brokerSales.js';   // AUDIT FB1024 (BROKER-RID): a press by its request id
+import { insigniaById, insigniaHeld } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - one law both ends
 import { ID_RE, nameIsIssuable } from '../../src/net/identityToken.js';
-import { PLAY_GRACE_S } from '../../src/net/playClock.js'; // ACC4: the widest gap one beat may credit - one home both ends
-import { MUTE_MAX_MIN } from '../../src/net/moderation.js'; // MOD1: the longest mute - the command and the service agree in one place
-import { verifyReceipt } from '../../src/net/gate/gateReceipt.js'; // WB5b: the relay's kill receipt, verified with its public half
-import { verifyDuelReceipt } from '../../src/net/duel/duelReceipt.js'; // INT8: a duel's result, the relay's
-import { TERMS_VERSION, PRIVACY_VERSION, LEGAL_VERSION_RE } from '../../src/net/legalLaw.js'; // TERMS1: the documents a new account agrees to - one home both ends
+import { PLAY_GRACE_S } from '../../src/net/playClock.js';   // ACC4: the widest gap one beat may credit - one home both ends
+import { MUTE_MAX_MIN } from '../../src/net/moderation.js';   // MOD1: the longest mute - the command and the service agree in one place
+import { verifyReceipt } from '../../src/net/gate/gateReceipt.js';   // WB5b: the relay's kill receipt, verified with its public half
+import { verifyDuelReceipt } from '../../src/net/duel/duelReceipt.js';   // INT8: a duel's result, the relay's
+import { TERMS_VERSION, PRIVACY_VERSION, LEGAL_VERSION_RE } from '../../src/net/legalLaw.js';   // TERMS1: the documents a new account agrees to - one home both ends
 import {
-  hashPassword,
-  verifyPassword,
-  needsRehash,
-  passwordRefusal,
-  mintRecoveryCode,
-  codeForHashing,
-  mintRecoverySet,
-  hashRecoverySet,
-  joinRecoverySet,
-  matchRecoveryCode,
-  recoveryLeft, // RECOVERY-SET: eight codes, each spent alone
+  hashPassword, verifyPassword, needsRehash, passwordRefusal,
+  mintRecoveryCode, codeForHashing,
+  mintRecoverySet, hashRecoverySet, joinRecoverySet, matchRecoveryCode, recoveryLeft,   // RECOVERY-SET: eight codes, each spent alone
 } from './password.js';
-import { gateRegionOk } from '../../src/net/townSeatLaw.js'; // SEAT1b: a gate claim's region; WW7-3: its lane's (a province's gate its own province's)
-import { DB_ANY, DB_ROOT } from './service.js'; // BOOKMARK-SPIRAL: a session started at any instance, and the binding behind it
+import { gateRegionOk } from '../../src/net/townSeatLaw.js';   // SEAT1b: a gate claim's region; WW7-3: its lane's (a province's gate its own province's)
+import { DB_ANY, DB_ROOT } from './service.js';   // BOOKMARK-SPIRAL: a session started at any instance, and the binding behind it
 
 /** A session's raw secret, in bytes. 32 bytes of CSPRNG is the whole
  *  of the credential; nothing about the player is encoded in it. */
@@ -134,7 +115,7 @@ export async function hashSecret(secret, { subtle }) {
  */
 export function displayName(row) {
   const handle = row?.handle;
-  if (typeof handle === 'string' && handle.length > 0 && !handleLooksLikeEmail(handle)) return handle; // HANDLE-EMAIL: an address is never read out
+  if (typeof handle === 'string' && handle.length > 0 && !handleLooksLikeEmail(handle)) return handle;   // HANDLE-EMAIL: an address is never read out
   return String(row?.guest_name ?? '');
 }
 
@@ -201,10 +182,7 @@ export async function wornNameOf({ db }, player, character) {
   const refused = wornNameRefusal(character);
   if (refused) return { name: account, ...refused };
   if (isHandleShaped(character)) {
-    const other = await db
-      .prepare('SELECT 1 AS taken FROM players WHERE handle_lc = ? AND id != ?')
-      .bind(character.toLowerCase(), player.id)
-      .first();
+    const other = await db.prepare('SELECT 1 AS taken FROM players WHERE handle_lc = ? AND id != ?').bind(character.toLowerCase(), player.id).first();
     if (other) return { name: account, why: 'taken' };
   }
   return { name: character };
@@ -220,10 +198,7 @@ export async function wornNameOf({ db }, player, character) {
  */
 export async function chooseNameAs({ db, nowS }, player, as) {
   if (!NAME_AS.includes(/** @type {any} */ (as))) return { error: 'no-name-as' };
-  await db
-    .prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?')
-    .bind(as === 'character' ? 'character' : null, nowS, player.id)
-    .run();
+  await db.prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?').bind(as === 'character' ? 'character' : null, nowS, player.id).run();
   return { ok: true, nameAs: as };
 }
 
@@ -255,12 +230,8 @@ export async function createGuest({ db, subtle, rand, nowS }, { deviceLabel = nu
   // has broken, which is worth a 500 because nothing else would be
   // trustworthy either.
   if (!nameIsIssuable(name) || !isGuestShaped(name)) throw new Error(`guestName produced an unusable name: ${name}`);
-  await db
-    .prepare(
-      'INSERT INTO players (id, handle, handle_lc, guest_name, created_at, last_seen, terms_version, privacy_version, legal_accepted_at) VALUES (?, NULL, NULL, ?, ?, ?, ?, ?, ?)',
-    )
-    .bind(id, name, nowS, nowS, ...legalColumns(legal, nowS))
-    .run();
+  await db.prepare('INSERT INTO players (id, handle, handle_lc, guest_name, created_at, last_seen, terms_version, privacy_version, legal_accepted_at) VALUES (?, NULL, NULL, ?, ?, ?, ?, ?, ?)')
+    .bind(id, name, nowS, nowS, ...legalColumns(legal, nowS)).run();
   const session = await openSession({ db, subtle, rand, nowS }, id, deviceLabel);
   return { id, name, kind: 'guest', ...session };
 }
@@ -290,16 +261,9 @@ export async function openSession({ db, subtle, rand, nowS }, playerId, deviceLa
     await db.prepare(`${into} VALUES (?, ?, ?, ?, ?, ?)`).bind(sessionId, playerId, hash, label, nowS, nowS).run();
     return { sessionId, secret };
   }
-  const stands =
-    guard.session != null
-      ? db
-          .prepare(
-            `${into} SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`,
-          )
-          .bind(sessionId, playerId, hash, label, nowS, nowS, guard.session, playerId)
-      : db
-          .prepare(`${into} SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`)
-          .bind(sessionId, playerId, hash, label, nowS, nowS, playerId, guard.password ?? null);
+  const stands = guard.session != null
+    ? db.prepare(`${into} SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)`).bind(sessionId, playerId, hash, label, nowS, nowS, guard.session, playerId)
+    : db.prepare(`${into} SELECT ?, ?, ?, ?, ?, ? WHERE EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)`).bind(sessionId, playerId, hash, label, nowS, nowS, playerId, guard.password ?? null);
   const wrote = await stands.run();
   return wrote?.meta?.changes ? { sessionId, secret } : null;
 }
@@ -309,14 +273,7 @@ export async function openSession({ db, subtle, rand, nowS }, playerId, deviceLa
  *  no column of `players` can carry, so one row holds both without a name in common (`id`, `created_at`, `last_seen`).
  *  The table's own six (0001_accounts.sql; no migration has altered it) - test/server/scale4a.test.js holds this list to the
  *  migrations' table, so a column added there is a pin that fails until it is named here. */
-export const SESSION_COLUMNS = Object.freeze([
-  'id',
-  'player_id',
-  'secret_hash',
-  'device_label',
-  'created_at',
-  'last_seen',
-]);
+export const SESSION_COLUMNS = Object.freeze(['id', 'player_id', 'secret_hash', 'device_label', 'created_at', 'last_seen']);
 /** SCALE4a: the session by its hash and its player beside it, in ONE statement. LEFT, so a session whose player is gone
  *  still comes back (its player's columns NULL) and meets the same exits it met as two reads: the idle one is deleted
  *  first, the orphan refused. */
@@ -366,16 +323,11 @@ export async function resolveSession({ db, subtle, nowS }, secret) {
   // job that can silently stop running. THE ROW IS DELETED rather than
   // merely refused, so a dead credential stops existing instead of
   // being rejected forever.
-  if (
-    Number.isSafeInteger(nowS) &&
-    Number.isSafeInteger(session.last_seen) &&
-    nowS - session.last_seen > SESSION_IDLE_S
-  ) {
+  if (Number.isSafeInteger(nowS) && Number.isSafeInteger(session.last_seen)
+      && nowS - session.last_seen > SESSION_IDLE_S) {
     try {
       await db.prepare('DELETE FROM sessions WHERE id = ?').bind(session.id).run();
-    } catch {
-      /* the refusal below is what matters; the row is retried next time */
-    }
+    } catch { /* the refusal below is what matters; the row is retried next time */ }
     return null;
   }
 
@@ -412,9 +364,7 @@ export async function resolveSession({ db, subtle, nowS }, secret) {
         db.prepare('UPDATE sessions SET last_seen = ? WHERE id = ?').bind(nowS, session.id),
         db.prepare('UPDATE players SET last_seen = ? WHERE id = ?').bind(nowS, player.id),
       ]);
-    } catch {
-      /* cosmetic: the caller is authorised either way */
-    }
+    } catch { /* cosmetic: the caller is authorised either way */ }
   }
   return { player, session };
 }
@@ -433,23 +383,15 @@ export async function closeAllSessions({ db }, playerId) {
 
 /** STAFF-PANEL2-FIX (design doc, Weak spots: "a password change ends staff sessions too"): every staff panel session of
  *  the account (staff.js) ended - a password changed or recovered is somebody who may have held the old one. */
-export const closeStaffSessions = ({ db }, playerId) =>
-  db.prepare('DELETE FROM staff_sessions WHERE player_id = ?').bind(playerId).run();
+export const closeStaffSessions = ({ db }, playerId) => db.prepare('DELETE FROM staff_sessions WHERE player_id = ?').bind(playerId).run();
 
 /** The device list a player sees. No secrets and no hashes leave here -
  *  a hash is a credential's shadow and there is no reason to ship one. */
 export async function devicesOf({ db }, playerId) {
-  const r = await db
-    .prepare(
-      'SELECT id, device_label, created_at, last_seen FROM sessions WHERE player_id = ? ORDER BY last_seen DESC LIMIT 50',
-    )
-    .bind(playerId)
-    .all();
+  const r = await db.prepare('SELECT id, device_label, created_at, last_seen FROM sessions WHERE player_id = ? ORDER BY last_seen DESC LIMIT 50')
+    .bind(playerId).all();
   return (r?.results ?? []).map((s) => ({
-    sessionId: s.id,
-    label: s.device_label ?? null,
-    createdAt: s.created_at,
-    lastSeen: s.last_seen,
+    sessionId: s.id, label: s.device_label ?? null, createdAt: s.created_at, lastSeen: s.last_seen,
   }));
 }
 
@@ -457,6 +399,7 @@ export async function devicesOf({ db }, playerId) {
  *  in one place so a caller cannot forget the comparison. */
 export const mutedUntil = (row) => (Number.isSafeInteger(row?.muted_until) ? row.muted_until : 0);
 export const isMuted = (row, nowS) => mutedUntil(row) > nowS;
+
 
 /**
  * MOD1 - MUTE (or, at `minutes` 0, UNMUTE) ONE ACCOUNT.
@@ -489,8 +432,7 @@ export async function muteAccount({ db, nowS }, actor, env, { target, minutes, a
   const adminHeld = row.mute_admin === 1 && isMuted(row, nowS);
   const admin = isDeveloper(actor, env);
   if (adminHeld && !admin && (until ?? 0) < Number(row.muted_until)) return { error: 'admin-sanction' };
-  const write = db
-    .prepare('UPDATE players SET muted_until = ?, muted_by = ?, mute_admin = ? WHERE id = ?')
+  const write = db.prepare('UPDATE players SET muted_until = ?, muted_by = ?, mute_admin = ? WHERE id = ?')
     .bind(until, until ? actor.id : null, until ? (admin || adminHeld ? 1 : 0) : null, target);
   const done = { ok: true, target, name: displayName(row), until: until ?? 0 };
   // STAFF-PANEL2-FIX: `also(answer)`, the caller's own statements for this write's batch (safety.js modAct: the act's
@@ -547,9 +489,8 @@ export function accountView(player, nowS) {
 export async function creditPlay({ db, nowS }, playerId, sessionId = null) {
   // SESSION-SIGN (AUDIT PLAN-1000 E3; sessionPass.js): a beat is a write, and asks in its own statement that the session it
   // came under still stands and the account is not banned - a hot route believes a pass for its reads alone
-  const row = await db
-    .prepare(
-      `UPDATE players SET
+  const row = await db.prepare(
+    `UPDATE players SET
        played_s = played_s + CASE
          WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at
          ELSE 0 END,
@@ -558,9 +499,7 @@ export async function creditPlay({ db, nowS }, playerId, sessionId = null) {
        AND COALESCE(frozen_until, 0) <= ?1   -- STAFF-PANEL5-FREEZE: a frozen account's beat credits nothing (a pass minted before the freeze)
        AND (?4 IS NULL OR EXISTS (SELECT 1 FROM sessions s WHERE s.id = ?4 AND s.player_id = ?3))
      RETURNING played_s`,
-    )
-    .bind(nowS, PLAY_GRACE_S, playerId, sessionId)
-    .first();
+  ).bind(nowS, PLAY_GRACE_S, playerId, sessionId).first();
   return { playedS: Number.isSafeInteger(row?.played_s) ? row.played_s : 0 };
 }
 
@@ -587,7 +526,8 @@ export const accountWardrobe = (player, env, nowS) => wardrobeOf(player, env, no
 export async function equipTitle({ db, nowS }, player, env, title) {
   const why = equipRefusal(title, player, env);
   if (why) return { error: why };
-  await db.prepare('UPDATE players SET title = ?, last_seen = ? WHERE id = ?').bind(title, nowS, player.id).run();
+  await db.prepare('UPDATE players SET title = ?, last_seen = ? WHERE id = ?')
+    .bind(title, nowS, player.id).run();
   // The ROW this answer describes is the row after the write, so the
   // caller never has to re-read to know what it did.
   return { ok: true, ...wardrobeOf({ ...player, title }, env, nowS) };
@@ -600,7 +540,7 @@ export async function equipTitle({ db, nowS }, player, env, title) {
  * wardrobe after the write.
  */
 export async function equipAura({ db, nowS }, player, env, aura) {
-  const why = auraRefusal(aura, player, env); // AEGIS: a list's aura is held off the config
+  const why = auraRefusal(aura, player, env);   // AEGIS: a list's aura is held off the config
   if (why) return { error: why };
   await db.prepare('UPDATE players SET aura = ?, last_seen = ? WHERE id = ?').bind(aura, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, aura }, env, nowS) };
@@ -622,10 +562,7 @@ export async function equipArmory({ db, nowS }, player, env, slot, piece) {
  *  Each piece refused as one worn alone would be (armoryRefusal). Answers the wardrobe after the write. */
 export async function equipArmoryKit({ db, nowS }, player, env, kit) {
   if (kit !== null && !armoryKitOk(kit)) return { error: 'no-piece' };
-  for (const [slot, key] of Object.entries(armoryKitPieces(kit))) {
-    const why = key ? armoryRefusal(slot, key, player, env) : null;
-    if (why) return { error: why };
-  }
+  for (const [slot, key] of Object.entries(armoryKitPieces(kit))) { const why = key ? armoryRefusal(slot, key, player, env) : null; if (why) return { error: why }; }
   await db.prepare('UPDATE players SET armory = ?, last_seen = ? WHERE id = ?').bind(kit, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, armory: kit }, env, nowS) };
 }
@@ -653,10 +590,7 @@ export async function equipGlyph({ db, nowS }, player, env, glyph, on) {
   const off = glyphsHidden(player, env, nowS).filter((g) => g !== glyph);
   if (!on) off.push(glyph);
   const glyphs_off = off.join(' ') || null;
-  await db
-    .prepare('UPDATE players SET glyphs_off = ?, last_seen = ? WHERE id = ?')
-    .bind(glyphs_off, nowS, player.id)
-    .run();
+  await db.prepare('UPDATE players SET glyphs_off = ?, last_seen = ? WHERE id = ?').bind(glyphs_off, nowS, player.id).run();
   return { ok: true, ...wardrobeOf({ ...player, glyphs_off }, env, nowS) };
 }
 
@@ -664,8 +598,7 @@ export async function equipGlyph({ db, nowS }, player, env, glyph, on) {
  *  (SERPENT_EMBERS a receipt): the gate's currency is a serpent's hoard's too, and the purse below counts both. EG-E1
  *  (bible/11-Multiplayer/Elite-Gates.md section 19): and the Redoubts' the week paid (eg_redoubts `stones` - egEconomy.js),
  *  so the insignia and the Broker's Panoply sink (egEconomy.js egSink) spend the Spire's embers from the one purse. */
-export const EMBERS_EARNED_SQL =
-  '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';
+export const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';
 /** WB9g: what the account's own closed gates could still pay for - one Sigil Stone a gate closed (gate_kills, WB5b),
  *  less what its insignia already cost (`insignia_spent`). Never below 0. WB12d: a row's own `stones` - two with the
  *  faithful's rite broken, one for the rite alone (migration 0066). SERPENT-SET: and a serpent's (EMBERS_EARNED_SQL). */
@@ -694,40 +627,27 @@ export async function buyInsignia({ db, nowS }, player, env, id, rid = null) {
   if (rid !== null && !brokerRidOk(rid)) return { error: 'rid' };
   const had = rid ? await brokerSaleOf(db, player.id, rid) : null;
   if (had?.kind === 'fence') return { error: 'fenced' };
-  if (had?.kind === 'insignia' && had.item === offer.id)
-    return {
-      ok: true,
-      bought: offer.id,
-      again: true,
-      ...wardrobeOf(player, env, nowS),
-      purse: await insigniaPurse({ db }, player),
-    };
-  if (insigniaHeld(player.insignia).includes(offer.id) || isDeveloper(player, env)) return { error: 'owned' }; // ADMIN-ALL: an admin holds every offer (titles.js holdsAll)
+  if (had?.kind === 'insignia' && had.item === offer.id) return { ok: true, bought: offer.id, again: true, ...wardrobeOf(player, env, nowS), purse: await insigniaPurse({ db }, player) };
+  if (insigniaHeld(player.insignia).includes(offer.id) || isDeveloper(player, env)) return { error: 'owned' };   // ADMIN-ALL: an admin holds every offer (titles.js holdsAll)
   // AUDIT WB9 (insignia F3): the id APPENDED to the column the UPDATE matches, not written over it from the row read
   // before - two sales of two pieces at once each read the column empty, and the second wrote its id alone over the
   // first's: both paid for, one held (the id's shape is the law's own, insigniaWith's: space-separated, in sale order)
   // AUDIT FB1024 (BROKER-RID): the request id's guard rides the one UPDATE, and its row is written by that write alone
   const [sold] = await db.batch([
-    db
-      .prepare(
-        `UPDATE players SET insignia = CASE WHEN COALESCE(insignia, '') = '' THEN ?2 ELSE insignia || ' ' || ?2 END,
+    db.prepare(
+      `UPDATE players SET insignia = CASE WHEN COALESCE(insignia, '') = '' THEN ?2 ELSE insignia || ' ' || ?2 END,
          insignia_spent = insignia_spent + ?3, last_seen = ?4
        WHERE id = ?1
          AND (' ' || COALESCE(insignia, '') || ' ') NOT LIKE ('% ' || ?2 || ' %')
-         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${
-           rid
-             ? `
-         AND ${brokerRidFreeSql('?1', '?5')}`
-             : ''
-         }
+         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `
+         AND ${brokerRidFreeSql('?1', '?5')}` : ''}
        RETURNING insignia, insignia_spent`,
-      )
-      .bind(player.id, offer.id, offer.price, nowS, ...(rid ? [rid] : [])),
+    ).bind(player.id, offer.id, offer.price, nowS, ...(rid ? [rid] : [])),
     ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'insignia', item: offer.id, nowS })] : []),
   ]);
   const row = sold?.results?.[0] ?? null;
   if (!row) {
-    if (rid && (await brokerSaleOf(db, player.id, rid))?.kind === 'fence') return { error: 'fenced' }; // fenced while it was asked
+    if (rid && (await brokerSaleOf(db, player.id, rid))?.kind === 'fence') return { error: 'fenced' };   // fenced while it was asked
     const now = await db.prepare('SELECT * FROM players WHERE id = ?').bind(player.id).first();
     if (insigniaHeld(now?.insignia).includes(offer.id)) return { error: 'owned' };
     return { error: 'short', purse: await insigniaPurse({ db }, now ?? player), price: offer.price };
@@ -745,9 +665,9 @@ export function handleRefusal(handle) {
   const h = handle.trim();
   if (h !== handle) return 'shape';
   if (!isHandleShaped(h)) return 'shape';
-  if (isGuestShaped(h)) return 'shape'; // belt and braces: the two spaces cannot overlap
-  if (handleLooksLikeEmail(h)) return 'email'; // HANDLE-EMAIL: a username is never an email address
-  if (!nameIsIssuable(h)) return 'refused'; // NAME-F1/F2, at entry
+  if (isGuestShaped(h)) return 'shape';         // belt and braces: the two spaces cannot overlap
+  if (handleLooksLikeEmail(h)) return 'email';  // HANDLE-EMAIL: a username is never an email address
+  if (!nameIsIssuable(h)) return 'refused';     // NAME-F1/F2, at entry
   return null;
 }
 
@@ -778,8 +698,7 @@ export function handleRefusal(handle) {
  * (accountClient.js REFUSALS `not-found`), which is the truth.
  */
 export function legalRefusal(body) {
-  const terms = body?.terms,
-    privacy = body?.privacy;
+  const terms = body?.terms, privacy = body?.privacy;
   if (terms === TERMS_VERSION && privacy === PRIVACY_VERSION) return null;
   if (terms === undefined && privacy === undefined) return { error: 'not-found' };
   const dated = (v) => typeof v === 'string' && LEGAL_VERSION_RE.test(v);
@@ -792,7 +711,7 @@ export function legalRefusal(body) {
  *  calls: a row that says its player agreed to text this service does not
  *  hold is a record of something that did not happen. */
 const legalColumns = (legal, nowS) =>
-  legal && !legalRefusal(legal) ? [legal.terms, legal.privacy, nowS] : [null, null, null];
+  (legal && !legalRefusal(legal) ? [legal.terms, legal.privacy, nowS] : [null, null, null]);
 
 // ── ACC1c: USERNAME, PASSWORD, AND THE ONE WAY BACK IN ──────────────
 
@@ -841,16 +760,11 @@ export async function overRate({ db, nowS }, key, max = LOGIN_MAX, windowS = LOG
   // at 1 through 300 requests; the `login:` and `ip:` doors share this
   // statement). A request stamped with a window already past is counted
   // in the window that is open.
-  const row = await db
-    .prepare(
-      `INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, 1)
+  const row = await db.prepare(`INSERT INTO rate_limits (key, window_start, count) VALUES (?, ?, 1)
     ON CONFLICT(key) DO UPDATE SET
       count = CASE WHEN rate_limits.window_start >= excluded.window_start THEN rate_limits.count + 1 ELSE 1 END,
       window_start = MAX(rate_limits.window_start, excluded.window_start)
-    RETURNING count`,
-    )
-    .bind(key, start)
-    .first();
+    RETURNING count`).bind(key, start).first();
   return (row?.count ?? 0) > max;
 }
 
@@ -947,14 +861,10 @@ export async function register({ db, subtle, rand, nowS }, playerId, { handle, p
     // authority on whether this row is still a guest's, by the same law
     // - two registrations of one guest (two devices) both passed the
     // SELECT above, both answered a recovery code, and the first's was dead.
-    wrote = await db
-      .prepare(
-        'UPDATE players SET handle = ?, handle_lc = ?, password = ?, recovery_hash = ?, registered_at = ?, ' +
-          'terms_version = COALESCE(?, terms_version), privacy_version = COALESCE(?, privacy_version), legal_accepted_at = COALESCE(?, legal_accepted_at) ' +
-          'WHERE id = ? AND handle IS NULL',
-      )
-      .bind(handle, handle.toLowerCase(), pw, rc, nowS, ...legalColumns(legal, nowS), playerId)
-      .run();
+    wrote = await db.prepare('UPDATE players SET handle = ?, handle_lc = ?, password = ?, recovery_hash = ?, registered_at = ?, '
+      + 'terms_version = COALESCE(?, terms_version), privacy_version = COALESCE(?, privacy_version), legal_accepted_at = COALESCE(?, legal_accepted_at) '
+      + 'WHERE id = ? AND handle IS NULL')
+      .bind(handle, handle.toLowerCase(), pw, rc, nowS, ...legalColumns(legal, nowS), playerId).run();
   } catch (e) {
     // THE UNIQUE INDEX IS THE AUTHORITY ON WHETHER A NAME IS TAKEN, not
     // a SELECT before the write - two registrations in the same instant
@@ -993,8 +903,7 @@ export async function login({ db, subtle, rand, nowS }, { handle, password, devi
   await clearRate({ db }, `login:${lc}`);
   // AUDIT SAFE SERVICE-7 (bible/11-Multiplayer/Chat-Safety-Arc.md section 5): A BANNED ACCOUNT IS TOLD SO, and minted no
   // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle
-  if (bannedNow(player, nowS))
-    return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };
+  if (bannedNow(player, nowS)) return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };
   // The cost of a hash goes up over the years. The only moment the
   // plaintext is in hand is a correct login, so that is when a row is
   // rewritten at the current count.
@@ -1006,20 +915,15 @@ export async function login({ db, subtle, rand, nowS }, { handle, password, devi
   let held = player.password;
   if (needsRehash(held)) {
     const fresh = await hashPassword(password, { subtle, rand });
-    const re = await db
-      .prepare('UPDATE players SET password = ? WHERE id = ? AND password = ?')
-      .bind(fresh, player.id, held)
-      .run();
+    const re = await db.prepare('UPDATE players SET password = ? WHERE id = ? AND password = ?').bind(fresh, player.id, held).run();
     if (re.meta.changes) held = fresh;
   }
   let session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel, { password: held });
   if (!session) {
     // the row moved under it - a recovery, a change, or only another sign-in's rehash: the password typed is asked of
     // the row as it stands now, once, so two sign-ins of one account at once both get in
-    const now =
-      (await db.prepare('SELECT password FROM players WHERE id = ?').bind(player.id).first())?.password ?? null;
-    if (now && (await verifyPassword(password, now, { subtle })))
-      session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel, { password: now });
+    const now = (await db.prepare('SELECT password FROM players WHERE id = ?').bind(player.id).first())?.password ?? null;
+    if (now && await verifyPassword(password, now, { subtle })) session = await openSession({ db, subtle, rand, nowS }, player.id, deviceLabel, { password: now });
   }
   if (!session) return { error: 'bad-login' };
   return { id: player.id, name: displayName(player), kind: accountKind(player), ...session };
@@ -1052,25 +956,17 @@ export async function recover({ db, subtle, rand, nowS }, { handle, code, passwo
   const { ok, rest } = await matchRecoveryCode(canon, player?.recovery_hash ?? null, { subtle });
   if (!player || !canon || !ok) return { error: 'bad-code' };
   // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in
-  if (bannedNow(player, nowS))
-    return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };
+  if (bannedNow(player, nowS)) return { error: 'banned', until: player.banned_until, reason: player.ban_reason ?? null };
 
   const one = set ? null : mintRecoveryCode(rand);
   const fresh = set && !rest?.length ? mintRecoverySet(rand) : null;
   const [pw, rc] = await Promise.all([
     hashPassword(password, { subtle, rand }),
-    one
-      ? hashPassword(codeForHashing(one), { subtle, rand })
-      : fresh
-        ? hashRecoverySet(fresh, { subtle, rand })
-        : joinRecoverySet(rest),
+    one ? hashPassword(codeForHashing(one), { subtle, rand }) : fresh ? hashRecoverySet(fresh, { subtle, rand }) : joinRecoverySet(rest),
   ]);
   // AUDIT 68 S01-register-recover-lost-update: the code is SPENT by the write that replaces it - two recoveries racing
   // on one code both verified it, and the first one's new code and session were dead on arrival
-  const spent = await db
-    .prepare('UPDATE players SET password = ?, recovery_hash = ? WHERE id = ? AND recovery_hash = ?')
-    .bind(pw, rc, player.id, player.recovery_hash)
-    .run();
+  const spent = await db.prepare('UPDATE players SET password = ?, recovery_hash = ? WHERE id = ? AND recovery_hash = ?').bind(pw, rc, player.id, player.recovery_hash).run();
   // AUDIT RECOVERY-SET A4: a code that WAS right and lost the race (two of one set's codes typed at once) is told to try
   // again, not that it was wrong - the caller has already shown a code, so the word leaks nothing
   if (!spent.meta.changes) return { error: 'codes-moved' };
@@ -1078,24 +974,15 @@ export async function recover({ db, subtle, rand, nowS }, { handle, code, passwo
   // recovery (another of the set's codes) that wrote after this one signed out every device itself and opened its own
   // session - answered 200 - which this sign-out, by the account's id alone, then deleted. Every device from before the
   // second is gone by its own sign-out, and nothing since stands on a password but the second's
-  await db
-    .prepare(
-      'DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)',
-    )
-    .bind(player.id, player.id, pw)
-    .run();
-  await closeStaffSessions({ db }, player.id); // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too
+  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, player.id, pw).run();
+  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too
   await clearRate({ db }, `recover:${lc}`);
   // RPT1026-SECNET: on the password this recovery wrote - a second recovery (another of the set's codes) that signed
   // every device out after this one's write is not outlived by this one's session
   const session = await openSession({ db, subtle, rand, nowS }, player.id, null, { password: pw });
   if (!session) return { error: 'codes-moved' };
   // AUDIT RECOVERY-SET B6: and the handle as the row holds it - the saved file names the account, not its typing
-  const left = one
-    ? { recoveryCode: one }
-    : fresh
-      ? { recoveryCodes: fresh, codesLeft: fresh.length, handle: player.handle }
-      : { codesLeft: rest.length, handle: player.handle };
+  const left = one ? { recoveryCode: one } : fresh ? { recoveryCodes: fresh, codesLeft: fresh.length, handle: player.handle } : { codesLeft: rest.length, handle: player.handle };
   return { id: player.id, name: displayName(player), ...left, ...session };
 }
 
@@ -1111,29 +998,20 @@ export async function changePassword({ db, subtle, rand, nowS }, player, session
   // one allowance, whichever door; this route had only the account's 240 a
   // minute, and a stolen session could grind the password that locks the owner out
   if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };
-  if (!(await verifyPassword(oldPassword, player.password, { subtle }))) return { error: 'bad-login' };
+  if (!await verifyPassword(oldPassword, player.password, { subtle })) return { error: 'bad-login' };
   await clearRate({ db }, `login:${player.handle_lc}`);
   const pw = await hashPassword(password, { subtle, rand });
   // RPT1026-SECNET (from a private security report): THE CHANGE LANDS ON WHAT IT PROVED - the password it checked the
   // old one against, still the row's, and the session asking, still standing. A recovery that landed while the
   // derivations ran moved the one and deleted the other, and this write by id alone put the thief's password over the
   // owner's recovered one. Refused then, as a wrong old password is.
-  const wrote = await db
-    .prepare(
-      'UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)',
-    )
-    .bind(pw, player.id, player.password, session.id, player.id)
-    .run();
+  const wrote = await db.prepare('UPDATE players SET password = ? WHERE id = ? AND password = ? AND EXISTS (SELECT 1 FROM sessions WHERE id = ? AND player_id = ?)')
+    .bind(pw, player.id, player.password, session.id, player.id).run();
   if (!wrote.meta.changes) return { error: 'bad-login' };
   // and the sign-out only while the password is still this change's: a recovery between the two statements signed every
   // device out itself and opened its owner's, which this one would have deleted
-  await db
-    .prepare(
-      'DELETE FROM sessions WHERE player_id = ? AND id != ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)',
-    )
-    .bind(player.id, session.id, player.id, pw)
-    .run();
-  await closeStaffSessions({ db }, player.id); // STAFF-PANEL2-FIX: and every staff panel session
+  await db.prepare('DELETE FROM sessions WHERE player_id = ? AND id != ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, session.id, player.id, pw).run();
+  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: and every staff panel session
   return { ok: true };
 }
 
@@ -1165,7 +1043,7 @@ export async function changePassword({ db, subtle, rand, nowS }, player, session
 export async function newRecoveryCodes({ db, subtle, rand, nowS }, player, { password, code }) {
   if (!player.password) return { error: 'not-registered' };
   if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };
-  if (!(await verifyPassword(password, player.password, { subtle }))) return { error: 'bad-login' };
+  if (!await verifyPassword(password, player.password, { subtle })) return { error: 'bad-login' };
   await clearRate({ db }, `login:${player.handle_lc}`);
   if (recoveryLeft(player.recovery_hash) !== null) {
     // a guess at a code is a guess at a code, whichever door: RECOVER's bucket, as `recover` spends it
@@ -1177,10 +1055,7 @@ export async function newRecoveryCodes({ db, subtle, rand, nowS }, player, { pas
   }
   const codes = mintRecoverySet(rand);
   const rc = await hashRecoverySet(codes, { subtle, rand });
-  const wrote = await db
-    .prepare('UPDATE players SET recovery_hash = ? WHERE id = ? AND recovery_hash IS ?')
-    .bind(rc, player.id, player.recovery_hash ?? null)
-    .run();
+  const wrote = await db.prepare('UPDATE players SET recovery_hash = ? WHERE id = ? AND recovery_hash IS ?').bind(rc, player.id, player.recovery_hash ?? null).run();
   if (!wrote.meta.changes) return { error: 'codes-moved' };
   return { recoveryCodes: codes, codesLeft: codes.length };
 }
@@ -1254,36 +1129,23 @@ export async function claimDuel({ db, nowS, subtle }, player, receipt, publicKey
   if (!v.ok) return { error: 'receipt', why: v.why };
   const c = v.claims;
   if (!c.f.includes(player.id)) return { error: 'not-yours' };
-  const winner = c.f[c.w],
-    loser = c.f[1 - c.w];
-  const r = await db
-    .prepare(
-      `INSERT INTO duel_results (loser, winner, at, rk)
+  const winner = c.f[c.w], loser = c.f[1 - c.w];
+  const r = await db.prepare(
+    `INSERT INTO duel_results (loser, winner, at, rk)
      SELECT ?1, ?2, ?3, ?4
      WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1 AND handle IS NOT NULL)
        AND EXISTS (SELECT 1 FROM players WHERE id = ?2 AND handle IS NOT NULL)
        AND NOT EXISTS (SELECT 1 FROM duel_results WHERE rk = ?4)
        AND (SELECT COUNT(*) FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?5) < ?6
        AND (SELECT COUNT(*) FROM duel_results WHERE winner = ?2 AND at > ?3 - ?5) < ?7`,
-    )
-    .bind(loser, winner, c.i, c.n, DAY_S, DUEL_PAIR_DAY_MAX, DUEL_WINNER_DAY_MAX)
-    .run();
+  ).bind(loser, winner, c.i, c.n, DAY_S, DUEL_PAIR_DAY_MAX, DUEL_WINNER_DAY_MAX).run();
   const mine = () => duelRecordOf({ db }, player.id);
   if (Number(r?.meta?.changes ?? 0) > 0) return { recorded: true, ...(await mine()) };
   // Refused or already counted: which, read after the fact - the INSERT above is still the only write
-  if (await db.prepare('SELECT 1 AS x FROM duel_results WHERE rk = ?1').bind(c.n).first())
-    return { recorded: true, ...(await mine()) };
-  const handles = await db
-    .prepare('SELECT COUNT(*) AS n FROM players WHERE id IN (?1, ?2) AND handle IS NOT NULL')
-    .bind(loser, winner)
-    .first();
+  if (await db.prepare('SELECT 1 AS x FROM duel_results WHERE rk = ?1').bind(c.n).first()) return { recorded: true, ...(await mine()) };
+  const handles = await db.prepare('SELECT COUNT(*) AS n FROM players WHERE id IN (?1, ?2) AND handle IS NOT NULL').bind(loser, winner).first();
   const n = (row) => Number(row?.n ?? 0);
-  const pair = n(
-    await db
-      .prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?4')
-      .bind(loser, winner, c.i, DAY_S)
-      .first(),
-  );
+  const pair = n(await db.prepare('SELECT COUNT(*) AS n FROM duel_results WHERE loser = ?1 AND winner = ?2 AND at > ?3 - ?4').bind(loser, winner, c.i, DAY_S).first());
   const why = n(handles) < 2 ? 'guest' : pair >= DUEL_PAIR_DAY_MAX ? 'pair' : 'winner';
   return { recorded: false, why, ...(await mine()) };
 }
@@ -1313,10 +1175,7 @@ export async function claimDuel({ db, nowS, subtle }, player, receipt, publicKey
 
 /** An account's gates: `{ closed }`, counted off the rows - WB12d: a rite's own row is no breach closed. */
 export async function gateRecordOf({ db }, playerId) {
-  const r = await db
-    .prepare("SELECT COUNT(*) AS n FROM gate_kills WHERE account = ?1 AND earned != 'rite'")
-    .bind(playerId)
-    .first();
+  const r = await db.prepare("SELECT COUNT(*) AS n FROM gate_kills WHERE account = ?1 AND earned != 'rite'").bind(playerId).first();
   return { closed: Number(r?.n ?? 0) };
 }
 
@@ -1333,13 +1192,7 @@ export async function gateRecordOf({ db }, playerId) {
  * @param {{ id: string, handle?: string|null }} player the session's account
  * @param {unknown} receipt @param {CryptoKey|null} publicKey
  */
-export async function claimGate(
-  { db, nowS, subtle },
-  player,
-  receipt,
-  publicKey,
-  { strike = null, region = null, deeds = null, weir = null } = {},
-) {
+export async function claimGate({ db, nowS, subtle }, player, receipt, publicKey, { strike = null, region = null, deeds = null, weir = null } = {}) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifyReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -1351,67 +1204,28 @@ export async function claimGate(
   // at least three of its claims agree on (seatInfluence.js), null where the claim named none, and on the rite's own
   // row, which is no kill
   const embers = c.r === 1 ? 2 : 1;
-  const kill = db
-    .prepare(
-      'INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)',
-    )
-    .bind(
-      c.d,
-      player.id,
-      c.b,
-      c.x,
-      nowS,
-      c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null,
-      embers,
-      c.m ? JSON.stringify(c.m) : null,
-    ); // INT14: the relay's count, kept; WW2: a region the Bay's lane's alone - no gate past the Bay stands in a Bay region
+  const kill = db.prepare('INSERT OR IGNORE INTO gate_kills (day, account, boss, earned, at, region, stones, body) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)')
+    .bind(c.d, player.id, c.b, c.x, nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m ? JSON.stringify(c.m) : null);   // INT14: the relay's count, kept; WW2: a region the Bay's lane's alone - no gate past the Bay stands in a Bay region
   // MARKS1 / AUDIT 28 M4: the gate's Marks (marks.js gateStrikeStatement) IN THE SAME BATCH as the row - one transaction,
   // so a strike that fails takes the row with it and the retry claims afresh; `strike` null where Marks are not this
   // account's, and the row is written alone. WB12d: the rite alone is no breach closed - no strike
-  const stmt = c.x === 'rite' ? null : (strike?.(c.d) ?? null);
+  const stmt = c.x === 'rite' ? null : strike?.(c.d) ?? null;
   // SILVER-WAYS: the guild's deed (marks.js deedStatements - its mark and its strike, by the gate_kills row this claim
   // wrote), in the same batch; never for the rite alone, which is no breach closed
-  const deed = c.x === 'rite' ? null : (deeds?.(c.d) ?? null);
+  const deed = c.x === 'rite' ? null : deeds?.(c.d) ?? null;
   // AUDIT EG IV (lane3 #16): the Weir Key's roll directly after the row, in its transaction (eg.js egGateWeir - `changes()`
   // the row's): never the rite's
-  const roll = c.x === 'rite' ? null : (weir?.(c) ?? null);
-  const [r, ...rest] =
-    stmt || deed || roll
-      ? await db.batch([kill, ...(roll ? [roll] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])])
-      : [await kill.run(), null];
-  const w = roll ? rest.shift() : null,
-    [m, ...d] = rest;
+  const roll = c.x === 'rite' ? null : weir?.(c) ?? null;
+  const [r, ...rest] = stmt || deed || roll ? await db.batch([kill, ...(roll ? [roll] : []), ...(stmt ? [stmt] : [db.prepare('SELECT 0')]), ...(deed ?? [])]) : [await kill.run(), null];
+  const w = roll ? rest.shift() : null, [m, ...d] = rest;
   const recorded = Number(r?.meta?.changes ?? 0) > 0;
   const struck = !!stmt && Number(m?.meta?.changes ?? 0) > 0;
   const deedStruck = !!deed && Number(d[1]?.meta?.changes ?? 0) > 0;
-  if (recorded)
-    return {
-      recorded,
-      day: c.d,
-      stones: embers,
-      ...(c.p > 0 ? { portent: c.p } : {}),
-      ...(c.x === 'rite' ? { rite: true } : {}),
-      ...(stmt ? { struck } : {}),
-      ...(deed ? { deedStruck } : {}),
-      ...(roll ? { weirRow: w?.results?.[0] ?? null } : {}),
-      ...(await gateRecordOf({ db }, player.id)),
-    };
+  if (recorded) return { recorded, day: c.d, stones: embers, ...(c.p > 0 ? { portent: c.p } : {}), ...(c.x === 'rite' ? { rite: true } : {}), ...(stmt ? { struck } : {}), ...(deed ? { deedStruck } : {}), ...(roll ? { weirRow: w?.results?.[0] ?? null } : {}), ...(await gateRecordOf({ db }, player.id)) };
   // AUDIT WB12d (A1): A FIGHTER'S `r` COUNTED AT ONE EMBER - a service from before acct62 took the receipt as a plain one
   // and kept its row - is made good when the receipt is claimed again (the game keeps an `r` receipt until a service
   // that answers its embers has counted it). One row a (day, account), one receipt a kill: the row is this receipt's
-  if (c.r === 1)
-    await db
-      .prepare("UPDATE gate_kills SET stones = 2 WHERE day = ?1 AND account = ?2 AND stones = 1 AND earned != 'rite'")
-      .bind(c.d, player.id)
-      .run();
-  const row = await db
-    .prepare('SELECT stones FROM gate_kills WHERE day = ?1 AND account = ?2')
-    .bind(c.d, player.id)
-    .first();
-  return {
-    recorded,
-    why: 'claimed',
-    ...(Number.isSafeInteger(row?.stones) ? { stones: row.stones } : {}),
-    ...(await gateRecordOf({ db }, player.id)),
-  };
+  if (c.r === 1) await db.prepare("UPDATE gate_kills SET stones = 2 WHERE day = ?1 AND account = ?2 AND stones = 1 AND earned != 'rite'").bind(c.d, player.id).run();
+  const row = await db.prepare('SELECT stones FROM gate_kills WHERE day = ?1 AND account = ?2').bind(c.d, player.id).first();
+  return { recorded, why: 'claimed', ...(Number.isSafeInteger(row?.stones) ? { stones: row.stones } : {}), ...(await gateRecordOf({ db }, player.id)) };
 }

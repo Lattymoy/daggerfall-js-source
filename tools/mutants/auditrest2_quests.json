@@ -38,8 +38,8 @@
   {
     "name": "AUDITREST2-Q-Q3-the-mark-not-read",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  out.v = Number.isSafeInteger(rec.v) && rec.v >= 1 ? rec.v : 1; // AUDIT REST II Q3: no mark - a ledger from before it",
-    "new": "  out.v = BOUNTY_LEDGER_VERSION; // AUDIT REST II Q3: no mark - a ledger from before it",
+    "old": "  out.v = Number.isSafeInteger(rec.v) && rec.v >= 1 ? rec.v : 1;",
+    "new": "  out.v = BOUNTY_LEDGER_VERSION;",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "AUDITREST2-Q-Q3-a-new-ledger-unmarked",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  v: BOUNTY_LEDGER_VERSION,",
-    "new": "  v: 1,",
+    "old": "droppedKilled: /** @type {Record<string, number>} */ ({}), v: BOUNTY_LEDGER_VERSION });",
+    "new": "droppedKilled: /** @type {Record<string, number>} */ ({}), v: 1 });",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "AUDITREST2-Q-Q3-the-host-not-asking",
     "file": "src/scenes/bountyHost.js",
-    "old": "    if (sharedClockOn()) restampNeverLapsed(ledger, now);\n    // AUDIT 28 B10: a bounty taken \"later\" than now was taken on another clock (an offline save played online): it",
-    "new": "    // AUDIT 28 B10: a bounty taken \"later\" than now was taken on another clock (an offline save played online): it",
+    "old": "    if (sharedClockOn()) restampNeverLapsed(ledger, now);\n",
+    "new": "",
     "tests": [
       "test/systems/quest/auditrest2_quests.test.js"
     ]

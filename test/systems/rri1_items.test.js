@@ -324,7 +324,7 @@ test('RRI1 wiring: the install at the scene boot, the Features row and its curat
   assert.match(rd('src/ui/paperDoll.js'), /if \(item\.group === 'Weapons' && item\.equipSlot === EQUIP_SLOTS\.RightHand && getItemHands\(item\) === ITEM_HANDS\.Either\) record \+= 1;\n\s+const m = item\.material \?\? 0;/);
   assert.match(rd('src/characters/equipTable.js'), /if \(cls\?\.equipSlot\) return EQUIP_SLOTS\[cls\.equipSlot\];/);
   assert.match(rd('src/characters/equipTable.js'), /if \(cls\?\.itemHands\) return ITEM_HANDS\[cls\.itemHands\];/);
-  assert.match(rd('src/systems/equip.js'), /const armorSlotRule = \(templateIndex\) => \{\n\s*const slot = customItemClass\(templateIndex\)\?\.equipSlot;\n\s*return slot \? \{ slot \} : SLOT_RULES\.Armor\[templateIndex\];\n\s*\};/);
+  assert.match(rd('src/systems/equip.js'), /const armorSlotRule = \(templateIndex\) => \{ const slot = customItemClass\(templateIndex\)\?\.equipSlot; return slot \? \{ slot \} : SLOT_RULES\.Armor\[templateIndex\]; \};/);
   assert.equal((rd('src/systems/equip.js').match(/armorSlotRule\(item\.templateIndex\)/g) ?? []).length, 2, 'both body-part reads');
   assert.match(rd('src/characters/weapons.js'), /if \(cls\?\.weaponSkillUsed\) return SKILLS\[cls\.weaponSkillUsed\];/);
   assert.match(rd('src/combat/fpsWeapon.js'), /if \(cls\?\.weaponType\) return T\[cls\.weaponType\(isEnchanted\(item\)\)\];/);

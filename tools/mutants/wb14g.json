@@ -56,8 +56,8 @@
   {
     "name": "WB14g-a-Common-piece",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  for (const bit of SPOILS_PORTENT_BITS)\n    if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));",
-    "new": "  for (const bit of SPOILS_PORTENT_BITS) if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), 'common', rolls));",
+    "old": "if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));",
+    "new": "if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), 'common', rolls));",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "WB14g-a-bit-paying-nothing",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    if ((p & bit) !== 0) more.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));",
-    "new": "    if ((p & bit) !== 0 && bit !== 4) more.push(graded(spoilsBase(lv, rolls), magicOrBetter(rolls), rolls));",
+    "old": "if ((p & bit) !== 0) more.push(",
+    "new": "if ((p & bit) !== 0 && bit !== 4) more.push(",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "WB14g-the-claims-p-unread",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  const s = rollSpoils(seed, level, claims?.p ?? 0); // WB14g: a portent night's pieces more",
-    "new": "  const s = rollSpoils(seed, level); // WB14g: a portent night's pieces more",
+    "old": "rollSpoils(seed, level, claims?.p ?? 0)",
+    "new": "rollSpoils(seed, level)",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "WB14g-the-pictures-shifted",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    record: p.tier === 'gilded' || i >= firstPortent ? null : flat(),",
-    "new": "    record: p.tier === 'gilded' ? null : flat(),",
+    "old": "record: p.tier === 'gilded' || i >= firstPortent ? null : flat()",
+    "new": "record: p.tier === 'gilded' ? null : flat()",
     "tests": [
       "test/net/gate/wb14g_pays.test.js"
     ]

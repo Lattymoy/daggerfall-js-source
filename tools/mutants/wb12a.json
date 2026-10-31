@@ -2,8 +2,8 @@
   {
     "name": "WB12a-the-repair-never-renames",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    if (isSigilStone(it) && it.name !== SIGIL_STONE.name) {",
-    "new": "    if (false && isSigilStone(it)) {",
+    "old": "  for (const it of list) if (isSigilStone(it) && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
+    "new": "  for (const it of list) if (false && isSigilStone(it)) { it.name = SIGIL_STONE.name; renamed++; }",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB12a-every-item-renamed",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    if (isSigilStone(it) && it.name !== SIGIL_STONE.name) {",
-    "new": "    if (it && it.name !== SIGIL_STONE.name) {",
+    "old": "  for (const it of list) if (isSigilStone(it) && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
+    "new": "  for (const it of list) if (it && it.name !== SIGIL_STONE.name) { it.name = SIGIL_STONE.name; renamed++; }",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB12a-the-crash-record-keeps-its-name",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  if (item) nameEmbers([item]); // WB12a: a stone a crash record kept under its old name lands as a Deadlands Ember",
-    "new": "  // WB12a: a stone a crash record kept under its old name lands as a Deadlands Ember",
+    "old": "  if (item) nameEmbers([item]);",
+    "new": "",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB12a-the-old-frame-said",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  `The Covenant tears Dagon's Breach near ${near} shut. ${boss} is cast back into the Deadlands.`;",
-    "new": "  `The Oblivion Gate near ${near} collapses. ${boss} returns to the Deadlands.`;",
+    "old": "`The Covenant tears Dagon's Breach near ${near} shut. ${boss} is cast back into the Deadlands.`",
+    "new": "`The Oblivion Gate near ${near} collapses. ${boss} returns to the Deadlands.`",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB12a-the-banner-says-the-old-name",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "  name: \"Dagon's Breach\", // WB12a (Mac: \"Dagon's Breach\"): the event's name - the arch it wears is still \"the gate\"",
-    "new": "  name: 'Oblivion Gate', // WB12a (Mac: \"Dagon's Breach\"): the event's name - the arch it wears is still \"the gate\"",
+    "old": "  name: 'Dagon\\'s Breach',",
+    "new": "  name: 'Oblivion Gate',",
     "tests": [
       "test/systems/gate/wb12a_breach_words.test.js"
     ]

@@ -416,8 +416,8 @@
   {
     "name": "MARTIAL3-the-shaft-tell-dropped",
     "file": "src/combat/arrowFlight.js",
-    "old": "  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg); // MARTIAL3: a path's rider answers its signature's shaft\n  const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];",
-    "new": "  const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];",
+    "old": "  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg);   // MARTIAL3: a path's rider answers its signature's shaft\n",
+    "new": "",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "BAL10-the-stock-fists-unread",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths\n  return damage;",
-    "new": "  return damage;",
+    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths\n",
+    "new": "",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]
@@ -651,7 +651,7 @@
   {
     "name": "BAL10-the-stock-claws-read",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info); // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths",
+    "old": "  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths",
     "new": "  if (isPlayer) damage = weaponBlowMods(null, damage, attacker, target, info);",
     "tests": [
       "test/systems/martial_paths.test.js"
@@ -660,8 +660,8 @@
   {
     "name": "BAL10-the-stock-host-word-dropped",
     "file": "src/combat/formulas.js",
-    "old": "        damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, {\n          unaware: !!unaware,\n          wraps,\n        }); // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines",
-    "new": "        damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls); // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines",
+    "old": "      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, { unaware: !!unaware, wraps });",
+    "new": "      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls);",
     "tests": [
       "test/systems/martial_paths.test.js"
     ]

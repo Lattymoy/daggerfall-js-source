@@ -128,8 +128,8 @@
   {
     "name": "DISC29-A-ray-any-bucket",
     "file": "src/world/actionSystem.js",
-    "old": "  return Number.isFinite(surfaces.raycast(origin, DOWN, skin + TRIGGER_RAY_LIFT, { only: [key] }));",
-    "new": "  return Number.isFinite(surfaces.raycast(origin, DOWN, skin + TRIGGER_RAY_LIFT, null));",
+    "old": "skin + TRIGGER_RAY_LIFT, { only: [key] }));",
+    "new": "skin + TRIGGER_RAY_LIFT, null));",
     "tests": [
       "test/world/disc29_throne.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "DISC29-D-disarm-keeps-count",
     "file": "src/ui/drawWatchdog.js",
-    "old": "  armed--;\n  if (h.t != null) {",
-    "new": "  if (h.t != null) {",
+    "old": "  h.live = false;\n  armed--;",
+    "new": "  h.live = false;",
     "tests": [
       "test/ui/enhanced/disc29_watchdog.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "DISC29-D-arm-never-ticks",
     "file": "src/ui/drawWatchdog.js",
-    "old": "  startTicking();\n  const check = () => {",
-    "new": "  const check = () => {",
+    "old": "  armed++;\n  startTicking();",
+    "new": "  armed++;",
     "tests": [
       "test/ui/enhanced/disc29_watchdog.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "DISC29-D-notice-wall-clock",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "    : armDrawWatchdog(\n        NOTICE_WATCHDOG_MS,\n        () => {\n          if (panels.get(key) === p) releaseEnhancedNotice(key);\n        },\n        { schedule, cancel },\n      );",
-    "new": "    : schedule(() => {\n        if (panels.get(key) === p) releaseEnhancedNotice(key);\n      }, NOTICE_WATCHDOG_MS);",
+    "old": "armDrawWatchdog(NOTICE_WATCHDOG_MS, () => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, { schedule, cancel });",
+    "new": "schedule(() => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, NOTICE_WATCHDOG_MS);",
     "tests": [
       "test/ui/enhancedNotice.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "DISC29-D-plaque-wall-clock",
     "file": "src/ui/worldPlaque.js",
-    "old": "  _watchdog = armDrawWatchdog(\n    PLAQUE_WATCHDOG_MS,\n    () => {\n      _watchdog = null;\n      hideWorldPlaque();\n    },\n    { schedule: _schedule, cancel: _cancel },\n  );",
-    "new": "  _watchdog = _schedule(() => {\n    _watchdog = null;\n    hideWorldPlaque();\n  }, PLAQUE_WATCHDOG_MS);",
+    "old": "armDrawWatchdog(PLAQUE_WATCHDOG_MS, () => { _watchdog = null; hideWorldPlaque(); }, { schedule: _schedule, cancel: _cancel });",
+    "new": "_schedule(() => { _watchdog = null; hideWorldPlaque(); }, PLAQUE_WATCHDOG_MS);",
     "tests": [
       "test/systems/worldhover.test.js"
     ]

@@ -41,8 +41,8 @@
   {
     "name": "GOLD-WIRE-clamp-everywhere",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    shared = isRoomCarried(remote),",
-    "new": "    shared = true,",
+    "old": "shared = isRoomCarried(remote),",
+    "new": "shared = true,",
     "tests": [
       "test/systems/loot/goldwire.test.js"
     ],

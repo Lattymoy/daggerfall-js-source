@@ -202,7 +202,7 @@
   {
     "name": "speed-penalty-absolute",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    cautiousTravelMultiplier: 1 - speedPenalty / 100,",
+    "old": "    cautiousTravelMultiplier: 1 - (speedPenalty / 100),",
     "new": "    cautiousTravelMultiplier: speedPenalty / 100,",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -229,7 +229,7 @@
   {
     "name": "waterways-ignore-rivers-switch",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  const waterwaysEnabled = roadsIntegration ? !!get('RoadsIntegration.EnableWaterways') && riversStreams : false;",
+    "old": "  const waterwaysEnabled = roadsIntegration ? (!!get('RoadsIntegration.EnableWaterways') && riversStreams) : false;",
     "new": "  const waterwaysEnabled = roadsIntegration ? !!get('RoadsIntegration.EnableWaterways') : false;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
@@ -238,7 +238,7 @@
   {
     "name": "follow-key-custom-no-fallback",
     "file": "src/systems/inputActions.js",
-    "old": "        name =\n          i < row.options.length ? row.options[i] : String(storedModSetting(vendor, row.choice) ?? '').trim() || null;",
+    "old": "        name = i < row.options.length ? row.options[i] : (String(storedModSetting(vendor, row.choice) ?? '').trim() || null);",
     "new": "        name = row.options[i] ?? null;",
     "tests": [
       "test/ui/kb1_keybinds.test.js"
@@ -274,8 +274,8 @@
   {
     "name": "circumnavigate-yaw-window",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  if (rectContains(corners.ne, worldX, worldZ)) return yaw > 45 && yaw < 225 ? 'se' : 'nw';",
-    "new": "  if (rectContains(corners.ne, worldX, worldZ)) return yaw > 135 && yaw < 315 ? 'se' : 'nw';",
+    "old": "  if (rectContains(corners.ne, worldX, worldZ)) return (yaw > 45 && yaw < 225) ? 'se' : 'nw';",
+    "new": "  if (rectContains(corners.ne, worldX, worldZ)) return (yaw > 135 && yaw < 315) ? 'se' : 'nw';",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "circumnavigate-no-bail",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  if (worldX > locationBorderRect.xMin && worldX < locationRect.xMin) return yaw > 90 && yaw < 270 ? 'sw' : 'nw';\n  return null;",
-    "new": "  if (worldX > locationBorderRect.xMin && worldX < locationRect.xMin) return yaw > 90 && yaw < 270 ? 'sw' : 'nw';\n  return 'ne';",
+    "old": "  return null;\n}\n\n/** The mod, as a host builds it.",
+    "new": "  return 'ne';\n}\n\n/** The mod, as a host builds it.",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "follow-keeps-destination",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        st.destinationName = null;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
-    "new": "        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
+    "old": "        st.road = (roadDataPt & playerDirection) !== 0;\n        st.destinationName = null;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
+    "new": "        st.road = (roadDataPt & playerDirection) !== 0;\n        beginPathTravel(targetPixel(playerDirection, mp.x, mp.y));",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "cautious-watch-always",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (st.destinationCautious) {",
-    "new": "      if (true) {",
+    "old": "      if (st.destinationCautious) {\n        const e = deps.entity?.() ?? {};",
+    "new": "      if (true) {\n        const e = deps.entity?.() ?? {};",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "m1-detach-latch-ignored",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.enterRectDetached) return; // AUDIT-TO1 M1: the mod's `-=` at :994-996\n    if (st.destinationName && st.settings.locationPause === LOC_PAUSE_ENTER) {",
-    "new": "    if (st.destinationName && st.settings.locationPause === LOC_PAUSE_ENTER) {",
+    "old": "    if (st.enterRectDetached) return;   // AUDIT-TO1 M1: the mod's `-=` at :994-996",
+    "new": "",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -726,7 +726,7 @@
   {
     "name": "l5-estimate-kept-on-clear",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.estimateMinutes = null; // AUDIT-TO1 L5",
+    "old": "    st.estimateMinutes = null;   // AUDIT-TO1 L5",
     "new": "",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"

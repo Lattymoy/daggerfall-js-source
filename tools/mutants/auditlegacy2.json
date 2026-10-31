@@ -250,7 +250,7 @@
   {
     "name": "AUDIT-LEGACY-II-H4-bones-anywhere",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (item.legacyRemains && !usingWagon && remote?.[REMAINS_LIST] !== item.legacyRemains.of)\n    return { ok: false, refusal: REFUSAL.remains };",
+    "old": "  if (item.legacyRemains && !usingWagon && remote?.[REMAINS_LIST] !== item.legacyRemains.of) return { ok: false, refusal: REFUSAL.remains };",
     "new": "",
     "tests": [
       "test/systems/legacy/auditlegacy2.test.js"

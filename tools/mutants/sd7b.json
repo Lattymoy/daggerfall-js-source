@@ -57,8 +57,8 @@
   {
     "name": "SD7B-an-island-at-the-floor",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  const C = (x, y, z) => realmToDungeon(cx + x, y0 + y, cz + z);",
-    "new": "  const C = (x, y, z) => realmToDungeon(cx + x, y, cz + z);",
+    "old": "const C = (x, y, z) => realmToDungeon(cx + x, y0 + y, cz + z);",
+    "new": "const C = (x, y, z) => realmToDungeon(cx + x, y, cz + z);",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]

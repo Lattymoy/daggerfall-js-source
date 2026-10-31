@@ -318,8 +318,8 @@
   {
     "name": "WB11-the-bye-a-gate",
     "file": "src/net/gate/gateLaw.js",
-    "old": "    return pairs.filter((q) => q[0] < nT && q[1] < nT).map(([x, y]) => [pi[x], pi[y]].sort((u, v) => u - v)); // WB11a: the trial paired with the bye rests",
-    "new": "    return pairs.filter((q) => q[0] < nT - 1 && q[1] < nT - 1).map(([x, y]) => [pi[x], pi[y]].sort((u, v) => u - v)); // WB11a: the trial paired with the bye rests",
+    "old": "return pairs.filter((q) => q[0] < nT && q[1] < nT).map(",
+    "new": "return pairs.filter((q) => q[0] < nT - 1 && q[1] < nT - 1).map(",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js",
       "test/net/gate/wb11_gate_host.test.js"

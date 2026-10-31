@@ -127,7 +127,7 @@ test('HAND-WRAPS the blow under PCAAO: its core takes the wraps and hands them t
     assert.equal(seen.at(-1), w);
   } finally { registerWeaponBlowMod('handwraps-pcaao', null); }
   const src = read('src/combat/formulas.js');
-  assert.ok(src.includes('core(attacker, target, {\n        weapon,\n        wraps,\n        damageMod,'), 'the registered core is handed them');
+  assert.ok(src.includes('core(attacker, target, { weapon, wraps, damageMod,'), 'the registered core is handed them');
   assert.ok(src.includes('const charged = weapon ?? wraps;') && src.includes('doItemEnchantmentPayloads(PAYLOAD.Strikes, charged, {'), 'their Strikes payload strikes with the fist');
 });
 

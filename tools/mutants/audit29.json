@@ -2,8 +2,8 @@
   {
     "name": "AUDIT29-A1-a-node-in-any-spelling",
     "file": "src/net/nodeLaw.js",
-    "old": "  return pixelOk(x, y) && nodeKey({ kind: m[1], x, y, day, slot }) === s ? { kind: m[1], x, y, day, slot } : null;",
-    "new": "  return pixelOk(x, y) ? { kind: m[1], x, y, day, slot } : null;",
+    "old": "pixelOk(x, y) && nodeKey({ kind: m[1], x, y, day, slot }) === s ?",
+    "new": "pixelOk(x, y) ?",
     "tests": [
       "test/net/audit29_laws.test.js",
       "test/net/audit29_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT29-A1-a-dungeon-vein-in-any-spelling",
     "file": "src/net/nodeLaw.js",
-    "old": "    return dungeonOk(dungeon) && dveinKey({ dungeon, day, slot }) === s ? { kind: 'dvein', dungeon, day, slot } : null;",
-    "new": "    return dungeonOk(dungeon) ? { kind: 'dvein', dungeon, day, slot } : null;",
+    "old": "dungeonOk(dungeon) && dveinKey({ dungeon, day, slot }) === s ?",
+    "new": "dungeonOk(dungeon) ?",
     "tests": [
       "test/net/audit29_laws.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "AUDIT29-A6-the-signature-in-a-vein-s-place",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (kind === 'vein')\n    return !VEIN_TABLES[climate]\n      ? 0\n      : richCount('vein', climate, region, confirmed) + signatureOres(region, confirmed).length;",
-    "new": "  if (kind === 'vein') return !VEIN_TABLES[climate] ? 0 : richCount('vein', climate, region, confirmed);",
+    "old": "richCount('vein', climate, region, confirmed) + signatureOres(region, confirmed).length;",
+    "new": "richCount('vein', climate, region, confirmed);",
     "tests": [
       "test/net/audit29_laws.test.js",
       "test/net/audit29_service.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT29-A8-the-unconfirmed-patch-unheld",
     "file": "src/net/nodeLaw.js",
-    "old": "  const tier = drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
-    "new": "  const tier = drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
+    "old": "drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
+    "new": "drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
     "tests": [
       "test/net/audit29_laws.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "AUDIT29-A10-the-first-writ-the-lowest-high",
     "file": "src/net/nodeLaw.js",
-    "old": "      tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1]; // AUDIT 29 A10: the highest, as said",
-    "new": "      tier = high.length ? high[0] : tiers[tiers.length - 1]; // AUDIT 29 A10: the highest, as said",
+    "old": "tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
+    "new": "tier = high.length ? high[0] : tiers[tiers.length - 1];",
     "tests": [
       "test/net/audit29_laws.test.js"
     ]
@@ -297,8 +297,8 @@
     "name": "AUDIT29-B2-a-forge-sold-anywhere",
     "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - a hired trader is offered and sold in a home alone (a caravan's or a ship's had it paid for, never working).",
     "file": "src/ui/decorPanel.js",
-    "old": "export const stationsOffered = (trader = true) =>\n  DECOR_STATIONS.filter((k) =>\n    k === VENDOR_STATION ? trader && forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered(),\n  ); // PROF4: the workbench as the forge",
-    "new": "export const stationsOffered = (trader = true) => DECOR_STATIONS.filter(() => trader || true); // PROF4: the workbench as the forge",
+    "old": "export const stationsOffered = (trader = true) => DECOR_STATIONS.filter((k) => (k === VENDOR_STATION ? trader && forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered()));",
+    "new": "export const stationsOffered = (trader = true) => DECOR_STATIONS.filter(() => trader || true);",
     "tests": [
       "test/net/audit29_client.test.js"
     ]

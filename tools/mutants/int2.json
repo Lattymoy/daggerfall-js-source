@@ -2,7 +2,7 @@
   {
     "name": "INT2-the-claim-unread",
     "file": "server-account/src/judge.js",
-    "old": "  else if (summary && summary.level != null && summary.level !== level) out.push({ code: 'level-claim' });",
+    "old": "else if (summary && summary.level != null && summary.level !== level) out.push({ code: 'level-claim' });",
     "new": "",
     "tests": [
       "test/server/int2_judge.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "INT2-attributes-uncapped",
     "file": "server-account/src/judge.js",
-    "old": "      if (v != null && !(Number.isInteger(v) && v >= 0 && v <= MAX_STAT_VALUE)) out.push({ code: 'stat', at: k });",
-    "new": "      if (v != null && !(Number.isInteger(v) && v >= 0)) out.push({ code: 'stat', at: k });",
+    "old": "if (v != null && !(Number.isInteger(v) && v >= 0 && v <= MAX_STAT_VALUE)) out.push({ code: 'stat', at: k });",
+    "new": "if (v != null && !(Number.isInteger(v) && v >= 0)) out.push({ code: 'stat', at: k });",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "INT2-the-bound-worth",
     "file": "server-account/src/judge.js",
-    "old": "const pieceWealth = (/** @type {any} */ it, liquid = liquidWorthOf(it)) =>\n  liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it);",
-    "new": "const pieceWealth = (/** @type {any} */ it, liquid = liquidWorthOf(it)) => (liquid > 0 ? liquid : itemWorth(it));",
+    "old": "liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it));",
+    "new": "liquid > 0 ? liquid : itemWorth(it));",
     "tests": [
       "test/server/int2_judge.test.js"
     ]

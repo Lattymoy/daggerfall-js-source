@@ -128,8 +128,8 @@
   {
     "name": "REALM-GZIP-a-trade-reads-unopened",
     "file": "server-account/src/realmTrade.js",
-    "old": "    saveA = JSON.parse(await realmSaveTextOf(objA));\n    saveB = JSON.parse(await realmSaveTextOf(objB));",
-    "new": "    saveA = JSON.parse(await objA.text());\n    saveB = JSON.parse(await objB.text());",
+    "old": "saveA = JSON.parse(await realmSaveTextOf(objA)); saveB = JSON.parse(await realmSaveTextOf(objB));",
+    "new": "saveA = JSON.parse(await objA.text()); saveB = JSON.parse(await objB.text());",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "REALM-GZIP-a-trade-held-to-the-request",
     "file": "server-account/src/realmTrade.js",
-    "old": "  if (bytesA > REALM_TEXT_MAX_BYTES || bytesB > REALM_TEXT_MAX_BYTES)\n    return refuse(db, sid, 'too-large', playerId, asker, true); // REALM-GZIP: written plain, within the text's bound",
-    "new": "  if (bytesA > 4 * 1024 * 1024 || bytesB > 4 * 1024 * 1024) return refuse(db, sid, 'too-large', playerId, asker, true); // REALM-GZIP: written plain, within the text's bound",
+    "old": "  if (bytesA > REALM_TEXT_MAX_BYTES || bytesB > REALM_TEXT_MAX_BYTES) return",
+    "new": "  if (bytesA > 4 * 1024 * 1024 || bytesB > 4 * 1024 * 1024) return",
     "tests": [
       "test/net/realm_gzip.test.js"
     ]

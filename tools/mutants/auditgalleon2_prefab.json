@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-GN2-PF3-her-pictures-at-her-first-draw",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          await pipeline.getTexture(art.archive);\n          for (const n of Object.values(art.night)) art.glow(n);",
-    "new": "          for (const n of Object.values(art.night)) art.glow(n);",
+    "old": "        try { await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }",
+    "new": "        try { for (const n of Object.values(art.night)) art.glow(n); }",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-GN2-PF3-her-glow-at-her-first-draw",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          for (const n of Object.values(art.night)) art.glow(n);\n        } catch (e) {",
-    "new": "        } catch (e) {",
+    "old": "await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }",
+    "new": "await pipeline.getTexture(art.archive); }",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-GN2-PF5-her-archive-never-marked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        pipeline?.markClassicArt?.(art.archive);\n      }",
-    "new": "      }",
+    "old": "        pipeline?.markClassicArt?.(art.archive);\n",
+    "new": "",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-GN2-PF5-her-glow-a-replacement",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (lit || glow)\n      renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow), {\n        replacement: !pipeline.isClassicArt?.(archive),\n      });",
-    "new": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night, lit ?? toColor32(glow), { replacement: true });",
+    "old": "{ replacement: !pipeline.isClassicArt?.(archive) }",
+    "new": "{ replacement: true }",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-GN2-TS7-the-whole-stern-glows",
     "file": "src/world/ships/galleonArt.js",
-    "old": "      put(out, x, y, glassy ? [255, 186, 96] : [0, 0, 0]);",
-    "new": "      put(out, x, y, [255, 186, 96]);",
+    "old": "put(out, x, y, glassy ? [255, 186, 96] : [0, 0, 0]);",
+    "new": "put(out, x, y, [255, 186, 96]);",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-GN2-TS7-the-glint-dark",
     "file": "src/world/ships/galleonArt.js",
-    "old": "      const glassy = (c[0] === C.glass[0] && c[1] === C.glass[1]) || (c[0] === C.glassLit[0] && c[1] === C.glassLit[1]);",
-    "new": "      const glassy = c[0] === C.glass[0] && c[1] === C.glass[1];",
+    "old": " || (c[0] === C.glassLit[0] && c[1] === C.glassLit[1]);",
+    "new": ";",
     "tests": [
       "test/world/ships/auditgalleon2_prefab.test.js"
     ],

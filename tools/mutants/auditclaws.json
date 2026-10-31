@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-CLAWS-C2-dfu-metal-as-to-hit-x1",
     "file": "src/combat/formulas.js",
-    "old": "    if (weapon) chanceToHitMod = adjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon); // AUDIT PCO1: the stock's mod hook, right after CalculateWeaponToHit",
-    "new": "    else chanceToHitMod += clawMetalDamage(attacker);\n    if (weapon) chanceToHitMod = adjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon); // AUDIT PCO1: the stock's mod hook, right after CalculateWeaponToHit",
+    "old": "  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;\n",
+    "new": "  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;\n  else chanceToHitMod += clawMetalDamage(attacker);\n",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-CLAWS-C7-dfu-metal-outside-the-backstab",
     "file": "src/combat/formulas.js",
-    "old": "        damage = backstabDamage(damage, backstabChance, rolls, say);\n        if (before > 0 && damage === before * 3) notes.backstab = true;",
-    "new": "        damage = backstabDamage(damage, backstabChance, rolls, say);\n        if (before > 0 && damage === before * 3) damage -= 2 * clawMetalDamage(attacker);\n        if (before > 0 && damage - before * 3 === -2 * clawMetalDamage(attacker)) notes.backstab = true;",
+    "old": "      damage = backstabDamage(damage, backstabChance, rolls, say);\n      if (before > 0 && damage === before * 3) notes.backstab = true;\n    }\n  } else {",
+    "new": "      damage = backstabDamage(damage, backstabChance, rolls, say);\n      if (before > 0 && damage === before * 3) damage -= 2 * clawMetalDamage(attacker);\n      if (before > 0 && damage - before * 3 === -2 * clawMetalDamage(attacker)) notes.backstab = true;\n    }\n  } else {",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-CLAWS-C6-dfu-says-the-claws-ineffective",
     "file": "src/combat/formulas.js",
-    "old": "    if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
-    "new": "    if (!weapon && attacker?.isInBeastForm && (target.minMetalToHit ?? -1) > 2) say?.(MATERIAL_INEFFECTIVE_TEXT);\n    if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
+    "old": "  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
+    "new": "  if (!weapon && attacker?.isInBeastForm && (target.minMetalToHit ?? -1) > 2) say?.(MATERIAL_INEFFECTIVE_TEXT);\n  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]

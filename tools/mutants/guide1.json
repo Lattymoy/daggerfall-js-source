@@ -312,7 +312,7 @@
   {
     "name": "GUIDE1-logbook-loses-the-law",
     "file": "src/ui/quest/questJournal.js",
-    "old": "    const place = lastPlaceMentionedInMessage(message); // GUIDE1: ui/quest/questLens.js, the member's one home",
+    "old": "    const place = lastPlaceMentionedInMessage(message);   // GUIDE1: ui/quest/questLens.js, the member's one home",
     "new": "    const place = null;",
     "tests": [
       "test/ui/quest/guide1_questLens.test.js"

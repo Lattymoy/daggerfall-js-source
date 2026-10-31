@@ -196,8 +196,8 @@
   {
     "name": "CRAFT-WRITS-svc-any-maker",
     "file": "server-account/src/craftWrits.js",
-    "old": ") => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}",
-    "new": ") => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p}",
+    "old": "WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}",
+    "new": "WHERE pk.provenance = ${pv} AND pk.owner = ${p}",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "CRAFT-WRITS-svc-listed-ok",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))",
-    "new": "    AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))",
+    "old": "    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1)",
+    "new": "    AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1)",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CRAFT-WRITS-svc-ledger-kind",
     "file": "server-account/src/craftWrits.js",
-    "old": "      SELECT 'mint', NULL, 'account', ?1, 'craft-writ', pay, day, ?2, ?1, product, 'craft:' || id FROM craft_writs WHERE id = ?3 AND n = ?4`,",
-    "new": "      SELECT 'mint', NULL, 'account', ?1, 'writ', pay, day, ?2, ?1, product, 'craft:' || id FROM craft_writs WHERE id = ?3 AND n = ?4`,",
+    "old": "SELECT 'mint', NULL, 'account', ?1, 'craft-writ', pay,",
+    "new": "SELECT 'mint', NULL, 'account', ?1, 'writ', pay,",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "CRAFT-WRITS-svc-rows-stay",
     "file": "server-account/src/craftWrits.js",
-    "old": "    db\n      .prepare(\n        `DELETE FROM products WHERE provenance IN (SELECT value FROM json_each((SELECT goods FROM craft_writs WHERE id = ?1 AND n = ?2)))`,\n      )\n      .bind(id, nonce),\n    // the pay, struck - the ledger's trigger credits the balance",
-    "new": "    // the pay, struck - the ledger's trigger credits the balance",
+    "old": "    db.prepare(`DELETE FROM products WHERE provenance IN (SELECT value FROM json_each((SELECT goods FROM craft_writs WHERE id = ?1 AND n = ?2)))`).bind(id, nonce),\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CRAFT-WRITS-svc-xp-provisioning",
     "file": "server-account/src/craftWrits.js",
-    "old": "      SELECT ?1, ?2, track, MIN(${cap}, xp_given), ?3 FROM craft_writs WHERE id = ?4 AND n = ?5 AND xp_given > 0",
-    "new": "      SELECT ?1, ?2, 'provisioning', MIN(${cap}, xp_given), ?3 FROM craft_writs WHERE id = ?4 AND n = ?5 AND xp_given > 0",
+    "old": "      SELECT ?1, ?2, track, MIN(${cap}, xp_given), ?3 FROM craft_writs",
+    "new": "      SELECT ?1, ?2, 'provisioning', MIN(${cap}, xp_given), ?3 FROM craft_writs",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "CRAFT-WRITS-svc-roll-none",
     "file": "server-account/src/craftWrits.js",
-    "old": "              `UPDATE npc_roll SET rep = MIN(?4, rep + ?3), owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ?3)))",
-    "new": "              `UPDATE npc_roll SET rep = MIN(?4, rep + 0 * ?3), owed = MAX(0, MIN(owed, ?4 - MIN(?4, rep + ?3)))",
+    "old": "      db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + ?3), owed",
+    "new": "      db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + 0 * ?3), owed",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "CRAFT-WRITS-svc-anyone-posts",
     "file": "server-account/src/craftWrits.js",
-    "old": "  if (\n    !(await db\n      .prepare('SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL')\n      .bind(character, player.id)\n      .first())\n  )\n    return none;\n  await postCraftWrits(db, player.id, character, day);",
-    "new": "  await postCraftWrits(db, player.id, character, day);",
+    "old": "  if (!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL').bind(character, player.id).first())) return none;\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "CRAFT-WRITS-svc-never-smithed",
     "file": "server-account/src/craftWrits.js",
-    "old": "  return {\n    provisioning: rankOfXp(xp.provisioning ?? 0),\n    smithing: rankOfXp(xp.smithing ?? 0),\n    smithed: (xp.smithing ?? 0) > 0,\n  };",
-    "new": "  return { provisioning: rankOfXp(xp.provisioning ?? 0), smithing: rankOfXp(xp.smithing ?? 0), smithed: false };",
+    "old": "smithed: (xp.smithing ?? 0) > 0 };",
+    "new": "smithed: false };",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CRAFT-WRITS-svc-no-record",
     "file": "server-account/src/craftWrits.js",
-    "old": "  if (!side.at) return { error: 'realm-needed' }; // a crafting writ is a realm character's - its goods are its record's\n  const prior = await db",
-    "new": "  const prior = await db",
+    "old": "  if (!side.at) return { error: 'realm-needed' };   // a crafting writ is a realm character's - its goods are its record's\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-S1-product-unbound",
     "file": "server-account/src/craftWrits.js",
-    "old": "      ? `${brewedLeftSql('?1', '?2', '?10', '?11')} >= craft_writs.qty`",
-    "new": "      ? `${brewedLeftSql('?1', '?2', '?10', 'craft_writs.product')} >= craft_writs.qty`",
+    "old": "    ? `${brewedLeftSql('?1', '?2', '?10', '?11')} >= craft_writs.qty`",
+    "new": "    ? `${brewedLeftSql('?1', '?2', '?10', 'craft_writs.product')} >= craft_writs.qty`",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-S2-alias-shared",
     "file": "server-account/src/craftWrits.js",
-    "old": ") => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}\n    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND pk.provenance IN ${craftedBySql(p)}\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
-    "new": ") => `EXISTS (SELECT 1 FROM products pr WHERE pr.provenance = ${pv} AND pr.owner = ${p} AND pr.char_id = ${c}\n    AND pr.listed = 0 AND (pr.bought_with IS NOT 'gold' OR pr.loose = 1) AND pr.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND pr.provenance IN ${craftedBySql(p)}\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pr.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pr.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pr.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
+    "old": "const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}\n    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND pk.provenance IN ${craftedBySql(p)}\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`;",
+    "new": "const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pr WHERE pr.provenance = ${pv} AND pr.owner = ${p} AND pr.char_id = ${c}\n    AND pr.listed = 0 AND (pr.bought_with IS NOT 'gold' OR pr.loose = 1) AND pr.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND pr.provenance IN ${craftedBySql(p)}\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pr.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pr.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pr.provenance))`;",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-S3-oldest-first",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND ${pieceOkSql('?1', '?2', 'pr.provenance', '?3')} ORDER BY pr.made_at DESC, pr.rowid DESC LIMIT ?4`,",
-    "new": "    AND ${pieceOkSql('?1', '?2', 'pr.provenance', '?3')} ORDER BY pr.made_at LIMIT ?4`,",
+    "old": "ORDER BY pr.made_at DESC, pr.rowid DESC LIMIT ?4",
+    "new": "ORDER BY pr.made_at LIMIT ?4",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-S4-old-repeat",
     "file": "server-account/src/craftWrits.js",
-    "old": "  if (w.filled_at != null) return { error: 'craft-writ-filled' };",
-    "new": "  if (w.filled_at != null) return craftAnswer(db, player, w, nowS, { repeat: true });",
+    "old": "  if (w.filled_at != null) return { error: 'craft-writ-filled' };\n",
+    "new": "  if (w.filled_at != null) return craftAnswer(db, player, w, nowS, { repeat: true });\n",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-S5-rid-unread",
     "file": "server-account/src/craftWrits.js",
-    "old": "  if (byRid) return craftAnswer(db, player, byRid, nowS, { repeat: true });\n  if (now?.filled_at != null) return { error: 'craft-writ-filled' };",
-    "new": "  if (now?.filled_at != null) return { error: 'craft-writ-filled' };",
+    "old": "  if (byRid) return craftAnswer(db, player, byRid, nowS, { repeat: true });\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T2-bought-refused",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))",
-    "new": "    AND pk.listed = 0 AND (pk.bought_with IS NULL OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))",
+    "old": "AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND",
+    "new": "AND (pk.bought_with IS NULL OR pk.loose = 1) AND",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T2-gold-let-in",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND pk.listed = 0 AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND pk.recipe IN (SELECT value FROM json_each(${recipes}))",
-    "new": "    AND pk.listed = 0 AND 1 AND pk.recipe IN (SELECT value FROM json_each(${recipes}))",
+    "old": "AND (pk.bought_with IS NOT 'gold' OR pk.loose = 1) AND",
+    "new": "AND 1 AND",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-brews-any-character",
     "file": "server-account/src/craftWrits.js",
-    "old": ") => `(COALESCE((SELECT SUM(count) FROM prof_brews WHERE player = ${p} AND char_id = ${c} AND potion = ${potion}), 0)",
-    "new": ") => `(COALESCE((SELECT SUM(count) FROM prof_brews WHERE player = ${p} AND potion = ${potion}), 0)",
+    "old": "FROM prof_brews WHERE player = ${p} AND char_id = ${c} AND potion",
+    "new": "FROM prof_brews WHERE player = ${p} AND potion",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-auction",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)",
-    "new": "    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-road",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)",
-    "new": "    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-road-item",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
-    "new": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-home",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
-    "new": "    AND 1)`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`;",
+    "new": "    AND 1)`;",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-no-craft-row",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND pk.provenance IN ${craftedBySql(p)}\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')",
-    "new": "    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')",
+    "old": "    AND pk.provenance IN ${craftedBySql(p)}\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-sweep-filled",
     "file": "server-account/src/craftWrits.js",
-    "old": "    .prepare(\n      'DELETE FROM craft_writs WHERE id IN (SELECT id FROM craft_writs WHERE filled_at IS NULL AND expires_at < ?1 LIMIT ?2)',\n    )",
-    "new": "    .prepare('DELETE FROM craft_writs WHERE id IN (SELECT id FROM craft_writs WHERE expires_at < ?1 LIMIT ?2)')",
+    "old": "WHERE filled_at IS NULL AND expires_at < ?1 LIMIT ?2",
+    "new": "WHERE expires_at < ?1 LIMIT ?2",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-sweep-grace",
     "file": "server-account/src/craftWrits.js",
-    "old": "    .bind(nowS - DAY_S, limit)",
-    "new": "    .bind(nowS, limit)",
+    "old": "    .bind(nowS - DAY_S, limit).run();",
+    "new": "    .bind(nowS, limit).run();",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-outbound",
     "file": "server-account/src/craftWrits.js",
-    "old": "    { outbound: true },",
-    "new": "    { outbound: false },",
+    "old": "goods) ? null : 'craft-goods-gone'), { outbound: true });",
+    "new": "goods) ? null : 'craft-goods-gone'), { outbound: false });",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-renown-update",
     "file": "server-account/src/craftWrits.js",
-    "old": "        `UPDATE renown_tracks SET xp = MIN(?7, xp + (SELECT renown FROM craft_writs WHERE id = ?5 AND n = ?6)), updated_at = ?3",
-    "new": "        `UPDATE renown_tracks SET xp = MIN(?7, xp + 0 * (SELECT renown FROM craft_writs WHERE id = ?5 AND n = ?6)), updated_at = ?3",
+    "old": "    db.prepare(`UPDATE renown_tracks SET xp = MIN(?7, xp + (SELECT renown FROM",
+    "new": "    db.prepare(`UPDATE renown_tracks SET xp = MIN(?7, xp + 0 * (SELECT renown FROM",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-limit",
     "file": "server-account/src/craftWrits.js",
-    "old": "        xp_given = MAX(0, MIN(xp, ${cap} - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = craft_writs.track), 0)))",
-    "new": "        xp_given = MAX(0, MIN(xp, 100000 - COALESCE((SELECT xp FROM prof_tracks WHERE player = ?1 AND char_id = ?2 AND profession = craft_writs.track), 0)))",
+    "old": "        xp_given = MAX(0, MIN(xp, ${cap} - COALESCE(",
+    "new": "        xp_given = MAX(0, MIN(xp, 100000 - COALESCE(",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-chapters-gate",
     "file": "server-account/src/craftWrits.js",
-    "old": "    ...(chaptersOpenFor(player, env)",
-    "new": "    ...(true",
+    "old": "    ...(chaptersOpenFor(player, env) ? [",
+    "new": "    ...(true ? [",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-marks-board",
     "file": "server-account/src/craftWrits.js",
-    "old": "  if (asks(player, { character, needRid: false }) || shut(player, env) || !marksOpenFor(player, env)) return none;",
-    "new": "  if (asks(player, { character, needRid: false }) || shut(player, env)) return none;",
+    "old": " || shut(player, env) || !marksOpenFor(player, env)) return none;",
+    "new": " || shut(player, env)) return none;",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-marks-route",
     "file": "server-account/src/craftWrits.js",
-    "old": "  if (!marksOpenFor(player, env)) return { error: 'marks-closed' };\n  const w =",
-    "new": "  const w =",
+    "old": "  if (!marksOpenFor(player, env)) return { error: 'marks-closed' };\n",
+    "new": "",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-T3-early-count",
     "file": "server-account/src/craftWrits.js",
-    "old": "  if (Number(had?.n ?? 0) >= CRAFT_WRIT_SLOTS) return;\n  const writs = craftWritsFor(day, player, await ranksOf(db, player));",
-    "new": "  const writs = craftWritsFor(day, player, await ranksOf(db, player));",
+    "old": "  if (Number(had?.n ?? 0) >= CRAFT_WRIT_SLOTS) return;\n",
+    "new": "",
     "tests": [
       "test/server/scale4b.test.js",
       "test/net/craftwrits_service.test.js"
@@ -606,8 +606,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E1-worst-crafter",
     "file": "server-account/src/craftWrits.js",
-    "old": "      `SELECT t.profession, MAX(t.xp) AS xp FROM prof_tracks t JOIN realm_characters c ON c.id = t.char_id AND c.player = t.player AND c.dead_at IS NULL",
-    "new": "      `SELECT t.profession, MIN(t.xp) AS xp FROM prof_tracks t JOIN realm_characters c ON c.id = t.char_id AND c.player = t.player AND c.dead_at IS NULL",
+    "old": "SELECT t.profession, MAX(t.xp) AS xp FROM prof_tracks t",
+    "new": "SELECT t.profession, MIN(t.xp) AS xp FROM prof_tracks t",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E1-owner-only",
     "file": "server-account/src/craftWrits.js",
-    "old": "  if (!w || w.player !== player.id) return { error: 'no-writ' }; // E1: the account's - any of its characters fills it",
-    "new": "  if (!w || w.player !== player.id || w.owner !== character) return { error: 'no-writ' }; // E1: the account's - any of its characters fills it",
+    "old": "  if (!w || w.player !== player.id) return { error: 'no-writ' };",
+    "new": "  if (!w || w.player !== player.id || w.owner !== character) return { error: 'no-writ' };",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]
@@ -624,8 +624,8 @@
   {
     "name": "AUDIT-CRAFT-WRITS-E1-filler-unrecorded",
     "file": "server-account/src/craftWrits.js",
-    "old": "        `UPDATE craft_writs SET filled_at = ?3, filled_char = ?2, rid = ?4, n = ?6, goods = ?12,",
-    "new": "        `UPDATE craft_writs SET filled_at = ?3, rid = ?4, n = ?6, goods = ?12,",
+    "old": "SET filled_at = ?3, filled_char = ?2, rid",
+    "new": "SET filled_at = ?3, rid",
     "tests": [
       "test/net/craftwrits_service.test.js"
     ]

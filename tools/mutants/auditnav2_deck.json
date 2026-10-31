@@ -3,7 +3,7 @@
     "name": "AUDIT-NAV2-F57-keyed-by-rig",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    if (decks.has(hull)) return decks.get(hull);",
-    "new": "    const key = variant ? `${hull}:${variant}` : hull;\n    if (decks.has(key)) return decks.get(key);",
+    "new": "    const key = variant ? `${hull}:${variant}` : hull; if (decks.has(key)) return decks.get(key);",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDIT-NAV2-F39-classic-collider-skipped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "            ? cpu?.positions && cpu.indices\n              ? cpu\n              : null",
-    "new": "            ? null",
+    "old": "c.classicModel != null ? (cpu?.positions && cpu.indices ? cpu : null)",
+    "new": "c.classicModel != null ? null",
     "tests": [
       "test/systems/naval/auditnav2_deck.test.js"
     ]

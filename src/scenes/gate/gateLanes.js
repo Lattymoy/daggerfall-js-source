@@ -31,8 +31,7 @@ import { theatreAt, areaAt, BAY_THEATRE } from '../../world/worldWide/worldGrid.
 export function pageIdle() {
   const g = /** @type {any} */ (globalThis);
   if (typeof g.requestIdleCallback === 'function') return (fn, o) => g.requestIdleCallback(fn, o);
-  if (typeof g.document !== 'undefined' && typeof g.setTimeout === 'function')
-    return (fn) => g.setTimeout(() => fn({ didTimeout: true, timeRemaining: () => 0 }), 16);
+  if (typeof g.document !== 'undefined' && typeof g.setTimeout === 'function') return (fn) => g.setTimeout(() => fn({ didTimeout: true, timeRemaining: () => 0 }), 16);
   return null;
 }
 /** A slice the idle callback's timeout forced takes this long (ms) - the Bay scan's warm's own (scenes/world.js warmGateScan). */
@@ -53,65 +52,26 @@ export const SCAN_FORCED_SLICE_MS = 4;
  * @param {{ places: import('../../world/worldWide/worldPlaces.js').WorldPlaces, wet: (x: number, y: number) => boolean, spawnSalt?: number, land?: () => number, open?: (lane: number) => boolean,
  *   idle?: ReturnType<typeof pageIdle>, clock?: () => number }} o
  */
-export function createTheatreGateScans({
-  places,
-  wet,
-  spawnSalt,
-  land = () => 0,
-  open = gateLaneOpen,
-  idle = pageIdle(),
-  clock = () => performance.now(),
-}) {
+export function createTheatreGateScans({ places, wet, spawnSalt, land = () => 0, open = gateLaneOpen, idle = pageIdle(), clock = () => performance.now() }) {
   // WW5: kept as the world host makes them (keptTheatreScans) - Starfall's and the Hollows' lanes read the same scans, never
   // a second walk of a theatre's rings
-  let gen = -1,
-    ver = -1;
+  let gen = -1, ver = -1;
   /** @type {Map<number, import('../../systems/gate/theatreGateSite.js').TheatreGateScan>} */ const scans = new Map();
   /** @type {Map<number, ReturnType<typeof theatreGateScanner>>} */ const scanners = new Map();
-  /** @type {Map<number, boolean>} */ const grounds = new Map(); // a whole scan's: whether it offers a gate ground
+  /** @type {Map<number, boolean>} */ const grounds = new Map();   // a whole scan's: whether it offers a gate ground
   /** @type {number[]|null} */ let theatres = null;
   let warming = false;
-  const fresh = () => {
-    if (places.generation() !== gen || land() !== ver) {
-      gen = places.generation();
-      ver = land();
-      scans.clear();
-      scanners.clear();
-      grounds.clear();
-      theatres = null;
-    }
-  };
+  const fresh = () => { if (places.generation() !== gen || land() !== ver) { gen = places.generation(); ver = land(); scans.clear(); scanners.clear(); grounds.clear(); theatres = null; } };
   /** @param {number} t */
   const scannerOf = (t) => {
     let s = scanners.get(t);
-    if (!s)
-      scanners.set(
-        t,
-        (s = theatreGateScanner({
-          towns: places.inTheatre(t),
-          placeAt: places.at,
-          inTheatre: (x, y) => theatreAt(x, y) === t,
-          areaAt: (x, y) => areaAt(x, y, () => -1),
-          wet,
-          theatre: t,
-          spawnSalt,
-        })),
-      );
+    if (!s) scanners.set(t, s = theatreGateScanner({ towns: places.inTheatre(t), placeAt: places.at, inTheatre: (x, y) => theatreAt(x, y) === t, areaAt: (x, y) => areaAt(x, y, () => -1), wet, theatre: t, spawnSalt }));
     return s;
   };
   /** A theatre's scan made whole, kept for the generation. @param {number} t @param {import('../../systems/gate/theatreGateSite.js').TheatreGateScan} s */
-  const keep = (t, s) => {
-    scans.set(t, s);
-    scanners.delete(t);
-    grounds.set(t, theatreGateAreas(s).length > 0);
-    theatres = null;
-    return s;
-  };
+  const keep = (t, s) => { scans.set(t, s); scanners.delete(t); grounds.set(t, theatreGateAreas(s).length > 0); theatres = null; return s; };
   /** A theatre's scan, whole - made now if it is not yet (a test's, a probe's, and every ask with no idle moments). @param {number} t */
-  const scanOf = (t) => {
-    fresh();
-    return scans.get(t) ?? keep(t, /** @type {any} */ (scannerOf(t).step()));
-  };
+  const scanOf = (t) => { fresh(); return scans.get(t) ?? keep(t, /** @type {any} */ (scannerOf(t).step())); };
   /** The theatres past the Bay a gate may stand in, on a lane that stands - AUDIT TESA II P7: a closed lane unscanned. */
   const wanted = () => places.theatres().filter((t) => t !== BAY_THEATRE && t < GATE_LANES && open(t));
   /** THE WARM: each wanted theatre's scan, a slice an idle moment, a lane at a time, until every one is whole. */
@@ -119,29 +79,20 @@ export function createTheatreGateScans({
     if (warming || !idle) return;
     warming = true;
     const go = /** @type {NonNullable<typeof idle>} */ (idle);
-    go(
-      function slice(deadline) {
-        try {
-          fresh();
-          const until = clock() + (deadline.didTimeout ? SCAN_FORCED_SLICE_MS : 0);
-          const more = () => deadline.timeRemaining() > 2 || clock() < until;
-          for (const t of wanted()) {
-            if (scans.has(t)) continue;
-            const s = scannerOf(t).step(more);
-            if (s) keep(t, s);
-            if (!s || !more()) {
-              go(slice, { timeout: 250 });
-              return;
-            }
-          }
-        } catch (e) {
-          console.warn("[gate] a province's scan", /** @type {any} */ (e)?.message ?? e);
-          scanners.clear();
+    go(function slice(deadline) {
+      try {
+        fresh();
+        const until = clock() + (deadline.didTimeout ? SCAN_FORCED_SLICE_MS : 0);
+        const more = () => deadline.timeRemaining() > 2 || clock() < until;
+        for (const t of wanted()) {
+          if (scans.has(t)) continue;
+          const s = scannerOf(t).step(more);
+          if (s) keep(t, s);
+          if (!s || !more()) { go(slice, { timeout: 250 }); return; }
         }
-        warming = false;
-      },
-      { timeout: 4000 },
-    );
+      } catch (e) { console.warn('[gate] a province\'s scan', /** @type {any} */ (e)?.message ?? e); scanners.clear(); }
+      warming = false;
+    }, { timeout: 4000 });
   };
   return (_kept = {
     scanOf,
@@ -159,29 +110,12 @@ export function createTheatreGateScans({
       return out;
     },
     /** A lane's gate's site by its number, or null. @param {number} n */
-    siteOf: (n) => {
-      const t = gateLaneOf(n);
-      if (t === BAY_THEATRE) return null;
-      fresh();
-      const s = idle ? scans.get(t) : scanOf(t);
-      if (!s) {
-        warm();
-        return null;
-      }
-      return findTheatreGateSite(n, s);
-    }, // A2c: a scan not yet whole stands no site - the warm makes it
+    siteOf: (n) => { const t = gateLaneOf(n); if (t === BAY_THEATRE) return null; fresh(); const s = idle ? scans.get(t) : scanOf(t); if (!s) { warm(); return null; } return findTheatreGateSite(n, s); },   // A2c: a scan not yet whole stands no site - the warm makes it
     /** WW5 x WW-GATES-EVERYWHERE (A2c): a theatre's scan if it is whole, else null with the warm begun - the event lanes' ask
      *  (scenes/eventTheatres.js), which never makes a scan whole in one task where the page has idle moments to slice it
      *  into; with none, or for a theatre the warm does not make (a lane no gate stands on), made where it is asked, as
      *  scanOf. @param {number} t */
-    wholeScan: (t) => {
-      fresh();
-      const s = scans.get(t);
-      if (s || !idle) return s ?? scanOf(t);
-      if (!wanted().includes(t)) return scanOf(t);
-      warm();
-      return null;
-    },
+    wholeScan: (t) => { fresh(); const s = scans.get(t); if (s || !idle) return s ?? scanOf(t); if (!wanted().includes(t)) return scanOf(t); warm(); return null; },
   });
 }
 /** @typedef {{ scanOf: (t: number) => import('../../systems/gate/theatreGateSite.js').TheatreGateScan, theatres: () => number[], siteOf: (n: number) => any,
@@ -208,7 +142,7 @@ export function createGateLanes({ omen, bayGateSite, scans, lanesOk, here, open 
     let o = omens.get(lane);
     if (!o) {
       const site = lane === BAY_THEATRE ? bayGateSite : (/** @type {number} */ n) => scans?.siteOf(n) ?? null;
-      omens.set(lane, (o = createGateOmen({ ...omen, site, lane })));
+      omens.set(lane, o = createGateOmen({ ...omen, site, lane }));
     }
     return o;
   };
@@ -218,17 +152,13 @@ export function createGateLanes({ omen, bayGateSite, scans, lanesOk, here, open 
   /** The nearest to the player of every lane's `pick(omen)` that names a pixel (`px`, `py`). */
   const nearest = (/** @type {(o: ReturnType<typeof createGateOmen>) => any} */ pick) => {
     const p = here();
-    let best = null,
-      bestD = Infinity;
+    let best = null, bestD = Infinity;
     for (const lane of lanes()) {
       const v = pick(omenOf(lane));
       if (!v) continue;
       const s = v.site ?? v;
       const d = p && Number.isFinite(s?.px) ? Math.hypot(s.px - p.x, s.py - p.y) : lane === BAY_THEATRE ? 0 : Infinity;
-      if (d < bestD || !best) {
-        best = v;
-        bestD = d;
-      }
+      if (d < bestD || !best) { best = v; bestD = d; }
     }
     return best;
   };
@@ -236,10 +166,7 @@ export function createGateLanes({ omen, bayGateSite, scans, lanesOk, here, open 
     /** One frame of every lane's omen; the Bay's state answered (its readers', as before). */
     frame() {
       let out = null;
-      for (const lane of lanes()) {
-        const c = omenOf(lane).frame();
-        if (lane === BAY_THEATRE) out = c;
-      }
+      for (const lane of lanes()) { const c = omenOf(lane).frame(); if (lane === BAY_THEATRE) out = c; }
       return out;
     },
     /** The Bay's gate as the last frame saw it. */
@@ -247,41 +174,21 @@ export function createGateLanes({ omen, bayGateSite, scans, lanesOk, here, open 
     /** The Bay's gate's ring on the map. */
     mapMark: () => bay.mapMark(),
     /** The ring of every lane's gate past the Bay that is marked now - the Bay's is `mapMark`. */
-    mapMarks: () =>
-      lanes()
-        .filter((l) => l !== BAY_THEATRE)
-        .map((l) => omenOf(l).mapMark())
-        .filter(Boolean),
+    mapMarks: () => lanes().filter((l) => l !== BAY_THEATRE).map((l) => omenOf(l).mapMark()).filter(Boolean),
     /** Every lane's gate as the last frame saw it, with its lane. */
-    currents: () =>
-      lanes()
-        .map((lane) => ({ lane, c: omenOf(lane).current() }))
-        .filter((x) => x.c),
+    currents: () => lanes().map((lane) => ({ lane, c: omenOf(lane).current() })).filter((x) => x.c),
     /** The site of the gate numbered `n`, as its lane's last frame found it - or null. @param {number} n */
-    siteOf: (n) => {
-      const c = omens.get(gateLaneOf(n))?.current();
-      return c?.t?.day === n ? c.site : null;
-    },
+    siteOf: (n) => { const c = omens.get(gateLaneOf(n))?.current(); return c?.t?.day === n ? c.site : null; },
     /** The ring of the gate numbered `n` while it is marked - or null. @param {number} n */
-    markOf: (n) => {
-      const m = omens.get(gateLaneOf(n))?.mapMark();
-      return m?.day === n ? m : null;
-    },
+    markOf: (n) => { const m = omens.get(gateLaneOf(n))?.mapMark(); return m?.day === n ? m : null; },
     /** The nearest gate's state (`{t, phase, site}`) - the rite's circle stands at it. */
-    nearCurrent: () =>
-      nearest((o) => {
-        const c = o.current();
-        return c?.site ? c : null;
-      }) ?? bay.current(),
+    nearCurrent: () => nearest((o) => { const c = o.current(); return c?.site ? c : null; }) ?? bay.current(),
     /** The nearest standing gate - its stone, its plaque, the compass's mark. */
     standing: () => nearest((o) => o.standing()),
     /** The sky the nearest burning gate burns over an eye (gateOmen.js sky). */
     sky(/** @type {any} */ eye, /** @type {any} */ pixelTranslation) {
       let best = null;
-      for (const lane of lanes()) {
-        const s = omenOf(lane).sky(eye, pixelTranslation);
-        if (s && (!best || s.weight > best.weight)) best = s;
-      }
+      for (const lane of lanes()) { const s = omenOf(lane).sky(eye, pixelTranslation); if (s && (!best || s.weight > best.weight)) best = s; }
       return best;
     },
     /** BROKER-CAGE: the nearest breach's site from its omen to the Wrath's midnight. */

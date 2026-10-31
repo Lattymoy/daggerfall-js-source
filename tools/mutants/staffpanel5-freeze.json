@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-admin-door-open",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  if (ADMIN_ROUTES.has(path) && who.role !== 'admin') {",
-    "new": "  if (false) {",
+    "old": "if (ADMIN_ROUTES.has(path) && who.role !== 'admin') {",
+    "new": "if (false) {",
     "why": "a Moderator freezes",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-gate-gone",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
-    "new": "  if (true) return null;",
+    "old": "if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
+    "new": "if (true) return null;",
     "why": "the freeze gate gone: a modded client opens every door",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-allow-list-ignored",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
-    "new": "  if (!isFrozen(player, nowS) || readsRecord) return null;",
+    "old": "if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
+    "new": "if (!isFrozen(player, nowS) || readsRecord) return null;",
     "why": "a frozen player cannot sign out or read the staff chat",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-record-read-refused",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
-    "new": "  if (!isFrozen(player, nowS) || ALLOWED.has(path)) return null;",
+    "old": "if (!isFrozen(player, nowS) || ALLOWED.has(path) || readsRecord) return null;",
+    "new": "if (!isFrozen(player, nowS) || ALLOWED.has(path)) return null;",
     "why": "the look-around save unreadable",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-minutes-unbound",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    if (freeze && (!Number.isSafeInteger(minutes) || minutes < 1 || minutes > FREEZE_MINUTES_MAX))",
-    "new": "    if (freeze && (!Number.isSafeInteger(minutes) || minutes < 1 || minutes > FREEZE_MINUTES_MAX * 2))",
+    "old": "minutes > FREEZE_MINUTES_MAX)) return failed('bad-minutes'",
+    "new": "minutes > FREEZE_MINUTES_MAX * 2)) return failed('bad-minutes'",
     "why": "a freeze past its bound",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-reason-optional",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    if (freeze && !reason) return failed('bad-reason');",
-    "new": "    if (false) return failed('bad-reason');",
+    "old": "if (freeze && !reason) return failed('bad-reason');",
+    "new": "if (false) return failed('bad-reason');",
     "why": "a freeze with no reason",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-self-freeze",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    if (freeze && row.id === me.id) return failed('staff-self');",
-    "new": "    if (false) return failed('staff-self');",
+    "old": "if (freeze && row.id === me.id) return failed('staff-self');",
+    "new": "if (false) return failed('staff-self');",
     "why": "an Admin freezes themself",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-staff-frozen",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    if (freeze && canModerate(row, env)) return failed('protected');",
-    "new": "    if (false) return failed('protected');",
+    "old": "if (freeze && canModerate(row, env)) return failed('protected');",
+    "new": "if (false) return failed('protected');",
     "why": "staff frozen",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-unfreeze-unfrozen",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    if (!freeze && !isFrozen(row, nowS)) return failed('not-frozen');",
-    "new": "    if (false) return failed('not-frozen');",
+    "old": "if (!freeze && !isFrozen(row, nowS)) return failed('not-frozen');",
+    "new": "if (false) return failed('not-frozen');",
     "why": "an unfreeze of nobody frozen",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-rev-race-unsaid",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    if (!set.meta.changes) return { error: 'freeze-moved' };",
-    "new": "    if (false) return { error: 'freeze-moved' };",
+    "old": "if (!set.meta.changes) return { error: 'freeze-moved' };",
+    "new": "if (false) return { error: 'freeze-moved' };",
     "why": "two Admins at once both answered ok",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-freeze-thread-player-out",
     "file": "server-account/src/staffFreeze.js",
-    "old": "              `INSERT INTO staff_chat_threads (player, why, opened_at, opened_by, player_in, last_at, last_staff) SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1 WHERE ${LANDED}",
-    "new": "              `INSERT INTO staff_chat_threads (player, why, opened_at, opened_by, player_in, last_at, last_staff) SELECT ?1, 'freeze', ?2, ?3, 0, ?2, 1 WHERE ${LANDED}",
+    "old": "SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1",
+    "new": "SELECT ?1, 'freeze', ?2, ?3, 0, ?2, 1",
     "why": "a freeze opens no thread its player is in",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-unfreeze-thread-open",
     "file": "server-account/src/staffFreeze.js",
-    "old": "              `UPDATE staff_chat_threads SET closed_at = ?2, player_in = 0 WHERE player = ?1 AND closed_at IS NULL AND ${LANDED}`,",
-    "new": "              `UPDATE staff_chat_threads SET last_at = ?2, player_in = 0 WHERE player = ?1 AND closed_at IS NULL AND ${LANDED}`,",
+    "old": "        : db.prepare(`UPDATE staff_chat_threads SET closed_at = ?2",
+    "new": "        : db.prepare(`UPDATE staff_chat_threads SET last_at = ?2",
     "why": "the unfreeze leaves the chat open",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-live-any-rev",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    .prepare('UPDATE players SET freeze_live = 1 WHERE id = ?1 AND freeze_rev = ?2 AND freeze_live = 0')\n    .bind(row.id, Number(row.freeze_rev))",
-    "new": "    .prepare('UPDATE players SET freeze_live = 1 WHERE id = ?1 AND freeze_live = 0')\n    .bind(row.id)",
+    "old": "WHERE id = ?1 AND freeze_rev = ?2 AND freeze_live = 0').bind(row.id, Number(row.freeze_rev))",
+    "new": "WHERE id = ?1 AND freeze_live = 0').bind(row.id)",
     "why": "an old push marks a newer act live",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-push-again-when-live",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    if (row.freeze_live !== 0) return { ok: true, target: row.id, name, live: true };",
-    "new": "    if (false) return { ok: true, target: row.id, name, live: true };",
+    "old": "if (row.freeze_live !== 0) return { ok: true, target: row.id, name, live: true };",
+    "new": "if (false) return { ok: true, target: row.id, name, live: true };",
     "why": "a live act pushed again",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-freeze-thread-outlives",
     "file": "server-account/src/staffFreeze.js",
-    "old": "const threadOpen = (t, player, nowS) => !!t && t.closed_at == null && (t.why === 'talk' || isFrozen(player, nowS));",
-    "new": "const threadOpen = (t, player, nowS) => !!t && t.closed_at == null && true;",
+    "old": "(t.why === 'talk' || isFrozen(player, nowS))",
+    "new": "(true)",
     "why": "a freeze thread open past its freeze",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-player-in-unread",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  const open = threadOpen(thread, player, nowS) && thread.player_in === 1;",
-    "new": "  const open = threadOpen(thread, player, nowS);",
+    "old": "const open = threadOpen(thread, player, nowS) && thread.player_in === 1;",
+    "new": "const open = threadOpen(thread, player, nowS);",
     "why": "a Talk thread read by its player before staff wrote",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-player-rate-gone",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  if (await overRate(ctx, `staffchat:${player.id}`, PLAYER_LINES_MAX, PLAYER_LINES_WINDOW_S)) return { error: 'rate' };",
-    "new": "  if ((await overRate(ctx, `staffchat:${player.id}`, PLAYER_LINES_MAX, PLAYER_LINES_WINDOW_S)) && false)\n    return { error: 'rate' };",
+    "old": "PLAYER_LINES_MAX, PLAYER_LINES_WINDOW_S)) return { error: 'rate' };",
+    "new": "PLAYER_LINES_MAX, PLAYER_LINES_WINDOW_S) && false) return { error: 'rate' };",
     "why": "a player floods staff",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-player-line-unaudited",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  await auditStatement(db, nowS, {\n    actor: player,\n    role: 'player',\n    act: 'chat-line',\n    target: player.id,\n    detail: { line: id, len: text.length },\n  }).run();",
-    "new": "  if (false)\n    await auditStatement(db, nowS, {\n      actor: player,\n      role: 'player',\n      act: 'chat-line',\n      target: player.id,\n      detail: { line: id, len: text.length },\n    }).run();",
+    "old": "  await auditStatement(db, nowS, { actor: player,",
+    "new": "  if (false) await auditStatement(db, nowS, { actor: player,",
     "why": "a player line not in the audit log",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-staff-line-join-lost",
     "file": "server-account/src/staffFreeze.js",
-    "old": "      db\n        .prepare('UPDATE staff_chat_threads SET player_in = 1, last_at = ?2, last_staff = 1 WHERE player = ?1')\n        .bind(row.id, nowS),",
-    "new": "      db.prepare('UPDATE staff_chat_threads SET last_at = ?2, last_staff = 1 WHERE player = ?1').bind(row.id, nowS),",
+    "old": "SET player_in = 1, last_at = ?2, last_staff = 1 WHERE player = ?1",
+    "new": "SET last_at = ?2, last_staff = 1 WHERE player = ?1",
     "why": "the player never joins on the first staff line",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-staff-line-words-logged",
     "file": "server-account/src/staffFreeze.js",
-    "old": "      audit('chat-line', row.id, { name, line: line.id, len: text.length }),",
-    "new": "      audit('chat-line', row.id, { name, line: line.id, len: text.length, text }),",
+    "old": "audit('chat-line', row.id, { name, line: line.id, len: text.length }),",
+    "new": "audit('chat-line', row.id, { name, line: line.id, len: text.length, text }),",
     "why": "a line's words in the audit log",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-freeze-thread-closed-by-hand",
     "file": "server-account/src/staffFreeze.js",
-    "old": "    if (thread.why === 'freeze') return failed('freeze-thread'); // a freeze's thread closes with its unfreeze",
-    "new": "    if (false) return failed('freeze-thread'); // a freeze's thread closes with its unfreeze",
+    "old": "if (thread.why === 'freeze') return failed('freeze-thread');",
+    "new": "if (false) return failed('freeze-thread');",
     "why": "a freeze thread closed while the freeze stands",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-sweep-closes-talk",
     "file": "server-account/src/staffFreeze.js",
-    "old": "      WHERE t.closed_at IS NULL AND t.why = 'freeze' AND COALESCE(p.frozen_until, 0) <= ?1 LIMIT ?2)`,",
-    "new": "      WHERE t.closed_at IS NULL AND COALESCE(p.frozen_until, 0) <= ?1 LIMIT ?2)`,",
+    "old": "WHERE t.closed_at IS NULL AND t.why = 'freeze' AND COALESCE(p.frozen_until, 0) <= ?1",
+    "new": "WHERE t.closed_at IS NULL AND COALESCE(p.frozen_until, 0) <= ?1",
     "why": "the sweep closes a Talk thread",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-sweep-keeps-old-lines",
     "file": "server-account/src/staffFreeze.js",
-    "old": "      .bind(nowS - STAFF_LINES_KEEP_S, page),",
-    "new": "      .bind(nowS - STAFF_LINES_KEEP_S * 2, page),",
+    "old": ".bind(nowS - STAFF_LINES_KEEP_S, page)",
+    "new": ".bind(nowS - STAFF_LINES_KEEP_S * 2, page)",
     "why": "lines kept past 90 days",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-invite-http",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  return typeof u === 'string' && /^https:\\/\\/[\\w.-]+\\/[\\w/-]+$/.test(u.trim()) ? u.trim() : null;",
-    "new": "  return typeof u === 'string' && /^https?:\\/\\/[\\w.-]+\\/[\\w/-]+$/.test(u.trim()) ? u.trim() : null;",
+    "old": "/^https:\\/\\/[\\w.-]+\\/[\\w/-]+$/",
+    "new": "/^https?:\\/\\/[\\w.-]+\\/[\\w/-]+$/",
     "why": "an http invite shown",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-retry-too-soon",
     "file": "server-account/src/staffFreeze.js",
-    "old": "        .bind(nowS - PUSH_RETRY_AFTER_S, PUSH_RETRY_MAX)",
-    "new": "        .bind(nowS, PUSH_RETRY_MAX)",
+    "old": ".bind(nowS - PUSH_RETRY_AFTER_S, PUSH_RETRY_MAX)",
+    "new": ".bind(nowS, PUSH_RETRY_MAX)",
     "why": "an act pushed again before its own push had its chance",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-talk-joins-at-once",
     "file": "server-account/src/staffFreeze.js",
-    "old": "          .bind(row.id, nowS, me.id, isFrozen(row, nowS) ? 1 : 0),",
-    "new": "          .bind(row.id, nowS, me.id, 1),",
+    "old": ".bind(row.id, nowS, me.id, isFrozen(row, nowS) ? 1 : 0),",
+    "new": ".bind(row.id, nowS, me.id, 1),",
     "why": "Talk puts the player in before any staff line",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-beat-credits",
     "file": "server-account/src/accounts.js",
-    "old": "       AND COALESCE(frozen_until, 0) <= ?1   -- STAFF-PANEL5-FREEZE: a frozen account's beat credits nothing (a pass minted before the freeze)",
-    "new": "       AND 1   -- STAFF-PANEL5-FREEZE: a frozen account's beat credits nothing (a pass minted before the freeze)",
+    "old": "AND COALESCE(frozen_until, 0) <= ?1",
+    "new": "AND 1",
     "why": "a frozen beat credits play",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-older-order-applied",
     "file": "server/src/staffFreeze.js",
-    "old": "  if (held && (c.i < held.i || held.sig === sig)) return true;",
-    "new": "  if (held && held.sig === sig) return true;",
+    "old": "if (held && (c.i < held.i || held.sig === sig)) return true;",
+    "new": "if (held && held.sig === sig) return true;",
     "why": "an older lift lifts a newer freeze",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -352,8 +352,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-book-unsaved",
     "file": "server/src/staffFreeze.js",
-    "old": "  await saveFreezes(room, nowS);\n  const told = JSON.stringify({ t: 'frozen', until: fz });",
-    "new": "  const told = JSON.stringify({ t: 'frozen', until: fz });",
+    "old": "  await saveFreezes(room, nowS);\n  const told",
+    "new": "  const told",
     "why": "the book lost at a wake",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-old-build-kept",
     "file": "server/src/staffFreeze.js",
-    "old": "    if (fz && b.fv !== 1)",
-    "new": "    if (false)",
+    "old": "if (fz && b.fv !== 1) room._refuse(",
+    "new": "if (false) room._refuse(",
     "why": "an old build frozen with no screen stays",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -372,8 +372,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-book-unread-at-hello",
     "file": "server/src/staffFreeze.js",
-    "old": "  const book = key === SOCIAL_ROOM ? await bookOver(room, who.subject, who.gio, nowS) : undefined; // the hub keeps the book (its law door's)",
-    "new": "  const book = key === 'never' ? await bookOver(room, who.subject, who.gio, nowS) : undefined; // the hub keeps the book (its law door's)",
+    "old": "const book = key === SOCIAL_ROOM ? await bookOver(",
+    "new": "const book = key === 'never' ? await bookOver(",
     "why": "a reload sheds the freeze at the hub",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -382,8 +382,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-old-build-hello-kept",
     "file": "server/src/staffFreeze.js",
-    "old": "  if (who.fz && m.fv !== 1) {",
-    "new": "  if (false) {",
+    "old": "if (who.fz && m.fv !== 1) { room._refuse(",
+    "new": "if (false) { room._refuse(",
     "why": "an old build's frozen hello let in",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -402,8 +402,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-seat-unsaid",
     "file": "server/src/staffFreeze.js",
-    "old": "  if (seatBarred(was) === seatBarred(now) || isChatRoom(was?.key)) return;",
-    "new": "  if (true) return;",
+    "old": "if (seatBarred(was) === seatBarred(now) || isChatRoom(was?.key)) return;",
+    "new": "if (true) return;",
     "why": "the seat moves unsaid",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-staff-line-dropped",
     "file": "server/src/staffFreeze.js",
-    "old": "    if (m.t === 'chat' && m.ch === 'staff' && m.me !== true) return false;",
-    "new": "    if (m.t === 'never') return false;",
+    "old": "if (m.t === 'chat' && m.ch === 'staff' && m.me !== true) return false;",
+    "new": "if (m.t === 'never') return false;",
     "why": "a frozen player cannot talk to staff",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -463,8 +463,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-camera-whole",
     "file": "server/src/staffFreeze.js",
-    "old": "      m.p = { ...a.pose, yaw: m.p.yaw, pitch: m.p.pitch, mv: 0 };\n      return false;",
-    "new": "      return false;",
+    "old": "{ m.p = { ...a.pose, yaw: m.p.yaw, pitch: m.p.pitch, mv: 0 }; return false; }",
+    "new": "{ return false; }",
     "why": "a frozen camera walks",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -483,8 +483,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-words-carried",
     "file": "server/src/staffFreeze.js",
-    "old": "  nudge(room, a.sub, { t: 'chat', ch: 'staff', th: a.sub, sl, id: a.id, name: a.name, at: now });",
-    "new": "  nudge(room, a.sub, { t: 'chat', ch: 'staff', th: a.sub, sl, id: a.id, name: a.name, at: now, text: frame.text });",
+    "old": "th: a.sub, sl, id: a.id, name: a.name, at: now });",
+    "new": "th: a.sub, sl, id: a.id, name: a.name, at: now, text: frame.text });",
     "why": "the nudge carries words",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -493,8 +493,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-members-all",
     "file": "server/src/staffFreeze.js",
-    "old": "  for (const [other, b] of [...room._all()]) if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
-    "new": "  for (const [other, b] of [...room._all()]) if (b.id) room._send(other, out);",
+    "old": "if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
+    "new": "if (b.id) room._send(other, out);",
     "why": "a nudge to everyone",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -504,8 +504,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-no-thread-nudges",
     "file": "server/src/staffFreeze.js",
-    "old": "  if (!frozenAt(a, Math.floor(now / 1000)) && !room._staffIn?.has(a.sub)) return; // no thread of theirs this hub knows",
-    "new": "  if (false) return; // no thread of theirs this hub knows",
+    "old": "if (!frozenAt(a, Math.floor(now / 1000)) && !room._staffIn?.has(a.sub)) return;",
+    "new": "if (false) return;",
     "why": "a player in no thread nudges staff",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -514,8 +514,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-join-lost",
     "file": "server/src/staffFreeze.js",
-    "old": "    joined.set(c.s, c.i);",
-    "new": "    void joined;",
+    "old": "  joined.set(c.s, c.i);",
+    "new": "  void joined;",
     "why": "a staff line joins nobody",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -534,8 +534,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-cell-staff-line",
     "file": "server/src/staffFreeze.js",
-    "old": "  if (frame.t !== 'chat' || !isSocialRoom(a.key)) {",
-    "new": "  if (frame.t !== 'chat') {",
+    "old": "if (frame.t !== 'chat' || !isSocialRoom(a.key)) { room._junk(ws); return; }",
+    "new": "if (frame.t !== 'chat') { room._junk(ws); return; }",
     "why": "a staff nudge from a cell",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -664,8 +664,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-copy-on-player-line",
     "file": "src/net/chat.js",
-    "old": "    const copied = sys && typeof copy === 'string' && copy ? { copy } : {};",
-    "new": "    const copied = typeof copy === 'string' && copy ? { copy } : {};",
+    "old": "const copied = sys && typeof copy === 'string' && copy ? { copy } : {};",
+    "new": "const copied = typeof copy === 'string' && copy ? { copy } : {};",
     "why": "a player line offers words to copy",
     "tests": [
       "test/net/staffpanel5_freeze_client.test.js"
@@ -694,8 +694,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-lost-unfreeze-closes-thread",
     "file": "server-account/src/staffFreeze.js",
-    "old": "              `UPDATE staff_chat_threads SET closed_at = ?2, player_in = 0 WHERE player = ?1 AND closed_at IS NULL AND ${LANDED}`,",
-    "new": "              `UPDATE staff_chat_threads SET closed_at = ?2, player_in = 0 WHERE player = ?1 AND closed_at IS NULL`,",
+    "old": "WHERE player = ?1 AND closed_at IS NULL AND ${LANDED}",
+    "new": "WHERE player = ?1 AND closed_at IS NULL",
     "why": "an unfreeze that lost its race closes the winning freeze's thread",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -704,8 +704,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-lost-freeze-opens-thread",
     "file": "server-account/src/staffFreeze.js",
-    "old": "              `INSERT INTO staff_chat_threads (player, why, opened_at, opened_by, player_in, last_at, last_staff) SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1 WHERE ${LANDED}",
-    "new": "              `INSERT INTO staff_chat_threads (player, why, opened_at, opened_by, player_in, last_at, last_staff) SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1 WHERE 1",
+    "old": "SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1 WHERE ${LANDED}",
+    "new": "SELECT ?1, 'freeze', ?2, ?3, 1, ?2, 1 WHERE 1",
     "why": "a freeze that lost its race opens a thread",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -724,8 +724,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-hello-pose-taken",
     "file": "server/src/staffFreeze.js",
-    "old": "  if (who.fz && !isChatRoom(key)) m.pose = posedHere(room, who.subject);",
-    "new": "  if (false) m.pose = posedHere(room, who.subject);",
+    "old": "if (who.fz && !isChatRoom(key)) m.pose = posedHere(room, who.subject);",
+    "new": "if (false) m.pose = posedHere(room, who.subject);",
     "why": "finding 22: a frozen hello stands where it says - a reconnect is a step",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -734,8 +734,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-pose-of-anyone",
     "file": "server/src/staffFreeze.js",
-    "old": "  for (const [, b] of room._all())\n    if (b.sub === sub && b.pose && typeof b.pose === 'object') return { ...b.pose, mv: 0 };",
-    "new": "  for (const [, b] of room._all()) if (b.pose && typeof b.pose === 'object') return { ...b.pose, mv: 0 };",
+    "old": "if (b.sub === sub && b.pose && typeof b.pose === 'object') return",
+    "new": "if (b.pose && typeof b.pose === 'object') return",
     "why": "finding 22: a frozen hello stands where anyone in the room stands",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -744,8 +744,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-pose-walking",
     "file": "server/src/staffFreeze.js",
-    "old": "  for (const [, b] of room._all())\n    if (b.sub === sub && b.pose && typeof b.pose === 'object') return { ...b.pose, mv: 0 };",
-    "new": "  for (const [, b] of room._all()) if (b.sub === sub && b.pose && typeof b.pose === 'object') return b.pose;",
+    "old": "return { ...b.pose, mv: 0 };",
+    "new": "return b.pose;",
     "why": "finding 22: a frozen reconnect stands walking",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -754,8 +754,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-staff-by-hd",
     "file": "server/src/staffFreeze.js",
-    "old": "  for (const [other, b] of [...room._all()]) if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
-    "new": "  for (const [other, b] of [...room._all()]) if (b.id && (b.sub === sub || b.hd === 1)) room._send(other, out);",
+    "old": "if (b.id && (b.sub === sub || isHidden(b))) room._send(other, out);",
+    "new": "if (b.id && (b.sub === sub || b.hd === 1)) room._send(other, out);",
     "why": "findings 19, 24, 30: staff matched on `hd` 1, which no attachment carries - no staff socket nudged",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"
@@ -775,8 +775,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-no-push-after",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  if (set.meta.changes || tries < 1) return true;",
-    "new": "  return true;",
+    "old": "if (set.meta.changes || tries < 1) return true;",
+    "new": "return true;",
     "why": "finding 23: a push whose revision moved on is the last word - a stale freeze held at the hub",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -785,8 +785,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-push-after-own-rev",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  if (!cur || Number(cur.freeze_rev) === Number(row.freeze_rev)) return true; // live already, by another push of this revision",
-    "new": "  if (!cur) return true; // live already, by another push of this revision",
+    "old": "if (!cur || Number(cur.freeze_rev) === Number(row.freeze_rev)) return true;",
+    "new": "if (!cur) return true;",
     "why": "finding 23: a push of a revision live already pushes it again, and again",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -795,8 +795,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-failed-after-live",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  if (!(await pushFreeze({ db, nowS: at, subtle }, env, cur, tries - 1)))",
-    "new": "  await pushFreeze({ db, nowS: at, subtle }, env, cur, tries - 1);\n  if (false)",
+    "old": "if (!(await pushFreeze({ db, nowS: at, subtle }, env, cur, tries - 1))) await db.prepare(",
+    "new": "await pushFreeze({ db, nowS: at, subtle }, env, cur, tries - 1); if (false) await db.prepare(",
     "why": "finding 23: a failed push after leaves the newer act said live, never tried again",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -805,8 +805,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-order-time-request",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  const at = Math.max(nowS, Math.floor(Date.now() / 1000));",
-    "new": "  const at = nowS;",
+    "old": "const at = Math.max(nowS, Math.floor(Date.now() / 1000));",
+    "new": "const at = nowS;",
     "why": "finding 23: an order's time is its request's - older than an act committed before its mint",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -815,8 +815,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-firing-read-pushed",
     "file": "server-account/src/staffFreeze.js",
-    "old": "  for (const { id } of rows) {\n    const r = await db\n      .prepare('SELECT id, frozen_until, freeze_rev FROM players WHERE id = ?1 AND freeze_live = 0')\n      .bind(id)\n      .first(); // STAFF-PANEL5-FREEZE-FIX: the row as it stands at its own push, never as the firing's read found it",
-    "new": "  for (const r of rows) {\n    // STAFF-PANEL5-FREEZE-FIX: the row as it stands at its own push, never as the firing's read found it",
+    "old": "for (const { id } of rows) {\n    const r = await db.prepare('SELECT id, frozen_until, freeze_rev FROM players WHERE id = ?1 AND freeze_live = 0').bind(id).first();",
+    "new": "for (const r of rows) {",
     "why": "finding 23: the clock pushes each row as its firing read it",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"
@@ -946,8 +946,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-FIX-R2-pass-for-any-frame",
     "file": "server/src/staffFreeze.js",
-    "old": "    if (kind !== 'f' || !said.startsWith('{\"t\":\"lease\"')) continue; // an ask: a shard keeps every lease frame of that shape (hubShards.js shardKeeps), and hands up its asks alone",
-    "new": "    if (kind !== 'f') continue; // an ask: a shard keeps every lease frame of that shape (hubShards.js shardKeeps), and hands up its asks alone",
+    "old": "if (kind !== 'f' || !said.startsWith('{\"t\":\"lease\"')) continue;",
+    "new": "if (kind !== 'f') continue;",
     "why": "round two, item 2: a missed hand-up's line answered with a pass",
     "tests": [
       "test/net/staffpanel5_freeze_relay.test.js"

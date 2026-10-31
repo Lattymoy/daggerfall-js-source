@@ -65,8 +65,8 @@
   {
     "name": "DECORROOMY-batch-flat",
     "file": "server-account/src/decorBatch.js",
-    "old": "  const cap = yard ? DECOR_YARD_CAP : hall ? DECOR_HALL_CAP : decorCapOf(home.ground); // DECOR-ROOMY: a wider house holds more",
-    "new": "  const cap = yard ? DECOR_YARD_CAP : hall ? DECOR_HALL_CAP : decorCapOf(null); // DECOR-ROOMY: a wider house holds more",
+    "old": "(hall ? DECOR_HALL_CAP : decorCapOf(home.ground))",
+    "new": "(hall ? DECOR_HALL_CAP : decorCapOf(null))",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DECORROOMY-place-flat",
     "file": "server-account/src/decor.js",
-    "old": "    : decorCapOf(\n        (\n          await db\n            .prepare('SELECT ground FROM homes WHERE map_id = ? AND building_key = ?')\n            .bind(mapId, buildingKey)\n            .first()\n        )?.ground,\n      );",
-    "new": "    : (DECOR_CAP ??\n      decorCapOf(\n        (\n          await db\n            .prepare('SELECT ground FROM homes WHERE map_id = ? AND building_key = ?')\n            .bind(mapId, buildingKey)\n            .first()\n        )?.ground,\n      ));",
+    "old": "  const roomCap = S.seat ? S.cap : decorCapOf(",
+    "new": "  const roomCap = S.seat ? S.cap : DECOR_CAP ?? decorCapOf(",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DECORROOMY-list-unsaid",
     "file": "server-account/src/decor.js",
-    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground); // DECOR-ROOMY: the room's own, said with it",
-    "new": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : DECOR_CAP; // DECOR-ROOMY: the room's own, said with it",
+    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);",
+    "new": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : DECOR_CAP;",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "DECORROOMY-hall-cap",
     "file": "server-account/src/decor.js",
-    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground); // DECOR-ROOMY: the room's own, said with it",
-    "new": "  const cap = decorCapOf(home?.ground); // DECOR-ROOMY: the room's own, said with it",
+    "old": "  const cap = home?.guild_id != null ? DECOR_HALL_CAP : decorCapOf(home?.ground);",
+    "new": "  const cap = decorCapOf(home?.ground);",
     "tests": [
       "test/server/decorroomy_service.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "DECORROOMY-move-drops-ground",
     "file": "server-account/src/homes.js",
-    "old": "  'ground',\n]); // DECOR-ROOMY: the ground goes with the price it set   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed's hold stays one (none stands in the cell: holdDeed refuses it)",
-    "new": "]); // DECOR-ROOMY: the ground goes with the price it set   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed's hold stays one (none stands in the cell: holdDeed refuses it)",
+    "old": "'rent_due', 'look', 'layout', 'deed', 'ground']);",
+    "new": "'rent_due', 'look', 'layout', 'deed']);",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]

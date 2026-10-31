@@ -322,8 +322,8 @@
   {
     "name": "HOME-VOTE-room-handed-out",
     "file": "server-account/src/decor.js",
-    "old": "  if (!homeShownOf(shown?.results?.[0] ?? null))\n    return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
-    "new": "  if (false) return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
+    "old": "  if (!homeShownOf(shown?.results?.[0] ?? null)) return",
+    "new": "  if (false) return",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -332,8 +332,8 @@
   {
     "name": "HOME-VOTE-trader-withheld",
     "file": "server-account/src/decor.js",
-    "old": "    return { mapId, buildingKey, pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
-    "new": "    return { mapId, buildingKey, pieces: [], hidden: [], rev, cap, ...arms };",
+    "old": "pieces: await shopOf(db, mapId, pieces), hidden: [], rev, cap, ...arms };",
+    "new": "pieces: [], hidden: [], rev, cap, ...arms };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -342,8 +342,8 @@
   {
     "name": "HOME-VOTE-score-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "          ...votesOf(h), // HOME-VOTE\n        };",
-    "new": "        };",
+    "old": "        ...votesOf(h),   // HOME-VOTE\n      };",
+    "new": "      };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -352,8 +352,8 @@
   {
     "name": "HOME-VOTE-score-unselected",
     "file": "server-account/src/homes.js",
-    "old": "      `SELECT h.building_key, h.player, h.char_id, h.owner_name, h.entry, h.paid, h.rent_due, h.look, h.guild_id, h.deed, h.score,",
-    "new": "      `SELECT h.building_key, h.player, h.char_id, h.owner_name, h.entry, h.paid, h.rent_due, h.look, h.guild_id, h.deed, 0 AS score,",
+    "old": "h.look, h.guild_id, h.deed, h.score,",
+    "new": "h.look, h.guild_id, h.deed, 0 AS score,",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "HOME-VOTE-vote-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "  const votesOf = (h) => ({\n    ...(Number(h.score) ? { score: Number(h.score) } : {}),\n    ...(homeMyVoteOf(h.my_vote) ? { vote: homeMyVoteOf(h.my_vote) } : {}),\n  });",
-    "new": "  const votesOf = (h) => ({ ...(Number(h.score) ? { score: Number(h.score) } : {}), ...{} });",
+    "old": "...(homeMyVoteOf(h.my_vote) ? { vote: homeMyVoteOf(h.my_vote) } : {})",
+    "new": "...({})",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "HOME-VOTE-insider-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "            ...(h.kin === 1 && rank == null ? { insider: true } : {}), // AUDIT HOME-VOTE A5: the account has another character in its guild - no vote, its decor always (a `member` is one already)",
-    "new": "            ...{}, // AUDIT HOME-VOTE A5: the account has another character in its guild - no vote, its decor always (a `member` is one already)",
+    "old": "          ...(h.kin === 1 && rank == null ? { insider: true } : {}),",
+    "new": "          ...({}),",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "HOME-VOTE-look-said",
     "file": "server-account/src/homes.js",
-    "old": "  const lookFor = (h, insider) => (insider || !homeShunned(Number(h.score)) ? lookOfRow(h) : {});",
-    "new": "  const lookFor = (h, insider) => lookOfRow(h);",
+    "old": "(insider || !homeShunned(Number(h.score)) ? lookOfRow(h) : {})",
+    "new": "lookOfRow(h)",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -562,8 +562,8 @@
   {
     "name": "HOME-VOTE-II-A1-licence-kept",
     "file": "server-account/src/decor.js",
-    "old": "  return traders.filter((_, i) => stockedOf(stock[i]?.results?.[0]));",
-    "new": "  return traders;",
+    "old": "return traders.filter((_, i) => stockedOf(stock[i]?.results?.[0]));",
+    "new": "return traders;",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -832,8 +832,8 @@
   {
     "name": "HOME-VOTE-II-hall-score-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "            ...votesOf(h), // HOME-VOTE\n          };",
-    "new": "          };",
+    "old": "          ...votesOf(h),   // HOME-VOTE\n        };",
+    "new": "        };",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -842,8 +842,8 @@
   {
     "name": "HOME-VOTE-II-hall-paint-from-its-guild",
     "file": "server-account/src/homes.js",
-    "old": "            ...lookFor(h, h.kin === 1), // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)",
-    "new": "            ...lookFor(h, false), // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)",
+    "old": "...lookFor(h, h.kin === 1),",
+    "new": "...lookFor(h, false),",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -953,8 +953,8 @@
   {
     "name": "DECOR-BATCH-the-room-three-trips",
     "file": "server-account/src/decor.js",
-    "old": "  const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = await db.batch([\n    piecesRead,\n    homeShownRead(db, mapId, buildingKey, player?.id),\n    hiddenRead(db, mapId, buildingKey),\n    revRead,\n    capRead,\n    armsRead,\n  ]);",
-    "new": "  const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = [\n    await piecesRead.all(),\n    { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] },\n    { results: [await hiddenRead(db, mapId, buildingKey).first()] },\n    { results: [await revRead.first()] },\n    { results: [await capRead.first()] },\n    { results: [await armsRead.first()] },\n  ];",
+    "old": "const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = await db.batch([piecesRead, homeShownRead(db, mapId, buildingKey, player?.id), hiddenRead(db, mapId, buildingKey), revRead, capRead, armsRead]);",
+    "new": "const [{ results = [] }, shown, hidden, revRow, capRow, armsRow] = [await piecesRead.all(), { results: [await homeShownRead(db, mapId, buildingKey, player?.id).first()] }, { results: [await hiddenRead(db, mapId, buildingKey).first()] }, { results: [await revRead.first()] }, { results: [await capRead.first()] }, { results: [await armsRead.first()] }];",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -963,8 +963,8 @@
   {
     "name": "DECOR-BATCH-the-shop-a-trip-a-trader",
     "file": "server-account/src/decor.js",
-    "old": "  const stock = await db.batch(traders.map((p) => vendorStockedRead(db, mapId, p.id))); // DECOR-BATCH: every trader's in one request",
-    "new": "  const stock = [];\n  for (const p of traders) stock.push({ results: [await vendorStockedRead(db, mapId, p.id).first()] }); // DECOR-BATCH: every trader's in one request",
+    "old": "const stock = await db.batch(traders.map((p) => vendorStockedRead(db, mapId, p.id)));",
+    "new": "const stock = []; for (const p of traders) stock.push({ results: [await vendorStockedRead(db, mapId, p.id).first()] });",
     "tests": [
       "test/net/homevote.test.js"
     ],
@@ -973,8 +973,8 @@
   {
     "name": "DECOR-BATCH-hidden-dropped",
     "file": "server-account/src/decor.js",
-    "old": "  return {\n    mapId,\n    buildingKey,\n    pieces,\n    hidden: hiddenListOf(hidden?.results?.[0] ?? null),\n    rev,\n    cap,\n    measured: home?.ground != null,\n    ...arms,\n  };",
-    "new": "  return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null, ...arms };",
+    "old": "return { mapId, buildingKey, pieces, hidden: hiddenListOf(hidden?.results?.[0] ?? null), rev, cap, measured: home?.ground != null, ...arms };",
+    "new": "return { mapId, buildingKey, pieces, hidden: [], rev, cap, measured: home?.ground != null, ...arms };",
     "tests": [
       "test/net/homevote.test.js"
     ],

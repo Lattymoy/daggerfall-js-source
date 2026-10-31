@@ -492,8 +492,8 @@
   {
     "name": "HCC-inventory-ignores-runtime-refusal",
     "file": "src/systems/inventorySession.js",
-    "old": "    if (exitRequest && !d.allowed)",
-    "new": "    if (false)",
+    "old": "    if (exitRequest && !d.allowed) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };",
+    "new": "    if (false) return { mode, usingWagon: false, allowDungeonWagonAccess: false, chooseOne, refusal: { reason: 'horseCart', text: d.denialMessage } };",
     "tests": [
       "test/player/hcc_hosts.test.js"
     ]
@@ -501,7 +501,7 @@
   {
     "name": "HCC-toggle-asks-plain-inside",
     "file": "src/systems/inventorySession.js",
-    "old": "    const d = rt.canAccessWagonStorage(\n      state.dungeonExitAccessGranted && deps.dungeon?.inside\n        ? STORAGE_CONTEXT.DungeonExitSelection\n        : STORAGE_CONTEXT.NormalInventory,\n    );",
+    "old": "    const d = rt.canAccessWagonStorage(state.dungeonExitAccessGranted && deps.dungeon?.inside ? STORAGE_CONTEXT.DungeonExitSelection : STORAGE_CONTEXT.NormalInventory);",
     "new": "    const d = rt.canAccessWagonStorage(STORAGE_CONTEXT.NormalInventory);",
     "tests": [
       "test/player/hcc_hosts.test.js"

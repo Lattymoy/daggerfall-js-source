@@ -182,8 +182,8 @@
   {
     "name": "LEFAY-POOL-STALE-GROUND",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "        groundY = NaN; // its town gone: the ground is read afresh when it is built again (it may be built otherwise)",
-    "new": "        // its town gone: the ground is read afresh when it is built again (it may be built otherwise)",
+    "old": "        groundY = NaN;   // its town gone",
+    "new": "        // its town gone",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "LEFAY-POOL-PILE-AT-ORIGIN",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      for (const b of laidBatches.values()) {",
-    "new": "      for (const b of []) {",
+    "old": "      for (const b of laidBatches.values()) { b.origin[0] = at[0]; b.origin[1] = at[1]; b.origin[2] = at[2]; }   // after",
+    "new": "      for (const b of []) { b.origin[0] = at[0]; b.origin[1] = at[1]; b.origin[2] = at[2]; }   // after",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "LEFAY-POOL-TRAPS",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    if (!at || (!moved && bodyTrapped(at, feet()))) return; // held back while a body stands where it would first rise - asked every frame; AUDIT LEFAY1 C1: never as it moves, which would drop a body standing on its steps",
-    "new": "    if (!at) return; // held back while a body stands where it would first rise - asked every frame; AUDIT LEFAY1 C1: never as it moves, which would drop a body standing on its steps",
+    "old": "    if (!at || (!moved && bodyTrapped(at, feet()))) return;",
+    "new": "    if (!at) return;",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "LEFAY-POOL-LAID-IN-AIR",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "        if (k >= 1 || t < f.at) {",
-    "new": "        if (k >= 0 || t < f.at) {",
+    "old": "        if (k >= 1 || t < f.at) { land(f); landed++; continue; }",
+    "new": "        if (k >= 0 || t < f.at) { land(f); landed++; continue; }",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "LEFAY-POOL-STEAL-THROWS",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      if (verb == null && mode === 'steal') {\n        midText(TEXT.steal);\n        return true;\n      }",
-    "new": "",
+    "old": "      if (verb == null && mode === 'steal') { midText(TEXT.steal); return true; }\n",
+    "new": "\n",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "LEFAY-POOL-BOX-AT-AIR",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "        meshCollider: true,\n      }));",
-    "new": "      }));",
+    "old": "        distance: RAY_DISTANCE, reach: LEFAY_REACH, meshCollider: true,",
+    "new": "        distance: RAY_DISTANCE, reach: LEFAY_REACH,",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-GROUND-NEVER-REREAD",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      if (\n        s[0] !== groundAtXZ[0] ||\n        s[1] !== groundAtXZ[1] ||\n        comp !== groundAtXZ[3] ||\n        !Number.isFinite(groundY) ||\n        frameN - groundAtXZ[2] >= LEFAY_GROUND_EVERY\n      ) {",
-    "new": "      if (s[0] !== groundAtXZ[0] || s[1] !== groundAtXZ[1] || comp !== groundAtXZ[3] || !Number.isFinite(groundY)) {",
+    "old": " || frameN - groundAtXZ[2] >= LEFAY_GROUND_EVERY) {",
+    "new": ") {",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-PILE-EVERY-FRAME",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    if (laidFrom === laid) return;\n    laidFrom = laid;",
-    "new": "    laidFrom = laid;",
+    "old": "    if (laidFrom === laid) return;\n",
+    "new": "",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-COLLIDER-EVERY-FRAME",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    if (colAt && at && colAt[0] === at[0] && colAt[1] === at[1] && colAt[2] === at[2]) return;\n    const moved = colAt !== null; // stood, and the land moved under it (a recentre carries the body with it)",
-    "new": "    const moved = colAt !== null; // stood, and the land moved under it (a recentre carries the body with it)",
+    "old": "    if (colAt && at && colAt[0] === at[0] && colAt[1] === at[1] && colAt[2] === at[2]) return;\n",
+    "new": "",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-PILE-LEAKS",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      for (const b of laidBatches.values()) renderer?.destroyBillboardBatch?.(b);\n      laidBatches.clear();",
-    "new": "      laidBatches.clear();",
+    "old": "      for (const b of laidBatches.values()) renderer?.destroyBillboardBatch?.(b);\n",
+    "new": "",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-INFO-OVERRIDES-ROW",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      if (verb === 'read' || (verb == null && mode === 'info')) {",
-    "new": "      if (verb === 'read' || mode === 'info') {",
+    "old": "(verb == null && mode === 'info')",
+    "new": "mode === 'info'",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-STEAL-OVERRIDES-ROW",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      if (verb == null && mode === 'steal') {",
-    "new": "      if (mode === 'steal') {",
+    "old": "if (verb == null && mode === 'steal')",
+    "new": "if (mode === 'steal')",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-ZERO-COUNT",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "        subs: [...TEXT.subs, ...(n > 0 ? [TEXT.count(n)] : [])],",
-    "new": "        subs: [...TEXT.subs, TEXT.count(n)],",
+    "old": "...(n > 0 ? [TEXT.count(n)] : [])",
+    "new": "TEXT.count(n)",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-SITE-GONE-DROPS",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "          for (const f of tosses) land(f);\n          tosses = [];",
-    "new": "          tosses = [];",
+    "old": "if (at) { at = null; standCollider(); for (const f of tosses) land(f); tosses = []; }",
+    "new": "if (at) { at = null; standCollider(); tosses = []; }",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-FLIGHT-LEAK-ON-LAND",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    if (f.batch) renderer?.destroyBillboardBatch?.(f.batch);\n    f.batch = null;",
-    "new": "    f.batch = null;",
+    "old": "    if (f.batch) renderer?.destroyBillboardBatch?.(f.batch);\n",
+    "new": "",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-NO-EYE-NAN",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "      bearing = Number.isFinite(b) ? b : 0; // AUDIT LEFAY1 A5: no eye's NaN laid as nothing",
-    "new": "      bearing = b; // AUDIT LEFAY1 A5: no eye's NaN laid as nothing",
+    "old": "bearing = Number.isFinite(b) ? b : 0;",
+    "new": "bearing = b;",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -614,8 +614,8 @@
   {
     "name": "AUDIT-LEFAY1-B-POOL-TRAPPED-NO-HEIGHT",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "  return (\n    Math.hypot(f[0] - at[0], f[2] - at[2]) < MONUMENT_STEPS[0].r + CAPSULE_RADIUS &&\n    f[1] < at[1] + OBELISK.apex &&\n    f[1] + CAPSULE_HEIGHT > at[1] - MONUMENT_FOOT\n  );",
-    "new": "  return Math.hypot(f[0] - at[0], f[2] - at[2]) < MONUMENT_STEPS[0].r + CAPSULE_RADIUS;",
+    "old": "\n    && f[1] < at[1] + OBELISK.apex && f[1] + CAPSULE_HEIGHT > at[1] - MONUMENT_FOOT;",
+    "new": ";",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -641,8 +641,8 @@
   {
     "name": "AUDIT-LEFAY1-B1-unstamped",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    const f = { entry, from, to, at: t, batch: null, pos: [0, 0, 0], landed: false, gen: restores() };",
-    "new": "    const f = { entry, from, to, at: t, batch: null, pos: [0, 0, 0], landed: false, gen: 0 };",
+    "old": "landed: false, gen: restores() };",
+    "new": "landed: false, gen: 0 };",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -659,8 +659,8 @@
   {
     "name": "AUDIT-LEFAY1-C1-pedestal-only",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    Math.hypot(f[0] - at[0], f[2] - at[2]) < MONUMENT_STEPS[0].r + CAPSULE_RADIUS &&",
-    "new": "    Math.abs(f[0] - at[0]) < 0.84 + CAPSULE_RADIUS &&\n    Math.abs(f[2] - at[2]) < 0.84 + CAPSULE_RADIUS &&",
+    "old": "Math.hypot(f[0] - at[0], f[2] - at[2]) < MONUMENT_STEPS[0].r + CAPSULE_RADIUS",
+    "new": "Math.abs(f[0] - at[0]) < 0.84 + CAPSULE_RADIUS && Math.abs(f[2] - at[2]) < 0.84 + CAPSULE_RADIUS",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -668,8 +668,8 @@
   {
     "name": "AUDIT-LEFAY1-C1-foot-not-sunk",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    f[1] + CAPSULE_HEIGHT > at[1] - MONUMENT_FOOT",
-    "new": "    f[1] + CAPSULE_HEIGHT > at[1]",
+    "old": "f[1] + CAPSULE_HEIGHT > at[1] - MONUMENT_FOOT;",
+    "new": "f[1] + CAPSULE_HEIGHT > at[1];",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -677,8 +677,8 @@
   {
     "name": "AUDIT-LEFAY1-C1-moved-held-back",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "    if (!at || (!moved && bodyTrapped(at, feet()))) return; // held back while a body stands where it would first rise - asked every frame; AUDIT LEFAY1 C1: never as it moves, which would drop a body standing on its steps",
-    "new": "    if (!at || bodyTrapped(at, feet())) return; // held back while a body stands where it would first rise - asked every frame; AUDIT LEFAY1 C1: never as it moves, which would drop a body standing on its steps",
+    "old": "(!moved && bodyTrapped(at, feet()))",
+    "new": "bodyTrapped(at, feet())",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "AUDIT-LEFAY1-C2-vertical-ignored",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "        comp !== groundAtXZ[3] ||\n        !Number.isFinite(groundY) ||",
-    "new": "        !Number.isFinite(groundY) ||",
+    "old": "comp !== groundAtXZ[3] || ",
+    "new": "",
     "tests": [
       "test/world/lefay1_monument.test.js"
     ]

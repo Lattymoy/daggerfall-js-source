@@ -72,7 +72,7 @@ actor's pitch times the factor, about -X in the actor root's frame, on spine1 an
 and the bow carry the whole pitch, curved through two joints. The pitch is rot[0], + down; the port's look counts up, so
 the body's pose hands it negated, as the first-person neck has it (`fpArm.js:"aim: cam?.pitch && upper > UPPER_BODY.WeaponEquipped ? spineAimSlot(-cam.pitch * spinePitchFactor({"` -
 asked only while the look pitches and the upper body is past WeaponEquipped, so a peer's body at pitch 0 costs nothing).
-poseAssembly runs the slot after the clip and the neck and before the body motion (`mwFirstPerson.js:"assembly.aimFit ="`),
+poseAssembly runs the slot after the clip and the neck and before the body motion (`mwFirstPerson.js:"  assembly.aimFit = aim ? aim(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;"`),
 which keeps the clip's chest while the clip has a bow's arms (Body-Motion.md, "The upper body is whoever has the arms"),
 so the pitched chest is the one drawn. The first-person arm takes none (VM_FirstPerson attaches no spine controllers).
 

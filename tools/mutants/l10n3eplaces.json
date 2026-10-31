@@ -200,8 +200,8 @@
   {
     "name": "L10N3e-ui-questJournal-556-Location",
     "file": "src/ui/quest/questJournal.js",
-    "old": "      getLocalizedLocationName(site.mapId, site.locationName),",
-    "new": "      site.locationName,",
+    "old": "    const entryStr = locationInRegionText(getLocalizedLocationName(site.mapId, site.locationName),",
+    "new": "    const entryStr = locationInRegionText(site.locationName,",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_places.test.js",
@@ -211,8 +211,8 @@
   {
     "name": "L10N3e-ui-questJournal-557-Region",
     "file": "src/ui/quest/questJournal.js",
-    "old": "      getLocalizedRegionName(regionIndex, (i) => REGION_NAMES[i] ?? site.regionName ?? ''),",
-    "new": "      ((i) => REGION_NAMES[i] ?? site.regionName ?? '')(regionIndex),",
+    "old": "      getLocalizedRegionName(regionIndex, (i) => REGION_NAMES[i] ?? site.regionName ?? ''));",
+    "new": "      ((i) => REGION_NAMES[i] ?? site.regionName ?? '')(regionIndex));",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_places.test.js",

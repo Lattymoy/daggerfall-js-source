@@ -2,8 +2,8 @@
   {
     "name": "LAIR-WALK-no-flood",
     "file": "src/ai/nav/navmesh.js",
-    "old": "  while (stack.length) {\n    const cur = stack.pop();\n    for (const q of mesh.polys[cur].neis)\n      if (q >= 0 && !seen[q]) {\n        seen[q] = 1;\n        stack.push(q);\n      }\n  }\n  return (p) => {",
-    "new": "  return (p) => {",
+    "old": "  while (stack.length) { const cur = stack.pop(); for (const q of mesh.polys[cur].neis) if (q >= 0 && !seen[q]) { seen[q] = 1; stack.push(q); } }\n",
+    "new": "",
     "tests": [
       "test/systems/revenant/lair_walk.test.js"
     ]

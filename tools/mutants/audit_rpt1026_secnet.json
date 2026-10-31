@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-RPT1026-A3-recovery-signout-by-id",
     "file": "server-account/src/accounts.js",
-    "old": "      'DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)',",
-    "new": "      'DELETE FROM sessions WHERE player_id = ? AND (EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?) OR 1)',",
+    "old": "'DELETE FROM sessions WHERE player_id = ? AND EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?)').bind(player.id, player.id, pw)",
+    "new": "'DELETE FROM sessions WHERE player_id = ? AND (EXISTS (SELECT 1 FROM players WHERE id = ? AND password = ?) OR 1)').bind(player.id, player.id, pw)",
     "tests": [
       "test/server/audit_rpt1026_secnet_acct.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "SPELL-LOCK-the-act-is-not-a-peers-word",
     "file": "src/world/actionSystem.js",
-    "old": "      this.restoreSaveData([rec], { remote: true }); // SPELL-LOCK: a peer's lock lands only up to the door's own",
-    "new": "      this.restoreSaveData([rec]); // SPELL-LOCK: a peer's lock lands only up to the door's own",
+    "old": "      this.restoreSaveData([rec], { remote: true });",
+    "new": "      this.restoreSaveData([rec]);",
     "tests": [
       "test/world/fb1013e_spelllock.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SPELL-LOCK-a-peers-lock-past-the-ceiling-lands",
     "file": "src/world/actionSystem.js",
-    "old": "  if (remote) return false;",
-    "new": "  if (remote) return true;",
+    "old": "  if (remote) return false;\n",
+    "new": "  if (remote) return true;\n",
     "tests": [
       "test/world/fb1013e_spelllock.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SPELL-LOCK-the-ceiling-forgets-the-starting-lock",
     "file": "src/world/actionSystem.js",
-    "old": "  return Math.max(o?.startingLockValue | 0, o?.actionFlag === ACTION_FLAGS.LockDoor ? ACTION_LOCK_VALUE : 0);",
-    "new": "  return Math.max(0, o?.actionFlag === ACTION_FLAGS.LockDoor ? ACTION_LOCK_VALUE : 0);",
+    "old": "  return Math.max(o?.startingLockValue | 0, o?.actionFlag",
+    "new": "  return Math.max(0, o?.actionFlag",
     "tests": [
       "test/world/fb1013e_spelllock.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SPELL-LOCK-the-ceiling-forgets-LockDoor",
     "file": "src/world/actionSystem.js",
-    "old": "  return Math.max(o?.startingLockValue | 0, o?.actionFlag === ACTION_FLAGS.LockDoor ? ACTION_LOCK_VALUE : 0);",
-    "new": "  return Math.max(o?.startingLockValue | 0, o?.actionFlag === ACTION_FLAGS.LockDoor ? 0 : 0);",
+    "old": "o?.actionFlag === ACTION_FLAGS.LockDoor ? ACTION_LOCK_VALUE : 0);",
+    "new": "o?.actionFlag === ACTION_FLAGS.LockDoor ? 0 : 0);",
     "tests": [
       "test/world/fb1013e_spelllock.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SPELL-LOCK-the-early-act-keeps-its-lock",
     "file": "src/world/actionSystem.js",
-    "old": "        if (rec) this._keepEarly(withoutLock(rec));",
-    "new": "        if (rec) this._keepEarly(rec);",
+    "old": "if (rec) this._keepEarly(withoutLock(rec));",
+    "new": "if (rec) this._keepEarly(rec);",
     "tests": [
       "test/world/fb1013e_spelllock.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SPELL-LOCK-the-early-memory-keeps-its-lock",
     "file": "src/world/actionSystem.js",
-    "old": "        this._keepEarly(remote ? withoutLock(sa) : sa);",
-    "new": "        this._keepEarly(sa);",
+    "old": "this._keepEarly(remote ? withoutLock(sa) : sa);",
+    "new": "this._keepEarly(sa);",
     "tests": [
       "test/world/fb1013e_spelllock.test.js"
     ]

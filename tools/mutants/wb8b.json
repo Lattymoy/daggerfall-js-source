@@ -11,8 +11,8 @@
   {
     "name": "WB8b-the-wrap-unchecked",
     "file": "src/net/gate/gateLaw.js",
-    "old": "    if (p === rounds.length) return marksApart(last, seq[0][0]); // the wrap: the cycle comes round",
-    "new": "    if (p === rounds.length) return true; // the wrap: the cycle comes round",
+    "old": "    if (p === rounds.length) return marksApart(last, seq[0][0]);",
+    "new": "    if (p === rounds.length) return true;",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB8b-the-aspects-never-turn",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  for (let s = 0; s < nA; s++) for (const m of matchings) rounds.push(m.map((t, j) => ({ a: sig[(j + s) % nA], t })));",
-    "new": "  for (let s = 0; s < nA; s++) for (const m of matchings) rounds.push(m.map((t, j) => ({ a: sig[j % nA], t })));",
+    "old": "rounds.push(m.map((t, j) => ({ a: sig[(j + s) % nA], t })));",
+    "new": "rounds.push(m.map((t, j) => ({ a: sig[j % nA], t })));",
     "tests": [
       "test/net/gate/wb8b_gate_marks.test.js"
     ]

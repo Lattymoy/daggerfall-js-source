@@ -221,8 +221,8 @@
   {
     "name": "AUDITLWII2-S4-opens-now",
     "file": "server-account/src/homes.js",
-    "old": "      .bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S))",
-    "new": "      .bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S) - 1)",
+    "old": ".bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S)).run();",
+    "new": ".bind(mapId, buildingKey, player.id, Math.floor(/** @type {number} */ (nowS) / PATRON_HOUR_S) - 1).run();",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "AUDITLWII2-S4-shut-reckons",
     "file": "server-account/src/homes.js",
-    "old": "    await reckonPatrons(ctx, { maps: [mapId] }, env).catch(() => null);\n  }",
-    "new": "  }",
+    "old": "    await reckonPatrons(ctx, { maps: [mapId] }, env).catch(() => null);\n",
+    "new": "",
     "tests": [
       "test/systems/auditlwii2_service.test.js"
     ]

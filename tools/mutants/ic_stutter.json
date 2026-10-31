@@ -352,8 +352,8 @@
   {
     "name": "ICS-journey-never-asks-again",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.autopilot && st.route?.streetWait && !st.route.street) {\n      st.route.streetWait = false;\n      startRouteLeg();\n      applyRate();\n    }\n    // AUDIT FB1021d PS-1: A SAILED LEG AIMED AGAIN once its pixel's ground is built - aimed before it was, at its middle",
-    "new": "    // AUDIT FB1021d PS-1: A SAILED LEG AIMED AGAIN once its pixel's ground is built - aimed before it was, at its middle",
+    "old": "    if (st.autopilot && st.route?.streetWait && !st.route.street) { st.route.streetWait = false; startRouteLeg(); applyRate(); }\n",
+    "new": "",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "ICS-journey-pending-taken-for-none",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (way?.pending) {\n      r.streetFor = null;\n      r.streetWait = true;\n      return null;\n    } // IC-STUTTER: the host's search a few thousand cells an ask - asked again next frame (update), the leg walked meanwhile",
-    "new": "    // IC-STUTTER: the host's search a few thousand cells an ask - asked again next frame (update), the leg walked meanwhile",
+    "old": "    if (way?.pending) { r.streetFor = null; r.streetWait = true; return null; }",
+    "new": "",
     "tests": [
       "test/world/ic_stutter.test.js"
     ],

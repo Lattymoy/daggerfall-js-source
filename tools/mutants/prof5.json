@@ -313,8 +313,8 @@
   {
     "name": "PROF5-law-witness-reads-pixels",
     "file": "src/net/nodeLaw.js",
-    "old": "    .filter((r) => parse(r?.report))",
-    "new": "    .filter((r) => parseReport(r?.report))",
+    "old": "  const sorted = [...(rows ?? [])].filter((r) => parse(r?.report))",
+    "new": "  const sorted = [...(rows ?? [])].filter((r) => parseReport(r?.report))",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -342,8 +342,8 @@
   {
     "name": "PROF5-law-market-mints",
     "file": "src/net/marksLaw.js",
-    "old": "  'market-sale': 'move', // PROF5: a sale's proceeds, the buyer's balance into the seller's",
-    "new": "  'market-sale': 'mint', // PROF5: a sale's proceeds, the buyer's balance into the seller's",
+    "old": "  'market-sale': 'move',",
+    "new": "  'market-sale': 'mint',",
     "tests": [
       "test/net/prof5_law.test.js"
     ]
@@ -742,7 +742,7 @@
   {
     "name": "PROF5-svc-report-escrow-unseen",
     "file": "server-account/src/marks.js",
-    "old": "  const esc = await db\n    .prepare(\n      `SELECT COALESCE(SUM(CASE WHEN dst_kind = 'escrow' THEN amount ELSE 0 END), 0)\n    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`,\n    )\n    .first();",
+    "old": "  const esc = await db.prepare(`SELECT COALESCE(SUM(CASE WHEN dst_kind = 'escrow' THEN amount ELSE 0 END), 0)\n    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`).first();",
     "new": "  const esc = await db.prepare('SELECT 0 AS s').first();",
     "tests": [
       "test/net/prof5_service.test.js"
@@ -751,8 +751,8 @@
   {
     "name": "PROF5-svc-report-no-medians",
     "file": "server-account/src/marks.js",
-    "old": "    medians,",
-    "new": "    medians: [],",
+    "old": "    medians,\n  };",
+    "new": "    medians: [],\n  };",
     "tests": [
       "test/net/prof5_service.test.js"
     ]

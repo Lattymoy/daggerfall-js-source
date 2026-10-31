@@ -227,8 +227,8 @@
   {
     "name": "REALM3-spoils-cleared-past-the-checkpoint",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const ids = new Set(\n        [...held].filter(([id, h]) => h.who === whoSaved && (!only || only.includes(id))).map(([id]) => id),\n      );",
-    "new": "      const ids = new Set([...held].filter(([id, h]) => h.who === whoSaved).map(([id]) => id));",
+    "old": "h.who === whoSaved && (!only || only.includes(id))",
+    "new": "h.who === whoSaved",
     "tests": [
       "test/systems/realm3.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "REALM3-spoils-held-unread",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    heldIds(whoSaved) {\n      return [...held].filter(([, h]) => h.who === whoSaved).map(([id]) => id);",
-    "new": "    heldIds() {\n      return [];",
+    "old": "    heldIds(whoSaved) { return [...held].filter(([, h]) => h.who === whoSaved).map(([id]) => id); },",
+    "new": "    heldIds() { return []; },",
     "tests": [
       "test/systems/realm3.test.js"
     ]

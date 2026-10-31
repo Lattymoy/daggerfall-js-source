@@ -421,7 +421,7 @@ test('AUDIT WB14 WIRE-6 the account: a portent night\'s receipt fills the wealth
   assert.match(binds[0][0], /allowance = allowance \+ \?2 \+ \?3 \* MAX\(1, COALESCE\(level_seen, 1\)\) \+ \?4/);
   const { readFileSync } = await import('node:fs');
   const read = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-  assert.match(read('server-account/src/accounts.js'), /if \(recorded\)\n\s*return \{\n\s*recorded,\n\s*day: c\.d,\n\s*stones: embers,\n\s*\.\.\.\(c\.p > 0 \? \{ portent: c\.p \} : \{\}\),/);
+  assert.match(read('server-account/src/accounts.js'), /if \(recorded\) return \{ recorded, day: c\.d, stones: embers, \.\.\.\(c\.p > 0 \? \{ portent: c\.p \} : \{\}\),/);
   const svc = read('server-account/src/index.js');
   assert.match(svc, /if \(r\.recorded === true\) await grantSpoils\(ctx\.db, who\.player\.id, portentPieces\(r\.portent\)\);/);
   assert.match(svc, /delete answer\.weirRow; delete answer\.portent;/);

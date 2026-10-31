@@ -533,8 +533,8 @@
   {
     "name": "RAID4b-pool-keys-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  const STORE_KEY = keys.store,\n    DAY_KEY = keys.day; // RAID4b: a town's thanks keep their own",
-    "new": "  const STORE_KEY = SPOILS_KEYS.store,\n    DAY_KEY = SPOILS_KEYS.day; // RAID4b: a town's thanks keep their own",
+    "old": "  const STORE_KEY = keys.store, DAY_KEY = keys.day;",
+    "new": "  const STORE_KEY = SPOILS_KEYS.store, DAY_KEY = SPOILS_KEYS.day;",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "RAID4b-pool-roll-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite",
-    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite",
+    "old": "const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
+    "new": "const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ],
@@ -552,8 +552,8 @@
   {
     "name": "RAID4b-pool-gate-words",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      say(text);",
-    "new": "      say(SPOILS_TEXT.granted);",
+    "old": "      say(text);\n",
+    "new": "      say(SPOILS_TEXT.granted);\n",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]
@@ -561,8 +561,8 @@
   {
     "name": "RAID4b-recover-key-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    v = store.get(key);",
-    "new": "    v = store.get(SPOILS_STORE_KEY);",
+    "old": "  try { v = store.get(key); } catch { v = null; }",
+    "new": "  try { v = store.get(SPOILS_STORE_KEY); } catch { v = null; }",
     "tests": [
       "test/systems/raid4b_sets.test.js"
     ]

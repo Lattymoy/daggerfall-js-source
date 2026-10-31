@@ -2,8 +2,8 @@
   {
     "name": "SILVER-FINDS-gather-chance",
     "file": "src/net/marksLaw.js",
-    "old": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),",
-    "new": "  gather: Object.freeze({ chance: 0.2, amount: Object.freeze([2, 5]), perDay: 30 }),",
+    "old": "gather: Object.freeze({ chance: 0.1,",
+    "new": "gather: Object.freeze({ chance: 0.2,",
     "why": "a harvest finds twice as often",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "SILVER-FINDS-gather-range",
     "file": "src/net/marksLaw.js",
-    "old": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),",
-    "new": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 6]), perDay: 30 }),",
+    "old": "amount: Object.freeze([2, 5]), perDay: 30 }),",
+    "new": "amount: Object.freeze([2, 6]), perDay: 30 }),",
     "why": "a harvest finds up to 6",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "SILVER-FINDS-gather-day",
     "file": "src/net/marksLaw.js",
-    "old": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 30 }),",
-    "new": "  gather: Object.freeze({ chance: 0.1, amount: Object.freeze([2, 5]), perDay: 40 }),",
+    "old": "amount: Object.freeze([2, 5]), perDay: 30 }),",
+    "new": "amount: Object.freeze([2, 5]), perDay: 40 }),",
     "why": "forty a day of gathering",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -33,8 +33,8 @@
   {
     "name": "SILVER-FINDS-find-body-chance",
     "file": "src/net/marksLaw.js",
-    "old": "    chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }),",
-    "new": "    chance: Object.freeze({ corpse: 0.1, pile: 0.12, search: 0.15 }),",
+    "old": "chance: Object.freeze({ corpse: 0.05,",
+    "new": "chance: Object.freeze({ corpse: 0.1,",
     "why": "a body holds silver one in ten",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -44,8 +44,8 @@
   {
     "name": "SILVER-FINDS-find-pile-chance",
     "file": "src/net/marksLaw.js",
-    "old": "    chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }),",
-    "new": "    chance: Object.freeze({ corpse: 0.05, pile: 0.15, search: 0.15 }),",
+    "old": "pile: 0.12, search: 0.15 })",
+    "new": "pile: 0.15, search: 0.15 })",
     "why": "a treasure pile as a search's find",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -55,8 +55,8 @@
   {
     "name": "SILVER-FINDS-find-search-chance",
     "file": "src/net/marksLaw.js",
-    "old": "    chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.15 }),",
-    "new": "    chance: Object.freeze({ corpse: 0.05, pile: 0.12, search: 0.2 }),",
+    "old": "pile: 0.12, search: 0.15 })",
+    "new": "pile: 0.12, search: 0.2 })",
     "why": "a search's find one in five",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -66,8 +66,8 @@
   {
     "name": "SILVER-FINDS-find-range",
     "file": "src/net/marksLaw.js",
-    "old": "    amount: Object.freeze([1, 4]),",
-    "new": "    amount: Object.freeze([1, 5]),",
+    "old": "amount: Object.freeze([1, 4]), perDay: 20 }),",
+    "new": "amount: Object.freeze([1, 5]), perDay: 20 }),",
     "why": "a loot find up to 5",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -76,8 +76,8 @@
   {
     "name": "SILVER-FINDS-find-day",
     "file": "src/net/marksLaw.js",
-    "old": "    perDay: 20,",
-    "new": "    perDay: 25,",
+    "old": "amount: Object.freeze([1, 4]), perDay: 20 }),",
+    "new": "amount: Object.freeze([1, 4]), perDay: 25 }),",
     "why": "twenty-five a day of loot",
     "tests": [
       "test/net/silverfinds_service.test.js",
@@ -87,8 +87,8 @@
   {
     "name": "SILVER-FINDS-gather-not-a-mint",
     "file": "src/net/marksLaw.js",
-    "old": "  gather: 'mint', // SILVER-FINDS: a harvest's find - the service's dice in a harvest it counted (bounded by the day)",
-    "new": "  gather: 'move', // SILVER-FINDS: a harvest's find - the service's dice in a harvest it counted (bounded by the day)",
+    "old": "  gather: 'mint',             // SILVER-FINDS",
+    "new": "  gather: 'move',             // SILVER-FINDS",
     "why": "a harvest's find read as a move between accounts",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -97,8 +97,8 @@
   {
     "name": "SILVER-FINDS-find-not-a-mint",
     "file": "src/net/marksLaw.js",
-    "old": "  find: 'mint', // SILVER-FINDS: a loot find - the service's dice, the day's count (bounded by the day)",
-    "new": "  find: 'move', // SILVER-FINDS: a loot find - the service's dice, the day's count (bounded by the day)",
+    "old": "  find: 'mint',               // SILVER-FINDS",
+    "new": "  find: 'move',               // SILVER-FINDS",
     "why": "a loot find read as a move between accounts",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -107,8 +107,8 @@
   {
     "name": "SILVER-FINDS-range-short",
     "file": "src/net/marksLaw.js",
-    "old": "  return lo + Math.max(0, Math.min(hi - lo, Math.floor(roll * (hi - lo + 1))));",
-    "new": "  return lo + Math.max(0, Math.min(hi - lo, Math.floor(roll * (hi - lo))));",
+    "old": "Math.floor(roll * (hi - lo + 1))",
+    "new": "Math.floor(roll * (hi - lo))",
     "why": "the range's top never reached",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -117,8 +117,8 @@
   {
     "name": "SILVER-FINDS-gather-edge",
     "file": "src/net/marksLaw.js",
-    "old": "  chanceRoll < MARKS_FAUCETS.gather.chance ? amountOf(MARKS_FAUCETS.gather.amount, amountRoll) : 0;",
-    "new": "  chanceRoll <= MARKS_FAUCETS.gather.chance ? amountOf(MARKS_FAUCETS.gather.amount, amountRoll) : 0;",
+    "old": "(chanceRoll < MARKS_FAUCETS.gather.chance ?",
+    "new": "(chanceRoll <= MARKS_FAUCETS.gather.chance ?",
     "why": "the chance itself a find",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "SILVER-FINDS-days-shared",
     "file": "server-account/src/marks.js",
-    "old": "  AND kind = '${kind}' AND day = ${d})`;",
-    "new": "  AND kind IN ('gather', 'find') AND day = ${d})`;",
+    "old": "AND kind = '${kind}' AND day = ${d})`;",
+    "new": "AND kind IN ('gather', 'find') AND day = ${d})`;",
     "why": "a harvest's and a loot's day one count",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -148,8 +148,8 @@
   {
     "name": "SILVER-FINDS-last-find-whole",
     "file": "server-account/src/marks.js",
-    "old": "  const pay = `MIN(?2, ?6 - ${earned})`;",
-    "new": "  const pay = '?2';",
+    "old": "const pay = `MIN(?2, ?6 - ${earned})`;",
+    "new": "const pay = '?2';",
     "why": "the day's last find struck whole past the cap",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -158,8 +158,8 @@
   {
     "name": "SILVER-FINDS-cap-unread",
     "file": "server-account/src/marks.js",
-    "old": "    WHERE ${earned} < ?6",
-    "new": "    WHERE 1",
+    "old": "    WHERE ${earned} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7",
+    "new": "    WHERE 1\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7",
     "why": "the day met, struck all the same",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "SILVER-FINDS-purse-unread",
     "file": "server-account/src/marks.js",
-    "old": "    WHERE ${earned} < ?6\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)",
-    "new": "    WHERE ${earned} < ?6\n      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)",
+    "old": "      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7\n      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)\n      AND ${guard}`)",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)\n      AND ${guard}`)",
     "why": "a purse at its most struck past it",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -178,8 +178,8 @@
   {
     "name": "SILVER-FINDS-gather-switch-unread",
     "file": "server-account/src/marks.js",
-    "old": "  if (\n    !strikesFor(player, env) ||\n    !findsOpenFor(player, ctx.nowS) ||\n    !(amount > 0) ||\n    typeof rid !== 'string' ||\n    typeof nonce !== 'string'\n  )",
-    "new": "  if (!findsOpenFor(player, ctx.nowS) || !(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string')",
+    "old": "  if (!strikesFor(player, env) || !findsOpenFor(player, ctx.nowS) || !(amount > 0)",
+    "new": "  if (!findsOpenFor(player, ctx.nowS) || !(amount > 0)",
     "why": "a harvest finds silver with the switch shut",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -189,7 +189,7 @@
   {
     "name": "SILVER-FINDS-switch-before-the-line",
     "file": "server-account/src/marks.js",
-    "old": "  if (accountKind(player) !== 'linked') return []; // a guest is never struck: no line to look for",
+    "old": "  if (accountKind(player) !== 'linked') return [];   // a guest is never struck: no line to look for",
     "new": "  if (!strikesFor(player, env)) return [];",
     "why": "a find made, answered \"none\" after the switch shut (AUDIT 28 M2)",
     "tests": [
@@ -200,8 +200,8 @@
   {
     "name": "SILVER-FINDS-days-crossed-in-answer",
     "file": "server-account/src/marks.js",
-    "old": "      found: Number((line.kind === 'gather' ? f?.gathered : f?.found) ?? 0),",
-    "new": "      found: Number((line.kind === 'gather' ? f?.found : f?.gathered) ?? 0),",
+    "old": "today: { found: Number((line.kind === 'gather' ? f?.gathered : f?.found) ?? 0),",
+    "new": "today: { found: Number((line.kind === 'gather' ? f?.found : f?.gathered) ?? 0),",
     "why": "a harvest's answer says the loot's day",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "SILVER-FINDS-gather-max-the-loots",
     "file": "server-account/src/marks.js",
-    "old": "    today: {\n      found: Number((line.kind === 'gather' ? f?.gathered : f?.found) ?? 0),\n      max: MARKS_FAUCETS[line.kind].perDay,\n    },",
-    "new": "    today: { found: Number((line.kind === 'gather' ? f?.gathered : f?.found) ?? 0), max: MARKS_FAUCETS.find.perDay },",
+    "old": "max: MARKS_FAUCETS[line.kind].perDay } };",
+    "new": "max: MARKS_FAUCETS.find.perDay } };",
     "why": "a harvest's day said against 20",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -221,8 +221,8 @@
   {
     "name": "SILVER-FINDS-rid-of-another-act",
     "file": "server-account/src/marks.js",
-    "old": "  if (prior) return prior.kind === 'find' ? answer({ repeat: true }) : { error: 'marks-rid' }; // AUDIT 28 M2: before the switch",
-    "new": "  if (prior) return answer({ repeat: true }); // AUDIT 28 M2: before the switch",
+    "old": "if (prior) return prior.kind === 'find' ? answer({ repeat: true }) : { error: 'marks-rid' };",
+    "new": "if (prior) return answer({ repeat: true });",
     "why": "an id another act took answered as a find",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -251,8 +251,8 @@
   {
     "name": "SILVER-FINDS-rate-unasked",
     "file": "server-account/src/marks.js",
-    "old": "  if (await overRate(ctx, `marks:${player.id}`, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S)) return { error: 'marks-rate' };\n  await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(dice(rand))));",
-    "new": "  await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(dice(rand))));",
+    "old": "  if (await overRate(ctx, `marks:${player.id}`, MARKS_OPS_MAX, MARKS_OPS_WINDOW_S)) return { error: 'marks-rate' };\n  await decide(findStrikeStatement(",
+    "new": "  await decide(findStrikeStatement(",
     "why": "finds past the hour's acts",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -261,8 +261,8 @@
   {
     "name": "SILVER-FINDS-amount-not-the-dice",
     "file": "server-account/src/marks.js",
-    "old": "  await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(dice(rand))));",
-    "new": "  await decide(findStrikeStatement(ctx, player, 'find', rid, lootFindOf(0)));",
+    "old": "lootFindOf(dice(rand))",
+    "new": "lootFindOf(0)",
     "why": "every loot find 1",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -271,8 +271,8 @@
   {
     "name": "SILVER-FINDS-why-always-cap",
     "file": "server-account/src/marks.js",
-    "old": "      why: today.found >= max ? 'cap' : 'full',",
-    "new": "      why: 'cap',",
+    "old": "why: today.found >= max ? 'cap' : 'full' };",
+    "new": "why: 'cap' };",
     "why": "a full purse said as the day met",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -281,8 +281,8 @@
   {
     "name": "SILVER-FINDS-card-counts-swapped",
     "file": "server-account/src/marks.js",
-    "old": "    gathered: Number(f?.gathered ?? 0),\n    found: Number(f?.found ?? 0),",
-    "new": "    gathered: Number(f?.found ?? 0),\n    found: Number(f?.gathered ?? 0),",
+    "old": "gathered: Number(f?.gathered ?? 0), found: Number(f?.found ?? 0) };",
+    "new": "gathered: Number(f?.found ?? 0), found: Number(f?.gathered ?? 0) };",
     "why": "the card's finds crossed",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -291,8 +291,8 @@
   {
     "name": "SILVER-FINDS-card-maxes",
     "file": "server-account/src/marks.js",
-    "old": "      gatherMax: MARKS_FAUCETS.gather.perDay,",
-    "new": "      gatherMax: MARKS_FAUCETS.find.perDay,",
+    "old": "gathered: today.gathered, gatherMax: MARKS_FAUCETS.gather.perDay, found: today.found, findMax: MARKS_FAUCETS.find.perDay,",
+    "new": "gathered: today.gathered, gatherMax: MARKS_FAUCETS.find.perDay, found: today.found, findMax: MARKS_FAUCETS.find.perDay,",
     "why": "the gathering's day said against 20",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -661,8 +661,8 @@
   {
     "name": "SILVER-FINDS-card-source",
     "file": "src/ui/haulCards.js",
-    "old": "    source: FIND_SOURCE[kind] ?? FIND_SOURCE.pile,",
-    "new": "    source: FIND_SOURCE.pile,",
+    "old": "source: FIND_SOURCE[kind] ?? FIND_SOURCE.pile,",
+    "new": "source: FIND_SOURCE.pile,",
     "why": "every find found in the treasure",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -671,8 +671,8 @@
   {
     "name": "SILVER-FINDS-card-faucet",
     "file": "src/ui/haulCards.js",
-    "old": "  const faucet = kind === 'gather' ? 'gather' : 'find';",
-    "new": "  const faucet = 'find';",
+    "old": "const faucet = kind === 'gather' ? 'gather' : 'find';",
+    "new": "const faucet = 'find';",
     "why": "a harvest's find on the loot's bar",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -681,8 +681,8 @@
   {
     "name": "SILVER-FINDS-card-default-max",
     "file": "src/ui/haulCards.js",
-    "old": "      ? {\n          earned: t.found,\n          max: Number.isSafeInteger(t.max) ? t.max : MARKS_FAUCETS[faucet].perDay,\n          text: FIND_BAR_TEXT[faucet],\n        }",
-    "new": "      ? { earned: t.found, max: Number.isSafeInteger(t.max) ? t.max : 20, text: FIND_BAR_TEXT[faucet] }",
+    "old": "max: Number.isSafeInteger(t.max) ? t.max : MARKS_FAUCETS[faucet].perDay,",
+    "new": "max: Number.isSafeInteger(t.max) ? t.max : 20,",
     "why": "a harvest's day said against 20",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -691,8 +691,8 @@
   {
     "name": "SILVER-FINDS-card-lode-twice",
     "file": "src/ui/haulCards.js",
-    "old": "  if (!d.motherlode) {",
-    "new": "  {",
+    "old": "  if (!d.motherlode) { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
+    "new": "  { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
     "why": "a Motherlode's silver found twice",
     "tests": [
       "test/net/silverfinds_client.test.js",
@@ -702,7 +702,7 @@
   {
     "name": "SILVER-FINDS-card-no-find",
     "file": "src/ui/haulCards.js",
-    "old": "  if (!d.motherlode) {\n    const f = findHaul(d.marks, 'gather');\n    if (f) out.push(f);\n  }",
+    "old": "  if (!d.motherlode) { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
     "new": "",
     "why": "a harvest's find no card",
     "tests": [
@@ -713,8 +713,8 @@
   {
     "name": "SILVER-FINDS-card-bar-words",
     "file": "src/ui/haulCards.js",
-    "old": "            text: l.bar ?? COMBAT_BAR_TEXT,",
-    "new": "            text: COMBAT_BAR_TEXT,",
+    "old": "text: l.bar ?? COMBAT_BAR_TEXT,",
+    "new": "text: COMBAT_BAR_TEXT,",
     "why": "every bar the combat's",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -870,8 +870,8 @@
   {
     "name": "SILVER-FINDS-bank-rows",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "                      'Found in loot today',\n                      `${w.hooks.marks.today()?.found ?? 0} of ${w.hooks.marks.today()?.findMax ?? MARKS_FAUCETS.find.perDay}`,\n                    ], // SILVER-FINDS\n                    [\n                      'Found gathering today',",
-    "new": "                      'Found gathering today',",
+    "old": "            ['Found in loot today', `${(w.hooks.marks.today()?.found ?? 0)} of ${w.hooks.marks.today()?.findMax ?? MARKS_FAUCETS.find.perDay}`],   // SILVER-FINDS\n",
+    "new": "",
     "why": "the Bank never says the day's finds",
     "tests": [
       "test/net/silverfinds_client.test.js"
@@ -880,8 +880,8 @@
   {
     "name": "SILVER-FINDS-bank-serpents",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "                      'From gates, raids, serpents and the Spire today',",
-    "new": "                      'From gates and raids today',",
+    "old": "['From gates, raids, serpents and the Spire today',",
+    "new": "['From gates and raids today',",
     "why": "the serpents unnamed under the cap they share",
     "note": "EG-E1 (PIN MOVED): the Bank's card names the Spire's Redoubts beside them - re-aimed by content.",
     "tests": [

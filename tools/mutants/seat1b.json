@@ -140,8 +140,8 @@
   {
     "name": "SEAT1b-gate-region-not-stored",
     "file": "server-account/src/accounts.js",
-    "old": "    .bind(\n      c.d,\n      player.id,\n      c.b,\n      c.x,\n      nowS,\n      c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null,\n      embers,\n      c.m ? JSON.stringify(c.m) : null,\n    ); // INT14: the relay's count, kept; WW2: a region the Bay's lane's alone - no gate past the Bay stands in a Bay region",
-    "new": "    .bind(c.d, player.id, c.b, c.x, nowS, null, embers, c.m ? JSON.stringify(c.m) : null); // INT14: the relay's count, kept; WW2: a region the Bay's lane's alone - no gate past the Bay stands in a Bay region",
+    "old": "nowS, c.x !== 'rite' && gateRegionOk(c.d, region) ? region : null, embers, c.m",
+    "new": "nowS, null, embers, c.m",
     "tests": [
       "test/net/seat1b_service.test.js"
     ],

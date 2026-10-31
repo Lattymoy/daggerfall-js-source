@@ -247,7 +247,7 @@ test('STAND-FLAT the location and the boats by source: exterior.js stands its to
   ordered(e, ['const _peopleOn = standPeople.frame();', 'standingHorses.begin(mwViewHorseRig(), eye);', 'for (const sf of standFlats) {', 'standingHorses.offer(sf, sf.feet, sf.yaw, sf.look, sf.batch, sf.seed);',
     'const look = _peopleOn ? figureLook(sf, standFigureCtx) : null;', 'standPeople.draw(canvas, proj, view, eye,', 'if (standingHorses.end(dt, { proj, view })) standingHorses.draw(canvas, { eye, proj, view });', 'for (const b of billboardBatches) {'], 'the frame');
   const c = rd('src/scenes/comeSailAway/comeSailAwayPool.js');
-  assert.ok(c.includes('if (isNpcFlat(bb.Summary.Archive))\n            crew.set(n, {\n              piece: { id: `csa:${boat.uid || `h${boat.hull}`}:${i}`, flat: [bb.Summary.Archive, bb.Summary.Record] },\n            });'));
-  assert.equal(c.match(/flats\.delete\(n\);\n\s*crew\.delete\(n\);/g)?.length, 2, 'gone with its flat, both ways a flat goes');
-  assert.ok(c.includes('for (const [n, f] of crew) {\n      const b = flats.get(n);\n      if (b) fn(f, b);\n    }'));
+  assert.ok(c.includes('if (isNpcFlat(bb.Summary.Archive)) crew.set(n, { piece: { id: `csa:${boat.uid || `h${boat.hull}`}:${i}`, flat: [bb.Summary.Archive, bb.Summary.Record] } });'));
+  assert.equal(c.match(/flats\.delete\(n\); crew\.delete\(n\);/g)?.length, 2, 'gone with its flat, both ways a flat goes');
+  assert.ok(c.includes('for (const [n, f] of crew) { const b = flats.get(n); if (b) fn(f, b); }'));
 });

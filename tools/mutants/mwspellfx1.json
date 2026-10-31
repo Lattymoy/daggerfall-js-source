@@ -182,8 +182,8 @@
   {
     "name": "MWSPELLFX1-the-file-sets-every-flag",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      e.flags = d.getInt32(8, true) & (0x200 | 0x400 | 0x800); // AllowSpellmaking | AllowEnchanting | NegativeLight",
-    "new": "      e.flags = d.getInt32(8, true); // AllowSpellmaking | AllowEnchanting | NegativeLight",
+    "old": "      e.flags = d.getInt32(8, true) & (0x200 | 0x400 | 0x800);   // AllowSpellmaking | AllowEnchanting | NegativeLight",
+    "new": "      e.flags = d.getInt32(8, true);   // AllowSpellmaking | AllowEnchanting | NegativeLight",
     "tests": [
       "test/formats/morrowind/mwload_records.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "MWSPELLFX1-the-records-version-left",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "export const ARM_RECORDS_VERSION = 6; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records",
-    "new": "export const ARM_RECORDS_VERSION = 3; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records",
+    "old": "export const ARM_RECORDS_VERSION = 6;",
+    "new": "export const ARM_RECORDS_VERSION = 3;",
     "tests": [
       "test/formats/morrowind/mwload_records.test.js"
     ],

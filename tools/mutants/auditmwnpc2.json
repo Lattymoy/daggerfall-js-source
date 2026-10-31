@@ -292,8 +292,8 @@
   {
     "name": "AUDITMWNPC2-H2-lanes-under-overworld",
     "file": "src/characters/npcBodies.js",
-    "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return; // AUDIT MW-NPC II H2: none under the Overworld",
-    "new": "      if (!actor?.look || !actor.feet) return; // AUDIT MW-NPC II H2: none under the Overworld",
+    "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;",
+    "new": "      if (!actor?.look || !actor.feet) return;",
     "tests": [
       "test/characters/mwnpc_audit2.test.js"
     ]

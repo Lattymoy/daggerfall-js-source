@@ -3683,7 +3683,7 @@ The owner: *"the abyss dungeon ... we need to make this a party instance ... to 
 added a share to the Remnant's health and a Heart to each Reset, drew Gear Volleys, turned the Orrery's stones and
 woke the fight's fifteen-minute clock. The first kill then collapsed the Hollow for every other group in it.
 
-**The room.** A realm is now `sd:<s>.<owner>` (`sdLaw.js:"export const sdRoomKey"`), the owner an
+**The room.** A realm is now `sd:<s>.<owner>` (`sdLaw.js:"export const sdRoomKey = (s, owner) =>"`), the owner an
 account digest (`instanceOwnerOf`, the Ketch's crew law). The bare `sd:<s>` is no room: the Worker mints no object for
 it. The page picks the copy (`scenes/superDungeon/sdCopy.js` `sdCopyChoice`): the one it went into, while that slot is
 the same, the party is the same and its owner is still in it; else the party leader's; alone, its own. It is kept on

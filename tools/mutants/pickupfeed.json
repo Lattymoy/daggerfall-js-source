@@ -340,8 +340,8 @@
   {
     "name": "PICKUP-FEED-the-hide-leaves-the-cards-painted",
     "file": "src/ui/worldPlaque.js",
-    "old": "  clearPickupFeed(); // PICKUP-FEED: the take's cards come down by every door the plaque does - an overlay over the world, a held frame (AUDIT 64 F37: a DOM face stays painted unless told)",
-    "new": "  void 0; // PICKUP-FEED: the take's cards come down by every door the plaque does - an overlay over the world, a held frame (AUDIT 64 F37: a DOM face stays painted unless told)",
+    "old": "  clearPickupFeed();   // PICKUP-FEED:",
+    "new": "  void 0;   // PICKUP-FEED:",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]
@@ -349,8 +349,8 @@
   {
     "name": "PICKUP-FEED-the-plaque-teardown-misses-the-feed",
     "file": "src/ui/worldPlaque.js",
-    "old": "  destroyPickupFeed();\n}",
-    "new": "}",
+    "old": "  // the hosts' one teardown for quick loot is this function.\n  destroyPickupFeed();",
+    "new": "  // the hosts' one teardown for quick loot is this function.",
     "tests": [
       "test/systems/pickupfeed.test.js"
     ]

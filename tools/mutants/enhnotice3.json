@@ -317,8 +317,8 @@
   {
     "name": "ENH-NOTICE3-P4-mod-arrival-box-sent-to-the-hud-line",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles },\n    );\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++; // SEA-ROWS\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }\n",
-    "new": "      { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles },\n    );\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++; // SEA-ROWS\n      say(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }\n",
+    "old": "      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }\n\n  /** :495-519, BeginTravelToCoords",
+    "new": "      say(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }\n\n  /** :495-519, BeginTravelToCoords",
     "tests": [
       "test/systems/notify.test.js",
       "test/systems/travel/to1_travelOptions.test.js"
@@ -327,8 +327,8 @@
   {
     "name": "ENH-NOTICE3-P4-mod-enemies-refusal-sent-to-the-hud-line",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (st.destinationCautious) return attemptAvoidEncounter(route);\n    messageBox(T.MsgEnemies);",
-    "new": "    if (st.destinationCautious) return attemptAvoidEncounter(route);\n    say(T.MsgEnemies);",
+    "old": "    messageBox(T.MsgEnemies);\n    return false;",
+    "new": "    say(T.MsgEnemies);\n    return false;",
     "tests": [
       "test/systems/notify.test.js",
       "test/systems/travel/to1_travelOptions.test.js"
@@ -337,8 +337,8 @@
   {
     "name": "ENH-NOTICE3-P4-mod-no-path-hud-line-sent-to-the-box-door",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        say(T.MsgNoPath);",
-    "new": "        messageBox(T.MsgNoPath);",
+    "old": "        drawJunctionMap(mp);\n        say(T.MsgNoPath);",
+    "new": "        drawJunctionMap(mp);\n        messageBox(T.MsgNoPath);",
     "tests": [
       "test/systems/notify.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "AUDIT-the-box-under-the-toasts",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "  if (firstToast) stack.insertBefore(host, firstToast);\n  else stack.append(host);",
-    "new": "  stack.append(host);\n  void firstToast;",
+    "old": "  if (firstToast) stack.insertBefore(host, firstToast); else stack.append(host);",
+    "new": "  stack.append(host); void firstToast;",
     "tests": [
       "test/ui/enhancedNotice.test.js"
     ]
@@ -807,7 +807,7 @@
   {
     "name": "AUDIT4-A2-the-watchdog-leaves-the-owner-set",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "    if (mine) {\n      mine.delete(p.rowId);\n      if (!mine.size) toasts.delete(p.toastOwner);\n    }",
+    "old": "    if (mine) { mine.delete(p.rowId); if (!mine.size) toasts.delete(p.toastOwner); }",
     "new": "    void mine;",
     "tests": [
       "test/ui/enhancedNotice.test.js"
@@ -825,8 +825,8 @@
   {
     "name": "AUDIT4-A12-a-covered-arrival-counted",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "    if (host) {",
-    "new": "    mine.add(ids[i]);\n    if (host) {",
+    "old": "    if (host) {\n      const p = panels.get(toastKey(key, ids[i]));",
+    "new": "    mine.add(ids[i]);\n    if (host) {\n      const p = panels.get(toastKey(key, ids[i]));",
     "tests": [
       "test/ui/enhancedNotice.test.js"
     ]
@@ -834,7 +834,7 @@
   {
     "name": "AUDIT4-B2-the-hint-option-ignored",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "  const caption = toast ? false : hint === undefined ? NOTICE_HINT : hint;",
+    "old": "  const caption = toast ? false : (hint === undefined ? NOTICE_HINT : hint);",
     "new": "  const caption = toast ? false : NOTICE_HINT;",
     "tests": [
       "test/ui/enhancedNotice.test.js",

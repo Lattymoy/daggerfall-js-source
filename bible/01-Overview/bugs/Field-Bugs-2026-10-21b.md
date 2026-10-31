@@ -143,7 +143,7 @@ HOST-berth-unsaid and `fb1020c_berthring.json`'s ring re-aimed by content (both 
 `src/systems/handheldTorches.js` (`lanternFirst`, `toggleLightPress`, `waistPress`), `src/systems/quickslots.js` (the
 hotbar's light arm).
 
-FOUND. O is Handheld Torches' TorchToggleLight (`inputActions.js:"['KeyO', 'TorchToggleLight']"`), and its press lights
+FOUND. O is Handheld Torches' TorchToggleLight (`inputActions.js:"['KeyO', 'TorchToggleLight'],"`), and its press lights
 the pack's first lantern through PlayerEntity.LightSource's one door - it never marks one for the belt. BELT-LANTERN
 (2026-10-20, `10-UI/UI-Arc.md`) gave the lantern its own socket and the item its mark (`beltLantern: true`), and the
 inventory's hand row took a light only when it was NOT marked. But the world asks another question:

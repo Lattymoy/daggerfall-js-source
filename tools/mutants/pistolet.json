@@ -150,8 +150,8 @@
   {
     "name": "OH-no-share",
     "file": "src/combat/arrowFlight.js",
-    "old": "    ...(off ? OFF_HAND_BLOW : {}),\n    backstabChance: backstabChanceOf(playerEntity, back, foe),",
-    "new": "    backstabChance: backstabChanceOf(playerEntity, back, foe),",
+    "old": "    ...(off ? OFF_HAND_BLOW : {}),\n    backstabChance",
+    "new": "    backstabChance",
     "tests": [
       "test/combat/pistolet_law.test.js"
     ]
@@ -395,8 +395,8 @@
   {
     "name": "NM-metal-twice",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  if (!material || withholdsMaterialPrefix(item) || namesItsMetal(item, material)) return name;",
-    "new": "  if (!material || withholdsMaterialPrefix(item)) return name;",
+    "old": "|| namesItsMetal(item, material)) return name;",
+    "new": ") return name;",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]
@@ -404,8 +404,8 @@
   {
     "name": "NM-the-whole-name-asked",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  String(templateText(templateByIndex(item?.templateIndex)) ?? '')",
-    "new": "  String(itemNameParts(item).name ?? '')",
+    "old": "String(templateText(templateByIndex(item?.templateIndex)) ?? '').toLowerCase().startsWith(",
+    "new": "String(itemNameParts(item).name ?? '').toLowerCase().startsWith(",
     "tests": [
       "test/systems/pistolet_pins.test.js"
     ]

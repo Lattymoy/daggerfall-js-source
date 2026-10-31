@@ -2,8 +2,8 @@
   {
     "name": "STAFF-PANEL2-sev3-not-high",
     "file": "server-account/src/staffCases.js",
-    "old": "    if (sev >= 3 || (sev === 2 && (c.ai_category === 'threat' || c.ai_category === 'personal-info'))) raise(2, word);",
-    "new": "    if (sev > 3 || (sev === 2 && (c.ai_category === 'threat' || c.ai_category === 'personal-info'))) raise(2, word);",
+    "old": "if (sev >= 3 || (sev === 2",
+    "new": "if (sev > 3 || (sev === 2",
     "why": "a severity 3 case read as medium",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-PANEL2-threat2-not-high",
     "file": "server-account/src/staffCases.js",
-    "old": "    if (sev >= 3 || (sev === 2 && (c.ai_category === 'threat' || c.ai_category === 'personal-info'))) raise(2, word);",
-    "new": "    if (sev >= 3 || (sev === 2 && c.ai_category === 'personal-info')) raise(2, word);",
+    "old": "(c.ai_category === 'threat' || c.ai_category === 'personal-info')",
+    "new": "(c.ai_category === 'personal-info')",
     "why": "a threat at severity 2 read as medium",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL2-failed-read-not-high",
     "file": "server-account/src/staffCases.js",
-    "old": "  if (c.ai_state === 'failed') raise(2, 'AI check failed');",
-    "new": "  if (false) raise(2, 'AI check failed');",
+    "old": "  if (c.ai_state === 'failed') raise(2, 'AI check failed');\n  else if",
+    "new": "  if (false) raise(2, 'AI check failed');\n  else if",
     "why": "a failed read ranked low",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-PANEL2-waiting-read-unseen",
     "file": "server-account/src/staffCases.js",
-    "old": "  else if ((c.ai_state === 'due' || c.ai_state === 'reading') && nowS - Number(c.updated_at) >= AI_WAIT_S)",
-    "new": "  else if ((c.ai_state === 'due' || c.ai_state === 'reading') && nowS - Number(c.updated_at) > AI_WAIT_S * 6)",
+    "old": "nowS - Number(c.updated_at) >= AI_WAIT_S) raise(1",
+    "new": "nowS - Number(c.updated_at) > AI_WAIT_S * 6) raise(1",
     "why": "a read waiting ten minutes ranked low",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-PANEL2-auto-mute-unseen",
     "file": "server-account/src/staffCases.js",
-    "old": "  if (c.auto) raise(2, 'muted automatically, unchecked');\n  const counted = reports",
-    "new": "  const counted = reports",
+    "old": "  if (c.auto) raise(2, 'muted automatically, unchecked');\n",
+    "new": "",
     "why": "an automatic mute nobody checked ranked low",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-PANEL2-wave-any-span",
     "file": "server-account/src/staffCases.js",
-    "old": "    while (counted[j] - counted[i] > 3600) i++;\n    wave = Math.max(wave, j - i + 1);",
-    "new": "    wave = Math.max(wave, j - i + 1);",
+    "old": "while (counted[j] - counted[i] > 3600) i++;",
+    "new": "",
     "why": "three reporters across a day read as a wave",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-PANEL2-guests-count",
     "file": "server-account/src/staffCases.js",
-    "old": "  else if (n >= 2 && counted.length) raise(1, ''); // reporters who are all guests or new accounts are low",
-    "new": "  else if (n >= 2) raise(1, ''); // reporters who are all guests or new accounts are low",
+    "old": "else if (n >= 2 && counted.length) raise(1, '');",
+    "new": "else if (n >= 2) raise(1, '');",
     "why": "reporters all guests or new raise a case",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-PANEL2-ban-next-unseen",
     "file": "server-account/src/staffCases.js",
-    "old": "  if (strikes >= LADDER_BAN_AT) raise(2, `${strikes} strikes: next is a ban`);",
-    "new": "  if (false) raise(2, `${strikes} strikes: next is a ban`);",
+    "old": "  if (strikes >= LADDER_BAN_AT) raise(2, `${strikes} strikes: next is a ban`);\n  else if",
+    "new": "  if (false) raise(2, `${strikes} strikes: next is a ban`);\n  else if",
     "why": "a player whose next strike is a ban ranked medium",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL2-discord-failed-unseen",
     "file": "server-account/src/staffCases.js",
-    "old": "  if (c.discord_state === 'failed') raise(1, 'Discord card failed');\n  if (reports.length && !counted.length) why.push('reporters all guests or new');",
-    "new": "  if (reports.length && !counted.length) why.push('reporters all guests or new');",
+    "old": "  if (c.discord_state === 'failed') raise(1, 'Discord card failed');\n",
+    "new": "",
     "why": "a card nobody saw ranked low",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL2-stale-past-high",
     "file": "server-account/src/staffCases.js",
-    "old": "  if (nowS - Number(c.updated_at) >= STALE_S && rank < 2) {",
-    "new": "  if (nowS - Number(c.updated_at) >= STALE_S) {",
+    "old": "STALE_S && rank < 2) {",
+    "new": "STALE_S) {",
     "why": "a stale high case past the top level",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-PANEL2-claimed-not-below",
     "file": "server-account/src/staffCases.js",
-    "old": "            (a.claim && !a.claim.idle ? 1 : 0) - (b.claim && !b.claim.idle ? 1 : 0) || // a claimed case sorts below the rest of its level, unless left idle\n            (b.ai?.confidence ?? 0) - (a.ai?.confidence ?? 0) ||",
-    "new": "            (b.ai?.confidence ?? 0) - (a.ai?.confidence ?? 0) ||",
+    "old": "      || (a.claim && !a.claim.idle ? 1 : 0) - (b.claim && !b.claim.idle ? 1 : 0)   // a claimed case sorts below the rest of its level, unless left idle\n",
+    "new": "",
     "why": "a claimed case above the free ones of its level",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "STAFF-PANEL2-pages-overlap",
     "file": "server-account/src/staffCases.js",
-    "old": "      next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE : null,",
-    "new": "      next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE - 1 : null,",
+    "old": "next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE : null",
+    "new": "next: from + CASES_PAGE < ranked.length ? from + CASES_PAGE - 1 : null",
     "why": "a case on two pages",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-PANEL2-read-every-time",
     "file": "server-account/src/staffCases.js",
-    "old": "    const said = audit('cases-read', null, { sort }, { onceIn: 10 * 60 });",
-    "new": "    const said = audit('cases-read', null, { sort });",
+    "old": "const said = audit('cases-read', null, { sort }, { onceIn: 10 * 60 });",
+    "new": "const said = audit('cases-read', null, { sort });",
     "why": "every poll a row",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL2-mod-many-cases",
     "file": "server-account/src/staffCases.js",
-    "old": "          AND NOT EXISTS (SELECT 1 FROM mod_cases o WHERE o.status = 'open' AND o.claimed_by = ?2 AND ${claimHeldSql('o', 3)} AND o.id != ?1)`,",
-    "new": "          `,",
+    "old": "          AND NOT EXISTS (SELECT 1 FROM mod_cases o WHERE o.status = 'open' AND o.claimed_by = ?2 AND ${claimHeldSql('o', 3)} AND o.id != ?1)`)",
+    "new": "          `)",
     "why": "a Moderator holds two cases",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-PANEL2-mod-takes-held",
     "file": "server-account/src/staffCases.js",
-    "old": "          AND (claimed_by IS ?2 OR NOT ${claimHeldSql('mod_cases', 3)})\n          AND NOT EXISTS (SELECT 1 FROM mod_cases o WHERE o.status = 'open' AND o.claimed_by = ?2 AND ${claimHeldSql('o', 3)} AND o.id != ?1)`,",
-    "new": "          AND NOT EXISTS (SELECT 1 FROM mod_cases o WHERE o.status = 'open' AND o.claimed_by = ?2 AND ${claimHeldSql('o', 3)} AND o.id != ?1)`,",
+    "old": "          AND (claimed_by IS ?2 OR NOT ${claimHeldSql('mod_cases', 3)})\n",
+    "new": "",
     "why": "a Moderator takes a case another holds",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "STAFF-PANEL2-take-untold",
     "file": "server-account/src/staffCases.js",
-    "old": "            `UPDATE mod_cases SET claim_from = CASE WHEN claimed_by != ?2 AND ${claimHeldSql('mod_cases', 3)} THEN claimed_by ELSE NULL END,",
-    "new": "            `UPDATE mod_cases SET claim_from = NULL,",
+    "old": "claim_from = CASE WHEN claimed_by != ?2 AND ${claimHeldSql('mod_cases', 3)} THEN claimed_by ELSE NULL END,",
+    "new": "claim_from = NULL,",
     "why": "the Moderator never told",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "STAFF-PANEL2-look-lets-go",
     "file": "server-account/src/staffCases.js",
-    "old": "    const k = keep();",
-    "new": "    const k = null;",
+    "old": "    const k = keep();\n",
+    "new": "    const k = null;\n",
     "why": "the holder's look lets the claim go",
     "tests": [
       "test/server/staffpanel2.test.js"
@@ -224,8 +224,8 @@
   {
     "name": "STAFF-PANEL2-panel-unnamed",
     "file": "server-account/src/staffCases.js",
-    "old": "  const asName = `${displayName(me)} (staff panel)`;",
-    "new": "  const asName = displayName(me);",
+    "old": "const asName = `${displayName(me)} (staff panel)`;",
+    "new": "const asName = displayName(me);",
     "why": "the strike history never says the panel",
     "tests": [
       "test/server/staffpanel2.test.js"

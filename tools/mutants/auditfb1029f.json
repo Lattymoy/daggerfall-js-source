@@ -11,8 +11,8 @@
   {
     "name": "AUDITFB1029F-A1-claim-keeps-orphans",
     "file": "server-account/src/homes.js",
-    "old": "    await db.batch([\n      ...prep.steps,\n      accessOrphansCleared(db, claim.mapId, claim.buildingKey),\n      claimStatement(db, player, claim, nowS, claim.price),\n      mustChange(db),\n    ]);",
-    "new": "    await db.batch([...prep.steps, claimStatement(db, player, claim, nowS, claim.price), mustChange(db)]);",
+    "old": "accessOrphansCleared(db, claim.mapId, claim.buildingKey), claimStatement(",
+    "new": "claimStatement(",
     "tests": [
       "test/server/restorphans.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDITFB1029F-A4-sale-keeps-rows",
     "file": "server-account/src/homes.js",
-    "old": "      db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(home.map_id, home.building_key),\n      db",
-    "new": "      db",
+    "old": "      db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(home.map_id, home.building_key),\n",
+    "new": "",
     "tests": [
       "test/server/restorphans.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITFB1029F-A1-move-drops-rest",
     "file": "server-account/src/homes.js",
-    "old": "    db\n      .prepare(\"UPDATE decor_access SET building_key = ? WHERE map_id = ? AND building_key = ? AND kind = 'rest'\")\n      .bind(to, mapId, from),\n    db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(mapId, from),",
-    "new": "    db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(mapId, from),",
+    "old": "    db.prepare(\"UPDATE decor_access SET building_key = ? WHERE map_id = ? AND building_key = ? AND kind = 'rest'\").bind(to, mapId, from),\n",
+    "new": "",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITFB1029F-A1-move-keeps-old",
     "file": "server-account/src/homes.js",
-    "old": "    db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(mapId, from),\n    // a tenancy running is carried, offered to nobody, its point the old building's no more",
-    "new": "    // a tenancy running is carried, offered to nobody, its point the old building's no more",
+    "old": "    db.prepare('DELETE FROM decor_access WHERE map_id = ? AND building_key = ?').bind(mapId, from),\n",
+    "new": "",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITFB1029F-A1-move-takes-orphan",
     "file": "server-account/src/homes.js",
-    "old": "    accessOrphansCleared(db, mapId, to), // AUDIT FB1029f A1: what an earlier home there left\n    // the row whole at the new key - a building somebody owns is the primary key's refusal; the guild after the old goes",
-    "new": "    // the row whole at the new key - a building somebody owns is the primary key's refusal; the guild after the old goes",
+    "old": "    accessOrphansCleared(db, mapId, to),   // AUDIT FB1029f A1: what an earlier home there left\n",
+    "new": "",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]

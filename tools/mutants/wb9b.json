@@ -129,8 +129,8 @@
   {
     "name": "WB9b-a-slab-still-rising-under-a-foot",
     "file": "src/world/gate/gateArena.js",
-    "old": "  const done = at + WALK_LEAD_MS + (slab.j / slab.n) * WALK_FORM_MS,",
-    "new": "  const done = at + WALK_LEAD_MS + ((slab.j + 1) / slab.n) * WALK_FORM_MS,",
+    "old": "const done = at + WALK_LEAD_MS + (slab.j / slab.n) * WALK_FORM_MS",
+    "new": "const done = at + WALK_LEAD_MS + ((slab.j + 1) / slab.n) * WALK_FORM_MS",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "WB9b-a-slab-up-before-the-word",
     "file": "src/world/gate/gateArena.js",
-    "old": "    from = Math.max(at, done - SLAB_RISE_MS);",
-    "new": "    from = done - SLAB_RISE_MS;",
+    "old": "from = Math.max(at, done - SLAB_RISE_MS);",
+    "new": "from = done - SLAB_RISE_MS;",
     "tests": [
       "test/net/gate/wb9b_gate_courts.test.js"
     ]

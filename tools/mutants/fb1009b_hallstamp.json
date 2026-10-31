@@ -11,8 +11,8 @@
   {
     "name": "HALL-STAMP-a-nameless-place-stamped",
     "file": "src/systems/discovery.js",
-    "old": "  if (!renamed || renamed === rec.displayName) return false; // HALL-STAMP: and a nameless Place names nothing",
-    "new": "  if (renamed == null || renamed === rec.displayName) return false; // HALL-STAMP: and a nameless Place names nothing",
+    "old": "  if (!renamed || renamed === rec.displayName) return false;",
+    "new": "  if (renamed == null || renamed === rec.displayName) return false;",
     "tests": [
       "test/systems/guild/fb1009b_hallstamp.test.js"
     ]

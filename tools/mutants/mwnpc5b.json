@@ -191,8 +191,8 @@
   {
     "name": "MWNPC5b-lane-dressing-dropped",
     "file": "src/characters/npcBodies.js",
-    "old": "      r.conceal = conceal;\n      r.flash = flash > 0 ? flash : 0;\n      r.fx = fx;",
-    "new": "      r.conceal = null;\n      r.flash = 0;\n      r.fx = null;",
+    "old": "      r.conceal = conceal; r.flash = flash > 0 ? flash : 0; r.fx = fx; r.dead = !!actor.dead; r.frame = frame;",
+    "new": "      r.conceal = null; r.flash = 0; r.fx = null; r.dead = !!actor.dead; r.frame = frame;",
     "tests": [
       "test/render/mwnpc5_dungeon.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MWNPC5b-lane-dead-first",
     "file": "src/characters/npcBodies.js",
-    "old": "  const syncOpts = { priority: (id) => !seen(id)?.dead, conceal: (id) => seen(id)?.conceal ?? null };",
-    "new": "  const syncOpts = { priority: null, conceal: (id) => seen(id)?.conceal ?? null };",
+    "old": "  const syncOpts = { priority: (id) => !seen(id)?.dead,",
+    "new": "  const syncOpts = { priority: null,",
     "tests": [
       "test/render/mwnpc5_dungeon.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "MWNPC5b-lane-veiled-undrawn",
     "file": "src/characters/npcBodies.js",
-    "old": "    drawVeiled() {\n      bodies?.drawVeiled();\n    },",
+    "old": "    drawVeiled() { bodies?.drawVeiled(); },",
     "new": "    drawVeiled() {},",
     "tests": [
       "test/render/mwnpc5_dungeon.test.js"

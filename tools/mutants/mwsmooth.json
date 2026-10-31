@@ -12,8 +12,8 @@
   {
     "name": "MWSMOOTH-skinned-normals-left-unposed",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, p.normals ?? null); // MW-SMOOTH: and its normals",
-    "new": "      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, null); // MW-SMOOTH: and its normals",
+    "old": "      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, p.normals ?? null);   // MW-SMOOTH: and its normals",
+    "new": "      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, null);   // MW-SMOOTH: and its normals",
     "tests": [
       "test/formats/morrowind/mwsmooth.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "MWSMOOTH-rigid-normals-left-unposed",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals); // MW-SMOOTH\n    }",
-    "new": "    }",
+    "old": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals);   // MW-SMOOTH",
+    "new": "",
     "tests": [
       "test/formats/morrowind/mwsmooth.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "MWSMOOTH-the-scale-left-in",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    const nz = a[6] * x + a[7] * y + a[8] * z;\n    const len = Math.hypot(nx, ny, nz) || 1;",
-    "new": "    const nz = a[6] * x + a[7] * y + a[8] * z;\n    const len = 1;",
+    "old": "    const len = Math.hypot(nx, ny, nz) || 1;\n    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;\n  }\n  return out;\n}\n\n/** MW-SMOOTH: the posed-normal buffer",
+    "new": "    const len = 1;\n    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;\n  }\n  return out;\n}\n\n/** MW-SMOOTH: the posed-normal buffer",
     "tests": [
       "test/formats/morrowind/mwsmooth.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "MWSMOOTH-the-pre-transform-not-turned",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "            sourceNormals: normals ? applyPreNormals(batch.normals, part.preTransform) : null,",
-    "new": "            sourceNormals: normals ? batch.normals : null,",
+    "old": "            sourceNormals: normals ? applyPreNormals(batch.normals, part.preTransform) : null, normals });",
+    "new": "            sourceNormals: normals ? batch.normals : null, normals });",
     "tests": [
       "test/formats/morrowind/mwsmooth.test.js"
     ]
@@ -67,7 +67,7 @@
   {
     "name": "MWSMOOTH-no-normals-carried",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  return batch.normals && batch.normals.length === batch.positions.length\n    ? new Float32Array(batch.normals.length)\n    : null;",
+    "old": "  return batch.normals && batch.normals.length === batch.positions.length ? new Float32Array(batch.normals.length) : null;",
     "new": "  return null;",
     "tests": [
       "test/formats/morrowind/mwsmooth.test.js"
@@ -94,8 +94,8 @@
   {
     "name": "MWSMOOTH-the-garment-piece-drops-its-normals",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "        indices: batch.indices,\n        normals: posedNormals(batch),",
-    "new": "        indices: batch.indices,\n        normals: null,",
+    "old": "        normals: posedNormals(batch) });   // MW-SMOOTH: the garment's own normals, carried through its transferred skin",
+    "new": "        normals: null });   // MW-SMOOTH: the garment's own normals, carried through its transferred skin",
     "tests": [
       "test/formats/morrowind/mwsmooth.test.js"
     ],
@@ -104,8 +104,8 @@
   {
     "name": "MWSMOOTH-the-hung-part-lit-by-its-bone",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals); // MW-SMOOTH",
-    "new": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, at, p.mirrored, p.normals); // MW-SMOOTH",
+    "old": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals);   // MW-SMOOTH",
+    "new": "      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, at, p.mirrored, p.normals);   // MW-SMOOTH",
     "tests": [
       "test/formats/morrowind/mwsmooth.test.js"
     ],

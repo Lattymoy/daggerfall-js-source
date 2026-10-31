@@ -47,8 +47,8 @@
   {
     "name": "SD9E-the-brass-before-the-last-pass",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );\n  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);",
-    "new": "  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );",
+    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n",
+    "new": "  // SD9d: THE BRASS OF NUMIDIUM - rolled after every piece, so every spoils before it is what it was for its seed\n  const brass = rollNumidiumPiece(rolls);\n  lastPass(pieces.map((p) => p.item), rolls);\n",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD9E-the-two-before-the-first",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));",
-    "new": "  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));",
+    "old": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n",
+    "new": "  for (let i = 0; i < 2; i++) pieces.push(graded(spoilsBase(lv, rolls), rareOrBetter(rolls), rolls));\n  pieces.push(graded(spoilsBase(lv, rolls), rolls() < SD_SPOILS_LEGENDARY ? 'legendary' : 'rare', rolls));\n",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD9E-the-hourlock-before-the-brass",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);",
-    "new": "  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });",
+    "old": "  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n",
+    "new": "  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was\n  const hourlock = rollHourlock(rolls);\n  const brass = rollNumidiumPiece(rolls);\n  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD9E-no-brass",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was",
-    "new": "  // GILDED1: THE HOURLOCK - one draw more, LAST of all, so every spoils before it (the Brass's own) is what it was",
+    "old": "  if (brass) pieces.push({ item: brass, tier: brass.rarity });\n",
+    "new": "",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD9E-a-level-unfloored",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const lv = Math.max(1, Math.floor(Number(level) || 1));",
-    "new": "  const lv = Math.floor(Number(level) || 1);",
+    "old": "  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const gold = Math.round(SD_SPOILS",
+    "new": "  const lv = Math.floor(Number(level) || 1);\n  const gold = Math.round(SD_SPOILS",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD9E-the-list-gold-first",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "    ...pieces,\n    ...card, // CARDS9: the Remnant's card, after the pieces\n    ...gems, // GEM2: the Remnant's gems, after the card\n    gold,",
-    "new": "    gold,\n    ...pieces,\n    ...card, // CARDS9: the Remnant's card, after the pieces\n    ...gems, // GEM2: the Remnant's gems, after the card",
+    "old": "  return [\n    ...pieces,\n    ...card,   // CARDS9: the Remnant's card, after the pieces\n    ...gems,   // GEM2: the Remnant's gems, after the card\n    gold,\n  ];",
+    "new": "  return [\n    gold,\n    ...pieces,\n    ...card,   // CARDS9: the Remnant's card, after the pieces\n    ...gems,   // GEM2: the Remnant's gems, after the card\n  ];",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD9E-a-piece-undressed",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() }));",
-    "new": "  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier }));",
+    "old": "  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier, record: flat() }));\n  const gold = { kind: 'gold'",
+    "new": "  const pieces = s.pieces.map((p) => ({ kind: 'item', item: p.item, tier: p.tier }));\n  const gold = { kind: 'gold'",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SD9E-a-slot-misread",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const m = typeof day === 'string' ? /^sd:(\\d{1,9})$/.exec(day) : null;",
-    "new": "  const m = typeof day === 'string' ? /^sd:(\\d+)/.exec(day) : null;",
+    "old": "/^sd:(\\d{1,9})$/",
+    "new": "/^sd:(\\d+)/",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SD9E-the-roll-unread-at-the-burst",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)",
-    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)",
+    "old": "      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d",
+    "new": "      const list = spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD9E-the-gates-words",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (left.length > mailed.length) say(gathered); // SD9e: the pool's own words",
-    "new": "    if (left.length > mailed.length) say(SPOILS_TEXT.gathered); // SD9e: the pool's own words",
+    "old": "    if (left.length > mailed.length) say(gathered);",
+    "new": "    if (left.length > mailed.length) say(SPOILS_TEXT.gathered);",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD9E-spewed-at-the-fall",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "      if (s?.fell && here != null && spewedFi !== s.fi && t >= s.fell.at + SD_SPEW_AT_MS) {",
-    "new": "      if (s?.fell && here != null && spewedFi !== s.fi && t >= s.fell.at) {",
+    "old": "&& t >= s.fell.at + SD_SPEW_AT_MS) {",
+    "new": "&& t >= s.fell.at) {",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD9E-spewed-twice",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          spewedFi = s.fi;\n          const pose = remnantPose(s, s.fell.at + SD_SPEW_AT_MS);",
-    "new": "          const pose = remnantPose(s, s.fell.at + SD_SPEW_AT_MS);",
+    "old": "          spewedFi = s.fi;\n",
+    "new": "",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SD9E-the-level-unbounded",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          const lv = spoilsLevel(level(), c.l); // AUDIT WBX S2: never past the level the fight admitted",
-    "new": "          const lv = level(); // AUDIT WBX S2: never past the level the fight admitted",
+    "old": "          const lv = spoilsLevel(level(), c.l);",
+    "new": "          const lv = level();",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD9E-the-gates-roll",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          if (\n            pool.spew({\n              day: sdSpoilsDay(c.d),\n              seed: c.c,\n              level: lv,\n              at,\n              bearing,\n              acct: c.s,\n              keep: SD_SPOILS_KEEP,\n              roll: () => sdSpoilsList(c.c, lv),\n            })\n          )",
-    "new": "          if (pool.spew({ day: sdSpoilsDay(c.d), seed: c.c, level: lv, at, bearing, acct: c.s, keep: SD_SPOILS_KEEP }))",
+    "old": ", keep: SD_SPOILS_KEEP, roll: () => sdSpoilsList(c.c, lv) })",
+    "new": ", keep: SD_SPOILS_KEEP })",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SD9E-off-the-floor",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "              keep: SD_SPOILS_KEEP,",
-    "new": "              keep: null,",
+    "old": "acct: c.s, keep: SD_SPOILS_KEEP,",
+    "new": "acct: c.s, keep: null,",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SD9E-the-rim",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "  r: SD_ARENA.r - SD_SPEW_RIM_M,",
-    "new": "  r: SD_ARENA.r + 12,",
+    "old": "r: SD_ARENA.r - SD_SPEW_RIM_M,",
+    "new": "r: SD_ARENA.r + 12,",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SD9E-from-its-height-unsunk",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "            Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink),",
-    "new": "            Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST),",
+    "old": "Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink)",
+    "new": "Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST)",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SD9E-bearing-away",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          const bearing = f ? Math.atan2(f[0] - at[0], f[2] - at[2]) : pose.yw;",
-    "new": "          const bearing = f ? Math.atan2(at[0] - f[0], at[2] - f[2]) : pose.yw;",
+    "old": "Math.atan2(f[0] - at[0], f[2] - at[2])",
+    "new": "Math.atan2(at[0] - f[0], at[2] - f[2])",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SD9E-said-at-once",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "        } else if (saidFi !== s.fi && t >= s.fell.at + SD_RECEIPT_WAIT_MS && link.counted?.()) {",
-    "new": "        } else if (saidFi !== s.fi && t >= s.fell.at && link.counted?.()) {",
+    "old": "&& t >= s.fell.at + SD_RECEIPT_WAIT_MS &&",
+    "new": "&& t >= s.fell.at &&",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SD9E-said-to-a-watcher",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "        } else if (saidFi !== s.fi && t >= s.fell.at + SD_RECEIPT_WAIT_MS && link.counted?.()) {",
-    "new": "        } else if (saidFi !== s.fi && t >= s.fell.at + SD_RECEIPT_WAIT_MS) {",
+    "old": " && link.counted?.()) {",
+    "new": ") {",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SD9E-said-twice",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "          saidFi = s.fi;\n          say(SD_SPOILS_TEXT.none);",
-    "new": "          say(SD_SPOILS_TEXT.none);",
+    "old": "          saidFi = s.fi;\n",
+    "new": "",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SD9E-pool-never-flown",
     "file": "src/scenes/superDungeon/sdSpoils.js",
-    "old": "      pool.frame();\n    },",
-    "new": "    },",
+    "old": "      pool.frame();\n",
+    "new": "",
     "tests": [
       "test/systems/sd9e_spoils.test.js"
     ]

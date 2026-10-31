@@ -29,8 +29,8 @@
   {
     "name": "GRASS5-the-attributes-are-not-normalized-so-every-lane-is-a-raw-integer",
     "file": "src/render/labGrass.js",
-    "old": "        gl.vertexAttribPointer(L.loc, 4, L.type, true, 0, 0);",
-    "new": "        gl.vertexAttribPointer(L.loc, 4, L.type, false, 0, 0);",
+    "old": "        gl.enableVertexAttribArray(L.loc); gl.vertexAttribPointer(L.loc, 4, L.type, true, 0, 0);",
+    "new": "        gl.enableVertexAttribArray(L.loc); gl.vertexAttribPointer(L.loc, 4, L.type, false, 0, 0);",
     "tests": [
       "test/render/labGrass.test.js"
     ]

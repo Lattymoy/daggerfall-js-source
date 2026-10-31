@@ -407,8 +407,8 @@
   {
     "name": "REVIEW-WARNINGS-the-review-days",
     "file": "src/systems/guild/guilds.js",
-    "old": "  const due = Number(m?.lastRankChange) + DAYS_BETWEEN_RANK_CHANGES - daySinceZero(now);",
-    "new": "  const due = Number(m?.lastRankChange) - daySinceZero(now);",
+    "old": "+ DAYS_BETWEEN_RANK_CHANGES - daySinceZero(now);",
+    "new": "- daySinceZero(now);",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "LANE-E-GU-days-off-by-one",
     "file": "src/systems/guild/guilds.js",
-    "old": "  const due = Number(m?.lastRankChange) + DAYS_BETWEEN_RANK_CHANGES - daySinceZero(now);",
-    "new": "  const due = Number(m?.lastRankChange) + DAYS_BETWEEN_RANK_CHANGES - 1 - daySinceZero(now);",
+    "old": "+ DAYS_BETWEEN_RANK_CHANGES - daySinceZero(now);",
+    "new": "+ DAYS_BETWEEN_RANK_CHANGES - 1 - daySinceZero(now);",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -587,8 +587,8 @@
   {
     "name": "LANE-E-GU-ceiling-boundary",
     "file": "src/systems/guild/guilds.js",
-    "old": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
-    "new": "  return Number.isInteger(ceiling) && ruled >= ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
+    "old": "  return Number.isInteger(ceiling) && ruled > ceiling ?",
+    "new": "  return Number.isInteger(ceiling) && ruled >= ceiling ?",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -601,8 +601,8 @@
   {
     "name": "LANE-E-GU-ceiling-no-floor",
     "file": "src/systems/guild/guilds.js",
-    "old": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
-    "new": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.min(ruled, m.rank) : ruled;",
+    "old": "? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
+    "new": "? Math.min(ruled, m.rank) : ruled;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -613,8 +613,8 @@
   {
     "name": "LANE-E-GU-seat-at-or-past",
     "file": "src/systems/guild/guilds.js",
-    "old": "    return m.rank === top",
-    "new": "    return m.rank >= top",
+    "old": "    return m.rank === top\n",
+    "new": "    return m.rank >= top\n",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js",
       "test/systems/guild/fb1015_promonow.test.js",
@@ -1236,8 +1236,8 @@
   {
     "name": "UI-II-F1-the-well-unscrolled",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "        ...(needs ? [{ type: 'text', rows: needs, scroll: true }] : []),",
-    "new": "        ...(needs ? [{ type: 'text', rows: needs }] : []),",
+    "old": "rows: needs, scroll: true }",
+    "new": "rows: needs }",
     "tests": [
       "test/systems/fb1015g_guildwords.test.js",
       "test/systems/guild/fb1015_promonow.test.js"

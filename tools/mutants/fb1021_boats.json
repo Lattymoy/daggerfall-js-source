@@ -60,8 +60,8 @@
   {
     "name": "FB1021-pool-eye-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    _lifeEye = world.playerPosition ?? null; // BOAT-FAR: the eye a boat's range is read from (none: every boat near)",
-    "new": "    _lifeEye = null; // BOAT-FAR: the eye a boat's range is read from (none: every boat near)",
+    "old": "_lifeEye = world.playerPosition ?? null;",
+    "new": "_lifeEye = null;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -70,7 +70,7 @@
     "name": "FB1021-held-boat-walked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      if (dt === null) continue;",
-    "new": "      if (dt === null) {\n        /* walked anyway */\n      }",
+    "new": "      if (dt === null) { /* walked anyway */ }",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -78,8 +78,8 @@
   {
     "name": "FB1021-bake-missed-time-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      for (let k = 0; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], dt);",
-    "new": "      for (let k = 0; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], gameDt);",
+    "old": "lateUpdateHolder(holders[k], holders[k + 1], dt);",
+    "new": "lateUpdateHolder(holders[k], holders[k + 1], gameDt);",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "FB1021-lanterns-missed-time-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      lit.dt = dt;\n      for (const l of boat.Lights) lanternLightUpdate(l, lit);",
-    "new": "      for (const l of boat.Lights) lanternLightUpdate(l, lit);",
+    "old": "      lit.dt = dt;\n",
+    "new": "",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -106,8 +106,8 @@
   {
     "name": "FB1021-draws-walk-held",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    const kept = w !== undefined && w.stamp > 0;",
-    "new": "    const kept = w !== undefined;",
+    "old": "const kept = w !== undefined && w.stamp > 0;",
+    "new": "const kept = w !== undefined;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -115,8 +115,8 @@
   {
     "name": "FB1021-held-walk-walked-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1);",
-    "new": "    return w && walkStamp > 0 && w.stamp === walkStamp ? w : walkBoat(boat, -1);",
+    "old": "(w.stamp === walkStamp || w.heldAt === walkStamp) ? w",
+    "new": "w.stamp === walkStamp ? w",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -124,8 +124,8 @@
   {
     "name": "FB1021-held-matrices-unshifted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  const placed = (r) => (_shift === null ? made(r) : multiply(_shift, made(r), (r.at ??= new Float32Array(16))));",
-    "new": "  const placed = (r) => made(r);",
+    "old": "const placed = (r) => (_shift === null ? made(r) : multiply(_shift, made(r), (r.at ??= new Float32Array(16))));",
+    "new": "const placed = (r) => made(r);",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "FB1021-shifted-by-her-root",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    const node = hr !== undefined && hr.seen === w.stamp ? hull : boat.GameObject,",
-    "new": "    const node = boat.GameObject,",
+    "old": "const node = hr !== undefined && hr.seen === w.stamp ? hull : boat.GameObject, r = node?._walkRec;",
+    "new": "const node = boat.GameObject, r = node?._walkRec;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "FB1021-batch-at-the-held-hull",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      const frame = hullRec ? (_shift !== null ? boat.MeshObject.worldMatrix() : made(hullRec)) : null; // PERF-SAILS2: made as it is read - BOAT-FAR: held, her batch at her hull's matrix as it stands now",
-    "new": "      const frame = hullRec ? made(hullRec) : null; // PERF-SAILS2: made as it is read - BOAT-FAR: held, her batch at her hull's matrix as it stands now",
+    "old": "hullRec ? (_shift !== null ? boat.MeshObject.worldMatrix() : made(hullRec)) : null;",
+    "new": "hullRec ? made(hullRec) : null;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "FB1021-shift-kept-past-a-move",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (life.shiftAt === walkStamp && life.shiftNow === now) return life.shift; // the flats' and the draw's, while she stands as she did",
-    "new": "    if (life.shiftAt === walkStamp) return life.shift; // the flats' and the draw's, while she stands as she did",
+    "old": "if (life.shiftAt === walkStamp && life.shiftNow === now) return life.shift;",
+    "new": "if (life.shiftAt === walkStamp) return life.shift;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -160,8 +160,8 @@
   {
     "name": "FB1021-flats-unshifted",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        const m = kept ? placedAt(recs[i]) : placed(recs[i]); // PERF-SAILS2: a flat's matrix made as it is read",
-    "new": "        const m = kept ? made(recs[i]) : made(recs[i]); // PERF-SAILS2: a flat's matrix made as it is read",
+    "old": "const m = kept ? placedAt(recs[i]) : placed(recs[i]);",
+    "new": "const m = kept ? made(recs[i]) : made(recs[i]);",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -288,8 +288,8 @@
   {
     "name": "FB1021-held-parts-at-the-hull",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        for (const e of list.alone) one(e.gpu, placed(recs[e.i]), paint); // BOAT-OWN: held - her parts drawn on their own, as that draw found them",
-    "new": "        for (const e of list.alone)\n          one(e.gpu, _shift !== null ? boat.MeshObject.worldMatrix() : made(recs[e.i]), paint); // BOAT-OWN: held - her parts drawn on their own, as that draw found them",
+    "old": "one(e.gpu, placed(recs[e.i]), paint);",
+    "new": "one(e.gpu, _shift !== null ? boat.MeshObject.worldMatrix() : made(recs[e.i]), paint);",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -297,8 +297,8 @@
   {
     "name": "FB1021-held-unbatched-at-the-hull",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, placed(c.rec), paint);",
-    "new": "      for (const c of still)\n        if (!batch || !frame || !batch.nodes.has(c.node))\n          one(c.gpu, _shift !== null ? boat.MeshObject.worldMatrix() : made(c.rec), paint);",
+    "old": "one(c.gpu, placed(c.rec), paint);",
+    "new": "one(c.gpu, _shift !== null ? boat.MeshObject.worldMatrix() : made(c.rec), paint);",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "FB1021-held-shift-by-a-hull-not-walked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    const node = hr !== undefined && hr.seen === w.stamp ? hull : boat.GameObject,",
-    "new": "    const node = hr !== undefined ? hull : boat.GameObject,",
+    "old": "const node = hr !== undefined && hr.seen === w.stamp ? hull : boat.GameObject",
+    "new": "const node = hr !== undefined ? hull : boat.GameObject",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -315,8 +315,8 @@
   {
     "name": "FB1021-still-chain-kept-past-a-reshape",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    const stamp = prefabShapeStamp(node),",
-    "new": "    const stamp = 0,",
+    "old": "const stamp = prefabShapeStamp(node), frame = boat.MeshObject;",
+    "new": "const stamp = 0, frame = boat.MeshObject;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -324,8 +324,8 @@
   {
     "name": "FB1021-bones-stamp-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    const shape = prefabShapeStamp(skinnedNode); // BOAT-STAMP: its own tree's",
-    "new": "    const shape = 0; // BOAT-STAMP: its own tree's",
+    "old": "const shape = prefabShapeStamp(skinnedNode);",
+    "new": "const shape = 0;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/systems/comeSailAway/perfsails3.test.js",

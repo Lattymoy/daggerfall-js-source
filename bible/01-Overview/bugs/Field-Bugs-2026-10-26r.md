@@ -350,7 +350,7 @@ through the chest's door, which parked one of the chest's own rows on the pack. 
 the pack. Both skins.
 
 FIXED.
-- A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`itemTransfer.js:"if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true)"`).
+- A LIST WHOSE MOVES A SERVICE SETTLES KEEPS ITS COIN A PILE (`itemTransfer.js:"if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {"`).
   The shared chest's list carries the mark (`decorGrants.js:"Object.defineProperty(goods, 'pileCoins', { value: true })"`),
   so in both windows a pile taken from it lands in the window's pack as a pile. The close counts the coins leaving
   (whole piles and handfuls cut off one), tells the service (`purse` on the settle), and pays the purse in the act's
@@ -571,7 +571,7 @@ character's every purse after it: on the real Worker purses of 9e15 and 5e9 gold
 `enforce` (off as shipped), would have caught it. realmReview's usage lines named the hold and the strikes, never the
 excuse.
 
-FIXED. Every judgement keeps the character law's VALUES beside the signature (`judge.js:"export function lawValuesOf"`
+FIXED. Every judgement keeps the character law's VALUES beside the signature (`judge.js:"export function lawValuesOf(save, summary) {"`
 - each finding's key and the value it read, `gold@=-8000000`, `stat@agility=101`; `realm_characters.law_v`), the clear
 excuses the two together (`review.js:"law_excused = CASE"`,
 `verdict.js:"export const lawExcuseOf"` - a finding of pieces alone keeps its signature as every excuse was), and a
@@ -2650,7 +2650,7 @@ keeps none. The throw is now `throwWeirKeyFace` then the restack to the balance
 (`egFind.js:"if (Array.isArray(entity?.items))"`).
 
 THE WORDS. Nothing the player saw said the keys are the account's. The key's card carries, under its own line, *Every
-character on your account shares the same Weir Keys.* (`itemInfo.js:"export const weirKeySharedLine"`,
+character on your account shares the same Weir Keys.* (`itemInfo.js:"export const weirKeySharedLine = () =>"`,
 `eg.key.shared`, drafted in the thirteen whole languages with the key's name as each table already says it). Not in
 `EG_TEXT`: that table rides the relay's bundle, and a line there moved the relay's law (`test/net/relayversion.test.js`)
 for words the relay never reads - so no RELAY_VERSION is owed.
@@ -2748,7 +2748,7 @@ the turn, a pinch's second finger, a control's press, the pan) to the page: the 
 
 FIXED. A capture is a drag's comfort, never its law: refused, the press still lands where it was pressed. Every capture
 and release in the game's own windows goes through one door that answers a refusal
-(`pointerCapture.js:"export function capturePointer"`, releasePointer): the map's four, the Firmament's sky, the
+(`pointerCapture.js:"export function capturePointer("`, releasePointer): the map's four, the Firmament's sky, the
 charts, the sky window, the work board, the pack's figure, the deck plan, the family tree, the chat's grip (both) and
 the POI editor's. The six that catch their own refusal on their line stand - four captures and two releases, in five files (AUDIT RPT1026 K5: this said four; the door's own line said a missing element answers false, and it answers true - nothing to refuse). The labs under `src/tools` are pages of
 their own, mouse alone. Docs: `10-UI/Held-Map-Arc.md` PAD-CAPTURE; `10-UI/UI.md` counts the module (420).

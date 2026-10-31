@@ -65,8 +65,8 @@
   {
     "name": "MWNPC13-lane-ignores-veil",
     "file": "src/characters/npcBodies.js",
-    "old": "      conceal ??= actor.look.veil ?? null; // MWNPC13: a spectral's standing veil - the host's concealment first",
-    "new": "      void 0; // MWNPC13: a spectral's standing veil - the host's concealment first",
+    "old": "      conceal ??= actor.look.veil ?? null;",
+    "new": "      void 0;",
     "tests": [
       "test/characters/mwnpc13_spectral.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MWNPC13-lane-veil-over-host",
     "file": "src/characters/npcBodies.js",
-    "old": "      conceal ??= actor.look.veil ?? null; // MWNPC13: a spectral's standing veil - the host's concealment first",
-    "new": "      conceal = actor.look.veil ?? conceal; // MWNPC13: a spectral's standing veil - the host's concealment first",
+    "old": "      conceal ??= actor.look.veil ?? null;",
+    "new": "      conceal = actor.look.veil ?? conceal;",
     "tests": [
       "test/characters/mwnpc13_spectral.test.js"
     ]

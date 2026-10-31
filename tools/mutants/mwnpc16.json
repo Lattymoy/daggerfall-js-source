@@ -137,8 +137,8 @@
   {
     "name": "MWNPC16-npc-lane-silent",
     "file": "src/characters/npcBodies.js",
-    "old": "            casts: true,",
-    "new": "            casts: false,",
+    "old": "gate: BODY_BUILD_GATE, casts: true,",
+    "new": "gate: BODY_BUILD_GATE, casts: false,",
     "tests": [
       "test/render/mwnpc16_bodyshadow.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "MWNPC16-lane-word-dropped",
     "file": "src/characters/npcBodies.js",
-    "old": "      lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);",
-    "new": "      lane.stand(laneName, actor, conceal, flash, fx);",
+    "old": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);",
+    "new": "lane.stand(laneName, actor, conceal, flash, fx);",
     "tests": [
       "test/render/mwnpc16_bodyshadow.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "MWNPC16-origin-taken",
     "file": "src/characters/npcBodies.js",
-    "old": "      lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);",
-    "new": "      lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch._dyn !== true);",
+    "old": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);",
+    "new": "lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch._dyn !== true);",
     "tests": [
       "test/render/mwnpc16_bodyshadow.test.js"
     ]

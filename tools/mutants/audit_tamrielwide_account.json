@@ -53,8 +53,8 @@
   {
     "name": "AUDIT-TW-C3-the-key's-seven-digits-kept",
     "file": "src/net/nodeLaw.js",
-    "old": "const DVEIN_KEY_RE = /^dvein:(\\d{1,10}):(\\d{1,6}):(\\d{1,2})$/; // AUDIT TAMRIEL-WIDE C3: a dungeon past the Bay by its whole id",
-    "new": "const DVEIN_KEY_RE = /^dvein:(\\d{1,7}):(\\d{1,6}):(\\d{1,2})$/; // AUDIT TAMRIEL-WIDE C3: a dungeon past the Bay by its whole id",
+    "old": "const DVEIN_KEY_RE = /^dvein:(\\d{1,10}):(\\d{1,6}):(\\d{1,2})$/;",
+    "new": "const DVEIN_KEY_RE = /^dvein:(\\d{1,7}):(\\d{1,6}):(\\d{1,2})$/;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js"
     ],
@@ -176,8 +176,8 @@
   {
     "name": "AUDIT-TW-II-A1-nine-digits-read",
     "file": "src/net/nodeLaw.js",
-    "old": "const DVEIN_KEY_RE = /^dvein:(\\d{1,10}):(\\d{1,6}):(\\d{1,2})$/; // AUDIT TAMRIEL-WIDE C3: a dungeon past the Bay by its whole id",
-    "new": "const DVEIN_KEY_RE = /^dvein:(\\d{1,9}):(\\d{1,6}):(\\d{1,2})$/; // AUDIT TAMRIEL-WIDE C3: a dungeon past the Bay by its whole id",
+    "old": "const DVEIN_KEY_RE = /^dvein:(\\d{1,10}):(\\d{1,6}):(\\d{1,2})$/;",
+    "new": "const DVEIN_KEY_RE = /^dvein:(\\d{1,9}):(\\d{1,6}):(\\d{1,2})$/;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_account.test.js"
     ],

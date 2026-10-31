@@ -101,8 +101,8 @@ test('DRAGON4 world: the host\'s wiring - a receipt the link hears to the reward
   const { hostText } = await import('../../hostText.mjs');
   const w = hostText('src/scenes/world.js');
   const h = readFileSync(new URL('../../../src/scenes/dragonHost.js', import.meta.url), 'utf8');
-  assert.ok(h.includes('onReceipt: (r) => host?.receipt(r),\n  });'), 'PIN MOVED (AUDIT DRAGON): the receipt from the link, in the sky the dragon\'s host makes');
-  assert.ok(h.includes('host.tick(); // DRAGON4: its receipts offered in their time, in any mode'), 'PIN MOVED (AUDIT DRAGON): ticked in the sky\'s online frame');
+  assert.ok(h.includes('onReceipt: (r) => host?.receipt(r) });'), 'PIN MOVED (AUDIT DRAGON): the receipt from the link, in the sky the dragon\'s host makes');
+  assert.ok(h.includes('host.tick();   // DRAGON4: its receipts offered in their time, in any mode'), 'PIN MOVED (AUDIT DRAGON): ticked in the sky\'s online frame');
   for (const wired of [
     'takeSpoil, relayNowS, chatNotice: (text) => chatNotice(text),',
     'dragonSky?.recoverSpoils(who, _spoilsInSave);',

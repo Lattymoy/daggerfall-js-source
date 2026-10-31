@@ -1156,7 +1156,7 @@ the old span back). A bow takes the two-handed strength term even when BowLeftHa
 a left-hand weapon (`combat/pcaao.js:"const bow = weapon.templateIndex"`).
 The stock core, used when the overhaul is off, still adds strength once to every weapon: that core has
 no two-handed term to match. A shaft flies at `systems/spellcast.js:"export const ARROW_FLIGHT_SPEED"`
-(`combat/arrowFlight.js:"const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED)"`, `scenes/dungeonContext.js:"(m.arrow && !m.flatArchive ? ARROW_FLIGHT_SPEED : MISSILE_SPEED)"`).
+(`combat/arrowFlight.js:"(m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED)"`, `scenes/dungeonContext.js:"(m.arrow && !m.flatArchive ? ARROW_FLIGHT_SPEED : MISSILE_SPEED)"`).
 A spell and a gun's orb stay on MISSILE_SPEED. The bow's draw, its 0.0625 s tick and GetBowCooldownTime
 are unchanged. Archery Mastery is unchanged: +1% of the blow per effective point past 100, and never
 against a player, in a duel, in beast form, or through the Warden's ward.

@@ -29,8 +29,8 @@
   {
     "name": "MENUORDER-decor-grid-never-laid",
     "file": "src/ui/decorPanel.js",
-    "old": "    const shape = layout === 'grid' && DECOR_GRID_MODES.includes(mode) ? 'grid' : 'list'; // MENU-ORDER: the rooms and the painter are lines",
-    "new": "    const shape = 'list'; // MENU-ORDER: the rooms and the painter are lines",
+    "old": "const shape = layout === 'grid' && DECOR_GRID_MODES.includes(mode) ? 'grid' : 'list';",
+    "new": "const shape = 'list';",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MENUORDER-decor-model-glyph-dropped",
     "file": "src/ui/decorPanel.js",
-    "old": "      thumb.dataset.dficon = e.kind; // MENU-ORDER: a model's kind's glyph, until its own picture lands over it\n      if (e.model != null) modelPicture(thumb, e, r);",
-    "new": "      if (e.model != null) modelPicture(thumb, e, r);",
+    "old": "      thumb.dataset.dficon = e.kind;   // MENU-ORDER: a model's kind's glyph, until its own picture lands over it\n",
+    "new": "",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MENUORDER-decor-badges-dropped",
     "file": "src/ui/decorPanel.js",
-    "old": "      badges({ storage: !!e.storage, light: e.light != null }),",
-    "new": "      badges({}),",
+    "old": "badges({ storage: !!e.storage, light: e.light != null })",
+    "new": "badges({})",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MENUORDER-decor-room-badges-dropped",
     "file": "src/ui/decorPanel.js",
-    "old": "    main.append(\n      el('div', 'dfdecor-row-name', it.name),\n      el('div', 'dfdecor-row-sub', decorPlacedSub(it)),\n      badges({ storage: !!it.piece.storage, light: !!it.piece.light, station: !!it.piece.station }),\n    ); // MENU-ORDER: what it does, as pictures",
-    "new": "    main.append(el('div', 'dfdecor-row-name', it.name), el('div', 'dfdecor-row-sub', decorPlacedSub(it)), badges({})); // MENU-ORDER: what it does, as pictures",
+    "old": "badges({ storage: !!it.piece.storage, light: !!it.piece.light, station: !!it.piece.station })",
+    "new": "badges({})",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "MENUORDER-decor-switch-dead",
     "file": "src/ui/decorPanel.js",
-    "old": "          layout = 'list';\n          redraw();",
-    "new": "          redraw();",
+    "old": "() => { layout = 'list'; redraw(); }",
+    "new": "() => { redraw(); }",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MENUORDER-decor-tab-icons-one",
     "file": "src/ui/decorPanel.js",
-    "old": "      chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'room'),",
-    "new": "      chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'all'),",
+    "old": "chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'room')",
+    "new": "chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'all')",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MENUORDER-decor-layout-before-tabs",
     "file": "src/ui/decorPanel.js",
-    "old": "  head.append(whereLine, tabs, layoutChips, close);",
-    "new": "  head.append(whereLine, layoutChips, tabs, close);",
+    "old": "head.append(whereLine, tabs, layoutChips, close);",
+    "new": "head.append(whereLine, layoutChips, tabs, close);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MENUORDER-decor-remove-not-warned",
     "file": "src/ui/decorPanel.js",
-    "old": "  removeBtn.className += ' warn flat'; // MENU-ORDER: a press that costs something, edged in blood (enhancedFrame.js FRAME_ROLES.warn)",
-    "new": "  removeBtn.className += ' flat'; // MENU-ORDER: a press that costs something, edged in blood (enhancedFrame.js FRAME_ROLES.warn)",
+    "old": "removeBtn.className += ' warn flat';",
+    "new": "removeBtn.className += ' flat';",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MENUORDER-decor-legend-shown",
     "file": "src/ui/decorPanel.js",
-    "old": "  root.dataset.keys = '0'; // MENU-ORDER: the legend folded",
-    "new": "  root.dataset.keys = '1'; // MENU-ORDER: the legend folded",
+    "old": "root.dataset.keys = '0';   // MENU-ORDER: the legend folded",
+    "new": "root.dataset.keys = '1';   // MENU-ORDER: the legend folded",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MENUORDER-decor-fold-count-size",
     "file": "src/ui/decorPanel.js",
-    "old": "  const n =\n    (kinds?.size ?? 0) + (size != null ? 1 : 0) + (storage != null ? 1 : 0) + (light != null ? 1 : 0) + (fav ? 1 : 0);",
-    "new": "  const n = (kinds?.size ?? 0) + 0 + (storage != null ? 1 : 0) + (light != null ? 1 : 0) + (fav ? 1 : 0);",
+    "old": "(size != null ? 1 : 0)",
+    "new": "0",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MENUORDER-decor-kind-chips-bare",
     "file": "src/ui/decorPanel.js",
-    "old": "            k,\n            true,",
-    "new": "            true,",
+    "old": "      }, k, true)));   // MENU-ORDER: each kind its picture, named on the hover",
+    "new": "      }, true)));   // MENU-ORDER: each kind its picture, named on the hover",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MENUORDER-decor-presses-bare",
     "file": "src/ui/decorPanel.js",
-    "old": "    b.dataset.dficon = icon;",
-    "new": "    b.dataset.dficon = b === moveBtn ? icon : null;",
+    "old": "[allBackBtn, 'put-back'], [offerBtn, 'rent'], [withdrawBtn, 'remove'], [collectBtn, 'treasure'], [ownBtn, 'back'], [paintBtn, 'paint'], [backBtn, 'back']]) b.dataset.dficon = icon;",
+    "new": "[allBackBtn, 'put-back'], [offerBtn, 'rent'], [withdrawBtn, 'remove'], [collectBtn, 'treasure'], [ownBtn, 'back'], [paintBtn, 'paint'], [backBtn, 'back']]) b.dataset.dficon = b === moveBtn ? icon : null;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -532,8 +532,8 @@
   {
     "name": "MENUORDER-model-tile-never-asks",
     "file": "src/ui/decorPanel.js",
-    "old": "      if (e.model != null) modelPicture(thumb, e, r);\n    }",
-    "new": "    }",
+    "old": "      if (e.model != null) modelPicture(thumb, e, r);\n",
+    "new": "",
     "tests": [
       "test/ui/menuorder.test.js",
       "test/scenes/decor/decor1d.test.js"
@@ -542,7 +542,7 @@
   {
     "name": "MENUORDER-model-tile-unwatched",
     "file": "src/ui/decorPanel.js",
-    "old": "    else if (r && watcher) {\n      r.decorThumb = () => askThumb(shape, img);\n      watcher.observe(r);\n    } else askThumb(shape, img);",
+    "old": "    else if (r && watcher) { r.decorThumb = () => askThumb(shape, img); watcher.observe(r); } else askThumb(shape, img);",
     "new": "    else askThumb(shape, img);",
     "tests": [
       "test/scenes/decor/decor1d.test.js"
@@ -551,8 +551,8 @@
   {
     "name": "MENUORDER-placed-model-unpictured",
     "file": "src/ui/decorPanel.js",
-    "old": "      if (shape.model != null) modelPicture(thumb, shape); // ...and its own over that\n    }",
-    "new": "    }",
+    "old": "      if (shape.model != null) modelPicture(thumb, shape);   // ...and its own over that\n",
+    "new": "",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "MENUORDER-base-model-unpictured",
     "file": "src/ui/decorPanel.js",
-    "old": "      if (it.model != null) modelPicture(thumb, baseShape(it));\n    }",
-    "new": "    }",
+    "old": "      if (it.model != null) modelPicture(thumb, baseShape(it));\n",
+    "new": "",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "MENUORDER-model-pic-under-glyph",
     "file": "src/ui/decorPanel.js",
-    "old": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; max-width: none; max-height: none;",
-    "new": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none;",
+    "old": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0; z-index: 1;",
+    "new": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -776,8 +776,8 @@
   {
     "name": "MENUORDER-portrait-sails-unbaked",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        lateUpdateHolder(c, node, 1);\n      }",
-    "new": "      }",
+    "old": "        holderAsks.set(c, (holderAsks.get(c) ?? 0) + 1);\n        lateUpdateHolder(c, node, 1);\n",
+    "new": "        holderAsks.set(c, (holderAsks.get(c) ?? 0) + 1);\n",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "MENUORDER-portrait-unwaited",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if (!gpu) {\n        waiting = true;\n        continue;\n      }",
-    "new": "      if (!gpu) continue;",
+    "old": "      if (!gpu) { waiting = true; continue; }\n      const m = w.mats[i];",
+    "new": "      if (!gpu) continue;\n      const m = w.mats[i];",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "MENUORDER-portrait-built-each-ask",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      portraitBoats.set(hull, b);\n    }",
-    "new": "    }",
+    "old": "      portraitBoats.set(hull, b);\n",
+    "new": "",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "MENUORDER-portrait-on-the-water",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      b = new Boat(hull, 0);\n      spawnBoat(b, {",
-    "new": "      b = new Boat(hull, 0);\n      peerBoats.push(b);\n      spawnBoat(b, {",
+    "old": "      b = new Boat(hull, 0);\n      spawnBoat(b, ",
+    "new": "      b = new Boat(hull, 0);\n      peerBoats.push(b);\n      spawnBoat(b, ",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -992,8 +992,8 @@
   {
     "name": "AUDITMO-C4-none-asked-again",
     "file": "src/ui/decorPanel.js",
-    "old": "    if (thumbs.has(k) && !inFlight.has(k)) return; // none to be had\n    if (img) waiting.set(k, [...(waiting.get(k) ?? []), img]);",
-    "new": "    if (img) waiting.set(k, [...(waiting.get(k) ?? []), img]);",
+    "old": "    if (thumbs.has(k) && !inFlight.has(k)) return;   // none to be had\n",
+    "new": "",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -1010,8 +1010,8 @@
   {
     "name": "AUDITMO-U1-landscape-unfolded",
     "file": "src/ui/decorPanel.js",
-    "old": "@media (max-height: 500px) {",
-    "new": "@media (max-height: 1px) {",
+    "old": "@media (max-height: 500px) {\n  .dfdecor-ftoggle { display: inline-block; flex: none; }",
+    "new": "@media (max-height: 1px) {\n  .dfdecor-ftoggle { display: inline-block; flex: none; }",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -1100,8 +1100,8 @@
   {
     "name": "AUDITMO-U6-pic-in-flow",
     "file": "src/ui/decorPanel.js",
-    "old": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; max-width: none; max-height: none;",
-    "new": ".dfdecor-thumb img.dfdecor-modelpic { position: relative; z-index: 1; width: 100%; height: 100%; max-width: none; max-height: none;",
+    "old": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%;",
+    "new": ".dfdecor-thumb img.dfdecor-modelpic { position: relative; z-index: 1; width: 100%; height: 100%;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -1172,8 +1172,8 @@
   {
     "name": "AUDITMO-U15-fold-unsaid",
     "file": "src/ui/decorPanel.js",
-    "old": "  filterToggle.setAttribute('aria-expanded', 'false'); // AUDIT MENU-ORDER U15: folded, said from the first",
-    "new": "  // AUDIT MENU-ORDER U15: folded, said from the first",
+    "old": "  filterToggle.setAttribute('aria-expanded', 'false');",
+    "new": "",
     "tests": [
       "test/ui/menuorder.test.js"
     ]

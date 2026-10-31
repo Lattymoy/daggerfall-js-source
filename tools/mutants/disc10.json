@@ -187,8 +187,8 @@
   {
     "name": "DISC10-D-H1-the-arrow-dispatches-nothing",
     "file": "src/combat/arrowFlight.js",
-    "old": "  playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType ?? null });\n  return dmg;",
-    "new": "  return dmg;",
+    "old": "  playerWeaponHitEntity(playerEntity, foe.entity, { mobileType: foe.mobileType ?? null });\n",
+    "new": "",
     "tests": [
       "test/systems/disc10_vampire.test.js",
       "test/systems/disc10_lycan.test.js"
@@ -488,8 +488,8 @@
   {
     "name": "DISC10-E-L3-the-pack-opens-for-the-beast",
     "file": "src/ui/inventoryDoor.js",
-    "old": "  if (sup) {\n    messageBox(sup.text);\n    return null;\n  }\n  noteFirstUse(deps.loot && !deps.loot.playerOwned ? 'loot' : 'inventory'); // TUT1: a pile or a body is the loot page; the pack (and a store of the player's own) the inventory's",
-    "new": "  noteFirstUse(deps.loot && !deps.loot.playerOwned ? 'loot' : 'inventory'); // TUT1: a pile or a body is the loot page; the pack (and a store of the player's own) the inventory's",
+    "old": "  if (sup) { messageBox(sup.text); return null; }\n",
+    "new": "",
     "tests": [
       "test/systems/disc10_lycan.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "A1-the-code-not-asked",
     "file": "server-account/src/accounts.js",
-    "old": "  if (recoveryLeft(player.recovery_hash) !== null) {",
-    "new": "  if (false) {",
+    "old": "  if (recoveryLeft(player.recovery_hash) !== null) {\n    // a guess at a code",
+    "new": "  if (false) {\n    // a guess at a code",
     "tests": [
       "test/server/recoveryset.test.js",
       "test/server/audit_recoveryset.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "A1-a-wrong-code-answers-a-set",
     "file": "server-account/src/accounts.js",
-    "old": "    if (!canon || !ok) return { error: 'bad-code' };\n    await clearRate({ db }, `recover:${player.handle_lc}`);",
-    "new": "    await clearRate({ db }, `recover:${player.handle_lc}`);",
+    "old": "    if (!canon || !ok) return { error: 'bad-code' };\n    await clearRate({ db }, `recover:",
+    "new": "    await clearRate({ db }, `recover:",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "A1-the-row-shape-ignored",
     "file": "server-account/src/accounts.js",
-    "old": "  if (recoveryLeft(player.recovery_hash) !== null) {",
-    "new": "  if (true) {",
+    "old": "  if (recoveryLeft(player.recovery_hash) !== null) {\n    // a guess at a code",
+    "new": "  if (true) {\n    // a guess at a code",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "A1-the-code-unthrottled",
     "file": "server-account/src/accounts.js",
-    "old": "    if (await overRate({ db, nowS }, `recover:${player.handle_lc}`)) return { error: 'rate' };\n    const canon = codeForHashing(code);",
-    "new": "    const canon = codeForHashing(code);",
+    "old": "    if (await overRate({ db, nowS }, `recover:${player.handle_lc}`)) return { error: 'rate' };\n",
+    "new": "",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "A1-a-right-code-never-forgives",
     "file": "server-account/src/accounts.js",
-    "old": "    await clearRate({ db }, `recover:${player.handle_lc}`);\n  }",
-    "new": "  }",
+    "old": "    await clearRate({ db }, `recover:${player.handle_lc}`);\n  }\n  const codes = mintRecoverySet(rand);",
+    "new": "  }\n  const codes = mintRecoverySet(rand);",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "C3-a-bucket-of-its-own",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };",
-    "new": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `codes:${player.handle_lc}`)) return { error: 'rate' };",
+    "old": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };\n  if (!await verifyPassword(password, player.password, { subtle })) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "new": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `codes:${player.handle_lc}`)) return { error: 'rate' };\n  if (!await verifyPassword(password, player.password, { subtle })) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "C4-a-right-password-never-forgives",
     "file": "server-account/src/accounts.js",
-    "old": "  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(player.recovery_hash) !== null) {",
-    "new": "  if (recoveryLeft(player.recovery_hash) !== null) {",
+    "old": "  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "new": "  if (recoveryLeft(",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "B6-the-row-unnamed",
     "file": "server-account/src/accounts.js",
-    "old": "      ? { recoveryCodes: fresh, codesLeft: fresh.length, handle: player.handle }",
-    "new": "      ? { recoveryCodes: fresh, codesLeft: fresh.length }",
+    "old": ": fresh ? { recoveryCodes: fresh, codesLeft: fresh.length, handle: player.handle }",
+    "new": ": fresh ? { recoveryCodes: fresh, codesLeft: fresh.length }",
     "tests": [
       "test/server/recoveryset.test.js"
     ]
@@ -423,7 +423,7 @@
     "name": "C5-recover-skips-the-work-for-nobody",
     "file": "server-account/src/accounts.js",
     "old": "  const { ok, rest } = await matchRecoveryCode(canon, player?.recovery_hash ?? null, { subtle });",
-    "new": "  const { ok, rest } = player\n    ? await matchRecoveryCode(canon, player.recovery_hash, { subtle })\n    : { ok: false, rest: null };",
+    "new": "  const { ok, rest } = player ? await matchRecoveryCode(canon, player.recovery_hash, { subtle }) : { ok: false, rest: null };",
     "tests": [
       "test/server/audit_recoveryset.test.js"
     ]

@@ -173,8 +173,8 @@
   {
     "name": "MW-ASSIGN-mod-weapon-none",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  return MOD_WEAPON_TO_MW[idx] ?? MW_WEAPON_TYPE.None; // MW-ASSIGN: a mod's weapon of a classic shape",
-    "new": "  return MW_WEAPON_TYPE.None; // MW-ASSIGN: a mod's weapon of a classic shape",
+    "old": "  return MOD_WEAPON_TO_MW[idx] ?? MW_WEAPON_TYPE.None;   // MW-ASSIGN: a mod's weapon of a classic shape",
+    "new": "  return MW_WEAPON_TYPE.None;   // MW-ASSIGN: a mod's weapon of a classic shape",
     "tests": [
       "test/formats/morrowind/mwassign.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "DECOR-ROOMS-no-tabs",
     "file": "src/ui/decorPanel.js",
-    "old": "    if (!roomsUp()) return [];",
-    "new": "    return [];",
+    "old": "    if (!roomsUp()) return [];\n    const placed = view.placed ?? [];",
+    "new": "    return [];\n    const placed = view.placed ?? [];",
     "tests": [
       "test/systems/decor/decorrooms.test.js"
     ]

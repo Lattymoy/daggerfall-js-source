@@ -2,8 +2,8 @@
   {
     "name": "SD-SEA-census-counts-the-sea",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  for (const r of sdLaneRegions(sdLaneOf(s)))\n    if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN && !TOWNLESS.has(r)) qual.push(r);",
-    "new": "  for (const r of sdLaneRegions(sdLaneOf(s))) if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN) qual.push(r);",
+    "old": "if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN && !TOWNLESS.has(r)) qual.push(r);",
+    "new": "if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN) qual.push(r);",
     "tests": [
       "test/net/superDungeon/fb1020b_sdsea.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "SD-SEA-sea-off-the-list",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "export const SD_TOWNLESS_REGIONS = Object.freeze([\n  2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29, 30, 31, 61,\n]);",
-    "new": "export const SD_TOWNLESS_REGIONS = Object.freeze([2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29, 30, 61]);",
+    "old": "24, 25, 27, 28, 29, 30, 31, 61]);",
+    "new": "24, 25, 27, 28, 29, 30, 61]);",
     "tests": [
       "test/net/superDungeon/fb1020b_sdsea.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "SD-SEA-a-town-on-the-list",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29, 30, 31, 61,",
-    "new": "  2, 3, 4, 5, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29, 30, 31, 61,",
+    "old": "export const SD_TOWNLESS_REGIONS = Object.freeze([2, 3, 4, 6,",
+    "new": "export const SD_TOWNLESS_REGIONS = Object.freeze([2, 3, 4, 5, 6,",
     "tests": [
       "test/net/superDungeon/fb1020b_sdsea.test.js"
     ],

@@ -72,8 +72,8 @@
   {
     "name": "DEX4b-the-skeletal-door-shut",
     "file": "src/combat/formulas.js",
-    "old": "  for (const fn of _skeletal) {\n    const a = fn(target);\n    if (a != null) return a === true;\n  }\n  return target.careerIndex === SKELETAL_WARRIOR_INDEX;",
-    "new": "  return target.careerIndex === SKELETAL_WARRIOR_INDEX;",
+    "old": "  for (const fn of _skeletal) { const a = fn(target); if (a != null) return a === true; }\n",
+    "new": "",
     "why": "the Skeletal Soldier takes a blunt weapon whole",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -82,7 +82,7 @@
   {
     "name": "DEX4b-the-formula-asks-the-career",
     "file": "src/combat/formulas.js",
-    "old": "  if (!target.isPlayer && isSkeletalTarget(target)) {\n    // DEX4b: a mod's skeletal enemy too",
+    "old": "  if (!target.isPlayer && isSkeletalTarget(target)) {   // DEX4b: a mod's skeletal enemy too",
     "new": "  if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {",
     "why": "the stock formula asks the career alone",
     "tests": [
@@ -102,8 +102,8 @@
   {
     "name": "DEX4b-the-language-door-unasked",
     "file": "src/combat/formulas.js",
-    "old": "    if (s != null) return s;",
-    "new": "    if (s) return s;",
+    "old": "    const s = fn(entity);\n    if (s != null) return s;",
+    "new": "    const s = fn(entity);\n    if (s) return s;",
     "why": "a row's language of None (or Medical, skill 0) falls back to DFU's",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"
@@ -184,8 +184,8 @@
   {
     "name": "AUDIT-DEX-C2-the-word-widens",
     "file": "src/combat/formulas.js",
-    "old": "    if (a != null) return a === true;",
-    "new": "    if (a === true) return true;",
+    "old": "  for (const fn of _skeletal) { const a = fn(target); if (a != null) return a === true; }",
+    "new": "  for (const fn of _skeletal) { const a = fn(target); if (a === true) return true; }",
     "why": "a mod's skeletal word only adds to DFU's career test: under the mod a Barbarian (career 15) still halves a blunt blow and doubles silver",
     "tests": [
       "test/systems/enemyExpansion/dex4b_combat.test.js"

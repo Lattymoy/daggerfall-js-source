@@ -112,8 +112,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-157-table",
     "file": "src/systems/item/itemInfo.js",
-    "old": "export const CONDITION_WORDS = localizedTable({",
-    "new": "export const CONDITION_WORDS = ((t) =>\n  Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
+    "old": "export const CONDITION_WORDS = localizedTable({ 0: ['Broken', 'Broken'], 1: ['Useless', 'Useless'], 2: ['Battered', 'Battered'], 3: ['Worn', 'Worn'],",
+    "new": "export const CONDITION_WORDS = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({ 0: ['Broken', 'Broken'], 1: ['Useless', 'Useless'], 2: ['Battered', 'Battered'], 3: ['Worn', 'Worn'],",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -132,7 +132,7 @@
   {
     "name": "L10N3d2-systems-itemInfo-491-unknownPowers",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  const name =\n    potionRecipeByKey(item?.potionRecipeKey)?.displayName ?? localizedText('unknownPowers', 'Unknown Powers');",
+    "old": "  const name = potionRecipeByKey(item?.potionRecipeKey)?.displayName ?? localizedText('unknownPowers', 'Unknown Powers');",
     "new": "  const name = potionRecipeByKey(item?.potionRecipeKey)?.displayName ?? 'Unknown Powers';",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -152,8 +152,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-541-longArmorNameFormatString",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    item?.group === 'Armor'\n      ? localizedText('longArmorNameFormatString', '{0} {1}')\n      : localizedText('longWeaponNameFormatString', '{0} {1}'),",
-    "new": "    item?.group === 'Armor' ? '{0} {1}' : localizedText('longWeaponNameFormatString', '{0} {1}'),",
+    "old": "    ? localizedText('longArmorNameFormatString', '{0} {1}')",
+    "new": "    ? '{0} {1}'",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-542-longWeaponNameFormatString",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    item?.group === 'Armor'\n      ? localizedText('longArmorNameFormatString', '{0} {1}')\n      : localizedText('longWeaponNameFormatString', '{0} {1}'),",
-    "new": "    item?.group === 'Armor' ? localizedText('longArmorNameFormatString', '{0} {1}') : '{0} {1}',",
+    "old": "    : localizedText('longWeaponNameFormatString', '{0} {1}'), material, name);",
+    "new": "    : '{0} {1}', material, name);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-561-ingredientFormatString",
     "file": "src/systems/item/itemInfo.js",
-    "old": "      return {\n        name: formatText(\n          localizedText('ingredientFormatString', '{0} {1}'),\n          base,\n          localizedText('northern', '(northern)'),\n        ),\n        material: '',\n      };",
-    "new": "      return { name: formatText('{0} {1}', base, localizedText('northern', '(northern)')), material: '' };",
+    "old": "    if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return { name: formatText(localizedText('ingredientFormatString', '{0} {1}'), base, localizedText('northern', '(northern)')), material: '' };",
+    "new": "    if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return { name: formatText('{0} {1}', base, localizedText('northern', '(northern)')), material: '' };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-561-northern",
     "file": "src/systems/item/itemInfo.js",
-    "old": "      return {\n        name: formatText(\n          localizedText('ingredientFormatString', '{0} {1}'),\n          base,\n          localizedText('northern', '(northern)'),\n        ),\n        material: '',\n      };",
-    "new": "      return { name: formatText(localizedText('ingredientFormatString', '{0} {1}'), base, '(northern)'), material: '' };",
+    "old": "    if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return { name: formatText(localizedText('ingredientFormatString', '{0} {1}'), base, localizedText('northern', '(northern)')), material: '' };",
+    "new": "    if (item?.group === 'PlantIngredients1' && item.templateIndex < 18) return { name: formatText(localizedText('ingredientFormatString', '{0} {1}'), base, '(northern)'), material: '' };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-562-ingredientFormatString",
     "file": "src/systems/item/itemInfo.js",
-    "old": "      return {\n        name: formatText(\n          localizedText('ingredientFormatString', '{0} {1}'),\n          base,\n          localizedText('southern', '(southern)'),\n        ),\n        material: '',\n      };",
-    "new": "      return { name: formatText('{0} {1}', base, localizedText('southern', '(southern)')), material: '' };",
+    "old": "    if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return { name: formatText(localizedText('ingredientFormatString', '{0} {1}'), base, localizedText('southern', '(southern)')), material: '' };",
+    "new": "    if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return { name: formatText('{0} {1}', base, localizedText('southern', '(southern)')), material: '' };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-562-southern",
     "file": "src/systems/item/itemInfo.js",
-    "old": "      return {\n        name: formatText(\n          localizedText('ingredientFormatString', '{0} {1}'),\n          base,\n          localizedText('southern', '(southern)'),\n        ),\n        material: '',\n      };",
-    "new": "      return { name: formatText(localizedText('ingredientFormatString', '{0} {1}'), base, '(southern)'), material: '' };",
+    "old": "    if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return { name: formatText(localizedText('ingredientFormatString', '{0} {1}'), base, localizedText('southern', '(southern)')), material: '' };",
+    "new": "    if (item?.group === 'PlantIngredients2' && item.templateIndex < 18) return { name: formatText(localizedText('ingredientFormatString', '{0} {1}'), base, '(southern)'), material: '' };",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-625-unknownAuthor",
     "file": "src/systems/item/itemInfo.js",
-    "old": "      .replaceAll('%ba', authorMacro ?? localizedText('unknownAuthor', 'unknown author'))",
-    "new": "      .replaceAll('%ba', authorMacro ?? 'unknown author')",
+    "old": "    .replaceAll('%ba', authorMacro ?? localizedText('unknownAuthor', 'unknown author'))",
+    "new": "    .replaceAll('%ba', authorMacro ?? 'unknown author')",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-635-Nothing",
     "file": "src/systems/item/itemInfo.js",
-    "old": "      .replaceAll('%hs', soulName ?? localizedText('Nothing', 'Nothing'))",
-    "new": "      .replaceAll('%hs', soulName ?? 'Nothing')",
+    "old": "    .replaceAll('%hs', soulName ?? localizedText('Nothing', 'Nothing'))",
+    "new": "    .replaceAll('%hs', soulName ?? 'Nothing')",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-773-kgSrc",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  const kgSrc = localizedText('kgSrc', PANEL_KG_SRC),",
-    "new": "  const kgSrc = PANEL_KG_SRC,",
+    "old": "  const kgSrc = localizedText('kgSrc', PANEL_KG_SRC), kgRep = localizedText('kgRep', PANEL_KG_REP);",
+    "new": "  const kgSrc = PANEL_KG_SRC, kgRep = localizedText('kgRep', PANEL_KG_REP);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-773-kgRep",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    kgRep = localizedText('kgRep', PANEL_KG_REP);",
-    "new": "    kgRep = PANEL_KG_REP;",
+    "old": "  const kgSrc = localizedText('kgSrc', PANEL_KG_SRC), kgRep = localizedText('kgRep', PANEL_KG_REP);",
+    "new": "  const kgSrc = localizedText('kgSrc', PANEL_KG_SRC), kgRep = PANEL_KG_REP;",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-774-damSrc",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  const damSrc = localizedText('damSrc', PANEL_DAM_SRC),",
-    "new": "  const damSrc = PANEL_DAM_SRC,",
+    "old": "  const damSrc = localizedText('damSrc', PANEL_DAM_SRC), damRep = localizedText('damRep', PANEL_DAM_REP);",
+    "new": "  const damSrc = PANEL_DAM_SRC, damRep = localizedText('damRep', PANEL_DAM_REP);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-774-damRep",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    damRep = localizedText('damRep', PANEL_DAM_REP);",
-    "new": "    damRep = PANEL_DAM_REP;",
+    "old": "  const damSrc = localizedText('damSrc', PANEL_DAM_SRC), damRep = localizedText('damRep', PANEL_DAM_REP);",
+    "new": "  const damSrc = localizedText('damSrc', PANEL_DAM_SRC), damRep = PANEL_DAM_REP;",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-775-arSrc",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  const arSrc = localizedText('arSrc', PANEL_AR_SRC),",
-    "new": "  const arSrc = PANEL_AR_SRC,",
+    "old": "  const arSrc = localizedText('arSrc', PANEL_AR_SRC), arRep = localizedText('arRep', PANEL_AR_REP);",
+    "new": "  const arSrc = PANEL_AR_SRC, arRep = localizedText('arRep', PANEL_AR_REP);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"
@@ -282,8 +282,8 @@
   {
     "name": "L10N3d2-systems-itemInfo-775-arRep",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    arRep = localizedText('arRep', PANEL_AR_REP);",
-    "new": "    arRep = PANEL_AR_REP;",
+    "old": "  const arSrc = localizedText('arSrc', PANEL_AR_SRC), arRep = localizedText('arRep', PANEL_AR_REP);",
+    "new": "  const arSrc = localizedText('arSrc', PANEL_AR_SRC), arRep = PANEL_AR_REP;",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_talk.test.js"

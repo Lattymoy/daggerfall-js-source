@@ -20,8 +20,8 @@
   {
     "name": "CT-trade-tab-on-the-bar",
     "file": "src/net/chat.js",
-    "old": "      return t('net.chat.tradeHint', 'Everyone in the Trade channel: buying, selling and swapping');\n    },\n    hidden: true,\n  }),\n  Object.freeze({",
-    "new": "      return t('net.chat.tradeHint', 'Everyone in the Trade channel: buying, selling and swapping');\n    },\n  }),\n  Object.freeze({",
+    "old": "'Everyone in the Trade channel: buying, selling and swapping'); }, hidden: true }),",
+    "new": "'Everyone in the Trade channel: buying, selling and swapping'); } }),",
     "tests": [
       "test/ui/chattrade1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "CT-rp-kind-lost",
     "file": "src/net/chat.js",
-    "old": "    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : '';",
-    "new": "    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : '';",
+    "old": "isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : ''",
+    "new": "isOocText(text) ? 'ooc' : ''",
     "tests": [
       "test/ui/chattrade1.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "CT-A3-inner-marks-kept",
     "file": "src/net/chat.js",
-    "old": "    .replace(/\\*/g, '')\n    .replace(/\\s+/g, ' ')",
-    "new": "    .replace(/\\s+/g, ' ')",
+    "old": ".replace(/\\*/g, '').replace(/\\s+/g, ' ').trim()}*`;",
+    "new": ".replace(/\\s+/g, ' ').trim()}*`;",
     "tests": [
       "test/ui/chattrade1.test.js"
     ]

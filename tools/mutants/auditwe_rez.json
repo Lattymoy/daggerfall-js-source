@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WE-L1-1-any-hello-rises",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  return (realm.raised ?? []).some(([x, at]) => x === sub && at >= d[1]) ? 'rise' : 'down';",
-    "new": "  return 'rise';",
+    "old": "return (realm.raised ?? []).some(([x, at]) => x === sub && at >= d[1]) ? 'rise' : 'down';",
+    "new": "return 'rise';",
     "tests": [
       "test/net/superDungeon/auditwe_rez.test.js",
       "test/net/superDungeon/sd12_onelife.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-WE-L1-1-raise-from-afar",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "    Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M",
-    "new": "    Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M * 100",
+    "old": "Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M);",
+    "new": "Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M * 100);",
     "tests": [
       "test/net/superDungeon/auditwe_rez.test.js",
       "test/net/superDungeon/sd12_onelife.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-WE-L1-1-the-lying-raise",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (\n    !caster ||\n    !to ||\n    caster === to ||\n    !realm.in.includes(caster) ||\n    realm.dead.includes(caster) ||\n    (realm.down ?? []).some(([x]) => x === caster)\n  )\n    return false;",
-    "new": "  if (!caster || !to || caster === to || !realm.in.includes(caster) || realm.dead.includes(caster)) return false;",
+    "old": "realm.dead.includes(caster) || (realm.down ?? []).some(([x]) => x === caster)) return false;",
+    "new": "realm.dead.includes(caster)) return false;",
     "tests": [
       "test/net/superDungeon/auditwe_rez.test.js",
       "test/net/superDungeon/sd12_onelife.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-WE-L1-1-raise-past-window",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (!d || now - d[1] > SD_REZ_MS) return false;",
-    "new": "  if (!d) return false;",
+    "old": "  if (!d || now - d[1] > SD_REZ_MS) return false;\n  return !(",
+    "new": "  if (!d) return false;\n  return !(",
     "tests": [
       "test/net/superDungeon/auditwe_rez.test.js",
       "test/net/superDungeon/sd12_onelife.test.js"
@@ -125,8 +125,8 @@
   {
     "name": "AUDIT-WE-L1-1-old-raise-counts",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  return (realm.raised ?? []).some(([x, at]) => x === sub && at >= d[1]) ? 'rise' : 'down';",
-    "new": "  return (realm.raised ?? []).some(([x, at]) => x === sub) ? 'rise' : 'down';",
+    "old": "x === sub && at >= d[1]) ? 'rise' : 'down';",
+    "new": "x === sub) ? 'rise' : 'down';",
     "tests": [
       "test/net/superDungeon/auditwe_rez.test.js",
       "test/net/superDungeon/sd12_onelife.test.js"

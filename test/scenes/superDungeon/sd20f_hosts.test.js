@@ -230,7 +230,7 @@ test('SD20f THE VEIL AHEAD, AND /unstuck IN THE HOUR (H9, H10): a Hollow stood b
   assert.match(W, /stand: \(key, loc\) => \{ _locIndexGen \+= 1; locationIndex\.set\(key, loc\); _sdLate\.add\(key\); warmGateVeil\(\); \},/);
   const at = W.indexOf('        if (/^\\/unstuck(\\s+cancel)?$/i.test(text.trim())) {');   // PVPUNSTUCK (the Wrothgarian zone's merge): the command takes a cancel too
   assert.ok(at > 0, 'the /unstuck command');
-  const block = W.slice(at, W.indexOf('          return true;\n        }', at) + '          return true;\n        }'.length);
+  const block = W.slice(at, W.indexOf('return true; }', at) + 'return true; }'.length);
   // PIN MOVED (UNSTUCK-OUT, FIELD BUGS 2026-10-08): outdoors - the door refusing - the body stands on open ground
   const run = (hour, wayHome, unstuck, outdoors = 'none') => {
     const log = [];

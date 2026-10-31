@@ -11,8 +11,8 @@
   {
     "name": "ONE-BOARD-the-nearest-ignored",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "    const d = Array.isArray(centre)\n      ? Math.hypot((box[0] + box[3]) / 2 - centre[0], (box[2] + box[5]) / 2 - centre[1])\n      : 0;",
-    "new": "    const d = 0;",
+    "old": "const d = Array.isArray(centre) ? Math.hypot((box[0] + box[3]) / 2 - centre[0], (box[2] + box[5]) / 2 - centre[1]) : 0;",
+    "new": "const d = 0;",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ONE-BOARD-the-tie-to-the-last",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "    if (d < near) {",
-    "new": "    if (d <= near) {",
+    "old": "    if (d < near) { near = d; best = i; }",
+    "new": "    if (d <= near) { near = d; best = i; }",
     "tests": [
       "test/ui/board_ui.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "BOARD-UI-the-board-left-cold",
     "file": "src/ui/enhanced/enhancedChunk.js",
-    "old": "  () => import('../noticeWindow.js'), // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it\n  () => import('../brokerWindow.js'), // SET7: the Sigil Broker's window - online's, and last: the gate is the rarest door",
-    "new": "  () => import('../brokerWindow.js'), // SET7: the Sigil Broker's window - online's, and last: the gate is the rarest door",
+    "old": "  () => import('../noticeWindow.js'),   // BOARD-UI: a town's Notice Board - online's, its tabs (the Market, the Work, the Seat) with it\n",
+    "new": "",
     "tests": [
       "test/ui/board_ui.test.js"
     ]

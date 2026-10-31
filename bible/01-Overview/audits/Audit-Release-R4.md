@@ -71,7 +71,7 @@ What it costs: a player in the open asks about three times a minute - an estimat
 free a foe that stands, a renew a batch of up to 32 live grants every eight minutes - `GRANT_RENEW_LEAD_MS` before
 `GRANT_TTL_MS`), not a live count (GRANT2's measure posts asks to the service, not to this token's analytics) - so some 130 million rows a
 month per 1,000 concurrent players outdoors, **~$130 a month**, ~$11 per 1,000 daily players at two hours a day. Its
-ceiling is the socket gate, `src/net/grantLaw.js:"export const GRANT_HZ_MAX"`: a client flooding asks writes at most
+ceiling is the socket gate, `src/net/grantLaw.js:"export const GRANT_HZ_MAX = 2;"`: a client flooding asks writes at most
 5.2 million rows a socket-month ($5.18) - the same order as the object it holds awake ($4.11), not an amplification.
 **Proposed, not built (a security fix on release day is not the place)**: write a refused ask's gate only when the refusal
 moved something (a bucket's refill accounting does move it today), and let a `free` go unwritten while anything still binds (the key

@@ -36,7 +36,7 @@
     "name": "L10N3e-systems-itemInfo-520-Item",
     "file": "src/systems/item/itemInfo.js",
     "old": "  return t ? getLocalizedItemName(t.index, t.name ?? '') : '';",
-    "new": "  return t ? (t.name ?? '') : '';",
+    "new": "  return t ? t.name ?? '' : '';",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3e_things.test.js",

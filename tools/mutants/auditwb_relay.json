@@ -248,8 +248,8 @@
   {
     "name": "AUDWB-C7-the-times-made-every-ask",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  let t = _gateTimesOf.get(day); // AUDIT WB C7: a day's instants made once - the client's clock asks for them every frame",
-    "new": "  let t = null; // AUDIT WB C7: a day's instants made once - the client's clock asks for them every frame",
+    "old": "  let t = _gateTimesOf.get(day);",
+    "new": "  let t = null;",
     "tests": [
       "test/net/gate/auditwb_relay.test.js"
     ]

@@ -20,8 +20,8 @@
   {
     "name": "SD5A-the-slot-unread",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "export const isSdRealm = (loc) =>\n  Number.isSafeInteger(loc?.sdRealm) && loc?.dungeon?.recordElement?.header?.locationId === SD_REALM_LOCATION_ID;",
-    "new": "export const isSdRealm = (loc) => loc?.dungeon?.recordElement?.header?.locationId === SD_REALM_LOCATION_ID;",
+    "old": "export const isSdRealm = (loc) => Number.isSafeInteger(loc?.sdRealm) && ",
+    "new": "export const isSdRealm = (loc) => ",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD5A-the-dial-off-the-hall",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD, {",
-    "new": "  realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_FLOOR_RECORD, {",
+    "old": "realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_DIAL_RECORD,",
+    "new": "realmIsland(f, SD_ORRERY.x, SD_ORRERY.z, R, SD_REALM_FLOOR_RECORD,",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD5A-no-root",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    f.quad(\n      SD_REALM_ROOT_RECORD,\n      C(x0, -SD_LIP, z0),\n      C(x0, 0, z0),\n      C(x1, 0, z1),\n      C(x1, -SD_LIP, z1),\n      [k / 8, 0.02],\n      [k / 8, 0],\n      [(k + 1) / 8, 0],\n      [(k + 1) / 8, 0.02],\n    );",
-    "new": "    if (false)\n      f.quad(\n        SD_REALM_ROOT_RECORD,\n        C(x0, -SD_LIP, z0),\n        C(x0, 0, z0),\n        C(x1, 0, z1),\n        C(x1, -SD_LIP, z1),\n        [k / 8, 0.02],\n        [k / 8, 0],\n        [(k + 1) / 8, 0],\n        [(k + 1) / 8, 0.02],\n      );",
+    "old": "    f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0),",
+    "new": "    if (false) f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0),",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD5A-a-floor-left-out",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  disc(SD_ORRERY);\n  disc(SD_ARENA);",
-    "new": "  disc(SD_ARENA);",
+    "old": "  disc(SD_THRESHOLD);\n  disc(SD_ORRERY);\n",
+    "new": "  disc(SD_THRESHOLD);\n",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD5A-the-walk-unwalked",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  Object.freeze({ kind: 'band', ...SD_WALK }),\n  Object.freeze({ kind: 'disc', ...SD_ORRERY }),",
-    "new": "  Object.freeze({ kind: 'disc', ...SD_ORRERY }),",
+    "old": "  Object.freeze({ kind: 'band', ...SD_WALK }),\n",
+    "new": "",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD5A-the-inset-ignored",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "        rr = Math.max(0, fl.r - inset);",
-    "new": "        rr = fl.r;",
+    "old": "rr = Math.max(0, fl.r - inset);",
+    "new": "rr = fl.r;",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD5A-the-lamps-outside-the-rims",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "      out.push([cx + Math.cos(a) * (r - 1), 0, cz + Math.sin(a) * (r - 1)]);",
-    "new": "      out.push([cx + Math.cos(a) * (r - 1), 0, cz + Math.sin(a) * (r + 2)]);",
+    "old": "0, cz + Math.sin(a) * (r - 1)]);",
+    "new": "0, cz + Math.sin(a) * (r + 2)]);",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD5A-the-dial's-twelfth-unlit",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  twelfth: 0.035,",
-    "new": "  twelfth: 0.02,",
+    "old": "twelfth: 0.035, hour: 0.02,",
+    "new": "twelfth: 0.02, hour: 0.02,",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ]

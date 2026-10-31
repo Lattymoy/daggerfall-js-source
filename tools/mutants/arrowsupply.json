@@ -2,8 +2,8 @@
   {
     "name": "STUCK-ARROWS-still-lost",
     "file": "src/combat/arrowFlight.js",
-    "old": "        this._stick(\n          m,\n          [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop],\n          unit,\n        );\n        m.dead = true;",
-    "new": "        m.dead = true;",
+    "old": "{ this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit); m.dead = true; continue; }",
+    "new": "{ m.dead = true; continue; }",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STUCK-ARROWS-the-point-off-the-ray",
     "file": "src/combat/arrowFlight.js",
-    "old": "        this._stick(\n          m,\n          [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop],\n          unit,\n        );",
-    "new": "        this._stick(m, [m.pos[0], m.pos[1], m.pos[2]], unit);",
+    "old": "this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit)",
+    "new": "this._stick(m, [m.pos[0], m.pos[1], m.pos[2]], unit)",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "STUCK-ARROWS-no-lift",
     "file": "src/combat/arrowFlight.js",
-    "old": "  const pile = loot.seedPile(\n    [bowDamageArrow()],\n    [at[0], at[1] - STUCK_ARROW_LIFT, at[2]],\n    STUCK_ARROW_ICON,\n    null,\n    pixelKey,\n    { unsaved: true, drawn: false, owner: STUCK_ARROW_OWNER },\n  );",
-    "new": "  const pile = loot.seedPile([bowDamageArrow()], [at[0], at[1], at[2]], STUCK_ARROW_ICON, null, pixelKey, {\n    unsaved: true,\n    drawn: false,\n    owner: STUCK_ARROW_OWNER,\n  });",
+    "old": "[at[0], at[1] - STUCK_ARROW_LIFT, at[2]]",
+    "new": "[at[0], at[1], at[2]]",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STUCK-ARROWS-no-label",
     "file": "src/combat/arrowFlight.js",
-    "old": "  pile.label = STUCK_ARROW_LABEL;\n  pile.noStore = STUCK_ARROW_NO_STORE;",
-    "new": "  pile.noStore = STUCK_ARROW_NO_STORE;",
+    "old": "  pile.label = STUCK_ARROW_LABEL;\n",
+    "new": "",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STUCK-ARROWS-no-noStore",
     "file": "src/combat/arrowFlight.js",
-    "old": "  pile.noStore = STUCK_ARROW_NO_STORE;\n  pile.stuckDir = [dir[0] / l, dir[1] / l, dir[2] / l];",
-    "new": "  pile.stuckDir = [dir[0] / l, dir[1] / l, dir[2] / l];",
+    "old": "  pile.noStore = STUCK_ARROW_NO_STORE;\n",
+    "new": "",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "STUCK-ARROWS-saved",
     "file": "src/combat/arrowFlight.js",
-    "old": "    { unsaved: true, drawn: false, owner: STUCK_ARROW_OWNER },",
-    "new": "    { unsaved: false, drawn: false, owner: STUCK_ARROW_OWNER },",
+    "old": "{ unsaved: true, drawn: false, owner: STUCK_ARROW_OWNER }",
+    "new": "{ unsaved: false, drawn: false, owner: STUCK_ARROW_OWNER }",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "STUCK-ARROWS-no-ground-arm",
     "file": "src/combat/arrowFlight.js",
-    "old": "        if (from) this._stick(m, groundEntry(from, m.pos, c), m.dir);\n        m.dead = true;",
-    "new": "        m.dead = true;",
+    "old": "{ if (from) this._stick(m, groundEntry(from, m.pos, c), m.dir); m.dead = true; }",
+    "new": "{ m.dead = true; }",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "STUCK-ARROWS-the-steps-end",
     "file": "src/combat/arrowFlight.js",
-    "old": "        if (from) this._stick(m, groundEntry(from, m.pos, c), m.dir);",
-    "new": "        if (from) this._stick(m, [m.pos[0], c.heightAt(m.pos[0], m.pos[2]), m.pos[2]], m.dir);",
+    "old": "this._stick(m, groundEntry(from, m.pos, c), m.dir)",
+    "new": "this._stick(m, [m.pos[0], c.heightAt(m.pos[0], m.pos[2]), m.pos[2]], m.dir)",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "STUCK-ARROWS-the-crossing-not-interpolated",
     "file": "src/combat/arrowFlight.js",
-    "old": "  const t = da > 0 && da - db > 0 ? Math.min(1, da / (da - db)) : 0;",
-    "new": "  const t = da > 0 && da - db > 0 ? 1 : 0;",
+    "old": "const t = da > 0 && da - db > 0 ? Math.min(1, da / (da - db)) : 0;",
+    "new": "const t = da > 0 && da - db > 0 ? 1 : 0;",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "STUCK-ARROWS-an-enemys-shaft",
     "file": "src/combat/arrowFlight.js",
-    "old": "  return !!m?.fromPlayer && !m.visual && !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen();",
-    "new": "  return !!m && !m.visual && !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen();",
+    "old": "return !!m?.fromPlayer && !m.visual",
+    "new": "return !!m && !m.visual",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "STUCK-ARROWS-a-peers-echo",
     "file": "src/combat/arrowFlight.js",
-    "old": "  return !!m?.fromPlayer && !m.visual && !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen();",
-    "new": "  return !!m?.fromPlayer && !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen();",
+    "old": "&& !m.visual && !m.summoned",
+    "new": "&& !m.summoned",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "STUCK-ARROWS-a-conjured-round",
     "file": "src/combat/arrowFlight.js",
-    "old": "  return !!m?.fromPlayer && !m.visual && !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen();",
-    "new": "  return !!m?.fromPlayer && !m.visual && !orbArchiveFor(m.weapon) && !shotTallyOpen();",
+    "old": "&& !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen()",
+    "new": "&& !orbArchiveFor(m.weapon) && !shotTallyOpen()",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "STUCK-ARROWS-the-guns-pellet",
     "file": "src/combat/arrowFlight.js",
-    "old": "  return !!m?.fromPlayer && !m.visual && !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen();",
-    "new": "  return !!m?.fromPlayer && !m.visual && !m.summoned && !shotTallyOpen();",
+    "old": "&& !orbArchiveFor(m.weapon) && !shotTallyOpen()",
+    "new": "&& !shotTallyOpen()",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "STUCK-ARROWS-on-the-sand",
     "file": "src/combat/arrowFlight.js",
-    "old": "  return !!m?.fromPlayer && !m.visual && !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen();",
-    "new": "  return !!m?.fromPlayer && !m.visual && !m.summoned && !orbArchiveFor(m.weapon);",
+    "old": " && !shotTallyOpen();\n}",
+    "new": ";\n}",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "STUCK-ARROWS-no-cap",
     "file": "src/combat/arrowFlight.js",
-    "old": "  for (let i = 0; i < all.length - STUCK_ARROWS_MAX; i++) loot.removePile(all[i]);\n  return pile;",
-    "new": "  return pile;",
+    "old": "  for (let i = 0; i < all.length - STUCK_ARROWS_MAX; i++) loot.removePile(all[i]);\n",
+    "new": "",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "STUCK-ARROWS-the-newest-dropped",
     "file": "src/combat/arrowFlight.js",
-    "old": "  for (let i = 0; i < all.length - STUCK_ARROWS_MAX; i++) loot.removePile(all[i]);",
-    "new": "  for (let i = 0; i < all.length - STUCK_ARROWS_MAX; i++) loot.removePile(all[all.length - 1 - i]);",
+    "old": "loot.removePile(all[i]);",
+    "new": "loot.removePile(all[all.length - 1 - i]);",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "STUCK-ARROWS-no-prune",
     "file": "src/combat/arrowFlight.js",
-    "old": "  for (const p of stuckPilesOf(loot)) if (p.inactive || !p.items.length) loot.removePile(p);",
-    "new": "  for (const p of stuckPilesOf(loot)) if (false) loot.removePile(p);",
+    "old": "if (p.inactive || !p.items.length) loot.removePile(p);",
+    "new": "if (false) loot.removePile(p);",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "STUCK-ARROWS-an-emptied-pile-kept",
     "file": "src/combat/arrowFlight.js",
-    "old": "  for (const p of stuckPilesOf(loot)) if (p.inactive || !p.items.length) loot.removePile(p);",
-    "new": "  for (const p of stuckPilesOf(loot)) if (p.inactive) loot.removePile(p);",
+    "old": "if (p.inactive || !p.items.length) loot.removePile(p);",
+    "new": "if (p.inactive) loot.removePile(p);",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "STUCK-ARROWS-not-drawn",
     "file": "src/combat/arrowFlight.js",
-    "old": "    if (gpu) for (const p of stuck) renderer.drawMesh(gpu, stuckArrowMatrix(p, gpu.bounds), texRemap);",
-    "new": "    if (gpu && false) for (const p of stuck) renderer.drawMesh(gpu, stuckArrowMatrix(p, gpu.bounds), texRemap);",
+    "old": "if (gpu) for (const p of stuck) renderer.drawMesh(",
+    "new": "if (gpu && false) for (const p of stuck) renderer.drawMesh(",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "STUCK-ARROWS-the-set-back-ignored",
     "file": "src/combat/arrowFlight.js",
-    "old": "    back = stuckArrowSetBack(bounds);",
-    "new": "    back = 0;",
+    "old": "const d = pile.stuckDir, back = stuckArrowSetBack(bounds);",
+    "new": "const d = pile.stuckDir, back = 0;",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "STUCK-ARROWS-the-tip-the-spheres-back",
     "file": "src/combat/arrowFlight.js",
-    "old": "  return bounds[2] + bounds[3] - STUCK_ARROW_EMBED * 2 * bounds[3];",
-    "new": "  return bounds[2] - bounds[3] - STUCK_ARROW_EMBED * 2 * bounds[3];",
+    "old": "return bounds[2] + bounds[3] - STUCK_ARROW_EMBED",
+    "new": "return bounds[2] - bounds[3] - STUCK_ARROW_EMBED",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "STUCK-ARROWS-dungeon-entry-never-removed",
     "file": "src/combat/arrowFlight.js",
-    "old": "    if (i >= 0) draws.splice(i, 1);\n    held.delete(p);",
-    "new": "    held.delete(p);",
+    "old": "    if (i >= 0) draws.splice(i, 1);\n",
+    "new": "",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "STUCK-ARROWS-dungeon-drawn-twice",
     "file": "src/combat/arrowFlight.js",
-    "old": "    if (held.has(p)) continue;\n    const d = { gpu, object: { matrix: stuckArrowMatrix(p, gpu.bounds) } };",
-    "new": "    const d = { gpu, object: { matrix: stuckArrowMatrix(p, gpu.bounds) } };",
+    "old": "    if (held.has(p)) continue;\n",
+    "new": "",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "ARROW-LODGE-always",
     "file": "src/combat/arrowFlight.js",
-    "old": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
-    "new": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned) {",
+    "old": "&& !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
+    "new": "&& !m.summoned) {",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "ARROW-LODGE-never",
     "file": "src/combat/arrowFlight.js",
-    "old": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
-    "new": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned && rolls() < 0) {",
+    "old": "rolls() < ARROW_LODGE_CHANCE) {",
+    "new": "rolls() < 0) {",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "ARROW-LODGE-the-conjured-lodged",
     "file": "src/combat/arrowFlight.js",
-    "old": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
-    "new": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && rolls() < ARROW_LODGE_CHANCE) {",
+    "old": "&& !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
+    "new": "&& rolls() < ARROW_LODGE_CHANCE) {",
     "tests": [
       "test/systems/arrowsupply.test.js"
     ]

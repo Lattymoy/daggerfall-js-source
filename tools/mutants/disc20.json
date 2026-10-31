@@ -2,8 +2,8 @@
   {
     "name": "DISC20-A-the-blend-dropped",
     "file": "src/render/labGrass.js",
-    "old": "    to: \"  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(c, vWorld);   // DW-C: and the carved sea's distance fog, as the terrain's last line takes it\\n  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));\",",
-    "new": "    to: \"  c = c;   // DISC20-A\\n  c = dwWaterFog(c, vWorld);   // DW-C: and the carved sea's distance fog, as the terrain's last line takes it\\n  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));\",",
+    "old": "  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(",
+    "new": "  c = c;   // DISC20-A\\n  c = dwWaterFog(",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DISC20-A-the-fog-factor-inverted",
     "file": "src/render/labGrass.js",
-    "old": "    to: \"  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(c, vWorld);   // DW-C: and the carved sea's distance fog, as the terrain's last line takes it\\n  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));\",",
-    "new": "    to: \"  c = mix(c, uFogColor, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(c, vWorld);   // DW-C: and the carved sea's distance fog, as the terrain's last line takes it\\n  o = vec4(c, mix(vFade * smoothstep(0.0, 0.30, vT), 1.0, uPixel));\",",
+    "old": "  c = mix(uFogColor, c, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(",
+    "new": "  c = mix(c, uFogColor, fogFactorAt(vWorld));   // DISC20-A\\n  c = dwWaterFog(",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DISC20-A-the-world-point-not-handed-down",
     "file": "src/render/labGrass.js",
-    "old": "    to: '  vWorld = p;   // DISC20-A\\n  gl_Position = uVP * vec4(p,1.0);',",
-    "new": "    to: '  vWorld = vec3(0.0);   // DISC20-A\\n  gl_Position = uVP * vec4(p,1.0);',",
+    "old": "  vWorld = p;   // DISC20-A\\n",
+    "new": "  vWorld = vec3(0.0);   // DISC20-A\\n",
     "tests": [
       "test/systems/disc20.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DISC20-A-no-fog-handed-reads-a-fog",
     "file": "src/render/labGrass.js",
-    "old": "    gl.uniform1i(u.uFogMode, fog ? fog.mode : 0);",
-    "new": "    gl.uniform1i(u.uFogMode, fog ? fog.mode : 2);",
+    "old": "gl.uniform1i(u.uFogMode, fog ? fog.mode : 0);",
+    "new": "gl.uniform1i(u.uFogMode, fog ? fog.mode : 2);",
     "tests": [
       "test/systems/disc20.test.js"
     ]

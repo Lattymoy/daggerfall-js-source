@@ -510,7 +510,7 @@ test('SW1: the attack-resolution seam fires on EVERY resolution, hit or miss, wi
   // V3's hook above it is gated on damage; this one must not be - three
   // of the six Recoil conditions are MISS conditions.
   assert.match(f, /if \(target\?\.isPlayer && !attacker\.isPlayer\) \{\s*_attackOnPlayerHook\?\.\(attacker, target, damage, struckPart\);/);
-  assert.match(f, /export function setAttackOnPlayerHook\(fn\) \{\n\s*_attackOnPlayerHook = fn \?\? null;\n\s*\}/);
+  assert.match(f, /export function setAttackOnPlayerHook\(fn\) \{ _attackOnPlayerHook = fn \?\? null; \}/);
   // and the struck part is carried out of the block the roll is made in
   assert.match(f, /struckPart = struck;/);
 });
@@ -647,7 +647,7 @@ test('SW1-LOOK: the frame’s look reaches the shield as the ARRAY it is, or Ine
   // reason no pin and no player said so.
   const rig = readFileSync('src/combat/weapon/weaponRig.js', 'utf8');
   const feed = rig.slice(rig.indexOf('if (shieldOn()) shield.lateUpdate({'));
-  const body = feed.slice(0, feed.indexOf('\n        });'));
+  const body = feed.slice(0, feed.indexOf('});'));
   // WIDGET-LOOK (FIELD BUGS 2026-10-03): indexed off the frame's look converted to DFU's axes (dfuLookAxes answers the
   // same [yaw, pitch] array)
   assert.match(body, /look: \{ x: lookAxes\[0\], y: lookAxes\[1\],/, 'indexed, as the clone reads it');

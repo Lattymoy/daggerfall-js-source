@@ -914,7 +914,7 @@ tops named once beside the ones that ask (`const NOTES = Object.freeze(['noSpell
 `ASKS` the delete, the sort and the trade, which the draw's buttons and the click's Yes/No hit-test now share), BOX1's
 single read unchanged, the panel released when the box clears (the next draw) and in `_close`. And the port's dismiss
 asks the seam rather than a field: `enhancedPort.js:"if (noticeShown(win)) { win.click?.(-1, -1); return; }"` - the
-notice is the panel the window raised (`enhancedNotice.js:"export const noticeShown"`),
+notice is the panel the window raised (`enhancedNotice.js:"export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);"`),
 up exactly while the player can read it, whatever field holds the box; so the guild's and the coven's notices take the
 first click too, and nothing under any notice acts. The four windows that kept `box` answer as before. No DFU behaviour
 changes (DFU shows each box; the notice at the edge is ENH-NOTICE1's Ledger A row).
@@ -991,7 +991,7 @@ FOUND, on the code. A player's private report: an item that makes its wearer inv
 stopped working after Overworld travel, and worked again only once it was taken off and put on again. Travel alone does
 not end it - on the real equip door and the real magic-round pump the worn pin rode 37 hours of travel rounds and the
 six-hour reroll untouched. One landed blow does. AUDIT 24 wave 31's break - at the attack formula's tail,
-`formulas.js:"if (damage > 0) breakNormalPowerConcealment"`, and at every FromSource damage door
+`formulas.js:"if (damage > 0) breakNormalPowerConcealment(attacker);"`, and at every FromSource damage door
 (`handleAttackFromSource`) - ran a filter that DELETED every normal-power concealment entry, a spell's and a worn item's
 alike, and the worn one's pin went with it. The reroll that recasts a worn item's spell visits only an item that still
 holds a pin (`enchantments.js:"if (!entity.activeEffects.some((a) => a.heldItem === item))"`), so the piece
@@ -1257,7 +1257,7 @@ too (a 25-million lot at a quality-10 counter, Mercantile and Personality 40, pa
 pieces, and the purse's write is unclamped, as DFU's setter is (`inventory.js:"entity.goldPieces = goldPiecesOf(entity) + amount;"`).
 A purse already below nothing stays there. Every price is more than it, so every payment spends the letters first
 (`court.js:"const loc = items.find"`), and the judge finds it
-at every checkpoint (`judge.js:"if (!purseWord(save?.goldPieces))"`): the trade held, and a
+at every checkpoint (`judge.js:"if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });"`): the trade held, and a
 death in the zone burnt (BURNT-SAID). 18b left such a character to "a staff repair (`review.js`)", and none could be
 made. The review's one repair took a faction's flag or nothing (`repairLaw.js:"if (!REPAIR_FLAGS.includes(flag))"`)
 and never reached the purse. `clear` lifts the hold but EXCUSES its signature (`review.js`'s `law_excused = law_sig` at d5a4c9c6a), so

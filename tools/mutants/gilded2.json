@@ -56,8 +56,8 @@
   {
     "name": "GILDED2-the-oath-before-the-passes",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  // before it is what it was for its seed (a piece with no technique family takes no draw)\n  techniquePass(",
-    "new": "  // before it is what it was for its seed (a piece with no technique family takes no draw)\n  rollDragonfireOath(rolls);\n  techniquePass(",
+    "old": "  techniquePass(pieces.map((p) => p.item), rolls);\n  // GILDED2",
+    "new": "  rollDragonfireOath(rolls);\n  techniquePass(pieces.map((p) => p.item), rolls);\n  // GILDED2",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GILDED2-the-sovereign-to-a-ship-that-stood",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "  const sovereign = dealt ? rollSunkenSovereign(rolls) : null;",
-    "new": "  const sovereign = rollSunkenSovereign(rolls);",
+    "old": "const sovereign = dealt ? rollSunkenSovereign(rolls) : null;",
+    "new": "const sovereign = rollSunkenSovereign(rolls);",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "GILDED2-AUDIT-the-oaths-picture-in-its-place",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    record: p.tier === 'gilded' || i >= firstPortent ? null : flat(),",
-    "new": "    record: i >= firstPortent ? null : flat(),",
+    "old": "record: p.tier === 'gilded' || i >= firstPortent ? null : flat() }));",
+    "new": "record: i >= firstPortent ? null : flat() }));",
     "tests": [
       "test/systems/gilded2_world.test.js"
     ]

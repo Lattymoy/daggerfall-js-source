@@ -101,7 +101,7 @@ test('F077: a filled soul trap says whose soul it holds', () => {
   // the pin holds the exact identified tail instead of source order.
   // PIN MOVED (TEXT-F1): a typed name read through shownItemName, its words starred - the suffix's arm unchanged;
   // L10N3e: and every name as shown (templateText, shownSoulName)
-  assert.match(ii, /const itemName = !identified\n\s*\? templateText\(t\)\n\s*: item\?\.group === 'Books'\n\s*\? \(bookTitle\(item\?\.message \?\? -1\) \?\? name \?\? shownItemName\(item\) \?\? templateText\(t\)\)\n\s*: \(name \?\? shownItemName\(item\) \?\? templateText\(t\)\) \+ soulTrapNameSuffix\(item, shownSoulName\);/,
+  assert.match(ii, /const itemName = !identified \? templateText\(t\)\n\s*: item\?\.group === 'Books' \? \(bookTitle\(item\?\.message \?\? -1\) \?\? name \?\? shownItemName\(item\) \?\? templateText\(t\)\)\n\s*: \(name \?\? shownItemName\(item\) \?\? templateText\(t\)\) \+ soulTrapNameSuffix\(item, shownSoulName\);/,
     'the suffix is on the identified non-book arm, behind the unidentified early return');
 });
 

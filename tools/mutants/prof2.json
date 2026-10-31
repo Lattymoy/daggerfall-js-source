@@ -50,7 +50,7 @@
   {
     "name": "PROF2-6-unconfirmed-any-tier",
     "file": "src/net/nodeLaw.js",
-    "old": "  const d = drawFromTable(\n    table,\n    unit('vein', x, y, day, slot, 3),\n    unit('vein', x, y, day, slot, 4),\n    confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER,\n  );",
+    "old": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);",
     "new": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), 7);",
     "tests": [
       "test/net/prof2_law.test.js"
@@ -59,8 +59,8 @@
   {
     "name": "PROF2-7-signature-unconfirmed",
     "file": "src/net/nodeLaw.js",
-    "old": "const signatureOres = (region, confirmed) =>\n  confirmed && region !== null ? (regionSignature(region)?.ores ?? []) : [];",
-    "new": "const signatureOres = (region, confirmed) => (region !== null ? (regionSignature(region)?.ores ?? []) : []);",
+    "old": "const signatureOres = (region, confirmed) => (confirmed && region !== null ?",
+    "new": "const signatureOres = (region, confirmed) => (region !== null ?",
     "tests": [
       "test/net/prof2_law.test.js",
       "test/net/prof2_client.test.js"
@@ -81,7 +81,7 @@
     "name": "PROF2-9-a-dungeon-with-none",
     "file": "src/net/nodeLaw.js",
     "old": "export const dungeonVeinCount = (dungeon, day) => 1 + (nodeRoll('dvein', dungeon, 0, day, 0, 0) % DUNGEON_VEINS_MAX);",
-    "new": "export const dungeonVeinCount = (dungeon, day) => nodeRoll('dvein', dungeon, 0, day, 0, 0) % DUNGEON_VEINS_MAX;",
+    "new": "export const dungeonVeinCount = (dungeon, day) => (nodeRoll('dvein', dungeon, 0, day, 0, 0) % DUNGEON_VEINS_MAX);",
     "tests": [
       "test/net/prof2_law.test.js"
     ]
@@ -99,8 +99,8 @@
   {
     "name": "PROF2-11-gem-on-unconfirmed-ground",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (!confirmed && kind !== 'dvein') return null;\n  const chance = GEM_CHANCE * (prospector ? PROSPECTOR_GEM : 1);",
-    "new": "  const chance = GEM_CHANCE * (prospector ? PROSPECTOR_GEM : 1);",
+    "old": "  if (!confirmed && kind !== 'dvein') return null;\n  const chance = GEM_CHANCE",
+    "new": "  const chance = GEM_CHANCE",
     "tests": [
       "test/net/prof2_law.test.js",
       "test/net/prof2_service.test.js"
@@ -598,7 +598,7 @@
     "name": "DEEP-OPEN-the-cap-back",
     "file": "src/net/nodeLaw.js",
     "old": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4));",
-    "new": "  const d = drawFromTable(\n    table,\n    unit('dvein', dungeon, 0, day, slot, 3),\n    unit('dvein', dungeon, 0, day, slot, 4),\n    confirmed ? 7 : UNCONFIRMED_VEIN_TIER,\n  );",
+    "new": "  const d = drawFromTable(table, unit('dvein', dungeon, 0, day, slot, 3), unit('dvein', dungeon, 0, day, slot, 4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);",
     "tests": [
       "test/net/deepopen.test.js",
       "test/net/prof2_law.test.js"

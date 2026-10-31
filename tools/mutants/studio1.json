@@ -49,8 +49,8 @@
   {
     "name": "STUDIO1-a-name-with-no-folder",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "  if (parts.length < 2 || parts.some((p) => !p || p === '.' || p === '..')) return null;",
-    "new": "  if (parts.length < 1 || parts.some((p) => !p || p === '.' || p === '..')) return null;",
+    "old": "  if (parts.length < 2 || parts.some",
+    "new": "  if (parts.length < 1 || parts.some",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "STUDIO1-the-label-swallowed",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "const STUDIO_FILE = new RegExp(`^(.+?)(?:${STUDIO_LABEL}(.+))?\\\\.png$`, 'i');",
-    "new": "const STUDIO_FILE = new RegExp(`^(.+)(?:${STUDIO_LABEL}(.+))?\\\\.png$`, 'i');",
+    "old": "const STUDIO_FILE = new RegExp(`^(.+?)(?:${STUDIO_LABEL}",
+    "new": "const STUDIO_FILE = new RegExp(`^(.+)(?:${STUDIO_LABEL}",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "STUDIO1-the-monument-rows-flipped",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "          { topDown: true },\n        );",
-    "new": "        );",
+    "old": "renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); }, { topDown: true });",
+    "new": "renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); });",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "STUDIO1-the-room-wears-its-built-record",
     "file": "src/scenes/caravanRoom.js",
-    "old": "      out.push([\n        lookRecord(rec, CARAVAN_LIVE_CHOICE),\n        painted?.get(rec) ?? built.get(rec),\n        painted?.has(rec) ? lookRecord(rec, i) : rec,\n      ]);",
-    "new": "      out.push([lookRecord(rec, CARAVAN_LIVE_CHOICE), painted?.get(rec) ?? built.get(rec), rec]);",
+    "old": "painted?.has(rec) ? lookRecord(rec, i) : rec]);",
+    "new": "rec]);",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -284,8 +284,8 @@
   {
     "name": "STUDIO1-the-icon-painted",
     "file": "src/world/wagonModels.js",
-    "old": "  const pics = new Map(\n    wagonArt().map(([rec, pic]) => [\n      rec,\n      paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec))),\n    ]),\n  );",
-    "new": "  const pics = new Map(wagonArt().map(([rec, pic]) => [rec, toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))]));",
+    "old": "paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32",
+    "new": "toColor32",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "STUDIO1-url-unencoded",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "  new URL(`${STUDIO_DIR}/${String(path).split('/').map(encodeURIComponent).join('/')}`, root).href;",
-    "new": "  new URL(`${STUDIO_DIR}/${String(path)}`, root).href;",
+    "old": "String(path).split('/').map(encodeURIComponent).join('/')",
+    "new": "String(path)",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "STUDIO1-url-off-the-document",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "export const studioUrl = (path, root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/') =>",
-    "new": "export const studioUrl = (path, root = globalThis.document?.baseURI ?? 'http://localhost/') =>",
+    "old": "root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/'",
+    "new": "root = globalThis.document?.baseURI ?? 'http://localhost/'",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "STUDIO1-url-absolute",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "  new URL(`${STUDIO_DIR}/${String(path).split('/').map(encodeURIComponent).join('/')}`, root).href;",
-    "new": "  new URL(`/${STUDIO_DIR}/${String(path).split('/').map(encodeURIComponent).join('/')}`, root).href;",
+    "old": "  new URL(`${STUDIO_DIR}/${",
+    "new": "  new URL(`/${STUDIO_DIR}/${",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "STUDIO1-a-failed-read-remembered",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "    if (_install === asked) _install = null; // a read that failed is no answer: the next boot asks again\n    return 0;",
-    "new": "    return 0;",
+    "old": "    if (_install === asked) _install = null;   // a read that failed is no answer: the next boot asks again\n",
+    "new": "",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "STUDIO1-a-failed-read-an-answer",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "    return null;",
-    "new": "    return 0;",
+    "old": "  } catch { return null; }",
+    "new": "  } catch { return 0; }",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -518,8 +518,8 @@
   {
     "name": "STUDIO1-listing-not-held",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "  holdTextureTiers(asked, STUDIO_HOLD_MS);\n  return asked;",
-    "new": "  return asked;",
+    "old": "  holdTextureTiers(asked, STUDIO_HOLD_MS);\n",
+    "new": "",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -536,8 +536,8 @@
   {
     "name": "STUDIO1-bytes-root-lost",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "    const r = await fetch(studioUrl(path, root));",
-    "new": "    const r = await fetch(studioUrl(path));",
+    "old": "const r = await fetch(studioUrl(path, root)); return r?.ok",
+    "new": "const r = await fetch(studioUrl(path)); return r?.ok",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "STUDIO1-a-404-read",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "    if (!r?.ok) return 0;\n    files = (await r.json())?.files;",
-    "new": "    files = (await r.json())?.files;",
+    "old": "    if (!r?.ok) return 0;\n",
+    "new": "",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -554,8 +554,8 @@
   {
     "name": "STUDIO1-install-frame-dropped",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "      frame: e.frame,\n      map: e.map,",
-    "new": "      map: e.map,",
+    "old": "    archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,\n    studio: true,",
+    "new": "    archive: e.archive, record: e.record, map: e.map, dye: e.dye,\n    studio: true,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -563,8 +563,8 @@
   {
     "name": "STUDIO1-install-map-dropped",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "      map: e.map,\n      dye: e.dye,",
-    "new": "      dye: e.dye,",
+    "old": "    archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,\n    studio: true,",
+    "new": "    archive: e.archive, record: e.record, frame: e.frame, dye: e.dye,\n    studio: true,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -572,8 +572,8 @@
   {
     "name": "STUDIO1-install-dye-dropped",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "      dye: e.dye,\n      studio: true,",
-    "new": "      studio: true,",
+    "old": "    archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,\n    studio: true,",
+    "new": "    archive: e.archive, record: e.record, frame: e.frame, map: e.map,\n    studio: true,",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -581,8 +581,8 @@
   {
     "name": "STUDIO1-install-not-studio",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "      studio: true,\n      fileName: `studio:${e.path}`,",
-    "new": "      fileName: `studio:${e.path}`,",
+    "old": "    studio: true, fileName: `studio:${e.path}`, load: () => bytes(e.path),",
+    "new": "    fileName: `studio:${e.path}`, load: () => bytes(e.path),",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -590,8 +590,8 @@
   {
     "name": "STUDIO1-install-filename-dropped",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "      fileName: `studio:${e.path}`,\n      load: () => bytes(e.path),",
-    "new": "      load: () => bytes(e.path),",
+    "old": "    studio: true, fileName: `studio:${e.path}`, load: () => bytes(e.path),",
+    "new": "    studio: true, load: () => bytes(e.path),",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -599,8 +599,8 @@
   {
     "name": "STUDIO1-generation-still",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "  if (n) _generation++;\n  const own = _worn.filter((e) => e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE);",
-    "new": "  const own = _worn.filter((e) => e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE);",
+    "old": "  if (n) _generation++;\n",
+    "new": "",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -617,8 +617,8 @@
   {
     "name": "STUDIO1-decodes-uncapped",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "  _decoded = Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, own.length) }, lane)).then(() => {});",
-    "new": "  _decoded = Promise.all(Array.from({ length: own.length }, lane)).then(() => {});",
+    "old": "Math.min(PRELOAD_CONCURRENCY, own.length)",
+    "new": "own.length",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -626,8 +626,8 @@
   {
     "name": "STUDIO1-landed-before-decoded",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "  await _decoded;\n  return n;",
-    "new": "  return n;",
+    "old": "  const n = await installStudioArt();\n  await _decoded;\n",
+    "new": "  const n = await installStudioArt();\n",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "STUDIO1-landed-asks-nothing",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "  const n = await installStudioArt();",
-    "new": "  const n = await (_install ?? 0);",
+    "old": "  const n = await installStudioArt();\n  await _decoded;\n",
+    "new": "  const n = await (_install ?? 0);\n  await _decoded;\n",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -680,7 +680,7 @@
   {
     "name": "STUDIO1-a-miss-never-decoded",
     "file": "src/systems/studioArt/studioArt.js",
-    "old": "    .then(() =>\n      hasTextureReplacement(archive, record)\n        ? preloadTextureRecord(archive, record, 0, 'Albedo', null, { decode: _decode })\n        : null,\n    )",
+    "old": "    .then(() => (hasTextureReplacement(archive, record) ? preloadTextureRecord(archive, record, 0, 'Albedo', null, { decode: _decode }) : null))",
     "new": "    .then(() => decodedTexture(archive, record))",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
@@ -726,7 +726,7 @@
     "name": "STUDIO1-night-lit-by-the-paint",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    const lit = decodedTexture(archive, night, 0, 'Emission');",
-    "new": "    const lit = null;\n    void decodedTexture;",
+    "new": "    const lit = null; void decodedTexture;",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -752,8 +752,8 @@
   {
     "name": "STUDIO1-room-slot-by-source",
     "file": "src/scenes/caravanRoom.js",
-    "old": "      { slot: key },\n    ); // the live record's slot: a room repainted while a picture was on its way keeps its new paint",
-    "new": "    ); // the live record's slot: a room repainted while a picture was on its way keeps its new paint",
+    "old": "    }, { slot: key });",
+    "new": "    });",
     "tests": [
       "test/systems/studioArt/auditstudio1.test.js"
     ]
@@ -761,8 +761,8 @@
   {
     "name": "STUDIO1-icon-before-the-studio",
     "file": "src/world/wagonModels.js",
-    "old": "  await studioLanded(); // STUDIO1: the icon is drawn once - in the studio's pictures where an artist drew them",
-    "new": "  void studioLanded;",
+    "old": "  await studioLanded();   // STUDIO1: the icon is drawn once - in the studio's pictures where an artist drew them\n",
+    "new": "  void studioLanded;\n",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]

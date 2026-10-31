@@ -67,26 +67,19 @@
 // rebuild.
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
-import { worldDataDoor } from './worldData/worldDataDoor.js'; // RR3b: WorldDataReplacement's three asks (MapsFile.cs:984, :999, :1027)
+import { worldDataDoor } from './worldData/worldDataDoor.js';   // RR3b: WorldDataReplacement's three asks (MapsFile.cs:984, :999, :1027)
 import { PakFile } from './pakFile.js';
 import { readBuildingData, BUILDING_DATA_SIZE } from './blocksFile.js';
 // PROF1: the three FALL.EXE / MapsFile tables and the map's bounds the account service reads too, in a module that reads no file (mapsTables.js) -
 // one home, re-exported here so every importer stands where it stood.
-import {
-  REGION_NAMES,
-  REGION_RACES,
-  CLIMATES,
-  MAX_MAP_PIXEL_X,
-  MAX_MAP_PIXEL_Y,
-  BAY_REGION_COUNT,
-  isProvinceRegion,
-} from './mapsTables.js';
+import { REGION_NAMES, REGION_RACES, CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y, BAY_REGION_COUNT, isProvinceRegion } from './mapsTables.js';
 export { REGION_NAMES, REGION_RACES, CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y };
 
 // World metrics.
 export const WORLD_MAP_TERRAIN_DIM = 32768;
 export const WORLD_MAP_TILE_DIM = 128;
 export const WORLD_MAP_RMB_DIM = 4096;
+
 
 /**
  * PatchRegionIndex (MapsFile.cs:550-569), verbatim - the workaround for
@@ -107,128 +100,27 @@ export function patchRegionIndex(regionIndex, canonicalRegionName) {
   return regionIndex;
 }
 
+
 /** Region temple faction IDs from FALL.EXE. */
 export const REGION_TEMPLES = Object.freeze([
-  106,
-  82,
-  0,
-  0,
-  0,
-  98,
-  0,
-  0,
-  0,
-  92,
-  0,
-  106,
-  0,
-  0,
-  0,
-  84,
-  36,
-  36,
-  84,
-  88,
-  82,
-  88,
-  98,
-  92,
-  0,
-  0,
-  82,
-  0,
-  0,
-  0,
-  0,
-  0,
-  88,
-  94,
-  36,
-  94,
-  106,
-  84,
-  106,
-  106,
-  88,
-  98,
-  82,
-  98,
-  84,
-  94,
-  36,
-  88,
-  94,
-  36,
-  98,
-  84,
-  106,
-  88,
-  106,
-  88,
-  92,
-  84,
-  98,
-  88,
-  82,
-  94,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0, // WW-R: the provinces past the Bay - FALL.EXE names none of their temples
+  106, 82, 0, 0, 0, 98, 0, 0, 0, 92,
+  0, 106, 0, 0, 0, 84, 36, 36, 84, 88,
+  82, 88, 98, 92, 0, 0, 82, 0, 0, 0,
+  0, 0, 88, 94, 36, 94, 106, 84, 106, 106,
+  88, 98, 82, 98, 84, 94, 36, 88, 94, 36,
+  98, 84, 106, 88, 106, 88, 92, 84, 98, 88,
+  82, 94,
+  0, 0, 0, 0, 0, 0, 0, 0, 0,   // WW-R: the provinces past the Bay - FALL.EXE names none of their temples
 ]);
 
 /** Block file prefixes indexed by blockIndex. */
 export const RMB_BLOCK_PREFIXES = Object.freeze([
-  'TVRN',
-  'GENR',
-  'RESI',
-  'WEAP',
-  'ARMR',
-  'ALCH',
-  'BANK',
-  'BOOK',
-  'CLOT',
-  'FURN',
-  'GEMS',
-  'LIBR',
-  'PAWN',
-  'TEMP',
-  'TEMP',
-  'PALA',
-  'FARM',
-  'DUNG',
-  'CAST',
-  'MANR',
-  'SHRI',
-  'RUIN',
-  'SHCK',
-  'GRVE',
-  'FILL',
-  'KRAV',
-  'KDRA',
-  'KOWL',
-  'KMOO',
-  'KCAN',
-  'KFLA',
-  'KHOR',
-  'KROS',
-  'KWHE',
-  'KSCA',
-  'KHAW',
-  'MAGE',
-  'THIE',
-  'DARK',
-  'FIGH',
-  'CUST',
-  'WALL',
-  'MARK',
-  'SHIP',
-  'WITC',
+  'TVRN', 'GENR', 'RESI', 'WEAP', 'ARMR', 'ALCH', 'BANK', 'BOOK',
+  'CLOT', 'FURN', 'GEMS', 'LIBR', 'PAWN', 'TEMP', 'TEMP', 'PALA',
+  'FARM', 'DUNG', 'CAST', 'MANR', 'SHRI', 'RUIN', 'SHCK', 'GRVE',
+  'FILL', 'KRAV', 'KDRA', 'KOWL', 'KMOO', 'KCAN', 'KFLA', 'KHOR',
+  'KROS', 'KWHE', 'KSCA', 'KHAW', 'MAGE', 'THIE', 'DARK', 'FIGH',
+  'CUST', 'WALL', 'MARK', 'SHIP', 'WITC',
 ]);
 
 /** Letters forming the second part of an RMB block name. */
@@ -238,22 +130,10 @@ const LETTER2_ARRAY = ['A', 'L', 'M', 'S'];
 const RDB_BLOCK_LETTERS = ['N', 'W', 'L', 'S', 'B', 'M'];
 
 export const LOCATION_TYPES = Object.freeze({
-  TownCity: 0,
-  TownHamlet: 1,
-  TownVillage: 2,
-  HomeFarms: 3,
-  DungeonLabyrinth: 4,
-  ReligionTemple: 5,
-  Tavern: 6,
-  DungeonKeep: 7,
-  HomeWealthy: 8,
-  ReligionCult: 9,
-  DungeonRuin: 10,
-  HomePoor: 11,
-  Graveyard: 12,
-  Coven: 13,
-  HomeYourShips: 14,
-  None: 0xffff,
+  TownCity: 0, TownHamlet: 1, TownVillage: 2, HomeFarms: 3,
+  DungeonLabyrinth: 4, ReligionTemple: 5, Tavern: 6, DungeonKeep: 7,
+  HomeWealthy: 8, ReligionCult: 9, DungeonRuin: 10, HomePoor: 11,
+  Graveyard: 12, Coven: 13, HomeYourShips: 14, None: 0xffff,
 });
 
 /* PlayerGPS.IsPlayerInTown's seven-type set lived here briefly - two
@@ -265,56 +145,30 @@ export const LOCATION_TYPES = Object.freeze({
  * fuller port and the better home; this file reads MAPS.BSA. */
 
 export const DUNGEON_TYPES = Object.freeze({
-  Crypt: 0,
-  OrcStronghold: 1,
-  HumanStronghold: 2,
-  Prison: 3,
-  DesecratedTemple: 4,
-  Mine: 5,
-  NaturalCave: 6,
-  Coven: 7,
-  VampireHaunt: 8,
-  Laboratory: 9,
-  HarpyNest: 10,
-  RuinedCastle: 11,
-  SpiderNest: 12,
-  GiantStronghold: 13,
-  DragonsDen: 14,
-  BarbarianStronghold: 15,
-  VolcanicCaves: 16,
-  ScorpionNest: 17,
-  Cemetery: 18,
-  NoDungeon: 255,
+  Crypt: 0, OrcStronghold: 1, HumanStronghold: 2, Prison: 3,
+  DesecratedTemple: 4, Mine: 5, NaturalCave: 6, Coven: 7,
+  VampireHaunt: 8, Laboratory: 9, HarpyNest: 10, RuinedCastle: 11,
+  SpiderNest: 12, GiantStronghold: 13, DragonsDen: 14,
+  BarbarianStronghold: 15, VolcanicCaves: 16, ScorpionNest: 17,
+  Cemetery: 18, NoDungeon: 255,
 });
 
+
 export const CLIMATE_BASE_TYPES = Object.freeze({
-  None: -1,
-  Desert: 0,
-  Mountain: 100,
-  Temperate: 300,
-  Swamp: 400,
+  None: -1, Desert: 0, Mountain: 100, Temperate: 300, Swamp: 400,
 });
 
 // ClimateTextureSet nature archives.
 /** The climates' nature sets - their summer archives (DECOR-OUTDOOR: a yard's trees and plants are its climate's). */
 export const CLIMATE_NATURE = Object.freeze({
-  RainForest: 500,
-  SubTropical: 501,
-  Swamp: 502,
-  Desert: 503,
-  TemperateWoodland: 504,
-  WoodlandHills: 506,
-  HauntedWoodlands: 508,
+  RainForest: 500, SubTropical: 501, Swamp: 502, Desert: 503,
+  TemperateWoodland: 504, WoodlandHills: 506, HauntedWoodlands: 508,
   Mountains: 510,
 });
 
 // FactionFile.FactionRaces values used by climate settings.
 export const FACTION_RACES = Object.freeze({
-  None: -1,
-  Nord: 0,
-  Khajiit: 1,
-  Redguard: 2,
-  Breton: 3,
+  None: -1, Nord: 0, Khajiit: 1, Redguard: 2, Breton: 3,
 });
 
 export const DEFAULT_CLIMATE = 231;
@@ -333,7 +187,7 @@ export function mapPixelToLongitudeLatitude(mapPixelX, mapPixelY) {
 
 /** ID of map pixel; maps to location and quest IDs (mapId & 0xfffff). */
 export function getMapPixelID(mapPixelX, mapPixelY) {
-  return mapPixelY * 1000 + mapPixelX; // BAY-OWN: MapsFile's own pixel id (DFU's GetMapPixelID)
+  return mapPixelY * 1000 + mapPixelX;   // BAY-OWN: MapsFile's own pixel id (DFU's GetMapPixelID)
 }
 
 export function getPixelFromPixelID(pixelID) {
@@ -481,14 +335,13 @@ export class MapsFile {
    *  PROVINCE_REGION_NAMES), which holds no MAPS.BSA record. */
   getRegionName(region) {
     if (isProvinceRegion(region)) return REGION_NAMES[region];
-    if (region < 0 || region >= this.regionCount) return ''; // BAY-OWN: MAPS.BSA's own regions, a province's answered above
+    if (region < 0 || region >= this.regionCount) return '';   // BAY-OWN: MAPS.BSA's own regions, a province's answered above
     return REGION_NAMES[region];
   }
 
   /** Index of region with specified name, or -1 - WW-R: a province's too. */
   getRegionIndex(name) {
-    for (let i = 0; i < this.regionCount; i++) {
-      // BAY-OWN: MAPS.BSA's own regions
+    for (let i = 0; i < this.regionCount; i++) {   // BAY-OWN: MAPS.BSA's own regions
       if (REGION_NAMES[i] === name) return i;
     }
     for (let i = BAY_REGION_COUNT; i < REGION_NAMES.length; i++) if (REGION_NAMES[i] === name) return i;
@@ -497,7 +350,7 @@ export class MapsFile {
 
   /** Load a region into memory and decompose it for use. */
   loadRegion(region) {
-    if (region < 0 || region >= this.regionCount) return false; // BAY-OWN: MAPS.BSA's own regions
+    if (region < 0 || region >= this.regionCount) return false;   // BAY-OWN: MAPS.BSA's own regions
     // DEPARTURE (measured): C# LoadRegion has NO cache check - every call
     // discards lastRegion and re-reads the four BSA records, rebuilding
     // DFRegion (MapsFile.cs:653-680). Memoized here. The decoded region is
@@ -521,10 +374,8 @@ export class MapsFile {
       dfRegion: null,
     };
     if (
-      rec.mapNames.length === 0 ||
-      rec.mapTable.length === 0 ||
-      rec.mapPItem.length === 0 ||
-      rec.mapDItem.length === 0
+      rec.mapNames.length === 0 || rec.mapTable.length === 0 ||
+      rec.mapPItem.length === 0 || rec.mapDItem.length === 0
     ) {
       return false;
     }
@@ -544,7 +395,7 @@ export class MapsFile {
 
   /** Discard a region from memory. */
   discardRegion(region) {
-    if (region < 0 || region >= this.regionCount) return; // BAY-OWN: MAPS.BSA's own regions
+    if (region < 0 || region >= this.regionCount) return;   // BAY-OWN: MAPS.BSA's own regions
     this._regions[region] = null;
   }
 
@@ -577,7 +428,7 @@ export class MapsFile {
 
     dfLocation.regionIndex = region;
     dfLocation.locationIndex = location;
-    worldDataDoor()?.editLocation?.(dfLocation, this); // ARENA1: the port's own edits (world/arena/arenaCity.js - Daggerfall's cell 4,3), on every layout's read
+    worldDataDoor()?.editLocation?.(dfLocation, this);   // ARENA1: the port's own edits (world/arena/arenaCity.js - Daggerfall's cell 4,3), on every layout's read
     return dfLocation;
   }
 
@@ -593,8 +444,7 @@ export class MapsFile {
   /** Block name for exterior block at x,y. */
   getRmbBlockName(dfLocation, x, y) {
     // WD3: the town whose blocks are read next - a town a save keeps in another layout is read in it (systems/layoutPins.js)
-    if (Number.isInteger(dfLocation.regionIndex) && Number.isInteger(dfLocation.locationIndex))
-      worldDataDoor()?.noteReadingLocation?.(dfLocation.regionIndex, dfLocation.locationIndex);
+    if (Number.isInteger(dfLocation.regionIndex) && Number.isInteger(dfLocation.locationIndex)) worldDataDoor()?.noteReadingLocation?.(dfLocation.regionIndex, dfLocation.locationIndex);
     const index = y * dfLocation.exterior.exteriorData.width + x;
     return dfLocation.exterior.exteriorData.blockNames[index];
   }
@@ -663,8 +513,8 @@ export class MapsFile {
     const politicIndex = this.getPoliticIndex(mapPixelX, mapPixelY);
     // High Rock sea coast is the one politic value below the +128 band
     let result = politicIndex === 64 ? 31 : politicIndex - 128;
-    if (result === 105) result = 16; // known bad value -> Wrothgarian Mountains
-    if (result < 0 || result >= REGION_NAMES.length) result = 0; // clamp out of range - WW-R: a province's region past the Bay is in range (its politic world/tamriel/tamrielGround.js groundPoliticIndex's)
+    if (result === 105) result = 16;   // known bad value -> Wrothgarian Mountains
+    if (result < 0 || result >= REGION_NAMES.length) result = 0;   // clamp out of range - WW-R: a province's region past the Bay is in range (its politic world/tamriel/tamrielGround.js groundPoliticIndex's)
     return result;
   }
 
@@ -866,7 +716,10 @@ export class MapsFile {
 
   /** Politic should always equal region index + 128. */
   _readClimatePoliticData(dfLocation) {
-    const pos = longitudeLatitudeToMapPixel(dfLocation.mapTableData.longitude, dfLocation.mapTableData.latitude);
+    const pos = longitudeLatitudeToMapPixel(
+      dfLocation.mapTableData.longitude,
+      dfLocation.mapTableData.latitude
+    );
     dfLocation.politic = this.politicPak.getValue(pos.x, pos.y);
     const worldClimate = this.climatePak.getValue(pos.x, pos.y);
     dfLocation.climate = getWorldClimateSettings(worldClimate);
@@ -934,7 +787,7 @@ export class MapsFile {
         dfLocation,
         ext.blockIndex[i],
         ext.blockNumber[i],
-        ext.blockCharacter[i],
+        ext.blockCharacter[i]
       );
     }
   }

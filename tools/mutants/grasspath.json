@@ -114,8 +114,8 @@
   {
     "name": "PERF10-the-eviction-takes-the-nearest-standing-cell-instead-of-the-farthest",
     "file": "src/render/labGrass.js",
-    "old": "          if (hd > farD) {",
-    "new": "          if (hd < farD) {",
+    "old": "          if (hd > farD) { farD = hd; far = held; farKey = k; }",
+    "new": "          if (hd < farD) { farD = hd; far = held; farKey = k; }",
     "tests": [
       "test/world/terrain/grasspath.test.js"
     ]
@@ -132,7 +132,7 @@
   {
     "name": "PERF10-the-hysteresis-goes-so-the-rim-churns-where-the-eye-stands",
     "file": "src/render/labGrass.js",
-    "old": "      const keepR2 = span * span; // PERF10: held out to here",
+    "old": "      const keepR2 = span * span;      // PERF10: held out to here",
     "new": "      const keepR2 = range * range;",
     "tests": [
       "test/world/terrain/grasspath.test.js",
@@ -142,7 +142,7 @@
   {
     "name": "PERF10-the-fill-reaches-as-far-as-the-hold-so-cells-are-placed-that-cannot-be-drawn",
     "file": "src/render/labGrass.js",
-    "old": "      const fillR2 = range * range; // PERF10: placed only inside here",
+    "old": "      const fillR2 = range * range;    // PERF10: placed only inside here",
     "new": "      const fillR2 = span * span;",
     "tests": [
       "test/world/terrain/grasspath.test.js",
@@ -152,8 +152,8 @@
   {
     "name": "PERF10-the-free-sweep-measures-from-the-cells-centre-not-its-nearest-point",
     "file": "src/render/labGrass.js",
-    "old": "    const dx = Math.max(cx * cell + gx - ex, 0, ex - ((cx + 1) * cell + gx));\n    const dz = Math.max(cz * cell + gz - ez, 0, ez - ((cz + 1) * cell + gz));",
-    "new": "    const dx = (cx + 0.5) * cell + gx - ex;\n    const dz = (cz + 0.5) * cell + gz - ez;",
+    "old": "  const nearSq = (cx, cz, ex, ez) => {\n    const dx = Math.max(cx * cell + gx - ex, 0, ex - ((cx + 1) * cell + gx));\n    const dz = Math.max(cz * cell + gz - ez, 0, ez - ((cz + 1) * cell + gz));\n    return dx * dx + dz * dz;\n  };",
+    "new": "  const nearSq = (cx, cz, ex, ez) => {\n    const dx = (cx + 0.5) * cell + gx - ex;\n    const dz = (cz + 0.5) * cell + gz - ez;\n    return dx * dx + dz * dz;\n  };",
     "tests": [
       "test/world/terrain/grasspath.test.js",
       "test/render/labGrass.test.js"

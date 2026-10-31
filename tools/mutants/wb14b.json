@@ -2,8 +2,8 @@
   {
     "name": "WB14b-every-carrier-a-portent",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  if (((n % 2) + 2) % 2 === 1) return null; // every other carrier",
-    "new": "",
+    "old": "  if (((n % 2) + 2) % 2 === 1) return null;   // every other carrier\n",
+    "new": "\n",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB14b-the-Dire-Breach-without-its-line",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  return (ok.length > 1 ? [gateDireLine(), ...lines] : lines).join(' ');",
-    "new": "  return lines.join(' ');",
+    "old": "return (ok.length > 1 ? [gateDireLine(), ...lines] : lines).join(' ');",
+    "new": "return lines.join(' ');",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "AUDIT-WB14-RECORD-6-portents-tithe-every-night",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  isGateDay(day) && gateRoll(day, 21) % TITHE_ONE_IN === 0",
-    "new": "  isGateDay(day) && gateRoll(day, 21) % 1 === 0",
+    "old": "gateRoll(day, 21) % TITHE_ONE_IN === 0 ?",
+    "new": "gateRoll(day, 21) % 1 === 0 ?",
     "tests": [
       "test/net/gate/wb14b_portents.test.js"
     ],

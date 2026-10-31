@@ -232,8 +232,8 @@
   {
     "name": "EGE1-the-guard-unpaid",
     "file": "server-account/src/marks.js",
-    "old": "    `EXISTS (SELECT 1 FROM eg_redoubts WHERE b = ?${p} AND account = ?1 AND w = ?${p + 1} AND nonce = ?${p + 2} AND paid = 1)`,",
-    "new": "    `EXISTS (SELECT 1 FROM eg_redoubts WHERE b = ?${p} AND account = ?1 AND w = ?${p + 1} AND nonce = ?${p + 2})`,",
+    "old": "AND w = ?${p + 1} AND nonce = ?${p + 2} AND paid = 1)`,",
+    "new": "AND w = ?${p + 1} AND nonce = ?${p + 2})`,",
     "why": "an unpaid claim marking its guild's deed",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -242,8 +242,8 @@
   {
     "name": "EGE1-the-faucet-amount",
     "file": "src/net/marksLaw.js",
-    "old": "  eg: Object.freeze({ amount: EG_PAY_MARKS }), // EG-E1: a Redoubt the week pays (server-account/src/egEconomy.js)",
-    "new": "  eg: Object.freeze({ amount: 25 }), // EG-E1: a Redoubt the week pays (server-account/src/egEconomy.js)",
+    "old": "eg: Object.freeze({ amount: EG_PAY_MARKS }),",
+    "new": "eg: Object.freeze({ amount: 25 }),",
     "why": "the Redoubt's 20 silver another number",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "EGE1-outside-the-cap",
     "file": "src/net/marksLaw.js",
-    "old": "export const MARKS_COMBAT = Object.freeze({\n  kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']),\n  perDay: 150,\n});",
-    "new": "export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid', 'serpent', 'star']), perDay: 150 });",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'star']), perDay: 150 }",
     "why": "the Spire's silver outside the day's combat cap",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -302,8 +302,8 @@
   {
     "name": "EGE1-embers-outside-the-purse",
     "file": "server-account/src/accounts.js",
-    "old": "  '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
-    "new": "  '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1))';",
+    "old": " + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
+    "new": ")';",
     "why": "the Spire's embers never spendable",
     "tests": [
       "test/net/eliteGates/egeco_service.test.js"
@@ -575,8 +575,8 @@
   {
     "name": "EGE1-source-a-breach",
     "file": "src/ui/haulCards.js",
-    "old": "  eg: 'Redoubt taken',",
-    "new": "  eg: 'Breach closed',",
+    "old": "eg: 'Redoubt taken', get star() { return t('starfall.haul.source', 'Star held'); } });",
+    "new": "eg: 'Breach closed', get star() { return t('starfall.haul.source', 'Star held'); } });",
     "why": "a Redoubt's silver carded as a breach's",
     "tests": [
       "test/systems/eliteGates/egeco_broker.test.js"

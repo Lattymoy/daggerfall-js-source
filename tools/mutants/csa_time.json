@@ -371,8 +371,8 @@
   {
     "name": "CSA-G-down-key-dropped",
     "file": "src/systems/inputActions.js",
-    "old": "  ['NumpadSubtract', 'BoatTimeScaleDown'],\n  ['NumpadEnter', 'BoatTimeScaleReset'],",
-    "new": "  ['NumpadEnter', 'BoatTimeScaleReset'],",
+    "old": "  ['NumpadSubtract', 'BoatTimeScaleDown'],\n",
+    "new": "",
     "tests": [
       "test/systems/inputactions.test.js"
     ]

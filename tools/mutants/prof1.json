@@ -146,8 +146,8 @@
   {
     "name": "PROF1-16-an-herb-its-rarest-place",
     "file": "src/net/nodeLaw.js",
-    "old": "      if (table[t].includes(templateIndex) && (best === null || t + 1 < best)) best = t + 1;",
-    "new": "      if (table[t].includes(templateIndex) && (best === null || t + 1 > best)) best = t + 1;",
+    "old": "    for (let t = 0; t < table.length; t++) if (table[t].includes(templateIndex) && (best === null || t + 1 < best)) best = t + 1;",
+    "new": "    for (let t = 0; t < table.length; t++) if (table[t].includes(templateIndex) && (best === null || t + 1 > best)) best = t + 1;",
     "tests": [
       "test/systems/foraging/prof1_law.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "PROF1-17-winter-bares-nothing",
     "file": "src/net/nodeLaw.js",
-    "old": "export const herbInSeason = (templateIndex, season) =>\n  season !== SEASONS.Winter || !WINTER_BARE.includes(templateIndex);",
+    "old": "export const herbInSeason = (templateIndex, season) => season !== SEASONS.Winter || !WINTER_BARE.includes(templateIndex);",
     "new": "export const herbInSeason = (templateIndex, season) => true;",
     "tests": [
       "test/systems/foraging/prof1_law.test.js",
@@ -165,8 +165,8 @@
   {
     "name": "PROF1-18-unconfirmed-shows-rare",
     "file": "src/net/nodeLaw.js",
-    "old": "  const tier = drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
-    "new": "  const tier = drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
+    "old": "drawTier(unit('herb', x, y, day, slot, 3), confirmed ? HERB_TIERS : 2);",
+    "new": "drawTier(unit('herb', x, y, day, slot, 3), HERB_TIERS);",
     "tests": [
       "test/systems/foraging/prof1_law.test.js"
     ]
@@ -230,8 +230,8 @@
   {
     "name": "PROF1-25-the-first-writ-ordinary",
     "file": "src/net/nodeLaw.js",
-    "old": "    if (slot === 0 || !low.length)",
-    "new": "    if (!low.length)",
+    "old": "    if (slot === 0 || !low.length) tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
+    "new": "    if (!low.length) tier = high.length ? high[high.length - 1] : tiers[tiers.length - 1];",
     "tests": [
       "test/systems/foraging/prof1_law.test.js"
     ]

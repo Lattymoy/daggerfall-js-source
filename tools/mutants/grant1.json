@@ -22,8 +22,8 @@
   {
     "name": "GRANT1-stream-salted-otherwise",
     "file": "src/net/grantLaw.js",
-    "old": "  let a = grantHash('grant', s >>> 0, salt);",
-    "new": "  let a = grantHash('grants', s >>> 0, salt);",
+    "old": "let a = grantHash('grant', s >>> 0, salt);",
+    "new": "let a = grantHash('grants', s >>> 0, salt);",
     "why": "the grant's stream is no longer eliteRng over eliteHash",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "GRANT1-kind-most-ignored",
     "file": "src/net/grantLaw.js",
-    "old": "  if (!intIn(v.n, 1, law.max) || !intIn(v.s, 0, 0xffffffff) || !intIn(v.e, 0, (1 << v.n) - 1)) return null;",
-    "new": "  if (!intIn(v.n, 1, 8) || !intIn(v.s, 0, 0xffffffff) || !intIn(v.e, 0, (1 << v.n) - 1)) return null;",
+    "old": "if (!intIn(v.n, 1, law.max) ||",
+    "new": "if (!intIn(v.n, 1, 8) ||",
     "why": "an encounter of five read as a grant",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "GRANT1-elite-champion-believed",
     "file": "src/net/grantLaw.js",
-    "old": "    if ((v.e >>> i) & 1 && v.c[i] !== -1) return null; // an elite is never a champion\n  }",
-    "new": "  }",
+    "old": "    if (((v.e >>> i) & 1) && v.c[i] !== -1) return null;   // an elite is never a champion\n",
+    "new": "",
     "why": "a member both elite and champion read",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "GRANT1-guest-level-refused",
     "file": "src/net/grantLaw.js",
-    "old": "  if (!(v.l === 0 || characterLevelIssuable(v.l)) || !(v.r === 0 || renownIssuable(v.r))) return null;",
-    "new": "  if (!characterLevelIssuable(v.l) || !(v.r === 0 || renownIssuable(v.r))) return null;",
+    "old": "if (!(v.l === 0 || characterLevelIssuable(v.l))",
+    "new": "if (!(characterLevelIssuable(v.l))",
     "why": "a guest's grant (no signed level) refused",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "GRANT1-minute-unsigned",
     "file": "src/net/grantLaw.js",
-    "old": "  return `${GRANT_SIG_V}\\n${g.g}|${g.o}|${g.q}|${g.a}|${g.k}|${g.p[0]},${g.p[1]}|${g.m}|${g.l}|${g.r}|${g.n}|${g.s}|${g.e}|${g.c.join(',')}|${g.h}|${g.x}`;",
-    "new": "  return `${GRANT_SIG_V}\\n${g.g}|${g.o}|${g.q}|${g.a}|${g.k}|${g.p[0]},${g.p[1]}|${g.l}|${g.r}|${g.n}|${g.s}|${g.e}|${g.c.join(',')}|${g.h}|${g.x}`;",
+    "old": "|${g.p[0]},${g.p[1]}|${g.m}|${g.l}|",
+    "new": "|${g.p[0]},${g.p[1]}|${g.l}|",
     "why": "the world minute moved under a good signature",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -72,7 +72,7 @@
   {
     "name": "GRANT1-any-signature-taken",
     "file": "src/net/grantLaw.js",
-    "old": "  try {\n    return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(grantBytes(v)));\n  } catch {\n    return false;\n  }",
+    "old": "  try { return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(grantBytes(v))); } catch { return false; }",
     "new": "  return true;",
     "why": "every signature of the right shape believed",
     "tests": [
@@ -82,8 +82,8 @@
   {
     "name": "GRANT1-renown-gate-dropped",
     "file": "src/net/grantLaw.js",
-    "old": "    if (elite && r >= GRANT_ELITE_MIN_RENOWN) {",
-    "new": "    if (elite) {",
+    "old": "if (elite && r >= GRANT_ELITE_MIN_RENOWN) {",
+    "new": "if (elite) {",
     "why": "an owner under Renown 5 is granted elites",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "GRANT1-elite-skips-draws",
     "file": "src/net/grantLaw.js",
-    "old": "      chance = rng(),\n      trait = rng(); // three draws a member, always",
-    "new": "      chance = elite ? 0 : rng(),\n      trait = elite ? 0 : rng(); // three draws a member, always",
+    "old": "const elite = rng() < GRANT_ELITE_CHANCE, chance = rng(), trait = rng();",
+    "new": "const elite = rng() < GRANT_ELITE_CHANCE, chance = elite ? 0 : rng(), trait = elite ? 0 : rng();",
     "why": "an elite's roll skips the champion's draws, so the members after it shift",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "GRANT1-dice-not-their-own",
     "file": "src/net/grantLaw.js",
-    "old": "  return Object.freeze(Object.fromEntries(GRANT_DICE.map((d) => [d, grantRng(s, `${d}:${i}`)])));",
-    "new": "  return Object.freeze(Object.fromEntries(GRANT_DICE.map((d) => [d, grantRng(s, `${i}`)])));",
+    "old": "[d, grantRng(s, `${d}:${i}`)]",
+    "new": "[d, grantRng(s, `${i}`)]",
     "why": "every die draws the same stream",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "GRANT1-ceiling-after-bucket",
     "file": "src/net/grantLaw.js",
-    "old": "  if (law.hostile && live + n > GRANT_CELL_CEILING) return { bucket, refusal: 'ceiling' };\n  const gate = tokenGate(bucket, nowMs, law.rate, law.cap);",
-    "new": "  const gate = tokenGate(bucket, nowMs, law.rate, law.cap);\n  if (law.hostile && live + n > GRANT_CELL_CEILING) return { bucket: gate.bucket, refusal: 'ceiling' };",
+    "old": "  if (law.hostile && live + n > GRANT_CELL_CEILING) return { bucket, refusal: 'ceiling' };\n  const gate = tokenGate(bucket, nowMs, law.rate, law.cap);\n",
+    "new": "  const gate = tokenGate(bucket, nowMs, law.rate, law.cap);\n  if (law.hostile && live + n > GRANT_CELL_CEILING) return { bucket: gate.bucket, refusal: 'ceiling' };\n",
     "why": "a full cell spends the asker's bucket",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "GRANT1-ceiling-off-by-one",
     "file": "src/net/grantLaw.js",
-    "old": "  if (law.hostile && live + n > GRANT_CELL_CEILING) return { bucket, refusal: 'ceiling' };",
-    "new": "  if (law.hostile && live + n >= GRANT_CELL_CEILING) return { bucket, refusal: 'ceiling' };",
+    "old": "live + n > GRANT_CELL_CEILING",
+    "new": "live + n >= GRANT_CELL_CEILING",
     "why": "the cell refuses the ask that fills it exactly",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "GRANT1-mint-size-bound",
     "file": "src/net/grantLaw.js",
-    "old": "  if (!intIn(n, 1, law.max)) return { bucket, refusal: 'size' };",
-    "new": "  if (!intIn(n, 1, law.max + 1)) return { bucket, refusal: 'size' };",
+    "old": "if (!intIn(n, 1, law.max)) return",
+    "new": "if (!intIn(n, 1, law.max + 1)) return",
     "why": "an ask past its kind minted",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "GRANT1-sender-unchecked",
     "file": "src/net/grantLaw.js",
-    "old": "  if (g.o !== from) return 'sender';\n  if (!coversCell(cover, g.q)) return 'cell';",
-    "new": "  if (!coversCell(cover, g.q)) return 'cell';",
+    "old": "  if (g.o !== from) return 'sender';\n",
+    "new": "",
     "why": "another socket's grant stands a forger's foe",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "GRANT1-skew-doubled",
     "file": "src/net/grantLaw.js",
-    "old": "  if (!(nowMs <= g.x + GRANT_SKEW_MS)) return 'expired';",
-    "new": "  if (!(nowMs <= g.x + 2 * GRANT_SKEW_MS)) return 'expired';",
+    "old": "nowMs <= g.x + GRANT_SKEW_MS",
+    "new": "nowMs <= g.x + 2 * GRANT_SKEW_MS",
     "why": "an expired grant believed two minutes on",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "GRANT1-member-off-by-one",
     "file": "src/net/grantLaw.js",
-    "old": "  if (!Number.isInteger(i) || i < 0 || i >= g.n || (g.h >= 0 && i !== g.h)) return 'member'; // GRANT3: a handed-on grant stands its one member",
-    "new": "  if (!Number.isInteger(i) || i < 0 || i > g.n || (g.h >= 0 && i !== g.h)) return 'member'; // GRANT3: a handed-on grant stands its one member",
+    "old": "i >= g.n ||",
+    "new": "i > g.n ||",
     "why": "a member past the grant stands",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "GRANT1-any-trait-believed",
     "file": "src/net/grantLaw.js",
-    "old": "  GRANT_MARKLESS.includes(g.k) || ((!z || ((g.e >>> i) & 1) === 1) && (cp == null || cp === g.c[i]));",
-    "new": "  GRANT_MARKLESS.includes(g.k) || ((!z || ((g.e >>> i) & 1) === 1) && (cp == null || cp >= 0));",
+    "old": "(cp == null || cp === g.c[i])",
+    "new": "(cp == null || cp >= 0)",
     "why": "any champion trait believed on a granted member",
     "tests": [
       "test/net/grant1_law.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "GRANT-star-off-its-home",
     "file": "src/net/grantLaw.js",
-    "old": "  star: Object.freeze({ max: 24, rate: 1 / 10, cap: 8, hostile: true }),",
-    "new": "  star: Object.freeze({ max: 9, rate: 1 / 10, cap: 8, hostile: true }),",
+    "old": "  star: Object.freeze({ max: 24,",
+    "new": "  star: Object.freeze({ max: 9,",
     "tests": [
       "test/net/grant1_law.test.js"
     ],

@@ -259,6 +259,6 @@ test('AUDIT WB C7 what a frame pays for: the stone\'s matrix only when it moves,
   const world = hostText('src/scenes/world.js');
   assert.match(world, /if \(gatePool\?\.stands\(\) && gatePool\.drawPass\(proj, view, wxEye32, now \/ 1000,/);
   const src = read('src/scenes/gate/gatePool.js');
-  assert.match(src, /if \(k !== _matKey\) \{\n\s*_matKey = k;\n\s*_mat = trs\(/);
+  assert.match(src, /if \(k !== _matKey\) \{ _matKey = k; _mat = trs\(/);
   assert.match(src, /aabb: fireBox\(place, profile, fireHalfW\)/);
 });

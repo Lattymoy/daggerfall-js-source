@@ -2,8 +2,8 @@
   {
     "name": "QUEST-HOME-the-read-names-no-homes",
     "file": "server-account/src/homes.js",
-    "old": "  return { towns: results.map((r) => [r.map_id, homeLayoutOk(r.layout) ? (r.layout ?? null) : null]), homes };",
-    "new": "  return { towns: results.map((r) => [r.map_id, homeLayoutOk(r.layout) ? (r.layout ?? null) : null]) };",
+    "old": "  return { towns: results.map((r) => [r.map_id, homeLayoutOk(r.layout) ? r.layout ?? null : null]), homes };",
+    "new": "  return { towns: results.map((r) => [r.map_id, homeLayoutOk(r.layout) ? r.layout ?? null : null]) };",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "QUEST-HOME-the-claim-answers-no-order",
     "file": "server-account/src/homes.js",
-    "old": "  return {\n    ok: true,\n    home: homeOf(row),\n    ...realmSaleOf(row),\n    realm: { seq: prep.seq },\n    moved: homeMoved(claim.mapId, [claim.buildingKey]),\n  }; // AUDIT HOME-PRICE C2; QUEST-HOME: a home now, for every page online",
-    "new": "  return { ok: true, home: homeOf(row), ...realmSaleOf(row), realm: { seq: prep.seq } }; // AUDIT HOME-PRICE C2; QUEST-HOME: a home now, for every page online",
+    "old": ", moved: homeMoved(claim.mapId, [claim.buildingKey]) };",
+    "new": " };",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "QUEST-HOME-the-sale-answers-no-order",
     "file": "server-account/src/homes.js",
-    "old": "    moved: homeMoved(home.map_id, [], [home.building_key]),\n  }; // QUEST-HOME: sold, a house again",
-    "new": "  }; // QUEST-HOME: sold, a house again",
+    "old": ", moved: homeMoved(home.map_id, [], [home.building_key]) };",
+    "new": " };",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]

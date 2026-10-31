@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-WB9-the-column-written-from-the-row-read-before",
     "file": "server-account/src/accounts.js",
-    "old": "        `UPDATE players SET insignia = CASE WHEN COALESCE(insignia, '') = '' THEN ?2 ELSE insignia || ' ' || ?2 END,",
-    "new": "        `UPDATE players SET insignia = ?2,",
+    "old": "insignia = CASE WHEN COALESCE(insignia, '') = '' THEN ?2 ELSE insignia || ' ' || ?2 END",
+    "new": "insignia = ?2",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "AUDIT-WB9-flown-over-the-collider-alone",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      flyRay = plane ? (a, d, l) => ray?.(a, d, l) ?? plane(a, d, l) : ray; // AUDIT WB9 (spoils F1): flown over the floor they were kept to",
-    "new": "      flyRay = ray; // AUDIT WB9 (spoils F1): flown over the floor they were kept to",
+    "old": "      flyRay = plane ? (a, d, l) => ray?.(a, d, l) ?? plane(a, d, l) : ray;",
+    "new": "      flyRay = ray;",
     "tests": [
       "test/net/gate/audit_wb9.test.js"
     ]

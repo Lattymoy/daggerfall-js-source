@@ -2,8 +2,8 @@
   {
     "name": "MWHEADS1-the-data-pools-again",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`))))\n    return { heads: own.heads, hairs: own.hairs };\n  const want = String(race || '').toLowerCase();",
-    "new": "  const want = String(race || '').toLowerCase();",
+    "old": "  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`)))) return { heads: own.heads, hairs: own.hairs };\n",
+    "new": "",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "MWHEADS1-AUDIT-own-pools-without-their-meshes",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`))))\n    return { heads: own.heads, hairs: own.hairs };",
-    "new": "  if (own) return { heads: own.heads, hairs: own.hairs };",
+    "old": "  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`)))) return",
+    "new": "  if (own) return",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "MWHEADS1-AUDIT-one-mesh-is-enough",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`))))",
-    "new": "  if (own && (!has || [...own.heads, ...own.hairs].some((r) => has(`meshes/${r.model}`))))",
+    "old": "[...own.heads, ...own.hairs].every((r) => has(",
+    "new": "[...own.heads, ...own.hairs].some((r) => has(",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "MWHEADS1-AUDIT-rows-ignore-the-archives",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  const pools = facePools(parts, race, female, { has, own: ownHeads });",
-    "new": "  const pools = facePools(parts, race, female, { own: ownHeads });",
+    "old": "  const pools = facePools(parts, race, female, { has, own: ownHeads });\n",
+    "new": "  const pools = facePools(parts, race, female, { own: ownHeads });\n",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "MWHEADS1-AUDIT-counts-the-data",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      counts: { all: sorted.length }, // AUDIT MW-HEADS1 (L2-F7): the pool chosen among - the port's own where it stands",
-    "new": "      counts: { all: 0 }, // AUDIT MW-HEADS1 (L2-F7): the pool chosen among - the port's own where it stands",
+    "old": "      counts: { all: sorted.length },",
+    "new": "      counts: { all: 0 },",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],

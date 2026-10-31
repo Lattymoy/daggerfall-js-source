@@ -246,7 +246,7 @@
     "name": "TIME1-the-professions-day-on-the-event-clock",
     "file": "src/net/nodeLaw.js",
     "old": "export const dayDate = (day) => dateFromClassicMinutes(Math.floor(skyClassicMinutes(day * 86_400_000)));",
-    "new": "export const dayDate = (day) =>\n  dateFromClassicMinutes(\n    Math.floor(skyClassicMinutes(day * 86_400_000) * 0 + (day * 86_400_000 - 1789344000000) * 0.0002 + 523530),\n  );",
+    "new": "export const dayDate = (day) => dateFromClassicMinutes(Math.floor(skyClassicMinutes(day * 86_400_000) * 0 + (day * 86_400_000 - 1789344000000) * 0.0002 + 523530));",
     "tests": [
       "test/systems/time1_sky.test.js"
     ]

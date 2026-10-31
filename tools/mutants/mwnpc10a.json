@@ -137,8 +137,8 @@
   {
     "name": "MWNPC10a-lane-scale-dropped",
     "file": "src/characters/npcBodies.js",
-    "old": "      r.scale = actor.scale > 0 ? actor.scale : 1; // MWNPC10\n    },",
-    "new": "    },",
+    "old": "      r.scale = actor.scale > 0 ? actor.scale : 1;   // MWNPC10\n",
+    "new": "",
     "tests": [
       "test/net/gate/mwnpc10_gate.test.js"
     ]

@@ -154,8 +154,8 @@
   {
     "name": "SD11A-L2F6-the-left-kerb-down",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "        xa = Math.min(xi, xo),\n        xb = Math.max(xi, xo);",
-    "new": "        xa = xi,\n        xb = xo;",
+    "old": "xa = Math.min(xi, xo), xb = Math.max(xi, xo);",
+    "new": "xa = xi, xb = xo;",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -174,8 +174,8 @@
   {
     "name": "SD11A-L2F6-no-lip-inside",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    f.quad(\n      SD_REALM_BRASS_RECORD,\n      C(xi1, 0, zi1),\n      C(xi1, SD_RIM_H, zi1),\n      C(xi0, SD_RIM_H, zi0),\n      C(xi0, 0, zi0),\n      [0, 0],\n      [0, 0.1],\n      [1, 0.1],\n      [1, 0],\n    );\n    // SD-LOOK S11: the torn edge, facing out - the top rows of the root's strata (the cake's lip); the hang's skirt from its foot",
-    "new": "    // SD-LOOK S11: the torn edge, facing out - the top rows of the root's strata (the cake's lip); the hang's skirt from its foot",
+    "old": "    f.quad(SD_REALM_BRASS_RECORD, C(xi1, 0, zi1), C(xi1, SD_RIM_H, zi1), C(xi0, SD_RIM_H, zi0), C(xi0, 0, zi0), [0, 0], [0, 0.1], [1, 0.1], [1, 0]);\n",
+    "new": "",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -184,8 +184,8 @@
   {
     "name": "SD11A-L2F6-a-kerb-a-lid",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "        P(xa, 0, false),\n        P(xa, H, false),\n        P(xa, H, true),\n        P(xa, 0, true),\n        [0, 0],\n        [0, 0.1],\n        [4, 0.1],\n        [4, 0],\n      ); // toward -x\n      f.quad(\n        SD_REALM_BRASS_RECORD,\n        P(xb, 0, true),",
-    "new": "        P(xb, 0, true),",
+    "old": "      f.quad(SD_REALM_BRASS_RECORD, P(xa, 0, false), P(xa, H, false), P(xa, H, true), P(xa, 0, true), [0, 0], [0, 0.1], [4, 0.1], [4, 0]);   // toward -x\n",
+    "new": "",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -364,8 +364,8 @@
   {
     "name": "SD11A-L2F9-the-lamps-sorted-by-a-closure",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  for (let i = 1; i < L.length; i++) {\n    const l = L[i],\n      dl = (l.x - ex) ** 2 + (l.z - ez) ** 2;\n    let j = i - 1;\n    while (j >= 0 && (L[j].x - ex) ** 2 + (L[j].z - ez) ** 2 > dl) {\n      L[j + 1] = L[j];\n      j--;\n    }\n    L[j + 1] = l;\n  }",
-    "new": "  L.sort((a, b) => (a.x - ex) ** 2 + (a.z - ez) ** 2 - ((b.x - ex) ** 2 + (b.z - ez) ** 2));",
+    "old": "  for (let i = 1; i < L.length; i++) {\n    const l = L[i], dl = (l.x - ex) ** 2 + (l.z - ez) ** 2;\n    let j = i - 1;\n    while (j >= 0 && (L[j].x - ex) ** 2 + (L[j].z - ez) ** 2 > dl) { L[j + 1] = L[j]; j--; }\n    L[j + 1] = l;\n  }\n",
+    "new": "  L.sort((a, b) => (a.x - ex) ** 2 + (a.z - ez) ** 2 - ((b.x - ex) ** 2 + (b.z - ez) ** 2));\n",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js",
       "test/world/superDungeon/sd5a_realm.test.js"
@@ -385,8 +385,8 @@
   {
     "name": "SD11A-L2F9-the-lights-fresh",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  return _realmLight;",
-    "new": "  return { tri: { ...tri, sky: [...tri.sky] }, key };",
+    "old": "  return _realmLight;\n};",
+    "new": "  return { tri: { ...tri, sky: [...tri.sky] }, key };\n};",
     "tests": [
       "test/world/superDungeon/sd5a_realm.test.js"
     ],
@@ -529,8 +529,8 @@
   {
     "name": "SD11A-L2F14-no-post",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    lampBoxQuads(p, SD_LAMP_POST_W, 0, SD_LAMP_H - SD_LAMP_HEAD).forEach((q, i) =>\n      f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? LAMP_SIDE_UV : PILLAR_TOP_UV)),\n    );\n    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, true).forEach((q) =>",
-    "new": "    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, true).forEach((q) =>",
+    "old": "    lampBoxQuads(p, SD_LAMP_POST_W, 0, SD_LAMP_H - SD_LAMP_HEAD).forEach((q, i) => f.quad(SD_REALM_BRASS_RECORD, q[0], q[1], q[2], q[3], ...(i < 4 ? LAMP_SIDE_UV : PILLAR_TOP_UV)));\n",
+    "new": "",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],
@@ -539,8 +539,8 @@
   {
     "name": "SD11A-L2F14-no-head",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, true).forEach((q) =>\n      f.quad(SD_HALL_GLOW_RECORD.brass, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV),\n    );\n    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD + 0.03).forEach((q) =>",
-    "new": "    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD + 0.03).forEach((q) =>",
+    "old": "    lampBoxQuads(p, SD_LAMP_HEAD, SD_LAMP_H - SD_LAMP_HEAD, SD_LAMP_H + SD_LAMP_HEAD, true).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass, q[0], q[1], q[2], q[3], ...PILLAR_TOP_UV));\n",
+    "new": "",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js",
       "test/world/superDungeon/sd5a_realm.test.js"
@@ -560,8 +560,8 @@
   {
     "name": "SD11A-L2F14-the-posts-off-the-collider",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  out.set(lamps, floors.length + pillars.length);\n  return out;",
-    "new": "  return out;",
+    "old": "  out.set(lamps, floors.length + pillars.length);\n",
+    "new": "",
     "tests": [
       "test/scenes/superDungeon/sd11a_scenes.test.js"
     ],

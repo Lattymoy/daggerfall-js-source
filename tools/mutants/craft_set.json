@@ -32,8 +32,8 @@
   {
     "name": "CRAFTSET-writ-piece-decor-scanned",
     "file": "server-account/src/craftWrits.js",
-    "old": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +pk.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
-    "new": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`; // AUDIT CRAFT-WRITS S2: its own alias (`pk`) - the board's outer `pr` named here made the check its own piece's",
+    "old": "json_extract(item, '$.pv') = +pk.provenance",
+    "new": "json_extract(item, '$.pv') = pk.provenance",
     "tests": [
       "test/server/craft_set.test.js"
     ],

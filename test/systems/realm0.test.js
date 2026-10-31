@@ -71,7 +71,7 @@ test('REALM P0.1 by source: the world host drops them beside the Test Room refus
   assert.ok(drop > w.indexOf("if (testRoomOffline) { params.delete('online'); publishBootParams(params); }"), 'after the Test Room refusal (which may take `online` itself away)');
   // PIN MOVED (HOST-SPLIT, 2026-10-19: the town probes - __addGold among them - moved verbatim to scenes/townProbes.js;
   // the host installs them, and that call is its read)
-  for (const reader of ["const regionName = params.get('region')", "const shotMode = params.has('shot');", 'if (shotMode) { modes.installShotProbes(); installTownProbes(); }']) {
+  for (const reader of ["const regionName = params.get('region')", "const shotMode = params.has('shot');", 'if (shotMode) {\n    modes.installShotProbes();\n    installTownProbes();\n  }']) {
     const at = w.indexOf(reader);
     assert.ok(at > drop, `${reader} reads after the drop`);
   }

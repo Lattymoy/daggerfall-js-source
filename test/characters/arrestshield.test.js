@@ -97,7 +97,7 @@ test('ARREST-SHIELD by source: ONE predicate answers "am I in a trial", and the 
   assert.equal((af.match(/awaitingSurrenderAnswer \|\| !!playerEntity\.arrested/g) ?? []).length, 1, 'said once');
   // The teardown: a stale closure over a dead entity must never shield
   // a live one.
-  assert.match(af, /function dispose\(\) \{\n\s*registerPlayerDamageVeto\(null\);\n\s*\}/);
+  assert.match(af, /function dispose\(\) \{ registerPlayerDamageVeto\(null\); \}/);
 
   // The veto is the FIRST thing the door does - ahead of the shield
   // pool and ahead of the bypassShield branch both.

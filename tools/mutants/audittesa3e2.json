@@ -82,8 +82,8 @@
   {
     "name": "E2-1-idle-bucket-kept",
     "file": "src/net/grantLaw.js",
-    "old": "    .filter(([k, v]) => !grantBucketIdle(k.slice(k.lastIndexOf('|') + 1), v, nowMs))",
-    "new": "    .filter(([k, v]) => true || !grantBucketIdle(k.slice(k.lastIndexOf('|') + 1), v, nowMs))",
+    "old": "filter(([k, v]) => !grantBucketIdle(",
+    "new": "filter(([k, v]) => true || !grantBucketIdle(",
     "tests": [
       "test/net/audittesa3e2_grantgate.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "E2-1-expired-grant-kept",
     "file": "src/net/grantLaw.js",
-    "old": "    .filter(([, v]) => v.x > nowMs)",
-    "new": "    .filter(([, v]) => true)",
+    "old": "filter(([, v]) => v.x > nowMs)",
+    "new": "filter(([, v]) => true)",
     "tests": [
       "test/net/audittesa3e2_grantgate.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "E2-1-version-unread",
     "file": "src/net/grantLaw.js",
-    "old": "  if (\n    !v ||\n    typeof v !== 'object' ||\n    v.v !== GRANT_GATE_V ||\n    !Number.isSafeInteger(v.n) ||\n    !Array.isArray(v.b) ||\n    !Array.isArray(v.l)\n  )",
-    "new": "  if (!v || typeof v !== 'object' || !Number.isSafeInteger(v.n) || !Array.isArray(v.b) || !Array.isArray(v.l))",
+    "old": "v.v !== GRANT_GATE_V || ",
+    "new": "",
     "tests": [
       "test/net/audittesa3e2_grantgate.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "E2-1-expired-read-back",
     "file": "src/net/grantLaw.js",
-    "old": "      !(Number.isFinite(e[2]) && e[2] > nowMs) ||",
-    "new": "      !Number.isFinite(e[2]) ||",
+    "old": "!(Number.isFinite(e[2]) && e[2] > nowMs)",
+    "new": "!Number.isFinite(e[2])",
     "tests": [
       "test/net/audittesa3e2_grantgate.test.js"
     ],

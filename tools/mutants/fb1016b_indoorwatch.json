@@ -805,8 +805,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-packed-as-array",
     "file": "src/ai/nav/navmesh.js",
-    "old": "    idx = colliders.box ? buildPackedIndex(colliders) : buildColliderIndex(colliders);",
-    "new": "    idx = buildColliderIndex(colliders);",
+    "old": "idx = colliders.box ? buildPackedIndex(colliders) : buildColliderIndex(colliders);",
+    "new": "idx = buildColliderIndex(colliders);",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -814,8 +814,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-count-shifted",
     "file": "src/ai/nav/navmesh.js",
-    "old": "    for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i + 1]++;",
-    "new": "    for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i]++;",
+    "old": "for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i + 1]++;",
+    "new": "for (let k = k0; k <= k1; k++) for (let i = i0; i <= i1; i++) start[k * bx + i]++;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -823,8 +823,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-no-prefix",
     "file": "src/ai/nav/navmesh.js",
-    "old": "  for (let j = 0; j < bx * bz; j++) start[j + 1] += start[j];\n  const list = new Int32Array(start[bx * bz]),",
-    "new": "  const list = new Int32Array(start[bx * bz]),",
+    "old": "  for (let j = 0; j < bx * bz; j++) start[j + 1] += start[j];\n",
+    "new": "",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -832,8 +832,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-fill-wrong-box",
     "file": "src/ai/nav/navmesh.js",
-    "old": "      for (let i = span[s]; i <= span[s + 1]; i++) list[fill[k * bx + i]++] = ci;",
-    "new": "      for (let i = span[s]; i <= span[s + 1]; i++) list[fill[k * bx + i]++] = n - 1 - ci;",
+    "old": "list[fill[k * bx + i]++] = ci;",
+    "new": "list[fill[k * bx + i]++] = n - 1 - ci;",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -841,8 +841,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-mint-top-bottom",
     "file": "src/ai/nav/navmesh.js",
-    "old": "      top: box[o + 4],\n      bottom: box[o + 5],",
-    "new": "      top: box[o + 5],\n      bottom: box[o + 4],",
+    "old": "top: box[o + 4], bottom: box[o + 5],",
+    "new": "top: box[o + 5], bottom: box[o + 4],",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]
@@ -850,8 +850,8 @@
   {
     "name": "INDOOR-WATCH-AUDIT-W2-mint-x1",
     "file": "src/ai/nav/navmesh.js",
-    "old": "      x1: box[o + 1],",
-    "new": "      x1: box[o],",
+    "old": "x0: box[o], x1: box[o + 1], z0: box[o + 2],",
+    "new": "x0: box[o], x1: box[o], z0: box[o + 2],",
     "tests": [
       "test/ai/nav/fb1016b_indoorwatch.test.js"
     ]

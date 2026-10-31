@@ -40,8 +40,8 @@
   {
     "name": "FIELD-GUN14-5-a-spent-orb-hangs-in-the-world",
     "file": "src/combat/arrowFlight.js",
-    "old": "        this._releaseOrb(m);\n        continue;",
-    "new": "        continue;",
+    "old": "      if (m.dead) { this._releaseOrb(m); continue; }",
+    "new": "      if (m.dead) { continue; }",
     "tests": [
       "test/systems/arrowflight.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "FIELD-GUN14-6-a-gun-kill-drops-arrows",
     "file": "src/combat/arrowFlight.js",
-    "old": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
-    "new": "  if (foe.entity?.items && !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
+    "old": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned",
+    "new": "  if (foe.entity?.items && !m.summoned",
     "tests": [
       "test/systems/arrowflight.test.js"
     ]

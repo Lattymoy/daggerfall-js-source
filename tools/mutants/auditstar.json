@@ -216,8 +216,8 @@
   {
     "name": "AUDIT-STAR-I2-glass-card-silent",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isStarglass(item))\n    for (const text of STARGLASS_TEXT.glass()) out.push({ text, center: true }); // AUDIT STAR I2\n  else if (isLockpick(item))",
-    "new": "  else if (isLockpick(item))",
+    "old": "  else if (isStarglass(item)) for (const text of STARGLASS_TEXT.glass()) out.push({ text, center: true });   // AUDIT STAR I2\n",
+    "new": "",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "AUDIT-STAR-I2-glass-classic-box",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    isStarglass(item) ||\n    isLockpick(item)",
-    "new": "    isLockpick(item)",
+    "old": "|| isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+    "new": "|| isHearthOffering(item) || isLockpick(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]

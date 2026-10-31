@@ -11,8 +11,8 @@
   {
     "name": "UNWITNESSED-ORE-the-vein-held-to-two",
     "file": "src/net/nodeLaw.js",
-    "old": "    confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER,",
-    "new": "    confirmed || surveyed ? 7 : 2,",
+    "old": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);",
+    "new": "  const d = drawFromTable(table, unit('vein', x, y, day, slot, 3), unit('vein', x, y, day, slot, 4), confirmed || surveyed ? 7 : 2);",
     "tests": [
       "test/net/fb1009e_unwitnessedore.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "UNWITNESSED-ORE-the-court-held-to-two",
     "file": "src/net/nodeLaw.js",
-    "old": "    for (const k of VEIN_TABLES[p.climate] ?? [])\n      if (tierOfKey(k) <= (p.confirmed ? 7 : UNCONFIRMED_VEIN_TIER)) keys.add(k);",
+    "old": "    for (const k of VEIN_TABLES[p.climate] ?? []) if (tierOfKey(k) <= (p.confirmed ? 7 : UNCONFIRMED_VEIN_TIER)) keys.add(k);",
     "new": "    for (const k of VEIN_TABLES[p.climate] ?? []) if (tierOfKey(k) <= (p.confirmed ? 7 : 2)) keys.add(k);",
     "tests": [
       "test/net/fb1009e_unwitnessedore.test.js"

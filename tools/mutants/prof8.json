@@ -2,8 +2,8 @@
   {
     "name": "PROF8-key-any-spelling",
     "file": "src/net/nodeLaw.js",
-    "old": "    return pixelOk(x, y) && haulKey({ x, y, day, id: h[4] }) === s ? { kind: 'haul', x, y, day, id: h[4] } : null;",
-    "new": "    return pixelOk(x, y) ? { kind: 'haul', x, y, day, id: h[4] } : null;",
+    "old": "    return pixelOk(x, y) && haulKey({ x, y, day, id: h[4] }) === s ? { kind: 'haul'",
+    "new": "    return pixelOk(x, y) ? { kind: 'haul'",
     "tests": [
       "test/net/prof8_law.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PROF8-full-net-unstepped",
     "file": "src/net/nodeLaw.js",
-    "old": "  let y = roll * (clean ? ACT_YIELD_MAX : 1);",
-    "new": "  let y = roll;",
+    "old": "  let y = roll * (clean ? ACT_YIELD_MAX : 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school)",
+    "new": "  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school)",
     "tests": [
       "test/net/prof8_law.test.js",
       "test/net/prof8_service.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "PROF8-netter-plain",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;",
-    "new": "  if (school) y += SCHOOL_FISH.plain;",
+    "old": "if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;",
+    "new": "if (school) y += SCHOOL_FISH.plain;",
     "tests": [
       "test/net/prof8_law.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "PROF8-slaughterfish-light",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (slaughterfish) y += 1;\n  return Math.max(1, wholeYield(y, chance));",
-    "new": "  return Math.max(1, wholeYield(y, chance));",
+    "old": "  if (slaughterfish) y += 1;\n",
+    "new": "",
     "tests": [
       "test/net/prof8_law.test.js",
       "test/net/prof8_service.test.js"
@@ -50,8 +50,8 @@
   {
     "name": "PROF8-pearl-diver-plain",
     "file": "src/net/nodeLaw.js",
-    "old": "  const pearl =\n    open &&\n    dice() < FISH_CHANCE.pearl * (pearlDiver ? FISH_CHANCE.pearlDiver : 1) * (deepSea ? FISH_CHANCE.deepSea : 1);",
-    "new": "  const pearl = open && dice() < FISH_CHANCE.pearl * 1 * (deepSea ? FISH_CHANCE.deepSea : 1);",
+    "old": "(pearlDiver ? FISH_CHANCE.pearlDiver : 1)",
+    "new": "1",
     "tests": [
       "test/net/prof8_law.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "PROF8-deep-sea-slaughter-plain",
     "file": "src/net/nodeLaw.js",
-    "old": "  const slaughterfish = open && dice() < FISH_CHANCE.slaughterfish * (deepSea ? FISH_CHANCE.deepSea : 1);",
-    "new": "  const slaughterfish = open && dice() < FISH_CHANCE.slaughterfish;",
+    "old": "FISH_CHANCE.slaughterfish * (deepSea ? FISH_CHANCE.deepSea : 1)",
+    "new": "FISH_CHANCE.slaughterfish",
     "tests": [
       "test/net/prof8_law.test.js"
     ]

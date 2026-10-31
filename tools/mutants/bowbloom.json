@@ -47,8 +47,8 @@
   {
     "name": "BOW-BLOOM-the-lane-unwired",
     "file": "src/combat/arrowFlight.js",
-    "old": "      dir = bowShotAim(dir, meta.weapon);",
-    "new": "      dir = [...dir];",
+    "old": "if (meta.fromPlayer && !orb && !meta.technique) { dir = bowShotAim(dir, meta.weapon);",
+    "new": "if (meta.fromPlayer && !orb && !meta.technique) { dir = [...dir];",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BOW-BLOOM-a-technique-bloomed",
     "file": "src/combat/arrowFlight.js",
-    "old": "    if (meta.fromPlayer && !orb && !meta.technique) {",
-    "new": "    if (meta.fromPlayer && !orb) {",
+    "old": "if (meta.fromPlayer && !orb && !meta.technique) { dir = bowShotAim(dir, meta.weapon);",
+    "new": "if (meta.fromPlayer && !orb) { dir = bowShotAim(dir, meta.weapon);",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BOW-FAST-the-stamp-off",
     "file": "src/combat/arrowFlight.js",
-    "old": "      meta = { ...meta, ...bowShotStamp(meta.weapon) };",
-    "new": "      meta = { ...meta };",
+    "old": "meta = { ...meta, ...bowShotStamp(meta.weapon) };",
+    "new": "meta = { ...meta };",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BOW-FAST-the-relay-body-whole",
     "file": "src/combat/arrowFlight.js",
-    "old": "  const dmg = bowFastDamage(m, m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled); // BOW-FAST",
-    "new": "  const dmg = (m, x) => x;\n  (m, m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled); // BOW-FAST",
+    "old": "  const dmg = bowFastDamage(m, m?.technique ?",
+    "new": "  const dmg = (m, x) => x;(m, m?.technique ?",
     "tests": [
       "test/combat/bowbloom.test.js"
     ]

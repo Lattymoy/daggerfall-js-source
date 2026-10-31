@@ -36,15 +36,15 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhanced/enhancedChunk.js'; // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhanced/enhancedOverlays.js'; // PX28: Tab puts it away
-import { requestLook } from '../player/pointerLock.js'; // MAC1: the relock rides the closing gesture
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
+import { requestLook } from '../player/pointerLock.js';   // MAC1: the relock rides the closing gesture
 import { BookReaderWindow } from './bookReader.js';
 import { BookFile } from '../formats/bookFile.js';
 import { getBookFileName } from '../systems/books.js';
-import { openPortBook } from '../systems/portBooks.js'; // WB12c: the port's own books, read before any file
-import { setBookAuthor } from '../systems/item/itemInfo.js'; // IM1: the %ba cache
-import { openLocalizedBookFile } from '../systems/localizedBook.js'; // L10N3f: LocalizedBook.OpenBookFile's first arm
+import { openPortBook } from '../systems/portBooks.js';   // WB12c: the port's own books, read before any file
+import { setBookAuthor } from '../systems/item/itemInfo.js';   // IM1: the %ba cache
+import { openLocalizedBookFile } from '../systems/localizedBook.js';   // L10N3f: LocalizedBook.OpenBookFile's first arm
 
 /** Build the reader this skin wears over an opened BookFile - or
  *  (L10N3f) the language's LocalizedBook. */
@@ -64,10 +64,7 @@ export function makeOpenBookHook({ fetchBytes, showReader }) {
   return async (item, onFail) => {
     const port = openPortBook(item?.message ?? -1);
     const name = port ? null : getBookFileName(item?.message ?? -1);
-    if (!port && !name) {
-      onFail?.();
-      return;
-    }
+    if (!port && !name) { onFail?.(); return; }
     // L10N3f - LocalizedBook.OpenBookFile (LocalizedBook.cs:61-72): the
     // language's -LOC book first, and the BOK file only where it has
     // none - so a translated book never fetches the classic one. Its
@@ -83,12 +80,8 @@ export function makeOpenBookHook({ fetchBytes, showReader }) {
     }
     try {
       let bookFile = port;
-      if (bookFile)
-        await null; // WB12c: after the pack's close, as a fetched file lands - never inside its hand-off (EB4)
-      else {
-        bookFile = new BookFile();
-        bookFile.load(await fetchBytes(name), name);
-      }
+      if (bookFile) await null;   // WB12c: after the pack's close, as a fetched file lands - never inside its hand-off (EB4)
+      else { bookFile = new BookFile(); bookFile.load(await fetchBytes(name), name); }
       // IM1: the file's author line feeds the %ba cache - DFU reads it
       // at info time (BookAuthor :162-183); the port's read is here.
       setBookAuthor(item?.message, bookFile.author);
@@ -105,39 +98,24 @@ function enhancedBookOverlay(model) {
   let view = null;
   let torn = false;
   let mounted = false;
-  let hostCanvas = null; // the world's canvas, learned from draw(): the relock's target
+  let hostCanvas = null;   // the world's canvas, learned from draw(): the relock's target
   let unregister = () => {};
   const teardown = () => {
     if (torn) return;
-    torn = true; // `done` reads this: true only once the book has left
+    torn = true;   // `done` reads this: true only once the book has left
     unregister();
-    try {
-      view?.destroy?.();
-    } catch {
-      /* already gone */
-    }
-    try {
-      el?.remove();
-    } catch {
-      /* ditto */
-    }
-    el = null;
-    view = null;
+    try { view?.destroy?.(); } catch { /* already gone */ }
+    try { el?.remove(); } catch { /* ditto */ }
+    el = null; view = null;
   };
-  const relock = () => {
-    if (hostCanvas) requestLook(hostCanvas);
-  };
+  const relock = () => { if (hostCanvas) requestLook(hostCanvas); };
   // The exit through the FACE, so the cover shuts and the book sinks
   // before the overlay is dropped; before the face has mounted, the
   // classic arm (ButtonClick, done) and a plain teardown.
   const exit = () => {
     if (torn) return;
     if (view) view.key('Escape');
-    else {
-      if (!model.done) model.input('Escape');
-      relock();
-      teardown();
-    }
+    else { if (!model.done) model.input('Escape'); relock(); teardown(); }
   };
   // EB4 (Mac: "tapping use doesn't do anything and then locks me out
   // of pointerclick in inventory"): THE CANVAS MOUNTS ON THE HOST'S
@@ -154,20 +132,14 @@ function enhancedBookOverlay(model) {
     // Above the enhanced pack (z 13): the inventory hands over THEN
     // closes, so for a moment both stand. No wash: the world reads
     // through, and the canvas takes every pointer so the world does not.
-    el.style.cssText =
-      'position:fixed;inset:0;width:100vw;height:100dvh;z-index:14;image-rendering:pixelated;touch-action:none';
+    el.style.cssText = 'position:fixed;inset:0;width:100vw;height:100dvh;z-index:14;image-rendering:pixelated;touch-action:none';
     document.body.append(el);
     unregister = registerOverlay(exit);
     // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
     mountEnhancedChunk({
       load: () => import('./enhanced/enhancedBook.js'),
-      mount: ({ mountEnhancedBook }) => {
-        view = mountEnhancedBook(el, { model, onExit: teardown, relock });
-      },
-      alive: () => !torn,
-      host: el,
-      onDismiss: exit,
-      label: 'book',
+      mount: ({ mountEnhancedBook }) => { view = mountEnhancedBook(el, { model, onExit: teardown, relock }); },
+      alive: () => !torn, host: el, onDismiss: exit, label: 'book',
     });
   };
   return {
@@ -175,26 +147,16 @@ function enhancedBookOverlay(model) {
     // shape): the arms the slots dereference, and dispose on
     // replacement.
     isChoiceWindow: true,
-    get done() {
-      return torn;
-    },
+    get done() { return torn; },
     input(code) {
       if (torn) return;
       if (view) view.key(code);
       else if (code === 'Escape' || code === 'Enter' || code === 'KeyE') exit();
     },
-    click() {
-      return true;
-    }, // consumed: nothing beside the book grabs the pointer
-    wheel() {
-      /* the canvas has its own wheel */
-    },
-    hover() {
-      /* no canvas hit-test: the book's own */
-    },
-    tick() {
-      /* the clock is paintBook's */
-    },
+    click() { return true; },   // consumed: nothing beside the book grabs the pointer
+    wheel() { /* the canvas has its own wheel */ },
+    hover() { /* no canvas hit-test: the book's own */ },
+    tick() { /* the clock is paintBook's */ },
     /** Per frame: the first draw is the host's acceptance and mounts
      *  the canvas; after that the book paints itself, and the host's
      *  canvas is remembered for the relock. */

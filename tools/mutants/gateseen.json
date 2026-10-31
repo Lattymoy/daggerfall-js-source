@@ -2,8 +2,8 @@
   {
     "name": "GATESEEN-no-far-ground-the-defect",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;\n  if (!Number.isFinite(ground)) return null;",
-    "new": "  if (!Number.isFinite(ground)) return null;",
+    "old": "  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;\n",
+    "new": "",
     "tests": [
       "test/scenes/gateseen.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GATESEEN-a-far-gate-is-whole",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "    coarse,",
-    "new": "    coarse: false,",
+    "old": "risen: rise >= 1, coarse };",
+    "new": "risen: rise >= 1, coarse: false };",
     "tests": [
       "test/scenes/gateseen.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GATESEEN-a-far-collider",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "    const want = place?.risen && !place.coarse ? matrixOf(place) : null; // GATE-SEEN: a beacon alone stands nothing to walk into",
-    "new": "    const want = place?.risen ? matrixOf(place) : null; // GATE-SEEN: a beacon alone stands nothing to walk into",
+    "old": "const want = place?.risen && !place.coarse ? matrixOf(place) : null;",
+    "new": "const want = place?.risen ? matrixOf(place) : null;",
     "tests": [
       "test/scenes/gateseen.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GATESEEN-the-pool-hands-no-beacon-flag",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "        ? [{ origin: place.origin, yaw: place.yaw, open, fade: place.fade, spin, beaconOnly: !!place.coarse }]",
-    "new": "        ? [{ origin: place.origin, yaw: place.yaw, open, fade: place.fade, spin, beaconOnly: false }]",
+    "old": ", beaconOnly: !!place.coarse }]",
+    "new": ", beaconOnly: false }]",
     "tests": [
       "test/scenes/gateseen.test.js"
     ]

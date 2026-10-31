@@ -47,8 +47,8 @@
   {
     "name": "SD27-R2-the-floor-light-past-the-rim",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    return q < 0 ? 0 : Math.min(1.6 * SD_WAY_BACK_SIZE, Math.max(0, -b + Math.sqrt(q)));",
-    "new": "    return 1.6 * SD_WAY_BACK_SIZE;",
+    "old": "return q < 0 ? 0 : Math.min(1.6 * SD_WAY_BACK_SIZE, Math.max(0, -b + Math.sqrt(q)));",
+    "new": "return 1.6 * SD_WAY_BACK_SIZE;",
     "tests": [
       "test/scenes/sd27_audit.test.js"
     ]

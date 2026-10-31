@@ -2,8 +2,8 @@
   {
     "name": "AUDIT1003-WD1-the-layout-unwritten",
     "file": "server-account/src/halls.js",
-    "old": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}",
-    "new": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (CASE WHEN ? = ? THEN NULL ELSE ? END)",
+    "old": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}\n",
+    "new": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (CASE WHEN ? = ? THEN NULL ELSE ? END)\n",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT1003-WD1-the-towns-stamp-unread",
     "file": "server-account/src/halls.js",
-    "old": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}",
-    "new": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (CASE WHEN ? = ? THEN ? END)",
+    "old": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${TOWN_LAYOUT_SQL}\n",
+    "new": "        SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (CASE WHEN ? = ? THEN ? END)\n",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT1003-WD1-the-writes-guard",
     "file": "server-account/src/halls.js",
-    "old": "        WHERE NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`,",
-    "new": "        WHERE NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND 0 AND NOT (${LAYOUT_MATCH_SQL}))`,",
+    "old": "        WHERE NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)\n",
+    "new": "        WHERE NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND 0 AND NOT (${LAYOUT_MATCH_SQL}))`)\n",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT1003-WD1-the-inserts-change-unasked",
     "file": "server-account/src/halls.js",
-    "old": "        ),\n      mustChange(db),\n    ]);",
-    "new": "        ),\n    ]);",
+    "old": "...layoutMatchBinds(layout)),\n      mustChange(db),\n    ]);",
+    "new": "...layoutMatchBinds(layout)),\n    ]);",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT1003-WD1-the-town-unasked-before-the-hour",
     "file": "server-account/src/halls.js",
-    "old": "  const crossed = await townLayoutRefusal(db, mapId, layout);\n  if (crossed) return crossed;\n  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S))",
-    "new": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S))",
+    "old": "  const crossed = await townLayoutRefusal(db, mapId, layout);\n  if (crossed) return crossed;\n",
+    "new": "",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT1003-WD1-the-raced-answer",
     "file": "server-account/src/halls.js",
-    "old": "    const lost = await townLayoutRefusal(db, mapId, layout); // AUDIT PRE-MERGE 1003 WD1: a first home in another layout landed first\n    if (lost) return lost;\n    const t = await db.prepare('SELECT treasury, realm_gold FROM guilds WHERE id = ?').bind(gid).first();",
-    "new": "    const t = await db.prepare('SELECT treasury, realm_gold FROM guilds WHERE id = ?').bind(gid).first();",
+    "old": "    const lost = await townLayoutRefusal(db, mapId, layout);   // AUDIT PRE-MERGE 1003 WD1: a first home in another layout landed first\n    if (lost) return lost;\n",
+    "new": "",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT1003-WD1-the-stamp-unchecked",
     "file": "server-account/src/halls.js",
-    "old": "  if (!homeLayoutOk(layout)) return { error: 'bad-home' }; // AUDIT PRE-MERGE 1003 WD1: the layout the buyer's town stands in",
-    "new": "  // AUDIT PRE-MERGE 1003 WD1: the layout the buyer's town stands in",
+    "old": "  if (!homeLayoutOk(layout)) return { error: 'bad-home' };   // AUDIT PRE-MERGE 1003 WD1",
+    "new": "  // AUDIT PRE-MERGE 1003 WD1",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT1003-WD1-the-426-unasked",
     "file": "server-account/src/halls.js",
-    "old": "  if (!Object.hasOwn(body ?? {}, 'layout')) return { error: 'home-update' }; // AUDIT PRE-MERGE 1003 WD1: a build from before the town mods (AUDIT WD3 B2)",
-    "new": "  if (false) return { error: 'home-update' }; // AUDIT PRE-MERGE 1003 WD1: a build from before the town mods (AUDIT WD3 B2)",
+    "old": "  if (!Object.hasOwn(body ?? {}, 'layout')) return { error: 'home-update' };",
+    "new": "  if (false) return { error: 'home-update' };",
     "tests": [
       "test/systems/quest/audit1003_wd.test.js"
     ]

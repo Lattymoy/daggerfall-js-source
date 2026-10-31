@@ -129,8 +129,8 @@
   {
     "name": "HEARTH1-the-subrecord-flats-stop-carrying-it-so-the-other-half-are",
     "file": "src/world/city/cityLights.js",
-    "old": "        record: obj.textureRecord, // HEARTH1\n        x: obj.xPos * GLOBAL_SCALE + subX,",
-    "new": "        x: obj.xPos * GLOBAL_SCALE + subX,",
+    "old": "        record: obj.textureRecord,   // HEARTH1\n",
+    "new": "",
     "tests": [
       "test/systems/survival/hearth1_worldfires.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "FIX-D-the-exterior-foot-is-the-flame-so-the-box-floats-a-sprite-high",
     "file": "src/world/city/cityLights.js",
-    "old": "      // hearth.js hearthAabb) rather than a guess hung off the flame.\n      foot: -obj.yPos * GLOBAL_SCALE,",
-    "new": "      // hearth.js hearthAabb) rather than a guess hung off the flame.\n      foot: -obj.yPos * GLOBAL_SCALE + size.h,",
+    "old": "      foot: -obj.yPos * GLOBAL_SCALE, w: size.w, h: size.h,\n",
+    "new": "      foot: -obj.yPos * GLOBAL_SCALE + size.h, w: size.w, h: size.h,\n",
     "tests": [
       "test/systems/survival/hearth1_worldfires.test.js",
       "test/scenes/fixd_hearthbox.test.js"

@@ -120,8 +120,8 @@
   {
     "name": "GUILD1e-poster-without-a-banner",
     "file": "server-account/src/board.js",
-    "old": "    ...(guildOk ? { guild: { name: n.guild_name, tag: n.guild_tag, heraldry: heraldryOfRow(n.guild_heraldry) } } : {}),",
-    "new": "    ...(guildOk ? { guild: { name: n.guild_name, tag: n.guild_tag, heraldry: null } } : {}),",
+    "old": "heraldry: heraldryOfRow(n.guild_heraldry) } } : {}),",
+    "new": "heraldry: null } } : {}),",
     "tests": [
       "test/net/guild1e_service.test.js",
       "test/net/guild1e_client.test.js"

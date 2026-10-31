@@ -23,7 +23,7 @@
 // draws them). Every builder answers [] for an answer it cannot read, and
 // the host then says its lines as it always did.
 // ═══════════════════════════════════════════════════════════════════
-import { t } from '../systems/textManager.js'; // STAR7: a held star's source
+import { t } from '../systems/textManager.js';   // STAR7: a held star's source
 import { xpForRank, rankOfXp, professionName, PROF_RANK_MAX } from '../net/professionLaw.js';
 import { material } from '../net/nodeLaw.js';
 import { materialCountLabel, mintMaterialItem } from '../systems/professions/profItems.js';
@@ -45,16 +45,14 @@ export const LODE_HOLD_MS = 9000;
  *  tiers 1 and 2 plain, 3 magic's blue, 4 rare's gold, 5 legendary's orange, 6 artifact's violet; none while the
  *  player has the loot's tiers off (systems/loot/lootRarity.js), as an item's own name would wear none. */
 export const TIER_RARITY = Object.freeze([null, null, null, 'magic', 'rare', 'legendary', 'artifact']);
-export const tierRarity = (tier, on = lootRarityOn()) =>
-  on && Number.isSafeInteger(tier) ? (TIER_RARITY[tier] ?? null) : null;
+export const tierRarity = (tier, on = lootRarityOn()) => (on && Number.isSafeInteger(tier) ? TIER_RARITY[tier] ?? null : null);
 
 /** A rank's progress to the next, 0-1 (1 at the top rank). */
 export function rankProgress(xp) {
   const x = Math.max(0, Number(xp) || 0);
   const r = rankOfXp(x);
   if (r >= PROF_RANK_MAX) return 1;
-  const lo = xpForRank(r),
-    hi = xpForRank(r + 1);
+  const lo = xpForRank(r), hi = xpForRank(r + 1);
   return hi > lo ? Math.max(0, Math.min(1, (x - lo) / (hi - lo))) : 1;
 }
 
@@ -62,39 +60,24 @@ export function rankProgress(xp) {
 export function materialImage(key) {
   try {
     const item = mintMaterialItem(key);
-    return item ? (inventoryItemImage(item) ?? null) : null;
-  } catch {
-    return null;
-  }
+    return item ? inventoryItemImage(item) ?? null : null;
+  } catch { return null; }
 }
 
 /** The Stores' whole count of a material after a harvest (`store`: own, bought and gold's), or null where unsaid. */
-const heldOf = (store) =>
-  store && typeof store === 'object'
-    ? Number(store.own ?? 0) + Number(store.bought ?? 0) + Number(store.gold ?? 0)
-    : null;
+const heldOf = (store) => (store && typeof store === 'object' ? Number(store.own ?? 0) + Number(store.bought ?? 0) + Number(store.gold ?? 0) : null);
 
 /** ONE GOOD INTO THE STORES, as a card's data: its material's name (the count's plural, at the card's count), tier,
  *  picture and the Stores' count after it. `key` makes two of it one card - the feed adds the counts. */
-export function storesHaul(key, qty, { held = null, name = null, sub = null, where = 'Stores' } = {}) {
-  // BAG1: `where` the count's word
+export function storesHaul(key, qty, { held = null, name = null, sub = null, where = 'Stores' } = {}) {   // BAG1: `where` the count's word
   const n = Math.trunc(Number(qty) || 0);
   if (typeof key !== 'string' || n <= 0) return null;
   const m = material(key);
   return {
-    key: `stores\u0002${key}${name ? `\u0002${name}` : ''}`,
-    haul: 'stores',
-    material: key,
-    count: n,
-    name,
-    sub,
-    rarity: tierRarity(m?.tier ?? null),
-    image: materialImage(key),
-    held: Number.isSafeInteger(held) ? held : null,
-    where: where === 'Carried' ? 'Carried' : 'Stores', // BAG1: a carried harvest's count is what the character carries
-    hold: HAUL_HOLD_MS,
-    adds: ['count'],
-    latest: ['held'],
+    key: `stores\u0002${key}${name ? `\u0002${name}` : ''}`, haul: 'stores', material: key, count: n, name, sub,
+    rarity: tierRarity(m?.tier ?? null), image: materialImage(key), held: Number.isSafeInteger(held) ? held : null,
+    where: where === 'Carried' ? 'Carried' : 'Stores',   // BAG1: a carried harvest's count is what the character carries
+    hold: HAUL_HOLD_MS, adds: ['count'], latest: ['held'],
   };
 }
 
@@ -112,23 +95,12 @@ export function harvestHauls(d, { name = null, note = null } = {}) {
   const where = carried ? 'Carried' : 'Stores';
   // AUDIT2 BAG1 U6: a carried harvest's card counts what CAME - the units the bag and the pack took (net/profBook.js
   // mintHarvest's `put`, each material's `lost` its own) - never what the service counted with some left on the ground
-  const lost = (k) =>
-    carried && Array.isArray(d.put?.lost)
-      ? d.put.lost.reduce((n, x) => n + (x?.key === k ? Number(x.n) || 0 : 0), 0)
-      : 0;
+  const lost = (k) => (carried && Array.isArray(d.put?.lost) ? d.put.lost.reduce((n, x) => n + (x?.key === k ? Number(x.n) || 0 : 0), 0) : 0);
   const came = (k, n) => Math.max(0, (Number(n) || 0) - lost(k));
   const mainCame = came(d.material, d.qty);
-  const main = storesHaul(d.material, mainCame > 0 ? mainCame : d.qty, {
-    held: heldOf(carried ? d.carried : d.store),
-    name,
-    sub: name ? `as ${materialCountLabel(d.material, Number(d.qty) || 1)}` : null,
-    where,
-  });
+  const main = storesHaul(d.material, mainCame > 0 ? mainCame : d.qty, { held: heldOf(carried ? d.carried : d.store), name, sub: name ? `as ${materialCountLabel(d.material, Number(d.qty) || 1)}` : null, where });
   if (!main) return [];
-  if (mainCame < 1) {
-    main.count = 0;
-    main.sub = 'left where gathered - no room';
-  } // none came: the act's XP still said
+  if (mainCame < 1) { main.count = 0; main.sub = 'left where gathered - no room'; }   // none came: the act's XP still said
   const profession = d.track?.profession ?? null;
   const xp = Math.trunc(Number(d.xp) || 0);
   if (profession && xp > 0) {
@@ -147,33 +119,17 @@ export function harvestHauls(d, { name = null, note = null } = {}) {
     main.lode = true;
     main.head = head ? `Motherlode - ${head}` : 'Motherlode';
     main.silver = Number.isSafeInteger(d.marks?.struck) && d.marks.struck > 0 ? d.marks.struck : 0;
-    main.balance = Number.isSafeInteger(d.marks?.balance) ? d.marks.balance : null; // AUDIT HAUL-CARDS B4: the purse, as the silver cards say it
+    main.balance = Number.isSafeInteger(d.marks?.balance) ? d.marks.balance : null;   // AUDIT HAUL-CARDS B4: the purse, as the silver cards say it
     main.miners = Number.isSafeInteger(d.lode?.struck) ? `${d.lode.struck} / ${d.lode.strikers ?? 20} miners` : null;
     main.hold = LODE_HOLD_MS;
   }
-  const out = /** @type {any[]} */ ([main]); // the goods' card, then each find's - a gem's, a second find's, silver's
+  const out = /** @type {any[]} */ ([main]);   // the goods' card, then each find's - a gem's, a second find's, silver's
   // SILVER-FINDS: a harvest's find - the service's dice in the harvest (a Motherlode's `marks` is its own strike, above)
-  if (!d.motherlode) {
-    const f = findHaul(d.marks, 'gather');
-    if (f) out.push(f);
-  }
+  if (!d.motherlode) { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }
   // AUDIT HAUL-CARDS B1: "a gem" only for a gem - a tree's `gem` is its Heartwood, a body's its DFU part (a Big Tooth);
   // B3: each find its own Stores count, as the answer carries it (`gemStore`, `extraStore`)
-  if (d.gem) {
-    const g = storesHaul(d.gem, came(d.gem, 1), {
-      held: heldOf(carried ? d.gemCarried : d.gemStore),
-      sub: material(d.gem)?.family === 'gems' ? 'a gem' : null,
-      where,
-    });
-    if (g) out.push(g);
-  }
-  if (d.extra) {
-    const x = storesHaul(d.extra, came(d.extra, Number(d.extraQty) || 1), {
-      held: heldOf(carried ? d.extraCarried : d.extraStore),
-      where,
-    });
-    if (x) out.push(x);
-  }
+  if (d.gem) { const g = storesHaul(d.gem, came(d.gem, 1), { held: heldOf(carried ? d.gemCarried : d.gemStore), sub: material(d.gem)?.family === 'gems' ? 'a gem' : null, where }); if (g) out.push(g); }
+  if (d.extra) { const x = storesHaul(d.extra, came(d.extra, Number(d.extraQty) || 1), { held: heldOf(carried ? d.extraCarried : d.extraStore), where }); if (x) out.push(x); }
   return out;
 }
 
@@ -184,26 +140,14 @@ export function silverHaul(marks, { source = '', combat = false, cappedText = nu
   if (!marks || typeof marks !== 'object') return null;
   const n = Math.trunc(Number(marks.struck) || 0);
   if (n <= 0) {
-    return marks.why === 'cap' && cappedText
-      ? { key: 'silver\u0002capped', haul: 'note', text: cappedText, count: 1, hold: HAUL_HOLD_MS }
-      : null;
+    return marks.why === 'cap' && cappedText ? { key: 'silver\u0002capped', haul: 'note', text: cappedText, count: 1, hold: HAUL_HOLD_MS } : null;
   }
-  const c =
-    combat && Number.isSafeInteger(marks.combat?.earned)
-      ? { earned: marks.combat.earned, max: marks.combat.max ?? MARKS_COMBAT.perDay, text: COMBAT_BAR_TEXT }
-      : day && Number.isSafeInteger(day.earned) && day.max > 0
-        ? day
-        : null;
+  const c = combat && Number.isSafeInteger(marks.combat?.earned) ? { earned: marks.combat.earned, max: marks.combat.max ?? MARKS_COMBAT.perDay, text: COMBAT_BAR_TEXT }
+    : day && Number.isSafeInteger(day.earned) && day.max > 0 ? day : null;
   return {
-    key: `silver\u0002${source}`,
-    haul: 'silver',
-    count: n,
-    source,
-    balance: Number.isSafeInteger(marks.balance) ? marks.balance : null,
+    key: `silver\u0002${source}`, haul: 'silver', count: n, source, balance: Number.isSafeInteger(marks.balance) ? marks.balance : null,
     ...(c ? { earned: c.earned, max: c.max, bar: c.text } : {}),
-    hold: HAUL_HOLD_MS,
-    adds: ['count'],
-    latest: ['balance', 'earned', 'max'],
+    hold: HAUL_HOLD_MS, adds: ['count'], latest: ['balance', 'earned', 'max'],
   };
 }
 
@@ -211,12 +155,7 @@ export function silverHaul(marks, { source = '', combat = false, cappedText = nu
 export const COMBAT_BAR_TEXT = 'Combat today';
 /** SILVER-FINDS: a find's source and its day's bar, as its card says them - a loot find's kind (marksLaw.js FIND_KINDS)
  *  and a harvest's (`gather`), each faucet's day its own (MARKS_FAUCETS.find, .gather). */
-export const FIND_SOURCE = Object.freeze({
-  corpse: 'Found on the body',
-  pile: 'Found in the treasure',
-  search: 'Found in the search',
-  gather: 'Found while gathering',
-});
+export const FIND_SOURCE = Object.freeze({ corpse: 'Found on the body', pile: 'Found in the treasure', search: 'Found in the search', gather: 'Found while gathering' });
 export const FIND_BAR_TEXT = Object.freeze({ find: 'Finds today', gather: 'Gathering finds today' });
 /**
  * SILVER-FINDS: A FIND'S SILVER AS ITS CARD - a loot find's answer (net/marksBook.js find's `found`) or a harvest's
@@ -230,26 +169,12 @@ export function findHaul(found, kind) {
   const t = found.today;
   return silverHaul(found, {
     source: FIND_SOURCE[kind] ?? FIND_SOURCE.pile,
-    day: Number.isSafeInteger(t?.found)
-      ? {
-          earned: t.found,
-          max: Number.isSafeInteger(t.max) ? t.max : MARKS_FAUCETS[faucet].perDay,
-          text: FIND_BAR_TEXT[faucet],
-        }
-      : null,
+    day: Number.isSafeInteger(t?.found) ? { earned: t.found, max: Number.isSafeInteger(t.max) ? t.max : MARKS_FAUCETS[faucet].perDay, text: FIND_BAR_TEXT[faucet] } : null,
   });
 }
 
 /** A combat claim's source, as its silver card says it. SERPENT-SET: a serpent slain. EG-E1: a Redoubt of the Elite Breach. */
-export const CLAIM_SOURCE = Object.freeze({
-  gate: 'Breach closed',
-  raid: 'Town defended',
-  serpent: 'Serpent slain',
-  eg: 'Redoubt taken',
-  get star() {
-    return t('starfall.haul.source', 'Star held');
-  },
-}); // STAR7: a held star's, read through the text core where it is shown
+export const CLAIM_SOURCE = Object.freeze({ gate: 'Breach closed', raid: 'Town defended', serpent: 'Serpent slain', eg: 'Redoubt taken', get star() { return t('starfall.haul.source', 'Star held'); } });   // STAR7: a held star's, read through the text core where it is shown
 /**
  * A COUNTED CLAIM'S SILVER AS ITS CARDS (a raid's, a gate's or - SERPENT-SET - a serpent's answer; EG-E1: a Redoubt's:
  * net/marksBook.js claimLines' own data): its strike (the day's combat bar on it, or the cap's muted card), the guild
@@ -260,36 +185,17 @@ export const CLAIM_SOURCE = Object.freeze({
 export function claimHauls(data, kind = 'gate') {
   if (!data || typeof data !== 'object') return [];
   const out = [];
-  const strike = silverHaul(data.marks, {
-    source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate,
-    combat: true,
-    cappedText: haulCappedText(),
-  });
+  const strike = silverHaul(data.marks, { source: CLAIM_SOURCE[kind] ?? CLAIM_SOURCE.gate, combat: true, cappedText: haulCappedText() });
   if (strike) out.push(strike);
   const deed = data.deed;
   if (deed && Number.isSafeInteger(deed.struck) && deed.struck > 0) {
-    out.push({
-      key: `deed\u0002${deed.guild?.name ?? ''}`,
-      haul: 'silver',
-      tone: 'treasury',
-      count: deed.struck,
-      source: `Guild deed: to ${deed.guild?.name ?? 'your guild'}`,
-      hold: HAUL_HOLD_MS,
-      adds: ['count'],
-    });
+    out.push({ key: `deed\u0002${deed.guild?.name ?? ''}`, haul: 'silver', tone: 'treasury', count: deed.struck, source: `Guild deed: to ${deed.guild?.name ?? 'your guild'}`, hold: HAUL_HOLD_MS, adds: ['count'] });
   }
   for (const c of Array.isArray(data.contracts) ? data.contracts : []) {
     if (!c || !Number.isSafeInteger(c.pay) || c.pay <= 0) continue;
     const tag = c.guild?.tag ? `[${c.guild.tag}]` : (c.guild?.name ?? 'a guild');
     // AUDIT HAUL-CARDS C3/C7: the tax before the guild (a long name gives way, never the tax), grouped as every number
-    out.push({
-      key: `contract\u0002${c.contract ?? tag}`,
-      haul: 'silver',
-      count: c.pay,
-      source: `Contract${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''} - ${tag}`,
-      hold: HAUL_HOLD_MS,
-      adds: ['count'],
-    });
+    out.push({ key: `contract\u0002${c.contract ?? tag}`, haul: 'silver', count: c.pay, source: `Contract${c.tax > 0 ? ` (${num(c.tax)} tax)` : ''} - ${tag}`, hold: HAUL_HOLD_MS, adds: ['count'] });
   }
   return out;
 }
@@ -309,48 +215,13 @@ export const LODE_ICON_BOX = 38;
 export function haulWords(l) {
   if (l.haul === 'note') return { note: String(l.text ?? '') };
   if (l.haul === 'silver') {
-    const row =
-      Number.isSafeInteger(l.earned) && l.max > 0
-        ? {
-            text: l.bar ?? COMBAT_BAR_TEXT,
-            fill: Math.max(0, Math.min(1, l.earned / l.max)),
-            end: `${num(l.earned)} / ${num(l.max)}`,
-          }
-        : null; // SILVER-FINDS: a find's day its own words
-    return {
-      head: '',
-      plus: `+${num(l.count)}`,
-      name: 'silver',
-      sub: l.source || '',
-      tag: '',
-      end: Number.isSafeInteger(l.balance) ? num(l.balance) : '',
-      row,
-      lode: null,
-    };
+    const row = Number.isSafeInteger(l.earned) && l.max > 0 ? { text: l.bar ?? COMBAT_BAR_TEXT, fill: Math.max(0, Math.min(1, l.earned / l.max)), end: `${num(l.earned)} / ${num(l.max)}` } : null;   // SILVER-FINDS: a find's day its own words
+    return { head: '', plus: `+${num(l.count)}`, name: 'silver', sub: l.source || '', tag: '', end: Number.isSafeInteger(l.balance) ? num(l.balance) : '', row, lode: null };
   }
   const name = l.name ?? materialCountLabel(l.material, l.count);
-  const row =
-    l.xp > 0
-      ? {
-          text: `+${num(l.xp)} ${professionName(l.profession)} XP`,
-          fill: Math.max(0, Math.min(1, Number(l.progress) || 0)),
-          end: l.rank ? `${l.rank}` : '',
-        }
-      : null;
+  const row = l.xp > 0 ? { text: `+${num(l.xp)} ${professionName(l.profession)} XP`, fill: Math.max(0, Math.min(1, Number(l.progress) || 0)), end: l.rank ? `${l.rank}` : '' } : null;
   return {
-    head: l.head ?? '',
-    plus: `+${num(l.count)}`,
-    name,
-    sub: l.sub ?? '',
-    tag: Number.isSafeInteger(l.held) ? `${l.where ?? 'Stores'} ${num(l.held)}` : (l.where ?? 'Stores'),
-    end: '',
-    row, // BAG1: 'Carried 41'
-    lode: l.lode
-      ? {
-          silver: l.silver > 0 ? `+${num(l.silver)} silver` : '',
-          held: l.silver > 0 && Number.isSafeInteger(l.balance) ? `you hold ${num(l.balance)}` : '',
-          miners: l.miners ?? '',
-        }
-      : null,
+    head: l.head ?? '', plus: `+${num(l.count)}`, name, sub: l.sub ?? '', tag: Number.isSafeInteger(l.held) ? `${l.where ?? 'Stores'} ${num(l.held)}` : (l.where ?? 'Stores'), end: '', row,   // BAG1: 'Carried 41'
+    lode: l.lode ? { silver: l.silver > 0 ? `+${num(l.silver)} silver` : '', held: l.silver > 0 && Number.isSafeInteger(l.balance) ? `you hold ${num(l.balance)}` : '', miners: l.miners ?? '' } : null,
   };
 }

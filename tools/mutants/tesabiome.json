@@ -662,8 +662,8 @@
   {
     "name": "TESA-BIOME-74-grant-pixel-bay",
     "file": "src/net/grantLaw.js",
-    "old": "  if (!Array.isArray(v.p) || v.p.length !== 2 || !worldPixelOk(v.p[0]) || !worldPixelOk(v.p[1])) return null; // AUDIT TESA-BIOME F2: the world's pixel (TV-BEYOND, net/wire.js WORLD_PIXEL_BOUND) - a cell past the Bay mints its own, as the relay reads it off the pose",
-    "new": "  if (\n    !Array.isArray(v.p) ||\n    v.p.length !== 2 ||\n    !Number.isSafeInteger(v.p[0]) ||\n    v.p[0] < 0 ||\n    v.p[0] > 999 ||\n    !Number.isSafeInteger(v.p[1]) ||\n    v.p[1] < 0 ||\n    v.p[1] > 499\n  )\n    return null; // AUDIT TESA-BIOME F2: the world's pixel (TV-BEYOND, net/wire.js WORLD_PIXEL_BOUND) - a cell past the Bay mints its own, as the relay reads it off the pose",
+    "old": "!worldPixelOk(v.p[0]) || !worldPixelOk(v.p[1])",
+    "new": "!Number.isSafeInteger(v.p[0]) || v.p[0] < 0 || v.p[0] > 999 || !Number.isSafeInteger(v.p[1]) || v.p[1] < 0 || v.p[1] > 499",
     "tests": [
       "test/net/grant1_law.test.js"
     ]

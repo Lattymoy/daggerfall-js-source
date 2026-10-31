@@ -83,8 +83,8 @@
   {
     "name": "GMAKER-the-enhanced-rename-live",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "                    button: { label: 'Rename', disabled: !sel || makerKeepsName(sel), act: at(w, ITEM_RECTS.nameItem) },",
-    "new": "                    button: { label: 'Rename', disabled: !sel, act: at(w, ITEM_RECTS.nameItem) },",
+    "old": "disabled: !sel || makerKeepsName(sel),",
+    "new": "disabled: !sel,",
     "tests": [
       "test/systems/gildedmaker.test.js"
     ]

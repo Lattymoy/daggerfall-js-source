@@ -63,11 +63,11 @@
 // there to be read all along - "Matriarch", "Sister", "Knight
 // Sister", "Dark Sister". Both ship, and the flag is retired.
 import { SKILLS, permanentSkillValue } from '../skills.js';
-import { getReputation, setReputation } from '../faction/factionRep.js'; // RR1: the underworld guilds' join floor
+import { getReputation, setReputation } from '../faction/factionRep.js';   // RR1: the underworld guilds' join floor
 import { GUILD_GROUPS, FACTION_TYPES } from '../../formats/factionFile.js';
-import { dayOfYear } from '../gameDate.js'; // S28: DaggerfallDateTime.DayOfYear
-import { localizedText, localizedTextList, localizedTable } from '../textManager.js'; // L10N3d: the titles, read when shown
-import { GUILD_FACTION_IDS, RANK_REQ_REPUTATION } from './guildFactions.js'; // CHAP1: the four ids' one home, a leaf the account service reads; AUDIT CHAP D1: and the reputation's rank row
+import { dayOfYear } from '../gameDate.js';   // S28: DaggerfallDateTime.DayOfYear
+import { localizedText, localizedTextList, localizedTable } from '../textManager.js';   // L10N3d: the titles, read when shown
+import { GUILD_FACTION_IDS, RANK_REQ_REPUTATION } from './guildFactions.js';   // CHAP1: the four ids' one home, a leaf the account service reads; AUDIT CHAP D1: and the reputation's rank row
 
 /** Internal_Strings "nonMember". Guild.GetTitle returns the PLAYER'S
  *  NAME for a non-member; three subclasses override that with this
@@ -129,31 +129,13 @@ export const GUILDS = Object.freeze({
     // skills past a bar, so one more only lets a fist-fighter in and turns no
     // member out. Roleplay & Realism's fightersTeachHandToHand, which swapped
     // Giantish out, is RETIRED with it (FGH2H-R, rrRealism.js).
-    skills: [
-      SKILLS.Archery,
-      SKILLS.Axe,
-      SKILLS.BluntWeapon,
-      SKILLS.Giantish,
-      SKILLS.HandToHand,
-      SKILLS.LongBlade,
-      SKILLS.Orcish,
-      SKILLS.ShortBlade,
-    ],
+    skills: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.Giantish,
+      SKILLS.HandToHand, SKILLS.LongBlade, SKILLS.Orcish, SKILLS.ShortBlade],
     // L10N3d: RankTitles is a getter in DFU too (FightersGuild.cs:56),
     // GetLocalizedTextList each time it is read - so here.
     get rankTitles() {
-      return localizedTextList('fightersRanks', [
-        'Apprentice',
-        'Journeyman',
-        'Swordsman',
-        'Protector',
-        'Defender',
-        'Warder',
-        'Guardian',
-        'Champion',
-        'Warrior',
-        'Master',
-      ]);
+      return localizedTextList('fightersRanks', ['Apprentice', 'Journeyman', 'Swordsman', 'Protector', 'Defender',
+        'Warder', 'Guardian', 'Champion', 'Warrior', 'Master']);
     },
     text: { ineligibleBadRep: 679, ineligibleLowSkill: 680, eligible: 681, welcome: 684, promotion: 686 },
   },
@@ -161,28 +143,11 @@ export const GUILDS = Object.freeze({
     name: 'MagesGuild',
     guildGroup: GUILD_GROUPS.MagesGuild,
     factionId: GUILD_FACTION_IDS.MagesGuild,
-    skills: [
-      SKILLS.Alteration,
-      SKILLS.Destruction,
-      SKILLS.Illusion,
-      SKILLS.Mysticism,
-      SKILLS.Restoration,
-      SKILLS.Thaumaturgy,
-    ],
-    get rankTitles() {
-      // MagesGuild.cs:61
-      return localizedTextList('magesRanks', [
-        'Apprentice',
-        'Journeyman',
-        'Evoker',
-        'Conjurer',
-        'Magician',
-        'Enchanter',
-        'Warlock',
-        'Wizard',
-        'Master Wizard',
-        'Archmage',
-      ]);
+    skills: [SKILLS.Alteration, SKILLS.Destruction, SKILLS.Illusion,
+      SKILLS.Mysticism, SKILLS.Restoration, SKILLS.Thaumaturgy],
+    get rankTitles() {   // MagesGuild.cs:61
+      return localizedTextList('magesRanks', ['Apprentice', 'Journeyman', 'Evoker', 'Conjurer', 'Magician',
+        'Enchanter', 'Warlock', 'Wizard', 'Master Wizard', 'Archmage']);
     },
     // MagesGuild.cs:67-70 overrides IsSatisfyQuestReqByLevel to true - see
     // questRankFor below. The Mages Guild and the knightly orders are the
@@ -195,32 +160,14 @@ export const GUILDS = Object.freeze({
   },
   ThievesGuild: {
     name: 'ThievesGuild',
-    neverExpels: true, // AllowGuildExpulsion (ThievesGuild.cs:128-131)
+    neverExpels: true,          // AllowGuildExpulsion (ThievesGuild.cs:128-131)
     guildGroup: GUILD_GROUPS.GeneralPopulace,
     factionId: GUILD_FACTION_IDS.ThievesGuild,
-    skills: [
-      SKILLS.Backstabbing,
-      SKILLS.Climbing,
-      SKILLS.Lockpicking,
-      SKILLS.Pickpocket,
-      SKILLS.ShortBlade,
-      SKILLS.Stealth,
-      SKILLS.Streetwise,
-    ],
-    get rankTitles() {
-      // ThievesGuild.cs:66
-      return localizedTextList('thievesRanks', [
-        'Apprentice',
-        'Journeyman',
-        'Filcher',
-        'Crook',
-        'Robber',
-        'Bandit',
-        'Thief',
-        'Ringleader',
-        'Mastermind',
-        'Master Thief',
-      ]);
+    skills: [SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.Lockpicking, SKILLS.Pickpocket,
+      SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
+    get rankTitles() {   // ThievesGuild.cs:66
+      return localizedTextList('thievesRanks', ['Apprentice', 'Journeyman', 'Filcher', 'Crook', 'Robber',
+        'Bandit', 'Thief', 'Ringleader', 'Mastermind', 'Master Thief']);
     },
     text: { welcome: 5225, promotion: 5235, bribesJudge: 550 },
     // ThievesGuild.cs:24 - the ONLY way in. See INVITATION_ONLY below.
@@ -235,34 +182,14 @@ export const GUILDS = Object.freeze({
   },
   DarkBrotherhood: {
     name: 'DarkBrotherhood',
-    neverExpels: true, // AllowGuildExpulsion (DarkBrotherhood.cs:132-135)
+    neverExpels: true,          // AllowGuildExpulsion (DarkBrotherhood.cs:132-135)
     guildGroup: GUILD_GROUPS.DarkBrotherHood,
     factionId: GUILD_FACTION_IDS.DarkBrotherhood,
-    skills: [
-      SKILLS.Archery,
-      SKILLS.Backstabbing,
-      SKILLS.Climbing,
-      SKILLS.CriticalStrike,
-      SKILLS.Daedric,
-      SKILLS.Destruction,
-      SKILLS.ShortBlade,
-      SKILLS.Stealth,
-      SKILLS.Streetwise,
-    ],
-    get rankTitles() {
-      // DarkBrotherhood.cs:69
-      return localizedTextList('darkBrotherhoodRanks', [
-        'Apprentice',
-        'Journeyman',
-        'Operator',
-        'Slayer',
-        'Executioner',
-        'Punisher',
-        'Terminator',
-        'Assassin',
-        'Dark Brother',
-        'Master Assassin',
-      ]);
+    skills: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
+      SKILLS.Daedric, SKILLS.Destruction, SKILLS.ShortBlade, SKILLS.Stealth, SKILLS.Streetwise],
+    get rankTitles() {   // DarkBrotherhood.cs:69
+      return localizedTextList('darkBrotherhoodRanks', ['Apprentice', 'Journeyman', 'Operator', 'Slayer', 'Executioner',
+        'Punisher', 'Terminator', 'Assassin', 'Dark Brother', 'Master Assassin']);
     },
     text: { welcome: 5292, promotion: 666, bribesJudge: 551 },
     // DarkBrotherhood.cs:24.
@@ -273,7 +200,7 @@ export const GUILDS = Object.freeze({
     // MARKER of which override applies, not a second copy of the string.
     nonMemberTitle: 'nonMember',
     femaleTitleRanks: [8],
-    femaleRankTitles: localizedTable({ 8: ['darkSister', 'Dark Sister'] }), // DarkBrotherhood.cs:88-89
+    femaleRankTitles: localizedTable({ 8: ['darkSister', 'Dark Sister'] }),   // DarkBrotherhood.cs:88-89
     // DarkBrotherhood.GetPromotionMsgId - odd ranks. G8: every DB
     // promotion fires the DiscoverRandomLocation reveal + the
     // readMapDB note BEFORE its switch (:105-110), whatever the rank
@@ -292,7 +219,8 @@ export const GUILDS = Object.freeze({
  *  day-of-year is computed here exactly as DFU's getter does. The
  *  older { year, dayOfYear } shape a test may hand-build is still
  *  accepted, so the ONE law has ONE reader either way. */
-export const daySinceZero = (date) => date.year * DAYS_PER_YEAR + (date.dayOfYear ?? dayOfYear(date));
+export const daySinceZero = (date) =>
+  (date.year * DAYS_PER_YEAR) + (date.dayOfYear ?? dayOfYear(date));
 
 /** CalculateNumHighLowSkills (:113-130). The `else if` is load-bearing:
  *  a skill that cleared the HIGH bar is not also counted low, so
@@ -306,10 +234,8 @@ export const daySinceZero = (date) => date.year * DAYS_PER_YEAR + (date.dayOfYea
  *  values did not earn (and take it back on unequip). In DFU a worn
  *  enchantment never moves guild rank. */
 export function numHighLowSkills(entity, guild, rank) {
-  let high = 0,
-    low = 0;
-  for (const skill of guild?.skills ?? []) {
-    // GuildSkills (FGH2H-R: no mod overrides it now)
+  let high = 0, low = 0;
+  for (const skill of guild?.skills ?? []) {   // GuildSkills (FGH2H-R: no mod overrides it now)
     const v = permanentSkillValue(entity, skill);
     if (v >= RANK_REQ_SKILL_HIGH[rank]) high++;
     else if (v >= RANK_REQ_SKILL_LOW[rank]) low++;
@@ -327,16 +253,12 @@ export function numHighLowSkills(entity, guild, rank) {
 // name, registered once: `{ joinReputationFloor, squad(level),
 // expulsion: [lines] }` or null for DFU's own.
 let _underworldRule = null;
-export function setUnderworldRule(fn) {
-  _underworldRule = typeof fn === 'function' ? fn : null;
-}
+export function setUnderworldRule(fn) { _underworldRule = typeof fn === 'function' ? fn : null; }
 export const underworldRuleOf = (guild) => _underworldRule?.(guild?.name) ?? null;
 /** Guild.Leave() (GuildManager.RemoveMembership :140 calls it): the
  *  host's seam for what a mod's Leave does - the squad. */
 let _onExpelled = null;
-export function setGuildExpelledHook(fn) {
-  _onExpelled = typeof fn === 'function' ? fn : null;
-}
+export function setGuildExpelledHook(fn) { _onExpelled = typeof fn === 'function' ? fn : null; }
 
 export function calculateNewRank(entity, guild, store) {
   // AUDIT 21 F1: DFU's shape exactly. Guild.CalculateNewRank is the base
@@ -386,14 +308,14 @@ export function updateRank(memberships, guild, entity, store, now, ctx = null) {
   // PROMO-NOW (FIELD BUGS 2026-10-15; Mac, asked: "No wait"): online (`ctx.promoteWhenEarned`, the host's) a PROMOTION
   // does not wait the 28 days - the review promotes the moment the member qualifies. The Roll's paced reputation already
   // paces the ranks (ten a rank, at most 15 a day). Demotion, probation and expulsion keep DFU's wait.
-  const waited = !(today < m.lastRankChange + DAYS_BETWEEN_RANK_CHANGES); // DFU's own test, negated: an unread stamp opens it
+  const waited = !(today < m.lastRankChange + DAYS_BETWEEN_RANK_CHANGES);   // DFU's own test, negated: an unread stamp opens it
   if (!waited && !ctx?.promoteWhenEarned) return null;
 
   // CHAP4b (Chapters-Arc 3.5): online, while the Roll holds, ranks 8 and 9 are seats - the host names the highest rank a
   // review gives (`ctx.rankCeiling`, null offline). A review never takes past it, and never demotes a rank above it (the
   // Roll's adoption holds the book at 7 itself, unannounced by DFU's demotion record)
   const newRank = reviewedRank(m, guild, entity, store, ctx);
-  if (!waited && !(newRank > m.rank)) return null; // PROMO-NOW: inside the 28 days, a promotion alone
+  if (!waited && !(newRank > m.rank)) return null;   // PROMO-NOW: inside the 28 days, a promotion alone
   // REP6 (the reputation overhaul, 2026-09-29 - "Guilds: probation below 0, and expulsion only below -10, with a warning
   // first"): DFU expels a member the first review their standing is below zero - one failed quest's -2 from 0 was out
   // ("i got expelled from the mages... it says i dont have reputation"), a timeout's -22 was out with a death squad
@@ -407,18 +329,20 @@ export function updateRank(memberships, guild, entity, store, now, ctx = null) {
   const owed = Math.max(0, Number(ctx?.owed) || 0);
   if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)) {
     m.probation = true;
-    m.lastRankChange = today; // the next review is 28 days on
+    m.lastRankChange = today;   // the next review is 28 days on
     return { outcome: 'probation', rank: m.rank, textId: null, lines: PROBATION_LINES };
   }
   if (newRank >= 0) m.probation = false;
   if (newRank === m.rank) return null;
 
-  const outcome = newRank > m.rank ? 'promotion' : newRank < 0 ? 'expulsion' : 'demotion';
+  const outcome = newRank > m.rank ? 'promotion'
+    : newRank < 0 ? 'expulsion'
+      : 'demotion';
   m.rank = newRank;
   m.lastRankChange = today;
   if (outcome === 'expulsion') {
     leaveGuild(memberships, guild);
-    _onExpelled?.(guild, entity, ctx); // RR1: Guild.Leave() - a mod's class sends its squad
+    _onExpelled?.(guild, entity, ctx);   // RR1: Guild.Leave() - a mod's class sends its squad
   }
   // RR1: TokensExpulsion, the virtual - a mod's own lines stand in for record 668
   const rule = outcome === 'expulsion' ? underworldRuleOf(guild) : null;
@@ -456,12 +380,7 @@ export function rankNeeds(memberships, guild, entity, store, ctx = null) {
   if (rank >= RANK_REQ_REPUTATION.length) return null;
   if (rank > top) {
     return m.rank === top
-      ? {
-          rank,
-          seat: true,
-          reputation: getReputation(store, guild.factionId),
-          reputationNeed: RANK_REQ_REPUTATION[rank],
-        }
+      ? { rank, seat: true, reputation: getReputation(store, guild.factionId), reputationNeed: RANK_REQ_REPUTATION[rank] }
       : null;
   }
   let best = null;
@@ -471,12 +390,9 @@ export function rankNeeds(memberships, guild, entity, store, ctx = null) {
   }
   return {
     rank,
-    reputation: getReputation(store, guild.factionId),
-    reputationNeed: RANK_REQ_REPUTATION[rank],
-    skillHigh: RANK_REQ_SKILL_HIGH[rank],
-    skillLow: RANK_REQ_SKILL_LOW[rank],
-    ...numHighLowSkills(entity, guild, rank),
-    best,
+    reputation: getReputation(store, guild.factionId), reputationNeed: RANK_REQ_REPUTATION[rank],
+    skillHigh: RANK_REQ_SKILL_HIGH[rank], skillLow: RANK_REQ_SKILL_LOW[rank],
+    ...numHighLowSkills(entity, guild, rank), best,
   };
 }
 
@@ -515,12 +431,11 @@ export function promotionTextId(guild, rank, ctx = null) {
   return guild.promotionByRank?.[rank] ?? guild.text.promotion;
 }
 
-const textIdFor = (guild, outcome, rank, ctx = null) =>
-  outcome === 'promotion'
-    ? promotionTextId(guild, rank, ctx)
-    : outcome === 'demotion'
-      ? DEMOTION_TEXT_ID
-      : EXPULSION_TEXT_ID;
+const textIdFor = (guild, outcome, rank, ctx = null) => (
+  outcome === 'promotion' ? promotionTextId(guild, rank, ctx)
+    : outcome === 'demotion' ? DEMOTION_TEXT_ID
+      : EXPULSION_TEXT_ID
+);
 
 /** IsMember (:155-158): rank >= 0. A non-member is rank -1, which is
  *  also what an expulsion leaves behind. */
@@ -614,6 +529,7 @@ export function guildOfFaction(factionId, resolveVariant = null, factionDict = n
   return resolveVariant ? resolveVariant(factionId) : null;
 }
 
+
 // ── membership (GuildManager.cs :122-165) ─────────────────────────
 // DFU keys Memberships by GuildGroups, and the group is DATA - read
 // off the faction record's ggroup, not hardcoded per subclass.
@@ -679,12 +595,9 @@ export function activeMemberships(entity) {
   // a pre-V2e book IS the mortal book - migrated in place, so a
   // legacy save with a live curse cannot read the wrong book
   else if (!isMembershipStore(cur)) entity.guildMemberships = { mortal: cur, vampire: {} };
-  const vamp = !!(
-    entity.racialOverride &&
-    !entity.racialOverride.ended &&
-    entity.racialOverride.racial === 'vampirism'
-  );
-  carryInvitationOnly(entity.guildMemberships, vamp); // CURSE-CARRY: the two that cannot be asked ride the swap
+  const vamp = !!(entity.racialOverride && !entity.racialOverride.ended
+    && entity.racialOverride.racial === 'vampirism');
+  carryInvitationOnly(entity.guildMemberships, vamp);   // CURSE-CARRY: the two that cannot be asked ride the swap
   return membershipsFor(entity.guildMemberships, vamp);
 }
 /** CURSE-CARRY (`01-Overview/bugs/Field-Bugs-2026-10-17d.md`) - A DEPARTURE FROM GuildManager.Memberships
@@ -738,8 +651,7 @@ export function joinGuild(memberships, guild, now, store = null) {
   memberships[membershipKey(guild)] = m;
   // RR1: ThievesGuildRR / DarkBrotherhoodRR.Join - "Ensure reputation starts at at least 2 to give a 1 quest failure buffer"
   const floor = underworldRuleOf(guild)?.joinReputationFloor;
-  if (store && floor != null && getReputation(store, guild.factionId) < floor)
-    setReputation(store, guild.factionId, floor);
+  if (store && floor != null && getReputation(store, guild.factionId) < floor) setReputation(store, guild.factionId, floor);
   return m;
 }
 
@@ -822,7 +734,7 @@ export function guildInitiationQuestEnded(memberships, questName, questSuccess, 
   const joined = [];
   for (const guild of [GUILDS.ThievesGuild, GUILDS.DarkBrotherhood]) {
     if (questName !== guild.initiationQuest) continue;
-    joinGuild(memberships, guild, now, store); // AUDIT-RR F2: AddMembership runs the class's Join() (GuildManager.cs:122-126) - the underworld floor (ThievesGuildRR.cs:91-99) needs the store this path never handed
+    joinGuild(memberships, guild, now, store);   // AUDIT-RR F2: AddMembership runs the class's Join() (GuildManager.cs:122-126) - the underworld floor (ThievesGuildRR.cs:91-99) needs the store this path never handed
     joined.push(guild);
   }
   return joined;

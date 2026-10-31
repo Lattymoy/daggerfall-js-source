@@ -62,8 +62,8 @@
   {
     "name": "FRONTS-gate-unfronted",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  Number.isSafeInteger(n) &&\n  n >= 0 &&\n  gateLaneOf(n) < GATE_LANES &&\n  gateDayOf(n) % GATE_EVERY_DAYS === 0 &&\n  frontStands(gateFrontDay(n), gateLaneOf(n));",
-    "new": "  Number.isSafeInteger(n) && n >= 0 && gateLaneOf(n) < GATE_LANES && gateDayOf(n) % GATE_EVERY_DAYS === 0;",
+    "old": " && gateDayOf(n) % GATE_EVERY_DAYS === 0 && frontStands(gateFrontDay(n), gateLaneOf(n));",
+    "new": " && gateDayOf(n) % GATE_EVERY_DAYS === 0;",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -113,7 +113,7 @@
     "name": "FRONTS-sd-turn",
     "file": "src/net/superDungeon/sdLaw.js",
     "old": "const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && (lane === 0 || held < SD_FRONT_HOLLOWS);",
-    "new": "const sdFrontMay = (now, lane, held) => lane === 0 || held < SD_FRONT_HOLLOWS;",
+    "new": "const sdFrontMay = (now, lane, held) => (lane === 0 || held < SD_FRONT_HOLLOWS);",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "FRONTS-sd-held-bay",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  (recs ?? []).filter((r) => r && sdLaneOf(r.s) > 0 && sdLaneOf(r.s) !== lane && sdStands(sdPhase(r, now)));",
-    "new": "  (recs ?? []).filter((r) => r && sdLaneOf(r.s) >= 0 && sdLaneOf(r.s) !== lane && sdStands(sdPhase(r, now)));",
+    "old": "r && sdLaneOf(r.s) > 0 && sdLaneOf(r.s) !== lane",
+    "new": "r && sdLaneOf(r.s) >= 0 && sdLaneOf(r.s) !== lane",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "AUDIT-FRONTS-B1-turn-unread",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "    t = sdFrontFrom(t, lane);\n    const standing = sdStandingPast(recs, t, lane);",
-    "new": "    const standing = sdStandingPast(recs, t, lane);",
+    "old": "    t = sdFrontFrom(t, lane);\n    const standing",
+    "new": "    const standing",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "AUDIT-FRONTS-A2-lane-order",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "export const sdBeatOrder = (recs) => [\n  0,\n  ...SD_LANES.filter((l) => l > 0).sort((a, b) => sdLastRise(recs, a) - sdLastRise(recs, b) || a - b),\n];",
-    "new": "export const sdBeatOrder = (recs) => [0, ...SD_LANES.filter((l) => l > 0).sort((a, b) => a - b)];",
+    "old": ".sort((a, b) => sdLastRise(recs, a) - sdLastRise(recs, b) || a - b)]",
+    "new": ".sort((a, b) => a - b)]",
     "tests": [
       "test/net/fronts1_law.test.js"
     ],

@@ -340,8 +340,8 @@
   {
     "name": "PRIMARYFOLD-rate-peek-one-late",
     "file": "server-account/src/accounts.js",
-    "old": "  return !!w && w.start >= Math.floor(nowS / windowS) * windowS && w.count + 1 > max;",
-    "new": "  return !!w && w.start >= Math.floor(nowS / windowS) * windowS && w.count > max;",
+    "old": "&& w.count + 1 > max;",
+    "new": "&& w.count > max;",
     "tests": [
       "test/server/primaryfold.test.js"
     ],
@@ -350,8 +350,8 @@
   {
     "name": "PRIMARYFOLD-rate-peek-any-window",
     "file": "server-account/src/accounts.js",
-    "old": "  return !!w && w.start >= Math.floor(nowS / windowS) * windowS && w.count + 1 > max;",
-    "new": "  return !!w && w.count + 1 > max;",
+    "old": "return !!w && w.start >= Math.floor(nowS / windowS) * windowS && w.count + 1 > max;",
+    "new": "return !!w && w.count + 1 > max;",
     "tests": [
       "test/server/primaryfold.test.js"
     ],

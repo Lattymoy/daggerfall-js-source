@@ -168,8 +168,8 @@
   {
     "name": "AUDIT-WB11-W5-the-shaft-on-the-stand-in",
     "file": "src/combat/arrowFlight.js",
-    "old": "      bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }),",
-    "new": "      bloodHit(dmg, foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }),",
+    "old": "bloodHit(dmg, foe.bloodOf ?? foe.entity, {",
+    "new": "bloodHit(dmg, foe.entity, {",
     "tests": [
       "test/net/gate/audit_wb11.test.js",
       "test/combat/blood1_decals.test.js"

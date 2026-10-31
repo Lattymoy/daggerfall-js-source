@@ -344,8 +344,8 @@
   {
     "name": "SD25-HANG-the-lip-gone",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    f.quad(\n      SD_REALM_ROOT_RECORD,\n      C(x0, -SD_LIP, z0),\n      C(x0, 0, z0),\n      C(x1, 0, z1),\n      C(x1, -SD_LIP, z1),\n      [k / 8, 0.02],\n      [k / 8, 0],\n      [(k + 1) / 8, 0],\n      [(k + 1) / 8, 0.02],\n    );",
-    "new": "    if (false)\n      f.quad(\n        SD_REALM_ROOT_RECORD,\n        C(x0, -SD_LIP, z0),\n        C(x0, 0, z0),\n        C(x1, 0, z1),\n        C(x1, -SD_LIP, z1),\n        [k / 8, 0.02],\n        [k / 8, 0],\n        [(k + 1) / 8, 0],\n        [(k + 1) / 8, 0.02],\n      );",
+    "old": "    f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0),",
+    "new": "    if (false) f.quad(SD_REALM_ROOT_RECORD, C(x0, -SD_LIP, z0), C(x0, 0, z0),",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SD25-HANG-the-lip-facing-in",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "      C(x0, -SD_LIP, z0),\n      C(x0, 0, z0),\n      C(x1, 0, z1),\n      C(x1, -SD_LIP, z1),",
-    "new": "      C(x1, -SD_LIP, z1),\n      C(x1, 0, z1),\n      C(x0, 0, z0),\n      C(x0, -SD_LIP, z0),",
+    "old": "C(x0, -SD_LIP, z0), C(x0, 0, z0), C(x1, 0, z1), C(x1, -SD_LIP, z1),",
+    "new": "C(x1, -SD_LIP, z1), C(x1, 0, z1), C(x0, 0, z0), C(x0, -SD_LIP, z0),",
     "tests": [
       "test/world/superDungeon/sd25_hang.test.js"
     ]

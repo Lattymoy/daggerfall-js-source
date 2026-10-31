@@ -110,8 +110,8 @@
   {
     "name": "OWS2-dry-line-delegate",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    return dryLineOf(a, b, deps.isWater); // OWS2: the one law, travelRoute.js's (the Overworld's spot walk asks it too)",
-    "new": "    return true; // OWS2: the one law, travelRoute.js's (the Overworld's spot walk asks it too)",
+    "old": "return dryLineOf(a, b, deps.isWater);",
+    "new": "return true;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "OWS2-rig-rebuilt",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      hullRigCache.set(hull, rig);\n    }",
-    "new": "    }",
+    "old": "      hullRigCache.set(hull, rig);\n",
+    "new": "\n",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "OWS2-rig-no-cargo",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        cargo: b.modifierCargoThreshold,",
-    "new": "        cargo: 1,",
+    "old": "cargo: b.modifierCargoThreshold });",
+    "new": "cargo: 1 });",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "OWS2-rig-bounds",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  function hullRig(hull) {\n    if (!models || !(hull >= 0 && hull < HULL_NAMES.length)) return null;",
-    "new": "  function hullRig(hull) {\n    if (!models) return null;",
+    "old": "if (!models || !(hull >= 0 && hull < HULL_NAMES.length)) return null;\n    let rig = hullRigCache.get(hull);",
+    "new": "if (!models) return null;\n    let rig = hullRigCache.get(hull);",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "OWS2-ocean-stops-sailors",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if ((deps.climateIndex?.() ?? 0) === CLIMATE_OCEAN && !deps.atSea?.() && !flownNow()) {",
-    "new": "      if ((deps.climateIndex?.() ?? 0) === CLIMATE_OCEAN && !flownNow()) {",
+    "old": "=== CLIMATE_OCEAN && !deps.atSea?.() && !flownNow()) {",
+    "new": "=== CLIMATE_OCEAN && !flownNow()) {",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "OWS2-steer-at-sea",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (st.autopilot && drive && !drive.arrived && st.settings.avoidObstacles && deps.steer && !deps.atSea?.()) {",
-    "new": "      if (st.autopilot && drive && !drive.arrived && st.settings.avoidObstacles && deps.steer) {",
+    "old": "&& deps.steer && !deps.atSea?.()) {",
+    "new": "&& deps.steer) {",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "OWS2-sea-leg-road-square",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      : leg.kind === 'sea' || leg.kind === 'embark'",
-    "new": "      : false",
+    "old": "      : leg.kind === 'sea' || leg.kind === 'embark' ? rectOf(w.x + SEA_LEG_LO",
+    "new": "      : false ? rectOf(w.x + SEA_LEG_LO",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "OWS2-sea-spot-road-square",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const w = afloat ? SEA_SPOT_SIZE : P_SIZE;",
-    "new": "    const w = P_SIZE;",
+    "old": "const w = afloat ? SEA_SPOT_SIZE : P_SIZE;",
+    "new": "const w = P_SIZE;",
     "tests": [
       "test/systems/travel/ows2_crossing.test.js"
     ]

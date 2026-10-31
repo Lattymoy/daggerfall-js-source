@@ -260,8 +260,8 @@
   {
     "name": "HT-WAIST-the-part-rides-the-bone",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      const placed = p.hang ? hangAffine(at, p.hang) : at; // HT-WAIST",
-    "new": "      const placed = at; // HT-WAIST",
+    "old": "      const placed = p.hang ? hangAffine(at, p.hang) : at;   // HT-WAIST",
+    "new": "      const placed = at;   // HT-WAIST",
     "tests": [
       "test/combat/htwaist_mwbody.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "HT-WAIST-the-bind-drops-the-hang",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "            hang: part.hang ?? null, // HT-WAIST: a part that HANGS from its bone (hangAffine) rather than riding it",
-    "new": "            hang: null, // HT-WAIST: a part that HANGS from its bone (hangAffine) rather than riding it",
+    "old": "            hang: part.hang ?? null,   // HT-WAIST: a part that HANGS",
+    "new": "            hang: null,   // HT-WAIST: a part that HANGS",
     "tests": [
       "test/combat/htwaist_mwbody.test.js"
     ]

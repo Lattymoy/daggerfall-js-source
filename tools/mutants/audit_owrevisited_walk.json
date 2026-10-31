@@ -74,8 +74,8 @@
   {
     "name": "AOWR-L2-1-place-line-ends-at-road",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          path: finalPath(r, rectCentre(rect), true),",
-    "new": "          lane: routeLane(r, r.legs.length - 1),",
+    "old": "path: finalPath(r, rectCentre(rect), true), cornerTurn",
+    "new": "lane: routeLane(r, r.legs.length - 1), cornerTurn",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AOWR-L2-2-spot-unlaned",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        { path: finalPath(r, r.point, false), cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk },",
-    "new": "        { cornerTurn: LANE_CORNER_TURN, walk: st.autopilot?.walk },",
+    "old": "        { path: finalPath(r, r.point, false), cornerTurn",
+    "new": "        { cornerTurn",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "AOWR-L2-3-corner-skipped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (inA.band !== sideA && (RING_ORDER.indexOf(inA.band) + step + 8) % 8 === a) out.push(at[sideA]); // round the corner it came in beside",
-    "new": "    // round the corner it came in beside",
+    "old": "  if (inA.band !== sideA && (RING_ORDER.indexOf(inA.band) + step + 8) % 8 === a) out.push(at[sideA]);",
+    "new": "",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "AOWR-L2-3-exit-corner-skipped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (outB.band !== sideB && (RING_ORDER.indexOf(outB.band) - step + 8) % 8 === b) out.push(at[sideB]); // round the corner it leaves beside",
-    "new": "    // round the corner it leaves beside",
+    "old": "  if (outB.band !== sideB && (RING_ORDER.indexOf(outB.band) - step + 8) % 8 === b) out.push(at[sideB]);",
+    "new": "",
     "tests": [
       "test/world/worldOfDaggerfall/ow_wod.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AOWR-L2-3-ring-approach-unlaned",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const a = prev.ring ? prev.at : legEnd(prev, legMiddle),\n      b = leg.ring ? leg.at : legEnd(leg, legMiddle);",
-    "new": "    if (leg.ring) return null;\n    const a = legEnd(prev, legMiddle),\n      b = legEnd(leg, legMiddle);",
+    "old": "    const a = prev.ring ? prev.at : legEnd(prev, legMiddle), b = leg.ring ? leg.at : legEnd(leg, legMiddle);",
+    "new": "    if (leg.ring) return null;\n    const a = legEnd(prev, legMiddle), b = legEnd(leg, legMiddle);",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]
@@ -230,7 +230,7 @@
   {
     "name": "AOWR-L1-5-flag-kept-on-interrupt",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.shutStop = false; // AUDIT OW-REVISITED L1-5: a stop in the same frame (a foe, the steering) takes the gates' word with it",
+    "old": "    st.shutStop = false;   // AUDIT OW-REVISITED L1-5: a stop in the same frame (a foe, the steering) takes the gates' word with it",
     "new": "",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
@@ -239,8 +239,8 @@
   {
     "name": "AOWR-L1-5-flag-kept-on-begin",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.shutStop = false; // AUDIT OW-REVISITED L1-5: a shut gate's word is its own journey's, never the next's\n    startRouteLeg();",
-    "new": "    startRouteLeg();",
+    "old": "    st.shutStop = false;   // AUDIT OW-REVISITED L1-5: a shut gate's word is its own journey's, never the next's\n    startRouteLeg();\n    st.beginTime",
+    "new": "    startRouteLeg();\n    st.beginTime",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -248,8 +248,8 @@
   {
     "name": "AOWR-L1-9-town-not-asked-again",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        } else st.route.streetFor = null;",
-    "new": "        }",
+    "old": " else st.route.streetFor = null; }",
+    "new": " }",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "AOWR-L1-6-sea-walked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (\n      !r.townAt ||\n      !deps.townWay ||\n      leg?.ring ||\n      SEA_LEG_KINDS.includes(leg?.kind) ||\n      deps.atSea?.() ||\n      r.streetFor === key\n    )\n      return null;",
-    "new": "    if (!r.townAt || !deps.townWay || leg?.ring || r.streetFor === key) return null;",
+    "old": "leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key) return null;",
+    "new": "leg?.ring || r.streetFor === key) return null;",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
     ]
@@ -275,7 +275,7 @@
   {
     "name": "AOWR-L1-6-arrival-no-buffer",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    return (\n      !!rect &&\n      p.x >= rect.xMin - ARRIVAL_BUFFER &&\n      p.x < rect.xMax + ARRIVAL_BUFFER &&\n      p.z >= rect.zMin - ARRIVAL_BUFFER &&\n      p.z < rect.zMax + ARRIVAL_BUFFER\n    );",
+    "old": "    return !!rect && p.x >= rect.xMin - ARRIVAL_BUFFER && p.x < rect.xMax + ARRIVAL_BUFFER && p.z >= rect.zMin - ARRIVAL_BUFFER && p.z < rect.zMax + ARRIVAL_BUFFER;",
     "new": "    return !!rect && p.x >= rect.xMin && p.x < rect.xMax && p.z >= rect.zMin && p.z < rect.zMax;",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"
@@ -284,7 +284,7 @@
   {
     "name": "AOWR-L1-6-aim-not-the-place",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (final && r.summary) {\n      const rect = deps.locationWorldRect?.(r.summary);\n      if (rect) return rectCentre(rect);\n    }",
+    "old": "    if (final && r.summary) { const rect = deps.locationWorldRect?.(r.summary); if (rect) return rectCentre(rect); }",
     "new": "",
     "tests": [
       "test/systems/travel/audit_owrevisited_walk.test.js"

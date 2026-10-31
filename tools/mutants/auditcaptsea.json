@@ -1062,8 +1062,8 @@
   {
     "name": "ACS-G5-ground-law",
     "file": "src/world/ethericSea.js",
-    "old": "  ground.etherLaw = inEtherLaw; // AUDIT CAPTAIN'S SEA G5: where the composition answers the ground itself (the Overworld's water law asks)",
-    "new": "  ground.etherLaw = null; // AUDIT CAPTAIN'S SEA G5: where the composition answers the ground itself (the Overworld's water law asks)",
+    "old": "  ground.etherLaw = inEtherLaw;",
+    "new": "  ground.etherLaw = null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1117,8 +1117,8 @@
   {
     "name": "ACS-G11-doc",
     "file": "src/world/ethericSea.js",
-    "old": " *  called by (AUDIT CAPTAIN'S SEA G11: of fifty places charted, two share a name about one time in twenty - measured over",
-    "new": " *  called by (AUDIT CAPTAIN'S SEA G11: of fifty places charted, no two share a name - measured over",
+    "old": "of fifty places charted, two share a name about one time in twenty",
+    "new": "of fifty places charted, no two share a name",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1126,8 +1126,8 @@
   {
     "name": "ACS-G13-doc",
     "file": "src/world/ethericSea.js",
-    "old": "// past a margin of four). Past the margin the law answers nothing: the sea is the box's, and past it nothing streams.",
-    "new": "// past a margin of four). Past the margin the law answers the Bay.",
+    "old": "Past the margin the law answers nothing: the sea is the box's, and past it nothing streams.",
+    "new": "Past the margin the law answers the Bay.",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1135,8 +1135,8 @@
   {
     "name": "ACS-G12-zero",
     "file": "src/world/ethericSea.js",
-    "old": "  if (!dx && !dy) return null;\n  const a = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;",
-    "new": "  const a = ((Math.atan2(dx, -dy) * 180) / Math.PI + 360) % 360;",
+    "old": "  if (!dx && !dy) return null;\n",
+    "new": "",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1171,8 +1171,8 @@
   {
     "name": "ACS-H1-port-size",
     "file": "src/world/ethericSea.js",
-    "old": "    r: Object.freeze([0.9, 1.1]),",
-    "new": "    r: Object.freeze([1.6, 2.4]),",
+    "old": "  port: Object.freeze({ r: Object.freeze([0.9, 1.1]),",
+    "new": "  port: Object.freeze({ r: Object.freeze([1.6, 2.4]),",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -1189,8 +1189,8 @@
   {
     "name": "ACS-H1-haven-radius",
     "file": "src/world/ethericSea.js",
-    "old": "  const radius = haven ? 1 : lerp(k.r[0], k.r[1], r()); // AUDIT CAPTAIN'S SEA H1: Veilhaven a port's, the haven's town on its four bytes",
-    "new": "  const radius = haven ? 2.4 : lerp(k.r[0], k.r[1], r()); // AUDIT CAPTAIN'S SEA H1: Veilhaven a port's, the haven's town on its four bytes",
+    "old": "  const radius = haven ? 1 : lerp(",
+    "new": "  const radius = haven ? 2.4 : lerp(",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]
@@ -2466,8 +2466,8 @@
   {
     "name": "ACS-S14-removed-gate",
     "file": "src/systems/inputActions.js",
-    "old": "    if (\n      autofill &&\n      (getBinding(store, action, true) != null ||\n        getBinding(store, action, false) != null ||\n        store.removedPrimary.has(action))\n    )\n      continue;",
-    "new": "    if (autofill && (getBinding(store, action, true) != null || getBinding(store, action, false) != null)) continue;",
+    "old": " || getBinding(store, action, false) != null || store.removedPrimary.has(action))) continue;",
+    "new": " || getBinding(store, action, false) != null)) continue;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js"
     ]

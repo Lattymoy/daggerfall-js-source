@@ -251,7 +251,7 @@
   {
     "name": "BLM-C3-the-index-alone-as-before",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))\n        ? pendingSummary(px, py, row)\n        : null;",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId)) ? pendingSummary(px, py, row) : null;",
     "new": "      return null;",
     "tests": [
       "test/scenes/bayleft_places.test.js"
@@ -261,8 +261,8 @@
   {
     "name": "BLM-C3-stood-to-answer",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "    let stood = null;",
-    "new": "    let stood = provinceQuestPlaces?.standAt(px, py) ?? null;",
+    "old": "    let stood = null;\n    const rect = locationWorldRect(",
+    "new": "    let stood = provinceQuestPlaces?.standAt(px, py) ?? null;\n    const rect = locationWorldRect(",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
@@ -271,8 +271,8 @@
   {
     "name": "BLM-C3-the-location-stood-every-read",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "        return (stood ??= locationIndex.get(key) ?? provinceQuestPlaces?.standAt(px, py) ?? null);",
-    "new": "        return provinceQuestPlaces?.standAt(px, py) ?? null;",
+    "old": "      get loc() { return (stood ??= locationIndex.get(key) ?? provinceQuestPlaces?.standAt(px, py) ?? null); },",
+    "new": "      get loc() { return provinceQuestPlaces?.standAt(px, py) ?? null; },",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "BLM-C3-the-found-law-skipped",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))",
-    "new": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || true)",
+    "old": "knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))",
+    "new": "knownByKind(row.mapId >>> 0, row.type) || true)",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
@@ -290,8 +290,8 @@
   {
     "name": "BLM-C3-the-row's-own-find-unchecked",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))\n        ? pendingSummary(px, py, row)\n        : null;",
-    "new": "      return row?.name ? pendingSummary(px, py, row) : null;",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId)) ? pendingSummary",
+    "new": "      return row?.name ? pendingSummary",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
@@ -300,8 +300,8 @@
   {
     "name": "BLM-C3-named-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))",
-    "new": "      return row?.name && (knownByKind(row.mapId >>> 0, row.type) || hasDiscoveredLocationId(row.mapId))",
+    "old": "      return row?.name && (named || knownByKind(row.mapId >>> 0, row.type)",
+    "new": "      return row?.name && (knownByKind(row.mapId >>> 0, row.type)",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
@@ -310,8 +310,8 @@
   {
     "name": "BLM-C3-the-index-arm's-named-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "        return loc.name &&\n          id &&\n          (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id))",
-    "new": "        return loc.name && id && (knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id))",
+    "old": "return loc.name && id && (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ?",
+    "new": "return loc.name && id && (knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ?",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
@@ -341,8 +341,8 @@
   {
     "name": "BLM-C3-the-snapshot-back",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "    const out = [...bay];",
-    "new": "    return bay;\n    const out = [...bay];",
+    "old": "    const out = [...bay];\n    if (worldPlaces) {",
+    "new": "    return bay;\n    const out = [...bay];\n    if (worldPlaces) {",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
@@ -351,8 +351,8 @@
   {
     "name": "BLM-C3-the-bay's-gathered-with-what-stood-past-it",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "    const bay = (_baySettlements ??= settlementPixels(locationIndex).filter((t) => !t.loc.ether && onTheBay(t.x, t.y)));",
-    "new": "    const bay = (_baySettlements ??= settlementPixels(locationIndex).filter((t) => !t.loc.ether));",
+    "old": "settlementPixels(locationIndex).filter((t) => !t.loc.ether && onTheBay(t.x, t.y))",
+    "new": "settlementPixels(locationIndex).filter((t) => !t.loc.ether)",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "BLM-C3-the-capital's-every-slice",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "          .filter(\n            (p) =>\n              !onTheBay(p.px, p.py) &&\n              TV_FAR_TYPES.has(p.type) &&\n              (!isCapitalPlaceId(p.mapId) || (p.mapId & 0x7ffff) < 16),\n          )",
-    "new": "          .filter((p) => !onTheBay(p.px, p.py) && TV_FAR_TYPES.has(p.type))",
+    "old": " && (!isCapitalPlaceId(p.mapId) || (p.mapId & 0x7ffff) < 16)).map((p) => ({ x: p.px, y: p.py }));",
+    "new": ").map((p) => ({ x: p.px, y: p.py }));",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
@@ -370,8 +370,8 @@
   {
     "name": "BLM-C3-the-countryside-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "    for (const p of pastBayPlacesIn(at.x - range, at.y - range, at.x + range + 1, at.y + range + 1))\n      if (TV_FAR_TYPES.has(p.type) && !onTheBay(p.x, p.y)) out.push({ x: p.x, y: p.y });",
-    "new": "    for (const p of []) if (TV_FAR_TYPES.has(p.type) && !onTheBay(p.x, p.y)) out.push({ x: p.x, y: p.y });",
+    "old": "    for (const p of pastBayPlacesIn(at.x - range, at.y - range, at.x + range + 1, at.y + range + 1))",
+    "new": "    for (const p of [])",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ]
@@ -388,8 +388,8 @@
   {
     "name": "BLM-C3-the-edge's-circle-held-to-the-bay",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "    if (\n      onTheBay(at.x, at.y) &&\n      at.x >= range &&\n      at.y >= range &&\n      at.x < MAX_MAP_PIXEL_X - range &&\n      at.y < MAX_MAP_PIXEL_Y - range\n    )\n      return bay; // the edge's circle wholly on the Bay",
-    "new": "    if (onTheBay(at.x, at.y)) return bay; // the edge's circle wholly on the Bay",
+    "old": "    if (onTheBay(at.x, at.y) && at.x >= range && at.y >= range && at.x < MAX_MAP_PIXEL_X - range && at.y < MAX_MAP_PIXEL_Y - range) return bay;",
+    "new": "    if (onTheBay(at.x, at.y)) return bay;",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ],
@@ -409,8 +409,8 @@
   {
     "name": "BLM-C11-a-bay-key-read-off-the-registry",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "    if (key < BAY_PIXEL_IDS) return locationIndex.get(`${key % MAX_MAP_PIXEL_X},${Math.floor(key / MAX_MAP_PIXEL_X)}`);",
-    "new": "    if (false) return locationIndex.get(`${key % MAX_MAP_PIXEL_X},${Math.floor(key / MAX_MAP_PIXEL_X)}`);",
+    "old": "    if (key < BAY_PIXEL_IDS) return locationIndex.get(",
+    "new": "    if (false) return locationIndex.get(",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "BLM-C10-the-dots-past-the-bay-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "    const s = tvPlaceSummary(x, y);",
-    "new": "    const s = null;",
+    "old": "    const s = tvPlaceSummary(x, y);\n    return s ? { locationType:",
+    "new": "    const s = null;\n    return s ? { locationType:",
     "tests": [
       "test/scenes/bayleft_places.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "BLM-C7-the-deed's-record-lost",
     "file": "src/systems/discovery.js",
-    "old": "  const deeds = (Array.isArray(houses) ? houses : []).filter(\n    (h) => h && (h.buildingKey | 0) > 0 && discoveryKeyOf(Number(h.mapId) || 0) >= BAY_PIXEL_IDS,\n  );",
-    "new": "  const deeds = [].filter((h) => h && (h.buildingKey | 0) > 0 && discoveryKeyOf(Number(h.mapId) || 0) >= BAY_PIXEL_IDS);",
+    "old": "  const deeds = (Array.isArray(houses) ? houses : []).filter(",
+    "new": "  const deeds = [].filter(",
     "tests": [
       "test/systems/bayleft_disckey.test.js"
     ],
@@ -795,8 +795,8 @@
   {
     "name": "BLM-C7-a-carried-one-dropped-by-its-book",
     "file": "src/systems/discovery.js",
-    "old": "      const had = _discovered.get(locId);\n      if (had) for (const [k, r] of recs) had.set(k, r);\n      else _discovered.set(locId, recs);",
-    "new": "      _discovered.set(locId, recs);",
+    "old": "    if (!old) { const had = _discovered.get(locId); if (had) for (const [k, r] of recs) had.set(k, r); else _discovered.set(locId, recs); continue; }",
+    "new": "    if (!old) { _discovered.set(locId, recs); continue; }",
     "tests": [
       "test/systems/bayleft_disckey.test.js"
     ]

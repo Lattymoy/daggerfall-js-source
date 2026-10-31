@@ -11,8 +11,8 @@
   {
     "name": "L10N3f-the-door-s-LOC-arm",
     "file": "src/ui/bookDoor.js",
-    "old": "    const localized = name ? openLocalizedBookFile(name) : null;",
-    "new": "    const localized = null;",
+    "old": "const localized = name ? openLocalizedBookFile(name) : null;",
+    "new": "const localized = null;",
     "tests": [
       "test/systems/l10n3f_readers.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "L10N3f-the-LOC-author-to-ba",
     "file": "src/ui/bookDoor.js",
-    "old": "      setBookAuthor(item?.message, localized.author);\n      showReader(createBookReaderWindow(localized));",
-    "new": "      showReader(createBookReaderWindow(localized));",
+    "old": "      setBookAuthor(item?.message, localized.author);\n",
+    "new": "",
     "tests": [
       "test/systems/l10n3f_readers.test.js"
     ]

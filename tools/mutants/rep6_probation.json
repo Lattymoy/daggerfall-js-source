@@ -11,8 +11,8 @@
   {
     "name": "REP6-the-probation-never-ending",
     "file": "src/systems/guild/guilds.js",
-    "old": "  if (newRank >= 0) m.probation = false;\n  if (newRank === m.rank) return null;",
-    "new": "  if (newRank === m.rank) return null;",
+    "old": "  if (newRank >= 0) m.probation = false;\n",
+    "new": "",
     "tests": [
       "test/systems/guild/rep6_probation.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "REP6-the-warning-skipped",
     "file": "src/systems/guild/guilds.js",
-    "old": "  if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)) {",
-    "new": "  if (newRank < 0 && getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW) {",
+    "old": "(!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)",
+    "new": "(getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)",
     "tests": [
       "test/systems/guild/rep6_probation.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "REP6-the-minus-10-line-ignored",
     "file": "src/systems/guild/guilds.js",
-    "old": "  if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)) {",
-    "new": "  if (newRank < 0 && !m.probation) {",
+    "old": "(!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)",
+    "new": "(!m.probation)",
     "tests": [
       "test/systems/guild/rep6_probation.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REP6-the-review-not-deferred",
     "file": "src/systems/guild/guilds.js",
-    "old": "    m.lastRankChange = today; // the next review is 28 days on\n    return { outcome: 'probation', rank: m.rank, textId: null, lines: PROBATION_LINES };",
-    "new": "    return { outcome: 'probation', rank: m.rank, textId: null, lines: PROBATION_LINES };",
+    "old": "    m.lastRankChange = today;   // the next review is 28 days on\n",
+    "new": "",
     "tests": [
       "test/systems/guild/rep6_probation.test.js"
     ]

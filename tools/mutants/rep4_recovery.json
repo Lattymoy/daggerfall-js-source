@@ -65,8 +65,8 @@
   {
     "name": "REP4-the-thanks-never-paid",
     "file": "src/scenes/bountyHost.js",
-    "old": "    if (Number.isInteger(region) && region >= 0 && entity) rewardContract(entity, region);\n    const reward = bountyRewardRows(posting.gold, item);",
-    "new": "    const reward = bountyRewardRows(posting.gold, item);",
+    "old": "    if (Number.isInteger(region) && region >= 0 && entity) rewardContract(entity, region);\n",
+    "new": "",
     "tests": [
       "test/systems/rep4_recovery.test.js"
     ]

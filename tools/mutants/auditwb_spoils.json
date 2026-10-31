@@ -11,8 +11,8 @@
   {
     "name": "AUDWB-A2-a-grant-twice",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    }) {\n      if (spentOn(day, acct)) {",
-    "new": "    }) {\n      if (false) {",
+    "old": "    grant({ day, seed, level, acct = '', roll = null, text = SPOILS_TEXT.granted, owner = undefined, kept = null, claims = null }) {\n      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }",
+    "new": "    grant({ day, seed, level, acct = '', roll = null, text = SPOILS_TEXT.granted, owner = undefined, kept = null, claims = null }) {\n      if (false) { if (spentBy(day, acct)) said(day, acct); return false; }",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDWB-A2-a-grant-unrecorded",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const id = spend(day, acct, list);",
-    "new": "      const id = null;",
+    "old": "      const id = spend(day, acct, list);\n      for (const piece of list) take(piece);\n      held.set(id, { who: who(), day });",
+    "new": "      const id = null;\n      for (const piece of list) take(piece);\n      held.set(id, { who: who(), day });",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDWB-A9-the-old-day-forgotten",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    return (\n      kept === day || (Array.isArray(kept) && (kept.includes(spentKey(day, acct)) || kept.includes(spentKey(day, '*'))))\n    );",
-    "new": "    return kept === day || (Array.isArray(kept) && kept.includes(spentKey(day, acct)));",
+    "old": " || kept.includes(spentKey(day, '*'))",
+    "new": "",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDWB-A9-the-old-day-dropped-in-the-carry",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    const marks = [\n      ...(Array.isArray(kept) ? kept : Number.isSafeInteger(kept) ? [spentKey(kept, '*')] : []),\n      spentKey(day, acct),\n    ].slice(-SPOILS_SPENT_MAX);",
-    "new": "    const marks = [...(Array.isArray(kept) ? kept : []), spentKey(day, acct)].slice(-SPOILS_SPENT_MAX);",
+    "old": "Number.isSafeInteger(kept) ? [spentKey(kept, '*')] : []",
+    "new": "[]",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDWB-A9-the-session-forgets",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  function spentOn(day, acct) {\n    if (spentHere.has(spentKey(day, acct))) return true;\n    const kept = read(DAY_KEY);",
-    "new": "  function spentOn(day, acct) {\n    const kept = read(DAY_KEY);",
+    "old": "  function spentOn(day, acct) {\n    if (spentHere.has(spentKey(day, acct))) return true;",
+    "new": "  function spentOn(day, acct) {",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "AUDWB-A7-anothers-record-dropped",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (rec.who != null && rec.who !== who) {\n      left.push(rec);\n      continue;\n    } // another character's waits for them",
+    "old": "    if (rec.who != null && rec.who !== who) { left.push(rec); continue; }   // another character's waits for them",
     "new": "    if (rec.who != null && rec.who !== who) continue;",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "AUDWB-A7-a-saved-record-kept",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue; // a save since holds them: it goes",
-    "new": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) {\n      left.push(rec);\n      continue;\n    }",
+    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes",
+    "new": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) { left.push(rec); continue; }",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js",
       "test/systems/item/wb5_gate_spoils.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "AUDWB-A6-no-memory",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        mem.set(k, JSON.parse(JSON.stringify(v ?? null)));",
-    "new": "        /* lost */",
+    "old": "      catch { mem.set(k, JSON.parse(JSON.stringify(v ?? null))); }",
+    "new": "      catch { /* lost */ }",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "AUDWB-A6-memory-over-a-landed-write",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        mem.delete(k);\n      } catch {",
-    "new": "      } catch {",
+    "old": "storage.setItem(k, JSON.stringify(v)); mem.delete(k); }",
+    "new": "storage.setItem(k, JSON.stringify(v)); }",
     "tests": [
       "test/net/gate/auditwb_spoils.test.js"
     ]

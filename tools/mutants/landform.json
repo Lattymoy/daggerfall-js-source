@@ -266,8 +266,8 @@
   {
     "name": "LANDFORM-restand-backwards",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "  const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);",
-    "new": "  const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y + landformLiftAt(x, z) : y);",
+    "old": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y - landformLiftAt(x, z) : y);",
+    "new": "const groundFrameHeight = (y, x, z) => (landform && Number.isFinite(y) ? y + landformLiftAt(x, z) : y);",
     "tests": [
       "test/systems/landform.test.js"
     ]
@@ -275,8 +275,8 @@
   {
     "name": "LANDFORM-restand-scale-only",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet;",
-    "new": "    if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + relief + town(y + relief) + meet;",
+    "old": "if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet;",
+    "new": "if (!(was > 0) || was === STREAMING_TERRAIN_SCALE) return y + relief + town(y + relief) + meet;",
     "tests": [
       "test/systems/landform.test.js"
     ],

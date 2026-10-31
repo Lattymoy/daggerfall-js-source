@@ -185,8 +185,8 @@
   {
     "name": "CHAP4B-CEILING-FLOOR",
     "file": "src/systems/guild/guilds.js",
-    "old": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
-    "new": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.min(ruled, m.rank) : ruled;",
+    "old": "? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
+    "new": "? Math.min(ruled, m.rank) : ruled;",
     "tests": [
       "test/systems/guild/chap4b_seats.test.js"
     ]

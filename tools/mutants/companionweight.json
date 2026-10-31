@@ -20,8 +20,8 @@
   {
     "name": "COMPANION-WEIGHT-store-gate-dropped",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (capacity) {",
-    "new": "  if (false) {",
+    "old": "  if (capacity) {\n    // COMPANION-WEIGHT: a storage with its own limit takes what fits",
+    "new": "  if (false) {\n    // COMPANION-WEIGHT: a storage with its own limit takes what fits",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "COMPANION-WEIGHT-refusal-unnamed",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    : { reason: 'packFull', text: packFullText(capacity?.name) };",
-    "new": "    : { reason: 'packFull', text: packFullText(null) };",
+    "old": "{ reason: 'packFull', text: packFullText(capacity?.name) });",
+    "new": "{ reason: 'packFull', text: packFullText(null) });",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "COMPANION-WEIGHT-asked-of-the-wagon",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.usingWagon || state.chooseOne || !deps.loot) return null;",
-    "new": "  if (!deps.loot) return null;",
+    "old": "  if (state.usingWagon || state.chooseOne || !deps.loot) return null;\n  const cap = deps.loot.capacity?.();",
+    "new": "  if (!deps.loot) return null;\n  const cap = deps.loot.capacity?.();",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-ECON-C1-the-quest-arm-answers-first",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (capacity && !usingWagon && packRefuses(capacity, item, item.stackCount ?? 1, remote))\n    return { ok: false, refusal: packFull(capacity) };\n  // AUDIT 26: TransferItem's QUEST arm (:1480-1505), the guard ONE",
-    "new": "  // AUDIT 26: TransferItem's QUEST arm (:1480-1505), the guard ONE",
+    "old": "  if (capacity && !usingWagon && packRefuses(capacity, item, item.stackCount ?? 1, remote)) return { ok: false, refusal: packFull(capacity) };\n",
+    "new": "",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-ECON-C5-a-gone-pack-takes-a-quiver",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  !!capacity.gone || canHoldAmount(units, effectiveUnitWeightInKg(item), capacity.kg, totalWeight(remote)) <= 0;",
-    "new": "  canHoldAmount(units, effectiveUnitWeightInKg(item), capacity.kg, totalWeight(remote)) <= 0;",
+    "old": "const packRefuses = (capacity, item, units, remote) => !!capacity.gone || canHoldAmount(",
+    "new": "const packRefuses = (capacity, item, units, remote) => canHoldAmount(",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "AUDIT-ECON-C5-a-gone-pack-takes-gold",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    if (capacity.gone) {\n      const r = packFull(capacity);\n      return { ok: false, refusal: r, notice: r.text };\n    } // AUDIT ECON C5\n    // COMPANION-WEIGHT: a companion's pack clamps gold the way the wagon does, by its own limit and in its own words",
-    "new": "    // COMPANION-WEIGHT: a companion's pack clamps gold the way the wagon does, by its own limit and in its own words",
+    "old": "    if (capacity.gone) { const r = packFull(capacity); return { ok: false, refusal: r, notice: r.text }; }   // AUDIT ECON C5\n",
+    "new": "",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "AUDIT-ECON-gold-under-nothing",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    const notice = asked > canCarry ? packFullGoldText(capacity.name, Math.max(0, canCarry)) : null;",
-    "new": "    const notice = asked > canCarry ? packFullGoldText(capacity.name, canCarry) : null;",
+    "old": "packFullGoldText(capacity.name, Math.max(0, canCarry))",
+    "new": "packFullGoldText(capacity.name, canCarry)",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDIT-ECON-C4-a-quiver-weighed",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item), capacity.kg, totalWeight(remote));",
-    "new": "    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item) || 1, capacity.kg, totalWeight(remote));",
+    "old": "    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item), capacity.kg, totalWeight(remote));\n    if (capacity.gone || canHold <= 0)",
+    "new": "    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item) || 1, capacity.kg, totalWeight(remote));\n    if (capacity.gone || canHold <= 0)",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDIT-ECON-C4-the-exact-headroom-said",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    const notice = asked > canCarry ? packFullGoldText(capacity.name, Math.max(0, canCarry)) : null;",
-    "new": "    const notice = asked >= canCarry ? packFullGoldText(capacity.name, Math.max(0, canCarry)) : null;",
+    "old": "const notice = asked > canCarry ? packFullGoldText(",
+    "new": "const notice = asked >= canCarry ? packFullGoldText(",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDIT-ECON-C4-a-limit-of-nothing",
     "file": "src/systems/inventorySession.js",
-    "old": "  return cap && Number.isFinite(cap.kg) ? cap : null;",
-    "new": "  return cap ? cap : null;",
+    "old": "return cap && Number.isFinite(cap.kg) ? cap : null;",
+    "new": "return cap ? cap : null;",
     "tests": [
       "test/systems/companion_weight.test.js"
     ]

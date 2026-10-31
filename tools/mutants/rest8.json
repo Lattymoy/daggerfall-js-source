@@ -150,7 +150,7 @@
     "name": "REST8-TIMEFREE-bounty-never-lapses-back",
     "file": "src/scenes/bountyHost.js",
     "old": "    for (const gone of lapseBounties(ledger, now)) {",
-    "new": "    for (const gone of deps.online?.() ? [] : lapseBounties(ledger, now)) {",
+    "new": "    for (const gone of (deps.online?.() ? [] : lapseBounties(ledger, now))) {",
     "tests": [
       "test/systems/quest/rest8_questwaits.test.js"
     ],

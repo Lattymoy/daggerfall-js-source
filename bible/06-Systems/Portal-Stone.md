@@ -81,7 +81,7 @@ is the one DFU already asks for a count.
   The chain is the tavern's room rental's - DaggerfallTavernWindow's field then Yes/No, run by U24's
   `ServiceFlowWindow` (`guildServiceWindows.js:"export class ServiceFlowWindow {"`), as
   `tavernWindow.js:"export const DAYS_FIELD"`
-  rents a room. The field is the split popup's (`itemTransfer.js:"export const HOW_MANY_ITEMS"`, its parse
+  rents a room. The field is the split popup's (`itemTransfer.js:"export const HOW_MANY_ITEMS = (max) =>"`, its parse
   `parseSplitAmount`: "0", past the most and "3x" end the chain with nothing taken, as SplitStackPopup_OnGotUserInput
   moves nothing), **seeded with 1**. Escape on the field, No or Escape on the offer, take nothing. Both skins take the
   count from the one window: the field box is THE ONE DaggerfallInputMessageBox (`inputMessageBox.js`, in the

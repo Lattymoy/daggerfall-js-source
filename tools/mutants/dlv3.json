@@ -706,8 +706,8 @@
   {
     "name": "DLV3-grant-delve-max",
     "file": "src/net/grantLaw.js",
-    "old": "  delve: Object.freeze({ max: 12, rate: 1 / 3, cap: 8, hostile: true }), // DLV3: a dungeon encounter's foes - its law's largest wave a grant (net/delve/delveLaw.js HOLD_WAVE_MAX), a Wellsprings' four pours each 12 s the rate; a world room's alone",
-    "new": "  delve: Object.freeze({ max: 13, rate: 1 / 3, cap: 8, hostile: true }), // DLV3: a dungeon encounter's foes - its law's largest wave a grant (net/delve/delveLaw.js HOLD_WAVE_MAX), a Wellsprings' four pours each 12 s the rate; a world room's alone",
+    "old": "delve: Object.freeze({ max: 12,",
+    "new": "delve: Object.freeze({ max: 13,",
     "tests": [
       "test/net/grant1_law.test.js"
     ]
@@ -724,8 +724,8 @@
   {
     "name": "DLV3-grant-delve-unasked",
     "file": "src/net/grantLaw.js",
-    "old": "  if (o?.delve) return 'delve'; // DLV3: an encounter's foes ask their own kind (a stand a dungeon's encounter makes)",
-    "new": "  if (o?.delve) return 'loose'; // DLV3: an encounter's foes ask their own kind (a stand a dungeon's encounter makes)",
+    "old": "if (o?.delve) return 'delve';",
+    "new": "if (o?.delve) return 'loose';",
     "tests": [
       "test/scenes/delve/dlv3_online.test.js"
     ]

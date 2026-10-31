@@ -152,8 +152,8 @@
   {
     "name": "STAFF-PANEL-SPEED-realm-home-audit-after",
     "file": "server-account/src/staffStatus.js",
-    "old": "      homeOf(ctx, env, who, n),",
-    "new": "      await homeOf(ctx, env, who, n),",
+    "old": "Promise.all([homeOf(ctx, env, who, n), audit('home-read'",
+    "new": "Promise.all([await homeOf(ctx, env, who, n), audit('home-read'",
     "why": "Home's audit row a trip of its own after every watch",
     "tests": [
       "test/server/staffpanelspeedrealm.test.js"

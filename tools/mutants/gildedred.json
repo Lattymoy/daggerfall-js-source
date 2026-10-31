@@ -233,8 +233,8 @@
   {
     "name": "GR-ramp-turned-crimson",
     "file": "src/combat/thunderlockArt.js",
-    "old": "  [252, 214, 90],",
-    "new": "  [252, 60, 70],",
+    "old": "[252, 214, 90]",
+    "new": "[252, 60, 70]",
     "tests": [
       "test/ui/gildedred.test.js"
     ]

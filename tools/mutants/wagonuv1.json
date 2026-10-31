@@ -42,8 +42,8 @@
   {
     "name": "WAGONUV1-5-the-half-texel-dropped",
     "file": "src/world/wagonModels.js",
-    "old": "  return planarUv([p[0], p[1], p[2] - mid], n, [tile, 1])[0] + 0.5 + CARAVAN_SIDE_WINDOW_U;",
-    "new": "  return planarUv([p[0], p[1], p[2] - mid], n, [tile, 1])[0] + 0.5 + 0.5;",
+    "old": "+ 0.5 + CARAVAN_SIDE_WINDOW_U;",
+    "new": "+ 0.5 + 0.5;",
     "tests": [
       "test/world/wagonuv1.test.js"
     ],

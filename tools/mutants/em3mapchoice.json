@@ -47,8 +47,8 @@
   {
     "name": "EM3-TRAIL-not-saved",
     "file": "src/systems/automap/automap.js",
-    "old": "      ...(rec.trail?.size ? { trail: [...rec.trail] } : {}),\n      ...(rec.trailAll ? { trailAll: true } : {}),",
-    "new": "      ...(rec.trailAll ? { trailAll: true } : {}),",
+    "old": "      ...(rec.trail?.size ? { trail: [...rec.trail] } : {}),\n",
+    "new": "",
     "tests": [
       "test/ui/ink/em3_3d_dungeon.test.js",
       "test/ui/automap/automapsheet.test.js",
@@ -58,8 +58,8 @@
   {
     "name": "EM3-TRAIL-not-restored",
     "file": "src/systems/automap/automap.js",
-    "old": "      ...(Array.isArray(rec.trail) ? { trail: new Set(rec.trail) } : {}),\n      // AUDIT SD III (D1): the drops come back with it - six numbers each, or none",
-    "new": "      // AUDIT SD III (D1): the drops come back with it - six numbers each, or none",
+    "old": "      ...(Array.isArray(rec.trail) ? { trail: new Set(rec.trail) } : {}),\n",
+    "new": "",
     "tests": [
       "test/ui/ink/em3_3d_dungeon.test.js",
       "test/ui/automap/automapsheet.test.js",
@@ -69,8 +69,8 @@
   {
     "name": "EM3-TRAIL-kept-across-a-new-layout",
     "file": "src/systems/automap/automap.js",
-    "old": "    delete rec.trail;\n    delete rec.trailAll;\n    delete rec.drops; // EM3-3D: the walked trail is of a layout that is gone (AUDIT SD III, D1: and its drops)\n    rec.blockNames = [...model.blockNames];",
-    "new": "    rec.blockNames = [...model.blockNames];",
+    "old": "    delete rec.trail; delete rec.trailAll; delete rec.drops;   // EM3-3D: the walked trail is of a layout that is gone (AUDIT SD III, D1: and its drops)\n",
+    "new": "",
     "tests": [
       "test/ui/ink/em3_3d_dungeon.test.js",
       "test/ui/automap/automapsheet.test.js",
@@ -80,8 +80,8 @@
   {
     "name": "EM3-TRAIL-RevealAll-not-all",
     "file": "src/systems/automap/automap.js",
-    "old": "  rec.trailAll = true; // EM3-3D: everything is known now, walked or not - the solid sheet draws the reveal\n  return true;",
-    "new": "  return true;",
+    "old": "  rec.trailAll = true;   // EM3-3D: everything is known now, walked or not - the solid sheet draws the reveal\n",
+    "new": "",
     "tests": [
       "test/ui/ink/em3_3d_dungeon.test.js",
       "test/ui/automap/automapsheet.test.js"
@@ -90,8 +90,8 @@
   {
     "name": "EM3-TRAIL-HideAll-keeps-the-trail",
     "file": "src/systems/automap/automap.js",
-    "old": "  rec.trail = new Set();\n  delete rec.trailAll;\n  delete rec.drops; // EM3-3D: nothing is known, so nothing was walked (AUDIT SD III, D1: nor dropped)\n  return true;",
-    "new": "  return true;",
+    "old": "  rec.trail = new Set(); delete rec.trailAll; delete rec.drops;   // EM3-3D: nothing is known, so nothing was walked (AUDIT SD III, D1: nor dropped)\n",
+    "new": "",
     "tests": [
       "test/ui/ink/em3_3d_dungeon.test.js",
       "test/ui/automap/automapsheet.test.js"
@@ -100,8 +100,8 @@
   {
     "name": "EM3-TRAIL-a-new-step-every-scan",
     "file": "src/systems/automap/automap.js",
-    "old": "  if (rec.trail.has(key)) return false;\n  rec.trail.add(key);",
-    "new": "  rec.trail.add(key);",
+    "old": "  if (rec.trail.has(key)) return false;\n",
+    "new": "",
     "tests": [
       "test/ui/ink/em3_3d_dungeon.test.js",
       "test/ui/automap/automapsheet.test.js"

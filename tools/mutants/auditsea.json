@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-SEA-B4-refund-unpaid",
     "file": "server-account/src/seaBounty.js",
-    "old": "  await db.batch(seaRefundSteps(db, player.id, character, nowS)); // AUDIT SEA VENTURES B4: its posts on heads gone, owed back to it first",
-    "new": "  // AUDIT SEA VENTURES B4: its posts on heads gone, owed back to it first",
+    "old": "  await db.batch(seaRefundSteps(db, player.id, character, nowS));",
+    "new": "",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "AUDIT-SEA-B5-standing-swept",
     "file": "server-account/src/seaBounty.js",
-    "old": "      'DELETE FROM sea_bounties WHERE id IN (SELECT id FROM sea_bounties WHERE claimed_r IS NOT NULL AND at < ?1 LIMIT ?2)',",
-    "new": "      'DELETE FROM sea_bounties WHERE id IN (SELECT id FROM sea_bounties WHERE at < ?1 LIMIT ?2)',",
+    "old": "WHERE claimed_r IS NOT NULL AND at < ?1 LIMIT ?2",
+    "new": "WHERE at < ?1 LIMIT ?2",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]

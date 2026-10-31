@@ -273,7 +273,7 @@ test('AUDIT-TESA A4-F2/A4-F3: a capital\'s pixel is the capital\'s - never clone
   assert.match(W, /const aloc = aq \? capitalLocationAt\(aq\.bx, aq\.by\) \|\| arenaLocationAt\(aq\.bx, aq\.by\) : null;/);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the port's id is WORLD-WIDE's own (world/worldWide/worldPorts.js portIdOfLocation)
   // PIN MOVED (the fourth merge of main into #1184): the towns are one list, kept by id (RPT1026-WORLD FAR-QUAY's ring beside it)
-  assert.match(W, /if \(aloc\?\.exterior\?\.exteriorData\) add\(\{ id: portIdOfLocation\(aloc\), loc: aloc,/);
+  assert.match(W, /if \(aloc\?\.exterior\?\.exteriorData\)\n\s*add\(\{ id: portIdOfLocation\(aloc\), loc: aloc,/);
 });
 
 test('AUDIT-TESA A2-3: a pixel id past the Bay aliases a Bay row (y * 1000 + x) - every read by it asks the Bay\'s pixels alone; past the Bay the place the world stands there answers, once discovered', () => {
@@ -291,7 +291,7 @@ test('AUDIT-TESA A2-3: a pixel id past the Bay aliases a Bay row (y * 1000 + x) 
     /locationSummary: \(\) => \(onTheBay\(to\.x, to\.y\) \? travelLocationSummaryAt\(mapDict, to\.x, to\.y\) : null\),/,
     // PIN MOVED (BAY-LEFT-MAPS): past the Bay a place found - or one a quest names (`named`, OW-QUEST's press)
     // PIN MOVED (OW-BEYOND-KNOWN, test/systems/travel/owbeyondknown.test.js): or one known by its kind, as MAPS.BSA bakes the Bay's
-    /return loc\.name &&\n\s*id &&\n\s*\(named \|\| knownByKind\(id, loc\.mapTableData\?\.locationType\) \|\| hasDiscoveredLocationId\(id\)\)\n\s*\? \{\n\s*pixel: \{ x: px, y: py \},\n\s*name: loc\.name,\n\s*mapId: id,/,
+    /return loc\.name && id && \(named \|\| knownByKind\(id, loc\.mapTableData\?\.locationType\) \|\| hasDiscoveredLocationId\(id\)\) \? \{ pixel: \{ x: px, y: py \}, name: loc\.name, mapId: id,/,
   ]) assert.match(W, re);
   // PIN MOVED (WORLD-WIDE folded into TESA, #1184): the harbour's loop no longer bounds itself - WW3's directory answers no
   // row off the Bay's map (systems/map/mapDirectory.js locationSummaryAt), so a pixel past the Bay aliases none

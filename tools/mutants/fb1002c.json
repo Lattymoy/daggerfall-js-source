@@ -110,8 +110,8 @@
   {
     "name": "TOLIVE-boot-bag-whole",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k]; // TO-LIVE: the restart half, as the world loaded it",
-    "new": "  if (boot) return boot; // TO-LIVE: the restart half, as the world loaded it",
+    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k];",
+    "new": "  if (boot) return boot;",
     "tests": [
       "test/systems/to_live.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TOLIVE-restart-half-afresh",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k]; // TO-LIVE: the restart half, as the world loaded it",
-    "new": "  void TRAVEL_OPTIONS_RESTART_KEYS; // TO-LIVE: the restart half, as the world loaded it",
+    "old": "  if (boot) for (const k of TRAVEL_OPTIONS_RESTART_KEYS) bag[k] = boot[k];",
+    "new": "  void TRAVEL_OPTIONS_RESTART_KEYS;",
     "tests": [
       "test/systems/to_live.test.js"
     ]

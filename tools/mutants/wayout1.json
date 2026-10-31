@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-DELVE-B1-the-fill-too-coarse",
     "file": "src/systems/automap/automap.js",
-    "old": "    const steps = Math.ceil(d / (TRAIL_CELL / 2)); // half a cell apart: no cell the step crosses is skipped",
-    "new": "    const steps = Math.ceil(d / (TRAIL_CELL * 2)); // half a cell apart: no cell the step crosses is skipped",
+    "old": "Math.ceil(d / (TRAIL_CELL / 2))",
+    "new": "Math.ceil(d / (TRAIL_CELL * 2))",
     "tests": [
       "test/systems/wayout1_wayout.test.js"
     ]

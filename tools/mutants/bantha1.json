@@ -554,8 +554,8 @@
   {
     "name": "AUDIT-BANTHA1-the-grasss-haze-never-uploaded",
     "file": "src/render/labGrass.js",
-    "old": "    if (u.uJungleHaze) gl.uniform4fv(u.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1: the frame's (renderer.setJungleHaze); none handed, off",
-    "new": "    if (u.uJungleHaze) gl.uniform4fv(u.uJungleHaze, NO_HAZE); // BANTHA1: the frame's (renderer.setJungleHaze); none handed, off",
+    "old": "gl.uniform4fv(u.uJungleHaze, fog?.haze ?? NO_HAZE);",
+    "new": "gl.uniform4fv(u.uJungleHaze, NO_HAZE);",
     "tests": [
       "test/world/bantha1_jungle.test.js"
     ]

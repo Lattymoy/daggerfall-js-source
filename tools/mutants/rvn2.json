@@ -335,7 +335,7 @@
   {
     "name": "RVN2-stock-core-ignores-the-veto",
     "file": "src/combat/formulas.js",
-    "old": "    if (weapon.material === 2 && silverDoubles(target)) damage *= 2; // Silver (RVN2: unless a veto keeps it plain)",
+    "old": "    if (weapon.material === 2 && silverDoubles(target)) damage *= 2;    // Silver (RVN2: unless a veto keeps it plain)",
     "new": "    if (weapon.material === 2) damage *= 2;",
     "tests": [
       "test/systems/rvn2_adapt.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "RVN2-the-veto-inverted",
     "file": "src/combat/formulas.js",
-    "old": "      if (fn(target) === true) return false;",
-    "new": "      if (fn(target) === false) return false;",
+    "old": "  for (const fn of _silverVetoes.values()) { try { if (fn(target) === true) return false; }",
+    "new": "  for (const fn of _silverVetoes.values()) { try { if (fn(target) === false) return false; }",
     "tests": [
       "test/systems/rvn2_adapt.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "RVN2-the-arrow-foe-unread",
     "file": "src/combat/arrowFlight.js",
-    "old": "    backstabChance: backstabChanceOf(playerEntity, back, foe),",
-    "new": "    backstabChance: backstabChanceOf(playerEntity, back),",
+    "old": "backstabChance: backstabChanceOf(playerEntity, back, foe),",
+    "new": "backstabChance: backstabChanceOf(playerEntity, back),",
     "tests": [
       "test/systems/rvn2_adapt.test.js"
     ]

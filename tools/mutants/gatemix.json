@@ -283,8 +283,8 @@
   {
     "name": "GATE-MIX-lights-mask-unread",
     "file": "src/world/gate/gateArena.js",
-    "old": "    if (l.carried) carried[n + i] = 1;\n  }); // GATE-MIX: a flash's mask - no shadow caster",
-    "new": "  }); // GATE-MIX: a flash's mask - no shadow caster",
+    "old": " if (l.carried) carried[n + i] = 1; });",
+    "new": " });",
     "tests": [
       "test/world/gatemix_lights.test.js"
     ],
@@ -293,8 +293,8 @@
   {
     "name": "GATE-MIX-lights-all-masked",
     "file": "src/world/gate/gateArena.js",
-    "old": "    if (l.carried) carried[n + i] = 1;",
-    "new": "    carried[n + i] = 1;",
+    "old": " if (l.carried) carried[n + i] = 1; });",
+    "new": " carried[n + i] = 1; });",
     "tests": [
       "test/world/gatemix_lights.test.js"
     ],

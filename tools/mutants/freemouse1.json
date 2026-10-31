@@ -2,8 +2,8 @@
   {
     "name": "the-action-is-spliced-mid-list-instead-of-appended",
     "file": "src/systems/inputActions.js",
-    "old": "  'LookUp',",
-    "new": "  'FreeMouse',\n  'LookUp',",
+    "old": "  'ActivateCenterObject', 'ActivateCursor',",
+    "new": "  'ActivateCenterObject', 'ActivateCursor', 'FreeMouse',",
     "tests": [
       "test/systems/freemouse.test.js",
       "test/systems/inputactions.test.js",
@@ -42,8 +42,8 @@
   {
     "name": "the-row-stops-yielding-in-the-classic-windows",
     "file": "src/systems/inputActions.js",
-    "old": "  'FreeMouse',\n  'Interact',",
-    "new": "  'Interact',",
+    "old": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen', 'FreeMouse',",
+    "new": "export const PORT_ACTIONS = Object.freeze(['SocialInteract', 'QuickUse1', 'QuickUse2', 'QuickSwap', 'QuickOffHand', 'QuickSpell', 'QuickLootAll', 'QuickLootOpen',",
     "tests": [
       "test/systems/freemouse.test.js",
       "test/systems/qs2_inputs.test.js",
@@ -53,8 +53,8 @@
   {
     "name": "the-pane-draws-no-row-so-the-key-is-unrebindable",
     "file": "src/systems/inputActions.js",
-    "old": "  g('Mouse', [\n    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'],\n    ['FreeMouse', 'Free the mouse (press again to look)'],\n  ]),",
-    "new": "  g('Mouse', [['ActivateCursor', 'Free the mouse (offline) / open chat (online)']]),",
+    "old": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'], ['FreeMouse', 'Free the mouse (press again to look)'],",
+    "new": "    ['ActivateCursor', 'Free the mouse (offline) / open chat (online)'],",
     "tests": [
       "test/systems/freemouse.test.js",
       "test/ui/enhanced/enhancedControls.test.js",
@@ -64,8 +64,8 @@
   {
     "name": "the-row-is-hidden-under-the-online-heading",
     "file": "src/systems/inputActions.js",
-    "old": "  g('Online', [['SocialInteract', 'Interact with player']]),",
-    "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n    ['FreeMouse', 'Free the mouse (press again to look)'],\n  ]),",
+    "old": "  g('Online', [\n    ['SocialInteract', 'Interact with player'],\n  ]),",
+    "new": "  g('Online', [\n    ['SocialInteract', 'Interact with player'], ['FreeMouse', 'Free the mouse (press again to look)'],\n  ]),",
     "tests": [
       "test/systems/freemouse.test.js",
       "test/systems/qs2_inputs.test.js",

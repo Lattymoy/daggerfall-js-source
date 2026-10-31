@@ -307,7 +307,7 @@ test('ROAD-H H1c: BOTH arrow spawn seams apply it, so every host inherits the bo
   assert.match(src('systems/spellcast.js'),
     /export function playerShotOrigin\(eye, lookDir, muzzle\) \{\n\s*if \(muzzle\?\.world\) return \[\.\.\.muzzle\.world\];\n\s*return muzzle \? playerMuzzleOrigin\(eye, lookDir, muzzle\) : playerArrowOrigin\(eye, lookDir\);\n\}/);
   assert.match(src('combat/arrowFlight.js'),
-    /const origin = meta\.fromPlayer \? playerShotOrigin\(from, dir, meta\.muzzle\) : \[\.\.\.from\];/);
+    /const origin = meta\.fromPlayer\n\s*\? playerShotOrigin\(from, dir, meta\.muzzle\)\n\s*: \[\.\.\.from\];/);
   assert.match(src('combat/arrowFlight.js'), /this\.arrows\.push\(\{ pos: origin,/);
   assert.match(src('scenes/dungeonContext.js'),
     /const pos = fromPlayer\s*\n\s*\? playerShotOrigin\(from, dir, muzzle\)[^\n]*\n\s*: \[\.\.\.from\];/);

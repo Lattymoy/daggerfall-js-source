@@ -32,7 +32,7 @@
     "name": "LIGHT-ID-the-seam-imports-on-the-boot-path",
     "file": "src/render/lightId.js",
     "old": "const LIGHT_ID = Symbol('lightId');",
-    "new": "import { MAP_W } from '../world/road/roadNetwork.js';\nvoid MAP_W;\nconst LIGHT_ID = Symbol('lightId');",
+    "new": "import { MAP_W } from '../world/road/roadNetwork.js'; void MAP_W;\nconst LIGHT_ID = Symbol('lightId');",
     "tests": [
       "test/render/boot2.test.js"
     ]

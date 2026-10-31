@@ -3788,9 +3788,9 @@ faults, both past the Bay; the Bay's plans were 100% on the road and are unchang
   and the next walks the curve's second half before its straight run - each such leg carries its `line`, the painted
   road's native points (`roadLine.js:"export function roadLineLegs"`, from
   `travelRoute.js:"return roadLineLegs"`). Travel Options walks a
-  line's points as its lane (`travelOptions.js:"return { ax: a.x"`,
+  line's points as its lane (`travelOptions.js:"...(leg.line && !leg.ring ? { pts: [[a.x, a.z], ...leg.line] } : {})"`,
   the autopilot's `path`, OW-ROAD-TRUE's pursuit), aims a leg at its line's end (`legEnd`), rejoins a curve at its
-  nearest point (`travelOptions.js:"const near = lane?.pts"`) and walks a last
+  nearest point (`travelOptions.js:"const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;"`) and walks a last
   leg's line to its place or its spot. The drawn line and the forecast run the same points (`routeDrawPoints`' `via`,
   `drawRouteRuns`, `drawOwnRun`). A pair the byte paints no curve for (a T's stem, a junction's turn sharper than 45
   degrees), a way straight through, the Bay's pixels and the route's two ends are the middles they were - on the road.
@@ -3869,7 +3869,7 @@ The field, the day TESA shipped: *"travel nodes dont exist outside the bay in ov
 to travel"*.
 
 **What stood.** A plate on the Overworld - TV2's grid, TV5's edge, the junction map's dot - is a known place
-(`mapPlacesHost.js:"const tvPlaceSummary"`). On the Bay that is DFU's law: MAPS.BSA's baked
+(`mapPlacesHost.js:"const tvPlaceSummary = (px, py, named = false) =>"`). On the Bay that is DFU's law: MAPS.BSA's baked
 Discovered bit, which every town of the Bay carries. Past the Bay no place is a row of MAPS.BSA, so only a place the
 player had walked into was known, and the land past the Bay wore no plate to click.
 
@@ -3927,9 +3927,9 @@ the worst), and no open step past the Bay between two ends on the roads. The wal
   the walk asked, kept while the body stands. It is one body's walk, handed from leg to leg (`walk`), a place's and a
   spot's last leg too.
 - **On through a curve's apex**: a leg that ends inside a curve is handed the next leg's line
-  (`travelOptions.js:"const after = lane"`); its end is no
+  (`travelOptions.js:"const after = lane && r.i + 1 < r.legs.length ? routeLane(r, r.i + 1) : null;"`); its end is no
   corner then, and the aim looks on along it (`travelAutopilot.js:"export function pathPursuit"`).
-- **No stop at a leg** (`travelOptions.js:"k = 0; drive.arrived"`): a routed
+- **No stop at a leg** (`travelOptions.js:"drive.arrived && st.route && st.autopilot && k < LEG_CHAIN_MAX"`): a routed
   leg's end goes on to the next leg's drive in the same frame, up to LEG_CHAIN_MAX (8) legs. The mod's own journeys keep
   their stop.
 - **Either kind's paint** (`roadLine.js:"for (const kind of new Set([a, b, a === 'road' ? 'track' : 'road']))"`): at a

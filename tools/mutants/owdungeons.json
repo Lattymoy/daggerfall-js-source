@@ -165,7 +165,7 @@
     "name": "OWDS-host-grown-by-distance",
     "file": "src/scenes/travelViewDungeonModels.js",
     "old": "      const g = owDungeonGrow(e.h, blend);",
-    "new": "      const g = owDungeonGrow(\n        (e.h * 330) / Math.max(1, Math.hypot(eye[0] - _tvDngAt[0], eye[1] - _tvDngAt[1], eye[2] - _tvDngAt[2])),\n        blend,\n      );",
+    "new": "      const g = owDungeonGrow(e.h * 330 / Math.max(1, Math.hypot(eye[0] - _tvDngAt[0], eye[1] - _tvDngAt[1], eye[2] - _tvDngAt[2])), blend);",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "OWD-host-the-grid-left",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      max: Infinity,\n    });",
-    "new": "      max: Infinity,\n      grid: 3,\n    });",
+    "old": "spawnGone: (s) => !s.loc?.superTier && tvSpawnGone(s.x, s.y), max: Infinity });",
+    "new": "spawnGone: (s) => !s.loc?.superTier && tvSpawnGone(s.x, s.y), max: Infinity, grid: 3 });",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "OWD-host-the-Abyss-unknown",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      spawnKnown: (s) => !!s.loc?.superTier || tvSpawnKnown(s),",
-    "new": "      spawnKnown: tvSpawnKnown,",
+    "old": "spawnKnown: (s) => !!s.loc?.superTier || tvSpawnKnown(s), spawnFound: tvSpawnFound,\n      spawnGone: (s) => !s.loc?.superTier",
+    "new": "spawnKnown: tvSpawnKnown, spawnFound: tvSpawnFound,\n      spawnGone: (s) => !s.loc?.superTier",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "OWD-host-the-Abyss-timed-out",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      spawnGone: (s) => !s.loc?.superTier && tvSpawnGone(s.x, s.y),",
-    "new": "      spawnGone: (s) => tvSpawnGone(s.x, s.y),",
+    "old": "      spawnGone: (s) => !s.loc?.superTier && tvSpawnGone(s.x, s.y), max: Infinity });",
+    "new": "      spawnGone: (s) => tvSpawnGone(s.x, s.y), max: Infinity });",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "OWD-host-the-Abyss-asked-again",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "    if (host.tvDngModels.list.some((g) => g.spawn && !g.loc?.superTier && tvSpawnGone(g.px, g.py)))\n      host.tvDngModels.at = null; // AUDIT OW4 D2's law: a spawn whose time ran out goes",
-    "new": "    if (host.tvDngModels.list.some((g) => g.spawn && tvSpawnGone(g.px, g.py))) host.tvDngModels.at = null; // AUDIT OW4 D2's law: a spawn whose time ran out goes",
+    "old": "if (host.tvDngModels.list.some((g) => g.spawn && !g.loc?.superTier && tvSpawnGone(g.px, g.py))) host.tvDngModels.at = null;",
+    "new": "if (host.tvDngModels.list.some((g) => g.spawn && tvSpawnGone(g.px, g.py))) host.tvDngModels.at = null;",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "OWD-host-asked-every-frame",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "    if (\n      host.tvDngModels.at &&\n      host.tvDngModels.at.x === at.x &&\n      host.tvDngModels.at.y === at.y &&\n      host.tvDngModels.dg === dg &&\n      host.tvDngModels.n === n\n    )\n      return host.tvDngModels.list;",
-    "new": "    if (false) return host.tvDngModels.list;",
+    "old": "if (host.tvDngModels.at && host.tvDngModels.at.x === at.x && host.tvDngModels.at.y === at.y && host.tvDngModels.dg === dg && host.tvDngModels.n === n) return host.tvDngModels.list;",
+    "new": "if (false) return host.tvDngModels.list;",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "OWD-host-the-pixels-hold",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      hold: pipeline.holdPlace('owdungeon', g.key),",
-    "new": "      hold: pipeline.holdPlace('pixel', g.key),",
+    "old": "hold: pipeline.holdPlace('owdungeon', g.key) };",
+    "new": "hold: pipeline.holdPlace('pixel', g.key) };",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "OWD-host-the-climate-unworn",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "        await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, host.season), {",
-    "new": "        await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, 2, host.season), {",
+    "old": "(a, r) => applyClimate(a, r, climate, host.season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });\n      if (_tvDngModel.get(g.key) !== e) return;",
+    "new": "(a, r) => applyClimate(a, r, 2, host.season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });\n      if (_tvDngModel.get(g.key) !== e) return;",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "OWD-host-the-season-unread",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "        await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, host.season), {",
-    "new": "        await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, 0), {",
+    "old": "(a, r) => applyClimate(a, r, climate, host.season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });\n      if (_tvDngModel.get(g.key) !== e) return;",
+    "new": "(a, r) => applyClimate(a, r, climate, 0), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });\n      if (_tvDngModel.get(g.key) !== e) return;",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "OWD-host-the-colosseum-swapped",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      if (!free)\n        await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, host.season), {\n          getTexture: pipeline.getTexture,\n          uploadRecord: e.hold.uploadRecord,\n        });",
-    "new": "      await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, host.season), {\n        getTexture: pipeline.getTexture,\n        uploadRecord: e.hold.uploadRecord,\n      });",
+    "old": "      if (!free) await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, host.season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
+    "new": "      await remapSubMeshes(gpu.subMeshes, texRemap, (a, r) => applyClimate(a, r, climate, host.season), { getTexture: pipeline.getTexture, uploadRecord: e.hold.uploadRecord });",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "OWD-host-gone-yet-dressed",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      if (!gpu || !cpu || _tvDngModel.get(g.key) !== e) return;",
-    "new": "      if (!gpu || !cpu) return;",
+    "old": "      if (!gpu || !cpu || _tvDngModel.get(g.key) !== e) return;\n      const free = isClimateFreeModel",
+    "new": "      if (!gpu || !cpu) return;\n      const free = isClimateFreeModel",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "OWD-host-gone-made-ready",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      if (_tvDngModel.get(g.key) !== e) return;\n      const box = transformedAabb(archAabb(pick.modelIdNum, cpu.positions), pick.local);",
-    "new": "      const box = transformedAabb(archAabb(pick.modelIdNum, cpu.positions), pick.local);",
+    "old": "      if (_tvDngModel.get(g.key) !== e) return;\n      const box = transformedAabb(archAabb(pick.modelIdNum",
+    "new": "      const box = transformedAabb(archAabb(pick.modelIdNum",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "OWD-host-a-giants-shadow",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      renderer.drawMesh(e.gpu, grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, { noShadow: true });",
-    "new": "      renderer.drawMesh(e.gpu, grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, {\n        noShadow: false,\n      });",
+    "old": "grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, { noShadow: true });",
+    "new": "grownModelMatrix(e.local, e.box, _tvDngAt, g, e.matrix), e.texRemap, { noShadow: false });",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "OWD-host-the-gone-kept",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      if (!keep.has(k)) {",
-    "new": "      if (false) {",
+    "old": "for (const [k, e] of _tvDngModel) if (!keep.has(k)) { e.hold.release(); _tvDngModel.delete(k); }",
+    "new": "for (const [k, e] of _tvDngModel) if (false) { e.hold.release(); _tvDngModel.delete(k); }",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "OWD-host-drawn-twice-at-its-size",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "      if (!owDungeonDrawn(g, !!level)) continue;",
-    "new": "      if (!owDungeonDrawn(g, false)) continue;",
+    "old": "if (!owDungeonDrawn(g, !!level)) continue;",
+    "new": "if (!owDungeonDrawn(g, false)) continue;",
     "tests": [
       "test/world/owdungeons.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "OWD-host-the-ground-asked-each-frame",
     "file": "src/scenes/travelViewDungeonModels.js",
-    "old": "        if (e.groundGen !== gen) {",
-    "new": "        {",
+    "old": "        if (e.groundGen !== gen) { e.groundY = tvGroundAt(_tvDngAt[0], _tvDngAt[2]); e.groundGen = gen; }",
+    "new": "        { e.groundY = tvGroundAt(_tvDngAt[0], _tvDngAt[2]); e.groundGen = gen; }",
     "tests": [
       "test/world/owdungeons.test.js"
     ]

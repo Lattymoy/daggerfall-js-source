@@ -278,7 +278,7 @@ test('AUDIT HEARTH1 F3: the three hosts measure a hearth\u2019s height different
   // hung off the flame at all. Each collector hands the sprite's base
   // in its own convention, beside the light it already placed.
   assert.match(read('src/world/city/cityLights.js'), /y: -obj\.yPos \* GLOBAL_SCALE \+ size\.h,/, 'the exterior pair: the light at the TOP of the flat');
-  assert.match(read('src/world/city/cityLights.js'), /foot: -obj\.yPos \* GLOBAL_SCALE,\n\s*w: size\.w,\n\s*h: size\.h,/, '...and the flat standing on -yPos');
+  assert.match(read('src/world/city/cityLights.js'), /foot: -obj\.yPos \* GLOBAL_SCALE, w: size\.w, h: size\.h,/, '...and the flat standing on -yPos');
   assert.match(read('src/world/interior/interiorLights.js'), /y: f\.y \+ h \/ 2 \+ offset,/, 'the interior: the centre, plus a per-record offset');
   assert.match(read('src/world/interior/interiorLights.js'), /foot: f\.y,\n\s*w,\n\s*h,/, '...and the flat standing on its y');
   assert.match(read('src/scenes/dungeonContext.js'), /const based = centers\.map\(\(p\) => Object\.assign\(\[p\[0\], p\[1\] - size\.h \/ 2, p\[2\]\], \{ noCover: !!p\.noCover \}\)\);/, 'a dungeon flat\u2019s stored y is its CENTRE - its own batch shifts down to find the base');

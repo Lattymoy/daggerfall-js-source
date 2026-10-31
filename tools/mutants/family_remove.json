@@ -2,8 +2,8 @@
   {
     "name": "FAMILY-REMOVE-living-ignored",
     "file": "server-account/src/legacy.js",
-    "old": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))',",
-    "new": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL) AND 0)',",
+    "old": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))').bind(playerId, id).run();",
+    "new": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL) AND 0)').bind(playerId, id).run();",
     "tests": [
       "test/server/family_remove.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "FAMILY-REMOVE-dead-hold-it",
     "file": "server-account/src/legacy.js",
-    "old": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))',",
-    "new": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2)',",
+    "old": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))').bind(playerId, id).run();",
+    "new": "lineage_id = ?2)').bind(playerId, id).run();",
     "tests": [
       "test/server/family_remove.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "FAMILY-REMOVE-any-account",
     "file": "server-account/src/legacy.js",
-    "old": "      'DELETE FROM lineages WHERE player = ?1 AND id = ?2' +",
-    "new": "      'DELETE FROM lineages WHERE (player = ?1 OR 1) AND id = ?2' +",
+    "old": "const gone = await db.prepare('DELETE FROM lineages WHERE player = ?1 AND id = ?2'",
+    "new": "const gone = await db.prepare('DELETE FROM lineages WHERE (player = ?1 OR 1) AND id = ?2'",
     "tests": [
       "test/server/family_remove.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "FAMILY-REMOVE-in-use-unsaid",
     "file": "server-account/src/legacy.js",
-    "old": "  return { error: had ? 'lineage-in-use' : 'no-lineage' };",
-    "new": "  return { error: 'no-lineage' };",
+    "old": "return { error: had ? 'lineage-in-use' : 'no-lineage' };",
+    "new": "return { error: 'no-lineage' };",
     "tests": [
       "test/server/family_remove.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-FB1029e-F1-hold-unseen",
     "file": "server-account/src/legacy.js",
-    "old": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))',",
-    "new": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL))',",
+    "old": "lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))').bind(playerId, id).run();",
+    "new": "lineage_id = ?2 AND (dead_at IS NULL))').bind(playerId, id).run();",
     "tests": [
       "test/server/family_remove.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-FB1029e-F2-not-kept",
     "file": "src/systems/legacy/realmLine.js",
-    "old": "  'no-lineage',\n]); // INT18: a copy that breaks the family's own law (legacyLaw.js); AUDIT FB1029e F2: a line removed from the realm",
-    "new": "]); // INT18: a copy that breaks the family's own law (legacyLaw.js); AUDIT FB1029e F2: a line removed from the realm",
+    "old": "'lineage-law', 'no-lineage']);",
+    "new": "'lineage-law']);",
     "tests": [
       "test/systems/legacy/family_remove_menu.test.js"
     ],

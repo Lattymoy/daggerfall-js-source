@@ -278,8 +278,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-dropped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    y += relief; // RELIEF-PEAKS: DFU's frame of its day onto today's",
-    "new": "    y += 0; // RELIEF-PEAKS: DFU's frame of its day onto today's",
+    "old": "y += relief;   // RELIEF-PEAKS",
+    "new": "y += 0;   // RELIEF-PEAKS",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/world/terrain/bayleftground_frame.test.js"
@@ -289,8 +289,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-row-off",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + relief + town(y + relief) + meet;",
-    "new": "    if ((!(was > 0) || was === STREAMING_TERRAIN_SCALE) && !landform) return y + town(y) + meet;",
+    "old": "&& !landform) return y + relief + town(y + relief) + meet;",
+    "new": "&& !landform) return y + town(y) + meet;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],
@@ -299,8 +299,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-on-stamped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    const relief = movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;",
-    "new": "    const relief = movedAt && Number.isFinite(y) && !bayAt(x, z) ? movedAt(x, z) : 0;",
+    "old": "!(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;",
+    "new": "!bayAt(x, z) ? movedAt(x, z) : 0;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],
@@ -309,8 +309,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-on-the-bay",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    const relief = movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;",
-    "new": "    const relief = movedAt && Number.isFinite(y) && !(frame >= RELIEF_FRAME_LAW) ? movedAt(x, z) : 0;",
+    "old": "!(frame >= RELIEF_FRAME_LAW) && !bayAt(x, z) ? movedAt(x, z) : 0;",
+    "new": "!(frame >= RELIEF_FRAME_LAW) ? movedAt(x, z) : 0;",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ],
@@ -319,8 +319,8 @@
   {
     "name": "RELIEF-PEAKS-old-lift-by-the-new-law",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
-    "new": "    if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
+    "old": "if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z))",
+    "new": "if (landform && !(frame >= GROUND_FRAME_LAW) && !bayAt(x, z))",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "RELIEF-PEAKS-record-move-unhanded",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    movedAt: groundMovedAt,",
-    "new": "    movedAt: null,",
+    "old": "movedAt: groundMovedAt, townMovedAt, meetMovedAt });",
+    "new": "movedAt: null, townMovedAt, meetMovedAt });",
     "tests": [
       "test/world/reliefpeaks.test.js",
       "test/world/terrain/bayleftground_frame.test.js"
@@ -357,8 +357,8 @@
   {
     "name": "RELIEF-PEAKS-move-rect-unread",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "      moved = groundMovedField(woods, px, py, rect);",
-    "new": "      moved = groundMovedField(woods, px, py, null);",
+    "old": "moved = groundMovedField(woods, px, py, rect);",
+    "new": "moved = groundMovedField(woods, px, py, null);",
     "tests": [
       "test/world/reliefpeaks.test.js"
     ]

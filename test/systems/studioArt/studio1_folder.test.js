@@ -181,9 +181,9 @@ test('STUDIO1 F6: the slots - every model the port paints itself, each key read 
   const src = (f) => readFileSync(join(ROOT, 'src', f), 'utf8');
   const DOORS = { wagons: ['scenes/horseCartPool.js', 'WAGON_ARCHIVE'], yards: ['scenes/merchantYardsHost.js', 'YARD_ARCHIVE'], port: ['scenes/portHost.js', 'PORT_ARCHIVE'], lefay: ['scenes/lefayMonumentHost.js', 'LEFAY_ARCHIVE'] };
   const STANDS = {
-    galleon: ['world/ships/galleonArt.js', /addVendorTextures\(\n\s*shipStandIns\(\{\n\s*archive: GALLEON_ARCHIVE,/],
-    carrack: ['world/ships/carrackArt.js', /addVendorTextures\(\n\s*shipStandIns\(\{\n\s*archive: CARRACK_ARCHIVE,/],
-    largeboat: ['world/ships/largeBoatArt.js', /addVendorTextures\(\n\s*shipStandIns\(\{\n\s*archive: LARGE_BOAT_ARCHIVE,/],
+    galleon: ['world/ships/galleonArt.js', /addVendorTextures\(shipStandIns\(\{ archive: GALLEON_ARCHIVE,/],
+    carrack: ['world/ships/carrackArt.js', /addVendorTextures\(shipStandIns\(\{ archive: CARRACK_ARCHIVE,/],
+    largeboat: ['world/ships/largeBoatArt.js', /addVendorTextures\(shipStandIns\(\{ archive: LARGE_BOAT_ARCHIVE,/],
     hangings: ['world/detStandIns.js', /entries\.push\(\.\.\.townPictureEntries\(gate\)\);[\s\S]*return addVendorTextures\(entries\.map/],
   };
   for (const set of STUDIO_SETS) {

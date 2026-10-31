@@ -84,8 +84,8 @@
   {
     "name": "BAG1-the-bag-a-floor",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null; // BAG1: the bag is no floor",
-    "new": "  if (state.usingWagon || state.chooseOne) return null; // BAG1: the bag is no floor",
+    "old": "  if (state.usingWagon || state.usingBag || state.chooseOne) return null;",
+    "new": "  if (state.usingWagon || state.chooseOne) return null;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "BAG1-a-loaded-bag-dropped",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded }; // BAG1",
-    "new": "  void bagLoaded; // BAG1",
+    "old": "  if (bagLoaded && isBagItem(item)) return { ok: false, refusal: REFUSAL.bagLoaded };",
+    "new": "  void bagLoaded;",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-BAG1-H1-the-toggle-over-a-tray",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (state.chooseOne && !state.usingBag) return { ok: false, refusal: { reason: 'reward', text: BAG_WORDS.reward } };",
-    "new": "  if (false) return { ok: false, refusal: { reason: 'reward', text: BAG_WORDS.reward } };",
+    "old": "  if (state.chooseOne && !state.usingBag) return",
+    "new": "  if (false) return",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]
@@ -707,8 +707,8 @@
   {
     "name": "AUDIT2-BAG1-U6-the-services-count-on-the-card",
     "file": "src/ui/haulCards.js",
-    "old": "  const main = storesHaul(d.material, mainCame > 0 ? mainCame : d.qty, {",
-    "new": "  const main = storesHaul(d.material, d.qty, {",
+    "old": "  const main = storesHaul(d.material, mainCame > 0 ? mainCame : d.qty,",
+    "new": "  const main = storesHaul(d.material, d.qty,",
     "tests": [
       "test/systems/bag1_client.test.js"
     ]

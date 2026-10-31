@@ -50,13 +50,13 @@ import { HOME_WATCH as WATCHLIST_WATCH } from './staffDesk.js';
 import { HOME_WATCH as ECONOMY_WATCH } from './staffEconomy.js';
 import { HOME_WATCH as GAINS_WATCH } from './staffRealm.js';
 import { HOME_WATCH as CONTESTED_WATCH } from './staffCensus.js';
-import { HOME_WATCH as BURSTS_WATCH } from './staffNet.js'; // STAFF-PANEL5-FEEDS: packet bursts
-import { HOME_WATCH as MONSTERS_WATCH } from './staffMonsters.js'; // STAFF-PANEL5-FEEDS: monster owners
-import { HOME_WATCH as FREEZE_WATCH } from './staffFreeze.js'; // STAFF-PANEL5-FREEZE: freezes not live, players waiting
+import { HOME_WATCH as BURSTS_WATCH } from './staffNet.js';   // STAFF-PANEL5-FEEDS: packet bursts
+import { HOME_WATCH as MONSTERS_WATCH } from './staffMonsters.js';   // STAFF-PANEL5-FEEDS: monster owners
+import { HOME_WATCH as FREEZE_WATCH } from './staffFreeze.js';   // STAFF-PANEL5-FREEZE: freezes not live, players waiting
 import { modAiOn } from './modAi.js';
 import { utcDay } from '../../src/net/marksLaw.js';
 import { PLAY_GRACE_S } from '../../src/net/playClock.js';
-import { staffKept, staffKeptAll, staffKeptForget, _resetStaffKeptForTests } from './staffKept.js'; // STAFF-SPEED-2: kept for every isolate
+import { staffKept, staffKeptAll, staffKeptForget, _resetStaffKeptForTests } from './staffKept.js';   // STAFF-SPEED-2: kept for every isolate
 
 /** How long each part is kept in the isolate, seconds: the health reads, Analytics Engine and the relay's breach list, and
  *  the hour's activity (the design's "cache 5-10 minutes" for a heavy read). */
@@ -80,16 +80,11 @@ export const HOME_TOPS = Object.freeze([3, 5, 10]);
 export const HOME_TOP_DEFAULT = 5;
 export const HOME_READ_ROW_S = 10 * 60;
 
-export const STATUS_ROUTES = Object.freeze([
-  '/v1/staff/status',
-  '/v1/staff/home',
-  '/v1/staff/limits',
-  '/v1/staff/limit/set',
-]);
+export const STATUS_ROUTES = Object.freeze(['/v1/staff/status', '/v1/staff/home', '/v1/staff/limits', '/v1/staff/limit/set']);
 
 /** Every number a limit may be set on, and what it counts. */
 export const STATUS_METRICS = Object.freeze({
-  'players.registered': "registered accounts at play (a play beat inside the play clock's grace)",
+  'players.registered': 'registered accounts at play (a play beat inside the play clock\'s grace)',
   'players.tabs': 'tabs at play (heartbeats with a beat, last 5 minutes)',
   'players.breaches': 'Elite Breaches live',
   'load.rps': 'requests a second (last 5 minutes)',
@@ -128,7 +123,7 @@ export const _resetStatusForTests = () => _resetStaffKeptForTests();
 /** `fn`'s answer, kept `s` seconds - STAFF-SPEED-2: in the row every isolate reads (staffKept.js), where it was one
  *  isolate's own and N isolates serving the panel read N times a window. `fn` never throws - each part answers its own
  *  failure. @param {any} ctx @param {string} key @param {number} s @param {() => Promise<any>} fn */
-const cached = (ctx, key, s, fn) => staffKept(ctx, `status:${key}`, s, s, fn); // never answered past its window: the tiles say now
+const cached = (ctx, key, s, fn) => staffKept(ctx, `status:${key}`, s, s, fn);   // never answered past its window: the tiles say now
 
 /** A Cloudflare account id: 32 hex, so nothing else reaches the SQL API's address. */
 const ACCOUNT_ID = /^[0-9a-f]{32}$/;
@@ -138,22 +133,14 @@ const ACCOUNT_ID = /^[0-9a-f]{32}$/;
  * @param {any} env @param {string} sql @returns {Promise<{ state: 'ok', rows: any[] }|{ state: 'missing'|'not-configured' }>}
  */
 async function aeAsk(env, sql) {
-  const token = env?.STAFF_ANALYTICS_TOKEN,
-    acct = env?.STAFF_ANALYTICS_ACCOUNT;
-  if (typeof token !== 'string' || !token || typeof acct !== 'string' || !ACCOUNT_ID.test(acct))
-    return { state: 'not-configured' };
+  const token = env?.STAFF_ANALYTICS_TOKEN, acct = env?.STAFF_ANALYTICS_ACCOUNT;
+  if (typeof token !== 'string' || !token || typeof acct !== 'string' || !ACCOUNT_ID.test(acct)) return { state: 'not-configured' };
   try {
-    const res = await globalThis.fetch(`https://api.cloudflare.com/client/v4/accounts/${acct}/analytics_engine/sql`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${token}` },
-      body: `${sql} FORMAT JSON`,
-      signal: AbortSignal.timeout(STATUS_ASK_MS),
-    });
+    const res = await globalThis.fetch(`https://api.cloudflare.com/client/v4/accounts/${acct}/analytics_engine/sql`,
+      { method: 'POST', headers: { authorization: `Bearer ${token}` }, body: `${sql} FORMAT JSON`, signal: AbortSignal.timeout(STATUS_ASK_MS) });
     const said = res.ok ? await res.json().catch(() => null) : null;
     return Array.isArray(said?.data) ? { state: 'ok', rows: said.data } : { state: 'missing' };
-  } catch {
-    return { state: 'missing' };
-  }
+  } catch { return { state: 'missing' }; }
 }
 
 /**
@@ -168,38 +155,22 @@ async function relayAsk(env, path) {
   try {
     const url = new URL(path, law).href;
     const init = { signal: AbortSignal.timeout(STATUS_ASK_MS) };
-    const res =
-      typeof env.RELAY?.fetch === 'function'
-        ? await env.RELAY.fetch(new Request(url, init))
-        : await globalThis.fetch(url, init);
+    const res = typeof env.RELAY?.fetch === 'function' ? await env.RELAY.fetch(new Request(url, init)) : await globalThis.fetch(url, init);
     const body = res.ok ? await res.json().catch(() => null) : null;
     return body && typeof body === 'object' ? { state: 'ok', body } : { state: 'missing' };
-  } catch {
-    return { state: 'missing' };
-  }
+  } catch { return { state: 'missing' }; }
 }
 
-const num = (/** @type {unknown} */ v) => {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-};
+const num = (/** @type {unknown} */ v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 /** `x` over `d`, to two places. */
 const per = (/** @type {number} */ x, /** @type {number} */ d) => Math.round((x / d) * 100) / 100;
 
-const LIMITS_SQL =
-  'SELECT l.metric, l.amber, l.red, l.set_by, l.set_at, p.handle FROM staff_limits l LEFT JOIN players p ON p.id = l.set_by';
+const LIMITS_SQL = 'SELECT l.metric, l.amber, l.red, l.set_by, l.set_at, p.handle FROM staff_limits l LEFT JOIN players p ON p.id = l.set_by';
 /** The limits' rows by metric, with who set each. @param {any[]|undefined} rows */
 const limitsFrom = (rows) => {
   /** @type {Record<string, Limit & { by: string|null, byName: string|null, at: number }>} */
   const out = {};
-  for (const l of rows ?? [])
-    out[l.metric] = {
-      amber: l.amber ?? null,
-      red: l.red ?? null,
-      by: l.set_by ?? null,
-      byName: l.handle ?? null,
-      at: l.set_at,
-    };
+  for (const l of rows ?? []) out[l.metric] = { amber: l.amber ?? null, red: l.red ?? null, by: l.set_by ?? null, byName: l.handle ?? null, at: l.set_at };
   return out;
 };
 /** THE LIMITS, by metric. @param {any} db */
@@ -208,27 +179,19 @@ export const limitsOf = async (db) => limitsFrom((await db.prepare(LIMITS_SQL).a
 /** The fast part (STATUS_FAST_S): the limits, the database's own health reads in one batch, and the relay's /health. */
 async function fastPart(/** @type {any} */ ctx, /** @type {any} */ env) {
   const { db, nowS } = ctx;
-  let health = null,
-    limits = {};
+  let health = null, limits = {};
   try {
     const [h, l] = await db.batch([
-      db
-        .prepare(
-          `SELECT
+      db.prepare(`SELECT
           (SELECT COUNT(*) FROM players WHERE handle IS NOT NULL AND played_at > ?1) AS registered,
           (SELECT COUNT(*) FROM mod_cases WHERE status = 'open' AND ai_state = 'failed') AS ai_failed,
           (SELECT MIN(updated_at) FROM mod_cases WHERE ai_state IN ('due', 'reading') AND status = 'open') AS case_wait,
-          (SELECT MIN(at) FROM mod_feed WHERE state IN ('due', 'reading')) AS feed_wait`,
-        )
-        .bind(nowS - PLAY_GRACE_S),
+          (SELECT MIN(at) FROM mod_feed WHERE state IN ('due', 'reading')) AS feed_wait`).bind(nowS - PLAY_GRACE_S),
       db.prepare(LIMITS_SQL),
     ]);
     health = h?.results?.[0] ?? null;
     limits = limitsFrom(l?.results);
-  } catch (e) {
-    console.warn("[staff-status] the database's read", /** @type {any} */ (e)?.message ?? e);
-    health = null;
-  }
+  } catch (e) { console.warn('[staff-status] the database\'s read', /** @type {any} */ (e)?.message ?? e); health = null; }
   return { at: nowS, db: health ? 'ok' : 'missing', health, limits, relay: await relayAsk(env, '/health') };
 }
 
@@ -236,24 +199,15 @@ async function fastPart(/** @type {any} */ ctx, /** @type {any} */ env) {
 async function slowPart(/** @type {any} */ ctx, /** @type {any} */ env) {
   const w = `timestamp > NOW() - INTERVAL '${STATUS_WINDOW_S / 60}' MINUTE`;
   const [load, cron, rooms, breaches] = await Promise.all([
-    aeAsk(
-      env,
-      `SELECT SUM(_sample_interval) AS requests, SUM(IF(double1 >= ${STATUS_SLOW_MS}, 1, 0) * _sample_interval) AS slow,
+    aeAsk(env, `SELECT SUM(_sample_interval) AS requests, SUM(IF(double1 >= ${STATUS_SLOW_MS}, 1, 0) * _sample_interval) AS slow,
       SUM(IF(blob3 = '429', 1, 0) * _sample_interval) AS r429, SUM(IF(blob3 = '503', 1, 0) * _sample_interval) AS r503,
       SUM(IF(startsWith(blob3, '5'), 1, 0) * _sample_interval) AS r5xx, SUM(double5 * _sample_interval) AS d1_wait_ms,
       SUM(IF(startsWith(blob6, 'beat'), 1, 0) * _sample_interval) AS beats
-      FROM ${ACCOUNT_DATASET} WHERE ${w} AND blob2 != 'CRON'`,
-    ),
+      FROM ${ACCOUNT_DATASET} WHERE ${w} AND blob2 != 'CRON'`),
     // a cron firing is one point a job (cron.js runCron): its status '200', or '500' for a job that threw
-    aeAsk(
-      env,
-      `SELECT blob1 AS job, SUM(IF(blob3 = '200', 0, 1) * _sample_interval) AS failed FROM ${ACCOUNT_DATASET}
-      WHERE timestamp > NOW() - INTERVAL '1' HOUR AND blob2 = 'CRON' GROUP BY job ORDER BY failed DESC LIMIT 60`,
-    ),
-    aeAsk(
-      env,
-      `SELECT blob1 AS kind, SUM(double2 * _sample_interval) AS sockets FROM ${RELAY_DATASET} WHERE ${w} GROUP BY kind ORDER BY sockets DESC LIMIT 40`,
-    ),
+    aeAsk(env, `SELECT blob1 AS job, SUM(IF(blob3 = '200', 0, 1) * _sample_interval) AS failed FROM ${ACCOUNT_DATASET}
+      WHERE timestamp > NOW() - INTERVAL '1' HOUR AND blob2 = 'CRON' GROUP BY job ORDER BY failed DESC LIMIT 60`),
+    aeAsk(env, `SELECT blob1 AS kind, SUM(double2 * _sample_interval) AS sockets FROM ${RELAY_DATASET} WHERE ${w} GROUP BY kind ORDER BY sockets DESC LIMIT 40`),
     relayAsk(env, EG_LIVE_PATH),
   ]);
   return { at: ctx.nowS, load, cron, rooms, breaches };
@@ -265,19 +219,15 @@ async function activityPart(/** @type {any} */ ctx) {
   const { db, nowS } = ctx;
   const cut = nowS - 3600;
   try {
-    const r = await db
-      .prepare(
-        `SELECT
+    const r = await db.prepare(`SELECT
         (SELECT COUNT(*) FROM market_listings WHERE state = 'open') AS listings,
         (SELECT COUNT(*) FROM market_sales WHERE day IN (?2, ?3) AND at >= ?1) AS sales,
         (SELECT COUNT(*) FROM guild_vault_log WHERE at >= ?1) AS vault,
         (SELECT COUNT(*) FROM guild_store_moves WHERE at >= ?1) AS store,
         (SELECT COUNT(*) FROM realm_trades WHERE created_at >= ?1 AND state = 'done') AS trades,
         (SELECT COALESCE(SUM(amount), 0) FROM marks_ledger WHERE day IN (?2, ?3) AND at >= ?1 AND src_kind = 'mint') AS minted,
-        (SELECT COALESCE(SUM(amount), 0) FROM marks_ledger WHERE day IN (?2, ?3) AND at >= ?1 AND dst_kind = 'burn') AS burned`,
-      )
-      .bind(cut, utcDay(cut), utcDay(nowS))
-      .first();
+        (SELECT COALESCE(SUM(amount), 0) FROM marks_ledger WHERE day IN (?2, ?3) AND at >= ?1 AND dst_kind = 'burn') AS burned`)
+      .bind(cut, utcDay(cut), utcDay(nowS)).first();
     return { at: nowS, state: r ? 'ok' : 'missing', row: r ?? null };
   } catch (e) {
     console.warn('[staff-status] the activity read', /** @type {any} */ (e)?.message ?? e);
@@ -297,9 +247,7 @@ function tile(id, label, values, limits, sources, asOf, more = {}) {
   for (const [k, v] of Object.entries(values)) {
     const l = levelOf(v, limits[`${id}.${k}`]);
     if (l === 'grey') continue;
-    why.push(
-      `${STATUS_METRICS[/** @type {keyof typeof STATUS_METRICS} */ (`${id}.${k}`)] ?? k}: ${v} (${l} at ${l === 'red' ? limits[`${id}.${k}`].red : limits[`${id}.${k}`].amber})`,
-    );
+    why.push(`${STATUS_METRICS[/** @type {keyof typeof STATUS_METRICS} */ (`${id}.${k}`)] ?? k}: ${v} (${l} at ${l === 'red' ? limits[`${id}.${k}`].red : limits[`${id}.${k}`].amber})`);
     if (l === 'red' || level === 'grey') level = l;
   }
   return { id, label, level, why, values, sources, asOf, ...more };
@@ -319,174 +267,74 @@ export async function statusNow(ctx, env) {
   const limits = fast.limits;
   const h = fast.health;
   const ok = (/** @type {{ state: string }} */ x) => x.state === 'ok';
-  const L = ok(slow.load) ? (slow.load.rows[0] ?? {}) : null;
+  const L = ok(slow.load) ? slow.load.rows[0] ?? {} : null;
   const mins = STATUS_WINDOW_S / 60;
   const requests = L ? num(L.requests) : null;
 
   /** @type {Record<string, number>} */
   const kinds = {};
   if (ok(slow.rooms)) for (const r of slow.rooms.rows) kinds[String(r.kind)] = num(r.sockets);
-  const players = tile(
-    'players',
-    'Players',
-    {
-      registered: h ? num(h.registered) : null,
-      tabs: L ? num(L.beats) : null,
-      breaches: ok(slow.breaches) && Number.isSafeInteger(slow.breaches.body.live) ? slow.breaches.body.live : null,
-    },
-    limits,
-    { registered: fast.db, tabs: slow.load.state, breaches: slow.breaches.state, rooms: slow.rooms.state },
-    Math.min(fast.at, slow.at),
-    {
-      // each room kind's sockets over the window - an estimate from below, sockets not accounts (relayLoad.mjs says why)
-      rooms: ok(slow.rooms)
-        ? {
-            basis: `${mins}-minute sockets`,
-            kinds,
-            dungeons: kinds.dungeon ?? 0,
-            arenas: kinds.arena ?? 0,
-            breaches: kinds.eg ?? 0,
-          }
-        : null,
-      unmeasured: UNMEASURED,
-    },
-  );
-  const load = tile(
-    'load',
-    'Service load',
-    {
-      rps: L ? per(num(L.requests), STATUS_WINDOW_S) : null,
-      slow: L ? per(num(L.slow), mins) : null,
-      refused: L ? per(num(L.r429) + num(L.r503), mins) : null,
-      errors: L ? per(num(L.r5xx) - num(L.r503), mins) : null, // a 503 is a 5xx: counted once, as refused
-      dbWait: L && requests ? per(num(L.d1_wait_ms), requests) : L ? 0 : null,
-    },
-    limits,
-    { analytics: slow.load.state },
-    slow.at,
-  );
+  const players = tile('players', 'Players', {
+    registered: h ? num(h.registered) : null,
+    tabs: L ? num(L.beats) : null,
+    breaches: ok(slow.breaches) && Number.isSafeInteger(slow.breaches.body.live) ? slow.breaches.body.live : null,
+  }, limits, { registered: fast.db, tabs: slow.load.state, breaches: slow.breaches.state, rooms: slow.rooms.state }, Math.min(fast.at, slow.at), {
+    // each room kind's sockets over the window - an estimate from below, sockets not accounts (relayLoad.mjs says why)
+    rooms: ok(slow.rooms) ? { basis: `${mins}-minute sockets`, kinds, dungeons: kinds.dungeon ?? 0, arenas: kinds.arena ?? 0, breaches: kinds.eg ?? 0 } : null,
+    unmeasured: UNMEASURED,
+  });
+  const load = tile('load', 'Service load', {
+    rps: L ? per(num(L.requests), STATUS_WINDOW_S) : null,
+    slow: L ? per(num(L.slow), mins) : null,
+    refused: L ? per(num(L.r429) + num(L.r503), mins) : null,
+    errors: L ? per(num(L.r5xx) - num(L.r503), mins) : null,   // a 503 is a 5xx: counted once, as refused
+    dbWait: L && requests ? per(num(L.d1_wait_ms), requests) : L ? 0 : null,
+  }, limits, { analytics: slow.load.state }, slow.at);
   const a = act.row;
-  const activity = tile(
-    'activity',
-    'Game activity, last hour',
-    {
-      listings: a ? num(a.listings) : null,
-      sales: a ? num(a.sales) : null,
-      vault: a ? num(a.vault) : null,
-      store: a ? num(a.store) : null,
-      trades: a ? num(a.trades) : null,
-      minted: a ? num(a.minted) : null,
-      burned: a ? num(a.burned) : null,
-    },
-    limits,
-    { db: act.state },
-    act.at,
-  );
+  const activity = tile('activity', 'Game activity, last hour', {
+    listings: a ? num(a.listings) : null, sales: a ? num(a.sales) : null, vault: a ? num(a.vault) : null, store: a ? num(a.store) : null,
+    trades: a ? num(a.trades) : null, minted: a ? num(a.minted) : null, burned: a ? num(a.burned) : null,
+  }, limits, { db: act.state }, act.at);
 
   // HEALTH: red on its own, no limit - a failed cron job, the relay or the service not answering, the reviewer failing
-  const failedJobs = ok(slow.cron)
-    ? slow.cron.rows.filter((r) => num(r.failed) > 0).map((r) => String(r.job).replace(/^cron:/, ''))
-    : null;
+  const failedJobs = ok(slow.cron) ? slow.cron.rows.filter((r) => num(r.failed) > 0).map((r) => String(r.job).replace(/^cron:/, '')) : null;
   const aiOn = modAiOn(env);
-  const waited = h
-    ? Math.max(0, ...[h.case_wait, h.feed_wait].filter((t) => t != null).map((t) => nowS - Number(t)))
-    : null;
+  const waited = h ? Math.max(0, ...[h.case_wait, h.feed_wait].filter((t) => t != null).map((t) => nowS - Number(t))) : null;
   const checks = [
-    {
-      id: 'cron',
-      ok: failedJobs ? !failedJobs.length : null,
-      why: failedJobs
-        ? failedJobs.length
-          ? `cron failed in the last hour: ${failedJobs.join(', ')}`
-          : ''
-        : `cron: ${slow.cron.state}`,
-    },
-    {
-      id: 'relay',
-      ok: ok(fast.relay) ? fast.relay.body.ok === true : fast.relay.state === 'missing' ? false : null,
-      why: ok(fast.relay)
-        ? fast.relay.body.ok === true
-          ? ''
-          : 'relay /health not ok'
-        : fast.relay.state === 'missing'
-          ? 'relay /health did not answer'
-          : 'relay: not-configured',
-      version: ok(fast.relay) ? (fast.relay.body.version ?? null) : null,
-    },
-    { id: 'service', ok: fast.db === 'ok', why: fast.db === 'ok' ? '' : "the service's database read failed" },
-    {
-      id: 'ai',
-      ok: !aiOn ? null : h ? !(num(h.ai_failed) > 0) && !(waited != null && waited >= AI_WAIT_S) : null,
-      why: !aiOn
-        ? 'reviewer off'
-        : !h
-          ? ''
-          : [
-              num(h.ai_failed) > 0
-                ? `${num(h.ai_failed)} open case${num(h.ai_failed) === 1 ? '' : 's'} the AI check failed to read`
-                : '',
-              waited != null && waited >= AI_WAIT_S ? `AI check waiting ${Math.floor(waited / 60)} min` : '',
-            ]
-              .filter(Boolean)
-              .join(' · '),
-      failed: h ? num(h.ai_failed) : null,
-      waitingS: waited,
-    },
+    { id: 'cron', ok: failedJobs ? !failedJobs.length : null, why: failedJobs ? (failedJobs.length ? `cron failed in the last hour: ${failedJobs.join(', ')}` : '') : `cron: ${slow.cron.state}` },
+    { id: 'relay', ok: ok(fast.relay) ? fast.relay.body.ok === true : fast.relay.state === 'missing' ? false : null,
+      why: ok(fast.relay) ? (fast.relay.body.ok === true ? '' : 'relay /health not ok') : fast.relay.state === 'missing' ? 'relay /health did not answer' : 'relay: not-configured',
+      version: ok(fast.relay) ? fast.relay.body.version ?? null : null },
+    { id: 'service', ok: fast.db === 'ok', why: fast.db === 'ok' ? '' : 'the service\'s database read failed' },
+    { id: 'ai', ok: !aiOn ? null : h ? !(num(h.ai_failed) > 0) && !(waited != null && waited >= AI_WAIT_S) : null,
+      why: !aiOn ? 'reviewer off' : !h ? '' : [num(h.ai_failed) > 0 ? `${num(h.ai_failed)} open case${num(h.ai_failed) === 1 ? '' : 's'} the AI check failed to read` : '',
+        waited != null && waited >= AI_WAIT_S ? `AI check waiting ${Math.floor(waited / 60)} min` : ''].filter(Boolean).join(' · '),
+      failed: h ? num(h.ai_failed) : null, waitingS: waited },
   ];
   const sick = checks.filter((c) => c.ok === false);
-  const health = {
-    id: 'health',
-    label: 'Health',
-    level: /** @type {TileLevel} */ (sick.length ? 'red' : 'grey'),
-    why: sick.map((c) => c.why),
-    checks,
-    asOf: Math.min(fast.at, slow.at),
-  };
+  const health = { id: 'health', label: 'Health', level: /** @type {TileLevel} */ (sick.length ? 'red' : 'grey'), why: sick.map((c) => c.why), checks, asOf: Math.min(fast.at, slow.at) };
 
   const tiles = [players, load, activity, health];
   const rank = (/** @type {TileLevel} */ l) => ['grey', 'amber', 'red'].indexOf(l);
-  return {
-    at: nowS,
-    level: tiles.reduce((w, t) => (rank(t.level) > rank(w) ? t.level : w), /** @type {TileLevel} */ ('grey')),
-    tiles,
-  };
+  return { at: nowS, level: tiles.reduce((w, t) => (rank(t.level) > rank(w) ? t.level : w), /** @type {TileLevel} */ ('grey')), tiles };
 }
 
 /** SERVER STATUS AS A HOME WATCH (Admins only): each tile past a limit, red ones high and amber ones medium. */
 export const STATUS_WATCH = Object.freeze({
-  id: 'status',
-  label: 'Server status',
-  role: 'admin',
+  id: 'status', label: 'Server status', role: 'admin',
   /** @param {any} ctx @param {any} env @param {any} _who @param {number} n */
   async top(ctx, env, _who, n) {
-    const hot = (await statusNow(ctx, env)).tiles
-      .filter((t) => t.level !== 'grey')
+    const hot = (await statusNow(ctx, env)).tiles.filter((t) => t.level !== 'grey')
       .sort((x, y) => (y.level === 'red' ? 1 : 0) - (x.level === 'red' ? 1 : 0));
     return {
-      items: hot.slice(0, n).map((t) => ({
-        level: t.level === 'red' ? 'high' : 'medium',
-        why: t.why.join(' · '),
-        sub: null,
-        name: t.label,
-      })),
-      high: hot.filter((t) => t.level === 'red').length,
-      total: hot.length,
+      items: hot.slice(0, n).map((t) => ({ level: t.level === 'red' ? 'high' : 'medium', why: t.why.join(' · '), sub: null, name: t.label })),
+      high: hot.filter((t) => t.level === 'red').length, total: hot.length,
     };
   },
 });
 
 /** THE HOME ROLL-UP's watches, in their usual order - one plain list; a module's HOME_WATCH joins it by one line. */
-export const HOME_WATCHES = [
-  REPORTS_WATCH,
-  ECONOMY_WATCH,
-  GAINS_WATCH,
-  CONTESTED_WATCH,
-  BURSTS_WATCH,
-  MONSTERS_WATCH,
-  FREEZE_WATCH,
-  WATCHLIST_WATCH,
-  STATUS_WATCH,
-]; // the design's Home order: reports, then market and harvesting, then the rest
+export const HOME_WATCHES = [REPORTS_WATCH, ECONOMY_WATCH, GAINS_WATCH, CONTESTED_WATCH, BURSTS_WATCH, MONSTERS_WATCH, FREEZE_WATCH, WATCHLIST_WATCH, STATUS_WATCH];   // the design's Home order: reports, then market and harvesting, then the rest
 
 const LEVELS = Object.freeze(['low', 'medium', 'high']);
 /** STAFF-SPEED-2 (staffKept.js): THE WATCHES HOME KEEPS FOR EVERY ISOLATE - the Admins' own, the same for every Admin (never
@@ -504,50 +352,23 @@ const HOME_TOP_MAX = HOME_TOPS[HOME_TOPS.length - 1];
  */
 export async function homeOf(ctx, env, who, n, watches = HOME_WATCHES) {
   const mine = watches.filter((w) => w.role === 'moderator' || who.role === 'admin');
-  const keeps = (/** @type {{ id: string, role: string }} */ w) =>
-    w.role !== 'moderator' && HOME_KEPT.includes(w.id) && who.role === 'admin';
+  const keeps = (/** @type {{ id: string, role: string }} */ w) => w.role !== 'moderator' && HOME_KEPT.includes(w.id) && who.role === 'admin';
   // STAFF-SPEED-2: every kept watch's row, and the status parts its tiles read, in one statement; what is made kept in one batch
-  const keys = mine.some(keeps)
-    ? [...mine.filter(keeps).map((w) => `home:${w.id}`), ...STATUS_PARTS.map((p) => `status:${p}`)]
-    : [];
-  const out = await staffKeptAll(ctx, keys, (ctx) =>
-    Promise.all(
-      mine.map(async (w, i) => {
-        try {
-          const r = keeps(w)
-            ? await staffKept(ctx, `home:${w.id}`, HOME_KEPT_S, HOME_STALE_S, () => w.top(ctx, env, who, HOME_TOP_MAX))
-            : await w.top(ctx, env, who, n);
-          // a watch may say why in parts (staffRealm.js) - Home says it as one line, parts joined as the panel's lists join them
-          const items = (r.items ?? [])
-            .slice(0, n)
-            .map((/** @type {any} */ x) => (Array.isArray(x.why) ? { ...x, why: x.why.join(' · ') } : x));
-          return {
-            id: w.id,
-            label: w.label,
-            items,
-            high: num(r.high),
-            total: num(r.total),
-            more: Math.max(0, num(r.total) - items.length),
-            worst: Math.max(-1, ...items.map((x) => LEVELS.indexOf(x.level))),
-            i,
-          };
-        } catch (e) {
-          console.warn(`[staff-home] the ${w.id} watch`, /** @type {any} */ (e)?.message ?? e);
-          return {
-            id: w.id,
-            label: w.label,
-            items: [],
-            high: 0,
-            total: 0,
-            more: 0,
-            failed: true,
-            worst: LEVELS.indexOf('medium'),
-            i,
-          };
-        }
-      }),
-    ),
-  );
+  const keys = mine.some(keeps) ? [...mine.filter(keeps).map((w) => `home:${w.id}`), ...STATUS_PARTS.map((p) => `status:${p}`)] : [];
+  const out = await staffKeptAll(ctx, keys, (ctx) => Promise.all(mine.map(async (w, i) => {
+    try {
+      const r = keeps(w)
+        ? await staffKept(ctx, `home:${w.id}`, HOME_KEPT_S, HOME_STALE_S, () => w.top(ctx, env, who, HOME_TOP_MAX))
+        : await w.top(ctx, env, who, n);
+      // a watch may say why in parts (staffRealm.js) - Home says it as one line, parts joined as the panel's lists join them
+      const items = (r.items ?? []).slice(0, n).map((/** @type {any} */ x) => (Array.isArray(x.why) ? { ...x, why: x.why.join(' · ') } : x));
+      return { id: w.id, label: w.label, items, high: num(r.high), total: num(r.total), more: Math.max(0, num(r.total) - items.length),
+        worst: Math.max(-1, ...items.map((x) => LEVELS.indexOf(x.level))), i };
+    } catch (e) {
+      console.warn(`[staff-home] the ${w.id} watch`, /** @type {any} */ (e)?.message ?? e);
+      return { id: w.id, label: w.label, items: [], high: 0, total: 0, more: 0, failed: true, worst: LEVELS.indexOf('medium'), i };
+    }
+  })));
   out.sort((a, b) => b.worst - a.worst || b.high - a.high || a.i - b.i);
   return { n, watches: out.map(({ worst: _w, i: _i, ...w }) => w) };
 }
@@ -570,10 +391,7 @@ export async function staffStatus(ctx, env, path, body, who, audit) {
     const n = body.n === undefined ? HOME_TOP_DEFAULT : body.n;
     if (!HOME_TOPS.includes(n)) return { error: 'body' };
     // STAFF-PANEL-SPEED: the audit row with the watches' first reads, one trip
-    const [r] = await Promise.all([
-      homeOf(ctx, env, who, n),
-      audit('home-read', null, { n }, { onceIn: HOME_READ_ROW_S }).run(),
-    ]);
+    const [r] = await Promise.all([homeOf(ctx, env, who, n), audit('home-read', null, { n }, { onceIn: HOME_READ_ROW_S }).run()]);
     return r;
   }
   if (path === '/v1/staff/limits') return { limits: await limitsOf(db), metrics: STATUS_METRICS };
@@ -581,42 +399,24 @@ export async function staffStatus(ctx, env, path, body, who, audit) {
     await audit('refused', null, { path, need: 'admin' }, { outcome: 'denied' }).run();
     return { error: 'staff-admin' };
   }
-  if (path === '/v1/staff/status')
-    return staffKeptAll(
-      ctx,
-      STATUS_PARTS.map((p) => `status:${p}`),
-      (c) => statusNow(c, env),
-    ); // STAFF-SPEED-2: its parts' rows in one read
+  if (path === '/v1/staff/status') return staffKeptAll(ctx, STATUS_PARTS.map((p) => `status:${p}`), (c) => statusNow(c, env));   // STAFF-SPEED-2: its parts' rows in one read
   if (path === '/v1/staff/limit/set') {
     const metric = typeof body.metric === 'string' && Object.hasOwn(STATUS_METRICS, body.metric) ? body.metric : null;
-    const line = (/** @type {unknown} */ v) =>
-      v == null ? null : typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : NaN;
-    const amber = line(body.amber),
-      red = line(body.red);
+    const line = (/** @type {unknown} */ v) => (v == null ? null : typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : NaN);
+    const amber = line(body.amber), red = line(body.red);
     if (!metric || Number.isNaN(amber) || Number.isNaN(red) || (amber != null && red != null && amber > red)) {
-      await audit(
-        'limit-set',
-        null,
-        { metric: typeof body.metric === 'string' ? body.metric.slice(0, 40) : null, error: 'body' },
-        { outcome: 'failed' },
-      ).run();
+      await audit('limit-set', null, { metric: typeof body.metric === 'string' ? body.metric.slice(0, 40) : null, error: 'body' }, { outcome: 'failed' }).run();
       return { error: 'body' };
     }
     const was = await db.prepare('SELECT amber, red FROM staff_limits WHERE metric = ?1').bind(metric).first();
     await db.batch([
       amber == null && red == null
         ? db.prepare('DELETE FROM staff_limits WHERE metric = ?1').bind(metric)
-        : db
-            .prepare(
-              `INSERT INTO staff_limits (metric, amber, red, set_by, set_at) VALUES (?1, ?2, ?3, ?4, ?5)
-            ON CONFLICT (metric) DO UPDATE SET amber = ?2, red = ?3, set_by = ?4, set_at = ?5`,
-            )
-            .bind(metric, amber, red, who.player.id, nowS),
+        : db.prepare(`INSERT INTO staff_limits (metric, amber, red, set_by, set_at) VALUES (?1, ?2, ?3, ?4, ?5)
+            ON CONFLICT (metric) DO UPDATE SET amber = ?2, red = ?3, set_by = ?4, set_at = ?5`).bind(metric, amber, red, who.player.id, nowS),
       audit('limit-set', null, { metric, amber, red, was: was ? { amber: was.amber, red: was.red } : null }),
     ]);
-    await staffKeptForget(db, ['status:fast', ...HOME_KEPT.map((id) => `home:${id}`)])
-      .run()
-      .catch(() => null); // STAFF-SPEED-2: every isolate's tiles take the new line at once
+    await staffKeptForget(db, ['status:fast', ...HOME_KEPT.map((id) => `home:${id}`)]).run().catch(() => null);   // STAFF-SPEED-2: every isolate's tiles take the new line at once
     return { ok: true, metric, amber, red };
   }
   return { error: 'not-found' };

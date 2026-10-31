@@ -92,8 +92,8 @@
   {
     "name": "SET6-the-roll-before-the-graded-pieces",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'rare';",
-    "new": "  rollRegalia(rolls);\n  const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'rare';",
+    "old": "  const pieces = [];\n  const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'rare';",
+    "new": "  const pieces = [];\n  rollRegalia(rolls);\n  const first = rolls() < SPOILS_LEGENDARY ? 'legendary' : 'rare';",
     "tests": [
       "test/systems/set6_aetheric.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SET6-the-drop-never-laid",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  if (regalia) pieces.push({ item: regalia, tier: regalia.rarity });\n  // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): the ladder's last pass - a Legendary among them Exalted one time in",
-    "new": "  // LOOT2 (bible/06-Systems/Loot-Arc.md section 4): the ladder's last pass - a Legendary among them Exalted one time in",
+    "old": "  if (regalia) pieces.push({ item: regalia, tier: regalia.rarity });\n",
+    "new": "",
     "tests": [
       "test/systems/set6_aetheric.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SET6-the-daedric-prefix",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
-    "new": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.gilded;",
+    "old": "return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
+    "new": "return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.gilded;",
     "tests": [
       "test/systems/set6_aetheric.test.js"
     ]

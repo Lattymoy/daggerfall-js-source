@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-TESA-A1-1-key-names",
     "file": "src/systems/automap/automap.js",
-    "old": "  loc?.arena && !loc.capital",
-    "new": "  false",
+    "old": "export const automapKeyOf = (loc, name = loc?.name ?? '') => (loc?.arena && !loc.capital",
+    "new": "export const automapKeyOf = (loc, name = loc?.name ?? '') => (false",
     "tests": [
       "test/audit_tesa.test.js"
     ]
@@ -314,8 +314,8 @@
   {
     "name": "AUDIT-TESA-A2-3-summary-undiscovered",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "        return loc.name &&\n          id &&\n          (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id))",
-    "new": "        return loc.name && id",
+    "old": "return loc.name && id && (named || knownByKind(id, loc.mapTableData?.locationType) || hasDiscoveredLocationId(id)) ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
+    "new": "return loc.name && id ? { pixel: { x: px, y: py }, name: loc.name, mapId: id,",
     "tests": [
       "test/audit_tesa.test.js"
     ],

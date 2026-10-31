@@ -29,8 +29,8 @@
   {
     "name": "AUDITMWNPC-A2-part-clock-always",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      if (t === p._clockAt) continue;\n      posePartBatch(p.clip.nif, p.clip.batch, t, p.source, p.sourceNormals);",
-    "new": "      posePartBatch(p.clip.nif, p.clip.batch, t, p.source, p.sourceNormals);",
+    "old": "      if (t === p._clockAt) continue;\n",
+    "new": "",
     "tests": [
       "test/formats/morrowind/mwnpc_mainmerge.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITMWNPC-A3-creature-skinned-normals-lost",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      normals: posedNormals(batch),\n    });",
-    "new": "    });",
+    "old": "      positions: new Float32Array(batch.positions.length), indices: batch.indices, normals: posedNormals(batch) });",
+    "new": "      positions: new Float32Array(batch.positions.length), indices: batch.indices });",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITMWNPC-A3-creature-rigid-normals-lost",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      sourceNormals: normals ? applyPreNormals(batch.normals, pre) : null,",
-    "new": "      sourceNormals: null,",
+    "old": "      sourceNormals: normals ? applyPreNormals(batch.normals, pre) : null, normals });",
+    "new": "      sourceNormals: null, normals });",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDITMWNPC-B2-stale-share-kept",
     "file": "src/characters/npcBodies.js",
-    "old": "      r.inCut = 0; // AUDIT MW-NPC B2: a lane reporting none (all past its range) takes no share - never its last cut's",
-    "new": "      // AUDIT MW-NPC B2: a lane reporting none (all past its range) takes no share - never its last cut's",
+    "old": "      r.inCut = 0;   // AUDIT MW-NPC B2",
+    "new": "      // AUDIT MW-NPC B2",
     "tests": [
       "test/characters/mwnpc_audit.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDITMWNPC-B4-rounds-never-turn",
     "file": "src/characters/npcBodies.js",
-    "old": "      if (r.round === round) round++;\n      r.d2 = d2;",
-    "new": "      r.d2 = d2;",
+    "old": "      if (r.round === round) round++;\n",
+    "new": "",
     "tests": [
       "test/characters/mwnpc11_budget.test.js",
       "test/characters/mwnpc_audit.test.js"
@@ -138,8 +138,8 @@
   {
     "name": "AUDITMWNPC-B4-this-round-only",
     "file": "src/characters/npcBodies.js",
-    "old": "    for (const r of lanes.values()) if (r.round >= round - NPC_BUDGET_ROUNDS && r.n > 0) live.push(r);",
-    "new": "    for (const r of lanes.values()) if (r.round >= round && r.n > 0) live.push(r);",
+    "old": "if (r.round >= round - NPC_BUDGET_ROUNDS && r.n > 0) live.push(r);",
+    "new": "if (r.round >= round && r.n > 0) live.push(r);",
     "tests": [
       "test/characters/mwnpc11_budget.test.js",
       "test/characters/mwnpc_audit.test.js"

@@ -74,8 +74,8 @@
   {
     "name": "LEGACY7B-sprite-beside-body",
     "file": "src/world/familyBodies.js",
-    "old": "      dolls.sync(peers, sceneOf, { bodyHeight: (/** @type {string} */ id) => bodies?.heightOf(id) ?? 0, dt, eye });",
-    "new": "      dolls.sync(peers, sceneOf, { bodyHeight: () => 0, dt, eye });",
+    "old": "bodyHeight: (/** @type {string} */ id) => bodies?.heightOf(id) ?? 0, dt, eye",
+    "new": "bodyHeight: () => 0, dt, eye",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LEGACY7B-never-walks",
     "file": "src/world/familyBodies.js",
-    "old": "  mv: moving ? 1 : 0,",
-    "new": "  mv: 0,",
+    "old": "mv: moving ? 1 : 0, ...(st > 0 ? { st } : {}) });",
+    "new": "mv: 0, ...(st > 0 ? { st } : {}) });",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "LEGACY7B-yaw-unchecked",
     "file": "src/world/familyBodies.js",
-    "old": "  yaw: Number.isFinite(yaw) ? yaw : 0,",
-    "new": "  yaw,",
+    "old": "yaw: Number.isFinite(yaw) ? yaw : 0,",
+    "new": "yaw,",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "LEGACY7B-origin-left",
     "file": "src/world/familyBodies.js",
-    "old": "      for (const b of dolls.batches()) {\n        b.origin[0] += o[0];\n        b.origin[1] += o[1];\n        b.origin[2] += o[2];\n      }\n      bodies?.offsetAll(o);",
-    "new": "      bodies?.offsetAll(o);",
+    "old": "      for (const b of dolls.batches()) { b.origin[0] += o[0]; b.origin[1] += o[1]; b.origin[2] += o[2]; }\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "LEGACY7B-bodies-left",
     "file": "src/world/familyBodies.js",
-    "old": "      bodies?.offsetAll(o);\n    },",
-    "new": "    },",
+    "old": "      bodies?.offsetAll(o);\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "LEGACY7B-clear-keeps",
     "file": "src/world/familyBodies.js",
-    "old": "      dolls.sync([], sceneOf);\n      bodies?.destroy();",
-    "new": "      bodies?.destroy();",
+    "old": "    clear() { peers.length = 0; dolls.sync([], sceneOf); bodies?.destroy(); },",
+    "new": "    clear() { peers.length = 0; bodies?.destroy(); },",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "LEGACY7B-bodies-unasked",
     "file": "src/world/familyBodies.js",
-    "old": "      bodies?.sync(peers, sceneOf, dt, eye);\n      dolls.sync(peers, sceneOf, { bodyHeight: (/** @type {string} */ id) => bodies?.heightOf(id) ?? 0, dt, eye });",
-    "new": "      dolls.sync(peers, sceneOf, { bodyHeight: (/** @type {string} */ id) => bodies?.heightOf(id) ?? 0, dt, eye });",
+    "old": "      bodies?.sync(peers, sceneOf, dt, eye);\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "LEGACY7B-seat-outlives",
     "file": "src/world/familyBodies.js",
-    "old": "      for (const key of [...persons.keys()]) if (!here.has(key)) persons.delete(key);\n      sprites.sync(rest, o);",
-    "new": "      sprites.sync(rest, o);",
+    "old": "      for (const key of [...persons.keys()]) if (!here.has(key)) persons.delete(key);\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/legacy7_body.test.js"
     ]

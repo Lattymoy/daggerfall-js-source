@@ -2,8 +2,8 @@
   {
     "name": "CHESTGOLD-click-pays-purse",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {",
-    "new": "  if (toPlayer && isGoldPieces(item)) {",
+    "old": "if (toPlayer && isGoldPieces(item) && from?.pileCoins !== true) {",
+    "new": "if (toPlayer && isGoldPieces(item)) {",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -322,8 +322,8 @@
   {
     "name": "LADDER-wagon-over-chest",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (!state.usingWagon && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL }; // RPT1026-CHESTGOLD\n  // HCC: TrailingWagonInventoryWindow.WagonButton_OnMouseClick [IL_ad28] - showing, the click hides; hidden, the",
-    "new": "  // HCC: TrailingWagonInventoryWindow.WagonButton_OnMouseClick [IL_ad28] - showing, the click hides; hidden, the",
+    "old": "  if (!state.usingWagon && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD",
+    "new": "",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"
     ],
@@ -332,7 +332,7 @@
   {
     "name": "LADDER-bag-over-chest",
     "file": "src/systems/inventorySession.js",
-    "old": "  if (!state.usingBag && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL }; // RPT1026-CHESTGOLD",
+    "old": "  if (!state.usingBag && settlesOwnPieces(deps)) return { ok: false, refusal: CHEST_ALONE_REFUSAL };   // RPT1026-CHESTGOLD",
     "new": "",
     "tests": [
       "test/systems/decor/rpt1026_chestgold.test.js"

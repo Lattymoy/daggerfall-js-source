@@ -333,7 +333,7 @@ test('CSA-H: the host\'s seams - the two use handlers on the item-use door (the 
   assert.equal((m.match(/shelfLootSpawned\(stockShopShelf\(\{ buildingType: b\.buildingType, quality: b\.quality \}, playerEntity(?:, \{ shelfIndex: i \})?\), b\)/g) ?? []).length, 2, 'both shelf doors (AUDIT ECON P1: the shelf hands its index)');
   assert.match(m, /mountWindow: \(win\) => mountSpellWindow\(win\),\s*closeWindow: \(win\) => closeSpellWindow\(win\),/);
   const pool = src('scenes/comeSailAway/comeSailAwayPool.js');
-  assert.match(pool, /function setVariant\(boat, variant\) \{\n\s*setBoatVariant\(boat, variant, \{\n\s*models,/);
+  assert.match(pool, /function setVariant\(boat, variant\) \{\n\s*setBoatVariant\(boat, variant, \{ models,/);
 });
 
 test('CSA-H x SHIPYARDS: the shelf\'s custom loop stocks neither row - a roll that always succeeds stocks everything a General Store\'s or a Pawn Shop\'s shelf can hold, and no boat; neither counter buys one (PIN MOVED: the General Store stocked both, parts first)', async () => {

@@ -2,7 +2,7 @@
   {
     "name": "SEAT-LINE-the-seat-answered-null",
     "file": "src/systems/guild/guilds.js",
-    "old": "    return m.rank === top\n      ? {\n          rank,\n          seat: true,\n          reputation: getReputation(store, guild.factionId),\n          reputationNeed: RANK_REQ_REPUTATION[rank],\n        }\n      : null;",
+    "old": "    return m.rank === top\n      ? { rank, seat: true, reputation: getReputation(store, guild.factionId), reputationNeed: RANK_REQ_REPUTATION[rank] }\n      : null;",
     "new": "    return null;",
     "tests": [
       "test/systems/fb1015g_seatline.test.js"
@@ -11,8 +11,8 @@
   {
     "name": "SEAT-LINE-the-seat-at-any-rank",
     "file": "src/systems/guild/guilds.js",
-    "old": "    return m.rank === top",
-    "new": "    return true",
+    "old": "    return m.rank === top\n",
+    "new": "    return true\n",
     "tests": [
       "test/systems/fb1015g_seatline.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SEAT-LINE-the-seat-need-not-rank-8s",
     "file": "src/systems/guild/guilds.js",
-    "old": "          reputationNeed: RANK_REQ_REPUTATION[rank],",
-    "new": "          reputationNeed: RANK_REQ_REPUTATION[top],",
+    "old": "reputationNeed: RANK_REQ_REPUTATION[rank] }\n      : null;",
+    "new": "reputationNeed: RANK_REQ_REPUTATION[top] }\n      : null;",
     "tests": [
       "test/systems/fb1015g_seatline.test.js"
     ]

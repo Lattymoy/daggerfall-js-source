@@ -499,8 +499,8 @@
   {
     "name": "RR-the-yard-sells-no-ram",
     "file": "src/systems/shipyards.js",
-    "old": "    sailHp: b.sailHp,\n    ram: !!b.ram, // RAM-RETURN: the galley's, built to it",
-    "new": "    sailHp: b.sailHp, // RAM-RETURN: the galley's, built to it",
+    "old": "sailHp: b.sailHp, ram: !!b.ram,",
+    "new": "sailHp: b.sailHp,",
     "tests": [
       "test/systems/shipyards1.test.js",
       "test/systems/shipyards1_host.test.js"

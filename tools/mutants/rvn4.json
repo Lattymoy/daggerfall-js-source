@@ -431,8 +431,8 @@
   {
     "name": "RVN4-the-shaft-reaches-a-roar",
     "file": "src/combat/arrowFlight.js",
-    "old": "  if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return 0; // RVN4: nor one roaring its last stand",
-    "new": "  if (foe.yielded || foe.executing || foe.sparing || foe.leaving) return 0; // RVN4: nor one roaring its last stand",
+    "old": "|| foe.leaving || foe.roaring) return 0;",
+    "new": "|| foe.leaving) return 0;",
     "tests": [
       "test/systems/revenant/rvn4_stand.test.js"
     ]

@@ -457,7 +457,7 @@ checkpoint carries it to the record. No ledger reads it: `ledgerKeyOf` answers n
 carries, so the judge, the wealth and the trade lock see the record as before (`insureall.test.js` judges it both ways).
 
 A FORGED OR COPIED ID BUYS NOTHING MORE THAN THE PLAYER'S OWN PIECE. Policies are the character's own rows. The service
-refuses a key two pieces in the pack carry (`server-account/src/wildInsure.js:"const piece = named.length"`),
+refuses a key two pieces in the pack carry (`server-account/src/wildInsure.js:"const piece = named.length === 1 ? named[0] : null;"`),
 and at a fall a key two of the fallen's pieces carry keeps neither (`wildInsuredBy`'s `among`). Every reader that names
 a policy's piece reads this key: the book's card, the service's insure, the fall's keep and spend
 (`takeWildDeath`'s `saved`, through the predicate's own `keyOf`), the kill's roll and its policy pick

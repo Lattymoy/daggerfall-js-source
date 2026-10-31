@@ -502,8 +502,8 @@
   {
     "name": "SET7-the-gate-plaque-a-bare-string",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      return {\n        title: GATE_TEXT.name,\n        subs: words ? [...(cd.to === 'collapse' ? ['Sealed'] : []), words[0].toUpperCase() + words.slice(1)] : [],\n      }; // GATE-COLLAPSE: sealed, and when it goes",
-    "new": "      return words ? `${GATE_TEXT.name} (${words})` : GATE_TEXT.name; // GATE-COLLAPSE: sealed, and when it goes",
+    "old": "      return { title: GATE_TEXT.name, subs: words ? [...(cd.to === 'collapse' ? ['Sealed'] : []), words[0].toUpperCase() + words.slice(1)] : [] };",
+    "new": "      return words ? `${GATE_TEXT.name} (${words})` : GATE_TEXT.name;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]

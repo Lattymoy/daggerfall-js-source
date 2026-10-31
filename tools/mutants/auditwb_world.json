@@ -170,7 +170,7 @@
     "name": "AUDWB-C6-the-pool-spins-by-its-clock",
     "file": "src/scenes/gate/gatePool.js",
     "old": "      spin = (spin + gateSpinRate(open) * Math.max(0, dt)) % 1;",
-    "new": "      spin = (gateSpinRate(open) * (now() / 1000)) % 1;",
+    "new": "      spin = gateSpinRate(open) * (now() / 1000) % 1;",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]
@@ -188,7 +188,7 @@
     "name": "AUDWB-C7-stands-without-a-pass",
     "file": "src/scenes/gate/gatePool.js",
     "old": "    stands: () => !!pass && (!!place || !!arches?.stands?.()),",
-    "new": "    stands: () => !!place || !!arches?.stands?.(),",
+    "new": "    stands: () => (!!place || !!arches?.stands?.()),",
     "tests": [
       "test/scenes/auditwb_world.test.js"
     ]

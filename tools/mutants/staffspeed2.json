@@ -52,8 +52,8 @@
   {
     "name": "STAFF-SPEED-2-home-keeps-reports",
     "file": "server-account/src/staffStatus.js",
-    "old": "export const HOME_KEPT = Object.freeze(['economy', 'gains', 'contested', 'bursts', 'monsters', 'freeze', 'status']);",
-    "new": "export const HOME_KEPT = Object.freeze([\n  'reports',\n  'economy',\n  'gains',\n  'contested',\n  'bursts',\n  'monsters',\n  'freeze',\n  'status',\n]);",
+    "old": "export const HOME_KEPT = Object.freeze(['economy',",
+    "new": "export const HOME_KEPT = Object.freeze(['reports', 'economy',",
     "why": "a watch with a member's own claims kept for every Admin",
     "tests": [
       "test/server/staffspeed2_kept.test.js"

@@ -2,8 +2,8 @@
   {
     "name": "MACD1-a-stranded-swing-is-never-repaired",
     "file": "src/systems/inputActions.js",
-    "old": "      if (repairUnloseableBindings(store).length) saveKeyBinds(store);\n      return store;",
-    "new": "      return store;",
+    "old": "      if (repairUnloseableBindings(store).length) saveKeyBinds(store);\n",
+    "new": "",
     "tests": [
       "test/systems/inputactions.test.js",
       "test/systems/audit63_items_loot.test.js",
@@ -24,8 +24,8 @@
   {
     "name": "MACD1-the-swing-is-not-among-the-verbs-that-cannot-be-lost",
     "file": "src/systems/inputActions.js",
-    "old": "  'SwingWeapon',\n  'ActivateCenterObject',",
-    "new": "  'ActivateCenterObject',",
+    "old": "export const UNLOSEABLE_ACTIONS = Object.freeze(['SwingWeapon',",
+    "new": "export const UNLOSEABLE_ACTIONS = Object.freeze([",
     "tests": [
       "test/systems/inputactions.test.js",
       "test/systems/audit63_items_loot.test.js",

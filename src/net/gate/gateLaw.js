@@ -14,19 +14,10 @@
 // the world's own data (systems/gate/gateSite.js), with the rolls below; the relay never needs to know where a gate is.
 //
 // Not a DFU member: Daggerfall has no other players and no world events. Ledger A (WB).
-import { sharedClassicMinutes, wallMsForClassicMinutes, GATE_LANES_OPEN, gateLaneOpen } from '../wire.js'; // AUDIT WW F2: the lanes that stand
-import { GATE_COURTS_MAX } from './gateCourts.js'; // GATE-COURTS: a night's courts' rooms - gateCourts.js imports nothing
-import {
-  GATE_ASPECTS,
-  GATE_TRIALS,
-  readGateMods,
-  GATE_DIRE,
-  gateDireLine,
-  CAPTIVE_NAMES,
-  validGatePortents,
-  portentOf,
-} from './gateMods.js'; // WB8b: the Warden's marks, drawn by the day; WB14b: and the night's portents
-import { frontStands, frontDayOfMinute } from '../frontLaw.js'; // FRONTS: a province's gate on its turn alone - frontLaw.js imports nothing
+import { sharedClassicMinutes, wallMsForClassicMinutes, GATE_LANES_OPEN, gateLaneOpen } from '../wire.js';   // AUDIT WW F2: the lanes that stand
+import { GATE_COURTS_MAX } from './gateCourts.js';   // GATE-COURTS: a night's courts' rooms - gateCourts.js imports nothing
+import { GATE_ASPECTS, GATE_TRIALS, readGateMods, GATE_DIRE, gateDireLine, CAPTIVE_NAMES, validGatePortents, portentOf } from './gateMods.js';   // WB8b: the Warden's marks, drawn by the day; WB14b: and the night's portents
+import { frontStands, frontDayOfMinute } from '../frontLaw.js';   // FRONTS: a province's gate on its turn alone - frontLaw.js imports nothing
 
 /** Classic minutes in a game day (gameDate.js MINUTES_PER_DAY - pinned equal; not imported, the relay's graph stays flat). */
 export const GATE_DAY_MINUTES = 1440;
@@ -47,8 +38,7 @@ export const GATE_SALT = 0x6a7e;
 
 /** The game day a relay-clock instant stands in - WW2: on lane `lane`, whose days run its stagger behind the Bay's (0, by
  *  default; GATE_LANE_STAGGER below). */
-export const gameDayAt = (nowMs, lane = 0) =>
-  Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);
+export const gameDayAt = (nowMs, lane = 0) => Math.floor((sharedClassicMinutes(nowMs) - lane * GATE_LANE_STAGGER) / GATE_DAY_MINUTES);
 
 // ═══ WW2: THE LANES - A GATE A GAME DAY IN EVERY THEATRE ═══════════════════════════════════════
 //
@@ -91,12 +81,7 @@ export const gateBaseMinute = (n) => gateDayOf(n) * GATE_DAY_MINUTES + gateLaneO
 export const gateFrontDay = (n) => frontDayOfMinute(gateBaseMinute(n) + GATE_OPEN_MINUTE);
 /** Does `n` number a gate - a whole number of a lane the world has, on a gate day? (Lane 0's numbers are its days.)
  *  FRONTS: a province's gate opens only on its province's turn (net/frontLaw.js); the Bay's every day, as before. */
-export const isGateDay = (n) =>
-  Number.isSafeInteger(n) &&
-  n >= 0 &&
-  gateLaneOf(n) < GATE_LANES &&
-  gateDayOf(n) % GATE_EVERY_DAYS === 0 &&
-  frontStands(gateFrontDay(n), gateLaneOf(n));
+export const isGateDay = (n) => Number.isSafeInteger(n) && n >= 0 && gateLaneOf(n) < GATE_LANES && gateDayOf(n) % GATE_EVERY_DAYS === 0 && frontStands(gateFrontDay(n), gateLaneOf(n));
 
 /**
  * A gate's instants, RELAY-CLOCK milliseconds (the client reads its own through the welcome's offset - WORLD5).
@@ -105,18 +90,11 @@ export const isGateDay = (n) =>
  * @param {number} day
  */
 export function gateTimes(day) {
-  let t = _gateTimesOf.get(day); // AUDIT WB C7: a day's instants made once - the client's clock asks for them every frame
+  let t = _gateTimesOf.get(day);   // AUDIT WB C7: a day's instants made once - the client's clock asks for them every frame
   if (t) return t;
   const base = gateBaseMinute(day);
   const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));
-  t = Object.freeze({
-    day,
-    omenAt: at(GATE_OMEN_MINUTE),
-    riseAt: at(GATE_RISE_MINUTE),
-    openAt: at(GATE_OPEN_MINUTE),
-    sealAt: at(GATE_SEAL_MINUTE),
-    wrathAt: at(GATE_WRATH_MINUTE),
-  });
+  t = Object.freeze({ day, omenAt: at(GATE_OMEN_MINUTE), riseAt: at(GATE_RISE_MINUTE), openAt: at(GATE_OPEN_MINUTE), sealAt: at(GATE_SEAL_MINUTE), wrathAt: at(GATE_WRATH_MINUTE) });
   if (_gateTimesOf.size >= GATE_TIMES_KEPT) _gateTimesOf.delete(_gateTimesOf.keys().next().value);
   _gateTimesOf.set(day, t);
   return t;
@@ -135,12 +113,7 @@ const _gateTimesOf = new Map();
  */
 export function gateAt(nowMs, lane = 0) {
   let day = gameDayAt(nowMs, lane);
-  if (
-    day >= 1 &&
-    isGateDay(gateNumber(day - 1, lane)) &&
-    nowMs < gateTimes(gateNumber(day - 1, lane)).wrathAt + GATE_COLLAPSE_MS
-  )
-    return gateTimes(gateNumber(day - 1, lane));
+  if (day >= 1 && isGateDay(gateNumber(day - 1, lane)) && nowMs < gateTimes(gateNumber(day - 1, lane)).wrathAt + GATE_COLLAPSE_MS) return gateTimes(gateNumber(day - 1, lane));
   while (!isGateDay(gateNumber(day, lane))) day++;
   return gateTimes(gateNumber(day, lane));
 }
@@ -149,7 +122,7 @@ export function gateAt(nowMs, lane = 0) {
  *  number breaks a tie). On one lane a gate's number IS its order; across lanes it is not (lane 1's day 900 opens before
  *  the Bay's day 901, and its number is a hundred million past it), so a record that keeps "the latest gate" whatever its
  *  lane weighs them by this. @param {number} a @param {number} b */
-export const gateOrder = (a, b) => gateTimes(a).openAt - gateTimes(b).openAt || a - b;
+export const gateOrder = (a, b) => (gateTimes(a).openAt - gateTimes(b).openAt) || (a - b);
 
 /** The phases, in the order a gate lives them. */
 export const GATE_PHASES = Object.freeze(['quiet', 'omen', 'rising', 'sealed', 'open', 'closed', 'collapsing', 'gone']);
@@ -163,10 +136,7 @@ export const GATE_PHASES = Object.freeze(['quiet', 'omen', 'rising', 'sealed', '
  */
 export function gatePhase(t, nowMs, fellAt = null) {
   if (!t || !Number.isFinite(nowMs)) return 'quiet';
-  const end =
-    Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= t.openAt
-      ? Math.min(/** @type {number} */ (fellAt), t.wrathAt)
-      : t.wrathAt;
+  const end = Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= t.openAt ? Math.min(/** @type {number} */ (fellAt), t.wrathAt) : t.wrathAt;
   if (nowMs >= end + GATE_COLLAPSE_MS) return 'gone';
   if (nowMs >= end) return 'collapsing';
   if (nowMs >= t.sealAt) return 'closed';
@@ -178,8 +148,7 @@ export function gatePhase(t, nowMs, fellAt = null) {
 }
 
 /** Does the gate stand in the world in this phase (drawn, found, looked at)? */
-export const gateStands = (phase) =>
-  phase === 'rising' || phase === 'sealed' || phase === 'open' || phase === 'closed' || phase === 'collapsing';
+export const gateStands = (phase) => phase === 'rising' || phase === 'sealed' || phase === 'open' || phase === 'closed' || phase === 'collapsing';
 /** Does the map ring show in this phase (the omen until the gate is gone)? */
 export const gateMarked = (phase) => phase !== 'quiet' && phase !== 'gone';
 
@@ -190,8 +159,7 @@ export const gateMarked = (phase) => phase !== 'quiet' && phase !== 'gone';
  *  read as one that would never go. It goes at the wrath (a kill inside ends it sooner, and then it is collapsing). */
 export function gateCountdown(t, nowMs, phase = gatePhase(t, nowMs)) {
   if (!t) return null;
-  if (phase === 'omen' || phase === 'rising' || phase === 'sealed')
-    return { to: 'open', ms: Math.max(0, t.openAt - nowMs) };
+  if (phase === 'omen' || phase === 'rising' || phase === 'sealed') return { to: 'open', ms: Math.max(0, t.openAt - nowMs) };
   if (phase === 'open') return { to: 'seal', ms: Math.max(0, t.sealAt - nowMs) };
   if (phase === 'closed') return { to: 'collapse', ms: Math.max(0, t.wrathAt - nowMs) };
   return null;
@@ -199,8 +167,7 @@ export function gateCountdown(t, nowMs, phase = gatePhase(t, nowMs)) {
 
 /** A countdown's words, the one home for the banner, the plaque and the map: "opens in 4:07", "seals in 8:41",
  *  "collapses in 6:12" - null for none. */
-export const countdownWords = (cd) =>
-  cd ? `${cd.to === 'open' ? 'opens' : cd.to === 'seal' ? 'seals' : 'collapses'} in ${countdownText(cd.ms)}` : null;
+export const countdownWords = (cd) => (cd ? `${cd.to === 'open' ? 'opens' : cd.to === 'seal' ? 'seals' : 'collapses'} in ${countdownText(cd.ms)}` : null);
 
 /** "4:07", "0:09" - minutes and seconds, the seconds rounded UP so a countdown never reads 0:00 while time is left. */
 export function countdownText(ms) {
@@ -213,9 +180,7 @@ export function countdownText(ms) {
 // A gate's arena is keyed by its day: `gate:<day>`. No zero-padding - the wire admits exactly the keys the clock mints
 // (AUDIT WORLD6a B4's law), and each day's arena is a fresh object. GATE-COURTS (net/gate/gateCourts.js): a night's
 // courts past its first are `gate:<day>.<k>`, k 1 to GATE_COURTS_MAX - 1, each a fight of its own.
-const GATE_ROOM = new RegExp(
-  `^gate:(?:0|[1-9]\\d{0,8})(?:\\.(?:${Array.from({ length: GATE_COURTS_MAX - 1 }, (_, i) => i + 1).join('|')}))?$`,
-);
+const GATE_ROOM = new RegExp(`^gate:(?:0|[1-9]\\d{0,8})(?:\\.(?:${Array.from({ length: GATE_COURTS_MAX - 1 }, (_, i) => i + 1).join('|')}))?$`);
 /** A night's court's room: the first `gate:<day>`, the k-th after it `gate:<day>.<k>`. @param {number} day @param {number} [court] */
 export const gateRoomKey = (day, court = 0) => (court > 0 ? `gate:${day}.${court}` : `gate:${day}`);
 export const isGateRoom = (key) => GATE_ROOM.test(String(key ?? ''));
@@ -224,15 +189,9 @@ export const gateDayOfRoom = (key) => (isGateRoom(key) ? Number(String(key).slic
 /** GATE-COURTS: the court a gate room is, 0 the first, or null. */
 export const gateCourtOfRoom = (key) => (isGateRoom(key) ? Number(String(key).split('.')[1] ?? 0) : null);
 /** WB3: may a player enter this day's arena for the first time now? From the opening to the seal. */
-export const gateAdmits = (day, nowMs) => {
-  const t = gateTimes(day);
-  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt;
-};
+export const gateAdmits = (day, nowMs) => { const t = gateTimes(day); return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt; };
 /** WB3: may a player who has already entered be in the room now (a reconnect after a blip)? Until the wrath's end. */
-export const gateHolds = (day, nowMs) => {
-  const t = gateTimes(day);
-  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;
-};
+export const gateHolds = (day, nowMs) => { const t = gateTimes(day); return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS; };
 
 // ═══ THE ROLLS ════════════════════════════════════════════════════════
 //
@@ -268,9 +227,7 @@ function bagRound(round, n) {
   const a = Array.from({ length: n }, (_, i) => i);
   for (let i = n - 1; i > 0; i--) {
     const j = gateHash(GATE_SALT, round, 11, i) % (i + 1);
-    const tmp = a[i];
-    a[i] = a[j];
-    a[j] = tmp;
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
   }
   return a;
 }
@@ -288,17 +245,12 @@ export function pickGateRegion(day, regions) {
   const n = regions?.length ?? 0;
   if (!n) return null;
   const g = gateIndex(day);
-  if (n <= 2) return regions[((g % n) + n) % n]; // one province is that one; two alternate
-  const round = Math.floor(g / n),
-    at = g - round * n;
+  if (n <= 2) return regions[((g % n) + n) % n];   // one province is that one; two alternate
+  const round = Math.floor(g / n), at = g - round * n;
   const bag = bagRound(round, n);
   // the seam: a round's first draw is never the last round's last (for n >= 3 the swap below touches draws 0 and 1
   // alone, so the last round's LAST draw is its bag's own, unswapped)
-  if (bag[0] === bagRound(round - 1, n)[n - 1]) {
-    const tmp = bag[0];
-    bag[0] = bag[1];
-    bag[1] = tmp;
-  }
+  if (bag[0] === bagRound(round - 1, n)[n - 1]) { const tmp = bag[0]; bag[0] = bag[1]; bag[1] = tmp; }
   return regions[bag[at]];
 }
 /** The gate's pixel id (y * 1000 + x): one of its region's suitable `pixels`, by the day's roll. */
@@ -311,8 +263,7 @@ export const GATE_SPOT_SPREAD_M = 200;
 /** The gate's spot inside its pixel, metres from the pixel's south-west corner: [east, north] - the frame spawned
  *  dungeons' `spawnedLocationCentreLocal` answers in. The centre, moved up to GATE_SPOT_SPREAD_M, evenly over the disc. */
 export function gateSpotLocal(day) {
-  const a = unit(day, 3) * 2 * Math.PI,
-    r = Math.sqrt(unit(day, 4)) * GATE_SPOT_SPREAD_M;
+  const a = unit(day, 3) * 2 * Math.PI, r = Math.sqrt(unit(day, 4)) * GATE_SPOT_SPREAD_M;
   return [PIXEL_M / 2 + Math.cos(a) * r, PIXEL_M / 2 + Math.sin(a) * r];
 }
 
@@ -329,10 +280,8 @@ export const OMEN_RING_SHIFT_PIXELS = 1.2;
  * @param {number[]} [spot] the gate's spot in its pixel (gateSpotLocal), [east, north] metres
  */
 export function omenRing(day, px, py, spot = gateSpotLocal(day)) {
-  const gx = px + spot[0] / PIXEL_M,
-    gy = py + 1 - spot[1] / PIXEL_M;
-  const a = unit(day, 6) * 2 * Math.PI,
-    r = Math.sqrt(unit(day, 7)) * OMEN_RING_SHIFT_PIXELS;
+  const gx = px + spot[0] / PIXEL_M, gy = py + 1 - spot[1] / PIXEL_M;
+  const a = unit(day, 6) * 2 * Math.PI, r = Math.sqrt(unit(day, 7)) * OMEN_RING_SHIFT_PIXELS;
   return { cx: gx + Math.cos(a) * r, cy: gy + Math.sin(a) * r, r: OMEN_RING_PIXELS, gx, gy };
 }
 
@@ -347,18 +296,13 @@ export const GATE_BOSSES = Object.freeze([
 export const gateBossOf = (day) => GATE_BOSSES[gateRoll(day, 5) % GATE_BOSSES.length];
 
 /** WB8b: the streams the marks' cycle is shuffled on (gateHash(GATE_SALT, round, key, i) - the provinces' bag is 11). */
-const ASPECT_BAG = 12,
-  TRIAL_BAG = 13,
-  ROUND_BAG = 14,
-  GATE_BAG = 15;
+const ASPECT_BAG = 12, TRIAL_BAG = 13, ROUND_BAG = 14, GATE_BAG = 15;
 /** One round of a bag of `n`: Fisher-Yates on the round's own rolls in stream `key` (bagRound's law). */
 function shuffledRound(round, key, n) {
   const a = Array.from({ length: n }, (_, i) => i);
   for (let i = n - 1; i > 0; i--) {
     const j = gateHash(GATE_SALT, round, key, i) % (i + 1);
-    const tmp = a[i];
-    a[i] = a[j];
-    a[j] = tmp;
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
   }
   return a;
 }
@@ -387,25 +331,22 @@ const marksApart = (x, y) => x.a !== y.a && !x.t.some((k) => y.t.includes(k));
  */
 function marksCycle() {
   if (_marksCycle) return _marksCycle;
-  const nA = GATE_ASPECTS.length,
-    nT = GATE_TRIALS.length;
+  const nA = GATE_ASPECTS.length, nT = GATE_TRIALS.length;
   // WB11a: the seats - the trials, and the bye beside an odd count of them (the last seat; its pair is no gate)
   const nS = nT + (nT % 2);
   if (Math.floor(nT / 2) !== nA) throw new Error('gateLaw: the marks need two trials an aspect, or one over');
-  const pi = shuffledRound(0, TRIAL_BAG, nT),
-    sig = shuffledRound(0, ASPECT_BAG, nA),
-    fo = shuffledRound(0, ROUND_BAG, nS - 1);
+  const pi = shuffledRound(0, TRIAL_BAG, nT), sig = shuffledRound(0, ASPECT_BAG, nA), fo = shuffledRound(0, ROUND_BAG, nS - 1);
   const matchings = fo.map((i) => {
     const pairs = [[i, nS - 1]];
     for (let j = 1; j < nS / 2; j++) pairs.push([(i + j) % (nS - 1), (i - j + nS - 1) % (nS - 1)]);
-    return pairs.filter((q) => q[0] < nT && q[1] < nT).map(([x, y]) => [pi[x], pi[y]].sort((u, v) => u - v)); // WB11a: the trial paired with the bye rests
+    return pairs.filter((q) => q[0] < nT && q[1] < nT).map(([x, y]) => [pi[x], pi[y]].sort((u, v) => u - v));   // WB11a: the trial paired with the bye rests
   });
   const rounds = [];
   for (let s = 0; s < nA; s++) for (const m of matchings) rounds.push(m.map((t, j) => ({ a: sig[(j + s) % nA], t })));
   const seq = [];
   const place = (p, last) => {
-    if (p === rounds.length) return marksApart(last, seq[0][0]); // the wrap: the cycle comes round
-    const R = shuffledRound(p, GATE_BAG, rounds[p].length).map((k) => rounds[p][k]); // the round's gates in its own order
+    if (p === rounds.length) return marksApart(last, seq[0][0]);   // the wrap: the cycle comes round
+    const R = shuffledRound(p, GATE_BAG, rounds[p].length).map((k) => rounds[p][k]);   // the round's gates in its own order
     for (let f = 0; f < R.length; f++) {
       if (last && !marksApart(last, R[f])) continue;
       for (let l = R.length - 1; l >= 0; l--) {
@@ -416,10 +357,8 @@ function marksCycle() {
     }
     return false;
   };
-  if (!place(0, null)) throw new Error('gateLaw: the marks have no cycle'); // the tables' shape and the salt pinned: never
-  _marksCycle = Object.freeze(
-    seq.flat().map((g) => Object.freeze([GATE_ASPECTS[g.a].id, ...g.t.map((k) => GATE_TRIALS[k].id)])),
-  );
+  if (!place(0, null)) throw new Error('gateLaw: the marks have no cycle');   // the tables' shape and the salt pinned: never
+  _marksCycle = Object.freeze(seq.flat().map((g) => Object.freeze([GATE_ASPECTS[g.a].id, ...g.t.map((k) => GATE_TRIALS[k].id)])));
   return _marksCycle;
 }
 /** @type {ReadonlyArray<ReadonlyArray<string>>|null} */
@@ -436,8 +375,7 @@ export const gateMarksCycleLength = () => marksCycle().length;
  * @returns {ReadonlyArray<string>}
  */
 export function gateModsOf(day) {
-  const c = marksCycle(),
-    g = gateIndex(day);
+  const c = marksCycle(), g = gateIndex(day);
   return c[((g % c.length) + c.length) % c.length];
 }
 
@@ -461,8 +399,7 @@ export const marksCarryPortent = (md) => !(Array.isArray(md) && md.includes('leg
 let _carriers = null;
 function carriersBefore() {
   if (_carriers) return _carriers;
-  const c = marksCycle(),
-    pre = [0];
+  const c = marksCycle(), pre = [0];
   for (let i = 0; i < c.length; i++) pre.push(pre[i] + (marksCarryPortent(c[i]) ? 1 : 0));
   return (_carriers = pre);
 }
@@ -475,30 +412,16 @@ function carriersBefore() {
  */
 export function gatePortentsOf(day) {
   if (!isGateDay(day)) return null;
-  const c = marksCycle(),
-    L = c.length,
-    g = gateIndex(day),
-    pos = ((g % L) + L) % L,
-    q = Math.floor(g / L);
+  const c = marksCycle(), L = c.length, g = gateIndex(day), pos = ((g % L) + L) % L, q = Math.floor(g / L);
   if (!marksCarryPortent(c[pos])) return null;
-  const pre = carriersBefore(),
-    n = q * pre[L] + pre[pos];
-  if (((n % 2) + 2) % 2 === 1) return null; // every other carrier
-  const k = n / 2,
-    round = Math.floor(k / PORTENT_BAG.length),
-    at = k - round * PORTENT_BAG.length;
+  const pre = carriersBefore(), n = q * pre[L] + pre[pos];
+  if (((n % 2) + 2) % 2 === 1) return null;   // every other carrier
+  const k = n / 2, round = Math.floor(k / PORTENT_BAG.length), at = k - round * PORTENT_BAG.length;
   const id = PORTENT_BAG[shuffledRound(round, PORTENT_BAG_KEY, PORTENT_BAG.length)[at]];
   return id === 'dire' ? GATE_DIRE : _portentOne(id);
 }
 const _onePortent = new Map();
-const _portentOne = (id) => {
-  let a = _onePortent.get(id);
-  if (!a) {
-    a = Object.freeze([id]);
-    _onePortent.set(id, a);
-  }
-  return a;
-};
+const _portentOne = (id) => { let a = _onePortent.get(id); if (!a) { a = Object.freeze([id]); _onePortent.set(id, a); } return a; };
 
 /** WB14e: THE TITHE-IMP - one night in TITHE_ONE_IN, unannounced (bible/11-Multiplayer/Breach-Portents.md section 9). */
 export const TITHE_ONE_IN = 5;
@@ -506,10 +429,7 @@ export const TITHE_ONE_IN = 5;
 export const TITHE_AFTER_MS = 50_000;
 export const TITHE_SPREAD_MS = 100_000;
 /** WB14e: when a night's Tithe-Imp rises, ms after his wake - null on a night with none. */
-export const gateTitheOf = (day) =>
-  isGateDay(day) && gateRoll(day, 21) % TITHE_ONE_IN === 0
-    ? TITHE_AFTER_MS + (gateRoll(day, 22) % (TITHE_SPREAD_MS / 1000)) * 1000
-    : null;
+export const gateTitheOf = (day) => (isGateDay(day) && gateRoll(day, 21) % TITHE_ONE_IN === 0 ? TITHE_AFTER_MS + (gateRoll(day, 22) % (TITHE_SPREAD_MS / 1000)) * 1000 : null);
 /** WB14f: the night's captive knight - by his place in net/gate/gateMods.js CAPTIVE_NAMES (CAPTIVE_DAMES says a Dame's), and
  *  by name. */
 export const captiveIndexOf = (day) => gateRoll(day, 23) % CAPTIVE_NAMES.length;
@@ -531,14 +451,13 @@ export const portentsLine = (pt) => {
 // WB13b (2026-10-01, Mac: "clean up text to be less explanatory and less AI"): each line the event, where and when -
 // the map's ring, the banner and the countdowns say the rest
 export const riseLine = ({ near, left }) => `Dagon's Breach rises near ${near}. It opens in ${left}.`;
-export const wrathLine = ({ near, boss }) =>
-  `The Covenant tears Dagon's Breach near ${near} shut. ${boss} is cast back into the Deadlands.`;
+export const wrathLine = ({ near, boss }) => `The Covenant tears Dagon's Breach near ${near} shut. ${boss} is cast back into the Deadlands.`;
 /** WB8c: the Warden's marks said beside the omen (and to a player who comes in later, beside the line they hear first).
  *  WB13b: by name - "Valkynaz Ruhn comes the Rime-Wrought tonight, Colossal and Echoing." - the marks' card and the bar
  *  say what each does; Discord says the same sentence. */
 export const marksLine = ({ boss, md }) => {
   const { aspect, trials } = readGateMods(md);
   const names = trials.map((t) => t.name);
-  const said = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : (names[0] ?? '');
+  const said = names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0] ?? '';
   return `${boss} comes ${aspect.epithet} tonight${said ? `, ${said}` : ''}.`;
 };

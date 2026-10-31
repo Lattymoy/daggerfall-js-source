@@ -56,8 +56,8 @@
   {
     "name": "MWBOW1-the-piece-drops-the-node",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "            preClip: part.preClip\n              ? { ...part.preClip, local: batch.positions, localNormals: batch.normals ?? null }\n              : null,",
-    "new": "            preClip: null,",
+    "old": "            preClip: part.preClip ? { ...part.preClip, local: batch.positions, localNormals: batch.normals ?? null } : null,\n",
+    "new": "            preClip: null,\n",
     "tests": [
       "test/formats/morrowind/mwbow1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "MWBOW1-every-slot-on-the-weapon-clock",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    if (p.kind !== 'rigid' || !slots.has(p.slot)) continue;",
-    "new": "    if (p.kind !== 'rigid') continue;",
+    "old": "    if (p.kind !== 'rigid' || !slots.has(p.slot)) continue;\n",
+    "new": "    if (p.kind !== 'rigid') continue;\n",
     "tests": [
       "test/formats/morrowind/mwbow1.test.js"
     ]

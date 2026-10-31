@@ -172,8 +172,8 @@
   {
     "name": "P6-mask-kept",
     "file": "src/systems/discovery.js",
-    "old": "  return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
-    "new": "  return low;",
+    "old": "return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "new": "return low;",
     "tests": [
       "test/systems/audittesa2p_laws.test.js"
     ]
@@ -181,8 +181,8 @@
   {
     "name": "P6-bound-off-by-one",
     "file": "src/systems/discovery.js",
-    "old": "  return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
-    "new": "  return low <= BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "old": "return low < BAY_PIXEL_IDS ? low : mapId >>> 0;",
+    "new": "return low <= BAY_PIXEL_IDS ? low : mapId >>> 0;",
     "tests": [
       "test/systems/audittesa2p_laws.test.js"
     ]
@@ -190,8 +190,8 @@
   {
     "name": "P6-old-key-kept",
     "file": "src/systems/discovery.js",
-    "old": "    if (key >= BAY_PIXEL_IDS && key < 0x100000) continue;\n    _locations.set(key, { ...r });",
-    "new": "    _locations.set(key, { ...r });",
+    "old": "    if (key >= BAY_PIXEL_IDS && key < 0x100000) continue;\n",
+    "new": "",
     "tests": [
       "test/systems/audittesa2p_laws.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "P7-closed-lanes-scanned",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "  const wanted = () => places.theatres().filter((t) => t !== BAY_THEATRE && t < GATE_LANES && open(t));",
-    "new": "  const wanted = () => places.theatres().filter((t) => t !== BAY_THEATRE && t < GATE_LANES);",
+    "old": "t < GATE_LANES && open(t));",
+    "new": "t < GATE_LANES);",
     "tests": [
       "test/scenes/audittesa2p_hosts.test.js"
     ]

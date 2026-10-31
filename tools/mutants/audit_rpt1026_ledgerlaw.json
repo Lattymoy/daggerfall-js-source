@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-RPT1026-C1-trade-second-side-no-giver",
     "file": "server-account/src/realmTrade.js",
-    "old": "  const movesB = ledgerMoves(db, { player: playerId, char: id, seq: seq + 1, nowS }, piecesB[0], piecesB[1], {\n    from: t.a_player,\n  });",
-    "new": "  const movesB = ledgerMoves(db, { player: playerId, char: id, seq: seq + 1, nowS }, piecesB[0], piecesB[1]);",
+    "old": "piecesB[0], piecesB[1], { from: t.a_player });",
+    "new": "piecesB[0], piecesB[1]);",
     "tests": [
       "test/server/audit_rpt1026_ledgerlaw.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-RPT1026-C1-trade-first-side-no-giver",
     "file": "server-account/src/realmTrade.js",
-    "old": "    { from: playerId },\n  );",
-    "new": "  );",
+    "old": "piecesA[0], piecesA[1], { from: playerId });",
+    "new": "piecesA[0], piecesA[1]);",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js",
       "test/server/audit_rpt1026_ledgerlaw.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-RPT1026-C5-cut-unmarked",
     "file": "server-account/src/judge.js",
-    "old": "const cutOf = (/** @type {string} */ s, /** @type {number} */ n) =>\n  s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s;",
-    "new": "const cutOf = (/** @type {string} */ s, /** @type {number} */ n) => s.slice(0, n);",
+    "old": "(s.length > n ? `${s.slice(0, n)}${LAW_VALUES_CUT}` : s)",
+    "new": "s.slice(0, n)",
     "tests": [
       "test/server/audit_rpt1026_ledgerlaw.test.js"
     ],

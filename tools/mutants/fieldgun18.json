@@ -11,8 +11,8 @@
   {
     "name": "FIELD-GUN18-2-the-three-host-lane-stops-scaling",
     "file": "src/combat/arrowFlight.js",
-    "old": "              scale: ORB_SCALE, // FIELD-GUN18: a pellet, not a fireball\n              onTexture: (t, archive, record) => noteOrbColour(t?.getColor32?.(t.getDFBitmap(record, 0), 0)),",
-    "new": "              onTexture: (t, archive, record) => noteOrbColour(t?.getColor32?.(t.getDFBitmap(record, 0), 0)),",
+    "old": "            scale: ORB_SCALE,   // FIELD-GUN18: a pellet, not a fireball\n",
+    "new": "",
     "tests": [
       "test/systems/thunderlock.test.js"
     ]

@@ -53,7 +53,8 @@ test('HALL-GOLD the Guild tab: the service\'s view carries what of the treasury 
 test('HALL-GOLD the treasury\'s buttons: an amount past one move\'s cap is held at Deposit and Withdraw with the cap said, not sent to be refused (mutant: the cap not asked)', () => {
   const panel = rd('src/ui/socialPanel.js');
   assert.match(panel, /const overCap = \(\) => goldTyped\(\) > GUILD_MOVE_MAX;/);
-  assert.match(panel, /liveBtn\('Deposit', \(\) => \(\{ enabled: !g\.busy && goldTyped\(\) > 0 && !overCap\(\), why: g\.busy \? 'a moment' : overCap\(\) \? capWhy : 'an amount' \}\)/);
-  assert.match(panel, /liveBtn\('Withdraw', \(\) => \(\{ enabled: !g\.busy && goldTyped\(\) > 0 && !overCap\(\) && guildMay\(me, 'withdraw'\)/);
+  // PIN MOVED (GUILD-RANKS, main's: a rank's powers gate the move first, said as the rank's why)
+  assert.match(panel, /liveBtn\('Deposit', \(\) => \(\{ enabled: !g\.busy && goldTyped\(\) > 0 && !overCap\(\) && guildMay\(me, 'deposit', v\.powers\), why: !guildMay\(me, 'deposit', v\.powers\) \? rankWhy\(v, 'deposit'\) : g\.busy \? 'a moment' : overCap\(\) \? capWhy : 'an amount' \}\)/);
+  assert.match(panel, /liveBtn\('Withdraw', \(\) => \(\{ enabled: !g\.busy && goldTyped\(\) > 0 && !overCap\(\) && guildMay\(me, 'withdraw', v\.powers\)/);
   assert.equal(GUILD_MOVE_MAX, 1_000_000, 'a hall at 1,274,880 takes two deposits');
 });

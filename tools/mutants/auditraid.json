@@ -242,8 +242,8 @@
   {
     "name": "RAID-R4-other-characters-pack",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      if (owner !== undefined && owner !== who()) {\n        spend(day, acct, list, owner);\n        if (kept) say(kept);\n        return true;\n      }\n      const id = spend(day, acct, list);",
-    "new": "      const id = spend(day, acct, list);",
+    "old": "      if (owner !== undefined && owner !== who()) { spend(day, acct, list, owner); if (kept) say(kept); return true; }\n",
+    "new": "",
     "tests": [
       "test/net/auditraid.test.js"
     ]

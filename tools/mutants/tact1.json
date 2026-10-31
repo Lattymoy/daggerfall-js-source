@@ -156,8 +156,8 @@
   {
     "name": "TACT1-arrow-through",
     "file": "src/combat/arrowFlight.js",
-    "old": "            coverDistance(c, m.pos, unit, reach),",
-    "new": "            Infinity,",
+    "old": "      const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach), c.raycast(m.pos, unit, reach),",
+    "new": "      const cs = c ? coverStep(Infinity, c.raycast(m.pos, unit, reach),",
     "tests": [
       "test/scenes/tact1.test.js"
     ]

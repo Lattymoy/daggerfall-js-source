@@ -2,8 +2,8 @@
   {
     "name": "MWHEADS2-every-breton-man-wears-them",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  const own = ownAsked ? ownFacePools(race, female) : null; // MW-HEADS2: the port's own heads are a player's alone - asked for",
-    "new": "  const own = ownFacePools(race, female); // MW-HEADS2: the port's own heads are a player's alone - asked for",
+    "old": "  const own = ownAsked ? ownFacePools(race, female) : null;",
+    "new": "  const own = ownFacePools(race, female);",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MWHEADS2-the-player-in-the-data's",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  const pools = facePools(parts, race, female, { has, own: ownHeads });",
-    "new": "  const pools = facePools(parts, race, female, { has, own: false });",
+    "old": "  const pools = facePools(parts, race, female, { has, own: ownHeads });\n",
+    "new": "  const pools = facePools(parts, race, female, { has, own: false });\n",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],

@@ -284,7 +284,7 @@
   {
     "name": "LR-street-flicker-variance",
     "file": "src/world/city/cityLights.js",
-    "old": "  a.variance *= k;\n  a.speed *= k;",
+    "old": "  a.variance *= k; a.speed *= k;",
     "new": "  a.speed *= k;",
     "tests": [
       "test/render/lightreach.test.js"
@@ -293,8 +293,8 @@
   {
     "name": "LR-street-flicker-step",
     "file": "src/world/city/cityLights.js",
-    "old": "  a.speed *= k;\n  return a;",
-    "new": "  return a;",
+    "old": "  a.variance *= k; a.speed *= k;",
+    "new": "  a.variance *= k;",
     "tests": [
       "test/render/lightreach.test.js"
     ]

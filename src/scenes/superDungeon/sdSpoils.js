@@ -36,8 +36,7 @@ export const SD_PILLAR_CLEAR_M = 1.2;
 export function clearOfPillars(x, z, margin = SD_PILLAR_CLEAR_M) {
   const half = SD_PILLAR_W / 2 + margin;
   for (const [px, pz] of SD_PILLARS) {
-    const dx = x - px,
-      dz = z - pz;
+    const dx = x - px, dz = z - pz;
     if (Math.abs(dx) >= half || Math.abs(dz) >= half) continue;
     if (half - Math.abs(dx) < half - Math.abs(dz)) x = px + (dx < 0 ? -half : half);
     else z = pz + (dz < 0 ? -half : half);
@@ -46,11 +45,7 @@ export function clearOfPillars(x, z, margin = SD_PILLAR_CLEAR_M) {
 }
 /** The floor they are kept to (world/gate/gateSpew.js keepLaunch's `{ centre, r, floorY }`): the arena's, in the dungeon's
  *  frame. */
-export const SD_SPOILS_KEEP = Object.freeze({
-  centre: Object.freeze(realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z)),
-  r: SD_ARENA.r - SD_SPEW_RIM_M,
-  floorY: realmToDungeon(0, 0, 0)[1],
-});
+export const SD_SPOILS_KEEP = Object.freeze({ centre: Object.freeze(realmToDungeon(SD_ARENA.x, 0, SD_ARENA.z)), r: SD_ARENA.r - SD_SPEW_RIM_M, floorY: realmToDungeon(0, 0, 0)[1] });
 
 /**
  * The burst's driver. `link` the fight's (net/superDungeon/sdFightLink.js - its `state`, `now` and `counted`), `pool` the Hour's spoils
@@ -61,42 +56,22 @@ export const SD_SPOILS_KEEP = Object.freeze({
  */
 export function createSdSpoils({ link, pool, slot, receipt, level, feet = () => null, say = () => {} }) {
   /** the fight whose spoils have left it on this screen, and the one told it had none - each once a fight */
-  let spewedFi = 0,
-    saidFi = 0;
+  let spewedFi = 0, saidFi = 0;
   return {
     /** One frame in the Hour: the burst, when it is due and the receipt is here; then the pool's pieces flying. */
     frame() {
-      const s = link?.state?.(),
-        t = link?.now?.() ?? 0,
-        here = slot();
+      const s = link?.state?.(), t = link?.now?.() ?? 0, here = slot();
       if (s?.fell && here != null && spewedFi !== s.fi && t >= s.fell.at + SD_SPEW_AT_MS) {
-        const r = receipt(here),
-          c = r ? readSdReceipt(r) : null;
+        const r = receipt(here), c = r ? readSdReceipt(r) : null;
         if (c && c.d === here) {
           spewedFi = s.fi;
           const pose = remnantPose(s, s.fell.at + SD_SPEW_AT_MS);
-          const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3); // AUDIT SD: never out of a pillar's inside
-          const at = realmToDungeon(
-            SD_ARENA.x + px,
-            Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink),
-            SD_ARENA.z + pz,
-          );
+          const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3);   // AUDIT SD: never out of a pillar's inside
+          const at = realmToDungeon(SD_ARENA.x + px, Math.max(SD_SPEW_LOW_M, SD_REM.h * SD_SPEW_CHEST - pose.sink), SD_ARENA.z + pz);
           const f = feet();
           const bearing = f ? Math.atan2(f[0] - at[0], f[2] - at[2]) : pose.yw;
-          const lv = spoilsLevel(level(), c.l); // AUDIT WBX S2: never past the level the fight admitted
-          if (
-            pool.spew({
-              day: sdSpoilsDay(c.d),
-              seed: c.c,
-              level: lv,
-              at,
-              bearing,
-              acct: c.s,
-              keep: SD_SPOILS_KEEP,
-              roll: () => sdSpoilsList(c.c, lv),
-            })
-          )
-            say(SD_SPOILS_TEXT.spilled);
+          const lv = spoilsLevel(level(), c.l);   // AUDIT WBX S2: never past the level the fight admitted
+          if (pool.spew({ day: sdSpoilsDay(c.d), seed: c.c, level: lv, at, bearing, acct: c.s, keep: SD_SPOILS_KEEP, roll: () => sdSpoilsList(c.c, lv) })) say(SD_SPOILS_TEXT.spilled);
         } else if (saidFi !== s.fi && t >= s.fell.at + SD_RECEIPT_WAIT_MS && link.counted?.()) {
           saidFi = s.fi;
           say(SD_SPOILS_TEXT.none);
@@ -106,8 +81,7 @@ export function createSdSpoils({ link, pool, slot, receipt, level, feet = () => 
     },
     /** Out of the Hour: whatever is still on the floor goes into the pack (the record stands until a save holds it). */
     leave() {
-      spewedFi = 0;
-      saidFi = 0;
+      spewedFi = 0; saidFi = 0;
       return pool.gather();
     },
     /** What the driver holds, for the tests. */

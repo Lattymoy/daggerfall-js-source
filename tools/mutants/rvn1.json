@@ -101,8 +101,8 @@
   {
     "name": "RVN1-backstab-never-told",
     "file": "src/combat/formulas.js",
-    "old": "    const info = { backstab: notes.backstab, blow: whole, wraps }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
-    "new": "    const info = { backstab: false, blow: whole, wraps }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
+    "old": "    const info = { backstab: notes.backstab, blow: whole, wraps };",
+    "new": "    const info = { backstab: false, blow: whole, wraps };",
     "tests": [
       "test/systems/rvn1_ledger.test.js"
     ]

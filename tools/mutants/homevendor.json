@@ -66,7 +66,7 @@
   {
     "name": "HOMEVENDOR-a-stocked-trader-unmade",
     "file": "server-account/src/decor.js",
-    "old": "  if (was.station === 'vendor' && (pl.station ?? null) !== 'vendor' && (await vendorStocked(db, mapId, id)))\n    return { error: 'vendor-stocked' };",
+    "old": "  if (was.station === 'vendor' && (pl.station ?? null) !== 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };",
     "new": "  void vendorStocked;",
     "tests": [
       "test/net/homevendor_service.test.js"
@@ -75,7 +75,7 @@
   {
     "name": "HOMEVENDOR-a-stocked-trader-removed",
     "file": "server-account/src/decor.js",
-    "old": "    if (was?.station === 'vendor' && (await vendorStocked(db, mapId, id))) return { error: 'vendor-stocked' }; // HOME-VENDOR",
+    "old": "    if (was?.station === 'vendor' && await vendorStocked(db, mapId, id)) return { error: 'vendor-stocked' };   // HOME-VENDOR",
     "new": "    // HOME-VENDOR",
     "tests": [
       "test/net/homevendor_service.test.js"
@@ -84,8 +84,8 @@
   {
     "name": "HOMEVENDOR-a-stocked-house-sold",
     "file": "server-account/src/homes.js",
-    "old": "    return { error: 'home-vendor-stocked' };",
-    "new": "    void 0;",
+    "old": ".first())?.n ?? 0) > 0) return { error: 'home-vendor-stocked' };",
+    "new": ".first())?.n ?? 0) > 0) void 0;",
     "tests": [
       "test/net/homevendor_service.test.js"
     ]
@@ -240,8 +240,8 @@
     "name": "HOMEVENDOR-a-trader-offered-offline",
     "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content - a hired trader is offered and sold in a home alone (a caravan's or a ship's had it paid for, never working).",
     "file": "src/ui/decorPanel.js",
-    "old": "  DECOR_STATIONS.filter((k) =>\n    k === VENDOR_STATION ? trader && forgeOffered() : !PROF_STATIONS.includes(k) || forgeOffered(),\n  ); // PROF4: the workbench as the forge",
-    "new": "  DECOR_STATIONS.filter((k) => (k === VENDOR_STATION ? trader : !PROF_STATIONS.includes(k) || forgeOffered())); // PROF4: the workbench as the forge",
+    "old": "(k === VENDOR_STATION ? trader && forgeOffered() : ",
+    "new": "(k === VENDOR_STATION ? trader : ",
     "tests": [
       "test/net/audit29_client.test.js"
     ]

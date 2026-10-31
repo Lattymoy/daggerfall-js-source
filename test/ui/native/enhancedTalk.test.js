@@ -66,7 +66,7 @@ test('ET1 door: townTalk opens every conversation through createTalkWindow, and 
   assert.match(door, /import\('\.\/enhanced\/enhancedTalk\.js'\)/, 'dynamic: classic pays nothing');
   assert.match(door, /unregister = registerOverlay\(goodbye\);/, 'PX28: Tab says goodbye');
   assert.match(door, /if \(!model\.done\) model\.press\('goodbye'\);/, 'and goodbye goes THROUGH the model, so the note is filed and onClose fires');
-  assert.match(door, /click\(\) \{\n\s*return true;\n\s*\}/, 'a press beside the panel is consumed, never a pointer grab');
+  assert.match(door, /click\(\) \{ return true; \}/, 'a press beside the panel is consumed, never a pointer grab');
   // headless: the door hands back the classic window and it is live
   const w = createTalkWindow('Hello.', mkHooks());
   assert.ok(w instanceof NativeTalkWindow);

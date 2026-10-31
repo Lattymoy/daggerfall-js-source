@@ -22,8 +22,8 @@
   {
     "name": "YARD-HEIGHT-place-unguarded",
     "file": "server-account/src/decor.js",
-    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower",
-    "new": "  if (false && sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower",
+    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
+    "new": "  if (false && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
     "tests": [
       "test/net/yardheight.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "YARD-HEIGHT-room-capped",
     "file": "server-account/src/decor.js",
-    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower",
-    "new": "  if (sent && !decorYardHighOk(sent)) return { error: 'yard-high' }; // YARD-HEIGHT: never a tower",
+    "old": "  if (yard === true && sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
+    "new": "  if (sent && !decorYardHighOk(sent)) return { error: 'yard-high' };",
     "tests": [
       "test/net/yardheight.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "YARD-HEIGHT-move-unguarded",
     "file": "server-account/src/decor.js",
-    "old": "  if (row.yard === 1 && !decorYardHighOk(pl)) return { error: 'yard-high' }; // YARD-HEIGHT: nor moved up into a tower",
-    "new": "  if (false && !decorYardHighOk(pl)) return { error: 'yard-high' }; // YARD-HEIGHT: nor moved up into a tower",
+    "old": "  if (row.yard === 1 && !decorYardHighOk(pl)) return { error: 'yard-high' };",
+    "new": "  if (false && !decorYardHighOk(pl)) return { error: 'yard-high' };",
     "tests": [
       "test/net/yardheight.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "DECOR-TURN-direction",
     "file": "src/ui/decorPanel.js",
-    "old": "  const turnLeftBtn = turnBtn('Turn left', -1),",
-    "new": "  const turnLeftBtn = turnBtn('Turn left', 1),",
+    "old": "turnBtn('Turn left', -1), turnRightBtn = turnBtn('Turn right', 1);",
+    "new": "turnBtn('Turn left', 1), turnRightBtn = turnBtn('Turn right', 1);",
     "tests": [
       "test/net/yardheight.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "DECOR-TURN-door-turned",
     "file": "src/ui/decorPanel.js",
-    "old": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it || door; // DECOR-TURN: a door is turned by its doorway (Move)",
-    "new": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it; // DECOR-TURN: a door is turned by its doorway (Move)",
+    "old": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it || door;",
+    "new": "    turnLeftBtn.disabled = turnRightBtn.disabled = !it;",
     "tests": [
       "test/net/yardheight.test.js"
     ],

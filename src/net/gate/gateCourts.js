@@ -54,14 +54,7 @@ export const GATE_NIGHT_GRACE_MS = 3_000;
 export const bookNew = (day) => ({ d: day, s: {}, f: {}, end: 0, told: 0 });
 
 /** Is `b` a book - storage's own shape, read back after a wake? @param {any} b */
-export const isGateBook = (b) =>
-  !!b &&
-  typeof b === 'object' &&
-  Number.isSafeInteger(b.d) &&
-  !!b.s &&
-  typeof b.s === 'object' &&
-  !!b.f &&
-  typeof b.f === 'object';
+export const isGateBook = (b) => !!b && typeof b === 'object' && Number.isSafeInteger(b.d) && !!b.s && typeof b.s === 'object' && !!b.f && typeof b.f === 'object';
 
 /** Is a court index a court's? @param {any} c */
 export const courtOk = (c) => Number.isSafeInteger(c) && c >= 0 && c < GATE_COURTS_MAX;
@@ -77,12 +70,7 @@ export function courtCounts(book, now) {
 }
 
 /** The courts a fighter has joined - the courts the night holds. @param {GateBook} book @returns {Set<number>} */
-export const courtsJoined = (book) =>
-  new Set(
-    Object.values(book.s)
-      .filter((s) => s[2] === 1)
-      .map((s) => s[0]),
-  );
+export const courtsJoined = (book) => new Set(Object.values(book.s).filter((s) => s[2] === 1).map((s) => s[0]));
 
 /**
  * THE SEAT: the court `sub` fights in tonight, or null for none (every court that may take it is full, or the gate no
@@ -115,8 +103,7 @@ export function placeSeat(book, sub, { asked, now, admits, can = false, mates = 
   let court = null;
   for (const m of mates) {
     const s = m !== sub ? book.s[m] : null;
-    if (s && seatLive(s, now) && open(s[0], GATE_COURT_FIGHTERS + GATE_PARTY_SLACK) && (court === null || s[0] < court))
-      court = s[0];
+    if (s && seatLive(s, now) && open(s[0], GATE_COURT_FIGHTERS + GATE_PARTY_SLACK) && (court === null || s[0] < court)) court = s[0];
   }
   for (let c = 0; court === null && c < GATE_COURTS_MAX; c++) if (open(c, GATE_COURT_FIGHTERS)) court = c;
   if (court === null) return null;
@@ -160,13 +147,7 @@ export function nightDone(book, now, t) {
  */
 export function nightWord(book, at) {
   const falls = Object.values(book.f).sort((a, b) => a.at - b.at);
-  return {
-    at,
-    top: falls[0]?.top ?? [],
-    n: falls.reduce((s, f) => s + f.n, 0),
-    w: falls.length,
-    cs: Math.max(courtsJoined(book).size, falls.length),
-  };
+  return { at, top: falls[0]?.top ?? [], n: falls.reduce((s, f) => s + f.n, 0), w: falls.length, cs: Math.max(courtsJoined(book).size, falls.length) };
 }
 
 /**
@@ -182,11 +163,5 @@ export function riteOnly(book, helpers) {
 
 /** When the book next needs its beat: the seal, then the wrath's grace, while the night is not said done; null after.
  *  @param {GateBook} book @param {{sealAt: number, wrathAt: number}} t @param {number} now */
-export const bookNextAt = (book, t, now) =>
-  book.end
-    ? null
-    : now < t.sealAt
-      ? t.sealAt
-      : now < t.wrathAt + GATE_NIGHT_GRACE_MS
-        ? t.wrathAt + GATE_NIGHT_GRACE_MS
-        : null;
+export const bookNextAt = (book, t, now) => (book.end ? null : now < t.sealAt ? t.sealAt : now < t.wrathAt + GATE_NIGHT_GRACE_MS ? t.wrathAt + GATE_NIGHT_GRACE_MS : null);
+

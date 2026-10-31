@@ -24,7 +24,7 @@ them as a non-member until `$CUREVAM`. DFU does the same: read against Interkarm
 nothing in GuildManager or VampirismEffect carries either guild across.
 
 FIXED - A DEPARTURE, NAMED (`Port-Ledger.md` section A, CURSE-CARRY).
-`systems/guild/guilds.js:"export function carryInvitationOnly"` runs on every `activeMemberships` read. Where the
+`systems/guild/guilds.js:"export function carryInvitationOnly(store, vampire) {"` runs on every `activeMemberships` read. Where the
 active book lacks the Thieves Guild's slot or the Brotherhood's and the other book holds it, the record MOVES to the
 active book. One record, never two: a rank earned as a vampire is the rank the cured player reads, and a save carries it
 where it stands. Where both books hold one (a classic import can carry both), each keeps its own, as DFU's do. The other

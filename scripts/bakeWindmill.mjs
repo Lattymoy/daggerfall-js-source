@@ -33,11 +33,7 @@ import { isMain } from '../tools/lib/isMain.mjs';
 const EXPECTED_NODE_MATRIX = [1, 0, 0, 0, 0, -0, -1, 0, 0, 1, -0, 0, 0, 0, 0, 1];
 
 const floats = (s) => s.trim().split(/\s+/).map(Number);
-const ints = (s) =>
-  s
-    .trim()
-    .split(/\s+/)
-    .map((v) => parseInt(v, 10));
+const ints = (s) => s.trim().split(/\s+/).map((v) => parseInt(v, 10));
 
 /**
  * Parse one COLLADA file into the port's model shape.
@@ -55,9 +51,7 @@ export function parseCollada(text, materialTextures = null, { nodeMatrix = 'asse
   const [, geomId, geom] = geoms[0];
 
   const src = new Map();
-  for (const m of geom.matchAll(
-    /<source id="([^"]+)"[\s\S]*?<float_array[^>]*>([\s\S]*?)<\/float_array>[\s\S]*?<accessor[^>]*stride="(\d+)"/g,
-  )) {
+  for (const m of geom.matchAll(/<source id="([^"]+)"[\s\S]*?<float_array[^>]*>([\s\S]*?)<\/float_array>[\s\S]*?<accessor[^>]*stride="(\d+)"/g)) {
     src.set(m[1], { data: floats(m[2]), stride: Number(m[3]) });
   }
 
@@ -117,30 +111,21 @@ export function parseCollada(text, materialTextures = null, { nodeMatrix = 'asse
     const matrix = floats(nm[2]);
     matrix.forEach((v, i) => {
       if (Math.abs(v - EXPECTED_NODE_MATRIX[i]) > 1e-6) {
-        throw new Error(
-          `node matrix differs at ${i}: ${v} vs ${EXPECTED_NODE_MATRIX[i]} - ` +
-            'this export is rotated differently and the no-transform bake would be wrong',
-        );
+        throw new Error(`node matrix differs at ${i}: ${v} vs ${EXPECTED_NODE_MATRIX[i]} - `
+          + 'this export is rotated differently and the no-transform bake would be wrong');
       }
     });
   } else if (nodeMatrix !== 'ignore') {
     throw new Error(`nodeMatrix must be 'assert' or 'ignore', got ${nodeMatrix}`);
   }
 
-  const positions = [],
-    normals = [],
-    uvs = [],
-    indices = [],
-    subMeshes = [];
+  const positions = [], normals = [], uvs = [], indices = [], subMeshes = [];
   const seen = new Map();
 
   for (const tri of geom.matchAll(/<triangles material="([^"]+)" count="(\d+)">([\s\S]*?)<\/triangles>/g)) {
     const [, material, count, body] = tri;
-    const inputs = [...body.matchAll(/<input semantic="(\w+)" source="#([^"]+)" offset="(\d+)"/g)].map((m) => ({
-      semantic: m[1],
-      source: m[2],
-      offset: Number(m[3]),
-    }));
+    const inputs = [...body.matchAll(/<input semantic="(\w+)" source="#([^"]+)" offset="(\d+)"/g)]
+      .map((m) => ({ semantic: m[1], source: m[2], offset: Number(m[3]) }));
     const want = ['VERTEX', 'NORMAL', 'TEXCOORD'];
     for (const w of want) {
       if (!inputs.some((i) => i.semantic === w)) throw new Error(`triangles for ${material} has no ${w} input`);
@@ -148,7 +133,8 @@ export function parseCollada(text, materialTextures = null, { nodeMatrix = 'asse
     const stride = Math.max(...inputs.map((i) => i.offset)) + 1;
     const p = ints(body.match(/<p>([\s\S]*?)<\/p>/)[1]);
 
-    const tex = matTexture.get(material.replace(/-material$/, '') + '-material') ?? matTexture.get(material);
+    const tex = matTexture.get(material.replace(/-material$/, '') + '-material')
+      ?? matTexture.get(material);
     if (!tex) throw new Error(`no texture for material ${material}`);
     mapUsed.add(material);
 
@@ -202,9 +188,7 @@ export function parseCollada(text, materialTextures = null, { nodeMatrix = 'asse
   for (let i = 0; i < positions.length; i += 3) positions[i] = -positions[i];
   for (let i = 0; i < normals.length; i += 3) normals[i] = -normals[i];
   for (let i = 0; i < indices.length; i += 3) {
-    const t = indices[i];
-    indices[i] = indices[i + 2];
-    indices[i + 2] = t;
+    const t = indices[i]; indices[i] = indices[i + 2]; indices[i + 2] = t;
   }
 
   // The sail must be flat in exactly ONE axis, and that axis is the one
@@ -266,81 +250,64 @@ export function parseCollada(text, materialTextures = null, { nodeMatrix = 'asse
 // the guard is the shared real-path one - the URL string comparison
 // here was false under a space or a symlink, and the bake did nothing.
 if (isMain(import.meta.url)) {
-  const BODY_MATERIALS = {
-    'Walls-material': [364, 2],
-    'Plank-material': [67, 1],
-    'Roof-material': [369, 3],
-    'Windmill-material': [67, 1],
-    'Door-material': [332, 0],
-  };
-  const machinery = JSON.parse(
-    readFileSync(new URL('../vendor/windmills-kamer/machinery.json', import.meta.url), 'utf8'),
-  );
-  const PARTS = [
-    ['ROTOR', 'Blade.dae', null, 'assert'],
-    ['BODY', 'Windmill.dae', BODY_MATERIALS, 'assert'],
-    ['MACHINERY', machinery.body.file, machinery.body.materials, 'assert'],
-    ...machinery.children.map((c) => [c.name.toUpperCase(), c.file, c.materials, 'ignore']),
-  ];
-  const arr = (a, digits = 6) => `[${a.map((v) => (Number.isInteger(v) ? v : +v.toFixed(digits))).join(', ')}]`;
 
-  const blocks = PARTS.map(([name, file, mats, nodeMatrix]) => {
-    const m = parseCollada(readFileSync(new URL(`../vendor/windmills-kamer/${file}`, import.meta.url), 'utf8'), mats, {
-      nodeMatrix,
-    });
-    return `/** ${name} - \`${file}\`, node \`${m.node}\`, geometry \`${m.geomId}\`.
+const BODY_MATERIALS = {
+  'Walls-material': [364, 2],
+  'Plank-material': [67, 1],
+  'Roof-material': [369, 3],
+  'Windmill-material': [67, 1],
+  'Door-material': [332, 0],
+};
+const machinery = JSON.parse(
+  readFileSync(new URL('../vendor/windmills-kamer/machinery.json', import.meta.url), 'utf8'));
+const PARTS = [
+  ['ROTOR', 'Blade.dae', null, 'assert'],
+  ['BODY', 'Windmill.dae', BODY_MATERIALS, 'assert'],
+  ['MACHINERY', machinery.body.file, machinery.body.materials, 'assert'],
+  ...machinery.children.map((c) => [c.name.toUpperCase(), c.file, c.materials, 'ignore']),
+];
+const arr = (a, digits = 6) => `[${a.map((v) => (Number.isInteger(v) ? v : +v.toFixed(digits))).join(', ')}]`;
+
+const blocks = PARTS.map(([name, file, mats, nodeMatrix]) => {
+  const m = parseCollada(readFileSync(new URL(`../vendor/windmills-kamer/${file}`, import.meta.url), 'utf8'), mats, { nodeMatrix });
+  return `/** ${name} - \`${file}\`, node \`${m.node}\`, geometry \`${m.geomId}\`.
  *  ${m.positions.length / 3} vertices, ${m.indices.length / 3} triangles${m.flatAxis ? `, flat in ${m.flatAxis.toUpperCase()}` : ''}. */
 export const ${name} = Object.freeze({
   positions: new Float32Array(${arr(m.positions)}),
   normals: new Float32Array(${arr(m.normals)}),
   uvs: new Float32Array(${arr(m.uvs)}),
   indices: new Uint32Array(${arr(m.indices)}),
-  subMeshes: Object.freeze([${m.subMeshes
-    .map(
-      (sm) => `
-    Object.freeze({ textureArchive: ${sm.textureArchive}, textureRecord: ${sm.textureRecord}, startIndex: ${sm.startIndex}, primitiveCount: ${sm.primitiveCount} }),`,
-    )
-    .join('')}
+  subMeshes: Object.freeze([${m.subMeshes.map((sm) => `
+    Object.freeze({ textureArchive: ${sm.textureArchive}, textureRecord: ${sm.textureRecord}, startIndex: ${sm.startIndex}, primitiveCount: ${sm.primitiveCount} }),`).join('')}
   ]),
   flatAxis: ${m.flatAxis ? `'${m.flatAxis}'` : 'null'},
   bounds: Object.freeze({ min: Object.freeze(${arr(m.bounds.min)}), max: Object.freeze(${arr(m.bounds.max)}) }),
 });`;
-  }).join('\n\n');
+}).join('\n\n');
 
-  // HIS CLIMATE AND SEASON SKINS, carried verbatim - see variants.json for
-  // why they are not derived from ClimateSwaps.
-  const variants = JSON.parse(
-    readFileSync(new URL('../vendor/windmills-kamer/variants.json', import.meta.url), 'utf8'),
-  );
-  const skinRows = Object.entries(variants.climates)
-    .map(
-      ([base, c]) =>
-        `  [${base}, Object.freeze({ name: '${c.name}', ` +
-        `walls: [${c.walls}], roof: [${c.roof}], ` +
-        `winterWalls: [${c.winterWalls}], winterRoof: [${c.winterRoof}] })],`,
-    )
-    .join('\n');
+// HIS CLIMATE AND SEASON SKINS, carried verbatim - see variants.json for
+// why they are not derived from ClimateSwaps.
+const variants = JSON.parse(
+  readFileSync(new URL('../vendor/windmills-kamer/variants.json', import.meta.url), 'utf8'));
+const skinRows = Object.entries(variants.climates).map(([base, c]) =>
+  `  [${base}, Object.freeze({ name: '${c.name}', `
+  + `walls: [${c.walls}], roof: [${c.roof}], `
+  + `winterWalls: [${c.winterWalls}], winterRoof: [${c.winterRoof}] })],`).join('\n');
 
-  // WHERE THE MILLS STAND - the seven placements Kamer chose, carried as the
-  // RAW record fields rather than baked matrices, so the placement MATH
-  // stays in world/rmbLayout.js where every other model's lives.
-  const placements = JSON.parse(
-    readFileSync(new URL('../vendor/windmills-kamer/placements.json', import.meta.url), 'utf8'),
-  ).placements;
-  const placementRows = placements
-    .map(
-      (p) =>
-        `  Object.freeze({ block: '${p.block}', ` +
-        `subX: ${p.subX}, subZ: ${p.subZ}, subRot: ${p.subRot}, ` +
-        `x: ${p.x}, y: ${p.y}, z: ${p.z}, rotY: ${p.rotY}, ` +
-        `building: Object.freeze({ modelIdNum: ${p.building.modelIdNum}, ` +
-        `x: ${p.building.x}, y: ${p.building.y}, z: ${p.building.z}, rotY: ${p.building.rotY} }) }),`,
-    )
-    .join('\n');
+// WHERE THE MILLS STAND - the seven placements Kamer chose, carried as the
+// RAW record fields rather than baked matrices, so the placement MATH
+// stays in world/rmbLayout.js where every other model's lives.
+const placements = JSON.parse(
+  readFileSync(new URL('../vendor/windmills-kamer/placements.json', import.meta.url), 'utf8')
+).placements;
+const placementRows = placements.map((p) => `  Object.freeze({ block: '${p.block}', `
+  + `subX: ${p.subX}, subZ: ${p.subZ}, subRot: ${p.subRot}, `
+  + `x: ${p.x}, y: ${p.y}, z: ${p.z}, rotY: ${p.rotY}, `
+  + `building: Object.freeze({ modelIdNum: ${p.building.modelIdNum}, `
+  + `x: ${p.building.x}, y: ${p.building.y}, z: ${p.building.z}, rotY: ${p.building.rotY} }) }),`).join('\n');
 
-  writeFileSync(
-    new URL('../src/world/windmillMesh.js', import.meta.url),
-    `// GENERATED by scripts/bakeWindmill.mjs from vendor/windmills-kamer/
+writeFileSync(new URL('../src/world/windmillMesh.js', import.meta.url),
+  `// GENERATED by scripts/bakeWindmill.mjs from vendor/windmills-kamer/
 // (Kamer's "Windmills of Daggerfall" models and placements, vendored
 // WITH THE AUTHOR'S PERMISSION - see vendor/windmills-kamer/README.md).
 // Do not hand-edit; re-run the bake. test/world/windmillmesh.test.js pins this
@@ -390,16 +357,11 @@ ${placementRows}
  *  vendor/windmills-kamer/machinery.json. */
 export const MACHINERY_MODEL_ID = 41601;
 export const MACHINERY_CHILDREN = Object.freeze([
-${machinery.children
-  .map(
-    (c) =>
-      `  Object.freeze({ name: '${c.name}', mesh: '${c.name.toUpperCase()}', ` +
-      `position: Object.freeze(${arr(c.position)}), rotation: Object.freeze(${arr(c.rotation, 7)}), ` +
-      `axis: '${c.axis}', degPerSec: ${c.degPerSec}, loopsSound: ${c.loopsSound}, collider: ${c.collider} }),`,
-  )
-  .join('\n')}
+${machinery.children.map((c) => `  Object.freeze({ name: '${c.name}', mesh: '${c.name.toUpperCase()}', `
+  + `position: Object.freeze(${arr(c.position)}), rotation: Object.freeze(${arr(c.rotation, 7)}), `
+  + `axis: '${c.axis}', degPerSec: ${c.degPerSec}, loopsSound: ${c.loopsSound}, collider: ${c.collider} }),`).join('\n')}
 ]);
-`,
-  );
-  console.log('wrote src/world/windmillMesh.js');
-} // RUN
+`);
+console.log('wrote src/world/windmillMesh.js');
+
+}   // RUN

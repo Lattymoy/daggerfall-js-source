@@ -20,8 +20,8 @@
   {
     "name": "RARITY-WEAR-the-spoils-base-not-made-again",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  for (let n = 0; n < 32 && (!templateByIndex(item?.templateIndex) || !wearableItem(item)); n++)\n    item = makeBase(level, rolls);",
-    "new": "  for (let n = 0; n < 32 && !templateByIndex(item?.templateIndex); n++) item = makeBase(level, rolls);",
+    "old": "(!templateByIndex(item?.templateIndex) || !wearableItem(item))",
+    "new": "!templateByIndex(item?.templateIndex)",
     "tests": [
       "test/systems/fb1001_wand.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RARITY-WEAR-the-base-made-again-when-wearable",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  for (let n = 0; n < 32 && (!templateByIndex(item?.templateIndex) || !wearableItem(item)); n++)",
-    "new": "  for (let n = 0; n < 32 && (!templateByIndex(item?.templateIndex) || wearableItem(item)); n++)",
+    "old": "(!templateByIndex(item?.templateIndex) || !wearableItem(item))",
+    "new": "(!templateByIndex(item?.templateIndex) || wearableItem(item))",
     "tests": [
       "test/systems/fb1001_wand.test.js"
     ]

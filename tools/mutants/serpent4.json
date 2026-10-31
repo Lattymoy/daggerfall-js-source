@@ -265,8 +265,8 @@
   {
     "name": "SERPENT4-the-shaft-flying-through",
     "file": "src/combat/arrowFlight.js",
-    "old": "        if (hit) {\n          onPlayerArrowHitBox(m, hit);\n          m.dead = true;\n          continue;\n        }",
-    "new": "        if (hit) onPlayerArrowHitBox(m, hit);",
+    "old": "if (hit) { onPlayerArrowHitBox(m, hit); m.dead = true; continue; }",
+    "new": "if (hit) onPlayerArrowHitBox(m, hit);",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "SERPENT4-an-enemy-shaft-handed",
     "file": "src/combat/arrowFlight.js",
-    "old": "      const was = boxTargets?.length && m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null; // SERPENT4: the step's start, for a box",
-    "new": "      const was = boxTargets?.length ? [m.pos[0], m.pos[1], m.pos[2]] : null; // SERPENT4: the step's start, for a box",
+    "old": "const was = boxTargets?.length && m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;",
+    "new": "const was = boxTargets?.length ? [m.pos[0], m.pos[1], m.pos[2]] : null;",
     "tests": [
       "test/net/serpent/serpent4.test.js"
     ]

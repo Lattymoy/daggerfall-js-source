@@ -1059,8 +1059,8 @@
   {
     "name": "BLOOD1b-the-shaft-claims-a-swing",
     "file": "src/combat/arrowFlight.js",
-    "old": "      bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }),",
-    "new": "      bloodHit(dmg, foe.bloodOf ?? foe.entity, {\n        fromPlayer: true,\n        weapon: m.weapon ?? null,\n        swing: 'StrikeRight',\n        forward: [0, 0, 1],\n      }),",
+    "old": "bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null })",
+    "new": "bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null, swing: 'StrikeRight', forward: [0, 0, 1] })",
     "tests": [
       "test/combat/blood1_decals.test.js"
     ]

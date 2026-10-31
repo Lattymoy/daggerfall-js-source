@@ -92,8 +92,8 @@
   {
     "name": "BAL6-CLAWS-dfu-claws-as-silver",
     "file": "src/combat/formulas.js",
-    "old": "    if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
-    "new": "    if ((target.minMetalToHit ?? -1) > (weapon ? weapon.material : attacker?.isInBeastForm ? 2 : 99)) {",
+    "old": "  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
+    "new": "  if ((target.minMetalToHit ?? -1) > (weapon ? weapon.material : attacker?.isInBeastForm ? 2 : 99)) {",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "BAL6-CLAWS-dfu-every-fist-gated",
     "file": "src/combat/formulas.js",
-    "old": "    if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
-    "new": "    if ((target.minMetalToHit ?? -1) > (weapon ? weapon.material : -1)) {",
+    "old": "  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
+    "new": "  if ((target.minMetalToHit ?? -1) > (weapon ? weapon.material : -1)) {",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "BAL6-GAUNTLETS-dfu-without",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer) damage += clawMetalDamage(attacker);\n  damage += bonusOrPenaltyByEnemyType(attacker, target);",
-    "new": "  damage += bonusOrPenaltyByEnemyType(attacker, target);",
+    "old": "  if (isPlayer) damage += clawMetalDamage(attacker);\n",
+    "new": "",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "BAL6-GAUNTLETS-dfu-metal-as-to-hit",
     "file": "src/combat/formulas.js",
-    "old": "    if (weapon) chanceToHitMod = adjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon); // AUDIT PCO1: the stock's mod hook, right after CalculateWeaponToHit",
-    "new": "    else chanceToHitMod += clawMetalDamage(attacker) * 10;\n    if (weapon) chanceToHitMod = adjustWeaponHitChanceMod(attacker, target, chanceToHitMod, weaponAnimTime, weapon); // AUDIT PCO1: the stock's mod hook, right after CalculateWeaponToHit",
+    "old": "  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;\n",
+    "new": "  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;\n  else chanceToHitMod += clawMetalDamage(attacker) * 10;\n",
     "tests": [
       "test/systems/bal6_curses.test.js"
     ]

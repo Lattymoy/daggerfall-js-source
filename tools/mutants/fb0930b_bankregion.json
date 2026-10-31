@@ -2,8 +2,8 @@
   {
     "name": "BANK-REGION-the-region-unnamed",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "            [one ? 'Empire account' : here ? `Account in ${here}` : 'Account balance', L.account],",
-    "new": "            [one ? 'Empire account' : 'Account balance', L.account],",
+    "old": "here ? `Account in ${here}` : 'Account balance', L.account]",
+    "new": "'Account balance', L.account]",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "BANK-REGION-the-others-unlisted",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "            ...elsewhere,\n            ['Gold carried', L.inventory],",
-    "new": "            ['Gold carried', L.inventory],",
+    "old": "L.account], ...elsewhere, ['Gold carried', L.inventory],",
+    "new": "L.account], ['Gold carried', L.inventory],",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "BANK-REGION-the-account-itself-listed-again",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "      i !== gold && a?.accountGold > 0\n        ? [[`Banked in ${REGION_NAMES[i] ?? 'another region'}`, String(a.accountGold)]]\n        : [],",
-    "new": "      a?.accountGold > 0 ? [[`Banked in ${REGION_NAMES[i] ?? 'another region'}`, String(a.accountGold)]] : [],",
+    "old": "(i !== gold && a?.accountGold > 0 ?",
+    "new": "(a?.accountGold > 0 ?",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "BANK-REGION-every-empty-account-listed",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "      i !== gold && a?.accountGold > 0\n        ? [[`Banked in ${REGION_NAMES[i] ?? 'another region'}`, String(a.accountGold)]]\n        : [],",
-    "new": "      i !== gold && a ? [[`Banked in ${REGION_NAMES[i] ?? 'another region'}`, String(a.accountGold)]] : [],",
+    "old": "(i !== gold && a?.accountGold > 0 ?",
+    "new": "(i !== gold && a ?",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"
     ],
@@ -41,7 +41,7 @@
   {
     "name": "BANK-REGION-a-werewolf-reads-the-vampire-book",
     "file": "src/systems/guild/guilds.js",
-    "old": "  const vamp = !!(\n    entity.racialOverride &&\n    !entity.racialOverride.ended &&\n    entity.racialOverride.racial === 'vampirism'\n  );",
+    "old": "  const vamp = !!(entity.racialOverride && !entity.racialOverride.ended\n    && entity.racialOverride.racial === 'vampirism');",
     "new": "  const vamp = !!(entity.racialOverride && !entity.racialOverride.ended);",
     "tests": [
       "test/systems/fb0930b_bankregion.test.js"

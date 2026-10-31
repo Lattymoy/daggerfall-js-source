@@ -363,7 +363,7 @@ test('REVENANT-FATE the loot window\'s FATE side: the loot frame\'s own head (it
   assert.match(inv, /if \(remote\.kind === 'fate'\) return fateCol\(\);/);
   assert.match(inv, /loot-win\$\{remote\.count > LOOT_ONE_COLUMN \? ' wide' : ''\}\$\{remote\.kind === 'fate' \? ' fate' : ''\}/, 'the loot window\'s own frame');
   const door = read('src/ui/inventoryDoor.js');
-  assert.match(door, /if \(deps\.fate\)\n\s*return isEnhanced\(\) && typeof document !== 'undefined'\n\s*\? enhancedInventoryOverlay\(deps\)\n\s*: classicFateWindow\(deps\.fate\);/, 'the classic skin a keyed box');
+  assert.match(door, /if \(deps\.fate\) return isEnhanced\(\) && typeof document !== 'undefined' \? enhancedInventoryOverlay\(deps\) : classicFateWindow\(deps\.fate\);/, 'the classic skin a keyed box');
   // AUDIT (2026-10-02): the judgement comes before the beast's refusal, on both skins
-  assert.ok(door.indexOf('if (deps.fate)\n    return') < door.indexOf('const sup = racialSuppressInventory(deps.entity);'), 'a beast-form player still judges');
+  assert.ok(door.indexOf('if (deps.fate) return') < door.indexOf('const sup = racialSuppressInventory(deps.entity);'), 'a beast-form player still judges');
 });

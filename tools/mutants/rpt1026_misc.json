@@ -152,8 +152,8 @@
   {
     "name": "rpt1026-misc-touch-field-unmarked",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "          ? {\n              type: 'field',\n              label: BANK_FIELD_LABEL[w.transactionType] ?? 'Amount',\n              value: w.value,\n              active: true,\n              numeric: true,\n            }",
-    "new": "          ? { type: 'field', label: BANK_FIELD_LABEL[w.transactionType] ?? 'Amount', value: w.value, active: true }",
+    "old": "value: w.value, active: true, numeric: true } : null,",
+    "new": "value: w.value, active: true } : null,",
     "tests": [
       "test/ui/enhanced/rpt1026_misc_field.test.js"
     ],

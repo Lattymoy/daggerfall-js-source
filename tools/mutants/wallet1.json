@@ -516,8 +516,8 @@
   {
     "name": "WALLET1-card-blank",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  else if (isWalletItem(item))\n    for (const text of WALLET_CARD_LINES) out.push({ text, center: true }); // WALLET1\n  else if (isIliacCard(item))",
-    "new": "  else if (isIliacCard(item))",
+    "old": "  else if (isWalletItem(item)) for (const text of WALLET_CARD_LINES) out.push({ text, center: true });   // WALLET1",
+    "new": "",
     "why": "the wallet's card says nothing of what it is for",
     "tests": [
       "test/systems/wallet1.test.js"

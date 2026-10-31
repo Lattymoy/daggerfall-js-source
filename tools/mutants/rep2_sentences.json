@@ -56,8 +56,8 @@
   {
     "name": "REP2-every-wave-charged",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (playerEntity.chargedCrime === crimeId()) return;\n    playerEntity.chargedCrime = crimeId();",
-    "new": "    playerEntity.chargedCrime = crimeId();",
+    "old": "    if (playerEntity.chargedCrime === crimeId()) return;\n",
+    "new": "",
     "tests": [
       "test/scenes/rep2_sentences.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "REP2-no-charge-coming-quietly",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    chargeOnce();\n    if (",
-    "new": "    if (",
+    "old": "    playerEntity.haveShownSurrenderDialogue = true;\n    chargeOnce();\n    if (!surrenderToCityGuards",
+    "new": "    playerEntity.haveShownSurrenderDialogue = true;\n    if (!surrenderToCityGuards",
     "tests": [
       "test/scenes/rep2_sentences.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "REP2-the-acquittal-credited-as-a-sentence",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      raiseRepForSentence(playerEntity, court, { acquitted: true });",
-    "new": "      raiseRepForSentence(playerEntity, court);",
+    "old": "raiseRepForSentence(playerEntity, court, { acquitted: true });",
+    "new": "raiseRepForSentence(playerEntity, court);",
     "tests": [
       "test/scenes/rep2_sentences.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "REP2-the-charge-carried-across-a-load",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    playerEntity.chargedCrime = 0;\n    playerEntity.watchSlain = false;",
-    "new": "    playerEntity.watchSlain = false;",
+    "old": "    // REP2: and the chase it was part of - the loaded save's own crime is a chase of its own, charged at its first box\n    playerEntity.chargedCrime = 0;\n",
+    "new": "    // REP2: and the chase it was part of - the loaded save's own crime is a chase of its own, charged at its first box\n",
     "tests": [
       "test/scenes/rep2_sentences.test.js"
     ]

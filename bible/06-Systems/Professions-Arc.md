@@ -2361,7 +2361,7 @@ As built:
   56,792 ruins; Old Aelara and the lair at (2393,-635) were both 573867), and so did two abysses: one witnessed fact
   and one day's slots for both. The law is `scenes/dungeonIdentity.js`, `discoveryKeyOf`'s (AUDIT TESA II P6): a Bay
   id keeps the mask byte for byte, a place the port made keys by its whole id. The service takes 0 to 0xffffffff
-  (`nodeLaw.js:"export const DUNGEON_ID_MAX"`). The keys are TEXT: no migration, and the rows under the
+  (`nodeLaw.js:"export const DUNGEON_ID_MAX = 0xffffffff;"`). The keys are TEXT: no migration, and the rows under the
   old keys are orphaned.
 - **An old tab** (AUDIT TAMRIEL-WIDE II A2): a tab built before the release still keys a dungeon past the Bay by its
   low 20 bits, which the service cannot tell from a Bay id. Until it reloads it shares the old vein, and one account can
@@ -6181,7 +6181,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   - 26 weapons and armour pieces and the Daedric Repair Kit - none of them reachable.
 - **A dungeon nobody had witnessed drew Silver and nothing else.** Probed over 32,249 dungeon-days: Silver 100%, Dwarven
   Scrap 0. Its deep veins were held to `UNCONFIRMED_VEIN_TIER` (3 - section 23's "worth its least"), and a dungeon is
-  confirmed only once three accounts a week old have worked it (`nodeLaw.js:"export const WITNESS"`), which almost never
+  confirmed only once three accounts a week old have worked it (`nodeLaw.js:"export const WITNESS = Object.freeze({ ageS: 7 * 86_400, confirm: 3, dispute: 2 });"`), which almost never
   happens. Dwarven Scrap is found only in dungeons (4.1), so it was found nowhere.
 
 ### 53.2 The owner's decisions
@@ -6221,7 +6221,7 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
   bound is the ember the service counts, one a unit, so the heart a modified client could claim buys nothing past it.
   DFU's Daedra's Heart is an alchemy ingredient (no potion of DFU's twenty asks it); spending it at a forge is the
   port's own - Daggerfall has no professions (Ledger A, the row below PROF2's).
-- **The ember from the account's purse, on the service, the Broker's way** (`accounts.js:"export async function insigniaPurse"`):
+- **The ember from the account's purse, on the service, the Broker's way** (`accounts.js:"export async function insigniaPurse({ db }, player) {"`):
   the smelt's own decision asks that the account's gates, serpents and Redoubts earned the embers its insignia, the
   Panoply and the forge have not yet taken (`professions.js:"  const embers = workEmbers(r, count);"` and the purse's clause beside the
   inputs' in the INSERT), and the same batch adds them to `insignia_spent` - so two smelts pressed at once never spend one ember twice. Short:
@@ -6246,13 +6246,13 @@ The report (SaberGGaming, through the owner): no Daedric Ingot could be had, and
 ### 53.4 DEEP-OPEN, as built
 
 - **THE DEPARTURE, NAMED - section 23's "a dungeon not confirmed is worth its least", AUDIT 29 A5's Silver.** A dungeon
-  nobody has witnessed draws over the deep veins' whole table at section 6's weights (`nodeLaw.js:"const table = confirmed"`):
+  nobody has witnessed draws over the deep veins' whole table at section 6's weights (`nodeLaw.js:"  const table = confirmed ? dungeonVeinTable(climate) : DUNGEON_VEINS;"`):
   Silver, Gold, Dwarven Scrap, Platinum, Adamantium at tiers 3-6, 15 : 10 : 6 : 4 - Dwarven Scrap one vein in seven, where
   it was none. The probe is a pin: 32,256 dungeon-days (`test/net/deepopen.test.js`).
 - **What the witnesses still gate in a dungeon (verified).** The climate's claim alone - its own deep ore, a Woodlands or
-  HauntedWoodlands dungeon's Moonstone (`nodeLaw.js:"export const deepClimateOres"`); a confirmed dungeon still refuses another
+  HauntedWoodlands dungeon's Moonstone (`nodeLaw.js:"export const deepClimateOres = (climate) =>"`); a confirmed dungeon still refuses another
   climate's claim (AUDIT 29 A4) and is no invented id, outside the four a day. The tier cap is lifted; the gem with it - a
-  dungeon's gem is the Diamond whatever its climate, no claim to witness (`nodeLaw.js:"if (!confirmed && kind !== 'dvein')"`); Deep Delver's
+  dungeon's gem is the Diamond whatever its climate, no claim to witness (`nodeLaw.js:"  if (!confirmed && kind !== 'dvein') return null;"`); Deep Delver's
   x2 and the yields never asked. A Surveyor's word changes nothing underground (MINE-PERKS): the draw is anyone's.
 - **THE TRADE THE OWNER ACCEPTED.** A dungeon's id is the client's word, so a modified client that invents ids mines four
   full-table deep veins a day - Adamantium, Dwarven Scrap and the Diamond's chance among them - and no more
@@ -6638,7 +6638,7 @@ possible. No exceptions and no band aids." The decisions below are the record's,
   a band narrowed past a made value, or a line taken from a group's pool, is a change of the law (its version), as for a
   drop's lines.
 
-- **The judge** - `judge.js:"const recordLines"`: a piece showing a Master's lines holds a record that
+- **The judge** - `judge.js:"const recordLines = (record) => {"`: a piece showing a Master's lines holds a record that
   names them, at the values it signs. A piece edited within the band passes the item law and fails here. AUDIT
   HORIZONTAL B2: so does a plain craft's Masterwork reshaped to a Legendary of three band-top lines - its record names no
   lines, and this clause alone finds it (pinned).

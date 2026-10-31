@@ -290,7 +290,7 @@ test('AUDIT LEGACY III O3: A YES IS TAKEN BACK, AND NEVER OUTLIVES ITS WORD - th
   assert.deepEqual([took.ok, took.data?.wed], [true, false]);
   assert.equal(at(C, 'wedO3clnt1'), null, 'taken back by the client\'s word');
   // the union's write asks the other's half IN it: a half deleted between the read and the write makes nothing
-  assert.match(rd('server-account/src/legacy.js'), /\+\n\s*' AND EXISTS \(SELECT 1 FROM realm_wed_halves WHERE sid = \? AND player = \? AND char_id = \? AND partner_char = \?\)',/);
+  assert.match(rd('server-account/src/legacy.js'), /\+ ' AND EXISTS \(SELECT 1 FROM realm_wed_halves WHERE sid = \? AND player = \? AND char_id = \? AND partner_char = \?\)',/);
   assert.match(rd('server-account/src/legacy.js'), /ON CONFLICT \(sid, player\) DO NOTHING/);
 });
 

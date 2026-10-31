@@ -62,8 +62,8 @@
   {
     "name": "GRAVE-PACK-host-unhanded",
     "file": "src/scenes/bountyHost.js",
-    "old": "            place: p.graveyard ? p.target : null,",
-    "new": "            place: null,",
+    "old": "place: p.graveyard ? p.target : null });",
+    "new": "place: null });",
     "tests": [
       "test/scenes/fb1029_gravepack.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "GRAVE-PACK-host-every-hunt",
     "file": "src/scenes/bountyHost.js",
-    "old": "            place: p.graveyard ? p.target : null,",
-    "new": "            place: p.target,",
+    "old": "place: p.graveyard ? p.target : null });",
+    "new": "place: p.target });",
     "tests": [
       "test/scenes/fb1029_gravepack.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "GRAVE-PACK-street-unasked",
     "file": "src/scenes/bountyHost.js",
-    "old": "        const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
-    "new": "        const pool = deps.foePool?.() ?? null;",
+    "old": "const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
+    "new": "const pool = deps.foePool?.() ?? null;",
     "tests": [
       "test/scenes/fb1029_gravepack.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "GRAVE-PACK-street-always",
     "file": "src/scenes/bountyHost.js",
-    "old": "        const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
-    "new": "        const pool = deps.foePool?.(true) ?? null;",
+    "old": "const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
+    "new": "const pool = deps.foePool?.(true) ?? null;",
     "tests": [
       "test/scenes/fb1029_gravepack.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "GRAVE-PACK-judged-outdoors",
     "file": "src/scenes/bountyHost.js",
-    "old": "        if (pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) {",
-    "new": "        if (!!outside && pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) {",
+    "old": "        if (pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }",
+    "new": "        if (!!outside && pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }",
     "tests": [
       "test/scenes/fb1029_gravepack.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "GRAVE-PACK-untagged",
     "file": "src/scenes/bountyHost.js",
-    "old": "            f.bountyPlace = p.graveyard ? p.target : null;",
-    "new": "            f.bountyPlace = null;",
+    "old": "f.bountyPlace = p.graveyard ? p.target : null; }",
+    "new": "f.bountyPlace = null; }",
     "tests": [
       "test/scenes/fb1029_gravepack.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "GRAVE-PACK-street-graveyard-only",
     "file": "src/scenes/bountyHost.js",
-    "old": "        const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
-    "new": "        const pool = deps.foePool?.(p.graveyard) ?? null;",
+    "old": "const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;",
+    "new": "const pool = deps.foePool?.(p.graveyard) ?? null;",
     "tests": [
       "test/scenes/fb1029_gravepack.test.js"
     ],

@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SS-the-portal-not-the-courts",
     "file": "src/world/gate/gateArena.js",
-    "old": "    normal: { x: 0, y: 0, z: 1 },\n    court: true, // AUDIT SS: pressed where its fire stands (courtDoorAabb)",
-    "new": "    normal: { x: 0, y: 0, z: 1 }, // AUDIT SS: pressed where its fire stands (courtDoorAabb)",
+    "old": "    normal: { x: 0, y: 0, z: 1 },\n    court: true,",
+    "new": "    normal: { x: 0, y: 0, z: 1 },",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]

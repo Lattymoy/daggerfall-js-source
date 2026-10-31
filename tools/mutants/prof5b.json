@@ -77,8 +77,8 @@
   {
     "name": "PROF5b-law-kinds-burn",
     "file": "src/net/marksLaw.js",
-    "old": "  'bid-escrow': 'move', // PROF5b: an auction bid and its courier, held while it stands (the `escrow` end, the bid's id)",
-    "new": "  'bid-escrow': 'burn', // PROF5b: an auction bid and its courier, held while it stands (the `escrow` end, the bid's id)",
+    "old": "  'bid-escrow': 'move',",
+    "new": "  'bid-escrow': 'burn',",
     "tests": [
       "test/net/prof5b_law.test.js"
     ]

@@ -395,7 +395,7 @@
   {
     "name": "DECOR2b-the-kinds-unsaid",
     "file": "src/ui/decorPanel.js",
-    "old": "  const as = e?.looks\n    ? ` as any of the ${e.looks.map((k) => DECOR_KINDS[k].toLowerCase()).join(' or ')} you choose`\n    : '';",
+    "old": "  const as = e?.looks ? ` as any of the ${e.looks.map((k) => DECOR_KINDS[k].toLowerCase()).join(' or ')} you choose` : '';",
     "new": "  const as = '';",
     "tests": [
       "test/systems/decor/decor2b.test.js"
@@ -404,8 +404,8 @@
   {
     "name": "DECOR2b-the-tab-unpressed-in-a-look",
     "file": "src/ui/decorPanel.js",
-    "old": "      chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own'), 'own'), // DECOR2b: a look is chosen within them",
-    "new": "      chip(`Your things (${m})`, mode === 'own', () => setMode('own'), 'own'), // DECOR2b: a look is chosen within them",
+    "old": "chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own'), 'own')",
+    "new": "chip(`Your things (${m})`, mode === 'own', () => setMode('own'), 'own')",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "DECOR2b-the-look-lost",
     "file": "src/ui/decorPanel.js",
-    "old": "    lookKey = look;",
-    "new": "    lookKey = null;",
+    "old": "    lookFor = key;\n    lookKey = look;",
+    "new": "    lookFor = key;\n    lookKey = null;",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -422,8 +422,8 @@
   {
     "name": "DECOR2b-the-preview-the-catalogues",
     "file": "src/ui/decorPanel.js",
-    "old": "    return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? (mode === 'look' ? lookKey : selectedKey))) ?? null;",
-    "new": "    return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? selectedKey)) ?? null;",
+    "old": "return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? (mode === 'look' ? lookKey : selectedKey))) ?? null;",
+    "new": "return (view?.entries ?? []).find((e) => e.key === (hoverKey ?? selectedKey)) ?? null;",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -431,8 +431,8 @@
   {
     "name": "DECOR2b-the-choice-the-catalogues",
     "file": "src/ui/decorPanel.js",
-    "old": "      : mode === 'look'",
-    "new": "      : false",
+    "old": "const selected = () => (mode === 'own' ? ownSelected() : mode === 'look' ? lookSelected()",
+    "new": "const selected = () => (mode === 'own' ? ownSelected() : false ? lookSelected()",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "DECOR2b-a-look-row-unselected",
     "file": "src/ui/decorPanel.js",
-    "old": "    r.setAttribute('aria-selected', e.key === (look ? lookKey : selectedKey) ? 'true' : 'false');",
-    "new": "    r.setAttribute('aria-selected', e.key === selectedKey ? 'true' : 'false');",
+    "old": "r.setAttribute('aria-selected', e.key === (look ? lookKey : selectedKey) ? 'true' : 'false');",
+    "new": "r.setAttribute('aria-selected', e.key === selectedKey ? 'true' : 'false');",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "DECOR2b-a-look-row-priced-in-words",
     "file": "src/ui/decorPanel.js",
-    "old": "    const priceEl = el('span', 'dfdecor-row-price', look ? 'free' : decorPriceText(price));",
-    "new": "    const priceEl = el('span', 'dfdecor-row-price', decorPriceText(price));",
+    "old": "el('span', 'dfdecor-row-price', look ? 'free' : decorPriceText(price))",
+    "new": "el('span', 'dfdecor-row-price', decorPriceText(price))",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -467,8 +467,8 @@
   {
     "name": "DECOR2b-a-look-never-chosen",
     "file": "src/ui/decorPanel.js",
-    "old": "      if (look) lookKey = e.key;\n      else selectedKey = e.key;",
-    "new": "      selectedKey = e.key;",
+    "old": "r.addEventListener('click', () => { if (look) lookKey = e.key; else selectedKey = e.key; redraw(); });",
+    "new": "r.addEventListener('click', () => { selectedKey = e.key; redraw(); });",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -494,8 +494,8 @@
   {
     "name": "DECOR2b-a-picture-invented",
     "file": "src/ui/decorPanel.js",
-    "old": "    if (e.icon || e.flat) {",
-    "new": "    if (true) {",
+    "old": "    if (e.icon || e.flat) {\n      const img = el('img', '');",
+    "new": "    if (true) {\n      const img = el('img', '');",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -503,8 +503,8 @@
   {
     "name": "DECOR2b-the-letters-always-furniture",
     "file": "src/ui/decorPanel.js",
-    "old": "      thumb.textContent = (DECOR_KINDS[e.looks?.[0]] ?? DECOR_KINDS.furniture).slice(0, 2);",
-    "new": "      thumb.textContent = DECOR_KINDS.furniture.slice(0, 2);",
+    "old": "thumb.textContent = (DECOR_KINDS[e.looks?.[0]] ?? DECOR_KINDS.furniture).slice(0, 2);",
+    "new": "thumb.textContent = DECOR_KINDS.furniture.slice(0, 2);",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "DECOR2b-the-furnitures-name-lost",
     "file": "src/ui/decorPanel.js",
-    "old": "      pickName.textContent = lookOf()?.name ?? '';\n      pickLine.textContent = e ? `as ${e.name} - ${decorRowSub(e, radiusOf(e))}` : DECOR_LOOK_LINE;",
-    "new": "      pickLine.textContent = e ? `as ${e.name} - ${decorRowSub(e, radiusOf(e))}` : DECOR_LOOK_LINE;",
+    "old": "      pickName.textContent = lookOf()?.name ?? '';\n",
+    "new": "",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "DECOR2b-a-look-priced-at-place",
     "file": "src/ui/decorPanel.js",
-    "old": "      const free = sel?.kind === 'own' || mode === 'look'; // DECOR2a: one's own costs nothing (DECOR2b: nor its look)",
-    "new": "      const free = sel?.kind === 'own'; // DECOR2a: one's own costs nothing (DECOR2b: nor its look)",
+    "old": "const free = sel?.kind === 'own' || mode === 'look';",
+    "new": "const free = sel?.kind === 'own';",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "DECOR2b-the-button-never-asks",
     "file": "src/ui/decorPanel.js",
-    "old": "      const label = mode === 'own' && sel?.looks ? DECOR_LOOK_BUTTON : 'Place'; // DECOR2b: furniture chooses its look first",
-    "new": "      const label = 'Place'; // DECOR2b: furniture chooses its look first",
+    "old": "const label = mode === 'own' && sel?.looks ? DECOR_LOOK_BUTTON : 'Place';",
+    "new": "const label = 'Place';",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -557,8 +557,8 @@
   {
     "name": "DECOR2b-place-past-the-look",
     "file": "src/ui/decorPanel.js",
-    "old": "    if (mode === 'own' && sel.looks) {\n      chooseLook(sel.key);\n      return;\n    } // DECOR2b: its look first\n    const furn = mode === 'look' ? lookOf() : null;",
-    "new": "    const furn = mode === 'look' ? lookOf() : null;",
+    "old": "    if (mode === 'own' && sel.looks) { chooseLook(sel.key); return; }   // DECOR2b: its look first\n",
+    "new": "",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]
@@ -566,7 +566,7 @@
   {
     "name": "DECOR2b-the-look-placed-as-a-catalogue-piece",
     "file": "src/ui/decorPanel.js",
-    "old": "    if (furn) onPlaceLook(furn, sel);\n    else onPlace(sel);",
+    "old": "    if (furn) onPlaceLook(furn, sel); else onPlace(sel);",
     "new": "    onPlace(sel);",
     "tests": [
       "test/systems/decor/decor2b.test.js"
@@ -575,8 +575,8 @@
   {
     "name": "DECOR2b-showlook-forgetting-the-furniture",
     "file": "src/ui/decorPanel.js",
-    "old": "      ownKey = key;\n      chooseLook(key, look);",
-    "new": "      chooseLook(key, look);",
+    "old": "    showLook(key, look = null) { ownKey = key; chooseLook(key, look); },",
+    "new": "    showLook(key, look = null) { chooseLook(key, look); },",
     "tests": [
       "test/systems/decor/decor2b.test.js"
     ]

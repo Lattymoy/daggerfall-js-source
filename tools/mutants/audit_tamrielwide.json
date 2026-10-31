@@ -52,8 +52,8 @@
   {
     "name": "AUDIT-TW-D2-the-find-unread",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "  const knownPastBayIn = (x0, y0, x1, y1) =>\n    pastBayPlacesIn(x0, y0, x1, y1).filter(\n      (p) =>\n        BAKED_KNOWN_TYPES.has(p.type) || hasDiscoveredLocationId(provinceQuestPlaces?.rowAt(p.x, p.y)?.mapId ?? -1),\n    );",
-    "new": "  const knownPastBayIn = (x0, y0, x1, y1) => pastBayPlacesIn(x0, y0, x1, y1).filter((p) => true);",
+    "old": "BAKED_KNOWN_TYPES.has(p.type) || hasDiscoveredLocationId(provinceQuestPlaces?.rowAt(p.x, p.y)?.mapId ?? -1)",
+    "new": "true",
     "tests": [
       "test/world/worldWide/audit_tamrielwide.test.js"
     ],

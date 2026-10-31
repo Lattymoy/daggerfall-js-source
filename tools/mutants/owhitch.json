@@ -2,8 +2,8 @@
   {
     "name": "OW-HITCH-clear-zeros-back",
     "file": "src/render/labGrass.js",
-    "old": "    if (this.slotCount) this.slotCount[slot] = 0; // GRASS2\n  }",
-    "new": "    if (this.slotCount) this.slotCount[slot] = 0; // GRASS2\n    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bufs[0]);\n    this.gl.bufferSubData(this.gl.ARRAY_BUFFER, slot * this.perCell * 8, new Uint16Array(this.perCell * 4));\n  }",
+    "old": "    if (this.slotCount) this.slotCount[slot] = 0;   // GRASS2\n  }",
+    "new": "    if (this.slotCount) this.slotCount[slot] = 0;   // GRASS2\n    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.bufs[0]); this.gl.bufferSubData(this.gl.ARRAY_BUFFER, slot * this.perCell * 8, new Uint16Array(this.perCell * 4));\n  }",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "OW-HITCH-write-whole-slot",
     "file": "src/render/labGrass.js",
-    "old": "        gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * this._lanes[k].bytes, this._packs[k], 0, n * 4);",
-    "new": "        gl.bufferSubData(gl.ARRAY_BUFFER, slot * p * this._lanes[k].bytes, this._packs[k]);",
+    "old": "this._packs[k], 0, n * 4);",
+    "new": "this._packs[k]);",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "OW-HITCH-write-empty-uploaded",
     "file": "src/render/labGrass.js",
-    "old": "    if (n > 0) {",
-    "new": "    if (n >= 0) {",
+    "old": "    if (n > 0) {\n      for (let k = 0; k < this._lanes.length; k++) {",
+    "new": "    if (n >= 0) {\n      for (let k = 0; k < this._lanes.length; k++) {",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OW-HITCH-field-no-reuse",
     "file": "src/render/labGrass.js",
-    "old": "          reuse: wholeSpare,",
-    "new": "          reuse: null,",
+    "old": "originX: gx, originZ: gz, reuse: wholeSpare });   // PERF-EXT21",
+    "new": "originX: gx, originZ: gz, reuse: null });   // PERF-EXT21",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OW-HITCH-reuse-not-zeroed",
     "file": "src/render/labGrass.js",
-    "old": "  if (again) {\n    reuse.inst.fill(0);\n    reuse.inst2.fill(0);\n    reuse.rootY.fill(0);\n    reuse.ground.fill(0);\n    reuse.slope.fill(0);\n  }\n  return {",
-    "new": "  return {",
+    "old": "  if (again) { reuse.inst.fill(0); reuse.inst2.fill(0); reuse.rootY.fill(0); reuse.ground.fill(0); reuse.slope.fill(0); }\n",
+    "new": "",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "OW-HITCH-rim-on-whole-arrays",
     "file": "src/render/labGrass.js",
-    "old": "          rimSpare = beginGrassCell(w.cx, w.cz, { perCell, seed, cell, originX: gx, originZ: gz, reuse: rimSpare }); // OW-HITCH: into the last rim cell's arrays - begun only when none is in progress",
-    "new": "          rimSpare = beginGrassCell(w.cx, w.cz, { perCell, seed, cell, originX: gx, originZ: gz, reuse: wholeSpare }); // OW-HITCH: into the last rim cell's arrays - begun only when none is in progress",
+    "old": "originX: gx, originZ: gz, reuse: rimSpare });",
+    "new": "originX: gx, originZ: gz, reuse: wholeSpare });",
     "tests": [
       "test/render/owhitch.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "OW-HITCH-clump-unsmoothed",
     "file": "src/render/labGrass.js",
-    "old": "    fx = fx * fx * (3 - 2 * fx);\n    fz = fz * fz * (3 - 2 * fz);\n    let a = 0,",
-    "new": "    let a = 0,",
+    "old": "    let fx = vx - ix, fz = vz - iz;\n    fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);",
+    "new": "    let fx = vx - ix, fz = vz - iz;",
     "tests": [
       "test/render/labGrass.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "OW-HITCH-clump-corner-swapped",
     "file": "src/render/labGrass.js",
-    "old": "      let px = (ix + (k & 1)) * 123.34,\n        pz = (iz + (k >> 1)) * 456.21;",
-    "new": "      let px = (ix + (k >> 1)) * 123.34,\n        pz = (iz + (k & 1)) * 456.21;",
+    "old": "      let px = (ix + (k & 1)) * 123.34, pz = (iz + (k >> 1)) * 456.21;",
+    "new": "      let px = (ix + (k >> 1)) * 123.34, pz = (iz + (k & 1)) * 456.21;",
     "tests": [
       "test/render/labGrass.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "OW-HITCH-xorshift-word-not-loaded",
     "file": "src/render/labGrass.js",
-    "old": "  _xs[0] = st.s;\n  const rnd = () => {",
-    "new": "  const rnd = () => {",
+    "old": "  _xs[0] = st.s;\n",
+    "new": "",
     "tests": [
       "test/world/terrain/grassshift.test.js"
     ]

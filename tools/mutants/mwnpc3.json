@@ -38,8 +38,8 @@
   {
     "name": "MWNPC3-assembly-parses-its-own",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  if (parseNif) mod.parseNif = parseNif;",
-    "new": "",
+    "old": "  if (parseNif) mod.parseNif = parseNif;\n",
+    "new": "\n",
     "tests": [
       "test/combat/mwnpc3_bodyservice.test.js"
     ]

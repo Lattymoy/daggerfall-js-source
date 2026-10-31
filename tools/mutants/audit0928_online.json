@@ -175,8 +175,8 @@
   {
     "name": "A0928-O4-flats-plain",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "        b.conceal = boat.conceal ?? null; // AUDIT PRE-MERGE 0928 O4: a concealed owner's crew and lanterns wear the owner's look (the cart pool's horse)",
-    "new": "        b.conceal = null; // AUDIT PRE-MERGE 0928 O4: a concealed owner's crew and lanterns wear the owner's look (the cart pool's horse)",
+    "old": "        b.conceal = boat.conceal ?? null;",
+    "new": "        b.conceal = null;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "A0928-R5-walk-allocates",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls, _local), r.m);",
-    "new": "      r.m = multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls));",
+    "old": "    else { multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls, _local), r.m); r.pver = p.ver; }",
+    "new": "    else { r.m = multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls)); r.pver = p.ver; }",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "A0928-R5-draw-walks-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1);",
-    "new": "    return walkBoat(boat, -1);",
+    "old": "return w && walkStamp > 0 && (w.stamp === walkStamp || w.heldAt === walkStamp) ? w : walkBoat(boat, -1); };",
+    "new": "return walkBoat(boat, -1); };",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "A0928-R5-redress-stale",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    walks.delete(boat); // AUDIT PRE-MERGE 0928 R5: other objects active now - walked again\n  }",
-    "new": "  }",
+    "old": "    walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5: other objects active now - walked again",
+    "new": "",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "A0928-R5-origin-stale",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      walks.delete(boat); // AUDIT PRE-MERGE 0928 R5: moved - walked again\n    }",
-    "new": "    }",
+    "old": "      walks.delete(boat);   // AUDIT PRE-MERGE 0928 R5: moved - walked again",
+    "new": "",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "A0928-R5-flat-scale-walks-again",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          const s = n.lossyScaleOf(m, _flatScale);",
-    "new": "          const s = n.lossyScale;",
+    "old": "const s = n.lossyScaleOf(m, _flatScale);",
+    "new": "const s = n.lossyScale;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "A0928-R6-flats-dynamic",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          b = renderer.createBillboardBatch(bb.Summary.Archive, bb.Summary.Record, { w, h }, [[0, 0, 0]]); // AUDIT PRE-MERGE 0928 R6: its centre stands still - the origin moves it, which SC1's origin test sees; a batch built dynamic is replayed by every lantern near it every frame",
-    "new": "          b = renderer.createBillboardBatch(bb.Summary.Archive, bb.Summary.Record, { w, h }, [[0, 0, 0]], {\n            dynamic: true,\n          }); // AUDIT PRE-MERGE 0928 R6: its centre stands still - the origin moves it, which SC1's origin test sees; a batch built dynamic is replayed by every lantern near it every frame",
+    "old": "{ w, h }, [[0, 0, 0]]);   // AUDIT PRE-MERGE 0928 R6",
+    "new": "{ w, h }, [[0, 0, 0]], { dynamic: true });   // AUDIT PRE-MERGE 0928 R6",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]

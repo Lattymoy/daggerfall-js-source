@@ -2,8 +2,8 @@
   {
     "name": "LIGHT-ID-seam-no-identity",
     "file": "src/render/lightId.js",
-    "old": "  if (out.ids) out.ids[i] = lightIdOf(l);\n}",
-    "new": "}",
+    "old": "  if (out.ids) out.ids[i] = lightIdOf(l);\n",
+    "new": "",
     "tests": [
       "test/render/lightid.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LIGHT-ID-an-identity-minted-per-ask",
     "file": "src/render/lightId.js",
-    "old": "  let id = l[LIGHT_ID] ?? _frozen.get(l);",
-    "new": "  let id;",
+    "old": "let id = l[LIGHT_ID] ?? _frozen.get(l);",
+    "new": "let id;",
     "tests": [
       "test/render/lightid.test.js"
     ]
@@ -57,7 +57,7 @@
     "name": "LIGHT-ID-nearest-written-by-hand",
     "file": "src/world/city/cityLights.js",
     "old": "    packLight(out, i, l, Number.isFinite(w) ? w : CITY_LIGHT_RANGE);",
-    "new": "    out[i * 4] = l.x;\n    out[i * 4 + 1] = l.y;\n    out[i * 4 + 2] = l.z;\n    out[i * 4 + 3] = Number.isFinite(w) ? w : CITY_LIGHT_RANGE;",
+    "new": "    out[i * 4] = l.x; out[i * 4 + 1] = l.y; out[i * 4 + 2] = l.z; out[i * 4 + 3] = Number.isFinite(w) ? w : CITY_LIGHT_RANGE;",
     "tests": [
       "test/render/lightid.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "LIGHT-ID-the-court-written-by-hand",
     "file": "src/world/gate/gateArena.js",
-    "old": "    packLight(data, n + i, l);",
-    "new": "    data.set([l.x, l.y, l.z, l.range], (n + i) * 4);",
+    "old": "packLight(data, n + i, l);",
+    "new": "data.set([l.x, l.y, l.z, l.range], (n + i) * 4);",
     "tests": [
       "test/render/lightid.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "LIGHT-ID-the-lantern-pool-keeps-its-slots-name",
     "file": "src/world/city/cityLights.js",
-    "old": "      adoptLight(e, l); // LIGHT-ID: the entry is this lantern's this frame - the pool reshuffles when a pixel streams out",
-    "new": "      void l; // LIGHT-ID: the entry is this lantern's this frame - the pool reshuffles when a pixel streams out",
+    "old": "      adoptLight(e, l);   // LIGHT-ID",
+    "new": "      void l;   // LIGHT-ID",
     "tests": [
       "test/render/lightid.test.js"
     ]

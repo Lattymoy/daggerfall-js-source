@@ -2925,7 +2925,7 @@ test('MAC-S1: ONE flush, called from every exit out of `busy`', () => {
   // The file's own prose is not its wiring, so it is stripped first.
   const code = src.replace(/^\s*\/\/.*$/gm, '');
   const swap = code.slice(code.indexOf('    setWeapon(item, { hasAmmo = false, ammoCount = null } = {}) {'));
-  const tail = swap.slice(swap.indexOf('        } finally {'), swap.indexOf('        } finally {') + 600);
+  const tail = swap.slice(swap.indexOf('} finally {'), swap.indexOf('} finally {') + 600);
   assert.match(tail, /busy = false;/, 'the swap still frees the rig');
   assert.match(tail, /for \(const fn of listeners\)/, 'and still repaints (PX33)');
   assert.match(tail, /flushPending\(\);/, 'and now hands over what queued behind it');

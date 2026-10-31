@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-FB1029e-T-FR-living-any-account",
     "file": "server-account/src/legacy.js",
-    "old": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))',",
-    "new": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))',",
+    "old": "(SELECT 1 FROM realm_characters WHERE player = ?1 AND lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))",
+    "new": "(SELECT 1 FROM realm_characters WHERE lineage_id = ?2 AND (dead_at IS NULL OR rez_lease IS NOT NULL))",
     "tests": [
       "test/server/family_remove.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-FB1029e-T-FR-had-any-account",
     "file": "server-account/src/legacy.js",
-    "old": "  const had = await db.prepare('SELECT 1 AS h FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();",
-    "new": "  const had = await db\n    .prepare('SELECT 1 AS h FROM lineages WHERE (player = ? OR 1) AND id = ?')\n    .bind(playerId, id)\n    .first();",
+    "old": "'SELECT 1 AS h FROM lineages WHERE player = ? AND id = ?'",
+    "new": "'SELECT 1 AS h FROM lineages WHERE (player = ? OR 1) AND id = ?'",
     "tests": [
       "test/server/family_remove.test.js"
     ]

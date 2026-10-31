@@ -65,8 +65,8 @@
   {
     "name": "WB9f-the-pool-drops-the-keep",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      if (keep) launches = launches.map((l) => keepLaunch(from, l, keep)); // WB9f: every piece rests on the court's floor",
-    "new": "      if (false) launches = launches.map((l) => keepLaunch(from, l, keep)); // WB9f: every piece rests on the court's floor",
+    "old": "      if (keep) launches = launches.map((l) => keepLaunch(from, l, keep));",
+    "new": "      if (false) launches = launches.map((l) => keepLaunch(from, l, keep));",
     "tests": [
       "test/scenes/wb9f_gate_spoils.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB9f-the-gold-itemised",
     "file": "src/scenes/spoilsPool.js",
-    "old": "            key: `${f.piece.kind === 'gold' ? SPOIL_GOLD_KEY : SPOIL_KEY}${i}`,",
-    "new": "            key: `${SPOIL_KEY}${i}`,",
+    "old": "key: `${f.piece.kind === 'gold' ? SPOIL_GOLD_KEY : SPOIL_KEY}${i}`",
+    "new": "key: `${SPOIL_KEY}${i}`",
     "tests": [
       "test/scenes/wb9f_gate_spoils.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB9f-the-press-that-never-takes",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      takeOne(f);\n      return true;",
-    "new": "      return true;",
+    "old": "    pick(key) { const f = pieceAt(key); if (!f) return false; takeOne(f); return true; },",
+    "new": "    pick(key) { const f = pieceAt(key); if (!f) return false; return true; },",
     "tests": [
       "test/scenes/wb9f_gate_spoils.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB9f-the-rest-never-told",
     "file": "src/scenes/spoilsPool.js",
-    "old": "            try {\n              onRest?.(f.fly.pos, f.piece.tier, f.piece.kind);\n            } catch {\n              /* a spark is not the spoils' problem */\n            } // WB9f\n          }",
-    "new": "          }",
+    "old": "            try { onRest?.(f.fly.pos, f.piece.tier, f.piece.kind); } catch { /* a spark is not the spoils' problem */ }   // WB9f",
+    "new": "",
     "tests": [
       "test/scenes/wb9f_gate_spoils.test.js"
     ]

@@ -20,8 +20,8 @@
   {
     "name": "BAYLEFT-SEAM-whole-in-the-ask",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "      if (!wanted().includes(t)) return scanOf(t);\n      warm();\n      return null;",
-    "new": "      return scanOf(t);",
+    "old": "if (!wanted().includes(t)) return scanOf(t); warm(); return null; },",
+    "new": "return scanOf(t); },",
     "tests": [
       "test/world/worldWide/bayleft_scanseam.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BAYLEFT-SEAM-no-idle-answered-none",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "      if (s || !idle) return s ?? scanOf(t);",
-    "new": "      if (s) return s;",
+    "old": "if (s || !idle) return s ?? scanOf(t);",
+    "new": "if (s) return s;",
     "tests": [
       "test/world/worldWide/bayleft_scanseam.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BAYLEFT-SEAM-a-shut-lane-never-made",
     "file": "src/scenes/gate/gateLanes.js",
-    "old": "      if (!wanted().includes(t)) return scanOf(t);\n      warm();",
-    "new": "      warm();",
+    "old": "if (!wanted().includes(t)) return scanOf(t); warm(); return null; },",
+    "new": "warm(); return null; },",
     "tests": [
       "test/world/worldWide/bayleft_scanseam.test.js"
     ]

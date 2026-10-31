@@ -128,8 +128,8 @@
   {
     "name": "MWNPC7-lane-kept-unwanted",
     "file": "src/characters/npcBodies.js",
-    "old": "        if (lane) {\n          lane.destroy();\n          lane = null;\n        }\n        offered = false;",
-    "new": "        offered = false;",
+    "old": "      if (!want()) { if (lane) { lane.destroy(); lane = null; } offered = false; return false; }",
+    "new": "      if (!want()) { offered = false; return false; }",
     "tests": [
       "test/characters/mwnpc7_folk.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MWNPC7-lane-resyncs",
     "file": "src/characters/npcBodies.js",
-    "old": "    draw(canvas, proj, view, eye, dt) {\n      if (!lane || !offered) return;",
-    "new": "    draw(canvas, proj, view, eye, dt) {\n      if (!lane) return;",
+    "old": "      if (!lane || !offered) return;\n      offered = false;\n      lane.end(dt, eye);",
+    "new": "      if (!lane) return;\n      offered = false;\n      lane.end(dt, eye);",
     "tests": [
       "test/characters/mwnpc7_folk.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "MWNPC7-lane-unmarked",
     "file": "src/characters/npcBodies.js",
-    "old": "      for (let i = 0; i < ids.length; i++) if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);",
-    "new": "      for (let i = 0; i < ids.length; i++) if (batches[i]) batches[i].castOnly = false;",
+    "old": "if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);",
+    "new": "if (batches[i]) batches[i].castOnly = false;",
     "tests": [
       "test/characters/mwnpc7_folk.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "MWNPC7-lane-unsynced",
     "file": "src/characters/npcBodies.js",
-    "old": "      lane.end(dt, eye);\n      for (let i = 0; i < ids.length; i++) if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);",
-    "new": "      for (let i = 0; i < ids.length; i++) if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);",
+    "old": "      offered = false;\n      lane.end(dt, eye);\n      for (let i = 0;",
+    "new": "      offered = false;\n      for (let i = 0;",
     "tests": [
       "test/characters/mwnpc7_folk.test.js"
     ]

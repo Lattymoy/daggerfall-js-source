@@ -800,7 +800,7 @@ that calls the window's own method (Heal Curse, the Reforge, the
 lifting) acted under it. So the port's dismiss asks the seam rather
 than a field: `enhancedPort.js:"if (noticeShown(win)) { win.click?.(-1, -1); return; }"`
 - the notice is the panel the window raised
-(`enhancedNotice.js:"export const noticeShown"`),
+(`enhancedNotice.js:"export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);"`),
 whatever field holds its box, and it is up exactly while the player
 can read it. The bank, the potion maker, the item maker and the spell
 maker, which kept `box`, answer as before. The other ported windows
@@ -9887,7 +9887,7 @@ description of the effect (1512: "Duration: Instantaneous. Chance:
 N/A"). The words go through the text core (`spellbook.effect.duration`,
 `.chance`, `.magnitude`, drafted in-session for every language), so the
 file's hard-coded count falls by one. The guild's Buy Spells in its
-Enhanced Plus face reads the same words (enhancedPorts.js:"function effectRowsOf")
+Enhanced Plus face reads the same words (enhancedPorts.js:"function effectRowsOf(w, sp) {")
 and is fixed by the same change.
 
 THE OTHER READERS, checked: the hotbar's tip says a spell's name and
@@ -10659,7 +10659,7 @@ the same miss MAC-D found in the quest machine: a potion showed its
 template's "Glass Bottle" (setItemFields' name; createPotion's own mint
 carries none, so a blank row) and a MAGIC.DEF item its unfilled
 `%it of ...`. `createUseMagicItemWindow` now names a row with
-`itemInfo.js:"export function itemLongName"` - "Potion of
+`itemInfo.js:"export function itemLongName(item, opts) {"` - "Potion of
 Healing" by its recipe (the %po arm, Potent included), "Mark of
 Lightning" with %it filled once identified and the bare "Mark" before.
 The crowding was the names, not the rows: DFU lists one row per ITEM
@@ -11908,7 +11908,7 @@ the guard from either file) go red.
 
 The `listPicker.js` edit is line-neutral by construction: the hover
 docstring was rewritten to the same six lines, so the four files and
-the Ledger row that cite `listPicker.js:"if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy))"` and `listPicker.js:"release() {"` keep their
+the Ledger row that cite `listPicker.js:"if (vy >= 0 && this.scrollBar.update(!!(e?.buttons & 1), vy))"` and `listPicker.js:"release() { this.scrollBar.draggingThumb"` keep their
 numbers.
 
 **THE COUNT SWEEP (review round, same date).** Raising the roster from
@@ -20168,7 +20168,7 @@ from the scratchpad, the pack mounted over a wagon of thirteen):
 
 DFU's inventory window filters only the local list (AddLocalItem) and moves one row per click. The enhanced remote pane already filtered the player's own stores (WAGON-FILTER, above). A container — a chest, a corpse — now carries that same bar, and a rarity menu beside it.
 
-- **The bar.** Search, then the pack's pages (and Materials), then rarity, then material. The rarity menu lists only the tiers that container holds, in `RARITY_ORDER`, each as its label and its count ("Rare (3)"). Its first row is Rarity, every tier, with no count of its own - All already says it (FILTER-FIT, 2026-10-17: the menu names itself; it read Any Rarity, and the count made it too wide for a one-column window). The material menu is the same shape for armour and weapons: Material (every metal; it read Any Material), then only the metals that list holds (Leather and Chain, then the ten plate metals), each with its count. A chosen tier or metal stays at nought. An arrow, a book and anything else with no metal of its own are not a material, and neither is a metal the card withholds - an unidentified piece below Rare, an artifact, a helm or shield under HelmAndShieldMaterialDisplay: the menu reads the card's own gate (`itemInfo.js:"export const itemSaysMaterial"`), so a filter never picks out a piece by what its card does not say. The metal is named as the window prints it (`metalLabel`). With the loot-rarity ladder off, the rarity menu is not drawn and no tier is applied; the material menu stays. The search still reads the row's own name.
+- **The bar.** Search, then the pack's pages (and Materials), then rarity, then material. The rarity menu lists only the tiers that container holds, in `RARITY_ORDER`, each as its label and its count ("Rare (3)"). Its first row is Rarity, every tier, with no count of its own - All already says it (FILTER-FIT, 2026-10-17: the menu names itself; it read Any Rarity, and the count made it too wide for a one-column window). The material menu is the same shape for armour and weapons: Material (every metal; it read Any Material), then only the metals that list holds (Leather and Chain, then the ten plate metals), each with its count. A chosen tier or metal stays at nought. An arrow, a book and anything else with no metal of its own are not a material, and neither is a metal the card withholds - an unidentified piece below Rare, an artifact, a helm or shield under HelmAndShieldMaterialDisplay: the menu reads the card's own gate (`itemInfo.js:"export const itemSaysMaterial ="`), so a filter never picks out a piece by what its card does not say. The metal is named as the window prints it (`metalLabel`). With the loot-rarity ladder off, the rarity menu is not drawn and no tier is applied; the material menu stays. The search still reads the row's own name.
 - **Take all** walks those rows from the top, and its button stays on that list. **Stash all** walks the current pack page from the top, into the store beside it - the wagon, the player's own storage, the Materials Bag - and its button sits centred on the bottom edge of the pack's item list. A container's window never opens the pack (MAC-M2 B: a chest and a corpse are for taking), so Stash all is not on it; a fresh pack starts on Weapons. Each row goes through the one plan a click uses (`planTake`, `planStore`), and a take off someone else's keeping - a stranger's cupboard, a shut shop's shelf - is marked stolen exactly as a single take is (STOLEN-GOODS, `theftTarget`).
 - **Where it stops.** The first row the pack or the destination cannot hold stays, and so does everything under it. A row refused for another reason is left where it is and the walk continues. A stack that only partly fits is the last row moved. Stash all into a room container would stop at 64 rows (`LOOT_LIST_MAX`): a longer list is never told to the other players, who hear the container when its window closes, not row by row. No window offers that today (above); the stop stands for the layout that does.
 - **What does not change.** The ground and a reward tray have no bar and no buttons. The classic skin draws none of this.

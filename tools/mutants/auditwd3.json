@@ -75,8 +75,8 @@
   {
     "name": "AWD3-CLAIM-OVER-LAYOUT",
     "file": "server-account/src/homes.js",
-    "old": "  const town = await db\n    .prepare('SELECT layout FROM homes WHERE map_id = ? ORDER BY bought_at, building_key LIMIT 1')\n    .bind(claim.mapId)\n    .first();",
-    "new": "  const town = null;",
+    "old": "  const town = await db.prepare('SELECT layout FROM homes WHERE map_id = ? ORDER BY bought_at, building_key LIMIT 1').bind(claim.mapId).first();\n  if (town && !homeLayoutsMatch(town.layout, claim.layout)) return",
+    "new": "  const town = null;\n  if (town && !homeLayoutsMatch(town.layout, claim.layout)) return",
     "tests": [
       "test/net/wd3_online.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "AWD3-CLAIM-WRITE-UNGUARDED",
     "file": "server-account/src/homes.js",
-    "old": "      AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`,",
-    "new": "      AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND 0 AND NOT (${LAYOUT_MATCH_SQL}))`,",
+    "old": "      AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND NOT (${LAYOUT_MATCH_SQL}))`)",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM homes t WHERE t.map_id = ? AND 0 AND NOT (${LAYOUT_MATCH_SQL}))`)",
     "tests": [
       "test/net/wd3_online.test.js"
     ]
@@ -242,7 +242,7 @@
   {
     "name": "AWD3-REFUSALS-RATE-LIMITED",
     "file": "server-account/src/homes.js",
-    "old": "    if (town && !homeLayoutsMatch(town.layout, layout))\n      return { error: 'home-layout', layout: homeLayoutOk(town.layout) ? (town.layout ?? null) : null };\n  }",
+    "old": "    if (town && !homeLayoutsMatch(town.layout, layout)) return { error: 'home-layout', layout: homeLayoutOk(town.layout) ? town.layout ?? null : null };\n  }",
     "new": "  }",
     "tests": [
       "test/net/wd3_online.test.js"

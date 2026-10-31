@@ -252,8 +252,8 @@
   {
     "name": "SESSIONSIGN-beat-session-unread",
     "file": "server-account/src/accounts.js",
-    "old": "       AND (?4 IS NULL OR EXISTS (SELECT 1 FROM sessions s WHERE s.id = ?4 AND s.player_id = ?3))",
-    "new": "       AND (?4 IS NULL OR ?4 IS NOT NULL)",
+    "old": "OR EXISTS (SELECT 1 FROM sessions s WHERE s.id = ?4 AND s.player_id = ?3))",
+    "new": "OR ?4 IS NOT NULL)",
     "tests": [
       "test/server/sessionsign.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "SESSIONSIGN-beat-ban-unread",
     "file": "server-account/src/accounts.js",
-    "old": "     WHERE id = ?3 AND COALESCE(banned_until, 0) <= ?1",
-    "new": "     WHERE id = ?3",
+    "old": "WHERE id = ?3 AND COALESCE(banned_until, 0) <= ?1",
+    "new": "WHERE id = ?3",
     "tests": [
       "test/server/sessionsign.test.js"
     ],

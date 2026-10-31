@@ -10,43 +10,18 @@ import { REPOSITION, shipMemory, shipRestorePos, shipTransition } from '../syste
 /** @param {any} host */
 export function createShipBoard(host) {
   const {
-    _teleportToPixel,
-    cacheExteriorScene,
-    cam,
-    enterLinkedBankCabin,
-    groundFrameHeight,
-    landform,
-    player,
-    playerTravelPixel,
-    restandHeight,
-    restoreExteriorScene,
-    scaleOf,
-    setTransportModeHere,
-    state,
-    walkMode,
-    worldMoveBusy,
+    _teleportToPixel, cacheExteriorScene, cam, enterLinkedBankCabin, groundFrameHeight, landform, player,
+    playerTravelPixel, restandHeight, restoreExteriorScene, scaleOf, setTransportModeHere, state, walkMode,
+    worldMoveBusy
   } = host;
   async function boardOrDisembark() {
-    if (worldMoveBusy()) return; // AUDIT 68 S22
+    if (worldMoveBusy()) return;   // AUDIT 68 S22
     if (await enterLinkedBankCabin()) return;
     const here = playerTravelPixel();
     const t = shipTransition(playerEntity, {
       boardShipPosition: playerEntity.boardShipPosition ?? null,
       mapPixel: here,
-      position: shipMemory(
-        {
-          mapPixel: here,
-          pos: [
-            player.pos[0],
-            groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) +
-              state.compensation[1],
-            player.pos[2],
-          ],
-          yaw: cam.yaw,
-          ...RECORD_GROUND_STAMP,
-        },
-        state.compensation[1],
-      ), // AUDIT LANDFORMS C1: its height in DFU's frame   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
+      position: shipMemory({ mapPixel: here, pos: [player.pos[0], groundFrameHeight(player.pos[1] - state.compensation[1], player.pos[0], player.pos[2]) + state.compensation[1], player.pos[2]], yaw: cam.yaw, ...RECORD_GROUND_STAMP }, state.compensation[1]),   // AUDIT LANDFORMS C1: its height in DFU's frame   // TERRAIN-SCALE1 (audit): the ground `pos` stood on; AUDIT 68 S22: its height without the streamer's compensation
     });
     if (!t) return;
     // AUDIT ETHER-OW C2-3 (AUDIT CAPTAIN'S SEA P6's law): NO BOARDING ACROSS THE VEIL - "Your Ship" is the Bay's (its two
@@ -63,28 +38,19 @@ export function createShipBoard(host) {
     // AUDIT 68 S22: the height is stood in the arrival's frame (compensation[1] survives state.init); a memory
     // written raw, before the flag, cannot be recovered and is GROUNDED.
     const legacy = t.reposition === REPOSITION.None && !t.restore.compensationFree;
-    const localPos =
-      t.reposition === REPOSITION.None ? (shipRestorePos(t.restore, state.compensation[1]) ?? t.restore.pos) : null;
+    const localPos = t.reposition === REPOSITION.None ? (shipRestorePos(t.restore, state.compensation[1]) ?? t.restore.pos) : null;
     // A10 - THE SCENE CACHE ROUND THE TELEPORT (:382-388, :393-398): cache the pixel left, teleport, restore the pixel
     // reached - DFU's "ship is special case, cache will not be cleared". Without it _teleportToPixel destroyed the loose
     // piles, so a chest dropped on the dock was gone once you boarded. The piles travel as DFU's DroppedLoot entries
     // (:558-566) in NATIVE coordinates, never local ones the floating origin would move.
-    hudFade.smashHUDToBlack(); // WA1: UpdateMode's ship arm opens black (TransportManager.cs:364) - and the quest machine holds while it fades back (QuestMachine.Update)
+    hudFade.smashHUDToBlack();   // WA1: UpdateMode's ship arm opens black (TransportManager.cs:364) - and the quest machine holds while it fades back (QuestMachine.Update)
     cacheExteriorScene(here);
     await _teleportToPixel(t.go.x, t.go.y, localPos, { reposition: t.reposition, grounded: legacy });
     // TERRAIN-SCALE1 (audit): a deck remembered by a save from before the stamp stood on the prefab's 1.5 - the
     // teleport stood the player on it verbatim (not grounded); stood again now, over the pixel just built
-    if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)) {
-      // LANDFORM1: or with the row's lift to put back on
+    if (localPos && !legacy && (scaleOf(t.restore?.terrainScale) !== STREAMING_TERRAIN_SCALE || landform)) {   // LANDFORM1: or with the row's lift to put back on
       const c = state.compensation[1];
-      const y =
-        restandHeight(
-          localPos[1] - c,
-          localPos[0],
-          localPos[2],
-          scaleOf(t.restore.terrainScale),
-          t.restore.groundFrame,
-        ) + c; // BAY-LEFT-GROUND: by its frame's law
+      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale), t.restore.groundFrame) + c;   // BAY-LEFT-GROUND: by its frame's law
       if (walkMode) player.spawn(localPos[0], y, localPos[2]);
       cam.pos = [localPos[0], y + (walkMode ? 0 : 40), localPos[2]];
     }
@@ -92,7 +58,7 @@ export function createShipBoard(host) {
     if (t.restore) cam.yaw = t.restore.yaw;
     playerEntity.boardShipPosition = t.boardShipPosition;
     setTransportModeHere(t.mode);
-    hudFade.fadeHUDFromBlack(); // WA1: ...and closes on FadeHUDFromBlack (:401), the arrival awaited, as teleportTo's is
+    hudFade.fadeHUDFromBlack();   // WA1: ...and closes on FadeHUDFromBlack (:401), the arrival awaited, as teleportTo's is
   }
   return { boardOrDisembark };
 }

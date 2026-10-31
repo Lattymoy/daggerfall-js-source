@@ -27,9 +27,7 @@ let running = false;
 let raf = (fn) => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(fn) : null);
 let wall = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 const defaultSchedule = (fn, ms) => (typeof setTimeout === 'function' ? setTimeout(fn, ms) : null);
-const defaultCancel = (t) => {
-  if (t != null && typeof clearTimeout === 'function') clearTimeout(t);
-};
+const defaultCancel = (t) => { if (t != null && typeof clearTimeout === 'function') clearTimeout(t); };
 
 function tick() {
   ticks++;
@@ -73,24 +71,16 @@ export function disarmDraw(h) {
   if (!h || !h.live) return;
   h.live = false;
   armed--;
-  if (h.t != null) {
-    h.cancel(h.t);
-    h.t = null;
-  }
+  if (h.t != null) { h.cancel(h.t); h.t = null; }
 }
 
 /** Tests only: the frame source and the wall clock. `raf: null` stops the ticker (a suite advances frames with
  *  _frameForTests). Answers the live counts.
  *  @param {{ raf?: ((fn: () => void) => any) | null, wall?: (() => number) | null }} [seams] */
 export function _setDrawWatchdogForTests({ raf: r, wall: w } = {}) {
-  if (r !== undefined) {
-    raf = r ?? (() => null);
-    running = false;
-  }
+  if (r !== undefined) { raf = r ?? (() => null); running = false; }
   if (w !== undefined) wall = w ?? (() => (typeof performance !== 'undefined' ? performance.now() : Date.now()));
   return { ticks, armed };
 }
 /** Tests only: one animation frame, as the ticker counts one. */
-export function _frameForTests(n = 1) {
-  ticks += n;
-}
+export function _frameForTests(n = 1) { ticks += n; }

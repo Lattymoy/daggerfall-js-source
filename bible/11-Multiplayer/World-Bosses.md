@@ -2937,7 +2937,7 @@ distorts". The causes, landing in the same frames - his big landings, a wave ris
   first: a real picture under the frame's plain key is held for the place asking, as an `uploadTexture` hit holds it,
   and nothing is decoded. A placeholder answers no (the real picture replaces it), and a spectral or self-lit frame
   still goes the whole way (each carries a second picture).
-- **A flash casts no shadow** (`gateArena.js:"export function withCourtLights"`). His landings' lights
+- **A flash casts no shadow** (`gateArena.js:"export function withCourtLights(lit, lights) {"`). His landings' lights
   (the Meteor's, the Hellfire's - one under each mark), his fall's white and the Wrath's light took a shadow caster's
   slot by nearness alone (`render/shadowPass.js` pickShadowCasters), each a new light that rebuilt a cube map under
   Enhanced Lighting's shadows, for half a second of light; the running Tithe-Imp's moved its cube every frame. Each now

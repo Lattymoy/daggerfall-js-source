@@ -8,31 +8,13 @@ import { t } from '../textManager.js';
 /** Said once an entry, as the player first comes near a site that has not run. */
 export const DELVE_NEAR_TEXT = Object.freeze({
   hold: () => t('delve.near.hold', 'An old ward is cut into this floor. Step inside it to wake it.'),
-  litany: (k) =>
-    t('delve.near.litany', '{k} plates are set in a ring in this floor. Step inside the ring to wake them.', { k }),
-  springs: (look, n) =>
-    look === 'tomb'
-      ? t('delve.near.springs.tomb', '{n} cracked tombs stand round this floor. Step inside the circle to wake them.', {
-          n,
-        })
-      : look === 'pool'
-        ? t('delve.near.springs.pool', '{n} dark pools ring this floor. Step inside the circle to wake them.', { n })
-        : t(
-            'delve.near.springs.altar',
-            '{n} broken altars stand round this floor. Step inside the circle to wake them.',
-            { n },
-          ),
+  litany: (k) => t('delve.near.litany', '{k} plates are set in a ring in this floor. Step inside the ring to wake them.', { k }),
+  springs: (look, n) => (look === 'tomb' ? t('delve.near.springs.tomb', '{n} cracked tombs stand round this floor. Step inside the circle to wake them.', { n })
+    : look === 'pool' ? t('delve.near.springs.pool', '{n} dark pools ring this floor. Step inside the circle to wake them.', { n })
+      : t('delve.near.springs.altar', '{n} broken altars stand round this floor. Step inside the circle to wake them.', { n })),
   vigil: () => t('delve.near.vigil', 'A relic stands at the heart of this floor. Step inside the circle to wake it.'),
-  brazier: () =>
-    t(
-      'delve.near.brazier',
-      'A flame burns at the heart of this floor, with cold braziers round it. Step inside to wake the rite.',
-    ),
-  weighing: () =>
-    t(
-      'delve.near.weighing',
-      'Three plates are set in this floor, and stone weights lie by them. Step inside the circle to wake them.',
-    ),
+  brazier: () => t('delve.near.brazier', 'A flame burns at the heart of this floor, with cold braziers round it. Step inside to wake the rite.'),
+  weighing: () => t('delve.near.weighing', 'Three plates are set in this floor, and stone weights lie by them. Step inside the circle to wake them.'),
   seals: () => t('delve.near.seals', 'Old seals are cut into this floor. Step inside the circle to raise them.'),
 });
 
@@ -68,11 +50,11 @@ export const DELVE_SPRINGS_TEXT = Object.freeze({
 /** The Vigil, as it runs. */
 export const DELVE_VIGIL_TEXT = Object.freeze({
   gather: () => t('delve.vigil.gather', 'The relic wakes. Keep its light.'),
-  breath: () => t('delve.vigil.breath', "The relic's light steadies. Make ready."),
-  low: () => t('delve.vigil.low', "The relic's light is failing."),
-  dark: () => t('delve.vigil.dark', "The relic's light goes out. It wakes again in a minute."),
+  breath: () => t('delve.vigil.breath', 'The relic\'s light steadies. Make ready.'),
+  low: () => t('delve.vigil.low', 'The relic\'s light is failing.'),
+  dark: () => t('delve.vigil.dark', 'The relic\'s light goes out. It wakes again in a minute.'),
   failed: () => t('delve.vigil.failed', 'Nobody kept the relic. It goes dark and its foes crumble.'),
-  won: () => t('delve.vigil.won', "The relic's light holds. The vault is open."),
+  won: () => t('delve.vigil.won', 'The relic\'s light holds. The vault is open.'),
 });
 
 /** The Brazier Rite, as it runs. */

@@ -52,8 +52,8 @@
   {
     "name": "C4b-shown-unseated",
     "file": "src/world/familyBodies.js",
-    "old": "  ...(st > 0 ? { st } : {}),\n}); // CARDS4b: `st` seated (a card table's regular), the pose's own byte",
-    "new": "}); // CARDS4b: `st` seated (a card table's regular), the pose's own byte",
+    "old": "mv: moving ? 1 : 0, ...(st > 0 ? { st } : {}) });",
+    "new": "mv: moving ? 1 : 0 });",
     "tests": [
       "test/net/cards4b_regulars.test.js",
       "test/systems/auditcards2_host.test.js"

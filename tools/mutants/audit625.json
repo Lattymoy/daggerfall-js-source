@@ -252,8 +252,8 @@
   {
     "name": "AUDIT625-S1-the-age-unread-at-the-find",
     "file": "server-account/src/marks.js",
-    "old": "  if (!findsOpenFor(player, nowS)) return { error: 'marks-young' }; // AUDIT 625 S1: a week registered, before the hour is spent",
-    "new": "  // AUDIT 625 S1: a week registered, before the hour is spent",
+    "old": "  if (!findsOpenFor(player, nowS)) return { error: 'marks-young' };",
+    "new": "",
     "why": "a day-old account's loot find struck",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -262,8 +262,8 @@
   {
     "name": "AUDIT625-S1-the-age-unread-at-the-harvest",
     "file": "server-account/src/marks.js",
-    "old": "  if (\n    !strikesFor(player, env) ||\n    !findsOpenFor(player, ctx.nowS) ||\n    !(amount > 0) ||\n    typeof rid !== 'string' ||\n    typeof nonce !== 'string'\n  )\n    return null; // AUDIT 625 S1: a week registered",
-    "new": "  if (!strikesFor(player, env) || !(amount > 0) || typeof rid !== 'string' || typeof nonce !== 'string') return null; // AUDIT 625 S1: a week registered",
+    "old": "!strikesFor(player, env) || !findsOpenFor(player, ctx.nowS) || ",
+    "new": "!strikesFor(player, env) || ",
     "why": "a day-old account's harvest finds silver",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT625-S1-a-day-short-taken",
     "file": "server-account/src/marks.js",
-    "old": "  Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS;",
-    "new": "  Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS + 86_400;",
+    "old": "player.registered_at <= nowS - WITNESS.ageS;",
+    "new": "player.registered_at <= nowS - WITNESS.ageS + 86_400;",
     "why": "six days registered taken for a week",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -482,8 +482,8 @@
   {
     "name": "AUDIT625-S6-the-caps-crossed",
     "file": "server-account/src/marks.js",
-    "old": "      .bind(kind, from, MARKS_FAUCETS[kind].perDay)",
-    "new": "      .bind(kind, from, MARKS_FAUCETS.find.perDay)",
+    "old": "GROUP BY dst_id, day HAVING SUM(amount) >= ?3)`).bind(kind, from, MARKS_FAUCETS[kind].perDay)",
+    "new": "GROUP BY dst_id, day HAVING SUM(amount) >= ?3)`).bind(kind, from, MARKS_FAUCETS.find.perDay)",
     "why": "the gathering's cap read as the loot's",
     "tests": [
       "test/net/silverfinds_service.test.js"
@@ -683,8 +683,8 @@
   {
     "name": "AUDIT625-D2-the-source-a-breach",
     "file": "src/ui/haulCards.js",
-    "old": "  serpent: 'Serpent slain',",
-    "new": "  serpent: 'Breach closed',",
+    "old": "serpent: 'Serpent slain', eg:",
+    "new": "serpent: 'Breach closed', eg:",
     "why": "a serpent's silver carded as a breach's",
     "note": "EG-E1 (PIN MOVED): a Redoubt's source beside the serpent's - re-aimed by content.",
     "tests": [
@@ -694,8 +694,8 @@
   {
     "name": "AUDIT625-D2-the-embers-another-tier",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),",
-    "new": "    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'legendary' }] : []),",
+    "old": "{ kind: 'item', item: s.embers, tier: 'artifact' }",
+    "new": "{ kind: 'item', item: s.embers, tier: 'legendary' }",
     "why": "the serpent's embers another glow than the gate's",
     "tests": [
       "test/systems/audit625_serpent.test.js"

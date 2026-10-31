@@ -263,8 +263,8 @@
   {
     "name": "SIGIL1-formula-tail-dropped",
     "file": "src/combat/formulas.js",
-    "old": "  damage = weaponBlowMods(weapon, damage, attacker, target, info); // SIGIL1: the port's own over the whole blow - the online sigil, my blow at a foe - before the hook, so a bow's draw scales it too (SET2: `info` - the host's word that the foe had not noticed me)",
-    "new": "  void weaponBlowMods; // SIGIL1: the port's own over the whole blow - the online sigil, my blow at a foe - before the hook, so a bow's draw scales it too (SET2: `info` - the host's word that the foe had not noticed me)",
+    "old": "damage = weaponBlowMods(weapon, damage, attacker, target, info);",
+    "new": "void weaponBlowMods;",
     "tests": [
       "test/systems/sigil/sigil1.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "PROF4-haunted-wood-pine",
     "file": "src/net/nodeLaw.js",
-    "old": "  [CLIMATES.HauntedWoodlands]: row('log:oak', 'log:cherry'),",
-    "new": "  [CLIMATES.HauntedWoodlands]: row('log:pine'),",
+    "old": "  [CLIMATES.HauntedWoodlands]: row('log:oak', 'log:cherry'),\n  [CLIMATES.Swamp]: row('log:oak'),",
+    "new": "  [CLIMATES.HauntedWoodlands]: row('log:pine'),\n  [CLIMATES.Swamp]: row('log:oak'),",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PROF4-tree-unconfirmed-tier-3",
     "file": "src/net/nodeLaw.js",
-    "old": "  const d = drawFromTable(table, unit('tree', x, y, day, slot, 3), unit('tree', x, y, day, slot, 4), confirmed ? 7 : 2);",
-    "new": "  const d = drawFromTable(table, unit('tree', x, y, day, slot, 3), unit('tree', x, y, day, slot, 4), confirmed ? 7 : 3);",
+    "old": "unit('tree', x, y, day, slot, 4), confirmed ? 7 : 2);",
+    "new": "unit('tree', x, y, day, slot, 4), confirmed ? 7 : 3);",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "PROF4-tree-no-march",
     "file": "src/net/nodeLaw.js",
-    "old": "  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
-    "new": "  let y = roll;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
+    "old": "  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));\n}\n/**\n * A TREE'S FINDS",
+    "new": "  let y = roll;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));\n}\n/**\n * A TREE'S FINDS",
     "tests": [
       "test/net/prof4_law.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "PROF4-heartwood-unconfirmed",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (confirmed) {",
-    "new": "  if (true) {",
+    "old": "  let heartwood = null;\n  if (confirmed) {",
+    "new": "  let heartwood = null;\n  if (true) {",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/net/prof4_service.test.js"
@@ -503,7 +503,7 @@
   {
     "name": "PROF4-decor-anyones-id",
     "file": "server-account/src/decor.js",
-    "old": "  const ours =\n    row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
+    "old": "  const ours = row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "new": "  const ours = row && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "tests": [
       "test/net/prof4_service.test.js"
@@ -512,8 +512,8 @@
   {
     "name": "PROF4-decor-unmarked-marked",
     "file": "server-account/src/decor.js",
-    "old": "  return decorPieceOf({\n    ...p,\n    item: ours ? { ...plain, pv, ...(Number(row.marked) === 1 && row.maker ? { mk: row.maker } : {}) } : plain,\n  });",
-    "new": "  return decorPieceOf({ ...p, item: ours ? { ...plain, pv, ...(row.maker ? { mk: row.maker } : {}) } : plain });",
+    "old": "...(Number(row.marked) === 1 && row.maker ? { mk: row.maker } : {})",
+    "new": "...(row.maker ? { mk: row.maker } : {})",
     "tests": [
       "test/net/prof4_service.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "PROF4-decor-clients-mark",
     "file": "server-account/src/decor.js",
-    "old": "  const p = sent.item?.pv ? await provenOf(db, player, sent, mapId, buildingKey) : sent; // PROF4: a crafted piece's mark off its own record",
-    "new": "  const p = sent; // PROF4: a crafted piece's mark off its own record",
+    "old": "  const p = sent.item?.pv ? await provenOf(db, player, sent, mapId, buildingKey) : sent;",
+    "new": "  const p = sent;",
     "tests": [
       "test/net/prof4_service.test.js",
       "test/systems/prof4_client.test.js"
@@ -531,7 +531,7 @@
   {
     "name": "PROF4-decor-other-template",
     "file": "server-account/src/decor.js",
-    "old": "  const ours =\n    row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
+    "old": "  const ours = row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "new": "  const ours = row && row.owner === player.id && Number(row.listed) === 0 && !elsewhere;",
     "tests": [
       "test/net/prof4_service.test.js"
@@ -733,8 +733,8 @@
   {
     "name": "PROF4-name-no-joiner-mark",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    (item?.quality === 4 || item?.marked === true) &&",
-    "new": "    item?.quality === 4 &&",
+    "old": "if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string'",
+    "new": "if (item?.quality === 4 && typeof item.maker === 'string'",
     "tests": [
       "test/systems/prof4_client.test.js"
     ]

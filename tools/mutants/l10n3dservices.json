@@ -142,8 +142,8 @@
   {
     "name": "L10N3d2-systems-guilds-191-table",
     "file": "src/systems/guild/guilds.js",
-    "old": "    femaleRankTitles: localizedTable({ 8: ['darkSister', 'Dark Sister'] }), // DarkBrotherhood.cs:88-89",
-    "new": "    femaleRankTitles: ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({\n      8: ['darkSister', 'Dark Sister'],\n    }), // DarkBrotherhood.cs:88-89",
+    "old": "    femaleRankTitles: localizedTable({ 8: ['darkSister', 'Dark Sister'] }),   // DarkBrotherhood.cs:88-89",
+    "new": "    femaleRankTitles: ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({ 8: ['darkSister', 'Dark Sister'] }),   // DarkBrotherhood.cs:88-89",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/systems/l10n3d_services.test.js"

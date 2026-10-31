@@ -57,8 +57,8 @@
   {
     "name": "LOOT-SCROLL-f-the-light-counted-from-the-piles-top",
     "file": "src/ui/worldPlaque.js",
-    "old": "  paint(n, win.frame, lit >= 0 ? lit - win.from : -1, stats); // LOOT-SCROLL: the window, its lit row counted from its top",
-    "new": "  paint(n, win.frame, lit, stats); // LOOT-SCROLL: the window, its lit row counted from its top",
+    "old": "  paint(n, win.frame, lit >= 0 ? lit - win.from : -1, stats);",
+    "new": "  paint(n, win.frame, lit, stats);",
     "tests": [
       "test/systems/fb1011g_lootscroll.test.js",
       "test/systems/worldhover.test.js",
@@ -79,8 +79,8 @@
   {
     "name": "LOOT-SCROLL-h-the-plaques-rows-above-unsaid",
     "file": "src/ui/worldPlaque.js",
-    "old": "  if (f.above > 0) {",
-    "new": "  if (false) {",
+    "old": "  if (f.above > 0) {   // LOOT-SCROLL: what the window leaves above it",
+    "new": "  if (false) {   // LOOT-SCROLL: what the window leaves above it",
     "tests": [
       "test/systems/fb1011g_lootscroll.test.js",
       "test/systems/worldhover.test.js",
@@ -90,8 +90,8 @@
   {
     "name": "LOOT-SCROLL-i-the-window-forgets-its-top",
     "file": "src/ui/worldPlaque.js",
-    "old": "  const w = plaqueWindow(frame, lit, frame?.key != null && frame.key === _winKey ? _winFrom : 0);",
-    "new": "  const w = plaqueWindow(frame, lit, 0);",
+    "old": "plaqueWindow(frame, lit, frame?.key != null && frame.key === _winKey ? _winFrom : 0)",
+    "new": "plaqueWindow(frame, lit, 0)",
     "tests": [
       "test/systems/fb1011g_lootscroll.test.js",
       "test/systems/worldhover.test.js",

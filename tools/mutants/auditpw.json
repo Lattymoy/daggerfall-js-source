@@ -2,8 +2,8 @@
   {
     "name": "PW-1-the-hasher-takes-an-empty-credential-again",
     "file": "server-account/src/password.js",
-    "old": "  if (!normalise(pw)) throw new Error('refusing to hash an empty credential - a caller handed this null or \"\"');\n  const salt = new Uint8Array(SALT_BYTES);",
-    "new": "  const salt = new Uint8Array(SALT_BYTES);",
+    "old": "  if (!normalise(pw)) throw new Error('refusing to hash an empty credential - a caller handed this null or \"\"');\n",
+    "new": "",
     "tests": [
       "test/server/accountworker.test.js"
     ],
@@ -12,7 +12,7 @@
   {
     "name": "PW-2-the-constant-time-compare-fails-open-again",
     "file": "server-account/src/password.js",
-    "old": "  if (!(a instanceof Uint8Array) || !(b instanceof Uint8Array)) return false;\n  const x = a;\n  const y = b;",
+    "old": "  if (!(a instanceof Uint8Array) || !(b instanceof Uint8Array)) return false;\n  const x = a; const y = b;",
     "new": "  const x = a instanceof Uint8Array ? a : new Uint8Array(0);\n  const y = b instanceof Uint8Array ? b : new Uint8Array(0);",
     "tests": [
       "test/server/accountworker.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "PW-3-the-folding-eats-a-letter-the-alphabet-contains",
     "file": "server-account/src/password.js",
-    "old": "  const s = input.toUpperCase().replace(/[\\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1');",
-    "new": "  const s = input.toUpperCase().replace(/[\\s-]/g, '').replace(/O/g, '0').replace(/[IL]/g, '1').replace(/Q/g, '0');",
+    "old": "    .replace(/O/g, '0').replace(/[IL]/g, '1');",
+    "new": "    .replace(/O/g, '0').replace(/[IL]/g, '1').replace(/Q/g, '0');",
     "tests": [
       "test/server/accountworker.test.js"
     ],

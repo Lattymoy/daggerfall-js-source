@@ -2,8 +2,8 @@
   {
     "name": "GRANT3-heir-past-handed-member",
     "file": "src/net/grantLaw.js",
-    "old": "      if (\n        !gr ||\n        !intIn(x.i, 0, gr.n - 1) ||\n        (gr.h >= 0 && gr.h !== x.i) ||\n        typeof x.to !== 'string' ||\n        !ID_RE.test(x.to)\n      )\n        return null;",
-    "new": "      if (!gr || !intIn(x.i, 0, gr.n - 1) || typeof x.to !== 'string' || !ID_RE.test(x.to)) return null;",
+    "old": "if (!gr || !intIn(x.i, 0, gr.n - 1) || (gr.h >= 0 && gr.h !== x.i) || typeof x.to",
+    "new": "if (!gr || !intIn(x.i, 0, gr.n - 1) || typeof x.to",
     "why": "a handed grant's heir asked for a member it does not stand",
     "tests": [
       "test/net/grant3_asks.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "GRANT3-carried-cell-unchanged",
     "file": "src/net/grantLaw.js",
-    "old": "export const grantCarried = (g, q, n, nowMs) => ({ ...grantRenewed(g, nowMs), g: n, q });",
-    "new": "export const grantCarried = (g, q, n, nowMs) => ({ ...grantRenewed(g, nowMs), g: n });",
+    "old": "({ ...grantRenewed(g, nowMs), g: n, q })",
+    "new": "({ ...grantRenewed(g, nowMs), g: n })",
     "why": "a carried grant still names the cell it left",
     "tests": [
       "test/net/grant3_asks.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "GRANT3-renewed-expiry-unmoved",
     "file": "src/net/grantLaw.js",
-    "old": "export const grantRenewed = (g, nowMs) => ({\n  ...unsigned(g),\n  c: g.c.slice(),\n  p: [g.p[0], g.p[1]],\n  x: nowMs + GRANT_TTL_MS,\n});",
-    "new": "export const grantRenewed = (g, nowMs) => ({ ...unsigned(g), c: g.c.slice(), p: [g.p[0], g.p[1]], x: g.x });",
+    "old": "p: [g.p[0], g.p[1]], x: nowMs + GRANT_TTL_MS });",
+    "new": "p: [g.p[0], g.p[1]], x: g.x });",
     "why": "a renewal signs the old expiry again",
     "tests": [
       "test/net/grant3_asks.test.js"

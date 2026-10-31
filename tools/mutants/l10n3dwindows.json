@@ -32,8 +32,8 @@
   {
     "name": "L10N3d2-systems-inventorySession-54-noWagon",
     "file": "src/systems/inventorySession.js",
-    "old": "      return localizedText('noWagon', NO_WAGON_TEXT);",
-    "new": "      return NO_WAGON_TEXT;",
+    "old": "  noWagon: { reason: 'noWagon', get text() { return localizedText('noWagon', NO_WAGON_TEXT); } },",
+    "new": "  noWagon: { reason: 'noWagon', get text() { return NO_WAGON_TEXT; } },",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "L10N3d2-systems-inventorySession-55-exitTooFar",
     "file": "src/systems/inventorySession.js",
-    "old": "      return localizedText('exitTooFar', EXIT_TOO_FAR_TEXT);",
-    "new": "      return EXIT_TOO_FAR_TEXT;",
+    "old": "  exitTooFar: { reason: 'exitTooFar', get text() { return localizedText('exitTooFar', EXIT_TOO_FAR_TEXT); } },",
+    "new": "  exitTooFar: { reason: 'exitTooFar', get text() { return EXIT_TOO_FAR_TEXT; } },",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -72,7 +72,7 @@
   {
     "name": "L10N3d2-systems-itemTransfer-143-wagonFullGold",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "export const wagonFullGoldText = (n) =>\n  formatText(localizedText('wagonFullGold', 'Your wagon could only hold {0} gold pieces.'), n);",
+    "old": "export const wagonFullGoldText = (n) => formatText(localizedText('wagonFullGold', 'Your wagon could only hold {0} gold pieces.'), n);",
     "new": "export const wagonFullGoldText = (n) => formatText('Your wagon could only hold {0} gold pieces.', n);",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
@@ -442,8 +442,8 @@
   {
     "name": "L10N3d2-ui-questJournal-91-table",
     "file": "src/ui/quest/questJournal.js",
-    "old": "export const JOURNAL_TIPS = localizedTable({\n  dialog: ['dialogButtonInfo', 'Switch between: Active Quests; Finished Quests; Notebook; Messages'],\n  activeQuests: ['activeQuestsInfo', 'Click on an active quest that has a target location to initiate travel.'],\n  finishedQuests: ['finishedQuestsInfo', 'Click on an entry to move it. Right click to delete.'],\n  notebook: ['notebookInfo', 'Click a note to move. Right click to delete. Click in-between to add a new note.'],\n  messages: ['messagesInfo', 'History of messages recently shown on screen'],\n});",
-    "new": "export const JOURNAL_TIPS = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))(\n  {\n    dialog: ['dialogButtonInfo', 'Switch between: Active Quests; Finished Quests; Notebook; Messages'],\n    activeQuests: ['activeQuestsInfo', 'Click on an active quest that has a target location to initiate travel.'],\n    finishedQuests: ['finishedQuestsInfo', 'Click on an entry to move it. Right click to delete.'],\n    notebook: ['notebookInfo', 'Click a note to move. Right click to delete. Click in-between to add a new note.'],\n    messages: ['messagesInfo', 'History of messages recently shown on screen'],\n  },\n);",
+    "old": "export const JOURNAL_TIPS = localizedTable({",
+    "new": "export const JOURNAL_TIPS = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -453,7 +453,7 @@
     "name": "L10N3d2-ui-questJournal-143-table",
     "file": "src/ui/quest/questJournal.js",
     "old": "export const FIND_PLACE_TEXT = localizedTable({",
-    "new": "export const FIND_PLACE_TEXT = ((t) =>\n  Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
+    "new": "export const FIND_PLACE_TEXT = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"
@@ -472,8 +472,8 @@
   {
     "name": "L10N3d2-ui-questJournal-155-table",
     "file": "src/ui/quest/questJournal.js",
-    "old": "export const CONFIRM_TEXT = localizedTable({\n  // L10N3d: baseKey \"confirmMove\" / \"confirmRemove\" + \"Head\", \"\", \"2\" (:417, :489-491)\n  moveHead: ['confirmMoveHead', 'Move entry'],\n  move: ['confirmMove', 'Do you want to change the position of this entry?'],\n  move2: ['confirmMove2', '(It will be moved to before the next entry clicked)'],\n  removeHead: ['confirmRemoveHead', 'Delete entry'],\n  remove: ['confirmRemove', 'Are you sure you want to remove this entry?'],\n  remove2: ['confirmRemove2', '(It will be deleted permanently and cannot be restored)'],\n});",
-    "new": "export const CONFIRM_TEXT = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))(\n  {\n    // L10N3d: baseKey \"confirmMove\" / \"confirmRemove\" + \"Head\", \"\", \"2\" (:417, :489-491)\n    moveHead: ['confirmMoveHead', 'Move entry'],\n    move: ['confirmMove', 'Do you want to change the position of this entry?'],\n    move2: ['confirmMove2', '(It will be moved to before the next entry clicked)'],\n    removeHead: ['confirmRemoveHead', 'Delete entry'],\n    remove: ['confirmRemove', 'Are you sure you want to remove this entry?'],\n    remove2: ['confirmRemove2', '(It will be deleted permanently and cannot be restored)'],\n  },\n);",
+    "old": "export const CONFIRM_TEXT = localizedTable({   // L10N3d: baseKey \"confirmMove\" / \"confirmRemove\" + \"Head\", \"\", \"2\" (:417, :489-491)",
+    "new": "export const CONFIRM_TEXT = ((t) => Object.freeze(Object.fromEntries(Object.entries(t).map(([n, [, en]]) => [n, en]))))({   // L10N3d: baseKey \"confirmMove\" / \"confirmRemove\" + \"Head\", \"\", \"2\" (:417, :489-491)",
     "tests": [
       "test/systems/l10n3d_sites.test.js",
       "test/ui/l10n3d_windows.test.js"

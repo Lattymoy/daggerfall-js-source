@@ -288,8 +288,8 @@
   {
     "name": "RID4-insignia-row-unwritten",
     "file": "server-account/src/accounts.js",
-    "old": "    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'insignia', item: offer.id, nowS })] : []),\n  ]);",
-    "new": "  ]);",
+    "old": "    ...(rid ? [brokerSaleWrite(db, { account: player.id, rid, kind: 'insignia', item: offer.id, nowS })] : []),\n",
+    "new": "",
     "tests": [
       "test/server/fb1024_brokersales.test.js"
     ]
@@ -297,8 +297,8 @@
   {
     "name": "RID4-insignia-asked-again-owned",
     "file": "server-account/src/accounts.js",
-    "old": "  if (had?.kind === 'insignia' && had.item === offer.id)",
-    "new": "  if (false)",
+    "old": "  if (had?.kind === 'insignia' && had.item === offer.id) return",
+    "new": "  if (false) return",
     "tests": [
       "test/server/fb1024_brokersales.test.js"
     ]

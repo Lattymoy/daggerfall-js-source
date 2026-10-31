@@ -48,8 +48,8 @@
   {
     "name": "AUDIT-CC-L6-the-wheel-by-the-blocks",
     "file": "src/scenes/mapPlacesHost.js",
-    "old": "      on = isCarriageTown(townOfKey(id));",
-    "new": "      on = !!townOfKey(id)?.capital;",
+    "old": "on = isCarriageTown(townOfKey(id));",
+    "new": "on = !!townOfKey(id)?.capital;",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ]

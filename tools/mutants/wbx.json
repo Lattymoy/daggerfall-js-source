@@ -48,8 +48,8 @@
   {
     "name": "WBX3-the-line-from-the-floor",
     "file": "src/scenes/spoilsPool.js",
-    "old": "          root: [f.fly.pos[0], f.fly.pos[1] + f.h, f.fly.pos[2]],",
-    "new": "          root: [f.fly.pos[0], f.fly.pos[1], f.fly.pos[2]],",
+    "old": "root: [f.fly.pos[0], f.fly.pos[1] + f.h, f.fly.pos[2]]",
+    "new": "root: [f.fly.pos[0], f.fly.pos[1], f.fly.pos[2]]",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]

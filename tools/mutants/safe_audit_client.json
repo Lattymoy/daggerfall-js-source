@@ -182,7 +182,7 @@
   {
     "name": "SAFE-AUDIT-CLIENT-5-the-age-unread",
     "file": "src/net/chat.js",
-    "old": "    const fresh = (/** @type {any} */ l) => !(now - l.t > REPORT_PICK_AGE_MS); // AUDIT SAFE CLIENT-5",
+    "old": "    const fresh = (/** @type {any} */ l) => !(now - l.t > REPORT_PICK_AGE_MS);   // AUDIT SAFE CLIENT-5",
     "new": "    const fresh = (/** @type {any} */ l) => true;",
     "tests": [
       "test/net/safety/safe_client.test.js"
@@ -232,8 +232,8 @@
   {
     "name": "SAFE-AUDIT-CLIENT-6-the-report-carries-the-drawn-words",
     "file": "src/net/chat.js",
-    "old": "      .map((l) => ({ tab: l.tab, sub: l.sub, name: l.name, at: l.at, text: l.raw ?? l.text, sg: l.sg })); // AUDIT SAFE CLIENT-6: the relay's own words",
-    "new": "      .map((l) => ({ tab: l.tab, sub: l.sub, name: l.name, at: l.at, text: l.text, sg: l.sg })); // AUDIT SAFE CLIENT-6: the relay's own words",
+    "old": "text: l.raw ?? l.text, sg: l.sg }));",
+    "new": "text: l.text, sg: l.sg }));",
     "tests": [
       "test/net/safety/safe_client.test.js"
     ],

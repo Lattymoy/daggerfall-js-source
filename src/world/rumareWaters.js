@@ -23,8 +23,7 @@ import { waterfrontCanal } from './tamriel/tamrielLand.js';
 /** Metres a map pixel. */
 const PIXEL_M = 819.2;
 /** The span's half, map pixels (its centre pixel's either side) and metres (from its centre pixel's middle). */
-const R = (IMPERIAL_SPAN - 1) / 2,
-  HALF_M = (IMPERIAL_SPAN * PIXEL_M) / 2;
+const R = (IMPERIAL_SPAN - 1) / 2, HALF_M = (IMPERIAL_SPAN * PIXEL_M) / 2;
 /** THE BASIN: how many pixels past the span the land eases back to its own (`ramp`), measured from the span's square on a
  *  superellipse of power `p` (straight along its sides, its corners rounded). */
 export const RUMARE_BASIN = Object.freeze({ ramp: 10, p: 4 });
@@ -63,10 +62,7 @@ export const rumareSeaPixel = (px, py) => rumareSeaAt(px + 0.5, py + 0.5);
 export function rumareSliceAllLand(px, py) {
   const c = rumareCity();
   if (!c || Math.abs(px - c.cx) > R || Math.abs(py - c.cy) > R) return false;
-  const x0 = (px - c.cx - 0.5) * PIXEL_M,
-    x1 = x0 + PIXEL_M,
-    z0 = (py - c.cy - 0.5) * PIXEL_M,
-    z1 = z0 + PIXEL_M;
+  const x0 = (px - c.cx - 0.5) * PIXEL_M, x1 = x0 + PIXEL_M, z0 = (py - c.cy - 0.5) * PIXEL_M, z1 = z0 + PIXEL_M;
   const near = Math.hypot(x0 > 0 ? x0 : x1 < 0 ? x1 : 0, z0 > 0 ? z0 : z1 < 0 ? z1 : 0);
   const far = Math.hypot(Math.max(Math.abs(x0), Math.abs(x1)), Math.max(Math.abs(z0), Math.abs(z1)));
   if (far < IMPERIAL.isle - 1) return true;
@@ -111,16 +107,12 @@ const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 export function rumareLandHeight(bx, by, land, natural) {
   const c = rumareCity();
   if (!c) return natural;
-  const [x, z] = metres(c, bx, by),
-    e = HALF_M - Math.max(Math.abs(x), Math.abs(z));
+  const [x, z] = metres(c, bx, by), e = HALF_M - Math.max(Math.abs(x), Math.abs(z));
   if (e < 0) return natural;
-  const r = Math.hypot(x, z) - IMPERIAL.lake,
-    side = z > 0 ? Math.abs(x) - IMPERIAL.mouth : Infinity; // from the lake's far shore, or the mouth's side
+  const r = Math.hypot(x, z) - IMPERIAL.lake, side = z > 0 ? Math.abs(x) - IMPERIAL.mouth : Infinity;   // from the lake's far shore, or the mouth's side
   const s = Math.min(r, side);
   if (r <= 0 || s <= 0) return land;
-  const rise = land + Math.max(0, natural - land) * smooth(s / (s + e)),
-    d = landingReach(x, z),
-    A = RUMARE_LANDING;
+  const rise = land + Math.max(0, natural - land) * smooth(s / (s + e)), d = landingReach(x, z), A = RUMARE_LANDING;
   return d >= A.bank ? rise : land + (rise - land) * smooth(d / A.bank);
 }
 
@@ -130,10 +122,7 @@ export function rumareLandHeight(bx, by, land, natural) {
  *  deck's end and the carriage at the landing (world/capitalCarriages.js) stood in the ground. */
 export const RUMARE_LANDING = Object.freeze({ x0: -10060.8, x1: -9984, z0: -32, z1: 32, bank: 12.8 });
 /** How far a point (the city's metres) stands outside the landing's apron - 0 on it. */
-const landingReach = (x, z) => {
-  const A = RUMARE_LANDING;
-  return Math.hypot(Math.max(A.x0 - x, 0, x - A.x1), Math.max(A.z0 - z, 0, z - A.z1));
-};
+const landingReach = (x, z) => { const A = RUMARE_LANDING; return Math.hypot(Math.max(A.x0 - x, 0, x - A.x1), Math.max(A.z0 - z, 0, z - A.z1)); };
 /** Whether the city's ground at a point (its metres) is its land's own level - inside the lake's far shore, or on the
  *  landing's apron - and not the far shore's rise, whose height is the land's own (world/capitalCarriages.js). */
 export const rumareFlatAt = (x, z) => Math.hypot(x, z) <= IMPERIAL.lake || landingReach(x, z) === 0;
@@ -152,11 +141,9 @@ export function rumareMouthPixel(px, py) {
 export function rumareBasin(px, py) {
   const c = rumareCity();
   if (!c) return 0;
-  const { ramp, p } = RUMARE_BASIN,
-    ex = Math.max(0, Math.abs(px - c.cx) - R),
-    ey = Math.max(0, Math.abs(py - c.cy) - R);
+  const { ramp, p } = RUMARE_BASIN, ex = Math.max(0, Math.abs(px - c.cx) - R), ey = Math.max(0, Math.abs(py - c.cy) - R);
   if (ex > ramp || ey > ramp) return 0;
-  const d = (ex ** p + ey ** p) ** (1 / p); // past the span's square, its corners rounded
+  const d = (ex ** p + ey ** p) ** (1 / p);   // past the span's square, its corners rounded
   return d >= ramp ? 0 : 1 - smooth(d / ramp);
 }
 
@@ -166,16 +153,6 @@ export function rumareBasin(px, py) {
 export function rumareSliceRect(px, py, rim) {
   const c = rumareCity();
   if (!c || Math.abs(px - c.cx) > R || Math.abs(py - c.cy) > R) return null;
-  const W = px - c.cx === -R,
-    E = px - c.cx === R,
-    N = py - c.cy === -R,
-    S = py - c.cy === R,
-    D = 128,
-    clear = 3;
-  return {
-    xMin: W ? rim : -clear,
-    xMax: E ? D - rim : D - 1 + clear,
-    yMin: S ? rim : -clear,
-    yMax: N ? D - rim : D - 1 + clear,
-  };
+  const W = px - c.cx === -R, E = px - c.cx === R, N = py - c.cy === -R, S = py - c.cy === R, D = 128, clear = 3;
+  return { xMin: W ? rim : -clear, xMax: E ? D - rim : D - 1 + clear, yMin: S ? rim : -clear, yMax: N ? D - rim : D - 1 + clear };
 }

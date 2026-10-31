@@ -2,8 +2,8 @@
   {
     "name": "MWNPC15-pose-no-wolf",
     "file": "src/characters/npcBodies.js",
-    "old": "    wb: a.look?.wolf ? 1 : 0, // MWNPC15: a werewolf's look - the wire's own wolf bit, so PeerBodies builds Bloodmoon's wolf (WEREWOLF1)",
-    "new": "    wb: 0, // MWNPC15: a werewolf's look - the wire's own wolf bit, so PeerBodies builds Bloodmoon's wolf (WEREWOLF1)",
+    "old": "    wb: a.look?.wolf ? 1 : 0,",
+    "new": "    wb: 0,",
     "tests": [
       "test/characters/mwnpc15_werewolf.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MWNPC15-pose-all-wolves",
     "file": "src/characters/npcBodies.js",
-    "old": "    wb: a.look?.wolf ? 1 : 0, // MWNPC15: a werewolf's look - the wire's own wolf bit, so PeerBodies builds Bloodmoon's wolf (WEREWOLF1)",
-    "new": "    wb: 1, // MWNPC15: a werewolf's look - the wire's own wolf bit, so PeerBodies builds Bloodmoon's wolf (WEREWOLF1)",
+    "old": "    wb: a.look?.wolf ? 1 : 0,",
+    "new": "    wb: 1,",
     "tests": [
       "test/characters/mwnpc15_werewolf.test.js"
     ]

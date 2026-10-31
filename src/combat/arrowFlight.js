@@ -19,40 +19,31 @@
 // player is standing. The player arm and its damage law live here
 // now, one copy for the three hosts that share this flight.
 
-import {
-  MISSILE_SPEED,
-  ARROW_FLIGHT_SPEED,
-  MISSILE_COLLIDER_RADIUS,
-  MISSILE_LIFESPAN_S,
-  playerShotOrigin,
-  missileHitsCapsule,
-  missileReach,
-  PLAYER_BODY_RADIUS,
-} from '../systems/spellcast.js'; // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
-import { CAPSULE_HEIGHT } from '../player/motor.js'; // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
+import { MISSILE_SPEED, ARROW_FLIGHT_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotOrigin, missileHitsCapsule, missileReach, PLAYER_BODY_RADIUS } from '../systems/spellcast.js';   // FIELD-GUN17: playerMuzzleOrigin - the gun's own barrel, where GetAimPosition speaks for the bow   // AUDIT 65 CV-2: the player's own controller radius
+import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
-import { SWING_MODS, foeUnaware } from './playerWeapon.js'; // CalculateSwingModifiers, read live at the arrow's impact (SET2: and whether the shaft's foe had noticed me)
-import { bloodHit } from './blood/bloodDecals.js'; // BLOOD1b: the blow, in the shape the mark's ladder reads
+import { SWING_MODS, foeUnaware } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact (SET2: and whether the shaft's foe had noticed me)
+import { bloodHit } from './blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { calculateAttackDamage } from './formulas.js';
-import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js'; // AUDIT PISTOLET A1: a pair's off-hand shot, DUAL's terms as its swing's
+import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // AUDIT PISTOLET A1: a pair's off-hand shot, DUAL's terms as its swing's
 import { liveStat } from '../systems/statMods.js';
-import { segmentBoxEntry } from '../systems/naval/navalBallistics.js'; // SERPENT4: a shaft's step through a box - the guns' own test
-import { bowDamageArrow } from './enemyEquipment.js'; // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
+import { segmentBoxEntry } from '../systems/naval/navalBallistics.js';   // SERPENT4: a shaft's step through a box - the guns' own test
+import { bowDamageArrow } from './enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
 import { isBackFacing } from '../characters/enemy/enemyMotor.js';
 import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { addItem, ARROW_TEMPLATE } from '../systems/inventory.js';
-import { noteShotRecoverable, shotTallyOpen } from '../systems/shotTally.js'; // ARENA-ARROWS: a recoverable shaft is no shot the healers pay; STUCK-ARROWS: nor one stuck on the sand
-import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot/loot.js'; // STUCK-ARROWS: the stuck shaft's container picture (seedPile's icon)
-import { bowShotAim } from '../ui/bowBloomRing.js'; // BOW-BLOOM
-import { bowShotStamp, bowFastDamage, whileShaftLands } from './bowBloom.js'; // BOW-FAST, BOW-KINDS
-import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js'; // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand   // FIELD-GUN18: ...and how big it is drawn
-import { playerWeaponHitEntity } from '../systems/worldTick.js'; // DISC10-D H1: OnWeaponHitEntity's one dispatcher (worldTick never reaches this module - no cycle)
-import { sparedByPlayer } from './friendlyFire.js'; // SHIPMATES: the player's shaft passes their own crew by
-import { coverDistance, coverStep } from '../ai/cover.js'; // TACT1: billboards are cover; AUDIT TACT B5: met by touch
-import { blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js'; // TECH1: a technique's shaft - its weight, and never a player's body
-import { takeOwed } from '../systems/playerDoor.js'; // AUDIT MARTIAL L2 F5: the follow-ups a shaft owes a body the relay runs
-import { monsterVolume } from '../systems/monsterVolume.js'; // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
+import { noteShotRecoverable, shotTallyOpen } from '../systems/shotTally.js';   // ARENA-ARROWS: a recoverable shaft is no shot the healers pay; STUCK-ARROWS: nor one stuck on the sand
+import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot/loot.js';   // STUCK-ARROWS: the stuck shaft's container picture (seedPile's icon)
+import { bowShotAim } from '../ui/bowBloomRing.js';   // BOW-BLOOM
+import { bowShotStamp, bowFastDamage, whileShaftLands } from './bowBloom.js';   // BOW-FAST, BOW-KINDS
+import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand   // FIELD-GUN18: ...and how big it is drawn
+import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher (worldTick never reaches this module - no cycle)
+import { sparedByPlayer } from './friendlyFire.js';   // SHIPMATES: the player's shaft passes their own crew by
+import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
+import { blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's shaft - its weight, and never a player's body
+import { takeOwed } from '../systems/playerDoor.js';   // AUDIT MARTIAL L2 F5: the follow-ups a shaft owes a body the relay runs
+import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 
 export const ARROW_MODEL_ID = 99800;
 
@@ -96,15 +87,9 @@ export const liveStuckArrows = (loot) => stuckPilesOf(loot).filter((p) => !p.ina
  *  `loot`, on `pixelKey` (the world host's - it dies with its pixel). The pool keeps STUCK_ARROWS_MAX; the oldest goes. */
 export function stickArrow(loot, at, dir, { pixelKey = null } = {}) {
   if (!loot?.seedPile || !Array.isArray(at)) return null;
-  const l = Math.hypot(dir[0], dir[1], dir[2]) || 1; // a crouch-dipped shaft carries |dir| > 1 (missileReach)
-  const pile = loot.seedPile(
-    [bowDamageArrow()],
-    [at[0], at[1] - STUCK_ARROW_LIFT, at[2]],
-    STUCK_ARROW_ICON,
-    null,
-    pixelKey,
-    { unsaved: true, drawn: false, owner: STUCK_ARROW_OWNER },
-  );
+  const l = Math.hypot(dir[0], dir[1], dir[2]) || 1;   // a crouch-dipped shaft carries |dir| > 1 (missileReach)
+  const pile = loot.seedPile([bowDamageArrow()], [at[0], at[1] - STUCK_ARROW_LIFT, at[2]], STUCK_ARROW_ICON, null, pixelKey,
+    { unsaved: true, drawn: false, owner: STUCK_ARROW_OWNER });
   pile.label = STUCK_ARROW_LABEL;
   pile.noStore = STUCK_ARROW_NO_STORE;
   pile.stuckDir = [dir[0] / l, dir[1] / l, dir[2] / l];
@@ -129,22 +114,16 @@ export function stuckArrowSetBack(bounds) {
 
 /** A stuck shaft's model matrix, from its pile - read live, so a recentre (offsetAll) or the ground's move carries it. */
 export function stuckArrowMatrix(pile, bounds = null) {
-  const d = pile.stuckDir,
-    back = stuckArrowSetBack(bounds);
-  return arrowMatrix(
-    [pile.pos[0] - d[0] * back, pile.pos[1] + STUCK_ARROW_LIFT - d[1] * back, pile.pos[2] - d[2] * back],
-    d,
-  );
+  const d = pile.stuckDir, back = stuckArrowSetBack(bounds);
+  return arrowMatrix([pile.pos[0] - d[0] * back, pile.pos[1] + STUCK_ARROW_LIFT - d[1] * back, pile.pos[2] - d[2] * back], d);
 }
 
 /** Where a shaft's step from `a` to `b` went into the bare ground (the collider's heightAt floor, which the mesh
  *  raycast never sees): the crossing between the two heights, set on the ground there. */
 export function groundEntry(a, b, c) {
-  const da = a[1] - c.heightAt(a[0], a[2]),
-    db = b[1] - c.heightAt(b[0], b[2]);
+  const da = a[1] - c.heightAt(a[0], a[2]), db = b[1] - c.heightAt(b[0], b[2]);
   const t = da > 0 && da - db > 0 ? Math.min(1, da / (da - db)) : 0;
-  const x = a[0] + (b[0] - a[0]) * t,
-    z = a[2] + (b[2] - a[2]) * t;
+  const x = a[0] + (b[0] - a[0]) * t, z = a[2] + (b[2] - a[2]) * t;
   return [x, c.heightAt(x, z), z];
 }
 
@@ -195,8 +174,8 @@ export function shaftSequence(m, q) {
 
 /** The oriented arrow transform (dungeonContext.arrowMatrix law). */
 export function arrowMatrix(pos, dir) {
-  const yaw = (Math.atan2(dir[0], dir[2]) * 180) / Math.PI;
-  const pitch = (Math.asin(-Math.max(-1, Math.min(1, dir[1]))) * 180) / Math.PI;
+  const yaw = Math.atan2(dir[0], dir[2]) * 180 / Math.PI;
+  const pitch = Math.asin(-Math.max(-1, Math.min(1, dir[1]))) * 180 / Math.PI;
   return trs(pos[0], pos[1], pos[2], pitch, yaw, 0);
 }
 
@@ -255,35 +234,20 @@ export class ArrowFlight {
     // nothing and gets the verbatim arm, unchanged.
     // AUDIT FIELD-GUN-MW F2: the fork is playerShotOrigin's, once, for both spawn seams - a muzzle may now be a
     // WORLD point (the third-person Morrowind body's barrel, behind the camera).
-    if (meta.fromPlayer && !orb && !meta.technique) {
-      dir = bowShotAim(dir, meta.weapon);
-      meta = { ...meta, ...bowShotStamp(meta.weapon) };
-    } // BOW-BLOOM, BOW-FAST, BOW-KINDS: a bow's own shot, never a gun's or a technique's
-    const origin = meta.fromPlayer ? playerShotOrigin(from, dir, meta.muzzle) : [...from];
-    this.arrows.push({ pos: origin, dir: [...dir], age: 0, gpu: null, dead: false, orb, orbFlat: null, ...meta }); // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
+    if (meta.fromPlayer && !orb && !meta.technique) { dir = bowShotAim(dir, meta.weapon); meta = { ...meta, ...bowShotStamp(meta.weapon) }; }   // BOW-BLOOM, BOW-FAST, BOW-KINDS: a bow's own shot, never a gun's or a technique's
+    const origin = meta.fromPlayer
+      ? playerShotOrigin(from, dir, meta.muzzle)
+      : [...from];
+    this.arrows.push({ pos: origin, dir: [...dir], age: 0, gpu: null, dead: false, orb, orbFlat: null, ...meta });   // ROAD-H H1c: a PLAYER shaft leaves the BOW HAND - GetAimPosition (DaggerfallMissile.cs:540-550) offsets the camera position 0.11 DOWN the camera's own up and 0.15 to the hand (the other way under FPSWeapon.FlipHorizontal), and it runs INSIDE the missile in DFU (:471), so it runs here rather than at each host's loose; an ENEMY shaft arrives with its own origin already applied (enemyTargets.enemyArrowOrigin)
   }
 
-  update(
-    dt,
-    {
-      playerFeet = null,
-      playerHeight = CAPSULE_HEIGHT,
-      onPlayerHit = null,
-      foeTargets = null,
-      onFoeHit = null,
-      onPlayerArrowHitFoe = null,
-      boxTargets = null,
-      onPlayerArrowHitBox = null,
-    } = {},
-  ) {
+  update(dt, { playerFeet = null, playerHeight = CAPSULE_HEIGHT, onPlayerHit = null, foeTargets = null, onFoeHit = null,
+    onPlayerArrowHitFoe = null, boxTargets = null, onPlayerArrowHitBox = null } = {}) {
     let live = 0;
     const c = typeof this._collider === 'function' ? this._collider() : this._collider;
-    if (this._loot) pruneStuckArrows(this._loot); // STUCK-ARROWS: a taken shaft's pile goes
+    if (this._loot) pruneStuckArrows(this._loot);   // STUCK-ARROWS: a taken shaft's pile goes
     for (const m of this.arrows) {
-      if (m.dead) {
-        this._releaseOrb(m);
-        continue;
-      } // FIELD-GUN14: the flat goes out with the flight - `arrows` is not compacted until every record is dead
+      if (m.dead) { this._releaseOrb(m); continue; }   // FIELD-GUN14: the flat goes out with the flight - `arrows` is not compacted until every record is dead
       live++;
       if (m.orb) {
         // FIELD-GUN14: the orb's flat, lazily, on the same in-flight
@@ -296,49 +260,26 @@ export class ArrowFlight {
           // in and the muzzle light is thrown in. Sampled rather than
           // named, so "the same colour as the orb" is exact and follows
           // ORB_ARCHIVE if it ever changes.
-          m.orbFlat =
-            this._effects?.showFlyingFlat?.(m.orb, m.pos, {
-              record: ORB_RECORD,
-              scale: ORB_SCALE, // FIELD-GUN18: a pellet, not a fireball
-              onTexture: (t, archive, record) => noteOrbColour(t?.getColor32?.(t.getDFBitmap(record, 0), 0)),
-            }) ?? false;
+          m.orbFlat = this._effects?.showFlyingFlat?.(m.orb, m.pos, {
+            record: ORB_RECORD,
+            scale: ORB_SCALE,   // FIELD-GUN18: a pellet, not a fireball
+            onTexture: (t, archive, record) => noteOrbColour(t?.getColor32?.(t.getDFBitmap(record, 0), 0)),
+          }) ?? false;
         }
-      } else if (m.gpu === null) {
-        // lazy model fetch, in-flight guard
+      } else if (m.gpu === null) {   // lazy model fetch, in-flight guard
         m.gpu = false;
-        Promise.resolve(this.getGpuMesh(ARROW_MODEL_ID)).then((g) => {
-          if (g && !m.dead) m.gpu = g;
-        });
+        Promise.resolve(this.getGpuMesh(ARROW_MODEL_ID)).then((g) => { if (g && !m.dead) m.gpu = g; });
       }
       m.age += dt;
-      if (m.age > MISSILE_LIFESPAN_S) {
-        m.dead = true;
-        continue;
-      }
-      const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * (m.speedScale ?? 1) * dt; // TELL6d: an aimed shot flies x1.3 as fast; BAL-ARCHERY: a shaft, not a gun's orb
-      const { unit, reach } = missileReach(m.dir, step); // ROAD-H tail: displacement.magnitude + ColliderRadius along the NORMALISED direction (DaggerfallMissile.cs:333 builds the displacement, :337 casts it - an ARROW always takes that Raycast arm, never the :339 SphereCast) - a crouch-dipped shaft carries |dir| > 1
+      if (m.age > MISSILE_LIFESPAN_S) { m.dead = true; continue; }
+      const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * (m.speedScale ?? 1) * dt;   // TELL6d: an aimed shot flies x1.3 as fast; BAL-ARCHERY: a shaft, not a gun's orb
+      const { unit, reach } = missileReach(m.dir, step);   // ROAD-H tail: displacement.magnitude + ColliderRadius along the NORMALISED direction (DaggerfallMissile.cs:333 builds the displacement, :337 casts it - an ARROW always takes that Raycast arm, never the :339 SphereCast) - a crouch-dipped shaft carries |dir| > 1
       // TACT1: a tree, a crate - cover stops a shaft; AUDIT TACT B5: by touch, the bodies before it tested first
-      const cs = c
-        ? coverStep(
-            coverDistance(c, m.pos, unit, reach),
-            c.raycast(m.pos, unit, reach),
-            reach,
-            reach - step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]),
-            step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]),
-          )
-        : null;
-      if (cs && Number.isFinite(cs.stop)) {
-        this._stick(
-          m,
-          [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop],
-          unit,
-        );
-        m.dead = true;
-        continue;
-      } // met geometry: the arrow is LOST (DFU); STUCK-ARROWS: the player's stays where it struck - the RAY's point (`unit`, the collider's units)
+      const cs = c ? coverStep(coverDistance(c, m.pos, unit, reach), c.raycast(m.pos, unit, reach), reach, reach - step * Math.hypot(m.dir[0], m.dir[1], m.dir[2]), step * Math.hypot(m.dir[0], m.dir[1], m.dir[2])) : null;
+      if (cs && Number.isFinite(cs.stop)) { this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit); m.dead = true; continue; }   // met geometry: the arrow is LOST (DFU); STUCK-ARROWS: the player's stays where it struck - the RAY's point (`unit`, the collider's units)
       const adv = cs ? step * cs.advance : step;
-      const from = m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null; // STUCK-ARROWS: the step's start, for the ground's crossing
-      const was = boxTargets?.length && m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null; // SERPENT4: the step's start, for a box
+      const from = m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;   // STUCK-ARROWS: the step's start, for the ground's crossing
+      const was = boxTargets?.length && m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;   // SERPENT4: the step's start, for a box
       m.pos[0] += m.dir[0] * adv;
       m.pos[1] += m.dir[1] * adv;
       m.pos[2] += m.dir[2] * adv;
@@ -350,8 +291,7 @@ export class ArrowFlight {
       // X2-slice: an enemy arrow tests the player mid-capsule per
       // step - the dungeon missile's exact contact law
       // (MISSILE_COLLIDER_RADIUS + the player's OWN 0.35 body = 0.80).
-      if (m.enemy && playerFeet && onPlayerHit) {
-        // AUDIT 65 CV-2: PlayerAdvanced.prefab:82 m_Radius 0.35, not the foe prefab's 0.45
+      if (m.enemy && playerFeet && onPlayerHit) {   // AUDIT 65 CV-2: PlayerAdvanced.prefab:82 m_Radius 0.35, not the foe prefab's 0.45
         // ROAD-H tail: the SphereCast at :339 meets the player's
         // CharacterController CAPSULE at its LIVE height, not a point
         // 0.9 up - a crouched player (0.9) is a shorter target.
@@ -381,29 +321,23 @@ export class ArrowFlight {
       // SPELLFX1: ANOTHER PLAYER'S SHAFT, DRAWN (meta.visual) - neither arm: it stops on my capsule or a foe's and
       // applies nothing, since the player who loosed it has already dealt whatever it did
       if (m.visual) {
-        if (
-          (playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS)) ||
-          (foeTargets ?? []).some(
-            (t) => t?.feet && !t.ref?.dead && missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height),
-          )
-        )
-          m.dead = true;
+        if ((playerFeet && missileHitsCapsule(m.pos, playerFeet, playerHeight, PLAYER_BODY_RADIUS))
+          || (foeTargets ?? []).some((t) => t?.feet && !t.ref?.dead && missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height))) m.dead = true;
         else if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) m.dead = true;
         continue;
       }
-      const foeImpact = m.enemy ? onFoeHit : m.fromPlayer ? onPlayerArrowHitFoe : null;
+      const foeImpact = m.enemy ? onFoeHit : (m.fromPlayer ? onPlayerArrowHitFoe : null);
       if (foeImpact && foeTargets) {
         for (const t of foeTargets) {
           if (!t?.feet || t.ref === m.shooterFoe || t.ref?.dead) continue;
-          if (m.fromPlayer && sparedByPlayer(t.ref)) continue; // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)
-          if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue; // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck
-          if (missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height)) {
-            // ROAD-H tail: the target's own CAPSULE (REVIEW 2026-09-05 had its centre as a point)
+          if (m.fromPlayer && sparedByPlayer(t.ref)) continue;   // DISC19-F (AUDIT DISC19): the player's shaft flies through the town's defenders, as their spells do (hostMagic.js sparedFromPlayer) - SHIPMATES: and the player's own crew (combat/friendlyFire.js)
+          if (m.technique && (playerBody(t.ref) || m.technique.struck?.includes(t.ref))) continue;   // TECH1: a technique's shaft passes a player's body by (TECH law 3), and a piercing shot a foe it has struck
+          if (missileHitsCapsule(m.pos, t.feet, t.ref?.ai?.height)) {   // ROAD-H tail: the target's own CAPSULE (REVIEW 2026-09-05 had its centre as a point)
             // ROAD-H tail (review): an ENEMY shaft damages only the foe
             // it was loosed at (:669); any other foe it meets stops it
             // and takes nothing. A PLAYER shaft (WeaponDamage through
             // playerArrowHitFoe) has no such gate - it strikes what it hits.
-            if (!m.enemy || t.ref === m.aimFoe) whileShaftLands(m, () => foeImpact(m, t.ref)); // BOW-FAST: a duel's door reads the shaft's stacks
+            if (!m.enemy || t.ref === m.aimFoe) whileShaftLands(m, () => foeImpact(m, t.ref));   // BOW-FAST: a duel's door reads the shaft's stacks
             // TECH1: a PIERCING SHOT flies on through - each foe it meets struck once, until it has struck its number
             if (techniquePierces(m, t.ref)) continue;
             m.dead = true;
@@ -418,23 +352,13 @@ export class ArrowFlight {
       // shaft stops in it, its impact the host's (`onPlayerArrowHitBox(m, target)`)
       if (was && onPlayerArrowHitBox) {
         const hit = boxTargets.find((t) => t?.box && segmentBoxEntry(was, m.pos, t.box, MISSILE_COLLIDER_RADIUS));
-        if (hit) {
-          onPlayerArrowHitBox(m, hit);
-          m.dead = true;
-          continue;
-        }
+        if (hit) { onPlayerArrowHitBox(m, hit); m.dead = true; continue; }
       }
       // The mesh raycast never sees bare TERRAIN (the collider's
       // heightAt fallback floor) - an arrow at or under it has landed.
-      if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) {
-        if (from) this._stick(m, groundEntry(from, m.pos, c), m.dir);
-        m.dead = true;
-      } // STUCK-ARROWS: in the ground where the step crossed it
+      if (c && m.pos[1] <= c.heightAt(m.pos[0], m.pos[2])) { if (from) this._stick(m, groundEntry(from, m.pos, c), m.dir); m.dead = true; }   // STUCK-ARROWS: in the ground where the step crossed it
     }
-    if (!live && this.arrows.length) {
-      for (const m of this.arrows) this._releaseOrb(m);
-      this.arrows.length = 0;
-    }
+    if (!live && this.arrows.length) { for (const m of this.arrows) this._releaseOrb(m); this.arrows.length = 0; }
   }
 
   /** STUCK-ARROWS: a shaft that met the world stays there when it is the player's real arrow and the host has a pool. */
@@ -446,12 +370,7 @@ export class ArrowFlight {
   _stuckMesh() {
     if (this._stuckGpu === null) {
       this._stuckGpu = false;
-      Promise.resolve(this.getGpuMesh(ARROW_MODEL_ID)).then(
-        (g) => {
-          if (g) this._stuckGpu = g;
-        },
-        () => {},
-      );
+      Promise.resolve(this.getGpuMesh(ARROW_MODEL_ID)).then((g) => { if (g) this._stuckGpu = g; }, () => {});
     }
     return this._stuckGpu || null;
   }
@@ -459,10 +378,7 @@ export class ArrowFlight {
   /** FIELD-GUN14: an orb's flat, taken down. Idempotent - a record
    *  can be swept more than once before the array is compacted. */
   _releaseOrb(m) {
-    if (m.orbFlat) {
-      m.orbFlat.retire();
-      m.orbFlat = null;
-    }
+    if (m.orbFlat) { m.orbFlat.retire(); m.orbFlat = null; }
   }
 
   /** FIELD-GUN14: every flat down, now. A host tearing its scene down
@@ -470,12 +386,9 @@ export class ArrowFlight {
    *  orb hanging in the next one - hitEffects' own `clear` covers the
    *  pool, and this covers the handles that point into it. */
   clear() {
-    for (const m of this.arrows) {
-      this._releaseOrb(m);
-      m.dead = true;
-    }
+    for (const m of this.arrows) { this._releaseOrb(m); m.dead = true; }
     this.arrows.length = 0;
-    this._stuckGpu = null; // STUCK-ARROWS: a new scene asks its own pipeline again
+    this._stuckGpu = null;   // STUCK-ARROWS: a new scene asks its own pipeline again
   }
 
   /** Draw every live arrow (the host's mesh pass, after update). */
@@ -544,40 +457,30 @@ export class ArrowFlight {
  *  loot's echo) ride its one claim (systems/playerDoor.js - OPEN-HAND's law, the gate's own). Answers what to claim. */
 export function shaftOnRelayBody(m, entity, rolled) {
   const body = { name: entity?.name ?? '', entity };
-  const dmg = bowFastDamage(m, m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled); // BOW-FAST
+  const dmg = bowFastDamage(m, m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled);   // BOW-FAST
   if (m?.technique) tellTechniqueLanded(m.technique, body, dmg);
   const owed = takeOwed(entity);
   return dmg > 0 ? dmg + owed : dmg;
 }
 
-export function playerArrowHitFoe(
-  m,
-  foe,
-  {
-    playerEntity,
-    playerWeapon = null,
-    playerFeet = null,
-    dealDamage = null,
-    audio = null,
-    hitEffects = null,
-    say = null,
-    onInflictPoison = null,
-    // AUDIT 58: HandleAttackFromSource (WeaponManager.cs:630) is NOT in
-    // the damage fork - it runs for every shaft that CONNECTED, so a
-    // zero-damage arrow enrages what it hit and, through
-    // DaggerfallEntityBehaviour.cs:255-258, its whole area. It cannot
-    // ride `dealDamage` with a 0: that door carries the pools' knockback,
-    // and WeaponManager's knockback (:575-582) is inside the `damage > 0`
-    // arm - weaponKnockbackSpeed(0, w) would return the 15/ratio FLOOR
-    // and shove a foe DFU leaves standing.
-    onAttackFromPlayer = null,
-    rolls = Math.random,
-  } = {},
-) {
+export function playerArrowHitFoe(m, foe, {
+  playerEntity, playerWeapon = null, playerFeet = null, dealDamage = null,
+  audio = null, hitEffects = null, say = null, onInflictPoison = null,
+  // AUDIT 58: HandleAttackFromSource (WeaponManager.cs:630) is NOT in
+  // the damage fork - it runs for every shaft that CONNECTED, so a
+  // zero-damage arrow enrages what it hit and, through
+  // DaggerfallEntityBehaviour.cs:255-258, its whole area. It cannot
+  // ride `dealDamage` with a 0: that door carries the pools' knockback,
+  // and WeaponManager's knockback (:575-582) is inside the `damage > 0`
+  // arm - weaponKnockbackSpeed(0, w) would return the 15/ratio FLOOR
+  // and shove a foe DFU leaves standing.
+  onAttackFromPlayer = null,
+  rolls = Math.random,
+} = {}) {
   if (!foe || foe.dead || !playerEntity) return 0;
   // REVENANT-FATE (the 2026-10-02 audit): one held by its fate (kneeling, burning, gathering into a portal) - the shaft
   // lands nothing: no blow, no poison, no rage, no Archery (the kill door refused the damage; the rest still landed)
-  if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return 0; // RVN4: nor one roaring its last stand
+  if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return 0;   // RVN4: nor one roaring its last stand
   const swing = SWING_MODS[playerWeapon?.machine?.state] ?? { damage: 0, toHit: 0 };
   const back = foe.ai && playerFeet ? isBackFacing(foe.ai.yaw, foe.ai.feet, playerFeet) : false;
   // AUDIT PISTOLET A1 (TWO-HANDS DUAL): a pair's OFF-HAND shot strikes less surely and less hard, as the off hand's swing
@@ -586,49 +489,36 @@ export function playerArrowHitFoe(
   const off = !!playerWeapon?.isOffHandItem?.(m.weapon);
   const rolled = calculateAttackDamage(playerEntity, foe.entity, {
     weapon: m.weapon ?? null,
-    damageMod: swing.damage,
-    toHitMod: swing.toHit + (off ? offHandToHit(liveStat(playerEntity, 'agility')) : 0),
+    damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(liveStat(playerEntity, 'agility')) : 0),
     ...(off ? OFF_HAND_BLOW : {}),
     backstabChance: backstabChanceOf(playerEntity, back, foe),
-    weaponAnimTime: playerWeapon?.lastDrawMs ?? 0, // PCO1: the draw's length, for Roleplay Realism's archery
-    rolls,
-    onInflictPoison,
-    say,
-    unaware: foeUnaware(foe), // SET2: a shaft at a foe that had not noticed me - Nightfall Strike's "arrows too"
+    weaponAnimTime: playerWeapon?.lastDrawMs ?? 0,   // PCO1: the draw's length, for Roleplay Realism's archery
+    rolls, onInflictPoison, say,
+    unaware: foeUnaware(foe),   // SET2: a shaft at a foe that had not noticed me - Nightfall Strike's "arrows too"
   });
   // TECH1 (bible/05-Combat/Weapon-Techniques.md): a technique's shaft (a Volley's, a Piercing Shot's) weighs the formula's
   // number by the technique - never on a player's body (its shaft passes them by in flight; a door that hands one here
   // anyway gets the plain number)
-  const dmg = bowFastDamage(
-    m,
-    m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled,
-  ); // BOW-FAST
-  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg); // MARTIAL3: a path's rider answers its signature's shaft
+  const dmg = bowFastDamage(m, m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled);   // BOW-FAST
+  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg);   // MARTIAL3: a path's rider answers its signature's shaft
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
   // AUDIT 62 F20: the splash point is the struck foe's TRANSFORM
   // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:571), i.e. its
   // feet lifted by its own centreOffset. `at` stays the feet for the
   // hit sound and the pain voice below.
-  const bloodAt = foe.ai?.feet ? [at[0], at[1] + (foe.ai.centreOffset ?? (foe.ai.height ?? 1.8) / 2), at[2]] : at;
+  const bloodAt = foe.ai?.feet
+    ? [at[0], at[1] + (foe.ai.centreOffset ?? (foe.ai.height ?? 1.8) / 2), at[2]]
+    : at;
   if (dmg > 0) {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
-    hitEffects?.showBloodSplash?.(
-      foe.entity?.basics?.bloodIndex ?? 0,
-      bloodAt,
-      null,
-      bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }),
-    ); // BLOOD1b: the player's shaft drives the ladder, and the bow it came off decides the heavy branch   // ...and NO SWING: the reference reads the LIVE weapon state when blood spawns, which for a shaft that has been in the air is whatever the player's arm happens to be doing now. A shaft's blood is thrown by the shaft.
+    hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt, null, bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }));   // BLOOD1b: the player's shaft drives the ladder, and the bow it came off decides the heavy branch   // ...and NO SWING: the reference reads the LIVE weapon state when blood spawns, which for a shaft that has been in the air is whatever the player's arm happens to be doing now. A shaft's blood is thrown by the shaft.
     const pain = enemyPainVoice(foe, dmg, rolls);
-    if (pain && pain.clip >= 0)
-      audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], monsterVolume(), {
-        maxDistance: 16,
-        pitch: 1 + pain.pitchLift,
-      }); // AUDIT 58: EnemySounds.cs:172-175
+    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], monsterVolume(), { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);
   }
   // :627/:630's unconditional pair, whatever the fork above did - and
   // BEFORE the arrow is added back (BowDamage's own order).
-  onAttackFromPlayer?.(foe, dmg); // AUDIT WORLD6b-iii(e) C2: with what landed - a pool that diverts a zero blow to a puppet's owner sends none when the damage already went
+  onAttackFromPlayer?.(foe, dmg);   // AUDIT WORLD6b-iii(e) C2: with what landed - a pool that diverts a zero blow to a puppet's owner sends none when the damage already went
   // FIELD-GUN14: AND A GUN LEAVES NO SHAFT TO PULL OUT. BowDamage
   // (DaggerfallMissile.cs:679-687) adds the arrow back to whatever it
   // struck because an arrow SURVIVES being shot - that is what makes
@@ -640,8 +530,8 @@ export function playerArrowHitFoe(
   // isArrowSummoned - it vanishes), and a real one survives the strike ARROW_LODGE_CHANCE of the time - the roll last, on
   // the blow's own stream, so every roll above is drawn as it was
   if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned && rolls() < ARROW_LODGE_CHANCE) {
-    addItem(foe.entity.items, bowDamageArrow()); // MAC-N1: one minter, not a bare literal with no value
-    if (!foe.entity.bout && foe.rival == null) noteShotRecoverable(ARROW_TEMPLATE); // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)
+    addItem(foe.entity.items, bowDamageArrow());   // MAC-N1: one minter, not a bare literal with no value
+    if (!foe.entity.bout && foe.rival == null) noteShotRecoverable(ARROW_TEMPLATE);   // ARENA-ARROWS: lodged in a pack that can be looted - not the bout's to pay (a bout fighter's goes with it, and a relay opponent's stand-in is no corpse)
   }
   // DISC10-D H1: the shaft is a WeaponDamage like the swing
   // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:627-635), so its last

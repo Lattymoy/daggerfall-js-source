@@ -65,8 +65,8 @@
   {
     "name": "MWNPC9a-creature-pieces-mirrored",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      kind: 'rigid',\n      mirrored: false,",
-    "new": "      kind: 'rigid',\n      mirrored: true,",
+    "old": "pieces.push({ slot: 'creature', bone: null, kind: 'rigid', mirrored: false,",
+    "new": "pieces.push({ slot: 'creature', bone: null, kind: 'rigid', mirrored: true,",
     "tests": [
       "test/formats/morrowind/mwnpc9_creatures.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MWNPC9a-rigid-source-raw",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      source: applyPre(batch.positions, pre),",
-    "new": "      source: batch.positions,",
+    "old": "batch: null, source: applyPre(batch.positions, pre), attachRef, boneOffset: null,",
+    "new": "batch: null, source: batch.positions, attachRef, boneOffset: null,",
     "tests": [
       "test/formats/morrowind/mwnpc9_creatures.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MWNPC9a-skinned-dropped",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  // skinBatch, a rigid one's turned by its pre-transform once here and placed with its vertices each pose\n  for (const batch of bound.skinned) {",
-    "new": "  // skinBatch, a rigid one's turned by its pre-transform once here and placed with its vertices each pose\n  for (const batch of []) {",
+    "old": "  for (const batch of bound.skinned) {\n    pieces.push({ slot: 'creature'",
+    "new": "  for (const batch of []) {\n    pieces.push({ slot: 'creature'",
     "tests": [
       "test/formats/morrowind/mwnpc9_creatures.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "MWNPC9a-sources-never-bipedal",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  return animSourcesFor(bipedal ? TP_BASE_MODEL : null, modelPath, exists);",
-    "new": "  return animSourcesFor(null, modelPath, exists);",
+    "old": "return animSourcesFor(bipedal ? TP_BASE_MODEL : null, modelPath, exists);",
+    "new": "return animSourcesFor(null, modelPath, exists);",
     "tests": [
       "test/formats/morrowind/mwnpc9_creatures.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MWNPC9a-flag-blood-kept",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      e.flags = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getInt32(0, true) & 0xff;",
-    "new": "      e.flags = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getInt32(0, true);",
+    "old": ".getInt32(0, true) & 0xff;",
+    "new": ".getInt32(0, true);",
     "tests": [
       "test/formats/morrowind/mwload_records.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "MWNPC9a-scale-unread",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    else if (sub.name === 'XSCL' && sub.len >= 4)",
-    "new": "    else if (sub.name === 'XSCLx' && sub.len >= 4)",
+    "old": "else if (sub.name === 'XSCL' && sub.len >= 4) e.scale",
+    "new": "else if (sub.name === 'XSCLx' && sub.len >= 4) e.scale",
     "tests": [
       "test/formats/morrowind/mwload_records.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "MWNPC9a-creatures-unextracted",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      case 'CREA': {\n        const e = readCreature(bytes, rec);\n        if (e) out.creatures.push(e);\n        break;\n      } // MWNPC9\n      case 'LIGH': {",
-    "new": "      case 'LIGH': {",
+    "old": "      case 'CREA': { const e = readCreature(bytes, rec); if (e) out.creatures.push(e); break; }   // MWNPC9\n",
+    "new": "",
     "tests": [
       "test/formats/morrowind/mwload_records.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "MWNPC9a-shape-without-creatures",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights', 'magicEffects', 'statics', 'creatures'].every((k) =>",
-    "new": "    ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights', 'magicEffects', 'statics'].every((k) =>",
+    "old": "'magicEffects', 'statics', 'creatures'].every((k) => Array.isArray(r[k]))",
+    "new": "'magicEffects', 'statics'].every((k) => Array.isArray(r[k]))",
     "tests": [
       "test/formats/morrowind/mwload_records.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "MWNPC9a-version-unbumped",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "export const ARM_RECORDS_VERSION = 6; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records",
-    "new": "export const ARM_RECORDS_VERSION = 4; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records",
+    "old": "export const ARM_RECORDS_VERSION = 6;",
+    "new": "export const ARM_RECORDS_VERSION = 4;",
     "tests": [
       "test/formats/morrowind/mwload_records.test.js"
     ]

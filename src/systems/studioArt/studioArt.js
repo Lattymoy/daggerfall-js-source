@@ -24,16 +24,8 @@
 // Not a DFU member: DFU's loose folder (TextureReplacement.TryImportTexture) is the player's; this is the game's own.
 // Ledger A (STUDIO1).
 import {
-  textureEntry,
-  textureKey,
-  addVendorTextures,
-  hasTextureReplacement,
-  decodedTexture,
-  decodedTextureTopDown,
-  preloadTextureRecord,
-  decodePng,
-  holdTextureTiers,
-  PRELOAD_CONCURRENCY,
+  textureEntry, textureKey, addVendorTextures, hasTextureReplacement, decodedTexture, decodedTextureTopDown, preloadTextureRecord, decodePng,
+  holdTextureTiers, PRELOAD_CONCURRENCY,
 } from '../textureReplacement.js';
 import { LAST_CLASSIC_TEXTURE_ARCHIVE } from '../../formats/textureFile.js';
 import { DYE_COLORS, dyeToken } from '../../characters/dyes.js';
@@ -70,14 +62,8 @@ export function studioFile(path) {
   const e = m && textureEntry(`${m[1]}.png`);
   if (!e || (e.dye != null && !askedDye(e.dye))) return null;
   return {
-    path,
-    artist: parts[0],
-    label: m[2] ?? null,
-    archive: e.archive,
-    record: e.record,
-    frame: e.frame,
-    map: e.map,
-    dye: e.dye,
+    path, artist: parts[0], label: m[2] ?? null,
+    archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,
     key: textureKey(e.archive, e.record, e.frame, e.map, e.dye),
   };
 }
@@ -120,7 +106,7 @@ export function installStudioArt(io = {}) {
   if (_install) return _install;
   const asked = register(io).then((n) => {
     if (n !== null) return n;
-    if (_install === asked) _install = null; // a read that failed is no answer: the next boot asks again
+    if (_install === asked) _install = null;   // a read that failed is no answer: the next boot asks again
     return 0;
   });
   _install = asked;
@@ -134,36 +120,18 @@ async function register({ fetch = (u) => globalThis.fetch(u), root = undefined, 
     const r = await fetch(studioUrl(STUDIO_INDEX, root));
     if (!r?.ok) return 0;
     files = (await r.json())?.files;
-  } catch {
-    return null;
-  }
+  } catch { return null; }
   _worn = studioEntries(files);
   _decode = decode;
-  const bytes = async (path) => {
-    const r = await fetch(studioUrl(path, root));
-    return r?.ok ? new Uint8Array(await r.arrayBuffer()) : null;
-  };
-  const n = addVendorTextures(
-    _worn.map((e) => ({
-      archive: e.archive,
-      record: e.record,
-      frame: e.frame,
-      map: e.map,
-      dye: e.dye,
-      studio: true,
-      fileName: `studio:${e.path}`,
-      load: () => bytes(e.path),
-    })),
-  );
+  const bytes = async (path) => { const r = await fetch(studioUrl(path, root)); return r?.ok ? new Uint8Array(await r.arrayBuffer()) : null; };
+  const n = addVendorTextures(_worn.map((e) => ({
+    archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,
+    studio: true, fileName: `studio:${e.path}`, load: () => bytes(e.path),
+  })));
   if (n) _generation++;
   const own = _worn.filter((e) => e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE);
   let next = 0;
-  const lane = async () => {
-    while (next < own.length) {
-      const e = own[next++];
-      await preloadTextureRecord(e.archive, e.record, e.frame, e.map, e.dye, { decode });
-    }
-  };
+  const lane = async () => { while (next < own.length) { const e = own[next++]; await preloadTextureRecord(e.archive, e.record, e.frame, e.map, e.dye, { decode }); } };
   _decoded = Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, own.length) }, lane)).then(() => {});
   return n;
 }
@@ -178,13 +146,7 @@ export const studioWorn = () => _worn;
 /** Moves each time the studio registers pictures - what a cache of pictures drawn before it keys on (ui/textureCanvas.js). */
 export const studioGeneration = () => _generation;
 /** Test seam: not installed. */
-export function _resetStudioArt() {
-  _install = null;
-  _decoded = Promise.resolve();
-  _decode = decodePng;
-  _worn = [];
-  _slots.clear();
-}
+export function _resetStudioArt() { _install = null; _decoded = Promise.resolve(); _decode = decodePng; _worn = []; _slots.clear(); }
 
 /**
  * THE DOOR OF A PICTURE THE PORT PAINTS ITSELF (STUDIO1): what replaces it - the studio's picture, or a player's own
@@ -225,27 +187,15 @@ export function wearPainted(archive, record, paint, put, how = {}) {
   const wear = {};
   _slots.set(slot, wear);
   const own = paintedReplacement(archive, record, how);
-  if (own) {
-    _slots.delete(slot);
-    put(own, { replaced: true, late: false });
-    return;
-  }
+  if (own) { _slots.delete(slot); put(own, { replaced: true, late: false }); return; }
   put(paint(), { replaced: false, late: false });
   Promise.resolve(_install)
-    .then(() =>
-      hasTextureReplacement(archive, record)
-        ? preloadTextureRecord(archive, record, 0, 'Albedo', null, { decode: _decode })
-        : null,
-    )
+    .then(() => (hasTextureReplacement(archive, record) ? preloadTextureRecord(archive, record, 0, 'Albedo', null, { decode: _decode }) : null))
     .then((got) => {
       if (!got || _slots.get(slot) !== wear) return;
       const late = paintedReplacement(archive, record, how);
       if (late) put(late, { replaced: true, late: true });
     })
-    .catch((e) =>
-      console.warn(`[studio] ${archive}_${record}: the picture that landed would not go up`, e?.message ?? e),
-    )
-    .finally(() => {
-      if (_slots.get(slot) === wear) _slots.delete(slot);
-    });
+    .catch((e) => console.warn(`[studio] ${archive}_${record}: the picture that landed would not go up`, e?.message ?? e))
+    .finally(() => { if (_slots.get(slot) === wear) _slots.delete(slot); });
 }

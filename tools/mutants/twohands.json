@@ -608,8 +608,8 @@
   {
     "name": "TWOHANDS-AUDIT-share-after-the-report",
     "file": "src/combat/formulas.js",
-    "old": "    damage = shared(Math.max(0, damage));",
-    "new": "    damage = Math.max(0, damage);",
+    "old": "  damage = shared(Math.max(0, damage));",
+    "new": "  damage = Math.max(0, damage);",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1166,8 +1166,8 @@
   {
     "name": "TWOHANDS-AUDIT2-strikes-payload-every-blow",
     "file": "src/combat/formulas.js",
-    "old": "  if (charged && isEnchantedItem(charged) && (attacker.isPlayer || damage > 0) && whole) {",
-    "new": "  if (charged && isEnchantedItem(charged) && (attacker.isPlayer || damage > 0)) {",
+    "old": "(attacker.isPlayer || damage > 0) && whole) {",
+    "new": "(attacker.isPlayer || damage > 0)) {",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1175,8 +1175,8 @@
   {
     "name": "TWOHANDS-AUDIT2-weight-never-rolled",
     "file": "src/combat/formulas.js",
-    "old": "  const whole = !(blowWeight < 1) || rolls() < blowWeight;",
-    "new": "  const whole = true;",
+    "old": "const whole = !(blowWeight < 1) || rolls() < blowWeight;",
+    "new": "const whole = true;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1184,8 +1184,8 @@
   {
     "name": "TWOHANDS-AUDIT2-listeners-not-told",
     "file": "src/combat/formulas.js",
-    "old": "    const info = { backstab: notes.backstab, blow: whole, wraps }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
-    "new": "    const info = { backstab: notes.backstab, wraps }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
+    "old": "const info = { backstab: notes.backstab, blow: whole, wraps };",
+    "new": "const info = { backstab: notes.backstab, wraps };",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1202,8 +1202,8 @@
   {
     "name": "TWOHANDS-AUDIT2-core-not-handed-the-share",
     "file": "src/combat/formulas.js",
-    "old": "        blowShare,\n      })",
-    "new": "      })",
+    "old": "onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;",
+    "new": "onStruck: (part) => (struckPart = part), unaware }) : undefined;",
     "tests": [
       "test/combat/twohands.test.js"
     ]
@@ -1211,8 +1211,8 @@
   {
     "name": "TWOHANDS-AUDIT2-shared-twice-under-a-core",
     "file": "src/combat/formulas.js",
-    "old": "    damage = notes.shared ? overridden : shared(overridden);",
-    "new": "    damage = shared(overridden);",
+    "old": "damage = notes.shared ? overridden : shared(overridden);",
+    "new": "damage = shared(overridden);",
     "tests": [
       "test/combat/twohands.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "MWNPC11-tiers-raised",
     "file": "src/characters/npcBodies.js",
-    "old": "  near: Object.freeze({ bodies: 24, skins: 8 }),",
-    "new": "  near: Object.freeze({ bodies: 28, skins: 10 }),",
+    "old": "near: Object.freeze({ bodies: 24, skins: 8 }),",
+    "new": "near: Object.freeze({ bodies: 28, skins: 10 }),",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MWNPC11-stale-kept",
     "file": "src/characters/npcBodies.js",
-    "old": "    for (const r of lanes.values()) if (r.round >= round - NPC_BUDGET_ROUNDS && r.n > 0) live.push(r);",
-    "new": "    for (const r of lanes.values()) if (r.n > 0) live.push(r);",
+    "old": "if (r.round >= round - NPC_BUDGET_ROUNDS && r.n > 0) live.push(r);",
+    "new": "if (r.n > 0) live.push(r);",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MWNPC11-cut-nearest-first-lost",
     "file": "src/characters/npcBodies.js",
-    "old": "        for (const r of live) if (r.i < r.n && (!best || r.d2[r.i] < best.d2[best.i])) best = r;",
-    "new": "        for (const r of live) if (r.i < r.n && !best) best = r;",
+    "old": "for (const r of live) if (r.i < r.n && (!best || r.d2[r.i] < best.d2[best.i])) best = r;",
+    "new": "for (const r of live) if (r.i < r.n && !best) best = r;",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "MWNPC11-cut-none-when-few",
     "file": "src/characters/npcBodies.js",
-    "old": "        if (!best) {\n          cutD2 = Infinity;\n          break;\n        }",
+    "old": "        if (!best) { cutD2 = Infinity; break; }",
     "new": "        if (!best) break;",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
@@ -38,8 +38,8 @@
   {
     "name": "MWNPC11-report-whole-buffer",
     "file": "src/characters/npcBodies.js",
-    "old": "      r.n = n;",
-    "new": "      r.n = d2.length;",
+    "old": "      r.d2 = d2; r.n = n; r.round = round;",
+    "new": "      r.d2 = d2; r.n = d2.length; r.round = round;",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MWNPC11-drop-kept",
     "file": "src/characters/npcBodies.js",
-    "old": "      lanes.delete(lane);",
-    "new": "      void lane;",
+    "old": "    drop(lane) { lanes.delete(lane); },",
+    "new": "    drop(lane) { void lane; },",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MWNPC11-host-alone",
     "file": "src/characters/npcBodies.js",
-    "old": "    budget: NPC_FRAME_BUDGET,\n  }); // MWNPC11: every host's lane on the one frame",
-    "new": "  }); // MWNPC11: every host's lane on the one frame",
+    "old": "collider, tiers, budget: NPC_FRAME_BUDGET });",
+    "new": "collider, tiers });",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "MWNPC11-lane-builds-far",
     "file": "src/characters/npcBodies.js",
-    "old": "            limits: budget ? { ...limits, buildInRange: true, hysteresis: NPC_BUDGET_HYSTERESIS } : limits,",
-    "new": "            limits: budget ? { ...limits, hysteresis: NPC_BUDGET_HYSTERESIS } : limits,",
+    "old": "limits: budget ? { ...limits, buildInRange: true, hysteresis: NPC_BUDGET_HYSTERESIS } : limits,",
+    "new": "limits: budget ? { ...limits, hysteresis: NPC_BUDGET_HYSTERESIS } : limits,",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -128,7 +128,7 @@
   {
     "name": "MWNPC11-report-unsorted",
     "file": "src/characters/npcBodies.js",
-    "old": "      while (j > 0 && d2s[j - 1] > d2) {\n        d2s[j] = d2s[j - 1];\n        j--;\n      }",
+    "old": "      while (j > 0 && d2s[j - 1] > d2) { d2s[j] = d2s[j - 1]; j--; }",
     "new": "      void 0;",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "MWNPC11-range-unmoved",
     "file": "src/characters/npcBodies.js",
-    "old": "    b.setLimits({\n      range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)),\n      skinBudget: Math.min(lim.skinBudget, budget.skins(self, ft.skins)),\n    });",
-    "new": "    b.setLimits({ range: lim.range, skinBudget: Math.min(lim.skinBudget, budget.skins(self, ft.skins)) });",
+    "old": "range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)),",
+    "new": "range: lim.range,",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "MWNPC11-range-exact-root",
     "file": "src/characters/npcBodies.js",
-    "old": "      range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)),",
-    "new": "      range: Math.min(lim.range, Math.sqrt(cut)),",
+    "old": "Math.sqrt(cut) * (1 + 1e-9)",
+    "new": "Math.sqrt(cut)",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "MWNPC11-skins-unmoved",
     "file": "src/characters/npcBodies.js",
-    "old": "    b.setLimits({\n      range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)),\n      skinBudget: Math.min(lim.skinBudget, budget.skins(self, ft.skins)),\n    });",
-    "new": "    b.setLimits({ range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)), skinBudget: lim.skinBudget });",
+    "old": "skinBudget: Math.min(lim.skinBudget, budget.skins(self, ft.skins)) });",
+    "new": "skinBudget: lim.skinBudget });",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MWNPC11-destroy-kept-share",
     "file": "src/characters/npcBodies.js",
-    "old": "      budget?.drop(self);\n    }, // MWNPC11: and its share of the frame",
-    "new": "    }, // MWNPC11: and its share of the frame",
+    "old": "standing = null; budget?.drop(self); },",
+    "new": "standing = null; },",
     "tests": [
       "test/characters/mwnpc11_budget.test.js"
     ]

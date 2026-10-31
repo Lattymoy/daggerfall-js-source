@@ -55,8 +55,8 @@
   {
     "name": "AFB-SEA-F4-the-route-arrival-uncounted",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    st.arrived++; // SEA-ROWS\n    // AUDIT DEEP X-7: asked AT the arrival - a journey the view began but the player came down from ends in the mod's box",
-    "new": "    // AUDIT DEEP X-7: asked AT the arrival - a journey the view began but the player came down from ends in the mod's box",
+    "old": "  function arriveRoute(quiet) {\n    ui?.closeWindow();\n    clearTravelDestination();\n    st.arrived++;   // SEA-ROWS\n",
+    "new": "  function arriveRoute(quiet) {\n    ui?.closeWindow();\n    clearTravelDestination();\n",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -65,8 +65,8 @@
   {
     "name": "AFB-SEA-F4-the-place-arrival-uncounted",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles },\n    );\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++; // SEA-ROWS\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }",
-    "new": "      { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles },\n    );\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }",
+    "old": "edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;   // SEA-ROWS\n",
+    "new": "edgeArrival: st.settings.avoidObstacles });\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -75,8 +75,8 @@
   {
     "name": "AFB-SEA-F4-the-pixel-arrival-uncounted",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      st.road ? st.settings.recklessTravelMultiplier : st.settings.cautiousTravelMultiplier,\n    );\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++; // SEA-ROWS\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }",
-    "new": "      st.road ? st.settings.recklessTravelMultiplier : st.settings.cautiousTravelMultiplier,\n    );\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      messageBox(T.MsgArrived);\n    };\n    st.lastLocation = deps.currentLocation?.() ?? null;\n    initTravelUI();\n  }",
+    "old": "st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n      st.arrived++;   // SEA-ROWS\n",
+    "new": "st.settings.cautiousTravelMultiplier);\n    st.autopilot.onArrival = () => {\n      ui?.closeWindow();\n      clearTravelDestination();\n",
     "tests": [
       "test/systems/naval/fb1029g_searows.test.js"
     ],
@@ -85,8 +85,8 @@
   {
     "name": "AFB-SEA-F5-the-reach-edge",
     "file": "src/world/ethericSea.js",
-    "old": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
-    "new": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx > CROSS_SEA_PX; // Infinity: none in reach",
+    "old": "seaPx >= CROSS_SEA_PX;",
+    "new": "seaPx > CROSS_SEA_PX;",
     "tests": [
       "test/world/ethersea.test.js"
     ],

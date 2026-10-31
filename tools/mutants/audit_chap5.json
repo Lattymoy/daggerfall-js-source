@@ -313,8 +313,8 @@
   {
     "name": "AUDIT-CHAP5-E4-KEEPS",
     "file": "server-account/src/guilds.js",
-    "old": "  [\n    'guild-patron',\n    (/** @type {string} */ p) =>\n      `EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p} AND state = 'open')`,\n  ], // AUDIT CHAP5 E4: a bid for a chapter's patronage, its escrow burnt with the guild",
-    "new": "  ['guild-patron', (/** @type {string} */ p) => `0`], // AUDIT CHAP5 E4: a bid for a chapter's patronage, its escrow burnt with the guild",
+    "old": "`EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p} AND state = 'open')`",
+    "new": "`0`",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "AUDIT-CHAP5-E4-WORD",
     "file": "server-account/src/guilds.js",
-    "old": "    'guild-patron',",
-    "new": "    'guild-seat',",
+    "old": "  ['guild-patron', (/** @type {string} */ p) =>",
+    "new": "  ['guild-seat', (/** @type {string} */ p) =>",
     "tests": [
       "test/net/audit_chap5.test.js"
     ]

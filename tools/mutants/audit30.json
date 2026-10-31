@@ -92,8 +92,8 @@
   {
     "name": "AUDIT30-S6-one-piece-marked-many-times",
     "file": "server-account/src/decor.js",
-    "old": "  const ours =\n    row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
-    "new": "  const ours = row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0;",
+    "old": "&& Number(row.listed) === 0 && !elsewhere;",
+    "new": "&& Number(row.listed) === 0;",
     "tests": [
       "test/net/audit30_service.test.js"
     ]
@@ -504,8 +504,8 @@
   {
     "name": "AUDIT30-C7-any-mark-a-name",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    makerMark(item.maker) === item.maker &&\n    typeof item.provenance === 'string' &&\n    PROVENANCE_RE.test(item.provenance)",
-    "new": "    typeof item.provenance === 'string'",
+    "old": "item.maker && makerMark(item.maker) === item.maker\n    && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance))",
+    "new": "item.maker && typeof item.provenance === 'string')",
     "tests": [
       "test/net/audit30_client.test.js"
     ]

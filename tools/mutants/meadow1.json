@@ -47,8 +47,8 @@
   {
     "name": "MEADOW1-the-patch-scale-dropped",
     "file": "src/render/labGrass.js",
-    "old": "        `    h *= (${byVariant('scale')}) * mix(${glf(MEADOW_PATCH_SCALE[0])}, ${glf(MEADOW_PATCH_SCALE[1])}, mLush);\\n` +",
-    "new": "        `    h *= (${byVariant('scale')}) ;\\n` +",
+    "old": "* mix(${glf(MEADOW_PATCH_SCALE[0])}, ${glf(MEADOW_PATCH_SCALE[1])}, mLush);",
+    "new": ";",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MEADOW1-the-bush-as-stiff-as-grass",
     "file": "src/render/labGrass.js",
-    "old": "        `    mStiff = ${byVariant('stiff')};\\n` +",
-    "new": "        `    mStiff = 1.0;\\n` +",
+    "old": "mStiff = ${byVariant('stiff')};",
+    "new": "mStiff = 1.0;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MEADOW1-the-vertex-stage-still-picks-the-hash-tuft",
     "file": "src/render/labGrass.js",
-    "old": "      to:\n        'every tuft re-rolled at each map pixel crossed\\n' +\n        '  if (uArt > 0.5) { vVar = mVar; vUV = mC; }   // MEADOW1\\n',",
-    "new": "      to: 'every tuft re-rolled at each map pixel crossed\\n' + '  if (uArt > 0.5) { vUV = mC; }   // MEADOW1\\n',",
+    "old": "if (uArt > 0.5) { vVar = mVar; vUV = mC; }",
+    "new": "if (uArt > 0.5) { vUV = mC; }",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "MEADOW1-the-quad-turned-to-the-eye",
     "file": "src/render/labGrass.js",
-    "old": "        '  if (uArt > 0.5) { vT = mC.y; mLean = aInst2.xy * mStiff + (lean - aInst2.xy) * mSway; p.xz = root + mLean * (vT*vT) * h + mDir * (mC.x - 0.5) * h; }   // MEADOW1: the card\\n',",
-    "new": "        '  if (uArt > 0.5) { vT = mC.y; mLean = aInst2.xy * mStiff + (lean - aInst2.xy) * mSway; p.xz = root + mLean * (vT*vT) * h + side * (mC.x - 0.5) * h; }   // MEADOW1: the card\\n',",
+    "old": "p.xz = root + mLean * (vT*vT) * h + mDir * (mC.x - 0.5) * h;",
+    "new": "p.xz = root + mLean * (vT*vT) * h + side * (mC.x - 0.5) * h;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -94,8 +94,8 @@
   {
     "name": "MEADOW1-the-mirror-flag-lost",
     "file": "src/render/labGrass.js",
-    "old": "        '    if ((fract(mYaw * 8.0) >= 0.5) != (aCard >= 1.0)) mDir = -mDir;   // mirrored, by tuft and by every other card - AUDIT MEADOW1: the card turned, so its box holds\\n' +",
-    "new": "        '    if ((fract(mYaw * 8.0) >= 0.5) != false) mDir = -mDir;   // mirrored, by tuft and by every other card - AUDIT MEADOW1: the card turned, so its box holds\\n' +",
+    "old": "!= (aCard >= 1.0)) mDir = -mDir;",
+    "new": "!= false) mDir = -mDir;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -123,8 +123,8 @@
   {
     "name": "MEADOW1-the-face-law-dropped",
     "file": "src/render/labGrass.js",
-    "old": "        `    vLam *= mix(1.0, clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), mSun), ${glf(MEADOW_FACE.floor)}, 1.0), length(mSun.xz));\\n` +",
-    "new": "        `    vLam *= 1.0 + 0.0 * mix(1.0, clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), mSun), ${glf(MEADOW_FACE.floor)}, 1.0), length(mSun.xz));\\n` +",
+    "old": "`    vLam *= mix(1.0, clamp(",
+    "new": "`    vLam *= 1.0 + 0.0 * mix(1.0, clamp(",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -133,8 +133,8 @@
   {
     "name": "MEADOW1-the-face-not-turned-to-the-eye",
     "file": "src/render/labGrass.js",
-    "old": "        '    vec2 mN = vec2(-mDir.y, mDir.x); if (dot(mN, uEye.xz - root) < 0.0) mN = -mN;\\n' +",
-    "new": "        '    vec2 mN = vec2(-mDir.y, mDir.x);\\n' +",
+    "old": " if (dot(mN, uEye.xz - root) < 0.0) mN = -mN;",
+    "new": "",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "MEADOW1-the-art-unmoved",
     "file": "src/render/labGrass.js",
-    "old": "      `c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS, clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0) * uArtHue); }   // MEADOW1: his green, the tile's own; his petals his own\\n`,",
-    "new": "      `c = art * mix(vec3(1.0), vec3(1.0), clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0) * uArtHue); }   // MEADOW1: his green, the tile's own; his petals his own\\n`,",
+    "old": "c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS,",
+    "new": "c = art * mix(vec3(1.0), vec3(1.0),",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "MEADOW1-every-texel-the-greens-hue",
     "file": "src/render/labGrass.js",
-    "old": "      `c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS, clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0) * uArtHue); }   // MEADOW1: his green, the tile's own; his petals his own\\n`,",
-    "new": "      `c = art * mix(vec3(dot(mS, vec3(0.299, 0.587, 0.114))), mS, 1.0 * uArtHue); }   // MEADOW1: his green, the tile's own; his petals his own\\n`,",
+    "old": "clamp((art.g - max(art.r, art.b)) * ${glf(MEADOW_GREEN_EDGE)}, 0.0, 1.0)",
+    "new": "1.0",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "MEADOW1-one-ground-for-both-lanes",
     "file": "src/render/labGrass.js",
-    "old": "    gl.uniform3fv(u.uArtGround, lane ? this.artGround : this.artGroundClassic); // MEADOW1: and the meadow's art its own ground",
-    "new": "    gl.uniform3fv(u.uArtGround, this.artGround); // MEADOW1: and the meadow's art its own ground",
+    "old": "gl.uniform3fv(u.uArtGround, lane ? this.artGround : this.artGroundClassic);",
+    "new": "gl.uniform3fv(u.uArtGround, this.artGround);",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "MEADOW1-the-meadow-takes-the-pixel-ramp",
     "file": "src/render/labGrass.js",
-    "old": "    to: '  if (uPixel > 0.5 && uArt < 0.5) { float l = max(dot(c, vec3(0.299, 0.587, 0.114)), 1e-4);',",
-    "new": "    to: '  if (uPixel > 0.5) { float l = max(dot(c, vec3(0.299, 0.587, 0.114)), 1e-4);',",
+    "old": "to: '  if (uPixel > 0.5 && uArt < 0.5) {",
+    "new": "to: '  if (uPixel > 0.5) {",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -197,8 +197,8 @@
   {
     "name": "MEADOW1-the-meadow-wears-the-pixel-sheet",
     "file": "src/render/labGrass.js",
-    "old": "      gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);",
-    "new": "      gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);",
+    "old": "gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);",
+    "new": "gl.bindTexture(gl.TEXTURE_2D, this.pxSheet);",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -206,7 +206,7 @@
   {
     "name": "MEADOW1-the-atlas-leaked",
     "file": "src/render/labGrass.js",
-    "old": "    gl.deleteTexture(this.meadowSheet); // MEADOW1",
+    "old": "    gl.deleteTexture(this.meadowSheet);   // MEADOW1",
     "new": "",
     "tests": [
       "test/render/grassmeadow.test.js"
@@ -215,8 +215,8 @@
   {
     "name": "MEADOW1-no-far-cards",
     "file": "src/render/labGrass.js",
-    "old": "      const cardsFar = dn > range * (MEADOW_NEAR_AT + MEADOW_NEAR_BAND); // AUDIT MEADOW1: past the band, where no tuft keeps its third card",
-    "new": "      const cardsFar = false; // AUDIT MEADOW1: past the band, where no tuft keeps its third card",
+    "old": "      const cardsFar = dn > range * (MEADOW_NEAR_AT + MEADOW_NEAR_BAND);",
+    "new": "      const cardsFar = false;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -225,8 +225,8 @@
   {
     "name": "MEADOW1-the-box-reaches-no-wider-than-a-root",
     "file": "src/render/labGrass.js",
-    "old": "        const r = this.slotCardH[slot] * this._cardReach,",
-    "new": "        const r = 0,",
+    "old": "const r = this.slotCardH[slot] * this._cardReach, cb = this._cardBox;",
+    "new": "const r = 0, cb = this._cardBox;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -235,8 +235,8 @@
   {
     "name": "MEADOW1-the-box-as-tall-as-a-blade",
     "file": "src/render/labGrass.js",
-    "old": "        if (placed.rootY[i] + hd * artTop > cardTop) cardTop = placed.rootY[i] + hd * artTop;",
-    "new": "        if (placed.rootY[i] + hd > cardTop) cardTop = placed.rootY[i] + hd;",
+    "old": "if (placed.rootY[i] + hd * artTop > cardTop) cardTop = placed.rootY[i] + hd * artTop;",
+    "new": "if (placed.rootY[i] + hd > cardTop) cardTop = placed.rootY[i] + hd;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -245,8 +245,8 @@
   {
     "name": "MEADOW1-the-reach-off-a-height-the-lane-cannot-hold",
     "file": "src/render/labGrass.js",
-    "old": "        const hd = hFloor + ((A[i * 4 + 3] >> 10) / hTop) * hSpan;",
-    "new": "        const hd = h;",
+    "old": "const hd = hFloor + (A[i * 4 + 3] >> 10) / hTop * hSpan;",
+    "new": "const hd = h;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ],
@@ -282,8 +282,8 @@
   {
     "name": "AUDIT-MEADOW1-the-seed-the-scenes-root",
     "file": "src/render/labGrass.js",
-    "old": "        `    float mYaw = hash(aPA.xy * ${glf(MEADOW_SEED)});   // the tuft's own turn, fixed in the world - AUDIT MEADOW1: off its place in its cell, which no shift of the origin moves\\n` +",
-    "new": "        `    float mYaw = hash(root * 0.37);   // the tuft's own turn, fixed in the world - AUDIT MEADOW1: off its place in its cell, which no shift of the origin moves\\n` +",
+    "old": "float mYaw = hash(aPA.xy * ${glf(MEADOW_SEED)});",
+    "new": "float mYaw = hash(root * 0.37);",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "AUDIT-MEADOW1-the-pixel-tuft-re-rolled-at-a-crossing",
     "file": "src/render/labGrass.js",
-    "old": "      \"  vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude's hash, its float32 fract honest; AUDIT MEADOW1: of the cell's lane, not the scene's root - every tuft re-rolled at each map pixel crossed\",",
-    "new": "      \"  vVar = min(floor(hash(root * 0.37) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude's hash, its float32 fract honest; AUDIT MEADOW1: of the cell's lane, not the scene's root - every tuft re-rolled at each map pixel crossed\",",
+    "old": "vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants)",
+    "new": "vVar = min(floor(hash(root * 0.37) * uPxVariants)",
     "tests": [
       "test/render/grassmeadow.test.js",
       "test/render/grasspx.test.js"
@@ -301,8 +301,8 @@
   {
     "name": "AUDIT-MEADOW1-the-card-not-cut",
     "file": "src/render/labGrass.js",
-    "old": "        '    mC = mix(mBox.xz, mBox.yw, aCorner);\\n' +",
-    "new": "        '    mC = aCorner;\\n' +",
+    "old": "'    mC = mix(mBox.xz, mBox.yw, aCorner);\\n'",
+    "new": "'    mC = aCorner;\\n'",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "AUDIT-MEADOW1-the-texture-flipped-not-the-card",
     "file": "src/render/labGrass.js",
-    "old": "        '    if ((fract(mYaw * 8.0) >= 0.5) != (aCard >= 1.0)) mDir = -mDir;   // mirrored, by tuft and by every other card - AUDIT MEADOW1: the card turned, so its box holds\\n' +",
-    "new": "        '    if ((fract(mYaw * 8.0) >= 0.5) != (aCard >= 1.0)) mC.x = mBox.x + mBox.y - mC.x;   // mirrored, by tuft and by every other card - AUDIT MEADOW1: the card turned, so its box holds\\n' +",
+    "old": "if ((fract(mYaw * 8.0) >= 0.5) != (aCard >= 1.0)) mDir = -mDir;",
+    "new": "if ((fract(mYaw * 8.0) >= 0.5) != (aCard >= 1.0)) mC.x = mBox.x + mBox.y - mC.x;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "AUDIT-MEADOW1-every-tuft-mirrored",
     "file": "src/render/labGrass.js",
-    "old": "        '    if ((fract(mYaw * 8.0) >= 0.5) != (aCard >= 1.0)) mDir = -mDir;   // mirrored, by tuft and by every other card - AUDIT MEADOW1: the card turned, so its box holds\\n' +",
-    "new": "        '    if ((fract(mYaw * 8.0) >= 0.0) != (aCard >= 1.0)) mDir = -mDir;   // mirrored, by tuft and by every other card - AUDIT MEADOW1: the card turned, so its box holds\\n' +",
+    "old": "if ((fract(mYaw * 8.0) >= 0.5) != (aCard",
+    "new": "if ((fract(mYaw * 8.0) >= 0.0) != (aCard",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -346,8 +346,8 @@
   {
     "name": "AUDIT-MEADOW1-the-far-set-turned-its-own-way",
     "file": "src/render/labGrass.js",
-    "old": "    const cardsFar = buildVao(meadowCardCorners(MEADOW_CARDS_FAR, MEADOW_CARDS), meadowCardIndices(MEADOW_CARDS_FAR)); // AUDIT MEADOW1: the near set's first two, so nothing turns at the handover",
-    "new": "    const cardsFar = buildVao(meadowCardCorners(MEADOW_CARDS_FAR), meadowCardIndices(MEADOW_CARDS_FAR)); // AUDIT MEADOW1: the near set's first two, so nothing turns at the handover",
+    "old": "buildVao(meadowCardCorners(MEADOW_CARDS_FAR, MEADOW_CARDS), ",
+    "new": "buildVao(meadowCardCorners(MEADOW_CARDS_FAR), ",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "AUDIT-MEADOW1-drawn-unindexed",
     "file": "src/render/labGrass.js",
-    "old": "      this._point(slot);\n      if (this._meadow)",
-    "new": "      this._point(slot);\n      if (false)",
+    "old": "if (this._meadow) gl.drawElementsInstanced(",
+    "new": "if (false) gl.drawElementsInstanced(",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "AUDIT-MEADOW1-the-indices-never-bound",
     "file": "src/render/labGrass.js",
-    "old": "      if (ib) {",
-    "new": "      if (false) {",
+    "old": "if (ib) { gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);",
+    "new": "if (false) { gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "AUDIT-MEADOW1-the-corners-read-at-the-blades-stride",
     "file": "src/render/labGrass.js",
-    "old": "      const stride = cards ? 12 : 0;",
-    "new": "      const stride = 0;",
+    "old": "const stride = cards ? 12 : 0;",
+    "new": "const stride = 0;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -382,8 +382,8 @@
   {
     "name": "AUDIT-MEADOW1-the-turn-never-enabled",
     "file": "src/render/labGrass.js",
-    "old": "        gl.enableVertexAttribArray(3);\n        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, stride, 8);",
-    "new": "        gl.vertexAttribPointer(3, 1, gl.FLOAT, false, stride, 8);",
+    "old": "if (cards) { gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3,",
+    "new": "if (cards) { gl.vertexAttribPointer(3,",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "AUDIT-MEADOW1-the-band-ignored",
     "file": "src/render/labGrass.js",
-    "old": "      const cardsFar = dn > range * (MEADOW_NEAR_AT + MEADOW_NEAR_BAND); // AUDIT MEADOW1: past the band, where no tuft keeps its third card",
-    "new": "      const cardsFar = dn > range * MEADOW_NEAR_AT; // AUDIT MEADOW1: past the band, where no tuft keeps its third card",
+    "old": "range * (MEADOW_NEAR_AT + MEADOW_NEAR_BAND);   // AUDIT MEADOW1: past the band",
+    "new": "range * MEADOW_NEAR_AT;   // AUDIT MEADOW1: past the band",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -400,8 +400,8 @@
   {
     "name": "AUDIT-MEADOW1-the-third-card-never-handed-over",
     "file": "src/render/labGrass.js",
-    "old": "        `    if (fract(aCard) > 0.5 && d > uRange * (${glf(MEADOW_NEAR_AT)} + ${glf(MEADOW_NEAR_BAND)} * fract(mYaw * 64.0))) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }   // AUDIT MEADOW1: the third card goes tuft by tuft across the band\\n` +",
-    "new": "        `    if (fract(aCard) > 0.5 && d > 1e9 * uRange * (${glf(MEADOW_NEAR_AT)} + ${glf(MEADOW_NEAR_BAND)} * fract(mYaw * 64.0))) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }   // AUDIT MEADOW1: the third card goes tuft by tuft across the band\\n` +",
+    "old": "if (fract(aCard) > 0.5 && d > uRange",
+    "new": "if (fract(aCard) > 0.5 && d > 1e9 * uRange",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "AUDIT-MEADOW1-every-tuft-at-one-distance",
     "file": "src/render/labGrass.js",
-    "old": "        `    if (fract(aCard) > 0.5 && d > uRange * (${glf(MEADOW_NEAR_AT)} + ${glf(MEADOW_NEAR_BAND)} * fract(mYaw * 64.0))) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }   // AUDIT MEADOW1: the third card goes tuft by tuft across the band\\n` +",
-    "new": "        `    if (fract(aCard) > 0.5 && d > uRange * (${glf(MEADOW_NEAR_AT)} + ${glf(MEADOW_NEAR_BAND)} * 0.5)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }   // AUDIT MEADOW1: the third card goes tuft by tuft across the band\\n` +",
+    "old": "${glf(MEADOW_NEAR_BAND)} * fract(mYaw * 64.0)",
+    "new": "${glf(MEADOW_NEAR_BAND)} * 0.5",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -418,8 +418,8 @@
   {
     "name": "AUDIT-MEADOW1-the-level-foot",
     "file": "src/render/labGrass.js",
-    "old": "        `  if (uArt > 0.5) p.y += dot(p.xz - root, -gN.xz) / max(gN.y, ${glf(MEADOW_SLOPE_FLOOR)});   // AUDIT MEADOW1: sheared to the ground under it\\n`,",
-    "new": "        `  if (false) p.y += dot(p.xz - root, -gN.xz) / max(gN.y, ${glf(MEADOW_SLOPE_FLOOR)});   // AUDIT MEADOW1: sheared to the ground under it\\n`,",
+    "old": "if (uArt > 0.5) p.y += dot(p.xz - root, -gN.xz)",
+    "new": "if (false) p.y += dot(p.xz - root, -gN.xz)",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -427,8 +427,8 @@
   {
     "name": "AUDIT-MEADOW1-the-face-law-at-noon",
     "file": "src/render/labGrass.js",
-    "old": "        `    vLam *= mix(1.0, clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), mSun), ${glf(MEADOW_FACE.floor)}, 1.0), length(mSun.xz));\\n` +",
-    "new": "        `    vLam *= mix(1.0, clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), mSun), ${glf(MEADOW_FACE.floor)}, 1.0), 1.0);\\n` +",
+    "old": "${glf(MEADOW_FACE.floor)}, 1.0), length(mSun.xz));",
+    "new": "${glf(MEADOW_FACE.floor)}, 1.0), 1.0);",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -436,8 +436,8 @@
   {
     "name": "AUDIT-MEADOW1-the-moon-lit-by-the-sun",
     "file": "src/render/labGrass.js",
-    "old": "        `    vMoonLam *= mix(1.0, clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), mMoon), ${glf(MEADOW_FACE.floor)}, 1.0), length(mMoon.xz));\\n` +",
-    "new": "        `    vMoonLam *= mix(1.0, clamp(${glf(MEADOW_FACE.base)} + ${glf(MEADOW_FACE.span)} * dot(vec3(mN.x, 0.0, mN.y), mSun), ${glf(MEADOW_FACE.floor)}, 1.0), length(mMoon.xz));\\n` +",
+    "old": "dot(vec3(mN.x, 0.0, mN.y), mMoon)",
+    "new": "dot(vec3(mN.x, 0.0, mN.y), mSun)",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -445,8 +445,8 @@
   {
     "name": "AUDIT-MEADOW1-lit-by-the-blades-lean",
     "file": "src/render/labGrass.js",
-    "old": "        '  if (uArt > 0.5) nrm = normalize(vec3(-mLean.y, 0.0, mLean.x) + 1.2 * gN);   // AUDIT MEADOW1: its own lean\\n',",
-    "new": "        '  if (false) nrm = normalize(vec3(-mLean.y, 0.0, mLean.x) + 1.2 * gN);   // AUDIT MEADOW1: its own lean\\n',",
+    "old": "if (uArt > 0.5) nrm = normalize(vec3(-mLean.y, 0.0, mLean.x) + 1.2 * gN);",
+    "new": "if (false) nrm = normalize(vec3(-mLean.y, 0.0, mLean.x) + 1.2 * gN);",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "AUDIT-MEADOW1-the-level-by-the-width",
     "file": "src/render/labGrass.js",
-    "old": "      `    if (uArt > 0.5) { float mLod = log2(max(max(abs(dFdx(vUV.y)), abs(dFdy(vUV.y))) * ${glf(MEADOW_CELL)}, 1.0)); px = textureLod(uPxSheet, pxUv, mLod); }   // MEADOW1: the cell's texels down a pixel - the switch a uniform, so the derivatives stand in uniform control\\n` +",
-    "new": "      `    if (uArt > 0.5) { float mLod = log2(max(max(abs(dFdx(vUV.x)), abs(dFdy(vUV.x))) * ${glf(MEADOW_CELL)}, 1.0)); px = textureLod(uPxSheet, pxUv, mLod); }   // MEADOW1: the cell's texels down a pixel - the switch a uniform, so the derivatives stand in uniform control\\n` +",
+    "old": "float mLod = log2(max(max(abs(dFdx(vUV.y)), abs(dFdy(vUV.y)))",
+    "new": "float mLod = log2(max(max(abs(dFdx(vUV.x)), abs(dFdy(vUV.x)))",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -463,8 +463,8 @@
   {
     "name": "AUDIT-MEADOW1-the-gpus-own-level",
     "file": "src/render/labGrass.js",
-    "old": "      `    if (uArt > 0.5) { float mLod = log2(max(max(abs(dFdx(vUV.y)), abs(dFdy(vUV.y))) * ${glf(MEADOW_CELL)}, 1.0)); px = textureLod(uPxSheet, pxUv, mLod); }   // MEADOW1: the cell's texels down a pixel - the switch a uniform, so the derivatives stand in uniform control\\n` +",
-    "new": "      `    if (uArt > 0.5) { float mLod = log2(max(max(abs(dFdx(vUV.y)), abs(dFdy(vUV.y))) * ${glf(MEADOW_CELL)}, 1.0)); px = texture(uPxSheet, pxUv); }   // MEADOW1: the cell's texels down a pixel - the switch a uniform, so the derivatives stand in uniform control\\n` +",
+    "old": "px = textureLod(uPxSheet, pxUv, mLod); }",
+    "new": "px = texture(uPxSheet, pxUv); }",
     "tests": [
       "test/render/grassmeadow.test.js",
       "test/render/grasspx.test.js"
@@ -473,8 +473,8 @@
   {
     "name": "AUDIT-MEADOW1-the-box-widened-for-every-style",
     "file": "src/render/labGrass.js",
-    "old": "      let seen = box;\n      if (this._meadow) {",
-    "new": "      let seen = box;\n      if (true) {",
+    "old": "      if (this._meadow) {\n        const r = this.slotCardH[slot]",
+    "new": "      if (true) {\n        const r = this.slotCardH[slot]",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "AUDIT-MEADOW1-the-box-no-reach-ahead",
     "file": "src/render/labGrass.js",
-    "old": "        cb[5] = box[5] + r;",
-    "new": "        cb[5] = box[5];",
+    "old": "cb[5] = box[5] + r;",
+    "new": "cb[5] = box[5];",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -491,8 +491,8 @@
   {
     "name": "AUDIT-MEADOW1-the-wind-left-out-of-the-box",
     "file": "src/render/labGrass.js",
-    "old": "    this._cardReach = this.art.reach + this.art.windReach * Math.hypot(windV[0], windV[1]);",
-    "new": "    this._cardReach = this.art.reach;",
+    "old": "this._cardReach = this.art.reach + this.art.windReach * Math.hypot(windV[0], windV[1]);",
+    "new": "this._cardReach = this.art.reach;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -500,8 +500,8 @@
   {
     "name": "AUDIT-MEADOW1-the-slope-left-out-of-the-box",
     "file": "src/render/labGrass.js",
-    "old": "        const t = r * this.slotCardTilt[slot]; // a card sheared to its slope stands that much under its root or over its top",
-    "new": "        const t = 0; // a card sheared to its slope stands that much under its root or over its top",
+    "old": "const t = r * this.slotCardTilt[slot];",
+    "new": "const t = 0;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -509,8 +509,8 @@
   {
     "name": "AUDIT-MEADOW1-the-tilt-never-measured",
     "file": "src/render/labGrass.js",
-    "old": "        if (tilt > cardTilt) cardTilt = tilt;",
-    "new": "        if (false) cardTilt = tilt;",
+    "old": "if (tilt > cardTilt) cardTilt = tilt;",
+    "new": "if (false) cardTilt = tilt;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -545,8 +545,8 @@
   {
     "name": "AUDIT-MEADOW1-the-trees-switch-ignored",
     "file": "src/render/labGrass.js",
-    "old": "    const windV = wind.sway === false ? NO_WIND : wind.windV;",
-    "new": "    const windV = wind.windV;",
+    "old": "const windV = wind.sway === false ? NO_WIND : wind.windV;",
+    "new": "const windV = wind.windV;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -574,8 +574,8 @@
   {
     "name": "AUDIT-MEADOW1-the-gust-carried-the-wrong-way",
     "file": "src/systems/wind/windDrive.js",
-    "old": "  const p = (phase + GUST_K * (offset[0] * dx + offset[2] * dz)) % (2 * Math.PI);",
-    "new": "  const p = (phase - GUST_K * (offset[0] * dx + offset[2] * dz)) % (2 * Math.PI);",
+    "old": "(phase + GUST_K * (offset[0] * dx + offset[2] * dz))",
+    "new": "(phase - GUST_K * (offset[0] * dx + offset[2] * dz))",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -583,8 +583,8 @@
   {
     "name": "AUDIT-MEADOW1-the-clock-not-the-phases",
     "file": "src/systems/wind/windDrive.js",
-    "old": "export const gustClock = (tsec, phase) => tsec + phase / GUST_RATE;",
-    "new": "export const gustClock = (tsec, phase) => tsec + phase;",
+    "old": "tsec + phase / GUST_RATE;",
+    "new": "tsec + phase;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -602,8 +602,8 @@
   {
     "name": "AUDIT-MEADOW1-the-palette-leaves-the-art",
     "file": "src/render/labGrass.js",
-    "old": "    this[classic ? 'artGroundClassic' : 'artGround'] = new Float32Array(meadowArtGround(tones[1], this.art.green));",
-    "new": "    void tones;",
+    "old": "this[classic ? 'artGroundClassic' : 'artGround'] = new Float32Array(meadowArtGround(tones[1], this.art.green));",
+    "new": "void tones;",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -665,8 +665,8 @@
   {
     "name": "AUDIT-MEADOW1-the-winds-share-the-stiffness",
     "file": "src/render/labGrass.js",
-    "old": "        `    mSway = ${byVariant('sway')};   // AUDIT MEADOW1: its share of the wind - the trees' own\\n` +",
-    "new": "        `    mSway = ${byVariant('stiff')};   // AUDIT MEADOW1: its share of the wind - the trees' own\\n` +",
+    "old": "mSway = ${byVariant('sway')};",
+    "new": "mSway = ${byVariant('stiff')};",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -701,8 +701,8 @@
   {
     "name": "AUDIT-MEADOW1-the-pixel-count-on-the-meadow",
     "file": "src/render/labGrass.js",
-    "old": "    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);",
-    "new": "    gl.uniform1f(u.uPxVariants, this.pxVariants);",
+    "old": "gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);",
+    "new": "gl.uniform1f(u.uPxVariants, this.pxVariants);",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]
@@ -710,8 +710,8 @@
   {
     "name": "AUDIT-MEADOW1-bound-every-slot",
     "file": "src/render/labGrass.js",
-    "old": "      if (vao !== wasVao) {",
-    "new": "      {",
+    "old": "if (vao !== wasVao) { gl.bindVertexArray(vao); wasVao = vao; }",
+    "new": "{ gl.bindVertexArray(vao); wasVao = vao; }",
     "tests": [
       "test/render/grassmeadow.test.js"
     ]

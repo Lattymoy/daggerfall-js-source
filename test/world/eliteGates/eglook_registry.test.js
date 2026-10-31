@@ -91,7 +91,7 @@ test('EG-G2 THE SPIRE\'S ARCHIVES (section 25.1): the four bands at the page\'s 
 test('EG-G2 THE GATE\'S TIERS (section 2): Regular, Elite, Abyss as the dungeons\' three; the Regular tier\'s word is the event\'s own name (unchanged - the gate\'s pool says it), the Elite tier\'s the breach\'s, Abyss reserved and answered by nothing; a breach (its id, its room key, its kind) is Elite, the day\'s gate Regular, anything else none; the plaque - its title, The Battlespire, and the company line to an outsider only; the sight line in the Elite Dungeon\'s own rounding; the Timers row before and inside (mutants: the Regular word changed; super answered; the company line shown to the company)', () => {
   assert.deepEqual([...GATE_TIERS], [...DUNGEON_TIERS], 'the dungeons\' shape');
   assert.equal(GATE_TIER_TEXT.regular, "Dagon's Breach");
-  assert.match(readFileSync(new URL('../../../src/scenes/gate/gatePool.js', import.meta.url), 'utf8'), /name: "Dagon's Breach"/, 'the gate\'s own name, unchanged');
+  assert.match(readFileSync(new URL('../../../src/scenes/gate/gatePool.js', import.meta.url), 'utf8'), /name: 'Dagon\\'s Breach'/, 'the gate\'s own name, unchanged');
   assert.equal(GATE_TIER_TEXT.elite, EG_TEXT.name);
   assert.equal(GATE_TIER_TEXT.super, 'Abyss Breach');
   assert.equal(gateTier({ b: '0123456789abcdef' }), 'elite');

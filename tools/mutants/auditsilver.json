@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-A2-strike-unguarded",
     "file": "server-account/src/marks.js",
-    "old": "        AND ${CLAIM_GUARDS[kind](11)}`,",
-    "new": "        AND (${CLAIM_GUARDS[kind](11)} OR 1)`,",
+    "old": "        AND ${CLAIM_GUARDS[kind](11)}`)",
+    "new": "        AND (${CLAIM_GUARDS[kind](11)} OR 1)`)",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-A3-deeds-unread",
     "file": "server-account/src/guilds.js",
-    "old": "          ...(await guildDeedsToday(db, guildId, nowS)),\n        }",
-    "new": "        }",
+    "old": "      ...(await guildDeedsToday(db, guildId, nowS)),\n",
+    "new": "",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "AUDIT-SILVER-WAYS-C1-no-ceiling",
     "file": "src/net/motherlodeLaw.js",
-    "old": "export const motherlodeWatchOk = (i, at) =>\n  Number.isSafeInteger(i) && i >= at - MOTHERLODE_WATCH_S && i <= at + MOTHERLODE_WATCH_AHEAD_S;",
-    "new": "export const motherlodeWatchOk = (i, at) => Number.isSafeInteger(i) && i >= at - MOTHERLODE_WATCH_S;",
+    "old": "i >= at - MOTHERLODE_WATCH_S && i <= at + MOTHERLODE_WATCH_AHEAD_S;",
+    "new": "i >= at - MOTHERLODE_WATCH_S;",
     "tests": [
       "test/net/auditsilver_service.test.js"
     ]

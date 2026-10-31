@@ -454,7 +454,7 @@ test('AUDIT GRASS-LIT2 A1: a cell walks only the lanterns whose reach meets its 
   assert.deepEqual([...of('uPointIdx').at(-1)[0]], [0, 1, 2, 3, 4, 5, 6, 7], 'a tie keeps the earlier light first, and the ninth off');
   // the draw resets the cell list each frame and walks it per drawn cell
   const src = readFileSync(new URL('../../src/render/labGrass.js', import.meta.url), 'utf8');
-  assert.ok(src.includes('this._pts = pn > 0 ? pts : null;\n    this._pn = pn;\n    this._cellN = -1;') && src.includes('if (this._pn > 0) this._cellLights(box); // AUDIT GRASS-LIT2 A1'));
+  assert.ok(src.includes('this._pts = pn > 0 ? pts : null; this._pn = pn; this._cellN = -1;') && src.includes('if (this._pn > 0) this._cellLights(box);   // AUDIT GRASS-LIT2 A1'));
   assert.ok(GAME_GRASS_VS.includes(`uniform int uPointIdx[${GRASS_CELL_LIGHTS}];`) && GAME_GRASS_VS.includes('    int i = uPointIdx[j];\n'));
   // and the stage reads the cell's list: a light the list does not name lights nothing, though it is in the frame's
   const two = [{ at: [16, 1.5, 15], range: 10, color: [1, 0, 0] }, { at: [14, 1.5, 15], range: 10, color: [0, 0, 1] }];

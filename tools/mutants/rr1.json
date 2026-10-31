@@ -137,7 +137,7 @@
   {
     "name": "RR1-16-the-join-floor-is-not-applied",
     "file": "src/systems/guild/guilds.js",
-    "old": "  if (store && floor != null && getReputation(store, guild.factionId) < floor)\n    setReputation(store, guild.factionId, floor);",
+    "old": "  if (store && floor != null && getReputation(store, guild.factionId) < floor) setReputation(store, guild.factionId, floor);",
     "new": "",
     "tests": [
       "test/systems/rr1_realism.test.js"

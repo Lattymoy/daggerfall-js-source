@@ -23,7 +23,7 @@
 // was this header's own overstatement.
 
 import { deref } from './mwNifFile.js';
-import { affineOfTransform, affineMul } from './mwAffine.js'; // AUDIT 68 S11-affine-dup: one home
+import { affineOfTransform, affineMul } from './mwAffine.js';   // AUDIT 68 S11-affine-dup: one home
 
 // Every NiNode-derived record, the reference's own membership test
 // (nifloader.cpp:932-937 recurses whatever casts to Nif::NiNode) - a
@@ -61,19 +61,12 @@ function affineInverse(m) {
   return { a: inv, t };
 }
 
-export function quatToMat33(q) {
-  // MW-SPELLFX1: exported - an effect mesh's keyframed node takes the same rotation
+export function quatToMat33(q) {   // MW-SPELLFX1: exported - an effect mesh's keyframed node takes the same rotation
   const [w, x, y, z] = q;
   return Float32Array.from([
-    1 - 2 * (y * y + z * z),
-    2 * (x * y - w * z),
-    2 * (x * z + w * y),
-    2 * (x * y + w * z),
-    1 - 2 * (x * x + z * z),
-    2 * (y * z - w * x),
-    2 * (x * z - w * y),
-    2 * (y * z + w * x),
-    1 - 2 * (x * x + y * y),
+    1 - 2 * (y * y + z * z), 2 * (x * y - w * z), 2 * (x * z + w * y),
+    2 * (x * y + w * z), 1 - 2 * (x * x + z * z), 2 * (y * z - w * x),
+    2 * (x * z - w * y), 2 * (y * z + w * x), 1 - 2 * (x * x + y * y),
   ]);
 }
 
@@ -171,13 +164,11 @@ export function injectSkeletonNodes(skeleton, addonNif) {
     const key = String(rec.name || '').toLowerCase();
     const hereRef = next++;
     skeleton.nodes.set(hereRef, {
-      ref: hereRef,
-      name: rec.name || '',
-      parent: parentRef,
+      ref: hereRef, name: rec.name || '', parent: parentRef,
       rest: { rotation: rec.rotation, translation: rec.translation, scale: rec.scale },
       injected: true,
     });
-    if (key && !skeleton.byName.has(key)) skeleton.byName.set(key, hereRef); // rule 16: the first of a name answers
+    if (key && !skeleton.byName.has(key)) skeleton.byName.set(key, hereRef);   // rule 16: the first of a name answers
     added.push(rec.name || '(nameless)');
     for (const child of rec.children ?? []) if (child >= 0) copy(child, hereRef);
   }
@@ -189,14 +180,8 @@ export function injectSkeletonNodes(skeleton, addonNif) {
       const key = String(rec.name || '').toLowerCase();
       const parentKey = String(parentRec?.name || '').toLowerCase();
       const baseParent = parentKey ? skeleton.byName.get(parentKey) : undefined;
-      if (baseParent === undefined) {
-        skipped.push(`${rec.name || '(nameless)'} (no "${parentRec?.name ?? ''}" here)`);
-        return;
-      }
-      if (key && skeleton.byName.has(key)) {
-        skipped.push(`${rec.name} (already here)`);
-        return;
-      }
+      if (baseParent === undefined) { skipped.push(`${rec.name || '(nameless)'} (no "${parentRec?.name ?? ''}" here)`); return; }
+      if (key && skeleton.byName.has(key)) { skipped.push(`${rec.name} (already here)`); return; }
       copy(ref, baseParent);
       return;
     }
@@ -282,7 +267,7 @@ export function poseSkeleton(skeleton, tracks, sampleTrack, time, opts = {}) {
     const s = sampleTrack(track, time);
     let translation = s.translation ?? node.rest.translation;
     if (ref === opts.accumRoot) {
-      translation = [0, 0, translation[2]]; // componentMultiply((0,0,1), trans)
+      translation = [0, 0, translation[2]];   // componentMultiply((0,0,1), trans)
     }
     pose.set(ref, {
       rotation: s.rotation ? quatToMat33(s.rotation) : node.rest.rotation,
@@ -387,7 +372,8 @@ export function affineMulInto(p, l, out) {
   const a = out.a;
   for (let r = 0; r < 3; r++) {
     for (let c = 0; c < 3; c++) {
-      a[r * 3 + c] = p.a[r * 3] * l.a[c] + p.a[r * 3 + 1] * l.a[3 + c] + p.a[r * 3 + 2] * l.a[6 + c];
+      a[r * 3 + c] =
+        p.a[r * 3] * l.a[c] + p.a[r * 3 + 1] * l.a[3 + c] + p.a[r * 3 + 2] * l.a[6 + c];
     }
   }
   out.t[0] = p.a[0] * l.t[0] + p.a[1] * l.t[1] + p.a[2] * l.t[2] + p.t[0];
@@ -429,7 +415,7 @@ export function skinPost(skin, skeleton, pose) {
  */
 export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normalsOut) {
   const skin = batch.skin;
-  const post = skinPost(skin, skeleton, pose); // MW-D20 / MWNPC1: the one home of the post
+  const post = skinPost(skin, skeleton, pose);   // MW-D20 / MWNPC1: the one home of the post
   const n = batch.positions.length / 3;
   // PERF-RIG1 (2026-09-21, Mac: "continue looking into fixing exterior
   // performance issues"): THE ACCUMULATORS ARE THE BATCH'S. This runs
@@ -444,12 +430,9 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   // arithmetic changes: the scratch is Float32Array where the old
   // temporaries were, so every rounding is the one it was.
   const sc = skinScratch(batch, n);
-  const acc = sc.acc;
-  acc.fill(0);
-  const wsum = sc.wsum;
-  wsum.fill(0);
-  const touched = sc.touched;
-  touched.fill(0);
+  const acc = sc.acc; acc.fill(0);
+  const wsum = sc.wsum; wsum.fill(0);
+  const touched = sc.touched; touched.fill(0);
   const boneMat = sc.boneMat;
   // Per-vertex blended affines, translations included - 12 floats each.
   // MW-D31: the blend accumulates ONLY invBind * boneInSkelSpace - the
@@ -504,18 +487,13 @@ export function skinBatch(batch, skeleton, pose, skelMats, positionsOut, normals
   const pa = post.a;
   const pt = post.t;
   const composePost = (o) => {
-    for (let c = 0; c < 3; c++) {
-      // three columns of acc's 3x3
-      const x = acc[o + c];
-      const y = acc[o + 3 + c];
-      const z = acc[o + 6 + c];
+    for (let c = 0; c < 3; c++) {           // three columns of acc's 3x3
+      const x = acc[o + c]; const y = acc[o + 3 + c]; const z = acc[o + 6 + c];
       composed[c] = pa[0] * x + pa[1] * y + pa[2] * z;
       composed[3 + c] = pa[3] * x + pa[4] * y + pa[5] * z;
       composed[6 + c] = pa[6] * x + pa[7] * y + pa[8] * z;
     }
-    const tx = acc[o + 9];
-    const ty = acc[o + 10];
-    const tz = acc[o + 11];
+    const tx = acc[o + 9]; const ty = acc[o + 10]; const tz = acc[o + 11];
     composed[9] = pa[0] * tx + pa[1] * ty + pa[2] * tz + pt[0];
     composed[10] = pa[3] * tx + pa[4] * ty + pa[5] * tz + pt[1];
     composed[11] = pa[6] * tx + pa[7] * ty + pa[8] * tz + pt[2];

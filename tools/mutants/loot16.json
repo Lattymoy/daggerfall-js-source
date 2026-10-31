@@ -620,8 +620,8 @@
   {
     "name": "LOOT16-the-plus-face-without",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "            ...(!w.hooks.reforge && w.hooks.lift ? [{ label: LIFT_ROW, act: () => w._lift() }] : []), // LOOT16: the temple's lifting, beside its Cure Disease\n          ],",
-    "new": "          ],",
+    "old": "        ...(!w.hooks.reforge && w.hooks.lift ? [{ label: LIFT_ROW, act: () => w._lift() }] : []),   // LOOT16: the temple's lifting, beside its Cure Disease\n",
+    "new": "",
     "tests": [
       "test/systems/loot16_curses.test.js"
     ]

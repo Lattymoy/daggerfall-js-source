@@ -308,8 +308,8 @@
   {
     "name": "SD20C-V9-the-extras-first",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    sorted = !!eye && m > SD_LIGHTS_CAP && k <= _litIdx.length;",
-    "new": "    sorted = false;",
+    "old": "sorted = !!eye && m > SD_LIGHTS_CAP && k <= _litIdx.length;",
+    "new": "sorted = false;",
     "tests": [
       "test/scenes/superDungeon/sd20c_render.test.js"
     ]

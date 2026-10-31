@@ -2,8 +2,8 @@
   {
     "name": "PLEA-LOOP-the-press-ignores-the-stack",
     "file": "src/ui/enhanced/enhancedDialog.js",
-    "old": "          if (windowCovered(owner)) return; // PLEA-LOOP: asked at the press - a covered window answers nothing\n          closeEnhancedChoice();",
-    "new": "          closeEnhancedChoice();",
+    "old": "          if (windowCovered(owner)) return;   // PLEA-LOOP: asked at the press - a covered window answers nothing\n",
+    "new": "",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PLEA-LOOP-the-release-leaves-the-trial-standing",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (trial) trial.released = true; // PLEA-LOOP: the court's last act - no step of this trial acts after it\n    clearArrest();",
-    "new": "    clearArrest();",
+    "old": "    if (trial) trial.released = true;   // PLEA-LOOP: the court's last act - no step of this trial acts after it\n",
+    "new": "",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "PLEA-LOOP-the-step-ignores-the-release",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    return (...args) => (t && trial === t && !t.released ? fn(...args) : undefined);",
-    "new": "    return (...args) => (t && trial === t ? fn(...args) : undefined);",
+    "old": "(t && trial === t && !t.released ? fn(...args) : undefined)",
+    "new": "(t && trial === t ? fn(...args) : undefined)",
     "tests": [
       "test/ui/fb1013b_plealoop.test.js"
     ]

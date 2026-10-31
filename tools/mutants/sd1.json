@@ -52,8 +52,8 @@
   {
     "name": "SD1-found-twice",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (!rec || sdPhase(rec, now) !== 'risen') return null;",
-    "new": "  if (!rec) return null;",
+    "old": "  if (!rec || sdPhase(rec, now) !== 'risen') return null;\n  return /** @type {SdRecord} */ ({ ...rec, ph: 'found'",
+    "new": "  if (!rec) return null;\n  return /** @type {SdRecord} */ ({ ...rec, ph: 'found'",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "SD1-an-unfound-fall",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (!rec || sdPhase(rec, now) !== 'found') return null;",
-    "new": "  if (!rec) return null;",
+    "old": "  if (!rec || sdPhase(rec, now) !== 'found') return null;\n  const count",
+    "new": "  if (!rec) return null;\n  const count",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "SD1-the-count-unbounded",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  const count = Number.isSafeInteger(n) ? Math.max(0, Math.min(SD_FIGHTERS_MAX, n)) : 0;",
-    "new": "  const count = Number.isSafeInteger(n) ? n : 0;",
+    "old": "Math.max(0, Math.min(SD_FIGHTERS_MAX, n))",
+    "new": "n",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "SD1-gone-unsaid",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (p === 'gone' && rec.ph !== 'gone' && rec.s) return { act: 'gone' };\n  if (p === 'gone' && now < rec.next) return { act: null, at: rec.next };",
-    "new": "  if (p === 'gone' && now < rec.next) return { act: null, at: rec.next };",
+    "old": "  if (p === 'gone' && rec.ph !== 'gone' && rec.s) return { act: 'gone' };\n",
+    "new": "",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "SD1-one-player-a-crowd",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  for (const r of sdLaneRegions(sdLaneOf(s)))\n    if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN && !TOWNLESS.has(r)) qual.push(r);",
-    "new": "  for (const r of sdLaneRegions(sdLaneOf(s))) if (Number(counts?.[r] ?? 0) >= 1 && !TOWNLESS.has(r)) qual.push(r);",
+    "old": "if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN && !TOWNLESS.has(r)) qual.push(r);",
+    "new": "if (Number(counts?.[r] ?? 0) >= 1 && !TOWNLESS.has(r)) qual.push(r);",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "SD1-the-map-unflipped",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "    cz = (500 - claim.py - 0.5) * PIXEL_UNITS;",
-    "new": "    cz = (claim.py + 0.5) * PIXEL_UNITS;",
+    "old": "cz = (500 - claim.py - 0.5) * PIXEL_UNITS;",
+    "new": "cz = (claim.py + 0.5) * PIXEL_UNITS;",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "SD1-the-city-left-in-the-name",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  return city ? name.replace('{city}', () => city) : SD_NAMES[0]; // AUDIT SD II (L4 C6): a replacer - a name's `$&` is a name",
-    "new": "  return name.replace('{city}', () => city); // AUDIT SD II (L4 C6): a replacer - a name's `$&` is a name",
+    "old": "  return city ? name.replace('{city}', () => city) : SD_NAMES[0];",
+    "new": "  return name.replace('{city}', () => city);",
     "tests": [
       "test/net/superDungeon/sd1_sdlaw.test.js"
     ],

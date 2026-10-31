@@ -38,8 +38,8 @@
   {
     "name": "SD25-S7-the-collider-to-the-shaft",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    w = SD_PILLAR_W / 2;",
-    "new": "    w = SD_PILLAR_W / 2 - 0.1;",
+    "old": "  const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W / 2;",
+    "new": "  const px = SD_ARENA.x + Math.cos(a) * SD_PILLAR_R, pz = SD_ARENA.z + Math.sin(a) * SD_PILLAR_R, w = SD_PILLAR_W / 2 - 0.1;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD25-S7-every-lamp-dimmed",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    const k = dk < 1 && q >= extra.length && arenaLamp(l) ? dk : 1; // SD-LOOK S7: the Reset's dimming, the arena's lamps alone",
-    "new": "    const k = dk < 1 && q >= extra.length ? dk : 1; // SD-LOOK S7: the Reset's dimming, the arena's lamps alone",
+    "old": "    const k = dk < 1 && q >= extra.length && arenaLamp(l) ? dk : 1;",
+    "new": "    const k = dk < 1 && q >= extra.length ? dk : 1;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SD25-S7-the-hours-own-dimmed",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "    const k = dk < 1 && q >= extra.length && arenaLamp(l) ? dk : 1; // SD-LOOK S7: the Reset's dimming, the arena's lamps alone",
-    "new": "    const k = dk < 1 && arenaLamp(l) ? dk : 1; // SD-LOOK S7: the Reset's dimming, the arena's lamps alone",
+    "old": "    const k = dk < 1 && q >= extra.length && arenaLamp(l) ? dk : 1;",
+    "new": "    const k = dk < 1 && arenaLamp(l) ? dk : 1;",
     "tests": [
       "test/world/superDungeon/sd25_arena.test.js"
     ]

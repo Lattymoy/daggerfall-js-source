@@ -582,8 +582,8 @@
   {
     "name": "SCHOOLS5-the-judge-never-asks",
     "file": "server-account/src/judge.js",
-    "old": "  for (const f of pathFindings(save)) out.push(f); // SCHOOLS5: an honest save never breaks it - only the choice writes the path",
-    "new": "  void pathFindings; // SCHOOLS5: an honest save never breaks it - only the choice writes the path",
+    "old": "  for (const f of pathFindings(save)) out.push(f);",
+    "new": "  void pathFindings;",
     "tests": [
       "test/systems/schools_arcane.test.js"
     ]

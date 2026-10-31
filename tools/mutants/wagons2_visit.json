@@ -255,7 +255,7 @@
   {
     "name": "WAGONS2-VISIT-a-visit-entered-as-my-own-room",
     "file": "src/scenes/caravanRoom.js",
-    "old": "      return go(t, {\n        privateRoom: room,\n        cabinOwner: t.owner,\n        look: t.look ?? null,\n        k: t.k,\n        at: Array.isArray(t.at) ? [...t.at] : null,\n        cell: typeof t.cell === 'string' ? t.cell : null,\n      });",
+    "old": "      return go(t, { privateRoom: room, cabinOwner: t.owner, look: t.look ?? null, k: t.k, at: Array.isArray(t.at) ? [...t.at] : null, cell: typeof t.cell === 'string' ? t.cell : null });",
     "new": "      return go(t, null);",
     "tests": [
       "test/systems/wagons2_visit.test.js"

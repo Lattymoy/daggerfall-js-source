@@ -85,8 +85,8 @@
   {
     "name": "TELL6d-formulas-deaf",
     "file": "src/combat/formulas.js",
-    "old": "    ...(blowInfo ?? {}),\n  }); // TELL6d: what the blow was (an aimed shot's)",
-    "new": "  }); // TELL6d: what the blow was (an aimed shot's)",
+    "old": "'arrow' : 'melee', ...(blowInfo ?? {}) });",
+    "new": "'arrow' : 'melee' });",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "TELL6d-flight-plain",
     "file": "src/combat/arrowFlight.js",
-    "old": "      const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * (m.speedScale ?? 1) * dt; // TELL6d: an aimed shot flies x1.3 as fast; BAL-ARCHERY: a shaft, not a gun's orb",
-    "new": "      const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * dt; // TELL6d: an aimed shot flies x1.3 as fast; BAL-ARCHERY: a shaft, not a gun's orb",
+    "old": "      const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * (m.speedScale ?? 1) * dt;",
+    "new": "      const step = (m.orb ? MISSILE_SPEED : ARROW_FLIGHT_SPEED) * dt;",
     "tests": [
       "test/characters/enemy/tell6d_aimed.test.js"
     ]

@@ -72,8 +72,8 @@
   {
     "name": "SEA-ROWS-rows",
     "file": "src/world/ethericSea.js",
-    "old": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
-    "new": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX; // Infinity: none in reach",
+    "old": "landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX;",
+    "new": "landPx >= CROSS_LAND_PX;",
     "tests": [
       "test/world/ethersea.test.js",
       "test/systems/naval/auditcaptsea.test.js",

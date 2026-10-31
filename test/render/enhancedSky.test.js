@@ -592,7 +592,7 @@ test('WX1: the enhanced precipitation shaders are the lab\u2019s own, verbatim, 
   // has one), the rate is slider * 0.16 without the gust, and the travel
   // is that rate times the gust times the clamped frame
   const d = read('src/systems/wind/windDrive.js');
-  assert.match(d, /return 0\.72 \+ 0\.2 \* Math\.sin\(tsec \* 0\.31\) \+ 0\.14 \* Math\.sin\(tsec \* 0\.83 \+ 1\.7\) \+ 0\.1 \* Math\.sin\(tsec \* 2\.1 \+ 0\.4\);/, 'the lab\'s gust');
+  assert.match(d, /return 0\.72 \+ 0\.20 \* Math\.sin\(tsec \* 0\.31\) \+ 0\.14 \* Math\.sin\(tsec \* 0\.83 \+ 1\.7\) \+ 0\.10 \* Math\.sin\(tsec \* 2\.10 \+ 0\.4\);/, 'the lab\'s gust');
   assert.match(d, /export const LAB_WIND_RATE = 0\.16;/);
   assert.match(d, /const rate = slider \* LAB_WIND_RATE;\s*\n\s*const windV = \[dir\[0\] \* rate, dir\[1\] \* rate\];/, 'the rate, without the gust');
   assert.match(d, /const ds = Math\.min\(WIND_STEP_DT_MAX, Math\.max\(0, Number\(dt\) \|\| 0\)\);/);

@@ -18,34 +18,11 @@
 // record's projection (validSdRecord) is the wire's, beside the frame that carries it (SD3) - re-exported here.
 //
 // Not a DFU member: Daggerfall has no other players and no world events. Ledger A (SUPER-DUNGEONS).
-import {
-  sanitizeName,
-  PIXEL_UNITS,
-  SD_REGION_COUNT,
-  SD_SLOT_MAX,
-  SD_FIGHTERS_MAX,
-  SD_LANE_SPAN,
-  sdLaneWire,
-  sdLaneOpen,
-  sdLaneRegionOk,
-  SITE_EVENT_LANES,
-  CHAT_BAY_REGIONS,
-  sharedClassicMinutes,
-  wallMsForClassicMinutes,
-} from '../wire.js';
+import { sanitizeName, PIXEL_UNITS, SD_REGION_COUNT, SD_SLOT_MAX, SD_FIGHTERS_MAX, SD_LANE_SPAN, sdLaneWire, sdLaneOpen, sdLaneRegionOk, SITE_EVENT_LANES, CHAT_BAY_REGIONS, sharedClassicMinutes, wallMsForClassicMinutes } from '../wire.js';
 import { gateHash, PIXEL_M } from '../gate/gateLaw.js';
-import { frontDayOfMinute, frontNextDay, FRONT_DAY_MINUTES, FRONT_PER_DAY } from '../frontLaw.js'; // FRONTS: a province's Hollow rises on its turn alone
+import { frontDayOfMinute, frontNextDay, FRONT_DAY_MINUTES, FRONT_PER_DAY } from '../frontLaw.js';   // FRONTS: a province's Hollow rises on its turn alone
 
-export {
-  SD_PHASES,
-  SD_REGION_COUNT,
-  SD_SLOT_MAX,
-  SD_FIGHTERS_MAX,
-  validSdRecord,
-  SD_LANE_SPAN,
-  sdLaneOpen,
-  sdLaneRegionOk,
-} from '../wire.js';
+export { SD_PHASES, SD_REGION_COUNT, SD_SLOT_MAX, SD_FIGHTERS_MAX, validSdRecord, SD_LANE_SPAN, sdLaneOpen, sdLaneRegionOk } from '../wire.js';
 
 // ═══ WW5: A HOLLOW IN EVERY THEATRE ═══════════════════════════════════
 //
@@ -59,12 +36,7 @@ export const sdLaneOf = (s) => sdLaneWire(s);
 /** The lanes the hub keeps a Hollow on. */
 export const SD_LANES = SITE_EVENT_LANES;
 /** The census's regions a lane's Hollow may rise in: the Bay's 62 (all but SD_TOWNLESS_REGIONS), a province's one. */
-export const sdLaneRegions = (lane) =>
-  lane === 0
-    ? Array.from({ length: CHAT_BAY_REGIONS }, (_, r) => r)
-    : sdLaneOpen(lane)
-      ? [CHAT_BAY_REGIONS - 1 + lane]
-      : [];
+export const sdLaneRegions = (lane) => (lane === 0 ? Array.from({ length: CHAT_BAY_REGIONS }, (_, r) => r) : sdLaneOpen(lane) ? [CHAT_BAY_REGIONS - 1 + lane] : []);
 
 /** How long a Hollow stands unbeaten before it fades, real ms (two days). */
 export const SD_LIFETIME_MS = 48 * 3600 * 1000;
@@ -88,9 +60,7 @@ export const SD_CENSUS_MIN = 2;
  *  in its channel, and a crowd at sea raised a Hollow that stood by no city on any client. Cybiades (61) has one place
  *  and no town; the rest have no place at all. The relay holds no map files, so the list is written here and pinned
  *  against them (test/net/superDungeon/fb1020b_sdsea.test.js). */
-export const SD_TOWNLESS_REGIONS = Object.freeze([
-  2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29, 30, 31, 61,
-]);
+export const SD_TOWNLESS_REGIONS = Object.freeze([2, 3, 4, 6, 7, 8, 10, 12, 13, 14, 15, 24, 25, 27, 28, 29, 30, 31, 61]);
 const TOWNLESS = new Set(SD_TOWNLESS_REGIONS);
 /** The one salt every client and the relay roll a Hollow's choices with. */
 export const SD_SALT = 0x5d01;
@@ -122,10 +92,7 @@ export const sdMarked = (phase) => phase === 'found' || phase === 'fell';
 /** May a fighter enter the Shattered Hour now - found, its boss standing? */
 export const sdAdmits = (rec, now) => sdPhase(rec, now) === 'found';
 /** May a fighter already in the Hour stay (a reconnect after a blip, the spoils after the kill)? Until it is gone. */
-export const sdHolds = (rec, now) => {
-  const p = sdPhase(rec, now);
-  return p === 'found' || p === 'fell';
-};
+export const sdHolds = (rec, now) => { const p = sdPhase(rec, now); return p === 'found' || p === 'fell'; };
 
 // ═══ THE DIRECTOR'S MOVES ═════════════════════════════════════════════
 //
@@ -140,15 +107,13 @@ export const SD_FRONT_HOLLOWS = FRONT_PER_DAY;
 /** FRONTS: the first instant from `now` on at which lane `lane` may raise a Hollow - `now` itself on its turn, and always
  *  on the Bay's lane. @param {number} now @param {number} lane */
 export function sdFrontFrom(now, lane) {
-  const day = frontDayOfMinute(sharedClassicMinutes(now)),
-    next = frontNextDay(day, lane);
+  const day = frontDayOfMinute(sharedClassicMinutes(now)), next = frontNextDay(day, lane);
   return next === day ? now : Math.ceil(wallMsForClassicMinutes(next * FRONT_DAY_MINUTES)) + 1;
 }
 /** FRONTS: the Hollows standing past the Bay at `now` on a lane other than `lane` (`recs`, every lane's record).
  *  @param {ReadonlyArray<SdRecord|null|undefined>} recs @param {number} now @param {number} lane */
 export const sdHeldPast = (recs, now, lane) => sdStandingPast(recs, now, lane).length;
-const sdStandingPast = (recs, now, lane) =>
-  (recs ?? []).filter((r) => r && sdLaneOf(r.s) > 0 && sdLaneOf(r.s) !== lane && sdStands(sdPhase(r, now)));
+const sdStandingPast = (recs, now, lane) => (recs ?? []).filter((r) => r && sdLaneOf(r.s) > 0 && sdLaneOf(r.s) !== lane && sdStands(sdPhase(r, now)));
 /** FRONTS: may lane `lane` raise a Hollow at `now`, with `held` standing past the Bay elsewhere? */
 const sdFrontMay = (now, lane, held) => sdFrontFrom(now, lane) <= now && (lane === 0 || held < SD_FRONT_HOLLOWS);
 /** AUDIT FRONTS A1, B1: the earliest a record's lane may raise its next Hollow, from `now` on - its rest, its turn and a
@@ -167,25 +132,11 @@ export function sdRiseNotBefore(rec, now, recs) {
 }
 /** AUDIT FRONTS A2: the order the director beats its lanes in - the Bay's, then the provinces whose last Hollow rose
  *  longest ago (none yet first), so a place freed past the Bay goes to the province that waited, not the lowest lane. */
-export const sdBeatOrder = (recs) => [
-  0,
-  ...SD_LANES.filter((l) => l > 0).sort((a, b) => sdLastRise(recs, a) - sdLastRise(recs, b) || a - b),
-];
-const sdLastRise = (recs, lane) => {
-  const r = (recs ?? []).find((x) => x && sdLaneOf(x.s) === lane);
-  return r && r.s % SD_LANE_SPAN ? r.at : -Infinity;
-};
+export const sdBeatOrder = (recs) => [0, ...SD_LANES.filter((l) => l > 0).sort((a, b) => sdLastRise(recs, a) - sdLastRise(recs, b) || a - b)];
+const sdLastRise = (recs, lane) => { const r = (recs ?? []).find((x) => x && sdLaneOf(x.s) === lane); return r && r.s % SD_LANE_SPAN ? r.at : -Infinity; };
 
 /** The hub's first beat: nothing has risen, the first rise SD_FIRST_RISE_MS on. WW5: a lane's own - its zero slot. */
-export const sdFirst = (now, lane = 0) =>
-  /** @type {SdRecord} */ ({
-    s: lane * SD_LANE_SPAN,
-    ph: 'gone',
-    r: -1,
-    at: now,
-    until: now,
-    next: now + SD_FIRST_RISE_MS,
-  });
+export const sdFirst = (now, lane = 0) => /** @type {SdRecord} */ ({ s: lane * SD_LANE_SPAN, ph: 'gone', r: -1, at: now, until: now, next: now + SD_FIRST_RISE_MS });
 
 /** A new Hollow rises - the next slot, in the census's region (-1: the Bay's great cities). Null while the last stands
  *  or rests. WW5: on the lane `prev` is (`lane` for a lane with no record yet) - its next slot in its own span, a region
@@ -193,19 +144,11 @@ export const sdFirst = (now, lane = 0) =>
 export function sdRise(prev, now, region, lane = prev ? sdLaneOf(prev.s) : 0, held = 0) {
   if (prev && (sdPhase(prev, now) !== 'gone' || now < prev.next)) return null;
   if (!sdLaneOpen(lane) || (prev && sdLaneOf(prev.s) !== lane)) return null;
-  if (!sdFrontMay(now, lane, held)) return null; // FRONTS: off its province's turn, or the provinces' Hollows all stand
-  if (!Number.isSafeInteger(region) || region < -1 || region >= SD_REGION_COUNT || !sdLaneRegionOk(lane, region))
-    return null;
+  if (!sdFrontMay(now, lane, held)) return null;   // FRONTS: off its province's turn, or the provinces' Hollows all stand
+  if (!Number.isSafeInteger(region) || region < -1 || region >= SD_REGION_COUNT || !sdLaneRegionOk(lane, region)) return null;
   const s = (prev?.s ?? lane * SD_LANE_SPAN) + 1;
   if (s > SD_SLOT_MAX || sdLaneOf(s) !== lane) return null;
-  return /** @type {SdRecord} */ ({
-    s,
-    ph: 'risen',
-    r: region,
-    at: now,
-    until: now + SD_LIFETIME_MS,
-    next: now + SD_LIFETIME_MS + SD_COOLDOWN_MS,
-  });
+  return /** @type {SdRecord} */ ({ s, ph: 'risen', r: region, at: now, until: now + SD_LIFETIME_MS, next: now + SD_LIFETIME_MS + SD_COOLDOWN_MS });
 }
 
 /** Found - by `name`, at `now` - while it has risen and no one has found it. */
@@ -229,14 +172,7 @@ export function sdEnter(rec, now) {
 export function sdFell(rec, now, { top = '', n = 0 } = {}) {
   if (!rec || sdPhase(rec, now) !== 'found') return null;
   const count = Number.isSafeInteger(n) ? Math.max(0, Math.min(SD_FIGHTERS_MAX, n)) : 0;
-  return /** @type {SdRecord} */ ({
-    ...rec,
-    ph: 'fell',
-    fellAt: now,
-    top: sanitizeName(top),
-    n: count,
-    next: now + SD_COLLAPSE_MS + SD_COOLDOWN_MS,
-  });
+  return /** @type {SdRecord} */ ({ ...rec, ph: 'fell', fellAt: now, top: sanitizeName(top), n: count, next: now + SD_COLLAPSE_MS + SD_COOLDOWN_MS });
 }
 
 /** Its time has run: the record says gone (it already IS gone by sdPhase; this is the word the hub fans). */
@@ -258,15 +194,13 @@ export function sdDue(rec, now, held = 0) {
   const p = sdPhase(rec, now);
   // AUDIT SD II (L3 F4): a FOUND Hollow's fade waits SD_FADE_GRACE_MS past its `until` - a fall told meanwhile wins (one
   // never found has no realm, and no fight to fall)
-  if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS)
-    return { act: null, at: rec.until + SD_FADE_GRACE_MS };
+  if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS) return { act: null, at: rec.until + SD_FADE_GRACE_MS };
   if (p === 'gone' && rec.ph !== 'gone' && rec.s) return { act: 'gone' };
   if (p === 'gone' && now < rec.next) return { act: null, at: rec.next };
   if (p === 'gone') {
     // FRONTS: a province's rise waits for its turn - and, all the provinces' Hollows standing, for one of them to end
     // (their own moves wake the hub then)
-    const lane = sdLaneOf(rec.s),
-      from = sdFrontFrom(now, lane);
+    const lane = sdLaneOf(rec.s), from = sdFrontFrom(now, lane);
     if (from > now) return { act: null, at: from };
     return sdFrontMay(now, lane, held) ? { act: 'rise' } : { act: null };
   }
@@ -290,8 +224,7 @@ export const sdRoll = (s, k) => gateHash(SD_SALT, s, k);
  */
 export function pickSdRegion(s, counts, last = -1) {
   const qual = [];
-  for (const r of sdLaneRegions(sdLaneOf(s)))
-    if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN && !TOWNLESS.has(r)) qual.push(r);
+  for (const r of sdLaneRegions(sdLaneOf(s))) if (Number(counts?.[r] ?? 0) >= SD_CENSUS_MIN && !TOWNLESS.has(r)) qual.push(r);
   const pool = qual.length > 1 ? qual.filter((r) => r !== last) : qual;
   if (!pool.length) return -1;
   const top = Math.max(...pool.map((r) => Number(counts[r])));
@@ -309,17 +242,10 @@ const UNITS_PER_M = PIXEL_UNITS / PIXEL_M;
  * @param {{ x:number, z:number }} pose
  */
 export function sdNearSite(claim, pose) {
-  if (
-    !Number.isSafeInteger(claim?.px) ||
-    !Number.isSafeInteger(claim?.py) ||
-    !Number.isFinite(pose?.x) ||
-    !Number.isFinite(pose?.z)
-  )
-    return false;
+  if (!Number.isSafeInteger(claim?.px) || !Number.isSafeInteger(claim?.py) || !Number.isFinite(pose?.x) || !Number.isFinite(pose?.z)) return false;
   // MapsFile's frame: x east from the map's west edge, z north from its SOUTH edge (pixel row py spans the z band
   // whose top is (500 - py) pixels up) - the pose's own law, wire.js pixelOf
-  const cx = (claim.px + 0.5) * PIXEL_UNITS,
-    cz = (500 - claim.py - 0.5) * PIXEL_UNITS;
+  const cx = (claim.px + 0.5) * PIXEL_UNITS, cz = (500 - claim.py - 0.5) * PIXEL_UNITS;
   return Math.hypot(pose.x - cx, pose.z - cz) <= SD_FOUND_RADIUS_M * UNITS_PER_M;
 }
 /**
@@ -343,20 +269,14 @@ export function sdFindBelieved(rec, now, claim, pose) {
 
 /** What a Hollow is called - by its slot's roll; `{city}` is the city it stands by (Super-Dungeons.md section 5). */
 export const SD_NAMES = Object.freeze([
-  'The Brass Hollow',
-  'The Stopped Bell',
-  'The Unwound Halls',
-  'The Clockless Deep',
-  "The Hour's Wound",
-  'The Splintered Keep',
-  'The Last Bell of {city}',
-  'The Hollow Under {city}',
+  'The Brass Hollow', 'The Stopped Bell', 'The Unwound Halls', 'The Clockless Deep', 'The Hour\'s Wound',
+  'The Splintered Keep', 'The Last Bell of {city}', 'The Hollow Under {city}',
 ]);
 /** A slot's name, with its city (or none - then the name that needs a city falls back to the first of the bare ones). */
 export function sdNameOf(s, city = '') {
   const name = SD_NAMES[sdRoll(s, 2) % SD_NAMES.length];
   if (!name.includes('{city}')) return name;
-  return city ? name.replace('{city}', () => city) : SD_NAMES[0]; // AUDIT SD II (L4 C6): a replacer - a name's `$&` is a name
+  return city ? name.replace('{city}', () => city) : SD_NAMES[0];   // AUDIT SD II (L4 C6): a replacer - a name's `$&` is a name
 }
 
 // ═══ THE ROOM ═════════════════════════════════════════════════════════
@@ -367,30 +287,16 @@ export function sdNameOf(s, city = '') {
 // player instance"): owner `p<n>`, a shared Hour of SD_PUB_SEATS, the next opened when it is full or won.
 const SD_ROOM = /^sd:([1-9]\d{0,8})\.([0-9a-f]{16}|p(?:0|[1-9]\d?))$/;
 const SD_OWNER = /^(?:[0-9a-f]{16}|p(?:0|[1-9]\d?))$/;
-export const SD_PUB_SEATS = 40; // SD-SOLO-40 (2026-10-28, the owner: "lets up the amount in a non party to 40")
+export const SD_PUB_SEATS = 40;   // SD-SOLO-40 (2026-10-28, the owner: "lets up the amount in a non party to 40")
 export const SD_PUB_MAX = 64;
 /** SD-SOLO: the shared Hour `n`'s owner, or null. @param {number} n */
 export const sdPubOwner = (n) => (Number.isSafeInteger(n) && n >= 0 && n < SD_PUB_MAX ? `p${n}` : null);
-export const isSdPubOwner = (o) =>
-  typeof o === 'string' && /^p(?:0|[1-9]\d?)$/.test(o) && Number(o.slice(1)) < SD_PUB_MAX;
+export const isSdPubOwner = (o) => typeof o === 'string' && /^p(?:0|[1-9]\d?)$/.test(o) && Number(o.slice(1)) < SD_PUB_MAX;
 /** @param {number} s @param {string} owner */
-export const sdRoomKey = (s, owner) =>
-  Number.isSafeInteger(s) &&
-  s > 0 &&
-  typeof owner === 'string' &&
-  SD_OWNER.test(owner) &&
-  (owner[0] !== 'p' || isSdPubOwner(owner))
-    ? `sd:${s}.${owner}`
-    : null;
-export const isSdRoom = (key) => {
-  const m = SD_ROOM.exec(String(key ?? ''));
-  return !!m && (m[2][0] !== 'p' || isSdPubOwner(m[2]));
-};
+export const sdRoomKey = (s, owner) => (Number.isSafeInteger(s) && s > 0 && typeof owner === 'string' && SD_OWNER.test(owner) && (owner[0] !== 'p' || isSdPubOwner(owner)) ? `sd:${s}.${owner}` : null);
+export const isSdRoom = (key) => { const m = SD_ROOM.exec(String(key ?? '')); return !!m && (m[2][0] !== 'p' || isSdPubOwner(m[2])); };
 /** The slot a realm room is for, or null. */
-export const sdSlotOfRoom = (key) => {
-  const m = SD_ROOM.exec(String(key ?? ''));
-  return m ? Number(m[1]) : null;
-};
+export const sdSlotOfRoom = (key) => { const m = SD_ROOM.exec(String(key ?? '')); return m ? Number(m[1]) : null; };
 /** SD-PARTY: the owner's digest a realm room is for, or null. */
 export const sdOwnerOfRoom = (key) => SD_ROOM.exec(String(key ?? ''))?.[2] ?? null;
 
@@ -402,19 +308,14 @@ export const sdOwnerOfRoom = (key) => SD_ROOM.exec(String(key ?? ''))?.[2] ?? nu
  *  Desert region* - it read *near Alik'r Desert*), else near the Bay. Pure. */
 /** The Bay's own name in a line, its one home (sdWhere's, and the herald's rise - net/superDungeon/sdHerald.js). */
 export const SD_BAY_NAME = 'the Iliac Bay';
-export const sdWhere = (near, region = '', province = '') =>
-  near ? `near ${near}` : region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME; // WW5: a province's Hollow is in its province (`province` - its name)
-export const sdFoundLine = ({ who, near, region, province = '' }) =>
-  `${who} has found an Abyss Dungeon ${sdWhere(near, region, province)}!`; // ABYSS-NAME (Mac: "lets rename Super Dungeons to Abyss Dungeons"): the player's word; the code's stays `super`
+export const sdWhere = (near, region = '', province = '') => (near ? `near ${near}` : region ? `in the ${region} region` : province ? 'in ' + province : 'near ' + SD_BAY_NAME);   // WW5: a province's Hollow is in its province (`province` - its name)
+export const sdFoundLine = ({ who, near, region, province = '' }) => `${who} has found an Abyss Dungeon ${sdWhere(near, region, province)}!`;   // ABYSS-NAME (Mac: "lets rename Super Dungeons to Abyss Dungeons"): the player's word; the code's stays `super`
 /** AUDIT SD II (L6 F20): a Hollow's name inside a sentence - its article small ("in the Brass Hollow"), as the Orrery's
  *  stones store theirs (net/superDungeon/sdBrain.js). */
 export const sdNameIn = (name) => String(name ?? '').replace(/^The /, 'the ');
-export const sdFellLine = ({ top, n, name }) =>
-  n > 1
-    ? `${top} and ${n - 1} ${n === 2 ? 'other' : 'others'} broke the Hour in ${sdNameIn(name)}. It collapses.`
-    : `${top} broke the Hour in ${sdNameIn(name)}. It collapses.`;
+export const sdFellLine = ({ top, n, name }) => (n > 1 ? `${top} and ${n - 1} ${n === 2 ? 'other' : 'others'} broke the Hour in ${sdNameIn(name)}. It collapses.` : `${top} broke the Hour in ${sdNameIn(name)}. It collapses.`);
 export const sdFadeLine = ({ name }) => `The Hour closes over ${sdNameIn(name)}, unbroken.`;
-export const SD_CAST_OUT_LINE = 'The Hour closes, and the Abyss Dungeon folds in on itself behind you.'; // AUDIT SD III (T15): the player's word for it (ABYSS-NAME) - it said "the Hollow"
+export const SD_CAST_OUT_LINE = 'The Hour closes, and the Abyss Dungeon folds in on itself behind you.';   // AUDIT SD III (T15): the player's word for it (ABYSS-NAME) - it said "the Hollow"
 /** The Rift's refusals (section 6) - said by the realm's room at a hello it will not admit, and by the client's own Rift
  *  before it asks: not yet found, and the Hour closed (or closing - its boss fallen, a newcomer is not let in). */
 export const SD_NO_RIFT = 'The Rift will not take you yet.';
@@ -465,21 +366,8 @@ export function sdDownWord(realm, sub, now) {
  * @param {string} caster @param {string} to @param {number} now @param {number[]|null} [at]
  */
 export function sdMayRaise(realm, caster, to, now, at = null) {
-  if (
-    !caster ||
-    !to ||
-    caster === to ||
-    !realm.in.includes(caster) ||
-    realm.dead.includes(caster) ||
-    (realm.down ?? []).some(([x]) => x === caster)
-  )
-    return false;
+  if (!caster || !to || caster === to || !realm.in.includes(caster) || realm.dead.includes(caster) || (realm.down ?? []).some(([x]) => x === caster)) return false;
   const d = (realm.down ?? []).find(([x]) => x === to);
   if (!d || now - d[1] > SD_REZ_MS) return false;
-  return !(
-    Array.isArray(at) &&
-    Number.isFinite(d[2]) &&
-    Number.isFinite(d[3]) &&
-    Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M
-  );
+  return !(Array.isArray(at) && Number.isFinite(d[2]) && Number.isFinite(d[3]) && Math.hypot(at[0] - d[2], at[2] - d[3]) > SD_REZ_REACH_M);
 }

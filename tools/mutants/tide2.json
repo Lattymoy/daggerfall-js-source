@@ -56,8 +56,8 @@
   {
     "name": "TIDE2-yield-treeYield",
     "file": "src/net/nodeLaw.js",
-    "old": "  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
-    "new": "  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= 1; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
+    "old": "export function treeYield({ roll, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function treeYield({ roll, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TIDE2-yield-haulYield",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (march) y *= MARCH_MULT;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;",
-    "new": "  if (march) y *= MARCH_MULT;\n  y *= 1; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;",
+    "old": "export function haulYield({ roll, clean = false, march = false, school = false, netter = false, slaughterfish = false, tideMult = 1 }, chance) {\n  let y = roll * (clean ? ACT_YIELD_MAX : 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function haulYield({ roll, clean = false, march = false, school = false, netter = false, slaughterfish = false, tideMult = 1 }, chance) {\n  let y = roll * (clean ? ACT_YIELD_MAX : 1);\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TIDE2-yield-herbYield",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (bruised) y = Math.max(1, y - 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
-    "new": "  if (bruised) y = Math.max(1, y - 1);\n  if (march) y *= MARCH_MULT;\n  y *= 1; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
+    "old": "export function herbYield({ roll, common = false, gardener = false, seasonMult = 1, offSeason = false, bruised = false, march = false, tideMult = 1 }, chance) {\n  let y = roll + (common && gardener ? 1 : 0);\n  y *= seasonMult;\n  if (offSeason) y *= OFF_SEASON_MULT;\n  if (bruised) y = Math.max(1, y - 1);\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function herbYield({ roll, common = false, gardener = false, seasonMult = 1, offSeason = false, bruised = false, march = false, tideMult = 1 }, chance) {\n  let y = roll + (common && gardener ? 1 : 0);\n  y *= seasonMult;\n  if (offSeason) y *= OFF_SEASON_MULT;\n  if (bruised) y = Math.max(1, y - 1);\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TIDE2-yield-foodYield",
     "file": "src/net/nodeLaw.js",
-    "old": "  let y = roll * step;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
-    "new": "  let y = roll * step;\n  if (march) y *= MARCH_MULT;\n  y *= 1; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
+    "old": "export function foodYield({ roll, step = 1, march = false, tideMult = 1 }, chance) {\n  let y = roll * step;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function foodYield({ roll, step = 1, march = false, tideMult = 1 }, chance) {\n  let y = roll * step;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TIDE2-yield-veinYield",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (deep && deepDelver) y *= DEEP_DELVER_MULT;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
-    "new": "  if (deep && deepDelver) y *= DEEP_DELVER_MULT;\n  if (march) y *= MARCH_MULT;\n  y *= 1; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));",
+    "old": "export function veinYield({ roll, deep = false, deepDelver = false, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (deep && deepDelver) y *= DEEP_DELVER_MULT;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function veinYield({ roll, deep = false, deepDelver = false, march = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (deep && deepDelver) y *= DEEP_DELVER_MULT;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TIDE2-yield-boulderYield",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (march) y *= MARCH_MULT;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (cut) return { material: 'stone:cut', qty: Math.max(1, wholeYield(y / CUT_RATIO, chance)) };",
-    "new": "  if (march) y *= MARCH_MULT;\n  y *= 1; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (cut) return { material: 'stone:cut', qty: Math.max(1, wholeYield(y / CUT_RATIO, chance)) };",
+    "old": "export function boulderYield({ roll, march = false, cut = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;",
+    "new": "export function boulderYield({ roll, march = false, cut = false, tideMult = 1 }, chance) {\n  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= 1;",
     "tests": [
       "test/net/tide_economy.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TIDE2-haul-order",
     "file": "src/net/nodeLaw.js",
-    "old": "  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;\n  if (slaughterfish) y += 1;",
-    "new": "  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;\n  if (slaughterfish) y += 1;\n  y *= tideMult; // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)",
+    "old": "  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;\n  if (slaughterfish) y += 1;\n",
+    "new": "  if (school) y += netter ? SCHOOL_FISH.netter : SCHOOL_FISH.plain;\n  if (slaughterfish) y += 1;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n",
     "tests": [
       "test/net/tide_economy.test.js"
     ]

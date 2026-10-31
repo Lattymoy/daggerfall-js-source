@@ -83,8 +83,8 @@
   {
     "name": "WB5-ammunition-kept",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    for (let n = 0; n < 32 && isAmmunition(w); n++) w = createRandomWeapon(level, rolls); // \"no arrows\" - ItemBuilder's own rule for a made piece",
-    "new": "    for (let n = 0; n < 0 && isAmmunition(w); n++) w = createRandomWeapon(level, rolls); // \"no arrows\" - ItemBuilder's own rule for a made piece",
+    "old": "    for (let n = 0; n < 32 && isAmmunition(w); n++)",
+    "new": "    for (let n = 0; n < 0 && isAmmunition(w); n++)",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "WB5-the-take-out-of-reach",
     "file": "src/scenes/spoilsPool.js",
-    "old": "            reach: TREASURE_ACTIVATION_DISTANCE,",
-    "new": "            reach: RAY_DISTANCE,",
+    "old": "distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE };",
+    "new": "distance: RAY_DISTANCE, reach: RAY_DISTANCE };",
     "tests": [
       "test/scenes/wb9f_gate_spoils.test.js"
     ],
@@ -175,8 +175,8 @@
   {
     "name": "WB5-no-condition",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  return mintCondition(item);",
-    "new": "  return item;",
+    "old": "  return mintCondition(item);\n}",
+    "new": "  return item;\n}",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WB5-unidentified",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  item.isIdentified = true;\n  return { item, tier: item.rarity ?? tier };",
-    "new": "  return { item, tier: item.rarity ?? tier };",
+    "old": "  item.isIdentified = true;\n",
+    "new": "",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -194,7 +194,7 @@
     "name": "WB5-the-sigil-a-renamed-gem",
     "file": "src/systems/gate/gateSpoils.js",
     "old": "  return mintCondition(setItemFields({ group: 'Gems', templateIndex: SIGIL_STONE_TEMPLATE }));",
-    "new": "  return mintCondition(\n    setItemFields({ group: 'Gems', templateIndex: 0, name: SIGIL_STONE.name, value: SIGIL_STONE.value }),\n  );",
+    "new": "  return mintCondition(setItemFields({ group: 'Gems', templateIndex: 0, name: SIGIL_STONE.name, value: SIGIL_STONE.value }));",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "WB5-a-piece-without-its-row",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  for (let n = 0; n < 32 && (!templateByIndex(item?.templateIndex) || !wearableItem(item)); n++)\n    item = makeBase(level, rolls);",
-    "new": "  for (let n = 0; n < 32 && !wearableItem(item); n++) item = makeBase(level, rolls);",
+    "old": "(!templateByIndex(item?.templateIndex) || !wearableItem(item)); n++)",
+    "new": "!wearableItem(item); n++)",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -220,7 +220,7 @@
   {
     "name": "WB5-the-devices-word-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    return (\n      kept === day || (Array.isArray(kept) && (kept.includes(spentKey(day, acct)) || kept.includes(spentKey(day, '*'))))\n    );",
+    "old": "    return kept === day || (Array.isArray(kept) && (kept.includes(spentKey(day, acct)) || kept.includes(spentKey(day, '*'))));",
     "new": "    return false;",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
@@ -229,8 +229,8 @@
   {
     "name": "WB5-the-sessions-word-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  function spentOn(day, acct) {\n    if (spentHere.has(spentKey(day, acct))) return true;\n    const kept = read(DAY_KEY);",
-    "new": "  function spentOn(day, acct) {\n    const kept = read(DAY_KEY);",
+    "old": "  function spentOn(day, acct) {\n    if (spentHere.has(spentKey(day, acct))) return true;",
+    "new": "  function spentOn(day, acct) {",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "WB5-a-save-since-ignored",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue; // a save since holds them: it goes\n    // AUDIT RESCUE-SAVE A1: the loaded save already holds them - adopted, so the save that lands clears the record",
-    "new": "    // AUDIT RESCUE-SAVE A1: the loaded save already holds them - adopted, so the save that lands clears the record",
+    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes\n",
+    "new": "",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "WB5-another-character-handed-them",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (rec.who != null && rec.who !== who) {\n      left.push(rec);\n      continue;\n    } // another character's waits for them\n    // AUDIT WBX S3: a record of this build is cleared by the save that holds it (the pool's `saved`) - never by a clock;",
-    "new": "    // AUDIT WBX S3: a record of this build is cleared by the save that holds it (the pool's `saved`) - never by a clock;",
+    "old": "    if (rec.who != null && rec.who !== who) { left.push(rec); continue; }   // another character's waits for them\n",
+    "new": "",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "WB5-any-characters-save-counted",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  who != null && [...(saves ?? [])].some((i) => i?.characterId === who && (i.dateAndTime?.realTime ?? 0) > at);",
-    "new": "  who != null && [...(saves ?? [])].some((i) => (i.dateAndTime?.realTime ?? 0) > at);",
+    "old": "i?.characterId === who && ",
+    "new": "",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "WB5-the-validator-skipped",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  const item = p?.kind === 'item' ? validLootItem(p.item) : null;",
-    "new": "  const item = p?.kind === 'item' ? p.item : null;",
+    "old": "const item = p?.kind === 'item' ? validLootItem(p.item) : null;",
+    "new": "const item = p?.kind === 'item' ? p.item : null;",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "WB5-the-record-cleared-on-handing",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    left.push(rec); // and it stays until a save does",
-    "new": "    clear();\n    left.push(rec); // and it stays until a save does",
+    "old": "  for (const p of rec.pieces) { const q = keptPiece(p); if (q) { take(q); n++; } }\n",
+    "new": "  for (const p of rec.pieces) { const q = keptPiece(p); if (q) { take(q); n++; } }\n  clear();\n",
     "tests": [
       "test/systems/item/wb5_gate_spoils.test.js"
     ]

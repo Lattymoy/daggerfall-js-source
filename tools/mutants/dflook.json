@@ -92,8 +92,8 @@
   {
     "name": "DFLOOK-the-ships-painted",
     "file": "src/world/ships/galleonArt.js",
-    "old": "        return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record));",
-    "new": "        return p && (void dfLook, void lookSeed, p);",
+    "old": "      const paint = () => { const p = built(record); return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record)); };",
+    "new": "      const paint = () => { const p = built(record); return p && (void dfLook, void lookSeed, p); };",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DFLOOK-a-twin-its-own-grain",
     "file": "src/world/ships/galleonArt.js",
-    "old": "        return p && dfLook(p, lookSeed(archive, dayOf.get(record) ?? record));",
-    "new": "        return p && dfLook(p, lookSeed(archive, record));",
+    "old": "dfLook(p, lookSeed(archive, dayOf.get(record) ?? record))",
+    "new": "dfLook(p, lookSeed(archive, record))",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "DFLOOK-the-room-painted",
     "file": "src/scenes/caravanRoom.js",
-    "old": "      () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))),",
-    "new": "      () => toColor32((void dfLook, void lookSeed, pic)),",
+    "old": "    wearPainted(WAGON_ARCHIVE, from, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))), (c32) => {",
+    "new": "    wearPainted(WAGON_ARCHIVE, from, () => toColor32((void dfLook, void lookSeed, pic)), (c32) => {",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "DFLOOK-the-room-its-paint's-grain",
     "file": "src/scenes/caravanRoom.js",
-    "old": "      () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))),",
-    "new": "      () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec))),",
+    "old": "    wearPainted(WAGON_ARCHIVE, from, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))), (c32) => {",
+    "new": "    wearPainted(WAGON_ARCHIVE, from, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec))), (c32) => {",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DFLOOK-the-icon-painted",
     "file": "src/world/wagonModels.js",
-    "old": "      paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec))),",
-    "new": "      paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32((void dfLook, void lookSeed, pic)),",
+    "old": "toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))",
+    "new": "toColor32((void dfLook, void lookSeed, pic))",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "DFLOOK-the-monument-painted",
     "file": "src/scenes/lefayMonumentHost.js",
-    "old": "          () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)),",
-    "new": "          () => (void dfLook, void lookSeed, art),",
+    "old": "wearPainted(LEFAY_ARCHIVE, rec, () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)),",
+    "new": "wearPainted(LEFAY_ARCHIVE, rec, () => (void dfLook, void lookSeed, art),",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -212,8 +212,8 @@
   {
     "name": "DFLOOK-the-night-remap-dropped",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap); // THE STERN WINDOWS LIT: her glass whole and glowing",
-    "new": "    if (cityLights) void nightRemapOf; // THE STERN WINDOWS LIT: her glass whole and glowing",
+    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap);",
+    "new": "    if (cityLights) void nightRemapOf;",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -221,8 +221,8 @@
   {
     "name": "DFLOOK-worn-by-day",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap); // THE STERN WINDOWS LIT: her glass whole and glowing",
-    "new": "    if (!cityLights) texRemap = nightRemapOf(texRemap); // THE STERN WINDOWS LIT: her glass whole and glowing",
+    "old": "    if (cityLights) texRemap = nightRemapOf(texRemap);",
+    "new": "    if (!cityLights) texRemap = nightRemapOf(texRemap);",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -239,8 +239,8 @@
   {
     "name": "DFLOOK-a-new-remap-each-night",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "  let m = _nightRemaps.get(texRemap);\n  if (!m) {",
-    "new": "  let m = _nightRemaps.get(texRemap);\n  {",
+    "old": "  if (!m) { m = new Map([...NIGHT_REMAP, ...texRemap]); _nightRemaps.set(texRemap, m); }",
+    "new": "  { m = new Map([...NIGHT_REMAP, ...texRemap]); _nightRemaps.set(texRemap, m); }",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js"
     ]
@@ -267,8 +267,8 @@
   {
     "name": "DFLOOK-the-twin's-glow-unuploaded",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "    if (lit || glow)",
-    "new": "    if (!(lit || glow))",
+    "old": "    if (lit || glow) renderer?.uploadEmissionTexture?.(archive, night,",
+    "new": "    if (!(lit || glow)) renderer?.uploadEmissionTexture?.(archive, night,",
     "tests": [
       "test/systems/naval/auditgalleon_sea.test.js",
       "test/world/ships/auditgalleon2_prefab.test.js"
@@ -295,7 +295,7 @@
   {
     "name": "DFLOOK-the-carrack-unlit",
     "file": "src/world/ships/carrackArt.js",
-    "old": "export const CARRACK_NIGHT = Object.freeze(\n  Object.fromEntries(BANDS.transom.recs.map((r) => [r, r + NIGHT_RECORD_OFFSET])),\n);",
+    "old": "export const CARRACK_NIGHT = Object.freeze(Object.fromEntries(BANDS.transom.recs.map((r) => [r, r + NIGHT_RECORD_OFFSET])));",
     "new": "export const CARRACK_NIGHT = Object.freeze({});",
     "tests": [
       "test/systems/naval/ships2_carrack.test.js",

@@ -137,8 +137,8 @@
   {
     "name": "H1-a-switched-off-mod-holds-its-keys",
     "file": "src/systems/inputActions.js",
-    "old": "  return !vendor || (modLatchedOn(vendor) ?? !!modSetting(vendor, 'Enabled')); // AUDIT PRE-MERGE 0928 U7: a next-load mod its host latched at mount (Come Sail Away, Travel Options) keeps its keys for the game it was loaded for",
-    "new": "  return true; // AUDIT PRE-MERGE 0928 U7: a next-load mod its host latched at mount (Come Sail Away, Travel Options) keeps its keys for the game it was loaded for",
+    "old": "  return !vendor || (modLatchedOn(vendor) ?? !!modSetting(vendor, 'Enabled'));",
+    "new": "  return true;",
     "tests": [
       "test/systems/auditcontrib.test.js",
       "test/ui/kb1_keybinds.test.js",

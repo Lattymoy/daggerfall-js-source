@@ -32,8 +32,8 @@
   {
     "name": "STAFF-PANEL3-ECON-wiring-gone",
     "file": "server-account/src/staff.js",
-    "old": "  if (ECON_ROUTES.includes(path)) return staffEconomy(ctx, env, path, body, who, audit); // STAFF-PANEL3-ECON: an Admin's alone",
-    "new": "  if (ECON_ROUTES.includes('nothing')) return staffEconomy(ctx, env, path, body, who, audit); // STAFF-PANEL3-ECON: an Admin's alone",
+    "old": "  if (ECON_ROUTES.includes(path)) return staffEconomy(ctx, env, path, body, who, audit);",
+    "new": "  if (ECON_ROUTES.includes('nothing')) return staffEconomy(ctx, env, path, body, who, audit);",
     "why": "the routes fall to the owners' door",
     "tests": [
       "test/server/staffpanel3econ.test.js"

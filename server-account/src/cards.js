@@ -21,35 +21,19 @@
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
-import { regionOk } from '../../src/net/nodeLaw.js'; // WW7-5: a town book's region any of the world's
+import { regionOk } from '../../src/net/nodeLaw.js';   // WW7-5: a town book's region any of the world's
 import { mintStakeOrder, STAKE_ROOM_RE } from '../../src/net/identityToken.js';
 import { verifyCardReceipt, CARD_RECEIPT_TTL_S } from '../../src/net/card/cardReceipt.js';
-import {
-  HOLDEM_BBS,
-  HOLDEM_STAKE_MIN_BB,
-  HOLDEM_STAKE_MAX_BB,
-  HOLDEM_TABLES_MAX,
-  HOLDEM_TOPUP_MIN_BB,
-  holdemGoldTable,
-} from '../../src/net/holdemTable.js';
-import { GAMBIT_STAKE_BB, gambitStakeOk } from '../../src/net/gambit/gambitStakes.js'; // KG6: The King's Gambit's stakes, an arm of their own (AUDIT KG C24)
+import { HOLDEM_BBS, HOLDEM_STAKE_MIN_BB, HOLDEM_STAKE_MAX_BB, HOLDEM_TABLES_MAX, HOLDEM_TOPUP_MIN_BB, holdemGoldTable } from '../../src/net/holdemTable.js';
+import { GAMBIT_STAKE_BB, gambitStakeOk } from '../../src/net/gambit/gambitStakes.js';   // KG6: The King's Gambit's stakes, an arm of their own (AUDIT KG C24)
 
 /** A stake request's id - one asked twice is one stake. */
 export const CARDS_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;
 /** A stake's id: twenty hex digits from the service's own randomness (net/identityToken.js STAKE_ID_RE). */
-const stakeIdOf = (rand) => {
-  const b = new Uint8Array(10);
-  rand(b);
-  return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
-};
+const stakeIdOf = (rand) => { const b = new Uint8Array(10); rand(b); return [...b].map((x) => x.toString(16).padStart(2, '0')).join(''); };
 
 /** The order on a held stake, minted for its row. */
-const orderOf = (row, player, signingKey, subtle, nowS) =>
-  mintStakeOrder(
-    { s: player.id, cj: row.id, cr: row.room, ct: Number(row.tbl), ca: Number(row.amount), cb: Number(row.bb) },
-    signingKey,
-    { subtle, nowS },
-  );
+const orderOf = (row, player, signingKey, subtle, nowS) => mintStakeOrder({ s: player.id, cj: row.id, cr: row.room, ct: Number(row.tbl), ca: Number(row.amount), cb: Number(row.bb) }, signingKey, { subtle, nowS });
 
 /**
  * STAKE: `{ character, realm, region, room, table, bb, amount, rid }` - `amount` gold of the realm character's held
@@ -58,35 +42,17 @@ const orderOf = (row, player, signingKey, subtle, nowS) =>
  * again answers its stake again (`repeat`), no gold moving twice.
  * @param {any} ctx @param {any} player @param {any} env @param {any} body @param {CryptoKey|null} signingKey
  */
-export async function stakeCards(
-  ctx,
-  player,
-  env,
-  { character, realm = null, region, room, table, bb, amount, rid, topup = false } = {},
-  signingKey = null,
-) {
+export async function stakeCards(ctx, player, env, { character, realm = null, region, room, table, bb, amount, rid, topup = false } = {}, signingKey = null) {
   const { db, nowS, rand, subtle } = ctx;
-  const side = await realmActFirst(db, player.id, character, realm); // AUDIT REALM L1-F2: where the record stands, first
+  const side = await realmActFirst(db, player.id, character, realm);   // AUDIT REALM L1-F2: where the record stands, first
   if (side.error) return side;
-  if (!side.at) return { error: 'cards-realm' }; // section 5: a character the service does not keep plays for chips
+  if (!side.at) return { error: 'cards-realm' };   // section 5: a character the service does not keep plays for chips
   if (!signingKey) return { error: 'cards-closed' };
   if (typeof rid !== 'string' || !CARDS_RID_RE.test(rid)) return { error: 'bad-rid' };
-  const prior = await db
-    .prepare('SELECT * FROM card_stakes WHERE player = ?1 AND rid = ?2')
-    .bind(player.id, rid)
-    .first();
+  const prior = await db.prepare('SELECT * FROM card_stakes WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();
   // AUDIT CARDS-4 A1: asked again, the SAME order - minted at the stake's own instant, so a repeat is never a fresh minute
   // to sit on, nor a void the relay's memory of its spend (HOLDEM_STAKE_KEEP_S) has outlived
-  if (prior)
-    return prior.status === 'held'
-      ? {
-          ok: true,
-          repeat: true,
-          id: prior.id,
-          amount: Number(prior.amount),
-          stake: await orderOf(prior, player, signingKey, subtle, Number(prior.at)),
-        }
-      : { error: 'cards-stake-paid' };
+  if (prior) return prior.status === 'held' ? { ok: true, repeat: true, id: prior.id, amount: Number(prior.amount), stake: await orderOf(prior, player, signingKey, subtle, Number(prior.at)) } : { error: 'cards-stake-paid' };
   if (!regionOk(region)) return { error: 'bad-region' };
   if (typeof room !== 'string' || !STAKE_ROOM_RE.test(room)) return { error: 'bad-room' };
   if (!Number.isInteger(table) || table < 0 || table >= HOLDEM_TABLES_MAX) return { error: 'bad-table' };
@@ -99,46 +65,26 @@ export async function stakeCards(
   } else {
     if (!HOLDEM_BBS.includes(bb)) return { error: 'bad-stakes' };
     // section 24: a top-up's stake is a seat's addition - from HOLDEM_TOPUP_MIN_BB (the relay keeps the seat within the most)
-    if (
-      !Number.isSafeInteger(amount) ||
-      amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb ||
-      amount > HOLDEM_STAKE_MAX_BB * bb
-    )
-      return { error: 'bad-buy-in' };
+    if (!Number.isSafeInteger(amount) || amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb || amount > HOLDEM_STAKE_MAX_BB * bb) return { error: 'bad-buy-in' };
   }
   const id = stakeIdOf(rand);
-  const prep = await prepareRealmRecord(
-    ctx,
-    player.id,
-    side.at,
-    (save) => (payFromSave(save, amount, region) ? null : 'realm-gold'),
-    { outbound: true },
-  ); // INT3: a stake can be won by another player
+  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (payFromSave(save, amount, region) ? null : 'realm-gold'), { outbound: true });   // INT3: a stake can be won by another player
   if (prep.error) return prep;
   try {
     await db.batch([
       ...prep.steps,
-      db
-        .prepare(
-          `INSERT INTO card_stakes (id, player, char_id, rid, room, tbl, bb, amount, status, at, region) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'held', ?9, ?10)`,
-        )
+      db.prepare(`INSERT INTO card_stakes (id, player, char_id, rid, room, tbl, bb, amount, status, at, region) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'held', ?9, ?10)`)
         .bind(id, player.id, character, rid, room, table, bb, amount, nowS, region),
     ]);
   } catch {
-    await dropIfUnnamed(db, ctx.bucket, player.id, side.at.id, prep.key); // AUDIT REALM2 S3: a batch that landed and lost its answer keeps its save
+    await dropIfUnnamed(db, ctx.bucket, player.id, side.at.id, prep.key);   // AUDIT REALM2 S3: a batch that landed and lost its answer keeps its save
     const moved = await recordMovedOf(db, player.id, side.at);
     if (moved) return moved;
     return { error: 'cards-stake-failed' };
   }
   await dropObjects(ctx.bucket, [prep.prev]);
   const row = { id, room, tbl: table, amount, bb };
-  return {
-    ok: true,
-    id,
-    amount,
-    stake: await orderOf(row, player, signingKey, subtle, nowS),
-    realm: { seq: prep.seq },
-  };
+  return { ok: true, id, amount, stake: await orderOf(row, player, signingKey, subtle, nowS), realm: { seq: prep.seq } };
 }
 
 /**
@@ -159,7 +105,7 @@ export async function cashoutCards(ctx, player, env, { character, realm = null, 
   if (c.s !== player.id) return { error: 'cards-not-yours' };
   const row = await db.prepare('SELECT * FROM card_stakes WHERE id = ?1 AND player = ?2').bind(c.j, player.id).first();
   if (!row) return { error: 'cards-no-stake' };
-  if (row.char_id !== character) return { error: 'cards-other-character' }; // the gold goes home to the character that staked it
+  if (row.char_id !== character) return { error: 'cards-other-character' };   // the gold goes home to the character that staked it
   // AUDIT CARDS-4 E6: where the record stands FIRST (AUDIT REALM L1-F2), then a repeat - a paid stake answered before it
   // read a landed claim whose answer was lost as ok with no move, the device's sequence one behind the record's
   const side = await realmActFirst(db, player.id, character, realm);
@@ -167,41 +113,26 @@ export async function cashoutCards(ctx, player, env, { character, realm = null, 
   if (!side.at) return { error: 'cards-realm' };
   if (row.status === 'paid') return { ok: true, repeat: true, gold: Number(row.paid ?? 0) };
   // a stake handed back whole is the stake; a seat leaves with no more than every seat's deepest stake at its table
-  if ((c.w === 'refused' || c.w === 'void') && c.r !== Number(row.amount))
-    return { error: 'cards-receipt', why: 'sum' };
+  if ((c.w === 'refused' || c.w === 'void') && c.r !== Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };
   // AUDIT CARDS-5 E1: and a seat leaves with no more than every stake that came to its table - the seats' buy-ins, their
   // re-buys and top-ups, over the receipt's life (six deep stakes was no bound: a loser's re-buy is a winner's chips)
-  const into = await db
-    .prepare(
-      `SELECT COALESCE(SUM(amount), 0) AS n FROM card_stakes WHERE room = ?1 AND tbl = ?2 AND bb = ?3 AND at <= ?4 AND at >= ?5`,
-    )
-    .bind(row.room, row.tbl, row.bb, c.i, c.i - CARD_RECEIPT_TTL_S)
-    .first();
+  const into = await db.prepare(`SELECT COALESCE(SUM(amount), 0) AS n FROM card_stakes WHERE room = ?1 AND tbl = ?2 AND bb = ?3 AND at <= ?4 AND at >= ?5`)
+    .bind(row.room, row.tbl, row.bb, c.i, c.i - CARD_RECEIPT_TTL_S).first();
   if (c.r > Number(into?.n ?? 0)) return { error: 'cards-receipt', why: 'sum' };
   // AUDIT KG II A4: a King's Gambit pot is two like stakes - its winner leaves with no more than twice its own
   if (Number(row.bb) === GAMBIT_STAKE_BB && c.r > 2 * Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };
   // AUDIT CARDS-4 A7: home to the region it was staked from - never the one the client names
   const home = Number(row.region);
   if (!regionOk(home)) return { error: 'bad-region' };
-  const settle = db
-    .prepare(
-      `UPDATE card_stakes SET status = 'paid', paid = ?3, paid_at = ?4 WHERE id = ?1 AND player = ?2 AND status = 'held'`,
-    )
-    .bind(c.j, player.id, c.r, nowS);
-  if (c.r === 0) {
-    // out of chips: nothing for the record, the stake settled
+  const settle = db.prepare(`UPDATE card_stakes SET status = 'paid', paid = ?3, paid_at = ?4 WHERE id = ?1 AND player = ?2 AND status = 'held'`).bind(c.j, player.id, c.r, nowS);
+  if (c.r === 0) {   // out of chips: nothing for the record, the stake settled
     // AUDIT CARDS-4 A6: a settle that failed is said - answered paid, the row stayed held
-    const done = await db.batch([settle, mustChange(db)]).then(
-      () => true,
-      () => false,
-    );
+    const done = await db.batch([settle, mustChange(db)]).then(() => true, () => false);
     if (done) return { ok: true, gold: 0 };
     const now = await db.prepare('SELECT status FROM card_stakes WHERE id = ?1').bind(c.j).first();
     return now?.status === 'paid' ? { ok: true, repeat: true, gold: 0 } : { error: 'cards-cashout-failed' };
   }
-  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) =>
-    creditSave(save, c.r, { bank: home }) ? null : 'bad-gold',
-  );
+  const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (creditSave(save, c.r, { bank: home }) ? null : 'bad-gold'));
   if (prep.error) return prep;
   try {
     await db.batch([...prep.steps, settle, mustChange(db)]);
@@ -210,9 +141,7 @@ export async function cashoutCards(ctx, player, env, { character, realm = null, 
     const moved = await recordMovedOf(db, player.id, side.at);
     if (moved) return moved;
     const now = await db.prepare('SELECT status, paid FROM card_stakes WHERE id = ?1').bind(c.j).first();
-    return now?.status === 'paid'
-      ? { ok: true, repeat: true, gold: Number(now.paid ?? 0) }
-      : { error: 'cards-cashout-failed' };
+    return now?.status === 'paid' ? { ok: true, repeat: true, gold: Number(now.paid ?? 0) } : { error: 'cards-cashout-failed' };
   }
   await dropObjects(ctx.bucket, [prep.prev]);
   return { ok: true, gold: c.r, realm: { seq: prep.seq } };

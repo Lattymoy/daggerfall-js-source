@@ -144,8 +144,8 @@
   {
     "name": "SERPENT-SET-no-ember",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),\n    { kind: 'gold', gold: s.gold, tier: 'common' },",
-    "new": "    { kind: 'gold', gold: s.gold, tier: 'common' },",
+    "old": "    ...(s.embers ? [{ kind: 'item', item: s.embers, tier: 'artifact' }] : []),\n",
+    "new": "",
     "why": "the gate's currency never paid",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -165,8 +165,8 @@
   {
     "name": "SERPENT-SET-the-set-before-the-last-pass",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );\n  // SERPENT-SET: the Old Coil's own set, a dealer's alone - rolled LAST, so every hoard before it is what it was\n  const coil = dealt ? rollSerpentSetPiece(rolls) : null;",
-    "new": "  const coil = dealt ? rollSerpentSetPiece(rolls) : null;\n  lastPass(\n    pieces.map((p) => p.item),\n    rolls,\n  );",
+    "old": "  lastPass(pieces.map((p) => p.item), rolls);\n  // SERPENT-SET: the Old Coil's own set, a dealer's alone - rolled LAST, so every hoard before it is what it was\n  const coil = dealt ? rollSerpentSetPiece(rolls) : null;",
+    "new": "  const coil = dealt ? rollSerpentSetPiece(rolls) : null;\n  lastPass(pieces.map((p) => p.item), rolls);",
     "why": "the set rolled before the last pass - every earlier hoard's Exalted roll moved",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "SERPENT-SET-a-standers-set",
     "file": "src/systems/serpent/serpentSpoils.js",
-    "old": "  const coil = dealt ? rollSerpentSetPiece(rolls) : null;",
-    "new": "  const coil = rollSerpentSetPiece(rolls);",
+    "old": "const coil = dealt ? rollSerpentSetPiece(rolls) : null;",
+    "new": "const coil = rollSerpentSetPiece(rolls);",
     "why": "a ship that stood finds a piece too",
     "tests": [
       "test/systems/serpentset.test.js"
@@ -409,8 +409,8 @@
   {
     "name": "SERPENT-SET-purse-gates-alone",
     "file": "server-account/src/accounts.js",
-    "old": "  '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
-    "new": "  '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
+    "old": "const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM serpent_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
+    "new": "const EMBERS_EARNED_SQL = '((SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) + (SELECT COALESCE(SUM(stones), 0) FROM eg_redoubts WHERE account = ?1))';",
     "why": "the sea's embers refused at the counter",
     "note": "EG-E1 (PIN MOVED): the Spire's embers join the one sum - re-aimed by content; the sea's term alone dropped.",
     "tests": [
@@ -420,8 +420,8 @@
   {
     "name": "SERPENT-SET-the-sale-apart",
     "file": "server-account/src/accounts.js",
-    "old": "         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${",
-    "new": "         AND (SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) - insignia_spent >= ?3${",
+    "old": "         AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3${rid ? `",
+    "new": "         AND (SELECT COALESCE(SUM(stones), 0) FROM gate_kills WHERE account = ?1) - insignia_spent >= ?3${rid ? `",
     "why": "the purse says yes and the sale no",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"
@@ -441,8 +441,8 @@
   {
     "name": "SERPENT-SET-the-amount",
     "file": "src/net/marksLaw.js",
-    "old": "  serpent: Object.freeze({ amount: 40, stood: 0.5 }),",
-    "new": "  serpent: Object.freeze({ amount: 50, stood: 0.5 }),",
+    "old": "serpent: Object.freeze({ amount: 40, stood: 0.5 }),",
+    "new": "serpent: Object.freeze({ amount: 50, stood: 0.5 }),",
     "why": "a gate's 50",
     "tests": [
       "test/net/serpent/serpentset_service.test.js"
@@ -451,7 +451,7 @@
   {
     "name": "SERPENT-SET-stood-whole",
     "file": "src/net/marksLaw.js",
-    "old": "export const serpentStrikeOf = (earned) =>\n  earned === 'stood'\n    ? Math.floor(MARKS_FAUCETS.serpent.amount * MARKS_FAUCETS.serpent.stood)\n    : MARKS_FAUCETS.serpent.amount;",
+    "old": "export const serpentStrikeOf = (earned) => (earned === 'stood' ? Math.floor(MARKS_FAUCETS.serpent.amount * MARKS_FAUCETS.serpent.stood) : MARKS_FAUCETS.serpent.amount);",
     "new": "export const serpentStrikeOf = (earned) => MARKS_FAUCETS.serpent.amount;",
     "why": "a stander paid whole",
     "tests": [
@@ -461,8 +461,8 @@
   {
     "name": "SERPENT-SET-cap-apart",
     "file": "src/net/marksLaw.js",
-    "old": "export const MARKS_COMBAT = Object.freeze({\n  kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']),\n  perDay: 150,\n});",
-    "new": "export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid', 'eg', 'star']), perDay: 150 });",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate', 'raid', 'eg', 'star']), perDay: 150 }",
     "why": "the serpents outside the day's cap - and every serpent strike counted for nothing toward it",
     "note": "EG-E1 (PIN MOVED): the Spire's Redoubts under the same cap - re-aimed by content; the serpents alone dropped.",
     "tests": [

@@ -701,8 +701,8 @@
   {
     "name": "SPY-I-share-unseated",
     "file": "src/systems/inputActions.js",
-    "old": "  Object.freeze(['KeyK', 'Spyglass', 'FollowPaths']),\n]);",
-    "new": "]);",
+    "old": "  Object.freeze(['KeyK', 'Spyglass', 'FollowPaths']),\n",
+    "new": "",
     "tests": [
       "test/systems/naval/spyglass.test.js",
       "test/systems/inputactions.test.js"

@@ -2,7 +2,7 @@
   {
     "name": "GRASSLIT2-classic-tones",
     "file": "src/render/labGrass.js",
-    "old": "  Object.freeze([1.06, 1.1, 1.01]),",
+    "old": "  Object.freeze([1.06, 1.10, 1.01]),",
     "new": "  Object.freeze([1.15, 1.21, 1.06]),",
     "tests": [
       "test/render/grasslit2.test.js",
@@ -12,8 +12,8 @@
   {
     "name": "GRASSLIT2-tones-by-lane",
     "file": "src/render/labGrass.js",
-    "old": "    gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic); // GRASS-LIT2: each lane its own",
-    "new": "    gl.uniform3fv(u.uGrassTone, this.tones); // GRASS-LIT2: each lane its own",
+    "old": "gl.uniform3fv(u.uGrassTone, lane ? this.tones : this.tonesClassic);",
+    "new": "gl.uniform3fv(u.uGrassTone, this.tones);",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "GRASSLIT2-twin-tones-by-lane",
     "file": "src/render/labGrass.js",
-    "old": "  const [root, mid, tip] = (tones ?? (lane ? GRASS_TONES : GRASS_TONES_CLASSIC))\n    .slice(0, 3)\n    .map((k) => ground.map((v, i) => v * k[i]));",
-    "new": "  const [root, mid, tip] = (tones ?? GRASS_TONES).slice(0, 3).map((k) => ground.map((v, i) => v * k[i]));",
+    "old": "(tones ?? (lane ? GRASS_TONES : GRASS_TONES_CLASSIC)).slice(0, 3)",
+    "new": "(tones ?? GRASS_TONES).slice(0, 3)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -33,8 +33,8 @@
   {
     "name": "GRASSLIT2-slope-ignored",
     "file": "src/render/labGrass.js",
-    "old": "      '  vec3 gN = vec3(slope.x, sqrt(max(1.0 - dot(slope, slope), 0.0)), slope.y);\\n' +",
-    "new": "      '  vec3 gN = vec3(0.0, 1.0, 0.0);\\n' +",
+    "old": "vec3 gN = vec3(slope.x, sqrt(max(1.0 - dot(slope, slope), 0.0)), slope.y);",
+    "new": "vec3 gN = vec3(0.0, 1.0, 0.0);",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -43,8 +43,8 @@
   {
     "name": "GRASSLIT2-slope-axes-swapped",
     "file": "src/render/labGrass.js",
-    "old": "      `  vec2 slope = (vec2(float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u), float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u)) - ${GRASS_SLOPE_STEPS.toFixed(1)}) * ${GRASS_SLOPE_SPAN / GRASS_SLOPE_STEPS};   // AUDIT A3: stored ^ 15, so a zero word is level\\n` +",
-    "new": "      `  vec2 slope = (vec2(float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u), float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u)) - ${GRASS_SLOPE_STEPS.toFixed(1)}) * ${GRASS_SLOPE_SPAN / GRASS_SLOPE_STEPS};   // AUDIT A3: stored ^ 15, so a zero word is level\\n` +",
+    "old": "float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u), float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u)",
+    "new": "float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u), float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -63,8 +63,8 @@
   {
     "name": "GRASSLIT2-pack-undithered",
     "file": "src/render/labGrass.js",
-    "old": "      Math.min(\n        2 * GRASS_SLOPE_STEPS,\n        Math.round(GRASS_SLOPE_STEPS + (v * k * GRASS_SLOPE_STEPS) / GRASS_SLOPE_SPAN + r),\n      ),",
-    "new": "      Math.min(2 * GRASS_SLOPE_STEPS, Math.round(GRASS_SLOPE_STEPS + (v * k * GRASS_SLOPE_STEPS) / GRASS_SLOPE_SPAN)),",
+    "old": "GRASS_SLOPE_STEPS / GRASS_SLOPE_SPAN + r)))",
+    "new": "GRASS_SLOPE_STEPS / GRASS_SLOPE_SPAN)))",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -73,8 +73,8 @@
   {
     "name": "GRASSLIT2-pack-unheld",
     "file": "src/render/labGrass.js",
-    "old": "    k = l > GRASS_SLOPE_SPAN ? GRASS_SLOPE_SPAN / l : 1; // a normal past the span is held to it, its heading kept",
-    "new": "    k = 1; // a normal past the span is held to it, its heading kept",
+    "old": "k = l > GRASS_SLOPE_SPAN ? GRASS_SLOPE_SPAN / l : 1;",
+    "new": "k = 1;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -83,8 +83,8 @@
   {
     "name": "GRASSLIT2-points-every-vertex",
     "file": "src/render/labGrass.js",
-    "old": "      `  if (gl_VertexID % 3 == 2) for (int j = 0; j < ${GRASS_CELL_LIGHTS}; j++) {   // AUDIT A1: the cell's lights, not the frame's\\n` +",
-    "new": "      `  if (gl_VertexID % 3 >= 0) for (int j = 0; j < ${GRASS_CELL_LIGHTS}; j++) {   // AUDIT A1: the cell's lights, not the frame's\\n` +",
+    "old": "if (gl_VertexID % 3 == 2) for (int j = 0;",
+    "new": "if (gl_VertexID % 3 >= 0) for (int j = 0;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "GRASSLIT2-points-classic-falloff",
     "file": "src/render/labGrass.js",
-    "old": "      '    float pa = uLane > 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;\\n' +",
-    "new": "      '    float pa = uLane > 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc;\\n' +",
+    "old": ": pc * pc;\\n'",
+    "new": ": pc;\\n'",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "GRASSLIT2-points-lane-falloff",
     "file": "src/render/labGrass.js",
-    "old": "      '    float pa = uLane > 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;\\n' +",
-    "new": "      '    float pa = uLane > 2.0 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;\\n' +",
+    "old": "float pa = uLane > 0.5 ? elAttenuation(",
+    "new": "float pa = uLane > 2.0 ? elAttenuation(",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "GRASSLIT2-points-unshadowed",
     "file": "src/render/labGrass.js",
-    "old": "      `    vPoint += pa * shadowOfLight(i, uPointLights[i], rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0)) * max(dot(nrm, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];\\n` +",
-    "new": "      `    vPoint += pa * max(dot(nrm, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];\\n` +",
+    "old": "    vPoint += pa * shadowOfLight(i, uPointLights[i], rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0)) * max(",
+    "new": "    vPoint += pa * max(",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "GRASSLIT2-points-no-lambert",
     "file": "src/render/labGrass.js",
-    "old": "      `    vPoint += pa * shadowOfLight(i, uPointLights[i], rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0)) * max(dot(nrm, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];\\n` +",
-    "new": "      `    vPoint += pa * shadowOfLight(i, uPointLights[i], rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0)) * uPointColors[i];\\n` +",
+    "old": "* max(dot(nrm, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];",
+    "new": "* uPointColors[i];",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -133,8 +133,8 @@
   {
     "name": "GRASSLIT2-points-not-added",
     "file": "src/render/labGrass.js",
-    "old": "      `  vec3 light = uAmb * (${GRASS_SWARD} + ${(1 - GRASS_SWARD).toFixed(2)}*t) + uSunCol * (uSunScale * vLam * vSun) + uMoonCol * (uMoonScale * vMoonLam) + vNear + vPoint;   // GRASS-LIT; GRASS-LIT2: and the lanterns\\n` +",
-    "new": "      `  vec3 light = uAmb * (${GRASS_SWARD} + ${(1 - GRASS_SWARD).toFixed(2)}*t) + uSunCol * (uSunScale * vLam * vSun) + uMoonCol * (uMoonScale * vMoonLam) + vNear;   // GRASS-LIT; GRASS-LIT2: and the lanterns\\n` +",
+    "old": "+ vNear + vPoint;   // GRASS-LIT; GRASS-LIT2",
+    "new": "+ vNear;   // GRASS-LIT; GRASS-LIT2",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -143,8 +143,8 @@
   {
     "name": "GRASSLIT2-points-not-decoded",
     "file": "src/render/labGrass.js",
-    "old": "        lane ? lane.decodeN(pcs, this._dec.points, pn) : pcs.subarray ? pcs.subarray(0, pn * 3) : pcs.slice(0, pn * 3),",
-    "new": "        false ? lane.decodeN(pcs, this._dec.points, pn) : pcs.subarray ? pcs.subarray(0, pn * 3) : pcs.slice(0, pn * 3),",
+    "old": "lane ? lane.decodeN(pcs, this._dec.points, pn) :",
+    "new": "false ? lane.decodeN(pcs, this._dec.points, pn) :",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -153,8 +153,8 @@
   {
     "name": "GRASSLIT2-points-uncapped",
     "file": "src/render/labGrass.js",
-    "old": "    const pn = pts && pcs ? Math.min(pts.length >> 2, Math.floor(pcs.length / 3), GRASS_MAX_LIGHTS) : 0;",
-    "new": "    const pn = pts && pcs ? Math.min(pts.length >> 2, Math.floor(pcs.length / 3)) : 0;",
+    "old": "Math.floor(pcs.length / 3), GRASS_MAX_LIGHTS) : 0;",
+    "new": "Math.floor(pcs.length / 3)) : 0;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -163,8 +163,8 @@
   {
     "name": "GRASSLIT2-placer-slope-dropped",
     "file": "src/render/labGrass.js",
-    "old": "    st.slope[n * 2] = gn ? gn[0] : 0;",
-    "new": "    st.slope[n * 2] = 0;",
+    "old": "st.slope[n * 2] = gn ? gn[0] : 0;",
+    "new": "st.slope[n * 2] = 0;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -173,8 +173,8 @@
   {
     "name": "GRASSLIT2-writeslot-slope-dropped",
     "file": "src/render/labGrass.js",
-    "old": "      A[i * 4 + 3] = packHeightSlope(\n        (h - hFloor) / hSpan,\n        placed.slope ? placed.slope[i * 2] : 0,\n        placed.slope ? placed.slope[i * 2 + 1] : 0,\n        i,\n      ); // GRASS-LIT2",
-    "new": "      A[i * 4 + 3] = packHeightSlope((h - hFloor) / hSpan, 0, placed.slope ? placed.slope[i * 2 + 1] : 0, i); // GRASS-LIT2",
+    "old": "placed.slope ? placed.slope[i * 2] : 0,",
+    "new": "0,",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "GRASSLIT2-mean-even-step",
     "file": "src/render/labGrass.js",
-    "old": "export const grassMeanStep = (n) => Math.max(1, Math.ceil(n / GRASS_MEAN_SAMPLES)) | 1;",
-    "new": "export const grassMeanStep = (n) => Math.max(1, Math.ceil(n / GRASS_MEAN_SAMPLES));",
+    "old": "Math.ceil(n / GRASS_MEAN_SAMPLES)) | 1;",
+    "new": "Math.ceil(n / GRASS_MEAN_SAMPLES));",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -253,8 +253,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-reach-ignored",
     "file": "src/render/labGrass.js",
-    "old": "      if (!(d2 < r * r)) continue; // its reach misses the cell (the shader's own `pd >= w` cut, at the box)",
-    "new": "      // reach ignored   // its reach misses the cell (the shader's own `pd >= w` cut, at the box)",
+    "old": "      if (!(d2 < r * r)) continue;",
+    "new": "      // reach ignored",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-reach-flat",
     "file": "src/render/labGrass.js",
-    "old": "        dy = Math.max(box[1] - y, 0, y - box[4]),",
-    "new": "        dy = 0,",
+    "old": "dy = Math.max(box[1] - y, 0, y - box[4])",
+    "new": "dy = 0",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -273,8 +273,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-full-keeps-first",
     "file": "src/render/labGrass.js",
-    "old": "      if (n === cap && d2 >= dist[cap - 1]) continue; // full, and no nearer than any kept: it falls off",
-    "new": "      if (n === cap) continue; // full, and no nearer than any kept: it falls off",
+    "old": "if (n === cap && d2 >= dist[cap - 1]) continue;",
+    "new": "if (n === cap) continue;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -283,8 +283,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-full-tie-replaces",
     "file": "src/render/labGrass.js",
-    "old": "      if (n === cap && d2 >= dist[cap - 1]) continue; // full, and no nearer than any kept: it falls off",
-    "new": "      if (n === cap && d2 > dist[cap - 1]) continue; // full, and no nearer than any kept: it falls off",
+    "old": "if (n === cap && d2 >= dist[cap - 1]) continue;",
+    "new": "if (n === cap && d2 > dist[cap - 1]) continue;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -293,8 +293,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-unsorted",
     "file": "src/render/labGrass.js",
-    "old": "      while (k > 0 && dist[k - 1] > d2) {",
-    "new": "      while (false && dist[k - 1] > d2) {",
+    "old": "while (k > 0 && dist[k - 1] > d2)",
+    "new": "while (false && dist[k - 1] > d2)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -303,8 +303,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-tie-to-later",
     "file": "src/render/labGrass.js",
-    "old": "      while (k > 0 && dist[k - 1] > d2) {",
-    "new": "      while (k > 0 && dist[k - 1] >= d2) {",
+    "old": "while (k > 0 && dist[k - 1] > d2)",
+    "new": "while (k > 0 && dist[k - 1] >= d2)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -323,8 +323,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-frame-reset-dropped",
     "file": "src/render/labGrass.js",
-    "old": "    this._cellN = -1;\n    gl.uniform1i(u.uPointCount, 0);",
-    "new": "    gl.uniform1i(u.uPointCount, 0);",
+    "old": "this._pts = pn > 0 ? pts : null; this._pn = pn; this._cellN = -1;",
+    "new": "this._pts = pn > 0 ? pts : null; this._pn = pn;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -333,8 +333,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-cell-walk-dropped",
     "file": "src/render/labGrass.js",
-    "old": "      if (this._pn > 0) this._cellLights(box); // AUDIT GRASS-LIT2 A1",
-    "new": "      if (false) this._cellLights(box); // AUDIT GRASS-LIT2 A1",
+    "old": "if (this._pn > 0) this._cellLights(box);",
+    "new": "if (false) this._cellLights(box);",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -343,8 +343,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A1-stage-ignores-list",
     "file": "src/render/labGrass.js",
-    "old": "      '    int i = uPointIdx[j];\\n' +",
-    "new": "      '    int i = j;\\n' +",
+    "old": "'    int i = uPointIdx[j];\\n'",
+    "new": "'    int i = j;\\n'",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A2-no-caster-reset",
     "file": "src/render/labGrass.js",
-    "old": "      gl.uniform1iv(L.casterOf, NO_CASTERS);\n      gl.uniform4fv(L.pointParams, NO_CASTER_PARAMS);\n    }",
-    "new": "    }",
+    "old": "      gl.uniform1iv(L.casterOf, NO_CASTERS);\n      gl.uniform4fv(L.pointParams, NO_CASTER_PARAMS);\n",
+    "new": "\n",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A3-pack-unxored",
     "file": "src/render/labGrass.js",
-    "old": "  return (h << 10) | ((q(nx, dx) ^ GRASS_SLOPE_STEPS) << 5) | (q(nz, dz) ^ GRASS_SLOPE_STEPS); // AUDIT A3: stored XOR 15 - a zero word is level",
-    "new": "  return (h << 10) | (q(nx, dx) << 5) | q(nz, dz); // AUDIT A3: stored XOR 15 - a zero word is level",
+    "old": "((q(nx, dx) ^ GRASS_SLOPE_STEPS) << 5) | (q(nz, dz) ^ GRASS_SLOPE_STEPS)",
+    "new": "(q(nx, dx) << 5) | q(nz, dz)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -373,8 +373,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A3-stage-unxored",
     "file": "src/render/labGrass.js",
-    "old": "      `  vec2 slope = (vec2(float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u), float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u)) - ${GRASS_SLOPE_STEPS.toFixed(1)}) * ${GRASS_SLOPE_SPAN / GRASS_SLOPE_STEPS};   // AUDIT A3: stored ^ 15, so a zero word is level\\n` +",
-    "new": "      `  vec2 slope = (vec2(float((hw >> 5u) & 31u), float(hw & 31u)) - ${GRASS_SLOPE_STEPS.toFixed(1)}) * ${GRASS_SLOPE_SPAN / GRASS_SLOPE_STEPS};   // AUDIT A3: stored ^ 15, so a zero word is level\\n` +",
+    "old": "float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u), float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u)",
+    "new": "float((hw >> 5u) & 31u), float(hw & 31u)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -383,8 +383,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A4-nan-unguarded",
     "file": "src/render/labGrass.js",
-    "old": "  if (!Number.isFinite(nx) || !Number.isFinite(nz)) nx = nz = 0; // AUDIT GRASS-LIT2 A4: a normal that is not one is level - NaN shifted to code 0, the steepest lean",
-    "new": "  // unguarded   // AUDIT GRASS-LIT2 A4: a normal that is not one is level - NaN shifted to code 0, the steepest lean",
+    "old": "  if (!Number.isFinite(nx) || !Number.isFinite(nz)) nx = nz = 0;",
+    "new": "  // unguarded",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -393,8 +393,8 @@
   {
     "name": "AUDIT-GRASSLIT2-A5-floor",
     "file": "src/render/labGrass.js",
-    "old": "export const grassMeanStep = (n) => Math.max(1, Math.ceil(n / GRASS_MEAN_SAMPLES)) | 1;",
-    "new": "export const grassMeanStep = (n) => Math.max(1, Math.floor(n / GRASS_MEAN_SAMPLES)) | 1;",
+    "old": "Math.max(1, Math.ceil(n / GRASS_MEAN_SAMPLES)) | 1",
+    "new": "Math.max(1, Math.floor(n / GRASS_MEAN_SAMPLES)) | 1",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -457,8 +457,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-r2-same-constant",
     "file": "src/render/labGrass.js",
-    "old": "    dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5; // R2, centred: -0.5..0.5",
-    "new": "    dz = ((0.5 + i * 0.7548776662466927) % 1) - 0.5; // R2, centred: -0.5..0.5",
+    "old": "dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5",
+    "new": "dz = ((0.5 + i * 0.7548776662466927) % 1) - 0.5",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -467,8 +467,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-r2-golden",
     "file": "src/render/labGrass.js",
-    "old": "  const dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5,",
-    "new": "  const dx = ((0.5 + i * 0.6180339887498949) % 1) - 0.5,",
+    "old": "dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5",
+    "new": "dx = ((0.5 + i * 0.6180339887498949) % 1) - 0.5",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -477,8 +477,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-r2-axes-swapped",
     "file": "src/render/labGrass.js",
-    "old": "  const dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5,\n    dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5; // R2, centred: -0.5..0.5",
-    "new": "  const dx = ((0.5 + i * 0.5698402909980532) % 1) - 0.5,\n    dz = ((0.5 + i * 0.7548776662466927) % 1) - 0.5; // R2, centred: -0.5..0.5",
+    "old": "const dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5, dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5;",
+    "new": "const dx = ((0.5 + i * 0.5698402909980532) % 1) - 0.5, dz = ((0.5 + i * 0.7548776662466927) % 1) - 0.5;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -487,8 +487,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-r2-phase-0",
     "file": "src/render/labGrass.js",
-    "old": "  const dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5,\n    dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5; // R2, centred: -0.5..0.5",
-    "new": "  const dx = ((0.0 + i * 0.7548776662466927) % 1) - 0.5,\n    dz = ((0.0 + i * 0.5698402909980532) % 1) - 0.5; // R2, centred: -0.5..0.5",
+    "old": "const dx = ((0.5 + i * 0.7548776662466927) % 1) - 0.5, dz = ((0.5 + i * 0.5698402909980532) % 1) - 0.5;",
+    "new": "const dx = ((0.0 + i * 0.7548776662466927) % 1) - 0.5, dz = ((0.0 + i * 0.5698402909980532) % 1) - 0.5;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -497,8 +497,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-pack-hold-strict",
     "file": "src/render/labGrass.js",
-    "old": "    k = l > GRASS_SLOPE_SPAN ? GRASS_SLOPE_SPAN / l : 1; // a normal past the span is held to it, its heading kept",
-    "new": "    k = l > GRASS_SLOPE_SPAN ? (0.95 * GRASS_SLOPE_SPAN) / l : 1; // a normal past the span is held to it, its heading kept",
+    "old": "k = l > GRASS_SLOPE_SPAN ? GRASS_SLOPE_SPAN / l : 1;",
+    "new": "k = l > GRASS_SLOPE_SPAN ? 0.95 * GRASS_SLOPE_SPAN / l : 1;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -507,8 +507,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-decode-no-round",
     "file": "src/render/labGrass.js",
-    "old": "      '  uint hw = uint(aPA.w * 65535.0 + 0.5);\\n' +",
-    "new": "      '  uint hw = uint(aPA.w * 65535.0);\\n' +",
+    "old": "'  uint hw = uint(aPA.w * 65535.0 + 0.5);\\n'",
+    "new": "'  uint hw = uint(aPA.w * 65535.0);\\n'",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -517,8 +517,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-height-div-64",
     "file": "src/render/labGrass.js",
-    "old": "    to: `                    uBladeScale.x + float(hw >> ${16 - GRASS_HEIGHT_BITS}u) / ${(2 ** GRASS_HEIGHT_BITS - 1).toFixed(1)} * uBladeScale.y,   // GRASS-LIT2\\n`,",
-    "new": "    to: `                    uBladeScale.x + float(hw >> ${16 - GRASS_HEIGHT_BITS}u) / 64.0 * uBladeScale.y,   // GRASS-LIT2\\n`,",
+    "old": "/ ${(2 ** GRASS_HEIGHT_BITS - 1).toFixed(1)} * uBladeScale.y",
+    "new": "/ 64.0 * uBladeScale.y",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -527,8 +527,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-height-div-62",
     "file": "src/render/labGrass.js",
-    "old": "    to: `                    uBladeScale.x + float(hw >> ${16 - GRASS_HEIGHT_BITS}u) / ${(2 ** GRASS_HEIGHT_BITS - 1).toFixed(1)} * uBladeScale.y,   // GRASS-LIT2\\n`,",
-    "new": "    to: `                    uBladeScale.x + float(hw >> ${16 - GRASS_HEIGHT_BITS}u) / 62.0 * uBladeScale.y,   // GRASS-LIT2\\n`,",
+    "old": "/ ${(2 ** GRASS_HEIGHT_BITS - 1).toFixed(1)} * uBladeScale.y",
+    "new": "/ 62.0 * uBladeScale.y",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -537,8 +537,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-count-gate-dropped",
     "file": "src/render/labGrass.js",
-    "old": "      '    if (j >= uPointCount) break;\\n' +",
-    "new": "      '' +",
+    "old": "'    if (j >= uPointCount) break;\\n'",
+    "new": "''",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -547,8 +547,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-vpoint-uninit",
     "file": "src/render/labGrass.js",
-    "old": "      '  vPoint = vec3(0.0);\\n' +",
-    "new": "      '' +",
+    "old": "'  vPoint = vec3(0.0);\\n'",
+    "new": "''",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -557,8 +557,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-lane-compare-flipped",
     "file": "src/render/labGrass.js",
-    "old": "      '    float pa = uLane > 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;\\n' +",
-    "new": "      '    float pa = uLane >= 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;\\n' +",
+    "old": "float pa = uLane > 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;",
+    "new": "float pa = uLane >= 0.5 ? elAttenuation(pd, uPointLights[i].w) : pc * pc;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -569,8 +569,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-lambert-up-not-nrm",
     "file": "src/render/labGrass.js",
-    "old": "      `    vPoint += pa * shadowOfLight(i, uPointLights[i], rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0)) * max(dot(nrm, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];\\n` +",
-    "new": "      `    vPoint += pa * shadowOfLight(i, uPointLights[i], rootW + vec3(0.0, ${GRASS_SUN_LIFT}, 0.0), vec3(0.0)) * max(dot(gN, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];\\n` +",
+    "old": "* max(dot(nrm, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];",
+    "new": "* max(dot(gN, pL / max(pd, 1e-4)), 0.0) * uPointColors[i];",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -579,8 +579,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-count-ignores-colors",
     "file": "src/render/labGrass.js",
-    "old": "    const pn = pts && pcs ? Math.min(pts.length >> 2, Math.floor(pcs.length / 3), GRASS_MAX_LIGHTS) : 0;",
-    "new": "    const pn = pts && pcs ? Math.min(pts.length >> 2, GRASS_MAX_LIGHTS) : 0;",
+    "old": "Math.min(pts.length >> 2, Math.floor(pcs.length / 3), GRASS_MAX_LIGHTS)",
+    "new": "Math.min(pts.length >> 2, GRASS_MAX_LIGHTS)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -589,8 +589,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-classic-colors-uncut",
     "file": "src/render/labGrass.js",
-    "old": "      gl.uniform3fv(\n        u.uPointColors,\n        lane ? lane.decodeN(pcs, this._dec.points, pn) : pcs.subarray ? pcs.subarray(0, pn * 3) : pcs.slice(0, pn * 3),\n      );",
-    "new": "      gl.uniform3fv(u.uPointColors, lane ? lane.decodeN(pcs, this._dec.points, pn) : pcs);",
+    "old": ": (pcs.subarray ? pcs.subarray(0, pn * 3) : pcs.slice(0, pn * 3)));",
+    "new": ": pcs);",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -599,8 +599,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-twin-normal-ignored",
     "file": "src/render/labGrass.js",
-    "old": "  const n = light.normal ?? [0, 1, 0];",
-    "new": "  const n = [0, 1, 0];",
+    "old": "const n = light.normal ?? [0, 1, 0];",
+    "new": "const n = [0, 1, 0];",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -609,8 +609,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-twin-lantern-undecoded",
     "file": "src/render/labGrass.js",
-    "old": "    for (let i = 0; i < 3; i++) pt[i] += k * dec(p.color[i]);",
-    "new": "    for (let i = 0; i < 3; i++) pt[i] += k * p.color[i];",
+    "old": "pt[i] += k * dec(p.color[i]);",
+    "new": "pt[i] += k * p.color[i];",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -619,8 +619,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-twin-moon-up",
     "file": "src/render/labGrass.js",
-    "old": "  const moonLam = light.moonDir ? lamOf(light.moonDir) : 0;",
-    "new": "  const moonLam = light.moonDir ? Math.max(light.moonDir[1], 0) : 0;",
+    "old": "const moonLam = light.moonDir ? lamOf(light.moonDir) : 0;",
+    "new": "const moonLam = light.moonDir ? Math.max(light.moonDir[1], 0) : 0;",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -629,8 +629,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-ask-no-slope",
     "file": "src/render/labGrass.js",
-    "old": "      const ask = { keep: keepNow, ground: groundNow, slope: slopeNow, height };",
-    "new": "      const ask = { keep: keepNow, ground: groundNow, height };",
+    "old": "const ask = { keep: keepNow, ground: groundNow, slope: slopeNow, height };",
+    "new": "const ask = { keep: keepNow, ground: groundNow, height };",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -684,8 +684,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-nx-mask-63",
     "file": "src/render/labGrass.js",
-    "old": "      `  vec2 slope = (vec2(float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u), float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u)) - ${GRASS_SLOPE_STEPS.toFixed(1)}) * ${GRASS_SLOPE_SPAN / GRASS_SLOPE_STEPS};   // AUDIT A3: stored ^ 15, so a zero word is level\\n` +",
-    "new": "      `  vec2 slope = (vec2(float(((hw >> 5u) & 63u) ^ ${GRASS_SLOPE_STEPS}u), float((hw & 31u) ^ ${GRASS_SLOPE_STEPS}u)) - ${GRASS_SLOPE_STEPS.toFixed(1)}) * ${GRASS_SLOPE_SPAN / GRASS_SLOPE_STEPS};   // AUDIT A3: stored ^ 15, so a zero word is level\\n` +",
+    "old": "float(((hw >> 5u) & 31u) ^ ${GRASS_SLOPE_STEPS}u)",
+    "new": "float(((hw >> 5u) & 63u) ^ ${GRASS_SLOPE_STEPS}u)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -712,8 +712,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-twin-tones-override-ignored",
     "file": "src/render/labGrass.js",
-    "old": "  const [root, mid, tip] = (tones ?? (lane ? GRASS_TONES : GRASS_TONES_CLASSIC))",
-    "new": "  const [root, mid, tip] = (lane ? GRASS_TONES : GRASS_TONES_CLASSIC)",
+    "old": "(tones ?? (lane ? GRASS_TONES : GRASS_TONES_CLASSIC)).slice(0, 3)",
+    "new": "(lane ? GRASS_TONES : GRASS_TONES_CLASSIC).slice(0, 3)",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"
@@ -740,8 +740,8 @@
   {
     "name": "AUDIT-GRASSLIT2-C-height-bit-into-slope",
     "file": "src/render/labGrass.js",
-    "old": "      '  uint hw = uint(aPA.w * 65535.0 + 0.5);\\n' +",
-    "new": "      '  uint hw = uint(aPA.w * 65535.0 + 0.5); hw ^= ((hw >> 10u) & 1u) << 9u;\\n' +",
+    "old": "'  uint hw = uint(aPA.w * 65535.0 + 0.5);\\n'",
+    "new": "'  uint hw = uint(aPA.w * 65535.0 + 0.5); hw ^= ((hw >> 10u) & 1u) << 9u;\\n'",
     "tests": [
       "test/render/grasslit2.test.js",
       "test/render/grasslit.test.js"

@@ -104,8 +104,8 @@
   {
     "name": "AUDITRETRO1-B1-the-smooth-grass-reads-unit-0",
     "file": "src/render/labGrass.js",
-    "old": "    } else gl.uniform1i(u.uPxSheet, 4); // AUDIT RETRO1 B1: the smooth style reads the sampler too (the mix at 0) - left on unit 0 it read whatever was bound there, and a frame image still bound there is a WebGL feedback loop; unit 4, which this style never binds",
-    "new": "    } // AUDIT RETRO1 B1: the smooth style reads the sampler too (the mix at 0) - left on unit 0 it read whatever was bound there, and a frame image still bound there is a WebGL feedback loop; unit 4, which this style never binds",
+    "old": "    } else gl.uniform1i(u.uPxSheet, 4);   // AUDIT RETRO1 B1",
+    "new": "    }   // AUDIT RETRO1 B1",
     "tests": [
       "test/render/auditretro1.test.js",
       "test/render/grasspx.test.js"

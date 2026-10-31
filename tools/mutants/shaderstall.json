@@ -74,8 +74,8 @@
   {
     "name": "SS-the-gate-fire-at-its-first-stand",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "    pass ??= firePass();",
-    "new": "    if (!pass && gl) pass = new GatePassRenderer(gl, profile);",
+    "old": "  function ensurePass() { pass ??= firePass(); }",
+    "new": "  function ensurePass() { if (!pass && gl) pass = new GatePassRenderer(gl, profile); }",
     "tests": [
       "test/render/shaderstall.test.js"
     ]

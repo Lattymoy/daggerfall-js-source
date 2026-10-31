@@ -130,8 +130,8 @@
   {
     "name": "HUB1-base-count-with-mod-rows",
     "file": "src/formats/mapsFile.js",
-    "old": "    return this._readLocationCount(region);",
-    "new": "    return this.getRegion(region)?.locationCount ?? 0;",
+    "old": "    return this._readLocationCount(region);\n  }\n\n  /** DFRegion by name",
+    "new": "    return this.getRegion(region)?.locationCount ?? 0;\n  }\n\n  /** DFRegion by name",
     "tests": [
       "test/ui/ink/hub1.test.js"
     ]

@@ -835,8 +835,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-logout-no-order",
     "file": "server-account/src/staff.js",
-    "old": "    await hiddenEnd(ctx, env, me.id, all ? null : [who.hash]); // STAFF-PANEL5-HIDDEN: the session's hidden sockets closed, never shown",
-    "new": "    // STAFF-PANEL5-HIDDEN: the session's hidden sockets closed, never shown",
+    "old": "    await hiddenEnd(ctx, env, me.id, all ? null : [who.hash]);",
+    "new": "",
     "why": "a sign-out pushes nothing",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -845,8 +845,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-logout-one-as-all",
     "file": "server-account/src/staff.js",
-    "old": "    await hiddenEnd(ctx, env, me.id, all ? null : [who.hash]); // STAFF-PANEL5-HIDDEN: the session's hidden sockets closed, never shown",
-    "new": "    await hiddenEnd(ctx, env, me.id, null); // STAFF-PANEL5-HIDDEN: the session's hidden sockets closed, never shown",
+    "old": "await hiddenEnd(ctx, env, me.id, all ? null : [who.hash]);",
+    "new": "await hiddenEnd(ctx, env, me.id, null);",
     "why": "a sign-out of one ends every session's mark",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -855,8 +855,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-logout-all-as-one",
     "file": "server-account/src/staff.js",
-    "old": "    await hiddenEnd(ctx, env, me.id, all ? null : [who.hash]); // STAFF-PANEL5-HIDDEN: the session's hidden sockets closed, never shown",
-    "new": "    await hiddenEnd(ctx, env, me.id, [who.hash]); // STAFF-PANEL5-HIDDEN: the session's hidden sockets closed, never shown",
+    "old": "await hiddenEnd(ctx, env, me.id, all ? null : [who.hash]);",
+    "new": "await hiddenEnd(ctx, env, me.id, [who.hash]);",
     "why": "a sign-out of all ends one",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -865,8 +865,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-forget-no-order",
     "file": "server-account/src/staff.js",
-    "old": "    if (keyed.length)\n      await hiddenEnd(\n        ctx,\n        env,\n        me.id,\n        keyed.map((r) => r.token_hash),\n      ); // STAFF-PANEL5-HIDDEN: a forgotten key's hidden sockets closed with its sessions",
-    "new": "    // STAFF-PANEL5-HIDDEN: a forgotten key's hidden sockets closed with its sessions",
+    "old": "    if (keyed.length) await hiddenEnd(ctx, env, me.id, keyed.map((r) => r.token_hash));",
+    "new": "",
     "why": "a forgotten key pushes nothing",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -875,8 +875,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-remove-no-order",
     "file": "server-account/src/staff.js",
-    "old": "    await cutPush(ctx, env, target.id, hashes, false);\n    return { ok: true, handle: target.handle };",
-    "new": "    return { ok: true, handle: target.handle };",
+    "old": "    await cutPush(ctx, env, target.id, hashes, false);\n",
+    "new": "",
     "why": "a Moderator removed pushes nothing",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -885,8 +885,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-cut-no-order",
     "file": "server-account/src/staff.js",
-    "old": "  const orders = [\n    ...(key ? await Promise.all(subs.map((x) => mintHideOrder({ s: x }, key, { subtle, nowS: at }))) : []),\n    ...(cut ? [await staffCutOrder(env, subtle, at, playerId)] : []),\n  ];",
-    "new": "  const orders = [...(cut ? [await staffCutOrder(env, subtle, at, playerId)] : [])];",
+    "old": "  const orders = [...(key ? await Promise.all(subs.map((x) => mintHideOrder({ s: x }, key, { subtle, nowS: at }))) : []), ",
+    "new": "  const orders = [",
     "why": "a cut pushes nothing",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -895,8 +895,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-route-undispatched",
     "file": "server-account/src/staff.js",
-    "old": "  if (HIDDEN_ROUTES.includes(path)) return staffHidden(ctx, env, path, body, who, audit); // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js)",
-    "new": "  if (false) return staffHidden(ctx, env, path, body, who, audit); // STAFF-PANEL5-HIDDEN: Hide me and Show myself (staffHidden.js)",
+    "old": "if (HIDDEN_ROUTES.includes(path)) return staffHidden(",
+    "new": "if (false) return staffHidden(",
     "why": "the door never reached",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1296,8 +1296,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-logout-sub-unwritten",
     "file": "server-account/src/staff.js",
-    "old": "      audit('logout', null, all ? { all } : { all, sub: await hiddenSubOf(who.hash, subtle) }), // STAFF-PANEL5-HIDDEN-R2: the session's subject, so its sign-out ends its own hiding alone (staffHidden.js LAPSED_SQL)",
-    "new": "      audit('logout', null, { all }), // STAFF-PANEL5-HIDDEN-R2: the session's subject, so its sign-out ends its own hiding alone (staffHidden.js LAPSED_SQL)",
+    "old": "all ? { all } : { all, sub: await hiddenSubOf(who.hash, subtle) }",
+    "new": "{ all }",
     "why": "item 2: a sign-out names no session - its own hiding never ends by it",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1306,8 +1306,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-remove-live-only",
     "file": "server-account/src/staff.js",
-    "old": "    await cutPush(ctx, env, target.id, hashes, false);",
-    "new": "    await hiddenEnd(ctx, env, target.id, hashes);",
+    "old": "await cutPush(ctx, env, target.id, hashes, false);",
+    "new": "await hiddenEnd(ctx, env, target.id, hashes);",
     "why": "item 4: a Moderator removed after an idle-out, a sign-in's prune or a new password - their hidden sockets never ordered closed",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1316,8 +1316,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-follow-unread",
     "file": "server-account/src/staff.js",
-    "old": "          `SELECT json_extract(detail, '$.sub') AS sub, MAX(at) AS t FROM staff_audit WHERE actor = ?1 AND act IN ('hidden-token', 'follow', 'follow-home') AND at > ?2",
-    "new": "          `SELECT json_extract(detail, '$.sub') AS sub, MAX(at) AS t FROM staff_audit WHERE actor = ?1 AND act IN ('hidden-token') AND at > ?2",
+    "old": "act IN ('hidden-token', 'follow', 'follow-home')",
+    "new": "act IN ('hidden-token')",
     "why": "item 5: a cut or a removal leaves the member's follow eyes open",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1326,8 +1326,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-follow-home-unread",
     "file": "server-account/src/staff.js",
-    "old": "          `SELECT json_extract(detail, '$.sub') AS sub, MAX(at) AS t FROM staff_audit WHERE actor = ?1 AND act IN ('hidden-token', 'follow', 'follow-home') AND at > ?2",
-    "new": "          `SELECT json_extract(detail, '$.sub') AS sub, MAX(at) AS t FROM staff_audit WHERE actor = ?1 AND act IN ('hidden-token', 'follow') AND at > ?2",
+    "old": "act IN ('hidden-token', 'follow', 'follow-home')",
+    "new": "act IN ('hidden-token', 'follow')",
     "why": "item 5: a follow eye that only ever entered a home left open",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1336,8 +1336,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-removal-staffcut",
     "file": "server-account/src/staff.js",
-    "old": "    ...(cut ? [await staffCutOrder(env, subtle, at, playerId)] : []),",
-    "new": "    ...(true ? [await staffCutOrder(env, subtle, at, playerId)] : []),",
+    "old": "...(cut ? [await staffCutOrder",
+    "new": "...(true ? [await staffCutOrder",
     "why": "item 4: a Moderator removed is pushed a staffcut - a removal is no cut",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -1346,8 +1346,8 @@
   {
     "name": "STAFF-PANEL5-HIDDEN-R2-lapsed-status-unlisted",
     "file": "server-account/src/staff.js",
-    "old": "  'staff-session-lapsed': 409, // STAFF-PANEL5-HIDDEN-R2 (staffHidden.js hiddenToken): the game's mint, its hiding lapsed - /v1/auth/token's 409",
-    "new": "  // STAFF-PANEL5-HIDDEN-R2 (staffHidden.js hiddenToken): the game's mint, its hiding lapsed - /v1/auth/token's 409",
+    "old": "  'staff-session-lapsed': 409,",
+    "new": "",
     "why": "the lapsed mint's word in no STAFF_STATUS - a staff module's refusal with no status (accountflow ACC1e)",
     "tests": [
       "test/server/accountflow.test.js"

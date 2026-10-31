@@ -200,8 +200,8 @@
   {
     "name": "TELL1-formula-tail",
     "file": "src/combat/formulas.js",
-    "old": "  damage = blowTaken(damage, attacker, target, weapon, {",
-    "new": "  damage = ((d) => d)(damage, attacker, target, weapon, {",
+    "old": "  damage = blowTaken(damage, attacker, target, weapon, ",
+    "new": "  damage = ((d) => d)(damage, attacker, target, weapon, ",
     "tests": [
       "test/systems/tell1_poise.test.js"
     ]

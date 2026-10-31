@@ -254,8 +254,8 @@
   {
     "name": "TN-resume-without-edge-arrival",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles },",
-    "new": "      { grow: true, isLocation: true, edgeArrival: false },",
+    "old": "travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: st.settings.avoidObstacles });",
+    "new": "travelSpeedMultiplier(st.destinationCautious, st.settings), { grow: true, isLocation: true, edgeArrival: false });",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "TN-stop-words-swapped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);",
-    "new": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgBlocked : TRAVEL_NAV_TEXT.MsgStuck);",
+    "old": "stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked",
+    "new": "stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgBlocked : TRAVEL_NAV_TEXT.MsgStuck",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "TN-stop-leaves-a-panelless-journey-running",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          if (st.autopilot) interruptTravel();\n          return { drive, handled: true, stopped: stop };",
-    "new": "          return { drive, handled: true, stopped: stop };",
+    "old": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);\n          if (st.autopilot) interruptTravel();",
+    "new": "          stopTravelWithMessage(stop === 'stuck' ? TRAVEL_NAV_TEXT.MsgStuck : TRAVEL_NAV_TEXT.MsgBlocked);",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "TN-facing-reads-the-camera",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "  const yawDeg = (invert = false) =>\n    normalisedYaw(st.autopilot && st.steeredBy === st.autopilot ? st.autopilot.yaw : (deps.yaw?.() ?? 0), invert);",
-    "new": "  const yawDeg = (invert = false) => normalisedYaw(deps.yaw?.() ?? 0, invert);",
+    "old": "    st.autopilot && st.steeredBy === st.autopilot ? st.autopilot.yaw : (deps.yaw?.() ?? 0), invert);",
+    "new": "    (deps.yaw?.() ?? 0), invert);",
     "tests": [
       "test/systems/travel/travelnav.test.js"
     ]

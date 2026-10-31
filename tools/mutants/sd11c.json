@@ -254,7 +254,7 @@
   {
     "name": "SD11c-L5F4-the-word-forgotten",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (!went) {\n      const o = owedWords();\n      if (!o.some((w) => w.d === day && w.a === acct))\n        keep(OWED_KEY, [...o, { d: day, a: acct }].slice(-SPOILS_SPENT_MAX));\n    }",
+    "old": "    if (!went) { const o = owedWords(); if (!o.some((w) => w.d === day && w.a === acct)) keep(OWED_KEY, [...o, { d: day, a: acct }].slice(-SPOILS_SPENT_MAX)); }",
     "new": "    void went;",
     "tests": [
       "test/systems/sd11c_page.test.js"
@@ -263,8 +263,8 @@
   {
     "name": "SD11c-L5F4-said-under-another-account",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (mine(acct)) {",
-    "new": "    if (true) {",
+    "old": "    if (mine(acct)) { try { went = onSpent(day) !== false; }",
+    "new": "    if (true) { try { went = onSpent(day) !== false; }",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "SD11c-L5F4-resaid-under-another-account",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        if (!mine(w.a)) return true;\n        try {",
-    "new": "        try {",
+    "old": "{ if (!mine(w.a)) return true; try { return onSpent(w.d) === false; }",
+    "new": "{ try { return onSpent(w.d) === false; }",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]
@@ -281,7 +281,7 @@
   {
     "name": "SD11c-L5F4-never-resaid",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const left = list.filter((w) => {\n        if (!mine(w.a)) return true;\n        try {\n          return onSpent(w.d) === false;\n        } catch {\n          return true;\n        }\n      });",
+    "old": "      const left = list.filter((w) => { if (!mine(w.a)) return true; try { return onSpent(w.d) === false; } catch { return true; } });",
     "new": "      const left = list;",
     "tests": [
       "test/systems/sd11c_page.test.js"
@@ -290,8 +290,8 @@
   {
     "name": "SD11c-L5F4-a-throw-gone",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        went = false;",
-    "new": "        went = true;",
+    "old": "try { went = onSpent(day) !== false; } catch { went = false; }",
+    "new": "try { went = onSpent(day) !== false; } catch { went = true; }",
     "tests": [
       "test/systems/sd11c_page.test.js"
     ]

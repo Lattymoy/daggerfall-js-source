@@ -120,15 +120,15 @@
 import { getInt } from '../settings/settings.js';
 import { MINUTES_PER_DAY } from '../gameDate.js';
 import { buildAutomapModel, restoreMatchesLayout, AABB_TOLERANCE } from './automapModel.js';
-import { registerCommand } from '../consoleCommands.js'; // E3: the console command database
-import { CAPSULE_RADIUS, CAPSULE_HEIGHT, EYE_HEIGHT } from '../../player/motor.js'; // AUDIT-AMAP F8/F9: the entrance LOS ends at the player CAPSULE
+import { registerCommand } from '../consoleCommands.js';   // E3: the console command database
+import { CAPSULE_RADIUS, CAPSULE_HEIGHT, EYE_HEIGHT } from '../../player/motor.js';   // AUDIT-AMAP F8/F9: the entrance LOS ends at the player CAPSULE
 
-export const SCAN_INTERVAL_S = 1 / 5; // scanRateGeometryDiscoveryInHertz = 5 (:172)
-export const RAYCAST_DISTANCE_DOWN = 3.0; // :168
-export const RAYCAST_DISTANCE_VIEW = 30.0; // :169
-export const RAYCAST_DISTANCE_ENTRANCE = 100.0; // :170
-export const FLOOR_MARCH_STEP = 1.0; // :1180
-export const PROTECTION_RAYCAST_OFFSET = 0.1; // "slight offset of 10cm" (:1160, :1172)
+export const SCAN_INTERVAL_S = 1 / 5;              // scanRateGeometryDiscoveryInHertz = 5 (:172)
+export const RAYCAST_DISTANCE_DOWN = 3.0;          // :168
+export const RAYCAST_DISTANCE_VIEW = 30.0;         // :169
+export const RAYCAST_DISTANCE_ENTRANCE = 100.0;    // :170
+export const FLOOR_MARCH_STEP = 1.0;               // :1180
+export const PROTECTION_RAYCAST_OFFSET = 0.1;      // "slight offset of 10cm" (:1160, :1172)
 /** DFU's per-ray true-vs-copy tolerance (Math.Abs(...) < 0.01f,
  *  :1121-1123). RECORDED, NOT APPLIED: the port has one collider and
  *  no copy, so the door-bucket rejection in scanWithRaycast is that
@@ -138,10 +138,10 @@ export const HIT_DISTANCE_AGREEMENT = 0.01;
 
 // ---- the per-dungeon store (module singleton - one player) ---------
 
-let _dungeons = new Map(); // key -> { revealed:Set, visitedThisRun:Set, entranceDiscovered, lastVisited }
-let _live = null; // E3: { rec, model } - the console's `Automap.instance`
-let _inside = false; // GameManager.IsPlayerInside's automap half - the N=0 forget law reads it
-let _liveKey = null; // the dungeon the player stands in - structurally unevictable (see prune)
+let _dungeons = new Map();   // key -> { revealed:Set, visitedThisRun:Set, entranceDiscovered, lastVisited }
+let _live = null;            // E3: { rec, model } - the console's `Automap.instance`
+let _inside = false;         // GameManager.IsPlayerInside's automap half - the N=0 forget law reads it
+let _liveKey = null;         // the dungeon the player stands in - structurally unevictable (see prune)
 
 /** The DFU dictionary key is "RegionName/Name" (:2206); the port
  *  speaks the region INDEX + location name - the same identity, one
@@ -151,10 +151,9 @@ export const automapDungeonKey = (regionIndex, name) => `${regionIndex}/${name}`
  *  (world/tamrielDungeons.js), whose names repeat in the clamp's region its whole length, takes its own map id after it.
  *  AUDIT-TESA A1-1: an Arena place's key names it by its map id alone - Arena's name never rides the party's shared map
  *  (the wire) nor a save (the realm): nothing of Arena crosses the wire. */
-export const automapKeyOf = (loc, name = loc?.name ?? '') =>
-  loc?.arena && !loc.capital
-    ? automapDungeonKey(loc.regionIndex ?? -1, `arena#${(loc.mapTableData?.mapId ?? 0) >>> 0}`)
-    : `${automapDungeonKey(loc?.regionIndex ?? -1, name)}${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}`;
+export const automapKeyOf = (loc, name = loc?.name ?? '') => (loc?.arena && !loc.capital
+  ? automapDungeonKey(loc.regionIndex ?? -1, `arena#${(loc.mapTableData?.mapId ?? 0) >>> 0}`)
+  : `${automapDungeonKey(loc?.regionIndex ?? -1, name)}${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}`);
 
 /** Enter a dungeon: fetch-or-create its record, and on a REAL entry
  *  stamp the visit clock, reset visitedThisRun and prune. The LOAD
@@ -164,17 +163,14 @@ export const automapKeyOf = (loc, name = loc?.name ?? '') =>
  *  the stamp and prune belong to SAVE time (:2155, :2216-2238), so a
  *  load must never evict records the save itself carried (A1 review). */
 const newAutomapRecord = () => ({
-  revealed: new Set(),
-  visitedThisRun: new Set(),
-  entranceDiscovered: false,
-  lastVisited: 0,
-  blockNames: null, // c2/S1: the layout the discovery was recorded against (the restore guard's input)
+  revealed: new Set(), visitedThisRun: new Set(), entranceDiscovered: false, lastVisited: 0,
+  blockNames: null,   // c2/S1: the layout the discovery was recorded against (the restore guard's input)
   // c2/S8: AutomapDungeonState's two user-data collections (:93-94).
   // The SortedList is a Map kept in ASCENDING KEY ORDER - AddNext
   // reads Keys[i] positionally, so the order is part of the law.
-  notes: new Map(), // id -> { position:[x,y,z], note }
-  teleporters: new Map(), // dictKey -> { entrance:{pos,yawDeg}, exit:{pos,yawDeg} }
-  trail: new Set(), // EM3-3D: where the player has stood (automapTrailTick)
+  notes: new Map(),        // id -> { position:[x,y,z], note }
+  teleporters: new Map(),  // dictKey -> { entrance:{pos,yawDeg}, exit:{pos,yawDeg} }
+  trail: new Set(),        // EM3-3D: where the player has stood (automapTrailTick)
 });
 
 /** AUDIT 27h M1: a record OUTSIDE the store, for a level with no map to keep - the Burning Court (WB3b, the port's own
@@ -209,10 +205,10 @@ export function exitDungeonAutomap(nowMinutes = null) {
   // transition stamps the record with the EXIT time (:2155, :2530-2534)
   const live = _liveKey ? _dungeons.get(_liveKey) : null;
   if (live && Number.isFinite(nowMinutes)) live.lastVisited = nowMinutes;
-  const wasInside = _inside; // MAP-KEEP: a teardown after a load left no dungeon of THIS store - there is nothing to forget
+  const wasInside = _inside;   // MAP-KEEP: a teardown after a load left no dungeon of THIS store - there is nothing to forget
   _inside = false;
   _liveKey = null;
-  _live = null; // E3: Automap.instance goes with the geometry
+  _live = null;   // E3: Automap.instance goes with the geometry
   if (wasInside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) _dungeons = new Map();
 }
 
@@ -285,13 +281,10 @@ export function snapshotAutomap(nowMinutes = null) {
       // dictionary, and both travel as [key, value] pairs so the shape
       // is JSON-clean and byte-stable across a round trip.
       notes: [...(rec.notes ?? new Map())].map(([id, n]) => [id, { position: [...n.position], note: n.note ?? '' }]),
-      teleporters: [...(rec.teleporters ?? new Map())].map(([k, c]) => [
-        k,
-        {
-          entrance: { pos: [...c.entrance.pos], yawDeg: c.entrance.yawDeg },
-          exit: { pos: [...c.exit.pos], yawDeg: c.exit.yawDeg },
-        },
-      ]),
+      teleporters: [...(rec.teleporters ?? new Map())].map(([k, c]) => [k, {
+        entrance: { pos: [...c.entrance.pos], yawDeg: c.entrance.yawDeg },
+        exit: { pos: [...c.exit.pos], yawDeg: c.exit.yawDeg },
+      }]),
       // LAYOUT-KEEP: the dungeon's other layouts' discovery, where there is one (an older reader ignores it)
       ...(rec.layouts?.size ? { layouts: [...rec.layouts.values()].map(savedLayout) } : {}),
     };
@@ -307,8 +300,7 @@ export function snapshotAutomap(nowMinutes = null) {
 /** AUDIT SD III (D1): a saved record's drops, read back - each six finite numbers, keyed as trailDrop keys them. */
 function dropsOf(list) {
   const rec = { drops: new Map() };
-  for (const d of list)
-    if (Array.isArray(d) && d.length === 6 && d.every(Number.isFinite)) trailDrop(rec, d.slice(0, 3), d.slice(3));
+  for (const d of list) if (Array.isArray(d) && d.length === 6 && d.every(Number.isFinite)) trailDrop(rec, d.slice(0, 3), d.slice(3));
   return rec.drops;
 }
 export function restoreAutomap(snap) {
@@ -346,15 +338,7 @@ export function restoreAutomap(snap) {
       // there - and it made the sheet draw every model the scan had touched. A trail with points is the truth.
       ...(rec.trailAll ? { trailAll: true } : {}),
       // LAYOUT-KEEP: the other layouts' discovery, each under its own blocks
-      ...(Array.isArray(rec.layouts)
-        ? {
-            layouts: new Map(
-              rec.layouts
-                .filter((l) => Array.isArray(l?.blockNames))
-                .map((l) => [layoutSig(l.blockNames), restoredLayout(l)]),
-            ),
-          }
-        : {}),
+      ...(Array.isArray(rec.layouts) ? { layouts: new Map(rec.layouts.filter((l) => Array.isArray(l?.blockNames)).map((l) => [layoutSig(l.blockNames), restoredLayout(l)])) } : {}),
     });
   }
 }
@@ -363,7 +347,7 @@ export function resetAutomapStore() {
   _inside = false;
   _liveKey = null;
   _live = null;
-  _interior = null; // c2/S9: the visit-scoped interior record dies with the store
+  _interior = null;   // c2/S9: the visit-scoped interior record dies with the store
 }
 
 // ── ROAD-C c2/S9: THE INTERIOR-BUILDING RECORD ───────────────────────
@@ -471,11 +455,11 @@ export function enterInteriorAutomap({ dungeonEntranceDiscovered = false } = {})
   // THE SEQUENCE, statement for statement, in DFU's order. Each step is
   // its own exported function so the ORDER is what a pin drives, rather
   // than a final state that three different orders could produce.
-  setupInteriorEntranceBeacon(rec); // CreateIndoorGeometryForAutomap -> SetupBeacons(door) (:1898, :1450-1457)
-  hideAllAutomap(rec); // InitWhenInInteriorOrDungeon -> RestoreStateAutomapDungeon(true) -> HideAll() (:2485, :2355, :2450-2461)
+  setupInteriorEntranceBeacon(rec);   // CreateIndoorGeometryForAutomap -> SetupBeacons(door) (:1898, :1450-1457)
+  hideAllAutomap(rec);                // InitWhenInInteriorOrDungeon -> RestoreStateAutomapDungeon(true) -> HideAll() (:2485, :2355, :2450-2461)
   // ...and the dictionary tail (3), which is the ONLY thing that can
   // leave the beacon lit before the player has looked at the door.
-  if (dungeonEntranceDiscovered) rec.entranceDiscovered = true; // :2379
+  if (dungeonEntranceDiscovered) rec.entranceDiscovered = true;   // :2379
   return rec;
 }
 
@@ -492,10 +476,7 @@ export function setupInteriorEntranceBeacon(rec) {
 /** OnTransitionToExterior (:2525-2528): the beacons are destroyed and
  *  the state written to a field nothing reads. The port drops the
  *  record instead - see the dead-restore note above. */
-export function exitInteriorAutomap() {
-  _interior = null;
-  _live = null;
-}
+export function exitInteriorAutomap() { _interior = null; _live = null; }
 
 export const getInteriorAutomap = () => _interior;
 
@@ -521,49 +502,30 @@ const layoutSig = (names) => (names ?? []).map((n) => n ?? '').join('|');
 /** The record's discovery set aside under its own blocks - only where there is any. */
 function keepLayout(rec) {
   if (!Array.isArray(rec.blockNames)) return;
-  if (!(rec.revealed?.size || rec.notes?.size || rec.teleporters?.size || rec.trail?.size || rec.entranceDiscovered))
-    return;
+  if (!(rec.revealed?.size || rec.notes?.size || rec.teleporters?.size || rec.trail?.size || rec.entranceDiscovered)) return;
   const kept = rec.layouts ?? (rec.layouts = new Map());
   const sig = layoutSig(rec.blockNames);
   kept.delete(sig);
   kept.set(sig, {
-    blockNames: [...rec.blockNames],
-    revealed: rec.revealed,
-    entranceDiscovered: !!rec.entranceDiscovered,
-    notes: rec.notes ?? new Map(),
-    teleporters: rec.teleporters ?? new Map(),
-    ...(rec.trail ? { trail: rec.trail } : {}),
-    ...(rec.trailAll ? { trailAll: true } : {}),
-    ...(rec.drops ? { drops: rec.drops } : {}),
+    blockNames: [...rec.blockNames], revealed: rec.revealed, entranceDiscovered: !!rec.entranceDiscovered,
+    notes: rec.notes ?? new Map(), teleporters: rec.teleporters ?? new Map(),
+    ...(rec.trail ? { trail: rec.trail } : {}), ...(rec.trailAll ? { trailAll: true } : {}), ...(rec.drops ? { drops: rec.drops } : {}),
   });
   while (kept.size > AUTOMAP_LAYOUTS_KEPT) kept.delete(kept.keys().next().value);
 }
 /** A kept layout as the save writes it - the record's own fields' shapes (snapshotAutomap). */
 const savedLayout = (l) => ({
-  blockNames: [...l.blockNames],
-  revealed: [...l.revealed],
-  entranceDiscovered: l.entranceDiscovered,
+  blockNames: [...l.blockNames], revealed: [...l.revealed], entranceDiscovered: l.entranceDiscovered,
   notes: [...l.notes].map(([id, n]) => [id, { position: [...n.position], note: n.note ?? '' }]),
-  teleporters: [...l.teleporters].map(([k, c]) => [
-    k,
-    {
-      entrance: { pos: [...c.entrance.pos], yawDeg: c.entrance.yawDeg },
-      exit: { pos: [...c.exit.pos], yawDeg: c.exit.yawDeg },
-    },
-  ]),
-  ...(l.trail?.size ? { trail: [...l.trail] } : {}),
-  ...(l.trailAll ? { trailAll: true } : {}),
+  teleporters: [...l.teleporters].map(([k, c]) => [k, { entrance: { pos: [...c.entrance.pos], yawDeg: c.entrance.yawDeg }, exit: { pos: [...c.exit.pos], yawDeg: c.exit.yawDeg } }]),
+  ...(l.trail?.size ? { trail: [...l.trail] } : {}), ...(l.trailAll ? { trailAll: true } : {}),
   ...(l.drops?.size ? { drops: [...l.drops.values()].map((d) => [...d]) } : {}),
 });
 /** A kept layout read back (restoreAutomap's arms). */
 const restoredLayout = (l) => ({
-  blockNames: [...l.blockNames],
-  revealed: new Set(Array.isArray(l.revealed) ? l.revealed : []),
-  entranceDiscovered: l.entranceDiscovered === true,
-  notes: sortedNoteMap(l.notes),
-  teleporters: new Map(Array.isArray(l.teleporters) ? l.teleporters : []),
-  ...(Array.isArray(l.trail) ? { trail: new Set(l.trail) } : {}),
-  ...(l.trailAll ? { trailAll: true } : {}),
+  blockNames: [...l.blockNames], revealed: new Set(Array.isArray(l.revealed) ? l.revealed : []), entranceDiscovered: l.entranceDiscovered === true,
+  notes: sortedNoteMap(l.notes), teleporters: new Map(Array.isArray(l.teleporters) ? l.teleporters : []),
+  ...(Array.isArray(l.trail) ? { trail: new Set(l.trail) } : {}), ...(l.trailAll ? { trailAll: true } : {}),
   ...(Array.isArray(l.drops) ? { drops: dropsOf(l.drops) } : {}),
 });
 
@@ -608,9 +570,7 @@ export function bindAutomapLayout(rec, model) {
     // the portals with the discovery, and does not keep half of each.
     rec.notes = new Map();
     rec.teleporters = new Map();
-    delete rec.trail;
-    delete rec.trailAll;
-    delete rec.drops; // EM3-3D: the walked trail is of a layout that is gone (AUDIT SD III, D1: and its drops)
+    delete rec.trail; delete rec.trailAll; delete rec.drops;   // EM3-3D: the walked trail is of a layout that is gone (AUDIT SD III, D1: and its drops)
     rec.blockNames = [...model.blockNames];
     return false;
   }
@@ -619,7 +579,11 @@ export function bindAutomapLayout(rec, model) {
 }
 
 // ---- vector helpers, Unity's semantics ------------------------------
-const _cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+const _cross = (a, b) => [
+  a[1] * b[2] - a[2] * b[1],
+  a[2] * b[0] - a[0] * b[2],
+  a[0] * b[1] - a[1] * b[0],
+];
 /** Vector3.Normalize: Unity answers the ZERO VECTOR for a zero input
  *  rather than NaN, and the automap leans on that - see the march. */
 const _norm = (v) => {
@@ -662,14 +626,11 @@ function scanWithRaycast(rayStart, rayDir, rayDistance, offsetSecond, ctx, rec) 
     const p = [o[0] + rayDir[0] * hit.dist, o[1] + rayDir[1] * hit.dist, o[2] + rayDir[2] * hit.dist];
     const row = model.resolveAt(p, AABB_TOLERANCE);
     if (!row) return null;
-    if (!haveKey) {
-      key = row.key;
-      haveKey = true;
-    } else if (row.key !== key) return null; // "hits must have same collider" (:1116-1117)
+    if (!haveKey) { key = row.key; haveKey = true; } else if (row.key !== key) return null;   // "hits must have same collider" (:1116-1117)
     dists.push(hit.dist);
   }
-  rec.revealed.add(key); // hitMeshRenderer.enabled = true (:1129)
-  rec.visitedThisRun.add(key); // DisableKeyword("RENDER_IN_GRAYSCALE") (:1135)
+  rec.revealed.add(key);          // hitMeshRenderer.enabled = true (:1129)
+  rec.visitedThisRun.add(key);    // DisableKeyword("RENDER_IN_GRAYSCALE") (:1135)
   return dists[0];
 }
 
@@ -678,7 +639,7 @@ function scanWithRaycast(rayStart, rayDir, rayDistance, offsetSecond, ctx, rec) 
  *  camera has no roll, so the basis rebuilds exactly. */
 function cameraDownFrom(fwd) {
   let right = _norm(_cross(fwd, [0, 1, 0]));
-  if (right[0] === 0 && right[1] === 0 && right[2] === 0) right = [1, 0, 0]; // straight up/down
+  if (right[0] === 0 && right[1] === 0 && right[2] === 0) right = [1, 0, 0];   // straight up/down
   const up = _norm(_cross(right, fwd));
   return [-up[0], -up[1], -up[2]];
 }
@@ -695,10 +656,7 @@ function cameraDownFrom(fwd) {
  * Answers `{ rays }` - the tick's true ray count, which the budget
  * pin bounds at 3 x (1 + 1 + march steps).
  */
-export function automapRevealTick(
-  rec,
-  { eye, fwd, collider, model, index, isDoorBucket = null, isMovedBucket = null },
-) {
+export function automapRevealTick(rec, { eye, fwd, collider, model, index, isDoorBucket = null, isMovedBucket = null }) {
   const m = model ?? index;
   if (!rec || !m) return { rays: 0 };
   const ctx = { collider, model: m, isDoorBucket, isMovedBucket, rays: 0 };
@@ -736,11 +694,8 @@ export function automapRevealTick(
  *  centre half a capsule above them. The hosts pass their live motor
  *  numbers (a crouch lowers both); the constants are the standing
  *  pair. */
-export const capsuleCentreFromEye = (eye, eyeHeight = EYE_HEIGHT, capsuleHeight = CAPSULE_HEIGHT) => [
-  eye[0],
-  eye[1] - eyeHeight + capsuleHeight / 2,
-  eye[2],
-];
+export const capsuleCentreFromEye = (eye, eyeHeight = EYE_HEIGHT, capsuleHeight = CAPSULE_HEIGHT) =>
+  [eye[0], eye[1] - eyeHeight + capsuleHeight / 2, eye[2]];
 
 /** The entrance beacon's own discovery (:1197-1274): while
  *  undiscovered, a clear line of sight entrance->player within 100
@@ -767,12 +722,13 @@ export function automapEntranceTick(rec, entrancePos, playerCentre, collider) {
 export const DEFAULT_SLICING_BIAS_Y = 0.2;
 export const slicingPositionY = (playerY, eyeHeight, biasY) => playerY + eyeHeight + biasY;
 
+
 // ── ROAD-C c2/S8: USER NOTE MARKERS ──────────────────────────────────
 
-export const NOTE_SPAWN_NORMAL_OFFSET = 0.7; // hit.point + hit.normal * 0.7f (:773)
-export const NOTE_MIN_DISTANCE = 1.0; // Vector3.Distance(...) < 1.0f (:780)
-export const NOTE_MAX_CHARACTERS = 50; // messageboxUserNote.TextBox.MaxCharacters (:1603)
-export const NOTE_WIDTH_OVERRIDE = 306; // ...TextBox.WidthOverride (:1604)
+export const NOTE_SPAWN_NORMAL_OFFSET = 0.7;   // hit.point + hit.normal * 0.7f (:773)
+export const NOTE_MIN_DISTANCE = 1.0;          // Vector3.Distance(...) < 1.0f (:780)
+export const NOTE_MAX_CHARACTERS = 50;         // messageboxUserNote.TextBox.MaxCharacters (:1603)
+export const NOTE_WIDTH_OVERRIDE = 306;        // ...TextBox.WidthOverride (:1604)
 
 /** NameGameobjectUserNoteMarkerSubStringStart + id (:164, :1580), read
  *  back the way every one of DFU's five handlers reads it -
@@ -879,7 +835,7 @@ export function tryAddOrEditUserNote(rec, hit, { editOnCreation = true } = {}) {
   for (const marker of rec.notes.values()) {
     const q = marker.position;
     if (Math.hypot(at[0] - q[0], at[1] - q[1], at[2] - q[2]) < NOTE_MIN_DISTANCE) {
-      return { action: 'none', id: null, edit: false }; // :781 - no marker, and no id burned
+      return { action: 'none', id: null, edit: false };   // :781 - no marker, and no id burned
     }
   }
   const id = sortedListAddNext(rec.notes, { position: at, note: '' });
@@ -894,7 +850,7 @@ export function tryRemoveUserNote(rec, hit) {
   if (!rec || !hit) return false;
   const id = userNoteIdFromName(hit.name);
   if (id == null) return false;
-  rec.notes.delete(id); // `if (ContainsKey(id)) Remove(id)`, then Destroy - the object goes either way
+  rec.notes.delete(id);   // `if (ContainsKey(id)) Remove(id)`, then Destroy - the object goes either way
   return true;
 }
 
@@ -913,8 +869,8 @@ export function setUserNote(rec, id, text) {
 /** TeleporterTransform's two position offsets, applied IN THE
  *  CONSTRUCTOR and therefore already baked into the string key
  *  (OnTeleportAction :2565-2572). */
-export const TELEPORTER_ENTRANCE_OFFSET = Object.freeze([0, 1.0, 0]); // Vector3.up * 1.0f
-export const TELEPORTER_EXIT_OFFSET = Object.freeze([0, 0.2, 0]); // Vector3.up * 0.2f
+export const TELEPORTER_ENTRANCE_OFFSET = Object.freeze([0, 1.0, 0]);   // Vector3.up * 1.0f
+export const TELEPORTER_EXIT_OFFSET = Object.freeze([0, 0.2, 0]);       // Vector3.up * 0.2f
 
 const addOffset = (p, o) => [p[0] + o[0], p[1] + o[1], p[2] + o[2]];
 
@@ -939,7 +895,7 @@ export const quaternionString = (q) => `(${formatF1(q[0])}, ${formatF1(q[1])}, $
 /** Quaternion.Euler(0, yaw, 0) - the port's action objects carry a YAW
  *  and nothing else, so this is the whole rotation they can have. */
 export function yawQuaternion(yawDeg) {
-  const h = ((yawDeg ?? 0) * Math.PI) / 360; // half of yaw, in radians
+  const h = (yawDeg ?? 0) * Math.PI / 360;   // half of yaw, in radians
   return [0, Math.sin(h), 0, Math.cos(h)];
 }
 
@@ -1018,7 +974,7 @@ export function revealAllAutomap(rec, model) {
     rec.visitedThisRun.add(row.key);
   }
   rec.entranceDiscovered = true;
-  rec.trailAll = true; // EM3-3D: everything is known now, walked or not - the solid sheet draws the reveal
+  rec.trailAll = true;   // EM3-3D: everything is known now, walked or not - the solid sheet draws the reveal
   return true;
 }
 
@@ -1031,9 +987,7 @@ export function hideAllAutomap(rec) {
   if (!rec) return false;
   rec.revealed = new Set();
   rec.entranceDiscovered = false;
-  rec.trail = new Set();
-  delete rec.trailAll;
-  delete rec.drops; // EM3-3D: nothing is known, so nothing was walked (AUDIT SD III, D1: nor dropped)
+  rec.trail = new Set(); delete rec.trailAll; delete rec.drops;   // EM3-3D: nothing is known, so nothing was walked (AUDIT SD III, D1: nor dropped)
   return true;
 }
 
@@ -1087,8 +1041,7 @@ function trailDrop(rec, from, to) {
 export function automapWaySteps(rec) {
   const out = [];
   for (const t of rec?.teleporters?.values?.() ?? []) out.push(t);
-  for (const d of rec?.drops?.values?.() ?? [])
-    out.push({ entrance: { pos: [d[0], d[1], d[2]] }, exit: { pos: [d[3], d[4], d[5]] } });
+  for (const d of rec?.drops?.values?.() ?? []) out.push({ entrance: { pos: [d[0], d[1], d[2]] }, exit: { pos: [d[3], d[4], d[5]] } });
   return out;
 }
 function trailMark(rec, x, y, z) {
@@ -1119,18 +1072,10 @@ export function automapTrailTick(rec, eye, eyeHeight = EYE_HEIGHT, fallFrom = nu
   if (drop && last) trailDrop(rec, last, feet);
   const reach = fell == null ? TRAIL_FILL_M : drop ? 0 : TRAIL_LAND_FILL_M;
   if (d > TRAIL_CELL && d <= reach) {
-    const steps = Math.ceil(d / (TRAIL_CELL / 2)); // half a cell apart: no cell the step crosses is skipped
+    const steps = Math.ceil(d / (TRAIL_CELL / 2));   // half a cell apart: no cell the step crosses is skipped
     for (let s = 1; s < steps; s++) {
       const t = s / steps;
-      if (
-        trailMark(
-          rec,
-          last[0] + (feet[0] - last[0]) * t,
-          last[1] + (feet[1] - last[1]) * t,
-          last[2] + (feet[2] - last[2]) * t,
-        )
-      )
-        added = true;
+      if (trailMark(rec, last[0] + (feet[0] - last[0]) * t, last[1] + (feet[1] - last[1]) * t, last[2] + (feet[2] - last[2]) * t)) added = true;
     }
   }
   return trailMark(rec, feet[0], feet[1], feet[2]) || added;
@@ -1140,8 +1085,7 @@ export function automapTrailPoints(rec) {
   const out = [];
   for (const k of rec?.trail ?? []) {
     const [x, y, z] = k.split(',').map(Number);
-    if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z))
-      out.push([(x + 0.5) * TRAIL_CELL, y, (z + 0.5) * TRAIL_CELL]);
+    if (Number.isFinite(x) && Number.isFinite(y) && Number.isFinite(z)) out.push([(x + 0.5) * TRAIL_CELL, y, (z + 0.5) * TRAIL_CELL]);
   }
   return out;
 }
@@ -1180,8 +1124,7 @@ export const automapInstance = () => _live;
  *  the automap's Start down with it). */
 export function registerAutomapConsoleCommands() {
   try {
-    registerCommand(
-      'map_revealall',
+    registerCommand('map_revealall',
       'Reveals entire map (including disconnected dungeon segments) on automap',
       'map_revealall',
       () => {
@@ -1190,19 +1133,18 @@ export function registerAutomapConsoleCommands() {
         if (automap == null) return 'Automap instance not found';
         revealAllAutomap(automap.rec, automap.model);
         return 'dungeon has been completely revealed on the automap';
-      },
-    );
-    registerCommand('map_hideall', 'Hides entire map', 'map_hideall', () => {
-      if (!automapIsPlayerInside()) return 'this command only has an effect when inside a dungeon';
-      const automap = automapInstance();
-      if (automap == null) return 'Automap instance not found';
-      hideAllAutomap(automap.rec);
-      return 'hide complete on automap';
-    });
+      });
+    registerCommand('map_hideall', 'Hides entire map', 'map_hideall',
+      () => {
+        if (!automapIsPlayerInside()) return 'this command only has an effect when inside a dungeon';
+        const automap = automapInstance();
+        if (automap == null) return 'Automap instance not found';
+        hideAllAutomap(automap.rec);
+        return 'hide complete on automap';
+      });
     // DebugTeleportMode (:2666-2688) has NO inside gate - only the
     // instance one - which is C#'s own asymmetry, kept.
-    registerCommand(
-      'map_teleportmode',
+    registerCommand('map_teleportmode',
       'toggles (enables or disables) debug teleport mode (Control+Shift+Left Mouse Click on a dungeon segment will teleport player to it)',
       'map_teleportmode',
       () => {
@@ -1211,8 +1153,7 @@ export function registerAutomapConsoleCommands() {
         return toggleAutomapDebugTeleportMode()
           ? 'debug teleport mode has been enabled'
           : 'debug teleport mode has been disabled';
-      },
-    );
+      });
   } catch (ex) {
     console.error(`Error Registering Automap Console commands: ${ex?.message ?? ex}`);
   }
@@ -1235,7 +1176,7 @@ export function mergePartyAutomap(key, rows) {
   if (!_inside || key == null || key !== _liveKey || !Array.isArray(rows)) return 0;
   const rec = _dungeons.get(key);
   if (!rec) return 0;
-  const byKey = _live && _live.rec === rec ? (_live.model?.byKey ?? null) : null;
+  const byKey = _live && _live.rec === rec ? _live.model?.byKey ?? null : null;
   let added = 0;
   for (const k of rows) {
     if (typeof k !== 'string' || rec.revealed.has(k)) continue;

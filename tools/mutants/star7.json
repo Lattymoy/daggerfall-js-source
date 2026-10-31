@@ -2,8 +2,8 @@
   {
     "name": "STAR7-the-amount",
     "file": "src/net/marksLaw.js",
-    "old": "  star: Object.freeze({ amount: 30 }), // STAR7: a fallen star held (server-account/src/stars.js)",
-    "new": "  star: Object.freeze({ amount: 40 }), // STAR7: a fallen star held (server-account/src/stars.js)",
+    "old": "star: Object.freeze({ amount: 30 }),",
+    "new": "star: Object.freeze({ amount: 40 }),",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "STAR7-the-caps-kinds",
     "file": "src/net/marksLaw.js",
-    "old": "export const MARKS_COMBAT = Object.freeze({\n  kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']),\n  perDay: 150,\n});",
-    "new": "export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg']), perDay: 150 });",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star'])",
+    "new": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg'])",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "STAR7-the-silver-unguarded",
     "file": "server-account/src/marks.js",
-    "old": "  star: (p) => `EXISTS (SELECT 1 FROM stars_held WHERE star = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,",
-    "new": "  star: (p) => `(?${p} IS NOT NULL OR ?${p + 1} IS NOT NULL)`,",
+    "old": "star: (p) => `EXISTS (SELECT 1 FROM stars_held WHERE star = ?${p} AND account = ?1 AND nonce = ?${p + 1})`,",
+    "new": "star: (p) => `(?${p} IS NOT NULL OR ?${p + 1} IS NOT NULL)`,",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]

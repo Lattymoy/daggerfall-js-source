@@ -119,8 +119,8 @@
   {
     "name": "OTW-pace-unheld",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true))",
-    "new": "      ? travelRateOf(true)",
+    "old": "    const rate = street ? Math.min(st.route.street.pace ?? TOWN_PACE_MAX, travelRateOf(true)) : st.walk",
+    "new": "    const rate = street ? travelRateOf(true) : st.walk",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "OTW-asked-again-at-the-end",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (\n      !r.townAt ||\n      !deps.townWay ||\n      leg?.ring ||\n      SEA_LEG_KINDS.includes(leg?.kind) ||\n      deps.atSea?.() ||\n      r.streetFor === key\n    )\n      return null;",
-    "new": "    if (!r.townAt || !deps.townWay || leg?.ring || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.()) return null;",
+    "old": "|| deps.atSea?.() || r.streetFor === key) return null;",
+    "new": "|| deps.atSea?.()) return null;",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "OTW-resume-way-kept",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    r.street = null;\n    r.streetFor = null; // OW-TOWN-WALK: a resume in a town takes its streets again, from where it stands",
-    "new": "    r.streetFor = null; // OW-TOWN-WALK: a resume in a town takes its streets again, from where it stands",
+    "old": "    r.street = null; r.streetFor = null;   // OW-TOWN-WALK: a resume",
+    "new": "    r.streetFor = null;   // OW-TOWN-WALK: a resume",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "OTW-town-walked-into-unheard",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      if (k !== st.route.townAt) {\n        st.route.townAt = k;\n        if (k) {\n          startRouteLeg();\n          applyRate();\n        } else st.route.streetFor = null;\n      } // AUDIT OW-REVISITED L1-9: left, the town is asked again if walked back into",
-    "new": "      // AUDIT OW-REVISITED L1-9: left, the town is asked again if walked back into",
+    "old": "      if (k !== st.route.townAt) { st.route.townAt = k; if (k) { startRouteLeg(); applyRate(); } else st.route.streetFor = null; }",
+    "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "OTW-ring-walked-through",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (\n      !r.townAt ||\n      !deps.townWay ||\n      leg?.ring ||\n      SEA_LEG_KINDS.includes(leg?.kind) ||\n      deps.atSea?.() ||\n      r.streetFor === key\n    )",
-    "new": "    if (!r.townAt || !deps.townWay || SEA_LEG_KINDS.includes(leg?.kind) || deps.atSea?.() || r.streetFor === key)",
+    "old": "if (!r.townAt || !deps.townWay || leg?.ring ||",
+    "new": "if (!r.townAt || !deps.townWay ||",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "OTW-place-walked-across",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.summary && r.i >= r.legs.length - 1 && arrivedAtPlace(r)) return null; // in the place it is bound for: arrived, not walked across",
-    "new": "    // in the place it is bound for: arrived, not walked across",
+    "old": "    if (r.summary && r.i >= r.legs.length - 1 && arrivedAtPlace(r)) return null;",
+    "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "OTO-shut-unmarked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (way?.shut) st.shutStop = true; // a walled city's gates shut for the night between the traveller and the point: said, never walked into",
-    "new": "    // a walled city's gates shut for the night between the traveller and the point: said, never walked into",
+    "old": "    if (way?.shut) st.shutStop = true;",
+    "new": "",
     "tests": [
       "test/systems/travel/ow_townwalk.test.js"
     ]

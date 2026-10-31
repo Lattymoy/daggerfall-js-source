@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-B5-asked-after-a-null-omen",
     "file": "src/scenes/dragonHost.js",
-    "old": "        omens.has(w) ||",
-    "new": "        omens.get(w) != null ||",
+    "old": "if (omens.has(w) || t < dragonQuietAt(w)",
+    "new": "if (omens.get(w) != null || t < dragonQuietAt(w)",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ],
@@ -139,8 +139,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-B5-asked-past-its-remains",
     "file": "src/scenes/dragonHost.js",
-    "old": "        t >= dragonAskEnd(w) ||\n        t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS",
-    "new": "        t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS",
+    "old": " || t >= dragonAskEnd(w) || t - (asked.get(w)",
+    "new": " || t - (asked.get(w)",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ],
@@ -149,8 +149,8 @@
   {
     "name": "AUDIT-DRAGON-HIDDEN-B5-the-sighting-brass",
     "file": "src/scenes/dragonHost.js",
-    "old": "        deps.mid?.(DRAGON_WORDS.circles(sceneCompassWord(x - f[0], z - f[2]), mine ? s.b : dragonLookOf(d)), 5);",
-    "new": "        deps.mid?.(DRAGON_WORDS.circles(sceneCompassWord(x - f[0], z - f[2]), mine ? s.b : 0), 5);",
+    "old": "mine ? s.b : dragonLookOf(d)), 5); }",
+    "new": "mine ? s.b : 0), 5); }",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ]

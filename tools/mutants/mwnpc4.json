@@ -272,8 +272,8 @@
   {
     "name": "MWNPC4-lane-unknown-tier-kept",
     "file": "src/characters/npcBodies.js",
-    "old": "    const want = Object.prototype.hasOwnProperty.call(tiers, t) ? t : NPC_BODIES_DEFAULT; // an unknown tier stands under the default",
-    "new": "    const want = t; // an unknown tier stands under the default",
+    "old": "    const want = Object.prototype.hasOwnProperty.call(tiers, t) ? t : NPC_BODIES_DEFAULT;",
+    "new": "    const want = t;",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "MWNPC4-lane-offers-lookless",
     "file": "src/characters/npcBodies.js",
-    "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return; // AUDIT MW-NPC II H2: none under the Overworld",
-    "new": "      if (!actor?.feet || npcBodiesHeld()) return; // AUDIT MW-NPC II H2: none under the Overworld",
+    "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;",
+    "new": "      if (!actor?.feet || npcBodiesHeld()) return;",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "MWNPC4-lane-no-gate",
     "file": "src/characters/npcBodies.js",
-    "old": "            gate: BODY_BUILD_GATE,\n            casts: true,",
-    "new": "            casts: true,",
+    "old": "limits, gate: BODY_BUILD_GATE, ",
+    "new": "limits, ",
     "tests": [
       "test/combat/mwnpc4_npclane.test.js"
     ]

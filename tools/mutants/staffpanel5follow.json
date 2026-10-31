@@ -142,8 +142,8 @@
   {
     "name": "STAFF-PANEL5-FOLLOW-acct-status-word",
     "file": "server-account/src/staff.js",
-    "old": "  'no-signing-key': 503, // STAFF-PANEL5-FOLLOW (staffFollow.js): a service with no key mints no follow token",
-    "new": "  'no-signing-key': 500, // STAFF-PANEL5-FOLLOW (staffFollow.js): a service with no key mints no follow token",
+    "old": "'no-signing-key': 503,",
+    "new": "'no-signing-key': 500,",
     "why": "the no-key refusal answered as a crash",
     "tests": [
       "test/server/staffpanel5follow.test.js"

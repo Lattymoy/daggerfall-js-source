@@ -20,14 +20,7 @@ export const familyPeerId = (resId) => `fam:${resId}`;
 
 /** A member's pose as the peer layers read one: the scene's own point (the layers' `toScene` is the identity here), the
  *  yaw, the move bit. */
-export const familyShown = (feet, yaw, moving, st = 0) => ({
-  x: feet[0],
-  y: feet[1],
-  z: feet[2],
-  yaw: Number.isFinite(yaw) ? yaw : 0,
-  mv: moving ? 1 : 0,
-  ...(st > 0 ? { st } : {}),
-}); // CARDS4b: `st` seated (a card table's regular), the pose's own byte
+export const familyShown = (feet, yaw, moving, st = 0) => ({ x: feet[0], y: feet[1], z: feet[2], yaw: Number.isFinite(yaw) ? yaw : 0, mv: moving ? 1 : 0, ...(st > 0 ? { st } : {}) });   // CARDS4b: `st` seated (a card table's regular), the pose's own byte
 const sceneOf = (/** @type {any} */ s) => [s.x, s.y, s.z];
 
 /**
@@ -39,9 +32,7 @@ export function createFamilyBodies({ dolls, bodies = null }) {
   const peers = [];
   return {
     /** A frame begins: nobody stands yet. */
-    begin() {
-      peers.length = 0;
-    },
+    begin() { peers.length = 0; },
     /**
      * One of the line at `feet` (the scene's frame), facing `yaw`, walking or not. True when they are drawn here - the
      * caller draws its own sprite for them no more this frame. A resident with no look is not.
@@ -60,35 +51,19 @@ export function createFamilyBodies({ dolls, bodies = null }) {
     /** This frame's sprites and dolls, for the pass that draws the place's people. */
     batches: () => dolls.batches(),
     /** The Morrowind bodies, in the bodies' pass. */
-    draw(/** @type {any} */ canvas, /** @type {any} */ o) {
-      bodies?.draw(canvas, o);
-    },
+    draw(/** @type {any} */ canvas, /** @type {any} */ o) { bodies?.draw(canvas, o); },
     /** The floating origin moved: everything drawn follows it (the peer layers' own law, AUDIT ONLINE D5). */
     offsetAll(/** @type {number[]} */ o) {
-      for (const b of dolls.batches()) {
-        b.origin[0] += o[0];
-        b.origin[1] += o[1];
-        b.origin[2] += o[2];
-      }
+      for (const b of dolls.batches()) { b.origin[0] += o[0]; b.origin[1] += o[1]; b.origin[2] += o[2]; }
       bodies?.offsetAll(o);
     },
     /** Everything freed (the place left). */
-    clear() {
-      peers.length = 0;
-      dolls.sync([], sceneOf);
-      bodies?.destroy();
-    },
+    clear() { peers.length = 0; dolls.sync([], sceneOf); bodies?.destroy(); },
     /** AUDIT CARDS-3 B10: the layer let go for good - every doll texture released too (clear keeps the dolls' cache for
      *  the next stand; a layer dropped after clear took its textures with it, an evening's regulars at a time). */
-    destroy() {
-      peers.length = 0;
-      dolls.destroy?.();
-      bodies?.destroy();
-    },
+    destroy() { peers.length = 0; dolls.destroy?.(); bodies?.destroy(); },
     /** How many of the line stood this frame. */
-    get size() {
-      return peers.length;
-    },
+    get size() { return peers.length; },
   };
 }
 
@@ -107,21 +82,11 @@ export function familyRoomSprites(sprites, family, living = null) {
   const personOf = (key, res, feet, yaw) => {
     let p = persons.get(key);
     if (!p || p.living.res !== res) {
-      p = {
-        nameNPC: res.name,
-        personFaceRecordId: res.face,
-        _talkSeed: lwSeed(textSeed(res.id), 0x74616c6b) & 0x7fffffff,
-        living: { id: res.id, res, town: living },
-        pos: [0, 0, 0],
-        facingYaw: 0,
-        guard: false,
-        archive: res.archive,
-        pickpocketAttempted: false,
-      };
+      p = { nameNPC: res.name, personFaceRecordId: res.face, _talkSeed: lwSeed(textSeed(res.id), 0x74616c6b) & 0x7fffffff,
+        living: { id: res.id, res, town: living }, pos: [0, 0, 0], facingYaw: 0, guard: false, archive: res.archive, pickpocketAttempted: false };
       persons.set(key, p);
     }
-    p.pos = feet;
-    p.facingYaw = yaw;
+    p.pos = feet; p.facingYaw = yaw;
     return p;
   };
   return {
@@ -147,17 +112,8 @@ export function familyRoomSprites(sprites, family, living = null) {
     persons: () => [...sprites.persons(), ...seats],
     bodyOf: (/** @type {string} */ key) => sprites.bodyOf?.(key) ?? null,
     /** MWNPC10c: the rest's Morrowind bodies (the line's are the family's). */
-    drawBodies(canvas, proj, view, eye, dt) {
-      sprites.drawBodies?.(canvas, proj, view, eye, dt);
-    },
-    clear() {
-      sprites.clear();
-      family.clear();
-      seats.length = 0;
-      persons.clear();
-    },
-    get size() {
-      return (sprites.size ?? 0) + family.size;
-    },
+    drawBodies(canvas, proj, view, eye, dt) { sprites.drawBodies?.(canvas, proj, view, eye, dt); },
+    clear() { sprites.clear(); family.clear(); seats.length = 0; persons.clear(); },
+    get size() { return (sprites.size ?? 0) + family.size; },
   };
 }

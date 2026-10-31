@@ -308,8 +308,8 @@
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-window-unasked",
     "file": "src/systems/inventorySession.js",
-    "old": "  return deps.storeRefusal ? (deps.storeRefusal() ?? null) : wildStoreRefusal();",
-    "new": "  return deps.storeRefusal ? (deps.storeRefusal() ?? null) : null;",
+    "old": "  return deps.storeRefusal ? deps.storeRefusal() ?? null : wildStoreRefusal();",
+    "new": "  return deps.storeRefusal ? deps.storeRefusal() ?? null : null;",
     "tests": [
       "test/systems/wild/combatlock.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-store-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal } };\n  if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };",
-    "new": "  if (item.group === 'Transportation') return { ok: false, refusal: REFUSAL.transport };",
+    "old": "  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal } };\n",
+    "new": "",
     "tests": [
       "test/systems/wild/combatlock.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-gold-unread",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal }, notice: null }; // AUDIT PVP-EASE L2-1: the combat lock (inventorySession.js storeRefusalOf)",
-    "new": "  void 0; // AUDIT PVP-EASE L2-1: the combat lock (inventorySession.js storeRefusalOf)",
+    "old": "  if (storeRefusal) return { ok: false, refusal: { reason: 'store', text: storeRefusal }, notice: null };",
+    "new": "  void 0;",
     "tests": [
       "test/systems/wild/combatlock.test.js"
     ]

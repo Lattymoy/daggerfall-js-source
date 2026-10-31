@@ -143,8 +143,8 @@ test('QUARRY-WORLD the host (scenes/bountyHost.js): a board posts the land\'s be
 test('QUARRY-WORLD by source: the world host hands the board the land\'s wild over its maps', () => {
   assert.match(hostText('src/scenes/world.js'), /wildAt: bountyLandWild\(maps\),/);
   const host = rd('src/scenes/bountyHost.js');
-  assert.match(host, /dungeons: dungeonsFor\(b\.px, b\.py\),\n\s*wild: wildFor\(b\.px, b\.py\),\n\s*\}\);/);
-  assert.match(host, /dungeons: dungeonsFor\(town\.px, town\.py\),\n\s*wild: wildFor\(town\.px, town\.py\),\n\s*\}\);/);
+  assert.match(host, /dungeons: dungeonsFor\(b\.px, b\.py\), wild: wildFor\(b\.px, b\.py\) \}\);/);
+  assert.match(host, /dungeons: dungeonsFor\(town\.px, town\.py\), wild: wildFor\(town\.px, town\.py\) \}\);/);
   let asked = 0;
   const at = bountyLandWild({ getClimateIndex: () => { asked++; return CLIMATES.Desert; } });
   assert.deepEqual(at(5, 5), at(5, 5));

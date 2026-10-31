@@ -29,8 +29,8 @@
   {
     "name": "WAGONS1-the-750-still-read",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item), wagonKg, totalWeight(remote)); // WAGONS1: the driven wagon's capacity",
-    "new": "    const canHold = canHoldAmount(stack, effectiveUnitWeightInKg(item), WAGON_KG_LIMIT, totalWeight(remote)); // WAGONS1: the driven wagon's capacity",
+    "old": "effectiveUnitWeightInKg(item), wagonKg, totalWeight(remote)",
+    "new": "effectiveUnitWeightInKg(item), WAGON_KG_LIMIT, totalWeight(remote)",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WAGONS1-the-lift-dropped",
     "file": "src/world/wagonModels.js",
-    "old": "      wheels.push({\n        role: part.role,\n        geometry: bench.finish(),\n        pivot: [pivot[0], pivot[1] - LIFT, pivot[2]],\n        radius: R,\n      });",
-    "new": "      wheels.push({ role: part.role, geometry: bench.finish(), pivot: [pivot[0], pivot[1], pivot[2]], radius: R });",
+    "old": "pivot: [pivot[0], pivot[1] - LIFT, pivot[2]], radius: R",
+    "new": "pivot: [pivot[0], pivot[1], pivot[2]], radius: R",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WAGONS1-a-wheel-not-re-based",
     "file": "src/world/wagonModels.js",
-    "old": "        offset: pivot,",
-    "new": "        offset: [0, 0, 0],",
+    "old": "benchPart(bench, part, { offset: pivot, role: part.role,",
+    "new": "benchPart(bench, part, { offset: [0, 0, 0], role: part.role,",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WAGONS1-a-front-wheel-taken-for-a-rear",
     "file": "src/world/wagonModels.js",
-    "old": "  const rearLeft = wheels.find((w) => w.role === 'wheelRearLeft'),",
-    "new": "  const rearLeft = wheels.find((w) => w.role === 'wheelFrontLeft') ?? wheels.find((w) => w.role === 'wheelRearLeft'),",
+    "old": "const rearLeft = wheels.find((w) => w.role === 'wheelRearLeft')",
+    "new": "const rearLeft = wheels.find((w) => w.role === 'wheelFrontLeft') ?? wheels.find((w) => w.role === 'wheelRearLeft')",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WAGONS1-a-measure-moved-off-the-model",
     "file": "src/world/wagonModels.js",
-    "old": "    rearZ: -0.7077,",
-    "new": "    rearZ: -0.75,",
+    "old": "rearZ: -0.7077,",
+    "new": "rearZ: -0.75,",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WAGONS1-front-and-rear-swapped",
     "file": "src/world/wagonModels.js",
-    "old": "    return { rec: n[2] > 0 ? TEX.caravanFront : TEX.caravanRear, uv: endUv(n[2] > 0 ? -1 : 1) };",
-    "new": "    return { rec: n[2] > 0 ? TEX.caravanRear : TEX.caravanFront, uv: endUv(n[2] > 0 ? -1 : 1) };",
+    "old": "rec: n[2] > 0 ? TEX.caravanFront : TEX.caravanRear,",
+    "new": "rec: n[2] > 0 ? TEX.caravanRear : TEX.caravanFront,",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WAGONS1-a-side-tiled",
     "file": "src/world/wagonModels.js",
-    "old": "  if (Math.abs(n[0]) > 0.95) return banded('caravanSide');",
-    "new": "  if (Math.abs(n[0]) > 0.95) return tiled(TEX.caravanSide);",
+    "old": "if (Math.abs(n[0]) > 0.95) return banded('caravanSide');",
+    "new": "if (Math.abs(n[0]) > 0.95) return tiled(TEX.caravanSide);",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WAGONS1-the-cargo-out-of-the-bed",
     "file": "src/world/wagonModels.js",
-    "old": "        mid + (d.position[2] - classicMid) * stretch,",
-    "new": "        (d.position[2] - classicMid) * stretch,",
+    "old": "mid + (d.position[2] - classicMid) * stretch]",
+    "new": "(d.position[2] - classicMid) * stretch]",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WAGONS1-a-seat-facing-along",
     "file": "src/world/wagonModels.js",
-    "old": "    [-x, 0.1, 90],",
-    "new": "    [-x, 0.1, 0],",
+    "old": "[-x, 0.1, 90]",
+    "new": "[-x, 0.1, 0]",
     "tests": [
       "test/systems/item/wagons1.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "WAGONS1-the-doors-landing-unground",
     "file": "src/scenes/caravanRoom.js",
-    "old": "      return { position: deps.ground ? deps.ground(at) : at, yaw: room.yaw };",
-    "new": "      return { position: at, yaw: room.yaw };",
+    "old": "return { position: deps.ground ? deps.ground(at) : at, yaw: room.yaw };",
+    "new": "return { position: at, yaw: room.yaw };",
     "tests": [
       "test/scenes/wagons1_seats.test.js"
     ]

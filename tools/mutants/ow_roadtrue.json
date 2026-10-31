@@ -101,7 +101,7 @@
   {
     "name": "ORT-open-ground-laned",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!leg || !prev || !ROAD_LEG_KINDS.includes(leg.kind) || (leg.at && !leg.ring) || (leg.ring && prev.ring))\n      return null;",
+    "old": "    if (!leg || !prev || !ROAD_LEG_KINDS.includes(leg.kind) || (leg.at && !leg.ring) || (leg.ring && prev.ring)) return null;",
     "new": "    if (!leg || !prev || (leg.at && !leg.ring) || (leg.ring && prev.ring)) return null;",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "ORT-join-laned",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!leg || !prev || !ROAD_LEG_KINDS.includes(leg.kind) || (leg.at && !leg.ring) || (leg.ring && prev.ring))\n      return null;",
+    "old": "    if (!leg || !prev || !ROAD_LEG_KINDS.includes(leg.kind) || (leg.at && !leg.ring) || (leg.ring && prev.ring)) return null;",
     "new": "    if (!leg || !prev || !ROAD_LEG_KINDS.includes(leg.kind) || (leg.ring && prev.ring)) return null;",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
@@ -121,8 +121,8 @@
   {
     "name": "ORT-first-leg-from-nowhere",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      prev = r.legs[i - 1];",
-    "new": "      prev = r.legs[i - 1] ?? leg;",
+    "old": "    const leg = r.legs[i], prev = r.legs[i - 1];\n    if (!leg || !prev ||",
+    "new": "    const leg = r.legs[i], prev = r.legs[i - 1] ?? leg;\n    if (!leg || !prev ||",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "ORT-last-leg-unlaned",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "          path: finalPath(r, rectCentre(rect), true),",
-    "new": "          path: null,",
+    "old": "path: finalPath(r, rectCentre(rect), true), cornerTurn",
+    "new": "path: null, cornerTurn",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "ORT-lane-from-the-joins-point",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const a = prev.ring ? prev.at : legEnd(prev, legMiddle),",
-    "new": "    const a = prev.at ?? legEnd(prev, legMiddle),",
+    "old": "    const a = prev.ring ? prev.at : legEnd(prev, legMiddle), b = leg.ring ? leg.at : legEnd(leg, legMiddle);",
+    "new": "    const a = prev.at ?? legEnd(prev, legMiddle), b = leg.ring ? leg.at : legEnd(leg, legMiddle);",
     "tests": [
       "test/systems/travel/ow_roadtrue.test.js"
     ]

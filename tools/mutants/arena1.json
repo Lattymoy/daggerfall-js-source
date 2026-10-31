@@ -86,8 +86,8 @@
   {
     "name": "ARENA1-MAPS-NO-EDIT",
     "file": "src/formats/mapsFile.js",
-    "old": "    worldDataDoor()?.editLocation?.(dfLocation, this); // ARENA1: the port's own edits (world/arena/arenaCity.js - Daggerfall's cell 4,3), on every layout's read",
-    "new": "    // ARENA1: the port's own edits (world/arena/arenaCity.js - Daggerfall's cell 4,3), on every layout's read",
+    "old": "    worldDataDoor()?.editLocation?.(dfLocation, this);",
+    "new": "",
     "tests": [
       "test/world/arena/arena1_city.test.js"
     ]

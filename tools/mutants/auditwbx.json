@@ -122,8 +122,8 @@
   {
     "name": "AUDWBX-S3-the-clock-rule-for-this-build",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue; // a save since holds them: it goes",
-    "new": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue; // a save since holds them: it goes",
+    "old": "    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue;",
+    "new": "    if (savedSince(infos, rec.who ?? who, rec.at)) continue;",
     "tests": [
       "test/net/gate/auditwbx.test.js"
     ]
@@ -131,7 +131,7 @@
   {
     "name": "AUDWBX-S3-a-save-clearing-nothing",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const ids = new Set(\n        [...held].filter(([id, h]) => h.who === whoSaved && (!only || only.includes(id))).map(([id]) => id),\n      );",
+    "old": "      const ids = new Set([...held].filter(([id, h]) => h.who === whoSaved && (!only || only.includes(id))).map(([id]) => id));",
     "new": "      const ids = new Set();",
     "tests": [
       "test/net/gate/auditwbx.test.js",
@@ -151,7 +151,7 @@
   {
     "name": "AUDWBX-S2-the-players-level-whatever-the-claim",
     "file": "src/scenes/spoilsPool.js",
-    "old": "export const spoilsLevel = (playerLevel, claimLevel) =>\n  Math.max(\n    1,\n    Math.min(Math.max(1, playerLevel | 0), Number.isSafeInteger(claimLevel) && claimLevel >= 1 ? claimLevel : Infinity),\n  );",
+    "old": "export const spoilsLevel = (playerLevel, claimLevel) => Math.max(1, Math.min(Math.max(1, playerLevel | 0), Number.isSafeInteger(claimLevel) && claimLevel >= 1 ? claimLevel : Infinity));",
     "new": "export const spoilsLevel = (playerLevel, claimLevel) => Math.max(1, playerLevel | 0);",
     "tests": [
       "test/net/gate/auditwbx.test.js"
@@ -224,7 +224,7 @@
   {
     "name": "AUDWBX-W6-the-box-every-frame",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (\n        !box ||\n        !boxAt ||\n        boxAt[0] !== o[0] ||\n        boxAt[1] !== o[1] ||\n        boxAt[2] !== o[2] ||\n        boxAt[3] !== place.yaw ||\n        boxAt[4] !== place.day\n      ) {",
+    "old": "      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {",
     "new": "      if (true) {",
     "tests": [
       "test/net/gate/auditwbx.test.js"
@@ -233,7 +233,7 @@
   {
     "name": "AUDWBX-W6-the-box-left-where-it-stood",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (\n        !box ||\n        !boxAt ||\n        boxAt[0] !== o[0] ||\n        boxAt[1] !== o[1] ||\n        boxAt[2] !== o[2] ||\n        boxAt[3] !== place.yaw ||\n        boxAt[4] !== place.day\n      ) {",
+    "old": "      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {",
     "new": "      if (!box) {",
     "tests": [
       "test/net/gate/auditwbx.test.js"

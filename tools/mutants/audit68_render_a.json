@@ -67,8 +67,8 @@
   {
     "name": "AUDIT68-S16-grass-a-draw-with-no-field-runs-anyway",
     "file": "src/render/labGrass.js",
-    "old": "    if (!this.count || !this.slotBox) return; // AUDIT 68 S16-grass-set-broken-dead: the field's slots are the one thing it draws",
-    "new": "    if (!this.count) return; // AUDIT 68 S16-grass-set-broken-dead: the field's slots are the one thing it draws",
+    "old": "    if (!this.count || !this.slotBox) return;",
+    "new": "    if (!this.count) return;",
     "tests": [
       "test/render/audit68_render_a.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "SEA-box-north",
     "file": "src/world/ethericSea.js",
-    "old": "export const ETHER_BOX = Object.freeze({ x0: 64, x1: 8128, y0: -7680, y1: -2688 });",
-    "new": "export const ETHER_BOX = Object.freeze({ x0: 64, x1: 8128, y0: -8128, y1: -2688 });",
+    "old": "y0: -7680, y1: -2688 }",
+    "new": "y0: -8128, y1: -2688 }",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SEA-law-no-margin",
     "file": "src/world/ethericSea.js",
-    "old": "  x >= ETHER_BOX.x0 - ETHER_MARGIN &&\n  x < ETHER_BOX.x1 + ETHER_MARGIN &&\n  y >= ETHER_BOX.y0 - ETHER_MARGIN &&\n  y < ETHER_BOX.y1 + ETHER_MARGIN;",
-    "new": "  x >= ETHER_BOX.x0 && x < ETHER_BOX.x1 && y >= ETHER_BOX.y0 - ETHER_MARGIN && y < ETHER_BOX.y1 + ETHER_MARGIN;",
+    "old": "export const inEtherLaw = (x, y) => x >= ETHER_BOX.x0 - ETHER_MARGIN && x < ETHER_BOX.x1 + ETHER_MARGIN",
+    "new": "export const inEtherLaw = (x, y) => x >= ETHER_BOX.x0 && x < ETHER_BOX.x1",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SEA-reaches-bound",
     "file": "src/world/ethericSea.js",
-    "old": "    from: 12,",
-    "new": "    from: 10,",
+    "old": "id: 'reaches', name: 'the Reaches', from: 12,",
+    "new": "id: 'reaches', name: 'the Reaches', from: 10,",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SEA-abyss-bound",
     "file": "src/world/ethericSea.js",
-    "old": "    from: 140,",
-    "new": "    from: 150,",
+    "old": "id: 'abyss', name: 'the Abyss', from: 140,",
+    "new": "id: 'abyss', name: 'the Abyss', from: 150,",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SEA-margin-no-spill",
     "file": "src/world/ethericSea.js",
-    "old": "  const margin = Math.ceil(radius) + 1; // its land, and the kernel's pixel past it, inside the cell",
-    "new": "  const margin = Math.ceil(radius); // its land, and the kernel's pixel past it, inside the cell",
+    "old": "  const margin = Math.ceil(radius) + 1;",
+    "new": "  const margin = Math.ceil(radius);",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SEA-radius-range",
     "file": "src/world/ethericSea.js",
-    "old": "  const radius = haven ? 1 : lerp(k.r[0], k.r[1], r()); // AUDIT CAPTAIN'S SEA H1: Veilhaven a port's, the haven's town on its four bytes",
-    "new": "  const radius = haven ? 1 : lerp(k.r[0], k.r[1] + 1, r()); // AUDIT CAPTAIN'S SEA H1: Veilhaven a port's, the haven's town on its four bytes",
+    "old": "  const radius = haven ? 1 : lerp(k.r[0], k.r[1], r());",
+    "new": "  const radius = haven ? 1 : lerp(k.r[0], k.r[1] + 1, r());",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SEA-port-lifted",
     "file": "src/world/ethericSea.js",
-    "old": "  const peak = haven ? 12 : Math.round(lerp(k.peak[0], k.peak[1], r()) * (kind === 'port' ? 1 : 1 + band.lift)); // a port's town stays a short climb from the water",
-    "new": "  const peak = haven ? 12 : Math.round(lerp(k.peak[0], k.peak[1], r()) * (1 + band.lift)); // a port's town stays a short climb from the water",
+    "old": "(kind === 'port' ? 1 : 1 + band.lift)",
+    "new": "(1 + band.lift)",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SEA-veil-strip",
     "file": "src/world/ethericSea.js",
-    "old": "const openCell = (cx, cy) => cx < EDGE_CELLS || cy < EDGE_CELLS || cy >= CELLS_H - EDGE_CELLS || cx > VEILHAVEN_CELL[0];",
-    "new": "const openCell = (cx, cy) =>\n  cx < EDGE_CELLS || cy < EDGE_CELLS || cy >= CELLS_H - EDGE_CELLS || cx > VEILHAVEN_CELL[0] + 2;",
+    "old": "|| cx > VEILHAVEN_CELL[0];",
+    "new": "|| cx > VEILHAVEN_CELL[0] + 2;",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "SEA-haven-cell",
     "file": "src/world/ethericSea.js",
-    "old": "  Math.floor((VEIL_X - ETHER_BOX.x0) / ISLE_CELL_PX) - 4,",
-    "new": "  Math.floor((VEIL_X - ETHER_BOX.x0) / ISLE_CELL_PX) - 6,",
+    "old": "Math.floor((VEIL_X - ETHER_BOX.x0) / ISLE_CELL_PX) - 4,",
+    "new": "Math.floor((VEIL_X - ETHER_BOX.x0) / ISLE_CELL_PX) - 6,",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SEA-haven-peak",
     "file": "src/world/ethericSea.js",
-    "old": "  const peak = haven ? 12 : Math.round(lerp(k.peak[0], k.peak[1], r()) * (kind === 'port' ? 1 : 1 + band.lift)); // a port's town stays a short climb from the water",
-    "new": "  const peak = haven ? 22 : Math.round(lerp(k.peak[0], k.peak[1], r()) * (kind === 'port' ? 1 : 1 + band.lift)); // a port's town stays a short climb from the water",
+    "old": "  const peak = haven ? 12 :",
+    "new": "  const peak = haven ? 22 :",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SEA-cache-unkept",
     "file": "src/world/ethericSea.js",
-    "old": "  _isles.set(key, isle);\n  return isle;",
-    "new": "  return isle;",
+    "old": "  _isles.set(key, isle);\n",
+    "new": "",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SEA-name-middle-rare",
     "file": "src/world/ethericSea.js",
-    "old": "  const root = draw(NAME_HEADS, r) + (r() < 0.5 ? draw(NAME_MIDS, r) : '') + draw(NAME_TAILS, r);",
-    "new": "  const root = draw(NAME_HEADS, r) + (r() < 0.1 ? draw(NAME_MIDS, r) : '') + draw(NAME_TAILS, r);",
+    "old": "(r() < 0.5 ? draw(NAME_MIDS, r) : '')",
+    "new": "(r() < 0.1 ? draw(NAME_MIDS, r) : '')",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "SEA-ruin-rootless",
     "file": "src/world/ethericSea.js",
-    "old": "    (n, w) => `the ${w.ruin} of ${n}`,",
-    "new": "    (n, w) => `the ${w.adj} ${w.ruin}`,",
+    "old": "(n, w) => `the ${w.ruin} of ${n}`]),",
+    "new": "(n, w) => `the ${w.adj} ${w.ruin}`]),",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "SEA-fall-unread",
     "file": "src/world/ethericSea.js",
-    "old": "  const h = isle.peak * Math.pow(1 - t * t, isle.fall) + (lattice(x, y, 0x51) - 0.5) * 2 * HEIGHT_NOISE;",
-    "new": "  const h = isle.peak * Math.pow(1 - t * t, 1.5) + (lattice(x, y, 0x51) - 0.5) * 2 * HEIGHT_NOISE;",
+    "old": "  const h = isle.peak * Math.pow(1 - t * t, isle.fall)",
+    "new": "  const h = isle.peak * Math.pow(1 - t * t, 1.5)",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "SEA-rim-unkept",
     "file": "src/world/ethericSea.js",
-    "old": "  if (t >= 1) return 0;\n  const h = isle.peak * Math.pow(1 - t * t, isle.fall) + (lattice(x, y, 0x51) - 0.5) * 2 * HEIGHT_NOISE;",
-    "new": "  const h = isle.peak * Math.pow(1 - t * t, isle.fall) + (lattice(x, y, 0x51) - 0.5) * 2 * HEIGHT_NOISE;",
+    "old": "  if (t >= 1) return 0;\n",
+    "new": "",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "SEA-noise-wide",
     "file": "src/world/ethericSea.js",
-    "old": "  const h = isle.peak * Math.pow(1 - t * t, isle.fall) + (lattice(x, y, 0x51) - 0.5) * 2 * HEIGHT_NOISE;",
-    "new": "  const h = isle.peak * Math.pow(1 - t * t, isle.fall) + (lattice(x, y, 0x51) - 0.5) * 6 * HEIGHT_NOISE;",
+    "old": "(lattice(x, y, 0x51) - 0.5) * 2 * HEIGHT_NOISE",
+    "new": "(lattice(x, y, 0x51) - 0.5) * 6 * HEIGHT_NOISE",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "SEA-climate-reach",
     "file": "src/world/ethericSea.js",
-    "old": "  return Math.hypot(x - isle.lx, y - isle.ly) <= isle.r + CLIMATE_REACH_PX ? isle.climate : CLIMATES.Ocean;",
-    "new": "  return Math.hypot(x - isle.lx, y - isle.ly) <= isle.r ? isle.climate : CLIMATES.Ocean;",
+    "old": "Math.hypot(x - isle.lx, y - isle.ly) <= isle.r + CLIMATE_REACH_PX ? isle.climate",
+    "new": "Math.hypot(x - isle.lx, y - isle.ly) <= isle.r ? isle.climate",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "SEA-compose-height",
     "file": "src/world/ethericSea.js",
-    "old": "    return inEtherLaw(x, y) ? etherHeightByte(x, y) : woods.getHeightMapValue(x, y);",
-    "new": "    return woods.getHeightMapValue(x, y);",
+    "old": "  ground.getHeightMapValue = function (x, y) { return inEtherLaw(x, y) ? etherHeightByte(x, y) : woods.getHeightMapValue(x, y); };",
+    "new": "  ground.getHeightMapValue = function (x, y) { return woods.getHeightMapValue(x, y); };",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SEA-compose-large",
     "file": "src/world/ethericSea.js",
-    "old": "    return inEtherLaw(x, y) ? etherLargeMap(x, y) : woods.getLargeMapData(x, y);",
-    "new": "    return woods.getLargeMapData(x, y);",
+    "old": "  ground.getLargeMapData = function (x, y) { return inEtherLaw(x, y) ? etherLargeMap(x, y) : woods.getLargeMapData(x, y); };",
+    "new": "  ground.getLargeMapData = function (x, y) { return woods.getLargeMapData(x, y); };",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "SEA-cross-west",
     "file": "src/world/ethericSea.js",
-    "old": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
-    "new": "  !inEtherLaw(x, y) && x <= CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
+    "old": "!inEtherLaw(x, y) && x < CROSS_X && typeof landPx",
+    "new": "!inEtherLaw(x, y) && x <= CROSS_X && typeof landPx",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SEA-cross-land",
     "file": "src/world/ethericSea.js",
-    "old": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
-    "new": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx > CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
+    "old": "typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx",
+    "new": "typeof landPx === 'number' && landPx > CROSS_LAND_PX && seaPx",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "SEA-cross-in-box",
     "file": "src/world/ethericSea.js",
-    "old": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
-    "new": "  x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
+    "old": "export const crossingWaters = (x, y, landPx, seaPx) => !inEtherLaw(x, y) && x < CROSS_X",
+    "new": "export const crossingWaters = (x, y, landPx, seaPx) => x < CROSS_X",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "SEA-cross-infinity",
     "file": "src/world/ethericSea.js",
-    "old": "  !inEtherLaw(x, y) && x < CROSS_X && typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
-    "new": "  !inEtherLaw(x, y) && x < CROSS_X && Number.isFinite(landPx) && landPx >= CROSS_LAND_PX && seaPx >= CROSS_SEA_PX; // Infinity: none in reach",
+    "old": "typeof landPx === 'number' && landPx >= CROSS_LAND_PX && seaPx",
+    "new": "Number.isFinite(landPx) && landPx >= CROSS_LAND_PX && seaPx",
     "tests": [
       "test/world/ethersea.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "SEA-light-none-made",
     "file": "src/world/ethericSea.js",
-    "old": "  if (!(w > 0) && rgb instanceof Float32Array) return rgb;\n  const k = Math.max(0, Math.min(1, w || 0));",
-    "new": "  const k = Math.max(0, Math.min(1, w || 0));",
+    "old": "  if (!(w > 0) && rgb instanceof Float32Array) return rgb;\n",
+    "new": "",
     "tests": [
       "test/world/ethersea.test.js"
     ]

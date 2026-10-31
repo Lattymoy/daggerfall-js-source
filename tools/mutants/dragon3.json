@@ -84,8 +84,8 @@
   {
     "name": "DRAGON3-the-remains-forgotten-at-the-watchs-turn",
     "file": "src/scenes/dragonHost.js",
-    "old": "export function skyWatchAt(t, seedOf) {\n  for (const w of dragonWatchesAbout(t)) {",
-    "new": "export function skyWatchAt(t, seedOf) {\n  for (const w of dragonWatchesAbout(t).slice(0, 1)) {",
+    "old": "  for (const w of dragonWatchesAbout(t)) {\n    const s = seedOf(w), o = { w, s };",
+    "new": "  for (const w of dragonWatchesAbout(t).slice(0, 1)) {\n    const s = seedOf(w), o = { w, s };",
     "tests": [
       "test/net/dragon/dragon3_client.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "DRAGON3-in-every-frame",
     "file": "src/scenes/dragonHost.js",
-    "old": "    if (lastIn.w === d.w && t - lastIn.at < (heard || t >= d.leaveAt ? DRAGON_IN_RESEND_MS : DRAGON_IN_RETRY_MS))\n      return; // past its leaving, an `in` only asks whether it lies here",
-    "new": "    // past its leaving, an `in` only asks whether it lies here",
+    "old": "    if (lastIn.w === d.w && t - lastIn.at < (heard || t >= d.leaveAt ? DRAGON_IN_RESEND_MS : DRAGON_IN_RETRY_MS)) return;",
+    "new": "",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "DRAGON3-the-sighting-at-once",
     "file": "src/scenes/dragonHost.js",
-    "old": "      if (nearSince !== null && noticed !== d.w && t - nearSince >= DRAGON_NOTICE_WAIT_MS) {",
-    "new": "      if (nearSince !== null && noticed !== d.w && true) {",
+    "old": "t - nearSince >= DRAGON_NOTICE_WAIT_MS) { noticed = d.w;",
+    "new": "true) { noticed = d.w;",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]
@@ -139,7 +139,7 @@
   {
     "name": "DRAGON3-the-dead-struck-later",
     "file": "src/scenes/dragonHost.js",
-    "old": "      if (!alive) {\n        if (t >= bl.at) judged.add(bl.i);\n        continue;\n      }",
+    "old": "      if (!alive) { if (t >= bl.at) judged.add(bl.i); continue; }",
     "new": "      if (!alive) continue;",
     "tests": [
       "test/scenes/dragon3_host.test.js"
@@ -148,8 +148,8 @@
   {
     "name": "DRAGON3-a-swing-on-it-aloft",
     "file": "src/scenes/dragonHost.js",
-    "old": "        if (s.md === DRAGON_MODE.ground && p.a < 1.5)",
-    "new": "        if (true)",
+    "old": "        if (s.md === DRAGON_MODE.ground && p.a < 1.5) foe =",
+    "new": "        if (true) foe =",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "DRAGON3-it-lies-for-ever",
     "file": "src/scenes/dragonHost.js",
-    "old": "      const end =\n        mine && s.fell\n          ? s.fell.at + DRAGON_REMAINS_MS\n          : mine && s.gone\n            ? s.gone + DRAGON_CLIMB_MS\n            : d.leaveAt + DRAGON_CLIMB_MS;",
-    "new": "      const end = mine && s.fell ? Infinity : mine && s.gone ? s.gone + DRAGON_CLIMB_MS : d.leaveAt + DRAGON_CLIMB_MS;",
+    "old": "      const end = mine && s.fell ? s.fell.at + DRAGON_REMAINS_MS :",
+    "new": "      const end = mine && s.fell ? Infinity :",
     "tests": [
       "test/scenes/dragon3_host.test.js"
     ]

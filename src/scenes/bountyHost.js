@@ -23,45 +23,21 @@
 // falls or walks off hands on a hunt part done.
 
 import {
-  BOUNTY_VENDOR,
-  bountyDay,
-  bountySites,
-  boardPostings,
-  postingFromId,
-  parseBountyId,
-  postingState,
-  bountyDungeons,
-  newBountyLedger,
-  readBountyLedger,
-  takeBounty,
-  dropBounty,
-  payBounty,
-  lapseBounties,
-  pruneBountyLedger,
-  bountyPoseField,
-  bountyPackOwner,
-  bountyHuntKey,
-  bountyTierFits,
-  bountyMinutesLeft,
-  rewardStory,
-  BOUNTY_REWARD_TITLE,
-  BOUNTY_ACTIVE_MAX,
-  MINUTES_PER_DAY,
-  bountyIdAtLevel,
-  bountyPartyKills,
-  bountyClearPays,
-  restampNeverLapsed,
+  BOUNTY_VENDOR, bountyDay, bountySites, boardPostings, postingFromId, parseBountyId, postingState,
+  bountyDungeons, newBountyLedger, readBountyLedger, takeBounty, dropBounty, payBounty, lapseBounties, pruneBountyLedger,
+  bountyPoseField, bountyPackOwner, bountyHuntKey, bountyTierFits, bountyMinutesLeft, rewardStory, BOUNTY_REWARD_TITLE, BOUNTY_ACTIVE_MAX,
+  MINUTES_PER_DAY, bountyIdAtLevel, bountyPartyKills, bountyClearPays, restampNeverLapsed,
 } from '../systems/bounty/bountyBoard.js';
 import { mintBountyItem, bountyItemName, bountyRewardRows } from '../systems/bounty/bountyReward.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
 import { addGoldPieces, addItem } from '../systems/inventory.js';
 import { BOUNTY_RING_R } from '../ui/bounty/bountyMapMark.js';
 import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bounty/bountyJournal.js';
-import { rewardContract } from '../systems/standing.js'; // REP4: a contract finished, the region's law two points better
-import { sharedClockOn } from '../systems/worldTick.js'; // AUDIT REST II Q3: the never-lapse build's rows, re-stamped online
-import { festivalBountyPaid } from '../systems/festival/festivalClient.js'; // WITCH1: a bounty paid asks a find
+import { rewardContract } from '../systems/standing.js';   // REP4: a contract finished, the region's law two points better
+import { sharedClockOn } from '../systems/worldTick.js';   // AUDIT REST II Q3: the never-lapse build's rows, re-stamped online
+import { festivalBountyPaid } from '../systems/festival/festivalClient.js';   // WITCH1: a bounty paid asks a find
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
-import { createHuntersMark } from './huntersMark.js'; // HUNTERS-MARK: the hunter's rank and the week's named mark
+import { createHuntersMark } from './huntersMark.js';   // HUNTERS-MARK: the hunter's rank and the week's named mark
 
 /** THE PIXEL OF THE DUNGEON I AM IN, for a hunt underground (the host's `dungeonPixel`): the dungeon's OWN pixel - its
  *  location's map-table position - rather than the streamer's last pixel (frozen at the entrance underground, which is
@@ -70,8 +46,7 @@ import { createHuntersMark } from './huntersMark.js'; // HUNTERS-MARK: the hunte
 export function bountyDungeonPixel(modes, travelPixel) {
   if ((modes?.mode ?? 'exterior') !== 'dungeon') return null;
   const mt = modes?.dungeonLocation?.mapTableData;
-  if (mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude))
-    return longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
+  if (mt && Number.isFinite(mt.longitude) && Number.isFinite(mt.latitude)) return longitudeLatitudeToMapPixel(mt.longitude, mt.latitude);
   return travelPixel();
 }
 
@@ -93,10 +68,7 @@ export function bountyGroups(p) {
   return [first, p.count - first];
 }
 /** Which group a held bounty is on, by its kills: 0 the first, 1 the second. */
-export const bountyStage = (p, killed) => {
-  const g = bountyGroups(p);
-  return g.length > 1 && killed >= g[0] ? 1 : 0;
-};
+export const bountyStage = (p, killed) => { const g = bountyGroups(p); return g.length > 1 && killed >= g[0] ? 1 : 0; };
 /** How long to wait before asking the world again about a pack that is still far off, seconds. */
 const FAR_RECHECK_S = 1.5;
 
@@ -109,7 +81,7 @@ export const BOUNTY_REFUSALS = Object.freeze({
   paid: 'You have already claimed this bounty today.',
   full: `You can hold no more than ${BOUNTY_ACTIVE_MAX} bounties at once.`,
   bad: 'That notice is too faded to read.',
-  party: 'Your party has already claimed this bounty today.', // AUDIT 28 B1: a hunt a mate cleared is done
+  party: 'Your party has already claimed this bounty today.',   // AUDIT 28 B1: a hunt a mate cleared is done
 });
 
 /**
@@ -152,9 +124,8 @@ export function createBountyHost(deps) {
   const notices = [];
   /** the sites of each town's board, by "px,py" - the map does not change under a session */
   const sitesCache = new Map();
-  let clock = 0,
-    acc = 0;
-  let boardView = null; // the open board window's { repaint } - so a kill or a lapse redraws it
+  let clock = 0, acc = 0;
+  let boardView = null;   // the open board window's { repaint } - so a kill or a lapse redraws it
   /** the bounties I have been told a party mate is standing the pack of (said once) */
   const toldOwner = new Set();
   /** BOUNTY-TRAIL: the ways already named - `${id}:${stage}` -> the words (the quest log repeats the latest) */
@@ -170,7 +141,7 @@ export function createBountyHost(deps) {
   const sitesFor = (px, py) => {
     const k = keyOf(px, py);
     let s = sitesCache.get(k);
-    if (!s) sitesCache.set(k, (s = bountySites(px, py, deps.siteOk)));
+    if (!s) sitesCache.set(k, s = bountySites(px, py, deps.siteOk));
     return s;
   };
   /** the dungeons in each town's reach, by "px,py" - the game's own, so the same on every client */
@@ -178,42 +149,19 @@ export function createBountyHost(deps) {
   const dungeonsFor = (px, py) => {
     const k = keyOf(px, py);
     let d = dungeonsCache.get(k);
-    if (!d) dungeonsCache.set(k, (d = bountyDungeons(px, py, deps.dungeonAt, deps.graveyardAt)));
+    if (!d) dungeonsCache.set(k, d = bountyDungeons(px, py, deps.dungeonAt, deps.graveyardAt));
     return d;
   };
   /** QUARRY-WORLD: the land's own wild about a town (systems/bounty/bountyQuarry.js, the host's `wildAt` - kept there), the
    *  beasts its board hunts; none handed, the ladder's. */
-  const wildFor = (px, py) => {
-    try {
-      return deps.wildAt?.(px, py) ?? null;
-    } catch {
-      return null;
-    }
-  };
+  const wildFor = (px, py) => { try { return deps.wildAt?.(px, py) ?? null; } catch { return null; } };
   const postingOf = (id) => {
     const b = parseBountyId(id);
     if (!b) return null;
-    return postingFromId(id, {
-      name: deps.townName(b.px, b.py),
-      sites: sitesFor(b.px, b.py),
-      dungeons: dungeonsFor(b.px, b.py),
-      wild: wildFor(b.px, b.py),
-    });
+    return postingFromId(id, { name: deps.townName(b.px, b.py), sites: sitesFor(b.px, b.py), dungeons: dungeonsFor(b.px, b.py), wild: wildFor(b.px, b.py) });
   };
-  const social = () => {
-    try {
-      return deps.social?.() ?? null;
-    } catch {
-      return null;
-    }
-  };
-  const repaint = () => {
-    try {
-      boardView?.repaint?.();
-    } catch {
-      /* the window's own problem */
-    }
-  };
+  const social = () => { try { return deps.social?.() ?? null; } catch { return null; } };
+  const repaint = () => { try { boardView?.repaint?.(); } catch { /* the window's own problem */ } };
   // HUNTERS-MARK (Bounty-Boards.md 12): the rank and the named mark - their own module, its clears reported from `pay`
   const hunt = createHuntersMark({ ...deps, sitesFor, repaint, notice: (n) => notices.push(n) });
 
@@ -228,13 +176,10 @@ export function createBountyHost(deps) {
     // AUDIT 28 B6: a pack whose bounty the load still holds keeps its beasts - a same-dungeon load patches them in place
     // (the dungeon's save carried them), and a second pack stood beside them doubled the hunt; a pack whose beasts the
     // load took away is found empty by the next tick, and what is left stands again. The kills are on the row.
-    for (const k of [...packs.keys()])
-      if (k.startsWith('retry:') || !ledger.held.some((h) => h.id === k)) packs.delete(k);
+    for (const k of [...packs.keys()]) if (k.startsWith('retry:') || !ledger.held.some((h) => h.id === k)) packs.delete(k);
     orphans.clear();
     notices.length = 0;
-    clues.clear();
-    toldOwner.clear();
-    tierRefused.clear(); // AUDIT 28 B9: the ways named are this session's - named again
+    clues.clear(); toldOwner.clear(); tierRefused.clear();   // AUDIT 28 B9: the ways named are this session's - named again
   };
   registerModSaveData(BOUNTY_VENDOR, {
     newSaveData: () => newBountyLedger(),
@@ -244,7 +189,7 @@ export function createBountyHost(deps) {
 
   // ── the journal (Mac: "i also dont see the bounty in my questlog means i cant abandon it?") ──
   setBountyJournal({
-    abandon: (id) => (hunt.isMark(id) ? hunt.drop(id) : drop(id)).ok, // HUNTERS-MARK: a named mark's from its own module
+    abandon: (id) => (hunt.isMark(id) ? hunt.drop(id) : drop(id)).ok,   // HUNTERS-MARK: a named mark's from its own module
     share: (id) => share(id).ok,
     canShare: (id) => !!social()?.inParty && ledger.held.some((h) => h.id === id && !h.shared),
   });
@@ -253,50 +198,35 @@ export function createBountyHost(deps) {
    *  the notice as the entry, the kills, the place and the purse under it, and the time left as the quest's clock. */
   function questLogEntries() {
     const now = deps.now();
-    return ledger.held
-      .map((h) => {
-        const p = postingOf(h.id);
-        if (!p) return null;
-        const where =
-          p.kind === 'dungeon' && !p.graveyard
-            ? `Where: ${p.place}, ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`
-            : `Where: ${p.far} ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`;
-        const lines = [
-          p.tierLabel,
-          p.story,
-          '',
-          `Slain: ${h.killed} of ${p.count} ${p.foes}.`,
-          where,
-          `Reward: ${p.gold} gold pieces and a piece of kit.`,
-        ];
-        // BOUNTY-TRAIL: where the hunt stands in its two groups
-        const groups = bountyGroups(p);
-        const stage = bountyStage(p, h.killed);
-        if (groups.length > 1) {
-          lines.push(
-            stage === 0
-              ? `They move in two groups: ${groups[0]} first, then ${groups[1]} more.`
-              : `The first group is dead. ${p.count - h.killed} ${p.foes} fled. Follow their trail.`,
-          );
-        }
-        // RPT1026-QUESTS BOUNTY-WAY (a private report: a farm hunt whose rats never showed): and the last way named, for
-        // EVERY hunt whose group waits at its spot - a farm's first group as a split hunt's second. A farm stands in the
-        // middle half of its pixel (330 to 350 metres from where the hunter came onto it, in the real game) and its rats
-        // stand within 150 metres of the hunter; the way, said once on the screen among the arrival's own lines, was kept for
-        // a split hunt alone, so a hunter of one group who missed it had nothing to go on
-        const clue = clues.get(`${h.id}:${stage}`);
-        if (clue) lines.push(clue);
-        if (h.from) lines.push(`Shared with you by ${h.from}.`);
-        return {
-          id: `${BOUNTY_QUEST_PREFIX}${h.id}`,
-          name: `Bounty: ${p.title}`,
-          questName: 'BOUNTY',
-          bounty: true,
-          clockSeconds: bountyMinutesLeft(h, now) * 60,
-          messages: [lines.map(line)],
-        };
-      })
-      .filter(Boolean);
+    return ledger.held.map((h) => {
+      const p = postingOf(h.id);
+      if (!p) return null;
+      const where = p.kind === 'dungeon' && !p.graveyard
+        ? `Where: ${p.place}, ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`
+        : `Where: ${p.far} ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`;
+      const lines = [p.tierLabel, p.story, '', `Slain: ${h.killed} of ${p.count} ${p.foes}.`, where, `Reward: ${p.gold} gold pieces and a piece of kit.`];
+      // BOUNTY-TRAIL: where the hunt stands in its two groups
+      const groups = bountyGroups(p);
+      const stage = bountyStage(p, h.killed);
+      if (groups.length > 1) {
+        lines.push(stage === 0
+          ? `They move in two groups: ${groups[0]} first, then ${groups[1]} more.`
+          : `The first group is dead. ${p.count - h.killed} ${p.foes} fled. Follow their trail.`);
+      }
+      // RPT1026-QUESTS BOUNTY-WAY (a private report: a farm hunt whose rats never showed): and the last way named, for
+      // EVERY hunt whose group waits at its spot - a farm's first group as a split hunt's second. A farm stands in the
+      // middle half of its pixel (330 to 350 metres from where the hunter came onto it, in the real game) and its rats
+      // stand within 150 metres of the hunter; the way, said once on the screen among the arrival's own lines, was kept for
+      // a split hunt alone, so a hunter of one group who missed it had nothing to go on
+      const clue = clues.get(`${h.id}:${stage}`);
+      if (clue) lines.push(clue);
+      if (h.from) lines.push(`Shared with you by ${h.from}.`);
+      return {
+        id: `${BOUNTY_QUEST_PREFIX}${h.id}`, name: `Bounty: ${p.title}`, questName: 'BOUNTY', bounty: true,
+        clockSeconds: bountyMinutesLeft(h, now) * 60,
+        messages: [lines.map(line)],
+      };
+    }).filter(Boolean);
   }
 
   // ── the board ─────────────────────────────────────────────────────
@@ -309,7 +239,7 @@ export function createBountyHost(deps) {
       for (const r of Array.isArray(m?.p?.bq) ? m.p.bq : []) {
         if (r.c) continue;
         const b = parseBountyId(r.i);
-        if (!b || !bountyTierFits(r.i, deps.level())) continue; // BOUNTY-TIER: only a hunt I could join shows as one
+        if (!b || !bountyTierFits(r.i, deps.level())) continue;   // BOUNTY-TIER: only a hunt I could join shows as one
         const list = out.get(b.slotKey) ?? [];
         list.push({ id: r.i, name: String(m.name ?? 'A companion') });
         out.set(b.slotKey, list);
@@ -322,22 +252,13 @@ export function createBountyHost(deps) {
   function boardRows(town) {
     const now = deps.now();
     const day = bountyDay(now);
-    const posts = boardPostings({
-      day,
-      px: town.px,
-      py: town.py,
-      name: town.name,
-      level: deps.level(),
-      sites: sitesFor(town.px, town.py),
-      dungeons: dungeonsFor(town.px, town.py),
-      wild: wildFor(town.px, town.py),
-    });
+    const posts = boardPostings({ day, px: town.px, py: town.py, name: town.name, level: deps.level(), sites: sitesFor(town.px, town.py), dungeons: dungeonsFor(town.px, town.py), wild: wildFor(town.px, town.py) });
     const mates = matesOnBoard();
     return posts.map((p) => {
       const held = ledger.held.find((h) => parseBountyId(h.id)?.slotKey === p.slotKey) ?? null;
       const joined = mates.get(p.slotKey) ?? [];
       // a mate's copy wins what the row SHOWS when I have not taken it: joining their hunt is joining their pack
-      const shown = held ? (postingOf(held.id) ?? p) : joined.length ? (postingOf(joined[0].id) ?? p) : p;
+      const shown = held ? (postingOf(held.id) ?? p) : (joined.length ? (postingOf(joined[0].id) ?? p) : p);
       return {
         posting: shown,
         state: postingState(ledger, p),
@@ -350,15 +271,7 @@ export function createBountyHost(deps) {
   /** The bounties I hold, for the window's list. */
   const heldRows = () => {
     const now = deps.now();
-    return ledger.held
-      .map((h) => ({
-        id: h.id,
-        posting: postingOf(h.id),
-        killed: h.killed,
-        left: bountyMinutesLeft(h, now),
-        shared: !!h.shared,
-        from: h.from ?? null,
-      }))
+    return ledger.held.map((h) => ({ id: h.id, posting: postingOf(h.id), killed: h.killed, left: bountyMinutesLeft(h, now), shared: !!h.shared, from: h.from ?? null }))
       .filter((r) => r.posting);
   };
 
@@ -366,16 +279,12 @@ export function createBountyHost(deps) {
   const mateCleared = (huntKey) => {
     const s = social();
     if (!s?.inParty) return null;
-    for (const m of s.mates ?? [])
-      for (const r of Array.isArray(m?.p?.bq) ? m.p.bq : []) if (r.c && bountyHuntKey(r.i) === huntKey) return r;
+    for (const m of s.mates ?? []) for (const r of Array.isArray(m?.p?.bq) ? m.p.bq : []) if (r.c && bountyHuntKey(r.i) === huntKey) return r;
     return null;
   };
   /** AUDIT 28 B12: a notice taken as MY bounty - a mate's copy (Join the hunt, a share) rebuilt at my level where its tier
    *  is mine, so the piece it pays is minted for me; the hunt (slot and tier) is the same. */
-  const mine = (id) => {
-    const lv = deps.level();
-    return bountyTierFits(id, lv) ? (bountyIdAtLevel(id, lv) ?? id) : id;
-  };
+  const mine = (id) => { const lv = deps.level(); return bountyTierFits(id, lv) ? (bountyIdAtLevel(id, lv) ?? id) : id; };
   /** AUDIT 28 B2: a pack given up and taken again - its live beasts are the hunt's again, never a second pack. */
   const adopt = (slotKey, id) => {
     const o = orphans.get(slotKey);
@@ -404,7 +313,7 @@ export function createBountyHost(deps) {
     if (!dropBounty(ledger, id)) return { ok: false };
     const pack = packs.get(id);
     packs.delete(id);
-    if (pack && p) orphans.set(p.slotKey, pack); // AUDIT 28 B2: kept for a retake, with its kills (dropBounty)
+    if (pack && p) orphans.set(p.slotKey, pack);   // AUDIT 28 B2: kept for a retake, with its kills (dropBounty)
     if (p) deps.say(`You gave up the bounty on the ${p.foes}.`);
     repaint();
     return { ok: true };
@@ -424,10 +333,7 @@ export function createBountyHost(deps) {
       if (!Number.isSafeInteger(lv) || bountyTierFits(id, lv)) continue;
       shut.push({ name: String(m.name ?? 'A companion'), lv, low: lv < (parseBountyId(id)?.level ?? lv) });
     }
-    for (const m of shut)
-      deps.say(
-        `${m.name} (level ${m.lv}) is too ${m.low ? 'low' : 'high'} level to take this bounty, but can still help you hunt.`,
-      );
+    for (const m of shut) deps.say(`${m.name} (level ${m.lv}) is too ${m.low ? 'low' : 'high'} level to take this bounty, but can still help you hunt.`);
     repaint();
     return { ok: true, shut };
   }
@@ -443,22 +349,11 @@ export function createBountyHost(deps) {
       now: () => deps.now(),
       nextDayIn: () => MINUTES_PER_DAY - (deps.now() % MINUTES_PER_DAY),
       inParty: () => !!social()?.inParty,
-      take,
-      drop,
-      share,
+      take, drop, share,
       // HUNTERS-MARK: the board's header (the rank) and its named mark - each read as the window draws
-      hunt: () => ({
-        rank: hunt.boardRank(t),
-        mark: hunt.boardMark(t),
-        takeMark: (id) => hunt.take(id),
-        dropMark: (id) => hunt.drop(id),
-      }),
-      attach: (view) => {
-        boardView = view;
-      },
-      detach: () => {
-        boardView = null;
-      },
+      hunt: () => ({ rank: hunt.boardRank(t), mark: hunt.boardMark(t), takeMark: (id) => hunt.take(id), dropMark: (id) => hunt.drop(id) }),
+      attach: (view) => { boardView = view; },
+      detach: () => { boardView = null; },
     });
     return true;
   }
@@ -482,16 +377,13 @@ export function createBountyHost(deps) {
     notices.push({
       title: BOUNTY_REWARD_TITLE,
       heading: posting.title,
-      story: rewardStory(
-        { town: posting.town.name, gold: posting.gold, itemName: bountyItemName(item) },
-        Math.floor(rolls() * 1e9),
-      ),
+      story: rewardStory({ town: posting.town.name, gold: posting.gold, itemName: bountyItemName(item) }, Math.floor(rolls() * 1e9)),
       byMate,
       reward,
     });
     deps.say(`Bounty fulfilled: ${posting.title}. +${posting.gold} gold, ${reward.item}.`);
-    festivalBountyPaid(); // WITCH1: a Witches' Festival find (nothing while it is not live)
-    hunt.cleared(id, Number.isInteger(region) ? region : null); // HUNTERS-MARK: reported to the hunt's ledger, kept until answered
+    festivalBountyPaid();   // WITCH1: a Witches' Festival find (nothing while it is not live)
+    hunt.cleared(id, Number.isInteger(region) ? region : null);   // HUNTERS-MARK: reported to the hunt's ledger, kept until answered
     repaint();
     return true;
   }
@@ -508,49 +400,34 @@ export function createBountyHost(deps) {
         // BOUNTY-TIER: the same HUNT is the same slot in the same tier - a mate's clear in another tier is theirs alone
         const hunt = bountyHuntKey(r.i);
         const held = ledger.held.find((h) => bountyHuntKey(h.id) === hunt);
-        if (r.c) {
-          // a mate cleared it: whoever of us held that hunt BEFORE the clear is paid (AUDIT 28 B1)
+        if (r.c) {   // a mate cleared it: whoever of us held that hunt BEFORE the clear is paid (AUDIT 28 B1)
           if (held && bountyClearPays(r, held.takenAt)) pay(held.id, { byMate: String(m.name ?? 'A companion') });
           continue;
         }
         if (!r.s || today - b.day > SHARE_MAX_AGE_DAYS) continue;
-        if (ledger.held.some((h) => parseBountyId(h.id)?.slotKey === b.slotKey)) continue; // I hold that notice already
+        if (ledger.held.some((h) => parseBountyId(h.id)?.slotKey === b.slotKey)) continue;   // I hold that notice already
         if (!bountyTierFits(r.i, deps.level())) {
           // a share across tiers is not taken up - but the hunter may still help (they see its farm and its beasts)
           if (!tierRefused.has(r.i)) {
             tierRefused.add(r.i);
             const p = postingOf(r.i);
-            if (p)
-              deps.say(
-                `${m.name ?? 'A companion'} shared a bounty meant for ${b.level > deps.level() ? 'stronger' : 'weaker'} hunters (${p.title}). You cannot take it, but you can help them hunt.`,
-              );
+            if (p) deps.say(`${m.name ?? 'A companion'} shared a bounty meant for ${b.level > deps.level() ? 'stronger' : 'weaker'} hunters (${p.title}). You cannot take it, but you can help them hunt.`);
           }
           continue;
         }
-        if (
-          ledger.paid.includes(b.slotKey) ||
-          ledger.dropped.includes(b.slotKey) ||
-          ledger.held.length >= BOUNTY_ACTIVE_MAX
-        )
-          continue;
-        if (mateCleared(hunt)) continue; // AUDIT 28 B1: a share of a hunt the party already cleared is done
-        const id = mine(r.i); // AUDIT 28 B12: at my level
+        if (ledger.paid.includes(b.slotKey) || ledger.dropped.includes(b.slotKey) || ledger.held.length >= BOUNTY_ACTIVE_MAX) continue;
+        if (mateCleared(hunt)) continue;   // AUDIT 28 B1: a share of a hunt the party already cleared is done
+        const id = mine(r.i);   // AUDIT 28 B12: at my level
         const done = takeBounty(ledger, id, now, { shared: true, from: String(m.name ?? '') });
         const p = done.ok ? postingOf(id) : null;
-        if (p) {
-          deps.say(`${m.name ?? 'A companion'} shared a bounty with you: ${p.title}. It is marked on your map.`);
-          repaint();
-        }
+        if (p) { deps.say(`${m.name ?? 'A companion'} shared a bounty with you: ${p.title}. It is marked on your map.`); repaint(); }
       }
     }
     // AUDIT 28 B4: the hunt's kills are the party's - the most any holder of it reports
     for (const h of ledger.held) {
       const p = postingOf(h.id);
       const k = Math.min(p?.count ?? 0, bountyPartyKills(s.mates, bountyHuntKey(h.id)));
-      if (k > h.killed) {
-        h.killed = k;
-        repaint();
-      }
+      if (k > h.killed) { h.killed = k; repaint(); }
     }
   }
 
@@ -577,17 +454,11 @@ export function createBountyHost(deps) {
           }
           repaint();
         }
-        if (row.killed >= p.count) {
-          pay(row.id);
-          continue;
-        }
+        if (row.killed >= p.count) { pay(row.id); continue; }
         // every beast either dead or gone (culled, cleared by a load): the pack is over - what is left stands again
         // FB1029 GRAVE-PACK: an open-air pack is judged by the street's pool in every mode - down in a crypt too
         const pool = deps.foePool?.(!(p.kind === 'dungeon' && !p.graveyard)) ?? null;
-        if (pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) {
-          packs.delete(row.id);
-          pack = null;
-        }
+        if (pack.foes.every((f) => f._bountyCounted || f.dead || (pool && !pool.includes(f)))) { packs.delete(row.id); pack = null; }
       }
       if (pack) continue;
       // WHERE the pack stands: the open-ground hunt on its pixel in the open air, the dungeon hunt inside its dungeon
@@ -600,18 +471,9 @@ export function createBountyHost(deps) {
       // one pack for the party: the owner stands it, the others fight its puppets - the place as the POSES say it (AUDIT
       // 28 B8: underground my pose's pixel, which is what my mates' poses carry, never the dungeon's map-table one)
       const pose = deps.posePixel?.() ?? null;
-      const owner = bountyPackOwner(
-        s?.inParty ? s.acct : null,
-        s?.inParty ? s.mates : [],
-        bountyHuntKey(row.id),
-        pose ? { px: pose.x, py: pose.y } : p.target,
-        underground ? 1 : 0,
-      );
+      const owner = bountyPackOwner(s?.inParty ? s.acct : null, s?.inParty ? s.mates : [], bountyHuntKey(row.id), pose ? { px: pose.x, py: pose.y } : p.target, underground ? 1 : 0);
       if (owner && s?.acct && owner !== s.acct) {
-        if (!toldOwner.has(row.id)) {
-          toldOwner.add(row.id);
-          deps.say(`Your party is already on the trail of the ${p.foes} here.`);
-        }
+        if (!toldOwner.has(row.id)) { toldOwner.add(row.id); deps.say(`Your party is already on the trail of the ${p.foes} here.`); }
         continue;
       }
       const retry = packs.get(`retry:${row.id}`);
@@ -622,31 +484,17 @@ export function createBountyHost(deps) {
       const remaining = Math.max(1, stage === 0 ? groups[0] - row.killed : p.count - row.killed);
       const stood = underground
         ? (deps.standDungeonPack?.({ id: row.id, mobileType: p.mobileType, count: remaining }) ?? null)
-        : deps.standPack({
-            id: row.id,
-            mobileType: p.mobileType,
-            count: remaining,
-            stage,
-            farm: !!p.farm && stage === 0,
-            target: p.target,
-            farmKey: p.slotKey,
-            huntKey: bountyHuntKey(row.id),
-            place: p.graveyard ? p.target : null,
-          });
-      if (!stood) {
-        packs.set(`retry:${row.id}`, { at: clock + BOUNTY_RETRY_S });
-        continue;
-      }
+        : deps.standPack({ id: row.id, mobileType: p.mobileType, count: remaining, stage, farm: !!p.farm && stage === 0, target: p.target, farmKey: p.slotKey, huntKey: bountyHuntKey(row.id), place: p.graveyard ? p.target : null });
+      if (!stood) { packs.set(`retry:${row.id}`, { at: clock + BOUNTY_RETRY_S }); continue; }
       if ('far' in stood) {
         // the group waits at its spot: name the way once, then ask again as the hunter closes in
         const key = `${row.id}:${stage}`;
         if (!clues.has(key)) {
           const m = Math.max(10, Math.round(Math.hypot(stood.dx, stood.dz) / 10) * 10);
           const way = compass8(stood.dx, stood.dz);
-          const words =
-            stage === 1
-              ? `You find tracks leading away from the bodies: the rest of the ${p.foes} fled ${m} meters to the ${way}.`
-              : `The farmstead lies ${m} meters to the ${way}.`;
+          const words = stage === 1
+            ? `You find tracks leading away from the bodies: the rest of the ${p.foes} fled ${m} meters to the ${way}.`
+            : `The farmstead lies ${m} meters to the ${way}.`;
           clues.set(key, words);
           deps.say(words);
           repaint();
@@ -658,29 +506,16 @@ export function createBountyHost(deps) {
       const entry = { foes: /** @type {any[]|null} */ (null) };
       packs.set(row.id, entry);
       const metres = Math.round(Math.hypot(stood.dx, stood.dz));
-      deps.say(
-        underground
-          ? `You hear ${p.foes} somewhere deeper in ${p.place}: ${remaining} of them, about ${metres} meters away.`
-          : `You spot ${remaining} ${p.foes}, ${metres} meters to the ${compass8(stood.dx, stood.dz)}!`,
-      );
-      Promise.resolve(stood.foes)
-        .then((foes) => {
-          const list = (foes ?? []).filter(Boolean);
-          if (packs.get(row.id) !== entry) return;
-          if (!list.length) {
-            packs.delete(row.id);
-            packs.set(`retry:${row.id}`, { at: clock + BOUNTY_RETRY_S });
-            return;
-          }
-          for (const f of list) {
-            f.bountyId = row.id;
-            f.bountyPlace = p.graveyard ? p.target : null;
-          } // FB1029 GRAVE-PACK: a wild foe in its place's rect
-          entry.foes = list;
-        })
-        .catch(() => {
-          if (packs.get(row.id) === entry) packs.delete(row.id);
-        });
+      deps.say(underground
+        ? `You hear ${p.foes} somewhere deeper in ${p.place}: ${remaining} of them, about ${metres} meters away.`
+        : `You spot ${remaining} ${p.foes}, ${metres} meters to the ${compass8(stood.dx, stood.dz)}!`);
+      Promise.resolve(stood.foes).then((foes) => {
+        const list = (foes ?? []).filter(Boolean);
+        if (packs.get(row.id) !== entry) return;
+        if (!list.length) { packs.delete(row.id); packs.set(`retry:${row.id}`, { at: clock + BOUNTY_RETRY_S }); return; }
+        for (const f of list) { f.bountyId = row.id; f.bountyPlace = p.graveyard ? p.target : null; }   // FB1029 GRAVE-PACK: a wild foe in its place's rect
+        entry.foes = list;
+      }).catch(() => { if (packs.get(row.id) === entry) packs.delete(row.id); });
     }
   }
 
@@ -688,10 +523,7 @@ export function createBountyHost(deps) {
   function tick(dt) {
     clock += dt;
     acc += dt;
-    if (acc < BOUNTY_TICK_S) {
-      showNextNotice();
-      return;
-    }
+    if (acc < BOUNTY_TICK_S) { showNextNotice(); return; }
     acc = 0;
     const now = deps.now();
     // AUDIT REST II Q3: a ledger the never-lapse build (TIMEFREE) wrote, first played online here - its held rows kept
@@ -711,7 +543,7 @@ export function createBountyHost(deps) {
     for (const [k, id] of paidIds) if (!ledger.paid.includes(k)) paidIds.delete(k);
     partyTick(now);
     packTick(now);
-    hunt.tick(BOUNTY_TICK_S); // HUNTERS-MARK: the book's beat and the named mark's stand
+    hunt.tick(BOUNTY_TICK_S);   // HUNTERS-MARK: the book's beat and the named mark's stand
     showNextNotice();
   }
 
@@ -721,31 +553,13 @@ export function createBountyHost(deps) {
   }
 
   return {
-    openBoard,
-    tick,
-    take,
-    drop,
-    share,
+    openBoard, tick, take, drop, share,
     /** The black circles, for both maps - HUNTERS-MARK: the named mark's beside them. */
-    mapMarks: () => [
-      ...hunt.mapMarks(),
-      ...ledger.held
-        .map((h) => {
-          const p = postingOf(h.id);
-          return p
-            ? {
-                cx: p.target.px + 0.5,
-                cy: p.target.py + 0.5,
-                r: BOUNTY_RING_R,
-                label: p.place ? `${p.foes} - ${p.place}` : p.foes,
-                id: h.id,
-                place: p.kind === 'dungeon',
-                farmKey: p.farm ? p.slotKey : null,
-              }
-            : null; // BOUNTY-SNAP: what the Overworld's click walks to
-        })
-        .filter(Boolean),
-    ],
+    mapMarks: () => [...hunt.mapMarks(), ...ledger.held.map((h) => {
+      const p = postingOf(h.id);
+      return p ? { cx: p.target.px + 0.5, cy: p.target.py + 0.5, r: BOUNTY_RING_R, label: p.place ? `${p.foes} - ${p.place}` : p.foes, id: h.id,
+        place: p.kind === 'dungeon', farmKey: p.farm ? p.slotKey : null } : null;   // BOUNTY-SNAP: what the Overworld's click walks to
+    }).filter(Boolean)],
     /** The quest log's rows for my bounties (the world host folds them into questBridge.questLog) - and the named mark's. */
     questLogEntries: () => [...hunt.questLogEntries(), ...questLogEntries()],
     /** BOUNTY-FARM: the farm bounties I hold - their farms stand while I do (scenes/bountyFarms.js). */
@@ -753,13 +567,10 @@ export function createBountyHost(deps) {
     farmsWanted: () => {
       const ids = new Set(ledger.held.map((h) => h.id));
       const s = social();
-      if (s?.inParty)
-        for (const m of s.mates ?? [])
-          for (const r of Array.isArray(m?.p?.bq) ? m.p.bq : []) if (!r.c && parseBountyId(r.i)) ids.add(r.i);
+      if (s?.inParty) for (const m of s.mates ?? []) for (const r of Array.isArray(m?.p?.bq) ? m.p.bq : []) if (!r.c && parseBountyId(r.i)) ids.add(r.i);
       // one farm a NOTICE (keyed by its slot, not by an id - two holders at two levels see one farm, in one place)
       const out = new Map();
-      for (const p of [...ids].map((id) => postingOf(id)))
-        if (p?.farm && !out.has(p.slotKey)) out.set(p.slotKey, { id: p.slotKey, px: p.target.px, py: p.target.py });
+      for (const p of [...ids].map((id) => postingOf(id))) if (p?.farm && !out.has(p.slotKey)) out.set(p.slotKey, { id: p.slotKey, px: p.target.px, py: p.target.py });
       return [...out.values()];
     },
     /** My pose's `bq` - a row's `a` while its pack stands here. */
@@ -767,14 +578,12 @@ export function createBountyHost(deps) {
     held: () => heldRows(),
     pendingNotices: () => notices.length,
     /** AUDIT 28 H12: a notice taken down unread goes back to the front of the queue - never dropped. */
-    requeue: (n) => {
-      if (n && !notices.includes(n)) notices.unshift(n);
-    },
+    requeue: (n) => { if (n && !notices.includes(n)) notices.unshift(n); },
     /** Test seams. */
     _ledger: () => ledger,
     _packs: () => packs,
     _reset: reset,
-    hunt, // HUNTERS-MARK: the rank and the named mark (a test's seam, the pages' book)
+    hunt,   // HUNTERS-MARK: the rank and the named mark (a test's seam, the pages' book)
   };
 }
 

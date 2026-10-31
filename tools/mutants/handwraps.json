@@ -22,8 +22,8 @@
   {
     "name": "HANDWRAPS-metal-named",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  if (item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item)) return materialText(item); // HAND-WRAPS: cloth, no metal",
-    "new": "  if (item?.group === 'Weapons' && !isAmmunition(item)) return materialText(item); // HAND-WRAPS: cloth, no metal",
+    "old": "  if (item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item)) return materialText(item);",
+    "new": "  if (item?.group === 'Weapons' && !isAmmunition(item)) return materialText(item);",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "HANDWRAPS-damage-row",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item) // HAND-WRAPS: the fists' damage, no weapon's",
-    "new": "  item?.group === 'Weapons' && !isAmmunition(item) // HAND-WRAPS: the fists' damage, no weapon's",
+    "old": "  item?.group === 'Weapons' && !isAmmunition(item) && !isHandWraps(item)   // HAND-WRAPS",
+    "new": "  item?.group === 'Weapons' && !isAmmunition(item)   // HAND-WRAPS",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "HANDWRAPS-hand",
     "file": "src/characters/equipTable.js",
-    "old": "  if (group === ITEM_GROUPS.Weapons && item.templateIndex === HAND_WRAPS_TEMPLATE) return ITEM_HANDS.Either; // HAND-WRAPS: worn in either hand, both fists up (combat/twoHands/handsLaw.js)",
-    "new": "  // HAND-WRAPS: worn in either hand, both fists up (combat/twoHands/handsLaw.js)",
+    "old": "  if (group === ITEM_GROUPS.Weapons && item.templateIndex === HAND_WRAPS_TEMPLATE) return ITEM_HANDS.Either;",
+    "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "HANDWRAPS-mods-unread",
     "file": "src/combat/formulas.js",
-    "old": "  if (isPlayer && info?.wraps) damage = weaponDamageMods(info.wraps, damage); // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own",
-    "new": "  // HAND-WRAPS: the wraps' own lines over the fist's roll, as a weapon's over its own",
+    "old": "  if (isPlayer && info?.wraps) damage = weaponDamageMods(info.wraps, damage);",
+    "new": "",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "HANDWRAPS-fists-untold",
     "file": "src/combat/formulas.js",
-    "old": "          wraps,\n        }); // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines",
-    "new": "        }); // BAL10: the host's word for the fists' blow modifiers too; HAND-WRAPS: and the wraps' lines",
+    "old": "rolls, { unaware: !!unaware, wraps });   // BAL10: the host's word for the fists' blow modifiers too",
+    "new": "rolls, { unaware: !!unaware });   // BAL10: the host's word for the fists' blow modifiers too",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "HANDWRAPS-listeners-untold",
     "file": "src/combat/formulas.js",
-    "old": "    const info = { backstab: notes.backstab, blow: whole, wraps }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
-    "new": "    const info = { backstab: notes.backstab, blow: whole }; // HAND-WRAPS: the wraps of a fist's blow, for their lines   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge",
+    "old": "    const info = { backstab: notes.backstab, blow: whole, wraps };",
+    "new": "    const info = { backstab: notes.backstab, blow: whole };",
     "tests": [
       "test/combat/handwraps.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "HANDWRAPS-strikes",
     "file": "src/combat/formulas.js",
-    "old": "  const charged = weapon ?? wraps; // HAND-WRAPS: the wraps' enchantment strikes with the fist",
-    "new": "  const charged = weapon; // HAND-WRAPS: the wraps' enchantment strikes with the fist",
+    "old": "  const charged = weapon ?? wraps;",
+    "new": "  const charged = weapon;",
     "tests": [
       "test/combat/handwraps_audit.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "HANDWRAPS-core-untold",
     "file": "src/combat/formulas.js",
-    "old": "        wraps,\n        damageMod,",
-    "new": "        damageMod,",
+    "old": "core(attacker, target, { weapon, wraps, damageMod,",
+    "new": "core(attacker, target, { weapon, damageMod,",
     "tests": [
       "test/combat/handwraps.test.js"
     ],

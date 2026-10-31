@@ -14,12 +14,12 @@
 // pixel id when there is a map to draw, and the save shape below
 // already keys by that one string.
 
-import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js'; // RMBLayout.IsResidence (:753-760), House1-House4
-import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js'; // WD3: a town's discoveries keep the layout they were made in
-import { isHallMapId } from '../net/wire.js'; // AUDIT WW F1: a zone hall's id is no Bay pixel's
-import { LOCATION_TYPES } from '../formats/mapsFile.js'; // OW-BEYOND-KNOWN: the kinds the Bay's rows bake found
-import { isProvinceRegion } from '../formats/mapsTables.js'; // BAY-LEFT-MAPS: a province's region
-import { BAY_PIXEL_IDS } from '../world/placeIds.js'; // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500 (BAY-LEFT-B: the leaf's, the deeds' too)
+import { isResidence, BUILDING_TYPES } from '../world/buildingNames.js';   // RMBLayout.IsResidence (:753-760), House1-House4
+import { layoutStampOfTown, layoutsMatch, CLASSIC_LAYOUT } from './layoutPins.js';   // WD3: a town's discoveries keep the layout they were made in
+import { isHallMapId } from '../net/wire.js';   // AUDIT WW F1: a zone hall's id is no Bay pixel's
+import { LOCATION_TYPES } from '../formats/mapsFile.js';   // OW-BEYOND-KNOWN: the kinds the Bay's rows bake found
+import { isProvinceRegion } from '../formats/mapsTables.js';   // BAY-LEFT-MAPS: a province's region
+import { BAY_PIXEL_IDS } from '../world/placeIds.js';   // AUDIT TESA II P6: the Bay's pixel ids, under its 1000 x 500 (BAY-LEFT-B: the leaf's, the deeds' too)
 
 /**
  * BAY-LEFT-MAPS (2026-10-27, the owner after AUDIT LEFT IN THE BAY: "Every single thing here needs to be addressed. No
@@ -60,10 +60,10 @@ export function shownBuildingName(rec, live = null) {
   return rec.displayName ?? '';
 }
 
-let _discovered = new Map(); // locationId -> Map(buildingKey -> record)
+let _discovered = new Map();   // locationId -> Map(buildingKey -> record)
 // WD3: the layout each town's discoveries were made in (systems/layoutPins.js), for a town a layout mod changes - a
 // building is discovered by its KEY, and a key names a building only in its town's layout. None for classic.
-let _layouts = new Map(); // locationId -> stamp
+let _layouts = new Map();      // locationId -> stamp
 function noteTownLayout(locationId) {
   const stamp = layoutStampOfTown(locationId);
   if (stamp == null) return;
@@ -114,10 +114,7 @@ function noteTownLayout(locationId) {
 export function discoverBuilding(locationId, building, overrideName = null, questSource = null) {
   if (!building || building.buildingKey == null) return false;
   let loc = _discovered.get(locationId);
-  if (!loc) {
-    loc = new Map();
-    _discovered.set(locationId, loc);
-  }
+  if (!loc) { loc = new Map(); _discovered.set(locationId, loc); }
   // :926-927 - already discovered: nothing to do. DISC28-K (Discord: two Mages Guild "cast the Sleep spell" jobs sent to
   // the same house showed the FIRST job's name on it): unless an active quest has since named this building otherwise.
   // A residence Place rolls a fresh surname on every pick (Place.cs:1219-1224, :1298-1311), and the first job's name
@@ -126,18 +123,17 @@ export function discoverBuilding(locationId, building, overrideName = null, ques
   // ended in another town left "The X Residence" standing, and the next one's "The Y Residence" never displaced it - the
   // quest text said Y, the door and the map said X. DFU does the same; the port re-stamps a record whose stored name
   // is not the one the live quest gave (Port-Ledger A) - in place (restampQuestName, AUDIT DISC28 QS-K1).
-  if (overrideName == null && loc.has(building.buildingKey))
-    return restampQuestName(loc.get(building.buildingKey), questSource);
+  if (overrideName == null && loc.has(building.buildingKey)) return restampQuestName(loc.get(building.buildingKey), questSource);
   const rec = {
     buildingKey: building.buildingKey,
     displayName: building.name ?? '',
     factionId: building.factionId ?? 0,
     quality: building.quality ?? 0,
     buildingType: building.buildingType ?? 0,
-    lastLockpickAttempt: 0, // R1: PlayerGPS.cs:101 - the failed-attempt skill record
-    customUserDisplayName: '', // c2/S10: the exterior automap's rename (PlayerGPS.cs:97)
-    isOverrideName: false, // PlayerGPS.cs:97 - the automap's plate ladder reads it
-    oldDisplayName: null, // PlayerGPS.cs:96 - the name the override displaced
+    lastLockpickAttempt: 0,   // R1: PlayerGPS.cs:101 - the failed-attempt skill record
+    customUserDisplayName: '',   // c2/S10: the exterior automap's rename (PlayerGPS.cs:97)
+    isOverrideName: false,   // PlayerGPS.cs:97 - the automap's plate ladder reads it
+    oldDisplayName: null,    // PlayerGPS.cs:96 - the name the override displaced
   };
   // :945-959 - only when no override was handed in; the caller's name
   // has priority.
@@ -145,15 +141,14 @@ export function discoverBuilding(locationId, building, overrideName = null, ques
     const q = liveQuestName(building, questSource);
     if (q != null && q !== rec.displayName) overrideName = q;
   }
-  if (overrideName != null) {
-    // :961-967
+  if (overrideName != null) {   // :961-967
     if (!rec.isOverrideName) rec.oldDisplayName = rec.displayName;
     rec.displayName = overrideName;
     rec.isOverrideName = true;
   }
-  if (rec.oldDisplayName === rec.displayName) rec.isOverrideName = false; // :969-970
+  if (rec.oldDisplayName === rec.displayName) rec.isOverrideName = false;   // :969-970
   loc.set(building.buildingKey, rec);
-  noteTownLayout(locationId); // WD3
+  noteTownLayout(locationId);   // WD3
   return true;
 }
 
@@ -185,11 +180,11 @@ function restampQuestName(rec, questSource) {
   // "The Dark Brotherhood": the member's hall lost its plate on the town map and its name at the door.
   if (rec.factionId === THIEVES_GUILD_FACTION || rec.factionId === DARK_BROTHERHOOD_FACTION) return false;
   const renamed = liveQuestName(rec, questSource);
-  if (!renamed || renamed === rec.displayName) return false; // HALL-STAMP: and a nameless Place names nothing
+  if (!renamed || renamed === rec.displayName) return false;   // HALL-STAMP: and a nameless Place names nothing
   if (questSource?.ownsHouse?.(rec.buildingKey)) return false;
-  rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName; // the building's own name
+  rec.oldDisplayName = rec.isOverrideName ? (rec.oldDisplayName ?? '') : rec.displayName;   // the building's own name
   rec.displayName = renamed;
-  rec.isOverrideName = rec.oldDisplayName !== rec.displayName; // the flag, and the collapse when the names agree
+  rec.isOverrideName = rec.oldDisplayName !== rec.displayName;   // the flag, and the collapse when the names agree
   return true;
 }
 
@@ -281,7 +276,7 @@ export function undiscoverBuilding(locationId, buildingKey, onlyIfResidence = fa
 
 /** The location's discovered records, for the map that will draw them. */
 export function discoveredBuildings(locationId) {
-  return [...(_discovered.get(locationId)?.values() ?? [])].map((r) => ({ ...r }));
+  return [..._discovered.get(locationId)?.values() ?? []].map((r) => ({ ...r }));
 }
 
 // G8-slice (guilds-8): the LOCATION half - PlayerGPS
@@ -301,12 +296,9 @@ export function discoveredBuildings(locationId) {
 // (every one of them past 2^20, so no key of the Bay's meets it); a Bay place, a spawn on a Bay pixel, the Abyss's pits
 // keep DFU's mask. BAY-LEFT-B: the law's leaf is world/placeIds.js (isMadePlaceId), which the deeds read too.
 /** The store's key for a map id. @param {number} mapId */
-export const discoveryKeyOf = (mapId) => {
-  const low = mapId & 0xfffff;
-  return low < BAY_PIXEL_IDS ? low : mapId >>> 0;
-}; // BAY-OWN: a Bay id keeps its low 20 bits, a port id keys whole
-let _locations = new Map(); // discoveryKeyOf(mapId) -> { regionName, locationName }
-let _locationsGen = 0; // AUDIT DEEP2 B-3: bumped whenever the set changes - a cache of what is named keys on it
+export const discoveryKeyOf = (mapId) => { const low = mapId & 0xfffff; return low < BAY_PIXEL_IDS ? low : mapId >>> 0; };   // BAY-OWN: a Bay id keeps its low 20 bits, a port id keys whole
+let _locations = new Map();   // discoveryKeyOf(mapId) -> { regionName, locationName }
+let _locationsGen = 0;   // AUDIT DEEP2 B-3: bumped whenever the set changes - a cache of what is named keys on it
 
 /** AUDIT DEEP2 B-3: the discovered-location set's generation - it moves on every discovery and every restore. */
 export const discoveryGeneration = () => _locationsGen;
@@ -314,7 +306,7 @@ export const discoveryGeneration = () => _locationsGen;
 /** DiscoverLocation's store write (:869-890, the summary columns). */
 export function discoverLocation(mapId, info = {}) {
   if (isHallMapId(mapId)) return false;
-  const key = discoveryKeyOf(mapId); // AUDIT TESA II P6
+  const key = discoveryKeyOf(mapId);   // AUDIT TESA II P6
   if (_locations.has(key)) return false;
   _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });
   _locationsGen += 1;
@@ -323,27 +315,17 @@ export function discoverLocation(mapId, info = {}) {
 
 /** HasDiscoveredLocation (:875-882). */
 export function hasDiscoveredLocationId(mapId) {
-  return !isHallMapId(mapId) && _locations.has(discoveryKeyOf(mapId)); // AUDIT TESA II P6
+  return !isHallMapId(mapId) && _locations.has(discoveryKeyOf(mapId));   // AUDIT TESA II P6
 }
 
 /** OW-BEYOND-KNOWN (2026-10-28, the field: "travel nodes dont exist outside the bay in overworld"): THE KINDS MAPS.BSA BAKES
  *  DISCOVERED ON EVERY ROW (its MapTable Discovered bit; the freeware's 15,251 rows) - every city, town, village, farm,
  *  manor, poor home, inn, temple, cult and ship. No labyrinth, ruin, keep or coven is, and 191 of 774 graveyards. A place
  *  past the Bay is no row of it, so it is known by its kind's. */
-export const BAKED_KNOWN_TYPES = Object.freeze(
-  new Set([
-    LOCATION_TYPES.TownCity,
-    LOCATION_TYPES.TownHamlet,
-    LOCATION_TYPES.TownVillage,
-    LOCATION_TYPES.HomeFarms,
-    LOCATION_TYPES.HomeWealthy,
-    LOCATION_TYPES.HomePoor,
-    LOCATION_TYPES.Tavern,
-    LOCATION_TYPES.ReligionTemple,
-    LOCATION_TYPES.ReligionCult,
-    LOCATION_TYPES.HomeYourShips,
-  ]),
-);
+export const BAKED_KNOWN_TYPES = Object.freeze(new Set([
+  LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage, LOCATION_TYPES.HomeFarms, LOCATION_TYPES.HomeWealthy,
+  LOCATION_TYPES.HomePoor, LOCATION_TYPES.Tavern, LOCATION_TYPES.ReligionTemple, LOCATION_TYPES.ReligionCult, LOCATION_TYPES.HomeYourShips,
+]));
 
 /** DiscoverRandomLocation (PlayerGPS.cs:892-910), the pure law:
  *  candidates are the CURRENT region's rows with the BAKED MapTable
@@ -353,7 +335,8 @@ export const BAKED_KNOWN_TYPES = Object.freeze(
  *  and returned. regionLocations: [{ mapId, discovered, name,
  *  regionName }]. */
 export function discoverRandomLocation(regionLocations, rolls = Math.random) {
-  const candidates = (regionLocations ?? []).filter((l) => !l.discovered && !hasDiscoveredLocationId(l.mapId));
+  const candidates = (regionLocations ?? []).filter(
+    (l) => !l.discovered && !hasDiscoveredLocationId(l.mapId));
   if (!candidates.length) return null;
   const pick = candidates[Math.floor(rolls() * candidates.length)];
   discoverLocation(pick.mapId, { regionName: pick.regionName, locationName: pick.name });
@@ -370,7 +353,7 @@ export function snapshotDiscovery() {
     buildings[locId] = Object.fromEntries([...b].map(([k, r]) => [k, { ...r }]));
   }
   const out = { buildings, locations: Object.fromEntries([..._locations].map(([k, r]) => [k, { ...r }])) };
-  if (_layouts.size) out.layouts = Object.fromEntries(_layouts); // WD3: only where a layout mod changed the town
+  if (_layouts.size) out.layouts = Object.fromEntries(_layouts);   // WD3: only where a layout mod changed the town
   return out;
 }
 
@@ -383,14 +366,12 @@ export function snapshotDiscovery() {
 export function restoreDiscovery(snap, { houses = null } = {}) {
   _discovered = new Map();
   _locations = new Map();
-  _layouts = new Map(Object.entries(snap?.layouts ?? {}).filter(([, v]) => typeof v === 'string' && v)); // WD3: none on a save from before - classic
+  _layouts = new Map(Object.entries(snap?.layouts ?? {}).filter(([, v]) => typeof v === 'string' && v));   // WD3: none on a save from before - classic
   _locationsGen += 1;
   if (!snap) return;
   const legacy = !snap.buildings && !snap.locations;
   const buildings = legacy ? snap : (snap.buildings ?? {});
-  const deeds = (Array.isArray(houses) ? houses : []).filter(
-    (h) => h && (h.buildingKey | 0) > 0 && discoveryKeyOf(Number(h.mapId) || 0) >= BAY_PIXEL_IDS,
-  );
+  const deeds = (Array.isArray(houses) ? houses : []).filter((h) => h && (h.buildingKey | 0) > 0 && discoveryKeyOf(Number(h.mapId) || 0) >= BAY_PIXEL_IDS);
   for (const [locId, b] of Object.entries(buildings)) {
     // c2/S10: the missing-field discipline the rest of this store
     // already keeps - a record written before the rename shipped
@@ -400,18 +381,9 @@ export function restoreDiscovery(snap, { houses = null } = {}) {
       // AUDIT 63 F49: the override columns join the same discipline -
       // a record written before the quest arm shipped restores with
       // the flag down and no displaced name, never `undefined`.
-      Object.entries(b).map(([k, r]) => [
-        Number(k),
-        { customUserDisplayName: '', isOverrideName: false, oldDisplayName: null, ...r },
-      ]),
-    );
+      Object.entries(b).map(([k, r]) => [Number(k), { customUserDisplayName: '', isOverrideName: false, oldDisplayName: null, ...r }]));
     const old = pastBayBookOfOld(locId);
-    if (!old) {
-      const had = _discovered.get(locId);
-      if (had) for (const [k, r] of recs) had.set(k, r);
-      else _discovered.set(locId, recs);
-      continue;
-    } // a book's own records over a deed's carried one
+    if (!old) { const had = _discovered.get(locId); if (had) for (const [k, r] of recs) had.set(k, r); else _discovered.set(locId, recs); continue; }   // a book's own records over a deed's carried one
     _layouts.delete(locId);
     for (const h of deeds) {
       const rec = h.location === old.name ? recs.get(h.buildingKey | 0) : null;

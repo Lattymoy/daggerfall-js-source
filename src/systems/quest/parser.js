@@ -47,36 +47,11 @@ export class Parser {
    *   ride the parse too since Q2b-ii - the Item mint reads player/
    *   guild/region facts at create (DFU parses with the live world).
    */
-  parse(
-    source,
-    factionId = 0,
-    {
-      partialParse = false,
-      rolls,
-      actionFactory,
-      nowSeconds,
-      skySeconds = null,
-      worldSeconds = null,
-      raisedSeconds = null,
-      hooks,
-      questClockStepMax = null,
-    } = {},
-  ) {
-    const quest = new Quest({
-      rolls,
-      actionFactory,
-      nowSeconds,
-      skySeconds,
-      worldSeconds,
-      raisedSeconds,
-      hooks,
-      questClockStepMax,
-    }); // WORLD7: the played step rides the parse like the clock does; TIME3: and the sky, the event clock and the raises
+  parse(source, factionId = 0, { partialParse = false, rolls, actionFactory, nowSeconds, skySeconds = null, worldSeconds = null, raisedSeconds = null, hooks, questClockStepMax = null } = {}) {
+    const quest = new Quest({ rolls, actionFactory, nowSeconds, skySeconds, worldSeconds, raisedSeconds, hooks, questClockStepMax });   // WORLD7: the played step rides the parse like the clock does; TIME3: and the sky, the event clock and the raises
     quest.factionId = factionId;
-    let inQRC = false,
-      inQBN = false;
-    const qrcLines = [],
-      qbnLines = [];
+    let inQRC = false, inQBN = false;
+    const qrcLines = [], qbnLines = [];
 
     // First pass gathers basic structure: <Header> <QRC> <QBN>
     for (const line of source) {
@@ -86,18 +61,14 @@ export class Parser {
       } else if (startsWithCI(text, 'displayname:')) {
         quest.displayName = getFieldStringValue(text);
       } else if (startsWithCI(text, 'qrc:')) {
-        inQRC = true;
-        inQBN = false;
-        continue;
+        inQRC = true; inQBN = false; continue;
       } else if (startsWithCI(text, 'qbn:')) {
-        inQRC = false;
-        inQBN = true;
-        continue;
+        inQRC = false; inQBN = true; continue;
       }
       if (inQRC) {
         qrcLines.push(line);
       } else if (inQBN) {
-        if (text.startsWith('-')) continue; // comments always skipped in QBN
+        if (text.startsWith('-')) continue;   // comments always skipped in QBN
         qbnLines.push(line);
       }
     }
@@ -116,7 +87,7 @@ export class Parser {
   _parseQRC(quest, lines) {
     const table = staticMessagesTable();
     for (let i = 0; i < lines.length; i++) {
-      if (lines[i].startsWith('-')) continue; // comments (RAW line, as C#)
+      if (lines[i].startsWith('-')) continue;         // comments (RAW line, as C#)
       if (!lines[i].trim()) continue;
 
       // Message block header: 'Message: 1011' or fixed 'QuestComplete: [1004]'
@@ -125,13 +96,9 @@ export class Parser {
         let messageID = 0;
         if (parts[1].startsWith('[') && parts[1].endsWith(']')) {
           messageID = table.getInt('id', parts[0]);
-          if (messageID === -1)
-            throw new Error(
-              `Could not parse text '${table.getInt('id', parts[0])}' to an int. Expected message ID value.`,
-            );
+          if (messageID === -1) throw new Error(`Could not parse text '${table.getInt('id', parts[0])}' to an int. Expected message ID value.`);
         } else {
-          if (!/^-?\d+$/.test(parts[1]))
-            throw new Error(`Could not parse text '${parts[1]}' to an int. Expected message ID value.`);
+          if (!/^-?\d+$/.test(parts[1])) throw new Error(`Could not parse text '${parts[1]}' to an int. Expected message ID value.`);
           messageID = Number.parseInt(parts[1], 10);
         }
 
@@ -141,12 +108,9 @@ export class Parser {
         const messageLines = [];
         for (;;) {
           if (i + 1 >= lines.length) break;
-          const text = lines[++i].replace(/\r+$/, ''); // C# TrimEnd('\r') strips ALL trailing CRs (AUDIT quest-P10)
+          const text = lines[++i].replace(/\r+$/, '');   // C# TrimEnd('\r') strips ALL trailing CRs (AUDIT quest-P10)
           if (!text) {
-            if (!this._peekMessageEnd(lines, i)) {
-              messageLines.push(' ');
-              continue;
-            }
+            if (!this._peekMessageEnd(lines, i)) { messageLines.push(' '); continue; }
             break;
           }
           messageLines.push(text);
@@ -154,9 +118,7 @@ export class Parser {
 
         quest.addMessage(messageID, new Message(quest, messageID, messageLines));
       } else {
-        throw new Error(
-          `Could not parse message block near '${lines[i]}'. Check message header syntax, spelling, and casing are all correct.`,
-        );
+        throw new Error(`Could not parse message block near '${lines[i]}'. Check message header syntax, spelling, and casing are all correct.`);
       }
     }
   }
@@ -187,48 +149,19 @@ export class Parser {
         quest.addResource(new Place(quest, lines[i]));
       } else if (startsWithCI(lines[i], 'variable')) {
         quest.addTask(new Task(quest, [lines[i]]));
-      } else if (lines[i].includes('task:') || (startsWithCI(lines[i], 'until') && lines[i].includes('performed:'))) {
-        quest.addTask(
-          new Task(
-            quest,
-            this._readBlock(
-              lines,
-              (n) => {
-                i = n;
-              },
-              i,
-            ),
-          ),
-        );
+      } else if (lines[i].includes('task:')
+        || (startsWithCI(lines[i], 'until') && lines[i].includes('performed:'))) {
+        quest.addTask(new Task(quest, this._readBlock(lines, (n) => { i = n; }, i)));
       } else if (this._isGlobalReference(lines[i])) {
         // A global variable link task; body optional
         let hasBody = false;
         if (i + 1 !== lines.length) hasBody = !this._isNewTaskOrLineBreak(lines[i + 1]);
         const globalVar = this._getGlobalReference(lines[i]);
-        const taskLines = hasBody
-          ? this._readBlock(
-              lines,
-              (n) => {
-                i = n;
-              },
-              i,
-            )
-          : [lines[i]];
+        const taskLines = hasBody ? this._readBlock(lines, (n) => { i = n; }, i) : [lines[i]];
         quest.addTask(new Task(quest, taskLines, globalVar));
       } else if (foundHeadlessTask === false) {
         // First unrecognized QBN block is the headless startup task
-        quest.addTask(
-          new Task(
-            quest,
-            this._readBlock(
-              lines,
-              (n) => {
-                i = n;
-              },
-              i,
-            ),
-          ),
-        );
+        quest.addTask(new Task(quest, this._readBlock(lines, (n) => { i = n; }, i)));
         foundHeadlessTask = true;
       } else {
         throw new Error(`Unknown line signature encounted '${lines[i]}'.`);
@@ -237,13 +170,11 @@ export class Parser {
   }
 
   _isNewTaskOrLineBreak(line) {
-    return (
-      startsWithCI(line, 'variable') ||
-      line.includes('task:') ||
-      (startsWithCI(line, 'until') && line.includes('performed:')) ||
-      this._isGlobalReference(line) ||
-      !line.trim()
-    );
+    return startsWithCI(line, 'variable')
+      || line.includes('task:')
+      || (startsWithCI(line, 'until') && line.includes('performed:'))
+      || this._isGlobalReference(line)
+      || !line.trim();
   }
 
   /** ReadBlock: gather lines to the next pure-whitespace line, each

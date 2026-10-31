@@ -155,8 +155,8 @@
   {
     "name": "MAP-KEEP-live-kept-on-restore",
     "file": "src/systems/automap/automap.js",
-    "old": "  _inside = false;\n  _liveKey = null;\n  _live = null;\n  for (const [key, rec] of Object.entries(snap)) {",
-    "new": "  for (const [key, rec] of Object.entries(snap)) {",
+    "old": "  // cleared the whole store it had just restored.\n  _inside = false;\n  _liveKey = null;\n  _live = null;\n",
+    "new": "  // cleared the whole store it had just restored.\n",
     "tests": [
       "test/systems/automap/mapkeep.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MAP-KEEP-teardown-forgets",
     "file": "src/systems/automap/automap.js",
-    "old": "  if (wasInside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) _dungeons = new Map();",
-    "new": "  if (getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0) _dungeons = new Map();",
+    "old": "if (wasInside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0)",
+    "new": "if (getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0)",
     "tests": [
       "test/systems/automap/mapkeep.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "HOLD-STEP-view-no-setter",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "    set: live((v) => ed.setValue(field, v)),",
-    "new": "    set: undefined,",
+    "old": "set: live((v) => ed.setValue(field, v)),",
+    "new": "set: undefined,",
     "tests": [
       "test/ui/enhanced/holdstep.test.js"
     ]

@@ -55,7 +55,7 @@
     "name": "FLAT-WALK-multitrigger-alone",
     "file": "src/world/actionSystem.js",
     "old": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay');",
-    "new": "export const walkHears = (o) =>\n  hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay' && o.triggerFlag === TRIGGER_FLAGS.MultiTrigger);",
+    "new": "export const walkHears = (o) => hasActionCollision(o) && !(o.isFlat === true && o.kind === 'relay' && o.triggerFlag === TRIGGER_FLAGS.MultiTrigger);",
     "tests": [
       "test/player/audit0929_actions.test.js"
     ],

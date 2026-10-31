@@ -48,8 +48,8 @@
   {
     "name": "DOMAIN2-no-crown-asked",
     "file": "server-account/src/castles.js",
-    "old": "        AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?2 AND guild_id = ?3 AND region = ?1 AND tier = 'crown')\n        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4",
-    "new": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4",
+    "old": "        AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = ?2 AND guild_id = ?3 AND region = ?1 AND tier = 'crown')\n        AND COALESCE",
+    "new": "        AND COALESCE",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "DOMAIN2-nothing-burnt",
     "file": "server-account/src/castles.js",
-    "old": "        `${INSERT_LINE} SELECT 'guild', guild_id, 'burn', NULL, 'castle', paid, ?3, bought_at, buyer, ?4, rid || ':castle'",
-    "new": "        `${INSERT_LINE} SELECT 'guild', guild_id, 'burn', NULL, 'castle', 0, ?3, bought_at, buyer, ?4, rid || ':castle'",
+    "old": "SELECT 'guild', guild_id, 'burn', NULL, 'castle', paid,",
+    "new": "SELECT 'guild', guild_id, 'burn', NULL, 'castle', 0,",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "DOMAIN2-the-silver-unasked",
     "file": "server-account/src/castles.js",
-    "old": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4",
-    "new": "        AND 1",
+    "old": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?3), 0) >= ?4\n",
+    "new": "        AND 1\n",
     "tests": [
       "test/net/domain2_castles.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "DOMAIN2-never-released",
     "file": "server-account/src/castles.js",
-    "old": "    WHERE (?1 IS NULL OR c.guild_id = ?1) AND NOT ${HELD_SQL('c')}`,",
-    "new": "    WHERE (?1 IS NULL OR c.guild_id = ?1) AND 0`,",
+    "old": "    WHERE (?1 IS NULL OR c.guild_id = ?1) AND NOT ${HELD_SQL('c')}`).bind(g).all();",
+    "new": "    WHERE (?1 IS NULL OR c.guild_id = ?1) AND 0`).bind(g).all();",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "DOMAIN2-the-same-epoch",
     "file": "server-account/src/castles.js",
-    "old": "  rand(b);\n  return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');",
-    "new": "  return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');",
+    "old": "const mintEpoch = (rand) => { const b = new Uint8Array(4); rand(b);",
+    "new": "const mintEpoch = (rand) => { const b = new Uint8Array(4);",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "DOMAIN2-the-view-silent",
     "file": "server-account/src/guilds.js",
-    "old": "    ...(await castleViewOf(db, guildId, Number(me.rank), nowS)),\n    // GUILD2a: when the guild last took a new name, and when it may next (null: now)",
-    "new": "    // GUILD2a: when the guild last took a new name, and when it may next (null: now)",
+    "old": "    ...(await castleViewOf(db, guildId, Number(me.rank), nowS)),\n",
+    "new": "",
     "tests": [
       "test/net/domain2_castles.test.js"
     ]

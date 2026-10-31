@@ -47,8 +47,8 @@
   {
     "name": "DRAGON7-the-sky-drawn-brass",
     "file": "src/scenes/dragonHost.js",
-    "old": "        draw(act, pos, p.yw, mine ? s.b : dragonLookOf(d), glint, t); // DRAGON7: its look in the sky too, before any fight is mine",
-    "new": "        draw(act, pos, p.yw, mine ? s.b : 0, glint, t); // DRAGON7: its look in the sky too, before any fight is mine",
+    "old": "draw(act, pos, p.yw, mine ? s.b : dragonLookOf(d), glint, t);",
+    "new": "draw(act, pos, p.yw, mine ? s.b : 0, glint, t);",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ],
@@ -57,8 +57,8 @@
   {
     "name": "DRAGON7-the-batch-kept-across-a-look",
     "file": "src/scenes/dragonHost.js",
-    "old": "    if (batch && batchArchive !== archive) {\n      r.destroyBillboardBatch?.(batch);\n      batch = null;\n    } // another watch's dragon, another look\n    if (!batch) {",
-    "new": "    if (!batch) {",
+    "old": "    if (batch && batchArchive !== archive) { r.destroyBillboardBatch?.(batch); batch = null; }   // another watch's dragon, another look\n",
+    "new": "",
     "tests": [
       "test/net/dragon/dragon7_aetherbright.test.js"
     ]

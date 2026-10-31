@@ -689,7 +689,7 @@ line (one home is a later slice's); nothing was seen in a real RMB interior (no 
 AUDIT (2026-10-16). Four findings, each fixed and pinned; the audit's own rigs re-run on the fix.
 - **W1 (MAJOR - the report survived).** Shelves 0.8 m deep or more put the tucked player within ISLAND_REACH of the
   aisle's island - so NO ROUTE never fired - but past findPath's half-metre goal snap
-  (`navmesh.js:"return bestD <= 2"`): every route failed (288 repaths, 288 fails in 30 s), the motor fell
+  (`navmesh.js:"return bestD <= 2 ? best : -1;"`): every route failed (288 repaths, 288 fails in 30 s), the motor fell
   back to the classic line, and nobody crossed the partition. A 0.7 m closet 2 m deep left the player on no island at
   all, and three of five watchmen stayed at the partition. FIXED: a route that cannot place its goal asks the host for
   the mesh's point a route there ends at (`navGoal`, the room's `nav.goal` - `meshPointNear`: the poly the player stands

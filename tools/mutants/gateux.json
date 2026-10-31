@@ -20,8 +20,8 @@
   {
     "name": "GATEUX-taken-unpressed",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        if (!f.left) {",
-    "new": "        if (f.fly.rest) {\n          takeOne(f);\n          return;\n        }\n        if (!f.left) {",
+    "old": "      loadTex();\n      floor.forEach((f, i) => {\n        if (f.taken) return;",
+    "new": "      loadTex();\n      floor.forEach((f, i) => {\n        if (f.taken) return;\n        if (f.fly.rest) { takeOne(f); return; }",
     "tests": [
       "test/ui/gate/gateux_gate.test.js",
       "test/systems/item/wb5_gate_spoils.test.js",

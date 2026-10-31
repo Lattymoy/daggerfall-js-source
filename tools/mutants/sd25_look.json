@@ -112,8 +112,8 @@
   {
     "name": "SD25-the-compass-turned",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "      len = k === 0 ? SD_COMPASS.north : k % 2 === 0 ? SD_COMPASS.cardinal : SD_COMPASS.diagonal;",
-    "new": "      len = k === 2 ? SD_COMPASS.north : k % 2 === 0 ? SD_COMPASS.cardinal : SD_COMPASS.diagonal;",
+    "old": "len = k === 0 ? SD_COMPASS.north",
+    "new": "len = k === 2 ? SD_COMPASS.north",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "SD25-the-rim's-edge-line-gone",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "      E(re, a0, ye),\n      E(re, a1, ye),\n      E(ro, a1, ye),\n      E(ro, a0, ye),\n      [0, 0],\n      [1, 0],\n      [1, 1],\n      [0, 1],\n      UP,\n    );\n    quadFacing(\n      f,\n      SD_REALM_EDGE_RECORD,\n      E(ro, a0, ye - SD_EDGE_LINE),",
-    "new": "      E(ro, a0, ye - SD_EDGE_LINE),",
+    "old": "    quadFacing(f, SD_REALM_EDGE_RECORD, E(re, a0, ye), E(re, a1, ye), E(ro, a1, ye), E(ro, a0, ye), [0, 0], [1, 0], [1, 1], [0, 1], UP);\n",
+    "new": "",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "SD25-the-kerb's-edge-line-gone",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "      quadFacing(\n        f,\n        SD_REALM_EDGE_RECORD,\n        P(xl, Y, true),\n        P(xl, Y, false),\n        P(xr, Y, false),\n        P(xr, Y, true),\n        [0, 0],\n        [0, 1],\n        [1, 1],\n        [1, 0],\n        UP,\n      );\n    }",
-    "new": "    }",
+    "old": "      quadFacing(f, SD_REALM_EDGE_RECORD, P(xl, Y, true), P(xl, Y, false), P(xr, Y, false), P(xr, Y, true), [0, 0], [0, 1], [1, 1], [1, 0], UP);\n",
+    "new": "",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "SD25-the-arena-a-disc-again",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, { bands: SD_ARENA_BANDS }); // SD-LOOK: a face, in rings",
-    "new": "  realmIsland(f, SD_ARENA.x, SD_ARENA.z, SD_ARENA.r, SD_REALM_ARENA_RECORD, {}); // SD-LOOK: a face, in rings",
+    "old": "{ bands: SD_ARENA_BANDS }",
+    "new": "{}",
     "tests": [
       "test/world/superDungeon/sd25_look.test.js"
     ]

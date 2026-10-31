@@ -519,7 +519,7 @@ test('PX25: every host hands the pause window the arms it already had', () => {
       const heads = { 'pauseDoorHooks()': 'const pauseDoorHooks = () => ({', 'interiorPauseHooks()': 'const interiorPauseHooks = () => ({' };
       const from = s.indexOf(heads[spread[1]] ?? 'pauseHooks(setPlayerPos = null) {');
       assert.ok(from > 0, `${host}: the arm the door spreads exists`);
-      call = s.slice(from, s.indexOf(heads[spread[1]] ? '\n  });\n' : '\n      };\n    },\n', from));
+      call = s.slice(from, s.indexOf(heads[spread[1]] ? '\n  });\n' : '};\n    },', from));
     }
     for (const hook of ['openPack', 'openSpellbook', 'openChronicle']) {
       assert.ok(call.includes(`${hook}:`), `${host} hands over ${hook}`);

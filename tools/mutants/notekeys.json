@@ -2,8 +2,8 @@
   {
     "name": "NOTE-KEYS-the-default-cap",
     "file": "src/ui/quest/questJournal.js",
-    "old": "      maxCharacters: MAX_LINE_LENGTH,\n      widthOverride: ENTER_NOTE_WIDTH_OVERRIDE,",
-    "new": "      widthOverride: ENTER_NOTE_WIDTH_OVERRIDE,",
+    "old": "      maxCharacters: MAX_LINE_LENGTH, widthOverride: ENTER_NOTE_WIDTH_OVERRIDE,\n",
+    "new": "      widthOverride: ENTER_NOTE_WIDTH_OVERRIDE,\n",
     "tests": [
       "test/ui/audit26_uiwindows2.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "NOTE-KEYS-the-prompt-lost",
     "file": "src/ui/quest/questJournal.js",
-    "old": "      lines: [{ text: enterNotePrompt(), center: false }],\n      label: ENTER_NOTE_LABEL,",
-    "new": "      label: ENTER_NOTE_LABEL,",
+    "old": "      lines: [{ text: enterNotePrompt(), center: false }], label: ENTER_NOTE_LABEL,\n",
+    "new": "      label: ENTER_NOTE_LABEL,\n",
     "tests": [
       "test/ui/audit26_uiwindows2.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NOTE-KEYS-the-event-dropped",
     "file": "src/ui/quest/questJournal.js",
-    "old": "      this.noteBox.input(action, e);",
-    "new": "      this.noteBox.input(action, null);",
+    "old": "      this.noteBox.input(action, e);\n",
+    "new": "      this.noteBox.input(action, null);\n",
     "tests": [
       "test/ui/audit26_uiwindows2.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NOTE-KEYS-yes-by-char-alone",
     "file": "src/ui/quest/questJournal.js",
-    "old": "      if (action === 'confirm' || code === 'Enter' || hotkeyHit('Yes', action, e))\n        return this.answerMoveRemove(MB_BUTTONS.Yes);",
-    "new": "      if (action === 'confirm' || code === 'Enter' || action === 'char:y') return this.answerMoveRemove(MB_BUTTONS.Yes);",
+    "old": "|| hotkeyHit('Yes', action, e)) return this.answerMoveRemove(MB_BUTTONS.Yes);",
+    "new": "|| action === 'char:y') return this.answerMoveRemove(MB_BUTTONS.Yes);",
     "tests": [
       "test/ui/audit26_uiwindows2.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NOTE-KEYS-no-by-char-alone",
     "file": "src/ui/quest/questJournal.js",
-    "old": "      if (action === 'back' || code === 'Escape' || hotkeyHit('No', action, e))\n        return this.answerMoveRemove(MB_BUTTONS.No);",
-    "new": "      if (action === 'back' || code === 'Escape' || action === 'char:n') return this.answerMoveRemove(MB_BUTTONS.No);",
+    "old": "|| hotkeyHit('No', action, e)) return this.answerMoveRemove(MB_BUTTONS.No);",
+    "new": "|| action === 'char:n') return this.answerMoveRemove(MB_BUTTONS.No);",
     "tests": [
       "test/ui/audit26_uiwindows2.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "NOTE-KEYS-the-pick-kept",
     "file": "src/ui/quest/questJournal.js",
-    "old": "        this.selectedEntry = null;\n      },",
-    "new": "      },",
+    "old": "      onCancel: () => { this.noteBox = null; this.selectedEntry = null; },\n",
+    "new": "      onCancel: () => { this.noteBox = null; },\n",
     "tests": [
       "test/ui/audit26_uiwindows2.test.js"
     ]

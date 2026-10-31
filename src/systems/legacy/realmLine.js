@@ -17,14 +17,7 @@ import { realmLineages, realmLineagePut } from '../realmSaves.js';
 /** How many times a stale write is merged and tried again before it waits for the next. */
 export const PUSH_TRIES = 4;
 /** AUDIT LEGACY III O2/P1: the service's refusals of a record that the same record would earn again - never re-sent. */
-export const LINE_REFUSALS = Object.freeze([
-  'body',
-  'lineage-too-large',
-  'lineage-model',
-  'too-many-lineages',
-  'lineage-law',
-  'no-lineage',
-]); // INT18: a copy that breaks the family's own law (legacyLaw.js); AUDIT FB1029e F2: a line removed from the realm
+export const LINE_REFUSALS = Object.freeze(['body', 'lineage-too-large', 'lineage-model', 'too-many-lineages', 'lineage-law', 'no-lineage']);   // INT18: a copy that breaks the family's own law (legacyLaw.js); AUDIT FB1029e F2: a line removed from the realm
 
 /**
  * The two copies of one line as one: the newer by rev, the other's facts taken in. Answers the record to keep.
@@ -33,8 +26,7 @@ export const LINE_REFUSALS = Object.freeze([
  * @param {any} mine - the device's (or null) @param {any} theirs - the service's (or null)
  */
 export function mergeLines(mine, theirs) {
-  const a = readFamily(mine),
-    b = readFamily(theirs);
+  const a = readFamily(mine), b = readFamily(theirs);
   if (!a || !b) return a ?? b;
   rekeyClashes(a, b);
   const [base, other] = b.rev > a.rev ? [b, a] : [a, b];
@@ -97,34 +89,24 @@ export function createRealmLine({ io, storage, list = realmLineages, put = realm
           if (Number.isSafeInteger(r.data.rev)) bases.set(id, r.data.rev);
           const merged = mergeLines(record, r.data.record);
           merged.rev = Math.max(record.rev | 0, r.data.rev | 0) + 1;
-          storeFamily(storage(), merged, record.rev); // over the device's copy as it was pushed: a write since is merged in
+          storeFamily(storage(), merged, record.rev);   // over the device's copy as it was pushed: a write since is merged in
           record = JSON.parse(JSON.stringify(merged));
           continue;
         }
         lastError = r.error ?? 'server';
         if (LINE_REFUSALS.includes(lastError)) {
           // the record's own refusal: kept, said once, never sent again this session (the next write would earn it too)
-          if (!refused.has(id)) {
-            refused.set(id, lastError);
-            try {
-              onRefused(id, lastError);
-            } catch {
-              /* the line goes on */
-            }
-          }
+          if (!refused.has(id)) { refused.set(id, lastError); try { onRefused(id, lastError); } catch { /* the line goes on */ } }
           queued.delete(id);
           break;
         }
-        if (!queued.has(id)) queued.set(id, record); // the network's: tried again with the next write, or the next flush
+        if (!queued.has(id)) queued.set(id, record);   // the network's: tried again with the next write, or the next flush
         return;
       }
     }
   }
   const run = () => {
-    if (!running)
-      running = drain().finally(() => {
-        running = null;
-      });
+    if (!running) running = drain().finally(() => { running = null; });
     return running;
   };
 
@@ -147,13 +129,11 @@ export function createRealmLine({ io, storage, list = realmLineages, put = realm
       return queued.size === 0 && refused.size === 0;
     },
     /** The last refusal, or null. */
-    get error() {
-      return lastError;
-    },
+    get error() { return lastError; },
     /** AUDIT LEGACY III O2/P1: why the realm will not take line `id` - the record's own refusal - or null. */
     refusalOf: (/** @type {string} */ id) => refused.get(id) ?? null,
     /** Why line `id` does not stand at the realm as last written - its refusal, or the network's word while it waits -
      *  or null when it does. */
-    unwrittenOf: (/** @type {string} */ id) => refused.get(id) ?? (queued.has(id) ? (lastError ?? 'offline') : null),
+    unwrittenOf: (/** @type {string} */ id) => refused.get(id) ?? (queued.has(id) ? lastError ?? 'offline' : null),
   };
 }

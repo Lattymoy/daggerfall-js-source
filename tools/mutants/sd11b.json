@@ -101,7 +101,7 @@
   {
     "name": "SD11b-L3F4-no-grace",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS)\n    return { act: null, at: rec.until + SD_FADE_GRACE_MS };",
+    "old": "  if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS) return { act: null, at: rec.until + SD_FADE_GRACE_MS };",
     "new": "  void 0;",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "SD11b-L3F4-a-grace-for-the-unfound",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS)",
-    "new": "  if (p === 'gone' && rec.ph !== 'gone' && rec.s && rec.fellAt == null && now < rec.until + SD_FADE_GRACE_MS)",
+    "old": "if (p === 'gone' && rec.ph === 'found' && now < rec.until + SD_FADE_GRACE_MS)",
+    "new": "if (p === 'gone' && rec.ph !== 'gone' && rec.s && rec.fellAt == null && now < rec.until + SD_FADE_GRACE_MS)",
     "tests": [
       "test/net/superDungeon/sd11b_relay.test.js"
     ]

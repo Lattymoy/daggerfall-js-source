@@ -75,8 +75,8 @@
   {
     "name": "SD-BACK-the-death-said-final",
     "file": "src/world/superDungeon/sdRealm.js",
-    "old": "  died: \"The Shattered Hour casts you out. You wake before the Abyss Dungeon's door.\", // SD-BACK (2026-10-28): its Rift takes you back to your own Hour",
-    "new": "  died: \"The Shattered Hour casts you out for good. You wake before the Abyss Dungeon's door.\", // SD-BACK (2026-10-28): its Rift takes you back to your own Hour",
+    "old": "casts you out. You wake",
+    "new": "casts you out for good. You wake",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ],

@@ -113,8 +113,8 @@
   {
     "name": "GRANT8-encr-asked",
     "file": "src/net/grantLaw.js",
-    "old": "    if (typeof m.kind !== 'string' || !Object.hasOwn(GRANT_KINDS, m.kind) || m.kind === 'encr') return null; // GRANT8: `encr` the relay's word, never asked",
-    "new": "    if (typeof m.kind !== 'string' || !Object.hasOwn(GRANT_KINDS, m.kind)) return null; // GRANT8: `encr` the relay's word, never asked",
+    "old": "!Object.hasOwn(GRANT_KINDS, m.kind) || m.kind === 'encr') return null;",
+    "new": "!Object.hasOwn(GRANT_KINDS, m.kind)) return null;",
     "why": "`encr` asked by name",
     "tests": [
       "test/net/grant4_relay.test.js"
@@ -123,8 +123,8 @@
   {
     "name": "GRANT8-every-kind-rolled",
     "file": "src/net/grantLaw.js",
-    "old": "export const grantKindRolled = (k, roll) => (k === 'enc' && roll ? 'encr' : k);",
-    "new": "export const grantKindRolled = (k, roll) => (roll ? 'encr' : k);",
+    "old": "(k === 'enc' && roll ? 'encr' : k)",
+    "new": "(roll ? 'encr' : k)",
     "why": "a camp's grant rolled as an encounter's",
     "tests": [
       "test/net/grant4_relay.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "GRANT4-markless-judged",
     "file": "src/net/grantLaw.js",
-    "old": "export const grantMarksAllow = (g, i, { z, cp }) =>\n  GRANT_MARKLESS.includes(g.k) || ((!z || ((g.e >>> i) & 1) === 1) && (cp == null || cp === g.c[i]));",
-    "new": "export const grantMarksAllow = (g, i, { z, cp }) => (!z || ((g.e >>> i) & 1) === 1) && (cp == null || cp === g.c[i]);",
+    "old": "GRANT_MARKLESS.includes(g.k) || ((!z",
+    "new": "((!z",
     "why": "a kept stand's own marks refused",
     "tests": [
       "test/scenes/grant4_lanes.test.js",
@@ -444,8 +444,8 @@
   {
     "name": "GRANT-star-in-a-room",
     "file": "src/net/grantLaw.js",
-    "old": "export const GRANT_OPEN_KINDS = Object.freeze(['enc', 'camp', 'bounty', 'giant', 'encr', 'star']);",
-    "new": "export const GRANT_OPEN_KINDS = Object.freeze(['enc', 'camp', 'bounty', 'giant', 'encr']);",
+    "old": "'encr', 'star']);",
+    "new": "'encr']);",
     "tests": [
       "test/scenes/grant3_pool.test.js"
     ],

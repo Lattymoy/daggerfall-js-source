@@ -32,7 +32,7 @@
   {
     "name": "SCALE4a-column-left-out",
     "file": "server-account/src/accounts.js",
-    "old": "export const SESSION_COLUMNS = Object.freeze([\n  'id',\n  'player_id',\n  'secret_hash',\n  'device_label',\n  'created_at',\n  'last_seen',\n]);",
+    "old": "export const SESSION_COLUMNS = Object.freeze(['id', 'player_id', 'secret_hash', 'device_label', 'created_at', 'last_seen']);",
     "new": "export const SESSION_COLUMNS = Object.freeze(['id', 'player_id', 'secret_hash', 'created_at', 'last_seen']);",
     "tests": [
       "test/server/scale4a.test.js"

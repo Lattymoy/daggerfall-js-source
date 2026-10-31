@@ -2,8 +2,8 @@
   {
     "name": "DRAKES-the-old-name-back",
     "file": "src/net/marksLaw.js",
-    "old": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} silver`;",
-    "new": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} ${n === 1 ? 'Mark' : 'Marks'}`;",
+    "old": "toLocaleString('en-US')} silver`;",
+    "new": "toLocaleString('en-US')} ${n === 1 ? 'Mark' : 'Marks'}`;",
     "tests": [
       "test/ui/drakes.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DRAKES-one-drakes",
     "file": "src/net/marksLaw.js",
-    "old": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} silver`;",
-    "new": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} ${n === 1 ? 'silver' : 'silvers'}`;",
+    "old": "toLocaleString('en-US')} silver`;",
+    "new": "toLocaleString('en-US')} ${n === 1 ? 'silver' : 'silvers'}`;",
     "tests": [
       "test/ui/drakes.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DRAKES-the-bank-button-old",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "                      label: w.hooks.marks.pending() ? 'Counting a sale...' : 'Sell silver',",
-    "new": "                      label: w.hooks.marks.pending() ? 'Counting a sale...' : 'Sell Marks',",
+    "old": "'Sell silver'",
+    "new": "'Sell Marks'",
     "tests": [
       "test/ui/drakes.test.js"
     ]

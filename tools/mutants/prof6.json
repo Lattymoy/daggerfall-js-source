@@ -128,8 +128,8 @@
   {
     "name": "PROF6-law-writ-pay-minted",
     "file": "src/net/marksLaw.js",
-    "old": "  'writ-pay': 'move', // PROF6: a delivery's pay less its tax, out of the writ's escrow into the deliverer's balance",
-    "new": "  'writ-pay': 'mint', // PROF6: a delivery's pay less its tax, out of the writ's escrow into the deliverer's balance",
+    "old": "  'writ-pay': 'move',",
+    "new": "  'writ-pay': 'mint',",
     "tests": [
       "test/net/prof6_law.test.js"
     ]
@@ -499,8 +499,8 @@
   {
     "name": "PROF6-svc-disband-keeps-nothing",
     "file": "server-account/src/guilds.js",
-    "old": "      AND NOT ${guildKeepsSql('?1')}\n      AND (?2 = 0 OR (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1)`,",
-    "new": "      AND (?2 = 0 OR (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1)`,",
+    "old": "      AND NOT ${guildKeepsSql('?1')}\n",
+    "new": "",
     "tests": [
       "test/net/prof6_service.test.js"
     ]
@@ -508,8 +508,8 @@
   {
     "name": "PROF6-svc-sweep-keeps-nothing",
     "file": "server-account/src/marks.js",
-    "old": "      AND NOT ${guildKeepsSql('?1')}   -- PROF6: a guild that keeps its Stores or a writ does not go, so its Marks stay\n      AND (?8 = 0 OR (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1)`,",
-    "new": "      AND (?8 = 0 OR (SELECT COUNT(*) FROM guild_members WHERE guild_id = ?1) = 1)`,",
+    "old": "      AND NOT ${guildKeepsSql('?1')}   -- PROF6: a guild that keeps its Stores or a writ does not go, so its Marks stay\n",
+    "new": "",
     "tests": [
       "test/net/prof6_service.test.js"
     ]
@@ -517,8 +517,8 @@
   {
     "name": "PROF6-svc-report-orders-alone",
     "file": "server-account/src/marks.js",
-    "old": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`,",
-    "new": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE kind LIKE 'order-%'`,",
+    "old": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`).first();",
+    "new": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE kind LIKE 'order-%'`).first();",
     "tests": [
       "test/net/prof6_service.test.js"
     ]

@@ -22,8 +22,8 @@
   {
     "name": "ACC2-3-a-delete-reaches-past-its-own-account",
     "file": "server-account/src/saves.js",
-    "old": "  await db\n    .prepare('DELETE FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')\n    .bind(playerId, characterId, saveName)\n    .run();",
-    "new": "  await db.prepare('DELETE FROM saves WHERE character_id = ? AND save_name = ?').bind(characterId, saveName).run();",
+    "old": "  await db.prepare('DELETE FROM saves WHERE player_id = ? AND character_id = ? AND save_name = ?')\n    .bind(playerId, characterId, saveName).run();",
+    "new": "  await db.prepare('DELETE FROM saves WHERE character_id = ? AND save_name = ?')\n    .bind(characterId, saveName).run();",
     "tests": [
       "test/server/cloudsaves.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "ACC2-5-the-card-resets-the-bytes-already-up",
     "file": "server-account/src/saves.js",
-    "old": "        ' character_name = excluded.character_name, game_time = excluded.game_time, real_time = excluded.real_time,' +",
-    "new": "        ' character_name = excluded.character_name, game_time = excluded.game_time, real_time = excluded.real_time, bytes = 0,' +",
+    "old": "    + ' character_name = excluded.character_name, game_time = excluded.game_time, real_time = excluded.real_time,'",
+    "new": "    + ' character_name = excluded.character_name, game_time = excluded.game_time, real_time = excluded.real_time, bytes = 0,'",
     "tests": [
       "test/server/cloudsaves.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "ACC2-6-the-oldest-slot-is-taken-to-make-room",
     "file": "server-account/src/saves.js",
-    "old": "        ' OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) < ?' +",
-    "new": "        ' OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) <= ?' +",
+    "old": " OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) < ?'",
+    "new": " OR (SELECT COUNT(*) FROM saves WHERE player_id = ?) <= ?'",
     "tests": [
       "test/server/cloudsaves.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "ACC2-12-the-listing-shows-every-account-its-own-plus-everyone-elses",
     "file": "server-account/src/saves.js",
-    "old": "        ' FROM saves WHERE player_id = ? ORDER BY updated_at DESC LIMIT ?',",
-    "new": "        ' FROM saves WHERE player_id = player_id ORDER BY updated_at DESC LIMIT ?',",
+    "old": "    + ' FROM saves WHERE player_id = ? ORDER BY updated_at DESC LIMIT ?',",
+    "new": "    + ' FROM saves WHERE player_id = player_id ORDER BY updated_at DESC LIMIT ?',",
     "tests": [
       "test/server/cloudsaves.test.js"
     ],

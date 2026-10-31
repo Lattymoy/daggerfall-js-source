@@ -155,8 +155,8 @@
   {
     "name": "STAND-FLAT-crew-unnamed",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "          if (isNpcFlat(bb.Summary.Archive))",
-    "new": "          if (false)",
+    "old": "          if (isNpcFlat(bb.Summary.Archive)) crew.set(n,",
+    "new": "          if (false) crew.set(n,",
     "tests": [
       "test/world/standflats.test.js"
     ]

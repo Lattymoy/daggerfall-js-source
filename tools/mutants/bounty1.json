@@ -2,8 +2,8 @@
   {
     "name": "BOUNTY1-1-a-short-pack-pays-a-full-purse",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  0.6 + 0.1 * (Math.max(BOUNTY_PACK_MIN, Math.min(BOUNTY_PACK_MAX, n | 0)) - BOUNTY_PACK_MIN);",
-    "new": "  1 + 0 * (Math.max(BOUNTY_PACK_MIN, Math.min(BOUNTY_PACK_MAX, n | 0)) - BOUNTY_PACK_MIN);",
+    "old": "export const purseShare = (n) => 0.6 + 0.1 *",
+    "new": "export const purseShare = (n) => 1 + 0 *",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BOUNTY1-2-a-dungeon-pack-pays-as-its-own-count",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "      2 * (Math.max(BOUNTY_DUNGEON_PACK_MIN, Math.min(BOUNTY_DUNGEON_PACK_MAX, count | 0)) - BOUNTY_DUNGEON_PACK_MIN)",
-    "new": "      1 * (Math.max(BOUNTY_DUNGEON_PACK_MIN, Math.min(BOUNTY_DUNGEON_PACK_MAX, count | 0)) - BOUNTY_DUNGEON_PACK_MIN)",
+    "old": "    ? BOUNTY_PACK_MIN + 2 * (Math.max(BOUNTY_DUNGEON_PACK_MIN",
+    "new": "    ? BOUNTY_PACK_MIN + 1 * (Math.max(BOUNTY_DUNGEON_PACK_MIN",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "BOUNTY1-4-a-share-across-tiers-fits",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  return !!b && bountyTierIndex(b.level) === bountyTierIndex(level);",
-    "new": "  return !!b && bountyTierIndex(b.level) <= bountyTierIndex(level);",
+    "old": "bountyTierIndex(b.level) === bountyTierIndex(level); };",
+    "new": "bountyTierIndex(b.level) <= bountyTierIndex(level); };",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "BOUNTY1-5-one-dungeon-slot-however-many-dungeons",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "export const dungeonSlotsFor = (n) => (n >= 2 ? [2, 3] : n === 1 ? [3] : []).slice(0, BOUNTY_DUNGEON_SLOTS_MAX);",
-    "new": "export const dungeonSlotsFor = (n) => (n >= 2 ? [3] : n === 1 ? [3] : []).slice(0, BOUNTY_DUNGEON_SLOTS_MAX);",
+    "old": "export const dungeonSlotsFor = (n) => (n >= 2 ? [2, 3] :",
+    "new": "export const dungeonSlotsFor = (n) => (n >= 2 ? [3] :",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BOUNTY1-6-the-bounty-boards-are-the-first-half-not-every-other",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  for (let k = 0; k < order.length && out.size < want; k += 2) out.add(order[k][1]);",
-    "new": "  for (let k = 0; k < order.length && out.size < want; k += 1) out.add(order[k][1]);",
+    "old": "out.size < want; k += 2) out.add(order[k][1]);",
+    "new": "out.size < want; k += 1) out.add(order[k][1]);",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "BOUNTY1-7-a-bounty-outlives-its-day",
     "file": "src/systems/bounty/bountyBoard.js",
-    "old": "  const gone = ledger.held.filter((h) => nowMinutes - h.takenAt >= BOUNTY_LIFETIME_MINUTES);",
-    "new": "  const gone = ledger.held.filter((h) => nowMinutes - h.takenAt > BOUNTY_LIFETIME_MINUTES);",
+    "old": "nowMinutes - h.takenAt >= BOUNTY_LIFETIME_MINUTES);",
+    "new": "nowMinutes - h.takenAt > BOUNTY_LIFETIME_MINUTES);",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BOUNTY1-9-a-culled-beast-is-a-kill",
     "file": "src/scenes/bountyHost.js",
-    "old": "  const killedOf = (f) => !!f?.dead && (!!f.corpse || (Number(f.entity?.health) || 0) <= 0);",
-    "new": "  const killedOf = (f) => !!f?.dead;",
+    "old": "const killedOf = (f) => !!f?.dead && (!!f.corpse || (Number(f.entity?.health) || 0) <= 0);",
+    "new": "const killedOf = (f) => !!f?.dead;",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "BOUNTY1-10-the-purse-is-never-paid",
     "file": "src/scenes/bountyHost.js",
-    "old": "    addGoldPieces(entity, posting.gold);\n    if (Array.isArray(entity?.items)) addItem(entity.items, item);",
-    "new": "    if (Array.isArray(entity?.items)) addItem(entity.items, item);",
+    "old": "    addGoldPieces(entity, posting.gold);\n",
+    "new": "",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -93,7 +93,7 @@
     "name": "BOUNTY1-11-a-notice-is-dropped-while-a-window-is-up",
     "file": "src/scenes/bountyHost.js",
     "old": "    if (deps.showNotice(notices[0])) notices.shift();",
-    "new": "    deps.showNotice(notices[0]);\n    notices.shift();",
+    "new": "    deps.showNotice(notices[0]); notices.shift();",
     "tests": [
       "test/systems/bounty1.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BOUNTY1-13-a-mates-clear-pays-nobody-else",
     "file": "src/scenes/bountyHost.js",
-    "old": "          if (held && bountyClearPays(r, held.takenAt)) pay(held.id, { byMate: String(m.name ?? 'A companion') });",
-    "new": "          if (false) pay(held.id, { byMate: String(m.name ?? 'A companion') });",
+    "old": "          if (held && bountyClearPays(r, held.takenAt)) pay(held.id, { byMate:",
+    "new": "          if (false) pay(held.id, { byMate:",
     "tests": [
       "test/systems/bounty1.test.js"
     ]

@@ -42,8 +42,8 @@
   {
     "name": "OWED-PACE-ends-probation",
     "file": "src/systems/guild/guilds.js",
-    "old": "    m.probation = true;",
-    "new": "    m.probation = owed === 0;",
+    "old": "    m.probation = true;\n    m.lastRankChange = today;   // the next review is 28 days on",
+    "new": "    m.probation = owed === 0;\n    m.lastRankChange = today;   // the next review is 28 days on",
     "tests": [
       "test/systems/guild/fb1016c_owedpace.test.js"
     ],
@@ -188,7 +188,7 @@
     "name": "LAYOUT-KEEP-not-saved",
     "file": "src/systems/automap/automap.js",
     "old": "      ...(rec.layouts?.size ? { layouts: [...rec.layouts.values()].map(savedLayout) } : {}),",
-    "new": "      ...{},",
+    "new": "      ...({}),",
     "tests": [
       "test/systems/automap/fb1016c_layoutkeep.test.js"
     ],
@@ -197,8 +197,8 @@
   {
     "name": "LAYOUT-KEEP-not-loaded",
     "file": "src/systems/automap/automap.js",
-    "old": "      ...(Array.isArray(rec.layouts)",
-    "new": "      ...(false",
+    "old": "      ...(Array.isArray(rec.layouts) ? { layouts:",
+    "new": "      ...(false ? { layouts:",
     "tests": [
       "test/systems/automap/fb1016c_layoutkeep.test.js"
     ],
@@ -207,8 +207,8 @@
   {
     "name": "LAYOUT-KEEP-unbounded",
     "file": "src/systems/automap/automap.js",
-    "old": "  while (kept.size > AUTOMAP_LAYOUTS_KEPT) kept.delete(kept.keys().next().value);\n}",
-    "new": "}",
+    "old": "  while (kept.size > AUTOMAP_LAYOUTS_KEPT) kept.delete(kept.keys().next().value);",
+    "new": "",
     "tests": [
       "test/systems/automap/fb1016c_layoutkeep.test.js"
     ],

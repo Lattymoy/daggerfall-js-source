@@ -407,8 +407,8 @@
   {
     "name": "GATEALONE-words",
     "file": "src/world/gate/gateArena.js",
-    "old": "  noCompanions: 'Your companions cannot follow you into the Deadlands.', // GATE-ALONE: said as a fighter steps in with any at their side",
-    "new": "  noCompanions: 'Your companions wait outside.', // GATE-ALONE: said as a fighter steps in with any at their side",
+    "old": "noCompanions: 'Your companions cannot follow you into the Deadlands.',",
+    "new": "noCompanions: 'Your companions wait outside.',",
     "tests": [
       "test/systems/gatecrowd.test.js"
     ]

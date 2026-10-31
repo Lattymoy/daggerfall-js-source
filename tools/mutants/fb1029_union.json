@@ -2,8 +2,8 @@
   {
     "name": "FB1029U-no-line-read",
     "file": "server-account/src/legacy.js",
-    "old": "    u.kin_line == null\n      ? unionView(u, playerId)\n      : { ...unionView(u, playerId), children: unionKinOf(u.kin_line, u.kin_person, u.sid) },",
-    "new": "    u.kin_line == null ? unionView(u, playerId) : unionView(u, playerId),",
+    "old": "    : { ...unionView(u, playerId), children: unionKinOf(u.kin_line, u.kin_person, u.sid) }));",
+    "new": "    : unionView(u, playerId)));",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "FB1029U-window-never-shuts",
     "file": "server-account/src/legacy.js",
-    "old": "  ' WHERE ended_at IS NULL OR ended_at >= ?2 ORDER BY ended_at IS NOT NULL, COALESCE(ended_at, wed_at) DESC LIMIT ?3)' +",
-    "new": "  ' WHERE ended_at IS NULL OR ended_at >= 0 ORDER BY ended_at IS NOT NULL, COALESCE(ended_at, wed_at) DESC LIMIT ?3)' +",
+    "old": "' WHERE ended_at IS NULL OR ended_at >= ?2 ORDER BY",
+    "new": "' WHERE ended_at IS NULL OR ended_at >= 0 ORDER BY",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "FB1029U-no-line-cap",
     "file": "server-account/src/legacy.js",
-    "old": "  ' WHERE ended_at IS NULL OR ended_at >= ?2 ORDER BY ended_at IS NOT NULL, COALESCE(ended_at, wed_at) DESC LIMIT ?3)' +",
-    "new": "  ' WHERE ended_at IS NULL OR ended_at >= ?2 ORDER BY ended_at IS NOT NULL, COALESCE(ended_at, wed_at) DESC LIMIT 50)' +",
+    "old": "COALESCE(ended_at, wed_at) DESC LIMIT ?3)'",
+    "new": "COALESCE(ended_at, wed_at) DESC LIMIT 50)'",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "FB1029U-open-not-first",
     "file": "server-account/src/legacy.js",
-    "old": "  ' WHERE ended_at IS NULL OR ended_at >= ?2 ORDER BY ended_at IS NOT NULL, COALESCE(ended_at, wed_at) DESC LIMIT ?3)' +",
-    "new": "  ' WHERE ended_at IS NULL OR ended_at >= ?2 ORDER BY COALESCE(ended_at, wed_at) DESC LIMIT ?3)' +",
+    "old": "ORDER BY ended_at IS NOT NULL, COALESCE(ended_at, wed_at) DESC LIMIT ?3",
+    "new": "ORDER BY COALESCE(ended_at, wed_at) DESC LIMIT ?3",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FB1029U-names-unfiltered",
     "file": "server-account/src/legacy.js",
-    "old": "    return w && w.split(/\\s+/).every((x) => checkName(x).ok) ? w : '';",
-    "new": "    return w;",
+    "old": "return w && w.split(/\\s+/).every((x) => checkName(x).ok) ? w : '';",
+    "new": "return w;",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FB1029U-any-spouse",
     "file": "server-account/src/legacy.js",
-    "old": "        p.parents.some((/** @type {any} */ id) => wedIn.has(id)),",
-    "new": "        p.parents.length > 1,",
+    "old": "p.parents.some((/** @type {any} */ id) => wedIn.has(id)))",
+    "new": "p.parents.length > 1)",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FB1029U-service-no-cap",
     "file": "server-account/src/legacy.js",
-    "old": "    .slice(0, UNION_KIN_MAX)\n    .map((/** @type {any} */ p) =>",
-    "new": "    .map((/** @type {any} */ p) =>",
+    "old": "    .slice(0, UNION_KIN_MAX)\n    .map((/** @type {any} */ p) => kinCard(",
+    "new": "    .map((/** @type {any} */ p) => kinCard(",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "FB1029U-mirror-of-a-mirror",
     "file": "server-account/src/legacy.js",
-    "old": "        (p?.kind ?? 'member') === 'member' &&\n        Array.isArray(p.parents) &&",
-    "new": "        Array.isArray(p.parents) &&",
+    "old": "return people.filter((/** @type {any} */ p) => (p?.kind ?? 'member') === 'member' && Array.isArray(p.parents)",
+    "new": "return people.filter((/** @type {any} */ p) => Array.isArray(p.parents)",
     "tests": [
       "test/systems/legacy/fb1029_union.test.js"
     ]

@@ -19,7 +19,7 @@
 
 import { RMB_DIMENSION } from '../../formats/blocksFile.js';
 import { GLOBAL_SCALE } from '../meshReader.js';
-import { lightList, packLight, adoptLight } from '../../render/lightId.js'; // LIGHT-ID: a light into the frame's list through the one seam, its identity beside it
+import { lightList, packLight, adoptLight } from '../../render/lightId.js';   // LIGHT-ID: a light into the frame's list through the one seam, its identity beside it
 import { CityLightAnimator } from '../worldClock.js';
 
 export const LIGHTS_ARCHIVE = 210;
@@ -40,8 +40,7 @@ export const streetLightRange = (lane) => CITY_LIGHT_RANGE * streetLightReach(la
 export function streetLanternAnimator(count, lane) {
   const k = streetLightRange(lane) / CITY_LIGHT_RANGE;
   const a = new CityLightAnimator(count, CITY_LIGHT_RANGE * k);
-  a.variance *= k;
-  a.speed *= k;
+  a.variance *= k; a.speed *= k;
   return a;
 }
 /**
@@ -73,14 +72,12 @@ function capFade(lit, lead, pos, cap, color, stride, fade) {
   const count = lit.length >> 2;
   if (count <= cap || lead >= cap) return null;
   const dist = (i) => Math.hypot(lit[i * 4] - pos[0], lit[i * 4 + 1] - pos[1], lit[i * 4 + 2] - pos[2]);
-  const cut = dist(cap); // the first light the cap leaves out
+  const cut = dist(cap);   // the first light the cap leaves out
   const out = new Float32Array(cap * 3);
   for (let i = 0; i < cap; i++) {
     const share = i < lead ? 1 : Math.max(0, Math.min(1, (cut - dist(i)) / fade));
     const c = i * stride;
-    out[i * 3] = color[c] * share;
-    out[i * 3 + 1] = color[c + 1] * share;
-    out[i * 3 + 2] = color[c + 2] * share;
+    out[i * 3] = color[c] * share; out[i * 3 + 1] = color[c + 1] * share; out[i * 3 + 2] = color[c + 2] * share;
   }
   return out;
 }
@@ -112,10 +109,8 @@ export function fillLanternPool(pixels, translate, pool, ranges, animRanges, ext
     for (let j = 0; j < p.lights.length + m; j++) {
       const l = j < p.lights.length ? p.lights[j] : more[j - p.lights.length];
       const e = pool[n] ?? (pool[n] = { x: 0, y: 0, z: 0 });
-      e.x = l[0] + t[0];
-      e.y = l[1] + t[1];
-      e.z = l[2] + t[2];
-      adoptLight(e, l); // LIGHT-ID: the entry is this lantern's this frame - the pool reshuffles when a pixel streams out
+      e.x = l[0] + t[0]; e.y = l[1] + t[1]; e.z = l[2] + t[2];
+      adoptLight(e, l);   // LIGHT-ID: the entry is this lantern's this frame - the pool reshuffles when a pixel streams out
       ranges[n] = animRanges[(slot0 + j) % animRanges.length];
       n++;
     }
@@ -161,9 +156,7 @@ export function collectCityLights(dfBlock, getScaledSize) {
       // FIX-D: and the SPRITE the light sits on top of - its base and
       // its size - so a brazier's eye box is the brazier (survival/
       // hearth.js hearthAabb) rather than a guess hung off the flame.
-      foot: -obj.yPos * GLOBAL_SCALE,
-      w: size.w,
-      h: size.h,
+      foot: -obj.yPos * GLOBAL_SCALE, w: size.w, h: size.h,
     });
   }
 
@@ -175,13 +168,11 @@ export function collectCityLights(dfBlock, getScaledSize) {
       if (obj.textureArchive !== LIGHTS_ARCHIVE) continue;
       const size = getScaledSize(obj.textureRecord);
       lights.push({
-        record: obj.textureRecord, // HEARTH1
+        record: obj.textureRecord,   // HEARTH1
         x: obj.xPos * GLOBAL_SCALE + subX,
         y: -obj.yPos * GLOBAL_SCALE + size.h,
         z: (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE + subZ,
-        foot: -obj.yPos * GLOBAL_SCALE,
-        w: size.w,
-        h: size.h, // FIX-D
+        foot: -obj.yPos * GLOBAL_SCALE, w: size.w, h: size.h,   // FIX-D
       });
     }
   }
@@ -240,17 +231,12 @@ export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, c
     // exactly at the range stays lit.
     if (xz2 && dx * dx + dz * dz > xz2) continue;
     const d = dx * dx + dy * dy + dz * dz;
-    if (count >= max && d >= _selD[count - 1]) continue; // not admitted; ties keep the earlier light
+    if (count >= max && d >= _selD[count - 1]) continue;   // not admitted; ties keep the earlier light
     let j = count < max ? count++ : count - 1;
-    while (j > 0 && _selD[j - 1] > d) {
-      _selD[j] = _selD[j - 1];
-      _selIdx[j] = _selIdx[j - 1];
-      j--;
-    }
-    _selD[j] = d;
-    _selIdx[j] = i;
+    while (j > 0 && _selD[j - 1] > d) { _selD[j] = _selD[j - 1]; _selIdx[j] = _selIdx[j - 1]; j--; }
+    _selD[j] = d; _selIdx[j] = i;
   }
-  const out = lightList(count); // LIGHT-ID: each light's identity rides the list
+  const out = lightList(count);   // LIGHT-ID: each light's identity rides the list
   for (let i = 0; i < count; i++) {
     const l = lights[_selIdx[i]];
     // AUDIT PERF-LIGHTS F2 (pre-existing, found by this audit): a
@@ -271,9 +257,7 @@ export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, c
   const colors = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
     const c = colorOf(lights[_selIdx[i]], _selIdx[i]);
-    colors[i * 3] = c[0];
-    colors[i * 3 + 1] = c[1];
-    colors[i * 3 + 2] = c[2];
+    colors[i * 3] = c[0]; colors[i * 3 + 1] = c[1]; colors[i * 3 + 2] = c[2];
   }
   return { data: out, colors };
 }

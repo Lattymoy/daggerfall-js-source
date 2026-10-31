@@ -11,8 +11,8 @@
   {
     "name": "WB1-the-gate-a-day-late",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  const base = gateBaseMinute(day);",
-    "new": "  const base = gateBaseMinute(day) + GATE_DAY_MINUTES;",
+    "old": "  const base = gateBaseMinute(day);\n",
+    "new": "  const base = gateBaseMinute(day) + GATE_DAY_MINUTES;\n",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB1-yesterday-forgotten-while-it-sinks",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  if (\n    day >= 1 &&\n    isGateDay(gateNumber(day - 1, lane)) &&\n    nowMs < gateTimes(gateNumber(day - 1, lane)).wrathAt + GATE_COLLAPSE_MS\n  )",
-    "new": "  if (day >= 1 && isGateDay(gateNumber(day - 1, lane)) && nowMs < gateTimes(gateNumber(day - 1, lane)).wrathAt)",
+    "old": "nowMs < gateTimes(gateNumber(day - 1, lane)).wrathAt + GATE_COLLAPSE_MS) return",
+    "new": "nowMs < gateTimes(gateNumber(day - 1, lane)).wrathAt) return",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WB1-a-fall-before-the-opening-counts",
     "file": "src/net/gate/gateLaw.js",
-    "old": "    Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= t.openAt",
-    "new": "    Number.isFinite(fellAt) && /** @type {number} */ (fellAt) >= 0",
+    "old": "(fellAt) >= t.openAt ? Math.min",
+    "new": "(fellAt) >= 0 ? Math.min",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WB1-the-countdown-rounded-down",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  const s = Math.max(0, Math.ceil((Number.isFinite(ms) ? ms : 0) / 1000));",
-    "new": "  const s = Math.max(0, Math.floor((Number.isFinite(ms) ? ms : 0) / 1000));",
+    "old": "const s = Math.max(0, Math.ceil((Number.isFinite(ms) ? ms : 0) / 1000));",
+    "new": "const s = Math.max(0, Math.floor((Number.isFinite(ms) ? ms : 0) / 1000));",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB1-a-padded-room-admitted",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  `^gate:(?:0|[1-9]\\\\d{0,8})(?:\\\\.(?:${Array.from({ length: GATE_COURTS_MAX - 1 }, (_, i) => i + 1).join('|')}))?$`,",
-    "new": "  `^gate:\\\\d{1,9}(?:\\\\.(?:${Array.from({ length: GATE_COURTS_MAX - 1 }, (_, i) => i + 1).join('|')}))?$`,",
+    "old": "const GATE_ROOM = new RegExp(`^gate:(?:0|[1-9]\\\\d{0,8})(?:",
+    "new": "const GATE_ROOM = new RegExp(`^gate:\\\\d{1,9}(?:",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB1-admitted-at-the-seal",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt;",
-    "new": "  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs <= t.sealAt;",
+    "old": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt; };",
+    "new": "return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs <= t.sealAt; };",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB1-held-only-to-the-seal",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.wrathAt + GATE_COLLAPSE_MS;",
-    "new": "  return isGateDay(day) && gateLaneOpen(gateLaneOf(day)) && nowMs >= t.openAt && nowMs < t.sealAt;",
+    "old": "nowMs < t.wrathAt + GATE_COLLAPSE_MS; };",
+    "new": "nowMs < t.sealAt; };",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WB1-two-provinces-never-alternate",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  if (n <= 2) return regions[((g % n) + n) % n]; // one province is that one; two alternate",
-    "new": "  if (n <= 2) return regions[0]; // one province is that one; two alternate",
+    "old": "  if (n <= 2) return regions[((g % n) + n) % n];",
+    "new": "  if (n <= 2) return regions[0];",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WB1-the-spot-past-its-spread",
     "file": "src/net/gate/gateLaw.js",
-    "old": "    r = Math.sqrt(unit(day, 4)) * GATE_SPOT_SPREAD_M;",
-    "new": "    r = Math.sqrt(unit(day, 4)) * GATE_SPOT_SPREAD_M * 2;",
+    "old": "r = Math.sqrt(unit(day, 4)) * GATE_SPOT_SPREAD_M;",
+    "new": "r = Math.sqrt(unit(day, 4)) * GATE_SPOT_SPREAD_M * 2;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB1-north-down-the-map",
     "file": "src/net/gate/gateLaw.js",
-    "old": "    gy = py + 1 - spot[1] / PIXEL_M;",
-    "new": "    gy = py + spot[1] / PIXEL_M;",
+    "old": "const gx = px + spot[0] / PIXEL_M, gy = py + 1 - spot[1] / PIXEL_M;",
+    "new": "const gx = px + spot[0] / PIXEL_M, gy = py + spot[1] / PIXEL_M;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB1-the-ring-shifted-off-its-gate",
     "file": "src/net/gate/gateLaw.js",
-    "old": "    r = Math.sqrt(unit(day, 7)) * OMEN_RING_SHIFT_PIXELS;",
-    "new": "    r = Math.sqrt(unit(day, 7)) * OMEN_RING_PIXELS * 1.5;",
+    "old": "r = Math.sqrt(unit(day, 7)) * OMEN_RING_SHIFT_PIXELS;",
+    "new": "r = Math.sqrt(unit(day, 7)) * OMEN_RING_PIXELS * 1.5;",
     "tests": [
       "test/ui/wb1_gate_omen.test.js"
     ]

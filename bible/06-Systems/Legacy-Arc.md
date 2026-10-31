@@ -906,10 +906,10 @@ realmDie's `hold`, `realmRaise`, `settleHolds`) - as the slice's audit left it (
   dead's so the leave sends nothing); a load or a new game over it (`adopt`, `newGame`: F11, the pause's Load, a
   same-dungeon load); a body up that no Resurrect raised. Closing tells the realm (`realmDie` without `hold` - what a
   tombstone takes goes now) and the house's towns (the death's news, told once it stands). A window no page closes - a
-  killed tab - the realm's minute closes (`cron.js` `rez-holds`, `legacy.js:"export async function settleHolds"`).
+  killed tab - the realm's minute closes (`cron.js` `rez-holds`, `legacy.js:"export async function settleHolds({ db, nowS, budget = () => true }) {"`).
 - **A party's Resurrect inside the window asks the realm** (`legacyHost.js:"function raise(rez = null) {"`, asked by the
   fallen's own frame before it rises - `world.js:"if (rez && legacyHost?.raise(rez) !== false)"`), and the body stays
-  down until it answers: `POST /v1/realm/raise` (`legacy.js:"export async function realmRaise"`)
+  down until it answers: `POST /v1/realm/raise` (`legacy.js:"export async function realmRaise({ db, nowS }, playerId, { id, lease, diedAt }) {"`)
   takes the death back only of a character of the account's own line, under the lease that fell, inside the window,
   with no other of the account's characters in play since (ONE-SEAT), once. Its yes clears the tombstone, hands the lease
   back (the session plays on at its own sequence: nothing was checkpointed over the dead) and stamps the line's copy

@@ -334,8 +334,8 @@
   {
     "name": "STAFF-SET-BANK-moved-said-as-a-body",
     "file": "server-account/src/staff.js",
-    "old": "  'bank-moved': 409,\n  // GUILD-LETTER-FIX (net/repairLaw.js applyGuildLetter): a member already, the initiation quest still held, a letter on",
-    "new": "  // GUILD-LETTER-FIX (net/repairLaw.js applyGuildLetter): a member already, the initiation quest still held, a letter on",
+    "old": "  'bank-none': 409, 'bank-moved': 409,\n",
+    "new": "  'bank-none': 409,\n",
     "why": "a bank not the one read is a conflict (409), never a bad body",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -344,8 +344,8 @@
   {
     "name": "STAFF-SET-BANK-none-said-as-a-body",
     "file": "server-account/src/staff.js",
-    "old": "  'bank-none': 409,\n  'bank-moved': 409,",
-    "new": "  'bank-moved': 409,",
+    "old": "  'bank-none': 409, 'bank-moved': 409,\n",
+    "new": "  'bank-moved': 409,\n",
     "why": "a record with no Empire account is a conflict (409), never a bad body",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -354,8 +354,8 @@
   {
     "name": "STAFF-SET-BANK-the-profile-sum",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    banks: bankTotalOf(save), // STAFF-SET-BANK: the sum a bank set is checked against (net/repairLaw.js), one with it",
-    "new": "    banks: arrayOf(save.bankAccounts).reduce((s, a) => s + Math.max(0, num(a?.accountGold) ?? 0), 0), // STAFF-SET-BANK: the sum a bank set is checked against (net/repairLaw.js), one with it",
+    "old": "    banks: bankTotalOf(save),",
+    "new": "    banks: arrayOf(save.bankAccounts).reduce((s, a) => s + Math.max(0, num(a?.accountGold) ?? 0), 0),",
     "why": "the profile says the total a set is checked against: one sum",
     "tests": [
       "test/server/staffsetbank.test.js"

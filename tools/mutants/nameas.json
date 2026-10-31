@@ -20,8 +20,8 @@
   {
     "name": "NAMEAS-an-unknown-word-read-as-the-character",
     "file": "server-account/src/accounts.js",
-    "old": "export const nameAsOf = (/** @type {any} */ row) => (row?.name_as === 'character' ? 'character' : 'account');",
-    "new": "export const nameAsOf = (/** @type {any} */ row) => (row?.name_as ? 'character' : 'account');",
+    "old": "(row?.name_as === 'character' ? 'character' : 'account')",
+    "new": "(row?.name_as ? 'character' : 'account')",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "NAMEAS-an-email-worn",
     "file": "server-account/src/accounts.js",
-    "old": "  if (handleLooksLikeEmail(s)) return { why: 'email' };\n  if (nameIsIssuable(s)) return null;",
-    "new": "  if (nameIsIssuable(s)) return null;",
+    "old": "  if (handleLooksLikeEmail(s)) return { why: 'email' };\n",
+    "new": "",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "NAMEAS-the-long-refusal-unread",
     "file": "server-account/src/accounts.js",
-    "old": "  if (s.length > NAME_MAX) return { why: 'long' };\n  const verdict = checkName(s);",
-    "new": "  const verdict = checkName(s);",
+    "old": "  if (s.length > NAME_MAX) return { why: 'long' };\n",
+    "new": "",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NAMEAS-the-caught-word-dropped",
     "file": "server-account/src/accounts.js",
-    "old": "  if (!verdict.ok && verdict.kind !== 'empty') return { why: 'refused', word: verdict.word };",
-    "new": "  if (!verdict.ok && verdict.kind !== 'empty') return { why: 'refused' };",
+    "old": "return { why: 'refused', word: verdict.word };",
+    "new": "return { why: 'refused' };",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "NAMEAS-the-guard-blind-to-case",
     "file": "server-account/src/accounts.js",
-    "old": "      .bind(character.toLowerCase(), player.id)",
-    "new": "      .bind(character, player.id)",
+    "old": ".bind(character.toLowerCase(), player.id)",
+    "new": ".bind(character, player.id)",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "NAMEAS-my-own-username-taken",
     "file": "server-account/src/accounts.js",
-    "old": "      .bind(character.toLowerCase(), player.id)",
-    "new": "      .bind(character.toLowerCase(), '')",
+    "old": ".bind(character.toLowerCase(), player.id)",
+    "new": ".bind(character.toLowerCase(), '')",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "NAMEAS-the-choice-unwritten",
     "file": "server-account/src/accounts.js",
-    "old": "  await db\n    .prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?')\n    .bind(as === 'character' ? 'character' : null, nowS, player.id)\n    .run();",
-    "new": "  void db;",
+    "old": "await db.prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?').bind(as === 'character' ? 'character' : null, nowS, player.id).run();",
+    "new": "void db;",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "NAMEAS-the-account-stored-as-a-word",
     "file": "server-account/src/accounts.js",
-    "old": "  await db\n    .prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?')\n    .bind(as === 'character' ? 'character' : null, nowS, player.id)\n    .run();",
-    "new": "  await db.prepare('UPDATE players SET name_as = ?, last_seen = ? WHERE id = ?').bind(as, nowS, player.id).run();",
+    "old": ".bind(as === 'character' ? 'character' : null, nowS, player.id)",
+    "new": ".bind(as, nowS, player.id)",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "NAMEAS-the-account-view-silent",
     "file": "server-account/src/accounts.js",
-    "old": "    nameAs: nameAsOf(player),\n    // RECOVERY-SET: how many recovery codes still open this account - a COUNT, never a code or its hash (null for a guest)",
-    "new": "    // RECOVERY-SET: how many recovery codes still open this account - a COUNT, never a code or its hash (null for a guest)",
+    "old": "    nameAs: nameAsOf(player),\n",
+    "new": "",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "NAMEAS-a-guest-taken-as-a-reader",
     "file": "server-account/src/letters.js",
-    "old": "  if (!reader.handle) return { error: 'reader-guest' }; // NAME-AS: by account alone - a handle found by handle has one",
-    "new": "  if (!reader.handle && false) return { error: 'reader-guest' }; // NAME-AS: by account alone - a handle found by handle has one",
+    "old": "  if (!reader.handle) return { error: 'reader-guest' };",
+    "new": "  if (!reader.handle && false) return { error: 'reader-guest' };",
     "tests": [
       "test/net/nameas_service.test.js",
       "test/server/mail1.test.js"
@@ -139,8 +139,8 @@
   {
     "name": "NAMEAS-the-letter-answer-naming-the-handle",
     "file": "server-account/src/letters.js",
-    "old": "  if (!r?.meta?.changes) return { error: 'inbox-full' };\n  return { ok: true, id, to: account ? displayName(reader) : reader.handle };",
-    "new": "  if (!r?.meta?.changes) return { error: 'inbox-full' };\n  return { ok: true, id, to: reader.handle };",
+    "old": "return { ok: true, id, to: account ? displayName(reader) : reader.handle };\n}",
+    "new": "return { ok: true, id, to: reader.handle };\n}",
     "tests": [
       "test/net/nameas_service.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "NAMEAS-the-notes-account-dropped",
     "file": "server-account/src/board.js",
-    "old": "    by: n.author,\n    ...badgeOf(row, env, nowS),",
-    "new": "    ...badgeOf(row, env, nowS),",
+    "old": "from: n.author_name, by: n.author, ",
+    "new": "from: n.author_name, ",
     "tests": [
       "test/net/nameas_service.test.js"
     ]

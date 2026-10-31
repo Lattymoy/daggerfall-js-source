@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-RESCUE-SAVE-A1-the-door-hands-them-anyway",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (rec.v === SPOILS_RECORD_V && inSave?.includes(rec.id)) {\n      left.push(rec);\n      onHanded?.(rec);\n      continue;\n    }\n    for (const p of rec.pieces) {",
-    "new": "    for (const p of rec.pieces) {",
+    "old": "    if (rec.v === SPOILS_RECORD_V && inSave?.includes(rec.id)) { left.push(rec); onHanded?.(rec); continue; }\n",
+    "new": "",
     "tests": [
       "test/server/rescuesave.test.js"
     ]

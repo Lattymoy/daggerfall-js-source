@@ -128,8 +128,8 @@
   {
     "name": "binder-sheath-offset-lost",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "        if (part.slot === 'sheath') sheathBoneOffset = bound.boneOffset || null; // WS1\n      }",
-    "new": "      }",
+    "old": "        if (part.slot === 'sheath') sheathBoneOffset = bound.boneOffset || null;   // WS1\n",
+    "new": "",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "binder-subtree-lost",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "        bound = mod.bindPart(skeleton, nif, {\n          ...(bone ? { attachBone: bone } : {}),\n          underNode: part.underNode,\n          excludeNode: part.excludeNode,\n        }); // WS1: a subtree of the file",
-    "new": "        bound = mod.bindPart(skeleton, nif, { ...(bone ? { attachBone: bone } : {}) });",
+    "old": "underNode: part.underNode, excludeNode: part.excludeNode });   // WS1: a subtree of the file",
+    "new": "});",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "binder-tag-lost",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "            mirrored: mirror,\n            tag: part.tag ?? null, // WS1: a part's own tag (the quiver slot's index)",
-    "new": "            mirrored: mirror, // WS1: a part's own tag (the quiver slot's index)",
+    "old": "kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,",
+    "new": "kind: 'rigid', mirrored: mirror,",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "inject-known-overwritten",
     "file": "src/formats/morrowind/mwSkin.js",
-    "old": "      if (key && skeleton.byName.has(key)) {\n        skipped.push(`${rec.name} (already here)`);\n        return;\n      }\n      copy(ref, baseParent);",
-    "new": "      copy(ref, baseParent);",
+    "old": "      if (key && skeleton.byName.has(key)) { skipped.push(`${rec.name} (already here)`); return; }\n",
+    "new": "",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "inject-parent-missing-added-at-root",
     "file": "src/formats/morrowind/mwSkin.js",
-    "old": "        skipped.push(`${rec.name || '(nameless)'} (no \"${parentRec?.name ?? ''}\" here)`);",
-    "new": "        copy(ref, -1);",
+    "old": "      if (baseParent === undefined) { skipped.push(`${rec.name || '(nameless)'} (no \"${parentRec?.name ?? ''}\" here)`); return; }",
+    "new": "      if (baseParent === undefined) { copy(ref, -1); return; }",
     "tests": [
       "test/formats/morrowind/ws1_sheathing.test.js"
     ]

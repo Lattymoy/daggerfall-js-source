@@ -2,8 +2,8 @@
   {
     "name": "SILVER-the-old-name-back",
     "file": "src/net/marksLaw.js",
-    "old": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} silver`;",
-    "new": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} ${n === 1 ? 'Drake' : 'Drakes'}`;",
+    "old": "toLocaleString('en-US')} silver`;",
+    "new": "toLocaleString('en-US')} ${n === 1 ? 'Drake' : 'Drakes'}`;",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SILVER-a-plural",
     "file": "src/net/marksLaw.js",
-    "old": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} silver`;",
-    "new": "export const marksText = (n) => `${Number(n).toLocaleString('en-US')} ${n === 1 ? 'silver' : 'silvers'}`;",
+    "old": "toLocaleString('en-US')} silver`;",
+    "new": "toLocaleString('en-US')} ${n === 1 ? 'silver' : 'silvers'}`;",
     "tests": [
       "test/net/silver.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SILVER-the-bank-rate-old",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "                    ['The Bank pays', `${MARKS_BANK.goldPerMark} gold for each silver`],",
-    "new": "                    ['The Bank pays', `${MARKS_BANK.goldPerMark} gold a Drake`],",
+    "old": "`${MARKS_BANK.goldPerMark} gold for each silver`",
+    "new": "`${MARKS_BANK.goldPerMark} gold a Drake`",
     "tests": [
       "test/net/silver.test.js"
     ]

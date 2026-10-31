@@ -46,17 +46,17 @@
 
 import { billboardSize } from '../world/rmbFlats.js';
 import { LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
-import { lightList, packLight, copyLights } from '../render/lightId.js'; // LIGHT-ID: the player's lights into the list through the one seam
+import { lightList, packLight, copyLights } from '../render/lightId.js';   // LIGHT-ID: the player's lights into the list through the one seam
 
 /** MagicCandleBehaviour + the prefab's Light, as numbers. */
 export const CANDLE = Object.freeze({
-  archive: LIGHTS_ARCHIVE, // 210 (MagicCandleBehaviour.cs:22)
-  record: 3, // (:23)
-  distance: 1.4, // candleDistance (LightNormal.cs:89)
-  heightFraction: 0.25, // candlePosition.y += height * 0.25 (:96)
-  range: 15, // MagicCandle.prefab m_Range
-  jitterRadius: 0.125, // Random.insideUnitSphere * 0.125 (:47)
-  moveSpeed: 8, // moveSpeed (:14), lerp units per second
+  archive: LIGHTS_ARCHIVE,   // 210 (MagicCandleBehaviour.cs:22)
+  record: 3,                 // (:23)
+  distance: 1.4,             // candleDistance (LightNormal.cs:89)
+  heightFraction: 0.25,      // candlePosition.y += height * 0.25 (:96)
+  range: 15,                 // MagicCandle.prefab m_Range
+  jitterRadius: 0.125,       // Random.insideUnitSphere * 0.125 (:47)
+  moveSpeed: 8,              // moveSpeed (:14), lerp units per second
 });
 
 /** The unwobbled position: `transform.position + forward * 1.4`, then
@@ -86,9 +86,7 @@ export function candleBase(feet, height, forward) {
  *  gives the same distribution Unity's does with no cube corners. */
 export function insideUnitSphere(rolls = Math.random) {
   for (let i = 0; i < 32; i++) {
-    const x = rolls() * 2 - 1,
-      y = rolls() * 2 - 1,
-      z = rolls() * 2 - 1;
+    const x = rolls() * 2 - 1, y = rolls() * 2 - 1, z = rolls() * 2 - 1;
     if (x * x + y * y + z * z <= 1) return [x, y, z];
   }
   return [0, 0, 0];
@@ -98,7 +96,7 @@ export function insideUnitSphere(rolls = Math.random) {
  *  current displacement from the base, `tick(dt)` advances the leg. */
 export function createCandleWobble(rolls = Math.random) {
   let last = [0, 0, 0];
-  let next = null; // null IS DFU's Vector3.zero sentinel (:44)
+  let next = null;          // null IS DFU's Vector3.zero sentinel (:44)
   let moveAmount = 0;
   const cur = [0, 0, 0];
   return {
@@ -108,15 +106,12 @@ export function createCandleWobble(rolls = Math.random) {
         const j = insideUnitSphere(rolls);
         next = [j[0] * CANDLE.jitterRadius, j[1] * CANDLE.jitterRadius, j[2] * CANDLE.jitterRadius];
       }
-      const t = Math.min(1, Math.max(0, moveAmount)); // Vector3.Lerp clamps t
+      const t = Math.min(1, Math.max(0, moveAmount));   // Vector3.Lerp clamps t
       cur[0] = last[0] + (next[0] - last[0]) * t;
       cur[1] = last[1] + (next[1] - last[1]) * t;
       cur[2] = last[2] + (next[2] - last[2]) * t;
       moveAmount += CANDLE.moveSpeed * dt;
-      if (moveAmount >= 1) {
-        last = next;
-        next = null;
-      }
+      if (moveAmount >= 1) { last = next; next = null; }
     },
     offset: () => cur,
   };
@@ -154,12 +149,10 @@ export function withPlayerLights(base, ...lights) {
     const colors = new Float32Array(keep + live.length * 3);
     live.forEach((l, i) => {
       const c = l.color ?? [1, 1, 1];
-      colors[i * 3] = c[0];
-      colors[i * 3 + 1] = c[1];
-      colors[i * 3 + 2] = c[2];
+      colors[i * 3] = c[0]; colors[i * 3 + 1] = c[1]; colors[i * 3 + 2] = c[2];
     });
     colors.set(base.colors.subarray(0, keep), live.length * 3);
-    return { data, colors, carried: data.carried }; // MAC-T1: the mask rides the pair too
+    return { data, colors, carried: data.carried };   // MAC-T1: the mask rides the pair too
   }
   const live = lights.filter(Boolean);
   if (!live.length) return base;
@@ -171,7 +164,7 @@ export function withPlayerLights(base, ...lights) {
   // sit first, what it drops is the base's farthest - which is exactly
   // what the old arithmetic dropped on the classic set, light for light.
   const keep = (base.length / 4) * 4;
-  const out = lightList(keep / 4 + live.length); // LIGHT-ID: each light's identity beside it, the base's carried over
+  const out = lightList(keep / 4 + live.length);   // LIGHT-ID: each light's identity beside it, the base's carried over
   // MAC-T1: THE CARRIED MASK - one byte per light, in the array's own order, 1 for a record that says `carried`
   // (the player's torch and candle; playerTorch.js says why). Per LIGHT, not "the first N": this same list carries the
   // dropped and thrown torches and the burning foes (droppedTorches.lights()), which sit over real billboards and
@@ -198,49 +191,37 @@ export function withPlayerLights(base, ...lights) {
  * and no sprite rather than a crash.
  */
 export function createMagicCandle({
-  renderer,
-  getTexture,
-  uploadRecord = null,
-  rolls = Math.random,
+  renderer, getTexture, uploadRecord = null, rolls = Math.random,
   // The hitEffects pool's shape: a host whose draw list is a standing
   // array registers the batch instead of merging one every frame.
-  onSpawn = null,
-  onRetire = null,
+  onSpawn = null, onRetire = null,
 }) {
   const wobble = createCandleWobble(rolls);
   const pos = [0, 0, 0];
   let lit = false;
   let batch = null;
-  let basePos = null; // where the batch's baked centre sits
+  let basePos = null;     // where the batch's baked centre sits
   let warming = false;
 
   function spawnSprite() {
     if (warming || batch || !uploadRecord) return;
     warming = true;
-    getTexture(CANDLE.archive)
-      .then((t) => {
-        warming = false;
-        // The pool can be torn down while the archive warms - the corpse
-        // mint's lesson, the same shape hitEffects guards.
-        if (!lit || batch || !t) return;
-        if (t.recordCount != null && CANDLE.record >= t.recordCount) return;
-        uploadRecord(CANDLE.archive, CANDLE.record);
-        const size = billboardSize(t, CANDLE.record);
-        basePos = [pos[0], pos[1], pos[2]];
-        batch = renderer.createBillboardBatch(CANDLE.archive, CANDLE.record, size, [basePos]);
-        onSpawn?.(batch);
-      })
-      .catch(() => {
-        warming = false;
-      });
+    getTexture(CANDLE.archive).then((t) => {
+      warming = false;
+      // The pool can be torn down while the archive warms - the corpse
+      // mint's lesson, the same shape hitEffects guards.
+      if (!lit || batch || !t) return;
+      if (t.recordCount != null && CANDLE.record >= t.recordCount) return;
+      uploadRecord(CANDLE.archive, CANDLE.record);
+      const size = billboardSize(t, CANDLE.record);
+      basePos = [pos[0], pos[1], pos[2]];
+      batch = renderer.createBillboardBatch(CANDLE.archive, CANDLE.record, size, [basePos]);
+      onSpawn?.(batch);
+    }).catch(() => { warming = false; });
   }
 
   function dropSprite() {
-    if (batch) {
-      onRetire?.(batch);
-      renderer.destroyBillboardBatch(batch);
-      batch = null;
-    }
+    if (batch) { onRetire?.(batch); renderer.destroyBillboardBatch(batch); batch = null; }
     basePos = null;
   }
 
@@ -248,26 +229,18 @@ export function createMagicCandle({
     /** @param active - hasActiveEffect(playerEntity, 'light')
      *  @param sprite - false: the light alone, no candle drawn (CANDLE-POV: my own candle in first person) */
     update(dt, { active, feet, height, forward, sprite = true }) {
-      if (!active) {
-        if (lit) {
-          lit = false;
-          dropSprite();
-        }
-        return;
-      }
+      if (!active) { if (lit) { lit = false; dropSprite(); } return; }
       lit = true;
       wobble.tick(dt);
       const b = candleBase(feet, height, forward);
       const o = wobble.offset();
-      pos[0] = b[0] + o[0];
-      pos[1] = b[1] + o[1];
-      pos[2] = b[2] + o[2];
+      pos[0] = b[0] + o[0]; pos[1] = b[1] + o[1]; pos[2] = b[2] + o[2];
       if (!sprite) dropSprite();
       else if (!batch) spawnSprite();
       else batch.origin = [pos[0] - basePos[0], pos[1] - basePos[1], pos[2] - basePos[2]];
     },
     /** The point light, in nearestLights' own shape, or null. */
-    light: () => (lit ? { x: pos[0], y: pos[1], z: pos[2], range: CANDLE.range, carried: true } : null), // MAC-T1: the candle is the player's own light too
+    light: () => (lit ? { x: pos[0], y: pos[1], z: pos[2], range: CANDLE.range, carried: true } : null),   // MAC-T1: the candle is the player's own light too
     batch: () => batch,
     /** THE FOUR HOSTS RULE: a floating-origin recenter would leave the
      *  candle behind in the old space - its centre is baked into a
@@ -281,10 +254,7 @@ export function createMagicCandle({
       if (!offset) return;
       dropSprite();
     },
-    clear() {
-      lit = false;
-      dropSprite();
-    },
+    clear() { lit = false; dropSprite(); },
     _pos: pos,
   };
 }

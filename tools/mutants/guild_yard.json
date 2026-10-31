@@ -2,8 +2,8 @@
   {
     "name": "GUILD-YARD-hall-yard-refused-at-the-read",
     "file": "server-account/src/decor.js",
-    "old": "    if (yard === true && S.seat) return { error: 'hall-yard' };",
-    "new": "    if (yard === true) return { error: 'hall-yard' };",
+    "old": "    if (yard === true && S.seat) return { error: 'hall-yard' };\n",
+    "new": "    if (yard === true) return { error: 'hall-yard' };\n",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GUILD-YARD-the-look-a-characters-again",
     "file": "server-account/src/homes.js",
-    "old": "    .prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character)",
-    "new": "    .prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND player = ? AND char_id = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, player.id, character)",
+    "old": "AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character).run();",
+    "new": "AND player = ? AND char_id = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, player.id, character).run();",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "GUILD-YARD-keepers-any-rank",
     "file": "server-account/src/decor.js",
-    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}",
-    "new": "      AND g.rank >= 0",
+    "old": "      AND ${guildPowerSql('decorate', 'g.rank', 'g.guild_id')}\n      AND EXISTS",
+    "new": "      AND g.rank >= 0\n      AND EXISTS",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GUILD-YARD-the-halls-look-unanswered",
     "file": "server-account/src/homes.js",
-    "old": "            ...lookFor(h, h.kin === 1), // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n            ...votesOf(h), // HOME-VOTE",
-    "new": "            ...votesOf(h), // HOME-VOTE",
+    "old": "          ...lookFor(h, h.kin === 1),   // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n",
+    "new": "",
     "note": "AUDIT HOME-VOTE A3 (PIN MOVED): the hall's paint through lookFor, a shunned hall's to its guild alone",
     "tests": [
       "test/net/guild_yard.test.js"
@@ -48,8 +48,8 @@
   {
     "name": "GUILD-YARD-a-yard-pieces-half-to-the-record",
     "file": "server-account/src/decor.js",
-    "old": "    const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;",
-    "new": "    const hall = delta > 0 && row.yard !== 1 ? await S.guildOf(db, mapId, buildingKey) : null;",
+    "old": "    const hall = delta > 0 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
+    "new": "    const hall = delta > 0 && row.yard !== 1 ? await S.guildOf(db, mapId, buildingKey) : null;\n    if (hall) {\n      // GUILD1d: a hall's piece taken out",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "GUILD-YARD-the-sale-without-the-yard",
     "file": "server-account/src/halls.js",
-    "old": "    COALESCE(SUM(CASE WHEN json_valid(place) THEN paid / 2 ELSE 0 END), 0) AS back FROM home_decor WHERE map_id = ? AND building_key = ?`,",
-    "new": "    COALESCE(SUM(CASE WHEN json_valid(place) THEN paid / 2 ELSE 0 END), 0) AS back FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = 0`,",
+    "old": "AS back FROM home_decor WHERE map_id = ? AND building_key = ?`)",
+    "new": "AS back FROM home_decor WHERE map_id = ? AND building_key = ? AND yard = 0`)",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "AUDIT-GUILD-YARD-Y1-the-keeper-off-the-rank-alone",
     "file": "server-account/src/homes.js",
-    "old": "            ...(rank != null\n              ? { member: true, ...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {}) }\n              : {}),",
-    "new": "            ...(rank != null ? { member: true, ...(guildMay(rank, 'decorate', powers) ? { keeper: true } : {}) } : {}),",
+    "old": "guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true }",
+    "new": "guildMay(rank, 'decorate', powers) ? { keeper: true }",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "AUDIT-PROF-541-G2-hallEntry-asks-a-realm-character",
     "file": "server-account/src/homes.js",
-    "old": "            ...(rank != null && guildMay(rank, 'hallEntry', powers) ? { hallEntry: true } : {}),",
-    "new": "            ...(rank != null && guildMay(rank, 'hallEntry', powers) && h.me_realm === 1 ? { hallEntry: true } : {}),",
+    "old": "guildMay(rank, 'hallEntry', powers) ? { hallEntry: true }",
+    "new": "guildMay(rank, 'hallEntry', powers) && h.me_realm === 1 ? { hallEntry: true }",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "AUDIT-GUILD-YARD-the-bars-word-your-yard",
     "file": "src/ui/decorPanel.js",
-    "old": "  if (count >= cap)\n    return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
-    "new": "  if (count >= cap) return `${yard ? 'Your yard' : 'This room'} already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
+    "old": "(hall ? \"The hall's yard\" : 'Your yard')",
+    "new": "'Your yard'",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -285,8 +285,8 @@
   {
     "name": "AUDIT-GUILD-YARD-the-panels-hall-unsent",
     "file": "src/ui/decorPanel.js",
-    "old": "            hall: !!view?.hall,\n          })",
-    "new": "          })",
+    "old": "yard: !!view?.yard, hall: !!view?.hall }) : null;",
+    "new": "yard: !!view?.yard }) : null;",
     "tests": [
       "test/net/guild_yard.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "AUDIT-GUILD-YARD-the-hall-word-for-every-yard",
     "file": "server-account/src/decor.js",
-    "old": "      : barred && (S.seat || (await hallGuildOf(db, mapId, buildingKey)))",
-    "new": "      : (sent.item || out) && (S.seat || (await hallGuildOf(db, mapId, buildingKey)))",
+    "old": "    : barred && (S.seat",
+    "new": "    : (sent.item || out) && (S.seat",
     "tests": [
       "test/net/guild_yard.test.js",
       "test/net/guild1d_service.test.js",

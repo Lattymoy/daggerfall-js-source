@@ -156,8 +156,8 @@
   {
     "name": "GILDED1-the-metal-prefix",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
-    "new": "  return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric;",
+    "old": "return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric || !!item?.gilded;",
+    "new": "return !itemIsIdentified(item) || !!item?.artifact || !!item?.legendary || !!item?.aetheric;",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "GILDED1-alpha-written",
     "file": "src/combat/thunderlockArt.js",
-    "old": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n  }",
-    "new": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n    d[o + 3] = Math.round(255 * k);\n  }",
+    "old": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n  }\n  return rgba;\n}\n/**\n * THUNDERLOCK-ART2",
+    "new": "    d[o + 2] = d[o + 2] * (1 - k) + c[2] * k;\n    d[o + 3] = Math.round(255 * k);\n  }\n  return rgba;\n}\n/**\n * THUNDERLOCK-ART2",
     "tests": [
       "test/systems/gilded1_gilded.test.js"
     ]

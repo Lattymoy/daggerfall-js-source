@@ -83,8 +83,8 @@
   {
     "name": "BC-grass-off-its-list",
     "file": "src/render/labGrass.js",
-    "old": "    const prog = buildProgram(gl, ...labGrassPrograms(stages)[0]); // GRASS-PX: the lab's text under the declared edits",
-    "new": "    const prog = buildProgram(gl, GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs); // GRASS-PX: the lab's text under the declared edits",
+    "old": "    const prog = buildProgram(gl, ...labGrassPrograms(stages)[0]);",
+    "new": "    const prog = buildProgram(gl, GAME_GRASS_FIELD + stages.vs, LAB_GRASS_HEAD + stages.fs);",
     "tests": [
       "test/render/bootcompile.test.js"
     ]

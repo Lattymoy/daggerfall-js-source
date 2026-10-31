@@ -413,8 +413,8 @@
   {
     "name": "AUDIT-GALLEON-R11-dark-tile-a-metre",
     "file": "src/world/ships/galleonArt.js",
-    "old": "  dark: [2, 2],",
-    "new": "  dark: [1, 1],",
+    "old": "dark: [2, 2]",
+    "new": "dark: [1, 1]",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -423,8 +423,8 @@
   {
     "name": "AUDIT-GALLEON-R11-dark-seamed",
     "file": "src/world/ships/galleonArt.js",
-    "old": "  planks(img, {\n    ph: 8,\n    lenMin: 20,",
-    "new": "  planks(img, {\n    ph: 7,\n    lenMin: 20,",
+    "old": "planks(img, { ph: 8, lenMin: 20, lenMax: 44, seed: 0xd4b,",
+    "new": "planks(img, { ph: 7, lenMin: 20, lenMax: 44, seed: 0xd4b,",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],
@@ -433,8 +433,8 @@
   {
     "name": "AUDIT-GALLEON-R12-a-texel-misstated",
     "file": "src/world/ships/galleonArt.js",
-    "old": "// jib's 8.0 by 25.3); a shutter's face 1.4 by 2.4, a door's 2.4 by 4.0.",
-    "new": "// jib's 8.0 by 25.3); a shutter's face 1.4 by 2.5, a door's 2.4 by 4.0.",
+    "old": "a shutter's face 1.4 by 2.4",
+    "new": "a shutter's face 1.4 by 2.5",
     "tests": [
       "test/world/ships/auditgalleon_prefab.test.js"
     ],

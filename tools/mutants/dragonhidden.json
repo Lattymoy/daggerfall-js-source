@@ -68,8 +68,8 @@
   {
     "name": "DRAGON-HIDDEN-asked-before-the-landing",
     "file": "src/scenes/dragonHost.js",
-    "old": "      if (\n        omens.has(w) ||\n        t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS ||\n        t >= dragonAskEnd(w) ||\n        t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS\n      )\n        continue; // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count",
-    "new": "      if (omens.has(w) || t >= dragonAskEnd(w) || t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS) continue; // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count",
+    "old": "if (omens.has(w) || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS ||",
+    "new": "if (omens.has(w) ||",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],
@@ -78,8 +78,8 @@
   {
     "name": "DRAGON-HIDDEN-the-ask-never-again",
     "file": "src/scenes/dragonHost.js",
-    "old": "      if (\n        omens.has(w) ||\n        t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS ||\n        t >= dragonAskEnd(w) ||\n        t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS\n      )\n        continue; // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count",
-    "new": "      if (omens.has(w) || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w) || asked.has(w)) continue; // DRAGON-HIDDEN-TIME: from the watch's start, its landing being nobody's to count",
+    "old": "t - (asked.get(w) ?? -Infinity) < DRAGON_ASK_RETRY_MS",
+    "new": "asked.has(w)",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "DRAGON-HIDDEN-the-omen-to-the-link",
     "file": "src/scenes/dragonHost.js",
-    "old": "    word: (w) => (w?.k === 'omen' ? host.omen(w) : link.word(w)), // DRAGON-HIDDEN: a watch's omen is the host's, never the fight's",
-    "new": "    word: (w) => link.word(w), // DRAGON-HIDDEN: a watch's omen is the host's, never the fight's",
+    "old": "word: (w) => (w?.k === 'omen' ? host.omen(w) : link.word(w)),",
+    "new": "word: (w) => link.word(w),",
     "tests": [
       "test/net/dragon/dragonhiddenaudit.test.js"
     ]
@@ -106,8 +106,8 @@
   {
     "name": "DRAGON-HIDDEN-a-dragon-drawn-untold",
     "file": "src/scenes/dragonHost.js",
-    "old": "    if (s == null || !isDragonOmen(o)) continue;",
-    "new": "    if (s != null && !isDragonOmen(o)) continue;",
+    "old": "if (s == null || !isDragonOmen(o)) continue;",
+    "new": "if (s != null && !isDragonOmen(o)) continue;",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ]

@@ -29,8 +29,8 @@
   {
     "name": "CK-the-book-door-names-no-window",
     "file": "src/ui/spellbookDoor.js",
-    "old": "        view = mountEnhancedSpellbook(host, { ...shared, onExit: close, owner: overlay });",
-    "new": "        view = mountEnhancedSpellbook(host, { ...shared, onExit: close, owner: null });",
+    "old": "onExit: close, owner: overlay }",
+    "new": "onExit: close, owner: null }",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "CK-the-pack-door-names-no-window",
     "file": "src/ui/inventoryDoor.js",
-    "old": "      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null, owner: overlay });",
-    "new": "      view = mountEnhancedInventory(host, { ...deps, onExit: close, fpArm: armMod?.fpArm ?? null, owner: null });",
+    "old": "owner: overlay }",
+    "new": "owner: null }",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

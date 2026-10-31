@@ -313,8 +313,8 @@
   {
     "name": "SD11E-C6-a-name-a-pattern",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  return city ? name.replace('{city}', () => city) : SD_NAMES[0]; // AUDIT SD II (L4 C6): a replacer - a name's `$&` is a name",
-    "new": "  return city ? name.replace('{city}', city) : SD_NAMES[0]; // AUDIT SD II (L4 C6): a replacer - a name's `$&` is a name",
+    "old": "name.replace('{city}', () => city)",
+    "new": "name.replace('{city}', city)",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js"
     ]
@@ -322,8 +322,8 @@
   {
     "name": "SD11E-docs-sdfell-n-earned",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "/** The boss fell: kept with the top fighter's name and how many fought it (`n` - every seat its fight took, the realm's",
-    "new": "/** The boss fell: kept with the top fighter's name and how many earned it (`n` - every seat its fight took, the realm's",
+    "old": "how many fought it (`n` - every seat its fight took",
+    "new": "how many earned it (`n` - every seat its fight took",
     "tests": [
       "test/net/superDungeon/sd11e_laws.test.js"
     ]

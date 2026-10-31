@@ -1148,8 +1148,8 @@
   {
     "name": "PROF12-item-name-potent",
     "file": "src/systems/item/itemInfo.js",
-    "old": "  if (isPotion(item))\n    return {\n      name: `${Number.isInteger(item.potent) && item.potent > 0 ? 'Potent ' : ''}${potionMacroName(item) ?? base}`,\n      material,\n    };",
-    "new": "  if (isPotion(item)) return { name: `${''}${potionMacroName(item) ?? base}`, material };",
+    "old": "${Number.isInteger(item.potent) && item.potent > 0 ? 'Potent ' : ''}",
+    "new": "${''}",
     "tests": [
       "test/systems/prof12_client.test.js"
     ]
@@ -1861,8 +1861,8 @@
   {
     "name": "PROF-541-B2-decor",
     "file": "server-account/src/decor.js",
-    "old": "  const pvSql = pv ? ' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)' : '';",
-    "new": "  const pvSql = pv ? ' AND ? IS NOT NULL AND ? IS NOT NULL' : '';",
+    "old": "' AND EXISTS (SELECT 1 FROM products WHERE provenance = ? AND owner = ? AND listed = 0)'",
+    "new": "' AND ? IS NOT NULL AND ? IS NOT NULL'",
     "tests": [
       "test/net/prof12_service.test.js"
     ]

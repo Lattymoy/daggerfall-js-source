@@ -51,8 +51,8 @@ test('the death screen shows the loss - wherever the death respawns (online, or 
   assert.match(ds, /this\.rises = !this\.online && !!rises\?\.\(\);/, 'the rise is the host\'s word, offline');
   assert.match(ds, /if \(this\.goldLoss > 0\) \{[\s\S]*?'DEATH CLAIMS \{gold\} GOLD', \{ gold: this\.goldLoss \}/, 'classic face');
   const en = read('src/ui/enhanced/enhancedDeath.js');
-  assert.match(en, /const lossLine = screen\.goldLoss > 0 \? screen\.goldLossLine \|\| deathPenaltyLine\(screen\.goldLoss\) : '';/);
-  assert.match(en, /el\(\n\s*'p',\n\s*`dth-line\$\{lossLine \? ' dth-lossline' : ''\}`,\n\s*lossLine \|\|\n\s*\(online/, 'it takes the tagline\'s place and wears its font');
+  assert.match(en, /const lossLine = screen\.goldLoss > 0 \? \(screen\.goldLossLine \|\| deathPenaltyLine\(screen\.goldLoss\)\) : '';/);
+  assert.match(en, /el\('p', `dth-line\$\{lossLine \? ' dth-lossline' : ''\}`, lossLine \|\| \(online/, 'it takes the tagline\'s place and wears its font');
   assert.match(en, /band\.append\(title, rule, line, count, keys\);/, 'no second line under it');
   assert.doesNotMatch(en, /dth-loss[ '"]/, 'the separate brass loss line is gone');
   assert.match(ds, /this\.goldLossLine = deathPenaltyLine\(this\.goldLoss\);/, 'picked once per death, not per frame');

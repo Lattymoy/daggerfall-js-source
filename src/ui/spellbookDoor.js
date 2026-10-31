@@ -27,11 +27,11 @@
 // the classic window survives a failed art load and the enhanced one
 // reads no ARENA2 at all, so the readiness gate differs by skin.
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhanced/enhancedChunk.js'; // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhanced/enhancedOverlays.js'; // PX28: Tab puts it away
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
 import { SpellbookWindow, spellbookArtLoaded } from './spellbookWindow.js';
-import { setSpellQuickslot } from '../systems/quickslots.js'; // QS8 (the drop's QS7, renamed - QS7 is one mode, one dispatch): a spell readied from the book becomes the spell slot's
-import { noteFirstUse } from '../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
+import { setSpellQuickslot } from '../systems/quickslots.js';   // QS8 (the drop's QS7, renamed - QS7 is one mode, one dispatch): a spell readied from the book becomes the spell slot's
+import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 export { spellbookArtLoaded };
 
@@ -55,7 +55,7 @@ export function spellbookDoorReady() {
  * host's `makeSpellbookWindow` already gave.
  */
 export function createSpellbookWindow(deps = {}) {
-  noteFirstUse('spellbook'); // TUT1
+  noteFirstUse('spellbook');   // TUT1
   if (!spellbookDoorReady()) return null;
   const { entity, magic, castCost, rows, onClose } = deps;
   const shared = {
@@ -99,23 +99,14 @@ function enhancedSpellbookOverlay(shared, onClose) {
   let host = null;
   let view = null;
   let done = false;
-  let unregister = () => {}; // PX28: Tab must be able to put this away
+  let unregister = () => {};   // PX28: Tab must be able to put this away
   const close = () => {
     if (done) return;
     done = true;
     unregister();
-    try {
-      view?.destroy?.();
-    } catch {
-      /* already gone */
-    }
-    try {
-      host?.remove();
-    } catch {
-      /* ditto */
-    }
-    host = null;
-    view = null;
+    try { view?.destroy?.(); } catch { /* already gone */ }
+    try { host?.remove(); } catch { /* ditto */ }
+    host = null; view = null;
     onClose?.();
   };
   const mount = () => {
@@ -124,19 +115,14 @@ function enhancedSpellbookOverlay(shared, onClose) {
     host.id = 'enhanced-spellbook';
     host.style.cssText = 'position:fixed;inset:0;z-index:11';
     document.body.append(host);
-    unregister = registerOverlay(close);
+  unregister = registerOverlay(close);
     // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js) - retried
     // once, then SPOKEN rather than closed in silence.
     // COVERED-KEYS: `owner` is the window the book's keys are gated on (ui/windowStack.js listenWindowKeys).
     mountEnhancedChunk({
       load: () => import('./enhanced/enhancedSpellbook.js'),
-      mount: ({ mountEnhancedSpellbook }) => {
-        view = mountEnhancedSpellbook(host, { ...shared, onExit: close, owner: overlay });
-      },
-      alive: () => !done,
-      host,
-      onDismiss: close,
-      label: 'spellbook',
+      mount: ({ mountEnhancedSpellbook }) => { view = mountEnhancedSpellbook(host, { ...shared, onExit: close, owner: overlay }); },
+      alive: () => !done, host, onDismiss: close, label: 'spellbook',
     });
   };
   mount();
@@ -149,27 +135,13 @@ function enhancedSpellbookOverlay(shared, onClose) {
     // a TypeError thrown inside the host's keydown handler. Same arms
     // as ui/pauseDoor.js and ui/inventoryDoor.js.
     isChoiceWindow: true,
-    get done() {
-      return done;
-    },
-    input() {
-      /* the view's own capture keydown owns the keyboard */
-    },
-    click() {
-      /* the view is a fixed div over the canvas; pointers never get here */
-    },
-    wheel() {
-      /* the view scrolls itself */
-    },
-    hover() {
-      /* the view has its own :hover, and no canvas to hit-test */
-    },
-    tick() {
-      /* nothing on this screen moves on a clock */
-    },
-    draw() {
-      /* DOM, not canvas */
-    },
+    get done() { return done; },
+    input() { /* the view's own capture keydown owns the keyboard */ },
+    click() { /* the view is a fixed div over the canvas; pointers never get here */ },
+    wheel() { /* the view scrolls itself */ },
+    hover() { /* the view has its own :hover, and no canvas to hit-test */ },
+    tick() { /* nothing on this screen moves on a clock */ },
+    draw() { /* DOM, not canvas */ },
     // `close`, `dispose` and `destroy` are the hosts' three words for
     // the same act - townTalk's showOverlay frees the outgoing window
     // with `dispose?.()`, and without it the div outlives the object.

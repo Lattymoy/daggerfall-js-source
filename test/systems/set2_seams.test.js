@@ -55,7 +55,7 @@ test('SET2 the blow\'s word: a foe whose AI has not detected me is unaware - nev
   assert.match(af, /calculateAttackDamage\(playerEntity, foe\.entity, \{[\s\S]*?unaware: foeUnaware\(foe\),[\s\S]*?\}\);/, 'the shaft\'s word');
   const f = strip(read('src/combat/formulas.js'));
   // PIN MOVED (TWO-HANDS AUDIT 2, bible/05-Combat/Two-Hands.md): and, after it, the off hand's share (`blowShare`)
-  assert.match(f, /core\(attacker, target, \{\n\s*weapon,\n\s*wraps,\n\s*damageMod,\n\s*toHitMod,\n\s*backstabChance,\n\s*weaponAnimTime,\n\s*rolls,\n\s*dfRand,\n\s*onMonsterHit,\n\s*onInflictPoison,\n\s*say,\n\s*playerReflexes,\n\s*notes,\n\s*onStruck: \(part\) => \(struckPart = part\),\n\s*unaware,\n\s*blowShare,\n\s*\}\)/, 'a replacement core is handed the word');
+  assert.match(f, /core\(attacker, target, \{ weapon, wraps, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: \(part\) => \(struckPart = part\), unaware, blowShare \}\)/, 'a replacement core is handed the word');
 });
 
 test('SET2 AUDIT SET M2: the strike tail - every named strike listener told MY attack\'s FINAL damage at a foe, with the weapon, after either core (a replaced core\'s number too); never a miss, a blow at a player, a peer\'s blow resolved here, or a foe\'s; a listener that throws is skipped (mutants: the strike listeners never told; a miss told; a blow at a player told; a peer\'s blow told; a foe\'s blow told)', () => {

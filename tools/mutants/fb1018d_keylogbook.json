@@ -2,8 +2,8 @@
   {
     "name": "KEY-LOGBOOK-old-words",
     "file": "src/systems/inputActions.js",
-    "old": "    ['LogBook', journalKeyLabel('Quests', 'logbook')],",
-    "new": "    ['LogBook', 'Quest log'],",
+    "old": "['LogBook', journalKeyLabel('Quests', 'logbook')]",
+    "new": "['LogBook', 'Quest log']",
     "tests": [
       "test/systems/fb1018d_keylogbook.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "KEY-LOGBOOK-page",
     "file": "src/systems/inputActions.js",
-    "old": "    ['LogBook', journalKeyLabel('Quests', 'logbook')],",
-    "new": "    ['LogBook', journalKeyLabel('Quest', 'logbook')],",
+    "old": "['LogBook', journalKeyLabel('Quests', 'logbook')]",
+    "new": "['LogBook', journalKeyLabel('Quest', 'logbook')]",
     "tests": [
       "test/systems/fb1018d_keylogbook.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "KEY-LOGBOOK-classic-half",
     "file": "src/systems/inputActions.js",
-    "old": "    ['LogBook', journalKeyLabel('Quests', 'logbook')],",
-    "new": "    ['LogBook', journalKeyLabel('Quests', 'logboo')],",
+    "old": "['LogBook', journalKeyLabel('Quests', 'logbook')]",
+    "new": "['LogBook', journalKeyLabel('Quests', 'logboo')]",
     "tests": [
       "test/systems/fb1018d_keylogbook.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "KEY-NOTEBOOK-old-words",
     "file": "src/systems/inputActions.js",
-    "old": "    ['NoteBook', journalKeyLabel('Notes', 'notebook')], // FB1018D KEY-LOGBOOK",
-    "new": "    ['NoteBook', 'Notebook'], // FB1018D KEY-LOGBOOK",
+    "old": "['NoteBook', journalKeyLabel('Notes', 'notebook')]",
+    "new": "['NoteBook', 'Notebook']",
     "tests": [
       "test/systems/fb1018d_keylogbook.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "KEY-NOTEBOOK-page",
     "file": "src/systems/inputActions.js",
-    "old": "    ['NoteBook', journalKeyLabel('Notes', 'notebook')], // FB1018D KEY-LOGBOOK",
-    "new": "    ['NoteBook', journalKeyLabel('Note', 'notebook')], // FB1018D KEY-LOGBOOK",
+    "old": "['NoteBook', journalKeyLabel('Notes', 'notebook')]",
+    "new": "['NoteBook', journalKeyLabel('Note', 'notebook')]",
     "tests": [
       "test/systems/fb1018d_keylogbook.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "KEY-JOURNAL-skin-name",
     "file": "src/systems/inputActions.js",
-    "old": "const journalKeyLabel = (page, classic) => `Chronicle: ${page} (Enhanced Plus) / ${classic} (Classic)`;",
-    "new": "const journalKeyLabel = (page, classic) => `Chronicle: ${page} (Enhanced Plu) / ${classic} (Classic)`;",
+    "old": "`Chronicle: ${page} (Enhanced Plus) / ${classic} (Classic)`",
+    "new": "`Chronicle: ${page} (Enhanced Plu) / ${classic} (Classic)`",
     "tests": [
       "test/systems/fb1018d_keylogbook.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "KEY-JOURNAL-window-name",
     "file": "src/systems/inputActions.js",
-    "old": "const journalKeyLabel = (page, classic) => `Chronicle: ${page} (Enhanced Plus) / ${classic} (Classic)`;",
-    "new": "const journalKeyLabel = (page, classic) => `Chronicl: ${page} (Enhanced Plus) / ${classic} (Classic)`;",
+    "old": "`Chronicle: ${page} (Enhanced Plus) / ${classic} (Classic)`",
+    "new": "`Chronicl: ${page} (Enhanced Plus) / ${classic} (Classic)`",
     "tests": [
       "test/systems/fb1018d_keylogbook.test.js"
     ],

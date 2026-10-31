@@ -47,8 +47,8 @@
   {
     "name": "WWC1-richness-on-unconfirmed-ground",
     "file": "src/net/nodeLaw.js",
-    "old": "  nodeCount(climate, kind) * (confirmed && region !== null ? richness(region, kind) : 1);",
-    "new": "  nodeCount(climate, kind) * (region !== null ? richness(region, kind) : 1);",
+    "old": "nodeCount(climate, kind) * (confirmed && region !== null ? richness(region, kind) : 1);",
+    "new": "nodeCount(climate, kind) * (region !== null ? richness(region, kind) : 1);",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WWC1-the-ores-unconfirmed",
     "file": "src/net/nodeLaw.js",
-    "old": "const signatureOres = (region, confirmed) =>\n  confirmed && region !== null ? (regionSignature(region)?.ores ?? []) : [];",
-    "new": "const signatureOres = (region, confirmed) => (region !== null ? (regionSignature(region)?.ores ?? []) : []);",
+    "old": "const signatureOres = (region, confirmed) => (confirmed && region !== null ?",
+    "new": "const signatureOres = (region, confirmed) => (region !== null ?",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WWC1-the-jungle-multiplied",
     "file": "src/net/nodeLaw.js",
-    "old": "        ? JUNGLE_TREE_SLOTS",
-    "new": "        ? JUNGLE_TREE_SLOTS * richness(region ?? 0, 'tree')",
+    "old": "jungleWoods({ x, y, climate, region, confirmed, jungle }) ? JUNGLE_TREE_SLOTS : richCount('tree', climate, region, confirmed);",
+    "new": "jungleWoods({ x, y, climate, region, confirmed, jungle }) ? JUNGLE_TREE_SLOTS * richness(region ?? 0, 'tree') : richCount('tree', climate, region, confirmed);",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "WWC1-the-veins-unmerged",
     "file": "src/net/nodeLaw.js",
-    "old": "  const table = richTable(VEIN_TABLES, 'vein', climate, region, confirmed);",
-    "new": "  const table = VEIN_TABLES[climate];",
+    "old": "  const table = richTable(VEIN_TABLES, 'vein', climate, region, confirmed);\n  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots(",
+    "new": "  const table = VEIN_TABLES[climate];\n  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots(",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WWC1-the-rare-woods-unconfirmed",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE)",
-    "new": "  if (rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE)",
+    "old": "  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return",
+    "new": "  if (rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return",
     "tests": [
       "test/net/prof4_law.test.js",
       "test/world/worldWide/wwc1_ground.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "WWC1-the-ground-the-bays-map-alone",
     "file": "src/net/nodeLaw.js",
-    "old": "  Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y);",
-    "new": "  Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && y >= 0 && x < 1000 && y < 500;",
+    "old": "export const pixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && worldPixelOk(x) && worldPixelOk(y);",
+    "new": "export const pixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && y >= 0 && x < 1000 && y < 500;",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js",
       "test/net/ether_nodes.test.js"
@@ -130,8 +130,8 @@
   {
     "name": "WWC1-a-province-on-the-bay",
     "file": "src/net/nodeLaw.js",
-    "old": "  !(isProvinceRegion(region) && x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y);",
-    "new": "  !(false && x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y);",
+    "old": "export const regionOnPixel = (region, x, y) => !(isProvinceRegion(region) && x >= 0",
+    "new": "export const regionOnPixel = (region, x, y) => !(false && x >= 0",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "WWC1-the-boulders-unrich",
     "file": "src/net/nodeLaw.js",
-    "old": "  for (let slot = 0; slot < nodeSlots('boulder', p); slot++) {",
-    "new": "  for (let slot = 0; slot < nodeCount(p.climate, 'boulder'); slot++) {",
+    "old": "  for (let slot = 0; slot < nodeSlots('boulder', p); slot++) { const n = boulder({ ...p, slot }); if (n) out.push(n); }",
+    "new": "  for (let slot = 0; slot < nodeCount(p.climate, 'boulder'); slot++) { const n = boulder({ ...p, slot }); if (n) out.push(n); }",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]

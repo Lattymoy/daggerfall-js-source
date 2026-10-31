@@ -166,8 +166,8 @@
   {
     "name": "GGLOW-the-thunderlock-shimmer-over-the-gold",
     "file": "src/combat/thunderlockArt.js",
-    "old": "    return gilded ? gildFrame(own, thunderlockGildKeep(own)) : magic ? thunderlockShimmer(own) : own;",
-    "new": "    return magic ? thunderlockShimmer(own) : gilded ? gildFrame(own, thunderlockGildKeep(own)) : own;",
+    "old": "return gilded ? gildFrame(own, thunderlockGildKeep(own)) : magic ? thunderlockShimmer(own) : own;",
+    "new": "return magic ? thunderlockShimmer(own) : gilded ? gildFrame(own, thunderlockGildKeep(own)) : own;",
     "tests": [
       "test/systems/gildedglow.test.js"
     ]

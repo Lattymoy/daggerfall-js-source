@@ -2,8 +2,8 @@
   {
     "name": "SILVER-WAYS-law-raid-31",
     "file": "src/net/marksLaw.js",
-    "old": "  raid: Object.freeze({ amount: 30 }),",
-    "new": "  raid: Object.freeze({ amount: 31 }),",
+    "old": "raid: Object.freeze({ amount: 30 }),",
+    "new": "raid: Object.freeze({ amount: 31 }),",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SILVER-WAYS-law-cap-151",
     "file": "src/net/marksLaw.js",
-    "old": "  perDay: 150,",
-    "new": "  perDay: 151,",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 151 }",
     "tests": [
       "test/net/silverways_service.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "SILVER-WAYS-law-cap-gate-alone",
     "file": "src/net/marksLaw.js",
-    "old": "export const MARKS_COMBAT = Object.freeze({\n  kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']),\n  perDay: 150,\n});",
-    "new": "export const MARKS_COMBAT = Object.freeze({ kinds: Object.freeze(['gate']), perDay: 150 });",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate']), perDay: 150 }",
     "tests": [
       "test/net/silverways_service.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "SILVER-WAYS-law-strike-no-remainder",
     "file": "src/net/marksLaw.js",
-    "old": "export const combatStrike = (amount, earned) =>\n  Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)));",
-    "new": "export const combatStrike = (amount, earned) => Math.max(0, amount);",
+    "old": "Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)))",
+    "new": "Math.max(0, amount)",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -40,8 +40,8 @@
   {
     "name": "SILVER-WAYS-law-deed-26",
     "file": "src/net/marksLaw.js",
-    "old": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
-    "new": "  deed: Object.freeze({ amount: 26, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
+    "old": "deed: Object.freeze({ amount: 25,",
+    "new": "deed: Object.freeze({ amount: 26,",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "SILVER-WAYS-law-deed-five-a-day",
     "file": "src/net/marksLaw.js",
-    "old": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
-    "new": "  deed: Object.freeze({ amount: 25, perDay: 5, members: 3, tenureS: 7 * 86_400 }),",
+    "old": "amount: 25, perDay: 4, members: 3,",
+    "new": "amount: 25, perDay: 5, members: 3,",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "SILVER-WAYS-law-deed-two-members",
     "file": "src/net/marksLaw.js",
-    "old": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
-    "new": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 2, tenureS: 7 * 86_400 }),",
+    "old": "perDay: 4, members: 3, tenureS",
+    "new": "perDay: 4, members: 2, tenureS",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "SILVER-WAYS-law-deed-six-days",
     "file": "src/net/marksLaw.js",
-    "old": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 7 * 86_400 }),",
-    "new": "  deed: Object.freeze({ amount: 25, perDay: 4, members: 3, tenureS: 6 * 86_400 }),",
+    "old": "tenureS: 7 * 86_400 }",
+    "new": "tenureS: 6 * 86_400 }",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "SILVER-WAYS-svc-cap-unread",
     "file": "server-account/src/marks.js",
-    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6",
-    "new": "    WHERE 1",
+    "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n",
+    "new": "    WHERE 1\n",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "SILVER-WAYS-svc-deed-tenure-unread",
     "file": "server-account/src/marks.js",
-    "old": "      WHERE m.player = ?1 AND m.char_id = ?3 AND m.joined_at <= ?4 - ?5 AND ${CLAIM_GUARDS[kind](6)}`,",
-    "new": "      WHERE m.player = ?1 AND m.char_id = ?3 AND 1 AND ${CLAIM_GUARDS[kind](6)}`,",
+    "old": "m.joined_at <= ?4 - ?5 AND",
+    "new": "1 AND",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "SILVER-WAYS-svc-deed-two-marks",
     "file": "server-account/src/marks.js",
-    "old": "        AND (SELECT COUNT(*) FROM guild_deed_marks x WHERE x.guild_id = d.guild_id AND x.event = ?7) >= ?8",
-    "new": "        AND (SELECT COUNT(*) FROM guild_deed_marks x WHERE x.guild_id = d.guild_id AND x.event = ?7) >= ?8 - 1",
+    "old": "x.event = ?7) >= ?8",
+    "new": "x.event = ?7) >= ?8 - 1",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "SILVER-WAYS-svc-deed-day-unbounded",
     "file": "server-account/src/marks.js",
-    "old": "        AND (SELECT COUNT(*) FROM marks_ledger l WHERE l.dst_kind = 'guild' AND l.dst_id = d.guild_id AND l.kind = 'guild-deed' AND l.day = ?3) < ?9",
-    "new": "        AND (SELECT COUNT(*) FROM marks_ledger l WHERE l.dst_kind = 'guild' AND l.dst_id = d.guild_id AND l.kind = 'guild-deed' AND l.day = ?3) < ?9 + 1",
+    "old": "l.kind = 'guild-deed' AND l.day = ?3) < ?9",
+    "new": "l.kind = 'guild-deed' AND l.day = ?3) < ?9 + 1",
     "tests": [
       "test/net/silverways_service.test.js"
     ]
@@ -130,7 +130,7 @@
   {
     "name": "SILVER-WAYS-svc-gate-deed-none",
     "file": "server-account/src/accounts.js",
-    "old": "  const deed = c.x === 'rite' ? null : (deeds?.(c.d) ?? null);",
+    "old": "  const deed = c.x === 'rite' ? null : deeds?.(c.d) ?? null;",
     "new": "  const deed = null;",
     "tests": [
       "test/net/silverways_service.test.js"
@@ -185,8 +185,8 @@
   {
     "name": "SILVER-WAYS-svc-guild-goes-with-contract",
     "file": "server-account/src/guilds.js",
-    "old": "  [\n    'guild-contracts',\n    (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state = 'open')`,\n  ], // SILVER-WAYS: a contract standing",
-    "new": "  ['guild-contracts', (/** @type {string} */ p) => `0`], // SILVER-WAYS: a contract standing",
+    "old": "`EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state = 'open')`",
+    "new": "`0`",
     "tests": [
       "test/net/silverways_service.test.js",
       "test/net/silverways_client.test.js"

@@ -144,8 +144,8 @@
   {
     "name": "DECORMODS-late-unlisted",
     "file": "src/ui/decorPanel.js",
-    "old": "      view?.sized ?? 0,\n      view?.gold ?? 0,",
-    "new": "      view?.gold ?? 0,",
+    "old": "view?.ready ? 1 : 0, view?.sized ?? 0, view?.gold ?? 0,",
+    "new": "view?.ready ? 1 : 0, view?.gold ?? 0,",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],
@@ -164,8 +164,8 @@
   {
     "name": "DECORMODS-builder-off-table",
     "file": "src/world/detStandIns.js",
-    "old": "      [tapestry, () => hanging(DET_PICTURES[tapestry], 0.9, 1.35)],",
-    "new": "      [tapestry, () => hanging(PICTURE.regionBanner('Glenpoint'), 0.9, 1.35)],",
+    "old": "    [tapestry, () => hanging(DET_PICTURES[tapestry], 0.9, 1.35)],",
+    "new": "    [tapestry, () => hanging(PICTURE.regionBanner('Glenpoint'), 0.9, 1.35)],",
     "tests": [
       "test/systems/decor/decormods.test.js"
     ],

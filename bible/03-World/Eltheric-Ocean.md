@@ -523,7 +523,7 @@ The sea past the Veil is **the Eltheric Ocean** (2026-10-12, the owner: "Apparen
 not etheric"). It is the lore's ocean west of Tamriel and the name the world had already given the waters west of the
 Bay (`world/tamriel/tamrielGeography.js` SEAS, the intro map's; `test/ui/tamriel.test.js` "the Bay opens west to the Eltheric") -
 one ocean, one name, the noun the owner's own. It was "the Etheric Sea", spelt in fourteen literals across eight modules;
-the word has one home now, `ethericSea.js:"export const ETHER_WORD"`, and every word a player reads of the
+the word has one home now, `ethericSea.js:"export const ETHER_WORD = 'Eltheric';"`, and every word a player reads of the
 sea is made of it: the chart's title and its two labels, the harbourmaster's lede, the legend's end, the crossing's
 question and its landfall, the log's lines and trades, the isles' region's words and the unstreamed landing.
 `test/world/eltheric.test.js` holds the word, the names, the map's ocean the same, each reader made of it, and a scan of the
@@ -594,7 +594,7 @@ nothing here to gather."), and every ask after an isle pixel's witnesses was ref
 apart for as long as the captain stood there.
 
 THE LAW. The nodes' ground is the Bay's map and the Eltheric's box
-(`nodeLaw.js:"export const pixelOk"`; the ground's one
+(`nodeLaw.js:"export const pixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y)"`; the ground's one
 home is `world/ethericSea.js` `onBayOrEther` since ETHER-OW, where the Overworld's bands and raiders are born too), and a node's and a haul's ids are read in their one spelling with four digits and a sign. Nothing
 else moves: the day's counts by climate, the tiers, the witnessed world (an isle pixel is unconfirmed until three
 week-old accounts agree, worth its kind's least till then), the regions' materials (an isle's herbs are Betony's), a

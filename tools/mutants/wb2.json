@@ -101,8 +101,8 @@
   {
     "name": "WB2-a-collider-while-it-rises",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "    const want = place?.risen && !place.coarse ? matrixOf(place) : null; // GATE-SEEN: a beacon alone stands nothing to walk into",
-    "new": "    const want = place && !place.coarse ? matrixOf(place) : null; // GATE-SEEN: a beacon alone stands nothing to walk into",
+    "old": "    const want = place?.risen && !place.coarse ? matrixOf(place) : null;",
+    "new": "    const want = place && !place.coarse ? matrixOf(place) : null;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB2-it-never-rises",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "  return {\n    day: g.day,\n    phase,\n    origin: [x, ground - (1 - eased) * sunk, z],\n    ground,\n    yaw,\n    fade,\n    risen: rise >= 1,\n    coarse,\n  };",
-    "new": "  return { day: g.day, phase, origin: [x, ground, z], ground, yaw, fade, risen: rise >= 1, coarse };",
+    "old": "  return { day: g.day, phase, origin: [x, ground - (1 - eased) * sunk, z],",
+    "new": "  return { day: g.day, phase, origin: [x, ground, z],",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WB2-a-gate-on-no-ground",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "  if (!Number.isFinite(ground)) return null;\n  const phase = gatePhase(g.t, now, g.fellAt);",
-    "new": "  const phase = gatePhase(g.t, now, g.fellAt);",
+    "old": "  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;\n  if (!Number.isFinite(ground)) return null;\n",
+    "new": "  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;\n",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WB2-entered-without-a-relay",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (!ready()) {\n        refuse(GATE_TEXT.notYet);\n        return false;\n      }\n      enter({ day: g.day, near: g.near, origin: place.origin, yaw: place.yaw, px: g.px, py: g.py, spot: g.spot });",
-    "new": "      enter({ day: g.day, near: g.near, origin: place.origin, yaw: place.yaw, px: g.px, py: g.py, spot: g.spot });",
+    "old": "      if (!ready()) { refuse(GATE_TEXT.notYet); return false; }\n",
+    "new": "",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WB2-the-refusal-every-press",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "    if (t - saidAt < GATE_SAY_MS) return;\n    saidAt = t;",
-    "new": "    saidAt = t;",
+    "old": "    if (t - saidAt < GATE_SAY_MS) return;\n",
+    "new": "",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -155,7 +155,7 @@
   {
     "name": "WB2-walked-in-past-the-horns",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "        const inside =\n          Math.abs(lx) < openingHalfWidth(profile, Math.max(ARCH_Y0 + 0.05, ly + 0.9)) && Math.abs(lz) < GATE_STEP_M;",
+    "old": "        const inside = Math.abs(lx) < openingHalfWidth(profile, Math.max(ARCH_Y0 + 0.05, ly + 0.9)) && Math.abs(lz) < GATE_STEP_M;",
     "new": "        const inside = Math.abs(lz) < GATE_STEP_M;",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
@@ -164,8 +164,8 @@
   {
     "name": "WB2-the-banner-from-afar",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      if (place && f && Math.hypot(f[0] - place.origin[0], f[2] - place.origin[2]) <= GATE_BANNER_M) {",
-    "new": "      if (place && f && Math.hypot(f[0] - place.origin[0], f[2] - place.origin[2]) <= GATE_BANNER_M * 10) {",
+    "old": "Math.hypot(f[0] - place.origin[0], f[2] - place.origin[2]) <= GATE_BANNER_M) {",
+    "new": "Math.hypot(f[0] - place.origin[0], f[2] - place.origin[2]) <= GATE_BANNER_M * 10) {",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WB2-any-key-opens-the-gate",
     "file": "src/scenes/gate/gatePool.js",
-    "old": "      return typeof key === 'string' && key.startsWith('gate:') ? tryEnter() : false;",
-    "new": "      return typeof key === 'string' ? tryEnter() : false;",
+    "old": "return typeof key === 'string' && key.startsWith('gate:') ? tryEnter() : false; },",
+    "new": "return typeof key === 'string' ? tryEnter() : false; },",
     "tests": [
       "test/world/gate/wb2_gate.test.js"
     ]

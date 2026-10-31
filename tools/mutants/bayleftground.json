@@ -556,8 +556,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-dropped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
-    "new": "    // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ],
@@ -566,8 +566,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-on-the-Bay",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
-    "new": "    if (landform && !(frame >= LIFT_FRAME_LAW)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (landform && !(frame >= LIFT_FRAME_LAW)) y -= landformLiftAt(x, z, { before: true });",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ],
@@ -576,8 +576,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-on-a-stamped-record",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
-    "new": "    if (landform && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (landform && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ],
@@ -586,8 +586,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-with-the-row-off",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
-    "new": "    if (!(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (!(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ],
@@ -596,8 +596,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-step-by-todays-lift",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true }); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
-    "new": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z); // BAY-LEFT-GROUND: the old law's frame past the Bay, into DFU's",
+    "old": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z, { before: true });",
+    "new": "    if (landform && !(frame >= LIFT_FRAME_LAW) && !bayAt(x, z)) y -= landformLiftAt(x, z);",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ],
@@ -606,8 +606,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-lift-the-Bays-bound",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0; // BAY-LEFT-GROUND: the world's grid - it was the Bay's 1000 x 500, and 0 past it",
-    "new": "    if (!host.woods || !inBay(px, py)) return 0; // BAY-LEFT-GROUND: the world's grid - it was the Bay's 1000 x 500, and 0 past it",
+    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;   // BAY-LEFT-GROUND: the world's grid",
+    "new": "    if (!host.woods || !inBay(px, py)) return 0;   // BAY-LEFT-GROUND: the world's grid",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -615,8 +615,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-lift-the-grids-bound-dropped",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0; // BAY-LEFT-GROUND: the world's grid - it was the Bay's 1000 x 500, and 0 past it",
-    "new": "    if (!host.woods) return 0; // BAY-LEFT-GROUND: the world's grid - it was the Bay's 1000 x 500, and 0 past it",
+    "old": "    if (!host.woods || !inWorldGrid(px, py)) return 0;   // BAY-LEFT-GROUND: the world's grid",
+    "new": "    if (!host.woods) return 0;   // BAY-LEFT-GROUND: the world's grid",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -624,8 +624,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-old-laws-landforms-the-new",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "      field = landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere({ before }), about);",
-    "new": "      field = landformLiftField(host.woods, px, py, rect, HEIGHTMAP_DIMENSION, landformsHere(), about);",
+    "old": "landformsHere({ before })",
+    "new": "landformsHere()",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -633,8 +633,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-field-kept-across-the-generation",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()},${aboutKey(about)}`;",
-    "new": "    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : 1},${aboutKey(about)}`;",
+    "old": "${before ? 'before' : beyondSites.generation()}",
+    "new": "${before ? 'before' : 1}",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -642,8 +642,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-field-one-book-for-both-laws",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${before ? 'before' : beyondSites.generation()},${aboutKey(about)}`;",
-    "new": "    const key = `${px},${py},${rect ? `${rect.xMin},${rect.xMax},${rect.yMin},${rect.yMax}` : '-'},${terrainGen.roads() ? 1 : 0},${beyondSites.generation()},${aboutKey(about)}`;",
+    "old": "${before ? 'before' : beyondSites.generation()}",
+    "new": "${beyondSites.generation()}",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -651,8 +651,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-the-Bay-everywhere",
     "file": "src/scenes/groundFrameHost.js",
-    "old": "    bayAt: (x, z) => inBay(...framePixelAt(host.state, x, z)),",
-    "new": "    bayAt: () => true,",
+    "old": "bayAt: (x, z) => inBay(...framePixelAt(host.state, x, z))",
+    "new": "bayAt: () => true",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -742,8 +742,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-deck-reader-blind",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "      const y =\n        restandHeight(\n          localPos[1] - c,\n          localPos[0],\n          localPos[2],\n          scaleOf(t.restore.terrainScale),\n          t.restore.groundFrame,\n        ) + c; // BAY-LEFT-GROUND: by its frame's law",
-    "new": "      const y = restandHeight(localPos[1] - c, localPos[0], localPos[2], scaleOf(t.restore.terrainScale)) + c; // BAY-LEFT-GROUND: by its frame's law",
+    "old": "scaleOf(t.restore.terrainScale), t.restore.groundFrame)",
+    "new": "scaleOf(t.restore.terrainScale))",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -787,8 +787,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-world-deck-unstamped",
     "file": "src/scenes/shipBoardHost.js",
-    "old": "          ...RECORD_GROUND_STAMP,",
-    "new": "          terrainScale: STREAMING_TERRAIN_SCALE,",
+    "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP }",
+    "new": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]

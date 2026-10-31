@@ -249,8 +249,8 @@
   {
     "name": "ECOTONE1-sway-set-ignored",
     "file": "src/systems/wind/windDrive.js",
-    "old": "  if (natureArchive instanceof Set ? !natureArchive.has(archive) : archive !== natureArchive) return 0;",
-    "new": "  if (natureArchive instanceof Set ? true : archive !== natureArchive) return 0;",
+    "old": "if (natureArchive instanceof Set ? !natureArchive.has(archive) : archive !== natureArchive) return 0;",
+    "new": "if (natureArchive instanceof Set ? true : archive !== natureArchive) return 0;",
     "tests": [
       "test/systems/ecotone1.test.js"
     ]

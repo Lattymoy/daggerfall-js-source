@@ -2,8 +2,8 @@
   {
     "name": "AFB-FAMILY-F3-the-race-founds-again",
     "file": "server-account/src/legacy.js",
-    "old": "    if (base !== null) return { error: 'no-lineage' };\n  }",
-    "new": "  }",
+    "old": "    if (base !== null) return { error: 'no-lineage' };\n  }\n  const founding",
+    "new": "  }\n  const founding",
     "tests": [
       "test/server/family_remove.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AFB-FAMILY-F3-null-answered",
     "file": "server-account/src/legacy.js",
-    "old": "    const stale = await staleLine(db, playerId, id, rec.model);\n    if (stale) return stale;",
-    "new": "    return staleLine(db, playerId, id, rec.model);",
+    "old": "    const stale = await staleLine(db, playerId, id, rec.model);\n    if (stale) return stale;\n    // AUDIT FB1029g FAMILY F3",
+    "new": "    return staleLine(db, playerId, id, rec.model);\n    // AUDIT FB1029g FAMILY F3",
     "tests": [
       "test/server/family_remove.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AFB-FAMILY-F3-stale-unsaid",
     "file": "server-account/src/legacy.js",
-    "old": "    if (stale) return stale;\n    // AUDIT FB1029g FAMILY F3: removed between the read and the UPDATE - F2's answer to a copy made from it (null was a",
-    "new": "    // AUDIT FB1029g FAMILY F3: removed between the read and the UPDATE - F2's answer to a copy made from it (null was a",
+    "old": "    if (stale) return stale;\n",
+    "new": "",
     "tests": [
       "test/server/family_remove.test.js",
       "test/server/legacy7_service.test.js"

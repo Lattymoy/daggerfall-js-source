@@ -69,7 +69,7 @@ gaming desktop (scripts, not committed):
   size of the largest field save we hold) about 48 ms in one frame and another 33 ms in a later task once the put
   lands; about 9 ms at a typical 600 KB. A known hitch that grows with the save (Performance-Next.md), but its cadence
   is fixed, and the report's is not;
-- the checkpoint's landform lift fields (`groundFrameHost.js:"const LIFT_FIELDS_KEPT"`): about 37 ms a town pixel the
+- the checkpoint's landform lift fields (`groundFrameHost.js:"const LIFT_FIELDS_KEPT = 32;"`): about 37 ms a town pixel the
   memo misses, on synthetic bytes;
 - an offline save, 13.6 ms at 4.37 MB, only when the player saves;
 - the desktop file store's atomic write, 9-28 ms for a 4.3 MB save on this disk (Windows under antivirus is
@@ -114,7 +114,7 @@ FOUND, in Node over the real account service on node:sqlite, the real client reg
 host's own gates: character A of an account claims a home; the town read as the account's character B. The door lets
 B in, every station refuses, and the enchanting station says "This belongs to <the account's own handle>." Two owner
 questions disagreed (THE ONE CONSTRUCTION SEAM):
-- the door asks the ACCOUNT (`mine`: `homes.js:"const mine = h.player"` on the service,
+- the door asks the ACCOUNT (`mine`: `homes.js:"      const mine = h.player === player.id;"` on the service,
   `homeLaw.js:"if (home.mine) return"`);
 - the stations asked THIS CHARACTER (`own`: `onlineHomes.js` homeAt's `row.mine && typeof me === 'string' && row.character === me` - since
   ACCOUNT-HOMES, `onlineHomes.js:"const own = row.mine"`, the account's too),
@@ -139,7 +139,7 @@ not built.
 AUDIT FB1018D. "A visitor the door admits is refused" was pinned for a home open to anyone alone; a guildmate the door
 lets in (entry 'guild') and a tenant are pinned refused too, every accessor null (L1-3). A knight's house still
 refuses the account's other character (L1-4): the service hands B the deed row
-(`homes.js:"own as an online".."homes: results"`),
+(`homes.js:"homes: results.filter((h) => !(h.deed === 1 && h.player === player.id && h.char_id === me)).map((h) => {"`),
 which reads `mine` and so would serve its stations - but the house's pieces are A's save's and the service lists none,
 so B finds no station to press. Cruor's report still stands in a knight's house; closing it needs a deed house's
 pieces on the service. Left.
@@ -307,7 +307,7 @@ Ready ends a solo rest about 12 s later. All of it is the record's (16.2-16.4, 1
 
 FOUND ON THE WAY, NOT FIXED. One key does two things there (Controls.md KB1 law 3, "No default code ships twice", and
 law 5, no raw read of a bound key):
-- Y is the default FreeMouse (`inputActions.js:"['KeyY', 'FreeMouse']"`), heard first by the capture-phase toggle
+- Y is the default FreeMouse (`inputActions.js:"  ['KeyY', 'FreeMouse'],"`), heard first by the capture-phase toggle
   (`pointerLock.js:"addEventListener('keydown', onKey, true)"`), which does not stop the key. The world's handler
   then hands the same press to the Spire (`world.js:"if ((!e.repeat && !gamePaused() && egClient?.key(e)) || (!gamePaused() && staffView.key(e))) { e.preventDefault(); return; }"`),
   which reads Y as a Ready vote (`egClient.js:"if (open.length && (code === 'KeyY' || code === 'KeyN')) return this.vote("`).
@@ -338,7 +338,7 @@ FOUND. On Enhanced Plus L and N open the Chronicle (PX24d, a66c269a: both journa
 "Quest log" over a window headed Chronicle.
 
 FIXED. The rows say both skins, because the same Controls pane is the Classic boot Settings' too:
-`inputActions.js:"const journalKeyLabel"`
+`inputActions.js:"const journalKeyLabel = (page, classic) =>"`
 - "Chronicle: Quests (Enhanced Plus) / logbook (Classic)" and "Chronicle: Notes (Enhanced Plus) / notebook
 (Classic)". The Controller bindings window (Enhanced Plus only) says "Chronicle: Quests" for the d-pad. No host
 changed: a key rebound gets what the row says (LogBook moved to K: K opened and closed the Chronicle, L did nothing).

@@ -2,8 +2,8 @@
   {
     "name": "CURSE-CARRY-no-carry",
     "file": "src/systems/guild/guilds.js",
-    "old": "  carryInvitationOnly(entity.guildMemberships, vamp); // CURSE-CARRY: the two that cannot be asked ride the swap\n  return membershipsFor(entity.guildMemberships, vamp);",
-    "new": "  return membershipsFor(entity.guildMemberships, vamp);",
+    "old": "  carryInvitationOnly(entity.guildMemberships, vamp);   // CURSE-CARRY: the two that cannot be asked ride the swap\n",
+    "new": "",
     "tests": [
       "test/systems/guild/fb1017d_cursecarry.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CURSE-CARRY-copied",
     "file": "src/systems/guild/guilds.js",
-    "old": "    delete from[key];\n  }",
-    "new": "  }",
+    "old": "    delete from[key];\n",
+    "new": "",
     "tests": [
       "test/systems/guild/fb1017d_cursecarry.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "CURSE-CARRY-every-guild",
     "file": "src/systems/guild/guilds.js",
-    "old": "  for (const name of INVITATION_ONLY) {",
-    "new": "  for (const name of Object.keys(GUILDS)) {",
+    "old": "  for (const name of INVITATION_ONLY) {\n    const key = membershipKey(GUILDS[name]);",
+    "new": "  for (const name of Object.keys(GUILDS)) {\n    const key = membershipKey(GUILDS[name]);",
     "tests": [
       "test/systems/guild/fb1017d_cursecarry.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "CURSE-CARRY-one-guild",
     "file": "src/systems/guild/guilds.js",
-    "old": "  for (const name of INVITATION_ONLY) {",
-    "new": "  for (const name of ['DarkBrotherhood']) {",
+    "old": "  for (const name of INVITATION_ONLY) {\n    const key = membershipKey(GUILDS[name]);",
+    "new": "  for (const name of ['DarkBrotherhood']) {\n    const key = membershipKey(GUILDS[name]);",
     "tests": [
       "test/systems/guild/fb1017d_cursecarry.test.js"
     ],

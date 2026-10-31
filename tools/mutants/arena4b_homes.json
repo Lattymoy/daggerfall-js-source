@@ -20,8 +20,8 @@
   {
     "name": "ARENA4B-CARRY-COLUMN",
     "file": "server-account/src/homes.js",
-    "old": "  'look',\n  'layout',",
-    "new": "  'layout',",
+    "old": "'rent_due', 'look', 'layout', 'deed', 'ground']);",
+    "new": "'rent_due', 'layout', 'deed', 'ground']);",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "ARENA4B-TENANCY-UNMOVED",
     "file": "server-account/src/homes.js",
-    "old": "        'UPDATE home_rooms SET building_key = ?, listed = 0, anchor = ? WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ?',",
-    "new": "        'UPDATE home_rooms SET building_key = ?, listed = 0, anchor = ? WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ? AND 0',",
+    "old": "WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ?')",
+    "new": "WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ? AND 0')",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "ARENA4B-TENANCY-LISTED",
     "file": "server-account/src/homes.js",
-    "old": "        'UPDATE home_rooms SET building_key = ?, listed = 0, anchor = ? WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ?',",
-    "new": "        'UPDATE home_rooms SET building_key = ?, listed = 1, anchor = ? WHERE map_id = ? AND building_key = ? AND tenant IS NOT NULL AND until > ?',",
+    "old": "'UPDATE home_rooms SET building_key = ?, listed = 0, anchor = ?",
+    "new": "'UPDATE home_rooms SET building_key = ?, listed = 1, anchor = ?",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "ARENA4B-REFUND-HALF",
     "file": "server-account/src/homes.js",
-    "old": "  const refund = Math.max(0, Number(d?.paid) || 0);",
-    "new": "  const refund = Math.trunc(Math.max(0, Number(d?.paid) || 0) / 2);",
+    "old": "const refund = Math.max(0, Number(d?.paid) || 0);",
+    "new": "const refund = Math.trunc(Math.max(0, Number(d?.paid) || 0) / 2);",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -57,8 +57,8 @@
   {
     "name": "ARENA4B-REFUND-ITEM",
     "file": "server-account/src/homes.js",
-    "old": "      `SELECT COUNT(*) AS n, COALESCE(SUM(CASE WHEN item IS NULL THEN paid ELSE 0 END), 0) AS paid,",
-    "new": "      `SELECT COUNT(*) AS n, COALESCE(SUM(paid), 0) AS paid,",
+    "old": "COALESCE(SUM(CASE WHEN item IS NULL THEN paid ELSE 0 END), 0) AS paid,",
+    "new": "COALESCE(SUM(paid), 0) AS paid,",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "ARENA4B-FROM-CELL",
     "file": "server-account/src/homes.js",
-    "old": "  if (!homeInArenaCell(mapId, from)) return { error: 'home-unmoved' };",
-    "new": "  if (false) return { error: 'home-unmoved' };",
+    "old": "if (!homeInArenaCell(mapId, from)) return { error: 'home-unmoved' };",
+    "new": "if (false) return { error: 'home-unmoved' };",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -75,8 +75,8 @@
   {
     "name": "ARENA4B-TO-CELL",
     "file": "server-account/src/homes.js",
-    "old": "  if (homeInArenaCell(mapId, to)) return { error: 'home-arena' }; // the new house outside the cell - `to` = `from` among it",
-    "new": "  if (false) return { error: 'home-arena' }; // the new house outside the cell - `to` = `from` among it",
+    "old": "if (homeInArenaCell(mapId, to)) return { error: 'home-arena' };",
+    "new": "if (false) return { error: 'home-arena' };",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -84,8 +84,8 @@
   {
     "name": "ARENA4B-OWNER-UNASKED",
     "file": "server-account/src/homes.js",
-    "old": "  if (!owns) return { error: 'no-home' }; // nobody's and somebody else's are one word (HOME1)",
-    "new": "  if (!home) return { error: 'no-home' }; // nobody's and somebody else's are one word (HOME1)",
+    "old": "if (!owns) return { error: 'no-home' };",
+    "new": "if (!home) return { error: 'no-home' };",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -93,8 +93,8 @@
   {
     "name": "ARENA4B-REALM-NEEDED",
     "file": "server-account/src/homes.js",
-    "old": "    if (!side.at) return { error: 'realm-needed' };",
-    "new": "    if (false) return { error: 'realm-needed' };",
+    "old": "if (!side.at) return { error: 'realm-needed' };",
+    "new": "if (false) return { error: 'realm-needed' };",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "ARENA4B-DECOR-GUARD",
     "file": "server-account/src/homes.js",
-    "old": "        AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?3\n        AND (SELECT COALESCE(SUM(CASE WHEN item IS NULL THEN paid ELSE 0 END), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?4`,",
-    "new": "        AND ?3 = ?3 AND ?4 = ?4`,",
+    "old": "        AND (SELECT COUNT(*) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?3\n        AND (SELECT COALESCE(SUM(CASE WHEN item IS NULL THEN paid ELSE 0 END), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?4`)",
+    "new": "        AND ?3 = ?3 AND ?4 = ?4`)",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -111,8 +111,8 @@
   {
     "name": "ARENA4B-HALL-GUILD-INSERT",
     "file": "server-account/src/homes.js",
-    "old": "        `INSERT INTO homes (map_id, building_key, ${cols}, guild_id) SELECT map_id, ?, ${cols}, NULL FROM homes",
-    "new": "        `INSERT INTO homes (map_id, building_key, ${cols}, guild_id) SELECT map_id, ?, ${cols}, guild_id FROM homes",
+    "old": "SELECT map_id, ?, ${cols}, NULL FROM homes",
+    "new": "SELECT map_id, ?, ${cols}, guild_id FROM homes",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "ARENA4B-HALL-REFUND-RECORD",
     "file": "server-account/src/homes.js",
-    "old": "  if (refund > 0 && gid == null) {",
-    "new": "  if (refund > 0) {",
+    "old": "if (refund > 0 && gid == null) {",
+    "new": "if (refund > 0) {",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "ARENA4B-ONCE",
     "file": "server-account/src/homes.js",
-    "old": "  if (was) return was.player === player.id ? { ok: true, repeat: true, ...moveOf(was) } : { error: 'no-home' };",
-    "new": "  if (false) return was.player === player.id ? { ok: true, repeat: true, ...moveOf(was) } : { error: 'no-home' };",
+    "old": "if (was) return was.player === player.id ? { ok: true, repeat: true, ...moveOf(was) } : { error: 'no-home' };",
+    "new": "if (false) return was.player === player.id ? { ok: true, repeat: true, ...moveOf(was) } : { error: 'no-home' };",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "ARENA4B-CLAIM-GUARD",
     "file": "server-account/src/homes.js",
-    "old": "  // with the shapes (no record moves for it, so no record is asked first)\n  if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };",
-    "new": "  // with the shapes (no record moves for it, so no record is asked first)\n  if (false) return { error: 'home-arena' };",
+    "old": "if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };\n  // WD3 (AUDIT WD3 B2)",
+    "new": "if (false) return { error: 'home-arena' };\n  // WD3 (AUDIT WD3 B2)",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ],
@@ -148,8 +148,8 @@
   {
     "name": "ARENA4B-HALL-GUARD",
     "file": "server-account/src/halls.js",
-    "old": "  if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' }; // ARENA4b: the arena stands there - a build from before it still stands GEMSAL03 (homes.js claimHome's guard)",
-    "new": "  if (false) return { error: 'home-arena' }; // ARENA4b: the arena stands there - a build from before it still stands GEMSAL03 (homes.js claimHome's guard)",
+    "old": "if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };",
+    "new": "if (false) return { error: 'home-arena' };",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "ARENA4B-MOVES-OTHER-CHAR",
     "file": "server-account/src/homes.js",
-    "old": "      'SELECT * FROM home_moves WHERE player = ? AND char_id = ? AND seen_at IS NULL ORDER BY moved_at, map_id, old_key LIMIT ?',",
-    "new": "      'SELECT * FROM home_moves WHERE player = ? AND ? IS NOT NULL AND seen_at IS NULL ORDER BY moved_at, map_id, old_key LIMIT ?',",
+    "old": "WHERE player = ? AND char_id = ? AND seen_at IS NULL ORDER BY",
+    "new": "WHERE player = ? AND ? IS NOT NULL AND seen_at IS NULL ORDER BY",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "ARENA4B-MOVES-READ-AGAIN",
     "file": "server-account/src/homes.js",
-    "old": "    .prepare(\n      'SELECT * FROM home_moves WHERE player = ? AND char_id = ? AND seen_at IS NULL ORDER BY moved_at, map_id, old_key LIMIT ?',\n    )",
-    "new": "    .prepare('SELECT * FROM home_moves WHERE player = ? AND char_id = ? ORDER BY moved_at, map_id, old_key LIMIT ?')",
+    "old": "AND char_id = ? AND seen_at IS NULL ORDER BY moved_at",
+    "new": "AND char_id = ? ORDER BY moved_at",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "ARENA4B-ROOMS-MOVED-DROPPED",
     "file": "server-account/src/rent.js",
-    "old": "    if (!anchor && !moved) continue;",
-    "new": "    if (!anchor) continue;",
+    "old": "if (!anchor && !moved) continue;",
+    "new": "if (!anchor) continue;",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ]

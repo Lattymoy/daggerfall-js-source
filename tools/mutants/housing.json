@@ -112,8 +112,8 @@
   {
     "name": "HOME-DOORS-the-bucket-left",
     "file": "src/world/actionSystem.js",
-    "old": "    this.collider.removeBucket(key);\n    return true;",
-    "new": "    return true;",
+    "old": "    this.collider.removeBucket(key);\n    return true;\n  }",
+    "new": "    return true;\n  }",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "HOME-RENT-the-price-unchecked",
     "file": "server-account/src/rent.js",
-    "old": "  if (row.price !== price) return { error: 'rent-price', price: row.price };\n  const until = rentUntil(nowS, renewing ? row.until : 0, days);",
-    "new": "  const until = rentUntil(nowS, renewing ? row.until : 0, days);",
+    "old": "  if (row.price !== price) return { error: 'rent-price', price: row.price };\n",
+    "new": "",
     "tests": [
       "test/server/homerent.test.js"
     ],
@@ -195,8 +195,8 @@
   {
     "name": "HOME-RENT-the-owner-renting",
     "file": "server-account/src/rent.js",
-    "old": "  if (row.owner === player.id) return { error: 'rent-own' };\n  const running = row.tenant != null && row.until > nowS;",
-    "new": "  const running = row.tenant != null && row.until > nowS;",
+    "old": "  if (row.owner === player.id) return { error: 'rent-own' };\n",
+    "new": "",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -204,8 +204,8 @@
   {
     "name": "HOME-RENT-the-hold-unmoved",
     "file": "server-account/src/rent.js",
-    "old": "        .prepare('UPDATE homes SET rent_due = rent_due + ? WHERE map_id = ? AND building_key = ?')\n        .bind(cost, mapId, buildingKey),",
-    "new": "        .prepare('UPDATE homes SET rent_due = rent_due + 0 WHERE map_id = ? AND building_key = ?')\n        .bind(mapId, buildingKey),",
+    "old": "      db.prepare('UPDATE homes SET rent_due = rent_due + ? WHERE map_id = ? AND building_key = ?').bind(cost, mapId, buildingKey),",
+    "new": "      db.prepare('UPDATE homes SET rent_due = rent_due + 0 WHERE map_id = ? AND building_key = ?').bind(mapId, buildingKey),",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -222,8 +222,8 @@
   {
     "name": "HOME-RENT-the-withdraw-deleting-a-tenancy",
     "file": "server-account/src/rent.js",
-    "old": "        `DELETE FROM home_rooms WHERE map_id = ? AND building_key = ? AND room = ? AND (tenant IS NULL OR until <= ?) AND ${OWNS} RETURNING room`,",
-    "new": "        `DELETE FROM home_rooms WHERE map_id = ? AND building_key = ? AND room = ? AND (tenant IS NULL OR until <= ? OR 1) AND ${OWNS} RETURNING room`,",
+    "old": "AND room = ? AND (tenant IS NULL OR until <= ?) AND ${OWNS} RETURNING room`)",
+    "new": "AND room = ? AND (tenant IS NULL OR until <= ? OR 1) AND ${OWNS} RETURNING room`)",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -231,8 +231,8 @@
   {
     "name": "HOME-RENT-the-sale-unguarded",
     "file": "server-account/src/homes.js",
-    "old": "          .first()\n      )?.n ?? 0,\n    ) > 0\n  )\n    return { error: 'home-tenants' };",
-    "new": "          .first()\n      )?.n ?? 0,\n    ) > 1e9\n  )\n    return { error: 'home-tenants' };",
+    "old": ".bind(mapId, buildingKey, ctx.nowS ?? Math.floor(Date.now() / 1000)).first())?.n ?? 0) > 0) return { error: 'home-tenants' };",
+    "new": ".bind(mapId, buildingKey, ctx.nowS ?? Math.floor(Date.now() / 1000)).first())?.n ?? 0) > 1e9) return { error: 'home-tenants' };",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "HOME-LOOK-the-owner-unchecked",
     "file": "server-account/src/homes.js",
-    "old": "    .prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character)",
-    "new": "    .prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey)",
+    "old": "  const r = await db.prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ? AND ${OWNS}`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey, mapId, buildingKey, player.id, character).run();",
+    "new": "  const r = await db.prepare(`UPDATE homes SET look = ? WHERE map_id = ? AND building_key = ?`)\n    .bind(next ? JSON.stringify(next) : null, mapId, buildingKey).run();",
     "tests": [
       "test/net/homelook.test.js"
     ]
@@ -350,8 +350,8 @@
   {
     "name": "HOME-YARD-the-room-listing-the-yard",
     "file": "server-account/src/decor.js",
-    "old": "      `SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ? AND yard = 0",
-    "new": "      `SELECT * FROM ${S.table} WHERE map_id = ? AND building_key = ?",
+    "old": "FROM ${S.table} WHERE map_id = ? AND building_key = ? AND yard = 0",
+    "new": "FROM ${S.table} WHERE map_id = ? AND building_key = ?",
     "tests": [
       "test/scenes/homeyard.test.js"
     ]
@@ -359,8 +359,8 @@
   {
     "name": "HOME-YARD-one-cap-for-both",
     "file": "server-account/src/decor.js",
-    "old": "      out ? DECOR_YARD_CAP : guildHall ? DECOR_HALL_CAP : roomCap,",
-    "new": "      roomCap,",
+    "old": "...countBinds, out ? DECOR_YARD_CAP : (guildHall ? DECOR_HALL_CAP : roomCap),",
+    "new": "...countBinds, roomCap,",
     "tests": [
       "test/scenes/homeyard.test.js"
     ],
@@ -387,8 +387,8 @@
   {
     "name": "HOME-RENT-a-withdrawn-room-renewed",
     "file": "server-account/src/rent.js",
-    "old": "  if (row.listed !== 1) return { error: 'no-rent-room' }; // taken off the offer: a tenancy runs out, never renewed (AUDIT)",
-    "new": "  if (row.listed !== 1 && !renewing) return { error: 'no-rent-room' }; // taken off the offer: a tenancy runs out, never renewed (AUDIT)",
+    "old": "  if (row.listed !== 1) return { error: 'no-rent-room' };",
+    "new": "  if (row.listed !== 1 && !renewing) return { error: 'no-rent-room' };",
     "tests": [
       "test/server/homerent.test.js"
     ],
@@ -398,8 +398,8 @@
   {
     "name": "HOME-RENT-every-race-said-taken",
     "file": "server-account/src/rent.js",
-    "old": "    return (await recordMovedOf(db, player.id, side.at)) || (await roomMovedOf(db, mapId, buildingKey, room, price));",
-    "new": "    return (await recordMovedOf(db, player.id, side.at)) || { error: 'rent-taken' };",
+    "old": "|| (await roomMovedOf(db, mapId, buildingKey, room, price));",
+    "new": "|| { error: 'rent-taken' };",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "HOME-RENT-the-price-race-unsaid",
     "file": "server-account/src/rent.js",
-    "old": "  if (now.price !== price) return { error: 'rent-price', price: now.price };\n  return { error: 'rent-taken' };",
-    "new": "  return { error: 'rent-taken' };",
+    "old": "  if (now.price !== price) return { error: 'rent-price', price: now.price };\n",
+    "new": "",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "HOME-RENT-the-collection-unrated",
     "file": "server-account/src/rent.js",
-    "old": "  if (await overRate({ db, nowS: ctx.nowS }, `rent:${player.id}`, RENT_WRITES_MAX, RENT_WRITES_WINDOW_S))\n    return { error: 'rent-rate' }; // a collection counts, as the law says\n  // ACCOUNT-HOMES: the account's home, collected by any character of it into that character's record",
-    "new": "  // ACCOUNT-HOMES: the account's home, collected by any character of it into that character's record",
+    "old": "  if (await overRate({ db, nowS: ctx.nowS }, `rent:${player.id}`, RENT_WRITES_MAX, RENT_WRITES_WINDOW_S)) return { error: 'rent-rate' };   // a collection counts, as the law says\n",
+    "new": "",
     "tests": [
       "test/server/homerent.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "HOME-DOORS-the-early-record-dropped",
     "file": "src/world/actionSystem.js",
-    "old": "      if (!o) {\n        this._keepEarly(remote ? withoutLock(sa) : sa);\n        return;\n      } // HOME-DOORS (AUDIT): a placed door, hung a moment later, takes it then",
-    "new": "      if (!o) return; // HOME-DOORS (AUDIT): a placed door, hung a moment later, takes it then",
+    "old": "      if (!o) { this._keepEarly(remote ? withoutLock(sa) : sa); return; }",
+    "new": "      if (!o) return;",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "HOME-DOORS-the-early-record-unsaved",
     "file": "src/world/actionSystem.js",
-    "old": "    return [...this.objects.values()]\n      .map((o) => ({\n        key: o.key,\n        state: o.state,\n        t: o.t ?? 0,\n        ...(o.kind === 'door'\n          ? {\n              lock: o.currentLockValue,\n              failedSkillLevel: o.failedSkillLevel ?? 0,\n              moveState: o.moveState,\n              moveT: o.moveT ?? 0,\n            } // P10 lock; the Move pair\n          : {}),\n      }))\n      .concat([...this._early.values()]); // HOME-DOORS (AUDIT): a placed door's record whose door was not hung this visit",
-    "new": "    return [...this.objects.values()].map((o) => ({\n      key: o.key,\n      state: o.state,\n      t: o.t ?? 0,\n      ...(o.kind === 'door'\n        ? {\n            lock: o.currentLockValue,\n            failedSkillLevel: o.failedSkillLevel ?? 0,\n            moveState: o.moveState,\n            moveT: o.moveT ?? 0,\n          } // P10 lock; the Move pair\n        : {}),\n    })); // HOME-DOORS (AUDIT): a placed door's record whose door was not hung this visit",
+    "old": "    })).concat([...this._early.values()]);",
+    "new": "    }));",
     "tests": [
       "test/scenes/decor/homedoors.test.js"
     ]
@@ -634,8 +634,8 @@
   {
     "name": "HOME-YARD-a-full-yard-a-room",
     "file": "src/ui/decorPanel.js",
-    "old": "  if (count >= cap)\n    return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
-    "new": "  if (count >= cap) return `This room already holds ${cap} pieces.`; // HOME-YARD (AUDIT): a yard said \"this room\"; AUDIT GUILD-YARD: a hall's yard is nobody's own",
+    "old": "  if (count >= cap) return `${yard ? (hall ? \"The hall's yard\" : 'Your yard') : 'This room'} already holds ${cap} pieces.`;",
+    "new": "  if (count >= cap) return `This room already holds ${cap} pieces.`;",
     "tests": [
       "test/scenes/homeyard.test.js"
     ]
@@ -680,8 +680,8 @@
   {
     "name": "HOME-LOOK-every-style-offered",
     "file": "src/ui/decorPanel.js",
-    "old": "      for (let r = 0; styles.length < DECOR_LOOK_STYLES && r <= 15 && (have == null || r < have); r++)",
-    "new": "      for (let r = 0; styles.length < DECOR_LOOK_STYLES && r <= 15; r++)",
+    "old": "r <= 15 && (have == null || r < have); r++)",
+    "new": "r <= 15; r++)",
     "tests": [
       "test/net/homelook.test.js"
     ]

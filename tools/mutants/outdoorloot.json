@@ -395,8 +395,8 @@
   {
     "name": "OUTDOOR-LOOT-stale-row-copies-the-piece",
     "file": "src/systems/item/itemTransfer.js",
-    "old": "  if (Array.isArray(from) && !from.includes(item)) return null;",
-    "new": "  void 0;",
+    "old": "if (Array.isArray(from) && !from.includes(item)) return null;",
+    "new": "void 0;",
     "tests": [
       "test/net/bodyloot_protocol.test.js",
       "test/systems/itemTransfer.test.js"
@@ -405,8 +405,8 @@
   {
     "name": "OUTDOOR-LOOT-window-never-told-it-opened",
     "file": "src/ui/inventoryDoor.js",
-    "old": "  deps.loot?.opened?.();",
-    "new": "  void 0;",
+    "old": "deps.loot?.opened?.();",
+    "new": "void 0;",
     "tests": [
       "test/net/outdoorloot_pins.test.js"
     ]
@@ -414,8 +414,8 @@
   {
     "name": "OUTDOOR-LOOT-window-never-told-it-closed",
     "file": "src/systems/inventorySession.js",
-    "old": "    loot?.closed?.();",
-    "new": "    void 0;",
+    "old": "try { loot?.closed?.(); }",
+    "new": "try { void 0; }",
     "tests": [
       "test/net/outdoorloot_pins.test.js"
     ]

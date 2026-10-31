@@ -92,8 +92,8 @@
   {
     "name": "RPT1026-LEDGERLAW-99-value-dropped",
     "file": "server-account/src/judge.js",
-    "old": "      .map((f) => `${f.code}@${f.at ?? ''}=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`)",
-    "new": "      .map((f) => `${f.code}@${f.at ?? ''}=`)",
+    "old": "=${cutOf(JSON.stringify(lawValueOf(save, summary, f)) ?? 'none', 40)}`",
+    "new": "=`",
     "tests": [
       "test/server/rpt1026_ledgerlaw.test.js"
     ],

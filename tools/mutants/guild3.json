@@ -109,8 +109,8 @@
   {
     "name": "GUILD3b-svc-never-out",
     "file": "server-account/src/guilds.js",
-    "old": "            out: l.src_kind === 'guild' && String(l.src_id) === String(guildId),",
-    "new": "            out: false,",
+    "old": "out: l.src_kind === 'guild' && String(l.src_id) === String(guildId),",
+    "new": "out: false,",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -118,8 +118,8 @@
   {
     "name": "GUILD3b-svc-no-raw",
     "file": "server-account/src/guilds.js",
-    "old": "            raw: String(l.kind),",
-    "new": "            raw: 'guild-deposit',",
+    "old": "raw: String(l.kind),",
+    "new": "raw: 'guild-deposit',",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -172,8 +172,8 @@
   {
     "name": "GUILD3c-svc-the-stores-unsaid",
     "file": "server-account/src/guilds.js",
-    "old": "    'guild-stores',",
-    "new": "    'guild-treasury',",
+    "old": "  ['guild-stores', (/** @type {string} */ p) =>",
+    "new": "  ['guild-treasury', (/** @type {string} */ p) =>",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -440,8 +440,8 @@
   {
     "name": "GUILD3c-svc-the-view-says-nothing",
     "file": "server-account/src/guilds.js",
-    "old": "    ...(me.rank === GUILD_RANK_MASTER ? { keeps: (await guildHolds(db, guildId, me.player)) ?? [] } : {}),\n    vault: (() => {",
-    "new": "    vault: (() => {",
+    "old": "    ...(me.rank === GUILD_RANK_MASTER ? { keeps: (await guildHolds(db, guildId, me.player)) ?? [] } : {}),\n",
+    "new": "",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -449,8 +449,8 @@
   {
     "name": "GUILD3c-svc-every-member-asked",
     "file": "server-account/src/guilds.js",
-    "old": "    ...(me.rank === GUILD_RANK_MASTER ? { keeps: (await guildHolds(db, guildId, me.player)) ?? [] } : {}),",
-    "new": "    ...(true ? { keeps: (await guildHolds(db, guildId, me.player)) ?? [] } : {}),",
+    "old": "...(me.rank === GUILD_RANK_MASTER ? { keeps:",
+    "new": "...(true ? { keeps:",
     "tests": [
       "test/net/guild3_plain.test.js"
     ]
@@ -458,8 +458,8 @@
   {
     "name": "GUILD3c-svc-a-battle-unread",
     "file": "server-account/src/guilds.js",
-    "old": "  [\n    'guild-battle',\n    (/** @type {string} */ p) =>\n      `EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING})`,\n  ], // SEAT1c: a battle it is named in, still to come",
-    "new": "  ['guild-battle', (/** @type {string} */ p) => `0`], // SEAT1c: a battle it is named in, still to come",
+    "old": "`EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING})`",
+    "new": "`0`",
     "tests": [
       "test/net/guild3_plain.test.js",
       "test/net/seat1c_service.test.js"

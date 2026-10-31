@@ -92,8 +92,8 @@
   {
     "name": "HOME-PRICE-the-service-range-unread",
     "file": "server-account/src/homes.js",
-    "old": "  if (!homePriceOk(price)) return { error: 'home-update' };",
-    "new": "",
+    "old": "  if (!homePriceOk(price)) return { error: 'home-update' };\n",
+    "new": "\n",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "HOME-PRICE-the-update-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "  if (!homePriceOk(price)) return { error: 'home-update' };",
-    "new": "  if (!homePriceOk(price)) return { error: 'bad-home' };",
+    "old": "  if (!homePriceOk(price)) return { error: 'home-update' };\n",
+    "new": "  if (!homePriceOk(price)) return { error: 'bad-home' };\n",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "HOME-PRICE-the-hall-range-unread",
     "file": "server-account/src/halls.js",
-    "old": "  if (!homePriceOk(price)) return { error: 'home-update' }; // HOME-PRICE: a build from before the online price (homes.js claimHome)",
-    "new": "  // HOME-PRICE: a build from before the online price (homes.js claimHome)",
+    "old": "  if (!homePriceOk(price)) return { error: 'home-update' };   // HOME-PRICE",
+    "new": "  // HOME-PRICE",
     "tests": [
       "test/systems/homeprice.test.js",
       "test/net/guild1d_service.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "AUDIT-HOME-PRICE-L3-the-character-unasked",
     "file": "server-account/src/homes.js",
-    "old": "          mine && !deedRow && !crossed && Number(h.me_realm) === 1",
-    "new": "          mine && !deedRow && !crossed",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ?",
+    "new": "const sale = mine && !deedRow && !crossed ?",
     "tests": [
       "test/systems/homeprice.test.js",
       "test/server/home1.test.js"
@@ -140,8 +140,8 @@
   {
     "name": "HOME-PRICE-the-refund-told-another",
     "file": "server-account/src/homes.js",
-    "old": "          mine && !deedRow && !crossed && Number(h.me_realm) === 1",
-    "new": "          !deedRow && !crossed && Number(h.me_realm) === 1",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ?",
+    "new": "const sale = !deedRow && !crossed && Number(h.me_realm) === 1 ?",
     "tests": [
       "test/systems/homeprice.test.js",
       "test/server/account_homes.test.js"
@@ -151,8 +151,8 @@
   {
     "name": "HOME-PRICE-a-crossed-house-refunded",
     "file": "server-account/src/homes.js",
-    "old": "          mine && !deedRow && !crossed && Number(h.me_realm) === 1\n            ? { ...realmSaleOf(h), ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}) }",
-    "new": "          mine && !deedRow && Number(h.me_realm) === 1\n            ? {\n                refund: homeSaleRefund(Number(h.paid) || 0),\n                ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}),\n              }",
+    "old": "const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ? { ...realmSaleOf(h),",
+    "new": "const sale = mine && !deedRow && Number(h.me_realm) === 1 ? { refund: homeSaleRefund(Number(h.paid) || 0),",
     "tests": [
       "test/systems/homeprice.test.js"
     ],
@@ -161,8 +161,8 @@
   {
     "name": "AUDIT-HOME-PRICE-C3-the-rent-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "        const sale =\n          mine && !deedRow && !crossed && Number(h.me_realm) === 1\n            ? { ...realmSaleOf(h), ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}) }\n            : {};",
-    "new": "        const sale = mine && !deedRow && !crossed && Number(h.me_realm) === 1 ? { ...realmSaleOf(h), ...{} } : {};",
+    "old": "...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {})",
+    "new": "...{}",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -170,8 +170,8 @@
   {
     "name": "AUDIT-HOME-PRICE-C2-the-repeat-silent",
     "file": "server-account/src/homes.js",
-    "old": "      ? { ok: true, repeat: true, home: homeOf(held), ...realmSaleOf(held), realm: { seq: at.seq } }",
-    "new": "      ? { ok: true, repeat: true, home: homeOf(held), realm: { seq: at.seq } }",
+    "old": "home: homeOf(held), ...realmSaleOf(held), realm:",
+    "new": "home: homeOf(held), realm:",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -179,8 +179,8 @@
   {
     "name": "AUDIT-HOME-PRICE-C2-the-claim-silent",
     "file": "server-account/src/homes.js",
-    "old": "  return {\n    ok: true,\n    home: homeOf(row),\n    ...realmSaleOf(row),\n    realm: { seq: prep.seq },\n    moved: homeMoved(claim.mapId, [claim.buildingKey]),\n  }; // AUDIT HOME-PRICE C2; QUEST-HOME: a home now, for every page online",
-    "new": "  return { ok: true, home: homeOf(row), realm: { seq: prep.seq }, moved: homeMoved(claim.mapId, [claim.buildingKey]) }; // AUDIT HOME-PRICE C2; QUEST-HOME: a home now, for every page online",
+    "old": "return { ok: true, home: homeOf(row), ...realmSaleOf(row), realm: { seq: prep.seq }, moved: homeMoved(claim.mapId, [claim.buildingKey]) };",
+    "new": "return { ok: true, home: homeOf(row), realm: { seq: prep.seq }, moved: homeMoved(claim.mapId, [claim.buildingKey]) };",
     "tests": [
       "test/systems/homeprice.test.js",
       "test/server/home1.test.js"

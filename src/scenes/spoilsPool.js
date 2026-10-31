@@ -87,16 +87,16 @@
 import { rollSpoils, nameEmbers, sigilStone } from '../systems/gate/gateSpoils.js';
 import { seededRng } from '../systems/wind/wind.js';
 import { spewLaunches, spewPiece, flySpew, keepLaunch, floorRayAt } from '../world/gate/gateSpew.js';
-import { SpoilsGlowRenderer, tierColour } from '../render/spoilsGlow.js'; // WBX3: the loot line
+import { SpoilsGlowRenderer, tierColour } from '../render/spoilsGlow.js';   // WBX3: the loot line
 import { RARITIES } from '../systems/loot/lootRarity.js';
 import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS, validLootItem } from '../systems/loot/loot.js';
-import { isIliacCard, iliacCardName } from '../systems/iliac/iliacItems.js'; // AUDIT CARDS-6 A7: a boss's card taken, said by its own name
+import { isIliacCard, iliacCardName } from '../systems/iliac/iliacItems.js';   // AUDIT CARDS-6 A7: a boss's card taken, said by its own name
 import { billboardSize } from '../world/rmbFlats.js';
 import { SOUND } from '../systems/soundClips.js';
 import { CLIPS } from '../systems/handheldTorches.js';
-import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js'; // WB9f: a piece is pressed as a loot pile is
-import { adoptLight } from '../render/lightId.js'; // LIGHT-ID: a piece's light named by its piece
-import { LOST_OWED_MAX_MS } from '../net/lostLaw.js'; // LOST-SPOILS: how long a floor's leftovers are asked after
+import { RAY_DISTANCE, TREASURE_ACTIVATION_DISTANCE } from '../player/activate.js';   // WB9f: a piece is pressed as a loot pile is
+import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a piece's light named by its piece
+import { LOST_OWED_MAX_MS } from '../net/lostLaw.js';   // LOST-SPOILS: how long a floor's leftovers are asked after
 import { t } from '../systems/textManager.js';
 
 /** WBX3: an item's picture stands this many metres a texel tall on the floor, and never taller than the most. */
@@ -133,12 +133,11 @@ export const SIGIL_TIER = 'artifact';
 /** The words. */
 export const SPOILS_TEXT = Object.freeze({
   gold: (n) => `You take ${n} gold pieces.`,
-  item: (name, tier) =>
-    tier && tier !== 'common' ? `You take ${name} (${RARITIES[tier]?.label ?? tier}).` : `You take ${name}.`,
+  item: (name, tier) => (tier && tier !== 'common' ? `You take ${name} (${RARITIES[tier]?.label ?? tier}).` : `You take ${name}.`),
   gathered: 'The spoils of the Burning Court are in your pack.',
-  goldName: (n) => `${n} Gold Pieces`, // WB9f: the pile's name on the plaque
-  granted: "Your share of the Burning Court's spoils is in your pack.", // AUDIT WB A2: a receipt that came outside its court
-  rite: 'An ember from the broken rite is in your pack.', // WB12d: a receipt of the rite alone
+  goldName: (n) => `${n} Gold Pieces`,   // WB9f: the pile's name on the plaque
+  granted: 'Your share of the Burning Court\'s spoils is in your pack.',   // AUDIT WB A2: a receipt that came outside its court
+  rite: 'An ember from the broken rite is in your pack.',   // WB12d: a receipt of the rite alone
 });
 
 /**
@@ -154,17 +153,12 @@ export function spoilsList(seed, level, claims = null) {
   const look = seededRng((seed ^ 0x5eed) >>> 0);
   const flat = () => RANDOM_TREASURE_ICONS[Math.floor(look() * RANDOM_TREASURE_ICONS.length)];
   if (claims?.x === 'rite') return [{ kind: 'item', item: sigilStone(), tier: SIGIL_TIER, record: flat() }];
-  const s = rollSpoils(seed, level, claims?.p ?? 0); // WB14g: a portent night's pieces more
+  const s = rollSpoils(seed, level, claims?.p ?? 0);   // WB14g: a portent night's pieces more
   // AUDIT WORLD-REWARDS A1: the Dragonfire Oath's picture is drawn LAST of all (below) - drawn in its place among the pieces,
   // it moved every picture after it (the ember's, the gold's, the card's, the gems') off what the seed gave them, in
   // every spoils it came in. It still leaves among the pieces, its glow's line in the frame's first eight.
-  const firstPortent = s.pieces.length - (s.portent ?? 0); // WB14g: a portent's piece's picture drawn last too, as the Oath's
-  const pieces = s.pieces.map((p, i) => ({
-    kind: 'item',
-    item: p.item,
-    tier: p.tier,
-    record: p.tier === 'gilded' || i >= firstPortent ? null : flat(),
-  }));
+  const firstPortent = s.pieces.length - (s.portent ?? 0);   // WB14g: a portent's piece's picture drawn last too, as the Oath's
+  const pieces = s.pieces.map((p, i) => ({ kind: 'item', item: p.item, tier: p.tier, record: p.tier === 'gilded' || i >= firstPortent ? null : flat() }));
   const ember = { kind: 'item', item: s.sigil, tier: SIGIL_TIER, record: flat() };
   const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };
   // AUDIT CARDS-6 A8: the card's picture is drawn LAST, after the gold's - drawn between the ember's and the gold's, it
@@ -173,11 +167,11 @@ export function spoilsList(seed, level, claims = null) {
   // GEM2 (bible/06-Systems/Gem-Sockets.md section 4): the Warden's gem, its picture drawn after the card's - so every
   // picture before it is what the seed gave it - and thrown after the card
   const gems = (s.gems ?? []).map((g) => ({ kind: 'item', item: g, tier: 'common', record: flat() }));
-  for (const p of pieces) if (p.record === null) p.record = flat(); // AUDIT WORLD-REWARDS A1: the Oath's, last
+  for (const p of pieces) if (p.record === null) p.record = flat();   // AUDIT WORLD-REWARDS A1: the Oath's, last
   return [
     ...pieces,
-    ...card, // CARDS9: the Warden's card, after the pieces
-    ...gems, // GEM2: the Warden's gem, after the card
+    ...card,   // CARDS9: the Warden's card, after the pieces
+    ...gems,   // GEM2: the Warden's gem, after the card
     ember,
     ...(claims?.r === 1 ? [{ ...ember, item: sigilStone() }] : []),
     gold,
@@ -192,46 +186,24 @@ export function spoilsList(seed, level, claims = null) {
  *  the store before the other had written it, and both gave them (the Web Locks API; without it, at once). One lock for
  *  every pool's grant: the gate's, the raids', the serpent's, the Hour's, the stars' (STAR7 moved it here from the world
  *  host, so each pool's host takes the same one). */
-export const spoilsLock = (fn) => {
-  const locks = globalThis.navigator?.locks;
-  return locks?.request ? locks.request('wb5.spoils', () => fn()) : Promise.resolve().then(fn);
-};
+export const spoilsLock = (fn) => { const locks = globalThis.navigator?.locks; return locks?.request ? locks.request('wb5.spoils', () => fn()) : Promise.resolve().then(fn); };
 
 export function spoilsStore(storage) {
   const mem = new Map();
   return {
     get(k) {
       if (mem.has(k)) return mem.get(k);
-      try {
-        const v = storage?.getItem?.(k);
-        return v ? JSON.parse(v) : null;
-      } catch {
-        return null;
-      }
+      try { const v = storage?.getItem?.(k); return v ? JSON.parse(v) : null; } catch { return null; }
     },
     set(k, v) {
-      try {
-        if (!storage?.setItem) throw new Error('no storage');
-        storage.setItem(k, JSON.stringify(v));
-        mem.delete(k);
-      } catch {
-        mem.set(k, JSON.parse(JSON.stringify(v ?? null)));
-      }
+      try { if (!storage?.setItem) throw new Error('no storage'); storage.setItem(k, JSON.stringify(v)); mem.delete(k); }
+      catch { mem.set(k, JSON.parse(JSON.stringify(v ?? null))); }
     },
     /** AUDIT WBX S5: a value kept in this session's memory alone (never the device's), and whether the last write of a
      *  key landed on the device. */
-    hold(k, v) {
-      mem.set(k, JSON.parse(JSON.stringify(v ?? null)));
-    },
+    hold(k, v) { mem.set(k, JSON.parse(JSON.stringify(v ?? null))); },
     persisted: (k) => !mem.has(k),
-    remove(k) {
-      mem.delete(k);
-      try {
-        storage?.removeItem?.(k);
-      } catch {
-        /* nothing to lose */
-      }
-    },
+    remove(k) { mem.delete(k); try { storage?.removeItem?.(k); } catch { /* nothing to lose */ } },
   };
 }
 const NONE = Object.freeze([]);
@@ -239,11 +211,7 @@ const NONE = Object.freeze([]);
 export const SPOILS_RECORD_V = 2;
 /** AUDIT WBX S2: the level the spoils are rolled at - the player's, never past the level the fight admitted the
  *  receipt's account at (its `l`: a level-1 claim's receipt carried to a level-50 character rolls at 1). Pure. */
-export const spoilsLevel = (playerLevel, claimLevel) =>
-  Math.max(
-    1,
-    Math.min(Math.max(1, playerLevel | 0), Number.isSafeInteger(claimLevel) && claimLevel >= 1 ? claimLevel : Infinity),
-  );
+export const spoilsLevel = (playerLevel, claimLevel) => Math.max(1, Math.min(Math.max(1, playerLevel | 0), Number.isSafeInteger(claimLevel) && claimLevel >= 1 ? claimLevel : Infinity));
 /** AUDIT WB A7: the most crash records the device keeps (one a day and character), and spent receipts it remembers. */
 export const SPOILS_RECORDS_MAX = 8;
 export const SPOILS_SPENT_MAX = 32;
@@ -260,31 +228,24 @@ export const LOST_RETRY_MAX_MS = 30 * 60_000;
 export const LOST_FIRST_MS = 20_000;
 /** LOST-SPOILS: the words - what was left went to the mailbox, or could not and is in the pack. */
 export const LOST_TEXT = Object.freeze({
-  mailed: () =>
-    t(
-      'spoils.lost.mailed',
-      'What you left on the floor will wait for you in your mailbox, beside the hourglass in the pause menu.',
-    ),
-  back: () =>
-    t('spoils.lost.back', 'What you left on the floor could not be sent to your mailbox, so it is in your pack.'),
+  mailed: () => t('spoils.lost.mailed', 'What you left on the floor will wait for you in your mailbox, beside the hourglass in the pause menu.'),
+  back: () => t('spoils.lost.back', 'What you left on the floor could not be sent to your mailbox, so it is in your pack.'),
 });
 /** LOST-SPOILS: a record's pieces owed to the mailbox - `{ i, piece }`, an item's - or none. */
-export const mailOf = (r) =>
-  Array.isArray(r?.mail) ? r.mail.filter((m) => m && Number.isSafeInteger(m.i) && m.piece?.kind === 'item') : [];
+export const mailOf = (r) => (Array.isArray(r?.mail) ? r.mail.filter((m) => m && Number.isSafeInteger(m.i) && m.piece?.kind === 'item') : []);
 /** The records as a list - an older build's single record is a list of one. */
 const recordsOf = (v) => (Array.isArray(v) ? v : v && typeof v === 'object' ? [v] : []);
 
 /** Whether a save of the character `who` was written after `at` (wall-clock ms, as the slots' realTime) - its pack holds
  *  every piece of a burst before it. `saves` the slots' SaveInfos (systems/save/saveSlots.js enumerateSaves). */
-export const savedSince = (saves, who, at) =>
-  who != null && [...(saves ?? [])].some((i) => i?.characterId === who && (i.dateAndTime?.realTime ?? 0) > at);
+export const savedSince = (saves, who, at) => who != null && [...(saves ?? [])].some((i) => i?.characterId === who && (i.dateAndTime?.realTime ?? 0) > at);
 
 /** A piece off the record as the pack may take it, or null: gold a whole positive sum, an item one the port's own loot
  *  validator admits (systems/loot/loot.js validLootItem - a template it knows, every declared field its kind). */
 function keptPiece(p) {
   if (p?.kind === 'gold') return Number.isSafeInteger(p.gold) && p.gold > 0 ? { ...p } : null;
   const item = p?.kind === 'item' ? validLootItem(p.item) : null;
-  if (item) nameEmbers([item]); // WB12a: a stone a crash record kept under its old name lands as a Deadlands Ember
+  if (item) nameEmbers([item]);   // WB12a: a stone a crash record kept under its old name lands as a Deadlands Ember
   return item ? { ...p, item } : null;
 }
 
@@ -299,54 +260,27 @@ function keptPiece(p) {
  *   records the loaded save's pack already holds: a realm save the device kept (systems/realmSaves.js openRealmBoot
  *   `held`) was composed holding them, so they are adopted and never handed again; the next save that lands clears them
  */
-export function recoverSpoils(
-  store,
-  take,
-  { who = null, saves = [], onHanded = null, key = SPOILS_STORE_KEY, inSave = null } = {},
-) {
+export function recoverSpoils(store, take, { who = null, saves = [], onHanded = null, key = SPOILS_STORE_KEY, inSave = null } = {}) {
   let v = null;
-  try {
-    v = store.get(key);
-  } catch {
-    v = null;
-  }
+  try { v = store.get(key); } catch { v = null; }
   if (!v) return 0;
   const infos = [...(saves ?? [])];
-  const all = recordsOf(v),
-    left = [];
+  const all = recordsOf(v), left = [];
   let n = 0;
   for (const rec of all) {
-    if (!rec || typeof rec !== 'object' || !Array.isArray(rec.pieces) || !Number.isFinite(rec.at)) continue; // junk is no record
-    if (rec.who != null && rec.who !== who) {
-      left.push(rec);
-      continue;
-    } // another character's waits for them
+    if (!rec || typeof rec !== 'object' || !Array.isArray(rec.pieces) || !Number.isFinite(rec.at)) continue;   // junk is no record
+    if (rec.who != null && rec.who !== who) { left.push(rec); continue; }   // another character's waits for them
     // AUDIT WBX S3: a record of this build is cleared by the save that holds it (the pool's `saved`) - never by a clock;
     // an older build's keeps the old rule, the slots' realTime against its own
-    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue; // a save since holds them: it goes
+    if (rec.v !== SPOILS_RECORD_V && savedSince(infos, rec.who ?? who, rec.at)) continue;   // a save since holds them: it goes
     // AUDIT RESCUE-SAVE A1: the loaded save already holds them - adopted, so the save that lands clears the record
-    if (rec.v === SPOILS_RECORD_V && inSave?.includes(rec.id)) {
-      left.push(rec);
-      onHanded?.(rec);
-      continue;
-    }
-    for (const p of rec.pieces) {
-      const q = keptPiece(p);
-      if (q) {
-        take(q);
-        n++;
-      }
-    }
-    left.push(rec); // and it stays until a save does
-    if (rec.v === SPOILS_RECORD_V) onHanded?.(rec); // in the pack now: the next save of its character clears it
+    if (rec.v === SPOILS_RECORD_V && inSave?.includes(rec.id)) { left.push(rec); onHanded?.(rec); continue; }
+    for (const p of rec.pieces) { const q = keptPiece(p); if (q) { take(q); n++; } }
+    left.push(rec);   // and it stays until a save does
+    if (rec.v === SPOILS_RECORD_V) onHanded?.(rec);   // in the pack now: the next save of its character clears it
   }
   if (left.length !== all.length || !Array.isArray(v)) {
-    try {
-      if (left.length) store.set?.(key, left);
-      else store.remove(key);
-    } catch {
-      /* the pack has them either way */
-    }
+    try { if (left.length) store.set?.(key, left); else store.remove(key); } catch { /* the pack has them either way */ }
   }
   return n;
 }
@@ -389,42 +323,16 @@ export function recoverSpoils(
  *   `later` the timer the sends are asked again on (setTimeout's shape).
  */
 export function createSpoilsPool({
-  renderer = null,
-  gl = null,
-  getTexture = null,
-  uploadRecordFrame = null,
-  audio = null,
-  ray,
-  now,
-  take,
-  say = () => {},
-  store = null,
-  who = () => null,
-  wall = () => Date.now(),
-  iconOf = null,
-  gathered = SPOILS_TEXT.gathered,
-  onSpent = () => {},
-  keys = SPOILS_KEYS,
-  recordsMax = SPOILS_RECORDS_MAX,
-  itemName = (item) => item?.name ?? 'Something',
-  me = () => null,
-  mail = null,
-  later = (fn, ms) => globalThis.setTimeout?.(fn, ms),
+  renderer = null, gl = null, getTexture = null, uploadRecordFrame = null, audio = null,
+  ray, now, take, say = () => {}, store = null, who = () => null, wall = () => Date.now(), iconOf = null, gathered = SPOILS_TEXT.gathered,
+  onSpent = () => {}, keys = SPOILS_KEYS, recordsMax = SPOILS_RECORDS_MAX, itemName = (item) => item?.name ?? 'Something',
+  me = () => null, mail = null, later = (fn, ms) => globalThis.setTimeout?.(fn, ms),
 }) {
-  const STORE_KEY = keys.store,
-    DAY_KEY = keys.day; // RAID4b: a town's thanks keep their own
+  const STORE_KEY = keys.store, DAY_KEY = keys.day;   // RAID4b: a town's thanks keep their own
   let glow = null;
-  try {
-    if (gl) glow = new SpoilsGlowRenderer(gl);
-  } catch (e) {
-    console.warn("[gate] the spoils' glow would not build", e?.message ?? e);
-    glow = null;
-  }
+  try { if (gl) glow = new SpoilsGlowRenderer(gl); } catch (e) { console.warn('[gate] the spoils\' glow would not build', e?.message ?? e); glow = null; }
   /** the spew under way: its day, when it began, where it left from; each piece's flight, rest and batch */
-  let rec = null,
-    t0 = 0,
-    from = null,
-    launches = [];
+  let rec = null, t0 = 0, from = null, launches = [];
   /** AUDIT WB9 (spoils F1): what the pieces fly over - the world's ray, and under a kept throw the floor it was kept to
    *  besides: the collider takes no hit nearer than a tenth of a millimetre (player/collider.js rayTriangle), so a step
    *  begun that close above the floor missed it and the next began under it - about one kill in fifty let a piece fall
@@ -435,27 +343,13 @@ export function createSpoilsPool({
    *  WB9f: `target` its activation target, made at its rest.
    *  @type {Array<{ piece: any, fly: any, left: boolean, restAt: number, taken: boolean, batch: any, sprite: any, batchIcon: boolean, h: number, target: any }>} */
   let floor = [];
-  let lastT = 0,
-    tex = null,
-    texLoading = null;
+  let lastT = 0, tex = null, texLoading = null;
   /** WB9f: the resting pieces' activation targets (AUDIT WB D10: one list, refilled; each piece's target made once, at
    *  its rest - a resting piece never moves) */
   const _targets = [];
 
-  const keep = (k, v) => {
-    try {
-      store?.set(k, v);
-    } catch {
-      /* the floor still holds them */
-    }
-  };
-  const read = (k) => {
-    try {
-      return store?.get(k) ?? null;
-    } catch {
-      return null;
-    }
-  };
+  const keep = (k, v) => { try { store?.set(k, v); } catch { /* the floor still holds them */ } };
+  const read = (k) => { try { return store?.get(k) ?? null; } catch { return null; } };
   /** AUDIT WBX S3: the records whose pieces are in the pack (id -> {who, day}) - the next save of their character holds
    *  them - and the days to say spent to the hub once a save has (their record would not land on the device) */
   const held = new Map();
@@ -468,36 +362,14 @@ export function createSpoilsPool({
   // not go is kept on the device (its pool's own key) with its account, and said again by `resendSpent` until it goes -
   // on its own account's socket alone (`me`).
   const OWED_KEY = `${DAY_KEY}.owed`;
-  const owedWords = () => {
-    const v = read(OWED_KEY);
-    return Array.isArray(v) ? v.filter((o) => o && typeof o === 'object' && o.d != null) : [];
-  };
-  const meNow = () => {
-    try {
-      return me() ?? null;
-    } catch {
-      return null;
-    }
-  };
+  const owedWords = () => { const v = read(OWED_KEY); return Array.isArray(v) ? v.filter((o) => o && typeof o === 'object' && o.d != null) : []; };
+  const meNow = () => { try { return me() ?? null; } catch { return null; } };
   /** Whether the hub's link may say `acct`'s word now - its own socket, or an account unknown (an older record's). */
-  const mine = (acct) => {
-    const m = meNow();
-    return !acct || m == null || m === acct;
-  };
+  const mine = (acct) => { const m = meNow(); return !acct || m == null || m === acct; };
   const said = (day, acct = '') => {
     let went = false;
-    if (mine(acct)) {
-      try {
-        went = onSpent(day) !== false;
-      } catch {
-        went = false;
-      }
-    }
-    if (!went) {
-      const o = owedWords();
-      if (!o.some((w) => w.d === day && w.a === acct))
-        keep(OWED_KEY, [...o, { d: day, a: acct }].slice(-SPOILS_SPENT_MAX));
-    }
+    if (mine(acct)) { try { went = onSpent(day) !== false; } catch { went = false; } }
+    if (!went) { const o = owedWords(); if (!o.some((w) => w.d === day && w.a === acct)) keep(OWED_KEY, [...o, { d: day, a: acct }].slice(-SPOILS_SPENT_MAX)); }
   };
   /** the receipts spent this session - the device's word may be lost (no store), this one is not */
   const spentHere = new Set();
@@ -506,9 +378,7 @@ export function createSpoilsPool({
   function spentOn(day, acct) {
     if (spentHere.has(spentKey(day, acct))) return true;
     const kept = read(DAY_KEY);
-    return (
-      kept === day || (Array.isArray(kept) && (kept.includes(spentKey(day, acct)) || kept.includes(spentKey(day, '*'))))
-    );
+    return kept === day || (Array.isArray(kept) && (kept.includes(spentKey(day, acct)) || kept.includes(spentKey(day, '*'))));
   }
   /** AUDIT WBX2 M6: whether THIS account spent them - the only spend the hub is told of again. An older build's mark
    *  for anyone refuses the spoils here as it did, but said to the hub it made another account forget a receipt it never
@@ -532,23 +402,13 @@ export function createSpoilsPool({
     let was = null;
     const out = [];
     for (const r of all) {
-      if (r?.id !== id || was) {
-        out.push(r);
-        continue;
-      }
+      if (r?.id !== id || was) { out.push(r); continue; }
       was = r;
       const next = fn(r);
       if (next) out.push(next);
     }
     if (!was) return null;
-    if (out.length) keep(STORE_KEY, out);
-    else {
-      try {
-        store?.remove(STORE_KEY);
-      } catch {
-        /* nothing to lose */
-      }
-    }
+    if (out.length) keep(STORE_KEY, out); else { try { store?.remove(STORE_KEY); } catch { /* nothing to lose */ } }
     return was;
   }
   /** The receipt spent, here and on the device, and its pieces kept as rolled until a save holds them. AUDIT WBX S5: the
@@ -556,91 +416,47 @@ export function createSpoilsPool({
    *  record's id. */
   function spend(day, acct, list, owner = who()) {
     spentHere.add(spentKey(day, acct));
-    const w = owner,
-      at = wall();
+    const w = owner, at = wall();
     const id = `${day}:${w ?? ''}:${at}`;
     const recs = recordsOf(read(STORE_KEY)).filter((r) => r && !(r.day === day && r.who === w));
     keep(STORE_KEY, trimRecords([...recs, { v: SPOILS_RECORD_V, id, day, at, who: w, pieces: list }]));
     const durable = store?.persisted?.(STORE_KEY) ?? true;
     const kept = read(DAY_KEY);
-    const marks = [
-      ...(Array.isArray(kept) ? kept : Number.isSafeInteger(kept) ? [spentKey(kept, '*')] : []),
-      spentKey(day, acct),
-    ].slice(-SPOILS_SPENT_MAX);
-    if (durable) {
-      keep(DAY_KEY, marks);
-      said(day, acct);
-    } else {
-      try {
-        store?.hold?.(DAY_KEY, marks);
-      } catch {
-        /* the session's own set holds it */
-      }
-      ackOnSave.set(id, { day, acct });
-    }
+    const marks = [...(Array.isArray(kept) ? kept : Number.isSafeInteger(kept) ? [spentKey(kept, '*')] : []), spentKey(day, acct)].slice(-SPOILS_SPENT_MAX);
+    if (durable) { keep(DAY_KEY, marks); said(day, acct); }
+    else { try { store?.hold?.(DAY_KEY, marks); } catch { /* the session's own set holds it */ } ackOnSave.set(id, { day, acct }); }
     return id;
   }
 
   function loadTex() {
     if (tex || texLoading || !getTexture) return;
-    texLoading = Promise.resolve()
-      .then(() => getTexture(RANDOM_TREASURE_ARCHIVE))
-      .then(
-        (t) => {
-          tex = t ?? null;
-        },
-        () => {
-          tex = null;
-        },
-      );
+    texLoading = Promise.resolve().then(() => getTexture(RANDOM_TREASURE_ARCHIVE)).then((t) => { tex = t ?? null; }, () => { tex = null; });
   }
   /** WBX3: an item's own picture, asked for once at the burst - uploaded under the pool's pseudo-archive (the upload is
    *  keyed by the picture, so two pieces alike share it); a piece with no picture, or one that will not load, keeps its
    *  treasure pile. A picture that lands while the pile stands swaps it on the next frame. */
   function askSprite(f) {
-    if (f.sprite || f.piece.kind !== 'item' || !iconOf || !renderer?.uploadTexture) {
-      f.sprite ??= 'none';
-      return;
-    }
+    if (f.sprite || f.piece.kind !== 'item' || !iconOf || !renderer?.uploadTexture) { f.sprite ??= 'none'; return; }
     f.sprite = 'asked';
-    Promise.resolve()
-      .then(() => iconOf(f.piece.item))
-      .then(
-        (img) => {
-          if (!img?.colors || !(img.width > 0) || !(img.height > 0)) {
-            f.sprite = 'none';
-            return;
-          }
-          const record = `icon:${img.key ?? floor.indexOf(f)}`;
-          renderer.uploadTexture(SPOILS_ICON_ARCHIVE, record, img);
-          f.sprite = { record, ...iconSize(img.width, img.height) };
-        },
-        () => {
-          f.sprite = 'none';
-        },
-      );
+    Promise.resolve().then(() => iconOf(f.piece.item)).then((img) => {
+      if (!img?.colors || !(img.width > 0) || !(img.height > 0)) { f.sprite = 'none'; return; }
+      const record = `icon:${img.key ?? floor.indexOf(f)}`;
+      renderer.uploadTexture(SPOILS_ICON_ARCHIVE, record, img);
+      f.sprite = { record, ...iconSize(img.width, img.height) };
+    }, () => { f.sprite = 'none'; });
   }
   function batchOf(f) {
     const icon = f.sprite && typeof f.sprite === 'object';
     if (f.batch && !icon === !f.batchIcon) return f.batch;
-    if (f.batch) {
-      renderer?.destroyBillboardBatch?.(f.batch);
-      f.batch = null;
-    } // the pile gives way to the picture
+    if (f.batch) { renderer?.destroyBillboardBatch?.(f.batch); f.batch = null; }   // the pile gives way to the picture
     if (!renderer?.createBillboardBatch) return null;
     try {
       if (icon) {
-        f.batch = renderer.createBillboardBatch(
-          SPOILS_ICON_ARCHIVE,
-          f.sprite.record,
-          { w: f.sprite.w, h: f.sprite.h },
-          [[0, 0, 0]],
-        );
+        f.batch = renderer.createBillboardBatch(SPOILS_ICON_ARCHIVE, f.sprite.record, { w: f.sprite.w, h: f.sprite.h }, [[0, 0, 0]]);
         f.h = f.sprite.h;
       } else {
         if (!tex) return null;
-        if (!renderer.textures?.has?.(`${RANDOM_TREASURE_ARCHIVE}_${f.piece.record}#0`))
-          uploadRecordFrame?.(RANDOM_TREASURE_ARCHIVE, f.piece.record, 0);
+        if (!renderer.textures?.has?.(`${RANDOM_TREASURE_ARCHIVE}_${f.piece.record}#0`)) uploadRecordFrame?.(RANDOM_TREASURE_ARCHIVE, f.piece.record, 0);
         const size = billboardSize(tex, f.piece.record);
         f.batch = renderer.createBillboardBatch(RANDOM_TREASURE_ARCHIVE, f.piece.record, size, [[0, 0, 0]]);
         f.batch.frame = 0;
@@ -648,9 +464,7 @@ export function createSpoilsPool({
       }
       f.batchIcon = icon;
       f.batch.origin = [...f.fly.pos];
-    } catch {
-      f.batch = null;
-    }
+    } catch { f.batch = null; }
     return f.batch;
   }
   function takeOne(f) {
@@ -661,39 +475,18 @@ export function createSpoilsPool({
     // and the pack's); its stored name is the template's, and the floor said "You take Card (Aetheric)."
     const name = (/** @type {any} */ item) => (isIliacCard(item) ? iliacCardName(item) : item.name);
     say(f.piece.kind === 'gold' ? SPOILS_TEXT.gold(f.piece.gold) : SPOILS_TEXT.item(name(f.piece.item), f.piece.tier));
-    if (f.batch) {
-      renderer?.destroyBillboardBatch?.(f.batch);
-      f.batch = null;
-    }
-    if (spewId && floor.every((g) => g.taken)) {
-      held.set(spewId, { who: who(), day: rec?.day });
-      spewId = null;
-    } // AUDIT WBX S3: all of it in the pack
+    if (f.batch) { renderer?.destroyBillboardBatch?.(f.batch); f.batch = null; }
+    if (spewId && floor.every((g) => g.taken)) { held.set(spewId, { who: who(), day: rec?.day }); spewId = null; }   // AUDIT WBX S3: all of it in the pack
   }
 
   // ── LOST-SPOILS: the floor's leftovers owed to the mailbox ────────────────
   /** the records whose send is out, and the timer the sends are asked again on */
   const sending = new Set();
-  let retryTimer = null,
-    idleRounds = 0;
-  const sayMail = (/** @type {string} */ text) => {
-    try {
-      (mail?.say ?? say)(text);
-    } catch {
-      /* a word is not the spoils' problem */
-    }
-  };
+  let retryTimer = null, idleRounds = 0;
+  const sayMail = (/** @type {string} */ text) => { try { (mail?.say ?? say)(text); } catch { /* a word is not the spoils' problem */ } };
   const retryMail = (ms = LOST_RETRY_MS) => {
     if (!mail || retryTimer) return;
-    try {
-      retryTimer =
-        later(() => {
-          retryTimer = null;
-          sendMail().catch(() => {});
-        }, ms) ?? null;
-    } catch {
-      retryTimer = null;
-    }
+    try { retryTimer = later(() => { retryTimer = null; sendMail().catch(() => {}); }, ms) ?? null; } catch { retryTimer = null; }
   };
   /** THE FLOOR'S ITEMS LEFT, OWED TO THE MAILBOX in one write of the spew's record (its `pieces` the pack's part, the rest
    *  its `mail`) and off the floor, never into the pack. None - the pack takes them, as ever - with no `mail`, a box not
@@ -703,31 +496,15 @@ export function createSpoilsPool({
     const items = left.filter((f) => f.piece.kind === 'item');
     if (!mail || !spewId || !rec || !items.length) return [];
     let ready = false;
-    try {
-      ready = mail.ready() && mine(rec.acct);
-    } catch {
-      ready = false;
-    }
+    try { ready = mail.ready() && mine(rec.acct); } catch { ready = false; }
     // and only onto a record the device holds: one kept in this sitting's memory alone (a full quota, a private window)
     // dies with the tab, and its receipt is given again (AUDIT WBX S5) - so its floor goes to the pack, as ever
     if (!ready || store?.persisted?.(STORE_KEY) === false) return [];
     const at = new Map(items.map((f) => [floor.indexOf(f), f]));
     const acct = rec.acct ?? '';
-    const kept = rewrite(spewId, (r) => ({
-      ...r,
-      acct,
-      pieces: (r.pieces ?? []).filter((/** @type {any} */ _p, /** @type {number} */ i) => !at.has(i)),
-      mail: [...mailOf(r), ...[...at].map(([i, f]) => ({ i, piece: f.piece }))],
-      mailAt: wall(),
-    }));
+    const kept = rewrite(spewId, (r) => ({ ...r, acct, pieces: (r.pieces ?? []).filter((/** @type {any} */ _p, /** @type {number} */ i) => !at.has(i)), mail: [...mailOf(r), ...[...at].map(([i, f]) => ({ i, piece: f.piece }))], mailAt: wall() }));
     if (!kept) return [];
-    for (const f of items) {
-      f.taken = true;
-      if (f.batch) {
-        renderer?.destroyBillboardBatch?.(f.batch);
-        f.batch = null;
-      }
-    }
+    for (const f of items) { f.taken = true; if (f.batch) { renderer?.destroyBillboardBatch?.(f.batch); f.batch = null; } }
     return items;
   }
   /** A send landed: those pieces are the post's. The record goes once it owes nothing more - its pack's part held by a
@@ -740,11 +517,7 @@ export function createSpoilsPool({
       const { mail: _mail, mailAt: _at, ...rest } = r;
       return rest.pieces?.length ? rest : null;
     });
-    try {
-      mail?.sent?.();
-    } catch {
-      /* the box looks again on its own clock */
-    }
+    try { mail?.sent?.(); } catch { /* the box looks again on its own clock */ }
   }
   /** THE MAILBOX WILL NOT TAKE THEM: the pieces into the pack after all - its record's pack part first (one write, so a crash
    *  hands them from there), then the pack, held for the next save. Another character's wait for it to stand up. */
@@ -752,14 +525,8 @@ export function createSpoilsPool({
     const r0 = recordsOf(read(STORE_KEY)).find((r) => r?.id === id);
     if (!r0 || (r0.who != null && r0.who !== who())) return false;
     const back = mailOf(r0);
-    rewrite(id, (r) => {
-      const { mail: _mail, mailAt: _at, ...rest } = r;
-      return { ...rest, pieces: [...(rest.pieces ?? []), ...back.map((x) => x.piece)] };
-    });
-    for (const x of back) {
-      const q = keptPiece(x.piece);
-      if (q) take(q);
-    }
+    rewrite(id, (r) => { const { mail: _mail, mailAt: _at, ...rest } = r; return { ...rest, pieces: [...(rest.pieces ?? []), ...back.map((x) => x.piece)] }; });
+    for (const x of back) { const q = keptPiece(x.piece); if (q) take(q); }
     held.set(id, { who: who(), day: r0.day });
     sayMail(LOST_TEXT.back());
     return true;
@@ -769,42 +536,24 @@ export function createSpoilsPool({
    *  asked again LOST_RETRY_MS on. Answers how many records still owe. */
   async function sendMail() {
     if (!mail) return 0;
-    let owing = 0,
-      landed = 0;
+    let owing = 0, landed = 0;
     for (const r of recordsOf(read(STORE_KEY))) {
       const owed = mailOf(r);
       if (!owed.length) continue;
-      if (sending.has(r.id)) {
-        owing++;
-        continue;
-      }
+      if (sending.has(r.id)) { owing++; continue; }
       const late = !(wall() - (Number(r.mailAt) || 0) < LOST_OWED_MAX_MS);
       /** @type {'ok'|'refused'|'later'} */
       let word = 'refused';
       if (!late) {
-        if (!mine(r.acct)) {
-          owing++;
-          continue;
-        }
+        if (!mine(r.acct)) { owing++; continue; }
         sending.add(r.id);
-        try {
-          word = await mail.send({ day: r.day, pieces: owed.map((x) => ({ i: x.i, item: x.piece.item })) });
-        } catch {
-          word = 'later';
-        } finally {
-          sending.delete(r.id);
-        }
+        try { word = await mail.send({ day: r.day, pieces: owed.map((x) => ({ i: x.i, item: x.piece.item })) }); } catch { word = 'later'; } finally { sending.delete(r.id); }
       }
-      if (word === 'ok') {
-        mailLanded(r.id, owed);
-        landed++;
-        continue;
-      }
+      if (word === 'ok') { mailLanded(r.id, owed); landed++; continue; }
       if (word === 'refused' && mailBack(r.id)) continue;
       owing++;
     }
-    if (landed) idleRounds = 0;
-    else if (owing) idleRounds++; // a round that owed nothing is no round
+    if (landed) idleRounds = 0; else if (owing) idleRounds++;   // a round that owed nothing is no round
     if (owing) retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)));
     return owing;
   }
@@ -814,21 +563,13 @@ export function createSpoilsPool({
     const left = floor.filter((f) => !f.taken);
     const mailed = owedToMail(left);
     floor.forEach((f) => takeOne(f));
-    if (spewId) {
-      held.set(spewId, { who: who(), day: rec?.day });
-      spewId = null;
-    } // AUDIT WBX S3: all of it in the pack now
-    rec = null;
-    floor = [];
-    launches = [];
-    if (left.length > mailed.length) say(gathered); // SD9e: the pool's own words
-    if (mailed.length) {
-      sayMail(LOST_TEXT.mailed());
-      sendMail().catch(() => {});
-    }
+    if (spewId) { held.set(spewId, { who: who(), day: rec?.day }); spewId = null; }   // AUDIT WBX S3: all of it in the pack now
+    rec = null; floor = []; launches = [];
+    if (left.length > mailed.length) say(gathered);   // SD9e: the pool's own words
+    if (mailed.length) { sayMail(LOST_TEXT.mailed()); sendMail().catch(() => {}); }
     return left.length;
   }
-  if (mail) retryMail(LOST_FIRST_MS); // what an earlier sitting left owed
+  if (mail) retryMail(LOST_FIRST_MS);   // what an earlier sitting left owed
 
   /** WB9f: the floor's piece a key names - resting, not yet taken - or null. */
   function pieceAt(key) {
@@ -844,9 +585,7 @@ export function createSpoilsPool({
   return {
     /** WB14e: a piece straight into the pack by this pool's own door (`take`, the host's takeGateSpoil) - a Tithe-Imp's
      *  tithe, which never lies on the floor. */
-    take(piece) {
-      take(piece);
-    },
+    take(piece) { take(piece); },
     /**
      * THE BURST: the spoils of `day` for this player (the receipt's `seed`, the player's `level`) leave his chest `at`
      * (the dungeon's frame) toward `bearing` (the angle from him to the player). Once a day, on this device: a day
@@ -859,56 +598,24 @@ export function createSpoilsPool({
     resendSpent() {
       const list = owedWords();
       if (!list.length) return 0;
-      const left = list.filter((w) => {
-        if (!mine(w.a)) return true;
-        try {
-          return onSpent(w.d) === false;
-        } catch {
-          return true;
-        }
-      });
-      if (left.length !== list.length) {
-        if (left.length) keep(OWED_KEY, left);
-        else {
-          try {
-            store?.remove(OWED_KEY);
-          } catch {
-            /* nothing owed */
-          }
-        }
-      }
+      const left = list.filter((w) => { if (!mine(w.a)) return true; try { return onSpent(w.d) === false; } catch { return true; } });
+      if (left.length !== list.length) { if (left.length) keep(OWED_KEY, left); else { try { store?.remove(OWED_KEY); } catch { /* nothing owed */ } } }
       return left.length;
     },
     spew({ day, seed, level, at, bearing, acct = '', keep = null, claims = null, roll = null }) {
-      if (spentOn(day, acct)) {
-        if (spentBy(day, acct)) said(day, acct);
-        return false;
-      } // AUDIT WBX S1: spent - said so again, for a hub that missed it
-      if (rec) gatherFloor(); // LOST-SPOILS: a floor not yet left goes where leaving sends it - never under this one
+      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again, for a hub that missed it
+      if (rec) gatherFloor();   // LOST-SPOILS: a floor not yet left goes where leaving sends it - never under this one
       rec = { day, acct };
-      t0 = now();
-      lastT = t0;
-      from = [...at];
-      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)
+      t0 = now(); lastT = t0; from = [...at];
+      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // WB12d: the receipt's rite; SD9e: or a pool's own roll (the Brass Remnant's)
       launches = spewLaunches(seededRng(((seed >>> 0) ^ 0x5a5a) >>> 0), list.length, bearing);
-      if (keep) launches = launches.map((l) => keepLaunch(from, l, keep)); // WB9f: every piece rests on the court's floor
+      if (keep) launches = launches.map((l) => keepLaunch(from, l, keep));   // WB9f: every piece rests on the court's floor
       const plane = keep && Number.isFinite(keep.floorY) ? floorRayAt(keep.floorY) : null;
-      flyRay = plane ? (a, d, l) => ray?.(a, d, l) ?? plane(a, d, l) : ray; // AUDIT WB9 (spoils F1): flown over the floor they were kept to
-      floor = list.map((piece, i) => ({
-        piece,
-        fly: spewPiece(from, launches[i]),
-        left: false,
-        restAt: 0,
-        taken: false,
-        batch: null,
-        sprite: null,
-        batchIcon: false,
-        h: 0,
-        target: null,
-      }));
+      flyRay = plane ? (a, d, l) => ray?.(a, d, l) ?? plane(a, d, l) : ray;   // AUDIT WB9 (spoils F1): flown over the floor they were kept to
+      floor = list.map((piece, i) => ({ piece, fly: spewPiece(from, launches[i]), left: false, restAt: 0, taken: false, batch: null, sprite: null, batchIcon: false, h: 0, target: null }));
       spewId = spend(day, acct, list);
       loadTex();
-      for (const f of floor) askSprite(f); // WBX3: each item's own picture, asked for while the first pieces are still in the air
+      for (const f of floor) askSprite(f);   // WBX3: each item's own picture, asked for while the first pieces are still in the air
       return true;
     },
     /** AUDIT WB A2: THE SPOILS WITH NO FLOOR - a receipt that came while its court was not this player's to stand in
@@ -916,32 +623,15 @@ export function createSpoilsPool({
      *  once. Once a receipt, as the burst is; answers whether they were given. RAID4b: `roll` answers the pieces instead
      *  (a town's thanks - raidSpoils.js raidSpoilsList), asked only for a receipt not yet spent, and `text` is said.
      *  @param {{ day: any, seed?: number, level?: number, acct?: string, roll?: (() => any[]) | null, text?: string, owner?: any, kept?: string | null, claims?: any }} o */
-    grant({
-      day,
-      seed,
-      level,
-      acct = '',
-      roll = null,
-      text = SPOILS_TEXT.granted,
-      owner = undefined,
-      kept = null,
-      claims = null,
-    }) {
-      if (spentOn(day, acct)) {
-        if (spentBy(day, acct)) said(day, acct);
-        return false;
-      } // AUDIT WBX S1: spent - said so again
-      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims); // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite
+    grant({ day, seed, level, acct = '', roll = null, text = SPOILS_TEXT.granted, owner = undefined, kept = null, claims = null }) {
+      if (spentOn(day, acct)) { if (spentBy(day, acct)) said(day, acct); return false; }   // AUDIT WBX S1: spent - said so again
+      const list = typeof roll === 'function' ? roll() : spoilsList(seed >>> 0, Math.max(1, level | 0), claims);   // RAID4b: a town's thanks roll their own; WB12d: the receipt's rite
       // AUDIT RAID R4: ANOTHER CHARACTER'S - the one that fought for them, when another stands here: kept on the device
       // as a crash's record is (never in this pack), and the crash's door hands them over when that character stands up
-      if (owner !== undefined && owner !== who()) {
-        spend(day, acct, list, owner);
-        if (kept) say(kept);
-        return true;
-      }
+      if (owner !== undefined && owner !== who()) { spend(day, acct, list, owner); if (kept) say(kept); return true; }
       const id = spend(day, acct, list);
       for (const piece of list) take(piece);
-      held.set(id, { who: who(), day }); // AUDIT WBX S3: in the pack - the next save holds them
+      held.set(id, { who: who(), day });   // AUDIT WBX S3: in the pack - the next save holds them
       say(text);
       return true;
     },
@@ -950,60 +640,35 @@ export function createSpoilsPool({
      *  kept on the device until the crash's door hands them again (it asks at the load). Answers how many it let go. */
     loaded(whoLoaded) {
       let n = 0;
-      for (const [id, h] of held)
-        if (h.who === whoLoaded) {
-          held.delete(id);
-          n++;
-        }
+      for (const [id, h] of held) if (h.who === whoLoaded) { held.delete(id); n++; }
       return n;
     },
     /** AUDIT WBX S3: records the crash's door handed over at boot (recoverSpoils' `onHanded`) - their pieces are in the
      *  pack, and the next save of their character clears them. */
-    adopt(recOrId) {
-      const r = typeof recOrId === 'string' ? { id: recOrId } : recOrId;
-      if (r?.id) held.set(r.id, { who: r.who ?? who(), day: r.day });
-    },
+    adopt(recOrId) { const r = typeof recOrId === 'string' ? { id: recOrId } : recOrId; if (r?.id) held.set(r.id, { who: r.who ?? who(), day: r.day }); },
     /** REALM P1.3: the records of `whoSaved` whose pieces are in the pack NOW - what a realm checkpoint composed at this
      *  moment holds, handed back to `saved` when it lands (a realm save lands later than it is made). */
-    heldIds(whoSaved) {
-      return [...held].filter(([, h]) => h.who === whoSaved).map(([id]) => id);
-    },
+    heldIds(whoSaved) { return [...held].filter(([, h]) => h.who === whoSaved).map(([id]) => id); },
     /** AUDIT WBX S3: A SAVE LANDED for character `whoSaved` (systems/save/saveSlots.js onSlotSaved): every record of theirs
      *  whose pieces are in the pack is held by it - cleared from the device, its receipt's mark made fast, and (AUDIT
      *  WBX S1) said spent to the hub if it was not yet. Answers how many were cleared. REALM P1.3: a realm checkpoint
      *  names the records it was composed holding (`only`, from heldIds), since it lands after pieces may have come in. */
     saved(whoSaved, only = null) {
       if (whoSaved == null || !held.size) return 0;
-      const ids = new Set(
-        [...held].filter(([id, h]) => h.who === whoSaved && (!only || only.includes(id))).map(([id]) => id),
-      );
+      const ids = new Set([...held].filter(([id, h]) => h.who === whoSaved && (!only || only.includes(id))).map(([id]) => id));
       if (!ids.size) return 0;
       const all = recordsOf(read(STORE_KEY));
       // LOST-SPOILS: a record still owing the mailbox stays, its pack's part held - nothing of it handed again
       const left = all.flatMap((r) => (!(r && ids.has(r.id)) ? [r] : mailOf(r).length ? [{ ...r, pieces: [] }] : []));
       const cleared = all.filter((r) => r && ids.has(r.id)).length;
-      if (cleared) {
-        if (left.length) keep(STORE_KEY, left);
-        else {
-          try {
-            store?.remove(STORE_KEY);
-          } catch {
-            /* nothing to lose */
-          }
-        }
-      }
+      if (cleared) { if (left.length) keep(STORE_KEY, left); else { try { store?.remove(STORE_KEY); } catch { /* nothing to lose */ } } }
       for (const id of ids) {
         held.delete(id);
         const a = ackOnSave.get(id);
         if (a) {
           ackOnSave.delete(id);
           const kept = read(DAY_KEY);
-          keep(
-            DAY_KEY,
-            [...(Array.isArray(kept) ? kept : []), spentKey(a.day, a.acct)]
-              .filter((v, i, xs) => xs.indexOf(v) === i)
-              .slice(-SPOILS_SPENT_MAX),
-          );
+          keep(DAY_KEY, [...(Array.isArray(kept) ? kept : []), spentKey(a.day, a.acct)].filter((v, i, xs) => xs.indexOf(v) === i).slice(-SPOILS_SPENT_MAX));
           said(a.day, a.acct);
         }
       }
@@ -1014,36 +679,23 @@ export function createSpoilsPool({
      *  rest (the court's sparks). */
     frame(onRest = null) {
       if (!rec) return;
-      const t = now(),
-        dt = Math.max(0, Math.min(0.1, (t - lastT) / 1000));
+      const t = now(), dt = Math.max(0, Math.min(0.1, (t - lastT) / 1000));
       lastT = t;
       loadTex();
       floor.forEach((f, i) => {
         if (f.taken) return;
-        if (!f.left) {
-          if (t - t0 < launches[i].at) return;
-          f.left = true;
-        }
+        if (!f.left) { if (t - t0 < launches[i].at) return; f.left = true; }
         if (!f.fly.rest) {
           const what = flySpew(f.fly, dt, flyRay);
           if (what === 'bounce' || what === 'rest') audio?.play3d?.(CLIPS.drop, [...f.fly.pos], 1, { maxDistance: 24 });
           if (f.fly.rest) {
             f.restAt = t;
-            if ((RARITIES[f.piece.tier]?.rank ?? 0) >= RARITIES.rare.rank)
-              audio?.play3d?.(SOUND.MakeItem, [...f.fly.pos], 1, { maxDistance: 30 }); // the rare chime (corpseMarker.js playRareDrop's own)
-            try {
-              onRest?.(f.fly.pos, f.piece.tier, f.piece.kind);
-            } catch {
-              /* a spark is not the spoils' problem */
-            } // WB9f
+            if ((RARITIES[f.piece.tier]?.rank ?? 0) >= RARITIES.rare.rank) audio?.play3d?.(SOUND.MakeItem, [...f.fly.pos], 1, { maxDistance: 30 });   // the rare chime (corpseMarker.js playRareDrop's own)
+            try { onRest?.(f.fly.pos, f.piece.tier, f.piece.kind); } catch { /* a spark is not the spoils' problem */ }   // WB9f
           }
         }
         const b = batchOf(f);
-        if (b) {
-          b.origin[0] = f.fly.pos[0];
-          b.origin[1] = f.fly.pos[1];
-          b.origin[2] = f.fly.pos[2];
-        }
+        if (b) { b.origin[0] = f.fly.pos[0]; b.origin[1] = f.fly.pos[1]; b.origin[2] = f.fly.pos[2]; }
       });
     },
     /**
@@ -1058,18 +710,9 @@ export function createSpoilsPool({
       floor.forEach((f, i) => {
         if (f.taken || !f.left || !f.fly.rest) return;
         if (!f.target) {
-          const [x, y, z] = f.fly.pos,
-            h = Math.max(SPOIL_BOX_MIN_H, f.h || 0);
-          f.target = {
-            key: `${f.piece.kind === 'gold' ? SPOIL_GOLD_KEY : SPOIL_KEY}${i}`,
-            aabb: {
-              min: [x - SPOIL_BOX_HALF_M, y, z - SPOIL_BOX_HALF_M],
-              max: [x + SPOIL_BOX_HALF_M, y + h, z + SPOIL_BOX_HALF_M],
-            },
-            distance: RAY_DISTANCE,
-            reach: TREASURE_ACTIVATION_DISTANCE,
-          };
-        } else if (f.h > 0) f.target.aabb.max[1] = f.target.aabb.min[1] + Math.max(SPOIL_BOX_MIN_H, f.h); // the picture landed after the pile: its box follows
+          const [x, y, z] = f.fly.pos, h = Math.max(SPOIL_BOX_MIN_H, f.h || 0);
+          f.target = { key: `${f.piece.kind === 'gold' ? SPOIL_GOLD_KEY : SPOIL_KEY}${i}`, aabb: { min: [x - SPOIL_BOX_HALF_M, y, z - SPOIL_BOX_HALF_M], max: [x + SPOIL_BOX_HALF_M, y + h, z + SPOIL_BOX_HALF_M] }, distance: RAY_DISTANCE, reach: TREASURE_ACTIVATION_DISTANCE };
+        } else if (f.h > 0) f.target.aabb.max[1] = f.target.aabb.min[1] + Math.max(SPOIL_BOX_MIN_H, f.h);   // the picture landed after the pile: its box follows
         _targets.push(f.target);
       });
       return _targets;
@@ -1084,18 +727,10 @@ export function createSpoilsPool({
       return { title: itemName(f.piece.item), subs: label ? [label] : [] };
     },
     /** WB9f: what an item's key holds, for the plaque's list - the one item - or null. */
-    contentsOf(key) {
-      const f = pieceAt(key);
-      return f && f.piece.kind === 'item' ? [f.piece.item] : null;
-    },
+    contentsOf(key) { const f = pieceAt(key); return f && f.piece.kind === 'item' ? [f.piece.item] : null; },
     /** WB9f: THE PRESS - the piece a key names into the pack, and said; false when it is not there. GATE-UX: the only
      *  way a piece leaves the floor short of leaving the court. */
-    pick(key) {
-      const f = pieceAt(key);
-      if (!f) return false;
-      takeOne(f);
-      return true;
-    },
+    pick(key) { const f = pieceAt(key); if (!f) return false; takeOne(f); return true; },
     /** The pieces, for the host's billboard pass (AUDIT WB D10: an empty floor - the court's every frame but a kill's -
      *  makes nothing). */
     batches: () => (floor.length ? floor.filter((f) => f.batch && !f.taken && f.left).map((f) => f.batch) : NONE),
@@ -1105,20 +740,8 @@ export function createSpoilsPool({
       const out = [];
       for (const f of floor) {
         if (f.taken || !f.fly.rest || (RARITIES[f.piece.tier]?.rank ?? 0) < RARITIES.rare.rank) continue;
-        const c = tierColour(f.piece.tier),
-          k = SPOILS_LIGHT.k * Math.min(1, (now() - f.restAt) / SPOILS_RISE_MS);
-        out.push(
-          adoptLight(
-            {
-              x: f.fly.pos[0],
-              y: f.fly.pos[1] + SPOILS_LIGHT.up,
-              z: f.fly.pos[2],
-              range: SPOILS_LIGHT.range,
-              color: c.map((v) => v * k),
-            },
-            f,
-          ),
-        ); // LIGHT-ID: the piece's own light
+        const c = tierColour(f.piece.tier), k = SPOILS_LIGHT.k * Math.min(1, (now() - f.restAt) / SPOILS_RISE_MS);
+        out.push(adoptLight({ x: f.fly.pos[0], y: f.fly.pos[1] + SPOILS_LIGHT.up, z: f.fly.pos[2], range: SPOILS_LIGHT.range, color: c.map((v) => v * k) }, f));   // LIGHT-ID: the piece's own light
       }
       return out;
     },
@@ -1126,13 +749,7 @@ export function createSpoilsPool({
     drawPass(proj, view, eye, seconds, fog = null) {
       if (!glow || !floor.length) return false;
       const t = now();
-      const lines = floor
-        .filter((f) => !f.taken && f.fly.rest)
-        .map((f) => ({
-          root: [f.fly.pos[0], f.fly.pos[1] + f.h, f.fly.pos[2]],
-          tier: f.piece.tier,
-          alpha: Math.min(1, (t - f.restAt) / SPOILS_RISE_MS),
-        }));
+      const lines = floor.filter((f) => !f.taken && f.fly.rest).map((f) => ({ root: [f.fly.pos[0], f.fly.pos[1] + f.h, f.fly.pos[2]], tier: f.piece.tier, alpha: Math.min(1, (t - f.restAt) / SPOILS_RISE_MS) }));
       glow.draw(lines, proj, view, eye, seconds, fog);
       return glow.drawn > 0;
     },
@@ -1142,18 +759,6 @@ export function createSpoilsPool({
     /** LOST-SPOILS: what is owed to the mailbox sent now (the host's, the tests') - answers how many records still owe. */
     mailOwed: () => sendMail(),
     /** What the pool holds, for the tests and the stats. */
-    state: () => ({
-      day: rec?.day ?? null,
-      pieces: floor.map((f) => ({
-        kind: f.piece.kind,
-        tier: f.piece.tier,
-        left: f.left,
-        rest: f.fly.rest,
-        taken: f.taken,
-        pos: [...f.fly.pos],
-        icon: !!f.batchIcon,
-        h: f.h,
-      })),
-    }),
+    state: () => ({ day: rec?.day ?? null, pieces: floor.map((f) => ({ kind: f.piece.kind, tier: f.piece.tier, left: f.left, rest: f.fly.rest, taken: f.taken, pos: [...f.fly.pos], icon: !!f.batchIcon, h: f.h })) }),
   };
 }

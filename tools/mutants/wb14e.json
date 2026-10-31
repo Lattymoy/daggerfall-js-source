@@ -2,8 +2,8 @@
   {
     "name": "WB14e-every-night",
     "file": "src/net/gate/gateLaw.js",
-    "old": "  isGateDay(day) && gateRoll(day, 21) % TITHE_ONE_IN === 0\n    ? TITHE_AFTER_MS + (gateRoll(day, 22) % (TITHE_SPREAD_MS / 1000)) * 1000\n    : null;",
-    "new": "  isGateDay(day) && true ? TITHE_AFTER_MS + (gateRoll(day, 22) % (TITHE_SPREAD_MS / 1000)) * 1000 : null;",
+    "old": "gateRoll(day, 21) % TITHE_ONE_IN === 0 ?",
+    "new": "true ?",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB14e-its-moment-past-the-spread",
     "file": "src/net/gate/gateLaw.js",
-    "old": "    ? TITHE_AFTER_MS + (gateRoll(day, 22) % (TITHE_SPREAD_MS / 1000)) * 1000",
-    "new": "    ? TITHE_AFTER_MS + (gateRoll(day, 22) % (TITHE_SPREAD_MS / 100)) * 1000",
+    "old": "(gateRoll(day, 22) % (TITHE_SPREAD_MS / 1000)) * 1000",
+    "new": "(gateRoll(day, 22) % (TITHE_SPREAD_MS / 100)) * 1000",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]
@@ -235,8 +235,8 @@
   {
     "name": "WB14e-the-gold-unscaled",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  const gold = Math.round(TITHE_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));",
-    "new": "  const gold = Math.round(TITHE_GOLD_PER_LEVEL * (0.8 + 0.4 * rolls()));",
+    "old": "  const gold = Math.round(TITHE_GOLD_PER_LEVEL * lv * (0.8 + 0.4 * rolls()));\n  return [{ kind: 'gold', gold, tier: 'common' }",
+    "new": "  const gold = Math.round(TITHE_GOLD_PER_LEVEL * (0.8 + 0.4 * rolls()));\n  return [{ kind: 'gold', gold, tier: 'common' }",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]
@@ -244,8 +244,8 @@
   {
     "name": "WB14e-the-spoils-seed-s-gem",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "  const rolls = seededRng(((seed >>> 0) ^ 0x7177e) >>> 0);",
-    "new": "  const rolls = seededRng(7);",
+    "old": "  const rolls = seededRng(((seed >>> 0) ^ 0x7177e) >>> 0);\n  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const gold = Math.round(TITHE_GOLD_PER_LEVEL",
+    "new": "  const rolls = seededRng(7);\n  const lv = Math.max(1, Math.floor(Number(level) || 1));\n  const gold = Math.round(TITHE_GOLD_PER_LEVEL",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]
@@ -354,7 +354,7 @@
   {
     "name": "WB14e-the-pool-s-door-shut",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    take(piece) {\n      take(piece);\n    },",
+    "old": "    take(piece) { take(piece); },",
     "new": "    take() {},",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"

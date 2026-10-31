@@ -145,7 +145,7 @@ test('RF1: the two seams - the equip listener (and the save\'s rebuild) and the 
 
 test('RF1: the read sites - one accessor per channel in the formulas, the field in the leaves, nothing of the affix fold\'s left there', () => {
   const f = read('src/combat/formulas.js');
-  assert.match(f, /chance \+=\n\s*mentorArmorValue\(target, target\.armorValues\?\.\[struckBodyPart\] \?\? 0\) \+ entityArmorMod\(target, struckBodyPart\);/, 'the hit formula\'s armour term');
+  assert.match(f, /chance \+= mentorArmorValue\(target, target\.armorValues\?\.\[struckBodyPart\] \?\? 0\) \+ entityArmorMod\(target, struckBodyPart\);/, 'the hit formula\'s armour term');
   assert.match(f, /weaponDamageMods\(weapon, wMin \+ Math\.floor\(rolls\(\) \* \(wMax \+ 1 - wMin\)\)\) \+ damageMod/, 'the weapon roll');
   assert.match(f, /const mult = entityWeightMult\(entity\);/, 'the carrying capacity');
   assert.match(read('src/combat/pcaao.js'), /result = 100 - entityEnchantArmorMod\(target\) - entityArmorPoints\(target, struckBodyPart\);/, 'PCAAO\'s read (AUDIT SET P-M1: the channels and the points apart, the points as protection)');

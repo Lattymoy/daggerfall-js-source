@@ -110,8 +110,8 @@
   {
     "name": "ROLL-PACE-the-held-rank-taken",
     "file": "src/systems/guild/guilds.js",
-    "old": "  return Number.isInteger(ceiling) && ruled > ceiling ? Math.max(ceiling, Math.min(ruled, m.rank)) : ruled;",
-    "new": "  return Number.isInteger(ceiling) && ruled > ceiling ? ceiling : ruled;",
+    "old": "Math.max(ceiling, Math.min(ruled, m.rank))",
+    "new": "ceiling",
     "tests": [
       "test/systems/guild/fb1015f_rollpace.test.js"
     ]

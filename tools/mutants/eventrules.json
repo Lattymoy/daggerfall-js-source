@@ -132,8 +132,8 @@
   {
     "name": "SD-REZ-the-window-ignored",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (now - d[1] > SD_REZ_MS) return 'fallen';\n  return (realm.raised ?? []).some(([x, at]) => x === sub && at >= d[1]) ? 'rise' : 'down';",
-    "new": "  return (realm.raised ?? []).some(([x, at]) => x === sub && at >= d[1]) ? 'rise' : 'down';",
+    "old": "  if (now - d[1] > SD_REZ_MS) return 'fallen';\n  return (realm.raised",
+    "new": "  return (realm.raised",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]

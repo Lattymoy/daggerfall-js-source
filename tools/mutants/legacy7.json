@@ -2,8 +2,8 @@
   {
     "name": "LEGACY7-stale-overwrites",
     "file": "server-account/src/legacy.js",
-    "old": "        'UPDATE lineages SET record = ?, rev = ?, surname = ?, updated_at = ? WHERE player = ? AND id = ? AND rev = ? AND rev < ?',",
-    "new": "        'UPDATE lineages SET record = ?, rev = ?, surname = ?, updated_at = ? WHERE player = ? AND id = ? AND (rev = ? OR 1) AND (rev < ? OR 1)',",
+    "old": "WHERE player = ? AND id = ? AND rev = ? AND rev < ?')",
+    "new": "WHERE player = ? AND id = ? AND (rev = ? OR 1) AND (rev < ? OR 1)')",
     "tests": [
       "test/server/legacy7_service.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LEGACY7-model-rewritten",
     "file": "server-account/src/legacy.js",
-    "old": "    if (had.model !== rec.model) return { error: 'lineage-model' };\n    // INT18 (bible/06-Systems/Integrity-Arc.md section 7): THE FAMILY'S OWN LAW (src/systems/legacy/legacyLaw.js) - a",
-    "new": "    // INT18 (bible/06-Systems/Integrity-Arc.md section 7): THE FAMILY'S OWN LAW (src/systems/legacy/legacyLaw.js) - a",
+    "old": "    if (had.model !== rec.model) return { error: 'lineage-model' };\n",
+    "new": "",
     "tests": [
       "test/server/legacy7_service.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LEGACY7-lines-unbounded",
     "file": "server-account/src/legacy.js",
-    "old": "        ' SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ?',",
-    "new": "        ' SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ? + 1000',",
+    "old": "WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ?',",
+    "new": "WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ? + 1000',",
     "tests": [
       "test/server/legacy7_service.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "LEGACY7-dead-born-again",
     "file": "server-account/src/legacy.js",
-    "old": "  if (!p || p.died || p.retired != null || (p.kind ?? 'member') !== 'member' || p.minor)\n    return { error: 'lineage-person' };",
+    "old": "  if (!p || p.died || p.retired != null || (p.kind ?? 'member') !== 'member' || p.minor) return { error: 'lineage-person' };",
     "new": "  if (!p || p.retired != null || (p.kind ?? 'member') !== 'member' || p.minor) return { error: 'lineage-person' };",
     "tests": [
       "test/server/legacy7_service.test.js"
@@ -47,8 +47,8 @@
   {
     "name": "LEGACY7-tomb-any-lease",
     "file": "server-account/src/legacy.js",
-    "old": "      `UPDATE realm_characters SET dead_at = ?, dead_why = ?, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL${lease == null ? '' : ' AND lease = ?'}`,",
-    "new": "      `UPDATE realm_characters SET dead_at = ?, dead_why = ?, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL${lease == null ? '' : ' AND (lease = ? OR 1)'}`,",
+    "old": "dead_at IS NULL${lease == null ? '' : ' AND lease = ?'}",
+    "new": "dead_at IS NULL${lease == null ? '' : ' AND (lease = ? OR 1)'}",
     "tests": [
       "test/server/legacy7_service.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "LEGACY7-pull-overwrites",
     "file": "src/systems/legacy/realmLine.js",
-    "old": "  mergeFacts(base, other);\n  base.rev = Math.max(a.rev, b.rev);",
-    "new": "  base.rev = Math.max(a.rev, b.rev);",
+    "old": "  mergeFacts(base, other);\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/legacy7_online.test.js"
     ]

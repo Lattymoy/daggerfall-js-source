@@ -2,8 +2,8 @@
   {
     "name": "MAIL-guest-sends",
     "file": "server-account/src/letters.js",
-    "old": "  if (accountKind(sender) !== 'linked') return { error: 'mail-needs-account' };\n  if (isMuted(sender, nowS)) return { error: 'muted' };",
-    "new": "  if (isMuted(sender, nowS)) return { error: 'muted' };",
+    "old": "  if (accountKind(sender) !== 'linked') return { error: 'mail-needs-account' };\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "MAIL-muted-heard",
     "file": "server-account/src/letters.js",
-    "old": "  if (isMuted(sender, nowS)) return { error: 'muted' };\n  const words = letterWords({ subject, body });",
-    "new": "  const words = letterWords({ subject, body });",
+    "old": "  if (isMuted(sender, nowS)) return { error: 'muted' };\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "MAIL-words-unchecked",
     "file": "server-account/src/letters.js",
-    "old": "  if ('error' in words) return words;\n  const account = typeof toAccount === 'string' && ID_RE.test(toAccount) ? toAccount : null;",
-    "new": "  const account = typeof toAccount === 'string' && ID_RE.test(toAccount) ? toAccount : null;",
+    "old": "  if ('error' in words) return words;\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "MAIL-shape-after-rate",
     "file": "server-account/src/letters.js",
-    "old": "  if (!account && !HANDLE_RE.test(handle)) return { error: 'no-reader' };\n  // ITS OWN WORD, not the routes' `rate`: that one's sentence says \"wait a few minutes\", and this window is an hour",
-    "new": "  // ITS OWN WORD, not the routes' `rate`: that one's sentence says \"wait a few minutes\", and this window is an hour",
+    "old": "  if (!account && !HANDLE_RE.test(handle)) return { error: 'no-reader' };\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "MAIL-sender-rate-dropped",
     "file": "server-account/src/letters.js",
-    "old": "  if (await overRate({ db, nowS }, `mail:${sender.id}`, LETTERS_SENT_MAX, LETTERS_SENT_WINDOW_S))\n    return { error: 'mail-rate' };\n  const reader = account",
-    "new": "  const reader = account",
+    "old": "  if (await overRate({ db, nowS }, `mail:${sender.id}`, LETTERS_SENT_MAX, LETTERS_SENT_WINDOW_S)) return { error: 'mail-rate' };\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "MAIL-pair-rate-dropped",
     "file": "server-account/src/letters.js",
-    "old": "  if (await overRate({ db, nowS }, `mail:${sender.id}>${reader.id}`, LETTERS_PAIR_MAX, LETTERS_SENT_WINDOW_S))\n    return { error: 'mail-rate' };\n  const id = mintId(rand);",
-    "new": "  const id = mintId(rand);",
+    "old": "  if (await overRate({ db, nowS }, `mail:${sender.id}>${reader.id}`, LETTERS_PAIR_MAX, LETTERS_SENT_WINDOW_S)) return { error: 'mail-rate' };\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "MAIL-to-self-kept",
     "file": "server-account/src/letters.js",
-    "old": "  if (reader.id === sender.id) return { error: 'to-self' };\n  if (await overRate({ db, nowS }, `mail:${sender.id}>${reader.id}`, LETTERS_PAIR_MAX, LETTERS_SENT_WINDOW_S))",
-    "new": "  if (await overRate({ db, nowS }, `mail:${sender.id}>${reader.id}`, LETTERS_PAIR_MAX, LETTERS_SENT_WINDOW_S))",
+    "old": "  if (reader.id === sender.id) return { error: 'to-self' };\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "MAIL-bound-off-by-one",
     "file": "server-account/src/letters.js",
-    "old": "    .bind(id, reader.id, sender.id, displayName(sender), words.subject, words.body, nowS, reader.id, LETTERS_INBOX_MAX)",
-    "new": "    .bind(\n      id,\n      reader.id,\n      sender.id,\n      displayName(sender),\n      words.subject,\n      words.body,\n      nowS,\n      reader.id,\n      LETTERS_INBOX_MAX + 1,\n    )",
+    "old": "reader.id, LETTERS_INBOX_MAX).run();",
+    "new": "reader.id, LETTERS_INBOX_MAX + 1).run();",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "MAIL-full-box-lands-anyway",
     "file": "server-account/src/letters.js",
-    "old": "  if (!r?.meta?.changes) return { error: 'inbox-full' };\n  return { ok: true, id, to: account ? displayName(reader) : reader.handle };",
-    "new": "  return { ok: true, id, to: account ? displayName(reader) : reader.handle };",
+    "old": "  if (!r?.meta?.changes) return { error: 'inbox-full' };\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "MAIL-inbox-oldest-first",
     "file": "server-account/src/letters.js",
-    "old": "    WHERE to_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`,",
-    "new": "    WHERE to_id = ? ORDER BY sent_at ASC, id DESC LIMIT ?`,",
+    "old": "ORDER BY sent_at DESC, id DESC LIMIT ?",
+    "new": "ORDER BY sent_at ASC, id DESC LIMIT ?",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "MAIL-inbox-anybodys",
     "file": "server-account/src/letters.js",
-    "old": "    WHERE to_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`,",
-    "new": "    WHERE to_id != ? ORDER BY sent_at DESC, id DESC LIMIT ?`,",
+    "old": "    WHERE to_id = ? ORDER BY",
+    "new": "    WHERE to_id != ? ORDER BY",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "MAIL-unread-is-all",
     "file": "server-account/src/letters.js",
-    "old": "  return { letters, unread: letters.filter((l) => !l.read).length, max: LETTERS_INBOX_MAX };",
-    "new": "  return { letters, unread: letters.length, max: LETTERS_INBOX_MAX };",
+    "old": "unread: letters.filter((l) => !l.read).length,",
+    "new": "unread: letters.length,",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "MAIL-badge-never-read",
     "file": "server-account/src/letters.js",
-    "old": "    ...badgeOf(rows.get(l.from_id), env, nowS),",
-    "new": "    ...badgeOf(null, env, nowS),",
+    "old": "id: l.id, from: l.from_name, ...badgeOf(rows.get(l.from_id), env, nowS),",
+    "new": "id: l.id, from: l.from_name, ...badgeOf(null, env, nowS),",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "MAIL-read-anybodys",
     "file": "server-account/src/letters.js",
-    "old": "    .prepare('SELECT id, from_id, from_name, subject, body, sent_at, read_at FROM letters WHERE id = ? AND to_id = ?')\n    .bind(id, reader.id)",
-    "new": "    .prepare('SELECT id, from_id, from_name, subject, body, sent_at, read_at FROM letters WHERE id = ?')\n    .bind(id)",
+    "old": "FROM letters WHERE id = ? AND to_id = ?')\n    .bind(id, reader.id).first();",
+    "new": "FROM letters WHERE id = ?')\n    .bind(id).first();",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "MAIL-read-never-marked",
     "file": "server-account/src/letters.js",
-    "old": "  if (l.read_at == null)\n    await db\n      .prepare('UPDATE letters SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL')\n      .bind(nowS, id, reader.id)\n      .run();\n  const row = await withIliacHonours(",
-    "new": "  const row = await withIliacHonours(",
+    "old": "  if (l.read_at == null) await db.prepare('UPDATE letters SET read_at = ? WHERE id = ? AND to_id = ? AND read_at IS NULL').bind(nowS, id, reader.id).run();\n",
+    "new": "",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "MAIL-read-time-rewritten",
     "file": "server-account/src/letters.js",
-    "old": "      readAt: l.read_at ?? nowS,",
-    "new": "      readAt: nowS,",
+    "old": "sentAt: l.sent_at, readAt: l.read_at ?? nowS,",
+    "new": "sentAt: l.sent_at, readAt: nowS,",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "MAIL-delete-anybodys",
     "file": "server-account/src/letters.js",
-    "old": "  const r = await db.prepare('DELETE FROM letters WHERE id = ? AND to_id = ?').bind(id, reader.id).run();",
-    "new": "  const r = await db.prepare('DELETE FROM letters WHERE id = ?').bind(id).run();",
+    "old": "DELETE FROM letters WHERE id = ? AND to_id = ?').bind(id, reader.id)",
+    "new": "DELETE FROM letters WHERE id = ?').bind(id)",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "LAW-lines-collapsed",
     "file": "src/net/letterLaw.js",
-    "old": "  ).join('\\n');",
-    "new": "  ).join(' ');",
+    "old": "  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join('\\n');",
+    "new": "  return foldBlankLines(String(text ?? '').split(LINE_BREAK).map(wordsLine)).join(' ');",
     "tests": [
       "test/server/mail1.test.js"
     ],
@@ -305,7 +305,7 @@
   {
     "name": "LAW-subject-keeps-lines",
     "file": "src/net/letterLaw.js",
-    "old": "  return wordsLine(\n    String(text ?? '')\n      .split(LINE_BREAK)\n      .join(' '),\n  );",
+    "old": "  return wordsLine(String(text ?? '').split(LINE_BREAK).join(' '));",
     "new": "  return wordsLine(String(text ?? ''));",
     "tests": [
       "test/server/mail1.test.js"

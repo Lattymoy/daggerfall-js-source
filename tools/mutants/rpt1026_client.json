@@ -123,8 +123,8 @@
   {
     "name": "RPT1026-WEIR-card-unsaid",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true }); // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are",
-    "new": "    out.push({ text: EG_TEXT.keyLine, center: true }); // AUDIT EG V (c, L8-6): the Weir Key's line (section 5), its name and weight above it; RPT1026-CLIENT: and whose the keys are",
+    "old": "out.push({ text: EG_TEXT.keyLine, center: true }, { text: weirKeySharedLine(), center: true });",
+    "new": "out.push({ text: EG_TEXT.keyLine, center: true });",
     "tests": [
       "test/systems/eliteGates/rpt1026_client_weirface.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "RPT1026-CAPTURE-door-throws",
     "file": "src/ui/pointerCapture.js",
-    "old": "  try {\n    el?.setPointerCapture?.(id);\n    return true;\n  } catch {\n    return false;\n  }",
-    "new": "  el?.setPointerCapture?.(id);\n  return true;",
+    "old": "  try { el?.setPointerCapture?.(id); return true; } catch { return false; }",
+    "new": "  el?.setPointerCapture?.(id); return true;",
     "tests": [
       "test/ui/rpt1026_client_capture.test.js"
     ],
@@ -253,8 +253,8 @@
   {
     "name": "RPT1026-CAPTURE-release-throws",
     "file": "src/ui/pointerCapture.js",
-    "old": "  try {\n    el?.releasePointerCapture?.(id);\n    return true;\n  } catch {\n    return false;\n  }",
-    "new": "  el?.releasePointerCapture?.(id);\n  return true;",
+    "old": "  try { el?.releasePointerCapture?.(id); return true; } catch { return false; }",
+    "new": "  el?.releasePointerCapture?.(id); return true;",
     "tests": [
       "test/ui/rpt1026_client_capture.test.js"
     ],

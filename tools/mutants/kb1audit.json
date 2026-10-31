@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-KB1-F1-the-carry-runs-before-the-defaults",
     "file": "src/systems/inputActions.js",
-    "old": "  resetDefaults(store, true); // step 2: the standard's defaults, on every code still free\n  const spoken = (code) => actionForCode(store, code) != null || comboModifiers(store).has(code);",
-    "new": "  const spoken = (code) => actionForCode(store, code) != null || comboModifiers(store).has(code);",
+    "old": "  resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free\n",
+    "new": "",
     "tests": [
       "test/ui/kb1_audit.test.js"
     ]
@@ -11,7 +11,7 @@
   {
     "name": "AUDIT-KB1-F2-a-taken-key-is-taken-silently",
     "file": "src/systems/inputActions.js",
-    "old": "      if (spoken(code)) {\n        report.kept.push({ action: row.action, code, holder: actionForCode(store, code) });\n        continue;\n      }",
+    "old": "      if (spoken(code)) { report.kept.push({ action: row.action, code, holder: actionForCode(store, code) }); continue; }",
     "new": "",
     "tests": [
       "test/ui/kb1_audit.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-KB1-F3-a-lost-key-is-not-reported",
     "file": "src/systems/inputActions.js",
-    "old": "    report.lost.push({ action, code, holder: actionForCode(store, code) });\n  }",
-    "new": "  }",
+    "old": "    report.lost.push({ action, code, holder: actionForCode(store, code) });",
+    "new": "",
     "tests": [
       "test/ui/kb1_audit.test.js",
       "test/ui/kb1_keybinds.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "AUDIT-KB1-F3-a-hidden-action-keeps-a-moved-key",
     "file": "src/systems/inputActions.js",
-    "old": "      if (had != null) {\n        clearBinding(store, hidden, primary);\n        report.moved.push(`${hidden} off ${had}`);\n      }\n    }",
-    "new": "    }",
+    "old": "      if (had != null) { clearBinding(store, hidden, primary); report.moved.push(`${hidden} off ${had}`); }",
+    "new": "",
     "tests": [
       "test/ui/kb1_audit.test.js"
     ]

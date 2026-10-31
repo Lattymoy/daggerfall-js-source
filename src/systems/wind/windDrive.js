@@ -41,7 +41,7 @@ import { labWindSlider } from '../../render/labGrass.js';
 import { isEnhanced } from '../uiSkin.js';
 import { getPref } from '../uiPrefs.js';
 import { TALL_FLAT_HEIGHT } from '../../world/flatDistance.js';
-import { pageParam } from '../pageQuery.js'; // AUDIT PERF-URL A4: the ?sway=off door reads the page's one parse
+import { pageParam } from '../pageQuery.js';   // AUDIT PERF-URL A4: the ?sway=off door reads the page's one parse
 
 /** The lab's metres a second per slider unit (grass-proto.html frame()). */
 export const LAB_WIND_RATE = 0.16;
@@ -53,7 +53,7 @@ export const WIND_STEP_DT_MAX = 0.05;
 /** WX1's fixed gust stack, kept as the fallback for a controller that has
  *  no envelope of its own (a bare deck in a test, the mod's deck). */
 export function legacyGust(tsec) {
-  return 0.72 + 0.2 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.1 * Math.sin(tsec * 2.1 + 0.4);
+  return 0.72 + 0.20 * Math.sin(tsec * 0.31) + 0.14 * Math.sin(tsec * 0.83 + 1.7) + 0.10 * Math.sin(tsec * 2.10 + 0.4);
 }
 
 /** The frame's wind, in every unit. */
@@ -68,10 +68,7 @@ export function windDrive(sky, tsec, dt = 0) {
   const windV = [dir[0] * rate, dir[1] * rate];
   const ds = Math.min(WIND_STEP_DT_MAX, Math.max(0, Number(dt) || 0));
   return {
-    on,
-    w,
-    dir,
-    slider,
+    on, w, dir, slider,
     strength01: Math.min(1, slider / WIND_SLIDER_MAX),
     gust,
     windV,
@@ -94,24 +91,14 @@ export const GUST_K = 0.35;
  *  heading the shaders' own, (1, 0) when it is still), kept in 0..2pi */
 export function gustPhaseAfterShift(phase, offset, windV) {
   const l = Math.hypot(windV[0], windV[1]);
-  const dx = l > 1e-4 ? windV[0] / l : 1,
-    dz = l > 1e-4 ? windV[1] / l : 0;
+  const dx = l > 1e-4 ? windV[0] / l : 1, dz = l > 1e-4 ? windV[1] / l : 0;
   const p = (phase + GUST_K * (offset[0] * dx + offset[2] * dz)) % (2 * Math.PI);
   return p < 0 ? p + 2 * Math.PI : p;
 }
 /** the clock the wave is handed: the frame's seconds, and the phase the crossings carried */
 export const gustClock = (tsec, phase) => tsec + phase / GUST_RATE;
 
-export const WIND_NONE = Object.freeze({
-  on: false,
-  w: [0, 0],
-  dir: [1, 0],
-  slider: 0,
-  strength01: 0,
-  gust: 1,
-  windV: [0, 0],
-  step: [0, 0],
-});
+export const WIND_NONE = Object.freeze({ on: false, w: [0, 0], dir: [1, 0], slider: 0, strength01: 0, gust: 1, windV: [0, 0], step: [0, 0] });
 
 // ── THE FLATS' SWAY ──────────────────────────────────────────────────
 /** How much a flat batch leans with the wind: the climate's NATURE

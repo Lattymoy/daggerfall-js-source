@@ -277,21 +277,16 @@ export class Person extends QuestResource {
         return Number.isInteger(index) ? getLocalizedRegionName(index, canonical) : canonical(index);
       }
       case 5: {
-        // DetailsMacro - the flat caption ("young lady in green")
-        // GetFlatDetailsString (Person.cs:354-383). FactionFile.GetFlatData:
-        // archive = flat >> 7, record = flat & 0x7f.
+        // DetailsMacro - the flat caption ("young lady in green") GetFlatDetailsString (Person.cs:354-383).
+        // FactionFile.GetFlatData: archive = flat >> 7, record = flat & 0x7f.
         //
-        // C# QUIRK KEPT: the IsIndividualNPC arm ("Individuals are
-        // always flat1 no matter gender") has NO else, so the gender
-        // branch immediately overwrites it and an individual FEMALE
-        // still takes flat2. The comment is a lie about C#'s own dead
-        // assignment; the port writes what actually runs.
+        // C# QUIRK KEPT: the IsIndividualNPC arm ("Individuals are always flat1 no matter gender") has NO else, so the
+        // gender branch immediately overwrites it and an individual FEMALE still takes flat2. The comment is a lie
+        // about C#'s own dead assignment; the port writes what actually runs.
         //
-        // AUDIT 24 (the seven-slice sweep): the FALLBACK was missing.
-        // When FLATS.CFG has no caption for the flat id, DFU answers
-        // the RACE NAME - `GetRaceDictionary()[(int)race].Name` - not
-        // an unexpanded macro. The port returned false and left
-        // "=symbol_" standing in the text.
+        // AUDIT 24 (the seven-slice sweep): the FALLBACK was missing. When FLATS.CFG has no caption for the flat id,
+        // DFU answers the RACE NAME - `GetRaceDictionary()[(int)race].Name` - not an unexpanded macro. The port
+        // returned false and left "=symbol_" standing in the text.
         const flat = (this.npcGender === GENDERS.Male ? this.factionData?.flat1 : this.factionData?.flat2) ?? 0;
         const archive = flat >> 7,
           record = flat & 0x7f;

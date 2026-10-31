@@ -32,8 +32,8 @@
   {
     "name": "TERMS1-guest-row-records-nothing",
     "file": "server-account/src/accounts.js",
-    "old": "    .bind(id, name, nowS, nowS, ...legalColumns(legal, nowS))",
-    "new": "    .bind(id, name, nowS, nowS, null, null, null)",
+    "old": ".bind(id, name, nowS, nowS, ...legalColumns(legal, nowS)).run();",
+    "new": ".bind(id, name, nowS, nowS, null, null, null).run();",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "TERMS1-register-records-nothing",
     "file": "server-account/src/accounts.js",
-    "old": "      .bind(handle, handle.toLowerCase(), pw, rc, nowS, ...legalColumns(legal, nowS), playerId)",
-    "new": "      .bind(handle, handle.toLowerCase(), pw, rc, nowS, null, null, null, playerId)",
+    "old": ".bind(handle, handle.toLowerCase(), pw, rc, nowS, ...legalColumns(legal, nowS), playerId).run();",
+    "new": ".bind(handle, handle.toLowerCase(), pw, rc, nowS, null, null, null, playerId).run();",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "TERMS1-any-version-written",
     "file": "server-account/src/accounts.js",
-    "old": "const legalColumns = (legal, nowS) =>\n  legal && !legalRefusal(legal) ? [legal.terms, legal.privacy, nowS] : [null, null, null];",
-    "new": "const legalColumns = (legal, nowS) => (legal ? [legal.terms, legal.privacy, nowS] : [null, null, null]);",
+    "old": "(legal && !legalRefusal(legal) ? [legal.terms, legal.privacy, nowS]",
+    "new": "(legal ? [legal.terms, legal.privacy, nowS]",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TERMS1-coalesce-dropped",
     "file": "server-account/src/accounts.js",
-    "old": "          'terms_version = COALESCE(?, terms_version), privacy_version = COALESCE(?, privacy_version), legal_accepted_at = COALESCE(?, legal_accepted_at) ' +",
-    "new": "          'terms_version = ?, privacy_version = ?, legal_accepted_at = ? ' +",
+    "old": "'terms_version = COALESCE(?, terms_version), privacy_version = COALESCE(?, privacy_version), legal_accepted_at = COALESCE(?, legal_accepted_at) '",
+    "new": "'terms_version = ?, privacy_version = ?, legal_accepted_at = ? '",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "TERMS1-stale-said-as-unaccepted",
     "file": "server-account/src/accounts.js",
-    "old": "  if (dated(terms) && dated(privacy)) return { error: 'terms-stale' };\n  return { error: 'terms-unaccepted' };",
-    "new": "  return { error: 'terms-unaccepted' };",
+    "old": "  if (dated(terms) && dated(privacy)) return { error: 'terms-stale' };\n",
+    "new": "",
     "tests": [
       "test/ui/enhanced/terms1.test.js"
     ],

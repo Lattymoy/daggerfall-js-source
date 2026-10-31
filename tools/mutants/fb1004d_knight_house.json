@@ -133,8 +133,8 @@
   {
     "name": "KNIGHT-HOUSE-record-unread",
     "file": "server-account/src/homes.js",
-    "old": "  if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null)) return { error: 'no-deed' };\n  await db.batch([",
-    "new": "  await db.batch([",
+    "old": "  if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null)) return { error: 'no-deed' };\n",
+    "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "KNIGHT-HOUSE-deed-layout-unasked",
     "file": "server-account/src/homes.js",
-    "old": "  if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null)) return { error: 'no-deed' };",
-    "new": "  if (!deed) return { error: 'no-deed' };",
+    "old": "if (!deed || !homeLayoutsMatch(deed.layout ?? null, layout ?? null))",
+    "new": "if (!deed)",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "KNIGHT-HOUSE-hold-unwritten",
     "file": "server-account/src/homes.js",
-    "old": "  await db.batch([\n    accessOrphansCleared(db, mapId, buildingKey),\n    deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS),\n  ]); // AUDIT FB1029f A1\n  const row = await db",
-    "new": "  const row = await db",
+    "old": "  await db.batch([accessOrphansCleared(db, mapId, buildingKey), deedStatement(db, player, { mapId, buildingKey, region, character, layout: layout ?? null }, nowS)]);   // AUDIT FB1029f A1\n",
+    "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "KNIGHT-HOUSE-hold-a-bought-home",
     "file": "server-account/src/homes.js",
-    "old": "    SELECT ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ${TOWN_LAYOUT_SQL}, 1",
-    "new": "    SELECT ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ${TOWN_LAYOUT_SQL}, 0",
+    "old": "SELECT ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ${TOWN_LAYOUT_SQL}, 1",
+    "new": "SELECT ?, ?, ?, ?, ?, ?, ?, 0, ?, 0, ${TOWN_LAYOUT_SQL}, 0",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -173,8 +173,8 @@
   {
     "name": "KNIGHT-HOUSE-cap-counts-deed",
     "file": "server-account/src/homes.js",
-    "old": "    WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ? AND deed = 0) < ?",
-    "new": "    WHERE (SELECT COUNT(*) FROM homes WHERE player = ? AND char_id = ? AND region = ?) < ?",
+    "old": " AND deed = 0) < ?",
+    "new": ") < ?",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "KNIGHT-HOUSE-own-deed-listed",
     "file": "server-account/src/homes.js",
-    "old": "    homes: results\n      .filter((h) => !(h.deed === 1 && h.player === player.id && h.char_id === me))\n      .map((h) => {\n        if (h.guild_id != null) {\n          // GUILD1d: A GUILD'S HALL - named by its guild, whose members walk in and whose Officers furnish it; nobody's home\n          const rank = Number.isSafeInteger(h.my_rank) ? h.my_rank : null;\n          const powers = guildPowersOf(h.guild_powers ?? null, guildRankCount(h.guild_ranks ?? null)); // GUILD-RANKS: as the guild set them\n          return {\n            buildingKey: h.building_key,\n            owner: h.guild_name ?? h.owner_name,\n            entry: h.entry,\n            mine: false,\n            hall: {\n              name: h.guild_name ?? h.owner_name,\n              tag: h.guild_tag ?? '',\n              heraldry: heraldryOfRow(h.guild_heraldry),\n            },\n            // AUDIT GUILD-YARD Y1: a keeper as OWNS keeps it - of the rank, and a realm character (a local one is refused\n            // every write; its decorator stood for nothing)\n            ...(rank != null\n              ? { member: true, ...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {}) }\n              : {}),\n            // AUDIT PROF-541 G2: who may say who walks in, as setHallEntry asks it (halls.js) - the rank alone, any character;\n            // `keeper`'s realm clause took the door's \"Who may enter\" from a local Officer the service would have answered\n            ...(rank != null && guildMay(rank, 'hallEntry', powers) ? { hallEntry: true } : {}),\n            // GUILD-HALL-SALE (2026-10-06, asked: \"Guild houses should be able to be sold, like regular houses\"): who may sell\n            // it at its door, as sellHall asks it - the rank alone - and the deed share of what the treasury paid, which the\n            // sale pays back into it (with half of what records paid for its pieces, which the door says in words)\n            ...(rank != null && hallMay(rank, 'hall')\n              ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.paid) || 0)) }\n              : {}),\n            ...(h.kin === 1 && rank == null ? { insider: true } : {}), // AUDIT HOME-VOTE A5: the account has another character in its guild - no vote, its decor always (a `member` is one already)\n            ...lookFor(h, h.kin === 1), // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n            ...votesOf(h), // HOME-VOTE\n          };\n        }\n        const mine = h.player === player.id;\n        const deedRow = Number(h.deed) === 1;\n        // HOME-CROSSED: my own house no record paid for is `crossed` - its door asks no price. ACCOUNT-HOMES: any of the\n        // account's (one from before the realm is every character's now, and no record paid for it either) - never a deed's\n        const crossed = mine && !deedRow && !(Number(h.paid) > 0);\n        // HOME-PRICE: what its sale pays back, as realmRelease pays it, and (C3) the rent held on it, which the sale pays with\n        // it - to the character named when it is a realm character of the account (AUDIT HOME-PRICE L3; ACCOUNT-HOMES: any of\n        // them sells the account's home)\n        const sale =\n          mine && !deedRow && !crossed && Number(h.me_realm) === 1\n            ? { ...realmSaleOf(h), ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}) }\n            : {};\n        return {\n          buildingKey: h.building_key,\n          owner: h.owner_name,\n          entry: open && !mine ? 'public' : h.entry,\n          mine,\n          ...(mine ? { character: h.char_id } : {}),\n          ...(crossed ? { crossed } : {}),\n          ...sale,\n          ...(Number(h.vacant) > 0 ? { rent: { vacant: Number(h.vacant), from: Number(h.rent_from) } } : {}),\n          ...(Number.isSafeInteger(h.tenancy) && h.tenancy > nowS ? { tenant: h.tenancy } : {}),\n          ...lookFor(h, mine), // HOME-LOOK: how its owner painted it (AUDIT HOME-VOTE A3: a shunned home's to its owner alone)\n          ...(h.guildmate === 1 ? { guildmate: true } : {}), // GUILD1d: the named character is in the guild of one of the owner's characters (ACCOUNT-HOMES: any of the account's)\n          ...(h.deed === 1 ? { deed: true } : {}), // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought\n          ...offerFor(h),\n          ...votesOf(h), // HOME-VOTE\n        };\n      }),",
-    "new": "    homes: results.map((h) => {\n      if (h.guild_id != null) {\n        // GUILD1d: A GUILD'S HALL - named by its guild, whose members walk in and whose Officers furnish it; nobody's home\n        const rank = Number.isSafeInteger(h.my_rank) ? h.my_rank : null;\n        const powers = guildPowersOf(h.guild_powers ?? null, guildRankCount(h.guild_ranks ?? null)); // GUILD-RANKS: as the guild set them\n        return {\n          buildingKey: h.building_key,\n          owner: h.guild_name ?? h.owner_name,\n          entry: h.entry,\n          mine: false,\n          hall: {\n            name: h.guild_name ?? h.owner_name,\n            tag: h.guild_tag ?? '',\n            heraldry: heraldryOfRow(h.guild_heraldry),\n          },\n          // AUDIT GUILD-YARD Y1: a keeper as OWNS keeps it - of the rank, and a realm character (a local one is refused\n          // every write; its decorator stood for nothing)\n          ...(rank != null\n            ? { member: true, ...(guildMay(rank, 'decorate', powers) && h.me_realm === 1 ? { keeper: true } : {}) }\n            : {}),\n          // AUDIT PROF-541 G2: who may say who walks in, as setHallEntry asks it (halls.js) - the rank alone, any character;\n          // `keeper`'s realm clause took the door's \"Who may enter\" from a local Officer the service would have answered\n          ...(rank != null && guildMay(rank, 'hallEntry', powers) ? { hallEntry: true } : {}),\n          // GUILD-HALL-SALE (2026-10-06, asked: \"Guild houses should be able to be sold, like regular houses\"): who may sell\n          // it at its door, as sellHall asks it - the rank alone - and the deed share of what the treasury paid, which the\n          // sale pays back into it (with half of what records paid for its pieces, which the door says in words)\n          ...(rank != null && hallMay(rank, 'hall')\n            ? { hallSell: true, refund: homeSaleRefund(Math.max(0, Number(h.paid) || 0)) }\n            : {}),\n          ...(h.kin === 1 && rank == null ? { insider: true } : {}), // AUDIT HOME-VOTE A5: the account has another character in its guild - no vote, its decor always (a `member` is one already)\n          ...lookFor(h, h.kin === 1), // GUILD-YARD: how its keepers painted it, to everyone (AUDIT HOME-VOTE A3: but a shunned hall's)\n          ...votesOf(h), // HOME-VOTE\n        };\n      }\n      const mine = h.player === player.id;\n      const deedRow = Number(h.deed) === 1;\n      // HOME-CROSSED: my own house no record paid for is `crossed` - its door asks no price. ACCOUNT-HOMES: any of the\n      // account's (one from before the realm is every character's now, and no record paid for it either) - never a deed's\n      const crossed = mine && !deedRow && !(Number(h.paid) > 0);\n      // HOME-PRICE: what its sale pays back, as realmRelease pays it, and (C3) the rent held on it, which the sale pays with\n      // it - to the character named when it is a realm character of the account (AUDIT HOME-PRICE L3; ACCOUNT-HOMES: any of\n      // them sells the account's home)\n      const sale =\n        mine && !deedRow && !crossed && Number(h.me_realm) === 1\n          ? { ...realmSaleOf(h), ...(Number(h.rent_due) > 0 ? { rentDue: Number(h.rent_due) } : {}) }\n          : {};\n      return {\n        buildingKey: h.building_key,\n        owner: h.owner_name,\n        entry: open && !mine ? 'public' : h.entry,\n        mine,\n        ...(mine ? { character: h.char_id } : {}),\n        ...(crossed ? { crossed } : {}),\n        ...sale,\n        ...(Number(h.vacant) > 0 ? { rent: { vacant: Number(h.vacant), from: Number(h.rent_from) } } : {}),\n        ...(Number.isSafeInteger(h.tenancy) && h.tenancy > nowS ? { tenant: h.tenancy } : {}),\n        ...lookFor(h, mine), // HOME-LOOK: how its owner painted it (AUDIT HOME-VOTE A3: a shunned home's to its owner alone)\n        ...(h.guildmate === 1 ? { guildmate: true } : {}), // GUILD1d: the named character is in the guild of one of the owner's characters (ACCOUNT-HOMES: any of the account's)\n        ...(h.deed === 1 ? { deed: true } : {}), // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought\n        ...offerFor(h),\n        ...votesOf(h), // HOME-VOTE\n      };\n    }),",
+    "old": "homes: results.filter((h) => !(h.deed === 1 && h.player === player.id && h.char_id === me)).map((h) => {",
+    "new": "homes: results.map((h) => {",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "KNIGHT-HOUSE-deed-unsaid",
     "file": "server-account/src/homes.js",
-    "old": "          ...(h.deed === 1 ? { deed: true } : {}), // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought\n          ...offerFor(h),",
-    "new": "          ...offerFor(h),",
+    "old": "        ...(h.deed === 1 ? { deed: true } : {}),   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed held, never bought\n",
+    "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "KNIGHT-HOUSE-release-any-row",
     "file": "server-account/src/homes.js",
-    "old": "      .prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ? AND deed = 1')",
-    "new": "      .prepare('DELETE FROM homes WHERE map_id = ? AND building_key = ? AND player = ?')",
+    "old": "AND player = ? AND deed = 1').bind(mapId, buildingKey, player.id).run();",
+    "new": "AND player = ?').bind(mapId, buildingKey, player.id).run();",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "KNIGHT-HOUSE-release-arm-gone",
     "file": "server-account/src/homes.js",
-    "old": "  if (deed === true) {",
-    "new": "  if (false) {",
+    "old": "  if (deed === true) {\n",
+    "new": "  if (false) {\n",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -223,8 +223,8 @@
   {
     "name": "KNIGHT-HOUSE-hour-unread",
     "file": "server-account/src/homes.js",
-    "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S))\n    return { error: 'home-rate' };\n  // THE RECORD HOLDS IT - the save as it stands (a read: nothing of the record moves)",
-    "new": "  // THE RECORD HOLDS IT - the save as it stands (a read: nothing of the record moves)",
+    "old": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S)) return { error: 'home-rate' };\n  // THE RECORD HOLDS IT",
+    "new": "  // THE RECORD HOLDS IT",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "KNIGHT-HOUSE-town-layout-unasked",
     "file": "server-account/src/homes.js",
-    "old": "  // a claim's order (AUDIT WD3 B8): another layout of the town refused before the hour counts it; the record read after it\n  const refused = await townLayoutRefusal(db, mapId, layout ?? null);\n  if (refused) return refused;\n  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S))",
-    "new": "  if (await overRate({ db, nowS }, `home:${player.id}`, HOME_CLAIMS_MAX, HOME_CLAIMS_WINDOW_S))",
+    "old": "  // a claim's order (AUDIT WD3 B8): another layout of the town refused before the hour counts it; the record read after it\n  const refused = await townLayoutRefusal(db, mapId, layout ?? null);\n  if (refused) return refused;\n",
+    "new": "",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -243,8 +243,8 @@
   {
     "name": "KNIGHT-HOUSE-arena-cell-held",
     "file": "server-account/src/homes.js",
-    "old": "  if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };\n  if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return { error: 'realm-only' };",
-    "new": "  if (typeof character !== 'string' || !REALM_ID_RE.test(character)) return { error: 'realm-only' };",
+    "old": "  if (homeInArenaCell(mapId, buildingKey)) return { error: 'home-arena' };\n  if (typeof character",
+    "new": "  if (typeof character",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -273,8 +273,8 @@
   {
     "name": "KNIGHT-HOUSE-move-drops-deed",
     "file": "server-account/src/homes.js",
-    "old": "  'deed',\n  'ground',",
-    "new": "  'ground',",
+    "old": "'rent_due', 'look', 'layout', 'deed', 'ground']);",
+    "new": "'rent_due', 'look', 'layout', 'ground']);",
     "tests": [
       "test/net/arena4b_homes.test.js"
     ],

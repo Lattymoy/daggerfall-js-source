@@ -80,7 +80,7 @@ export function createFrameBudget() {
   /** @type {any[]} */
   const live = [];
   let cutD2 = Infinity;
-  let round = 0; // AUDIT MW-NPC B4: the round of reports - a lane reporting twice in one begins the next
+  let round = 0;   // AUDIT MW-NPC B4: the round of reports - a lane reporting twice in one begins the next
   const fresh = () => {
     live.length = 0;
     for (const r of lanes.values()) if (r.round >= round - NPC_BUDGET_ROUNDS && r.n > 0) live.push(r);
@@ -91,15 +91,11 @@ export function createFrameBudget() {
       let r = lanes.get(lane);
       if (!r) lanes.set(lane, (r = { d2, n: 0, round: -1, i: 0, inCut: 0 }));
       if (r.round === round) round++;
-      r.d2 = d2;
-      r.n = n;
-      r.round = round;
-      r.inCut = 0; // AUDIT MW-NPC B2: a lane reporting none (all past its range) takes no share - never its last cut's
+      r.d2 = d2; r.n = n; r.round = round;
+      r.inCut = 0;   // AUDIT MW-NPC B2: a lane reporting none (all past its range) takes no share - never its last cut's
     },
     /** A lane let go. */
-    drop(lane) {
-      lanes.delete(lane);
-    },
+    drop(lane) { lanes.delete(lane); },
     /** The squared distance the `k` nearest candidates across the lanes stand within (Infinity: fewer than k). */
     cut(k) {
       fresh();
@@ -108,36 +104,26 @@ export function createFrameBudget() {
       for (let c = 0; c < k; c++) {
         let best = null;
         for (const r of live) if (r.i < r.n && (!best || r.d2[r.i] < best.d2[best.i])) best = r;
-        if (!best) {
-          cutD2 = Infinity;
-          break;
-        }
+        if (!best) { cutD2 = Infinity; break; }
         cutD2 = best.d2[best.i++];
       }
       return cutD2;
     },
     /** This lane's skins of `skins` under the last cut: one each lane with a body in it, the rest by its share. */
     skins(lane, skins) {
-      let lanesIn = 0,
-        total = 0;
+      let lanesIn = 0, total = 0;
       for (const r of live) {
         let c = 0;
         while (c < r.n && r.d2[c] <= cutD2) c++;
         r.inCut = c;
-        if (c) {
-          lanesIn++;
-          total += c;
-        }
+        if (c) { lanesIn++; total += c; }
       }
       const mine = lanes.get(lane)?.inCut ?? 0;
       if (!mine) return 0;
       return 1 + Math.floor((Math.max(0, skins - lanesIn) * mine) / total);
     },
     /** The lanes reporting now (the probe's, a test's). */
-    get lanes() {
-      fresh();
-      return live.length;
-    },
+    get lanes() { fresh(); return live.length; },
   };
 }
 /** MWNPC11: the page's one - every host's lane (createHostNpcBodies) shares it. */
@@ -160,20 +146,15 @@ const count = (v) => (Number.isFinite(v) ? v | 0 : 0);
  */
 export function npcShown(a) {
   return {
-    x: finite(a.feet[0]),
-    y: finite(a.feet[1]),
-    z: finite(a.feet[2]),
-    yaw: finite(a.yaw),
-    pitch: 0,
+    x: finite(a.feet[0]), y: finite(a.feet[1]), z: finite(a.feet[2]),
+    yaw: finite(a.yaw), pitch: 0,
     mv: a.moving ? (a.running ? 2 : 1) : 0,
     wd: a.drawn ? 1 : 0,
-    an: count(a.swings),
-    as: count(a.strike),
-    cn: count(a.casts),
-    cr: count(a.castRange),
+    an: count(a.swings), as: count(a.strike),
+    cn: count(a.casts), cr: count(a.castRange),
     ht: count(a.hits),
     dd: count(a.dead),
-    wb: a.look?.wolf ? 1 : 0, // MWNPC15: a werewolf's look - the wire's own wolf bit, so PeerBodies builds Bloodmoon's wolf (WEREWOLF1)
+    wb: a.look?.wolf ? 1 : 0,   // MWNPC15: a werewolf's look - the wire's own wolf bit, so PeerBodies builds Bloodmoon's wolf (WEREWOLF1)
   };
 }
 
@@ -186,23 +167,11 @@ const sceneOf = (/** @type {any} */ s) => [s.x, s.y, s.z];
  *   now?: () => number, warn?: (m: string) => void, collider?: () => any, tiers?: Record<string, any>,
  *   budget?: ReturnType<typeof createFrameBudget> | null, frameTiers?: Record<string, any> }} p
  */
-export function createNpcBodies({
-  renderer,
-  enabled = () => true,
-  generation = () => 0,
-  tier = () => NPC_BODIES_DEFAULT,
-  createRig,
-  now,
-  warn,
-  collider,
-  tiers = NPC_BODY_TIERS, // MWNPC5b: `tiers` a table of the caller's (a test's)
-  budget = null,
-  frameTiers = NPC_FRAME_TIERS,
-}) {
-  // MWNPC11: the frame budget the lane shares (null: none - a test's lane alone), and its tiers
+export function createNpcBodies({ renderer, enabled = () => true, generation = () => 0, tier = () => NPC_BODIES_DEFAULT, createRig, now, warn, collider, tiers = NPC_BODY_TIERS,   // MWNPC5b: `tiers` a table of the caller's (a test's)
+  budget = null, frameTiers = NPC_FRAME_TIERS }) {   // MWNPC11: the frame budget the lane shares (null: none - a test's lane alone), and its tiers
   /** @type {PeerBodies|null} */
   let bodies = null;
-  let standing = null; // the tier the lane stands under
+  let standing = null;   // the tier the lane stands under
   /** @type {any[]} */
   const peers = [];
   // MWNPC5b: what a host knows of an actor beyond its pose, by its lane id - the concealment its billboard would have
@@ -211,33 +180,20 @@ export function createNpcBodies({
   /** @type {Map<string, { conceal: any, flash: number, fx: any, dead: boolean, scale: number, frame: number, anchored: boolean }>} */
   const info = new Map();
   let frame = 0;
-  const seen = (id) => info.get(id); // read for the actors offered this frame (the sync's) and the bodies standing (the draw's) - a lingering body is not drawn
+  const seen = (id) => info.get(id);   // read for the actors offered this frame (the sync's) and the bodies standing (the draw's) - a lingering body is not drawn
   const syncOpts = { priority: (id) => !seen(id)?.dead, conceal: (id) => seen(id)?.conceal ?? null };
   const flashOf = (id) => seen(id)?.flash ?? 0;
   const fxOf = (id) => seen(id)?.fx ?? null;
-  const scaleOf = (id) => seen(id)?.scale ?? 1; // MWNPC10: an actor drawn larger than itself (the gate's boss)
-  const anchoredOf = (id) => !!seen(id)?.anchored; // AUDIT MWNPC16-18 A3: one that never walks - its shadow in the lo tier's lamps
+  const scaleOf = (id) => seen(id)?.scale ?? 1;   // MWNPC10: an actor drawn larger than itself (the gate's boss)
+  const anchoredOf = (id) => !!seen(id)?.anchored;   // AUDIT MWNPC16-18 A3: one that never walks - its shadow in the lo tier's lamps
   const drawOpts = { proj: null, view: null, eye: null, flashOf, fxOf, scaleOf, anchoredOf };
   const lane = () => {
     const t = tier();
-    const want = Object.prototype.hasOwnProperty.call(tiers, t) ? t : NPC_BODIES_DEFAULT; // an unknown tier stands under the default
+    const want = Object.prototype.hasOwnProperty.call(tiers, t) ? t : NPC_BODIES_DEFAULT;   // an unknown tier stands under the default
     if (want !== standing) {
       bodies?.destroy();
       const limits = tiers[want] ?? null;
-      bodies = limits
-        ? new PeerBodies({
-            renderer,
-            enabled,
-            generation,
-            limits: budget ? { ...limits, buildInRange: true, hysteresis: NPC_BUDGET_HYSTERESIS } : limits,
-            gate: BODY_BUILD_GATE,
-            casts: true,
-            ...(createRig ? { createRig } : {}),
-            ...(now ? { now } : {}),
-            ...(warn ? { warn } : {}),
-            ...(collider ? { collider } : {}),
-          })
-        : null; // MWNPC16: an NPC's body casts its own shadow (its flat casts none)
+      bodies = limits ? new PeerBodies({ renderer, enabled, generation, limits: budget ? { ...limits, buildInRange: true, hysteresis: NPC_BUDGET_HYSTERESIS } : limits, gate: BODY_BUILD_GATE, casts: true, ...(createRig ? { createRig } : {}), ...(now ? { now } : {}), ...(warn ? { warn } : {}), ...(collider ? { collider } : {}) }) : null;   // MWNPC16: an NPC's body casts its own shadow (its flat casts none)
       standing = want;
     }
     return bodies;
@@ -247,46 +203,36 @@ export function createNpcBodies({
   /** MWNPC11: share the frame - report the nearest this lane could stand (within its range, to its cap: a sorted
    *  insertion into its own buffer, a held body ranked by its hysteresis), take its range and skins from the cut. */
   const share = (b, eye) => {
-    const lim = tiers[standing],
-      ft = frameTiers[standing];
+    const lim = tiers[standing], ft = frameTiers[standing];
     if (!lim || !ft) return;
-    const r2 = lim.range * lim.range,
-      cap = lim.max,
-      h2 = NPC_BUDGET_HYSTERESIS * NPC_BUDGET_HYSTERESIS;
+    const r2 = lim.range * lim.range, cap = lim.max, h2 = NPC_BUDGET_HYSTERESIS * NPC_BUDGET_HYSTERESIS;
     if (d2s.length < cap) d2s = new Float64Array(cap);
     let n = 0;
     for (const p of peers) {
       // AUDIT MW-NPC B2: ON THE GROUND'S PLANE, as PeerBodies measures the range the cut becomes (peerBodies.js dist2) -
       // ranked in 3D, an eye raised above the crowd (a wall top, a dungeon's gallery, the Overworld) stood every body the
       // flat range let in, past the budget
-      const dx = p.shown.x - eye[0],
-        dz = p.shown.z - eye[2];
+      const dx = p.shown.x - eye[0], dz = p.shown.z - eye[2];
       // one that holds a body ranks as near as the hysteresis it is held to (its body falls only past range x it), so
       // the cut counts the frame's bodies exactly - the held ones among them
       const d2 = (dx * dx + dz * dz) / (b.holds(p.id) ? h2 : 1);
       if (!(d2 <= r2) || (n === cap && d2 >= d2s[n - 1])) continue;
       let j = n < cap ? n++ : n - 1;
-      while (j > 0 && d2s[j - 1] > d2) {
-        d2s[j] = d2s[j - 1];
-        j--;
-      }
+      while (j > 0 && d2s[j - 1] > d2) { d2s[j] = d2s[j - 1]; j--; }
       d2s[j] = d2;
     }
     budget.report(self, d2s, n);
     const cut = budget.cut(ft.bodies);
     // the range a hair past the cut: the body AT it (often the held one whose rank set it) stands, never lost to the
     // root's rounding and back the next frame
-    b.setLimits({
-      range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)),
-      skinBudget: Math.min(lim.skinBudget, budget.skins(self, ft.skins)),
-    });
+    b.setLimits({ range: Math.min(lim.range, Math.sqrt(cut) * (1 + 1e-9)), skinBudget: Math.min(lim.skinBudget, budget.skins(self, ft.skins)) });
   };
   const self = {
     /** A frame begins: nobody stands yet. */
     begin() {
       peers.length = 0;
       frame++;
-      if (info.size > 256) for (const [id, r] of info) if (r.frame < frame - 1) info.delete(id); // the long gone let go (a record an actor offered lately)
+      if (info.size > 256) for (const [id, r] of info) if (r.frame < frame - 1) info.delete(id);   // the long gone let go (a record an actor offered lately)
     },
     /**
      * One actor offered: `lane` its population ('foe', 'watch', 'folk', ...), `actor` { id, look, feet, yaw, moving,
@@ -298,20 +244,14 @@ export function createNpcBodies({
      * @param {string} laneName @param {any} actor @param {any} [conceal] @param {number} [flash] @param {any} [fx] @param {boolean} [anchored]
      */
     stand(laneName, actor, conceal = null, flash = 0, fx = null, anchored = false) {
-      if (!actor?.look || !actor.feet || npcBodiesHeld()) return; // AUDIT MW-NPC II H2: none under the Overworld
-      conceal ??= actor.look.veil ?? null; // MWNPC13: a spectral's standing veil - the host's concealment first
+      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;   // AUDIT MW-NPC II H2: none under the Overworld
+      conceal ??= actor.look.veil ?? null;   // MWNPC13: a spectral's standing veil - the host's concealment first
       const id = npcPeerId(laneName, actor.id);
       peers.push({ id, name: '', told: true, look: actor.look, shown: npcShown(actor) });
       let r = info.get(id);
-      if (!r)
-        info.set(id, (r = { conceal: null, flash: 0, fx: null, dead: false, scale: 1, frame: 0, anchored: false }));
-      r.conceal = conceal;
-      r.flash = flash > 0 ? flash : 0;
-      r.fx = fx;
-      r.dead = !!actor.dead;
-      r.frame = frame;
-      r.anchored = !!anchored;
-      r.scale = actor.scale > 0 ? actor.scale : 1; // MWNPC10
+      if (!r) info.set(id, (r = { conceal: null, flash: 0, fx: null, dead: false, scale: 1, frame: 0, anchored: false }));
+      r.conceal = conceal; r.flash = flash > 0 ? flash : 0; r.fx = fx; r.dead = !!actor.dead; r.frame = frame; r.anchored = !!anchored;
+      r.scale = actor.scale > 0 ? actor.scale : 1;   // MWNPC10
     },
     /** The frame's actors to their bodies - MWNPC11: under the frame's budget, shared with every other lane.
      *  @param {number} dt @param {number[]|null} eye */
@@ -322,47 +262,26 @@ export function createNpcBodies({
       b.sync(peers, sceneOf, dt, eye, syncOpts);
     },
     /** Does this actor stand in a body - so its host draws no billboard for it? @param {string} laneName @param {any} id */
-    has(laneName, id) {
-      return !!bodies?.has(npcPeerId(laneName, id));
-    },
+    has(laneName, id) { return !!bodies?.has(npcPeerId(laneName, id)); },
     /** NPC-MARKS: how tall this actor's body stands (scene metres; 0 standing none) - its race's own height, where a mark
      *  over its head is hung (scenes/npcMarksHost.js). @param {string} laneName @param {any} id */
-    heightOf(laneName, id) {
-      return bodies?.heightOf(npcPeerId(laneName, id)) ?? 0;
-    },
+    heightOf(laneName, id) { return bodies?.heightOf(npcPeerId(laneName, id)) ?? 0; },
     /** The bodies, in the body pass (inside its batch - renderer.js beginCharacterSpriteBatch). @param {any} canvas @param {any} o */
     draw(canvas, o) {
       if (!bodies) return;
-      drawOpts.proj = o.proj;
-      drawOpts.view = o.view;
-      drawOpts.eye = o.eye;
+      drawOpts.proj = o.proj; drawOpts.view = o.view; drawOpts.eye = o.eye;
       bodies.draw(canvas, drawOpts);
     },
     /** MWNPC5b: the concealed ones, translucent - after the host's opaque world (PeerBodies drawVeiled). */
-    drawVeiled() {
-      bodies?.drawVeiled();
-    },
+    drawVeiled() { bodies?.drawVeiled(); },
     /** The floating origin moved (the peer layers' law, AUDIT ONLINE D5). @param {number[]} o */
-    offsetAll(o) {
-      bodies?.offsetAll(o);
-    },
+    offsetAll(o) { bodies?.offsetAll(o); },
     /** Everything let go (the place left, the lane switched off). */
-    destroy() {
-      peers.length = 0;
-      info.clear();
-      bodies?.destroy();
-      bodies = null;
-      standing = null;
-      budget?.drop(self);
-    }, // MWNPC11: and its share of the frame
+    destroy() { peers.length = 0; info.clear(); bodies?.destroy(); bodies = null; standing = null; budget?.drop(self); },   // MWNPC11: and its share of the frame
     /** How many actors were offered this frame. */
-    get offered() {
-      return peers.length;
-    },
+    get offered() { return peers.length; },
     /** The tier the lane stands under (after the last `end`). */
-    get tier() {
-      return standing;
-    },
+    get tier() { return standing; },
   };
   return self;
 }
@@ -380,9 +299,7 @@ export const NPC_HOLD_MS = 250;
  * or not), and it lapses NPC_HOLD_MS after the last frame that asked.
  * @param {boolean} on @param {number} [now]
  */
-export function holdNpcBodies(on, now = performance.now()) {
-  _heldUntil = on ? now + NPC_HOLD_MS : -Infinity;
-}
+export function holdNpcBodies(on, now = performance.now()) { _heldUntil = on ? now + NPC_HOLD_MS : -Infinity; }
 /** Is the Overworld's hold on? @param {number} [now] */
 export const npcBodiesHeld = (now = performance.now()) => now < _heldUntil;
 
@@ -393,17 +310,8 @@ export function npcBodiesOn() {
 }
 
 /** MWNPC5b: a host's lane - the gate, the data generation and the tier read as every host reads them. */
-export function createHostNpcBodies({ renderer, collider = () => null, tiers = NPC_BODY_TIERS }) {
-  // MWNPC6: `tiers` a population's own caps (WATCH_BODY_TIERS)
-  return createNpcBodies({
-    renderer,
-    enabled: npcBodiesOn,
-    generation: morrowindDataGeneration,
-    tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT,
-    collider,
-    tiers,
-    budget: NPC_FRAME_BUDGET,
-  }); // MWNPC11: every host's lane on the one frame
+export function createHostNpcBodies({ renderer, collider = () => null, tiers = NPC_BODY_TIERS }) {   // MWNPC6: `tiers` a population's own caps (WATCH_BODY_TIERS)
+  return createNpcBodies({ renderer, enabled: npcBodiesOn, generation: morrowindDataGeneration, tier: () => getPref('mwNpcBodies') ?? NPC_BODIES_DEFAULT, collider, tiers, budget: NPC_FRAME_BUDGET });   // MWNPC11: every host's lane on the one frame
 }
 
 /**
@@ -415,14 +323,7 @@ export function createHostNpcBodies({ renderer, collider = () => null, tiers = N
  * frame drawn twice or not at all, and nothing if nothing was offered since the last draw.
  * @param {{ laneName: string, renderer: any, collider?: () => any, tiers?: any, want?: () => boolean, make?: (() => any) | null }} p
  */
-export function createPopulationLane({
-  laneName,
-  renderer,
-  collider = () => null,
-  tiers = NPC_BODY_TIERS,
-  want = npcBodiesOn,
-  make = null,
-}) {
+export function createPopulationLane({ laneName, renderer, collider = () => null, tiers = NPC_BODY_TIERS, want = npcBodiesOn, make = null }) {
   let lane = null;
   let offered = false;
   /** @type {any[]} */
@@ -432,16 +333,8 @@ export function createPopulationLane({
   return {
     /** A frame begins: true while the lane is wanted (the host then offers its actors). */
     frame() {
-      ids.length = 0;
-      batches.length = 0;
-      if (!want()) {
-        if (lane) {
-          lane.destroy();
-          lane = null;
-        }
-        offered = false;
-        return false;
-      }
+      ids.length = 0; batches.length = 0;
+      if (!want()) { if (lane) { lane.destroy(); lane = null; } offered = false; return false; }
       lane ??= make ? make() : createHostNpcBodies({ renderer, collider, tiers });
       lane.begin();
       offered = true;
@@ -455,8 +348,7 @@ export function createPopulationLane({
       // AUDIT MWNPC16-18 A3: one whose flat cannot walk - its centre in its vertices, no origin, never moved by its
       // vertices (shadowPass.js recordBillboards' DISC29-E test) - is a body that never walks
       lane.stand(laneName, actor, conceal, flash, fx, !!batch && batch.origin == null && batch._dyn !== true);
-      ids.push(actor.id);
-      batches.push(batch);
+      ids.push(actor.id); batches.push(batch);
     },
     /** Synced, marked, drawn - before the host draws the billboards it offered.
      *  @param {any} canvas @param {Float32Array} proj @param {Float32Array} view @param {number[]} eye @param {number} dt */
@@ -466,35 +358,17 @@ export function createPopulationLane({
       lane.end(dt, eye);
       for (let i = 0; i < ids.length; i++) if (batches[i]) batches[i].castOnly = lane.has(laneName, ids[i]);
       renderer.beginCharacterSpriteBatch?.();
-      try {
-        lane.draw(canvas, { proj, view, eye });
-      } finally {
-        renderer.flushCharacterSpriteBatch?.();
-      }
+      try { lane.draw(canvas, { proj, view, eye }); } finally { renderer.flushCharacterSpriteBatch?.(); }
     },
     /** The concealed, translucent - after the host's opaque world. */
-    drawVeiled() {
-      lane?.drawVeiled();
-    },
+    drawVeiled() { lane?.drawVeiled(); },
     /** The floating origin moved. @param {number[]} o */
-    offsetAll(o) {
-      lane?.offsetAll(o);
-    },
+    offsetAll(o) { lane?.offsetAll(o); },
     /** Let go (the place left). */
-    destroy() {
-      lane?.destroy();
-      lane = null;
-      offered = false;
-      ids.length = 0;
-      batches.length = 0;
-    },
+    destroy() { lane?.destroy(); lane = null; offered = false; ids.length = 0; batches.length = 0; },
     /** Does this actor stand in a body? @param {any} id */
-    has(id) {
-      return !!lane?.has(laneName, id);
-    },
+    has(id) { return !!lane?.has(laneName, id); },
     /** NPC-MARKS: how tall its body stands (0: none). @param {any} id */
-    heightOf(id) {
-      return lane?.heightOf(laneName, id) ?? 0;
-    },
+    heightOf(id) { return lane?.heightOf(laneName, id) ?? 0; },
   };
 }

@@ -362,7 +362,7 @@ test('MWNPC16f the wiring: the renderer hands the pass the skinned VS and its pa
   assert.ok(mesh && !mesh._dead, 'standing: alive');
   arm.unload();
   assert.equal(mesh._dead, true, 'let go: a record made before it went casts nothing');
-  assert.match(rd('src/characters/npcBodies.js'), /gate: BODY_BUILD_GATE,\n\s*casts: true,/);
+  assert.match(rd('src/characters/npcBodies.js'), /gate: BODY_BUILD_GATE, casts: true,/);
 });
 
 test('MWNPC16g A LAMP WHOSE ONLY MOVERS ARE BODIES THAT DID NOT CHANGE KEEPS THE FACES IT DREW - a body out of the view is never posed, and it held its lamps\' six dynamic faces redrawn every frame to draw it as it was; posed, turned, a range hidden, gone, or with a mover beside it, the lamp draws again (AUDIT MWNPC16-18 A2: a still body cost 10 face operations a frame where its flat cost none. Mutants: the look blind to the pose; to the matrix; to a hidden range; held through a mover; the generation never bumped)', () => {

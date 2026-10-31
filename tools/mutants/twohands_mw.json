@@ -200,8 +200,8 @@
   {
     "name": "TWOHANDSMW-run-never-solved",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "  assembly.runFit = run ? applyClimbRig(skeleton, pose, GRAPH_ROOT, fns.skelMats, run) : null;",
-    "new": "  assembly.runFit = null;",
+    "old": "assembly.runFit = run ? applyClimbRig(skeleton, pose, GRAPH_ROOT, fns.skelMats, run) : null;",
+    "new": "assembly.runFit = null;",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "TWOHANDSMW-other-clip-sampled-whole",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "        ? {\n            ...l,\n            pose: fns.poseSkeleton(\n              limbSkeleton(skeleton, GRAPH_ROOT, fns.skelMats, side, l),\n              l.clip.tracks,\n              l.clip.sampleTrack,\n              l.clip.time,\n              { accumRoot },\n            ),\n          }",
-    "new": "        ? { ...l, pose: fns.poseSkeleton(skeleton, l.clip.tracks, l.clip.sampleTrack, l.clip.time, { accumRoot }) }",
+    "old": "fns.poseSkeleton(limbSkeleton(skeleton, GRAPH_ROOT, fns.skelMats, side, l), l.clip.tracks",
+    "new": "fns.poseSkeleton(skeleton, l.clip.tracks",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "TWOHANDSMW-AUDIT2-assembly-hands-no-skin",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    const addon = offWeaponBoneAddon(skeleton, GRAPH_ROOT, mod.skelMats, skeletonFile);",
-    "new": "    const addon = offWeaponBoneAddon(skeleton, GRAPH_ROOT, mod.skelMats);",
+    "old": "const addon = offWeaponBoneAddon(skeleton, GRAPH_ROOT, mod.skelMats, skeletonFile);",
+    "new": "const addon = offWeaponBoneAddon(skeleton, GRAPH_ROOT, mod.skelMats);",
     "tests": [
       "test/combat/twohands_mw.test.js"
     ]

@@ -534,7 +534,7 @@ test('PCO1: the seams - the Mods pane entry, the credit, the vendor folder, worl
   assert.equal((pw.match(/this\.lastDrawMs = this\._bowAnimTimeMs\(\);/g) || []).length, 4, 'the drawn release, the instant shot, the touch button and a technique\'s loose');   // PIN MOVED (TECH1): techniqueStrike, a Volley's or a Piercing Shot's StrikeDown, writes it as the instant shot does
   assert.match(rd('src/combat/arrowFlight.js'), /weaponAnimTime: playerWeapon\?\.lastDrawMs \?\? 0,/, 'the arrow hands it to the formula');
   assert.match(rd('src/combat/formulas.js'), /const core = _overrides\.get\('calculateAttackDamage'\);/, 'the core is the registry\'s');
-  assert.match(rd('src/systems/equip.js'), /if \(removeFrom\) \{\n\s*const i = removeFrom\.indexOf\(item\);\n\s*if \(i >= 0\) removeFrom\.splice\(i, 1\);\n\s*\}/, 'LowerCondition\'s removeFromCollectionWhenBreaks');
+  assert.match(rd('src/systems/equip.js'), /if \(removeFrom\) \{ const i = removeFrom\.indexOf\(item\); if \(i >= 0\) removeFrom\.splice\(i, 1\); \}/, 'LowerCondition\'s removeFromCollectionWhenBreaks');
   assert.match(rd('src/characters/enemy/enemyEntity.js'), /const basics = editAtMint\(mobileType, pcaaoMeanerMonstersRow\(mobileType, applyMeanerMonsters\(mobileType, basicsIn\)\)\);/, 'MM1: the overhaul\'s edit over Ralzar\'s row (DEX1: a Start-time mod\'s over both)');
   const ws = rd('src/combat/pcaao.js');
   assert.equal((ws.match(/Mathf\.Clamp/g) || []).length >= 4, true, 'the four discarded clamps are named');
@@ -575,7 +575,7 @@ test('AUDIT PCO1: the archery arm registers on the STOCK path too - InitMod regi
   const f = rd('src/combat/formulas.js');
   assert.match(f, /if \(weapon\) chanceToHitMod = adjustWeaponHitChanceMod\(attacker, target, chanceToHitMod, weaponAnimTime, weapon\);/, 'after CalculateWeaponToHit');
   assert.match(f, /damage = adjustWeaponAttackDamage\(attacker, target, damage, weaponAnimTime, weapon\);\n\s+return damage;\n\}/, 'CalculateWeaponAttackDamage\'s last line');
-  assert.match(f, /weaponAttackDamage\(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, \{\n\s*unaware: !!unaware,\n\s*\}\)/, 'the stock core hands the draw down (SET2: and the host\'s word the foe had not noticed me)');
+  assert.match(f, /weaponAttackDamage\(attacker, target, damageModifiers, weapon, rolls, weaponAnimTime, \{ unaware: !!unaware \}\)/, 'the stock core hands the draw down (SET2: and the host\'s word the foe had not noticed me)');
 });
 
 test('AUDIT PCO1: a CLASS enemy\'s bare fists deal nothing under the overhaul - CalculateHandToHandAttackDamage gives a non-player only its damageModifier, which is 0 for anyone but the player (bug for bug; a knight whose sword the wear broke fights for 0)', () => {

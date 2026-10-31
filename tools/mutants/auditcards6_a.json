@@ -110,8 +110,8 @@
   {
     "name": "AC6-A5-classic-gate",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    isCardPack(item) ||\n    isWeirKey(item) ||",
-    "new": "    isWeirKey(item) ||",
+    "old": "isCardBinder(item) || isCardPack(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
+    "new": "isCardBinder(item) || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item) || isLockpick(item)) record = survivalInfoTokens(item);",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AC6-A5-enhanced-gate",
     "file": "src/systems/item/itemInfo.js",
-    "old": "    isCardPack(item) ||\n    isOatsItem(item) ||",
-    "new": "    isOatsItem(item) ||",
+    "old": "isCardBinder(item) || isCardPack(item) || isOatsItem(item)",
+    "new": "isCardBinder(item) || isOatsItem(item)",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AC6-A7-stored-name",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    const name = (/** @type {any} */ item) => (isIliacCard(item) ? iliacCardName(item) : item.name);",
-    "new": "    const name = (/** @type {any} */ item) => item.name;",
+    "old": "(isIliacCard(item) ? iliacCardName(item) : item.name)",
+    "new": "(item.name)",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AC6-A8-gate-card-before-gold",
     "file": "src/scenes/spoilsPool.js",
-    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };",
-    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };",
+    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };\n",
+    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };\n",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AC6-A8-abyss-card-before-gold",
     "file": "src/systems/superDungeon/sdSpoils.js",
-    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };",
-    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };",
+    "old": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: flat() };\n",
+    "new": "  const gold = { kind: 'gold', gold: s.gold, tier: 'common', record: s.card ? (flat(), flat()) : flat() };\n",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

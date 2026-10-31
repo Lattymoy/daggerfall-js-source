@@ -46,10 +46,8 @@ export const NO_LIGHT_ID = 0;
 /** @param {any} l @param {number} id */
 function nameLight(l, id) {
   if (_own.call(l, LIGHT_ID)) l[LIGHT_ID] = id;
-  else if (Object.isExtensible(l)) {
-    _desc.value = id;
-    Object.defineProperty(l, LIGHT_ID, _desc);
-  } else _frozen.set(l, id);
+  else if (Object.isExtensible(l)) { _desc.value = id; Object.defineProperty(l, LIGHT_ID, _desc); }
+  else _frozen.set(l, id);
 }
 
 /** The identity of light record `l` (any object: a producer's `{ x, y, z, range }`, a lantern's position array) -
@@ -57,10 +55,7 @@ function nameLight(l, id) {
  *  @param {any} l */
 export function lightIdOf(l) {
   let id = l[LIGHT_ID] ?? _frozen.get(l);
-  if (id === undefined) {
-    id = ++_seq;
-    nameLight(l, id);
-  }
+  if (id === undefined) { id = ++_seq; nameLight(l, id); }
   return id;
 }
 
@@ -85,21 +80,13 @@ export function adoptLight(e, src) {
  *  of the same lights in the same places are the same list, whatever their lights are called). */
 export function lightList(n) {
   const out = /** @type {LightList} */ (new Float32Array(n * 4));
-  Object.defineProperty(out, 'ids', {
-    value: new Float64Array(n),
-    writable: true,
-    enumerable: false,
-    configurable: true,
-  });
+  Object.defineProperty(out, 'ids', { value: new Float64Array(n), writable: true, enumerable: false, configurable: true });
   return out;
 }
 
 /** THE SEAM: light `l` into list `out` (a lightList) at `i` - its place, `range` (its own by default) and its identity. */
 export function packLight(out, i, l, range = l.range) {
-  out[i * 4] = l.x;
-  out[i * 4 + 1] = l.y;
-  out[i * 4 + 2] = l.z;
-  out[i * 4 + 3] = range;
+  out[i * 4] = l.x; out[i * 4 + 1] = l.y; out[i * 4 + 2] = l.z; out[i * 4 + 3] = range;
   if (out.ids) out.ids[i] = lightIdOf(l);
 }
 
@@ -108,8 +95,7 @@ export function packLight(out, i, l, range = l.range) {
  *  Hour lines make nothing a frame). */
 export function copyLights(out, at, src, from = 0, count = (src.length >> 2) - from) {
   for (let j = 0, a = at * 4, b = from * 4; j < count * 4; j++) out[a + j] = src[b + j];
-  const ids = out.ids,
-    sids = src.ids;
+  const ids = out.ids, sids = src.ids;
   if (ids) for (let j = 0; j < count; j++) ids[at + j] = sids ? sids[from + j] : NO_LIGHT_ID;
 }
 
@@ -117,13 +103,7 @@ export function copyLights(out, at, src, from = 0, count = (src.length >> 2) - f
  *  frame view: sdRealm.js realmLightsWith). */
 export function lightListView(list, n) {
   const out = /** @type {LightList} */ (list.subarray(0, n * 4));
-  if (list.ids)
-    Object.defineProperty(out, 'ids', {
-      value: list.ids.subarray(0, n),
-      writable: true,
-      enumerable: false,
-      configurable: true,
-    });
+  if (list.ids) Object.defineProperty(out, 'ids', { value: list.ids.subarray(0, n), writable: true, enumerable: false, configurable: true });
   return out;
 }
 

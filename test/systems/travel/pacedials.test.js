@@ -156,6 +156,6 @@ test('PACE-DIALS host: the world tells the rule its ground every frame a journey
   assert.match(w, /if \(travelControlUI\?\.isShowing\) setPaceGround\(!!travelControlUI\.onRoad\);\n\s*else if \(travelView\?\.state === 'up'\) setPaceGround\(travellerOnRoad\(\)\);/, 'the journey\'s own ground, else the feet\'s under the view');
   assert.match(w, /const _stopPace = onTravelPace\(\(\) => \{ if \(!frameAlive\(_frameToken\)\) \{ _stopPace\(\); return; \} travelOptions\?\.reapplyRate\?\.\(\); \}\);/);
   assert.match(w, /if \(travelControlUI\?\.isShowing && typeof document !== 'undefined'\) showPaceBox\(\); else hidePaceBox\(\);/, 'the classic strip and GrimoireUI: the dials\' own box while a journey runs');
-  assert.match(rd('src/systems/travel/travelOptions.js'), /reapplyRate: \(\) => \{\n\s*if \(st\.autopilot && ui\?\.isShowing\) applyRate\(true\);\n\s*\},/);
+  assert.match(rd('src/systems/travel/travelOptions.js'), /reapplyRate: \(\) => \{ if \(st\.autopilot && ui\?\.isShowing\) applyRate\(true\); \},/);
   assert.match(rd('src/systems/timeScale.js'), /export const travelRateOf = \(onRoad\) => paceRateOn\(onRoad\);/);
 });

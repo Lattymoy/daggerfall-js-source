@@ -12,7 +12,7 @@ test('OVERLOAD-EASE: festival/mine is asked per account, retried on its own cloc
   assert.doesNotMatch(w, /heard = false/, 'a reconnect no longer forgets the account was heard');
   assert.match(w, /if \(heardFor !== account && !mineAsking && Date\.now\(\) - mineAt >= OFFERING_REFRESH_MS\) \{/);
   assert.match(w, /if \(ok && asked === account\) heardFor = asked;/, 'only an answer marks it heard');
-  assert.match(w, /if \(who && who === heardFor && pendingSale\(\)\) \{\n\s*heardFor = null;\n\s*mineAt = -Infinity;\n\s*\}/, 'a pending sale is resumed on reconnect');
+  assert.match(w, /if \(who && who === heardFor && pendingSale\(\)\) \{ heardFor = null; mineAt = -Infinity; \}/, 'a pending sale is resumed on reconnect');
 });
 
 test('OVERLOAD-EASE: a restack is no save', () => {

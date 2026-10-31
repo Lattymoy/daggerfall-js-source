@@ -2,8 +2,8 @@
   {
     "name": "MWNPC14-flag-unread",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "      e.vampire = bytes[sub.start + 1] !== 0; // MWNPC14: BYDT's second byte, the vampire flag (getVampireHead reads it)",
-    "new": "      e.vampire = false; // MWNPC14: BYDT's second byte, the vampire flag (getVampireHead reads it)",
+    "old": "      e.vampire = bytes[sub.start + 1] !== 0;",
+    "new": "      e.vampire = false;",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MWNPC14-version-left",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "export const ARM_RECORDS_VERSION = 6; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records",
-    "new": "export const ARM_RECORDS_VERSION = 5; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records",
+    "old": "export const ARM_RECORDS_VERSION = 6;",
+    "new": "export const ARM_RECORDS_VERSION = 5;",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MWNPC14-head-any-head",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
-    "new": "    if (p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
+    "old": "if (p.vampire && p.skin && p.slot === 'head'",
+    "new": "if (p.skin && p.slot === 'head'",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "MWNPC14-head-any-sex",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
-    "new": "    if (p.vampire && p.skin && p.slot === 'head' && p.race === want && !p.firstPerson) out = p;",
+    "old": " && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
+    "new": " && p.race === want && !p.firstPerson) out = p;",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MWNPC14-head-any-race",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
-    "new": "    if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && !p.firstPerson) out = p;",
+    "old": " && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
+    "new": " && p.female === !!female && !p.firstPerson) out = p;",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MWNPC14-head-first-wins",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson) out = p;",
-    "new": "    if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson)\n      out ??= p;",
+    "old": "&& p.race === want && !p.firstPerson) out = p;",
+    "new": "&& p.race === want && !p.firstPerson) out ??= p;",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "MWNPC14-rows-hair-too",
     "file": "src/formats/morrowind/mwFirstPerson.js",
-    "old": "    const row = rows.find((r) => r.slot === 'head');",
-    "new": "    const row = rows.find((r) => r.slot === 'hair');",
+    "old": "    const row = rows.find((r) => r.slot === 'head');\n    if (row) { row.record = vamp;",
+    "new": "    const row = rows.find((r) => r.slot === 'hair');\n    if (row) { row.record = vamp;",
     "tests": [
       "test/characters/mwnpc14_vampires.test.js"
     ]

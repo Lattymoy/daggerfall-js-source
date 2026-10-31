@@ -1396,7 +1396,7 @@ test('AUDIT-TO1 F1: paid teleportation reaches a member of ANY rank, and only wh
 
   // and the install itself is the mod's, on the mod's own setting
   const t = read('src/systems/travel/travelOptions.js');
-  assert.match(t, /registerCustomGuild\(\n\s*'MagesGuild',\n\s*s0\.teleportCost/,
+  assert.match(t, /registerCustomGuild\('MagesGuild', s0\.teleportCost/,
     'the registration is gated on EnablePaidTeleportation, as :331-336 gates it');
   assert.match(t, /\(_membership, service\) => \(service === 'Teleport' \? true : undefined\)/);
 });

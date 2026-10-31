@@ -11,8 +11,8 @@
   {
     "name": "LOOK-BUTTONS-the-row-not-laid-out-as-a-row",
     "file": "src/ui/decorPanel.js",
-    "old": ".dfdecor-paint-btns { display: flex; flex-wrap: wrap; gap: 4px; }   /* FB1001 LOOK-BUTTONS: the painter's own row, never the rent's */",
-    "new": ".dfdecor-paint-btns { flex-wrap: wrap; gap: 4px; }   /* FB1001 LOOK-BUTTONS: the painter's own row, never the rent's */",
+    "old": ".dfdecor-paint-btns { display: flex; flex-wrap: wrap; gap: 4px; }",
+    "new": ".dfdecor-paint-btns { flex-wrap: wrap; gap: 4px; }",
     "tests": [
       "test/net/fb1001_look.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "LOOK-BUTTONS-the-painters-rows-hidden-in-the-painter-too",
     "file": "src/ui/decorPanel.js",
-    "old": ".dfdecor-card[data-mode=\"paint\"] .dfdecor-rent-actions, .dfdecor-card:not([data-mode=\"paint\"]) .dfdecor-paint-actions { display: none; }",
-    "new": ".dfdecor-card[data-mode=\"paint\"] .dfdecor-rent-actions, .dfdecor-card .dfdecor-paint-actions { display: none; }",
+    "old": ".dfdecor-card:not([data-mode=\"paint\"]) .dfdecor-paint-actions { display: none; }",
+    "new": ".dfdecor-card .dfdecor-paint-actions { display: none; }",
     "tests": [
       "test/net/fb1001_look.test.js"
     ]

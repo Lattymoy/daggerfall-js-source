@@ -22,8 +22,8 @@
   {
     "name": "SD-THROUGH-stamped-twice",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (!rec || sdPhase(rec, now) !== 'found' || rec.inAt != null) return null;",
-    "new": "  if (!rec || sdPhase(rec, now) !== 'found') return null;",
+    "old": "if (!rec || sdPhase(rec, now) !== 'found' || rec.inAt != null) return null;",
+    "new": "if (!rec || sdPhase(rec, now) !== 'found') return null;",
     "tests": [
       "test/net/superDungeon/sdthrough_relay.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "SD-THROUGH-stamped-unfound",
     "file": "src/net/superDungeon/sdLaw.js",
-    "old": "  if (!rec || sdPhase(rec, now) !== 'found' || rec.inAt != null) return null;",
-    "new": "  if (!rec || sdPhase(rec, now) === 'gone' || rec.inAt != null) return null;",
+    "old": "if (!rec || sdPhase(rec, now) !== 'found' || rec.inAt != null) return null;",
+    "new": "if (!rec || sdPhase(rec, now) === 'gone' || rec.inAt != null) return null;",
     "tests": [
       "test/net/superDungeon/sdthrough_relay.test.js"
     ],

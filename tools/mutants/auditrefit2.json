@@ -263,8 +263,8 @@
   {
     "name": "A2-pool-paint-every-mesh",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      if (texRemap !== drawRemap) texRemap = paints.remapFor(gpu, texRemap, drawRemap); // AUDIT 2: her paint only on a mesh it repaints - the renderer's picture cache keys on the remap",
-    "new": "      // AUDIT 2: her paint only on a mesh it repaints - the renderer's picture cache keys on the remap",
+    "old": "      if (texRemap !== drawRemap) texRemap = paints.remapFor(gpu, texRemap, drawRemap);",
+    "new": "",
     "tests": [
       "test/systems/naval/auditrefit2.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "A2-plaque-hidden-shown",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      const shown = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? plaqueNameOf(boat) : null; // SHIP-PLAQUE: her name boards, in her hull's frame - AUDIT 2: only where she is drawn (a hidden peer's boat - her look 'hidden' - sailed two boards with her name across the water; mine, off while I am indoors, hung them in the room)",
-    "new": "      const shown = boat.MeshObject ? plaqueNameOf(boat) : null; // SHIP-PLAQUE: her name boards, in her hull's frame - AUDIT 2: only where she is drawn (a hidden peer's boat - her look 'hidden' - sailed two boards with her name across the water; mine, off while I am indoors, hung them in the room)",
+    "old": "const shown = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? plaqueNameOf(boat) : null;",
+    "new": "const shown = boat.MeshObject ? plaqueNameOf(boat) : null;",
     "tests": [
       "test/systems/naval/auditrefit2.test.js",
       "test/systems/naval/shipplaque.test.js"
@@ -420,8 +420,8 @@
   {
     "name": "A2-plaque-unprimed",
     "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
-    "old": "      for (let hull = 0; hull < HULL_NAMES.length; hull++) plaques.prime(hull);\n      for (let hull = 0; hull < HULL_NAMES.length; hull++) figureheads.prime(hull); // FIGUREHEAD: her stem read and the carving fitted (20-100 ms a hull)",
-    "new": "      for (let hull = 0; hull < HULL_NAMES.length; hull++) figureheads.prime(hull); // FIGUREHEAD: her stem read and the carving fitted (20-100 ms a hull)",
+    "old": "      for (let hull = 0; hull < HULL_NAMES.length; hull++) plaques.prime(hull);\n",
+    "new": "",
     "tests": [
       "test/systems/naval/shipplaque.test.js",
       "test/systems/naval/auditrefit2.test.js"

@@ -68,8 +68,8 @@
   {
     "name": "RF-the-line-not-copied",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}),\n    })); // ROAD-FOLLOW: the painted road's points   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point",
-    "new": "    })); // ROAD-FOLLOW: the painted road's points   // OW-ROADSIDE: a join's own point; OW-TOWN-RING: a town's ring point",
+    "old": ", ...(l.line ? { line: l.line.map((q) => [q[0], q[1]]) } : {}) }));",
+    "new": " }));",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "RF-the-lane-s-points-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const path = lane?.pts ?? null; // ROAD-FOLLOW: on the curves past the Bay",
-    "new": "    const path = null; // ROAD-FOLLOW: on the curves past the Bay",
+    "old": "    const path = lane?.pts ?? null;",
+    "new": "    const path = null;",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -86,8 +86,8 @@
   {
     "name": "RF-the-leg-s-end-square-at-the-middle",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "            ? spotRect(legEnd(leg, legMiddle))",
-    "new": "            ? spotRect(legMiddle(leg))",
+    "old": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "new": ": leg.line ? spotRect(legMiddle(leg)) : rectOf(",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -95,8 +95,8 @@
   {
     "name": "RF-the-rejoin-on-the-chord",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const near = lane?.pts ? nearestOnLine(lane.pts, me) : null; // ROAD-FOLLOW: the nearest point of the curves it walks",
-    "new": "    const near = null; // ROAD-FOLLOW: the nearest point of the curves it walks",
+    "old": "    const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;",
+    "new": "    const near = null;",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "RF-the-last-leg-s-line-unread",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    const road = lane.pts\n      ? place\n        ? lane.pts\n        : lineUpTo(lane.pts, end)\n      : [\n          [lane.ax, lane.az],\n          [via.x, via.z],\n        ];",
-    "new": "    const road = [\n      [lane.ax, lane.az],\n      [via.x, via.z],\n    ];",
+    "old": "    const road = lane.pts ? (place ? lane.pts : lineUpTo(lane.pts, end)) : [[lane.ax, lane.az], [via.x, via.z]];",
+    "new": "    const road = [[lane.ax, lane.az], [via.x, via.z]];",
     "tests": [
       "test/systems/travel/road_follow.test.js"
     ]

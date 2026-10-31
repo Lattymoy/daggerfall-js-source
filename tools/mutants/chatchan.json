@@ -147,8 +147,8 @@
   {
     "name": "CC-peek-not-deduplicated",
     "file": "src/net/chat.js",
-    "old": "    const heard = new Set();",
-    "new": "    const heard = {\n      all: [],\n      add(x) {\n        this.all.push(x);\n      },\n      [Symbol.iterator]() {\n        return this.all[Symbol.iterator]();\n      },\n    };",
+    "old": "    const heard = new Set();\n    for (const tab of this.tabs) {\n      if (!tab.shown) continue;",
+    "new": "    const heard = { all: [], add(x) { this.all.push(x); }, [Symbol.iterator]() { return this.all[Symbol.iterator](); } };\n    for (const tab of this.tabs) {\n      if (!tab.shown) continue;",
     "tests": [
       "test/net/chatchan.test.js"
     ],
@@ -160,8 +160,8 @@
     "tests": [
       "test/net/chatchan.test.js"
     ],
-    "old": "      if (tab.id !== this.active && !tab.peekAll) {",
-    "new": "      if (false) {",
+    "old": "      if (tab.id !== this.active && !tab.peekAll) { for",
+    "new": "      if (false) { for",
     "note": "CHAT-CHAN's old peek: a World line stands over the screen of a player reading Region - Mac: \"Messages sent in world chat shouldnt carry over to region chat\"."
   },
   {
@@ -170,8 +170,8 @@
     "tests": [
       "test/net/chatchan.test.js"
     ],
-    "old": "      if (tab.id !== this.active && !tab.peekAll) {",
-    "new": "      if (tab.id !== this.active) {",
+    "old": "      if (tab.id !== this.active && !tab.peekAll) { for",
+    "new": "      if (tab.id !== this.active) { for",
     "note": "A party member's \"help\" said to this player waits on a badge while they read another tab."
   },
   {
@@ -180,15 +180,15 @@
     "tests": [
       "test/net/chatchan.test.js"
     ],
-    "old": "      if (!tab.shown) continue;",
-    "new": "      if (false) continue;",
+    "old": "      if (!tab.shown) continue;\n      // PING1",
+    "new": "      if (false) continue;\n      // PING1",
     "note": "A tab off the bar still stands its lines over the world."
   },
   {
     "name": "CC-aside-on-a-notice",
     "file": "src/net/chat.js",
-    "old": "    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : '';",
-    "new": "    const kind = rolled ? 'roll' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : '';",
+    "old": "rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : ''",
+    "new": "rolled ? 'roll' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : ''",
     "tests": [
       "test/net/chatchan.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "CC-setroom-overwrites-label",
     "file": "src/net/chat.js",
-    "old": "    tab.place = place;\n    this.version++;",
-    "new": "    tab.place = place;\n    tab.label = place ?? tab.label;\n    this.version++;",
+    "old": "    tab.room = room; tab.place = place;",
+    "new": "    tab.room = room; tab.place = place; tab.label = place ?? tab.label;",
     "tests": [
       "test/net/chatchan.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "CC-earshot-counts-height",
     "file": "src/net/chat.js",
-    "old": "    dz = speaker[2] - listener[2];\n  return Number.isFinite(dx) && Number.isFinite(dz) && dx * dx + dz * dz <= range * range;",
-    "new": "    dz = speaker[2] - listener[2],\n    dy = speaker[1] - listener[1];\n  return Number.isFinite(dx) && Number.isFinite(dz) && dx * dx + dy * dy + dz * dz <= range * range;",
+    "old": "  const dx = speaker[0] - listener[0], dz = speaker[2] - listener[2];\n  return Number.isFinite(dx) && Number.isFinite(dz) && dx * dx + dz * dz <= range * range;",
+    "new": "  const dx = speaker[0] - listener[0], dz = speaker[2] - listener[2], dy = speaker[1] - listener[1];\n  return Number.isFinite(dx) && Number.isFinite(dz) && dx * dx + dy * dy + dz * dz <= range * range;",
     "tests": [
       "test/net/chatchan.test.js"
     ]
@@ -232,8 +232,8 @@
   {
     "name": "CC-own-line-filtered",
     "file": "src/net/chat.js",
-    "old": "  if (line?.mine) return true;\n  const who = Array.isArray(near) ? near.find((p) => p?.id === line?.id) : null;",
-    "new": "  const who = Array.isArray(near) ? near.find((p) => p?.id === line?.id) : null;",
+    "old": "  if (line?.mine) return true;\n  const who",
+    "new": "  const who",
     "tests": [
       "test/net/chatchan.test.js"
     ]
@@ -259,7 +259,7 @@
   {
     "name": "CC-flap-keeps-the-wait",
     "file": "src/net/chat.js",
-    "old": "  if (!want || want === current) {\n    hold.room = null;\n    return null;\n  }",
+    "old": "  if (!want || want === current) { hold.room = null; return null; }",
     "new": "  if (!want || want === current) return null;",
     "tests": [
       "test/net/chatchan.test.js"
@@ -469,8 +469,8 @@
   {
     "name": "CC-setroom-clears-history",
     "file": "src/net/chat.js",
-    "old": "    tab.place = place;\n    this.version++;",
-    "new": "    tab.place = place;\n    tab.messages = [];\n    this.version++;",
+    "old": "    tab.room = room; tab.place = place;",
+    "new": "    tab.room = room; tab.place = place; tab.messages = [];",
     "tests": [
       "test/net/chatchan.test.js"
     ]
@@ -478,8 +478,8 @@
   {
     "name": "CC-setroom-noop-bumps",
     "file": "src/net/chat.js",
-    "old": "    if (tab.room === room && tab.place === place) return false;\n    tab.room = room;",
-    "new": "    tab.room = room;",
+    "old": "    if (tab.room === room && tab.place === place) return false;\n",
+    "new": "",
     "tests": [
       "test/net/chatchan.test.js"
     ]
@@ -535,8 +535,8 @@
     "tests": [
       "test/net/chatchan.test.js"
     ],
-    "old": "  Object.freeze({\n    id: 'party',\n    label: 'Party',\n    room: null,\n    link: false,\n    hint: 'Only your party',\n    hidden: true,\n    peekAll: true,\n  }),",
-    "new": "  Object.freeze({ id: 'party', label: 'Party', room: null, link: false, hint: 'Only your party', peekAll: true }),"
+    "old": "hint: 'Only your party', hidden: true, peekAll: true }",
+    "new": "hint: 'Only your party', peekAll: true }"
   },
   {
     "name": "CHAT-P-select-into-a-hidden-tab",
@@ -562,8 +562,8 @@
     "tests": [
       "test/net/chatchan.test.js"
     ],
-    "old": "    return this.tabs.reduce((n, t) => n + (t.shown ? t.unread : 0), 0);",
-    "new": "    return this.tabs.reduce((n, t) => n + t.unread, 0);"
+    "old": "n + (t.shown ? t.unread : 0)",
+    "new": "n + t.unread"
   },
   {
     "name": "CHAT-P-every-party-note-on-the-party-tab",
@@ -580,8 +580,8 @@
     "tests": [
       "test/net/chatchan.test.js"
     ],
-    "old": "  if (code === 'party.kicked' && note?.acct != null && note.acct === social.acct) return fallback;\n  return 'party';",
-    "new": "  return 'party';"
+    "old": "  if (code === 'party.kicked' && note?.acct != null && note.acct === social.acct) return fallback;\n",
+    "new": ""
   },
   {
     "name": "CHAT-P-the-bar-never-follows-the-party",

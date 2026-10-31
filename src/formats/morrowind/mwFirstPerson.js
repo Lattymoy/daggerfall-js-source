@@ -59,9 +59,7 @@ export function parseBsaIndex(bytes) {
     if (end >= stringStart + stringLen) throw new Error(`unterminated name (entry ${i})`);
     files.push({
       // Rule: VFS normalisation is backslash -> slash then ASCII lowercase.
-      name: latin1(bytes.subarray(stringStart + nameOffset, end))
-        .replace(/\\/g, '/')
-        .toLowerCase(),
+      name: latin1(bytes.subarray(stringStart + nameOffset, end)).replace(/\\/g, '/').toLowerCase(),
       size: fileSize,
       offset,
     });
@@ -88,11 +86,7 @@ export const NIF_MAGICS = Object.freeze(['NetImmerse File Format', 'Gamebryo Fil
 
 export function readNifHeader(bytes) {
   let nl = -1;
-  for (let i = 0; i < Math.min(bytes.length, 128); i++)
-    if (bytes[i] === 0x0a) {
-      nl = i;
-      break;
-    }
+  for (let i = 0; i < Math.min(bytes.length, 128); i++) if (bytes[i] === 0x0a) { nl = i; break; }
   if (nl < 0) return { ok: false, why: 'no newline in the first 128 bytes - not a NIF' };
   const line = latin1(bytes.subarray(0, nl)).replace(/\r$/, '');
   const magic = NIF_MAGICS.find((m) => line.startsWith(m));
@@ -101,10 +95,7 @@ export function readNifHeader(bytes) {
   const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const version = dv.getUint32(nl + 1, true);
   return {
-    ok: true,
-    magic,
-    line,
-    version,
+    ok: true, magic, line, version,
     versionText: [24, 16, 8, 0].map((s) => (version >>> s) & 0xff).join('.'),
     // Rule: a NIF `bool` is int32 BELOW version 4.1.0.0 and int8 at or
     // above - the threshold is the rule, not the answer (Part V).
@@ -137,7 +128,7 @@ export function walkEsm(bytes, { limit = Infinity } = {}) {
     const type = latin1(bytes.subarray(p, p + 4));
     const size = dv.getUint32(p + 4, true);
     const body = p + 16;
-    if (body + size > bytes.length) break; // truncated tail, not a throw
+    if (body + size > bytes.length) break;   // truncated tail, not a throw
     out.push({ type, start: body, size });
     p = body + size;
   }
@@ -176,28 +167,13 @@ export { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
 import { MW_BODY_PARTS, isFirstPersonId } from './mwEsmFile.js';
 import FACE_TABLE from '../mwFaceTable.json' with { type: 'json' };
 import { GRAPH_ROOT, ACCUM_ROOT_NAMES } from './mwSkin.js';
-import { transferSkin, sourceSkin, fitLift, liftBatch } from './mwSkinTransfer.js'; // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it
-import {
-  getTextKeyTime,
-  animVelocity,
-  collectTextKeys,
-  normalizeTextKeys,
-  clipGroups,
-  resetClip,
-  parseAnimGroups,
-  extractTracks,
-} from './mwAnim.js';
-import { mat33Mul } from './mwNifMesh.js'; // AUDIT 68 S11-affine-dup: the one row-major 3x3 product
-import { batchMoves, posePartBatch, nodeAffineAt, nodeClockAt, clockFor } from './mwPartClock.js'; // MW-BOW1: a part's own clock
-import { applyClimbRig } from '../../combat/climbRig.js'; // CLIMB6: the climb's pose on the rig's own bones
-import {
-  applyMirrorRig,
-  limbSkeleton,
-  offWeaponBoneAddon,
-  WEAPON_BONE_LEFT_SOURCE,
-  mirrorBindSources,
-} from '../../combat/twoHands/mirrorRig.js'; // TWO-HANDS: the second hand - an arm, or the body, in the mirror; the left hand's weapon bone   // MIRROR-BIND: the skins it is mirrored by
-import { ownFacePools } from '../../characters/ownModels/ownHeadModels.js'; // MW-HEADS1: the port's own heads and hairs - a race's pools where it has them
+import { transferSkin, sourceSkin, fitLift, liftBatch } from './mwSkinTransfer.js';   // MW-BRIG2: a worn model skinned from the body under it; MW-BRIG3: and fitted onto it
+import { getTextKeyTime, animVelocity, collectTextKeys, normalizeTextKeys, clipGroups, resetClip, parseAnimGroups, extractTracks } from './mwAnim.js';
+import { mat33Mul } from './mwNifMesh.js';   // AUDIT 68 S11-affine-dup: the one row-major 3x3 product
+import { batchMoves, posePartBatch, nodeAffineAt, nodeClockAt, clockFor } from './mwPartClock.js';   // MW-BOW1: a part's own clock
+import { applyClimbRig } from '../../combat/climbRig.js';   // CLIMB6: the climb's pose on the rig's own bones
+import { applyMirrorRig, limbSkeleton, offWeaponBoneAddon, WEAPON_BONE_LEFT_SOURCE, mirrorBindSources } from '../../combat/twoHands/mirrorRig.js';   // TWO-HANDS: the second hand - an arm, or the body, in the mirror; the left hand's weapon bone   // MIRROR-BIND: the skins it is mirrored by
+import { ownFacePools } from '../../characters/ownModels/ownHeadModels.js';   // MW-HEADS1: the port's own heads and hairs - a race's pools where it has them
 
 /** The four parts allowed to fall back to a third-person mesh when the
  *  first-person record is missing (rule 3 / npcanimation.cpp:1217-1253).
@@ -216,12 +192,12 @@ function readBodyPart(bytes, rec) {
     else if (sub.name === 'FNAM') e.race = zstr(bytes, sub.start, sub.len).toLowerCase();
     else if (sub.name === 'BYDT' && sub.len >= 4) {
       e.part = bytes[sub.start];
-      e.vampire = bytes[sub.start + 1] !== 0; // MWNPC14: BYDT's second byte, the vampire flag (getVampireHead reads it)
+      e.vampire = bytes[sub.start + 1] !== 0;   // MWNPC14: BYDT's second byte, the vampire flag (getVampireHead reads it)
       const flags = bytes[sub.start + 2];
-      e.female = (flags & 1) !== 0; // BPF_Female = 1
-      e.playable = (flags & 2) === 0; // BPF_NotPlayable = 2
-      e.skin = bytes[sub.start + 3] === 0; // MT_Skin = 0
-      e.bodyKind = bytes[sub.start + 3]; // IG3: the raw MeshType - getShieldMesh gates on MT_Armor (2)
+      e.female = (flags & 1) !== 0;            // BPF_Female = 1
+      e.playable = (flags & 2) === 0;          // BPF_NotPlayable = 2
+      e.skin = bytes[sub.start + 3] === 0;     // MT_Skin = 0
+      e.bodyKind = bytes[sub.start + 3];       // IG3: the raw MeshType - getShieldMesh gates on MT_Armor (2)
     }
   }
   e.slot = MW_BODY_PARTS[e.part] ?? `#${e.part}`;
@@ -566,10 +542,7 @@ export function allWeaponShortGroups() {
  * the bit with the class, and so does isTwoHandedMelee below.
  */
 export const MW_WEAPON_CLASS = Object.freeze({
-  Melee: 0,
-  Ranged: 1,
-  Thrown: 2,
-  Ammo: 3,
+  Melee: 0, Ranged: 1, Thrown: 2, Ammo: 3,
 });
 export const MW_TWO_HANDED = 0x01;
 export const MW_HAS_HEALTH = 0x02;
@@ -632,7 +605,9 @@ export const weaponFlags = (type) => WEAPON_FLAGS[type] ?? 0;
  * nothing at all.
  */
 export function isRealWeapon(type) {
-  return type !== MW_WEAPON_TYPE.HandToHand && type !== MW_WEAPON_TYPE.Spell && type !== MW_WEAPON_TYPE.None;
+  return type !== MW_WEAPON_TYPE.HandToHand
+    && type !== MW_WEAPON_TYPE.Spell
+    && type !== MW_WEAPON_TYPE.None;
 }
 
 /** `weapInfo->mFlags & TwoHanded && mWeaponClass == Melee`
@@ -640,7 +615,8 @@ export function isRealWeapon(type) {
  *  so they take the ONE-handed ladder, and hand-to-hand is TwoHanded and
  *  Melee but is filtered out before this by isRealWeapon. */
 export function isTwoHandedMelee(type) {
-  return !!(weaponFlags(type) & MW_TWO_HANDED) && weaponClass(type) === MW_WEAPON_CLASS.Melee;
+  return !!(weaponFlags(type) & MW_TWO_HANDED)
+    && weaponClass(type) === MW_WEAPON_CLASS.Melee;
 }
 
 /**
@@ -714,12 +690,8 @@ export function composeStanceGroup(base, type, hasGroup) {
  * ("runforward", "turnleft", ...) or null for standing still.
  */
 export function movementAnimState({
-  forward = 0,
-  strafe = 0,
-  running = false,
-  sneaking = false,
-  turning = 0,
-  thirdPerson = false,
+  forward = 0, strafe = 0, running = false, sneaking = false,
+  turning = 0, thirdPerson = false,
 } = {}) {
   const prefix = sneaking ? 'sneak' : running ? 'run' : 'walk';
   const strafing = Math.abs(strafe) > Math.abs(forward) * 2;
@@ -798,23 +770,15 @@ export function composeMovementGroup(base, type, hasGroup) {
  *
  * @returns {{ jump: 'inair'|'landing'|null, inJump: boolean }}
  */
-export function jumpAnimState({
-  grounded = true,
-  swimming = false,
-  levitating = false,
-  jumpQueued = false,
-  priorInAir = false,
-  jumpPlaying = false,
-} = {}) {
+export function jumpAnimState({ grounded = true, swimming = false, levitating = false,
+  jumpQueued = false, priorInAir = false, jumpPlaying = false } = {}) {
   let inJump = false;
   let jump = null;
   if (!swimming && !levitating) {
-    if (!grounded) {
-      inJump = true;
-      jump = 'inair';
-    } else if (!priorInAir && jumpQueued) inJump = true; // :2224-2227, the takeoff frame
+    if (!grounded) { inJump = true; jump = 'inair'; }
+    else if (!priorInAir && jumpQueued) inJump = true;   // :2224-2227, the takeoff frame
   }
-  if (!inJump && jumpPlaying) jump = 'landing'; // :2292-2293
+  if (!inJump && jumpPlaying) jump = 'landing';   // :2292-2293
   return { jump, inJump };
 }
 
@@ -823,16 +787,15 @@ export function jumpAnimState({
  *  any velocity to calculate a speed multiplier from"), in MW units
  *  per second: sneak, run, walk. */
 export const MOVEMENT_FALLBACK_SPEED = Object.freeze({
-  sneak: 33.5452,
-  run: 222.857,
-  walk: 154.064,
+  sneak: 33.5452, run: 222.857, walk: 154.064,
 });
 
 /** character.cpp:2403 - "Vanilla caps the played animation speed." */
 export const MOVEMENT_SPEED_CAP = 10;
 
 /** character.cpp:2396 - the turning animation's own speed law. */
-export const turnAnimSpeed = (yawRatePerSec) => Math.min(1.5, Math.abs(yawRatePerSec) / Math.PI);
+export const turnAnimSpeed = (yawRatePerSec) =>
+  Math.min(1.5, Math.abs(yawRatePerSec) / Math.PI);
 
 export function composeWeaponGroup(type, hasGroup) {
   const asked = weaponLongGroup(type);
@@ -943,7 +906,7 @@ function readWeapon(bytes, rec) {
     else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
     else if (sub.name === 'ENAM') e.enchanted = true;
     else if (sub.name === 'WPDT') {
-      if (sub.len < 32) continue; // refused, not read past
+      if (sub.len < 32) continue;   // refused, not read past
       // MW-D22: mType is at byte EIGHT. loadweap.hpp's WPDTstruct is
       // float mWeight (0-3), int32 mValue (4-7), int16 mType (8-9),
       // uint16 mHealth (10-11), ... - 32 bytes. MW-D9 recorded "byte
@@ -971,16 +934,7 @@ function readWeapon(bytes, rec) {
 
 /** MWNPC9: a CREA record's FLAG bits (OpenMW components/esm3/loadcrea.hpp `enum Flags`, at openmw-0.48.0; the
  *  reader keeps the low byte, `mFlags = flags & 0xFF` - loadcrea.cpp). */
-export const CREA_FLAG = Object.freeze({
-  Bipedal: 0x01,
-  Respawn: 0x02,
-  Weapon: 0x04,
-  Base: 0x08,
-  Swims: 0x10,
-  Flies: 0x20,
-  Walks: 0x40,
-  Essential: 0x80,
-});
+export const CREA_FLAG = Object.freeze({ Bipedal: 0x01, Respawn: 0x02, Weapon: 0x04, Base: 0x08, Swims: 0x10, Flies: 0x20, Walks: 0x40, Essential: 0x80 });
 
 /** MWNPC9: the CREA records - what a creature's body is built from: its id, its model (MODL, the path as the WEAP
  *  reader keeps one), its name, its flags (FLAG's low byte) and its scale (XSCL, 1 when absent - loadcrea.cpp). */
@@ -990,10 +944,8 @@ function readCreature(bytes, rec) {
     if (sub.name === 'NAME') e.id = zstr(bytes, sub.start, sub.len).toLowerCase();
     else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
     else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
-    else if (sub.name === 'FLAG' && sub.len >= 4)
-      e.flags = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getInt32(0, true) & 0xff;
-    else if (sub.name === 'XSCL' && sub.len >= 4)
-      e.scale = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getFloat32(0, true);
+    else if (sub.name === 'FLAG' && sub.len >= 4) e.flags = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getInt32(0, true) & 0xff;
+    else if (sub.name === 'XSCL' && sub.len >= 4) e.scale = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 4).getFloat32(0, true);
   }
   return e.id && e.model ? e : null;
 }
@@ -1038,7 +990,7 @@ function readLight(bytes, rec) {
     else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
     else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
     else if (sub.name === 'LHDT') {
-      if (sub.len < 24) continue; // refused, not read past
+      if (sub.len < 24) continue;   // refused, not read past
       const dv = new DataView(bytes.buffer, bytes.byteOffset + sub.start, 24);
       e.flags = dv.getInt32(20, true);
       e.carry = (e.flags & MW_LIGHT_CARRY) !== 0;
@@ -1057,26 +1009,15 @@ function readLight(bytes, rec) {
  * modifiable bits are the file's) stands: the hard-coded rest is not read here, so it is not stored.
  */
 function readMagicEffect(bytes, rec) {
-  const e = {
-    index: -1,
-    school: 0,
-    flags: 0,
-    color: [255, 255, 255],
-    speed: 1,
-    particle: '',
-    casting: '',
-    bolt: '',
-    hit: '',
-    area: '',
-  };
+  const e = { index: -1, school: 0, flags: 0, color: [255, 255, 255], speed: 1, particle: '', casting: '', bolt: '', hit: '', area: '' };
   for (const sub of subrecords(bytes, rec)) {
     const dv = () => new DataView(bytes.buffer, bytes.byteOffset + sub.start, sub.len);
     if (sub.name === 'INDX' && sub.len >= 4) e.index = dv().getInt32(0, true);
     else if (sub.name === 'MEDT') {
-      if (sub.len < 36) continue; // refused, not read past
+      if (sub.len < 36) continue;   // refused, not read past
       const d = dv();
       e.school = d.getInt32(0, true);
-      e.flags = d.getInt32(8, true) & (0x200 | 0x400 | 0x800); // AllowSpellmaking | AllowEnchanting | NegativeLight
+      e.flags = d.getInt32(8, true) & (0x200 | 0x400 | 0x800);   // AllowSpellmaking | AllowEnchanting | NegativeLight
       e.color = [d.getInt32(12, true), d.getInt32(16, true), d.getInt32(20, true)];
       e.speed = d.getFloat32(28, true);
     } else if (sub.name === 'PTEX') e.particle = zstr(bytes, sub.start, sub.len);
@@ -1120,13 +1061,8 @@ export function vfxStaticRecords(bytes) {
   const byId = new Map();
   const effects = [];
   for (const rec of walkEsm(bytes)) {
-    if (rec.type === 'STAT') {
-      const e = readStatic(bytes, rec);
-      if (e) byId.set(e.id, e);
-    } else if (rec.type === 'MGEF') {
-      const m = readMagicEffect(bytes, rec);
-      if (m) effects.push(m);
-    }
+    if (rec.type === 'STAT') { const e = readStatic(bytes, rec); if (e) byId.set(e.id, e); }
+    else if (rec.type === 'MGEF') { const m = readMagicEffect(bytes, rec); if (m) effects.push(m); }
   }
   return vfxStatics(byId, effects);
 }
@@ -1162,9 +1098,8 @@ export function pickLanternRecord(lights, { has = null } = {}) {
   return pickCarriedLight(lights, /lantern/, null, has);
 }
 function pickCarriedLight(lights, named, exactId, has) {
-  const cands = (lights ?? []).filter(
-    (l) => l && l.carry && l.model && named.test(l.id) && (!has || has(`meshes/${l.model}`)),
-  );
+  const cands = (lights ?? []).filter((l) => l && l.carry && l.model && named.test(l.id)
+    && (!has || has(`meshes/${l.model}`)));
   if (!cands.length) return null;
   const exact = exactId ? cands.find((l) => l.id === exactId) : null;
   if (exact) return exact;
@@ -1190,10 +1125,7 @@ export function blendMaskBones(skeleton, rootName = 'bip01 l clavicle') {
     while (at !== undefined && at !== null && at >= 0 && hops++ < 256) {
       const n = skeleton.nodes.get(at);
       if (!n) break;
-      if (String(n.name || '').toLowerCase() === want) {
-        out.add(String(node.name || '').toLowerCase());
-        break;
-      }
+      if (String(n.name || '').toLowerCase() === want) { out.add(String(node.name || '').toLowerCase()); break; }
       at = n.parent;
     }
   }
@@ -1317,7 +1249,7 @@ function readArmor(bytes, rec) {
     else if (sub.name === 'MODL') e.model = zstr(bytes, sub.start, sub.len).replace(/\\/g, '/').toLowerCase();
     else if (sub.name === 'FNAM') e.name = zstr(bytes, sub.start, sub.len);
     else if (sub.name === 'ENAM') e.enchanted = true;
-    else readPartRef(bytes, sub, e, 'ARMO'); // MW-D29: the worn half
+    else readPartRef(bytes, sub, e, 'ARMO');   // MW-D29: the worn half
   }
   return e.id && e.model ? e : null;
 }
@@ -1385,7 +1317,7 @@ export const ARM_GMST_IDS = Object.freeze([GMST_SNEAK_DELTA]);
 /** MW-LOAD: the SHAPE of extractArmRecords' answer. Bumped whenever a
  *  reader above changes what it returns, so a derived set written by
  *  an older build is refused and re-extracted rather than read wrong. */
-export const ARM_RECORDS_VERSION = 6; // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records
+export const ARM_RECORDS_VERSION = 6;   // MWNPC14: + the BODY vampire flag (a set without it is re-extracted); MW-D51: + the LIGH records (a set without them is re-extracted); WEREWOLF1 (AUDIT C2): a CLOT with parts and no MODL is kept; MW-SPELLFX1: + the MGEF records and the VFX statics; MWNPC9: + the CREA records
 
 /**
  * MW-LOAD: EVERY record the arm build reads, in ONE pass of the master.
@@ -1407,77 +1339,30 @@ export const ARM_RECORDS_VERSION = 6; // MWNPC14: + the BODY vampire flag (a set
  */
 export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
   const want = new Set(gmst.map((id) => String(id).toLowerCase()));
-  const out = {
-    version: ARM_RECORDS_VERSION,
-    parts: [],
-    races: [],
-    armors: [],
-    clothes: [],
-    weapons: [],
-    lights: [],
-    magicEffects: [],
-    statics: [],
-    creatures: [],
-    gmst: {},
-  };
+  const out = { version: ARM_RECORDS_VERSION, parts: [], races: [], armors: [], clothes: [], weapons: [], lights: [], magicEffects: [], statics: [], creatures: [], gmst: {} };
   const races = new Map();
-  const statics = new Map(); // MW-SPELLFX1: every STAT, until the file's MGEFs have said which they name
+  const statics = new Map();   // MW-SPELLFX1: every STAT, until the file's MGEFs have said which they name
   for (const rec of walkEsm(bytes)) {
     switch (rec.type) {
-      case 'BODY':
-        out.parts.push(readBodyPart(bytes, rec));
-        break;
-      case 'RACE': {
-        const e = readRace(bytes, rec);
-        if (e) races.set(e.id, e);
-        break;
-      }
-      case 'ARMO': {
-        const e = readArmor(bytes, rec);
-        if (e) out.armors.push(e);
-        break;
-      }
-      case 'CLOT': {
-        const e = readClothing(bytes, rec);
-        if (e) out.clothes.push(e);
-        break;
-      }
-      case 'WEAP': {
-        const e = readWeapon(bytes, rec);
-        if (e) out.weapons.push(e);
-        break;
-      }
-      case 'CREA': {
-        const e = readCreature(bytes, rec);
-        if (e) out.creatures.push(e);
-        break;
-      } // MWNPC9
-      case 'LIGH': {
-        const e = readLight(bytes, rec);
-        if (e) out.lights.push(e);
-        break;
-      } // MW-D51
-      case 'MGEF': {
-        const e = readMagicEffect(bytes, rec);
-        if (e) out.magicEffects.push(e);
-        break;
-      } // MW-SPELLFX1
-      case 'STAT': {
-        const e = readStatic(bytes, rec);
-        if (e) statics.set(e.id, e);
-        break;
-      } // MW-SPELLFX1
+      case 'BODY': out.parts.push(readBodyPart(bytes, rec)); break;
+      case 'RACE': { const e = readRace(bytes, rec); if (e) races.set(e.id, e); break; }
+      case 'ARMO': { const e = readArmor(bytes, rec); if (e) out.armors.push(e); break; }
+      case 'CLOT': { const e = readClothing(bytes, rec); if (e) out.clothes.push(e); break; }
+      case 'WEAP': { const e = readWeapon(bytes, rec); if (e) out.weapons.push(e); break; }
+      case 'CREA': { const e = readCreature(bytes, rec); if (e) out.creatures.push(e); break; }   // MWNPC9
+      case 'LIGH': { const e = readLight(bytes, rec); if (e) out.lights.push(e); break; }   // MW-D51
+      case 'MGEF': { const e = readMagicEffect(bytes, rec); if (e) out.magicEffects.push(e); break; }   // MW-SPELLFX1
+      case 'STAT': { const e = readStatic(bytes, rec); if (e) statics.set(e.id, e); break; }   // MW-SPELLFX1
       case 'GMST': {
         const g = readGmst(bytes, rec);
         if (want.has(g.name) && !Object.hasOwn(out.gmst, g.name)) out.gmst[g.name] = g.value;
         break;
       }
-      default:
-        break;
+      default: break;
     }
   }
   out.races = [...races.entries()];
-  out.statics = vfxStatics(statics, out.magicEffects); // MW-SPELLFX1: the VFX_ family and whatever this file's MGEFs name
+  out.statics = vfxStatics(statics, out.magicEffects);   // MW-SPELLFX1: the VFX_ family and whatever this file's MGEFs name
   return out;
 }
 
@@ -1485,16 +1370,9 @@ export function extractArmRecords(bytes, { gmst = ARM_GMST_IDS } = {}) {
  *  writes, every list present? A derived set from another version, or
  *  a torn one, answers false and is re-extracted. */
 export function isArmRecords(r) {
-  return (
-    !!r &&
-    typeof r === 'object' &&
-    r.version === ARM_RECORDS_VERSION &&
-    ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights', 'magicEffects', 'statics', 'creatures'].every((k) =>
-      Array.isArray(r[k]),
-    ) &&
-    !!r.gmst &&
-    typeof r.gmst === 'object'
-  );
+  return !!r && typeof r === 'object' && r.version === ARM_RECORDS_VERSION
+    && ['parts', 'races', 'armors', 'clothes', 'weapons', 'lights', 'magicEffects', 'statics', 'creatures'].every((k) => Array.isArray(r[k]))
+    && !!r.gmst && typeof r.gmst === 'object';
 }
 
 /**
@@ -1587,16 +1465,9 @@ export const DF_TO_MW_WEAPON = Object.freeze({
 //     player reads, so glass, recorded as the judgement it is.
 // Each value is a CHAIN tried in order; the first token present wins.
 export const DF_TO_MW_MATERIAL = Object.freeze({
-  Iron: ['iron'],
-  Steel: ['steel'],
-  Silver: ['silver'],
-  Elven: ['silver', 'steel'],
-  Dwarven: ['dwarven'],
-  Mithril: ['ebony'],
-  Adamantium: ['adamantium', 'ebony'],
-  Ebony: ['ebony'],
-  Orcish: ['glass', 'ebony'],
-  Daedric: ['daedric'],
+  Iron: ['iron'], Steel: ['steel'], Silver: ['silver'], Elven: ['silver', 'steel'],
+  Dwarven: ['dwarven'], Mithril: ['ebony'], Adamantium: ['adamantium', 'ebony'],
+  Ebony: ['ebony'], Orcish: ['glass', 'ebony'], Daedric: ['daedric'],
 });
 
 /**
@@ -1626,7 +1497,7 @@ export function dfWeaponToMw(item, weaponsTable) {
   for (const [name, tmpl] of Object.entries(weaponsTable ?? {})) {
     if (tmpl === idx && name in DF_TO_MW_WEAPON) return DF_TO_MW_WEAPON[name];
   }
-  return MOD_WEAPON_TO_MW[idx] ?? MW_WEAPON_TYPE.None; // MW-ASSIGN: a mod's weapon of a classic shape
+  return MOD_WEAPON_TO_MW[idx] ?? MW_WEAPON_TYPE.None;   // MW-ASSIGN: a mod's weapon of a classic shape
 }
 
 /** MW-ASSIGN (2026-09-27, Discord: "Some sprites not assigned morrowind skin"): THE WEAPONS A MOD ADDS, by template -
@@ -1634,8 +1505,8 @@ export function dfWeaponToMw(item, weaponsTable) {
  *  flail, as the classic one maps). Outside DFU's frozen WEAPONS, so the walk above never met them: in Morrowind first
  *  person they drew EMPTY HANDS, and their icon and a wall's mount stood as the classic picture. */
 export const MOD_WEAPON_TO_MW = Object.freeze({
-  513: MW_WEAPON_TYPE.AxeOneHand, // Archer's Axe
-  514: MW_WEAPON_TYPE.BluntOneHand, // Light Flail
+  513: MW_WEAPON_TYPE.AxeOneHand,     // Archer's Axe
+  514: MW_WEAPON_TYPE.BluntOneHand,   // Light Flail
 });
 
 export function pickWeaponRecord(records, type, material = null, { has = null, shape = null } = {}) {
@@ -1645,8 +1516,7 @@ export function pickWeaponRecord(records, type, material = null, { has = null, s
   // the same character draws the same sword on every machine, and on
   // retail the alphabetical first is the iron/chitin commons the old
   // pick usually landed on anyway.
-  const sorted = (records ?? [])
-    .filter((r) => r.type === type && !r.enchanted)
+  const sorted = (records ?? []).filter((r) => r.type === type && !r.enchanted)
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   if (!sorted.length) return null;
   // MW-D50 (Mac: on a Morrowind bow "the arrow is never shown being
@@ -1668,10 +1538,9 @@ export function pickWeaponRecord(records, type, material = null, { has = null, s
   const present = has ? sorted.filter((r) => has(`meshes/${r.model}`)) : sorted;
   const ofType = present.length ? present : sorted;
   const chain = material ? DF_TO_MW_MATERIAL[material] : null;
-  for (const want of Array.isArray(chain) ? chain : chain ? [chain] : []) {
+  for (const want of (Array.isArray(chain) ? chain : chain ? [chain] : [])) {
     const matches = ofType.filter((r) => r.id.includes(want));
-    if (matches.length)
-      return (shape && matches.find((r) => r.id.replace(/[^a-z]/g, '').endsWith(shape))) || matches[0];
+    if (matches.length) return (shape && matches.find((r) => r.id.replace(/[^a-z]/g, '').endsWith(shape))) || matches[0];
   }
   return ofType[0];
 }
@@ -1684,18 +1553,8 @@ export function pickWeaponRecord(records, type, material = null, { has = null, s
  *  (those come off the actor's own record - the chargen face law), NO
  *  clavicle (deliberately never mapped to any PRT slot). */
 export const SKIN_SWEEP_SLOTS = Object.freeze([
-  'neck',
-  'chest',
-  'groin',
-  'hand',
-  'wrist',
-  'forearm',
-  'upperarm',
-  'foot',
-  'ankle',
-  'knee',
-  'upperleg',
-  'tail',
+  'neck', 'chest', 'groin', 'hand', 'wrist', 'forearm', 'upperarm',
+  'foot', 'ankle', 'knee', 'upperleg', 'tail',
 ]);
 
 const ARM_SLOT_SET = new Set(['hand', 'wrist', 'forearm', 'upperarm']);
@@ -1744,7 +1603,7 @@ export function resolveBodyParts(parts, race, female, { firstPerson = false } = 
       continue;
     }
     if (isF !== !!p.female) continue;
-    out.set(slot, p); // proper match: LAST in load order wins
+    out.set(slot, p);   // proper match: LAST in load order wins
   }
   return out;
 }
@@ -1770,10 +1629,8 @@ export function armReport(parts, race, female) {
       firstPerson: chosenFp,
       thirdPersonFallback: chosenTp,
       // Rule 3: only these four may fall back at all, and this IS one of them.
-      verdict: chosenFp
-        ? 'first-person record found'
-        : chosenTp
-          ? 'no .1st record - falls back to the third-person mesh (allowed for arms)'
+      verdict: chosenFp ? 'first-person record found'
+        : chosenTp ? 'no .1st record - falls back to the third-person mesh (allowed for arms)'
           : 'NOTHING for this slot',
       counts: { firstPerson: fp.length, thirdPerson: tp.length },
     });
@@ -1821,18 +1678,15 @@ export function armReport(parts, race, female) {
  *  walk a save's face onto another index. No `has` - a caller with no
  *  archives - reads the own as shipped. */
 export function facePools(parts, race, female, { has = null, own: ownAsked = false } = {}) {
-  const own = ownAsked ? ownFacePools(race, female) : null; // MW-HEADS2: the port's own heads are a player's alone - asked for
-  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`))))
-    return { heads: own.heads, hairs: own.hairs };
+  const own = ownAsked ? ownFacePools(race, female) : null;   // MW-HEADS2: the port's own heads are a player's alone - asked for
+  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`)))) return { heads: own.heads, hairs: own.hairs };
   const want = String(race || '').toLowerCase();
   const pool = (slot) => {
-    const forSlot = (parts ?? []).filter(
-      (p) => p.race === want && p.slot === slot && p.skin && p.playable && !p.firstPerson,
-    );
+    const forSlot = (parts ?? []).filter((p) => p.race === want && p.slot === slot
+      && p.skin && p.playable && !p.firstPerson);
     const sexed = forSlot.filter((p) => p.female === !!female);
     return (sexed.length ? sexed : forSlot.filter((p) => !p.female))
-      .slice()
-      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      .slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   };
   return { heads: pool('head'), hairs: pool('hair') };
 }
@@ -1865,7 +1719,7 @@ export const curatedFace = (race, female, faceIndex, faceTable = FACE_TABLE) =>
  *  - the curated table's, or the matcher's raw-case verdict - is compared without it. */
 export const poolRecord = (pool, id) => {
   const w = String(id || '').toLowerCase();
-  return w ? (pool.find((p) => String(p.id).toLowerCase() === w) ?? null) : null;
+  return w ? pool.find((p) => String(p.id).toLowerCase() === w) ?? null : null;
 };
 
 /** AUDIT MW-HEADS1 (L2-F6): does the curated table answer BOTH halves of this face among these pools? Then no measured
@@ -1875,22 +1729,7 @@ export function curatedAnswersFace(pools, race, female, faceIndex, faceTable = F
   return !!c && !!poolRecord(pools.heads, c.head) && !!poolRecord(pools.hairs, c.hair);
 }
 
-export function playerBodyRows(
-  parts,
-  race,
-  female,
-  {
-    beast = false,
-    faceIndex = 0,
-    faceTable = FACE_TABLE,
-    faceMatch = null,
-    vampire = false,
-    walk = null,
-    has = null,
-    ownHeads = false,
-  } = {},
-) {
-  // MWNPC14: `vampire` the race's vampire head; MWNPC17: `walk` an NPC's { head, hair }; AUDIT MW-HEADS1: `has` the archives' (facePools); MW-HEADS2: `ownHeads` a player's - the port's own heads
+export function playerBodyRows(parts, race, female, { beast = false, faceIndex = 0, faceTable = FACE_TABLE, faceMatch = null, vampire = false, walk = null, has = null, ownHeads = false } = {}) {   // MWNPC14: `vampire` the race's vampire head; MWNPC17: `walk` an NPC's { head, hair }; AUDIT MW-HEADS1: `has` the archives' (facePools); MW-HEADS2: `ownHeads` a player's - the port's own heads
   const want = String(race || '').toLowerCase();
   // MW-D32: the sweep slots resolve through getBodyParts-whole
   // (npcanimation.cpp:1167-1297 - LAST proper match wins, male-for-
@@ -1899,7 +1738,8 @@ export function playerBodyRows(
   const resolved = resolveBodyParts(parts, race, female, { firstPerson: false });
   const rows = [];
   for (const slot of SKIN_SWEEP_SLOTS) {
-    const forSlot = parts.filter((p) => p.race === want && p.slot === slot && p.skin && p.playable && !p.firstPerson);
+    const forSlot = parts.filter((p) => p.race === want && p.slot === slot
+      && p.skin && p.playable && !p.firstPerson);
     const chosen = resolved.get(slot) ?? null;
     if (!chosen && slot === 'tail' && !beast) continue;
     rows.push({
@@ -1962,12 +1802,8 @@ export function playerBodyRows(
     rows.push({
       slot,
       record: chosen,
-      verdict: chosen
-        ? how
-          ? `third-person record found, ${how}`
-          : 'third-person record found'
-        : 'NOTHING for this slot',
-      counts: { all: sorted.length }, // AUDIT MW-HEADS1 (L2-F7): the pool chosen among - the port's own where it stands
+      verdict: chosen ? (how ? `third-person record found, ${how}` : 'third-person record found') : 'NOTHING for this slot',
+      counts: { all: sorted.length },   // AUDIT MW-HEADS1 (L2-F7): the pool chosen among - the port's own where it stands
     });
   }
   // MWNPC14: A VAMPIRE'S FACE - the race's vampire head over the one walked (npcanimation.cpp updateNpcBase: the head
@@ -1975,10 +1811,7 @@ export function playerBodyRows(
   const vamp = vampire ? vampireHeadRecord(parts, race, female) : null;
   if (vamp) {
     const row = rows.find((r) => r.slot === 'head');
-    if (row) {
-      row.record = vamp;
-      row.verdict = "third-person record found, a vampire's (getVampireHead)";
-    }
+    if (row) { row.record = vamp; row.verdict = 'third-person record found, a vampire\'s (getVampireHead)'; }
   }
   return rows;
 }
@@ -1989,8 +1822,7 @@ export function playerBodyRows(
 export function vampireHeadRecord(parts, race, female) {
   const want = String(race || '').toLowerCase();
   let out = null;
-  for (const p of parts ?? [])
-    if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson) out = p;
+  for (const p of parts ?? []) if (p.vampire && p.skin && p.slot === 'head' && p.female === !!female && p.race === want && !p.firstPerson) out = p;
   return out;
 }
 
@@ -2024,10 +1856,7 @@ export function scanNifRecordTypes(bytes) {
     let ok = true;
     for (let j = i + 4; j < i + 4 + len; j++) {
       const c = bytes[j];
-      if (c < 0x30 || c > 0x7a || (c > 0x39 && c < 0x41) || (c > 0x5a && c < 0x61 && c !== 0x5f)) {
-        ok = false;
-        break;
-      }
+      if (c < 0x30 || c > 0x7a || (c > 0x39 && c < 0x41) || (c > 0x5a && c < 0x61 && c !== 0x5f)) { ok = false; break; }
     }
     if (!ok) continue;
     const name = latin1(bytes.subarray(i + 4, i + 4 + len));
@@ -2094,8 +1923,7 @@ export function armMeshPaths(rows) {
  * swallowed everything.
  */
 export async function parseMeshForPreview(bytes) {
-  let parseNif;
-  let flattenNif;
+  let parseNif; let flattenNif;
   try {
     ({ parseNif } = await import('./mwNifFile.js'));
     ({ flattenNif } = await import('./mwNifMesh.js'));
@@ -2114,15 +1942,13 @@ export async function parseMeshForPreview(bytes) {
   } catch (err) {
     return { ok: false, stage: 'flatten', error: err.message };
   }
-  const shapes = batches
-    .map((b) => ({
-      positions: b.positions,
-      indices: b.indices,
-      skinned: !!(b.skinned && b.skin),
-      vertices: b.positions ? b.positions.length / 3 : 0,
-      triangles: b.indices ? b.indices.length / 3 : 0,
-    }))
-    .filter((s) => s.vertices > 0 && s.triangles > 0);
+  const shapes = batches.map((b) => ({
+    positions: b.positions,
+    indices: b.indices,
+    skinned: !!(b.skinned && b.skin),
+    vertices: b.positions ? b.positions.length / 3 : 0,
+    triangles: b.indices ? b.indices.length / 3 : 0,
+  })).filter((s) => s.vertices > 0 && s.triangles > 0);
   if (!shapes.length) return { ok: false, stage: 'geometry', error: 'parsed, but it carries no drawable geometry' };
   return {
     ok: true,
@@ -2137,12 +1963,8 @@ export async function parseMeshForPreview(bytes) {
 /** Axis-aligned bounds over every shape, for framing a preview.
  *  Morrowind is Z-UP, so a front view is x across and z up. */
 export function meshBounds(shapes) {
-  let minX = Infinity;
-  let minY = Infinity;
-  let minZ = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let maxZ = -Infinity;
+  let minX = Infinity; let minY = Infinity; let minZ = Infinity;
+  let maxX = -Infinity; let maxY = -Infinity; let maxZ = -Infinity;
   for (const s of shapes) {
     const p = s.positions;
     for (let i = 0; i < p.length; i += 3) {
@@ -2167,44 +1989,23 @@ export function meshBounds(shapes) {
  *  (fpArm.js foldRangeBoxes) - it walked every posed vertex a SECOND time,
  *  per body per frame, the repeated walk AUDIT MWBODY A4 removed once. */
 export function foldPieceBounds(pieces) {
-  let minX = Infinity;
-  let minY = Infinity;
-  let minZ = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let maxZ = -Infinity;
+  let minX = Infinity; let minY = Infinity; let minZ = Infinity;
+  let maxX = -Infinity; let maxY = -Infinity; let maxZ = -Infinity;
   for (const s of pieces) {
     const p = s.positions;
-    let aX = Infinity;
-    let aY = Infinity;
-    let aZ = Infinity;
-    let bX = -Infinity;
-    let bY = -Infinity;
-    let bZ = -Infinity;
+    let aX = Infinity; let aY = Infinity; let aZ = Infinity;
+    let bX = -Infinity; let bY = -Infinity; let bZ = -Infinity;
     for (let i = 0; i < p.length; i += 3) {
-      const x = p[i];
-      const y = p[i + 1];
-      const z = p[i + 2];
-      if (x < aX) aX = x;
-      if (x > bX) bX = x;
-      if (y < aY) aY = y;
-      if (y > bY) bY = y;
-      if (z < aZ) aZ = z;
-      if (z > bZ) bZ = z;
+      const x = p[i]; const y = p[i + 1]; const z = p[i + 2];
+      if (x < aX) aX = x; if (x > bX) bX = x;
+      if (y < aY) aY = y; if (y > bY) bY = y;
+      if (z < aZ) aZ = z; if (z > bZ) bZ = z;
     }
     const b = s.box || (s.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });
-    b.minX = aX;
-    b.minY = aY;
-    b.minZ = aZ;
-    b.maxX = bX;
-    b.maxY = bY;
-    b.maxZ = bZ;
-    if (aX < minX) minX = aX;
-    if (bX > maxX) maxX = bX;
-    if (aY < minY) minY = aY;
-    if (bY > maxY) maxY = bY;
-    if (aZ < minZ) minZ = aZ;
-    if (bZ > maxZ) maxZ = bZ;
+    b.minX = aX; b.minY = aY; b.minZ = aZ; b.maxX = bX; b.maxY = bY; b.maxZ = bZ;
+    if (aX < minX) minX = aX; if (bX > maxX) maxX = bX;
+    if (aY < minY) minY = aY; if (bY > maxY) maxY = bY;
+    if (aZ < minZ) minZ = aZ; if (bZ > maxZ) maxZ = bZ;
   }
   if (!Number.isFinite(minX)) return null;
   return { minX, minY, minZ, maxX, maxY, maxZ };
@@ -2237,8 +2038,7 @@ export function frontViewMapper(bounds, w, h, pad = 8) {
  * this whole effort keeps circling. So ask the file.
  */
 export async function skeletonReport(bytes) {
-  let parseNif;
-  let buildSkeleton;
+  let parseNif; let buildSkeleton;
   try {
     ({ parseNif } = await import('./mwNifFile.js'));
     ({ buildSkeleton } = await import('./mwSkin.js'));
@@ -2325,31 +2125,16 @@ async function assemblyFns(parseNif) {
   // NIF is never written after its read (flattenNif copies every array it transforms, and a skin's bones are fresh
   // objects over the parse's read-only lists), so one parse serves every assembly that binds it.
   if (parseNif) mod.parseNif = parseNif;
-  ({
-    buildSkeleton: mod.buildSkeleton,
-    poseSkeleton: mod.poseSkeleton,
-    skeletonSpaceMatrices: mod.skelMats,
-    skinBatch: mod.skinBatch,
-    accumRootRef: mod.accumRootRef,
-    trackBinding: mod.trackBinding,
-    injectSkeletonNodes: mod.injectSkeletonNodes,
-  } = await import('./mwSkin.js'));
-  ({
-    bindPart: mod.bindPart,
-    attachmentTransform: mod.attachmentTransform,
-    bindCreatureModel: mod.bindCreatureModel,
-  } = await import('./mwCharacter.js'));
+  ({ buildSkeleton: mod.buildSkeleton, poseSkeleton: mod.poseSkeleton,
+    skeletonSpaceMatrices: mod.skelMats, skinBatch: mod.skinBatch,
+    accumRootRef: mod.accumRootRef, trackBinding: mod.trackBinding,
+    injectSkeletonNodes: mod.injectSkeletonNodes } = await import('./mwSkin.js'));
+  ({ bindPart: mod.bindPart, attachmentTransform: mod.attachmentTransform, bindCreatureModel: mod.bindCreatureModel } = await import('./mwCharacter.js'));
   ({ PART_BONES: mod.PART_BONES } = await import('./mwNpc.js'));
   return mod;
 }
 
-export async function assembleFirstPersonArm({
-  skeletonBytes,
-  parts,
-  boneSources = [],
-  parseNif = null,
-  offWeaponBone = false,
-}) {
+export async function assembleFirstPersonArm({ skeletonBytes, parts, boneSources = [], parseNif = null, offWeaponBone = false }) {
   let mod;
   try {
     mod = await assemblyFns(parseNif);
@@ -2366,7 +2151,7 @@ export async function assembleFirstPersonArm({
   }
   const pieces = [];
   const notes = [];
-  const effects = []; // MAC-Q
+  const effects = [];   // MAC-Q
   // WS1: the bone addons (OpenMW's `use additional anim sources`) join
   // the skeleton BEFORE any part binds, so a part may attach at a bone
   // the addon brought. Each is `{ name, bytes }`; a file that will not
@@ -2397,7 +2182,7 @@ export async function assembleFirstPersonArm({
   const assembly = {
     ok: pieces.length > 0,
     pieces,
-    effects, // MAC-Q: the parts' particle systems, placed like their rigid shapes
+    effects,   // MAC-Q: the parts' particle systems, placed like their rigid shapes
     notes,
     skeleton,
     // The resolved readers ride along so the per-frame call is SYNCHRONOUS.
@@ -2405,8 +2190,8 @@ export async function assembleFirstPersonArm({
     // frame; this function already paid for them once.
     fns: mod,
     bounds: null,
-    injected, // WS1: what each bone addon added
-    skinBinds: offWeaponBone ? mirrorBindSources({ nif: skeletonFile }) : null, // MIRROR-BIND: the skeleton file's own skins (retail's Tri Shadow), for the picture's mirror (mirrorBindsOf)
+    injected,   // WS1: what each bone addon added
+    skinBinds: offWeaponBone ? mirrorBindSources({ nif: skeletonFile }) : null,   // MIRROR-BIND: the skeleton file's own skins (retail's Tri Shadow), for the picture's mirror (mirrorBindsOf)
     error: pieces.length ? null : 'nothing bound - see the notes for why',
   };
   // THE REST POSE IS NOW "pose at t=0 with no tracks" - one home, and the
@@ -2443,75 +2228,28 @@ export async function assembleCreature({ modelBytes, parseNif = null }) {
   } catch (err) {
     return { ok: false, stage: 'assembly', error: err.message };
   }
-  if (bound.missingBones.length)
-    notes.push(
-      `creature: its skin names no node ${bound.missingBones.map((b) => `"${b}"`).join(', ')} - those influences are skipped (rule 40)`,
-    );
+  if (bound.missingBones.length) notes.push(`creature: its skin names no node ${bound.missingBones.map((b) => `"${b}"`).join(', ')} - those influences are skipped (rule 40)`);
   const pieces = [];
   // AUDIT MW-NPC (MW-SMOOTH): a creature lit by its own normals, as a person's parts are - a skinned piece's posed by
   // skinBatch, a rigid one's turned by its pre-transform once here and placed with its vertices each pose
   for (const batch of bound.skinned) {
-    pieces.push({
-      slot: 'creature',
-      bone: null,
-      kind: 'skinned',
-      mirrored: false,
-      batch,
-      source: null,
-      attachRef: null,
-      uvs: batch.uvs || null,
-      colors: batch.colors || null,
-      material: batch.material || null,
-      positions: new Float32Array(batch.positions.length),
-      indices: batch.indices,
-      normals: posedNormals(batch),
-    });
+    pieces.push({ slot: 'creature', bone: null, kind: 'skinned', mirrored: false, batch, source: null, attachRef: null,
+      uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
+      positions: new Float32Array(batch.positions.length), indices: batch.indices, normals: posedNormals(batch) });
   }
   for (const { batch, attachRef, pre } of bound.rigid) {
     const normals = posedNormals(batch);
-    pieces.push({
-      slot: 'creature',
-      bone: null,
-      kind: 'rigid',
-      mirrored: false,
-      tag: null,
-      hang: null,
-      batch: null,
-      source: applyPre(batch.positions, pre),
-      attachRef,
-      boneOffset: null,
-      uvs: batch.uvs || null,
-      colors: batch.colors || null,
-      material: batch.material || null,
-      shape: batch.name || null,
-      positions: new Float32Array(batch.positions.length),
-      indices: batch.indices,
-      sourceNormals: normals ? applyPreNormals(batch.normals, pre) : null,
-      normals,
-    });
+    pieces.push({ slot: 'creature', bone: null, kind: 'rigid', mirrored: false, tag: null, hang: null,
+      batch: null, source: applyPre(batch.positions, pre), attachRef, boneOffset: null,
+      uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null, shape: batch.name || null,
+      positions: new Float32Array(batch.positions.length), indices: batch.indices,
+      sourceNormals: normals ? applyPreNormals(batch.normals, pre) : null, normals });
   }
-  const effects = bound.effects.map(({ desc, attachRef, pre }) => ({
-    slot: 'creature',
-    bone: null,
-    mirrored: false,
-    tag: null,
-    hang: null,
-    attachRef,
-    boneOffset: null,
-    pre,
-    desc,
-    material: desc.material,
-  }));
+  const effects = bound.effects.map(({ desc, attachRef, pre }) => ({ slot: 'creature', bone: null, mirrored: false, tag: null, hang: null,
+    attachRef, boneOffset: null, pre, desc, material: desc.material }));
   const assembly = {
-    ok: pieces.length > 0,
-    pieces,
-    effects,
-    notes,
-    skeleton,
-    fns: mod,
-    bounds: null,
-    injected: [],
-    dropped: bound.dropped, // the Tri Bip shapes left out
+    ok: pieces.length > 0, pieces, effects, notes, skeleton, fns: mod, bounds: null, injected: [],
+    dropped: bound.dropped,   // the Tri Bip shapes left out
     error: pieces.length ? null : 'the creature model has no shape to draw',
   };
   return pieces.length ? poseAssembly(assembly) : assembly;
@@ -2527,7 +2265,7 @@ export async function assembleCreature({ modelBytes, parseNif = null }) {
 export function bindPartsInto(assembly, parts) {
   const mod = assembly.fns;
   const { skeleton, pieces, notes } = assembly;
-  const effects = assembly.effects ?? (assembly.effects = []); // MAC-Q: the parts' particle systems
+  const effects = assembly.effects ?? (assembly.effects = []);   // MAC-Q: the parts' particle systems
   // MW-D44: the WEAPON's own BoneOffset, kept for the ammunition that
   // rides inside its mesh. resolveWeaponParts pushes 'weapon' before
   // 'arrow', so by the time the arrow binds this is the offset the
@@ -2547,10 +2285,7 @@ export function bindPartsInto(assembly, parts) {
     const bones = part.bones ?? mod.PART_BONES[part.slot] ?? [];
     // MW-BRIG2: a worn model of the port's own is SKINNED FROM THE BODY under it (formats/morrowind/mwSkinTransfer.js) - it
     // moves by the body's own bones and binds, never by an attach node the body does not use.
-    if (part.skinFrom) {
-      bindSkinnedFromBody(assembly, part, bones);
-      continue;
-    }
+    if (part.skinFrom) { bindSkinnedFromBody(assembly, part, bones); continue; }
     let nif;
     try {
       nif = mod.parseNif(part.bytes);
@@ -2570,11 +2305,7 @@ export function bindPartsInto(assembly, parts) {
       }
       let bound;
       try {
-        bound = mod.bindPart(skeleton, nif, {
-          ...(bone ? { attachBone: bone } : {}),
-          underNode: part.underNode,
-          excludeNode: part.excludeNode,
-        }); // WS1: a subtree of the file
+        bound = mod.bindPart(skeleton, nif, { ...(bone ? { attachBone: bone } : {}), underNode: part.underNode, excludeNode: part.excludeNode });   // WS1: a subtree of the file
       } catch (err) {
         notes.push(`${part.slot} @ ${bone}: ${err.message}`);
         continue;
@@ -2584,10 +2315,9 @@ export function bindPartsInto(assembly, parts) {
       // so the card must say WHY a finger sags or a strip collapses.
       // One note per part, not per bone - the names are the same.
       if (bound.missingBones?.length) {
-        const say =
-          `${part.slot}: this skeleton has no bone ` +
-          `${bound.missingBones.map((b) => `"${b}"`).join(', ')} - ` +
-          'those influences are skipped (rule 40)';
+        const say = `${part.slot}: this skeleton has no bone `
+          + `${bound.missingBones.map((b) => `"${b}"`).join(', ')} - `
+          + 'those influences are skipped (rule 40)';
         if (!notes.includes(say)) notes.push(say);
       }
       shapeCensus ??= bound.skinned.map((b) => String(b.name || '').trim() || '(nameless)');
@@ -2633,25 +2363,15 @@ export function bindPartsInto(assembly, parts) {
         // buffer - never an alias of batch.positions, which poseAssembly
         // reads every frame. Aliasing them is the runaway the viewer
         // documents at mwViewer.js:"Skinned batches are".
-        pieces.push({
-          slot: part.slot,
-          bone,
-          kind: 'skinned',
-          mirrored: false,
-          batch,
-          source: null,
-          attachRef: null,
+        pieces.push({ slot: part.slot, bone, kind: 'skinned', mirrored: false,
+          batch, source: null, attachRef: null,
           // MW-D11: the UVs and the material ride WITH the piece. They
           // were reachable through `batch` for a skinned piece and lost
           // entirely for a rigid one (which keeps only its positions), so
           // the texture a Morrowind mesh names never reached the draw.
-          uvs: batch.uvs || null,
-          colors: batch.colors || null,
-          material: batch.material || null,
-          positions: new Float32Array(batch.positions.length),
-          indices: batch.indices,
-          normals: posedNormals(batch),
-        }); // MW-SMOOTH: the mesh's own normals, skinned with it
+          uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
+          positions: new Float32Array(batch.positions.length), indices: batch.indices,
+          normals: posedNormals(batch) });   // MW-SMOOTH: the mesh's own normals, skinned with it
         if (nameless) namelessHere = true;
       }
       tookNameless = tookNameless || namelessHere;
@@ -2671,9 +2391,8 @@ export function bindPartsInto(assembly, parts) {
       // batches are NOTED and dropped rather than mirrored into places
       // the reference never draws them.
       if (bound.attached.length && bound.skinned.length) {
-        const say =
-          `${part.slot}: ${bound.attached.length} unskinned shape(s) in a RIG file are not ` +
-          'attached (attach.cpp:42-46 seeds only skinned geometry)';
+        const say = `${part.slot}: ${bound.attached.length} unskinned shape(s) in a RIG file are not `
+          + 'attached (attach.cpp:42-46 seeds only skinned geometry)';
         if (!notes.includes(say)) notes.push(say);
       } else if (bound.attached.length) {
         // The mirror is fixed HERE, at bind time, because it is a fact
@@ -2687,25 +2406,18 @@ export function bindPartsInto(assembly, parts) {
         // is lowercase; the node the skeleton actually carries is what
         // decides.
         const nodeRef = bone ? skeleton.byName.get(bone.toLowerCase()) : null;
-        const nodeName = nodeRef != null && skeleton.nodes.has(nodeRef) ? skeleton.nodes.get(nodeRef).name : bone || '';
+        const nodeName = nodeRef != null && skeleton.nodes.has(nodeRef) ? skeleton.nodes.get(nodeRef).name : (bone || '');
         const mirror = nodeName.includes('Left');
         for (const batch of bound.attached) {
-          const normals = posedNormals(batch); // MW-SMOOTH
-          pieces.push({
-            slot: part.slot,
-            bone,
-            kind: 'rigid',
-            mirrored: mirror,
-            tag: part.tag ?? null, // WS1: a part's own tag (the quiver slot's index)
-            hang: part.hang ?? null, // HT-WAIST: a part that HANGS from its bone (hangAffine) rather than riding it
+          const normals = posedNormals(batch);   // MW-SMOOTH
+          pieces.push({ slot: part.slot, bone, kind: 'rigid', mirrored: mirror, tag: part.tag ?? null,   // WS1: a part's own tag (the quiver slot's index)
+            hang: part.hang ?? null,   // HT-WAIST: a part that HANGS from its bone (hangAffine) rather than riding it
             // MW-D16: a part instanced under a node INSIDE another part's
             // mesh (the arrow, under the bow's ArrowBone) carries that
             // node's whole chain. It is baked in ONCE here rather than
             // applied per frame, because it is a fact about two FILES and
             // not about the pose.
-            batch: null,
-            source: applyPre(batch.positions, part.preTransform),
-            attachRef: bound.attachRef,
+            batch: null, source: applyPre(batch.positions, part.preTransform), attachRef: bound.attachRef,
             // Rule 14: the part's own BoneOffset node, resolved once at
             // bind time because it is a fact about the FILE.
             //
@@ -2762,34 +2474,23 @@ export function bindPartsInto(assembly, parts) {
             // its offset there would be the same mistake pointing the
             // other way.
             boneOffset: part.ammo
-              ? part.preTransform
-                ? weaponBoneOffset
-                : null
+              ? (part.preTransform ? weaponBoneOffset : null)
               : part.bare
-                ? part.inheritOffsetFrom === 'sheath'
-                  ? sheathBoneOffset
-                  : null // WS1: a bare instance under the scabbard's node
-                : bound.boneOffset || null,
-            uvs: batch.uvs || null,
-            colors: batch.colors || null,
-            material: batch.material || null,
-            shape: batch.name || null, // SHADOW-FANG (AUDIT F2): the shape's own name - a skinned piece keeps its batch, a rigid one only this (an eye names itself)
+                ? (part.inheritOffsetFrom === 'sheath' ? sheathBoneOffset : null)   // WS1: a bare instance under the scabbard's node
+                : (bound.boneOffset || null),
+            uvs: batch.uvs || null, colors: batch.colors || null, material: batch.material || null,
+            shape: batch.name || null,   // SHADOW-FANG (AUDIT F2): the shape's own name - a skinned piece keeps its batch, a rigid one only this (an eye names itself)
             // MW-BOW1: the file and the batch's chain, for a part whose own controllers move it on the weapon clock
             // (formats/morrowind/mwPartClock.js posePartBatch) - the weapon's slots alone, so no other part keeps its parsed
             // file alive; and, for a part instanced under a node of ANOTHER file (the arrow under the bow's
             // ArrowBone), that file and node with the part's own vertices before the node's chain - so the node can
             // move it. Nothing is copied: references to what the walk already made.
             clip: WEAPON_CLOCK_SLOTS.has(part.slot) ? { nif, batch } : null,
-            preClip: part.preClip
-              ? { ...part.preClip, local: batch.positions, localNormals: batch.normals ?? null }
-              : null,
-            positions: new Float32Array(batch.positions.length),
-            indices: batch.indices,
+            preClip: part.preClip ? { ...part.preClip, local: batch.positions, localNormals: batch.normals ?? null } : null,
+            positions: new Float32Array(batch.positions.length), indices: batch.indices,
             // MW-SMOOTH: the mesh's own normals, turned as its vertices are - the pre-transform once, here, and the
             // bone and the mirror each frame (placeNormalsAtBone)
-            sourceNormals: normals ? applyPreNormals(batch.normals, part.preTransform) : null,
-            normals,
-          });
+            sourceNormals: normals ? applyPreNormals(batch.normals, part.preTransform) : null, normals });
         }
         // MAC-Q: THE PART'S PARTICLE SYSTEMS ride the same placement its
         // rigid shapes do - the bone, the mirror, rule 14's offset and the
@@ -2801,23 +2502,16 @@ export function bindPartsInto(assembly, parts) {
         // particles would follow a bone this flattener does not track.
         for (const desc of bound.effects ?? []) {
           effects.push({
-            slot: part.slot,
-            bone,
-            mirrored: mirror,
-            tag: part.tag ?? null,
-            hang: part.hang ?? null, // HT-WAIST: a hanging part's flame hangs with it
-            attachRef: bound.attachRef,
-            boneOffset: bound.boneOffset || null,
-            pre: part.preTransform || null,
-            desc,
-            material: desc.material,
+            slot: part.slot, bone, mirrored: mirror, tag: part.tag ?? null, hang: part.hang ?? null,   // HT-WAIST: a hanging part's flame hangs with it
+            attachRef: bound.attachRef, boneOffset: bound.boneOffset || null, pre: part.preTransform || null,
+            desc, material: desc.material,
           });
         }
         // MW-D44: the weapon's offset, held for the ammunition that
         // rides inside its mesh. Only the weapon's - a shield or a body
         // part must not lend the arrow anything.
         if (part.slot === 'weapon') weaponBoneOffset = bound.boneOffset || null;
-        if (part.slot === 'sheath') sheathBoneOffset = bound.boneOffset || null; // WS1
+        if (part.slot === 'sheath') sheathBoneOffset = bound.boneOffset || null;   // WS1
       }
       // THE SILENT HOLE, CLOSED. A bone whose every NAMED skinned shape
       // fails rule 15's filter used to bind NOTHING and say NOTHING -
@@ -2829,16 +2523,16 @@ export function bindPartsInto(assembly, parts) {
       // once-per-part latch is correct and stays silent: `named` is
       // empty for it.)
       if (pieces.length === bonePiecesBefore && bone) {
-        const named = bound.skinned.map((b) => String(b.name || '').trim()).filter((s) => s);
+        const named = bound.skinned
+          .map((b) => String(b.name || '').trim())
+          .filter((s) => s);
         // No attached-geometry guard: rigid geometry always binds, so
         // reaching here with no new piece already means attached was
         // empty - a guard on it would be a branch no fixture can take.
         if (named.length) {
-          notes.push(
-            `${part.slot} @ ${bone}: no shape matched - the mesh offers ` +
-              `${named.map((s) => `"${s}"`).join(', ')} (rule 15's filter is a ` +
-              'case-insensitive prefix, "tri " stripped first)',
-          );
+          notes.push(`${part.slot} @ ${bone}: no shape matched - the mesh offers `
+            + `${named.map((s) => `"${s}"`).join(', ')} (rule 15's filter is a `
+            + 'case-insensitive prefix, "tri " stripped first)');
         }
       }
     }
@@ -2972,8 +2666,7 @@ const rotationOf = (m) => {
  *  takes: `osg::Quat(pitch * rotateFactor, osg::Vec3f(-1, 0, 0))` - and the third person's ranged aim
  *  (combat/spineAim.js, BOW-AIM: `osg::Quat(pitch / 2, osg::Vec3f(-1, 0, 0))`). */
 export const rotNegX = (rad) => {
-  const c = Math.cos(rad);
-  const sn = Math.sin(rad);
+  const c = Math.cos(rad); const sn = Math.sin(rad);
   return Float32Array.from([1, 0, 0, 0, c, sn, 0, -sn, c]);
 };
 
@@ -3051,11 +2744,7 @@ export function applyRotateController(skeleton, pose, rootRef, skelMats, ref, ro
   if (!world) return false;
   const local = pose.get(ref) ?? skeleton.nodes.get(ref).rest;
   const w = rotationOf(world.a);
-  pose.set(ref, {
-    rotation: rootSpaceTurn(local.rotation, w, rotate),
-    translation: local.translation,
-    scale: local.scale,
-  });
+  pose.set(ref, { rotation: rootSpaceTurn(local.rotation, w, rotate), translation: local.translation, scale: local.scale });
   return true;
 }
 
@@ -3086,7 +2775,7 @@ export function posePartClocks(assembly, value, { frameTime = value, slots = WEA
       writePre(p.preClip.local, pre, p.source);
       if (p.sourceNormals && p.preClip.localNormals) writePreNormals(p.preClip.localNormals, pre, p.sourceNormals);
       p._clockAt = t;
-      p.sourceGen = (p.sourceGen | 0) + 1; // MWNPC1: the GPU stream re-streams this piece's corners (mwGpuSkin.js restreamMovedRows)
+      p.sourceGen = (p.sourceGen | 0) + 1;   // MWNPC1: the GPU stream re-streams this piece's corners (mwGpuSkin.js restreamMovedRows)
       moved++;
     } else if (p.clip && batchMoves(p.clip.nif, p.clip.batch)) {
       const t = clockFor(p.clip.batch.animFlags | 0, value, frameTime);
@@ -3100,25 +2789,8 @@ export function posePartClocks(assembly, value, { frameTime = value, slots = WEA
   return moved;
 }
 
-export function poseAssembly(
-  assembly,
-  {
-    tracks = null,
-    sampleTrack = null,
-    time = 0,
-    accumRoot = null,
-    neckPitch = 0,
-    neckAim = 0,
-    neckOffset = null,
-    climb = null,
-    skin = true,
-    mirror = null,
-    run = null,
-    hold = null,
-    motion = null,
-    aim = null,
-  } = {},
-) {
+export function poseAssembly(assembly, { tracks = null, sampleTrack = null,
+  time = 0, accumRoot = null, neckPitch = 0, neckAim = 0, neckOffset = null, climb = null, skin = true, mirror = null, run = null, hold = null, motion = null, aim = null } = {}) {
   const { fns, skeleton, pieces } = assembly;
   if (!fns || !skeleton) return assembly;
   // MIRROR-BIND: an arm mirrored across the picture is mirrored by the binds of the skins it wears (mirrorBindsOf)
@@ -3128,9 +2800,7 @@ export function poseAssembly(
   // (combat/twoHands/mirrorRig.js), straight over the clip's pose and under every law that follows it (the neck's look, the
   // climb's hands): a left-hand blow, a second weapon held up. An arm read from ANOTHER clip (`clip`: the idle under a
   // blow) is posed here, on this skeleton, at that clip's own time.
-  assembly.mirrored = mirror
-    ? applyMirrorRig(skeleton, pose, GRAPH_ROOT, fns.skelMats, mirrorWithPoses(mirror, fns, skeleton, accumRoot))
-    : null;
+  assembly.mirrored = mirror ? applyMirrorRig(skeleton, pose, GRAPH_ROOT, fns.skelMats, mirrorWithPoses(mirror, fns, skeleton, accumRoot)) : null;
   // MW-D20: ONE SPACE. The reference poses every piece - skinned, rigid,
   // and the camera node rule 54 reads - in the same space, the full
   // graph below the Skeleton group with the root node's own transform
@@ -3176,12 +2846,12 @@ export function poseAssembly(
   }
   for (const p of pieces) {
     if (p.kind === 'skinned') {
-      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, p.normals ?? null); // MW-SMOOTH: and its normals
+      fns.skinBatch(p.batch, skeleton, pose, mats, p.positions, p.normals ?? null);   // MW-SMOOTH: and its normals
     } else {
       const at = fns.attachmentTransform(mats, p.attachRef);
-      const placed = p.hang ? hangAffine(at, p.hang) : at; // HT-WAIST
+      const placed = p.hang ? hangAffine(at, p.hang) : at;   // HT-WAIST
       placeAtBone(p.source, placed, p.mirrored, p.positions, p.boneOffset);
-      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals); // MW-SMOOTH
+      if (p.normals && p.sourceNormals) placeNormalsAtBone(p.sourceNormals, placed, p.mirrored, p.normals);   // MW-SMOOTH
     }
   }
   assembly.pose = pose;
@@ -3192,7 +2862,7 @@ export function poseAssembly(
   // AUDIT MW-CLOAK: what the assembly's owner places after every piece is posed - the stowed gear that goes with the
   // cloak (formats/morrowind/mwCloakFit.js followCloak), which reads the cloak where this pose just put it
   if (assembly.afterPose) assembly.afterPose(assembly);
-  assembly.bounds = pieces.length ? foldPieceBounds(pieces) : null; // PR-BOW1b: and each piece's own box, in the same walk
+  assembly.bounds = pieces.length ? foldPieceBounds(pieces) : null;   // PR-BOW1b: and each piece's own box, in the same walk
   return assembly;
 }
 
@@ -3201,11 +2871,7 @@ export function poseAssembly(
  *  for each set of pieces it holds. */
 function mirrorBindsOf(assembly) {
   const n = assembly.pieces?.length ?? 0;
-  if (assembly.mirrorBinds?.n !== n)
-    assembly.mirrorBinds = {
-      n,
-      binds: [...(assembly.skinBinds ?? []), ...mirrorBindSources({ pieces: assembly.pieces })],
-    };
+  if (assembly.mirrorBinds?.n !== n) assembly.mirrorBinds = { n, binds: [...(assembly.skinBinds ?? []), ...mirrorBindSources({ pieces: assembly.pieces })] };
   return assembly.mirrorBinds.binds;
 }
 
@@ -3218,19 +2884,9 @@ function mirrorWithPoses(req, fns, skeleton, accumRoot) {
   for (const side of ['L', 'R']) {
     const l = req.limbs[side];
     if (!l) continue;
-    limbs[side] =
-      l.clip && !l.pose
-        ? {
-            ...l,
-            pose: fns.poseSkeleton(
-              limbSkeleton(skeleton, GRAPH_ROOT, fns.skelMats, side, l),
-              l.clip.tracks,
-              l.clip.sampleTrack,
-              l.clip.time,
-              { accumRoot },
-            ),
-          }
-        : l;
+    limbs[side] = l.clip && !l.pose
+      ? { ...l, pose: fns.poseSkeleton(limbSkeleton(skeleton, GRAPH_ROOT, fns.skelMats, side, l), l.clip.tracks, l.clip.sampleTrack, l.clip.time, { accumRoot }) }
+      : l;
   }
   return { ...req, limbs };
 }
@@ -3254,13 +2910,9 @@ function mirrorWithPoses(req, fns, skeleton, accumRoot) {
  */
 export function hangAffine(at, hang) {
   const out = hang._at ?? (hang._at = { a: new Float32Array(9), t: [0, 0, 0] });
-  const s = hang.size > 0 ? hang.size : 1,
-    r = hang.rot,
-    A = out.a;
+  const s = hang.size > 0 ? hang.size : 1, r = hang.rot, A = out.a;
   for (let i = 0; i < 9; i++) A[i] = r[i] * s;
-  const k = hang.hookLocal ?? ZERO3,
-    n = hang.anchor ?? ZERO3,
-    a = at.a;
+  const k = hang.hookLocal ?? ZERO3, n = hang.anchor ?? ZERO3, a = at.a;
   const hx = a[0] * k[0] + a[1] * k[1] + a[2] * k[2] + at.t[0];
   const hy = a[3] * k[0] + a[4] * k[1] + a[5] * k[2] + at.t[1];
   const hz = a[6] * k[0] + a[7] * k[1] + a[8] * k[2] + at.t[2];
@@ -3276,12 +2928,7 @@ const ZERO3 = Object.freeze([0, 0, 0]);
  *  part bound (they share the one `hang`), so its shapes hang as one. Writes `hang.anchor` - and `hang.height`, the
  *  shapes' own from that top to their foot, in the same units (HT-WAIST-SIZE) - and answers the anchor. */
 export function hangAnchor(pieces, hang) {
-  let minX = Infinity,
-    minY = Infinity,
-    maxX = -Infinity,
-    maxY = -Infinity,
-    minZ = Infinity,
-    maxZ = -Infinity;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity, minZ = Infinity, maxZ = -Infinity;
   for (const p of pieces ?? []) {
     if (p.hang !== hang || !p.source) continue;
     const o = p.boneOffset;
@@ -3289,12 +2936,9 @@ export function hangAnchor(pieces, hang) {
       const x = (p.mirrored ? -p.source[v] : p.source[v]) + (o ? o[0] : 0);
       const y = p.source[v + 1] + (o ? o[1] : 0);
       const z = p.source[v + 2] + (o ? o[2] : 0);
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-      if (z < minZ) minZ = z;
-      if (z > maxZ) maxZ = z;
+      if (x < minX) minX = x; if (x > maxX) maxX = x;
+      if (y < minY) minY = y; if (y > maxY) maxY = y;
+      if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
     }
   }
   hang.anchor = Number.isFinite(maxZ) ? [(minX + maxX) / 2, (minY + maxY) / 2, maxZ] : [0, 0, 0];
@@ -3322,23 +2966,13 @@ export function hookOnBone(assembly, boneName, offset) {
 }
 function invert33(m) {
   const [a, b, c, d, e, f, g, h, i] = m;
-  const A = e * i - f * h,
-    B = -(d * i - f * g),
-    C = d * h - e * g;
+  const A = e * i - f * h, B = -(d * i - f * g), C = d * h - e * g;
   const det = a * A + b * B + c * C;
   if (!(Math.abs(det) > 1e-12)) return null;
   const k = 1 / det;
-  return [
-    A * k,
-    -(b * i - c * h) * k,
-    (b * f - c * e) * k,
-    B * k,
-    (a * i - c * g) * k,
-    -(a * f - c * d) * k,
-    C * k,
-    -(a * h - b * g) * k,
-    (a * e - b * d) * k,
-  ];
+  return [A * k, -(b * i - c * h) * k, (b * f - c * e) * k,
+    B * k, (a * i - c * g) * k, -(a * f - c * d) * k,
+    C * k, -(a * h - b * g) * k, (a * e - b * d) * k];
 }
 
 /** MW-D6: one row per assembled piece, for the page's table and the
@@ -3384,31 +3018,17 @@ function bindSkinnedFromBody(assembly, part, bones) {
   const mod = assembly.fns;
   const { skeleton, pieces, notes } = assembly;
   let nif;
-  try {
-    nif = mod.parseNif(part.bytes);
-  } catch (err) {
-    notes.push(`${part.slot}: ${err.message}`);
-    return;
-  }
+  try { nif = mod.parseNif(part.bytes); } catch (err) { notes.push(`${part.slot}: ${err.message}`); return; }
   const sources = [];
-  const slotOf = new Map(); // MW-BRIG3: which body part each source is, for the fit
+  const slotOf = new Map();   // MW-BRIG3: which body part each source is, for the fit
   for (const src of part.skinFrom) {
     let srcNif;
-    try {
-      srcNif = mod.parseNif(src.bytes);
-    } catch (err) {
-      notes.push(`${part.slot}: body ${src.slot}: ${err.message}`);
-      continue;
-    }
+    try { srcNif = mod.parseNif(src.bytes); } catch (err) { notes.push(`${part.slot}: body ${src.slot}: ${err.message}`); continue; }
     let tookNameless = false;
     for (const bone of src.bones ?? mod.PART_BONES[src.slot] ?? []) {
       if (!skeleton.byName.has(bone.toLowerCase())) continue;
       let bound;
-      try {
-        bound = mod.bindPart(skeleton, srcNif, { attachBone: bone });
-      } catch {
-        continue;
-      }
+      try { bound = mod.bindPart(skeleton, srcNif, { attachBone: bone }); } catch { continue; }
       for (const b of bound.skinned) {
         const nameless = !String(b.name || '').trim();
         if (nameless ? tookNameless : !shapeMatchesBone(b.name, bone)) continue;
@@ -3416,7 +3036,7 @@ function bindSkinnedFromBody(assembly, part, bones) {
         sources.push(b);
         slotOf.set(b, src.slot);
       }
-      if (bound.skinned.length) continue; // a rig file's rigid shapes are not drawn (MW-D31), so they are no body
+      if (bound.skinned.length) continue;   // a rig file's rigid shapes are not drawn (MW-D31), so they are no body
       const ref = skeleton.byName.get(bone.toLowerCase());
       const mirrored = (skeleton.nodes.get(ref)?.name ?? '').includes('Left');
       for (const b of bound.attached) {
@@ -3427,56 +3047,33 @@ function bindSkinnedFromBody(assembly, part, bones) {
     }
   }
   if (!sources.length) {
-    notes.push(
-      `${part.slot}: no body part to skin it from (${part.skinFrom.map((x) => x.slot).join(', ') || 'none named'}) - not drawn`,
-    );
+    notes.push(`${part.slot}: no body part to skin it from (${part.skinFrom.map((x) => x.slot).join(', ') || 'none named'}) - not drawn`);
     return;
   }
   let garment;
-  try {
-    garment = mod.bindPart(skeleton, nif, bones[0] ? { attachBone: bones[0] } : {});
-  } catch (err) {
-    notes.push(`${part.slot}: ${err.message}`);
-    return;
-  }
+  try { garment = mod.bindPart(skeleton, nif, bones[0] ? { attachBone: bones[0] } : {}); } catch (err) { notes.push(`${part.slot}: ${err.message}`); return; }
   const pose = mod.poseSkeleton(skeleton, null, null, 0, {});
   const ctx = { skeleton, pose, mats: mod.skelMats(skeleton, pose, GRAPH_ROOT), skinBatch: mod.skinBatch };
   let worn = [...garment.attached, ...garment.skinned];
   // MW-BRIG3: ONTO THE WEARER FIRST - its top to the top of the part it hides - and only then skinned from the body
   // there, so every vertex copies the skin of the body it now actually covers.
   if (part.fitTo) {
-    const fit = fitLift(
-      worn,
-      sources.filter((s) => slotOf.get(s) === part.fitTo),
-      ctx,
-    );
+    const fit = fitLift(worn, sources.filter((s) => slotOf.get(s) === part.fitTo), ctx);
     if (fit) {
       worn = worn.map((g) => liftBatch(g, fit.lift));
-      notes.push(
-        `${part.slot}: fitted to the ${part.fitTo} - moved ${fit.lift >= 0 ? 'up' : 'down'} ${Math.abs(fit.lift).toFixed(1)} ` +
-          `(its top from ${fit.top.toFixed(1)} to the ${part.fitTo}'s top at ${fit.anchorTop.toFixed(1)})`,
-      );
+      notes.push(`${part.slot}: fitted to the ${part.fitTo} - moved ${fit.lift >= 0 ? 'up' : 'down'} ${Math.abs(fit.lift).toFixed(1)} `
+        + `(its top from ${fit.top.toFixed(1)} to the ${part.fitTo}'s top at ${fit.anchorTop.toFixed(1)})`);
     } else {
       notes.push(`${part.slot}: no ${part.fitTo} to fit it to - drawn at its baked height`);
     }
   }
   for (const g of worn) {
     for (const batch of transferSkin(g, sources, ctx)) {
-      pieces.push({
-        slot: part.slot,
-        bone: bones[0] ?? null,
-        kind: 'skinned',
-        mirrored: false,
-        batch,
-        source: null,
-        attachRef: null,
-        uvs: batch.uvs || null,
-        colors: null,
-        material: batch.material || null,
-        positions: new Float32Array(batch.positions.length),
-        indices: batch.indices,
-        normals: posedNormals(batch),
-      }); // MW-SMOOTH: the garment's own normals, carried through its transferred skin
+      pieces.push({ slot: part.slot, bone: bones[0] ?? null, kind: 'skinned', mirrored: false,
+        batch, source: null, attachRef: null,
+        uvs: batch.uvs || null, colors: null, material: batch.material || null,
+        positions: new Float32Array(batch.positions.length), indices: batch.indices,
+        normals: posedNormals(batch) });   // MW-SMOOTH: the garment's own normals, carried through its transferred skin
     }
   }
 }
@@ -3488,9 +3085,7 @@ function applyPre(positions, pre) {
   if (!pre) return positions;
   const out = new Float32Array(positions.length);
   for (let v = 0; v < positions.length; v += 3) {
-    const x = positions[v];
-    const y = positions[v + 1];
-    const z = positions[v + 2];
+    const x = positions[v]; const y = positions[v + 1]; const z = positions[v + 2];
     out[v] = pre.a[0] * x + pre.a[1] * y + pre.a[2] * z + pre.t[0];
     out[v + 1] = pre.a[3] * x + pre.a[4] * y + pre.a[5] * z + pre.t[1];
     out[v + 2] = pre.a[6] * x + pre.a[7] * y + pre.a[8] * z + pre.t[2];
@@ -3503,9 +3098,7 @@ function applyPre(positions, pre) {
  *  with NO name matches everything, because a nameless shape in a
  *  one-shape part file is the part. */
 export function shapeMatchesBone(shapeName, bone) {
-  const name = String(shapeName || '')
-    .trim()
-    .toLowerCase();
+  const name = String(shapeName || '').trim().toLowerCase();
   if (!name) return true;
   const want = String(bone).toLowerCase();
   if (name.startsWith(want)) return true;
@@ -3559,9 +3152,7 @@ export function placeNormalsAtBone(normals, at, mirror, out = new Float32Array(n
     const ny = a[3] * x + a[4] * y + a[5] * z;
     const nz = a[6] * x + a[7] * y + a[8] * z;
     const len = Math.hypot(nx, ny, nz) || 1;
-    out[v] = nx / len;
-    out[v + 1] = ny / len;
-    out[v + 2] = nz / len;
+    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;
   }
   return out;
 }
@@ -3569,18 +3160,14 @@ export function placeNormalsAtBone(normals, at, mirror, out = new Float32Array(n
 /** MW-SMOOTH: the posed-normal buffer a piece of this batch carries - one normal per vertex, or null for a mesh that
  *  authored none (packFpArm then lights it by its faces, as every mesh was before). */
 function posedNormals(batch) {
-  return batch.normals && batch.normals.length === batch.positions.length
-    ? new Float32Array(batch.normals.length)
-    : null;
+  return batch.normals && batch.normals.length === batch.positions.length ? new Float32Array(batch.normals.length) : null;
 }
 
 /** MW-SMOOTH: a part's pre-transform (MW-D16) applied to its normals - turned, never moved. */
 /** MW-BOW1: applyPre into a buffer the piece owns - the per-frame form. */
 function writePre(positions, pre, out) {
   for (let v = 0; v + 2 < positions.length && v + 2 < out.length; v += 3) {
-    const x = positions[v];
-    const y = positions[v + 1];
-    const z = positions[v + 2];
+    const x = positions[v]; const y = positions[v + 1]; const z = positions[v + 2];
     out[v] = pre.a[0] * x + pre.a[1] * y + pre.a[2] * z + pre.t[0];
     out[v + 1] = pre.a[3] * x + pre.a[4] * y + pre.a[5] * z + pre.t[1];
     out[v + 2] = pre.a[6] * x + pre.a[7] * y + pre.a[8] * z + pre.t[2];
@@ -3589,16 +3176,12 @@ function writePre(positions, pre, out) {
 /** MW-BOW1: applyPreNormals into a buffer the piece owns. */
 function writePreNormals(normals, pre, out) {
   for (let v = 0; v + 2 < normals.length && v + 2 < out.length; v += 3) {
-    const x = normals[v];
-    const y = normals[v + 1];
-    const z = normals[v + 2];
+    const x = normals[v]; const y = normals[v + 1]; const z = normals[v + 2];
     const nx = pre.a[0] * x + pre.a[1] * y + pre.a[2] * z;
     const ny = pre.a[3] * x + pre.a[4] * y + pre.a[5] * z;
     const nz = pre.a[6] * x + pre.a[7] * y + pre.a[8] * z;
     const len = Math.hypot(nx, ny, nz) || 1;
-    out[v] = nx / len;
-    out[v + 1] = ny / len;
-    out[v + 2] = nz / len;
+    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;
   }
 }
 
@@ -3606,16 +3189,12 @@ function applyPreNormals(normals, pre) {
   if (!pre) return normals;
   const out = new Float32Array(normals.length);
   for (let v = 0; v < normals.length; v += 3) {
-    const x = normals[v];
-    const y = normals[v + 1];
-    const z = normals[v + 2];
+    const x = normals[v]; const y = normals[v + 1]; const z = normals[v + 2];
     const nx = pre.a[0] * x + pre.a[1] * y + pre.a[2] * z;
     const ny = pre.a[3] * x + pre.a[4] * y + pre.a[5] * z;
     const nz = pre.a[6] * x + pre.a[7] * y + pre.a[8] * z;
     const len = Math.hypot(nx, ny, nz) || 1;
-    out[v] = nx / len;
-    out[v + 1] = ny / len;
-    out[v + 2] = nz / len;
+    out[v] = nx / len; out[v + 1] = ny / len; out[v + 2] = nz / len;
   }
   return out;
 }
@@ -3773,14 +3352,11 @@ export function sourceVelocityOf(source, group) {
 
 export function sourcesVelocity(sources, group) {
   const list = sources || [];
-  const velOf = (so) => sourceVelocityOf(so, group); // AUDIT 68 S11-velof-dup: one source's velocity, one home
+  const velOf = (so) => sourceVelocityOf(so, group);   // AUDIT 68 S11-velof-dup: one source's velocity, one home
   let i = list.length - 1;
   for (; i >= 0; i--) {
-    if (
-      getTextKeyTime(list[i].keys, `${group}: start`) >= 0 ||
-      getTextKeyTime(list[i].keys, `${group}: loop start`) >= 0
-    )
-      break;
+    if (getTextKeyTime(list[i].keys, `${group}: start`) >= 0
+      || getTextKeyTime(list[i].keys, `${group}: loop start`) >= 0) break;
   }
   if (i < 0) return 0;
   let velocity = velOf(list[i]);
@@ -3844,7 +3420,8 @@ export async function clipReport({ kfBytes, skeleton = null, group = 'Idle', cli
     // survives the trip, so a probe never asserts on a null it cannot read.
     loopStopFinite: !!clip.ok && Number.isFinite(clip.loopStopTime),
     legacy: legacyRaw
-      ? { start: legacyRaw.start, stop: legacyRaw.stop, loopStart: legacyRaw.loopStart, loopStop: legacyRaw.loopStop }
+      ? { start: legacyRaw.start, stop: legacyRaw.stop,
+        loopStart: legacyRaw.loopStart, loopStop: legacyRaw.loopStop }
       : null,
     tracks: [...tracks.entries()].map(([bone, t]) => ({
       bone,
@@ -3914,16 +3491,10 @@ export function clipUnionBounds(assembly, poseAt, times) {
     poseAt(t);
     const b = assembly.bounds;
     if (!b) continue;
-    acc = acc
-      ? {
-          minX: Math.min(acc.minX, b.minX),
-          minY: Math.min(acc.minY, b.minY),
-          minZ: Math.min(acc.minZ, b.minZ),
-          maxX: Math.max(acc.maxX, b.maxX),
-          maxY: Math.max(acc.maxY, b.maxY),
-          maxZ: Math.max(acc.maxZ, b.maxZ),
-        }
-      : { ...b };
+    acc = acc ? {
+      minX: Math.min(acc.minX, b.minX), minY: Math.min(acc.minY, b.minY), minZ: Math.min(acc.minZ, b.minZ),
+      maxX: Math.max(acc.maxX, b.maxX), maxY: Math.max(acc.maxY, b.maxY), maxZ: Math.max(acc.maxZ, b.maxZ),
+    } : { ...b };
   }
   return acc;
 }

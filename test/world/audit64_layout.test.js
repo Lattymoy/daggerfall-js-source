@@ -321,7 +321,7 @@ test('AUDIT 64 F13: a dungeon static NPC\'s bootstrap behaviour reaches BOTH beh
   // The dungeon context must therefore hand its raw people list out;
   // npcTargets() is the RAY's filtered view and serves neither.
   const d = src('src/scenes/dungeonContext.js');
-  assert.ok(d.includes('\n    people,\n'),
+  assert.ok(d.includes('people,'),
     'buildDungeonContext exposes the raw static-NPC list, not only npcTargets()');
   const m = src('src/scenes/worldModes.js');
   const scene = m.slice(m.indexOf('const sceneBehaviours = () => {'), m.indexOf('const activeStaticNpcQuestBehaviours'));

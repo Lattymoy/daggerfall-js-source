@@ -739,8 +739,8 @@
   {
     "name": "REZ-BLOODLINE-svc-a-held-fall-never-closed",
     "file": "server-account/src/legacy.js",
-    "old": "    if (!hold) await settleHeld(db, playerId, id, row.dead_at);\n    return { ok: true, deadAt: row.dead_at };",
-    "new": "    return { ok: true, deadAt: row.dead_at };",
+    "old": "    if (!hold) await settleHeld(db, playerId, id, row.dead_at);\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -766,8 +766,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-lease-not-kept-aside",
     "file": "server-account/src/legacy.js",
-    "old": "        `UPDATE realm_characters SET dead_at = ?, dead_why = 'fell', rez_lease = lease, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL${lease == null ? '' : ' AND lease = ?'}`,",
-    "new": "        `UPDATE realm_characters SET dead_at = ?, dead_why = 'fell', rez_lease = NULL, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL${lease == null ? '' : ' AND lease = ?'}`,",
+    "old": "rez_lease = lease, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL",
+    "new": "rez_lease = NULL, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -785,8 +785,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-close-claims-nothing",
     "file": "server-account/src/legacy.js",
-    "old": "  const took = await db\n    .prepare(\n      'UPDATE realm_characters SET rez_lease = NULL WHERE id = ? AND player = ? AND rez_lease IS NOT NULL AND dead_at IS NOT NULL',\n    )\n    .bind(id, playerId)\n    .run();\n  if (!took.meta.changes) return false;\n  await afterTomb(db, playerId, id, deadAt, 'fell');",
-    "new": "  await afterTomb(db, playerId, id, deadAt, 'fell');",
+    "old": "  const took = await db.prepare('UPDATE realm_characters SET rez_lease = NULL WHERE id = ? AND player = ? AND rez_lease IS NOT NULL AND dead_at IS NOT NULL').bind(id, playerId).run();\n  if (!took.meta.changes) return false;\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -794,8 +794,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-close-takes-nothing",
     "file": "server-account/src/legacy.js",
-    "old": "  await afterTomb(db, playerId, id, deadAt, 'fell');\n  return true;",
-    "new": "  return true;",
+    "old": "  await afterTomb(db, playerId, id, deadAt, 'fell');\n  return true;\n}",
+    "new": "  return true;\n}",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -803,8 +803,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-minute-closes-early",
     "file": "server-account/src/legacy.js",
-    "old": "    .bind(nowS - REZ_HOLD_S, REZ_SETTLE_MAX)",
-    "new": "    .bind(nowS, REZ_SETTLE_MAX)",
+    "old": "    .bind(nowS - REZ_HOLD_S, REZ_SETTLE_MAX).all();",
+    "new": "    .bind(nowS, REZ_SETTLE_MAX).all();",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -821,8 +821,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-minute-past-its-share",
     "file": "server-account/src/legacy.js",
-    "old": "    if (n && !budget()) break;\n    await afterTomb(db, row.player, row.id, row.dead_at, 'fell');",
-    "new": "    await afterTomb(db, row.player, row.id, row.dead_at, 'fell');",
+    "old": "    if (n && !budget()) break;\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-minute-takes-nothing",
     "file": "server-account/src/legacy.js",
-    "old": "    await afterTomb(db, row.player, row.id, row.dead_at, 'fell');\n    const took = await db",
-    "new": "    const took = await db",
+    "old": "    await afterTomb(db, row.player, row.id, row.dead_at, 'fell');\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-minute-claims-nothing",
     "file": "server-account/src/legacy.js",
-    "old": "        'UPDATE realm_characters SET rez_lease = NULL WHERE id = ? AND player = ? AND rez_lease IS NOT NULL AND dead_at = ?',",
-    "new": "        'UPDATE realm_characters SET rez_lease = rez_lease WHERE id = ? AND player = ? AND rez_lease IS NOT NULL AND dead_at = ?',",
+    "old": "    const took = await db.prepare('UPDATE realm_characters SET rez_lease = NULL WHERE id = ? AND player = ? AND rez_lease IS NOT NULL AND dead_at = ?')",
+    "new": "    const took = await db.prepare('UPDATE realm_characters SET rez_lease = rez_lease WHERE id = ? AND player = ? AND rez_lease IS NOT NULL AND dead_at = ?')",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "REZ-BLOODLINE-svc-a-line-less-raise",
     "file": "server-account/src/legacy.js",
-    "old": "  if (!row.lineage_id || !Number.isSafeInteger(row.person_id)) return { error: 'raise-no-line' };\n  if (row.dead_at == null) {",
-    "new": "  if (row.dead_at == null) {",
+    "old": "  if (!row.lineage_id || !Number.isSafeInteger(row.person_id)) return { error: 'raise-no-line' };\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -857,8 +857,8 @@
   {
     "name": "REZ-BLOODLINE-svc-any-lease-stamps-the-living",
     "file": "server-account/src/legacy.js",
-    "old": "    if (row.lease !== lease) return { error: 'not-dead' };\n    return (await reviveOnLine(db, playerId, row.lineage_id, row.person_id, at, nowS)) === 'stamped'",
-    "new": "    return (await reviveOnLine(db, playerId, row.lineage_id, row.person_id, at, nowS)) === 'stamped'",
+    "old": "    if (row.lease !== lease) return { error: 'not-dead' };\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -866,8 +866,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-living-raised-twice",
     "file": "server-account/src/legacy.js",
-    "old": "    return (await reviveOnLine(db, playerId, row.lineage_id, row.person_id, at, nowS)) === 'stamped'",
-    "new": "    return (await reviveOnLine(db, playerId, row.lineage_id, row.person_id, at, nowS)) !== null",
+    "old": "=== 'stamped' ? { ok: true, held: false } : { error: 'not-dead' };",
+    "new": "!== null ? { ok: true, held: false } : { error: 'not-dead' };",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -875,8 +875,8 @@
   {
     "name": "REZ-BLOODLINE-svc-any-lease-raises",
     "file": "server-account/src/legacy.js",
-    "old": "        ' WHERE id = ?2 AND player = ?3 AND rez_lease = ?4 AND dead_at > ?5' +",
-    "new": "        ' WHERE id = ?2 AND player = ?3 AND (rez_lease = ?4 OR 1) AND dead_at > ?5' +",
+    "old": " WHERE id = ?2 AND player = ?3 AND rez_lease = ?4 AND dead_at > ?5'",
+    "new": " WHERE id = ?2 AND player = ?3 AND (rez_lease = ?4 OR 1) AND dead_at > ?5'",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -884,8 +884,8 @@
   {
     "name": "REZ-BLOODLINE-svc-raised-past-the-window",
     "file": "server-account/src/legacy.js",
-    "old": "        ' WHERE id = ?2 AND player = ?3 AND rez_lease = ?4 AND dead_at > ?5' +",
-    "new": "        ' WHERE id = ?2 AND player = ?3 AND rez_lease = ?4 AND dead_at > 0' +",
+    "old": " WHERE id = ?2 AND player = ?3 AND rez_lease = ?4 AND dead_at > ?5'",
+    "new": " WHERE id = ?2 AND player = ?3 AND rez_lease = ?4 AND dead_at > 0'",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -893,8 +893,8 @@
   {
     "name": "REZ-BLOODLINE-svc-raised-with-another-in-play",
     "file": "server-account/src/legacy.js",
-    "old": "        ' AND NOT EXISTS (SELECT 1 FROM realm_characters o WHERE o.player = ?3 AND o.id != ?2 AND o.lease IS NOT NULL)',",
-    "new": "        ' AND ?3 = ?3 AND ?2 = ?2',",
+    "old": "    + ' AND NOT EXISTS (SELECT 1 FROM realm_characters o WHERE o.player = ?3 AND o.id != ?2 AND o.lease IS NOT NULL)')",
+    "new": "    + ' AND ?3 = ?3 AND ?2 = ?2')",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -902,8 +902,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-lease-not-handed-back",
     "file": "server-account/src/legacy.js",
-    "old": "      'UPDATE realm_characters SET dead_at = NULL, dead_why = NULL, lease = rez_lease, rez_lease = NULL, lease_at = ?1, updated_at = ?1' +",
-    "new": "      'UPDATE realm_characters SET dead_at = NULL, dead_why = NULL, lease = NULL, rez_lease = NULL, lease_at = ?1, updated_at = ?1' +",
+    "old": "dead_why = NULL, lease = rez_lease, rez_lease = NULL, lease_at = ?1",
+    "new": "dead_why = NULL, lease = NULL, rez_lease = NULL, lease_at = ?1",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -911,8 +911,8 @@
   {
     "name": "REZ-BLOODLINE-svc-a-closed-window-said-lease",
     "file": "server-account/src/legacy.js",
-    "old": "  if (!took.meta.changes)\n    return { error: row.rez_lease == null || row.dead_at <= nowS - REZ_HOLD_S ? 'raise-late' : 'lease' };",
-    "new": "  if (!took.meta.changes) return { error: row.dead_at <= nowS - REZ_HOLD_S ? 'raise-late' : 'lease' };",
+    "old": "return { error: row.rez_lease == null || row.dead_at <= nowS - REZ_HOLD_S ? 'raise-late' : 'lease' };",
+    "new": "return { error: row.dead_at <= nowS - REZ_HOLD_S ? 'raise-late' : 'lease' };",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -920,8 +920,8 @@
   {
     "name": "REZ-BLOODLINE-svc-a-past-window-said-lease",
     "file": "server-account/src/legacy.js",
-    "old": "  if (!took.meta.changes)\n    return { error: row.rez_lease == null || row.dead_at <= nowS - REZ_HOLD_S ? 'raise-late' : 'lease' };",
-    "new": "  if (!took.meta.changes) return { error: row.rez_lease == null ? 'raise-late' : 'lease' };",
+    "old": "return { error: row.rez_lease == null || row.dead_at <= nowS - REZ_HOLD_S ? 'raise-late' : 'lease' };",
+    "new": "return { error: row.rez_lease == null ? 'raise-late' : 'lease' };",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -947,8 +947,8 @@
   {
     "name": "REZ-BLOODLINE-svc-stamped-twice",
     "file": "server-account/src/legacy.js",
-    "old": "  if (revivedOf(p).includes(diedAt)) return 'had';\n  stampRevived(p, diedAt);",
-    "new": "  stampRevived(p, diedAt);",
+    "old": "  if (revivedOf(p).includes(diedAt)) return 'had';\n",
+    "new": "",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]
@@ -956,8 +956,8 @@
   {
     "name": "REZ-BLOODLINE-svc-the-stamp-drops-nothing",
     "file": "server-account/src/legacy.js",
-    "old": "  dropRevived(rec);\n  rec.rev = (Number(line.rev) || 0) + 1;",
-    "new": "  rec.rev = (Number(line.rev) || 0) + 1;",
+    "old": "  stampRevived(p, diedAt);\n  dropRevived(rec);\n",
+    "new": "  stampRevived(p, diedAt);\n",
     "tests": [
       "test/systems/legacy/fb1016b_rezbloodline.test.js"
     ]

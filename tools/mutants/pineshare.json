@@ -11,8 +11,8 @@
   {
     "name": "PINESHARE-every-forest-pined",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE)\n    return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }; // PINE-SHARE",
-    "new": "  if (unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }; // PINE-SHARE",
+    "old": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE)",
+    "new": "  if (unit('tree', x, y, day, slot, 6) < PINE_SHARE)",
     "tests": [
       "test/net/pineshare.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PINESHARE-no-pine",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE)\n    return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }; // PINE-SHARE\n  const d = drawFromTable(table, unit('tree', x, y, day, slot, 3), unit('tree', x, y, day, slot, 4), confirmed ? 7 : 2);",
-    "new": "  const d = drawFromTable(table, unit('tree', x, y, day, slot, 3), unit('tree', x, y, day, slot, 4), confirmed ? 7 : 2);",
+    "old": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };   // PINE-SHARE\n",
+    "new": "",
     "tests": [
       "test/net/pineshare.test.js",
       "test/systems/prof4_client.test.js"
@@ -30,8 +30,8 @@
   {
     "name": "PINESHARE-pine-tier-two",
     "file": "src/net/nodeLaw.js",
-    "old": "    return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }; // PINE-SHARE",
-    "new": "    return { slot, u, v, tier: 2, material: PINE_WOOD, rare: false }; // PINE-SHARE",
+    "old": "return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };",
+    "new": "return { slot, u, v, tier: 2, material: PINE_WOOD, rare: false };",
     "tests": [
       "test/net/pineshare.test.js"
     ]
@@ -39,8 +39,8 @@
   {
     "name": "PINESHARE-pine-before-rare",
     "file": "src/net/nodeLaw.js",
-    "old": "  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE)\n    return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };\n  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE)\n    return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }; // PINE-SHARE",
-    "new": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE)\n    return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false }; // PINE-SHARE\n  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE)\n    return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };",
+    "old": "  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };\n  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };   // PINE-SHARE\n",
+    "new": "  if (needsPine(table) && unit('tree', x, y, day, slot, 6) < PINE_SHARE) return { slot, u, v, tier: 1, material: PINE_WOOD, rare: false };   // PINE-SHARE\n  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE) return { slot, u, v, tier: tierOfKey(rare), material: rare, rare: true };\n",
     "tests": [
       "test/net/pineshare.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "PINESHARE-writ-without-pine",
     "file": "src/net/nodeLaw.js",
-    "old": "      if (needsPine(WOOD_TABLES[p.climate])) keys.add(PINE_WOOD); // PINE-SHARE: the Pine its forest stands\n    }",
-    "new": "    }",
+    "old": "      if (needsPine(WOOD_TABLES[p.climate])) keys.add(PINE_WOOD);   // PINE-SHARE: the Pine its forest stands\n",
+    "new": "",
     "tests": [
       "test/net/pineshare.test.js",
       "test/net/prof4_law.test.js"

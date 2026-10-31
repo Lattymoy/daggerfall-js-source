@@ -41,7 +41,7 @@ same roots land 83.7 m away (still a walk-in teleport, still wrong). The other E
 Teleport. Ruled out, measured: the void rescue (its floor -10.40, the roots' floors 12.8 to 23.35), the relay's snap-back
 (siege and royal battles alone), a size change's warp (a load alone), the anchor's prompt (single-use).
 
-THE LAW NOW. `actionSystem.js:"export const walkHears"`: what a walk hears is a DaggerfallActionCollision's
+THE LAW NOW. `actionSystem.js:"export const walkHears = (o) =>"`: what a walk hears is a DaggerfallActionCollision's
 object that is not a flat relay, and the pass asks it (`dungeonContext.js:"if (!walkHears(o)) continue;"` - the line
 edited in place, buildDungeonContext not a line longer). A flat Teleport, Activate or Unknown27 fires on a click or a
 blow, as DFU's; the red brick teleporters (model relays, 22 Collision03 and the rest) are walked into as ever; an effect
@@ -148,7 +148,7 @@ THE LAW NOW.
 - PATROL-GRACE: `standing.js:"export function patrolHalts"` - a known criminal outside the grace an answered law gives;
   LW9's `wanted` asks it (`world.js:"patrolHalts(playerEntity, trip.from.region,"`). An arrest on the road instead of a
   knight's sword stays LW-II's open item 6.
-- CURFEW-REFUND: the charge keeps the factor it was laid at (`arrestFlow.js:"playerEntity.chargedFactor ="`,
+- CURFEW-REFUND: the charge keeps the factor it was laid at (`arrestFlow.js:"playerEntity.chargedFactor = lowerRepForCrime("`,
   the court's `factor`) and the refund gives back what was charged (`court.js:"const legal = loss"`);
   a marked crime keeps half of what was charged; the People's half was never doubled.
 
@@ -265,10 +265,10 @@ THE LAW NOW.
   helm (PS-4).
 - PASSAGE-IN: (a) a sailed leg is aimed at its pixel's middle where the built ground floats her there, else at the nearest
   water that does - a block of 5 by 5 tiles, room for her hull (`seaMark.js:"export function seaLegMark"`,
-  `travelOptions.js:"const read = leg.kind"` - the autopilot's rect,
+  `travelOptions.js:"const read = leg.kind === 'sea' ? seaLegMark(w, deps.seaWaterAt) : null;"` - the autopilot's rect,
   so the hand's mark and the arrival are that point; the host hands the journey its built water, one entry). AUDIT
   FB1021d PS-1: a pixel built dry is passed for the next leg, and one not built when its leg begins (a leg folds a
-  straight run) is aimed again once it is (`travelOptions.js:"&& st.route && st.route.seaUnbuilt"`; the host's reader
+  straight run) is aimed again once it is (`travelOptions.js:"st.route.seaUnbuilt === st.route.i"`; the host's reader
   answers null there). On the same 56 voyages, none aimed at land - 25 dry legs passed, which the first count had
   filtered out.
   (b) `passage.js:"export function voyageSails"`: a voyage's plan may be walked when it sails, or when she

@@ -62,8 +62,8 @@
   {
     "name": "OW-ROADSIDE-join-ignored",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        : leg.at\n          ? spotRect(leg.at)\n          : leg.line\n            ? spotRect(legEnd(leg, legMiddle))\n            : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE); // ROAD-FOLLOW: a curve's apex",
-    "new": "        : leg.line\n          ? spotRect(legEnd(leg, legMiddle))\n          : rectOf(o.x + MID_LO, o.z + MID_LO, P_SIZE, P_SIZE); // ROAD-FOLLOW: a curve's apex",
+    "old": ": leg.at ? spotRect(leg.at) : leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
+    "new": ": leg.line ? spotRect(legEnd(leg, legMiddle)) : rectOf(",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "OW-ROADSIDE-join-dropped",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "      ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}),\n      ...(l.ring ? { ring: true } : {}),",
-    "new": "      ...(l.ring ? { ring: true } : {}),",
+    "old": "'open', ...(l.at ? { at: { x: l.at.x, z: l.at.z } } : {}), ...(l.ring",
+    "new": "'open', ...(l.ring",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

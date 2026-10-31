@@ -156,8 +156,8 @@
   {
     "name": "LOST-SPOILS-the-record-kept-whole",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      pieces: (r.pieces ?? []).filter((/** @type {any} */ _p, /** @type {number} */ i) => !at.has(i)),",
-    "new": "      pieces: r.pieces,",
+    "old": "pieces: (r.pieces ?? []).filter((/** @type {any} */ _p, /** @type {number} */ i) => !at.has(i)),",
+    "new": "pieces: r.pieces,",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -166,8 +166,8 @@
   {
     "name": "LOST-SPOILS-a-refusal-kept-owed",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      if (word === 'refused' && mailBack(r.id)) continue;\n      owing++;",
-    "new": "      owing++;",
+    "old": "      if (word === 'refused' && mailBack(r.id)) continue;\n",
+    "new": "",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "LOST-SPOILS-sent-on-anothers-session",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        if (!mine(r.acct)) {\n          owing++;\n          continue;\n        }\n        sending.add(r.id);",
-    "new": "        sending.add(r.id);",
+    "old": "        if (!mine(r.acct)) { owing++; continue; }\n",
+    "new": "",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -206,7 +206,7 @@
   {
     "name": "LOST-SPOILS-mailed-unready",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    try {\n      ready = mail.ready() && mine(rec.acct);\n    } catch {\n      ready = false;\n    }",
+    "old": "    try { ready = mail.ready() && mine(rec.acct); } catch { ready = false; }",
     "new": "    ready = true;",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
@@ -216,8 +216,8 @@
   {
     "name": "LOST-SPOILS-the-old-floor-dropped",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      if (rec) gatherFloor(); // LOST-SPOILS: a floor not yet left goes where leaving sends it - never under this one\n      rec = { day, acct };",
-    "new": "      rec = { day, acct };",
+    "old": "      if (rec) gatherFloor();   // LOST-SPOILS: a floor not yet left goes where leaving sends it - never under this one\n",
+    "new": "",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -226,8 +226,8 @@
   {
     "name": "LOST-SPOILS-a-saved-record-dropped-with-its-mail",
     "file": "src/scenes/spoilsPool.js",
-    "old": "      const left = all.flatMap((r) => (!(r && ids.has(r.id)) ? [r] : mailOf(r).length ? [{ ...r, pieces: [] }] : []));",
-    "new": "      const left = all.flatMap((r) => (!(r && ids.has(r.id)) ? [r] : []));",
+    "old": ": mailOf(r).length ? [{ ...r, pieces: [] }] : []));",
+    "new": ": []));",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -236,8 +236,8 @@
   {
     "name": "LOST-SPOILS-the-cap-over-a-mail-record",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    return over <= 0 ? list : list.filter((r) => mailOf(r).length > 0 || over-- <= 0);",
-    "new": "    return over <= 0 ? list : list.filter((r) => over-- <= 0);",
+    "old": "list.filter((r) => mailOf(r).length > 0 || over-- <= 0);",
+    "new": "list.filter((r) => over-- <= 0);",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -246,8 +246,8 @@
   {
     "name": "LOST-SPOILS-the-retry-never-armed",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (owing) retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)));\n    return owing;",
-    "new": "    return owing;",
+    "old": "    if (owing) retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)));\n",
+    "new": "",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -266,8 +266,8 @@
   {
     "name": "LOST-SPOILS-the-backoff-uncapped",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (owing) retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)));",
-    "new": "    if (owing) retryMail(LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1));",
+    "old": "retryMail(Math.min(LOST_RETRY_MAX_MS, LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1)))",
+    "new": "retryMail(LOST_RETRY_MS * 2 ** Math.max(0, idleRounds - 1))",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -276,8 +276,8 @@
   {
     "name": "LOST-SPOILS-an-empty-round-counted",
     "file": "src/scenes/spoilsPool.js",
-    "old": "    if (landed) idleRounds = 0;\n    else if (owing) idleRounds++; // a round that owed nothing is no round",
-    "new": "    idleRounds = landed ? 0 : idleRounds + 1; // a round that owed nothing is no round",
+    "old": "    if (landed) idleRounds = 0; else if (owing) idleRounds++;",
+    "new": "    idleRounds = landed ? 0 : idleRounds + 1;",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],
@@ -296,8 +296,8 @@
   {
     "name": "LOST-SPOILS-a-landed-send-kept-owed",
     "file": "src/scenes/spoilsPool.js",
-    "old": "        mailLanded(r.id, owed);\n        landed++;",
-    "new": "        landed++;",
+    "old": "      if (word === 'ok') { mailLanded(r.id, owed); landed++; continue; }",
+    "new": "      if (word === 'ok') { landed++; continue; }",
     "tests": [
       "test/scenes/lostspoils_pool.test.js"
     ],

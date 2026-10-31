@@ -2,8 +2,8 @@
   {
     "name": "OFFHAND-equip-ignores-hand",
     "file": "src/systems/equip.js",
-    "old": "  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None; // computed ONCE up front (the DFU order)",
-    "new": "  const slot = getEquipSlot(entity, item); // computed ONCE up front (the DFU order)",
+    "old": "  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None;",
+    "new": "  const slot = getEquipSlot(entity, item);",
     "tests": [
       "test/ui/enhanced/offhanddrop.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "OFFHAND-equip-hand-unchecked",
     "file": "src/systems/equip.js",
-    "old": "  const slot = hand == null ? getEquipSlot(entity, item) : mayHold(item, hand) ? hand : EQUIP_SLOTS.None; // computed ONCE up front (the DFU order)",
-    "new": "  const slot = hand == null ? getEquipSlot(entity, item) : hand; // computed ONCE up front (the DFU order)",
+    "old": ": mayHold(item, hand) ? hand : EQUIP_SLOTS.None;",
+    "new": ": hand;",
     "tests": [
       "test/ui/enhanced/offhanddrop.test.js"
     ],
@@ -62,7 +62,7 @@
   {
     "name": "OFFHAND-right-refuses-twohander",
     "file": "src/systems/equip.js",
-    "old": "  if (hand === EQUIP_SLOTS.RightHand)\n    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;",
+    "old": "  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;",
     "new": "  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly;",
     "tests": [
       "test/ui/enhanced/offhanddrop.test.js"
@@ -72,7 +72,7 @@
   {
     "name": "OFFHAND-right-takes-shield",
     "file": "src/systems/equip.js",
-    "old": "  if (hand === EQUIP_SLOTS.RightHand)\n    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;",
+    "old": "  if (hand === EQUIP_SLOTS.RightHand) return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;",
     "new": "  if (hand === EQUIP_SLOTS.RightHand) return h !== ITEM_HANDS.None;",
     "tests": [
       "test/ui/enhanced/offhanddrop.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "OFFHAND-any-slot-a-hand",
     "file": "src/systems/equip.js",
-    "old": "    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;\n  return false;",
-    "new": "    return h === ITEM_HANDS.Either || h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;\n  return h !== ITEM_HANDS.None;",
+    "old": "h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;\n  return false;",
+    "new": "h === ITEM_HANDS.RightOnly || h === ITEM_HANDS.Both;\n  return h !== ITEM_HANDS.None;",
     "tests": [
       "test/ui/enhanced/offhanddrop.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "OFFHAND-swap-right-unchecked",
     "file": "src/systems/equip.js",
-    "old": "  if (R && !mayHold(R, EQUIP_SLOTS.LeftHand))\n    return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };",
-    "new": "  if (false) return { ok: false, why: `${R.name ?? 'That'} can only be held in the right hand.` };",
+    "old": "  if (R && !mayHold(R, EQUIP_SLOTS.LeftHand)) return",
+    "new": "  if (false) return",
     "tests": [
       "test/ui/enhanced/offhanddrop.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "OFFHAND-swap-left-unchecked",
     "file": "src/systems/equip.js",
-    "old": "  if (L && !mayHold(L, EQUIP_SLOTS.RightHand))\n    return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };",
-    "new": "  if (false) return { ok: false, why: `${L.name ?? 'That'} can only be held in the left hand.` };",
+    "old": "  if (L && !mayHold(L, EQUIP_SLOTS.RightHand)) return",
+    "new": "  if (false) return",
     "tests": [
       "test/ui/enhanced/offhanddrop.test.js"
     ],

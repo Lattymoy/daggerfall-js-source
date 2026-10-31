@@ -32,16 +32,13 @@
 import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { drawMenuBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';
-import { FntFile } from '../formats/fntFile.js'; // AUDIT 58: FONT0002, DaggerfallUI.SmallFont
-import { makeFont } from './text.js';
-import { isEnhancedPlus } from '../systems/uiSkin.js';
-import { drawEnhancedPicker } from './enhanced/enhancedPicker.js'; // PORT3: the list, in the enhanced skin
+import { FntFile } from '../formats/fntFile.js';   // AUDIT 58: FONT0002, DaggerfallUI.SmallFont
+import { makeFont } from './text.js';  import { isEnhancedPlus } from '../systems/uiSkin.js';  import { drawEnhancedPicker } from './enhanced/enhancedPicker.js';   // PORT3: the list, in the enhanced skin
 
 /** pickerPanel.Size = the texture's size (:73), Center/Middle (:74-75). */
-export const PICKER_W = 200,
-  PICKER_H = 128;
-export const PICKER_X = Math.round((320 - PICKER_W) / 2); // 60
-export const PICKER_Y = Math.round((200 - PICKER_H) / 2); // 36
+export const PICKER_W = 200, PICKER_H = 128;
+export const PICKER_X = Math.round((320 - PICKER_W) / 2);   // 60
+export const PICKER_Y = Math.round((200 - PICKER_H) / 2);   // 36
 
 /** Panel-child rects, verbatim (:83-99). */
 export const PICKER_RECTS = Object.freeze({
@@ -88,18 +85,13 @@ export const rowShadowOffset = (selected) => (selected ? 0 : 1);
 let _art = null;
 export async function preloadListPickerArt(deps) {
   if (_art) return;
-  try {
-    _art = { base: await loadImg(deps, 'PICK00I0.IMG') };
-  } catch {
-    console.warn('[picker] PICK00I0.IMG unavailable; list pickers stay closed');
-  }
+  try { _art = { base: await loadImg(deps, 'PICK00I0.IMG') }; }
+  catch { console.warn('[picker] PICK00I0.IMG unavailable; list pickers stay closed'); }
 }
 export const listPickerArtLoaded = () => !!_art;
 /** MEND-AIM: the seam the other windows' art has (nativeInventory `_setInventoryArtForTests`) - a host that pushes a
  *  picker only when the art is loaded is driven in a test without the IMG. */
-export function _setListPickerArtForTests(art) {
-  _art = art;
-}
+export function _setListPickerArtForTests(art) { _art = art; }
 
 /** AUDIT 58: DaggerfallUI.SmallFont (FONT0002, DaggerfallUI.cs:155)
  *  against the FONT0003 DefaultFont (:156). Three windows build this
@@ -113,23 +105,18 @@ export function _setListPickerArtForTests(art) {
 let _smallFont = null;
 export async function preloadListPickerSmallFont(deps) {
   if (_smallFont) return;
-  try {
-    _smallFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0002.FNT')), 'FONT0002');
-  } catch (e) {
-    console.warn('[picker] FONT0002.FNT unavailable; the SmallFont pickers fall back to the host font', e);
-  }
+  try { _smallFont = makeFont(deps.renderer, new FntFile().load(await deps.fetchBytes('FONT0002.FNT')), 'FONT0002'); }
+  catch (e) { console.warn('[picker] FONT0002.FNT unavailable; the SmallFont pickers fall back to the host font', e); }
 }
 export const listPickerSmallFont = () => _smallFont;
 /** advPickerItemCount's arithmetic, and the row count all three
  *  SmallFont call sites pass: 12 x (FONT0002's fixedHeight 5 +
  *  rowSpacing 1) = 72 = the listBox height (:83-84). */
 export const SMALL_FONT_PICKER_ROWS = 12;
-export function _setListPickerSmallFontForTests(f) {
-  _smallFont = f;
-}
+export function _setListPickerSmallFontForTests(f) { _smallFont = f; }
 
-const inRect = ([rx, ry, rw, rh], x, y) =>
-  x >= rx + PICKER_X && y >= ry + PICKER_Y && x < rx + PICKER_X + rw && y < ry + PICKER_Y + rh;
+const inRect = ([rx, ry, rw, rh], x, y) => x >= rx + PICKER_X && y >= ry + PICKER_Y
+  && x < rx + PICKER_X + rw && y < ry + PICKER_Y + rh;
 
 /** hooks = { items: string[], onPick(index, label), onCancel(),
  *  backdrop, allowCancel, selectedIndex }. BACKDROP: DFU's picker is a
@@ -149,14 +136,8 @@ const inRect = ([rx, ry, rw, rh], x, y) =>
  *  lastSelectedIndex so the picker reopens where you left it. */
 export class ListPickerWindow {
   constructor({
-    items = [],
-    onPick = null,
-    onCancel = null,
-    backdrop = 'menu',
-    allowCancel = true,
-    selectedIndex = 0,
-    font = null,
-    rowsDisplayed = 0,
+    items = [], onPick = null, onCancel = null, backdrop = 'menu',
+    allowCancel = true, selectedIndex = 0, font = null, rowsDisplayed = 0,
   } = {}) {
     this.items = items;
     this.onPick = onPick;
@@ -182,15 +163,9 @@ export class ListPickerWindow {
     // 5x82. Its rect is kept in NATIVE coordinates so the window's own
     // hit tests and its draw share one origin.
     this.scrollBar = new VerticalScrollBar({
-      rect: [
-        PICKER_X + PICKER_RECTS.scrollBar[0],
-        PICKER_Y + PICKER_RECTS.scrollBar[1],
-        PICKER_RECTS.scrollBar[2],
-        PICKER_RECTS.scrollBar[3],
-      ],
-      totalUnits: this.items.length,
-      displayUnits: this.rowsDisplayed,
-      scrollIndex: this.scrollIndex,
+      rect: [PICKER_X + PICKER_RECTS.scrollBar[0], PICKER_Y + PICKER_RECTS.scrollBar[1],
+        PICKER_RECTS.scrollBar[2], PICKER_RECTS.scrollBar[3]],
+      totalUnits: this.items.length, displayUnits: this.rowsDisplayed, scrollIndex: this.scrollIndex,
     });
     this._lastRowClick = null;
   }
@@ -210,9 +185,7 @@ export class ListPickerWindow {
     }
   }
 
-  _now() {
-    return typeof performance !== 'undefined' ? performance.now() : Date.now();
-  }
+  _now() { return typeof performance !== 'undefined' ? performance.now() : Date.now(); }
 
   /** ROAD-U CORRECTION. ListBox.ScrollToSelected (:778-783) is
    *  UNCONDITIONAL - `scrollIndex = selectedIndex;` then a clamp to
@@ -249,7 +222,7 @@ export class ListPickerWindow {
    *  picker is the longest one in the game. */
   _select(dir) {
     const next = this.selectedIndex + dir;
-    if (next < 0 || next >= this.items.length) return; // SelectPrevious/SelectNext both refuse at the ends
+    if (next < 0 || next >= this.items.length) return;   // SelectPrevious/SelectNext both refuse at the ends
     this.selectedIndex = next;
     // EntryWise scrolling: only enough to keep the selection on screen
     if (dir < 0 && this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
@@ -268,35 +241,25 @@ export class ListPickerWindow {
   }
 
   /** UseSelectedItem over the live selection. */
-  _use() {
-    this._pick(this.selectedIndex);
-  }
+  _use() { this._pick(this.selectedIndex); }
 
   _cancel() {
-    if (!this.allowCancel) return; // AllowCancel gates the back button (DaggerfallPopupWindow :69-73)
+    if (!this.allowCancel) return;   // AllowCancel gates the back button (DaggerfallPopupWindow :69-73)
     this.done = true;
     this.onCancel?.();
   }
 
   input(code) {
-    if (code === 'Escape') {
-      this._cancel();
-      return;
-    }
+    if (code === 'Escape') { this._cancel(); return; }
     // ListBox.Update (:296-297): Return is UseSelectedItem, the same
     // door the double click goes through.
-    if (code === 'Enter') {
-      this._use();
-      return;
-    }
-    if (code === 'ArrowDown' || code === 'KeyN')
-      this.selectedIndex = Math.min(this.items.length - 1, this.selectedIndex + 1);
+    if (code === 'Enter') { this._use(); return; }
+    if (code === 'ArrowDown' || code === 'KeyN') this.selectedIndex = Math.min(this.items.length - 1, this.selectedIndex + 1);
     if (code === 'ArrowUp' || code === 'KeyP') this.selectedIndex = Math.max(0, this.selectedIndex - 1);
     // keep the selection visible, which is ClampSelectionToVisibleRange's
     // job in DFU (commented out there, done here so the keyboard works)
     if (this.selectedIndex < this.scrollIndex) this.scrollIndex = this.selectedIndex;
-    if (this.selectedIndex >= this.scrollIndex + this.rowsDisplayed)
-      this.scrollIndex = this.selectedIndex - this.rowsDisplayed + 1;
+    if (this.selectedIndex >= this.scrollIndex + this.rowsDisplayed) this.scrollIndex = this.selectedIndex - this.rowsDisplayed + 1;
     this._clampScroll();
     const d = /^Digit([1-9])$/.exec(code);
     if (d) this._pick(this.scrollIndex + Number(d[1]) - 1);
@@ -312,9 +275,7 @@ export class ListPickerWindow {
 
   /** The ONE row height draw, hover and the hit-test all resolve
    *  against (ListBox.cs:435, :469): glyphHeight + rowSpacing. */
-  rowHeight(font) {
-    return (font?.fnt?.fixedHeight ?? 6) + ROW_SPACING;
-  }
+  rowHeight(font) { return (font?.fnt?.fixedHeight ?? 6) + ROW_SPACING; }
 
   /** MouseMove (:428-458) and MouseLeave (:460-463): the row under the
    *  cursor is the highlightedIndex, anything off the LIST clears it,
@@ -348,20 +309,11 @@ export class ListPickerWindow {
    *  (which `scenes/dungeon.js` and `worldModes` both feed) and
    *  `scenes/interior.js`'s own `pointerup`; a window that NESTS a
    *  picker forwards it the way it already forwards `hover`. */
-  release() {
-    this.scrollBar.draggingThumb = false;
-  }
+  release() { this.scrollBar.draggingThumb = false; }
 
-  click(vx, vy, font = null) {
-    // AUDIT 65 UI-1: THREE slots - the 4th took the bare mounts' `middle` as its clock
-    if (inRect(PICKER_RECTS.previous, vx, vy)) {
-      this._select(-1);
-      return true;
-    }
-    if (inRect(PICKER_RECTS.next, vx, vy)) {
-      this._select(1);
-      return true;
-    }
+  click(vx, vy, font = null) {   // AUDIT 65 UI-1: THREE slots - the 4th took the bare mounts' `middle` as its clock
+    if (inRect(PICKER_RECTS.previous, vx, vy)) { this._select(-1); return true; }
+    if (inRect(PICKER_RECTS.next, vx, vy)) { this._select(1); return true; }
     // ROAD-A7: the bar. A press inside thumbRect latches the DRAG
     // (Update :108-113); a press above or below it pages by
     // DisplayUnits (MouseClick :146-149). The bar rect is already
@@ -408,11 +360,11 @@ export class ListPickerWindow {
         // MouseClick has already moved the selection to it. AUDIT 65
         // UI-1: that clock is the window's OWN, never a positional.
         if (index >= 0 && index < this.items.length) {
-          const t = this._now(); // BaseScreenComponent.cs:688
-          const wasDouble = this._lastRowClick != null && t - this._lastRowClick < DOUBLE_CLICK_DELAY_MS;
-          this.selectedIndex = index; // MouseClick
+          const t = this._now();   // BaseScreenComponent.cs:688
+          const wasDouble = this._lastRowClick != null && (t - this._lastRowClick) < DOUBLE_CLICK_DELAY_MS;
+          this.selectedIndex = index;          // MouseClick
           this._lastRowClick = t;
-          if (wasDouble) this._use(); // MouseDoubleClick; :687-688 stamps unconditionally, so nothing is cleared
+          if (wasDouble) this._use();   // MouseDoubleClick; :687-688 stamps unconditionally, so nothing is cleared
         }
       }
       return true;
@@ -425,24 +377,12 @@ export class ListPickerWindow {
     return true;
   }
 
-  draw(renderer, canvas, font) {
-    // PORT3: under the enhanced skin the list is its own DOM window (the font latched first - the replayed click measures rows by it)
-    if (
-      typeof document !== 'undefined' &&
-      isEnhancedPlus() &&
-      ((this._font = this.pickerFont ?? font),
-      this._clampScroll(),
-      drawEnhancedPicker(this, renderer, canvas, { x: PICKER_X, y: PICKER_Y, list: PICKER_RECTS.list }))
-    )
-      return;
+  draw(renderer, canvas, font) {   // PORT3: under the enhanced skin the list is its own DOM window (the font latched first - the replayed click measures rows by it)
+    if (typeof document !== 'undefined' && isEnhancedPlus() && ((this._font = this.pickerFont ?? font), this._clampScroll(), drawEnhancedPicker(this, renderer, canvas, { x: PICKER_X, y: PICKER_Y, list: PICKER_RECTS.list }))) return;
     // No art, no window. A picker that cannot be cancelled still has to
     // go away here or it would hold the host for ever showing nothing -
     // so this bypasses AllowCancel deliberately, and says so.
-    if (!_art) {
-      this.done = true;
-      this.onCancel?.();
-      return;
-    }
+    if (!_art) { this.done = true; this.onCancel?.(); return; }
     // AUDIT 58: `listBox.Font = (value != null) ? value :
     // DaggerfallUI.DefaultFont` (:40-44) - the host's font is the
     // DEFAULT, not the override.
@@ -458,10 +398,8 @@ export class ListPickerWindow {
       const i = this.scrollIndex + r;
       const selected = i === this.selectedIndex;
       // DecideTextColor (:360-380): selected, hovered, both, or plain.
-      shadowText(renderer, font, label, m, PICKER_X + lx, PICKER_Y + ly + r * rh, {
-        color: rowTextColor(selected, i === this.highlightedIndex),
-        shadowOffset: rowShadowOffset(selected),
-      });
+      shadowText(renderer, font, label, m, PICKER_X + lx, PICKER_Y + ly + r * rh,
+        { color: rowTextColor(selected, i === this.highlightedIndex), shadowOffset: rowShadowOffset(selected) });
     });
     // ROAD-A7: the bar, from DFU's own thumb art. Draw (:136) paints
     // nothing at all when the list fits, which drawScrollThumb honours

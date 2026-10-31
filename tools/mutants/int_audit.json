@@ -260,8 +260,8 @@
   {
     "name": "INTA-the-craft-upgraded",
     "file": "server-account/src/judge.js",
-    "old": "      (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality))) &&",
-    "new": "      true &&",
+    "old": "      && (piece.q == null || (Number.isInteger(piece.q) && /** @type {number} */ (piece.q) <= Number(row.quality)))\n",
+    "new": "      && true\n",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "INTA-the-craft-remade",
     "file": "server-account/src/judge.js",
-    "old": "      (piece.m == null || row.material == null || Number(row.material) === piece.m) &&",
-    "new": "      true &&",
+    "old": "      && (piece.m == null || row.material == null || Number(row.material) === piece.m)",
+    "new": "      && true",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -278,8 +278,8 @@
   {
     "name": "INTA-the-gold-unread",
     "file": "server-account/src/judge.js",
-    "old": "  if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });\n  arrayOf(save?.bankAccounts).forEach((/** @type {any} */ a, /** @type {number} */ i) => {",
-    "new": "  arrayOf(save?.bankAccounts).forEach((/** @type {any} */ a, /** @type {number} */ i) => {",
+    "old": "  if (!purseWord(save?.goldPieces)) out.push({ code: 'gold' });\n",
+    "new": "",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -287,8 +287,8 @@
   {
     "name": "INTA-infinite-gold",
     "file": "server-account/src/judge.js",
-    "old": "export const goldOf = (/** @type {unknown} */ v) =>\n  Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0;",
-    "new": "export const goldOf = (/** @type {unknown} */ v) => Math.max(0, Number(v) || 0);",
+    "old": "const goldOf = (/** @type {unknown} */ v) => (Number.isSafeInteger(v) && /** @type {number} */ (v) > 0 ? /** @type {number} */ (v) : 0);",
+    "new": "const goldOf = (/** @type {unknown} */ v) => Math.max(0, Number(v) || 0);",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -496,8 +496,8 @@
   {
     "name": "INTA-old-stock-vaulted",
     "file": "server-account/src/guildVault.js",
-    "old": "  if (!lawfulItem(rec)) return { error: 'vault-goods' }; // one no honest client mints goes to no member: it waits for staff\n  const give = { ...rec };",
-    "new": "  const give = { ...rec };",
+    "old": "  if (!lawfulItem(rec)) return { error: 'vault-goods' };   // one no honest client mints goes to no member: it waits for staff\n",
+    "new": "",
     "tests": [
       "test/net/int6_review.test.js"
     ]

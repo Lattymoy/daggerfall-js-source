@@ -22,8 +22,8 @@
   {
     "name": "OW3-J1-pause-closes-nothing",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    pauseTravel: () => {\n      if (ui?.isShowing) ui.closeWindow();",
-    "new": "    pauseTravel: () => {\n      interruptTravel();",
+    "old": "    pauseTravel: () => { if (ui?.isShowing) ui.closeWindow(); },",
+    "new": "    pauseTravel: () => { interruptTravel(); },",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "OW3-J3-no-rejoin",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    r.join = rejoinPoint(r);",
-    "new": "    r.join = null;",
+    "old": "    r.join = rejoinPoint(r);\n",
+    "new": "    r.join = null;\n",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "OW3-J3-join-never-walked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.join) {",
-    "new": "    if (false) {",
+    "old": "    if (r.join) {\n",
+    "new": "    if (false) {\n",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "OW3-J3-join-never-spent",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        r.join = null;\n        startRouteLeg();",
-    "new": "        startRouteLeg();",
+    "old": "r.join = null; startRouteLeg(); };",
+    "new": "startRouteLeg(); };",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "OW3-J3-join-in-the-legs-pixel",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "        jp = worldCoordToMapPixel(j.x, j.z);",
-    "new": "        jp = r.legs[r.i];",
+    "old": "const j = r.join, jp = worldCoordToMapPixel(j.x, j.z);",
+    "new": "const j = r.join, jp = r.legs[r.i];",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "OW3-J3-open-ground-rejoined",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (!leg || !prev || leg.kind === 'open' || leg.ring || prev.ring) return null; // OW-TOWN-RING: a ring's points are walked point to point - no road's lane runs between them",
-    "new": "    if (!leg || !prev || leg.ring || prev.ring) return null; // OW-TOWN-RING: a ring's points are walked point to point - no road's lane runs between them",
+    "old": "    if (!leg || !prev || leg.kind === 'open' || leg.ring || prev.ring) return null;",
+    "new": "    if (!leg || !prev || leg.ring || prev.ring) return null;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "OW3-J3-join-at-the-end",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    return Math.hypot(j.x - me.x, j.z - me.z) > P_SIZE / 2 && Math.hypot(j.x - end.x, j.z - end.z) > P_SIZE / 2\n      ? j\n      : null;",
-    "new": "    return Math.hypot(j.x - me.x, j.z - me.z) > P_SIZE / 2 ? j : null;",
+    "old": " && Math.hypot(j.x - end.x, j.z - end.z) > P_SIZE / 2 ? j : null;",
+    "new": " ? j : null;",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "OW3-J3-stale-join-walked",
     "file": "src/systems/travel/travelOptions.js",
-    "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++; // OW-TOWN-RING: a ring's point is no join\n    r.i = best;",
-    "new": "    r.i = best;",
+    "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;   // OW-TOWN-RING: a ring's point is no join\n",
+    "new": "",
     "tests": [
       "test/systems/travel/tv2_click_to_move.test.js"
     ],

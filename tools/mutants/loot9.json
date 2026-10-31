@@ -2,8 +2,8 @@
   {
     "name": "LOOT9-shard-unbound",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    worldTextureRecord: 2,\n    bound: true,\n    stackable: true,",
-    "new": "    worldTextureRecord: 2,\n    stackable: true,",
+    "old": "  bound: true,\n  stackable: true,\n}]);",
+    "new": "  stackable: true,\n}]);",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "LOOT9-shard-unstacked",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    stackable: true,\n  },",
-    "new": "  },",
+    "old": "  bound: true,\n  stackable: true,\n}]);",
+    "new": "  bound: true,\n}]);",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "LOOT9-shards-below-one",
     "file": "src/systems/gate/gateSpoils.js",
-    "old": "    stackCount: Math.max(1, Math.trunc(Number(n) || 1)),",
-    "new": "    stackCount: Math.trunc(Number(n) || 1),",
+    "old": "{ stackCount: Math.max(1, Math.trunc(Number(n) || 1)) }",
+    "new": "{ stackCount: Math.trunc(Number(n) || 1) }",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "LOOT9-plus-face-no-row",
     "file": "src/ui/enhanced/enhancedPorts.js",
-    "old": "            ...(w.hooks.reforge ? [{ label: REFORGE_ROW, act: () => w._reforge() }] : []), // LOOT9: the Mages Guild's Reforge, beside its Identify",
-    "new": "            ...[], // LOOT9: the Mages Guild's Reforge, beside its Identify",
+    "old": "        ...(w.hooks.reforge ? [{ label: REFORGE_ROW, act: () => w._reforge() }] : []),",
+    "new": "        ...([]),",
     "tests": [
       "test/systems/loot9_reforge.test.js"
     ]

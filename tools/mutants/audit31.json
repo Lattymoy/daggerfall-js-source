@@ -318,8 +318,8 @@
   {
     "name": "AUDIT31-svc-reclaim-keeps",
     "file": "server-account/src/guilds.js",
-    "old": "      `DELETE FROM guilds WHERE (name_key = ?1 OR tag = ?2) AND NOT EXISTS (SELECT 1 FROM guild_members m WHERE m.guild_id = guilds.id)\n    AND treasury = 0 AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = guilds.id AND balance > 0) AND NOT ${guildKeepsSql('guilds.id')}`,",
-    "new": "      `DELETE FROM guilds WHERE (name_key = ?1 OR tag = ?2) AND NOT EXISTS (SELECT 1 FROM guild_members m WHERE m.guild_id = guilds.id)\n`,",
+    "old": "    AND treasury = 0 AND NOT EXISTS (SELECT 1 FROM guild_marks WHERE guild_id = guilds.id AND balance > 0) AND NOT ${guildKeepsSql('guilds.id')}`).bind(key, t).run();",
+    "new": "`).bind(key, t).run();",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "AUDIT31-svc-escrow-word",
     "file": "server-account/src/guilds.js",
-    "old": "  // statistics, as D1 has none) off the realm-wide `returned` one\n  [\n    'guild-writ-escrow',\n    (/** @type {string} */ p) =>",
-    "new": "  // statistics, as D1 has none) off the realm-wide `returned` one\n  [\n    'guild-writs',\n    (/** @type {string} */ p) =>",
+    "old": "  ['guild-writ-escrow', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_writs WHERE",
+    "new": "  ['guild-writs', (/** @type {string} */ p) => `EXISTS (SELECT 1 FROM guild_writs WHERE",
     "tests": [
       "test/net/audit31_service.test.js"
     ]

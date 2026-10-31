@@ -95,8 +95,8 @@
   {
     "name": "SPELLSHOP-SAID-a-key-taken-for-a-panel",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);",
-    "new": "export const noticeShown = (owner) => owner?._noticeKey != null;",
+    "old": "export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);\n",
+    "new": "export const noticeShown = (owner) => owner?._noticeKey != null;\n",
     "tests": [
       "test/ui/fb1019f_spellshopsaid.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "SPELLSHOP-SAID-no-panel-ever-shown",
     "file": "src/ui/enhanced/enhancedNotice.js",
-    "old": "export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);",
-    "new": "export const noticeShown = (owner) => owner?._noticeKey == null && panels.has(owner._noticeKey);",
+    "old": "export const noticeShown = (owner) => owner?._noticeKey != null && panels.has(owner._noticeKey);\n",
+    "new": "export const noticeShown = (owner) => owner?._noticeKey == null && panels.has(owner._noticeKey);\n",
     "tests": [
       "test/ui/fb1019f_spellshopsaid.test.js"
     ]

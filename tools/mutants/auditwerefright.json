@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-WERE-FRIGHT-F2-a-man-roars",
     "file": "src/scenes/arrestFlow.js",
-    "old": "    if (!isTransformedLycanthrope(playerEntity)) {\n      applyDamage();\n      return false;\n    }\n    const roar = frightenRoar(playerEntity);",
-    "new": "    const roar = frightenRoar(playerEntity);",
+    "old": "    if (!isTransformedLycanthrope(playerEntity)) { applyDamage(); return false; }\n",
+    "new": "",
     "tests": [
       "test/scenes/auditwerefright.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-WERE-FRIGHT-F2-a-man-answering-f-is-spared-the-blow",
     "file": "src/scenes/arrestFlow.js",
-    "old": "      applyDamage();\n      return false;",
-    "new": "      return false;",
+    "old": "    if (!isTransformedLycanthrope(playerEntity)) { applyDamage(); return false; }",
+    "new": "    if (!isTransformedLycanthrope(playerEntity)) { return false; }",
     "tests": [
       "test/scenes/auditwerefright.test.js"
     ]
