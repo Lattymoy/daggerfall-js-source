@@ -29,11 +29,12 @@ import { orientationFor, portrayedYaw, frameCount, frameTime, chooseTable, speed
 import { getMeleeWeaponAnimTime } from '../../characters/weaponStates.js';
 import { EOTB_FOOT_SET_COUNT } from '../../player/classSkins.js';   // PEERFX3: a class skin is a set past the mod's
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
-import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, worldOrderLayered, lookedPixels } from '../../player/eyeOfTheBeholder/eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, worldOrderLayered, lookedPixels, ridersReady } from '../../player/eyeOfTheBeholder/eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';
 import { isLayeredKey, decodeLayered, outfitOfItems, layeredGenderOf, LAYERED_OWN } from '../../player/eyeOfTheBeholder/layeredArmor.js';   // WORN-ARMOUR: a walker in the armour it wears
 import { modSetting } from '../../systems/modSettings.js';   // LAYERED-PEERS: whether this player wears Layered Gearing
 import { POSE_RIDE } from '../wire.js';
+import { peerMountLook } from '../../systems/horse/mountLook.js';   // STOREFRONT: a rider's horse in its mount look
 import {
   isRearView, createLanternArt, loadLanternArt, createSpriteLantern, stepSpriteLantern, spriteStride, hangSpriteLantern,
   mintSpriteLantern, dropSpriteLantern,
@@ -148,9 +149,10 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
     else { img = decode(url); img.catch(() => { if (pixels.get(s.key) === img) pixels.delete(s.key); }); }
     pixels.set(s.key, img);
     if (pixels.size > RIDER_PIXELS_KEPT) pixels.delete(pixels.keys().next().value);   // PEER-ART: the longest unasked goes
-    const p = img.then((raw) => {
+    const p = img.then(async (raw) => {
+      const riders = s.horse ? await ridersReady() : null;   // AUDIT-STOREFRONT: the rider the dye spares
       if (tex.get(k) !== p) return null;   // COATS1: let go while in flight - never uploaded
-      const { width, height, colors } = lookedPixels(s, raw);   // COATS1: a rider's mount in its look
+      const { width, height, colors } = lookedPixels(s, raw, riders);   // COATS1: a rider's mount in its look
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
       return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldGlowPx(px, raw.held, width, height, s.mirror), heldOff: heldGlowPx(px, raw.held, width, height, s.mirror, 2), ...(raw.provisional ? { retryAt: clock() + PICTURE_RETRY_MS } : {}) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
@@ -356,7 +358,7 @@ export function createPeerRiders({ renderer = null, urlFor = eotbSpriteUrl, deco
     // PR-WW1: the form picks the lycan archive (tableArchive: 112380, or 112381 for the wereboar); a mounted table
     // still reads the rider's own set
     const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it
-    const s = spriteFor(table, view, r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast, horse: pose.rc | 0 });   // COATS1: `rc` the look their horse wears
+    const s = spriteFor(table, view, r.frame, { onHorse: pose.rv | 0, lycanthropyType: beast, horse: peerMountLook(peer.id, pose.rc | 0, feet) });   // COATS1: `rc` the look their horse wears; STOREFRONT: their mount look over it, by the Others' effects choice
     if (!s) return;
     faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it
     // PR-WW1: the transformed forms take the saddle's size (sizeMod - one constant serves both)

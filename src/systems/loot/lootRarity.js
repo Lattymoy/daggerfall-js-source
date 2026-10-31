@@ -459,7 +459,9 @@ export function rollFinalFinds(source, rolls = Math.random) {
   return out;
 }
 /** A legendary record a mod adds - the pool is DFU-shaped but not
- *  DFU's, so it is allowed to grow. */
+ *  DFU's, so it is allowed to grow. STOREFRONT: a record marked `unrolled` is lawful on its items (legendariesFor) but
+ *  no roll lands on it - its own source mints it whole (systems/pass/resonantMaul.js), and every seeded roll of its
+ *  templates draws from the pool it drew from before. */
 const _customLegendaries = [];
 export function registerLegendary(record) {
   if (!record?.id) return _customLegendaries.length;
@@ -1475,7 +1477,7 @@ export function applyRarity(item, tier, rolls = Math.random, legendaryPool = nul
   let affixes;
   let enchantment = null;
   if (tier === 'legendary') {
-    const pool = legendaryPool ?? legendariesFor(item);
+    const pool = legendaryPool ?? legendariesFor(item).filter((l) => !l.unrolled);   // STOREFRONT: a record its own source mints is never rolled
     if (!pool.length) return applyRarity(item, 'rare', rolls, null, { byLines, lean, fists });   // no record for this item: the tier below
     const rec = pickLegendary(pool, family, rolls);   // LOOT6: a source's family weighs its own records
     affixes = rec.affixes.map((a) => ({ ...a }));

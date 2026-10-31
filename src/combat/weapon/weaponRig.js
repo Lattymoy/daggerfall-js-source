@@ -84,6 +84,7 @@ import { conditionPercentage } from '../../systems/item/itemInfo.js';   // SW1: 
 import { isShieldTemplate } from '../../systems/armorMaterials.js';   // SW1: GetShieldProtectedBodyParts' own test
 import { rriNativeMaterialValue } from '../../systems/roleplayRealismItems/rriItems.js';
 import { riddenHorseLook } from '../../systems/horse/horseCoats.js';   // COATS1: the sprite body's mount wears the ridden horse's look   // AUDIT 68 S09-v-shield-material-ignored: the port's one NativeMaterialValue
+import { ownMountLook } from '../../systems/horse/mountLook.js';   // STOREFRONT: my mount look on my body's horse
 import { createHandheldTorches, isHeldLight } from '../../systems/handheldTorches.js';   // HT1: Handheld Torches' component, one per rig beside the widget; TORCH-VIS: and its own light test
 import { lanternAtWaist } from '../../systems/playerTorch.js';   // HT-WAIST: a lantern hung at the waist is in no hand - the ladder, the Morrowind body and the sprite ask the one question
 import { liveVampirism } from '../../systems/racialLive.js';   // PORTRAIT3D: a vampire's body wears the race's vampire head
@@ -844,7 +845,7 @@ export function createWeaponRig({ renderer, canvas, fetchBytes, palette, audio, 
     ...layeredCast(),   // SPELL-BURST: the cast's element and the spell hand
     transformed: !!entity && isTransformedLycanthrope(entity),
     lycanthropyType: (entity && liveLycanthropy(entity)?.infectionType) || 0,
-    horseLook: entity ? riddenHorseLook(entity.items ?? []) : 0,   // COATS1: its code
+    horseLook: entity ? ownMountLook(riddenHorseLook(entity.items ?? [])) : 0,   // COATS1: its code; STOREFRONT: my mount look over it
     died: !!entity && (entity.health ?? 1) <= 0,
     motion: camera?.()?.move ?? null,
     attacking: playerWeapon.machine.state !== 'Idle',

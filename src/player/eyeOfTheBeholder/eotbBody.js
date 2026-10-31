@@ -51,7 +51,7 @@ import {
   DELAYED_FRAMES, ORIENTATION_TIME, signedAngleY, tableMoveSpeed, portrayedYaw,
 } from './eotbBillboard.js';
 import { spriteMarks, spriteArmsSeen } from '../../render/armoryPose.js';   // ARMORY: where the body stands in its own picture
-import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels, decodeSprite } from './eotbSprite.js';
+import { spriteFor, eotbSpriteUrl, spriteCount, spriteSize, spriteOffset, spriteArtScale, flipRows, worldOrderColors, lookedPixels, ridersReady, decodeSprite } from './eotbSprite.js';
 import { decodePng } from '../../systems/textureReplacement.js';   // EOTB-FLIP: the one PNG decoder the world's other PNG billboards take
 import { decodeServedPng } from '../../systems/vanillaEnhanced/vanillaEnhancedPack.js';   // FIRST-VISIT: and its decode workers
 import { isLayeredKey, decodeLayered, outfitOfSlots, layeredGenderOf, LAYERED_ARCHIVE } from './layeredArmor.js';   // WORN-ARMOUR: the body in the armour it wears
@@ -454,9 +454,10 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
     if (!urlFor(s.key)) { tex.set(cacheKey(s), null); return null; }
     const p = (async () => {
       const img = await pixels(s.key);
+      const riders = s.horse ? await ridersReady() : null;   // AUDIT-STOREFRONT: the rider the dye spares
       if (tex.get(cacheKey(s)) !== p) return null;   // COATS1: let go while in flight (a look left behind) - never uploaded
       if (!img) throw new Error(`${s.key}: no art`);
-      const { width, height, colors } = lookedPixels(s, img);   // COATS1: the mount's look, dyed first
+      const { width, height, colors } = lookedPixels(s, img, riders);   // COATS1: the mount's look, dyed first
       // the MIRROR is applied here, on the way to the upload, because
       // the renderer's billboard batch has no flip - a mirrored sprite
       // is its own pixels under its own key (`s.rec`, EOTB5)

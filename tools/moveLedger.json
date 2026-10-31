@@ -4534,5 +4534,8 @@
   ["test/containerpreview.test.js","test/systems/containerpreview.test.js"],
   ["src/systems/townEcon.js","src/systems/town/townEcon.js"],
   ["test/townecon.test.js","test/systems/townecon.test.js"],
-  ["bible/01-Overview/Audit-Town-Econ.md","bible/01-Overview/audits/Audit-Town-Econ.md"]
+  ["bible/01-Overview/Audit-Town-Econ.md","bible/01-Overview/audits/Audit-Town-Econ.md"],
+  ["src/world/season/fissureArt.js","src/world/fissureArt.js"],
+  ["src/world/season/fissureModel.js","src/world/fissureModel.js"],
+  ["src/ui/season/fissureMapMark.js","src/ui/fissureMapMark.js"]
 ]

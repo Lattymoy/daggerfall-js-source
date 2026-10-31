@@ -177,8 +177,33 @@ export function spriteFor(table, orientation, frame, look = {}, { flip = false }
 
 /** COATS1: a sprite's pixels as its state draws them - its horse's look dyed in (systems/horse/horseCoats.js recolorHorse;
  *  none but a mounted table's ever has one), on the world's rows (bottom first, worldOrderColors) - before the mirror,
- *  so a mirrored view is the other flank. */
-export const lookedPixels = (s, image) => (s?.horse ? recolorHorse(image, s.horse) : image);
+ *  so a mirrored view is the other flank. AUDIT-STOREFRONT: its rider spared (`riders`, ridersReady's answer), its view said. */
+export const lookedPixels = (s, image, riders = null) => (s?.horse ? recolorHorse(image, s.horse, { spare: riderSpareOf(riders, s.key, image.width, image.height), view: s.view }) : image);
+
+/** AUDIT-STOREFRONT: THE MOUNTED PICTURES' RIDERS (eotbRiderMasks.js, baked by tools/bakeEotbRiders.mjs from the five
+ *  sets), loaded once, on the first dye of a mounted picture - never at boot. `load` the import (a test hands its own). */
+let _riders = /** @type {Promise<Readonly<Record<string, string>>|null>|null} */ (null);
+const loadRiders = () => import('./eotbRiderMasks.js');
+// AUDIT-STOREFRONT II (lane C 3): a load that fails answers none - that picture dyed with no rider spared, as before the
+// masks - and is forgotten, so the next mounted picture asks again. Kept, it failed every mounted sprite for the session.
+export const ridersReady = (load = loadRiders) => (_riders ??= load().then((m) => m.RIDER_MASKS, () => { _riders = null; return null; }));
+/** A picture's rider as the dye's `spare`, on the world's rows (bottom first): 1 a pixel of his. None for a picture the
+ *  masks do not hold, or hold at another size (art replaced since the bake). */
+export function riderSpareOf(riders, key, width, height) {
+  const m = riders?.[key];
+  if (!m) return null;
+  const at = m.indexOf(':'), [w, h] = m.slice(0, at).split('x').map(Number);
+  if (w !== width || h !== height) return null;
+  const bin = globalThis.atob(m.slice(at + 1)), out = new Uint8Array(w * h);
+  let i = 0, his = 0;
+  for (let b = 0; b < bin.length;) {
+    let run = 0, shift = 0, c;
+    do { c = bin.charCodeAt(b++); run += (c & 127) * 2 ** shift; shift += 7; } while (c & 128);
+    if (his) for (let k = i; k < i + run; k++) { const x = k % w; out[(h - 1 - (k - x) / w) * w + x] = 1; }   // the bake's rows top first
+    i += run; his ^= 1;
+  }
+  return out;
+}
 
 /** Every sprite key one table needs at a given frame - what the
  *  preload fetches, and what the probes count. */

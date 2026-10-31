@@ -83,12 +83,13 @@
   {
     "name": "GRANT2-welcome-silent",
     "file": "server/src/index.js",
-    "old": "\"v\":${JSON.stringify(RELAY_VERSION)}${rf}${gm}${a.ly ?",
-    "new": "\"v\":${JSON.stringify(RELAY_VERSION)}${rf}${a.ly ?",
+    "old": "\"v\":${JSON.stringify(RELAY_VERSION)}${rf}${gm}${await this._cacheProofField(a.key, who)}${a.ly ?",
+    "new": "\"v\":${JSON.stringify(RELAY_VERSION)}${rf}${await this._cacheProofField(a.key, who)}${a.ly ?",
     "why": "no welcome says the law's mode",
     "tests": [
       "test/net/grant2_relay.test.js"
-    ]
+    ],
+    "note": "AUDIT AURUM-CACHES E1 (re-aimed by content): before the cache proof"
   },
   {
     "name": "GRANT2-unknown-setting-enforces",

@@ -6,7 +6,7 @@ import '../modsOff.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { claimsValid } from '../../src/net/identityToken.js';
+import { claimsValid, glyphsOfBits } from '../../src/net/identityToken.js';
 import { badged, readBadge } from '../../src/net/wire.js';
 import { SESSION_KEY, adoptIdentity, keepSession, storedSession, accountRefusalText } from '../../src/net/accountClient.js';
 import { glyphsOf, glyphsHidden, glyphsShown, glyphRefusal, wardrobeOf } from '../../server-account/src/titles.js';
@@ -43,7 +43,7 @@ test('GLYPH-WEAR service: /v1/account/glyph hides and shows; the token keeps `g`
   let t = await call('/v1/auth/token', {}, me.secret);
   assert.equal(t.status, 200, JSON.stringify(t.body));
   let c = claimsOf(t.body.token);
-  assert.ok(c.g.includes('dev'), 'still signed as true - the rights read `g`');
+  assert.ok(glyphsOfBits(c.gb).includes('dev'), 'still signed as true - the rights read `g`');   // PIN MOVED (STOREFRONT): the body signs the glyphs as their mask `gb`, the verifier's `g`
   assert.deepEqual(c.gx, ['dev']);
   assert.deepEqual(t.body.glyphsOff, ['dev']);
   assert.ok(claimsValid(c));

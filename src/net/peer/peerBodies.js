@@ -91,6 +91,7 @@ import { gatherActOf, peerGatherTool, peerGatherSwing, peerKneeling, GATHER_POSE
 import { weaponGlowOn, glowFromWord, fistGlow } from '../../systems/weaponGlow.js';   // WEAPON-GLOW1: a peer's weapon, glowing as its look says
 import { fieldOfView } from '../../ui/viewSettings.js';   // HORSE-VIEW (AUDIT): the frame's own lens, the cadence's base (lensOf)
 import { appearanceSig } from '../appearanceLaw.js';   // AUDIT HORIZONTAL E1: a held weapon's look is part of what the hand holds
+import { peerMountLook } from '../../systems/horse/mountLook.js';   // STOREFRONT: a rider's 3D horse in its mount look
 
 
 /** The most peers in a Morrowind body at once; the rest keep the paperdoll. */
@@ -776,7 +777,7 @@ export class PeerBodies {
     if (!rig?.ready() || shown.rd !== POSE_RIDE.Horse || peerIsWolf(shown) || shown.wb) { this._unhorse(b); return null; }
     b.horse ??= rig.horse(seedOf(b.id));
     if (!b.horse) return null;
-    rig.step(b.horse, { feet: horseFeetUnder(f, b.yaw), yaw: b.yaw, speed: b.speed ?? 0, dt, look: shown.rc | 0, gallops: !shown.hs, pose: false });   // HORSE-WALK: the pose's slow ride (its `hs` - walked, or under half) never gallops
+    rig.step(b.horse, { feet: horseFeetUnder(f, b.yaw), yaw: b.yaw, speed: b.speed ?? 0, dt, look: peerMountLook(b.id, shown.rc | 0, f), gallops: !shown.hs, pose: false });   // STOREFRONT: in its rider's mount look, by the Others' effects choice; HORSE-WALK: the pose's slow ride (its `hs` - walked, or under half) never gallops
     const seat = rig.seat(b.horse);
     return seat ? { feet: [f[0], f[1], f[2]], seat, yaw: b.yaw, lean: gaitShare(b.horse.gait, 'gallop') } : null;
   }

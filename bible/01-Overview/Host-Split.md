@@ -825,6 +825,23 @@ mutant re-aimed under it). The tool re-aimed ten mutant records over the moved l
 `portships.json`'s); the pins that read the moved lines off world.js's own text read the host whole (`hostText`:
 `shiplife.test.js`, `sealanes.test.js`, `auditholdings.test.js`, `etherplaces.test.js` - PIN MOVED, PORT-SHIPS).
 
+
+## STOREFRONT - the dungeon pack out of bootWorld, the season's host wired (2026-10-29)
+
+The season in the world (`06-Systems/Battle-Pass.md` section 6) is a host of its own, `src/scenes/seasonHost.js`
+`createSeasonHost`, on the bindings the Starfall's host already read: one object both take (`_eventHostDeps`), so the
+season costs `bootWorld` one hook at each door it uses - its frame, its draw, its lights, the held map's cards, the
+gate's clearings and the let-go. To pay for them, BOUNTY1's dungeon pack (`standDungeonPack`) moved out whole to
+`src/scenes/bountyDungeonPack.js` `standBountyDungeonPack`, its pool, the hunter's feet and the camp counter handed in
+and DFU's placement its default seam. `bootWorld` 35,299 -> 35,258 logical lines, and the ceiling at it
+(`test/scenes/hostceiling.test.js`); the three BOUNTY-LAIR mutant records re-aimed at the module. `createWorldModes`,
+`buildDungeonContext` and `bootExterior` gained a field at the kill reports they already made (the kill effect's place,
+`killFxOf`), no statement. At the merge of main, beside its PvP wiring, `bootWorld` measures 35,282 and the ceiling
+stands there.
+
+At the merges of main with FRONTS and DRAGON (05cf1838d, 50417cc24), `bootWorld` measures 35,276 and then 35,195 - DRAGON's
+moves out beside STOREFRONT's - and the ceiling stands there. The Resonant Maul's save at its mint added no binding: the
+season's host asks the checkpoint clock's own door (`onlineCheckpointClock.js` askCheckpoint).
 ## DRAGON0 - the POI editor's mount out of bootWorld (2026-10-29)
 
 The Dwarven Dragon (`11-Multiplayer/Dwarven-Dragon.md`) needs wiring in the world host - its client, its blows on the
