@@ -9,6 +9,7 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram, compiledPass } from './glProgram.js';
 import { AURA_NOISE_GLSL, auraClock, AURA_CLOCK_PERIOD, ETERNAL_RGB } from './auraRing.js';
+import { AURA_PIXEL_GLSL } from './auraPixel.js';   // AURA-PIXEL: the pieces in Daggerfall's pixels, as the auras are
 import { ARMORY_PIECES, ARMORY_SLOTS, armoryKitPieces } from '../net/armoryLaw.js';
 import { POSE_AT, poseWorld, ARM_BAND } from './armoryPose.js';
 import { heraldryOf, heraldryColourOf, heraldryInk } from '../net/heraldryLaw.js';   // GUILD-SHOP: the Insignia Armlet wears its wearer's guild's arms
@@ -163,7 +164,7 @@ uniform mat4 uVP;
 uniform vec3 uCamPos, uCamRight, uCamUp;
 uniform float uLift;
 uniform vec4 uTrail[${ARMORY_TRAIL}];
-out vec2 vP;
+out vec2 vArm;   // AURA-PIXEL: the surface's point, which the fragment snaps to its texel
 out vec3 vWorld;
 out vec4 vS;
 ${SHARED}${CARDS_GLSL}
@@ -177,11 +178,11 @@ void main() {
     float a = aP.x * TAU;
     vec3 nrm = n1 * cos(a) + n2 * sin(a);
     p = uA + ax * aP.y + nrm * mix(uR.x, uR.y, aP.y);
-    vP = aP;
+    vArm = aP;
     vS = vec4(dot(nrm, normalize(uCamPos - p)), L, 0.0, 0.0);
   } else {
     float k = floor(aP.x * 0.5); vec2 c = vec2(aP.x - 2.0 * k, aP.y) * 2.0 - 1.0;
-    vP = c;
+    vArm = c;
     if (uMesh == ${DECAL}) {   // a decal facing uN, its up uU, a half-width uSize
       vec3 right = normalize(cross(uU, uN)), up = normalize(cross(uN, right));
       p = uA + (right * c.x + up * c.y) * uSize;
@@ -405,7 +406,8 @@ vec3 crystalLight() {
 }
 `;
 
-export const ARMORY_FS = `${HEAD}in vec2 vP;
+export const ARMORY_FS = `${HEAD}in vec2 vArm;
+vec2 vP;   // AURA-PIXEL: the point every look answers - vArm, at its texel's middle under the pixel law (main)
 in vec3 vWorld;
 in vec4 vS;
 uniform float uKindle;
@@ -416,8 +418,9 @@ uniform int uFogMode;
 uniform float uFogDensity;
 uniform vec2 uFogRange;
 uniform vec3 uCamPos;
+uniform float uPixel;   // AURA-PIXEL: 1 in Daggerfall's pixels (render/auraPixel.js) - the pass sets it; 0 per pixel
 out vec4 o;
-${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}${SHARED}${LOOKS_GLSL}
+${FOG_FACTOR_GLSL}${AURA_NOISE_GLSL}${AURA_PIXEL_GLSL}${SHARED}${LOOKS_GLSL}
 /** GUILD-SHOP: the Insignia Armlet - a gilt band with the guild's field enamelled between its rims and its ink run round
  *  the middle, the crest (the arms on a gilt shield, uArms) on the band's outer face, and a soft glow of the ink behind
  *  it. Colour over what is behind (alpha), the glow alone added (alpha 0). */
@@ -445,7 +448,7 @@ vec4 insigniaLight() {
   float seen = smoothstep(0.0, 0.25, uFace);   // AUDIT GUILD-SHOP R7: from behind the arm, none of it
   return vec4(t.rgb * (0.7 + 0.3 * uFace) + t.a * sheen * vec3(1.0, 0.95, 0.8), t.a) * seen;
 }
-void main() {
+void armoryLook() {
   vec3 c;
   if (uPiece == ${ARMLET}) {   // GUILD-SHOP
     vec4 a = insigniaLight();
@@ -464,6 +467,17 @@ void main() {
   else c = vec3(0.0);   // the weapon's pieces are the weapon glow's (systems/weaponGlow.js law 7), never drawn here
   o = vec4(max(c, vec3(0.0)) * uKindle * fogFactorAt(vWorld), 1.0);
 }
+// AURA-PIXEL: the armlet covers (its crest's colour kept, its cover cut); every other piece adds light
+void main() {
+  if (uPixel > 0.5) {
+    vP = auraTexel(vArm, vWorld, ARMORY_TEXEL);
+    armoryLook();
+    o = auraPixel(o, uPiece == ${ARMLET});
+  } else {
+    vP = vArm;
+    armoryLook();
+  }
+}
 `;
 
 const _programs = new Map();
@@ -481,7 +495,7 @@ export function armoryPrograms(piece) {
 export const ARMORY_BODY_PIECES = Object.freeze(ARMORY_PIECES.filter((p) => p.slot !== 'weapon').map((p) => p.key));
 /** Every body piece's program - what the boot's idle starts (render/playPrograms.js). */
 export const ARMORY_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze(ARMORY_BODY_PIECES.flatMap((k) => armoryPrograms(ARMORY_PIECES.findIndex((p) => p.key === k)))));
-const UNIFORMS = Object.freeze(['uVP', 'uCamPos', 'uCamRight', 'uCamUp', 'uLift', 'uTrail', 'uMesh', 'uPart', 'uA', 'uB', 'uN', 'uU', 'uVel', 'uR', 'uTime', 'uSeed', 'uScale', 'uSize', 'uGain', 'uFace', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze', 'uArms', 'uInk', 'uField', 'uMirror']);   // GUILD-SHOP: the armlet's crest and colours
+const UNIFORMS = Object.freeze(['uVP', 'uCamPos', 'uCamRight', 'uCamUp', 'uLift', 'uTrail', 'uMesh', 'uPart', 'uA', 'uB', 'uN', 'uU', 'uVel', 'uR', 'uTime', 'uSeed', 'uScale', 'uSize', 'uGain', 'uFace', 'uKindle', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze', 'uArms', 'uInk', 'uField', 'uMirror', 'uPixel']);   // GUILD-SHOP: the armlet's crest and colours
 
 /** A tube's grid: `round` steps round by `along` along, two triangles a cell, as (round, along) pairs. Pure. */
 export function armoryTubeGrid(round = ARMORY_ROUND, along = ARMORY_ALONG) {
@@ -799,6 +813,8 @@ export class ArmoryRenderer {
     this._trail = new Float32Array(ARMORY_TRAIL * 4);
     /** the pieces the last draw drew, for the stats and the tests */
     this.drawn = 0;
+    /** AURA-PIXEL: false draws every piece per pixel (the probes read the designs so) - the game never sets it */
+    this.pixel = true;
   }
 
   /** A piece's program, built at its door once the driver says it is compiled (the auras' law) - null while it compiles,
@@ -938,6 +954,7 @@ export class ArmoryRenderer {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);
     if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);
+    if (U.uPixel) gl.uniform1f(U.uPixel, this.pixel === false ? 0 : 1);   // AURA-PIXEL: the pieces in Daggerfall's pixels
   }
 
   /** The wearer's footfall embers as the shader reads them: [x, y, z, age 0..1], -1 for none or burned out. */

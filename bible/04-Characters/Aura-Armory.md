@@ -262,6 +262,9 @@ peer's name lifts only over a head piece drawn in that frame, and a sprite's Cin
 - `tools/profileSlotsProbe.mjs` - the section on a real GPU, desktop and phone, round three bodies: the plate clear of
   the drawn head, a try-on and a press, and close-ups of each line's set. `tools/spriteArmsSheet.mjs` - every sprite's
   pose on its picture.
+- `test/render/aurapixel.test.js` - section 13's texel and levels run in the shader's own code, both passes' `main()`
+  with the law on, the switch, and the rider's cards; `tools/mutants/aurapixel.json` mutates them. `tools/auraProbe.mjs`
+  and `tools/armoryProbe.mjs` read every look and kit with the law on, beside the designs read per pixel.
 
 ## 12. Decided while building
 
@@ -277,3 +280,31 @@ The owner asked for the system built without further questions. These were chose
 - The weapon slot's piece is not on the profile's stage: it is the weapon glow's (section 8), shown on the shop's stage.
 - The Morrowind body shows on the profile only when paused in a game, where its rig is built; at the door, the save's
   sprite.
+
+## 13. In Daggerfall's pixels (AURA-PIXEL, 2026-10-31)
+
+The owner (2026-10-31): *"Can we do a comprehensive pass on all auras and while keeping their holographic designs, add
+some pixelation and bring it more inline with the daggerfall athestic."*
+
+**The texel.** Every aura and every armory piece is answered at the middle of its texel, not at each pixel
+(`src/render/auraPixel.js`). An aura's texel is a Daggerfall flat's pixel at most - `GLOBAL_SCALE`, 2.5 cm, the size
+DFU's GetScaledBillboardSize gives a flat's pixel - and half of it at least. It is a power of two to a unit of the
+surface, so a ring closes on whole texels and a curved cloth's grids nest. The shader measures the metres a unit of its
+surface spans from the screen's derivatives, so the ground, the strips, the cloak's and the wings' meshes and every card
+take one law. An armory piece takes half an aura's texel: at a whole flat's pixel the Ember Heart's veins and the
+Bracers' links were lost (section 6). Where a texel is no bigger than the screen's pixel, the look is answered per pixel.
+
+**The levels.** An added look's brightest channel is cut to ten levels spaced by their square root, its hue kept,
+through the ordered dither (`bayer4`) at its texel. A linear cut dotted a dim glow out. A look that covers (AURA_LOOK
+`shade`, the armlet) has its cover cut to tenths and keeps its colour whole, so the Crystal Resonance stays its one
+purple. The Resonance's squares are its own pixels and are not resampled (`AURA_OWN_PIXELS`): its pitch is no whole
+number of texels, so a snapped square stood one texel wide or two by turns.
+
+**The switch.** `uPixel` is a uniform that both passes set to 1. A pass that never sets it draws per pixel. The probes
+set a renderer's `pixel` to false to read the designs, and read the law with it on. The designs themselves are
+unchanged: only where each is sampled and how many levels it shows.
+
+**GLYPHS-MOUNTED** (the owner, 2026-10-31: *"glyphs shouldnt show when mounted"*). No aura floats its cards over a rider
+on a horse, a cart or a dragon: the Oblivion Ward's symbols, the Lilac Warren's rabbits, Sage's Smoke's puffs and
+nirnroots, the Vampiric Haze's wisps and the wings' sparks (`render/auraRing.js`, the third draw). The ground and the
+wall draw as before. The cloak's emblems and Eternal's cards already folded away with their cloth.

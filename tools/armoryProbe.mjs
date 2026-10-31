@@ -106,7 +106,7 @@ const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
 /** Draw a body - 'mw' (retail's Morrowind skeleton, a mannequin on its bones), 'rig' (the stand-in, at rest) or 'sprite' (its picture on a card, 'front' or 'back') - wearing \`kit\` from
  *  \`eye\` at \`t\`, kindled \`kindle\`; read back \`pts\` (world) and the frame's brightest pixels in \`box\` rows. */
-window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0, side = 'front', at = [0, 1.0, 0], torn = -1, walk = 0, plain = false, arms = undefined }) => {
+window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0, side = 'front', at = [0, 1.0, 0], torn = -1, walk = 0, plain = false, arms = undefined, pixel = false }) => {   // AURA-PIXEL: \`pixel\` the law on - the designs are read per pixel
   const proj = persp(0.8, W / H, 0.05, 100), view = look(eye, at), vp = mul(proj, view);
   gl.viewport(0, 0, W, H); gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
   gl.clearColor(0, 0, 0, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -132,7 +132,9 @@ window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0,
   const w = { at: [0, 0, 0], yaw, kit, pose, seed: 0.37, kindle, torn, mounted: false, _d: Math.hypot(...eye), ...(arms !== undefined ? { arms } : {}) };   // GUILD-SHOP: the armlet's guild's arms
   for (let i = 0; i <= 8; i++) { w.at[2] = walk * i * 0.1; armoryMotionStep(w, t - 0.8 + i * 0.1); }
   w.at[2] = walk * 0.8; w.at[2] = 0;
+  pass.pixel = pixel;
   pass.draw([w], proj, view, new Float32Array(eye), t, null, true);
+  pass.pixel = false;
   const px = (p) => {
     const c = [0, 1, 2, 3].map((r) => vp[r] * p[0] + vp[4 + r] * p[1] + vp[8 + r] * p[2] + vp[12 + r]);
     const x = Math.round((c[0] / c[3] * 0.5 + 0.5) * W), y = Math.round((c[1] / c[3] * 0.5 + 0.5) * H);
@@ -143,7 +145,9 @@ window.draw = ({ body = 'rig', kit, eye, t = 5.3, kindle = 1, pts = [], yaw = 0,
   };
   const rows = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, rows);
   let lit = 0; for (let i = 0; i < rows.length; i += 4) if (rows[i] + rows[i + 1] + rows[i + 2] > 120) lit++;
-  return { error: gl.getError(), drawn: pass.drawn, lit, px: pts.map(px), pose: Array.from(pose.pts), dx: Array.from(pose.dx), right: [view[0], view[4], view[8]], marks: body === 'sprite' ? sprites[side].marks : null };
+  let glow = 0, same = 0;   // AURA-PIXEL: the lit pixels the same as their right-hand neighbour
+  for (let i = 0; i < rows.length - 4; i += 4) if (rows[i] + rows[i + 1] + rows[i + 2] > 120 && (i / 4) % W !== W - 1) { glow++; if (rows[i] === rows[i + 4] && rows[i + 1] === rows[i + 5] && rows[i + 2] === rows[i + 6]) same++; }
+  return { error: gl.getError(), drawn: pass.drawn, lit, same: glow ? same / glow : 0, px: pts.map(px), pose: Array.from(pose.pts), dx: Array.from(pose.dx), right: [view[0], view[4], view[8]], marks: body === 'sprite' ? sprites[side].marks : null };
 };
 window.probe = { err, linked };
 window.ready = true;
@@ -483,6 +487,16 @@ try {
     "an Eternal Edge kit alone takes the weapon's stage, any other kit the figure's",
     weaponStageOf('0000b') === 'edge' && weaponStageOf('b000b') === null && weaponStageOf(null) === null,
   );
+  // AURA-PIXEL (2026-10-31): the pieces in Daggerfall's pixels - each kit drawn close with the law on: no GL error, as much
+  // of it lit as per pixel, and in texels (a lit pixel the same as its neighbour more often); a shot of each
+  for (const [name, kit] of [['dagonfire', 'aaaa0'], ['eternal', 'bbbb0'], ['spurs', '00d00']]) {
+    const close = { kit, eye: [0, 1.3, 1.5], at: [0, 1.1, 0] };
+    const flat = await draw(close), px = await draw({ ...close, pixel: true });
+    await shot(`pixel_${name}`);
+    check(`${name}: in pixels, drawn without a GL error`, px.error === 0 && px.drawn > 0, `error ${px.error}, drawn ${px.drawn}`);
+    check(`${name}: as much of it lit`, px.lit > flat.lit * 0.6, `${px.lit} lit, per pixel ${flat.lit}`);
+    check(`${name}: in texels`, px.same > flat.same + 0.05, `${px.same.toFixed(2)} as their neighbour, per pixel ${flat.same.toFixed(2)}`);
+  }
   const real = errs.filter((x) => !/GPU stall|fallback to software WebGL|404 \(Not Found\)/.test(x)); // the driver's own notes, and the page's missing favicon
   check('no page error', real.length === 0, real.join(' | ').slice(0, 600));
 } finally {

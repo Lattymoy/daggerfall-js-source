@@ -456,7 +456,7 @@ export function createDragonSky({ bayScan, theatres, street, barBlocked = () => 
   let host = null;
   const link = createDragonLink({ now: deps.now, say: (code) => host?.refused(code), site: () => host?.site() ?? null, onReceipt: (r) => host?.receipt(r) });
   host = makeHost({ ...deps, link, sites });
-  const keep = createDragonKeep({ ...deps, street, scale: DRAGON_SCALE });   // DRAGON5b
+  const keep = createDragonKeep({ ...deps, street });   // DRAGON5b; DRAGON-KEEP-SIZE: at its ridden size, not DRAGON_SCALE
   const bossBatches = host.batches, _all = [];
   let barUp = false;
   return Object.assign(host, {

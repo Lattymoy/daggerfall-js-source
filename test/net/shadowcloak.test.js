@@ -557,7 +557,7 @@ test('SHADOW-CLOAK the draw: FARTHEST FIRST, so a nearer cloak\'s shadow lies ov
   assert.deepEqual([draws(), firsts()], [[6, CLOAK_SHREDS * 6], [0, CLOAK_EMBLEMS * 6]], 'torn through: its ground and its shreds alone - the emblems\' cards not drawn at all - and no cloth');
   calls.length = 0;
   r.draw([{ at: [1, 0, 1], aura: 'shadowcloak', mounted: true }, { at: [5, 0, 5], aura: 'oblivionward', mounted: true }], M, M, [0, 0, 0], 10);
-  assert.deepEqual(draws(), [6, AURA_STEPS * 6, WARD_GLYPHS * 6, 6], 'riding: the ward on a rider as before; the cape folded away, its emblems with it - its ground stays');
+  assert.deepEqual(draws(), [6, AURA_STEPS * 6, 6], 'riding: the ward on a rider without its floating symbols (GLYPHS-MOUNTED, PIN MOVED: they were drawn); the cape folded away, its emblems with it - its ground stays');
   // a wearer that throws mid-pass: the frame's state handed back all the same
   calls.length = 0;
   assert.throws(() => r.draw([{ at: [1, 0, 1], aura: 'shadowcloak', get yaw() { throw new Error('a broken wearer'); } }], M, M, [0, 0, 0], 10), /a broken wearer/);
