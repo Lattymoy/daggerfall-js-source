@@ -206,6 +206,13 @@ signed into the token (relay world294) and shown in the wardrobe under the Dwarv
 name plate (the owner: "naw just make the name plate"): brass, aetherium, and the Firsts' gold and ice
 (`ui/titleFlame.js` TITLE_PLATE and plateCss).
 
+**A named First** (FIRST-WYRM, 2026-10-31, the owner: "Seasoning needs to be granted the first dragon rider. He hasnt
+recieved it"). `server-account/wrangler.toml` FIRST_WYRM_RIDER_HANDLES grants First Wyrm Rider by handle, as First of
+the Spire is granted (`server-account/src/titles.js` isNamedFirstWyrm). It holds the account Seanobi (FIRST-WYRM-NAME, the owner: "His name is Seanobi"). While the list
+names anyone, it names the First: the earliest brass tame holds the title only if listed. There is one First. The
+service's rows were not read here, so why the derived First missed him is not known. First Aether Rider stays
+derived.
+
 ## 9. What a player sees and hears
 
 - **The body** is the Dwarven Dragon's own sprite (`characters/dwarvenDragon.js`, archive 1800) at `DRAGON_SCALE`,

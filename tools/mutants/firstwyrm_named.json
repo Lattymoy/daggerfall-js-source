@@ -1,0 +1,29 @@
+[
+  {
+    "name": "FIRST-WYRM-list-ignored",
+    "file": "server-account/src/titles.js",
+    "old": "if (isNamedFirstWyrm(player, env) && !held.includes(DRAGON_TITLES.first)) held.push(DRAGON_TITLES.first);",
+    "new": "if (false && isNamedFirstWyrm(player, env) && !held.includes(DRAGON_TITLES.first)) held.push(DRAGON_TITLES.first);",
+    "tests": [
+      "test/server/firstwyrm_named.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-WYRM-derived-first-kept",
+    "file": "server-account/src/titles.js",
+    "old": "const namedFirst = firstWyrmHandles(env).size > 0;",
+    "new": "const namedFirst = false;",
+    "tests": [
+      "test/server/firstwyrm_named.test.js"
+    ]
+  },
+  {
+    "name": "FIRST-WYRM-guest-named",
+    "file": "server-account/src/titles.js",
+    "old": "typeof player?.handle === 'string' && !!player.handle && firstWyrmHandles(env).has(player.handle.toLowerCase());",
+    "new": "firstWyrmHandles(env).has(String(player?.handle ?? '').toLowerCase()) || player?.handle === null;",
+    "tests": [
+      "test/server/firstwyrm_named.test.js"
+    ]
+  }
+]
