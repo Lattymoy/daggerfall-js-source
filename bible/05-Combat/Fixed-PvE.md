@@ -250,7 +250,8 @@ carries a template, so nothing leans. Daggerfall Unity's items have no lines. Th
 The steps sit a band ahead (the owner: "adjust lean so player start farming gear for the nest area tto pushj up").
 Players craft gear to about 30 ("we want them to make gear for say 30"), then better it with leaned drops from harder
 zones and honing. Only drops lean: an Imbue stays random (the owner: "its a random"). The reference gear skill
-(`pveBuilds.js` `TIERS`) is +375 at 40, the plain enchanted base kit, and +575 at 45, inside the owner's "500-650 rang".
+(`pveBuilds.js` `TIERS`) is the plain enchanted base kit, +375, at 30 ("base kit need tuned fro lvl 30"), +650 at 40 and
++800 at 45, close to best gear's +875 ("45 shoud need almost top gear").
 
 ## 15. A template foe's metal follows its level (FOE-METAL, 2026-10-30)
 

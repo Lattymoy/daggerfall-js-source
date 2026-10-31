@@ -53,7 +53,7 @@ test('FIXED-PVE a Normal foe falls in NORMAL_BLOWS and needs the edge more to fe
     const edge = (ref.health / mean) * FOE_BLOW_S / (NORMAL_BLOWS * ref.swingS) - 1;   // its time to fell them over theirs
     assert.ok(edge >= PLAYER_EDGE.min - 0.02 && edge <= PLAYER_EDGE.max + 0.02, `L${L} edge ${edge}`);
   }
-  assert.ok(referencePlayer(45).blow > referencePlayer(30).blow * 3, 'gear compounds at the top');
+  assert.ok(referencePlayer(45).blow > referencePlayer(30).blow * 2.5, 'gear compounds past the base kit');
 });
 
 test('FIXED-PVE categories climb in health and in the party they are made for', () => {

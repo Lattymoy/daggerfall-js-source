@@ -31,9 +31,9 @@ export const TIERS = Object.freeze([
   Object.freeze({ key: 'early', level: 1, health: 45, stat: 75, skill: 30, gearSkill: 0, metal: 0, pace: 0, cast: 0, potency: 0, hit: 0.8, taken: 1, evade: 0, regen: 0, vigil: false }),
   Object.freeze({ key: 'intermediate', level: 10, health: 140, stat: 85, skill: 60, gearSkill: 10, metal: 1, pace: 0, cast: 0.06, potency: 6, hit: 0.9, taken: 1, evade: 0, regen: 0.001, vigil: false }),
   Object.freeze({ key: 'advanced', level: 20, health: 330, stat: 95, skill: 100, gearSkill: 40, metal: 4, pace: 10, cast: 0.15, potency: 15, hit: 0.95, taken: 0.85, evade: 0.03, regen: 0.002, vigil: false }),
-  Object.freeze({ key: 'mastered', level: 30, health: 650, stat: 100, skill: 140, gearSkill: 150, metal: 7, pace: 20, cast: 0.25, potency: 25, hit: 0.97, taken: 0.8, evade: 0.05, regen: 0.004, vigil: true }),
-  Object.freeze({ key: 'enhanced', level: 40, health: 1000, stat: 100, skill: 140, gearSkill: 375, metal: 9, pace: 35, cast: 0.38, potency: 30, hit: 0.97, taken: 0.7, evade: 0.1, regen: 0.006, vigil: true }),
-  Object.freeze({ key: 'top', level: 45, health: 1265, stat: 100, skill: 140, gearSkill: 575, metal: 9, pace: SWING_PACE_MOST, cast: 0.45, potency: POTENCY_CAP, hit: 0.97, taken: 0.6, evade: 0.15, regen: 0.008, vigil: true }),
+  Object.freeze({ key: 'mastered', level: 30, health: 650, stat: 100, skill: 140, gearSkill: 375, metal: 7, pace: 20, cast: 0.25, potency: 25, hit: 0.97, taken: 0.8, evade: 0.05, regen: 0.004, vigil: true }),
+  Object.freeze({ key: 'enhanced', level: 40, health: 1000, stat: 100, skill: 140, gearSkill: 650, metal: 9, pace: 35, cast: 0.38, potency: 30, hit: 0.97, taken: 0.7, evade: 0.1, regen: 0.006, vigil: true }),
+  Object.freeze({ key: 'top', level: 45, health: 1265, stat: 100, skill: 140, gearSkill: 800, metal: 9, pace: SWING_PACE_MOST, cast: 0.45, potency: POTENCY_CAP, hit: 0.97, taken: 0.6, evade: 0.15, regen: 0.008, vigil: true }),
 ]);
 
 /** @typedef {{ key: string, name: string, family: 'melee'|'bow'|'spell', range: number, health: number,

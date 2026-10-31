@@ -13,7 +13,7 @@ import { TACT } from '../../ai/tactics.js';
  *  (pveBuilds.js - the test holds the two together), its damage a second times its own swing, health over its guards. */
 export const REFERENCE_PLAYER = Object.freeze([
   Object.freeze([1, 18, 45]), Object.freeze([10, 29.8, 140]), Object.freeze([20, 68.5, 400]),
-  Object.freeze([30, 356, 855]), Object.freeze([40, 852, 1587]), Object.freeze([45, 1435, 2480]),
+  Object.freeze([30, 859, 855]), Object.freeze([40, 1792, 1587]), Object.freeze([45, 2291, 2480]),
 ]);
 export const LEVEL_MIN = 1;
 export const LEVEL_MAX = 45;
