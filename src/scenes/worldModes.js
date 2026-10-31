@@ -415,6 +415,7 @@ import { isTouchDevice } from '../ui/touch/touchDevice.js';
 import { holdCursor, cursorKeyClaimed } from '../player/pointerLock.js';
 import { decorKey } from '../systems/decor/decorCatalogue.js';
 import { decorBuiltInPlaque, decorPlaque, decorVerbKey } from '../systems/decor/decorLook.js';
+import { bookHouseOf } from './portalBookHost.js';   // PORTAL-BOOK: the house a Portal Book keeps
 import { BULLETIN_BOARD_MODEL_ID } from '../world/rmbLayout.js';   // GUILD1e: Daggerfall's own board, placed in a guild's hall
 import { accountRefusalText } from '../net/accountClient.js';
 // P1: the scene cache - what an interior remembers across a visit.
@@ -13552,6 +13553,7 @@ export function createWorldModes(host) {
      *  land the player one building offset away from where they set
      *  it. Same distinction the interior save half draws (IS1's
      *  `restore.pos` lands raw over the door landing). */
+    portalBookHere: () => bookHouseOf(interiorHome, mode === 'interior' && !!interiorBuilding && houseOwnedAt(interiorBuilding, interiorBuilding.buildingKey), interiorBuilding, homeTownOf(interiorBuilding), exitReturn?.siblings, player.pos, !!(interiorCabin || privateVisitRoom) || mode !== 'interior'),   // PORTAL-BOOK (scenes/portalBookHost.js): the house I stand in and the landing outside its front door, or null
     setPlayerLocalPosition(p) {
       player.spawn(p[0], p[1], p[2]);
       cam.pos = player.eyeAt();   // EV1: the interpolated render eye
