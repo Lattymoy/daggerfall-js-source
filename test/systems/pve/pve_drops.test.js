@@ -30,8 +30,9 @@ test('TEMPLATE-DROPS gear: a caster carries jewellery most often, a creature may
   assert.deepEqual([DROP_JEWEL.caster, DROP_JEWEL.other, DROP_CREATURE_GEAR], [0.5, 0.15, 0.3]);
   assert.deepEqual(templateGearKinds(tpl(M.Mage), seq(0.49, 0.99)), ['jewel'], 'a caster under a half');
   assert.deepEqual(templateGearKinds(tpl(M.Knight), seq(0.49, 0.99)), [], 'a fighter over 0.15');
-  assert.deepEqual(templateGearKinds(tpl(M.Knight), seq(0.1)), ['jewel', 'cloak'], 'a class body takes no creature gear, but clothing');
-  assert.deepEqual(templateGearKinds(tpl(M.Knight), seq(0.9, 0.29, 0.25)), ['cloth'], 'CLOTH-DROPS: a person under 0.3, a cloak under 0.25');
+  assert.deepEqual(templateGearKinds(tpl(M.Knight), seq(0.1)), ['jewel', 'weapon', 'cloak'], 'FIGHTER-GEAR: a fighter takes the creature gear, and clothing');
+  assert.deepEqual(templateGearKinds(tpl(M.Mage), seq(0.1)), ['jewel', 'cloak'], 'a caster takes no creature gear, but clothing');
+  assert.deepEqual(templateGearKinds(tpl(M.Knight), seq(0.9, 0.9, 0.29, 0.25)), ['cloth'], 'CLOTH-DROPS: a person under 0.3, a cloak under 0.25');
   assert.deepEqual(templateGearKinds(tpl(M.Knight), seq(0.9, 0.3)), []);
   assert.deepEqual(templateGearKinds(tpl(M.Rat, 'strong'), seq(0.9, 0.9, 0.8, 0.1)), ['cloak'], 'a rank piece may be clothing');
   assert.deepEqual(templateGearKinds(tpl(M.Rat), seq(0.9, 0.29, 0.4)), ['weapon']);
@@ -50,7 +51,7 @@ test('TEMPLATE-DROPS mint: the kinds become real pieces on the body', () => {
   assert.equal(e.items.length, out.length);
   assert.deepEqual(DROP_CLOTH, { people: 0.3, cloak: 0.25 });
   const k = tpl(M.Knight, 'normal', { items: [], gender: 'male' });
-  const cloak = addTemplateGear(k, seq(0.9, 0.1, 0.1, 0.5, 0.5, 0.9, 0.1));
+  const cloak = addTemplateGear(k, seq(0.9, 0.9, 0.1, 0.1, 0.5, 0.5, 0.9, 0.1));
   assert.ok(cloak.some((it) => [154, 155].includes(it.templateIndex) && it.group === 'MensClothing' && it.name), JSON.stringify(cloak.map((x) => [x.group, x.templateIndex])));
 });
 

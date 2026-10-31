@@ -9,7 +9,7 @@ import { SPECIES_BY_BODY } from './pveSpecies.js';
 
 /** The share of template foes that carry a piece of jewellery: a body that casts, and any other. */
 export const DROP_JEWEL = Object.freeze({ caster: 0.5, other: 0.15 });
-/** The share of creature (no class body) template foes that carry a weapon or a piece of armour. */
+/** The share of creature template foes, and of people who cast no spell (FIGHTER-GEAR), that carry a weapon or a piece of armour. */
 export const DROP_CREATURE_GEAR = 0.3;
 /** CLOTH-DROPS (the owner, 2026-10-31: "cloaks", "that works"): the share of people (a class body) that carry a piece of
  *  clothing, and the share of a clothing piece that is a cloak. */
@@ -33,7 +33,9 @@ export function templateGearKinds(entity, rolls = Math.random) {
   if (!entity?.pveTemplate) return [];
   const body = bodyOf(entity.mobileType), out = [];
   if (rolls() < (body?.casts ? DROP_JEWEL.caster : DROP_JEWEL.other)) out.push('jewel');
-  if (body?.kind !== 'class' && rolls() < DROP_CREATURE_GEAR) out.push(rolls() < 0.5 ? 'weapon' : 'armor');
+  // FIGHTER-GEAR (2026-10-31, the owner asked for warriors to drop weapons and armour too): a person that casts no spell
+  // rolls the creature's extra weapon or armour beside the kit it wore
+  if ((body?.kind !== 'class' || !body?.casts) && rolls() < DROP_CREATURE_GEAR) out.push(rolls() < 0.5 ? 'weapon' : 'armor');
   const cloth = () => (rolls() < DROP_CLOTH.cloak ? 'cloak' : 'cloth');
   if (body?.kind === 'class' && rolls() < DROP_CLOTH.people) out.push(cloth());
   const extra = entity.eliteFoe ? Math.max(DROP_RANK_PIECES.elite, DROP_RANK_PIECES[entity.pveCategory] ?? 0) : DROP_RANK_PIECES[entity.pveCategory] ?? 0;

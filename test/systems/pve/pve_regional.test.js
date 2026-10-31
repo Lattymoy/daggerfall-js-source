@@ -102,3 +102,16 @@ test('an Enemy Expansion creature drops as a template creature: its level the ti
   assert.ok(!templateGearKinds({ ...troll, pveCategory: 'normal' }, () => 0).includes('cloth'), 'a creature wears no clothing');
   assert.ok(templateGearKinds(troll, seq).length >= 1, 'a strong one carries its rank\'s piece');
 });
+
+test('FIGHTER-GEAR: a fighter carries the creature\'s extra weapon or armour share; a caster does not', async () => {
+  const { templateGearKinds } = await import('../../../src/systems/pve/pveDrops.js');
+  let i = 7;
+  const seq = () => ((i = (i * 1103515245 + 12345) % 2147483648) / 2147483648);
+  const share = (key) => {
+    let n = 0;
+    for (let k = 0; k < 4000; k++) if (templateGearKinds({ pveTemplate: 'x', pveCategory: 'normal', mobileType: SPECIES_BY_KEY.get(key).body }, seq).some((x) => x === 'weapon' || x === 'armor')) n++;
+    return n / 4000;
+  };
+  for (const k of ['warrior', 'knight', 'archer', 'barbarian']) assert.ok(share(k) > 0.25 && share(k) < 0.35, k);
+  for (const k of ['mage', 'healer']) assert.equal(share(k), 0, k);
+});
