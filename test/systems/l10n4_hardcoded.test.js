@@ -463,6 +463,7 @@ const HARDCODED = {
   'src/systems/masterSkills.js': 52,
   'src/systems/merchantYards.js': 9,
   'src/systems/modSettings.js': 241,
+  'src/systems/musicSheetRow.js': 1,   // MUSIC-BOX: the row's name, its catalogue column - each sheet carries its own name through t()
   'src/systems/mysticism.js': 1,
   'src/systems/naval/captainLedger.js': 15,
   'src/systems/naval/crewCompanions.js': 3,

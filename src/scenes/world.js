@@ -1198,6 +1198,7 @@ import { setItemFields, mintCondition } from '../systems/item/itemTemplates.js';
 import { registerItemUseHandler } from '../systems/item/itemTemplates.js';   // CSA-H: the boat items' UseItem on the item-use door
 import { mintBoatItem, mintShelfBoatUids, assignVariantsToShopItems, cargoLootTarget, BOAT_PARTS_TEMPLATE as CSA_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE as CSA_DEED_TEMPLATE } from '../systems/comeSailAway/comeSailAwayItems.js';   // CSA-H: the two items, their shelf
 import { ListPickerWindow, listPickerArtLoaded } from '../ui/listPicker.js';   // CSA-H: the boat's variant picker
+import { createMusicBoxScore } from '../systems/musicBox.js';   // MUSIC-BOX: a house's music box holds the music in its room
 import { mustSpawnOnFloor, alignFloorEnemyY, spawnRevealDistance, enemyRoster } from '../world/underwater/underwaterEnemies.js';   // DW-E4: where the mod sets a foe's transform; DW-E5: SpawnRevealDistance
 import { puddleWetAt, PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the puddle is the art's
 import { rayUprightCapsule } from '../world/passiveFish.js';   // DW-E3: a fish's probe meets the player's capsule
@@ -23530,6 +23531,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
    *  death); where I stand held a few metres past each change (A10, sdScorePlace's `was`). */
   let _hourScoreHeld = false, _hourScoreMade = false, _hourPlace = null;
   const _hourScore = createHourScore();
+  const musicBoxScore = createMusicBoxScore({ music, here: (id) => modes?.musicBoxHere?.(id) === true });   // MUSIC-BOX (systems/musicBox.js): last of the scores, before the director
   const _spireScore = createSpireScoreHost({ music, now: () => Date.now() + _sharedOffsetMs });   // EG-G2: the Spire's score holds the music before the Hour's (systems/eliteGates/egScore.js)
   const sdScoreWhere = () => {
     if ((modes?.mode ?? 'exterior') !== 'dungeon') return (_hourPlace = null);
@@ -31140,7 +31142,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     // so it fell silent for the rest of the visit. The whole interior and
     // dungeon music path was dead code in this host.
     const frameMusic = () => {   // PERF-V8 (AUDIT SOUNDSCAPE: the sea's score in the chain put the host's frame past three quarters of the ceiling)
-    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
+    if (!hourScoreFrame() && !gateScoreFrame() && !arenaScoreFrame() && !soundscape.scoreFrame() && !musicBoxScore.frame()) musicDirector.update({   // WB7: the court holds the music while it stands; ARENA2: and a bout while it is heard; SD13: and a Hollow or its Hour while I stand in it; SOUNDSCAPE: and the sea's songs while I sail
       inside: false,
       inLocationRect: _musicInLocationRect(),
       locationType: _musicLocationType(),
