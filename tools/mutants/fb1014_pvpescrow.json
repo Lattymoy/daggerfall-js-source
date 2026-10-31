@@ -156,8 +156,8 @@
   {
     "name": "ESCROW-the-death-screen-says-taken",
     "file": "src/systems/wild/wildZone.js",
-    "old": "(d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)",
-    "new": "WILD_TEXT.deathClaim",
+    "old": "        ? (d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)(d.killer, d.claimed)",
+    "new": "        ? WILD_TEXT.deathClaim(d.killer, d.claimed)",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
     ]

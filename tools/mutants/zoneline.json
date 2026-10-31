@@ -11,8 +11,8 @@
   {
     "name": "ZONELINE-a-bands-down-left-diagonal-unasked",
     "file": "src/systems/wild/wildZone.js",
-    "old": "        if (cx > 0 && mid[j - 1] !== v) band[i] = band[j - 1] = 1;",
-    "new": "",
+    "old": "        if (cx > 0 && mid[j - 1] !== v) band[i] = band[j - 1] = 1;\n      }",
+    "new": "      }",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ZONELINE-the-walks-upward-side-unwalked",
     "file": "src/systems/wild/wildZone.js",
-    "old": "    if (sy > 0) enter(cx, cy, sx, sy - 1); else enter(cx, cy - 1, sx, cell - 1);",
-    "new": "    if (sy > 0) enter(cx, cy, sx, sy - 1);",
+    "old": "    else enter(cx, cy - 1, sx, cell - 1);\n    if (sy < cell - 1) enter(cx, cy, sx, sy + 1);",
+    "new": "    if (sy < cell - 1) enter(cx, cy, sx, sy + 1);",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ZONELINE-the-edges-ring-dropped",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  return mask.bits ? Math.max(1, ringOfCell(mask, cx, cy)) : ringOfCell(mask, cx, cy);",
-    "new": "  return ringOfCell(mask, cx, cy);",
+    "old": "  return mask.bits ? Math.max(1, ringOfCell(mask, cx, cy)) : ringOfCell(mask, cx, cy); // a zone pixel of a cell whose middle is out: the edge's ring",
+    "new": "  return ringOfCell(mask, cx, cy); // a zone pixel of a cell whose middle is out: the edge's ring",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ZONELINE-the-ring-past-the-law",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  if (mask.bits && !wildInside(mask, x, y)) return 0;",
-    "new": "  if (false) return 0;",
+    "old": "  if (mask.bits && !wildInside(mask, x, y)) return 0; // ZONE-LINE: the pixel's own law first",
+    "new": "  if (false) return 0; // ZONE-LINE: the pixel's own law first",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ZONELINE-the-band-from-the-middles",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  const seed = exact ? exact.bits : inside;",
-    "new": "  const seed = inside;",
+    "old": "  const seed = exact ? exact.bits : inside; // ZONE-LINE: the band from every cell the zone touches",
+    "new": "  const seed = inside; // ZONE-LINE: the band from every cell the zone touches",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ZONELINE-the-box-of-the-middles",
     "file": "src/systems/wild/wildZone.js",
-    "old": "      if (!(exact ? exact.bits[y * width + x] : at(x, y))) continue;",
-    "new": "      if (!at(x, y)) continue;",
+    "old": "      if (!(exact ? exact.bits[y * width + x] : at(x, y))) continue; // ZONE-LINE: the box every cell the zone touches",
+    "new": "      if (!at(x, y)) continue; // ZONE-LINE: the box every cell the zone touches",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ZONELINE-the-middles-bit-beside-it",
     "file": "src/systems/wild/wildZone.js",
-    "old": "const m = Math.floor(cell / 2), midBit = m * cell + m;",
-    "new": "const m = Math.floor(cell / 2), midBit = m * cell + m + 1;",
+    "old": "    midBit = m * cell + m;",
+    "new": "    midBit = m * cell + m + 1;",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ZONELINE-the-zones-cells-again",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "  _mask = buildWildMask({ width, height, ox, oy, cell, pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y) });",
-    "new": "  _mask = buildWildMask({ width, height, ox, oy, cell, inZone: (cx, cy) => theatreAt(ox + cx * cell + 2, oy + cy * cell + 2) === CYRODIIL_THEATRE || provinceWaterAt(ox + cx * cell + 2, oy + cy * cell + 2) });",
+    "old": "    pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y),",
+    "new": "    inZone: (cx, cy) =>\n      theatreAt(ox + cx * cell + 2, oy + cy * cell + 2) === CYRODIIL_THEATRE ||\n      provinceWaterAt(ox + cx * cell + 2, oy + cy * cell + 2),",
     "tests": [
       "test/systems/wild/zoneline.test.js",
       "test/world/worldWide/wwc2_zone.test.js"
@@ -120,8 +120,8 @@
   {
     "name": "ZONELINE-the-line-untraced",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "get: () => (trace ? zoneLineOf(trace, own) : null)",
-    "new": "get: () => null",
+    "old": "  Object.defineProperty(own, 'line', {\n    enumerable: true,\n    configurable: true,\n    get: () => (trace ? zoneLineOf(trace, own) : null),\n  });",
+    "new": "  Object.defineProperty(own, 'line', { enumerable: true, configurable: true, get: () => null });",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -157,7 +157,7 @@
   {
     "name": "ZONELINE-the-outlines-coast-none",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "  const coast = yield* linkSteps(segs.filter((s) => s.kind === 'coast'), lines.points);",
+    "old": "  const coast = yield* linkSteps(\n    segs.filter((s) => s.kind === 'coast'),\n    lines.points,\n  );",
     "new": "  const coast = [];",
     "tests": [
       "test/systems/wild/zoneline.test.js"
@@ -167,7 +167,7 @@
     "name": "ZONELINE-the-giants-pixel-unasked-on-its-walk",
     "file": "src/systems/wild/wildGiants.js",
     "old": "    if (!giantIn(mask, a.x + 0.5 + ((b.x - a.x) * k) / n, a.y + 0.5 + ((b.y - a.y) * k) / n)) return false;",
-    "new": "    if (!ringOfCell(mask, Math.floor(a.x + 0.5 + ((b.x - a.x) * k) / n), Math.floor(a.y + 0.5 + ((b.y - a.y) * k) / n))) return false;",
+    "new": "    if (!ringOfCell(mask, Math.floor(a.x + 0.5 + ((b.x - a.x) * k) / n), Math.floor(a.y + 0.5 + ((b.y - a.y) * k) / n)))\n      return false;",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "ZONELINE-the-giants-pixel-unasked-at-its-leash",
     "file": "src/systems/wild/wildGiants.js",
-    "old": "    if (!giantIn(mask, cx, cy)) { const p = f < 0.5 ? a : b; cx = p.x + 0.5; cy = p.y + 0.5; }",
-    "new": "    if (!ringOfCell(mask, Math.floor(cx), Math.floor(cy))) { const p = f < 0.5 ? a : b; cx = p.x + 0.5; cy = p.y + 0.5; }",
+    "old": "    if (!giantIn(mask, cx, cy)) {",
+    "new": "    if (!ringOfCell(mask, Math.floor(cx), Math.floor(cy))) {",
     "tests": [
       "test/systems/wild/zoneline.test.js"
     ]

@@ -1,21 +1,179 @@
 [
-  {"name": "PVP-REWARD-the-roll-blind-to-the-policy", "file": "src/systems/wild/pvpReward.js", "old": "  const open = offer.map((it, w) => (insured(it) || keep(it) ? -1 : w)).filter((w) => w >= 0);", "new": "  const open = offer.map((it, w) => (keep(it) ? -1 : w)).filter((w) => w >= 0);", "tests": ["test/systems/wild/pvpreward.test.js", "test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-the-roll-blind-to-the-hold", "file": "src/systems/wild/pvpReward.js", "old": "  const open = offer.map((it, w) => (insured(it) || keep(it) ? -1 : w)).filter((w) => w >= 0);", "new": "  const open = offer.map((it, w) => (insured(it) ? -1 : w)).filter((w) => w >= 0);", "tests": ["test/systems/wild/pvpreward.test.js", "test/net/int9_wild_ref.test.js"]},
-  {"name": "PVP-REWARD-the-policy-path-never", "file": "src/systems/wild/pvpReward.js", "old": "  return keys.length ? { policy: /** @type {string} */ (keys[pick(keys.length)]) } : null;", "new": "  return null;", "tests": ["test/systems/wild/pvpreward.test.js", "test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-the-policy-from-a-bag-piece", "file": "src/systems/wild/pvpReward.js", "old": "  const keys = [...new Set(offer.filter((it) => insured(it)).map(insureKeyOf).filter((k) => k != null))];", "new": "  const keys = [...new Set(items.filter((it) => insured(it)).map(insureKeyOf).filter((k) => k != null))];", "tests": ["test/systems/wild/pvpreward.test.js"]},
-  {"name": "PVP-REWARD-the-villain-insured", "file": "src/systems/wild/pvpReward.js", "old": "wildInsuredBy(villain ? [] : keys, among);", "new": "wildInsuredBy(keys, among);", "tests": ["test/systems/wild/pvpreward.test.js"]},
-  {"name": "PVP-REWARD-coin-past-the-weight", "file": "src/systems/wild/pvpReward.js", "old": "n * GOLD_PIECE_WEIGHT_KG <= freeKg ? 'gold' : 'letter');", "new": "n * GOLD_PIECE_WEIGHT_KG <= freeKg + 1 ? 'gold' : 'letter');", "tests": ["test/systems/wild/pvpreward.test.js", "test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-coin-with-no-weight-said", "file": "src/systems/wild/pvpReward.js", "old": "(typeof freeKg === 'number' && Number.isFinite(freeKg) && n * GOLD_PIECE_WEIGHT_KG", "new": "(freeKg === undefined || typeof freeKg === 'number' && Number.isFinite(freeKg) && n * GOLD_PIECE_WEIGHT_KG", "tests": ["test/systems/wild/pvpreward.test.js"]},
-  {"name": "PVP-REWARD-the-bag-dropped", "file": "server-account/src/wild.js", "old": "    drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });", "new": "    drop = takeWildDeath(save, w, keep, wt, { insured, purse: false });", "tests": ["test/net/int9_wild_ref.test.js", "test/systems/fb1015_cartaway.test.js"]},
-  {"name": "PVP-REWARD-the-law-bag-unread", "file": "src/systems/wild/wildDropLaw.js", "old": "  const drop = (drops ? takeWildDrop(bag) : []).map((it) => /** @type {[any, string]} */ ([it, 'bag']));", "new": "  const drop = takeWildDrop(bag).map((it) => /** @type {[any, string]} */ ([it, 'bag']));", "tests": ["test/systems/wild/pvpreward.test.js"]},
-  {"name": "PVP-REWARD-the-old-pick-read", "file": "server-account/src/wild.js", "old": "  w = roll && 'w' in roll ? roll.w : -1; wt = null;", "new": "  w = w >= 0 ? w : roll && 'w' in roll ? roll.w : -1;", "tests": ["test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-policy-gold-without-a-collect", "file": "server-account/src/wild.js", "old": "  const policy = roll && 'policy' in roll && collect ? live.find((p) => String(p.key) === roll.policy) : null;", "new": "  const policy = roll && 'policy' in roll ? live.find((p) => String(p.key) === roll.policy) : null;", "tests": ["test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-the-policy-unspent", "file": "server-account/src/wild.js", "old": "  /** @type {string[]} */ const spent = policy ? [...new Set([...drop.saved, String(policy.key)])] : drop.saved;", "new": "  /** @type {string[]} */ const spent = drop.saved;", "tests": ["test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-the-gold-hers-to-watch", "file": "server-account/src/wild.js", "old": "  if (escrow && pvpPolicyGoldOf(parse(escrow.rec))) escrow = null;", "new": "", "tests": ["test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-the-gold-hers-to-take-back", "file": "server-account/src/wild.js", "old": " || row.char_id !== side.at.id || pvpPolicyGoldOf(parse(row.rec))) return { error: 'no-escrow' };", "new": " || row.char_id !== side.at.id) return { error: 'no-escrow' };", "tests": ["test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-the-gold-listed-for-her", "file": "server-account/src/wild.js", "old": "  return { escrows: results.filter((e) => !pvpPolicyGoldOf(parse(e.rec))).map(escrowView) };", "new": "  return { escrows: results.map(escrowView) };", "tests": ["test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-the-letter-never", "file": "server-account/src/wild.js", "old": "  if (gold && pvpGoldPaid(gold, freeKg) === 'letter') item = pvpLetterOf(gold, mintItemId(ctx.rand));", "new": "", "tests": ["test/systems/wild/wildinsure.test.js"]},
-  {"name": "PVP-REWARD-the-weight-unsaid", "file": "src/scenes/wildEscrowHost.js", "old": "realm: at, free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity) }),", "new": "realm: at }),", "tests": ["test/systems/wild/pvpreward.test.js", "test/systems/fb1014_pvpescrow.test.js"]},
-  {"name": "PVP-REWARD-the-offer-back", "file": "src/scenes/world.js", "old": "    // PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)\n", "new": "    if (fell) wildFight.offerWorn(fell.by, fell.r, []);\n", "tests": ["test/systems/wild/pvpreward.test.js"]},
-  {"name": "PVP-REWARD-the-villain-insured", "file": "server-account/src/wild.js", "old": "{ villain: isVillain(Number(row.villainy)), among: stored.items }", "new": "{ villain: false, among: stored.items }", "tests": ["test/systems/wild/wildinsure.test.js"]}
+  {
+    "name": "PVP-REWARD-the-roll-blind-to-the-policy",
+    "file": "src/systems/wild/pvpReward.js",
+    "old": "  const open = offer.map((it, w) => (insured(it) || keep(it) ? -1 : w)).filter((w) => w >= 0);",
+    "new": "  const open = offer.map((it, w) => (keep(it) ? -1 : w)).filter((w) => w >= 0);",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js",
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-roll-blind-to-the-hold",
+    "file": "src/systems/wild/pvpReward.js",
+    "old": "  const open = offer.map((it, w) => (insured(it) || keep(it) ? -1 : w)).filter((w) => w >= 0);",
+    "new": "  const open = offer.map((it, w) => (insured(it) ? -1 : w)).filter((w) => w >= 0);",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js",
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-policy-path-never",
+    "file": "src/systems/wild/pvpReward.js",
+    "old": "  return keys.length ? { policy: /** @type {string} */ (keys[pick(keys.length)]) } : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js",
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-policy-from-a-bag-piece",
+    "file": "src/systems/wild/pvpReward.js",
+    "old": "      offer",
+    "new": "      items",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-villain-insured",
+    "file": "src/systems/wild/pvpReward.js",
+    "old": ") => wildInsuredBy(villain ? [] : keys, among);",
+    "new": ") => wildInsuredBy(keys, among);",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-coin-past-the-weight",
+    "file": "src/systems/wild/pvpReward.js",
+    "old": "  typeof freeKg === 'number' && Number.isFinite(freeKg) && n * GOLD_PIECE_WEIGHT_KG <= freeKg ? 'gold' : 'letter';",
+    "new": "  typeof freeKg === 'number' && Number.isFinite(freeKg) && n * GOLD_PIECE_WEIGHT_KG <= freeKg + 1 ? 'gold' : 'letter';",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js",
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-coin-with-no-weight-said",
+    "file": "src/systems/wild/pvpReward.js",
+    "old": "  typeof freeKg === 'number' && Number.isFinite(freeKg) && n * GOLD_PIECE_WEIGHT_KG <= freeKg ? 'gold' : 'letter';",
+    "new": "  freeKg === undefined || (typeof freeKg === 'number' && Number.isFinite(freeKg) && n * GOLD_PIECE_WEIGHT_KG <= freeKg)\n    ? 'gold'\n    : 'letter';",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-bag-dropped",
+    "file": "server-account/src/wild.js",
+    "old": "    drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });",
+    "new": "    drop = takeWildDeath(save, w, keep, wt, { insured, purse: false });",
+    "tests": [
+      "test/net/int9_wild_ref.test.js",
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-law-bag-unread",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  const drop = (drops ? takeWildDrop(bag) : []).map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
+    "new": "  const drop = takeWildDrop(bag).map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-old-pick-read",
+    "file": "server-account/src/wild.js",
+    "old": "  w = roll && 'w' in roll ? roll.w : -1; wt = null;",
+    "new": "  w = w >= 0 ? w : roll && 'w' in roll ? roll.w : -1;",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-policy-gold-without-a-collect",
+    "file": "server-account/src/wild.js",
+    "old": "  const policy = roll && 'policy' in roll && collect ? live.find((p) => String(p.key) === roll.policy) : null;",
+    "new": "  const policy = roll && 'policy' in roll ? live.find((p) => String(p.key) === roll.policy) : null;",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-policy-unspent",
+    "file": "server-account/src/wild.js",
+    "old": "  /** @type {string[]} */ const spent = policy ? [...new Set([...drop.saved, String(policy.key)])] : drop.saved;",
+    "new": "  /** @type {string[]} */ const spent = drop.saved;",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-gold-hers-to-watch",
+    "file": "server-account/src/wild.js",
+    "old": "  if (escrow && pvpPolicyGoldOf(parse(escrow.rec))) escrow = null;",
+    "new": "",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-gold-hers-to-take-back",
+    "file": "server-account/src/wild.js",
+    "old": " || row.char_id !== side.at.id || pvpPolicyGoldOf(parse(row.rec))) return { error: 'no-escrow' };",
+    "new": " || row.char_id !== side.at.id) return { error: 'no-escrow' };",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-gold-listed-for-her",
+    "file": "server-account/src/wild.js",
+    "old": "  return { escrows: results.filter((e) => !pvpPolicyGoldOf(parse(e.rec))).map(escrowView) };",
+    "new": "  return { escrows: results.map(escrowView) };",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-letter-never",
+    "file": "server-account/src/wild.js",
+    "old": "  if (gold && pvpGoldPaid(gold, freeKg) === 'letter') item = pvpLetterOf(gold, mintItemId(ctx.rand));",
+    "new": "",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-weight-unsaid",
+    "file": "src/scenes/wildEscrowHost.js",
+    "old": "realm: at, free: entityMaxEncumbrance(playerEntity) - carriedWeight(playerEntity) }),",
+    "new": "realm: at }),",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js",
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-offer-back",
+    "file": "src/scenes/world.js",
+    "old": "    // PVP-REWARD: no worn offer - the account service rolls the killer's piece (systems/wild/pvpReward.js)\n",
+    "new": "    if (fell) wildFight.offerWorn(fell.by, fell.r, []);\n",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ]
+  },
+  {
+    "name": "PVP-REWARD-the-villain-insured",
+    "file": "server-account/src/wild.js",
+    "old": "{ villain: isVillain(Number(row.villainy)), among: stored.items }",
+    "new": "{ villain: false, among: stored.items }",
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ]
+  }
 ]

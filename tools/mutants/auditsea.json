@@ -744,8 +744,8 @@
   {
     "name": "AUDIT-SEA-C7-truce-the-hills",
     "file": "src/systems/wild/etherWild.js",
-    "old": "  get truce() { return ETHER_WILD_TEXT.truce(); },\n",
-    "new": "",
+    "old": "  get truce() {\n    return ETHER_WILD_TEXT.truce();\n  },\n  get dropLate() {",
+    "new": "  get dropLate() {",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -780,8 +780,8 @@
   {
     "name": "AUDIT-SEA-F4-bonus-english",
     "file": "src/systems/wild/etherWild.js",
-    "old": "t('sea.wild.bonus', '+{pct}% loot', { pct: Math.round((wildRingLoot(ring) - 1) * 100) });",
-    "new": "`+${Math.round((wildRingLoot(ring) - 1) * 100)}% loot`;",
+    "old": "export const etherRingBonus = (/** @type {number} */ ring) =>\n  t('sea.wild.bonus', '+{pct}% loot', { pct: Math.round((wildRingLoot(ring) - 1) * 100) });",
+    "new": "export const etherRingBonus = (/** @type {number} */ ring) => `+${Math.round((wildRingLoot(ring) - 1) * 100)}% loot`;",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "AUDIT-SEA-C6-unstuck-hills-english",
     "file": "src/systems/wild/wildZone.js",
-    "old": "get unstuckOut() { return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in Cyrodiil.'); },",
-    "new": "get unstuckOut() { return '/unstuck does not work outdoors in Cyrodiil.'; },",
+    "old": "    return t('wild.zone.unstuckOut', '/unstuck does not work outdoors in Cyrodiil.');",
+    "new": "    return '/unstuck does not work outdoors in Cyrodiil.';",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ],
@@ -808,8 +808,8 @@
   {
     "name": "AUDIT-SEA-C7-revenant-hills-english",
     "file": "src/systems/wild/wildZone.js",
-    "old": "get revenantOne() { return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in Cyrodiil.'); },",
-    "new": "revenantOne: 'Only one revenant may walk at your side in Cyrodiil.',",
+    "old": "  get revenantOne() {\n    return t('wild.zone.revenantOne', 'Only one revenant may walk at your side in Cyrodiil.');\n  },",
+    "new": "  revenantOne: 'Only one revenant may walk at your side in Cyrodiil.',",
     "tests": [
       "test/systems/sea/auditsea.test.js"
     ],

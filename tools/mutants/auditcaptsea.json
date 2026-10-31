@@ -1326,8 +1326,8 @@
   {
     "name": "ACS-P4-rise-port",
     "file": "src/systems/wild/etherWild.js",
-    "old": "    const port = islesNear(x, y, Math.min(r, far + 1)).find((i) => i.kind === 'port' && Math.hypot(i.px - x, i.py - y) <= r);\n    if (port) return port;",
-    "new": "    const port = null;\n    if (port) return port;",
+    "old": "    const port = islesNear(x, y, Math.min(r, far + 1)).find(\n      (i) => i.kind === 'port' && Math.hypot(i.px - x, i.py - y) <= r,\n    );",
+    "new": "    const port = null;",
     "tests": [
       "test/systems/naval/auditcaptsea.test.js",
       "test/systems/sea/auditsea.test.js"

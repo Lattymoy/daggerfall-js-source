@@ -155,8 +155,8 @@
   {
     "name": "ZONE-GRACE-the-client-end-unsaid",
     "file": "src/systems/wild/wildGrace.js",
-    "old": "      } else if (mine > at) { mine = 0; say(WILD_TEXT.graceOff()); }",
-    "new": "      } else if (mine > at) { mine = 0; }",
+    "old": "      } else if (mine > at) {\n        mine = 0;\n        say(WILD_TEXT.graceOff());\n      }\n    },",
+    "new": "      } else if (mine > at) {\n        mine = 0;\n      }\n    },",
     "tests": [
       "test/net/zonegrace.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "ZONE-GRACE-the-client-run-out-unsaid",
     "file": "src/systems/wild/wildGrace.js",
-    "old": "      if (mine && mine <= at) { mine = 0; say(WILD_TEXT.graceOff()); }",
-    "new": "      if (false) { mine = 0; say(WILD_TEXT.graceOff()); }",
+    "old": "      if (mine && mine <= at) {",
+    "new": "      if (false) {",
     "tests": [
       "test/net/zonegrace.test.js"
     ]

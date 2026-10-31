@@ -686,7 +686,7 @@ the foes and the players so too. Online alone, as the mountains are. Its section
 `etherWild.js:"export function etherInPeace"`): the Veil, the way home, the whole length of the sea; and the water
 within `ETHER_PEACE_PX` (12 pixels, some ten kilometres) of Veilhaven's own pixel - the haven, its quay, and the
 landfall four pixels east of it, so a crossing never comes out into a fight; and THE WAY HOME between them - her own rows,
-`ETHER_PEACE_PX` either side, east of her to the Veil (`etherWild.js:"return inEther(x, y) && x >= h.px && Math.abs(y - h.py) <= ETHER_PEACE_PX;"`
+`ETHER_PEACE_PX` either side, east of her to the Veil (`etherWild.js:"return inEther(x, y)"`
 - AUDIT SEA VENTURES C2: the circle alone left thirty-one pixels of open zone between the peace and the Veil, every
 captain's one way home through them). West of her the peace is a circle, not a square: a captain reads it off
 Veilhaven, whichever way she sails. Every other port is a freeport of the open sea - its watch ten
@@ -723,7 +723,7 @@ its "+75% loot" English.
   ("Past the Veil the dead rise after 10 seconds." - the death keeps the ground it
   fell on, `setWildDeath`'s `kind`), the remains twelve minutes, marked for their owner. THE RISE is the sea's own,
   AUDIT CAPTAIN'S SEA P4's: THE NEAREST FREEPORT'S TOWN, however far - sought from `ETHER_RISE_PX` out, the reach doubled
-  until a port stands within it (`etherWild.js:"for (let r = ETHER_RISE_PX; ; r *= 2) {"`, `etherRisePort`; Veilhaven
+  until a port stands within it (`etherWild.js:"for (let r = ETHER_RISE_PX; ; r *= 2)"`, `etherRisePort`; Veilhaven
   is one, so it ends at her at the farthest) (`wildRiseSite`,
   `world.js:"const wildRiseSite = (px, inDungeon = false, kill = true) => {"`, over `etherWild.js` `etherRiseSite`) - the mountains' search of the Bay's maps would have
   woken the dead a crossing away, and the sea has no "outside" near enough to rise in; a ruin's death rises there too,

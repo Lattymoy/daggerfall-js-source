@@ -87,7 +87,7 @@ CHANGED:
   held case its own way (`burntLate`). The three lines go through the text core (L10N4: `wild.death.burnt`,
   `wild.death.letters`, `wild.death.burntLate`), in the English catalog (`tools/l10nExtract.mjs`) and drafted in-session for
   the thirteen languages that cover it whole (`tools/l10nInSession.mjs`, recorded as the machine's).
-- Every death in the zone names the letters of credit it took, by their worth (`wildZone.js:"deathLetters: (n, gold) =>"`):
+- Every death in the zone names the letters of credit it took, by their worth (`wildZone.js:"deathLetters: (n, gold)"`):
   "2 letters of credit worth 1,350,000 gold left your wallet." A letter's loss was "a thing you carried", whatever it
   stood for.
 - The host hands both on in its one line, in place (`wildDropHost.js:"claimed, held, burnt: d.burnt ? n : 0, letters: out,"`) - no line added: the host does not grow.

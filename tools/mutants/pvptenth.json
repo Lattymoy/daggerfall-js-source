@@ -4,7 +4,9 @@
     "file": "server-account/src/wild.js",
     "old": "drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });",
     "new": "drop = takeWildDeath(save, w, keep, wt, { insured, bag: false });",
-    "tests": ["test/systems/wild/wildinsure.test.js"],
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ],
     "why": "a kill with a piece to take takes the purse's tenth too - the owner: \"No gold dropped on death\""
   },
   {
@@ -12,7 +14,9 @@
     "file": "server-account/src/wild.js",
     "old": "const lastRoll = !burnt && collect && roll === null;",
     "new": "const lastRoll = !burnt && collect;",
-    "tests": ["test/systems/wild/wildinsure.test.js"],
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ],
     "why": "the gold rolled beside a worn piece or a policy, where it is the last roll alone"
   },
   {
@@ -20,7 +24,9 @@
     "file": "server-account/src/wild.js",
     "old": "const lastRoll = !burnt && collect && roll === null;",
     "new": "const lastRoll = !burnt && roll === null;",
-    "tests": ["test/systems/wild/wildinsure.test.js"],
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ],
     "why": "a room that signs no collect takes the gold, which no escrow can pay its killer"
   },
   {
@@ -28,7 +34,9 @@
     "file": "server-account/src/wild.js",
     "old": "const lastRoll = !burnt && collect && roll === null;",
     "new": "const lastRoll = collect && roll === null;",
-    "tests": ["test/systems/fb1018b_burntsaid.test.js"],
+    "tests": [
+      "test/systems/fb1018b_burntsaid.test.js"
+    ],
     "why": "a held record loses the last roll's gold, which can never reach its killer"
   },
   {
@@ -36,7 +44,9 @@
     "file": "server-account/src/wild.js",
     "old": "const killerGold = policyGold ?? lastPile,",
     "new": "const killerGold = policyGold,",
-    "tests": ["test/systems/wild/wildinsure.test.js"],
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ],
     "why": "the last roll's gold taken off the fallen and paid to nobody"
   },
   {
@@ -44,7 +54,9 @@
     "file": "server-account/src/wild.js",
     "old": "return parse(fall?.tk)?.last ? { ...paid, last: true } : paid;",
     "new": "return paid;",
-    "tests": ["test/systems/wild/wildinsure.test.js"],
+    "tests": [
+      "test/systems/wild/wildinsure.test.js"
+    ],
     "why": "the killer is told a policy paid him, where the fallen had none"
   },
   {
@@ -52,31 +64,40 @@
     "file": "server-account/src/wild.js",
     "old": "const last = tk?.last ? { last: true } : {};",
     "new": "const last = {};",
-    "tests": ["test/systems/wild/wildinsure.test.js", "test/systems/fb1018b_burntsaid.test.js"],
+    "tests": [
+      "test/systems/wild/wildinsure.test.js",
+      "test/systems/fb1018b_burntsaid.test.js"
+    ],
     "why": "the fallen's game never learns the gold it lost went to the last roll"
   },
   {
     "name": "PVP-NO-TENTH-purse-not-first",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const purse = Math.min(have, n);\n",
-    "new": "  const purse = 0;\n",
-    "tests": ["test/systems/wild/pvpreward.test.js"],
+    "old": "  const purse = Math.min(have, n);",
+    "new": "  const purse = 0;",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ],
     "why": "the letters pay before the purse - the owner: \"Letter only pay out 10% if they have not enough gold\""
   },
   {
     "name": "PVP-NO-TENTH-letters-out-of-sum",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "const n = Math.floor((have + paper.reduce((/** @type {number} */ g, /** @type {any} */ it) => g + it.value, 0)) / WILD_GOLD_DIVISOR);",
-    "new": "const n = Math.floor(have / WILD_GOLD_DIVISOR);",
-    "tests": ["test/systems/wild/pvpreward.test.js"],
+    "old": "  const n = Math.floor(\n    (have + paper.reduce((/** @type {number} */ g, /** @type {any} */ it) => g + it.value, 0)) / WILD_GOLD_DIVISOR,\n  );",
+    "new": "  const n = Math.floor(have / WILD_GOLD_DIVISOR);",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ],
     "why": "a tenth of the coin alone, where the owner said the total"
   },
   {
     "name": "PVP-NO-TENTH-held-letter-pays",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "entity.items.filter((/** @type {any} */ it) => shareLetter(it) && !keep(it))",
-    "new": "entity.items.filter((/** @type {any} */ it) => shareLetter(it))",
-    "tests": ["test/systems/wild/pvpreward.test.js"],
+    "old": "    letters && Array.isArray(entity?.items)\n      ? entity.items.filter((/** @type {any} */ it) => shareLetter(it) && !keep(it))\n      : [];",
+    "new": "    letters && Array.isArray(entity?.items) ? entity.items.filter((/** @type {any} */ it) => shareLetter(it)) : [];",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ],
     "why": "a letter the ledger or a policy keeps pays the killer"
   },
   {
@@ -84,7 +105,9 @@
     "file": "src/scenes/wildEscrowHost.js",
     "old": "const words = d.last ? [WILD_TEXT.lastGold, WILD_TEXT.lastLetter] : [WILD_TEXT.policyGold, WILD_TEXT.policyLetter];",
     "new": "const words = [WILD_TEXT.policyGold, WILD_TEXT.policyLetter];",
-    "tests": ["test/systems/wild/pvpreward.test.js"],
+    "tests": [
+      "test/systems/wild/pvpreward.test.js"
+    ],
     "why": "the killer is told \"All their gear was insured\" for the last roll"
   },
   {
@@ -92,15 +115,21 @@
     "file": "src/scenes/wildDropHost.js",
     "old": "dropped: d.order ? n - (d.wi === 0 ? 1 : 0) : 0,",
     "new": "dropped: d.order ? n : 0,",
-    "tests": ["test/systems/wild/pvpreward.test.js", "test/systems/fb1018b_burntsaid.test.js"],
+    "tests": [
+      "test/systems/wild/pvpreward.test.js",
+      "test/systems/fb1018b_burntsaid.test.js"
+    ],
     "why": "the fallen is told her killer's record lies where she fell, for anyone"
   },
   {
     "name": "PVP-NO-TENTH-death-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "d.last ? WILD_TEXT.deathLast(d.killer, d.last) : WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0)",
-    "new": "WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0)",
-    "tests": ["test/systems/wild/pvpreward.test.js", "test/systems/fb1018b_burntsaid.test.js"],
+    "old": "    d.last ? WILD_TEXT.deathLast(d.killer, d.last) : WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0),",
+    "new": "    WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0),",
+    "tests": [
+      "test/systems/wild/pvpreward.test.js",
+      "test/systems/fb1018b_burntsaid.test.js"
+    ],
     "why": "the death screen says the letters' tenth lies on the ground, and never what the killer took"
   }
 ]

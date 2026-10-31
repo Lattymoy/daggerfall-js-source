@@ -2,8 +2,8 @@
   {
     "name": "WWC2-a-cell-by-its-corner",
     "file": "src/systems/wild/wildZone.js",
-    "old": "const m = Math.floor(cell / 2), midBit = m * cell + m;",
-    "new": "const m = Math.floor(cell / 2), midBit = 0;",
+    "old": "    midBit = m * cell + m;",
+    "new": "    midBit = 0;",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WWC2-the-lattice-the-boxs",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "const ox = Math.floor(box.x0 / cell) * cell, oy = Math.floor(box.y0 / cell) * cell;",
-    "new": "const ox = box.x0, oy = box.y0;",
+    "old": "  const ox = Math.floor(box.x0 / cell) * cell,\n    oy = Math.floor(box.y0 / cell) * cell; // the world's one lattice",
+    "new": "  const ox = box.x0,\n    oy = box.y0; // the world's one lattice",
     "tests": [
       "test/world/worldWide/wwc2_zone.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "WWC2-the-chains-left-on-the-grid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  }, (x, y) => maskWorld(mask, x, y));",
-    "new": "  }, (x, y) => [x, y]);",
+    "old": "    (x, y) => maskWorld(mask, x, y),",
+    "new": "    (x, y) => [x, y],",
     "tests": [
       "test/systems/wild1_zone.test.js",
       "test/world/worldWide/wwc2_zone.test.js"
@@ -59,7 +59,7 @@
   {
     "name": "WWC2-the-anchors-left-on-the-grid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  return out.map((p) => { const [wx, wy] = maskWorld(mask, p.x, p.y); return { ring: p.ring, x: wx, y: wy }; });",
+    "old": "  return out.map((p) => {\n    const [wx, wy] = maskWorld(mask, p.x, p.y);\n    return { ring: p.ring, x: wx, y: wy };\n  });",
     "new": "  return out;",
     "tests": [
       "test/systems/wild1_zone.test.js",
@@ -69,8 +69,8 @@
   {
     "name": "WWC2-the-band-in-pixels",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  const band = Math.max(1, Math.ceil(nearPx / cell));",
-    "new": "  const band = nearPx;",
+    "old": "  const band = Math.max(1, Math.ceil(nearPx / cell)); // WW-C2: the hiding band in cells",
+    "new": "  const band = nearPx; // WW-C2: the hiding band in cells",
     "tests": [
       "test/systems/wild1_zone.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "WWC2-the-band-unthinned",
     "file": "src/systems/wild/wildDungeons.js",
-    "old": "const freeFrom = (min) => thin(ring_.filter((p) => p.bd >= min), poolMax, sift).filter(isFree);",
-    "new": "const freeFrom = (min) => ring_.filter((p) => p.bd >= min).filter(isFree);",
+    "old": "    const freeFrom = (min) =>\n      thin(\n        ring_.filter((p) => p.bd >= min),\n        poolMax,\n        sift,\n      ).filter(isFree);",
+    "new": "    const freeFrom = (min) => ring_.filter((p) => p.bd >= min).filter(isFree);",
     "tests": [
       "test/systems/wild/wildfree.test.js",
       "test/world/worldWide/wwc2_zone.test.js"
@@ -97,8 +97,8 @@
   {
     "name": "WWC2-the-giants-high-ground",
     "file": "src/systems/wild/wildGiants.js",
-    "old": "      near = near.filter((p) => c.low(p) <= cut);",
-    "new": "",
+    "old": "      near = near.filter((p) => c.low(p) <= cut);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/pvpdungeons_game.test.js"
     ]

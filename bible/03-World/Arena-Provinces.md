@@ -1541,7 +1541,7 @@ Also, daggerfall's clustered icons need to be fixed amd standardized across tamr
   region's faint ink. Each province's name on a halo too, 18 px out on the continent (15, bare, was lost in the web).
 - **Cyrodiil's line** (ZONE-LINE, 2026-10-26, `11-Multiplayer/Wild-Zone.md` section 27; the owner: *"Also ensure the pvp
   border outlines cyrodil perfectly, currently it doesnt"*): Cyrodiil's borders and its open coast are the open zone's
-  own line (`cyrodiilZone.js:"export function zoneLineOf("`) - the province's outline on the traced picture, unsmoothed,
+  own line (`cyrodiilZone.js:"export function zoneLineOf"`) - the province's outline on the traced picture, unsmoothed,
   the red line drawn on it - where TAMRIEL4's corner cut had drawn them up to 12 pixels off the province's law at a
   corner. `tracedChains` keeps no border with Cyrodiil on one side and leaves its open coast to that line; a lake inside
   it and every other province's line are drawn as before, a neighbour's coast and border ending on the line's corner.

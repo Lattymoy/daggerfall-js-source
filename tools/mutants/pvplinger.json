@@ -218,8 +218,8 @@
   {
     "name": "PVP-LINGER-RISE-page-unnamed",
     "file": "src/systems/wild/wildRejoin.js",
-    "old": "...(word.aw === 1 ? { away: true,",
-    "new": "...(word.aw === 2 ? { away: true,",
+    "old": "        ...(word.aw === 1 ? { away: true, ...(typeof word.n === 'string' && word.n ? { killer: word.n } : {}) } : {}),",
+    "new": "        ...(word.aw === 2 ? { away: true, ...(typeof word.n === 'string' && word.n ? { killer: word.n } : {}) } : {}),",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "PVP-LINGER-RISE-line-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  if (d.away) return [WILD_TEXT.deathAway(d.killer), ...wildDeathLines({ ...d, away: false })];",
-    "new": "",
+    "old": "  if (d.away) return [WILD_TEXT.deathAway(d.killer), ...wildDeathLines({ ...d, away: false })]; // PVP-LINGER-RISE: slain while I was away",
+    "new": "  // PVP-LINGER-RISE: slain while I was away",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "PVP-LINGER-RISE-the-slain-head-twice",
     "file": "src/systems/wild/wildZone.js",
-    "old": "(d && !d.away && (d.killer || d.kill) ?",
-    "new": "(d && (d.killer || d.kill) ?",
+    "old": "export const wildDeathSlain = (d = _death) =>\n  d && !d.away && (d.killer || d.kill) ? WILD_TEXT.deathSlain(d.killer) : ''; // PVP-LINGER-RISE: away, its own line says it",
+    "new": "export const wildDeathSlain = (d = _death) => (d && (d.killer || d.kill) ? WILD_TEXT.deathSlain(d.killer) : ''); // PVP-LINGER-RISE: away, its own line says it",
     "tests": [
       "test/net/pvplinger_relay.test.js"
     ]

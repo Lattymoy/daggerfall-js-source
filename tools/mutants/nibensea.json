@@ -150,7 +150,7 @@
     "name": "ZONE-one-bank-enough",
     "file": "src/systems/wild/cyrodiilZone.js",
     "old": "  return (bank(-1, 0) && bank(1, 0)) || (bank(0, -1) && bank(0, 1));",
-    "new": "  return (bank(-1, 0) || bank(1, 0)) || (bank(0, -1) && bank(0, 1));",
+    "new": "  return bank(-1, 0) || bank(1, 0) || (bank(0, -1) && bank(0, 1));",
     "tests": [
       "test/world/nibensea.test.js"
     ]
@@ -167,8 +167,8 @@
   {
     "name": "ZONE-water-unasked",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y) });",
-    "new": "pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE });",
+    "old": "  _mask = buildWildMask({\n    width,\n    height,\n    ox,\n    oy,\n    cell,\n    pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE || provinceWaterAt(x, y),\n  }); // ZONE-LINE: the province's own law, a pixel at a time; NIBEN-SEA: and its own water",
+    "new": "  _mask = buildWildMask({ width, height, ox, oy, cell, pixelIn: (x, y) => theatreAt(x, y) === CYRODIIL_THEATRE }); // ZONE-LINE: the province's own law, a pixel at a time; NIBEN-SEA: and its own water",
     "tests": [
       "test/systems/wild/audittesa2z_zone.test.js",
       "test/systems/wild/zoneline.test.js"
@@ -196,8 +196,8 @@
   {
     "name": "ZONE-dam-the-laws",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "    if ((ia !== ib && one(bx, by, bx + 1, by))",
-    "new": "    if (false && (ia !== ib && one(bx, by, bx + 1, by))",
+    "old": "      (ia !== ib && one(bx, by, bx + 1, by)) ||",
+    "new": "      (false && ia !== ib && one(bx, by, bx + 1, by)) ||",
     "tests": [
       "test/world/nibensea.test.js",
       "test/systems/wild/zoneline.test.js"
@@ -206,8 +206,8 @@
   {
     "name": "ZONE-water-by-the-picture",
     "file": "src/systems/wild/cyrodiilZone.js",
-    "old": "  if (provinceKeyAt(qx, qy) !== null) return false;",
-    "new": "  if (provinceKeyAt(qx, qy) !== null && false) return false;",
+    "old": "  if (provinceKeyAt(qx, qy) !== null) return false; // land, by the land's own law (SMOOTH-LAND)",
+    "new": "  if (provinceKeyAt(qx, qy) !== null && false) return false; // land, by the land's own law (SMOOTH-LAND)",
     "tests": [
       "test/world/nibensea.test.js"
     ]

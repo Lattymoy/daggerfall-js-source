@@ -437,8 +437,8 @@
   {
     "name": "PVP-CAST-SKILL-the-bar-on-level-dice",
     "file": "src/systems/wild/pvpKit.js",
-    "old": "case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];",
-    "new": "case 'damage': return [{ ...FIREBALL }];",
+    "old": "      return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }]; // PVP-CAST-SKILL: sized by live Destruction, no dice",
+    "new": "      return [{ ...FIREBALL }]; // PVP-CAST-SKILL: sized by live Destruction, no dice",
     "tests": [
       "test/combat/pvp_guard.test.js",
       "test/systems/wild/pvpkit.test.js"

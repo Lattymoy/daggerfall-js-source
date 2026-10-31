@@ -278,7 +278,7 @@ THE ZONE'S WORDS A LEAF OF THEIR OWN (found at the integration). The fix first h
 `WILD_NEVER_GROUPS` there - pulling the drop law's whole graph, the item law among it (which installs itself on the
 wire's door, `loot.js setItemLaw`), into every client graph that stands a revenant: SIGIL1's, CURSE-SYNC's and SET4's
 wire pins went red on their hand-built pieces. The three words need no graph: `wild/wildLeaf.js` holds them with no
-imports (`wildLeaf.js:"export const WILD_NEVER_GROUPS = Object.freeze(new Set(['Transportation', 'Deeds', 'QuestItems', 'Currency']));"`),
+imports (`wildLeaf.js:"export const WILD_NEVER_GROUPS"`),
 `wildDropLaw.js` re-exports them for its readers and the account service, and the two modules read the leaf. Two of
 this list's records follow their lines to the leaf (52 dead, 1 equivalent as recorded, with STEED-KEPT's).
 
@@ -1197,7 +1197,7 @@ having it in the pack (DFU's `Items.Contains(Transportation, Horse)`; the stable
 `merchantYards.js yardStock`), and a stable's horse is worth more than most of a pack. Reproduced on the real module
 (`pickTaken`, 1,000 ids): a stable-minted horse beside a worn steel longsword and four spare weapons was drawn 165
 times - "X took your Horse." - while the open zone's own law already calls a vehicle and a deed pieces that never
-change hands (`wildLeaf.js:"export const WILD_NEVER_GROUPS = Object.freeze(new Set(['Transportation', 'Deeds', 'QuestItems', 'Currency']));"`).
+change hands (`wildLeaf.js:"export const WILD_NEVER_GROUPS"`).
 The same law let it take a ship's deed or her packed parts (Come Sail Away's own two, filed under UselessItems2, which
 the trade never hands on - a deed handed on is a second boat), a deed as Daggerfall files one (House_Deed, Ship_Deed -
 MiscItems, not the Deeds group), and the spellbook (KEEP-SPELLBOOK: "Your spellbook never leaves you").

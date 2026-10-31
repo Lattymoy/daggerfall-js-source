@@ -11,8 +11,8 @@
   {
     "name": "WILD-INSURE-the-premium-rounded-down",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR))",
-    "new": "Math.max(1, Math.floor((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR))",
+    "old": "  Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR));",
+    "new": "  Math.max(1, Math.floor((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR));",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WILD-INSURE-in-force-at-once",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "at + WILD_INSURE_SETTLE_S <= fallAt",
-    "new": "at <= fallAt",
+    "old": "  Number.isSafeInteger(at) && Number.isSafeInteger(fallAt) && at + WILD_INSURE_SETTLE_S <= fallAt;",
+    "new": "  Number.isSafeInteger(at) && Number.isSafeInteger(fallAt) && at <= fallAt;",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "WILD-INSURE-the-pick-blind",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  if (k && !held(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }",
-    "new": "  if (k && !keep(k) && recordFits(wildRecord(k))) { bag.splice(bag.indexOf(k), 1); took.push([k, 'bag']); }",
+    "old": "  if (k && !held(k) && recordFits(wildRecord(k))) {",
+    "new": "  if (k && !keep(k) && recordFits(wildRecord(k))) {",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "WILD-INSURE-the-drop-blind",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "const held = (/** @type {any} */ it) => keep(it) || insured(it);",
-    "new": "const held = (/** @type {any} */ it) => keep(it);",
+    "old": "  const held = (/** @type {any} */ it) => keep(it) || insured(it); // WILD-INSURE: a policy keeps as the ledger does",
+    "new": "  const held = (/** @type {any} */ it) => keep(it); // WILD-INSURE: a policy keeps as the ledger does",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "WILD-INSURE-the-kept-line-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  return [head, WILD_TEXT.deathDrop(d.dropped), WILD_TEXT.deathInsured(d.insured ?? 0),",
-    "new": "  return [head, WILD_TEXT.deathDrop(d.dropped),",
+    "old": "    WILD_TEXT.deathInsured(d.insured ?? 0),\n    WILD_TEXT.deathBurnt(d.burnt ?? 0),",
+    "new": "    WILD_TEXT.deathBurnt(d.burnt ?? 0),",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "REPEAT-SHIELD-the-line-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  const head = d.shield ? WILD_TEXT.deathShield()",
-    "new": "  const head = false ? WILD_TEXT.deathShield()",
+    "old": "  const head = d.shield",
+    "new": "  const head = false",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]

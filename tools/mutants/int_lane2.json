@@ -267,7 +267,7 @@
   {
     "name": "INT9-LAW-A-KEPT-PIECE-TAKEN",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const aside = bag.map((it, i) => (held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)).filter((x) => x !== null);",
+    "old": "  const aside = bag\n    .map((it, i) =>\n      held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null,\n    )\n    .filter((x) => x !== null);",
     "new": "  const aside = [];",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -502,8 +502,8 @@
   {
     "name": "INT9-AUDIT-THE-GOLD-LAST",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  if (pile) took.push([pile, 'gold']);\n",
-    "new": "",
+    "old": "  if (pile) took.push([pile, 'gold']);\n  // a piece kept stands aside while the drop is taken, and comes back to its place - LETTERS-TENTH: a letter too",
+    "new": "  // a piece kept stands aside while the drop is taken, and comes back to its place - LETTERS-TENTH: a letter too",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -512,8 +512,8 @@
   {
     "name": "INT9-AUDIT-THE-DROP-IN-THE-PACKS-ORDER",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  drop.sort((a, b) => worth.get(b[0]) - worth.get(a[0]));",
-    "new": "",
+    "old": "  drop.sort((a, b) => worth.get(b[0]) - worth.get(a[0])); // stable: equal worth keeps the pack's order",
+    "new": "  // stable: equal worth keeps the pack's order",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -521,8 +521,8 @@
   {
     "name": "INT9-AUDIT-A-HEAVY-RECORD-TAKEN",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "(held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null)",
-    "new": "(held(it) || (letters && shareLetter(it)) ? [i, it] : null)",
+    "old": "    .map((it, i) =>\n      held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null,\n    )",
+    "new": "    .map((it, i) => (held(it) || (letters && shareLetter(it)) ? [i, it] : null))",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -558,8 +558,8 @@
   {
     "name": "INT9-AUDIT-THE-TOOK-BY-MARKS-ALONE",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    const same = (/** @type {any} */ it) => !!it && (s.u ? it.uid === s.u : s.p ? it.provenance === s.p\n      : ",
-    "new": "    const same = (/** @type {any} */ it) => !!it && (false ? 0 : false ? 0\n      : ",
+    "old": "      (s.u\n        ? it.uid === s.u\n        : s.p\n          ? it.provenance === s.p",
+    "new": "      (false\n        ? 0\n        : false\n          ? 0",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

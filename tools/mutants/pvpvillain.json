@@ -2,8 +2,8 @@
   {
     "name": "PVP-VILLAIN-red-line",
     "file": "src/systems/wild/villainLaw.js",
-    "old": "max: 10_000, red: 5_000,",
-    "new": "max: 10_000, red: 5_001,",
+    "old": "  red: 5_000,",
+    "new": "  red: 5_001,",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PVP-VILLAIN-per-level",
     "file": "src/systems/wild/villainLaw.js",
-    "old": "perLevel: 100, fromLevels: 5, unflagged: 2_000,",
-    "new": "perLevel: 100, fromLevels: 4, unflagged: 2_000,",
+    "old": "  fromLevels: 5,",
+    "new": "  fromLevels: 4,",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PVP-VILLAIN-unflagged-sum",
     "file": "src/systems/wild/villainLaw.js",
-    "old": "return levels + (flagged ? 0 : VILLAIN.unflagged);",
-    "new": "return levels;",
+    "old": "  return levels + (flagged ? 0 : VILLAIN.unflagged);",
+    "new": "  return levels;",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PVP-VILLAIN-self-defence-unread",
     "file": "src/systems/wild/villainLaw.js",
-    "old": "  if (defended) return 0;\n",
-    "new": "",
+    "old": "  if (defended) return 0;\n  const under =",
+    "new": "  const under =",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "PVP-VILLAIN-levels-edge",
     "file": "src/systems/wild/villainLaw.js",
-    "old": "under >= VILLAIN.fromLevels ?",
-    "new": "under > VILLAIN.fromLevels ?",
+    "old": "  const levels = under >= VILLAIN.fromLevels ? under * VILLAIN.perLevel : 0;",
+    "new": "  const levels = under > VILLAIN.fromLevels ? under * VILLAIN.perLevel : 0;",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-VILLAIN-monster-edge",
     "file": "src/systems/wild/villainLaw.js",
-    "old": "monsterLevel >= killerLevel - VILLAIN.monsterBelow",
-    "new": "monsterLevel >= killerLevel",
+    "old": "  Number.isFinite(killerLevel) && Number.isFinite(monsterLevel) && monsterLevel >= killerLevel - VILLAIN.monsterBelow\n    ? VILLAIN.monster\n    : 0;",
+    "new": "  Number.isFinite(killerLevel) && Number.isFinite(monsterLevel) && monsterLevel >= killerLevel ? VILLAIN.monster : 0;",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PVP-VILLAIN-raid-while-red",
     "file": "src/systems/wild/villainLaw.js",
-    "old": "(isVillain(n) ? 0 : VILLAIN.raid)",
-    "new": "VILLAIN.raid",
+    "old": "export const villainRaidLowers = (/** @type {unknown} */ n) => (isVillain(n) ? 0 : VILLAIN.raid);",
+    "new": "export const villainRaidLowers = (/** @type {unknown} */ n) => VILLAIN.raid;",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "PVP-VILLAIN-page-drop-allowed",
     "file": "src/systems/wild/pvpFlag.js",
-    "old": "  if (red) return t('pvp.flag.villain', 'You are a villain. Your PvP flag stays on.');   // PVP-VILLAIN: always in aggro\n",
-    "new": "",
+    "old": "  if (red) return t('pvp.flag.villain', 'You are a villain. Your PvP flag stays on.'); // PVP-VILLAIN: always in aggro\n  const left = PVP_FLAG.lockMs - (now - fightAt);",
+    "new": "  const left = PVP_FLAG.lockMs - (now - fightAt);",
     "tests": [
       "test/net/pvpvillain.test.js"
     ]

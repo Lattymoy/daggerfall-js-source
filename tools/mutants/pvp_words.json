@@ -2,8 +2,8 @@
   {
     "name": "PVP-WORDS-mountains-enter-bag-back",
     "file": "src/systems/wild/wildZone.js",
-    "old": "If another player kills you, they may take one uninsured worn piece, or gold.', { zone: WILD_NAME }); },",
-    "new": "If another player kills you, you drop what you carry.', { zone: WILD_NAME }); },",
+    "old": "      'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, they may take one uninsured worn piece, or gold.',",
+    "new": "      'You enter {zone}, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry.',",
     "tests": [
       "test/systems/wild/foekeeps.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "PVP-WORDS-mountains-chip-bag-back",
     "file": "src/systems/wild/wildZone.js",
-    "old": "twice in the heart). A player\\'s kill may cost uninsured gear or gold.'",
-    "new": "twice in the heart). If another player kills you, you drop what you carry.'",
+    "old": "      \"{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). A player's kill may cost uninsured gear or gold.\",",
+    "new": "      '{zone}: other players may attack you. Foes are four times as strong and drop up to twice the loot (25% more at the edge, twice in the heart). If another player kills you, you drop what you carry.',",
     "tests": [
       "test/systems/wild/foekeeps.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "PVP-WORDS-sea-enter-bag-back",
     "file": "src/systems/wild/etherWild.js",
-    "old": "If another player kills you, they may take one uninsured worn piece, or gold.', { word: ETHER_WORD }),",
-    "new": "If another player kills you, you drop what you carry.', { word: ETHER_WORD }),",
+    "old": "      \"You sail out of Veilhaven's peace onto the open {word} Ocean, an open PvP zone. Foes here are four times as strong. If another player kills you, they may take one uninsured worn piece, or gold.\",",
+    "new": "      \"You sail out of Veilhaven's peace onto the open {word} Ocean, an open PvP zone. Foes here are four times as strong. If another player kills you, you drop what you carry.\",",
     "tests": [
       "test/systems/wild/foekeeps.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "PVP-WORDS-kept-line-back",
     "file": "src/systems/wild/wildZone.js",
-    "old": "'Nothing dropped. You pay the usual death penalty.'",
-    "new": "'Nothing dropped. Only another player\\'s kill drops what you carry.'",
+    "old": "  deathKept: () => t('wild.death.kept', 'Nothing dropped. You pay the usual death penalty.'), // PVP-WORDS: no bag drops at a kill either",
+    "new": "  deathKept: () => t('wild.death.kept', \"Nothing dropped. Only another player's kill drops what you carry.\"), // PVP-WORDS: no bag drops at a kill either",
     "tests": [
       "test/systems/wild/foekeeps.test.js",
       "test/systems/wild/auditfoekeeps.test.js"
@@ -64,8 +64,8 @@
   {
     "name": "PVP-WORDS-claim-line-back",
     "file": "src/systems/wild/wildZone.js",
-    "old": "may take one uninsured worn piece of yours, or gold.`,",
-    "new": "may claim one piece of your worn gear.`,",
+    "old": "  deathPvp: (name) => `${name || 'Another player'} may take one uninsured worn piece of yours, or gold.`, // PVP-WORDS: the service's roll",
+    "new": "  deathPvp: (name) => `${name || 'Another player'} may claim one piece of your worn gear.`, // PVP-WORDS: the service's roll",
     "tests": [
       "test/systems/wild/foekeeps.test.js",
       "test/systems/wild/wildrejoin.test.js",
@@ -76,8 +76,8 @@
   {
     "name": "PVP-WORDS-walk-into-bag-back",
     "file": "src/systems/wild/wildZone.js",
-    "old": "Other players may kill you there and take a worn piece or gold.`,",
-    "new": "Other players may kill you there and take what you carry.`,",
+    "old": "  walkInto: `It leads into ${WILD_NAME}, an open PvP zone. Other players may kill you there and take a worn piece or gold.`,",
+    "new": "  walkInto: `It leads into ${WILD_NAME}, an open PvP zone. Other players may kill you there and take what you carry.`,",
     "tests": [
       "test/systems/wild/foekeeps.test.js",
       "test/systems/travel/tv8_party_walk.test.js"
@@ -87,8 +87,8 @@
   {
     "name": "PVP-WORDS-drop-late-back",
     "file": "src/systems/wild/etherWild.js",
-    "old": "'What your killer took when you died at sea has left your pack.'",
-    "new": "'What you dropped when you died at sea has left your pack. It lies where you fell.'",
+    "old": "  dropLate: () => t('sea.wild.dropLate', 'What your killer took when you died at sea has left your pack.'),",
+    "new": "  dropLate: () =>\n    t('sea.wild.dropLate', 'What you dropped when you died at sea has left your pack. It lies where you fell.'),",
     "tests": [
       "test/systems/wild/foekeeps.test.js"
     ],

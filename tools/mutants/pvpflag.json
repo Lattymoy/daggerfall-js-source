@@ -2,8 +2,8 @@
   {
     "name": "PVP-FLAG-the-level",
     "file": "src/systems/wild/pvpFlag.js",
-    "old": "lockMs: 60_000, level: 30,",
-    "new": "lockMs: 60_000, level: 1,",
+    "old": "export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30, sayMs: 10_000 });",
+    "new": "export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 1, sayMs: 10_000 });",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "PVP-FLAG-the-lock-short",
     "file": "src/systems/wild/pvpFlag.js",
-    "old": "lockMs: 60_000, level: 30,",
-    "new": "lockMs: 30_000, level: 30,",
+    "old": "export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30, sayMs: 10_000 });",
+    "new": "export const PVP_FLAG = Object.freeze({ lockMs: 30_000, level: 30, sayMs: 10_000 });",
     "tests": [
       "test/net/pvpflag.test.js"
     ],
@@ -263,8 +263,8 @@
   {
     "name": "PVP-30-the-level",
     "file": "src/systems/wild/pvpFlag.js",
-    "old": "Number.isSafeInteger(cl) && cl < PVP_FLAG.level;",
-    "new": "Number.isSafeInteger(cl) && cl <= PVP_FLAG.level;",
+    "old": "export const pvpYoung = (cl) => Number.isSafeInteger(cl) && cl < PVP_FLAG.level;",
+    "new": "export const pvpYoung = (cl) => Number.isSafeInteger(cl) && cl <= PVP_FLAG.level;",
     "tests": [
       "test/net/pvpflag.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "PVP-EDGE-the-distance-unread",
     "file": "src/systems/wild/zoneEdge.js",
-    "old": " && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;",
-    "new": ") walkedAt = now;",
+    "old": "  if (!inside && out && now - out.at <= ZONE_EDGE.ms && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;",
+    "new": "  if (!inside && out && now - out.at <= ZONE_EDGE.ms) walkedAt = now;",
     "tests": [
       "test/net/pvpflag.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "PVP-EDGE-the-time-unread",
     "file": "src/systems/wild/zoneEdge.js",
-    "old": "if (!inside && out && now - out.at <= ZONE_EDGE.ms &&",
-    "new": "if (!inside && out &&",
+    "old": "  if (!inside && out && now - out.at <= ZONE_EDGE.ms && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;",
+    "new": "  if (!inside && out && Math.hypot(x - out.x, z - out.z) <= ZONE_EDGE.m) walkedAt = now;",
     "tests": [
       "test/net/pvpflag.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "PVP-EDGE-the-walk-unspent",
     "file": "src/systems/wild/zoneEdge.js",
-    "old": "inside = false; walkedAt = -Infinity; return false; }",
-    "new": "inside = false; return false; }",
+    "old": "    walkedAt = -Infinity;\n    return false;",
+    "new": "    return false;",
     "tests": [
       "test/net/pvpflag.test.js"
     ]

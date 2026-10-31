@@ -227,8 +227,8 @@
   {
     "name": "PVP-HUD-the-head-for-a-name-alone",
     "file": "src/systems/wild/wildZone.js",
-    "old": "(d && !d.away && (d.killer || d.kill) ? WILD_TEXT.deathSlain(d.killer) : '')",
-    "new": "(d && !d.away && d.killer ? WILD_TEXT.deathSlain(d.killer) : '')",
+    "old": "export const wildDeathSlain = (d = _death) =>\n  d && !d.away && (d.killer || d.kill) ? WILD_TEXT.deathSlain(d.killer) : ''; // PVP-LINGER-RISE: away, its own line says it",
+    "new": "export const wildDeathSlain = (d = _death) => (d && !d.away && d.killer ? WILD_TEXT.deathSlain(d.killer) : ''); // PVP-LINGER-RISE: away, its own line says it",
     "tests": [
       "test/ui/pvphud.test.js"
     ]

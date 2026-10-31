@@ -139,8 +139,8 @@
   {
     "name": "PVP-SAFE-HIT-streets-strike-red-unread",
     "file": "src/systems/wild/villainHunt.js",
-    "old": "=> !streets || !!red;",
-    "new": "=> !streets;",
+    "old": "export const streetsStrike = (/** @type {boolean} */ streets, /** @type {boolean} */ red) => !streets || !!red;",
+    "new": "export const streetsStrike = (/** @type {boolean} */ streets, /** @type {boolean} */ red) => !streets;",
     "tests": [
       "test/systems/wild/pvpsafehit.test.js"
     ]

@@ -175,7 +175,7 @@ player first and the rest only when the page is idle.
 ### R4-7 - the smooth land's law and lines, built whole on the page (FIXED)
 
 `src/world/tamriel/tamrielLand.js:"export function landLaw(trace) {"`, `src/world/tamriel/tamrielLines.js:"export function lawLines(trace) {"`,
-`src/ui/tamrielInk.js:"export function tracedChains(trace) {"`, `src/systems/wild/cyrodiilZone.js:"export function zoneLineOf(trace, mask = cyrodiilMask()) {"`.
+`src/ui/tamrielInk.js:"export function tracedChains(trace) {"`, `src/systems/wild/cyrodiilZone.js:"export function zoneLineOf"`.
 SMOOTH-LAND (`03-World/Tamriel.md`; the owner: "Whatever is most detailed"), merged into this lane at ad2a8d71de, reads a
 pixel's province past the Bay through the land's smooth law, made once a trace on each thread that asks (`landLaw`: the
 labels, the land's and each province's distances over the padded picture), and draws every coast and border, the zone's

@@ -111,14 +111,14 @@ PvE is left whole. A departure: DFU's spells never crit.
 PVP-CAST-SKILL (2026-10-30: "it was ment to scale with skill"): before the crit, a harmful spell at a player lands at most
 0.15 x the caster's live Destruction, gear counted and no ceiling, as PvE's PVE-CAST holds it
 (`pvpSpellCrit.js:"export const pvpCastHold = (caster) =>"`). The bar's Damage is that size, no level dice
-(`pvpKit.js:"case 'damage': return [{ ...FIREBALL, ...kitMagnitude(PVP_CAST_PER_SKILL * skill, level) }];"`). Destruction
+(`pvpKit.js:"case 'damage':"`). Destruction
 870 and Critical Strike 860 land about 1,250 before the triangle and PVP-HIT. A departure: DFU sizes a spell by level.
 
 ## PVP-FLAG: in the open zone only a flagged player strikes
 
 "u flag and un flag instanly", "we changed it to 1m", "u cant flag on a party member": Caps Lock or the button at the right edge
 (`pvpFlagHost.js:"export function createPvpFlagHost"`) puts the flag up at once from level 30, and takes it down at once
-unless a PvP blow fell in the last minute (`pvpFlag.js:"export const PVP_FLAG = Object.freeze({ lockMs: 60_000, level: 30,"`).
+unless a PvP blow fell in the last minute (`pvpFlag.js:"export const PVP_FLAG"`).
 The zone word carries it; the referee holds the lock and says each flag to the room
 (`server/src/index.js:"_wildFlagSay(st, a, x, flagWas, wasIn, fl) {"`).
 
@@ -163,7 +163,7 @@ replaces ZONE-GRACE's rise arm (`Wild-Zone.md`); an entry from outside, away and
 ## PVP-EDGE: safe passage only for a walk in
 
 "only from ebterin from the edge", "if u tp in no safe passage": the game says the zone word's `ed` only when its last
-step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE = Object.freeze({ m: 60, ms: 5_000,"`), and
+step outside was close and just now (`zoneEdge.js:"export const ZONE_EDGE"`), and
 the referee grants an entry's safe passage on it alone (`wildRef.js:"if (!x.down && x.diedAt > -Infinity)".."!x.down &&"`). A
 teleport, a dungeon or a building left, a town's streets left (they are in the zone, PVP-SAFE-HIT's `sf`) and a rise
 grant none: the edge reads the zone's pixel alone (`world.js:"zoneEdgeSee(wildHere(), player.pos, Date.now())"`, AUDIT
@@ -201,7 +201,7 @@ Overworld's travel marks are left as they were. A departure: DFU has no player n
 
 "if u get attacked first u dont gain any villany to kill htem", "as well as if somoe attack your party", "so u cant get
 pushed in becoming a villian its a CHOICES": each character has a meter from 0 to 10,000
-(`villainLaw.js:"export const VILLAIN = Object.freeze({"`). A kill of a flagged player adds 100 for each level the
+(`villainLaw.js:"export const VILLAIN"`). A kill of a flagged player adds 100 for each level the
 victim is under the killer, from 5 under; an unflagged victim adds the same and 2,000. Hits add nothing. A kill adds
 nothing where the victim struck the killer, or one of its party, first in this fight - a blow between the two inside the
 aggro's minute (`wildRef.js:"two inside PVP_FLAG.lockMs".."/** @type {any} */ st,"`; the party is the hub's word, `server/src/index.js:"async _wildVillainy(st, fall, now) {"`).
@@ -242,18 +242,18 @@ quest are the page's word, as the Renown they pay is. A departure: DFU has no Pv
 
 "when u get aggroed or flag up change speed levciataion all that jazz", "sleep need disable", "sleep spell as well": while
 my flag is up in the open zone (aggro is a flag up, its skull gold), the law holds me
-(`pvpRules.js:"export const pvpLimited = () =>"`, wired by `pvpRulesHost.js:"export function createPvpRulesHost"`).
+(`pvpRules.js:"export const pvpLimited"`, wired by `pvpRulesHost.js:"export function createPvpRulesHost"`).
 Levitate lifts nothing and is not cast; the fall it ends costs no health, once
-(`pvpRules.js:"export function pvpLevitateBarred() {"`, spent at `shared.js:"if (inOutdoorWater || takePvpFallSpare()) return;"`).
+(`pvpRules.js:"export function pvpLevitateBarred"`, spent at `shared.js:"if (inOutdoorWater || takePvpFallSpare()) return;"`).
 The flag going up ends every PvE buff - Fortify, Shield, the Resists, the concealments, Jumping, Climbing, Slowfall, Free
 Action, Water Walking, Regenerate - a curse's and a duel's left whole
-(`pvpRules.js:"export function stripPvpBuffs(entity, edge) {"`).
+(`pvpRules.js:"export function stripPvpBuffs"`).
 
 "Item buff no": a worn item's buff goes at each poll too, and the worn set is recast once the flag drops (`pvpRulesHost.js:"} else if (takePvpHeldTaken())"`). While it is up none is cast on myself but Shield, the
-fight's own (`pvpRules.js:"export function pvpSpellRefusal(sp, limited = pvpLimited()) {"`), and the rest window stays shut.
+fight's own (`pvpRules.js:"export function pvpSpellRefusal"`), and the rest window stays shut.
 
 The pace on foot and the jump are held to an unbuffed best, Speed and Running 100 and Jumping 100 with Athleticism
-(`pvpRules.js:"export const PVP_LIMITS = Object.freeze({ mps: 11.71, jump: 1.6 });"`, read at
+(`pvpRules.js:"export const PVP_LIMITS"`, read at
 `motor.js:"export function registerMoveCap(name, fn) {"`). "No horse u demoibt", "Demount": a rider is set on foot and
 the saddle refused (`mountRig.js:"const barred = isRiding(mode) ? rideBarred() : null;"`). Paralyze never reaches a player:
 PVP-SPELLS lands a Damage or a Heal Health alone. A beast's change raises no flag - the flag host's own `set` alone sends
@@ -265,7 +265,7 @@ it. All of it is the client's: the relay refs only blows. A departure: DFU has n
 hotbar's PvP set (PVP-SET, below) holds the toolkit's spells, each pressed the hotbar's way
 (`pvpSpellMenu.js:"export function castKitSlot("`). Every other spell is refused under the flag, and only the toolkit's
 spells reach a player (`world.js:"if (!wildFair(peerId) || !sp?.pvpKit) return false;"`). The first bar's eight slots
-(`pvpKit.js:"export const PVP_KIT = Object.freeze({ slots: 8, reachM: 15, rounds: 12, lo: 100, hi: 300 });"`) are carried
+(`pvpKit.js:"export const PVP_KIT"`) are carried
 into the set. Outside PvP the spell keys work as before.
 
 PVP-SET (the owner, 2026-10-29: "player should get a whole second hot bar of the one we have", "hot bar need to use
@@ -275,7 +275,7 @@ the zone or the PvP menu is open (`pvpSpellMenu.js:"const inForce = () => on() |
 place, keys 1 to 0, held up whatever the bar's style (`uiSkin.js:"export function forceHotbar"`). It takes toolkit
 spells and items, never a book spell; the save keeps the normal set alone. It lives in the browser; an old bar
 (`dfo.pvpKitBar.v1`) lands on keys 3 to 0 with the normal set's potions on 1 and 2
-(`pvpSet.js:"export function pvpStoreFromV1(v1, main = []) {"`).
+(`pvpSet.js:"export function pvpStoreFromV1"`).
 
 The menu (the PvP spells button on the bar, or the spellbook's) makes a spell from its kind, its element or attribute
 and its icon, and lists it with its cost and where it lands. A row is dragged onto a slot, or clicked and then a slot
@@ -289,9 +289,9 @@ the PvP combat lock runs (`pvpFlagHost.js:"fightLeft: () =>"`): the set cannot c
 toolkit spell casts it. A departure: DFU has no PvP.
 
 "They get to pick damage and its a aoe", "Just our damage formula": Damage is the classic Fireball's record at Area at
-Range in the picked element (`pvpKit.js:"const FIREBALL = Object.freeze({"`), its harm the referee's path as before
+Range in the picked element (`pvpKit.js:"const FIREBALL ="`), its harm the referee's path as before
 (siegeSpellNumbers, the crit, the triangle, the ward, PVP-HIT); the bar's Poison is the one poison spell that reaches a
-player. Each cast costs its share of maximum magicka (`pvpKit.js:"export const KIT_SPELLS = Object.freeze({"`,
+player. Each cast costs its share of maximum magicka (`pvpKit.js:"export const KIT_SPELLS"`,
 `spellcost.js:"if (spell.pvpKitCost > 0)"`), and PVP-ARMOUR-CAST still adds to it.
 
 The rest are CasterOnly gifts, a minute long, scaled with the governing school from 100 to 300. "Goo choose make it
@@ -305,15 +305,15 @@ numbers. Inside a zone dungeon the bar is off. A departure: DFU has no PvP.
 
 PVP-KIT-REGEN (2026-10-30: "cure is worthless in pvp"): Regenerate takes Cure's slot, the classic Regenerate at
 2% to 4% of the receiver's health each round for a minute, 10% of maximum magicka
-(`pvpKit.js:"regen: Object.freeze({ cost: 10, scale: Object.freeze([2, 4]), icon: 1 }),"`). Each round is its receiver's own
+(`pvpKit.js:"regen: Object.freeze"`). Each round is its receiver's own
 rise, so PVP-HEAL's window caps it with every other heal. The relay prices it in Cure's place and banks its rounds
 as health credit for the minute, at most `regenKit` (4%) a second (`pvpVitals.js:"else if (id === 'regen')"`). A
 saved Cure slot loads as Regenerate
-(`pvpKit.js:"if (raw?.id === 'cure') raw = {"`). A departure: DFU has no PvP.
+(`pvpKit.js:"if (raw?.id === 'cure')"`). A departure: DFU has no PvP.
 
 PVP-KIT-REZ (the owner, 2026-10-29: "Add resurrection to the. Mages tool belt"): Resurrect is a slot spell at 25% of
-maximum magicka (`pvpKit.js:"resurrect: Object.freeze({ cost: 25, icon: 10 }),"`). It is the shop's own Resurrection,
-by touch (`pvpKit.js:"case 'resurrect': return [{ ...resurrectionSpell().effects[0] }];"`), with no 15 m gift: it goes
+maximum magicka (`pvpKit.js:"resurrect: Object.freeze"`). It is the shop's own Resurrection,
+by touch (`pvpKit.js:"case 'resurrect':"`), with no 15 m gift: it goes
 through RESURRECT1's path, a fallen party member's body within RESURRECT_REACH
 (`hostMagic.js:"try { bodies = fallenTarget(eye, dir, RESURRECT_REACH) ?? null; } catch { return null; }"`). The host
 hands only party members' bodies (`world.js:"const mate = cAcct ? social.others().find((m) => m.acct === cAcct) : null; if (!mate) continue;"`),
@@ -323,7 +323,7 @@ and the fallen player's own client rises only on its party's call. A departure: 
 
 "they only get a piece that isnt insured", "random roll on uninsure peices": a kill in the open zone gives its killer one
 worn piece, rolled by the account service on the fallen's record, never chosen and never rolled on a game
-(`pvpReward.js:"export function pvpRewardRoll(items, { insured = () => false, keep = () => false, pick }) {"`, called at
+(`pvpReward.js:"export function pvpRewardRoll"`, called at
 `server-account/src/wild.js:"const roll = burnt ? null : pvpRewardRoll(stored.items, { insured, keep, pick: (n) => pvpRollIndex(ctx.rand, n) });"`).
 The roll skips a piece a policy in force or a ledger hold keeps. The pick and the worn offer are gone: the relay signs
 a fall after `wildRef.js:"pickMs: 10_000,"`, so the fallen's first dead frame lays its body first, and the service reads
@@ -334,14 +334,14 @@ policy is spent; the piece stays. The gold lies in the remains as the killer's a
 collect pays none and spends none). It is never the fallen's: no reclaim, and no listing for her tab. "if gold will
 ovrweight a player u get a letter of credit": the killer's collect says its free weight (`free`), and the service pays
 coin where it fits, else a letter of credit for the whole - the trade window's own rule
-(`pvpReward.js:"export const pvpGoldPaid ="`). A tab that says no weight gets the letter.
+(`pvpReward.js:"export const pvpGoldPaid"`). A tab that says no weight gets the letter.
 
 "get rid of the bag drop": no bag piece drops at a kill
 (`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The purse's
 tenth and the letters' tenth went to the remains until PVP-NO-TENTH, below; the cart and the packs stay storage. A villain has no insurance:
-`pvpReward.js:"export const pvpInsuredFor ="` takes `villain`: "villian lose insurance" - a fallen whose kept meter is red holds no policy
+`pvpReward.js:"export const pvpInsuredFor"` takes `villain`: "villian lose insurance" - a fallen whose kept meter is red holds no policy
 (`wild.js:"{ villain: isVillain(Number(row.villainy)), among: stored.items }"`). "Insurance cost 20%": a
-premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR = 5;"`), which counts the
+premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR"`), which counts the
 piece's price and its lines' worth - and, since INSURE-ALL (`Wild-Zone.md` 4b), the item maker's gold, on every piece of
 gear. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
 
@@ -362,7 +362,7 @@ rises after its three seconds.
 DEATH-10 (2026-10-30, the owner: "give death a 10 second timer let them click respawn now but at 10 auto respawn
 them", "for pve and pvp"): online, Enter rises at once (`deathScreen.js:"export const DEATH_RISE_MIN_S = 0;"`) and the
 screen rises by itself at `deathScreen.js:"export const DEATH_AUTO_RISE_S = 10;"`, in the zone
-`wildZone.js:"export const WILD_DEATH_HOLD_S = 10;"`. The referee keeps a fallen down 10 s
+`wildZone.js:"export const WILD_DEATH_HOLD_S"`. The referee keeps a fallen down 10 s
 (`wildRef.js:"riseMs: 10_000,"`, the wire's word at most `wire.js:"export const WILD_DOWN_MS_MAX = 10_000;"`). A step
 out of the zone still heals whole only after the minute (`awayMs`). A party Resurrect has those 10 s, and the body
 still lies the minute. Relay world293. A departure: DFU rises after its three seconds.
@@ -376,12 +376,12 @@ is a worn piece, else one policy's gold, else THE LAST ROLL - only with no worn 
 (`wild.js:"const lastRoll = !burnt && collect && roll === null;"`). "Only give them some of their total or letter of
 credit or gold what ever =10%", "Letter only pay out 10% if they have not enough gold": a tenth of the coin and the
 letters together, the purse first, the letters (bag order) paying only what it cannot
-(`wildDropLaw.js:"export function takeWildLastRoll("`).
+(`wildDropLaw.js:"export function takeWildLastRoll"`).
 
 The gold goes to the killer the way a policy's gold does: escrowed, his alone in the remains, never the fallen's to take
 back, collected as coin where it fits his free weight, else one letter of credit for the whole. The collect says it is
 the last roll (`wild.js:"return parse(fall?.tk)?.last ? { ...paid, last: true } : paid;"`), and so does each side's text
-(`wildZone.js:"lastGold: (n) =>"`, `wildZone.js:"deathLast: (name, gold) =>"`). A held record, a REPEAT-SHIELD kill
+(`wildZone.js:"lastGold: (n) =>"`, `wildZone.js:"deathLast: (name, gold)"`). A held record, a REPEAT-SHIELD kill
 and a room that signs no collect take nothing. A foe's death keeps everything, as FOE-KEEPS says. The service is
 acct215. A departure: DFU has no PvP.
 
@@ -389,8 +389,8 @@ acct215. A departure: DFU has no PvP.
 
 "Guards constantly come after a villain", "like my self coming for me": while I am red on the villain meter in a
 settlement's streets of the open zone, the watch sends two guards at once, one more each 30 s, six at most
-(`villainHunt.js:"export const VILLAIN_HUNT = Object.freeze({ first: 2, stepMs: 30_000, max: 6, taken: 0.05 });"`). Each comes on
-the watch's ring at my level, my mirror turned to a guard's use (`villainHunt.js:"export function villainMirror(villain, { skill = skillValue, stat = liveStat } = {}) {"`):
+(`villainHunt.js:"export const VILLAIN_HUNT"`). Each comes on
+the watch's ring at my level, my mirror turned to a guard's use (`villainHunt.js:"export function villainMirror"`):
 every weapon skill my best attack skill (any weapon, Hand-to-Hand, Archery or Destruction), my Critical Strike, and
 Dodging the best of my Dodging, Restoration and Alteration, since a guard casts nothing. DFU has no Block skill: a
 shield's block reads six attributes, and each of mine that beats the guard's own is its. It keeps its own kit.
@@ -401,7 +401,7 @@ send it away; once I leave the streets, fall or am red no more, every hunter wal
 (`pvpGuardsHost.js:"export function createPvpGuardsHost"`), as DFU's watch does at the location's edge.
 
 "a villain can always take damage in a town": the streets keep no peace for a villain
-(`villainHunt.js:"export const peaceFor = "`). Red, my word on the zone stays 1 there, and a red body there is fair to
+(`villainHunt.js:"export const peaceFor"`). Red, my word on the zone stays 1 there, and a red body there is fair to
 every door of mine. A player in the streets is at peace, and strikes a villain alone (PVP-SAFE-HIT, below). Guards are
 this client's NPCs, so the hunt is the client's, on the meter the relay already says (`wref` `vil`); a villain who
 enters the zone in a town is hunted from its first step out of the streets. THE FOUR HOSTS: `world.js` wired;
@@ -447,7 +447,7 @@ is kept in its room's storage for a week (`pvpLinger.js:"export async function l
 that it stands in the zone is a `down` word with `aw` 1 and its killer's name
 (`wildLinger.js:"export function lingerAwayWord"`): ten seconds on the death screen, or the referee's own wait if it is
 still down, then the zone's rise in the nearest town outside it, with no safe passage (PVP-DEATH). The screen says who
-killed it (`wildZone.js:"deathAway: "`). A log-in in another room, or after a week, hears nothing, and the player stands
+killed it (`wildZone.js:"deathAway: (/** @type {string | null | undefined} */ name)"`). A log-in in another room, or after a week, hears nothing, and the player stands
 where the save left it. The relay says it, not the account service: no account change.
 
 ## PVP-HUD: the combat lock, shown
@@ -479,7 +479,7 @@ share and a resist are not shown. A name is the one my name layer shows; a stran
 green name and bar, no skull, and a bar under 20% flashes (`nameLayer.js:"export const pvpBarLow = "`).
 
 My kill says "You slew" (`pvpHud.js:"export const pvpSlewText = "`); the fallen's screen heads its lines "Slain by"
-(`wildZone.js:"export const wildDeathSlain = "`). A villain the room says is red is marked on the Overworld where the
+(`wildZone.js:"export const wildDeathSlain"`). A villain the room says is red is marked on the Overworld where the
 law would hide it, nameless (`travelViewMarks.js:"const villainMark = (id, at, dropped) => {"`); one in no room of mine
 is unknown to this client. The owed level 29 reads "Level 29 · 1 level owed", its button "Go to 30"
 (`pvp30Ask.js:"export const pvp30Owed"`). Tests: `test/ui/pvphud.test.js`. A departure: DFU has no PvP.

@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-PVP-EASE-L1-3-every-carried-policy-spent",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  return [...new Set(would.taken.filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];",
-    "new": "  return [...new Set((Array.isArray(entity?.items) ? entity.items : []).filter((it) => insured(it)).map(keyOf).filter((k) => k != null))];",
+    "old": "      would.taken",
+    "new": "      (Array.isArray(entity?.items) ? entity.items : [])",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-PVP-EASE-L3-7-out-of-the-zone-said",
     "file": "src/systems/wild/wildGrace.js",
-    "old": "      if (!inZone) { if (mine || until.size) this.clear(); return; }\n",
-    "new": "",
+    "old": "      if (!inZone) {\n        if (mine || until.size) this.clear();\n        return;\n      }\n      const at = now();",
+    "new": "      const at = now();",
     "tests": [
       "test/net/zonegrace.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-PVP-EASE-L2-1-the-fall-unlocked",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS);",
-    "new": "  noteWildBlow(Date.now());",
+    "old": "  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS); // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first",
+    "new": "  noteWildBlow(Date.now()); // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first",
     "tests": [
       "test/systems/wild/combatlock.test.js"
     ]

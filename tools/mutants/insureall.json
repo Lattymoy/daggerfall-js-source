@@ -11,7 +11,7 @@
   {
     "name": "INSURE-ALL-a-stack-insurable",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1)) return false;",
+    "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1))\n    return false;",
     "new": "  if (item.bound === true || item.questItem === true) return false;",
     "tests": [
       "test/systems/wild/insureall.test.js"
@@ -20,7 +20,7 @@
   {
     "name": "INSURE-ALL-a-bound-or-quest-piece-insurable",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1)) return false;",
+    "old": "  if (item.bound === true || item.questItem === true || (Number.isInteger(item.stackCount) && item.stackCount > 1))\n    return false;",
     "new": "  if (Number.isInteger(item.stackCount) && item.stackCount > 1) return false;",
     "tests": [
       "test/systems/wild/insureall.test.js"
@@ -31,8 +31,8 @@
   {
     "name": "INSURE-ALL-the-plain-id-unread",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "  return typeof item.uid === 'string' && ITEM_UID_RE.test(item.uid) ? item.uid : null;\n}",
-    "new": "  return null;\n}",
+    "old": "  return typeof item.uid === 'string' && ITEM_UID_RE.test(item.uid) ? item.uid : null;",
+    "new": "  return null;",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -49,8 +49,8 @@
   {
     "name": "INSURE-ALL-the-makers-gold-unread",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR))",
-    "new": "Math.max(1, Math.ceil(itemWorth(item) / WILD_INSURE_DIVISOR))",
+    "old": "export const wildPremium = (item) =>\n  Math.max(1, Math.ceil((itemWorth(item) + wildMakerGold(item)) / WILD_INSURE_DIVISOR));",
+    "new": "export const wildPremium = (item) => Math.max(1, Math.ceil(itemWorth(item) / WILD_INSURE_DIVISOR));",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "INSURE-ALL-a-side-effect-paid",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "g + Math.max(0, enchantmentRowCost(e) ?? 0)",
-    "new": "g + Math.abs(enchantmentRowCost(e) ?? 0)",
+    "old": "  return rows.reduce((g, e) => g + Math.max(0, enchantmentRowCost(e) ?? 0), 0) * GOLD_PER_ENCHANTMENT_POINT;",
+    "new": "  return rows.reduce((g, e) => g + Math.abs(enchantmentRowCost(e) ?? 0), 0) * GOLD_PER_ENCHANTMENT_POINT;",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -67,8 +67,8 @@
   {
     "name": "INSURE-ALL-the-rows-own-cost-read",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "g + Math.max(0, enchantmentRowCost(e) ?? 0)",
-    "new": "g + Math.max(0, e.enchantCost ?? 0)",
+    "old": "  return rows.reduce((g, e) => g + Math.max(0, enchantmentRowCost(e) ?? 0), 0) * GOLD_PER_ENCHANTMENT_POINT;",
+    "new": "  return rows.reduce((g, e) => g + Math.max(0, e.enchantCost ?? 0), 0) * GOLD_PER_ENCHANTMENT_POINT;",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -76,8 +76,8 @@
   {
     "name": "INSURE-ALL-the-gold-per-point-dropped",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "Math.max(0, enchantmentRowCost(e) ?? 0), 0) * GOLD_PER_ENCHANTMENT_POINT;",
-    "new": "Math.max(0, enchantmentRowCost(e) ?? 0), 0);",
+    "old": "  return rows.reduce((g, e) => g + Math.max(0, enchantmentRowCost(e) ?? 0), 0) * GOLD_PER_ENCHANTMENT_POINT;",
+    "new": "  return rows.reduce((g, e) => g + Math.max(0, enchantmentRowCost(e) ?? 0), 0);",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "INSURE-ALL-the-ladders-row-paid",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "item.enchantments.filter(makerLaid) : [];",
-    "new": "item.enchantments : [];",
+    "old": "  const rows = Array.isArray(item?.enchantments) ? item.enchantments.filter(makerLaid) : [];",
+    "new": "  const rows = Array.isArray(item?.enchantments) ? item.enchantments : [];",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "INSURE-ALL-a-shared-key-kept",
     "file": "src/systems/wild/wildInsureLaw.js",
-    "old": "    if (seen.has(k)) set.delete(k);\n",
-    "new": "",
+    "old": "    if (seen.has(k)) set.delete(k);\n    seen.add(k);",
+    "new": "    seen.add(k);",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "INSURE-ALL-the-saved-by-the-ledger-key",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const keyOf = /** @type {any} */ (insured).keyOf ?? ledgerKeyOf;",
-    "new": "  const keyOf = ledgerKeyOf;",
+    "old": "  const keyOf = /** @type {any} */ (insured).keyOf ?? ledgerKeyOf; // INSURE-ALL: the policy's own key (wildInsureLaw.js insureKeyOf)",
+    "new": "  const keyOf = ledgerKeyOf; // INSURE-ALL: the policy's own key (wildInsureLaw.js insureKeyOf)",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "INSURE-ALL-the-policy-pick-by-the-ledger-key",
     "file": "src/systems/wild/pvpReward.js",
-    "old": "offer.filter((it) => insured(it)).map(insureKeyOf)",
-    "new": "offer.filter((it) => insured(it)).map((it) => it.provenance ?? null)",
+    "old": "        .map(insureKeyOf)",
+    "new": "        .map((it) => it.provenance ?? null)",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]

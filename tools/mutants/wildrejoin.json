@@ -121,8 +121,8 @@
   {
     "name": "WILD-REJOIN-the-served-time-lost-to-a-later-word",
     "file": "src/systems/wild/wildZone.js",
-    "old": "Number(d.served ?? _death?.served) || 0",
-    "new": "Number(d.served) || 0",
+    "old": "  const served = d ? Math.min(WILD_DEATH_HOLD_S, Math.max(0, Number(d.served ?? _death?.served) || 0)) : 0;",
+    "new": "  const served = d ? Math.min(WILD_DEATH_HOLD_S, Math.max(0, Number(d.served) || 0)) : 0;",
     "tests": [
       "test/systems/wild/wildrejoin.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "WILD-REJOIN-the-hall-dropped",
     "file": "src/systems/wild/wildRejoin.js",
-    "old": "dungeon: here.dungeon ?? null,",
-    "new": "dungeon: null,",
+    "old": "      return { p: [...p], room, dungeon: here.dungeon ?? null, px: here.px ?? null };",
+    "new": "      return { p: [...p], room, dungeon: null, px: here.px ?? null };",
     "tests": [
       "test/systems/wild/wildrejoin.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WILD-REJOIN-the-pixel-dropped",
     "file": "src/systems/wild/wildRejoin.js",
-    "old": "px: here.px ?? null };",
-    "new": "px: null };",
+    "old": "      return { p: [...p], room, dungeon: here.dungeon ?? null, px: here.px ?? null };",
+    "new": "      return { p: [...p], room, dungeon: here.dungeon ?? null, px: null };",
     "tests": [
       "test/systems/wild/wildrejoin.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "WILD-REJOIN-the-callers-array-kept",
     "file": "src/systems/wild/wildRejoin.js",
-    "old": "return { p: [...p], room,",
-    "new": "return { p, room,",
+    "old": "      return { p: [...p], room, dungeon: here.dungeon ?? null, px: here.px ?? null };",
+    "new": "      return { p, room, dungeon: here.dungeon ?? null, px: here.px ?? null };",
     "tests": [
       "test/systems/wild/wildrejoin.test.js"
     ]

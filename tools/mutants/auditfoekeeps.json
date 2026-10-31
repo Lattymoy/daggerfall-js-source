@@ -2,8 +2,8 @@
   {
     "name": "AFK-H1-the-word-unkept",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  _fell = fell ?? _fell;\n  _killed = true;",
-    "new": "  _fell = fell ?? _fell;",
+    "old": "  _killed = true;\n  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS); // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first",
+    "new": "  noteWildBlow(Date.now() + WILD_STORE_LOCK_MS); // AUDIT PVP-EASE L2-1: the take is a pick's minute behind the fall - a Resurrect inside it stores nothing first",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AFK-H1-the-screen-unnamed",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  if (_death) _death = { ..._death, kill: true, killer: _death.killer ?? (typeof name === 'string' && name ? name : null) };",
-    "new": "",
+    "old": "  if (_death)\n    _death = { ..._death, kill: true, killer: _death.killer ?? (typeof name === 'string' && name ? name : null) };\n}",
+    "new": "}",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "AFK-H1-the-first-frame-forgets",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  else if (d.kill === true || (typeof d.killer === 'string' && d.killer)) _killed = true;",
-    "new": "  else _killed = d.kill === true || (typeof d.killer === 'string' && !!d.killer);",
+    "old": "  } else if (d.kill === true || (typeof d.killer === 'string' && d.killer)) _killed = true;",
+    "new": "  } else _killed = d.kill === true || (typeof d.killer === 'string' && !!d.killer);",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AFK-H1-the-clear-left-out",
     "file": "src/systems/wild/wildZone.js",
-    "old": "  if (!d) { _killed = false; _fell = null; }",
-    "new": "  if (!d) { _fell = null; }",
+    "old": "    _killed = false;\n    _fell = null;",
+    "new": "    _fell = null;",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AFK-H1-a-kill-shown-kept",
     "file": "src/systems/wild/wildZone.js",
-    "old": "    : d.killer || d.kill ? (d.claimed",
-    "new": "    : d.killer ? (d.claimed",
+    "old": "    : d.killer || d.kill",
+    "new": "    : d.killer",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -104,8 +104,8 @@
   {
     "name": "AFK-O1-the-kept-line-again",
     "file": "src/systems/wild/wildZone.js",
-    "old": "'Nothing dropped. You pay the usual death penalty.'",
-    "new": "'You keep what you carry. You pay the usual death penalty.'",
+    "old": "  deathKept: () => t('wild.death.kept', 'Nothing dropped. You pay the usual death penalty.'), // PVP-WORDS: no bag drops at a kill either",
+    "new": "  deathKept: () => t('wild.death.kept', 'You keep what you carry. You pay the usual death penalty.'), // PVP-WORDS: no bag drops at a kill either",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js",
       "test/systems/wild/foekeeps.test.js"
@@ -307,8 +307,8 @@
   {
     "name": "AFK-LT-the-share-whole",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    const n = Math.floor(it.value / WILD_GOLD_DIVISOR);\n    if (n > 0) { it.value -= n; out.push([it, n]); }",
-    "new": "    const n = it.value;\n    if (n > 0) { it.value -= n; out.push([it, n]); }",
+    "old": "      const n = Math.floor(it.value / WILD_GOLD_DIVISOR);",
+    "new": "      const n = it.value;",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "AFK-LT-the-letter-dropped-too",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "held(it) || (letters && shareLetter(it)) || (wildCanLose(it)",
-    "new": "held(it) || (wildCanLose(it)",
+    "old": "    .map((it, i) =>\n      held(it) || (letters && shareLetter(it)) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null,\n    )",
+    "new": "    .map((it, i) => (held(it) || (wildCanLose(it) && !recordFits(wildRecord(it))) ? [i, it] : null))",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -325,8 +325,8 @@
   {
     "name": "AFK-LT-the-kept-letter-shared",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    if (!shareLetter(it) || keep(it)) continue;",
-    "new": "    if (!shareLetter(it)) continue;",
+    "old": "      if (!shareLetter(it) || keep(it)) continue;",
+    "new": "      if (!shareLetter(it)) continue;",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -334,8 +334,8 @@
   {
     "name": "AFK-LT-a-quests-letter-shared",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "it.templateIndex === TEMPLATES.Letter_of_credit && !it.questItem\n  && typeof it.uid",
-    "new": "it.templateIndex === TEMPLATES.Letter_of_credit\n  && typeof it.uid",
+    "old": "  !it.questItem &&\n  typeof it.uid === 'string' &&",
+    "new": "  typeof it.uid === 'string' &&",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ],
@@ -345,7 +345,7 @@
   {
     "name": "AFK-LT-the-pile-without-it",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  const pile = lettersGold > 0 ? (coin ? Object.assign(coin, { stackCount: coin.stackCount + lettersGold }) : goldStack(lettersGold)) : coin;",
+    "old": "  const pile =\n    lettersGold > 0\n      ? coin\n        ? Object.assign(coin, { stackCount: coin.stackCount + lettersGold })\n        : goldStack(lettersGold)\n      : coin;",
     "new": "  const pile = coin;",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "AFK-LT-the-games-letter-unlowered",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "    it.value = Math.max(0, it.value - n);\n",
-    "new": "",
+    "old": "    it.value = Math.max(0, it.value - n);\n    out.letters = { n: (out.letters?.n ?? 0) + 1, gold: (out.letters?.gold ?? 0) + n };",
+    "new": "    out.letters = { n: (out.letters?.n ?? 0) + 1, gold: (out.letters?.gold ?? 0) + n };",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "AFK-LT-the-line-unsaid",
     "file": "src/systems/wild/wildZone.js",
-    "old": " WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0),",
-    "new": "",
+    "old": "    d.last ? WILD_TEXT.deathLast(d.killer, d.last) : WILD_TEXT.deathLettersTenth(d.letters?.tenth ?? 0),\n    zoneWord('deathHold', d.kind ?? WILD_KIND),",
+    "new": "    d.last ? WILD_TEXT.deathLast(d.killer, d.last) : zoneWord('deathHold', d.kind ?? WILD_KIND),",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "AFK-LT-the-word-unsaid",
     "file": "src/systems/wild/wildDeath.js",
-    "old": "packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS });",
-    "new": "packs: WILD_FALL_PACKS });",
+    "old": "export const wildFallWords = () => ({ packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS }); // AUDIT FOE-KEEPS LETTERS-TENTH: this game lowers a letter by its share",
+    "new": "export const wildFallWords = () => ({ packs: WILD_FALL_PACKS }); // AUDIT FOE-KEEPS LETTERS-TENTH: this game lowers a letter by its share",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]
