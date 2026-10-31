@@ -243,9 +243,9 @@ export function withdrawEliteLoot(entity) {
 /** THE GLOW: a slow pulse, 0.55..1, phased per foe so a pack does not breathe in step. 0 for anything not elite.
  *  STAFF-EVENT: a mini boss's is the same pulse past STAFF_BOSS_GLOW, which the shaders read as its yellow. */
 export function eliteGlow(entity, nowSeconds, phase = 0) {
-  if (!entity?.eliteFoe) return 0;
+  if (!entity?.eliteFoe && !isRaidBoss(entity)) return 0;
   const k = 0.775 + 0.225 * Math.sin(nowSeconds * 3.2 + phase);
-  return entity.staffBoss ? STAFF_BOSS_GLOW + k : k;
+  return bossGlowOffset(entity) + k;
 }
 /** Put the glow on a billboard batch (written only when it changes - the draw reads 0 for undefined). */
 /** How far an elite's quad reaches past its sprite (left, bottom, right, top, as fractions of the sprite): room for the
@@ -264,20 +264,22 @@ export function setBatchEliteGlow(batch, k, nowSeconds = 0) {
  *  the rim to close (no room above for embers). */
 export const ELITE_CORPSE_GLOW = 0.85;
 export const ELITE_CORPSE_PAD = Object.freeze([0.08, 0.03, 0.08, 0.03]);
-export const isEliteCorpse = (entity) => !!entity?.eliteFoe;
-export function markEliteCorpseBatch(batch, phase = Math.random(), boss = false) {
+export const isEliteCorpse = (entity) => !!entity?.eliteFoe || isRaidBoss(entity);   // RAID-BOSS-LOOK: a raid boss's corpse keeps its outline too
+export function markEliteCorpseBatch(batch, phase = Math.random(), boss = 0) {
   if (!batch) return;
   // negative: a corpse - its magnitude is the pulse's phase (0.05..1), so bodies side by side do not breathe in step;
   // the shader runs the pulse off its own clock (systems/hitFlash.js eliteRimK). STAFF-EVENT: a mini boss's past
   // STAFF_BOSS_GLOW - its outline stays yellow
-  batch.eliteGlow = -((boss ? STAFF_BOSS_GLOW : 0) + 0.05 + 0.95 * Math.min(1, Math.max(0, phase)));
+  // RAID-BOSS-LOOK: `boss` is bossGlowOffset's number (true still reads as a mini boss's)
+  const off = boss === true ? STAFF_BOSS_GLOW : Number(boss) || 0;
+  batch.eliteGlow = -(off + 0.05 + 0.95 * Math.min(1, Math.max(0, phase)));
   batch.elitePad = ELITE_CORPSE_PAD;
 }
 /** An elite's body lies a quarter larger too, like the elite that fell (STAFF-EVENT: a mini boss's as large as it stood). */
 export const eliteCorpseSize = (size, entity) => (isEliteCorpse(entity) && size ? { ...size, w: size.w * eliteSize(entity), h: size.h * eliteSize(entity) } : size);
 
 /** The size a sprite is drawn at (STAFF-EVENT: a mini boss's its event's). */
-export const eliteSize = (entity) => (entity?.staffBoss ? entity.staffBoss.size : entity?.raidLeader ? RAID_LEADER_SIZE : entity?.eliteFoe ? ELITE_FOE_SIZE : 1);   // RAID5: a raid's leader, larger
+export const eliteSize = (entity) => (entity?.staffBoss ? entity.staffBoss.size : isRaidBoss(entity) ? RAID_BOSS_SIZE : entity?.raidLeader ? RAID_LEADER_SIZE : entity?.eliteFoe ? ELITE_FOE_SIZE : 1);   // RAID5: a raid's leader, larger
 
 // ═══ RAID5: A RAID'S LEADER (bible/03-World/Raiding-Parties.md RAID5) ═══════════════════════════════════════════════
 /** How much larger a raid's leader is drawn than its kind. */
@@ -327,6 +329,20 @@ export const staffBossHit = (damage, maxHealth, fighters) =>
   Math.min(damage, Math.max(1, Math.round(((maxHealth > 0 ? maxHealth : 1) * STAFF_BOSS_HIT_SHARE) / Math.max(1, fighters))));
 /** Is this entity a staff event's mini boss? */
 export const isStaffBoss = (entity) => !!entity?.staffBoss;
+
+// ═══ RAID-BOSS-LOOK (2026-10-31, the owner asked for raid bosses as large as a staff event's mini boss, with a glow of
+// their own): a PvE raid boss (systems/pve/pveTemplates.js category raidBoss - pve/pveGrant.js standTemplate marks the
+// entity, a puppet's too) is drawn at a mini boss's default size and outlined in its own colour (systems/hitFlash.js
+// RAID_BOSS_RIM), the pulse past RAID_BOSS_GLOW. Looks alone: its numbers stay its template's.
+/** The glow's offset that says a raid boss to the shaders: a living one's pulse 4.55..5, its corpse's -4.05..-5. */
+export const RAID_BOSS_GLOW = 4;
+/** How much larger a raid boss is drawn than its kind: a staff mini boss's default (net/staffEvent/staffEventLaw.js
+ *  STAFF_BOSS_SIZE_DEFAULT 200%). */
+export const RAID_BOSS_SIZE = 2;
+/** Is this entity a PvE raid boss? */
+export const isRaidBoss = (entity) => entity?.pveCategory === 'raidBoss';
+/** The shaders' colour offset for an outlined foe: a raid boss's, a mini boss's, else an elite's 0. */
+export const bossGlowOffset = (entity) => (isRaidBoss(entity) ? RAID_BOSS_GLOW : entity?.staffBoss ? STAFF_BOSS_GLOW : 0);
 /**
  * Make a freshly built foe a staff event's mini boss: an elite (the flag, the blows, the drop), `healthX` times its health
  * (staff's pick on the start form, 1-100; STAFF_BOSS_HEALTH_MULT unset) or BOSS-HP's `hp`, the exact health staff typed (it

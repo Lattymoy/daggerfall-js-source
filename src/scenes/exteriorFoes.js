@@ -116,7 +116,7 @@ import { createHostNpcBodies, npcBodiesOn } from '../characters/npcBodies.js';  
 import { isBodyFoe, foeActor, foeFx, foeWireLook, applyWireLook, kitWire } from '../characters/foeBodies.js';   // WATCH-PROTECTS: a townsperson's one blow
 import { raidLeaderNameOf } from '../systems/raidKinds.js';   // RAID5: a raid's leader, by its party's word
 import { huntMarkSeen } from '../systems/hunt/namedMark.js';   // HUNTERS-MARK-II: a hunter's named mark, read off its record
-import { elitesAllowed, promoteEliteFoe, promoteRaidLeader, rollOverworldElite, grantEliteLoot, eliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, isEliteCorpse, markEliteCorpseBatch, isStaffBoss, promoteStaffBoss, STAFF_BOSS_SPELL_TAKEN, staffBossHit, STAFF_BOSS_FIGHTERS_MAX } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
+import { elitesAllowed, promoteEliteFoe, promoteRaidLeader, rollOverworldElite, grantEliteLoot, eliteLoot, eliteGlow, setBatchEliteGlow, eliteSize, bossGlowOffset, isEliteCorpse, markEliteCorpseBatch, isStaffBoss, promoteStaffBoss, STAFF_BOSS_SPELL_TAKEN, staffBossHit, STAFF_BOSS_FIGHTERS_MAX } from '../systems/eliteFoes.js';   // ELITE FOES: 5% of the wilds' foes   // HITFLASH1
 import { grantKindOf, grantElite } from '../net/grantLaw.js';   // GRANT3-GRANT4: a stand's grant - its kind, its member's elite (bible/11-Multiplayer/Spawn-Grants.md)
 import { standTemplate, templateMayBeElite, rankTemplateElite, revenantTemplate, templateBand } from '../systems/pve/pveGrant.js';   // FIXED-PVE: a template foe at its own level, health and blow
 
@@ -719,7 +719,7 @@ export function createExteriorFoes({ renderer, collider, fetchBytes, getTexture,
     sizeScale: eliteSize(f.entity) * wildGiantSize(f.entity),   // ELITE FOES: the body as large as the elite was (WILD3: and a giant of the open zone its four)
   }).then((c) => {
     if (!c) return;
-    if (isEliteCorpse(f.entity)) { c.elite = true; c.elitePhase = Math.random(); c.boss = isStaffBoss(f.entity); markEliteCorpseBatch(c.batch, c.elitePhase, c.boss); }   // ELITE FOES: the blue outline stays and pulses, the embers stop
+    if (isEliteCorpse(f.entity)) { c.elite = true; c.elitePhase = Math.random(); c.boss = bossGlowOffset(f.entity); markEliteCorpseBatch(c.batch, c.elitePhase, c.boss); }   // ELITE FOES: the blue outline stays and pulses, the embers stop
     // AUDIT-39r: the sweep took this pool's world while the marker
     // was still loading its art. Its pixelKey would be the
     // departure pixel, which the teleport has already torn down -
