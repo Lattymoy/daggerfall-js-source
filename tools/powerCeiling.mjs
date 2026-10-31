@@ -6,11 +6,12 @@
 //
 //   node tools/powerCeiling.mjs        the tops, the ceilings and the kit each top is reached with
 import { isMain } from './lib/isMain.mjs';
+import { SET_TIER_BLOW, POWER_BLOW } from '../src/systems/powerBlows.js';
 import { AFFIX_RANGES, allLegendaries, powerOf } from '../src/systems/loot/lootRarity.js';
 import '../src/systems/thunderlock.js';   // registers The Last Lock, a Legendary record of its own
 import { GILDED_RECORDS } from '../src/systems/gilded.js';
 import { SIGIL_POWER_MAX, SIGIL_STAGES } from '../src/systems/sigil/sigil.js';
-import { SIGIL_SETS, tierValues, SET_STAGE_MAX, RAMPAGE_STACKS, BLOOD_STACKS, COIL_STACKS, UNBROKEN_LESS } from '../src/systems/sigil/sigilSets.js';
+import { SIGIL_SETS, tierValues, SET_STAGE_MAX, UNBROKEN_LESS } from '../src/systems/sigil/sigilSets.js';
 import {
   STAT_DEFS, BLOW_CAP, BLOW_TOTAL_CAP, CAST_COST_CAP, blowPct, statDef, ATTRIBUTES, COMBAT_SKILLS, LIFE_SKILLS, FIRM_ELEMENTS, SCHOOLS, GATHERING,
   CRAFTING, ACTS,
@@ -27,43 +28,14 @@ import { WEAPON_HANDS } from '../src/characters/equipRules.js';
 export const SET_PLACE_COUNT = 9;
 
 // ── what each set tier and each Legendary power does to a blow or a hurt ───────────────────────────────────────────
-/** A set tier's most onto one blow (per cent), at its numbers `v` - sigilSetPowers.js setBlow, read at its best moment. */
-export const SET_TIER_BLOW = Object.freeze({
-  bloodfury: (v) => v.more * 2,                  // twice below half health
-  rampage: (v) => v.stack * RAMPAGE_STACKS,
-  nightfall: (v) => v.more,                      // an unaware foe
-  wrath: (v) => v.more,
-  riposte: (v) => v.more,
-  'run-them-down': (v) => v.more,
-  'no-escape': (v) => v.more,
-  'blood-for-blood': (v) => v.stack * BLOOD_STACKS,
-  constrict: (v) => v.stack * COIL_STACKS,
-  'tallow-ward': (v) => v.more,
-  'battlemages-discipline': (v) => v.armed,      // a foe that takes the cast's element whole
-  'bound-in-silk': (v) => v.more,
-  undertow: (v) => v.more,                       // the open sea
-});
+// AUDIT POTION-MIGHT D8: what a tier and a power add to a blow, in their one home (src/systems/powerBlows.js)
+export { SET_TIER_BLOW, POWER_BLOW } from '../src/systems/powerBlows.js';
 /** A set tier's share off a hurt (per cent) - sigilSetPowers.js setDamageMod. Pools (Iron Hide's ward, the Reprieve's
  *  shield) spend points, not shares, and stand outside the composite as a Shield spell's pool does. */
 export const SET_TIER_GUARD = Object.freeze({
   unbroken: () => UNBROKEN_LESS,
   'hold-the-line': (v) => v.less,
   gearward: (v) => v.lighter,
-});
-/** A Legendary or Gilded power's most onto one blow - lootPowers.js lootBlow - and the moment it needs: `fresh` the
- *  foe's first landed blow, `struck` a foe already struck to every stack, `any` either. */
-export const POWER_BLOW = Object.freeze({
-  bane: { pct: (p) => p.pct, moment: 'any' },
-  unaware: { pct: (p) => p.pct, moment: 'any' },
-  sanctified: { pct: (p) => p.pct, moment: 'any' },
-  flow: { pct: (p) => p.pct * p.max, moment: 'any' },   // its stacks are mine, from any foe
-  moon: { pct: (p) => p.pct + p.beast, moment: 'any' },
-  rage: { pct: (p) => p.pct, moment: 'any' },
-  execute: { pct: (p) => p.pct, moment: 'any' },
-  firstblood: { pct: (p) => p.pct, moment: 'fresh' },
-  toll: { pct: (p) => p.pct, moment: 'any' },           // the third shot of the weapon, at any foe
-  undertow: { pct: (p) => p.pct * p.max, moment: 'struck' },
-  broadside: { pct: (p) => p.pct, moment: 'struck' },   // the other hand's mark: the pistol's shot landed on this foe
 });
 /** A power's share off a hurt - lootPowers.js lootDamageMod. Dawnward and the Raven turn a blow aside whole (an
  *  avoidance), Bulwark takes points, Unyielding caps a hit by health: none is a share, all stand outside. */

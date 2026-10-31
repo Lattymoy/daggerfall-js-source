@@ -296,8 +296,8 @@
   {
     "name": "EGZS-echo-share-on-adds-dropped",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "egHitBody(F, spec, mm, m.i, dm, m.r, p, now, m.q, mult, vx.bx);",
-    "new": "egHitBody(F, spec, mm, m.i, m.d, m.r, p, now, m.q, mult, vx.bx);",
+    "old": "egHitBody(F, spec, mm, m.i, dm, m.r, p, now, m.q, mult, bx);",
+    "new": "egHitBody(F, spec, mm, m.i, m.d, m.r, p, now, m.q, mult, bx);",
     "tests": [
       "test/net/eliteGates/egz_mastery_accords.test.js"
     ],
@@ -326,7 +326,7 @@
   {
     "name": "EGZS-host-hits-never",
     "file": "src/net/eliteGates/egBrain.js",
-    "old": "  hostHits(B, F, spec, sub, mm, { r: m.r, q: m.q, bx: vx.bx, d: dm * mult }, b, got, p, now, here, out);   // EG-ZS",
+    "old": "  hostHits(B, F, spec, sub, mm, { r: m.r, q: m.q, bx, d: dm * mult }, b, got, p, now, here, out);   // EG-ZS",
     "new": "  void hostHits;   // EG-ZS",
     "tests": [
       "test/net/eliteGates/egz_mastery.test.js",

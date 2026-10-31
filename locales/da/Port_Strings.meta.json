@@ -12574,6 +12574,11 @@
   "tr": "8fa72b0de760",
   "by": "claude-in-session"
  },
+ "eg.potion.wait": {
+  "en": "3ee335241484",
+  "tr": "6b81c6fcabe2",
+  "by": "claude-in-session"
+ },
  "eg.progress.gauntlet": {
   "en": "83d2b8b37cf7",
   "tr": "e4fcb9c6a34d",
@@ -20634,9 +20639,9 @@
   "tr": "45d0dce86c15",
   "by": "claude-in-session"
  },
- "madeRules.potions": {
-  "en": "88310252fc38",
-  "tr": "30586cb1cc6f",
+ "madeRules.potionClock": {
+  "en": "74ec7fa1a624",
+  "tr": "b30c58f415bc",
   "by": "claude-in-session"
  },
  "madeRules.regen": {

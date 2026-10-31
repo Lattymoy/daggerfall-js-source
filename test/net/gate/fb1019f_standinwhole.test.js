@@ -143,7 +143,8 @@ test('STAND-IN-WHOLE THE NUMBER SAYS WHAT CAN LAND (scenes/gate/standInSpell.js)
   } finally { setPlayerAttackHook(null); registerSpellLandedListener('fb1019f', null); }
   // the law: my bucket's factor as its owner says it, clamped to the breach's own bounds; none said, the gate's 1
   const at = (x) => standInBlowCap(bossStandIn({ mobile: 31 }, 'x', null, x), 30);
-  assert.deepEqual([at(null), at(() => 1.2), at(() => 9), at(() => 0.5), at(() => NaN), at(() => { throw new Error('no word'); })], [420, 504, 525, 420, 420, 420]);
+  // PIN MOVED (AUDIT POTION-MIGHT B5): the factor is my Vestiges' and my might's, so its bound is both's (12.5)
+  assert.deepEqual([at(null), at(() => 1.2), at(() => 9), at(() => 99), at(() => 0.5), at(() => NaN), at(() => { throw new Error('no word'); })], [420, 504, 3780, 5250, 420, 420, 420]);
   assert.deepEqual([standInBlowCap(hostStandIn({ mobile: 31, name: 'a lord' }, 1, null, () => 1.2), 30), standInBlowCap(crystalStandIn(bossLookOf('ruhn'), 0, null, () => 1.2), 30)], [504, 504], 'a host body\'s and an object\'s factory keep it');
   assert.deepEqual([standInShown(975, 300), standInShown(12.5, 300), standInShown(-4, 300)], [300, 12.5, 0]);
 });

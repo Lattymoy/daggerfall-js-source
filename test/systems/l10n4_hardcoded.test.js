@@ -546,7 +546,6 @@ const HARDCODED = {
   'src/systems/snowfall.js': 12,
   'src/systems/snowfallRuntime.js': 10,
   'src/systems/spell/spellEffects.js': 29,
-  'src/systems/eliteGates/spireKit.js': 1,
   'src/systems/staleChunk.js': 6,
   'src/systems/starfall/starglass.js': 1,   // AUDIT STAR I1: Starfall Glass's name - an item's canonical name is its row's, as the Soul Cake's and the Weir Key's
   'src/systems/startDungeon.js': 1,

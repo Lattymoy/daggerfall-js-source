@@ -136,7 +136,7 @@
   },
   {
     "name": "BAL9c-potency-cap-at-40",
-    "file": "src/systems/loot/lootPowers.js",
+    "file": "src/systems/powerBlows.js",
     "old": "export const POTENCY_CAP = 30;",
     "new": "export const POTENCY_CAP = 40;",
     "tests": [
@@ -145,7 +145,7 @@
   },
   {
     "name": "BAL9c-the-whole-at-60",
-    "file": "src/systems/loot/lootPowers.js",
+    "file": "src/systems/powerBlows.js",
     "old": "export const SPELL_POWER_MOST = 50;",
     "new": "export const SPELL_POWER_MOST = 60;",
     "tests": [
@@ -211,7 +211,7 @@
   {
     "name": "BAL9c-the-service-behind-the-law",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct233';",
+    "old": "export const ACCOUNT_VERSION = 'acct234';",
     "new": "export const ACCOUNT_VERSION = 'acct120';",
     "tests": [
       "test/systems/tech1_roster.test.js"
