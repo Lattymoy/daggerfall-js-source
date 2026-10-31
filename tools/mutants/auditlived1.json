@@ -544,8 +544,8 @@
   {
     "name": "AUDITLIVED1-T7-heartsday-enhanced",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "date: { dayOfYear: dayOfYearFromMinutes(deps.worldNow?.() ?? now) }",
-    "new": "date: { dayOfYear: dayOfYearFromMinutes(now) }",
+    "old": "    date: { dayOfYear: dayOfYearFromMinutes(deps.worldNow?.() ?? now) }, // LIVED1: Heart's Day is the world's calendar, the room the character's own time",
+    "new": "    date: { dayOfYear: dayOfYearFromMinutes(now) }, // LIVED1: Heart's Day is the world's calendar, the room the character's own time",
     "tests": [
       "test/systems/auditlived1.test.js"
     ]

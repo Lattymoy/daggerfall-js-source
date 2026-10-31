@@ -596,8 +596,8 @@
   {
     "name": "SURVTIERS-enhanced-serves-what-the-house-refused",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  if (!order.ok) { say(line(order.text)); return; }",
-    "new": "",
+    "old": "  if (!order.ok) {\n    say(line(order.text));\n    return;\n  } // the menu stays up, as it does for the gold: a lighter drink still serves",
+    "new": "  // the menu stays up, as it does for the gold: a lighter drink still serves",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "SURVTIERS-enhanced-closes-the-menu-on-a-refusal",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  if (!order.ok) { say(line(order.text)); return; }",
-    "new": "  if (!order.ok) { menu = null; say(line(order.text)); return; }",
+    "old": "    say(line(order.text));",
+    "new": "    menu = null;\n    say(line(order.text));",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "SURVTIERS-the-shut-kitchen-serves-nothing",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  if (m.closed) { say(line(m.closedText)); return; }\n  render();\n}",
-    "new": "  if (m.closed) { menu = null; say(line(m.closedText)); return; }\n  render();\n}",
+    "old": "    say(line(m.closedText));",
+    "new": "    menu = null;\n    say(line(m.closedText));",
     "tests": [
       "test/systems/survival/survtiers.test.js"
     ]
@@ -807,8 +807,8 @@
   {
     "name": "SURVTIERS-enhanced-asks-the-house-before-the-gold",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }\n  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) { say(line(order.text)); return; }",
-    "new": "  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items });   // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) { say(line(order.text)); return; }\n  if (totalGoldAmount(h.entity) < row.price) { say(rows(NOT_ENOUGH_GOLD_ID)); return; }",
+    "old": "  if (totalGoldAmount(h.entity) < row.price) {\n    say(rows(NOT_ENOUGH_GOLD_ID));\n    return;\n  }\n  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) {\n    say(line(order.text));",
+    "new": "  // SURV-TIERS: the tier refuses before the coin changes hands - the drink that would take the night, the meal that would go to waste\n  const order = tavernOrder(s, now, row, { endurance, rules, items: h.entity.items }); // INN-WATER: the pack, for the skins the water asks after\n  if (!order.ok) {\n    say(line(order.text));\n    return;\n  }\n  if (totalGoldAmount(h.entity) < row.price) {\n    say(rows(NOT_ENOUGH_GOLD_ID));",
     "note": "INN-WATER (FIELD BUGS 2026-09-30, PIN MOVED): the order call names the pack now (items: h.entity.items) - the record re-aimed to the new line, the mutant (the house asked before the gold) unchanged",
     "tests": [
       "test/systems/survival/survtiers.test.js"

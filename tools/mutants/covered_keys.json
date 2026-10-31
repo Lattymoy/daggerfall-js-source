@@ -92,8 +92,8 @@
   {
     "name": "CK-the-tavern-listens-past-the-door",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "listenWindowKeys(hooks.owner, onKey)",
-    "new": "listenWindowKeys(null, onKey)",
+    "old": "  unlistenKeys = listenWindowKeys(hooks.owner, onKey); // COVERED-KEYS: hooks.owner, the panel's window (ui/tavernDoor.js)",
+    "new": "  unlistenKeys = listenWindowKeys(null, onKey); // COVERED-KEYS: hooks.owner, the panel's window (ui/tavernDoor.js)",
     "tests": [
       "test/ui/coveredkeys.test.js"
     ]

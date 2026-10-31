@@ -127,7 +127,7 @@ test('CARDS9 the counter: a pack\'s price is the counter\'s (DFU\'s CalculateTra
   const tav = read('src/ui/enhanced/enhancedTavern.js');
   assert.match(tav, /const pack = el\('button', 'act tavern-act', `Card pack \(\$\{packPrice\(\)\} gold\)`\);\s*pack\.onclick = buyPack;/);
   assert.match(tav, /wrap\.append\(room, talkBtn, food, pack, exit\);/);
-  assert.match(tav, /const r = buyCardPack\(deps\.entity, \{ quality: deps\.quality\?\.\(\) \?\? 10, skills: deps\.skills\?\.\(\) \?\? \{\} \}\);\s*if \(!r\.ok\) \{ say\(rows\(NOT_ENOUGH_GOLD_ID, \{ amount: r\.price \}\)\); return; \}/);
+  assert.match(tav, /const r = buyCardPack\(deps\.entity, \{ quality: deps\.quality\?\.\(\) \?\? 10, skills: deps\.skills\?\.\(\) \?\? \{\} \}\);\n\s*if \(!r\.ok\) \{\n\s*say\(rows\(NOT_ENOUGH_GOLD_ID, \{ amount: r\.price \}\)\);\n\s*return;\n\s*\}/);
   assert.doesNotMatch(read('src/ui/tavernWindow.js'), /buyCardPack/, 'the classic window keeps DFU\'s four buttons');
 });
 

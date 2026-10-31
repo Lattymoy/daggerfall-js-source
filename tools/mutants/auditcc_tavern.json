@@ -172,8 +172,8 @@
   {
     "name": "AUDIT-CC-I6-the-enhanced-drink-fortifies-nothing",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  tavernRefresh(h.entity, r);   // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour\n",
-    "new": "",
+    "old": "  tavernRefresh(h.entity, r); // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour\n  let b = null;",
+    "new": "  let b = null;",
     "tests": [
       "test/systems/survival/auditcc_tavern.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-CC-I6-the-enhanced-drink-before-its-quarter-hour",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  h.advanceMinutes?.(r.minutes);\n  h.entity.lastTimePlayerAteOrDrankAtTavern = now;\n  tavernRefresh(h.entity, r);",
-    "new": "  tavernRefresh(h.entity, r);\n  h.advanceMinutes?.(r.minutes);\n  h.entity.lastTimePlayerAteOrDrankAtTavern = now;",
+    "old": "  h.advanceMinutes?.(r.minutes);\n  h.entity.lastTimePlayerAteOrDrankAtTavern = now;\n  tavernRefresh(h.entity, r); // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour",
+    "new": "  tavernRefresh(h.entity, r);\n  h.advanceMinutes?.(r.minutes);\n  h.entity.lastTimePlayerAteOrDrankAtTavern = now; // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour",
     "tests": [
       "test/systems/survival/auditcc_tavern.test.js"
     ],
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT-CC-I8-the-enhanced-window-hands-no-calendar",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "quality: h.quality?.() ?? 5, minutes: h.worldNow?.() ?? now, hour:",
-    "new": "quality: h.quality?.() ?? 5, hour:",
+    "old": "    minutes: h.worldNow?.() ?? now,\n    hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),",
+    "new": "    hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),",
     "tests": [
       "test/systems/survival/auditcc_tavern.test.js"
     ],
@@ -472,8 +472,8 @@
   {
     "name": "AUDIT-CC-I8-the-enhanced-window-hands-no-region",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "regionIndex: h.regionIndex?.() ?? -1, ",
-    "new": "",
+    "old": "    regionIndex: h.regionIndex?.() ?? -1,\n    quality: h.quality?.() ?? 5,",
+    "new": "    quality: h.quality?.() ?? 5,",
     "tests": [
       "test/systems/survival/auditcc_tavern.test.js"
     ],

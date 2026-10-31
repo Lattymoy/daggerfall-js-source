@@ -969,8 +969,8 @@
   {
     "name": "AUDITLIVED1B-T8-ui-enhanced-tavern-kitchen-own",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "hour: Math.trunc((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440 / 60) });",
-    "new": "hour: Math.trunc((((now) % 1440) + 1440) % 1440 / 60) });",
+    "old": "    hour: Math.trunc(((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440) / 60),",
+    "new": "    hour: Math.trunc((((now % 1440) + 1440) % 1440) / 60),",
     "tests": [
       "test/systems/auditlived1b_t.test.js"
     ]
@@ -978,8 +978,8 @@
   {
     "name": "AUDITLIVED1B-T8-ui-enhanced-tavern-meal-holiday-own",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "gameMinutes: h.worldNow?.() ?? now });",
-    "new": "gameMinutes: now });",
+    "old": "  const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now }); // LIVED1: the meal's holiday is the world's calendar",
+    "new": "  const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: now }); // LIVED1: the meal's holiday is the world's calendar",
     "tests": [
       "test/systems/auditlived1b_t.test.js"
     ]

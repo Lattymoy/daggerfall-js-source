@@ -1790,6 +1790,7 @@
 !/src/ui/enhanced/enhancedShop.js
 !/src/ui/enhanced/enhancedStartChoice.js
 !/src/ui/enhanced/enhancedTalk.js
+!/src/ui/enhanced/enhancedTavern.js
 !/src/ui/enhanced/enhancedTextLayer.js
 !/src/ui/enhanced/enhancedTimers.js
 !/src/ui/enhanced/enhancedTravelControl.js

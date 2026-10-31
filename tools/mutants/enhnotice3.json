@@ -455,8 +455,8 @@
   {
     "name": "TAV-yes-no-decision-routed-to-the-panel",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "noticeHold(noticeOwner, box.buttons ? null : box.rows)",
-    "new": "noticeHold(noticeOwner, box.rows)",
+    "old": "  const onPanel = noticeHold(noticeOwner, box.buttons ? null : box.rows);",
+    "new": "  const onPanel = noticeHold(noticeOwner, box.rows);",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "TAV-scrim-is-not-the-click",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "    scrim.onclick = dismiss;\n",
-    "new": "",
+    "old": "    scrim.onclick = dismiss;\n    return scrim;",
+    "new": "    return scrim;",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "TAV-no-release-when-the-box-clears",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  } else noticeRelease(noticeOwner);",
-    "new": "  } else if (false) noticeRelease(noticeOwner);",
+    "old": "  } else noticeRelease(noticeOwner); // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:\"if (drawMessageBox(renderer, m, font, this._box))\")",
+    "new": "  } else if (false) noticeRelease(noticeOwner); // ENH-NOTICE3: no box, no panel - the same `} else noticeRelease(this)` the classic windows keep (ui/restWindow.js:\"if (drawMessageBox(renderer, m, font, this._box))\")",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -635,8 +635,8 @@
   {
     "name": "TAV-dismiss-does-not-repaint",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "  const cb = box?.onDismiss;\n  box = null;\n  cb?.();\n  render();",
-    "new": "  const cb = box?.onDismiss;\n  box = null;\n  cb?.();",
+    "old": "  cb?.();\n  render();\n}",
+    "new": "  cb?.();\n}",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -846,8 +846,8 @@
   {
     "name": "AUDIT4-B1-the-scrim-window-sized",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "    scrim.className = 'sb-ask sb-screen';\n",
-    "new": "",
+    "old": "    scrim.className = 'sb-ask sb-screen';\n    scrim.onclick = dismiss;",
+    "new": "    scrim.onclick = dismiss;",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
@@ -855,8 +855,8 @@
   {
     "name": "AUDIT4-B1-the-scrim-on-the-window",
     "file": "src/ui/enhanced/enhancedTavern.js",
-    "old": "    (scrim.className.includes('sb-screen') ? shell : win).append(scrim);",
-    "new": "    win.append(scrim);",
+    "old": "    (scrim.className.includes('sb-screen') ? shell : win).append(scrim); // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)",
+    "new": "    win.append(scrim); // the panel's arm catches the press over the whole screen (AUDIT ENH-NOTICE3 B1)",
     "tests": [
       "test/ui/enhanced/tavernwindow.test.js"
     ]
