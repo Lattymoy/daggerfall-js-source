@@ -276,13 +276,15 @@ commit with its pins carried, and main merged in over it.
   `tools/carryTextPins.mjs` carries such a pin token by token. 139 files whose pins it could not carry were taken
   back to their old text, with their records.
 
-**Set aside.** The twelve files with more than 400 records each: `world.js`, `worldModes.js`, `dungeonContext.js`,
-`navalHost.js`, `exteriorFoes.js`, `comeSailAway.js`, `revenant.js`, `egBrain.js`, `wire.js`, `online.js`,
-`renderer.js` and `server/src/index.js`. A host's ceiling is in logical lines, so formatting moves no
-ceiling. These need a quiet window on main of their own: a branch open across one stales most of its records. The
-other aside files are ones whose mutant record or cite the carrier could not move.
+**Set aside: 548 files.** 18 are the files with more than 400 mutant records each, `world.js` (3,941) the largest;
+`net/npcChapterLaw.js` (451) is the one that heavy which carried. A branch open across one of them stales most of its
+records, so each needs a quiet window on main of its own. A host's ceiling is in logical lines, so formatting moves no
+ceiling. 139 are the files taken back for their text pins. 318 the rollout's runner set aside: the carrier refused one
+of their records or cites, a test that quotes them failed after the format, or their chunk failed whole. 74 are files
+added since it began, in folders not yet on the list: 71 of main's, and three of the five modules moved out of
+`bootWorld`, kept in the host's own layout, which their pins read through `hostText`.
 
-**The relay.** 148 of the relay's 181 files are formatted, so its bytes changed though its program did not:
+**The relay.** 150 of the relay's 181 files are formatted, so its bytes changed though nothing it does did:
 world298 (`test/net/relayversion.test.js`). The 312 formatting commits are in `.git-blame-ignore-revs`.
 
 ## LEGIBLE 4 - lint that holds the line (2026-10-30)

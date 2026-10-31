@@ -256,7 +256,7 @@ test('SHADER-STALL the wiring: the world\'s sea warm and the spells\' impact pas
   assert.match(eg, /const telegraphDoor = \(\) =>\n\s*compiledPass\(\n\s*gl,\n\s*telegraphPrograms\(true\),\n\s*\(\) => new GateTelegraphRenderer\(gl, \{ spire: true \}\)/);
   assert.match(eg, /const crystalDoor = \(\) =>\n\s*compiledPass\(\n\s*gl,\n\s*CRYSTAL_PROGRAMS,\n\s*\(\) => new CourtCrystalRenderer\(gl\)/);
   assert.match(eg, /pass = null;\n\s*crystalPass = null;\n\s*telegraphOf = telegraphDoor\(\);\n\s*crystalsOf = crystalDoor\(\);/);
-  assert.doesNotMatch(eg, /new GateTelegraphRenderer\(gl, \{ spire: true \}\); \}/, 'no build outside the door');
+  assert.doesNotMatch(eg, /new GateTelegraphRenderer\(gl, \{ spire: true \}\);\s*\}/, 'no build outside the door');   // AUDIT LEGIBLE 3: either layout
 });
 
 // AURA-STALL (#1137) and AURA-SPLIT (#1143, bible/07-Rendering/Performance-Priority.md): the auras' one program was 81 KB
