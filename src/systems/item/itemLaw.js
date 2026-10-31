@@ -94,6 +94,7 @@ import '../gems.js';   // GEM2: the graded gems' rows
 import '../walletItem.js';
 import '../upkeep/upkeepItemRows.js';   // STEED1/WAGONS4: the Sack of Oats and the Wagon Repair Kit
 import '../livingWorld/keepsake.js';
+import '../musicSheetRow.js';   // MUSIC-BOX: the Sheet music
 import '../legacy/heirloom.js';
 import '../comeSailAway/comeSailAwayItems.js';
 import '../naval/navalStores.js';

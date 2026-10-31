@@ -83,7 +83,7 @@
   {
     "name": "DECORUSE-no-cooking-station",
     "file": "src/net/decorLaw.js",
-    "old": "'workbench', 'cooking', 'loom', 'mason', 'jeweller', 'vendor']);",
+    "old": "'workbench', 'cooking', 'music', 'loom', 'mason', 'jeweller', 'vendor']);",
     "new": "'workbench', 'loom', 'mason', 'jeweller', 'vendor']);",
     "tests": [
       "test/systems/decor/decoruse.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "DECORUSE-its-licence-cheap",
     "file": "src/net/decorLaw.js",
-    "old": "workbench: 50_000, cooking: 50_000, loom",
+    "old": "workbench: 50_000, cooking: 50_000, music: 5_000, loom",
     "new": "workbench: 50_000, cooking: 5_000, loom",
     "tests": [
       "test/systems/decor/decoruse.test.js"
