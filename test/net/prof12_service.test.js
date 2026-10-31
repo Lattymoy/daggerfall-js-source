@@ -91,18 +91,18 @@ test('PROF12 service: a Healing brewed at rank 0 - DFU\'s own recipe law on the 
   const ask = { character: mac.character, potion: 'healing', keys: HEALING, rid: rid() };
   const r = await steered(0x00, () => s.call('/v1/prof/brew', ask, mac.secret));
   assert.equal(r.status, 200, JSON.stringify(r.body));
-  assert.deepEqual([r.body.potion, r.body.count, r.body.potent, r.body.unbruised, r.body.steps, r.body.first, r.body.xp], ['healing', 2, 0, 0, 0, true, 20 + 3155], 'Novice: two potions (PIN MOVED: CRAFT-PAYS, one), the lowest roll never Potent');   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp, brewFirstXp, workFirstXp), no longer a flat 500 - Healing's, Provisioning's 3,155
-  assert.equal(brewFirstXp(potionById('healing')), 3155);
-  assert.deepEqual([r.body.track.profession, r.body.track.xp, s.xpOf(mac, 'provisioning')], ['provisioning', 3175, 3175]);   // PIN MOVED (CRAFT3): a brew raises Provisioning, Alchemy's craft - the track answered and the row credited are its
+  assert.deepEqual([r.body.potion, r.body.count, r.body.potent, r.body.unbruised, r.body.steps, r.body.first, r.body.xp], ['healing', 2, 0, 0, 0, true, 20 + 3171], 'Novice: two potions (PIN MOVED: CRAFT-PAYS, one), the lowest roll never Potent');   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp, brewFirstXp, workFirstXp), no longer a flat 500 - Healing's, Provisioning's 3,171
+  assert.equal(brewFirstXp(potionById('healing')), 3171);
+  assert.deepEqual([r.body.track.profession, r.body.track.xp, s.xpOf(mac, 'provisioning')], ['provisioning', 3191, 3191]);   // PIN MOVED (CRAFT3): a brew raises Provisioning, Alchemy's craft - the track answered and the row credited are its
   assert.deepEqual(r.body.keys, HEALING);
   assert.deepEqual([s.stores(mac, 'p1:16'), s.stores(mac, 'metal:mercury')], [[['own', 2]], [['own', 1]]], 'the bought Red Berries spent first');
   assert.deepEqual(r.body.stores.map((st) => st.material).sort(), [...HEALING].sort());
   s.env.PROFESSIONS_OPEN = 'off';
   const again = await s.call('/v1/prof/brew', ask, mac.secret);
-  assert.deepEqual([again.body.repeat, again.body.xp, again.body.count], [true, 3175, 2], 'asked twice: the row\'s answer - looked for before the switch (AUDIT 28 M2\'s rule)');   // PIN MOVED (FIRST-BUDGET)
+  assert.deepEqual([again.body.repeat, again.body.xp, again.body.count], [true, 3191, 2], 'asked twice: the row\'s answer - looked for before the switch (AUDIT 28 M2\'s rule)');   // PIN MOVED (FIRST-BUDGET)
   assert.deepEqual((await s.brew(mac, 'healing', HEALING)).body, { error: 'prof-closed' }, 'a new brew under a shut switch');
   s.env.PROFESSIONS_OPEN = 'on';
-  assert.deepEqual([s.stores(mac, 'metal:mercury'), s.xpOf(mac, 'provisioning')], [[['own', 1]], 3175], 'nothing moved twice');   // PIN MOVED (CRAFT3): Provisioning's row, Alchemy's craft's
+  assert.deepEqual([s.stores(mac, 'metal:mercury'), s.xpOf(mac, 'provisioning')], [[['own', 1]], 3191], 'nothing moved twice');   // PIN MOVED (CRAFT3): Provisioning's row, Alchemy's craft's
   const shuffled = await s.brew(mac, 'healing', [HEALING[3], HEALING[1], HEALING[0], HEALING[2]]);
   assert.deepEqual([shuffled.status, shuffled.body.first, shuffled.body.xp], [200, false, 20], 'DFU sorts the cauldron: any order; the second no 500');
   assert.deepEqual((await s.brew(mac, 'healing', HEALING)).body, { error: 'stores-short' }, 'the Red Berries\' own one left, the Troll\'s Blood none');

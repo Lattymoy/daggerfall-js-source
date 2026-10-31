@@ -39,9 +39,9 @@
 //
 // FIRST-BUDGET (SaberGGaming's report, 2026-10-25: Provisioning is slow; the owner, asked: "Match Smithing's pace"): A
 // FIRST-MAKE'S XP IS ITS TRACK'S SHARE (net/recipeLaw.js FIRST_MAKE_SHARE - firstCraftXp, workFirstXp), no longer a flat
-// 500 every track: Smithing's 500, Outfitting's 511, Building's 1,823, Provisioning's 3,155 - each the least that brings
-// its track to Master in Smithing's crafts - and every line below says the recipe's own. The share says how much a first
-// pays, CLOTH-GEMS whether. bible/06-Systems/Professions-Arc.md 52.
+// 500 every track: Smithing's 500, Outfitting's 518, Building's 1,832, Provisioning's 3,171 (SMITH-RRI's rerun) - each
+// the least that brings its track to Master in Smithing's crafts - and every line below says the recipe's own. The share
+// says how much a first pays, CLOTH-GEMS whether. bible/06-Systems/Professions-Arc.md 52.
 import { t, intlLocale } from '../systems/textManager.js';
 import { craftXp, firstCraftPays, counterMade, firstCraftXp, workFirstXp, masonXp } from '../net/recipeLaw.js';
 import { creditedXp, professionName, JOURNEYMAN_RANK, CRAFTS_ABOVE_JOURNEYMAN, MASON_RECIPES } from '../net/professionLaw.js';   // FIRST-BUDGET: the bench's two works, each its first's share

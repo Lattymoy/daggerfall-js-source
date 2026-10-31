@@ -95,6 +95,7 @@ import { createChiselAct } from '../../systems/chiselAct.js';   // PROF11
 import { createPanAct } from '../../systems/panAct.js';   // PROF9
 import { createFacetAct } from '../../systems/facetAct.js';   // PROF10
 import { templateByIndex } from '../../systems/item/itemTemplates.js';   // PROF10: a piece's DFU template - its enchantment points
+import { RRI_CLASSES, customItemClass } from '../../systems/roleplayRealismItems/rriItems.js';   // SMITH-RRI: a mod's weapon, made while its class stands
 import { itemLongName } from '../../systems/item/itemInfo.js';   // DISENCHANT-SAID: a piece the station lists, named as the pack names it
 import { tradeRefusal } from '../../systems/tradePack.js';   // DISENCHANT-SAID: a piece that may not leave the pack is not the station's (PROF12)
 import { isLocked } from '../../systems/item/itemLock.js';   // DISENCHANT-SAID: nor a locked one (PROF5)
@@ -1579,9 +1580,12 @@ const daedricWord = () => t('prof.page.forge.daedric', DAEDRIC_LINE);
 const toolsWord = () => t('prof.page.family.tools', 'Tools');
 export const ANVIL_FAMILIES = Object.freeze([wordRow('weapons', () => t('prof.page.family.weapons', 'Weapons')), wordRow('armour', () => t('prof.page.family.armour', 'Armour')),
   wordRow('tools', toolsWord), wordRow('kits', () => t('prof.page.family.kits', 'Repair Kits'))]);
+/** SMITH-RRI: a mod's weapon (RRI's Light Flail and Archer's Axe) is made only while its class stands - unregistered,
+ *  the piece swings as nothing (fpsWeapon.js weaponTypeForItem). Online it always stands (onlineLane.js newWeapons). */
+const anvilMakes = (r) => !RRI_CLASSES[r.templateIndex] || !!customItemClass(r.templateIndex);
 /** The recipes the anvil makes for a family - at a metal where one is named (the tools are Iron's alone; the chain is
  *  Steel's). CRAFT2: the anvil lists them as patterns (patternsOf), every metal under its piece. */
-export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family && (metal == null || family === 'tools' || r.metal === metal));
+export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family && (metal == null || family === 'tools' || r.metal === metal) && anvilMakes(r));
 /** PROF4: what a craft spends as this character would spend it - a Joiner's half the planks, a Heartwood for one. */
 const spendsOf = (r, book, heartwood) => recipeInputs(r, { heartwood: heartwood && takesHeartwood(r), joiner: book.track(r.profession)?.specs?.[50] === 'joiner' });
 /** Whether the Stores make a recipe now - its inputs, or (PROF4) what it would spend (`inputs`). */

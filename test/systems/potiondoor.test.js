@@ -70,7 +70,7 @@ async function stand({ station = true, rank = 0 } = {}) {
 
 // ─── THE DONE-WHEN ───────────────────────────────────────────────────
 
-test('POTION-DOOR DONE WHEN: at an alchemy station, online, the potion maker lists the Stores\' Red Berries, Troll\'s Blood, Elixir Vitae and Mercury beside the pack, its Healing filled from them and mixed IS the brew - asked of the real Worker, its 20 XP and its first\'s 3,155 credited to Provisioning, two potions into the pack, the four out of the Stores, the cauldron emptied, the answer said (mutants: the Stores unlisted; the mix minted on the client; the brew\'s keys the herb\'s other group; the cauldron kept)', async (t) => {
+test('POTION-DOOR DONE WHEN: at an alchemy station, online, the potion maker lists the Stores\' Red Berries, Troll\'s Blood, Elixir Vitae and Mercury beside the pack, its Healing filled from them and mixed IS the brew - asked of the real Worker, its 20 XP and its first\'s 3,171 credited to Provisioning, two potions into the pack, the four out of the Stores, the cauldron emptied, the answer said (mutants: the Stores unlisted; the mix minted on the client; the brew\'s keys the herb\'s other group; the cauldron kept)', async (t) => {
   t.mock.method(Date, 'now', () => NOON * 1000);
   const { give, stored, book, player, asked, open } = await stand();
   for (const k of HEALING) give(k, 1);
@@ -92,12 +92,12 @@ test('POTION-DOOR DONE WHEN: at an alchemy station, online, the potion maker lis
   assert.equal(w.cauldron.length, 4, 'the pot it brews is not touched while it is asked');
   await settled(w);
   assert.deepEqual(asked, [['healing', ['p1:16', 'reagent:troll-blood', 'reagent:elixir-vitae', 'metal:mercury']]], 'the cauldron as the Stores hold it');
-  assert.equal(book.track('alchemy').xp, 20 + 3155, 'the brew\'s XP and Provisioning\'s first-make share, the service\'s');
+  assert.equal(book.track('alchemy').xp, 20 + 3171, 'the brew\'s XP and Provisioning\'s first-make share, the service\'s');
   assert.deepEqual([player.items.length, player.items[0].stackCount], [1, 2], 'two potions, one stack, minted on the answer');
   assert.equal(player.items[0].potionRecipeKey, potionById('healing').key);
   assert.deepEqual(HEALING.map(stored), [0, 0, 0, 0], 'the four out of the Stores');
   assert.deepEqual(w.cauldron, [], 'the cauldron emptied');
-  assert.deepEqual(rows(w), [POTION_MIXED, `You brewed 2 Potions of Healing (+3175 ${professionName('alchemy')} XP).`]);
+  assert.deepEqual(rows(w), [POTION_MIXED, `You brewed 2 Potions of Healing (+3191 ${professionName('alchemy')} XP).`]);
 });
 
 // ─── THE DOOR'S LAW ──────────────────────────────────────────────────

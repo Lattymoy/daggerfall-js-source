@@ -134,8 +134,8 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
     await settled();
     assert.equal(book.held('stone:cut'), 5);
     assert.equal(book.held('stone:rough'), 10);
-    assert.equal(book.track('masonry').xp, 5 * 20 * 1.5 + 1823, 'a clean chisel half again, and the first cut\'s - Building\'s share');   // PIN MOVED (FIRST-BUDGET): 1,823
-    assert.deepEqual([said.at(-1), player.gold], ['+1973 building', 950]);   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the service answers the Building track
+    assert.equal(book.track('masonry').xp, 5 * 20 * 1.5 + 1832, 'a clean chisel half again, and the first cut\'s - Building\'s share');   // PIN MOVED (FIRST-BUDGET): 1,832
+    assert.deepEqual([said.at(-1), player.gold], ['+1982 building', 950]);   // PIN MOVED (SMITH-RRI): Building's 1,832   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the service answers the Building track
     // THE MIX: rank 10 opens it - PIN MOVED (FIRST-BUDGET): the cut alone brought 650 of 1,000; with its first's -
     // Building's share - 1,973 now, rank 14, so the Mortar stands open after it (Mortar's rank pinned by the service's own test)
     assert.match(page.text(), /BuildingNovice 14[^]*Mortar x10[^]*Mix/, 'the cut alone past rank 10: the Mortar open');   // PIN MOVED (CRAFT-HALL): the rank is the station header's bar, not the station's sentence
@@ -146,7 +146,7 @@ test('PROF11 DONE WHEN: Rough Stone cut with a clean chisel at a General Store\'
     await settled();
     assert.equal(book.held('stone:mortar'), 10, 'ten at a time');
     assert.deepEqual([book.held('metal:sulphur'), book.held('metal:lead'), book.held('stone:rough')], [0, 0, 5]);
-    assert.equal(said.at(-1), `+${1 * 20 * 2 + 1823} building`, 'a quick mix: no chisel, no half again - rank 10\'s tier, and its first\'s share');   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the service answers the Building track
+    assert.equal(said.at(-1), `+${1 * 20 * 2 + 1832} building`, 'a quick mix: no chisel, no half again - rank 10\'s tier, and its first\'s share');   // PIN MOVED (FIRST-BUDGET)   // PIN MOVED (CRAFT3): the service answers the Building track
     // THE SCULPTOR'S COLUMN: a Master who chose the Sculptor, the dice steered to a Masterwork (the mark)
     track(PROF_XP_MAX, 'quarryman', 'sculptor');
     give('stone:cut', 12);

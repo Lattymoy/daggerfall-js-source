@@ -61,7 +61,9 @@ const TIN = 'metal:tin', COPPER = 'metal:copper', LEATHER = 'leather:cured', OAK
  */
 /** @returns {Product} */
 const product = (id, name, kind, templateIndex, ingots, also = []) => Object.freeze({ id, name, kind, templateIndex, ingots, also: Object.freeze(also.map((a) => Object.freeze(a))) });
-/** The weapons (DFU 113-128 but the Staff, a carpenter's): the ingots and the fittings 9.3 asks. */
+/** The weapons (DFU 113-128 but the Staff, a carpenter's): the ingots and the fittings 9.3 asks. SMITH-RRI: and
+ *  Roleplay & Realism: Items' two (rriItems.js 513, 514), whose class online always registers (onlineLane.js). The Light
+ *  Flail is the Mace's and the Flail's row; the Archer's Axe, 3 kg, half the Battle Axe's 6, takes half its 4 ingots. */
 export const WEAPON_PRODUCTS = Object.freeze([
   product('dagger', 'Dagger', 'weapon', 113, 1, [[TIN, 1]]), product('tanto', 'Tanto', 'weapon', 114, 1, [[TIN, 1]]),
   product('shortsword', 'Shortsword', 'weapon', 116, 2, [[TIN, 1]]), product('wakizashi', 'Wakizashi', 'weapon', 117, 2, [[TIN, 1]]),
@@ -76,6 +78,8 @@ export const WEAPON_PRODUCTS = Object.freeze([
   product('waraxe', 'War Axe', 'weapon', 128, 4, [[COPPER, 1], [OAK, 1]]),
   product('claymore', 'Claymore', 'weapon', 122, 5, [[COPPER, 1], [LEATHER, 1]]),
   product('daikatana', 'Dai-katana', 'weapon', 123, 5, [[COPPER, 1], [LEATHER, 1]]),
+  product('lightflail', 'Light Flail', 'weapon', 514, 3, [[COPPER, 1], [LEATHER, 1]]),   // SMITH-RRI
+  product('archersaxe', 'Archer\'s Axe', 'weapon', 513, 2, [[COPPER, 1], [OAK, 1]]),   // SMITH-RRI
 ]);
 /** The plate (DFU 102-108): Cuirass 6 and 2 Cured Leather, Greaves 4, Helm 2, the pauldrons, Gauntlets and Boots 2. */
 export const PLATE = Object.freeze([
@@ -820,9 +824,10 @@ export const brewFirstPays = (potion) => !!potion && !potion.ingredients.every((
  *  less than it did (firstShares never answers under it). */
 export const FIRST_MAKE_FLOOR = 500;
 /** FIRST-BUDGET RETUNED: what one first-make pays on each crafting track - Smithing's 500, and each other track's the
- *  least share that brings it to Master in Smithing's 172 crafts (tools/craftPace.mjs firstShares, on this recipe set;
- *  a change to a track's recipes, its pool or its XP moves the derivation, and the law's test says by how much). */
-export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 511, building: 1823, provisioning: 3155 });
+ *  least share that brings it to Master in Smithing's crafts (tools/craftPace.mjs firstShares, on this recipe set;
+ *  a change to a track's recipes, its pool or its XP moves the derivation, and the law's test says by how much).
+ *  SMITH-RRI: the two RRI weapons' 14 first-makes took Smithing to Master in 170, not 172 - rerun, each share rose. */
+export const FIRST_MAKE_SHARE = Object.freeze({ smithing: 500, outfitting: 518, building: 1832, provisioning: 3171 });
 /** Each track's first-makes, in the tables' order: RECIPES, then the mason's works, then DFU's twenty. */
 const FIRST_MAKES = new Map();
 const firstMake = (/** @type {string} */ track, /** @type {string} */ key) => {

@@ -132,7 +132,7 @@ test('PROF9 law: Cooking\'s XP follows the rank - 20 x the rank\'s own tier a co
   assert.deepEqual([0, 10, 25, 40, 55, 70, 90, 100].map((r) => cookXp(r)), [20, 40, 60, 80, 100, 120, 140, 140]);
   assert.deepEqual([0, 55, 100].map((r) => cookXp(r, { clean: true })), [30, 150, 210]);
   for (const r of [0, 33, 77, 100]) assert.equal(cookXp(r), 20 * topTierOf(r));
-  assert.deepEqual(COOKING_RECIPES.map((r) => firstCraftXp(r)), [3155, 3155, 3155, 3155, 3155, 3155, 3155]);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp), no longer a flat 500 - every dish Provisioning's 3,155
+  assert.deepEqual(COOKING_RECIPES.map((r) => firstCraftXp(r)), [3171, 3171, 3171, 3171, 3171, 3171, 3171]);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp), no longer a flat 500 - every dish Provisioning's 3,171
 });
 
 // ─── THE PAN (9.4) ───────────────────────────────────────────────────

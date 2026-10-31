@@ -2,12 +2,12 @@
   {
     "name": "FIRST-BUDGET-share-off-by-one",
     "file": "src/net/recipeLaw.js",
-    "old": "building: 1823,",
-    "new": "building: 1822,",
+    "old": "building: 1832,",
+    "new": "building: 1831,",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
-    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Building's share one XP short - the derivation says 1,823, and at 1,822 Building takes a 173rd craft to Master."
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Building's share one XP short - the derivation says 1,832, and at 1,831 Building takes a 171st craft to Master. Re-aimed by SMITH-RRI (the rerun: 1,823 before)."
   },
   {
     "name": "FIRST-BUDGET-smithing-share-moved",
@@ -22,12 +22,12 @@
   {
     "name": "FIRST-BUDGET-share-past-the-least",
     "file": "src/net/recipeLaw.js",
-    "old": "outfitting: 511,",
-    "new": "outfitting: 512,",
+    "old": "outfitting: 518,",
+    "new": "outfitting: 519,",
     "tests": [
       "test/net/firstbudget_law.test.js"
     ],
-    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Outfitting's share one past the least that reaches Master in 172 - fast enough, and not the derivation's."
+    "note": "FIRST-BUDGET RETUNED (the owner, asked: \"Match Smithing's pace\"; Professions-Arc 52): Outfitting's share one past the least that reaches Master in 170 - fast enough, and not the derivation's. Re-aimed by SMITH-RRI (511 before)."
   },
   {
     "name": "FIRST-BUDGET-pool-asked-as-bought",

@@ -783,7 +783,8 @@ minted again. The service at acct126; no migration.
 |---|---|---|
 | Dagger, Tanto | 1 | 1 Tin |
 | Shortsword, Wakizashi | 2 | 1 Tin |
-| Broadsword, Saber, Longsword, Katana, Mace, Flail | 3 | 1 Copper, 1 Cured Leather |
+| Broadsword, Saber, Longsword, Katana, Mace, Flail, Light Flail (SMITH-RRI, section 59) | 3 | 1 Copper, 1 Cured Leather |
+| Archer's Axe (SMITH-RRI, section 59) | 2 | 1 Copper, 1 Oak Plank |
 | Warhammer, Battle Axe, War Axe | 4 | 1 Copper, 1 Oak Plank |
 | Claymore, Dai-katana | 5 | 1 Copper, 1 Cured Leather |
 | Cuirass | 6 | 2 Cured Leather |
@@ -2420,6 +2421,7 @@ Mac: **"Lets keep moving"** (PROF3 after the merge of main). What the design abo
   (`recipeLaw.js` KIT_INGOTS; AUDIT 30 R11: this line said every metal): 1 of the metal's ingot and 1 Cured Leather. A
   recipe's rank is its material's tier's (3.2: 0, 10, 25, 40, 55, 70, 90); every recipe unlocks by rank in PROF3 - the
   found ones come with the writs.
+- **SMITH-RRI** (2026-10-31, section 59): the anvil makes Roleplay & Realism: Items' Light Flail and Archer's Axe too.
 - **The quality** (9.2), rolled by the service's CSPRNG on the margin (the smith's rank minus the recipe's), then a
   step each, at most, for: a clean act (the honest bound: one step, 5.1); the family's specialisation (Weaponsmith the
   weapons; Armoursmith the plate, the chain and the shields); a Warforged ingot among the inputs. Nothing passes
@@ -6036,6 +6038,7 @@ band aids"; and, asked how fast the tracks should climb: "Match Smithing's pace"
   `test/net/firstbudget_law.test.js` holds the law's figures equal to it and each the least (one XP less and the track
   takes a 173rd craft). A change to a track's recipes, its pool or its XP moves the derivation, and the test says by how
   much.
+- **SMITH-RRI moved it** (section 59): Smithing at Master in 170, and Outfitting 518, Building 1,832, Provisioning 3,171.
 - **One share a track matches Master, not Journeyman as well**: a small pool's firsts come early in the climb, so
   Building reaches Journeyman in 14 crafts and Provisioning in 8, against Smithing's 45 (Outfitting in 45, as Smithing).
   Matching both would take a second figure a track (the firsts paid by the rank they open at, say); the owner's word was
@@ -6774,6 +6777,33 @@ Pins: `test/systems/huntersmark_trophies.test.js` (the Worker's answer and the k
 
 AUDIT HORIZONTAL F8: the code names this section for the Trophy Hunter (`professionLaw.js` trophyHunted and its spec,
 `huntHost.js`, `profTemplates.js`, `professions.js`, the two tests above); section 57 is MASTER-ART's.
+
+## 59. SMITH-RRI - the Light Flail and the Archer's Axe at the anvil (BUILT 2026-10-31)
+
+Sammy, Discord #feature-feedback: **"Add missing weapon types to be smithable (Light flail etc)"**. FOUND: every DFU
+weapon was made at the anvil already (9.3). Roleplay & Realism: Items' two weapons were not - the Archer's Axe (513) and
+the Light Flail (514) - though foes carry them and the anvil's mint makes them (`enemyEquipment.js` `weaponOfMaterial`).
+
+**Built** (`recipeLaw.js` `WEAPON_PRODUCTS`, at every metal): the Light Flail, 4 kg, on the Mace's and the Flail's row - 3
+ingots, 1 Copper, 1 Cured Leather. The Archer's Axe, 3 kg, is half the Battle Axe's 6, so it takes half its 4 ingots - 2,
+with the axes' Copper and Oak Plank. Each is a pattern of its own: the anvil lists 17 weapons, and Smithing's first-makes
+are 235, not 221. A found one is tempered by its recipe now (41.7), for half its ingots.
+
+**The mod's switch.** Its weapon class registers under `newWeapons`; with it off a piece swings as nothing
+(`fpsWeapon.js` `weaponTypeForItem`). The anvil lists the two only while the class stands (`profPages.js`
+`anvilMakes`). The anvil is online alone, and online forces `newWeapons` on (`onlineLane.js`), so a player always sees them.
+
+**The pace moved** (52.2): Smithing reaches Master in 170 crafts, not 172. `tools/craftPace.mjs --shares` was rerun and
+`FIRST_MAKE_SHARE` is Outfitting 518, Building 1,832, Provisioning 3,171 (511, 1,823 and 3,155 before).
+
+**The service** reads `recipeLaw.js`, so the account deploy carries the two recipes (it runs on any bundled file). Until
+it lands, an older service answers `bad-recipe` to them. The version is BUTCHER-STORES' (section 60, the same release).
+
+Pins: `test/net/smithrri.test.js`, `tools/mutants/smithrri.json`. PIN MOVED on purpose: `craft2_patterns` (17 weapons),
+`daedricsmelt_law` and `audit31_law` (29 Daedric works), `masterart_law` (1,076 pieces), `firstbudget_law` (the counts,
+the shares, the pace) and every test that pins a share (`fb1015f_firstcraft`, `fb1018f_craftlimit`, `prof4/9/11/12`,
+`audit32_service`, `clothgems_*`, `potiondoor`). `affixlines_reforge` runs with the mods off, so it leaves the two out.
+The firstbudget mutants were re-aimed by content.
 
 ## Appendix A - a day of a gatherer
 

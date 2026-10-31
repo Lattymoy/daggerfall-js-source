@@ -398,6 +398,15 @@ the bare TEMPLATE's name (`systems/loot/lootRarity.js rarityName`), so the long 
 `test/systems/disc29_rarity.test.js` (6), `test/systems/if1_immersivefootsteps.test.js` (the boots' ladder);
 `tools/mutants/disc29.json` (DISC29-B, 11). `01-Overview/bugs/Field-Bugs-2026-09-28f.md`, DISC29-B.
 
+## SMITH-RRI (2026-10-31) - the two weapons at the anvil
+
+Sammy, Discord #feature-feedback: "Add missing weapon types to be smithable (Light flail etc)". The Light Flail (514)
+and the Archer's Axe (513) are Smithing recipes at every metal now (`net/recipeLaw.js` `WEAPON_PRODUCTS`; the
+Professions arc's section 59 has the ingots and why). A made one mints through `weaponOfMaterial`, as a foe's does, and
+swings by the class above. The anvil offers them only while `newWeapons` registers the class (`ui/professions/profPages.js`
+`anvilMakes`) - always online, where the room forces it on. Not a DFU member: the mod crafts nothing, and neither does DFU.
+`test/net/smithrri.test.js`, `tools/mutants/smithrri.json`.
+
 ## Record
 
 `vendor/roleplay-realism-items/`. Suites `test/systems/rri1_items.test.js` (9),

@@ -147,7 +147,7 @@ const HARDCODED = {
   'src/net/raid/raidClaims.js': 5,
   'src/net/realm/realmGoldLaw.js': 1,
   'src/net/realm/realmTradeLaw.js': 20,   // RPT1026-MARKET HOLD-SAID: -1, the law's named hold's words through t() (realm.held.lawNamed)
-  'src/net/recipeLaw.js': 109,
+  'src/net/recipeLaw.js': 110,   // SMITH-RRI: the Light Flail's name - a recipe's canonical product name, as the Battle Axe's and the War Axe's are
   'src/net/relayCfg.js': 3,
   'src/net/renown.js': 2,
   'src/net/royalLink.js': 10,

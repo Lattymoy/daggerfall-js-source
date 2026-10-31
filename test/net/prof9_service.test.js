@@ -59,9 +59,9 @@ test('PROF9 service: a Hunter\'s Stew at the fire - its Raw Meat, Mushroom and R
   const ask = { character: mac.character, recipe: 'stew:north', clean: false, name: 'Silverthorn', rid: rid() };
   const r = await s.call('/v1/prof/craft', ask, mac.secret);
   assert.equal(r.status, 200, JSON.stringify(r.body));
-  assert.deepEqual([r.body.recipe, r.body.quality, r.body.count, r.body.maker, r.body.marked, r.body.first, r.body.xp, r.body.hand], ['stew:north', -1, 1, 'Silverthorn', false, true, 20 + 3155, null]);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp, brewFirstXp, workFirstXp), no longer a flat 500 - the Stew's, Provisioning's 3,155
+  assert.deepEqual([r.body.recipe, r.body.quality, r.body.count, r.body.maker, r.body.marked, r.body.first, r.body.xp, r.body.hand], ['stew:north', -1, 1, 'Silverthorn', false, true, 20 + 3171, null]);   // PIN MOVED (FIRST-BUDGET): the first's XP its track's first-make share (recipeLaw firstCraftXp, brewFirstXp, workFirstXp), no longer a flat 500 - the Stew's, Provisioning's 3,171
   // PIN MOVED (CRAFT3): a dish is Cooking's, its track its craft's - the XP credited to Provisioning's row, none to a 'cooking' one
-  assert.deepEqual([r.body.track.profession, r.body.track.xp, s.xpOf(mac, 'provisioning'), s.xpOf(mac, 'cooking')], ['provisioning', 3175, 3175, 0]);   // PIN MOVED (FIRST-BUDGET): 20 and Provisioning's 3,155
+  assert.deepEqual([r.body.track.profession, r.body.track.xp, s.xpOf(mac, 'provisioning'), s.xpOf(mac, 'cooking')], ['provisioning', 3191, 3191, 0]);   // PIN MOVED (FIRST-BUDGET): 20 and Provisioning's 3,171
   assert.equal(r.body.pieces.length, 1);
   const p = r.body.pieces[0];
   const v = await verifyProductRecord(p.record, s.identityPublic, { subtle: globalThis.crypto.subtle });
@@ -71,9 +71,9 @@ test('PROF9 service: a Hunter\'s Stew at the fire - its Raw Meat, Mushroom and R
   assert.deepEqual([s.stores(mac, 'food:meat'), s.stores(mac, 'food:mushroom'), s.stores(mac, 'p1:13')], [[['own', 5]], [['own', 2]], [['own', 2]]], 'the bought Raw Meat spent first');
   assert.deepEqual(r.body.stores.map((st) => st.material).sort(), ['food:meat', 'food:mushroom', 'p1:13']);
   const again = await s.call('/v1/prof/craft', ask, mac.secret);
-  assert.deepEqual([again.body.repeat, again.body.xp, again.body.pieces[0].provenance], [true, 3175, p.provenance], 'asked twice: the row\'s answer');
-  assert.deepEqual([s.stores(mac, 'food:meat'), s.xpOf(mac, 'provisioning')], [[['own', 5]], 3175], 'nothing moved twice');   // PIN MOVED (CRAFT3): Provisioning's track
-  s.setXp(mac, 0, 'provisioning');   // PIN MOVED (FIRST-BUDGET): the Stew's 3,155 lifts the cook to rank 17 (XP follows the rank) - back to a Novice, so the next stews read at tier 1 as they did
+  assert.deepEqual([again.body.repeat, again.body.xp, again.body.pieces[0].provenance], [true, 3191, p.provenance], 'asked twice: the row\'s answer');
+  assert.deepEqual([s.stores(mac, 'food:meat'), s.xpOf(mac, 'provisioning')], [[['own', 5]], 3191], 'nothing moved twice');   // PIN MOVED (CRAFT3): Provisioning's track
+  s.setXp(mac, 0, 'provisioning');   // PIN MOVED (FIRST-BUDGET): the Stew's 3,171 lifts the cook to rank 17 (XP follows the rank) - back to a Novice, so the next stews read at tier 1 as they did
   const second = await s.cook(mac, 'stew:north');
   assert.deepEqual([second.body.first, second.body.xp], [false, 20], 'the second stew: no 500');
   const clean = await s.cook(mac, 'stew:north', { clean: true });
