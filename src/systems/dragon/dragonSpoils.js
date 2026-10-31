@@ -4,7 +4,7 @@
 // (systems/serpent/serpentSpoils.js), rung for rung. Gold, DRAGON_GOLD_PER_LEVEL a level and a fifth either way (a
 // stander STOOD_GOLD of it); a dealer one piece Rare or better (Legendary DRAGON_SPOILS_LEGENDARY of the time) and one
 // Magic or better; a stander the Magic-or-better piece alone. Every piece known, the ladder's last passes over them. Given
-// when the account service says this claim is its (watch, account)'s, straight into the pack. Not a DFU member. Ledger A
+// when the account service says this claim is its (watch, place, account)'s, straight into the pack. Not a DFU member. Ledger A
 // (DRAGON).
 import { seededRng } from '../wind/wind.js';
 import { spoilsBase, magicOrBetter } from '../gate/gateSpoils.js';
@@ -19,8 +19,8 @@ export const DRAGON_SPOILS_LEGENDARY = 0.15;
 /** The device's record of a hoard no save holds yet, and the receipts spent - the dragon's own spoils-pool keys. */
 export const DRAGON_SPOILS_KEYS = Object.freeze({ store: 'dragon4.spoils', day: 'dragon4.spoilsDay' });
 export const DRAGON_SPOILS_RECORDS_MAX = 16;
-/** A dragon's receipt as the pool keys it spent: its watch. */
-export const dragonSpoilsDay = (w) => `dragon:${w}`;
+/** A dragon's receipt as the pool keys it spent: its watch and place (DRAGON-EACH); one from before it, its watch. */
+export const dragonSpoilsDay = (w, p) => (p === undefined ? `dragon:${w}` : `dragon:${w}:${p}`);
 export { DRAGON_SPOILS_TEXT };
 
 /** A piece laddered to its tier and known. */

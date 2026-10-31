@@ -58,6 +58,13 @@ export function lairSite(c) {
 /** A cell's map id, and its location index. */
 export const lairPlaceId = (c) => ((LAIR_LANE << 20) | 0x80000 | c) >>> 0;
 export const lairLocationIndex = (c) => -(LAIR_INDEX_BASE + c);
+/** FIND-FOUND: a lair's map id read back to its pixel (lairPlaceId's inverse, its cell's site); null for any other id. */
+export function lairPixelOfId(id) {
+  const v = Number(id) >>> 0;
+  if (((v >>> 20) & 0xfff) !== LAIR_LANE || (v & 0x80000) === 0) return null;
+  const s = lairSite(v & 0x7ffff);
+  return { x: s.px, y: s.py };
+}
 
 const idOf = (l) => (l?.mapTableData?.mapId ?? 0) >>> 0;
 const isBorder = (b) => /^b/i.test(b?.blockName ?? '');

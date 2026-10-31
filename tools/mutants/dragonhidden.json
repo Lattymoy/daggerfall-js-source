@@ -11,20 +11,22 @@
   {
     "name": "DRAGON-HIDDEN-the-watch-unread",
     "file": "src/net/dragon/dragonSeed.js",
-    "old": "enc.encode(`dragon-watch:${w}`)",
-    "new": "enc.encode('dragon-watch')",
+    "old": "enc.encode(`dragon-omen:${w}:${i}`)",
+    "new": "enc.encode(`dragon-omen:0:${i}`)",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL II E11: the watch's own seed retired; its omens' read the watch)."
   },
   {
     "name": "DRAGON-HIDDEN-the-bytes-shortened",
     "file": "src/net/dragon/dragonSeed.js",
-    "old": "return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
-    "new": "return ((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
+    "old": "out.push(((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);",
+    "new": "out.push(((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (AUDIT DRAGON-CELL II E11)."
   },
   {
     "name": "DRAGON-HIDDEN-told-before-its-landing",
@@ -40,40 +42,45 @@
   {
     "name": "DRAGON-HIDDEN-told-for-any-watch",
     "file": "server/src/dragonFights.js",
-    "old": "  if (!dragonWatchesAbout(now).includes(m.w)) return;\n  const o = await dragonOmenOf(room, m.w);",
-    "new": "  const o = await dragonOmenOf(room, m.w);",
+    "old": "  if (!dragonWatchesAbout(now).includes(m.w)) return;\n  const p = judgedPixel(a);",
+    "new": "  const p = judgedPixel(a);",
     "tests": [
-      "test/net/dragon/dragonhidden.test.js"
+      "test/net/dragon/dragonhidden.test.js",
+      "test/net/dragon/dragonbudget.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content (AUDIT DRAGON-CELL). AUDIT DRAGON-CELL III: since DRAGON-BUDGET the hub refuses such a watch too, so the pin is that the hub is never asked (dragonbudget)."
   },
   {
     "name": "DRAGON-HIDDEN-the-seed-not-the-relays",
     "file": "server/src/dragonFights.js",
-    "old": "say(room, ws, { k: 'omen', w: m.w, s: o ? o.s : null });",
-    "new": "say(room, ws, { k: 'omen', w: m.w, s: m.w });",
+    "old": "say(room, ws, { k: 'omen', w: m.w, s: c.s }); return; }",
+    "new": "say(room, ws, { k: 'omen', w: m.w, s: m.w }); return; }",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-CELL)."
   },
   {
     "name": "DRAGON-HIDDEN-the-brains-floor-left",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const DRAGON_BRAIN_MIN = 2;",
-    "new": "export const DRAGON_BRAIN_MIN = 1;",
+    "old": "export const DRAGON_BRAIN_MIN = 3;",
+    "new": "export const DRAGON_BRAIN_MIN = 2;",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
-    ]
+    ],
+    "note": "Re-aimed by content (DRAGON-CELL)."
   },
   {
     "name": "DRAGON-HIDDEN-asked-before-the-landing",
     "file": "src/scenes/dragonHost.js",
-    "old": "if (omens.has(w) || t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS ||",
-    "new": "if (omens.has(w) ||",
+    "old": "t < dragonQuietAt(w) - DRAGON_LAND_SPAN_MS || t >= dragonAskEnd(w)",
+    "new": "t >= dragonAskEnd(w)",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],
-    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start."
+    "note": "Re-aimed by content (DRAGON-HIDDEN-TIME): the landing is the seed's roll, a quiet watch told at the latest landing, the ask from the watch's start. Re-aimed by content again (DRAGON-CELL). Re-aimed by content (AUDIT DRAGON-CELL).",
+    "equivalent": true,
+    "why": "DRAGON-CELL found it alive on main too: the ask walks dragonWatchesAbout, whose watches are never before their start, so the bound is a guard no clock reaches."
   },
   {
     "name": "DRAGON-HIDDEN-the-ask-never-again",
@@ -109,7 +116,9 @@
     "old": "if (s == null || !isDragonOmen(o)) continue;",
     "new": "if (s != null && !isDragonOmen(o)) continue;",
     "tests": [
-      "test/net/dragon/dragonhidden.test.js"
-    ]
+      "test/net/dragon/dragonhidden.test.js",
+      "test/net/dragon/dragoncellaudit.test.js"
+    ],
+    "note": "AUDIT DRAGON-CELL D12: alive on main too; dragoncellaudit's pin reads it."
   }
 ]
