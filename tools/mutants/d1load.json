@@ -1,165 +1,165 @@
 [
- {
-  "name": "D1LOAD-weight",
-  "file": "tools/d1Load.mjs",
-  "old": "waitS: 'SUM(double5 * _sample_interval) / 1000',",
-  "new": "waitS: 'SUM(double5) / 1000',",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-wait-double",
-  "file": "tools/d1Load.mjs",
-  "old": "waitS: 'SUM(double5 * _sample_interval) / 1000',",
-  "new": "waitS: 'SUM(double1 * _sample_interval) / 1000',",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-order",
-  "file": "tools/d1Load.mjs",
-  "old": "ORDER BY d1_wait_s DESC LIMIT 40",
-  "new": "ORDER BY requests DESC LIMIT 40",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-window-guard",
-  "file": "tools/d1Load.mjs",
-  "old": "if (!Number.isSafeInteger(h) || h < 1 || h > HOURS_MAX)",
-  "new": "if (!Number.isSafeInteger(h) || h > HOURS_MAX)",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-empty",
-  "file": "tools/d1Load.mjs",
-  "old": "if (!rows.length) return `${head}No points in the window.\\n`;",
-  "new": "",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-refusal-drawn",
-  "file": ".github/workflows/d1-load.yml",
-  "old": "if [ \"${code:-000}\" = \"200\" ] && node tools/d1Load.mjs",
-  "new": "if node tools/d1Load.mjs",
-  "tests": [
-   "test/server/d1load.test.js"
-  ],
-  "note": "AUDIT PLAN-1000 A7: not equivalent - an HTTP 500 whose body carries rows was drawn; its fixture now kills it."
- },
- {
-  "name": "D1LOAD-input-spliced",
-  "file": ".github/workflows/d1-load.yml",
-  "old": "node tools/d1Load.mjs --sql \"$q\" \"$HOURS\"",
-  "new": "node tools/d1Load.mjs --sql \"$q\" \"${{ inputs.hours }}\"",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-seats-default-kept",
-  "file": "server-account/src/townSeats.js",
-  "old": "fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS)",
-  "new": "fresh || true ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS)",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-turning-fresh",
-  "file": "server-account/src/seatTurning.js",
-  "old": "const registry = await confirmedSeats(db, nowS, { fresh: true });",
-  "new": "const registry = await confirmedSeats(db, nowS);",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-lease-read",
-  "file": "server-account/src/seatTurning.js",
-  "old": "if (held && Number(held.until) > nowS) return { settled: 0, pending: true };",
-  "new": "",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-turn-spread",
-  "file": "src/net/townSeatBook.js",
-  "old": "seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs)",
-  "new": "seatWeekOf(at) !== seatWeekOf(nowMs())",
-  "tests": [
-   "test/scenes/seat_standing_festival.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-turn-spread-window",
-  "file": "src/net/townSeatBook.js",
-  "old": "export const SEAT_TURN_READ_SPREAD_MS = 120_000;",
-  "new": "export const SEAT_TURN_READ_SPREAD_MS = 600_000;",
-  "tests": [
-   "test/scenes/seat_standing_festival.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-written-blob",
-  "file": "tools/d1Load.mjs",
-  "old": "SELECT blob1 AS route, blob5 AS tables,",
-  "new": "SELECT blob1 AS route, blob6 AS tables,",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-hot-double",
-  "file": "tools/d1Load.mjs",
-  "old": "realm: 'SUM(double11 * _sample_interval)',",
-  "new": "realm: 'SUM(double10 * _sample_interval)',",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-written-order",
-  "file": "tools/d1Load.mjs",
-  "old": "GROUP BY route, tables ORDER BY rows_written DESC",
-  "new": "GROUP BY route, tables ORDER BY requests DESC",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-written-points",
-  "file": "tools/d1Load.mjs",
-  "old": "AND double4 > 0 GROUP BY route, tables",
-  "new": "GROUP BY route, tables",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-ranking-fixed",
-  "file": ".github/workflows/d1-load.yml",
-  "old": "--sort-by \"$sort\"",
-  "new": "--sort-by time",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- },
- {
-  "name": "D1LOAD-ranking-unguarded",
-  "file": ".github/workflows/d1-load.yml",
-  "old": "time|reads|writes) sort=\"${SORT_BY:-time}\" ;;",
-  "new": "*) sort=\"${SORT_BY:-time}\" ;;",
-  "tests": [
-   "test/server/d1load.test.js"
-  ]
- }
+  {
+    "name": "D1LOAD-weight",
+    "file": "tools/d1Load.mjs",
+    "old": "  waitS: 'SUM(double5 * _sample_interval) / 1000',",
+    "new": "  waitS: 'SUM(double5) / 1000',",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-wait-double",
+    "file": "tools/d1Load.mjs",
+    "old": "  waitS: 'SUM(double5 * _sample_interval) / 1000',",
+    "new": "  waitS: 'SUM(double1 * _sample_interval) / 1000',",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-order",
+    "file": "tools/d1Load.mjs",
+    "old": "      `SELECT blob1 AS route, blob2 AS method, ${W.n} AS requests, ${W.waitS} AS d1_wait_s, ${W.stmts} AS statements, ${W.read} AS rows_read, ${W.written} AS rows_written, quantileWeighted(0.95)(double1, _sample_interval) AS p95_ms FROM ${DATASET} WHERE ${since(h)} GROUP BY route, method ORDER BY d1_wait_s DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS route, blob2 AS method, ${W.n} AS requests, ${W.waitS} AS d1_wait_s, ${W.stmts} AS statements, ${W.read} AS rows_read, ${W.written} AS rows_written, quantileWeighted(0.95)(double1, _sample_interval) AS p95_ms FROM ${DATASET} WHERE ${since(h)} GROUP BY route, method ORDER BY requests DESC LIMIT 40`,",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-window-guard",
+    "file": "tools/d1Load.mjs",
+    "old": "  if (!Number.isSafeInteger(h) || h < 1 || h > HOURS_MAX)",
+    "new": "  if (!Number.isSafeInteger(h) || h > HOURS_MAX)",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-empty",
+    "file": "tools/d1Load.mjs",
+    "old": "  if (!rows.length) return `${head}No points in the window.\\n`;",
+    "new": "",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-refusal-drawn",
+    "file": ".github/workflows/d1-load.yml",
+    "old": "if [ \"${code:-000}\" = \"200\" ] && node tools/d1Load.mjs",
+    "new": "if node tools/d1Load.mjs",
+    "tests": [
+      "test/server/d1load.test.js"
+    ],
+    "note": "AUDIT PLAN-1000 A7: not equivalent - an HTTP 500 whose body carries rows was drawn; its fixture now kills it."
+  },
+  {
+    "name": "D1LOAD-input-spliced",
+    "file": ".github/workflows/d1-load.yml",
+    "old": "node tools/d1Load.mjs --sql \"$q\" \"$HOURS\"",
+    "new": "node tools/d1Load.mjs --sql \"$q\" \"${{ inputs.hours }}\"",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-seats-default-kept",
+    "file": "server-account/src/townSeats.js",
+    "old": "  const { seats } = fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
+    "new": "  const { seats } = fresh || true ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-turning-fresh",
+    "file": "server-account/src/seatTurning.js",
+    "old": "const registry = await confirmedSeats(db, nowS, { fresh: true });",
+    "new": "const registry = await confirmedSeats(db, nowS);",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-lease-read",
+    "file": "server-account/src/seatTurning.js",
+    "old": "if (held && Number(held.until) > nowS) return { settled: 0, pending: true };",
+    "new": "",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-turn-spread",
+    "file": "src/net/townSeatBook.js",
+    "old": "      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs))\n        read({ force: true });",
+    "new": "      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs())) read({ force: true });",
+    "tests": [
+      "test/scenes/seat_standing_festival.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-turn-spread-window",
+    "file": "src/net/townSeatBook.js",
+    "old": "export const SEAT_TURN_READ_SPREAD_MS = 120_000;",
+    "new": "export const SEAT_TURN_READ_SPREAD_MS = 600_000;",
+    "tests": [
+      "test/scenes/seat_standing_festival.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-written-blob",
+    "file": "tools/d1Load.mjs",
+    "old": "      `SELECT blob1 AS route, blob5 AS tables, ${W.n} AS requests, ${W.written} AS rows_written, ${W.players} AS players, ${W.sessions} AS sessions, ${W.renown} AS renown_tracks, ${W.realm} AS realm_characters FROM ${DATASET} WHERE ${since(h)} AND double4 > 0 GROUP BY route, tables ORDER BY rows_written DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS route, blob6 AS tables, ${W.n} AS requests, ${W.written} AS rows_written, ${W.players} AS players, ${W.sessions} AS sessions, ${W.renown} AS renown_tracks, ${W.realm} AS realm_characters FROM ${DATASET} WHERE ${since(h)} AND double4 > 0 GROUP BY route, tables ORDER BY rows_written DESC LIMIT 40`,",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-hot-double",
+    "file": "tools/d1Load.mjs",
+    "old": "  realm: 'SUM(double11 * _sample_interval)',",
+    "new": "  realm: 'SUM(double10 * _sample_interval)',",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-written-order",
+    "file": "tools/d1Load.mjs",
+    "old": "      `SELECT blob1 AS route, blob5 AS tables, ${W.n} AS requests, ${W.written} AS rows_written, ${W.players} AS players, ${W.sessions} AS sessions, ${W.renown} AS renown_tracks, ${W.realm} AS realm_characters FROM ${DATASET} WHERE ${since(h)} AND double4 > 0 GROUP BY route, tables ORDER BY rows_written DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS route, blob5 AS tables, ${W.n} AS requests, ${W.written} AS rows_written, ${W.players} AS players, ${W.sessions} AS sessions, ${W.renown} AS renown_tracks, ${W.realm} AS realm_characters FROM ${DATASET} WHERE ${since(h)} AND double4 > 0 GROUP BY route, tables ORDER BY requests DESC LIMIT 40`,",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-written-points",
+    "file": "tools/d1Load.mjs",
+    "old": "      `SELECT blob1 AS route, blob5 AS tables, ${W.n} AS requests, ${W.written} AS rows_written, ${W.players} AS players, ${W.sessions} AS sessions, ${W.renown} AS renown_tracks, ${W.realm} AS realm_characters FROM ${DATASET} WHERE ${since(h)} AND double4 > 0 GROUP BY route, tables ORDER BY rows_written DESC LIMIT 40`,",
+    "new": "      `SELECT blob1 AS route, blob5 AS tables, ${W.n} AS requests, ${W.written} AS rows_written, ${W.players} AS players, ${W.sessions} AS sessions, ${W.renown} AS renown_tracks, ${W.realm} AS realm_characters FROM ${DATASET} WHERE ${since(h)} GROUP BY route, tables ORDER BY rows_written DESC LIMIT 40`,",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-ranking-fixed",
+    "file": ".github/workflows/d1-load.yml",
+    "old": "--sort-by \"$sort\"",
+    "new": "--sort-by time",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  },
+  {
+    "name": "D1LOAD-ranking-unguarded",
+    "file": ".github/workflows/d1-load.yml",
+    "old": "time|reads|writes) sort=\"${SORT_BY:-time}\" ;;",
+    "new": "*) sort=\"${SORT_BY:-time}\" ;;",
+    "tests": [
+      "test/server/d1load.test.js"
+    ]
+  }
 ]

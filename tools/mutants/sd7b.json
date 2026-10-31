@@ -2,8 +2,8 @@
   {
     "name": "SD7B-the-top-turned-in",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "const TOP = [0, 3, 2, 1], UNDER = [4, 5, 6, 7];",
-    "new": "const TOP = [0, 1, 2, 3], UNDER = [4, 5, 6, 7];",
+    "old": "const TOP = [0, 3, 2, 1],",
+    "new": "const TOP = [0, 1, 2, 3],",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SD7B-a-side-turned-in",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "const SIDES = Object.freeze([[0, 1, 5, 4], [1, 2, 6, 5]",
-    "new": "const SIDES = Object.freeze([[0, 4, 5, 1], [1, 2, 6, 5]",
+    "old": "  [0, 1, 5, 4],",
+    "new": "  [0, 4, 5, 1],",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD7B-a-riser-no-deeper-than-a-step",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "h: kind === 'riser' ? SD_RISER_H + SD_STEP_THICK : SD_STEP_THICK",
-    "new": "h: SD_STEP_THICK",
+    "old": "  return { w: size.w, d: size.d, h: kind === 'riser' ? SD_RISER_H + SD_STEP_THICK : SD_STEP_THICK };",
+    "new": "  return { w: size.w, d: size.d, h: SD_STEP_THICK };",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD7B-the-wrong-wear",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "crumble: Object.freeze({ atlas: SD_STEPS_RECORD.crumble[0] }),",
-    "new": "crumble: Object.freeze({ atlas: SD_STEPS_RECORD.riser }),",
+    "old": "  crumble: Object.freeze({ atlas: SD_STEPS_RECORD.crumble[0] }),",
+    "new": "  crumble: Object.freeze({ atlas: SD_STEPS_RECORD.riser }),",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ],
@@ -39,8 +39,8 @@
   {
     "name": "SD7B-the-collider-wound-wrong",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "for (const [a, b, e, g] of [TOP, UNDER, ...SIDES]) indices.push(a, b, e, a, e, g);",
-    "new": "for (const [a, b, e, g] of [TOP, UNDER, ...SIDES]) indices.push(a, e, b, a, g, e);",
+    "old": "  for (const [a, b, e, g] of [TOP, UNDER, ...SIDES]) indices.push(a, b, e, a, e, g);",
+    "new": "  for (const [a, b, e, g] of [TOP, UNDER, ...SIDES]) indices.push(a, e, b, a, g, e);",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]
@@ -48,8 +48,8 @@
   {
     "name": "SD7B-a-checkpoint-on-the-floor",
     "file": "src/world/superDungeon/sdStepsModel.js",
-    "old": "SD_REALM_FLOOR_RECORD, { y: c.y });",
-    "new": "SD_REALM_FLOOR_RECORD, {});",
+    "old": "    if (k > 0) realmIsland(f, c.x, c.z, c.r, SD_REALM_FLOOR_RECORD, { y: c.y });",
+    "new": "    if (k > 0) realmIsland(f, c.x, c.z, c.r, SD_REALM_FLOOR_RECORD, {});",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]
@@ -66,8 +66,8 @@
   {
     "name": "SD7B-the-cracks-unlit",
     "file": "src/world/superDungeon/sdStepsArt.js",
-    "old": "return d < S.core ? scale(col, k)",
-    "new": "return d < S.core ? BLACK",
+    "old": "    return d < S.core ? scale(col, k) : d < S.lip ? scale(col, k * 0.18) : BLACK;",
+    "new": "    return d < S.core ? BLACK : d < S.lip ? scale(col, k * 0.18) : BLACK;",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "SD7B-the-hub-alight",
     "file": "src/world/superDungeon/sdStepsArt.js",
-    "old": "if (r < D.hub) return BLACK;   // the hub",
-    "new": "if (r < D.hub) return scale(col, 1);   // the hub",
+    "old": "    if (r < D.hub) return BLACK; // the hub's pin: brass, never a light",
+    "new": "    if (r < D.hub) return scale(col, 1); // the hub's pin: brass, never a light",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ],
@@ -261,8 +261,8 @@
   {
     "name": "SD7B-the-arena-left-off",
     "file": "src/world/superDungeon/sdSteps.js",
-    "old": "  Object.freeze({ kind: 'disc', ...SD_ARENA }),\n",
-    "new": "",
+    "old": "  Object.freeze({ kind: 'disc', ...SD_ARENA }),\n]);",
+    "new": "]);",
     "tests": [
       "test/world/superDungeon/sd7b_steps.test.js"
     ]

@@ -70,6 +70,6 @@ export const lampAlpha = (dist) => Math.min(1, Math.max(0, (dist - LAMP_NEAR_M) 
 export function lampPoints(points) {
   if (points.length <= LAMP_MAX) return points.slice();
   const out = [];
-  for (let k = 0; k < LAMP_MAX; k++) out.push(points[Math.round(k * (points.length - 1) / (LAMP_MAX - 1))]);
+  for (let k = 0; k < LAMP_MAX; k++) out.push(points[Math.round((k * (points.length - 1)) / (LAMP_MAX - 1))]);
   return out;
 }

@@ -61,7 +61,9 @@ export class CfaFile extends BaseImageFile {
   }
 
   /** RecordCount is 1 for a CFA (BaseImageFile's default record). */
-  get recordCount() { return 1; }
+  get recordCount() {
+    return 1;
+  }
 
   /** GetFrameCount (:71-77). */
   getFrameCount(record = 0) {
@@ -77,13 +79,20 @@ export class CfaFile extends BaseImageFile {
 
   /** GetDFBitmap (:85-101): the frame's own slice of the flat buffer. */
   getDFBitmap(record = 0, frame = 0) {
-    if (record < 0 || record >= this.recordCount || frame < 0 || frame >= this.getFrameCount(record) || !this.imageData) {
+    if (
+      record < 0 ||
+      record >= this.recordCount ||
+      frame < 0 ||
+      frame >= this.getFrameCount(record) ||
+      !this.imageData
+    ) {
       return { width: 0, height: 0, data: null, palette: null };
     }
     const { widthUncompressed: width, height } = this.header;
     const offset = width * height * frame;
     return {
-      width, height,
+      width,
+      height,
       data: this.imageData.subarray(offset, offset + width * height),
       palette: this.palette,
     };

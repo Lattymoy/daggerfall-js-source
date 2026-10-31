@@ -67,8 +67,8 @@
   {
     "name": "ASLH-B7-null-kept",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) { h.harbour = sound(); h.at = clock; }",
-    "new": "else if (false) { h.harbour = sound(); h.at = clock; }",
+    "old": "    } else if (!h.harbour && clock - h.at >= HARBOUR_RETRY_S && near.ready?.() !== false) {",
+    "new": "    } else if (false) {",
     "tests": [
       "test/scenes/naval/auditshiplife_host.test.js"
     ],
@@ -158,8 +158,8 @@
   {
     "name": "ABM-C6-aimed-unread",
     "file": "src/systems/comeSailAway/csaBoatMenu.js",
-    "old": "  if (aimed && list.includes(aimed)) return aimed;",
-    "new": "",
+    "old": "  if (aimed && list.includes(aimed)) return aimed; // AUDIT BOAT-MENU C6: the box aimed at, where it is the verb's",
+    "new": "  // AUDIT BOAT-MENU C6: the box aimed at, where it is the verb's",
     "tests": [
       "test/systems/comeSailAway/boatmenu.test.js"
     ]
@@ -185,8 +185,8 @@
   {
     "name": "AHZ-E3-ratio-below-base",
     "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
-    "old": "(clicks < 0 && -z >= baseDist - 1e-6)",
-    "new": "clicks < 0",
+    "old": "      if (far < MAX_Z && clicks && (-z > baseDist + 1e-6 || (clicks < 0 && -z >= baseDist - 1e-6))) {",
+    "new": "      if (far < MAX_Z && clicks && (-z > baseDist + 1e-6 || clicks < 0)) {",
     "tests": [
       "test/player/fbsea_zoom.test.js"
     ]

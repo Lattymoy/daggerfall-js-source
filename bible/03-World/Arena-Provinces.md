@@ -1541,7 +1541,7 @@ Also, daggerfall's clustered icons need to be fixed amd standardized across tamr
   region's faint ink. Each province's name on a halo too, 18 px out on the continent (15, bare, was lost in the web).
 - **Cyrodiil's line** (ZONE-LINE, 2026-10-26, `11-Multiplayer/Wild-Zone.md` section 27; the owner: *"Also ensure the pvp
   border outlines cyrodil perfectly, currently it doesnt"*): Cyrodiil's borders and its open coast are the open zone's
-  own line (`cyrodiilZone.js:"export function zoneLineOf("`) - the province's outline on the traced picture, unsmoothed,
+  own line (`cyrodiilZone.js:"export function zoneLineOf"`) - the province's outline on the traced picture, unsmoothed,
   the red line drawn on it - where TAMRIEL4's corner cut had drawn them up to 12 pixels off the province's law at a
   corner. `tracedChains` keeps no border with Cyrodiil on one side and leaves its open coast to that line; a lake inside
   it and every other province's line are drawn as before, a neighbour's coast and border ending on the line's corner.
@@ -1896,11 +1896,11 @@ the entirety of the city"; "No band aids for any of this"). The living town make
 walks them between their doors over the one street net most of its doors open onto (`places.js` doorsNet) - and the
 city's own blocks carried no building (the fabric's facades have no door): 425 of the 625 slices stood nobody but the
 watch and its travellers, the 200 with Daggerfall's blocks people only about those blocks' doors. Two causes, both fixed:
-- **The fabric's homes** (`src/world/imperialHomes.js:"export function fabricHomesIn(s) {"`): each near slice's fabric hands
+- **The fabric's homes** (`src/world/imperialHomes.js:"export function fabricHomesIn"`): each near slice's fabric hands
   its living town one plot with a street front in HOMES_EVERY (16; 24 to 160 a slice - a district its density by its
   buildings), picked off the plot's own key (the same people on every client), each a house, a shop (one in five, its
   kind off its key) or a tavern (one in twelve), with its door on the widest of its street fronts whose ground before it
-  is open (`src/world/imperialHomes.js:"export function doorOf(p) {"` - the fabric's own law and the landmarks', as the walkers' grid
+  is open (`src/world/imperialHomes.js:"export function doorOf"` - the fabric's own law and the landmarks', as the walkers' grid
   reads them) and inside the slice's own grid. Keyed by the plot's own key (past Daggerfall's keys, FABRIC_HOME_KEY_MIN)
   within the slice's map id: the BLD stream gives the same buildings building records and doors keyed by the same plot
   key, and where it does the census takes its records - `cityHomesOf` is the one door the swap goes through
@@ -1910,7 +1910,7 @@ watch and its travellers, the 200 with Daggerfall's blocks people only about tho
   stands in the next slice splits it, and the one net left the other side's streets empty. A capital's slice
   (`livingTown.js`: its town's map id a capital's) walks every component QUARTER_MIN (3) of its buildings open onto, each
   a QUARTER: the town's places over its own street alone (its square, corners, shops, exits), its people its own
-  households (`src/systems/livingWorld/census.js:"export function quarterCensus(town, buildings, opens) {"` - the town's own quarter's as
+  households (`src/systems/livingWorld/census.js:"export function quarterCensus"` - the town's own quarter's as
   townCensus mints them, each other quarter's on slots of their own), and every one's day planned over its home's
   quarter (`livingTown.js` `_placesFor`), so every walk has its way. A Bay town is one town on one net, as the field's
   law keeps it (no quarters asked).
@@ -1926,7 +1926,7 @@ IC-TOWER-LOD (2026-10-26, the owner walking the city: "Weird pop in issues in th
 PALACE COARSE, THE HORIZON'S OWN. A far view (a slice the stream builds past the player's ring) stood the tower's and the
 palace's whole parts (7,654 and 15,612 triangles), and past the stream the far ring stood their silhouette's few prisms:
 at the stream's edge, seen from everywhere in the city, the tower changed shape. Both are now made of ONE list each
-(`src/world/imperialCity.js:"export function imperialTowerLod(T = IMPERIAL.tower) {"`, `imperialPalaceLod` - the rotunda,
+(`src/world/imperialCity.js:"export function imperialTowerLod"`, `imperialPalaceLod` - the rotunda,
 its dome, the shaft in bands of two tiers each ringed by a gilt band, the gallery, the crown, the spire; the wings' runs and
 their slate, the pillar-towers): the silhouette (`imperialImpostor.js`, byte for byte as it stood) and a far view's coarse
 model (`capitalImperial.js` buildImperialTowerLod, buildImperialPalaceLod - the same prisms in the landmarks' pictures,
@@ -2642,17 +2642,17 @@ issue. They have no logical placements"*, and *"No band aids or half assed work"
   Stable stands at its edge by a road or a gate. One Stable, one Wagon Yard and one joinery outside each district's
   avenue gate in the city wall, on City Isle's own grass beside the way out (IMPERIAL_YARD_LANE kept clear), clear of
   the wall's towers, each wholly in one slice, the Stable nearest the gate - eighteen. The ground is the blocks' own, asked
-  as they are built (`imperialBlocks.js:"export const imperialAnchorOf = (r, c, x, z) =>"`): the automap's closed
+  as they are built (`imperialBlocks.js:"export const imperialAnchorOf"`): the automap's closed
   cells, the tile's grass, and each of the isle's trees at its foot - Daggerfall's ground scenery stands at its tile's
   north-west corner (`rmbFlats.js` collectBlockFlats; DFU's RMB nature flat), and the first reading set it a tile off,
   so the Elven Gardens' Wagon Yard stood under a tree the host closed and was not stood at all
-  (`imperialYards.js:"const FX = TX * TILE_CELLS, FZ = TZ * TILE_CELLS + TILE_CELLS;"`). Every slice hands the yards'
-  law its share (`merchantYards/townYards.js:"export function townYardsOf(dfLocation) {"`, from `scenes/world.js`
+  (`imperialYards.js:"const FX = TX * TILE_CELLS"`). Every slice hands the yards'
+  law its share (`merchantYards/townYards.js:"export function townYardsOf"`, from `scenes/world.js`
   townPlacesFor) and the law places none by itself on any slice.
-- EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`):
+- EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName"`):
   a House1 to House6 with no name of its own is named as DFU discovers it - DFU's own `residence` text, no new string -
   whatever its verbs; a quest's home, a player's home and a guild's hall keep theirs. A building of no house type with no
-  name (a ship's deck) says the place it stands in (`worldTooltips.js:"    : displayName || locationName;"` - the mod
+  name (a ship's deck) says the place it stands in (`worldTooltips.js:": displayName ||"` - the mod
   would print "To" and nothing). The Info say reads the same word.
 - A DOOR IS ITS OWN TOWN'S (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`): the host's record
   for a door carries the town it stands in - its book of buildings, its name, and its building's name in that town
@@ -2660,19 +2660,19 @@ issue. They have no logical placements"*, and *"No band aids or half assed work"
   else BuildingNames' law over that town's names). The plaque, the press and the activation discover into that book
   (`scenes/worldModes.js:"const locId = bd.townBook ?? discoveryLocationId?.() ?? null;   // IC-PROPS: the door's own town's book, the one its press"`),
   and a nameless building's plaque says its own town, never the player's.
-- THE GRAND CITY THE ONLY LAYOUT (`world/imperialCity.js:"function cellOf(r, c, I = IMPERIAL) {"`): no cell is one of
+- THE GRAND CITY THE ONLY LAYOUT (`world/imperialCity.js:"function cellOf(r, c, I = IMPERIAL)"`): no cell is one of
   Daggerfall's blocks but the arena's (the grand plan names it); IMPERIAL_MIX, IMPERIAL_SIGNATURE and their trade cells
   are gone, and the fabric keeps no street round a block of Daggerfall's (CLEAR.classic), its far skyline no ring of
   their houses (`imperialFabricModels.js` classicMass). What they carried that the grand city means to keep is the
   fabric's now (`world/imperialFabricBuildings.js` DISTRICT_TRADE): each district's SIGNATURE HALLS, about as many as its
-  blocks stood (`imperialFabricBuildings.js:"if (door.street === 'main') for (const [pool, every] of trade?.halls ?? [])"`)
+  blocks stood (`imperialFabricBuildings.js:"if (door.street === 'main')"`)
   - the Temple District's temples of the Eight, 40 where 33 TEMP blocks stood, each its own god's (the donor's record's
   faction - TEMPAAA0 to TEMPAAH0, read off the freeware; each god alike whatever the plot's size,
-  `imperialFabricBuildings.js:"if (pool === 'temple') return list[hash32(SALT, p.key, 9) % list.length];"`); the
+  `imperialFabricBuildings.js:"if (pool === 'temple')"`); the
   Waterfront's Thieves Guild, 14 houses of the guild's faction where 15 THIE blocks stood (Daggerfall's own: a House2 of
   faction 42); the University's Mages Guild halls; and the Market's bank and Talos Plaza's general stores among their
   shops (their BANK and GENR blocks). THE ARCANE UNIVERSITY's halls are a neighbourhood of their own inside its curtain
-  where its 14 MAGE and 5 LIBR blocks stood (`imperialFabric.js:"export function universityGrounds(I = IMPERIAL) {"`):
+  where its 14 MAGE and 5 LIBR blocks stood (`imperialFabric.js:"export function universityGrounds"`):
   quads round garden courts square to its walls, clear of its curtain, its Arch-Mage's tower and its hall (their doors'
   forecourts), and of its two walks - from each gate straight across the compound - 858 buildings entered, 37 of them its
   Mages Guild's halls, 77 libraries. The quest sites index is baked again off the new plan and donors
@@ -2876,17 +2876,17 @@ this machine - four cores shared at load 30-45, so read them against each other)
   walkers' grid, its sixty-four blocks laid in one task (`scenes/pixelBuild.js`).
 
 THE FIX - the same city, the same pace, the same views, nothing hidden behind a pause:
-- **Ahead of the traveller** (`scenes/capitalPrebuild.js:"export function prebuildWanted(x, y, px, py, heading = null) {"`):
+- **Ahead of the traveller** (`scenes/capitalPrebuild.js:"export function prebuildWanted"`):
   the sweep keeps the way of the last crossing, and the outer ring's slices one more crossing that way brings within
   NEAR_RING are wanted near, first of their ring - their pieces made while the traveller is still a pixel off.
-- **Nothing of the city made on the page while a worker stands** (`capitalPrebuild.js:"function firstReady(queue) {"`,
+- **Nothing of the city made on the page while a worker stands** (`capitalPrebuild.js:"function firstReady"`,
   wired into the stream's pump - `world.js:"if (building || !state.owes(queue)"`): a pixel of the city is built once every
   piece of the view it builds now (near within NEAR_RING, else far) is the page's (`worldDataReplacement.js`
   portBlockFamilyHas, `customModels.js` customModelReady) or held from a worker; the queue's first such pixel goes first,
   its order else kept, and the pieces the next NEED_AHEAD pixels owe are asked of their workers (`need`) - a hole in the
   land's before a view built again behind the one standing (IC-SWAP-BEHIND), which stands meanwhile. No worker (node, a
   factory that throws, one that failed), or none of the city's pixels: every pixel ready, every piece the page's as ever.
-  The gate is a frame's work, so it keeps a look a slice and view (`capitalPrebuild.js:"function lookOf(px, py) {"`):
+  The gate is a frame's work, so it keeps a look a slice and view (`capitalPrebuild.js:"function lookOf(px, py)"`):
   a frame looks at a queued pixel from the first piece its look found owed, and the pixel chosen is looked at whole
   before it is built (a piece let go since: owed again, asked). With the stream's square of the city queued and owing
   (81 pixels), a frame of it checks 345 pieces, where a look at each view whole every frame would check 5,931 -
@@ -2957,7 +2957,7 @@ stacked on the street. It was a parkour route drawn as cargo, not a stair.
 
 **As built** (`world/imperialFabric.js` blockStair, stairPlan, stairRuns; `world/imperialFabricModels.js` the stair's
 mesh): a WAY UP IS A BUILT STONE STAIR along its block's street front, from the street to a roof of its block.
-- **Its proportions a built stair's** (`imperialFabric.js:"export const STAIR = Object.freeze({"`): a riser of 0.18 m at
+- **Its proportions a built stair's** (`imperialFabric.js:"export const STAIR ="`): a riser of 0.18 m at
   the most, all of a stair's alike - under half the motor's STEP_OFFSET (`player/motor.js`), so it is walked, not
   climbed - and a tread of 0.30 m, 2 R + G within Blondel's 0.60-0.66 m; flights of 16 risers at the most, the odd ones
   first, with a 1.2 m landing between them and a 1.8 m head landing at the top; 1.4 m clear between the wall and its

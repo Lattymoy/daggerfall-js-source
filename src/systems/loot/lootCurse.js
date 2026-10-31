@@ -25,7 +25,7 @@ import { itemBaseValue } from '../item/itemTemplates.js';
 import { isEquipped } from '../equip.js';
 import { totalGoldAmount, deductGold } from '../court.js';
 import { itemIsIdentified } from '../tradeModes.js';
-import { makerLaid } from '../enchanting.js';   // AUDIT MAKER-RARE A1: the lift takes the curse's own row, never a maker's
+import { makerLaid } from '../enchanting.js'; // AUDIT MAKER-RARE A1: the lift takes the curse's own row, never a maker's
 
 /** The least a lifting costs, in gold, and the share of the piece's own price it costs above that. */
 export const LIFT_FLOOR = 300;
@@ -38,7 +38,8 @@ export function liftPrice(item) {
 }
 /** The pieces of a pack the temple sees a curse on: cursed, and known (a curse the guild has not named is no curse the
  *  priest can see - and listing it would say what Identify has not). */
-export const cursedKnown = (items) => (Array.isArray(items) ? items : []).filter((it) => isCursed(it) && itemIsIdentified(it));
+export const cursedKnown = (items) =>
+  (Array.isArray(items) ? items : []).filter((it) => isCursed(it) && itemIsIdentified(it));
 /** Why a piece's curse may not be lifted now, or null: 'off', 'not' (no curse), 'unknown' (not yet identified), 'damned'
  *  (TRUE-CURSE: no temple lifts it - said once it is known, never before), 'worn' (its drawback is on the wearer - off
  *  first, as the Reforge asks), 'gold'. `player` is the payer. */
@@ -66,7 +67,8 @@ export function liftCurse(item, player) {
   // Field-Bugs-2026-10-26.md): a cursed Rare the maker took may carry a bound soul's forced row of the drawback's very
   // kind after it (a Wraith's Item Deteriorates in holy places) - the last of its kind alone took the soul's row, left the
   // curse biting, and the item law held the piece's owner's trade
-  for (let i = list.length - 1; i >= 0 && at < 0; i--) if (!makerLaid(list[i]) && list[i]?.type === c.type && list[i]?.param === c.param) at = i;
+  for (let i = list.length - 1; i >= 0 && at < 0; i--)
+    if (!makerLaid(list[i]) && list[i]?.type === c.type && list[i]?.param === c.param) at = i;
   item.enchantments = list.filter((_, i) => i !== at);
   delete item.cursed;
   deductGold(player, price);

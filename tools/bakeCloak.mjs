@@ -44,7 +44,17 @@ export const CLOAK_BOX = Object.freeze([Object.freeze([-23.64, -21.66, 29.28]), 
 export const CLOAK_SUBDIVISIONS = 2;
 
 /** Each painting, as committed. The export names one, `capthing\red.png` - Mac's red. */
-export const PAINTING = Object.freeze(Object.fromEntries(CLOAK_PAINTINGS.map((p) => [p, `src/assets/mw/source/Cloak_${p.split('_').map((w) => w[0].toUpperCase() + w.slice(1)).join('_')}.png`])));
+export const PAINTING = Object.freeze(
+  Object.fromEntries(
+    CLOAK_PAINTINGS.map((p) => [
+      p,
+      `src/assets/mw/source/Cloak_${p
+        .split('_')
+        .map((w) => w[0].toUpperCase() + w.slice(1))
+        .join('_')}.png`,
+    ]),
+  ),
+);
 
 export const textureName = (painting) => `cloak_${painting}.dds`;
 export const meshFile = (painting) => `src/assets/mw/meshes/${cloakModel(painting)}`;
@@ -72,17 +82,28 @@ export function bakeCloak({ source, pngs, skeleton }) {
   const paintings = CLOAK_PAINTINGS.map((painting) => {
     if (!pngs[painting]) throw new Error(`no painting for the ${painting} cloak (${PAINTING[painting]})`);
     const png = readPng(pngs[painting]);
-    const nif = skinnedMeshesToNif([{ mesh, texture: textureName(painting), name: `${CLOAK_RIG.shape} 0`, weights }], { node: 'Cloak', bones });
+    const nif = skinnedMeshesToNif([{ mesh, texture: textureName(painting), name: `${CLOAK_RIG.shape} 0`, weights }], {
+      node: 'Cloak',
+      bones,
+    });
     return { painting, png, dds: writeDds(mipChain({ width: png.width, height: png.height, data: png.data })), nif };
   });
   return { mesh, weights, paintings };
 }
 
-const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };
+const save = (path, bytes) => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, bytes);
+};
 
 if (isMain(import.meta.url)) {
-  const missing = Object.entries(PAINTING).filter(([, p]) => !existsSync(p)).map(([t]) => t);
-  if (missing.length) { console.error(`no painting yet for: ${missing.join(', ')}`); process.exit(1); }
+  const missing = Object.entries(PAINTING)
+    .filter(([, p]) => !existsSync(p))
+    .map(([t]) => t);
+  if (missing.length) {
+    console.error(`no painting yet for: ${missing.join(', ')}`);
+    process.exit(1);
+  }
   const r = bakeCloak({
     source: readFileSync(SOURCE),
     pngs: Object.fromEntries(Object.entries(PAINTING).map(([t, p]) => [t, readFileSync(p)])),
@@ -92,6 +113,8 @@ if (isMain(import.meta.url)) {
   for (const p of r.paintings) {
     save(meshFile(p.painting), p.nif);
     save(textureFile(p.painting), p.dds);
-    console.log(`  ${p.painting.padEnd(12)} ${p.png.width}x${p.png.height} -> ${meshFile(p.painting)} ${p.nif.length} bytes, ${textureFile(p.painting)} ${p.dds.length} bytes`);
+    console.log(
+      `  ${p.painting.padEnd(12)} ${p.png.width}x${p.png.height} -> ${meshFile(p.painting)} ${p.nif.length} bytes, ${textureFile(p.painting)} ${p.dds.length} bytes`,
+    );
   }
 }

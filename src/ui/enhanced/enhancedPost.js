@@ -13,10 +13,10 @@
 // the reports, their inbox (ui/enhanced/enhancedReport.js), in this same window.
 import { REFUSALS } from '../../net/accountClient.js';
 import { placeBeside } from './enhancedTimers.js';
-import { reportPane, reportPaneKey } from './enhancedReport.js';   // PRIVATE-REPORT
+import { reportPane, reportPaneKey } from './enhancedReport.js'; // PRIVATE-REPORT
 import { t } from '../../systems/textManager.js';
-import { shopWareTag, injectShopStyle } from './enhancedShop.js';   // SHOP: a receipt's ware, in its own paint
-import { giftOf } from '../../net/giftLaw.js';   // THANKS-POST: the gift a letter brought
+import { shopWareTag, injectShopStyle } from './enhancedShop.js'; // SHOP: a receipt's ware, in its own paint
+import { giftOf } from '../../net/giftLaw.js'; // THANKS-POST: the gift a letter brought
 import { armoryPieceName } from '../armoryText.js';
 
 /** How often the mark's count and the open window look at the box's version, ms. */
@@ -28,20 +28,25 @@ const POST_WORDS = Object.freeze({
   busy: 'A claim is already under way.',
 });
 /** The words a refusal shows in the window - its own, else the account's own sentences (net/accountClient.js REFUSALS). */
-export const postRefusalText = (/** @type {string|undefined} */ w) => (w && (POST_WORDS[w] ?? REFUSALS[w])) || 'The mailbox could not do that right now. Try again in a moment.';
+export const postRefusalText = (/** @type {string|undefined} */ w) =>
+  (w && (POST_WORDS[w] ?? REFUSALS[w])) || 'The mailbox could not do that right now. Try again in a moment.';
 
 /** A piece's date, in the player's own clock: "8 Oct". */
-export const postDayText = (/** @type {number} */ sentAtS) => new Date(sentAtS * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+export const postDayText = (/** @type {number} */ sentAtS) =>
+  new Date(sentAtS * 1000).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
 /** THANKS-POST: what a letter's gift gave, in words - its Aurum and each piece's name; [] for no gift. */
 export const postGiftWords = (/** @type {unknown} */ key) => {
   const g = giftOf(key);
-  return g ? [t('post.giftAurum', '{n, number} Aurum', { n: g.aurum }), ...g.armory.map((k) => armoryPieceName(k))] : [];
+  return g
+    ? [t('post.giftAurum', '{n, number} Aurum', { n: g.aurum }), ...g.armory.map((k) => armoryPieceName(k))]
+    : [];
 };
 
 /** An item's rarity as its name wears it (`data-rarity`, LR1's attribute - the sheet colours each rung, enhancedStyle.js),
  *  or null: a rung's word alone, never anything the sheet could read as more. */
-export const postRarity = (/** @type {string|null} */ r) => (typeof r === 'string' && /^[a-z]{1,16}$/.test(r) ? r : null);
+export const postRarity = (/** @type {string|null} */ r) =>
+  typeof r === 'string' && /^[a-z]{1,16}$/.test(r) ? r : null;
 
 /**
  * The envelope, the button beside the hourglass, and the count it wears while anything waits (empty - and hidden by
@@ -87,7 +92,11 @@ export function watchPostMark(mark, box, every = POST_TICK_MS) {
   let seen = -1;
   let tick = null;
   const step = () => {
-    if (mark?.isConnected === false && tick) { clearInterval(tick); tick = null; return; }
+    if (mark?.isConnected === false && tick) {
+      clearInterval(tick);
+      tick = null;
+      return;
+    }
     const b = box();
     if (!b || b.version === seen) return;
     seen = b.version;
@@ -95,7 +104,10 @@ export function watchPostMark(mark, box, every = POST_TICK_MS) {
   };
   step();
   tick = setInterval(step, every);
-  return () => { if (tick) clearInterval(tick); tick = null; };
+  return () => {
+    if (tick) clearInterval(tick);
+    tick = null;
+  };
 }
 
 /** THE ENVELOPE STANDS LEFT OF THE HOURGLASS (or of the profile mark, where there is no hourglass) - and the hourglass is
@@ -104,14 +116,20 @@ export function watchPostMark(mark, box, every = POST_TICK_MS) {
  *  hourglass or the face changes size; answers the disconnect, for the caller's teardown.
  *  @param {any} mark @param {any} glass the hourglass, or null @param {any} profile @param {any} host */
 export function anchorPost(mark, glass, profile, host, gap = 10) {
-  const place = () => { if (glass) placeBeside(glass, profile, host, gap); placeBeside(mark, glass ?? profile, host, gap); };
+  const place = () => {
+    if (glass) placeBeside(glass, profile, host, gap);
+    placeBeside(mark, glass ?? profile, host, gap);
+  };
   globalThis.requestAnimationFrame?.(place);
   const RO = globalThis.ResizeObserver;
   const ro = RO ? new RO(place) : null;
   for (const n of [profile, glass, host]) if (n) ro?.observe?.(n);
   globalThis.addEventListener?.('resize', place);
   globalThis.document?.fonts?.ready?.then?.(place).catch?.(() => {});
-  return () => { ro?.disconnect?.(); globalThis.removeEventListener?.('resize', place); };
+  return () => {
+    ro?.disconnect?.();
+    globalThis.removeEventListener?.('resize', place);
+  };
 }
 
 /**
@@ -137,7 +155,7 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     b.addEventListener('click', fn);
     return b;
   };
-  injectShopStyle(doc);   // SHOP: a receipt's ware tag is the shop's sheet's
+  injectShopStyle(doc); // SHOP: a receipt's ware tag is the shop's sheet's
   const win = el('div', 'px-win px-postwin');
   win.setAttribute('role', 'dialog');
   win.setAttribute('aria-modal', 'true');
@@ -167,9 +185,17 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
   /** AUDIT SERVER-POST: WHERE THE FOCUS GOES after the next draw - a draw empties the view, and a focus left on a button it
    *  took away fell to the page's body, where a Tab reached nothing. A key: 'back', 'claim', 'throw', 'retry', a row's id. */
   /** @type {string|null} */ let focusTo = null;
-  const tell = (/** @type {string} */ text, ok = false) => { keep.said = text; keep.ok = ok; say.textContent = text; say.classList?.toggle?.('ok', ok); };
+  const tell = (/** @type {string} */ text, ok = false) => {
+    keep.said = text;
+    keep.ok = ok;
+    say.textContent = text;
+    say.classList?.toggle?.('ok', ok);
+  };
   if (keep.said) tell(keep.said, !!keep.ok);
-  const setOpen = (/** @type {string|null} */ id) => { openId = id; keep.openId = id; };
+  const setOpen = (/** @type {string|null} */ id) => {
+    openId = id;
+    keep.openId = id;
+  };
 
   /** The key the element holding the focus answers to, if it is in the view. */
   const focusKeyOf = () => {
@@ -178,14 +204,23 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
   };
   // PRIVATE-REPORT (AUDIT PRIVATE-REPORT UI-1): and `data-focus`, the key the pause face's repaint finds a control by
   // (ui/domRepaint.js focusOf) - a face rebuilt gives the focus and the caret back to the same field
-  const keyed = (/** @type {any} */ n, /** @type {string} */ key) => { n.setAttribute('data-key', key); n.setAttribute('data-focus', `pm-${key}`); return n; };
+  const keyed = (/** @type {any} */ n, /** @type {string} */ key) => {
+    n.setAttribute('data-key', key);
+    n.setAttribute('data-focus', `pm-${key}`);
+    return n;
+  };
   const focusKey = (/** @type {string|null} */ key) => {
     if (!key) return;
     const n = /** @type {HTMLElement|null} */ (view.querySelector?.(`[data-key="${key}"]`));
-    if (n) { n.focus?.({ preventScroll: true }); return; }
+    if (n) {
+      n.focus?.({ preventScroll: true });
+      return;
+    }
     // AUDIT PRIVATE-REPORT UI-6: in a report pane, a control gone (a closed report's row, a state's button) gives the focus
     // to the pane's first control - the window's Close was where a reflexive Enter shut the whole window
-    const first = keep.view ? /** @type {HTMLElement|null} */ (view.querySelector?.('[data-key]:not([disabled])')) : null;
+    const first = keep.view
+      ? /** @type {HTMLElement|null} */ (view.querySelector?.('[data-key]:not([disabled])'))
+      : null;
     (first ?? close).focus?.();
   };
 
@@ -197,7 +232,9 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     const { focus = null, ...rest } = extra;
     keep.view = to;
     Object.assign(keep, rest);
-    setOpen(null); opened = null; pane = null;
+    setOpen(null);
+    opened = null;
+    pane = null;
     tell('');
     focusTo = focus;
     draw(true);
@@ -207,46 +244,103 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
   const reportDoors = (/** @type {any} */ b) => {
     if (!b?.desk || b.state === 'unknown' || b.state === 'signed-out') return;
     const doors = el('div', 'pm-foot pm-doors');
-    doors.append(keyed(button('pm-report', t('report.door', 'Report a bug or exploit'), () => go('report', { focus: 'kind-exploit' })), 'report'));
-    if (b.reports) doors.append(keyed(button('pm-inbox', b.reports.unread ? t('report.inboxDoorNew', 'Private reports ({n} new)', { n: b.reports.unread }) : t('report.inboxDoor', 'Private reports'), () => go('inbox', { which: 'open', focus: 'tab-open' })), 'inbox'));   // AUDIT PRIVATE-REPORT UI-6: into the pane, never to Close
+    doors.append(
+      keyed(
+        button('pm-report', t('report.door', 'Report a bug or exploit'), () => go('report', { focus: 'kind-exploit' })),
+        'report',
+      ),
+    );
+    if (b.reports)
+      doors.append(
+        keyed(
+          button(
+            'pm-inbox',
+            b.reports.unread
+              ? t('report.inboxDoorNew', 'Private reports ({n} new)', { n: b.reports.unread })
+              : t('report.inboxDoor', 'Private reports'),
+            () => go('inbox', { which: 'open', focus: 'tab-open' }),
+          ),
+          'inbox',
+        ),
+      ); // AUDIT PRIVATE-REPORT UI-6: into the pane, never to Close
     view.append(doors);
   };
   /** The window's kit, for a report pane (ui/enhanced/enhancedReport.js reportPane). */
   const kit = (/** @type {any} */ b) => ({
-    keep, box: b, el, button, keyed, tell, go, day: postDayText,
+    keep,
+    box: b,
+    el,
+    button,
+    keyed,
+    tell,
+    go,
+    day: postDayText,
     // AUDIT PRIVATE-REPORT CLI-7: a report's own sentence for no session - the post's ("...to receive post") was the wrong
     // one, and untranslated
-    refusal: (/** @type {string|undefined} */ w) => (w === 'signed-out' ? t('report.signIn', 'Sign in to an account to send a private report.') : postRefusalText(w)),
-    held: focusKeyOf, focus: (/** @type {string|null} */ key) => { if (key) focusKey(key); },
+    refusal: (/** @type {string|undefined} */ w) =>
+      w === 'signed-out' ? t('report.signIn', 'Sign in to an account to send a private report.') : postRefusalText(w),
+    held: focusKeyOf,
+    focus: (/** @type {string|null} */ key) => {
+      if (key) focusKey(key);
+    },
   });
 
   const drawList = (/** @type {any} */ b) => {
-    if (!b || b.state === 'unknown') { empty('Looking in your mailbox...'); return; }
-    if (b.state === 'signed-out') { empty(postRefusalText('signed-out')); return; }
-    if (b.state === 'guest') { empty(postRefusalText('post-needs-account')); return; }
-    if (b.state === 'error' && !b.post.length) {
-      empty('The mailbox could not be read right now.');
-      view.append(keyed(button('pm-retry', 'Try again', () => { b.refresh?.()?.catch?.(() => {}); focusTo = 'retry'; }), 'retry'));
+    if (!b || b.state === 'unknown') {
+      empty('Looking in your mailbox...');
       return;
     }
-    if (!b.post.length) { empty('Your mailbox is empty.'); return; }
+    if (b.state === 'signed-out') {
+      empty(postRefusalText('signed-out'));
+      return;
+    }
+    if (b.state === 'guest') {
+      empty(postRefusalText('post-needs-account'));
+      return;
+    }
+    if (b.state === 'error' && !b.post.length) {
+      empty('The mailbox could not be read right now.');
+      view.append(
+        keyed(
+          button('pm-retry', 'Try again', () => {
+            b.refresh?.()?.catch?.(() => {});
+            focusTo = 'retry';
+          }),
+          'retry',
+        ),
+      );
+      return;
+    }
+    if (!b.post.length) {
+      empty('Your mailbox is empty.');
+      return;
+    }
     // LOST-SPOILS: a boss's floor's leftovers come a piece an item - claimed together (net/serverPost.js PostBox.claimAll)
     const waiting = b.post.filter((/** @type {any} */ p) => p.item && !p.claimed).length;
     if (waiting >= 2) {
       const row = el('div', 'pm-foot pm-claimrow');
-      const all = keyed(button('pm-claimall', b.claimingAll ? 'Claiming...' : t('post.claimAll', 'Claim all ({n})', { n: waiting }), () => claimAllNow()), 'claimall');
+      const all = keyed(
+        button(
+          'pm-claimall',
+          b.claimingAll ? 'Claiming...' : t('post.claimAll', 'Claim all ({n})', { n: waiting }),
+          () => claimAllNow(),
+        ),
+        'claimall',
+      );
       if (b.busy || b.claimingAll) all.disabled = true;
       row.append(all);
       view.append(row);
     }
     const list = el('div', 'pm-list');
     for (const p of b.post) {
-      const row = /** @type {any} */ (keyed(el('button', `pm-row${p.read ? '' : ' unread'}${p.item && !p.claimed ? ' gift' : ''}`), p.id));
+      const row = /** @type {any} */ (
+        keyed(el('button', `pm-row${p.read ? '' : ' unread'}${p.item && !p.claimed ? ' gift' : ''}`), p.id)
+      );
       row.type = 'button';
       const text = el('span', 'pm-text');
       text.append(el('span', 'pm-subject', p.subject), el('span', 'pm-from', `${p.from} - ${postDayText(p.sentAt)}`));
       row.append(el('span', 'pm-dot'), text);
-      if (!p.read) row.append(el('span', 'pm-sr', ' - unread'));   // said, as the dot is seen
+      if (!p.read) row.append(el('span', 'pm-sr', ' - unread')); // said, as the dot is seen
       if (p.item) {
         const chip = el('span', 'pm-chip');
         const name = el('span', null, p.item.name);
@@ -254,12 +348,21 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
         if (rar) name.setAttribute('data-rarity', rar);
         chip.append(name, el('span', 'pm-state', p.claimed ? 'Claimed' : 'Waiting'));
         row.append(chip);
-      } else if (p.ware) {   // SHOP: a receipt - its ware is on the account already, nothing to claim
+      } else if (p.ware) {
+        // SHOP: a receipt - its ware is on the account already, nothing to claim
         const tag = shopWareTag(doc, p.ware);
-        if (tag) { const chip = el('span', 'pm-chip'); chip.append(tag, el('span', 'pm-state', t('post.wareHeld', 'On your account'))); row.append(chip); }
-      } else if (p.gift) {   // THANKS-POST: a gift - on the account already, nothing to claim
+        if (tag) {
+          const chip = el('span', 'pm-chip');
+          chip.append(tag, el('span', 'pm-state', t('post.wareHeld', 'On your account')));
+          row.append(chip);
+        }
+      } else if (p.gift) {
+        // THANKS-POST: a gift - on the account already, nothing to claim
         const chip = el('span', 'pm-chip');
-        chip.append(el('span', null, postGiftWords(p.gift).join(', ')), el('span', 'pm-state', t('post.wareHeld', 'On your account')));
+        chip.append(
+          el('span', null, postGiftWords(p.gift).join(', ')),
+          el('span', 'pm-state', t('post.wareHeld', 'On your account')),
+        );
         row.append(chip);
       }
       row.addEventListener('click', () => openOne(p.id));
@@ -269,14 +372,40 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
   };
 
   const drawOne = (/** @type {any} */ b) => {
-    const head = b?.post?.find((/** @type {any} */ p) => p.id === openId) ?? null;   // the piece open, as the box lists it
-    if (!head) { setOpen(null); opened = null; drawList(b); return; }
-    const back = keyed(button('pm-back', 'Back', () => { const was = openId; setOpen(null); opened = null; tell(''); focusTo = was; draw(true); }), 'back');
+    const head = b?.post?.find((/** @type {any} */ p) => p.id === openId) ?? null; // the piece open, as the box lists it
+    if (!head) {
+      setOpen(null);
+      opened = null;
+      drawList(b);
+      return;
+    }
+    const back = keyed(
+      button('pm-back', 'Back', () => {
+        const was = openId;
+        setOpen(null);
+        opened = null;
+        tell('');
+        focusTo = was;
+        draw(true);
+      }),
+      'back',
+    );
     const piece = el('article', 'pm-piece');
-    piece.append(el('h4', 'pm-subject', head.subject), el('p', 'pm-from', `From ${head.from} - ${postDayText(head.sentAt)}`));
+    piece.append(
+      el('h4', 'pm-subject', head.subject),
+      el('p', 'pm-from', `From ${head.from} - ${postDayText(head.sentAt)}`),
+    );
     if (opened?.error) {
       piece.append(el('p', 'pm-body', 'This message could not be opened.'));
-      piece.append(keyed(button('pm-retry', 'Try again', () => { focusTo = 'retry'; openOne(head.id); }), 'retry'));
+      piece.append(
+        keyed(
+          button('pm-retry', 'Try again', () => {
+            focusTo = 'retry';
+            openOne(head.id);
+          }),
+          'retry',
+        ),
+      );
     } else piece.append(el('p', 'pm-body', opened?.body ?? 'Opening...'));
     if (head.item) {
       const card = el('div', 'pm-item');
@@ -284,22 +413,28 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
       const rar = postRarity(head.item.rarity);
       if (rar) name.setAttribute('data-rarity', rar);
       card.append(name);
-      if (head.claimed) card.append(el('span', 'pm-state', 'Claimed.'));   // into whichever of the account's characters took it
+      if (head.claimed)
+        card.append(el('span', 'pm-state', 'Claimed.')); // into whichever of the account's characters took it
       else {
-        const claim = keyed(button('pm-claim', b.busy ? 'Claiming...' : 'Claim', () => claimOne(head.id)), 'claim');
+        const claim = keyed(
+          button('pm-claim', b.busy ? 'Claiming...' : 'Claim', () => claimOne(head.id)),
+          'claim',
+        );
         claim.setAttribute('aria-label', `Claim ${head.item.name}`);
-        if (b.busy || b.claimingAll) claim.disabled = true;   // LOST-SPOILS: nor while a Claim all runs
+        if (b.busy || b.claimingAll) claim.disabled = true; // LOST-SPOILS: nor while a Claim all runs
         card.append(claim);
       }
       piece.append(card);
-    } else if (head.ware) {   // SHOP: the receipt's ware, and where it is worn
+    } else if (head.ware) {
+      // SHOP: the receipt's ware, and where it is worn
       const tag = shopWareTag(doc, head.ware);
       if (tag) {
         const card = el('div', 'pm-item');
         card.append(tag, el('span', 'pm-state', t('post.wareWear', 'Wear it from your profile.')));
         piece.append(card);
       }
-    } else if (head.gift) {   // THANKS-POST: the gift, each part on the account already
+    } else if (head.gift) {
+      // THANKS-POST: the gift, each part on the account already
       for (const words of postGiftWords(head.gift)) {
         const card = el('div', 'pm-item');
         card.append(el('span', 'pm-itemname', words), el('span', 'pm-state', t('post.wareHeld', 'On your account')));
@@ -308,7 +443,13 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     }
     const foot = el('div', 'pm-foot');
     foot.append(back);
-    if (!head.item || head.claimed) foot.append(keyed(button('pm-throw', 'Throw away', () => throwOne(head.id)), 'throw'));
+    if (!head.item || head.claimed)
+      foot.append(
+        keyed(
+          button('pm-throw', 'Throw away', () => throwOne(head.id)),
+          'throw',
+        ),
+      );
     piece.append(foot);
     view.append(piece);
   };
@@ -320,18 +461,31 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     seen = v;
     // PRIVATE-REPORT: a report pane - updated where it stands, rebuilt only when its key moves
     const paned = !!(keep.view && b?.desk);
-    title.textContent = !paned ? 'Mailbox' : keep.view === 'report' ? t('report.title', 'Report privately') : t('report.inboxDoor', 'Private reports');
+    title.textContent = !paned
+      ? 'Mailbox'
+      : keep.view === 'report'
+        ? t('report.title', 'Report privately')
+        : t('report.inboxDoor', 'Private reports');
     if (paned && pane && pane.key === reportPaneKey(keep, b)) {
       pane.update();
-      if (focusTo) { const to = focusTo; focusTo = null; focusKey(to); }
+      if (focusTo) {
+        const to = focusTo;
+        focusTo = null;
+        focusKey(to);
+      }
       return;
     }
     if (!paned) pane = null;
     const had = focusKeyOf();
     view.textContent = '';
-    if (paned) { pane = reportPane(kit(b)); view.append(pane.root); }
-    else if (openId) drawOne(b);
-    else { drawList(b); reportDoors(b); }
+    if (paned) {
+      pane = reportPane(kit(b));
+      view.append(pane.root);
+    } else if (openId) drawOne(b);
+    else {
+      drawList(b);
+      reportDoors(b);
+    }
     if (say.textContent !== (keep.said ?? '')) say.textContent = keep.said ?? '';
     const to = focusTo ?? had;
     focusTo = null;
@@ -339,27 +493,34 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
   };
 
   const openOne = async (/** @type {string} */ id, again = false) => {
-    setOpen(id); opened = null;
-    if (!again) tell('');   // reopened by a rebuild, the line it said stays said
+    setOpen(id);
+    opened = null;
+    if (!again) tell(''); // reopened by a rebuild, the line it said stays said
     focusTo = 'back';
     draw(true);
     const b = box();
     const r = b ? await b.open(id) : { ok: false, error: 'signed-out' };
     if (openId !== id) return;
     if (r.ok) opened = r.post;
-    else { tell(postRefusalText(r.error)); if (r.error === 'no-post') setOpen(null); else opened = { error: r.error }; }
+    else {
+      tell(postRefusalText(r.error));
+      if (r.error === 'no-post') setOpen(null);
+      else opened = { error: r.error };
+    }
     draw(true);
   };
   const claimOne = async (/** @type {string} */ id) => {
     const b = box();
-    if (!b || b.busy) return;   // AUDIT SERVER-POST: a second press while the first is out is no second claim, and no busy sentence
+    if (!b || b.busy) return; // AUDIT SERVER-POST: a second press while the first is out is no second claim, and no busy sentence
     tell('');
     const going = b.claim(id);
     focusTo = 'claim';
-    draw(true);   // the button down at once (the box is busy the moment the claim sets out)
+    draw(true); // the button down at once (the box is busy the moment the claim sets out)
     const r = await going;
-    if (r.ok) { tell(`${r.item?.name ?? 'The item'} is in your pack.`, true); focusTo = 'back'; }
-    else tell(postRefusalText(r.error));
+    if (r.ok) {
+      tell(`${r.item?.name ?? 'The item'} is in your pack.`, true);
+      focusTo = 'back';
+    } else tell(postRefusalText(r.error));
     draw(true);
   };
   /** LOST-SPOILS: every item waiting, claimed one after another - what landed said, and where it stopped. */
@@ -373,24 +534,40 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     const r = await going;
     const n = r.items?.length ?? 0;
     if (r.ok) tell(t('post.claimedAll', '{n, plural, one {# item is} other {# items are}} in your pack.', { n }), true);
-    else tell(n ? `${t('post.claimedAll', '{n, plural, one {# item is} other {# items are}} in your pack.', { n })} ${postRefusalText(r.error)}` : postRefusalText(r.error));
+    else
+      tell(
+        n
+          ? `${t('post.claimedAll', '{n, plural, one {# item is} other {# items are}} in your pack.', { n })} ${postRefusalText(r.error)}`
+          : postRefusalText(r.error),
+      );
     draw(true);
   };
   const throwOne = async (/** @type {string} */ id) => {
     const b = box();
     if (!b) return;
     const r = await b.remove(id);
-    if (r.ok) { setOpen(null); opened = null; tell(''); } else tell(postRefusalText(r.error));
+    if (r.ok) {
+      setOpen(null);
+      opened = null;
+      tell('');
+    } else tell(postRefusalText(r.error));
     draw(true);
     if (r.ok) (view.querySelector?.('.pm-row') ?? close).focus?.();
   };
 
   const b0 = box();
-  if (b0 && (b0.state === 'unknown' || b0.state === 'error')) b0.refresh?.()?.catch?.(() => {});   // a first look, or another after a failed one
+  if (b0 && (b0.state === 'unknown' || b0.state === 'error')) b0.refresh?.()?.catch?.(() => {}); // a first look, or another after a failed one
   draw(true);
-  if (openId) openOne(openId, true);   // reopened where it stood: its words read again (the box keeps them - no second call)
+  if (openId) openOne(openId, true); // reopened where it stood: its words read again (the box keeps them - no second call)
   let tick = null;
-  const step = () => { if (win.isConnected === false && tick) { clearInterval(tick); tick = null; return; } draw(); };
+  const step = () => {
+    if (win.isConnected === false && tick) {
+      clearInterval(tick);
+      tick = null;
+      return;
+    }
+    draw();
+  };
   tick = setInterval(step, every);
   // PRIVATE-REPORT: opened on the form (`/bug`), the focus on its choice - the draft's kind, else the first (AUDIT
   // PRIVATE-REPORT UI-14). AUDIT PRIVATE-REPORT UI-1: A FOCUS ALREADY IN THE WINDOW STAYS - a face rebuilt mid-typing (the
@@ -400,8 +577,18 @@ export function postWindow(doc, { box, onClose, every = POST_TICK_MS, keep = {} 
     globalThis.requestAnimationFrame?.(() => {
       const a = /** @type {any} */ (doc).activeElement;
       if (a && win.contains?.(a)) return;
-      if (keep.view === 'report') focusKey(`kind-${box()?.desk?.draft?.kind ?? 'exploit'}`); else close.focus?.();
+      if (keep.view === 'report') focusKey(`kind-${box()?.desk?.draft?.kind ?? 'exploit'}`);
+      else close.focus?.();
     });
   }
-  return { root: win, stop: () => { if (tick) clearInterval(tick); tick = null; }, draw, close, openOne };
+  return {
+    root: win,
+    stop: () => {
+      if (tick) clearInterval(tick);
+      tick = null;
+    },
+    draw,
+    close,
+    openOne,
+  };
 }

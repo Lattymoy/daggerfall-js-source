@@ -18,8 +18,16 @@ export async function dragonWatchKeyOf(secret, { subtle }) {
   if (typeof secret !== 'string' || !secret) return null;
   try {
     const base = await subtle.importKey('raw', enc.encode(secret), 'HKDF', false, ['deriveKey']);
-    return await subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: enc.encode(DRAGON_SEED_INFO) }, base, { name: 'HMAC', hash: 'SHA-256', length: 256 }, false, ['sign']);
-  } catch { return null; }
+    return await subtle.deriveKey(
+      { name: 'HKDF', hash: 'SHA-256', salt: new Uint8Array(0), info: enc.encode(DRAGON_SEED_INFO) },
+      base,
+      { name: 'HMAC', hash: 'SHA-256', length: 256 },
+      false,
+      ['sign'],
+    );
+  } catch {
+    return null;
+  }
 }
 
 /**

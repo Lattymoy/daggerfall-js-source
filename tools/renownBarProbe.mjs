@@ -85,46 +85,84 @@ const STATES = [
 ];
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
 const fails = [];
 let checks = 0;
-const check = (ok, what) => { checks++; if (!ok) fails.push(what); };
+const check = (ok, what) => {
+  checks++;
+  if (!ok) fails.push(what);
+};
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   for (const v of VIEWS) {
-    const ctx = await browser.newContext({ viewport: v.viewport, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch, deviceScaleFactor: 2 });
+    const ctx = await browser.newContext({
+      viewport: v.viewport,
+      isMobile: !!v.isMobile,
+      hasTouch: !!v.hasTouch,
+      deviceScaleFactor: 2,
+    });
     const page = await ctx.newPage();
     page.on('pageerror', (err) => fails.push(`${v.name}: page error ${err.message}`));
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced${process.env.NOFONTS ? '&nofonts' : ''}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForFunction(() => typeof globalThis.__measure === 'function' && !!document.querySelector('.hud-renown'), null, { timeout: 60000 });
+    await page.goto(
+      `http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced${process.env.NOFONTS ? '&nofonts' : ''}`,
+      { waitUntil: 'domcontentloaded', timeout: 60000 },
+    );
+    await page.waitForFunction(
+      () => typeof globalThis.__measure === 'function' && !!document.querySelector('.hud-renown'),
+      null,
+      { timeout: 60000 },
+    );
     // the box's width is its FACE's: wait for the web fonts the page asked for (a face that never came says so)
     const face = await page.evaluate(async () => {
       const link = document.getElementById('dagger-enhanced-fonts');
-      if (link && !link.sheet) await new Promise((res) => { link.addEventListener('load', res, { once: true }); link.addEventListener('error', res, { once: true }); setTimeout(res, 15000); });
+      if (link && !link.sheet)
+        await new Promise((res) => {
+          link.addEventListener('load', res, { once: true });
+          link.addEventListener('error', res, { once: true });
+          setTimeout(res, 15000);
+        });
       globalThis.__renown(12, 0.42, 900);
       await new Promise((res) => requestAnimationFrame(() => requestAnimationFrame(res)));
       await document.fonts.ready;
       const lv = document.querySelector('.hud-renownbox');
       const fam = lv ? getComputedStyle(lv).fontFamily : '';
       const first = fam.split(',')[0].trim().replace(/["']/g, '');
-      return { fam, first, loaded: !!first && document.fonts.check(`13px "${first}"`) && [...document.fonts].some((f) => f.family.replace(/["']/g, '') === first && f.status === 'loaded') };
+      return {
+        fam,
+        first,
+        loaded:
+          !!first &&
+          document.fonts.check(`13px "${first}"`) &&
+          [...document.fonts].some((f) => f.family.replace(/["']/g, '') === first && f.status === 'loaded'),
+      };
     });
-    console.log(`${v.name}: the box's face ${face.first || '(none)'} - ${face.loaded ? 'loaded' : 'NOT loaded (the fallback measured)'}`);
+    console.log(
+      `${v.name}: the box's face ${face.first || '(none)'} - ${face.loaded ? 'loaded' : 'NOT loaded (the fallback measured)'}`,
+    );
     for (const s of STATES) {
       await page.evaluate((a) => globalThis.__renown(...a), s.args);
       await page.waitForTimeout(250);
       const m = await page.evaluate(() => globalThis.__measure());
       const tag = `${v.name}/${s.name}`;
       const off = m.track && m.bars ? m.track.cx - m.bars.cx : null;
-      console.log(`${tag.padEnd(20)} level [${m.levelText}] words "${m.words}"`
-        + (m.track ? ` | bar ${m.track.w.toFixed(0)}x${m.track.h.toFixed(0)}, centre off ${off.toFixed(1)}px` : ' | no bar'));
+      console.log(
+        `${tag.padEnd(20)} level [${m.levelText}] words "${m.words}"` +
+          (m.track
+            ? ` | bar ${m.track.w.toFixed(0)}x${m.track.h.toFixed(0)}, centre off ${off.toFixed(1)}px`
+            : ' | no bar'),
+      );
       check(m.on, `${tag}: the row is not drawn`);
       if (m.on && m.bars && m.row) {
         const pad = 18;
-        const clip = { x: Math.max(0, Math.min(m.bars.x, m.row.x) - pad), y: Math.max(0, Math.min(m.bars.y, m.row.y) - pad) };
+        const clip = {
+          x: Math.max(0, Math.min(m.bars.x, m.row.x) - pad),
+          y: Math.max(0, Math.min(m.bars.y, m.row.y) - pad),
+        };
         clip.width = Math.min(m.vw, Math.max(m.bars.r, m.row.r) + pad) - clip.x;
         clip.height = Math.min(m.vh, Math.max(m.bars.y + m.bars.h, m.row.y + m.row.h) + pad) - clip.y;
         await page.screenshot({ path: join(OUT, `renownbar-${v.name}-${s.name}.png`), clip });
@@ -135,11 +173,25 @@ try {
         check(!m.track && !m.num && m.words === '', `${tag}: a bar or words with no total`);
         continue;
       }
-      check(s.name === 'cap' ? m.words === 'Highest' : /^[\d,]+ \/ [\d,]+ XP$/.test(m.words), `${tag}: the bar says "${m.words}"`);
-      check(m.num && m.track && m.num.x >= m.track.x - 0.5 && m.num.r <= m.track.r + 0.5 && m.num.y >= m.track.y - 0.5 && m.num.y + m.num.h <= m.track.y + m.track.h + 0.5, `${tag}: the words run out of the bar`);
+      check(
+        s.name === 'cap' ? m.words === 'Highest' : /^[\d,]+ \/ [\d,]+ XP$/.test(m.words),
+        `${tag}: the bar says "${m.words}"`,
+      );
+      check(
+        m.num &&
+          m.track &&
+          m.num.x >= m.track.x - 0.5 &&
+          m.num.r <= m.track.r + 0.5 &&
+          m.num.y >= m.track.y - 0.5 &&
+          m.num.y + m.num.h <= m.track.y + m.track.h + 0.5,
+        `${tag}: the words run out of the bar`,
+      );
       check(m.num && m.num.h <= 16, `${tag}: the words wrap (${m.num?.h}px tall)`);
       check(m.track && Math.abs(off) <= 1, `${tag}: the bar's centre is ${off?.toFixed(1)}px off the vitals'`);
-      check(m.track && Math.abs(m.track.h - 20) <= 0.5 && m.row && m.track.h <= m.row.h + 0.5, `${tag}: the bar is ${m.track?.h}px, not the vitals' 20 inside the row`);
+      check(
+        m.track && Math.abs(m.track.h - 20) <= 0.5 && m.row && m.track.h <= m.row.h + 0.5,
+        `${tag}: the bar is ${m.track?.h}px, not the vitals' 20 inside the row`,
+      );
       check(m.level && m.track && m.level.r <= m.track.x, `${tag}: the level's box overlaps the bar`);
     }
     await ctx.close();

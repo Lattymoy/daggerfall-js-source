@@ -2,8 +2,8 @@
   {
     "name": "BAR-NO-FOCUS-tab",
     "file": "src/ui/staffFollowBar.js",
-    "old": "    b.tabIndex = -1;\n",
-    "new": "",
+    "old": "    b.tabIndex = -1;\n    for (const k of ['pointerdown', 'mousedown'])",
+    "new": "    for (const k of ['pointerdown', 'mousedown'])",
     "why": "the bar's button in the tab order, the space bar on it",
     "tests": [
       "test/ui/staffFollowBar.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "BAR-NO-FOCUS-press",
     "file": "src/ui/staffFollowBar.js",
-    "old": "(/** @type {any} */ e) => { e.stopPropagation?.(); e.preventDefault?.(); });",
-    "new": "(/** @type {any} */ e) => { e.stopPropagation?.(); });",
+    "old": "        e.preventDefault?.();\n      });",
+    "new": "      });",
     "why": "a press gives the button the keyboard",
     "tests": [
       "test/ui/staffFollowBar.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "BAR-NO-FOCUS-blur",
     "file": "src/ui/staffFollowBar.js",
-    "old": "e.preventDefault?.(); b.blur?.(); run(); });",
-    "new": "e.preventDefault?.(); run(); });",
+    "old": "      b.blur?.();\n      run();",
+    "new": "      run();",
     "why": "mob: the Hide button stays on the space bar",
     "tests": [
       "test/ui/staffFollowBar.test.js"

@@ -59,8 +59,8 @@
     "tests": [
       "test/ui/hud/hud_icon1.test.js"
     ],
-    "old": "if (s === 'monochrome') return 'mono';",
-    "new": "if (s === 'monochrome') return 'icon';"
+    "old": "  if (s === 'monochrome') return 'mono';",
+    "new": "  if (s === 'monochrome') return 'icon';"
   },
   {
     "name": "HI1-classicxhair-set-lost",
@@ -68,8 +68,8 @@
     "tests": [
       "test/ui/hud/hud_icon1.test.js"
     ],
-    "old": "if (s === 'classic' || s === 'classicxhair') return 'classic';",
-    "new": "if (s === 'classic') return 'classic';"
+    "old": "  if (s === 'classic' || s === 'classicxhair') return 'classic';",
+    "new": "  if (s === 'classic') return 'classic';"
   },
   {
     "name": "HI1-colourxhair-set-lost",
@@ -77,8 +77,8 @@
     "tests": [
       "test/ui/hud/hud_icon1.test.js"
     ],
-    "old": "if (s === 'colour' || s === 'colourxhair') return 'colour';",
-    "new": "if (s === 'colour') return 'colour';"
+    "old": "  if (s === 'colour' || s === 'colourxhair') return 'colour';",
+    "new": "  if (s === 'colour') return 'colour';"
   },
   {
     "name": "HI1-talk-misnamed",
@@ -86,8 +86,8 @@
     "tests": [
       "test/ui/hud/hud_icon1.test.js"
     ],
-    "old": "dialogue: 'talk'",
-    "new": "dialogue: 'dialogue'"
+    "old": "export const MODE_ICON_SUFFIX = Object.freeze({ steal: 'steal', grab: 'grab', info: 'info', dialogue: 'talk' });",
+    "new": "export const MODE_ICON_SUFFIX = Object.freeze({ steal: 'steal', grab: 'grab', info: 'info', dialogue: 'dialogue' });"
   },
   {
     "name": "HI1-smooth-sampling",
@@ -95,8 +95,8 @@
     "tests": [
       "test/ui/hud/hud_icon1.test.js"
     ],
-    "old": "{ alpha: true })",
-    "new": "{ alpha: true, smooth: true })"
+    "old": "    slot.icon = { tex: renderer.uploadTexture('dfu-icon', file, px, { alpha: true }), w: px.width, h: px.height };",
+    "new": "    slot.icon = {\n      tex: renderer.uploadTexture('dfu-icon', file, px, { alpha: true, smooth: true }),\n      w: px.width,\n      h: px.height,\n    };"
   },
   {
     "name": "HI1-no-alpha",
@@ -104,8 +104,8 @@
     "tests": [
       "test/ui/hud/hud_icon1.test.js"
     ],
-    "old": "px, { alpha: true })",
-    "new": "px, {})"
+    "old": "    slot.icon = { tex: renderer.uploadTexture('dfu-icon', file, px, { alpha: true }), w: px.width, h: px.height };",
+    "new": "    slot.icon = { tex: renderer.uploadTexture('dfu-icon', file, px, {}), w: px.width, h: px.height };"
   },
   {
     "name": "HI1-one-file-not-the-set",
@@ -113,7 +113,7 @@
     "tests": [
       "test/ui/hud/hud_icon1.test.js"
     ],
-    "old": "for (const s of Object.values(MODE_ICON_SUFFIX)) if",
-    "new": "for (const s of [suffix]) if"
+    "old": "    for (const s of Object.values(MODE_ICON_SUFFIX))\n      if (!cache.has(`${set}-${s}.png`)) load(renderer, cache, `${set}-${s}.png`);",
+    "new": "    for (const s of [suffix]) if (!cache.has(`${set}-${s}.png`)) load(renderer, cache, `${set}-${s}.png`);"
   }
 ]

@@ -25,8 +25,16 @@ function scratch(nav, key = nav) {
   const n = nav.width * nav.height;
   let s = scratchOf.get(key);
   if (!s || s.stamp.length !== n) {
-    s = { stamp: new Int32Array(n), g: new Float32Array(n), from: new Int32Array(n), closed: new Int32Array(n),
-      heap: new Int32Array(n), f: new Float32Array(n), order: new Int32Array(n), search: 0 };
+    s = {
+      stamp: new Int32Array(n),
+      g: new Float32Array(n),
+      from: new Int32Array(n),
+      closed: new Int32Array(n),
+      heap: new Int32Array(n),
+      f: new Float32Array(n),
+      order: new Int32Array(n),
+      search: 0,
+    };
     scratchOf.set(key, s);
   }
   return s;
@@ -47,25 +55,44 @@ function scratch(nav, key = nav) {
  * @returns {{ step: (n: number) => (number[][]|null|undefined), spent: number }}
  */
 export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS, hWeight = 1, scratchKey = nav } = {}) {
-  const W = nav.width, H = nav.height;
+  const W = nav.width,
+    H = nav.height;
   const inb = (x, y) => x >= 0 && y >= 0 && x < W && y < H;
-  if (!a || !b || !inb(a[0], a[1]) || !inb(b[0], b[1]) || !(nav.weightAt(a[0], a[1]) > 0) || !(nav.weightAt(b[0], b[1]) > 0)) {
+  if (
+    !a ||
+    !b ||
+    !inb(a[0], a[1]) ||
+    !inb(b[0], b[1]) ||
+    !(nav.weightAt(a[0], a[1]) > 0) ||
+    !(nav.weightAt(b[0], b[1]) > 0)
+  ) {
     return { step: () => null, spent: 0 };
   }
-  const start = a[1] * W + a[0], goal = b[1] * W + b[0];
+  const start = a[1] * W + a[0],
+    goal = b[1] * W + b[0];
   if (start === goal) return { step: () => [[a[0], a[1]]], spent: 0 };
   // the grid's own bytes when it has them (CityNavigation: the weight in the high nibble), else its reader
   const grid = nav.grid instanceof Uint8Array && nav.grid.length === W * H ? nav.grid : null;
-  const bx = b[0], by = b[1];
+  const bx = b[0],
+    by = b[1];
   const s = scratch(nav, scratchKey);
   const { stamp, g, from, closed, heap, f, order } = s;
-  let id = 0, size = 0, opened = 0, expansions = 0;
+  let id = 0,
+    size = 0,
+    opened = 0,
+    expansions = 0;
   /** @type {number[][]|null|undefined} */
   let answer;
   const begin = () => {
     id = ++s.search;
-    size = 0; opened = 0; expansions = 0;
-    stamp[start] = id; g[start] = 0; from[start] = -1; f[start] = hWeight * (Math.abs(a[0] - bx) + Math.abs(a[1] - by)); order[start] = opened++;
+    size = 0;
+    opened = 0;
+    expansions = 0;
+    stamp[start] = id;
+    g[start] = 0;
+    from[start] = -1;
+    f[start] = hWeight * (Math.abs(a[0] - bx) + Math.abs(a[1] - by));
+    order[start] = opened++;
     heap[size++] = start;
   };
   begin();
@@ -75,7 +102,7 @@ export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS,
     step(n) {
       search.spent = 0;
       if (answer !== undefined) return answer;
-      if (s.search !== id) begin();   // another search ran over the scratch: this one again
+      if (s.search !== id) begin(); // another search ran over the scratch: this one again
       let budget = n;
       while (size > 0) {
         // pop: the least f, ties by the order opened
@@ -83,16 +110,19 @@ export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS,
         const last = heap[--size];
         if (size > 0) {
           let k = 0;
-          const lf = f[last], lo = order[last];
+          const lf = f[last],
+            lo = order[last];
           for (;;) {
             const l = 2 * k + 1;
             if (l >= size) break;
             const r = l + 1;
             let m = l;
-            if (r < size && (f[heap[r]] < f[heap[l]] || (f[heap[r]] === f[heap[l]] && order[heap[r]] < order[heap[l]]))) m = r;
+            if (r < size && (f[heap[r]] < f[heap[l]] || (f[heap[r]] === f[heap[l]] && order[heap[r]] < order[heap[l]])))
+              m = r;
             const mi = heap[m];
             if (!(f[mi] < lf || (f[mi] === lf && order[mi] < lo))) break;
-            heap[k] = mi; k = m;
+            heap[k] = mi;
+            k = m;
           }
           heap[k] = last;
         }
@@ -104,9 +134,14 @@ export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS,
           answer = out.reverse();
           return answer;
         }
-        if (++expansions > maxExpansions) { answer = null; return null; }
+        if (++expansions > maxExpansions) {
+          answer = null;
+          return null;
+        }
         search.spent++;
-        const cx = cur % W, cy = (cur / W) | 0, gc = g[cur];
+        const cx = cur % W,
+          cy = (cur / W) | 0,
+          gc = g[cur];
         // the four neighbours in the walkers' own order: +y, -y, +x, -x
         for (let d = 0; d < 4; d++) {
           const nx = d === 2 ? cx + 1 : d === 3 ? cx - 1 : cx;
@@ -118,16 +153,20 @@ export function townPathSearch(nav, a, b, { maxExpansions = PATH_MAX_EXPANSIONS,
           if (closed[ni] === id) continue;
           const ng = gc + (grid ? STEP_COST[w] : stepCost(w));
           if (stamp[ni] === id && ng >= g[ni]) continue;
-          stamp[ni] = id; g[ni] = ng; from[ni] = cur;
-          f[ni] = ng + hWeight * (Math.abs(nx - bx) + Math.abs(ny - by)); order[ni] = opened++;
-          const fi = f[ni];   // as kept (the scratch's own precision): the order the whole search keeps
+          stamp[ni] = id;
+          g[ni] = ng;
+          from[ni] = cur;
+          f[ni] = ng + hWeight * (Math.abs(nx - bx) + Math.abs(ny - by));
+          order[ni] = opened++;
+          const fi = f[ni]; // as kept (the scratch's own precision): the order the whole search keeps
           // push: up while less than its parent - the cell pushed is the last opened, so a tie never lifts it
           let k = size++;
           while (k > 0) {
             const p = (k - 1) >> 1;
             const pi = heap[p];
             if (!(fi < f[pi])) break;
-            heap[k] = pi; k = p;
+            heap[k] = pi;
+            k = p;
           }
           heap[k] = ni;
         }
@@ -163,12 +202,18 @@ export function pathLine(cells) {
   const pts = [];
   const at = (c) => [c[0] * NAV_CELL + HALF_CELL, c[1] * NAV_CELL + HALF_CELL];
   for (let i = 0; i < cells.length; i++) {
-    if (i === 0 || i === cells.length - 1) { pts.push(at(cells[i])); continue; }
-    const p = cells[i - 1], c = cells[i], n = cells[i + 1];
-    if ((c[0] - p[0]) !== (n[0] - c[0]) || (c[1] - p[1]) !== (n[1] - c[1])) pts.push(at(c));
+    if (i === 0 || i === cells.length - 1) {
+      pts.push(at(cells[i]));
+      continue;
+    }
+    const p = cells[i - 1],
+      c = cells[i],
+      n = cells[i + 1];
+    if (c[0] - p[0] !== n[0] - c[0] || c[1] - p[1] !== n[1] - c[1]) pts.push(at(c));
   }
   const cum = [0];
-  for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  for (let i = 1; i < pts.length; i++)
+    cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
   return { pts, len: cum[cum.length - 1] ?? 0, cum };
 }
 
@@ -185,7 +230,8 @@ export function pointOnLine(line, s) {
   const d = Math.max(0, Math.min(line.len, s));
   let i = 1;
   while (i < pts.length - 1 && cum[i] < d) i++;
-  const a = pts[i - 1], b = pts[i];
+  const a = pts[i - 1],
+    b = pts[i];
   const seg = cum[i] - cum[i - 1];
   const t = seg > 0 ? (d - cum[i - 1]) / seg : 0;
   return { x: a[0] + (b[0] - a[0]) * t, z: a[1] + (b[1] - a[1]) * t, yaw: Math.atan2(b[0] - a[0], b[1] - a[1]) };
@@ -211,18 +257,24 @@ export function createPathBook(nav, { max = 768 } = {}) {
   /** @type {Map<number, { pts: number[][], len: number, cum: number[] } | null>} - kept in the order searched, the
    *  oldest leaving first past `max` */
   const book = new Map();
-  const keyOf = (a, b) => ((a[1] * nav.width + a[0]) * 1048576 + (b[1] * nav.width + b[0]));
+  const keyOf = (a, b) => (a[1] * nav.width + a[0]) * 1048576 + (b[1] * nav.width + b[0]);
   let budget = Infinity;
   /** LW-PERF: the cells this frame's searching may still open, the cells it has, the search under way and the walks
    *  waiting (each queue in the order asked). */
-  let cells = Infinity, spent = 0;
+  let cells = Infinity,
+    spent = 0;
   /** @type {{ key: number, search: ReturnType<typeof townPathSearch> } | null} */
   let job = null;
   /** @type {Map<number, number[][]>} */
-  const soon = new Map(), later = new Map();
+  const soon = new Map(),
+    later = new Map();
   /** The next walk waiting, the soon first. */
   const nextAsked = () => {
-    for (const q of [soon, later]) for (const [key, ends] of q) { q.delete(key); if (!book.has(key)) return { key, ends }; }
+    for (const q of [soon, later])
+      for (const [key, ends] of q) {
+        q.delete(key);
+        if (!book.has(key)) return { key, ends };
+      }
     return null;
   };
   /** The searching on this frame's cells: the search under way, then the walks waiting, till the cells are spent. */
@@ -235,7 +287,8 @@ export function createPathBook(nav, { max = 768 } = {}) {
         job = { key: n.key, search: townPathSearch(nav, n.ends[0], n.ends[1]) };
       }
       const found = job.search.step(cells);
-      cells -= job.search.spent; spent += job.search.spent;
+      cells -= job.search.spent;
+      spent += job.search.spent;
       if (found === undefined) return;
       book.set(job.key, found ? pathLine(found) : null);
       if (book.size > max) book.delete(book.keys().next().value);
@@ -259,17 +312,27 @@ export function createPathBook(nav, { max = 768 } = {}) {
           if (budget <= 0 || soon.size + later.size >= PATH_QUEUE_MAX) return undefined;
           budget--;
           (first ? soon : later).set(k, [a, b]);
-        } else if (first && later.has(k)) { soon.set(k, /** @type {number[][]} */ (later.get(k))); later.delete(k); }
+        } else if (first && later.has(k)) {
+          soon.set(k, /** @type {number[][]} */ (later.get(k)));
+          later.delete(k);
+        }
       }
       pump();
-      return book.get(k);   // undefined while it waits
+      return book.get(k); // undefined while it waits
     },
     /** This frame's new walks asked. @param {number} n */
-    budget(n) { budget = n; },
+    budget(n) {
+      budget = n;
+    },
     /** LW-PERF: a new frame - the cells its searching may open. @param {number} n */
-    cells(n) { cells = n; spent = 0; },
+    cells(n) {
+      cells = n;
+      spent = 0;
+    },
     /** LW-PERF: the frame's searching, on what the asking left of its cells (the host calls it once a frame). */
-    run() { pump(); },
+    run() {
+      pump();
+    },
     /** LW-PERF: the cells this frame's searching opened (the probes; the pins). */
     spent: () => spent,
     /** LW-PERF: the walks under way and waiting. */

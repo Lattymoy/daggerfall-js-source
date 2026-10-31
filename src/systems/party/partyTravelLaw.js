@@ -40,13 +40,19 @@ export const TRIP_SHIP = 4;
 
 /** The popup's three toggles as the wire's `o`. */
 export function tripBits(opts) {
-  return (opts?.speedCautious ? TRIP_CAUTIOUS : 0) | (opts?.sleepModeInn ? TRIP_INN : 0) | (opts?.travelShip ? TRIP_SHIP : 0);
+  return (
+    (opts?.speedCautious ? TRIP_CAUTIOUS : 0) | (opts?.sleepModeInn ? TRIP_INN : 0) | (opts?.travelShip ? TRIP_SHIP : 0)
+  );
 }
 
 /** The wire's `o` back to the popup's three toggles (anything but an integer reads as none set). */
 export function tripOptionsOf(bits) {
   const b = Number.isInteger(bits) ? bits : 0;
-  return { speedCautious: (b & TRIP_CAUTIOUS) !== 0, sleepModeInn: (b & TRIP_INN) !== 0, travelShip: (b & TRIP_SHIP) !== 0 };
+  return {
+    speedCautious: (b & TRIP_CAUTIOUS) !== 0,
+    sleepModeInn: (b & TRIP_INN) !== 0,
+    travelShip: (b & TRIP_SHIP) !== 0,
+  };
 }
 
 /** How long a round that has SET OUT stands on the leader's pose: a follower reads `go` off it and then waits for the
@@ -127,7 +133,14 @@ export function leaderTripOf({ party = null, me = null, leader = null, outdoors 
   if (!outdoors) return { refuse: PARTY_TRAVEL_TEXT.inside };
   const p = leader.p;
   if (here && p.px === here.x && p.py === here.y) return { refuse: PARTY_TRAVEL_TEXT.here };
-  return { x: p.px, y: p.py, inside: p.in === 1 ? 'dungeon' : p.in === 2 ? 'building' : null, loc: p.loc || '', name: leader.name || 'your leader', acct: leader.acct };
+  return {
+    x: p.px,
+    y: p.py,
+    inside: p.in === 1 ? 'dungeon' : p.in === 2 ? 'building' : null,
+    loc: p.loc || '',
+    name: leader.name || 'your leader',
+    acct: leader.acct,
+  };
 }
 
 /** The leader's feet in natives (`{x, y, z}`: MapsFile's X and Z, the height with the floating origin's shift shed -
@@ -151,8 +164,18 @@ export const BESIDE_LEVEL = 1;
  *  map's east and west), then the four between them - all BESIDE_STEP from the leader. AUDIT PARTY-TRAVEL: eight, not
  *  four, so a whole party (PARTY_MAX 8: the leader and seven) that follows one leader lands on seven different spots. */
 const BESIDE_DIAG = BESIDE_STEP / Math.SQRT2;
-export const BESIDE_OFFSETS = Object.freeze([[BESIDE_STEP, 0], [-BESIDE_STEP, 0], [0, BESIDE_STEP], [0, -BESIDE_STEP],
-  [BESIDE_DIAG, BESIDE_DIAG], [-BESIDE_DIAG, -BESIDE_DIAG], [-BESIDE_DIAG, BESIDE_DIAG], [BESIDE_DIAG, -BESIDE_DIAG]].map((o) => Object.freeze(o)));
+export const BESIDE_OFFSETS = Object.freeze(
+  [
+    [BESIDE_STEP, 0],
+    [-BESIDE_STEP, 0],
+    [0, BESIDE_STEP],
+    [0, -BESIDE_STEP],
+    [BESIDE_DIAG, BESIDE_DIAG],
+    [-BESIDE_DIAG, -BESIDE_DIAG],
+    [-BESIDE_DIAG, BESIDE_DIAG],
+    [BESIDE_DIAG, -BESIDE_DIAG],
+  ].map((o) => Object.freeze(o)),
+);
 
 /** Where a follower lands beside the leader's feet `at` (the scene frame): the first offset whose way from the leader
  *  is clear at the chest and whose floor is the leader's own level, facing the leader; else the leader's own spot, on
@@ -188,7 +211,8 @@ export function fareText(computed, afford = true, coinsShort = false) {
   const total = Math.max(0, Math.round(computed?.totalCost ?? 0));
   // AUDIT 28e: the purse holds the fare and the COINS fall short - "Taverns only accept gold pieces" (enoughGoldCheck's
   // second half) - so the words name the coin the inns want, not the whole fare
-  if (!afford && coinsShort) return `You cannot afford the journey (${Math.max(0, Math.round(computed?.piecesCost ?? 0))} gold in coin for the inns).`;
+  if (!afford && coinsShort)
+    return `You cannot afford the journey (${Math.max(0, Math.round(computed?.piecesCost ?? 0))} gold in coin for the inns).`;
   if (!afford) return `You cannot afford the journey (${total} gold).`;
   return total > 0 ? `The journey costs ${total} gold.` : 'The journey costs nothing.';
 }
@@ -196,7 +220,8 @@ export function fareText(computed, afford = true, coinsShort = false) {
 /** The rows of the offer to travel to the leader (a Yes/No box, ui/yesNoBox.js, either skin). */
 export function leaderOfferRows(trip, dest, fare, unwell = false) {
   const rows = [`Travel to ${trip.name}${dest ? ` at ${dest}` : ''}?`];
-  if (trip.inside === 'dungeon') rows.push(`${trip.name} is inside ${trip.loc || 'a dungeon'}. You will arrive at its door.`);
+  if (trip.inside === 'dungeon')
+    rows.push(`${trip.name} is inside ${trip.loc || 'a dungeon'}. You will arrive at its door.`);
   else if (trip.inside === 'building') rows.push(`${trip.name} is indoors. You will arrive outside.`);
   rows.push(fare);
   if (unwell) rows.push('You are diseased or poisoned.');

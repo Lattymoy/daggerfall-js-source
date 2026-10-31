@@ -190,7 +190,7 @@ test('STAFF-CHAT-RED THE MINT\'S WORD: the service\'s `hidden: 1` reaches the vo
   const again = accountTokenMinter({ fetch, storage, onIssued: (who) => host.adopt(who) });
   assert.equal(await again('chat:world'), 'v1.tok0.sig');
   assert.equal(host.voice.hidden(), false, 'a visible mint says nothing, and is heard as visible');
-  assert.match(rd('server-account/src/staffHidden.js'), /expiresAt: nowS \+ MAX_TTL_S, hidden: 1, sub,/, 'the service\'s word, as the minter reads it');
+  assert.match(rd('server-account/src/staffHidden.js'), /expiresAt: nowS \+ MAX_TTL_S,\n\s*hidden: 1,\n\s*sub,/, 'the service\'s word, as the minter reads it');
 });
 
 /* ═══ THE PANEL ═══════════════════════════════════════════════════════════════════════════════════════════════════ */

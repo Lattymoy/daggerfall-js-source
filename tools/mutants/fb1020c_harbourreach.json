@@ -2,8 +2,8 @@
   {
     "name": "HARBOUR-REACH-the-ring-never-sounded",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) { e.harbour = sound(far) ?? sound(far, true); e.far = true; }   // ALDBRUGH-QUAY: and its corners where the round reach finds no shore\n",
-    "new": "",
+    "old": "    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) {\n      e.harbour = sound(far) ?? sound(far, true);\n      e.far = true;\n    } // ALDBRUGH-QUAY: and its corners where the round reach finds no shore\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "HARBOUR-REACH-sounded-whatever-the-near-found",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "if (e && !e.harbour && !e.far && far > own &&",
-    "new": "if (e && !e.far && far > own &&",
+    "old": "    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) {",
+    "new": "    if (e && !e.far && far > own && near.ready?.(far) !== false) {",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HARBOUR-REACH-at-the-near-reach",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "{ e.harbour = sound(far) ?? sound(far, true); e.far = true; }",
-    "new": "{ e.harbour = sound(); e.far = true; }",
+    "old": "      e.harbour = sound(far) ?? sound(far, true);",
+    "new": "      e.harbour = sound();",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "HARBOUR-REACH-ready-asked-at-the-near-reach",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "near.ready?.(far) !== false) {",
-    "new": "near.ready?.() !== false) {",
+    "old": "    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) {",
+    "new": "    if (e && !e.harbour && !e.far && far > own && near.ready?.() !== false) {",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "HARBOUR-REACH-sounded-every-step",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "if (e && !e.harbour && !e.far && far > own",
-    "new": "if (e && !e.harbour && far > own",
+    "old": "    if (e && !e.harbour && !e.far && far > own && near.ready?.(far) !== false) {",
+    "new": "    if (e && !e.harbour && far > own && near.ready?.(far) !== false) {",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "HARBOUR-REACH-an-isle-sounds-the-ring",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "far = own === HARBOUR_REACH ? portRingReach(near.rect) : 0;",
-    "new": "far = portRingReach(near.rect);",
+    "old": "      far = own === HARBOUR_REACH ? portRingReach(near.rect) : 0;",
+    "new": "      far = portRingReach(near.rect);",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "HARBOUR-REACH-the-ring-a-pixel-short",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "export const portRingReach = (rect) => (SEA_RING + 0.5) * TERRAIN_SIZE",
-    "new": "export const portRingReach = (rect) => (SEA_RING - 0.5) * TERRAIN_SIZE",
+    "old": "  (SEA_RING + 0.5) * TERRAIN_SIZE - Math.max(rect.maxX - rect.minX, rect.maxZ - rect.minZ) / 2;",
+    "new": "  (SEA_RING - 0.5) * TERRAIN_SIZE - Math.max(rect.maxX - rect.minX, rect.maxZ - rect.minZ) / 2;",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "HARBOUR-REACH-the-footprint-not-taken-off",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "(SEA_RING + 0.5) * TERRAIN_SIZE - Math.max(rect.maxX - rect.minX, rect.maxZ - rect.minZ) / 2;",
-    "new": "(SEA_RING + 0.5) * TERRAIN_SIZE;",
+    "old": "export const portRingReach = (rect) =>\n  (SEA_RING + 0.5) * TERRAIN_SIZE - Math.max(rect.maxX - rect.minX, rect.maxZ - rect.minZ) / 2;",
+    "new": "export const portRingReach = (rect) => (SEA_RING + 0.5) * TERRAIN_SIZE;",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js"
     ]
@@ -75,7 +75,7 @@
     "name": "HARBOUR-REACH-the-world-ready-at-its-own-reach",
     "file": "src/systems/naval/harbourBook.js",
     "old": "  const ready = (r = reach) => {",
-    "new": "  const ready = (_r) => { const r = reach;",
+    "new": "  const ready = (_r) => {\n    const r = reach;",
     "tests": [
       "test/systems/naval/fb1020c_harbourreach.test.js",
       "test/systems/naval/auditholdings.test.js"

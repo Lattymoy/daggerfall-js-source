@@ -77,8 +77,11 @@ export const PUPPET_HURT_HOLD_S = 0.35;
  *  the sprite unit (its `state`), `now` seconds. Answers the `hurtKnock` for this frame. */
 export function puppetHurtStep(p, mobile, now) {
   if (!p) return false;
-  if (p.hurt) { p.hurtUntil = now + PUPPET_HURT_HOLD_S; p.hurt = false; }
-  if (p.hurtUntil && mobile?.state === 'hurt') p.hurtUntil = 0;   // it is hurting: spent
+  if (p.hurt) {
+    p.hurtUntil = now + PUPPET_HURT_HOLD_S;
+    p.hurt = false;
+  }
+  if (p.hurtUntil && mobile?.state === 'hurt') p.hurtUntil = 0; // it is hurting: spent
   return !!p.hurtUntil && now < p.hurtUntil;
 }
 
@@ -195,16 +198,30 @@ export const TELL_GLINT_PAD = Object.freeze([0.001, 0.001, 0.001, 0.001]);
 export function setBatchGlint(batch, g) {
   if (!batch) return;
   const cur = batch.glint;
-  if (!g || !(g[3] > 0)) { if (cur) batch.glint = undefined; return; }
+  if (!g || !(g[3] > 0)) {
+    if (cur) batch.glint = undefined;
+    return;
+  }
   if (cur && cur[0] === g[0] && cur[1] === g[1] && cur[2] === g[2] && cur[3] === g[3]) return;
-  if (cur) { cur[0] = g[0]; cur[1] = g[1]; cur[2] = g[2]; cur[3] = g[3]; return; }   // AUDIT TELL U9: a glint that changes every frame is rewritten in place - no array a frame
+  if (cur) {
+    cur[0] = g[0];
+    cur[1] = g[1];
+    cur[2] = g[2];
+    cur[3] = g[3];
+    return;
+  } // AUDIT TELL U9: a glint that changes every frame is rewritten in place - no array a frame
   batch.glint = [g[0], g[1], g[2], g[3]];
 }
-let _reducedAt = -Infinity, _reduced = false;
+let _reducedAt = -Infinity,
+  _reduced = false;
 /** The viewer's reduced motion (`prefers-reduced-motion`), read at most once a second; false where there is no window. */
 export function prefersReducedMotion(nowMs = Date.now()) {
   if (nowMs - _reducedAt < 1000) return _reduced;
   _reducedAt = nowMs;
-  try { _reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches; } catch { _reduced = false; }
+  try {
+    _reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  } catch {
+    _reduced = false;
+  }
   return _reduced;
 }

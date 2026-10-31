@@ -14,11 +14,28 @@
 // is AmbientEffects.onPlayEffect.
 
 import {
-  WEATHER_PRESET, parseSkyboxSetting, parseLightCurve, fogSettingsFromPresets, fogPresetKey,
-  initMaterial, applySkyboxSettings, applyLunarPhases, moonDirection,
-  DAY_PARTS, dayPartOfHour, weatherIndexOf, dayTimeOf,
-  worldTimeSeconds, sunLightDirection, sunLightColor, fogColorNow, FOG_COLOR_INTERVAL_SECONDS,
-  LightningFlash, windDirectionRoll, pixelSnowSettings, parseHtmlColor,
+  WEATHER_PRESET,
+  parseSkyboxSetting,
+  parseLightCurve,
+  fogSettingsFromPresets,
+  fogPresetKey,
+  initMaterial,
+  applySkyboxSettings,
+  applyLunarPhases,
+  moonDirection,
+  DAY_PARTS,
+  dayPartOfHour,
+  weatherIndexOf,
+  dayTimeOf,
+  worldTimeSeconds,
+  sunLightDirection,
+  sunLightColor,
+  fogColorNow,
+  FOG_COLOR_INTERVAL_SECONDS,
+  LightningFlash,
+  windDirectionRoll,
+  pixelSnowSettings,
+  parseHtmlColor,
 } from './dynamicSkies.js';
 import { dateFromClassicMinutes } from '../gameDate.js';
 
@@ -51,7 +68,7 @@ export class DynamicSkies {
     this.hour = 0;
     this.minutes = 0;
     // Weather
-    this.currentWeather = 'sunny';   // WeatherType.None == Sunny
+    this.currentWeather = 'sunny'; // WeatherType.None == Sunny
     this.forceWeatherUpdate = true;
     this.pendingWeather = false;
     this.pendingWeatherType = 'sunny';
@@ -59,9 +76,9 @@ export class DynamicSkies {
     this.pendingWindDirection = 0;
     this._seenWeather = null;
     // Lightning
-    this.lightningFlash = new LightningFlash(rng);   // BLBSkybox.Start: flashDuration 0.2
-    this.lightningSubscriptions = 0;   // the OnPlayEffect invocation list (a count: duplicates kept)
-    this.lightningCoroutine = false;    // StartLightningEffect's handle, null until Thunder
+    this.lightningFlash = new LightningFlash(rng); // BLBSkybox.Start: flashDuration 0.2
+    this.lightningSubscriptions = 0; // the OnPlayEffect invocation list (a count: duplicates kept)
+    this.lightningCoroutine = false; // StartLightningEffect's handle, null until Thunder
     // Fog colour (RenderSettings.fogColor), sRGB
     this.fogColor = null;
     this.lastFogUpdate = null;
@@ -73,15 +90,17 @@ export class DynamicSkies {
     // the clock (MODS AUDIT: the port left MATERIAL_DEFAULTS until the
     // first tick; nothing drew in between, but it is his order).
     this.phases = classicMinutes === null ? null : applyLunarPhases(this.mat, dateFromClassicMinutes(classicMinutes));
-    this._seconds = null;      // the last frame's real clock (Time.time)
-    this._insideSince = null;  // when the player went in, on that clock
+    this._seconds = null; // the last frame's real clock (Time.time)
+    this._insideSince = null; // when the player went in, on that clock
     // Init: currentWeather = None, force, OnWeatherChange(None), SetFogDistance
     this.onWeatherChange('sunny');
     this.setFogDistance('sunny');
   }
 
   /** getWeatherIndex. */
-  weatherIndex() { return weatherIndexOf(this.currentDayPart); }
+  weatherIndex() {
+    return weatherIndexOf(this.currentDayPart);
+  }
 
   /** WeatherManager.OnWeatherChange -> BLBSkybox.OnWeatherChange (:534-574). */
   onWeatherChange(weather) {
@@ -105,11 +124,13 @@ export class DynamicSkies {
       // twice; the else arm then drops one, and the other stays for the
       // session, rolling on every one-shot under any weather. Kept.
       if (this.pendingWeatherType === 'thunder') {
-        if (!this.lightningCoroutine) {   // StartCoroutine(StartLightningEffect) -> StartListening
+        if (!this.lightningCoroutine) {
+          // StartCoroutine(StartLightningEffect) -> StartListening
           this.lightningCoroutine = true;
           this.lightningSubscriptions++;
         }
-      } else if (this.lightningCoroutine) {   // StopCoroutine + ONE StopListening
+      } else if (this.lightningCoroutine) {
+        // StopCoroutine + ONE StopListening
         this.lightningCoroutine = false;
         this.lightningSubscriptions = Math.max(0, this.lightningSubscriptions - 1);
       }
@@ -159,7 +180,10 @@ export class DynamicSkies {
    *  weather (the controller's jump, which does not carry the sim's
    *  word) the next tick forces whatever word it brings. */
   weatherJump(weather) {
-    if (weather === undefined) { this._seenWeather = null; return; }
+    if (weather === undefined) {
+      this._seenWeather = null;
+      return;
+    }
     this.forceWeatherUpdate = true;
     this.pendingWeather = false;
     this.onWeatherChange(weather);
@@ -168,7 +192,9 @@ export class DynamicSkies {
   }
 
   /** Is the listener subscribed at all (the port's pins' question). */
-  get lightningListening() { return this.lightningSubscriptions > 0; }
+  get lightningListening() {
+    return this.lightningSubscriptions > 0;
+  }
 
   /** LightningFlashListener.HandleOnPlayEffect: an ambient effect
    *  played; outside, the flash rolls ONCE PER SUBSCRIPTION (each
@@ -221,7 +247,7 @@ export class DynamicSkies {
     const dt = f.dt ?? 0;
     if (this._insideSince !== null) {
       if (f.seconds !== undefined && f.seconds > this._insideSince) {
-        this.lightningFlash.tick(0);   // a routine rolled and never entered lights at its roll, as StartCoroutine runs to the first yield
+        this.lightningFlash.tick(0); // a routine rolled and never entered lights at its roll, as StartCoroutine runs to the first yield
         this.lightningFlash.tick(f.seconds - this._insideSince);
       }
       this._insideSince = null;
@@ -248,8 +274,8 @@ export class DynamicSkies {
       this.setFogColor(this.dayTime);
       this.lastFogUpdate = f.seconds;
     }
-    this.hour = Math.floor(((minuteOfDay % 1440) + 1440) % 1440 / 60);
-    this.minutes = Math.floor(((minuteOfDay % 1440) + 1440) % 1440 % 60);
+    this.hour = Math.floor((((minuteOfDay % 1440) + 1440) % 1440) / 60);
+    this.minutes = Math.floor((((minuteOfDay % 1440) + 1440) % 1440) % 60);
     this.forceWeatherUpdate = true;
     const part = dayPartOfHour(this.hour);
     if (part !== DAY_PARTS.None && part !== this.currentDayPart) {

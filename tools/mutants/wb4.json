@@ -2,8 +2,8 @@
   {
     "name": "WB4-the-body-out-of-the-cone",
     "file": "src/net/gate/gateStrike.js",
-    "old": "(d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw))",
-    "new": "(false || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw))",
+    "old": "      return d <= r && (d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);",
+    "new": "      return d <= r && (false || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WB4-the-arc-doubled",
     "file": "src/net/gate/gateStrike.js",
-    "old": "<= (A.arc / 2) * DEG);",
-    "new": "<= A.arc * DEG);",
+    "old": "      return d <= r && (d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= (A.arc / 2) * DEG);",
+    "new": "      return d <= r && (d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw)) <= A.arc * DEG);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WB4-the-targets-discs-about-him",
     "file": "src/net/gate/gateStrike.js",
-    "old": "case 'disc': return A.aim === 'self' ? d <= r :",
-    "new": "case 'disc': return true ? d <= r :",
+    "old": "      return A.aim === 'self'",
+    "new": "      return true",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WB4-the-rings-inner-edge-dropped",
     "file": "src/net/gate/gateStrike.js",
-    "old": "case 'ring': return d >= A.r0 && d <= A.r1;",
-    "new": "case 'ring': return d <= A.r1;",
+    "old": "      return d >= A.r0 && d <= A.r1;",
+    "new": "      return d <= A.r1;",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WB4-the-charge-a-ray-from-where-he-stood",
     "file": "src/net/gate/gateStrike.js",
-    "old": "const a = chargeHead(atk, Math.max(prev, atk.at))",
-    "new": "const a = chargeHead(atk, atk.at)",
+    "old": "  const a = chargeHead(atk, Math.max(prev, atk.at)),",
+    "new": "  const a = chargeHead(atk, atk.at),",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WB4-the-wrath-saved",
     "file": "src/net/gate/gateStrike.js",
-    "old": "saved: L.el != null && !isDagons(A)",
-    "new": "saved: L.el != null",
+    "old": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null && !isDagons(A) }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
+    "new": "  return { pct: L.pct, base: L.base, el: L.el, name: L.name, saved: L.el != null }; // WB9c: Dagon's Reckoning, as his Wrath, is answered by nothing",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WB4-the-damage-off-a-fixed-health",
     "file": "src/net/gate/gateStrike.js",
-    "old": "Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base))",
-    "new": "Math.round(pct * 100 + Math.max(0, base))",
+    "old": "export const strikeDamage = (pct, maxHealth, base = 0) =>\n  Math.max(1, Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base)));",
+    "new": "export const strikeDamage = (pct, maxHealth, base = 0) => Math.max(1, Math.round(pct * 100 + Math.max(0, base)));",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WB4-phase-three-the-full-windup",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  const w = windupOf(A, phase), span = Math.max(A.active, 1);",
-    "new": "  const w = A.windup, span = Math.max(A.active, 1);",
+    "old": "  const w = windupOf(A, phase),",
+    "new": "  const w = A.windup,",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "WB4-the-raise-held-from-the-word",
     "file": "src/world/gate/gateBoss.js",
-    "old": "frame: cast ? CAST_RAISE_FRAME : tel.t < 0.5 ? 0 : 1,",
-    "new": "frame: cast ? CAST_RAISE_FRAME : 1,",
+    "old": "        frame: cast ? CAST_RAISE_FRAME : tel.t < 0.5 ? 0 : 1,",
+    "new": "        frame: cast ? CAST_RAISE_FRAME : 1,",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "WB4-the-flinch-over-a-windup",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (A) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air",
-    "new": "  if (A && !(now - hurtAt >= 0 && now - hurtAt < FLINCH_MS)) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air",
+    "old": "  const atk = s.atk,\n    A = atk ? ATTACK_BY_ID[atk.a] : null;\n  if (A) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air - his legs under him, as the charge runs; WB9b: and the bound's long flight",
+    "new": "  const atk = s.atk,\n    A = atk ? ATTACK_BY_ID[atk.a] : null;\n  if (A && !(now - hurtAt >= 0 && now - hurtAt < FLINCH_MS)) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air - his legs under him, as the charge runs; WB9b: and the bound's long flight",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "WB4-the-loop-not-wrapped",
     "file": "src/world/gate/gateBoss.js",
-    "old": "const frame = act.loop ? ((act.frame % n) + n) % n :",
-    "new": "const frame = act.loop ? act.frame :",
+    "old": "  const frame = act.loop ? ((act.frame % n) + n) % n : Math.max(0, Math.min(n - 1, act.frame));",
+    "new": "  const frame = act.loop ? act.frame : Math.max(0, Math.min(n - 1, act.frame));",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "WB4-the-held-frame-past-the-record",
     "file": "src/world/gate/gateBoss.js",
-    "old": "Math.max(0, Math.min(n - 1, act.frame))",
-    "new": "Math.max(0, act.frame)",
+    "old": "  const frame = act.loop ? ((act.frame % n) + n) % n : Math.max(0, Math.min(n - 1, act.frame));",
+    "new": "  const frame = act.loop ? ((act.frame % n) + n) % n : Math.max(0, act.frame);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "WB4-the-glow-flat-through-the-windup",
     "file": "src/world/gate/gateBoss.js",
-    "old": "return lit(color, 0.35 + 1.25 * tel.t * tel.t, GLOW_RANGE.windup);",
-    "new": "return lit(color, 1, GLOW_RANGE.windup);",
+    "old": "      return lit(color, 0.35 + 1.25 * tel.t * tel.t, GLOW_RANGE.windup);",
+    "new": "      return lit(color, 1, GLOW_RANGE.windup);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "WB4-the-wards-gold-never-shown",
     "file": "src/world/gate/gateBoss.js",
-    "old": "  if (now < s.shieldUntil) return lit(WARD_COLOR,",
-    "new": "  if (false) return lit(WARD_COLOR,",
+    "old": "  if (now < s.shieldUntil) return lit(WARD_COLOR, 0.9 + 0.3 * Math.sin(now / 90), GLOW_RANGE.windup);",
+    "new": "  if (false) return lit(WARD_COLOR, 0.9 + 0.3 * Math.sin(now / 90), GLOW_RANGE.windup);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "WB4-the-readings-cone-without-his-body",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "const inside = d <= sh.r && (d <= sh.body || ang <= sh.halfArc);",
-    "new": "const inside = d <= sh.r && ang <= sh.halfArc;",
+    "old": "      const inside = d <= sh.r && (d <= sh.body || ang <= sh.halfArc);",
+    "new": "      const inside = d <= sh.r && ang <= sh.halfArc;",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "WB4-the-discs-drawn-about-him",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "(A.aim === 'self' ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.discs)",
-    "new": "(true ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.discs)",
+    "old": "      ? A.aim === 'self'",
+    "new": "      ? true",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "WB4-the-depth-written",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    gl.depthMask(false);\n",
-    "new": "    gl.depthMask(true);\n",
+    "old": "    gl.depthMask(false);",
+    "new": "    gl.depthMask(true);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -209,7 +209,7 @@
   {
     "name": "WB4-the-offset-left-on",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "    gl.disable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(0, 0);",
+    "old": "    gl.disable(gl.POLYGON_OFFSET_FILL);\n    gl.polygonOffset(0, 0);",
     "new": "    gl.polygonOffset(0, 0);",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
@@ -218,8 +218,8 @@
   {
     "name": "WB4-the-callout-after-the-landing",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "let callout = !s.fell && A && tel && !tel.over ?",
-    "new": "let callout = !s.fell && A && tel ?",
+    "old": "    !s.fell && A && tel && !tel.over",
+    "new": "    !s.fell && A && tel",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "WB4-the-countdown-always",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "toWrath <= WRATH_WARN_MS ?",
-    "new": "toWrath <= Infinity ?",
+    "old": "    wrath:\n      !s.fell && s.wrath == null && toWrath <= WRATH_WARN_MS ? BOSS_BAR_TEXT.wrathIn(countdownText(toWrath)) : null,",
+    "new": "    wrath: !s.fell && s.wrath == null && toWrath <= Infinity ? BOSS_BAR_TEXT.wrathIn(countdownText(toWrath)) : null,",
     "tests": [
       "test/net/gate/wb4_gate_boss.test.js"
     ]

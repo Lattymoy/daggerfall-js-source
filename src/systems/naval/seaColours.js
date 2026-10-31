@@ -29,44 +29,159 @@ import { fitFlag } from './shipFlag.js';
 
 const P = (id) => SHIP_PAINTS.findIndex((p) => p?.id === id);
 /** A livery written by its paints' names (0, as built, for a part left out). */
-const paints = (strake, accent, sail, stain = strake) => Object.freeze({ strake: P(strake), accent: P(accent), sail: sail ? P(sail) : 0, stain: P(stain) });
+const paints = (strake, accent, sail, stain = strake) =>
+  Object.freeze({ strake: P(strake), accent: P(accent), sail: sail ? P(sail) : 0, stain: P(stain) });
 
 /** The crowns' colours by the name her flag says (navalShips.js CROWNS' `name`; etherShips.js ISLES_FLAG's 'the Isles'):
  *  the field, the border and the device of the royal ensign, and the crown's paint for her strake and trim. */
 export const CROWN_COLOURS = Object.freeze({
-  Daggerfall: Object.freeze({ field: 'azure', border: 'gold', device: 'dagger', charge: 'gold', livery: paints('navy', 'gold', 'white') }),
-  Wayrest: Object.freeze({ field: 'crimson', border: 'gold', device: 'rose', charge: 'gold', livery: paints('crimson', 'gold', 'white') }),
-  Sentinel: Object.freeze({ field: 'gold', border: 'crimson', device: 'sun', charge: 'crimson', livery: paints('ochre', 'black', 'white') }),
-  'the Isles': Object.freeze({ field: 'teal', border: 'argent', device: 'star', charge: 'argent', livery: paints('teal', 'white', 'white') }),
+  Daggerfall: Object.freeze({
+    field: 'azure',
+    border: 'gold',
+    device: 'dagger',
+    charge: 'gold',
+    livery: paints('navy', 'gold', 'white'),
+  }),
+  Wayrest: Object.freeze({
+    field: 'crimson',
+    border: 'gold',
+    device: 'rose',
+    charge: 'gold',
+    livery: paints('crimson', 'gold', 'white'),
+  }),
+  Sentinel: Object.freeze({
+    field: 'gold',
+    border: 'crimson',
+    device: 'sun',
+    charge: 'crimson',
+    livery: paints('ochre', 'black', 'white'),
+  }),
+  'the Isles': Object.freeze({
+    field: 'teal',
+    border: 'argent',
+    device: 'star',
+    charge: 'argent',
+    livery: paints('teal', 'white', 'white'),
+  }),
 });
 /** THE MERCHANT HOUSES: each its house paint, the colour its flag parts the crown's field with, and its device. */
 export const MERCHANT_HOUSES = Object.freeze([
-  Object.freeze({ id: 'tanners', livery: paints('tan', 'white', 'tan'), colour: 'umber', division: 'fess', device: 'scales' }),
-  Object.freeze({ id: 'greens', livery: paints('sea', 'gold', null), colour: 'vert', division: 'pale', device: 'ship' }),
-  Object.freeze({ id: 'ochres', livery: paints('ochre', 'black', 'tan'), colour: 'ochre', division: 'bend', device: 'key' }),
-  Object.freeze({ id: 'bays', livery: paints('bay', 'white', null), colour: 'celeste', division: 'fess', device: 'anchor' }),
-  Object.freeze({ id: 'forests', livery: paints('forest', 'ochre', 'tan'), colour: 'vert', division: 'chevron', device: 'tree' }),
-  Object.freeze({ id: 'oxbloods', livery: paints('oxblood', 'white', null), colour: 'sanguine', division: 'pale', device: 'chalice' }),
-  Object.freeze({ id: 'greys', livery: paints('grey', 'gold', 'white'), colour: 'ash', division: 'quarterly', device: 'tower' }),
-  Object.freeze({ id: 'whites', livery: paints('white', 'navy', null), colour: 'argent', division: 'bend-sinister', device: 'fish' }),
+  Object.freeze({
+    id: 'tanners',
+    livery: paints('tan', 'white', 'tan'),
+    colour: 'umber',
+    division: 'fess',
+    device: 'scales',
+  }),
+  Object.freeze({
+    id: 'greens',
+    livery: paints('sea', 'gold', null),
+    colour: 'vert',
+    division: 'pale',
+    device: 'ship',
+  }),
+  Object.freeze({
+    id: 'ochres',
+    livery: paints('ochre', 'black', 'tan'),
+    colour: 'ochre',
+    division: 'bend',
+    device: 'key',
+  }),
+  Object.freeze({
+    id: 'bays',
+    livery: paints('bay', 'white', null),
+    colour: 'celeste',
+    division: 'fess',
+    device: 'anchor',
+  }),
+  Object.freeze({
+    id: 'forests',
+    livery: paints('forest', 'ochre', 'tan'),
+    colour: 'vert',
+    division: 'chevron',
+    device: 'tree',
+  }),
+  Object.freeze({
+    id: 'oxbloods',
+    livery: paints('oxblood', 'white', null),
+    colour: 'sanguine',
+    division: 'pale',
+    device: 'chalice',
+  }),
+  Object.freeze({
+    id: 'greys',
+    livery: paints('grey', 'gold', 'white'),
+    colour: 'ash',
+    division: 'quarterly',
+    device: 'tower',
+  }),
+  Object.freeze({
+    id: 'whites',
+    livery: paints('white', 'navy', null),
+    colour: 'argent',
+    division: 'bend-sinister',
+    device: 'fish',
+  }),
 ]);
 /** THE PIRATE CREWS: each its dark paint and its black flag. */
 export const PIRATE_CREWS = Object.freeze([
-  Object.freeze({ id: 'bones', livery: paints('black', 'crimson', 'grey'), flag: Object.freeze({ shape: 'flag', field: 'sable', device: 'skull', charge: 'argent' }) }),
-  Object.freeze({ id: 'blades', livery: paints('oxblood', 'black', 'tan'), flag: Object.freeze({ shape: 'flag', field: 'sable', device: 'swords', charge: 'argent' }) }),
-  Object.freeze({ id: 'serpents', livery: paints('forest', 'black', 'grey'), flag: Object.freeze({ shape: 'swallowtail', field: 'sable', device: 'serpent', charge: 'vert' }) }),
-  Object.freeze({ id: 'reds', livery: paints('black', 'gold', 'oxblood'), flag: Object.freeze({ shape: 'flag', field: 'sanguine', device: 'skull', charge: 'argent' }) }),
-  Object.freeze({ id: 'knives', livery: paints('grey', 'crimson', null), flag: Object.freeze({ shape: 'swallowtail', field: 'sable', device: 'dagger', charge: 'crimson' }) }),
-  Object.freeze({ id: 'bats', livery: paints('black', 'grey', 'black'), flag: Object.freeze({ shape: 'flag', field: 'sable', device: 'bat', charge: 'ash' }) }),
+  Object.freeze({
+    id: 'bones',
+    livery: paints('black', 'crimson', 'grey'),
+    flag: Object.freeze({ shape: 'flag', field: 'sable', device: 'skull', charge: 'argent' }),
+  }),
+  Object.freeze({
+    id: 'blades',
+    livery: paints('oxblood', 'black', 'tan'),
+    flag: Object.freeze({ shape: 'flag', field: 'sable', device: 'swords', charge: 'argent' }),
+  }),
+  Object.freeze({
+    id: 'serpents',
+    livery: paints('forest', 'black', 'grey'),
+    flag: Object.freeze({ shape: 'swallowtail', field: 'sable', device: 'serpent', charge: 'vert' }),
+  }),
+  Object.freeze({
+    id: 'reds',
+    livery: paints('black', 'gold', 'oxblood'),
+    flag: Object.freeze({ shape: 'flag', field: 'sanguine', device: 'skull', charge: 'argent' }),
+  }),
+  Object.freeze({
+    id: 'knives',
+    livery: paints('grey', 'crimson', null),
+    flag: Object.freeze({ shape: 'swallowtail', field: 'sable', device: 'dagger', charge: 'crimson' }),
+  }),
+  Object.freeze({
+    id: 'bats',
+    livery: paints('black', 'grey', 'black'),
+    flag: Object.freeze({ shape: 'flag', field: 'sable', device: 'bat', charge: 'ash' }),
+  }),
 ]);
 /** THE LEGENDS' OWN (etherShips.js LEGENDS' ids): each her paint and her flag. */
 export const LEGEND_COLOURS = Object.freeze({
-  wake: Object.freeze({ livery: paints('grey', 'white', 'black'), flag: Object.freeze({ shape: 'swallowtail', field: 'ash', border: 'sable', device: 'raven', charge: 'sable' }) }),
-  queen: Object.freeze({ livery: paints('sea', 'teal', 'grey'), flag: Object.freeze({ shape: 'flag', field: 'teal', border: 'argent', device: 'crown', charge: 'argent' }) }),
-  hunger: Object.freeze({ livery: paints('crimson', 'black', 'oxblood'), flag: Object.freeze({ shape: 'flag', field: 'sanguine', border: 'sable', device: 'wolf', charge: 'gold' }) }),
-  lantern: Object.freeze({ livery: paints('black', 'gold', 'ochre'), flag: Object.freeze({ shape: 'pennant', field: 'sable', border: 'gold', device: 'flame', charge: 'gold' }) }),
-  regent: Object.freeze({ livery: paints('purple', 'gold', 'white'), flag: Object.freeze({ shape: 'flag', field: 'purpure', border: 'gold', device: 'crown', charge: 'gold' }) }),
-  starless: Object.freeze({ livery: paints('black', 'black', 'black'), flag: Object.freeze({ shape: 'swallowtail', field: 'sable', device: 'star', charge: 'ash' }) }),
+  wake: Object.freeze({
+    livery: paints('grey', 'white', 'black'),
+    flag: Object.freeze({ shape: 'swallowtail', field: 'ash', border: 'sable', device: 'raven', charge: 'sable' }),
+  }),
+  queen: Object.freeze({
+    livery: paints('sea', 'teal', 'grey'),
+    flag: Object.freeze({ shape: 'flag', field: 'teal', border: 'argent', device: 'crown', charge: 'argent' }),
+  }),
+  hunger: Object.freeze({
+    livery: paints('crimson', 'black', 'oxblood'),
+    flag: Object.freeze({ shape: 'flag', field: 'sanguine', border: 'sable', device: 'wolf', charge: 'gold' }),
+  }),
+  lantern: Object.freeze({
+    livery: paints('black', 'gold', 'ochre'),
+    flag: Object.freeze({ shape: 'pennant', field: 'sable', border: 'gold', device: 'flame', charge: 'gold' }),
+  }),
+  regent: Object.freeze({
+    livery: paints('purple', 'gold', 'white'),
+    flag: Object.freeze({ shape: 'flag', field: 'purpure', border: 'gold', device: 'crown', charge: 'gold' }),
+  }),
+  starless: Object.freeze({
+    livery: paints('black', 'black', 'black'),
+    flag: Object.freeze({ shape: 'swallowtail', field: 'sable', device: 'star', charge: 'ash' }),
+  }),
 });
 /** The streams her colours are drawn off (her seed's own, apart from her names' and her temper's). */
 export const HOUSE_SALT = 0x5ea1;
@@ -75,7 +190,9 @@ export const CREW_SALT = 0xc7e3;
 /** A seed's pick of `n` on its own stream - the same on every machine that knows her seed. */
 export function seaPick(seed, salt, n) {
   let h = Math.imul(((seed >>> 0) ^ salt) >>> 0, 0x9e3779b1) >>> 0;
-  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b) >>> 0; h ^= h >>> 13;
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b) >>> 0;
+  h ^= h >>> 13;
   return n > 0 ? (h >>> 0) % n : 0;
 }
 
@@ -87,7 +204,8 @@ export function seaPick(seed, salt, n) {
  */
 
 /** A merchant house a ship is of - hers, or (a pirate under false colours) the one she passes for. */
-export const houseOf = (/** @type {SeaWho} */ who) => MERCHANT_HOUSES[seaPick(who.seed, HOUSE_SALT, MERCHANT_HOUSES.length)];
+export const houseOf = (/** @type {SeaWho} */ who) =>
+  MERCHANT_HOUSES[seaPick(who.seed, HOUSE_SALT, MERCHANT_HOUSES.length)];
 /** A pirate's crew. */
 export const crewOf = (/** @type {SeaWho} */ who) => PIRATE_CREWS[seaPick(who.seed, CREW_SALT, PIRATE_CREWS.length)];
 
@@ -96,11 +214,17 @@ export function seaLiveryOf(/** @type {SeaWho} */ who) {
   if (!who?.cls) return null;
   const legend = who.legend ? LEGEND_COLOURS[who.legend] : null;
   const f = who.cls.faction;
-  const raw = legend ? legend.livery
-    : f === 'navy' ? CROWN_COLOURS[who.crown ?? '']?.livery ?? null
-    : f === 'merchant' ? houseOf(who).livery
-    : f === 'pirate' ? (who.disguise ? houseOf(who).livery : crewOf(who).livery)
-    : null;
+  const raw = legend
+    ? legend.livery
+    : f === 'navy'
+      ? (CROWN_COLOURS[who.crown ?? '']?.livery ?? null)
+      : f === 'merchant'
+        ? houseOf(who).livery
+        : f === 'pirate'
+          ? who.disguise
+            ? houseOf(who).livery
+            : crewOf(who).livery
+          : null;
   return raw ? liveryOf(raw, who.cls.hull) : null;
 }
 
@@ -108,7 +232,17 @@ export function seaLiveryOf(/** @type {SeaWho} */ who) {
  *  Argent were the two one colour), the house's device. */
 function merchantFlag(crown, house) {
   const c = CROWN_COLOURS[crown ?? ''];
-  return c ? fitFlag({ shape: 'swallowtail', field: c.field, division: house.division, field2: house.colour, border: null, device: house.device, charge: null }) : null;
+  return c
+    ? fitFlag({
+        shape: 'swallowtail',
+        field: c.field,
+        division: house.division,
+        field2: house.colour,
+        border: null,
+        device: house.device,
+        charge: null,
+      })
+    : null;
 }
 
 /**
@@ -125,7 +259,16 @@ export function seaFlagOf(/** @type {SeaWho} */ who, colours = 'hers') {
   const f = who.cls.faction;
   if (f === 'navy') {
     const c = CROWN_COLOURS[who.crown ?? ''];
-    return c ? fitFlag({ shape: 'flag', field: c.field, division: 'plain', border: c.border, device: c.device, charge: c.charge }) : null;
+    return c
+      ? fitFlag({
+          shape: 'flag',
+          field: c.field,
+          division: 'plain',
+          border: c.border,
+          device: c.device,
+          charge: c.charge,
+        })
+      : null;
   }
   if (f === 'merchant') return merchantFlag(who.crown, houseOf(who));
   if (f === 'pirate') return fitFlag({ division: 'plain', border: null, ...crewOf(who).flag });

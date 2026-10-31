@@ -11,7 +11,7 @@
   {
     "name": "FAST-default-concurrency",
     "file": "tools/testShards.mjs",
-    "old": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...(summary || record ? summaryReporters(root) : []), ...extra];",
+    "old": "  const head = [\n    '--test',\n    `--test-concurrency=${Math.max(1, cores | 0)}`,\n    ...(summary || record ? summaryReporters(root) : []),\n    ...extra,\n  ];",
     "new": "  const head = ['--test', ...(summary || record ? summaryReporters(root) : []), ...extra];",
     "tests": [
       "test/tooling/fastsuite.test.js"
@@ -20,8 +20,8 @@
   {
     "name": "FAST-concurrency-zero",
     "file": "tools/testShards.mjs",
-    "old": "`--test-concurrency=${Math.max(1, cores | 0)}`",
-    "new": "`--test-concurrency=${cores | 0}`",
+    "old": "    `--test-concurrency=${Math.max(1, cores | 0)}`,",
+    "new": "    `--test-concurrency=${cores | 0}`,",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "FAST-empty-spawns",
     "file": "tools/testShards.mjs",
-    "old": "  if (!files.length) return 0;\n  const ordered",
-    "new": "  const ordered",
+    "old": "  if (!files.length) return 0;\n  const ordered = shardsOf(files, 1, times)[0].files;",
+    "new": "  const ordered = shardsOf(files, 1, times)[0].files;",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FAST-shard-own-spawn",
     "file": "tools/testShards.mjs",
-    "old": "  return runTests(files, { times, extra: runnerFlags(argv.slice(1)), record });\n}",
-    "new": "  return spawnSync(process.execPath, ['--test', ...files], { cwd: ROOT, stdio: 'inherit' }).status ?? 1;\n}",
+    "old": "  return runTests(files, { times, extra: runnerFlags(argv.slice(1)), record });",
+    "new": "  return spawnSync(process.execPath, ['--test', ...files], { cwd: ROOT, stdio: 'inherit' }).status ?? 1;",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "FAST-changed-own-spawn",
     "file": "tools/testChanged.mjs",
-    "old": "  return runTests(files, { extra: runnerFlags(argv) });\n}",
-    "new": "  return 0;\n}",
+    "old": "  return runTests(files, { extra: runnerFlags(argv) });",
+    "new": "  return 0;",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "FAST-F7-start-error-unsaid",
     "file": "tools/testShards.mjs",
-    "old": "    if (r.error) console.error(`[tests] the test runner did not start: ${r.error.message ?? r.error}`);\n",
-    "new": "",
+    "old": "    if (r.error) console.error(`[tests] the test runner did not start: ${r.error.message ?? r.error}`);\n    const s = r.status ?? 1;",
+    "new": "    const s = r.status ?? 1;",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "FAST-F7-flags-ahead-of-concurrency",
     "file": "tools/testShards.mjs",
-    "old": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...(summary || record ? summaryReporters(root) : []), ...extra];",
-    "new": "  const head = ['--test', ...extra, `--test-concurrency=${Math.max(1, cores | 0)}`, ...(summary || record ? summaryReporters(root) : [])];",
+    "old": "    `--test-concurrency=${Math.max(1, cores | 0)}`,\n    ...(summary || record ? summaryReporters(root) : []),\n    ...extra,",
+    "new": "    ...extra,\n    `--test-concurrency=${Math.max(1, cores | 0)}`,\n    ...(summary || record ? summaryReporters(root) : []),",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "CI-FAST-summary-never-handed",
     "file": "tools/testShards.mjs",
-    "old": "...(summary || record ? summaryReporters(root) : [])",
-    "new": "...[]",
+    "old": "  const head = [\n    '--test',\n    `--test-concurrency=${Math.max(1, cores | 0)}`,\n    ...(summary || record ? summaryReporters(root) : []),\n    ...extra,\n  ];",
+    "new": "  const head = ['--test', `--test-concurrency=${Math.max(1, cores | 0)}`, ...[], ...extra];",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ],
@@ -131,8 +131,8 @@
   {
     "name": "CI-FAST-own-reporter-dropped",
     "file": "tools/testShards.mjs",
-    "old": "  `--test-reporter=${tty ? 'spec' : 'tap'}`, '--test-reporter-destination=stdout',\n",
-    "new": "",
+    "old": "  `--test-reporter=${tty ? 'spec' : 'tap'}`,\n  '--test-reporter-destination=stdout',\n  `--test-reporter=${pathToFileURL(join(root, 'tools/failSummary.mjs')).href}`,",
+    "new": "  `--test-reporter=${pathToFileURL(join(root, 'tools/failSummary.mjs')).href}`,",
     "tests": [
       "test/tooling/fastsuite.test.js"
     ],
@@ -161,8 +161,8 @@
   {
     "name": "CI-FAST-no-annotation",
     "file": "tools/failSummary.mjs",
-    "old": "  for (const a of annotations) yield `${a}\\n`;\n",
-    "new": "",
+    "old": "  for (const a of annotations) yield `${a}\\n`;\n  if (github && process.env.GITHUB_STEP_SUMMARY) {",
+    "new": "  if (github && process.env.GITHUB_STEP_SUMMARY) {",
     "tests": [
       "test/tooling/cifast_failsummary.test.js"
     ],
@@ -181,8 +181,8 @@
   {
     "name": "CI-FAST-summary-unwritten",
     "file": "tools/failSummary.mjs",
-    "old": "    try { appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\\n`); } catch { /* the summary is a convenience; the log has it */ }",
-    "new": "",
+    "old": "    try {\n      appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${markdown}\\n`);\n    } catch {\n      /* the summary is a convenience; the log has it */\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/tooling/cifast_failsummary.test.js"
     ],

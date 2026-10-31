@@ -7,7 +7,13 @@
 // walk's name (its `as` fields). A pinned town or a set block variant bypasses the record. prefetchGroundTiles fetches it
 // once, before the walks, and installs the keeper.
 
-import { bytesStamp, textStamp, derivedValueStore, keepAnswer, firstVisitPin } from '../../systems/firstVisit/firstVisitStore.js';
+import {
+  bytesStamp,
+  textStamp,
+  derivedValueStore,
+  keepAnswer,
+  firstVisitPin,
+} from '../../systems/firstVisit/firstVisitStore.js';
 import { anyBlockVariant } from '../../systems/worldDataVariants.js';
 import { setGroundTilesKeeper } from './terrainTiles.js';
 import { SHAPE_AUTOMAP_SIDE } from '../townShape.js';
@@ -15,7 +21,7 @@ import { SHAPE_AUTOMAP_SIDE } from '../townShape.js';
 /** The cache's scope: one record, the last written. */
 export const GROUND_TILES_SCOPE = 'fv-ground:';
 
-const TILES = 16;   // RMB_TILES_PER_BLOCK
+const TILES = 16; // RMB_TILES_PER_BLOCK
 const SAVE_AFTER_MS = 2000;
 const CELLS = SHAPE_AUTOMAP_SIDE * SHAPE_AUTOMAP_SIDE;
 
@@ -33,7 +39,12 @@ export function groundTilesKey(blocksBytes, serving) {
   return stamp ? `${GROUND_TILES_SCOPE}${firstVisitPin('groundTiles')}:${stamp}:${textStamp(serving)}` : null;
 }
 
-const isBlock = (b) => b?.t instanceof Int32Array && b.t.length === TILES * TILES * 2 && b.r instanceof Float64Array && b.r.length % 3 === 0 && (b.m === null || (b.m instanceof Uint8Array && b.m.length === CELLS / 8));
+const isBlock = (b) =>
+  b?.t instanceof Int32Array &&
+  b.t.length === TILES * TILES * 2 &&
+  b.r instanceof Float64Array &&
+  b.r.length % 3 === 0 &&
+  (b.m === null || (b.m instanceof Uint8Array && b.m.length === CELLS / 8));
 
 /** A stored record is a Map of walk name -> Map of block name -> KeptBlock. */
 function isRecord(v) {
@@ -52,7 +63,10 @@ function isRecord(v) {
 export async function prefetchGroundTiles({ blocksBytes, serving, store = derivedValueStore() }) {
   setGroundTilesKeeper(keptGroundTiles);
   const key = groundTilesKey(blocksBytes, serving);
-  if (!key) { kept = null; return false; }
+  if (!key) {
+    kept = null;
+    return false;
+  }
   if (kept?.key === key) return kept.walks.size > 0;
   const hit = store ? await store.get(key) : null;
   // the record this one replaces must not save later: its sweep would delete this key
@@ -67,7 +81,10 @@ function unpack(k) {
   const groundTiles = [];
   for (let x = 0; x < TILES; x++) {
     const col = [];
-    for (let y = 0; y < TILES; y++) { const i = (x * TILES + y) * 2; col.push({ tileBitfield: k.t[i], textureRecord: k.t[i + 1] }); }
+    for (let y = 0; y < TILES; y++) {
+      const i = (x * TILES + y) * 2;
+      col.push({ tileBitfield: k.t[i], textureRecord: k.t[i + 1] });
+    }
     groundTiles.push(col);
   }
   let autoMapData = null;
@@ -76,13 +93,21 @@ function unpack(k) {
     for (let c = 0; c < CELLS; c++) if (k.m[c >> 3] & (1 << (c & 7))) autoMapData[c] = 1;
   }
   const records = [];
-  for (let i = 0; i < k.r.length; i += 3) records.push(k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] });
+  for (let i = 0; i < k.r.length; i += 3)
+    records.push(
+      k.r[i + 2] >= 0 ? { xPos: k.r[i], zPos: k.r[i + 1], modelIdNum: k.r[i + 2] } : { xPos: k.r[i], zPos: k.r[i + 1] },
+    );
   return { groundTiles, autoMapData, misc3dObjectRecords: records, miscFlatObjectRecords: [] };
 }
 function pack(part) {
   const t = new Int32Array(TILES * TILES * 2);
   for (let x = 0; x < TILES; x++) {
-    for (let y = 0; y < TILES; y++) { const tile = part.groundTiles[x][y]; const i = (x * TILES + y) * 2; t[i] = tile.tileBitfield; t[i + 1] = tile.textureRecord; }
+    for (let y = 0; y < TILES; y++) {
+      const tile = part.groundTiles[x][y];
+      const i = (x * TILES + y) * 2;
+      t[i] = tile.tileBitfield;
+      t[i + 1] = tile.textureRecord;
+    }
   }
   let m = null;
   const cells = part.autoMapData;
@@ -90,9 +115,14 @@ function pack(part) {
     m = new Uint8Array(CELLS / 8);
     for (let c = 0; c < CELLS; c++) if (cells[c]) m[c >> 3] |= 1 << (c & 7);
   }
-  const models = part.misc3dObjectRecords ?? [], all = [...models, ...(part.miscFlatObjectRecords ?? [])];
+  const models = part.misc3dObjectRecords ?? [],
+    all = [...models, ...(part.miscFlatObjectRecords ?? [])];
   const r = new Float64Array(all.length * 3);
-  all.forEach((rec, i) => { r[i * 3] = rec.xPos; r[i * 3 + 1] = rec.zPos; r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1; });
+  all.forEach((rec, i) => {
+    r[i * 3] = rec.xPos;
+    r[i * 3 + 1] = rec.zPos;
+    r[i * 3 + 2] = i < models.length && Number.isFinite(rec.modelIdNum) ? rec.modelIdNum : -1;
+  });
   return { t, m, r };
 }
 
@@ -110,7 +140,10 @@ export function keptGroundTiles(walk, block, read) {
   const part = read();
   if (part?.groundTiles?.length !== TILES) return part;
   let m = kept.walks.get(walk);
-  if (!m) { m = new Map(); kept.walks.set(walk, m); }
+  if (!m) {
+    m = new Map();
+    kept.walks.set(walk, m);
+  }
   m.set(block, pack(part));
   scheduleSave();
   return part;
@@ -120,15 +153,24 @@ export function keptGroundTiles(walk, block, read) {
 function scheduleSave() {
   const k = kept;
   if (!k?.store || k.timer) return;
-  k.timer = setTimeout(() => { k.timer = null; keepAnswer(k.store, k.key, k.walks, GROUND_TILES_SCOPE); }, SAVE_AFTER_MS);
+  k.timer = setTimeout(() => {
+    k.timer = null;
+    keepAnswer(k.store, k.key, k.walks, GROUND_TILES_SCOPE);
+  }, SAVE_AFTER_MS);
 }
 
 /** Tests: write what was added now, and answer when it is stored. */
 export async function _flushGroundTiles() {
   const k = kept;
   if (!k?.store) return;
-  if (k.timer) { clearTimeout(k.timer); k.timer = null; }
+  if (k.timer) {
+    clearTimeout(k.timer);
+    k.timer = null;
+  }
   await keepAnswer(k.store, k.key, k.walks, GROUND_TILES_SCOPE);
 }
 /** Tests: forget the fetched record. */
-export function _resetGroundTiles() { if (kept?.timer) clearTimeout(kept.timer); kept = null; }
+export function _resetGroundTiles() {
+  if (kept?.timer) clearTimeout(kept.timer);
+  kept = null;
+}

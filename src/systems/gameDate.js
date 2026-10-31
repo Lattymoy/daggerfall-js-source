@@ -27,7 +27,7 @@
 // this module is pure functions over an absolute minute count, so
 // there is no mutable clock object to carry.
 
-import { localizedText, localizedTextList, formatText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText, localizedTextList, formatText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const SECONDS_PER_MINUTE = 60;
 export const MINUTES_PER_HOUR = 60;
@@ -36,7 +36,7 @@ export const HOURS_PER_DAY = 24;
 export const DAYS_PER_WEEK = 7;
 export const DAYS_PER_MONTH = 30;
 export const MONTHS_PER_YEAR = 12;
-export const DAYS_PER_YEAR = DAYS_PER_MONTH * MONTHS_PER_YEAR;   // 360
+export const DAYS_PER_YEAR = DAYS_PER_MONTH * MONTHS_PER_YEAR; // 360
 /** :48-49. The two DaggerfallDateTime members the rest of the port
  *  reached for by re-declaring them: the seconds in a week (quest
  *  tombstones expire on it, and V1's vampire turn raises the clock by
@@ -64,11 +64,38 @@ export const DEFAULT_DATE = Object.freeze({ year: 405, month: 5, day: 0, hour: 1
  *  where GetDayName/GetMonthName/GetBirthSignName/GetSeasonName read
  *  them (:550-615). SEASON_NAMES stays the English list as well: the
  *  quest Season trigger compares a season's word against it. */
-export const dayNames = () => localizedTextList('dayNames', ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);
-export const monthNames = () => localizedTextList('monthNames', ["Morning Star", "Sun's Dawn", 'First Seed', "Rain's Hand",
-  'Second Seed', 'Midyear', "Sun's Height", 'Last Seed', 'Hearthfire', 'Frostfall', "Sun's Dusk", 'Evening Star']);
-export const birthSignNames = () => localizedTextList('birthSignNames', ['The Ritual', 'The Lover', 'The Lord', 'The Mage',
-  'The Shadow', 'The Steed', 'The Apprentice', 'The Warrior', 'The Lady', 'The Tower', 'The Atronach', 'The Thief']);
+export const dayNames = () =>
+  localizedTextList('dayNames', ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);
+export const monthNames = () =>
+  localizedTextList('monthNames', [
+    'Morning Star',
+    "Sun's Dawn",
+    'First Seed',
+    "Rain's Hand",
+    'Second Seed',
+    'Midyear',
+    "Sun's Height",
+    'Last Seed',
+    'Hearthfire',
+    'Frostfall',
+    "Sun's Dusk",
+    'Evening Star',
+  ]);
+export const birthSignNames = () =>
+  localizedTextList('birthSignNames', [
+    'The Ritual',
+    'The Lover',
+    'The Lord',
+    'The Mage',
+    'The Shadow',
+    'The Steed',
+    'The Apprentice',
+    'The Warrior',
+    'The Lady',
+    'The Tower',
+    'The Atronach',
+    'The Thief',
+  ]);
 export const SEASON_NAMES = Object.freeze(['Fall', 'Spring', 'Summer', 'Winter']);
 const seasonNames = () => localizedTextList('seasonNames', ['Fall', 'Spring', 'Summer', 'Winter']);
 export const SEASONS = Object.freeze({ Fall: 0, Spring: 1, Summer: 2, Winter: 3 });
@@ -77,12 +104,14 @@ export const SEASONS = Object.freeze({ Fall: 0, Spring: 1, Summer: 2, Winter: 3 
  *  the month term is SecondsPerMonth * Month - i.e. months are the
  *  same fixed 30 days as everywhere else. */
 export function dateToSeconds({ year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0 }) {
-  return year * (DAYS_PER_YEAR * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE)
-    + month * (DAYS_PER_MONTH * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE)
-    + day * (HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE)
-    + hour * (MINUTES_PER_HOUR * SECONDS_PER_MINUTE)
-    + minute * SECONDS_PER_MINUTE
-    + Math.trunc(second);
+  return (
+    year * (DAYS_PER_YEAR * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE) +
+    month * (DAYS_PER_MONTH * HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE) +
+    day * (HOURS_PER_DAY * MINUTES_PER_HOUR * SECONDS_PER_MINUTE) +
+    hour * (MINUTES_PER_HOUR * SECONDS_PER_MINUTE) +
+    minute * SECONDS_PER_MINUTE +
+    Math.trunc(second)
+  );
 }
 
 /** FromSeconds (:446-470). DFU walks the years and months off with two
@@ -112,7 +141,6 @@ export const dateFromClassicMinutes = (minutes) =>
 /** SetClassicGameStartTime (:491-494): 13:30 4th Morning Star 3E405. */
 export const classicGameStartDate = () => dateFromClassicMinutes(CLASSIC_GAME_START_TIME);
 
-
 // RETIRED AT THE AUDIT 22 MERGE. S28 shipped
 // classicMinutesFromElapsed/dateFromElapsedMinutes because the port's
 // hosts each counted ELAPSED minutes from zero, so the epoch had to be
@@ -127,7 +155,7 @@ export const classicGameStartDate = () => dateFromClassicMinutes(CLASSIC_GAME_ST
 /** GetDayOfYear (:629-633): `(Month * DaysPerMonth) + (Day + 1)`, so it
  *  is 1-based and the first day of the year is 1. Guild.cs's
  *  CalculateDaySinceZero reads exactly this. */
-export const dayOfYear = (date) => (date.month * DAYS_PER_MONTH) + (date.day + 1);
+export const dayOfYear = (date) => date.month * DAYS_PER_MONTH + (date.day + 1);
 /** The SAME day of year, read off a raw CLASSIC-MINUTES counter
  *  instead of a date record - the arithmetic GetHolidayId does inline
  *  (`(gameMinutes % minutesPerYear) / 1440 + 1`). It lives here rather
@@ -151,11 +179,18 @@ export const dayOfMonth = (date) => date.day + 1;
 // tests run before the bands, so ratio 16 reads New where the <=22
 // band below would have called it OneWax.
 export const LUNAR_PHASES = Object.freeze({
-  None: -1, New: 0, OneWax: 1, HalfWax: 2, ThreeWax: 3,
-  Full: 4, ThreeWane: 5, HalfWane: 6, OneWane: 7,
+  None: -1,
+  New: 0,
+  OneWax: 1,
+  HalfWax: 2,
+  ThreeWax: 3,
+  Full: 4,
+  ThreeWane: 5,
+  HalfWane: 6,
+  OneWane: 7,
 });
 export function lunarPhase(date, { masser = true } = {}) {
-  if (date.year < 0) return LUNAR_PHASES.None;   // "Year < 0 not supported"
+  if (date.year < 0) return LUNAR_PHASES.None; // "Year < 0 not supported"
   const offset = masser ? 3 : -1;
   const moonRatio = (dayOfYear(date) + date.year * MONTHS_PER_YEAR * DAYS_PER_MONTH + offset) % 32;
   if (moonRatio === 0) return LUNAR_PHASES.Full;
@@ -165,7 +200,7 @@ export function lunarPhase(date, { masser = true } = {}) {
   if (moonRatio <= 15) return LUNAR_PHASES.OneWane;
   if (moonRatio <= 22) return LUNAR_PHASES.OneWax;
   if (moonRatio <= 28) return LUNAR_PHASES.HalfWax;
-  return LUNAR_PHASES.ThreeWax;   // 29..31
+  return LUNAR_PHASES.ThreeWax; // 29..31
 }
 /** Both moons off one classic-minutes clock - the shape every system
  *  caller has (worldTick's round, the enchantment ctx). */
@@ -194,7 +229,9 @@ export const lunarPhasesFromMinutes = (gameMinutes) => {
 export function lunarPhaseFraction(date, minuteOfDay, { masser = true } = {}) {
   if (date.year < 0) return 0;
   const offset = masser ? 3 : -1;
-  const ratio = ((dayOfYear(date) + date.year * MONTHS_PER_YEAR * DAYS_PER_MONTH + offset) % 32) + (((minuteOfDay % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY) / MINUTES_PER_DAY;
+  const ratio =
+    ((dayOfYear(date) + date.year * MONTHS_PER_YEAR * DAYS_PER_MONTH + offset) % 32) +
+    (((minuteOfDay % MINUTES_PER_DAY) + MINUTES_PER_DAY) % MINUTES_PER_DAY) / MINUTES_PER_DAY;
   return (4 + ratio / 4) % 8;
 }
 export const lunarPhaseFractionsFromMinutes = (gameMinutes) => {
@@ -222,7 +259,8 @@ export const isFullMoonFromMinutes = (gameMinutes) => {
 /** TIME2 (bible/06-Systems/Online-Time-Arc.md 6.1): the NIGHT a minute stands in, named by the date of its dusk - from
  *  18:00 of a date to 06:00 of the next (isDayFromMinutes' complement) - as that date's first minute; null by day. */
 export const nightDateMinutes = (gameMinutes) => {
-  const day = Math.floor(gameMinutes / MINUTES_PER_DAY), into = gameMinutes - day * MINUTES_PER_DAY;
+  const day = Math.floor(gameMinutes / MINUTES_PER_DAY),
+    into = gameMinutes - day * MINUTES_PER_DAY;
   if (into >= DUSK_HOUR * 60) return day * MINUTES_PER_DAY;
   if (into < DAWN_HOUR * 60) return (day - 1) * MINUTES_PER_DAY;
   return null;
@@ -235,7 +273,7 @@ export const isFullMoonNightFromMinutes = (gameMinutes) => {
   return night !== null && isFullMoonFromMinutes(night);
 };
 /** GetMinuteOfDay (:618-622). */
-export const minuteOfDay = (date) => (date.hour * MINUTES_PER_HOUR) + date.minute;
+export const minuteOfDay = (date) => date.hour * MINUTES_PER_HOUR + date.minute;
 
 /** GetDayName (:550-559). The week is the day's position WITHIN its
  *  week, and since 30 divides evenly by neither 7 nor anything useful,
@@ -255,7 +293,7 @@ export function seasonValue(date) {
   if (m === 2 || m === 3 || m === 4) return SEASONS.Spring;
   if (m === 5 || m === 6 || m === 7) return SEASONS.Summer;
   if (m === 8 || m === 9 || m === 10) return SEASONS.Fall;
-  return SEASONS.Summer;   // DFU's `default:`
+  return SEASONS.Summer; // DFU's `default:`
 }
 export const seasonName = (date) => seasonNames()[seasonValue(date)];
 
@@ -267,8 +305,14 @@ export const seasonName = (date) => seasonNames()[seasonValue(date)];
  *  AUDIT 24 systems: the port had invented "Loredas, 4 Morning Star,
  *  3E 405" where DFU renders "Loredas the 4th of Morning Star" - and
  *  every %dat, %qdt and %qdat macro reads this. */
-export const dateString = (date) => formatText(localizedText('dateFormatString', '{0} the {1}{2} of {3:00}'),
-  dayName(date), dayOfMonth(date), daySuffix(dayOfMonth(date)), monthName(date));
+export const dateString = (date) =>
+  formatText(
+    localizedText('dateFormatString', '{0} the {1}{2} of {3:00}'),
+    dayName(date),
+    dayOfMonth(date),
+    daySuffix(dayOfMonth(date)),
+    monthName(date),
+  );
 
 /** GetSuffix (:641-652): st on 1/21, nd on 2/22, rd on 3/23, else th
  *  (a 30-day month never reaches 31, so DFU never wrote that arm). */
@@ -295,11 +339,28 @@ export function daySuffix(dayOfMonth1) {
  *  IFormattable, string.Format drops the spec and the name prints
  *  plainly - and the day ({3}) is UNPADDED here. The notebook's D:
  *  note headers read this shape (Q4-v). */
-export const dateTimeString = (d) => formatText(localizedText('dateTimeFormatString', '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'),
-  d.hour, d.minute, d.second, d.day + 1, daySuffix(d.day + 1), monthName(d), d.year);
+export const dateTimeString = (d) =>
+  formatText(
+    localizedText('dateTimeFormatString', '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'),
+    d.hour,
+    d.minute,
+    d.second,
+    d.day + 1,
+    daySuffix(d.day + 1),
+    monthName(d),
+    d.year,
+  );
 /** MidDateTimeString (:390-394) over midDateTimeFormatString
  *  '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}' - HERE the day IS padded
  *  ({3:00} lands on the int) and the month-name spec drops again. The
  *  notebook's finished-quest headers read this shape (Q4-v). */
-export const midDateTimeString = (d) => formatText(localizedText('midDateTimeFormatString', '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}'),
-  d.hour, d.minute, d.second, d.day + 1, monthName(d), d.year);
+export const midDateTimeString = (d) =>
+  formatText(
+    localizedText('midDateTimeFormatString', '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}'),
+    d.hour,
+    d.minute,
+    d.second,
+    d.day + 1,
+    monthName(d),
+    d.year,
+  );

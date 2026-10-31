@@ -46,10 +46,10 @@ test('GREEDY-BEYOND untouched: a walk the exact search finds inside its count is
 
 test('GREEDY-BEYOND the wiring: the lean comes after the walk across country, is asked only of a plan past the Bay with no boat, its box the widest rung\'s', () => {
   const src = readFileSync(new URL('../../../src/systems/travel/travelRoute.js', import.meta.url), 'utf8');
-  const fall = src.indexOf('if (!best && past && (roads || tracks) && !sea) return yield* planRouteSteps(');
+  const fall = src.indexOf('if (!best && past && (roads || tracks) && !sea)\n    return yield* planRouteSteps(');
   const lean = src.indexOf('if (!best && past && !roads && !tracks && !sea && tally.n - spent >= BEYOND_MAX_EXPANSIONS) {');
   assert.ok(fall > 0 && lean > fall, 'after the roads\' plan falls to the walk across country');
-  assert.match(src.slice(lean, src.indexOf('\n  }\n', lean)), /bounds: reachOf\(BEYOND_MARGIN\), margin: BEYOND_MARGIN, maxExpansions: BEYOND_MAX_EXPANSIONS,[^\n]*hCost: BEYOND_GREED \* ROUTE_COST\.open/);
+  assert.match(src.slice(lean, src.indexOf('\n  }\n', lean)), /bounds: reachOf\(BEYOND_MARGIN\),\n\s*margin: BEYOND_MARGIN,\n\s*maxExpansions: BEYOND_MAX_EXPANSIONS,\n\s*openBlocked,\n\s*goalExempt,\n\s*peakAt,\n\s*sea,\n\s*beyond,\n\s*hCost: BEYOND_GREED \* ROUTE_COST\.open/);
 });
 
 // ── WITH ARENA2: the freeware's own Tamriel ─────────────────────

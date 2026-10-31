@@ -52,7 +52,11 @@ export const FOG_DENSITY_MAX = 0.25;
  *  This is the fog UnderwaterFog backs up and restores in a dungeon,
  *  and both dungeon hosts already wrote these five values inline. */
 export const DUNGEON_FOG = Object.freeze({
-  mode: 'exp', density: 0.005, start: 0, end: 0, color: Object.freeze([0, 0, 0]),
+  mode: 'exp',
+  density: 0.005,
+  start: 0,
+  end: 0,
+  color: Object.freeze([0, 0, 0]),
 });
 
 /** The port's one fog door takes five positional arguments and a
@@ -65,7 +69,7 @@ export function applyFog(renderer, s, into = null) {
 }
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
-const lerp = (a, b, t) => a + (b - a) * clamp(t, 0, 1);   // Mathf.Lerp clamps t
+const lerp = (a, b, t) => a + (b - a) * clamp(t, 0, 1); // Mathf.Lerp clamps t
 
 /**
  * UnderwaterFog.UpdateFog's depth term (:39-54), pulled out so the
@@ -96,12 +100,12 @@ const lerp = (a, b, t) => a + (b - a) * clamp(t, 0, 1);   // Mathf.Lerp clamps t
  * @returns {number} fogT in [0, 1]; 0 is dry, 1 is fully submerged.
  */
 export function fogT(waterLevel, camY) {
-  const adjustedCamYPos = camY + (50 * GLOBAL_SCALE) - 0.95;
-  const waterEntryThreshold = (waterLevel * -1 * GLOBAL_SCALE) + 0.38;
+  const adjustedCamYPos = camY + 50 * GLOBAL_SCALE - 0.95;
+  const waterEntryThreshold = waterLevel * -1 * GLOBAL_SCALE + 0.38;
   const waterExitThreshold = waterEntryThreshold - 0.02;
   const clampedCamYPos = clamp(adjustedCamYPos, waterExitThreshold, waterEntryThreshold);
   if (waterEntryThreshold - waterExitThreshold !== 0.0) {
-    return 1 - ((clampedCamYPos - waterExitThreshold) / (waterEntryThreshold - waterExitThreshold));
+    return 1 - (clampedCamYPos - waterExitThreshold) / (waterEntryThreshold - waterExitThreshold);
   }
   return 0.0;
 }
@@ -159,8 +163,10 @@ export class UnderwaterFog {
     // enters the water still saves the dry room.
     if (this.oldFogT === 0.0 && current) {
       this.original = {
-        mode: current.mode, density: current.density,
-        start: current.start, end: current.end,
+        mode: current.mode,
+        density: current.density,
+        start: current.start,
+        end: current.end,
         color: current.color ? Array.from(current.color) : [0, 0, 0],
       };
     }
@@ -181,8 +187,10 @@ export class UnderwaterFog {
     }
     // :72-80 - "otherwise restore old fog settings".
     return {
-      mode: this.original.mode, density: this.original.density,
-      start: this.original.start, end: this.original.end,
+      mode: this.original.mode,
+      density: this.original.density,
+      start: this.original.start,
+      end: this.original.end,
       color: Array.from(this.original.color),
     };
   }

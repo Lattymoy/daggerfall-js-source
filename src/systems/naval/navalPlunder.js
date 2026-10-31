@@ -28,7 +28,7 @@
 
 import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { NOTORIETY } from './navalLaw.js';
-import { HULL_PRICES } from '../comeSailAway/comeSailAwayBoat.js';   // SHIP-CLAIM: a claimed prize's deed, at a share of her hull's price
+import { HULL_PRICES } from '../comeSailAway/comeSailAwayBoat.js'; // SHIP-CLAIM: a claimed prize's deed, at a share of her hull's price
 import { hullBuild } from './navalShips.js';
 import { STORE_POINTS } from './navalYard.js';
 
@@ -75,7 +75,8 @@ export const prizeDeedValue = (hull) => Math.round(HULL_PRICES[hull] * PRIZE_DEE
 export const HOLD_RARITY_TIER = Object.freeze({ merchant: 5, pirate: 6, navy: 8 });
 export const STRONGBOX_RARITY_TIER = 11;
 /** A lot's rarity tier: its ship's trade's, or the strongbox's. */
-export const holdTier = (shipClass, strongbox = false) => (strongbox ? STRONGBOX_RARITY_TIER : HOLD_RARITY_TIER[shipClass?.faction] ?? HOLD_RARITY_TIER.merchant);
+export const holdTier = (shipClass, strongbox = false) =>
+  strongbox ? STRONGBOX_RARITY_TIER : (HOLD_RARITY_TIER[shipClass?.faction] ?? HOLD_RARITY_TIER.merchant);
 
 /** The keys of a ship's hold, one a lot, from her seed. */
 export function holdKeys(shipClass, seed) {
@@ -121,7 +122,8 @@ export function flotsamKeys(shipClass, seed) {
  */
 export function drawHold(shipClass, seed, generate) {
   const items = [];
-  const keys = holdKeys(shipClass, seed), boxes = strongboxesOf(shipClass);
+  const keys = holdKeys(shipClass, seed),
+    boxes = strongboxesOf(shipClass);
   keys.forEach((key, i) => {
     const strongbox = i >= keys.length - boxes;
     for (const it of generate(key, holdTier(shipClass, strongbox)) ?? []) items.push(it);
@@ -137,7 +139,8 @@ export function drawHold(shipClass, seed, generate) {
  * @param {{ barrelStock?: number, notoriety?: number }} [armament]
  */
 export function choiceEffect(choice, mine, { barrelStock = 0, notoriety = 0 } = {}) {
-  if (choice === 'repair') return { repair: { hull: Math.round(mine.maxHull * REPAIR_SHARE), sail: Math.round(mine.maxSail * REPAIR_SHARE) } };
+  if (choice === 'repair')
+    return { repair: { hull: Math.round(mine.maxHull * REPAIR_SHARE), sail: Math.round(mine.maxSail * REPAIR_SHARE) } };
   if (choice === 'powder') return { barrels: barrelStock, reload: true };
   if (choice === 'press') return { crew: Math.ceil((mine.maxCrew - mine.crew) * PRESS_SHARE) };
   if (choice === 'papers') return { notoriety: -Math.min(Math.max(0, notoriety), PAPERS_NOTORIETY) };
@@ -145,7 +148,12 @@ export function choiceEffect(choice, mine, { barrelStock = 0, notoriety = 0 } = 
 }
 
 /** The choices' names, as the plunder window says them (the papers' by her trade - choiceOffer). */
-export const CHOICE_TITLES = Object.freeze({ repair: 'Timber and cordage', powder: 'Powder and shot', press: 'Press the crew', papers: 'Burn the papers' });
+export const CHOICE_TITLES = Object.freeze({
+  repair: 'Timber and cordage',
+  powder: 'Powder and shot',
+  press: 'Press the crew',
+  papers: 'Burn the papers',
+});
 /** AUDIT NAV1 (B13): a pirate prize's papers are her crew, given up to the crown. */
 export const PIRATE_PAPERS_TITLE = 'Hand the crew to the crown';
 
@@ -160,29 +168,63 @@ export const PIRATE_PAPERS_TITLE = 'Hand the crew to the crown';
  * @param {{ notoriety?: number, lawful?: boolean, crown?: string }} [law] - AUDIT NAV1 (B13): my notoriety in the waters
  *   of the crown she answers to, whether she is lawful, that crown's name
  */
-export function choiceOffer(choice, mine, { barrelStock = 0, barrels = 0, barrelGuns = false, loaded = false, guns = true } = {}, { notoriety = 0, lawful = true, crown = '' } = {}) {
+export function choiceOffer(
+  choice,
+  mine,
+  { barrelStock = 0, barrels = 0, barrelGuns = false, loaded = false, guns = true } = {},
+  { notoriety = 0, lawful = true, crown = '' } = {},
+) {
   const fx = choiceEffect(choice, mine, { barrelStock, notoriety });
-  const title = choice === 'papers' && !lawful ? PIRATE_PAPERS_TITLE : CHOICE_TITLES[choice] ?? choice;
+  const title = choice === 'papers' && !lawful ? PIRATE_PAPERS_TITLE : (CHOICE_TITLES[choice] ?? choice);
   if (choice === 'repair') {
     const hull = Math.max(0, Math.min(fx.repair.hull, Math.round(mine.maxHull - mine.hull)));
     const sail = Math.max(0, Math.min(fx.repair.sail, Math.round(mine.maxSail - mine.sail)));
     const useful = hull > 0 || sail > 0;
-    return { id: choice, title, useful, detail: useful ? `Mend ${[hull > 0 ? `${hull} of hull` : null, sail > 0 ? `${sail} of canvas` : null].filter(Boolean).join(' and ')}` : 'Your ship is sound' };
+    return {
+      id: choice,
+      title,
+      useful,
+      detail: useful
+        ? `Mend ${[hull > 0 ? `${hull} of hull` : null, sail > 0 ? `${sail} of canvas` : null].filter(Boolean).join(' and ')}`
+        : 'Your ship is sound',
+    };
   }
   if (choice === 'powder') {
-    if (!guns) return { id: choice, title, useful: false, detail: 'No guns aboard' };   // AUDIT NAV1: a rowboat's, never "loaded"
+    if (!guns) return { id: choice, title, useful: false, detail: 'No guns aboard' }; // AUDIT NAV1: a rowboat's, never "loaded"
     const topUp = barrelGuns && barrels < barrelStock;
     const useful = !loaded || topUp;
-    return { id: choice, title, useful, detail: useful ? `Every gun loaded${barrelGuns ? ` - fire barrels to ${barrelStock}` : ''}` : 'Your guns are loaded' };
+    return {
+      id: choice,
+      title,
+      useful,
+      detail: useful
+        ? `Every gun loaded${barrelGuns ? ` - fire barrels to ${barrelStock}` : ''}`
+        : 'Your guns are loaded',
+    };
   }
   if (choice === 'press') {
     const n = Math.max(0, fx.crew | 0);
-    return { id: choice, title, useful: n > 0, detail: mine.maxCrew <= 0 ? 'No berths for them' : n > 0 ? `${n} ${n === 1 ? 'hand' : 'hands'} to your guns` : 'Your crew is whole' };
+    return {
+      id: choice,
+      title,
+      useful: n > 0,
+      detail:
+        mine.maxCrew <= 0
+          ? 'No berths for them'
+          : n > 0
+            ? `${n} ${n === 1 ? 'hand' : 'hands'} to your guns`
+            : 'Your crew is whole',
+    };
   }
   if (choice === 'papers') {
     const n = -(fx.notoriety ?? 0);
     const waters = crown ? `${crown}'s waters` : 'these waters';
-    return { id: choice, title, useful: n > 0, detail: n > 0 ? `Your notoriety in ${waters} falls by ${n}` : `No one hunts you in ${waters}` };
+    return {
+      id: choice,
+      title,
+      useful: n > 0,
+      detail: n > 0 ? `Your notoriety in ${waters} falls by ${n}` : `No one hunts you in ${waters}`,
+    };
   }
   return { id: choice, title, useful: false, detail: '' };
 }

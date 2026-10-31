@@ -214,8 +214,14 @@ globalThis.__scrollTop = (where) => Math.round(listOf(where).scrollTop);
 /** A 768-byte ART_PAL, a grey ramp. */
 function synthPalette() {
   const b = Buffer.alloc(768);
-  for (let i = 0; i < 256; i++) { b[i * 3] = i; b[i * 3 + 1] = i; b[i * 3 + 2] = i; }
-  b[3] = 200; b[4] = 40; b[5] = 30;
+  for (let i = 0; i < 256; i++) {
+    b[i * 3] = i;
+    b[i * 3 + 1] = i;
+    b[i * 3 + 2] = i;
+  }
+  b[3] = 200;
+  b[4] = 40;
+  b[5] = 30;
   return b;
 }
 /** An uncompressed TEXTURE archive of `count` 16x16 records (tools/enhancedIconProbe.mjs's shape, larger). */
@@ -226,17 +232,24 @@ function synthArchive(count, W = 16, H = 16, STRIDE = 256) {
   buf.writeInt16LE(count, 0);
   buf.write('SYNTHETIC', 2, 'ascii');
   for (let r = 0; r < count; r++) {
-    const bodyAt = headersEnd + bodySize * r, hAt = 26 + 20 * r;
+    const bodyAt = headersEnd + bodySize * r,
+      hAt = 26 + 20 * r;
     buf.writeInt32LE(bodyAt, hAt + 2);
-    buf.writeInt16LE(W, bodyAt + 4); buf.writeInt16LE(H, bodyAt + 6);
-    buf.writeUInt32LE(bodySize - 28, bodyAt + 10); buf.writeUInt32LE(28, bodyAt + 14);
-    buf.writeInt16LE(1, bodyAt + 18); buf.writeUInt16LE(1, bodyAt + 20);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) buf[bodyAt + 28 + y * STRIDE + x] = (x + y + r) % 3 ? 1 + (r % 200) : 0;
+    buf.writeInt16LE(W, bodyAt + 4);
+    buf.writeInt16LE(H, bodyAt + 6);
+    buf.writeUInt32LE(bodySize - 28, bodyAt + 10);
+    buf.writeUInt32LE(28, bodyAt + 14);
+    buf.writeInt16LE(1, bodyAt + 18);
+    buf.writeUInt16LE(1, bodyAt + 20);
+    for (let y = 0; y < H; y++)
+      for (let x = 0; x < W; x++) buf[bodyAt + 28 + y * STRIDE + x] = (x + y + r) % 3 ? 1 + (r % 200) : 0;
   }
   return buf;
 }
 
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = process.env.PROBE_PORT ?? vite.httpServer.address().port;
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
@@ -246,95 +259,184 @@ const VIEWS = [
 ];
 const out = {};
 let failures = 0;
-const check = (name, ok, detail = '') => { if (!ok) failures++; console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`); };
+const check = (name, ok, detail = '') => {
+  if (!ok) failures++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? ` - ${detail}` : ''}`);
+};
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
   for (const v of VIEWS) {
-  const ctx = await browser.newContext({ viewport: v.viewport, deviceScaleFactor: v.dpr, isMobile: !!v.isMobile, hasTouch: !!v.hasTouch });
-  const page = await ctx.newPage();
-  const errors = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  const archive = synthArchive(128);
-  await page.route('**/arena2/**', (route) => {
-    const name = route.request().url().split('/').pop();
-    if (name === 'ART_PAL.COL') return route.fulfill({ status: 200, body: synthPalette() });
-    if (/^TEXTURE\.\d+$/.test(name)) return route.fulfill({ status: 200, body: archive });
-    return route.fulfill({ status: 404, body: '' });
-  });
-  await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, { waitUntil: 'domcontentloaded', timeout: 90000 });
-  await page.waitForFunction(() => typeof globalThis.__open === 'function', null, { timeout: 90000 });
-  // the module's first load is not the window's cost: a small pile first
-  await page.evaluate(() => globalThis.__open(3, 'loot'));
-  await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 30000 });
-  out.kinds = await page.evaluate(() => globalThis.__kinds);
-  const res = out[v.name] = {};
-  // long tasks, from here on
-  await page.evaluate(() => { globalThis.__long = []; new PerformanceObserver((l) => { for (const t of l.getEntries()) globalThis.__long.push(t.duration); }).observe({ type: 'longtask' }); });
-  for (const where of ['loot', 'storage', 'pack']) {
-    const r = {};
-    await page.evaluate(() => { globalThis.__long.length = 0; });
-    const t0 = Date.now();
-    r.cold = await page.evaluate(([n, w]) => globalThis.__open(n, w), [N, where]);
-    // until the drawn rows' pictures settle: no initials left among them, or nothing moved for 1.5 s
-    let last = null, still = 0;
-    for (let i = 0; i < 300 && still < 15; i++) {
-      await page.waitForTimeout(100);
-      const s = await page.evaluate((w) => globalThis.__state(w), where);
-      if (!s) continue;
-      if (s.initials === 0) { last = s; break; }
-      still = last && last.initials === s.initials && last.landings === s.landings ? still + 1 : 0;
-      last = s;
+    const ctx = await browser.newContext({
+      viewport: v.viewport,
+      deviceScaleFactor: v.dpr,
+      isMobile: !!v.isMobile,
+      hasTouch: !!v.hasTouch,
+    });
+    const page = await ctx.newPage();
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    const archive = synthArchive(128);
+    await page.route('**/arena2/**', (route) => {
+      const name = route.request().url().split('/').pop();
+      if (name === 'ART_PAL.COL') return route.fulfill({ status: 200, body: synthPalette() });
+      if (/^TEXTURE\.\d+$/.test(name)) return route.fulfill({ status: 200, body: archive });
+      return route.fulfill({ status: 404, body: '' });
+    });
+    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 90000,
+    });
+    await page.waitForFunction(() => typeof globalThis.__open === 'function', null, { timeout: 90000 });
+    // the module's first load is not the window's cost: a small pile first
+    await page.evaluate(() => globalThis.__open(3, 'loot'));
+    await page.waitForSelector('#enhanced-inventory .itemrow', { timeout: 30000 });
+    out.kinds = await page.evaluate(() => globalThis.__kinds);
+    const res = (out[v.name] = {});
+    // long tasks, from here on
+    await page.evaluate(() => {
+      globalThis.__long = [];
+      new PerformanceObserver((l) => {
+        for (const t of l.getEntries()) globalThis.__long.push(t.duration);
+      }).observe({ type: 'longtask' });
+    });
+    for (const where of ['loot', 'storage', 'pack']) {
+      const r = {};
+      await page.evaluate(() => {
+        globalThis.__long.length = 0;
+      });
+      const t0 = Date.now();
+      r.cold = await page.evaluate(([n, w]) => globalThis.__open(n, w), [N, where]);
+      // until the drawn rows' pictures settle: no initials left among them, or nothing moved for 1.5 s
+      let last = null,
+        still = 0;
+      for (let i = 0; i < 300 && still < 15; i++) {
+        await page.waitForTimeout(100);
+        const s = await page.evaluate((w) => globalThis.__state(w), where);
+        if (!s) continue;
+        if (s.initials === 0) {
+          last = s;
+          break;
+        }
+        still = last && last.initials === s.initials && last.landings === s.landings ? still + 1 : 0;
+        last = s;
+      }
+      r.settleMs = Date.now() - t0;
+      r.settled = last;
+      await page.waitForTimeout(1000);
+      r.later = await page.evaluate((w) => globalThis.__state(w), where);
+      r.longTasks = await page.evaluate(() => ({
+        count: globalThis.__long.length,
+        ms: Math.round(globalThis.__long.reduce((a, b) => a + b, 0)),
+        worst: Math.round(Math.max(0, ...globalThis.__long)),
+      }));
+      r.warm = await page.evaluate(([n, w]) => globalThis.__open(n, w), [N, where]);
+      r.warmState = await page.evaluate((w) => globalThis.__state(w), where);
+      r.pick = await page.evaluate((w) => globalThis.__pickMiddle(w), where);
+      r.foot = await page.evaluate((w) => globalThis.__foot(w), where);
+      r.placed = [];
+      for (const f of [0, 0.13, 0.5, 0.77, 1, 0.31])
+        r.placed.push(await page.evaluate(([w, x]) => globalThis.__placed(w, x), [where, f]));
+      r.tipAway = await page.evaluate((w) => globalThis.__tipAway(w), where);
+      if (where === 'storage') {
+        r.search = await page.evaluate(() => globalThis.__search('a'));
+        r.searchPlaced = [];
+        for (const f of [0, 0.5, 1])
+          r.searchPlaced.push(await page.evaluate(([w, x]) => globalThis.__placed(w, x, 'a'), [where, f]));
+      }
+      if (where === 'pack') {
+        // the press above left its card up - a phone's is a sheet over the dock's foot: put away, as a player would
+        if (await page.locator('.packtip').count()) {
+          await page.keyboard.press('Escape');
+          await page.waitForTimeout(200);
+        }
+        r.drag = await page.evaluate(() => globalThis.__dragScroll());
+        r.focus = await page.evaluate(() => globalThis.__focusAway());
+        if (r.focus.onList) {
+          await page.keyboard.press('Home');
+          await page.waitForTimeout(300);
+        }
+        r.focusHome = await page.evaluate(() => globalThis.__scrollTop('pack'));
+      }
+      res[where] = r;
+      const tag = `${v.name} ${where}`;
+      check(`${tag}: every drawn row's picture landed`, r.settled?.initials === 0, JSON.stringify(r.settled));
+      if (r.later?.landings != null) {
+        check(
+          `${tag}: and the landing passes stopped (none in the second after)`,
+          r.later.landings === r.settled.landings,
+          `${r.settled.landings} -> ${r.later.landings}`,
+        );
+        check(
+          `${tag}: each tile was painted at most once`,
+          r.later.painted <= r.later.tiles,
+          `${r.later.painted} painted, ${r.later.tiles} tiles`,
+        );
+      }
+      check(
+        `${tag}: a press did its act, and kept the list's scroll`,
+        r.pick.did && r.pick.scrollAfter === r.pick.scrollBefore,
+        JSON.stringify(r.pick),
+      );
+      check(
+        `${tag}: the foot of the scroll shows the last piece itself, flush`,
+        r.foot.lastIsLast && Math.abs(r.foot.gapBelow) <= 8,
+        JSON.stringify(r.foot),
+      );
+      const all = [...r.placed, ...(r.searchPlaced ?? [])];
+      for (const p of all)
+        check(
+          `${tag}: at ${p.frac} of the scroll${p.items < N - 1 ? ' (searched)' : ''} every drawn row stands at its piece's place, and none in view is missing`,
+          p.wrong === 0 && p.missing === 0 && p.drawn > 0,
+          `${p.drawn} drawn, ${p.wrong} wrong, ${p.missing} missing${p.firstWrong ? ` ${JSON.stringify(p.firstWrong)}` : ''}`,
+        );
+      check(
+        `${tag}: the list is one height at every scroll, its foot's`,
+        r.placed.every((p) => p.scrollHeight === r.foot.scrollHeight),
+        r.placed.map((p) => p.scrollHeight).join(', '),
+      );
+      check(
+        `${tag}: its columns stand still as it scrolls, inside the window`,
+        r.placed.every(
+          (p) => JSON.stringify(p.lefts) === JSON.stringify(r.placed[0].lefts) && p.scrollWidth <= p.clientWidth,
+        ),
+        r.placed
+          .map(
+            (p) => `${p.lefts.join('/')}${p.scrollWidth > p.clientWidth ? ` (${p.scrollWidth}>${p.clientWidth})` : ''}`,
+          )
+          .join(' | '),
+      );
+      check(
+        `${tag}: a hover card whose row a scroll took away is put away`,
+        r.tipAway.shown && (!r.tipAway.rowGone || !r.tipAway.tip),
+        JSON.stringify(r.tipAway),
+      );
+      if (r.search) {
+        check(`${tag}: the search keeps its focus`, r.search.focused);
+        check(
+          `${tag}: and the list's scroll, as the whole list kept it`,
+          Math.abs(r.search.after - Math.min(r.search.before, r.search.max)) <= 1,
+          JSON.stringify(r.search),
+        );
+      }
+      if (where === 'pack') check(`${tag}: a row to carry a tile onto is in reach`, !!r.drag);
+      if (r.drag)
+        check(
+          `${tag}: a carried tile across a scroll - the ghost names the act at the new point, the carried tile dimmed`,
+          !!r.drag.before && r.drag.after === r.drag.before && r.drag.dimmed === 1,
+          JSON.stringify(r.drag),
+        );
+      if (r.focus)
+        check(
+          `${tag}: a focused row scrolled away leaves the focus on the list, and Home scrolls it home`,
+          r.focus.onList && r.focusHome === 0,
+          `${JSON.stringify(r.focus)}, Home -> ${r.focusHome}`,
+        );
+      console.log(
+        `     ${tag}: cold ${Math.round(r.cold.framed)} ms, settled in ${r.settleMs} ms over ${r.settled?.repaints} repaints${r.settled?.landings != null ? ` and ${r.settled.landings} landing passes` : ''}, ${r.longTasks.count} long tasks (${r.longTasks.ms} ms); warm ${Math.round(r.warm.framed)} ms; a press ${Math.round(r.pick.framed)} ms${r.search ? `; a search ${Math.round(r.search.typed)} ms` : ''}; ${r.warmState.rows} rows drawn, ${r.warmState.scrollHeight} px of list`,
+      );
     }
-    r.settleMs = Date.now() - t0;
-    r.settled = last;
-    await page.waitForTimeout(1000);
-    r.later = await page.evaluate((w) => globalThis.__state(w), where);
-    r.longTasks = await page.evaluate(() => ({ count: globalThis.__long.length, ms: Math.round(globalThis.__long.reduce((a, b) => a + b, 0)), worst: Math.round(Math.max(0, ...globalThis.__long)) }));
-    r.warm = await page.evaluate(([n, w]) => globalThis.__open(n, w), [N, where]);
-    r.warmState = await page.evaluate((w) => globalThis.__state(w), where);
-    r.pick = await page.evaluate((w) => globalThis.__pickMiddle(w), where);
-    r.foot = await page.evaluate((w) => globalThis.__foot(w), where);
-    r.placed = [];
-    for (const f of [0, 0.13, 0.5, 0.77, 1, 0.31]) r.placed.push(await page.evaluate(([w, x]) => globalThis.__placed(w, x), [where, f]));
-    r.tipAway = await page.evaluate((w) => globalThis.__tipAway(w), where);
-    if (where === 'storage') {
-      r.search = await page.evaluate(() => globalThis.__search('a'));
-      r.searchPlaced = [];
-      for (const f of [0, 0.5, 1]) r.searchPlaced.push(await page.evaluate(([w, x]) => globalThis.__placed(w, x, 'a'), [where, f]));
-    }
-    if (where === 'pack') {
-      // the press above left its card up - a phone's is a sheet over the dock's foot: put away, as a player would
-      if (await page.locator('.packtip').count()) { await page.keyboard.press('Escape'); await page.waitForTimeout(200); }
-      r.drag = await page.evaluate(() => globalThis.__dragScroll());
-      r.focus = await page.evaluate(() => globalThis.__focusAway());
-      if (r.focus.onList) { await page.keyboard.press('Home'); await page.waitForTimeout(300); }
-      r.focusHome = await page.evaluate(() => globalThis.__scrollTop('pack'));
-    }
-    res[where] = r;
-    const tag = `${v.name} ${where}`;
-    check(`${tag}: every drawn row's picture landed`, r.settled?.initials === 0, JSON.stringify(r.settled));
-    if (r.later?.landings != null) {
-      check(`${tag}: and the landing passes stopped (none in the second after)`, r.later.landings === r.settled.landings, `${r.settled.landings} -> ${r.later.landings}`);
-      check(`${tag}: each tile was painted at most once`, r.later.painted <= r.later.tiles, `${r.later.painted} painted, ${r.later.tiles} tiles`);
-    }
-    check(`${tag}: a press did its act, and kept the list's scroll`, r.pick.did && r.pick.scrollAfter === r.pick.scrollBefore, JSON.stringify(r.pick));
-    check(`${tag}: the foot of the scroll shows the last piece itself, flush`, r.foot.lastIsLast && Math.abs(r.foot.gapBelow) <= 8, JSON.stringify(r.foot));
-    const all = [...r.placed, ...(r.searchPlaced ?? [])];
-    for (const p of all) check(`${tag}: at ${p.frac} of the scroll${p.items < N - 1 ? ' (searched)' : ''} every drawn row stands at its piece's place, and none in view is missing`, p.wrong === 0 && p.missing === 0 && p.drawn > 0, `${p.drawn} drawn, ${p.wrong} wrong, ${p.missing} missing${p.firstWrong ? ` ${JSON.stringify(p.firstWrong)}` : ''}`);
-    check(`${tag}: the list is one height at every scroll, its foot's`, r.placed.every((p) => p.scrollHeight === r.foot.scrollHeight), r.placed.map((p) => p.scrollHeight).join(', '));
-    check(`${tag}: its columns stand still as it scrolls, inside the window`, r.placed.every((p) => JSON.stringify(p.lefts) === JSON.stringify(r.placed[0].lefts) && p.scrollWidth <= p.clientWidth), r.placed.map((p) => `${p.lefts.join('/')}${p.scrollWidth > p.clientWidth ? ` (${p.scrollWidth}>${p.clientWidth})` : ''}`).join(' | '));
-    check(`${tag}: a hover card whose row a scroll took away is put away`, r.tipAway.shown && (!r.tipAway.rowGone || !r.tipAway.tip), JSON.stringify(r.tipAway));
-    if (r.search) {
-      check(`${tag}: the search keeps its focus`, r.search.focused);
-      check(`${tag}: and the list's scroll, as the whole list kept it`, Math.abs(r.search.after - Math.min(r.search.before, r.search.max)) <= 1, JSON.stringify(r.search));
-    }
-    if (where === 'pack') check(`${tag}: a row to carry a tile onto is in reach`, !!r.drag);
-    if (r.drag) check(`${tag}: a carried tile across a scroll - the ghost names the act at the new point, the carried tile dimmed`, !!r.drag.before && r.drag.after === r.drag.before && r.drag.dimmed === 1, JSON.stringify(r.drag));
-    if (r.focus) check(`${tag}: a focused row scrolled away leaves the focus on the list, and Home scrolls it home`, r.focus.onList && r.focusHome === 0, `${JSON.stringify(r.focus)}, Home -> ${r.focusHome}`);
-    console.log(`     ${tag}: cold ${Math.round(r.cold.framed)} ms, settled in ${r.settleMs} ms over ${r.settled?.repaints} repaints${r.settled?.landings != null ? ` and ${r.settled.landings} landing passes` : ''}, ${r.longTasks.count} long tasks (${r.longTasks.ms} ms); warm ${Math.round(r.warm.framed)} ms; a press ${Math.round(r.pick.framed)} ms${r.search ? `; a search ${Math.round(r.search.typed)} ms` : ''}; ${r.warmState.rows} rows drawn, ${r.warmState.scrollHeight} px of list`);
-  }
-  check(`${v.name}: no page errors`, errors.length === 0, errors.join(' | '));
-  await ctx.close();
+    check(`${v.name}: no page errors`, errors.length === 0, errors.join(' | '));
+    await ctx.close();
   }
 } finally {
   await unlink(join(ROOT, `tools/${PAGE_NAME}`)).catch(() => {});

@@ -20,8 +20,8 @@
   {
     "name": "RVN7b-hint-moved",
     "file": "src/systems/revenant/revenantFeud.js",
-    "old": "element: 'some element is its bane',",
-    "new": "element: 'an element is its bane',",
+    "old": "  element: 'some element is its bane',",
+    "new": "  element: 'an element is its bane',",
     "tests": [
       "test/systems/rvn7b_rumor.test.js"
     ]

@@ -751,5 +751,5 @@ test('LV1b: the CHRONICLE answers the key it is named after, off the registry', 
   const arm = cr.indexOf("eventMeans(e, 'LogBook')");
   assert.ok(guard > 0 && arm > guard, 'the composer keeps its own letters');
   // ...and it exits through the door's own close, not a second path.
-  assert.match(cr, /if \(eventMeans\(e, 'LogBook'\)\) \{[^\n]*\n\s*e\.preventDefault\(\);\n\s*e\.stopPropagation\(\);\n\s*if \(!e\.repeat\) onExit\(\);/, 'AUDIT KB1: the press exits, a held key\'s repeat is swallowed');
+  assert.match(cr, /if \(eventMeans\(e, 'LogBook'\)\) \{\n\s*\/\/ UXB1-S: its key, shared or not\n\s*e\.preventDefault\(\);\n\s*e\.stopPropagation\(\);\n\s*if \(!e\.repeat\) onExit\(\);/, 'AUDIT KB1: the press exits, a held key\'s repeat is swallowed');
 });

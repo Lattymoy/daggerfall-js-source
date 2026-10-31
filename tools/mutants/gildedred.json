@@ -130,8 +130,8 @@
   {
     "name": "GR-banner-pips-unset",
     "file": "src/ui/lootBanner.js",
-    "old": ".lb-kicker::after { content: var(--rar-pips, '');",
-    "new": ".lb-kicker::after { content: '';",
+    "old": ".lb-kicker::after { content: var(--rar-pips, ''); margin-left: 6px; letter-spacing: 0.05em; color: var(--rar, ${T.brass}); }",
+    "new": ".lb-kicker::after { content: ''; margin-left: 6px; letter-spacing: 0.05em; color: var(--rar, ${T.brass}); }",
     "tests": [
       "test/ui/gildedred.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "GR-gem-left-gold",
     "file": "src/ui/lootTierMarks.js",
-    "old": "artifact: '#b57bee', gilded: '#ff3b4a',",
-    "new": "artifact: '#b57bee', gilded: '#ffcf4d',",
+    "old": "  gilded: '#ff3b4a',",
+    "new": "  gilded: '#ffcf4d',",
     "tests": [
       "test/ui/gildedred.test.js",
       "test/ui/lootmarks1.test.js"
@@ -187,8 +187,8 @@
   {
     "name": "GR-gem-rim-leaf",
     "file": "src/ui/lootTierMarks.js",
-    "old": "inset 0 0 0 2px #f6c945",
-    "new": "inset 0 0 0 2px #fff4c4",
+    "old": "    `${at('.wplaque-row[data-rarity=\"gilded\"] > span:first-child::before')} { box-shadow: inset 0 0 0 2px #f6c945, 0 0 0 1px ${edge}, 0 0 5px rgba(255, 59, 74, 0.8), 1px 2px 0 rgba(0,0,0,0.45)${b}; }`,",
+    "new": "    `${at('.wplaque-row[data-rarity=\"gilded\"] > span:first-child::before')} { box-shadow: inset 0 0 0 2px #fff4c4, 0 0 0 1px ${edge}, 0 0 5px rgba(255, 59, 74, 0.8), 1px 2px 0 rgba(0,0,0,0.45)${b}; }`,",
     "tests": [
       "test/ui/gildedred.test.js",
       "test/ui/lootmarks1.test.js"
@@ -197,8 +197,8 @@
   {
     "name": "GR-gem-glint-left-gold",
     "file": "src/ui/lootTierMarks.js",
-    "old": "0 0 5px rgba(255, 59, 74, 0.8)",
-    "new": "0 0 5px rgba(255, 207, 77, 0.8)",
+    "old": "    `${at('.wplaque-row[data-rarity=\"gilded\"] > span:first-child::before')} { box-shadow: inset 0 0 0 2px #f6c945, 0 0 0 1px ${edge}, 0 0 5px rgba(255, 59, 74, 0.8), 1px 2px 0 rgba(0,0,0,0.45)${b}; }`,",
+    "new": "    `${at('.wplaque-row[data-rarity=\"gilded\"] > span:first-child::before')} { box-shadow: inset 0 0 0 2px #f6c945, 0 0 0 1px ${edge}, 0 0 5px rgba(255, 207, 77, 0.8), 1px 2px 0 rgba(0,0,0,0.45)${b}; }`,",
     "tests": [
       "test/ui/gildedred.test.js"
     ]

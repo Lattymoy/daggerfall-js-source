@@ -21,10 +21,10 @@ import { Symbol as QuestSymbol } from './symbol.js';
 import { parseInt as questParseInt } from './parseUtils.js';
 import { foesTable } from './tables.js';
 import { GENDERS, getNameBankOfRegion, monsterName } from '../../characters/nameHelper.js';
-import { personName } from '../../characters/personNames.js';   // REGION-NAMES
+import { personName } from '../../characters/personNames.js'; // REGION-NAMES
 import { srand, randomRange } from '../../formats/dfRandom.js';
 import { enemyDisplayName, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
-import { getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the type name shown
+import { getLocalizedEnemyName } from '../textManager.js'; // L10N3e: the type name shown
 
 const MAX_SPAWN_COUNT = 8;
 
@@ -44,12 +44,12 @@ export class Foe extends QuestResource {
     super(parentQuest);
     this.spawnCount = 0;
     this.foeName = '';
-    this.foeType = -1;   // MobileTypes id from the Quests-Foes table
+    this.foeType = -1; // MobileTypes id from the Quests-Foes table
     // Q2b tracking state (Foe.cs:41-44)
-    this.injuredTrigger = false;   // true once enemy injured, rearmed each wave
-    this.deathTrigger = false;     // true when the enemy should instantly die (Foe.cs:42); NOT save state
-    this.isRestrained = false;     // true if enemy restrained by quest
-    this.killCount = 0;            // kills of this spawn; does NOT rearm
+    this.injuredTrigger = false; // true once enemy injured, rearmed each wave
+    this.deathTrigger = false; // true when the enemy should instantly die (Foe.cs:42); NOT save state
+    this.isRestrained = false; // true if enemy restrained by quest
+    this.killCount = 0; // kills of this spawn; does NOT rearm
     this.learnedKills = new Map(); // QUEST-AUDIT III KILL-ONCE: a party member's kills an envelope brought, not yet credited, by whose envelope - transient
     // Q3-iii name state (Foe.cs:45-46, SetFoeName)
     //
@@ -68,16 +68,24 @@ export class Foe extends QuestResource {
     this.humanoidGender = GENDERS.Male;
     this.displayName = '';
     this.typeName = '';
-    this.namePending = true;   // no world seam -> SetFoeName PENDS (a flag; AUDIT-QUEST F1)
+    this.namePending = true; // no world seam -> SetFoeName PENDS (a flag; AUDIT-QUEST F1)
     if (line !== null) this.setResource(line);
   }
 
-  get isFoe() { return true; }
+  get isFoe() {
+    return true;
+  }
 
-  _rolls() { return this.parentQuest?.rolls ?? Math.random; }
-  _range(n) { return n > 0 ? Math.floor(this._rolls()() * n) : 0; }
+  _rolls() {
+    return this.parentQuest?.rolls ?? Math.random;
+  }
+  _range(n) {
+    return n > 0 ? Math.floor(this._rolls()() * n) : 0;
+  }
 
-  get gender() { return this.humanoidGender; }
+  get gender() {
+    return this.humanoidGender;
+  }
 
   /** ExpandMacro (Foe.cs:153-177): _symbol_ answers the TYPE name,
    *  =symbol_ the display name - the inversion is C#'s own. Stores
@@ -89,18 +97,26 @@ export class Foe extends QuestResource {
    *  holds, so the lookup is made here, by the foe's MobileTypes id. */
   expandMacro(macroType) {
     this.parentQuest.lastResourceReferenced = this;
-    if (macroType === 1) return getLocalizedEnemyName(this.foeType, this.typeName);      // NameMacro1
-    if (macroType === 5) return this.displayName;   // DetailsMacro
+    if (macroType === 1) return getLocalizedEnemyName(this.foeType, this.typeName); // NameMacro1
+    if (macroType === 5) return this.displayName; // DetailsMacro
     return false;
   }
 
   /** SetInjured / RearmInjured (Foe.cs:186-196). */
-  setInjured() { this.injuredTrigger = true; }
-  rearmInjured() { this.injuredTrigger = false; }
+  setInjured() {
+    this.injuredTrigger = true;
+  }
+  rearmInjured() {
+    this.injuredTrigger = false;
+  }
 
   /** SetRestrained / ClearRestrained (Foe.cs:202-212). */
-  setRestrained() { this.isRestrained = true; }
-  clearRestrained() { this.isRestrained = false; }
+  setRestrained() {
+    this.isRestrained = true;
+  }
+  clearRestrained() {
+    this.isRestrained = false;
+  }
 
   /** QUEST-AUDIT III KILL-ONCE (VERMIN-SHARED's "Said, not fixed"): a party member's kill of this Foe, counted on this
    *  copy - their puppet's fall seen, their pose's word - unless their copy's envelope already brought it here
@@ -113,7 +129,10 @@ export class Foe extends QuestResource {
   creditPartnerKill(owner = null) {
     const key = owner == null ? '' : String(owner);
     const n = this.learnedKills.get(key) ?? 0;
-    if (n > 0) { this.learnedKills.set(key, n - 1); return false; }
+    if (n > 0) {
+      this.learnedKills.set(key, n - 1);
+      return false;
+    }
     this.incrementKills();
     return true;
   }
@@ -129,7 +148,9 @@ export class Foe extends QuestResource {
 
   /** Kill (Foe.cs:224-227): flags every live instance to die; the
    *  behaviour mount zeroes entity health per instance (Q4). */
-  kill() { this.deathTrigger = true; }
+  kill() {
+    this.deathTrigger = true;
+  }
 
   /** QueueSpell (Foe.cs:233-239): a plain lazy Add - no duplicate
    *  refusal, unlike the item queue. Delivery is per-instance
@@ -141,7 +162,9 @@ export class Foe extends QuestResource {
     this.spellQueue.push(spell);
   }
 
-  get spellQueueCount() { return this.spellQueue?.length ?? 0; }
+  get spellQueueCount() {
+    return this.spellQueue?.length ?? 0;
+  }
 
   /** QueueItem (Foe.cs:246-252): items added to this Foe by the quest
    *  system; Q2b-ii - GiveItem's consumer. Q3's spawner clones the
@@ -159,7 +182,9 @@ export class Foe extends QuestResource {
     this.itemQueue.push(dfItem);
   }
 
-  get itemQueueCount() { return this.itemQueue?.length ?? 0; }
+  get itemQueueCount() {
+    return this.itemQueue?.length ?? 0;
+  }
 
   /** GetClonedItemQueue (Foe.cs:254-265): null when empty, else a
    *  clone per item - "Original item UIDs will remain on Foe in
@@ -190,10 +215,10 @@ export class Foe extends QuestResource {
     }
     this.foeType = questParseInt(table.getValue('id', this.foeName));
 
-    this.spawnCount = Math.min(Math.max(count, 1), MAX_SPAWN_COUNT);   // Mathf.Clamp(count, 1, 8)
+    this.spawnCount = Math.min(Math.max(count, 1), MAX_SPAWN_COUNT); // Mathf.Clamp(count, 1, 8)
 
     const world = this.parentQuest?.hooks?.world;
-    if (!world) return;   // namePending stays true - the headless charter (the BRIDGE reports the absent seam)
+    if (!world) return; // namePending stays true - the headless charter (the BRIDGE reports the absent seam)
     this._setFoeName(world);
     this.namePending = false;
   }

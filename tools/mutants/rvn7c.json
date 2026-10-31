@@ -182,8 +182,8 @@
   {
     "name": "RVN7c-ink-unpainted",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  for (const b of opts.revenants ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, REVENANT_INK);\n",
-    "new": "",
+    "old": "  for (const b of opts.revenants ?? [])\n    if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, REVENANT_INK);\n  // MINE-PERKS: a Motherlode Sense's day's Motherlodes - the same circle in the compass's aqua, its ore and its hour over it",
+    "new": "  // MINE-PERKS: a Motherlode Sense's day's Motherlodes - the same circle in the compass's aqua, its ore and its hour over it",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "RVN7c-ink-black",
     "file": "src/ui/ink/inkMap.js",
-    "old": "paintBountyRing(ctx, view, b, pulse, REVENANT_INK);",
-    "new": "paintBountyRing(ctx, view, b, pulse);",
+    "old": "  for (const b of opts.revenants ?? [])\n    if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, REVENANT_INK);",
+    "new": "  for (const b of opts.revenants ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse);",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "RVN7c-ink-ring-unread",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.strokeStyle = ink.ring; ctx.lineWidth = 2.2 + pulse * 0.6;",
-    "new": "  ctx.strokeStyle = BOUNTY_RING_CSS; ctx.lineWidth = 2.2 + pulse * 0.6;",
+    "old": "  ctx.strokeStyle = ink.ring;",
+    "new": "  ctx.strokeStyle = BOUNTY_RING_CSS;",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "RVN7c-ink-wash-unread",
     "file": "src/ui/ink/inkMap.js",
-    "old": "  ctx.fillStyle = ink.fill;\n",
-    "new": "  ctx.fillStyle = BOUNTY_FILL_CSS;\n",
+    "old": "  ctx.fillStyle = ink.fill;",
+    "new": "  ctx.fillStyle = BOUNTY_FILL_CSS;",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "RVN7c-chronicle-unwired",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "            abandonHuntQuest(e.uid);\n",
-    "new": "",
+    "old": "            abandonHuntQuest(e.uid);\n            render();",
+    "new": "            render();",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "RVN7c-chronicle-shares-a-hunt",
     "file": "src/ui/enhanced/enhancedChronicle.js",
-    "old": "!e.main && !isBountyQuestId(e.uid) && !isHuntQuestId(e.uid)",
-    "new": "!e.main && !isBountyQuestId(e.uid)",
+    "old": "          !isHuntQuestId(e.uid) &&\n          (deps.partyMembers?.() ?? []).length",
+    "new": "          (deps.partyMembers?.() ?? []).length",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "RVN7c-page-off-the-map",
     "file": "src/ui/revenant/revenantPage.js",
-    "old": "  return r.lairKnown ? `Lair: ${r.lair.name}, marked on your map.` :",
-    "new": "  return r.lairKnown ? `Lair: ${r.lair.name}.` :",
+    "old": "  return r.lairKnown\n    ? `Lair: ${r.lair.name}, marked on your map.`\n    : 'Lair: unknown. Nearby towns may have heard of it.'; // RVN7c: and marked",
+    "new": "  return r.lairKnown ? `Lair: ${r.lair.name}.` : 'Lair: unknown. Nearby towns may have heard of it.'; // RVN7c: and marked",
     "tests": [
       "test/systems/rvn7c_map.test.js"
     ]

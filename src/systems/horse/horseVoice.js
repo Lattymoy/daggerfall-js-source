@@ -37,7 +37,7 @@ import { SOUND } from '../soundClips.js';
 import { FOOTSTEP_KIND } from '../footsteps.js';
 import { RIDING_SOUND } from '../riding.js';
 import { APP_ROOT } from '../appRoot.js';
-import { createClipInstaller, CLIP_RETRY_MS } from '../soundscape/clipInstall.js';   // AUDIT SOUNDSCAPE H2: one loader, a bounded retry
+import { createClipInstaller, CLIP_RETRY_MS } from '../soundscape/clipInstall.js'; // AUDIT SOUNDSCAPE H2: one loader, a bounded retry
 
 /** The port's clips (tools/horseSfx.mjs -> public/sfx/horse-*.wav), by role, as the bus's string keys. */
 export const HORSE_SFX = Object.freeze({
@@ -52,10 +52,17 @@ export const HORSE_SFX = Object.freeze({
   }),
 });
 /** Each key's file under public/sfx. */
-export const HORSE_SFX_FILES = Object.freeze(Object.fromEntries([
-  ...HORSE_SFX.snort, ...HORSE_SFX.blow, ...HORSE_SFX.breath, HORSE_SFX.spook,
-  ...Object.values(HORSE_SFX.hooves).flatMap((g) => [g.slow, g.fast]),
-].map((key) => [key, `${key.replace(':', '-')}.wav`])));
+export const HORSE_SFX_FILES = Object.freeze(
+  Object.fromEntries(
+    [
+      ...HORSE_SFX.snort,
+      ...HORSE_SFX.blow,
+      ...HORSE_SFX.breath,
+      HORSE_SFX.spook,
+      ...Object.values(HORSE_SFX.hooves).flatMap((g) => [g.slow, g.fast]),
+    ].map((key) => [key, `${key.replace(':', '-')}.wav`]),
+  ),
+);
 
 /** The neigh's pitches (DFU's own clip, AnimalHorse); the whinny a mount gets; the spook's neigh. */
 export const NEIGH_PITCHES = Object.freeze([0.94, 1, 1.05, 1.1]);
@@ -141,7 +148,10 @@ export function pickKind(mood, roll, has = () => true) {
   const weights = Object.entries(HORSE_MOODS[mood] ?? HORSE_MOODS.ride).filter(([k]) => k === 'neigh' || has(k));
   const sum = weights.reduce((a, [, w]) => a + w, 0);
   let at = roll * sum;
-  for (const [k, w] of weights) { if (at < w) return k; at -= w; }
+  for (const [k, w] of weights) {
+    if (at < w) return k;
+    at -= w;
+  }
   return weights[weights.length - 1][0];
 }
 
@@ -153,8 +163,18 @@ export function pickKind(mood, roll, has = () => true) {
  * care's share, null without it), `winded`, `foesNear()` (asked every FOE_SAMPLE_S), `ready(key)` (a clip loaded).
  */
 export function createHorseVoice({ rolls = Math.random } = {}) {
-  let now = 0, whinnyDue = false, gallopFor = 0, recover = 0, breathAt = 0, tiredAt = 0, tiredCount = 0;
-  let foes = false, foeAskAt = 0, spookAt = -Infinity, held = false, quiet = false;
+  let now = 0,
+    whinnyDue = false,
+    gallopFor = 0,
+    recover = 0,
+    breathAt = 0,
+    tiredAt = 0,
+    tiredCount = 0;
+  let foes = false,
+    foeAskAt = 0,
+    spookAt = -Infinity,
+    held = false,
+    quiet = false;
   /** @type {Record<string, any>} */
   const last = {};
   /** @type {{ at: number, clip: any, volume: number, pitch: number }[]} */
@@ -168,14 +188,26 @@ export function createHorseVoice({ rolls = Math.random } = {}) {
     return k;
   };
   return {
-    get now() { return now; },
-    get gallopFor() { return gallopFor; },
-    get recover() { return recover; },
-    get pending() { return queue.length; },
+    get now() {
+      return now;
+    },
+    get gallopFor() {
+      return gallopFor;
+    },
+    get recover() {
+      return recover;
+    },
+    get pending() {
+      return queue.length;
+    },
     mount(riding = true) {
       whinnyDue = !!riding;
-      gallopFor = 0; recover = 0; tiredCount = 0;
-      foes = false; foeAskAt = 0; held = false;
+      gallopFor = 0;
+      recover = 0;
+      tiredCount = 0;
+      foes = false;
+      foeAskAt = 0;
+      held = false;
       if (queue.length) queue = [];
     },
     /** The rig's frame on DFU's sounds instead (AUDIT SOUNDSCAPE H1): what was owed - a mount's whinny, a spook's neigh,
@@ -185,11 +217,28 @@ export function createHorseVoice({ rolls = Math.random } = {}) {
       quiet = true;
       this.mount(false);
     },
-    update(dt, { neigh = false, clip = null, moving = false, running = false, pitch = 1, paused = false, breath = null, winded = false, foesNear = null, ready = horseSoundReady } = {}) {
+    update(
+      dt,
+      {
+        neigh = false,
+        clip = null,
+        moving = false,
+        running = false,
+        pitch = 1,
+        paused = false,
+        breath = null,
+        winded = false,
+        foesNear = null,
+        ready = horseSoundReady,
+      } = {},
+    ) {
       /** @type {{ clip: any, volume: number, pitch: number }[]} */
       const out = [];
       quiet = false;
-      if (paused) { held ||= !!neigh; return out; }   // a window up: the horse holds its breath with the world, and its moment (H4)
+      if (paused) {
+        held ||= !!neigh;
+        return out;
+      } // a window up: the horse holds its breath with the world, and its moment (H4)
       neigh = !!neigh || held;
       held = false;
       now += Math.max(0, Number(dt) || 0);
@@ -199,9 +248,15 @@ export function createHorseVoice({ rolls = Math.random } = {}) {
       }
       // the gallop, and the blowing a long one leaves
       const galloping = !!moving && !!running && clip === RIDING_SOUND.horseFast;
-      if (galloping) { if (gallopFor === 0) breathAt = now + GALLOP_BREATH_S / (Number(pitch) > 0 ? pitch : 1); gallopFor += dt; recover = 0; }
-      else {
-        if (gallopFor >= GALLOP_BREATH_AFTER_S) { recover = Math.min(RECOVER_MAX_S, gallopFor * RECOVER_SHARE); tiredAt = now + TIRED_BREATH_S[0]; }
+      if (galloping) {
+        if (gallopFor === 0) breathAt = now + GALLOP_BREATH_S / (Number(pitch) > 0 ? pitch : 1);
+        gallopFor += dt;
+        recover = 0;
+      } else {
+        if (gallopFor >= GALLOP_BREATH_AFTER_S) {
+          recover = Math.min(RECOVER_MAX_S, gallopFor * RECOVER_SHARE);
+          tiredAt = now + TIRED_BREATH_S[0];
+        }
         gallopFor = 0;
         recover = Math.max(0, recover - dt);
       }
@@ -214,14 +269,23 @@ export function createHorseVoice({ rolls = Math.random } = {}) {
         if (seen && !foes && now - spookAt >= SPOOK_COOLDOWN_S && ready(HORSE_SFX.spook)) {
           spookAt = now;
           say(out, HORSE_SFX.spook, VOICE_GAIN.spook);
-          queue.push({ at: now + SPOOK_NEIGH_LAG_S, clip: SOUND.AnimalHorse, volume: VOICE_GAIN.neigh * 0.9, pitch: SPOOK_NEIGH_PITCH });
+          queue.push({
+            at: now + SPOOK_NEIGH_LAG_S,
+            clip: SOUND.AnimalHorse,
+            volume: VOICE_GAIN.neigh * 0.9,
+            pitch: SPOOK_NEIGH_PITCH,
+          });
         }
         foes = seen;
       }
       // the gallop's breath, once a stride
       if (galloping && (gallopFor >= GALLOP_BREATH_AFTER_S || short) && now >= breathAt) {
-        breathAt = now + (GALLOP_BREATH_S / (Number(pitch) > 0 ? pitch : 1)) * (1 + GALLOP_BREATH_JITTER * (2 * rolls() - 1));
-        const effort = Math.min(1, Math.max(Math.max(0, gallopFor - GALLOP_BREATH_AFTER_S) / GALLOP_EFFORT_S, breath != null ? 1 - breath : 0));
+        breathAt =
+          now + (GALLOP_BREATH_S / (Number(pitch) > 0 ? pitch : 1)) * (1 + GALLOP_BREATH_JITTER * (2 * rolls() - 1));
+        const effort = Math.min(
+          1,
+          Math.max(Math.max(0, gallopFor - GALLOP_BREATH_AFTER_S) / GALLOP_EFFORT_S, breath != null ? 1 - breath : 0),
+        );
         const k = one('breath', ready);
         if (k) say(out, k, GALLOP_BREATH_GAIN[0] + (GALLOP_BREATH_GAIN[1] - GALLOP_BREATH_GAIN[0]) * effort);
       }
@@ -234,17 +298,30 @@ export function createHorseVoice({ rolls = Math.random } = {}) {
       }
       // DFU's clock: its neigh's moment, said in the mood of the moment
       if (neigh) {
-        if (whinnyDue) { whinnyDue = false; say(out, SOUND.AnimalHorse, VOICE_GAIN.neigh, MOUNT_WHINNY_PITCH); }
-        else {
+        if (whinnyDue) {
+          whinnyDue = false;
+          say(out, SOUND.AnimalHorse, VOICE_GAIN.neigh, MOUNT_WHINNY_PITCH);
+        } else {
           const mood = horseMood({ alarm: foes, tired, galloping, slow: clip === RIDING_SOUND.horseSlow, moving });
-          const kind = pickKind(mood, rolls(), (k) => /** @type {readonly string[]} */ (/** @type {any} */ (HORSE_SFX)[k] ?? []).some((key) => ready(key)));
+          const kind = pickKind(mood, rolls(), (k) =>
+            /** @type {readonly string[]} */ (/** @type {any} */ (HORSE_SFX)[k] ?? []).some((key) => ready(key)),
+          );
           if (kind === 'neigh') {
-            const p = mood === 'alarm' ? NEIGH_PITCHES[NEIGH_PITCHES.length - 1] : pickOther(NEIGH_PITCHES, last.neigh, rolls());
+            const p =
+              mood === 'alarm'
+                ? NEIGH_PITCHES[NEIGH_PITCHES.length - 1]
+                : pickOther(NEIGH_PITCHES, last.neigh, rolls());
             last.neigh = p;
             say(out, SOUND.AnimalHorse, VOICE_GAIN.neigh, p);
           } else {
             const k = one(kind, ready);
-            if (k) say(out, k, /** @type {any} */ (VOICE_GAIN)[kind], mood === 'alarm' && kind === 'snort' ? ALARM_SNORT_PITCH : 1);
+            if (k)
+              say(
+                out,
+                k,
+                /** @type {any} */ (VOICE_GAIN)[kind],
+                mood === 'alarm' && kind === 'snort' ? ALARM_SNORT_PITCH : 1,
+              );
           }
         }
       }
@@ -255,7 +332,8 @@ export function createHorseVoice({ rolls = Math.random } = {}) {
 
 // ---- the clips' loading: once, the first frame a horse is heard with the sounds on -----------------------------------
 
-export const horseSfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
+export const horseSfxUrl = (file) =>
+  new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 /** A clip the bus would not take is asked again, the first time no sooner than this after the last try (and on the
  *  loader's own backoff after it, then not at all - AUDIT SOUNDSCAPE H2: every 2 s for the session). */
@@ -268,8 +346,15 @@ let _testInstaller = null;
  *  do it makes nothing (AUDIT SOUNDSCAPE H6). `fetchBytes` and `now` the tests' (a loader of their own). */
 export function installHorseSounds(audio, { fetchBytes = null, now = null } = {}) {
   if (!fetchBytes && !now) return _installer.install(audio);
-  _testInstaller ??= createClipInstaller(HORSE_SFX_FILES, { urlOf: horseSfxUrl, fetchBytes, now: now ?? (() => Date.now()) });
+  _testInstaller ??= createClipInstaller(HORSE_SFX_FILES, {
+    urlOf: horseSfxUrl,
+    fetchBytes,
+    now: now ?? (() => Date.now()),
+  });
   return _testInstaller.install(audio);
 }
 /** Test seam: forget the install and the loaded set. */
-export function _resetHorseSounds() { _installer._reset(); _testInstaller = null; }
+export function _resetHorseSounds() {
+  _installer._reset();
+  _testInstaller = null;
+}

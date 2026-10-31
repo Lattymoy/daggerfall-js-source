@@ -136,5 +136,5 @@ test('FT2: every builder asks the registry (one home per idea, every store), the
   assert.match(world, /const fogDistance = landViewRead\(\);/);
   assert.ok(!/landViewDistance\(\{/.test(world), 'no second composition of the read');
   // the DFU key stays in its category (the map is total) and its settings row is settingRow's pointer, through featureForControl
-  assert.match(read('src/ui/settings/settingsMap.js'), /"Experimental\/TerrainDistance",/);
+  assert.match(read('src/ui/settings/settingsMap.js'), /'Experimental\/TerrainDistance',/);
 });

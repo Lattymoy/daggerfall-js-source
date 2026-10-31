@@ -16,14 +16,27 @@ export const PRESS_LEAD_MAX_S = 0.1;
  * @param {{ band?: number, gentle?: boolean }} [opts] `band` the attribute band's widening (recipeLaw stitchBand)
  */
 export function createStitchAct({ band = 1, gentle = false } = {}) {
-  const st = { kind: 'stitch', t: 0, w: STITCH_ACT.bandW * band, stitches: /** @type {boolean[]} */ ([]), lastAt: -Infinity, done: false };
+  const st = {
+    kind: 'stitch',
+    t: 0,
+    w: STITCH_ACT.bandW * band,
+    stitches: /** @type {boolean[]} */ ([]),
+    lastAt: -Infinity,
+    done: false,
+  };
   return {
     state: st,
     /** Where the beat stands now, 0 to 1 - the beat at 0. */
-    get beat() { return beatAt(st.t); },
+    get beat() {
+      return beatAt(st.t);
+    },
     /** Whether a stitch now would be on the beat. */
-    get onBeat() { return onBeat(beatAt(st.t), st.w); },
-    tick(dt) { if (!st.done && Number.isFinite(dt) && dt > 0) st.t += dt; },
+    get onBeat() {
+      return onBeat(beatAt(st.t), st.w);
+    },
+    tick(dt) {
+      if (!st.done && Number.isFinite(dt) && dt > 0) st.t += dt;
+    },
     /** A stitch: true on the beat, false off it, null when it is too soon after the last or the act is over. The
      *  eighth stitch ends the act. `lead` - AUDIT 32 P1: the press's own moment, seconds past the act's last frame (the
      *  event's time; a tenth of a second at most) - a press was judged at the frame before it. */
@@ -37,11 +50,17 @@ export function createStitchAct({ band = 1, gentle = false } = {}) {
       return hit;
     },
     /** Let go (Esc, or the page shut): no more stitches; an act of fewer than eight is never clean. */
-    cancel() { st.done = true; },
+    cancel() {
+      st.done = true;
+    },
     /** The act's report: its stitches, those on the beat, and whether it was clean - eight, every one on the beat. */
     report() {
       const hits = st.stitches.filter(Boolean).length;
-      return { stitches: st.stitches.length, hits, clean: !gentle && st.stitches.length >= STITCH_ACT.stitches && hits === st.stitches.length };
+      return {
+        stitches: st.stitches.length,
+        hits,
+        clean: !gentle && st.stitches.length >= STITCH_ACT.stitches && hits === st.stitches.length,
+      };
     },
   };
 }

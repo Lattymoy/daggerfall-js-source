@@ -94,7 +94,7 @@ DFU's book never moves on a pick: ListBox.MouseClick (ListBox.cs:465-504) only s
 
 FIXED. The book draws through the repaint (`enhancedSpellbook.js:"if (host) repaintKeepingScroll(host, paint);"`); the
 list and the page scroll each in their own column (`.sb-shell .px-body` holds them and scrolls neither - the grimoire
-dress's book, worn plain); and a pane names what it shows (`domRepaint.js:"const key = n.getAttribute?.('data-scroll-key');"`),
+dress's book, worn plain); and a pane names what it shows (`domRepaint.js:"const key = n.getAttribute?.('data-scroll-key')"`),
 so another spell's page starts at its top while the list keeps its place. AUDIT FB1018f L2-2: the page is named by its
 spell (its `index`, the port's name for a spell, the quickslot's and the hotbar's), not its row - a delete kept the row,
 and the spell after a deleted one opened at the deleted one's offset; a rename keeps the page. L2-1: a key also names
@@ -105,7 +105,7 @@ press's own cost.
 
 THE SIBLINGS. The Chronicle (the same bones) lost its page on every fold, remove, share, abandon and run-out deadline
 (measured 900 -> 0); drawn the same way, its page named by its section
-(`enhancedChronicle.js:"body.setAttribute('data-scroll-key', section);"`). BioGud's "same with magic items salvaging" is NOT
+(`enhancedChronicle.js:"body.setAttribute"`). BioGud's "same with magic items salvaging" is NOT
 REPRODUCED: the Reforge's Salvage page keeps one scroller and replaces only its rows (measured 900 -> 900 through Salvage
 and Break it), the pack's Salvage repaints through domRepaint with PX22's memo (measured holding), the Stores page's
 Disenchant draws in the pause window (domRepaint). What would find it: which window (its title, a screenshot), the skin
@@ -141,10 +141,10 @@ FOUND, on a body the relay runs. On every other foe the power works and always d
   25, pct: 50`, "Your weapon blows deal +50% damage to a foe under a quarter of its health"; a Rare takes it at the
   Reforge (`lootCodex.js` imprintPiece). It rides every weapon blow of mine, worn in any slot, never a spell, never a
   player (it sleeps in a duel and a refereed bout).
-- **The law** (`lootPowers.js:"      case 'execute': if (share(target) < p.below / 100) pct += p.pct; break;"`): the share
+- **The law** (`lootPowers.js:"case 'execute':"`): the share
   is the struck entity's health of its whole. An orc from makeEnemyEntity takes 8 whole and 12 under a fifth, before and
   after. But every body the relay runs is struck against a stand-in whose health is a placeholder nothing empties
-  (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`), and the share read it as whole: the Warden at 200 of 1000 took 8.
+  (`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE"`), and the share read it as whole: the Warden at 200 of 1000 took 8.
   Every screen holds the relay's word of the real health - the boss bar draws it - and nothing handed it to the
   stand-in. So the power never fired on the Warden, his crystals or host, the Remnant, its Echoes or Hearts, the
   serpent, or any foe of an Elite Breach.
@@ -183,7 +183,7 @@ game.
   a native window is handed the raw code (`input.js:"if (ctx.overlayIsNative) { ctx.overlayInput(e.code, e); return true; }"`).
 - **The bar takes the digits first.** The hotbar (the default quickbar since HB-LYCFREE) listens on the window's
   capture phase, ahead of every host's ladder, takes a key whose action is one of its ten slots and stops it
-  (`enhancedHotbar.js:"function onKey(e) {"`). It stands down only while the HUD's last frame said the game is paused
+  (`enhancedHotbar.js:"function onKey(e)"`). It stands down only while the HUD's last frame said the game is paused
   (`hud.js:"paused: !!cursorActive,"`).
 - **Underground no frame said so.** Both dungeon hosts return above `drawFoes` while a window pauses the game
   (`worldModes.js:"if (windowHoldsDungeon(dungeonCtx.uiOverlayActive, aliveUnder())) { dungeonCtx.hideHudText?.();"`, `dungeon.js:"ctx.hideHudText?.(); hideWorldPlaque(); ctx.tickOverlay(dt); ctx.drawOverlay(canvas);"`),
@@ -193,7 +193,7 @@ game.
 FIXED. The hide door both branches already call (`dungeonContext.js:"hideHudText: () => hideHudTextSurfaces(hudText),"`)
 now tells the enhanced HUD what drawHud tells it under a window (`enhancedHud.js:"export function hideEnhancedHud() {"`),
 so the HUD and its bar hide and the keys belong to the window; the next frame of play gives them back. The pad's
-crossbar already stood down under every dungeon window (`gamepadInput.js:"    const xbOn = !overlay && crossbarInForce();"`,
+crossbar already stood down under every dungeon window (`gamepadInput.js:"const xbOn = !overlay"`,
 the dungeon's `overlayActive`); the bar's own gate now agrees with it (AUDIT FB1018f L2-7). THE FOUR HOSTS: `world.js`, `exterior.js` and worldModes' building arm draw the HUD every frame with the
 game's pause; the dungeon arm's window branch already calls the door (no line added); `dungeon.js` mounts the same
 context. Our own feature: DFU does not Update its HUD under a window (DaggerfallUI.cs:429-433).
@@ -227,7 +227,7 @@ the company along its platforms. They are meant to die (3 s of the company's mea
 and a span's platforms are traversal ground. Reproduced on the real relay: ten 40-point blows from a platform landed
 nothing; from an island four killed one. The refusal is the design; the screen was the defect. It offered the Harrier,
 bled it, flashed it, popped a number and sent the blow, which resolves against a stand-in nothing can empty
-(`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE;"`), so every heal of a landed blow answered the claim: 20 blows of a
+(`gateBoss.js:"e.maxHealth = e.health = STAND_IN_WHOLE"`), so every heal of a landed blow answered the claim: 20 blows of a
 Vampiric Effect blade with a 10% leech line healed 264 for 240 claimed, the relay landing 0. The same hole stood
 wherever the relay lands nothing: a Vengeful Shade (warded from its rise), a held Ward-Bearer, a lord's ward, and a
 Court lord asleep in its ring.
@@ -235,7 +235,7 @@ Court lord asleep in its ring.
 FIXED. One law: the relay's strike rule is `egBodies.js:"export function egStruckOff(view, b, x, y, z) {"`, called by
 `egBrain.js:"if (egStruckOff(view, body, p.x, p.y, p.z)) return land(0);"`, and the screen asks the same rule plus the
 flags the relay takes nothing through and a lord asleep (`egBodies.js:"export function egStrikeTurned(view, b, x, y, z, now = 0, spec = null) {"`).
-Each frame `egFight.js:"function turnStandIn(t, b) {"` marks a target's stand-in `warded` when the relay would refuse a
+Each frame `egFight.js:"function turnStandIn"` marks a target's stand-in `warded` when the relay would refuse a
 blow from my feet; every heal and power already refuses a warded target, and Vampiric Effect now does too
 (VAMPIRIC-WARD). Nothing is sent, nothing bleeds, the swing and the shaft ring off as off the Warden's ward, and the hit
 number says "No footing" or "Warded". THE FOUR HOSTS: `dungeonContext.js` (the one door a blow on a Spire body leaves
@@ -285,9 +285,9 @@ and one call site in `test/net/eliteGates/law9_height.test.js`.
 `src/systems/enchantments.js`. FOUND: Vampiric Effect was the only heal of a landed blow that ignored the ward - it
 healed the whole claim of blows into the Warden's ward and into the Brass Remnant while shut; Gortwog's Cleaver, as the
 loot maker mints it, healed every point of 20 blows into the Warden's ward. FIXED
-(`enchantments.js:"if (param !== 1 || target?.warded) return null;"`): VampiricEffect.cs's own law told what the blow
+(`enchantments.js:"if (param !== 1 || target?.warded)"`): VampiricEffect.cs's own law told what the blow
 dealt, not a departure. AUDIT FB1018f L1: the Mace of Molag Bal's drain had the same hole and gives nothing off a ward
-or a blow of none (`artifactEffects.js:"if (!entity || !target || damage === 0 || target.warded) return null;"`). AUDIT FB1018f L3-2,
+or a blow of none (`artifactEffects.js:"if (!entity || !target || damage === 0 || target.warded)"`). AUDIT FB1018f L3-2,
 L3-3: a spell into a ward, Cast When Strikes and the sets' strike refuse it too (TURNED-BLOW). Pins:
 `test/systems/fb1018f_vampiricward.test.js` (6). Mutants: `tools/mutants/fb1018f_vampiricward.json` (6, all dead).
 
@@ -299,7 +299,7 @@ Ward-Bearers - at its place, on its floor, at a size, in its own art, offered as
 vanish (a hidden lord throws no blow, and the full state every 2 s resets the flags), culling, a Morrowind body, missing
 art (all 96 looks have it). What can hide one body while its attack markers (their own pass) still draw: its art never
 loaded - the driver keeps a failed texture for the session, every body of that mobile stands undrawn and untargetable,
-and nothing said so; it now logs once (`egFight.js:"const failed = (why) =>"`), behaviour unchanged - or an animation
+and nothing said so; it now logs once (`egFight.js:"const failed = (why)"`), behaviour unchanged - or an animation
 frame never uploaded (a texture pack missing a record). What would prove it, from the player: could they hit it; did a
 companion see it; the console then; their texture or sprite mods; the hall, the foe's card, a screenshot with the AOE.
 Pins: `test/scenes/eliteGates/fb1018f_unseenkeeper.test.js` (2). Mutants: `tools/mutants/fb1018f_unseenkeeper.json` (2,
@@ -361,7 +361,7 @@ FOUND. Reproduced in Node on the real Worker, book and Stores page: Smithing at 
 Provisioning 55, the anvil's Silver Dagger box read word for word as the screenshot, and the Worker answered `xp: 0,
 first: true`.
 - **The crafter's limit** (`06-Systems/Professions-Arc.md` 3.2, DECIDED; Mac kept it at CAP-OFF): two crafts past
-  Journeyman, every other stopped at `professionLaw.js:"return past >= CRAFTS_ABOVE_JOURNEYMAN ? xpForRank(JOURNEYMAN_RANK + 1) - 1 : PROF_XP_MAX;"` -
+  Journeyman, every other stopped at `professionLaw.js:"return past >= CRAFTS_ABOVE_JOURNEYMAN"` -
   one XP short of 51, the report's "1xp off". The service credits each act through its own INSERT,
   `professions.js:"MAX(0, MIN(?10 + f * p * ?13, ${cap} - COALESCE("` (the smelt's, temper's, brew's and disenchant's
   alike), so at that ceiling every act pays none, its first's 500 too. With Provisioning at 50 the same craft paid 60
@@ -398,7 +398,7 @@ house's word for a craft.
 DECIDED (Mac, 2026-10-19: "Stop with the decisions for me"): a craft is not let go back to 50 - 3.2's limit stands, and the tab says it before a second craft
 passes 50.
 
-THE FOUR HOSTS: `world.js` wired (`world.js:"profBook.limit(rec?.profession)"`, the line edited, bootWorld at its
+THE FOUR HOSTS: `world.js` wired (`professionsHost.js:"profBook.limit(rec?.profession)"`, the line edited, bootWorld at its
 ceiling). `worldModes.js`, `exterior.js` and `dungeonContext.js` build no station or craft word. Left: the brew's,
 temper's and disenchant's words ("(+0 ...)" - their stations say it first; they claim no bonus); the forge, which states
 no figure. Our own feature: no DFU member moves.

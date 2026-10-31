@@ -87,7 +87,7 @@ and the player describes the drops during play).
 FIXED. A `visibilitychange` starts the counter's second again at the first frame shown. The counter keeps every second
 that held a frame of HITCH_MS (50 ms) or more for HITCH_KEEP_MS (60 s), and while the minute holds one prints its
 worst, how long ago and how many, and the frame clock's split of the frame that opened that gap, asked by the rAF
-stamp it began at (`frameClock.js:"export function frameSampleAt(stamp) {"`: script, `frame` the game's callback,
+stamp it began at (`frameClock.js:"export function frameSampleAt"`: script, `frame` the game's callback,
 `before` a timer, message or collection, `stream` the world's build). A hitch with
 little script under it is the GPU, the compositor or untimed work; one that is nearly all script is the game's.
 `window.__fpsStats().hitch` carries the same.
@@ -115,12 +115,12 @@ host's own gates: character A of an account claims a home; the town read as the 
 B in, every station refuses, and the enchanting station says "This belongs to <the account's own handle>." Two owner
 questions disagreed (THE ONE CONSTRUCTION SEAM):
 - the door asks the ACCOUNT (`mine`: `homes.js:"      const mine = h.player === player.id;"` on the service,
-  `homeLaw.js:"  if (home.mine) return true;"`);
+  `homeLaw.js:"if (home.mine) return"`);
 - the stations asked THIS CHARACTER (`own`: `onlineHomes.js` homeAt's `row.mine && typeof me === 'string' && row.character === me` - since
-  ACCOUNT-HOMES, `onlineHomes.js:"    const own = row.mine && !row.deed;"`, the account's too),
+  ACCOUNT-HOMES, `onlineHomes.js:"const own = row.mine"`, the account's too),
   through decorOwnerHere at the press and the seven station questions.
 
-FIXED. `onlineHomes.js:"export const homeStationsServe = (home) => home?.mine === true;"`, wired by the host's one line
+FIXED. `onlineHomes.js:"export const homeStationsServe"`, wired by the host's one line
 `worldModes.js:"  const stationOwnerHere = () => decorOwnerHere() || (!privateVisitRoom && homeStationsServe(interiorHome));"`
 at the press and all seven questions (forge, workbench, loom, mason's bench, jeweller's bench, alchemy, enchanting).
 decorOwnerHere is unchanged, so the storage, the bed, the decorator and the sale stay the buying character's: the
@@ -160,7 +160,7 @@ draw plan: the ring reaches every screen as `pg.ring` (`egLords.js:"if (!open) {
 and the client read it only to hold the player's movement at the rim. Nothing drew it: the line was said, the frame
 had no shape at the ring.
 
-FIXED. `egFight.js:"  function duelRing(R, t) {"` draws a band of fire half a metre either side of the rim, burning
+FIXED. `egFight.js:"function duelRing"` draws a band of fire half a metre either side of the rim, burning
 ground on the floor. And a second false line: at n = 1 the record stands no ring and no braziers, yet the words said
 "The ring of fire rises." and "The ring falls." The relay's `challenge` and `challengeend` carry `t: 'open'`
 (`egLords.js:"export const EG_DUEL_OPEN = 'open';"`), and the screen says "A challenge in the open! Deal him a tenth
@@ -243,7 +243,7 @@ laid as plain discs off the fight floor (`egLaw.js:"if (variant === 'winch') for
 no body of the fight, so the stood-on errands' draw never marked them, and `GROUND_COLORS.plate` was unused: in three
 Winch halls the screen drew nothing at either plate.
 
-FIXED. `egFight.js:"  function winchPlates(F, t) {"` draws each plate gold, sized to EG_TOUCH_M (the 2.5 m reach the
+FIXED. `egFight.js:"function winchPlates"` draws each plate gold, sized to EG_TOUCH_M (the 2.5 m reach the
 relay counts), on its own surface during the trial. Left: the Gauntlet's plates are unmarked for the same reason, on
 sloped stairs where a flat quad would cut the slope; the Conquest's thirds (3.5 s) and Both Courts Burn (3.0 s) are
 counted ahead on the relay and drawn only as they start. AUDIT FB1018D L3-M3: none before the trial either - the
@@ -264,7 +264,7 @@ folded into the client's state:
 - On the relay, health alone makes a lord (`egLords.js:"export const egLordsOf = (F) => egBodiesOf(F, EG_ROLE.lord);"`),
   so it walked and threw blows - "he ressurected without timer ... he still could use skills and do damage".
 - On every screen, the fall's flag keeps `fellAt`, and a body with `fellAt` is no blow's target
-  (`egFight.js:"    if (!b.fellAt && b.hp > 0 && (b.fl & (EG_FL.friend | EG_FL.hidden)) === 0) {"`) - "intangible" -
+  (`egFight.js:"(!b.fellAt && b.hp > 0 && (b.fl & (EG_FL.friend | EG_FL.hidden)) === 0)"`) - "intangible" -
   while the lord bar reads health alone - "his lifebar was about 15%".
 - The pair's raise lifts only a mate at nought (`egLords.js:"  if (dead && !(dead.hp > 0)) {"`), so it never came; and
   killing Isk counted the fed corpse as the survivor, said "fell the other within fifteen seconds!" over an
@@ -301,14 +301,14 @@ alone. Left: the spoils are thrown when the account service answers the claim, n
 ### Item 5, the rest's short timer: the record's windows - and a key clash, the owner's call
 
 Measured on the real director, solo: the rest opens 6 s after the fall (EG_RD_WINDOW_MS) with the Vestige offer, the
-decrees, Ready and the respite together; each question was open 10 s (`egRun.js:"export const EG_ASK_MS = 30_000;"`, 30 s since FIELD BUGS 2026-10-25 ASK-LONGER);
+decrees, Ready and the respite together; each question was open 10 s (`egRun.js:"export const EG_ASK_MS"`, 30 s since FIELD BUGS 2026-10-25 ASK-LONGER);
 a decree no one votes takes the first shown, the offer's first card is taken at the next circle (96 s), and one yes to
 Ready ends a solo rest about 12 s later. All of it is the record's (16.2-16.4, 14, 15).
 
 FOUND ON THE WAY, NOT FIXED. One key does two things there (Controls.md KB1 law 3, "No default code ships twice", and
 law 5, no raw read of a bound key):
 - Y is the default FreeMouse (`inputActions.js:"  ['KeyY', 'FreeMouse'],"`), heard first by the capture-phase toggle
-  (`pointerLock.js:"  addEventListener('keydown', onKey, true);"`), which does not stop the key. The world's handler
+  (`pointerLock.js:"addEventListener('keydown', onKey, true)"`), which does not stop the key. The world's handler
   then hands the same press to the Spire (`world.js:"if ((!e.repeat && !gamePaused() && egClient?.key(e)) || (!gamePaused() && staffView.key(e))) { e.preventDefault(); return; }"`),
   which reads Y as a Ready vote (`egClient.js:"if (open.length && (code === 'KeyY' || code === 'KeyN')) return this.vote("`).
   A solo player who frees the mouse to read the panel votes Ready, sees it marked - "the option is selected to
@@ -424,7 +424,7 @@ Knight bodies: 2280, 4560, 6840 gold in three visits. "Fixed itself after a few 
 
 FIXED, so the seat and the memory's writer are one. In a dungeon room the relay's host is the eldest socket that has
 said a frame - its hello, a pose, its foes, its own lane, its memory, never a ping - within FOES_STALE_MS of another
-being there to hear it (`seatLive.js:"export function seatOf("`); alone it owes nothing; the change is said to the room
+being there to hear it (`seatLive.js:"export function seatOf"`); alone it owes nothing; the change is said to the room
 as a leave's is. A socket back from silence is a joiner: stamped after the seat and told whose it is, its frozen memory
 refused until the relay names it. The page asks for the seat it runs (`_askSeat`: its pose every FOES_FULL_MS while
 the named host is unheard), and its own hidden spell spends none of the named seat's patience (`createSeatClock`), so
@@ -467,17 +467,17 @@ auditworld6b (`seatClock` for `_foesInAt`), and slam11 (the host poses through i
 
 The quest is N0B20Y05; its target `Foe _monster_ is Mage`, placed by `place foe _monster_ at _mondung_` on a random
 quest marker of `remote dungeon9`. Every link from the door to the foe standing answers yes in the instance:
-- the popup's "Your instance" enters the dungeon whole (`instanceDoor.js:"if (row.kind === 'public') return PUBLIC;"`,
-  `smallerDungeons.js:"if (online) return whole ? 'full' : onlineDungeonSize(dfLocation);"`), and the mount's gate
-  lets it through (`instancePlaces.js:"export const questMountsHere = ({ online, builtSize }) => !online || builtSize === 'full';"`);
-- a quest taken online is stamped whole (`smallerDungeons.js:"if (online) return SMALLER_DUNGEONS_STATE.Disabled;"`),
+- the popup's "Your instance" enters the dungeon whole (`instanceDoor.js:"if (row.kind === 'public')"`,
+  `smallerDungeons.js:"if (online) return whole"`), and the mount's gate
+  lets it through (`instancePlaces.js:"export const questMountsHere"`);
+- a quest taken online is stamped whole (`smallerDungeons.js:"if (online) return SMALLER_DUNGEONS_STATE.Disabled"`),
   and an older stamp is re-laid onto the whole dungeon at the next online load (`questRepair.js` relayQuestOnline).
 Reproduced in Node with the real QuestMachine, Place, sceneMount, questRepair and smallerDungeons over N0B20Y05's own
 lines - taken online, entered public, saved and reloaded, the instance twice, copied offline and entered: the instance
 and the offline copy stand the Mage on the same marker; public stands nothing. That is INSTANCES' law
 (`worldModes.js:"if (!questMountsHere({ online: !!host.dungeonOnline?.(), builtSize: dungeonRoomSize(dungeonLoc) }))"`),
 and the line the player read as "your quest is in here" is QUEST-ELSEWHERE's:
-`instanceDoor.js:"questHere: () => t('instance.door.questHere',"` - "Your quest's business here waits in your instance.".
+`instanceDoor.js:"questHere: () =>"` - "Your quest's business here waits in your instance.".
 It was read the other way, and public was searched twice for it.
 
 Ruled out: the layout (the instance and the offline game build the same blocks and markers); the party (two members

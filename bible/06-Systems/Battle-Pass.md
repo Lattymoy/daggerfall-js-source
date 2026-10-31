@@ -252,7 +252,7 @@ dead); lane 5's `SEASONAUDIT-a-lost-answer-refused` is aimed at the kept id's li
   is a stand-up, as for the spoils pools.
 - **D2, the save at the mint.** The mint asks a checkpoint of the next standing frame, so the realm holds the Maul at
   once, not at the period's end: the checkpoint clock's own door, with no host binding
-  (`src/systems/online/onlineCheckpointClock.js:"export function askCheckpoint()"`).
+  (`src/systems/online/onlineCheckpointClock.js:"export function askCheckpoint"`).
 - **D3. The map's held poll made every card again**, four times a second: 0.8 ms and some 40 kB a poll for the Bay's 186,
   more with the provinces'. The cards are made once while the stage's fissures, each theatre's gate of the day and the
   language stand, and the map's reader keeps its marks and their key for the same list and box: 0.005 ms a poll.

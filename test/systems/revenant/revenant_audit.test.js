@@ -284,7 +284,7 @@ test('AUDIT D2/D6-D12: the window fits a phone; an armed Release never outlives 
   const v = read('src/ui/revenant/revenantFateView.js');
   assert.match(v, /\.pack-shell \.loot-win\.fate \{ width: 380px; max-height: min\(700px, 92dvh\); overflow-y: auto; \}/);
   assert.match(v, /\.pack-shell \.fatecol \.fatelist \{ flex: 0 0 auto; min-height: auto; \}/);
-  assert.match(v, /fate\.options\.filter\(\(o\) => !o\.disabled\)\.map\(\(o\) => `\$\{o\.key\} \$\{o\.label\.toLowerCase\(\)\}`\)/);
+  assert.match(v, /fate\.options\n\s*\.filter\(\(o\) => !o\.disabled\)\n\s*\.map\(\(o\) => `\$\{o\.key\} \$\{o\.label\.toLowerCase\(\)\}`\)/);
   assert.match(read('src/ui/enhanced/enhancedMenu.js'), /resetCompanionRoster\(\);   \/\/ COMPANION-ROSTER: nor an armed Release/);
   const roster = read('src/ui/companionRoster.js');
   assert.match(roster, /meter\(Math\.max\(0, Math\.round\(h\)\), Math\.round\(hm\), 'verdigris'\)/);

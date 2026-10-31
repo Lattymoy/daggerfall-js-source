@@ -5,7 +5,7 @@
 // (vite.config.pistol.js) has no use for either - combat/weapon/weaponAlign.js's reason, for the Thunderlock's lab. Its
 // one import is another leaf's (combat/gun/gunSheet.js - the boxes; PISTOL-EDGE: the frame set below measures with them).
 
-import { contentBox, unionBox } from './gunSheet.js';   // PISTOL-EDGE: the boxes, a leaf's
+import { contentBox, unionBox } from './gunSheet.js'; // PISTOL-EDGE: the boxes, a leaf's
 
 /** The strip: six frames, each its own registered canvas, in the order the owner gave them. */
 export const PISTOL_STRIP = Object.freeze({ frames: 6, cellW: 88, cellH: 113, file: 'pistol-frames.png' });
@@ -22,7 +22,10 @@ export function hardenAlpha(img, cut = 128) {
   let cleared = 0;
   for (let p = 3; p < data.length; p += 4) {
     if (data[p] >= cut) data[p] = 255;
-    else { if (data[p]) cleared++; data[p] = 0; }
+    else {
+      if (data[p]) cleared++;
+      data[p] = 0;
+    }
   }
   return cleared;
 }
@@ -58,14 +61,23 @@ export function armLean(img, rows = ARM_LEAN_ROWS) {
   const { width: w, height: h, data } = img;
   const pts = [];
   for (let y = Math.max(0, h - rows); y < h; y++) {
-    for (let x = 0; x < w; x++) if (data[(y * w + x) * 4 + 3] >= 128) { pts.push([x, y]); break; }
+    for (let x = 0; x < w; x++)
+      if (data[(y * w + x) * 4 + 3] >= 128) {
+        pts.push([x, y]);
+        break;
+      }
   }
   if (pts.length < 2) return null;
-  const mx = pts.reduce((s, p) => s + p[0], 0) / pts.length, my = pts.reduce((s, p) => s + p[1], 0) / pts.length;
-  let num = 0, den = 0;
-  for (const [x, y] of pts) { num += (x - mx) * (y - my); den += (y - my) * (y - my); }
+  const mx = pts.reduce((s, p) => s + p[0], 0) / pts.length,
+    my = pts.reduce((s, p) => s + p[1], 0) / pts.length;
+  let num = 0,
+    den = 0;
+  for (const [x, y] of pts) {
+    num += (x - mx) * (y - my);
+    den += (y - my) * (y - my);
+  }
   if (!(den > 0)) return null;
-  const b = Math.max(0, num / den);   // texels right per row down - never back across the cut
+  const b = Math.max(0, num / den); // texels right per row down - never back across the cut
   const len = Math.hypot(b, 1);
   return [b / len, 1 / len];
 }
@@ -83,10 +95,14 @@ export const EDGE_GAP = 4;
 function cutEdge(data, len, at) {
   const src = Array.from({ length: len }, (_, i) => (data[at(i) + 3] >= 128 ? at(i) : -1));
   for (let i = 0; i < len;) {
-    if (src[i] >= 0) { i++; continue; }
+    if (src[i] >= 0) {
+      i++;
+      continue;
+    }
     let j = i;
     while (j < len && src[j] < 0) j++;
-    if (i > 0 && j < len && j - i <= EDGE_GAP) for (let k = i; k < j; k++) src[k] = k - (i - 1) <= j - k ? src[i - 1] : src[j];
+    if (i > 0 && j < len && j - i <= EDGE_GAP)
+      for (let k = i; k < j; k++) src[k] = k - (i - 1) <= j - k ? src[i - 1] : src[j];
     i = j;
   }
   return src;
@@ -102,23 +118,30 @@ function cutEdge(data, len, at) {
  */
 export function bleedArm(img, lean, bleed = PISTOL_BLEED) {
   const { width: w, height: h, data } = img;
-  const W = w + bleed.right, H = h + bleed.bottom;
+  const W = w + bleed.right,
+    H = h + bleed.bottom;
   const out = new Uint8ClampedArray(W * H * 4);
   for (let y = 0; y < h; y++) for (let i = 0; i < w * 4; i++) out[y * W * 4 + i] = data[y * w * 4 + i];
   if (!lean) return { width: W, height: H, data: out };
   const [dx, dy] = lean;
-  const right = cutEdge(data, h, (y) => (y * w + w - 1) * 4), bottom = cutEdge(data, w, (x) => ((h - 1) * w + x) * 4);
+  const right = cutEdge(data, h, (y) => (y * w + w - 1) * 4),
+    bottom = cutEdge(data, w, (x) => ((h - 1) * w + x) * 4);
   for (let y = 0; y < H; y++) {
     for (let x = y < h ? w : 0; x < W; x++) {
-      const tx = x >= w ? (dx > 1e-6 ? (x - (w - 1)) / dx : Infinity) : 0, ty = y >= h ? (y - (h - 1)) / dy : 0;
+      const tx = x >= w ? (dx > 1e-6 ? (x - (w - 1)) / dx : Infinity) : 0,
+        ty = y >= h ? (y - (h - 1)) / dy : 0;
       const t = Math.max(tx, ty);
       if (!Number.isFinite(t)) continue;
-      const qx = Math.round(x - t * dx), qy = Math.round(y - t * dy);
+      const qx = Math.round(x - t * dx),
+        qy = Math.round(y - t * dy);
       if (qx < 0 || qy < 0 || qx >= w || qy >= h) continue;
-      const o = tx >= ty ? right[qy] : bottom[qx];   // the edge the walk back crossed last
+      const o = tx >= ty ? right[qy] : bottom[qx]; // the edge the walk back crossed last
       if (o < 0) continue;
       const d = (y * W + x) * 4;
-      out[d] = data[o]; out[d + 1] = data[o + 1]; out[d + 2] = data[o + 2]; out[d + 3] = data[o + 3];
+      out[d] = data[o];
+      out[d + 1] = data[o + 1];
+      out[d + 2] = data[o + 2];
+      out[d + 3] = data[o + 3];
     }
   }
   return { width: W, height: H, data: out };

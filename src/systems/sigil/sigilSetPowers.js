@@ -108,88 +108,144 @@
 import { SKILLS, MAGIC_SKILLS } from '../skills.js';
 import { registerEntityFold, registerWeaponBlowMod, newMods, EMPTY_MODS, NUMBER_BODY_PARTS } from '../entityMods.js';
 import { registerPlayerStruckListener, registerPlayerStrikeListener } from '../../combat/formulas.js';
-import { registerPlayerDamageMod, registerPlayerDeathSave, registerPlayerHurtListener, registerPlayerDoorOpen, setFoeBlowProbe } from '../../characters/playerEntity.js';
+import {
+  registerPlayerDamageMod,
+  registerPlayerDeathSave,
+  registerPlayerHurtListener,
+  registerPlayerDoorOpen,
+  setFoeBlowProbe,
+} from '../../characters/playerEntity.js';
 import { registerPlayerKillListener } from '../playerKills.js';
 import { registerSpellCostMod } from '../spellcost.js';
-import { healMine, manaMine } from '../playerHeal.js';   // SERPENT-SET: Shed Skin heals through the loot's own heal; EG15: the Discipline returns magicka through its own
-import { registerPlayerCastListener } from '../playerCasts.js';   // EG15: the player's own casts, told (a leaf)
-import { RESIST_ELEMENTS } from '../loot/lootRarity.js';   // EG15: the five elements the resistance channel names (it imports no power file)
-import { CAST_SETTING_MAX } from '../../net/wire.js';   // EG15: the cast frame's byte - an ally's shield rides it
+import { healMine, manaMine } from '../playerHeal.js'; // SERPENT-SET: Shed Skin heals through the loot's own heal; EG15: the Discipline returns magicka through its own
+import { registerPlayerCastListener } from '../playerCasts.js'; // EG15: the player's own casts, told (a leaf)
+import { RESIST_ELEMENTS } from '../loot/lootRarity.js'; // EG15: the five elements the resistance channel names (it imports no power file)
+import { CAST_SETTING_MAX } from '../../net/wire.js'; // EG15: the cast frame's byte - an ally's shield rides it
 import { registerAbsorptionChance } from '../absorption.js';
 import { registerMagicRoundHook } from '../worldTick.js';
-import { playerDoor, paidBack } from '../playerDoor.js';   // BAL5: a blow paid back never kills
+import { playerDoor, paidBack } from '../playerDoor.js'; // BAL5: a blow paid back never kills
 import { hudText } from '../notify.js';
-import { t } from '../textManager.js';   // STAR7: the Veil's lines
+import { t } from '../textManager.js'; // STAR7: the Veil's lines
 import { weaponSkillUsed } from '../../characters/weapons.js';
 import { friendlyProtected } from '../../combat/playerWeapon.js';
 import { careerTolerance, EFFECT_FLAGS } from '../spellcast.js';
 import { KNIGHT_CITY_WATCH } from '../../characters/mobile/mobileTypes.js';
-import { hallowedFoe } from '../festival/festivalFoes.js';   // WITCH1: the Wyrd's Raiment's Tallow-Ward - the dead and the summoned
-import { HARVEST_TEXT } from '../festival/festivalWords.js';   // WITCH1: Soul Harvest's words, in the player's language
+import { hallowedFoe } from '../festival/festivalFoes.js'; // WITCH1: the Wyrd's Raiment's Tallow-Ward - the dead and the summoned
+import { HARVEST_TEXT } from '../festival/festivalWords.js'; // WITCH1: Soul Harvest's words, in the player's language
 import { healthShare } from '../../combat/healthShare.js';
-import { wildZoneKind } from '../wild/wildZone.js';   // SEA-SET: Undertow - the open sea's ground on the zone's live flag
-import { ETHER_KIND } from '../wild/etherWild.js';   // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
+import { wildZoneKind } from '../wild/wildZone.js'; // SEA-SET: Undertow - the open sea's ground on the zone's live flag
+import { ETHER_KIND } from '../wild/etherWild.js'; // FIELD BUGS 2026-10-18f RELAY-SHARE: a body's share of its health, the one law
 import {
-  wornSets, setsAwake, RAMPAGE_SECONDS, RAMPAGE_STACKS, CLEAVE_METRES, WRATH_BELOW, NOVA_METRES, WRATH_SECONDS,
-  RIPOSTE_SECONDS, MARK_METRES, MARK_SECONDS, BLOOD_SECONDS, BLOOD_STACKS, COIL_STACKS, COIL_SECONDS, SHED_BELOW,
-  ROUND_SECONDS, REPRIEVE_BELOW, REPRIEVE_SECONDS, REPRIEVE_METRES, REPRIEVE_ALLY_SHARE,
-  STRAND_HITS, STRAND_SECONDS, VEIL_BELOW,   // STAR7: the Starspun Weave
-  UNBROKEN_LESS,   // POWER-CEILING: Unbroken's half, named
+  wornSets,
+  setsAwake,
+  RAMPAGE_SECONDS,
+  RAMPAGE_STACKS,
+  CLEAVE_METRES,
+  WRATH_BELOW,
+  NOVA_METRES,
+  WRATH_SECONDS,
+  RIPOSTE_SECONDS,
+  MARK_METRES,
+  MARK_SECONDS,
+  BLOOD_SECONDS,
+  BLOOD_STACKS,
+  COIL_STACKS,
+  COIL_SECONDS,
+  SHED_BELOW,
+  ROUND_SECONDS,
+  REPRIEVE_BELOW,
+  REPRIEVE_SECONDS,
+  REPRIEVE_METRES,
+  REPRIEVE_ALLY_SHARE,
+  STRAND_HITS,
+  STRAND_SECONDS,
+  VEIL_BELOW, // STAR7: the Starspun Weave
+  UNBROKEN_LESS, // POWER-CEILING: Unbroken's half, named
 } from './sigilSets.js';
-import { blowRoom, guardRoom } from '../powerCeiling.js';   // POWER-CEILING: the blow's one product, the guards' one share
+import { blowRoom, guardRoom } from '../powerCeiling.js'; // POWER-CEILING: the blow's one product, the guards' one share
 
 // ── the session's memory, and its voice ────────────────────────────
 let _now = () => performance.now() / 1000;
 const fresh = () => ({
-  unbrokenReady: 0, halvedUntil: 0,   // Malacath (6)
-  wrathReady: 0, wrathUntil: 0,       // Ruhn (6)
-  eventideReady: 0,                   // Nocturnal (6)
-  rampage: 0, rampageUntil: 0,        // Dagon (6)
-  riposteUntil: 0,                    // RAID4b: the Broken Oath (4)
-  marked: null, markUntil: 0,         // RAID4b: the Thief-Taker's Garb (6) - the marked foe's entity
-  blood: 0, bloodUntil: 0,            // RAID4b: Orcsbane Harness (4)
-  ward: 0, wardReady: 0,              // RAID4b: Orcsbane Harness (6) - the ward's points left
-  coils: new WeakMap(),               // SERPENT-SET: Sethrakul's Coilscale (4) - AUDIT 625 P3: each foe's own coil, entity -> { n, until }
-  coilFoe: null,                      // the foe my last landed blow coiled - the one the states say
-  shedReady: 0,                       // SERPENT-SET: Sethrakul's Coilscale (6)
-  gearReady: 0,                       // SD9d: the Brass of Numidium (4) - when the gear is wound again
-  hourReady: 0, hourHeal: 0,          // SD9d: the Brass of Numidium (6) - its recovery, and the heal its save owes
-  armed: -1, lastCost: 0,             // EG15: the Battlemage's Panoply (4) - the element my next blow carries (-1 none), the last spell's cost
-  reprieve: 0, reprieveUntil: 0, reprieveReady: 0,   // EG15: the Panoply (6) - the shield's points left, its window, its recovery
-  harvestReady: 0,                    // WITCH1: the Wyrd's Raiment (6) - Soul Harvest's recovery
-  strands: new WeakMap(),             // STAR7: the Starspun Weave (4) - each foe's own strands, entity -> { n, until }
-  strandFoe: null,                    // the foe my last landed blow laid a strand on - the one the states say
-  veilReady: 0,                       // STAR7: the Starspun Weave (6)
-  spireHeld: new Map(),               // EG15: THE SPIRE'S RECOVERY - a death save spent in a breach, `key -> the breach`, held to its next Redoubt
-  recovering: new Set(),              // the powers whose "ready again" is still to be said
+  unbrokenReady: 0,
+  halvedUntil: 0, // Malacath (6)
+  wrathReady: 0,
+  wrathUntil: 0, // Ruhn (6)
+  eventideReady: 0, // Nocturnal (6)
+  rampage: 0,
+  rampageUntil: 0, // Dagon (6)
+  riposteUntil: 0, // RAID4b: the Broken Oath (4)
+  marked: null,
+  markUntil: 0, // RAID4b: the Thief-Taker's Garb (6) - the marked foe's entity
+  blood: 0,
+  bloodUntil: 0, // RAID4b: Orcsbane Harness (4)
+  ward: 0,
+  wardReady: 0, // RAID4b: Orcsbane Harness (6) - the ward's points left
+  coils: new WeakMap(), // SERPENT-SET: Sethrakul's Coilscale (4) - AUDIT 625 P3: each foe's own coil, entity -> { n, until }
+  coilFoe: null, // the foe my last landed blow coiled - the one the states say
+  shedReady: 0, // SERPENT-SET: Sethrakul's Coilscale (6)
+  gearReady: 0, // SD9d: the Brass of Numidium (4) - when the gear is wound again
+  hourReady: 0,
+  hourHeal: 0, // SD9d: the Brass of Numidium (6) - its recovery, and the heal its save owes
+  armed: -1,
+  lastCost: 0, // EG15: the Battlemage's Panoply (4) - the element my next blow carries (-1 none), the last spell's cost
+  reprieve: 0,
+  reprieveUntil: 0,
+  reprieveReady: 0, // EG15: the Panoply (6) - the shield's points left, its window, its recovery
+  harvestReady: 0, // WITCH1: the Wyrd's Raiment (6) - Soul Harvest's recovery
+  strands: new WeakMap(), // STAR7: the Starspun Weave (4) - each foe's own strands, entity -> { n, until }
+  strandFoe: null, // the foe my last landed blow laid a strand on - the one the states say
+  veilReady: 0, // STAR7: the Starspun Weave (6)
+  spireHeld: new Map(), // EG15: THE SPIRE'S RECOVERY - a death save spent in a breach, `key -> the breach`, held to its next Redoubt
+  recovering: new Set(), // the powers whose "ready again" is still to be said
 });
 let _s = fresh();
 /** The host's voice (scenes/world.js): a line on the HUD, and a sound by the power's name ('unbroken', 'wrath',
  *  'eventide'; RAID4b 'mark', 'ward'; SERPENT-SET 'shed'; EG15 'reprieve'; STAR7 'veil'). The line defaults to the HUD's own door; the
  *  sound to none. */
-let _say = (line) => { hudText(line); };
-let _sound = null;   // SD9d: and 'gear', 'hour'
+let _say = (line) => {
+  hudText(line);
+};
+let _sound = null; // SD9d: and 'gear', 'hour'
 export function setSetPowersVoice({ say = null, sound = null } = {}) {
   if (typeof say === 'function') _say = say;
   _sound = typeof sound === 'function' ? sound : null;
 }
-const sound = (name) => { try { _sound?.(name); } catch { /* a sound is not the power's problem */ } };
+const sound = (name) => {
+  try {
+    _sound?.(name);
+  } catch {
+    /* a sound is not the power's problem */
+  }
+};
 /** AUDIT SET L10: the voice, never the power's problem - Unbroken's save had spent its recovery before a voice that
  *  threw could say so, and a throw there turned the save into a death. */
-const say = (line) => { try { _say(line); } catch { /* a line is not the power's problem */ } };
+const say = (line) => {
+  try {
+    _say(line);
+  } catch {
+    /* a line is not the power's problem */
+  }
+};
 
 /** THE ONE READ: every set MY entity wears, as `id -> [tier 1's numbers | null, tier 2's, tier 3's]` - awake tiers only;
  *  null for anyone but me, or while sets sleep. */
 export function awakeTiersOf(entity) {
   if (!entity?.isPlayer || entity.peer || !setsAwake()) return null;
   const out = new Map();
-  for (const st of wornSets(entity, undefined, undefined, { text: false })) out.set(st.id, st.tiers.map((t) => (t.awake ? t.values : null)));   // AUDIT SET L5: the numbers alone - the HUD and every blow ask, and no reader here reads a tier's words
+  for (const st of wornSets(entity, undefined, undefined, { text: false }))
+    out.set(
+      st.id,
+      st.tiers.map((t) => (t.awake ? t.values : null)),
+    ); // AUDIT SET L5: the numbers alone - the HUD and every blow ask, and no reader here reads a tier's words
   return out;
 }
 const tierOf = (entity, id, i) => awakeTiersOf(entity)?.get(id)?.[i] ?? null;
 
 // ── the 2-piece stat tiers: the fold ────────────────────────────────
-const add = (rec, key, v) => { rec[key] = (rec[key] ?? 0) + v; };
+const add = (rec, key, v) => {
+  rec[key] = (rec[key] ?? 0) + v;
+};
 /** The awake stat tiers as one mods record (RF1's channels) - EMPTY for anyone but me. */
 export function setFold(entity) {
   const t = awakeTiersOf(entity);
@@ -197,33 +253,72 @@ export function setFold(entity) {
   let mods = null;
   const m = () => (mods ??= newMods());
   const mal = t.get('malacath')?.[0];
-  if (mal) { for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += mal.armor; add(m().stats, 'endurance', mal.endurance); }
+  if (mal) {
+    for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += mal.armor;
+    add(m().stats, 'endurance', mal.endurance);
+  }
   const dag = t.get('dagon')?.[0];
-  if (dag) { add(m().stats, 'strength', dag.strength); add(m().skills, SKILLS.CriticalStrike, dag.critical); }
+  if (dag) {
+    add(m().stats, 'strength', dag.strength);
+    add(m().skills, SKILLS.CriticalStrike, dag.critical);
+  }
   const noc = t.get('nocturnal')?.[0];
-  if (noc) { add(m().skills, SKILLS.Stealth, noc.stealth); add(m().stats, 'agility', noc.agility); }
+  if (noc) {
+    add(m().skills, SKILLS.Stealth, noc.stealth);
+    add(m().stats, 'agility', noc.agility);
+  }
   const mor = t.get('mora')?.[0];
-  if (mor) { add(m().stats, 'intelligence', mor.intelligence); for (const s of MAGIC_SKILLS) add(m().skills, s, mor.schools); }
+  if (mor) {
+    add(m().stats, 'intelligence', mor.intelligence);
+    for (const s of MAGIC_SKILLS) add(m().skills, s, mor.schools);
+  }
   const ruhn = t.get('ruhn')?.[0];
   if (ruhn) add(m().resist, 'fire', ruhn.fire);
-  const oath = t.get('oath')?.[0];   // RAID4b: Oath of the Watch
-  if (oath) { for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += oath.armor; add(m().stats, 'willpower', oath.willpower); }
-  const keen = t.get('thieftaker')?.[0];   // RAID4b: Keen-Eyed
-  if (keen) { add(m().stats, 'agility', keen.agility); add(m().skills, SKILLS.Archery, keen.archery); }
-  const hide = t.get('orcsbane')?.[0];   // RAID4b: Thick-Skinned
-  if (hide) { add(m().stats, 'endurance', hide.endurance); add(m().skills, SKILLS.BluntWeapon, hide.blunt); }
-  const scale = t.get('coilscale')?.[0];   // SERPENT-SET: Sea-Scale
-  if (scale) { add(m().resist, 'frost', scale.frost); add(m().stats, 'endurance', scale.endurance); }
-  const brass = t.get('numidium')?.[0];   // SD9d: Dwemer Brass
-  if (brass) { add(m().resist, 'magic', brass.magic); add(m().resist, 'shock', brass.shock); }
-  const bearing = t.get('panoply')?.[0];   // EG15: Battlemage's Bearing - every resistance, and the maximum magicka
-  if (bearing) { for (const el of RESIST_ELEMENTS) add(m().resist, el, bearing.resist); m().magicka += bearing.magicka; }
-  const sight = t.get('wyrd')?.[0];   // WITCH1: Wyrd-Sight - Willpower, and the magic resistance no piece of the set carries
-  if (sight) { add(m().stats, 'willpower', sight.willpower); add(m().resist, 'magic', sight.magic); }
-  const thread = t.get('starspun')?.[0];   // STAR7: Spinner's Thread
-  if (thread) { add(m().resist, 'poison', thread.poison); add(m().stats, 'agility', thread.agility); }
-  const wrack = t.get('eltheric')?.[0];   // SEA-SET: Stormwrack
-  if (wrack) { add(m().resist, 'shock', wrack.shock); add(m().stats, 'speed', wrack.speed); }
+  const oath = t.get('oath')?.[0]; // RAID4b: Oath of the Watch
+  if (oath) {
+    for (let p = 0; p < NUMBER_BODY_PARTS; p++) m().armorParts[p] += oath.armor;
+    add(m().stats, 'willpower', oath.willpower);
+  }
+  const keen = t.get('thieftaker')?.[0]; // RAID4b: Keen-Eyed
+  if (keen) {
+    add(m().stats, 'agility', keen.agility);
+    add(m().skills, SKILLS.Archery, keen.archery);
+  }
+  const hide = t.get('orcsbane')?.[0]; // RAID4b: Thick-Skinned
+  if (hide) {
+    add(m().stats, 'endurance', hide.endurance);
+    add(m().skills, SKILLS.BluntWeapon, hide.blunt);
+  }
+  const scale = t.get('coilscale')?.[0]; // SERPENT-SET: Sea-Scale
+  if (scale) {
+    add(m().resist, 'frost', scale.frost);
+    add(m().stats, 'endurance', scale.endurance);
+  }
+  const brass = t.get('numidium')?.[0]; // SD9d: Dwemer Brass
+  if (brass) {
+    add(m().resist, 'magic', brass.magic);
+    add(m().resist, 'shock', brass.shock);
+  }
+  const bearing = t.get('panoply')?.[0]; // EG15: Battlemage's Bearing - every resistance, and the maximum magicka
+  if (bearing) {
+    for (const el of RESIST_ELEMENTS) add(m().resist, el, bearing.resist);
+    m().magicka += bearing.magicka;
+  }
+  const sight = t.get('wyrd')?.[0]; // WITCH1: Wyrd-Sight - Willpower, and the magic resistance no piece of the set carries
+  if (sight) {
+    add(m().stats, 'willpower', sight.willpower);
+    add(m().resist, 'magic', sight.magic);
+  }
+  const thread = t.get('starspun')?.[0]; // STAR7: Spinner's Thread
+  if (thread) {
+    add(m().resist, 'poison', thread.poison);
+    add(m().stats, 'agility', thread.agility);
+  }
+  const wrack = t.get('eltheric')?.[0]; // SEA-SET: Stormwrack
+  if (wrack) {
+    add(m().resist, 'shock', wrack.shock);
+    add(m().stats, 'speed', wrack.speed);
+  }
   return mods ?? EMPTY_MODS;
 }
 
@@ -233,7 +328,7 @@ export const rampageStacks = (now = _now()) => (now < _s.rampageUntil ? _s.rampa
 /** RAID4b: Blood for Blood's standing stacks now, and the foe No Escape has marked (its entity) - none once its window
  *  has run out. */
 export const bloodStacks = (now = _now()) => (now < _s.bloodUntil ? _s.blood : 0);
-export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null);   // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)
+export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null); // AUDIT SETS L1: a mark on a body is none (a peer's kill of it reaches no setKill of mine)
 /** SERPENT-SET, AUDIT 625 P3 (Mac: "A coil per foe"): A FOE'S OWN COIL - its stacks now, none once its window has run
  *  out, or over a body (a peer's kill of it reaches no setKill of mine: the mark's own law). One coil once, moved to
  *  whichever foe a blow landed on last, so a swing that met two foes - a crowd's, a sweep's - unwound it on each in
@@ -252,7 +347,7 @@ export const strandsAt = (foe, now = _now()) => {
 };
 /** The strands on the foe my last landed blow touched (the states' - a chip, the pins'). */
 export const strandCount = (now = _now()) => strandsAt(_s.strandFoe, now);
-const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5;   // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)
+const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5; // FIELD BUGS 2026-10-18f RELAY-SHARE: the one law - a body the relay runs reads its word (Run Them Down there too)
 const ranged = (w) => weaponSkillUsed(w?.templateIndex) === SKILLS.Archery;
 /** @type {WeakMap<object, number>} */
 let _carry = new WeakMap();
@@ -268,39 +363,46 @@ let _carry = new WeakMap();
  */
 export function setBlow(weapon, damage, attacker, target, info) {
   if (!(damage > 0) || !attacker?.isPlayer || attacker.peer || !target || target.isPlayer) return damage;
-  if (target.warded) return damage;   // AUDIT SETS L4: the Warden's ward turns the blow whole - Riposte is not spent on it (dungeonContext.js gateBossBody marks his stand-in)
+  if (target.warded) return damage; // AUDIT SETS L4: the Warden's ward turns the blow whole - Riposte is not spent on it (dungeonContext.js gateBossBody marks his stand-in)
   const t = awakeTiersOf(attacker);
   if (!t || !t.size) return damage;
   const now = _now();
-  let pct = 0, flat = 0;
+  let pct = 0,
+    flat = 0;
   const dag = t.get('dagon');
   if (dag?.[1]) pct += dag[1].more * (belowHalf(attacker) ? 2 : 1);
   if (dag?.[2]) pct += dag[2].stack * rampageStacks(now);
   const noc = t.get('nocturnal');
   if (noc?.[1] && info?.unaware) pct += noc[1].more;
   const ruhn = t.get('ruhn');
-  if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear;   // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch
+  if (ruhn?.[0] && !fireProof(target)) flat += ruhn[0].sear; // AUDIT SET L7: the gate's fire, never on a foe the fire cannot touch
   if (ruhn?.[2] && now < _s.wrathUntil) pct += ruhn[2].more;
   const oath = t.get('oath');
-  const keep = !info?.estimate;   // AUDIT MARTIAL L2 F7: the Stats page's estimate spends no window and carries nothing
-  if (oath?.[1] && now < _s.riposteUntil) { pct += oath[1].more; if (keep) _s.riposteUntil = 0; }   // RAID4b: Riposte - the next blow alone
+  const keep = !info?.estimate; // AUDIT MARTIAL L2 F7: the Stats page's estimate spends no window and carries nothing
+  if (oath?.[1] && now < _s.riposteUntil) {
+    pct += oath[1].more;
+    if (keep) _s.riposteUntil = 0;
+  } // RAID4b: Riposte - the next blow alone
   const taker = t.get('thieftaker');
-  if (taker?.[1] && belowHalf(target)) pct += taker[1].more;   // RAID4b: Run Them Down
-  if (taker?.[2] && markedFoe(now) === target) pct += taker[2].more;   // RAID4b: No Escape
+  if (taker?.[1] && belowHalf(target)) pct += taker[1].more; // RAID4b: Run Them Down
+  if (taker?.[2] && markedFoe(now) === target) pct += taker[2].more; // RAID4b: No Escape
   const orcs = t.get('orcsbane');
-  if (orcs?.[1]) pct += orcs[1].stack * bloodStacks(now);   // RAID4b: Blood for Blood
+  if (orcs?.[1]) pct += orcs[1].stack * bloodStacks(now); // RAID4b: Blood for Blood
   const coil = t.get('coilscale');
-  if (coil?.[1]) pct += coil[1].stack * coilStacksAt(target, now);   // SERPENT-SET: Constrict, at that foe's own coil (AUDIT 625 P3)
+  if (coil?.[1]) pct += coil[1].stack * coilStacksAt(target, now); // SERPENT-SET: Constrict, at that foe's own coil (AUDIT 625 P3)
   const ward = t.get('wyrd')?.[1];
-  if (ward && hallowedFoe(target)) pct += ward.more;   // WITCH1: Tallow-Ward - the dead and the summoned
+  if (ward && hallowedFoe(target)) pct += ward.more; // WITCH1: Tallow-Ward - the dead and the summoned
   const disc = t.get('panoply')?.[1];
-  if (disc && weapon && _s.armed >= 0) { pct += disc.armed * elementShare(target, _s.armed); if (keep) _s.armed = -1; }   // EG15: Battlemage's Discipline - the next weapon blow alone, whatever its element does to this foe
+  if (disc && weapon && _s.armed >= 0) {
+    pct += disc.armed * elementShare(target, _s.armed);
+    if (keep) _s.armed = -1;
+  } // EG15: Battlemage's Discipline - the next weapon blow alone, whatever its element does to this foe
   const silk = t.get('starspun')?.[1];
-  if (silk && weapon && strandsAt(target, now) >= STRAND_HITS - 1) pct += silk.more;   // STAR7: Bound in Silk - the blow the web holds (its landing cuts the count: setStrike)
+  if (silk && weapon && strandsAt(target, now) >= STRAND_HITS - 1) pct += silk.more; // STAR7: Bound in Silk - the blow the web holds (its landing cuts the count: setStrike)
   const tow = t.get('eltheric')?.[1];
-  if (tow && weapon) pct += atSea() ? tow.more : tow.more / 2;   // SEA-SET: Undertow - whole in the open sea, half ashore
+  if (tow && weapon) pct += atSea() ? tow.more : tow.more / 2; // SEA-SET: Undertow - whole in the open sea, half ashore
   let out = damage;
-  if (pct > 0) pct = blowRoom(pct, 'sets');   // POWER-CEILING: the sets' room under the blow's one product
+  if (pct > 0) pct = blowRoom(pct, 'sets'); // POWER-CEILING: the sets' room under the blow's one product
   if (pct > 0) {
     const key = weapon ?? attacker;
     const exact = (damage * pct) / 100 + (_carry.get(key) ?? 0);
@@ -309,17 +411,17 @@ export function setBlow(weapon, damage, attacker, target, info) {
     out += more;
   }
   out += flat;
-  return out;   // AUDIT SET M2: Cleave shares the blow that LANDED - setStrike, at the formula's tail
+  return out; // AUDIT SET M2: Cleave shares the blow that LANDED - setStrike, at the formula's tail
 }
 /** AUDIT SET M2: MY WEAPON'S BLOW, LANDED (formulas.js registerPlayerStrikeListener - the attack's final damage, after
  *  either core's crits, materials and armour): Cleave's share of it, a MELEE blow's alone. Taken here, at the blow
  *  modifiers, the share was of a number PCAAO then reduced for the struck foe's armour alone, so its neighbour could take
  *  more than it did. SERPENT-SET: and Constrict's coil tightens - a bow's blow too (the tier says a weapon blow). */
 export function setStrike(attacker, target, damage, weapon, info = null) {
-  if (!(damage > 0) || !weapon || target?.warded) return;   // AUDIT FB1018f L3-3: a blow its referee turns whole landed nothing - no Discipline's return, no coil, no Cleave off it (setBlow's own AUDIT SETS L4)
-  if (info?.blow !== false) coiled(attacker, target);   // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)
-  stranded(attacker, target, info?.blow !== false);   // STAR7: Bound in Silk - a strand a blow that counts whole; AUDIT STAR S1: the held blow's landing cuts the count whatever its weight
-  if (info?.blow !== false) returned(attacker);   // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone
+  if (!(damage > 0) || !weapon || target?.warded) return; // AUDIT FB1018f L3-3: a blow its referee turns whole landed nothing - no Discipline's return, no coil, no Cleave off it (setBlow's own AUDIT SETS L4)
+  if (info?.blow !== false) coiled(attacker, target); // TWO-HANDS (AUDIT 2): a stack a blow, from a blow that counts whole (formulas.js `blow`)
+  stranded(attacker, target, info?.blow !== false); // STAR7: Bound in Silk - a strand a blow that counts whole; AUDIT STAR S1: the held blow's landing cuts the count whatever its weight
+  if (info?.blow !== false) returned(attacker); // EG15: the Discipline's return - a bow's blow too (a weapon blow); TWO-HANDS (AUDIT 2): a per-blow charge, so a blow that counts whole alone
   if (ranged(weapon)) return;
   const v = tierOf(attacker, 'ruhn', 1);
   if (v) cleave(target, (damage * v.share) / 100, weapon);
@@ -331,7 +433,7 @@ export function setStrike(attacker, target, damage, weapon, info = null) {
 function coiled(attacker, target) {
   if (!target || target.isPlayer || !tierOf(attacker, 'coilscale', 1)) return;
   const now = _now();
-  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS });   // AUDIT 625 P3: its own
+  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS }); // AUDIT 625 P3: its own
   _s.coilFoe = target;
 }
 
@@ -344,10 +446,12 @@ function coiled(attacker, target) {
  *  and the next blow took it again. */
 function stranded(attacker, target, whole = true) {
   if (!target || target.isPlayer || !tierOf(attacker, 'starspun', 1)) return;
-  const now = _now(), had = strandsAt(target, now);
-  if (had >= STRAND_HITS - 1) _s.strands.delete(target);   // the held blow landed
+  const now = _now(),
+    had = strandsAt(target, now);
+  if (had >= STRAND_HITS - 1)
+    _s.strands.delete(target); // the held blow landed
   else if (whole) _s.strands.set(target, { n: had + 1, until: now + STRAND_SECONDS });
-  else return;   // a part-blow lays nothing
+  else return; // a part-blow lays nothing
   _s.strandFoe = target;
 }
 
@@ -366,7 +470,13 @@ const NO_DUE = Object.freeze({ guns: 1, hull: 1 });
 // ── EG15: Battlemage's Discipline - the cast, the armed blow, the return ──
 /** EG15: a spell's element (spellcast.js ELEMENTS: Fire 0, Frost 1, DiseaseOrPoison 2, Shock 3, Magic 4) as the effect
  *  flag a foe's tolerance of it is read by - the saving throw's own pairing. */
-const ELEMENT_FLAGS = Object.freeze([EFFECT_FLAGS.Fire, EFFECT_FLAGS.Frost, EFFECT_FLAGS.Poison, EFFECT_FLAGS.Shock, EFFECT_FLAGS.Magic]);
+const ELEMENT_FLAGS = Object.freeze([
+  EFFECT_FLAGS.Fire,
+  EFFECT_FLAGS.Frost,
+  EFFECT_FLAGS.Poison,
+  EFFECT_FLAGS.Shock,
+  EFFECT_FLAGS.Magic,
+]);
 /** EG15: how much of an element a foe takes - none IMMUNE, half when it RESISTS, else whole (systems/loot/lootPowers.js
  *  elementShare's law, which this file may not import: lootPowers.js reads the blow's law out of this one). The Burning
  *  Gate's sear asks the same of fire (fireProof, AUDIT SET L7). */
@@ -416,7 +526,8 @@ function cleave(targetEntity, amount, weapon) {
   const foes = door.foes();
   const struck = foes.find((f) => f.entity === targetEntity);
   if (!struck?.ai?.feet) return;
-  let best = null, bestD = CLEAVE_METRES;
+  let best = null,
+    bestD = CLEAVE_METRES;
   for (const f of foes) {
     if (f === struck || f.dead || !f.ai?.feet || spared(f)) continue;
     if (rise(f.ai.feet, struck.ai.feet) > REACH_RISE_M) continue;
@@ -424,7 +535,8 @@ function cleave(targetEntity, amount, weapon) {
     const d = flat2(f.ai.feet, struck.ai.feet);
     if (d > bestD) continue;
     if (door.clear && !door.clear(struck.ai.feet, f.ai.feet)) continue;
-    bestD = d; best = f;
+    bestD = d;
+    best = f;
   }
   if (best) door.hurtFoe(best, Math.max(1, Math.round(amount)));
 }
@@ -449,7 +561,9 @@ export function setStruck(attacker, target, damage) {
  *  again as the blow lands (`remarkPlayerBlow`); a blow it withholds is the door's word "nothing"
  *  (playerEntity.js playerBlowCameToNothing). */
 export const heldPlayerBlow = () => (_blow && _now() - _blow.at <= BLOW_WINDOW_S ? { attacker: _blow.attacker } : null);
-export function remarkPlayerBlow(b) { if (b?.attacker) _blow = { attacker: b.attacker, at: _now() }; }
+export function remarkPlayerBlow(b) {
+  if (b?.attacker) _blow = { attacker: b.attacker, at: _now() };
+}
 /** The mark, taken - or null for a hurt no foe's blow dealt (a mark older than the window is nobody's). */
 function landedBlow() {
   const b = _blow;
@@ -469,7 +583,9 @@ function spite(entity, blow, took) {
 
 // ── the damage I take: Unbroken's halving, Hold the Line, Iron Hide ──
 function unbrokenHalves(entity, dmg) {
-  return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2) ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100) : dmg;   // AUDIT SET L1: whole points - a half point left health fractional, and a later blow of the rest spent Unbroken's save on a wound that was never lethal; POWER-CEILING: its room under the guards' one share
+  return _now() < _s.halvedUntil && tierOf(entity, 'malacath', 2)
+    ? Math.floor((dmg * (100 - guardRoom(UNBROKEN_LESS, 'sets'))) / 100)
+    : dmg; // AUDIT SET L1: whole points - a half point left health fractional, and a later blow of the rest spent Unbroken's save on a wound that was never lethal; POWER-CEILING: its room under the guards' one share
 }
 /** RAID4b: Hold the Line's share of a hurt, in whole points - the fraction carried to the next hurt (the blow's own
  *  law), so a Faint tenth takes a point of every ten a run of small blows deals, not none of them. */
@@ -480,7 +596,7 @@ export function setDamageMod(entity, dmg) {
   let d = unbrokenHalves(entity, dmg);
   const hold = tierOf(entity, 'oath', 2);
   if (hold && d > 0 && belowHalf(entity)) {
-    const owed = (d * guardRoom(hold.less, 'sets')) / 100 + _holdOwed;   // POWER-CEILING
+    const owed = (d * guardRoom(hold.less, 'sets')) / 100 + _holdOwed; // POWER-CEILING
     const cut = Math.min(d, Math.floor(owed + 1e-9));
     _holdOwed = owed - cut;
     d -= cut;
@@ -492,13 +608,14 @@ export function setDamageMod(entity, dmg) {
   }
   // SD9d: GEARWARD - a foe's blow (the door's mark, never a fall or a spell) while the gear is wound lands lighter, in whole
   // points, and the gear winds again
-  const gear = d > 0 && (_pending || _pendingBoss) ? tierOf(entity, 'numidium', 1) : null;   // AUDIT SD: and a world boss's blow
+  const gear = d > 0 && (_pending || _pendingBoss) ? tierOf(entity, 'numidium', 1) : null; // AUDIT SD: and a world boss's blow
   if (gear) {
     const now = _now();
     if (now >= _s.gearReady) {
       const cut = Math.round((d * gear.lighter) / 100);
-      if (cut > 0) {   // AUDIT SD: a blow too small to lighten by a whole point spends no winding
-        d -= Math.round((d * guardRoom(gear.lighter, 'sets')) / 100);   // POWER-CEILING: the winding spent, its share under the guards' one
+      if (cut > 0) {
+        // AUDIT SD: a blow too small to lighten by a whole point spends no winding
+        d -= Math.round((d * guardRoom(gear.lighter, 'sets')) / 100); // POWER-CEILING: the winding spent, its share under the guards' one
         _s.gearReady = now + gear.recover;
         sound('gear');
       }
@@ -515,14 +632,14 @@ export function setDamageMod(entity, dmg) {
 }
 export function setDeathSave(entity) {
   const v = tierOf(entity, 'malacath', 2);
-  if (!v) return hourTurns(entity);   // SD9d: no Bulwark worn - the Brass's own save (the two are never worn at once: 6 and 6 is past nine places)
+  if (!v) return hourTurns(entity); // SD9d: no Bulwark worn - the Brass's own save (the two are never worn at once: 6 and 6 is past nine places)
   const now = _now();
-  if (!recovered('unbroken', now)) return false;   // EG15: and in the Spire, not before its next Redoubt
+  if (!recovered('unbroken', now)) return false; // EG15: and in the Spire, not before its next Redoubt
   _s.unbrokenReady = now + v.recover;
   spireHold('unbroken');
   _s.halvedUntil = now + v.halved;
   _s.recovering.add('unbroken');
-  say(`Unbroken! Damage halved for ${v.halved} s.`);   // WB13b
+  say(`Unbroken! Damage halved for ${v.halved} s.`); // WB13b
   sound('unbroken');
   return true;
 }
@@ -533,7 +650,7 @@ function hourTurns(entity) {
   const v = tierOf(entity, 'numidium', 2);
   if (!v) return false;
   const now = _now();
-  if (!recovered('hour', now)) return false;   // EG15: and in the Spire, not before its next Redoubt
+  if (!recovered('hour', now)) return false; // EG15: and in the Spire, not before its next Redoubt
   _s.hourReady = now + v.recover;
   spireHold('hour');
   _s.hourHeal = v.heal;
@@ -552,8 +669,11 @@ let _pending = null;
  *  power its own set brings to the fight it drops in, Gearward, reads this mark of its own instead: the Remnant's
  *  driver marks a body's own blow as it lands (scenes/superDungeon/sdRemnantBlows.js bodysBlow - never the Hour's magic, never the
  *  burning brass); nothing else reads it. */
-let _bossBlowAt = -Infinity, _pendingBoss = false;
-export function setBossStruck() { _bossBlowAt = _now(); }
+let _bossBlowAt = -Infinity,
+  _pendingBoss = false;
+export function setBossStruck() {
+  _bossBlowAt = _now();
+}
 /** AUDIT EG V (lane8 L8-1; Elite-Gates.md section 15's death saves, Sigil-Sets.md 6e): A SPIRE FOE'S BLOW. The Spire's lords
  *  and legion strike through the dungeon context's door (scenes/eliteGates/egFight.js landShare -> strikePlayer), never the attack
  *  formula's struck tail, so their blows carried no foe's mark - and the two hurt-listener saves the Spire holds to its
@@ -561,8 +681,11 @@ export function setBossStruck() { _bossBlowAt = _now(); }
  *  drops. The fight's driver marks a body's blow as it lands (never a hazard, a zone or a drain - no foe's blow), taken by
  *  the damage door as it opens, read by those two alone: no foe of the door's stands behind it, so Spite, Riposte, Blood
  *  for Blood, the Wrath and the loot's blow listeners hear none (Sigil-Sets.md section 8). */
-let _spireBlowAt = -Infinity, _pendingSpire = false;
-export function setSpireStruck() { _spireBlowAt = _now(); }
+let _spireBlowAt = -Infinity,
+  _pendingSpire = false;
+export function setSpireStruck() {
+  _spireBlowAt = _now();
+}
 function setDoorOpen(entity) {
   if (!entity?.isPlayer || entity.peer) return;
   _pending = landedBlow();
@@ -580,15 +703,19 @@ export const pendingPlayerBlow = () => (_pending ? { attacker: _pending.attacker
  *  (the moment Spite answers), whatever set is worn: the loot's thorns, hexes and charges answer it. A name
  *  re-registered replaces, `null` removes; one that throws is skipped. */
 const _landed = new Map();
-export function registerPlayerBlowLanded(name, fn) { if (typeof fn === 'function') _landed.set(name, fn); else _landed.delete(name); }
+export function registerPlayerBlowLanded(name, fn) {
+  if (typeof fn === 'function') _landed.set(name, fn);
+  else _landed.delete(name);
+}
 
 // ── Wrath of the Warden: a blow that leaves me under the line ───────
 export function setHurt(entity, { before, after, saved = false }) {
   if (!entity?.isPlayer || entity.peer) return;
-  const blow = _pending, spire = _pendingSpire;
+  const blow = _pending,
+    spire = _pendingSpire;
   _pending = null;
-  _pendingBoss = false;   // AUDIT SD: the boss's mark is this hurt's alone
-  _pendingSpire = false;   // AUDIT EG V (L8-1): and the Spire's
+  _pendingBoss = false; // AUDIT SD: the boss's mark is this hurt's alone
+  _pendingSpire = false; // AUDIT EG V (L8-1): and the Spire's
   // SD9d: THE HOUR TURNS - the death it turned back said, and its share of my health returned, as the door left me at 1
   // (whatever dealt it: the save is a death save's, a fall's as a blow's)
   if (saved && _s.hourHeal > 0) {
@@ -598,14 +725,25 @@ export function setHurt(entity, { before, after, saved = false }) {
     const healed = max > 0 ? healMine(entity, (max * share) / 100) : 0;
     say(healed > 0 ? `The Hour Turns! ${healed} health returns.` : 'The Hour Turns!');
   }
-  if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }   // AUDIT EG V (L8-1): a Spire foe's blow - its two saves
-  if (!blow) return;   // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath
-  if (before - after > 0) for (const fn of _landed.values()) { try { fn(entity, blow.attacker, before - after); } catch { /* the loot is not the blow's problem */ } }   // LOOT4
+  if (!blow && spire) {
+    shed(entity, before, after, saved);
+    reprieve(entity, before, after, saved);
+    return;
+  } // AUDIT EG V (L8-1): a Spire foe's blow - its two saves
+  if (!blow) return; // L3: a fall, a poison's tick, a spell's burn - no foe's blow, no Spite and no Wrath
+  if (before - after > 0)
+    for (const fn of _landed.values()) {
+      try {
+        fn(entity, blow.attacker, before - after);
+      } catch {
+        /* the loot is not the blow's problem */
+      }
+    } // LOOT4
   spite(entity, blow, before - after);
-  if (before - after > 0) bloodied(entity);   // RAID4b: Riposte, Blood for Blood
-  shed(entity, before, after, saved);   // SERPENT-SET: Shed Skin
-  reprieve(entity, before, after, saved);   // EG15: Battlemage's Reprieve - Shed Skin's crossing, at its own line
-  veil(entity, before, after, saved);   // STAR7: Mephala's Veil - Shed Skin's crossing, at its own line
+  if (before - after > 0) bloodied(entity); // RAID4b: Riposte, Blood for Blood
+  shed(entity, before, after, saved); // SERPENT-SET: Shed Skin
+  reprieve(entity, before, after, saved); // EG15: Battlemage's Reprieve - Shed Skin's crossing, at its own line
+  veil(entity, before, after, saved); // STAR7: Mephala's Veil - Shed Skin's crossing, at its own line
   const v = tierOf(entity, 'ruhn', 2);
   const max = entity?.maxHealth;
   if (!v || !(max > 0) || !(after > 0)) return;
@@ -617,7 +755,7 @@ export function setHurt(entity, { before, after, saved = false }) {
   _s.wrathUntil = now + WRATH_SECONDS;
   _s.recovering.add('wrath');
   const struck = nova(v.nova);
-  say(struck ? `Wrath of the Warden! ${struck} ${struck === 1 ? 'foe' : 'foes'} struck.` : 'Wrath of the Warden!');   // WB12a; WB13b: the burst is seen - the count is the news
+  say(struck ? `Wrath of the Warden! ${struck} ${struck === 1 ? 'foe' : 'foes'} struck.` : 'Wrath of the Warden!'); // WB12a; WB13b: the burst is seen - the count is the news
   sound('wrath');
 }
 /** RAID4b: A FOE'S BLOW TOOK MY HEALTH - Riposte's window opens (the next blow of mine inside it is sharpened), and
@@ -646,7 +784,7 @@ function shed(entity, before, after, saved = false) {
   const line = max * SHED_BELOW;
   if (!(before >= line && after < line)) return;
   const now = _now();
-  if (!recovered('shed', now)) return;   // EG15: and in the Spire, not before its next Redoubt
+  if (!recovered('shed', now)) return; // EG15: and in the Spire, not before its next Redoubt
   _s.shedReady = now + v.recover;
   spireHold('shed');
   _s.recovering.add('shed');
@@ -659,10 +797,10 @@ function shed(entity, before, after, saved = false) {
  *  list and the sheet show it), its chip's (Soul Harvest's is HARVEST_TEXT.name), its proc - the effect and how long, as
  *  its card says (AUDIT STAR W6) - and its recovery's end. */
 export const VEIL_TEXT = Object.freeze({
-  spell: () => t('starfall.set.veilSpell', 'Mephala\'s Veil'),
+  spell: () => t('starfall.set.veilSpell', "Mephala's Veil"),
   chip: () => t('starfall.set.veilChip', 'Veil'),
-  proc: (/** @type {number} */ s) => t('starfall.set.veil', 'Mephala\'s Veil! Chameleon for {s} s.', { s }),
-  ready: () => t('starfall.set.veilReady', 'Mephala\'s Veil is ready again.'),
+  proc: (/** @type {number} */ s) => t('starfall.set.veil', "Mephala's Veil! Chameleon for {s} s.", { s }),
+  ready: () => t('starfall.set.veilReady', "Mephala's Veil is ready again."),
 });
 /** STAR7, MEPHALA'S VEIL: the Veil's Chameleon (classic 23,0 - it breaks when I strike) for `rounds` magic rounds,
  *  Eventide's own spell under its own name, its round MORE (AUDIT SET M5). */
@@ -683,7 +821,7 @@ function veil(entity, before, after, saved = false) {
   _s.veilReady = now + v.recover;
   _s.recovering.add('veil');
   door.castOnPlayer(veilBundle(v.rounds));
-  say(VEIL_TEXT.proc(v.rounds * ROUND_SECONDS));   // AUDIT STAR (W6): the effect and how long, as the card says it
+  say(VEIL_TEXT.proc(v.rounds * ROUND_SECONDS)); // AUDIT STAR (W6): the effect and how long, as the card says it
   sound('veil');
 }
 
@@ -707,7 +845,11 @@ function reprieve(entity, before, after, saved = false) {
   _s.reprieve = points;
   _s.reprieveUntil = now + REPRIEVE_SECONDS;
   const shared = shieldAllies(Math.round(points * REPRIEVE_ALLY_SHARE));
-  say(shared ? `Battlemage's Reprieve! A ${points}-point shield, and ${shared} ${shared === 1 ? 'ally' : 'allies'} shielded.` : `Battlemage's Reprieve! A ${points}-point shield.`);
+  say(
+    shared
+      ? `Battlemage's Reprieve! A ${points}-point shield, and ${shared} ${shared === 1 ? 'ally' : 'allies'} shielded.`
+      : `Battlemage's Reprieve! A ${points}-point shield.`,
+  );
   sound('reprieve');
 }
 /** EG15: THE ALLIES' HALF - the host's door to the players beside me (setSetPowersAllies). Sets have no reach of their own
@@ -721,7 +863,10 @@ let _allies = null;
  * @param {{ near?: ((metres: number) => any[]) | null, shield?: ((ally: any, spell: any) => boolean) | null } | null} [door]
  */
 export function setSetPowersAllies(door = null) {
-  _allies = typeof door?.near === 'function' && typeof door?.shield === 'function' ? { near: door.near, shield: door.shield } : null;
+  _allies =
+    typeof door?.near === 'function' && typeof door?.shield === 'function'
+      ? { near: door.near, shield: door.shield }
+      : null;
 }
 /** EG15: the Shield spell an ally's share rides (Alteration's Shield, 35,255: its magnitude IS the pool) - `points`
  *  whole, inside the cast frame's byte (net/wire.js CAST_SETTING_MAX), no level's term, so every receiver's pool is
@@ -729,22 +874,46 @@ export function setSetPowersAllies(door = null) {
  *  shared clock online), so it is rounded UP to whole rounds and given ONE MORE, as Eventide's is (AUDIT SET M5: an effect
  *  ends at its Nth round's tick, wherever the shared clock says) - 3 rounds, at least the 6 s the card says (10 to 15). */
 export const reprieveBundle = (points) => ({
-  name: "Battlemage's Reprieve", rangeType: 0, element: 4, icon: 0,
-  effects: [{
-    type: 35, subType: 255, durationBase: Math.ceil(REPRIEVE_SECONDS / ROUND_SECONDS) + 1, durationMod: 0, durationPerLevel: 1,
-    chanceBase: 0, chanceMod: 0, chancePerLevel: 1,
-    magnitudeBaseLow: Math.max(1, Math.min(CAST_SETTING_MAX, Math.round(points) || 0)), magnitudeBaseHigh: Math.max(1, Math.min(CAST_SETTING_MAX, Math.round(points) || 0)),
-    magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 1,
-  }],
+  name: "Battlemage's Reprieve",
+  rangeType: 0,
+  element: 4,
+  icon: 0,
+  effects: [
+    {
+      type: 35,
+      subType: 255,
+      durationBase: Math.ceil(REPRIEVE_SECONDS / ROUND_SECONDS) + 1,
+      durationMod: 0,
+      durationPerLevel: 1,
+      chanceBase: 0,
+      chanceMod: 0,
+      chancePerLevel: 1,
+      magnitudeBaseLow: Math.max(1, Math.min(CAST_SETTING_MAX, Math.round(points) || 0)),
+      magnitudeBaseHigh: Math.max(1, Math.min(CAST_SETTING_MAX, Math.round(points) || 0)),
+      magnitudeLevelBase: 0,
+      magnitudeLevelHigh: 0,
+      magnitudePerLevel: 1,
+    },
+  ],
 });
 /** Shield every ally the host names near me for `points` (each its own cast): answers how many it reached. A door that
  *  throws, or an ally whose cast did not leave, is skipped - the shield on me is the Reprieve's whatever the door does. */
 function shieldAllies(points) {
   if (!_allies || !(points > 0)) return 0;
   let near = [];
-  try { near = _allies.near(REPRIEVE_METRES) ?? []; } catch { return 0; }
+  try {
+    near = _allies.near(REPRIEVE_METRES) ?? [];
+  } catch {
+    return 0;
+  }
   let n = 0;
-  for (const ally of near) { try { if (_allies.shield(ally, reprieveBundle(points))) n++; } catch { /* one ally is not the shield's problem */ } }
+  for (const ally of near) {
+    try {
+      if (_allies.shield(ally, reprieveBundle(points))) n++;
+    } catch {
+      /* one ally is not the shield's problem */
+    }
+  }
   return n;
 }
 
@@ -756,14 +925,35 @@ function shieldAllies(points) {
 let _spireRoom = () => null;
 /** The host's word (scenes/world.js): the Elite Breach the player stands in now (`modes.egHallBreach()` - its id, any
  *  value but null and false), or null outside every breach. */
-export function setSpireRecovery(fn) { _spireRoom = typeof fn === 'function' ? fn : () => null; }
-const spireRoom = () => { try { const r = _spireRoom(); return r == null || r === false ? null : r; } catch { return null; } };
+export function setSpireRecovery(fn) {
+  _spireRoom = typeof fn === 'function' ? fn : () => null;
+}
+const spireRoom = () => {
+  try {
+    const r = _spireRoom();
+    return r == null || r === false ? null : r;
+  } catch {
+    return null;
+  }
+};
 /** The death saves the Spire holds, by their READY key. */
-const SPIRE_SAVES = Object.freeze({ unbroken: 'unbrokenReady', hour: 'hourReady', shed: 'shedReady', reprieve: 'reprieveReady' });
+const SPIRE_SAVES = Object.freeze({
+  unbroken: 'unbrokenReady',
+  hour: 'hourReady',
+  shed: 'shedReady',
+  reprieve: 'reprieveReady',
+});
 /** A death save just spent: held to the next Redoubt when it was spent in a breach. */
-function spireHold(k) { const room = spireRoom(); if (room != null) _s.spireHeld.set(k, room); else _s.spireHeld.delete(k); }
+function spireHold(k) {
+  const room = spireRoom();
+  if (room != null) _s.spireHeld.set(k, room);
+  else _s.spireHeld.delete(k);
+}
 /** Is this power held to a Redoubt now - spent in the breach the player still stands in? */
-const spireHeld = (k) => { const room = _s.spireHeld.get(k); return room !== undefined && room === spireRoom(); };
+const spireHeld = (k) => {
+  const room = _s.spireHeld.get(k);
+  return room !== undefined && room === spireRoom();
+};
 /** Is this power ready now: its timer run out, and no breach holding it. */
 const recovered = (k, now) => now >= _s[SPIRE_SAVES[k]] && !spireHeld(k);
 // EG-ZH (2026-10-12, Mac: "I said I want everything"; Elite-Gates.md section 15, "Death saves"): THE SPIRE'S RECOVERY FOR
@@ -773,7 +963,10 @@ const recovered = (k, now) => now >= _s[SPIRE_SAVES[k]] && !spireHeld(k);
 /** @type {Map<string, () => void>} */
 const _spireRedoubts = new Map();
 /** A power's own recovery at a Redoubt taken in a breach (`key` its name - one each). */
-export function registerSpireRedoubt(key, fn) { if (typeof fn === 'function') _spireRedoubts.set(key, fn); else _spireRedoubts.delete(key); }
+export function registerSpireRedoubt(key, fn) {
+  if (typeof fn === 'function') _spireRedoubts.set(key, fn);
+  else _spireRedoubts.delete(key);
+}
 /** The Elite Breach the player stands in now (the host's `setSpireRecovery` word - any value but null and false), or null. */
 export const spireRoomNow = () => spireRoom();
 /** The host's word (scenes/eliteGates/egClient.js, as the room says a Redoubt was taken): every death save recovers at once - the
@@ -782,7 +975,13 @@ export const spireRoomNow = () => spireRoom();
 export function spireRedoubtTaken() {
   for (const field of Object.values(SPIRE_SAVES)) _s[field] = 0;
   _s.spireHeld.clear();
-  for (const fn of _spireRedoubts.values()) { try { fn(); } catch { /* one power's recovery is not the others' */ } }
+  for (const fn of _spireRedoubts.values()) {
+    try {
+      fn();
+    } catch {
+      /* one power's recovery is not the others' */
+    }
+  }
 }
 
 /** The Nova: every live foe within NOVA_METRES of my feet takes `n` - never an ally or a foe at peace (H1), one on
@@ -809,16 +1008,31 @@ function nova(n) {
  *  five seconds wherever the shared clock says, so N rounds lasted between N-1 and N of them (a Faint shadow could end
  *  at once); N+1 lasts N rounds at the least, as the card says. */
 export const eventideBundle = (rounds) => ({
-  name: 'Eventide', rangeType: 0, element: 4,
-  effects: [{
-    type: 23, subType: 0, durationBase: Math.max(1, rounds | 0) + 1, durationMod: 0, durationPerLevel: 1,
-    chanceBase: 1, chanceMod: 1, chancePerLevel: 1,
-    magnitudeBaseLow: 1, magnitudeBaseHigh: 1, magnitudeLevelBase: 1, magnitudeLevelHigh: 1, magnitudePerLevel: 1,
-  }],
+  name: 'Eventide',
+  rangeType: 0,
+  element: 4,
+  effects: [
+    {
+      type: 23,
+      subType: 0,
+      durationBase: Math.max(1, rounds | 0) + 1,
+      durationMod: 0,
+      durationPerLevel: 1,
+      chanceBase: 1,
+      chanceMod: 1,
+      chancePerLevel: 1,
+      magnitudeBaseLow: 1,
+      magnitudeBaseHigh: 1,
+      magnitudeLevelBase: 1,
+      magnitudeLevelHigh: 1,
+      magnitudePerLevel: 1,
+    },
+  ],
 });
 /** AUDIT SET L8: a kill that never counts - the city watch, and my own ally (Renown's own rule, net/renownTracker.js
  *  neverPays): a summoned daedra of mine fed the Rampage. */
-const neverCounts = (entity) => entity?.mobileType === KNIGHT_CITY_WATCH || entity?.team === 'PlayerAlly' || entity?.mobileTeam === 'PlayerAlly';
+const neverCounts = (entity) =>
+  entity?.mobileType === KNIGHT_CITY_WATCH || entity?.team === 'PlayerAlly' || entity?.mobileTeam === 'PlayerAlly';
 export function setKill(entity = null) {
   if (neverCounts(entity)) return;
   const door = playerDoor();
@@ -829,7 +1043,7 @@ export function setKill(entity = null) {
   if (t.get('dagon')?.[2]) {
     const had = rampageStacks(now);
     _s.rampage = Math.min(RAMPAGE_STACKS, had + 1);
-    _s.rampageUntil = now + RAMPAGE_SECONDS;   // a kill refreshes them all
+    _s.rampageUntil = now + RAMPAGE_SECONDS; // a kill refreshes them all
     if (_s.rampage > had) say(`Rampage ${'I'.repeat(_s.rampage)}`);
   }
   const noc = t.get('nocturnal')?.[2];
@@ -837,15 +1051,16 @@ export function setKill(entity = null) {
     _s.eventideReady = now + noc.recover;
     _s.recovering.add('eventide');
     door.castOnPlayer(eventideBundle(noc.rounds));
-    say('Eventide! Nocturnal\'s shadows take you.');   // WB13b: the procs one shape
+    say("Eventide! Nocturnal's shadows take you."); // WB13b: the procs one shape
     sound('eventide');
   }
-  if (entity && _s.marked === entity) _s.markUntil = 0;   // AUDIT SETS L1: the marked foe's own death ends its mark (its chip counted on over a body)
-  if (entity) _s.coils.delete(entity);   // SERPENT-SET: a coiled foe's death ends its coil (AUDIT 625 P3: its own - every other foe keeps theirs)
-  if (entity) _s.strands.delete(entity);   // STAR7: and its strands
+  if (entity && _s.marked === entity) _s.markUntil = 0; // AUDIT SETS L1: the marked foe's own death ends its mark (its chip counted on over a body)
+  if (entity) _s.coils.delete(entity); // SERPENT-SET: a coiled foe's death ends its coil (AUDIT 625 P3: its own - every other foe keeps theirs)
+  if (entity) _s.strands.delete(entity); // STAR7: and its strands
   if (t.get('thieftaker')?.[2]) markNext(door, entity, now);
   const harvest = t.get('wyrd')?.[2];
-  if (harvest && me && now >= _s.harvestReady) {   // WITCH1: Soul Harvest - the kill's soul sent home, as health and magicka
+  if (harvest && me && now >= _s.harvestReady) {
+    // WITCH1: Soul Harvest - the kill's soul sent home, as health and magicka
     _s.harvestReady = now + harvest.recover;
     _s.recovering.add('harvest');
     healMine(me, ((me.maxHealth ?? 0) * harvest.heal) / 100);
@@ -854,7 +1069,8 @@ export function setKill(entity = null) {
     sound('harvest');
   }
   const hide = t.get('orcsbane')?.[2];
-  if (hide && now >= _s.wardReady) {   // RAID4b: Iron Hide - a fresh ward, never one on top of another
+  if (hide && now >= _s.wardReady) {
+    // RAID4b: Iron Hide - a fresh ward, never one on top of another
     _s.ward = hide.ward;
     _s.wardReady = now + hide.recover;
     _s.recovering.add('ward');
@@ -868,18 +1084,21 @@ export function setKill(entity = null) {
 function markNext(door, killed, now) {
   const feet = door.feet?.();
   if (!feet) return;
-  let best = null, reach = MARK_METRES;
+  let best = null,
+    reach = MARK_METRES;
   for (const f of door.foes()) {
-    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M) continue;
+    if (f.dead || f.entity === killed || !f.entity || !f.ai?.feet || spared(f) || rise(f.ai.feet, feet) > REACH_RISE_M)
+      continue;
     const d = flat2(f.ai.feet, feet);
     if (d > reach || door.clear?.(feet, f.ai.feet) === false) continue;
-    reach = d; best = f;
+    reach = d;
+    best = f;
   }
   if (!best) return;
   const had = markedFoe(now);
   _s.marked = best.entity;
   _s.markUntil = now + MARK_SECONDS;
-  if (had === best.entity) return;   // AUDIT SETS L5: the same foe marked again - its time renewed, nothing said (Rampage's own law)
+  if (had === best.entity) return; // AUDIT SETS L5: the same foe marked again - its time renewed, nothing said (Rampage's own law)
   say('No Escape! The nearest enemy is marked.');
   sound('mark');
 }
@@ -898,19 +1117,39 @@ const READY = Object.freeze({
   unbroken: { at: () => _s.unbrokenReady, line: 'Unbroken is ready again.', set: 'malacath', tier: 2 },
   wrath: { at: () => _s.wrathReady, line: 'Wrath of the Warden is ready again.', set: 'ruhn', tier: 2 },
   eventide: { at: () => _s.eventideReady, line: 'Eventide is ready again.', set: 'nocturnal', tier: 2 },
-  ward: { at: () => _s.wardReady, line: 'Iron Hide is ready again.', set: 'orcsbane', tier: 2, spent: () => !(_s.ward > 0) },   // RAID4b
-  shed: { at: () => _s.shedReady, line: 'Shed Skin is ready again.', set: 'coilscale', tier: 2 },   // SERPENT-SET
-  hour: { at: () => _s.hourReady, line: 'The Hour Turns is ready again.', set: 'numidium', tier: 2 },   // SD9d
-  reprieve: { at: () => _s.reprieveReady, line: 'Battlemage\'s Reprieve is ready again.', set: 'panoply', tier: 2 },   // EG15
-  harvest: { at: () => _s.harvestReady, get line() { return HARVEST_TEXT.ready(); }, set: 'wyrd', tier: 2 },   // WITCH1
-  veil: { at: () => _s.veilReady, get line() { return VEIL_TEXT.ready(); }, set: 'starspun', tier: 2 },   // STAR7: through the text core, read where it is said
+  ward: {
+    at: () => _s.wardReady,
+    line: 'Iron Hide is ready again.',
+    set: 'orcsbane',
+    tier: 2,
+    spent: () => !(_s.ward > 0),
+  }, // RAID4b
+  shed: { at: () => _s.shedReady, line: 'Shed Skin is ready again.', set: 'coilscale', tier: 2 }, // SERPENT-SET
+  hour: { at: () => _s.hourReady, line: 'The Hour Turns is ready again.', set: 'numidium', tier: 2 }, // SD9d
+  reprieve: { at: () => _s.reprieveReady, line: "Battlemage's Reprieve is ready again.", set: 'panoply', tier: 2 }, // EG15
+  harvest: {
+    at: () => _s.harvestReady,
+    get line() {
+      return HARVEST_TEXT.ready();
+    },
+    set: 'wyrd',
+    tier: 2,
+  }, // WITCH1
+  veil: {
+    at: () => _s.veilReady,
+    get line() {
+      return VEIL_TEXT.ready();
+    },
+    set: 'starspun',
+    tier: 2,
+  }, // STAR7: through the text core, read where it is said
 });
 export function setRound(entity) {
   if (!entity?.isPlayer || entity.peer || !_s.recovering.size) return;
   const now = _now();
   for (const k of [..._s.recovering]) {
     const r = READY[k];
-    if (now < r.at() || spireHeld(k)) continue;   // EG15: a death save the Spire holds is said at its Redoubt
+    if (now < r.at() || spireHeld(k)) continue; // EG15: a death save the Spire holds is said at its Redoubt
     _s.recovering.delete(k);
     if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);
   }
@@ -921,41 +1160,55 @@ export const SIGIL_SETS_POWER = 'sigilSets';
 registerEntityFold(SIGIL_SETS_POWER, setFold);
 registerWeaponBlowMod(SIGIL_SETS_POWER, setBlow);
 registerPlayerStruckListener(SIGIL_SETS_POWER, setStruck);
-registerPlayerStrikeListener(SIGIL_SETS_POWER, setStrike);   // AUDIT SET M2
+registerPlayerStrikeListener(SIGIL_SETS_POWER, setStrike); // AUDIT SET M2
 registerPlayerDamageMod(SIGIL_SETS_POWER, setDamageMod);
 registerPlayerDeathSave(SIGIL_SETS_POWER, setDeathSave);
 registerPlayerHurtListener(SIGIL_SETS_POWER, setHurt);
-registerPlayerDoorOpen(SIGIL_SETS_POWER, setDoorOpen);   // AUDIT FINAL F10
-setFoeBlowProbe(() => _pending != null);   // FULL-GUARD (FIELD BUGS 2026-10-11b): the door asks this file's law of what a blow is
+registerPlayerDoorOpen(SIGIL_SETS_POWER, setDoorOpen); // AUDIT FINAL F10
+setFoeBlowProbe(() => _pending != null); // FULL-GUARD (FIELD BUGS 2026-10-11b): the door asks this file's law of what a blow is
 registerPlayerKillListener(SIGIL_SETS_POWER, setKill);
 registerSpellCostMod(SIGIL_SETS_POWER, setCastCost);
 registerAbsorptionChance(SIGIL_SETS_POWER, setAbsorbChance);
 registerMagicRoundHook(SIGIL_SETS_POWER, setRound);
-registerPlayerCastListener(SIGIL_SETS_POWER, setCast);   // EG15
+registerPlayerCastListener(SIGIL_SETS_POWER, setCast); // EG15
 
 /** What the HUD may show of the powers now (SET5): the Rampage's stacks and the time left on each window and each
  *  recovery, in whole seconds - 0 for one not running. */
 export function setPowerStates(now = _now()) {
   const left = (t) => Math.max(0, Math.ceil(t - now));
   return {
-    rampage: rampageStacks(now), rampageLeft: rampageStacks(now) ? left(_s.rampageUntil) : 0,
-    halvedLeft: left(_s.halvedUntil), unbrokenLeft: left(_s.unbrokenReady),
-    wrathLeft: left(_s.wrathUntil), wrathRecoverLeft: left(_s.wrathReady),
+    rampage: rampageStacks(now),
+    rampageLeft: rampageStacks(now) ? left(_s.rampageUntil) : 0,
+    halvedLeft: left(_s.halvedUntil),
+    unbrokenLeft: left(_s.unbrokenReady),
+    wrathLeft: left(_s.wrathUntil),
+    wrathRecoverLeft: left(_s.wrathReady),
     eventideLeft: left(_s.eventideReady),
     // RAID4b: Riposte's window, Blood for Blood's stacks, No Escape's mark, Iron Hide's ward (its points) and recovery
-    riposteLeft: left(_s.riposteUntil), blood: bloodStacks(now), bloodLeft: bloodStacks(now) ? left(_s.bloodUntil) : 0,
-    markLeft: markedFoe(now) ? left(_s.markUntil) : 0, ward: _s.ward, wardRecoverLeft: left(_s.wardReady),
+    riposteLeft: left(_s.riposteUntil),
+    blood: bloodStacks(now),
+    bloodLeft: bloodStacks(now) ? left(_s.bloodUntil) : 0,
+    markLeft: markedFoe(now) ? left(_s.markUntil) : 0,
+    ward: _s.ward,
+    wardRecoverLeft: left(_s.wardReady),
     // SERPENT-SET: Constrict's stacks and window, Shed Skin's recovery
-    coil: coilStacks(now), coilLeft: coilStacks(now) ? left(_s.coils.get(_s.coilFoe).until) : 0, shedRecoverLeft: left(_s.shedReady),
+    coil: coilStacks(now),
+    coilLeft: coilStacks(now) ? left(_s.coils.get(_s.coilFoe).until) : 0,
+    shedRecoverLeft: left(_s.shedReady),
     // SD9d: Gearward's winding, The Hour Turns' recovery
-    gearLeft: left(_s.gearReady), hourRecoverLeft: left(_s.hourReady),
+    gearLeft: left(_s.gearReady),
+    hourRecoverLeft: left(_s.hourReady),
     // EG15: the Discipline's armed element (-1 none), the Reprieve's shield (its points, while its window holds), its window
     // and recovery, and the death saves the Spire holds to its next Redoubt
-    armed: _s.armed, reprieve: now < _s.reprieveUntil ? _s.reprieve : 0, reprieveLeft: now < _s.reprieveUntil && _s.reprieve > 0 ? left(_s.reprieveUntil) : 0,
-    reprieveRecoverLeft: left(_s.reprieveReady), redoubt: Object.keys(SPIRE_SAVES).filter(spireHeld),
-    harvestRecoverLeft: left(_s.harvestReady),   // WITCH1: Soul Harvest's recovery
+    armed: _s.armed,
+    reprieve: now < _s.reprieveUntil ? _s.reprieve : 0,
+    reprieveLeft: now < _s.reprieveUntil && _s.reprieve > 0 ? left(_s.reprieveUntil) : 0,
+    reprieveRecoverLeft: left(_s.reprieveReady),
+    redoubt: Object.keys(SPIRE_SAVES).filter(spireHeld),
+    harvestRecoverLeft: left(_s.harvestReady), // WITCH1: Soul Harvest's recovery
     // STAR7: Bound in Silk's strands on the foe my last blow touched, and Mephala's Veil's recovery
-    strands: strandCount(now), veilRecoverLeft: left(_s.veilReady),
+    strands: strandCount(now),
+    veilRecoverLeft: left(_s.veilReady),
   };
 }
 
@@ -974,35 +1227,96 @@ export function setHudChips(entity, now = _now()) {
   const held = new Set(st.redoubt);
   const wait = (k, n) => (held.has(k) ? 'Redoubt' : time(n));
   const out = [];
-  if (t.get('dagon')?.[2] && st.rampage) out.push({ key: 'rampage', set: 'dagon', name: `Rampage ${'I'.repeat(st.rampage)}`, text: time(st.rampageLeft), state: 'active' });
+  if (t.get('dagon')?.[2] && st.rampage)
+    out.push({
+      key: 'rampage',
+      set: 'dagon',
+      name: `Rampage ${'I'.repeat(st.rampage)}`,
+      text: time(st.rampageLeft),
+      state: 'active',
+    });
   if (t.get('malacath')?.[2]) {
-    if (st.halvedLeft) out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: time(st.halvedLeft), state: 'active' });
-    else if (st.unbrokenLeft || held.has('unbroken')) out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: wait('unbroken', st.unbrokenLeft), state: 'recovering' });
+    if (st.halvedLeft)
+      out.push({ key: 'unbroken', set: 'malacath', name: 'Unbroken', text: time(st.halvedLeft), state: 'active' });
+    else if (st.unbrokenLeft || held.has('unbroken'))
+      out.push({
+        key: 'unbroken',
+        set: 'malacath',
+        name: 'Unbroken',
+        text: wait('unbroken', st.unbrokenLeft),
+        state: 'recovering',
+      });
   }
   if (t.get('ruhn')?.[2]) {
     if (st.wrathLeft) out.push({ key: 'wrath', set: 'ruhn', name: 'Wrath', text: time(st.wrathLeft), state: 'active' });
-    else if (st.wrathRecoverLeft) out.push({ key: 'wrath', set: 'ruhn', name: 'Wrath', text: time(st.wrathRecoverLeft), state: 'recovering' });
+    else if (st.wrathRecoverLeft)
+      out.push({ key: 'wrath', set: 'ruhn', name: 'Wrath', text: time(st.wrathRecoverLeft), state: 'recovering' });
   }
-  if (t.get('nocturnal')?.[2] && st.eventideLeft) out.push({ key: 'eventide', set: 'nocturnal', name: 'Eventide', text: time(st.eventideLeft), state: 'recovering' });
+  if (t.get('nocturnal')?.[2] && st.eventideLeft)
+    out.push({ key: 'eventide', set: 'nocturnal', name: 'Eventide', text: time(st.eventideLeft), state: 'recovering' });
   // RAID4b: No Escape's mark while it stands; Iron Hide's ward while it holds (its points), else its recovery
-  if (t.get('thieftaker')?.[2] && st.markLeft) out.push({ key: 'mark', set: 'thieftaker', name: 'No Escape', text: time(st.markLeft), state: 'active' });
+  if (t.get('thieftaker')?.[2] && st.markLeft)
+    out.push({ key: 'mark', set: 'thieftaker', name: 'No Escape', text: time(st.markLeft), state: 'active' });
   if (t.get('orcsbane')?.[2]) {
     if (st.ward) out.push({ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: String(st.ward), state: 'active' });
-    else if (st.wardRecoverLeft) out.push({ key: 'ward', set: 'orcsbane', name: 'Iron Hide', text: time(st.wardRecoverLeft), state: 'recovering' });
+    else if (st.wardRecoverLeft)
+      out.push({
+        key: 'ward',
+        set: 'orcsbane',
+        name: 'Iron Hide',
+        text: time(st.wardRecoverLeft),
+        state: 'recovering',
+      });
   }
   // SERPENT-SET: Shed Skin's recovery, while it recovers
-  if (t.get('coilscale')?.[2] && (st.shedRecoverLeft || held.has('shed'))) out.push({ key: 'shed', set: 'coilscale', name: 'Shed Skin', text: wait('shed', st.shedRecoverLeft), state: 'recovering' });
+  if (t.get('coilscale')?.[2] && (st.shedRecoverLeft || held.has('shed')))
+    out.push({
+      key: 'shed',
+      set: 'coilscale',
+      name: 'Shed Skin',
+      text: wait('shed', st.shedRecoverLeft),
+      state: 'recovering',
+    });
   // SD9d: The Hour Turns' recovery, while it recovers
-  if (t.get('numidium')?.[2] && (st.hourRecoverLeft || held.has('hour'))) out.push({ key: 'hour', set: 'numidium', name: 'The Hour Turns', text: wait('hour', st.hourRecoverLeft), state: 'recovering' });
+  if (t.get('numidium')?.[2] && (st.hourRecoverLeft || held.has('hour')))
+    out.push({
+      key: 'hour',
+      set: 'numidium',
+      name: 'The Hour Turns',
+      text: wait('hour', st.hourRecoverLeft),
+      state: 'recovering',
+    });
   // EG15: the Reprieve's shield while it holds (its points), else its recovery - "Redoubt" while the Spire holds it
   if (t.get('panoply')?.[2]) {
-    if (st.reprieve) out.push({ key: 'reprieve', set: 'panoply', name: 'Reprieve', text: String(st.reprieve), state: 'active' });
-    else if (st.reprieveRecoverLeft || held.has('reprieve')) out.push({ key: 'reprieve', set: 'panoply', name: 'Reprieve', text: wait('reprieve', st.reprieveRecoverLeft), state: 'recovering' });
+    if (st.reprieve)
+      out.push({ key: 'reprieve', set: 'panoply', name: 'Reprieve', text: String(st.reprieve), state: 'active' });
+    else if (st.reprieveRecoverLeft || held.has('reprieve'))
+      out.push({
+        key: 'reprieve',
+        set: 'panoply',
+        name: 'Reprieve',
+        text: wait('reprieve', st.reprieveRecoverLeft),
+        state: 'recovering',
+      });
   }
   // WITCH1: Soul Harvest's recovery, while it recovers
-  if (t.get('wyrd')?.[2] && st.harvestRecoverLeft) out.push({ key: 'harvest', set: 'wyrd', name: HARVEST_TEXT.name(), text: time(st.harvestRecoverLeft), state: 'recovering' });
+  if (t.get('wyrd')?.[2] && st.harvestRecoverLeft)
+    out.push({
+      key: 'harvest',
+      set: 'wyrd',
+      name: HARVEST_TEXT.name(),
+      text: time(st.harvestRecoverLeft),
+      state: 'recovering',
+    });
   // STAR7: Mephala's Veil's recovery, while it recovers
-  if (t.get('starspun')?.[2] && st.veilRecoverLeft) out.push({ key: 'veil', set: 'starspun', name: VEIL_TEXT.chip(), text: time(st.veilRecoverLeft), state: 'recovering' });
+  if (t.get('starspun')?.[2] && st.veilRecoverLeft)
+    out.push({
+      key: 'veil',
+      set: 'starspun',
+      name: VEIL_TEXT.chip(),
+      text: time(st.veilRecoverLeft),
+      state: 'recovering',
+    });
   // AUDIT STAR S2: each chip carries its tier's index - every one above is its set's 6-piece tier (the law of this
   // function) - so the HUD's card reads the tier by it, never by a name: 'Veil' and 'Reprieve' begin no tier's
   // name, and a name in the player's language begins none of them
@@ -1011,5 +1325,22 @@ export function setHudChips(entity, now = _now()) {
 }
 
 /** Tests only: a clock of their own (seconds), and every power fresh. */
-export function _setSetPowersClockForTests(fn) { _now = typeof fn === 'function' ? fn : () => performance.now() / 1000; }
-export function _resetSetPowersForTests() { _s = fresh(); _carry = new WeakMap(); _blow = null; _bossBlowAt = -Infinity; _pendingBoss = false; _spireBlowAt = -Infinity; _pendingSpire = false; _holdOwed = 0; _say = (line) => { hudText(line); }; _sound = null; _allies = null; _spireRoom = () => null; }
+export function _setSetPowersClockForTests(fn) {
+  _now = typeof fn === 'function' ? fn : () => performance.now() / 1000;
+}
+export function _resetSetPowersForTests() {
+  _s = fresh();
+  _carry = new WeakMap();
+  _blow = null;
+  _bossBlowAt = -Infinity;
+  _pendingBoss = false;
+  _spireBlowAt = -Infinity;
+  _pendingSpire = false;
+  _holdOwed = 0;
+  _say = (line) => {
+    hudText(line);
+  };
+  _sound = null;
+  _allies = null;
+  _spireRoom = () => null;
+}

@@ -2183,7 +2183,7 @@ unbuilt.
 **THE SWEEP** (`tools/pixelBuildSweep.mjs`, on a player's own ARENA2 - nothing of it kept, nothing of it rendered to a
 file: Port-Doctrine). The world host booted in headless Chromium (SwiftShader) in shot mode, its frame held so nothing
 else runs, and the pump's own build driven pixel by pixel through the host's probe door
-(world.js:"window.__pixelBuild = async"): the stream re-centred on the pixel as a teleport re-centres it, then
+(worldShotHooks.js:"window.__pixelBuild"): the stream re-centred on the pixel as a teleport re-centres it, then
 `buildPixel`, a throw caught as the pump's catch catches it and kept with its stack. The places: every town of the
 location index (city, town, village, hamlet, a mod's row) and every fourth other place, the Bay's wilderness on a
 ten-pixel lattice (every region, every climate) and its sea on every other point of it, the land past the Bay in
@@ -2226,7 +2226,7 @@ cached-rejection shape AUDIT VE R12 took out of the tile sets:
 
 **THE RETRY LAW.** Those failures are transient - the next read would not have them - so the stream asks for a failed
 pixel again by its own law, not at the next crossing alone. The pump's catch lets the pixel go through `state.fail`
-(streamingWorld.js:"fail(px, py, now) {") where it called `release`, and the frame asks
+(streamingWorld.js:"fail(px, py, now)") where it called `release`, and the frame asks
 (world.js:"queue.push(...state.retryDue(performance.now()))") for the pixels whose wait is over
 (streamingWorld.js:"retryDue(now) {"): still in the grid, not listed again by a crossing meanwhile, taken back on the
 stream's books and queued nearest first. The waits are BUILD_RETRY_MS (streamingWorld.js:"export const BUILD_RETRY_MS"):
@@ -2241,9 +2241,9 @@ a pixel whose read failed once costs one build's hold; one that could never be b
 clock under x100 for about two minutes (at x20 lowest, the halvings and the climb's +5 a step) and holds nothing after
 its fifth ask.
 
-Recorded, not changed: loads that keep a failure but throw in no build - the snowfall's masks (snowfallHost.js:"failed = true; console.warn": no snow) and the helm's
+Recorded, not changed: loads that keep a failure but throw in no build - the snowfall's masks (snowfallHost.js:"failed = true;": no snow) and the helm's
 art (world.js `_csa*Load ??=`) - a session's look lost, not a hole in the world. Low Poly Trees' door no longer keeps
-one: since AUDIT BANTHA1 TREE-6 it is asked again on this backoff (lowPolyTreesAssets.js:"failedUntil = now() + (BUILD_RETRY_MS[tries] ?? Infinity);"),
+one: since AUDIT BANTHA1 TREE-6 it is asked again on this backoff (lowPolyTreesAssets.js:"failedUntil = now"),
 the trees flats meanwhile.
 
 **The four hosts.** `scenes/world.js` wired - it alone streams pixels (the pump, the frame's re-ask, the person
@@ -2877,9 +2877,9 @@ straight across beside the road TESA14 had built, and a road's crossing onto the
 from the Bay's edge.
 
 - **The law** (`systems/travel/travelRoute.js`): `routeGround` carries the reader of the installed layer of the roads past
-  the Bay (`travelRoute.js:"get pathsBeyond() { return pathsBeyond === arenaRoadByte && !arenaRoadsLayer() ? null : pathsBeyond; },"`
+  the Bay (`travelRoute.js:"get pathsBeyond()"`
   - `world/arenaRoads.js` arenaRoadByte, none while no layer is installed, so a plan with no roads past the Bay reads
-  nothing), and `planRoute` hands it to the search only when it walks roads (`travelRoute.js:"const beyond = roads || tracks ? pathsBeyond : null;"`
+  nothing), and `planRoute` hands it to the search only when it walks roads (`travelRoute.js:"const beyond = roads"`
   - FREE mode, which hands no road, reads none). A step past the table, or within JOIN_DEPTH of its edge where a
   crossing's join carries a Bay road out, asks the layer (`stepKind`'s beyondKind: the road's bit out of the one pixel and
   its back bit into the other, the Bay's own byte ORed with its join on the table): a road's step 1, a track's 1.6, as on
@@ -3599,7 +3599,7 @@ owner, the same day: "No band aids or half assed work". RELIEF-PEAKS named the c
 - **Measured** (`tools/horizonTreesProbe.mjs`, the freeware, Bay pixel 2046,325, the eye 300 m up, Land View 5): of the
   band ring's 185,688 trees, 45,068 (24.3%) stood wholly behind the middle ring's ground and 16,110 (8.7%) behind it in
   part (a 12 m tree) - every one drawn whole over the hill before.
-- **The fix** (`render/farTrees.js:"float skyline(vec3 eye, vec3 foot) {"`): the middle ring keeps the heights it draws
+- **The fix** (`render/farTrees.js:"float skyline(vec3 eye, vec3 foot)"`): the middle ring keeps the heights it draws
   (`render/midRing.js` groundHeights, `MidRingMesh.build`), and the far ring hands them to the band's draw with their corner
   in the band's frame (`farRing.js:"_bandGround(origin) {"`). The band uploads them once a ring as a half float a vertex,
   filtered, on GROUND_UNIT (`farTrees.js:"_ground(ground) {"`). Its vertex program takes the eye from the view and reads
@@ -3607,7 +3607,7 @@ owner, the same day: "No band aids or half assed work". RELIEF-PEAKS named the c
   left to the depth test its ground already passes (FLORA-GROUND's slot bits), a point past the ring not read - and the
   highest line the ground lifts at the tree, less GROUND_SLACK (1.5 m: the drawn triangles against the heights'
   bilinear, the half float's step), is the tree's cut: a tree under it whole is not drawn, and both fragment programs draw
-  a sprite above it alone. The JS twin (`farTrees.js:"export function skylineAt(eye, foot, ground, built = () => false) {"`)
+  a sprite above it alone. The JS twin (`farTrees.js:"export function skylineAt"`)
   is the law the pins and the probe read; the vertex program was run against it in WebGL2 by transform feedback (64 trees
   over a synthetic ridge with two built pixels: every whole-hidden verdict the same, the cut within 0.004 of a tree's
   height). The frames checked on the freeware: the ring's height under each band tree's foot is the tree's own ground
@@ -3787,17 +3787,17 @@ faults, both past the Bay; the Bay's plans were 100% on the road and are unchang
 
 - **The walk on the curves** (`systems/travel/roadLine.js`): a route's pixel past the Bay that it turns in, one road (or
   one track) in and out, is walked on the curve its byte paints between the two edges it crosses
-  (`roadLine.js:"export function routeCurveAt(pixels, kinds, i, {"`): the leg that ends there ends at the curve's apex,
+  (`roadLine.js:"export function routeCurveAt"`): the leg that ends there ends at the curve's apex,
   and the next walks the curve's second half before its straight run - each such leg carries its `line`, the painted
-  road's native points (`roadLine.js:"export function roadLineLegs(legs, ix, pixels, kinds, o = {}) {"`, from
-  `travelRoute.js:"return roadLineLegs(legs, ix, pixels, kinds, { byteAt: roadBytes });"`). Travel Options walks a
+  road's native points (`roadLine.js:"export function roadLineLegs"`, from
+  `travelRoute.js:"return roadLineLegs"`). Travel Options walks a
   line's points as its lane (`travelOptions.js:"...(leg.line && !leg.ring ? { pts: [[a.x, a.z], ...leg.line] } : {})"`,
   the autopilot's `path`, OW-ROAD-TRUE's pursuit), aims a leg at its line's end (`legEnd`), rejoins a curve at its
   nearest point (`travelOptions.js:"const near = lane?.pts ? nearestOnLine(lane.pts, me) : null;"`) and walks a last
   leg's line to its place or its spot. The drawn line and the forecast run the same points (`routeDrawPoints`' `via`,
   `drawRouteRuns`, `drawOwnRun`). A pair the byte paints no curve for (a T's stem, a junction's turn sharper than 45
   degrees), a way straight through, the Bay's pixels and the route's two ends are the middles they were - on the road.
-- **The plan keeps to the roads** (`travelRoute.js:"export function* roadEndsSteps(from, to, {"`). A plan handed the roads
+- **The plan keeps to the roads** (`travelRoute.js:"export function* roadEndsSteps"`). A plan handed the roads
   walks the open ground only on its ends' own legs and across a gap in them:
   - **each end's leg**: none about an end on a road or a track (its pixel carries one - it starts or ends on the road), out
     to ROAD_END_SLACK (2) rings past the nearest road about an end off them (a spot in the field, a dungeon off the road);
@@ -3812,12 +3812,12 @@ faults, both past the Bay; the Bay's plans were 100% on the road and are unchang
     (3,911) joined to no other; 28 places' roads join no other road, their narrowest crossing 2 to 9 pixels (Taneth's 4,
     Necrom's 2); 11 on islands none within 400.
   - **the searches** walk those legs and crossings alone: the roads' search past the Bay
-    (`travelRoute.js:"if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny))) continue;"`) and the ladder on the Bay
-    (`travelRoute.js:"if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny))) continue;"`). A way by the roads
-    is kept however much dearer than the straight walk (`travelRoute.js:"if (byRoad) return byRoad;"`).
+    (`travelRoute.js:"if (kind < 0 || (kind === 2 && !endLeg(cx, cy, nx, ny)))"`) and the ladder on the Bay
+    (`travelRoute.js:"if (kind < 0 || (kind === 2 && endLeg && !endLeg(cx, cy, nx, ny)))"`). A way by the roads
+    is kept however much dearer than the straight walk (`travelRoute.js:"if (byRoad) return"`).
   - **no road joins the two** (an end no road comes within BY_ROAD_SEEK of; an island's roads with no crossing; every box
     the ladder holds without a way by them): TV2's cost law, the plan's own again with `costLaw`
-    (`travelRoute.js:"if (!best && endLeg) return yield* planRouteSteps(from, to, { ...opts, costLaw: true, tally });"`),
+    (`travelRoute.js:"if (!best && endLeg)"`),
     then the walk across country as before. FREE mode hands no road and walks the cost law as it did.
 
 **Measured after** (the same sampling, seed 7: 60 tries a set, journeys of 20 to 900 pixels; "no way" a pair the land does
@@ -3851,7 +3851,7 @@ Imperial City to Bruma 5,086 to 20,095) - PLAN-SLICES' cells a frame, the same p
 - **A river under the road** (ROAD-LOOK, `03-World/Roads.md`): the plan's water is the map's own water pixels; a river
   CYRODIIL-WATERS carves inside a pixel is none of them, so a road over one is the plan's step as any road's, and walked on
   ROAD-LOOK's bridge where the river is wider than a ford. A water pixel under the Bay's own road (a causeway) is
-  stepped onto by that road alone (`travelRoute.js:"if (goal === 0 && isWater(bx, by) && !pavedStep(ax, ay, bx, by, bit, width, height, roads)) return -1;"`,
+  stepped onto by that road alone (`travelRoute.js:"=== 0 && isWater"`,
   main's RPT1026-WORLD CAUSEWAY), never a track's ford; roadEndsSteps' crossing of a gap walks no water pixel.
 - **OPEN**: a turn the painter draws no curve for (VOYAGER2's junction law pairs only turns of 45 degrees or less) is
   walked through the middle, as the lane walked it - off the paint by up to half the road's width at a sharp junction
@@ -3922,20 +3922,20 @@ the worst), and no open step past the Bay between two ends on the roads. The wal
 
 **What holds now** (`systems/travel/travelAutopilot.js`, `systems/travel/travelOptions.js`, `systems/travel/roadLine.js`):
 
-- **A corner is a turn** (`travelAutopilot.js:"export const LANE_CORNER_TURN = 22.5;"`): a point of a road's line that
+- **A corner is a turn** (`travelAutopilot.js:"export const LANE_CORNER_TURN"`): a point of a road's line that
   turns 22.5 degrees or more. Basic Roads' kinks turn 45 or 90; a painted curve's runs turn under 4. The force is cut, and
-  the aim stopped, at a corner alone (`travelAutopilot.js:"const cut = w.reach > 0"`). A street's line (OW-TOWN-WALK)
+  the aim stopped, at a corner alone (`travelAutopilot.js:"const cut ="`). A street's line (OW-TOWN-WALK)
   keeps every point a corner, as it was.
 - **A whole frame's reach** (`travelAutopilot.js:"measureWalk(worldX, worldZ) {"`): the step over the share of the force
   the walk asked, kept while the body stands. It is one body's walk, handed from leg to leg (`walk`), a place's and a
   spot's last leg too.
 - **On through a curve's apex**: a leg that ends inside a curve is handed the next leg's line
   (`travelOptions.js:"const after = lane && r.i + 1 < r.legs.length ? routeLane(r, r.i + 1) : null;"`); its end is no
-  corner then, and the aim looks on along it (`travelAutopilot.js:"export function pathPursuit(x, z, path, seg, look, ahead = null) {"`).
+  corner then, and the aim looks on along it (`travelAutopilot.js:"export function pathPursuit"`).
 - **No stop at a leg** (`travelOptions.js:"drive.arrived && st.route && st.autopilot && k < LEG_CHAIN_MAX"`): a routed
   leg's end goes on to the next leg's drive in the same frame, up to LEG_CHAIN_MAX (8) legs. The mod's own journeys keep
   their stop.
-- **Either kind's paint** (`roadLine.js:"for (const kind of new Set([a, b, a === 'road' ? 'track' : 'road'])) {"`): at a
+- **Either kind's paint** (`roadLine.js:"for (const kind of new Set([a, b, a === 'road' ? 'track' : 'road']))"`): at a
   turn, the curve the road or the track paints through both edges, the step in's kind first.
 
 **Measured after** (the same journeys; before / after):
@@ -3984,7 +3984,7 @@ land." On the freeware's ground with no roads past the Bay landed, 105 trips bet
 truly (no land joins them, by a flood under the planner's step law), about 55 falsely.
 
 **What it is now.** A plan past the Bay with no boat that spent its whole count asks once more, as a weighted A*
-(`travelRoute.js:"export const BEYOND_GREED = 3;"`), with its own count, in the widest rung's box. A plan that finds its
+(`travelRoute.js:"export const BEYOND_GREED"`), with its own count, in the widest rung's box. A plan that finds its
 way inside the count is the same plan at the same count; a box that held no way is not searched again. Measured: Daggerfall
 to the Imperial City 7,900 (the cheapest 7,574), Bruma, Solitude, Windhelm and Leyawiin to it as well; of the 105 trips, 42
 false refusals answered and 13 left, where a lean of 2 left 25. On 40 random trips over land, whose cheapest was measured
@@ -4031,7 +4031,7 @@ Cyrodiil and its neighbours laid as the game lays them (24 regions), 111 of 992 
 one. A spend of 300,000 reached them all, but the cells grow with the network, not the trip.
 
 **What it is now.** A road pixel with other than two steps out under the step law (`roadOuts`) is a junction. The pixels
-between two junctions are a chain, walked once and read either way (`travelRoute.js:"function roadGraphFor("`). The
+between two junctions are a chain, walked once and read either way (`travelRoute.js:"function roadGraphFor"`). The
 search moves junction to junction a chain at a time, at the same prices and the same lean (BY_ROAD_GREED). The ends' own
 legs, the gaps' crossings and the goal's neighbours are searched a pixel at a time under ROAD-FOLLOW's law, and a chain
 that reaches one stops there. There is no spend: BY_ROAD_MAX_EXPANSIONS is gone, and with it ROAD-BEYOND's bound of

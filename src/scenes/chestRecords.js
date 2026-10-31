@@ -15,30 +15,47 @@ const r2 = (v) => Math.round(v * 100) / 100;
 /** A chest's identity for its record: its model and where its placement stands, from `origin` (the building's). */
 export function chestIdentity(chest, origin) {
   const m = chest?.matrix;
-  return m ? { model: chest.modelIdNum, at: [r2(m[12] - origin[0]), r2(m[13] - origin[1]), r2(m[14] - origin[2])] } : {};
+  return m
+    ? { model: chest.modelIdNum, at: [r2(m[12] - origin[0]), r2(m[13] - origin[1]), r2(m[14] - origin[2])] }
+    : {};
 }
 
 /** Each house-chest record (`container:<i>`) of `records` to its chest among `chests` (each `{ modelIdNum, matrix }`):
  *  by what it is and where it stands first, the nearest within CHEST_MATCH_REACH; then a record without either by its
  *  index, onto a chest no record has named. A Map of record -> chest; a record it leaves out has no chest this visit. */
 export function matchChests(records, chests, origin) {
-  const list = chests ?? [], out = new Map(), taken = new Set();
+  const list = chests ?? [],
+    out = new Map(),
+    taken = new Set();
   const mine = (records ?? []).filter((c) => typeof c?.key === 'string' && c.key.startsWith('container:'));
   const named = (c) => c.model != null && Array.isArray(c.at);
   for (const c of mine) {
     if (!named(c)) continue;
-    let best = null, bd = CHEST_MATCH_REACH ** 2;
+    let best = null,
+      bd = CHEST_MATCH_REACH ** 2;
     for (const t of list) {
       if (taken.has(t) || t.modelIdNum !== c.model || !t.matrix) continue;
-      const d = (t.matrix[12] - origin[0] - c.at[0]) ** 2 + (t.matrix[13] - origin[1] - c.at[1]) ** 2 + (t.matrix[14] - origin[2] - c.at[2]) ** 2;
-      if (d <= bd) { bd = d; best = t; }
+      const d =
+        (t.matrix[12] - origin[0] - c.at[0]) ** 2 +
+        (t.matrix[13] - origin[1] - c.at[1]) ** 2 +
+        (t.matrix[14] - origin[2] - c.at[2]) ** 2;
+      if (d <= bd) {
+        bd = d;
+        best = t;
+      }
     }
-    if (best) { out.set(c, best); taken.add(best); }
+    if (best) {
+      out.set(c, best);
+      taken.add(best);
+    }
   }
   for (const c of mine) {
     if (named(c)) continue;
     const t = list[+c.key.split(':')[1]];
-    if (t && !taken.has(t)) { out.set(c, t); taken.add(t); }
+    if (t && !taken.has(t)) {
+      out.set(c, t);
+      taken.add(t);
+    }
   }
   return out;
 }

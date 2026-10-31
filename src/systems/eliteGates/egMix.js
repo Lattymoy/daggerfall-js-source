@@ -19,10 +19,17 @@
 //
 // Not a DFU member. Ledger A (ELITE-GATES).
 import { BOSS_CUES } from '../../world/gate/gateBoss.js';
-import { setPeerSoundScope } from '../../net/peer/peerFx.js';   // EG-ZH: the peers' sounds' one scope
+import { setPeerSoundScope } from '../../net/peer/peerFx.js'; // EG-ZH: the peers' sounds' one scope
 
 /** THE SPIRE MIX's numbers (section 26). */
-export const EG_MIX = Object.freeze({ duckDb: 6, duckMs: 300, addGapMs: 1500, barksPerKind: 4, peerDb: -4, watchfirePitch: 1.4 });
+export const EG_MIX = Object.freeze({
+  duckDb: 6,
+  duckMs: 300,
+  addGapMs: 1500,
+  barksPerKind: 4,
+  peerDb: -4,
+  watchfirePitch: 1.4,
+});
 /** A level in decibels as a gain. */
 export const egDbGain = (db) => 10 ** (db / 20);
 /** What rides THE CRITICAL BUS (never culled, ducks the score). */
@@ -30,7 +37,8 @@ export const EG_CRITICAL = Object.freeze(['sting', 'windup', 'release', 'check']
 
 /** Whether a personal sting sounds for a blow of `kind` ('lord', 'check', 'add') on my feet at `now`, the last add's sting
  *  at `lastAddAt` (ms). Pure. */
-export const egStingWanted = (kind, now, lastAddAt = -Infinity) => kind === 'lord' || kind === 'check' || (kind === 'add' && now - lastAddAt >= EG_MIX.addGapMs);
+export const egStingWanted = (kind, now, lastAddAt = -Infinity) =>
+  kind === 'lord' || kind === 'check' || (kind === 'add' && now - lastAddAt >= EG_MIX.addGapMs);
 
 /**
  * THE BARKS' CAP: of `barks` (`{ kind, at: [x, y, z] }`), at most `per` a kind, nearest `ear` first - the rest dropped this
@@ -40,7 +48,8 @@ export const egStingWanted = (kind, now, lastAddAt = -Infinity) => kind === 'lor
 export function egBarkCull(barks, ear, per = EG_MIX.barksPerKind) {
   const d2 = (b) => (ear && b.at ? (b.at[0] - ear[0]) ** 2 + (b.at[1] - ear[1]) ** 2 + (b.at[2] - ear[2]) ** 2 : 0);
   const sorted = [...barks].sort((a, b) => (b.critical ? 1 : 0) - (a.critical ? 1 : 0) || d2(a) - d2(b));
-  const n = new Map(), out = [];
+  const n = new Map(),
+    out = [];
   for (const b of sorted) {
     const k = n.get(b.kind) ?? 0;
     if (k >= per && !b.critical) continue;
@@ -53,7 +62,12 @@ export function egBarkCull(barks, ear, per = EG_MIX.barksPerKind) {
 /** EG-ZH: WATCHFIRE'S TELL (section 26) - the gate's sting (the parry's ring, world/gate/gateBoss.js BOSS_CUES.sting) at
  *  EG_MIX.watchfirePitch, so an early outline is heard apart from a sting on your own feet (pitch 2.2); its volume and
  *  reach the sting's. */
-export const EG_TELL_CUE = Object.freeze({ clip: BOSS_CUES.sting.clip, pitch: EG_MIX.watchfirePitch, volume: BOSS_CUES.sting.volume, reach: BOSS_CUES.sting.reach });
+export const EG_TELL_CUE = Object.freeze({
+  clip: BOSS_CUES.sting.clip,
+  pitch: EG_MIX.watchfirePitch,
+  volume: BOSS_CUES.sting.volume,
+  reach: BOSS_CUES.sting.reach,
+});
 
 /**
  * THE MIX'S SEAM: `sting(kind, at)` (a personal sting at my feet, ducking the score), `critical()` (the duck alone),
@@ -63,10 +77,21 @@ export const EG_TELL_CUE = Object.freeze({ clip: BOSS_CUES.sting.clip, pitch: EG
  * @param {{ audio?: any, music?: any, now?: () => number }} deps
  */
 export function createSpireMix({ audio = null, music = null, now = () => Date.now() } = {}) {
-  let lastAdd = -Infinity, stings = 0, ducks = 0, tells = 0, peersOn = false;
+  let lastAdd = -Infinity,
+    stings = 0,
+    ducks = 0,
+    tells = 0,
+    peersOn = false;
   const mix = {
     /** THE CRITICAL BUS: the score ducked EG_MIX.duckDb for EG_MIX.duckMs. */
-    critical() { ducks++; try { music?.duck?.(EG_MIX.duckDb, EG_MIX.duckMs / 1000); } catch { /* the score is never the fight */ } },
+    critical() {
+      ducks++;
+      try {
+        music?.duck?.(EG_MIX.duckDb, EG_MIX.duckMs / 1000);
+      } catch {
+        /* the score is never the fight */
+      }
+    },
     /** A personal sting for a blow of `kind` on my feet, at `at` (the scene's frame). Answers whether it sounded. */
     sting(kind, at) {
       const t = now();
@@ -74,7 +99,12 @@ export function createSpireMix({ audio = null, music = null, now = () => Date.no
       if (kind === 'add') lastAdd = t;
       stings++;
       const c = BOSS_CUES.sting;
-      try { if (at) audio?.play3d?.(c.clip, at, c.volume, { maxDistance: c.reach, distanceModel: 'linear', pitch: c.pitch }); } catch { /* a sound is never the fight */ }
+      try {
+        if (at)
+          audio?.play3d?.(c.clip, at, c.volume, { maxDistance: c.reach, distanceModel: 'linear', pitch: c.pitch });
+      } catch {
+        /* a sound is never the fight */
+      }
       mix.critical();
       return true;
     },
@@ -82,7 +112,14 @@ export function createSpireMix({ audio = null, music = null, now = () => Date.no
     barks(list, ear, play) {
       if (!list.length) return 0;
       const kept = egBarkCull(list, ear);
-      for (const b of kept) { try { play(b); } catch { /* never the fight */ } if (b.critical) mix.critical(); }
+      for (const b of kept) {
+        try {
+          play(b);
+        } catch {
+          /* never the fight */
+        }
+        if (b.critical) mix.critical();
+      }
       return kept.length;
     },
     /** EG-ZD: A BEAT ON THE CRITICAL BUS - `S` its record, volume and pitch (ui/eliteGates/egBeats.js EG_BEAT_SOUNDS' shape), played as a
@@ -91,7 +128,14 @@ export function createSpireMix({ audio = null, music = null, now = () => Date.no
     beat(S) {
       if (!S || !Number.isInteger(S.rec)) return false;
       let played = false;
-      try { if (audio?.playOneShot) { audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1); played = true; } } catch { /* a sound is never the breach */ }
+      try {
+        if (audio?.playOneShot) {
+          audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1);
+          played = true;
+        }
+      } catch {
+        /* a sound is never the breach */
+      }
       mix.critical();
       return played;
     },
@@ -103,14 +147,24 @@ export function createSpireMix({ audio = null, music = null, now = () => Date.no
       const want = !!on;
       if (want === peersOn) return peersOn;
       peersOn = want;
-      setPeerSoundScope(want ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(mix.peerVolume(1), run) : run()) : null);
+      setPeerSoundScope(
+        want ? (run) => (typeof audio?.scaled === 'function' ? audio.scaled(mix.peerVolume(1), run) : run()) : null,
+      );
       return peersOn;
     },
     /** EG-ZH: WATCHFIRE'S TELL - a told blow heard at `at` (the scene's frame), EG_TELL_CUE. Answers whether it sounded. */
     tell(at) {
       if (!at || !audio?.play3d) return false;
       tells++;
-      try { audio.play3d(EG_TELL_CUE.clip, at, EG_TELL_CUE.volume, { maxDistance: EG_TELL_CUE.reach, distanceModel: 'linear', pitch: EG_TELL_CUE.pitch }); } catch { /* a sound is never the fight */ }
+      try {
+        audio.play3d(EG_TELL_CUE.clip, at, EG_TELL_CUE.volume, {
+          maxDistance: EG_TELL_CUE.reach,
+          distanceModel: 'linear',
+          pitch: EG_TELL_CUE.pitch,
+        });
+      } catch {
+        /* a sound is never the fight */
+      }
       return true;
     },
     /** What the mix has done (tests). */

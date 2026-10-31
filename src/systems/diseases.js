@@ -37,21 +37,34 @@
 // verbatim so sequences match.
 
 import { savingThrow, EFFECT_FLAGS } from './spellcast.js';
-import { isEntityImmuneToDisease } from './effects.js';   // AUDIT 63 F15: AssignBundle's hard-immunity gate (EntityEffectManager.cs:495-499), beside its paralysis twin
-import { INFECTION, startInfection } from './infection.js';   // V1: the three special infections OnMonsterHit mints
+import { isEntityImmuneToDisease } from './effects.js'; // AUDIT 63 F15: AssignBundle's hard-immunity gate (EntityEffectManager.cs:495-499), beside its paralysis twin
+import { INFECTION, startInfection } from './infection.js'; // V1: the three special infections OnMonsterHit mints
 import { FATIGUE_MULTIPLIER } from './statMods.js';
-import { dice100, formulaOverride } from '../combat/formulas.js';   // DEX4b: OnMonsterHit's TryGetOverride
+import { dice100, formulaOverride } from '../combat/formulas.js'; // DEX4b: OnMonsterHit's TryGetOverride
 import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { noteFirstUse } from './tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 // ---- MagicAndEffectsEnums.Diseases, verbatim ----
 export const DISEASES = Object.freeze({
   None: -1,
-  WitchesPox: 0, Plague: 1, YellowFever: 2, StomachRot: 3,
-  Consumption: 4, BrainFever: 5, SwampRot: 6, CalironsCurse: 7,
-  Cholera: 8, Leprosy: 9, WoundRot: 10, RedDeath: 11, BloodRot: 12,
-  TyphoidFever: 13, Dementia: 14, Chrondiasis: 15, WizardFever: 16,
+  WitchesPox: 0,
+  Plague: 1,
+  YellowFever: 2,
+  StomachRot: 3,
+  Consumption: 4,
+  BrainFever: 5,
+  SwampRot: 6,
+  CalironsCurse: 7,
+  Cholera: 8,
+  Leprosy: 9,
+  WoundRot: 10,
+  RedDeath: 11,
+  BloodRot: 12,
+  TyphoidFever: 13,
+  Dementia: 14,
+  Chrondiasis: 15,
+  WizardFever: 16,
 });
 
 export const PERMANENT_DISEASE_VALUE = 0xff;
@@ -61,27 +74,59 @@ export const COMPLETED_DISEASE_VALUE = 0xfe;
 // Diseases id). Columns: 8 stat multipliers, HEA/FAT/SPL multipliers,
 // the daily damage roll span, days-of-symptoms span (0xFF = never
 // ending). Byte-exact from DiseaseEffect.cs:218-236. ----
-const D = (STR, INT, WIL, AGI, END, PER, SPD, LUC, HEA, FAT, SPL, minDamage, maxDamage, daysOfSymptomsMin, daysOfSymptomsMax) =>
-  Object.freeze({ STR, INT, WIL, AGI, END, PER, SPD, LUC, HEA, FAT, SPL, minDamage, maxDamage, daysOfSymptomsMin, daysOfSymptomsMax });
+const D = (
+  STR,
+  INT,
+  WIL,
+  AGI,
+  END,
+  PER,
+  SPD,
+  LUC,
+  HEA,
+  FAT,
+  SPL,
+  minDamage,
+  maxDamage,
+  daysOfSymptomsMin,
+  daysOfSymptomsMax,
+) =>
+  Object.freeze({
+    STR,
+    INT,
+    WIL,
+    AGI,
+    END,
+    PER,
+    SPD,
+    LUC,
+    HEA,
+    FAT,
+    SPL,
+    minDamage,
+    maxDamage,
+    daysOfSymptomsMin,
+    daysOfSymptomsMax,
+  });
 export const DISEASE_DATA = Object.freeze([
   //STR INT WIL AGI END PER SPD LUC HEA FAT SPL MIN MAX  DAYS
-  D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 10, 0xFF, 0xFF),   // Witches' Pox
-  D(1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 30, 0xFF, 0xFF),   // Plague
-  D(0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 5, 10, 0xFF, 0xFF),   // Yellow Fever
-  D(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 5, 0xFF, 0xFF),    // Stomach Rot
-  D(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0xFF, 0xFF),   // Consumption
-  D(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 5, 0xFF, 0xFF),    // Brain Fever
-  D(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0xFF, 0xFF),   // Swamp Rot
-  D(1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 5, 10, 3, 18),        // Caliron's Curse
-  D(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 30, 0xFF, 0xFF),   // Cholera
-  D(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 5, 30, 0xFF, 0xFF),   // Leprosy
-  D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 4, 0xFF, 0xFF),    // Wound Rot
-  D(0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 2, 10, 0xFF, 0xFF),   // Red Death
-  D(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 5, 10, 3, 18),        // Blood Rot
-  D(0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 10, 0xFF, 0xFF),   // Typhoid Fever
-  D(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 2, 10, 0xFF, 0xFF),   // Dementia
-  D(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 10, 0xFF, 0xFF),   // Chrondiasis
-  D(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4, 3, 18),         // Wizard Fever
+  D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 10, 0xff, 0xff), // Witches' Pox
+  D(1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 3, 30, 0xff, 0xff), // Plague
+  D(0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 5, 10, 0xff, 0xff), // Yellow Fever
+  D(0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 5, 0xff, 0xff), // Stomach Rot
+  D(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0xff, 0xff), // Consumption
+  D(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 5, 0xff, 0xff), // Brain Fever
+  D(1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 10, 0xff, 0xff), // Swamp Rot
+  D(1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 5, 10, 3, 18), // Caliron's Curse
+  D(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 30, 0xff, 0xff), // Cholera
+  D(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 5, 30, 0xff, 0xff), // Leprosy
+  D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 4, 0xff, 0xff), // Wound Rot
+  D(0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 2, 10, 0xff, 0xff), // Red Death
+  D(0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 5, 10, 3, 18), // Blood Rot
+  D(0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 10, 0xff, 0xff), // Typhoid Fever
+  D(0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 2, 10, 0xff, 0xff), // Dementia
+  D(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 5, 10, 0xff, 0xff), // Chrondiasis
+  D(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 4, 3, 18), // Wizard Fever
 ]);
 
 /** IsDiseasePermanent, verbatim (min == 0xff means never-ending). */
@@ -96,8 +141,23 @@ export const contractedMessageRecord = (diseaseType) => 100 + diseaseType;
  *  Pox.", "...the Plague, a very serious...") - the name the Status box tells a player once incubation is over, and so
  *  the one the HUD's status widget may show from then (ui/hud/hudStatus.js). Indexed by Diseases id. */
 export const DISEASE_NAMES = Object.freeze([
-  "Witches' Pox", 'Plague', 'Yellow Fever', 'Stomach Rot', 'Consumption', 'Brain Fever', 'Swamp Rot', "Caliron's Curse",
-  'Cholera', 'Leprosy', 'Wound Rot', 'Red Death', 'Blood Rot', 'Typhoid Fever', 'Dementia', 'Chrondiasis', 'Wizard Fever',
+  "Witches' Pox",
+  'Plague',
+  'Yellow Fever',
+  'Stomach Rot',
+  'Consumption',
+  'Brain Fever',
+  'Swamp Rot',
+  "Caliron's Curse",
+  'Cholera',
+  'Leprosy',
+  'Wound Rot',
+  'Red Death',
+  'Blood Rot',
+  'Typhoid Fever',
+  'Dementia',
+  'Chrondiasis',
+  'Wizard Fever',
 ]);
 
 /** TextManager "youFeelSomewhatBad" - the daily-tick HUD alert. */
@@ -113,9 +173,17 @@ export const youFeelSomewhatBadText = () => localizedText('youFeelSomewhatBad', 
 export const DISEASE_LIST_A = Object.freeze([DISEASES.Plague]);
 export const DISEASE_LIST_B = Object.freeze([DISEASES.Plague, DISEASES.StomachRot, DISEASES.BrainFever]);
 export const DISEASE_LIST_C = Object.freeze([
-  DISEASES.Plague, DISEASES.YellowFever, DISEASES.StomachRot, DISEASES.Consumption,
-  DISEASES.BrainFever, DISEASES.SwampRot, DISEASES.Cholera, DISEASES.Leprosy, DISEASES.RedDeath,
-  DISEASES.TyphoidFever, DISEASES.Dementia,
+  DISEASES.Plague,
+  DISEASES.YellowFever,
+  DISEASES.StomachRot,
+  DISEASES.Consumption,
+  DISEASES.BrainFever,
+  DISEASES.SwampRot,
+  DISEASES.Cholera,
+  DISEASES.Leprosy,
+  DISEASES.RedDeath,
+  DISEASES.TyphoidFever,
+  DISEASES.Dementia,
 ]);
 
 /** FormulaHelper.specialInfectionChance (percent on a 0..100 float
@@ -145,18 +213,23 @@ export function startDisease(target, diseaseType, currentDay, rolls = Math.rando
   // current caller needs it (infection.js mints its own entry), but the
   // clause is the reference's and a future producer must be able to say so.
   if (!specialInfection && isEntityImmuneToDisease(target)) return null;
-  if (!target.isPlayer || (target.level ?? 0) < 2) return null;   // Start: EndDisease for non-player hosts
-  if (target.activeEffects?.some((a) => a.kind === 'disease' && a.disease === diseaseType && !a.ended)) return null;   // AddState no-op
-  noteFirstUse('afflictions');   // TUT1: the player's first disease (or curse of the blood)
+  if (!target.isPlayer || (target.level ?? 0) < 2) return null; // Start: EndDisease for non-player hosts
+  if (target.activeEffects?.some((a) => a.kind === 'disease' && a.disease === diseaseType && !a.ended)) return null; // AddState no-op
+  noteFirstUse('afflictions'); // TUT1: the player's first disease (or curse of the blood)
   const data = DISEASE_DATA[diseaseType];
   const entry = {
-    kind: 'disease', disease: diseaseType, permanent: true,
-    incubationOver: false, lastDay: currentDay, daysOfSymptomsLeft: 0,
+    kind: 'disease',
+    disease: diseaseType,
+    permanent: true,
+    incubationOver: false,
+    lastDay: currentDay,
+    daysOfSymptomsLeft: 0,
     statMods: {},
   };
   // If not permanent, set a range for how long stats will fall
   if (!isDiseasePermanent(data)) {
-    entry.daysOfSymptomsLeft = data.daysOfSymptomsMin + Math.floor(rolls() * (data.daysOfSymptomsMax + 1 - data.daysOfSymptomsMin));   // Range(min, max+1)
+    entry.daysOfSymptomsLeft =
+      data.daysOfSymptomsMin + Math.floor(rolls() * (data.daysOfSymptomsMax + 1 - data.daysOfSymptomsMin)); // Range(min, max+1)
   }
   target.activeEffects = target.activeEffects || [];
   target.activeEffects.push(entry);
@@ -191,7 +264,7 @@ export const curableDiseaseCount = (entity) => {
  *  removes the entry, lifting its statMods with it). */
 export function endDisease(entry) {
   entry.daysOfSymptomsLeft = COMPLETED_DISEASE_VALUE;
-  entry.ended = true;   // forcedRoundsRemaining = 0
+  entry.ended = true; // forcedRoundsRemaining = 0
 }
 
 /** IncrementDailyDiseaseEffects, verbatim: ONE damage roll for the
@@ -200,9 +273,11 @@ export function endDisease(entry) {
  *  through the sinks (FAT in RAW units - no x64). */
 function incrementDailyDiseaseEffects(entry, sinks, rolls) {
   const data = DISEASE_DATA[entry.disease];
-  const damageAmount = data.minDamage + Math.floor(rolls() * (data.maxDamage + 1 - data.minDamage));   // Range(min, max+1)
+  const damageAmount = data.minDamage + Math.floor(rolls() * (data.maxDamage + 1 - data.minDamage)); // Range(min, max+1)
   const mods = entry.statMods;
-  const change = (stat, mult) => { if (mult) mods[stat] = (mods[stat] ?? 0) - mult * damageAmount; };
+  const change = (stat, mult) => {
+    if (mult) mods[stat] = (mods[stat] ?? 0) - mult * damageAmount;
+  };
   change('strength', data.STR);
   change('intelligence', data.INT);
   change('willpower', data.WIL);
@@ -212,7 +287,7 @@ function incrementDailyDiseaseEffects(entry, sinks, rolls) {
   change('speed', data.SPD);
   change('luck', data.LUC);
   if (data.HEA && sinks.hurt) sinks.hurt(data.HEA * damageAmount);
-  if (data.FAT && sinks.drainFatigue) sinks.drainFatigue(data.FAT * damageAmount);   // DecreaseFatigue WITHOUT the multiplier
+  if (data.FAT && sinks.drainFatigue) sinks.drainFatigue(data.FAT * damageAmount); // DecreaseFatigue WITHOUT the multiplier
   if (data.SPL && sinks.drainMagicka) sinks.drainMagicka(data.SPL * damageAmount);
 }
 
@@ -231,7 +306,7 @@ export function updateDiseaseEntry(entry, currentDay, sinks, rolls = Math.random
   // loop reads DISEASE_DATA[null] and throws on the first day of an
   // infection, which is the four-hosts version of never shipping it.
   if (entry.infection) return;
-  if (entry.ended) return;   // do nothing if expiring out
+  if (entry.ended) return; // do nothing if expiring out
   const daysPast = currentDay - entry.lastDay;
   // same day = incubation; 0xfe = disease has run its course
   if (daysPast === 0 || entry.daysOfSymptomsLeft === COMPLETED_DISEASE_VALUE) return;
@@ -272,9 +347,9 @@ export function inflictDisease(target, diseaseList, { rolls = Math.random, curre
   // effect (EntityEffectManager.cs:495-499). Returning early here
   // consumed neither roll, which is a divergence of the RNG stream for
   // every immune target - so the line is gone rather than moved.
-  if (target.level === 1) return null;   // classic: no diseases at level 1
-  if (savingThrow(2, EFFECT_FLAGS.Disease, target, 0, rolls) === 0) return null;   // resisted
-  const diseaseType = diseaseList[Math.floor(rolls() * diseaseList.length)];   // Range(0, length)
+  if (target.level === 1) return null; // classic: no diseases at level 1
+  if (savingThrow(2, EFFECT_FLAGS.Disease, target, 0, rolls) === 0) return null; // resisted
+  const diseaseType = diseaseList[Math.floor(rolls() * diseaseList.length)]; // Range(0, length)
   const entry = startDisease(target, diseaseType, currentDay, rolls);
   if (entry && onContract) onContract(diseaseType, entry);
   return entry;
@@ -298,16 +373,28 @@ export function fatigueDamage(target, damage, sinks) {
  */
 export function onMonsterHit(attacker, target, damage, deps = {}) {
   const o = formulaOverride('onMonsterHit');
-  if (o) { o(attacker, target, damage, deps); return; }
+  if (o) {
+    o(attacker, target, damage, deps);
+    return;
+  }
   runMonsterHitArm(CLASSIC_HIT_ARM[attacker.careerIndex] ?? 0, attacker, target, damage, deps);
 }
 
 /** DFU's switch, career -> arm (:1279-1371). The arms are numbered as Daggerfall Enemy Expansion's OnHit column numbers
  *  them - its chain tests them in this order (BestiaryMod.cs:1477-1561) - and the Nymph's and the Lamia's are one body. */
 export const CLASSIC_HIT_ARM = Object.freeze({
-  [MOBILE_TYPES.Rat]: 1, [MOBILE_TYPES.GiantBat]: 2, [MOBILE_TYPES.Spider]: 3, [MOBILE_TYPES.GiantScorpion]: 3,
-  [MOBILE_TYPES.Werewolf]: 4, [MOBILE_TYPES.Nymph]: 5, [MOBILE_TYPES.Lamia]: 5, [MOBILE_TYPES.Wereboar]: 6,
-  [MOBILE_TYPES.Zombie]: 7, [MOBILE_TYPES.Mummy]: 8, [MOBILE_TYPES.Vampire]: 9, [MOBILE_TYPES.VampireAncient]: 9,
+  [MOBILE_TYPES.Rat]: 1,
+  [MOBILE_TYPES.GiantBat]: 2,
+  [MOBILE_TYPES.Spider]: 3,
+  [MOBILE_TYPES.GiantScorpion]: 3,
+  [MOBILE_TYPES.Werewolf]: 4,
+  [MOBILE_TYPES.Nymph]: 5,
+  [MOBILE_TYPES.Lamia]: 5,
+  [MOBILE_TYPES.Wereboar]: 6,
+  [MOBILE_TYPES.Zombie]: 7,
+  [MOBILE_TYPES.Mummy]: 8,
+  [MOBILE_TYPES.Vampire]: 9,
+  [MOBILE_TYPES.VampireAncient]: 9,
 });
 /** How many arms DFU's switch has. */
 export const MONSTER_HIT_ARMS = 9;
@@ -317,50 +404,53 @@ export function runMonsterHitArm(arm, attacker, target, damage, deps = {}) {
   const { rolls = Math.random, currentDay = 0, sinks = null, onContract = null } = deps;
   const inflict = (list) => inflictDisease(target, list, { rolls, currentDay, onContract });
   switch (arm) {
-    case 1:   // Rat
+    case 1: // Rat
       // classic = listA only; DF Chronicles' listB kept (DFU choice)
       if (dice100(5, rolls())) inflict(DISEASE_LIST_B);
       break;
-    case 2:   // GiantBat
+    case 2: // GiantBat
       // classic 2% (DF Chronicles says 5%) - classic kept
       if (dice100(2, rolls())) inflict(DISEASE_LIST_B);
       break;
-    case 3:   // Spider, GiantScorpion
+    case 3: // Spider, GiantScorpion
       // S19: the attacker readies classic spell 66 (Spider Touch - Paralyze) unless the target is already paralyzed
       // (FindIncumbentEffect<Paralyze> == null gate). SetReadySpell noSpellPointCost=true - the scene's readySpell is a
       // free cast through the enemy spell seam.
       if (!target.activeEffects?.some((a) => a.kind === 'paralyze')) deps.readySpell?.(SPIDER_TOUCH_SPELL_INDEX);
       break;
-    case 4: {   // Werewolf
-      const random = rolls() * 100;   // Random.Range(0f, 100f)
+    case 4: {
+      // Werewolf
+      const random = rolls() * 100; // Random.Range(0f, 100f)
       if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
         startInfection(target, INFECTION.Werewolf, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
       }
       break;
     }
-    case 5:   // Nymph, and the Lamia (nothing in classic; DF Chronicles' fatigue rule kept) - one body in DFU's two cases
+    case 5: // Nymph, and the Lamia (nothing in classic; DF Chronicles' fatigue rule kept) - one body in DFU's two cases
       fatigueDamage(target, damage, sinks);
       break;
     // DFU puts the Nymph BETWEEN the two lycanthropes and gives each
     // its own arm (:1307-1329) - they are not the shared case this
     // port had while both were routed, because each mints its own
     // strain and the two cancel each other.
-    case 6: {   // Wereboar
-      const random = rolls() * 100;   // Random.Range(0f, 100f)
+    case 6: {
+      // Wereboar
+      const random = rolls() * 100; // Random.Range(0f, 100f)
       if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
         startInfection(target, INFECTION.Wereboar, { day: currentDay, regionIndex: deps.regionIndex ?? -1 });
       }
       break;
     }
-    case 7:   // Zombie
+    case 7: // Zombie
       // nothing in classic; DF Chronicles' 2% kept (DFU choice)
       if (dice100(2, rolls())) inflict(DISEASE_LIST_C);
       break;
-    case 8:   // Mummy
+    case 8: // Mummy
       if (dice100(5, rolls())) inflict(DISEASE_LIST_C);
       break;
-    case 9: {   // Vampire, VampireAncient
-      const random = rolls() * 100;   // Random.Range(0f, 100f)
+    case 9: {
+      // Vampire, VampireAncient
+      const random = rolls() * 100; // Random.Range(0f, 100f)
       if (random <= SPECIAL_INFECTION_CHANCE && target.isPlayer) {
         // Stage-one vampirism, which records WHERE it was caught: the
         // clan is read from this region at deployment, not from

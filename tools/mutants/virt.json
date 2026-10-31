@@ -29,8 +29,8 @@
   {
     "name": "VIRT-the-window-rebuilt-whole-on-every-move",
     "file": "src/ui/virtualRows.js",
-    "old": "    for (const [i, n] of nodes) if (i < ns || i >= ne) { if (active && n.contains?.(active)) lostFocus = true; n.remove(); nodes.delete(i); }",
-    "new": "    for (const [i, n] of nodes) if (i >= 0) { if (active && n.contains?.(active)) lostFocus = true; n.remove(); nodes.delete(i); }",
+    "old": "      if (i < ns || i >= ne) {",
+    "new": "      if (i >= 0) {",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "VIRT-the-window-rebuilt-inside-its-margin",
     "file": "src/ui/virtualRows.js",
-    "old": "    if (aligned && start <= line(v0 - 1) * cols && end >= Math.min(total, (line(v1 + 1) + 1) * cols)) { place(); return false; }",
-    "new": "    if (false) { place(); return false; }",
+    "old": "    if (aligned && start <= line(v0 - 1) * cols && end >= Math.min(total, (line(v1 + 1) + 1) * cols)) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "VIRT-an-unmeasurable-list-left-cut-short",
     "file": "src/ui/virtualRows.js",
-    "old": "      if (!g) { if (!geo) drawAll(); return; }",
-    "new": "      if (!g) return;",
+    "old": "      if (!g) {\n        if (!geo) drawAll();\n        return;\n      } // never measured: drawn whole; measured once: kept as it was",
+    "new": "      if (!g) return; // never measured: drawn whole; measured once: kept as it was",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "VIRT-the-fitted-bound-by-the-order-made",
     "file": "src/ui/textureCanvas.js",
-    "old": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }",
-    "new": "  if (fitted.has(key)) { const pic = fitted.get(key); hear(fitWaiting.get(key), onReady); return pic; }",
+    "old": "    fitted.delete(key);\n    fitted.set(key, pic);\n    hear(fitWaiting.get(key), onReady);",
+    "new": "    hear(fitWaiting.get(key), onReady);",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "VIRT-the-hit-put-back-as-nothing",
     "file": "src/ui/textureCanvas.js",
-    "old": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }",
-    "new": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, null); hear(fitWaiting.get(key), onReady); return pic; }",
+    "old": "    fitted.delete(key);\n    fitted.set(key, pic);",
+    "new": "    fitted.delete(key);\n    fitted.set(key, null);",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "AUDIT-VIRT-no-trim-at-a-landing",
     "file": "src/ui/textureCanvas.js",
-    "old": "      trimFitted();   // AUDIT VIRT: a picture put out while it was made comes back as it lands - the bound kept then too",
-    "new": "      void 0;",
+    "old": "        trimFitted(); // AUDIT VIRT: a picture put out while it was made comes back as it lands - the bound kept then too",
+    "new": "        void 0;",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-VIRT-the-empty-entry-kept",
     "file": "src/ui/textureCanvas.js",
-    "old": "    if (!url) { if (fitted.get(key) === null) fitted.delete(key); fitWaiting.delete(key); wakeAll(wake); return; }",
-    "new": "    if (!url) { fitWaiting.delete(key); return; }",
+    "old": "      if (fitted.get(key) === null) fitted.delete(key);\n      fitWaiting.delete(key);\n      wakeAll(wake);",
+    "new": "      fitWaiting.delete(key);",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-VIRT-the-fitted-cache-blind-to-the-mods",
     "file": "src/ui/textureCanvas.js",
-    "old": "  if (_fittedGen !== iconsGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = iconsGeneration(); }",
-    "new": "  if (_fittedGen !== iconsGeneration()) { _fittedGen = iconsGeneration(); }",
+    "old": "    fitted.clear();\n    fitWaiting.clear();\n    fittedBytes = 0;\n    _fittedGen = iconsGeneration();",
+    "new": "    _fittedGen = iconsGeneration();",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-VIRT-the-old-sets-make-kept",
     "file": "src/ui/textureCanvas.js",
-    "old": "      if (gen !== _fittedGen) { wakeAll(wake); return; }   // made from a mod set since replaced: not kept, asked again",
-    "new": "      void gen;",
+    "old": "        if (gen !== _fittedGen) {\n          wakeAll(wake);\n          return;\n        } // made from a mod set since replaced: not kept, asked again",
+    "new": "        void gen;",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-VIRT-the-scroll-heard-and-never-followed",
     "file": "src/ui/virtualRows.js",
-    "old": "  const onScroll = () => { if (queued || gone) return; queued = true; later(() => { queued = false; sync(); }); };",
-    "new": "  const onScroll = () => { if (queued || gone) return; queued = true; later(() => { queued = false; }); };",
+    "old": "      sync();\n    });",
+    "new": "    });",
     "tests": [
       "test/systems/virt_pack.test.js"
     ]
@@ -245,7 +245,7 @@
   {
     "name": "AUDIT-VIRT-the-boxes-round-it-ignored",
     "file": "src/ui/virtualRows.js",
-    "old": "      for (let a = container; a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement; a = a.parentElement) {",
+    "old": "      for (\n        let a = container;\n        a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement;\n        a = a.parentElement\n      ) {",
     "new": "      for (let a = container; a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement; a = null) {",
     "tests": [
       "test/systems/virt_pack.test.js"
@@ -263,7 +263,7 @@
   {
     "name": "AUDIT-VIRT-the-hidden-list-never-aimed",
     "file": "src/ui/virtualRows.js",
-    "old": "    if (!(hi > lo) && own) { const r = own.getBoundingClientRect(); return [r.top, r.bottom]; }",
+    "old": "    if (!(hi > lo) && own) {\n      const r = own.getBoundingClientRect();\n      return [r.top, r.bottom];\n    }",
     "new": "    void own;",
     "tests": [
       "test/systems/virt_pack.test.js"
@@ -301,7 +301,7 @@
   {
     "name": "AUDIT-VIRT-the-still-waiting-tiles-thrown-away",
     "file": "src/ui/enhanced/landingTiles.js",
-    "old": "      if (!fresh.classList.contains('has-icon')) continue;   // its picture is still being made - the pass is every waiting tile's, and another picture woke it",
+    "old": "      if (!fresh.classList.contains('has-icon')) continue; // its picture is still being made - the pass is every waiting tile's, and another picture woke it",
     "new": "      void 0;",
     "tests": [
       "test/systems/virt_pack.test.js"

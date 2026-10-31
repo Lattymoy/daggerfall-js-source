@@ -32,8 +32,8 @@
   {
     "name": "PADBINDS-the-unbound-action-dropped",
     "file": "src/ui/gamepadInput.js",
-    "old": "if (!c) { try { hooks.padAction?.(name); }",
-    "new": "if (!c) { try { void name; }",
+    "old": "          hooks.padAction?.(name);",
+    "new": "          void name;",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PADARRANGE-LT-ignored",
     "file": "src/ui/gamepadInput.js",
-    "old": "if (edge(HOTBAR_ARRANGE_CODE) && !P.stale.has(HOTBAR_ARRANGE_CODE))",
-    "new": "if (false && edge(HOTBAR_ARRANGE_CODE))",
+    "old": "      if (edge(HOTBAR_ARRANGE_CODE) && !P.stale.has(HOTBAR_ARRANGE_CODE)) {",
+    "new": "      if (false && edge(HOTBAR_ARRANGE_CODE)) {",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "PADARRANGE-the-place-swallows-nothing",
     "file": "src/ui/gamepadInput.js",
-    "old": "      for (const c of P.placeTaken) swallowed.add(c);\n",
-    "new": "",
+    "old": "      for (const c of P.placeTaken) swallowed.add(c);\n      const free = (c) => edge(c) && !P.placeTaken.has(c);",
+    "new": "      const free = (c) => edge(c) && !P.placeTaken.has(c);",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "PADARRANGE-the-bar-stays-tucked",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand || secondRaised());",
-    "new": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || secondRaised());",
+    "old": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || arranging || !!hand || secondRaised()); // PVP-SET: and the PvP menu",
+    "new": "  bar.classList.toggle('dragging', extDragging || !!hbDrag?.moved || secondRaised()); // PVP-SET: and the PvP menu",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "PADARRANGE-the-tap-picks-nothing",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "    else if (commit && d.payload.tapPick) takeHotbarHand(d.payload.slot);",
-    "new": "",
+    "old": "    else if (commit && d.payload.tapPick) takeHotbarHand(d.payload.slot); // PAD-ARRANGE: the pad's A takes it in hand",
+    "new": "    // PAD-ARRANGE: the pad's A takes it in hand",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "PADARRANGE-the-hand-outlives-the-window",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "dragEnd(false); hand = null; arranging = false; handPress = -1; raiseSync(); }",
-    "new": "dragEnd(false); raiseSync(); }",
+    "old": "    dragEnd(false);\n    hand = null;\n    arranging = false;\n    handPress = -1;\n    raiseSync();",
+    "new": "    dragEnd(false);\n    raiseSync();",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "PADARRANGE-put-down-on-the-press",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "{ e.preventDefault(); handPress = i; return; }",
-    "new": "{ e.preventDefault(); placeHotbarHand(i); return; }",
+    "old": "        handPress = i;",
+    "new": "        placeHotbarHand(i);",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "PADARRANGE-the-cleared-slot-kept-in-hand",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "    if (hand?.kind === 'slot' && hand.slot === i) { hand = null; handPress = -1; raiseSync(); }",
-    "new": "",
+    "old": "    if (hand?.kind === 'slot' && hand.slot === i) {\n      hand = null;\n      handPress = -1;\n      raiseSync();\n    } // PAD-ARRANGE: the slot in hand cleared",
+    "new": "    // PAD-ARRANGE: the slot in hand cleared",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "PADARRANGE-the-hand-kept-off-the-pad",
     "file": "src/ui/enhanced/enhancedHotbar.js",
-    "old": "  if ((hand || arranging) && !padInHand()) { hand = null; arranging = false; handPress = -1; raiseSync(); }\n",
-    "new": "",
+    "old": "  if ((hand || arranging) && !padInHand()) {\n    hand = null;\n    arranging = false;\n    handPress = -1;\n    raiseSync();\n  }\n  const on = hotbarMode();",
+    "new": "  const on = hotbarMode();",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "PADARRANGE-the-row-of-tens-tabs-taken",
     "file": "src/ui/gamepadInput.js",
-    "old": "inHand = !!xbApi?.holding?.() && !!xbApi?.crossbar?.();",
-    "new": "inHand = !!xbApi?.holding?.();",
+    "old": "        inHand = !!xbApi?.holding?.() && !!xbApi?.crossbar?.();",
+    "new": "        inHand = !!xbApi?.holding?.();",
     "tests": [
       "test/ui/plus/fb1004e_padarrange.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "HORSEFACE-the-host-never-shifts-the-body",
     "file": "src/player/mwView.js",
-    "old": "  eotbBody.rebase(delta);   // HORSE-FACE",
-    "new": "  void delta;   // HORSE-FACE",
+    "old": "  eotbBody.rebase(delta); // HORSE-FACE: the sprite's own feet too - an origin shift read as a placing",
+    "new": "  void delta; // HORSE-FACE: the sprite's own feet too - an origin shift read as a placing",
     "tests": [
       "test/player/eyeOfTheBeholder/fb1004e_horseface.test.js"
     ],
@@ -292,8 +292,8 @@
   {
     "name": "ARENAARROWS-the-tally-unread",
     "file": "src/systems/arena/arenaQuiver.js",
-    "old": "loosed?.get(m.template) ?? 0",
-    "new": "loosed?.get(m.template) ?? Infinity",
+    "old": "    const owed = Math.min(m.count - now, loosed?.get(m.template) ?? 0);",
+    "new": "    const owed = Math.min(m.count - now, loosed?.get(m.template) ?? Infinity);",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -362,8 +362,8 @@
   {
     "name": "ARENAARROWS-the-tally-left-running",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "const shots = stopShotTally() ?? new Map();",
-    "new": "const shots = new Map();",
+    "old": "      const shots = stopShotTally() ?? new Map();",
+    "new": "      const shots = new Map();",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -372,8 +372,8 @@
   {
     "name": "ARENAARROWS-the-dismissed-quiver-dropped",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "if (quiver.C === C) quiver.shots = shots; else quiver = null;",
-    "new": "quiver = null;",
+    "old": "      if (quiver.C === C) quiver.shots = shots;\n      else quiver = null;",
+    "new": "      quiver = null;",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -382,8 +382,8 @@
   {
     "name": "ARENAARROWS-no-mark-at-the-bout",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (ladder) { deps.setPlayerBout?.(cur.playerTag); markMine(cur); }",
-    "new": "    if (ladder) { deps.setPlayerBout?.(cur.playerTag); }",
+    "old": "      markMine(cur);\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -392,8 +392,8 @@
   {
     "name": "ARENAARROWS-no-refund-at-the-heal",
     "file": "src/scenes/arena/arenaBouts.js",
-    "old": "    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); refundMine(C); restoreSandHeld(P); C.lastHealth",
-    "new": "    if (C.ladder) { deps.heal?.(); deps.say?.(ARENA_TEXT.healed); restoreSandHeld(P); C.lastHealth",
+    "old": "      refundMine(C);\n      restoreSandHeld(P);",
+    "new": "      restoreSandHeld(P);",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -412,8 +412,8 @@
   {
     "name": "ARENATEAMS-the-side-ignored",
     "file": "src/combat/friendlyFire.js",
-    "old": "String(x.id) === String(y.id) && (x.side | 0) === (y.side | 0);",
-    "new": "String(x.id) === String(y.id);",
+    "old": "  return !!x && !!y && a !== b && String(x.id) === String(y.id) && (x.side | 0) === (y.side | 0);",
+    "new": "  return !!x && !!y && a !== b && String(x.id) === String(y.id);",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -442,8 +442,8 @@
   {
     "name": "ARENATEAMS-the-melee-test-inverted",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "const melee = bout.fighters.length > 2 && new Set",
-    "new": "const melee = bout.fighters.length <= 2 && new Set",
+    "old": "  const melee = bout.fighters.length > 2 && new Set(bout.fighters.map((f) => f.side | 0)).size === bout.fighters.length;",
+    "new": "  const melee =\n    bout.fighters.length <= 2 && new Set(bout.fighters.map((f) => f.side | 0)).size === bout.fighters.length;",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -452,8 +452,8 @@
   {
     "name": "ARENATEAMS-the-word-never-written",
     "file": "src/ui/arena/arenaHud.js",
-    "old": "parts.vs.textContent = shown.vs; }",
-    "new": "}",
+    "old": "    parts.vs.textContent = shown.vs;\n  } // ARENA-TEAMS",
+    "new": "  } // ARENA-TEAMS",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -512,8 +512,8 @@
   {
     "name": "UNDERCROFTDEEP-the-reach-dropped",
     "file": "src/world/arena/arenaUndercroft.js",
-    "old": "  for (const m of order.slice(i)) if (!undercroftHallNear(out, [m.x, m.y, m.z])) out.deep.push",
-    "new": "  for (const m of order.slice(i)) if (true) out.deep.push",
+    "old": "  for (const m of order.slice(i))\n    if (!undercroftHallNear(out, [m.x, m.y, m.z])) out.deep.push({ x: m.x, y: m.y, z: m.z });",
+    "new": "  for (const m of order.slice(i)) if (true) out.deep.push({ x: m.x, y: m.y, z: m.z });",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -522,8 +522,8 @@
   {
     "name": "UNDERCROFTDEEP-the-reach-forgets-the-stair",
     "file": "src/world/arena/arenaUndercroft.js",
-    "old": "  out.near = [[s.x, s.y, s.z], ...order",
-    "new": "  out.near = [...order",
+    "old": "  out.near = [[s.x, s.y, s.z], ...order.slice(0, i).map((m) => [m.x, m.y, m.z])];",
+    "new": "  out.near = [...order.slice(0, i).map((m) => [m.x, m.y, m.z])];",
     "tests": [
       "test/systems/arena/fb1004e_arena.test.js"
     ],
@@ -542,8 +542,8 @@
   {
     "name": "OWKIN-the-guild-never-matched",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (myTag && p?.gt && String(p.gt).toUpperCase() === String(myTag).toUpperCase()) return 'guild';\n",
-    "new": "",
+    "old": "  if (myTag && p?.gt && String(p.gt).toUpperCase() === String(myTag).toUpperCase()) return 'guild';\n  return null;",
+    "new": "  return null;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -552,8 +552,8 @@
   {
     "name": "OWKIN-no-guild-of-mine-matched",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (myTag && p?.gt && ",
-    "new": "  if (p?.gt && ",
+    "old": "  if (myTag && p?.gt && String(p.gt).toUpperCase() === String(myTag).toUpperCase()) return 'guild';",
+    "new": "  if (p?.gt && String(p.gt).toUpperCase() === String(myTag).toUpperCase()) return 'guild';",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -562,8 +562,8 @@
   {
     "name": "OWWHO-a-kin-switch-ignored",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (w[g] === false) return false;\n  return !(w.renown",
-    "new": "  return !(w.renown",
+    "old": "  if (w[g] === false) return false;\n  return !(w.renown > 0) || (Number(p?.lv) || 0) >= w.renown;",
+    "new": "  return !(w.renown > 0) || (Number(p?.lv) || 0) >= w.renown;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -572,8 +572,8 @@
   {
     "name": "OWWHO-the-floor-inverted",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": ">= w.renown;",
-    "new": "< w.renown;",
+    "old": "  return !(w.renown > 0) || (Number(p?.lv) || 0) >= w.renown;",
+    "new": "  return !(w.renown > 0) || (Number(p?.lv) || 0) < w.renown;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -582,8 +582,8 @@
   {
     "name": "OWNODEKM-the-reach-ignored",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;\n",
-    "new": "",
+    "old": "  if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -592,8 +592,8 @@
   {
     "name": "OWWHO-travellers-never-filtered",
     "file": "src/systems/travel/travelViewFilters.js",
-    "old": "  if (g === 'travellers' && !playerShown(m, w)) return false;\n",
-    "new": "",
+    "old": "  if (g === 'travellers' && !playerShown(m, w)) return false;\n  if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;",
+    "new": "  if (g === 'gathering' && w.nodeKm != null && Number.isFinite(m?.dist) && m.dist > w.nodeKm) return false;",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -642,8 +642,8 @@
   {
     "name": "OWHUBS-a-gate-block-missed",
     "file": "src/world/immersiveTravelGates.js",
-    "old": "IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`)",
-    "new": "IT_GATE_FILE.test(String(n ?? ''))",
+    "old": "  (loc?.exterior?.exteriorData?.blockNames ?? []).some(\n    (n) => IT_GATE_FILE.test(`${String(n ?? '').toUpperCase()}.json`) || isWallCarrier(n),\n  ); // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown",
+    "new": "  (loc?.exterior?.exteriorData?.blockNames ?? []).some((n) => IT_GATE_FILE.test(String(n ?? '')) || isWallCarrier(n)); // TS7: or the carrier of a wall on its outline (world/townWalls.js gateFurniture); a capital's: world/capitalCarriages.js isCarriageTown",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -722,8 +722,8 @@
   {
     "name": "OWKIN-the-travel-map-forgets-the-kin",
     "file": "src/ui/partyMapMarks.js",
-    "old": "kin: r.kin === 'friend' || r.kin === 'guild' ? r.kin : null, lv:",
-    "new": "kin: null, lv:",
+    "old": "      kin: r.kin === 'friend' || r.kin === 'guild' ? r.kin : null,",
+    "new": "      kin: null,",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -732,8 +732,8 @@
   {
     "name": "OWHUBS-the-wheel-on-the-mark",
     "file": "src/ui/ink/inkMap.js",
-    "old": "(beside ? [x - markReach(m) - CARRIAGE_WHEEL_R - 1, y - 1] : [x, y])",
-    "new": "(beside ? [x - 9, y - 1] : [x, y])",
+    "old": "export const carriageWheelAt = (m, x, y, beside = true) =>\n  beside ? [x - markReach(m) - CARRIAGE_WHEEL_R - 1, y - 1] : [x, y];",
+    "new": "export const carriageWheelAt = (m, x, y, beside = true) => (beside ? [x - 9, y - 1] : [x, y]);",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -742,8 +742,8 @@
   {
     "name": "OWHUBS-the-wheels-ground-unreserved",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    if (m.carriage) {   // OW-HUBS: and a carriage town's wheel beside it\n",
-    "new": "    if (false) {   // OW-HUBS: and a carriage town's wheel beside it\n",
+    "old": "    if (m.carriage) {",
+    "new": "    if (false) {",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -752,8 +752,8 @@
   {
     "name": "OWHUBS-the-left-name-on-the-wheel",
     "file": "src/ui/ink/inkMap.js",
-    "old": "(m.carriage ? markReach(m) + 2 * CARRIAGE_WHEEL_R + 2 : glyph)",
-    "new": "glyph",
+    "old": "      { x: px - (m.carriage ? markReach(m) + 2 * CARRIAGE_WHEEL_R + 2 : glyph) - 3 - w, base: py + size * 0.35 }, // OW-HUBS: past a carriage town's wheel",
+    "new": "      { x: px - glyph - 3 - w, base: py + size * 0.35 }, // OW-HUBS: past a carriage town's wheel",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -772,8 +772,8 @@
   {
     "name": "SEATTIP-readTip-ignores-the-bound",
     "file": "src/ui/eventMapMarks.js",
-    "old": ".map((l) => String(l ?? '').slice(0, textMax))",
-    "new": ".map((l) => String(l ?? '').slice(0, TIP_TEXT_MAX))",
+    "old": "    .map((l) => String(l ?? '').slice(0, textMax))",
+    "new": "    .map((l) => String(l ?? '').slice(0, TIP_TEXT_MAX))",
     "tests": [
       "test/ui/fb1004e_overworld.test.js"
     ],
@@ -842,8 +842,8 @@
   {
     "name": "WILDROAD-class-foes-trivial",
     "file": "src/systems/roadEncounters.js",
-    "old": "(ENEMY_BASICS)[mobileType]?.level;",
-    "new": "(ENEMY_BASICS)[mobileType]?.level ?? 0;",
+    "old": "  const lv = /** @type {any} */ (ENEMY_BASICS)[mobileType]?.level; // none for a class foe (built at the traveller's level)",
+    "new": "  const lv = /** @type {any} */ (ENEMY_BASICS)[mobileType]?.level ?? 0; // none for a class foe (built at the traveller's level)",
     "tests": [
       "test/systems/fb1004e_road.test.js"
     ],

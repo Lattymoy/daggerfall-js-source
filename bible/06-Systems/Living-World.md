@@ -2111,7 +2111,7 @@ taste, dead.
 The owner, walking the Imperial City: "Seems like NPCs arent navigating the entirety of the city". A capital's slice is
 cut from one city at its pixel's lines, so its walkers' grid holds pieces of several of the city's street nets (a
 district wall whose gate stands in the next slice parts it), and the town walked the one its most doors open onto - the
-others' people stayed in. A capital's slice is now A TOWN OF QUARTERS (`src/systems/livingWorld/places.js:"export function quartersOf(nav, doors, streets, main) {"`):
+others' people stayed in. A capital's slice is now A TOWN OF QUARTERS (`src/systems/livingWorld/places.js:"export function quartersOf"`):
 every component QUARTER_MIN of its buildings open onto is the town's (its net the union) and each a quarter - the town's
 places over its own street alone (`quarters`, `quarterAt`). Its people are each quarter's own (`census.js` quarterCensus:
 the town's own quarter's as townCensus mints them - households, watch, travellers - each other quarter's households of

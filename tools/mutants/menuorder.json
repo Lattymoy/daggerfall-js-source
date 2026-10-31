@@ -2,8 +2,8 @@
   {
     "name": "MENUORDER-glyph-pixel-dropped",
     "file": "src/ui/menu/menuGlyphs.js",
-    "old": "if (row[x] === '#') rects.push(",
-    "new": "if (row[x] === '#' && x > 0) rects.push(",
+    "old": "    for (let x = 0; x < 12; x++) if (row[x] === '#') rects.push(`<rect x='${x}' y='${y}' width='1' height='1'/>`);",
+    "new": "    for (let x = 0; x < 12; x++)\n      if (row[x] === '#' && x > 0) rects.push(`<rect x='${x}' y='${y}' width='1' height='1'/>`);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MENUORDER-glyph-mask-unnamed",
     "file": "src/ui/menu/menuGlyphs.js",
-    "old": "`[data-dficon=\"${k}\"] { --dficon: ${dficonUrl(k)}; }`",
-    "new": "`[data-dficon=\"${k}\"] { }`",
+    "old": "  .map((k) => `[data-dficon=\"${k}\"] { --dficon: ${dficonUrl(k)}; }`)",
+    "new": "  .map((k) => `[data-dficon=\"${k}\"] { }`)",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MENUORDER-glyph-own-colour",
     "file": "src/ui/menu/menuGlyphs.js",
-    "old": "  background-color: currentColor; -webkit-mask: var(--dficon)",
-    "new": "  background-color: #fff; -webkit-mask: var(--dficon)",
+    "old": "  background-color: currentColor; -webkit-mask: var(--dficon) center / contain no-repeat; mask: var(--dficon) center / contain no-repeat; }",
+    "new": "  background-color: #fff; -webkit-mask: var(--dficon) center / contain no-repeat; mask: var(--dficon) center / contain no-repeat; }",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "MENUORDER-market-picture-never-asked",
     "file": "src/ui/marketTab.js",
-    "old": "const matPic = (key) => pictureNode(m.picture?.(key, wake) ?? null, el, 'market-pic');",
-    "new": "const matPic = (key) => (key, null);",
+    "old": "  const matPic = (key) => pictureNode(m.picture?.(key, wake) ?? null, el, 'market-pic');",
+    "new": "  const matPic = (key) => (key, null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "MENUORDER-market-picture-wrong-key",
     "file": "src/ui/marketTab.js",
-    "old": "named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(row.material))",
-    "new": "named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(String(row.id)))",
+    "old": "      named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(row.material)),",
+    "new": "      named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(String(row.id))),",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "MENUORDER-market-supplier-unpictured",
     "file": "src/ui/marketTab.js",
-    "old": "matPic(w.key)), el('span', 'market-price', `${marksText(w.marks)} a bolt`)",
-    "new": "null), el('span', 'market-price', `${marksText(w.marks)} a bolt`)",
+    "old": "      row.append(\n        named(m.name(w.key), matPic(w.key)),\n        el('span', 'market-price', `${marksText(w.marks)} a bolt`),\n        inp,\n        b,\n      );",
+    "new": "      row.append(named(m.name(w.key), null), el('span', 'market-price', `${marksText(w.marks)} a bolt`), inp, b);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "MENUORDER-market-name-unpictured",
     "file": "src/ui/marketTab.js",
-    "old": "const named = (text, pic) => { const n = el('b', null, text); if (pic) { if (n.prepend) n.prepend(pic); else n.append(pic); } return n; };",
-    "new": "const named = (text) => el('b', null, text);",
+    "old": "  const named = (text, pic) => {\n    const n = el('b', null, text);\n    if (pic) {\n      if (n.prepend) n.prepend(pic);\n      else n.append(pic);\n    }\n    return n;\n  };",
+    "new": "  const named = (text) => el('b', null, text);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "MENUORDER-market-views-bare",
     "file": "src/ui/marketTab.js",
-    "old": "        t.setAttribute('data-dficon', MARKET_VIEW_ICONS[id] ?? 'list');   // MENU-ORDER\n",
-    "new": "",
+    "old": "        t.setAttribute('data-dficon', MARKET_VIEW_ICONS[id] ?? 'list'); // MENU-ORDER\n        if (st.view === id) t.setAttribute('aria-current', 'page');",
+    "new": "        if (st.view === id) t.setAttribute('aria-current', 'page');",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "MENUORDER-vendor-unpictured",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "const pic = pictureNode(v.picture?.(row.item, wake) ?? null, el, 'market-pic');",
-    "new": "const pic = null;",
+    "old": "    const pic = pictureNode(v.picture?.(row.item, wake) ?? null, el, 'market-pic');",
+    "new": "    const pic = null;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "MENUORDER-vendorpage-unpictured",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "const pic = pictureNode(safe(() => p.picture?.(item, rerender), null), el, 'vendor-pic');",
-    "new": "const pic = null;",
+    "old": "    const pic = pictureNode(\n      safe(() => p.picture?.(item, rerender), null),\n      el,\n      'vendor-pic',\n    );",
+    "new": "    const pic = null;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "MENUORDER-market-piece-unpictured",
     "file": "src/ui/marketTab.js",
-    "old": "const piecePic = (p) => pictureNode(m.piecePicture?.(p, wake) ?? null, el, 'market-pic');",
-    "new": "const piecePic = (p) => (p, null);",
+    "old": "  const piecePic = (p) => pictureNode(m.piecePicture?.(p, wake) ?? null, el, 'market-pic');",
+    "new": "  const piecePic = (p) => (p, null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "MENUORDER-reforge-tabs-bare",
     "file": "src/ui/reforgeWindow.js",
-    "old": "    t.setAttribute('data-dficon', REFORGE_PAGE_ICONS[id] ?? 'anvil');   // MENU-ORDER: each page its picture\n",
-    "new": "",
+    "old": "    t.setAttribute('data-dficon', REFORGE_PAGE_ICONS[id] ?? 'anvil'); // MENU-ORDER: each page its picture\n    t.setAttribute('role', 'tab');",
+    "new": "    t.setAttribute('role', 'tab');",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "MENUORDER-shipyard-tabs-bare",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      b.setAttribute('data-dficon', SHIPYARD_TAB_ICONS[t.id] ?? 'ship');   // MENU-ORDER: each page its picture\n",
-    "new": "",
+    "old": "      b.setAttribute('data-dficon', SHIPYARD_TAB_ICONS[t.id] ?? 'ship'); // MENU-ORDER: each page its picture\n      tabs.append(b);",
+    "new": "      tabs.append(b);",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "MENUORDER-shipyard-card-unpictured",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      card.append(pic, el('b', null, t.name),",
-    "new": "      card.append(el('b', null, t.name),",
+    "old": "      card.append(pic, el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));",
+    "new": "      card.append(el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "MENUORDER-navalyard-tabs-bare",
     "file": "src/ui/naval/navalYardWindow.js",
-    "old": "  yardTab.setAttribute('data-dficon', 'saw'); officeTab.setAttribute('data-dficon', 'anchor'); tradeTab.setAttribute('data-dficon', 'treasure');   // MENU-ORDER: each page its picture\n",
-    "new": "",
+    "old": "  yardTab.setAttribute('data-dficon', 'saw');\n  officeTab.setAttribute('data-dficon', 'anchor');\n  tradeTab.setAttribute('data-dficon', 'treasure'); // MENU-ORDER: each page its picture\n  const exchange = () => (typeof m.exchange === 'function' ? m.exchange() : null);",
+    "new": "  const exchange = () => (typeof m.exchange === 'function' ? m.exchange() : null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -389,15 +389,15 @@
   {
     "name": "MENUORDER-merchant-bare",
     "file": "src/ui/enhanced/enhancedMerchantPanel.js",
-    "old": "    if (icon) btn.setAttribute('data-dficon', icon);\n",
-    "new": "",
+    "old": "    if (icon) btn.setAttribute('data-dficon', icon);\n    btn.onclick = b.onClick;",
+    "new": "    btn.onclick = b.onClick;",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
   },
   {
     "name": "MENUORDER-host-stores-unpictured",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/professionsHost.js",
     "old": "        picture: (k, wake) => materialPicture(k, { onReady: wake }),   // MENU-ORDER: a material card's picture\n",
     "new": "",
     "tests": [
@@ -416,7 +416,7 @@
   {
     "name": "MENUORDER-host-traders-unpictured",
     "file": "src/scenes/vendorHost.js",
-    "old": "    picture: (it, wake) => itemPicture(it, { onReady: wake }),   // MENU-ORDER: a piece's picture on its row\n    waypoint: vendorWaypointOn,",
+    "old": "    picture: (it, wake) => itemPicture(it, { onReady: wake }), // MENU-ORDER: a piece's picture on its row\n    waypoint: vendorWaypointOn,",
     "new": "    waypoint: vendorWaypointOn,",
     "tests": [
       "test/ui/menuorder.test.js"
@@ -425,8 +425,8 @@
   {
     "name": "MENUORDER-refused-still-disabled",
     "file": "src/ui/brokerWindow.js",
-    "old": "  btn.setAttribute('aria-disabled', 'true');\n",
-    "new": "  btn.setAttribute('disabled', '');\n",
+    "old": "  btn.setAttribute('aria-disabled', 'true');",
+    "new": "  btn.setAttribute('disabled', '');",
     "tests": [
       "test/ui/menuorder.test.js",
       "test/systems/item/set7_broker.test.js"
@@ -435,8 +435,8 @@
   {
     "name": "MENUORDER-refused-no-title",
     "file": "src/ui/brokerWindow.js",
-    "old": "  btn.setAttribute('title', reason);\n  // AUDIT MENU-ORDER U15",
-    "new": "  // AUDIT MENU-ORDER U15",
+    "old": "  btn.setAttribute('title', reason);\n  // AUDIT MENU-ORDER U15: its name starts with the word it shows (WCAG's label in name - \"Need 5 more\", then whose and why)",
+    "new": "  // AUDIT MENU-ORDER U15: its name starts with the word it shows (WCAG's label in name - \"Need 5 more\", then whose and why)",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -444,8 +444,8 @@
   {
     "name": "MENUORDER-refused-untold",
     "file": "src/ui/brokerWindow.js",
-    "old": "    tell(reason);\n    if (held",
-    "new": "    if (held",
+    "old": "    tell(reason);\n    if (held && btn.isConnected === false && win && name)",
+    "new": "    if (held && btn.isConnected === false && win && name)",
     "tests": [
       "test/ui/menuorder.test.js",
       "test/systems/loot9_reforge.test.js"
@@ -454,8 +454,8 @@
   {
     "name": "MENUORDER-refused-row-picked",
     "file": "src/ui/brokerWindow.js",
-    "old": "    e?.stopPropagation?.();\n    // AUDIT MENU-ORDER U4",
-    "new": "    // AUDIT MENU-ORDER U4",
+    "old": "    e?.stopPropagation?.();\n    // AUDIT MENU-ORDER U4: the keys stay where the press was - a window that draws again on the word finds it by its name",
+    "new": "    // AUDIT MENU-ORDER U4: the keys stay where the press was - a window that draws again on the word finds it by its name",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "MENUORDER-insignia-refusal-pressable",
     "file": "src/ui/brokerWindow.js",
-    "old": "        if (!can && !busy && !pendingInsig) refusePress(btn, BROKER_REFUSALS.stones, refused);",
-    "new": "        if (false) refusePress(btn, BROKER_REFUSALS.stones, refused);",
+    "old": "        if (!can && !busy && !pendingInsig) refusePress(btn, BROKER_REFUSALS.stones, refused); // MENU-ORDER: pressed, it says why",
+    "new": "        if (false) refusePress(btn, BROKER_REFUSALS.stones, refused); // MENU-ORDER: pressed, it says why",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "MENUORDER-reforge-refusal-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
-    "new": "  const refused = (reason) => { const ask = asking; asking = null; if (ask) render(); else drawNote(); };",
+    "old": "    say(false, reason);\n    if (ask) render();",
+    "new": "    if (ask) render();",
     "tests": [
       "test/systems/loot9_reforge.test.js",
       "test/systems/loot16_curses.test.js",
@@ -495,8 +495,8 @@
   {
     "name": "MENUORDER-reforge-refusal-undrawn",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
-    "new": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); };",
+    "old": "    else drawNote();\n  };",
+    "new": "  };",
     "tests": [
       "test/systems/loot9_reforge.test.js",
       "test/systems/fb1012d_salvageclassic.test.js"
@@ -505,8 +505,8 @@
   {
     "name": "MENUORDER-reforge-refusal-keeps-ask",
     "file": "src/ui/reforgeWindow.js",
-    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
-    "new": "  const refused = (reason) => { const ask = asking; say(false, reason); if (ask) render(); else drawNote(); };",
+    "old": "    asking = null;\n    say(false, reason);",
+    "new": "    say(false, reason);",
     "tests": [
       "test/systems/fb1012d_salvageclassic.test.js"
     ]
@@ -596,8 +596,8 @@
   {
     "name": "MENUORDER-thumb-square-off-card",
     "file": "src/scenes/panelPicture.js",
-    "old": "x: Math.round((box.left - c.left + box.width / 2) * sx - pw / 2)",
-    "new": "x: Math.round((box.left - c.left) * sx - pw / 2)",
+    "old": "    x: Math.round((box.left - c.left + box.width / 2) * sx - pw / 2),",
+    "new": "    x: Math.round((box.left - c.left) * sx - pw / 2),",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -605,8 +605,8 @@
   {
     "name": "MENUORDER-thumb-copy-wrong-square",
     "file": "src/scenes/panelPicture.js",
-    "old": "drawImage(canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h)",
-    "new": "drawImage(canvas, 0, 0, rect.w, rect.h, 0, 0, rect.w, rect.h)",
+    "old": "    out.getContext('2d')?.drawImage(canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);",
+    "new": "    out.getContext('2d')?.drawImage(canvas, 0, 0, rect.w, rect.h, 0, 0, rect.w, rect.h);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -686,8 +686,8 @@
   {
     "name": "MENUORDER-ship-asked-each-card",
     "file": "src/scenes/shipPortraits.js",
-    "old": "    if (!p) {\n      p = new Promise",
-    "new": "    if (true) {\n      p = new Promise",
+    "old": "    if (!p) {",
+    "new": "    if (true) {",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -695,8 +695,8 @@
   {
     "name": "MENUORDER-ship-ask-stays-under-old-window",
     "file": "src/scenes/shipPortraits.js",
-    "old": "    for (const a of asks) if (a.hull === hull) a.where = where;",
-    "new": "    for (const a of asks) if (a.hull === -1) a.where = where;",
+    "old": "    for (const a of asks) if (a.hull === hull) a.where = where; // still waiting: drawn under the window that asks now",
+    "new": "    for (const a of asks) if (a.hull === -1) a.where = where; // still waiting: drawn under the window that asks now",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -704,8 +704,8 @@
   {
     "name": "MENUORDER-ship-none-kept",
     "file": "src/scenes/shipPortraits.js",
-    "old": "      p.then((url) => { if (!url) made.delete(hull); });",
-    "new": "      p.then(() => {});",
+    "old": "      p.then((url) => {\n        if (!url) made.delete(hull);\n      }); // none this time: the next window asks again",
+    "new": "      p.then(() => {}); // none this time: the next window asks again",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -722,8 +722,8 @@
   {
     "name": "MENUORDER-ship-never-given-up",
     "file": "src/scenes/shipPortraits.js",
-    "old": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS) { asks.splice(i, 1); ask.resolve(null); continue; }",
-    "new": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS * 1e9) { asks.splice(i, 1); ask.resolve(null); continue; }",
+    "old": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS) {",
+    "new": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS * 1e9) {",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -731,8 +731,8 @@
   {
     "name": "MENUORDER-ship-one-part",
     "file": "src/scenes/shipPortraits.js",
-    "old": "body: () => { for (const [gpu, m] of ship.parts) deps.renderer.drawMesh(gpu, m, null); },",
-    "new": "body: () => { const [gpu, m] = ship.parts[0]; deps.renderer.drawMesh(gpu, m, null); },",
+    "old": "            for (const [gpu, m] of ship.parts) deps.renderer.drawMesh(gpu, m, null);",
+    "new": "            const [gpu, m] = ship.parts[0];\n            deps.renderer.drawMesh(gpu, m, null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -758,8 +758,8 @@
   {
     "name": "MENUORDER-ship-camera-square",
     "file": "src/scenes/shipPortraits.js",
-    "old": "proj: mirrorProjectionX(perspective(FOV, aspect, ",
-    "new": "proj: mirrorProjectionX(perspective(FOV, 1, ",
+    "old": "    proj: mirrorProjectionX(perspective(FOV, aspect, Math.max(0.05, dist - rad * 1.5), dist + rad * 1.5)),",
+    "new": "    proj: mirrorProjectionX(perspective(FOV, 1, Math.max(0.05, dist - rad * 1.5), dist + rad * 1.5)),",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -767,8 +767,8 @@
   {
     "name": "MENUORDER-ship-box-centre",
     "file": "src/scenes/panelPicture.js",
-    "old": "y: Math.round((box.top - c.top + box.height / 2) * sy - ph / 2)",
-    "new": "y: Math.round((box.top - c.top) * sy - ph / 2)",
+    "old": "    y: Math.round((box.top - c.top + box.height / 2) * sy - ph / 2),",
+    "new": "    y: Math.round((box.top - c.top) * sy - ph / 2),",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -830,8 +830,8 @@
   {
     "name": "MENUORDER-card-ship-unasked",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      shipPicture(pic, s.hull);\n",
-    "new": "",
+    "old": "      shipPicture(pic, s.hull);\n      card.append(pic, el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));",
+    "new": "      card.append(pic, el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -839,8 +839,8 @@
   {
     "name": "MENUORDER-card-ship-unkept",
     "file": "src/ui/shipyardWindow.js",
-    "old": "    if (url) { img.setAttribute('src', url); return; }\n",
-    "new": "",
+    "old": "    if (url) {\n      img.setAttribute('src', url);\n      return;\n    }\n    if (!deps.picture) return; // AUDIT MENU-ORDER C4: no host to ask, nothing to wait on - her glyph",
+    "new": "    if (!deps.picture) return; // AUDIT MENU-ORDER C4: no host to ask, nothing to wait on - her glyph",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -848,8 +848,8 @@
   {
     "name": "MENUORDER-card-ship-unset",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      for (const i of imgs) i.setAttribute('src', u);\n",
-    "new": "",
+    "old": "      for (const i of imgs) i.setAttribute('src', u);\n    };",
+    "new": "    };",
     "tests": [
       "test/systems/shipyards1_host.test.js"
     ]
@@ -857,7 +857,7 @@
   {
     "name": "MENUORDER-card-ship-none-kept",
     "file": "src/ui/shipyardWindow.js",
-    "old": "      if (!u || !alive) { shipPics.delete(hull); return; }",
+    "old": "      if (!u || !alive) {\n        shipPics.delete(hull);\n        return;\n      }",
     "new": "      if (!u || !alive) return;",
     "tests": [
       "test/systems/shipyards1_host.test.js"
@@ -920,8 +920,8 @@
   {
     "name": "AUDITMO-R6-lanterns-lit",
     "file": "src/scenes/panelPicture.js",
-    "old": "  renderer.setPointLights?.(NO_POINTS, null, null);\n",
-    "new": "",
+    "old": "  renderer.setPointLights?.(NO_POINTS, null, null);\n  renderer.setIndirectLight?.(NONE3, 0, NONE3);",
+    "new": "  renderer.setIndirectLight?.(NONE3, 0, NONE3);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -929,8 +929,8 @@
   {
     "name": "AUDITMO-R6-moonlit",
     "file": "src/scenes/panelPicture.js",
-    "old": "  renderer.setMoonlight?.(null);\n",
-    "new": "",
+    "old": "  renderer.setMoonlight?.(null);\n  renderer.setThirdLight?.(null);",
+    "new": "  renderer.setThirdLight?.(null);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -1001,8 +1001,8 @@
   {
     "name": "AUDITMO-C5-closure-a-row",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "v.picture?.(row.item, wake)",
-    "new": "v.picture?.(row.item, () => ui.rerender())",
+    "old": "    const pic = pictureNode(v.picture?.(row.item, wake) ?? null, el, 'market-pic');",
+    "new": "    const pic = pictureNode(v.picture?.(row.item, () => ui.rerender()) ?? null, el, 'market-pic');",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -1046,8 +1046,8 @@
   {
     "name": "AUDITMO-U4-focus-dropped",
     "file": "src/ui/brokerWindow.js",
-    "old": ".find((b) => b.getAttribute('aria-label') === name)?.focus?.();",
-    "new": ".find((b) => b.getAttribute('aria-label') === name);",
+    "old": "      [...(win.querySelectorAll?.('[aria-disabled=\"true\"]') ?? [])]\n        .find((b) => b.getAttribute('aria-label') === name)\n        ?.focus?.();",
+    "new": "      [...(win.querySelectorAll?.('[aria-disabled=\"true\"]') ?? [])].find((b) => b.getAttribute('aria-label') === name);",
     "tests": [
       "test/ui/menuorder.test.js"
     ]
@@ -1055,7 +1055,7 @@
   {
     "name": "AUDITMO-U5-imprint-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(btn);",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      li.append(btn);",
     "new": "      li.append(btn);",
     "tests": [
       "test/systems/loot10_codex.test.js"
@@ -1064,8 +1064,8 @@
   {
     "name": "AUDITMO-U5-extract-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused);",
-    "new": "",
+    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused); // MENU-ORDER: pressed, it says why",
+    "new": "      // MENU-ORDER: pressed, it says why",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -1073,7 +1073,7 @@
   {
     "name": "AUDITMO-U5-unset-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
     "new": "      li.append(x, btn);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
@@ -1082,8 +1082,8 @@
   {
     "name": "AUDITMO-U5-set-pressable",
     "file": "src/ui/reforgeWindow.js",
-    "old": "        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
-    "new": "        li.append(btn);\n        ul.append(li);",
+    "old": "        };\n        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
+    "new": "        };\n        li.append(btn);\n        ul.append(li);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -1091,8 +1091,8 @@
   {
     "name": "AUDITMO-U5-imprint-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(btn);",
-    "new": "      if (why) refusePress(btn, '', refused);\n      li.append(btn);",
+    "old": "      };\n      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      li.append(btn);",
+    "new": "      };\n      if (why) refusePress(btn, '', refused);\n      li.append(btn);",
     "tests": [
       "test/systems/loot10_codex.test.js"
     ]
@@ -1200,8 +1200,8 @@
   {
     "name": "AUDITMO-U5-extract-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused);",
-    "new": "      if (xwhy) refusePress(x, '', refused);",
+    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused); // MENU-ORDER: pressed, it says why",
+    "new": "      if (xwhy) refusePress(x, '', refused); // MENU-ORDER: pressed, it says why",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -1209,8 +1209,8 @@
   {
     "name": "AUDITMO-U5-unset-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
-    "new": "      if (why) refusePress(btn, '', refused);\n      li.append(x, btn);",
+    "old": "      };\n      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
+    "new": "      };\n      if (why) refusePress(btn, '', refused);\n      li.append(x, btn);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]
@@ -1218,8 +1218,8 @@
   {
     "name": "AUDITMO-U5-set-unsaid",
     "file": "src/ui/reforgeWindow.js",
-    "old": "        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
-    "new": "        if (why) refusePress(btn, '', refused);\n        li.append(btn);\n        ul.append(li);",
+    "old": "          render();\n        };\n        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused); // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
+    "new": "          render();\n        };\n        if (why) refusePress(btn, '', refused);\n        li.append(btn);\n        ul.append(li);",
     "tests": [
       "test/systems/loot20_sockets.test.js"
     ]

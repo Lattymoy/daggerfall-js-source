@@ -20,7 +20,7 @@
 
 import { localeDocument } from './textManager.js';
 import { PACK_KIND } from './translationPacks.js';
-import { Table } from './quest/table.js';   // Utility/Table.cs, the one port of it (read-only here)
+import { Table } from './quest/table.js'; // Utility/Table.cs, the one port of it (read-only here)
 
 /** TextManager.GetText's answer for a database or key it does not hold (TextManager.cs:248-249). */
 export const TEXT_NOT_FOUND = '<TextError-NotFound>';
@@ -29,13 +29,17 @@ export const TEXT_COLUMN = 'text';
 
 // A database is parsed once per text: the cache is keyed by the document itself, so a pack installed, replaced or
 // removed, or a locale switched, reads the new file - and nothing is kept for a text no longer asked for past a few.
-const _parsed = new Map();   // document text -> Table | null (a file that would not parse)
+const _parsed = new Map(); // document text -> Table | null (a file that would not parse)
 function parseDatabase(name, text) {
   if (_parsed.has(text)) return _parsed.get(text);
   let table = null;
-  try { table = new Table(text); } catch (err) {
+  try {
+    table = new Table(text);
+  } catch (err) {
     // EnumerateTextDatabases' catch (:714-718): said, and the file is no database.
-    console.log(`TextManager unable to parse text database table ${name} with exception message ${err?.message ?? err}`);
+    console.log(
+      `TextManager unable to parse text database table ${name} with exception message ${err?.message ?? err}`,
+    );
   }
   if (_parsed.size >= 32) _parsed.clear();
   _parsed.set(text, table);
@@ -60,7 +64,8 @@ export function hasText(name, key) {
 }
 
 /** GetText (TextManager.cs:245-252): the row's text, or TEXT_NOT_FOUND. */
-export const getText = (name, key) => (hasText(name, key) ? textDatabase(name).getValue(TEXT_COLUMN, String(key)) : TEXT_NOT_FOUND);
+export const getText = (name, key) =>
+  hasText(name, key) ? textDatabase(name).getValue(TEXT_COLUMN, String(key)) : TEXT_NOT_FOUND;
 
 /** The port's reading of GetText where DFU shows a database's word: the pack's row, else `en` - the English the port
  *  holds for DFU's row, byte for byte. */

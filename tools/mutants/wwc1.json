@@ -2,8 +2,8 @@
   {
     "name": "WWC1-a-province-climate-not-the-maps",
     "file": "src/net/provinceNodes.js",
-    "old": "[regionOfTheatre(3)]: ground(CLIMATES.Mountain,",
-    "new": "[regionOfTheatre(3)]: ground(CLIMATES.Woodlands,",
+    "old": "  [regionOfTheatre(3)]: ground(CLIMATES.Mountain, { vein: 3, boulder: 2 }, 'ore:orichalcum'), // Skyrim: the mountains' mines",
+    "new": "  [regionOfTheatre(3)]: ground(CLIMATES.Woodlands, { vein: 3, boulder: 2 }, 'ore:orichalcum'), // Skyrim: the mountains' mines",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WWC1-cyrodiil-one-provinces-richness",
     "file": "src/net/provinceNodes.js",
-    "old": "if (region === CYRODIIL_REGION) return Math.max(1, ...PROVINCES.map((p) => p.rich[kind] ?? 1));",
-    "new": "if (region === CYRODIIL_REGION) return PROVINCES[0].rich[kind] ?? 1;",
+    "old": "  if (region === CYRODIIL_REGION) return Math.max(1, ...PROVINCES.map((p) => p.rich[kind] ?? 1));",
+    "new": "  if (region === CYRODIIL_REGION) return PROVINCES[0].rich[kind] ?? 1;",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WWC1-cyrodiil-one-provinces-ore",
     "file": "src/net/provinceNodes.js",
-    "old": "if (region === CYRODIIL_REGION) return PROVINCES.map((p) => p.ore).filter((o) => o !== null);",
-    "new": "if (region === CYRODIIL_REGION) return [PROVINCES[0].ore];",
+    "old": "  if (region === CYRODIIL_REGION) return PROVINCES.map((p) => p.ore).filter((o) => o !== null);",
+    "new": "  if (region === CYRODIIL_REGION) return [PROVINCES[0].ore];",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WWC1-a-provinces-ore-once",
     "file": "src/net/provinceNodes.js",
-    "old": "return ore ? Array(PROVINCE_ORE_SLOTS).fill(ore) : [];",
-    "new": "return ore ? [ore] : [];",
+    "old": "  return ore ? Array(PROVINCE_ORE_SLOTS).fill(ore) : [];",
+    "new": "  return ore ? [ore] : [];",
     "tests": [
       "test/world/worldWide/wwc1_ground.test.js"
     ]
@@ -176,8 +176,8 @@
   {
     "name": "WWC1-the-card-cyrodiils-line",
     "file": "src/ui/oreMapTip.js",
-    "old": "  if (at === CYRODIIL_REGION) lines.push(`Cyrodiil holds every province's ores and metals${times}`);\n  else if (sig)",
-    "new": "  if (sig)",
+    "old": "  if (at === CYRODIIL_REGION) lines.push(`Cyrodiil holds every province's ores and metals${times}`);\n  else if (sig) {",
+    "new": "  if (sig) {",
     "tests": [
       "test/ui/fb1011_oremap.test.js"
     ]

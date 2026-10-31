@@ -2,8 +2,8 @@
   {
     "name": "RISE-STUCK-screen-does-not-hold-the-top",
     "file": "src/ui/deathScreen.js",
-    "old": "    this.holdsTop = true;\n",
-    "new": "",
+    "old": "    this.holdsTop = true;\n    // DUPE-LOAD (2026-10-11): the ONE window a quickload is pressed from under (its \"F11 load\" hint, FIX-E) - the world",
+    "new": "    // DUPE-LOAD (2026-10-11): the ONE window a quickload is pressed from under (its \"F11 load\" hint, FIX-E) - the world",
     "tests": [
       "test/systems/travel/risestuck.test.js"
     ]

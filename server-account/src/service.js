@@ -24,14 +24,14 @@
 // from here.
 // ═══════════════════════════════════════════════════════════════════
 
-import { busyRead, BUSY_SHED_MS } from '../../src/net/busyLaw.js';   // BUSY-GATE: the reads an overloaded isolate sheds, one law with the client's gate
+import { busyRead, BUSY_SHED_MS } from '../../src/net/busyLaw.js'; // BUSY-GATE: the reads an overloaded isolate sheds, one law with the client's gate
 
 /** Bumped with every change to this Worker's law, and answered by
  *  /v1/health - the same discipline RELAY_VERSION keeps, for the same
  *  reason: a deploy that did not happen looks exactly like one that
  *  did. Kept in step with ACCOUNT_VERSION in wrangler.toml, which
  *  test/server/accountworker.test.js holds. */
-export const ACCOUNT_VERSION = 'acct235';   // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: "no daily cap ... value finds from 5 to 10"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.
+export const ACCOUNT_VERSION = 'acct235'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: "no daily cap ... value finds from 5 to 10"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.
 // acct234: EG-MIGHT (2026-10-31, acct231 then acct233 on its branch, renumbered past MUSIC-BOX's acct231, PORTAL-BOOK's acct232 and DRAGON-EACH's acct233 at the merges of main; the owner: "Address DMG cap in Elite Breach"; bible/11-Multiplayer/Elite-Gates.md section 21.1; migration 0204, 0203 on its branch): the judge reads each checkpoint's kit might (net/kitMight.js, realm_characters.might) and the mint signs it grown by the Renown's sky (`mg`, net/mightLaw.js). An older relay ignores `mg`; deploy it and the relay (world300) in either order.
 // acct233: DRAGON-EACH (2026-10-31, acct231 on its branch, renumbered past MUSIC-BOX acct231 and PORTAL-BOOK acct232 at the merge of main; the owner: "open up the rewards", of AUDIT DRAGON-CELL D4; bible/11-Multiplayer/Dwarven-Dragon.md DRAGON-EACH) - a dragon's kill, hoard and tame keyed (watch, place, account), `place` the receipt's `p` (-1 one from before it), so each dragon of a watch pays. Migration 0203. CI deploys it after the relay: a placed receipt acct232 counted in between is refused here (AUDIT DRAGON-CELL III G2). ROLLBACK FLOOR: never below acct233 for a week after the relay last minted `p` - acct232 would pay a placed receipt again.
 // acct232: PORTAL-BOOK (2026-10-31, acct231 on its branch, renumbered past MUSIC-BOX acct231 at the fold; the owner: "portal book (lets you keep spot to summon stones to like your houses guild hall friends houses)"; bible/06-Systems/Portal-Stone.md PORTAL-BOOK) - the item law knows the Portal Book (template 577, src/systems/gate/gateSpoils.js), bound. No migration. Deploy the account service before the site, or an honest pack holding one reads as a forgery. acct231: MUSIC-BOX (2026-10-31; bible/06-Systems/Online-Arc.md MUSIC-BOX) - a placed piece may be made the `music` station (net/decorLaw.js DECOR_STATIONS, its 5,000 gold licence); no migration. acct230: STOREFRONT (2026-10-29, acct211, acct213, acct216, acct219, acct220, acct222, acct223, acct224, acct225, acct227, acct228 then acct229 on its branch, renumbered past KEEP-MARK, SHED-REPLICA, MINT-TITLE-GATE, PVP-REWARD, PVP-NO-TENTH, CRAFT-SET, AUDIT TAMRIEL-WIDE C3, INSURE-ALL, YARD-CELL YC3, UNION-CHILDREN, HEARTH-SIBLING, DRAGON, STAFF-SPEED-2, HAND-WRAPS, GILDED-MAKER, FAMILY-STALE, ADMIN-ALL, GUILD-SHOP and BIRTH-SKILL at the merges of main; the owner: "an overhaul to the ingame shop menu ... Portal effects ... and kill effects"; bible/06-Systems/Storefront.md, Battle-Pass.md; migration 0201, 0198 then 0200 on its branch) - the shop's second build: wares held by id past the first nine bits (`shop_held`), bundles priced against what is held, the launch windows (SHOP_FEATURED, limited wares sold only inside theirs) and every sale counted by day for the staff (/v1/staff/econ/shop); the effects an account wears (`effects`: a kill effect, a portal skin, a mount look), POST /v1/account/effect, the kit minted on the token as `fx`; the token's glyphs minted as their mask `gb`; the Battle Pass (battlePass.js: /v1/pass/mine and /v1/pass/find, the day's bound and the challenges' counts; PASS_OPEN); AURUM (bible/06-Systems/Aurum.md): the account read's `aurum` card, POST /v1/aurum/buy, the packs (`shop_orders.aurum`), `aurum_ledger` and its deeds' triggers, AURUM_OPEN; AUDIT-STOREFRONT II: `shop_charge_words`; PASS-PANELS (2026-10-30, the owner: "a free panel track and a premium panel track using our new currency to both unlock tracks and buy the items"): a find and a challenge pay Aurum (`pass_days`), POST /v1/pass/unlock opens a season's premium track and POST /v1/pass/buy buys an item on its tracks, each a ledger line (`track`, `panel`), the items bought on `pass_items`; no pass, booster or Seasonal Collector is sold; AURUM-CACHES: POST /v1/aurum/cache claims a day's Aurum cache (aurumCache.js), one ledger line a cache, three a UTC day. ADMIN-ALL reaches what this adds: an Admin holds every effect, the Folios' items and the daily wares, and is sold none of them. CACHES-ONCE (a cache once ever a dungeon), PATRON-AURUM (a Patreon total paid as Aurum) and BLOOD-OF-COLDHARBOUR (Trakel's handle list) and THANKS-POST (the update's gift, migration 0202) grown in place (2026-10-30).
@@ -129,7 +129,8 @@ export async function readAll(/** @type {any} */ db, /** @type {any[]} */ statem
  *  queued for too long.", D1's code 7429), which #755's deploy met and the service answered as any other fault: `server`,
  *  500. It is still `server` (every book asks that again, and a new word would be a refusal to eight of them), but 503,
  *  so the metrics count an overload apart from a bug. */
-export const d1Overloaded = (/** @type {unknown} */ e) => /overloaded|queued for too long|\b7429\b/i.test(String((/** @type {any} */ (e))?.message ?? e ?? ''));
+export const d1Overloaded = (/** @type {unknown} */ e) =>
+  /overloaded|queued for too long|\b7429\b/i.test(String(/** @type {any} */ (e)?.message ?? e ?? ''));
 
 /** BUSY-GATE (2026-10-13, net/busyLaw.js): THE READS THIS ISOLATE SHEDS, HAVING MET AN OVERLOADED DATABASE. An overload
  *  is the primary's queue full; every read sent into it only lengthens it. So for BUSY_SHED_MS after this isolate meets
@@ -139,15 +140,23 @@ export const d1Overloaded = (/** @type {unknown} */ e) => /overloaded|queued for
  *  it. The moment the shedding ends (ms) - one an isolate, as the database is one. */
 let busyShedUntil = 0;
 /** BUSY-GATE: an overload met at `nowMs` - the reads shed for BUSY_SHED_MS from it. */
-export function noteOverload(/** @type {number} */ nowMs) { busyShedUntil = Math.max(busyShedUntil, nowMs + BUSY_SHED_MS); }
+export function noteOverload(/** @type {number} */ nowMs) {
+  busyShedUntil = Math.max(busyShedUntil, nowMs + BUSY_SHED_MS);
+}
 /** BUSY-GATE: whether this request is a read the isolate sheds at `nowMs`. */
-export const shedding = (/** @type {string} */ path, /** @type {string} */ method, /** @type {number} */ nowMs) => busyRead(path, method) && nowMs < busyShedUntil;
+export const shedding = (/** @type {string} */ path, /** @type {string} */ method, /** @type {number} */ nowMs) =>
+  busyRead(path, method) && nowMs < busyShedUntil;
 /** SHED-REPLICA: the replica reads it never moves to any instance - BUSY-HEART's two, which write to the primary: the
  *  heartbeat its beat on every ask, the motherlodes their claim and pick. On a replica those writes are still the
  *  overloaded primary's, so they stay shed. */
 export const SHED_NO_REPLICA = new Set(['/v1/heartbeat', '/v1/prof/motherlodes']);
 /** BUSY-GATE: a stood service is a fresh isolate - nothing shed. */
-export function _resetBusyShed() { busyShedUntil = 0; slowWaits.length = 0; slowSum.ms = 0; slowSum.trips = 0; }
+export function _resetBusyShed() {
+  busyShedUntil = 0;
+  slowWaits.length = 0;
+  slowSum.ms = 0;
+  slowSum.trips = 0;
+}
 
 /** SLOW-SHED (2026-10-19, the account database overloaded again, 18:05-18:25 UTC; bible/11-Multiplayer/Scale-Arc.md
  *  SLOW-SHED): A DATABASE TOO SLOW TO ANSWER IS SHED AS ONE THAT REFUSES. BUSY-GATE's shed opened only on D1's own word
@@ -178,7 +187,7 @@ const slowSum = { ms: 0, trips: 0 };
  *  too slow. A request that asked the database nothing says nothing of it. */
 export function noteD1Wait(/** @type {number} */ ms, /** @type {number} */ trips, /** @type {number} */ nowMs) {
   if (!(trips > 0) || !Number.isFinite(ms)) return;
-  const waited = Math.min(ms, trips * SLOW_SHED_TRIP_CAP_MS);   // metrics.js caps each trip; a caller that hands the whole is held to the same bound
+  const waited = Math.min(ms, trips * SLOW_SHED_TRIP_CAP_MS); // metrics.js caps each trip; a caller that hands the whole is held to the same bound
   slowWaits.push({ at: nowMs, ms: waited, trips });
   slowSum.ms += waited;
   slowSum.trips += trips;
@@ -187,9 +196,12 @@ export function noteD1Wait(/** @type {number} */ ms, /** @type {number} */ trips
     slowSum.ms -= gone.ms;
     slowSum.trips -= gone.trips;
   }
-  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return;   // a quick request keeps nothing open
+  if (slowWaits.length < SLOW_SHED_MIN || waited / trips < SLOW_SHED_WAIT_MS) return; // a quick request keeps nothing open
   if (slowSum.ms / slowSum.trips < SLOW_SHED_WAIT_MS) return;
-  if (nowMs >= busyShedUntil) console.warn(`[busy] slow: the shed opened - ${slowWaits.length} requests in ${SLOW_SHED_SPAN_MS / 1000} s waited ${Math.round(slowSum.ms / slowSum.trips)} ms a trip`);
+  if (nowMs >= busyShedUntil)
+    console.warn(
+      `[busy] slow: the shed opened - ${slowWaits.length} requests in ${SLOW_SHED_SPAN_MS / 1000} s waited ${Math.round(slowSum.ms / slowSum.trips)} ms a trip`,
+    );
   noteOverload(nowMs);
 }
 
@@ -237,8 +249,8 @@ export const REPLICA_ROUTES = new Map([
   ['/v1/realm/unions', 'POST'],
   ['/v1/saves', 'GET'],
   ['/v1/arena/board', 'POST'],
-  ['/v1/festival/town', 'POST'],   // WITCH1: a town's Hearth Offerings - reads and nothing else (festival.js festivalTown)
-  ['/v1/hunt/state', 'POST'],   // HUNT-LEAN: a character's hunt - reads and nothing else (hunts.js huntState)
+  ['/v1/festival/town', 'POST'], // WITCH1: a town's Hearth Offerings - reads and nothing else (festival.js festivalTown)
+  ['/v1/hunt/state', 'POST'], // HUNT-LEAN: a character's hunt - reads and nothing else (hunts.js huntState)
 ]);
 /** SCALE4d: where a replica session's FIRST statement goes - the primary. A mint's first statement is the session
  *  lookup, and every statement after it is served by a replica at least as new as that answer (D1's Sessions API: one
@@ -294,15 +306,33 @@ export const DB_FIRST_PRIMARY = Symbol('db-first-primary');
  *  or at the primary for a request that carries none (BOOKMARK-SPIRAL: any instance, for ANY_REPLICA_ROUTES); the
  *  binding itself for every other route. A bookmark D1 will not take starts as one with none would, and the mint's
  *  always starts at the primary (PRIMARY_FIRST_ROUTES, AUDIT SCALE II A-1). */
-export function routeDb(/** @type {any} */ db, /** @type {string} */ path, /** @type {string} */ method, /** @type {string|null} */ bookmark = null) {
+export function routeDb(
+  /** @type {any} */ db,
+  /** @type {string} */ path,
+  /** @type {string} */ method,
+  /** @type {string|null} */ bookmark = null,
+) {
   if (REPLICA_ROUTES.get(path) !== method) return db;
-  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) { try { return replicaDb(db, bookmark); } catch { /* a bookmark D1 refuses: as with none, below */ } }
+  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) {
+    try {
+      return replicaDb(db, bookmark);
+    } catch {
+      /* a bookmark D1 refuses: as with none, below */
+    }
+  }
   return replicaDb(db, ANY_REPLICA_ROUTES.get(path) === method ? REPLICA_ANY : REPLICA_CONSTRAINT);
 }
 
 /** SEAT-REPLICA: a session's newest bookmark, or null (the binding, an older runtime or a harness, keeps none). YARDS-REPLICA
  *  (2026-10-16): here, beside replicaDb, so every kept read that starts its next from the last one's bookmark reads it one way. */
-export const bookmarkOf = (/** @type {any} */ session) => { try { const m = session?.getBookmark?.(); return typeof m === 'string' && m ? m : null; } catch { return null; } };
+export const bookmarkOf = (/** @type {any} */ session) => {
+  try {
+    const m = session?.getBookmark?.();
+    return typeof m === 'string' && m ? m : null;
+  } catch {
+    return null;
+  }
+};
 
 /** SCALE4d: the binding as one D1 session (`withSession`) - every statement counted where the binding's are
  *  (metrics.js countedDb opens the session through itself), and DB_ROOT the binding the session came from, so what an
@@ -318,8 +348,8 @@ export function replicaDb(/** @type {any} */ db, constraint = REPLICA_CONSTRAINT
   return new Proxy(session, {
     get(target, key) {
       if (key === DB_ROOT) return root;
-      if (key === DB_ANY) return constraint === REPLICA_ANY;   // BOOKMARK-SPIRAL: its lookup's miss asks the primary
-      if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT;   // SESSION-SIGN: its lookup the primary's
+      if (key === DB_ANY) return constraint === REPLICA_ANY; // BOOKMARK-SPIRAL: its lookup's miss asks the primary
+      if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT; // SESSION-SIGN: its lookup the primary's
       const v = Reflect.get(target, key);
       return typeof v === 'function' ? v.bind(target) : v;
     },
@@ -365,8 +395,12 @@ export function savePathOf(path) {
   const part = seg.length === 3 ? seg[2] : null;
   if (part !== null && !SAVE_PARTS.includes(part)) return null;
   let characterId, saveName;
-  try { characterId = decodeURIComponent(seg[0]); saveName = decodeURIComponent(seg[1]); }
-  catch { return null; }   // a malformed escape is not a slot
+  try {
+    characterId = decodeURIComponent(seg[0]);
+    saveName = decodeURIComponent(seg[1]);
+  } catch {
+    return null;
+  } // a malformed escape is not a slot
   if (!CHAR_ID_RE.test(characterId)) return null;
   // A NAME IS BOUNDED AND PRINTABLE. The store's own cards carry
   // whatever the player typed, and this is the one door where that
@@ -402,15 +436,24 @@ export const SAVES_MAX = 60;
 /** Every path this service serves. Named once, so the 404 and the
  *  ladder cannot come to disagree about what exists. */
 export const ROUTES = new Set([
-  '/v1/health', '/v1/pubkey', '/v1/relaykey', '/v1/auth/guest', '/v1/auth/token', '/v1/auth/session',
-  '/v1/account', '/v1/auth/logout',
+  '/v1/health',
+  '/v1/pubkey',
+  '/v1/relaykey',
+  '/v1/auth/guest',
+  '/v1/auth/token',
+  '/v1/auth/session',
+  '/v1/account',
+  '/v1/auth/logout',
   // ACC1c: username and password. `register` needs a session (it
   // upgrades the guest row that session belongs to); `login` and
   // `recover` are the two that do NOT, because a player standing at
   // them has no session yet - which is exactly why they are the two
   // that are throttled.
-  '/v1/auth/register', '/v1/auth/login', '/v1/auth/recover',
-  '/v1/account/password', '/v1/account/email',
+  '/v1/auth/register',
+  '/v1/auth/login',
+  '/v1/auth/recover',
+  '/v1/account/password',
+  '/v1/account/email',
   // RECOVERY-SET: a new set of recovery codes, behind the password (accounts.js newRecoveryCodes)
   '/v1/account/recovery-codes',
   // ACC3: the one WRITE in the wardrobe. Holding a title is derived
@@ -419,21 +462,31 @@ export const ROUTES = new Set([
   '/v1/account/title',
   // WB9g: the Broker's insignia - a title and an aura BOUGHT (a sale recorded, the account's closed gates paying),
   // and the one other thing about the wardrobe a player chooses: the aura worn.
-  '/v1/account/insignia', '/v1/account/aura',
-  '/v1/broker/settle',   // AUDIT FB1024 (BROKER-RID): a Broker sale whose answer was lost, asked after by its request id
-  '/v1/account/icon',   // WITCH1: a profile icon worn, or none
-  '/v1/account/armory',   // ARMORY: an Aura Armory piece worn in its slot, or the slot emptied
-  '/v1/account/effect',   // STOREFRONT: a kill effect, a portal skin or a mount look worn in its slot, or the slot bared
+  '/v1/account/insignia',
+  '/v1/account/aura',
+  '/v1/broker/settle', // AUDIT FB1024 (BROKER-RID): a Broker sale whose answer was lost, asked after by its request id
+  '/v1/account/icon', // WITCH1: a profile icon worn, or none
+  '/v1/account/armory', // ARMORY: an Aura Armory piece worn in its slot, or the slot emptied
+  '/v1/account/effect', // STOREFRONT: a kill effect, a portal skin or a mount look worn in its slot, or the slot bared
   // STOREFRONT (bible/06-Systems/Battle-Pass.md): THE BATTLE PASS - the account's pass, and a deed's find; PASS-PANELS: the
   // premium track opened and an item bought, for Aurum
-  '/v1/pass/mine', '/v1/pass/find', '/v1/pass/unlock', '/v1/pass/buy',
-  '/v1/season/maul',   // AUDIT LANE 5: the Resonant Maul's day, an account's (seasonClaim.js)
-  '/v1/aurum/buy',   // AURUM (bible/06-Systems/Aurum.md): a ware bought for Aurum - AURUM-ONLY, any but a pack (aurum.js)
-  '/v1/aurum/cache',   // AURUM-CACHES: an Aurum cache claimed (aurumCache.js)
+  '/v1/pass/mine',
+  '/v1/pass/find',
+  '/v1/pass/unlock',
+  '/v1/pass/buy',
+  '/v1/season/maul', // AUDIT LANE 5: the Resonant Maul's day, an account's (seasonClaim.js)
+  '/v1/aurum/buy', // AURUM (bible/06-Systems/Aurum.md): a ware bought for Aurum - AURUM-ONLY, any but a pack (aurum.js)
+  '/v1/aurum/cache', // AURUM-CACHES: an Aurum cache claimed (aurumCache.js)
   // WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL - the account's cakes, a find, a sale, a town's
   // offerings, and an offering set out, filled, taken in and taken from
-  '/v1/festival/mine', '/v1/festival/find', '/v1/festival/buy', '/v1/festival/town',
-  '/v1/festival/offering/set', '/v1/festival/offering/fill', '/v1/festival/offering/take-in', '/v1/festival/offering/take',
+  '/v1/festival/mine',
+  '/v1/festival/find',
+  '/v1/festival/buy',
+  '/v1/festival/town',
+  '/v1/festival/offering/set',
+  '/v1/festival/offering/fill',
+  '/v1/festival/offering/take-in',
+  '/v1/festival/offering/take',
   // GLYPH-WEAR: a glyph shown or hidden - paint alone, the rights that ride one untouched.
   '/v1/account/glyph',
   // NAME-AS: which name the room reads - the account's, or the character's the mint is for (accounts.js chooseNameAs).
@@ -458,17 +511,17 @@ export const ROUTES = new Set([
   '/v1/mod/realm-hold',
   '/v1/mod/realm-rollback',
   '/v1/mod/realm-budget',
-  '/v1/mod/realm-bodies',   // INT14: the boss fights' count, measured (review.js bodiesMeasure)
-  '/v1/mod/realm-grants',   // GRANT2: the spawn grants' asks, measured (grants.js grantsMeasure)
-  '/v1/mod/grant-feed',     // GRANT2: the relay's door in - a cell's window of asks, proven by its signature (grants.js)
-  '/v1/mod/reaction-feed',  // STAFF-PANEL5-FEEDS: the relay's door in - the bot check's episodes, by its signature (staffReactions.js)
-  '/v1/mod/hidden-seen',    // STAFF-PANEL5-HIDDEN: the relay's door in - a hidden staff subject entered a private home, proven by its signature (staffHidden.js takeHiddenSeen)
-  '/v1/mod/realm-gains',    // HACKED-GOLD: who gained past the bucket (review.js gainsMeasure)
+  '/v1/mod/realm-bodies', // INT14: the boss fights' count, measured (review.js bodiesMeasure)
+  '/v1/mod/realm-grants', // GRANT2: the spawn grants' asks, measured (grants.js grantsMeasure)
+  '/v1/mod/grant-feed', // GRANT2: the relay's door in - a cell's window of asks, proven by its signature (grants.js)
+  '/v1/mod/reaction-feed', // STAFF-PANEL5-FEEDS: the relay's door in - the bot check's episodes, by its signature (staffReactions.js)
+  '/v1/mod/hidden-seen', // STAFF-PANEL5-HIDDEN: the relay's door in - a hidden staff subject entered a private home, proven by its signature (staffHidden.js takeHiddenSeen)
+  '/v1/mod/realm-gains', // HACKED-GOLD: who gained past the bucket (review.js gainsMeasure)
   '/v1/mod/realm-progress', // INT17: the progression claims' measure and their line (review.js progressMeasure)
-  '/v1/mod/realm-trades',   // HACKED-GOLD: a character's realm trades, whom it traded with (review.js tradesOf)
-  '/v1/mod/realm-characters',   // SUMMON-REPAIR: an account's realm characters by handle (review.js)
-  '/v1/mod/realm-repair',       // SUMMON-REPAIR: one character mended by staff, once a ticket (review.js repairAct)
-  '/v1/mod/realm-mend',         // PURSE-MEND: a purse below nothing mended by staff, once a ticket (review.js mendAct)
+  '/v1/mod/realm-trades', // HACKED-GOLD: a character's realm trades, whom it traded with (review.js tradesOf)
+  '/v1/mod/realm-characters', // SUMMON-REPAIR: an account's realm characters by handle (review.js)
+  '/v1/mod/realm-repair', // SUMMON-REPAIR: one character mended by staff, once a ticket (review.js repairAct)
+  '/v1/mod/realm-mend', // PURSE-MEND: a purse below nothing mended by staff, once a ticket (review.js mendAct)
   // ACC2: the LISTING is a fixed path; every other save route carries
   // the slot in it and is matched by `savePathOf`.
   '/v1/saves',
@@ -476,55 +529,94 @@ export const ROUTES = new Set([
   // throws them away. The box is a GET; the three that change something
   // are POSTs, each naming the letter in its body - never in the path,
   // so an id is never a URL a log keeps.
-  '/v1/mail/inbox', '/v1/mail/send', '/v1/mail/read', '/v1/mail/delete',
+  '/v1/mail/inbox',
+  '/v1/mail/send',
+  '/v1/mail/read',
+  '/v1/mail/delete',
   // SERVER-POST: the developers' pieces to one registered account - the box a GET, the three that change something POSTs,
   // each naming the piece in its body; a claim names the realm character it goes into and where its record stands.
-  '/v1/post/box', '/v1/post/read', '/v1/post/claim', '/v1/post/delete',
+  '/v1/post/box',
+  '/v1/post/read',
+  '/v1/post/claim',
+  '/v1/post/delete',
   // LOST-SPOILS: a boss's floor's leftovers sent to the account that left them - a POST, the kill named by the pool's day
   '/v1/post/lost',
   // PRIVATE-REPORT: a registered player's private report - sent, and their own listed; the readers' inbox, a report
   // opened and closed. All POSTs, every id in the body.
-  '/v1/report/send', '/v1/report/mine', '/v1/report/inbox', '/v1/report/read', '/v1/report/close',
+  '/v1/report/send',
+  '/v1/report/mine',
+  '/v1/report/inbox',
+  '/v1/report/read',
+  '/v1/report/close',
   // DUEL1: the duelling record - the loser's own report (INT8: retired,
   // answered `retired`), and any account's two counts for the Inspect
   // card; INT8: a duel's result, the relay's receipt claimed. All behind
   // a session.
-  '/v1/duel/loss', '/v1/duel/record', '/v1/duel/claim',
+  '/v1/duel/loss',
+  '/v1/duel/record',
+  '/v1/duel/claim',
   // INT9: a death in the open zone's drop, taken off the fallen's record against the relay's fall (or none, a foe's);
   // MAC (2026-10-14): its killer's piece in escrow - collected by the killer, taken back by the fallen, listed for it
-  '/v1/wild/fall', '/v1/wild/collect', '/v1/wild/reclaim', '/v1/wild/escrows',
+  '/v1/wild/fall',
+  '/v1/wild/collect',
+  '/v1/wild/reclaim',
+  '/v1/wild/escrows',
   // WILD-INSURE (2026-10-26): a policy on a piece of gear, written against its premium off the record, and the policies
   // in force for a character's tab (wildInsure.js)
-  '/v1/wild/insure', '/v1/wild/policies',
+  '/v1/wild/insure',
+  '/v1/wild/policies',
   // RENOWN1: Renown - what one of the caller's characters earned
   // online (the account's for a day under RENOWN-ACCOUNT; the
   // character's again since RENOWN-CHAR). Behind a session; the level
   // itself rides the token.
   '/v1/renown/xp',
   // FIRM1: the Firmament - a character's passive tree, read and changed whole (firmament.js)
-  '/v1/firmament/state', '/v1/firmament/set', '/v1/firmament/respec',
+  '/v1/firmament/state',
+  '/v1/firmament/set',
+  '/v1/firmament/respec',
   // HUNTERS-MARK: the hunt's ledger - a character's clears read, a paid bounty reported (hunts.js). Behind a session.
-  '/v1/hunt/state', '/v1/hunt/clear',
+  '/v1/hunt/state',
+  '/v1/hunt/clear',
   // CHAP1: the Roll - a realm character's standing with Daggerfall's guilds, read (seeded once) and claimed under the
   // playing tab's lease (npcRoll.js). Behind a session and CHAPTERS_OPEN.
-  '/v1/chapters/roll', '/v1/chapters/claim',
+  '/v1/chapters/roll',
+  '/v1/chapters/claim',
   // CHAP2a: a town's guild halls witnessed - a registered account a week old (npcHalls.js); AUDIT CHAP2 E1: a region's
   // audit list and a false town struck, a developer's
-  '/v1/chapters/witness', '/v1/chapters/halls', '/v1/chapters/strike', '/v1/chapters/list', '/v1/chapters/focus', '/v1/chapters/history',
-  '/v1/chapters/back',   // CHAP6b: a member's backing in its chapter's Season
-  '/v1/chapters/patron',   // CHAP7a: a guild's bid for a chapter's patronage
+  '/v1/chapters/witness',
+  '/v1/chapters/halls',
+  '/v1/chapters/strike',
+  '/v1/chapters/list',
+  '/v1/chapters/focus',
+  '/v1/chapters/history',
+  '/v1/chapters/back', // CHAP6b: a member's backing in its chapter's Season
+  '/v1/chapters/patron', // CHAP7a: a guild's bid for a chapter's patronage
   // HOME1: the online homes - one owner a building (homes.js). A town's
   // homes are read by every session, a guest's too (the doors say whose
   // a home is to everyone); the three that change one are an account's.
-  '/v1/homes/town', '/v1/homes/mine', '/v1/homes/claim', '/v1/homes/release', '/v1/homes/transfer', '/v1/homes/entry',
+  '/v1/homes/town',
+  '/v1/homes/mine',
+  '/v1/homes/claim',
+  '/v1/homes/release',
+  '/v1/homes/transfer',
+  '/v1/homes/entry',
   // DECOR1: an online home's decor (decor.js). Its pieces are read by every session (the room is the same room to
   // every visitor); the three that change one are its owner's.
-  '/v1/homes/decor', '/v1/homes/decor/place', '/v1/homes/decor/move', '/v1/homes/decor/remove', '/v1/homes/decor/batch', '/v1/homes/decor/use',
+  '/v1/homes/decor',
+  '/v1/homes/decor/place',
+  '/v1/homes/decor/move',
+  '/v1/homes/decor/remove',
+  '/v1/homes/decor/batch',
+  '/v1/homes/decor/use',
   // BASE-HIDE: what the owner took out of the room's own furniture - read with the pieces, written by the owner
   '/v1/homes/decor/hidden',
   // HOME-RENT: a home's rooms (rent.js) - read by every session at its door; offered and withdrawn by its owner, rented by
   // another player's realm character, the rent collected by the owner
-  '/v1/homes/rooms', '/v1/homes/rooms/offer', '/v1/homes/rooms/withdraw', '/v1/homes/rooms/rent', '/v1/homes/rooms/collect',
+  '/v1/homes/rooms',
+  '/v1/homes/rooms/offer',
+  '/v1/homes/rooms/withdraw',
+  '/v1/homes/rooms/rent',
+  '/v1/homes/rooms/collect',
   // HOME-LOOK: how a home looks outside (homes.js setHomeLook) - read with the town's homes, written by its owner
   '/v1/homes/look',
   // HOME-VOTE: a registered account's word on another's home (homeVotes.js) - read with the town's homes
@@ -532,13 +624,16 @@ export const ROUTES = new Set([
   // HOME-YARD: a town's yards, a block at a time (yardCells.js) - read by anyone, before a session (YARD-SHED); its pieces
   // written through the decor routes (`yard`), by the home's owner. YARD-CELL: the whole town's route is refused (410,
   // `client-update`) to a build from before the cells
-  '/v1/homes/yards/cells', '/v1/homes/yards',
+  '/v1/homes/yards/cells',
+  '/v1/homes/yards',
   // WD3: every town that holds a home and the layout it keeps (homes.js homeLayouts) - read by every session at its
   // online boot, so the room stands each such town as its homes were bought in it
   '/v1/homes/layouts',
   // ARENA4b: a home the arena displaced (homes.js arenaMoveHome) - moved by its owner's client to the house it picked, the
   // moves its character has not read, and one read
-  '/v1/homes/arena-move', '/v1/homes/arena-moves', '/v1/homes/arena-seen',
+  '/v1/homes/arena-move',
+  '/v1/homes/arena-moves',
+  '/v1/homes/arena-seen',
   // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the realm gave held off its character's record (homes.js holdDeed) - an
   // account's alone
   '/v1/homes/deed',
@@ -547,140 +642,300 @@ export const ROUTES = new Set([
   '/v1/homes/inherit',
   // GUILD1: the guilds (guilds.js) - a character's own guild and the account's invitations read by any session (a
   // guest's reads nothing); the rest change one, an account's alone.
-  '/v1/guilds/mine', '/v1/guilds/invites', '/v1/guilds/found', '/v1/guilds/invite', '/v1/guilds/answer', '/v1/guilds/leave',
-  '/v1/guilds/remove', '/v1/guilds/rank', '/v1/guilds/ranks', '/v1/guilds/deposit', '/v1/guilds/withdraw', '/v1/guilds/handover',
+  '/v1/guilds/mine',
+  '/v1/guilds/invites',
+  '/v1/guilds/found',
+  '/v1/guilds/invite',
+  '/v1/guilds/answer',
+  '/v1/guilds/leave',
+  '/v1/guilds/remove',
+  '/v1/guilds/rank',
+  '/v1/guilds/ranks',
+  '/v1/guilds/deposit',
+  '/v1/guilds/withdraw',
+  '/v1/guilds/handover',
   '/v1/guilds/disband',
   // GUILD1d: the guild hall (halls.js) - bought and sold from the treasury by the guildmaster, who may walk in set by an
   // Officer; and the heraldry, the guildmaster's
-  '/v1/guilds/hall/buy', '/v1/guilds/hall/sell', '/v1/guilds/hall/entry', '/v1/guilds/heraldry',
-  '/v1/guilds/castle/buy', '/v1/guilds/castle/sell',   // DOMAIN2: a guild's castle (castles.js)
+  '/v1/guilds/hall/buy',
+  '/v1/guilds/hall/sell',
+  '/v1/guilds/hall/entry',
+  '/v1/guilds/heraldry',
+  '/v1/guilds/castle/buy',
+  '/v1/guilds/castle/sell', // DOMAIN2: a guild's castle (castles.js)
   // GUILD1e: a guild's own board (guildBoard.js) - read, pinned to and taken down by its members
-  '/v1/guilds/board', '/v1/guilds/board/pin', '/v1/guilds/board/take-down',
+  '/v1/guilds/board',
+  '/v1/guilds/board/pin',
+  '/v1/guilds/board/take-down',
   // GUILD2 (bible/11-Multiplayer/Guild-Overhaul.md): a new name for a price (guilds.js), and the vault - read, a piece put
   // in and taken out on the realm record, the guildmaster's grants (guildVault.js)
-  '/v1/guilds/rename', '/v1/guilds/vault', '/v1/guilds/vault/put', '/v1/guilds/vault/take', '/v1/guilds/vault/grant',
+  '/v1/guilds/rename',
+  '/v1/guilds/vault',
+  '/v1/guilds/vault/put',
+  '/v1/guilds/vault/take',
+  '/v1/guilds/vault/grant',
   // GUILD-SHOP (bible/11-Multiplayer/Guild-Shop.md): the guild shop read and a ware bought in silver (guildShop.js), every
   // guild's arms by its tag (any session's), and a guild's own logo sent for review and withdrawn (guildLogos.js)
-  '/v1/guilds/shop', '/v1/guilds/shop/buy', '/v1/guilds/arms', '/v1/guilds/logo', '/v1/guilds/logo/withdraw', '/v1/guilds/logo/clear',
+  '/v1/guilds/shop',
+  '/v1/guilds/shop/buy',
+  '/v1/guilds/arms',
+  '/v1/guilds/logo',
+  '/v1/guilds/logo/withdraw',
+  '/v1/guilds/logo/clear',
   // GUILD-RANKS: what each rank may do, the guildmaster's; GUILD-REQUESTS: a request to join sent, taken back and answered
-  '/v1/guilds/powers', '/v1/guilds/request', '/v1/guilds/request/withdraw', '/v1/guilds/request/answer',
+  '/v1/guilds/powers',
+  '/v1/guilds/request',
+  '/v1/guilds/request/withdraw',
+  '/v1/guilds/request/answer',
   // SEAT1a: the seats' witnessed registry (townSeats.js) - the confirmed seats, a seat witnessed, a developer's strike
-  '/v1/seats/list', '/v1/seats/witness', '/v1/seats/strike',
+  '/v1/seats/list',
+  '/v1/seats/witness',
+  '/v1/seats/strike',
   // TOWN-ECON TE2 (townEcon.js): the towns' players' shares, a town witnessed, the Watch's ticks walked in a town
-  '/v1/towns/econ', '/v1/towns/witness', '/v1/towns/watch', '/v1/towns/strike', '/v1/towns/audit',   // AUDIT TOWN-ECON 2 SVC-1: the strike and the audit
+  '/v1/towns/econ',
+  '/v1/towns/witness',
+  '/v1/towns/watch',
+  '/v1/towns/strike',
+  '/v1/towns/audit', // AUDIT TOWN-ECON 2 SVC-1: the strike and the audit
   // SEAT1b: influence (seatInfluence.js) - a guild's pledge, a seat's standings, the Watch's receipts, Tribute
-  '/v1/seats/pledge', '/v1/seats/standings', '/v1/seats/records', '/v1/seats/watch', '/v1/seats/tribute',
+  '/v1/seats/pledge',
+  '/v1/seats/standings',
+  '/v1/seats/records',
+  '/v1/seats/watch',
+  '/v1/seats/tribute',
   // SEAT1c: the Turning settles on any seat read (seatTurning.js); a Charter relinquished by its guildmaster
   '/v1/seats/relinquish',
   // SEAT1d: the holder's levers (seatHolding.js) - the Tithe, the coming week's Edict; a Bounty's camp claimed
-  '/v1/seats/tithe', '/v1/seats/edict', '/v1/seats/bounty',
+  '/v1/seats/tithe',
+  '/v1/seats/edict',
+  '/v1/seats/bounty',
   // SEAT2a: the battles' week (seatBattles.js) - the holder's window, a side signed and unsigned, a Sellsword hired and withdrawn
-  '/v1/seats/window', '/v1/seats/siege/sign', '/v1/seats/siege/unsign', '/v1/seats/siege/hire', '/v1/seats/siege/withdraw',
+  '/v1/seats/window',
+  '/v1/seats/siege/sign',
+  '/v1/seats/siege/unsign',
+  '/v1/seats/siege/hire',
+  '/v1/seats/siege/withdraw',
   // SEAT2a part three (seatSiege.js): a battle's pass, a fighter's receipt claimed; the deploy blackout's public question
-  '/v1/seats/siege/pass', '/v1/seats/siege/claim', '/v1/seats/sieges/live',
+  '/v1/seats/siege/pass',
+  '/v1/seats/siege/claim',
+  '/v1/seats/sieges/live',
   // VOID (Seats-Arc 18; seatSiege.js voidSiege): a moderator's `/siege void <key>` - the seat's battle this week void
   '/v1/seats/siege/void',
   // CROWN1 part two (seatRoyal.js): a Royal Tourney's pass, a bout's receipt claimed
-  '/v1/seats/royal/pass', '/v1/seats/royal/claim',
+  '/v1/seats/royal/pass',
+  '/v1/seats/royal/claim',
   // CROWN2 (seatPolitics.js): fealty and Pacts
-  '/v1/seats/fealty', '/v1/seats/fealty/accept', '/v1/seats/fealty/break', '/v1/seats/pact', '/v1/seats/pact/break',
+  '/v1/seats/fealty',
+  '/v1/seats/fealty/accept',
+  '/v1/seats/fealty/break',
+  '/v1/seats/pact',
+  '/v1/seats/pact/break',
   // SEASON1 part two (seatInfluence.js): an Orc Raid's camp cleared
   '/v1/seats/orc-camp',
   // SEAT2b (seatForts.js): a seat's fortifications read, a project begun
-  '/v1/seats/forts', '/v1/seats/fort/fund',
-  '/v1/seats/gifts', '/v1/seats/give',   // DOMAIN1: where a member's gift goes, and a gift (seatGifts.js)
+  '/v1/seats/forts',
+  '/v1/seats/fort/fund',
+  '/v1/seats/gifts',
+  '/v1/seats/give', // DOMAIN1: where a member's gift goes, and a gift (seatGifts.js)
   // WB5b: the gates closed - the kill receipt the relay signed, carried
   // here by the account it names. Behind a session.
   '/v1/gate/claim',
   // RAID4: the towns defended - a raid's receipt the relay signed, carried
   // here by the account it names with the character that fought it.
   '/v1/raid/claim',
-  '/v1/serpent/claim',   // SERPENT1: a sea serpent's receipt
-  '/v1/dragon/claim',   // DRAGON4: a Dwarven Dragon's receipt - its hoard and its tame
-  '/v1/dragon/tames',   // AUDIT DRAGON: the tames the service drew, read back
-  '/v1/star/claim',   // STAR7: a fallen star's receipt
-  '/v1/sd/claim',   // SD9b: a Brass Remnant's receipt - an Hour broken, and its grants on the first write
-  '/v1/ketch/claim',   // KETCH: a Tonal Warden's receipt - the Ketchmaster's hold, once a voyage an account
-  '/v1/eg/keys',   // EG-PLAY: the Weir Keys held, the live breach, the day's Rehearsal
-  '/v1/eg/open',   // EG-PLAY: a key staked and the open order signed
-  '/v1/eg/admit',   // EG-PLAY: a member's admission order
-  '/v1/eg/claim',   // EG-PLAY: an Elite Breach's receipt - a Redoubt taken, a member's end, a void
-  '/v1/eg/board',   // EG-E2: the Elite Breach's three boards - the Descent, the Depths, the Deepest Redoubts
-  '/v1/eg/sink',   // EG-E1: the Broker's Panoply piece, once an account a week, for 20 embers
-  '/v1/eg/find',   // EG-E3: a dungeon elite's find - the service's die at the tier's odds, capped a day and a week
-  '/v1/eg/starts',   // EG-F: the start window's preflight - which starts each member of the opener's party may make
-  '/v1/eg/first',   // EG-ZF: the first-time lines a client showed, kept once an account
-  '/v1/lamp/claim',   // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp laid on the row once (AUDIT FIVE-ASKS A1: it was never listed, so every claim was a 404)
-  '/v1/ql/claim',   // QL12: a questline's step claimed - opened, then witnessed by its endgame receipt; a line's title, the Covens' Hoard's key (questlines.js)
+  '/v1/serpent/claim', // SERPENT1: a sea serpent's receipt
+  '/v1/dragon/claim', // DRAGON4: a Dwarven Dragon's receipt - its hoard and its tame
+  '/v1/dragon/tames', // AUDIT DRAGON: the tames the service drew, read back
+  '/v1/star/claim', // STAR7: a fallen star's receipt
+  '/v1/sd/claim', // SD9b: a Brass Remnant's receipt - an Hour broken, and its grants on the first write
+  '/v1/ketch/claim', // KETCH: a Tonal Warden's receipt - the Ketchmaster's hold, once a voyage an account
+  '/v1/eg/keys', // EG-PLAY: the Weir Keys held, the live breach, the day's Rehearsal
+  '/v1/eg/open', // EG-PLAY: a key staked and the open order signed
+  '/v1/eg/admit', // EG-PLAY: a member's admission order
+  '/v1/eg/claim', // EG-PLAY: an Elite Breach's receipt - a Redoubt taken, a member's end, a void
+  '/v1/eg/board', // EG-E2: the Elite Breach's three boards - the Descent, the Depths, the Deepest Redoubts
+  '/v1/eg/sink', // EG-E1: the Broker's Panoply piece, once an account a week, for 20 embers
+  '/v1/eg/find', // EG-E3: a dungeon elite's find - the service's die at the tier's odds, capped a day and a week
+  '/v1/eg/starts', // EG-F: the start window's preflight - which starts each member of the opener's party may make
+  '/v1/eg/first', // EG-ZF: the first-time lines a client showed, kept once an account
+  '/v1/lamp/claim', // LAMP-KEEPER II: a lamp keeper spoken to - I Love Lamp laid on the row once (AUDIT FIVE-ASKS A1: it was never listed, so every claim was a 404)
+  '/v1/ql/claim', // QL12: a questline's step claimed - opened, then witnessed by its endgame receipt; a line's title, the Covens' Hoard's key (questlines.js)
   // MARKS1: Marks (marks.js) - an account's balance, the Bank's exchange (Marks for gold, never the other way), a
   // guild's Marks treasury, and the developers' weekly report. Every one behind a session, an account's alone.
   // SILVER-FINDS: and a loot find (the service's dice, the day's count).
-  '/v1/marks/balance', '/v1/marks/exchange', '/v1/marks/find', '/v1/marks/guild/deposit', '/v1/marks/guild/withdraw', '/v1/marks/report',
-  '/v1/board/read', '/v1/board/pin', '/v1/board/take-down', '/v1/board/report', '/v1/board/mod/remove', '/v1/board/mod/restore',
-  '/v1/board/notice', '/v1/board/notice/remove',
+  '/v1/marks/balance',
+  '/v1/marks/exchange',
+  '/v1/marks/find',
+  '/v1/marks/guild/deposit',
+  '/v1/marks/guild/withdraw',
+  '/v1/marks/report',
+  '/v1/board/read',
+  '/v1/board/pin',
+  '/v1/board/take-down',
+  '/v1/board/report',
+  '/v1/board/mod/remove',
+  '/v1/board/mod/restore',
+  '/v1/board/notice',
+  '/v1/board/notice/remove',
   // SAFE1-SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): a player's block list, a report, the code of conduct agreed;
   // a moderator's ban, unban and look; and the two doors a stranger reaches that prove themselves (SAFE_OPEN_ROUTES);
   // AUDIT SAFE DOC-4: the moderators' read of the cases in the game - the open ones, one, and its dismissal
-  '/v1/safety/blocks', '/v1/safety/block', '/v1/safety/unblock', '/v1/safety/report', '/v1/safety/conduct',
-  '/v1/mod/ban', '/v1/mod/unban', '/v1/mod/strikes', '/v1/mod/feed', '/v1/discord/interactions',
-  '/v1/mod/cases', '/v1/mod/case', '/v1/mod/dismiss',
+  '/v1/safety/blocks',
+  '/v1/safety/block',
+  '/v1/safety/unblock',
+  '/v1/safety/report',
+  '/v1/safety/conduct',
+  '/v1/mod/ban',
+  '/v1/mod/unban',
+  '/v1/mod/strikes',
+  '/v1/mod/feed',
+  '/v1/discord/interactions',
+  '/v1/mod/cases',
+  '/v1/mod/case',
+  '/v1/mod/dismiss',
   // STAFF-PANEL1: the staff panel's doors (staff.js) - its own sign-in and session, never a game session (STAFF_ROUTES)
-  '/v1/staff/login', '/v1/staff/enroll', '/v1/staff/me', '/v1/staff/logout', '/v1/staff/keys', '/v1/staff/key/forget',
-  '/v1/staff/team', '/v1/staff/invite', '/v1/staff/cut', '/v1/staff/audit', '/v1/staff/mods', '/v1/staff/mod/add', '/v1/staff/mod/remove',
+  '/v1/staff/login',
+  '/v1/staff/enroll',
+  '/v1/staff/me',
+  '/v1/staff/logout',
+  '/v1/staff/keys',
+  '/v1/staff/key/forget',
+  '/v1/staff/team',
+  '/v1/staff/invite',
+  '/v1/staff/cut',
+  '/v1/staff/audit',
+  '/v1/staff/mods',
+  '/v1/staff/mod/add',
+  '/v1/staff/mod/remove',
   // STAFF-PANEL2: the panel's reports - the open cases, one case, a claim and its release, a strike record, and the acts
-  '/v1/staff/cases', '/v1/staff/case', '/v1/staff/claim', '/v1/staff/release', '/v1/staff/strikes',
-  '/v1/staff/mute', '/v1/staff/ban', '/v1/staff/unban', '/v1/staff/dismiss',
+  '/v1/staff/cases',
+  '/v1/staff/case',
+  '/v1/staff/claim',
+  '/v1/staff/release',
+  '/v1/staff/strikes',
+  '/v1/staff/mute',
+  '/v1/staff/ban',
+  '/v1/staff/unban',
+  '/v1/staff/dismiss',
   // STAFF-BANNED (mob: "we need a tab for banned players as well"): the Banned tab - every account banned now, Admins and Moderators
   '/v1/staff/banned',
   // STAFF-PANEL3-DESK: staff notes, the watchlist and its events, your settings; the Admins' server notice, AI check
   // scorecard, and reported board notes (Remove, Restore) and market listings (staffDesk.js)
-  '/v1/staff/notes', '/v1/staff/notes/add', '/v1/staff/watch', '/v1/staff/watch/add', '/v1/staff/watch/remove', '/v1/staff/watch/events',
-  '/v1/staff/settings', '/v1/staff/settings/save', '/v1/staff/notice', '/v1/staff/ai-score', '/v1/staff/board/reported', '/v1/staff/board/moderate',
+  '/v1/staff/notes',
+  '/v1/staff/notes/add',
+  '/v1/staff/watch',
+  '/v1/staff/watch/add',
+  '/v1/staff/watch/remove',
+  '/v1/staff/watch/events',
+  '/v1/staff/settings',
+  '/v1/staff/settings/save',
+  '/v1/staff/notice',
+  '/v1/staff/ai-score',
+  '/v1/staff/board/reported',
+  '/v1/staff/board/moderate',
   '/v1/staff/market/reported',
   // STAFF-PANEL3-PLAYERS: the panel's players (staffPlayers.js) - the search, a profile's tabs, its devices, Sign out
   // everywhere, and a rename - Admins' alone
-  '/v1/staff/players', '/v1/staff/player', '/v1/staff/player/devices', '/v1/staff/player/signout', '/v1/staff/player/rename',
+  '/v1/staff/players',
+  '/v1/staff/player',
+  '/v1/staff/player/devices',
+  '/v1/staff/player/signout',
+  '/v1/staff/player/rename',
   // STAFF-PANEL6-STATUS: the panel's server status, its Admin-set limits, and Home (staffStatus.js)
-  '/v1/staff/status', '/v1/staff/home', '/v1/staff/limits', '/v1/staff/limit/set',
+  '/v1/staff/status',
+  '/v1/staff/home',
+  '/v1/staff/limits',
+  '/v1/staff/limit/set',
   // STAFF-PANEL3-REALM: the trade holds, a character's findings, a hold laid (one character, or every one of an account) and
   // lifted, Roll back, Fix account, wealth past the allowance, and the removals with their 30-day store (staffRealm.js);
   // STAFF-SET-BANK: and a character's bank set (Fix account's `bank`)
-  '/v1/staff/trade-holds', '/v1/staff/findings', '/v1/staff/trade-hold', '/v1/staff/trade-unhold', '/v1/staff/rollback', '/v1/staff/fix/repair',
-  '/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains', '/v1/staff/market/pull', '/v1/staff/market/remove', '/v1/staff/item/take', '/v1/staff/item/purge-dupes', '/v1/staff/evidence',
+  '/v1/staff/trade-holds',
+  '/v1/staff/findings',
+  '/v1/staff/trade-hold',
+  '/v1/staff/trade-unhold',
+  '/v1/staff/rollback',
+  '/v1/staff/fix/repair',
+  '/v1/staff/fix/mend',
+  '/v1/staff/fix/bank',
+  '/v1/staff/fix/letter',
+  '/v1/staff/gains',
+  '/v1/staff/market/pull',
+  '/v1/staff/market/remove',
+  '/v1/staff/item/take',
+  '/v1/staff/item/purge-dupes',
+  '/v1/staff/evidence',
   '/v1/staff/evidence/return',
   // STAFF-GIVE: Add an item - the item list, and one piece minted and given (staffGive.js)
-  '/v1/staff/item/catalogue', '/v1/staff/item/give',
+  '/v1/staff/item/catalogue',
+  '/v1/staff/item/give',
   // STAFF-PANEL4-CENSUS: the item and gold census (a kind found, its count and holders, its jumps) and the contested pieces
   // (the list, one piece's trail, a trail check recorded) - Admin only (staffCensus.js)
-  '/v1/staff/census/find', '/v1/staff/census', '/v1/staff/census/jumps', '/v1/staff/contested', '/v1/staff/contested/piece', '/v1/staff/contested/trail',
+  '/v1/staff/census/find',
+  '/v1/staff/census',
+  '/v1/staff/census/jumps',
+  '/v1/staff/contested',
+  '/v1/staff/contested/piece',
+  '/v1/staff/contested/trail',
   // STAFF-PANEL3-ECON: the panel's economy (staffEconomy.js) - the market and trades stream, node activity, the economy, per guild
-  '/v1/staff/econ/stream', '/v1/staff/econ/harvests', '/v1/staff/econ/economy', '/v1/staff/econ/guilds', '/v1/staff/econ/shop',   // STOREFRONT: the shop's demand
+  '/v1/staff/econ/stream',
+  '/v1/staff/econ/harvests',
+  '/v1/staff/econ/economy',
+  '/v1/staff/econ/guilds',
+  '/v1/staff/econ/shop', // STOREFRONT: the shop's demand
   // STAFF-PANEL5-FOLLOW: a follow token for a hidden staff spectator, minted and written down (staffFollow.js)
   '/v1/staff/follow',
   // STAFF-PANEL5-MESSAGE: Message on screen - one sent, and each one's state (staffMessage.js); and the game's two: the
   // messages waiting for its player, and one pressed OK (behind the game's own session)
-  '/v1/staff/message', '/v1/staff/messages', '/v1/safety/staff-messages', '/v1/safety/staff-message-ok',
+  '/v1/staff/message',
+  '/v1/staff/messages',
+  '/v1/safety/staff-messages',
+  '/v1/safety/staff-message-ok',
   // STAFF-EVENT: a staff event staged, ended or its mini boss called, and the events with their meters (staffEvents.js)
-  '/v1/staff/event', '/v1/staff/events',
+  '/v1/staff/event',
+  '/v1/staff/events',
   // STAFF-PANEL5-FEEDS: the relay's counts - Network bursts, Monster watch and its Flag, the bot check's Reactions and
   // their keeping (staffNet.js, staffMonsters.js, staffReactions.js); and the relay's net feed in, by its signature
-  '/v1/staff/net', '/v1/staff/monsters', '/v1/staff/monster/flag', '/v1/staff/reactions', '/v1/staff/reactions/keep', '/v1/staff/net-feed',
+  '/v1/staff/net',
+  '/v1/staff/monsters',
+  '/v1/staff/monster/flag',
+  '/v1/staff/reactions',
+  '/v1/staff/reactions/keep',
+  '/v1/staff/net-feed',
   // STAFF-PANEL5-HIDDEN: Hide me and Show myself - a staff member hidden from every player (staffHidden.js)
   '/v1/staff/hide',
   // STAFF-PANEL5-FREEZE (staffFreeze.js): freeze and unfreeze, the frozen list and a push again (Admins); Talk, a thread, a
   // line, a thread closed and the open threads (Admins and Moderators) - and the player's own two doors to their thread,
   // behind the game's session
-  '/v1/staff/freeze', '/v1/staff/unfreeze', '/v1/staff/freezes', '/v1/staff/freeze-push',
-  '/v1/staff/talk', '/v1/staff/chat', '/v1/staff/chat-send', '/v1/staff/chat-close', '/v1/staff/chats',
-  '/v1/staff-chat/read', '/v1/staff-chat/send',
+  '/v1/staff/freeze',
+  '/v1/staff/unfreeze',
+  '/v1/staff/freezes',
+  '/v1/staff/freeze-push',
+  '/v1/staff/talk',
+  '/v1/staff/chat',
+  '/v1/staff/chat-send',
+  '/v1/staff/chat-close',
+  '/v1/staff/chats',
+  '/v1/staff-chat/read',
+  '/v1/staff-chat/send',
   // PROF1: the professions (professions.js) - a character's tracks, Stores and day, the witnessed pixels, a harvest,
   // a specialisation, a withdrawal to the pack, a region's Court writs and a delivery. Every one behind a session, a
   // registered account's alone, and PROFESSIONS_OPEN's.
-  '/v1/prof/state', '/v1/prof/pixels', '/v1/prof/harvest', '/v1/prof/spec', '/v1/prof/smelt', '/v1/prof/craft', '/v1/prof/stock', '/v1/stores/withdraw', '/v1/writs/list', '/v1/writs/deliver',
+  '/v1/prof/state',
+  '/v1/prof/pixels',
+  '/v1/prof/harvest',
+  '/v1/prof/spec',
+  '/v1/prof/smelt',
+  '/v1/prof/craft',
+  '/v1/prof/stock',
+  '/v1/stores/withdraw',
+  '/v1/writs/list',
+  '/v1/writs/deliver',
   // PROF12: the alchemy station's brew and an enchanting station's disenchant (alchemy.js) - the same doors
-  '/v1/prof/brew', '/v1/prof/disenchant',
+  '/v1/prof/brew',
+  '/v1/prof/disenchant',
   // CRAFT4: a temper (professions.js) and an Enchanter's Reforge with Essence (alchemy.js) - the same doors
-  '/v1/prof/temper', '/v1/prof/reforge',
+  '/v1/prof/temper',
+  '/v1/prof/reforge',
   // MASTER-ART: a Master's work (masterWork.js) - the same doors
   '/v1/prof/master',
   // BAG1: a deposit - carried units into the Stores (professions.js depositStores), the same door
@@ -689,57 +944,104 @@ export const ROUTES = new Set([
   '/v1/prof/motherlodes',
   // PROF6: guild writs (posted, supplied, withdrawn, the Officers' budget), commissions (posted, fulfilled, cancelled,
   // declined) and the guild Stores (read, deposit, withdraw) - writs.js; behind a session, a registered account's alone.
-  '/v1/writs/post', '/v1/writs/supply', '/v1/writs/withdraw', '/v1/writs/budget', '/v1/writs/commission', '/v1/writs/fulfil',
-  '/v1/writs/cancel', '/v1/writs/decline', '/v1/stores/guild', '/v1/stores/guild-deposit', '/v1/stores/guild-withdraw',
+  '/v1/writs/post',
+  '/v1/writs/supply',
+  '/v1/writs/withdraw',
+  '/v1/writs/budget',
+  '/v1/writs/commission',
+  '/v1/writs/fulfil',
+  '/v1/writs/cancel',
+  '/v1/writs/decline',
+  '/v1/stores/guild',
+  '/v1/stores/guild-deposit',
+  '/v1/stores/guild-withdraw',
   // SILVER-WAYS: a guild contract posted and withdrawn (contracts.js); its pay rides a raid's claim
-  '/v1/writs/contract', '/v1/writs/contract-withdraw',
+  '/v1/writs/contract',
+  '/v1/writs/contract-withdraw',
   // CRAFT-WRITS: a crafting writ filled (craftWrits.js) - its goods out of the realm record; its list rides /v1/writs/list
   '/v1/writs/craft',
   // PROF5: the market (market.js) - the Market tab's views, a listing, a purchase, a cancel, a buy order, a fill, an
   // order withdrawn, a piece collected, a report and a moderator's removal. Every one behind a session, a registered
   // account's alone, and the board's, the professions' and the Marks' switches together. PROF5b: an auction posted, a bid.
   // GOLD-MARKET: a realm character's gold its sales hold, collected into its record.
-  '/v1/market/read', '/v1/market/list', '/v1/market/buy', '/v1/market/cancel', '/v1/market/order', '/v1/market/fill',
-  '/v1/market/unorder', '/v1/market/collect', '/v1/market/report', '/v1/market/remove', '/v1/market/auction', '/v1/market/bid',
+  '/v1/market/read',
+  '/v1/market/list',
+  '/v1/market/buy',
+  '/v1/market/cancel',
+  '/v1/market/order',
+  '/v1/market/fill',
+  '/v1/market/unorder',
+  '/v1/market/collect',
+  '/v1/market/report',
+  '/v1/market/remove',
+  '/v1/market/auction',
+  '/v1/market/bid',
   '/v1/market/gold',
-  '/v1/sea/bounty/board', '/v1/sea/bounty/post', '/v1/sea/bounty/collect',   // SEA-BOUNTY: a freeport's bounty board on the open sea's killers
-  '/v1/sea/season/board',   // SEA-SEASON: the sea's season boards
-  '/v1/crew/hall', '/v1/crew/sign', '/v1/crew/release',   // CREW-SIGNED: a crew hall's recruit signed once online (crewSigns.js)
-  '/v1/sea/wreck', '/v1/sea/prize/collect', '/v1/sea/prize/reclaim',   // SHIP-PVP: a wreck at sea, and its prize
-  '/v1/cards/stake',   // CARDS6: a card table's stake held against the realm record
-  '/v1/cards/cashout',   // CARDS6: the relay's cash-out receipt paid back into it
-  '/v1/cards/deck',   // CARDS10: a ranked seat's deck vouched for (iliac.js deckOrderOf)
-  '/v1/iliac/claim', '/v1/iliac/board',   // CARDS10: Iliac Hand's season board
-  '/v1/gambit/claim', '/v1/gambit/board',   // KG6: The King's Gambit's season board
+  '/v1/sea/bounty/board',
+  '/v1/sea/bounty/post',
+  '/v1/sea/bounty/collect', // SEA-BOUNTY: a freeport's bounty board on the open sea's killers
+  '/v1/sea/season/board', // SEA-SEASON: the sea's season boards
+  '/v1/crew/hall',
+  '/v1/crew/sign',
+  '/v1/crew/release', // CREW-SIGNED: a crew hall's recruit signed once online (crewSigns.js)
+  '/v1/sea/wreck',
+  '/v1/sea/prize/collect',
+  '/v1/sea/prize/reclaim', // SHIP-PVP: a wreck at sea, and its prize
+  '/v1/cards/stake', // CARDS6: a card table's stake held against the realm record
+  '/v1/cards/cashout', // CARDS6: the relay's cash-out receipt paid back into it
+  '/v1/cards/deck', // CARDS10: a ranked seat's deck vouched for (iliac.js deckOrderOf)
+  '/v1/iliac/claim',
+  '/v1/iliac/board', // CARDS10: Iliac Hand's season board
+  '/v1/gambit/claim',
+  '/v1/gambit/board', // KG6: The King's Gambit's season board
   // HOME-VENDOR: a home's trader's stock, and the region's traders
-  '/v1/market/vendor', '/v1/market/vendors', '/v1/market/myvendors',
+  '/v1/market/vendor',
+  '/v1/market/vendors',
+  '/v1/market/myvendors',
   // RPT1026-MARKET ARRIVE: the road alone - the account's market settled and what is on its way read (market.js marketRoad)
   '/v1/market/road',
   // REALM P1: the realm's characters (realm.js). The listing and the five that change one; the save itself rides a
   // path that names the character, matched by `realmPathOf`.
-  '/v1/realm', '/v1/realm/create', '/v1/realm/customs', '/v1/realm/join', '/v1/realm/leave', '/v1/realm/delete',
+  '/v1/realm',
+  '/v1/realm/create',
+  '/v1/realm/customs',
+  '/v1/realm/join',
+  '/v1/realm/leave',
+  '/v1/realm/delete',
   // REALM P2.1: a trade's half (realmTrade.js) - settled here, both records at once or neither.
   '/v1/realm/trade',
   // HOUSE-LOSS: the door's undo of a customs whose first save never landed (realm.js undoRealm) - its own path, so a
   // door newer than this service is told `not-found`, never handed a delete.
   '/v1/realm/undo',
   // LEGACY7: Project Legacy's lines (legacy.js) - listed, written past their rev - and a fallen character's tombstone
-  '/v1/realm/lineages', '/v1/realm/lineage', '/v1/realm/die',
+  '/v1/realm/lineages',
+  '/v1/realm/lineage',
+  '/v1/realm/die',
   // FAMILY-REMOVE (FIELD BUGS 2026-10-29e): a line no living character plays, let go (legacy.js removeLineage)
   '/v1/realm/lineage/remove',
   // REZ-BLOODLINE AUDIT R1 (FIELD BUGS 2026-10-16b): a party's Resurrect taking back a fall the realm holds (legacy.js realmRaise)
   '/v1/realm/raise',
   // LEGACY7 part three: a half of one wedding between two players' characters, and the account's unions
-  '/v1/realm/wed', '/v1/realm/unions',
+  '/v1/realm/wed',
+  '/v1/realm/unions',
   // PATREON-LINK: a patron's own Patreon, linked (patreon.js) - Patreon sends the player back to the callback, the
   // confirm is their yes, the webhook is Patreon's word on a member; the unlink is the account's, behind a session.
-  '/v1/patreon/callback', '/v1/patreon/confirm', '/v1/patreon/webhook', '/v1/patreon/unlink',
+  '/v1/patreon/callback',
+  '/v1/patreon/confirm',
+  '/v1/patreon/webhook',
+  '/v1/patreon/unlink',
   // SHOP: the shop's open doors (shop.js) - the confirm page, its press, Stripe's webhook, and the two pages Stripe sends
   // the buyer back to; none behind a session, each proven by what it carries
-  '/v1/shop/buy', '/v1/shop/checkout', '/v1/shop/webhook', '/v1/shop/done', '/v1/shop/cancel',
+  '/v1/shop/buy',
+  '/v1/shop/checkout',
+  '/v1/shop/webhook',
+  '/v1/shop/done',
+  '/v1/shop/cancel',
   // ARENA4: the arena (arena.js) - a bout's receipt the relay signed, carried here by an account it names; the boards,
   // counted from the rows; a banner joined or quit. Every one behind a session; a guest reads the boards and keeps nothing.
-  '/v1/arena/claim', '/v1/arena/board', '/v1/arena/team',
+  '/v1/arena/claim',
+  '/v1/arena/board',
+  '/v1/arena/team',
   // AUDIT ARENA-LADDER: a ladder attempt's ticket (arena.js arenaAttempt), behind a session
   '/v1/arena/attempt',
 ]);
@@ -763,12 +1065,28 @@ export function realmPathOf(path) {
 export function poiPathOf(path) {
   if (typeof path !== 'string' || !path.startsWith('/v1/poi/')) return null;
   const rest = path.slice('/v1/poi/'.length);
-  if (['live', 'me', 'list', 'queue', 'draft', 'submit', 'withdraw', 'retire', 'review', 'rollback', 'shelf', 'unshelve'].includes(rest)) return { route: rest };
+  if (
+    [
+      'live',
+      'me',
+      'list',
+      'queue',
+      'draft',
+      'submit',
+      'withdraw',
+      'retire',
+      'review',
+      'rollback',
+      'shelf',
+      'unshelve',
+    ].includes(rest)
+  )
+    return { route: rest };
   let m = /^asset\/([0-9a-f]{64})$/.exec(rest);
   if (m) return { route: 'asset', sha: m[1] };
   m = /^doc\/(poi-[0-9a-f]{12})$/.exec(rest);
   if (m) return { route: 'doc', id: m[1] };
-  m = /^shelf\/(lib-[0-9a-f]{12})$/.exec(rest);   // POI-4b: one library entry
+  m = /^shelf\/(lib-[0-9a-f]{12})$/.exec(rest); // POI-4b: one library entry
   if (m) return { route: 'shelf', id: m[1] };
   return null;
 }
@@ -790,4 +1108,6 @@ export const SAFE_OPEN_ROUTES = new Set(['/v1/mod/feed', '/v1/discord/interactio
 
 /** STAFF-PANEL1: the staff panel's doors (staff.js), NOT the JSON ladder's - none takes a game session. Two prove themselves by
  *  a password and an extension's signature (login, enroll); the rest by a staff session in `x-staff-session`. */
-export const STAFF_ROUTES = new Set([...ROUTES].filter((r) => r.startsWith('/v1/staff/') && r !== '/v1/staff/net-feed'));   // STAFF-PANEL5-FEEDS: the relay's feed, by its signature, takes no session
+export const STAFF_ROUTES = new Set(
+  [...ROUTES].filter((r) => r.startsWith('/v1/staff/') && r !== '/v1/staff/net-feed'),
+); // STAFF-PANEL5-FEEDS: the relay's feed, by its signature, takes no session

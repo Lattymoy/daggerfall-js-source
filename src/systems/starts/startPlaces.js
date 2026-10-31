@@ -9,6 +9,7 @@
 import { addIntoQuestTables } from '../quest/tables.js';
 import { STARTS, startSiteId } from './starts.js';
 
-export const START_PLACE_ROWS = Object.freeze(STARTS.filter((s) => s.site)
-  .map((s) => `${s.site}, 0x${startSiteId(s).toString(16)}, 0x0001, -1`));
+export const START_PLACE_ROWS = Object.freeze(
+  STARTS.filter((s) => s.site).map((s) => `${s.site}, 0x${startSiteId(s).toString(16)}, 0x0001, -1`),
+);
 addIntoQuestTables({ places: START_PLACE_ROWS.map((line) => ({ line, unlessKey: line.split(',')[0].trim() })) });

@@ -20,8 +20,8 @@
   {
     "name": "JUNGLE-TRAILS-the-turn-gone",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "  const x = c * wx - s * wz, z = s * wx + c * wz;   // turned: a rotation keeps every distance",
-    "new": "  const x = wx, z = wz;   // turned: a rotation keeps every distance",
+    "old": "  const x = c * wx - s * wz,\n    z = s * wx + c * wz; // turned: a rotation keeps every distance",
+    "new": "  const x = wx,\n    z = wz; // turned: a rotation keeps every distance",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "JUNGLE-TRAILS-the-frame-mirrored-north-south",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "scale = TERRAIN_SIZE / T, ox = px * T, oz = -py * T;",
-    "new": "scale = TERRAIN_SIZE / T, ox = px * T, oz = py * T;",
+    "old": "    oz = -py * T;",
+    "new": "    oz = py * T;",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "JUNGLE-TRAILS-the-culling-s-reach-gone",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "const B = JUNGLE_TRAILS.block, H = B / 2, R = Math.SQRT2 * H, ox",
-    "new": "const B = JUNGLE_TRAILS.block, H = B / 2, R = 0, ox",
+    "old": "    R = Math.SQRT2 * H,",
+    "new": "    R = 0,",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "JUNGLE-TRAILS-the-water-painted",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "          if (tileData[i] === WATER) continue;\n",
-    "new": "",
+    "old": "          if (tileData[i] === WATER) continue;\n          let d = Infinity;",
+    "new": "          let d = Infinity;",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "JUNGLE-TRAILS-the-town-s-rect-painted",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "          if (rect && cornerCleared(rect, x, y)) continue;   // the town's own ground and its clearing (E1-5: its outline's)\n",
-    "new": "",
+    "old": "          if (rect && cornerCleared(rect, x, y)) continue; // the town's own ground and its clearing (E1-5: its outline's)\n          if (!whole && jungleDepthAt(px, py, nine, x * scale, y * scale) < JUNGLE_EDGE.in) continue;",
+    "new": "          if (!whole && jungleDepthAt(px, py, nine, x * scale, y * scale) < JUNGLE_EDGE.in) continue;",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "E1-5-the-outline-unread",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "  if (!rect.shape) return x >= rect.xMin",
-    "new": "  if (!rect.shap) return x >= rect.xMin",
+    "old": "  if (!rect.shape) return x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax;",
+    "new": "  if (!rect.shap) return x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax;",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "E1-5-a-corner-s-south-row-unread",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "for (let ty = Math.max(0, y - 1);",
-    "new": "for (let ty = Math.max(0, y - 0);",
+    "old": "  for (let ty = Math.max(0, y - 1); ty <= Math.min(T - 1, y); ty++) {",
+    "new": "  for (let ty = Math.max(0, y - 0); ty <= Math.min(T - 1, y); ty++) {",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "E1-5-a-corner-s-west-column-unread",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "for (let tx = Math.max(0, x - 1);",
-    "new": "for (let tx = Math.max(0, x - 0);",
+    "old": "    for (let tx = Math.max(0, x - 1); tx <= Math.min(T - 1, x); tx++) if (natureCleared(rect, tx, ty)) return true;",
+    "new": "    for (let tx = Math.max(0, x - 0); tx <= Math.min(T - 1, x); tx++) if (natureCleared(rect, tx, ty)) return true;",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "JUNGLE-TRAILS-a-tile-by-one-corner",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2",
-    "new": "on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 1",
+    "old": "      if (tilemap[t] === 0 && on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2) paths[t] = 1; // half dirt by its art and more",
+    "new": "      if (tilemap[t] === 0 && on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 1) paths[t] = 1; // half dirt by its art and more",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "JUNGLE-TRAILS-a-tile-by-three-corners",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2",
-    "new": "on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 3",
+    "old": "      if (tilemap[t] === 0 && on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2) paths[t] = 1; // half dirt by its art and more",
+    "new": "      if (tilemap[t] === 0 && on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 3) paths[t] = 1; // half dirt by its art and more",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "JUNGLE-TRAILS-a-road-s-tile-marked",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "if (tilemap[t] === 0 && on[i]",
-    "new": "if (on[i]",
+    "old": "      if (tilemap[t] === 0 && on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2) paths[t] = 1; // half dirt by its art and more",
+    "new": "      if (on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2) paths[t] = 1; // half dirt by its art and more",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "JUNGLE-TRAILS-the-gate-gone",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "          if (!whole && jungleDepthAt(px, py, nine, x * scale, y * scale) < JUNGLE_EDGE.in) continue;\n",
-    "new": "",
+    "old": "          if (!whole && jungleDepthAt(px, py, nine, x * scale, y * scale) < JUNGLE_EDGE.in) continue;\n          on[i] = 1;",
+    "new": "          on[i] = 1;",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "JUNGLE-TRAILS-the-canopy-s-foot-unread",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "      const js = s0 + (s1 - s0) * tileDraw(wx, wz, 25);\n      if (onTrail(ti, mx, mz, species, js)) continue;\n",
-    "new": "      const js = s0 + (s1 - s0) * tileDraw(wx, wz, 25);\n",
+    "old": "      if (onTrail(ti, mx, mz, species, js)) continue;\n      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue; // JUNGLE-ROADSIDE: no canopy tree crowds a pair's trunk",
+    "new": "      if (nearPair(mx, mz, JUNGLE_ROADSIDE.clear)) continue; // JUNGLE-ROADSIDE: no canopy tree crowds a pair's trunk",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "JUNGLE-TRAILS-the-young-trees-foot-unread",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "        if (onTrail(ti, mx, mz, species, js)) continue;\n        out.push(",
-    "new": "        out.push(",
+    "old": "        if (onTrail(ti, mx, mz, species, js)) continue;\n        out.push({",
+    "new": "        out.push({",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "JUNGLE-TRAILS-the-foot-s-gate-unread",
     "file": "src/world/terrain/jungleNature.js",
-    "old": "trails && share[ti] >= 1 && !trailClear(",
-    "new": "trails && !trailClear(",
+    "old": "    trails && share[ti] >= 1 && !trailClear(px, py, mx, mz, JUNGLE_MEASURES[species].foot * js);",
+    "new": "    trails && !trailClear(px, py, mx, mz, JUNGLE_MEASURES[species].foot * js);",
     "tests": [
       "test/world/jungletrails.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "JUNGLE-TRAILS-the-block-s-floor-without-the-half-width",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "need = JUNGLE_TRAILS.half + reach / scale;",
-    "new": "need = reach / scale;",
+    "old": "      need = JUNGLE_TRAILS.half + reach / scale;",
+    "new": "      need = reach / scale;",
     "tests": [
       "test/world/jungletrails.test.js"
     ],
@@ -184,8 +184,8 @@
   {
     "name": "JUNGLE-TRAILS-the-kept-blocks-another-row-s",
     "file": "src/world/jungle/jungleTrails.js",
-    "old": "if (_blocksOf === px && _blocksPy === py) return _blocks;",
-    "new": "if (_blocksOf === px) return _blocks;",
+    "old": "  if (_blocksOf === px && _blocksPy === py) return _blocks;",
+    "new": "  if (_blocksOf === px) return _blocks;",
     "tests": [
       "test/world/jungletrails.test.js"
     ]

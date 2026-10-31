@@ -2,8 +2,8 @@
   {
     "name": "GRANT-UNHEARD-unheard-a-forgery",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (!v) return note(from, 'ungranted');",
-    "new": "    if (!v) return note(from, 'unsigned');",
+    "old": "    if (!v) return note(from, 'ungranted'); // GRANT-UNHEARD: never heard is no forgery - the relay drops frames past its byte budget, the full ones (the grants') first",
+    "new": "    if (!v) return note(from, 'unsigned'); // GRANT-UNHEARD: never heard is no forgery - the relay drops frames past its byte budget, the full ones (the grants') first",
     "why": "a grant the relay's budget dropped tallied `unsigned` - a case's reason against an honest owner",
     "tests": [
       "test/scenes/grantunheard.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "GRANT-UNHEARD-never-judged-anew",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (v.why === 'ungranted' && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;",
-    "new": "    if (false && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;",
+    "old": "    if (v.why === 'ungranted' && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null; // GRANT-UNHEARD: a grant unheard, heard since",
+    "new": "    if (false && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null; // GRANT-UNHEARD: a grant unheard, heard since",
     "why": "a grant unheard, heard since, still stands its foe down",
     "tests": [
       "test/scenes/grantunheard.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "GRANT-UNHEARD-forgery-judged-anew",
     "file": "src/scenes/grantHost.js",
-    "old": "    if (v.why === 'ungranted' && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;",
-    "new": "    if ((v.why === 'ungranted' || v.why === 'unsigned') && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;",
+    "old": "    if (v.why === 'ungranted' && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null; // GRANT-UNHEARD: a grant unheard, heard since",
+    "new": "    if ((v.why === 'ungranted' || v.why === 'unsigned') && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null; // GRANT-UNHEARD: a grant unheard, heard since",
     "why": "a failed signature built, judged and tallied again on every frame",
     "tests": [
       "test/scenes/grantunheard.test.js"

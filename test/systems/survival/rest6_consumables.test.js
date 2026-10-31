@@ -260,7 +260,7 @@ test('REST6 by source: the windows kneel by the candle, the hosts\' rest points 
   assert.match(rd('src/scenes/world.js'), /camps\.restPointAt\(walkMode && playerSpawned \? player\.pos : cam\.pos\)/);
   assert.match(rd('src/scenes/dungeonContext.js'), /restPoint: \(\) => \(_restFromBed \|\| bedInReach\(dungeonBeds, _fpFeet\) \? \{ kind: 'bed', where: null \} : _fpFeet \? camps\.restPointAt\(_fpFeet\) : null\),/);   // FIELD BUGS 2026-10-05 DUNGEON-BEDS: a bed first, then the fire or the Bedroll
   const shop = rd('src/systems/shopStock.js');
-  const at = shop.indexOf("restItemsStock(buildingType === BUILDING_TYPES.GeneralStore ? 'GeneralStore' : 'Alchemist'");
+  const at = shop.indexOf("restItemsStock(\n      buildingType === BUILDING_TYPES.GeneralStore ? 'GeneralStore' : 'Alchemist'");
   assert.ok(at > shop.indexOf("const pairs = SHOP_ITEM_GROUPS[buildingType]") && at < shop.indexOf('add(mintHealingPotion());'), 'after DFU\'s draws, before the healing supply');
   const shared = rd('src/scenes/shared.js');
   assert.ok(shared.indexOf('  installRestItemLoot();') > shared.indexOf('  installForaging();'), 'after Foraging\'s hooks');

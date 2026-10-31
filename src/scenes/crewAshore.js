@@ -87,7 +87,8 @@ export function createCrewAshore(deps) {
   /** @type {Map<string, { c: any, rec: any, remove: (rec: any) => void, has: ((rec: any) => boolean) | null, fx: any, sat?: { feet: number[], yaw: number } | null }>} */
   const stood = new Map();
   const pending = new Set();
-  let placeKey, epoch = 0;
+  let placeKey,
+    epoch = 0;
   /** COMPANION-TRAIL: where the leader walked in this place, oldest first. @type {number[][]} */
   const trail = [];
   /** @type {number[]|null} the leader's feet the frame before */
@@ -96,9 +97,10 @@ export function createCrewAshore(deps) {
    *  on a floor, a crumb past TRAIL_STEP_M from the last. */
   function drop(L) {
     const f = L.feet;
-    if (leaderWas && Math.hypot(f[0] - leaderWas[0], f[1] - leaderWas[1], f[2] - leaderWas[2]) > TRAIL_JUMP_M) trail.length = 0;
+    if (leaderWas && Math.hypot(f[0] - leaderWas[0], f[1] - leaderWas[1], f[2] - leaderWas[2]) > TRAIL_JUMP_M)
+      trail.length = 0;
     leaderWas = [f[0], f[1], f[2]];
-    if (L.grounded === false) return;   // a jump's arc, a swim, a levitation leave no crumb in the air
+    if (L.grounded === false) return; // a jump's arc, a swim, a levitation leave no crumb in the air
     const last = trail[trail.length - 1];
     if (last && Math.hypot(f[0] - last[0], f[2] - last[2]) < TRAIL_STEP_M) return;
     trail.push([f[0], f[1], f[2]]);
@@ -113,15 +115,38 @@ export function createCrewAshore(deps) {
    *  party - takes none to his next turn ashore. In memory alone: a save carries his health, not his spells, so a load
    *  (a quickload too - the party is the save's) stands him without them, as ever. */
   const carried = new WeakMap();
-  const carry = (s) => { const fx = s.rec?.entity?.activeEffects; carried.set(s.c, Array.isArray(fx) ? fx.filter((a) => a && !a.ended) : []); };
+  const carry = (s) => {
+    const fx = s.rec?.entity?.activeEffects;
+    carried.set(s.c, Array.isArray(fx) ? fx.filter((a) => a && !a.ended) : []);
+  };
 
-  const lift = (s) => { try { s.remove(s.rec); } catch (e) { console.warn('[companions] a body would not lift', e?.message ?? e); } };
+  const lift = (s) => {
+    try {
+      s.remove(s.rec);
+    } catch (e) {
+      console.warn('[companions] a body would not lift', e?.message ?? e);
+    }
+  };
   /** COMPANION-PORTAL: out through a portal where the place draws one - the body taken out once it has closed. */
   const leave = (s) => {
-    if (typeof s.fx?.leave !== 'function') { lift(s); return; }
-    try { s.fx.leave(s.rec, () => lift(s)); } catch (e) { console.warn('[companions] a portal would not open', e?.message ?? e); lift(s); }
+    if (typeof s.fx?.leave !== 'function') {
+      lift(s);
+      return;
+    }
+    try {
+      s.fx.leave(s.rec, () => lift(s));
+    } catch (e) {
+      console.warn('[companions] a portal would not open', e?.message ?? e);
+      lift(s);
+    }
   };
-  function liftAll() { for (const s of stood.values()) { carry(s); lift(s); } stood.clear(); }
+  function liftAll() {
+    for (const s of stood.values()) {
+      carry(s);
+      lift(s);
+    }
+    stood.clear();
+  }
   /** Where the `i`th of `n` stands behind the leader, walked out from the leader's feet (the place's `spot`: never in a wall). */
   function slotFeet(place, L, i, n) {
     const [dx, dz] = companionSlot(L.yaw, i, n);
@@ -136,71 +161,111 @@ export function createCrewAshore(deps) {
    *  billed from the bed, no target or route held from the seat). A body moved off its seat by something else (further
    *  than GET_DOWN_REACH from it - wagonRiders.js getDown's own guard) stays where it is. */
   function getDown(s, place) {
-    const sat = s.sat, ai = s.rec.ai;
+    const sat = s.sat,
+      ai = s.rec.ai;
     s.sat = null;
     const f = ai.feet;
     if (!sat || Math.hypot(f[0] - sat.feet[0], f[2] - sat.feet[2]) > GET_DOWN_REACH) return;
     const to = getDownPoint(sat);
     const at = place?.spot ? place.spot(sat.feet, to[0] - sat.feet[0], to[2] - sat.feet[2]) : to;
-    f[0] = at[0]; f[1] = at[1]; f[2] = at[2];
+    f[0] = at[0];
+    f[1] = at[1];
+    f[2] = at[2];
     if (typeof ai.resumeLive === 'function') ai.resumeLive();
-    else { ai.target = null; ai.path = null; ai.velY = 0; }
+    else {
+      ai.target = null;
+      ai.path = null;
+      ai.velY = 0;
+    }
     ai._restGrounded = false;
   }
   /** The motor's follow handle: the leader's live feet, and how near this one keeps. */
-  const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M + i * HEEL_STEP_M, trail: () => trail });   // COMPANION-TRAIL
+  const followOf = (i) => ({
+    feet: () => deps.leader()?.feet ?? null,
+    stop: HEEL_M + i * HEEL_STEP_M,
+    trail: () => trail,
+  }); // COMPANION-TRAIL
 
   /** One frame: the place read, the bodies there kept to the party, the missing stood. */
   function frame() {
     const party = deps.party();
     const now = deps.now();
     party?.wake(now);
-    const place = party && (party.party.length || stood.size) ? deps.place() : null;   // COMPANION-PORTAL: the last one sent away still leaves through its portal (no party: everyone out)
+    const place = party && (party.party.length || stood.size) ? deps.place() : null; // COMPANION-PORTAL: the last one sent away still leaves through its portal (no party: everyone out)
     const key = place ? place.key : undefined;
-    if (key !== placeKey) { liftAll(); placeKey = key; epoch++; trail.length = 0; leaderWas = null; }   // COMPANION-TRAIL: a new place, a new trail
+    if (key !== placeKey) {
+      liftAll();
+      placeKey = key;
+      epoch++;
+      trail.length = 0;
+      leaderWas = null;
+    } // COMPANION-TRAIL: a new place, a new trail
     if (!party) return;
     const L = deps.leader();
-    if (place && L) drop(L);   // COMPANION-TRAIL
+    if (place && L) drop(L); // COMPANION-TRAIL
     const list = party.party;
     // the bodies standing: knocked, swept, sent back, left behind
     for (const [k, s] of [...stood]) {
       const { rec } = s;
       const i = list.indexOf(s.c);
       if (rec._knockedOut) {
-        stood.delete(k); leave(s);   // COMPANION-PORTAL: carried off through a portal
-        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null);   // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was
+        stood.delete(k);
+        leave(s); // COMPANION-PORTAL: carried off through a portal
+        if (party.knock(s.c.boat, s.c.name, now)) deps.onKnocked?.(s.c, rec._knockedBy ?? null); // RVN10 (Feud-Arc.md 21.1): and the foe whose blow it was
         continue;
       }
       // the place swept it - a cull, a remove, or (AUDIT CC-A1) a clear that empties the list and marks nobody (the
       // street's clearLive: a fast travel, a Recall, a passage, a respawn): it stands again below
-      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) { carry(s); stood.delete(k); continue; }   // AUDIT WK-M3: with his spells
-      if (i < 0) { stood.delete(k); leave(s); continue; }   // sent back aboard - COMPANION-PORTAL: through a portal
+      if (rec.dead || !rec.ai || (s.has && !s.has(rec))) {
+        carry(s);
+        stood.delete(k);
+        continue;
+      } // AUDIT WK-M3: with his spells
+      if (i < 0) {
+        stood.delete(k);
+        leave(s);
+        continue;
+      } // sent back aboard - COMPANION-PORTAL: through a portal
       if (rec.entity) {
         party.hurt(s.c.boat, s.c.name, rec.entity.health, rec.entity.maxHealth);
         // AUDIT CC-A4: the player's, whatever turned him (a blow of mine that reached him, a reset of an ally's team)
-        rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly';
+        rec.entity.team = 'PlayerAlly';
+        rec.entity.mobileTeam = 'PlayerAlly';
       }
       rec.shipmate = true;
       rec.ai.follow = followOf(i);
-      rec.ai.seat = deps.seat ? seatOf(i, list.length) : null;   // WAGONS1
-      rec.ai.seatDraw = deps.seatDraw ? seatDrawOf(i, list.length) : null;   // WAGONS2: drawn in the grown wagon
+      rec.ai.seat = deps.seat ? seatOf(i, list.length) : null; // WAGONS1
+      rec.ai.seatDraw = deps.seatDraw ? seatDrawOf(i, list.length) : null; // WAGONS2: drawn in the grown wagon
       const seat = rec.ai.seat?.() ?? null;
-      if (seat) s.sat = { feet: [seat.feet[0], seat.feet[1], seat.feet[2]], yaw: seat.yaw };   // WAGON-ALIGHT: where it sits, kept for its getting down
+      if (seat)
+        s.sat = { feet: [seat.feet[0], seat.feet[1], seat.feet[2]], yaw: seat.yaw }; // WAGON-ALIGHT: where it sits, kept for its getting down
       else if (s.sat) getDown(s, place);
       if (place && L && !seat) {
         const f = rec.ai.feet;
         // AUDIT CC-A3: a floor away counts only while the leader stands on one - levitating, swimming or in the air, the
         // body stood at his height would only fall and be stood up there again
-        const away = Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M || (L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY);
+        const away =
+          Math.hypot(f[0] - L.feet[0], f[2] - L.feet[2]) > CATCH_UP_M ||
+          (L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY);
         if (away) {
           const at = slotFeet(place, L, i, list.length);
           const from = [f[0], f[1], f[2]];
-          f[0] = at[0]; f[1] = at[1]; f[2] = at[2];
-          try { s.fx?.jump?.(rec, from); } catch { /* COMPANION-PORTAL: no portal, the step all the same */ }
+          f[0] = at[0];
+          f[1] = at[1];
+          f[2] = at[2];
+          try {
+            s.fx?.jump?.(rec, from);
+          } catch {
+            /* COMPANION-PORTAL: no portal, the step all the same */
+          }
           // AUDIT CC-A3: stood afresh - the motor resumes as a puppet handed back does (enemyMotor.js resumeLive: its
           // grounding, so no fall is billed from the ledge he left; its target and senses; the route)
           if (typeof rec.ai.resumeLive === 'function') rec.ai.resumeLive();
-          else { rec.ai.target = null; rec.ai.path = null; rec.ai.velY = 0; }
+          else {
+            rec.ai.target = null;
+            rec.ai.path = null;
+            rec.ai.velY = 0;
+          }
           rec.ai._restGrounded = false;
         }
       }
@@ -211,30 +276,46 @@ export function createCrewAshore(deps) {
       const k = companionKeyOf(c);
       if (stood.has(k) || pending.has(k)) return;
       pending.add(k);
-      const at = slotFeet(place, L, i, list.length), was = epoch;
-      Promise.resolve(place.spawn(c.mobile, at, { yaw: L.yaw, gender: c.gender })).then((rec) => {
-        pending.delete(k);
-        if (!rec) return;
-        if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) { place.remove(rec); return; }   // the place changed under the stand, or he went back
-        rec.companion = k;
-        rec.person = companionPerson(c);   // FB1012d ALLY-RACE: his own person in every place - never the stand's draw
-        rec.folk = c.folk ?? null;   // AUDIT PROVINCE-FOLK A1: a sworn one's race as it was born (foeBodies.js ownRace)
-        rec.shipmate = true;
-        if (rec.entity) {
-          rec.entity.name = /** @type {any} */ (c).title ?? c.name;   // REVENANT-COMPANION: a sworn one's own name
-          // AUDIT CC-A2: a door neither heals nor hurts him - each place rolls his class's pool afresh.
-          // AUDIT WK-U2: so his WHOLE rides with him too, not a share of the new roll: carried as a share, his maximum
-          // changed at every door (94, 86, 76, 105...) and his card and bar read each re-roll as a blow or a heal
-          if (c.maxHealth > 0) { rec.entity.maxHealth = c.maxHealth; rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth)); }
-          // AUDIT WK-M3: and his spells, as he left the last place
-          const fx = carried.get(c);
-          if (fx?.length) rec.entity.activeEffects = [...(rec.entity.activeEffects ?? []), ...fx];
-        }
-        if (rec.ai) rec.ai.follow = followOf(Math.max(0, party.party.indexOf(c)));
-        stood.set(k, { c, rec, remove: place.remove, has: place.has ?? null, fx: place.fx ?? null });
-        try { place.fx?.arrive?.(rec); } catch { /* COMPANION-PORTAL: no portal, the stand all the same */ }
-        deps.onStood?.(c, rec);
-      }).catch((e) => { pending.delete(k); console.warn('[companions] a companion would not stand', e?.message ?? e); });
+      const at = slotFeet(place, L, i, list.length),
+        was = epoch;
+      Promise.resolve(place.spawn(c.mobile, at, { yaw: L.yaw, gender: c.gender }))
+        .then((rec) => {
+          pending.delete(k);
+          if (!rec) return;
+          if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) {
+            place.remove(rec);
+            return;
+          } // the place changed under the stand, or he went back
+          rec.companion = k;
+          rec.person = companionPerson(c); // FB1012d ALLY-RACE: his own person in every place - never the stand's draw
+          rec.folk = c.folk ?? null; // AUDIT PROVINCE-FOLK A1: a sworn one's race as it was born (foeBodies.js ownRace)
+          rec.shipmate = true;
+          if (rec.entity) {
+            rec.entity.name = /** @type {any} */ (c).title ?? c.name; // REVENANT-COMPANION: a sworn one's own name
+            // AUDIT CC-A2: a door neither heals nor hurts him - each place rolls his class's pool afresh.
+            // AUDIT WK-U2: so his WHOLE rides with him too, not a share of the new roll: carried as a share, his maximum
+            // changed at every door (94, 86, 76, 105...) and his card and bar read each re-roll as a blow or a heal
+            if (c.maxHealth > 0) {
+              rec.entity.maxHealth = c.maxHealth;
+              rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));
+            }
+            // AUDIT WK-M3: and his spells, as he left the last place
+            const fx = carried.get(c);
+            if (fx?.length) rec.entity.activeEffects = [...(rec.entity.activeEffects ?? []), ...fx];
+          }
+          if (rec.ai) rec.ai.follow = followOf(Math.max(0, party.party.indexOf(c)));
+          stood.set(k, { c, rec, remove: place.remove, has: place.has ?? null, fx: place.fx ?? null });
+          try {
+            place.fx?.arrive?.(rec);
+          } catch {
+            /* COMPANION-PORTAL: no portal, the stand all the same */
+          }
+          deps.onStood?.(c, rec);
+        })
+        .catch((e) => {
+          pending.delete(k);
+          console.warn('[companions] a companion would not stand', e?.message ?? e);
+        });
     });
   }
 
@@ -244,9 +325,16 @@ export function createCrewAshore(deps) {
     bodies: () => [...stood.values()].map((s) => s.rec),
     /** WAGON-ALIGHT: their capsules (`{ feet, height }`) - the parked wagon's box never stands round one
      *  (scenes/horseCartPool.js capsuleInBox). */
-    capsules: () => [...stood.values()].filter((s) => s.rec.ai?.feet).map((s) => ({ feet: s.rec.ai.feet, height: s.rec.ai.height })),
+    capsules: () =>
+      [...stood.values()].filter((s) => s.rec.ai?.feet).map((s) => ({ feet: s.rec.ai.feet, height: s.rec.ai.height })),
     /** Everyone out of the place (the naval arc switched off, a new game) - the party keeps them. */
-    clear() { liftAll(); placeKey = undefined; epoch++; trail.length = 0; leaderWas = null; },
+    clear() {
+      liftAll();
+      placeKey = undefined;
+      epoch++;
+      trail.length = 0;
+      leaderWas = null;
+    },
     /** COMPANION-TRAIL: the leader's crumbs in this place (tests). */
     trail: () => trail,
   };

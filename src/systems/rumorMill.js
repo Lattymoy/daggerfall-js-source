@@ -67,9 +67,9 @@
 //   rolls                 - Math.random-compatible (Random.Range +
 //                           Dice100)
 
-import { getInt } from './settings/settings.js';   // AUDIT 28 W1: QuestRumorWeight, read live
+import { getInt } from './settings/settings.js'; // AUDIT 28 W1: QuestRumorWeight, read live
 import { dice100 } from '../combat/formulas.js';
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** TalkManager.RumorType (:341-346). */
 export const RUMOR_TYPE = Object.freeze({ CommonRumor: 0, QuestProgressRumor: 1, QuestRumorMill: 2 });
@@ -103,7 +103,7 @@ export function tokensToString(tokens, addSpaceAtTokenEnd = true) {
   const separator = addSpaceAtTokenEnd ? ' ' : '';
   let out = '';
   for (const token of tokens ?? []) {
-    out += (token.text != null && token.text !== '') ? token.text : separator;
+    out += token.text != null && token.text !== '' ? token.text : separator;
   }
   return out;
 }
@@ -118,10 +118,16 @@ export class RumorMill {
     this.defaultSession = { numAnswersGivenTellMeAboutOrRumors: 0, isSpyMaster: false };
   }
 
-  _rolls() { return this.deps.rolls ?? Math.random; }
-  _now() { return this.deps.nowClassicMinutes?.() ?? 0; }
+  _rolls() {
+    return this.deps.rolls ?? Math.random;
+  }
+  _now() {
+    return this.deps.nowClassicMinutes?.() ?? 0;
+  }
   /** Random.Range(0, n) - int, exclusive top. */
-  _range(n) { return Math.floor(this._rolls()() * n); }
+  _range(n) {
+    return Math.floor(this._rolls()() * n);
+  }
 
   // SetupRumorMill (:2745-2749) only guards a NULL list; the JS list
   // is never null, so the add-side `null || Count == 0` calls
@@ -135,9 +141,9 @@ export class RumorMill {
    *  gates, C#'s own order. */
   importClassicRumor(rumor, readTokens) {
     const tokens = readTokens(rumor.rumorText);
-    if ((rumor.flags & 4) !== 0) return;   // a quest rumor - not imported
-    if ((rumor.flags & 1) !== 0) return;   // a sign message - not imported
-    if (rumor.npcID !== 0) return;         // an NPC-specific post-quest greeting - not imported
+    if ((rumor.flags & 4) !== 0) return; // a quest rumor - not imported
+    if ((rumor.flags & 1) !== 0) return; // a sign message - not imported
+    if (rumor.npcID !== 0) return; // an NPC-specific post-quest greeting - not imported
     this.listRumorMill.push({
       rumorType: RUMOR_TYPE.CommonRumor,
       listRumorVariants: [tokens],
@@ -148,7 +154,7 @@ export class RumorMill {
       regionID: rumor.regionID,
       flags: rumor.flags,
       type: rumor.type,
-      textID: 0,   // THE BULLETIN HOLE: never set on imports
+      textID: 0, // THE BULLETIN HOLE: never set on imports
     });
   }
 
@@ -160,7 +166,10 @@ export class RumorMill {
       listRumorVariants: [tokens],
       questID: 0,
       timeLimit: this._now() + NON_QUEST_RUMOR_TTL_MINUTES,
-      faction1, faction2, regionID, type,
+      faction1,
+      faction2,
+      regionID,
+      type,
       flags: this.getFlagsForNewRumor(type),
       textID: textId,
     });
@@ -170,7 +179,13 @@ export class RumorMill {
    *  answer 1, everything else 8 (spoken). */
   getFlagsForNewRumor(type) {
     switch (type) {
-      case 10: case 18: case 7: case 4: case 28: case 27: case 26:
+      case 10:
+      case 18:
+      case 7:
+      case 4:
+      case 28:
+      case 27:
+      case 26:
         return 1;
       default:
         return 8;
@@ -192,7 +207,7 @@ export class RumorMill {
       // the bulletin filter matches entry.textID against the allowed
       // ids - and runs FIRST, before any type check
       if (readingSign && !ALLOWED_BULLETIN_TEXT_IDS.includes(entry.textID)) continue;
-      if (entry.questID !== 0 && this.deps.questAway?.(entry.questID)) continue;   // QUEST-SHELF's audit
+      if (entry.questID !== 0 && this.deps.questAway?.(entry.questID)) continue; // QUEST-SHELF's audit
       if (entry.rumorType === RUMOR_TYPE.CommonRumor) {
         // the region gate (the crime-wave arm; DFU dropped classic's
         // ruler regioning by never stamping those - the CODE is the law)
@@ -263,8 +278,11 @@ export class RumorMill {
    *  default rebuilt per call would discard the increment on :261 and
    *  the gate could never close. */
   getNewsOrRumors(npcSession = this.defaultSession) {
-    if (npcSession.numAnswersGivenTellMeAboutOrRumors < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS
-      || npcSession.isSpyMaster || (this.deps.npcsKnowEverything?.() ?? false)) {
+    if (
+      npcSession.numAnswersGivenTellMeAboutOrRumors < MAX_ANSWERS_TELL_ME_ABOUT_OR_RUMORS ||
+      npcSession.isSpyMaster ||
+      (this.deps.npcsKnowEverything?.() ?? false)
+    ) {
       let news = this.deps.resolvingError?.() ?? resolvingErrorText();
       const validRumors = this.getValidRumors();
       if (validRumors.length === 0) return this.deps.expandRandomTextRecord?.(OUT_OF_NEWS_RECORD_INDEX) ?? '';
@@ -276,8 +294,9 @@ export class RumorMill {
         }
       } else if (entry.rumorType === RUMOR_TYPE.QuestRumorMill || entry.rumorType === RUMOR_TYPE.QuestProgressRumor) {
         const variant = this._range(entry.listRumorVariants.length);
-        news = this.deps.expandQuestTokens?.(entry.questID, entry.listRumorVariants[variant])
-          ?? tokensToString(entry.listRumorVariants[variant]);
+        news =
+          this.deps.expandQuestTokens?.(entry.questID, entry.listRumorVariants[variant]) ??
+          tokensToString(entry.listRumorVariants[variant]);
       }
       npcSession.numAnswersGivenTellMeAboutOrRumors++;
       return news;
@@ -309,8 +328,16 @@ export class RumorMill {
       listRumorVariants.push(message.getTextTokensByVariant(i, false));
     }
     this.listRumorMill.push({
-      rumorType: RUMOR_TYPE.QuestRumorMill, questID, listRumorVariants,
-      timeLimit: 0, faction1: 0, faction2: 0, regionID: 0, flags: 0, type: 0, textID: 0,
+      rumorType: RUMOR_TYPE.QuestRumorMill,
+      questID,
+      listRumorVariants,
+      timeLimit: 0,
+      faction1: 0,
+      faction2: 0,
+      regionID: 0,
+      flags: 0,
+      type: 0,
+      textID: 0,
     });
   }
 
@@ -319,8 +346,16 @@ export class RumorMill {
   addQuestRumorTokensToRumorMill(questID, listTokens) {
     if (listTokens.length > 0) {
       this.listRumorMill.push({
-        rumorType: RUMOR_TYPE.QuestRumorMill, questID, listRumorVariants: listTokens,
-        timeLimit: 0, faction1: 0, faction2: 0, regionID: 0, flags: 0, type: 0, textID: 0,
+        rumorType: RUMOR_TYPE.QuestRumorMill,
+        questID,
+        listRumorVariants: listTokens,
+        timeLimit: 0,
+        faction1: 0,
+        faction2: 0,
+        regionID: 0,
+        flags: 0,
+        type: 0,
+        textID: 0,
       });
     }
   }
@@ -332,7 +367,11 @@ export class RumorMill {
     if (message == null) throw new Error('AddOrReplaceQuestProgressRumor(): Message cannot be null.');
     let i;
     for (i = 0; i < this.listRumorMill.length; i++) {
-      if (this.listRumorMill[i].rumorType === RUMOR_TYPE.QuestProgressRumor && this.listRumorMill[i].questID === questID) break;
+      if (
+        this.listRumorMill[i].rumorType === RUMOR_TYPE.QuestProgressRumor &&
+        this.listRumorMill[i].questID === questID
+      )
+        break;
     }
     const listRumorVariants = [];
     for (let v = 0; v < message.variants.length; v++) {
@@ -340,8 +379,16 @@ export class RumorMill {
     }
     if (i >= this.listRumorMill.length) {
       this.listRumorMill.push({
-        rumorType: RUMOR_TYPE.QuestProgressRumor, questID, listRumorVariants,
-        timeLimit: 0, faction1: 0, faction2: 0, regionID: 0, flags: 0, type: 0, textID: 0,
+        rumorType: RUMOR_TYPE.QuestProgressRumor,
+        questID,
+        listRumorVariants,
+        timeLimit: 0,
+        faction1: 0,
+        faction2: 0,
+        regionID: 0,
+        flags: 0,
+        type: 0,
+        textID: 0,
       });
     } else {
       this.listRumorMill[i].listRumorVariants = listRumorVariants;
@@ -350,12 +397,16 @@ export class RumorMill {
 
   /** RemoveQuestRumorsFromRumorMill (:1636-1654). */
   removeQuestRumorsFromRumorMill(questID) {
-    this.listRumorMill = this.listRumorMill.filter((e) => !(e.rumorType === RUMOR_TYPE.QuestRumorMill && e.questID === questID));
+    this.listRumorMill = this.listRumorMill.filter(
+      (e) => !(e.rumorType === RUMOR_TYPE.QuestRumorMill && e.questID === questID),
+    );
   }
 
   /** RemoveQuestProgressRumorsFromRumorMill (:1656-1674). */
   removeQuestProgressRumorsFromRumorMill(questID) {
-    this.listRumorMill = this.listRumorMill.filter((e) => !(e.rumorType === RUMOR_TYPE.QuestProgressRumor && e.questID === questID));
+    this.listRumorMill = this.listRumorMill.filter(
+      (e) => !(e.rumorType === RUMOR_TYPE.QuestProgressRumor && e.questID === questID),
+    );
   }
 
   /** AddQuestorPostQuestMessage (:1676-1682): variant 0, unexpanded;
@@ -385,7 +436,9 @@ export class RumorMill {
       const entry = this.listRumorMill[i];
       if (entry.rumorType === RUMOR_TYPE.QuestRumorMill || entry.rumorType === RUMOR_TYPE.QuestProgressRumor) {
         if (!hasQuest(entry.questID)) {
-          console.log(`Save data contains orphaned rumors for quest with id ${entry.questID}. Removing these rumors...`);
+          console.log(
+            `Save data contains orphaned rumors for quest with id ${entry.questID}. Removing these rumors...`,
+          );
           this.listRumorMill.splice(i, 1);
         }
       }
@@ -400,13 +453,18 @@ export class RumorMill {
   getSaveData() {
     return {
       listRumorMill: structuredClone(this.listRumorMill),
-      dictQuestorPostQuestMessage: [...this.dictQuestorPostQuestMessage.entries()].map(([questID, tokens]) => ({ questID, tokens: structuredClone(tokens) })),
+      dictQuestorPostQuestMessage: [...this.dictQuestorPostQuestMessage.entries()].map(([questID, tokens]) => ({
+        questID,
+        tokens: structuredClone(tokens),
+      })),
     };
   }
 
   restoreSaveData(data) {
     if (!data) return;
     this.listRumorMill = structuredClone(data.listRumorMill ?? []);
-    this.dictQuestorPostQuestMessage = new Map((data.dictQuestorPostQuestMessage ?? []).map((r) => [r.questID, structuredClone(r.tokens)]));
+    this.dictQuestorPostQuestMessage = new Map(
+      (data.dictQuestorPostQuestMessage ?? []).map((r) => [r.questID, structuredClone(r.tokens)]),
+    );
   }
 }

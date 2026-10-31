@@ -84,8 +84,8 @@
   {
     "name": "GATE-CLEAR-north-is-the-row-below",
     "file": "src/world/gate/gateClearance.js",
-    "old": "(py - clear.py) * PIXEL_M + clear.z]",
-    "new": "(clear.py - py) * PIXEL_M + clear.z]",
+    "old": "  (py - clear.py) * PIXEL_M + clear.z,",
+    "new": "  (clear.py - py) * PIXEL_M + clear.z,",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -120,8 +120,8 @@
   {
     "name": "GATE-CLEAR-the-site-margin-dropped",
     "file": "src/world/gate/gateClearance.js",
-    "old": "rect.y * tileMetres + o.pos.z, WOD_SITE_OBJECT_RADIUS_M)) return false;",
-    "new": "rect.y * tileMetres + o.pos.z, 0)) return false;",
+    "old": "    if (\n      pointNearGate(\n        clear,\n        px,\n        py,\n        rect.x * tileMetres + o.pos.x,\n        rect.y * tileMetres + o.pos.z,\n        WOD_SITE_OBJECT_RADIUS_M,\n      )\n    )\n      return false;",
+    "new": "    if (pointNearGate(clear, px, py, rect.x * tileMetres + o.pos.x, rect.y * tileMetres + o.pos.z, 0)) return false;",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -129,8 +129,8 @@
   {
     "name": "GATE-CLEAR-a-refused-site-not-remembered",
     "file": "src/world/gate/gateClearance.js",
-    "old": "{ ledger.refused = true; return false; }",
-    "new": "{ return false; }",
+    "old": "      ledger.refused = true;\n      return false;",
+    "new": "      return false;",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -138,8 +138,8 @@
   {
     "name": "GATE-CLEAR-a-whole-site-left-out-of-the-reach",
     "file": "src/world/gate/gateClearance.js",
-    "old": "        ledger.reach.push(x, z, x, z, WOD_SITE_OBJECT_RADIUS_M);\n",
-    "new": "",
+    "old": "        ledger.reach.push(x, z, x, z, WOD_SITE_OBJECT_RADIUS_M);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -147,8 +147,8 @@
   {
     "name": "GATE-CLEAR-the-old-clearing's-cost-forgotten-at-the-turn",
     "file": "src/world/gate/gateClearance.js",
-    "old": "if ((gone && p.gateRefused) || reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);",
-    "new": "if (reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);",
+    "old": "        if ((gone && p.gateRefused) || reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);",
+    "new": "        if (reachNearGate(p.wodReach, comeOf.get(was), p.px, p.py)) again.push(p);",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -156,8 +156,8 @@
   {
     "name": "GATE-CLEAR-never-marked-current",
     "file": "src/world/gate/gateClearance.js",
-    "old": "        else p.gateClearKey = key;",
-    "new": "        // gone",
+    "old": "        else p.gateClearKey = key; // the old clearings cost it nothing, and nothing it stands reaches a new one",
+    "new": "        // gone   // the old clearings cost it nothing, and nothing it stands reaches a new one",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "GATE-CLEAR-a-publish-across-the-turn-ignored",
     "file": "src/world/gate/gateClearance.js",
-    "old": "    published(k, key) { if ((key ?? null) !== swept) due.add(k); },",
-    "new": "    published(k, key) { },",
+    "old": "    published(k, key) {\n      if ((key ?? null) !== swept) due.add(k);\n    },",
+    "new": "    published(k, key) {},",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "GATE-CLEAR-the-turn-asks-nobody",
     "file": "src/world/gate/gateClearance.js",
-    "old": "if (key !== swept) { swept = key; for (const k of built.keys()) due.add(k); }",
-    "new": "if (key !== swept) { swept = key; }",
+    "old": "        for (const k of built.keys()) due.add(k);\n      }",
+    "new": "      }",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "GATE-CLEAR-one-key-for-every-day",
     "file": "src/world/gate/gateClearance.js",
-    "old": "key: `${site.day}:${site.px},${site.py}`",
-    "new": "key: `${site.px},${site.py}`",
+    "old": "  return Object.freeze({\n    key: `${site.day}:${site.px},${site.py}`,\n    day: site.day,\n    px: site.px,\n    py: site.py,\n    x,\n    z,\n    rx,\n    rz,\n  });",
+    "new": "  return Object.freeze({ key: `${site.px},${site.py}`, day: site.day, px: site.px, py: site.py, x, z, rx, rz });",
     "tests": [
       "test/world/gate/gateclear.test.js"
     ]

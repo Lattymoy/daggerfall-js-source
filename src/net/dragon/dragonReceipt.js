@@ -26,7 +26,7 @@ export function dragonReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   for (const k of ['d', 'h', 'w', 'y', 'n', 'k', 't', 'o', 'r']) if (c[k] !== undefined) return false;
   if (!Number.isSafeInteger(c.q) || c.q < 0) return false;
-  if (c.p !== undefined && !(Number.isSafeInteger(c.p) && c.p >= 0 && c.p < DRAGON_PLACES)) return false;   // DRAGON-EACH: none from a relay before it
+  if (c.p !== undefined && !(Number.isSafeInteger(c.p) && c.p >= 0 && c.p < DRAGON_PLACES)) return false; // DRAGON-EACH: none from a relay before it
   if (c.b !== 0 && c.b !== 1) return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
@@ -45,11 +45,24 @@ export function dragonReceiptValid(c) {
  */
 export async function mintDragonReceipt({ q, p, b, s, c, x, l, m }, privateKey, { subtle, nowS }) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintDragonReceipt needs an integer epoch-seconds clock');
-  const claims = { q, ...(p !== undefined ? { p } : {}), b, s, c, x, l, ...(m !== undefined ? { m } : {}), i: nowS, e: nowS + DRAGON_RECEIPT_TTL_S };
+  const claims = {
+    q,
+    ...(p !== undefined ? { p } : {}),
+    b,
+    s,
+    c,
+    x,
+    l,
+    ...(m !== undefined ? { m } : {}),
+    i: nowS,
+    e: nowS + DRAGON_RECEIPT_TTL_S,
+  };
   if (!dragonReceiptValid(claims)) throw new TypeError('mintDragonReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${DRAGON_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${DRAGON_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${DRAGON_RECEIPT_V}.${body}`)),
+  );
   return `${DRAGON_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 
@@ -61,7 +74,11 @@ export function readDragonReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return dragonReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -83,10 +100,18 @@ export async function verifyDragonReceipt(r, publicKey, { subtle, nowS, skewS = 
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!dragonReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };

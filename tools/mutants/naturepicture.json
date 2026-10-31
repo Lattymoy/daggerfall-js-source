@@ -22,8 +22,8 @@
   {
     "name": "NATUREPIC-season-mipped",
     "file": "src/world/naturePicture.js",
-    "old": "{ mips: false, variant: '' });   // TEX1",
-    "new": "{ variant: '' });   // TEX1",
+    "old": "    renderer.uploadTexture(archive, key, sib.texture.image, { mips: false, variant: '' }); // TEX1: the door's answer, handed over whole",
+    "new": "    renderer.uploadTexture(archive, key, sib.texture.image, { variant: '' }); // TEX1: the door's answer, handed over whole",
     "tests": [
       "test/world/naturepicture.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "NATUREPIC-record-unloaded",
     "file": "src/world/naturePicture.js",
-    "old": "  uploadRecord(archive, record);\n",
-    "new": "",
+    "old": "  uploadRecord(archive, record);\n  return { key: record, size: plain, plain, sib: null, proto: null, far: null };",
+    "new": "  return { key: record, size: plain, plain, sib: null, proto: null, far: null };",
     "tests": [
       "test/world/naturepicture.test.js"
     ],

@@ -32,11 +32,13 @@ export const REALM_TEXT_MAX_BYTES = 16 * 1024 * 1024;
 const GZIP_MIN_BYTES = 20;
 
 /** Is this gzip? Its two magic bytes, which no JSON text begins with. */
-export const isGzip = (/** @type {Uint8Array} */ bytes) => bytes.byteLength >= GZIP_MIN_BYTES && bytes[0] === 0x1f && bytes[1] === 0x8b;
+export const isGzip = (/** @type {Uint8Array} */ bytes) =>
+  bytes.byteLength >= GZIP_MIN_BYTES && bytes[0] === 0x1f && bytes[1] === 0x8b;
 
 /** The length a gzip SAYS it opens to - its trailer's ISIZE (RFC 1952: the input's length mod 2^32, little-endian). An
  *  honest packer says true; one made to lie is caught by the bound every opening keeps (gunzipText). */
-export const gzipSizeOf = (/** @type {Uint8Array} */ bytes) => new DataView(bytes.buffer, bytes.byteOffset + bytes.byteLength - 4, 4).getUint32(0, true);
+export const gzipSizeOf = (/** @type {Uint8Array} */ bytes) =>
+  new DataView(bytes.buffer, bytes.byteOffset + bytes.byteLength - 4, 4).getUint32(0, true);
 
 /** Can this runtime pack, and open? (Every browser the game runs in, Node and workerd; the answer is asked, not assumed.) */
 export const canGzip = () => typeof CompressionStream === 'function';
@@ -51,7 +53,10 @@ export async function gzipText(/** @type {string} */ text) {
 /** A gzip opened to its text - or null: not whole, not gzip, or opening past `max` bytes (read as it opens, so a small
  *  body that opens to gigabytes costs the bound and no more). */
 export async function gunzipText(/** @type {Uint8Array} */ bytes, max = REALM_TEXT_MAX_BYTES) {
-  const reader = new Blob([/** @type {BlobPart} */ (bytes)]).stream().pipeThrough(new DecompressionStream('gzip')).getReader();
+  const reader = new Blob([/** @type {BlobPart} */ (bytes)])
+    .stream()
+    .pipeThrough(new DecompressionStream('gzip'))
+    .getReader();
   /** @type {Uint8Array[]} */
   const parts = [];
   let size = 0;
@@ -60,7 +65,10 @@ export async function gunzipText(/** @type {Uint8Array} */ bytes, max = REALM_TE
       const { done, value } = await reader.read();
       if (done) break;
       size += value.byteLength;
-      if (size > max) { reader.cancel().catch(() => {}); return null; }
+      if (size > max) {
+        reader.cancel().catch(() => {});
+        return null;
+      }
       parts.push(value);
     }
   } catch {
@@ -68,7 +76,10 @@ export async function gunzipText(/** @type {Uint8Array} */ bytes, max = REALM_TE
   }
   const out = new Uint8Array(size);
   let at = 0;
-  for (const p of parts) { out.set(p, at); at += p.byteLength; }
+  for (const p of parts) {
+    out.set(p, at);
+    at += p.byteLength;
+  }
   return new TextDecoder().decode(out);
 }
 

@@ -434,8 +434,8 @@ test('AUDIT RAID wiring by source: the relay keeps receipts at the hub and hands
   assert.match(idx, /if \(sub\) \{ try \{ await this\._raidReceiptsTo\(ws, sub, now\); \}/);
   assert.match(idx, /g: raidSig\(led\), rc: led\.rc \?\? \{\} \}/);
   const rp = rd('src/systems/raidingParties.js');
-  assert.match(rp, /const raidOfWord = \(key, g\) => \{ const r = raidByKey\(key\); return r && raidSigOf\(r\) === g \? r : null; \};/);
-  assert.match(rp, /for \(const \[key, , g\] of Array\.isArray\(f\.l\) \? f\.l : \[\]\) \{ const r = raidOfWord\(key, g\);/);
+  assert.match(rp, /const raidOfWord = \(key, g\) => \{\n\s*const r = raidByKey\(key\);\n\s*return r && raidSigOf\(r\) === g \? r : null;\n\s*\};/);
+  assert.match(rp, /for \(const \[key, , g\] of Array\.isArray\(f\.l\) \? f\.l : \[\]\) \{\n\s*const r = raidOfWord\(key, g\);/);
   assert.match(rp, /const raid = raidOfWord\(f\.key, f\.g\);/);
   const on = rd('src/net/online.js');
   assert.match(on, /r\.k === 'cl' \|\| r\.k === 'rc' \? isCellRoom\(room\) \|\| isSocialRoom\(room\)/);

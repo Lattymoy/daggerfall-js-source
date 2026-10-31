@@ -2,8 +2,8 @@
   {
     "name": "KTL3-awake-from-the-hello",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.sailwalk ? KT_SHIP.awake : KT_SHIP.asleep;",
-    "new": "out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.watch ? KT_SHIP.awake : KT_SHIP.asleep;",
+    "old": "  out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.sailwalk ? KT_SHIP.awake : KT_SHIP.asleep;",
+    "new": "  out.ship = singing ? KT_SHIP.singing : sg >= KT_STAGE.watch ? KT_SHIP.awake : KT_SHIP.asleep;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "KTL3-singing-after-the-fall",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "now >= (ws.op ?? Infinity) && !ws.fell && !ws.lost;",
-    "new": "now >= (ws.op ?? Infinity) && !ws.lost;",
+    "old": "  const singing = !!ws && now >= (ws.op ?? Infinity) && !ws.fell && !ws.lost;",
+    "new": "  const singing = !!ws && now >= (ws.op ?? Infinity) && !ws.lost;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "KTL3-the-appetite-of-the-need-alone",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "clamp01(out.banked / out.need)",
-    "new": "clamp01(1 / out.need)",
+    "old": "  out.appetite = out.need > 0 ? clamp01(out.banked / out.need) : 0;",
+    "new": "  out.appetite = out.need > 0 ? clamp01(1 / out.need) : 0;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "KTL3-a-taken-cradle-full",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 - (v - now) / ms));",
-    "new": "const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 + 0 * ms));",
+    "old": "  const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 - (v - now) / ms));",
+    "new": "  const fill = (v, ms) => (v === 1 ? 1 : clamp01(1 + 0 * ms));",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "KTL3-the-forks-unread",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "for (const q of ws?.fk?.c ?? []) {",
-    "new": "for (const q of []) {",
+    "old": "  for (const q of ws?.fk?.c ?? []) {",
+    "new": "  for (const q of []) {",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "KTL3-a-section-warned-while-gone",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "else { out.secGone[k] = 1;",
-    "new": "else { out.secWarn[k] = 1; out.secGone[k] = 1;",
+    "old": "      out.secGone[k] = 1;",
+    "new": "      out.secWarn[k] = 1;\n      out.secGone[k] = 1;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "KTL3-the-lifts-part-off-its-round",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "L.phase < W + R ? KT_LIFT_PART.rising",
-    "new": "L.phase < W + R ? KT_LIFT_PART.top",
+    "old": "        ? KT_LIFT_PART.rising",
+    "new": "        ? KT_LIFT_PART.top",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -66,7 +66,7 @@
     "name": "KTL3-the-record-made-anew",
     "file": "src/world/ketch/ketchStates.js",
     "old": "  for (let j = 0; j < out.sockets.length; j++) out.sockets[j] = cl?.sk?.[j] ? 1 : 0;",
-    "new": "  out.sockets = new Uint8Array(KT_SOCKETS.length); for (let j = 0; j < out.sockets.length; j++) out.sockets[j] = cl?.sk?.[j] ? 1 : 0;",
+    "new": "  out.sockets = new Uint8Array(KT_SOCKETS.length);\n  for (let j = 0; j < out.sockets.length; j++) out.sockets[j] = cl?.sk?.[j] ? 1 : 0;",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "KTL3-the-hatch-one-sided",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "join: Object.freeze(['decks', 'below']), r: KT_PVS_HATCH_M }),",
-    "new": "join: Object.freeze(['decks']), r: KT_PVS_HATCH_M }),",
+    "old": "        join: Object.freeze(['decks', 'below']),",
+    "new": "        join: Object.freeze(['decks']),",
     "tests": [
       "test/world/ketch/ketch_states.test.js",
       "test/scenes/ketch_deck_host.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "KTL3-the-door-rule-dropped",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "p[2] - d.at[2]) <= (d.r ?? KT_PVS_DOOR_M))",
-    "new": "p[2] - d.at[2]) <= 0)",
+    "old": "    if (Math.hypot(p[0] - d.at[0], p[1] - d.at[1], p[2] - d.at[2]) <= (d.r ?? KT_PVS_DOOR_M))",
+    "new": "    if (Math.hypot(p[0] - d.at[0], p[1] - d.at[1], p[2] - d.at[2]) <= 0)",
     "tests": [
       "test/world/ketch/ketch_states.test.js",
       "test/scenes/ketch_deck_host.test.js"
@@ -103,8 +103,8 @@
   {
     "name": "KTL3-a-group-culled-in-its-own-zone",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "for (const d of _grouped) d.culled = _eyed && !_seen.has(d.group);",
-    "new": "for (const d of _grouped) d.culled = _eyed;",
+    "old": "      for (const d of _grouped) d.culled = _eyed && !_seen.has(d.group);",
+    "new": "      for (const d of _grouped) d.culled = _eyed;",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "KTL3-an-ungrouped-draw-culled",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "    if (o.group) { d.group = o.group; d.culled = false; _grouped.push(d); }",
-    "new": "    { d.group = o.group ?? KT_GROUP.decks; d.culled = false; _grouped.push(d); }",
+    "old": "    if (o.group) {\n      d.group = o.group;",
+    "new": "    {\n      d.group = o.group ?? KT_GROUP.decks;",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "KTL3-the-eye-never-the-bodys",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "pose(V, t, now, body = null, carried = NONE, eye = body?.pos ?? null) {",
-    "new": "pose(V, t, now, body = null, carried = NONE, eye = null) {",
+    "old": "    pose(V, t, now, body = null, carried = NONE, eye = body?.pos ?? null) {",
+    "new": "    pose(V, t, now, body = null, carried = NONE, eye = null) {",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "KTL3-halos-on-the-lane",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "K()?.halos?.(renderer?.lightingLane ? NONE : ketchHalosInto(_halos, lamps));",
-    "new": "K()?.halos?.(ketchHalosInto(_halos, lamps));",
+    "old": "      K()?.halos?.(renderer?.lightingLane ? NONE : ketchHalosInto(_halos, lamps)); // KETCH-LOOK KL3: the classic set's bloom, with the late pass",
+    "new": "      K()?.halos?.(ketchHalosInto(_halos, lamps)); // KETCH-LOOK KL3: the classic set's bloom, with the late pass",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "KTL3-a-lit-thing-at-a-lamps-size",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "glow = !!L.carried, k =",
-    "new": "glow = false, k =",
+    "old": "      glow = !!L.carried,",
+    "new": "      glow = false,",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "KTL3-the-halo-slots-made-anew",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "h = out[n] ?? (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] })",
-    "new": "h = (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] })",
+    "old": "      h = out[n] ?? (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] }),",
+    "new": "      h = (out[n] = { at: [0, 0, 0], size: 0, color: [0, 0, 0] }),",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "KTL3-the-dial-the-other-way",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "const needle = KT_DIAL.from + KT_DIAL.sweep * Math.max(0, Math.min(1, a));",
-    "new": "const needle = KT_DIAL.from + KT_DIAL.sweep * (1 - Math.max(0, Math.min(1, a)));",
+    "old": "      const needle = KT_DIAL.from + KT_DIAL.sweep * Math.max(0, Math.min(1, a));",
+    "new": "      const needle = KT_DIAL.from + KT_DIAL.sweep * (1 - Math.max(0, Math.min(1, a)));",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "KTL3-the-red-at-the-full-end",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "inSweep <= KT_DIAL.red) return P.red;",
-    "new": "inSweep >= KT_DIAL.sweep - KT_DIAL.red && inSweep <= KT_DIAL.sweep) return P.red;",
+    "old": "      if (r > 0.7 && r < 0.82 && inSweep <= KT_DIAL.red) return P.red;",
+    "new": "      if (r > 0.7 && r < 0.82 && inSweep >= KT_DIAL.sweep - KT_DIAL.red && inSweep <= KT_DIAL.sweep) return P.red;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "KTL3-the-glass-from-the-top",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "return v <= top ? P.signal : P.dark;",
-    "new": "return v >= -top ? P.signal : P.dark;",
+    "old": "      return v <= top ? P.signal : P.dark;",
+    "new": "      return v >= -top ? P.signal : P.dark;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "KTL3-the-lamps-from-the-right",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "return i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
-    "new": "return n - 1 - i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
+    "old": "      return i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
+    "new": "      return n - 1 - i < Math.round(Math.max(0, Math.min(1, a)) * n) ? P.signal : P.dark;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "KTL3-the-ring-counter-clockwise",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "const th = Math.atan2(u, v), turned =",
-    "new": "const th = Math.atan2(-u, v), turned =",
+    "old": "      const th = Math.atan2(u, v),",
+    "new": "      const th = Math.atan2(-u, v),",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "KTL3-a-share-unclamped",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "return Math.abs(u - (-1 + 2 * Math.max(0, Math.min(1, a)))) < 0.12 ? P.signal : P.dark;",
-    "new": "return Math.abs(u - (-1 + 2 * a)) < 0.12 ? P.signal : P.dark;",
+    "old": "      return Math.abs(u - (-1 + 2 * Math.max(0, Math.min(1, a)))) < 0.12 ? P.signal : P.dark;",
+    "new": "      return Math.abs(u - (-1 + 2 * a)) < 0.12 ? P.signal : P.dark;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "KTL3-the-meaning-lost-to-the-kind",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "out[o + 9] = kind + KT_GAUGE_MEANING_STRIDE * meaning;",
-    "new": "out[o + 9] = kind;",
+    "old": "  out[o + 9] = kind + KT_GAUGE_MEANING_STRIDE * meaning;",
+    "new": "  out[o + 9] = kind;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "KTL3-a-field-off-its-slot",
     "file": "src/render/ketch/ktGaugePass.js",
-    "old": "out[o + 10] = a; out[o + 11] = b;",
-    "new": "out[o + 10] = b; out[o + 11] = a;",
+    "old": "  out[o + 10] = a;\n  out[o + 11] = b;",
+    "new": "  out[o + 10] = b;\n  out[o + 11] = a;",
     "tests": [
       "test/render/ketch/kt_gauge_pass.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "KTL3-a-cradle-knob-unread",
     "file": "src/tools/ketchLabLink.js",
-    "old": "spotAt(cr[j] ?? (j === 2 ? 10 : 1), now0)",
-    "new": "spotAt(j === 2 ? 10 : 1, now0)",
+    "old": "      cr: Array.from({ length: 6 }, (_, j) => spotAt(cr[j] ?? (j === 2 ? 10 : 1), now0)),",
+    "new": "      cr: Array.from({ length: 6 }, (_, j) => spotAt(j === 2 ? 10 : 1, now0)),",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "KTL3-a-sections-moment-turned",
     "file": "src/tools/ketchLabLink.js",
-    "old": "const at = now + Math.round(s * 1000); return { k: clamp(Math.round(k), 0, 7), at,",
-    "new": "const at = now - Math.round(s * 1000); return { k: clamp(Math.round(k), 0, 7), at,",
+    "old": "      const at = now + Math.round(s * 1000);",
+    "new": "      const at = now - Math.round(s * 1000);",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "KTL3-a-lab-blow-unfloored",
     "file": "src/tools/ketchLabLink.js",
-    "old": "const wu = egFloorWindup(Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1)), s);",
-    "new": "const wu = Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1));",
+    "old": "  const wu = egFloorWindup(Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1)), s);",
+    "new": "  const wu = Math.round(A.wu * (KW_FAST[f.phase - 1] ?? 1));",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]
@@ -328,8 +328,8 @@
   {
     "name": "KTL3-the-lab-waves-left-off",
     "file": "src/tools/ketchLabLink.js",
-    "old": "  if (A.wave) { const V = A.wave;",
-    "new": "  if (false) { const V = A.wave;",
+    "old": "  if (A.wave) {",
+    "new": "  if (false) {",
     "tests": [
       "test/world/ketch/ketch_lab.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "KTSHIP-the-held-view-alone",
     "file": "src/world/ketch/ketchStates.js",
-    "old": "  if (here && here !== view) for (const g of KT_PVS[here]) out.add(g);",
-    "new": "",
+    "old": "  if (here && here !== view) for (const g of KT_PVS[here]) out.add(g); // AUDIT SHIP A2: a view held, the zone the eye stands in seen with it",
+    "new": "  // AUDIT SHIP A2: a view held, the zone the eye stands in seen with it",
     "tests": [
       "test/world/ketch/ketch_states.test.js"
     ],
@@ -357,8 +357,8 @@
   {
     "name": "KTSHIP-her-fallback-art-held",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "    if (again) { renderer.releaseTexture?.(KT_ARCHIVE, rec); renderer.evictEmissionTexture?.(`${KT_ARCHIVE}_${rec}`); }\n",
-    "new": "",
+    "old": "    if (again) {\n      renderer.releaseTexture?.(KT_ARCHIVE, rec);\n      renderer.evictEmissionTexture?.(`${KT_ARCHIVE}_${rec}`);\n    }\n    renderer.uploadTexture(KT_ARCHIVE, rec, art.albedo, ...(KT_CUTOUT_RECS.includes(rec) ? [{ cutout: true }] : []));",
+    "new": "    renderer.uploadTexture(KT_ARCHIVE, rec, art.albedo, ...(KT_CUTOUT_RECS.includes(rec) ? [{ cutout: true }] : []));",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ],
@@ -367,8 +367,8 @@
   {
     "name": "KTSHIP-the-bounce-before-the-moon",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "  for (let i = 0; i < 3; i++) L.tri.ground[i] = Math.max(0, L.tri.ground[i] - L.key.color[i] * k0 * (1 - m) * KT_TRI.bounce);",
-    "new": "",
+    "old": "  for (let i = 0; i < 3; i++)\n    L.tri.ground[i] = Math.max(0, L.tri.ground[i] - L.key.color[i] * k0 * (1 - m) * KT_TRI.bounce); // AUDIT SHIP A6: the moons' bounce at their own light - none on a moonless night",
+    "new": "  // AUDIT SHIP A6: the moons' bounce at their own light - none on a moonless night",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ],
@@ -377,8 +377,8 @@
   {
     "name": "KTSHIP-the-halo-at-the-gain",
     "file": "src/scenes/ketch/ketchDeckHost.js",
-    "old": "(c ? Math.min(L.color[j], c[j]) : L.color[j]) * k",
-    "new": "L.color[j] * k",
+    "old": "    for (let j = 0; j < 3; j++) h.color[j] = (c ? Math.min(L.color[j], c[j]) : L.color[j]) * k;",
+    "new": "    for (let j = 0; j < 3; j++) h.color[j] = L.color[j] * k;",
     "tests": [
       "test/scenes/ketch_deck_host.test.js"
     ],
@@ -387,8 +387,8 @@
   {
     "name": "KTSHIP-her-lamps-dark-outside",
     "file": "src/scenes/ketch/ketchSky.js",
-    "old": "      if (lamps) r.drawMesh(lamps, M, null, { noShadow: true });\n",
-    "new": "",
+    "old": "      if (lamps) r.drawMesh(lamps, M, null, { noShadow: true });\n      if (place.pose.lift > 0.01 && lift && chain) {",
+    "new": "      if (place.pose.lift > 0.01 && lift && chain) {",
     "tests": [
       "test/scenes/ketch_sky.test.js"
     ],

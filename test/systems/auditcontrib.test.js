@@ -346,6 +346,6 @@ test('AUDIT CONTRIB H4/H5: the bar\'s view keys each pack record ONCE a frame, n
   const v = HB.hotbarView(me);
   assert.equal(v.filter((s) => !s.empty && !s.ghost).length, 7);
   assert.ok(reads <= counted.length * 3, `the pack was keyed ${reads / counted.length}x per record - once per slot again`);
-  assert.match(rd('src/ui/enhanced/enhancedHotbar.js'), /requestFittedIcon\(image\.archive, image\.record, \{ box: fit\.box, dpr: fit\.dpr, dye: image\.dye,/);   // UI2: fitted, still by the dye
+  assert.match(rd('src/ui/enhanced/enhancedHotbar.js'), /requestFittedIcon\(image\.archive, image\.record, \{\n\s*box: fit\.box,\n\s*dpr: fit\.dpr,\n\s*dye: image\.dye,/);   // UI2: fitted, still by the dye
   HB.clearQuickslots();
 });

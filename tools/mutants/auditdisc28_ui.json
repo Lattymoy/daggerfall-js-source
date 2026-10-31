@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-DISC28-UI1-classic-bare-code-compare",
     "file": "src/ui/pauseWindow.js",
-    "old": "    if (code !== 'Escape' && e?.code) return eventMeans(e, 'Escape');\n",
-    "new": "",
+    "old": "    if (code !== 'Escape' && e?.code) return eventMeans(e, 'Escape');\n    return (",
+    "new": "    return (",
     "tests": [
       "test/ui/auditdisc28_ui.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-DISC28-UI1-classic-release-reads-no-event",
     "file": "src/ui/pauseWindow.js",
-    "old": "if (!this._isCloseKey(code, e)) return;",
-    "new": "if (!this._isCloseKey(code)) return;",
+    "old": "    if (!this._isCloseKey(code, e)) return; // AUDIT DISC28 UI-1: the release's own event too - GetKeyUp's combo wants its modifier held",
+    "new": "    if (!this._isCloseKey(code)) return; // AUDIT DISC28 UI-1: the release's own event too - GetKeyUp's combo wants its modifier held",
     "tests": [
       "test/ui/auditdisc28_ui.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "AUDIT-DISC28-UI2-classic-a-repeat-arms",
     "file": "src/ui/pauseWindow.js",
-    "old": "if (this._isCloseKey(code, e) && !e?.repeat) this.isCloseWindowDeferred = true;",
-    "new": "if (this._isCloseKey(code, e)) this.isCloseWindowDeferred = true;",
+    "old": "    if (this._isCloseKey(code, e) && !e?.repeat) this.isCloseWindowDeferred = true;",
+    "new": "    if (this._isCloseKey(code, e)) this.isCloseWindowDeferred = true;",
     "tests": [
       "test/ui/auditdisc28_ui.test.js"
     ]

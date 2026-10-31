@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-ROBES-P3-own-surface-arm-dropped",
     "file": "src/player/activate.js",
-    "old": "      if (firstHit.key === target.key) d = Math.max(d, firstHit.dist);\n",
-    "new": "",
+    "old": "      if (firstHit.key === target.key) d = Math.max(d, firstHit.dist);\n    } else if (target.surface === true && collider.raycastHit && d <= bestDist) {",
+    "new": "    } else if (target.surface === true && collider.raycastHit && d <= bestDist) {",
     "tests": [
       "test/systems/fb1004c_audit.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-ROBES-cast-cut-at-reach",
     "file": "src/player/activate.js",
-    "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);   // the one cast, DISC19-E's arm's too",
-    "new": "      firstHit ??= collider.raycastHit(eye, dir, target.reach ?? RAY_DISTANCE);   // the one cast, DISC19-E's arm's too",
+    "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); // the one cast, DISC19-E's arm's too",
+    "new": "      firstHit ??= collider.raycastHit(eye, dir, target.reach ?? RAY_DISTANCE); // the one cast, DISC19-E's arm's too",
     "tests": [
       "test/systems/fb1004c_audit.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-ROBES-skin-taken-away",
     "file": "src/player/activate.js",
-    "old": "eye[2] + dir[2] * firstHit.dist], PICK_PARDON_M)) continue;",
-    "new": "eye[2] + dir[2] * firstHit.dist], 0)) continue;",
+    "old": "          [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist],\n          PICK_PARDON_M,",
+    "new": "          [eye[0] + dir[0] * firstHit.dist, eye[1] + dir[1] * firstHit.dist, eye[2] + dir[2] * firstHit.dist],\n          0,",
     "tests": [
       "test/systems/fb1004c_audit.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-ROBES-N1-resolver-dropped",
     "file": "src/systems/worldTooltips.js",
-    "old": "itemLongName(item, { differentiatePlantIngredients: false, getQuest })",
-    "new": "itemLongName(item, { differentiatePlantIngredients: false })",
+    "old": "  return itemLongName(item, { differentiatePlantIngredients: false, getQuest }) || null;",
+    "new": "  return itemLongName(item, { differentiatePlantIngredients: false }) || null;",
     "tests": [
       "test/systems/fb1004c_audit.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-ROBES-hidden-not-kept-alone",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (r.hasPlayerClicked || hidden) actsBefore.set(",
-    "new": "      if (r.hasPlayerClicked) actsBefore.set(",
+    "old": "      if (r.hasPlayerClicked || hidden) actsBefore.set(r.symbol?.name, { clicked: !!r.hasPlayerClicked, hidden });",
+    "new": "      if (r.hasPlayerClicked) actsBefore.set(r.symbol?.name, { clicked: !!r.hasPlayerClicked, hidden });",
     "tests": [
       "test/systems/fb1004c_audit.test.js"
     ]

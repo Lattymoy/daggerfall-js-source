@@ -29,7 +29,15 @@ import { RARITIES } from '../systems/loot/lootRarity.js';
 export const SPOILS_GLOW_MAX = 8;
 /** WBX3: how tall the line stands out of the sprite, by tier (metres), and how wide it is. SET6: the Aetheric's between
  *  the Legendary's and the Artifact's, as its rung is; GILDED1: the Gilded's the tallest, at the line's own cap. */
-export const SPOILS_LINE_H = Object.freeze({ common: 0.7, magic: 1.0, rare: 1.4, legendary: 1.9, aetheric: 2.1, artifact: 2.3, gilded: 2.5 });
+export const SPOILS_LINE_H = Object.freeze({
+  common: 0.7,
+  magic: 1.0,
+  rare: 1.4,
+  legendary: 1.9,
+  aetheric: 2.1,
+  artifact: 2.3,
+  gilded: 2.5,
+});
 export const SPOILS_LINE_W = 0.07;
 /** The narrowest the line may stand on the screen, as an angle of the eye's view (radians): about two pixels of a
  *  1080-line screen at the port's field of view - a piece across the court keeps a line the eye can find. */
@@ -52,7 +60,9 @@ const HEAD = `#version 300 es
 precision highp float;
 `;
 /** One quad a piece: x across the line (-1..1), y up it (0 at the sprite's crown, 1 at the tip). */
-export const SPOILS_GLOW_VS = HEAD + `layout(location = 0) in vec2 aP;
+export const SPOILS_GLOW_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aP;
 uniform mat4 uVP;
 uniform vec3 uRoot;      // where the line leaves the sprite: its crown
 uniform float uHeight;
@@ -73,7 +83,9 @@ void main() {
   vWorld = p;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const SPOILS_GLOW_FS = HEAD + `in vec2 vP;
+export const SPOILS_GLOW_FS =
+  HEAD +
+  `in vec2 vP;
 in vec3 vWorld;
 uniform vec3 uColor;
 uniform float uAlpha;    // its rise at rest, and its fade when taken
@@ -96,7 +108,9 @@ void main() {
   o = vec4(uColor * light * pulse * uAlpha * fogFactorAt(vWorld), 1.0);
 }`;
 // SHADER-EASE MOUNT-START (2026-10-29): what the constructor builds, started at page load (render/mountPrograms.js).
-export const SPOILS_GLOW_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ ([SPOILS_GLOW_VS, SPOILS_GLOW_FS]))]);
+export const SPOILS_GLOW_PROGRAMS = Object.freeze([
+  Object.freeze(/** @type {const} */ ([SPOILS_GLOW_VS, SPOILS_GLOW_FS])),
+]);
 
 /** The line's quad: x across (-1, 1), y up (0, 1). Pure. */
 export function spoilsLineVertices() {
@@ -113,7 +127,7 @@ function mat4Multiply(out, a, b) {
 }
 
 const NO_FOG_RANGE = new Float32Array([0, 1]);
-const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
+const NO_HAZE = new Float32Array(8); // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 
 export class SpoilsGlowRenderer {
   constructor(gl) {
@@ -121,7 +135,24 @@ export class SpoilsGlowRenderer {
     const prog = buildProgram(gl, SPOILS_GLOW_VS, SPOILS_GLOW_FS);
     this.program = prog;
     this.u = {};
-    for (const n of ['uVP', 'uRoot', 'uHeight', 'uWidth', 'uMinRad', 'uEye', 'uColor', 'uAlpha', 'uPulse', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of [
+      'uVP',
+      'uRoot',
+      'uHeight',
+      'uWidth',
+      'uMinRad',
+      'uEye',
+      'uColor',
+      'uAlpha',
+      'uPulse',
+      'uTime',
+      'uFogMode',
+      'uFogDensity',
+      'uFogRange',
+      'uCamPos',
+      'uJungleHaze',
+    ])
+      this.u[n] = gl.getUniformLocation(prog, n);
     const verts = spoilsLineVertices();
     this.count = verts.length / 2;
     const vao = gl.createVertexArray();
@@ -129,7 +160,8 @@ export class SpoilsGlowRenderer {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this.vao = vao;
     this._vp = new Float32Array(16);
@@ -144,9 +176,14 @@ export class SpoilsGlowRenderer {
    */
   draw(lines, proj, view, eye, seconds, fog = null) {
     this.drawn = 0;
-    const list = (Array.isArray(lines) ? lines : []).filter((g) => g && Array.isArray(g.root) && g.root.length === 3 && g.root.every(Number.isFinite) && g.alpha > 0.001).slice(0, SPOILS_GLOW_MAX);
+    const list = (Array.isArray(lines) ? lines : [])
+      .filter(
+        (g) => g && Array.isArray(g.root) && g.root.length === 3 && g.root.every(Number.isFinite) && g.alpha > 0.001,
+      )
+      .slice(0, SPOILS_GLOW_MAX);
     if (!list.length) return;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
@@ -159,9 +196,10 @@ export class SpoilsGlowRenderer {
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? at);
-    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE); // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
     gl.bindVertexArray(this.vao);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     for (const g of list) {
@@ -171,7 +209,10 @@ export class SpoilsGlowRenderer {
       gl.uniform1f(U.uHeight, Number.isFinite(g.h) ? g.h : lineHeight(tier));
       gl.uniform3fv(U.uColor, Array.isArray(g.colour) && g.colour.length === 3 ? g.colour : tierColour(tier));
       gl.uniform1f(U.uAlpha, Math.min(1, g.alpha));
-      gl.uniform1f(U.uPulse, g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0);
+      gl.uniform1f(
+        U.uPulse,
+        g.pulse != null ? (g.pulse ? 1 : 0) : RARITIES[tier].rank >= RARITIES.legendary.rank ? 1 : 0,
+      );
       gl.drawArrays(gl.TRIANGLES, 0, this.count);
       this.drawn++;
     }

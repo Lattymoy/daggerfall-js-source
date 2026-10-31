@@ -2,8 +2,8 @@
   {
     "name": "DRAGON6-the-sea-priced",
     "file": "src/systems/travel/travel.js",
-    "old": "  if (flying) {\n",
-    "new": "  if (false) {\n",
+    "old": "  if (flying) {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DRAGON6-the-fare-taken",
     "file": "src/systems/travel/travel.js",
-    "old": "travelShip && !hasDragon) totalCost +=",
-    "new": "travelShip) totalCost +=",
+    "old": "  if (oceanPixels > 0 && !hasShip && travelShip && !hasDragon) totalCost += 25 * (Math.trunc(oceanPixels / 24) + 1); // DRAGON6: a dragon takes no ship",
+    "new": "  if (oceanPixels > 0 && !hasShip && travelShip) totalCost += 25 * (Math.trunc(oceanPixels / 24) + 1); // DRAGON6: a dragon takes no ship",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "DRAGON6-the-horses-pace",
     "file": "src/systems/travel/travel.js",
-    "old": "hasDragon ? DRAGON_TRANSPORT_MODIFIER : hasHorse",
-    "new": "hasDragon ? 128 : hasHorse",
+    "old": "  const transportModifier = hasDragon ? DRAGON_TRANSPORT_MODIFIER : hasHorse ? 128 : hasCart ? 192 : 256; // DRAGON6: a dragon flies",
+    "new": "  const transportModifier = hasDragon ? 128 : hasHorse ? 128 : hasCart ? 192 : 256; // DRAGON6: a dragon flies",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "DRAGON6-the-storm-sea",
     "file": "src/systems/travel/travel.js",
-    "old": "seaMult !== 1 && !hasDragon ? Math.floor",
-    "new": "seaMult !== 1 ? Math.floor",
+    "old": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m; // SEASON1 part two: a Storm Season's sea - flown over",
+    "new": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 ? Math.floor(m * seaMult) : m; // SEASON1 part two: a Storm Season's sea - flown over",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "DRAGON6-the-governor-upside-down",
     "file": "src/systems/dragon/dragonJourney.js",
-    "old": "(DRAGON_CRUISE_M - heightOver) / DRAGON_CRUISE_BAND_M",
-    "new": "(heightOver - DRAGON_CRUISE_M) / DRAGON_CRUISE_BAND_M",
+    "old": "  return Math.max(-1, Math.min(1, (DRAGON_CRUISE_M - heightOver) / DRAGON_CRUISE_BAND_M));",
+    "new": "  return Math.max(-1, Math.min(1, (heightOver - DRAGON_CRUISE_M) / DRAGON_CRUISE_BAND_M));",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "DRAGON6-the-cruise-never-lifts",
     "file": "src/player/dragonRide.js",
-    "old": "  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off');",
-    "new": "  if (false) _heard?.('took-off');",
+    "old": "  if (_cruise === 'cruise' && mounted && !winded && !flight.aloft() && flight.lift()) _heard?.('took-off'); // DRAGON6: a flown journey takes it up (DRAGON5c: never winded)",
+    "new": "  if (false) _heard?.('took-off'); // DRAGON6: a flown journey takes it up (DRAGON5c: never winded)",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "DRAGON6-the-end-leaves-it-aloft",
     "file": "src/player/dragonRide.js",
-    "old": "_cruise === 'down' ? -1 : null",
-    "new": "_cruise === 'down' ? 0 : null",
+    "old": "        ? -1",
+    "new": "        ? 0",
     "tests": [
       "test/systems/travel/dragon6_flight.test.js"
     ]

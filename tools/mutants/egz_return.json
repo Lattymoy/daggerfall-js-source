@@ -344,8 +344,8 @@
   {
     "name": "EGZ-sink-linear",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "EG_FALL_SINK_M * (1 - (1 - k) ** 3)",
-    "new": "EG_FALL_SINK_M * k",
+    "old": "    sink: still ? 0 : Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000,",
+    "new": "    sink: still ? 0 : Math.round(EG_FALL_SINK_M * k * 1000) / 1000,",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "EGZ-colour-never-drains",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "let sat = still ? EG_FALL_SAT : 1 - (1 - EG_FALL_SAT) * k,",
-    "new": "let sat = still ? EG_FALL_SAT : 1,",
+    "old": "  let sat = still ? EG_FALL_SAT : 1 - (1 - EG_FALL_SAT) * k,",
+    "new": "  let sat = still ? EG_FALL_SAT : 1,",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "EGZ-eye-handed-late",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "    if (still || d >= 0.5) { eye = 'witness'; sat = 1; }",
-    "new": "    if (still || d >= 0.6) { eye = 'witness'; sat = 1; }",
+    "old": "    if (still || d >= 0.5) {",
+    "new": "    if (still || d >= 0.6) {",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "EGZ-dither-under-reduced-motion",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "    if (!still) veil = Math.round(",
-    "new": "    if (true) veil = Math.round(",
+    "old": "    if (!still) veil = Math.round((d < 0.5 ? d * 2 : (1 - d) * 2) * EG_FALL_DITHER_STEPS) / EG_FALL_DITHER_STEPS;",
+    "new": "    if (true) veil = Math.round((d < 0.5 ? d * 2 : (1 - d) * 2) * EG_FALL_DITHER_STEPS) / EG_FALL_DITHER_STEPS;",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "EGZ-lost-with-nothing-lost",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "lost: (fall.lost ?? 0) > 0 ? EG_FALL_TEXT.lost(fall.lost) : ''",
-    "new": "lost: EG_FALL_TEXT.lost(fall.lost ?? 0)",
+    "old": "          lost: (fall.lost ?? 0) > 0 ? EG_FALL_TEXT.lost(fall.lost) : '',",
+    "new": "          lost: EG_FALL_TEXT.lost(fall.lost ?? 0),",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "EGZ-card-rises-when-still",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "fresh: m.fresh && !still, still: !!still }",
-    "new": "fresh: m.fresh, still: !!still }",
+    "old": "          fresh: m.fresh && !still,",
+    "new": "          fresh: m.fresh,",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGZ-card-line-swapped",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": ": fall.final ? EG_FALL_TEXT.final : EG_FALL_TEXT.first }, now)",
-    "new": ": fall.final ? EG_FALL_TEXT.first : EG_FALL_TEXT.final }, now)",
+    "old": "          ? EG_FALL_TEXT.final\n          : EG_FALL_TEXT.first,",
+    "new": "          ? EG_FALL_TEXT.first\n          : EG_FALL_TEXT.final,",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGZ-sinks-when-still",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "phase, sink: still ? 0 : Math.round(",
-    "new": "phase, sink: Math.round(",
+    "old": "    sink: still ? 0 : Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000,",
+    "new": "    sink: Math.round(EG_FALL_SINK_M * (1 - (1 - k) ** 3) * 1000) / 1000,",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGZ-drain-never-drawn",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "const f = m.sat < 1 ? `saturate(${m.sat})` : '';",
-    "new": "const f = '';",
+    "old": "    const f = m.sat < 1 ? `saturate(${m.sat})` : '';",
+    "new": "    const f = '';",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGZ-veil-never-drawn",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "fallP.veil.style.background = egDitherCss(m.veil);",
-    "new": "fallP.veil.style.background = 'none';",
+    "old": "    fallP.veil.style.background = egDitherCss(m.veil);",
+    "new": "    fallP.veil.style.background = 'none';",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGZ-lost-not-red",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "fallShown.danger = danger; fallP.lost.style.color = danger;",
-    "new": "fallShown.danger = danger;",
+    "old": "    fallP.lost.style.color = danger;\n  }",
+    "new": "  }",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGZ-fall-never-hidden",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "fall.style.display = m ? '' : 'none';",
-    "new": "fall.style.display = '';",
+    "old": "    fall.style.display = m ? '' : 'none';",
+    "new": "    fall.style.display = '';",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EGZ-card-line-never-redrawn",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "for (const k of ['main', 'sub', 'lost']) if (C[k] !== fallShown[k])",
-    "new": "for (const k of ['main']) if (C[k] !== fallShown[k])",
+    "old": "  for (const k of ['main', 'sub', 'lost'])",
+    "new": "  for (const k of ['main'])",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "EGZ-dither-out-of-order",
     "file": "src/ui/eliteGates/egSpireHud.js",
-    "old": "const BAYER2 = Object.freeze([[0, 0], [1, 1], [1, 0], [0, 1]]);",
-    "new": "const BAYER2 = Object.freeze([[0, 0], [1, 0], [1, 1], [0, 1]]);",
+    "old": "  [1, 1],\n  [1, 0],",
+    "new": "  [1, 0],\n  [1, 1],",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "EGZ-feint-fill-runs-on",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "((bl.cut ? Math.min(t, bl.cut) : t) - from)",
-    "new": "(t - from)",
+    "old": "      sh.t = Math.max(0, Math.min(1, ((bl.cut ? Math.min(t, bl.cut) : t) - from) / Math.max(1, bl.wu)));",
+    "new": "      sh.t = Math.max(0, Math.min(1, (t - from) / Math.max(1, bl.wu)));",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "EGZ-feint-fade-slow",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.alpha = bl.cut ? Math.max(0, 1 - (t - bl.cut) / EG_FEINT_FADE_MS)",
-    "new": "sh.alpha = bl.cut ? Math.max(0, 1 - (t - bl.cut) / 300)",
+    "old": "        ? Math.max(0, 1 - (t - bl.cut) / EG_FEINT_FADE_MS)",
+    "new": "        ? Math.max(0, 1 - (t - bl.cut) / 300)",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EGZ-feint-not-dashed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "      sh.cut = !!bl.cut;",
-    "new": "      sh.cut = false;",
+    "old": "      sh.cut = !!bl.cut; // EG-ZD (section 13.2): dashed as it fades",
+    "new": "      sh.cut = false; // EG-ZD (section 13.2): dashed as it fades",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EGZ-every-blow-dashed",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "sh.look = bits | (sh.cut ? EG_LOOK_BIT.dash : 0);",
-    "new": "sh.look = bits | EG_LOOK_BIT.dash;",
+    "old": "      sh.look = bits | (sh.cut ? EG_LOOK_BIT.dash : 0); // EG-ZD: a cut feint dashed as it fades",
+    "new": "      sh.look = bits | EG_LOOK_BIT.dash; // EG-ZD: a cut feint dashed as it fades",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGZ-stale-dash-kept",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "{ sl.mine = false; sl.cut = false; sl.y = NaN;",
-    "new": "{ sl.mine = false; sl.y = NaN;",
+    "old": "        sl.cut = false;\n        sl.y = NaN;",
+    "new": "        sl.y = NaN;",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "EGZ-feint-lingers",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "!bl.cut || t - bl.cut < EG_FEINT_FADE_MS)",
-    "new": "!bl.cut || t - bl.cut < 1000)",
+    "old": "      for (const bl of F.blows) if (!bl.cut || t - bl.cut < EG_FEINT_FADE_MS) _orderIn.push(bl);",
+    "new": "      for (const bl of F.blows) if (!bl.cut || t - bl.cut < 1000) _orderIn.push(bl);",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGZ-stage-ignores-dash",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "  if ((uLook & 4) != 0) { float dsh",
-    "new": "  if ((uLook & 8) != 0) { float dsh",
+    "old": "    '  if ((uLook & 4) != 0) { float dsh = step(0.5, fract((vCourt.x - vCourt.y) * 2.5)); rgb *= dsh; a *= dsh; }   // EG-ZD: a feint cut - dashed as it fades\\n  o = vec4(rgb * f, clamp(a, 0.0, 1.0) * f);\\n}',",
+    "new": "    '  if ((uLook & 8) != 0) { float dsh = step(0.5, fract((vCourt.x - vCourt.y) * 2.5)); rgb *= dsh; a *= dsh; }   // EG-ZD: a feint cut - dashed as it fades\\n  o = vec4(rgb * f, clamp(a, 0.0, 1.0) * f);\\n}',",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGZ-panel-mark-off-the-button",
     "file": "src/ui/eliteGates/egHud.js",
-    "old": "`eg-k-btn${focus === offer.cards.length + use ? ' eg-focus' : ''}`",
-    "new": "`eg-k-btn${focus === use ? ' eg-focus' : ''}`",
+    "old": "        const b = egEl(doc, 'button', `eg-k-btn${focus === offer.cards.length + use ? ' eg-focus' : ''}`, label);",
+    "new": "        const b = egEl(doc, 'button', `eg-k-btn${focus === use ? ' eg-focus' : ''}`, label);",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "EGZ-beat-never-ducks",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1); played = true; } } catch { /* a sound is never the breach */ }\n      mix.critical();",
-    "new": "audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1); played = true; } } catch { /* a sound is never the breach */ }",
+    "old": "      mix.critical();\n      return played;",
+    "new": "      return played;",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "EGZ-beat-pitch-lost",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1);",
-    "new": "audio.playOneShot(S.rec, 1, 1);",
+    "old": "          audio.playOneShot(S.rec, S.vol ?? 1, S.pitch ?? 1);",
+    "new": "          audio.playOneShot(S.rec, 1, 1);",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGZ-beat-unguarded",
     "file": "src/systems/eliteGates/egMix.js",
-    "old": "      if (!S || !Number.isInteger(S.rec)) return false;\n      let played",
-    "new": "      if (!S) return false;\n      let played",
+    "old": "      if (!S || !Number.isInteger(S.rec)) return false;",
+    "new": "      if (!S) return false;",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGZ-toll-pitch",
     "file": "src/ui/eliteGates/egBeats.js",
-    "old": "  lowToll: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.42 }),",
-    "new": "  lowToll: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.55 }),",
+    "old": "  lowToll: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.42 }), // EG-ZD (section 16.5): a fall's low toll - clip 107 at pitch 0.42, the page's",
+    "new": "  lowToll: Object.freeze({ rec: 107, vol: 0.9, pitch: 0.55 }), // EG-ZD (section 16.5): a fall's low toll - clip 107 at pitch 0.42, the page's",
     "tests": [
       "test/net/eliteGates/egz_return.test.js"
     ]

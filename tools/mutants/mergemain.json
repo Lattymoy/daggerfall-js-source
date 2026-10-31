@@ -2,17 +2,21 @@
   {
     "name": "MERGE-MAIN-base-dropped",
     "file": "tools/mergeMain.mjs",
-    "old": "...(p.base.length ? ['||||||| base', ...p.base] : [])",
-    "new": "...[]",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "    else\n      out.push(\n        p.head,\n        ...p.ours,\n        ...(p.base.length ? ['||||||| base', ...p.base] : []),\n        '=======',\n        ...p.theirs,\n        p.tail,\n      );",
+    "new": "    else out.push(p.head, ...p.ours, ...[], '=======', ...p.theirs, p.tail);",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "an unresolved hunk written back without its base"
   },
   {
     "name": "MERGE-MAIN-version-left",
     "file": "tools/mergeMain.mjs",
-    "old": "let line = theirs.replace(new RegExp(`([\"'\\\\\\\\^])${prefix}${mine}([\"'\\\\\\\\$])`), `$1${prefix}${next}$2`);",
-    "new": "let line = theirs;",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "  let line = theirs.replace(new RegExp(`([\"'\\\\\\\\^])${prefix}${mine}([\"'\\\\\\\\$])`), `$1${prefix}${next}$2`);",
+    "new": "  let line = theirs;",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "a pin left at main's version"
   },
   {
@@ -20,63 +24,79 @@
     "file": "tools/mergeMain.mjs",
     "old": "    line = line.replace(tag, `PIN MOVED: ${prefix}${next}, ${noted}; ${tag}`);",
     "new": "    line = line.replace(tag, `PIN MOVED: ${prefix}${next}; ${tag}`);",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "the branch's own history clause dropped"
   },
   {
     "name": "MERGE-MAIN-note-missing",
     "file": "tools/mergeMain.mjs",
-    "old": "clause.replace('(', `(${renumberNote(prefix, was, mine)}; `)",
-    "new": "clause",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "    const noted = /\\(/.test(clause)\n      ? clause.replace('(', `(${renumberNote(prefix, was, mine)}; `)\n      : `${clause} (${renumberNote(prefix, was, mine)})`;",
+    "new": "    const noted = /\\(/.test(clause) ? clause : `${clause} (${renumberNote(prefix, was, mine)})`;",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "the renumber not said"
   },
   {
     "name": "MERGE-MAIN-main-line-dropped",
     "file": "tools/mergeMain.mjs",
-    "old": "    `// ${prefix}${mine}: ${t[2]}`,\n",
-    "new": "",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "    `// ${prefix}${mine}: ${t[2]}`,\n    ...theirsRest,",
+    "new": "    ...theirsRest,",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "main's version line lost from the history"
   },
   {
     "name": "MERGE-MAIN-toml-any-kind",
     "file": "tools/mergeMain.mjs",
-    "old": "if (prefix === KINDS.account && h.ours.length === 1",
-    "new": "if (h.ours.length === 1",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "  if (\n    prefix === KINDS.account &&\n    h.ours.length === 1 &&\n    h.theirs.length === 1 &&\n    TOML.test(h.ours[0]) &&\n    TOML.test(h.theirs[0])\n  )",
+    "new": "  if (h.ours.length === 1 && h.theirs.length === 1 && TOML.test(h.ours[0]) && TOML.test(h.theirs[0]))",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "the account's toml line renumbered as the relay's (the trial merge wrote acct266 this way)"
   },
   {
     "name": "MERGE-MAIN-imports-extras-dropped",
     "file": "tools/mergeMain.mjs",
-    "old": "    for (const n of a?.names ?? []) if (!names.includes(n)) names.push(n);\n    const note = a && b && a.note !== b.note ? (b.note.startsWith(a.note) ? b.note : a.note.startsWith(b.note) ? a.note : [a.note, b.note].filter(Boolean).join('; ')) : (a?.note || b?.note || '');   // a note one side only lengthened is that side's\n    return `import",
-    "new": "    const note = a && b && a.note !== b.note ? (b.note.startsWith(a.note) ? b.note : a.note.startsWith(b.note) ? a.note : [a.note, b.note].filter(Boolean).join('; ')) : (a?.note || b?.note || '');   // a note one side only lengthened is that side's\n    return `import",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "    for (const n of a?.names ?? []) if (!names.includes(n)) names.push(n);\n    const note =",
+    "new": "    const note =",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "the branch's own imported names lost"
   },
   {
     "name": "MERGE-MAIN-note-said-twice",
     "file": "tools/mergeMain.mjs",
-    "old": "(b.note.startsWith(a.note) ? b.note : a.note.startsWith(b.note) ? a.note : [a.note, b.note].filter(Boolean).join('; '))",
-    "new": "[a.note, b.note].filter(Boolean).join('; ')",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "    const note =\n      a && b && a.note !== b.note\n        ? b.note.startsWith(a.note)\n          ? b.note\n          : a.note.startsWith(b.note)\n            ? a.note\n            : [a.note, b.note].filter(Boolean).join('; ')\n        : a?.note || b?.note || ''; // a note one side only lengthened is that side's",
+    "new": "    const note = a && b && a.note !== b.note ? [a.note, b.note].filter(Boolean).join('; ') : a?.note || b?.note || ''; // a note one side only lengthened is that side's",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "a note one side only lengthened said twice (the redo merge wrote staffTeleport.js's import this way)"
   },
   {
     "name": "MERGE-MAIN-numbers-theirs",
     "file": "tools/mergeMain.mjs",
-    "old": "line.push(String(Number(o[k]) + Number(t[k]) - Number(b[k])));",
-    "new": "line.push(t[k]);",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "      line.push(String(Number(o[k]) + Number(t[k]) - Number(b[k])));",
+    "new": "      line.push(t[k]);",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "main's number taken, the branch's rows above it forgotten"
   },
   {
     "name": "MERGE-MAIN-numbers-no-base",
     "file": "tools/mergeMain.mjs",
-    "old": "  if (!h.base.length || h.ours.length !== h.base.length",
-    "new": "  if (h.ours.length !== h.base.length",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "  if (!h.base.length || h.ours.length !== h.base.length || h.theirs.length !== h.base.length) return null;",
+    "new": "  if (h.ours.length !== h.base.length || h.theirs.length !== h.base.length) return null;",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "equivalent": true,
     "why": "belt and braces: a two-way hunk has no base lines, so the length test below refuses it whatever this guard says (the mutation run proved it)",
     "note": "a two-way hunk read as if it had a base"
@@ -84,9 +104,11 @@
   {
     "name": "MERGE-MAIN-table-resurrects",
     "file": "tools/mergeMain.mjs",
-    "old": "if (same(kept, b)) continue;",
-    "new": "if (false) continue;",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "      if (same(kept, b)) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "a key one side deleted brought back"
   },
   {
@@ -94,23 +116,29 @@
     "file": "tools/mergeMain.mjs",
     "old": "    if (same(o, t) || same(t, b)) out.set(key, o);",
     "new": "    if (same(o, t)) out.set(key, o);",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "the branch's change lost where main left the key alone"
   },
   {
     "name": "MERGE-MAIN-sweep-any",
     "file": "tools/mergeMain.mjs",
-    "old": "if (v == null || !olds.includes(v)) return line;",
-    "new": "if (v == null) return line;",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "  if (v == null || !olds.includes(v)) return line;",
+    "new": "  if (v == null) return line;",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "a pin of an older, deployed version swept too"
   },
   {
     "name": "MERGE-MAIN-one-number-both-sides",
     "file": "tools/mergeMain.mjs",
-    "old": "if (was == null || mine == null || ours === theirs) return null;",
-    "new": "if (was == null || mine == null || was === mine) return null;",
-    "tests": ["test/tooling/mergemain.test.js"],
+    "old": "  if (was == null || mine == null || ours === theirs) return null; // one number both sides is a renumber too, when main took the branch's own (the second merge: world268 both)",
+    "new": "  if (was == null || mine == null || was === mine) return null; // one number both sides is a renumber too, when main took the branch's own (the second merge: world268 both)",
+    "tests": [
+      "test/tooling/mergemain.test.js"
+    ],
     "note": "one number both sides took (main took the branch's own) read as no renumber - the branch's pin left at main's number"
   }
 ]

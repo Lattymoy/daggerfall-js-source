@@ -8,12 +8,24 @@
 // chains the same way (healthStatus.js's ActionTextBox.addNext) and
 // keeps the words its own, plus a HUD strip the mod never had - one
 // chip a need, shown only while the need is felt.
-import { survivalOf, hungerStage, thirstStage, sleepStage, wetStage, hungerMinutes, NEED, BOON, warmedByFire, wakingHeld, heartyMealLeft } from './needs.js';   // HEARTY-MEAL: the tavern meal's hold
-import { t } from '../textManager.js';   // L10N4: the Well Fed tile's word in the player's language
-import { STAT_KEYS_ORDER } from '../statMods.js';   // AUDIT SURV-BOONS C11: the attributes, named as the sheet names them
+import {
+  survivalOf,
+  hungerStage,
+  thirstStage,
+  sleepStage,
+  wetStage,
+  hungerMinutes,
+  NEED,
+  BOON,
+  warmedByFire,
+  wakingHeld,
+  heartyMealLeft,
+} from './needs.js'; // HEARTY-MEAL: the tavern meal's hold
+import { t } from '../textManager.js'; // L10N4: the Well Fed tile's word in the player's language
+import { STAT_KEYS_ORDER } from '../statMods.js'; // AUDIT SURV-BOONS C11: the attributes, named as the sheet names them
 import { temperatureWord, signedDegrees } from './temperature.js';
 import { isStiff } from './rest.js';
-import { SURVIVAL_RULES, SURVIVAL_DEFAULT } from './difficulty.js';   // AUDIT C&C S5: the tier a chip's level is read by
+import { SURVIVAL_RULES, SURVIVAL_DEFAULT } from './difficulty.js'; // AUDIT C&C S5: the tier a chip's level is read by
 
 /** The chip's words, a need's stage each. AUDIT C&C S5: words alone - a chip's level ('warn' felt, 'danger' costing you)
  *  is the LIVE tier's (needLevel, below), never the table's: the table's Casual levels painted Hard's costing Tired, Warm
@@ -25,7 +37,14 @@ export const HUD_NEED_WORDS = Object.freeze({
   wet: Object.freeze({ damp: 'Damp', wet: 'Wet', soaked: 'Soaked', drenched: 'Drenched' }),
   // AUDIT SURV-TIERS (the third pass): and Warm, the Cold's twin - Hard charges from twenty either way, and a warm day
   // drained six a minute under an empty strip while the same band's cold said Cold
-  temp: Object.freeze({ warm: 'Warm', hot: 'Hot', scorching: 'Scorching', cold: 'Cold', freezing: 'Freezing', 'deadly cold': 'Deadly cold' }),
+  temp: Object.freeze({
+    warm: 'Warm',
+    hot: 'Hot',
+    scorching: 'Scorching',
+    cold: 'Cold',
+    freezing: 'Freezing',
+    'deadly cold': 'Deadly cold',
+  }),
 });
 /**
  * AUDIT C&C S5 (2026-10-12, decisions D1 and D2): RED MEANS IT COSTS - IN THE TIER THAT IS LIVE. A need's chip, the HUD's
@@ -42,21 +61,24 @@ export const HUD_NEED_WORDS = Object.freeze({
  */
 export function needLevel(key, stage, { rules = null, felt = 0, warmed = false, held = false } = {}) {
   const r = rules ?? SURVIVAL_RULES[SURVIVAL_DEFAULT];
-  const tires = r.stamina.floor < 1, takes = !!r.attributes;
+  const tires = r.stamina.floor < 1,
+    takes = !!r.attributes;
   if (key === 'hunger') return tires && stage === 'starving' ? 'danger' : 'warn';
   if (key === 'thirst') return tires && (stage === 'parched' || stage === 'dehydrated') ? 'danger' : 'warn';
   // AUDIT C&C (S5, REST6): and never while the Waking Salts hold the sleep's penalties and its drain (`held`) - it costs nothing
   if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';
-  if (key === 'temp') return tires && !warmed && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';
+  if (key === 'temp')
+    return tires && !warmed && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';
   if (key === 'stiff') return takes ? 'danger' : 'warn';
-  return 'warn';   // the wet
+  return 'warn'; // the wet
 }
 /** AUDIT C&C S14: A LEVEL IN WORDS, for a reader who cannot tell the amber from the red - a need's tile, the HUD's
  *  temperature plate and the pack's plaque say it on their title and label, and a costing one carries a mark (the
  *  sheets' `!`): the colour was the only thing that said a reading costs. */
 export const LEVEL_WORDS = Object.freeze({ danger: 'it costs you', warn: 'no cost to you yet' });
 /** "Freezing - it costs you"; the word alone where its level says nothing of a cost (comfortable, a boon). */
-export const levelSaid = (word, level) => (Object.hasOwn(LEVEL_WORDS, level) ? `${word} - ${LEVEL_WORDS[level]}` : word);
+export const levelSaid = (word, level) =>
+  Object.hasOwn(LEVEL_WORDS, level) ? `${word} - ${LEVEL_WORDS[level]}` : word;
 /**
  * SURV-BOONS (2026-10-12): A BOON'S CHIP - its word and the glyph it stands on (ui/hud/hudStatus.js STATUS_GLYPHS): the need's
  * own for the need it rewards, a flame for the hearth (its own - REST1's Next night is the campfire), a sparkle for
@@ -70,8 +92,11 @@ export const HEARTY_MEAL_CHIP = 'meal';
 export const heartyMealWord = () => t('survival.boon.meal', 'Well Fed');
 export const HEARTY_MEAL_GLYPH = 'hunger';
 export const HUD_BOON_WORDS = Object.freeze({
-  fed: Object.freeze(['Well fed', 'hunger']), quenched: Object.freeze(['Quenched', 'thirst']), rested: Object.freeze(['Well rested', 'sleep']),
-  thriving: Object.freeze(['Thriving', 'thriving']), hearth: Object.freeze(['Hearth', 'hearth']),   // AUDIT SURV-BOONS C7: its own flame - REST1's Next night is the campfire, and the two stood side by side
+  fed: Object.freeze(['Well fed', 'hunger']),
+  quenched: Object.freeze(['Quenched', 'thirst']),
+  rested: Object.freeze(['Well rested', 'sleep']),
+  thriving: Object.freeze(['Thriving', 'thriving']),
+  hearth: Object.freeze(['Hearth', 'hearth']), // AUDIT SURV-BOONS C7: its own flame - REST1's Next night is the campfire, and the two stood side by side
 });
 /** The tier a reader reads the record by: the LIVE tier's rules where the reader knows them (AUDIT SURV-BOONS C14: the
  *  HUD, the pack and - AUDIT C&C S11 - the Status page hand `rules` in, survival/switch.js survivalRules, so a turn of
@@ -86,12 +111,17 @@ const warmedBy = (s, word) => !!s.warmed && (word === 'cold' || word === 'freezi
 /** NEED-TIER (2026-10-02, Mac: "the debuffs you get from Climates and Calories no longer show the severity (how much
  *  hunger your character has etc)"): a felt need's stage on its own ladder - read off the chips' table, mildest first;
  *  the temperature's two ways each a ladder of their own - so the tile's foot can say "2/3" where its word has no room. */
-const COLD_WORDS = Object.freeze(['cold', 'freezing', 'deadly cold']);   // AUDIT NEED-TIER: the cold way named, not the table's second half by place
+const COLD_WORDS = Object.freeze(['cold', 'freezing', 'deadly cold']); // AUDIT NEED-TIER: the cold way named, not the table's second half by place
 const NEED_LADDERS = Object.freeze({
-  hunger: Object.keys(HUD_NEED_WORDS.hunger), thirst: Object.keys(HUD_NEED_WORDS.thirst), sleep: Object.keys(HUD_NEED_WORDS.sleep), wet: Object.keys(HUD_NEED_WORDS.wet),
-  warm: Object.keys(HUD_NEED_WORDS.temp).filter((w) => !COLD_WORDS.includes(w)), cold: COLD_WORDS,
+  hunger: Object.keys(HUD_NEED_WORDS.hunger),
+  thirst: Object.keys(HUD_NEED_WORDS.thirst),
+  sleep: Object.keys(HUD_NEED_WORDS.sleep),
+  wet: Object.keys(HUD_NEED_WORDS.wet),
+  warm: Object.keys(HUD_NEED_WORDS.temp).filter((w) => !COLD_WORDS.includes(w)),
+  cold: COLD_WORDS,
 });
-const needLadder = (key, stage) => (key === 'temp' ? (NEED_LADDERS.cold.includes(stage) ? NEED_LADDERS.cold : NEED_LADDERS.warm) : NEED_LADDERS[key]);
+const needLadder = (key, stage) =>
+  key === 'temp' ? (NEED_LADDERS.cold.includes(stage) ? NEED_LADDERS.cold : NEED_LADDERS.warm) : NEED_LADDERS[key];
 
 /** The strip's chips: [{ key, text, level, tier?, of? }] - empty when every need is met; `tier` of `of` is how bad
  *  (NEED-TIER), absent on a need with one stage (Stiff). `rules` the live tier's (tierOf); `live` the HUD's live reading
@@ -105,10 +135,16 @@ export function survivalHudChips(entity, now, { vampire = false, endurance = 50,
     const text = table[stage];
     if (!text) return;
     const ladder = needLadder(key, stage);
-    out.push({ key, text, level: needLevel(key, stage, { rules: tier, ...at }), tier: ladder.indexOf(stage) + 1, of: ladder.length });
+    out.push({
+      key,
+      text,
+      level: needLevel(key, stage, { rules: tier, ...at }),
+      tier: ladder.indexOf(stage) + 1,
+      of: ladder.length,
+    });
   };
-  if (!vampire) push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now)));   // AUDIT SURV C: no need for food or sleep
-  if (!vampire) push('thirst', HUD_NEED_WORDS.thirst, thirstStage(s.thirst));   // AUDIT SURV-TIERS (the third pass): nor drink - the law freezes it, and its red chip never cost
+  if (!vampire) push('hunger', HUD_NEED_WORDS.hunger, hungerStage(hungerMinutes(s, now))); // AUDIT SURV C: no need for food or sleep
+  if (!vampire) push('thirst', HUD_NEED_WORDS.thirst, thirstStage(s.thirst)); // AUDIT SURV-TIERS (the third pass): nor drink - the law freezes it, and its red chip never cost
   if (!vampire) push('sleep', HUD_NEED_WORDS.sleep, sleepStage(s.sleepDebt), { held: wakingHeld(s, now) });
   push('wet', HUD_NEED_WORDS.wet, wetStage(s.wet));
   // AUDIT C&C S9 (decision D3): ONE TEMPERATURE READING ON THE HUD - the live one the plate shows, where the HUD hands it
@@ -118,16 +154,37 @@ export function survivalHudChips(entity, now, { vampire = false, endurance = 50,
   const felt = live ? live.felt : s.felt;
   if (Number.isFinite(felt)) {
     const word = temperatureWord(felt);
-    push('temp', HUD_NEED_WORDS.temp, word, { felt, warmed: live ? warmedByFire(tier, live.env, felt) : warmedBy(s, word) });
+    push('temp', HUD_NEED_WORDS.temp, word, {
+      felt,
+      warmed: live ? warmedByFire(tier, live.env, felt) : warmedBy(s, word),
+    });
   }
   if (isStiff(s, now)) out.push({ key: 'stiff', text: 'Stiff', level: needLevel('stiff', 'stiff', { rules: tier }) });
   // HEARTY-MEAL (needs.js): a tavern meal's Well Fed hold - a buff in EVERY tier (it is the meal's, not a tier's reward),
   // the hunger's glyph, its hours left on its foot; in a rewarding tier it stands in for the Well fed boon it outlasts
   const meal = vampire ? 0 : heartyMealLeft(s, now);
-  const mealChip = meal > 0 ? { key: `boon:${HEARTY_MEAL_CHIP}`, text: heartyMealWord(), level: 'boon', glyph: HEARTY_MEAL_GLYPH, foot: `${Math.ceil(meal / 60)}h` } : null;
+  const mealChip =
+    meal > 0
+      ? {
+          key: `boon:${HEARTY_MEAL_CHIP}`,
+          text: heartyMealWord(),
+          level: 'boon',
+          glyph: HEARTY_MEAL_GLYPH,
+          foot: `${Math.ceil(meal / 60)}h`,
+        }
+      : null;
   // AUDIT SURV C/D: the page's own bands (the mod's LiveEndurance / 2 and - 10), not a hard forty
   // AUDIT SURV-BOONS C6: before the boons, so the one red Boons keeps is never the first tile a full band folds away
-  const drunk = s.drunk > endurance / 2 ? { key: 'drunk', text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk', level: s.drunk > endurance - 10 ? 'danger' : 'warn', tier: s.drunk > endurance - 10 ? 2 : 1, of: 2 } : null;
+  const drunk =
+    s.drunk > endurance / 2
+      ? {
+          key: 'drunk',
+          text: s.drunk > endurance - 10 ? 'Very drunk' : 'Drunk',
+          level: s.drunk > endurance - 10 ? 'danger' : 'warn',
+          tier: s.drunk > endurance - 10 ? 2 : 1,
+          of: 2,
+        }
+      : null;
   // SURV-BOONS: in a rewarding tier no need costs, so none is red (needLevel - the drink's swing is the drink's, and
   // stays); the boons follow, green (level 'boon')
   if (tier.boons) {
@@ -137,7 +194,7 @@ export function survivalHudChips(entity, now, { vampire = false, endurance = 50,
       const w = HUD_BOON_WORDS[id];
       if (!w || (mealChip && id === 'fed')) continue;
       const chip = { key: `boon:${id}`, text: w[0], level: 'boon', glyph: w[1] };
-      if (id === 'rested' && s.wellRested > 0) chip.foot = `${Math.ceil(s.wellRested / 60)}h`;   // the bank's hours left
+      if (id === 'rested' && s.wellRested > 0) chip.foot = `${Math.ceil(s.wellRested / 60)}h`; // the bank's hours left
       out.push(chip);
     }
   } else {
@@ -166,14 +223,27 @@ export function temperatureReadout(entity, felt = entity?.survival?.felt, { rule
   const warmed = env ? warmedByFire(tier, env, felt) : warmedBy(s, word);
   const level = label ? needLevel('temp', word, { rules: tier, felt, warmed }) : 'ok';
   const at = Math.min(1, Math.max(0, (felt - TEMP_SCALE.min) / (TEMP_SCALE.max - TEMP_SCALE.min)));
-  return { felt, text: signedDegrees(felt), word, label: label ?? 'Comfortable', level, side: COLD_WORDS.includes(word) ? 'cold' : label ? 'hot' : 'mild', warmed, at };
+  return {
+    felt,
+    text: signedDegrees(felt),
+    word,
+    label: label ?? 'Comfortable',
+    level,
+    side: COLD_WORDS.includes(word) ? 'cold' : label ? 'hot' : 'mild',
+    warmed,
+    at,
+  };
 }
 
 /** AUDIT SURV-BOONS C13: what a boon gives, in words - the page's line and the Stats side's row say it through this one
  *  helper: the attributes as the sheet names them, in its order (C11), or the hearth's stamina. */
 export function boonEffect(id) {
   if (id === 'hearth') return 'regain stamina beside a lit fire';
-  return BOON[id] ? STAT_KEYS_ORDER.filter((k) => BOON[id][k]).map((k) => `+${BOON[id][k]} ${k[0].toUpperCase()}${k.slice(1)}`).join(', ') : '';
+  return BOON[id]
+    ? STAT_KEYS_ORDER.filter((k) => BOON[id][k])
+        .map((k) => `+${BOON[id][k]} ${k[0].toUpperCase()}${k.slice(1)}`)
+        .join(', ')
+    : '';
 }
 /** The hours a Well rested bank has left, whole, said singular at one (C10): "12 hours", "1 hour" - '' with none. */
 export function restedLeft(s) {
@@ -183,26 +253,46 @@ export function restedLeft(s) {
 
 export const STATUS_TEXT = Object.freeze({
   hunger: Object.freeze({
-    fed: 'You are well fed.', peckish: 'You could eat.', hungry: 'You could do with a decent meal.', starving: 'You are starving.',
+    fed: 'You are well fed.',
+    peckish: 'You could eat.',
+    hungry: 'You could do with a decent meal.',
+    starving: 'You are starving.',
   }),
-  thirst: Object.freeze({ fine: 'You are not thirsty.', thirsty: 'You are thirsty.', parched: 'You are parched.', dehydrated: 'You are dehydrated.' }),
-  sleep: Object.freeze({ rested: 'You are well rested.', tired: 'You are tired.', drowsy: 'You are drowsy.', exhausted: 'You are exhausted.' }),
-  notTired: 'You are not tired.',   // AUDIT SURV-BOONS C5/D12: Boons' 'rested' stage with no bank - "well rested" is the boon's word there, and the page said it beside a strip with no Well rested
-  wet: Object.freeze({ dry: null, damp: 'Your clothes are damp.', wet: 'Your clothes are wet.', soaked: 'You are soaked through.', drenched: 'You are drenched.' }),
+  thirst: Object.freeze({
+    fine: 'You are not thirsty.',
+    thirsty: 'You are thirsty.',
+    parched: 'You are parched.',
+    dehydrated: 'You are dehydrated.',
+  }),
+  sleep: Object.freeze({
+    rested: 'You are well rested.',
+    tired: 'You are tired.',
+    drowsy: 'You are drowsy.',
+    exhausted: 'You are exhausted.',
+  }),
+  notTired: 'You are not tired.', // AUDIT SURV-BOONS C5/D12: Boons' 'rested' stage with no bank - "well rested" is the boon's word there, and the page said it beside a strip with no Well rested
+  wet: Object.freeze({
+    dry: null,
+    damp: 'Your clothes are damp.',
+    wet: 'Your clothes are wet.',
+    soaked: 'You are soaked through.',
+    drenched: 'You are drenched.',
+  }),
   temp: (word) => (word === 'comfortable' ? 'You are comfortable.' : `You feel ${word}.`),
   // TEMP-UI: the number under the word - in plain characters, which every font the box is drawn in carries (no degree
   // sign: the classic's own faces have none), with the comfortable band it is read against
   felt: (felt) => `Felt temperature: ${signedDegrees(felt).replace('\u00b0', '')} (comfortable from -10 to +10).`,
   warmedByFire: 'The fire keeps the cold at bay.',
-  stiff: 'You are stiff and sore from a hard night.',   // AUDIT SURV-TIERS (the third pass): the ground's or the tavern floor's (a Hard blackout)
-  drunk: 'You are drunk.', veryDrunk: 'You are very drunk.',
+  stiff: 'You are stiff and sore from a hard night.', // AUDIT SURV-TIERS (the third pass): the ground's or the tavern floor's (a Hard blackout)
+  drunk: 'You are drunk.',
+  veryDrunk: 'You are very drunk.',
   vampire: 'You have no need for food or sleep.',
   invigorated: 'You are invigorated from your last meal.',
   // SURV-BOONS: a boon's line - its word and what it gives, read off needs.js BOON (never restated), the attributes named
   // as the sheet names them (AUDIT SURV-BOONS C11) in the sheet's order; the hearth's own. Plain characters: the
   // classic's faces draw this box (TEMP-UI's felt line says why).
   boon: (id) => {
-    if (id === 'hearth') return 'The fire\'s warmth restores your stamina.';
+    if (id === 'hearth') return "The fire's warmth restores your stamina.";
     const w = HUD_BOON_WORDS[id]?.[0];
     if (!w || !BOON[id]) return null;
     return `${w}: ${boonEffect(id)}.`;
@@ -232,20 +322,30 @@ export function survivalStatusLines(entity, now, { vampire = false, endurance = 
   if (vampire) lines.push(STATUS_TEXT.vampire);
   else {
     const hunger = hungerStage(hungerMinutes(s, now));
-    lines.push(hunger === 'fed' && hungerMinutes(s, now) < NEED.PECKISH_AT / 2 ? STATUS_TEXT.invigorated : STATUS_TEXT.hunger[hunger]);
+    lines.push(
+      hunger === 'fed' && hungerMinutes(s, now) < NEED.PECKISH_AT / 2
+        ? STATUS_TEXT.invigorated
+        : STATUS_TEXT.hunger[hunger],
+    );
     lines.push(STATUS_TEXT.thirst[thirstStage(s.thirst)]);
     const sleep = sleepStage(s.sleepDebt);
-    lines.push(sleep === 'rested' && kept && !boons.includes('rested') ? STATUS_TEXT.notTired : STATUS_TEXT.sleep[sleep]);   // AUDIT SURV-BOONS C5/D12
+    lines.push(
+      sleep === 'rested' && kept && !boons.includes('rested') ? STATUS_TEXT.notTired : STATUS_TEXT.sleep[sleep],
+    ); // AUDIT SURV-BOONS C5/D12
   }
   // AUDIT SURV-BOONS C12: and a vampire's body is still wet or dry, warm or cold, drunk or sober, and by a fire - the
   // strip said so while the page said only that it needs no food or sleep
   const wet = STATUS_TEXT.wet[wetStage(s.wet)];
   if (wet) lines.push(wet);
-  if (Number.isFinite(s.felt)) { const word = temperatureWord(s.felt); lines.push(warmedBy(s, word) ? STATUS_TEXT.warmedByFire : STATUS_TEXT.temp(word), STATUS_TEXT.felt(s.felt)); }   // TEMP-UI: and its number
+  if (Number.isFinite(s.felt)) {
+    const word = temperatureWord(s.felt);
+    lines.push(warmedBy(s, word) ? STATUS_TEXT.warmedByFire : STATUS_TEXT.temp(word), STATUS_TEXT.felt(s.felt));
+  } // TEMP-UI: and its number
   if (isStiff(s, now)) lines.push(STATUS_TEXT.stiff);
   if (s.drunk > endurance / 2) lines.push(s.drunk > endurance - 10 ? STATUS_TEXT.veryDrunk : STATUS_TEXT.drunk);
-  for (const id of boons) lines.push(STATUS_TEXT.boon(id), id === 'rested' ? STATUS_TEXT.restedFor(s) : null);   // SURV-BOONS: what the body has earned - AUDIT C&C: the bank's hours after it
+  for (const id of boons) lines.push(STATUS_TEXT.boon(id), id === 'rested' ? STATUS_TEXT.restedFor(s) : null); // SURV-BOONS: what the body has earned - AUDIT C&C: the bank's hours after it
   return lines.filter(Boolean);
 }
 /** The box's rows, in the hosts' `{ text, center }` shape. */
-export const survivalStatusRows = (entity, now, opts) => survivalStatusLines(entity, now, opts).map((text) => ({ text, center: true }));
+export const survivalStatusRows = (entity, now, opts) =>
+  survivalStatusLines(entity, now, opts).map((text) => ({ text, center: true }));

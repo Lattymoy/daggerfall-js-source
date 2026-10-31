@@ -41,7 +41,8 @@ export async function mintReissue({ subtle, rand }) {
  */
 export function reissueSql(handle, hash) {
   if (!isHandleShaped(handle)) throw new Error(`not a username: ${JSON.stringify(handle)}`);
-  if (typeof hash !== 'string' || !HASH_RE.test(hash) || !parseStored(hash)) throw new Error('not a recovery-code hash from this tool');
+  if (typeof hash !== 'string' || !HASH_RE.test(hash) || !parseStored(hash))
+    throw new Error('not a recovery-code hash from this tool');
   const lc = handle.toLowerCase().replaceAll("'", "''");
   return `UPDATE players SET recovery_hash = '${hash}' WHERE handle_lc = '${lc}' AND handle IS NOT NULL RETURNING handle;`;
 }
@@ -55,13 +56,20 @@ async function main(argv) {
   const handle = argv[0];
   if (!isHandleShaped(handle)) throw new Error('usage: node tools/reissueRecoveryCode.mjs <handle>');
   const { code, hash } = await mintReissue({ subtle: globalThis.crypto.subtle, rand });
-  reissueSql(handle, hash);   // the statement the workflow will write, checked here first
+  reissueSql(handle, hash); // the statement the workflow will write, checked here first
   console.log(`Recovery code for ${handle} - give it to the player privately; it works once:\n\n  ${code}\n`);
   console.log(`Its hash - the workflow's \`hash\` input (not a secret):\n\n  ${hash}\n`);
-  console.log(`Then: Actions > "Account recovery" > Run workflow, with handle ${handle} and that hash. The player uses`);
-  console.log('"Forgot password" in the game with the code, picks a new password, and is shown new recovery codes to keep.');
+  console.log(
+    `Then: Actions > "Account recovery" > Run workflow, with handle ${handle} and that hash. The player uses`,
+  );
+  console.log(
+    '"Forgot password" in the game with the code, picks a new password, and is shown new recovery codes to keep.',
+  );
 }
 
 if (isMain(import.meta.url)) {
-  main(process.argv.slice(2)).catch((e) => { console.error(e.message); process.exit(1); });
+  main(process.argv.slice(2)).catch((e) => {
+    console.error(e.message);
+    process.exit(1);
+  });
 }

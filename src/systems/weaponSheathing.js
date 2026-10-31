@@ -51,7 +51,7 @@ export const SHEATHING_BONE = Object.freeze({
   [MW_WEAPON_TYPE.BluntTwoClose]: 'Bip01 BluntTwoClose',
   [MW_WEAPON_TYPE.BluntTwoWide]: 'Bip01 BluntTwoWide',
   [MW_WEAPON_TYPE.SpearTwoWide]: 'Bip01 SpearTwoWide',
-  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand',   // AUDIT-WS F1: weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a "Bip01 AxeOneHand" too, at the same transform, that the reference never names)
+  [MW_WEAPON_TYPE.AxeOneHand]: 'Bip01 LongBladeOneHand', // AUDIT-WS F1: weapontype.hpp:115 - the one-handed axe sheathes at the long blade's bone (the addon carries a "Bip01 AxeOneHand" too, at the same transform, that the reference never names)
   [MW_WEAPON_TYPE.AxeTwoHand]: 'Bip01 AxeTwoClose',
   [MW_WEAPON_TYPE.MarksmanBow]: 'Bip01 MarksmanBow',
   [MW_WEAPON_TYPE.MarksmanCrossbow]: 'Bip01 MarksmanCrossbow',
@@ -75,7 +75,9 @@ export function sheathedMeshPath(model) {
  *  -> `animations/xbase_anim/` (the reference swaps the first path
  *  segment and drops the extension). */
 export function animationsDirOf(model) {
-  let p = String(model || '').replace(/\\/g, '/').toLowerCase();
+  let p = String(model || '')
+    .replace(/\\/g, '/')
+    .toLowerCase();
   if (p.startsWith('meshes/')) p = `animations/${p.slice(7)}`;
   const dot = p.lastIndexOf('.');
   if (dot > p.lastIndexOf('/')) p = p.slice(0, dot);
@@ -98,7 +100,10 @@ export function boneSourcesFor(baseModel, skeletonPath, archives) {
       const names = typeof arc.list === 'function' ? arc.list() : (arc.names ?? []);
       for (const raw of names) {
         const n = String(raw).replace(/\\/g, '/').toLowerCase();
-        if (n.startsWith(dir) && n.endsWith('.nif') && !seen.has(n)) { seen.add(n); out.push(n); }
+        if (n.startsWith(dir) && n.endsWith('.nif') && !seen.has(n)) {
+          seen.add(n);
+          out.push(n);
+        }
       }
     }
   }
@@ -128,15 +133,27 @@ export function holsterPartPaths({ weaponModel }) {
  *
  * @returns {{ parts: object[], info: object|null, notes: string[] }}
  */
-export function resolveHolsterParts({ mwType, weaponModel, weaponBytes, ammo = null, ammoCount = 0, find, hasBone, parseNif }) {
+export function resolveHolsterParts({
+  mwType,
+  weaponModel,
+  weaponBytes,
+  ammo = null,
+  ammoCount = 0,
+  find,
+  hasBone,
+  parseNif,
+}) {
   const notes = [];
   const parts = [];
-  if (mwType == null || mwType === MW_WEAPON_TYPE.None || !weaponModel || !weaponBytes) return { parts, info: null, notes };
+  if (mwType == null || mwType === MW_WEAPON_TYPE.None || !weaponModel || !weaponBytes)
+    return { parts, info: null, notes };
   const bone = SHEATHING_BONE[mwType];
   if (!bone) return { parts, info: null, notes };
-  const showHolstered = holsters(mwType);   // AUDIT-WS F3: thrown - the scabbard alone
+  const showHolstered = holsters(mwType); // AUDIT-WS F3: thrown - the scabbard alone
   if (!hasBone(bone)) {
-    notes.push(`holster: this skeleton has no "${bone}" - no bone addon (animations/xbase_anim/xbase_anim_sh.nif) was found`);
+    notes.push(
+      `holster: this skeleton has no "${bone}" - no bone addon (animations/xbase_anim/xbase_anim_sh.nif) was found`,
+    );
     return { parts, info: { bone, reason: 'no sheathing bone' }, notes };
   }
   const shPath = sheathedMeshPath(`meshes/${weaponModel}`);
@@ -149,7 +166,9 @@ export function resolveHolsterParts({ mwType, weaponModel, weaponBytes, ammo = n
   }
   const shBytes = shArc.get(shPath).slice();
   let shNif;
-  try { shNif = parseNif(shBytes); } catch (err) {
+  try {
+    shNif = parseNif(shBytes);
+  } catch (err) {
     notes.push(`holster: ${shPath}: ${err.message}`);
     if (showHolstered) parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, bare: true });
     return { parts, info: { bone, scabbard: null, weaponNode: false, thrown: !showHolstered }, notes };
@@ -181,7 +200,14 @@ export function resolveHolsterParts({ mwType, weaponModel, weaponBytes, ammo = n
   } else if (weaponKids > 0) {
     parts.push({ slot: 'holster', bones: [bone], bytes: shBytes, underNode: SHEATH_WEAPON_NODE, bare: true });
   } else {
-    parts.push({ slot: 'holster', bones: [bone], bytes: weaponBytes, preTransform: nodeTransformOf(shNif, SHEATH_WEAPON_NODE), bare: true, inheritOffsetFrom: 'sheath' });
+    parts.push({
+      slot: 'holster',
+      bones: [bone],
+      bytes: weaponBytes,
+      preTransform: nodeTransformOf(shNif, SHEATH_WEAPON_NODE),
+      bare: true,
+      inheritOffsetFrom: 'sheath',
+    });
   }
   // The quiver.
   let quiver = 0;
@@ -191,7 +217,7 @@ export function resolveHolsterParts({ mwType, weaponModel, weaponBytes, ammo = n
     const suitable = wanted !== MW_WEAPON_TYPE.None && ammo.type === wanted;
     if (suitable) {
       const slots = (ammoNode.rec.children ?? []).filter((c) => c >= 0);
-      const n = Math.min(Math.max(0, Math.floor(Number(ammoCount) || 0)), slots.length);   // never `| 0`: a full quiver is asked for with MAX_SAFE_INTEGER
+      const n = Math.min(Math.max(0, Math.floor(Number(ammoCount) || 0)), slots.length); // never `| 0`: a full quiver is asked for with MAX_SAFE_INTEGER
       for (let i = 0; i < n; i++) {
         const child = /** @type {any} */ (deref(shNif, slots[i]));
         const name = child?.name || `${SHEATH_AMMO_NODE} ${i}`;
@@ -200,12 +226,31 @@ export function resolveHolsterParts({ mwType, weaponModel, weaponBytes, ammo = n
         // (updateQuiver's `ammoCount--` when isArrowAttached, :441-443,
         // re-run at every attach, release and detach - npcanimation.cpp
         // :1062-1074).
-        parts.push({ slot: 'quiver', bones: [bone], bytes: ammo.bytes, preTransform: nodeTransformOf(shNif, name), bare: true, inheritOffsetFrom: 'sheath', tag: { i, n } });
+        parts.push({
+          slot: 'quiver',
+          bones: [bone],
+          bytes: ammo.bytes,
+          preTransform: nodeTransformOf(shNif, name),
+          bare: true,
+          inheritOffsetFrom: 'sheath',
+          tag: { i, n },
+        });
         quiver++;
       }
     }
   }
-  return { parts, info: { bone, scabbard: shPath, weaponNode: true, weaponNodeEmpty: weaponKids === 0, quiver, thrown: !showHolstered }, notes };
+  return {
+    parts,
+    info: {
+      bone,
+      scabbard: shPath,
+      weaponNode: true,
+      weaponNodeEmpty: weaponKids === 0,
+      quiver,
+      thrown: !showHolstered,
+    },
+    notes,
+  };
 }
 
 /** The rig's hide law for the three slots, in one place: the holster

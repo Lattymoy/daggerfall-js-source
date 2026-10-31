@@ -69,5 +69,5 @@ test('GATE-RELOAD the host: a refused `in` takes the player out of the court in 
   assert.match(world, /onRefused: \(why\) => \{ if \(modes\?\.gateArenaDay\?\.\(\) != null\) ejectFromCourt\(gateRefusalText\(why\)\); \},/);
   assert.doesNotMatch(world, /ejectFromCourt\(GATE_NO_TEXT\[why\]/, 'no refusal of an `in` said in the old words');
   assert.match(world, /else if \(courtDay != null && online\?\.terminal\) ejectFromCourt\(GATE_NO_TEXT\[online\.error\] \?\? COURT_TEXT\.lost\);/, 'a hello refused at the window\'s end still says the gate is closed');
-  assert.match(read('src/net/gate/gateLink.js'), /if \(g\.k === 'no'\) \{ say\(gateRefusalText\(g\.m\)\); onRefused\(g\.m\); return; \}/);
+  assert.match(read('src/net/gate/gateLink.js'), /if \(g\.k === 'no'\) \{\n\s*say\(gateRefusalText\(g\.m\)\);\n\s*onRefused\(g\.m\);\n\s*return;\n\s*\}/);
 });

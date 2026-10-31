@@ -152,8 +152,8 @@
   {
     "name": "AUDIT-RPT1026-B2-owner-refused-under-guest",
     "file": "server-account/src/decorAccess.js",
-    "old": "LEFT AS IT IS).\n  const blob = await getRealmBlob(ctx, player.id, character);",
-    "new": "LEFT AS IT IS).\n  if (heldByOther(await holdRow(db, mapId, buildingKey, id), player, character, ctx.nowS)) return { error: 'decor-busy' };\n  const blob = await getRealmBlob(ctx, player.id, character);",
+    "old": "  // refused close keeps that gold as its run-out did (Field-Bugs-2026-10-26r, LEFT AS IT IS).\n  const blob = await getRealmBlob(ctx, player.id, character);",
+    "new": "  // refused close keeps that gold as its run-out did (Field-Bugs-2026-10-26r, LEFT AS IT IS).\n  if (heldByOther(await holdRow(db, mapId, buildingKey, id), player, character, ctx.nowS))\n    return { error: 'decor-busy' };\n  const blob = await getRealmBlob(ctx, player.id, character);",
     "tests": [
       "test/systems/decor/audit_rpt1026_chestgold.test.js"
     ],

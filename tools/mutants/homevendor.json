@@ -2,8 +2,8 @@
   {
     "name": "HOMEVENDOR-the-station-dropped",
     "file": "src/net/decorLaw.js",
-    "old": "'jeweller', 'vendor']);   // HOME-VENDOR: a hired trader",
-    "new": "'jeweller']);   // HOME-VENDOR: a hired trader",
+    "old": "  'vendor',\n]); // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)   // DECOR-USE: the cooking station - any piece the room's fire (systems/decor/decorUse.js decorHearth)",
+    "new": "]); // HOME-VENDOR: a hired trader (net/vendorLaw.js)   // PROF2: the forge - smelting at home (bible/06-Systems/Professions-Arc.md 23); PROF4: the workbench (25); PROF7: the loom and tanning rack (29); PROF11: the mason's bench (professionLaw MASON_FEE); PROF10: the jeweller's bench (JEWEL_FEE)   // DECOR-USE: the cooking station - any piece the room's fire (systems/decor/decorUse.js decorHearth)",
     "tests": [
       "test/net/homevendor_service.test.js",
       "test/ui/homestations.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "HOMEVENDOR-a-bad-id-taken",
     "file": "src/net/vendorLaw.js",
-    "old": "if (!mapOk(map) || typeof id !== 'string' || !DECOR_ID_RE.test(id)) return null;",
-    "new": "if (!mapOk(map) || typeof id !== 'string') return null;",
+    "old": "  if (!mapOk(map) || typeof id !== 'string' || !DECOR_ID_RE.test(id)) return null;",
+    "new": "  if (!mapOk(map) || typeof id !== 'string') return null;",
     "tests": [
       "test/net/homevendor_service.test.js"
     ]
@@ -21,8 +21,8 @@
   {
     "name": "HOMEVENDOR-one-word-enough",
     "file": "src/net/vendorLaw.js",
-    "old": "return words.every((w) => hay.includes(w));",
-    "new": "return words.some((w) => hay.includes(w));",
+    "old": "    return words.every((w) => hay.includes(w));",
+    "new": "    return words.some((w) => hay.includes(w));",
     "tests": [
       "test/net/homevendor_service.test.js"
     ]
@@ -130,8 +130,8 @@
   {
     "name": "HOMEVENDOR-a-bad-waypoint-taken",
     "file": "src/systems/vendorWaypoint.js",
-    "old": "if (!Number.isSafeInteger(map) || map <= 0 || !Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
-    "new": "if (!Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
+    "old": "  if (!Number.isSafeInteger(map) || map <= 0 || !Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
+    "new": "  if (!Number.isSafeInteger(buildingKey) || buildingKey <= 0) return false;",
     "tests": [
       "test/ui/homevendor_ui.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "HOMEVENDOR-an-off-map-pixel-taken",
     "file": "src/ui/vendor/vendorMapMark.js",
-    "old": " || px >= box.x0 + box.w || py >= box.y0 + box.h) return null;",
-    "new": ") return null;",
+    "old": "  if (\n    !Number.isInteger(px) ||\n    !Number.isInteger(py) ||\n    px < box.x0 ||\n    py < box.y0 ||\n    px >= box.x0 + box.w ||\n    py >= box.y0 + box.h\n  )\n    return null;",
+    "new": "  if (!Number.isInteger(px) || !Number.isInteger(py) || px < box.x0 || py < box.y0) return null;",
     "tests": [
       "test/ui/homevendor_ui.test.js"
     ]
@@ -148,7 +148,7 @@
   {
     "name": "HOMEVENDOR-a-throw-passed-on",
     "file": "src/ui/vendor/vendorMapMark.js",
-    "old": "  try { m = typeof fn === 'function' ? fn() : null; } catch { return null; }",
+    "old": "  try {\n    m = typeof fn === 'function' ? fn() : null;\n  } catch {\n    return null;\n  }",
     "new": "  m = typeof fn === 'function' ? fn() : null;",
     "tests": [
       "test/ui/homevendor_ui.test.js"
@@ -175,8 +175,8 @@
   {
     "name": "HOMEVENDOR-a-buy-on-the-board",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "rowNodes(r, { where: true })",
-    "new": "rowNodes(r, { where: true, buy: true })",
+    "old": "      for (const r of found) list.append(...rowNodes(r, { where: true }));",
+    "new": "      for (const r of found) list.append(...rowNodes(r, { where: true, buy: true }));",
     "tests": [
       "test/ui/homevendor_ui.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "HOMEVENDOR-buy-for-the-owner",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "rowNodes(r, { buy: !own && !r.mine,",
-    "new": "rowNodes(r, { buy: true,",
+    "old": "    for (const r of rows) list.append(...rowNodes(r, { buy: !own && !r.mine, take: own && r.mine }));",
+    "new": "    for (const r of rows) list.append(...rowNodes(r, { buy: true, take: own && r.mine }));",
     "tests": [
       "test/ui/homevendor_ui.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "HOMEVENDOR-the-put-unwired",
     "file": "src/ui/vendor/vendorTab.js",
-    "old": "() => act(() => v.put(chosen, st.price))",
-    "new": "() => act(async () => ({ ok: true }))",
+    "old": "      act(() => v.put(chosen, st.price)),",
+    "new": "      act(async () => ({ ok: true })),",
     "tests": [
       "test/ui/homevendor_ui.test.js"
     ]
@@ -202,7 +202,7 @@
   {
     "name": "HOMEVENDOR-the-page-always-shown",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "export const vendorPageShown = () => { try { return !!_provider && _provider.shown() === true; } catch { return false; } };",
+    "old": "export const vendorPageShown = () => {\n  try {\n    return !!_provider && _provider.shown() === true;\n  } catch {\n    return false;\n  }\n};",
     "new": "export const vendorPageShown = () => true;",
     "tests": [
       "test/ui/homevendor_ui.test.js"
@@ -211,8 +211,8 @@
   {
     "name": "HOMEVENDOR-the-sales-unread",
     "file": "src/ui/vendor/vendorPage.js",
-    "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])]",
-    "new": "    const sold = [...(mine.patronSold ?? [])]",
+    "old": "    const sold = [...(mine.sold ?? []), ...(mine.patronSold ?? [])].sort(\n      (a, b) => (Number(b.at) || 0) - (Number(a.at) || 0),\n    );",
+    "new": "    const sold = [...(mine.patronSold ?? [])].sort((a, b) => (Number(b.at) || 0) - (Number(a.at) || 0));",
     "tests": [
       "test/ui/homevendor_ui.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "HOMEVENDOR-people-read-as-decorations",
     "file": "src/systems/decor/decorCatalogue.js",
-    "old": "c.person ? 'people' : flatKind(c.as ?? c.flat[0])",
-    "new": "flatKind(c.as ?? c.flat[0])",
+    "old": "    let kind = c.model != null ? modelKind(c.as ?? c.model) : c.person ? 'people' : flatKind(c.as ?? c.flat[0]); // HOME-VENDOR",
+    "new": "    let kind = c.model != null ? modelKind(c.as ?? c.model) : flatKind(c.as ?? c.flat[0]); // HOME-VENDOR",
     "tests": [
       "test/server/decor1.test.js"
     ],

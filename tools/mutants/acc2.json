@@ -162,8 +162,8 @@
   {
     "name": "ACC2b-17-already-here-is-reported-as-a-failure",
     "file": "src/systems/cloudSaves.js",
-    "old": ": r.skipped ? { ok: true, key: null, skipped: true } : null;",
-    "new": ": false ? { ok: true, key: null, skipped: true } : null;",
+    "old": "    : r.skipped",
+    "new": "    : false",
     "tests": [
       "test/server/cloudsaves.test.js"
     ],
@@ -212,8 +212,8 @@
   {
     "name": "ACC2b-22-this-side-shadows-a-refusal-the-service-owns",
     "file": "src/systems/cloudSaves.js",
-    "old": "  'no-save': 'That save is not on this device.',",
-    "new": "  'no-save': 'That save is not on this device.',\n  'too-many-saves': 'No more saves.',",
+    "old": "  // NOT `no-account`, which the SERVICE already uses for \"that account",
+    "new": "  'too-many-saves': 'No more saves.',\n  // NOT `no-account`, which the SERVICE already uses for \"that account",
     "tests": [
       "test/server/cloudsaves.test.js"
     ],

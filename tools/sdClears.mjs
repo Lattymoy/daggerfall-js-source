@@ -46,5 +46,10 @@ function main(argv) {
 }
 
 if (isMain(import.meta.url)) {
-  try { main(process.argv.slice(2)); } catch (e) { console.error(e.message); process.exit(1); }
+  try {
+    main(process.argv.slice(2));
+  } catch (e) {
+    console.error(e.message);
+    process.exit(1);
+  }
 }

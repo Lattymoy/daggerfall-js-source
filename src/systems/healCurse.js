@@ -33,7 +33,10 @@ export function curseOf(entity) {
 }
 // AUDIT 24 (one home): bearsCurse and healCurseLift, not isCursed and liftCurse - those names are lootRarity.js's and
 // lootCurse.js's, an ITEM's curse (a drawback the temple lifts off a piece); this is the BLOOD's, on the entity
-export const bearsCurse = (entity) => { const c = curseOf(entity); return c.vampire || c.were || c.blood > 0; };
+export const bearsCurse = (entity) => {
+  const c = curseOf(entity);
+  return c.vampire || c.were || c.blood > 0;
+};
 
 /** The rite's price at this temple: the base through the region's adjustment (per thousand) and the hall's quality. */
 export function healCursePrice({ priceAdjustment = 1000, quality = 10 } = {}) {
@@ -56,7 +59,7 @@ export function healCurseLift(entity, { nowMinutes = 0, advanceMinutes = null, r
     e.ended = true;
     went.blood += 1;
   }
-  if (went.blood) entity.timeToBecomeVampireOrWerebeast = 0;   // the turn the blood was counting toward, cancelled with it
+  if (went.blood) entity.timeToBecomeVampireOrWerebeast = 0; // the turn the blood was counting toward, cancelled with it
   went.were = cureLycanthropy(entity, { nowMinutes, advanceMinutes, refreshHead });
   went.vampire = cureVampirism(entity, { advanceMinutes });
   return went;

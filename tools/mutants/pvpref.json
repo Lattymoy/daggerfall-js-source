@@ -12,8 +12,8 @@
   {
     "name": "PVPREF-room-key-week-swapped",
     "file": "src/net/siege/siegeRef.js",
-    "old": "return m ? { key: Number(m[1]), week: Number(m[2]) } : null;",
-    "new": "return m ? { key: Number(m[2]), week: Number(m[1]) } : null;",
+    "old": "  return m ? { key: Number(m[1]), week: Number(m[2]) } : null;",
+    "new": "  return m ? { key: Number(m[2]), week: Number(m[1]) } : null;",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -50,8 +50,8 @@
   {
     "name": "PVPREF-vitality-floor",
     "file": "src/net/siege/siegeRef.js",
-    "old": "SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
-    "new": "SIEGE_VITALITY.perLevel * Math.max(0, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
+    "old": "  SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
+    "new": "  SIEGE_VITALITY.perLevel * Math.max(0, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -59,8 +59,8 @@
   {
     "name": "PVPREF-vitality-rounds",
     "file": "src/net/siege/siegeRef.js",
-    "old": "SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
-    "new": "SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.round(Number(lv) || 1)));",
+    "old": "  SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.trunc(Number(lv) || 1)));",
+    "new": "  SIEGE_VITALITY.perLevel * Math.max(1, Math.min(SIEGE_VITALITY.levelMax, Math.round(Number(lv) || 1)));",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "PVPREF-table-dai-katana",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  126: 18, 127: 12, 128: 16, 129: 17, 130: 19,",
-    "new": "  126: 18, 127: 12, 128: 16, 129: 17, 130: 21,",
+    "old": "  130: 19, // BAL-ARCHERY: the bows' tops one past FormulaHelper's",
+    "new": "  130: 21, // BAL-ARCHERY: the bows' tops one past FormulaHelper's",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "PVPREF-table-dagger",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  113: 6, 114: 8, 115: 8,",
-    "new": "  113: 7, 114: 8, 115: 8,",
+    "old": "  113: 6,",
+    "new": "  113: 7,",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -324,8 +324,8 @@
   {
     "name": "PVPREF-unnamed-template",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (!top) return null;\n",
-    "new": "",
+    "old": "  if (!top) return null;\n  return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);",
+    "new": "  return top + (Number.isInteger(m) && m >= 0 && m < SIEGE_MATERIAL_MOD.length ? SIEGE_MATERIAL_MOD[m] : 0);",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "PVPREF-thunderlock-no-bow",
     "file": "src/net/siege/siegeRef.js",
-    "old": "export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_THUNDERLOCK.template || w === SIEGE_PISTOLET.template;",
-    "new": "export const siegeIsBow = (w) => w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_PISTOLET.template;",
+    "old": "  w === SIEGE_WEAPONS.Short_Bow ||\n  w === SIEGE_WEAPONS.Long_Bow ||\n  w === SIEGE_THUNDERLOCK.template ||\n  w === SIEGE_PISTOLET.template;",
+    "new": "  w === SIEGE_WEAPONS.Short_Bow || w === SIEGE_WEAPONS.Long_Bow || w === SIEGE_PISTOLET.template;",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "PVPREF-held-any-material",
     "file": "src/net/siege/siegeRef.js",
-    "old": "i?.group === 'Weapons' && SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w && (i.material ?? 0) === m);",
-    "new": "i?.group === 'Weapons' && SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w);",
+    "old": "    (i) =>\n      i?.group === 'Weapons' &&\n      SIEGE_HAND_SLOTS.includes(i.equipSlot) &&\n      i.templateIndex === w &&\n      (i.material ?? 0) === m,",
+    "new": "    (i) => i?.group === 'Weapons' && SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w,",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -369,8 +369,8 @@
   {
     "name": "PVPREF-held-any-group",
     "file": "src/net/siege/siegeRef.js",
-    "old": "i?.group === 'Weapons' && SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w && (i.material ?? 0) === m);",
-    "new": "SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w && (i.material ?? 0) === m);",
+    "old": "    (i) =>\n      i?.group === 'Weapons' &&\n      SIEGE_HAND_SLOTS.includes(i.equipSlot) &&\n      i.templateIndex === w &&\n      (i.material ?? 0) === m,",
+    "new": "    (i) => SIEGE_HAND_SLOTS.includes(i.equipSlot) && i.templateIndex === w && (i.material ?? 0) === m,",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "PVPREF-rate-one-deep",
     "file": "src/net/siege/siegeRef.js",
-    "old": "rate: SIEGE_BLOWS_HZ, rateAt: now, casts: [], harm: [],",
-    "new": "rate: 1, rateAt: now, casts: [], harm: [],",
+    "old": "    rate: SIEGE_BLOWS_HZ,",
+    "new": "    rate: 1,",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -397,7 +397,7 @@
     "name": "PVPREF-rate-refill-slow",
     "file": "src/net/siege/siegeRef.js",
     "old": "  f.rate = Math.min(SIEGE_BLOWS_HZ, f.rate + ((now - f.rateAt) / 1000) * SIEGE_BLOWS_HZ);",
-    "new": "  f.rate = Math.min(SIEGE_BLOWS_HZ, f.rate + ((now - f.rateAt) / 1000));",
+    "new": "  f.rate = Math.min(SIEGE_BLOWS_HZ, f.rate + (now - f.rateAt) / 1000);",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/pvpref_measure.test.js"
@@ -433,8 +433,8 @@
   {
     "name": "PVPREF-blow-on-fallen",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };\n  if (!spend(by, now))",
-    "new": "  if (by.down) return { ok: false, dealt: 0, fell: false, why: 'down' };\n  if (!spend(by, now))",
+    "old": "  if (!by || !to || by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };",
+    "new": "  if (!by || !to || by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  if (by.down) return { ok: false, dealt: 0, fell: false, why: 'down' };",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/siege/pvpref_relay.test.js"
@@ -443,8 +443,8 @@
   {
     "name": "PVPREF-blow-not-protected",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };\n  if (!held)",
-    "new": "  if (!held)",
+    "old": "  if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };\n  if (!held) return { ok: false, dealt: 0, fell: false, why: 'weapon' };",
+    "new": "  if (!held) return { ok: false, dealt: 0, fell: false, why: 'weapon' };",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/siege/pvpref_relay.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "PVPREF-blow-kind-one-way",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (shaft !== siegeIsBow(held.w) ||",
-    "new": "  if (shaft && !siegeIsBow(held.w) ||",
+    "old": "  if (shaft !== siegeIsBow(held.w) || (shaft && armsOk(wa) && wa[1] !== 1))",
+    "new": "  if ((shaft && !siegeIsBow(held.w)) || (shaft && armsOk(wa) && wa[1] !== 1))",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "PVPREF-blow-unclipped",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share",
-    "new": "  const got = Math.min(want, to.hp);   // PVP-HIT: the body's share",
+    "old": "  const got = Math.min(want, pvpHitMax(to), to.hp); // PVP-HIT: the body's share",
+    "new": "  const got = Math.min(want, to.hp); // PVP-HIT: the body's share",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/siege/pvpref_relay.test.js"
@@ -492,8 +492,8 @@
   {
     "name": "PVPREF-blow-past-left",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const got = Math.min(want, pvpHitMax(to), to.hp);   // PVP-HIT: the body's share",
-    "new": "  const got = Math.min(want, pvpHitMax(to));   // PVP-HIT: the body's share",
+    "old": "  const got = Math.min(want, pvpHitMax(to), to.hp); // PVP-HIT: the body's share",
+    "new": "  const got = Math.min(want, pvpHitMax(to)); // PVP-HIT: the body's share",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -501,8 +501,8 @@
   {
     "name": "PVPREF-blow-fractional",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0)));   // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
-    "new": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Number(d) || 0));   // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
+    "old": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Math.trunc(Number(d) || 0))); // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
+    "new": "  const want = shieldedBlow(to, shaft, guardedBlow(to, pvpBlowKind(held.w), Number(d) || 0)); // PVP-GUARD: the armour first (none below 0), then PVP-SHIELD",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -510,8 +510,8 @@
   {
     "name": "PVPREF-blow-clipped-untallied",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  by.clipped += want - got;\n  by.dealt += got;\n  to.hp -= got;\n  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP\n  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
-    "new": "  by.dealt += got;\n  to.hp -= got;\n  if (got > 0) noteRefereeChange(to, -got, now, true);   // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP\n  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
+    "old": "  const got = Math.min(want, pvpHitMax(to), to.hp); // PVP-HIT: the body's share\n  by.clipped += want - got;\n  by.dealt += got;",
+    "new": "  const got = Math.min(want, pvpHitMax(to), to.hp); // PVP-HIT: the body's share\n  by.dealt += got;",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/siege/pvpref_relay.test.js"
@@ -520,8 +520,8 @@
   {
     "name": "PVPREF-blow-no-fall",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const fell = to.hp <= 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
-    "new": "  const fell = to.hp < 0;\n  if (fell) to.down = true;\n  return { ok: true, dealt: got, fell, why: null };\n}\n\n/**\n * A CAST",
+    "old": "  if (got > 0) noteRefereeChange(to, -got, now, true); // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP\n  const fell = to.hp <= 0;",
+    "new": "  if (got > 0) noteRefereeChange(to, -got, now, true); // SHARED-HEALTH: a report that has not seen this blow still counts it; no heal mid-PvP\n  const fell = to.hp < 0;",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/siege/pvpref_relay.test.js"
@@ -530,8 +530,8 @@
   {
     "name": "PVPREF-cast-fallen-caster",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };\n  if (!from || !at || metres",
-    "new": "  if (to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };\n  if (!from || !at || metres",
+    "old": "  if (!by || !to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  if (by.down || to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };",
+    "new": "  if (!by || !to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  if (to.down) return { ok: false, dealt: 0, fell: false, why: 'down' };",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -539,8 +539,8 @@
   {
     "name": "PVPREF-cast-no-reach",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (!from || !at || metres(from, at) > SIEGE_REACH.spell + SIEGE_REACH.slack) return",
-    "new": "  if (!from || !at) return",
+    "old": "  if (!from || !at || metres(from, at) > SIEGE_REACH.spell + SIEGE_REACH.slack)\n    return { ok: false, dealt: 0, fell: false, why: 'reach' };",
+    "new": "  if (!from || !at) return { ok: false, dealt: 0, fell: false, why: 'reach' };",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -548,8 +548,8 @@
   {
     "name": "PVPREF-heal-unbounded",
     "file": "src/net/siege/siegeRef.js",
-    "old": "    if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };\n    by.casts.push(now);\n    const got",
-    "new": "    by.casts.push(now);\n    const got",
+    "old": "    if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };\n    by.casts.push(now);",
+    "new": "    by.casts.push(now);",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -557,8 +557,8 @@
   {
     "name": "PVPREF-heal-past-whole",
     "file": "src/net/siege/siegeRef.js",
-    "old": "Math.min(want, to.max - to.hp, healRoom(",
-    "new": "Math.min(want, healRoom(",
+    "old": "    const got = Math.max(0, Math.min(want, to.max - to.hp, healRoom(to, now, by.share?.resto ?? 0))); // PVP-HEAL: the target's window, at the better Restoration",
+    "new": "    const got = Math.max(0, Math.min(want, healRoom(to, now, by.share?.resto ?? 0))); // PVP-HEAL: the target's window, at the better Restoration",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -566,8 +566,8 @@
   {
     "name": "PVPREF-heal-window-unread",
     "file": "src/net/siege/siegeRef.js",
-    "old": "healRoom(to, now, by.share?.resto ?? 0)",
-    "new": "Infinity",
+    "old": "    const got = Math.max(0, Math.min(want, to.max - to.hp, healRoom(to, now, by.share?.resto ?? 0))); // PVP-HEAL: the target's window, at the better Restoration",
+    "new": "    const got = Math.max(0, Math.min(want, to.max - to.hp, Infinity)); // PVP-HEAL: the target's window, at the better Restoration",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -575,8 +575,8 @@
   {
     "name": "PVPREF-cast-self-damage",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  if (by.casts.length >= PVP_CASTS.max)",
-    "new": "  if (by.casts.length >= PVP_CASTS.max)",
+    "old": "  if (by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };",
+    "new": "  if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -593,8 +593,8 @@
   {
     "name": "PVPREF-cast-one-more",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };\n  by.casts.push(now);\n  if (now < to.safeTo)",
-    "new": "  if (by.casts.length > PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };\n  by.casts.push(now);\n  if (now < to.safeTo)",
+    "old": "  if (by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  if (by.casts.length >= PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };",
+    "new": "  if (by === to) return { ok: false, dealt: 0, fell: false, why: 'no-fighter' };\n  if (by.casts.length > PVP_CASTS.max) return { ok: false, dealt: 0, fell: false, why: 'rate' };",
     "tests": [
       "test/net/siege/bal8_pvp.test.js"
     ]
@@ -602,8 +602,8 @@
   {
     "name": "PVPREF-cast-not-protected",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  by.casts.push(now);\n  if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };\n",
-    "new": "  by.casts.push(now);\n",
+    "old": "  if (now < to.safeTo) return { ok: false, dealt: 0, fell: false, why: 'protected' };\n  const hurt = wardedCast(to, el, want); // PVP-WARD: the target's resistance first",
+    "new": "  const hurt = wardedCast(to, el, want); // PVP-WARD: the target's resistance first",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -611,8 +611,8 @@
   {
     "name": "PVPREF-cast-uncapped",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const got = Math.min(hurt, pvpHitMax(to), to.hp);   // PVP-HIT, a blow's own",
-    "new": "  const got = Math.min(hurt, to.hp);   // PVP-HIT, a blow's own",
+    "old": "  const got = Math.min(hurt, pvpHitMax(to), to.hp); // PVP-HIT, a blow's own",
+    "new": "  const got = Math.min(hurt, to.hp); // PVP-HIT, a blow's own",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -620,8 +620,8 @@
   {
     "name": "PVPREF-step-first-refused",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  if (!last) { if (f) f.stepM = full; return true; }",
-    "new": "  if (!last) { if (f) f.stepM = full; return false; }",
+    "old": "    return true;",
+    "new": "    return false;",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -629,8 +629,8 @@
   {
     "name": "PVPREF-step-negative-time",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const earned = SIEGE_SPEED.mps * Math.min(SIEGE_STEP_WINDOW_MS, Math.max(0, dtMs)) / 1000;",
-    "new": "  const earned = SIEGE_SPEED.mps * Math.min(SIEGE_STEP_WINDOW_MS, dtMs) / 1000;",
+    "old": "  const earned = (SIEGE_SPEED.mps * Math.min(SIEGE_STEP_WINDOW_MS, Math.max(0, dtMs))) / 1000;",
+    "new": "  const earned = (SIEGE_SPEED.mps * Math.min(SIEGE_STEP_WINDOW_MS, dtMs)) / 1000;",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -638,8 +638,8 @@
   {
     "name": "PVPREF-step-judges-height",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const rise = Math.max(0, (next.y - last.y) || 0);",
-    "new": "  const rise = Math.abs((next.y - last.y) || 0);",
+    "old": "  const rise = Math.max(0, next.y - last.y || 0); // a pose with no height climbs nothing (the relay's are all finite - validPose)",
+    "new": "  const rise = Math.abs(next.y - last.y || 0); // a pose with no height climbs nothing (the relay's are all finite - validPose)",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]
@@ -647,7 +647,7 @@
   {
     "name": "PVPREF-step-x-alone",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  const len = Math.hypot((next.x - last.x) / SIEGE_UNITS_PER_M, (next.z - last.z) / SIEGE_UNITS_PER_M, rise / SIEGE_UNITS_PER_M);",
+    "old": "  const len = Math.hypot(\n    (next.x - last.x) / SIEGE_UNITS_PER_M,\n    (next.z - last.z) / SIEGE_UNITS_PER_M,\n    rise / SIEGE_UNITS_PER_M,\n  );",
     "new": "  const len = Math.hypot((next.x - last.x) / SIEGE_UNITS_PER_M, rise / SIEGE_UNITS_PER_M);",
     "tests": [
       "test/systems/pvpref_law.test.js"
@@ -674,8 +674,8 @@
   {
     "name": "PVPREF-rise-not-whole",
     "file": "src/net/siege/siegeRef.js",
-    "old": "  f.hp = f.max; f.safeTo",
-    "new": "  f.safeTo",
+    "old": "  f.hp = f.max;\n  f.safeTo = now + SIEGE_PROTECT_MS;",
+    "new": "  f.safeTo = now + SIEGE_PROTECT_MS;",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/siege/pvpref_relay.test.js"
@@ -684,8 +684,8 @@
   {
     "name": "PVPREF-rise-unprotected",
     "file": "src/net/siege/siegeRef.js",
-    "old": "f.safeTo = now + SIEGE_PROTECT_MS; f.casts = [];",
-    "new": "f.safeTo = now; f.casts = [];",
+    "old": "  f.safeTo = now + SIEGE_PROTECT_MS;",
+    "new": "  f.safeTo = now;",
     "tests": [
       "test/systems/pvpref_law.test.js",
       "test/net/siege/pvpref_relay.test.js"
@@ -694,8 +694,8 @@
   {
     "name": "PVPREF-rise-casts-kept",
     "file": "src/net/siege/siegeRef.js",
-    "old": "f.safeTo = now + SIEGE_PROTECT_MS; f.casts = [];",
-    "new": "f.safeTo = now + SIEGE_PROTECT_MS;",
+    "old": "  f.casts = [];\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/pvpref_law.test.js"
     ]

@@ -59,16 +59,25 @@ import { egBandMastered, EG_FEAT_BANDS } from '../../src/net/eliteGates/egFeats.
 import { egProclamationOf, EG_DECREE_BY_KEY } from '../../src/net/eliteGates/egLaw.js';
 import { topWithMe, ARENA_BOARD_TOP } from './arena.js';
 import { boardNamesOf } from './boardNames.js';
-import { isSpireFirst } from './titles.js';   // EG-ZF: First of the Spire's list - its letter's addressees
-import { POST_SENDER } from '../../src/net/postLaw.js';   // EG-ZF: the post's sender, as the box shows it
-import { egWagerOf } from '../../src/net/eliteGates/egStartLaw.js';   // AUDIT EG V (L8-9): the Wager's decrees, read
-import { EG_RECEIPT_TTL_S } from '../../src/net/eliteGates/egReceipt.js';   // AUDIT EG IV (lane3 #13): a season's champions kept once its late ends are claimed
+import { isSpireFirst } from './titles.js'; // EG-ZF: First of the Spire's list - its letter's addressees
+import { POST_SENDER } from '../../src/net/postLaw.js'; // EG-ZF: the post's sender, as the box shows it
+import { egWagerOf } from '../../src/net/eliteGates/egStartLaw.js'; // AUDIT EG V (L8-9): the Wager's decrees, read
+import { EG_RECEIPT_TTL_S } from '../../src/net/eliteGates/egReceipt.js'; // AUDIT EG IV (lane3 #13): a season's champions kept once its late ends are claimed
 
 /** THE SPIRE'S HONOURS on the row (`players.eg_honours`), a bit each, in section 19's table's order - each a title of
  *  the same id (src/net/identityToken.js TITLES). */
 export const EG_HONOUR = Object.freeze({
-  spirewalker: 1, beaconlighter: 2, kynbane: 4, unfallen: 8, lonebeacon: 16, battlemage: 32, wellheadwalker: 64,
-  mastergallery: 128, mastercairn: 256, mastershade: 512, masterwellhead: 1024,
+  spirewalker: 1,
+  beaconlighter: 2,
+  kynbane: 4,
+  unfallen: 8,
+  lonebeacon: 16,
+  battlemage: 32,
+  wellheadwalker: 64,
+  mastergallery: 128,
+  mastercairn: 256,
+  mastershade: 512,
+  masterwellhead: 1024,
 });
 /** The titles the bits are, in their order. */
 export const EG_HONOUR_TITLES = Object.freeze(Object.keys(EG_HONOUR));
@@ -76,8 +85,11 @@ export const EG_HONOUR_TITLES = Object.freeze(Object.keys(EG_HONOUR));
 export const EG_HONOUR_AURA = Object.freeze({ kynbane: 'beaconlight', wellheadwalker: 'burningstair' });
 /** The Redoubts that grant a title by their number alone: taking one at or past it holds it. */
 export const EG_REDOUBT_HONOURS = Object.freeze([
-  Object.freeze([2, 'spirewalker']), Object.freeze([5, 'beaconlighter']), Object.freeze([10, 'kynbane']),
-  Object.freeze([15, 'battlemage']), Object.freeze([20, 'wellheadwalker']),
+  Object.freeze([2, 'spirewalker']),
+  Object.freeze([5, 'beaconlighter']),
+  Object.freeze([10, 'kynbane']),
+  Object.freeze([15, 'battlemage']),
+  Object.freeze([20, 'wellheadwalker']),
 ]);
 /** The Unfallen's Redoubt: taken with no fall, in a breach begun at Hall 1. */
 export const EG_UNFALLEN_REDOUBT = 10;
@@ -103,7 +115,13 @@ const wagered = (c) => (Array.isArray(c?.wg) ? c.wg.length > 0 : !!c?.wg);
 /** AUDIT EG V (lane8 L8-9; sections 18 and 20 - "the Wager shown on the row"): the receipt's Wager as its end's row keeps it,
  *  its decrees' numbers joined by commas ('' none - eg_stakes.wg's form), and read back. */
 const wagerText = (c) => (Array.isArray(c?.wg) ? (egWagerOf(c.wg) ?? []).join(',') : '');
-const wagerOfText = (s) => egWagerOf(String(s ?? '').split(',').filter(Boolean).map(Number)) ?? [];
+const wagerOfText = (s) =>
+  egWagerOf(
+    String(s ?? '')
+      .split(',')
+      .filter(Boolean)
+      .map(Number),
+  ) ?? [];
 
 /** THE HONOURS A `w` RECEIPT GRANTS, as bits (EG_HONOUR) - none from a Rehearsal or any other kind. Pure.
  *  @param {any} c the receipt's claims */
@@ -118,7 +136,9 @@ export function egHonourBitsOf(c) {
 /** THE MASTERS the feats `held` (lord key to its bits) make, as bits - each band whose lords' feats are all held. Pure. */
 export function egMasterBitsOf(held) {
   let bits = 0;
-  EG_FEAT_BANDS.forEach((_, b) => { if (egBandMastered(held, b)) bits |= EG_HONOUR[EG_BAND_MASTERS[b]]; });
+  EG_FEAT_BANDS.forEach((_, b) => {
+    if (egBandMastered(held, b)) bits |= EG_HONOUR[EG_BAND_MASTERS[b]];
+  });
   return bits;
 }
 /** The titles a set of honour bits is, in their order. Pure. */
@@ -133,16 +153,44 @@ export const egHonourTitlesOf = (bits) => EG_HONOUR_TITLES.filter((t) => (int(bi
 export function egHonourStatements(db, player, c, _nowS) {
   if (c.q === 'w') {
     if (c.rh === 1 || typeof c.lk !== 'string' || !Number.isSafeInteger(c.ft)) return [];
-    return [db.prepare(`INSERT INTO eg_feats (account, lord, bits) SELECT ?1, ?2, ?5
+    return [
+      db
+        .prepare(
+          `INSERT INTO eg_feats (account, lord, bits) SELECT ?1, ?2, ?5
         WHERE EXISTS (SELECT 1 FROM eg_redoubts WHERE b = ?3 AND account = ?1 AND w = ?4)
-        ON CONFLICT (account, lord) DO UPDATE SET bits = bits | excluded.bits`).bind(player.id, c.lk, c.b, c.w, c.ft)];
+        ON CONFLICT (account, lord) DO UPDATE SET bits = bits | excluded.bits`,
+        )
+        .bind(player.id, c.lk, c.b, c.w, c.ft),
+    ];
   }
   if (c.q !== 'x') return [];
   const td = Number.isSafeInteger(c.td) && c.td >= 0 ? c.td : null;
   return [
-    db.prepare('UPDATE eg_runs SET n = ?3, ew = ?4, wg = ?5, fl = ?6, td = ?7, rh = ?8, season = ?9, wgs = ?10 WHERE b = ?1 AND account = ?2')
-      .bind(c.b, player.id, int(c.n), int(c.ew), wagered(c) ? 1 : 0, int(c.fl), td, c.rh === 1 ? 1 : 0, arenaSeasonOf(c.i), wagerText(c)),   // AUDIT EG V (lane8 L8-9): and the Wager's decrees
-    ...(int(c.an) > 0 ? [db.prepare('UPDATE players SET eg_annals = eg_annals | ?2 WHERE id = ?1 AND EXISTS (SELECT 1 FROM eg_runs WHERE b = ?3 AND account = ?1)').bind(player.id, int(c.an), c.b)] : []),
+    db
+      .prepare(
+        'UPDATE eg_runs SET n = ?3, ew = ?4, wg = ?5, fl = ?6, td = ?7, rh = ?8, season = ?9, wgs = ?10 WHERE b = ?1 AND account = ?2',
+      )
+      .bind(
+        c.b,
+        player.id,
+        int(c.n),
+        int(c.ew),
+        wagered(c) ? 1 : 0,
+        int(c.fl),
+        td,
+        c.rh === 1 ? 1 : 0,
+        arenaSeasonOf(c.i),
+        wagerText(c),
+      ), // AUDIT EG V (lane8 L8-9): and the Wager's decrees
+    ...(int(c.an) > 0
+      ? [
+          db
+            .prepare(
+              'UPDATE players SET eg_annals = eg_annals | ?2 WHERE id = ?1 AND EXISTS (SELECT 1 FROM eg_runs WHERE b = ?3 AND account = ?1)',
+            )
+            .bind(player.id, int(c.an), c.b),
+        ]
+      : []),
   ];
 }
 
@@ -156,12 +204,17 @@ export function egHonourStatements(db, player, c, _nowS) {
 export async function egHonoursAnswer(db, player, c) {
   if (c.q !== 'w') return {};
   const row = await db.prepare('SELECT eg_honours AS h FROM players WHERE id = ?1').bind(player.id).first();
-  const feats = (await db.prepare('SELECT lord, bits FROM eg_feats WHERE account = ?1').bind(player.id).all()).results ?? [];
+  const feats =
+    (await db.prepare('SELECT lord, bits FROM eg_feats WHERE account = ?1').bind(player.id).all()).results ?? [];
   const bits = egHonourBitsOf(c) | egMasterBitsOf(Object.fromEntries(feats.map((f) => [f.lord, int(f.bits)])));
   const fresh = bits & ~int(row?.h);
   if (!fresh) return {};
-  const set = await db.prepare('UPDATE players SET eg_honours = eg_honours | ?2 WHERE id = ?1 AND EXISTS (SELECT 1 FROM eg_redoubts WHERE b = ?3 AND account = ?1 AND w = ?4)')
-    .bind(player.id, fresh, c.b, c.w).run();
+  const set = await db
+    .prepare(
+      'UPDATE players SET eg_honours = eg_honours | ?2 WHERE id = ?1 AND EXISTS (SELECT 1 FROM eg_redoubts WHERE b = ?3 AND account = ?1 AND w = ?4)',
+    )
+    .bind(player.id, fresh, c.b, c.w)
+    .run();
   return Number(set?.meta?.changes ?? 0) > 0 ? { honours: egHonourTitlesOf(fresh) } : {};
 }
 
@@ -170,14 +223,16 @@ export async function egHonoursAnswer(db, player, c) {
  *  @param {any} db @param {string} id */
 export async function egRecordOf(db, id) {
   const row = await db.prepare('SELECT eg_annals AS a FROM players WHERE id = ?1').bind(id).first();
-  const feats = (await db.prepare('SELECT lord, bits FROM eg_feats WHERE account = ?1 ORDER BY lord').bind(id).all()).results ?? [];
+  const feats =
+    (await db.prepare('SELECT lord, bits FROM eg_feats WHERE account = ?1 ORDER BY lord').bind(id).all()).results ?? [];
   return { annals: int(row?.a), feats: Object.fromEntries(feats.map((f) => [f.lord, int(f.bits)])) };
 }
 
 // ── THE BOARDS ───────────────────────────────────────────────────────────────────────────────────────────────────
 
 /** The season's ends the Descent may rank: unwagered, begun at Hall 1, no Rehearsal, a hall cleared. */
-const DESCENT_SQL = 'SELECT b, account, h, COALESCE(td, t) AS secs, n, fl, at, co_n, co_h FROM eg_runs WHERE season = ?1 AND rh = 0 AND ew = 0 AND wg = 0 AND h >= 1 ORDER BY at ASC, account ASC';   // EG-ZA: and the receipt's company
+const DESCENT_SQL =
+  'SELECT b, account, h, COALESCE(td, t) AS secs, n, fl, at, co_n, co_h FROM eg_runs WHERE season = ?1 AND rh = 0 AND ew = 0 AND wg = 0 AND h >= 1 ORDER BY at ASC, account ASC'; // EG-ZA: and the receipt's company
 /** Each account's deepest hall this season, from any start - its start Redoubt and its Wager with it. */
 const DEPTHS_SQL = `SELECT account, h, ew, wg, wgs, at FROM (
     SELECT account, h, ew, wg, wgs, at, ROW_NUMBER() OVER (PARTITION BY account ORDER BY h DESC, at ASC, b ASC) AS rn
@@ -206,7 +261,15 @@ export function egDescentCompanies(rows) {
   const best = new Map();
   for (const c of breachesOf(rows).values()) {
     const key = companyKeyOf(c);
-    const row = { key, players: c.players.slice(0, EG_COMPANY_MAX), h: c.h, t: c.t, n: Math.max(c.n, c.players.length), flame: c.fell === 0, at: c.at };
+    const row = {
+      key,
+      players: c.players.slice(0, EG_COMPANY_MAX),
+      h: c.h,
+      t: c.t,
+      n: Math.max(c.n, c.players.length),
+      flame: c.fell === 0,
+      at: c.at,
+    };
     const had = best.get(key);
     if (!had || descentOrder(row, had) < 0) best.set(key, row);
   }
@@ -221,8 +284,12 @@ function breachesOf(rows) {
     let c = by.get(r.b);
     if (!c) by.set(r.b, (c = { players: [], h: 0, t: Infinity, n: 0, fell: 0, at: Infinity, co: '' }));
     if (!c.players.includes(r.account)) c.players.push(r.account);
-    const h = int(r.h), secs = int(r.secs);
-    if (h > c.h) { c.h = h; c.t = secs; } else if (h === c.h) c.t = Math.min(c.t, secs);
+    const h = int(r.h),
+      secs = int(r.secs);
+    if (h > c.h) {
+      c.h = h;
+      c.t = secs;
+    } else if (h === c.h) c.t = Math.min(c.t, secs);
     c.n = Math.max(c.n, int(r.n), int(r.co_n));
     c.fell += int(r.fl);
     c.at = Math.min(c.at, int(r.at));
@@ -254,19 +321,29 @@ async function descentOf(db, season) {
 export async function recordEgChampions({ db }, season) {
   const rows = championsOf((await descentOf(db, season)).brackets);
   if (!rows.length) return 0;
-  const out = await db.batch(rows.map(([k, p]) => db.prepare('INSERT OR IGNORE INTO eg_champions (season, bracket, account) VALUES (?1, ?2, ?3)').bind(season, k, p)));
+  const out = await db.batch(
+    rows.map(([k, p]) =>
+      db
+        .prepare('INSERT OR IGNORE INTO eg_champions (season, bracket, account) VALUES (?1, ?2, ?3)')
+        .bind(season, k, p),
+    ),
+  );
   return out.reduce((s, r) => s + Number(r?.meta?.changes ?? 0), 0);
 }
 /** A season's Descent brackets' top EG_CHAMPIONS_TOP companies, every member: `[bracket, account]`. Pure. */
 function championsOf(brackets) {
   const rows = [];
-  for (const k of EG_BRACKETS) for (const c of brackets[k].slice(0, EG_CHAMPIONS_TOP)) for (const p of c.players) rows.push([k, p]);
+  for (const k of EG_BRACKETS)
+    for (const c of brackets[k].slice(0, EG_CHAMPIONS_TOP)) for (const p of c.players) rows.push([k, p]);
   return rows;
 }
 /** One Worker's word of the last season's champions, kept EG_CHAMPION_CACHE_S within the season it was read in. */
 let _champs = { season: 0, at: -Infinity, ids: /** @type {Set<string>} */ (new Set()) };
 /** Tests: the kept word forgotten (AUDIT EG III: and the boards' rankings). */
-export function _resetEgHonoursCache() { _champs = { season: 0, at: -Infinity, ids: new Set() }; egBoardsMoved(); }
+export function _resetEgHonoursCache() {
+  _champs = { season: 0, at: -Infinity, ids: new Set() };
+  egBoardsMoved();
+}
 /** The accounts holding Spire Champion at `nowS`: the last season's champions - kept first if that season is unkept.
  *  AUDIT EG IV (lane3 #13; section 20): kept only once the season is a receipt's life past its end (EG_RECEIPT_TTL_S) - an
  *  end issued in its last hours may be claimed that much later, and its row lands in that season after the first read;
@@ -275,9 +352,15 @@ async function championsNow(ctx, nowS) {
   const season = arenaSeasonOf(nowS);
   if (_champs.season === season && nowS - _champs.at < EG_CHAMPION_CACHE_S) return _champs.ids;
   const last = season - 1;
-  const read = async () => new Set(((await ctx.db.prepare('SELECT account FROM eg_champions WHERE season = ?1').bind(last).all()).results ?? []).map((r) => r.account));
+  const read = async () =>
+    new Set(
+      ((await ctx.db.prepare('SELECT account FROM eg_champions WHERE season = ?1').bind(last).all()).results ?? []).map(
+        (r) => r.account,
+      ),
+    );
   let ids = new Set();
-  if (last >= 1 && nowS < arenaSeasonEndsS(last) + EG_RECEIPT_TTL_S) ids = new Set(championsOf((await descentOf(ctx.db, last)).brackets).map(([, p]) => p));
+  if (last >= 1 && nowS < arenaSeasonEndsS(last) + EG_RECEIPT_TTL_S)
+    ids = new Set(championsOf((await descentOf(ctx.db, last)).brackets).map(([, p]) => p));
   else if (last >= 1) {
     ids = await read();
     if (!ids.size && (await recordEgChampions(ctx, last)) > 0) ids = await read();
@@ -315,7 +398,8 @@ export async function egStandingOf(db, player, c) {
   if (c?.q !== 'x' || c.rh === 1 || !(int(c.h) >= 1)) return {};
   const season = arenaSeasonOf(c.i);
   const rows = (await db.prepare(DESCENT_SQL).bind(season).all()).results ?? [];
-  const mine = breachesOf(rows).get(c.b), key = mine ? companyKeyOf(mine) : '';   // '' off the Descent: no company's - AUDIT EG III (lane3 #4): the board's own key
+  const mine = breachesOf(rows).get(c.b),
+    key = mine ? companyKeyOf(mine) : ''; // '' off the Descent: no company's - AUDIT EG III (lane3 #4): the board's own key
   const brackets = egDescentBrackets(egDescentCompanies(rows));
   for (const br of EG_BRACKETS) {
     const i = brackets[br].findIndex((r) => r.key === key);
@@ -332,7 +416,7 @@ export const EG_FIRST_POST = Object.freeze({
   batch: 'spire-first',
   subject: 'First of the Spire',
   body: [
-    'You were the first ever to take Redoubt 10 of the Battlespire. The Spire remembers.',   // AUDIT FB1020d L1-4: a company's words or one's - the first company came alone (SPIRE-FIRST)
+    'You were the first ever to take Redoubt 10 of the Battlespire. The Spire remembers.', // AUDIT FB1020d L1-4: a company's words or one's - the first company came alone (SPIRE-FIRST)
     '',
     'Your title, First of the Spire, and its aura, Firstlight, are yours to wear - choose them on your profile.',
     '',
@@ -347,9 +431,13 @@ export const EG_FIRST_POST = Object.freeze({
  */
 export async function egFirstPost(db, player, env, nowS) {
   if (!isSpireFirst(player, env)) return false;
-  const r = await db.prepare(`INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)
-    VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, ?6)`)
-    .bind(player.id, EG_FIRST_POST.batch, POST_SENDER, EG_FIRST_POST.subject, EG_FIRST_POST.body, nowS).run();
+  const r = await db
+    .prepare(
+      `INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)
+    VALUES (lower(hex(randomblob(12))), ?1, ?2, ?3, ?4, ?5, NULL, ?6)`,
+    )
+    .bind(player.id, EG_FIRST_POST.batch, POST_SENDER, EG_FIRST_POST.subject, EG_FIRST_POST.body, nowS)
+    .run();
   return Number(r?.meta?.changes ?? 0) > 0;
 }
 
@@ -366,7 +454,11 @@ let _ranks = { season: -1, at: -Infinity, v: /** @type {any} */ (null) };
 let _ranksAsking = /** @type {{ season: number, gen: number, p: Promise<any> } | null} */ (null);
 let _ranksGen = 0;
 /** AUDIT EG III: the kept rankings forgotten - a claim recorded here moved them (eg.js claimEg). */
-export function egBoardsMoved() { _ranks = { season: -1, at: -Infinity, v: null }; _ranksAsking = null; _ranksGen++; }
+export function egBoardsMoved() {
+  _ranks = { season: -1, at: -Infinity, v: null };
+  _ranksAsking = null;
+  _ranksGen++;
+}
 /** The boards' rankings for `season` at `nowS`: the Descent's companies and brackets, the Depths' rows, the Deepest's -
  *  kept, else read (once, however many ask while it is read). Each reader copies the rows it ranks (topWithMe marks the
  *  caller's own on them). */
@@ -376,19 +468,33 @@ async function ranksOf(db, season, nowS) {
   const gen = _ranksGen;
   const p = (async () => {
     const { companies, brackets } = await descentOf(db, season);
-    const depths = ((await db.prepare(DEPTHS_SQL).bind(season).all()).results ?? []).map((r) => ({ player: r.account, h: int(r.h), ew: int(r.ew), wagered: int(r.wg) === 1, wg: wagerOfText(r.wgs) }));   // AUDIT EG V (L8-9): the Wager's decrees
-    const deepest = ((await db.prepare(DEEPEST_SQL).all()).results ?? []).map((r) => ({ player: r.account, w: int(r.w), at: int(r.at) }));
+    const depths = ((await db.prepare(DEPTHS_SQL).bind(season).all()).results ?? []).map((r) => ({
+      player: r.account,
+      h: int(r.h),
+      ew: int(r.ew),
+      wagered: int(r.wg) === 1,
+      wg: wagerOfText(r.wgs),
+    })); // AUDIT EG V (L8-9): the Wager's decrees
+    const deepest = ((await db.prepare(DEEPEST_SQL).all()).results ?? []).map((r) => ({
+      player: r.account,
+      w: int(r.w),
+      at: int(r.at),
+    }));
     const v = { companies, brackets, depths, deepest };
     if (gen === _ranksGen) _ranks = { season, at: nowS, v };
     return v;
-  })().finally(() => { if (_ranksAsking?.p === p) _ranksAsking = null; });
+  })().finally(() => {
+    if (_ranksAsking?.p === p) _ranksAsking = null;
+  });
   _ranksAsking = { season, gen, p };
   return p;
 }
 
 /** The week's Proclamation (section 20): its decree's key, name and line. */
 export function egProclamationNow(nowS) {
-  const week = arenaWeekOf(nowS), key = egProclamationOf(week), d = EG_DECREE_BY_KEY[key];
+  const week = arenaWeekOf(nowS),
+    key = egProclamationOf(week),
+    d = EG_DECREE_BY_KEY[key];
   return { week, key, name: d?.name ?? key, line: d?.line ?? '' };
 }
 
@@ -405,19 +511,37 @@ export async function egBoardOf(ctx, player, env) {
   const { db, nowS } = ctx;
   const season = arenaSeasonOf(nowS);
   const me = player?.id ?? null;
-  await championsNow(ctx, nowS);   // the last season's champions kept, the first read of a new season
-  const R = await ranksOf(db, season, nowS), { companies } = R, copy = (rows) => rows.map((r) => ({ ...r }));   // AUDIT EG III (lane3 #18): kept a minute
+  await championsNow(ctx, nowS); // the last season's champions kept, the first read of a new season
+  const R = await ranksOf(db, season, nowS),
+    { companies } = R,
+    copy = (rows) => rows.map((r) => ({ ...r })); // AUDIT EG III (lane3 #18): kept a minute
   const mine = (r) => !!me && r.players.includes(me);
-  const descent = Object.fromEntries(EG_BRACKETS.map((k) => [k, topWithMe(copy(R.brackets[k]), mine, ARENA_BOARD_TOP)]));
+  const descent = Object.fromEntries(
+    EG_BRACKETS.map((k) => [k, topWithMe(copy(R.brackets[k]), mine, ARENA_BOARD_TOP)]),
+  );
   const depths = topWithMe(copy(R.depths), me, ARENA_BOARD_TOP);
   const deepest = topWithMe(copy(R.deepest), me, ARENA_BOARD_TOP);
   const shownOf = (b) => [...b.rows, ...(b.pinned ? [b.pinned] : [])];
   const ids = [
     ...EG_BRACKETS.flatMap((k) => shownOf(descent[k]).flatMap((r) => r.players)),
-    ...shownOf(depths).map((r) => r.player), ...shownOf(deepest).map((r) => r.player),
+    ...shownOf(depths).map((r) => r.player),
+    ...shownOf(deepest).map((r) => r.player),
   ];
   const names = await boardNamesOf(ctx, ids, env, nowS, {});
-  const company = (r) => (r ? { players: r.players, names: r.players.map((p) => names.get(p)?.name ?? '?'), h: r.h, t: r.t, n: r.n, flame: r.flame, pr: egProclamationNow(r.at).name, rank: r.rank, you: r.you } : null);
+  const company = (r) =>
+    r
+      ? {
+          players: r.players,
+          names: r.players.map((p) => names.get(p)?.name ?? '?'),
+          h: r.h,
+          t: r.t,
+          n: r.n,
+          flame: r.flame,
+          pr: egProclamationNow(r.at).name,
+          rank: r.rank,
+          you: r.you,
+        }
+      : null;
   const named = (r) => (r ? { ...r, ...(names.get(r.player) ?? { name: '?', title: null, glyphs: [] }) } : null);
   const board = (b, f) => ({ rows: b.rows.map(f), pinned: f(b.pinned), total: b.total });
   const best = companies.find(mine) ?? null;

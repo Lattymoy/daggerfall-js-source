@@ -30,7 +30,7 @@ export const WILD_MARK_FADE_FROM = 90;
 export const WILD_MARKS_IDLE_MS = 400;
 
 /** The mark's size by distance: whole near, a little smaller far off - never so small it is a speck. */
-export const wildMarkScale = (distance) => Math.max(0.6, Math.min(1.25, 1.35 - (Math.max(0, distance) / 160)));
+export const wildMarkScale = (distance) => Math.max(0.6, Math.min(1.25, 1.35 - Math.max(0, distance) / 160));
 /** Its opacity by distance: whole to WILD_MARK_FADE_FROM, then down to a third at the range's end. */
 export function wildMarkAlpha(distance) {
   if (!(distance > WILD_MARK_FADE_FROM)) return 1;
@@ -55,12 +55,20 @@ let root = null;
 let slots = [];
 /** @type {{ id: any, clear: (id: any) => void } | null} */
 let watchdog = null;
-const unwatch = () => { if (watchdog) { watchdog.clear(watchdog.id); watchdog = null; } };
+const unwatch = () => {
+  if (watchdog) {
+    watchdog.clear(watchdog.id);
+    watchdog = null;
+  }
+};
 /** The watchdog's arm: re-armed by every frame that draws a mark, cleared by one that draws none. */
 function watch(on, timers) {
   unwatch();
   if (!on) return;
-  const id = timers.set(() => { watchdog = null; destroyWildMarks(); }, WILD_MARKS_IDLE_MS);
+  const id = timers.set(() => {
+    watchdog = null;
+    destroyWildMarks();
+  }, WILD_MARKS_IDLE_MS);
   id?.unref?.();
   watchdog = { id, clear: timers.clear };
 }
@@ -73,7 +81,7 @@ function inject(doc) {
     st.textContent = WILD_MARKS_CSS;
     (doc.head ?? doc.documentElement)?.append(st);
   }
-  if (doc.head) injectEnhancedFonts(doc);   // the pixel face on the classic skin too (the naval readout's own reason)
+  if (doc.head) injectEnhancedFonts(doc); // the pixel face on the classic skin too (the naval readout's own reason)
 }
 
 /**
@@ -84,8 +92,12 @@ function inject(doc) {
  *   `timers` the watchdog's clock (the page's setTimeout; a pin hands its own)
  */
 export function drawWildMarks(points, { covered = false, doc = globalThis.document, scale = 1, timers = TIMERS } = {}) {
-  const want = covered ? [] : [...(points ?? [])].filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y) && p.distance < WILD_MARK_RANGE)
-    .sort((a, b) => a.distance - b.distance).slice(0, WILD_MARKS_MAX);
+  const want = covered
+    ? []
+    : [...(points ?? [])]
+        .filter((p) => p && Number.isFinite(p.x) && Number.isFinite(p.y) && p.distance < WILD_MARK_RANGE)
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, WILD_MARKS_MAX);
   watch(want.length > 0, timers);
   if (!root) {
     if (!want.length || !doc?.createElement) return;
@@ -120,19 +132,31 @@ export function drawWildMarks(points, { covered = false, doc = globalThis.docume
       slot = free.shift();
       slot.k.key = p.key;
       slot.n.className = 'dfwild-mark';
-      void slot.n.offsetWidth;   // a reflow between, so a reused element plays the pop again
+      void slot.n.offsetWidth; // a reflow between, so a reused element plays the pop again
       slot.n.className = 'dfwild-mark pop';
     }
-    if (slot.k.on !== true) { slot.k.on = true; slot.n.style.display = ''; }
+    if (slot.k.on !== true) {
+      slot.k.on = true;
+      slot.n.style.display = '';
+    }
     const sc = Math.round(wildMarkScale(p.distance) * scale * 100) / 100;
     const at = `translate(${Math.round(p.x)}px, ${Math.round(p.y)}px) scale(${sc}) translate(-50%, calc(-100% - ${WILD_MARK_LIFT}px))`;
-    if (slot.k.at !== at) { slot.k.at = at; slot.n.style.transform = at; }
+    if (slot.k.at !== at) {
+      slot.k.at = at;
+      slot.n.style.transform = at;
+    }
     const al = String(Math.round(wildMarkAlpha(p.distance) * 100) / 100);
-    if (slot.k.a !== al) { slot.k.a = al; slot.n.style.opacity = al; }
+    if (slot.k.a !== al) {
+      slot.k.a = al;
+      slot.n.style.opacity = al;
+    }
   }
   for (const slot of free) {
     slot.k.key = null;
-    if (slot.k.on !== false) { slot.k.on = false; slot.n.style.display = 'none'; }
+    if (slot.k.on !== false) {
+      slot.k.on = false;
+      slot.n.style.display = 'none';
+    }
   }
 }
 
@@ -140,7 +164,8 @@ export function drawWildMarks(points, { covered = false, doc = globalThis.docume
 export function destroyWildMarks() {
   unwatch();
   root?.remove?.();
-  root = null; slots = [];
+  root = null;
+  slots = [];
 }
 
 export const wildMarksMounted = () => !!root;

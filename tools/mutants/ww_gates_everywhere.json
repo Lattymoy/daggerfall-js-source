@@ -4,77 +4,99 @@
     "file": "src/net/wire.js",
     "old": "export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7, 8]);",
     "new": "export const GATE_LANES_OPEN = Object.freeze([0, 1, 2, 3, 4, 5, 6, 7]);",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-provinces-region-none",
     "file": "src/scenes/gate/gateSeat.js",
-    "old": "if (lane !== BAY_THEATRE) { const r = regionOfTheatre(lane); return r >= 0 ? r : null; }",
-    "new": "if (lane !== BAY_THEATRE) return null;",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "old": "  if (lane !== BAY_THEATRE) {\n    const r = regionOfTheatre(lane);\n    return r >= 0 ? r : null;\n  }",
+    "new": "  if (lane !== BAY_THEATRE) return null;",
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-every-claim-waits-on-the-bays-scan",
     "file": "src/scenes/gate/gateSeat.js",
-    "old": "=> !bayScan && !(Number.isSafeInteger(d) && gateLaneOf(/** @type {number} */ (d)) !== BAY_THEATRE);",
-    "new": "=> !bayScan;",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "old": "export const gateClaimWaits = (/** @type {number|undefined} */ d, /** @type {any} */ bayScan) =>\n  !bayScan && !(Number.isSafeInteger(d) && gateLaneOf(/** @type {number} */ (d)) !== BAY_THEATRE);",
+    "new": "export const gateClaimWaits = (/** @type {number|undefined} */ d, /** @type {any} */ bayScan) => !bayScan;",
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-host-asks-the-bays-lane-alone",
     "file": "src/scenes/world.js",
     "old": "try { region = c ? gateSeatRegion(c.d, _gateScan) : null; } catch { region = null; }",
     "new": "try { region = c && gateLaneOf(c.d) === 0 ? gateSeatRegion(c.d, _gateScan) : null; } catch { region = null; }",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-refusals-old-word",
     "file": "server-account/src/seatInfluence.js",
     "old": "  if (!gateRegionOk(day, region)) return { counted: false, why: 'not-its-region' };",
     "new": "  if (!gateRegionOk(day, region)) return { counted: false, why: 'beyond-the-bay' };",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-towns-region-past-the-bay",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "region: isBayArea(town.area) ? town.area : regionOfTheatre(scan.theatre), area: town.area }",
-    "new": "region: isBayArea(town.area) ? town.area : null, area: town.area }",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "old": "      ? {\n          name: town.name,\n          px: town.px,\n          py: town.py,\n          region: isBayArea(town.area) ? town.area : regionOfTheatre(scan.theatre),\n          area: town.area,\n        }",
+    "new": "      ? { name: town.name, px: town.px, py: town.py, region: isBayArea(town.area) ? town.area : null, area: town.area }",
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-scans-slice-unbounded",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (i < K.length && more && !more()) return null;",
-    "new": "if (false) return null;",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "old": "        if (i < K.length && more && !more()) return null;",
+    "new": "        if (false) return null;",
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-scans-step-the-whole",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "const end = Math.min(K.length, i + THEATRE_SCAN_STEP);",
-    "new": "const end = K.length;",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "old": "        const end = Math.min(K.length, i + THEATRE_SCAN_STEP);",
+    "new": "        const end = K.length;",
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-a-pixels-place-asked-again",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "if (v === undefined) placed.set(k, v = !!placeAt(x, y));",
-    "new": "v = !!placeAt(x, y);",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "old": "    if (v === undefined) placed.set(k, (v = !!placeAt(x, y)));",
+    "new": "    v = !!placeAt(x, y);",
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-warm-keeps-a-spent-slice",
     "file": "src/scenes/gate/gateLanes.js",
     "old": "if (!s || !more()) { go(slice, { timeout: 250 }); return; }",
     "new": "if (!s) { go(slice, { timeout: 250 }); return; }",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-forced-slice-none",
     "file": "src/scenes/gate/gateLanes.js",
     "old": "const until = clock() + (deadline.didTimeout ? SCAN_FORCED_SLICE_MS : 0);\n        const more = () =>",
     "new": "const until = clock() + 0;\n        const more = () =>",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"],
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ],
     "note": "Re-aimed by content (AUDIT DRAGON-CELL)."
   },
   {
@@ -82,34 +104,44 @@
     "file": "src/scenes/gate/gateLanes.js",
     "old": "const s = idle ? scans.get(t) : scanOf(t);",
     "new": "const s = scanOf(t);",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-lanes-unkept",
     "file": "src/scenes/gate/gateLanes.js",
     "old": "      if (whole) theatres = out;\n",
     "new": "",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-a-page-scans-at-once",
     "file": "src/scenes/gate/gateLanes.js",
     "old": "  if (typeof g.document !== 'undefined' && typeof g.setTimeout === 'function') return",
     "new": "  if (false) return",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-browsers-idle-unasked",
     "file": "src/scenes/gate/gateLanes.js",
     "old": "  if (typeof g.requestIdleCallback === 'function') return (fn, o) => g.requestIdleCallback(fn, o);",
     "new": "",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   },
   {
     "name": "WWGE-the-warm-never-begun",
     "file": "src/scenes/gate/gateLanes.js",
     "old": "      if (!whole) warm();\n",
     "new": "",
-    "tests": ["test/world/worldWide/ww_gates_everywhere.test.js"]
+    "tests": [
+      "test/world/worldWide/ww_gates_everywhere.test.js"
+    ]
   }
 ]

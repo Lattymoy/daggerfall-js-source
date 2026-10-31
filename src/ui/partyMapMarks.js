@@ -63,7 +63,8 @@ export const PARTY_MARK_CSS = PARTY_GREEN_CSS;
 export const PARTY_OFFLINE_RGBA = Object.freeze([0.55, 0.58, 0.55, 0.85]);
 
 /** The byte triple the classic page's dot buffer wants, derived from the one green rather than spelled twice. */
-const bytes = (rgba) => Object.freeze([Math.round(rgba[0] * 255), Math.round(rgba[1] * 255), Math.round(rgba[2] * 255)]);
+const bytes = (rgba) =>
+  Object.freeze([Math.round(rgba[0] * 255), Math.round(rgba[1] * 255), Math.round(rgba[2] * 255)]);
 const hex = (rgb) => '#' + rgb.map((v) => v.toString(16).padStart(2, '0')).join('');
 export const PARTY_DOT_RGB = bytes(PARTY_MARK_RGBA);
 export const PARTY_OFFLINE_DOT_RGB = bytes(PARTY_OFFLINE_RGBA);
@@ -106,16 +107,40 @@ export function readTravellerMarksIn(travellers, box) {
   const out = [];
   for (const r of rows) {
     if (!r || typeof r.id !== 'string') continue;
-    const px = Math.floor(Number(r.px)), py = Math.floor(Number(r.py));
-    if (!Number.isFinite(px) || !Number.isFinite(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;
-    const fx = Math.min(255, Math.max(0, Number(r.fx) || 0)), fy = Math.min(255, Math.max(0, Number(r.fy) || 0));
-    out.push({ id: r.id, name: String(r.name ?? '').trim() || TRAVELLER_LEGEND_TEXT, x: px + (fx + 0.5) / 256, y: py + 1 - (fy + 0.5) / 256, journey: !!r.tv, ship: r.ship === true,
-      kin: r.kin === 'friend' || r.kin === 'guild' ? r.kin : null, lv: Number.isFinite(r.lv) ? Number(r.lv) : null });   // OW-KIN / OW-WHO
+    const px = Math.floor(Number(r.px)),
+      py = Math.floor(Number(r.py));
+    if (
+      !Number.isFinite(px) ||
+      !Number.isFinite(py) ||
+      px < box.x0 ||
+      py < box.y0 ||
+      px >= box.x0 + box.w ||
+      py >= box.y0 + box.h
+    )
+      continue;
+    const fx = Math.min(255, Math.max(0, Number(r.fx) || 0)),
+      fy = Math.min(255, Math.max(0, Number(r.fy) || 0));
+    out.push({
+      id: r.id,
+      name: String(r.name ?? '').trim() || TRAVELLER_LEGEND_TEXT,
+      x: px + (fx + 0.5) / 256,
+      y: py + 1 - (fy + 0.5) / 256,
+      journey: !!r.tv,
+      ship: r.ship === true,
+      kin: r.kin === 'friend' || r.kin === 'guild' ? r.kin : null,
+      lv: Number.isFinite(r.lv) ? Number(r.lv) : null,
+    }); // OW-KIN / OW-WHO
   }
   return out;
 }
 /** TV3: what moves a traveller's mark - the pixel's 256th and the name; a key a poll compares. */
-export const travellerMarksKey = (marks) => marks.map((m) => `${m.id}:${m.x.toFixed(3)},${m.y.toFixed(3)},${m.journey ? 1 : 0},${m.ship ? 1 : 0},${m.kin ?? ''},${m.lv ?? ''},${m.name}`).join('|');   // OW-KIN: a friend made, a guild joined - drawn again   // OWS1: a traveller putting to sea is drawn again
+export const travellerMarksKey = (marks) =>
+  marks
+    .map(
+      (m) =>
+        `${m.id}:${m.x.toFixed(3)},${m.y.toFixed(3)},${m.journey ? 1 : 0},${m.ship ? 1 : 0},${m.kin ?? ''},${m.lv ?? ''},${m.name}`,
+    )
+    .join('|'); // OW-KIN: a friend made, a guild joined - drawn again   // OWS1: a traveller putting to sea is drawn again
 
 /**
  * @typedef {{ acct: string|null, name: string, px: number, py: number, in: number, loc: string,
@@ -154,7 +179,8 @@ export function readPartyMarksIn(party, box) {
   const marks = [];
   for (const r of rows) {
     if (!r) continue;
-    const px = Math.floor(Number(r.px)), py = Math.floor(Number(r.py));
+    const px = Math.floor(Number(r.px)),
+      py = Math.floor(Number(r.py));
     if (!Number.isFinite(px) || !Number.isFinite(py)) continue;
     if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;
     marks.push({
@@ -203,7 +229,9 @@ export function partyMarksKey(marks) {
   // (the ink label under the ring) and both maps' hover sentence are the place's name, so a member who walked from Daggerfall into
   // Privateers Hold WITHOUT changing map pixel (the pose carries the place's own pixel, so that happens) left a
   // label naming the town they had left. `leader` is still absent, and deliberately: no map draws it.
-  return marks.map((m) => `${m.acct ?? m.name}:${m.px},${m.py},${m.in},${m.online ? 1 : 0},${m.name},${m.loc}`).join('|');
+  return marks
+    .map((m) => `${m.acct ?? m.name}:${m.px},${m.py},${m.in},${m.online ? 1 : 0},${m.name},${m.loc}`)
+    .join('|');
 }
 
 /**
@@ -229,11 +257,18 @@ export function readPartyBodies(party) {
   for (const r of rows) {
     const f = r?.feet;
     if (!f || typeof f !== 'object') continue;
-    const x = Number(f[0]), y = Number(f[1]), z = Number(f[2]);
+    const x = Number(f[0]),
+      y = Number(f[1]),
+      z = Number(f[2]);
     // a body with no place in this frame is not drawn at the origin - "not here" is the truth (SOC6's law)
     if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;
     const yaw = Number(r.yaw);
-    out.push({ acct: r.acct ?? null, name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT, feet: [x, y, z], yaw: Number.isFinite(yaw) ? yaw : 0 });
+    out.push({
+      acct: r.acct ?? null,
+      name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT,
+      feet: [x, y, z],
+      yaw: Number.isFinite(yaw) ? yaw : 0,
+    });
   }
   return out;
 }
@@ -255,7 +290,13 @@ export function readPartyBodies(party) {
  *           fromWorld?: ((wx: number, wz: number) => number[])|null, pixelCentre?: ((px: number, py: number) => number[])|null }} [o]
  * @returns {number[][]} one [x, z] per mark
  */
-export function partyCompassPoints({ bodies = null, others = [], here = null, fromWorld = null, pixelCentre = null } = {}) {
+export function partyCompassPoints({
+  bodies = null,
+  others = [],
+  here = null,
+  fromWorld = null,
+  pixelCentre = null,
+} = {}) {
   const out = [];
   const drawn = new Set();
   for (const b of readPartyBodies(bodies)) {
@@ -267,7 +308,10 @@ export function partyCompassPoints({ bodies = null, others = [], here = null, fr
     const p = m?.p;
     if (!p || m.online === false || drawn.has(m.acct)) continue;
     if (!Number.isInteger(p.px) || !Number.isInteger(p.py)) continue;
-    if (p.in === 0 && Number.isFinite(p.wx) && Number.isFinite(p.wz) && fromWorld) { out.push(fromWorld(p.wx, p.wz)); continue; }
+    if (p.in === 0 && Number.isFinite(p.wx) && Number.isFinite(p.wz) && fromWorld) {
+      out.push(fromWorld(p.wx, p.wz));
+      continue;
+    }
     if (p.px === here.x && p.py === here.y) continue;
     if (pixelCentre) out.push(pixelCentre(p.px, p.py));
   }

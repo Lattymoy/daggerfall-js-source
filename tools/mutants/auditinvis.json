@@ -65,8 +65,8 @@
   {
     "name": "AINV-D-windup-douses-a-refused-throw",
     "file": "src/systems/handheldTorches.js",
-    "old": "        else if (!(dropRefusal?.() ?? null)) {   // AUDIT (pre-merge) I-D",
-    "new": "        else {   // AUDIT (pre-merge) I-D",
+    "old": "        else if (!(dropRefusal?.() ?? null)) {",
+    "new": "        else {",
     "tests": [
       "test/systems/housedrop.test.js"
     ]

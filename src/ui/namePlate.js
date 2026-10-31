@@ -12,7 +12,12 @@ import { renownText } from '../net/renown.js';
 /** The plate for `peer` - { title, glyphs, name, lv } as a token carries them - as nameLayer.js makeTag builds one and
  *  its render paints it, standing at the origin for its host to move (`translate(x, y) translate(-50%, -100%)`). */
 export function namePlateNode(/** @type {Document} */ doc, /** @type {any} */ peer) {
-  const el = (/** @type {string} */ tag, /** @type {string} */ cls, txt = '') => { const n = doc.createElement(tag); n.className = cls; if (txt) n.textContent = txt; return n; };
+  const el = (/** @type {string} */ tag, /** @type {string} */ cls, txt = '') => {
+    const n = doc.createElement(tag);
+    n.className = cls;
+    if (txt) n.textContent = txt;
+    return n;
+  };
   const node = el('div', 'dfname dfname-still');
   const badge = titleBadge(peer);
   const title = el('div', 'dfname-title', badge?.text ?? '');
@@ -22,9 +27,15 @@ export function namePlateNode(/** @type {Document} */ doc, /** @type {any} */ pe
   }
   if (badge?.flame) setTitleFlame(title, badge.key);
   const tag = el('div', 'dfname-tag');
-  tag.append(el('span', 'dfname-renown', renownText(peer?.lv) ?? ''), el('span', 'dfname-who', typeof peer?.name === 'string' ? peer.name : ''));
+  tag.append(
+    el('span', 'dfname-renown', renownText(peer?.lv) ?? ''),
+    el('span', 'dfname-who', typeof peer?.name === 'string' ? peer.name : ''),
+  );
   const glyphs = el('span', 'dfname-glyphs');
-  for (const g of glyphBadges(peer)) { const svg = glyphSvgNode(doc, g, 'dfname-glyph', 1.6); if (svg) glyphs.append(svg); }
+  for (const g of glyphBadges(peer)) {
+    const svg = glyphSvgNode(doc, g, 'dfname-glyph', 1.6);
+    if (svg) glyphs.append(svg);
+  }
   tag.append(glyphs);
   node.append(title, tag);
   return node;

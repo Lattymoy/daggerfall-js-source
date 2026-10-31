@@ -20,8 +20,8 @@
   {
     "name": "WET-FALL-past-the-row",
     "file": "src/systems/survival/temperature.js",
-    "old": "Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;",
-    "new": "Math.max(0, Number.isFinite(fall) ? fall : 1) : 1;",
+    "old": "  const k = precipitationForWeather(weather) ? Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;",
+    "new": "  const k = precipitationForWeather(weather) ? Math.max(0, Number.isFinite(fall) ? fall : 1) : 1;",
     "tests": [
       "test/systems/survival/fb1015f_wetfall.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WET-FALL-the-sky-s-word-read",
     "file": "src/systems/survival/temperature.js",
-    "old": "    wetGain: weatherWetGain(env.falling?.word ?? env.weather, {",
-    "new": "    wetGain: weatherWetGain(env.weather, {",
+    "old": "      weatherWetGain(env.falling?.word ?? env.weather, {",
+    "new": "      weatherWetGain(env.weather, {",
     "tests": [
       "test/systems/survival/fb1015f_wetfall.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WET-FALL-the-level-never-handed",
     "file": "src/systems/survival/temperature.js",
-    "old": "sheltered: !!env.sheltered, fall: env.falling?.level ?? 1, snow:",
-    "new": "sheltered: !!env.sheltered, snow:",
+    "old": "        fall: env.falling?.level ?? 1,\n        snow: env.falling?.snow ?? null,",
+    "new": "        snow: env.falling?.snow ?? null,",
     "tests": [
       "test/systems/survival/fb1015f_wetfall.test.js"
     ]

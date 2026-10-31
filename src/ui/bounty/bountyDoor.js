@@ -5,13 +5,17 @@
 // stack. Handed to the host's overlay slot (townTalk.showOverlay), so the game stands still while either is up.
 import { mountEnhancedChunk } from '../enhanced/enhancedChunk.js';
 import { registerOverlay } from '../enhanced/enhancedOverlays.js';
-import { noteFirstUse } from '../../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { noteFirstUse } from '../../systems/tutorials.js'; // TUT1: the first touch of a system pops its tutorial page
 
 /** @type {any} */ let _open = null;
 /** Is a bounty window up. */
 export const bountyDoorOpen = () => !!_open && !_open.done;
 /** Shut it, if it is up. */
-export function closeBountyDoor() { const was = bountyDoorOpen(); _open?.dispose(); return was; }
+export function closeBountyDoor() {
+  const was = bountyDoorOpen();
+  _open?.dispose();
+  return was;
+}
 
 /**
  * @param {'board'|'notice'} kind
@@ -20,7 +24,7 @@ export function closeBountyDoor() { const was = bountyDoorOpen(); _open?.dispose
  * @returns {any} the overlay, or null with no document
  */
 export function createBountyOverlay(kind, deps) {
-  if (kind === 'board') noteFirstUse('bounties');   // TUT1: the board, not a finished bounty's notice
+  if (kind === 'board') noteFirstUse('bounties'); // TUT1: the board, not a finished bounty's notice
   if (typeof document === 'undefined') return null;
   _open?.dispose();
   let fired = false;
@@ -39,31 +43,51 @@ export function createBountyOverlay(kind, deps) {
     view?.unmount();
     view = null;
     host.remove();
-    fired = true;   // last: `done` must not read true while the DOM is up
+    fired = true; // last: `done` must not read true while the DOM is up
     if (_open === overlay) _open = null;
     deps.onClose?.(read);
   };
-  unregister = registerOverlay(() => close(true));   // the overlay stack's Escape: the player's own dismissal
+  unregister = registerOverlay(() => close(true)); // the overlay stack's Escape: the player's own dismissal
   const overlay = {
     isChoiceWindow: true,
-    get done() { return fired; },
-    input() { /* the window's own capture keydown owns the keyboard */ },
-    click() { /* a fixed div over the canvas */ },
+    get done() {
+      return fired;
+    },
+    input() {
+      /* the window's own capture keydown owns the keyboard */
+    },
+    click() {
+      /* a fixed div over the canvas */
+    },
     wheel() {},
     hover() {},
     tick() {},
-    draw() { /* DOM, not canvas */ },
-    dispose() { close(); },
-    repaint() { view?.repaint(); },
+    draw() {
+      /* DOM, not canvas */
+    },
+    dispose() {
+      close();
+    },
+    repaint() {
+      view?.repaint();
+    },
   };
   _open = overlay;
   mountEnhancedChunk({
     load: () => import('./bountyWindow.js'),
     mount: (m) => {
-      view = kind === 'notice' ? m.mountBountyNotice(host, { ...deps, onExit: () => close(true) }) : m.mountBountyBoard(host, { ...deps, onExit: () => close(true) });
+      view =
+        kind === 'notice'
+          ? m.mountBountyNotice(host, { ...deps, onExit: () => close(true) })
+          : m.mountBountyBoard(host, { ...deps, onExit: () => close(true) });
       deps.attach?.(view);
     },
-    alive: () => !fired, host, onDismiss: () => { close(false); }, label: `bounty-${kind}`,   // a chunk that never loaded: unread
+    alive: () => !fired,
+    host,
+    onDismiss: () => {
+      close(false);
+    },
+    label: `bounty-${kind}`, // a chunk that never loaded: unread
   });
   return overlay;
 }

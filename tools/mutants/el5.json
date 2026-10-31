@@ -11,8 +11,8 @@
   {
     "name": "sphere-strict",
     "file": "src/render/bounds.js",
-    "old": "+ planes[k * 4 + 3] < -r) return false;",
-    "new": "+ planes[k * 4 + 3] < r) return false;",
+    "old": "    if (planes[k * 4] * x + planes[k * 4 + 1] * y + planes[k * 4 + 2] * z + planes[k * 4 + 3] < -r) return false;",
+    "new": "    if (planes[k * 4] * x + planes[k * 4 + 1] * y + planes[k * 4 + 2] * z + planes[k * 4 + 3] < r) return false;",
     "tests": [
       "test/render/el5_field.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "bounds-center-min",
     "file": "src/render/bounds.js",
-    "old": "  out[0] = (minX + maxX) / 2; out[1] = (minY + maxY) / 2; out[2] = (minZ + maxZ) / 2;",
-    "new": "  out[0] = minX; out[1] = minY; out[2] = minZ;",
+    "old": "  out[0] = (minX + maxX) / 2;\n  out[1] = (minY + maxY) / 2;\n  out[2] = (minZ + maxZ) / 2;",
+    "new": "  out[0] = minX;\n  out[1] = minY;\n  out[2] = minZ;",
     "tests": [
       "test/render/el5_field.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "bounds-range-start",
     "file": "src/render/bounds.js",
-    "old": "  const at = (k) => (indices ? indices[start + k] : k) * stride;",
-    "new": "  const at = (k) => (indices ? indices[k] : k) * stride;",
+    "old": "  const at = (k) => (indices ? indices[start + k] : k) * stride; // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)",
+    "new": "  const at = (k) => (indices ? indices[k] : k) * stride; // EL7: `stride` floats per vertex (a character rig's interleaved 9 or 11)",
     "tests": [
       "test/render/el5_field.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "glare-slack-zero",
     "file": "src/render/airPass.js",
-    "old": "export const AIR_GLARE_SLACK = 0.25;",
-    "new": "export const AIR_GLARE_SLACK = 0.0;",
+    "old": "export const AIR_GLARE_SLACK = 0.25; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
+    "new": "export const AIR_GLARE_SLACK = 0.0; // F4 (2026-09-17, Mac: \"bloom circle disconnected from light sources and still reports of light bloom balls appearing behind floors/ceilings\"): a QUARTER unit, either side. At a unit the band took a ceiling 0.4 in front of a hanging lantern and a wall 0.5 behind a bare light for \"a flame\" - the ball through the floor above, the ball beside a light with no flat. A flame flat is a camera-facing quad THROUGH the light, so its opaque texels sit at the light's own planar depth: a quarter unit holds the flat and nothing else",
     "tests": [
       "test/render/el5_field.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "LIGHT-NEAR1-glare-distance-skip-back",
     "file": "src/render/airPass.js",
-    "old": "      if (f.carried && f.carried[i]) continue;   // MAC-T1",
-    "new": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < 1.5) continue;\n      if (f.carried && f.carried[i]) continue;   // MAC-T1",
+    "old": "      if (f.carried && f.carried[i]) continue; // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
+    "new": "      if (eye && Math.hypot(L[i * 4] - eye[0], L[i * 4 + 1] - eye[1], L[i * 4 + 2] - eye[2]) < 1.5) continue;\n      if (f.carried && f.carried[i]) continue; // MAC-T1: the light in the player's hand, BY NAME - DFU's PlayerTorch is a bare point light with no flare in any camera; the distance above lapses in third person (2.7 behind the hand) and the body billboard passed for a flame flat",
     "tests": [
       "test/render/lightnear1.test.js",
       "test/render/el7_polish.test.js"
@@ -238,8 +238,8 @@
   {
     "name": "lit-no-early-out",
     "file": "src/render/enhancedLighting.js",
-    "old": "    if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it\n",
-    "new": "",
+    "old": "    if (d >= uPointLights[i].w) continue;   // EL5: outside the window the term is exactly zero - no shadow taps, no glint, no pow for it\n    vec3 Ln = L / max(d, 1e-4);",
+    "new": "    vec3 Ln = L / max(d, 1e-4);",
     "tests": [
       "test/render/el5_field.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "flat-no-early-out",
     "file": "src/render/enhancedLighting.js",
-    "old": "    if (d >= uPointLights[i].w) continue;   // EL5\n",
-    "new": "",
+    "old": "    if (d >= uPointLights[i].w) continue;   // EL5\n    vec3 toL = uPointLights[i].xyz - base;",
+    "new": "    vec3 toL = uPointLights[i].xyz - base;",
     "tests": [
       "test/render/el5_field.test.js"
     ]

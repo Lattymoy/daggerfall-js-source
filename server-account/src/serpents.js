@@ -54,10 +54,16 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { verifySerpentReceipt } from '../../src/net/serpent/serpentReceipt.js';
-import { SERPENT_EMBERS } from '../../src/net/serpent/serpentHoardLaw.js';   // SERPENT-SET: the embers a receipt's hoard pays
-import { renownForXp, renownSerpentXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
+import { SERPENT_EMBERS } from '../../src/net/serpent/serpentHoardLaw.js'; // SERPENT-SET: the embers a receipt's hoard pays
+import {
+  renownForXp,
+  renownSerpentXp,
+  RENOWN_XP_MAX,
+  RENOWN_XP_HOUR_MAX,
+  RENOWN_TRACKS_MAX,
+} from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
-import { seededRng } from '../../src/systems/wind/wind.js';   // SERPENT5: the honours' own stream
+import { seededRng } from '../../src/systems/wind/wind.js'; // SERPENT5: the honours' own stream
 
 /** A device's claim id - the key a serpent's hoard is given under (the raids' RAID_CID_RE). */
 export const SERPENT_CID_RE = /^[0-9a-f]{16}$/;
@@ -82,7 +88,9 @@ export function serpentHonoursRoll(seed) {
 
 /** The statements that write a (day, account)'s hoard row for `cid` if none is yet, and read whose it is. */
 const hoardOf = (db, day, account, cid, nowS) => [
-  db.prepare('INSERT OR IGNORE INTO serpent_spoils (day, account, cid, at) VALUES (?1, ?2, ?3, ?4)').bind(day, account, cid, nowS),
+  db
+    .prepare('INSERT OR IGNORE INTO serpent_spoils (day, account, cid, at) VALUES (?1, ?2, ?3, ?4)')
+    .bind(day, account, cid, nowS),
   db.prepare('SELECT cid FROM serpent_spoils WHERE day = ?1 AND account = ?2').bind(day, account),
 ];
 const hoardAnswer = (res, cid) => res?.results?.[0]?.cid === cid;
@@ -117,14 +125,21 @@ export async function serpentRecordOf({ db }, playerId) {
  * @param {{ receipt: unknown, character: unknown, name?: unknown, cid?: unknown, stones?: unknown }} body
  * @param {CryptoKey|null} publicKey
  */
-export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null, stones = null }, publicKey, { strike = null } = {}) {
+export async function claimSerpent(
+  { db, nowS, subtle, rand },
+  player,
+  { receipt, character, name = null, cid = null, stones = null },
+  publicKey,
+  { strike = null } = {},
+) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifySerpentReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
   const c = v.claims;
   if (c.s !== player.id) return { error: 'not-yours' };
   const hoard = typeof cid === 'string' && SERPENT_CID_RE.test(cid);
-  if (!player.handle) {   // a guest: never counted - but given its hoard, once
+  if (!player.handle) {
+    // a guest: never counted - but given its hoard, once
     const spoils = hoard ? hoardAnswer((await db.batch(hoardOf(db, c.d, player.id, cid, nowS)))[1], cid) : false;
     return { recorded: false, why: 'guest', ...(await serpentRecordOf({ db }, player.id)), spoils };
   }
@@ -136,12 +151,14 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   const nonce = hex(rand(new Uint8Array(8)));
   // SERPENT5: THE OLD COIL'S GRANTS - a dealing ship's alone, rolled off this claim's own draw
   const draw = c.x === 'stood' ? null : rand(new Uint8Array(4));
-  const { title, aura } = draw ? serpentHonoursRoll(((draw[0] << 24) | (draw[1] << 16) | (draw[2] << 8) | draw[3]) >>> 0) : { title: false, aura: false };
+  const { title, aura } = draw
+    ? serpentHonoursRoll(((draw[0] << 24) | (draw[1] << 16) | (draw[2] << 8) | draw[3]) >>> 0)
+    : { title: false, aura: false };
   const bits = (title ? SERPENT_HONOUR_TITLE : 0) | (aura ? SERPENT_HONOUR_AURA : 0);
-  const prior = Number(player.serpent_honours) || 0;   // what the account held before this claim, off the session's row
+  const prior = Number(player.serpent_honours) || 0; // what the account held before this claim, off the session's row
   // AUDIT 625 P4: the embers the claim says its build's hoard mints, never past the law's - none from a build before them
   const embers = Number.isSafeInteger(stones) && stones > 0 ? Math.min(stones, SERPENT_EMBERS) : 0;
-  const stmt = strike?.(c.d, nonce, c.x) ?? null;   // SERPENT-SET: the serpent's silver, in this batch
+  const stmt = strike?.(c.d, nonce, c.x) ?? null; // SERPENT-SET: the serpent's silver, in this batch
   const mine = 'EXISTS (SELECT 1 FROM serpent_kills WHERE day = ?3 AND account = ?1 AND nonce = ?4)';
   const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
   const refused = `(NOT EXISTS (${track}) AND ${renownHeldSql('?1')} >= ?9)`;
@@ -150,37 +167,61 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   const credit = `CASE WHEN ${mine} THEN MIN(${want}, ${room}) ELSE 0 END`;
   const res = await db.batch([
     // THE ROW, stamped with this claim's nonce - RETURNING it only when it was written
-    db.prepare(
-      `INSERT OR IGNORE INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at, stones, body, title, aura)
+    db
+      .prepare(
+        `INSERT OR IGNORE INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at, stones, body, title, aura)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
        RETURNING nonce`,
-    ).bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, c.m ? JSON.stringify(c.m) : null, title ? 1 : 0, aura ? 1 : 0),   // INT14: the relay's count, kept; SERPENT5: its grants
+      )
+      .bind(
+        c.d,
+        player.id,
+        c.b,
+        c.h,
+        character,
+        xp,
+        nonce,
+        nowS,
+        embers,
+        c.m ? JSON.stringify(c.m) : null,
+        title ? 1 : 0,
+        aura ? 1 : 0,
+      ), // INT14: the relay's count, kept; SERPENT5: its grants
     // THE HOUR SPENT and THE CREDIT DECIDED - by THIS claim's row alone (raids.js's statement)
-    db.prepare(
-      `UPDATE players SET
+    db
+      .prepare(
+        `UPDATE players SET
          renown_last_credit = ${credit},
          renown_hour_xp = CASE WHEN ${mine} THEN (CASE WHEN renown_hour >= ?8 THEN renown_hour_xp + ${credit} ELSE ${credit} END) ELSE renown_hour_xp END,
          renown_hour = CASE WHEN ${mine} THEN MAX(renown_hour, ?8) ELSE renown_hour END,
          serpent_honours = CASE WHEN ${mine} THEN serpent_honours | ?10 ELSE serpent_honours END
        WHERE id = ?1
        RETURNING renown_last_credit AS credit`,
-    ).bind(player.id, character, c.d, nonce, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX, bits),   // SERPENT5: THE GRANTS, by THIS claim's row alone - held for good
+      )
+      .bind(player.id, character, c.d, nonce, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX, bits), // SERPENT5: THE GRANTS, by THIS claim's row alone - held for good
     // THE TRACK THAT EXISTS grows by the credit (never past the cap's total) - by THIS claim's row alone
-    db.prepare(
-      `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7
+    db
+      .prepare(
+        `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7
        WHERE player = ?1 AND char_id = ?2 AND ${mine}`,
-    ).bind(player.id, character, c.d, nonce, RENOWN_XP_MAX, renownNameOf(name), nowS),
+      )
+      .bind(player.id, character, c.d, nonce, RENOWN_XP_MAX, renownNameOf(name), nowS),
     // A NEW TRACK, with Renown to hold and under the bound - by THIS claim's row alone
-    db.prepare(
-      `INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at)
+    db
+      .prepare(
+        `INSERT INTO renown_tracks (player, char_id, name, xp, created_at, updated_at)
        SELECT ?1, ?2, ?5, renown_last_credit, ?6, ?6 FROM players
        WHERE id = ?1 AND renown_last_credit > 0
          AND NOT EXISTS (SELECT 1 FROM renown_tracks WHERE player = ?1 AND char_id = ?2)
          AND ${renownHeldSql('?1')} < ?7
          AND ${mine}`,
-    ).bind(player.id, character, c.d, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
+      )
+      .bind(player.id, character, c.d, nonce, renownNameOf(name), nowS, RENOWN_TRACKS_MAX),
     // the row says what the claim PAID (the hour may have left less than the serpent is worth)
-    db.prepare(`UPDATE serpent_kills SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE day = ?3 AND account = ?1 AND nonce = ?4`)
+    db
+      .prepare(
+        `UPDATE serpent_kills SET xp = (SELECT renown_last_credit FROM players WHERE id = ?1) WHERE day = ?3 AND account = ?1 AND nonce = ?4`,
+      )
       .bind(player.id, character, c.d, nonce),
     db.prepare(track).bind(player.id, character),
     db.prepare('SELECT COUNT(*) AS n FROM serpent_kills WHERE account = ?1').bind(player.id),
@@ -194,16 +235,40 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   const slain = int(count?.results?.[0]?.n);
   if (!row?.results?.length) {
     // AUDIT 625 P4: the row's own embers - written by the claim that counted it, whatever this ask says
-    const kept = await db.prepare('SELECT stones FROM serpent_kills WHERE day = ?1 AND account = ?2').bind(c.d, player.id).first();
-    return { recorded: false, why: 'claimed', slain, spoils, ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}) };
+    const kept = await db
+      .prepare('SELECT stones FROM serpent_kills WHERE day = ?1 AND account = ?2')
+      .bind(c.d, player.id)
+      .first();
+    return {
+      recorded: false,
+      why: 'claimed',
+      slain,
+      spoils,
+      ...(Number.isSafeInteger(kept?.stones) ? { stones: kept.stones } : {}),
+    };
   }
   const total = after?.results?.length ? int(after.results[0].xp) : null;
   const was = before?.xp ?? 0;
   return {
-    recorded: true, slain, spoils, stones: embers, day: c.d, ...(stmt ? { struck } : {}),
-    title, aura, titleNew: title && !(prior & SERPENT_HONOUR_TITLE), auraNew: aura && !(prior & SERPENT_HONOUR_AURA),   // SERPENT5
-    renown: total === null
-      ? { character, xp: null, level: null, credited: 0, rose: false }   // no place for a new track: counted, paid nothing
-      : { character, xp: total, level: renownForXp(total), credited: Math.max(0, int(decided?.results?.[0]?.credit)), rose: renownForXp(total) > renownForXp(was) },
+    recorded: true,
+    slain,
+    spoils,
+    stones: embers,
+    day: c.d,
+    ...(stmt ? { struck } : {}),
+    title,
+    aura,
+    titleNew: title && !(prior & SERPENT_HONOUR_TITLE),
+    auraNew: aura && !(prior & SERPENT_HONOUR_AURA), // SERPENT5
+    renown:
+      total === null
+        ? { character, xp: null, level: null, credited: 0, rose: false } // no place for a new track: counted, paid nothing
+        : {
+            character,
+            xp: total,
+            level: renownForXp(total),
+            credited: Math.max(0, int(decided?.results?.[0]?.credit)),
+            rose: renownForXp(total) > renownForXp(was),
+          },
   };
 }

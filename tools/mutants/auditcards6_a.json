@@ -2,8 +2,8 @@
   {
     "name": "AC6-A1-pack-uncounted",
     "file": "src/net/card/cardWorthLaw.js",
-    "old": ": isPackRecord(rec) ? CARD_PACK_WORTH * stackOf(rec) : 0);",
-    "new": ": 0);",
+    "old": "export const cardRecordWorth = (/** @type {any} */ rec) =>\n  isCardRecord(rec) ? cardWorth(rec.card) * stackOf(rec) : isPackRecord(rec) ? CARD_PACK_WORTH * stackOf(rec) : 0;",
+    "new": "export const cardRecordWorth = (/** @type {any} */ rec) => (isCardRecord(rec) ? cardWorth(rec.card) * stackOf(rec) : 0);",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AC6-A1-birth-takes-a-pack",
     "file": "server-account/src/realm.js",
-    "old": " && cardPacksOf(save) === 0\n      ? null : { error: 'realm-birth' };",
-    "new": "\n      ? null : { error: 'realm-birth' };",
+    "old": "      cardWorthOf(save) <= STARTER_DECK_WORTH &&\n      cardPacksOf(save) === 0",
+    "new": "      cardWorthOf(save) <= STARTER_DECK_WORTH",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AC6-A2-decor-uncounted",
     "file": "src/net/card/cardWorthLaw.js",
-    "old": "  for (const { rec } of decorOwnOf(snap)) n += cardRecordWorth(rec);\n",
-    "new": "",
+    "old": "  for (const { rec } of decorOwnOf(snap)) n += cardRecordWorth(rec);\n  return n;",
+    "new": "  return n;",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AC6-A2-decor-piece-stands",
     "file": "src/systems/realmCustoms.js",
-    "old": "        if (Array.isArray(scene.decor)) scene.decor = scene.decor.filter((/** @type {any} */ p) => p?.id !== id);\n",
-    "new": "",
+    "old": "        if (Array.isArray(scene.decor)) scene.decor = scene.decor.filter((/** @type {any} */ p) => p?.id !== id);\n      },",
+    "new": "      },",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AC6-A9-every-copy-spare",
     "file": "src/systems/realmCustoms.js",
-    "old": "(have.get(h.rec.card) ?? 0) > (need.get(h.rec.card) ?? 0)",
-    "new": "true",
+    "old": "  const spare = (/** @type {any} */ h) =>\n    !h.inPack || !isCardRecord(h.rec) || (have.get(h.rec.card) ?? 0) > (need.get(h.rec.card) ?? 0);",
+    "new": "  const spare = (/** @type {any} */ h) => !h.inPack || !isCardRecord(h.rec) || true;",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AC6-A9-break-unsaid",
     "file": "src/systems/realmCustoms.js",
-    "old": "  const decksShort = decks.filter((d) => deckHeldRefusal(d.cards, snap.items)).length;",
-    "new": "  const decksShort = 0;",
+    "old": "  const decksShort = decks.filter((d) => deckHeldRefusal(d.cards, snap.items)).length; // ...and those it left naming a card that stayed",
+    "new": "  const decksShort = 0; // ...and those it left naming a card that stayed",
     "tests": [
       "test/systems/auditcards6_a.test.js"
     ]

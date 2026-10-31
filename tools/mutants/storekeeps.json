@@ -3,42 +3,60 @@
     "name": "STORE-KEEPS-the-cart-lifted-again",
     "file": "src/systems/wild/wildDropLaw.js",
     "old": "  const drop = (drops ? takeWildDrop(bag) : []).map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
-    "new": "  const drop = [...(drops ? takeWildDrop(bag) : []), ...takeWildDrop(Array.isArray(entity?.wagonItems) ? entity.wagonItems : [])].map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
-    "tests": ["test/systems/fb1015_cartaway.test.js", "test/systems/fb1019f_companiondrop.test.js"]
+    "new": "  const drop = [\n    ...(drops ? takeWildDrop(bag) : []),\n    ...takeWildDrop(Array.isArray(entity?.wagonItems) ? entity.wagonItems : []),\n  ].map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js",
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
   },
   {
     "name": "STORE-KEEPS-the-carts-coin-taken",
     "file": "src/systems/wild/wildDropLaw.js",
-    "old": "  entity.goldPieces = have - purse;\n  return goldStack(purse);",
-    "new": "  entity.goldPieces = have - purse;\n  const cc = Array.isArray(entity?.wagonItems) ? entity.wagonItems.find((i) => i?.group === 'Currency') : null;\n  if (cc) cc.stackCount -= Math.floor(cc.stackCount / WILD_GOLD_DIVISOR);\n  return goldStack(purse);",
-    "tests": ["test/systems/fb1015_cartaway.test.js", "test/systems/fb1019f_companiondrop.test.js"]
+    "old": "  return goldStack(purse);",
+    "new": "  const cc = Array.isArray(entity?.wagonItems) ? entity.wagonItems.find((i) => i?.group === 'Currency') : null;\n  if (cc) cc.stackCount -= Math.floor(cc.stackCount / WILD_GOLD_DIVISOR);\n  return goldStack(purse);",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js",
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
   },
   {
     "name": "STORE-KEEPS-the-candidates-keep-the-cart",
     "file": "src/systems/wild/wildDropLaw.js",
     "old": "  const drop = bag.filter((it) => !isEquipped(it) && wildCanLose(it) && !insured(it));",
-    "new": "  const drop = [...bag, ...(Array.isArray(entity?.wagonItems) ? entity.wagonItems : [])].filter((it) => !isEquipped(it) && wildCanLose(it) && !insured(it));",
-    "tests": ["test/systems/fb1015_cartaway.test.js", "test/systems/fb1019f_companiondrop.test.js"]
+    "new": "  const drop = [...bag, ...(Array.isArray(entity?.wagonItems) ? entity.wagonItems : [])].filter(\n    (it) => !isEquipped(it) && wildCanLose(it) && !insured(it),\n  );",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js",
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
   },
   {
     "name": "STORE-KEEPS-the-packs-lifted-again",
     "file": "src/systems/wild/wildDropLaw.js",
     "old": "  const drop = (drops ? takeWildDrop(bag) : []).map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
-    "new": "  const drop = [...(drops ? takeWildDrop(bag) : []), ...wildPacksOf(entity).flatMap((p) => takeWildDrop(p.items))].map((it) => /** @type {[any, string]} */ ([it, 'bag']));",
-    "tests": ["test/systems/fb1015_cartaway.test.js", "test/systems/fb1019f_companiondrop.test.js"]
+    "new": "  const drop = [...(drops ? takeWildDrop(bag) : []), ...wildPacksOf(entity).flatMap((p) => takeWildDrop(p.items))].map(\n    (it) => /** @type {[any, string]} */ ([it, 'bag']),\n  );",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js",
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
   },
   {
     "name": "STORE-KEEPS-the-wagons-word-said-again",
     "file": "src/systems/wild/wildDeath.js",
-    "old": "export const wildFallWords = () => ({ packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS });",
-    "new": "export const wildFallWords = () => ({ cart: 1, packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS });",
-    "tests": ["test/systems/fb1015_cartaway.test.js", "test/systems/fb1019f_companiondrop.test.js"]
+    "old": "export const wildFallWords = () => ({ packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS }); // AUDIT FOE-KEEPS LETTERS-TENTH: this game lowers a letter by its share",
+    "new": "export const wildFallWords = () => ({ cart: 1, packs: WILD_FALL_PACKS, letters: WILD_FALL_LETTERS }); // AUDIT FOE-KEEPS LETTERS-TENTH: this game lowers a letter by its share",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js",
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
   },
   {
     "name": "STORE-KEEPS-the-hand-held-at-the-side",
     "file": "src/scenes/naval/navalHost.js",
     "old": "      const pack = companions.takePack(boat.uid, name);   // COMPANION-KIT: his pack stowed in her hold",
     "new": "      if (true) return null;   // COMPANION-DROP's refusal, back\n      const pack = companions.takePack(boat.uid, name);   // COMPANION-KIT: his pack stowed in her hold",
-    "tests": ["test/systems/fb1015_cartaway.test.js", "test/systems/fb1019f_companiondrop.test.js"]
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js",
+      "test/systems/fb1019f_companiondrop.test.js"
+    ]
   }
 ]

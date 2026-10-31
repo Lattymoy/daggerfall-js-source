@@ -48,7 +48,9 @@ precision highp float;
 /** x across (-1..1), y up (-1..1): `uAt` the point the icon stands on, its bottom's middle (the bob already in it),
  *  `uRight` the camera's right in the scene, the half-width `h` - `uHalf` or `uMinRad` of the eye's distance, whichever is
  *  wider - so the icon's centre is `h` over the point. */
-export const NPC_MARK_VS = HEAD + `layout(location = 0) in vec2 aP;
+export const NPC_MARK_VS =
+  HEAD +
+  `layout(location = 0) in vec2 aP;
 uniform mat4 uVP;
 uniform vec3 uAt;
 uniform vec3 uRight;
@@ -62,7 +64,9 @@ void main() {
   vP = aP;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const NPC_MARK_FS = HEAD + `in vec2 vP;
+export const NPC_MARK_FS =
+  HEAD +
+  `in vec2 vP;
 uniform int uKind;       // NPC_MARK_KINDS
 uniform float uAlpha;
 out vec4 o;
@@ -127,7 +131,8 @@ export class NpcMarkRenderer {
     this.program = prog;
     /** @type {Record<string, WebGLUniformLocation | null>} */
     this.u = {};
-    for (const n of ['uVP', 'uAt', 'uRight', 'uEye', 'uHalf', 'uMinRad', 'uKind', 'uAlpha']) this.u[n] = gl.getUniformLocation(prog, n);
+    for (const n of ['uVP', 'uAt', 'uRight', 'uEye', 'uHalf', 'uMinRad', 'uKind', 'uAlpha'])
+      this.u[n] = gl.getUniformLocation(prog, n);
     const verts = markQuadVertices();
     this.count = verts.length / 2;
     this.vao = gl.createVertexArray();
@@ -135,7 +140,8 @@ export class NpcMarkRenderer {
     this.vbo = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
     gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 8, 0);
     gl.bindVertexArray(null);
     this._vp = new Float32Array(16);
     /** the marks the last draw stood, for the stats and the tests */
@@ -157,7 +163,8 @@ export class NpcMarkRenderer {
     let any = false;
     for (let i = 0; i < last && !any; i++) any = marks[i].alpha > 0.001;
     if (!any || !this.program) return;
-    const gl = this.gl, U = this.u;
+    const gl = this.gl,
+      U = this.u;
     mat4Multiply(this._vp, proj, view);
     gl.useProgram(this.program);
     gl.uniformMatrix4fv(U.uVP, false, this._vp);
@@ -166,7 +173,8 @@ export class NpcMarkRenderer {
     gl.uniform1f(U.uHalf, MARK_HALF_M);
     gl.uniform1f(U.uMinRad, MARK_MIN_RAD);
     gl.bindVertexArray(this.vao);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     for (let i = 0; i < last; i++) {
@@ -189,7 +197,11 @@ export class NpcMarkRenderer {
   dispose() {
     const gl = this.gl;
     if (!this.program) return;
-    gl.deleteProgram(this.program); gl.deleteVertexArray(this.vao); gl.deleteBuffer(this.vbo);
-    this.program = null; this.vao = null; this.vbo = null;
+    gl.deleteProgram(this.program);
+    gl.deleteVertexArray(this.vao);
+    gl.deleteBuffer(this.vbo);
+    this.program = null;
+    this.vao = null;
+    this.vbo = null;
   }
 }

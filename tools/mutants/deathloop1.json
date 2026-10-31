@@ -2,8 +2,8 @@
   {
     "name": "revival-forgets-the-drains",
     "file": "src/systems/deathRespawn.js",
-    "old": "  const cleared = endLethalDrains(entity), exposure = endLethalExposure(entity);",
-    "new": "  const cleared = [], exposure = endLethalExposure(entity);",
+    "old": "  const cleared = endLethalDrains(entity),",
+    "new": "  const cleared = [],",
     "tests": [
       "test/scenes/deathloop1.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "revival-leaves-the-exposure",
     "file": "src/systems/deathRespawn.js",
-    "old": "  const cleared = endLethalDrains(entity), exposure = endLethalExposure(entity);",
-    "new": "  const cleared = endLethalDrains(entity), exposure = [];",
+    "old": "    exposure = endLethalExposure(entity);",
+    "new": "    exposure = [];",
     "tests": [
       "test/scenes/deathloop1.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "exposure-reset-reports-regardless",
     "file": "src/systems/deathRespawn.js",
-    "old": "    if ((s[k] ?? 0) !== v) { s[k] = v; cleared.push(k); }",
-    "new": "    s[k] = v; cleared.push(k);",
+    "old": "    if ((s[k] ?? 0) !== v) {\n      s[k] = v;\n      cleared.push(k);\n    }",
+    "new": "    s[k] = v;\n    cleared.push(k);",
     "tests": [
       "test/scenes/deathloop1.test.js"
     ]

@@ -66,7 +66,7 @@ let _lifted = false;
 
 /** The player's cap, read as DFU reads it - and Off, where the wait is lifted, LIFTED_OFF_FPS. */
 export function frameCapFps() {
-  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0);   // spelled out: MENU T5 reads this clamp against the row's range
+  return frameCapRate(getInt('Video', 'TargetFrameRate', 0, 300)) || (_lifted ? LIFTED_OFF_FPS : 0); // spelled out: MENU T5 reads this clamp against the row's range
 }
 
 /**
@@ -80,9 +80,12 @@ export function frameCapFps() {
  * @param {number} fps the cap in force (0 = none)
  */
 export function capStep(state, now, fps) {
-  if (state.at === now) return state.held;   // one decision per stamp: the host and the counter agree
+  if (state.at === now) return state.held; // one decision per stamp: the host and the counter agree
   state.at = now;
-  if (!fps) { state.due = 0; return (state.held = false); }
+  if (!fps) {
+    state.due = 0;
+    return (state.held = false);
+  }
   const interval = 1000 / fps;
   if (state.due && now < state.due - FRAME_CAP_SLACK_MS) return (state.held = true);
   state.due = state.due && now - state.due < interval ? state.due + interval : now + interval;
@@ -92,7 +95,9 @@ export function capStep(state, now, fps) {
 const _state = { due: 0, at: -1, held: false };
 
 /** A host's question at the top of its frame: hold this one back? */
-export function frameCapSkip(now) { return capStep(_state, now, frameCapFps()); }
+export function frameCapSkip(now) {
+  return capStep(_state, now, frameCapFps());
+}
 
 /** THE PACER'S STAMP IS A SLOT (FPS-VSYNC, AUDIT 28e): the gate's one decision for `stamp` made "drawn", and the next
  *  slot booked as a drawn frame books it - an interval on from the slot it answers (so the cadence is the cap's, not the
@@ -102,12 +107,20 @@ export function frameCapSkip(now) { return capStep(_state, now, frameCapFps()); 
 export function capTake(state, stamp, fps) {
   state.at = stamp;
   state.held = false;
-  if (!fps) { state.due = 0; return; }
+  if (!fps) {
+    state.due = 0;
+    return;
+  }
   const interval = 1000 / fps;
   state.due = state.due && stamp - state.due < interval ? state.due + interval : stamp + interval;
 }
 
-export function _resetFrameCap() { _state.due = 0; _state.at = -1; _state.held = false; _lifted = false; }
+export function _resetFrameCap() {
+  _state.due = 0;
+  _state.at = -1;
+  _state.held = false;
+  _lifted = false;
+}
 
 /**
  * THE PACER (FPS-VSYNC, AUDIT 28e: the frame lane measured it). With Chromium's frame-rate limit lifted, a rAF callback
@@ -126,27 +139,60 @@ export function _resetFrameCap() { _state.due = 0; _state.at = -1; _state.held =
  * @param {{ raf: (cb: (t:number) => void) => number, caf: (id:number) => void, later: (fn: () => void, ms:number) => unknown,
  *   now: () => number, fps: () => number, take: (stamp:number) => void, due: () => number, report?: (e:unknown) => void }} seams
  */
-export function createFramePacer({ raf, caf, later, now, fps, take, due, report = (e) => { setTimeout(() => { throw e; }); } }) {
+export function createFramePacer({
+  raf,
+  caf,
+  later,
+  now,
+  fps,
+  take,
+  due,
+  report = (e) => {
+    setTimeout(() => {
+      throw e;
+    });
+  },
+}) {
   const queue = new Map();
-  let nextId = 2 ** 30;   // clear of the browser's own ids, so a cancel of one IT minted (a caller from before the install) passes through
-  let native = null, timer = null;
+  let nextId = 2 ** 30; // clear of the browser's own ids, so a cancel of one IT minted (a caller from before the install) passes through
+  let native = null,
+    timer = null;
   const run = (stamp) => {
     native = null;
-    take(stamp);   // this frame is the slot: drawn, the next one booked
+    take(stamp); // this frame is the slot: drawn, the next one booked
     const batch = [...queue.values()];
-    queue.clear();   // a request made while the batch runs is the NEXT slot's
-    for (const cb of batch) { try { cb(stamp); } catch (e) { report(e); } }   // one callback's throw is not the others'
+    queue.clear(); // a request made while the batch runs is the NEXT slot's
+    for (const cb of batch) {
+      try {
+        cb(stamp);
+      } catch (e) {
+        report(e);
+      }
+    } // one callback's throw is not the others'
   };
   function arm() {
     if (native != null || timer != null || queue.size === 0) return;
     const wait = fps() > 0 ? due() - PACER_LEAD_MS - now() : 0;
-    if (wait > 0) timer = later(() => { timer = null; native = raf(run); }, wait);
+    if (wait > 0)
+      timer = later(() => {
+        timer = null;
+        native = raf(run);
+      }, wait);
     else native = raf(run);
   }
   return {
-    request(cb) { const id = nextId++; queue.set(id, cb); arm(); return id; },
-    cancel(id) { if (!queue.delete(id)) caf(id); },
-    get pending() { return queue.size; },
+    request(cb) {
+      const id = nextId++;
+      queue.set(id, cb);
+      arm();
+      return id;
+    },
+    cancel(id) {
+      if (!queue.delete(id)) caf(id);
+    },
+    get pending() {
+      return queue.size;
+    },
   };
 }
 
@@ -155,13 +201,25 @@ export function createFramePacer({ raf, caf, later, now, fps, take, due, report 
  *  effect at the next start, as the settings screen says). A browser, or the app with VSync on, is left alone: there
  *  every frame waits for the screen and the gate holds frames as it always did. Once; true when installed. */
 export function installFramePacer(win = globalThis) {
-  if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame !== 'function' || win.__framePacer) return false;
-  _lifted = true;   // RPT1026-CLIENT: Off has its ceiling from here (LIFTED_OFF_FPS)
-  const raf = win.requestAnimationFrame.bind(win), caf = win.cancelAnimationFrame.bind(win);
+  if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame !== 'function' || win.__framePacer)
+    return false;
+  _lifted = true; // RPT1026-CLIENT: Off has its ceiling from here (LIFTED_OFF_FPS)
+  const raf = win.requestAnimationFrame.bind(win),
+    caf = win.cancelAnimationFrame.bind(win);
   const pacer = createFramePacer({
-    raf, caf, later: (fn, ms) => win.setTimeout(fn, ms), now: () => win.performance.now(),
-    fps: frameCapFps, take: (stamp) => capTake(_state, stamp, frameCapFps()), due: () => _state.due,
-    report: (e) => (typeof win.reportError === 'function' ? win.reportError(e) : win.setTimeout(() => { throw e; })),
+    raf,
+    caf,
+    later: (fn, ms) => win.setTimeout(fn, ms),
+    now: () => win.performance.now(),
+    fps: frameCapFps,
+    take: (stamp) => capTake(_state, stamp, frameCapFps()),
+    due: () => _state.due,
+    report: (e) =>
+      typeof win.reportError === 'function'
+        ? win.reportError(e)
+        : win.setTimeout(() => {
+            throw e;
+          }),
   });
   win.requestAnimationFrame = (cb) => pacer.request(cb);
   win.cancelAnimationFrame = (id) => pacer.cancel(id);

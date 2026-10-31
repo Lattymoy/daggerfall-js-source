@@ -224,8 +224,8 @@
   {
     "name": "BR5-mod-switch-the-game",
     "file": "src/systems/modSettings.js",
-    "old": "which the original game never shows.",
-    "new": "which classic Daggerfall never shows.",
+    "old": "            'See your shield in first person, which the original game never shows. It is drawn in its own metal, ' +",
+    "new": "            'See your shield in first person, which classic Daggerfall never shows. It is drawn in its own metal, ' +",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -324,8 +324,8 @@
   {
     "name": "BR5-patreon-page-old-name",
     "file": "server-account/src/patreon.js",
-    "old": "+ `<title>${esc(heading)} - DFO Online</title><style>`",
-    "new": "+ `<title>${esc(heading)} - Daggerfall</title><style>`",
+    "old": "    `<title>${esc(heading)} - DFO Online</title><style>` + // BR5: the product's name on the page a player is sent back to",
+    "new": "    `<title>${esc(heading)} - Daggerfall</title><style>` + // BR5: the product's name on the page a player is sent back to",
     "tests": [
       "test/ui/brand.test.js"
     ],
@@ -345,8 +345,8 @@
   {
     "name": "BR5-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct235';",
-    "new": "export const ACCOUNT_VERSION = 'acct123';",
+    "old": "export const ACCOUNT_VERSION = 'acct235'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
+    "new": "export const ACCOUNT_VERSION = 'acct123'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
     "tests": [
       "test/server/legacy7_service.test.js",
       "test/server/founder5.test.js"

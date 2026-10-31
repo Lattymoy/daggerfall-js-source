@@ -1,32 +1,32 @@
 [
- {
-  "name": "ORPHANGATE-batch-every-read",
-  "file": "server-account/src/festival.js",
-  "old": "if (mine?.length) { await orphansHome(db, player.id);",
-  "new": "if (true) { await orphansHome(db, player.id);",
-  "tests": [
-   "test/server/witch1_festival.test.js"
-  ],
-  "note": "a write transaction on the primary for every festival read"
- },
- {
-  "name": "ORPHANGATE-never-home",
-  "file": "server-account/src/festival.js",
-  "old": "if (mine?.length) { await orphansHome(db, player.id);",
-  "new": "if (false) { await orphansHome(db, player.id);",
-  "tests": [
-   "test/server/witch1_festival.test.js"
-  ],
-  "note": "an orphan's cakes and bowl never come home"
- },
- {
-  "name": "ORPHANGATE-stale-offerings",
-  "file": "server-account/src/festival.js",
-  "old": "({ results: mine } = await mineRead()); }",
-  "new": "}",
-  "tests": [
-   "test/server/witch1_festival.test.js"
-  ],
-  "note": "the orphan said standing after it came home"
- }
+  {
+    "name": "ORPHANGATE-batch-every-read",
+    "file": "server-account/src/festival.js",
+    "old": "  if (mine?.length) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "a write transaction on the primary for every festival read"
+  },
+  {
+    "name": "ORPHANGATE-never-home",
+    "file": "server-account/src/festival.js",
+    "old": "  if (mine?.length) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "an orphan's cakes and bowl never come home"
+  },
+  {
+    "name": "ORPHANGATE-stale-offerings",
+    "file": "server-account/src/festival.js",
+    "old": "    ({ results: mine } = await mineRead());\n  }",
+    "new": "  }",
+    "tests": [
+      "test/server/witch1_festival.test.js"
+    ],
+    "note": "the orphan said standing after it came home"
+  }
 ]

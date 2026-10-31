@@ -11,8 +11,8 @@
   {
     "name": "EGECO-a-slow-fall-swift",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": "ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS) bits |= 2;",
-    "new": "ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS * 10) bits |= 2;",
+    "old": "  if ((F.lordAt ?? 0) > 0 && ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS) bits |= 2;",
+    "new": "  if ((F.lordAt ?? 0) > 0 && ctx.now - F.lordAt <= EG_FEAT_SWIFT_MS * 10) bits |= 2;",
     "tests": [
       "test/net/eliteGates/egeco_feats.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGECO-a-bridges-catch-forgiven",
     "file": "src/net/eliteGates/egFeats.js",
-    "old": " && !egCaughtBy(F, EG_FEAT_BRIDGE).length }",
-    "new": " }",
+    "old": "    test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && !egCaughtBy(F, EG_FEAT_BRIDGE).length,",
+    "new": "    test: (s, F) => (F.mem?.burnI ?? -1) >= 0,",
     "tests": [
       "test/net/eliteGates/egeco_feats.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGECO-a-lords-card-rarer",
     "file": "src/systems/bossCards.js",
-    "old": "  dusk: 200, stalker: 200, seyth: 200, colossus: 200, wyrm: 200, garoth: 200,",
-    "new": "  dusk: 200, stalker: 100, seyth: 200, colossus: 200, wyrm: 200, garoth: 200,",
+    "old": "  stalker: 200,",
+    "new": "  stalker: 100,",
     "tests": [
       "test/systems/eliteGates/egeco_spoils.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGECO-the-second-pass-on-the-first-seed",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "    passes.push(rollPass(egPassSeed(seed, p), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }));",
-    "new": "    passes.push(rollPass(egPassSeed(seed, 0), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }));",
+    "old": "      rollPass(egPassSeed(seed, p), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }),",
+    "new": "      rollPass(egPassSeed(seed, 0), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }),",
     "tests": [
       "test/systems/eliteGates/egeco_spoils.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGECO-the-gold-flat",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "Math.min(EG_SPOILS_GOLD_MAX, 1 + EG_SPOILS_GOLD_STEP * (Math.max(1, w | 0) - 1))",
-    "new": "1",
+    "old": "export const egSpoilsGold = (lv, w) =>\n  EG_SPOILS_GOLD_PER_LEVEL *\n  Math.max(1, lv) *\n  Math.min(EG_SPOILS_GOLD_MAX, 1 + EG_SPOILS_GOLD_STEP * (Math.max(1, w | 0) - 1));",
+    "new": "export const egSpoilsGold = (lv, w) => EG_SPOILS_GOLD_PER_LEVEL * Math.max(1, lv) * 1;",
     "tests": [
       "test/systems/eliteGates/egeco_spoils.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGECO-the-legendary-share-flat",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "rolls() < egLegendaryShare(w) ? 'legendary' : 'rare'",
-    "new": "rolls() < 0.65 ? 'legendary' : 'rare'",
+    "old": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < egLegendaryShare(w) ? 'legendary' : 'rare', rolls));",
+    "new": "  pieces.push(graded(spoilsBase(lv, rolls), rolls() < 0.65 ? 'legendary' : 'rare', rolls));",
     "tests": [
       "test/systems/eliteGates/egeco_spoils.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGECO-the-pity-ignored",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }",
-    "new": "panoply: egPanoplyHit(seed >>> 0, w, p) }",
+    "old": "    passes.push(\n      rollPass(egPassSeed(seed, p), lv, w, { lord, panoply: pity.includes(p) || egPanoplyHit(seed >>> 0, w, p) }),\n    );",
+    "new": "    passes.push(rollPass(egPassSeed(seed, p), lv, w, { lord, panoply: egPanoplyHit(seed >>> 0, w, p) }));",
     "tests": [
       "test/systems/eliteGates/egeco_spoils.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGECO-the-choice-only-on-a-hit",
     "file": "src/systems/eliteGates/egSpoils.js",
-    "old": "  const which = rolls();\n",
-    "new": "  const which = 0.5;\n",
+    "old": "  const which = rolls();",
+    "new": "  const which = 0.5;",
     "tests": [
       "test/systems/eliteGates/egeco_spoils.test.js"
     ]

@@ -92,8 +92,8 @@ test('CAPT-WATERS at sea: a ship launched of the deep is the deep\'s - her tempe
   }, { aim: 'R', board: 'E', brace: 'C' }).plate;
   assert.equal(plate.waters, 'Wayrest waters, deep');
   const shots = rd('src/systems/naval/navalShots.js');
-  assert.match(shots, /floaters\.push\(\{ kind: 'flotsam', id, from, lot, owner, deep: !!deep,/);
-  assert.match(shots, /owner: f\.owner, deep: !!f\.deep, collector: c\.id,/);
+  assert.match(shots, /floaters\.push\(\{\n\s*kind: 'flotsam',\n\s*id,\n\s*from,\n\s*lot,\n\s*owner,\n\s*deep: !!deep,/);
+  assert.match(shots, /owner: f\.owner,\n\s*deep: !!f\.deep,\n\s*collector: c\.id,/);
 });
 
 test('CAPT-WATERS the world\'s waters: where() says them off the port\'s reach and the nearest port\'s distance - every map port\'s pixel found once, the distance Chebyshev and asked once a pixel (mutants: the distance\'s metric, the waters unsaid)', () => {

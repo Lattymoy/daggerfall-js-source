@@ -2,8 +2,8 @@
   {
     "name": "DRIVER-FACE-never-written",
     "file": "src/systems/immersiveTravel.js",
-    "old": "  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);   // DRIVER-FACE\n",
-    "new": "",
+    "old": "  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex); // DRIVER-FACE\n  registerMerchantService(",
+    "new": "  registerMerchantService(",
     "tests": [
       "test/systems/fb1009b_driverface.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "DRIVER-FACE-written-with-the-mod-off",
     "file": "src/systems/immersiveTravel.js",
-    "old": "  _installed = true;\n  if (!latchModLoaded(",
-    "new": "  _installed = true;\n  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);\n  if (!latchModLoaded(",
+    "old": "  if (!latchModLoaded(IMMERSIVE_TRAVEL_VENDOR, modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true)) return true;",
+    "new": "  setFlatFaceOverride(IT_DRIVER_FACE.archive, IT_DRIVER_FACE.record, IT_DRIVER_FACE.faceIndex);\n  if (!latchModLoaded(IMMERSIVE_TRAVEL_VENDOR, modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true)) return true;",
     "tests": [
       "test/systems/fb1009b_driverface.test.js"
     ]

@@ -49,15 +49,54 @@ import { POSE_GATHER_THROW_MAX } from '../wire.js';
 const f = Object.freeze;
 
 /** The acts the pose names, by `ga` - 1: an act machine's state kind, a net's by its phase. */
-export const GATHER_POSE_ACTS = f(['chop', 'mine', 'hand', 'steady', 'basket', 'trace', 'wind', 'fly', 'wait', 'tug', 'haul']);
+export const GATHER_POSE_ACTS = f([
+  'chop',
+  'mine',
+  'hand',
+  'steady',
+  'basket',
+  'trace',
+  'wind',
+  'fly',
+  'wait',
+  'tug',
+  'haul',
+]);
 /** The beats the pose names, by `gb` & 15 (sixteen at most - the wire's POSE_GATHER_BEAT_MAX). AUDIT GATHER-FEEL W2:
  *  `stop` - the blow counted just before it taken back (its act let go while it was in the air), dropped by every peer
  *  before it lands, as the gatherer's own ear drops it. */
-export const GATHER_POSE_BEATS = f(['blow', 'clean', 'bruise', 'pluck', 'find', 'miss', 'knife', 'slice', 'tear', 'peel', 'out', 'stop']);
+export const GATHER_POSE_BEATS = f([
+  'blow',
+  'clean',
+  'bruise',
+  'pluck',
+  'find',
+  'miss',
+  'knife',
+  'slice',
+  'tear',
+  'peel',
+  'out',
+  'stop',
+]);
 /** The ear's beats (systems/gatherSounds.js actBeats' names) that are the pose's: the tool's blows, the hand's and the
  *  knife's moments, the net in. The rest are the act's own (a swing comes with its blow, a kneel and a throw with the act
  *  itself) or the gatherer's alone (the glint's sparkle, the tree's creak - its node is theirs). */
-const POSE_BEAT_OF = f({ chop: 'blow', chopClean: 'clean', pick: 'blow', pickGlint: 'clean', bruise: 'bruise', pluck: 'pluck', find: 'find', miss: 'miss', knife: 'knife', slice: 'slice', tear: 'tear', peel: 'peel', netOut: 'out' });
+const POSE_BEAT_OF = f({
+  chop: 'blow',
+  chopClean: 'clean',
+  pick: 'blow',
+  pickGlint: 'clean',
+  bruise: 'bruise',
+  pluck: 'pluck',
+  find: 'find',
+  miss: 'miss',
+  knife: 'knife',
+  slice: 'slice',
+  tear: 'tear',
+  peel: 'peel',
+  netOut: 'out',
+});
 
 /** An act machine's state as the pose's `ga` (0 for none, or an act cancelled). A finished act is still its act: the
  *  host hands the one its hand is on - the act playing, or the last swing of one finished - and none once it lets go.
@@ -76,25 +115,37 @@ export function gatherActCode(st) {
  * count is the session's, run on across acts and riding past their end.
  */
 export function createGatherPose() {
-  let heard = null, prev = {}, n = 0, gb = 0;
-  const count = (kind) => { n = (n % 255) + 1; gb = n * 16 + GATHER_POSE_BEATS.indexOf(kind); };
+  let heard = null,
+    prev = {},
+    n = 0,
+    gb = 0;
+  const count = (kind) => {
+    n = (n % 255) + 1;
+    gb = n * 16 + GATHER_POSE_BEATS.indexOf(kind);
+  };
   return {
     frame(act) {
-      if (act !== heard) { heard = act; prev = {}; }
+      if (act !== heard) {
+        heard = act;
+        prev = {};
+      }
       if (!act?.state) return;
       for (const b of actBeats(prev, act.state, 0)) {
         const kind = POSE_BEAT_OF[/** @type {keyof typeof POSE_BEAT_OF} */ (b.name)];
         if (kind !== undefined) count(kind);
       }
     },
-    stop() { count('stop'); },
+    stop() {
+      count('stop');
+    },
     fields(act) {
       const out = /** @type {{ ga?: number, gb?: number, gm?: number }} */ ({});
       const ga = gatherActCode(act?.state);
       if (ga) {
         out.ga = ga;
         const st = act.state;
-        if (st.kind === 'fish' && st.phase !== 'wind' && Number(st.throwM) > 0) out.gm = Math.max(1, Math.min(POSE_GATHER_THROW_MAX, Math.round(st.throwM)));
+        if (st.kind === 'fish' && st.phase !== 'wind' && Number(st.throwM) > 0)
+          out.gm = Math.max(1, Math.min(POSE_GATHER_THROW_MAX, Math.round(st.throwM)));
       }
       if (gb) out.gb = gb;
       return out;
@@ -107,7 +158,7 @@ export function createGatherPose() {
 /** The act a drawn pose names, or null off one. */
 export const gatherActOf = (shown) => GATHER_POSE_ACTS[(shown?.ga | 0) - 1] ?? null;
 /** The kind of the beat a `gb` names, or null for none. */
-export const gatherBeatOf = (gb) => ((gb | 0) > 0 ? GATHER_POSE_BEATS[(gb | 0) & 15] ?? null : null);
+export const gatherBeatOf = (gb) => ((gb | 0) > 0 ? (GATHER_POSE_BEATS[(gb | 0) & 15] ?? null) : null);
 /** The acts the body kneels for: a herb by hand or with the sickle, the Basket's search, the knife at a body. */
 const KNEELS = new Set(['hand', 'steady', 'basket', 'trace']);
 /** Whether a drawn pose kneels at its act. */
@@ -122,7 +173,8 @@ export const GATHER_POSE_TOOLS = f({
   trace: f({ group: 'Weapons', templateIndex: 113, material: 0 }),
 });
 /** The tool a drawn pose holds for its act, or null (no act, or a hand that holds none). */
-export const peerGatherTool = (shown) => GATHER_POSE_TOOLS[/** @type {keyof typeof GATHER_POSE_TOOLS} */ (gatherActOf(shown))] ?? null;
+export const peerGatherTool = (shown) =>
+  GATHER_POSE_TOOLS[/** @type {keyof typeof GATHER_POSE_TOOLS} */ (gatherActOf(shown))] ?? null;
 /** The strike a tool's blow is drawn with - the hand's own (scenes/treeHost.js axeHandFrame's StrikeDownRight, mineHost.js
  *  pickHandFrame's StrikeDown). */
 export const GATHER_POSE_STRIKES = f({ chop: 'StrikeDownRight', mine: 'StrikeDown' });
@@ -135,10 +187,19 @@ export const GATHER_POSE_STRIKES = f({ chop: 'StrikeDownRight', mine: 'StrikeDow
  * @param {{ init?: boolean, ga?: number, gb?: number }} seen @param {any} shown @returns {'blow'|'throw'|null}
  */
 export function peerGatherSwing(seen, shown) {
-  const ga = shown?.ga | 0, gb = shown?.gb | 0;
-  if (!seen.init) { seen.init = true; seen.ga = ga; seen.gb = gb; return null; }
+  const ga = shown?.ga | 0,
+    gb = shown?.gb | 0;
+  if (!seen.init) {
+    seen.init = true;
+    seen.ga = ga;
+    seen.gb = gb;
+    return null;
+  }
   let out = /** @type {'blow'|'throw'|null} */ (null);
-  if (gb > 0 && gb !== seen.gb) { const k = gatherBeatOf(gb); if (k === 'blow' || k === 'clean') out = 'blow'; }
+  if (gb > 0 && gb !== seen.gb) {
+    const k = gatherBeatOf(gb);
+    if (k === 'blow' || k === 'clean') out = 'blow';
+  }
   if (!out && ga !== seen.ga && GATHER_POSE_ACTS[ga - 1] === 'fly') out = 'throw';
   seen.ga = ga;
   if (gb > 0) seen.gb = gb;
@@ -162,18 +223,38 @@ export const PEER_ACT_REACH_M = 1;
 export const PEER_ACT_HIGH_M = 0.8;
 /** A peer's blow lands this long after the beat that swung it (s): DFU's melee hit frame of the tool's own swing (the
  *  acts' `landsIn`, GATHER-FEEL) - the axe's and the pick's swing are one length (CHOP_ACT, MINE_ACT). */
-export const PEER_BLOW_DELAY_S = Object.freeze({ chop: CHOP_ACT.swingS * MELEE_HIT_SHARE, mine: MINE_ACT.swingS * MELEE_HIT_SHARE });
+export const PEER_BLOW_DELAY_S = Object.freeze({
+  chop: CHOP_ACT.swingS * MELEE_HIT_SHARE,
+  mine: MINE_ACT.swingS * MELEE_HIT_SHARE,
+});
 /** The beats a pose's beat says, by its kind and the act (the tool's blow its own clip). */
 const BLOW_SAYS = f({ chop: f({ blow: 'chop', clean: 'chopClean' }), mine: f({ blow: 'pick', clean: 'pickGlint' }) });
-const BEAT_SAYS = f({ bruise: 'bruise', pluck: 'pluck', find: 'find', miss: 'miss', knife: 'knife', slice: 'slice', tear: 'tear', peel: 'peel', out: 'netOut' });
+const BEAT_SAYS = f({
+  bruise: 'bruise',
+  pluck: 'pluck',
+  find: 'find',
+  miss: 'miss',
+  knife: 'knife',
+  slice: 'slice',
+  tear: 'tear',
+  peel: 'peel',
+  out: 'netOut',
+});
 
 /** A peer's act's place: PEER_ACT_REACH_M before its feet along its facing, PEER_ACT_HIGH_M up. */
-export const peerActAt = (feet, yaw, reach = PEER_ACT_REACH_M, high = PEER_ACT_HIGH_M) => [feet[0] + Math.sin(yaw) * reach, feet[1] + high, feet[2] + Math.cos(yaw) * reach];
+export const peerActAt = (feet, yaw, reach = PEER_ACT_REACH_M, high = PEER_ACT_HIGH_M) => [
+  feet[0] + Math.sin(yaw) * reach,
+  feet[1] + high,
+  feet[2] + Math.cos(yaw) * reach,
+];
 /** The acts a net is out for (its water heard where it landed). */
 const NET_OUT = new Set(['wait', 'tug', 'haul']);
 /** Where a peer's net landed: its throw (`gm`, whole metres) before its feet along its facing, at their height - null
  *  with no throw on the pose. */
-const peerNetAt = (shown, feet, yaw) => (feet && (shown?.gm | 0) > 0 ? [feet[0] + Math.sin(yaw) * shown.gm, feet[1], feet[2] + Math.cos(yaw) * shown.gm] : null);
+const peerNetAt = (shown, feet, yaw) =>
+  feet && (shown?.gm | 0) > 0
+    ? [feet[0] + Math.sin(yaw) * shown.gm, feet[1], feet[2] + Math.cos(yaw) * shown.gm]
+    : null;
 
 export class PeerGatherSounds {
   /**
@@ -182,7 +263,14 @@ export class PeerGatherSounds {
    *   sounds' switch (systems/enhancedSounds.js - off, each beat's DFU cue); `rand` the variety's dice; `install` false
    *   keeps the clips unloaded; `now` the clock (ms) the floor and the held blows read (the pins' seam).
    */
-  constructor({ audio = null, profile = null, on = enhancedSoundsOn, rand = Math.random, install = true, now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()) } = {}) {
+  constructor({
+    audio = null,
+    profile = null,
+    on = enhancedSoundsOn,
+    rand = Math.random,
+    install = true,
+    now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()),
+  } = {}) {
     this.audio = audio;
     this.profile = profile;
     this.on = on;
@@ -200,27 +288,38 @@ export class PeerGatherSounds {
    * the switch lets them be heard (out of it the act's state is kept silently, its held blows dropped).
    */
   update(id, shown, feet, heard = true) {
-    const ga = shown?.ga | 0, gb = shown?.gb | 0;
+    const ga = shown?.ga | 0,
+      gb = shown?.gb | 0;
     const yaw = Number.isFinite(shown?.yaw) ? shown.yaw : 0;
     let s = this.peers.get(id);
-    if (!s) { this.peers.set(id, { ga, gb, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] }); return; }   // first seen: an old act is not replayed
-    const fresh = gb > 0 && gb !== s.gb;   // a beat not yet heard (AUDIT GATHER-FEEL W4: none on a pose that names none - a reload's new page, its count not yet begun)
-    if (!ga && !s.ga && !fresh && !s.held.length) return;   // gathering nothing, no new beat, nothing in the air: a frame's no work (every peer in the room passes here)
+    if (!s) {
+      this.peers.set(id, { ga, gb, net: null, cueAt: -Infinity, plipAt: Infinity, thrashAt: Infinity, held: [] });
+      return;
+    } // first seen: an old act is not replayed
+    const fresh = gb > 0 && gb !== s.gb; // a beat not yet heard (AUDIT GATHER-FEEL W4: none on a pose that names none - a reload's new page, its count not yet begun)
+    if (!ga && !s.ga && !fresh && !s.held.length) return; // gathering nothing, no new beat, nothing in the air: a frame's no work (every peer in the room passes here)
     const t = this.now();
-    const doing = GATHER_POSE_ACTS[ga - 1] ?? null, before = GATHER_POSE_ACTS[s.ga - 1] ?? null;   // the act now, and as last seen (named apart from the hosts' key `act` - ROAD-H H5's sweep reads `if (act === ...)` as a key's arm)
+    const doing = GATHER_POSE_ACTS[ga - 1] ?? null,
+      before = GATHER_POSE_ACTS[s.ga - 1] ?? null; // the act now, and as last seen (named apart from the hosts' key `act` - ROAD-H H5's sweep reads `if (act === ...)` as a key's arm)
     const ok = heard && !!feet && !!this.audio?.play3d;
     if (ok && this.install && this.on()) installGatherSounds(this.audio);
     const place = feet ? peerActAt(feet, yaw) : null;
     // AUDIT GATHER-FEEL W2: a blow taken back - its act let go while it was in the air (the pose's `stop`) - goes before it
     // lands, as the gatherer's own ear drops it: the blow counted just before the stop, under the floor or not
-    if (fresh && gatherBeatOf(gb) === 'stop' && s.held.length) { const was = (((gb >> 4) + 253) % 255) + 1; s.held = s.held.filter((h) => h.n !== was); }
+    if (fresh && gatherBeatOf(gb) === 'stop' && s.held.length) {
+      const was = (((gb >> 4) + 253) % 255) + 1;
+      s.held = s.held.filter((h) => h.n !== was);
+    }
     // the held blows whose time has come, first - they were struck before anything this pose begins; dropped with the
     // peer out of earshot
     if (s.held.length) {
       if (!ok) s.held.length = 0;
       else {
         const due = s.held.filter((h) => h.due <= t);
-        if (due.length) { s.held = s.held.filter((h) => h.due > t); for (const h of due) this._say(h.name, h.at, h.pitch, h.gain); }
+        if (due.length) {
+          s.held = s.held.filter((h) => h.due > t);
+          for (const h of due) this._say(h.name, h.at, h.pitch, h.gain);
+        }
       }
     }
     const cueOk = t - s.cueAt >= PEER_GATHER_CUE_MS;
@@ -228,27 +327,51 @@ export class PeerGatherSounds {
     if (ok && cueOk) {
       // the act turned: the kneel among the leaves, the net thrown, landing, tugged, hauled
       if (doing !== before) {
-        if (doing === 'hand' || doing === 'steady' || doing === 'basket') { this._say('kneel', place); cued = true; }
-        if (doing === 'fly') { this._say('throw', place); cued = true; }
+        if (doing === 'hand' || doing === 'steady' || doing === 'basket') {
+          this._say('kneel', place);
+          cued = true;
+        }
+        if (doing === 'fly') {
+          this._say('throw', place);
+          cued = true;
+        }
         if (doing === 'wait') {
           s.net = peerNetAt(shown, feet, yaw) ?? place;
-          this._say('netLand', s.net); cued = true;
+          this._say('netLand', s.net);
+          cued = true;
         }
-        if (doing === 'tug') { this._say('tug', s.net ?? place); cued = true; }
-        if (doing === 'haul') { this._say('hauling', s.net ?? place); cued = true; }
+        if (doing === 'tug') {
+          this._say('tug', s.net ?? place);
+          cued = true;
+        }
+        if (doing === 'haul') {
+          this._say('hauling', s.net ?? place);
+          cued = true;
+        }
       }
       // a beat: the tool's swing now and its blow on the hit frame (the tool the act's - or, a last blow come with the
       // pose that let the act go, the act's it ended); the hand's, the knife's and the net's own
       if (fresh) {
         const kind = gatherBeatOf(gb);
-        const tool = doing === 'chop' || doing === 'mine' ? doing : before === 'chop' || before === 'mine' ? before : null;
+        const tool =
+          doing === 'chop' || doing === 'mine' ? doing : before === 'chop' || before === 'mine' ? before : null;
         const blow = (kind === 'blow' || kind === 'clean') && tool ? BLOW_SAYS[tool][kind] : null;
         if (blow && tool && place) {
           this._say('swing', place, tool === 'mine' ? GATHER_SOUND.PICK_SWING_PITCH : 1);
-          s.held.push({ due: t + PEER_BLOW_DELAY_S[tool] * 1000, name: blow, at: place, pitch: 1, gain: 1, n: gb >> 4 });
+          s.held.push({
+            due: t + PEER_BLOW_DELAY_S[tool] * 1000,
+            name: blow,
+            at: place,
+            pitch: 1,
+            gain: 1,
+            n: gb >> 4,
+          });
           cued = true;
         } else if (kind && BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)]) {
-          this._say(BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)], kind === 'out' ? peerActAt(feet, yaw, 0, PEER_ACT_HIGH_M) : place);
+          this._say(
+            BEAT_SAYS[/** @type {keyof typeof BEAT_SAYS} */ (kind)],
+            kind === 'out' ? peerActAt(feet, yaw, 0, PEER_ACT_HIGH_M) : place,
+          );
           cued = true;
         }
       }
@@ -260,28 +383,46 @@ export class PeerGatherSounds {
     else if (!s.net) s.net = peerNetAt(shown, feet, yaw);
     // the water's own beats: a plip by the floats while the net waits, the catch fighting while it hauls
     if (doing === 'wait') {
-      if (before !== 'wait' || !Number.isFinite(s.plipAt)) s.plipAt = t + this._span(GATHER_SOUND.PLIP_MIN_S, GATHER_SOUND.PLIP_MAX_S);
-      else if (t >= s.plipAt) { if (ok) this._say('plip', s.net ?? place); s.plipAt = t + this._span(GATHER_SOUND.PLIP_MIN_S, GATHER_SOUND.PLIP_MAX_S); }
+      if (before !== 'wait' || !Number.isFinite(s.plipAt))
+        s.plipAt = t + this._span(GATHER_SOUND.PLIP_MIN_S, GATHER_SOUND.PLIP_MAX_S);
+      else if (t >= s.plipAt) {
+        if (ok) this._say('plip', s.net ?? place);
+        s.plipAt = t + this._span(GATHER_SOUND.PLIP_MIN_S, GATHER_SOUND.PLIP_MAX_S);
+      }
     } else s.plipAt = Infinity;
     if (doing === 'haul') {
-      if (before !== 'haul' || !Number.isFinite(s.thrashAt)) s.thrashAt = t + this._span(GATHER_SOUND.THRASH_MIN_S, GATHER_SOUND.THRASH_MAX_S);
-      else if (t >= s.thrashAt) { if (ok) this._say('thrash', s.net ?? place); s.thrashAt = t + this._span(GATHER_SOUND.THRASH_MIN_S, GATHER_SOUND.THRASH_MAX_S); }
+      if (before !== 'haul' || !Number.isFinite(s.thrashAt))
+        s.thrashAt = t + this._span(GATHER_SOUND.THRASH_MIN_S, GATHER_SOUND.THRASH_MAX_S);
+      else if (t >= s.thrashAt) {
+        if (ok) this._say('thrash', s.net ?? place);
+        s.thrashAt = t + this._span(GATHER_SOUND.THRASH_MIN_S, GATHER_SOUND.THRASH_MAX_S);
+      }
     } else s.thrashAt = Infinity;
     s.ga = ga;
     if (gb > 0) s.gb = gb;
   }
 
   /** A peer gone (left the room, out of the drawn set): the next sight of them is a first. */
-  forget(id) { this.peers.delete(id); }
+  forget(id) {
+    this.peers.delete(id);
+  }
   /** The floating origin moved (`offset` added to every scene point - world.js's recentre, through remotePlayers.js
    *  rebaseSounds): the places held (a net's where it landed, a blow's in the air) move with the land (AUDIT GATHER-FEEL
    *  W1: dropped, a net's water was heard at the body for the rest of its cast). */
   rebase(offset) {
     if (!offset) return;
-    for (const s of this.peers.values()) for (const p of [s.net, ...s.held.map((h) => h.at)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }
+    for (const s of this.peers.values())
+      for (const p of [s.net, ...s.held.map((h) => h.at)])
+        if (p) {
+          p[0] += offset[0];
+          p[1] += offset[1];
+          p[2] += offset[2];
+        }
   }
 
-  _span(lo, hi) { return (lo + this.rand() * (hi - lo)) * 1000; }
+  _span(lo, hi) {
+    return (lo + this.rand() * (hi - lo)) * 1000;
+  }
 
   /** A beat said at `at`: the port's own clip on the enhanced skin (its volume, its pitch and its variety, the ear's -
    *  GATHER_SAY), the DFU cue the HUD said for it on the classic one - positional either way, with the peers' falloff. */
@@ -302,6 +443,8 @@ export class PeerGatherSounds {
       if (!cue?.clips.length) return;
       const clip = cue.clips[Math.min(cue.clips.length - 1, Math.floor(this.rand() * cue.clips.length))];
       this.audio.play3d(clip, at, cue.volume, { ...(this.profile ?? {}) });
-    } catch { /* a peer's sound never stops the frame */ }
+    } catch {
+      /* a peer's sound never stops the frame */
+    }
   }
 }

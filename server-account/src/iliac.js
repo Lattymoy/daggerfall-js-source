@@ -43,11 +43,22 @@
 // ═══════════════════════════════════════════════════════════════════
 import { verifyIliacReceipt } from '../../src/net/iliac/iliacReceipt.js';
 import { mintDeckOrder, deckDigest } from '../../src/net/identityToken.js';
-import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arena/arenaLaw.js';
+import {
+  arenaSeasonOf,
+  arenaSeasonEndsS,
+  arenaSeasonDay,
+  eloAfter,
+  ARENA_ELO_START,
+  ARENA_ELO_MIN,
+  ARENA_ELO_MAX,
+  arenaRatingOk,
+  ARENA_PAIR_DAY_MAX,
+  ARENA_PAIR_SEASON_MAX,
+} from '../../src/net/arena/arenaLaw.js';
 import { deckShortOf } from '../../src/net/card/cardWorthLaw.js';
-import { deckValid } from '../../src/net/iliac/iliacHand.js';   // the rules' own deck law (iliacHand.js imports cardLaw.js, dice.js and iliacCards.js - the bundle's already)
+import { deckValid } from '../../src/net/iliac/iliacHand.js'; // the rules' own deck law (iliacHand.js imports cardLaw.js, dice.js and iliacCards.js - the bundle's already)
 import { realmActFirst, getRealmBlob, realmSaveTextOf } from './realm.js';
-import { boardNamesOf } from './boardNames.js';   // AUDIT CARDS-6 D3: a board's names wear every honour, the arena's too
+import { boardNamesOf } from './boardNames.js'; // AUDIT CARDS-6 D3: a board's names wear every honour, the arena's too
 
 /** MEASURE (CARDS10): the games and the different foes the season's #1 must have played to wear the title - the
  *  arena's laurel's bounds (arenaLaw.js ARENA_CHAMPION_MIN_BOUTS, ARENA_CHAMPION_MIN_FOES), a card game's own. */
@@ -81,11 +92,16 @@ export async function deckOrderOf(ctx, player, env, { character, realm = null, d
   if (side.error) return side;
   if (!side.at) return { error: 'cards-realm' };
   if (!signingKey) return { error: 'cards-closed' };
-  if (!Array.isArray(deck) || !deck.every((x) => typeof x === 'string') || deckValid(deck) !== null) return { error: 'bad-deck' };
+  if (!Array.isArray(deck) || !deck.every((x) => typeof x === 'string') || deckValid(deck) !== null)
+    return { error: 'bad-deck' };
   const blob = await getRealmBlob(ctx, player.id, side.at.id);
   if (blob.error) return blob;
   let save = null;
-  try { save = JSON.parse(await realmSaveTextOf(blob.object)); } catch { save = null; }
+  try {
+    save = JSON.parse(await realmSaveTextOf(blob.object));
+  } catch {
+    save = null;
+  }
   if (!save || typeof save !== 'object' || Array.isArray(save)) return { error: 'no-data' };
   const short = deckShortOf(save, deck);
   if (short) return { error: 'deck-short', card: short };
@@ -97,7 +113,10 @@ export async function deckOrderOf(ctx, player, env, { character, realm = null, d
 
 /** One account's rated games of a season, read off its own side of each (an indexed read a side). `p` the account's
  *  parameter, `s` the season's. A row whose two sides are one account is read once, from `a`. */
-const MY_GAMES_SQL = (p, s) => `SELECT ra1 AS r, at, rowid AS k, CASE result WHEN 0 THEN 1 ELSE 0 END AS w, CASE result WHEN 1 THEN 1 ELSE 0 END AS l, CASE result WHEN 2 THEN 1 ELSE 0 END AS d
+const MY_GAMES_SQL = (
+  p,
+  s,
+) => `SELECT ra1 AS r, at, rowid AS k, CASE result WHEN 0 THEN 1 ELSE 0 END AS w, CASE result WHEN 1 THEN 1 ELSE 0 END AS l, CASE result WHEN 2 THEN 1 ELSE 0 END AS d
       FROM iliac_games WHERE a = ${p} AND season = ${s} AND rated = 1
     UNION ALL
     SELECT rb1, at, rowid, CASE result WHEN 1 THEN 1 ELSE 0 END, CASE result WHEN 0 THEN 1 ELSE 0 END, CASE result WHEN 2 THEN 1 ELSE 0 END
@@ -109,7 +128,9 @@ const MY_GAMES_SQL = (p, s) => `SELECT ra1 AS r, at, rowid AS k, CASE result WHE
  *  under the row it chained from, so the account's rating was read off T+1's again and the later-landed game's change
  *  was lost (a loss of 17, gone). The rowid is the order the rows were written in, which this guard already serialises
  *  (every row chains from the one written last), and no row is ever deleted (an account's sides go NULL). */
-const RATING_NOW_SQL = (p) => `COALESCE((SELECT CASE WHEN r BETWEEN ${ARENA_ELO_MIN} AND ${ARENA_ELO_MAX} THEN r ELSE ${ARENA_ELO_START} END
+const RATING_NOW_SQL = (
+  p,
+) => `COALESCE((SELECT CASE WHEN r BETWEEN ${ARENA_ELO_MIN} AND ${ARENA_ELO_MAX} THEN r ELSE ${ARENA_ELO_START} END
     FROM (SELECT r FROM (${MY_GAMES_SQL(p, '?2')}) ORDER BY k DESC LIMIT 1)), ${ARENA_ELO_START})`;
 /** AUDIT CARDS-6 D12: A PAIR'S RATED GAMES (`?1` and `?2` its two accounts, `when` the rows' further bound) - its two
  *  seatings, each one lookup on idx_iliac_games_pair. As one `(a = ?1 AND b = ?2) OR (a = ?2 AND b = ?1)` the planner
@@ -136,14 +157,26 @@ const BOARD_SQL = `WITH ${SIDES_SQL},
 /** An account's rating in a season and its tally - the start for one that has played nobody. Its rating the last row
  *  written (AUDIT CARDS-6 D1, RATING_NOW_SQL). */
 export async function iliacRatingOf({ db }, playerId, season) {
-  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,
-       SUM(w) AS w, SUM(l) AS l, SUM(d) AS d, COUNT(*) AS n FROM (${MY_GAMES_SQL('?2', '?1')})`).bind(season, playerId).first();
+  const t = await db
+    .prepare(
+      `SELECT (SELECT r FROM (${MY_GAMES_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,
+       SUM(w) AS w, SUM(l) AS l, SUM(d) AS d, COUNT(*) AS n FROM (${MY_GAMES_SQL('?2', '?1')})`,
+    )
+    .bind(season, playerId)
+    .first();
   const n = (v) => Number(v ?? 0) || 0;
-  return { rating: t?.last != null ? arenaRatingOk(Number(t.last)) : ARENA_ELO_START, wins: n(t?.w), losses: n(t?.l), draws: n(t?.d), games: n(t?.n) };
+  return {
+    rating: t?.last != null ? arenaRatingOk(Number(t.last)) : ARENA_ELO_START,
+    wins: n(t?.w),
+    losses: n(t?.l),
+    draws: n(t?.d),
+    games: n(t?.n),
+  };
 }
 
 /** May this board row wear the title - its rated games, against enough different foes. */
-export const iliacTitleWorthy = (r) => !!r && Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= ILIAC_CHAMPION_MIN_FOES;
+export const iliacTitleWorthy = (r) =>
+  !!r && Number(r.games) >= ILIAC_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= ILIAC_CHAMPION_MIN_FOES;
 /** The board's #1 when they may wear the title, or null - the FIRST row only: one short holds the top and nobody wears it. */
 export const iliacChampionOfBoard = (rows) => (iliacTitleWorthy(rows?.[0]) ? rows[0].player : null);
 /** The season's #1 who may wear the title, or null. */
@@ -154,12 +187,19 @@ export async function iliacChampionOf({ db }, season) {
 /** One Worker's word of the season's #1, kept ILIAC_CHAMPION_CACHE_S. */
 let _champ = { season: 0, at: -Infinity, id: null };
 /** Tests: the kept #1 forgotten. */
-export function _resetIliacCache() { _champ = { season: 0, at: -Infinity, id: null }; }
+export function _resetIliacCache() {
+  _champ = { season: 0, at: -Infinity, id: null };
+}
 /** The board's top counted and kept (iliac_champions), for every Worker. Answers the #1 (or null). */
 export async function storeIliacChampion(ctx, season, nowS) {
   const id = await iliacChampionOf(ctx, season);
-  await ctx.db.prepare(`INSERT INTO iliac_champions (season, player, at) VALUES (?1, ?2, ?3)
-    ON CONFLICT (season) DO UPDATE SET player = excluded.player, at = excluded.at`).bind(season, id, nowS).run();
+  await ctx.db
+    .prepare(
+      `INSERT INTO iliac_champions (season, player, at) VALUES (?1, ?2, ?3)
+    ON CONFLICT (season) DO UPDATE SET player = excluded.player, at = excluded.at`,
+    )
+    .bind(season, id, nowS)
+    .run();
   _champ = { season, at: nowS, id };
   return id;
 }
@@ -174,15 +214,28 @@ async function championNow(ctx, nowS) {
   if (_champ.season === season && nowS - _champ.at < ILIAC_CHAMPION_CACHE_S) return _champ.id;
   const kept = await championKeptRead(ctx.db, season).first();
   const stale = !(kept && nowS - Number(kept.at) < ILIAC_CHAMPION_STORED_S);
-  return championFrom(ctx, nowS, season, kept, stale && await seasonPlayed(ctx, season));
+  return championFrom(ctx, nowS, season, kept, stale && (await seasonPlayed(ctx, season)));
 }
 /** SIGN-BATCH: the kept #1's row, as a statement; and whether the season has a rated game, as one. */
-const championKeptRead = (/** @type {any} */ db, /** @type {number} */ season) => db.prepare('SELECT player, at FROM iliac_champions WHERE season = ?1').bind(season);
-const playedRead = (/** @type {any} */ db, /** @type {number} */ season) => db.prepare('SELECT 1 AS one FROM iliac_games WHERE season = ?1 AND rated = 1 LIMIT 1').bind(season);
+const championKeptRead = (/** @type {any} */ db, /** @type {number} */ season) =>
+  db.prepare('SELECT player, at FROM iliac_champions WHERE season = ?1').bind(season);
+const playedRead = (/** @type {any} */ db, /** @type {number} */ season) =>
+  db.prepare('SELECT 1 AS one FROM iliac_games WHERE season = ?1 AND rated = 1 LIMIT 1').bind(season);
 /** The season's #1 from its kept row - counted again and stored where it is none or stale and the season was played -
  *  and kept by this Worker. */
-async function championFrom(/** @type {any} */ ctx, /** @type {number} */ nowS, /** @type {number} */ season, /** @type {any} */ kept, /** @type {boolean} */ played) {
-  const id = kept && nowS - Number(kept.at) < ILIAC_CHAMPION_STORED_S ? kept.player ?? null : played ? await storeIliacChampion(ctx, season, nowS) : null;
+async function championFrom(
+  /** @type {any} */ ctx,
+  /** @type {number} */ nowS,
+  /** @type {number} */ season,
+  /** @type {any} */ kept,
+  /** @type {boolean} */ played,
+) {
+  const id =
+    kept && nowS - Number(kept.at) < ILIAC_CHAMPION_STORED_S
+      ? (kept.player ?? null)
+      : played
+        ? await storeIliacChampion(ctx, season, nowS)
+        : null;
   _champ = { season, at: nowS, id };
   return id;
 }
@@ -192,10 +245,15 @@ export function iliacHonoursPlan(/** @type {any} */ ctx, /** @type {any} */ play
   if (!player?.handle) return { reads: [], from: async () => ({ champion: false }) };
   const season = arenaSeasonOf(nowS);
   const cached = _champ.season === season && nowS - _champ.at < ILIAC_CHAMPION_CACHE_S;
-  const keptId = cached ? _champ.id : null;   // PRIMARY-TRIPS audit: the #1 kept when the plan was made - read after the batch, another request's count of a new season could stand in its place
+  const keptId = cached ? _champ.id : null; // PRIMARY-TRIPS audit: the #1 kept when the plan was made - read after the batch, another request's count of a new season could stand in its place
   return {
     reads: cached ? [] : [championKeptRead(ctx.db, season), playedRead(ctx.db, season)],
-    from: async (/** @type {any[]} */ res) => ({ champion: (cached ? keptId : await championFrom(ctx, nowS, season, res[0]?.results?.[0] ?? null, !!res[1]?.results?.[0])) === player.id }),
+    from: async (/** @type {any[]} */ res) => ({
+      champion:
+        (cached
+          ? keptId
+          : await championFrom(ctx, nowS, season, res[0]?.results?.[0] ?? null, !!res[1]?.results?.[0])) === player.id,
+    }),
   };
 }
 /**
@@ -208,9 +266,14 @@ export function iliacHonoursPlan(/** @type {any} */ ctx, /** @type {any} */ play
 export async function iliacChampionClock(ctx) {
   const season = arenaSeasonOf(ctx.nowS);
   // ONE question a quiet minute (AUDIT SCALE D7's law): the kept word's age and the season's last rated game together
-  const q = await ctx.db.prepare(`SELECT (SELECT at FROM iliac_champions WHERE season = ?1) AS kept,
+  const q = await ctx.db
+    .prepare(
+      `SELECT (SELECT at FROM iliac_champions WHERE season = ?1) AS kept,
       (SELECT player FROM iliac_champions WHERE season = ?1) AS player,
-      (SELECT MAX(at) FROM iliac_games WHERE season = ?1 AND rated = 1) AS last`).bind(season).first();
+      (SELECT MAX(at) FROM iliac_games WHERE season = ?1 AND rated = 1) AS last`,
+    )
+    .bind(season)
+    .first();
   const kept = q?.kept == null ? null : { at: Number(q.kept), player: q.player ?? null };
   if (kept && ctx.nowS - kept.at < ILIAC_CHAMPION_CLOCK_S) return 0;
   const last = { at: q?.last ?? null };
@@ -243,8 +306,19 @@ export async function withIliacHonours(ctx, player, nowS) {
 async function gameAnswer(ctx, me, row) {
   const side = row.a === me ? 0 : 1;
   const result = row.result === 2 ? 'draw' : row.result === side ? 'won' : 'lost';
-  const before = side === 0 ? row.ra0 : row.rb0, after = side === 0 ? row.ra1 : row.rb1;
-  return { game: row.game, side, result, how: row.how, rating: after, delta: after - before, rated: row.rated === 1, season: row.season, standing: await iliacRatingOf(ctx, me, row.season) };
+  const before = side === 0 ? row.ra0 : row.rb0,
+    after = side === 0 ? row.ra1 : row.rb1;
+  return {
+    game: row.game,
+    side,
+    result,
+    how: row.how,
+    rating: after,
+    delta: after - before,
+    rated: row.rated === 1,
+    season: row.season,
+    standing: await iliacRatingOf(ctx, me, row.season),
+  };
 }
 
 /** AUDIT CARDS-6 D12: MAY THIS RATED GAME MOVE THE BOARD'S TOP? Every rated claim counted the season's whole board
@@ -290,7 +364,8 @@ export async function claimIliac(ctx, player, receipt, publicKey) {
   // and kept the receipt a week, offered every five minutes, for a game nothing can rate
   if (!linked(a) || !linked(b)) return { recorded: false, why: 'foe-unregistered' };
   for (let tries = 0; tries < ILIAC_RATE_TRIES; tries++) {
-    const ra = await iliacRatingOf(ctx, a, season), rb = await iliacRatingOf(ctx, b, season);
+    const ra = await iliacRatingOf(ctx, a, season),
+      rb = await iliacRatingOf(ctx, b, season);
     // THE PAIR'S DAY AND SEASON: past the arena's bounds between the two, a game is kept and not counted. AUDIT CARDS-6
     // D5: the day is the GAMES' - each row's `played`, its receipt's own second, within a day either side of this one's -
     // where `at > now - 86400` read the claims' clock: ten games played in an hour, their receipts held and carried five
@@ -298,15 +373,27 @@ export async function claimIliac(ctx, player, receipt, publicKey) {
     const pair = await db.prepare(PAIR_SQL('played > ?3 - 86400 AND played < ?3 + 86400')).bind(a, b, c.i).first();
     const pairSeason = await db.prepare(PAIR_SQL('season = ?3')).bind(a, b, season).first();
     const rated = Number(pair?.n ?? 0) < ARENA_PAIR_DAY_MAX && Number(pairSeason?.n ?? 0) < ARENA_PAIR_SEASON_MAX;
-    const [na, nb] = rated ? eloAfter(ra.rating, rb.rating, c.r === 0 ? 1 : c.r === 1 ? 0 : 0.5) : [ra.rating, rb.rating];
-    const ins = await db.prepare(`INSERT OR IGNORE INTO iliac_games (game, season, a, b, result, how, ra0, rb0, ra1, rb1, rated, played, at)
+    const [na, nb] = rated
+      ? eloAfter(ra.rating, rb.rating, c.r === 0 ? 1 : c.r === 1 ? 0 : 0.5)
+      : [ra.rating, rb.rating];
+    const ins = await db
+      .prepare(
+        `INSERT OR IGNORE INTO iliac_games (game, season, a, b, result, how, ra0, rb0, ra1, rb1, rated, played, at)
         SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13
-        WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)
-      .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, c.i, nowS).run();
+        WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`,
+      )
+      .bind(c.j, season, a, b, c.r, c.h, ra.rating, rb.rating, na, nb, rated ? 1 : 0, c.i, nowS)
+      .run();
     const row = await db.prepare('SELECT * FROM iliac_games WHERE game = ?1').bind(c.j).first();
     if (Number(ins?.meta?.changes ?? 0) > 0) {
       // AUDIT CARDS-6 D12: counted only when this game may move the top (topMayMove)
-      if (rated) { try { if (await topMayMove(ctx, season, a, b, na, nb)) await storeIliacChampion(ctx, season, nowS); } catch { /* the game is recorded; the #1 is counted again by its age */ } }
+      if (rated) {
+        try {
+          if (await topMayMove(ctx, season, a, b, na, nb)) await storeIliacChampion(ctx, season, nowS);
+        } catch {
+          /* the game is recorded; the #1 is counted again by its age */
+        }
+      }
       return { recorded: true, ...(await gameAnswer(ctx, player.id, row)) };
     }
     if (row) return { recorded: false, why: 'claimed', ...(await gameAnswer(ctx, player.id, row)) };
@@ -327,18 +414,38 @@ export async function iliacBoardOf(ctx, player, env) {
   const me = player?.id ?? null;
   const all = (await db.prepare(BOARD_SQL).bind(season).all()).results ?? [];
   const champion = iliacChampionOfBoard(all);
-  const ranked = all.map((r, i) => ({ player: r.player, rating: Number(r.rating), wins: Number(r.wins), losses: Number(r.losses), draws: Number(r.draws), games: Number(r.games), rank: i + 1, you: r.player === me }));
+  const ranked = all.map((r, i) => ({
+    player: r.player,
+    rating: Number(r.rating),
+    wins: Number(r.wins),
+    losses: Number(r.losses),
+    draws: Number(r.draws),
+    games: Number(r.games),
+    rank: i + 1,
+    you: r.player === me,
+  }));
   const shown = ranked.slice(0, ILIAC_BOARD_TOP);
   const mine = ranked.find((r) => r.you) ?? null;
   const pinned = mine && !shown.includes(mine) ? mine : null;
   // AUDIT CARDS-6 D3: the badges every honour's (boardNames.js) - the season's #1 this board counted, the arena's as a
   // letter's are; it laid its own alone, and the arena's #1 here wore neither its title nor its laurel
-  const names = await boardNamesOf(ctx, [...shown, pinned].filter(Boolean).map((r) => r.player).concat(champion ? [champion] : []), env, nowS, { iliac: (row) => ({ champion: champion === row.id }) });
+  const names = await boardNamesOf(
+    ctx,
+    [...shown, pinned]
+      .filter(Boolean)
+      .map((r) => r.player)
+      .concat(champion ? [champion] : []),
+    env,
+    nowS,
+    { iliac: (row) => ({ champion: champion === row.id }) },
+  );
   const named = (r) => (r ? { ...r, ...(names.get(r.player) ?? { name: '?', title: null, glyphs: [] }) } : null);
   return {
     ok: true,
-    season: { n: season, day: arenaSeasonDay(nowS), ends: arenaSeasonEndsS(season) },   // AUDIT CARDS-6 D6: the season's end (it was handed the clock, and said the year 275760)
-    rows: shown.map(named), pinned: named(pinned), total: ranked.length,
+    season: { n: season, day: arenaSeasonDay(nowS), ends: arenaSeasonEndsS(season) }, // AUDIT CARDS-6 D6: the season's end (it was handed the clock, and said the year 275760)
+    rows: shown.map(named),
+    pinned: named(pinned),
+    total: ranked.length,
     champion: champion ? { player: champion, name: names.get(champion)?.name ?? '?' } : null,
     titleNeeds: { games: ILIAC_CHAMPION_MIN_GAMES, foes: ILIAC_CHAMPION_MIN_FOES },
     me: me ? { ...(await iliacRatingOf(ctx, me, season)), champion: champion === me } : null,

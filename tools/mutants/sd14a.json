@@ -11,8 +11,8 @@
   {
     "name": "SD14a-the-echoes-at-the-remnants-pitch",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "echoStep: Object.freeze([cue(SD_IRON.move, 0.8, 0.7, 30), cue(SD_IRON.move, 0.95, 0.7, 30)]),",
-    "new": "echoStep: Object.freeze([cue(SD_IRON.move, 0.5, 0.7, 30), cue(SD_IRON.move, 0.5, 0.7, 30)]),",
+    "old": "  echoStep: Object.freeze([cue(SD_IRON.move, 0.8, 0.7, 30), cue(SD_IRON.move, 0.95, 0.7, 30)]),",
+    "new": "  echoStep: Object.freeze([cue(SD_IRON.move, 0.5, 0.7, 30), cue(SD_IRON.move, 0.5, 0.7, 30)]),",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SD14a-a-late-join-sounding",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (!k || k.fi !== s.fi) { k = seen(s, t); return; }",
-    "new": "if (!k || k.fi !== s.fi) { k = { ...seen(s, t), ph: 1, awake: false, stun: false }; }",
+    "old": "      if (!k || k.fi !== s.fi) {\n        k = seen(s, t);\n        return;",
+    "new": "      if (!k || k.fi !== s.fi) {\n        k = { ...seen(s, t), ph: 1, awake: false, stun: false };",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SD14a-the-wake-heard-late",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (awake && !k.awake && t - s.op < SD_TURN_LATE_MS) {",
-    "new": "if (awake && !k.awake) {",
+    "old": "      if (awake && !k.awake && t - s.op < SD_TURN_LATE_MS) {",
+    "new": "      if (awake && !k.awake) {",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SD14a-no-turn",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "        if (s.ph === 2) play(SD_VOICE_CUES.outside, rem(4));\n",
-    "new": "        if (s.ph === 2) void 0;\n",
+    "old": "        if (s.ph === 2) play(SD_VOICE_CUES.outside, rem(4));",
+    "new": "        if (s.ph === 2) void 0;",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SD14a-no-stun",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (stun && !k.stun) { play(SD_VOICE_CUES.stunned, rem(4)); play(SD_VOICE_CUES.stunRing, rem(3)); }",
-    "new": "if (stun && !k.stun) { void 0; }",
+    "old": "        play(SD_VOICE_CUES.stunned, rem(4));\n        play(SD_VOICE_CUES.stunRing, rem(3));",
+    "new": "        void 0;",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SD14a-the-fall-heard-late",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (s.fell && !k.fell) { k.fell = true; if (t - s.fell.at < SD_TURN_LATE_MS) play(",
-    "new": "if (s.fell && !k.fell) { k.fell = true; if (true) play(",
+    "old": "        if (t - s.fell.at < SD_TURN_LATE_MS) play(SD_VOICE_CUES.fallCry, rem(4));",
+    "new": "        if (true) play(SD_VOICE_CUES.fallCry, rem(4));",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SD14a-sounds-after-the-end",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "      if (s.fell || s.lost) { k.t = t; return; }\n",
-    "new": "",
+    "old": "      if (s.fell || s.lost) {\n        k.t = t;\n        return;\n      }\n      // its wake, its turns, outside time and back",
+    "new": "      // its wake, its turns, outside time and back",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SD14a-a-grunt-each-blow",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (k.hurtHp - hp >= SD_HURT_FRAC && t - k.hurtAt >= SD_HURT_GAP_MS) {",
-    "new": "if (k.hurtHp - hp > 0) {",
+    "old": "      else if (k.hurtHp - hp >= SD_HURT_FRAC && t - k.hurtAt >= SD_HURT_GAP_MS) {",
+    "new": "      else if (k.hurtHp - hp > 0) {",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SD14a-never-a-grunt",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "{ play(SD_VOICE_CUES.hurt, rem(4)); k.hurtAt = t; k.hurtHp = hp; }",
-    "new": "{ k.hurtAt = t; k.hurtHp = hp; }",
+    "old": "        play(SD_VOICE_CUES.hurt, rem(4));\n        k.hurtAt = t;",
+    "new": "        k.hurtAt = t;",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SD14a-the-heal-unread",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "      if (hp > k.hurtHp) k.hurtHp = hp;   // a share joined: the count from where it stands\n",
-    "new": "",
+    "old": "      if (hp > k.hurtHp) k.hurtHp = hp; // a share joined: the count from where it stands\n      if (hp < SD_SLIP_FRAC && !k.slipped) {",
+    "new": "      if (hp < SD_SLIP_FRAC && !k.slipped) {",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SD14a-the-slip-every-frame",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (hp < SD_SLIP_FRAC && !k.slipped) {",
-    "new": "if (hp < SD_SLIP_FRAC) {",
+    "old": "      if (hp < SD_SLIP_FRAC && !k.slipped) {",
+    "new": "      if (hp < SD_SLIP_FRAC) {",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD14a-a-step-every-frame",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "else { m.walked += d; if (m.walked >= stride) {",
-    "new": "else { m.walked += d; if (d > 0) {",
+    "old": "        if (m.walked >= stride) {",
+    "new": "        if (d > 0) {",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SD14a-the-growl-while-striking",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (awake && !outside && !stun && !striking && !(s.ended > 0) && t >= k.growlAt) {",
-    "new": "if (awake && !outside && !stun && !(s.ended > 0) && t >= k.growlAt) {",
+    "old": "      if (awake && !outside && !stun && !striking && !(s.ended > 0) && t >= k.growlAt) {",
+    "new": "      if (awake && !outside && !stun && !(s.ended > 0) && t >= k.growlAt) {",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SD14a-the-growl-every-frame",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "k.growlAt = t + SD_GROWL_MS + k.rng() * SD_GROWL_MORE_MS; }",
-    "new": "k.growlAt = t; }",
+    "old": "        k.growlAt = t + SD_GROWL_MS + k.rng() * SD_GROWL_MORE_MS;",
+    "new": "        k.growlAt = t;",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SD14a-the-echoes-silent",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (up && !m.up) { play(SD_VOICE_CUES.echoRise[i] ?? SD_VOICE_CUES.echoRise[0], at(2)); m.hp = frac(E.h, E.m); }",
-    "new": "if (up && !m.up) { m.hp = frac(E.h, E.m); }",
+    "old": "          play(SD_VOICE_CUES.echoRise[i] ?? SD_VOICE_CUES.echoRise[0], at(2));\n          m.hp = frac(E.h, E.m);",
+    "new": "          m.hp = frac(E.h, E.m);",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "SD14a-both-echoes-gold",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "else if (!up && m.up) play(SD_VOICE_CUES.echoFall[i] ?? SD_VOICE_CUES.echoFall[0], at(2));",
-    "new": "else if (!up && m.up) play(SD_VOICE_CUES.echoFall[0], at(2));",
+    "old": "        } else if (!up && m.up) play(SD_VOICE_CUES.echoFall[i] ?? SD_VOICE_CUES.echoFall[0], at(2));",
+    "new": "        } else if (!up && m.up) play(SD_VOICE_CUES.echoFall[0], at(2));",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SD14a-no-release",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; if (t < a.at) sound(sdEndAgain(a, s) ? SD_VOICE_CUES.knell : SD_VOICE_CUES.release[A.key], where); }",
-    "new": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true; }",
+    "old": "          if (t < a.at) sound(sdEndAgain(a, s) ? SD_VOICE_CUES.knell : SD_VOICE_CUES.release[A.key], where);\n        }",
+    "new": "        }",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "SD14a-a-release-every-frame",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "if (!m.released && t >= a.at - SD_RELEASE_MS) { m.released = true;",
-    "new": "if (t >= a.at - SD_RELEASE_MS) { m.released = true;",
+    "old": "        if (!m.released && t >= a.at - SD_RELEASE_MS) {",
+    "new": "        if (t >= a.at - SD_RELEASE_MS) {",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SD14a-the-sting-for-every-volley",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "(a.tg ?? []).some((q) => Math.hypot(SD_ARENA.x + q[0] - me[0], SD_ARENA.z + q[1] - me[2]) <= SD_STING_M)",
-    "new": "(a.tg ?? []).length > 0",
+    "old": "          if (\n            A === SD_BLOWS.volley &&\n            me &&\n            t < a.at &&\n            (a.tg ?? []).some((q) => Math.hypot(SD_ARENA.x + q[0] - me[0], SD_ARENA.z + q[1] - me[2]) <= SD_STING_M)\n          )\n            sound(SD_VOICE_CUES.sting);",
+    "new": "          if (A === SD_BLOWS.volley && me && t < a.at && (a.tg ?? []).length > 0) sound(SD_VOICE_CUES.sting);",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"
     ]
@@ -227,7 +227,7 @@
   {
     "name": "SD14a-leave-remembering",
     "file": "src/scenes/superDungeon/sdRemnantVoice.js",
-    "old": "    leave() { k = null; },",
+    "old": "    leave() {\n      k = null;\n    },",
     "new": "    leave() {},",
     "tests": [
       "test/scenes/superDungeon/sd14a_voice.test.js"

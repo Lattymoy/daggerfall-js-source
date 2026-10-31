@@ -11,8 +11,7 @@ export const chatItemOf = (rec) => (rec && typeof rec === 'object' && !Array.isA
 
 /** Linked pieces on a line - `items` or a legacy single `item`, each through chatItemOf. */
 export function chatItemsOf(line) {
-  const raw = Array.isArray(line?.items) && line.items.length ? line.items
-    : (line?.item ? [line.item] : []);
+  const raw = Array.isArray(line?.items) && line.items.length ? line.items : line?.item ? [line.item] : [];
   return raw.map(chatItemOf).filter(Boolean);
 }
 
@@ -41,13 +40,19 @@ export function chatTextParts(text, items, el, { plain, mention } = {}) {
   let i = 0;
   const words = String(text ?? '');
   while (i < words.length) {
-    let bestAt = -1, best = -1, bestLen = 0;
+    let bestAt = -1,
+      best = -1,
+      bestLen = 0;
     for (let p = 0; p < pool.length; p++) {
       const slot = pool[p];
       if (!slot) continue;
       const needle = `[${slot.label}]`;
       const at = words.indexOf(needle, i);
-      if (at >= 0 && (bestAt < 0 || at < bestAt)) { bestAt = at; best = p; bestLen = needle.length; }
+      if (at >= 0 && (bestAt < 0 || at < bestAt)) {
+        bestAt = at;
+        best = p;
+        bestLen = needle.length;
+      }
     }
     if (best < 0) {
       const rest = words.slice(i);
@@ -91,12 +96,15 @@ export function matchBagItems(items, query, { limit = Infinity } = {}) {
     const hay = label.toLowerCase();
     if (q && !hay.includes(q)) continue;
     scored.push({
-      item, label,
+      item,
+      label,
       equipped: isEquipped(item),
       score: !q || hay.startsWith(q) ? 0 : 1,
     });
   }
-  scored.sort((a, b) => (b.equipped ? 1 : 0) - (a.equipped ? 1 : 0) || a.score - b.score || a.label.localeCompare(b.label));
+  scored.sort(
+    (a, b) => (b.equipped ? 1 : 0) - (a.equipped ? 1 : 0) || a.score - b.score || a.label.localeCompare(b.label),
+  );
   return Number.isFinite(limit) && limit >= 0 ? scored.slice(0, limit) : scored;
 }
 

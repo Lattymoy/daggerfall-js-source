@@ -1806,7 +1806,7 @@ scenes/horseCartPool.js frame -> poseTeam / pose3dTeam / horseRig.step, writeHor
 
 **Found.** PERF-TEAMS cuts another player's team past `PEER_TEAM_DRAW_M` (400 m); inside it nothing asked the view or
 the distance before a pose. `horseCartPool.js:"function pose3dTeam"` stepped every horse the pool stands - mine, and
-every peer's alone, following, parked in harness or pulling - through `horseRig.js:"function step(h,"`, which stepped
+every peer's alone, following, parked in harness or pulling - through `horseRig.js:"{ feet, yaw, speed"`, which stepped
 the gait, wrote the palette (`writeHorsePalette`, 33 bones composed) and sent it (`renderer.updateSkinPalette`, 1,632
 bytes) every frame. Only the draw asked the view (AUDIT COATS3D A12), so a horse behind the eye or a parked pair a
 hundred metres off cost what one in the street did. A riding peer's horse was the same:
@@ -1821,7 +1821,7 @@ container).
   since HORSE-VIEW II, its own section). False steps the clock and places the horse, and neither writes nor sends its
   pose: it stands in the last one sent (`stale`). The palette is the clock's alone, so `horseRig.js:"function pose(h)"`
   catches a horse up to the very palette an every-frame horse shows on that frame. A horse never posed is posed
-  whatever `pose` says. `seen` is the draw's own view test, and `horseRig.js:"function draw(h, canvas,"` takes `fresh`:
+  whatever `pose` says. `seen` is the draw's own view test, and `horseRig.js:"canvas, { proj, view,"` takes `fresh`:
   a pose behind its clock is caught up before the picture is queued.
 - The pool's horses - every one it stands, mine and every peer's, alone, following, parked in harness or pulling - are
   posed only in the last body pass's view (`_cam3d`, draw3d's camera - one frame behind; before the first pass, every
@@ -2095,7 +2095,7 @@ horse would stand.
 - **The standing horses.** Every horse that stands steps its idle's clock every frame. `end` judges the view by the
   camera the frame draws through - both hosts hand it the `{ proj, view }` they hand the draw - and the cadence by the
   distance from `begin`'s eye (world.js `mwv.eye`, exterior.js `eye`) over that camera's lens
-  (`standingHorses.js:"e.out = poseWhereSeen(rig, e.horse, o.feet, cam ? pass : null, eye, frameNo, e.phase);"`); `draw`
+  (`standingHorses.js:"e.out = poseWhereSeen"`); `draw`
   draws the ones in the view and catches up one come into it since its last pose (`fresh`) - judged by the camera it
   is drawn through, however it came into the view, so it hands the law no `wasOut`. The view test is the rig's
   own (`seen`, the draw's box), where it was a ball at the feet of its own (`VIEW_LIFT`, `VIEW_REACH`, gone): a horse
@@ -2188,12 +2188,12 @@ step sits inside `createComeSailAwayRuntime`, a host under its ceiling (`test/sc
 **The fix** (`scenes/comeSailAway/farLife.js` `createBoatLives`, `farTreeStep`; `systems/comeSailAway/comeSailAway.js`
 `animate`, `simulateParticles`; `comeSailAwayPool.js` `lifeOf`; `comeSailAwayPeers.js` `pose`).
 - **A module the runtime wires.** `comeSailAway.js:"const lives = createBoatLives({ eye: () => deps.pool?.lifeEye?.() ?? null });"`,
-  and the runtime's two steps call it (`farLife.js:"export function createBoatLives({ eye = () => null } = {}) {"`):
+  and the runtime's two steps call it (`farLife.js:"export function createBoatLives"`):
   past NEAR_LIFE_M of the pool's last eye (`lifeEye`, the one the peers' boats read) a boat's Animators step one frame
   in FAR_LIFE_EVERY on the time she missed, each boat on her own frame of the stride, and her particle systems on the
   same frame and time, none between. With no eye (a pool that keeps none), every boat every frame, as before. The
   runtime is three logical lines shorter, and its ceiling came down with it, 2,783 -> 2,780.
-- **A ship's tree** (`farLife.js:"export function farTreeStep(life, dt, root, pos, eye) {"`). One whose tree was
+- **A ship's tree** (`farLife.js:"export function farTreeStep"`). One whose tree was
   switched on or off or reshaped since she last lived lives that frame, whatever her range. BOAT-FAR's audit gave the
   pool's held walk this rule (its two stamps, inline in `lifeOf`); an Animator needs it as much - switched off it does
   nothing, switched on it starts over from its default state - so a far boat of mine stood again as I come out of a
@@ -2231,11 +2231,11 @@ runtime ceiling onto 2,780.
 and no answer moves.
 1. *Her stamps kept only as she lived.* `farTreeStep` wrote her tree's stamps on a frame she lived alone. A frame that
    holds her is one whose stamps read as kept - a changed one hands `farLifeStep` no place, and she lives - so there
-   they were written with what they held: the guard is gone (`farLife.js:"life.shape = shape; life.on = on;"`), its
+   they were written with what they held: the guard is gone (`farLife.js:"life.shape = shape"`), its
    mutant (the stamps kept every frame) was the same answer, and BO-tree-stamps-never-kept is re-aimed onto the line.
 2. *A parent no root of mine has.* `createBoatLives` read a boat's place as `root.parent ? root.position :
    root.localPosition`, the pool's `lifeOf`'s shape; a boat of mine is SpawnBoat's
-   (`comeSailAwayBoat.js:"newBoat.GameObject = new PrefabNode('Boat');"`) and nothing in the tree hangs that root under
+   (`comeSailAwayBoat.js:"newBoat.GameObject ="`) and nothing in the tree hangs that root under
    another node, so the first branch was never taken and its mutant survived every pin. It reads `root.localPosition`,
    and says why; BO-lives-eye-unread and BO-lives-range-unread are re-aimed onto it. The pool's `lifeOf` has the same
    branch over roots built the same way, and keeps it: it is not this record's line.
@@ -2260,7 +2260,7 @@ her frames still and is made when it was. A list made over an older walk is not 
 drew nothing), nor one a draw made outside a frame. The departure, past 600 m only: a mesh still loading when she was
 walked (a part's first sight, `meshFor`; the pipeline's classic models) is drawn from her next life, up to three frames
 later; a part's renderer switched on or off while she is held likewise. Once she is built, only her crew's flats are
-switched in this tree - `navalCrew.js:"for (const f of flats) { f.was = f.renderer.m_Enabled; f.renderer.m_Enabled = false; }"`
+switched in this tree - `navalCrew.js:"for (const f of flats)"`
 as a crew stands in their places, and `standDown` puts each back - and the draw passes a flat by, switched or not:
 `syncFlats` reads a flat's `m_Enabled` every frame, held or walked.
 

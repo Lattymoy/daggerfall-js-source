@@ -39,6 +39,7 @@ import { FACTION_TYPES } from '../../../src/formats/factionFile.js';
 import { BUILDING_TYPES } from '../../../src/world/buildingNames.js';
 import { ROOT, packMachine, loadTables } from '../../qlSources.mjs';
 import { town, dungeon, rmbBlock, worldOf, SPAWN, ITEM } from '../../fb1004dTowns.mjs';
+import { hostText } from '../../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 const DAY = 86400;
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -768,7 +769,7 @@ test('START2 on the freeware: the start page\'s classic face fits the native scr
 // ── the hosts' wiring ────────────────────────────────────────────
 
 test('START2 the world host wires the start host (scenes/startsHost.js) and grows no logic of its own: the page through the chargen door, the answer into its OnStartGame, the quests and the welcome once the character stands where their story begins, a birth online after it, the quest layer\'s start seam, and the writ at the passage; the fixed city\'s bench hands the commission (mutants: each line)', () => {
-  const W = rd('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   assert.match(W, /const starts = createStartsHost\(\{ params, pastBay: !!_lairTemplates, quests: \(\) => questWorld,\n\s+teleport: _teleportToPixel, landReady: arenaTraced, talk: townTalk, machine: \(\) => questBridge\?\.machine, ready: _worldReady \}\);/);   // PIN MOVED (AUDIT BAY-LEFT, its packages merged): world.js's one readiness, the homes' sweep's and the start's too
   assert.match(W, /starts\.begin\(\(start\) => \{ questBridge\.initAtGameStart\(start\); startTutorialTour\(\); \}, startKey\);/);
   assert.match(W, /if \(!questBridge\) \{ _questStartPending = startKey \?\? true; return; \}/, 'the answer kept while the bridge is still to come');

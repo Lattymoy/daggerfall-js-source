@@ -13,55 +13,19 @@
 // keys back through its string table; the port reads the record and
 // performs the same split.
 
-export const CLASS_QUESTIONS_TEXT_ID = 9000;      // classQuestionsToken (:42)
-export const QUESTION_COUNT = 10;                 // questionCount (:44)
-export const NO_CLASS_INDEX = 255;                // noClassIndex (:45)
-export const QUESTION_LIBRARY_SIZE = 40;          // questionCountInclusive (:216)
+export const CLASS_QUESTIONS_TEXT_ID = 9000; // classQuestionsToken (:42)
+export const QUESTION_COUNT = 10; // questionCount (:44)
+export const NO_CLASS_INDEX = 255; // noClassIndex (:45)
+export const QUESTION_LIBRARY_SIZE = 40; // questionCountInclusive (:216)
 
 /** The path each answer steers toward: rows are questions 1..40,
  *  columns the answers (a, b, c); values 0 Warrior, 1 Rogue, 2 Mage.
  *  Ripped from FALL.EXE v1.07.213 at offset 0x0059820C
  *  (CreateCharClassQuestions.cs:526-565, comment and table verbatim). */
 export const ANSWER_TABLE = Object.freeze([
-  0, 2, 1,
-  0, 2, 1,
-  0, 1, 2,
-  2, 0, 1,
-  0, 1, 2,
-  1, 0, 2,
-  0, 1, 2,
-  2, 0, 1,
-  0, 2, 1,
-  0, 1, 2,
-  0, 1, 2,
-  0, 1, 2,
-  0, 2, 1,
-  0, 1, 2,
-  1, 0, 2,
-  1, 2, 0,
-  2, 0, 1,
-  1, 0, 2,
-  0, 1, 2,
-  2, 0, 1,
-  1, 0, 2,
-  0, 1, 2,
-  0, 2, 1,
-  2, 1, 0,
-  1, 0, 2,
-  0, 2, 1,
-  2, 1, 0,
-  2, 0, 1,
-  2, 1, 0,
-  2, 1, 0,
-  2, 0, 1,
-  1, 0, 2,
-  0, 2, 1,
-  2, 1, 0,
-  1, 2, 0,
-  2, 0, 1,
-  2, 0, 1,
-  1, 2, 0,
-  0, 1, 2,
+  0, 2, 1, 0, 2, 1, 0, 1, 2, 2, 0, 1, 0, 1, 2, 1, 0, 2, 0, 1, 2, 2, 0, 1, 0, 2, 1, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 2, 1,
+  0, 1, 2, 1, 0, 2, 1, 2, 0, 2, 0, 1, 1, 0, 2, 0, 1, 2, 2, 0, 1, 1, 0, 2, 0, 1, 2, 0, 2, 1, 2, 1, 0, 1, 0, 2, 0, 2, 1,
+  2, 1, 0, 2, 0, 1, 2, 1, 0, 2, 1, 0, 2, 0, 1, 1, 0, 2, 0, 2, 1, 2, 1, 0, 1, 2, 0, 2, 0, 1, 2, 0, 1, 1, 2, 0, 0, 1, 2,
   1, 2, 0,
 ]);
 
@@ -82,7 +46,14 @@ export function parseQuestionLibrary(textRsc) {
     const library = [];
     for (let q = 1; q <= QUESTION_LIBRARY_SIZE; q++) {
       const tokens = textRsc.localeTokensByKey(`${CLASS_QUESTIONS_TEXT_ID}.${q}`) ?? [];
-      library.push(tokens.map((t) => { const split = t.text.split(/\d+[.]/); return split.length > 1 ? split[1] : split[0]; }).join('\n'));
+      library.push(
+        tokens
+          .map((t) => {
+            const split = t.text.split(/\d+[.]/);
+            return split.length > 1 ? split[1] : split[0];
+          })
+          .join('\n'),
+      );
     }
     return library;
   }
@@ -105,7 +76,9 @@ export function parseQuestionLibrary(textRsc) {
  *  LAST matching row wins, verbatim. */
 export function displayQuestion(questionText) {
   const lines = questionText.split('\n').filter((x) => x !== '');
-  let aIndex = 0, bIndex = 0, cIndex = 0;
+  let aIndex = 0,
+    bIndex = 0,
+    cIndex = 0;
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].includes('a)')) aIndex = i;
     else if (lines[i].includes('b)')) bIndex = i;
@@ -148,10 +121,10 @@ const weightsToUint = (w1, w2, w3) => (w1 | (w2 << 8) | (w3 << 16)) >>> 0;
  *  to be exactly the number of triples summing to ten. */
 export function getHeaderIndex(classData, weights) {
   const want = weightsToUint(weights[0], weights[1], weights[2]);
-  let resultsOffset = 18;   // resultsOffsetStart
+  let resultsOffset = 18; // resultsOffsetStart
   for (let i = 0; i < 66; i++, resultsOffset += 3) {
     if (weightsToUint(classData[resultsOffset], classData[resultsOffset + 1], classData[resultsOffset + 2]) === want) {
-      return Math.floor(i / 4);   // weightSetsPerClass
+      return Math.floor(i / 4); // weightSetsPerClass
     }
   }
   return -1;

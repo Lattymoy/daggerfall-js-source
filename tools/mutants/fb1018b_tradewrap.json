@@ -2,8 +2,8 @@
   {
     "name": "TRADE-WRAP-sale-wraps",
     "file": "src/systems/shopStock.js",
-    "old": "    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);",
-    "new": "    const sale = ((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) >> 8;",
+    "old": "    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256); // TRADE-WRAP: never int32's wrap",
+    "new": "    const sale = ((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) >> 8; // TRADE-WRAP: never int32's wrap",
     "tests": [
       "test/systems/fb1018b_tradewrap.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "TRADE-WRAP-purchase-wraps",
     "file": "src/systems/shopStock.js",
-    "old": "  return Math.floor(((((192 * dm) >> 8) + (dp >> 8)) * cost) / 256);",
-    "new": "  return ((((192 * dm) >> 8) + (dp >> 8)) * cost) >> 8;",
+    "old": "  return Math.floor(((((192 * dm) >> 8) + (dp >> 8)) * cost) / 256); // TRADE-WRAP: never int32's wrap",
+    "new": "  return ((((192 * dm) >> 8) + (dp >> 8)) * cost) >> 8; // TRADE-WRAP: never int32's wrap",
     "tests": [
       "test/systems/fb1018b_tradewrap.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "TRADE-WRAP-round-not-floor",
     "file": "src/systems/shopStock.js",
-    "old": "    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);",
-    "new": "    const sale = Math.round(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);",
+    "old": "    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256); // TRADE-WRAP: never int32's wrap",
+    "new": "    const sale = Math.round(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256); // TRADE-WRAP: never int32's wrap",
     "tests": [
       "test/systems/fb1018b_tradewrap.test.js"
     ],

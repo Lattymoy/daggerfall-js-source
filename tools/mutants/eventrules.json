@@ -11,8 +11,8 @@
   {
     "name": "EVENT-RULES-the-pause-unread",
     "file": "src/systems/courtRules.js",
-    "old": "  if (onPlayer && regenPausedMs() > 0) return 0;\n",
-    "new": "",
+    "old": "  if (onPlayer && regenPausedMs() > 0) return 0;\n  let carry = _carry;",
+    "new": "  let carry = _carry;",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js",
       "test/ui/hud/eventrules_tile.test.js"
@@ -39,8 +39,8 @@
   {
     "name": "EVENT-RULES-the-hurt-unheard",
     "file": "src/systems/courtRules.js",
-    "old": "  if (_on && hurt && hurt.after < hurt.before) _hurtAt = _now;\n",
-    "new": "",
+    "old": "export function courtRulesHurt(hurt) {\n  if (_on && hurt && hurt.after < hurt.before) _hurtAt = _now;\n}",
+    "new": "export function courtRulesHurt(hurt) {}",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js",
       "test/ui/hud/eventrules_tile.test.js"
@@ -49,8 +49,8 @@
   {
     "name": "EVENT-RULES-a-heal-read-as-a-hurt",
     "file": "src/systems/courtRules.js",
-    "old": "hurt.after < hurt.before) _hurtAt = _now;",
-    "new": "hurt.after !== hurt.before) _hurtAt = _now;",
+    "old": "  if (_on && hurt && hurt.after < hurt.before) _hurtAt = _now;",
+    "new": "  if (_on && hurt && hurt.after !== hurt.before) _hurtAt = _now;",
     "tests": [
       "test/world/gate/wbx_gate_fixes.test.js"
     ]
@@ -58,8 +58,8 @@
   {
     "name": "EVENT-RULES-the-court-off-again",
     "file": "src/systems/madeLevel.js",
-    "old": "companions: 'out', regen: 'held', death: 'castOut'",
-    "new": "companions: 'out', regen: 'off', death: 'castOut'",
+    "old": "    companions: 'out',\n    regen: 'held',\n    death: 'castOut',",
+    "new": "    companions: 'out',\n    regen: 'off',\n    death: 'castOut',",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js",
       "test/ui/hud/eventrules_tile.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "EVENT-RULES-the-ketch-refuses-a-rise",
     "file": "src/systems/madeLevel.js",
-    "old": "slowfall: 'banned', techFlight: 'refused', runLeap: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),",
-    "new": "slowfall: 'banned', techFlight: 'refused', runLeap: 'refused', resurrect: 'refused', avoidDeath: 'refused', death: 'fall', deathPenalty: 'none', unstuck: 'refused', says: 'mid' }),",
+    "old": "    techFlight: 'refused',\n    runLeap: 'refused',\n    avoidDeath: 'refused',\n    death: 'fall',",
+    "new": "    techFlight: 'refused',\n    runLeap: 'refused',\n    resurrect: 'refused',\n    avoidDeath: 'refused',\n    death: 'fall',",
     "tests": [
       "test/systems/eliteGates/egmade_law.test.js",
       "test/ui/hud/eventrules_tile.test.js"
@@ -78,8 +78,8 @@
   {
     "name": "EVENT-RULES-the-tile-outside-a-level",
     "file": "src/ui/hud/statusTips.js",
-    "old": "  if (!level || !Object.hasOwn(MADE_LEVEL_PLACE, level)) return null;\n  return { level,",
-    "new": "  if (!level) return null;\n  return { level,",
+    "old": "  if (!level || !Object.hasOwn(MADE_LEVEL_PLACE, level)) return null;",
+    "new": "  if (!level) return null;",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "EVENT-RULES-the-foot-always",
     "file": "src/ui/hud/statusTips.js",
-    "old": "foot: pausedMs > 0 ? `${Math.ceil(pausedMs / 1000)}s` : null };",
-    "new": "foot: `${Math.ceil(pausedMs / 1000)}s` };",
+    "old": "    foot: pausedMs > 0 ? `${Math.ceil(pausedMs / 1000)}s` : null,",
+    "new": "    foot: `${Math.ceil(pausedMs / 1000)}s`,",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "EVENT-RULES-the-recall-said-in-the-court",
     "file": "src/ui/hud/statusTips.js",
-    "old": "out.push(r('recall') === 'refused' ? t(",
-    "new": "out.push(true ? t(",
+    "old": "      r('recall') === 'refused'",
+    "new": "      true",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "EVENT-RULES-the-potions-everywhere",
     "file": "src/ui/hud/statusTips.js",
-    "old": "  if (r('potions') === 'timed') out.push(",
-    "new": "  if (true) out.push(",
+    "old": "  if (r('potions') === 'timed')",
+    "new": "  if (true)",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "EVENT-RULES-the-promise-kept",
     "file": "src/ui/hud/statusTips.js",
-    "old": "  regenerate: () => (regenHeldNow() ? t(",
-    "new": "  regenerate: () => (false ? t(",
+    "old": "    regenHeldNow()",
+    "new": "    false",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "SD-REZ-every-body-rises",
     "file": "src/net/bossBody.js",
-    "old": "      if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return",
-    "new": "      if (!(typeof lives === 'function' ? true : lives)) return",
+    "old": "      if (!(typeof lives === 'function' ? lives(x.sub) : lives)) return enforce ? { ...x, dead: true } : x;",
+    "new": "      if (!(typeof lives === 'function' ? true : lives)) return enforce ? { ...x, dead: true } : x;",
     "tests": [
       "test/net/int11_body.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "SD-REZ-the-page-keeps-the-slot",
     "file": "src/systems/superDungeon/sdSlots.js",
-    "old": "      own.get(k)?.delete(s);\n",
-    "new": "",
+    "old": "      own.get(k)?.delete(s);\n      const now = stored(k);",
+    "new": "      const now = stored(k);",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "SD-REZ-a-rise-past-the-window",
     "file": "src/systems/superDungeon/sdSlots.js",
-    "old": "      if (s == null || last?.s !== s || clock() - last.at > SD_REZ_MS - SD_REZ_PAGE_SLACK_MS) return;",
-    "new": "      if (s == null || last?.s !== s) return;",
+    "old": "      if (s == null || last?.s !== s || clock() - last.at > SD_REZ_MS - SD_REZ_PAGE_SLACK_MS) return; // past the window the realm keeps the death - so does the page",
+    "new": "      if (s == null || last?.s !== s) return; // past the window the realm keeps the death - so does the page",
     "tests": [
       "test/net/superDungeon/sd12_onelife.test.js"
     ]

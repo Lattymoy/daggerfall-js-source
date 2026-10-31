@@ -41,22 +41,42 @@ export function ladders({ memberships, pools, history = {}, level = 1, adult = f
     if (!isMember(m)) continue;
     const g = guildOfMembership(m);
     if (!g) continue;
-    const divine = /** @type {any} */ (g).divine ? /** @type {Record<string, string>} */ (MEMBERSHIP_STATUS)[/** @type {any} */ (g).divine] ?? null : null;
+    const divine = /** @type {any} */ (g).divine
+      ? /** @type {Record<string, string>} */ (MEMBERSHIP_STATUS[/** @type {any} */ (g).divine] ?? null)
+      : null;
     const offers = questRankFor(g, m.rank, level);
-    const rows = (pools?.get?.(g.guildGroup) ?? pools?.get?.(Number(group)) ?? [])
-      .filter((r) => (r.membership === 'M' || (divine && r.membership === divine)) && r.minReq >= 0 && r.minReq < RANK_FLOORS && (!r.adult || adult));
+    const rows = (pools?.get?.(g.guildGroup) ?? pools?.get?.(Number(group)) ?? []).filter(
+      (r) =>
+        (r.membership === 'M' || (divine && r.membership === divine)) &&
+        r.minReq >= 0 &&
+        r.minReq < RANK_FLOORS &&
+        (!r.adult || adult),
+    );
     const byRank = new Map();
     for (const r of rows) {
       const name = String(r.name).toUpperCase();
       if (!byRank.has(r.minReq)) byRank.set(r.minReq, new Map());
-      byRank.get(r.minReq).set(name, { name, done: Object.hasOwn(history, name), flagship: !!sheetFor(name)?.branches?.length });
+      byRank
+        .get(r.minReq)
+        .set(name, { name, done: Object.hasOwn(history, name), flagship: !!sheetFor(name)?.branches?.length });
     }
     const titles = g.rankTitles ?? [];
-    const rungs = [...byRank.keys()].sort((a, b) => a - b).map((rank) => ({
-      rank, title: titles[rank] ?? String(rank), reached: offers >= rank,
-      quests: [...byRank.get(rank).values()].sort((a, b) => a.name.localeCompare(b.name)),
-    }));
-    out.push({ key: g.name, group: g.guildGroup, factionId: g.factionId, rank: m.rank, rankTitle: titles[m.rank] ?? String(m.rank), rungs });
+    const rungs = [...byRank.keys()]
+      .sort((a, b) => a - b)
+      .map((rank) => ({
+        rank,
+        title: titles[rank] ?? String(rank),
+        reached: offers >= rank,
+        quests: [...byRank.get(rank).values()].sort((a, b) => a.name.localeCompare(b.name)),
+      }));
+    out.push({
+      key: g.name,
+      group: g.guildGroup,
+      factionId: g.factionId,
+      rank: m.rank,
+      rankTitle: titles[m.rank] ?? String(m.rank),
+      rungs,
+    });
   }
   return out;
 }

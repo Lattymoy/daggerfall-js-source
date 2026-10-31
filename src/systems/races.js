@@ -32,31 +32,54 @@ import { BODY_MORPHOLOGY } from './armorMaterials.js';
 /** EntityEnums.Races (1-based; Vampire/Werewolf/Wereboar are the
  *  transformed pseudo-races and are not selectable at chargen). */
 export const RACES = Object.freeze({
-  Breton: 1, Redguard: 2, Nord: 3, DarkElf: 4,
-  HighElf: 5, WoodElf: 6, Khajiit: 7, Argonian: 8,
+  Breton: 1,
+  Redguard: 2,
+  Nord: 3,
+  DarkElf: 4,
+  HighElf: 5,
+  WoodElf: 6,
+  Khajiit: 7,
+  Argonian: 8,
 });
 
 /** GetBodyMorphology (ItemBuilder.cs:910-925): Argonian 0, the three
  *  elves 1, the three humans 2, Khajiit 3. */
 const MORPHOLOGY_OF = Object.freeze({
-  Breton: 'Human', Redguard: 'Human', Nord: 'Human',
-  DarkElf: 'Elf', HighElf: 'Elf', WoodElf: 'Elf',
-  Khajiit: 'Khajiit', Argonian: 'Argonian',
+  Breton: 'Human',
+  Redguard: 'Human',
+  Nord: 'Human',
+  DarkElf: 'Elf',
+  HighElf: 'Elf',
+  WoodElf: 'Elf',
+  Khajiit: 'Khajiit',
+  Argonian: 'Argonian',
 });
 
-export const FACES_PER_RACE = 10;   // records in each FACE*.CIF
+export const FACES_PER_RACE = 10; // records in each FACE*.CIF
 
 /** RaceTemplate DescriptionID / ClipID (RaceTemplate.cs:177-332).
  *  U11: the chargen race screen pops the description in a Yes/No
  *  message box, so the TEXT.RSC record has to ride the table. Note
  *  the ids are NOT in enum order - Nord is 2000, Breton 2003. */
 const DESCRIPTION_ID = Object.freeze({
-  Breton: 2003, Redguard: 2002, Nord: 2000, DarkElf: 2007,
-  HighElf: 2006, WoodElf: 2005, Khajiit: 2001, Argonian: 2004,
+  Breton: 2003,
+  Redguard: 2002,
+  Nord: 2000,
+  DarkElf: 2007,
+  HighElf: 2006,
+  WoodElf: 2005,
+  Khajiit: 2001,
+  Argonian: 2004,
 });
 const CLIP_ID = Object.freeze({
-  Breton: 209, Redguard: 210, Nord: 211, DarkElf: 212,
-  HighElf: 213, WoodElf: 214, Khajiit: 215, Argonian: 216,
+  Breton: 209,
+  Redguard: 210,
+  Nord: 211,
+  DarkElf: 212,
+  HighElf: 213,
+  WoodElf: 214,
+  Khajiit: 215,
+  Argonian: 216,
 });
 
 /** AUDIT 18: the four RACIAL EFFECT-FLAG fields (RaceTemplate.cs:38-42)
@@ -79,36 +102,36 @@ const CLIP_ID = Object.freeze({
  *  reads all four channels through spellHasFlags - AUDIT 23 corrected
  *  the stale 'not written yet' routing note). */
 const RACE_EFFECT_FLAGS = Object.freeze({
-  Breton: { resistanceFlags: 2 },     // EffectFlags.Magic
-  Nord: { resistanceFlags: 16 },      // EffectFlags.Frost
-  HighElf: { immunityFlags: 1 },      // EffectFlags.Paralysis
+  Breton: { resistanceFlags: 2 }, // EffectFlags.Magic
+  Nord: { resistanceFlags: 16 }, // EffectFlags.Frost
+  HighElf: { immunityFlags: 1 }, // EffectFlags.Paralysis
 });
 
 const two = (n) => String(n).padStart(2, '0');
-const build = (key, artIndex) => Object.freeze({
-  key,
-  name: key.replace(/([a-z])([A-Z])/g, '$1 $2'),   // DarkElf -> "Dark Elf"
-  id: RACES[key],
-  artIndex,
-  descriptionId: DESCRIPTION_ID[key],
-  clipId: CLIP_ID[key],
-  morphology: MORPHOLOGY_OF[key],
-  morphologyIndex: BODY_MORPHOLOGY[MORPHOLOGY_OF[key]],
-  background: `SCBG${two(artIndex)}I0.IMG`,
-  bodyMale: Object.freeze([`BODY${two(artIndex)}I0.IMG`, `BODY${two(artIndex)}I1.IMG`]),
-  bodyFemale: Object.freeze([`BODY1${artIndex}I0.IMG`, `BODY1${artIndex}I1.IMG`]),
-  headsMale: `FACE${two(artIndex)}I0.CIF`,
-  headsFemale: `FACE1${artIndex}I0.CIF`,
-  resistanceFlags: 0,
-  immunityFlags: 0,
-  lowToleranceFlags: 0,
-  criticalWeaknessFlags: 0,
-  specialAbilities: 0,
-  ...RACE_EFFECT_FLAGS[key],
-});
+const build = (key, artIndex) =>
+  Object.freeze({
+    key,
+    name: key.replace(/([a-z])([A-Z])/g, '$1 $2'), // DarkElf -> "Dark Elf"
+    id: RACES[key],
+    artIndex,
+    descriptionId: DESCRIPTION_ID[key],
+    clipId: CLIP_ID[key],
+    morphology: MORPHOLOGY_OF[key],
+    morphologyIndex: BODY_MORPHOLOGY[MORPHOLOGY_OF[key]],
+    background: `SCBG${two(artIndex)}I0.IMG`,
+    bodyMale: Object.freeze([`BODY${two(artIndex)}I0.IMG`, `BODY${two(artIndex)}I1.IMG`]),
+    bodyFemale: Object.freeze([`BODY1${artIndex}I0.IMG`, `BODY1${artIndex}I1.IMG`]),
+    headsMale: `FACE${two(artIndex)}I0.CIF`,
+    headsFemale: `FACE1${artIndex}I0.CIF`,
+    resistanceFlags: 0,
+    immunityFlags: 0,
+    lowToleranceFlags: 0,
+    criticalWeaknessFlags: 0,
+    specialAbilities: 0,
+    ...RACE_EFFECT_FLAGS[key],
+  });
 
-export const RACE_TEMPLATES = Object.freeze(
-  Object.keys(RACES).map((key, i) => build(key, i)));
+export const RACE_TEMPLATES = Object.freeze(Object.keys(RACES).map((key, i) => build(key, i)));
 
 export const RACE_KEYS = Object.freeze(RACE_TEMPLATES.map((r) => r.key));
 export const raceByKey = (key) => RACE_TEMPLATES.find((r) => r.key === key) ?? null;

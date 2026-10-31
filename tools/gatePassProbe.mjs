@@ -16,7 +16,11 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.indexOf('--shots') + 1] : null;
-const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
+const out = [];
+const check = (n, ok, d = '') => {
+  out.push(ok);
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`);
+};
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { buildGateModel, gateArchProfile } from '/src/world/gate/gateModel.js';
@@ -59,10 +63,20 @@ window.ready = true;
 
 const server = http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/probe/') { res.writeHead(200, { 'content-type': 'text/html' }); res.end(PAGE); return; }   // not the root: U60 keeps that the landing page's
+  if (url === '/probe/') {
+    res.writeHead(200, { 'content-type': 'text/html' });
+    res.end(PAGE);
+    return;
+  } // not the root: U60 keeps that the landing page's
   const f = join(ROOT, url);
-  if (!f.startsWith(ROOT) || !existsSync(f)) { res.writeHead(404); res.end(); return; }
-  res.writeHead(200, { 'content-type': { '.js': 'text/javascript', '.json': 'application/json' }[extname(f)] ?? 'application/octet-stream' });   // GATE-FBX: the stone's bake is a JSON module
+  if (!f.startsWith(ROOT) || !existsSync(f)) {
+    res.writeHead(404);
+    res.end();
+    return;
+  }
+  res.writeHead(200, {
+    'content-type': { '.js': 'text/javascript', '.json': 'application/json' }[extname(f)] ?? 'application/octet-stream',
+  }); // GATE-FBX: the stone's bake is a JSON module
   res.end(readFileSync(f));
 });
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -70,29 +84,46 @@ const port = server.address().port;
 const browser = await chromium.launch();
 try {
   const page = await browser.newPage({ viewport: { width: 640, height: 480 } });
-  const errs = []; page.on('pageerror', (e) => errs.push(e.message));
+  const errs = [];
+  page.on('pageerror', (e) => errs.push(e.message));
   await page.goto(`http://127.0.0.1:${port}/probe/`);
   await page.waitForFunction(() => window.ready === true, null, { timeout: 20000 });
   const p = await page.evaluate(() => window.probe);
   check('the pass builds', !p.err, p.err ?? '');
-  check('both programs link in a real WebGL2', p.linked.length === 2 && p.linked.every(Boolean), JSON.stringify(p.linked));
-  check('the arch\'s profile is a live uniform', p.profileLoc);
+  check(
+    'both programs link in a real WebGL2',
+    p.linked.length === 2 && p.linked.every(Boolean),
+    JSON.stringify(p.linked),
+  );
+  check("the arch's profile is a live uniform", p.profileLoc);
   const lum = (c) => c[0] + c[1] + c[2];
   const open = await page.evaluate(() => window.draw([0, 6.5, 24], [0, 6.5, 0], 1));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'open.png') });
   check('no GL error drawing it', open.error === 0, `error ${open.error}`);
-  check('the fire stands between the pillars, hot and red', open.centre[0] > 150 && open.centre[0] > open.centre[2] * 2, JSON.stringify(open.centre));
+  check(
+    'the fire stands between the pillars, hot and red',
+    open.centre[0] > 150 && open.centre[0] > open.centre[2] * 2,
+    JSON.stringify(open.centre),
+  );
   check('and not where no gate is', lum(open.corner) < 60, JSON.stringify(open.corner));
   const sealed = await page.evaluate(() => window.draw([0, 6.5, 24], [0, 6.5, 0], 0));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'sealed.png') });
-  check('sealed, the fire is an ember - dimmer than open', lum(sealed.centre) < lum(open.centre), `${JSON.stringify(sealed.centre)} vs ${JSON.stringify(open.centre)}`);
+  check(
+    'sealed, the fire is an ember - dimmer than open',
+    lum(sealed.centre) < lum(open.centre),
+    `${JSON.stringify(sealed.centre)} vs ${JSON.stringify(open.centre)}`,
+  );
   // GATE-FBX: the stone itself, from off its shoulder - its basalt, the rim seared round the opening, the spines' points
   const shoulder = await page.evaluate(() => window.draw([-9, 1.7, 13], [0, 7, 0], 1));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'shoulder.png') });
   check('no GL error from off its shoulder', shoulder.error === 0, `error ${shoulder.error}`);
   const far = await page.evaluate(() => window.draw([0, 40, 900], [0, 200, 0], 1));
   if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'far.png') });
-  check('nine hundred metres off, the beacon still stands on the sky', far.centre[0] > far.centre[2] + 20 || far.sky[0] > far.sky[2] + 20, `${JSON.stringify(far.centre)} ${JSON.stringify(far.sky)}`);
+  check(
+    'nine hundred metres off, the beacon still stands on the sky',
+    far.centre[0] > far.centre[2] + 20 || far.sky[0] > far.sky[2] + 20,
+    `${JSON.stringify(far.centre)} ${JSON.stringify(far.sky)}`,
+  );
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

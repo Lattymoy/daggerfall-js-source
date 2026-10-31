@@ -119,7 +119,7 @@ export function collectHearths(flats) {
     // and never makes one.
     if (!f) continue;
     if (!isHearthFlat(f.archive ?? HEARTH_ARCHIVE, f.record)) continue;
-    out.push({ x: f.x, y: f.y, z: f.z, foot: f.foot, w: f.w, h: f.h });   // FIX-D: and the sprite, for the eye's box
+    out.push({ x: f.x, y: f.y, z: f.z, foot: f.foot, w: f.w, h: f.h }); // FIX-D: and the sprite, for the eye's box
   }
   return out;
 }
@@ -151,12 +151,16 @@ export function hearthAabb(hearth) {
  * whichever answers first.
  */
 export function nearestHearth(hearths, pos, reach, n = -1) {
-  let best = null, bestD = reach;
+  let best = null,
+    bestD = reach;
   const len = n < 0 ? (hearths?.length ?? 0) : Math.min(n, hearths?.length ?? 0);
   for (let i = 0; i < len; i++) {
     const h = hearths[i];
     const d = Math.hypot(h.x - pos[0], h.y - pos[1], h.z - pos[2]);
-    if (d <= bestD) { best = h; bestD = d; }
+    if (d <= bestD) {
+      best = h;
+      bestD = d;
+    }
   }
   return best;
 }
@@ -180,7 +184,9 @@ export function hearthNear(hearths, pos, reach, n = -1) {
   const len = n < 0 ? (hearths?.length ?? 0) : Math.min(n, hearths?.length ?? 0);
   for (let i = 0; i < len; i++) {
     const h = hearths[i];
-    const dx = h.x - pos[0], dy = h.y - pos[1], dz = h.z - pos[2];
+    const dx = h.x - pos[0],
+      dy = h.y - pos[1],
+      dz = h.z - pos[2];
     if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;
   }
   return false;

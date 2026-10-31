@@ -24,14 +24,23 @@ import { GAMBIT_TIERS, dealRegular, regularStep } from '../src/systems/gambit/ga
 
 /** A xorshift32 source - the measure's own, seeded. @param {number} seed */
 export const xorshift = (seed) => {
-  let s = (seed >>> 0) || 1;
-  return () => { s ^= s << 13; s >>>= 0; s ^= s >>> 17; s ^= s << 5; s >>>= 0; return s; };
+  let s = seed >>> 0 || 1;
+  return () => {
+    s ^= s << 13;
+    s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5;
+    s >>>= 0;
+    return s;
+  };
 };
 
 /** MurmurHash3's finalizer: every bit of a 32-bit word stirred into every other, a bijection (0 to 0 alone). */
 const mix32 = (/** @type {number} */ h) => {
-  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b);
-  h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
   return (h ^ (h >>> 16)) >>> 0;
 };
 
@@ -54,7 +63,9 @@ export function playRegular(tier, seed, { playerBlunder = 0, rounds = 200 } = {}
   const player = { blunder: playerBlunder };
   while (!st.over) {
     if (st.round > rounds) return { end: st.pieces.every((p) => p.king) ? 'kings' : 'long', rounds: st.round };
-    st = st.ending ? finishTurn(st, rnd).state : regularStep(st, st.turn, st.turn === 1 ? tier : player, rnd, rnd).state;
+    st = st.ending
+      ? finishTurn(st, rnd).state
+      : regularStep(st, st.turn, st.turn === 1 ? tier : player, rnd, rnd).state;
   }
   return { end: st.over.winner === 1 ? 'regular' : 'player', rounds: st.round };
 }
@@ -70,26 +81,37 @@ export function measureTier(tier, { games = 1000, seed = 1, ...opts } = {}) {
   for (let g = 0; g < games; g++) {
     const r = playRegular(tier, gameSeed(seed, g), opts);
     tally[r.end]++;
-    if (r.end === 'regular' || r.end === 'player') { tally.rounds += r.rounds; tally.longest = Math.max(tally.longest, r.rounds); }
+    if (r.end === 'regular' || r.end === 'player') {
+      tally.rounds += r.rounds;
+      tally.longest = Math.max(tally.longest, r.rounds);
+    }
   }
   return tally;
 }
 
 /** The run: a line a tier. @param {string[]} argv */
 function main(argv) {
-  const arg = (name, dflt) => { const i = argv.indexOf(name); return i >= 0 ? Number(argv[i + 1]) : dflt; };
-  const games = arg('--games', 1000), seed = arg('--seed', 1), playerBlunder = arg('--player-blunder', 0), rounds = arg('--rounds', 200);
+  const arg = (name, dflt) => {
+    const i = argv.indexOf(name);
+    return i >= 0 ? Number(argv[i + 1]) : dflt;
+  };
+  const games = arg('--games', 1000),
+    seed = arg('--seed', 1),
+    playerBlunder = arg('--player-blunder', 0),
+    rounds = arg('--rounds', 200);
   if (![games, seed, playerBlunder, rounds].every(Number.isFinite) || games < 1) {
     console.error('usage: node tools/kgMeasure.mjs [--games N] [--seed S] [--player-blunder P] [--rounds R]');
     return 2;
   }
   console.log(`${games} games a tier, seed ${seed}, the player's seat blundering ${playerBlunder}`);
-  const pct = (n, of) => `${(100 * n / of).toFixed(1)}%`.padStart(6);
+  const pct = (n, of) => `${((100 * n) / of).toFixed(1)}%`.padStart(6);
   for (const tier of GAMBIT_TIERS) {
     const t = measureTier(tier, { games, seed, playerBlunder, rounds });
     const decided = t.regular + t.player;
-    console.log(`${tier.key.padEnd(12)} regular ${pct(t.regular, games)}  player ${pct(t.player, games)}  kings alone ${pct(t.kings, games)}  long ${pct(t.long, games)}`
-      + `  | of the decided: regular ${pct(t.regular, decided || 1)}, ${(t.rounds / (decided || 1)).toFixed(1)} rounds a game, the longest ${t.longest}`);
+    console.log(
+      `${tier.key.padEnd(12)} regular ${pct(t.regular, games)}  player ${pct(t.player, games)}  kings alone ${pct(t.kings, games)}  long ${pct(t.long, games)}` +
+        `  | of the decided: regular ${pct(t.regular, decided || 1)}, ${(t.rounds / (decided || 1)).toFixed(1)} rounds a game, the longest ${t.longest}`,
+    );
   }
   return 0;
 }

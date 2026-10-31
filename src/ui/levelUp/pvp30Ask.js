@@ -12,14 +12,21 @@ import { openLevelUpWindow } from './levelUpOpener.js';
 const said = new WeakSet();
 
 /** Does `e`'s owed level want the ask first? Online, a real level (never the Oghma's), from 29 to 30, not yet answered Yes. */
-export const pvp30Asks = (e) => e?._online === true && e.readyToLevelUp === true && !e.oghmaLevelUp && e.level === PVP_FLAG.level - 1 && !said.has(e);
+export const pvp30Asks = (e) =>
+  e?._online === true && e.readyToLevelUp === true && !e.oghmaLevelUp && e.level === PVP_FLAG.level - 1 && !said.has(e);
 
 /** `e` answered Yes: its next door opens the level up. */
-export const pvp30Said = (e) => { if (e) said.add(e); };
+export const pvp30Said = (e) => {
+  if (e) said.add(e);
+};
 
 /** The ask's rows and its No button's word. */
 export const pvp30Rows = () => [
-  t('pvp.level30.warn', 'At level {n}, other players can attack and kill you in the PvP zones (Cyrodiil, the open {word} Ocean), even with your PvP flag off.', { n: PVP_FLAG.level, word: ETHER_WORD }),   // AUDIT TAMRIEL-WIDE III T8: the open ocean past Veilhaven, not every sea
+  t(
+    'pvp.level30.warn',
+    'At level {n}, other players can attack and kill you in the PvP zones (Cyrodiil, the open {word} Ocean), even with your PvP flag off.',
+    { n: PVP_FLAG.level, word: ETHER_WORD },
+  ), // AUDIT TAMRIEL-WIDE III T8: the open ocean past Veilhaven, not every sea
   '',
   t('pvp.level30.ask', 'Continue to level {n}?', { n: PVP_FLAG.level }),
 ];
@@ -29,4 +36,12 @@ export const pvp30Owed = (/** @type {number} */ n) => t('pvp.level30.owed', 'Lev
 export const pvp30Go = () => t('pvp.level30.go', 'Go to {n}', { n: PVP_FLAG.level });
 
 /** The sheet door's box for `e`: Yes opens the level up, Not yet leaves it owed. */
-export const pvp30Box = (e, open = openLevelUpWindow) => new YesNoBoxWindow({ rows: pvp30Rows(), noLabel: pvp30No(), onYes: () => { pvp30Said(e); open({ defer: true }); } });
+export const pvp30Box = (e, open = openLevelUpWindow) =>
+  new YesNoBoxWindow({
+    rows: pvp30Rows(),
+    noLabel: pvp30No(),
+    onYes: () => {
+      pvp30Said(e);
+      open({ defer: true });
+    },
+  });

@@ -16,30 +16,44 @@
 // Resets - a group with no row has no button), kept while the game runs; a group that empties hands the list back to All,
 // and All is the choice then. The window stands at one height and its list scrolls under the bar (AUDIT TIMERS2 H1, M6).
 import { eventTimerRows, timerText, localWhenText, timerGroups } from '../../systems/eventTimers.js';
-import { t } from '../../systems/textManager.js';   // TIMERS2: the groups' words in the player's language
+import { t } from '../../systems/textManager.js'; // TIMERS2: the groups' words in the player's language
 
 /** EG-ZM: a row's door (systems/eventTimers.js `door`) -> its button's words. */
 export const TIMER_DOOR_TEXT = Object.freeze({ board: 'Boards' });
 
 /** A row's kind -> its marker class (colour in the sheet). */
-export const TIMER_KINDS = Object.freeze(['gate', 'serpent', 'super', 'star', 'ketch', 'elite', 'raid', 'battle', 'seat', 'reset', 'front']);   // KETCH: the Sky-Ketch's; SERPENT-TIMERS: the sea serpent's; SD2c: the Super dungeon's, once found; STAR6: a fallen star's; TIMERS2: the Elite Breach's, in its arch's gold (it drew in no colour); FRONTS: the provinces' turn
+export const TIMER_KINDS = Object.freeze([
+  'gate',
+  'serpent',
+  'super',
+  'star',
+  'ketch',
+  'elite',
+  'raid',
+  'battle',
+  'seat',
+  'reset',
+  'front',
+]); // KETCH: the Sky-Ketch's; SERPENT-TIMERS: the sea serpent's; SD2c: the Super dungeon's, once found; STAR6: a fallen star's; TIMERS2: the Elite Breach's, in its arch's gold (it drew in no colour); FRONTS: the provinces' turn
 
 /** TIMERS2: a group's head (its title) and its button in the bar (a short word), in the player's language. */
-export const timerGroupTitle = (id) => ({
-  world: () => t('timers.group.world', 'World events'),
-  spire: () => t('timers.group.spire', 'The Battlespire'),
-  raids: () => t('timers.group.raids', 'Town raids'),
-  seats: () => t('timers.group.seats', 'Seats and battles'),
-  resets: () => t('timers.group.resets', 'Resets'),
-})[id]?.() ?? '';
-export const timerGroupChip = (id) => ({
-  all: () => t('timers.chip.all', 'All'),
-  world: () => t('timers.chip.world', 'World'),
-  spire: () => t('timers.chip.spire', 'Spire'),
-  raids: () => t('timers.chip.raids', 'Raids'),
-  seats: () => t('timers.chip.seats', 'Seats'),
-  resets: () => t('timers.chip.resets', 'Resets'),
-})[id]?.() ?? '';
+export const timerGroupTitle = (id) =>
+  ({
+    world: () => t('timers.group.world', 'World events'),
+    spire: () => t('timers.group.spire', 'The Battlespire'),
+    raids: () => t('timers.group.raids', 'Town raids'),
+    seats: () => t('timers.group.seats', 'Seats and battles'),
+    resets: () => t('timers.group.resets', 'Resets'),
+  })[id]?.() ?? '';
+export const timerGroupChip = (id) =>
+  ({
+    all: () => t('timers.chip.all', 'All'),
+    world: () => t('timers.chip.world', 'World'),
+    spire: () => t('timers.chip.spire', 'Spire'),
+    raids: () => t('timers.chip.raids', 'Raids'),
+    seats: () => t('timers.chip.seats', 'Seats'),
+    resets: () => t('timers.chip.resets', 'Resets'),
+  })[id]?.() ?? '';
 /** TIMERS2: the group a player last showed, kept while the game runs - the window opens on it again. */
 let shownGroup = 'all';
 
@@ -52,14 +66,17 @@ export function timersMark(doc, { onOpen, open = false }) {
   const b = doc.createElement('button');
   b.type = 'button';
   b.className = 'px-timersmark';
-  b.setAttribute('aria-label', 'Timers: the provinces\' turns, gates, the sea serpent, the Abyss Dungeon, the Starfall, the Sky-Ketch, raids, battles and resets');   // SD2c: its row; STAR6: the Starfall's; KETCH: the Sky-Ketch's; AUDIT FRONTS B13: the fronts'
-  b.setAttribute('aria-haspopup', 'dialog');   // AUDIT TIMERS1 UI-6
+  b.setAttribute(
+    'aria-label',
+    "Timers: the provinces' turns, gates, the sea serpent, the Abyss Dungeon, the Starfall, the Sky-Ketch, raids, battles and resets",
+  ); // SD2c: its row; STAR6: the Starfall's; KETCH: the Sky-Ketch's; AUDIT FRONTS B13: the fronts'
+  b.setAttribute('aria-haspopup', 'dialog'); // AUDIT TIMERS1 UI-6
   b.setAttribute('aria-expanded', open ? 'true' : 'false');
   b.title = 'Timers';
   const glass = doc.createElement('span');
   glass.className = 'px-hourglass';
   glass.setAttribute('aria-hidden', 'true');
-  b.append(glass);   // HOURGLASS-ALONE (2026-10-04, the owner: "remove the text \"timer\" from next of the hourglass"): the glass alone - its name is the label's and the title's
+  b.append(glass); // HOURGLASS-ALONE (2026-10-04, the owner: "remove the text \"timer\" from next of the hourglass"): the glass alone - its name is the label's and the title's
   b.addEventListener('click', () => onOpen());
   return b;
 }
@@ -68,7 +85,8 @@ export function timersMark(doc, { onOpen, open = false }) {
  *  `host` the positioned box both stand in. */
 export function placeBeside(mark, profile, host, gap = 10) {
   if (!mark || !profile || !host?.getBoundingClientRect) return;
-  const p = profile.getBoundingClientRect(), h = host.getBoundingClientRect();
+  const p = profile.getBoundingClientRect(),
+    h = host.getBoundingClientRect();
   if (!p.width) return;
   mark.style.right = `${Math.round(h.right - p.left + gap)}px`;
   mark.style.top = `${Math.round(p.top - h.top + (p.height - (mark.offsetHeight || p.height)) / 2)}px`;
@@ -82,10 +100,14 @@ export function anchorBeside(mark, profile, host, gap = 10) {
   globalThis.requestAnimationFrame?.(place);
   const RO = globalThis.ResizeObserver;
   const ro = RO ? new RO(place) : null;
-  ro?.observe?.(profile); ro?.observe?.(host);
+  ro?.observe?.(profile);
+  ro?.observe?.(host);
   globalThis.addEventListener?.('resize', place);
   globalThis.document?.fonts?.ready?.then?.(place).catch?.(() => {});
-  return () => { ro?.disconnect?.(); globalThis.removeEventListener?.('resize', place); };
+  return () => {
+    ro?.disconnect?.();
+    globalThis.removeEventListener?.('resize', place);
+  };
 }
 
 /**
@@ -98,7 +120,10 @@ export function anchorBeside(mark, profile, host, gap = 10) {
  * @param {Document} doc
  * @param {{ read: () => any, onClose: () => void, every?: number, door?: (fn: () => any) => any, group?: string, focus?: boolean }} o
  */
-export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => fn(), group = shownGroup, focus = true }) {
+export function timersWindow(
+  doc,
+  { read, onClose, every = 1000, door = (fn) => fn(), group = shownGroup, focus = true },
+) {
   const el = (tag, cls, text) => {
     const n = doc.createElement(tag);
     if (cls) n.className = cls;
@@ -127,7 +152,7 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
   // TIMERS2: the bar - All and a button for each group that has a row, the one shown pressed
   const bar = el('div', 'tm-groups');
   bar.setAttribute('role', 'group');
-  bar.setAttribute('aria-label', t('timers.groups', 'Which timers to show'));   // AUDIT TIMERS2 L8: "Show" said nothing
+  bar.setAttribute('aria-label', t('timers.groups', 'Which timers to show')); // AUDIT TIMERS2 L8: "Show" said nothing
   body.append(bar);
   const list = el('div', 'tm-list');
   body.append(list);
@@ -138,7 +163,7 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
   let cells = new Map();
   /** @type {Map<string, { b: any, count: any }>} */
   let chips = new Map();
-  let shape = null;   // never a list's shape, so the first draw always builds (an empty one says so)
+  let shape = null; // never a list's shape, so the first draw always builds (an empty one says so)
   let barIds = null;
   /** AUDIT TIMERS2 M3: a button's words, count, mark and state, written in place - the same buttons while the groups are
    *  the same groups (a rebuild at a live row's start lost a press caught between its down and its up, and the focus) */
@@ -147,24 +172,33 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
     b.className = classes('act', 'tm-chip', `tm-chip-${id}`, on && 'on', live && 'live');
     b.setAttribute('aria-pressed', on ? 'true' : 'false');
     // AUDIT TIMERS2 L8: the mark that one is under way is in the button's name too, not its colour alone
-    b.setAttribute('aria-label', `${timerGroupChip(id)} ${n}${live ? `, ${t('timers.underWay', '{n} under way', { n: live })}` : ''}`);
+    b.setAttribute(
+      'aria-label',
+      `${timerGroupChip(id)} ${n}${live ? `, ${t('timers.underWay', '{n} under way', { n: live })}` : ''}`,
+    );
     if (count.textContent !== String(n)) count.textContent = String(n);
   };
   const draw = () => {
     const src = read();
     const rows = src ? eventTimerRows(src) : [];
     const now = Number(src?.now) || Date.now();
-    const offset = now - Date.now();   // the relay's clock against this machine's - the local time is the machine's
+    const offset = now - Date.now(); // the relay's clock against this machine's - the local time is the machine's
     const groups = timerGroups(rows);
     // a group that empties (its last raid over) hands the list back to All - never a window that shows nothing. AUDIT
     // TIMERS2 M4: and the choice is All now, kept as the player's - it was this window's alone, and the next redraw of the
     // pause face (a quest's clock, a tab) brought the emptied group back when its rows did
-    if (showing !== 'all' && !groups.some((g) => g.id === showing)) { showing = 'all'; shownGroup = 'all'; }
-    const counts = [{ id: 'all', n: rows.length, live: groups.reduce((a, g) => a + g.live, 0) }, ...groups.map((g) => ({ id: g.id, n: g.rows.length, live: g.live }))];
+    if (showing !== 'all' && !groups.some((g) => g.id === showing)) {
+      showing = 'all';
+      shownGroup = 'all';
+    }
+    const counts = [
+      { id: 'all', n: rows.length, live: groups.reduce((a, g) => a + g.live, 0) },
+      ...groups.map((g) => ({ id: g.id, n: g.rows.length, live: g.live })),
+    ];
     const ids = groups.length ? counts.map((c) => c.id).join(' ') : '';
     if (ids !== barIds) {
       barIds = ids;
-      const had = [...chips].find(([, c]) => c.b === doc.activeElement)?.[0] ?? null;   // the press's focus kept through the rebuild
+      const had = [...chips].find(([, c]) => c.b === doc.activeElement)?.[0] ?? null; // the press's focus kept through the rebuild
       chips = new Map();
       bar.textContent = '';
       // no clock, no bar (the empty list says why); with one, the gate and the resets always stand - two groups at least
@@ -172,12 +206,14 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
         for (const { id } of counts) {
           const b = el('button', 'act tm-chip');
           /** @type {any} */ (b).type = 'button';
-          b.setAttribute('data-focus', `timers-${id}`);   // the pause face's redraw finds it again (ui/domRepaint.js)
+          b.setAttribute('data-focus', `timers-${id}`); // the pause face's redraw finds it again (ui/domRepaint.js)
           const count = el('span', 'tm-chip-n', '');
           b.append(el('span', 'tm-chip-name', timerGroupChip(id)), count);
           b.addEventListener('click', () => {
-            if (showing !== id) list.scrollTop = 0;   // another group starts at its top
-            showing = id; shownGroup = id; draw();
+            if (showing !== id) list.scrollTop = 0; // another group starts at its top
+            showing = id;
+            shownGroup = id;
+            draw();
           });
           bar.append(b);
           chips.set(id, { b, count });
@@ -185,17 +221,23 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
       }
       if (had) /** @type {any} */ (chips.get(had) ?? chips.get('all'))?.b?.focus?.({ preventScroll: true });
     }
-    for (const { id, n, live } of counts) { const c = chips.get(id); if (c) chipSay(c, id, n, live); }
+    for (const { id, n, live } of counts) {
+      const c = chips.get(id);
+      if (c) chipSay(c, id, n, live);
+    }
     const shown = showing === 'all' ? groups : groups.filter((g) => g.id === showing);
     // A cleared raid can change only the detail count while the displayed raid stays the same.
-    const nextShape = JSON.stringify([showing, shown.map((g) => [g.id, g.live, g.rows.map((r) => [r.id, r.live, r.title, r.where, r.detail, r.door ?? null])])]);
+    const nextShape = JSON.stringify([
+      showing,
+      shown.map((g) => [g.id, g.live, g.rows.map((r) => [r.id, r.live, r.title, r.where, r.detail, r.door ?? null])]),
+    ]);
     if (nextShape !== shape) {
       shape = nextShape;
       cells = new Map();
       list.textContent = '';
       // AUDIT TIMERS1 UI-8: the rows are never empty while there is a clock (the days and the gate always stand), so an
       // empty list is the source gone - the connection, not the calendar - and says so
-      if (!rows.length) list.append(el('p', 'tm-empty', 'The world\'s clock cannot be read right now.'));
+      if (!rows.length) list.append(el('p', 'tm-empty', "The world's clock cannot be read right now."));
       for (const g of shown) {
         // TIMERS2: the group's head - its title, and how many of its rows are under way
         const h = el('h4', classes('tm-section', `tm-g-${g.id}`));
@@ -221,7 +263,10 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
             const go = el('button', 'act tm-door', TIMER_DOOR_TEXT[r.door]);
             /** @type {any} */ (go).type = 'button';
             const which = r.door;
-            go.addEventListener('click', () => { const fn = read()?.doors?.[which]; if (typeof fn === 'function') door(fn); });
+            go.addEventListener('click', () => {
+              const fn = read()?.doors?.[which];
+              if (typeof fn === 'function') door(fn);
+            });
             row.append(go);
           }
           list.append(row);
@@ -235,19 +280,38 @@ export function timersWindow(doc, { read, onClose, every = 1000, door = (fn) => 
       const left = timerText(r.at - now);
       if (c.count.textContent !== left) c.count.textContent = left;
       // AUDIT TIMERS2 L8: in the player's language, as the "Now" above it is
-      const at = localWhenText(r.at - offset), when = r.live ? t('timers.ends', 'ends {when}', { when: at }) : t('timers.at', 'at {when}', { when: at });
+      const at = localWhenText(r.at - offset),
+        when = r.live ? t('timers.ends', 'ends {when}', { when: at }) : t('timers.at', 'at {when}', { when: at });
       if (c.when.textContent !== when) c.when.textContent = when;
     }
   };
   let tick = null;
   // AUDIT TIMERS1 UI-10: a window taken out of the page without its stop stops itself on the next tick
-  const step = () => { if (win.isConnected === false && tick) { clearInterval(tick); tick = null; return; } draw(); };
+  const step = () => {
+    if (win.isConnected === false && tick) {
+      clearInterval(tick);
+      tick = null;
+      return;
+    }
+    draw();
+  };
   draw();
   tick = setInterval(step, every);
   // AUDIT TIMERS1 UI-5: the focus goes INTO the window (it had stayed on the hourglass, under the scrim)
   // AUDIT SEASON-BOOK U3: when the window opens - never when the face repaints around it, and never scrolling the list.
   // AUDIT TIMERS2 M5: unless it is in already - the pause face redraws this window whole and puts the focus back where it
   // was (a filter's button), and Close took it off again a frame later
-  if (focus) globalThis.requestAnimationFrame?.(() => { if (!win.contains?.(doc.activeElement)) close.focus?.({ preventScroll: true }); });
-  return { root: win, stop: () => { if (tick) clearInterval(tick); tick = null; }, draw, close };
+  if (focus)
+    globalThis.requestAnimationFrame?.(() => {
+      if (!win.contains?.(doc.activeElement)) close.focus?.({ preventScroll: true });
+    });
+  return {
+    root: win,
+    stop: () => {
+      if (tick) clearInterval(tick);
+      tick = null;
+    },
+    draw,
+    close,
+  };
 }

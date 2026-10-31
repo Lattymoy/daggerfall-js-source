@@ -2,8 +2,8 @@
   {
     "name": "WOD-SEA-TEST-arm-reads-the-location",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2,",
-    "new": "ocean: WOD_OCEAN_REGIONS.includes(tile.mapRegionIndex) && tile.worldHeight <= 2,",
+    "old": "    ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2,",
+    "new": "    ocean: WOD_OCEAN_REGIONS.includes(tile.mapRegionIndex) && tile.worldHeight <= 2,",
     "tests": [
       "test/world/worldOfDaggerfall/fb1018f_wodsea.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "WOD-SEA-TEST-arm-unread",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2,",
-    "new": "ocean: false,",
+    "old": "    ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2,",
+    "new": "    ocean: false,",
     "tests": [
       "test/world/worldOfDaggerfall/fb1018f_wodsea.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "WOD-SEA-TEST-height-unread",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2,",
-    "new": "ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1),",
+    "old": "    ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2,",
+    "new": "    ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1),",
     "tests": [
       "test/world/worldOfDaggerfall/fb1018f_wodsea.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "WOD-SEA-TEST-walk-type0-between-ignores-sea",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "if ((st.hasLocation || st.ocean) && type0Between(idx.type0, prev, i)) return st.out;",
-    "new": "if (st.hasLocation && type0Between(idx.type0, prev, i)) return st.out;",
+    "old": "    if ((st.hasLocation || st.ocean) && type0Between(idx.type0, prev, i)) return st.out;",
+    "new": "    if (st.hasLocation && type0Between(idx.type0, prev, i)) return st.out;",
     "tests": [
       "test/systems/flow2_fast_tests.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "WOD-SEA-TEST-walk-sea-type0-placed",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "    if (st.ocean) { if (t === 0) return st.out; else if (t === 2) continue; }",
-    "new": "    if (st.ocean) { if (t === 2) continue; }",
+    "old": "    }\n    if (st.ocean) {\n      if (t === 0) return st.out;\n      else if (t === 2) continue;\n    }",
+    "new": "    }\n    if (st.ocean) {\n      if (t === 2) continue;\n    }",
     "tests": [
       "test/systems/flow2_fast_tests.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "WOD-SEA-TEST-scan-sea-arm-unread",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "    if (st.ocean) {\n      if (t === 0) return st.out;\n      else if (t === 2) continue;\n    }\n",
-    "new": "",
+    "old": "    if (st.ocean) {\n      if (t === 0) return st.out;\n      else if (t === 2) continue;\n    }\n    // :136-137",
+    "new": "    // :136-137",
     "tests": [
       "test/systems/flow2_fast_tests.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "WOD-SEA-TEST-no-default",
     "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
-    "old": "WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1)",
-    "new": "WOD_OCEAN_REGIONS.includes(tile.regionIndex)",
+    "old": "    ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex ?? -1) && tile.worldHeight <= 2,",
+    "new": "    ocean: WOD_OCEAN_REGIONS.includes(tile.regionIndex) && tile.worldHeight <= 2,",
     "tests": [
       "test/world/worldOfDaggerfall/fb1018f_wodsea.test.js",
       "test/systems/flow2_fast_tests.test.js"

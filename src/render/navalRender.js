@@ -57,16 +57,32 @@ export function aimTone(aim) {
   return aim?.hot ? AIM_TONES.hot : AIM_TONES.laid;
 }
 export const AIM_TONES = Object.freeze({
-  laid: Object.freeze({ zone: [0.98, 0.84, 0.46, 0.42], arc: [1, 0.86, 0.55, 0.4], post: [1, 0.84, 0.5, 0.3], strike: [1, 0.8, 0.45, 0.5] }),
-  hot: Object.freeze({ zone: [0.95, 0.18, 0.12, 0.55], arc: [1, 0.35, 0.22, 0.55], post: [1, 0.3, 0.2, 0.36], strike: [1, 0.26, 0.16, 0.8] }),
-  idle: Object.freeze({ zone: [0.62, 0.64, 0.66, 0.3], arc: [0.62, 0.64, 0.66, 0.22], post: [0.6, 0.62, 0.64, 0.16], strike: [0.62, 0.64, 0.66, 0.35] }),
+  laid: Object.freeze({
+    zone: [0.98, 0.84, 0.46, 0.42],
+    arc: [1, 0.86, 0.55, 0.4],
+    post: [1, 0.84, 0.5, 0.3],
+    strike: [1, 0.8, 0.45, 0.5],
+  }),
+  hot: Object.freeze({
+    zone: [0.95, 0.18, 0.12, 0.55],
+    arc: [1, 0.35, 0.22, 0.55],
+    post: [1, 0.3, 0.2, 0.36],
+    strike: [1, 0.26, 0.16, 0.8],
+  }),
+  idle: Object.freeze({
+    zone: [0.62, 0.64, 0.66, 0.3],
+    arc: [0.62, 0.64, 0.66, 0.22],
+    post: [0.6, 0.62, 0.64, 0.16],
+    strike: [0.62, 0.64, 0.66, 0.35],
+  }),
 });
 
 /** A half-axis across the eye's line to `p`, on the flat, `half` long - an upright quad's width turned to the eye. */
 export function flatAcross(p, eye, half) {
-  const dx = p[0] - eye[0], dz = p[2] - eye[2];
+  const dx = p[0] - eye[0],
+    dz = p[2] - eye[2];
   const l = Math.hypot(dx, dz) || 1;
-  return [-dz / l * half, 0, dx / l * half];
+  return [(-dz / l) * half, 0, (dx / l) * half];
 }
 
 const VS = `#version 300 es
@@ -125,43 +141,79 @@ export const NAVAL_PROGRAMS = Object.freeze([Object.freeze(/** @type {const} */ 
 /** A deterministic draw for the pictures (the same bytes every boot). */
 function prng(seed) {
   let a = seed >>> 0;
-  return () => { a = (a + 0x6d2b79f5) >>> 0; let t = Math.imul(a ^ (a >>> 15), a | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = Math.imul(a ^ (a >>> 15), a | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 /** A white picture whose alpha is `shape(u, v)` over [-1, 1]^2. */
 function picture(shape, size = NAVAL_TEX_SIZE) {
   const data = new Uint8Array(size * size * 4);
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      const u = (x + 0.5) / size * 2 - 1, v = (y + 0.5) / size * 2 - 1;
+      const u = ((x + 0.5) / size) * 2 - 1,
+        v = ((y + 0.5) / size) * 2 - 1;
       const i = (y * size + x) * 4;
-      data[i] = 255; data[i + 1] = 255; data[i + 2] = 255;
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
       data[i + 3] = Math.round(255 * Math.max(0, Math.min(1, shape(u, v))));
     }
   }
   return { width: size, height: size, data };
 }
 /** The soft dot: a smooth fall to nothing at the rim. */
-export const navalSoftTexture = () => picture((u, v) => { const r = Math.min(1, Math.hypot(u, v)); return (1 - r) * (1 - r); });
+export const navalSoftTexture = () =>
+  picture((u, v) => {
+    const r = Math.min(1, Math.hypot(u, v));
+    return (1 - r) * (1 - r);
+  });
 /** The smoke puff: a soft dot broken into lumps by a few seeded blobs, so a wall of puffs never tiles. */
 export function navalSmokeTexture() {
   const rnd = prng(0x5a0e);
-  const blobs = Array.from({ length: 9 }, () => ({ x: (rnd() - 0.5) * 1.1, y: (rnd() - 0.5) * 1.1, r: 0.3 + rnd() * 0.35 }));
+  const blobs = Array.from({ length: 9 }, () => ({
+    x: (rnd() - 0.5) * 1.1,
+    y: (rnd() - 0.5) * 1.1,
+    r: 0.3 + rnd() * 0.35,
+  }));
   return picture((u, v) => {
     let m = 0;
-    for (const b of blobs) { const d = Math.hypot(u - b.x, v - b.y) / b.r; m = Math.max(m, Math.max(0, 1 - d * d)); }
+    for (const b of blobs) {
+      const d = Math.hypot(u - b.x, v - b.y) / b.r;
+      m = Math.max(m, Math.max(0, 1 - d * d));
+    }
     const rim = Math.max(0, 1 - Math.hypot(u, v));
     return m * rim * 1.15;
   });
 }
 /** The foam ring: bright at 0.7 of the radius, falling away either side. */
-export const navalRingTexture = () => picture((u, v) => { const r = Math.hypot(u, v); return Math.max(0, 1 - Math.abs(r - 0.7) / 0.28) * (r < 1 ? 1 : 0); });
+export const navalRingTexture = () =>
+  picture((u, v) => {
+    const r = Math.hypot(u, v);
+    return Math.max(0, 1 - Math.abs(r - 0.7) / 0.28) * (r < 1 ? 1 : 0);
+  });
 /** The hard disc: a ball's, a splinter's and the zone's mark - solid to its edge, a pixel's fall there. */
-export const navalDiscTexture = () => picture((u, v) => { const r = Math.hypot(u, v); return Math.max(0, Math.min(1, (1 - r) * 12)); });
+export const navalDiscTexture = () =>
+  picture((u, v) => {
+    const r = Math.hypot(u, v);
+    return Math.max(0, Math.min(1, (1 - r) * 12));
+  });
 /** AUDIT NAV1 (the presentation, #4): the arcs' line - solid across its middle, falling to nothing by its edge texels,
  *  the same along its length but for the dash (the first half of a repeat lit, the second ARC_DASH_DIM); repeated
  *  along (`repeatS`). */
-export const navalLineTexture = () => ({ ...picture((u, v) => Math.max(0, Math.min(1, (0.97 - Math.abs(v)) / 0.3)) * (u < 0 ? 1 : ARC_DASH_DIM)), repeatS: true });
-export const NAVAL_TEXTURES = Object.freeze({ soft: navalSoftTexture, smoke: navalSmokeTexture, ring: navalRingTexture, disc: navalDiscTexture, line: navalLineTexture });
+export const navalLineTexture = () => ({
+  ...picture((u, v) => Math.max(0, Math.min(1, (0.97 - Math.abs(v)) / 0.3)) * (u < 0 ? 1 : ARC_DASH_DIM)),
+  repeatS: true,
+});
+export const NAVAL_TEXTURES = Object.freeze({
+  soft: navalSoftTexture,
+  smoke: navalSmokeTexture,
+  ring: navalRingTexture,
+  disc: navalDiscTexture,
+  line: navalLineTexture,
+});
 
 /**
  * AUDIT NAV1 (the frame's cost, #13): THE PICTURES ON ONE SHEET. The blended layers are sorted back to front, and a
@@ -172,24 +224,42 @@ export const NAVAL_TEXTURES = Object.freeze({ soft: navalSoftTexture, smoke: nav
  * blended pass is one draw, the added two (the sheet's, and the arcs' line, which repeats and has its own).
  */
 export const NAVAL_SHEET_GUTTER = 1;
-export const NAVAL_SHEET = Object.freeze({ soft: Object.freeze([0, 0]), smoke: Object.freeze([1, 0]), ring: Object.freeze([0, 1]), disc: Object.freeze([1, 1]) });
+export const NAVAL_SHEET = Object.freeze({
+  soft: Object.freeze([0, 0]),
+  smoke: Object.freeze([1, 0]),
+  ring: Object.freeze([0, 1]),
+  disc: Object.freeze([1, 1]),
+});
 const SHEET_CELL = NAVAL_TEX_SIZE + 2 * NAVAL_SHEET_GUTTER;
 export const NAVAL_SHEET_SIZE = SHEET_CELL * 2;
 /** A picture's cell on the sheet: `{ u0, u1, v0, v1 }` - its own texels, edge to edge. */
 export function sheetUv(pic) {
   const [col, row] = NAVAL_SHEET[pic] ?? NAVAL_SHEET.soft;
-  const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER, y0 = row * SHEET_CELL + NAVAL_SHEET_GUTTER;
-  return { u0: x0 / NAVAL_SHEET_SIZE, u1: (x0 + NAVAL_TEX_SIZE) / NAVAL_SHEET_SIZE, v0: y0 / NAVAL_SHEET_SIZE, v1: (y0 + NAVAL_TEX_SIZE) / NAVAL_SHEET_SIZE };
+  const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER,
+    y0 = row * SHEET_CELL + NAVAL_SHEET_GUTTER;
+  return {
+    u0: x0 / NAVAL_SHEET_SIZE,
+    u1: (x0 + NAVAL_TEX_SIZE) / NAVAL_SHEET_SIZE,
+    v0: y0 / NAVAL_SHEET_SIZE,
+    v1: (y0 + NAVAL_TEX_SIZE) / NAVAL_SHEET_SIZE,
+  };
 }
 const SHEET_UV = Object.freeze(Object.fromEntries(Object.keys(NAVAL_SHEET).map((k) => [k, Object.freeze(sheetUv(k))])));
 /** The sheet: the four pictures copied into their cells, the gutters clear (white, alpha nought). */
 export function navalSheetTexture() {
-  const size = NAVAL_SHEET_SIZE, data = new Uint8Array(size * size * 4);
-  for (let i = 0; i < data.length; i += 4) { data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; }
+  const size = NAVAL_SHEET_SIZE,
+    data = new Uint8Array(size * size * 4);
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = 255;
+    data[i + 1] = 255;
+    data[i + 2] = 255;
+  }
   for (const [name, [col, row]] of Object.entries(NAVAL_SHEET)) {
     const pic = NAVAL_TEXTURES[name]();
-    const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER, y0 = row * SHEET_CELL + NAVAL_SHEET_GUTTER;
-    for (let y = 0; y < pic.height; y++) data.set(pic.data.subarray(y * pic.width * 4, (y + 1) * pic.width * 4), ((y0 + y) * size + x0) * 4);
+    const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER,
+      y0 = row * SHEET_CELL + NAVAL_SHEET_GUTTER;
+    for (let y = 0; y < pic.height; y++)
+      data.set(pic.data.subarray(y * pic.width * 4, (y + 1) * pic.width * 4), ((y0 + y) * size + x0) * 4);
   }
   return { width: size, height: size, data };
 }
@@ -219,24 +289,46 @@ export function ballPictures(b, axes) {
   const ball = (pos, sz, color = iron) => ({ pos, size: sz, color, rot: 0, blend: 'alpha', solid: true, kind: 'ball' });
   const glow = (pos, sz, color) => ({ pos, size: sz, color, rot: 0, blend: 'add', solid: false, kind: 'flash' });
   const at = (u, k) => [b.pos[0] + u[0] * k, b.pos[1] + u[1] * k, b.pos[2] + u[2] * k];
-  const R = axes.right, U = axes.up;
-  const across = (a) => [R[0] * Math.cos(a) + U[0] * Math.sin(a), R[1] * Math.cos(a) + U[1] * Math.sin(a), R[2] * Math.cos(a) + U[2] * Math.sin(a)];
+  const R = axes.right,
+    U = axes.up;
+  const across = (a) => [
+    R[0] * Math.cos(a) + U[0] * Math.sin(a),
+    R[1] * Math.cos(a) + U[1] * Math.sin(a),
+    R[2] * Math.cos(a) + U[2] * Math.sin(a),
+  ];
   if (b.shot === 'grape') {
     const open = 0.08 + (GRAPE_OPEN_M - 0.08) * Math.min(1, Math.max(0, b.age ?? 0) / GRAPE_OPEN_S);
     const out = [];
-    for (let i = 0; i < GRAPE_PELLETS; i++) out.push(ball(at(across((b.spin ?? 0) * 0.08 + (i * 2 * Math.PI) / GRAPE_PELLETS), open * (0.7 + 0.3 * ((i * 7) % 3) / 2)), size * 0.42, [0.15, 0.15, 0.17, 1]));
+    for (let i = 0; i < GRAPE_PELLETS; i++)
+      out.push(
+        ball(
+          at(
+            across((b.spin ?? 0) * 0.08 + (i * 2 * Math.PI) / GRAPE_PELLETS),
+            open * (0.7 + (0.3 * ((i * 7) % 3)) / 2),
+          ),
+          size * 0.42,
+          [0.15, 0.15, 0.17, 1],
+        ),
+      );
     return out;
   }
   if (b.shot === 'chain') {
     const u = across(b.spin ?? 0);
-    return [ball(at(u, CHAIN_HALF_M), size * 0.8), ball(at(u, -CHAIN_HALF_M), size * 0.8),
-      ...[-0.5, 0, 0.5].map((k) => ball(at(u, CHAIN_HALF_M * k), size * 0.24, [0.13, 0.13, 0.14, 1]))];
+    return [
+      ball(at(u, CHAIN_HALF_M), size * 0.8),
+      ball(at(u, -CHAIN_HALF_M), size * 0.8),
+      ...[-0.5, 0, 0.5].map((k) => ball(at(u, CHAIN_HALF_M * k), size * 0.24, [0.13, 0.13, 0.14, 1])),
+    ];
   }
   if (b.shot === 'heated') {
-    const v = b.vel ?? [0, 0, 0], l = Math.hypot(v[0], v[1], v[2]) || 1;
+    const v = b.vel ?? [0, 0, 0],
+      l = Math.hypot(v[0], v[1], v[2]) || 1;
     const back = [-v[0] / l, -v[1] / l, -v[2] / l];
-    return [ball(b.pos, size, [0.6, 0.18, 0.05, 1]), glow(b.pos, size * 3.4, [1, 0.42, 0.12, 0.85]),
-      ...[1, 2, 3].map((k) => glow(at(back, k * 0.7), size * 2.6 * (1 - k * 0.2), [1, 0.38, 0.1, 0.5 / k]))];
+    return [
+      ball(b.pos, size, [0.6, 0.18, 0.05, 1]),
+      glow(b.pos, size * 3.4, [1, 0.42, 0.12, 0.85]),
+      ...[1, 2, 3].map((k) => glow(at(back, k * 0.7), size * 2.6 * (1 - k * 0.2), [1, 0.38, 0.1, 0.5 / k])),
+    ];
   }
   return [ball(b.pos, size)];
 }
@@ -247,14 +339,25 @@ export function ballPictures(b, axes) {
  * along `ay` (a picture's cell on the sheet). Answers the next vertex. Pure - the tests read the layout off it.
  */
 export function writeQuad(out, v, c, ax, ay, color, lit, u0 = 0, u1 = 1, v0 = 0, v1 = 1) {
-  const corners = [[-1, -1], [1, -1], [1, 1], [-1, -1], [1, 1], [-1, 1]];
+  const corners = [
+    [-1, -1],
+    [1, -1],
+    [1, 1],
+    [-1, -1],
+    [1, 1],
+    [-1, 1],
+  ];
   for (const [sx, sy] of corners) {
     const o = v * NAVAL_STRIDE;
     out[o] = c[0] + ax[0] * sx + ay[0] * sy;
     out[o + 1] = c[1] + ax[1] * sx + ay[1] * sy;
     out[o + 2] = c[2] + ax[2] * sx + ay[2] * sy;
-    out[o + 3] = u0 + (u1 - u0) * (sx + 1) / 2; out[o + 4] = v0 + (v1 - v0) * (1 - sy) / 2;
-    out[o + 5] = color[0]; out[o + 6] = color[1]; out[o + 7] = color[2]; out[o + 8] = color[3];
+    out[o + 3] = u0 + ((u1 - u0) * (sx + 1)) / 2;
+    out[o + 4] = v0 + ((v1 - v0) * (1 - sy)) / 2;
+    out[o + 5] = color[0];
+    out[o + 6] = color[1];
+    out[o + 7] = color[2];
+    out[o + 8] = color[3];
     out[o + 9] = lit ? 1 : 0;
     v++;
   }
@@ -269,7 +372,9 @@ export function viewAxes(view) {
 /** A particle's two half-axes: facing the eye (turned by its roll) or, `flat`, lying on the sea - AUDIT NAV1 (#15):
  *  `aspect` times as long as it is wide along its first (a plank). */
 export function particleAxes(p, axes) {
-  const h = p.size * 0.5, c = Math.cos(p.rot ?? 0), s = Math.sin(p.rot ?? 0);
+  const h = p.size * 0.5,
+    c = Math.cos(p.rot ?? 0),
+    s = Math.sin(p.rot ?? 0);
   const hl = h * (p.aspect ?? 1);
   if (p.flat) return { ax: [c * hl, 0, s * hl], ay: [-s * h, 0, c * h] };
   const { right: R, up: U } = axes;
@@ -289,7 +394,8 @@ export function particleAxes(p, axes) {
 export function writeRibbon(out, v, points, eye, width, color, { vh = 0, period = 0, offset = 0 } = {}) {
   let run = 0;
   for (let i = 0; i + 1 < points.length; i++) {
-    const a = points[i], b = points[i + 1];
+    const a = points[i],
+      b = points[i + 1];
     const d = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
     const len = Math.hypot(d[0], d[1], d[2]);
     if (len < 1e-6) continue;
@@ -298,15 +404,29 @@ export function writeRibbon(out, v, points, eye, width, color, { vh = 0, period 
     let s = [d[1] * e[2] - d[2] * e[1], d[2] * e[0] - d[0] * e[2], d[0] * e[1] - d[1] * e[0]];
     const sl = Math.hypot(s[0], s[1], s[2]) || 1;
     const w = vh > 0 ? width * vh * Math.hypot(e[0], e[1], e[2]) : width;
-    s = [s[0] / sl * w / 2, s[1] / sl * w / 2, s[2] / sl * w / 2];
-    const u0 = period > 0 ? (run - offset) / period : 0, u1 = period > 0 ? (run + len - offset) / period : 1;
+    s = [((s[0] / sl) * w) / 2, ((s[1] / sl) * w) / 2, ((s[2] / sl) * w) / 2];
+    const u0 = period > 0 ? (run - offset) / period : 0,
+      u1 = period > 0 ? (run + len - offset) / period : 1;
     run += len;
     v = writeQuad(out, v, mid, [d[0] / 2, d[1] / 2, d[2] / 2], s, color, false, u0, u1);
   }
   return v;
 }
 
-const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze'];
+const LIGHT_FOG = [
+  'uAmbient',
+  'uSunColor',
+  'uSunScale',
+  'uLightDir',
+  'uCamPos',
+  'uFogColor',
+  'uFogMode',
+  'uFogDensity',
+  'uFogRange',
+  'uDwFog',
+  'uFocus',
+  'uJungleHaze',
+];
 
 export class NavalRenderer {
   /** @param {any} renderer - render/renderer.js's (its matrices, light and fog are this pass's too) */
@@ -324,16 +444,24 @@ export class NavalRenderer {
     if (this._p) return this._p;
     const gl = this.gl;
     const p = buildProgram(gl, VS, NAVAL_FS, 'naval effects');
-    const u = Object.fromEntries(['uProj', 'uView', 'uTex', 'uAdd', ...LIGHT_FOG].map((n) => [n, gl.getUniformLocation(p, n)]));
-    const vao = gl.createVertexArray(), vbo = gl.createBuffer();
+    const u = Object.fromEntries(
+      ['uProj', 'uView', 'uTex', 'uAdd', ...LIGHT_FOG].map((n) => [n, gl.getUniformLocation(p, n)]),
+    );
+    const vao = gl.createVertexArray(),
+      vbo = gl.createBuffer();
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
     gl.bufferData(gl.ARRAY_BUFFER, this.data.byteLength, gl.DYNAMIC_DRAW);
-    const F = 4, S = NAVAL_STRIDE * F;
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 2, gl.FLOAT, false, S, 3 * F);
-    gl.enableVertexAttribArray(2); gl.vertexAttribPointer(2, 4, gl.FLOAT, false, S, 5 * F);
-    gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3, 1, gl.FLOAT, false, S, 9 * F);
+    const F = 4,
+      S = NAVAL_STRIDE * F;
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, S, 0);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, S, 3 * F);
+    gl.enableVertexAttribArray(2);
+    gl.vertexAttribPointer(2, 4, gl.FLOAT, false, S, 5 * F);
+    gl.enableVertexAttribArray(3);
+    gl.vertexAttribPointer(3, 1, gl.FLOAT, false, S, 9 * F);
     gl.bindVertexArray(null);
     for (const [name, make] of Object.entries(NAVAL_GL_TEXTURES)) {
       const pic = make();
@@ -354,7 +482,8 @@ export class NavalRenderer {
   }
 
   _uniforms(u) {
-    const gl = this.gl, r = this.renderer;
+    const gl = this.gl,
+      r = this.renderer;
     gl.uniformMatrix4fv(u.uProj, false, r._proj);
     gl.uniformMatrix4fv(u.uView, false, r._view);
     gl.uniform3fv(u.uAmbient, r._ambient);
@@ -368,7 +497,7 @@ export class NavalRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);
-    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze); // BANTHA1: the jungle's haze (render/hazeGlsl.js)
   }
 
   /**
@@ -387,16 +516,27 @@ export class NavalRenderer {
     const runs = { alpha: [], add: [] };
     const run = (blend, tex, start) => {
       if (v <= start) return;
-      const list = runs[blend], last = list[list.length - 1];
-      if (last && last[0] === tex && last[2] === start) last[2] = v; else list.push([tex, start, v]);
+      const list = runs[blend],
+        last = list[list.length - 1];
+      if (last && last[0] === tex && last[2] === start) last[2] = v;
+      else list.push([tex, start, v]);
     };
-    const alpha = [], add = [];
+    const alpha = [],
+      add = [];
     for (const p of frame.particles ?? []) (p.blend === 'add' ? add : alpha).push(p);
-    for (const b of frame.balls ?? []) for (const p of ballPictures(b, axes)) (p.blend === 'add' ? add : alpha).push(p);   // SHOT-KINDS: each load's own
+    for (const b of frame.balls ?? []) for (const p of ballPictures(b, axes)) (p.blend === 'add' ? add : alpha).push(p); // SHOT-KINDS: each load's own
     // SALVAGE: a sunk ship's wreckage (`wreck`, the host's mark) floats larger and paler than her casks - broken timber
     for (const f of frame.floaters ?? []) {
       const wreck = f.kind === 'flotsam' && !!f.wreck;
-      alpha.push({ pos: [f.pos[0], f.pos[1] + (wreck ? 0.25 : 0.35), f.pos[2]], size: wreck ? 1.4 : 0.9, color: f.kind === 'barrel' ? [0.45, 0.2, 0.08, 1] : wreck ? [0.66, 0.54, 0.36, 1] : [0.52, 0.38, 0.2, 1], rot: 0, blend: 'alpha', solid: true, kind: f.kind });
+      alpha.push({
+        pos: [f.pos[0], f.pos[1] + (wreck ? 0.25 : 0.35), f.pos[2]],
+        size: wreck ? 1.4 : 0.9,
+        color: f.kind === 'barrel' ? [0.45, 0.2, 0.08, 1] : wreck ? [0.66, 0.54, 0.36, 1] : [0.52, 0.38, 0.2, 1],
+        rot: 0,
+        blend: 'alpha',
+        solid: true,
+        kind: f.kind,
+      });
     }
     // back to front, so the blended layers stack as they stand
     const d2 = (p) => (p.pos[0] - eye[0]) ** 2 + (p.pos[1] - eye[1]) ** 2 + (p.pos[2] - eye[2]) ** 2;
@@ -407,7 +547,11 @@ export class NavalRenderer {
     // grape, chain or heated ball lays five quads; a busy fight's balls and smoke had filled the buffer before the aim's
     // zone, posts, strikes and arcs were laid). The effects take the rest, the farthest blended ones let go first.
     const aim = frame.aim;
-    const aimQuads = aim ? (aim.zone?.length ?? 0) * (aim.posts ? 2 : 1) + (aim.strikes?.length ?? 0) + (aim.arcs ?? []).reduce((n, a) => n + (a?.length ?? 0), 0) : 0;
+    const aimQuads = aim
+      ? (aim.zone?.length ?? 0) * (aim.posts ? 2 : 1) +
+        (aim.strikes?.length ?? 0) +
+        (aim.arcs ?? []).reduce((n, a) => n + (a?.length ?? 0), 0)
+      : 0;
     const fxCap = cap - Math.min(cap, aimQuads * 6);
     const over = alpha.length + add.length - fxCap / 6;
     if (over > 0) alpha.splice(0, Math.min(alpha.length, over));
@@ -418,7 +562,19 @@ export class NavalRenderer {
         if (v + 6 > fxCap) break;
         const { ax, ay } = particleAxes(p, axes);
         const uv = SHEET_UV[pictureOf(p)];
-        v = writeQuad(this.data, v, p.pos, ax, ay, p.color, blend === 'alpha' && p.kind !== 'flash', uv.u0, uv.u1, uv.v0, uv.v1);
+        v = writeQuad(
+          this.data,
+          v,
+          p.pos,
+          ax,
+          ay,
+          p.color,
+          blend === 'alpha' && p.kind !== 'flash',
+          uv.u0,
+          uv.u1,
+          uv.v0,
+          uv.v1,
+        );
       }
       run(blend, 'sheet', start);
     };
@@ -426,10 +582,23 @@ export class NavalRenderer {
     // the aim: the zone's marks flat on the sea (blended), the posts and the strikes and the arcs' ribbons (added)
     const tone = aimTone(aim);
     if (aim?.zone?.length) {
-      const start = v, uv = SHEET_UV.ring;
+      const start = v,
+        uv = SHEET_UV.ring;
       for (const z of aim.zone) {
         if (v + 6 > cap) break;
-        v = writeQuad(this.data, v, [z[0], z[1] + 0.06, z[2]], [aim.radius ?? 2.2, 0, 0], [0, 0, aim.radius ?? 2.2], tone.zone, false, uv.u0, uv.u1, uv.v0, uv.v1);
+        v = writeQuad(
+          this.data,
+          v,
+          [z[0], z[1] + 0.06, z[2]],
+          [aim.radius ?? 2.2, 0, 0],
+          [0, 0, aim.radius ?? 2.2],
+          tone.zone,
+          false,
+          uv.u0,
+          uv.u1,
+          uv.v0,
+          uv.v1,
+        );
       }
       run('alpha', 'sheet', start);
     }
@@ -438,20 +607,46 @@ export class NavalRenderer {
     // light is not - and a ball that meets a hull marked where it strikes her. Added light: laid before the arcs, it
     // sums the same, and runs on with the flashes' sheet
     if (aim?.posts && aim.zone?.length) {
-      const start = v, uv = SHEET_UV.soft;
+      const start = v,
+        uv = SHEET_UV.soft;
       for (const z of aim.zone) {
         if (v + 6 > cap) break;
         const f = flatAcross(z, eye, AIM_POST_HALF_W);
-        v = writeQuad(this.data, v, [z[0], z[1] + AIM_POST_HALF_H, z[2]], f, [0, AIM_POST_HALF_H, 0], tone.post, false, uv.u0, uv.u1, uv.v0, uv.v1);
+        v = writeQuad(
+          this.data,
+          v,
+          [z[0], z[1] + AIM_POST_HALF_H, z[2]],
+          f,
+          [0, AIM_POST_HALF_H, 0],
+          tone.post,
+          false,
+          uv.u0,
+          uv.u1,
+          uv.v0,
+          uv.v1,
+        );
       }
       run('add', 'sheet', start);
     }
     if (aim?.strikes?.length) {
-      const start = v, uv = SHEET_UV.soft;
+      const start = v,
+        uv = SHEET_UV.soft;
       const h = AIM_STRIKE_HALF;
       for (const z of aim.strikes) {
         if (v + 6 > cap) break;
-        v = writeQuad(this.data, v, z, [axes.right[0] * h, axes.right[1] * h, axes.right[2] * h], [axes.up[0] * h, axes.up[1] * h, axes.up[2] * h], tone.strike, false, uv.u0, uv.u1, uv.v0, uv.v1);
+        v = writeQuad(
+          this.data,
+          v,
+          z,
+          [axes.right[0] * h, axes.right[1] * h, axes.right[2] * h],
+          [axes.up[0] * h, axes.up[1] * h, axes.up[2] * h],
+          tone.strike,
+          false,
+          uv.u0,
+          uv.u1,
+          uv.v0,
+          uv.v1,
+        );
       }
       run('add', 'sheet', start);
     }
@@ -487,7 +682,10 @@ export class NavalRenderer {
       gl.uniform1i(P.u.uAdd, blend === 'add' ? 1 : 0);
       gl.blendFunc(gl.ONE, blend === 'add' ? gl.ONE : gl.ONE_MINUS_SRC_ALPHA);
       for (const [tex, a, b] of runs[blend]) {
-        if (bound !== tex) { gl.bindTexture(gl.TEXTURE_2D, this._tex.get(tex)); bound = tex; }
+        if (bound !== tex) {
+          gl.bindTexture(gl.TEXTURE_2D, this._tex.get(tex));
+          bound = tex;
+        }
         gl.drawArrays(gl.TRIANGLES, a, b - a);
       }
     }
@@ -503,7 +701,12 @@ export class NavalRenderer {
 
   dispose() {
     const gl = this.gl;
-    if (this._p) { gl.deleteProgram(this._p.p); gl.deleteBuffer(this._p.vbo); gl.deleteVertexArray(this._p.vao); this._p = null; }
+    if (this._p) {
+      gl.deleteProgram(this._p.p);
+      gl.deleteBuffer(this._p.vbo);
+      gl.deleteVertexArray(this._p.vao);
+      this._p = null;
+    }
     for (const t of this._tex.values()) gl.deleteTexture(t);
     this._tex.clear();
   }

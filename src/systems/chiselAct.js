@@ -18,7 +18,12 @@ import { PRESS_LEAD_MAX_S } from './stitchAct.js';
  * @param {{ strikes?: number, markS?: number, gentle?: boolean, rng?: () => number }} [opts] `strikes` the work's
  *   (recipeLaw chiselStrikes), `markS` how long a mark stands (recipeLaw chiselMarkS - the rank's and the band's)
  */
-export function createChiselAct({ strikes = CHISEL_ACT.strikes, markS = CHISEL_ACT.markS, gentle = false, rng = Math.random } = {}) {
+export function createChiselAct({
+  strikes = CHISEL_ACT.strikes,
+  markS = CHISEL_ACT.markS,
+  gentle = false,
+  rng = Math.random,
+} = {}) {
   const lines = CHISEL_ACT.lines;
   /** Another line than `not` (any, for none), by one throw of the dice - the glint's moveGlint, never a second throw:
    *  the lines but `not`, evenly. */
@@ -29,12 +34,20 @@ export function createChiselAct({ strikes = CHISEL_ACT.strikes, markS = CHISEL_A
     return g >= not ? g + 1 : g;
   };
   const st = {
-    kind: 'chisel', t: 0, lines, need: Math.max(1, strikes | 0), markS,
+    kind: 'chisel',
+    t: 0,
+    lines,
+    need: Math.max(1, strikes | 0),
+    markS,
     /** the marked line (-1 under Gentle acts), the one it moves to next, and how long it stands yet */
-    mark: -1, next: -1, markLeft: markS,
+    mark: -1,
+    next: -1,
+    markLeft: markS,
     /** the line the chisel is set on - the middle one first */
     at: Math.floor(lines / 2),
-    strikes: /** @type {boolean[]} */ ([]), lastAt: -Infinity, done: false,
+    strikes: /** @type {boolean[]} */ ([]),
+    lastAt: -Infinity,
+    done: false,
   };
   /** The mark moved on from `from` - a line other than it, and the one after that drawn now (so a press past the
    *  mark's end is judged against the line it moved to). */
@@ -46,24 +59,37 @@ export function createChiselAct({ strikes = CHISEL_ACT.strikes, markS = CHISEL_A
   };
   moveMark(-1);
   /** @param {number} i */
-  function aim(i) { if (!st.done && Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i)); }
+  function aim(i) {
+    if (!st.done && Number.isInteger(i)) st.at = Math.max(0, Math.min(lines - 1, i));
+  }
   return {
     state: st,
     /** The marked line now, or -1 (Gentle acts). */
-    get mark() { return st.mark; },
+    get mark() {
+      return st.mark;
+    },
     /** Whether the chisel is set on the marked line now. */
-    get onMark() { return !gentle && st.mark >= 0 && st.at === st.mark; },
+    get onMark() {
+      return !gentle && st.mark >= 0 && st.at === st.mark;
+    },
     tick(dt) {
       if (st.done || !Number.isFinite(dt) || dt <= 0) return;
       st.t += dt;
       if (gentle) return;
       st.markLeft -= dt;
-      while (st.markLeft <= 0) { const left = st.markLeft; st.mark = st.next; st.next = other(st.mark); st.markLeft = left + st.markS; }
+      while (st.markLeft <= 0) {
+        const left = st.markLeft;
+        st.mark = st.next;
+        st.next = other(st.mark);
+        st.markLeft = left + st.markS;
+      }
     },
     /** Set the chisel on line `i` (the pointer's, a digit's) - clamped to the stone. */
     aim,
     /** Move the chisel `d` lines (the arrows). */
-    move(d) { if (Number.isInteger(d)) aim(st.at + d); },
+    move(d) {
+      if (Number.isInteger(d)) aim(st.at + d);
+    },
     /** A strike where the chisel is set: true on the marked line, false off it, null when it is too soon after the last
      *  (the mallet's fall) or the act is over. `lead` - the press's own moment past the act's last frame (AUDIT 32 P1's
      *  law, the stitch's): a press after the mark's end is judged against the line it moved to. The last strike ends the
@@ -73,7 +99,7 @@ export function createChiselAct({ strikes = CHISEL_ACT.strikes, markS = CHISEL_A
       const at = st.t + l;
       if (st.done || at - st.lastAt < CHISEL_ACT.gapS) return null;
       const marked = l >= st.markLeft ? st.next : st.mark;
-      const hit = st.at === marked;   // Gentle acts mark no line (-1, and their mark never ends): never true
+      const hit = st.at === marked; // Gentle acts mark no line (-1, and their mark never ends): never true
       st.strikes.push(hit);
       st.lastAt = at;
       if (st.strikes.length >= st.need) st.done = true;
@@ -81,7 +107,9 @@ export function createChiselAct({ strikes = CHISEL_ACT.strikes, markS = CHISEL_A
       return hit;
     },
     /** Let go (Esc, or the page shut): no more strikes; an act short of its strikes is never clean. */
-    cancel() { st.done = true; },
+    cancel() {
+      st.done = true;
+    },
     /** The act's report: its strikes, the true ones, and whether it was clean - every strike made, every one true (a
      *  Gentle act's are none). */
     report() {

@@ -22,8 +22,8 @@
   {
     "name": "LEVEL-EVEN-floor-of-one",
     "file": "src/systems/levelEven.js",
-    "old": "(Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));",
-    "new": "(Math.trunc(level) - 1) * averageLevelHp(h, endurance));",
+    "old": "  return Math.floor(25 + h + (Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));",
+    "new": "  return Math.floor(25 + h + (Math.trunc(level) - 1) * averageLevelHp(h, endurance));",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "LEVEL-EVEN-level-one-body",
     "file": "src/systems/levelEven.js",
-    "old": "  return Math.floor(25 + h + (Math.trunc(level) - 1)",
-    "new": "  return Math.floor(25 + (Math.trunc(level) - 1)",
+    "old": "  return Math.floor(25 + h + (Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));",
+    "new": "  return Math.floor(25 + (Math.trunc(level) - 1) * Math.max(1, averageLevelHp(h, endurance)));",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -63,7 +63,7 @@
     "name": "LEVEL-EVEN-stars-left-out",
     "file": "src/systems/renownLayer.js",
     "old": "  const even = online ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + (x?.end ?? 0)) : 0;",
-    "new": "  const even = online ? evenHpOf(entity, (entity.stats?.endurance ?? NaN)) : 0;",
+    "new": "  const even = online ? evenHpOf(entity, entity.stats?.endurance ?? NaN) : 0;",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "LEVEL-EVEN-round-hands-no-endurance",
     "file": "src/systems/firmamentPowers.js",
-    "old": ", mp: capAt('mp', (c.mp ?? 0) + pctOf(baseMp, c.mpPct ?? 0)), end });",
-    "new": ", mp: capAt('mp', (c.mp ?? 0) + pctOf(baseMp, c.mpPct ?? 0)) });",
+    "old": "    end,\n  });",
+    "new": "  });",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "LEVEL-EVEN-refresh-dropped-classic",
     "file": "src/systems/advancement.js",
-    "old": "  // after the points, not before them), current health left as it stands (L2-1)\n  refreshOnlineLayer(entity, { keepHealth: true });\n",
-    "new": "  // after the points, not before them), current health left as it stands (L2-1)\n",
+    "old": "  refreshOnlineLayer(entity, { keepHealth: true });\n  entity.readyToLevelUp = false;",
+    "new": "  entity.readyToLevelUp = false;",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "LEVEL-EVEN-refresh-dropped-virtue",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "\n  refreshOnlineLayer(entity, { keepHealth: true });   // LEVEL-EVEN: the online health floor over the new level and maximum (AUDIT LEVEL-EVEN L2-1: health as it stands)",
-    "new": "",
+    "old": "  refreshOnlineLayer(entity, { keepHealth: true }); // LEVEL-EVEN: the online health floor over the new level and maximum (AUDIT LEVEL-EVEN L2-1: health as it stands)\n  rollOverLevelProgress(entity);",
+    "new": "  rollOverLevelProgress(entity);",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "LEVEL-EVEN-pool-online-gate",
     "file": "src/systems/advancement.js",
-    "old": "    entity.pendingBonusPool = online ? ONLINE_BONUS_POOL :",
-    "new": "    entity.pendingBonusPool = !online ? ONLINE_BONUS_POOL :",
+    "old": "    entity.pendingBonusPool = online",
+    "new": "    entity.pendingBonusPool = !online",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "LEVEL-EVEN-online-words-unread",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "get endurance() { return isOnlinePage() ?",
-    "new": "get endurance() { return false ?",
+    "old": "    return isOnlinePage()",
+    "new": "    return false",
     "tests": [
       "test/systems/fb1019b_leveleven.test.js"
     ],

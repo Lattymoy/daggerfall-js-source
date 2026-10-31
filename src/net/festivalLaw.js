@@ -22,14 +22,22 @@ import { HOLIDAYS, holidayDayOfYear } from '../systems/holidayTables.js';
  *  not inside), and its own night's (`eveFromMs`, `eveToMs` - All Hallows' Eve's whole UTC day). 2026's opens 20 October
  *  and closes at the end of 7 November, a week past Halloween. */
 export const FESTIVALS = Object.freeze([
-  Object.freeze({ id: 'witches-2026', fromMs: Date.UTC(2026, 9, 20), toMs: Date.UTC(2026, 10, 8), eveFromMs: Date.UTC(2026, 9, 31), eveToMs: Date.UTC(2026, 10, 1) }),
+  Object.freeze({
+    id: 'witches-2026',
+    fromMs: Date.UTC(2026, 9, 20),
+    toMs: Date.UTC(2026, 10, 8),
+    eveFromMs: Date.UTC(2026, 9, 31),
+    eveToMs: Date.UTC(2026, 10, 1),
+  }),
 ]);
 /** The festival open at `nowMs`, or null. Pure. */
-export const festivalAt = (/** @type {number} */ nowMs) => (Number.isFinite(nowMs) ? FESTIVALS.find((f) => nowMs >= f.fromMs && nowMs < f.toMs) ?? null : null);
+export const festivalAt = (/** @type {number} */ nowMs) =>
+  Number.isFinite(nowMs) ? (FESTIVALS.find((f) => nowMs >= f.fromMs && nowMs < f.toMs) ?? null) : null;
 /** Whether a festival is open at `nowMs`. */
 export const festivalOpen = (/** @type {number} */ nowMs) => festivalAt(nowMs) != null;
 /** The festival open now or the next to come, or null when none is left. */
-export const festivalNext = (/** @type {number} */ nowMs) => festivalAt(nowMs) ?? FESTIVALS.find((f) => f.fromMs > nowMs) ?? null;
+export const festivalNext = (/** @type {number} */ nowMs) =>
+  festivalAt(nowMs) ?? FESTIVALS.find((f) => f.fromMs > nowMs) ?? null;
 
 /** THE NIGHTS THE DEAD WALK: the sky's Witches' Festival (13 Frostfall) and Tales and Tallows (3 Hearthfire), each kept
  *  in every region (holidayTables.js REGION_CELEBRATING_HOLIDAY's 0xFF). On either, a find gives twice. */
@@ -44,7 +52,8 @@ export function festivalEve(/** @type {number} */ nowMs) {
   return !!f && nowMs >= f.eveFromMs && nowMs < f.eveToMs;
 }
 /** Whether the dead walk: the sky's night (`dayOfYear`), or the festival's own (`nowMs`). Pure. */
-export const deadWalk = (/** @type {number} */ dayOfYear, /** @type {number} */ nowMs) => festivalNight(dayOfYear) || festivalEve(nowMs);
+export const deadWalk = (/** @type {number} */ dayOfYear, /** @type {number} */ nowMs) =>
+  festivalNight(dayOfYear) || festivalEve(nowMs);
 
 // ═══ THE ITEMS ═══════════════════════════════════════════════════════════════════════════════════════════════════════
 /** The port's own templates, free past the gems' 1900-1931 (systems/festival/festivalRows.js holds their rows). */
@@ -72,7 +81,8 @@ export const isFindSource = (/** @type {unknown} */ s) => typeof s === 'string' 
 export const FIND_ASKS_PER_DAY = 1500;
 export const FIND_CAKES_PER_DAY = 120;
 /** What a find gives on a sky's day at `nowMs`: its count, twice while the dead walk (deadWalk). Pure. */
-export const findCount = (/** @type {string} */ source, /** @type {number} */ dayOfYear, nowMs = NaN) => (isFindSource(source) ? FIND_SOURCES[source].n * (deadWalk(dayOfYear, nowMs) ? FIND_NIGHT_MULT : 1) : 0);
+export const findCount = (/** @type {string} */ source, /** @type {number} */ dayOfYear, nowMs = NaN) =>
+  isFindSource(source) ? FIND_SOURCES[source].n * (deadWalk(dayOfYear, nowMs) ? FIND_NIGHT_MULT : 1) : 0;
 
 // ═══ THE HEARTH OFFERING ═════════════════════════════════════════════════════════════════════════════════════════════
 /** A bowl holds this many cakes at most; a fill moves up to OFFERING_FILL from the owner's count. */
@@ -94,13 +104,29 @@ export const QL_STARWARDEN_CAKES = 30;
 // ═══ THE WYRD SISTER'S WARES ═════════════════════════════════════════════════════════════════════════════════════════
 /** The Wyrd's Raiment, the festival's Aetheric set (systems/aetheric.js WYRD_SET_PIECES mints each by its id). */
 export const WYRD_PIECE_IDS = Object.freeze([
-  'wyrd-hood', 'wyrd-right-mantle', 'wyrd-left-mantle', 'wyrd-robe', 'wyrd-gloves', 'wyrd-greaves', 'wyrd-boots', 'wyrd-hearthward', 'wyrd-athame',
+  'wyrd-hood',
+  'wyrd-right-mantle',
+  'wyrd-left-mantle',
+  'wyrd-robe',
+  'wyrd-gloves',
+  'wyrd-greaves',
+  'wyrd-boots',
+  'wyrd-hearthward',
+  'wyrd-athame',
 ]);
 /** The festival's Iliac Hand cards (net/iliac/iliacCards.js FESTIVAL_CARD_IDS: kept out of every pack and every drop). */
-export const FESTIVAL_CARD_IDS = Object.freeze(['warlock', 'thaumaturge', 'glenmoril-witch', 'demonologist', 'tales-and-tallows', 'spectre-of-lysandus']);
+export const FESTIVAL_CARD_IDS = Object.freeze([
+  'warlock',
+  'thaumaturge',
+  'glenmoril-witch',
+  'demonologist',
+  'tales-and-tallows',
+  'spectre-of-lysandus',
+]);
 /** THE PROFILE ICONS the festival brings (net/identityToken.js ICONS): three sold, the Soul Cake's earned. */
 export const FESTIVAL_ICONS = Object.freeze(['tallowskull', 'twinmoons', 'wyrdcauldron', 'soulcake']);
-const ware = (/** @type {string} */ kind, /** @type {string} */ key, /** @type {number} */ price) => Object.freeze({ id: `${kind}:${key}`, kind, key, price });
+const ware = (/** @type {string} */ kind, /** @type {string} */ key, /** @type {number} */ price) =>
+  Object.freeze({ id: `${kind}:${key}`, kind, key, price });
 /** EVERY WARE, in the window's order: `{ id, kind, key, price }`. The account's - a title, an aura, an icon - are bought
  *  once and kept; the pack's - a set piece, a card - are minted on the client once the service has taken the cakes; the
  *  Hearth Offering is counted on the account as its cakes are (`fest_bowls`), the pack's bowls its face. */
@@ -114,12 +140,16 @@ export const FESTIVAL_WARES = Object.freeze([
   ...WYRD_PIECE_IDS.map((id) => ware('piece', id, id === 'wyrd-athame' ? 60 : id === 'wyrd-robe' ? 50 : 40)),
   ...FESTIVAL_CARD_IDS.map((id) => ware('card', id, id === 'spectre-of-lysandus' ? 45 : 20)),
 ]);
-export const wareById = (/** @type {unknown} */ id) => (typeof id === 'string' ? FESTIVAL_WARES.find((w) => w.id === id) ?? null : null);
+export const wareById = (/** @type {unknown} */ id) =>
+  typeof id === 'string' ? (FESTIVAL_WARES.find((w) => w.id === id) ?? null) : null;
 /** Whether a ware is the Hearth Offering - a bowl the account's count holds (bowlWare), never a piece minted. */
-export const bowlWare = (/** @type {{ kind: string, key?: string } | null} */ w) => w != null && w.kind === 'item' && w.key === 'offering';
+export const bowlWare = (/** @type {{ kind: string, key?: string } | null} */ w) =>
+  w != null && w.kind === 'item' && w.key === 'offering';
 /** Whether a ware is the account's (bought once, kept). */
-export const accountWare = (/** @type {{ kind: string } | null} */ w) => w != null && (w.kind === 'title' || w.kind === 'aura' || w.kind === 'icon');
+export const accountWare = (/** @type {{ kind: string } | null} */ w) =>
+  w != null && (w.kind === 'title' || w.kind === 'aura' || w.kind === 'icon');
 /** The account wares a stored column holds (space-separated ids, the insignia's shape), known ones alone. */
-export const festivalWaresHeld = (/** @type {unknown} */ col) => (typeof col === 'string' ? col.split(' ').filter((id) => accountWare(wareById(id))) : []);
+export const festivalWaresHeld = (/** @type {unknown} */ col) =>
+  typeof col === 'string' ? col.split(' ').filter((id) => accountWare(wareById(id))) : [];
 /** A sale's request id: twelve hex digits the client mints, so a sale asked twice is one sale. */
 export const SALE_RID_RE = /^[0-9a-f]{12}$/;

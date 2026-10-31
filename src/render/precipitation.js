@@ -23,7 +23,7 @@
 // cap alone - the lab's program and its 26,000 instances are built for
 // the lane that draws them, and for no other.
 
-import { buildProgram, startPrograms } from './glProgram.js';   // AUDIT 68 S17-gl-program-dup: the one compile and link
+import { buildProgram, startPrograms } from './glProgram.js'; // AUDIT 68 S17-gl-program-dup: the one compile and link
 
 const PRECIP_VS = `#version 300 es
 layout(location=0) in vec3 aSeed;   // 0..1 per particle
@@ -100,7 +100,6 @@ const SNOW = {
 // LAB_COUNTS, on the lab's own program; DFU's cap above is the classic
 // one, and it is the only one this program draws.
 
-
 // ═══════════════════════════════════════════════════════════════════
 // WX1 (Mac: implement the weather effects BYTE-EXACT to the proto - rain
 // and snow still stick to the screen in game). The enhanced profile is
@@ -122,7 +121,9 @@ const SNOW = {
 const LAB_HEAD = `#version 300 es
 precision highp float;
 `;
-export const LAB_WX_VS = LAB_HEAD + `layout(location=0) in vec2 aCorner;
+export const LAB_WX_VS =
+  LAB_HEAD +
+  `layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye, uRight, uUp;
 uniform float uTime, uKind, uBox, uFall;
@@ -191,7 +192,9 @@ void main(){
   vT = aCorner.y;
   gl_Position = uVP * vec4(p, 1.0);
 }`;
-export const LAB_WX_FS = LAB_HEAD + `in float vT; in float vSeed;
+export const LAB_WX_FS =
+  LAB_HEAD +
+  `in float vT; in float vSeed;
 uniform float uKind;
 out vec4 o;
 void main(){
@@ -247,7 +250,9 @@ export const PRECIP_CLOCK_MAX_S = 3600;
 // that blend a flake is a white square of the clamped size, which is
 // what the mod draws. Its own program: the lab's above is pinned byte
 // for byte against grass-proto.html and stays so.
-export const PIXEL_SNOW_VS = LAB_HEAD + `layout(location=0) in vec2 aCorner;
+export const PIXEL_SNOW_VS =
+  LAB_HEAD +
+  `layout(location=0) in vec2 aCorner;
 layout(location=1) in vec4 aSeed;      // x,y,z in the box + phase
 uniform mat4 uVP; uniform vec3 uEye;
 uniform float uTime, uBox, uFall;
@@ -279,7 +284,9 @@ void main(){
   vUv = aCorner;
   gl_Position = c;
 }`;
-export const PIXEL_SNOW_FS = LAB_HEAD + `in vec2 vUv;
+export const PIXEL_SNOW_FS =
+  LAB_HEAD +
+  `in vec2 vUv;
 uniform sampler2D uTex;
 out vec4 o;
 void main(){
@@ -312,7 +319,13 @@ export function precipPrograms(opts = {}) {
 /** The host's warm step for its rain (render/warmPrograms.js): the programs started, the renderer built once the
  *  driver is done, and none built over one the weather made first. `get`/`set` are the host's own `precip`. */
 export function precipWarmStep(gl, opts, get, set) {
-  return { start: () => startPrograms(gl, precipPrograms(opts)), run: () => { if (!get()) set(new PrecipitationRenderer(gl, opts)); }, need: () => !get() };
+  return {
+    start: () => startPrograms(gl, precipPrograms(opts)),
+    run: () => {
+      if (!get()) set(new PrecipitationRenderer(gl, opts));
+    },
+    need: () => !get(),
+  };
 }
 
 export class PrecipitationRenderer {
@@ -347,7 +360,20 @@ export class PrecipitationRenderer {
     this.gl = gl;
     const prog = buildProgram(gl, PRECIP_VS, PRECIP_FS);
     this.program = prog;
-    for (const u of ['uProj', 'uView', 'uCamPos', 'uCamRight', 'uTime', 'uBox', 'uFall', 'uDrift', 'uSlant', 'uSize', 'uSnow', 'uColor']) {
+    for (const u of [
+      'uProj',
+      'uView',
+      'uCamPos',
+      'uCamRight',
+      'uTime',
+      'uBox',
+      'uFall',
+      'uDrift',
+      'uSlant',
+      'uSize',
+      'uSnow',
+      'uColor',
+    ]) {
       this[u] = gl.getUniformLocation(prog, u);
     }
 
@@ -383,7 +409,12 @@ export class PrecipitationRenderer {
     const n = Math.max(RAIN.count, SNOW.count);
     const verts = new Float32Array(n * 4 * 5);
     const indices = new Uint32Array(n * 6);
-    const corners = [[-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5], [0.5, -0.5]];
+    const corners = [
+      [-0.5, -0.5],
+      [-0.5, 0.5],
+      [0.5, 0.5],
+      [0.5, -0.5],
+    ];
     let s = 1;
     const rand = () => {
       // Deterministic LCG so the volume is identical every load.
@@ -402,8 +433,12 @@ export class PrecipitationRenderer {
       }
       const b = i * 4;
       const io = i * 6;
-      indices[io] = b; indices[io + 1] = b + 2; indices[io + 2] = b + 1;
-      indices[io + 3] = b; indices[io + 4] = b + 3; indices[io + 5] = b + 2;
+      indices[io] = b;
+      indices[io + 1] = b + 2;
+      indices[io + 2] = b + 1;
+      indices[io + 3] = b;
+      indices[io + 4] = b + 3;
+      indices[io + 5] = b + 2;
     }
     /** EE8: the profile. false = classic (DFU's cap, byte for byte);
      *  true = the lab's volume, driven by the weather's wind. Set by the
@@ -464,21 +499,40 @@ export class PrecipitationRenderer {
     const lp = buildProgram(gl, LAB_WX_VS, LAB_WX_FS);
     this.labProgram = lp;
     this.lab = {};
-    for (const u of ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff']) this.lab[u] = gl.getUniformLocation(lp, u);
+    for (const u of ['uVP', 'uEye', 'uRight', 'uUp', 'uTime', 'uKind', 'uBox', 'uFall', 'uWindV', 'uWindOff'])
+      this.lab[u] = gl.getUniformLocation(lp, u);
     // the lab's instances: x,y,z in [0, BOX) + a phase, from the lab's
     // own xorshift so the scatter is the lab's scatter
     const n = LAB_COUNTS.rain;
     const inst = new Float32Array(n * 4);
     let s2 = 0x9e3779b9;
-    const rnd = () => { s2 ^= s2 << 13; s2 ^= s2 >>> 17; s2 ^= s2 << 5; s2 >>>= 0; return s2 / 4294967296; };
-    for (let i = 0; i < n; i++) { inst[i * 4] = rnd() * LAB_BOX; inst[i * 4 + 1] = rnd() * LAB_BOX; inst[i * 4 + 2] = rnd() * LAB_BOX; inst[i * 4 + 3] = rnd(); }
+    const rnd = () => {
+      s2 ^= s2 << 13;
+      s2 ^= s2 >>> 17;
+      s2 ^= s2 << 5;
+      s2 >>>= 0;
+      return s2 / 4294967296;
+    };
+    for (let i = 0; i < n; i++) {
+      inst[i * 4] = rnd() * LAB_BOX;
+      inst[i * 4 + 1] = rnd() * LAB_BOX;
+      inst[i * 4 + 2] = rnd() * LAB_BOX;
+      inst[i * 4 + 3] = rnd();
+    }
     const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     const q = new Float32Array([0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1]);
-    const qb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, qb); gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
-    const ib = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, ib); gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(1); gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0); gl.vertexAttribDivisor(1, 1);
+    const qb = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, qb);
+    gl.bufferData(gl.ARRAY_BUFFER, q, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(0);
+    gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+    const ib = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, ib);
+    gl.bufferData(gl.ARRAY_BUFFER, inst, gl.STATIC_DRAW);
+    gl.enableVertexAttribArray(1);
+    gl.vertexAttribPointer(1, 4, gl.FLOAT, false, 16, 0);
+    gl.vertexAttribDivisor(1, 1);
     gl.bindVertexArray(null);
     this.labVao = vao;
   }
@@ -489,10 +543,12 @@ export class PrecipitationRenderer {
    *  PRECIP_REST_S off the screen, on a clock that ran backwards, and at
    *  PRECIP_CLOCK_MAX_S. Called by each draw that reaches the GPU. */
   clock(seconds) {
-    const t0 = this._t0, last = this._lastDrawn;
+    const t0 = this._t0,
+      last = this._lastDrawn;
     if (t0 === null || seconds < last || seconds - last > PRECIP_REST_S || seconds - t0 >= PRECIP_CLOCK_MAX_S) {
       this._t0 = seconds;
-      this.windOff[0] = 0; this.windOff[1] = 0;
+      this.windOff[0] = 0;
+      this.windOff[1] = 0;
     }
     this._lastDrawn = seconds;
     return seconds - this._t0;
@@ -525,11 +581,25 @@ export class PrecipitationRenderer {
 
   _buildPixelSnow() {
     const gl = this.gl;
-    if (!this.labProgram) this._buildLab();   // the same instances and VAO
+    if (!this.labProgram) this._buildLab(); // the same instances and VAO
     const pp = buildProgram(gl, PIXEL_SNOW_VS, PIXEL_SNOW_FS);
     this.pixelProgram = pp;
     this.pixel = {};
-    for (const u of ['uVP', 'uEye', 'uTime', 'uBox', 'uFall', 'uWindV', 'uWindOff', 'uProjY', 'uAspect', 'uMinSize', 'uMaxSize', 'uTex']) this.pixel[u] = gl.getUniformLocation(pp, u);
+    for (const u of [
+      'uVP',
+      'uEye',
+      'uTime',
+      'uBox',
+      'uFall',
+      'uWindV',
+      'uWindOff',
+      'uProjY',
+      'uAspect',
+      'uMinSize',
+      'uMaxSize',
+      'uTex',
+    ])
+      this.pixel[u] = gl.getUniformLocation(pp, u);
   }
 
   /** DS1: the lab's snow, drawn as the mod's pixel snow: the same count,
@@ -546,11 +616,11 @@ export class PrecipitationRenderer {
     const P = this.pixel;
     gl.uniformMatrix4fv(P.uVP, false, this._vp);
     gl.uniform3fv(P.uEye, camPos);
-    gl.uniform1f(P.uTime, this.clock(timeSeconds));   // RAIN-CLOCK
+    gl.uniform1f(P.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
     gl.uniform1f(P.uBox, LAB_BOX);
     gl.uniform1f(P.uFall, LAB_FALL.snow);
     gl.uniform2fv(P.uWindV, this.windV);
-    gl.uniform2fv(P.uWindOff, this.windUpload());   // AUDIT PRECIP FALL-6/7: the flakes aside while drawFall draws them
+    gl.uniform2fv(P.uWindOff, this.windUpload()); // AUDIT PRECIP FALL-6/7: the flakes aside while drawFall draws them
     gl.uniform1f(P.uProjY, proj[5]);
     gl.uniform1f(P.uAspect, proj[5] / proj[0]);
     gl.uniform1f(P.uMinSize, this.pixelSnow.minParticleSize);
@@ -558,7 +628,8 @@ export class PrecipitationRenderer {
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.pixelTex);
     gl.uniform1i(P.uTex, 0);
-    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);   // Alpha Blended Premultiply
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA); // Alpha Blended Premultiply
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.labVao);
@@ -579,17 +650,30 @@ export class PrecipitationRenderer {
    *  `draw` as it is. */
   drawFall(mode, proj, view, camPos, camRight, timeSeconds) {
     const s = this.snowShare;
-    if (!this.enhanced || s == null || !(mode === 'rain' || mode === 'storm' || mode === 'snow')) return this.draw(mode, proj, view, camPos, camRight, timeSeconds);
-    const all = this.intensity, cap = this.countCap, share = Math.min(1, Math.max(0, s)), drops = mode === 'snow' ? 'rain' : mode;
+    if (!this.enhanced || s == null || !(mode === 'rain' || mode === 'storm' || mode === 'snow'))
+      return this.draw(mode, proj, view, camPos, camRight, timeSeconds);
+    const all = this.intensity,
+      cap = this.countCap,
+      share = Math.min(1, Math.max(0, s)),
+      drops = mode === 'snow' ? 'rain' : mode;
     const dropCap = cap == null ? null : Math.round(cap * (1 - share));
     try {
-      if (share < 1) { this.intensity = all * (1 - share); this.countCap = dropCap; this.draw(drops, proj, view, camPos, camRight, timeSeconds); }
+      if (share < 1) {
+        this.intensity = all * (1 - share);
+        this.countCap = dropCap;
+        this.draw(drops, proj, view, camPos, camRight, timeSeconds);
+      }
       if (share > 0) {
-        this.intensity = all * share; this.countCap = cap == null ? null : cap - (share < 1 ? dropCap : 0);
+        this.intensity = all * share;
+        this.countCap = cap == null ? null : cap - (share < 1 ? dropCap : 0);
         this._shift = MIX_SHIFT;
         this.draw('snow', proj, view, camPos, camRight, timeSeconds);
       }
-    } finally { this.intensity = all; this.countCap = cap; this._shift = null; }
+    } finally {
+      this.intensity = all;
+      this.countCap = cap;
+      this._shift = null;
+    }
   }
 
   /** The wind's travel as a draw hands it over: its own (the clock re-origins it), with the flakes' MIX_SHIFT added while
@@ -597,7 +681,8 @@ export class PrecipitationRenderer {
   windUpload() {
     const sh = this._shift;
     if (!sh) return this.windOff;
-    this._windUp[0] = this.windOff[0] + sh[0]; this._windUp[1] = this.windOff[1] + sh[1];
+    this._windUp[0] = this.windOff[0] + sh[0];
+    this._windUp[1] = this.windOff[1] + sh[1];
     return this._windUp;
   }
 
@@ -607,7 +692,7 @@ export class PrecipitationRenderer {
    *  only), the lab's box, fall and counts, the wind's rate and its
    *  integrated travel. */
   drawLab(mode, proj, view, camPos, camRight, timeSeconds) {
-    if (mode === 'snow' && this.pixelSnow && this.pixelTex) return this.drawPixelSnow(proj, view, camPos, timeSeconds);   // DS1
+    if (mode === 'snow' && this.pixelSnow && this.pixelTex) return this.drawPixelSnow(proj, view, camPos, timeSeconds); // DS1
     const gl = this.gl;
     if (!this.labProgram) this._buildLab();
     const kind = mode === 'snow' ? 1 : 0;
@@ -626,13 +711,14 @@ export class PrecipitationRenderer {
     gl.uniform3fv(L.uEye, camPos);
     gl.uniform3fv(L.uRight, camRight);
     gl.uniform3f(L.uUp, 0, 1, 0);
-    gl.uniform1f(L.uTime, this.clock(timeSeconds));   // RAIN-CLOCK
+    gl.uniform1f(L.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
     gl.uniform1f(L.uKind, kind);
     gl.uniform1f(L.uBox, LAB_BOX);
     gl.uniform1f(L.uFall, LAB_FALL[mode] ?? LAB_FALL.rain);
     gl.uniform2fv(L.uWindV, this.windV);
-    gl.uniform2fv(L.uWindOff, this.windUpload());   // AUDIT PRECIP FALL-6/7: the flakes aside while drawFall draws them
-    gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.uniform2fv(L.uWindOff, this.windUpload()); // AUDIT PRECIP FALL-6/7: the flakes aside while drawFall draws them
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.depthMask(false);
     gl.disable(gl.CULL_FACE);
     gl.bindVertexArray(this.labVao);
@@ -658,11 +744,17 @@ export class PrecipitationRenderer {
     gl.uniformMatrix4fv(this.uView, false, view);
     gl.uniform3fv(this.uCamPos, camPos);
     gl.uniform3fv(this.uCamRight, camRight);
-    gl.uniform1f(this.uTime, this.clock(timeSeconds));   // RAIN-CLOCK
+    gl.uniform1f(this.uTime, this.clock(timeSeconds)); // RAIN-CLOCK
     // EV2: the config vectors upload from arrays built ONCE - four
     // fresh Float32Arrays per frame sat in a pass whose header claims
     // zero per-frame CPU, and now it is true again.
-    if (!cfg._gpu) cfg._gpu = { box: new Float32Array(cfg.box), slant: new Float32Array(cfg.slant), size: new Float32Array(cfg.size), color: new Float32Array(cfg.color) };
+    if (!cfg._gpu)
+      cfg._gpu = {
+        box: new Float32Array(cfg.box),
+        slant: new Float32Array(cfg.slant),
+        size: new Float32Array(cfg.size),
+        color: new Float32Array(cfg.color),
+      };
     gl.uniform3fv(this.uBox, cfg._gpu.box);
     gl.uniform1f(this.uFall, cfg.fall);
     gl.uniform1f(this.uDrift, cfg.drift);

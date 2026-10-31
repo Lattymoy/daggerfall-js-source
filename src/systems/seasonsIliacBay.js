@@ -127,14 +127,24 @@ export function archivePrefix(season, archive) {
  *  mod keeps them. The script itself matches names by PREFIX ONLY, over
  *  the whole file list, and never reads a folder. */
 export const PREFIX_FOLDER = Object.freeze({
-  A: 'HauntedF', B: 'HauntedS', C: 'HauntedW',
-  D: 'HillsF', E: 'HillsS', F: 'HillsW',
-  G: 'MountainF', H: 'MountainsS',
-  I: 'TempF', J: 'TempS', K: 'TempW',
+  A: 'HauntedF',
+  B: 'HauntedS',
+  C: 'HauntedW',
+  D: 'HillsF',
+  E: 'HillsS',
+  F: 'HillsW',
+  G: 'MountainF',
+  H: 'MountainsS',
+  I: 'TempF',
+  J: 'TempS',
+  K: 'TempW',
 });
 
 const baseName = (p) => String(p).slice(Math.max(String(p).lastIndexOf('/'), String(p).lastIndexOf('\\')) + 1);
-const withoutExtension = (b) => { const d = b.lastIndexOf('.'); return d > 0 ? b.slice(0, d) : b; };
+const withoutExtension = (b) => {
+  const d = b.lastIndexOf('.');
+  return d > 0 ? b.slice(0, d) : b;
+};
 const startsWithIgnoreCase = (s, prefix) => s.slice(0, prefix.length).toLowerCase() === prefix.toLowerCase();
 
 /**
@@ -192,7 +202,10 @@ export function filesForPrefix(fileNames, prefix) {
  */
 export function seasonalRecordSet(prefix, archive, recordCount, textures) {
   if (!textures || !textures.length) {
-    return { ok: false, reason: `SeasonHelper: No textures found for prefix '${prefix}' and TEXTURE.${String(archive).padStart(3, '0')}.` };
+    return {
+      ok: false,
+      reason: `SeasonHelper: No textures found for prefix '${prefix}' and TEXTURE.${String(archive).padStart(3, '0')}.`,
+    };
   }
   const byRecord = new Map();
   for (const t of textures) {
@@ -200,11 +213,17 @@ export function seasonalRecordSet(prefix, archive, recordCount, textures) {
     if (rec >= 0) byRecord.set(rec, t);
   }
   if (recordCount < 2) {
-    return { ok: false, reason: `SeasonHelper: TEXTURE.${String(archive).padStart(3, '0')} has invalid record metadata.` };
+    return {
+      ok: false,
+      reason: `SeasonHelper: TEXTURE.${String(archive).padStart(3, '0')} has invalid record metadata.`,
+    };
   }
   for (let r = 1; r < recordCount; r++) {
     if (!byRecord.has(r)) {
-      return { ok: false, reason: `SeasonHelper: Missing ${prefix}${r}.png for TEXTURE.${String(archive).padStart(3, '0')}. Atlas replacement was skipped so stock billboard batching remains valid.` };
+      return {
+        ok: false,
+        reason: `SeasonHelper: Missing ${prefix}${r}.png for TEXTURE.${String(archive).padStart(3, '0')}. Atlas replacement was skipped so stock billboard batching remains valid.`,
+      };
     }
   }
   const records = new Array(recordCount);
@@ -251,9 +270,9 @@ export class SeasonHelper {
   constructor(deps) {
     this.deps = deps;
     this.installedSeason = NO_INSTALLED_SEASON;
-    this.vanillaAtlasByArchive = new Set();   // the archives whose vanilla atlas was ever displaced
-    this.seasonalAtlasByKey = new Map();      // atlasKey -> { records } | null (null: the build failed, and stays failed)
-    this.cache = new Map();                   // archive -> records[] installed over the vanilla atlas
+    this.vanillaAtlasByArchive = new Set(); // the archives whose vanilla atlas was ever displaced
+    this.seasonalAtlasByKey = new Map(); // atlasKey -> { records } | null (null: the build failed, and stays failed)
+    this.cache = new Map(); // archive -> records[] installed over the vanilla atlas
     this.refreshNatureBatchesAfterTravel = false;
     this._refreshAfterLoad = false;
     this._applying = null;
@@ -279,7 +298,11 @@ export class SeasonHelper {
       return true;
     })();
     this._applying = run;
-    try { return await run; } finally { if (this._applying === run) this._applying = null; }
+    try {
+      return await run;
+    } finally {
+      if (this._applying === run) this._applying = null;
+    }
   }
 
   /** EnsureSeasonalAtlasesInstalled(season). */
@@ -313,9 +336,15 @@ export class SeasonHelper {
     // could not load - is the warning below and the next archive, so a
     // rejecting count is read as no count.
     let recordCount = 0;
-    try { recordCount = await this.deps.recordCount(archive); } catch { recordCount = 0; }
+    try {
+      recordCount = await this.deps.recordCount(archive);
+    } catch {
+      recordCount = 0;
+    }
     if (!(recordCount > 0)) {
-      this.deps.warn?.(`SeasonHelper: Could not load the native atlas metadata for TEXTURE.${String(archive).padStart(3, '0')}.`);
+      this.deps.warn?.(
+        `SeasonHelper: Could not load the native atlas metadata for TEXTURE.${String(archive).padStart(3, '0')}.`,
+      );
       return null;
     }
     this.vanillaAtlasByArchive.add(archive);
@@ -339,20 +368,28 @@ export class SeasonHelper {
 
   /** Is this archive one the mod has ever taken over? (What
    *  RefreshLoadedNatureBatches filters batches by.) */
-  manages(archive) { return this.vanillaAtlasByArchive.has(archive); }
+  manages(archive) {
+    return this.vanillaAtlasByArchive.has(archive);
+  }
 
   /** Is an install under way (`apply` running, its cache cleared and
    *  refilling)? The port's, not the mod's: a cache that outlives the
    *  pixels it was painted for (LPT1's tree atlases) paints nothing
    *  seasonal while one is (AUDIT LPT B3). */
-  get installing() { return !!this._applying; }
+  get installing() {
+    return !!this._applying;
+  }
 
   // ---- the events Awake subscribes ----
 
   /** DaggerfallTerrain.OnInstantiateTerrain. */
-  onTerrainInstantiated() { return this.apply(false); }
+  onTerrainInstantiated() {
+    return this.apply(false);
+  }
   /** WorldTime.OnNewMonth. */
-  onNewMonth() { return this.apply(false); }
+  onNewMonth() {
+    return this.apply(false);
+  }
   /** SaveLoadManager.OnLoad: a forced apply now and an unforced one
    *  next frame (RefreshSeasonAfterLoad). */
   async onLoad() {

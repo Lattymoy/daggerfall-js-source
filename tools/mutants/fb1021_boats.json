@@ -12,8 +12,8 @@
   {
     "name": "FB1021-tree-left-unstamped",
     "file": "src/world/prefabNode.js",
-    "old": "reshaped(left); reshaped(this);",
-    "new": "reshaped(this);",
+    "old": "    reshaped(left);\n    reshaped(this); // ...and the tree it joins (itself again, hung under nothing now)",
+    "new": "    reshaped(this); // ...and the tree it joins (itself again, hung under nothing now)",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/world/navaudit_frame.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "FB1021-tree-joined-unstamped",
     "file": "src/world/prefabNode.js",
-    "old": "reshaped(left); reshaped(this);",
-    "new": "reshaped(left);",
+    "old": "    reshaped(left);\n    reshaped(this); // ...and the tree it joins (itself again, hung under nothing now)",
+    "new": "    reshaped(left); // ...and the tree it joins (itself again, hung under nothing now)",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/world/navaudit_frame.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "FB1021-node-stamped-not-its-top",
     "file": "src/world/prefabNode.js",
-    "old": "const reshaped = (n) => { topOf(n)._treeStamp = ++_shapeCount; };",
-    "new": "const reshaped = (n) => { n._treeStamp = ++_shapeCount; };",
+    "old": "  topOf(n)._treeStamp = ++_shapeCount;",
+    "new": "  n._treeStamp = ++_shapeCount;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/world/navaudit_frame.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "FB1021-a-count-per-tree",
     "file": "src/world/prefabNode.js",
-    "old": "const reshaped = (n) => { topOf(n)._treeStamp = ++_shapeCount; };",
-    "new": "const reshaped = (n) => { topOf(n)._treeStamp++; };",
+    "old": "  topOf(n)._treeStamp = ++_shapeCount;",
+    "new": "  topOf(n)._treeStamp++;",
     "tests": [
       "test/world/navaudit_frame.test.js"
     ]
@@ -51,8 +51,8 @@
   {
     "name": "FB1021-component-stamps-nothing",
     "file": "src/world/prefabNode.js",
-    "old": "  addComponent(c) { this.components.push(c); reshaped(this); return c; }",
-    "new": "  addComponent(c) { this.components.push(c); return c; }",
+    "old": "    reshaped(this);\n    return c;",
+    "new": "    return c;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "FB1021-reshaped-far-boat-held",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "life.shape === shape && life.on === on ? pos : null",
-    "new": "life.on === on ? pos : null",
+    "old": "  const lived = farLifeStep(life, dt, life.shape === shape && life.on === on ? pos : null, eye);",
+    "new": "  const lived = farLifeStep(life, dt, life.on === on ? pos : null, eye);",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
@@ -169,8 +169,8 @@
   {
     "name": "FB1021-peer-range-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "const lived = farTreeStep(s.life ??= farLife(lifeSeq++), dt, s.boat.GameObject, s.shown, eye);",
-    "new": "const lived = farTreeStep(s.life ??= farLife(lifeSeq++), dt, s.boat.GameObject, s.shown, null);",
+    "old": "    const lived = farTreeStep((s.life ??= farLife(lifeSeq++)), dt, s.boat.GameObject, s.shown, eye);",
+    "new": "    const lived = farTreeStep((s.life ??= farLife(lifeSeq++)), dt, s.boat.GameObject, s.shown, null);",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "FB1021-peer-pool-eye-unread",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "function frame(dt, eye = pool.lifeEye?.() ?? null) {",
-    "new": "function frame(dt, eye = null) {",
+    "old": "  function frame(dt, eye = pool.lifeEye?.() ?? null) {",
+    "new": "  function frame(dt, eye = null) {",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "FB1021-law-through-the-sky",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "Math.hypot(pos[0] - eye[0], pos[2] - eye[2])",
-    "new": "Math.hypot(pos[0] - eye[0], pos[1] - eye[1], pos[2] - eye[2])",
+    "old": "    Math.hypot(pos[0] - eye[0], pos[2] - eye[2]) > NEAR_LIFE_M &&",
+    "new": "    Math.hypot(pos[0] - eye[0], pos[1] - eye[1], pos[2] - eye[2]) > NEAR_LIFE_M &&",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "FB1021-law-wider",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": ") > NEAR_LIFE_M && (",
-    "new": ") > NEAR_LIFE_M + 200 && (",
+    "old": "    Math.hypot(pos[0] - eye[0], pos[2] - eye[2]) > NEAR_LIFE_M &&",
+    "new": "    Math.hypot(pos[0] - eye[0], pos[2] - eye[2]) > NEAR_LIFE_M + 200 &&",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -224,8 +224,8 @@
   {
     "name": "FB1021-law-stride-another-frame",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "% FAR_LIFE_EVERY) !== 0) return null;",
-    "new": "% FAR_LIFE_EVERY) !== 1) return null;",
+    "old": "    (life.lifeN = (life.lifeN + 1) % FAR_LIFE_EVERY) !== 0",
+    "new": "    (life.lifeN = (life.lifeN + 1) % FAR_LIFE_EVERY) !== 1",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -233,8 +233,8 @@
   {
     "name": "FB1021-law-bank-kept",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "  life.lifeDt = 0;\n",
-    "new": "",
+    "old": "  life.lifeDt = 0;\n  return lived;",
+    "new": "  return lived;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "FB1021-switches-unread",
     "file": "src/scenes/comeSailAway/farLife.js",
-    "old": "life.shape === shape && life.on === on ? pos : null",
-    "new": "life.shape === shape ? pos : null",
+    "old": "  const lived = farLifeStep(life, dt, life.shape === shape && life.on === on ? pos : null, eye);",
+    "new": "  const lived = farLifeStep(life, dt, life.shape === shape ? pos : null, eye);",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js",
       "test/systems/comeSailAway/fb1021b_ownboats.test.js"
@@ -252,8 +252,8 @@
   {
     "name": "FB1021-setActive-unstamped",
     "file": "src/world/prefabNode.js",
-    "old": "if (this.activeSelf !== on) { this.activeSelf = on; topOf(this)._treeSwitch = ++_shapeCount; }",
-    "new": "if (this.activeSelf !== on) { this.activeSelf = on; }",
+    "old": "      topOf(this)._treeSwitch = ++_shapeCount;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "FB1021-switch-stamped-on-the-node",
     "file": "src/world/prefabNode.js",
-    "old": "topOf(this)._treeSwitch = ++_shapeCount;",
-    "new": "this._treeSwitch = ++_shapeCount;",
+    "old": "      topOf(this)._treeSwitch = ++_shapeCount;",
+    "new": "      this._treeSwitch = ++_shapeCount;",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "FB1021-every-setActive-a-switch",
     "file": "src/world/prefabNode.js",
-    "old": "if (this.activeSelf !== on) { this.activeSelf = on;",
-    "new": "{ this.activeSelf = on;",
+    "old": "    if (this.activeSelf !== on) {",
+    "new": "    {",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]
@@ -337,8 +337,8 @@
   {
     "name": "FB1021-parent-under-its-own-node",
     "file": "src/world/prefabNode.js",
-    "old": "for (let p = parent; p; p = p.parent) if (p === this) throw",
-    "new": "for (let p = parent; p; p = p.parent) if (p === null) throw",
+    "old": "      if (p === this)",
+    "new": "      if (p === null)",
     "tests": [
       "test/systems/comeSailAway/fb1021_boats.test.js"
     ]

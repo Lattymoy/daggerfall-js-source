@@ -38,8 +38,8 @@
   {
     "name": "SPEC-RESET-price-unpaid",
     "file": "src/systems/specReset.js",
-    "old": "  payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));\n",
-    "new": "",
+    "old": "  payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));\n  entity[LAW[family].field] = null;",
+    "new": "  entity[LAW[family].field] = null;",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SPEC-RESET-nothing-held-unrefused",
     "file": "src/systems/specReset.js",
-    "old": "  if (!held) return t(",
-    "new": "  if (false) return t(",
+    "old": "  if (!held) return t('growth.spec.reset.refuse.nothing', 'You have no specialization of this kind to reset.');",
+    "new": "  if (false) return t('growth.spec.reset.refuse.nothing', 'You have no specialization of this kind to reset.');",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SPEC-RESET-arcane-box-permanent",
     "file": "src/systems/arcanePaths.js",
-    "old": "    ...pathPowerRows(p),\n    '',\n    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
-    "new": "    ...pathPowerRows(p),\n    '',\n    t('schools.choice.final', 'This decision cannot be undone.'),",
+    "old": "    '',\n    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
+    "new": "    '',\n    t('schools.choice.final', 'This decision cannot be undone.'),",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SPEC-RESET-martial-box-permanent",
     "file": "src/systems/martialPaths.js",
-    "old": "    ...martialPowerRows(p),\n    '',\n    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
-    "new": "    ...martialPowerRows(p),\n    '',\n    t('martial.choice.final', 'This decision cannot be undone.'),",
+    "old": "    '',\n    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
+    "new": "    '',\n    t('martial.choice.final', 'This decision cannot be undone.'),",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L1-1-offline-words-swapped",
     "file": "src/systems/specReset.js",
-    "old": "  return entity?._online === true\n",
-    "new": "  return entity?._online !== true\n",
+    "old": "  return entity?._online === true",
+    "new": "  return entity?._online !== true",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L1-2-ask-flag-left",
     "file": "src/systems/specReset.js",
-    "old": "  entity[LAW[family].prompted] = true;\n",
-    "new": "",
+    "old": "  entity[LAW[family].prompted] = true;\n  computeEntityMods(entity);",
+    "new": "  computeEntityMods(entity);",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L1-3-reset-unfolded",
     "file": "src/systems/specReset.js",
-    "old": "  computeEntityMods(entity);\n  return { ok: true",
-    "new": "  return { ok: true",
+    "old": "  computeEntityMods(entity);\n  return { ok: true, text: t('growth.spec.reset.done', '{name} is reset.', { name: held.name }) };",
+    "new": "  return { ok: true, text: t('growth.spec.reset.done', '{name} is reset.', { name: held.name }) };",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L4-5-arcane-price-row-dropped",
     "file": "src/systems/arcanePaths.js",
-    "old": "    // a lone word onto a line of its own in six languages\n    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),\n",
-    "new": "    // a lone word onto a line of its own in six languages\n",
+    "old": "    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),\n  ];",
+    "new": "  ];",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -410,8 +410,8 @@
   {
     "name": "AUDIT-SPEC-RESET-L4-5-martial-price-row-dropped",
     "file": "src/systems/martialPaths.js",
-    "old": "    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),   // AUDIT SPEC-RESET L4-5: a row of its own\n",
-    "new": "",
+    "old": "    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }), // AUDIT SPEC-RESET L4-5: a row of its own\n  ];",
+    "new": "  ];",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]
@@ -456,7 +456,7 @@
     "name": "AUDIT-SPEC-RESET-L5-3-reset-clears-prompted",
     "file": "src/systems/specReset.js",
     "old": "  entity[LAW[family].prompted] = true;",
-    "new": "  entity.pathPrompted = false; entity.martialPrompted = false;",
+    "new": "  entity.pathPrompted = false;\n  entity.martialPrompted = false;",
     "tests": [
       "test/ui/growth/specreset.test.js"
     ]

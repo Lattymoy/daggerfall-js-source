@@ -40,14 +40,22 @@
 // `gilded` map and reads as none found.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn, allLegendaries, legendaryById, powerOf, foundAmong, powerFits, recordFitsGroup } from './lootRarity.js';
+import {
+  lootRarityOn,
+  allLegendaries,
+  legendaryById,
+  powerOf,
+  foundAmong,
+  powerFits,
+  recordFitsGroup,
+} from './lootRarity.js';
 import { AETHERIC_RECORDS, aethericById } from '../aetheric.js';
-import { GILDED_RECORDS, gildedById } from '../gilded.js';   // GILDED1: the top rung's records
+import { GILDED_RECORDS, gildedById } from '../gilded.js'; // GILDED1: the top rung's records
 import { registerTakeListener } from '../inventory.js';
 import { registerModSaveData } from '../modSaveData.js';
 import { registerMagicRoundHook, worldMinutes } from '../worldTick.js';
 import { hudText } from '../notify.js';
-import { presentCodexFind } from '../acquireWatch.js';   // LOOT-BANNER: the banner says a first find on Enhanced Plus
+import { presentCodexFind } from '../acquireWatch.js'; // LOOT-BANNER: the banner says a first find on Enhanced Plus
 import { audio } from '../audio.js';
 import { SOUND } from '../soundClips.js';
 import { isEquipped, equipTableOf } from '../equip.js';
@@ -74,13 +82,17 @@ export const foundIds = (kind) => Object.keys(_codex[kind] ?? {});
 
 /** What a piece is to the codex: `{ kind, id }` (a Legendary's record, an Aetheric piece's, a Gilded one's), or null. */
 export function codexKey(item) {
-  if (item?.rarity === 'legendary' && typeof item.legendary === 'string' && legendaryById(item.legendary)) return { kind: 'legendary', id: item.legendary };
-  if (item?.rarity === 'aetheric' && typeof item.aetheric === 'string' && aethericById(item.aetheric)) return { kind: 'aetheric', id: item.aetheric };
-  if (item?.rarity === 'gilded' && typeof item.gilded === 'string' && gildedById(item.gilded)) return { kind: 'gilded', id: item.gilded };   // GILDED1
+  if (item?.rarity === 'legendary' && typeof item.legendary === 'string' && legendaryById(item.legendary))
+    return { kind: 'legendary', id: item.legendary };
+  if (item?.rarity === 'aetheric' && typeof item.aetheric === 'string' && aethericById(item.aetheric))
+    return { kind: 'aetheric', id: item.aetheric };
+  if (item?.rarity === 'gilded' && typeof item.gilded === 'string' && gildedById(item.gilded))
+    return { kind: 'gilded', id: item.gilded }; // GILDED1
   return null;
 }
 /** The first find's words: "Wyrmbane - a Legendary! Added to your codex." */
-export const CODEX_FIND = (name, kind) => `${name} - ${kind === 'gilded' ? 'a Gilded piece' : kind === 'aetheric' ? 'an Aetheric piece' : 'a Legendary'}! Added to your codex.`;
+export const CODEX_FIND = (name, kind) =>
+  `${name} - ${kind === 'gilded' ? 'a Gilded piece' : kind === 'aetheric' ? 'an Aetheric piece' : 'a Legendary'}! Added to your codex.`;
 
 /** NOTE A PIECE: into the codex if it is a record not yet there - said and heard unless `quiet`. Answers whether it
  *  was new. */
@@ -130,19 +142,38 @@ export function validCodexRecord(r) {
  *  first sweep takes in what the character already carries without a word; a new game has its own door, and is empty. */
 registerModSaveData(CODEX_SAVE_VENDOR, {
   newSaveData: () => ({ ...empty(), fill: true }),
-  getSaveData: () => ({ legendary: { ..._codex.legendary }, aetheric: { ..._codex.aetheric }, gilded: { ..._codex.gilded } }),
-  restoreSaveData: (r) => { _codex = validCodexRecord(r); _backfill = !r || typeof r !== 'object' || r.fill === true; },
-  newGame: () => { _codex = empty(); _backfill = false; },
+  getSaveData: () => ({
+    legendary: { ..._codex.legendary },
+    aetheric: { ..._codex.aetheric },
+    gilded: { ..._codex.gilded },
+  }),
+  restoreSaveData: (r) => {
+    _codex = validCodexRecord(r);
+    _backfill = !r || typeof r !== 'object' || r.fill === true;
+  },
+  newGame: () => {
+    _codex = empty();
+    _backfill = false;
+  },
 });
-registerTakeListener(CODEX, (item) => { noteFind(item); });
-registerMagicRoundHook(CODEX, (entity) => { if (entity?.isPlayer) sweepCodex(entity); });
+registerTakeListener(CODEX, (item) => {
+  noteFind(item);
+});
+registerMagicRoundHook(CODEX, (entity) => {
+  if (entity?.isPlayer) sweepCodex(entity);
+});
 
 // ── the page ────────────────────────────────────────────────────────
 /** Where a family's records are said to be. */
 export const FAMILY_HINT = Object.freeze({
-  undead: 'Said to be carried by the undead', daedra: 'Said to be held by the daedra', dragon: 'Said to lie in a dragon\'s hoard',
-  beast: 'Said to be found among the beasts of the wild', brute: 'Said to be carried by orcs and giants',
-  caster: 'Said to be kept by mages and witches', rogue: 'Said to pass among thieves and assassins', warrior: 'Said to be borne by warriors and knights',
+  undead: 'Said to be carried by the undead',
+  daedra: 'Said to be held by the daedra',
+  dragon: "Said to lie in a dragon's hoard",
+  beast: 'Said to be found among the beasts of the wild',
+  brute: 'Said to be carried by orcs and giants',
+  caster: 'Said to be kept by mages and witches',
+  rogue: 'Said to pass among thieves and assassins',
+  warrior: 'Said to be borne by warriors and knights',
 });
 /** The codex's Legendary rows, the table's order: `{ id, name, group, found, day, hint, power }` - a found record's
  *  name and power, an unfound one's name withheld ("A Legendary of the weapons") and its hint. AUDIT LOOT F8: EVERY
@@ -152,7 +183,17 @@ export function codexRows() {
   return allLegendaries().map((r) => {
     const day = foundDay('legendary', r.id);
     const p = powerOf(r.id);
-    return { id: r.id, kind: 'legendary', name: day != null ? r.name : null, group: r.group, found: day != null, day, hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '', power: day != null ? p : null, lore: day != null ? r.lore : null };
+    return {
+      id: r.id,
+      kind: 'legendary',
+      name: day != null ? r.name : null,
+      group: r.group,
+      found: day != null,
+      day,
+      hint: FAMILY_HINT[foundAmong(r.id)] ?? r.hint ?? '',
+      power: day != null ? p : null,
+      lore: day != null ? r.lore : null,
+    };
   });
 }
 /** The Aetheric sets' rows: `{ set, pieces: [{ id, name, found, day }] }`, in the records' order. */
@@ -172,20 +213,41 @@ export const GILDED_HINT = 'Said to lie in the brass of the Hour, once in a long
  *  Legendary's row is, a found one whole and an unfound one by its hint alone. */
 export function codexGilded() {
   return GILDED_RECORDS.map((r) => {
-    const day = foundDay('gilded', r.id), found = day != null;
-    return { id: r.id, kind: 'gilded', name: found ? r.name : null, group: r.group, found, day, hint: r.hint ?? GILDED_HINT, power: found ? r.power : null, lore: found ? r.lore : null };
+    const day = foundDay('gilded', r.id),
+      found = day != null;
+    return {
+      id: r.id,
+      kind: 'gilded',
+      name: found ? r.name : null,
+      group: r.group,
+      found,
+      day,
+      hint: r.hint ?? GILDED_HINT,
+      power: found ? r.power : null,
+      lore: found ? r.lore : null,
+    };
   });
 }
 /** How many found, of how many. */
-export const codexCount = () => ({ legendary: codexRows().filter((r) => r.found).length, legendaries: allLegendaries().length, aetheric: foundIds('aetheric').length, aetherics: AETHERIC_RECORDS.length, gilded: foundIds('gilded').length, gildeds: GILDED_RECORDS.length });   // AUDIT LOOT F8: of the rows the page lists
+export const codexCount = () => ({
+  legendary: codexRows().filter((r) => r.found).length,
+  legendaries: allLegendaries().length,
+  aetheric: foundIds('aetheric').length,
+  aetherics: AETHERIC_RECORDS.length,
+  gilded: foundIds('gilded').length,
+  gildeds: GILDED_RECORDS.length,
+}); // AUDIT LOOT F8: of the rows the page lists
 
 // ── the imprint ─────────────────────────────────────────────────────
 export const IMPRINT_PRICE = Object.freeze({ shards: 20, gold: 5000 });
 /** The found Legendaries a Rare may take the power of: its own group's, with a power it can use (AUDIT LOOT F1 - never
  *  Chain Lightning on a sword or Earthshaker on a bow: lootRarity.js powerFits). */
-export const imprintChoices = (item) => (item?.rarity === 'rare'
-  ? allLegendaries().filter((r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)))
-  : []);
+export const imprintChoices = (item) =>
+  item?.rarity === 'rare'
+    ? allLegendaries().filter(
+        (r) => recordFitsGroup(r, item) && foundDay('legendary', r.id) != null && powerFits(item, powerOf(r.id)),
+      )
+    : [];
 /** Why a Rare may not take that record's power now, or null: 'off', 'not' (not a Rare), 'unknown', 'worn', 'imprinted',
  *  'unfound' (a record the codex has not, of another group, or with no power), 'shards', 'gold'. */
 export function imprintRefusal(item, recordId, player) {
@@ -211,4 +273,7 @@ export function imprintPiece(item, recordId, player) {
 }
 
 /** Tests only: the codex emptied (and the backfill flag down). */
-export function _resetCodexForTests() { _codex = empty(); _backfill = false; }
+export function _resetCodexForTests() {
+  _codex = empty();
+  _backfill = false;
+}

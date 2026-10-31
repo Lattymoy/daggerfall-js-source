@@ -38,8 +38,8 @@
   {
     "name": "FB1001b-the-seam-forgets-the-roof",
     "file": "src/systems/passiveSpecials.js",
-    "old": "&& !(_host?.isInside?.() ?? false)",
-    "new": "",
+    "old": "  return isDayFromMinutes(now) && !(_host?.isInside?.() ?? false) && !(_host?.inPrison?.() ?? false);",
+    "new": "  return isDayFromMinutes(now) && !(_host?.inPrison?.() ?? false);",
     "tests": [
       "test/systems/fb1001b_vampsun.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "FB1001b-the-seam-forgets-the-cell",
     "file": "src/systems/passiveSpecials.js",
-    "old": "&& !(_host?.inPrison?.() ?? false)",
-    "new": "",
+    "old": "  return isDayFromMinutes(now) && !(_host?.isInside?.() ?? false) && !(_host?.inPrison?.() ?? false);",
+    "new": "  return isDayFromMinutes(now) && !(_host?.isInside?.() ?? false);",
     "tests": [
       "test/systems/fb1001b_vampsun.test.js"
     ]

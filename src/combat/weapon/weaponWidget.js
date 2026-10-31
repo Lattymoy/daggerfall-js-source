@@ -55,29 +55,55 @@
 // it, which the gun lab imports without dragging this file's world in.
 // Re-exported here because this is still the mod's front door.
 import {
-  readWidgetSettings, offsetStep, bobStep, inertiaStep, widgetTransformRect,
-  WINDUP, RECOVERY, RECOIL_CONDITION, MISS_VFX_AT,
+  readWidgetSettings,
+  offsetStep,
+  bobStep,
+  inertiaStep,
+  widgetTransformRect,
+  WINDUP,
+  RECOVERY,
+  RECOIL_CONDITION,
+  MISS_VFX_AT,
 } from './weaponWidgetMotion.js';
 export {
-  WEAPON_WIDGET_VENDOR, WINDUP, RECOVERY, BOB_SHAPE, STEP_CONDITION, RECOIL_CONDITION, MISS_VFX_AT,
-  readWidgetSettings, moveTowards, moveTowards2, roundHalfEven, snap,
-  offsetStep, bobStep, inertiaStep, widgetTransformRect,
+  WEAPON_WIDGET_VENDOR,
+  WINDUP,
+  RECOVERY,
+  BOB_SHAPE,
+  STEP_CONDITION,
+  RECOIL_CONDITION,
+  MISS_VFX_AT,
+  readWidgetSettings,
+  moveTowards,
+  moveTowards2,
+  roundHalfEven,
+  snap,
+  offsetStep,
+  bobStep,
+  inertiaStep,
+  widgetTransformRect,
 } from './weaponWidgetMotion.js';
 import { getBool, getInt } from '../../systems/settings/settings.js';
 import { liveStat } from '../../systems/statMods.js';
 import {
-  getMeleeWeaponAnimTime, bowReloadSeconds, CLASSIC_UPDATE_INTERVAL, HIT_FRAME_MELEE, HIT_FRAME_BOW, MELEE_NUM_FRAMES, BOW_NUM_FRAMES,
+  getMeleeWeaponAnimTime,
+  bowReloadSeconds,
+  CLASSIC_UPDATE_INTERVAL,
+  HIT_FRAME_MELEE,
+  HIT_FRAME_BOW,
+  MELEE_NUM_FRAMES,
+  BOW_NUM_FRAMES,
 } from '../../characters/weaponStates.js';
 import { WEAPON_TYPES, STATE_INDEX, ALIGN, NATIVE_W, NATIVE_H, WEAPON_FILE, weaponTypeForItem } from '../fpsWeapon.js';
 import { weaponOffsetHeight } from '../../ui/hud/hudLarge.js';
 import { swingSoundFor } from '../../systems/soundClips.js';
 import { isEnchanted } from '../../systems/inventory.js';
-import { atlasFileName, customTextureNames } from '../diverseWeapons/diverseWeapons.js';   // DW1
-import { customWeaponImage } from '../diverseWeapons/diverseWeaponsAssets.js';   // DW1: both bundles, this mod's first
+import { atlasFileName, customTextureNames } from '../diverseWeapons/diverseWeapons.js'; // DW1
+import { customWeaponImage } from '../diverseWeapons/diverseWeaponsAssets.js'; // DW1: both bundles, this mod's first
 import { widgetMetalName } from './weaponWidgetAssets.js';
 import { getItemHands } from '../../systems/equip.js';
 import { ITEM_HANDS } from '../../characters/equipTable.js';
-import { mirrorRect } from '../twoHands/handsLaw.js';   // TWO-HANDS: a hand of a pair on the left of the screen, drawn whole in the mirror
+import { mirrorRect } from '../twoHands/handsLaw.js'; // TWO-HANDS: a hand of a pair on the left of the screen, drawn whole in the mirror
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const inverseLerp = (a, b, v) => (a === b ? 0 : clamp((v - a) / (b - a), 0, 1));
@@ -95,7 +121,7 @@ const MIRROR_STATES = Object.freeze([STATE_INDEX.Idle, STATE_INDEX.StrikeDown, S
 /** WeaponStates, by the index the mod switches on. */
 const S = STATE_INDEX;
 const T = WEAPON_TYPES;
-const FRAME = 'frame';   // WaitForEndOfFrame
+const FRAME = 'frame'; // WaitForEndOfFrame
 
 /** GetAnimTickTime (IL 0x2a90): the melee tick is FormulaHelper's
  *  GetMeleeWeaponAnimTime (the port's, off the live speed); a bow's is
@@ -108,7 +134,7 @@ const FRAME = 'frame';   // WaitForEndOfFrame
  *  ticking the classic 0.0625 itself). */
 export function widgetAnimTickTime(weaponType, liveSpeed, swing, ctx = null) {
   let t = CLASSIC_UPDATE_INTERVAL;
-  if (weaponType !== T.Bow) t = getMeleeWeaponAnimTime(liveSpeed, ctx);   // RRI2: the entity and the hand ride along for a registered override
+  if (weaponType !== T.Bow) t = getMeleeWeaponAnimTime(liveSpeed, ctx); // RRI2: the entity and the hand ride along for a registered override
   if (!swing) return t;
   return lerp(0.045917998999357224, 0.35204100608825684, inverseLerp(0, 2, t / 0.19897900521755219));
 }
@@ -130,33 +156,66 @@ const STATE_NAMES = Object.keys(STATE_INDEX);
  *   bowDrawback()   Settings Controls/BowDrawback
  */
 export function createWeaponWidget({
-  settings = readWidgetSettings, audio = null, rolls = Math.random, missEffect = null, envHit = null,
-  handedness = () => getInt('Controls', 'Handedness', 0, 3) === 1, bowDrawback = () => getBool('Controls', 'BowDrawback'),
+  settings = readWidgetSettings,
+  audio = null,
+  rolls = Math.random,
+  missEffect = null,
+  envHit = null,
+  handedness = () => getInt('Controls', 'Handedness', 0, 3) === 1,
+  bowDrawback = () => getBool('Controls', 'BowDrawback'),
   hidden = false,
 } = {}) {
   // .ctor (IL 0x361c): the fields' resting values
   const w = {
     showWeapon: true,
-    position: [0, 0], scale: [1, 1], offset: [0, 0],     // Position / Scale / Offset - the published channels
-    weaponState: S.Idle, currentFrame: 0, currentWeaponType: T.None, currentMetalType: -1, currentTemplateIndex: -1,
-    weaponPosition: { x: 0, y: 0, w: 0, h: 0 }, curAnimRect: { u0: 0, v0: 0, u1: 1, v1: 1 },
-    weaponOffsetHeight: 0, screenRect: { x: 0, y: 0, width: NATIVE_W, height: NATIVE_H },
-    weaponScaleX: 1, weaponScaleY: 1, animTickTime: 0,
-    lastSheathed: null, lastDoubleScale: false, lastEnchanted: false,
-    curCustomTexture: null, curCustomSize: null,
-    animating: null, animatingCancel: false, hasCurrentAttackHit: false,
+    position: [0, 0],
+    scale: [1, 1],
+    offset: [0, 0], // Position / Scale / Offset - the published channels
+    weaponState: S.Idle,
+    currentFrame: 0,
+    currentWeaponType: T.None,
+    currentMetalType: -1,
+    currentTemplateIndex: -1,
+    weaponPosition: { x: 0, y: 0, w: 0, h: 0 },
+    curAnimRect: { u0: 0, v0: 0, u1: 1, v1: 1 },
+    weaponOffsetHeight: 0,
+    screenRect: { x: 0, y: 0, width: NATIVE_W, height: NATIVE_H },
+    weaponScaleX: 1,
+    weaponScaleY: 1,
+    animTickTime: 0,
+    lastSheathed: null,
+    lastDoubleScale: false,
+    lastEnchanted: false,
+    curCustomTexture: null,
+    curCustomSize: null,
+    animating: null,
+    animatingCancel: false,
+    hasCurrentAttackHit: false,
     // TWO-HANDS (AUDIT 2, L4): `hidden` - a clone born at the Offset slide's hidden place, settled (a pair's left hand:
     // single-hand play never steps it, never loads its art; it slides in from there when the hands become a pair)
-    offsetCurrent: hidden ? [2, 2] : [0, 0], offsetTarget: hidden ? [2, 2] : [0, 0],
-    swayDx: { bob: 0, inertia: 0 },   // TWO-HANDS (AUDIT 2): this frame's Bob and Inertia across the screen, apart (pairRect)
-    born: hidden,   // ...and not yet stepped: shown on its very first frame (a game loaded with a pair up) it stands at its place
-    moveSmooth: 0, bobSmooth: [0, 0], inertiaCurrent: [0, 0], inertiaTarget: [0, 0], inertiaSpeedMod: 1,
-    armsPosition: [0, 0], armsMoveSmooth: 0, armsBobSmooth: [0, 0],   // DISC14-C: the Morrowind arms' own Position, on the plain bob (armsTransform)
-    inertiaForwardCurrent: [0, 0], inertiaForwardTarget: [0, 0],
-    leftHanded: false, flipHorizontal: false, isInThirdPerson: false, time: 0,
-    specificWeapon: null, art: null, s: settings(),
+    offsetCurrent: hidden ? [2, 2] : [0, 0],
+    offsetTarget: hidden ? [2, 2] : [0, 0],
+    swayDx: { bob: 0, inertia: 0 }, // TWO-HANDS (AUDIT 2): this frame's Bob and Inertia across the screen, apart (pairRect)
+    born: hidden, // ...and not yet stepped: shown on its very first frame (a game loaded with a pair up) it stands at its place
+    moveSmooth: 0,
+    bobSmooth: [0, 0],
+    inertiaCurrent: [0, 0],
+    inertiaTarget: [0, 0],
+    inertiaSpeedMod: 1,
+    armsPosition: [0, 0],
+    armsMoveSmooth: 0,
+    armsBobSmooth: [0, 0], // DISC14-C: the Morrowind arms' own Position, on the plain bob (armsTransform)
+    inertiaForwardCurrent: [0, 0],
+    inertiaForwardTarget: [0, 0],
+    leftHanded: false,
+    flipHorizontal: false,
+    isInThirdPerson: false,
+    time: 0,
+    specificWeapon: null,
+    art: null,
+    s: settings(),
   };
-  let ctx = null;   // the frame's inputs (lateUpdate's argument), read by the coroutines
+  let ctx = null; // the frame's inputs (lateUpdate's argument), read by the coroutines
   const machineStateIndex = () => STATE_INDEX[ctx?.machine?.state ?? 'Idle'] ?? 0;
   const machineIsAttacking = () => !!ctx?.machine && ctx.machine.state !== 'Idle';
   const machineFrame = () => ctx?.machine?.frame ?? 0;
@@ -165,13 +224,18 @@ export function createWeaponWidget({
   // RRI2: what GetMeleeWeaponAnimTime's C# signature carries. TWO-HANDS: the rig's own ctx when it hands one (the striking
   // hand - PlayerWeapon.swingCtx), so the clone's swing runs on the clock the machine does (an off-hand blow's held ticks
   // are the machine's own, at its end: the clone holds its last frame while the machine attacks)
-  const animCtx = () => ctx?.animCtx?.() ?? ({ entity: ctx?.entity ?? null, weaponType: w.currentWeaponType, usingRightHand: usingRightHand() });
+  const animCtx = () =>
+    ctx?.animCtx?.() ?? {
+      entity: ctx?.entity ?? null,
+      weaponType: w.currentWeaponType,
+      usingRightHand: usingRightHand(),
+    };
   const anims = () => w.art?.anims ?? null;
   const usingRightHand = () => ctx?.usingRightHand !== false;
   const sheathed = () => !!ctx?.sheathed;
 
   // get_offsetSpeedLive (IL 0x284): LiveSpeed / 100 * offsetSpeed
-  const offsetSpeedLive = () => liveSpeed() / 100 * w.s.offsetSpeed;
+  const offsetSpeedLive = () => (liveSpeed() / 100) * w.s.offsetSpeed;
 
   // ---- the overrides (IL 0x3440-0x360f) ----
   /** OverrideAlignment: with the setting on, a StrikeDown or StrikeUp
@@ -181,7 +245,14 @@ export function createWeaponWidget({
     if (!w.s.swingAlignmentOverride || !w.specificWeapon) return false;
     if (w.weaponState !== S.StrikeDown && w.weaponState !== S.StrikeUp) return false;
     const t = w.currentWeaponType;
-    return !(t === T.Bow || t === T.Melee || t === T.Dagger || t === T.Dagger_Magic || t === T.Warhammer || t === T.Warhammer_Magic);
+    return !(
+      t === T.Bow ||
+      t === T.Melee ||
+      t === T.Dagger ||
+      t === T.Dagger_Magic ||
+      t === T.Warhammer ||
+      t === T.Warhammer_Magic
+    );
   }
   /** CheckForMirrorOverride: a two-handed weapon mirrored by its family's Miscellaneous switch. */
   function mirrorOverride() {
@@ -196,18 +267,32 @@ export function createWeaponWidget({
     const t = w.currentWeaponType;
     if (w.s.mirrorTwoHandedSwords && (t === T.LongBlade || t === T.LongBlade_Magic)) return true;
     if (w.s.mirrorTwoHandedAxes && (t === T.Battleaxe || t === T.Battleaxe_Magic)) return true;
-    if (w.s.mirrorTwoHandedBlunts && (t === T.Staff || t === T.Staff_Magic || t === T.Warhammer || t === T.Warhammer_Magic || t === T.Flail || t === T.Flail_Magic)) return true;
+    if (
+      w.s.mirrorTwoHandedBlunts &&
+      (t === T.Staff ||
+        t === T.Staff_Magic ||
+        t === T.Warhammer ||
+        t === T.Warhammer_Magic ||
+        t === T.Flail ||
+        t === T.Flail_Magic)
+    )
+      return true;
     return false;
   }
   /** CheckForOffsetOverride: everything but bare hands and the werecreature leans into its swing. */
   const offsetOverride = () => !(w.currentWeaponType === T.Melee || w.currentWeaponType === T.Werecreature);
   /** CheckForRecoveryOverride: a StrikeUp of anything but a dagger recovers in reverse. */
-  const recoveryOverride = () => w.weaponState === S.StrikeUp && !(w.currentWeaponType === T.Dagger || w.currentWeaponType === T.Dagger_Magic);
+  const recoveryOverride = () =>
+    w.weaponState === S.StrikeUp && !(w.currentWeaponType === T.Dagger || w.currentWeaponType === T.Dagger_Magic);
 
   // ---- the sounds (IL 0x3144-0x33ab) ----
-  function playSheatheSound() { audio?.playOneShot?.(SHEATHE_CLIP, 1, 1); }
+  function playSheatheSound() {
+    audio?.playOneShot?.(SHEATHE_CLIP, 1, 1);
+  }
   /** PlaySwingSound: the weapon's swing clip at volume 1.1 (pitch 1 x AttackSpeedScale, which nothing here scales). */
-  function playSwingSound() { audio?.playOneShot?.(swingSoundFor(w.specificWeapon), 1.1, 1); }
+  function playSwingSound() {
+    audio?.playOneShot?.(swingSoundFor(w.specificWeapon), 1.1, 1);
+  }
 
   // ---- ChangeWeaponState (IL 0x107c) ----
   function changeWeaponState(state) {
@@ -224,7 +309,10 @@ export function createWeaponWidget({
     // touched: an Idle already holding a real frame (Recovery = LastFrame,
     // the other changeWeaponState(S.Idle) callers) is left as it was.
     else if (state === S.Idle && w.currentFrame < 0) w.currentFrame = 0;
-    if (state !== S.Idle) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; }
+    if (state !== S.Idle) {
+      w.offsetCurrent = [0, 0];
+      w.offsetTarget = [0, 0];
+    }
     updateWeapon();
   }
 
@@ -235,7 +323,7 @@ export function createWeaponWidget({
     w.currentTemplateIndex = w.specificWeapon?.templateIndex ?? -1;
     w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx());
     w.customCache = new Map();
-    w.customMisses = new Set();   // DW1: the names that answered nothing, per atlas
+    w.customMisses = new Set(); // DW1: the names that answered nothing, per atlas
   }
   /** GetWeaponTextureAtlas's custom arm (IL 0x2d72-0x2e12): with
    *  DoubleScaleTextures the `w_` set, else the plain name - the
@@ -248,34 +336,46 @@ export function createWeaponWidget({
     // (FPSWeapon.cs:637-644 - the clone reads the same static), and
     // under DoubleScaleTextures the `w_` ask falls through to the plain
     // one (combat/diverseWeapons/diverseWeapons.js customTextureNames says why).
-    const file = atlasFileName(w.specificWeapon, classic, undefined, ctx?.glow ? false : undefined);   // WEAPON-GLOW1: an element shown asks the plain set
-    const metal = widgetMetalName(w.currentMetalType);   // AUDIT 68 S09-texname-dup: the one metal rule
+    const file = atlasFileName(w.specificWeapon, classic, undefined, ctx?.glow ? false : undefined); // WEAPON-GLOW1: an element shown asks the plain set
+    const metal = widgetMetalName(w.currentMetalType); // AUDIT 68 S09-texname-dup: the one metal rule
     const cache = (w.customCache ??= new Map());
     const misses = (w.customMisses ??= new Set());
     for (const name of customTextureNames(file, record, frame, metal, w.s.doubleScale)) {
-      if (misses.has(name)) continue;   // answered "nothing carries it": the next name's turn
+      if (misses.has(name)) continue; // answered "nothing carries it": the next name's turn
       if (!cache.has(name)) {
         cache.set(name, null);
-        customWeaponImage(name).then((img) => {
-          if (!img) { misses.add(name); return; }
-          const tex = ctx.renderer.uploadTexture('img', `ww:${name}`, img);
-          // AUDIT-DW F3: WHICH name answered rides the hit. The clone doubles
-          // a custom idle's box under DoubleScaleTextures because a `w_`
-          // texture IS double size; a plain name that answered through the
-          // DW1 fall-through is not, and doubled it drew at twice its size
-          cache.set(name, { tex, width: img.width, height: img.height, doubled: name.startsWith('w_') });
-        }).catch((e) => { misses.add(name); console.warn('[weapon widget] texture load failed', name, e); });   // WW3: the rig's neighbours say so too (weaponRig.js art/spell loads) - a bare `catch (() => {})` here is how a shape fault reaches a player instead of a console line
+        customWeaponImage(name)
+          .then((img) => {
+            if (!img) {
+              misses.add(name);
+              return;
+            }
+            const tex = ctx.renderer.uploadTexture('img', `ww:${name}`, img);
+            // AUDIT-DW F3: WHICH name answered rides the hit. The clone doubles
+            // a custom idle's box under DoubleScaleTextures because a `w_`
+            // texture IS double size; a plain name that answered through the
+            // DW1 fall-through is not, and doubled it drew at twice its size
+            cache.set(name, { tex, width: img.width, height: img.height, doubled: name.startsWith('w_') });
+          })
+          .catch((e) => {
+            misses.add(name);
+            console.warn('[weapon widget] texture load failed', name, e);
+          }); // WW3: the rig's neighbours say so too (weaponRig.js art/spell loads) - a bare `catch (() => {})` here is how a shape fault reaches a player instead of a console line
       }
-      return cache.get(name);   // a hit, or null while this name is still landing - the classic frame until then
+      return cache.get(name); // a hit, or null while this name is still landing - the classic frame until then
     }
     return null;
   }
 
   // ---- UpdateWeapon (IL 0x2328) and the three alignments ----
   function updateWeapon() {
-    const art = w.art, a = anims();
+    const art = w.art,
+      a = anims();
     if (!art || !a || !ctx) return;
-    if (ctx.weaponType === T.None) { w.weaponState = S.Idle; w.currentFrame = 0; }
+    if (ctx.weaponType === T.None) {
+      w.weaponState = S.Idle;
+      w.currentFrame = 0;
+    }
     const isBow = ctx.weaponType === T.Bow;
     const record = isBow ? 0 : a[w.weaponState].Record;
     const rec = art.records[record];
@@ -287,12 +387,23 @@ export function createWeaponWidget({
     w.curAnimRect = mirrored ? { u0: 1, v0: 0, u1: 0, v1: 1 } : { u0: 0, v0: 0, u1: 1, v1: 1 };
     const anim = { ...a[w.weaponState] };
     if (overrideAlignment()) anim.Alignment = ALIGN.Center;
-    let width = rec.width, height = rec.height;
+    let width = rec.width,
+      height = rec.height;
     if (custom) {
-      if (w.s.trueSize) { width = custom.width / w.s.textureScaleFactor; height = custom.height / w.s.textureScaleFactor; }
-      else if (w.s.doubleScale && custom.doubled !== false) {   // AUDIT-DW F3: only a `w_` texture is drawn into the doubled box
-        if (w.currentWeaponType === T.Bow) { if (w.currentFrame === 0) { width *= 2; height *= 2; } }
-        else if (w.weaponState === S.Idle) { width *= 2; height *= 2; }
+      if (w.s.trueSize) {
+        width = custom.width / w.s.textureScaleFactor;
+        height = custom.height / w.s.textureScaleFactor;
+      } else if (w.s.doubleScale && custom.doubled !== false) {
+        // AUDIT-DW F3: only a `w_` texture is drawn into the doubled box
+        if (w.currentWeaponType === T.Bow) {
+          if (w.currentFrame === 0) {
+            width *= 2;
+            height *= 2;
+          }
+        } else if (w.weaponState === S.Idle) {
+          width *= 2;
+          height *= 2;
+        }
       }
     }
     w.weaponScaleX = w.screenRect.width / NATIVE_W;
@@ -302,16 +413,28 @@ export function createWeaponWidget({
     // every image texture here binds NEAREST, so there is no filter
     // shrink to compensate for (combat/fpsSpellCasting.js's note).
     switch (anim.Alignment) {
-      case ALIGN.Left: alignLeft(anim, width, height); break;
-      case ALIGN.Center: alignCenter(anim, width, height); break;
-      case ALIGN.Right: alignRight(anim, width, height); break;
-      default: break;
+      case ALIGN.Left:
+        alignLeft(anim, width, height);
+        break;
+      case ALIGN.Center:
+        alignCenter(anim, width, height);
+        break;
+      case ALIGN.Right:
+        alignRight(anim, width, height);
+        break;
+      default:
+        break;
     }
     w.animTickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx());
   }
   const bottomY = (height) => w.screenRect.y + w.screenRect.height - height * w.weaponScaleY - w.weaponOffsetHeight;
   function alignLeft(anim, width, height) {
-    w.weaponPosition = { x: w.screenRect.x + w.screenRect.width * anim.Offset, y: bottomY(height), w: width * w.weaponScaleX, h: height * w.weaponScaleY };
+    w.weaponPosition = {
+      x: w.screenRect.x + w.screenRect.width * anim.Offset,
+      y: bottomY(height),
+      w: width * w.weaponScaleX,
+      h: height * w.weaponScaleY,
+    };
   }
   /** AlignCenter (IL 0x278c): under the alignment override the sprite's
    *  INNER edge sits on the screen's middle - the flipped sprite ends
@@ -321,22 +444,41 @@ export function createWeaponWidget({
     const mid = w.screenRect.x + w.screenRect.width / 2;
     let x;
     if (overrideAlignment()) x = w.flipHorizontal ? mid - width * w.weaponScaleX : mid;
-    else x = mid - width * w.weaponScaleX / 2;
+    else x = mid - (width * w.weaponScaleX) / 2;
     w.weaponPosition = { x, y: bottomY(height), w: width * w.weaponScaleX, h: height * w.weaponScaleY };
   }
   /** AlignRight (IL 0x28f4): flipped, the three mirror states take AlignLeft. */
   function alignRight(anim, width, height) {
     if (w.flipHorizontal && MIRROR_STATES.includes(w.weaponState)) return alignLeft(anim, width, height);
-    w.weaponPosition = { x: w.screenRect.x + w.screenRect.width * (1 - anim.Offset) - width * w.weaponScaleX, y: bottomY(height), w: width * w.weaponScaleX, h: height * w.weaponScaleY };
+    w.weaponPosition = {
+      x: w.screenRect.x + w.screenRect.width * (1 - anim.Offset) - width * w.weaponScaleX,
+      y: bottomY(height),
+      w: width * w.weaponScaleX,
+      h: height * w.weaponScaleY,
+    };
   }
 
   /** GetWeaponRect (IL 0x1590) over any base rect, with the clone's own
    *  channels and defaults - the arithmetic is widgetTransformRect's. */
-  function transformRect(base, { flip = w.flipHorizontal, scaleIt = w.currentWeaponType !== T.Werecreature, withOffset = true, position = w.position } = {}) {
+  function transformRect(
+    base,
+    {
+      flip = w.flipHorizontal,
+      scaleIt = w.currentWeaponType !== T.Werecreature,
+      withOffset = true,
+      position = w.position,
+    } = {},
+  ) {
     return widgetTransformRect(base, {
-      position, scale: w.scale, offset: w.offset, flip, scaleIt, withOffset,
+      position,
+      scale: w.scale,
+      offset: w.offset,
+      flip,
+      scaleIt,
+      withOffset,
       stepInterval: w.s.stepTransforms ? w.s.stepLength * (w.screenRect.height / 64) : 0,
-      screenHeight: w.screenRect.height, weaponOffsetHeight: w.weaponOffsetHeight,
+      screenHeight: w.screenRect.height,
+      weaponOffsetHeight: w.weaponOffsetHeight,
     });
   }
   const getWeaponRect = () => transformRect(w.weaponPosition);
@@ -348,7 +490,10 @@ export function createWeaponWidget({
    *  sprite takes Bob's x away (`r.x -= position[0]`), and Bob's x is one-sided, so the mirrored hand sent with it drew
    *  its cut outer side into the view on every step - and INERTIA KEEPS THE SCREEN'S DIRECTION, both hands lagging the
    *  look as one body (the mod pre-signs it for a flipped sprite). The Offset slide is the hand's own, mirrored with it. */
-  const pairRect = (mirror) => (mirror ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] }) : getWeaponRect());
+  const pairRect = (mirror) =>
+    mirror
+      ? transformRect(w.weaponPosition, { position: [w.swayDx.bob - w.swayDx.inertia, w.position[1]] })
+      : getWeaponRect();
 
   // ---- Recoil: OnAttackDamageCalculated (IL 0xc5c) and CheckForEnvDamage (0x1730) ----
   /** The host's word on one struck target: `damage` is the calc's
@@ -357,17 +502,24 @@ export function createWeaponWidget({
   function onAttackDamageCalculated({ damage = 0, parrySounds = false, pos = null, isEnemy = true } = {}) {
     if (!w.s.recoil) return;
     const r = rolls();
-    const c = w.s.recoilCondition, R = RECOIL_CONDITION;
+    const c = w.s.recoilCondition,
+      R = RECOIL_CONDITION;
     if (damage > 0) {
-      if (r < w.s.recoilChance && (c === R.HitsOnly || c === R.HitsAndParries || c === R.AllAttacks)) w.hasCurrentAttackHit = true;
+      if (r < w.s.recoilChance && (c === R.HitsOnly || c === R.HitsAndParries || c === R.AllAttacks))
+        w.hasCurrentAttackHit = true;
       return;
     }
     if (!isEnemy) return;
     if (parrySounds) {
-      if (r < w.s.recoilChance && (c === R.HitsAndParries || c === R.ParriesOnly || c === R.ParriesAndMisses || c === R.AllAttacks)) w.hasCurrentAttackHit = true;
+      if (
+        r < w.s.recoilChance &&
+        (c === R.HitsAndParries || c === R.ParriesOnly || c === R.ParriesAndMisses || c === R.AllAttacks)
+      )
+        w.hasCurrentAttackHit = true;
       if (w.s.playMissVFXEntity && pos) doClang(pos);
     } else {
-      if (r < w.s.recoilChance && (c === R.ParriesAndMisses || c === R.MissesOnly || c === R.AllAttacks)) w.hasCurrentAttackHit = true;
+      if (r < w.s.recoilChance && (c === R.ParriesAndMisses || c === R.MissesOnly || c === R.AllAttacks))
+        w.hasCurrentAttackHit = true;
       if (w.s.playMissVFXEntity && pos) doThud(pos);
     }
   }
@@ -383,7 +535,7 @@ export function createWeaponWidget({
       const k = len * 0.75;
       return [cam.pos[0] + cam.forward[0] * k, cam.pos[1] + cam.forward[1] * k, cam.pos[2] + cam.forward[2] * k];
     }
-    return [pos[0] + d[0] / len * 0.75, pos[1] + d[1] / len * 0.75, pos[2] + d[2] / len * 0.75];
+    return [pos[0] + (d[0] / len) * 0.75, pos[1] + (d[1] / len) * 0.75, pos[2] + (d[2] / len) * 0.75];
   }
   const doClang = (pos) => missEffect?.('CLANG', vfxAt(pos), { ...MISS_VFX, emissive: true });
   const doThud = (pos) => missEffect?.('THUD', vfxAt(pos), { ...MISS_VFX, emissive: false });
@@ -404,8 +556,10 @@ export function createWeaponWidget({
   function* playWeaponAnimation(state) {
     w.hasCurrentAttackHit = false;
     w.animatingCancel = false;
-    let tickTime = widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx()) / 5 / (w.s.swingSpeed || 1e-6);
-    if (w.s.swingWindup === WINDUP.FirstFrame) changeWeaponState(state); else changeWeaponState(S.Idle);
+    let tickTime =
+      widgetAnimTickTime(w.currentWeaponType, liveSpeed(), w.s.swing, animCtx()) / 5 / (w.s.swingSpeed || 1e-6);
+    if (w.s.swingWindup === WINDUP.FirstFrame) changeWeaponState(state);
+    else changeWeaponState(S.Idle);
     if (w.s.swingRecoveryOverride && recoveryOverride()) tickTime *= 0.5;
     // the wind-up: the pose the setting names, held until the ORIGINAL reaches its hit frame
     while (machineIsAttacking() && machineFrame() < hitFrame()) {
@@ -419,7 +573,10 @@ export function createWeaponWidget({
     // TWO-HANDS (AUDIT): the strike this wind-up shadows ENDED before its hit frame - a hand of a pair whose blow stopped
     // being its own (the pair dissolved mid-blow: a light lit, a weapon swapped, the beast). DFU's one machine always
     // reaches the hit frame first, so the one hand never comes here; a pair's clone must not wind up forever.
-    if (!machineIsAttacking()) { finishSwing(state); return; }
+    if (!machineIsAttacking()) {
+      finishSwing(state);
+      return;
+    }
     changeWeaponState(state);
     playSwingSound();
     if (w.s.recoil && w.s.recoilEnvironment && checkForEnvDamage()) w.hasCurrentAttackHit = true;
@@ -427,11 +584,23 @@ export function createWeaponWidget({
     if (w.hasCurrentAttackHit) {
       // a hit: forward to the hit frame, hold three ticks there, then recover
       const hf = hitFrame();
-      while (w.currentFrame < hf) { w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0]; w.currentFrame += 1; updateWeapon(); yield tickTime; }
+      while (w.currentFrame < hf) {
+        w.offsetTarget = [0, 0];
+        w.offsetCurrent = [0, 0];
+        w.currentFrame += 1;
+        updateWeapon();
+        yield tickTime;
+      }
       yield tickTime * 3;
     } else {
       // a miss: the whole strike forward
-      while (w.currentFrame < numFrames(ctx?.machine?.isBow, STATE_NAMES[w.weaponState]) - 1) { w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0]; w.currentFrame += 1; updateWeapon(); yield tickTime; }
+      while (w.currentFrame < numFrames(ctx?.machine?.isBow, STATE_NAMES[w.weaponState]) - 1) {
+        w.offsetTarget = [0, 0];
+        w.offsetCurrent = [0, 0];
+        w.currentFrame += 1;
+        updateWeapon();
+        yield tickTime;
+      }
     }
     w.animatingCancel = true;
     const recover = w.s.swingRecoveryOverride && recoveryOverride();
@@ -444,10 +613,17 @@ export function createWeaponWidget({
     while (machineIsAttacking()) {
       if (!reversed && (recover || w.hasCurrentAttackHit)) {
         reversed = true;
-        while (w.currentFrame > 0) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; w.currentFrame -= 1; updateWeapon(); yield tickTime; }
+        while (w.currentFrame > 0) {
+          w.offsetCurrent = [0, 0];
+          w.offsetTarget = [0, 0];
+          w.currentFrame -= 1;
+          updateWeapon();
+          yield tickTime;
+        }
         continue;
       }
-      w.currentFrame = w.s.swingRecovery === RECOVERY.LastFrame ? numFrames(ctx?.machine?.isBow, STATE_NAMES[w.weaponState]) - 1 : -1;
+      w.currentFrame =
+        w.s.swingRecovery === RECOVERY.LastFrame ? numFrames(ctx?.machine?.isBow, STATE_NAMES[w.weaponState]) - 1 : -1;
       yield FRAME;
     }
     finishSwing(state);
@@ -488,8 +664,10 @@ export function createWeaponWidget({
     changeWeaponState(state);
     const last = () => numFrames(ctx?.machine?.isBow, STATE_NAMES[w.weaponState]) - 1;
     while (w.currentFrame < last() && !w.hasCurrentAttackHit) {
-      w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0];
-      w.currentFrame += 1; updateWeapon();
+      w.offsetTarget = [0, 0];
+      w.offsetCurrent = [0, 0];
+      w.currentFrame += 1;
+      updateWeapon();
       if (w.currentFrame === hitFrame()) {
         playSwingSound();
         if (w.s.recoil && w.s.recoilEnvironment && checkForEnvDamage()) w.hasCurrentAttackHit = true;
@@ -498,8 +676,10 @@ export function createWeaponWidget({
     }
     // a hit plays the strike back to its start; at the hit frame on the way back the swing may be replaced
     while (w.currentFrame > 0 && w.hasCurrentAttackHit) {
-      w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0];
-      w.currentFrame -= 1; updateWeapon();
+      w.offsetTarget = [0, 0];
+      w.offsetCurrent = [0, 0];
+      w.currentFrame -= 1;
+      updateWeapon();
       if (w.currentFrame === hitFrame()) w.animatingCancel = true;
       yield tickTime;
     }
@@ -515,13 +695,23 @@ export function createWeaponWidget({
     const tick = CLASSIC_UPDATE_INTERVAL;
     if (bowDrawback()) {
       // the draw (IL 0x4477-0x45ab): frames 0..3 on the classic tick while the ORIGINAL draws, then held as long as it holds
-      w.currentFrame = 0; changeWeaponState(S.StrikeUp); updateWeapon();
-      const drawTime = 12; let drawTimer = 0;
+      w.currentFrame = 0;
+      changeWeaponState(S.StrikeUp);
+      updateWeapon();
+      const drawTime = 12;
+      let drawTimer = 0;
       while (machineStateIndex() === S.StrikeUp) {
         let hold = drawTimer > drawTime || !!ctx?.activateStarted?.();
         if (!hold) {
-          w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0];
-          if (w.currentFrame < 3) { w.currentFrame += 1; updateWeapon(); drawTimer += tick; yield tick; continue; }
+          w.offsetTarget = [0, 0];
+          w.offsetCurrent = [0, 0];
+          if (w.currentFrame < 3) {
+            w.currentFrame += 1;
+            updateWeapon();
+            drawTimer += tick;
+            yield tick;
+            continue;
+          }
           hold = true;
         }
         drawTimer += ctx?.dt ?? 0;
@@ -530,31 +720,58 @@ export function createWeaponWidget({
       if (machineStateIndex() === S.StrikeDown) {
         // the release (0x45c1-0x4734): to the last frame, the cooldown clocked at the hit frame. BOW-VOICE: silent -
         // the loose's one voice is the machine's `bowSound` (see the header)
-        changeWeaponState(S.StrikeDown); updateWeapon();
+        changeWeaponState(S.StrikeDown);
+        updateWeapon();
         yield tick;
         while (machineStateIndex() === S.StrikeDown && w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) {
-          w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0];
-          if (w.currentFrame === hitFrame()) cooldownTime = w.time + bowReloadSeconds(liveSpeed(), animCtx());   // BOW-LAW: the machine's reload
-          w.currentFrame += 1; updateWeapon();
+          w.offsetTarget = [0, 0];
+          w.offsetCurrent = [0, 0];
+          if (w.currentFrame === hitFrame()) cooldownTime = w.time + bowReloadSeconds(liveSpeed(), animCtx()); // BOW-LAW: the machine's reload
+          w.currentFrame += 1;
+          updateWeapon();
           yield tick;
         }
       } else {
         // a draw let go without a shot (0x4780-0x4779): back down the draw frames
-        while (w.currentFrame > 0) { w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0]; w.currentFrame -= 1; updateWeapon(); yield tick; }
+        while (w.currentFrame > 0) {
+          w.offsetTarget = [0, 0];
+          w.offsetCurrent = [0, 0];
+          w.currentFrame -= 1;
+          updateWeapon();
+          yield tick;
+        }
       }
       // dipped out of sight until the cooldown ends (0x478b-0x47c1), then idle
-      do { w.offsetTarget = [0, 1]; yield FRAME; } while (w.time < cooldownTime);
-      changeWeaponState(S.Idle); w.currentFrame = 0; updateWeapon();
+      do {
+        w.offsetTarget = [0, 1];
+        yield FRAME;
+      } while (w.time < cooldownTime);
+      changeWeaponState(S.Idle);
+      w.currentFrame = 0;
+      updateWeapon();
     } else {
       // BowDrawback off (0x481e-0x49fd): the instant shot from the drawn frame
-      w.currentFrame = 3; changeWeaponState(S.StrikeDown); updateWeapon();
+      w.currentFrame = 3;
+      changeWeaponState(S.StrikeDown);
+      updateWeapon();
       yield tick;
       // BOW-VOICE: the IL's PlaySwingSound here is the loose's second voice - the machine's `bowSound` is its one
-      cooldownTime = w.time + bowReloadSeconds(liveSpeed(), animCtx());   // BOW-LAW: the machine's reload
+      cooldownTime = w.time + bowReloadSeconds(liveSpeed(), animCtx()); // BOW-LAW: the machine's reload
       yield tick;
-      while (w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) { w.offsetTarget = [0, 0]; w.offsetCurrent = [0, 0]; w.currentFrame += 1; updateWeapon(); yield tick; }
-      do { w.offsetTarget = [0, 1]; yield FRAME; } while (w.time < cooldownTime);
-      w.currentFrame = 3; changeWeaponState(S.StrikeDown); updateWeapon();
+      while (w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) {
+        w.offsetTarget = [0, 0];
+        w.offsetCurrent = [0, 0];
+        w.currentFrame += 1;
+        updateWeapon();
+        yield tick;
+      }
+      do {
+        w.offsetTarget = [0, 1];
+        yield FRAME;
+      } while (w.time < cooldownTime);
+      w.currentFrame = 3;
+      changeWeaponState(S.StrikeDown);
+      updateWeapon();
     }
     w.offsetCurrent = [0, 1];
     w.animating = null;
@@ -576,8 +793,17 @@ export function createWeaponWidget({
   }
   function resume(a) {
     let r;
-    try { r = a.gen.next(); } catch (e) { console.warn('[weapon widget] a swing threw', e); if (w.animating === a) w.animating = null; return; }
-    if (r.done) { if (w.animating === a) w.animating = null; return; }
+    try {
+      r = a.gen.next();
+    } catch (e) {
+      console.warn('[weapon widget] a swing threw', e);
+      if (w.animating === a) w.animating = null;
+      return;
+    }
+    if (r.done) {
+      if (w.animating === a) w.animating = null;
+      return;
+    }
     a.wait = r.value === FRAME ? FRAME : Math.max(0, Number(r.value) || 0);
   }
   /** Unity's clock for the coroutines: a `yield seconds` resumes ahead
@@ -626,50 +852,82 @@ export function createWeaponWidget({
     // behind, the hands swinging apart and together on the walk. Its smoothing is taken too while it rests out of sight.
     if (c.clockOf) {
       const k = c.clockOf.clock;
-      if (lastSettledHidden()) { w.moveSmooth = k.moveSmooth; w.bobSmooth = [...k.bobSmooth]; }
+      if (lastSettledHidden()) {
+        w.moveSmooth = k.moveSmooth;
+        w.bobSmooth = [...k.bobSmooth];
+      }
       w.time = k.time;
     } else w.time += dt;
-    if (w.born) { w.born = false; if (c.shown) { w.offsetCurrent = [0, 0]; w.offsetTarget = [0, 0]; } }
+    if (w.born) {
+      w.born = false;
+      if (c.shown) {
+        w.offsetCurrent = [0, 0];
+        w.offsetTarget = [0, 0];
+      }
+    }
     stepSecondsWaits(dt);
     w.screenRect = { x: 0, y: 0, width: c.canvas?.width ?? NATIVE_W, height: c.canvas?.height ?? NATIVE_H };
     w.leftHanded = !!handedness();
     w.art = c.art ?? null;
-    w.position = [0, 0]; w.scale = [1, 1]; w.offset = [0, 0]; w.armsPosition = [0, 0];
+    w.position = [0, 0];
+    w.scale = [1, 1];
+    w.offset = [0, 0];
+    w.armsPosition = [0, 0];
     w.swayDx = { bob: 0, inertia: 0 };
     // the weapon in hand changed (SpecificWeapon)
     if (c.weapon !== w.specificWeapon) {
       if (c.weapon) {
         w.specificWeapon = c.weapon;
-        if (!bowDrawback() && weaponTypeForItem(c.weapon) === T.Bow) { w.currentFrame = 3; changeWeaponState(S.StrikeDown); }
-        else changeWeaponState(S.Idle);
-      } else { w.specificWeapon = null; changeWeaponState(S.Idle); }
+        if (!bowDrawback() && weaponTypeForItem(c.weapon) === T.Bow) {
+          w.currentFrame = 3;
+          changeWeaponState(S.StrikeDown);
+        } else changeWeaponState(S.Idle);
+      } else {
+        w.specificWeapon = null;
+        changeWeaponState(S.Idle);
+      }
     }
     // the atlas follows the type, the metal, the template, the enchantment and the double-scale switch (OnGUI 0x113b-0x11ab)
     const enchanted = !!(w.specificWeapon && isEnchanted(w.specificWeapon));
-    if (c.weaponType !== w.currentWeaponType || c.material !== w.currentMetalType
-      || (w.specificWeapon?.templateIndex ?? -1) !== w.currentTemplateIndex || enchanted !== w.lastEnchanted || w.s.doubleScale !== w.lastDoubleScale) {
+    if (
+      c.weaponType !== w.currentWeaponType ||
+      c.material !== w.currentMetalType ||
+      (w.specificWeapon?.templateIndex ?? -1) !== w.currentTemplateIndex ||
+      enchanted !== w.lastEnchanted ||
+      w.s.doubleScale !== w.lastDoubleScale
+    ) {
       loadWeaponAtlas();
-      w.lastEnchanted = enchanted; w.lastDoubleScale = w.s.doubleScale;
+      w.lastEnchanted = enchanted;
+      w.lastDoubleScale = w.s.doubleScale;
     }
     w.weaponOffsetHeight = weaponOffsetHeight();
     // the sheathe edge (OnGUI 0x12db-0x1416): the mod's own sheathe clip; the draw's clip is the rig's already
     // (the mod's field starts false, so DFU hears the clip once at every load - a boot artefact, not carried)
     if (w.lastSheathed === null) w.lastSheathed = c.sheathed;
-    if (c.sheathed !== w.lastSheathed) { if (c.sheathed) playSheatheSound(); w.lastSheathed = c.sheathed; }
+    if (c.sheathed !== w.lastSheathed) {
+      if (c.sheathed) playSheatheSound();
+      w.lastSheathed = c.sheathed;
+    }
     // TWO-HANDS (bible/05-Combat/Two-Hands.md): A HAND OF A PAIR is drawn as DFU draws any right hand - never flipped
     // here: the rig mirrors the one on the left of the screen whole (draw's `mirror`), every state, so a left hand is a
     // right hand in the mirror rather than DFU's three-state flip of one sprite. Ambidexterity's law is the one used hand's.
     if (c.pairHand) {
-      if (w.flipHorizontal) { w.flipHorizontal = false; changeWeaponState(S.Idle); }
+      if (w.flipHorizontal) {
+        w.flipHorizontal = false;
+        changeWeaponState(S.Idle);
+      }
     } else if (w.s.ambidexterity && !c.sheathed) {
-    // Ambidexterity (0x19c2-0x1b97): the sprite's hand
+      // Ambidexterity (0x19c2-0x1b97): the sprite's hand
       let want;
       if (c.weaponType === T.Bow) want = w.s.mirrorBows ? !w.leftHanded : w.leftHanded;
       else if (!usingRightHand()) want = !w.leftHanded;
       else want = mirrorOverride() ? !w.leftHanded : w.leftHanded;
-      if (w.flipHorizontal !== want) { w.flipHorizontal = want; changeWeaponState(S.Idle); }
+      if (w.flipHorizontal !== want) {
+        w.flipHorizontal = want;
+        changeWeaponState(S.Idle);
+      }
     } else if (!w.s.ambidexterity && w.flipHorizontal !== w.leftHanded) {
-      w.flipHorizontal = w.leftHanded;   // the module off: FPSWeapon's own Handedness flip
+      w.flipHorizontal = w.leftHanded; // the module off: FPSWeapon's own Handedness flip
       changeWeaponState(S.Idle);
     }
     // the attack (0x1b97-0x1c88): the original started a strike the clone is not playing
@@ -677,8 +935,11 @@ export function createWeaponWidget({
       const st = machineStateIndex();
       let play = st;
       if (w.s.swingNoDaggerRight && (w.currentWeaponType === T.Dagger || w.currentWeaponType === T.Dagger_Magic)) {
-        if (w.flipHorizontal) { if (st === S.StrikeLeft) play = S.StrikeRight; else if (st === S.StrikeDownLeft) play = S.StrikeDownRight; }
-        else if (st === S.StrikeRight) play = S.StrikeLeft; else if (st === S.StrikeDownRight) play = S.StrikeDownLeft;
+        if (w.flipHorizontal) {
+          if (st === S.StrikeLeft) play = S.StrikeRight;
+          else if (st === S.StrikeDownLeft) play = S.StrikeDownRight;
+        } else if (st === S.StrikeRight) play = S.StrikeLeft;
+        else if (st === S.StrikeDownRight) play = S.StrikeDownLeft;
       }
       // TWO-HANDS (AUDIT 2): a punch thrown off the running ARM winds up from below the view, where the arm went - its
       // Idle wind-up drew the fists' rest at its place in sight (where no fist stood) and sank it
@@ -691,16 +952,25 @@ export function createWeaponWidget({
     const flip = w.flipHorizontal;
     // Offset (0x1cd9-0x1dc5): off screen while hidden or equipping, back when shown, eased by the live speed
     if (w.s.offset) {
-      const o = offsetStep({
-        offsetCurrent: w.offsetCurrent, offsetTarget: w.offsetTarget,
-        animating, shown: c.shown, equipCountdown: c.equipCountdown ?? 0,
-      }, dt, offsetSpeedLive());
-      w.offsetCurrent = o.offsetCurrent; w.offsetTarget = o.offsetTarget;
+      const o = offsetStep(
+        {
+          offsetCurrent: w.offsetCurrent,
+          offsetTarget: w.offsetTarget,
+          animating,
+          shown: c.shown,
+          equipCountdown: c.equipCountdown ?? 0,
+        },
+        dt,
+        offsetSpeedLive(),
+      );
+      w.offsetCurrent = o.offsetCurrent;
+      w.offsetTarget = o.offsetTarget;
       w.offset = [w.offset[0] + o.delta[0], w.offset[1] + o.delta[1]];
     }
     // Bob (0x1dca-0x1fbb): while the original idles, or a bow draws or looses
     let bobbing = machineStateIndex() === S.Idle;
-    if (!bobbing && w.currentWeaponType === T.Bow && (w.weaponState === S.StrikeUp || w.weaponState === S.StrikeDown)) bobbing = true;
+    if (!bobbing && w.currentWeaponType === T.Bow && (w.weaponState === S.StrikeUp || w.weaponState === S.StrikeDown))
+      bobbing = true;
     if (w.s.bob && bobbing) {
       // DISC14-C (Mac: jitter on the Morrowind model): the doubled idle's bob (bobStep's xMin/yMax 0, centred on the rest)
       // belongs to the doubled BOX, as DW-CLIP made the half-size shift ride it: only a `w_` hit drawn doubled sits half
@@ -708,33 +978,65 @@ export function createWeaponWidget({
       // Morrowind arms' composite all rest on transformRect's floor, and a centred bob pinned them there for half of
       // every stride (63 of 120 frames on the sprite, 53 on the arms) - a hitch at each stop. So the sprite takes the
       // doubled bob only with the doubled hit, and the arms keep their own integrator on the plain bob, always.
-      const b = bobStep({
-        moveSmooth: w.moveSmooth, bobSmooth: w.bobSmooth, time: w.time, screenRect: w.screenRect,
-        doubleScaleIdle: w.weaponState === S.Idle && doubledIdleNow(),
-      }, w.s, { ...m, speedRatio }, dt);
-      w.moveSmooth = b.moveSmooth; w.bobSmooth = b.bobSmooth;
+      const b = bobStep(
+        {
+          moveSmooth: w.moveSmooth,
+          bobSmooth: w.bobSmooth,
+          time: w.time,
+          screenRect: w.screenRect,
+          doubleScaleIdle: w.weaponState === S.Idle && doubledIdleNow(),
+        },
+        w.s,
+        { ...m, speedRatio },
+        dt,
+      );
+      w.moveSmooth = b.moveSmooth;
+      w.bobSmooth = b.bobSmooth;
       w.position = [w.position[0] + b.delta[0], w.position[1] + b.delta[1]];
       w.swayDx.bob += b.delta[0];
-      const ba = bobStep({
-        moveSmooth: w.armsMoveSmooth, bobSmooth: w.armsBobSmooth, time: w.time, screenRect: w.screenRect, doubleScaleIdle: false,
-      }, w.s, { ...m, speedRatio }, dt);
-      w.armsMoveSmooth = ba.moveSmooth; w.armsBobSmooth = ba.bobSmooth;
+      const ba = bobStep(
+        {
+          moveSmooth: w.armsMoveSmooth,
+          bobSmooth: w.armsBobSmooth,
+          time: w.time,
+          screenRect: w.screenRect,
+          doubleScaleIdle: false,
+        },
+        w.s,
+        { ...m, speedRatio },
+        dt,
+      );
+      w.armsMoveSmooth = ba.moveSmooth;
+      w.armsBobSmooth = ba.bobSmooth;
       w.armsPosition = [w.armsPosition[0] + ba.delta[0], w.armsPosition[1] + ba.delta[1]];
     }
     // Inertia (0x1fc0-0x2243): the look and the body's motion lag the sprite, and forward motion scales it
     if (w.s.inertia && w.weaponState === S.Idle) {
-      const i = inertiaStep({
-        inertiaCurrent: w.inertiaCurrent, inertiaTarget: w.inertiaTarget,
-        inertiaForwardCurrent: w.inertiaForwardCurrent, inertiaForwardTarget: w.inertiaForwardTarget,
-        screenRect: w.screenRect, flip, look: c.look ?? [0, 0], cursorActive: c.cursorActive, swingHeld: c.swingHeld,
-      }, w.s, m, dt);
-      w.inertiaTarget = i.inertiaTarget; w.inertiaSpeedMod = i.inertiaSpeedMod;
+      const i = inertiaStep(
+        {
+          inertiaCurrent: w.inertiaCurrent,
+          inertiaTarget: w.inertiaTarget,
+          inertiaForwardCurrent: w.inertiaForwardCurrent,
+          inertiaForwardTarget: w.inertiaForwardTarget,
+          screenRect: w.screenRect,
+          flip,
+          look: c.look ?? [0, 0],
+          cursorActive: c.cursorActive,
+          swingHeld: c.swingHeld,
+        },
+        w.s,
+        m,
+        dt,
+      );
+      w.inertiaTarget = i.inertiaTarget;
+      w.inertiaSpeedMod = i.inertiaSpeedMod;
       w.inertiaCurrent = i.inertiaCurrent;
-      w.inertiaForwardTarget = i.inertiaForwardTarget; w.inertiaForwardCurrent = i.inertiaForwardCurrent;
+      w.inertiaForwardTarget = i.inertiaForwardTarget;
+      w.inertiaForwardCurrent = i.inertiaForwardCurrent;
       w.scale = [w.scale[0] + i.scale[0], w.scale[1] + i.scale[1]];
       w.position = [w.position[0] + i.delta[0], w.position[1] + i.delta[1]];
       w.swayDx.inertia += i.delta[0];
-      w.armsPosition = [w.armsPosition[0] + i.delta[0], w.armsPosition[1] + i.delta[1]];   // DISC14-C: the arms lag the look as the sprite does
+      w.armsPosition = [w.armsPosition[0] + i.delta[0], w.armsPosition[1] + i.delta[1]]; // DISC14-C: the arms lag the look as the sprite does
     }
     // DoubleScaleTextures (0x2248-0x22b1): the doubled idle sits half its size in, so its corner stays where the classic one was.
     // DW-CLIP (2026-09-23, a player on Discord: with the Diverse Weapons preset on "you dont see some weapons all the
@@ -744,7 +1046,10 @@ export function createWeaponWidget({
     // paintings, the war axe's 317x200 IS the screen), and with no `w_` hit at all it is the classic box; shifting
     // either half its size pushed the sprite half off the bottom-right - the snippet. The shift rides the doubling.
     if ((w.weaponState === S.Idle || (w.currentWeaponType === T.Bow && w.currentFrame === 0)) && doubledIdleNow()) {
-      w.offset = w.currentWeaponType === T.Werecreature ? [w.offset[0], w.offset[1] + 0.5] : [w.offset[0] + 0.5, w.offset[1] + 0.5];
+      w.offset =
+        w.currentWeaponType === T.Werecreature
+          ? [w.offset[0], w.offset[1] + 0.5]
+          : [w.offset[0] + 0.5, w.offset[1] + 0.5];
     }
     // the frame's placement (OnGUI's UpdateWeapon)
     updateWeapon();
@@ -753,7 +1058,8 @@ export function createWeaponWidget({
   /** OnGUI's repaint (IL 0x1424-0x1582): with the Offset module the
    *  sprite draws whatever the show clocks say (the slide takes it off
    *  screen); without it, only while the rig would show it. */
-  function draw(renderer, canvas, tint = null, { transform = null, mirror = false } = {}) {   // MAC-I: the room's light, as the sprite this clone stands in for takes it; TWO-HANDS: a pair's hand - its guard (`transform`, on the rect) and the mirror
+  function draw(renderer, canvas, tint = null, { transform = null, mirror = false } = {}) {
+    // MAC-I: the room's light, as the sprite this clone stands in for takes it; TWO-HANDS: a pair's hand - its guard (`transform`, on the rect) and the mirror
     if (!ctx || !w.art || !renderer || !canvas) return false;
     if (ctx.weaponType === T.None) return false;
     // WW4 (Mac's curated fix, 2026-09-16): an applicable clone that
@@ -780,7 +1086,11 @@ export function createWeaponWidget({
     if (!tex) return false;
     if (!transform && !mirror) {
       renderer.drawScreenQuad(tex, getWeaponRect(), w.curAnimRect, tint ?? undefined);
-      if (ctx.glow) renderer.drawScreenQuadGlow?.(tex, getWeaponRect(), w.curAnimRect, ctx.glow, { art: [rec.width, rec.height], view: [canvas.width, canvas.height] });   // WEAPON-GLOW1: the element's outline, as the sprite it stands in for draws it (the rig's ctx says it each frame), in the record's own pixels
+      if (ctx.glow)
+        renderer.drawScreenQuadGlow?.(tex, getWeaponRect(), w.curAnimRect, ctx.glow, {
+          art: [rec.width, rec.height],
+          view: [canvas.width, canvas.height],
+        }); // WEAPON-GLOW1: the element's outline, as the sprite it stands in for draws it (the rig's ctx says it each frame), in the record's own pixels
       return true;
     }
     // TWO-HANDS: a hand of a pair - its guard on the rect, then the mirror about the screen's middle, its source read
@@ -788,15 +1098,23 @@ export function createWeaponWidget({
     let rect = pairRect(mirror);
     if (transform) rect = transform(rect);
     if (mirror) rect = mirrorRect(rect, w.screenRect.width, w.screenRect.x);
-    const uv = mirror ? { u0: w.curAnimRect.u1, v0: w.curAnimRect.v0, u1: w.curAnimRect.u0, v1: w.curAnimRect.v1 } : w.curAnimRect;
+    const uv = mirror
+      ? { u0: w.curAnimRect.u1, v0: w.curAnimRect.v0, u1: w.curAnimRect.u0, v1: w.curAnimRect.v1 }
+      : w.curAnimRect;
     renderer.drawScreenQuad(tex, rect, uv, tint ?? undefined);
-    if (ctx.glow) renderer.drawScreenQuadGlow?.(tex, rect, uv, ctx.glow, { art: [rec.width, rec.height], view: [canvas.width, canvas.height] });   // WEAPON-GLOW1: this hand's own element, on its own rect and source
+    if (ctx.glow)
+      renderer.drawScreenQuadGlow?.(tex, rect, uv, ctx.glow, {
+        art: [rec.width, rec.height],
+        view: [canvas.width, canvas.height],
+      }); // WEAPON-GLOW1: this hand's own element, on its own rect and source
     return true;
   }
   /** AUDIT SPELL-HAND L2-1: the clone has the weapon this frame - a context, its art, a weapon type - whether or not it
    *  chooses silence: its flip (Ambidexterity's hand) stands through a Hide wind-up or recovery, and the spell hand's side
    *  is read off it then too (combat/weapon/weaponRig.js spellHandSide). */
-  function applies() { return !!ctx && !!w.art && ctx.weaponType !== T.None; }
+  function applies() {
+    return !!ctx && !!w.art && ctx.weaponType !== T.None;
+  }
   /** TWO-HANDS: would draw() put a picture on the screen this frame - the clone applicable and not choosing silence
    *  (frame -1, hidden, third person, not shown with no slide). The pair's running hands take over from a hand that is. */
   function drawing() {
@@ -810,32 +1128,70 @@ export function createWeaponWidget({
    *  Offset module's slide is the sprite's sheathe and is not applied,
    *  the arms sheathe with their own clips. */
   function armsTransform(base) {
-    return transformRect(base, { flip: false, scaleIt: true, withOffset: false, position: w.armsPosition });   // DISC14-C: on the plain bob
+    return transformRect(base, { flip: false, scaleIt: true, withOffset: false, position: w.armsPosition }); // DISC14-C: on the plain bob
   }
 
   return {
-    lateUpdate, draw, drawing, applies, endOfFrame, onAttackDamageCalculated, armsTransform, transformRect, pairRect,
+    lateUpdate,
+    draw,
+    drawing,
+    applies,
+    endOfFrame,
+    onAttackDamageCalculated,
+    armsTransform,
+    transformRect,
+    pairRect,
     /** The mod's `showWeapon` / `hideWeapon` messages. */
-    setShowWeapon(v) { w.showWeapon = !!v; },
-    setThirdPerson(v) { w.isInThirdPerson = !!v; },
+    setShowWeapon(v) {
+      w.showWeapon = !!v;
+    },
+    setThirdPerson(v) {
+      w.isInThirdPerson = !!v;
+    },
     /** The published channels and the clone's own state, read by the pins. */
-    get position() { return [w.position[0], w.position[1]]; },
-    get scale() { return [w.scale[0], w.scale[1]]; },
-    get offset() { return [w.offset[0], w.offset[1]]; },
+    get position() {
+      return [w.position[0], w.position[1]];
+    },
+    get scale() {
+      return [w.scale[0], w.scale[1]];
+    },
+    get offset() {
+      return [w.offset[0], w.offset[1]];
+    },
     /** TWO-HANDS (AUDIT): nothing left to step while hidden - no swing playing, and the Offset slide (when on) at its
      *  hidden place. A pair's left clone rests here between pairs: stepped again when a pair returns, it slides in. */
-    get settledHidden() { return lastSettledHidden(); },
+    get settledHidden() {
+      return lastSettledHidden();
+    },
     /** TWO-HANDS (AUDIT 2): the Bob's clock - the time and the smoothing a pair's other clone keeps (lateUpdate's
      *  `clockOf`). */
-    get clock() { return { time: w.time, moveSmooth: w.moveSmooth, bobSmooth: [w.bobSmooth[0], w.bobSmooth[1]] }; },
-    get state() { return w.weaponState; },
-    get frame() { return w.currentFrame; },
-    get flipHorizontal() { return w.flipHorizontal; },
-    get animating() { return !!w.animating; },
-    get hasCurrentAttackHit() { return w.hasCurrentAttackHit; },
-    get rect() { return getWeaponRect(); },
-    get weaponPosition() { return { ...w.weaponPosition }; },
-    get settings() { return w.s; },
+    get clock() {
+      return { time: w.time, moveSmooth: w.moveSmooth, bobSmooth: [w.bobSmooth[0], w.bobSmooth[1]] };
+    },
+    get state() {
+      return w.weaponState;
+    },
+    get frame() {
+      return w.currentFrame;
+    },
+    get flipHorizontal() {
+      return w.flipHorizontal;
+    },
+    get animating() {
+      return !!w.animating;
+    },
+    get hasCurrentAttackHit() {
+      return w.hasCurrentAttackHit;
+    },
+    get rect() {
+      return getWeaponRect();
+    },
+    get weaponPosition() {
+      return { ...w.weaponPosition };
+    },
+    get settings() {
+      return w.s;
+    },
     _w: w,
   };
 }

@@ -11,8 +11,8 @@
   {
     "name": "RENOWN-ACCOUNT-the-rate-rounded-not-floored",
     "file": "src/net/renown.js",
-    "old": "export const renownRate = (fullXp) => Math.floor((",
-    "new": "export const renownRate = (fullXp) => Math.round((",
+    "old": "  Math.floor((Math.max(0, Math.trunc(Number(fullXp) || 0)) * RENOWN_RATE_PCT) / 100);",
+    "new": "  Math.round((Math.max(0, Math.trunc(Number(fullXp) || 0)) * RENOWN_RATE_PCT) / 100);",
     "tests": [
       "test/server/renown_account.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "RENOWN-ACCOUNT-a-kill-at-the-full-rate",
     "file": "src/net/renown.js",
-    "old": "=> renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel",
-    "new": "=> (RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel",
+    "old": "  renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
+    "new": "  RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown));",
     "tests": [
       "test/server/renown_account.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "RENOWN-ACCOUNT-a-quest-at-the-full-rate",
     "file": "src/net/renown.js",
-    "old": "=> renownRate(RENOWN_QUEST_XP_BASE + ",
-    "new": "=> (RENOWN_QUEST_XP_BASE + ",
+    "old": "  renownRate(\n    RENOWN_QUEST_XP_BASE +\n      RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown)),\n  );",
+    "new": "  RENOWN_QUEST_XP_BASE +\n  RENOWN_QUEST_XP_PER_LEVEL * Math.min(clampInt(characterLevel, 1, RENOWN_QUEST_LEVEL_MAX), renownCeiling(renown));",
     "tests": [
       "test/server/renown_account.test.js"
     ]

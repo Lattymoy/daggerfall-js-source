@@ -40,8 +40,8 @@
   {
     "name": "MWSTEEL4-the-skirt-hangs-stiff",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "top: 84, bottom: 64.5, share: 0.7, centre: 4 }),",
-    "new": "top: 84, bottom: 64.5, share: 0, centre: 4 }),",
+    "old": "    share: 0.7,",
+    "new": "    share: 0,",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js",
       "test/tooling/mwsteel1.test.js"
@@ -51,8 +51,8 @@
   {
     "name": "MWSTEEL4-the-fingers-dropped",
     "file": "tools/bakeSteelPlate.mjs",
-    "old": "      bone(b('Finger1'), b('Finger11'), [b('Hand'), 1]), bone(b('Finger11'), { local: [2.5, 0, 0] }, [b('Finger1'), 0.75]),\n",
-    "new": "",
+    "old": "      bone(b('Finger1'), b('Finger11'), [b('Hand'), 1]),\n      bone(b('Finger11'), { local: [2.5, 0, 0] }, [b('Finger1'), 0.75]),\n      bone(b('Finger2'), b('Finger21'), [b('Hand'), 1]),",
+    "new": "      bone(b('Finger2'), b('Finger21'), [b('Hand'), 1]),",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ]
@@ -70,8 +70,8 @@
   {
     "name": "MWSTEEL4-no-joint-with-the-parent",
     "file": "tools/skinWeights.mjs",
-    "old": "      if (dot(sub(p, b.from), axis[k]) < L) { const w = across(p, k); return [[k, w], [index.get(b.parent), 1 - w]]; }",
-    "new": "      if (false) { const w = across(p, k); return [[k, w], [index.get(b.parent), 1 - w]]; }",
+    "old": "      if (dot(sub(p, b.from), axis[k]) < L) {",
+    "new": "      if (false) {",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ]
@@ -106,8 +106,8 @@
   {
     "name": "MWSTEEL4-no-weld",
     "file": "tools/skinWeights.mjs",
-    "old": "    if (g === undefined) { g = first.length; at.set(k, g); first.push(v); }",
-    "new": "    { g = first.length; at.set(k, g); first.push(v); }",
+    "old": "    if (g === undefined) {",
+    "new": "    {",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ],
@@ -125,8 +125,8 @@
   {
     "name": "MWSTEEL4-the-bind-written-for-its-inverse",
     "file": "tools/nifWrite.mjs",
-    "old": "      return { name: b.name, data: { transform: { rotation: inv.a, translation: inv.t, scale: 1 }, center: sphere.center, radius: sphere.radius, indices, weights: ws } };",
-    "new": "      return { name: b.name, data: { transform: { rotation: b.bind.a, translation: b.bind.t, scale: 1 }, center: sphere.center, radius: sphere.radius, indices, weights: ws } };",
+    "old": "            transform: { rotation: inv.a, translation: inv.t, scale: 1 },",
+    "new": "            transform: { rotation: b.bind.a, translation: b.bind.t, scale: 1 },",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ]
@@ -143,8 +143,8 @@
   {
     "name": "MWSTEEL4-the-plate-solved-at-runtime-again",
     "file": "src/formats/morrowind/mwItemMap.js",
-    "old": "          ...(own.skinFrom ? { skinFrom: own.skinFrom, fitTo: own.fitTo ?? null } : {}) };",
-    "new": "          skinFrom: own.skinFrom ?? ['chest'], fitTo: own.fitTo ?? null };",
+    "old": "          ...(own.skinFrom ? { skinFrom: own.skinFrom, fitTo: own.fitTo ?? null } : {}),",
+    "new": "          skinFrom: own.skinFrom ?? ['chest'],\n          fitTo: own.fitTo ?? null,",
     "tests": [
       "test/formats/morrowind/mwsteel4.test.js"
     ],

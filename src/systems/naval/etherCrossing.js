@@ -12,10 +12,20 @@
 // her crew and her hold: out to the open water off Veilhaven's quay, her bow on it; home to the Bay's waters the last
 // crossing out set sail from (the ledger's), or the open Abecean off the Bay's mouth.
 
-import { crossingWaters, inVeil, inEtherLaw, landfall, HOME_WATERS, ETHER_WORD, ETHER_SEA_NAME, CROSS_LAND_PX, CROSS_SEA_PX } from '../../world/ethericSea.js';
-import { NATIVE_PIXEL } from '../seaRaiders.js';   // SEA-ROWS: a lane's way is in native units
-import { t } from '../textManager.js';   // ETHER-WILD: the open sea's warning, in the player's language (L10N4)
-import { inBay } from '../../world/tamriel/tamrielFrame.js';   // AUDIT FB1029g SEA F9: the words name the Bay only in it
+import {
+  crossingWaters,
+  inVeil,
+  inEtherLaw,
+  landfall,
+  HOME_WATERS,
+  ETHER_WORD,
+  ETHER_SEA_NAME,
+  CROSS_LAND_PX,
+  CROSS_SEA_PX,
+} from '../../world/ethericSea.js';
+import { NATIVE_PIXEL } from '../seaRaiders.js'; // SEA-ROWS: a lane's way is in native units
+import { t } from '../textManager.js'; // ETHER-WILD: the open sea's warning, in the player's language (L10N4)
+import { inBay } from '../../world/tamriel/tamrielFrame.js'; // AUDIT FB1029g SEA F9: the words name the Bay only in it
 
 /** The voyage, either way (days). */
 export const CROSS_DAYS = 3;
@@ -35,9 +45,13 @@ export function createCrossLand(seaPixel, reach = CROSS_LAND_PX) {
     if (at?.key === key) return at.d;
     let d = Infinity;
     ring: for (let r = 0; r <= reach; r++) {
-      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-        if (Math.max(Math.abs(dx), Math.abs(dy)) === r && !seaPixel(px + dx, py + dy)) { d = r; break ring; }
-      }
+      for (let dy = -r; dy <= r; dy++)
+        for (let dx = -r; dx <= r; dx++) {
+          if (Math.max(Math.abs(dx), Math.abs(dy)) === r && !seaPixel(px + dx, py + dy)) {
+            d = r;
+            break ring;
+          }
+        }
     }
     at = { key, d };
     return d;
@@ -56,15 +70,27 @@ export function createCrossSea(lanes, site, reach = CROSS_SEA_PX, now = () => pe
   const walked = new WeakSet();
   let at = null;
   return (px, py) => {
-    const book = lanes(), s = site() ?? null;
+    const book = lanes(),
+      s = site() ?? null;
     if (!book?.settled()) return null;
     const list = book.all();
     if (at?.px === px && at.py === py && at.s === s && at.list === list) return at.d;
-    const x = px + 0.5, y = py + 0.5, here = { x: px, y: py }, t0 = now();
-    let d = s?.ring ? Math.max(0, Math.hypot(x - s.ring.cx, y - s.ring.cy) - s.ring.r) : Infinity, whole = true, fresh = 0;
+    const x = px + 0.5,
+      y = py + 0.5,
+      here = { x: px, y: py },
+      t0 = now();
+    let d = s?.ring ? Math.max(0, Math.hypot(x - s.ring.cx, y - s.ring.cy) - s.ring.r) : Infinity,
+      whole = true,
+      fresh = 0;
     for (const lane of list) {
       if (!book.near(lane, here, reach + 1)) continue;
-      if (!walked.has(lane)) { if (fresh++ && now() - t0 > CROSS_WALK_MS) { whole = false; continue; } walked.add(lane); }
+      if (!walked.has(lane)) {
+        if (fresh++ && now() - t0 > CROSS_WALK_MS) {
+          whole = false;
+          continue;
+        }
+        walked.add(lane);
+      }
       const pts = book.way(lane)?.pts ?? [];
       for (let i = 1; i < pts.length; i++) d = Math.min(d, segmentPx(x, y, pts[i - 1], pts[i]));
     }
@@ -75,7 +101,10 @@ export function createCrossSea(lanes, site, reach = CROSS_SEA_PX, now = () => pe
 }
 /** A point's distance (map pixels; y south, a pixel's middle at +0.5) to a way's leg between two native points. */
 function segmentPx(x, y, a, b) {
-  const ax = a.x / NATIVE_PIXEL, ay = 500 - a.z / NATIVE_PIXEL, dx = b.x / NATIVE_PIXEL - ax, dy = 500 - b.z / NATIVE_PIXEL - ay;
+  const ax = a.x / NATIVE_PIXEL,
+    ay = 500 - a.z / NATIVE_PIXEL,
+    dx = b.x / NATIVE_PIXEL - ax,
+    dy = 500 - b.z / NATIVE_PIXEL - ay;
   const t = dx || dy ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))) : 0;
   return Math.hypot(x - ax - t * dx, y - ay - t * dy);
 }
@@ -96,20 +125,39 @@ export function crossingWayAt(px, py, landPx, seaPx) {
  *  SEA-ROWS: told the waters at every check (undefined, unmeasured: nothing); `journey` is Travel Options, null when off.
  *  Waters she comes into under way are the journey's, marked asked; when its `arrived` count moves there, she is asked. */
 export function createCrossingGate() {
-  let asked = null, ours = false, said = null, arrivals = null;
+  let asked = null,
+    ours = false,
+    said = null,
+    arrivals = null;
   return {
     offer(way, journey = null) {
       if (way === undefined) return false;
-      const under = !!journey?.isTravelActive, n = journey?.arrived ?? 0;
+      const under = !!journey?.isTravelActive,
+        n = journey?.arrived ?? 0;
       if (way !== said) said = null;
-      if (way !== asked || (ours && n !== arrivals)) { asked = null; ours = false; }   // left them, or a journey arrived in them
+      if (way !== asked || (ours && n !== arrivals)) {
+        asked = null;
+        ours = false;
+      } // left them, or a journey arrived in them
       arrivals = n;
-      if (under && way && asked == null) { asked = way; ours = true; }
+      if (under && way && asked == null) {
+        asked = way;
+        ours = true;
+      }
       return !!way && asked == null;
     },
-    asked(way) { asked = way ?? null; ours = false; },
-    refused(way) { if (said === way) return false; said = way; return true; },
-    get pending() { return asked; },
+    asked(way) {
+      asked = way ?? null;
+      ours = false;
+    },
+    refused(way) {
+      if (said === way) return false;
+      said = way;
+      return true;
+    },
+    get pending() {
+      return asked;
+    },
   };
 }
 
@@ -117,7 +165,9 @@ export function createCrossingGate() {
  *  (AUDIT CAPTAIN'S SEA X2: never a way out that lies in the Eltheric Ocean's own law). */
 export function crossingTarget(way, from = null) {
   if (way === 'out') return landfall();
-  return from && Number.isFinite(from.px) && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py) ? { px: from.px, py: from.py } : { px: HOME_WATERS.px, py: HOME_WATERS.py };
+  return from && Number.isFinite(from.px) && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py)
+    ? { px: from.px, py: from.py }
+    : { px: HOME_WATERS.px, py: HOME_WATERS.py };
 }
 
 /** A sentence in the question's rows: broken at spaces into lines of at most `width` characters (the rows above are as
@@ -126,7 +176,10 @@ export function questionRows(text, width = ROW_CHARS) {
   const rows = [];
   let row = '';
   for (const word of String(text).split(/\s+/).filter(Boolean)) {
-    if (row && row.length + 1 + word.length > width) { rows.push(row); row = word; } else row = row ? `${row} ${word}` : word;
+    if (row && row.length + 1 + word.length > width) {
+      rows.push(row);
+      row = word;
+    } else row = row ? `${row} ${word}` : word;
   }
   if (row) rows.push(row);
   return rows;
@@ -141,21 +194,55 @@ const bayAt = (at) => !at || inBay(at.px ?? at.x, at.py ?? at.y);
 export function crossingRows(way, { days = CROSS_DAYS, pvp = false } = {}, at = null) {
   const time = `${days} ${days === 1 ? 'day' : 'days'}`;
   return way === 'out'
-    ? [`The ${bayAt(at) ? 'Abecean' : t('sea.cross.openSea', 'open sea')} runs empty to every horizon, and the stars`, 'hang strangely low over the water. Sailors say that past', `here the sea is no longer the sea, but the ${ETHER_WORD}.`, '', `Set a course into the open sea? (${time}. Your ship,`, 'its crew and hold go with you.)',
-      ...(pvp ? ['', ...questionRows(t('sea.wild.crossWarn', 'Past Veilhaven\'s peace the open sea is an open PvP zone. Other players may attack you there.'))] : [])]
-    : ['Ahead the Veil thins, and through it, faint as a memory,', bayAt(at) ? 'lie the gray waters of the Iliac Bay.' : t('sea.cross.homeRow', 'lie the gray waters you set out from.'), '', `Set a course for home? (${time})`];
+    ? [
+        `The ${bayAt(at) ? 'Abecean' : t('sea.cross.openSea', 'open sea')} runs empty to every horizon, and the stars`,
+        'hang strangely low over the water. Sailors say that past',
+        `here the sea is no longer the sea, but the ${ETHER_WORD}.`,
+        '',
+        `Set a course into the open sea? (${time}. Your ship,`,
+        'its crew and hold go with you.)',
+        ...(pvp
+          ? [
+              '',
+              ...questionRows(
+                t(
+                  'sea.wild.crossWarn',
+                  "Past Veilhaven's peace the open sea is an open PvP zone. Other players may attack you there.",
+                ),
+              ),
+            ]
+          : []),
+      ]
+    : [
+        'Ahead the Veil thins, and through it, faint as a memory,',
+        bayAt(at)
+          ? 'lie the gray waters of the Iliac Bay.'
+          : t('sea.cross.homeRow', 'lie the gray waters you set out from.'),
+        '',
+        `Set a course for home? (${time})`,
+      ];
 }
 /** What the screen says at the landfall (`at`, SEA F9's: where she comes out). */
-export const crossingWords = (way, at = null) => (way === 'out'
-  ? `Three days out of sight of land, and then the stars came down to meet the sea. You have crossed into ${ETHER_SEA_NAME}. Veilhaven lies ahead.`
-  : bayAt(at) ? 'The Veil closes astern, and the air smells of salt and tar again. The Iliac Bay, and home.'
-    : t('sea.cross.landfall', 'The Veil closes astern, and the air smells of salt and tar again. You are back in the waters you set out from.'));
+export const crossingWords = (way, at = null) =>
+  way === 'out'
+    ? `Three days out of sight of land, and then the stars came down to meet the sea. You have crossed into ${ETHER_SEA_NAME}. Veilhaven lies ahead.`
+    : bayAt(at)
+      ? 'The Veil closes astern, and the air smells of salt and tar again. The Iliac Bay, and home.'
+      : t(
+          'sea.cross.landfall',
+          'The Veil closes astern, and the air smells of salt and tar again. You are back in the waters you set out from.',
+        );
 /** Why a crossing is not asked (said once in those waters; AUDIT CAPTAIN'S SEA X1: asked as soon as the deck is clear,
  *  as the words promise - the refusal once marked the way asked, and the question never came back in those waters). */
 export const CROSS_REFUSED = Object.freeze({
   // VEIL-PARTY: her captain's party crosses with her (scenes/naval/veilParty.js); a stranger aboard holds her back - AUDIT
   // HORIZONTAL C7: and the words say so (it waited for "no one else", where her party may stay aboard)
-  get passengers() { return t('ether.cross.passengers', 'Only your party can cross the Veil with you. The crossing waits until only your party is aboard.'); },
+  get passengers() {
+    return t(
+      'ether.cross.passengers',
+      'Only your party can cross the Veil with you. The crossing waits until only your party is aboard.',
+    );
+  },
   hostile: 'Not with an enemy at your heels.',
 });
 /** AUDIT CAPTAIN'S SEA X2: a Yes to a question the waters no longer ask (a load, a new helm, waters left) - said, and no

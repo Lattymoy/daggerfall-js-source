@@ -44,10 +44,18 @@ export const TOWN_KEEP_MARGIN = 2 * BLOCK_M;
  * @param {{ west: number, east: number, north: number, south: number, thick: number }} W @param {number} tower a tower's
  *   half extent (m) @param {?'S'} open
  */
-const wallsOf = (W, tower, open) => Object.freeze({ x0: W.west, x1: W.east, z0: W.north, z1: W.south, band: Math.max(W.thick / 2, tower) + KEEP_SPARE, open });
+const wallsOf = (W, tower, open) =>
+  Object.freeze({
+    x0: W.west,
+    x1: W.east,
+    z0: W.north,
+    z1: W.south,
+    band: Math.max(W.thick / 2, tower) + KEEP_SPARE,
+    open,
+  });
 export const CAPITAL_WALLS = Object.freeze({
-  solitude: wallsOf(SOLITUDE.wall, SOLITUDE.wall.tower / 2, null),   // square towers, its side the half
-  alinor: wallsOf(ALINOR.wall, ALINOR.wall.tower + 0.6, 'S'),   // round towers, its radius and its ledge (capitalShapes.js roundTower)
+  solitude: wallsOf(SOLITUDE.wall, SOLITUDE.wall.tower / 2, null), // square towers, its side the half
+  alinor: wallsOf(ALINOR.wall, ALINOR.wall.tower + 0.6, 'S'), // round towers, its radius and its ledge (capitalShapes.js roundTower)
   torval: wallsOf(TORVAL.wall, TORVAL.wall.tower / 2, 'S'),
 });
 /** Inside a capital's walls, or on them (CAPITAL_WALLS'). @param {any} K @param {number} dx @param {number} dz */
@@ -58,17 +66,31 @@ export function inCapitalWalls(K, dx, dz) {
   return K.open === 'S' && (Math.hypot(dx - K.x0, dz - K.z1) <= b || Math.hypot(dx - K.x1, dz - K.z1) <= b);
 }
 /** A capital's straight piers on its quay's edge (`edge`, out to `pierTo` either way), each `pierW` wide at its `piers`. */
-const onPier = (Q, dx, dz) => dz >= Math.min(Q.edge, Q.pierTo) - KEEP_SPARE && dz <= Math.max(Q.edge, Q.pierTo) + KEEP_SPARE && Q.piers.some((p) => Math.abs(dx - p) <= Q.pierW / 2 + KEEP_SPARE);
+const onPier = (Q, dx, dz) =>
+  dz >= Math.min(Q.edge, Q.pierTo) - KEEP_SPARE &&
+  dz <= Math.max(Q.edge, Q.pierTo) + KEEP_SPARE &&
+  Q.piers.some((p) => Math.abs(dx - p) <= Q.pierW / 2 + KEEP_SPARE);
 /** A point's distance from a segment. */
 /** @param {number} x @param {number} z @param {number[]} a @param {number[]} b */
 const segDistance = (x, z, a, b) => {
-  const ax = a[0], az = a[1], ux = b[0] - ax, uz = b[1] - az, l = ux * ux + uz * uz, t = l > 0 ? Math.max(0, Math.min(1, ((x - ax) * ux + (z - az) * uz) / l)) : 0;
+  const ax = a[0],
+    az = a[1],
+    ux = b[0] - ax,
+    uz = b[1] - az,
+    l = ux * ux + uz * uz,
+    t = l > 0 ? Math.max(0, Math.min(1, ((x - ax) * ux + (z - az) * uz) / l)) : 0;
   return Math.hypot(x - ax - ux * t, z - az - uz * t);
 };
-const SOLITUDE_DOCKS = Object.freeze({ edge: SOLITUDE.docks.edge, pierTo: SOLITUDE.docks.pierTo, pierW: SOLITUDE.docks.pierW, piers: SOLITUDE.docks.piers });
+const SOLITUDE_DOCKS = Object.freeze({
+  edge: SOLITUDE.docks.edge,
+  pierTo: SOLITUDE.docks.pierTo,
+  pierW: SOLITUDE.docks.pierW,
+  piers: SOLITUDE.docks.piers,
+});
 /** The arch's foot each side of its middle and the stack's at the water (capitalSolitude.js buildSolitudeArch: the body's
  *  widest section at the water, its jitter and its feet's flare; the column's rings there and the boulders round it). */
-export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 16, STACK_FOOT = SOLITUDE.stack.foot + 19;
+export const ARCH_FOOT = SOLITUDE.arch.w / 2 + 16,
+  STACK_FOOT = SOLITUDE.stack.foot + 19;
 /** The Imperial City's ways over the lake: Talos Bridge and the causeways, their half width. */
 const IC_WAYS = Object.freeze([...causewayLines(), bridgeLine()]);
 const IC_WAY_HALF = Math.max(IMPERIAL.bridge.w, IMPERIAL.causeway) / 2 + KEEP_SPARE;
@@ -76,20 +98,30 @@ const IC_WAY_HALF = Math.max(IMPERIAL.bridge.w, IMPERIAL.causeway) / 2 + KEEP_SP
 /** Each harbour capital's keep, the anchor's metres (x east, z south). */
 export const CAPITAL_KEEPS = Object.freeze({
   solitude: (dx, dz) => {
-    const A = SOLITUDE.arch, st = SOLITUDE.stack;
-    if (onSolitudeRock(dx, dz)) return true;   // SOLITUDE-RELIEF: its rock - its cliffs' feet no quay
-    return inCapitalWalls(CAPITAL_WALLS.solitude, dx, dz) || onPier(SOLITUDE_DOCKS, dx, dz)
-      || Math.hypot(dx - st.x, dz - st.z) <= STACK_FOOT + KEEP_SPARE
-      || (dx >= st.x && dx <= A.to + KEEP_SPARE && Math.abs(dz) <= ARCH_FOOT + KEEP_SPARE);
+    const A = SOLITUDE.arch,
+      st = SOLITUDE.stack;
+    if (onSolitudeRock(dx, dz)) return true; // SOLITUDE-RELIEF: its rock - its cliffs' feet no quay
+    return (
+      inCapitalWalls(CAPITAL_WALLS.solitude, dx, dz) ||
+      onPier(SOLITUDE_DOCKS, dx, dz) ||
+      Math.hypot(dx - st.x, dz - st.z) <= STACK_FOOT + KEEP_SPARE ||
+      (dx >= st.x && dx <= A.to + KEEP_SPARE && Math.abs(dz) <= ARCH_FOOT + KEEP_SPARE)
+    );
   },
   alinor: (dx, dz) => inCapitalWalls(CAPITAL_WALLS.alinor, dx, dz) || onPier(ALINOR.quay, dx, dz),
   torval: (dx, dz) => inCapitalWalls(CAPITAL_WALLS.torval, dx, dz) || onPier(TORVAL.quay, dx, dz),
   'imperial-city': (dx, dz) => {
-    const C = IMPERIAL.cityWall, Wf = IMPERIAL.waterfront, r = Math.hypot(dx, dz);
-    if (r <= C.r + C.towerR + KEEP_SPARE) return true;   // the walled city
-    if (r >= Wf.r1 - KEEP_SPARE && r <= Wf.pierTo + KEEP_SPARE) {   // the Waterfront's piers, each on its bearing
+    const C = IMPERIAL.cityWall,
+      Wf = IMPERIAL.waterfront,
+      r = Math.hypot(dx, dz);
+    if (r <= C.r + C.towerR + KEEP_SPARE) return true; // the walled city
+    if (r >= Wf.r1 - KEEP_SPARE && r <= Wf.pierTo + KEEP_SPARE) {
+      // the Waterfront's piers, each on its bearing
       const b = imperialBearing(dx, dz);
-      if (Wf.piers.some((p) => Math.abs(((b - p + 540) % 360) - 180) * (Math.PI / 180) * r <= Wf.pierW / 2 + KEEP_SPARE)) return true;
+      if (
+        Wf.piers.some((p) => Math.abs(((b - p + 540) % 360) - 180) * (Math.PI / 180) * r <= Wf.pierW / 2 + KEEP_SPARE)
+      )
+        return true;
     }
     return IC_WAYS.some(([a, c]) => segDistance(dx, dz, a, c) <= IC_WAY_HALF);
   },
@@ -100,8 +132,12 @@ function capitalKeep(loc, rect) {
   const law = CAPITAL_KEEPS[loc.capital.key];
   const cap = CAPITALS[loc.capital.k];
   if (!law || !cap) return null;
-  const D = capitalDims(cap), s = loc.capital.s ?? capitalCentre(cap), sx = s % D.w, sy = Math.floor(s / D.w);
-  const ax = rect.minX + (cap.anchor[0] - sx * 8) * BLOCK_M, az = rect.maxZ - (cap.anchor[1] - sy * 8) * BLOCK_M;
+  const D = capitalDims(cap),
+    s = loc.capital.s ?? capitalCentre(cap),
+    sx = s % D.w,
+    sy = Math.floor(s / D.w);
+  const ax = rect.minX + (cap.anchor[0] - sx * 8) * BLOCK_M,
+    az = rect.maxZ - (cap.anchor[1] - sy * 8) * BLOCK_M;
   return (x, z) => law(x - ax, az - z);
 }
 
@@ -111,28 +147,42 @@ const _townFields = new WeakMap();
 export function townKeepField(wall, w, h) {
   const kept = _townFields.get(wall);
   if (kept) return kept;
-  const C = TOWN_KEEP_CELL, M = TOWN_KEEP_MARGIN, W = Math.ceil((w * BLOCK_M + 2 * M) / C), H = Math.ceil((h * BLOCK_M + 2 * M) / C);
-  const cells = new Uint8Array(W * H), line = wall.line;
-  for (let j = 0; j < H; j++) {   // inside: each row's crossings of the line, filled between pairs
-    const z = -M + (j + 0.5) * C, xs = [];
+  const C = TOWN_KEEP_CELL,
+    M = TOWN_KEEP_MARGIN,
+    W = Math.ceil((w * BLOCK_M + 2 * M) / C),
+    H = Math.ceil((h * BLOCK_M + 2 * M) / C);
+  const cells = new Uint8Array(W * H),
+    line = wall.line;
+  for (let j = 0; j < H; j++) {
+    // inside: each row's crossings of the line, filled between pairs
+    const z = -M + (j + 0.5) * C,
+      xs = [];
     for (let i = 0, k = line.length - 1; i < line.length; k = i++) {
-      const [x1, z1] = line[k], [x2, z2] = line[i];
-      if ((z1 > z) !== (z2 > z)) xs.push(x1 + ((z - z1) * (x2 - x1)) / (z2 - z1));
+      const [x1, z1] = line[k],
+        [x2, z2] = line[i];
+      if (z1 > z !== z2 > z) xs.push(x1 + ((z - z1) * (x2 - x1)) / (z2 - z1));
     }
     xs.sort((a, b) => a - b);
     for (let q = 0; q + 1 < xs.length; q += 2) {
-      const i0 = Math.max(0, Math.ceil((xs[q] + M) / C - 0.5)), i1 = Math.min(W - 1, Math.floor((xs[q + 1] + M) / C - 0.5));
+      const i0 = Math.max(0, Math.ceil((xs[q] + M) / C - 0.5)),
+        i1 = Math.min(W - 1, Math.floor((xs[q + 1] + M) / C - 0.5));
       for (let i = i0; i <= i1; i++) cells[j * W + i] = 1;
     }
   }
   const r = Math.ceil(TOWN_WALL_KEEP / C) + 1;
-  for (let i = 0, k = line.length - 1; i < line.length; k = i++) {   // the wall: its band either side of the line
-    const a = line[k], b = line[i];
-    const gx0 = Math.max(0, Math.floor((Math.min(a[0], b[0]) + M) / C) - r), gx1 = Math.min(W - 1, Math.floor((Math.max(a[0], b[0]) + M) / C) + r);
-    const gz0 = Math.max(0, Math.floor((Math.min(a[1], b[1]) + M) / C) - r), gz1 = Math.min(H - 1, Math.floor((Math.max(a[1], b[1]) + M) / C) + r);
-    for (let gz = gz0; gz <= gz1; gz++) for (let gx = gx0; gx <= gx1; gx++) {
-      if (!cells[gz * W + gx] && segDistance(-M + (gx + 0.5) * C, -M + (gz + 0.5) * C, a, b) <= TOWN_WALL_KEEP) cells[gz * W + gx] = 1;
-    }
+  for (let i = 0, k = line.length - 1; i < line.length; k = i++) {
+    // the wall: its band either side of the line
+    const a = line[k],
+      b = line[i];
+    const gx0 = Math.max(0, Math.floor((Math.min(a[0], b[0]) + M) / C) - r),
+      gx1 = Math.min(W - 1, Math.floor((Math.max(a[0], b[0]) + M) / C) + r);
+    const gz0 = Math.max(0, Math.floor((Math.min(a[1], b[1]) + M) / C) - r),
+      gz1 = Math.min(H - 1, Math.floor((Math.max(a[1], b[1]) + M) / C) + r);
+    for (let gz = gz0; gz <= gz1; gz++)
+      for (let gx = gx0; gx <= gx1; gx++) {
+        if (!cells[gz * W + gx] && segDistance(-M + (gx + 0.5) * C, -M + (gz + 0.5) * C, a, b) <= TOWN_WALL_KEEP)
+          cells[gz * W + gx] = 1;
+      }
   }
   const field = Object.freeze({ cells, W, H });
   _townFields.set(wall, field);
@@ -140,11 +190,14 @@ export function townKeepField(wall, w, h) {
 }
 /** A walled town's keep in the scene: its raster off its footprint's south-west corner. */
 function townKeep(wall, loc, rect) {
-  const ed = loc.exterior.exteriorData, C = TOWN_KEEP_CELL, M = TOWN_KEEP_MARGIN;
-  let f = null;   // made when first asked - the host hands a keep every frame, the book asks one at a sounding
+  const ed = loc.exterior.exteriorData,
+    C = TOWN_KEEP_CELL,
+    M = TOWN_KEEP_MARGIN;
+  let f = null; // made when first asked - the host hands a keep every frame, the book asks one at a sounding
   return (x, z) => {
     f ??= townKeepField(wall, ed.width, ed.height);
-    const i = Math.floor((x - rect.minX + M) / C), j = Math.floor((z - rect.minZ + M) / C);
+    const i = Math.floor((x - rect.minX + M) / C),
+      j = Math.floor((z - rect.minZ + M) / C);
     return i >= 0 && j >= 0 && i < f.W && j < f.H && f.cells[j * f.W + i] === 1;
   };
 }

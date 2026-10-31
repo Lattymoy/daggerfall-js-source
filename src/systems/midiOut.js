@@ -29,9 +29,7 @@
 // releases every note it struck and sends the pedal up and all-notes-off on every channel, and the next song starts
 // after the last message the stopped one queued.
 
-import {
-  SongPlayer, eventsInWindow, noteSeconds, songLevel, trackGain,
-} from './song/songPlayer.js';
+import { SongPlayer, eventsInWindow, noteSeconds, songLevel, trackGain } from './song/songPlayer.js';
 import { getPref, setPref } from './uiPrefs.js';
 
 /** The shelf's key: the output's name, '' for none (systems/uiPrefs.js). */
@@ -52,17 +50,24 @@ export function midiMessage(e) {
   const ch = e?.channel;
   if (!Number.isInteger(ch) || ch < 0 || ch > 15) return null;
   switch (e.type) {
-    case 'noteOn': return [0x90 | ch, clamp7(e.note), clamp7(e.velocity)];
-    case 'noteOff': return [0x80 | ch, clamp7(e.note), clamp7(e.velocity)];
-    case 'polyPressure': return [0xa0 | ch, clamp7(e.note), clamp7(e.pressure)];
-    case 'controller': return [0xb0 | ch, clamp7(e.controller), clamp7(e.value)];
-    case 'programChange': return [0xc0 | ch, clamp7(e.program)];
-    case 'channelPressure': return [0xd0 | ch, clamp7(e.pressure)];
+    case 'noteOn':
+      return [0x90 | ch, clamp7(e.note), clamp7(e.velocity)];
+    case 'noteOff':
+      return [0x80 | ch, clamp7(e.note), clamp7(e.velocity)];
+    case 'polyPressure':
+      return [0xa0 | ch, clamp7(e.note), clamp7(e.pressure)];
+    case 'controller':
+      return [0xb0 | ch, clamp7(e.controller), clamp7(e.value)];
+    case 'programChange':
+      return [0xc0 | ch, clamp7(e.program)];
+    case 'channelPressure':
+      return [0xd0 | ch, clamp7(e.pressure)];
     case 'pitchBend': {
       const v = Math.max(0, Math.min(16383, Math.trunc(Number(e.value) || 0)));
       return [0xe0 | ch, v & 0x7f, v >> 7];
     }
-    default: return null;
+    default:
+      return null;
   }
 }
 
@@ -79,12 +84,20 @@ export function scaledVolume(raw, scale) {
 /** What a channel is told as a song begins - freshChannelState's own (program 0, pan centre, bend centre), after
  *  CC121 resets the controllers the song may not set. The volume follows, scaled (MidiOutSongPlayer._volume). */
 export function channelResetMessages(ch) {
-  return [[0xb0 | ch, 121, 0], [0xc0 | ch, 0], [0xb0 | ch, 10, 64], [0xe0 | ch, 0, 64]];
+  return [
+    [0xb0 | ch, 121, 0],
+    [0xc0 | ch, 0],
+    [0xb0 | ch, 10, 64],
+    [0xe0 | ch, 0, 64],
+  ];
 }
 
 /** What a channel is told when a song stops: the pedal up, then all notes off. */
 export function channelQuietMessages(ch) {
-  return [[0xb0 | ch, 64, 0], [0xb0 | ch, 123, 0]];
+  return [
+    [0xb0 | ch, 64, 0],
+    [0xb0 | ch, 123, 0],
+  ];
 }
 
 /** The key a control event's LAST value is kept under, for the stall skip; null for an event that is not state
@@ -92,12 +105,17 @@ export function channelQuietMessages(ch) {
 export function stateKey(e) {
   if (!Number.isInteger(e?.channel)) return null;
   if (e.type === 'controller') return e.controller >= 120 ? null : `c${e.channel}:${e.controller}`;
-  if (e.type === 'programChange' || e.type === 'pitchBend' || e.type === 'channelPressure') return `${e.type}${e.channel}`;
+  if (e.type === 'programChange' || e.type === 'pitchBend' || e.type === 'channelPressure')
+    return `${e.type}${e.channel}`;
   return null;
 }
 
 /** Web MIDI's clock: a timestamp is performance.now()'s milliseconds, so the player keeps its time in those seconds. */
-export const PERFORMANCE_CLOCK = Object.freeze({ get currentTime() { return globalThis.performance.now() / 1000; } });
+export const PERFORMANCE_CLOCK = Object.freeze({
+  get currentTime() {
+    return globalThis.performance.now() / 1000;
+  },
+});
 
 /** The song player whose voice is a MIDI device (see the header). `output` is a MIDIOutput - anything with
  *  `send(bytes, timestampMs)`. */
@@ -105,22 +123,27 @@ export class MidiOutSongPlayer extends SongPlayer {
   constructor(output, clock = PERFORMANCE_CLOCK) {
     super(clock, null, null);
     this.output = output;
-    this._notes = [];                          // { channel, note, on, off } - struck, not yet released
-    this._raw7 = new Array(16).fill(127);      // the song's own CC7, per channel, before the scale
-    this._sent7 = new Array(16).fill(-1);      // the CC7 the device ends up at, per channel
+    this._notes = []; // { channel, note, on, off } - struck, not yet released
+    this._raw7 = new Array(16).fill(127); // the song's own CC7, per channel, before the scale
+    this._sent7 = new Array(16).fill(-1); // the CC7 the device ends up at, per channel
     this._at7 = new Array(16).fill(-Infinity); // when that CC7 is due - a re-level never lands under it
     this._fade = { from: 1, to: 1, t0: 0, t1: 0 };
-    this._sentUntil = -Infinity;               // the latest timestamp handed the device
-    this._quietAt = -Infinity;                 // a stopped song's last message: the next begins after it
+    this._sentUntil = -Infinity; // the latest timestamp handed the device
+    this._quietAt = -Infinity; // a stopped song's last message: the next begins after it
     this._refused = false;
   }
 
   _send(bytes, when) {
     if (!bytes) return;
     if (when > this._sentUntil) this._sentUntil = when;
-    try { this.output.send(bytes, when * 1000); } catch (e) {
+    try {
+      this.output.send(bytes, when * 1000);
+    } catch (e) {
       // A pulled cable throws on every send; say so once, not at every note
-      if (!this._refused) { this._refused = true; console.warn('[midi-out] the device refused a message:', e?.message ?? e); }
+      if (!this._refused) {
+        this._refused = true;
+        console.warn('[midi-out] the device refused a message:', e?.message ?? e);
+      }
     }
   }
 
@@ -132,7 +155,9 @@ export class MidiOutSongPlayer extends SongPlayer {
     return from + (to - from) * ((t - t0) / (t1 - t0));
   }
 
-  _scale(t) { return trackGain() * songLevel(this.song) * this._fadeAt(t); }
+  _scale(t) {
+    return trackGain() * songLevel(this.song) * this._fadeAt(t);
+  }
 
   /** A channel's CC7, scaled, at `when` - or after the last one queued for it, never under it. */
   _volume(ch, when) {
@@ -188,7 +213,10 @@ export class MidiOutSongPlayer extends SongPlayer {
     const last = new Map();
     for (const e of eventsInWindow(this.song.events, 0, toTick)) {
       const k = stateKey(e);
-      if (k) { last.delete(k); last.set(k, e); }   // AUDIT: in the order of each LAST value - a bank select before its program
+      if (k) {
+        last.delete(k);
+        last.set(k, e);
+      } // AUDIT: in the order of each LAST value - a bank select before its program
     }
     const now = this.ctx.currentTime;
     for (const e of last.values()) this._control(e, now);
@@ -211,7 +239,7 @@ export class MidiOutSongPlayer extends SongPlayer {
   }
 
   _control(e, when) {
-    if (e.type === 'noteOff') return;   // the player's own (_voice, _release)
+    if (e.type === 'noteOff') return; // the player's own (_voice, _release)
     if (e.type === 'controller' && e.controller === 7 && Number.isInteger(e.channel)) {
       this._raw7[e.channel] = clamp7(e.value);
       this._volume(e.channel, when);
@@ -223,7 +251,7 @@ export class MidiOutSongPlayer extends SongPlayer {
   _pump() {
     super._pump();
     if (!this.playing || !this.song) return;
-    this._release(this._originTime + this._cursorTick * this.song.secondsPerTick);   // the releases inside the window
+    this._release(this._originTime + this._cursorTick * this.song.secondsPerTick); // the releases inside the window
     this._relevel(this.ctx.currentTime);
   }
 
@@ -234,7 +262,9 @@ export class MidiOutSongPlayer extends SongPlayer {
     this._relevel(now);
   }
 
-  resyncGain() { this._relevel(this.ctx.currentTime); }
+  resyncGain() {
+    this._relevel(this.ctx.currentTime);
+  }
 
   stop() {
     // AUDIT: a player already quiet - never played, or stopped and not played since - has nothing to silence
@@ -243,14 +273,18 @@ export class MidiOutSongPlayer extends SongPlayer {
     if (quietAlready) return;
     const now = this.ctx.currentTime;
     const quiet = Math.max(now, this._sentUntil) + MIDI_GAP_S;
-    try { this.output.clear?.(); } catch { /* not every engine has it */ }
+    try {
+      this.output.clear?.();
+    } catch {
+      /* not every engine has it */
+    }
     // every note struck and not released - a note-on still queued is answered just after it
     for (const n of this._notes) this._send([0x80 | n.channel, n.note, 0], Math.max(now, n.on + MIDI_GAP_S));
     this._notes = [];
     for (let ch = 0; ch < 16; ch++) {
       for (const m of channelQuietMessages(ch)) {
         this._send(m, now);
-        if (quiet > now + MIDI_GAP_S) this._send(m, quiet);   // and again after anything the window had queued
+        if (quiet > now + MIDI_GAP_S) this._send(m, quiet); // and again after anything the window had queued
       }
     }
     this._quietAt = quiet;
@@ -259,8 +293,8 @@ export class MidiOutSongPlayer extends SongPlayer {
 
 // ── the device ──
 
-let _access = null;     // the promise of the MIDIAccess, once asked
-let _denied = null;     // why it was refused, when it was
+let _access = null; // the promise of the MIDIAccess, once asked
+let _denied = null; // why it was refused, when it was
 const _listeners = new Set();
 
 /** Can this browser reach a MIDI device at all? (Safari cannot.) */
@@ -280,7 +314,11 @@ export function onMidiOutChange(fn) {
 
 function publish() {
   for (const fn of [..._listeners]) {
-    try { fn(midiOutName()); } catch (e) { console.warn('[midi-out] a listener threw:', e?.message ?? e); }
+    try {
+      fn(midiOutName());
+    } catch (e) {
+      console.warn('[midi-out] a listener threw:', e?.message ?? e);
+    }
   }
 }
 
@@ -304,15 +342,20 @@ export function setMidiOut(name) {
 /** The MIDIAccess, asked once (the browser may ask the player). A refusal answers null and may be asked again. */
 export function midiAccess(nav = globalThis.navigator) {
   if (!midiOutSupported(nav)) return Promise.resolve(null);
-  _access ??= nav.requestMIDIAccess({ sysex: false }).then((a) => {
-    _denied = null;
-    a.onstatechange = (ev) => { if (!ev?.port || ev.port.type === 'output') publish(); };
-    return a;
-  }, (e) => {
-    _denied = e?.message ?? String(e);
-    _access = null;
-    return null;
-  });
+  _access ??= nav.requestMIDIAccess({ sysex: false }).then(
+    (a) => {
+      _denied = null;
+      a.onstatechange = (ev) => {
+        if (!ev?.port || ev.port.type === 'output') publish();
+      };
+      return a;
+    },
+    (e) => {
+      _denied = e?.message ?? String(e);
+      _access = null;
+      return null;
+    },
+  );
   return _access;
 }
 
@@ -333,4 +376,7 @@ export async function findMidiOutput(name, nav) {
 }
 
 /** Tests only: forget the access, so the next ask is a fresh one. */
-export function _resetMidiOutForTests() { _access = null; _denied = null; }
+export function _resetMidiOutForTests() {
+  _access = null;
+  _denied = null;
+}

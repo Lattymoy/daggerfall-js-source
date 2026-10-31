@@ -2,8 +2,8 @@
   {
     "name": "SEA-SET-stormwrack-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "tier(2, 'stormwrack', 'Stormwrack', { shock: [10, 30], speed: [2, 6] },",
-    "new": "tier(2, 'stormwrack', 'Stormwrack', { shock: [10, 31], speed: [2, 6] },",
+    "old": "        { shock: [10, 30], speed: [2, 6] },",
+    "new": "        { shock: [10, 31], speed: [2, 6] },",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SEA-SET-undertow-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "tier(4, 'undertow', 'Undertow', { more: [15, 40] },",
-    "new": "tier(4, 'undertow', 'Undertow', { more: [16, 40] },",
+    "old": "        'Undertow',\n        { more: [15, 40] },",
+    "new": "        'Undertow',\n        { more: [16, 40] },",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SEA-SET-due-number",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "{ guns: [10, 30], hull: [10, 25] },",
-    "new": "{ guns: [10, 30], hull: [10, 26] },",
+    "old": "        { guns: [10, 30], hull: [10, 25] },",
+    "new": "        { guns: [10, 30], hull: [10, 26] },",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "SEA-SET-a-world-set",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "id: 'eltheric', name: `The ${ETHER_WORD} Tidemail`, prince: 'The Drowned Queen', colour: '#6fcfe6', aetheric: true,",
-    "new": "id: 'eltheric', name: `The ${ETHER_WORD} Tidemail`, prince: 'The Drowned Queen', colour: '#6fcfe6', aetheric: false,",
+    "old": "    colour: '#6fcfe6',\n    aetheric: true,",
+    "new": "    colour: '#6fcfe6',\n    aetheric: false,",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SEA-SET-fold-element",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "if (wrack) { add(m().resist, 'shock', wrack.shock);",
-    "new": "if (wrack) { add(m().resist, 'frost', wrack.shock);",
+    "old": "    add(m().resist, 'shock', wrack.shock);",
+    "new": "    add(m().resist, 'frost', wrack.shock);",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "SEA-SET-fold-stat",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "add(m().stats, 'speed', wrack.speed); }",
-    "new": "add(m().stats, 'agility', wrack.speed); }",
+    "old": "    add(m().stats, 'speed', wrack.speed);",
+    "new": "    add(m().stats, 'agility', wrack.speed);",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SEA-SET-undertow-whole-ashore",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "pct += atSea() ? tow.more : tow.more / 2;",
-    "new": "pct += tow.more;",
+    "old": "  if (tow && weapon) pct += atSea() ? tow.more : tow.more / 2; // SEA-SET: Undertow - whole in the open sea, half ashore",
+    "new": "  if (tow && weapon) pct += tow.more; // SEA-SET: Undertow - whole in the open sea, half ashore",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SEA-SET-undertow-bare-hand",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  if (tow && weapon) pct +=",
-    "new": "  if (tow) pct +=",
+    "old": "  if (tow && weapon) pct += atSea() ? tow.more : tow.more / 2; // SEA-SET: Undertow - whole in the open sea, half ashore",
+    "new": "  if (tow) pct += atSea() ? tow.more : tow.more / 2; // SEA-SET: Undertow - whole in the open sea, half ashore",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SEA-SET-due-guns",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "{ guns: 1 + v.guns / 100,",
-    "new": "{ guns: 1 + v.guns / 99,",
+    "old": "  return v ? { guns: 1 + v.guns / 100, hull: Math.max(0, 1 - v.hull / 100) } : NO_DUE;",
+    "new": "  return v ? { guns: 1 + v.guns / 99, hull: Math.max(0, 1 - v.hull / 100) } : NO_DUE;",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SEA-SET-due-hull",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "hull: Math.max(0, 1 - v.hull / 100) }",
-    "new": "hull: Math.max(0, 1 + v.hull / 100) }",
+    "old": "  return v ? { guns: 1 + v.guns / 100, hull: Math.max(0, 1 - v.hull / 100) } : NO_DUE;",
+    "new": "  return v ? { guns: 1 + v.guns / 100, hull: Math.max(0, 1 + v.hull / 100) } : NO_DUE;",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SEA-SET-due-tier",
     "file": "src/systems/sigil/sigilSetPowers.js",
-    "old": "  const v = tierOf(entity, 'eltheric', 2);\n  return v ? { guns:",
-    "new": "  const v = tierOf(entity, 'eltheric', 1);\n  return v ? { guns:",
+    "old": "  const v = tierOf(entity, 'eltheric', 2);",
+    "new": "  const v = tierOf(entity, 'eltheric', 1);",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SEA-SET-pile-bay-latitude",
     "file": "src/systems/sea/seaSpoils.js",
-    "old": "py = 499 - Math.trunc(at.latitude / 128);",
-    "new": "py = Math.trunc(at.latitude / 128);",
+    "old": "    py = 499 - Math.trunc(at.latitude / 128);",
+    "new": "    py = Math.trunc(at.latitude / 128);",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "SEA-SET-pile-source-any-hall",
     "file": "src/systems/sea/seaSpoils.js",
-    "old": "(loc?.ether && loc.wildRing > 0 ? 'vault' : 'ruin');",
-    "new": "(loc?.wildRing > 0 ? 'vault' : 'ruin');",
+    "old": "export const seaPileSource = (loc) => (loc?.ether && loc.wildRing > 0 ? 'vault' : 'ruin');",
+    "new": "export const seaPileSource = (loc) => (loc?.wildRing > 0 ? 'vault' : 'ruin');",
     "tests": [
       "test/systems/sea/seaset.test.js"
     ]

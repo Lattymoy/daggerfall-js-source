@@ -59,30 +59,40 @@ export function rasterizeTopDown(mesh, size = 128, { ink = STAMP_INK, pad = 1 } 
 
   // fit the XZ bounds into the padded square, ONE uniform scale so the
   // silhouette keeps its proportions
-  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  let minX = Infinity,
+    maxX = -Infinity,
+    minZ = Infinity,
+    maxZ = -Infinity;
   for (let v = 0; v < pos.length; v += 3) {
     if (pos[v] < minX) minX = pos[v];
     if (pos[v] > maxX) maxX = pos[v];
     if (pos[v + 2] < minZ) minZ = pos[v + 2];
     if (pos[v + 2] > maxZ) maxZ = pos[v + 2];
   }
-  const spanX = maxX - minX, spanZ = maxZ - minZ;
+  const spanX = maxX - minX,
+    spanZ = maxZ - minZ;
   const span = Math.max(spanX, spanZ);
   if (!(span > 0)) return empty;
   const inner = w - 2 * pad;
   const k = inner / span;
-  const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
+  const cx = (minX + maxX) / 2,
+    cz = (minZ + maxZ) / 2;
   // x east -> +px, z north -> -py (the bitmap is drawn top-down)
   const toPx = (x) => w / 2 + (x - cx) * k;
   const toPy = (z) => w / 2 - (z - cz) * k;
 
   for (let t = 0; t + 2 < idx.length; t += 3) {
-    const a = idx[t] * 3, b = idx[t + 1] * 3, c = idx[t + 2] * 3;
-    const ax = toPx(pos[a]), ay = toPy(pos[a + 2]);
-    const bx = toPx(pos[b]), by = toPy(pos[b + 2]);
-    const cxp = toPx(pos[c]), cy = toPy(pos[c + 2]);
+    const a = idx[t] * 3,
+      b = idx[t + 1] * 3,
+      c = idx[t + 2] * 3;
+    const ax = toPx(pos[a]),
+      ay = toPy(pos[a + 2]);
+    const bx = toPx(pos[b]),
+      by = toPy(pos[b + 2]);
+    const cxp = toPx(pos[c]),
+      cy = toPy(pos[c + 2]);
     const area = (bx - ax) * (cy - ay) - (by - ay) * (cxp - ax);
-    if (area === 0) continue;   // edge-on from above: no silhouette
+    if (area === 0) continue; // edge-on from above: no silhouette
     const x0 = Math.max(0, Math.floor(Math.min(ax, bx, cxp)));
     const x1 = Math.min(w - 1, Math.ceil(Math.max(ax, bx, cxp)));
     const y0 = Math.max(0, Math.floor(Math.min(ay, by, cy)));
@@ -115,10 +125,12 @@ export function rasterizeTopDown(mesh, size = 128, { ink = STAMP_INK, pad = 1 } 
 export function rasterizeDisc(size = 64, { ink = STAMP_INK } = {}) {
   const w = Math.max(1, Math.trunc(size));
   const colors = new Uint32Array(w * w);
-  const r = w / 2, r2 = r * r;
+  const r = w / 2,
+    r2 = r * r;
   for (let y = 0; y < w; y++) {
     for (let x = 0; x < w; x++) {
-      const dx = x + 0.5 - r, dy = y + 0.5 - r;
+      const dx = x + 0.5 - r,
+        dy = y + 0.5 - r;
       if (dx * dx + dy * dy <= r2) colors[y * w + x] = ink;
     }
   }

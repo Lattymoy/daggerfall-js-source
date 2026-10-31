@@ -297,8 +297,8 @@
   {
     "name": "SERPENT3-pair-blow-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "deps.strike?.(ship.boat, shipHurt(A, ship, share(), blows),",
-    "new": "deps.strike?.(ship.boat, shipHurt(A, ship),",
+    "old": "    deps.strike?.(ship.boat, shipHurt(A, ship, share(), blows), {\n      shake: A.hull >= 0.18 ? 2.6 : 1.8,\n      line: `${A.name}!`,\n    }); // AUDIT SHIPS C3: carried",
+    "new": "    deps.strike?.(ship.boat, shipHurt(A, ship), { shake: A.hull >= 0.18 ? 2.6 : 1.8, line: `${A.name}!` }); // AUDIT SHIPS C3: carried",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -306,8 +306,8 @@
   {
     "name": "SERPENT3-pair-venom-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);",
-    "new": "const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), 1, blows);",
+    "old": "    const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);",
+    "new": "    const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), 1, blows);",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -315,8 +315,8 @@
   {
     "name": "SERPENT3-pair-crush-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "crushHurt(ship, share(), blows)",
-    "new": "crushHurt(ship)",
+    "old": "      deps.strike?.(ship.boat, crushHurt(ship, share(), blows), { shake: 3, line: 'The coils crush your hull!' });",
+    "new": "      deps.strike?.(ship.boat, crushHurt(ship), { shake: 3, line: 'The coils crush your hull!' });",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -324,8 +324,8 @@
   {
     "name": "SERPENT3-pair-grip-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "gripHurt(ship, Math.min(1, dtS), grip, share())",
-    "new": "gripHurt(ship, Math.min(1, dtS), grip)",
+    "old": "    const g = gripHurt(ship, Math.min(1, dtS), grip, share());",
+    "new": "    const g = gripHurt(ship, Math.min(1, dtS), grip);",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -333,8 +333,8 @@
   {
     "name": "SERPENT3-pair-grind-unread",
     "file": "src/scenes/serpentHost.js",
-    "old": "grindHurt(ship, dtS, grind, share())",
-    "new": "grindHurt(ship, dtS, grind)",
+    "old": "    const g = grindHurt(ship, dtS, grind, share());",
+    "new": "    const g = grindHurt(ship, dtS, grind);",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -351,8 +351,8 @@
   {
     "name": "SERPENT3-pair-grip-law",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k, crew",
-    "new": "const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS, crew",
+    "old": "  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS * k,",
+    "new": "  const hull = carry.hull + (GRIP.hull * whole.maxHull + GRIP.base) * dtS,",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -360,8 +360,8 @@
   {
     "name": "SERPENT3-pair-grind-law",
     "file": "src/systems/serpent/serpentStrike.js",
-    "old": "const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS * k;",
-    "new": "const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS;",
+    "old": "  const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS * k;",
+    "new": "  const hull = carry + (MAEL_GRIND.hull * whole.maxHull + MAEL_GRIND.base) * dtS;",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -378,8 +378,8 @@
   {
     "name": "SERPENT3-whirl-telegraph-at-the-heart",
     "file": "src/scenes/serpentHost.js",
-    "old": "const eye = a.tg?.[0] ? scene(a.tg[0][0], a.tg[0][1]) : scene(0, 0);",
-    "new": "const eye = scene(0, 0);",
+    "old": "        const eye = a.tg?.[0] ? scene(a.tg[0][0], a.tg[0][1]) : scene(0, 0);",
+    "new": "        const eye = scene(0, 0);",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -387,8 +387,8 @@
   {
     "name": "SERPENT3-wake-while-slow",
     "file": "src/scenes/serpentHost.js",
-    "old": "if (!L || !(L.v > CRUISE_V)) return;",
-    "new": "if (!L || !(L.v > 0)) return;",
+    "old": "    if (!L || !(L.v > CRUISE_V)) return;",
+    "new": "    if (!L || !(L.v > 0)) return;",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -396,8 +396,8 @@
   {
     "name": "SERPENT3-wake-on-the-surface",
     "file": "src/scenes/serpentHost.js",
-    "old": "    if (modeAt(s.modes, t) !== MODE.deep) return;\n",
-    "new": "",
+    "old": "    if (modeAt(s.modes, t) !== MODE.deep) return;\n    // AUDIT 2 XC6: its end is said ahead (AUDIT SHIPS B5) - the dash it was in swims on until its own turn, the last leg it",
+    "new": "    // AUDIT 2 XC6: its end is said ahead (AUDIT SHIPS B5) - the dash it was in swims on until its own turn, the last leg it",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]
@@ -405,8 +405,8 @@
   {
     "name": "SERPENT3-no-wake",
     "file": "src/scenes/serpentHost.js",
-    "old": "      dashWake(s, t);\n",
-    "new": "",
+    "old": "      dashWake(s, t);\n      coilOnMe(s, t);",
+    "new": "      coilOnMe(s, t);",
     "tests": [
       "test/net/serpent/serpent3.test.js"
     ]

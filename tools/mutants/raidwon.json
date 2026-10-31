@@ -32,8 +32,8 @@
   {
     "name": "RAID-WON-no-end",
     "file": "src/scenes/raidAshore.js",
-    "old": "      if (!quest.questComplete && !(quest.ticksToEnd > 0)) quest.endQuest();\n",
-    "new": "",
+    "old": "      if (!quest.questComplete && !(quest.ticksToEnd > 0)) quest.endQuest();\n      return n;",
+    "new": "      return n;",
     "tests": [
       "test/systems/naval/raidwon.test.js",
       "test/systems/naval/navaudit_boarding.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "RAID-WON-crew-taking-the-boarders",
     "file": "src/scenes/raidAshore.js",
-    "old": " if (f.questBehaviour?.targetSymbol?.name === RAID_CREW) { pool.remove(f); n++; }",
-    "new": " { pool.remove(f); n++; }",
+    "old": "        for (const f of questFoesOf(quest, [...pool.foes()]))\n          if (f.questBehaviour?.targetSymbol?.name === RAID_CREW) {\n            pool.remove(f);\n            n++;\n          }",
+    "new": "        for (const f of questFoesOf(quest, [...pool.foes()])) {\n          pool.remove(f);\n          n++;\n        }",
     "tests": [
       "test/systems/naval/raidwon.test.js",
       "test/systems/naval/navaudit_boarding.test.js",
@@ -148,8 +148,8 @@
   {
     "name": "RAID-WON-late-keeping-a-lander",
     "file": "src/scenes/raidAshore.js",
-    "old": "      if (!quest || !f || f.dead || !WA_RAID_QUESTS.includes(quest.questName) || !(ending.has(quest.uid) || quest.questTombstoned)) return false;",
-    "new": "      if (!quest || !f || f.dead || !WA_RAID_QUESTS.includes(quest.questName) || !(ending.has(quest.uid) || quest.questTombstoned) || true) return false;",
+    "old": "        !(ending.has(quest.uid) || quest.questTombstoned)",
+    "new": "        !(ending.has(quest.uid) || quest.questTombstoned) ||\n        true",
     "tests": [
       "test/systems/naval/raidwon.test.js",
       "test/systems/naval/navaudit_boarding.test.js",
@@ -159,7 +159,7 @@
   {
     "name": "RAID-WON-late-taking-a-running-raids",
     "file": "src/scenes/raidAshore.js",
-    "old": "      if (!quest || !f || f.dead || !WA_RAID_QUESTS.includes(quest.questName) || !(ending.has(quest.uid) || quest.questTombstoned)) return false;",
+    "old": "      if (\n        !quest ||\n        !f ||\n        f.dead ||\n        !WA_RAID_QUESTS.includes(quest.questName) ||\n        !(ending.has(quest.uid) || quest.questTombstoned)\n      )\n        return false;",
     "new": "      if (!quest || !f || f.dead || !WA_RAID_QUESTS.includes(quest.questName)) return false;",
     "tests": [
       "test/systems/naval/raidwon.test.js",
@@ -181,7 +181,7 @@
   {
     "name": "RAID-WON-late-taking-any-quests",
     "file": "src/scenes/raidAshore.js",
-    "old": "      if (!quest || !f || f.dead || !WA_RAID_QUESTS.includes(quest.questName) || !(ending.has(quest.uid) || quest.questTombstoned)) return false;",
+    "old": "      if (\n        !quest ||\n        !f ||\n        f.dead ||\n        !WA_RAID_QUESTS.includes(quest.questName) ||\n        !(ending.has(quest.uid) || quest.questTombstoned)\n      )\n        return false;",
     "new": "      if (!quest || !f || f.dead || !(ending.has(quest.uid) || quest.questTombstoned)) return false;",
     "tests": [
       "test/systems/naval/raidwon.test.js",
@@ -226,7 +226,7 @@
     "name": "RAID-WON-a-break-from-outside-a-tick",
     "file": "src/scenes/raidAshore.js",
     "old": "      if (!quest.questComplete && !(quest.ticksToEnd > 0)) quest.endQuest();",
-    "new": "      if (!quest.questComplete && !(quest.ticksToEnd > 0)) { quest.questBreak = true; quest.endQuest(); }",
+    "new": "      if (!quest.questComplete && !(quest.ticksToEnd > 0)) {\n        quest.questBreak = true;\n        quest.endQuest();\n      }",
     "tests": [
       "test/systems/naval/raidwon.test.js",
       "test/systems/naval/navaudit_boarding.test.js",

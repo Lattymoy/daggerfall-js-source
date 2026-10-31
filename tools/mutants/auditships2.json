@@ -228,8 +228,8 @@
   {
     "name": "AUDIT2-XC1-n-unfolded",
     "file": "src/net/serpent/serpentLink.js",
-    "old": "case 'hp': return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now };",
-    "new": "case 'hp': return { ...s, hp: w.h, max: w.m, heardAt: now };",
+    "old": "      return { ...s, hp: w.h, max: w.m, ...(w.n !== undefined ? { n: w.n } : {}), heardAt: now }; // AUDIT 2 XC1: the count with it",
+    "new": "      return { ...s, hp: w.h, max: w.m, heardAt: now }; // AUDIT 2 XC1: the count with it",
     "tests": [
       "test/net/serpent/auditships2.test.js"
     ],
@@ -268,8 +268,8 @@
   {
     "name": "AUDIT2-XC4-venom-share-rounded-alone",
     "file": "src/scenes/serpentHost.js",
-    "old": "const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);",
-    "new": "const n = Math.max(1, Math.round(venomBite(p, deps.maxHealth?.() ?? 0) * share()));",
+    "old": "    const n = venomHurt(venomBite(p, deps.maxHealth?.() ?? 0), share(), blows);",
+    "new": "    const n = Math.max(1, Math.round(venomBite(p, deps.maxHealth?.() ?? 0) * share()));",
     "tests": [
       "test/net/serpent/auditships2.test.js"
     ],
@@ -278,8 +278,8 @@
   {
     "name": "AUDIT2-XC6-wake-stopped-at-the-word",
     "file": "src/scenes/serpentHost.js",
-    "old": "if ((s.fell || s.gone) && !(t < (s.legs[s.legs.length - 1]?.at ?? -Infinity))) return;",
-    "new": "if (s.fell || s.gone) return;",
+    "old": "    if ((s.fell || s.gone) && !(t < (s.legs[s.legs.length - 1]?.at ?? -Infinity))) return;",
+    "new": "    if (s.fell || s.gone) return;",
     "tests": [
       "test/net/serpent/auditships2.test.js"
     ],
@@ -288,8 +288,8 @@
   {
     "name": "AUDIT2-XC7-change-unfloored",
     "file": "src/scenes/serpentHost.js",
-    "old": "(lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS)",
-    "new": "lastIn.hl !== hl",
+    "old": "    const due =\n      lastIn.day !== sw.day ||\n      (lastIn.hl !== hl && t - lastIn.at >= IN_CHANGE_MS) ||\n      t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
+    "new": "    const due = lastIn.day !== sw.day || lastIn.hl !== hl || t - lastIn.at >= (answered ? IN_RESEND_MS : IN_RETRY_MS);",
     "tests": [
       "test/net/serpent/auditships.test.js"
     ],
@@ -298,8 +298,8 @@
   {
     "name": "AUDIT2-XC8-bar-old-words",
     "file": "src/ui/serpentBar.js",
-    "old": "ships: (n) => (n === 1 ? '1 ship fighting it' : `${n} ships fighting it`),",
-    "new": "ships: (n) => (n === 1 ? '1 ship in its waters' : `${n} ships in its waters`),",
+    "old": "  ships: (n) => (n === 1 ? '1 ship fighting it' : `${n} ships fighting it`), // AUDIT 2 XC8: the count is the ships fighting it (AUDIT SHIPS C1), not every hull in its waters",
+    "new": "  ships: (n) => (n === 1 ? '1 ship in its waters' : `${n} ships in its waters`), // AUDIT 2 XC8: the count is the ships fighting it (AUDIT SHIPS C1), not every hull in its waters",
     "tests": [
       "test/net/serpent/auditships2.test.js"
     ],

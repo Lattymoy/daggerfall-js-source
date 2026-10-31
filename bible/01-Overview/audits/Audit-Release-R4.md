@@ -113,7 +113,7 @@ is fixed in this pass: each lever is a wire or relay law change, and the owner's
    HEARTBEAT_MS alone, so the object sleeps between; the first peer's hello wakes it, and the client returns to POSE_HZ
    as it is told of them. Halves nothing in a crowd and nearly all of it on the open road.
    **TAKEN** (the owner, 2026-10-26: "Idle lone cells"): LONE-SLEEP, `11-Multiplayer/Scale-Arc.md` - a lone session's
-   pose down its own cell's socket once a minute (`src/net/loneSleep.js:"export const LONE_POSE_MS = 60_000;"`, the
+   pose down its own cell's socket once a minute (`src/net/loneSleep.js:"export const LONE_POSE_MS"`, the
    longest the silence law and the Watch's tick allow - HEARTBEAT_MS itself unmoved) and none down an empty halo; at once
    on a peer's join, a referee's word, a fight or a word judged by where it stands. Client only, gated on the release's number (world269 at the second merge); composed with main's HIBERNATE (alone one notion - standing alone, nothing); a
    lone mover's ~1.9 objects to ~0.2-0.6.
@@ -148,7 +148,7 @@ about a second of the page's thread and one of the worker's each boot. **Propose
 the trace, its relief and the fit in IndexedDB under a print of TMAP00I0, TAMRIEL2, WOODS.WLD and the relief module's
 version - the roads' own `inputsPrint` already hashes all four.
 **Fixed (the coast's stream, 2026-10-26; the owner: "Take care of exclusions and gaps"):**
-`src/world/tamriel/tamrielBootCache.js:"export const BOOT_CACHE_VERSION ="` keeps in IndexedDB, and a returning boot
+`src/world/tamriel/tamrielBootCache.js:"export const BOOT_CACHE_VERSION"` keeps in IndexedDB, and a returning boot
 takes: the trace and its relief (`preloadTamrielTrace`), under a print of the two pictures' bytes, the palette read and
 the relief's own data, each record checked against its key, its sizes and its arrays' checksum; the fit (`fitBayToPicture`
 takes a kept fit for the very land it samples - its masks' print); and the roads' regions to build (the roads' start - since EXACT-PIECES the regions it wants, the Bay's own with those with land, the kept set's key tagged `w1`,
@@ -174,8 +174,8 @@ player first and the rest only when the page is idle.
 
 ### R4-7 - the smooth land's law and lines, built whole on the page (FIXED)
 
-`src/world/tamriel/tamrielLand.js:"export function landLaw(trace) {"`, `src/world/tamriel/tamrielLines.js:"export function lawLines(trace) {"`,
-`src/ui/tamrielInk.js:"export function tracedChains(trace) {"`, `src/systems/wild/cyrodiilZone.js:"export function zoneLineOf(trace, mask = cyrodiilMask()) {"`.
+`src/world/tamriel/tamrielLand.js:"export function landLaw(trace) {"`, `src/world/tamriel/tamrielLines.js:"export function lawLines"`,
+`src/ui/tamrielInk.js:"export function tracedChains(trace) {"`, `src/systems/wild/cyrodiilZone.js:"export function zoneLineOf"`.
 SMOOTH-LAND (`03-World/Tamriel.md`; the owner: "Whatever is most detailed"), merged into this lane at ad2a8d71de, reads a
 pixel's province past the Bay through the land's smooth law, made once a trace on each thread that asks (`landLaw`: the
 labels, the land's and each province's distances over the padded picture), and draws every coast and border, the zone's
@@ -227,7 +227,7 @@ collection stood 17 MB below where the walk began. A long journey's cost is the 
   sea (bytes): 1.7 MB of vertex buffers and 0.65-1.3 MB of index, rebuilt every MID_REBUILD_DRIFT (3) pixels.
 - **The far field**: 14,641 vertices (positions and normals Float32, colour and sea bytes): ~0.4 MB and its index.
 - **The Graht-oaks**: nine meshes (three variants, three LODs) packed in 3.16 MB, made once a session a breath at a time;
-  a frame walks every built pixel's trees (`src/scenes/grahtHost.js:"if (n || shown) gpu.setInstances(scratch, n);"` -
+  a frame walks every built pixel's trees (`src/scenes/grahtHost.js:"if (n || shown) gpu.setInstances"` -
   the instances uploaded each frame they are shown), a few thousand trees at the default view.
 - **The roads past the Bay**: a region's layer and places, a worker ~80 MB while it builds; the merged layer on the page
   is a Map of road pixels (not measured whole here).
@@ -260,7 +260,7 @@ the interiors 44, the hub's shards 17, everything else under 10.
 | the gate read at a wake | ~$0 | a row read an instance life ($0.001 a million) |
 | province channels (PROVINCE-SLEEP) | ~$0 past the lines' own time | one object a province, its sockets hibernated between lines |
 | new messages, timers, alarms, rooms | none | no new send on the client's wire; the relay's timers counted (R4-1); the gates' lanes past the Bay stand none (`GATE_LANES_OPEN` the Bay's); the serpent's agreed site said to a hub's sockets when it moves (a few a day) and to a hello |
-| the account service | ~$0 | the new routes are a player's acts (a castle bought or sold, a gift, a witness); the seats' list reads the region law's rows from an isolate's minute cache (`server-account/src/domains.js:"export const DOMAIN_ROWS_KEPT_S = 60;"`) |
+| the account service | ~$0 | the new routes are a player's acts (a castle bought or sold, a gift, a witness); the seats' list reads the region law's rows from an isolate's minute cache (`server-account/src/domains.js:"export const DOMAIN_ROWS_KEPT_S"`) |
 
 So **the release adds some $2,300 a month per 1,000 concurrent players if a third of them roam past the Bay alone**, and
 the per-player bound is the spread's: ~$7.8 a month for a concurrent player alone past the Bay against ~$0.6 for one in

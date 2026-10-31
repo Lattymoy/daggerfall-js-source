@@ -74,5 +74,5 @@ test('DEATH-HOLDS: the lists are what they say - the holds named, none of them a
   for (const k of DEATH_HOLDS) assert.ok(!LETHAL_DRAINS.includes(k), `${k} is a hold, not a drain - two lists, two reasons`);
   const src = readFileSync(new URL('../../src/systems/deathRespawn.js', import.meta.url), 'utf8');
   assert.ok(!/^\/\/ {3}graveyard, for free\. Paralysis is kept/m.test(src), 'the comment that kept the paralysis is retired');
-  assert.match(src, /const released = \(dead \|\| force\) \? endDeathHolds\(entity\) : \[\];/);
+  assert.match(src, /const released = dead \|\| force \? endDeathHolds\(entity\) : \[\];/);
 });

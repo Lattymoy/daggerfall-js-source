@@ -25,19 +25,19 @@ craft, a trade, the market and a card all `addItem` straight into the pack - and
 Materials Bag tells the listeners as if it were new. So the pack is watched, not the doors.
 
 - **Once a frame**, on drawHud's one call (`hud.js:"drawLootBanners({ entity: vitals,"`) - every host hands drawHud the
-  player entity as `vitals` - the watcher (`acquireWatch.js:"export function createAcquireWatch()"`) reads the player's
+  player entity as `vitals` - the watcher (`acquireWatch.js:"export function createAcquireWatch"`) reads the player's
   three own lists: the pack, the wagon and the Materials Bag. It runs on every skin, so a piece found on the classic skin
   is not announced if the player switches to Enhanced Plus later.
 - **The mark.** A piece that could ever announce (`markable` - a weapon that is not ammunition, armour, clothing,
   jewellery, an artifact, a card) gets `acquired: true` the first frame it stands in one of the lists. An unmarked one
-  there is an arrival. The mark is a declared item field (`itemFields.js:"acquired: bool(),"`), so it rides the save and
+  there is an arrival. The mark is a declared item field (`itemFields.js:"acquired: bool()"`), so it rides the save and
   the house's chests: a piece taken back out of the player's own storage, or picked back up off the ground, is not new.
 - **The receiver's mark.** Like `equipSlot` and `questItem`, the mark is stripped off the wire
-  (`systems/loot/loot.js:"for (const k of RECEIVER_MARKS) delete out[k];"`) and off the zone's death record
-  (`wildDropLaw.js:"for (const k of RECEIVER_MARKS) delete copy[k];"`). A piece another player hands over - a trade, the
+  (`systems/loot/loot.js:"for (const k of RECEIVER_MARKS)"`) and off the zone's death record
+  (`wildDropLaw.js:"for (const k of RECEIVER_MARKS)"`). A piece another player hands over - a trade, the
   zone's remains, the market, a room's chest - is new to its taker.
 - **And the realm's trade law reads the same list (MARK-WIRE, FIELD BUGS 2026-10-09b).** The three receiver's marks are
-  ONE list, `realmTradeLaw.js:"export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry', 'horseBond', 'horseFed', 'appearance']);"`,
+  ONE list, `realmTradeLaw.js:"export const RECEIVER_MARKS"`,
   which the realm's volatile fields spread and its moved record strips. ACQUIRE1 first added the mark to the wire's clamp
   and the death record and not there: the pack's record carried it, the List form's offer did not, and the market, a
   stall and a realm trade refused every marked piece ("The realm does not hold that piece where your pack had it" -
@@ -65,7 +65,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
 - **The top tiers** (Aetheric, Artifact, Gilded) stand taller, their picture larger, the edge wider, with a glow that
   breathes twice, and hold longer. The frame they land in plays the Arena's fanfare (SOUND.ArenaFanfareLevelUp) once,
   behind the port's own sounds switch (`systems/enhancedSounds.js`).
-- **The law** (`lootBanner.js:"export function createBannerQueue("`, pure): three stand at most, the newest on top. Each
+- **The law** (`lootBanner.js:"export function createBannerQueue"`, pure): three stand at most, the newest on top. Each
   holds 4.5 s (a big one 7 s) and slides out; a banner sliding out holds no place. What arrives while three stand waits,
   the best tier first, at most twelve. A second card of a kind whose banner stands or waits adds to its count.
 - **The HUD's hide gate.** Under a window - the loot window, a shop's counter, the Broker's - the stack stands hidden and
@@ -73,10 +73,10 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
   turn comes (zone remains the room gave to another player) never stands.
 - **Where.** The right edge, 60% down the window. When the notice stack is in the way the banners step under it, and
   never pass the window's foot - a band too short for every banner shows the newest (`bannerLayout`). The HUD-MOVE
-  layer moves the stack like any HUD piece (`hudLayout.js:"{ id: 'loot', sel: '.lootbanner-stack'"`, "Loot banners",
+  layer moves the stack like any HUD piece (`hudLayout.js:"{ id: 'loot', sel"`, "Loot banners",
   with a preview while the UI is unlocked); moved, it fades where it stands rather than sliding from the edge.
 - **The dress** is the pickup feed's - its veil, stone bevel and ring, tinted per Plus theme through the shared veil law
-  (`enhancedFrame.js:"export const hudVeil = (th) =>"`, moved there from the pickup feed, its first reader). The tier
+  (`enhancedFrame.js:"export const hudVeil"`, moved there from the pickup feed, its first reader). The tier
   colours are the RARITY-UI table's.
 - **Classic skin.** Nothing is built - no node, no sheet (AUDIT 39's law). The watcher still reads and marks.
 - **Reduced motion:** no slide, no sweep, no glow.
@@ -85,7 +85,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
 
 Mac: *"The title/aura in the abyss dungeon should also have a loot popup"*, and of the lamp keeper's title: *"ensure
 there is a loot popup for obtaining the title"*. A title or an aura is no piece in the pack, so the watcher never sees
-one: its grant's own door pushes it (`lootBanner.js:"export function announceHonour(kind, key, { doc = docOf() } = {}) {"`).
+one: its grant's own door pushes it (`lootBanner.js:"export function announceHonour"`).
 The Hour's (`net/superDungeon/sdClaims.js` - Hourbreaker and The Turning Hour, when the account service answers a claim with the
 grant), the lamp's (`systems/lampKeeper.js`, I Love Lamp) and - SERPENT5 (`11-Multiplayer/Sea-Serpent.md` section 17) -
 the Old Coil's (`net/serpent/serpentClaims.js`, Coilbreaker and The Maelstrom, on the Hour's own law) are its three doors.
@@ -104,13 +104,13 @@ the Old Coil's (`net/serpent/serpentClaims.js`, Coilbreaker and The Maelstrom, o
 ## 4. The pickup feed and the codex
 
 - **The pickup feed** (`ui/pickupFeed.js`) no longer cards a piece the banner will announce - one new to the player in
-  Rare or better (`pickupFeed.js:"const fresh = (m) =>"`). Its take still says no line for it. A Rare piece of the
+  Rare or better (`pickupFeed.js:"const fresh = (m)"`). Its take still says no line for it. A Rare piece of the
   player's own, picked back up, is carded in its tier as before.
 - **The codex.** LOOT10's first find of a Legendary record (`06-Systems/Loot-Arc.md` section 12) said "<name> - a
   Legendary! It joins your codex." and chimed. On Enhanced Plus the banner announcing the same piece says it instead -
   a "New to your codex" chip and the codex's own chime - through a presenter slot in the watcher, so the HUD never
   imports the codex and the codex never imports a face
-  (`lootCodex.js:"if (!quiet && !presentCodexFind(item, key.kind)) {"`). The banner declines, and the codex says its line
+  (`lootCodex.js:"if (!quiet && !presentCodexFind(item, key.kind))"`). The banner declines, and the codex says its line
   as before, on the classic skin, for a piece already read whose banner has gone, and for one no frame will read.
 
 ## 5. Known limits

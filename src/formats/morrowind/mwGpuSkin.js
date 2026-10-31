@@ -65,7 +65,7 @@
 
 import { skinPost, affineMulInto } from './mwSkin.js';
 import { hangAffine } from './mwFirstPerson.js';
-import { SKIN_PAL_ROW } from '../../render/skinPalette.js';   // the palette's shape, one home
+import { SKIN_PAL_ROW } from '../../render/skinPalette.js'; // the palette's shape, one home
 
 export { SKIN_PAL_ROW };
 
@@ -127,7 +127,10 @@ export function skinLayout(pieces) {
       let k8 = 1;
       for (let v = 0; v < n; v++) if (count[v] > k8) k8 = count[v];
       if (k8 > SKIN_MAX_INFLUENCES) {
-        return { ok: false, reason: `${p.slot}: a vertex blended by ${k8} bones - the shader carries ${SKIN_MAX_INFLUENCES}, and rule 39 forbids trimming` };
+        return {
+          ok: false,
+          reason: `${p.slot}: a vertex blended by ${k8} bones - the shader carries ${SKIN_MAX_INFLUENCES}, and rule 39 forbids trimming`,
+        };
       }
       if (k8 > most) most = k8;
       // pass 2: the influences, in BONE order - the order skinBatch's loop accumulates in
@@ -154,9 +157,12 @@ export function skinLayout(pieces) {
       const boxes = new Map();
       const untouched = emptyBox();
       let collapse = false;
-      let wMin = Infinity, wMax = -Infinity;
+      let wMin = Infinity,
+        wMax = -Infinity;
       for (let v = 0; v < n; v++) {
-        const x = pos[v * 3], y = pos[v * 3 + 1], z = pos[v * 3 + 2];
+        const x = pos[v * 3],
+          y = pos[v * 3 + 1],
+          z = pos[v * 3 + 2];
         if (!touched[v]) {
           infE[v * SKIN_MAX_INFLUENCES] = 0;
           infW[v * SKIN_MAX_INFLUENCES] = 1;
@@ -184,10 +190,31 @@ export function skinLayout(pieces) {
         }
       }
       // MW-SMOOTH: the authored normals, when the piece poses them (packFpArm reads `p.normals` beside its positions)
-      const nrm = p.normals && p.normals.length === pos.length && batch.normals && batch.normals.length === pos.length ? batch.normals : null;
-      rows.push({ piece: p, kind: 'skinned', n, post, boneEntry, pos, nrm, batch, infE, infW, postE,
-        boxes, untouched: untouched.minX <= untouched.maxX ? untouched : null, collapse, negative,
-        wMin: Number.isFinite(wMin) ? wMin : 1, wMax: Number.isFinite(wMax) ? wMax : 1, corner0: 0, sub: null });
+      const nrm =
+        p.normals && p.normals.length === pos.length && batch.normals && batch.normals.length === pos.length
+          ? batch.normals
+          : null;
+      rows.push({
+        piece: p,
+        kind: 'skinned',
+        n,
+        post,
+        boneEntry,
+        pos,
+        nrm,
+        batch,
+        infE,
+        infW,
+        postE,
+        boxes,
+        untouched: untouched.minX <= untouched.maxX ? untouched : null,
+        collapse,
+        negative,
+        wMin: Number.isFinite(wMin) ? wMin : 1,
+        wMax: Number.isFinite(wMax) ? wMax : 1,
+        corner0: 0,
+        sub: null,
+      });
     } else {
       const src = p.source;
       if (!src) return { ok: false, reason: `${p.slot}: a rigid piece with no authored positions` };
@@ -195,15 +222,39 @@ export function skinLayout(pieces) {
       const entry = next++;
       const infE = new Int32Array(n * SKIN_MAX_INFLUENCES);
       const infW = new Float32Array(n * SKIN_MAX_INFLUENCES);
-      for (let v = 0; v < n; v++) { infE[v * SKIN_MAX_INFLUENCES] = entry; infW[v * SKIN_MAX_INFLUENCES] = 1; }
-      const row = { piece: p, kind: 'rigid', n, entry, pos: new Float32Array(src.length), nrm: null, gen: -1, infE, infW, postE: new Int32Array(n),
-        boxes: new Map(), untouched: null, collapse: false, negative: false, wMin: 1, wMax: 1, corner0: 0, sub: null };
+      for (let v = 0; v < n; v++) {
+        infE[v * SKIN_MAX_INFLUENCES] = entry;
+        infW[v * SKIN_MAX_INFLUENCES] = 1;
+      }
+      const row = {
+        piece: p,
+        kind: 'rigid',
+        n,
+        entry,
+        pos: new Float32Array(src.length),
+        nrm: null,
+        gen: -1,
+        infE,
+        infW,
+        postE: new Int32Array(n),
+        boxes: new Map(),
+        untouched: null,
+        collapse: false,
+        negative: false,
+        wMin: 1,
+        wMax: 1,
+        corner0: 0,
+        sub: null,
+      };
       syncRigidRow(row);
       rows.push(row);
     }
   }
   let corner = 0;
-  for (const r of rows) { r.corner0 = corner; corner += Math.floor(r.piece.indices.length / 3) * 3; }
+  for (const r of rows) {
+    r.corner0 = corner;
+    corner += Math.floor(r.piece.indices.length / 3) * 3;
+  }
   if (!list.length) return { ok: false, reason: 'no drawable piece' };
   const entries = next;
   const width = 3 * Math.min(entries, SKIN_PAL_ROW);
@@ -224,9 +275,12 @@ function syncRigidRow(r) {
   const gen = p.sourceGen | 0;
   if (r.gen === gen) return false;
   r.gen = gen;
-  const src = p.source, pos = r.pos;
+  const src = p.source,
+    pos = r.pos;
   const o = p.boneOffset;
-  const ox = o ? o[0] : 0, oy = o ? o[1] : 0, oz = o ? o[2] : 0;
+  const ox = o ? o[0] : 0,
+    oy = o ? o[1] : 0,
+    oz = o ? o[2] : 0;
   const box = emptyBox();
   for (let v = 0; v < pos.length; v += 3) {
     pos[v] = (p.mirrored ? -src[v] : src[v]) + ox;
@@ -236,11 +290,18 @@ function syncRigidRow(r) {
   }
   r.boxes.clear();
   if (r.n) r.boxes.set(r.entry, box);
-  const sn = p.normals && p.normals.length === pos.length && p.sourceNormals && p.sourceNormals.length === pos.length ? p.sourceNormals : null;
+  const sn =
+    p.normals && p.normals.length === pos.length && p.sourceNormals && p.sourceNormals.length === pos.length
+      ? p.sourceNormals
+      : null;
   if (!sn) r.nrm = null;
   else {
     const nrm = r.nrm || (r.nrm = new Float32Array(pos.length));
-    for (let v = 0; v < nrm.length; v += 3) { nrm[v] = p.mirrored ? -sn[v] : sn[v]; nrm[v + 1] = sn[v + 1]; nrm[v + 2] = sn[v + 2]; }
+    for (let v = 0; v < nrm.length; v += 3) {
+      nrm[v] = p.mirrored ? -sn[v] : sn[v];
+      nrm[v + 1] = sn[v + 1];
+      nrm[v + 2] = sn[v + 2];
+    }
   }
   return true;
 }
@@ -281,14 +342,24 @@ export function packSkinStream(layout, lanesOf) {
   let o = 0;
   for (const r of layout.rows) {
     const p = r.piece;
-    if (r.kind === 'rigid') syncRigidRow(r);   // a source re-posed since the layout (MW-BOW1) streams where it is now
-    if (o !== r.corner0 * floats) throw new Error(`MWNPC1: ${p.slot}'s corners begin at ${o / floats}, the layout says ${r.corner0}`);
+    if (r.kind === 'rigid') syncRigidRow(r); // a source re-posed since the layout (MW-BOW1) streams where it is now
+    if (o !== r.corner0 * floats)
+      throw new Error(`MWNPC1: ${p.slot}'s corners begin at ${o / floats}, the layout says ${r.corner0}`);
     o = writeRowCorners(layout, r, lanesOf(p), stream, o);
     const textured = !!(p.uvs && p.material && p.material.textureFile);
-    const count = Math.floor(p.indices.length / 3) * 3;   // the corners written - a whole triangle list, as every retail piece is
-    ranges.push({ first: r.corner0, count, slot: p.slot, piece: p, textureFile: textured ? p.material.textureFile : null, tex: null, hidden: false });
+    const count = Math.floor(p.indices.length / 3) * 3; // the corners written - a whole triangle list, as every retail piece is
+    ranges.push({
+      first: r.corner0,
+      count,
+      slot: p.slot,
+      piece: p,
+      textureFile: textured ? p.material.textureFile : null,
+      tex: null,
+      hidden: false,
+    });
   }
-  if (o !== stream.length) throw new Error(`MWNPC1: the skin stream wrote ${o} of ${stream.length} floats (${slots} slots a corner)`);
+  if (o !== stream.length)
+    throw new Error(`MWNPC1: the skin stream wrote ${o} of ${stream.length} floats (${slots} slots a corner)`);
   return { stream, floats, ranges };
 }
 
@@ -296,16 +367,32 @@ export function packSkinStream(layout, lanesOf) {
  *  answers the float after its last. */
 function writeRowCorners(layout, r, lanes, out, o) {
   const idx = r.piece.indices;
-  const pos = r.pos, nrm = r.nrm;
+  const pos = r.pos,
+    nrm = r.nrm;
   let l = 0;
   for (let i = 0; i + 2 < idx.length; i += 3) {
     for (let k = 0; k < 3; k++) {
       const v = idx[i + k];
-      out[o++] = pos[v * 3]; out[o++] = pos[v * 3 + 1]; out[o++] = pos[v * 3 + 2];
-      out[o++] = lanes[l]; out[o++] = lanes[l + 1]; out[o++] = lanes[l + 2];
-      if (nrm) { out[o++] = nrm[v * 3]; out[o++] = nrm[v * 3 + 1]; out[o++] = nrm[v * 3 + 2]; } else { out[o++] = 0; out[o++] = 0; out[o++] = 0; }
-      out[o++] = lanes[l + 3]; out[o++] = lanes[l + 4];
-      out[o++] = lanes[l + 5]; out[o++] = lanes[l + 6]; out[o++] = lanes[l + 7];
+      out[o++] = pos[v * 3];
+      out[o++] = pos[v * 3 + 1];
+      out[o++] = pos[v * 3 + 2];
+      out[o++] = lanes[l];
+      out[o++] = lanes[l + 1];
+      out[o++] = lanes[l + 2];
+      if (nrm) {
+        out[o++] = nrm[v * 3];
+        out[o++] = nrm[v * 3 + 1];
+        out[o++] = nrm[v * 3 + 2];
+      } else {
+        out[o++] = 0;
+        out[o++] = 0;
+        out[o++] = 0;
+      }
+      out[o++] = lanes[l + 3];
+      out[o++] = lanes[l + 4];
+      out[o++] = lanes[l + 5];
+      out[o++] = lanes[l + 6];
+      out[o++] = lanes[l + 7];
       l += 8;
       const base = v * SKIN_MAX_INFLUENCES;
       for (let pr = 0; pr < layout.pairs; pr++) {
@@ -341,18 +428,37 @@ export function restreamMovedRows(layout, lanesOf) {
 /** Write one affine into palette entry `e`: three texels, rows [a0 a1 a2 t0] [a3 a4 a5 t1] [a6 a7 a8 t2]. */
 function putEntry(pal, e, m) {
   const o = e * 12;
-  const a = m.a, t = m.t;
-  pal[o] = a[0]; pal[o + 1] = a[1]; pal[o + 2] = a[2]; pal[o + 3] = t[0];
-  pal[o + 4] = a[3]; pal[o + 5] = a[4]; pal[o + 6] = a[5]; pal[o + 7] = t[1];
-  pal[o + 8] = a[6]; pal[o + 9] = a[7]; pal[o + 10] = a[8]; pal[o + 11] = t[2];
+  const a = m.a,
+    t = m.t;
+  pal[o] = a[0];
+  pal[o + 1] = a[1];
+  pal[o + 2] = a[2];
+  pal[o + 3] = t[0];
+  pal[o + 4] = a[3];
+  pal[o + 5] = a[4];
+  pal[o + 6] = a[5];
+  pal[o + 7] = t[1];
+  pal[o + 8] = a[6];
+  pal[o + 9] = a[7];
+  pal[o + 10] = a[8];
+  pal[o + 11] = t[2];
 }
 
 /** Read palette entry `e` back as an affine (into `out`). */
 function getEntry(pal, e, out) {
   const o = e * 12;
-  out.a[0] = pal[o]; out.a[1] = pal[o + 1]; out.a[2] = pal[o + 2]; out.t[0] = pal[o + 3];
-  out.a[3] = pal[o + 4]; out.a[4] = pal[o + 5]; out.a[5] = pal[o + 6]; out.t[1] = pal[o + 7];
-  out.a[6] = pal[o + 8]; out.a[7] = pal[o + 9]; out.a[8] = pal[o + 10]; out.t[2] = pal[o + 11];
+  out.a[0] = pal[o];
+  out.a[1] = pal[o + 1];
+  out.a[2] = pal[o + 2];
+  out.t[0] = pal[o + 3];
+  out.a[3] = pal[o + 4];
+  out.a[4] = pal[o + 5];
+  out.a[5] = pal[o + 6];
+  out.t[1] = pal[o + 7];
+  out.a[6] = pal[o + 8];
+  out.a[7] = pal[o + 9];
+  out.a[8] = pal[o + 10];
+  out.t[2] = pal[o + 11];
   return out;
 }
 
@@ -390,29 +496,47 @@ export function writeSkinPalette(layout, assembly, pal = layout.palette) {
 
 // ---- the boxes (rule 42) -------------------------------------------------
 
-function emptyBox() { return { minX: Infinity, minY: Infinity, minZ: Infinity, maxX: -Infinity, maxY: -Infinity, maxZ: -Infinity }; }
+function emptyBox() {
+  return { minX: Infinity, minY: Infinity, minZ: Infinity, maxX: -Infinity, maxY: -Infinity, maxZ: -Infinity };
+}
 function grow(b, x, y, z) {
-  if (x < b.minX) b.minX = x; if (x > b.maxX) b.maxX = x;
-  if (y < b.minY) b.minY = y; if (y > b.maxY) b.maxY = y;
-  if (z < b.minZ) b.minZ = z; if (z > b.maxZ) b.maxZ = z;
+  if (x < b.minX) b.minX = x;
+  if (x > b.maxX) b.maxX = x;
+  if (y < b.minY) b.minY = y;
+  if (y > b.maxY) b.maxY = y;
+  if (z < b.minZ) b.minZ = z;
+  if (z > b.maxZ) b.maxZ = z;
 }
 function unionInto(out, b) {
-  if (b.minX < out.minX) out.minX = b.minX; if (b.maxX > out.maxX) out.maxX = b.maxX;
-  if (b.minY < out.minY) out.minY = b.minY; if (b.maxY > out.maxY) out.maxY = b.maxY;
-  if (b.minZ < out.minZ) out.minZ = b.minZ; if (b.maxZ > out.maxZ) out.maxZ = b.maxZ;
+  if (b.minX < out.minX) out.minX = b.minX;
+  if (b.maxX > out.maxX) out.maxX = b.maxX;
+  if (b.minY < out.minY) out.minY = b.minY;
+  if (b.maxY > out.maxY) out.maxY = b.maxY;
+  if (b.minZ < out.minZ) out.minZ = b.minZ;
+  if (b.maxZ > out.maxZ) out.maxZ = b.maxZ;
 }
 /** A box through an affine: its centre through the affine, its half-extent through the affine's absolute 3x3. */
 function boxThrough(m, b, out) {
-  const cx = (b.minX + b.maxX) / 2, cy = (b.minY + b.maxY) / 2, cz = (b.minZ + b.maxZ) / 2;
-  const hx = (b.maxX - b.minX) / 2, hy = (b.maxY - b.minY) / 2, hz = (b.maxZ - b.minZ) / 2;
-  const a = m.a, t = m.t;
+  const cx = (b.minX + b.maxX) / 2,
+    cy = (b.minY + b.maxY) / 2,
+    cz = (b.minZ + b.maxZ) / 2;
+  const hx = (b.maxX - b.minX) / 2,
+    hy = (b.maxY - b.minY) / 2,
+    hz = (b.maxZ - b.minZ) / 2;
+  const a = m.a,
+    t = m.t;
   const x = a[0] * cx + a[1] * cy + a[2] * cz + t[0];
   const y = a[3] * cx + a[4] * cy + a[5] * cz + t[1];
   const z = a[6] * cx + a[7] * cy + a[8] * cz + t[2];
   const ex = Math.abs(a[0]) * hx + Math.abs(a[1]) * hy + Math.abs(a[2]) * hz;
   const ey = Math.abs(a[3]) * hx + Math.abs(a[4]) * hy + Math.abs(a[5]) * hz;
   const ez = Math.abs(a[6]) * hx + Math.abs(a[7]) * hy + Math.abs(a[8]) * hz;
-  out.minX = x - ex; out.maxX = x + ex; out.minY = y - ey; out.maxY = y + ey; out.minZ = z - ez; out.maxZ = z + ez;
+  out.minX = x - ex;
+  out.maxX = x + ex;
+  out.minY = y - ey;
+  out.maxY = y + ey;
+  out.minZ = z - ez;
+  out.maxZ = z + ez;
   return out;
 }
 /** The blend's hull scaled by every weight sum in [lo, hi]: a linear function of the scale is extreme at its ends. */
@@ -442,25 +566,44 @@ function skinBoxes(layout, pal) {
         if (r.negative) {
           // a negative weight leaves the hull: every coordinate is within (sum |w|) x the farthest corner. Bounded by
           // eight influences of at most |w| each, read off the corners' own magnitude - loose, and never smaller.
-          const reach = Math.max(Math.abs(hull.minX), Math.abs(hull.maxX), Math.abs(hull.minY), Math.abs(hull.maxY),
-            Math.abs(hull.minZ), Math.abs(hull.maxZ)) * SKIN_MAX_INFLUENCES * Math.max(Math.abs(r.wMin), Math.abs(r.wMax), 1);
+          const reach =
+            Math.max(
+              Math.abs(hull.minX),
+              Math.abs(hull.maxX),
+              Math.abs(hull.minY),
+              Math.abs(hull.maxY),
+              Math.abs(hull.minZ),
+              Math.abs(hull.maxZ),
+            ) *
+            SKIN_MAX_INFLUENCES *
+            Math.max(Math.abs(r.wMin), Math.abs(r.wMax), 1);
           hull = { minX: -reach, minY: -reach, minZ: -reach, maxX: reach, maxY: reach, maxZ: reach };
         } else if (r.wMin !== 1 || r.wMax !== 1) {
           hull = scaleHull(hull, Math.min(r.wMin, 1), Math.max(r.wMax, 1));
         }
         unionInto(box, boxThrough(getEntry(pal, r.post, _post), hull, _tb));
       }
-      if (r.collapse) { getEntry(pal, r.post, _post); grow(box, _post.t[0], _post.t[1], _post.t[2]); }
+      if (r.collapse) {
+        getEntry(pal, r.post, _post);
+        grow(box, _post.t[0], _post.t[1], _post.t[2]);
+      }
       if (r.untouched) unionInto(box, r.untouched);
     } else {
       unionInto(box, hull);
     }
     const p = r.piece;
     const out = p.box || (p.box = { minX: 0, minY: 0, minZ: 0, maxX: 0, maxY: 0, maxZ: 0 });
-    out.minX = box.minX; out.minY = box.minY; out.minZ = box.minZ; out.maxX = box.maxX; out.maxY = box.maxY; out.maxZ = box.maxZ;
+    out.minX = box.minX;
+    out.minY = box.minY;
+    out.minZ = box.minZ;
+    out.maxX = box.maxX;
+    out.maxY = box.maxY;
+    out.maxZ = box.maxZ;
     if (box.minX <= box.maxX) unionInto(all, box);
   }
-  return all.minX <= all.maxX ? { minX: all.minX, minY: all.minY, minZ: all.minZ, maxX: all.maxX, maxY: all.maxY, maxZ: all.maxZ } : null;
+  return all.minX <= all.maxX
+    ? { minX: all.minX, minY: all.minY, minZ: all.minZ, maxX: all.maxX, maxY: all.maxY, maxZ: all.maxZ }
+    : null;
 }
 
 // ---- the shader's law, in JS ---------------------------------------------
@@ -488,7 +631,12 @@ export function skinnedVertex(layout, piece, v, pal = layout.palette, out = [0, 
 export function skinnedNormal(layout, piece, v, pal = layout.palette, out = [0, 0, 0]) {
   const r = layout.byPiece.get(piece);
   if (!r || v < 0 || v >= r.n) return null;
-  if (!r.nrm) { out[0] = 0; out[1] = 0; out[2] = 0; return out; }
+  if (!r.nrm) {
+    out[0] = 0;
+    out[1] = 0;
+    out[2] = 0;
+    return out;
+  }
   const base = v * SKIN_MAX_INFLUENCES;
   const slots = new Array(SKIN_MAX_INFLUENCES);
   for (let s = 0; s < SKIN_MAX_INFLUENCES; s++) slots[s] = [r.infE[base + s], r.infW[base + s]];
@@ -504,7 +652,8 @@ export function skinStreamCorner(stream, floats, pairs, c, pal, out = [0, 0, 0],
   const o = c * floats;
   const slots = [];
   for (let pr = 0; pr < pairs; pr++) {
-    for (let s = 0; s < 4; s++) slots.push([stream[o + SKIN_STATIC_FLOATS + pr * 8 + s], stream[o + SKIN_STATIC_FLOATS + pr * 8 + 4 + s]]);
+    for (let s = 0; s < 4; s++)
+      slots.push([stream[o + SKIN_STATIC_FLOATS + pr * 8 + s], stream[o + SKIN_STATIC_FLOATS + pr * 8 + 4 + s]]);
   }
   if (normal) return skinNormal(pal, slots, stream[o + floats - 1], stream[o + 6], stream[o + 7], stream[o + 8], out);
   return skinPoint(pal, slots, stream[o + floats - 1], stream[o], stream[o + 1], stream[o + 2], out);
@@ -519,7 +668,9 @@ function skinNormal(pal, slots, postEntry, x, y, z, out) {
   const nz = _cmp[8] * x + _cmp[9] * y + _cmp[10] * z;
   const l2 = nx * nx + ny * ny + nz * nz;
   const k = l2 > 1e-24 ? 1 / Math.sqrt(l2) : 0;
-  out[0] = nx * k; out[1] = ny * k; out[2] = nz * k;
+  out[0] = nx * k;
+  out[1] = ny * k;
+  out[2] = nz * k;
   return out;
 }
 
@@ -541,7 +692,10 @@ function composeAt(pal, slots, postEntry) {
   // composed = post o acc: rows [a | t], the post's 3x3 times the accumulated rows, its translation added once
   const q = Math.round(postEntry) * 12;
   for (let row = 0; row < 3; row++) {
-    const p0 = pal[q + row * 4], p1 = pal[q + row * 4 + 1], p2 = pal[q + row * 4 + 2], pt = pal[q + row * 4 + 3];
+    const p0 = pal[q + row * 4],
+      p1 = pal[q + row * 4 + 1],
+      p2 = pal[q + row * 4 + 2],
+      pt = pal[q + row * 4 + 3];
     for (let col = 0; col < 4; col++) {
       _cmp[row * 4 + col] = p0 * _acc[col] + p1 * _acc[4 + col] + p2 * _acc[8 + col] + (col === 3 ? pt : 0);
     }

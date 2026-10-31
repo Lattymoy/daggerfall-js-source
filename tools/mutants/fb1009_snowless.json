@@ -2,8 +2,8 @@
   {
     "name": "SNOWLESS1-ground-as-drawn-ignored",
     "file": "src/world/climateSwaps.js",
-    "old": "return groundIsSnowy(climateSettings, season) && !(_snowlessGround?.(climateSettings.groundArchive + 1) ?? false);",
-    "new": "return groundIsSnowy(climateSettings, season);",
+    "old": "  return groundIsSnowy(climateSettings, season) && !(_snowlessGround?.(climateSettings.groundArchive + 1) ?? false);",
+    "new": "  return groundIsSnowy(climateSettings, season);",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "SNOWLESS1-the-add-on-not-asked",
     "file": "src/systems/dfmodTextures.js",
-    "old": "return s?.kind === 'array' && dfmodFileName(s.key) === SNOWLESS_FILE_NAME;",
-    "new": "return s?.kind === 'array';",
+    "old": "  return s?.kind === 'array' && dfmodFileName(s.key) === SNOWLESS_FILE_NAME;",
+    "new": "  return s?.kind === 'array';",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "SNOWLESS1-the-door-never-registered",
     "file": "src/systems/dfmodTextures.js",
-    "old": "setSnowlessGround(winterGroundSnowless);",
-    "new": "setSnowlessGround(null);",
+    "old": "setSnowlessGround(winterGroundSnowless); // SNOWLESS1: the weather's ground law and Snowfall read the door through climateSwaps",
+    "new": "setSnowlessGround(null); // SNOWLESS1: the weather's ground law and Snowfall read the door through climateSwaps",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SNOWLESS1-snowfall-tile-wears-the-mask",
     "file": "src/scenes/snowfallHost.js",
-    "old": "bare: snowless ? () => true : ground.bare",
-    "new": "bare: false ? () => true : ground.bare",
+    "old": "      bare: snowless ? () => true : ground.bare ? (lx, lz) => ground.bare(p, lx, lz) : undefined,",
+    "new": "      bare: false ? () => true : ground.bare ? (lx, lz) => ground.bare(p, lx, lz) : undefined,",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SNOWLESS1-the-desert-edge-snows",
     "file": "src/scenes/snowfallHost.js",
-    "old": "const snowless = cs?.climateType === 0 || winterGroundSnowless(winterArchive);",
-    "new": "const snowless = winterGroundSnowless(winterArchive);",
+    "old": "    const snowless = cs?.climateType === 0 || winterGroundSnowless(winterArchive);",
+    "new": "    const snowless = winterGroundSnowless(winterArchive);",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SNOWLESS1-snowfall-stands-in-the-snowless-swamp",
     "file": "src/scenes/snowfallHost.js",
-    "old": "desertNow = cs?.climateType === 0 || winterGroundSnowless(winterArchiveOf(cs));",
-    "new": "desertNow = cs?.climateType === 0;",
+    "old": "      desertNow = cs?.climateType === 0 || winterGroundSnowless(winterArchiveOf(cs));",
+    "new": "      desertNow = cs?.climateType === 0;",
     "tests": [
       "test/systems/fb1009_snowless.test.js"
     ]

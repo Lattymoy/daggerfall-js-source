@@ -64,7 +64,12 @@ export const DUEL_REASK_MS = 15_000;
 
 /** Is this a position - an Array or a typed array of at least three finite numbers? */
 /** @param {any} v */
-const isPos = (v) => (Array.isArray(v) || ArrayBuffer.isView(v)) && /** @type {ArrayLike<number>} */ (v).length >= 3 && Number.isFinite(v[0]) && Number.isFinite(v[1]) && Number.isFinite(v[2]);
+const isPos = (v) =>
+  (Array.isArray(v) || ArrayBuffer.isView(v)) &&
+  /** @type {ArrayLike<number>} */ (v).length >= 3 &&
+  Number.isFinite(v[0]) &&
+  Number.isFinite(v[1]) &&
+  Number.isFinite(v[2]);
 
 /** The distance on the ground (x and z) between two points of one frame, metres; Infinity when either is not a point. */
 export function groundDistance(a, b) {
@@ -87,7 +92,8 @@ export function ringCentre(a, b) {
 export function clampToRing(pos, centre, radius = DUEL_RADIUS_M, bodyR = 0) {
   if (!isPos(pos) || !isPos(centre)) return null;
   const lim = Math.max(0, radius - bodyR);
-  const dx = pos[0] - centre[0], dz = pos[2] - centre[2];
+  const dx = pos[0] - centre[0],
+    dz = pos[2] - centre[2];
   const d = Math.hypot(dx, dz);
   if (d <= lim) return null;
   if (d < 1e-9) return [centre[0], centre[2]];
@@ -124,17 +130,28 @@ export function duelWonText(why, name = 'They') {
 /** The words for why a duel (or an ask for one) ended, from the wire's DUEL_WHY codes. */
 export function duelWhyText(why, name = 'They') {
   switch (why) {
-    case 'declined': return `${name} declined the duel.`;
-    case 'busy': return `${name} cannot duel right now.`;
-    case 'timeout': return 'The duel challenge lapsed.';
-    case 'range': return `You are more than ${DUEL_RANGE_M} m apart. The duel is called off.`;
-    case 'outdoors': return 'A duel must be fought outdoors. The duel is called off.';
-    case 'left': return 'The duel is called off. A duelist left the ring.';
-    case 'dead': return 'The duel is called off. A duelist was killed by something else.';
-    case 'draw': return 'Time is up. The duel is a draw.';
-    case 'fell': return `${name} has fallen. You won the duel!`;
-    case 'yield': return `${name} yields. You won the duel!`;
-    default: return `${name} called off the duel.`;
+    case 'declined':
+      return `${name} declined the duel.`;
+    case 'busy':
+      return `${name} cannot duel right now.`;
+    case 'timeout':
+      return 'The duel challenge lapsed.';
+    case 'range':
+      return `You are more than ${DUEL_RANGE_M} m apart. The duel is called off.`;
+    case 'outdoors':
+      return 'A duel must be fought outdoors. The duel is called off.';
+    case 'left':
+      return 'The duel is called off. A duelist left the ring.';
+    case 'dead':
+      return 'The duel is called off. A duelist was killed by something else.';
+    case 'draw':
+      return 'Time is up. The duel is a draw.';
+    case 'fell':
+      return `${name} has fallen. You won the duel!`;
+    case 'yield':
+      return `${name} yields. You won the duel!`;
+    default:
+      return `${name} called off the duel.`;
   }
 }
 
@@ -195,35 +212,65 @@ export function validRingRecord(r) {
  * @param {() => number} [o.rand]
  */
 export function createDuelManager({
-  send, now = () => Date.now(), say = () => {}, peerName = () => null, selfId = () => '', near = () => true, can = () => null,
-  ringFor = () => null, reaches = () => true, myPos = () => null, peerPos = () => null, onPrompt = () => {}, onStart = () => {},
-  onHp = () => {}, onBout = (/** @type {any} */ _d) => {}, onEnd = () => {}, onReceipt = () => {}, onHeal = () => {}, rand = Math.random,
+  send,
+  now = () => Date.now(),
+  say = () => {},
+  peerName = () => null,
+  selfId = () => '',
+  near = () => true,
+  can = () => null,
+  ringFor = () => null,
+  reaches = () => true,
+  myPos = () => null,
+  peerPos = () => null,
+  onPrompt = () => {},
+  onStart = () => {},
+  onHp = () => {},
+  onBout = (/** @type {any} */ _d) => {},
+  onEnd = () => {},
+  onReceipt = () => {},
+  onHeal = () => {},
+  rand = Math.random,
 }) {
   /** @type {{ peer: string, s: string, at: number } | null} */
-  let outgoing = null;                 // my ask
+  let outgoing = null; // my ask
   /** @type {Map<string, { s: string, at: number, sub: string|null }>} */
-  const incoming = new Map();          // asks at me, by peer
+  const incoming = new Map(); // asks at me, by peer
   /** @type {Map<string, number>} */
-  const quiet = new Map();             // peer -> when I last declined them (or their ask lapsed on me): DUEL_REASK_MS of quiet
+  const quiet = new Map(); // peer -> when I last declined them (or their ask lapsed on me): DUEL_REASK_MS of quiet
   /** @type {{ peer: string, s: string, at: number, sub: string|null } | null} */
-  let waiting = null;                  // I said yes; the challenger's start is owed
+  let waiting = null; // I said yes; the challenger's start is owed
   /** @type {{ peer: string, s: string, at: number, c: number[], sub: string|null } | null} */
-  let starting = null;                 // they said yes; my start has not left the socket yet
+  let starting = null; // they said yes; my start has not left the socket yet
   /** @type {any} */
-  let duel = null;                     // { peer, s, c, sub, startedAt, n, seen, phase: 'live'|'over', overAt, end, goneSince, outSince, blows }
-  let outbox = [];                     // handshake and end frames waiting on the socket: { data, at }
+  let duel = null; // { peer, s, c, sub, startedAt, n, seen, phase: 'live'|'over', overAt, end, goneSince, outSince, blows }
+  let outbox = []; // handshake and end frames waiting on the socket: { data, at }
   const nameOf = (id) => peerName(id) ?? 'Someone';
-  const mint = () => { let s = ''; while (s.length < 10) s += rand().toString(36).slice(2); return s.slice(0, 10).padEnd(10, '0'); };
+  const mint = () => {
+    let s = '';
+    while (s.length < 10) s += rand().toString(36).slice(2);
+    return s.slice(0, 10).padEnd(10, '0');
+  };
 
   /** A frame that must get through (an answer, a start, a cancel, an end): sent now, or held for the next tick until
    *  DUEL_OUTBOX_TTL_MS. Blows and results are never held - a late blow is a wrong blow. */
   const post = (data) => {
     let ok = false;
-    try { ok = send(data) === true; } catch { ok = false; }
+    try {
+      ok = send(data) === true;
+    } catch {
+      ok = false;
+    }
     if (!ok) outbox.push({ data, at: now() });
     return ok;
   };
-  const once = (data) => { try { return send(data) === true; } catch { return false; } };
+  const once = (data) => {
+    try {
+      return send(data) === true;
+    } catch {
+      return false;
+    }
+  };
   const flush = () => {
     const t = now();
     const keep = [];
@@ -239,11 +286,27 @@ export function createDuelManager({
 
   const begin = (peer, s, c, sub) => {
     incoming.delete(peer);
-    for (const [p, a] of incoming) once({ k: 'no', to: p, s: a.s });   // a duel taken up answers every other ask at me
+    for (const [p, a] of incoming) once({ k: 'no', to: p, s: a.s }); // a duel taken up answers every other ask at me
     incoming.clear();
     if (outgoing && outgoing.peer !== peer) once({ k: 'cancel', to: outgoing.peer, s: outgoing.s, why: 'busy' });
-    outgoing = null; waiting = null; starting = null;
-    duel = { peer, s, c: [c[0], c[1], c[2]], sub: sub ?? null, startedAt: now(), n: 0, phase: 'live', overAt: 0, end: null, goneSince: null, outSince: null, fightSaid: false, h: null };   // INT8: `h` the referee's vitality, both fighters'
+    outgoing = null;
+    waiting = null;
+    starting = null;
+    duel = {
+      peer,
+      s,
+      c: [c[0], c[1], c[2]],
+      sub: sub ?? null,
+      startedAt: now(),
+      n: 0,
+      phase: 'live',
+      overAt: 0,
+      end: null,
+      goneSince: null,
+      outSince: null,
+      fightSaid: false,
+      h: null,
+    }; // INT8: `h` the referee's vitality, both fighters'
     say(`The duel with ${nameOf(peer)} begins. Fight in ${DUEL_COUNTDOWN_MS / 1000} seconds!`);
     onStart(duel);
     mgr.onChange?.();
@@ -268,11 +331,18 @@ export function createDuelManager({
   const finish = (why, { won = false, lost = false, by = 'me', text = null } = {}) => {
     const d = liveDuel();
     if (!d) return;
-    d.phase = 'over'; d.overAt = now();
+    d.phase = 'over';
+    d.overAt = now();
     d.end = { why, won, lost, by };
-    const line = text ?? (lost ? duelLostText(why, nameOf(d.peer))
-      : won ? duelWonText(why, nameOf(d.peer))
-        : by === 'me' ? duelWhyText(why, 'You') : duelWhyText(why, nameOf(d.peer)));
+    const line =
+      text ??
+      (lost
+        ? duelLostText(why, nameOf(d.peer))
+        : won
+          ? duelWonText(why, nameOf(d.peer))
+          : by === 'me'
+            ? duelWhyText(why, 'You')
+            : duelWhyText(why, nameOf(d.peer)));
     say(line);
     onEnd(d, d.end);
     mgr.onChange?.();
@@ -282,13 +352,23 @@ export function createDuelManager({
     /** @type {(() => void) | null} */
     onChange: null,
     /** The live duel ({ peer, s, c, sub, startedAt, ... }), or null - also while its end is held for the heal. */
-    get duel() { return duel; },
+    get duel() {
+      return duel;
+    },
     /** The duel in play - blows count, the ring stands - or null. */
-    get live() { return liveDuel(); },
+    get live() {
+      return liveDuel();
+    },
     /** Are blows counting yet (the live duel, past its count)? */
-    get fighting() { const d = liveDuel(); return !!d && !counting(d); },
+    get fighting() {
+      const d = liveDuel();
+      return !!d && !counting(d);
+    },
     /** The one peer my blows may reach, or null. */
-    get opponent() { const d = liveDuel(); return d ? d.peer : null; },
+    get opponent() {
+      const d = liveDuel();
+      return d ? d.peer : null;
+    },
     /** What the rows should say about a peer: 'none' | 'incoming' | 'outgoing' | 'waiting' | 'live' | 'busy'. */
     stateFor(peer) {
       if (duel) return duel.peer === peer && duel.phase === 'live' ? 'live' : 'busy';
@@ -301,9 +381,17 @@ export function createDuelManager({
     request(peer) {
       const st = mgr.stateFor(peer);
       if (st === 'incoming') return mgr.accept(peer);
-      if (st !== 'none') return { ok: false, why: st === 'outgoing' ? 'challenge sent' : st === 'live' ? 'already duelling' : 'you are busy' };
+      if (st !== 'none')
+        return {
+          ok: false,
+          why: st === 'outgoing' ? 'challenge sent' : st === 'live' ? 'already duelling' : 'you are busy',
+        };
       const no = can();
-      if (no) return { ok: false, why: no === 'outdoors' ? 'a duel is fought outdoors' : no === 'dead' ? 'you have fallen' : 'you are busy' };
+      if (no)
+        return {
+          ok: false,
+          why: no === 'outdoors' ? 'a duel is fought outdoors' : no === 'dead' ? 'you have fallen' : 'you are busy',
+        };
       if (near(peer) !== true) return { ok: false, why: `too far away (max ${DUEL_RANGE_M} m)` };
       const s = mint();
       if (!once({ k: 'ask', to: peer, s })) return { ok: false, why: 'try again' };
@@ -317,11 +405,18 @@ export function createDuelManager({
       const a = incoming.get(peer);
       if (!a || duel || waiting || starting) return { ok: false, why: 'gone' };
       const no = can();
-      if (no) return { ok: false, why: no === 'outdoors' ? 'a duel is fought outdoors' : no === 'dead' ? 'you have fallen' : 'you are busy' };
+      if (no)
+        return {
+          ok: false,
+          why: no === 'outdoors' ? 'a duel is fought outdoors' : no === 'dead' ? 'you have fallen' : 'you are busy',
+        };
       if (near(peer) !== true) return { ok: false, why: `too far away (max ${DUEL_RANGE_M} m)` };
       if (!once({ k: 'yes', to: peer, s: a.s })) return { ok: false, why: 'try again' };
       incoming.delete(peer);
-      if (outgoing) { once({ k: 'cancel', to: outgoing.peer, s: outgoing.s, why: 'busy' }); outgoing = null; }
+      if (outgoing) {
+        once({ k: 'cancel', to: outgoing.peer, s: outgoing.s, why: 'busy' });
+        outgoing = null;
+      }
       waiting = { peer, s: a.s, at: now(), sub: a.sub };
       say(`You accepted ${nameOf(peer)}'s challenge.`);
       mgr.onChange?.();
@@ -362,57 +457,125 @@ export function createDuelManager({
       switch (d.k) {
         case 'ask': {
           const busy = duel || waiting || starting;
-          if (busy) { if (!engagedElsewhere(from)) answer(from, { k: 'no', to: from, s: d.s }); return; }
-          if (can()) { answer(from, { k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' }); return; }
-          if (near(from) !== true) { answer(from, { k: 'cancel', to: from, s: d.s, why: 'range' }); return; }
+          if (busy) {
+            if (!engagedElsewhere(from)) answer(from, { k: 'no', to: from, s: d.s });
+            return;
+          }
+          if (can()) {
+            answer(from, { k: 'cancel', to: from, s: d.s, why: can() === 'outdoors' ? 'outdoors' : 'busy' });
+            return;
+          }
+          if (near(from) !== true) {
+            answer(from, { k: 'cancel', to: from, s: d.s, why: 'range' });
+            return;
+          }
           if (outgoing?.peer === from) {
             // crossed challenges: the smaller id keeps its own ask, the other takes it up - one duel, not two
-            if (from < selfId()) { outgoing = null; incoming.set(from, { s: d.s, at: now(), sub }); mgr.accept(from); }
+            if (from < selfId()) {
+              outgoing = null;
+              incoming.set(from, { s: d.s, at: now(), sub });
+              mgr.accept(from);
+            }
             return;
           }
           if (incoming.size >= 4 && !incoming.has(from)) return;
-          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) { answer(from, { k: 'no', to: from, s: d.s }); return; }   // declined a moment ago: no, and nothing over my game
+          if (!incoming.has(from) && now() - (quiet.get(from) ?? -Infinity) < DUEL_REASK_MS) {
+            answer(from, { k: 'no', to: from, s: d.s });
+            return;
+          } // declined a moment ago: no, and nothing over my game
           if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= DUEL_REASK_MS) quiet.delete(p);
           const fresh = !incoming.has(from);
           incoming.set(from, { s: d.s, at: now(), sub });
-          if (fresh) { say(`${nameOf(from)} challenges you to a duel. Answer on the prompt, or press F on them.`); onPrompt(from); }
+          if (fresh) {
+            say(`${nameOf(from)} challenges you to a duel. Answer on the prompt, or press F on them.`);
+            onPrompt(from);
+          }
           mgr.onChange?.();
           return;
         }
         case 'yes': {
           if (!outgoing || outgoing.peer !== from || outgoing.s !== d.s || duel || starting) {
             // a yes to an ask that is no longer mine: the accepter is waiting on a start - tell them it is off
-            if (!(duel && duel.peer === from && duel.s === d.s) && !engagedElsewhere(from)) answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });
+            if (!(duel && duel.peer === from && duel.s === d.s) && !engagedElsewhere(from))
+              answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });
             return;
           }
           const s = outgoing.s;
           outgoing = null;
           const no = can();
-          if (no || near(from) !== true) { once({ k: 'cancel', to: from, s, why: no === 'outdoors' ? 'outdoors' : no ? 'busy' : 'range' }); say(duelWhyText(no === 'outdoors' ? 'outdoors' : no ? 'busy' : 'range', 'You')); mgr.onChange?.(); return; }
+          if (no || near(from) !== true) {
+            once({ k: 'cancel', to: from, s, why: no === 'outdoors' ? 'outdoors' : no ? 'busy' : 'range' });
+            say(duelWhyText(no === 'outdoors' ? 'outdoors' : no ? 'busy' : 'range', 'You'));
+            mgr.onChange?.();
+            return;
+          }
           const c = ringFor(from);
-          if (!c) { once({ k: 'cancel', to: from, s, why: 'range' }); mgr.onChange?.(); return; }
-          if (once({ k: 'start', to: from, s, c })) { begin(from, s, c, sub); return; }
-          starting = { peer: from, s, at: now(), c, sub };   // the socket held it back: tick() tries again until the wait runs out
+          if (!c) {
+            once({ k: 'cancel', to: from, s, why: 'range' });
+            mgr.onChange?.();
+            return;
+          }
+          if (once({ k: 'start', to: from, s, c })) {
+            begin(from, s, c, sub);
+            return;
+          }
+          starting = { peer: from, s, at: now(), c, sub }; // the socket held it back: tick() tries again until the wait runs out
           return;
         }
         case 'no':
-          if (outgoing && outgoing.peer === from && outgoing.s === d.s) { outgoing = null; say(duelWhyText('declined', nameOf(from))); mgr.onChange?.(); }
+          if (outgoing && outgoing.peer === from && outgoing.s === d.s) {
+            outgoing = null;
+            say(duelWhyText('declined', nameOf(from)));
+            mgr.onChange?.();
+          }
           return;
         case 'start': {
-          if (duel && duel.peer === from && duel.s === d.s) return;   // this duel's own start, twice
-          if (!waiting || waiting.peer !== from || waiting.s !== d.s) { if (!engagedElsewhere(from)) answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' }); return; }
+          if (duel && duel.peer === from && duel.s === d.s) return; // this duel's own start, twice
+          if (!waiting || waiting.peer !== from || waiting.s !== d.s) {
+            if (!engagedElsewhere(from))
+              answer(from, { k: 'cancel', to: from, s: d.s, why: duel ? 'busy' : 'timeout' });
+            return;
+          }
           const no = can();
-          if (no) { once({ k: 'cancel', to: from, s: d.s, why: no === 'outdoors' ? 'outdoors' : 'busy' }); waiting = null; say(duelWhyText(no === 'outdoors' ? 'outdoors' : 'busy', 'You')); mgr.onChange?.(); return; }
+          if (no) {
+            once({ k: 'cancel', to: from, s: d.s, why: no === 'outdoors' ? 'outdoors' : 'busy' });
+            waiting = null;
+            say(duelWhyText(no === 'outdoors' ? 'outdoors' : 'busy', 'You'));
+            mgr.onChange?.();
+            return;
+          }
           begin(from, d.s, d.c, sub ?? waiting.sub);
           return;
         }
         case 'cancel': {
           const dl = liveDuel();
-          if (dl && dl.peer === from && dl.s === d.s) { finish(d.why ?? 'cancelled', { by: 'them' }); return; }
-          if (outgoing && outgoing.peer === from && outgoing.s === d.s) { outgoing = null; say(duelWhyText(d.why ?? 'cancelled', nameOf(from))); mgr.onChange?.(); return; }
-          if (waiting && waiting.peer === from && waiting.s === d.s) { waiting = null; say(duelWhyText(d.why ?? 'cancelled', nameOf(from))); mgr.onChange?.(); return; }
-          if (starting && starting.peer === from && starting.s === d.s) { starting = null; mgr.onChange?.(); return; }
-          if (incoming.get(from)?.s === d.s) { incoming.delete(from); quiet.set(from, now()); if (d.why === 'timeout') say(`${nameOf(from)}'s challenge lapsed.`); mgr.onChange?.(); }   // AUDIT DUEL1 A5: taken back, then asked again at once, is the re-ask DUEL_REASK_MS keeps quiet
+          if (dl && dl.peer === from && dl.s === d.s) {
+            finish(d.why ?? 'cancelled', { by: 'them' });
+            return;
+          }
+          if (outgoing && outgoing.peer === from && outgoing.s === d.s) {
+            outgoing = null;
+            say(duelWhyText(d.why ?? 'cancelled', nameOf(from)));
+            mgr.onChange?.();
+            return;
+          }
+          if (waiting && waiting.peer === from && waiting.s === d.s) {
+            waiting = null;
+            say(duelWhyText(d.why ?? 'cancelled', nameOf(from)));
+            mgr.onChange?.();
+            return;
+          }
+          if (starting && starting.peer === from && starting.s === d.s) {
+            starting = null;
+            mgr.onChange?.();
+            return;
+          }
+          if (incoming.get(from)?.s === d.s) {
+            incoming.delete(from);
+            quiet.set(from, now());
+            if (d.why === 'timeout') say(`${nameOf(from)}'s challenge lapsed.`);
+            mgr.onChange?.();
+          } // AUDIT DUEL1 A5: taken back, then asked again at once, is the re-ask DUEL_REASK_MS keeps quiet
           return;
         }
         case 'end': {
@@ -424,7 +587,7 @@ export function createDuelManager({
           finish(d.why === 'yield' || d.why === 'fell' ? 'cancelled' : d.why, { by: 'them' });
           return;
         }
-        default:   // INT8: a strike, a spell or a result is the referee's - the relay routes none, and none is read here
+        default: // INT8: a strike, a spell or a result is the referee's - the relay routes none, and none is read here
       }
     },
     /**
@@ -435,7 +598,10 @@ export function createDuelManager({
     onRef(g) {
       if (!g || typeof g.k !== 'string') return;
       if (g.k === 'no') {
-        if (starting?.s === g.s) { starting = null; mgr.onChange?.(); }
+        if (starting?.s === g.s) {
+          starting = null;
+          mgr.onChange?.();
+        }
         const d = liveDuel();
         if (d && d.s === g.s) finish(g.why, { text: DUEL_REF_TEXT.refused });
         return;
@@ -443,16 +609,34 @@ export function createDuelManager({
       if (g.k === 'bout' || g.k === 'hp') {
         if (!duel || duel.s !== g.s) return;
         duel.h = g.h;
-        if (g.k === 'hp') { try { onHp(g, duel); } catch { /* the HUD is not the duel's problem */ } }
-        else { try { onBout(duel); } catch { /* the HUD is not the duel's problem */ } }   // AUDIT INT8: the bout set - its readout drawn whole
+        if (g.k === 'hp') {
+          try {
+            onHp(g, duel);
+          } catch {
+            /* the HUD is not the duel's problem */
+          }
+        } else {
+          try {
+            onBout(duel);
+          } catch {
+            /* the HUD is not the duel's problem */
+          }
+        } // AUDIT INT8: the bout set - its readout drawn whole
         mgr.onChange?.();
         return;
       }
       if (g.k === 'end') {
-        if (g.rc) { try { onReceipt(g.rc); } catch { /* the carrier keeps what it can */ } }
+        if (g.rc) {
+          try {
+            onReceipt(g.rc);
+          } catch {
+            /* the carrier keeps what it can */
+          }
+        }
         const d = liveDuel();
-        if (!d || d.s !== g.s) return;   // ended here already (my own word, as it left)
-        const won = g.w !== '' && g.w === selfId(), lost = g.w !== '' && g.w !== selfId();
+        if (!d || d.s !== g.s) return; // ended here already (my own word, as it left)
+        const won = g.w !== '' && g.w === selfId(),
+          lost = g.w !== '' && g.w !== selfId();
         finish(g.why, { won, lost, by: lost ? 'me' : 'them' });
       }
     },
@@ -466,69 +650,127 @@ export function createDuelManager({
       for (const p of [...incoming.keys()]) if (!reaches(p)) mgr.peerGone(p);
       for (const x of [outgoing, waiting, starting]) if (x && !reaches(x.peer)) mgr.peerGone(x.peer);
       if (outgoing && t - outgoing.at > DUEL_ASK_TTL_MS) {
-        const o = outgoing; outgoing = null;
+        const o = outgoing;
+        outgoing = null;
         once({ k: 'cancel', to: o.peer, s: o.s, why: 'timeout' });
         say(`${nameOf(o.peer)} did not answer your challenge.`);
         mgr.onChange?.();
       }
-      for (const [p, a] of incoming) if (t - a.at > DUEL_ASK_TTL_MS) { incoming.delete(p); quiet.set(p, t); say(`${nameOf(p)}'s challenge lapsed.`); mgr.onChange?.(); }
+      for (const [p, a] of incoming)
+        if (t - a.at > DUEL_ASK_TTL_MS) {
+          incoming.delete(p);
+          quiet.set(p, t);
+          say(`${nameOf(p)}'s challenge lapsed.`);
+          mgr.onChange?.();
+        }
       if (waiting && t - waiting.at > DUEL_START_WAIT_MS) {
-        const w = waiting; waiting = null;
+        const w = waiting;
+        waiting = null;
         once({ k: 'cancel', to: w.peer, s: w.s, why: 'timeout' });
         say(`${nameOf(w.peer)} never started the duel. It is called off.`);
         mgr.onChange?.();
       }
       if (starting) {
         const st = starting;
-        if (t - st.at > DUEL_START_WAIT_MS / 2) { starting = null; once({ k: 'cancel', to: st.peer, s: st.s, why: 'timeout' }); mgr.onChange?.(); }
-        else if (once({ k: 'start', to: st.peer, s: st.s, c: st.c })) begin(st.peer, st.s, st.c, st.sub);
+        if (t - st.at > DUEL_START_WAIT_MS / 2) {
+          starting = null;
+          once({ k: 'cancel', to: st.peer, s: st.s, why: 'timeout' });
+          mgr.onChange?.();
+        } else if (once({ k: 'start', to: st.peer, s: st.s, c: st.c })) begin(st.peer, st.s, st.c, st.sub);
       }
       if (duel && duel.phase === 'over') {
-        if (t - duel.overAt >= DUEL_HEAL_HOLD_MS) { const d = duel; duel = null; try { onHeal(d); } finally { mgr.onChange?.(); } }
+        if (t - duel.overAt >= DUEL_HEAL_HOLD_MS) {
+          const d = duel;
+          duel = null;
+          try {
+            onHeal(d);
+          } finally {
+            mgr.onChange?.();
+          }
+        }
         return;
       }
       const d = liveDuel();
       if (!d) return;
-      if (!d.fightSaid && !counting(d)) { d.fightSaid = true; say('Fight!'); }   // the count is over: blows count from here
+      if (!d.fightSaid && !counting(d)) {
+        d.fightSaid = true;
+        say('Fight!');
+      } // the count is over: blows count from here
       // I cannot fight on (I went indoors, or fell to something else): my word to the referee - INT8: my loss once the
       // count has run, the duel called off before it
       const no = can();
-      if (no === 'dead' || no === 'outdoors') { const why = no === 'dead' ? 'dead' : 'left'; post({ k: 'end', to: d.peer, s: d.s, why }); finish(why, { lost: !counting(d) }); return; }
+      if (no === 'dead' || no === 'outdoors') {
+        const why = no === 'dead' ? 'dead' : 'left';
+        post({ k: 'end', to: d.peer, s: d.s, why });
+        finish(why, { lost: !counting(d) });
+        return;
+      }
       // my body far past the edge: the clamp never lets a body walk there, so I was carried off (a travel, a teleport)
       const me = myPos();
-      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) { post({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left', { lost: !counting(d) }); return; }
+      if (me && worldGroundMetres(me, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) {
+        post({ k: 'end', to: d.peer, s: d.s, why: 'left' });
+        finish('left', { lost: !counting(d) });
+        return;
+      }
       // INT8: the clock, my opponent gone and my opponent out of the ring are the REFEREE'S to end (`dref` `end`). Only
       // where no word of its comes - a relay that restarted, and with it the bout - does the duel let go here, well
       // past every one of the referee's own windows, naming nobody
-      if (t - d.startedAt > DUEL_MAX_MS + DUEL_COUNTDOWN_MS + DUEL_REF_LATE_MS) { finish('draw'); return; }
+      if (t - d.startedAt > DUEL_MAX_MS + DUEL_COUNTDOWN_MS + DUEL_REF_LATE_MS) {
+        finish('draw');
+        return;
+      }
       if (!reaches(d.peer)) {
         d.goneSince ??= t;
-        if (t - d.goneSince > DUEL_GONE_MS + DUEL_REF_LATE_MS) { finish('cancelled', { by: 'them' }); return; }
+        if (t - d.goneSince > DUEL_GONE_MS + DUEL_REF_LATE_MS) {
+          finish('cancelled', { by: 'them' });
+          return;
+        }
       } else d.goneSince = null;
       const them = peerPos(d.peer);
       if (them && worldGroundMetres(them, d.c) > DUEL_RADIUS_M + DUEL_OUT_SLACK_M) {
         d.outSince ??= t;
-        if (t - d.outSince > DUEL_OUT_MS + DUEL_REF_LATE_MS) { finish('cancelled', { by: 'them' }); return; }
+        if (t - d.outSince > DUEL_OUT_MS + DUEL_REF_LATE_MS) {
+          finish('cancelled', { by: 'them' });
+          return;
+        }
       } else d.outSince = null;
     },
     /** A peer left the room (no socket of mine reports them any more): their asks go; a live duel waits DUEL_GONE_MS. */
     peerGone(peer) {
       if (incoming.delete(peer)) mgr.onChange?.();
-      if (outgoing?.peer === peer) { outgoing = null; mgr.onChange?.(); }
-      if (waiting?.peer === peer) { waiting = null; mgr.onChange?.(); }
-      if (starting?.peer === peer) { starting = null; mgr.onChange?.(); }
+      if (outgoing?.peer === peer) {
+        outgoing = null;
+        mgr.onChange?.();
+      }
+      if (waiting?.peer === peer) {
+        waiting = null;
+        mgr.onChange?.();
+      }
+      if (starting?.peer === peer) {
+        starting = null;
+        mgr.onChange?.();
+      }
     },
     /** The player left the game or the world: everything ends here, a live duel as `left` (no record). */
     reset() {
       const d = liveDuel();
-      if (d) { once({ k: 'end', to: d.peer, s: d.s, why: 'left' }); finish('left'); }
+      if (d) {
+        once({ k: 'end', to: d.peer, s: d.s, why: 'left' });
+        finish('left');
+      }
       if (outgoing) once({ k: 'cancel', to: outgoing.peer, s: outgoing.s, why: 'cancelled' });
       for (const [p, a] of incoming) once({ k: 'no', to: p, s: a.s });
-      incoming.clear(); outgoing = null; waiting = null; starting = null; outbox = [];
+      incoming.clear();
+      outgoing = null;
+      waiting = null;
+      starting = null;
+      outbox = [];
       mgr.onChange?.();
     },
     /** The asks at me, newest first ({ peer, at }) - the prompt shows the newest. */
-    asks() { return [...incoming.entries()].map(([peer, a]) => ({ peer, at: a.at })).sort((x, y) => y.at - x.at); },
+    asks() {
+      return [...incoming.entries()].map(([peer, a]) => ({ peer, at: a.at })).sort((x, y) => y.at - x.at);
+    },
   };
   return mgr;
 }

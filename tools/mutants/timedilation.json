@@ -11,8 +11,8 @@
   {
     "name": "TD-held-never",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);",
-    "new": "const held = false;",
+    "old": "  const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);",
+    "new": "  const held = false;",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TD-held-everywhere",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "Math.hypot(t.dx, t.dz) <= t.holds);",
-    "new": "Math.hypot(t.dx, t.dz) <= Infinity);",
+    "old": "  const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= t.holds);",
+    "new": "  const held = (threats ?? []).some((t) => t.holds > 0 && Math.hypot(t.dx, t.dz) <= Infinity);",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TD-held-standing-lost",
     "file": "src/systems/travel/travelThreat.js",
-    "old": "if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held };",
-    "new": "if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held: false };",
+    "old": "  if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held };",
+    "new": "  if (!(speedMps > 0)) return { cap: Infinity, threat: null, metres: Infinity, held: false };",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TD-shared-never",
     "file": "src/systems/naval/seaClock.js",
-    "old": "  for (const p of peers) if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;\n",
-    "new": "",
+    "old": "  for (const p of peers)\n    if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TD-shared-height",
     "file": "src/systems/naval/seaClock.js",
-    "old": "Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2])",
-    "new": "Math.hypot(p.feet[0] - feet[0], p.feet[1] - feet[1], p.feet[2] - feet[2])",
+    "old": "    if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[2] - feet[2]) <= radius) return true;",
+    "new": "    if (Array.isArray(p?.feet) && Math.hypot(p.feet[0] - feet[0], p.feet[1] - feet[1], p.feet[2] - feet[2]) <= radius)\n      return true;",
     "tests": [
       "test/systems/naval/timedilation.test.js"
     ]

@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-FB1029e-S1-counter-past-zero",
     "file": "src/systems/comeSailAway/ladenRest.js",
-    "old": "toward: against ? 0 : swing };",
-    "new": "toward: swing };",
+    "old": "  return { rest: against || Math.abs(swing) < Math.abs(current), toward: against ? 0 : swing };",
+    "new": "  return { rest: against || Math.abs(swing) < Math.abs(current), toward: swing };",
     "tests": [
       "test/systems/comeSailAway/laden_rest.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-FB1029e-S1-eased-unrested",
     "file": "src/systems/comeSailAway/ladenRest.js",
-    "old": "rest: against || Math.abs(swing) < Math.abs(current),",
-    "new": "rest: against,",
+    "old": "  return { rest: against || Math.abs(swing) < Math.abs(current), toward: against ? 0 : swing };",
+    "new": "  return { rest: against, toward: against ? 0 : swing };",
     "tests": [
       "test/systems/comeSailAway/laden_rest.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "AUDIT-FB1029e-S5-slide-light",
     "file": "src/systems/comeSailAway/ladenRest.js",
-    "old": "export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) => wanted < was\n  && (wanted === 0 || dot >= f(f(wanted * was) * 0.999));",
-    "new": "export const wayRests = (/** @type {number} */ wanted, /** @type {number} */ was, /** @type {number} */ dot) => wanted < was;",
+    "old": "  wanted < was && (wanted === 0 || dot >= f(f(wanted * was) * 0.999));",
+    "new": "  wanted < was;",
     "tests": [
       "test/systems/comeSailAway/laden_rest.test.js"
     ],

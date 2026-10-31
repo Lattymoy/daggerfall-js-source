@@ -15,22 +15,25 @@
 
 import { liveStat, maxFatigue } from '../statMods.js';
 import { skillValue, SKILLS } from '../skills.js';
-import { healingRateModifier } from '../../combat/formulas.js';   // U10
-import { isOnlinePage } from '../online/onlineLane.js';   // REST-MANA1: online, every career's magicka comes back with rest
-import { localizedText, t } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: SPENT-ASHORE's line is the port's own
+import { healingRateModifier } from '../../combat/formulas.js'; // U10
+import { isOnlinePage } from '../online/onlineLane.js'; // REST-MANA1: online, every career's magicka comes back with rest
+import { localizedText, t } from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; L10N4: SPENT-ASHORE's line is the port's own
 
 // ---- DFCareer.SpecialAbilityFlags (the low byte of
 // AbilityFlagsAndSpellPointsBitfield) + RapidHealingFlags ----
 export const SPECIAL_ABILITY = Object.freeze({
-  AcuteHearing: 1, Athleticism: 2, AdrenalineRush: 4,
-  NoRegenSpellPoints: 8, SunDamage: 16, HolyDamage: 32,
+  AcuteHearing: 1,
+  Athleticism: 2,
+  AdrenalineRush: 4,
+  NoRegenSpellPoints: 8,
+  SunDamage: 16,
+  HolyDamage: 32,
 });
 export const RAPID_HEALING = Object.freeze({ None: 0, InLight: 1, InDarkness: 2, Always: 4 });
 
 /** DFCareer.HasSpecialAbility: the flag masked against the bitfield's
  *  LOW BYTE (the C# (byte)flags cast), verbatim. */
-export const hasSpecialAbility = (career, flag) =>
-  ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
+export const hasSpecialAbility = (career, flag) => ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
 
 // U10: HealingRateModifier moved to the FormulaHelper home beside
 // the other six derived stats; re-exported so existing importers of
@@ -56,7 +59,10 @@ export function healthRecoveryRate(entity, { day = false, inside = true } = {}) 
     add = 100;
   }
   medical += add;
-  return Math.max(Math.floor(healingRateModifier(liveStat(entity, 'endurance')) + medical * (entity.maxHealth ?? 0) / 1000), 1);
+  return Math.max(
+    Math.floor(healingRateModifier(liveStat(entity, 'endurance')) + (medical * (entity.maxHealth ?? 0)) / 1000),
+    1,
+  );
 }
 
 /** CalculateFatigueRecoveryRate: max(floor(maxFatigue / 8), 1) -
@@ -140,5 +146,5 @@ export function exhaustionOutcome({ enemiesNearby = false, swimming = false, ent
       magicka: spellPointRecoveryRate(entity),
     };
   }
-  return { kind: 'spent', damage: spentDamage(entity), line: exhaustedFightingText(), textId: null, inWater: false };   // SPENT-ASHORE: foes about, on dry feet (the water's is `drown`, above)
+  return { kind: 'spent', damage: spentDamage(entity), line: exhaustedFightingText(), textId: null, inWater: false }; // SPENT-ASHORE: foes about, on dry feet (the water's is `drown`, above)
 }

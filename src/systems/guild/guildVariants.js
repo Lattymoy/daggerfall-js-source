@@ -25,10 +25,10 @@
 // decide, because a throw here would take a scene host down over a
 // mis-clicked building.
 import { SKILLS } from '../skills.js';
-import { GUILDS, activeMemberships } from './guilds.js';   // TP1: GuildManager's Memberships.Values
+import { GUILDS, activeMemberships } from './guilds.js'; // TP1: GuildManager's Memberships.Values
 import { GUILD_GROUPS } from '../../formats/factionFile.js';
-import { localizedText, localizedStrings, localizedTable, splitTextList } from '../textManager.js';   // L10N3d
-import { DIVINES, ORDERS } from './guildFactions.js';   // CHAP1: the leaf the Roll reads on the service
+import { localizedText, localizedStrings, localizedTable, splitTextList } from '../textManager.js'; // L10N3d
+import { DIVINES, ORDERS } from './guildFactions.js'; // CHAP1: the leaf the Roll reads on the service
 
 /** The two variant-keyed rank lists, from DFU's Internal_Strings
  *  ("templeRanks" / "knightlyOrderRanks"), each held as the table holds
@@ -37,7 +37,8 @@ import { DIVINES, ORDERS } from './guildFactions.js';   // CHAP1: the leaf the R
  *  divine's or the order's. "Knight Brother" is one title
  *  (GetLocalizedTextList splits on newlines only). */
 const TEMPLE_RANKS = 'Novice\nInitiate\nAcolyte\nAdept\nCurate\nDisciple\nBrother\nDiviner\nMaster\nPatriarch';
-const KNIGHTLY_RANKS = 'Aspirant\nSquire\nGallant\nChevalier\nKeeper\nKnight Brother\nCommander\nMarshall\nSeneschal\nPaladin';
+const KNIGHTLY_RANKS =
+  'Aspirant\nSquire\nGallant\nChevalier\nKeeper\nKnight Brother\nCommander\nMarshall\nSeneschal\nPaladin';
 export const TEMPLE_RANK_TITLES = Object.freeze(splitTextList(TEMPLE_RANKS));
 export const KNIGHTLY_RANK_TITLES = Object.freeze(splitTextList(KNIGHTLY_RANKS));
 /** L10N3d: RankTitles (Temple.cs:272, KnightlyOrder.cs:77), read when a
@@ -52,25 +53,91 @@ export { DIVINES, ORDERS };
 /** Temple guildSkills (:144-231), per divine. These are the RANK
  *  law's input; the (longer) training lists are a services concern. */
 const TEMPLE_SKILLS = Object.freeze({
-  Akatosh: [SKILLS.Alteration, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dragonish,
-    SKILLS.LongBlade, SKILLS.Running, SKILLS.Stealth],
-  Arkay: [SKILLS.Axe, SKILLS.Backstabbing, SKILLS.Daedric, SKILLS.Destruction,
-    SKILLS.Medical, SKILLS.Restoration, SKILLS.ShortBlade],
-  Dibella: [SKILLS.Daedric, SKILLS.Etiquette, SKILLS.Illusion, SKILLS.Lockpicking,
-    SKILLS.LongBlade, SKILLS.Nymph, SKILLS.Orcish, SKILLS.Restoration],
-  Julianos: [SKILLS.Alteration, SKILLS.Daedric, SKILLS.Impish, SKILLS.Lockpicking,
-    SKILLS.Mysticism, SKILLS.ShortBlade, SKILLS.Thaumaturgy],
-  Kynareth: [SKILLS.Archery, SKILLS.Climbing, SKILLS.Daedric, SKILLS.Destruction,
-    SKILLS.Dodging, SKILLS.Dragonish, SKILLS.Harpy, SKILLS.Illusion,
-    SKILLS.Jumping, SKILLS.Running, SKILLS.Stealth],
-  Mara: [SKILLS.Archery, SKILLS.CriticalStrike, SKILLS.Daedric, SKILLS.Etiquette,
-    SKILLS.Harpy, SKILLS.Illusion, SKILLS.Medical, SKILLS.Nymph,
-    SKILLS.Restoration, SKILLS.Streetwise],
-  Stendarr: [SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike, SKILLS.Daedric,
-    SKILLS.Dodging, SKILLS.Medical, SKILLS.Restoration],
-  Zenithar: [SKILLS.BluntWeapon, SKILLS.Centaurian, SKILLS.Daedric, SKILLS.Etiquette,
-    SKILLS.Giantish, SKILLS.Harpy, SKILLS.Mercantile, SKILLS.Orcish,
-    SKILLS.Pickpocket, SKILLS.Spriggan, SKILLS.Streetwise, SKILLS.Thaumaturgy],
+  Akatosh: [
+    SKILLS.Alteration,
+    SKILLS.Daedric,
+    SKILLS.Destruction,
+    SKILLS.Dragonish,
+    SKILLS.LongBlade,
+    SKILLS.Running,
+    SKILLS.Stealth,
+  ],
+  Arkay: [
+    SKILLS.Axe,
+    SKILLS.Backstabbing,
+    SKILLS.Daedric,
+    SKILLS.Destruction,
+    SKILLS.Medical,
+    SKILLS.Restoration,
+    SKILLS.ShortBlade,
+  ],
+  Dibella: [
+    SKILLS.Daedric,
+    SKILLS.Etiquette,
+    SKILLS.Illusion,
+    SKILLS.Lockpicking,
+    SKILLS.LongBlade,
+    SKILLS.Nymph,
+    SKILLS.Orcish,
+    SKILLS.Restoration,
+  ],
+  Julianos: [
+    SKILLS.Alteration,
+    SKILLS.Daedric,
+    SKILLS.Impish,
+    SKILLS.Lockpicking,
+    SKILLS.Mysticism,
+    SKILLS.ShortBlade,
+    SKILLS.Thaumaturgy,
+  ],
+  Kynareth: [
+    SKILLS.Archery,
+    SKILLS.Climbing,
+    SKILLS.Daedric,
+    SKILLS.Destruction,
+    SKILLS.Dodging,
+    SKILLS.Dragonish,
+    SKILLS.Harpy,
+    SKILLS.Illusion,
+    SKILLS.Jumping,
+    SKILLS.Running,
+    SKILLS.Stealth,
+  ],
+  Mara: [
+    SKILLS.Archery,
+    SKILLS.CriticalStrike,
+    SKILLS.Daedric,
+    SKILLS.Etiquette,
+    SKILLS.Harpy,
+    SKILLS.Illusion,
+    SKILLS.Medical,
+    SKILLS.Nymph,
+    SKILLS.Restoration,
+    SKILLS.Streetwise,
+  ],
+  Stendarr: [
+    SKILLS.Axe,
+    SKILLS.BluntWeapon,
+    SKILLS.CriticalStrike,
+    SKILLS.Daedric,
+    SKILLS.Dodging,
+    SKILLS.Medical,
+    SKILLS.Restoration,
+  ],
+  Zenithar: [
+    SKILLS.BluntWeapon,
+    SKILLS.Centaurian,
+    SKILLS.Daedric,
+    SKILLS.Etiquette,
+    SKILLS.Giantish,
+    SKILLS.Harpy,
+    SKILLS.Mercantile,
+    SKILLS.Orcish,
+    SKILLS.Pickpocket,
+    SKILLS.Spriggan,
+    SKILLS.Streetwise,
+    SKILLS.Thaumaturgy,
+  ],
 });
 
 /** Temple templeData (:132-142), the whole RankData row per divine.
@@ -87,14 +154,134 @@ const TEMPLE_SKILLS = Object.freeze({
  *
  *  Note Arkay's blessing id is 0 - verbatim, not a gap. */
 export const TEMPLE_DATA = Object.freeze({
-  Akatosh: { library: 2, healing: 1, buyPotions: 4, makePotions: 5, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 7, welcome: 5290, promotion: 5245, templeName: 4058, blessing: 709 },
-  Arkay: { library: 3, healing: 0, buyPotions: 1, makePotions: 4, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: 4, summoning: 7, welcome: 5287, promotion: 5242, templeName: 4055, blessing: 0 },
-  Dibella: { library: 4, healing: 2, buyPotions: 1, makePotions: 5, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 7, welcome: 5290, promotion: 5247, templeName: 4059, blessing: 712 },
-  Julianos: { library: 0, healing: 2, buyPotions: -1, makePotions: -1, buyMagic: 3, makeMagic: 5, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 6, welcome: 6610, promotion: 5246, templeName: 4060, blessing: 710 },
-  Kynareth: { library: 4, healing: 1, buyPotions: -1, makePotions: -1, buyMagic: -1, makeMagic: -1, buySpells: 3, makeSpells: 6, soulGems: -1, summoning: 7, welcome: 5290, promotion: 5249, templeName: 4062, blessing: 717 },
-  Mara: { library: 4, healing: 1, buyPotions: 2, makePotions: 5, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 7, welcome: 5289, promotion: 5244, templeName: 4057, blessing: 707 },
-  Stendarr: { library: 4, healing: 0, buyPotions: 2, makePotions: 5, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 7, welcome: 5289, promotion: 5248, templeName: 4061, blessing: 716 },
-  Zenithar: { library: 4, healing: 1, buyPotions: 1, makePotions: 6, buyMagic: -1, makeMagic: -1, buySpells: -1, makeSpells: -1, soulGems: -1, summoning: 8, welcome: 5288, promotion: 5243, templeName: 4056, blessing: 705 },
+  Akatosh: {
+    library: 2,
+    healing: 1,
+    buyPotions: 4,
+    makePotions: 5,
+    buyMagic: -1,
+    makeMagic: -1,
+    buySpells: -1,
+    makeSpells: -1,
+    soulGems: -1,
+    summoning: 7,
+    welcome: 5290,
+    promotion: 5245,
+    templeName: 4058,
+    blessing: 709,
+  },
+  Arkay: {
+    library: 3,
+    healing: 0,
+    buyPotions: 1,
+    makePotions: 4,
+    buyMagic: -1,
+    makeMagic: -1,
+    buySpells: -1,
+    makeSpells: -1,
+    soulGems: 4,
+    summoning: 7,
+    welcome: 5287,
+    promotion: 5242,
+    templeName: 4055,
+    blessing: 0,
+  },
+  Dibella: {
+    library: 4,
+    healing: 2,
+    buyPotions: 1,
+    makePotions: 5,
+    buyMagic: -1,
+    makeMagic: -1,
+    buySpells: -1,
+    makeSpells: -1,
+    soulGems: -1,
+    summoning: 7,
+    welcome: 5290,
+    promotion: 5247,
+    templeName: 4059,
+    blessing: 712,
+  },
+  Julianos: {
+    library: 0,
+    healing: 2,
+    buyPotions: -1,
+    makePotions: -1,
+    buyMagic: 3,
+    makeMagic: 5,
+    buySpells: -1,
+    makeSpells: -1,
+    soulGems: -1,
+    summoning: 6,
+    welcome: 6610,
+    promotion: 5246,
+    templeName: 4060,
+    blessing: 710,
+  },
+  Kynareth: {
+    library: 4,
+    healing: 1,
+    buyPotions: -1,
+    makePotions: -1,
+    buyMagic: -1,
+    makeMagic: -1,
+    buySpells: 3,
+    makeSpells: 6,
+    soulGems: -1,
+    summoning: 7,
+    welcome: 5290,
+    promotion: 5249,
+    templeName: 4062,
+    blessing: 717,
+  },
+  Mara: {
+    library: 4,
+    healing: 1,
+    buyPotions: 2,
+    makePotions: 5,
+    buyMagic: -1,
+    makeMagic: -1,
+    buySpells: -1,
+    makeSpells: -1,
+    soulGems: -1,
+    summoning: 7,
+    welcome: 5289,
+    promotion: 5244,
+    templeName: 4057,
+    blessing: 707,
+  },
+  Stendarr: {
+    library: 4,
+    healing: 0,
+    buyPotions: 2,
+    makePotions: 5,
+    buyMagic: -1,
+    makeMagic: -1,
+    buySpells: -1,
+    makeSpells: -1,
+    soulGems: -1,
+    summoning: 7,
+    welcome: 5289,
+    promotion: 5248,
+    templeName: 4061,
+    blessing: 716,
+  },
+  Zenithar: {
+    library: 4,
+    healing: 1,
+    buyPotions: 1,
+    makePotions: 6,
+    buyMagic: -1,
+    makeMagic: -1,
+    buySpells: -1,
+    makeSpells: -1,
+    soulGems: -1,
+    summoning: 8,
+    welcome: 5288,
+    promotion: 5243,
+    templeName: 4056,
+    blessing: 705,
+  },
 });
 
 /** Temple.cs :27-29 - shared across every divine. */
@@ -104,14 +291,32 @@ export const TEMPLE_TEXT = Object.freeze({ ineligibleBadRep: 745, ineligibleLowS
  *  makes the service-rank columns load-bearing: RankData.GetPromotionMsgId
  *  asks which service opens AT this rank and announces that one. */
 export const TEMPLE_PROMOTION = Object.freeze({
-  buyPotions: 6600, library: 6601, makePotions: 6602, soulGems: 6603, summoning: 6604,
-  healing: 6605, buySpells: 6606, makeSpells: 6607, buyMagic: 6608, makeMagic: 6609,
+  buyPotions: 6600,
+  library: 6601,
+  makePotions: 6602,
+  soulGems: 6603,
+  summoning: 6604,
+  healing: 6605,
+  buySpells: 6606,
+  makeSpells: 6607,
+  buyMagic: 6608,
+  makeMagic: 6609,
   highest: 5241,
 });
 /** RankData.GetPromotionMsgId, in DFU's own order - rank 9 first, then
  *  the services in declaration order, then the divine's default. */
-const TEMPLE_SERVICE_ORDER = ['library', 'healing', 'buyPotions', 'makePotions',
-  'buyMagic', 'makeMagic', 'buySpells', 'makeSpells', 'soulGems', 'summoning'];
+const TEMPLE_SERVICE_ORDER = [
+  'library',
+  'healing',
+  'buyPotions',
+  'makePotions',
+  'buyMagic',
+  'makeMagic',
+  'buySpells',
+  'makeSpells',
+  'soulGems',
+  'summoning',
+];
 export function templePromotionId(data, rank) {
   if (rank === 9) return TEMPLE_PROMOTION.highest;
   for (const svc of TEMPLE_SERVICE_ORDER) {
@@ -124,12 +329,21 @@ export function templePromotionId(data, rank) {
  *  unlike the Temple, the orders differ by faction and message, not by
  *  what they ask of you. */
 const KNIGHTLY_SKILLS = Object.freeze([
-  SKILLS.Archery, SKILLS.CriticalStrike, SKILLS.Dragonish, SKILLS.Etiquette,
-  SKILLS.Giantish, SKILLS.LongBlade, SKILLS.Medical,
+  SKILLS.Archery,
+  SKILLS.CriticalStrike,
+  SKILLS.Dragonish,
+  SKILLS.Etiquette,
+  SKILLS.Giantish,
+  SKILLS.LongBlade,
+  SKILLS.Medical,
 ]);
 /** KnightlyOrder.cs :27-31. */
 export const KNIGHTLY_TEXT = Object.freeze({
-  ineligibleBadRep: 751, ineligibleLowSkill: 750, eligible: 752, welcome: 5291, promotion: 5237,
+  ineligibleBadRep: 751,
+  ineligibleLowSkill: 750,
+  eligible: 752,
+  welcome: 5291,
+  promotion: 5237,
 });
 
 /** A Temple as a guild record - the shape G1's rank law consumes. */
@@ -146,7 +360,9 @@ export function templeOf(divine) {
     factionId,
     skills: TEMPLE_SKILLS[divine],
     text: { ...TEMPLE_TEXT, welcome: d.welcome, promotion: d.promotion },
-    get rankTitles() { return shownRankTitles(localizedText('templeRanks', TEMPLE_RANKS), TEMPLE_RANKS, TEMPLE_RANK_TITLES); },
+    get rankTitles() {
+      return shownRankTitles(localizedText('templeRanks', TEMPLE_RANKS), TEMPLE_RANKS, TEMPLE_RANK_TITLES);
+    },
     // Temple.cs:389-398 overrides GetTitle twice over: a non-member
     // reads "nonMember" rather than their name, and ranks 9 and 6 are
     // gender-swapped - DFU annotating each with its reason ("Not
@@ -172,8 +388,10 @@ export function orderOf(order) {
     factionId,
     skills: KNIGHTLY_SKILLS,
     text: KNIGHTLY_TEXT,
-    get rankTitles() { return shownRankTitles(localizedText('knightlyOrderRanks', KNIGHTLY_RANKS), KNIGHTLY_RANKS, KNIGHTLY_RANK_TITLES); },
-    femaleRankTitles: localizedTable({ 5: ['knightSister', 'Knight Sister'] }),   // KnightlyOrder.cs:123-124
+    get rankTitles() {
+      return shownRankTitles(localizedText('knightlyOrderRanks', KNIGHTLY_RANKS), KNIGHTLY_RANKS, KNIGHTLY_RANK_TITLES);
+    },
+    femaleRankTitles: localizedTable({ 5: ['knightSister', 'Knight Sister'] }), // KnightlyOrder.cs:123-124
     // KnightlyOrder.cs:83-86 overrides IsSatisfyQuestReqByLevel to true -
     // the orders and the Mages Guild are the only two of the six.
     questReqByLevel: true,
@@ -190,11 +408,8 @@ export function orderOf(order) {
     // own apparent bug and this port is bug-for-bug, so it is
     // reproduced rather than tidied. Falling through to null is
     // GetPromotionMsgId's `return PromotionMsgId` (5237, text.promotion).
-    promotionForRank: (rank, ctx) => (
-      rank === 4 ? 5238
-        : rank === 6 ? 5239
-          : rank === 9 ? (ctx?.ownsHouse?.() ? 5241 : 5240)
-            : null),
+    promotionForRank: (rank, ctx) =>
+      rank === 4 ? 5238 : rank === 6 ? 5239 : rank === 9 ? (ctx?.ownsHouse?.() ? 5241 : 5240) : null,
   };
 }
 
@@ -225,8 +440,14 @@ export function getDivine(factionDict, factionId) {
  *  answers the bare name (:559-562). Handed the name GetDivine already
  *  resolved, where DFU re-resolves the faction id. */
 const DIVINE_NAMES = localizedStrings({
-  Akatosh: 'Akatosh', Arkay: 'Arkay', Dibella: 'Dibella', Julianos: 'Julianos',
-  Kynareth: 'Kynareth', Mara: 'Mara', Stendarr: 'Stendarr', Zenithar: 'Zenithar',
+  Akatosh: 'Akatosh',
+  Arkay: 'Arkay',
+  Dibella: 'Dibella',
+  Julianos: 'Julianos',
+  Kynareth: 'Kynareth',
+  Mara: 'Mara',
+  Stendarr: 'Stendarr',
+  Zenithar: 'Zenithar',
 });
 export const getDivineLocalized = (divine) => (Object.hasOwn(DIVINE_NAMES, divine) ? DIVINE_NAMES[divine] : divine);
 
@@ -270,10 +491,14 @@ export const resolveVariantGuild = (factionDict) => (factionId) => {
  *  matching DFU's `default: return null`. */
 export function createGuildForGroup(guildGroup, buildingFactionId = 0, factionDict = null) {
   switch (guildGroup) {
-    case GUILD_GROUPS.FightersGuild: return GUILDS.FightersGuild;
-    case GUILD_GROUPS.MagesGuild: return GUILDS.MagesGuild;
-    case GUILD_GROUPS.GeneralPopulace: return GUILDS.ThievesGuild;
-    case GUILD_GROUPS.DarkBrotherHood: return GUILDS.DarkBrotherhood;
+    case GUILD_GROUPS.FightersGuild:
+      return GUILDS.FightersGuild;
+    case GUILD_GROUPS.MagesGuild:
+      return GUILDS.MagesGuild;
+    case GUILD_GROUPS.GeneralPopulace:
+      return GUILDS.ThievesGuild;
+    case GUILD_GROUPS.DarkBrotherHood:
+      return GUILDS.DarkBrotherhood;
     case GUILD_GROUPS.HolyOrder: {
       const divine = getDivine(factionDict, buildingFactionId);
       return divine ? templeOf(divine) : null;
@@ -282,7 +507,8 @@ export function createGuildForGroup(guildGroup, buildingFactionId = 0, factionDi
       const order = getOrder(buildingFactionId);
       return order ? orderOf(order) : null;
     }
-    default: return null;
+    default:
+      return null;
   }
 }
 

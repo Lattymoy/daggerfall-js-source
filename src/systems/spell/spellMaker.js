@@ -27,11 +27,10 @@
 // save envelope carries the whole record for these; see save.js.
 
 import { calculateCastCost, effectCost } from '../spellcost.js';
-import { skillValue } from '../skills.js';   // E8: the editor's per-effect cost reads the caster's own skill
-import { MAGIC_ONLY_KEYS } from '../effects.js';   // AUDIT 26 F181: the AllowedElements set, already read off the effect classes
+import { skillValue } from '../skills.js'; // E8: the editor's per-effect cost reads the caster's own skill
+import { MAGIC_ONLY_KEYS } from '../effects.js'; // AUDIT 26 F181: the AllowedElements set, already read off the effect classes
 import { totalGoldAmount, deductGold } from '../court.js';
-import { localizedText } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-
+import { localizedText } from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** AUDIT 26 F181 - THE ALLOWED TARGET AND ELEMENT SETS.
  *
@@ -57,18 +56,22 @@ import { localizedText } from '../textManager.js';   // L10N3d: DFU's Internal_S
  *  window's rows cycle (MagicAndEffectsEnums.cs:21-29, :36-44), so a
  *  stored classic INDEX is its bit's position. */
 export const TARGET_FLAGS = Object.freeze({
-  CasterOnly: 1, ByTouch: 2, SingleTargetAtRange: 4, AreaAroundCaster: 8, AreaAtRange: 16,
+  CasterOnly: 1,
+  ByTouch: 2,
+  SingleTargetAtRange: 4,
+  AreaAroundCaster: 8,
+  AreaAtRange: 16,
 });
 export const ELEMENT_FLAGS = Object.freeze({ Fire: 1, Cold: 2, Poison: 4, Shock: 8, Magic: 16 });
 /** EntityEffectBroker.cs:41-48. */
-export const TARGET_FLAGS_ALL = 31;      // every bit
-export const TARGET_FLAGS_SELF = 1;      // CasterOnly
-export const TARGET_FLAGS_OTHER = 30;    // every bit BUT CasterOnly
+export const TARGET_FLAGS_ALL = 31; // every bit
+export const TARGET_FLAGS_SELF = 1; // CasterOnly
+export const TARGET_FLAGS_OTHER = 30; // every bit BUT CasterOnly
 export const ELEMENT_FLAGS_ALL = 31;
 export const ELEMENT_FLAGS_MAGIC_ONLY = 16;
 /** The window stores a classic index 0..4; the enums declare their
  *  bits in that same order. */
-export const flagOfIndex = (i) => (1 << i);
+export const flagOfIndex = (i) => 1 << i;
 
 /** The effects whose AllowedTargets is NOT TargetFlags_All, by
  *  classic (type, subType) key - read off every effect class under
@@ -77,15 +80,57 @@ export const flagOfIndex = (i) => (1 << i);
  *  (8, 0..4) and is All, PacifyEffect is (33, 0..3) and is Other.
  *  Everything absent from both sets is TargetFlags_All. */
 const SELF_TARGET_KEYS = new Set([
-  '2,255', '6,0', '6,1', '6,2', '14,255', '15,255', '16,255', '17,255', '25,255',
-  '29,255', '39,0', '39,1', '39,2', '40,255', '43,255', '44,255',
-  '46,255',   // PARTY-MAP: Shared Cartography, the port's own - the caster's map is the one shared
+  '2,255',
+  '6,0',
+  '6,1',
+  '6,2',
+  '14,255',
+  '15,255',
+  '16,255',
+  '17,255',
+  '25,255',
+  '29,255',
+  '39,0',
+  '39,1',
+  '39,2',
+  '40,255',
+  '43,255',
+  '44,255',
+  '46,255', // PARTY-MAP: Shared Cartography, the port's own - the caster's map is the one shared
 ]);
 const OTHER_TARGET_KEYS = new Set([
-  '0,255', '1,0', '1,1', '1,2', '4,0', '4,1', '4,2', '5,255', '7,0',
-  '7,1', '7,2', '7,3', '7,4', '7,5', '7,6', '7,7', '11,0', '11,1',
-  '11,2', '11,3', '11,4', '11,5', '11,6', '11,7', '11,8', '11,9', '12,255',
-  '33,0', '33,1', '33,2', '33,3', '34,255',
+  '0,255',
+  '1,0',
+  '1,1',
+  '1,2',
+  '4,0',
+  '4,1',
+  '4,2',
+  '5,255',
+  '7,0',
+  '7,1',
+  '7,2',
+  '7,3',
+  '7,4',
+  '7,5',
+  '7,6',
+  '7,7',
+  '11,0',
+  '11,1',
+  '11,2',
+  '11,3',
+  '11,4',
+  '11,5',
+  '11,6',
+  '11,7',
+  '11,8',
+  '11,9',
+  '12,255',
+  '33,0',
+  '33,1',
+  '33,2',
+  '33,3',
+  '34,255',
 ]);
 
 export const allowedTargetsOf = (type, subType) => {
@@ -99,7 +144,7 @@ export const allowedTargetsOf = (type, subType) => {
  *  read off the same classes for the GetElementType law. The two
  *  derivations were cross-checked key for key and agree exactly. */
 export const allowedElementsOf = (type, subType) =>
-  (MAGIC_ONLY_KEYS.has(`${type},${subType}`) ? ELEMENT_FLAGS_MAGIC_ONLY : ELEMENT_FLAGS_ALL);
+  MAGIC_ONLY_KEYS.has(`${type},${subType}`) ? ELEMENT_FLAGS_MAGIC_ONLY : ELEMENT_FLAGS_ALL;
 
 /** UpdateAllowedButtons, verbatim. `slots` is the window's three, of
  *  which any may be empty - DFU's own loop skips a slot with no key. */
@@ -122,8 +167,8 @@ export function updateAllowedButtons(slots) {
   return { targets, elements, forced: false };
 }
 /** The two the default arm forces back to. */
-export const DEFAULT_TARGET_INDEX = 0;    // TargetTypes.CasterOnly
-export const DEFAULT_ELEMENT_INDEX = 4;   // ElementTypes.Magic
+export const DEFAULT_TARGET_INDEX = 0; // TargetTypes.CasterOnly
+export const DEFAULT_ELEMENT_INDEX = 4; // ElementTypes.Magic
 
 /** SelectFirstAllowedTargetType / SelectFirstAllowedElementType
  *  (:605-660): the FIRST set bit in declaration order, which for both
@@ -155,18 +200,25 @@ export function cycleAllowed(index, dir, flags) {
   return index;
 }
 
-export const MAX_EFFECTS_PER_SPELL = 3;      // maxEffectsPerSpell (SpellMakerWindow:131)
-export const DEFAULT_SPELL_ICON = 1;         // defaultSpellIcon (:132)
-export const SPELL_ICON_COUNT = 69;          // SpellIconCollection.SpellIconCount
-export const MAX_SPELL_NAME = 31;            // TextBox.MaxCharacters default
+export const MAX_EFFECTS_PER_SPELL = 3; // maxEffectsPerSpell (SpellMakerWindow:131)
+export const DEFAULT_SPELL_ICON = 1; // defaultSpellIcon (:132)
+export const SPELL_ICON_COUNT = 69; // SpellIconCollection.SpellIconCount
+export const MAX_SPELL_NAME = 31; // TextBox.MaxCharacters default
 
 /** The spinner ranges, inclusive (EffectSettingsEditorWindow's
  *  SetRange calls). Every setting starts at its minimum of 1. */
 export const SPINNER_RANGES = Object.freeze({
-  durationBase: [1, 60], durationMod: [1, 60], durationPerLevel: [1, 20],
-  chanceBase: [1, 100], chanceMod: [1, 100], chancePerLevel: [1, 20],
-  magnitudeBaseLow: [1, 100], magnitudeBaseHigh: [1, 100],
-  magnitudeLevelBase: [1, 100], magnitudeLevelHigh: [1, 100], magnitudePerLevel: [1, 20],
+  durationBase: [1, 60],
+  durationMod: [1, 60],
+  durationPerLevel: [1, 20],
+  chanceBase: [1, 100],
+  chanceMod: [1, 100],
+  chancePerLevel: [1, 20],
+  magnitudeBaseLow: [1, 100],
+  magnitudeBaseHigh: [1, 100],
+  magnitudeLevelBase: [1, 100],
+  magnitudeLevelHigh: [1, 100],
+  magnitudePerLevel: [1, 20],
 });
 
 /** A fresh effect's settings: every spinner at 1 (the editor's own
@@ -185,7 +237,8 @@ export const SPELL_ABSORPTION_CHANCE_BASE_MAX = 50;
 /** The [min, max] of `field` for the effect `effectKey` (its `type,subType` key), or undefined for no such field. */
 export function spinnerRange(field, effectKey = null) {
   const r = SPINNER_RANGES[field];
-  if (r && field === 'chanceBase' && effectKey === SPELL_ABSORPTION_KEY) return [r[0], SPELL_ABSORPTION_CHANCE_BASE_MAX];
+  if (r && field === 'chanceBase' && effectKey === SPELL_ABSORPTION_KEY)
+    return [r[0], SPELL_ABSORPTION_CHANCE_BASE_MAX];
   return r;
 }
 
@@ -216,7 +269,7 @@ export function applyPairRules(settings, changed) {
  *  pair rule). Answers the new settings object. */
 export function stepSetting(settings, field, delta, effectKey = null) {
   const next = { ...settings };
-  next[field] = clampSetting(field, (next[field] ?? 1) + delta, effectKey);   // ABSORB-NERF: the effect's own range
+  next[field] = clampSetting(field, (next[field] ?? 1) + delta, effectKey); // ABSORB-NERF: the effect's own range
   return applyPairRules(next, field);
 }
 
@@ -225,7 +278,7 @@ export function stepSetting(settings, field, delta, effectKey = null) {
  *  enhanced port's field. Answers the new settings object. */
 export function setSetting(settings, field, value, effectKey = null) {
   const next = { ...settings };
-  next[field] = clampSetting(field, Number(value), effectKey);   // ABSORB-NERF: the effect's own range
+  next[field] = clampSetting(field, Number(value), effectKey); // ABSORB-NERF: the effect's own range
   return applyPairRules(next, field);
 }
 
@@ -245,21 +298,35 @@ export const isReadyMadeSpellIndex = (i) => Number.isInteger(i) && i <= READY_MA
 /** Mint the next custom index; a restore re-seeds this below the
  *  lowest loaded one so a session that loads then makes cannot
  *  collide with a spell the save already carried. */
-export function mintCustomSpellIndex() { return _nextCustomIndex--; }
+export function mintCustomSpellIndex() {
+  return _nextCustomIndex--;
+}
 export function seedCustomSpellIndex(spells) {
   for (const sp of spells ?? []) {
-    if (typeof sp?.index === 'number' && !isReadyMadeSpellIndex(sp.index) && sp.index <= _nextCustomIndex) _nextCustomIndex = sp.index - 1;
+    if (typeof sp?.index === 'number' && !isReadyMadeSpellIndex(sp.index) && sp.index <= _nextCustomIndex)
+      _nextCustomIndex = sp.index - 1;
   }
 }
-export function _resetCustomIndexForTests() { _nextCustomIndex = -1; }
+export function _resetCustomIndexForTests() {
+  _nextCustomIndex = -1;
+}
 
 /** An empty classic effect slot: type -1 is the file's own sentinel
  *  ("no effect"), which every consumer already skips. */
 const emptyEffect = () => ({
-  type: -1, subType: -1,
-  durationBase: 0, durationMod: 0, durationPerLevel: 0,
-  chanceBase: 0, chanceMod: 0, chancePerLevel: 0,
-  magnitudeBaseLow: 0, magnitudeBaseHigh: 0, magnitudeLevelBase: 0, magnitudeLevelHigh: 0, magnitudePerLevel: 0,
+  type: -1,
+  subType: -1,
+  durationBase: 0,
+  durationMod: 0,
+  durationPerLevel: 0,
+  chanceBase: 0,
+  chanceMod: 0,
+  chancePerLevel: 0,
+  magnitudeBaseLow: 0,
+  magnitudeBaseHigh: 0,
+  magnitudeLevelBase: 0,
+  magnitudeLevelHigh: 0,
+  magnitudePerLevel: 0,
 });
 
 /** Build the classic record. slots = up to 3 { type, subType,
@@ -267,28 +334,46 @@ const emptyEffect = () => ({
  *  GetEffectEntries drops empty entries). The record is minted with a
  *  fresh negative index unless one is supplied (a save restore
  *  re-hydrating an existing custom spell). */
-export function buildCustomSpell({ slots, rangeType = 0, element = 4, name = '', icon = DEFAULT_SPELL_ICON, index = null }) {
+export function buildCustomSpell({
+  slots,
+  rangeType = 0,
+  element = 4,
+  name = '',
+  icon = DEFAULT_SPELL_ICON,
+  index = null,
+}) {
   const effects = [];
   for (const s of slots ?? []) {
     if (!s || s.type == null || s.type < 0) continue;
     const st = { ...blankEffectSettings(), ...(s.settings ?? {}) };
     // ABSORB-NERF: a Spell Absorption record never carries a chanceBase past the maker's own 50
-    if (`${s.type},${s.subType ?? -1}` === SPELL_ABSORPTION_KEY && st.chanceBase > SPELL_ABSORPTION_CHANCE_BASE_MAX) st.chanceBase = SPELL_ABSORPTION_CHANCE_BASE_MAX;
+    if (`${s.type},${s.subType ?? -1}` === SPELL_ABSORPTION_KEY && st.chanceBase > SPELL_ABSORPTION_CHANCE_BASE_MAX)
+      st.chanceBase = SPELL_ABSORPTION_CHANCE_BASE_MAX;
     effects.push({
-      type: s.type, subType: s.subType ?? -1,
-      durationBase: st.durationBase, durationMod: st.durationMod, durationPerLevel: st.durationPerLevel,
-      chanceBase: st.chanceBase, chanceMod: st.chanceMod, chancePerLevel: st.chancePerLevel,
-      magnitudeBaseLow: st.magnitudeBaseLow, magnitudeBaseHigh: st.magnitudeBaseHigh,
-      magnitudeLevelBase: st.magnitudeLevelBase, magnitudeLevelHigh: st.magnitudeLevelHigh,
+      type: s.type,
+      subType: s.subType ?? -1,
+      durationBase: st.durationBase,
+      durationMod: st.durationMod,
+      durationPerLevel: st.durationPerLevel,
+      chanceBase: st.chanceBase,
+      chanceMod: st.chanceMod,
+      chancePerLevel: st.chancePerLevel,
+      magnitudeBaseLow: st.magnitudeBaseLow,
+      magnitudeBaseHigh: st.magnitudeBaseHigh,
+      magnitudeLevelBase: st.magnitudeLevelBase,
+      magnitudeLevelHigh: st.magnitudeLevelHigh,
       magnitudePerLevel: st.magnitudePerLevel,
     });
     if (effects.length >= MAX_EFFECTS_PER_SPELL) break;
   }
   while (effects.length < MAX_EFFECTS_PER_SPELL) effects.push(emptyEffect());
   return {
-    effects, element, rangeType, name,
-    icon: ((icon % SPELL_ICON_COUNT) + SPELL_ICON_COUNT) % SPELL_ICON_COUNT,   // SetIcon's index % count
-    cost: 0,   // the file's u16; nothing in the cast path reads it (the live formula prices every spell)
+    effects,
+    element,
+    rangeType,
+    name,
+    icon: ((icon % SPELL_ICON_COUNT) + SPELL_ICON_COUNT) % SPELL_ICON_COUNT, // SetIcon's index % count
+    cost: 0, // the file's u16; nothing in the cast path reads it (the live formula prices every spell)
     index: index ?? mintCustomSpellIndex(),
     custom: true,
   };
@@ -297,7 +382,9 @@ export function buildCustomSpell({ slots, rangeType = 0, element = 4, name = '',
 /** The window's live totals: gold to buy, spell points to cast. One
  *  home - calculateCastCost applies the per-effect component costs,
  *  the caster's magic skills, the target multiplier and the floor. */
-export function spellMakerCost(spell, entity) { return calculateCastCost(spell, entity); }
+export function spellMakerCost(spell, entity) {
+  return calculateCastCost(spell, entity);
+}
 
 /** ROAD-E E8 - the SETTINGS EDITOR's own cost label
  *  (DaggerfallEffectSettingsEditorWindow.UpdateCosts, :373-381):
@@ -318,7 +405,7 @@ export function editedEffectCost(slot, entity) {
 
 // ---- the purchase ladder -------------------------------------------
 
-export const SPELLBOOK_TEMPLATE_INDEX = 132;   // MiscItems Spellbook (startingGear's own constant)
+export const SPELLBOOK_TEMPLATE_INDEX = 132; // MiscItems Spellbook (startingGear's own constant)
 // The refusal texts, in DFU's order. The classic records are 1702-1705;
 // the no-effects line is DFU's own string, not a classic record.
 export const NO_SPELLBOOK_ID = 1703;
@@ -336,8 +423,8 @@ export const noEffectsText = () => localizedText('noEffectsError', NO_EFFECTS_TE
  *  (DaggerfallSpellMakerWindow.cs:749-753, whose own comment says
  *  "Presence of spellbook is also checked earlier"). AUDIT 63 F12 -
  *  the port had only the inner one. */
-export const hasSpellbook = (entity) => (entity?.items ?? []).some(
-  (it) => it.group === 'MiscItems' && it.templateIndex === SPELLBOOK_TEMPLATE_INDEX);
+export const hasSpellbook = (entity) =>
+  (entity?.items ?? []).some((it) => it.group === 'MiscItems' && it.templateIndex === SPELLBOOK_TEMPLATE_INDEX);
 
 /**
  * BuyButton's validation ladder, in DFU's exact ORDER (:740-777):

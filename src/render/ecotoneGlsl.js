@@ -30,7 +30,9 @@ const f = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
  * @param {string} decode
  */
 export function ecotoneGlsl(decode = '') {
-  const [w0, w1] = ECOTONE.warp, [p0, p1] = ECOTONE.patch, e = ECOTONE.edge;
+  const [w0, w1] = ECOTONE.warp,
+    [p0, p1] = ECOTONE.patch,
+    e = ECOTONE.edge;
   return `// ECOTONE1 (render/ecotoneGlsl.js; the law is world/ecotone.js)
 uniform sampler2DArray uEcoArr1;
 uniform sampler2DArray uEcoArr2;

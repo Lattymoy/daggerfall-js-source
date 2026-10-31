@@ -119,7 +119,7 @@ test('PITS-WORLD by source: the dungeon host knows the abyss by its own law - a 
   assert.match(d, /: isAbyssMapId\(dfLocation\?\.mapTableData\?\.mapId\) \? 'ocean-holes'/);
   assert.doesNotMatch(d, />= 0x60000000/, 'no reader takes a range for the abyss');
   assert.match(rd('src/scenes/oceanHolesAbyss.js'), /const abyssMapId = \(\) => getAbyssMapId\(data\.PitMapX, data\.PitMapY\);/);
-  assert.match(rd('src/scenes/oceanHolesHost.js'), /if \(openZoneAt\(st\.mapX, st\.mapY\)\) \{ markTerrainProcessed\(st, v, 'rejected:open-zone'\); return; \}/);
+  assert.match(rd('src/scenes/oceanHolesHost.js'), /if \(openZoneAt\(st\.mapX, st\.mapY\)\) \{\n\s*markTerrainProcessed\(st, v, 'rejected:open-zone'\);\n\s*return;\n\s*\}/);
   assert.doesNotMatch(hostText('src/scenes/world.js'), /openZoneAt/, 'the host hands nothing: the module asks the zone itself');
 });
 

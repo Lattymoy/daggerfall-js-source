@@ -13,14 +13,14 @@
 // read from two keys no row wrote; BLOOD2g retired those keys for the
 // one `blood-gore` tier below. Every key here has a registry row now.
 import { getPref } from '../../systems/uiPrefs.js';
-import { pageParam } from '../../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
+import { pageParam } from '../../systems/pageQuery.js'; // PERF-URL: the page's query, parsed once a search
 
 export const BLOOD_PREF = 'blood-marks';
 /** ON by default: the splash has always played, and the mark is what a
  *  player expects to still be there. `?blood=off` and the row both turn
  *  it off. */
 export const bloodMarksOn = (search = globalThis.location?.search ?? '') =>
-  getPref(BLOOD_PREF) !== false && pageParam('blood', search) !== 'off';   // BLOOD1 AUDIT 3: the door the comment above promised and nothing had built - windAudio.js's own shape
+  getPref(BLOOD_PREF) !== false && pageParam('blood', search) !== 'off'; // BLOOD1 AUDIT 3: the door the comment above promised and nothing had built - windAudio.js's own shape
 
 /** BLOOD2g - THE GORE DIAL. ONE key for how much blood there is,
  *  stepped, because that is the question a player asks; the two numbers

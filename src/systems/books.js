@@ -12,9 +12,9 @@
 import { BOOK_ID_TITLES } from './booksData.js';
 import { messageToBookFilename, BookFile } from '../formats/bookFile.js';
 import { templateByIndex, mintCondition } from './item/itemTemplates.js';
-import { localizedBookExists, localizedBookHeader } from './localizedBook.js';   // L10N3f: LocalizedBook.cs, a translation's books
-import { globalVarsTable } from './quest/tables.js';   // L10N3f: LocalizedBookMeetsConditions reads QuestMachine.GlobalVarsTable
-import { PORT_BOOK_IDS, isPortBook, portBookTitle, portBookPrice } from './portBooks.js';   // WB12c: the port's own books
+import { localizedBookExists, localizedBookHeader } from './localizedBook.js'; // L10N3f: LocalizedBook.cs, a translation's books
+import { globalVarsTable } from './quest/tables.js'; // L10N3f: LocalizedBookMeetsConditions reads QuestMachine.GlobalVarsTable
+import { PORT_BOOK_IDS, isPortBook, portBookTitle, portBookPrice } from './portBooks.js'; // WB12c: the port's own books
 
 const BOOK_IDS = Object.freeze([...BOOK_ID_TITLES.keys()]);
 /** WB12c: the books a bookseller's shelf and a library's draw from - the classic ones and the port's own, each at the
@@ -31,8 +31,8 @@ export const BOOK_TEMPLATE = 277;
 /** The same lookup without the warn - the price warm walks the whole
  *  mapping and a miss there is not news. */
 const bookFileNameQuiet = (id) => {
-  const key = id === 10000 ? 5 : id;   // legacy save alias
-  return BOOK_ID_TITLES.has(key) || isPortBook(key) ? messageToBookFilename(key) : null;   // WB12c: a port book's name is its id's own
+  const key = id === 10000 ? 5 : id; // legacy save alias
+  return BOOK_ID_TITLES.has(key) || isPortBook(key) ? messageToBookFilename(key) : null; // WB12c: a port book's name is its id's own
 };
 
 /** GetBookFileName: mapped ids only; unknown ids warn and answer null
@@ -67,7 +67,9 @@ export function getRandomBookID(roll = Math.random) {
  *  in, a book waiting on a global is not drawn: the variable reads as
  *  not yet set. */
 let _globalVarSet = null;
-export function setBookGlobalVars(fn) { _globalVarSet = typeof fn === 'function' ? fn : null; }
+export function setBookGlobalVars(fn) {
+  _globalVarSet = typeof fn === 'function' ? fn : null;
+}
 
 /** LocalizedBookMeetsConditions (ItemHelper.cs:648-665): the current
  *  language's -LOC book is not IsUnique, and its WhenVarSet global -
@@ -76,10 +78,15 @@ export function setBookGlobalVars(fn) { _globalVarSet = typeof fn === 'function'
 export function localizedBookMeetsConditions(id) {
   const book = localizedBookHeader(bookFileNameQuiet(id));
   if (!book) return false;
-  let globalVar = -1, globalVarSet = false;
+  let globalVar = -1,
+    globalVarSet = false;
   if (book.whenVarSet) {
     let table = null;
-    try { table = globalVarsTable(); } catch { /* no quest tables loaded: no variable matches, so none is waited on */ }
+    try {
+      table = globalVarsTable();
+    } catch {
+      /* no quest tables loaded: no variable matches, so none is waited on */
+    }
     if (table?.hasValue(book.whenVarSet)) {
       globalVar = Number.parseInt(table.getValue('id', book.whenVarSet), 10);
       globalVarSet = !!_globalVarSet?.(globalVar);
@@ -144,12 +151,16 @@ export function setBookPrice(id, price) {
 /** How many book files the host has priced (0 = never warmed). */
 export const bookPriceCount = () => _bookPrices.size;
 /** Test seam: the registry is module state, so it needs an unwind. */
-export function clearBookPrices() { _bookPrices.clear(); _warnedNoPrices = false; }
+export function clearBookPrices() {
+  _bookPrices.clear();
+  _warnedNoPrices = false;
+}
 
 /** BookFile.Price for a book id, or null when the registry has no
  *  entry for it (no ARENA2 warmed, or a file that would not open -
  *  DFU's own `!TryImportBook && !OpenBook` arm). */
-export const bookFilePrice = (id) => (isPortBook(id) ? portBookPrice(id) : _bookPrices.get(id === 10000 ? 5 : id) ?? null);   // WB12c: a port book's is its own bytes'
+export const bookFilePrice = (id) =>
+  isPortBook(id) ? portBookPrice(id) : (_bookPrices.get(id === 10000 ? 5 : id) ?? null); // WB12c: a port book's is its own bytes'
 
 /** The value a minted book carries: the FILE price, or the template's
  *  basePrice with one loud line when nothing warmed the registry. */
@@ -158,7 +169,9 @@ export function bookValue(id) {
   if (price != null) return price;
   if (!_warnedNoPrices) {
     _warnedNoPrices = true;
-    console.log('[books] no BOOKS prices registered - book values fall back to the template basePrice (loud interim: warm them with preloadBookPrices)');
+    console.log(
+      '[books] no BOOKS prices registered - book values fall back to the template basePrice (loud interim: warm them with preloadBookPrices)',
+    );
   }
   return templateByIndex(BOOK_TEMPLATE)?.basePrice ?? 0;
 }
@@ -206,7 +219,7 @@ export function createBook(id) {
     group: 'Books',
     templateIndex: BOOK_TEMPLATE,
     name: templateByIndex(BOOK_TEMPLATE)?.name,
-    message: id,          // `message = id`, verbatim - the 10000 alias is the FILENAME's, not the item's
+    message: id, // `message = id`, verbatim - the 10000 alias is the FILENAME's, not the item's
     value: bookValue(id),
   });
 }
@@ -222,14 +235,18 @@ export function createBook(id) {
  */
 export async function loadBookPrices(fetchBytes) {
   if (typeof fetchBytes !== 'function') return _bookPrices.size;
-  await Promise.all(BOOK_IDS.map(async (id) => {
-    const name = bookFileNameQuiet(id);
-    if (!name) return;
-    try {
-      const bf = new BookFile();
-      bf.load(await fetchBytes(name), name);
-      setBookPrice(id, bf.price);
-    } catch { /* a missing or truncated book keeps the template price */ }
-  }));
+  await Promise.all(
+    BOOK_IDS.map(async (id) => {
+      const name = bookFileNameQuiet(id);
+      if (!name) return;
+      try {
+        const bf = new BookFile();
+        bf.load(await fetchBytes(name), name);
+        setBookPrice(id, bf.price);
+      } catch {
+        /* a missing or truncated book keeps the template price */
+      }
+    }),
+  );
   return _bookPrices.size;
 }

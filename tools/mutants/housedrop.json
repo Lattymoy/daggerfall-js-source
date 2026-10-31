@@ -101,7 +101,7 @@
   {
     "name": "HOUSE-torch-drops-anyway",
     "file": "src/systems/handheldTorches.js",
-    "old": "    const no = dropRefusal?.() ?? null;   // HOUSE-DROP: a floor that refuses a light - said, and the light stays in hand\n    if (no) { say(no); return; }",
+    "old": "    const no = dropRefusal?.() ?? null; // HOUSE-DROP: a floor that refuses a light - said, and the light stays in hand\n    if (no) {\n      say(no);\n      return;\n    }",
     "new": "    const no = null;",
     "tests": [
       "test/systems/housedrop.test.js"
@@ -110,7 +110,7 @@
   {
     "name": "HOUSE-torch-thrown-anyway",
     "file": "src/systems/handheldTorches.js",
-    "old": "    const no = dropRefusal?.() ?? null;   // HOUSE-DROP: and a thrown one lands on the same floor\n    if (no) { say(no); return; }",
+    "old": "    const no = dropRefusal?.() ?? null; // HOUSE-DROP: and a thrown one lands on the same floor\n    if (no) {\n      say(no);\n      return;\n    }",
     "new": "    const no = null;",
     "tests": [
       "test/systems/housedrop.test.js"

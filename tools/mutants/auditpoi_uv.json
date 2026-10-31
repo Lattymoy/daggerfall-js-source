@@ -20,8 +20,8 @@
   {
     "name": "AUDITPOI-M1-their-corners-left-unlaid",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "      let from = firstOf[r];",
-    "new": "      let from = -1;",
+    "old": "          let from = firstOf[r];",
+    "new": "          let from = -1;",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDITPOI-M2-pieces-joined-through-a-face-of-no-area",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "      if (live[i] && live[j]) { join(fp, i, j); joinAt(i, j, wa); joinAt(i, j, wb); } else later.push(i, j, wa, wb);",
-    "new": "      join(fp, i, j); if (live[i] && live[j]) { joinAt(i, j, wa); joinAt(i, j, wb); } else later.push(i, j, wa, wb);",
+    "old": "        if (live[i] && live[j]) {\n          join(fp, i, j);",
+    "new": "        join(fp, i, j);\n        if (live[i] && live[j]) {",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDITPOI-M3-the-uv-islands-joined-where-the-uvs-part",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "        if (!sameUv(s, ca, cornerAt(s, g, s.weld[s.tris[ca]])) || !sameUv(s, cb, cornerAt(s, g, s.weld[s.tris[cb]]))) continue;\n",
-    "new": "",
+    "old": "        if (!sameUv(s, ca, cornerAt(s, g, s.weld[s.tris[ca]])) || !sameUv(s, cb, cornerAt(s, g, s.weld[s.tris[cb]])))\n          continue;\n        const ra = find(f),",
+    "new": "        const ra = find(f),",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDITPOI-M3-the-pack-one-island",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "      const isl = uvIslandsOf(s, selectedFaces());",
-    "new": "      const isl = [selectedFaces()];",
+    "old": "      if (busy) return 0;\n      const isl = uvIslandsOf(s, selectedFaces());",
+    "new": "      if (busy) return 0;\n      const isl = [selectedFaces()];",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDITPOI-M3-the-density-one-island",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "setDensity(target, w, h) { const isl = uvIslandsOf(s, selectedFaces());",
-    "new": "setDensity(target, w, h) { const isl = [selectedFaces()];",
+    "old": "    setDensity(target, w, h) {\n      const isl = uvIslandsOf(s, selectedFaces());",
+    "new": "    setDensity(target, w, h) {\n      const isl = [selectedFaces()];",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDITPOI-M4-the-piece-unsized",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "  if (areaUv > 0) { const k = Math.sqrt(area3 / areaUv);",
-    "new": "  if (false) { const k = Math.sqrt(area3 / areaUv);",
+    "old": "  if (areaUv > 0) {",
+    "new": "  if (false) {",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDITPOI-M4-sized-by-its-area-not-its-length",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "const k = Math.sqrt(area3 / areaUv);",
-    "new": "const k = area3 / areaUv;",
+    "old": "    const k = Math.sqrt(area3 / areaUv);",
+    "new": "    const k = area3 / areaUv;",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDITPOI-M5-the-table-read-on-every-ask",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "    if (!topoCache || topoCache.uvGen !== uvGen || topoCache.sub !== shownSub) topoCache",
-    "new": "    if (true) topoCache",
+    "old": "    if (!topoCache || topoCache.uvGen !== uvGen || topoCache.sub !== shownSub)\n      topoCache = { uvGen, sub: shownSub, ...uvVertices(s, shownFaces()) };",
+    "new": "    if (true) topoCache = { uvGen, sub: shownSub, ...uvVertices(s, shownFaces()) };",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDITPOI-M5-an-island-taken-for-each-of-its-faces",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "          if (taken[i]) continue;\n",
-    "new": "",
+    "old": "          if (taken[i]) continue;\n          taken[i] = 1;",
+    "new": "          taken[i] = 1;",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "AUDITPOI-M6-a-whole-copy-a-step",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "    if (within) for (const c of within) look(c); else for (let c = 0; c < s.faces * 3; c++) look(c);",
+    "old": "    if (within) for (const c of within) look(c);\n    else for (let c = 0; c < s.faces * 3; c++) look(c);",
     "new": "    for (let c = 0; c < s.faces * 3; c++) cs.push(c);",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "AUDITPOI-M6-the-budget-unread",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "(held > undoBytes && undo.length > 1)",
-    "new": "(false && undo.length > 1)",
+    "old": "    while (undo.length > UV_UNDO_DEPTH || (held > undoBytes && undo.length > 1)) {",
+    "new": "    while (undo.length > UV_UNDO_DEPTH || (false && undo.length > 1)) {",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDITPOI-M6-a-steps-seams-unrestored",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "    for (const k of e.del) s.seams.delete(k);\n",
-    "new": "",
+    "old": "    for (const k of e.del) s.seams.delete(k);\n    for (const k of e.add) s.seams.add(k);",
+    "new": "    for (const k of e.add) s.seams.add(k);",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDITPOI-M7-the-axis-corner-at-its-own-angle",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "  for (let k = 0; k < 3; k++) if (!(rho[k] > onAxis)) ang[k] = sum / off;\n",
-    "new": "",
+    "old": "  for (let k = 0; k < 3; k++) if (!(rho[k] > onAxis)) ang[k] = sum / off;\n}",
+    "new": "}",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDITPOI-M8-the-lights-in-the-models-frame",
     "file": "src/poi/poiThumb.js",
-    "old": "export const THUMB_KEY = fromEye(-0.45, 0.8, 0.55), THUMB_FILL = fromEye(0.7, 0.2, 0.4);",
-    "new": "export const THUMB_KEY = norm([-0.45, 0.8, 0.55]), THUMB_FILL = norm([0.7, 0.2, 0.4]);",
+    "old": "export const THUMB_KEY = fromEye(-0.45, 0.8, 0.55),\n  THUMB_FILL = fromEye(0.7, 0.2, 0.4);",
+    "new": "export const THUMB_KEY = norm([-0.45, 0.8, 0.55]),\n  THUMB_FILL = norm([0.7, 0.2, 0.4]);",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDITPOI-M8-the-key-on-the-right",
     "file": "src/poi/poiThumb.js",
-    "old": "export const THUMB_KEY = fromEye(-0.45,",
-    "new": "export const THUMB_KEY = fromEye(0.45,",
+    "old": "export const THUMB_KEY = fromEye(-0.45, 0.8, 0.55),",
+    "new": "export const THUMB_KEY = fromEye(0.45, 0.8, 0.55),",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDITPOI-M9-the-turns-applied-before-a-fit",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "  if (!place) return 0;\n  items.forEach",
-    "new": "  if (!place) { for (const it of items) it.corners.forEach((c, j) => { s.cornerUv[c * 2] = it.at[j * 2]; s.cornerUv[c * 2 + 1] = it.at[j * 2 + 1]; }); return 0; }\n  items.forEach",
+    "old": "  if (!place) return 0;",
+    "new": "  if (!place) {\n    for (const it of items)\n      it.corners.forEach((c, j) => {\n        s.cornerUv[c * 2] = it.at[j * 2];\n        s.cornerUv[c * 2 + 1] = it.at[j * 2 + 1];\n      });\n    return 0;\n  }",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDITPOI-M9-the-tie-by-an-amount",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "    if (area < bestArea * (1 - 1e-12)) { bestArea = area; best = a; }",
-    "new": "    if (area < bestArea - 1e-12) { bestArea = area; best = a; }",
+    "old": "    if (area < bestArea * (1 - 1e-12)) {",
+    "new": "    if (area < bestArea - 1e-12) {",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDITPOI-M9-the-panels-word-unsaid",
     "file": "src/ui/poi/poiUvPanel.js",
-    "old": "() => { if (!ed.pack({ margin, rotate })) say(",
-    "new": "() => { if (!ed.pack({ margin, rotate }) && false) say(",
+    "old": "      if (!ed.pack({ margin, rotate }))",
+    "new": "      if (!ed.pack({ margin, rotate }) && false)",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -237,7 +237,7 @@
     "name": "AUDITPOI-M11-the-corners-averaged",
     "file": "src/poi/uv/uvMesh.js",
     "old": "  const [u0, v0, u1, v1] = uvBounds(s, corners);\n  return [(u0 + u1) / 2, (v0 + v1) / 2];",
-    "new": "  let u = 0, v = 0;\n  for (const c of corners) { u += s.cornerUv[c * 2]; v += s.cornerUv[c * 2 + 1]; }\n  return [u / corners.length, v / corners.length];",
+    "new": "  let u = 0,\n    v = 0;\n  for (const c of corners) {\n    u += s.cornerUv[c * 2];\n    v += s.cornerUv[c * 2 + 1];\n  }\n  return [u / corners.length, v / corners.length];",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDITPOI-M12-a-centre-on-an-edge-every-triangles",
     "file": "src/poi/poiThumb.js",
-    "old": "      if ((s0 === 0 && !own0) || (s1 === 0 && !own1) || (s2 === 0 && !own2)) continue;\n",
-    "new": "",
+    "old": "      if ((s0 === 0 && !own0) || (s1 === 0 && !own1) || (s2 === 0 && !own2)) continue;\n      visit(x, y, e0 / area, e1 / area, e2 / area);",
+    "new": "      visit(x, y, e0 / area, e1 / area, e2 / area);",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDITPOI-M12-one-winding-read",
     "file": "src/poi/poiThumb.js",
-    "old": "  const sg = area > 0 ? 1 : -1;\n  // an edge",
-    "new": "  const sg = 1;\n  // an edge",
+    "old": "  const sg = area > 0 ? 1 : -1;",
+    "new": "  const sg = 1;",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDITPOI-M13-the-answer-unlaid",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "      lay(r.corners, r.uvs);\n",
-    "new": "",
+    "old": "      lay(r.corners, r.uvs);\n      return r.pieces;",
+    "new": "      return r.pieces;",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AUDITPOI-M13-the-tools-not-waiting",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "  const step = (fn, within = null) => { if (busy) return false; fn(); return record(within); };",
-    "new": "  const step = (fn, within = null) => { fn(); return record(within); };",
+    "old": "    if (busy) return false;\n    fn();",
+    "new": "    fn();",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDITPOI-M13-the-old-path-not-taken",
     "file": "src/poi/uv/uvEdit.js",
-    "old": "      if (!r) {\n        // the old path",
-    "new": "      if (false) {\n        // the old path",
+    "old": "      if (!r) {",
+    "new": "      if (false) {",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDITPOI-M13-an-idle-worker-kept",
     "file": "src/poi/uv/uvUnwrapClient.js",
-    "old": "    if (jobs.size || !w) return;\n    idle = setTimeout",
-    "new": "    return;\n    idle = setTimeout",
+    "old": "    if (jobs.size || !w) return;",
+    "new": "    return;",
     "tests": [
       "test/poi/auditpoi_uv.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AUDITPOI-M13-a-mirrored-entry-unconjugated",
     "file": "src/poi/sparseCholesky.js",
-    "old": "    ri[p] = below ? J[t] : I[t]; rr[p] = Vr[t]; rz[p] = Vz ? (below ? -Vz[t] : Vz[t]) : 0;",
-    "new": "    ri[p] = below ? J[t] : I[t]; rr[p] = Vr[t]; rz[p] = Vz ? Vz[t] : 0;",
+    "old": "    rz[p] = Vz ? (below ? -Vz[t] : Vz[t]) : 0;",
+    "new": "    rz[p] = Vz ? Vz[t] : 0;",
     "tests": [
       "test/poi/poi5_uv.test.js",
       "test/poi/auditpoi_uv.test.js"
@@ -318,8 +318,8 @@
   {
     "name": "AUDITPOI-M13-the-factors-complex-product",
     "file": "src/poi/sparseCholesky.js",
-    "old": "      for (let p = Lp[i] + 1; p < c[i]; p++) { const r = Li[p], lr = Lr[p], lz = Lz[p]; xr[r] -= lr * yr - lz * yz; xz[r] -= lr * yz + lz * yr; }",
-    "new": "      for (let p = Lp[i] + 1; p < c[i]; p++) { const r = Li[p], lr = Lr[p], lz = Lz[p]; xr[r] -= lr * yr - lz * yz; xz[r] -= lr * yz - lz * yr; }",
+    "old": "        xz[r] -= lr * yz + lz * yr;",
+    "new": "        xz[r] -= lr * yz - lz * yr;",
     "tests": [
       "test/poi/poi5_uv.test.js",
       "test/poi/auditpoi_uv.test.js"
@@ -328,8 +328,8 @@
   {
     "name": "AUDITPOI-M13-a-row-of-L-unconjugated",
     "file": "src/poi/sparseCholesky.js",
-    "old": "      Li[p] = k; Lr[p] = yr; Lz[p] = -yz;",
-    "new": "      Li[p] = k; Lr[p] = yr; Lz[p] = yz;",
+    "old": "      Lz[p] = -yz;",
+    "new": "      Lz[p] = yz;",
     "tests": [
       "test/poi/poi5_uv.test.js",
       "test/poi/auditpoi_uv.test.js"
@@ -338,8 +338,8 @@
   {
     "name": "AUDITPOI-M13-the-back-substitution-unconjugated",
     "file": "src/poi/sparseCholesky.js",
-    "old": "sr -= lr * xr[r] + lz * xz[r]; sz -= lr * xz[r] - lz * xr[r];",
-    "new": "sr -= lr * xr[r] - lz * xz[r]; sz -= lr * xz[r] + lz * xr[r];",
+    "old": "      sr -= lr * xr[r] + lz * xz[r];\n      sz -= lr * xz[r] - lz * xr[r];",
+    "new": "      sr -= lr * xr[r] - lz * xz[r];\n      sz -= lr * xz[r] + lz * xr[r];",
     "tests": [
       "test/poi/poi5_uv.test.js",
       "test/poi/auditpoi_uv.test.js"
@@ -348,8 +348,8 @@
   {
     "name": "AUDITPOI-M13-a-triangles-entry-below-unconjugated",
     "file": "src/poi/uv/uvMesh.js",
-    "old": "} else { I[cnt] = rb; J[cnt] = ra; Vz[cnt] = -im; }",
-    "new": "} else { I[cnt] = rb; J[cnt] = ra; Vz[cnt] = im; }",
+    "old": "          Vz[cnt] = -im;",
+    "new": "          Vz[cnt] = im;",
     "tests": [
       "test/poi/poi5_uv.test.js",
       "test/poi/auditpoi_uv.test.js"

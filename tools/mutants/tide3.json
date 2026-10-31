@@ -2,8 +2,8 @@
   {
     "name": "TIDE3-law-cap",
     "file": "src/net/townSeatLaw.js",
-    "old": "const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, amountOf(raid));",
-    "new": "const o = amountOf(raid);",
+    "old": "  const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, amountOf(raid)); // SEASON1 part two (9.3): an Orc Raid's camps, a week's 250",
+    "new": "  const o = amountOf(raid); // SEASON1 part two (9.3): an Orc Raid's camps, a week's 250",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "TIDE3-law-floor",
     "file": "src/net/townSeatLaw.js",
-    "old": "const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, amountOf(raid));",
-    "new": "const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, Number(raid));",
+    "old": "  const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, amountOf(raid)); // SEASON1 part two (9.3): an Orc Raid's camps, a week's 250",
+    "new": "  const o = Math.min(TIDE_EFFECTS.orcsInfluenceWeek, Number(raid)); // SEASON1 part two (9.3): an Orc Raid's camps, a week's 250",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TIDE3-law-sum",
     "file": "src/net/townSeatLaw.js",
-    "old": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o + b);",
-    "new": "return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + b);",
+    "old": "  return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + o + b);",
+    "new": "  return Math.min(ACCOUNT_SEAT_WEEK_CAP, w + g + r + h + m + b);",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "TIDE3-bk-zero",
     "file": "src/net/townSeatBook.js",
-    "old": "get zero() { return Number.isSafeInteger(data?.zero) ? data.zero : null; },",
-    "new": "get zero() { return data?.zero ?? null; },",
+    "old": "      return Number.isSafeInteger(data?.zero) ? data.zero : null;",
+    "new": "      return data?.zero ?? null;",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "TIDE3-bk-open",
     "file": "src/net/townSeatBook.js",
-    "old": "    tideAt(region) {\n      if (open !== true) return 'calm';\n",
-    "new": "    tideAt(region) {\n",
+    "old": "      if (open !== true) return 'calm';\n      const week = seatWeekOf(nowMs());",
+    "new": "      const week = seatWeekOf(nowMs());",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "TIDE3-bk-camp-open",
     "file": "src/net/townSeatBook.js",
-    "old": "    async orcCamp(site, region) {\n      if (open !== true) return { counted: false };\n",
-    "new": "    async orcCamp(site, region) {\n",
+    "old": "      if (open !== true) return { counted: false };\n      let r;",
+    "new": "      let r;",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -293,8 +293,8 @@
   {
     "name": "TIDE3-ed-said",
     "file": "src/systems/seatEdicts.js",
-    "old": "host.orcCamp(site, region).then((r) => { if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});",
-    "new": "host.orcCamp(site, region).then((r) => { host.say?.(ORC_CAMP_TEXT, 4); }).catch(() => {});",
+    "old": "          if (r?.counted) host.say?.(ORC_CAMP_TEXT, 4);",
+    "new": "          host.say?.(ORC_CAMP_TEXT, 4);",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -311,8 +311,8 @@
   {
     "name": "TIDE3-tr-ocean",
     "file": "src/systems/travel/travel.js",
-    "old": "minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m;",
-    "new": "minutes += seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m;",
+    "old": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m; // SEASON1 part two: a Storm Season's sea - flown over",
+    "new": "    minutes += seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m; // SEASON1 part two: a Storm Season's sea - flown over",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -320,8 +320,8 @@
   {
     "name": "TIDE3-tr-floor",
     "file": "src/systems/travel/travel.js",
-    "old": "minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m;",
-    "new": "minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.ceil(m * seaMult) : m;",
+    "old": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.floor(m * seaMult) : m; // SEASON1 part two: a Storm Season's sea - flown over",
+    "new": "    minutes += terrain === CLIMATES.Ocean && seaMult !== 1 && !hasDragon ? Math.ceil(m * seaMult) : m; // SEASON1 part two: a Storm Season's sea - flown over",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -329,8 +329,8 @@
   {
     "name": "TIDE3-tr-default",
     "file": "src/systems/travel/travel.js",
-    "old": "  hasHorse = false, hasCart = false, hasDragon = false, seaMult = seaTideAt(end),",
-    "new": "  hasHorse = false, hasCart = false, hasDragon = false, seaMult = 1,",
+    "old": "    seaMult = seaTideAt(end),",
+    "new": "    seaMult = 1,",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]
@@ -347,8 +347,8 @@
   {
     "name": "TIDE3-tr-set",
     "file": "src/systems/travel/travel.js",
-    "old": "export function setSeaTide(fn) { seaTide = typeof fn === 'function' ? fn : null; }",
-    "new": "export function setSeaTide(fn) { seaTide = typeof fn === 'function' ? fn : seaTide; }",
+    "old": "  seaTide = typeof fn === 'function' ? fn : null;",
+    "new": "  seaTide = typeof fn === 'function' ? fn : seaTide;",
     "tests": [
       "test/net/tide_orcs.test.js"
     ]

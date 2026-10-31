@@ -66,8 +66,8 @@
   {
     "name": "AUDIT-TESA-II-C1-bridge-to-the-edge",
     "file": "src/world/imperialCity.js",
-    "old": "polar(I.bridge.b, I.lake + I.bridge.landing)];",
-    "new": "polar(I.bridge.b, I.lake + I.bridge.landing + 60)];",
+    "old": "  polar(I.bridge.b, I.lake + I.bridge.landing),",
+    "new": "  polar(I.bridge.b, I.lake + I.bridge.landing + 60),",
     "tests": [
       "test/world/audittesa2c_capitals.test.js",
       "test/tesa11_imperial.test.js"
@@ -76,8 +76,8 @@
   {
     "name": "AUDIT-TESA-II-C1-bridge-no-landing",
     "file": "src/world/capitalImperial.js",
-    "old": "x <= xl ? 0.3 + (B.deck - 0.3) * ((x - x1) / (xl - x1)) : B.deck);",
-    "new": "x <= xl ? B.deck : B.deck);",
+    "old": "  const yAt = (x) =>\n    x >= xr\n      ? 0.3 + (B.deck - 0.3) * ((x0 - x) / (x0 - xr))\n      : x <= xl\n        ? 0.3 + (B.deck - 0.3) * ((x - x1) / (xl - x1))\n        : B.deck;",
+    "new": "  const yAt = (x) => (x >= xr ? 0.3 + (B.deck - 0.3) * ((x0 - x) / (x0 - xr)) : x <= xl ? B.deck : B.deck);",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "AUDIT-TESA-II-C1-piers-into-the-rim",
     "file": "src/world/imperialCity.js",
-    "old": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 8450,",
-    "new": "piers: Object.freeze(Array.from({ length: 21 }, (_, i) => 160 + i * 2)), pierTo: 10180,",
+    "old": "    pierTo: 8450,",
+    "new": "    pierTo: 10180,",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],
@@ -196,8 +196,8 @@
   {
     "name": "AUDIT-TESA-II-C3-prison-model-gate-its-own",
     "file": "src/world/capitalImperial.js",
-    "old": "prisonGates(P), 12, 10);",
-    "new": "[[2, P.half * 0.5]], 12, 10);",
+    "old": "  compound(mb, x, z, P.half, P.h, (cx, cz) => squareTower(mb, cx, cz, P.tower, P.h + 10), prisonGates(P), 12, 10); // AUDIT TESA II C3: the law's gates, its causeway's end",
+    "new": "  compound(mb, x, z, P.half, P.h, (cx, cz) => squareTower(mb, cx, cz, P.tower, P.h + 10), [[2, P.half * 0.5]], 12, 10); // AUDIT TESA II C3: the law's gates, its causeway's end",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "AUDIT-TESA-II-C3-west-gate-from-the-south",
     "file": "src/world/imperialCity.js",
-    "old": ": [x - half - out, z - half + along]);",
-    "new": ": [x - half - out, z + half - along]);",
+    "old": "        : [x - half - out, z - half + along];",
+    "new": "        : [x - half - out, z + half - along];",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "AUDIT-TESA-II-C4-platform-shut",
     "file": "src/world/capitalFalinesti.js",
-    "old": "* Math.PI * 2 > Math.PI * 2 - F.platformGap;",
-    "new": "* Math.PI * 2 > Math.PI * 2;",
+    "old": "    ((i + 0.5) / PLATFORM_SIDES) * Math.PI * 2 > Math.PI * 2 - F.platformGap;",
+    "new": "    ((i + 0.5) / PLATFORM_SIDES) * Math.PI * 2 > Math.PI * 2;",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "AUDIT-TESA-II-C4-roots-round",
     "file": "src/world/capitalPlans.js",
-    "old": "rootUnder: 0.8,",
-    "new": "rootUnder: -6,",
+    "old": "  rootUnder: 0.8,",
+    "new": "  rootUnder: -6,",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],
@@ -233,8 +233,8 @@
   {
     "name": "AUDIT-TESA-II-C4-limbs-low",
     "file": "src/world/capitalPlans.js",
-    "old": "limbFrom: Object.freeze([137, 160]),",
-    "new": "limbFrom: Object.freeze([100, 150]),",
+    "old": "  limbFrom: Object.freeze([137, 160]),",
+    "new": "  limbFrom: Object.freeze([100, 150]),",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -242,8 +242,8 @@
   {
     "name": "AUDIT-TESA-II-C4-huts-on-the-landing",
     "file": "src/world/capitalPlans.js",
-    "old": "hutFrom: Math.PI / 24,",
-    "new": "hutFrom: -Math.PI / 6,",
+    "old": "  hutFrom: Math.PI / 24,",
+    "new": "  hutFrom: -Math.PI / 6,",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -251,8 +251,8 @@
   {
     "name": "AUDIT-TESA-II-C5-tombs-band-narrow",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(r - I.tombs.r) < I.tombs.w) { const [f, s] = tombFrame(",
-    "new": "if (Math.abs(r - I.tombs.r) < I.tombs.w / 4) { const [f, s] = tombFrame(",
+    "old": "  if (Math.abs(r - I.tombs.r) < I.tombs.w) {",
+    "new": "  if (Math.abs(r - I.tombs.r) < I.tombs.w / 4) {",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],
@@ -261,8 +261,8 @@
   {
     "name": "AUDIT-TESA-II-C5-plinths-ring-short",
     "file": "src/world/imperialCity.js",
-    "old": "if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court) for",
-    "new": "if (Math.abs(x - ax) < D.ring && Math.abs(z - az) < D.ring) for",
+    "old": "  if (Math.abs(x - ax) < D.court && Math.abs(z - az) < D.court)",
+    "new": "  if (Math.abs(x - ax) < D.ring && Math.abs(z - az) < D.ring)",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "AUDIT-TESA-II-C5-points-not-kept",
     "file": "src/world/imperialCity.js",
-    "old": "    _geo.set(I, g);\n",
-    "new": "",
+    "old": "    _geo.set(I, g);\n  }",
+    "new": "  }",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],
@@ -281,8 +281,8 @@
   {
     "name": "AUDIT-TESA-II-C6-north-gate-in-the-marsh",
     "file": "src/world/capitalPlans.js",
-    "old": "  'L L G G G G L L',\n  'L RESI RESI RESI MAGE",
-    "new": "  'L L G L L G L L',\n  'L RESI RESI RESI MAGE",
+    "old": "export const HELSTROM_PLAN = plan([\n  'L L G G G G L L',",
+    "new": "export const HELSTROM_PLAN = plan([\n  'L L G L L G L L',",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-TESA-II-C7-outside-the-wall",
     "file": "src/world/imperialBlocks.js",
-    "old": "const best = nearest(inside, side, picks) ?? nearest(lattice, side, picks);",
-    "new": "const best = nearest(lattice, side, picks);",
+    "old": "    const best = nearest(inside, side, picks) ?? nearest(lattice, side, picks);",
+    "new": "    const best = nearest(lattice, side, picks);",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ],
@@ -345,8 +345,8 @@
   {
     "name": "AUDIT-TESA-II-C10-torval-north-gate-at-the-back",
     "file": "src/world/capitalTorval.js",
-    "old": "gatedRun(mb, SAND, ne, nw, W.thick, W.h, W.east - W.northGate, W.gate, W.gateH);",
-    "new": "gatedRun(mb, SAND, ne, nw, W.thick, W.h, W.east, W.gate, W.gateH);",
+    "old": "  gatedRun(mb, SAND, ne, nw, W.thick, W.h, W.east - W.northGate, W.gate, W.gateH); // AUDIT TESA II C10: on its lane, off the estate's closed back (26 m from it)",
+    "new": "  gatedRun(mb, SAND, ne, nw, W.thick, W.h, W.east, W.gate, W.gateH); // AUDIT TESA II C10: on its lane, off the estate's closed back (26 m from it)",
     "tests": [
       "test/tesa10c_capitals.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "AUDIT-TESA-II-C10-alinor-gate-towers-at-the-back",
     "file": "src/world/capitalAlinor.js",
-    "old": "[W.northGate - g, W.north], [W.northGate + g, W.north]);",
-    "new": "[-g, W.north], [g, W.north]);",
+    "old": "  out.push(\n    [W.west, midZ - g],\n    [W.west, midZ + g],\n    [W.east, midZ - g],\n    [W.east, midZ + g],\n    [W.northGate - g, W.north],\n    [W.northGate + g, W.north],\n  );",
+    "new": "  out.push([W.west, midZ - g], [W.west, midZ + g], [W.east, midZ - g], [W.east, midZ + g], [-g, W.north], [g, W.north]);",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "AUDIT-TESA-II-C10-torval-gate-towers-at-the-back",
     "file": "src/world/capitalTorval.js",
-    "old": "[W.northGate - g, W.north], [W.northGate + g, W.north]);",
-    "new": "[-g, W.north], [g, W.north]);",
+    "old": "  out.push(\n    [W.west, midZ - g],\n    [W.west, midZ + g],\n    [W.east, midZ - g],\n    [W.east, midZ + g],\n    [W.northGate - g, W.north],\n    [W.northGate + g, W.north],\n  );",
+    "new": "  out.push([W.west, midZ - g], [W.west, midZ + g], [W.east, midZ - g], [W.east, midZ + g], [-g, W.north], [g, W.north]);",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-TESA-II-C10-solitude-gate-on-the-tavern",
     "file": "src/world/solitudeRelief.js",
-    "old": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 318.4,",
-    "new": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 300,",
+    "old": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 318.4, z: 416 });",
+    "new": "export const SOLITUDE_MAIN_GATE = Object.freeze({ x: 300, z: 416 });",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "AUDIT-TESA-II-C10-alinor-bridge-on-the-pawnshop",
     "file": "src/world/capitalPlans.js",
-    "old": "bridges: Object.freeze([-1.5 * BLOCK_M, 85.6]),",
-    "new": "bridges: Object.freeze([-1.5 * BLOCK_M, 1.5 * BLOCK_M]),",
+    "old": "  bridges: Object.freeze([-1.5 * BLOCK_M, 85.6]),",
+    "new": "  bridges: Object.freeze([-1.5 * BLOCK_M, 1.5 * BLOCK_M]),",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]
@@ -426,8 +426,8 @@
   {
     "name": "AUDIT-TESA-II-C15-a-multiple-written-out",
     "file": "src/world/capitalPlans.js",
-    "old": "  plaza: Object.freeze({ x: 0, z: 2 * BLOCK_M,",
-    "new": "  plaza: Object.freeze({ x: 0, z: 204.8,",
+    "old": "  plaza: Object.freeze({ x: 0, z: 2 * BLOCK_M, r: 70, ring: 1.1, band: 1.2, gate: 8, path: 4, paved: 20 }),",
+    "new": "  plaza: Object.freeze({ x: 0, z: 204.8, r: 70, ring: 1.1, band: 1.2, gate: 8, path: 4, paved: 20 }),",
     "tests": [
       "test/world/audittesa2c_capitals.test.js"
     ]

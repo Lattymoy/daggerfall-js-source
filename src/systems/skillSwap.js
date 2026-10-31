@@ -33,21 +33,27 @@
 
 import { SKILLS, SKILL_NAMES, levelUpSkillSum } from './skills.js';
 import { careerGroupOf, isMasteredSkill } from './masterSkills.js';
-import { resetGold } from './specReset.js';   // SPEC-RESET's purse: coins, letters and online the Empire's account
+import { resetGold } from './specReset.js'; // SPEC-RESET's purse: coins, letters and online the Empire's account
 import { payUndoable } from './court.js';
 import { accountOfSave, REALM_EMPIRE_ACCOUNT } from '../net/realm/realmGoldLaw.js';
-import { onlineLevelFor, LEVEL_SUM_TOP } from './levelClimb.js';   // AUDIT SKILL-TRADE A2: the online level reads the start
+import { onlineLevelFor, LEVEL_SUM_TOP } from './levelClimb.js'; // AUDIT SKILL-TRADE A2: the online level reads the start
 import { t } from './textManager.js';
 
 /** SKILL-SWAP: what one swap costs. */
 export const SKILL_SWAP_GOLD = 100_000;
 const LIST = Object.freeze({ primary: 'primarySkills', major: 'majorSkills', minor: 'minorSkills' });
-const ALL = Object.freeze([...new Set(Object.values(SKILLS))].filter((id) => Number.isInteger(id) && id >= 0 && id < SKILL_NAMES.length).sort((a, b) => a - b));
+const ALL = Object.freeze(
+  [...new Set(Object.values(SKILLS))]
+    .filter((id) => Number.isInteger(id) && id >= 0 && id < SKILL_NAMES.length)
+    .sort((a, b) => a - b),
+);
 
 /** The class skills this character may give up: in a career group and not mastered, primary first. */
 export function swapOutChoices(entity) {
   const c = entity?.career;
-  return [...(c?.primarySkills ?? []), ...(c?.majorSkills ?? []), ...(c?.minorSkills ?? [])].filter((id) => !isMasteredSkill(entity, id));
+  return [...(c?.primarySkills ?? []), ...(c?.majorSkills ?? []), ...(c?.minorSkills ?? [])].filter(
+    (id) => !isMasteredSkill(entity, id),
+  );
 }
 /** The skills that may take a place in the class: every one outside it. */
 export const swapInChoices = (entity) => (entity?.career ? ALL.filter((id) => careerGroupOf(entity, id) == null) : []);
@@ -65,7 +71,8 @@ export function skillSwapRefusal(entity, out, inn) {
   if (!careerGroupOf(entity, out)) return t('skillswap.refuse.out', 'Choose one of your class skills to give up.');
   if (isMasteredSkill(entity, out)) return t('skillswap.refuse.mastered', 'A mastered skill stays in your class.');
   if (!swapInChoices(entity).includes(inn) && !swapTradeChoices(entity, out).includes(inn)) {
-    return isMasteredSkill(entity, inn) ? t('skillswap.refuse.inMastered', 'A mastered skill stays in its group.')
+    return isMasteredSkill(entity, inn)
+      ? t('skillswap.refuse.inMastered', 'A mastered skill stays in its group.')
       : t('skillswap.refuse.in', 'Choose a skill outside your class, or one from another group, to take its place.');
   }
   const have = resetGold(entity);
@@ -73,13 +80,22 @@ export function skillSwapRefusal(entity, out, inn) {
   const words = { gold: SKILL_SWAP_GOLD, have };
   return entity._online === true
     ? t('skillswap.refuse.gold', 'Changing a class skill costs {gold, number} gold. You have {have, number}.', words)
-    : t('skillswap.refuse.goldOffline', 'Changing a class skill costs {gold, number} gold, paid in coins or letters of credit. You have {have, number}.', words);
+    : t(
+        'skillswap.refuse.goldOffline',
+        'Changing a class skill costs {gold, number} gold, paid in coins or letters of credit. You have {have, number}.',
+        words,
+      );
 }
 
 /** The group a swap puts `inn` in: `out`'s. */
 export const swapGroupOf = (entity, out) => careerGroupOf(entity, out);
 /** The group's word in a sentence - the Growth page's own (ui/growth/specGuide.js groupWord's keys). */
-const groupWord = (g) => (g === 'primary' ? t('growth.spec.group.primary', 'primary') : g === 'major' ? t('growth.spec.group.major', 'major') : t('growth.spec.group.minor', 'minor'));
+const groupWord = (g) =>
+  g === 'primary'
+    ? t('growth.spec.group.primary', 'primary')
+    : g === 'major'
+      ? t('growth.spec.group.major', 'major')
+      : t('growth.spec.group.minor', 'minor');
 
 /** The career with `inn` in `out`'s place in its group, and `out` in `inn`'s where `inn` is a class skill of another group
  *  (SKILL-TRADE) - a copy, the entity's own untouched; the original when `out` is in no group. AUDIT SUGGESTIONS-1019
@@ -89,35 +105,42 @@ export function swappedCareer(entity, out, inn) {
   const group = careerGroupOf(entity, out);
   if (!group) return entity?.career ?? null;
   const key = LIST[group];
-  const other = careerGroupOf(entity, inn), back = other && other !== group ? LIST[other] : null;
+  const other = careerGroupOf(entity, inn),
+    back = other && other !== group ? LIST[other] : null;
   const traded = back ? { [back]: entity.career[back].map((id) => (id === inn ? out : id)) } : {};
   return { ...entity.career, [key]: entity.career[key].map((id) => (id === out ? inn : id)), ...traded, swapped: true };
 }
 /** AUDIT SUGGESTIONS-1019 L5-1: whether one swap of `out` for `inn` lets `possible` (a family's law - martialPaths.js
  *  martialPossible, arcanePaths.js pathPossible) answer yes, the masteries and their slots as they stand. */
-export const swapOpens = (entity, out, inn, possible) => !!entity?.career && possible({ ...entity, career: swappedCareer(entity, out, inn) });
+export const swapOpens = (entity, out, inn, possible) =>
+  !!entity?.career && possible({ ...entity, career: swappedCareer(entity, out, inn) });
 
 /** SWAP-CYCLE: the sum the level stands on - the stored current sum, caught up with the class's own where a raise has not
  *  stored it yet (a point trained by other means is the level's; the next raise's SetCurrentLevelUpSkillSum stores it). */
 function heldSum(entity) {
-  const sum = levelUpSkillSum(entity), held = entity.currentLevelUpSkillSum;
+  const sum = levelUpSkillSum(entity),
+    held = entity.currentLevelUpSkillSum;
   return held >= sum ? held : sum;
 }
 /** SWAP-CYCLE: the points the class's sum would sit under the sum the level stands on once `out` is given up for `inn` -
  *  what its skills make up before the next level comes any closer; 0 when it would sit under none. */
-export const swapShortfall = (entity, out, inn) => (entity?.career
-  ? Math.max(0, heldSum(entity) - levelUpSkillSum({ ...entity, career: swappedCareer(entity, out, inn) })) : 0);
+export const swapShortfall = (entity, out, inn) =>
+  entity?.career
+    ? Math.max(0, heldSum(entity) - levelUpSkillSum({ ...entity, career: swappedCareer(entity, out, inn) }))
+    : 0;
 
 /** AUDIT SKILL-TRADE A2: the starting sum that keeps the level when the stored sum rises from `held` to `now`. Offline
  *  the level reads the climb (current less start), so the start rises as much. Online it reads the climb's share of
  *  the room to LEVEL_SUM_TOP (levelClimb.js onlineLevelFor): a start moved as much shrank the room and paid levels, so
  *  the start moves to keep the share. At or past the top no start keeps it, and the offline move stands. */
 export function startAfterRise(entity, held, now) {
-  const start = entity.startingLevelUpSkillSum ?? 0, room = LEVEL_SUM_TOP - start;
+  const start = entity.startingLevelUpSkillSum ?? 0,
+    room = LEVEL_SUM_TOP - start;
   if (entity._online !== true || !(room > 0) || now >= LEVEL_SUM_TOP || now === held) return start + (now - held);
-  const share = (held - start) / room, level = onlineLevelFor(start, held);
+  const share = (held - start) / room,
+    level = onlineLevelFor(start, held);
   let s = (now - LEVEL_SUM_TOP * share) / (1 - share);
-  for (let i = 0; i < 8 && onlineLevelFor(s, now) !== level; i++) s += onlineLevelFor(s, now) > level ? 1e-9 : -1e-9;   // a float's edge
+  for (let i = 0; i < 8 && onlineLevelFor(s, now) !== level; i++) s += onlineLevelFor(s, now) > level ? 1e-9 : -1e-9; // a float's edge
   return s;
 }
 
@@ -127,7 +150,8 @@ export function startAfterRise(entity, held, now) {
 export function swapSkill(entity, out, inn) {
   const why = skillSwapRefusal(entity, out, inn);
   if (why) return { ok: false, text: why };
-  const group = careerGroupOf(entity, out), other = careerGroupOf(entity, inn);
+  const group = careerGroupOf(entity, out),
+    other = careerGroupOf(entity, inn);
   const held = heldSum(entity);
   payUndoable(entity, SKILL_SWAP_GOLD, entity._online === true ? accountOfSave(entity, REALM_EMPIRE_ACCOUNT) : null);
   entity.career = swappedCareer(entity, out, inn);
@@ -135,6 +159,14 @@ export function swapSkill(entity, out, inn) {
   entity.startingLevelUpSkillSum = startAfterRise(entity, held, held + rise);
   entity.currentLevelUpSkillSum = held + rise;
   const words = { inn: SKILL_NAMES[inn], out: SKILL_NAMES[out], group: groupWord(group), other: groupWord(other) };
-  return { ok: true, text: other ? t('skillswap.trade.done', '{inn} is now one of your {group} skills, and {out} one of your {other} skills.', words)
-    : t('skillswap.done', '{inn} is now one of your {group} skills, in place of {out}.', words) };
+  return {
+    ok: true,
+    text: other
+      ? t(
+          'skillswap.trade.done',
+          '{inn} is now one of your {group} skills, and {out} one of your {other} skills.',
+          words,
+        )
+      : t('skillswap.done', '{inn} is now one of your {group} skills, in place of {out}.', words),
+  };
 }

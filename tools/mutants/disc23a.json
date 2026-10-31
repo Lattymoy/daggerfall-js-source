@@ -92,8 +92,8 @@
   {
     "name": "D23A-no-name",
     "file": "src/ui/ink/inkMap.js",
-    "old": "    ctx.fillText(m.name, m.x, ly);\n",
-    "new": "",
+    "old": "    ctx.fillText(m.name, m.x, ly);\n  }",
+    "new": "  }",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "D23A-party-over-player-automap",
     "file": "src/ui/ink/inkAutomap.js",
-    "old": "  // DISC23-A: the party members on this storey, under the player's own caret\n  if (opts.party?.length && opts.partyFill) {",
-    "new": "  // DISC23-A: the party members on this storey, under the player's own caret\n  if (opts.party?.length && opts.partyFill && false) {",
+    "old": "  if (opts.party?.length && opts.partyFill) {",
+    "new": "  if (opts.party?.length && opts.partyFill && false) {",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "D23A-reader-keeps-nan",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;\n",
-    "new": "",
+    "old": "    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;\n    const yaw = Number(r.yaw);",
+    "new": "    const yaw = Number(r.yaw);",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "D23A-nameless-blank",
     "file": "src/ui/partyMapMarks.js",
-    "old": "name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT, feet: [x, y, z]",
-    "new": "name: String(r.name ?? '').trim(), feet: [x, y, z]",
+    "old": "      name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT,",
+    "new": "      name: String(r.name ?? '').trim(),",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "D23A-door-drops-party",
     "file": "src/ui/automap/automapDoor.js",
-    "old": "        party: deps.party ?? null,   // DISC23-A: the party members whose bodies stand in this level (the classic 3D arm ignores it)\n",
-    "new": "",
+    "old": "        party: deps.party ?? null, // DISC23-A: the party members whose bodies stand in this level (the classic 3D arm ignores it)\n        portals: deps.portals ?? null, // TP-SEEN: every teleporter in the level (the classic 3D arm ignores it)",
+    "new": "        portals: deps.portals ?? null, // TP-SEEN: every teleporter in the level (the classic 3D arm ignores it)",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "D23A-town-door-drops-party",
     "file": "src/ui/town/townMapDoor.js",
-    "old": "    party: deps.townParty ?? null,   // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)\n",
-    "new": "",
+    "old": "    party: deps.townParty ?? null, // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)\n    homes: deps.townHomes ?? null, // TOWN-MARKS: the player housing, by building key",
+    "new": "    homes: deps.townHomes ?? null, // TOWN-MARKS: the player housing, by building key",
     "tests": [
       "test/ui/ink/disc23a_party_plans.test.js"
     ]

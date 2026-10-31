@@ -21,6 +21,7 @@ import { material } from '../../src/net/nodeLaw.js';   // CLOTH-GEMS: a work's h
 import { recipeById } from '../../src/net/recipeLaw.js';
 import { chainPlan, chainWorks, chainNeeded, chainYield, refinedText, chainStopText, storesRoom, CHAIN_WORKS, CHAIN_DEPTH, producersOf, chainWorkOk } from '../../src/net/chainLaw.js';
 import { mintPieces } from '../../src/systems/smithItems.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT PROFESSIONS): the world host whole
 
 const src = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 const noWait = () => Promise.resolve();
@@ -447,7 +448,7 @@ test('AUDIT CRAFT1 the yields said: a Quartermaster\'s ingots two a work on the 
 });
 
 test('CRAFT1 host: the world\'s craft says what its chain refined first - made or refused - and the four other stations\' pages offer the chain as the anvil does (source pins)', () => {
-  const world = src('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /const chain = \[refinedText\(r\?\.refined, materialLabel, \(prof\) => profBook\.track\(prof\)\), r\?\.ok \? '' : chainStopText\(r\?\.stopped, r\?\.material, materialLabel\)\]\.filter\(Boolean\)\.join\(' '\);/);
   assert.match(world, /text: r\?\.kept \? `\$\{st\.kept\}\$\{chain \? ` \$\{chain\}` : ''\}` : /, 'AUDIT CRAFT1 F3: a kept craft says what its chain refined');
   // PIN MOVED (CRAFT-FIRST-SHOWN, FIELD BUGS 2026-10-15f): the craft's XP is said by craftXpText (ui/craftXpWords.js), its first with it

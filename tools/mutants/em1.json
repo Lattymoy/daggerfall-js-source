@@ -178,8 +178,8 @@
   {
     "name": "EM1-18-the-tabs-are-lettered-without-a-halo",
     "file": "src/ui/map/mapStrip.js",
-    "old": "    ctx.strokeText(t.title, t.x, t.y);\n",
-    "new": "",
+    "old": "    ctx.strokeText(t.title, t.x, t.y);\n    ctx.fillStyle = t.live ? PEN.name : PEN.soft;",
+    "new": "    ctx.fillStyle = t.live ? PEN.name : PEN.soft;",
     "tests": [
       "test/ui/map/mapstrip.test.js"
     ],
@@ -336,7 +336,7 @@
   {
     "name": "EM1-32-the-grab-law-gives-an-overlap-to-the-FIRST-box-not-the-nearest",
     "file": "src/ui/map/mapStrip.js",
-    "old": "    if (d < bestD) { bestD = d; best = i; }",
+    "old": "    if (d < bestD) {\n      bestD = d;\n      best = i;\n    }",
     "new": "    return i;",
     "tests": [
       "test/ui/ink/inkautomap.test.js",

@@ -2,8 +2,8 @@
   {
     "name": "EGZ-the-rebuild-falls",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "const kind = again ? (reduced ? 'cut' : 'veil') : egStairOf(h, reduced);",
-    "new": "const kind = egStairOf(h, reduced);",
+    "old": "  const kind = again ? (reduced ? 'cut' : 'veil') : egStairOf(h, reduced);",
+    "new": "  const kind = egStairOf(h, reduced);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "EGZ-the-chime-off-its-band",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "const m = EG_SCORE_BAND_MOTIFS[Math.max(0, Math.min(EG_SCORE_BAND_MOTIFS.length - 1, band | 0))];",
-    "new": "const m = EG_SCORE_BAND_MOTIFS[0];",
+    "old": "  const m = EG_SCORE_BAND_MOTIFS[Math.max(0, Math.min(EG_SCORE_BAND_MOTIFS.length - 1, band | 0))];",
+    "new": "  const m = EG_SCORE_BAND_MOTIFS[0];",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "EGZ-the-chime-floor-dropped",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "return Math.max(0.3, 0.7 * 2 **",
-    "new": "return Math.max(0.1, 0.7 * 2 **",
+    "old": "  return Math.max(0.3, 0.7 * 2 ** ((midiNote(m[0][0]) - midiNote('C5')) / 12));",
+    "new": "  return Math.max(0.1, 0.7 * 2 ** ((midiNote(m[0][0]) - midiNote('C5')) / 12));",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "EGZ-the-fall-held-past-the-hour",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "fallHold: 1.2 })",
-    "new": "fallHold: 2 })",
+    "old": "export const EG_STAIR_VEIL = Object.freeze({ close: EG_STAIR.dither, open: EG_STAIR.dither, fallHold: 1.2 });",
+    "new": "export const EG_STAIR_VEIL = Object.freeze({ close: EG_STAIR.dither, open: EG_STAIR.dither, fallHold: 2 });",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "EGZ-the-fall-held-unseen",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "fallHold: 1.2 })",
-    "new": "fallHold: 0.5 })",
+    "old": "export const EG_STAIR_VEIL = Object.freeze({ close: EG_STAIR.dither, open: EG_STAIR.dither, fallHold: 1.2 });",
+    "new": "export const EG_STAIR_VEIL = Object.freeze({ close: EG_STAIR.dither, open: EG_STAIR.dither, fallHold: 0.5 });",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "EGZ-the-floor-blind-to-the-pinger",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (ok && y <= near + EG_FLOOR_NEAR_UP && y > best) best = y;",
-    "new": "if (ok && y > best) best = y;",
+    "old": "    if (ok && y <= near + EG_FLOOR_NEAR_UP && y > best) best = y;",
+    "new": "    if (ok && y > best) best = y;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EGZ-the-floor-the-highest-always",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (best > -Infinity) return best;",
-    "new": "if (best > -Infinity) return top;",
+    "old": "  if (best > -Infinity) return best;",
+    "new": "  if (best > -Infinity) return top;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "EGZ-the-lanes-no-floor",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "for (const l of spec.lanes ?? []) if (laneDist(x, z, l) <= l.hw) take(l.y ?? 0);",
-    "new": "/* no lanes */",
+    "old": "  for (const l of spec.lanes ?? []) if (laneDist(x, z, l) <= l.hw) take(l.y ?? 0);",
+    "new": "  /* no lanes */",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "EGZ-the-quiet-frame-blinds-the-rest",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length) return NO_LIGHTS;",
-    "new": "if (E.sg !== 'closing' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length) return NO_LIGHTS;",
+    "old": "  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length)\n    return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring",
+    "new": "  if (E.sg !== 'closing' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length) return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "EGZ-the-quiet-frame-blinds-the-witness",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length) return NO_LIGHTS;",
-    "new": "if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !E.rises?.length && !E.pings?.length) return NO_LIGHTS;",
+    "old": "  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length)",
+    "new": "  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !E.rises?.length && !E.pings?.length)",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "EGZ-the-quiet-frame-blinds-the-recall",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length) return NO_LIGHTS;",
-    "new": "if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.pings?.length) return NO_LIGHTS;",
+    "old": "  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length)\n    return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring",
+    "new": "  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.pings?.length) return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "EGZ-the-quiet-frame-blinds-the-pings",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length) return NO_LIGHTS;",
-    "new": "if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length) return NO_LIGHTS;",
+    "old": "  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length && !E.pings?.length)\n    return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring",
+    "new": "  if (E.sg !== 'closing' && E.sg !== 'rest' && E.sg !== 'arrive' && !witness && !E.rises?.length) return NO_LIGHTS; // AUDIT EG V (c, L3-10): and the gather's ring",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "EGZ-the-door-in-the-trial",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (E.sg === 'closing' && spec.end) {",
-    "new": "if (spec.end) {",
+    "old": "  if (E.sg === 'closing' && spec.end) {",
+    "new": "  if (spec.end) {",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "EGZ-the-beam-never-climbs",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "const up = still ? 1 : clamp01((now - (E.sa || now)) / 1000 / EG_DOOR_BEAM.rise);",
-    "new": "const up = 1;",
+    "old": "    const up = still ? 1 : clamp01((now - (E.sa || now)) / 1000 / EG_DOOR_BEAM.rise);",
+    "new": "    const up = 1;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "EGZ-the-beam-climbs-under-reduced-motion",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "const up = still ? 1 : clamp01((now - (E.sa || now)) / 1000 / EG_DOOR_BEAM.rise);",
-    "new": "const up = clamp01((now - (E.sa || now)) / 1000 / EG_DOOR_BEAM.rise);",
+    "old": "    const up = still ? 1 : clamp01((now - (E.sa || now)) / 1000 / EG_DOOR_BEAM.rise);",
+    "new": "    const up = clamp01((now - (E.sa || now)) / 1000 / EG_DOOR_BEAM.rise);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "EGZ-the-ring-full-the-whole-closing",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "span > 0 ? clamp01((E.su - now) / span) : 0",
-    "new": "1",
+    "old": "        span > 0 ? clamp01((E.su - now) / span) : 0,",
+    "new": "        1,",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "EGZ-the-beacon-at-the-word",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "const s = (now - (R.at ?? now)) / 1000 - EG_BEACON.at;",
-    "new": "const s = (now - (R.at ?? now)) / 1000;",
+    "old": "    const s = (now - (R.at ?? now)) / 1000 - EG_BEACON.at;",
+    "new": "    const s = (now - (R.at ?? now)) / 1000;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "EGZ-the-beacon-past-the-rest",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (R && R.h === E.h && E.sg === 'rest' && spec.ring) {",
-    "new": "if (R && R.h === E.h && spec.ring) {",
+    "old": "  if (R && R.h === E.h && E.sg === 'rest' && spec.ring) {",
+    "new": "  if (R && R.h === E.h && spec.ring) {",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "EGZ-the-flare-never-lit",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "const flare = (E.rises ?? []).some((q) => q.h === E.h && now >= q.at && now - q.at < EG_BEACON.flare * 1000);",
-    "new": "const flare = false;",
+    "old": "      const flare = (E.rises ?? []).some((q) => q.h === E.h && now >= q.at && now - q.at < EG_BEACON.flare * 1000);",
+    "new": "      const flare = false;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "EGZ-the-flare-for-ever",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "now - q.at < EG_BEACON.flare * 1000);",
-    "new": "true);",
+    "old": "      const flare = (E.rises ?? []).some((q) => q.h === E.h && now >= q.at && now - q.at < EG_BEACON.flare * 1000);",
+    "new": "      const flare = (E.rises ?? []).some((q) => q.h === E.h && now >= q.at && true);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "EGZ-the-beacon-climbs-under-reduced-motion",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "EG_BEACON.h * (still ? 1 : clamp01(s / EG_BEACON.climb))",
-    "new": "EG_BEACON.h * clamp01(s / EG_BEACON.climb)",
+    "old": "          EG_BEACON.h * (still ? 1 : clamp01(s / EG_BEACON.climb)),",
+    "new": "          EG_BEACON.h * clamp01(s / EG_BEACON.climb),",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "EGZ-the-recall-for-ever",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (!(s >= 0 && s < P.s) || !(q.h > 0)) continue;",
-    "new": "if (!(s >= 0) || !(q.h > 0)) continue;",
+    "old": "    if (!(s >= 0 && s < P.s) || !(q.h > 0)) continue;",
+    "new": "    if (!(s >= 0) || !(q.h > 0)) continue;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "EGZ-the-recall-never-fades",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "P.w, 0, blue, clamp01((P.s - s) / P.fade), 0));",
-    "new": "P.w, 0, blue, 1, 0));",
+    "old": "    out.push(\n      light(\n        EG_LIGHT_KIND.pillar,\n        p,\n        P.h * (still ? 1 : clamp01(s / P.rise)),\n        P.w,\n        0,\n        blue,\n        clamp01((P.s - s) / P.fade),\n        0,\n      ),\n    );",
+    "new": "    out.push(light(EG_LIGHT_KIND.pillar, p, P.h * (still ? 1 : clamp01(s / P.rise)), P.w, 0, blue, 1, 0));",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "EGZ-the-ping-for-ever",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (!(s >= 0 && s < P.s)) continue;",
-    "new": "if (!(s >= 0)) continue;",
+    "old": "    if (!(s >= 0 && s < P.s)) continue;",
+    "new": "    if (!(s >= 0)) continue;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "EGZ-the-ping-glyph-not-its-kind",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "const g = q.w === 1 ? EG_GLYPH.danger : q.w === 2 ? EG_GLYPH.mine : EG_GLYPH.here;",
-    "new": "const g = q.w === 1 ? EG_GLYPH.mine : q.w === 2 ? EG_GLYPH.danger : EG_GLYPH.here;",
+    "old": "    const g = q.w === 1 ? EG_GLYPH.danger : q.w === 2 ? EG_GLYPH.mine : EG_GLYPH.here;",
+    "new": "    const g = q.w === 1 ? EG_GLYPH.mine : q.w === 2 ? EG_GLYPH.danger : EG_GLYPH.here;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "EGZ-the-ping-blind-to-its-pinger",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "egFloorUnder(spec, q.x, q.z, ys?.get(q.s) ?? null)",
-    "new": "egFloorUnder(spec, q.x, q.z)",
+    "old": "    const p = egToDungeon(spec, q.x, egFloorUnder(spec, q.x, q.z, ys?.get(q.s) ?? null), q.z);",
+    "new": "    const p = egToDungeon(spec, q.x, egFloorUnder(spec, q.x, q.z), q.z);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "EGZ-the-ping-never-fades",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "P.w, blue, clamp01((P.s - s) / P.fade), g, P.glyph);",
-    "new": "P.w, blue, 1, g, P.glyph);",
+    "old": "    pillarWithGlyph(\n      out,\n      p,\n      P.h * (still ? 1 : clamp01(s / P.rise)),\n      P.w,\n      blue,\n      clamp01((P.s - s) / P.fade),\n      g,\n      P.glyph,\n    );",
+    "new": "    pillarWithGlyph(out, p, P.h * (still ? 1 : clamp01(s / P.rise)), P.w, blue, 1, g, P.glyph);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "EGZ-the-living-see-the-lurkers",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "  if (witness) {\n    const S = EG_SIGHT;",
-    "new": "  {\n    const S = EG_SIGHT;",
+    "old": "  if (witness) {",
+    "new": "  {",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "EGZ-a-woken-lurker-marked",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "(b.fl & EG_FL.dormant) !== 0 && b.hp > 0",
-    "new": "b.hp > 0",
+    "old": "        if (b.role === EG_ROLE.add && b.k === EG_KIND.lurker && (b.fl & EG_FL.dormant) !== 0 && b.hp > 0) {",
+    "new": "        if (b.role === EG_ROLE.add && b.k === EG_KIND.lurker && b.hp > 0) {",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "EGZ-the-alcove-off-its-floor",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "mark(q.x, q.z, EG_GLYPH.mine, q.y);",
-    "new": "mark(q.x, q.z, EG_GLYPH.mine);",
+    "old": "    for (const q of spec.alcoves ?? []) mark(q.x, q.z, EG_GLYPH.mine, q.y); // an alcove's own floor (it is cut beside or under the course)",
+    "new": "    for (const q of spec.alcoves ?? []) mark(q.x, q.z, EG_GLYPH.mine); // an alcove's own floor (it is cut beside or under the course)",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "EGZ-the-lights-uncapped",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "return out.length > EG_LIGHTS_MAX ? out.slice(0, EG_LIGHTS_MAX) : out;",
-    "new": "return out;",
+    "old": "  return out.length > EG_LIGHTS_MAX ? out.slice(0, EG_LIGHTS_MAX) : out;",
+    "new": "  return out;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "EGZ-the-door-on-a-witness-compass",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (witness || !E?.b || E.end || E.sg !== 'closing' || !(E.h > 0)) return null;",
-    "new": "if (!E?.b || E.end || E.sg !== 'closing' || !(E.h > 0)) return null;",
+    "old": "  if (witness || !E?.b || E.end || E.sg !== 'closing' || !(E.h > 0)) return null;",
+    "new": "  if (!E?.b || E.end || E.sg !== 'closing' || !(E.h > 0)) return null;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "EGZ-the-twist-of-the-next-circle",
     "file": "src/world/eliteGates/egLights.js",
-    "old": "if (!E?.b || !(E.h > 0) || E.end || egCircleOfHall(E.h + 1) !== egCircleOfHall(E.h)) return '';",
-    "new": "if (!E?.b || !(E.h > 0) || E.end) return '';",
+    "old": "  if (!E?.b || !(E.h > 0) || E.end || egCircleOfHall(E.h + 1) !== egCircleOfHall(E.h)) return '';",
+    "new": "  if (!E?.b || !(E.h > 0) || E.end) return '';",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "EGZ-the-dither-inverted",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "if (bayer4(px) >= uCover) { o = vec4(0.0); return; }",
-    "new": "if (bayer4(px) < uCover) { o = vec4(0.0); return; }",
+    "old": "  if (bayer4(px) >= uCover) { o = vec4(0.0); return; }",
+    "new": "  if (bayer4(px) < uCover) { o = vec4(0.0); return; }",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "EGZ-the-cut-moves",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "(mode < 1.5 ? t * 0.8 : 0.0)",
-    "new": "t * 0.8",
+    "old": "    vec2 g = vec2(p.x * 30.0, e * 30.0 - (mode < 1.5 ? t * 0.8 : 0.0));",
+    "new": "    vec2 g = vec2(p.x * 30.0, e * 30.0 - t * 0.8);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "EGZ-the-deep-never-rises",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "c += DEEP[b] * 0.35 * k * smoothstep(0.0, 1.0, -e);",
-    "new": "c += DEEP[b] * 0.35 * smoothstep(0.0, 1.0, -e);",
+    "old": "    c += DEEP[b] * 0.35 * k * smoothstep(0.0, 1.0, -e);   // never a reversed edge (SD20c V14)",
+    "new": "    c += DEEP[b] * 0.35 * smoothstep(0.0, 1.0, -e);   // never a reversed edge (SD20c V14)",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "EGZ-the-veil-not-dimmed",
     "file": "src/render/eliteGates/egStairPass.js",
-    "old": "c *= ${f4(EG_STAIR_LOOK.veilDim)};",
-    "new": "",
+    "old": "  c *= ${f4(EG_STAIR_LOOK.veilDim)};",
+    "new": "  ",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "EGZ-the-column-edge-on",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "const sx = -dz * (L.w / 2), sz = dx * (L.w / 2);",
-    "new": "const sx = dx * (L.w / 2), sz = dz * (L.w / 2);",
+    "old": "    const sx = -dz * (L.w / 2),\n      sz = dx * (L.w / 2);",
+    "new": "    const sx = dx * (L.w / 2),\n      sz = dz * (L.w / 2);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "EGZ-the-ring-overruns",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "if (n + EG_RING_SIDES * 6 > room) break;",
-    "new": "",
+    "old": "      if (n + EG_RING_SIDES * 6 > room) break;\n      const r0 = Math.max(0, L.r - L.w / 2),",
+    "new": "      const r0 = Math.max(0, L.r - L.w / 2),",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "EGZ-the-ring-off-its-radii",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "const r0 = Math.max(0, L.r - L.w / 2), r1 = L.r + L.w / 2;",
-    "new": "const r0 = L.r, r1 = L.r + L.w;",
+    "old": "      const r0 = Math.max(0, L.r - L.w / 2),\n        r1 = L.r + L.w / 2;",
+    "new": "      const r0 = L.r,\n        r1 = L.r + L.w;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "EGZ-the-glyph-not-facing",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "put(L.x + (right[0] * s + up[0] * v) * h, L.y + (right[1] * s + up[1] * v) * h, L.z + (right[2] * s + up[2] * v) * h,",
-    "new": "put(L.x + s * h, L.y + v * h, L.z,",
+    "old": "        put(\n          L.x + (right[0] * s + up[0] * v) * h,\n          L.y + (right[1] * s + up[1] * v) * h,\n          L.z + (right[2] * s + up[2] * v) * h,\n          s,\n          v,\n          L.k,\n          L.f,\n          L.c,\n          L.a,\n        );",
+    "new": "        put(L.x + s * h, L.y + v * h, L.z, s, v, L.k, L.f, L.c, L.a);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "EGZ-the-spent-arc-lit",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "I = (1.0 - u * u) * (v <= vX ? 1.0 : uSpent);",
-    "new": "I = (1.0 - u * u);",
+    "old": "    I = (1.0 - u * u) * (v <= vX ? 1.0 : uSpent);",
+    "new": "    I = (1.0 - u * u);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "EGZ-the-beam-lost-in-the-haze",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "if (vKind == ${EG_LIGHT_KIND.beam}) kept = max(kept, uBeamFog);",
-    "new": "",
+    "old": "  if (vKind == ${EG_LIGHT_KIND.beam}) kept = max(kept, uBeamFog);",
+    "new": "  ",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "EGZ-the-ripple-never-stilled",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "float ripple = uStill > 0.5 ? 1.0 : 0.88 + 0.12 * sin(v * 24.0 - uTime * 2.4);",
-    "new": "float ripple = 0.88 + 0.12 * sin(v * 24.0 - uTime * 2.4);",
+    "old": "    float ripple = uStill > 0.5 ? 1.0 : 0.88 + 0.12 * sin(v * 24.0 - uTime * 2.4);",
+    "new": "    float ripple = 0.88 + 0.12 * sin(v * 24.0 - uTime * 2.4);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "EGZ-the-lights-fog-floor-dropped",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "float f = max(fogFactorAt(vWorld), kept);",
-    "new": "float f = fogFactorAt(vWorld);",
+    "old": "  float f = max(fogFactorAt(vWorld), kept);",
+    "new": "  float f = fogFactorAt(vWorld);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "EGZ-the-glyph-unread",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "a = 0.6 * I;",
-    "new": "a = 0.0;",
+    "old": "    a = 0.6 * I;",
+    "new": "    a = 0.0;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "EGZ-the-beam-not-fading-up",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "I = (exp(-u * u * 10.0) + 0.35 * (1.0 - u)) * pow(1.0 - v, 1.5) * ripple;",
-    "new": "I = (exp(-u * u * 10.0) + 0.35 * (1.0 - u)) * ripple;",
+    "old": "    I = (exp(-u * u * 10.0) + 0.35 * (1.0 - u)) * pow(1.0 - v, 1.5) * ripple;",
+    "new": "    I = (exp(-u * u * 10.0) + 0.35 * (1.0 - u)) * ripple;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "EGZ-the-blend-left-on",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);\n    this.drawn = n;",
-    "new": "gl.depthMask(true); gl.enable(gl.CULL_FACE);\n    this.drawn = n;",
+    "old": "    gl.disable(gl.BLEND);\n    gl.enable(gl.CULL_FACE);",
+    "new": "    gl.enable(gl.CULL_FACE);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "EGZ-the-still-never-told",
     "file": "src/render/eliteGates/egLightPass.js",
-    "old": "gl.uniform1f(U.uStill, still ? 1 : 0);",
-    "new": "gl.uniform1f(U.uStill, 0);",
+    "old": "    gl.uniform1f(U.uStill, still ? 1 : 0);",
+    "new": "    gl.uniform1f(U.uStill, 0);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "EGZ-the-veil-on-the-fire-clock",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const pace = () => (egMode() === undefined ? 1 : phase === 'closing' ? VEIL_CLOSE_S / EG_STAIR_VEIL.close : phase === 'opening' ? VEIL_OPEN_S / EG_STAIR_VEIL.open : 1);",
-    "new": "const pace = () => 1;",
+    "old": "  const pace = () =>\n    egMode() === undefined\n      ? 1\n      : phase === 'closing'\n        ? VEIL_CLOSE_S / EG_STAIR_VEIL.close\n        : phase === 'opening'\n          ? VEIL_OPEN_S / EG_STAIR_VEIL.open\n          : 1;",
+    "new": "  const pace = () => 1;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "EGZ-the-veil-opens-on-the-fire-clock",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "phase === 'opening' ? VEIL_OPEN_S / EG_STAIR_VEIL.open : 1);",
-    "new": "1);",
+    "old": "  const pace = () =>\n    egMode() === undefined\n      ? 1\n      : phase === 'closing'\n        ? VEIL_CLOSE_S / EG_STAIR_VEIL.close\n        : phase === 'opening'\n          ? VEIL_OPEN_S / EG_STAIR_VEIL.open\n          : 1;",
+    "new": "  const pace = () => (egMode() === undefined ? 1 : phase === 'closing' ? VEIL_CLOSE_S / EG_STAIR_VEIL.close : 1);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "EGZ-the-recover-at-the-fire-pace",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "phase = 'closing'; at = t - (u * VEIL_CLOSE_S * 1000) / pace();",
-    "new": "phase = 'closing'; at = t - u * VEIL_CLOSE_S * 1000;",
+    "old": "        at = t - (u * VEIL_CLOSE_S * 1000) / pace(); // EG-ZE: at the stair's pace for a stair",
+    "new": "        at = t - u * VEIL_CLOSE_S * 1000; // EG-ZE: at the stair's pace for a stair",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -479,7 +479,7 @@
   {
     "name": "EGZ-the-stair-silent",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, egChime);",
+    "old": "    play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, egChime);",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
@@ -488,8 +488,8 @@
   {
     "name": "EGZ-the-chime-off-its-note",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, egChime);",
-    "new": "play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, 1);",
+    "old": "    play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, egChime);",
+    "new": "    play(VEIL_EG_CUES.chime.clip, VEIL_EG_CUES.chime.volume, 1);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EGZ-the-fall-without-its-wind",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (egMode() === EG_STAIR_MODE.fall) play(",
-    "new": "if (false) play(",
+    "old": "    if (egMode() === EG_STAIR_MODE.fall)\n      play(VEIL_EG_CUES.fall.clip, VEIL_EG_CUES.fall.volume, VEIL_EG_CUES.fall.pitch);",
+    "new": "    if (false) play(VEIL_EG_CUES.fall.clip, VEIL_EG_CUES.fall.volume, VEIL_EG_CUES.fall.pitch);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EGZ-the-veil-fall-hold-dropped",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? VEIL_EG_HOLD_S[egMode()] ?? 0);",
-    "new": "const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? 0);",
+    "old": "      const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? VEIL_EG_HOLD_S[egMode()] ?? 0);",
+    "new": "      const held = seconds(t) >= (VEIL_HOUR_HOLD_S[hourMode()] ?? 0);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EGZ-the-hall-left-standing",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    if (phase === 'idle') labelShow(0);   // EG-ZE: the hall's label goes with the veil\n",
-    "new": "",
+    "old": "    if (phase === 'idle') labelShow(0); // EG-ZE: the hall's label goes with the veil\n    if (phase === 'idle') fallFree(); // EG-ZO: and the fall's underside with it",
+    "new": "    if (phase === 'idle') fallFree(); // EG-ZO: and the fall's underside with it",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "EGZ-the-hall-kept-past-the-veil",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "egPass = null; labelEl?.remove?.(); labelEl = null;",
-    "new": "egPass = null;",
+    "old": "      egPass = null;\n      labelEl?.remove?.();\n      labelEl = null; // EG-ZE",
+    "new": "      egPass = null; // EG-ZE",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -542,7 +542,7 @@
   {
     "name": "EGZ-the-stair-smooth",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "if (canvas.style.imageRendering !== 'pixelated') canvas.style.imageRendering = 'pixelated';",
+    "old": "    if (canvas.style.imageRendering !== 'pixelated') canvas.style.imageRendering = 'pixelated';",
     "new": "",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
@@ -551,8 +551,8 @@
   {
     "name": "EGZ-the-stair-at-the-fire-scale",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_EG_SCALE))",
-    "new": "const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_SCALE))",
+    "old": "    const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_EG_SCALE)),",
+    "new": "    const w = Math.max(1, Math.round((win.innerWidth || 1280) * dpr * VEIL_SCALE)),",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "EGZ-the-band-ignored",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "egBand = Math.max(0, Math.min(3, (opts?.band ?? 0) | 0));",
-    "new": "egBand = 0;",
+    "old": "    egBand = Math.max(0, Math.min(3, (opts?.band ?? 0) | 0));",
+    "new": "    egBand = 0;",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -569,8 +569,8 @@
   {
     "name": "EGZ-the-label-never-taken",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "egLabel = typeof opts?.label === 'string' ? opts.label : '';",
-    "new": "egLabel = '';",
+    "old": "    egLabel = typeof opts?.label === 'string' ? opts.label : '';",
+    "new": "    egLabel = '';",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -578,8 +578,8 @@
   {
     "name": "EGZ-the-fire-draws-the-stair",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    if (egMode() !== undefined && egDraw(t)) return;   // EG-ZE: the Spire's stair, its own pass\n",
-    "new": "",
+    "old": "    if (egMode() !== undefined && egDraw(t)) return; // EG-ZE: the Spire's stair, its own pass\n    labelShow(0);",
+    "new": "    labelShow(0);",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]
@@ -587,8 +587,8 @@
   {
     "name": "EGZ-the-stair-in-the-fire-cues",
     "file": "src/ui/gate/gateVeil.js",
-    "old": "    if (egMode() !== undefined) { egCue(name); return; }   // EG-ZE: the stair's own\n",
-    "new": "",
+    "old": "    if (egMode() !== undefined) {\n      egCue(name);\n      return;\n    } // EG-ZE: the stair's own\n    const m = hourMode();",
+    "new": "    const m = hourMode();",
     "tests": [
       "test/net/eliteGates/egz_stair.test.js"
     ]

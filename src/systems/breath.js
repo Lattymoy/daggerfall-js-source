@@ -8,7 +8,7 @@ import { RACES } from './races.js';
 import { maxBreath } from './statMods.js';
 import { hasActiveEffect } from './effects.js';
 import { templeOf } from './guild/guildVariants.js';
-import { activeMemberships } from './guild/guilds.js';   // V2e: GuildManager.Memberships
+import { activeMemberships } from './guild/guilds.js'; // V2e: GuildManager.Memberships
 
 // The one guild whose DeepBreath override is not the identity.
 const KYNARETH = templeOf('Kynareth').name;
@@ -47,7 +47,8 @@ export function setWaterBreathingRule(fn) {
   return prev;
 }
 /** DaggerfallEntity.IsWaterBreathing: the effect, or the installed rule. */
-export const isWaterBreathing = (entity) => hasActiveEffect(entity, 'waterBreathing') || !!_waterBreathingRule?.(entity);
+export const isWaterBreathing = (entity) =>
+  hasActiveEffect(entity, 'waterBreathing') || !!_waterBreathingRule?.(entity);
 
 /** PlayerEntity.FixedUpdate's breath clause (PlayerEntity.cs:322-343),
  *  ONE classic update's worth. While submerged without WaterBreathing:
@@ -63,7 +64,7 @@ export const isWaterBreathing = (entity) => hasActiveEffect(entity, 'waterBreath
 export function breathStep(entity, submerged, state, roll = () => Math.floor(Math.random() * 2)) {
   if (submerged && !isWaterBreathing(entity)) {
     if (!entity.currentBreath) {
-      entity.currentBreath = deepBreath(activeMemberships(entity), maxBreath(entity));   // V2e: the ACTIVE book (a vampire re-earns rank perks)
+      entity.currentBreath = deepBreath(activeMemberships(entity), maxBreath(entity)); // V2e: the ACTIVE book (a vampire re-earns rank perks)
     }
     if (state.tally > 18) {
       --entity.currentBreath;

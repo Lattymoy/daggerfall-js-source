@@ -21,7 +21,7 @@ test('DLV3 probe: its needle stands once in the file it names, and its plugin se
 test('DLV3 probe: the doors its seams read are where it reads them - the context\'s encounters\' host, the host\'s state, snapshot, press and contents, a wave foe\'s stamp', () => {
   assert.match(src('src/scenes/dungeonContext.js'), /\n {4}delve: \(\) => delve,/, 'the context\'s own door');
   const host = src('src/scenes/delve/delveHost.js');
-  for (const door of ['state: () => runs.map(', 'snapshot: () => ({ h: hash,', 'press(key, mode = \'grab\') {', 'contents(key) {']) assert.ok(host.includes(door), door);
+  for (const door of ['state: () =>\n      runs.map(', 'snapshot: () => ({\n      h: hash,', 'press(key, mode = \'grab\') {', 'contents(key) {']) assert.ok(host.includes(door), door);
   const hold = src('src/scenes/delve/delveHold.js');
   assert.match(hold, /\n {4}f\._delve = stamp;/, 'a wave foe carries its stamp');
   assert.match(hold, /void standOne\(p, \{\}, \{ i: site\.i, g: myGen, w, cap: false \}\)/, 'and the stamp names its site');

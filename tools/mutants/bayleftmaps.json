@@ -85,8 +85,8 @@
   {
     "name": "BLM-C1-the-party-box-far-edge-in",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
-    "new": "    if (px < box.x0 || py < box.y0 || px > box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "    if (px < box.x0 || py < box.y0 || px > box.x0 + box.w || py >= box.y0 + box.h) continue;",
     "tests": [
       "test/ui/bayleft_marks.test.js",
       "test/ui/soc6_partymap.test.js"
@@ -95,8 +95,8 @@
   {
     "name": "BLM-C1-the-party-box-west-the-bay's",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
-    "new": "    if (px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;\n    marks.push({",
+    "old": "    if (px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "new": "    if (px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]
@@ -122,8 +122,8 @@
   {
     "name": "BLM-C1-the-coin-box-west-the-bay's",
     "file": "src/ui/vendor/vendorMapMark.js",
-    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w",
-    "new": "px < 0 || py < box.y0 || px >= box.x0 + box.w",
+    "old": "    px < box.x0 ||",
+    "new": "    px < 0 ||",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]
@@ -131,8 +131,8 @@
   {
     "name": "BLM-C1-the-travellers-box-west-the-bay's",
     "file": "src/ui/partyMapMarks.js",
-    "old": "    if (!Number.isFinite(px) || !Number.isFinite(py) || px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
-    "new": "    if (!Number.isFinite(px) || !Number.isFinite(py) || px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "old": "      px < box.x0 ||",
+    "new": "      px < 0 ||",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]
@@ -140,8 +140,8 @@
   {
     "name": "BLM-C1-the-raids-box-west-the-bay's",
     "file": "src/ui/eventMapMarks.js",
-    "old": "px < box.x0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
-    "new": "px < 0 || py < box.y0 || px >= box.x0 + box.w || py >= box.y0 + box.h) continue;",
+    "old": "      px < box.x0 ||",
+    "new": "      px < 0 ||",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]
@@ -149,7 +149,7 @@
   {
     "name": "BLM-C2-the-flags-held-to-the-bay",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
+    "old": "const onMap = (mx, my) =>\n  Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
     "new": "const onMap = (mx, my) => Number.isFinite(mx) && Number.isFinite(my) && mx >= 0 && my >= 0 && mx < 1000 && my < 500;",
     "tests": [
       "test/ui/bayleft_marks.test.js",
@@ -159,8 +159,8 @@
   {
     "name": "BLM-C2-the-world's-edge-a-pixel-short",
     "file": "src/systems/map/mapWaypoints.js",
-    "old": "worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
-    "new": "worldPixelOk(Math.ceil(mx)) && worldPixelOk(Math.floor(my));",
+    "old": "  Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.floor(mx)) && worldPixelOk(Math.floor(my));",
+    "new": "  Number.isFinite(mx) && Number.isFinite(my) && worldPixelOk(Math.ceil(mx)) && worldPixelOk(Math.floor(my));",
     "tests": [
       "test/ui/bayleft_marks.test.js"
     ]
@@ -187,7 +187,7 @@
   {
     "name": "BLM-C10-past-the-table-0-as-before",
     "file": "src/world/road/pathData.js",
-    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "old": "  if (!onTable(mapPixelX, mapPixelY))\n    return pathType === PATH_ROADS || pathType === PATH_TRACKS\n      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff\n      : 0;",
     "new": "  if (!onTable(mapPixelX, mapPixelY)) return 0;",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
@@ -196,8 +196,8 @@
   {
     "name": "BLM-C10-the-tracks-read-as-the-roads",
     "file": "src/world/road/pathData.js",
-    "old": "roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
-    "new": "roadsPastTable('roads', mapPixelX, mapPixelY) & 0xff : 0;",
+    "old": "      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff",
+    "new": "      ? roadsPastTable('roads', mapPixelX, mapPixelY) & 0xff",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "BLM-C10-the-rivers-read-as-the-roads",
     "file": "src/world/road/pathData.js",
-    "old": "return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
-    "new": "return roadsPastTable(pathType === PATH_TRACKS ? 'tracks' : 'roads', mapPixelX, mapPixelY) & 0xff;",
+    "old": "    return pathType === PATH_ROADS || pathType === PATH_TRACKS\n      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff\n      : 0;",
+    "new": "    return roadsPastTable(pathType === PATH_TRACKS ? 'tracks' : 'roads', mapPixelX, mapPixelY) & 0xff;",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "BLM-C10-the-layer-read-on-the-table",
     "file": "src/world/road/pathData.js",
-    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType ===",
-    "new": "  if (true) return pathType ===",
+    "old": "  if (!net) return 0;\n  if (!onTable(mapPixelX, mapPixelY))",
+    "new": "  if (!net) return 0;\n  if (true)",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]
@@ -898,8 +898,8 @@
   {
     "name": "BLM-C12-the-cross-on-the-bay's-scale",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "    const [cx, cy] = sheet ? tamrielCrossAt(o.pixel, r) : [",
-    "new": "    const [cx, cy] = false ? tamrielCrossAt(o.pixel, r) : [",
+    "old": "    const [cx, cy] = sheet",
+    "new": "    const [cx, cy] = false",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -907,8 +907,8 @@
   {
     "name": "BLM-C12-the-markers-of-every-sheet",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet);",
-    "new": "  const shown = o.markers;",
+    "old": "  const shown = o.markers.filter((m) => (m.sheet ?? null) === sheet); // BAY-LEFT-MAPS: the sheet's own markers",
+    "new": "  const shown = o.markers; // BAY-LEFT-MAPS: the sheet's own markers",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -934,8 +934,8 @@
   {
     "name": "BLM-C12-the-sheet-not-kept",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "(sheet ? { position, label, color, sheet } : { position, label, color });",
-    "new": "({ position, label, color });",
+    "old": "export const placedMarker = (position, label, color, sheet = null) =>\n  sheet ? { position, label, color, sheet } : { position, label, color };",
+    "new": "export const placedMarker = (position, label, color, sheet = null) => ({ position, label, color });",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -943,8 +943,8 @@
   {
     "name": "BLM-C12-marked-across-sheets",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "export const markerOn = (m, pos, sheet = null) => (m.sheet ?? null) === (sheet ?? null) && m.position[0]",
-    "new": "export const markerOn = (m, pos, sheet = null) => m.position[0]",
+    "old": "export const markerOn = (m, pos, sheet = null) =>\n  (m.sheet ?? null) === (sheet ?? null) && m.position[0] === pos[0] && m.position[1] === pos[1];",
+    "new": "export const markerOn = (m, pos, sheet = null) => m.position[0] === pos[0] && m.position[1] === pos[1];",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -952,8 +952,8 @@
   {
     "name": "BLM-C12-the-distance-across-sheets",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "((m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity);",
-    "new": "vector2IntDistance(m.position, pos);",
+    "old": "export const markerDistance = (m, pos, sheet = null) =>\n  (m.sheet ?? null) === (sheet ?? null) ? vector2IntDistance(m.position, pos) : Infinity;",
+    "new": "export const markerDistance = (m, pos, sheet = null) => vector2IntDistance(m.position, pos);",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]
@@ -961,8 +961,8 @@
   {
     "name": "BLM-C12-the-save-drops-the-sheet",
     "file": "src/systems/comeSailAway/comeSailAwayMap.js",
-    "old": "color: m.color, ...(m.sheet ? { sheet: m.sheet } : {}) });",
-    "new": "color: m.color });",
+    "old": "  ...(m.sheet ? { sheet: m.sheet } : {}),\n});",
+    "new": "});",
     "tests": [
       "test/systems/comeSailAway/csa_map.test.js"
     ]

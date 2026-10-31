@@ -126,14 +126,14 @@ export const SOURCE = Object.freeze({
 
 /** Mac's paintings, as committed - each under the piece's name, beside the folder his FBX names it from. */
 export const TEXTURES = Object.freeze({
-  cuirass: 'src/assets/mw/source/Steel_Plate_Cuirass.png',     // steelbreastplate\material_0.015_2D_View_<UDIM>.png
-  pauldron: 'src/assets/mw/source/Steel_Plate_Pauldron.png',   // steelpauldrons\Material.034_2D_View_<UDIM>.png
-  gauntlet: 'src/assets/mw/source/Steel_Plate_Gauntlet.png',   // newgloves\DefaultMaterial_2D_View_<UDIM>.png
-  greave: 'src/assets/mw/source/Steel_Plate_Greave.png',       // steelpants\material_12.010_2D_View_<UDIM>.png
-  boot: 'src/assets/mw/source/Steel_Plate_Boot.png',           // BOOTS\DefaultMaterial_2D_View_<UDIM>.png
-  helm: 'src/assets/mw/source/Steel_Plate_Helm.png',           // helmet\DefaultMaterial_2D_View_<UDIM>.png
-  visor: 'src/assets/mw/source/Steel_Plate_Visor.png',         // helmetface\DefaultMaterial_2D_View_<UDIM>.png
-  skirt: 'src/assets/mw/source/Steel_Plate_Skirt.png',         // steelpelvis\material_2.013_2D_View_<UDIM>.png (MW-STEEL2)
+  cuirass: 'src/assets/mw/source/Steel_Plate_Cuirass.png', // steelbreastplate\material_0.015_2D_View_<UDIM>.png
+  pauldron: 'src/assets/mw/source/Steel_Plate_Pauldron.png', // steelpauldrons\Material.034_2D_View_<UDIM>.png
+  gauntlet: 'src/assets/mw/source/Steel_Plate_Gauntlet.png', // newgloves\DefaultMaterial_2D_View_<UDIM>.png
+  greave: 'src/assets/mw/source/Steel_Plate_Greave.png', // steelpants\material_12.010_2D_View_<UDIM>.png
+  boot: 'src/assets/mw/source/Steel_Plate_Boot.png', // BOOTS\DefaultMaterial_2D_View_<UDIM>.png
+  helm: 'src/assets/mw/source/Steel_Plate_Helm.png', // helmet\DefaultMaterial_2D_View_<UDIM>.png
+  visor: 'src/assets/mw/source/Steel_Plate_Visor.png', // helmetface\DefaultMaterial_2D_View_<UDIM>.png
+  skirt: 'src/assets/mw/source/Steel_Plate_Skirt.png', // steelpelvis\material_2.013_2D_View_<UDIM>.png (MW-STEEL2)
 });
 
 /** The DDS's name as the NIFs spell it: a BARE file, which `correctTexturePath` re-roots under `textures/` (the
@@ -153,8 +153,14 @@ export const REFERENCE_PARTS = Object.freeze({ head: 'Breton_Male.003', neck: 'B
  *  Breton, kept as the evidence SCENE_FROM_BIND is read against - the neck bone stands in this neck, the head bone in
  *  this head. */
 export const SCENE_BODY = Object.freeze({
-  head: Object.freeze({ min: Object.freeze([-4.764463, -5.649226, 113.146219]), max: Object.freeze([4.764463, 9.197224, 129.199977]) }),
-  neck: Object.freeze({ min: Object.freeze([-3.895279, -4.097911, 109.962381]), max: Object.freeze([3.895279, 3.687286, 121.834567]) }),
+  head: Object.freeze({
+    min: Object.freeze([-4.764463, -5.649226, 113.146219]),
+    max: Object.freeze([4.764463, 9.197224, 129.199977]),
+  }),
+  neck: Object.freeze({
+    min: Object.freeze([-3.895279, -4.097911, 109.962381]),
+    max: Object.freeze([3.895279, 3.687286, 121.834567]),
+  }),
 });
 
 /** MW-STEEL4: the retail skeleton whose bind the plate is skinned in - the retail hierarchy and its "Tri Shadow"
@@ -176,7 +182,14 @@ export const SCENE_FROM_BIND = Object.freeze([0, 2.5, 98.55]);
 /** An affine of a rotation and a translation, inverted: (R^T, -R^T t). */
 const rigidInverse = ({ a, t }) => {
   const r = [a[0], a[3], a[6], a[1], a[4], a[7], a[2], a[5], a[8]];
-  return { a: r, t: [-(r[0] * t[0] + r[1] * t[1] + r[2] * t[2]), -(r[3] * t[0] + r[4] * t[1] + r[5] * t[2]), -(r[6] * t[0] + r[7] * t[1] + r[8] * t[2])] };
+  return {
+    a: r,
+    t: [
+      -(r[0] * t[0] + r[1] * t[1] + r[2] * t[2]),
+      -(r[3] * t[0] + r[4] * t[1] + r[5] * t[2]),
+      -(r[6] * t[0] + r[7] * t[1] + r[8] * t[2]),
+    ],
+  };
 };
 
 /**
@@ -192,8 +205,12 @@ export function retailBind(skeletonBytes) {
   if (!shadow) throw new Error('this skeleton carries no skinned "Tri Shadow" to read the bind from');
   const skin = nif.records[shadow.skin];
   const data = nif.records[skin.data];
-  const identity = (tr) => tr.scale === 1 && tr.translation.every((v) => v === 0) && [1, 0, 0, 0, 1, 0, 0, 0, 1].every((v, i) => tr.rotation[i] === v);
-  if (!identity(shadow) || !identity(data.transform)) throw new Error('the Tri Shadow is moved or turned - its binds stand in another frame');
+  const identity = (tr) =>
+    tr.scale === 1 &&
+    tr.translation.every((v) => v === 0) &&
+    [1, 0, 0, 0, 1, 0, 0, 0, 1].every((v, i) => tr.rotation[i] === v);
+  if (!identity(shadow) || !identity(data.transform))
+    throw new Error('the Tri Shadow is moved or turned - its binds stand in another frame');
   const bind = new Map();
   skin.bones.forEach((ref, i) => {
     const tr = data.bones[i].transform;
@@ -205,13 +222,19 @@ export function retailBind(skeletonBytes) {
 
 /** MW-STEEL4: the bind in the scene's frame - where every bone stood under Mac's plate. */
 export function plateBind(skeletonBytes) {
-  return new Map([...retailBind(skeletonBytes)].map(([name, m]) => [name, { a: Array.from(m.a), t: m.t.map((v, k) => v + SCENE_FROM_BIND[k]) }]));
+  return new Map(
+    [...retailBind(skeletonBytes)].map(([name, m]) => [
+      name,
+      { a: Array.from(m.a), t: m.t.map((v, k) => v + SCENE_FROM_BIND[k]) },
+    ]),
+  );
 }
 
 /** A bone of a piece's rig: its name, where its segment ends (another bone's name - that bone's origin; `mid` -
  *  halfway between two bones' origins; or `local` - a point in the bone's own frame at bind), and its joint with its
  *  rig `parent`, `blend` units either side (tools/skinWeights.mjs). */
-const bone = (name, to, joint = null) => Object.freeze({ name, to, ...(joint ? { parent: joint[0], blend: joint[1] } : {}) });
+const bone = (name, to, joint = null) =>
+  Object.freeze({ name, to, ...(joint ? { parent: joint[0], blend: joint[1] } : {}) });
 const SPINE = Object.freeze([
   bone('Bip01 Pelvis', 'Bip01 Spine'),
   bone('Bip01 Spine', 'Bip01 Spine1', ['Bip01 Pelvis', 3]),
@@ -230,9 +253,12 @@ const limbs = (S) => {
     forearm: bone(b('Forearm'), b('Hand')),
     hand: [
       bone(b('Hand'), { mid: [b('Finger1'), b('Finger2')] }, [b('Forearm'), 1.5]),
-      bone(b('Finger0'), b('Finger01'), [b('Hand'), 1]), bone(b('Finger01'), { local: [2.5, 0, 0] }, [b('Finger0'), 0.75]),
-      bone(b('Finger1'), b('Finger11'), [b('Hand'), 1]), bone(b('Finger11'), { local: [2.5, 0, 0] }, [b('Finger1'), 0.75]),
-      bone(b('Finger2'), b('Finger21'), [b('Hand'), 1]), bone(b('Finger21'), { local: [2.5, 0, 0] }, [b('Finger2'), 0.75]),
+      bone(b('Finger0'), b('Finger01'), [b('Hand'), 1]),
+      bone(b('Finger01'), { local: [2.5, 0, 0] }, [b('Finger0'), 0.75]),
+      bone(b('Finger1'), b('Finger11'), [b('Hand'), 1]),
+      bone(b('Finger11'), { local: [2.5, 0, 0] }, [b('Finger1'), 0.75]),
+      bone(b('Finger2'), b('Finger21'), [b('Hand'), 1]),
+      bone(b('Finger21'), { local: [2.5, 0, 0] }, [b('Finger2'), 0.75]),
     ],
     thigh: bone(b('Thigh'), b('Calf')),
     calf: bone(b('Calf'), b('Foot'), [b('Thigh'), 3]),
@@ -241,7 +267,8 @@ const limbs = (S) => {
 };
 const R = limbs('R');
 const L = limbs('L');
-const rig = (shape, bones, hang = null) => Object.freeze({ shape, bones: Object.freeze(bones), ...(hang ? { hang: Object.freeze(hang) } : {}) });
+const rig = (shape, bones, hang = null) =>
+  Object.freeze({ shape, bones: Object.freeze(bones), ...(hang ? { hang: Object.freeze(hang) } : {}) });
 
 /**
  * MW-STEEL4: EACH PIECE'S RIG - the shape name rule 15's filter knows it by (the part's bone: "Tri Right Hand"; the
@@ -258,7 +285,14 @@ const rig = (shape, bones, hang = null) => Object.freeze({ shape, bones: Object.
  */
 export const PLATE_RIG = Object.freeze({
   cuirass: rig('Tri Chest', [...SPINE, R.clavicle(['Bip01 Spine2', 2]), L.clavicle(['Bip01 Spine2', 2])]),
-  skirt: rig('Tri Groin', [SPINE[0], L.thigh, R.thigh], { root: 'Bip01 Pelvis', legs: ['Bip01 L Thigh', 'Bip01 R Thigh'], top: 84, bottom: 64.5, share: 0.7, centre: 4 }),
+  skirt: rig('Tri Groin', [SPINE[0], L.thigh, R.thigh], {
+    root: 'Bip01 Pelvis',
+    legs: ['Bip01 L Thigh', 'Bip01 R Thigh'],
+    top: 84,
+    bottom: 64.5,
+    share: 0.7,
+    centre: 4,
+  }),
   pauldron_right: rig('Tri Right Clavicle', [R.clavicle(), R.upperArm]),
   pauldron_left: rig('Tri Left Clavicle', [L.clavicle(), L.upperArm]),
   gauntlet_right: rig('Tri Right Hand', [R.forearm, ...R.hand]),
@@ -280,8 +314,12 @@ export function rigSegments(rigBones, bind) {
   };
   const end = (b) => {
     if (typeof b.to === 'string') return origin(b.to);
-    if (b.to.mid) { const [p, q] = b.to.mid.map(origin); return [0, 1, 2].map((k) => (p[k] + q[k]) / 2); }
-    const m = bind.get(b.name); const l = b.to.local;
+    if (b.to.mid) {
+      const [p, q] = b.to.mid.map(origin);
+      return [0, 1, 2].map((k) => (p[k] + q[k]) / 2);
+    }
+    const m = bind.get(b.name);
+    const l = b.to.local;
     return [0, 1, 2].map((k) => m.a[k * 3] * l[0] + m.a[k * 3 + 1] * l[1] + m.a[k * 3 + 2] * l[2] + m.t[k]);
   };
   return rigBones.map((b) => ({ ...b, from: origin(b.name), to: end(b) }));
@@ -291,7 +329,8 @@ export function rigSegments(rigBones, bind) {
 export const BOX_SLACK = 0.02;
 
 const shape = (object, texture, box) => Object.freeze({ object, texture, box: Object.freeze(box) });
-const piece = (id, file, shapes, lift = 0) => Object.freeze({ id, file, shapes: Object.freeze(shapes), ...(lift ? { lift } : {}) });
+const piece = (id, file, shapes, lift = 0) =>
+  Object.freeze({ id, file, shapes: Object.freeze(shapes), ...(lift ? { lift } : {}) });
 
 /**
  * MW-STEEL5: HOW FAR UP THE HEAD BONE THE GAME'S HEAD STANDS OVER THE SCENE'S (units) - and so how far the open helm is
@@ -313,22 +352,89 @@ export const HELM_LIFT = 4;
  */
 export const PIECES = Object.freeze([
   piece('cuirass', 'set', [
-    shape('Imperial_Silver_Cuirass_67_Male.013', 'cuirass', [[-16.61, -11.94, 78.8], [16.61, 11.46, 115.42]]),
-    shape('Imperial_Silver_Cuirass_67_Male.012', 'cuirass', [[-10.69, -9.98, 85.82], [10.44, 10.28, 89.57]]),
+    shape('Imperial_Silver_Cuirass_67_Male.013', 'cuirass', [
+      [-16.61, -11.94, 78.8],
+      [16.61, 11.46, 115.42],
+    ]),
+    shape('Imperial_Silver_Cuirass_67_Male.012', 'cuirass', [
+      [-10.69, -9.98, 85.82],
+      [10.44, 10.28, 89.57],
+    ]),
   ]),
-  piece('skirt', 'set', [shape('Imperial_Silver_Cuirass_67_Male.011', 'skirt', [[-14.42, -11.98, 64.55], [14.42, 12.17, 86.93]])]),
-  piece('pauldron_right', 'set', [shape('Breton_Male.009 Remeshed.003', 'pauldron', [[6.43, -9.1, 106.74], [30.56, 7.55, 118.82]])]),
-  piece('pauldron_left', 'set', [shape('Breton_Male.009 Remeshed.001', 'pauldron', [[-30.56, -9.1, 106.74], [-6.43, 7.55, 118.82]])]),
-  piece('gauntlet_right', 'set', [shape('Imperial_Steel_Left_Gauntlet_20_Male', 'gauntlet', [[27.03, -5.81, 106.44], [59.04, 4.56, 115.56]])]),
-  piece('gauntlet_left', 'set', [shape('Imperial_Steel_Left_Gauntlet_20_Male.001', 'gauntlet', [[-59.04, -5.81, 106.44], [-27.03, 4.56, 115.56]])]),
-  piece('greave_right', 'set', [shape('Breton_Male.007', 'greave', [[0.53, -5.13, 39.78], [11.9, 8.05, 79.72]])]),
-  piece('greave_left', 'set', [shape('Breton_Male.001', 'greave', [[-11.9, -5.13, 39.78], [-0.53, 8.05, 79.72]])]),
-  piece('boot_right', 'set', [shape('Cube.024', 'boot', [[0.32, -6.48, -0.21], [11.33, 14.61, 48.13]])]),
-  piece('boot_left', 'set', [shape('Cube.019', 'boot', [[-11.33, -6.48, -0.21], [-0.32, 14.61, 48.13]])]),
-  piece('helm_open', 'openHelm', [shape('Sphere.002', 'helm', [[-7.5, -7.93, 112.88], [7.5, 9.22, 131.82]])], HELM_LIFT),
+  piece('skirt', 'set', [
+    shape('Imperial_Silver_Cuirass_67_Male.011', 'skirt', [
+      [-14.42, -11.98, 64.55],
+      [14.42, 12.17, 86.93],
+    ]),
+  ]),
+  piece('pauldron_right', 'set', [
+    shape('Breton_Male.009 Remeshed.003', 'pauldron', [
+      [6.43, -9.1, 106.74],
+      [30.56, 7.55, 118.82],
+    ]),
+  ]),
+  piece('pauldron_left', 'set', [
+    shape('Breton_Male.009 Remeshed.001', 'pauldron', [
+      [-30.56, -9.1, 106.74],
+      [-6.43, 7.55, 118.82],
+    ]),
+  ]),
+  piece('gauntlet_right', 'set', [
+    shape('Imperial_Steel_Left_Gauntlet_20_Male', 'gauntlet', [
+      [27.03, -5.81, 106.44],
+      [59.04, 4.56, 115.56],
+    ]),
+  ]),
+  piece('gauntlet_left', 'set', [
+    shape('Imperial_Steel_Left_Gauntlet_20_Male.001', 'gauntlet', [
+      [-59.04, -5.81, 106.44],
+      [-27.03, 4.56, 115.56],
+    ]),
+  ]),
+  piece('greave_right', 'set', [
+    shape('Breton_Male.007', 'greave', [
+      [0.53, -5.13, 39.78],
+      [11.9, 8.05, 79.72],
+    ]),
+  ]),
+  piece('greave_left', 'set', [
+    shape('Breton_Male.001', 'greave', [
+      [-11.9, -5.13, 39.78],
+      [-0.53, 8.05, 79.72],
+    ]),
+  ]),
+  piece('boot_right', 'set', [
+    shape('Cube.024', 'boot', [
+      [0.32, -6.48, -0.21],
+      [11.33, 14.61, 48.13],
+    ]),
+  ]),
+  piece('boot_left', 'set', [
+    shape('Cube.019', 'boot', [
+      [-11.33, -6.48, -0.21],
+      [-0.32, 14.61, 48.13],
+    ]),
+  ]),
+  piece(
+    'helm_open',
+    'openHelm',
+    [
+      shape('Sphere.002', 'helm', [
+        [-7.5, -7.93, 112.88],
+        [7.5, 9.22, 131.82],
+      ]),
+    ],
+    HELM_LIFT,
+  ),
   piece('helm_closed', 'set', [
-    shape('Sphere', 'helm', [[-7.5, -7.93, 113.88], [7.5, 8.95, 132.82]]),
-    shape('Sphere.001 Remeshed Remeshed', 'visor', [[-5.07, -8.02, 112.58], [6.82, 10.29, 140.61]]),
+    shape('Sphere', 'helm', [
+      [-7.5, -7.93, 113.88],
+      [7.5, 8.95, 132.82],
+    ]),
+    shape('Sphere.001 Remeshed Remeshed', 'visor', [
+      [-5.07, -8.02, 112.58],
+      [6.82, 10.29, 140.61],
+    ]),
   ]),
 ]);
 
@@ -342,7 +448,12 @@ export function objectTree(tree, name) {
   for (const c of childrenNamed(nodeAt(tree.nodes, 'Connections'), 'C')) {
     if (c.props[0] === 'OO' && String(c.props[2]) === id) keep.add(String(c.props[1]));
   }
-  const only = { ...objects, children: objects.children.filter((o) => keep.has(String(o.props[0])) && (o.name === 'Geometry' || o.name === 'Model')) };
+  const only = {
+    ...objects,
+    children: objects.children.filter(
+      (o) => keep.has(String(o.props[0])) && (o.name === 'Geometry' || o.name === 'Model'),
+    ),
+  };
   return { ...tree, nodes: tree.nodes.map((n) => (n === objects ? only : n)) };
 }
 
@@ -350,9 +461,14 @@ export function objectTree(tree, name) {
 export function bakeObject(tree, name, box = null) {
   const mesh = bakeMesh(objectTree(tree, name), { name, ...SETTINGS });
   if (box) {
-    const off = [0, 1, 2].flatMap((k) => [Math.abs(mesh.bounds.min[k] - box[0][k]), Math.abs(mesh.bounds.max[k] - box[1][k])]);
+    const off = [0, 1, 2].flatMap((k) => [
+      Math.abs(mesh.bounds.min[k] - box[0][k]),
+      Math.abs(mesh.bounds.max[k] - box[1][k]),
+    ]);
     if (Math.max(...off) > BOX_SLACK) {
-      throw new Error(`"${name}" stands at ${JSON.stringify(mesh.bounds)}, not where its piece was read (${JSON.stringify(box)}) - re-read the export before baking it`);
+      throw new Error(
+        `"${name}" stands at ${JSON.stringify(mesh.bounds)}, not where its piece was read (${JSON.stringify(box)}) - re-read the export before baking it`,
+      );
     }
   }
   return mesh;
@@ -365,13 +481,17 @@ export function liftMesh(mesh, lift) {
   return {
     ...mesh,
     positions: mesh.positions.map((v, i) => (i % 3 === 2 ? up(v) : v)),
-    bounds: { min: [mesh.bounds.min[0], mesh.bounds.min[1], up(mesh.bounds.min[2])], max: [mesh.bounds.max[0], mesh.bounds.max[1], up(mesh.bounds.max[2])] },
+    bounds: {
+      min: [mesh.bounds.min[0], mesh.bounds.min[1], up(mesh.bounds.min[2])],
+      max: [mesh.bounds.max[0], mesh.bounds.max[1], up(mesh.bounds.max[2])],
+    },
   };
 }
 
 /** One piece's shapes as the bake places them: each object held to the box it was read at, then raised by the piece's
  *  `lift` (MW-STEEL5, the open helm). `trees` - the parsed sources, by SOURCE's keys. */
-export const pieceMeshes = (trees, p) => p.shapes.map((s) => liftMesh(bakeObject(trees[p.file], s.object, s.box), p.lift ?? 0));
+export const pieceMeshes = (trees, p) =>
+  p.shapes.map((s) => liftMesh(bakeObject(trees[p.file], s.object, s.box), p.lift ?? 0));
 
 /**
  * MW-STEEL4: one piece's shapes weighted to its rig in `bind` (plateBind) - one `[[bone, weight], ...]` list per vertex
@@ -395,7 +515,8 @@ export function pieceRig(id, meshes, bind) {
  */
 export function bakeSteelPlate({ set, openHelm, pngs, skeleton }, { sheets = false } = {}) {
   if (!skeleton) throw new Error('no skeleton to skin the plate in - the bake reads its bind (RETAIL_SKELETON)');
-  if (!set || !openHelm) throw new Error('the bake reads two sources - the set (SOURCE.set) and the open helm (SOURCE.openHelm)');
+  if (!set || !openHelm)
+    throw new Error('the bake reads two sources - the set (SOURCE.set) and the open helm (SOURCE.openHelm)');
   const trees = { set: readFbx(Buffer.from(set)), openHelm: readFbx(Buffer.from(openHelm)) };
   const bind = plateBind(skeleton);
   const textures = Object.keys(TEXTURES).map((tex) => {
@@ -407,8 +528,15 @@ export function bakeSteelPlate({ set, openHelm, pngs, skeleton }, { sheets = fal
   const pieces = PIECES.map((p) => {
     const meshes = pieceMeshes(trees, p);
     const r = pieceRig(p.id, meshes, bind);
-    const nif = skinnedMeshesToNif(p.shapes.map((s, i) => ({ mesh: meshes[i], texture: textureName(s.texture), name: `${r.shape} ${i}`, weights: r.weights[i] })),
-      { node: `Steel Plate ${p.id}`, bones: r.bones });
+    const nif = skinnedMeshesToNif(
+      p.shapes.map((s, i) => ({
+        mesh: meshes[i],
+        texture: textureName(s.texture),
+        name: `${r.shape} ${i}`,
+        weights: r.weights[i],
+      })),
+      { node: `Steel Plate ${p.id}`, bones: r.bones },
+    );
     const out = { id: p.id, meshes, weights: r.weights, nif };
     if (sheets) {
       const t = byTex.get(p.shapes[0].texture).png;
@@ -460,11 +588,19 @@ export function openHelmSource(bytes, { pieces = PIECES } = {}) {
   return stripFbx(bytes, { drop: names.filter((n) => !keep.has(n)) }).bytes;
 }
 
-const save = (path, bytes) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); };
+const save = (path, bytes) => {
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, bytes);
+};
 
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
-  const opt = (k, d = null) => args.find((a) => a.startsWith(`--${k}=`))?.split('=').slice(1).join('=') ?? d;
+  const opt = (k, d = null) =>
+    args
+      .find((a) => a.startsWith(`--${k}=`))
+      ?.split('=')
+      .slice(1)
+      .join('=') ?? d;
   // AUDIT MW-STEEL5: NOTHING IS WRITTEN UNTIL EVERYTHING HAS BAKED. The sources are taken in memory, the bake runs on
   // them, and only then are the sources and what they make saved - so a refused open helm or a failed bake leaves the
   // tree as it was, never a new source beside the old NIFs.
@@ -472,21 +608,31 @@ if (isMain(import.meta.url)) {
   const imported = imp ? importSteelPlate(readFileSync(imp)) : null;
   const openFrom = opt('open-helm');
   const openHelm = openFrom ? openHelmSource(readFileSync(openFrom)) : null;
-  const missing = Object.entries(TEXTURES).filter(([, p]) => !existsSync(p)).map(([t]) => t);
-  if (missing.length) { console.error(`no painting yet for: ${missing.join(', ')} (${missing.map((t) => TEXTURES[t]).join(', ')})`); process.exit(1); }
+  const missing = Object.entries(TEXTURES)
+    .filter(([, p]) => !existsSync(p))
+    .map(([t]) => t);
+  if (missing.length) {
+    console.error(`no painting yet for: ${missing.join(', ')} (${missing.map((t) => TEXTURES[t]).join(', ')})`);
+    process.exit(1);
+  }
   const wantSheets = args.includes('--sheets');
-  const r = bakeSteelPlate({
-    set: imported ? imported.set : readFileSync(SOURCE.set), openHelm: openHelm ?? readFileSync(SOURCE.openHelm),
-    pngs: Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, readFileSync(p)])),
-    skeleton: readFileSync(RETAIL_SKELETON),
-  }, { sheets: wantSheets });
+  const r = bakeSteelPlate(
+    {
+      set: imported ? imported.set : readFileSync(SOURCE.set),
+      openHelm: openHelm ?? readFileSync(SOURCE.openHelm),
+      pngs: Object.fromEntries(Object.entries(TEXTURES).map(([t, p]) => [t, readFileSync(p)])),
+      skeleton: readFileSync(RETAIL_SKELETON),
+    },
+    { sheets: wantSheets },
+  );
   if (imported) {
     save(SOURCE.set, imported.set);
     console.log(`${SOURCE.set}  ${imported.set.length} bytes: ${meshModelNames(imported.set).join(', ')}`);
     if (imported.unread.length) console.log(`  read by no piece, kept in the source: ${imported.unread.join(', ')}`);
     if (imported.reference) {
       console.log('  the reference body, stripped - its bounds for SCENE_BODY:');
-      for (const [part, b] of Object.entries(imported.reference)) console.log(`    ${part}: min ${JSON.stringify(b.min)} max ${JSON.stringify(b.max)}`);
+      for (const [part, b] of Object.entries(imported.reference))
+        console.log(`    ${part}: min ${JSON.stringify(b.min)} max ${JSON.stringify(b.max)}`);
     }
   }
   if (openHelm) {
@@ -496,7 +642,9 @@ if (isMain(import.meta.url)) {
   for (const p of r.pieces) {
     save(meshFile(p.id), p.nif);
     const tris = p.meshes.reduce((n, m) => n + m.indices.length / 3, 0);
-    console.log(`  ${p.id.padEnd(15)} ${String(tris).padStart(4)} triangles -> ${meshFile(p.id)}  ${p.nif.length} bytes`);
+    console.log(
+      `  ${p.id.padEnd(15)} ${String(tris).padStart(4)} triangles -> ${meshFile(p.id)}  ${p.nif.length} bytes`,
+    );
     if (wantSheets) save(`scratch/steel-plate-${p.id}.png`, p.sheet);
   }
   for (const t of r.textures) {

@@ -80,7 +80,7 @@ test('WB8a: the doors, by source - the flag\'s door skips him; a sway stops at h
   // scenes/gate/standInSpell.js, which the context wires with its mid-screen line
   assert.match(read('src/scenes/dungeonContext.js'), /createStandInSpell\(\{\n\s*player: playerEntity, say: \(line\) => hudText\.add\(line\),/);
   const dc = read('src/scenes/gate/standInSpell.js');
-  assert.match(dc, /const sways = spellSways\(sp\) && !!boss\.entity\.pacifyImmune;\n\s*if \(sways && now\(\) - swayToldAt >= BOSS_SWAY_TELL_MS\) \{ swayToldAt = now\(\); say\(BOSS_SWAY_TEXT\(boss\.entity\.name\)\); \}/);
+  assert.match(dc, /const sways = spellSways\(sp\) && !!boss\.entity\.pacifyImmune;\n\s*if \(sways && now\(\) - swayToldAt >= BOSS_SWAY_TELL_MS\) \{\n\s*swayToldAt = now\(\);\n\s*say\(BOSS_SWAY_TEXT\(boss\.entity\.name\)\);\n\s*\}/);
   assert.match(dc, /if \(!harm\) return laid \|\| sways;/, 'a sway alone met him - the missile is spent there');
   assert.match(read('src/scenes/hostCombat.js'), /if \(isQuestFoe\) return null;\n\s*if \(entity\?\.pacifyImmune\) return null;/);
 });

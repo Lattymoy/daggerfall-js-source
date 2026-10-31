@@ -44,13 +44,13 @@
 // is NOT in the save shape, so a restrained foe re-applies restraint
 // after load.
 
-import { isShelved } from './quest.js';   // QUEST-SHELF: a quest set aside
+import { isShelved } from './quest.js'; // QUEST-SHELF: a quest set aside
 
 export class QuestResourceBehaviour {
   constructor(machine, host = null) {
     this.machine = machine;
     this.host = host;
-    machine?._registerBehaviour?.(this);   // AUDIT DISC7 C2: the resync finds every behaviour standing on its quest
+    machine?._registerBehaviour?.(this); // AUDIT DISC7 C2: the resync finds every behaviour standing on its quest
     // the serialized six (QuestResourceSaveData_v1)
     this.questUID = 0;
     this.targetSymbol = null;
@@ -65,9 +65,9 @@ export class QuestResourceBehaviour {
     this.restraintApplied = false;
     this.targetQuest = null;
     this.targetResource = null;
-    this.enemy = null;               // enemyEntityBehaviour - cached for Foe targets
-    this.individualHome = false;     // QUEST-SHELF (its audit): a named NPC's own home copy (machine.setupIndividualStaticNPC)
-    this.questorHost = false;        // AUDIT QA3 D2: a clicked questor's own body (machine.assignQuestResourceBehaviour)
+    this.enemy = null; // enemyEntityBehaviour - cached for Foe targets
+    this.individualHome = false; // QUEST-SHELF (its audit): a named NPC's own home copy (machine.setupIndividualStaticNPC)
+    this.questorHost = false; // AUDIT QA3 D2: a clicked questor's own body (machine.assignQuestResourceBehaviour)
     // AUDIT 63 F2: Unity's `Destroy(component)` stops the component
     // dead - it never Updates again and never receives activation.
     // The port's behaviour object survives its own destroy event
@@ -110,7 +110,10 @@ export class QuestResourceBehaviour {
       this.targetSymbol = r.symbol;
       return true;
     }
-    if (this.machine.getQuest(this.questUID) === this.targetQuest && this.targetQuest.getResource(this.targetSymbol) === this.targetResource) {
+    if (
+      this.machine.getQuest(this.questUID) === this.targetQuest &&
+      this.targetQuest.getResource(this.targetSymbol) === this.targetResource
+    ) {
       // QUEST-AUDIT III RELOAD-TWINS: the live resource by a symbol object of its own (a restored behaviour's is the save's
       // copy) - the mount's guard matches by the object, so it takes the resource's own
       const own = this.targetResource?.symbol;
@@ -118,21 +121,25 @@ export class QuestResourceBehaviour {
       this.targetSymbol = own;
       return true;
     }
-    this.targetResource?.uncoupleBehaviour(this);   // AUDIT 68 S30-relink-leaks-orphan-resources: the orphan lets go
-    this.targetQuest = null; this.targetResource = null;
+    this.targetResource?.uncoupleBehaviour(this); // AUDIT 68 S30-relink-leaks-orphan-resources: the orphan lets go
+    this.targetQuest = null;
+    this.targetResource = null;
     this.cacheTarget();
     if (this.targetResource?.symbol) this.targetSymbol = this.targetResource.symbol;
-    if (this.targetResource && !this.targetResource.questResourceBehaviour) this.targetResource.questResourceBehaviour = this;
+    if (this.targetResource && !this.targetResource.questResourceBehaviour)
+      this.targetResource.questResourceBehaviour = this;
     return true;
   }
 
   /** Start (:124-130). */
-  start() { return this.cacheTarget(); }
+  start() {
+    return this.cacheTarget();
+  }
 
   /** Update (:132-203), the order verbatim. */
   update() {
-    if (this.isComponentDestroyed) return;   // AUDIT 63 F2: a destroyed component does not Update
-    this.beat = this.machine?.beat ?? this.beat;   // AUDIT STAR8 S1: driven - its body stands
+    if (this.isComponentDestroyed) return; // AUDIT 63 F2: a destroyed component does not Update
+    this.beat = this.machine?.beat ?? this.beat; // AUDIT STAR8 S1: driven - its body stands
     // DISC6 (Discord, 2026-09-23: "Theres no quest notification when you killed all monsters and no quest update in
     // the log"): THE TARGET IS WHATEVER THE QUEST HOLDS NOW. CacheTarget resolves the quest and the resource once and
     // keeps them - and a party's shared-quest resync (machine.updateSharedQuest, every change to a partner's log)
@@ -159,7 +166,7 @@ export class QuestResourceBehaviour {
     // AUDIT QA3 D2: nor a quest the machine no longer holds at all - the journal's Restart threw it away (removeQuest),
     // and its things and people stood on, drawn and answering nothing, until the player left
     if (this.questUID != null && this.machine?.getQuest && !this.machine.getQuest(this.questUID) && !this.enemy) {
-      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false);   // a guild's questor stays at their post
+      if (!this.individualHome && !this.questorHost) this.setGameObjectActive(false); // a guild's questor stays at their post
       return;
     }
     // Ensure target resource has this behaviour assigned - coupling
@@ -227,11 +234,12 @@ export class QuestResourceBehaviour {
    *  EVERY quest, and its result ASSIGNS over the direct click's
    *  (the follow-up-quest bootstrap door, C#'s own shape). */
   doClick() {
-    if (this.isComponentDestroyed) return false;   // AUDIT 63 F2: PlayerActivate.cs:1523-1528's GetComponent<QuestResourceBehaviour>() misses after Destroy, and the activation falls through to talk/guild routing
+    if (this.isComponentDestroyed) return false; // AUDIT 63 F2: PlayerActivate.cs:1523-1528's GetComponent<QuestResourceBehaviour>() misses after Destroy, and the activation falls through to talk/guild routing
     // QUEST-SHELF: a quest set aside takes no click - it falls through to talk/guild routing; its audit: a named NPC's
     // click still reaches every RUNNING quest that holds them (the broadcast below)
     let foundInActiveQuest = false;
-    if (this.targetResource != null && !isShelved(this.targetQuest) && !this.targetQuest?.questComplete) {   // ENDED-STANDS: nor an ended one
+    if (this.targetResource != null && !isShelved(this.targetQuest) && !this.targetQuest?.questComplete) {
+      // ENDED-STANDS: nor an ended one
       this.targetResource.setPlayerClicked();
       if (this.targetResource.isItem) this._transferWorldItemToPlayer();
       foundInActiveQuest = true;
@@ -284,13 +292,15 @@ export class QuestResourceBehaviour {
   }
 
   /** gameObject.SetActive through the handle. */
-  setGameObjectActive(active) { this.host?.setActive?.(active); }
+  setGameObjectActive(active) {
+    this.host?.setActive?.(active);
+  }
 
   /** Destroy(gameObject): unmount then raise OnDestroy, as Unity's
    *  teardown sequence does. */
   destroyGameObject() {
     this.host?.destroy?.();
-    this.isComponentDestroyed = true;   // AUDIT 63 F2: Destroy(gameObject) takes its components with it
+    this.isComponentDestroyed = true; // AUDIT 63 F2: Destroy(gameObject) takes its components with it
     this.notifyDestroyed();
   }
 
@@ -309,7 +319,9 @@ export class QuestResourceBehaviour {
 
   /** OnDestroy (:205-208) + the event (:465-471). The QuestResource
    *  accessor subscribes here; its handler uncouples the field. */
-  onDestroy(handler) { this._destroyHandlers.push(handler); }
+  onDestroy(handler) {
+    this._destroyHandlers.push(handler);
+  }
   offDestroy(handler) {
     const i = this._destroyHandlers.indexOf(handler);
     if (i >= 0) this._destroyHandlers.splice(i, 1);
@@ -364,7 +376,7 @@ export class QuestResourceBehaviour {
   _clickAllIndividualNPCs(factionID) {
     let matched = false;
     for (const quest of this.machine.quests.values()) {
-      if (quest.questComplete || quest.questTombstoned || isShelved(quest)) continue;   // QUEST-SHELF
+      if (quest.questComplete || quest.questTombstoned || isShelved(quest)) continue; // QUEST-SHELF
       for (const resource of quest.resources.values()) {
         if (!resource.isPerson) continue;
         if (resource.isIndividualNPC && resource.factionData?.id === factionID) {

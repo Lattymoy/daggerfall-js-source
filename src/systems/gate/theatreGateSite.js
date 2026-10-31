@@ -24,11 +24,18 @@
 import { spawnsDungeon, WORLD_SALT } from '../../world/spawnedDungeons.js';
 import { pickGateRegion, pickGatePixel, gateSpotLocal, omenRing } from '../../net/gate/gateLaw.js';
 import { GATE_TOWN_TYPES, GATE_TOWN_MIN_PX, GATE_TOWN_MAX_PX, GATE_REGION_MIN_PIXELS } from './gateSite.js';
-import { WILD_REGION } from '../wild/wildZone.js';   // PVPDUNGEONS: no world event in the open zone
-import { onGhostfence } from '../../world/tamriel/ghostfence.js';   // FENCE-CLEAR: no gate on the Ghostfence's line
-import { redMountainLavaIn } from '../../world/tamriel/redMountain.js';   // LAVA-CLEAR: nor where Red Mountain's lava runs
-import { worldPixelKey, worldPixelOfKey, inWorldGrid, areaName, isBayArea, theatreOfArea } from '../../world/worldWide/worldGrid.js';
-import { theatreOfRegion, regionOfTheatre } from '../../formats/mapsTables.js';   // WW-C2: the open zone's theatre, by its region; WW-GATES-EVERYWHERE: a province's region (WW-R)
+import { WILD_REGION } from '../wild/wildZone.js'; // PVPDUNGEONS: no world event in the open zone
+import { onGhostfence } from '../../world/tamriel/ghostfence.js'; // FENCE-CLEAR: no gate on the Ghostfence's line
+import { redMountainLavaIn } from '../../world/tamriel/redMountain.js'; // LAVA-CLEAR: nor where Red Mountain's lava runs
+import {
+  worldPixelKey,
+  worldPixelOfKey,
+  inWorldGrid,
+  areaName,
+  isBayArea,
+  theatreOfArea,
+} from '../../world/worldWide/worldGrid.js';
+import { theatreOfRegion, regionOfTheatre } from '../../formats/mapsTables.js'; // WW-C2: the open zone's theatre, by its region; WW-GATES-EVERYWHERE: a province's region (WW-R)
 
 const TOWN_TYPES = new Set(/** @type {readonly number[]} */ (GATE_TOWN_TYPES));
 
@@ -70,14 +77,17 @@ export function theatreGateScanner({ towns, placeAt, inTheatre, areaAt, wet, the
       if (!TOWN_TYPES.has(p.type)) continue;
       const t = list.length;
       list.push({ name: String(p.name ?? ''), px: p.px, py: p.py, area: p.area });
-      for (let dy = -GATE_TOWN_MAX_PX; dy <= GATE_TOWN_MAX_PX; dy++) for (let dx = -GATE_TOWN_MAX_PX; dx <= GATE_TOWN_MAX_PX; dx++) {
-        const d = Math.max(Math.abs(dx), Math.abs(dy));
-        if (d < GATE_TOWN_MIN_PX) continue;
-        const x = p.px + dx, y = p.py + dy;
-        if (!inWorldGrid(x, y) || !inTheatre(x, y)) continue;
-        const k = worldPixelKey(x, y), b = best.get(k);
-        if (!b || d < b.d) best.set(k, { d, t });   // the NEAREST town names the gate; the first listed wins a tie
-      }
+      for (let dy = -GATE_TOWN_MAX_PX; dy <= GATE_TOWN_MAX_PX; dy++)
+        for (let dx = -GATE_TOWN_MAX_PX; dx <= GATE_TOWN_MAX_PX; dx++) {
+          const d = Math.max(Math.abs(dx), Math.abs(dy));
+          if (d < GATE_TOWN_MIN_PX) continue;
+          const x = p.px + dx,
+            y = p.py + dy;
+          if (!inWorldGrid(x, y) || !inTheatre(x, y)) continue;
+          const k = worldPixelKey(x, y),
+            b = best.get(k);
+          if (!b || d < b.d) best.set(k, { d, t }); // the NEAREST town names the gate; the first listed wins a tie
+        }
     }
     keys = [...best.keys()].sort((a, b) => a - b);
   };
@@ -86,10 +96,10 @@ export function theatreGateScanner({ towns, placeAt, inTheatre, areaAt, wet, the
    *  eight provinces), each through the countryside's and the lairs' rolls. */
   /** @type {Map<number, boolean>} */ const placed = new Map();
   const placeOn = (/** @type {number} */ x, /** @type {number} */ y) => {
-    if (!inWorldGrid(x, y)) return !!placeAt(x, y);   // off the grid no key is the pixel's own
+    if (!inWorldGrid(x, y)) return !!placeAt(x, y); // off the grid no key is the pixel's own
     const k = worldPixelKey(x, y);
     let v = placed.get(k);
-    if (v === undefined) placed.set(k, v = !!placeAt(x, y));
+    if (v === undefined) placed.set(k, (v = !!placeAt(x, y)));
     return v;
   };
   /** One ring pixel: kept in its area's list where the gate's ground is. */
@@ -97,11 +107,11 @@ export function theatreGateScanner({ towns, placeAt, inTheatre, areaAt, wet, the
     const [x, y] = worldPixelOfKey(k);
     let near = false;
     for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1 && !near; dx++) near = placeOn(x + dx, y + dy);
-    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return;   // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava
+    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava
     const a = areaAt(x, y);
     if (!Number.isInteger(a) || a < 0) return;
     let l = lists.get(a);
-    if (!l) lists.set(a, l = []);
+    if (!l) lists.set(a, (l = []));
     l.push(k);
     townOf.set(k, /** @type {{ t: number }} */ (best.get(k)).t);
   };
@@ -128,7 +138,14 @@ export function theatreGateScanner({ towns, placeAt, inTheatre, areaAt, wet, the
 /** The areas a theatre's gate may open in, ascending - the Bay scan's own (gateSite.js gateRegions): enough ground, never
  *  the open zone - WW-C2: never an area of Cyrodiil's theatre, the zone being the province whole (its lane opens no gate).
  *  @param {TheatreGateScan} scan */
-export const theatreGateAreas = (scan) => [...scan.byArea.keys()].filter((a) => theatreOfArea(a) !== theatreOfRegion(WILD_REGION) && /** @type {Int32Array} */ (scan.byArea.get(a)).length >= GATE_REGION_MIN_PIXELS).sort((a, b) => a - b);
+export const theatreGateAreas = (scan) =>
+  [...scan.byArea.keys()]
+    .filter(
+      (a) =>
+        theatreOfArea(a) !== theatreOfRegion(WILD_REGION) &&
+        /** @type {Int32Array} */ (scan.byArea.get(a)).length >= GATE_REGION_MIN_PIXELS,
+    )
+    .sort((a, b) => a - b);
 
 /**
  * A theatre's gate's site, by its number `n` (net/gate/gateLaw.js gateNumber - its lane the theatre's), or null when the
@@ -151,8 +168,25 @@ export function findTheatreGateSite(n, scan) {
   const near = town?.name || regionName;
   const townArea = town ? areaName(town.area) : '';
   return {
-    day: n, region: isBayArea(area) ? area : regionOfTheatre(scan.theatre), area, theatre: scan.theatre, regionName, px, py,
-    town: town ? { name: town.name, px: town.px, py: town.py, region: isBayArea(town.area) ? town.area : regionOfTheatre(scan.theatre), area: town.area } : null,
-    spot, ring: omenRing(n, px, py, spot), near, place: town?.name && townArea ? `${town.name}, ${townArea}` : near,
+    day: n,
+    region: isBayArea(area) ? area : regionOfTheatre(scan.theatre),
+    area,
+    theatre: scan.theatre,
+    regionName,
+    px,
+    py,
+    town: town
+      ? {
+          name: town.name,
+          px: town.px,
+          py: town.py,
+          region: isBayArea(town.area) ? town.area : regionOfTheatre(scan.theatre),
+          area: town.area,
+        }
+      : null,
+    spot,
+    ring: omenRing(n, px, py, spot),
+    near,
+    place: town?.name && townArea ? `${town.name}, ${townArea}` : near,
   };
 }

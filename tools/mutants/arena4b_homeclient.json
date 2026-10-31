@@ -2,8 +2,8 @@
   {
     "name": "ARENA4B-PICK-FILTER",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "return arenaHouseFor(o, (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId))), opts);",
-    "new": "return arenaHouseFor(o, summaries, opts);",
+    "old": "  return arenaHouseFor(\n    o,\n    (summaries ?? []).filter(\n      (s) =>\n        homeCandidate(s) &&\n        s.hasInterior !== false &&\n        !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),\n    ),\n    opts,\n  ); // AUDIT FOUNDATION P3: never a house off the market",
+    "new": "  return arenaHouseFor(o, summaries, opts); // AUDIT FOUNDATION P3: never a house off the market",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ARENA4B-EMPTY-OUTSIDE-ACT",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (d?.to) { m = moveOf(d); empty(m, d.repeat !== true); } },",
-    "new": "if (d?.to) { m = moveOf(d); } },",
+    "old": "              empty(m, d.repeat !== true);\n            }",
+    "new": "            }",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA4B-REPEAT-CREDIT",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (d?.to) { m = moveOf(d); empty(m, d.repeat !== true); } },",
-    "new": "if (d?.to) { m = moveOf(d); empty(m, true); } },",
+    "old": "              empty(m, d.repeat !== true);",
+    "new": "              empty(m, true);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARENA4B-OTHER-CHARACTER",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "((h.mine && h.character === character) || (h.hall && h.keeper))",
-    "new": "(h.mine || (h.hall && h.keeper))",
+    "old": "    (h) => homeInArenaCell(mapId, h.buildingKey) && ((h.mine && h.character === character) || (h.hall && h.keeper)),",
+    "new": "    (h) => homeInArenaCell(mapId, h.buildingKey) && (h.mine || (h.hall && h.keeper)),",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA4B-UNREAD-CREDIT",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    empty(m, false);\n",
-    "new": "    empty(m, true);\n",
+    "old": "    empty(m, false);",
+    "new": "    empty(m, true);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA4B-HALL-CREDIT",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (credit && !m.hall && m.refund > 0) hooks.credit?.(m.refund);",
-    "new": "if (credit && m.refund > 0) hooks.credit?.(m.refund);",
+    "old": "    if (credit && !m.hall && m.refund > 0) hooks.credit?.(m.refund);",
+    "new": "    if (credit && m.refund > 0) hooks.credit?.(m.refund);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA4B-HALL-RESIDENCE",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "hooks.discover?.(m.to, m.hall);",
-    "new": "hooks.discover?.(m.to, false);",
+    "old": "    hooks.discover?.(m.to, m.hall); // a hall is its guild's, never discovered as anyone's residence",
+    "new": "    hooks.discover?.(m.to, false); // a hall is its guild's, never discovered as anyone's residence",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ARENA4B-TAKEN-UNHELD",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "      held.add(to.buildingKey);\n",
-    "new": "\n",
+    "old": "      held.add(to.buildingKey);",
+    "new": "",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ARENA4B-LETTER-UNSAID",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    hooks.notice?.(m.hall ? ARENA_TEXT.homeMove.hallMoved : ARENA_TEXT.deedMoved);\n",
-    "new": "\n",
+    "old": "    hooks.notice?.(m.hall ? ARENA_TEXT.homeMove.hallMoved : ARENA_TEXT.deedMoved);",
+    "new": "",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ARENA4B-SEEN-UNASKED",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
-    "new": "checkpointLanded(await hooks.checkpoint?.())) void m;",
+    "old": "    if (checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
+    "new": "    if (checkpointLanded(await hooks.checkpoint?.())) void m;",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ARENA4B-SEEN-UNSAVED",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
-    "new": "await hooks.checkpoint?.(); await api.arenaSeen(mapId, m.from);",
+    "old": "    if (checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
+    "new": "    await hooks.checkpoint?.();\n    await api.arenaSeen(mapId, m.from);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "ARENA4B-CLIENT-ROOM-DROPPED",
     "file": "src/systems/homeRent.js",
-    "old": "(rentAnchorOf(x?.anchor) || (x?.moved === true && x.anchor == null))",
-    "new": "rentAnchorOf(x?.anchor)",
+    "old": "    .filter(\n      (x) =>\n        rentRoomOk(x?.room) &&\n        rentPriceOk(x?.price) &&\n        (rentAnchorOf(x?.anchor) || (x?.moved === true && x.anchor == null)),\n    )",
+    "new": "    .filter((x) => rentRoomOk(x?.room) && rentPriceOk(x?.price) && rentAnchorOf(x?.anchor))",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "ARENA4B-CLIENT-ROOM-MATCHED",
     "file": "src/systems/homeRent.js",
-    "old": "!used.has(x.room) && Array.isArray(x.anchor) && roomOf(",
-    "new": "!used.has(x.room) && roomOf(",
+    "old": "          Array.isArray(x.anchor) &&\n          roomOf([origin[0] + x.anchor[0], origin[1] + x.anchor[1], origin[2] + x.anchor[2]])?.id === f.id,",
+    "new": "          roomOf([origin[0] + x.anchor[0], origin[1] + x.anchor[1], origin[2] + x.anchor[2]])?.id === f.id,",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]

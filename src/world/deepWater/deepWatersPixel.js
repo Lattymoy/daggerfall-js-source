@@ -22,7 +22,12 @@
 // reads (Water Depth, Spawn Water Surfaces).
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
+import {
+  SCALED_OCEAN_ELEVATION,
+  MAX_TERRAIN_HEIGHT,
+  HEIGHTMAP_DIMENSION,
+  STREAMING_TERRAIN_SCALE,
+} from '../terrain/terrainSampler.js';
 import { DeepWaterTileData } from './deepWaterTileData.js';
 import { computeHoleMask, buildFloorMesh, TILE_WORLD_SIZE } from './deepWaterFloor.js';
 import { capDecision } from './deepWaterCap.js';
@@ -51,7 +56,8 @@ export function terrainLocalY(samples, lx, lz, terrainHeight = DW_TERRAIN_HEIGHT
   const num4 = clamp01(lz / TILE_WORLD_SIZE) * (n - 1);
   const num5 = clampInt(Math.floor(num3), 0, n - 2);
   const num6 = clampInt(Math.floor(num4), 0, n - 2);
-  const num7 = num3 - num5, num8 = num4 - num6;
+  const num7 = num3 - num5,
+    num8 = num4 - num6;
   const at = (row, col) => samples[col * n + row];
   const num9 = lerp(at(num6, num5), at(num6, num5 + 1), num7);
   const num10 = lerp(at(num6 + 1, num5), at(num6 + 1, num5 + 1), num7);
@@ -77,7 +83,7 @@ export function nearbyLocalYReader(samples, neighbours = {}, terrainHeight = DW_
     if (inX && inZ) return terrainLocalY(samples, lx, lz, terrainHeight);
     const dx = lx < 0 ? -1 : lx > size ? 1 : 0;
     const dz = lz < 0 ? -1 : lz > size ? 1 : 0;
-    if (dx !== 0 && dz !== 0) return null;   // the floor's probes are a meter along one axis: a corner is never asked
+    if (dx !== 0 && dz !== 0) return null; // the floor's probes are a meter along one axis: a corner is never asked
     const other = dx < 0 ? neighbours.w : dx > 0 ? neighbours.e : dz < 0 ? neighbours.s : neighbours.n;
     if (!other) return null;
     return terrainLocalY(other, lx - dx * size, lz - dz * size, terrainHeight);
@@ -106,27 +112,47 @@ export function buildDeepWatersPixel(job, bake) {
   // ClimateAtPixel reads only the 3 x 3: the pixel's own neighbourhood, map-clamped (IsValid-guarded where the C# guards)
   const climateAt = (x, y) => climates[clampInt(y - py + 1, 0, 2) * 3 + clampInt(x - px + 1, 0, 2)];
   prepareBake(bake, px, py);
-  const tile = new DeepWaterTileData({ mapPixelX: px, mapPixelY: py, mapData, climateIndex: climates[4], climateAt, bake });
-  let holes = null, floor = null;
+  const tile = new DeepWaterTileData({
+    mapPixelX: px,
+    mapPixelY: py,
+    mapData,
+    climateIndex: climates[4],
+    climateAt,
+    bake,
+  });
+  let holes = null,
+    floor = null;
   let cap = { hide: false, tilemap: null };
   if (tile.isOceanConnected && tile.hasDistanceField) {
     const mask = computeHoleMask(mapData, tile, bake);
     if (mask && mask.any) {
       holes = mask.holes;
       floor = buildFloorMesh({
-        mapData, tile, holes, oceanLocalY: DW_OCEAN_LOCAL_Y, terrainHeight: DW_TERRAIN_HEIGHT, waterDepth,
+        mapData,
+        tile,
+        holes,
+        oceanLocalY: DW_OCEAN_LOCAL_Y,
+        terrainHeight: DW_TERRAIN_HEIGHT,
+        waterDepth,
         nearbyLocalY: nearbyLocalYReader(samples, job.neighbours ?? {}),
       });
       cap = capDecision(px, py, mapData, tilemapBytes, bake);
     }
   }
-  const surface = job.spawnSurfaces && shouldHaveSurface(px, py, mapData, bake)
-    ? buildSurfaceMesh({ mapPixelX: px, mapPixelY: py, mapData, tilemapBytes, tile, bake })
-    : null;
+  const surface =
+    job.spawnSurfaces && shouldHaveSurface(px, py, mapData, bake)
+      ? buildSurfaceMesh({ mapPixelX: px, mapPixelY: py, mapData, tilemapBytes, tile, bake })
+      : null;
   return {
-    px, py,
-    ocean: tile.isOceanConnected, fallback: tile.usesLocalWaterFallback, biomeClimateIndex: tile.biomeClimateIndex,
-    holes, floor, cap, surface,
+    px,
+    py,
+    ocean: tile.isOceanConnected,
+    fallback: tile.usesLocalWaterFallback,
+    biomeClimateIndex: tile.biomeClimateIndex,
+    holes,
+    floor,
+    cap,
+    surface,
     planes: typeof bake?.exportPlanes === 'function' ? bake.exportPlanes(px, py) : [],
   };
 }
@@ -138,11 +164,18 @@ function prepareBake(bake, px, py) {
 /** Every ArrayBuffer a result owns, for a transfer list. */
 export function deepWatersPixelTransfers(result) {
   const out = new Set();
-  const add = (a) => { if (a && a.buffer instanceof ArrayBuffer) out.add(a.buffer); };
+  const add = (a) => {
+    if (a && a.buffer instanceof ArrayBuffer) out.add(a.buffer);
+  };
   add(result.holes);
-  if (result.floor) for (const k of ['positions', 'colors', 'uvs', 'indices', 'vertexLocalY', 'floorQuadWater']) add(result.floor[k]);
+  if (result.floor)
+    for (const k of ['positions', 'colors', 'uvs', 'indices', 'vertexLocalY', 'floorQuadWater']) add(result.floor[k]);
   add(result.cap?.tilemap);
   if (result.surface) for (const k of ['positions', 'uvs', 'indices', 'cells']) add(result.surface[k]);
-  for (const r of result.planes ?? []) { add(r.fine); add(r.dist); add(r.edge); }
+  for (const r of result.planes ?? []) {
+    add(r.fine);
+    add(r.dist);
+    add(r.edge);
+  }
   return [...out];
 }

@@ -22,10 +22,10 @@ stand's click.
 FOUND. "The First Printing" is A0C00Y12. "Mordastyr Moorford" is its `Person _thief_ face 97 faction
 The_Thieves_Guild local`: no line places him and no task answers a click on him. The Thieves Guild's faction row
 (`The_Thieves_Guild, 0, -1, 42`) is no building type, so the person is given a generated home, a random house
-(`person.js:"_assignHomeTown(world, scopeString) {"`), and Person.Tick stands him there the first time the player walks
+(`person.js:"_assignHomeTown(world, scopeString)"`), and Person.Tick stands him there the first time the player walks
 in - once: DFU's Person.cs asks `lastAssignedPlaceSymbol == null && homePlaceSymbol != null && !assignedToHome`, "will
 not be called again as assignment is permanent for duration of quest", and the port does the same
-(`person.js:"  tick(caller) {"`, `person.js:"placeAtHome() {"`). A click on a quest resource that answers ends the
+(`person.js:"tick(caller) {"`, `person.js:"placeAtHome() {"`). A click on a quest resource that answers ends the
 activation (PlayerActivate.cs:1523-1528; `worldModes.js:"const foundInActiveQuest = s.behaviour?.doClick() ?? false;"`),
 so no talk window opens - DFU's own. The confrontation is `Foe _thiefFoe_ is Thief`: `_S.02_`-`_S.04_` are `daily from`
 windows, each `pc at _house_ / _inn_ / _store_` placing the foe in that building (00:00-08:00 the house the rumours name,
@@ -49,19 +49,19 @@ a quest person no task listens to (a departure in QUEST-FOE-LINE's spirit) - new
 `door` and `next`, PERSON_KEY, raceWinner; `src/scenes/worldModes.js` exteriorActivationHit; each host's `_enemyArm`.
 
 FOUND. The port has no single raycast, so every host races its families' picks and gives a live foe the press only
-when the foe is strictly the nearer (`mobileEnemyActivate.js:"if (!(hit.distance < (deps.nearerThan ?? Infinity))) return false;"`,
+when the foe is strictly the nearer (`mobileEnemyActivate.js:"if (!(hit.distance < (deps.nearerThan ?? Infinity)))"`,
 AUDIT 65 MC-2's law for DFU's one ray, PlayerActivate.cs:314). A companion is in that pool (crewAshore.js stands him
 there: `companion`, a `shipmate`), and his hit opens his pack
-(`mobileEnemyActivate.js:"if (mode !== 'steal' && openCompanion && foe.companion != null"`). He keeps HEEL_M (2.5 m)
+(`mobileEnemyActivate.js:"is the shipmate's".."mode !== 'steal' &&"`). He keeps HEEL_M (2.5 m)
 from the player and walks where the player walks, so he stands between the crosshair and whatever the player has
 just walked up to: a body (3.75), a pile (3.2), a boat's helm (Come Sail Away's box, 3.2 - raced in the street's
 `raceActivation` as `boat` and pressed below the foe arm), a door, a shelf. TACT3d's door pass, which lets a peaceful
-watchman yield to a door, was never his (`mobileEnemyActivate.js:"if (!foe || foe.companion != null || mode === 'steal') return false;"`,
+watchman yield to a door, was never his (`mobileEnemyActivate.js:"if (!foe || foe.companion != null || mode === 'steal')"`,
 AUDIT TACT C5: his pack is asked of him), and the plaque raced him the same way, so it named him too.
 
 FIXED. A companion YIELDS: the press goes to whatever it would take were he not there - the ladder's own winner
 behind him - when that ANSWERS from where the player stands, a firm pick inside its own reach
-(`activate.js:"export const answersPress = (p) =>"`). Out of its reach that thing would only refuse, so he keeps the
+(`activate.js:"export const answersPress"`). Out of its reach that thing would only refuse, so he keeps the
 press, and with nothing behind him he is the hit as ever. Another player's team, which yields itself (PR-WAGON1), is
 no answer. Every mode: in Steal he was a silent break (a shipmate is no mark), so the thing behind him is the better
 answer there too. "Companion" is the companion layer's body and another player's (`peer:`); a hostile foe, a peaceful
@@ -73,7 +73,7 @@ every look - he would have been unreachable, and the press would have answered "
 across the room. Reach is the line DFU already draws (MC-2: past its reach a handler only refuses).
 
 The press asks `allyYields(foe, behind)` before TACT3d's door pass
-(`mobileEnemyActivate.js:"if (allyYields(hit.foe, deps.behind)) return false;"`), each host handing its ladder's winner as
+(`mobileEnemyActivate.js:"if (allyYields(hit.foe, deps.behind))"`), each host handing its ladder's winner as
 `behind`. On the street that winner is the race's `next`: `raceWinner` over every family with the door set and the
 townsfolk raced in, the door set's own reach from its own pick (worldModes `exteriorActivationHit`, handed to the race as
 `door`, where it was its distance alone), a townsperson at MobileNPCActivationDistance - the plaque's own person pick.
@@ -115,12 +115,12 @@ each host's own `_enemyArm` and street race cut out of the shipped source and ru
 Salvage button; `bible/06-Systems/Loot-Arc.md` (SALVAGE-CLASSIC, after LOOT9's PORTAL1 note).
 
 FOUND. The "Blazing Holy Dagger of Fireballs" is the MAGIC.DEF row "Blazing %it of Fireballs" (one Cast When Used row,
-spell 14, 1,500 uses) on a Holy Dagger, minted by `systems/loot/loot.js:"export function createRegularMagicItem("`, which writes no
+spell 14, 1,500 uses) on a Holy Dagger, minted by `systems/loot/loot.js:"export function createRegularMagicItem"`, which writes no
 `rarity`; its card reads "Magic" because the ladder's `lootRarity.js:"export function rarityOf(item) {"` calls any
-enchanted piece Magic. Salvage reads the ladder's own grade (`reforge.js:"export function salvageShards(item) {"`), so
+enchanted piece Magic. Salvage reads the ladder's own grade (`reforge.js:"export function salvageShards"`), so
 the piece is worth no shards, and the Salvage page's filter (shards over 0) and the card's button dropped it without a
 word. That is LOOT9's law, not a slip: DFU's own magic and made pieces are "worth none: shards come from what was found,
-never bought" - `shopStock.js:"export function stockGuildMagicItems("` shelves these pieces every day, a pawn shop sells
+never bought" - `shopStock.js:"export function stockGuildMagicItems"` shelves these pieces every day, a pawn shop sells
 them, a found one is a bought one's twin, and five shards buy a Portal Stone (online's fast travel). No ladder piece was
 dropped. The service has no salvage law (its disenchant takes crafted pieces), so client and service agree.
 

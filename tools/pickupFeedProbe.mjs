@@ -223,10 +223,12 @@ const VIEWS = [
   { name: 'desktop', viewport: { width: 1280, height: 800 }, dsf: 1 },
   { name: 'phone', viewport: { width: 390, height: 844 }, dsf: 2 },
 ];
-const SCENE_NAMES = ['one', 'bump', 'four', 'gold', 'refusal', 'tall', 'fade', 'haul', 'silver', 'capped', 'lode'];   // HAUL-CARDS: the last four
+const SCENE_NAMES = ['one', 'bump', 'four', 'gold', 'refusal', 'tall', 'fade', 'haul', 'silver', 'capped', 'lode']; // HAUL-CARDS: the last four
 
 mkdirSync(OUT, { recursive: true });
-const vite = process.env.PROBE_PORT ? null : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
+const vite = process.env.PROBE_PORT
+  ? null
+  : await createServer({ root: ROOT, server: { port: 0, host: '127.0.0.1', watch: null }, logLevel: 'error' });
 if (vite) await vite.listen();
 const port = vite ? vite.httpServer.address().port : Number(process.env.PROBE_PORT);
 const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
@@ -235,8 +237,17 @@ const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: p
 const fetched = new Map();
 const curl = (url) => {
   if (!fetched.has(url)) {
-    fetched.set(url, new Promise((res) => execFile('curl', ['-sS', '-A', 'Mozilla/5.0 (X11; Linux x86_64) Chrome/120', url],
-      { encoding: 'buffer', maxBuffer: 8 << 20 }, (err, out) => res(err ? null : out))));
+    fetched.set(
+      url,
+      new Promise((res) =>
+        execFile(
+          'curl',
+          ['-sS', '-A', 'Mozilla/5.0 (X11; Linux x86_64) Chrome/120', url],
+          { encoding: 'buffer', maxBuffer: 8 << 20 },
+          (err, out) => res(err ? null : out),
+        ),
+      ),
+    );
   }
   return fetched.get(url);
 };
@@ -252,7 +263,10 @@ async function serveFonts(page) {
 }
 const fails = [];
 let checks = 0;
-const check = (ok, what) => { checks++; if (!ok) fails.push(what); };
+const check = (ok, what) => {
+  checks++;
+  if (!ok) fails.push(what);
+};
 const overlaps = (a, b) => !!a && !!b && a.x < b.r && b.x < a.r && a.y < b.b && b.y < a.b;
 try {
   await writeFile(join(ROOT, `tools/${PAGE_NAME}`), PAGE);
@@ -261,20 +275,30 @@ try {
     const page = await ctx.newPage();
     await serveFonts(page);
     page.on('pageerror', (err) => fails.push(`${v.name}: page error ${err.message}`));
-    page.on('console', (m) => { if (m.type() === 'error') console.error(`${v.name} PAGE`, m.text().slice(0, 200)); });
-    await page.goto(`http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced&touch=off${process.env.NOFONTS ? '&nofonts' : ''}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    page.on('console', (m) => {
+      if (m.type() === 'error') console.error(`${v.name} PAGE`, m.text().slice(0, 200));
+    });
+    await page.goto(
+      `http://127.0.0.1:${port}/tools/${PAGE_NAME}?skin=enhanced&touch=off${process.env.NOFONTS ? '&nofonts' : ''}`,
+      { waitUntil: 'domcontentloaded', timeout: 90000 },
+    );
     await page.waitForFunction(() => globalThis.__ready === true, null, { timeout: 90000 });
-    await page.evaluate(async () => { await globalThis.__scene('one'); await document.fonts.ready; });
+    await page.evaluate(async () => {
+      await globalThis.__scene('one');
+      await document.fonts.ready;
+    });
     for (const s of SCENE_NAMES) {
       await page.evaluate((n) => globalThis.__scene(n), s);
-      await page.waitForTimeout(s === 'fade' ? 120 : 450);   // the entrance and a bump's pop run their course (the fade is caught part-way)
+      await page.waitForTimeout(s === 'fade' ? 120 : 450); // the entrance and a bump's pop run their course (the fade is caught part-way)
       const m = await page.evaluate(() => globalThis.__measure());
       const tag = `${v.name}/${s}`;
       const file = join(OUT, `pickupfeed-${v.name}-${s}.png`);
       await page.screenshot({ path: file });
-      console.log(`${tag.padEnd(16)} ${m.cards.map((c) => `[${c.text}${c.rarity ? ` ${c.rarity}` : ''}${c.fading ? ' fading' : ''}]`).join(' ')}`
-        + `  feed top ${m.feed ? m.feed.y.toFixed(0) : '-'} | plaque ${m.plaque ? `${m.plaque.y.toFixed(0)}-${m.plaque.b.toFixed(0)}` : '-'}`
-        + ` | mid ${m.mid ? `${m.mid.y.toFixed(0)}-${m.mid.b.toFixed(0)}` : '-'} | hud-bottom ${m.hudBottom ? m.hudBottom.y.toFixed(0) : '-'}  -> ${file}`);
+      console.log(
+        `${tag.padEnd(16)} ${m.cards.map((c) => `[${c.text}${c.rarity ? ` ${c.rarity}` : ''}${c.fading ? ' fading' : ''}]`).join(' ')}` +
+          `  feed top ${m.feed ? m.feed.y.toFixed(0) : '-'} | plaque ${m.plaque ? `${m.plaque.y.toFixed(0)}-${m.plaque.b.toFixed(0)}` : '-'}` +
+          ` | mid ${m.mid ? `${m.mid.y.toFixed(0)}-${m.mid.b.toFixed(0)}` : '-'} | hud-bottom ${m.hudBottom ? m.hudBottom.y.toFixed(0) : '-'}  -> ${file}`,
+      );
       check(m.cards.length > 0, `${tag}: no card drawn`);
       check(!m.cards.length || /Pixelify/.test(m.font), `${tag}: the cards are not in the pixel face (${m.font})`);
       for (const c of m.cards) {
@@ -287,7 +311,11 @@ try {
       }
       // with room under the line, the feed stands ON it (the classic label's own top edge)
       const room = m.hudBottom ? m.hudBottom.y - m.midLine : m.vh - m.midLine;
-      if (m.feed && !m.plaque && !m.mid && m.feed.h + 16 <= room) check(Math.abs(m.feed.y - m.midLine) < 1.5, `${tag}: the feed is not on the mid-screen line (${m.feed.y.toFixed(1)} vs ${m.midLine.toFixed(1)})`);
+      if (m.feed && !m.plaque && !m.mid && m.feed.h + 16 <= room)
+        check(
+          Math.abs(m.feed.y - m.midLine) < 1.5,
+          `${tag}: the feed is not on the mid-screen line (${m.feed.y.toFixed(1)} vs ${m.midLine.toFixed(1)})`,
+        );
     }
     await ctx.close();
   }

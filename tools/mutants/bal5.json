@@ -104,8 +104,8 @@
   {
     "name": "BAL5-the-card-says-nothing",
     "file": "src/systems/sigil/sigilSets.js",
-    "old": "of the damage back. This never kills them`,",
-    "new": "of the damage back`,",
+    "old": "        (v) => `Enemies that hit you take ${v.back}% of the damage back. This never kills them`,",
+    "new": "        (v) => `Enemies that hit you take ${v.back}% of the damage back`,",
     "tests": [
       "test/systems/bal5_blowback.test.js"
     ]

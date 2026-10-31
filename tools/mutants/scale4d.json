@@ -2,8 +2,8 @@
   {
     "name": "SCALE4d-routes-empty",
     "file": "server-account/src/service.js",
-    "old": "  ['/v1/auth/token', 'POST'],\n",
-    "new": "",
+    "old": "  ['/v1/auth/token', 'POST'],\n  // SCALE4g (2026-10-10, Mac: \"really future proof our archetecture\"; bible/11-Multiplayer/Scale-Arc.md SCALE4g): AND THE",
+    "new": "  // SCALE4g (2026-10-10, Mac: \"really future proof our archetecture\"; bible/11-Multiplayer/Scale-Arc.md SCALE4g): AND THE",
     "tests": [
       "test/server/scale4d.test.js"
     ],
@@ -72,7 +72,7 @@
   {
     "name": "SCALE4d-budget-kept-by-proxy",
     "file": "server-account/src/budget.js",
-    "old": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);",
+    "old": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? (db[DB_ROOT] ?? db) : null);",
     "new": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db : null);",
     "tests": [
       "test/server/scale4d.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-SCALE4d-D8-session-unbound",
     "file": "server-account/src/service.js",
-    "old": "      if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT;   // SESSION-SIGN: its lookup the primary's\n      const v = Reflect.get(target, key);\n      return typeof v === 'function' ? v.bind(target) : v;",
-    "new": "      if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT;   // SESSION-SIGN: its lookup the primary's\n      const v = Reflect.get(target, key);\n      return v;",
+    "old": "      return typeof v === 'function' ? v.bind(target) : v;",
+    "new": "      return v;",
     "tests": [
       "test/server/scale4d.test.js"
     ],

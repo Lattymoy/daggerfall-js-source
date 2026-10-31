@@ -11,8 +11,8 @@
   {
     "name": "DRAGON-HIDDEN-the-watch-unread",
     "file": "src/net/dragon/dragonSeed.js",
-    "old": "enc.encode(`dragon-omen:${w}:${i}`)",
-    "new": "enc.encode(`dragon-omen:0:${i}`)",
+    "old": "    const mac = new Uint8Array(await subtle.sign('HMAC', key, enc.encode(`dragon-omen:${w}:${i}`)));",
+    "new": "    const mac = new Uint8Array(await subtle.sign('HMAC', key, enc.encode(`dragon-omen:0:${i}`)));",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],
@@ -21,8 +21,8 @@
   {
     "name": "DRAGON-HIDDEN-the-bytes-shortened",
     "file": "src/net/dragon/dragonSeed.js",
-    "old": "out.push(((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);",
-    "new": "out.push(((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);",
+    "old": "    out.push(((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);",
+    "new": "    out.push(((mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0);",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "DRAGON-HIDDEN-told-before-its-landing",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
-    "new": "nowMs >= dragonTimes(o).landAt - DRAGON_LAND_SPAN_MS : nowMs >= dragonQuietAt(w));",
+    "old": "  (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
+    "new": "  (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt - DRAGON_LAND_SPAN_MS : nowMs >= dragonQuietAt(w));",
     "tests": [
       "test/net/dragon/dragonhidden.test.js",
       "test/net/dragon/dragon2_law.test.js"
@@ -53,8 +53,8 @@
   {
     "name": "DRAGON-HIDDEN-the-seed-not-the-relays",
     "file": "server/src/dragonFights.js",
-    "old": "say(room, ws, { k: 'omen', w: m.w, s: c.s }); return; }",
-    "new": "say(room, ws, { k: 'omen', w: m.w, s: m.w }); return; }",
+    "old": "    say(room, ws, { k: 'omen', w: m.w, s: c.s });",
+    "new": "    say(room, ws, { k: 'omen', w: m.w, s: m.w });",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "DRAGON-HIDDEN-the-brains-floor-left",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "export const DRAGON_BRAIN_MIN = 3;",
-    "new": "export const DRAGON_BRAIN_MIN = 2;",
+    "old": "export const DRAGON_BRAIN_MIN = 3; // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload; DRAGON-CELL: one that finds a site off a lane",
+    "new": "export const DRAGON_BRAIN_MIN = 2; // DRAGON-HIDDEN: a game that rolls the old public salt is told to reload; DRAGON-CELL: one that finds a site off a lane",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "DRAGON-HIDDEN-a-watch-to-come-told",
     "file": "src/net/dragon/dragonLaw.js",
-    "old": "nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
-    "new": "nowMs >= dragonTimes(o).landAt - DRAGON_WATCH_MS : nowMs >= dragonQuietAt(w) - DRAGON_WATCH_MS);",
+    "old": "  (o && isDragonOmen(o) ? nowMs >= dragonTimes(o).landAt : nowMs >= dragonQuietAt(w));",
+    "new": "  (o && isDragonOmen(o)\n    ? nowMs >= dragonTimes(o).landAt - DRAGON_WATCH_MS\n    : nowMs >= dragonQuietAt(w) - DRAGON_WATCH_MS);",
     "tests": [
       "test/net/dragon/dragonhidden.test.js"
     ],

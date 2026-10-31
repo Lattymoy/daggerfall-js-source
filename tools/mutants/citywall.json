@@ -52,8 +52,8 @@
   {
     "name": "CITY-WALL-6-the-cut-guessed",
     "file": "src/world/townStandIns.js",
-    "old": "const s = da / (da - db);",
-    "new": "const s = 0.5;",
+    "old": "        const s = da / (da - db);",
+    "new": "        const s = 0.5;",
     "tests": [
       "test/world/fb1003c_citywall.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "CITY-WALL-8-past-the-switch",
     "file": "src/world/townStandIns.js",
-    "old": "registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, { needs: [CITY_WALL_MODEL] });",
-    "new": "registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), () => true, { needs: [CITY_WALL_MODEL] });",
+    "old": "  registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, {\n    needs: [CITY_WALL_MODEL],\n  });",
+    "new": "  registerCustomModel(\n    CITY_WALL_PIECE,\n    (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)),\n    () => true,\n    { needs: [CITY_WALL_MODEL] },\n  );",
     "tests": [
       "test/world/fb1003c_citywall.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "CITY-WALL-9-no-need",
     "file": "src/world/townStandIns.js",
-    "old": "registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, { needs: [CITY_WALL_MODEL] });",
-    "new": "registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, {});",
+    "old": "  registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, {\n    needs: [CITY_WALL_MODEL],\n  });",
+    "new": "  registerCustomModel(CITY_WALL_PIECE, (ctx) => cityWallFillModel(ctx?.classicModel?.(CITY_WALL_MODEL)), isOn, {});",
     "tests": [
       "test/world/fb1003c_citywall.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "CITY-WALL-12-the-low-cut-keeps-the-wrong-face",
     "file": "src/world/townStandIns.js",
-    "old": "if (tri.every((v) => below(v) === 0) && !(tri[0][3] < 0)) continue;",
-    "new": "if (tri.every((v) => below(v) === 0) && !(tri[0][3] > 0)) continue;",
+    "old": "      if (tri.every((v) => below(v) === 0) && !(tri[0][3] < 0)) continue; // on the low cut, looking into the slab",
+    "new": "      if (tri.every((v) => below(v) === 0) && !(tri[0][3] > 0)) continue; // on the low cut, looking into the slab",
     "tests": [
       "test/world/fb1003c_citywall.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "CITY-WALL-13-the-high-cut-keeps-the-wrong-face",
     "file": "src/world/townStandIns.js",
-    "old": "if (tri.every((v) => above(v) === 0) && !(tri[0][3] > 0)) continue;",
-    "new": "if (tri.every((v) => above(v) === 0) && !(tri[0][3] < 0)) continue;",
+    "old": "      if (tri.every((v) => above(v) === 0) && !(tri[0][3] > 0)) continue; // on the high cut, looking into the slab",
+    "new": "      if (tri.every((v) => above(v) === 0) && !(tri[0][3] < 0)) continue; // on the high cut, looking into the slab",
     "tests": [
       "test/world/fb1003c_citywall.test.js"
     ],

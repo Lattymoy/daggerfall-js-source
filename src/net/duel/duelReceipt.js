@@ -31,13 +31,41 @@ export const DUEL_BOUT_RE = /^[0-9a-f]{12}$/;
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 /** Every other receipt's own fields (a gate's, a siege's, a Royal Tourney's, an arena's): never in a duel's. */
-const DUEL_FOREIGN = ['s', 'l', 'sk', 'sw', 'sd', 'r', 'a', 'h', 'th', 'k', 't', 'o', 'd', 'b', 'x', 'y', 'c', 'j', 'q', 'u', 'z'];
+const DUEL_FOREIGN = [
+  's',
+  'l',
+  'sk',
+  'sw',
+  'sd',
+  'r',
+  'a',
+  'h',
+  'th',
+  'k',
+  't',
+  'o',
+  'd',
+  'b',
+  'x',
+  'y',
+  'c',
+  'j',
+  'q',
+  'u',
+  'z',
+];
 
 /** Everything a well-formed duel receipt's claims must be, before any signature is considered. */
 export function duelReceiptValid(/** @type {any} */ c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (DUEL_FOREIGN.some((f) => c[f] !== undefined)) return false;
-  if (!Array.isArray(c.f) || c.f.length !== 2 || !c.f.every((x) => typeof x === 'string' && ID_RE.test(x)) || c.f[0] === c.f[1]) return false;
+  if (
+    !Array.isArray(c.f) ||
+    c.f.length !== 2 ||
+    !c.f.every((x) => typeof x === 'string' && ID_RE.test(x)) ||
+    c.f[0] === c.f[1]
+  )
+    return false;
   if (c.w !== 0 && c.w !== 1) return false;
   if (typeof c.n !== 'string' || !DUEL_BOUT_RE.test(c.n)) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
@@ -45,13 +73,19 @@ export function duelReceiptValid(/** @type {any} */ c) {
   return true;
 }
 /** MINT - the relay's half; unsigned (`d1.<body>.`) with no key, which the service declines. */
-export async function mintDuelReceipt(/** @type {{ f: string[], w: 0|1, n: string }} */ { f, w, n }, /** @type {CryptoKey|null} */ privateKey, /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS }) {
+export async function mintDuelReceipt(
+  /** @type {{ f: string[], w: 0|1, n: string }} */ { f, w, n },
+  /** @type {CryptoKey|null} */ privateKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number }} */ { subtle, nowS },
+) {
   if (!Number.isSafeInteger(nowS)) throw new TypeError('mintDuelReceipt needs an integer epoch-seconds clock');
   const claims = { f, w, n, i: nowS, e: nowS + DUEL_RECEIPT_TTL_S };
   if (!duelReceiptValid(claims)) throw new TypeError('mintDuelReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${DUEL_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${DUEL_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${DUEL_RECEIPT_V}.${body}`)),
+  );
   return `${DUEL_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 /** READ - the client's half: the claims, signed or not, never a verdict; null for anything else. */
@@ -62,11 +96,19 @@ export function readDuelReceipt(/** @type {unknown} */ r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return duelReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 /** VERIFY - the account service's half, the other receipts' rungs: `{ ok: true, claims }` or `{ ok: false, why }`. */
-export async function verifyDuelReceipt(/** @type {unknown} */ r, /** @type {CryptoKey} */ publicKey, /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ { subtle, nowS, skewS = SKEW_S }) {
+export async function verifyDuelReceipt(
+  /** @type {unknown} */ r,
+  /** @type {CryptoKey} */ publicKey,
+  /** @type {{ subtle: SubtleCrypto, nowS: number, skewS?: number }} */ { subtle, nowS, skewS = SKEW_S },
+) {
   if (typeof r !== 'string' || r.length > DUEL_RECEIPT_MAX) return { ok: false, why: 'shape' };
   const parts = r.split('.');
   if (parts.length !== 3) return { ok: false, why: 'shape' };
@@ -78,10 +120,18 @@ export async function verifyDuelReceipt(/** @type {unknown} */ r, /** @type {Cry
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!duelReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };

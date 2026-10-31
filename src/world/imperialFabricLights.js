@@ -16,7 +16,16 @@
 // the side streets and the lanes, each in its hash's order; at most FABRIC_LAMPS.perCell a cell (Daggerfall's own
 // blocks' most); only on the open street or square of the cell itself (world/imperialFabric.js fabricGroundIn). The
 // district picks the post (FABRIC_LAMPS.posts: its sector's parity).
-import { fabricCell, fabricGroundIn, outwardOf, streetKind, centroid, PAVEMENT, SQUARE_FOUNTAIN, GROUND } from './imperialFabric.js';
+import {
+  fabricCell,
+  fabricGroundIn,
+  outwardOf,
+  streetKind,
+  centroid,
+  PAVEMENT,
+  SQUARE_FOUNTAIN,
+  GROUND,
+} from './imperialFabric.js';
 import { imperialCellRect, imperialDistrictAt, IMPERIAL_SECTORS } from './imperialCity.js';
 import { LIGHTS_ARCHIVE } from './city/cityLights.js';
 import { hash32 } from './spawnedDungeons.js';
@@ -24,7 +33,15 @@ import { hash32 } from './spawnedDungeons.js';
 /** The lamps' measures: TEXTURE.210's two street lamp-posts (the freeware's commonest light flats), the least distance
  *  between two of a cell's, the most a cell carries (Daggerfall's own blocks' most), and a lamp's place out from its
  *  front - a main street's on its pavement, any other's at the wall's foot. */
-export const FABRIC_LAMPS = Object.freeze({ archive: LIGHTS_ARCHIVE, posts: Object.freeze([29, 28]), spacing: 18, perCell: 8, pavement: PAVEMENT.w - 0.6, kerb: 0.8, inset: 0.6 });
+export const FABRIC_LAMPS = Object.freeze({
+  archive: LIGHTS_ARCHIVE,
+  posts: Object.freeze([29, 28]),
+  spacing: 18,
+  perCell: 8,
+  pavement: PAVEMENT.w - 0.6,
+  kerb: 0.8,
+  inset: 0.6,
+});
 /** The streets a lamp stands on, in the order they are lit. */
 const LIT = Object.freeze({ main: 1, side: 2, lane: 3 });
 const SALT = 0xb1d4;
@@ -51,15 +68,26 @@ function makeLamps(r, c) {
   const [x0, z0, x1, z1] = imperialCellRect(r, c);
   /** @type {Array<{ at: number[], rank: number, h: number }>} */
   const spots = [];
-  for (const f of L.fountains) for (const s of [-1, 1]) spots.push({ at: [f[0] + s * (SQUARE_FOUNTAIN.r + 2.5), f[1]], rank: 0, h: hash32(SALT, r, c, s) });
+  for (const f of L.fountains)
+    for (const s of [-1, 1])
+      spots.push({ at: [f[0] + s * (SQUARE_FOUNTAIN.r + 2.5), f[1]], rank: 0, h: hash32(SALT, r, c, s) });
   for (const p of L.plots) {
     for (let e = 0; e < 4; e++) {
       if (!(p.out & (1 << e))) continue;
-      const kind = streetKind(p.sw?.[e] ?? 0), rank = LIT[kind];
+      const kind = streetKind(p.sw?.[e] ?? 0),
+        rank = LIT[kind];
       if (!rank) continue;
-      const a = p.q[e], b = p.q[(e + 1) & 3], n = outwardOf(p.q, e), out = kind === 'main' ? FABRIC_LAMPS.pavement : FABRIC_LAMPS.kerb;
-      const len = Math.hypot(b[0] - a[0], b[1] - a[1]), s = Math.min(FABRIC_LAMPS.inset, len / 2) / (len || 1);
-      spots.push({ at: [a[0] + (b[0] - a[0]) * s + n[0] * out, a[1] + (b[1] - a[1]) * s + n[1] * out], rank, h: hash32(SALT, p.key, e) });
+      const a = p.q[e],
+        b = p.q[(e + 1) & 3],
+        n = outwardOf(p.q, e),
+        out = kind === 'main' ? FABRIC_LAMPS.pavement : FABRIC_LAMPS.kerb;
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]),
+        s = Math.min(FABRIC_LAMPS.inset, len / 2) / (len || 1);
+      spots.push({
+        at: [a[0] + (b[0] - a[0]) * s + n[0] * out, a[1] + (b[1] - a[1]) * s + n[1] * out],
+        rank,
+        h: hash32(SALT, p.key, e),
+      });
     }
   }
   spots.sort((u, v) => u.rank - v.rank || u.h - v.h);
@@ -73,8 +101,18 @@ function makeLamps(r, c) {
     if (kept.some((k) => Math.hypot(k.at[0] - x, k.at[1] - z) < FABRIC_LAMPS.spacing)) continue;
     kept.push(s);
   }
-  const district = imperialDistrictAt(...centroid([[x0, z0], [x1, z0], [x1, z1], [x0, z1]]));
-  const sector = Math.max(0, IMPERIAL_SECTORS.findIndex(([d]) => d === district));
+  const district = imperialDistrictAt(
+    ...centroid([
+      [x0, z0],
+      [x1, z0],
+      [x1, z1],
+      [x0, z1],
+    ]),
+  );
+  const sector = Math.max(
+    0,
+    IMPERIAL_SECTORS.findIndex(([d]) => d === district),
+  );
   const record = FABRIC_LAMPS.posts[sector % FABRIC_LAMPS.posts.length];
   return kept.map((s) => Object.freeze({ at: Object.freeze(s.at), record }));
 }

@@ -36,22 +36,30 @@
 // (world/arena/arenaCity.js arenaRecordDisplaced) and each system's own law for a building that is not there takes it.
 
 import { inArenaCell, arenaRecordDisplaced, ARENA_REGION } from '../../world/arena/arenaCity.js';
-import { interiorSceneName, cacheScene, containsPermanentScene, addPermanentScene, removePermanentScene } from '../sceneCache.js';
-import { stampLayout } from '../layoutPins.js';   // FIELD BUGS 2026-10-07 CRATE-LAYOUT: the new house's record, in the layout it was picked in
+import {
+  interiorSceneName,
+  cacheScene,
+  containsPermanentScene,
+  addPermanentScene,
+  removePermanentScene,
+} from '../sceneCache.js';
+import { stampLayout } from '../layoutPins.js'; // FIELD BUGS 2026-10-07 CRATE-LAYOUT: the new house's record, in the layout it was picked in
 import { isResidence } from '../../world/buildingNames.js';
-import { templateByIndex } from '../item/itemTemplates.js';   // ARENA-FIX 11: a torch left burning, back into an item
-import { homeCandidate, homeClaimLayout } from '../online/onlineHomes.js';   // ARENA4b: the buildings an online home may be; AUDIT FOUNDATION II P6: its town's layout
-import { regionDeedsOf } from '../../net/homeLaw.js';   // HOUSES-3: a region's three deeds
-import { homeListedOff } from '../../net/homeListingLaw.js';   // AUDIT FOUNDATION P3: the property rows
+import { templateByIndex } from '../item/itemTemplates.js'; // ARENA-FIX 11: a torch left burning, back into an item
+import { homeCandidate, homeClaimLayout } from '../online/onlineHomes.js'; // ARENA4b: the buildings an online home may be; AUDIT FOUNDATION II P6: its town's layout
+import { regionDeedsOf } from '../../net/homeLaw.js'; // HOUSES-3: a region's three deeds
+import { homeListedOff } from '../../net/homeListingLaw.js'; // AUDIT FOUNDATION P3: the property rows
 
 /** The market's generator (banking.js housesForSale), seeded by what names this move. */
 function pick(n, mapId, oldKey) {
   let seed = ((mapId * 0x9e3779b1) ^ (oldKey + 1)) >>> 0 || 1;
   // a few steps, not one: the market's seeds differ in their high bits (a map id), these in their low (a key)
   for (let i = 0; i < 4; i++) {
-    seed ^= seed << 13; seed >>>= 0;
+    seed ^= seed << 13;
+    seed >>>= 0;
     seed ^= seed >>> 17;
-    seed ^= seed << 5; seed >>>= 0;
+    seed ^= seed << 5;
+    seed >>>= 0;
   }
   return Math.floor((seed / 0x100000000) * n);
 }
@@ -61,9 +69,20 @@ function pick(n, mapId, oldKey) {
  * (world/buildingSummaries.js - the arena's cell holds none); `oldType` the type the old house was; `held` the building
  * keys another record of the save holds in the city; `isActiveQuestBuilding(summary)` the market's own exclusion.
  */
-export function arenaHouseFor({ mapId, oldKey, oldType }, summaries, { held = new Set(), isActiveQuestBuilding = null } = {}) {
-  const free = (summaries ?? []).filter((s) => s.buildingKey > 0 && !inArenaCell(s.buildingKey) && !held.has(s.buildingKey)
-    && !(isActiveQuestBuilding?.(s) ?? false)).sort((a, b) => a.buildingKey - b.buildingKey);
+export function arenaHouseFor(
+  { mapId, oldKey, oldType },
+  summaries,
+  { held = new Set(), isActiveQuestBuilding = null } = {},
+) {
+  const free = (summaries ?? [])
+    .filter(
+      (s) =>
+        s.buildingKey > 0 &&
+        !inArenaCell(s.buildingKey) &&
+        !held.has(s.buildingKey) &&
+        !(isActiveQuestBuilding?.(s) ?? false),
+    )
+    .sort((a, b) => a.buildingKey - b.buildingKey);
   let list = free.filter((s) => s.buildingType === oldType);
   if (!list.length) list = free.filter((s) => isResidence(s.buildingType));
   return list.length ? list[pick(list.length, mapId, oldKey)] : null;
@@ -80,7 +99,16 @@ export function arenaHouseFor({ mapId, oldKey, oldType }, summaries, { held = ne
 export function arenaHomeFor(o, summaries, opts = {}) {
   // AUDIT FB1005 C2: never into a room that cannot be laid out - Daggerfall's GRVEAL27 holds twelve House5 graves and
   // CUSTAA05 two House6 with no room (FIELD BUGS 2026-10-05 CRYPT-SALE's law, homePurchasable's)
-  return arenaHouseFor(o, (summaries ?? []).filter((s) => homeCandidate(s) && s.hasInterior !== false && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId))), opts);   // AUDIT FOUNDATION P3: never a house off the market
+  return arenaHouseFor(
+    o,
+    (summaries ?? []).filter(
+      (s) =>
+        homeCandidate(s) &&
+        s.hasInterior !== false &&
+        !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),
+    ),
+    opts,
+  ); // AUDIT FOUNDATION P3: never a house off the market
 }
 
 /** The key of the new house's first container in its scene (scenes/worldModes.js restoreInteriorScene's `container:i`). */
@@ -96,7 +124,12 @@ export function droppedLightItem(t) {
   const template = t?.itemTemplateIndex | 0;
   const group = LIGHT_GROUPS[template];
   if (!group) return null;
-  return { group, templateIndex: template, maxCondition: templateByIndex(template)?.hitPoints ?? 0, currentCondition: Math.max(1, Math.ceil((Number(t.time) || 0) / LIGHT_SECONDS_PER_CONDITION)) };
+  return {
+    group,
+    templateIndex: template,
+    maxCondition: templateByIndex(template)?.hitPoints ?? 0,
+    currentCondition: Math.max(1, Math.ceil((Number(t.time) || 0) / LIGHT_SECONDS_PER_CONDITION)),
+  };
 }
 /**
  * THE OLD HOUSE'S SCENE EMPTIED INTO THE NEW ONE (the fix above): every entry of `from` (and its other layouts' visits,
@@ -129,25 +162,56 @@ export function emptyArenaScene(cache, from, to, { layout = null } = {}) {
     if (!moved(name)) continue;
     cache.scenes.delete(name);
     for (const item of Object.values(d?.decorOwn ?? {})) if (item) out.own.push(copyItem(item));
-    for (const p of d?.decor ?? []) { if (p?.item) continue; out.pieces++; out.refund += Number.isSafeInteger(p?.paid) && p.paid > 0 ? p.paid : 0; }
+    for (const p of d?.decor ?? []) {
+      if (p?.item) continue;
+      out.pieces++;
+      out.refund += Number.isSafeInteger(p?.paid) && p.paid > 0 ? p.paid : 0;
+    }
     out.hidden += Array.isArray(d?.hiddenBase) ? d.hiddenBase.length : 0;
-    for (const c of d?.lootContainers ?? []) if (Array.isArray(c?.items) && !String(c.key ?? '').startsWith('shelf')) out.crate.push(...c.items.map(copyItem));
-    for (const list of Object.values(d?.decorItems ?? {})) if (Array.isArray(list)) out.crate.push(...list.map(copyItem));
-    for (const pile of d?.droppedPiles ?? []) if (Array.isArray(pile?.items)) out.crate.push(...pile.items.map(copyItem));
-    for (const t of d?.droppedTorches ?? []) { const it = droppedLightItem(t); if (it) { out.crate.push(it); out.lights++; } }   // ARENA-FIX 11
+    for (const c of d?.lootContainers ?? [])
+      if (Array.isArray(c?.items) && !String(c.key ?? '').startsWith('shelf')) out.crate.push(...c.items.map(copyItem));
+    for (const list of Object.values(d?.decorItems ?? {}))
+      if (Array.isArray(list)) out.crate.push(...list.map(copyItem));
+    for (const pile of d?.droppedPiles ?? [])
+      if (Array.isArray(pile?.items)) out.crate.push(...pile.items.map(copyItem));
+    for (const t of d?.droppedTorches ?? []) {
+      const it = droppedLightItem(t);
+      if (it) {
+        out.crate.push(it);
+        out.lights++;
+      }
+    } // ARENA-FIX 11
   }
-  for (const name of [...cache.permanent]) if (moved(name)) { permanent = true; cache.permanent.delete(name); }
+  for (const name of [...cache.permanent])
+    if (moved(name)) {
+      permanent = true;
+      cache.permanent.delete(name);
+    }
   removePermanentScene(cache, from);
-  const kept = containsPermanentScene(cache, to) ? cache.scenes.get(to) ?? null : null;   // HOME-WIPE: the owner's record
+  const kept = containsPermanentScene(cache, to) ? (cache.scenes.get(to) ?? null) : null; // HOME-WIPE: the owner's record
   if (kept) {
     if (out.crate.length) {
-      const lc = kept.lootContainers;   // every entry is copySceneEntry's: the list is always there
+      const lc = kept.lootContainers; // every entry is copySceneEntry's: the list is always there
       const chest = lc.find((c) => c?.key === ARENA_CRATE_KEY);
-      if (chest) { chest.items = [...(Array.isArray(chest.items) ? chest.items : []), ...out.crate.map(copyItem)]; chest.crate = true; }
-      else lc.push({ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 });
+      if (chest) {
+        chest.items = [...(Array.isArray(chest.items) ? chest.items : []), ...out.crate.map(copyItem)];
+        chest.crate = true;
+      } else lc.push({ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 });
     }
   } else if (out.crate.length || permanent) {
-    cacheScene(cache, to, stampLayout({ lootContainers: out.crate.length ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }] : [], frame: 'building' }, layout));   // CRATE-LAYOUT
+    cacheScene(
+      cache,
+      to,
+      stampLayout(
+        {
+          lootContainers: out.crate.length
+            ? [{ key: ARENA_CRATE_KEY, items: out.crate.map(copyItem), crate: true, stockedDate: 0 }]
+            : [],
+          frame: 'building',
+        },
+        layout,
+      ),
+    ); // CRATE-LAYOUT
   }
   if (permanent) addPermanentScene(cache, to);
   return out;
@@ -161,13 +225,30 @@ export function emptyArenaScene(cache, from, to, { layout = null } = {}) {
  * the bank). `displaced(rec)` defaults to the arena's law. Answers { from, to, name, own, refund, crate } for a deed
  * moved, else null.
  */
-export function moveArenaRecords({ houses, summaries, oldTypeOf, held = new Set(), isActiveQuestBuilding = null, scenes = null, displaced = arenaRecordDisplaced } = {}, hooks = {}) {
+export function moveArenaRecords(
+  {
+    houses,
+    summaries,
+    oldTypeOf,
+    held = new Set(),
+    isActiveQuestBuilding = null,
+    scenes = null,
+    displaced = arenaRecordDisplaced,
+  } = {},
+  hooks = {},
+) {
   // HOUSES-3: the region holds three deeds - every one the arena displaced moves, never onto a house another of them
   // names; the answer is the first move's
   let first = null;
   for (const slot of regionDeedsOf(houses, ARENA_REGION).filter((d) => displaced(d))) {
-    const own = regionDeedsOf(houses, ARENA_REGION).filter((d) => d !== slot && (Number(d.mapId) >>> 0) === (Number(slot.mapId) >>> 0)).map((d) => d.buildingKey);
-    const moved = moveArenaDeed(slot, { summaries, oldTypeOf, held: new Set([...held, ...own]), isActiveQuestBuilding, scenes }, hooks);
+    const own = regionDeedsOf(houses, ARENA_REGION)
+      .filter((d) => d !== slot && Number(d.mapId) >>> 0 === Number(slot.mapId) >>> 0)
+      .map((d) => d.buildingKey);
+    const moved = moveArenaDeed(
+      slot,
+      { summaries, oldTypeOf, held: new Set([...held, ...own]), isActiveQuestBuilding, scenes },
+      hooks,
+    );
     first ??= moved;
   }
   return first;
@@ -176,9 +257,16 @@ export function moveArenaRecords({ houses, summaries, oldTypeOf, held = new Set(
 /** One deed the arena displaced, moved to a house of its town's (arenaHouseFor), its room emptied - or null, no house. */
 function moveArenaDeed(slot, { summaries, oldTypeOf, held, isActiveQuestBuilding, scenes }, hooks) {
   const from = slot.buildingKey;
-  const to = arenaHouseFor({ mapId: slot.mapId, oldKey: from, oldType: oldTypeOf?.(from) ?? null }, summaries, { held, isActiveQuestBuilding });
+  const to = arenaHouseFor({ mapId: slot.mapId, oldKey: from, oldType: oldTypeOf?.(from) ?? null }, summaries, {
+    held,
+    isActiveQuestBuilding,
+  });
   if (!to) return null;
-  const emptied = scenes ? emptyArenaScene(scenes, interiorSceneName(slot.mapId, from), interiorSceneName(slot.mapId, to.buildingKey), { layout: slot.layout ?? null }) : { own: [], refund: 0, crate: [] };   // FIELD BUGS 2026-10-07 CRATE-LAYOUT: the deed's layout - the one its town is pinned to, and visited in
+  const emptied = scenes
+    ? emptyArenaScene(scenes, interiorSceneName(slot.mapId, from), interiorSceneName(slot.mapId, to.buildingKey), {
+        layout: slot.layout ?? null,
+      })
+    : { own: [], refund: 0, crate: [] }; // FIELD BUGS 2026-10-07 CRATE-LAYOUT: the deed's layout - the one its town is pinned to, and visited in
   slot.buildingKey = to.buildingKey;
   if (emptied.own.length) hooks.giveOwn?.(emptied.own);
   if (emptied.refund > 0) hooks.refund?.(emptied.refund);
@@ -186,5 +274,12 @@ function moveArenaDeed(slot, { summaries, oldTypeOf, held, isActiveQuestBuilding
   hooks.discover?.(to);
   hooks.addNote?.(to);
   hooks.notice?.(to);
-  return { from, to: to.buildingKey, name: to.name ?? '', own: emptied.own.length, refund: emptied.refund, crate: emptied.crate.length };
+  return {
+    from,
+    to: to.buildingKey,
+    name: to.name ?? '',
+    own: emptied.own.length,
+    refund: emptied.refund,
+    crate: emptied.crate.length,
+  };
 }

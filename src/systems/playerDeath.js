@@ -28,11 +28,11 @@
 import { EYE_HEIGHT, CAPSULE_HEIGHT } from '../player/motor.js';
 import { SOUND } from './soundClips.js';
 import { RACES } from './races.js';
-import { combatVoicesEnabled } from '../combat/combatVoices.js';   // SETT: reads the store at the point of use
+import { combatVoicesEnabled } from '../combat/combatVoices.js'; // SETT: reads the store at the point of use
 
-export const DEATH_FALL_SPEED = 2.5;        // PlayerDeath.fallSpeed
-export const DEATH_TIME_BEFORE_RESET = 3;   // PlayerDeath.TimeBeforeReset
-export const DEATH_FADE_DURATION = 2;       // PlayerDeath.FadeDuration
+export const DEATH_FALL_SPEED = 2.5; // PlayerDeath.fallSpeed
+export const DEATH_TIME_BEFORE_RESET = 3; // PlayerDeath.TimeBeforeReset
+export const DEATH_FADE_DURATION = 2; // PlayerDeath.FadeDuration
 export const CLASSIC_PLAYER_DEATH_SOUND = SOUND.WoodElfMalePain1;
 
 /** GetRaceGenderPain3Sound (PlayerDeath.cs:179-201), verbatim - the
@@ -49,8 +49,7 @@ const PAIN3 = Object.freeze({
   [RACES.Khajiit]: [SOUND.KhajiitMalePain3, SOUND.KhajiitFemalePain3],
   [RACES.Argonian]: [SOUND.ArgonianMalePain3, SOUND.ArgonianFemalePain3],
 });
-export const raceGenderPain3Sound = (race, gender) =>
-  PAIN3[race]?.[gender === 'male' ? 0 : 1] ?? -1;
+export const raceGenderPain3Sound = (race, gender) => PAIN3[race]?.[gender === 'male' ? 0 : 1] ?? -1;
 
 /** PlayerEntity_OnDeath's two arms (:164-170). The setting is read
  *  HERE, at the death, exactly where DFU reads it. */
@@ -65,8 +64,7 @@ export function playerDeathSound(race, gender, voices = combatVoicesEnabled) {
 
 /** targetCameraHeight (PlayerEntity_OnDeath): height - height * 1.25,
  *  i.e. a quarter of the capsule BELOW the feet. */
-export const deathCameraTarget = (capsuleHeight = CAPSULE_HEIGHT) =>
-  capsuleHeight - capsuleHeight * 1.25;
+export const deathCameraTarget = (capsuleHeight = CAPSULE_HEIGHT) => capsuleHeight - capsuleHeight * 1.25;
 
 export class PlayerDeathSequence {
   /**
@@ -79,8 +77,15 @@ export class PlayerDeathSequence {
    * @param {string} [deps.gender]  'male' | 'female'
    * @param {function():boolean} [deps.voices]  the CombatVoices seam, injectable for the pins
    */
-  constructor({ eyeHeight = EYE_HEIGHT, capsuleHeight = CAPSULE_HEIGHT, playSound = null, onReset = null,
-    race = null, gender = null, voices = combatVoicesEnabled } = {}) {
+  constructor({
+    eyeHeight = EYE_HEIGHT,
+    capsuleHeight = CAPSULE_HEIGHT,
+    playSound = null,
+    onReset = null,
+    race = null,
+    gender = null,
+    voices = combatVoicesEnabled,
+  } = {}) {
     this.startCameraHeight = eyeHeight;
     this.targetCameraHeight = deathCameraTarget(capsuleHeight);
     this.currentCameraHeight = eyeHeight;
@@ -89,9 +94,7 @@ export class PlayerDeathSequence {
     this._onReset = onReset;
     // The race/gender arm needs an identity; without one (a host that
     // dies before chargen wrote it) DFU's classic clip stands.
-    this.deathSound = race == null
-      ? CLASSIC_PLAYER_DEATH_SOUND
-      : playerDeathSound(race, gender, voices);
+    this.deathSound = race == null ? CLASSIC_PLAYER_DEATH_SOUND : playerDeathSound(race, gender, voices);
     playSound?.(this.deathSound);
   }
 
@@ -115,8 +118,12 @@ export class PlayerDeathSequence {
   }
 
   /** How far the eye has sunk - what a world-space host subtracts. */
-  get drop() { return this.startCameraHeight - this.currentCameraHeight; }
+  get drop() {
+    return this.startCameraHeight - this.currentCameraHeight;
+  }
 
   /** FadeHUDToBlack's 0..1 progress over FadeDuration. */
-  get fade() { return Math.min(1, this.elapsed / DEATH_FADE_DURATION); }
+  get fade() {
+    return Math.min(1, this.elapsed / DEATH_FADE_DURATION);
+  }
 }

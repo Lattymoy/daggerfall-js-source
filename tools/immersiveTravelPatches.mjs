@@ -73,19 +73,25 @@ export function appendedEdit(modJson) {
   const rmb = modJson?.RmbBlock;
   const header = rmb?.FldHeader;
   if (!rmb || !header) throw new Error(`immersive travel: ${modJson?.Name} is not an RMB block`);
-  if (rmb.SubRecords.length !== header.NumBlockDataRecords) throw new Error(`immersive travel: ${modJson.Name} changes its subrecords - the header-count edit cannot carry it`);
+  if (rmb.SubRecords.length !== header.NumBlockDataRecords)
+    throw new Error(`immersive travel: ${modJson.Name} changes its subrecords - the header-count edit cannot carry it`);
   const ops = [];
   // AUDIT IT1 G1: the editor's round trip - the building slots past the count go, last first
   const slots = header.BuildingDataList;
-  if (Array.isArray(slots)) for (let i = CLASSIC_BUILDING_SLOTS - 1; i >= slots.length; i--) ops.push(['r', ['RmbBlock', 'FldHeader', 'BuildingDataList', i]]);
+  if (Array.isArray(slots))
+    for (let i = CLASSIC_BUILDING_SLOTS - 1; i >= slots.length; i--)
+      ops.push(['r', ['RmbBlock', 'FldHeader', 'BuildingDataList', i]]);
   // ...and the classic models' scales, which the classic record does not carry
   for (let i = 0; i < Math.min(header.NumMisc3dObjectRecords ?? 0, rmb.Misc3dObjectRecords?.length ?? 0); i++) {
-    for (const k of MODEL_SCALES) if (k in rmb.Misc3dObjectRecords[i]) ops.push(['s', ['RmbBlock', 'Misc3dObjectRecords', i, k], rmb.Misc3dObjectRecords[i][k]]);
+    for (const k of MODEL_SCALES)
+      if (k in rmb.Misc3dObjectRecords[i])
+        ops.push(['s', ['RmbBlock', 'Misc3dObjectRecords', i, k], rmb.Misc3dObjectRecords[i][k]]);
   }
   for (const [array, count] of IT_APPENDED_ARRAYS) {
     const list = rmb[array];
     const classic = header[count];
-    if (!Array.isArray(list) || !Number.isInteger(classic) || list.length < classic) throw new Error(`immersive travel: ${modJson.Name} ${array} is shorter than its header count`);
+    if (!Array.isArray(list) || !Number.isInteger(classic) || list.length < classic)
+      throw new Error(`immersive travel: ${modJson.Name} ${array} is shorter than its header count`);
     for (let i = classic; i < list.length; i++) ops.push(['i', ['RmbBlock', array, i], list[i]]);
   }
   return ops;
@@ -128,20 +134,23 @@ if (isMain(import.meta.url)) {
   let blocks = null;
   if (arena2 && existsSync(join(arena2, 'BLOCKS.BSA'))) {
     blocks = new BlocksFile();
-    if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA'))))) throw new Error('BLOCKS.BSA did not load');
+    if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA')))))
+      throw new Error('BLOCKS.BSA did not load');
   }
   for (const [name, modJson] of files) {
     let patch, how;
     if (blocks) {
       // WD1's own: the diff against the classic block, checked to rebuild the author's file
       patch = makePatch(blocks, name, modJson);
-      how = 'diffed against BLOCKS.BSA, rebuilds the author\'s file';
+      how = "diffed against BLOCKS.BSA, rebuilds the author's file";
       const appended = appendedPatch(modJson);
       const same = sha256Canonical(rebuildWorldDataPatch(appended, blocks)) === appended.sha256;
-      how += same ? ' (the header-count edit rebuilds it too)' : ' (the header-count edit does NOT - the editor changed classic records as well)';
+      how += same
+        ? ' (the header-count edit rebuilds it too)'
+        : ' (the header-count edit does NOT - the editor changed classic records as well)';
     } else {
       patch = appendedPatch(modJson);
-      how = 'the editor\'s round trip and the records past the header counts - NOT checked against a BLOCKS.BSA';
+      how = "the editor's round trip and the records past the header counts - NOT checked against a BLOCKS.BSA";
     }
     const out = join(outDir, `${name}.json`);
     const body = formatPatch(patch);

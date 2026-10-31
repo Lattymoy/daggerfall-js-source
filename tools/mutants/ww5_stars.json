@@ -2,8 +2,8 @@
   {
     "name": "WW5-STAR-cyrodiil-lane-open",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "k < STAR_PER_NIGHT * STAR_LANES && siteEventLaneOpen(starLaneOf(k));",
-    "new": "k < STAR_PER_NIGHT * STAR_LANES;",
+    "old": "  Number.isSafeInteger(n) &&\n  n > 0 &&\n  Number.isInteger(k) &&\n  k >= 0 &&\n  k < STAR_PER_NIGHT * STAR_LANES &&\n  siteEventLaneOpen(starLaneOf(k));",
+    "new": "  Number.isSafeInteger(n) && n > 0 && Number.isInteger(k) && k >= 0 && k < STAR_PER_NIGHT * STAR_LANES;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WW5-STAR-the-lane-bound",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "k < STAR_PER_NIGHT * STAR_LANES && siteEventLaneOpen(starLaneOf(k));",
-    "new": "k < STAR_PER_NIGHT && siteEventLaneOpen(starLaneOf(k));",
+    "old": "  k < STAR_PER_NIGHT * STAR_LANES &&",
+    "new": "  k < STAR_PER_NIGHT &&",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WW5-STAR-the-instant-by-the-raw-number",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": "STAR_FALLS_MS[starIndexOf(k)]",
-    "new": "STAR_FALLS_MS[k]",
+    "old": "  const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[starIndexOf(k)]; // WW5: every lane's star its place's instant",
+    "new": "  const fallAt = n * STAR_HOUR_MS + STAR_FALLS_MS[k]; // WW5: every lane's star its place's instant",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WW5-STAR-the-ledger-pixel-unread",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": " && siteEventPixelOk(starLaneOf(v.k), v.px, v.py)",
-    "new": "",
+    "old": "  Number.isInteger(v.py) &&\n  siteEventPixelOk(starLaneOf(v.k), v.px, v.py) && // WW5: on its own lane's pixel, as its word was (net/wire.js starWireOk)",
+    "new": "  Number.isInteger(v.py) && // WW5: on its own lane's pixel, as its word was (net/wire.js starWireOk)",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WW5-STAR-the-held-order",
     "file": "src/net/starfall/starfallLaw.js",
-    "old": ".sort((a, b) => (starLaneOf(a[0][1]) === 0 ? 0 : 1) - (starLaneOf(b[0][1]) === 0 ? 0 : 1) || a[1] - b[1])",
-    "new": ".sort((a, b) => a[1] - b[1])",
+    "old": "    .sort((a, b) => (starLaneOf(a[0][1]) === 0 ? 0 : 1) - (starLaneOf(b[0][1]) === 0 ? 0 : 1) || a[1] - b[1])",
+    "new": "    .sort((a, b) => a[1] - b[1])",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WW5-STAR-the-master-by-the-raw-number",
     "file": "src/systems/starfall/starCoven.js",
-    "old": "Math.min(2, starIndexOf(Math.max(0, k | 0)))",
-    "new": "Math.min(2, Math.max(0, k | 0))",
+    "old": "  const M = STAR_MASTERS[STAR_MASTER_TABLE[bandOk(band)][Math.max(0, Math.min(2, starIndexOf(Math.max(0, k | 0))))]];",
+    "new": "  const M = STAR_MASTERS[STAR_MASTER_TABLE[bandOk(band)][Math.max(0, Math.min(2, Math.max(0, k | 0)))]];",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WW5-STAR-the-leader-lost",
     "file": "src/systems/starfall/starCoven.js",
-    "old": "return M.id === 'mother' && typeof coven?.leader === 'function' ? leaderOf(coven) : M;",
-    "new": "return M;",
+    "old": "  return M.id === 'mother' && typeof coven?.leader === 'function' ? leaderOf(coven) : M;",
+    "new": "  return M;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -139,8 +139,8 @@
   {
     "name": "WW5-STAR-a-covens-region",
     "file": "src/systems/starfall/starfallCovens.js",
-    "old": "region: regionOfTheatre(c.theatre), location: null",
-    "new": "region: -1, location: null",
+    "old": "  Object.freeze({\n    ...c,\n    region: regionOfTheatre(c.theatre),\n    location: null,\n    place: null,\n    factionId: null,\n    own: /** @type {true} */ (true),\n  });",
+    "new": "  Object.freeze({ ...c, region: -1, location: null, place: null, factionId: null, own: /** @type {true} */ (true) });",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -148,8 +148,8 @@
   {
     "name": "WW5-STAR-a-faction-id",
     "file": "src/systems/starfall/starfallCovens.js",
-    "old": "location: null, place: null, factionId: null,",
-    "new": "location: null, place: null, factionId: 426,",
+    "old": "    factionId: null,",
+    "new": "    factionId: 426,",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "WW5-STAR-a-province-night-the-bays",
     "file": "src/systems/starfall/starfallCovens.js",
-    "old": "const covens = covensOfLane(lane), len = covens.length;",
-    "new": "const covens = covensOfLane(0), len = covens.length;",
+    "old": "  const covens = covensOfLane(lane),",
+    "new": "  const covens = covensOfLane(0),",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -166,8 +166,8 @@
   {
     "name": "WW5-STAR-the-lane-covens-spill",
     "file": "src/systems/starfall/starfallCovens.js",
-    "old": "STAR_PROVINCE_COVENS.filter((c) => c.theatre === lane)",
-    "new": "STAR_PROVINCE_COVENS.filter((c) => c.theatre <= lane)",
+    "old": "  lane === 0 ? STAR_COVENS : STAR_PROVINCE_COVENS.filter((c) => c.theatre === lane);",
+    "new": "  lane === 0 ? STAR_COVENS : STAR_PROVINCE_COVENS.filter((c) => c.theatre <= lane);",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "WW5-STAR-the-lanes-number",
     "file": "src/systems/starfall/starfallSites.js",
-    "old": "    const k = starOfLane(lane, j);\n",
-    "new": "    const k = j;\n",
+    "old": "    const k = starOfLane(lane, j);",
+    "new": "    const k = j;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "WW5-STAR-the-gate-unasked",
     "file": "src/systems/starfall/starfallSites.js",
-    "old": "    const gate = gateSiteOf(gameDayAt(times.fallAt, lane));\n",
-    "new": "    const gate = null;\n",
+    "old": "    const gate = gateSiteOf(gameDayAt(times.fallAt, lane));",
+    "new": "    const gate = null;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -202,8 +202,8 @@
   {
     "name": "WW5-STAR-the-towns-repeated",
     "file": "src/systems/starfall/starfallSites.js",
-    "old": "      return !strict || !towns.has(scan.townOf.get(key));\n",
-    "new": "      return true;\n",
+    "old": "      return !strict || !towns.has(scan.townOf.get(key));",
+    "new": "      return true;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -211,8 +211,8 @@
   {
     "name": "WW5-STAR-the-pixel-of-the-key",
     "file": "src/systems/starfall/starfallSites.js",
-    "old": "    const [px, py] = worldPixelOfKey(pick);\n",
-    "new": "    const px = pick % 1000, py = Math.floor(pick / 1000);\n",
+    "old": "    const [px, py] = worldPixelOfKey(pick);",
+    "new": "    const px = pick % 1000,\n      py = Math.floor(pick / 1000);",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -220,8 +220,8 @@
   {
     "name": "WW5-STAR-the-bays-lane-a-theatres",
     "file": "src/systems/starfall/starfallSites.js",
-    "old": "const coven = lane > 0 ? starCovenOf(n, lane) : null;",
-    "new": "const coven = starCovenOf(n, lane);",
+    "old": "  const coven = lane > 0 ? starCovenOf(n, lane) : null;",
+    "new": "  const coven = starCovenOf(n, lane);",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "WW5-STAR-every-theatre-one-idle-moment",
     "file": "src/scenes/eventTheatres.js",
-    "old": "    if (owed.size && idle) { busy = true; idle(drain); }\n",
-    "new": "    if (owed.size) drain();\n",
+    "old": "    if (owed.size && idle) {\n      busy = true;\n      idle(drain);\n    }",
+    "new": "    if (owed.size) drain();",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -238,8 +238,8 @@
   {
     "name": "WW5-STAR-a-stale-scan-kept",
     "file": "src/scenes/eventTheatres.js",
-    "old": "    if (warm.get(t) === stampOf(S)) return S.scanOf(t);\n",
-    "new": "    if (warm.has(t)) return S.scanOf(t);\n",
+    "old": "    if (warm.get(t) === stampOf(S)) return S.scanOf(t);",
+    "new": "    if (warm.has(t)) return S.scanOf(t);",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -247,8 +247,8 @@
   {
     "name": "WW5-STAR-the-open-zone-warmed",
     "file": "src/scenes/eventTheatres.js",
-    "old": "    if (!S || !PROVINCE_EVENT_LANES.includes(t)) return null;\n",
-    "new": "    if (!S) return null;\n",
+    "old": "    if (!S || !PROVINCE_EVENT_LANES.includes(t)) return null;",
+    "new": "    if (!S) return null;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -256,8 +256,8 @@
   {
     "name": "WW5-STAR-the-bays-lane-a-province",
     "file": "src/scenes/eventTheatres.js",
-    "old": "SITE_EVENT_LANES.filter((l) => l > 0)",
-    "new": "SITE_EVENT_LANES.filter((l) => l >= 0)",
+    "old": "export const PROVINCE_EVENT_LANES = Object.freeze(SITE_EVENT_LANES.filter((l) => l > 0));",
+    "new": "export const PROVINCE_EVENT_LANES = Object.freeze(SITE_EVENT_LANES.filter((l) => l >= 0));",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "WW5-STAR-the-relay-unasked",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "const lanesOk = () => !!session()?.ww5Ok;",
-    "new": "const lanesOk = () => true;",
+    "old": "  const lanesOk = () => !!session()?.ww5Ok;",
+    "new": "  const lanesOk = () => true;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "WW5-STAR-the-lanes-unasked",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "    for (const [lane, sc] of theatres.warmLanes()) out.push(...laneSitesOf(n, /** @type {number} */ (lane), sc));\n",
-    "new": "",
+    "old": "    for (const [lane, sc] of theatres.warmLanes()) out.push(...laneSitesOf(n, /** @type {number} */ (lane), sc));\n    return out;",
+    "new": "    return out;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -283,8 +283,8 @@
   {
     "name": "WW5-STAR-the-timers-every-theatres",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": ".filter((s) => laneOfSite(s) === lane), t, decided);",
-    "new": ", t, decided);",
+    "old": "      return starTimerRows(\n        [...nightSites(t), ...allSitesOf(starNightAt(t) + 1)].filter((s) => laneOfSite(s) === lane),\n        t,\n        decided,\n      );",
+    "new": "      return starTimerRows([...nightSites(t), ...allSitesOf(starNightAt(t) + 1)], t, decided);",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "WW5-STAR-the-hold-to-everyone",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": " && (laneOfSite(site) === 0 || laneOfSite(site) === myLane())) {",
-    "new": ") {",
+    "old": "          if (line && !S?.said.has('heldRegion') && (laneOfSite(site) === 0 || laneOfSite(site) === myLane())) {",
+    "new": "          if (line && !S?.said.has('heldRegion')) {",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -301,8 +301,8 @@
   {
     "name": "WW5-STAR-cyrodiil-my-lane",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "return t > 0 && siteEventLaneOpen(t) ? t : 0;",
-    "new": "return t > 0 ? t : 0;",
+    "old": "    return t > 0 && siteEventLaneOpen(t) ? t : 0;",
+    "new": "    return t > 0 ? t : 0;",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -310,8 +310,8 @@
   {
     "name": "WW5-STAR-the-master-not-the-covens",
     "file": "src/scenes/starfall/starfallHost.js",
-    "old": "const M = starMasterOf(L?.b ?? 1, S.site.k, S.site.coven);",
-    "new": "const M = starMasterOf(L?.b ?? 1, S.site.k);",
+    "old": "    const M = starMasterOf(L?.b ?? 1, S.site.k, S.site.coven);",
+    "new": "    const M = starMasterOf(L?.b ?? 1, S.site.k);",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]
@@ -319,8 +319,8 @@
   {
     "name": "WW5-STAR-the-map-master-not-the-covens",
     "file": "src/systems/starfall/starfallClient.js",
-    "old": "starMasterOf(l.b, s.k, s.coven)",
-    "new": "starMasterOf(l.b, s.k)",
+    "old": "            : starPhaseLine(l, l ? starMasterOf(l.b, s.k, s.coven).name() : '');",
+    "new": "            : starPhaseLine(l, l ? starMasterOf(l.b, s.k).name() : '');",
     "tests": [
       "test/world/worldWide/ww5_stars.test.js"
     ]

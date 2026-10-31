@@ -52,8 +52,8 @@
   {
     "name": "WAGONUV1-6-the-room-laid-from-the-axle",
     "file": "src/world/caravanRoomModel.js",
-    "old": "return [caravanSideU(b, out, WAGON_TILE.roomSide[0]),",
-    "new": "return [planarUv(b, out, [WAGON_TILE.roomSide[0], 1])[0],",
+    "old": "    caravanSideU(b, out, WAGON_TILE.roomSide[0]),",
+    "new": "    planarUv(b, out, [WAGON_TILE.roomSide[0], 1])[0],",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "WAGONUV1-7-the-window-back-under-the-cornice",
     "file": "src/world/wagonArt.js",
-    "old": "  y0: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y + 0.84) / 2), y1: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y - 0.84) / 2), x0: 22, x1: 42,",
-    "new": "  y0: sideRow(2.62), y1: sideRow(1.78), x0: 22, x1: 42,",
+    "old": "  y0: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y + 0.84) / 2),\n  y1: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y - 0.84) / 2),",
+    "new": "  y0: sideRow(2.62),\n  y1: sideRow(1.78),",
     "tests": [
       "test/world/wagonuv1.test.js"
     ],

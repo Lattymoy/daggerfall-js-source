@@ -11,12 +11,11 @@
 // which is load-bearing for Quests-StaticMessages, whose case-variant
 // alias rows (RumorsPostfailure/RumorsPostFailure) share one id.
 
-import { intTryParse } from './parseUtils.js';   // AUDIT 68 S30-tryparse-dup: the quest layer's one int.TryParse
+import { intTryParse } from './parseUtils.js'; // AUDIT 68 S30-tryparse-dup: the quest layer's one int.TryParse
 
 const INLINE_COMMENT = '//';
 const LITERAL = '"';
 const SEPARATOR = ',';
-
 
 export class Table {
   /** @param {string[]|string} source lines array, or whole text. */
@@ -29,7 +28,9 @@ export class Table {
     if (source !== null) this.loadTable(Array.isArray(source) ? source : source.split(/\r\n|\r|\n/));
   }
 
-  get rowCount() { return this.columns?.[this.primaryColumnIndex]?.values.length ?? 0; }
+  get rowCount() {
+    return this.columns?.[this.primaryColumnIndex]?.values.length ?? 0;
+  }
 
   loadTable(lines) {
     this.columnCount = 0;
@@ -41,7 +42,10 @@ export class Table {
       if (text.startsWith('-')) continue;
       if (!text) continue;
       text = text.split(INLINE_COMMENT)[0];
-      if (/^schema:/i.test(text)) { this._loadSchema(text); continue; }
+      if (/^schema:/i.test(text)) {
+        this._loadSchema(text);
+        continue;
+      }
       if (this.columnCount === 0 || this.primaryColumnIndex === -1) continue;
       this._loadRow(text, i);
     }
@@ -61,9 +65,13 @@ export class Table {
     }
   }
 
-  hasColumn(name) { return this.columnIndexDict.has(name); }
+  hasColumn(name) {
+    return this.columnIndexDict.has(name);
+  }
 
-  hasValue(key) { return this.columns[this.primaryColumnIndex].keyIndexDict.has(key); }
+  hasValue(key) {
+    return this.columns[this.primaryColumnIndex].keyIndexDict.has(key);
+  }
 
   getValue(columnName, key) {
     if (!this.hasColumn(columnName)) throw new Error(`GetValue() columnName '${columnName}' does not exist.`);
@@ -110,10 +118,13 @@ export class Table {
         name = name.slice(1);
       }
       let isStringLiteral = false;
-      if (name.startsWith('$')) { isStringLiteral = true; name = name.slice(1); }
+      if (name.startsWith('$')) {
+        isStringLiteral = true;
+        name = name.slice(1);
+      }
       this.columns.push({ name, values: [], keyIndexDict: new Map(), isStringLiteral });
       if (isStringLiteral) this.hasStringLiteralInSchema = true;
-      if (this.columnIndexDict.has(name)) throw new Error(`Duplicate schema column: ${name}`);   // C# Dictionary.Add throws (AUDIT quest-P9)
+      if (this.columnIndexDict.has(name)) throw new Error(`Duplicate schema column: ${name}`); // C# Dictionary.Add throws (AUDIT quest-P9)
       this.columnIndexDict.set(name, i);
     }
     if (this.primaryColumnIndex === -1) throw new Error('Table must tag at least one column as primary using *.');
@@ -134,7 +145,7 @@ export class Table {
       this.columns[i].values.push(value);
       if (i === this.primaryColumnIndex) {
         if (this.columns[i].keyIndexDict.has(value)) {
-          console.warn(`[table] Duplicate key found: ${value}`);   // Debug.LogErrorFormat; first row keeps the key
+          console.warn(`[table] Duplicate key found: ${value}`); // Debug.LogErrorFormat; first row keeps the key
         } else {
           this.columns[i].keyIndexDict.set(value, this.columns[i].values.length - 1);
         }
@@ -151,7 +162,11 @@ export class Table {
       if (this.columns[row].isStringLiteral) {
         let openedLiteral = false;
         while (position < text.length) {
-          if (text[position] === LITERAL) { openedLiteral = true; position++; break; }
+          if (text[position] === LITERAL) {
+            openedLiteral = true;
+            position++;
+            break;
+          }
           position++;
         }
         if (openedLiteral) {
@@ -167,14 +182,18 @@ export class Table {
             position++;
           }
           if (closedLiteral) {
-            while (position < text.length) { if (text[position++] === SEPARATOR) break; }
+            while (position < text.length) {
+              if (text[position++] === SEPARATOR) break;
+            }
           } else {
             console.warn(`[table] read error on line '${text}': expected closing string literal`);
           }
         }
       } else {
         const dataStart = position;
-        while (position < text.length) { if (text[position++] === SEPARATOR) break; }
+        while (position < text.length) {
+          if (text[position++] === SEPARATOR) break;
+        }
         const length = position - dataStart;
         if (dataStart + length < text.length) result = text.slice(dataStart, dataStart + length - 1);
         else if (dataStart + length === text.length) result = text.slice(dataStart, dataStart + length);

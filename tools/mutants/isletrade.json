@@ -2,8 +2,8 @@
   {
     "name": "ISLE-TRADE-no-good-made",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) };",
-    "new": "return { makes: [...ETHER], wants: BAY.slice() };",
+    "old": "    return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) };",
+    "new": "    return { makes: [...ETHER], wants: BAY.slice() };",
     "tests": [
       "test/systems/naval/isletrade.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ISLE-TRADE-own-good-exotic",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "const exotic = other && stand !== 'makes';",
-    "new": "const exotic = other;",
+    "old": "    const exotic = other && stand !== 'makes'; // ISLE-TRADE: an isle's own good of the Bay is its own, sold as made",
+    "new": "    const exotic = other; // ISLE-TRADE: an isle's own good of the Bay is its own, sold as made",
     "tests": [
       "test/systems/naval/isletrade.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ISLE-TRADE-own-good-unlisted",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "if (other && stand === 'neither') continue;",
-    "new": "if (other && stand !== 'wants') continue;",
+    "old": "    if (other && stand === 'neither') continue; // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)",
+    "new": "    if (other && stand !== 'wants') continue; // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)",
     "tests": [
       "test/systems/naval/isletrade.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ISLE-TRADE-plain-hash",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "const r = mulberry32(hashKey(`${port?.key ?? ''}:isle`) >>> 0);\n  return BAY[Math.floor(r() * BAY.length) % BAY.length];",
-    "new": "return BAY[(hashKey(`${port?.key ?? ''}:isle`) >>> 1) % 4];",
+    "old": "  const r = mulberry32(hashKey(`${port?.key ?? ''}:isle`) >>> 0);\n  return BAY[Math.floor(r() * BAY.length) % BAY.length];",
+    "new": "  return BAY[(hashKey(`${port?.key ?? ''}:isle`) >>> 1) % 4];",
     "tests": [
       "test/systems/naval/isletrade.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ISLE-TRADE-own-also-wanted",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "wants: BAY.filter((g) => g !== own) };",
-    "new": "wants: BAY.slice() };",
+    "old": "    return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) };",
+    "new": "    return { makes: [...ETHER, own], wants: BAY.slice() };",
     "tests": [
       "test/systems/naval/isletrade.test.js"
     ]

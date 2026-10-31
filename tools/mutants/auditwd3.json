@@ -20,8 +20,8 @@
   {
     "name": "AWD3-PACK-BEHIND-CLOSED-DOOR",
     "file": "src/scenes/modWorldData.js",
-    "old": "      const got = on && door ? await loadPackFrom(vendor, url, () => true) : 0;",
-    "new": "      const got = on ? await loadPackFrom(vendor, url, () => true) : 0;",
+    "old": "        const got = on && door ? await loadPackFrom(vendor, url, () => true) : 0;",
+    "new": "        const got = on ? await loadPackFrom(vendor, url, () => true) : 0;",
     "tests": [
       "test/systems/wd3_door.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AWD3-PIN-BEHIND-CLOSED-DOOR",
     "file": "src/scenes/modWorldData.js",
-    "old": "  if (!worldDataDoorOpen()) return false;",
-    "new": "",
+    "old": "  if (!worldDataDoorOpen()) return false; // AUDIT WD3 P2: behind a closed door no pin is honoured - the town stands as it is served",
+    "new": "  // AUDIT WD3 P2: behind a closed door no pin is honoured - the town stands as it is served",
     "tests": [
       "test/systems/wd3_door.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AWD3-CUSTOMS-LAYOUT-LOST",
     "file": "src/systems/realmCustoms.js",
-    "old": "      if (typeof slot.layout === 'string' && slot.layout) deed.layout = slot.layout;\n",
-    "new": "",
+    "old": "      if (typeof slot.layout === 'string' && slot.layout) deed.layout = slot.layout;\n      const first = houses[region];",
+    "new": "      const first = houses[region];",
     "note": "Re-aimed by content (HOUSES-3): the region's three deeds.",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "AWD3-QUESTOR-UNPINNED",
     "file": "src/systems/layoutPins.js",
-    "old": "  for (const q of questors ?? []) if (q && q.buildingKey > 0 && q.mapID) out.push",
-    "new": "  for (const q of []) if (q && q.buildingKey > 0 && q.mapID) out.push",
+    "old": "  for (const q of questors ?? [])",
+    "new": "  for (const q of [])",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -115,7 +115,7 @@
     "name": "AWD3-FOUNDATION-CENTRED",
     "file": "src/world/townStandIns.js",
     "old": "const foundation = rmbrpBlock(53170, [317, 0]);",
-    "new": "const foundation = () => { const m = new MeshBuilder(); m.box([317, 0], [0, -2.4, 0], [16, 8, 16], 0.5); return m.build(); };",
+    "new": "const foundation = () => {\n  const m = new MeshBuilder();\n  m.box([317, 0], [0, -2.4, 0], [16, 8, 16], 0.5);\n  return m.build();\n};",
     "tests": [
       "test/world/wd3_standins.test.js"
     ],
@@ -170,8 +170,8 @@
   {
     "name": "AWD3-SALE-KEEPS-VISITS",
     "file": "src/systems/sceneCache.js",
-    "old": "  for (const n of [...cache.permanent]) if (n.startsWith(`${sceneName}|`)) cache.permanent.delete(n);",
-    "new": "",
+    "old": "  for (const n of [...cache.permanent]) if (n.startsWith(`${sceneName}|`)) cache.permanent.delete(n); // WD3: and its other layouts' visits",
+    "new": "  // WD3: and its other layouts' visits",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -215,8 +215,8 @@
   {
     "name": "AWD3-CURATED-BASELINE-IGNORED",
     "file": "src/systems/layoutPins.js",
-    "old": "      const on = servesUnpinned(v, key);",
-    "new": "      const on = !!_vendorOn(v);",
+    "old": "      const on = servesUnpinned(v, key); // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own",
+    "new": "      const on = !!_vendorOn(v); // AUDIT WD3 G2: a curated town's baseline is Daggerfall's own",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -260,8 +260,8 @@
   {
     "name": "AWD3-TICKET-BY-KEY-ONLY",
     "file": "src/systems/repairService.js",
-    "old": "  && (recordStands(item.repairData) ? item.repairData.buildingKey === buildingKey : mapId != null && item.repairData.mapId === mapId);",
-    "new": "  && item.repairData.buildingKey === buildingKey;",
+    "old": "  isBeingRepaired(item) &&\n  (recordStands(item.repairData)\n    ? item.repairData.buildingKey === buildingKey\n    : mapId != null && item.repairData.mapId === mapId);",
+    "new": "  isBeingRepaired(item) && item.repairData.buildingKey === buildingKey;",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -269,8 +269,8 @@
   {
     "name": "AWD3-ROOM-LOST",
     "file": "src/systems/tavern.js",
-    "old": "  ?? (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ?? null;",
-    "new": "  ?? null;",
+    "old": "  (inn ? rooms.find((r) => r.mapId === mapId && !recordStands(r)) : null) ??\n  null;",
+    "new": "  null;",
     "tests": [
       "test/systems/wd3_layoutPins.test.js"
     ]
@@ -305,7 +305,7 @@
   {
     "name": "AWD3-STANDIN-NEVER-YIELDS",
     "file": "src/systems/textureReplacement.js",
-    "old": "const vendorOf = (key) => { const v = _vendor.get(key); return v && !(v.yields && ownPick(key)) ? v : null; };",
+    "old": "const vendorOf = (key) => {\n  const v = _vendor.get(key);\n  return v && !(v.yields && ownPick(key)) ? v : null;\n};",
     "new": "const vendorOf = (key) => _vendor.get(key) ?? null;",
     "tests": [
       "test/world/wd3_standins.test.js"

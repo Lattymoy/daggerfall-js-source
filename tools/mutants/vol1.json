@@ -2,8 +2,8 @@
   {
     "name": "vol-shadow-tap-dropped",
     "file": "src/render/airPass.js",
-    "old": "      sum += casterShadowOne(k, Lr, uCamPos + dir * t) / (h2 + ds * ds);",
-    "new": "      sum += 1.0 / (h2 + ds * ds);",
+    "old": "      sum += casterShadowOne(k, Lr, uCamPos + dir * t) / (h2 + ds * ds);   // DISC15: a 512 slot or a lo one",
+    "new": "      sum += 1.0 / (h2 + ds * ds);   // DISC15: a 512 slot or a lo one",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "vol-closed-form-for-all",
     "file": "src/render/airPass.js",
-    "old": "    if (k < 0) { acc += elScatter(rel, range, dir, dist) * uPointColors[i]; continue; }",
-    "new": "    { acc += elScatter(rel, range, dir, dist) * uPointColors[i]; continue; }",
+    "old": "    if (k < 0) { acc += elScatter(rel, range, dir, dist) * uPointColors[i]; continue; }   // no map (the hand's light, a far lantern): the closed form, as before",
+    "new": "    { acc += elScatter(rel, range, dir, dist) * uPointColors[i]; continue; }   // no map (the hand's light, a far lantern): the closed form, as before",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "vol-unblurred",
     "file": "src/render/airPass.js",
-    "old": "    quad(P.volBlur, T.volB);\n    depthOn(P.volBlur);   // the depth on unit 0; the glow on unit 1\n    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, T.vol.tex); gl.uniform1i(P.volBlur.uSrc, 1);\n    gl.activeTexture(gl.TEXTURE0);\n    gl.uniform2f(P.volBlur.uTexel, 1 / T.vol.w, 1 / T.vol.h);\n    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);\n",
-    "new": "    quad(P.gauss, T.volB);\n    gl.bindTexture(gl.TEXTURE_2D, T.vol.tex); gl.uniform1i(P.gauss.uSrc, 0);\n    gl.uniform2f(P.gauss.uDir, 0, 0);\n    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);\n",
+    "old": "    quad(P.volBlur, T.volB);\n    depthOn(P.volBlur); // the depth on unit 0; the glow on unit 1\n    gl.activeTexture(gl.TEXTURE1);\n    gl.bindTexture(gl.TEXTURE_2D, T.vol.tex);\n    gl.uniform1i(P.volBlur.uSrc, 1);\n    gl.activeTexture(gl.TEXTURE0);\n    gl.uniform2f(P.volBlur.uTexel, 1 / T.vol.w, 1 / T.vol.h);",
+    "new": "    quad(P.gauss, T.volB);\n    gl.bindTexture(gl.TEXTURE_2D, T.vol.tex);\n    gl.uniform1i(P.gauss.uSrc, 0);\n    gl.uniform2f(P.gauss.uDir, 0, 0);",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "vol-resolve-not-adding",
     "file": "src/render/airPass.js",
-    "old": "${glow ? '    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed\\n' : ''}",
-    "new": "",
+    "old": "${glow ? '    c += airDecode(texture(uVol, wuv).rgb);   // VOL1: what elFinish added per fragment, once per pixel and shadowed\\n' : ''}    float r = length((wuv - 0.5) * 2.0);",
+    "new": "    float r = length((wuv - 0.5) * 2.0);",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "vol-tonemapped-before-the-blur",
     "file": "src/render/airPass.js",
-    "old": "    ? 'outColor = vec4(acc, 1.0);   // linear light, unclamped: the blur averages it and the tone pass curves the average'",
-    "new": "    ? 'outColor = vec4(airEncode(elTonemapRGB(acc * uScatter * uExposure * elAdapt())), 1.0);'",
+    "old": "      ? 'outColor = vec4(acc, 1.0);   // linear light, unclamped: the blur averages it and the tone pass curves the average'",
+    "new": "      ? 'outColor = vec4(airEncode(elTonemapRGB(acc * uScatter * uExposure * elAdapt())), 1.0);'",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "vol-stale-frame-imaged",
     "file": "src/render/airPass.js",
-    "old": "    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }",
+    "old": "    if (prepared) this._images();\n    else {\n      this._blank(quad);\n      this.measured = false;\n    }",
     "new": "    if (this.f) this._images();",
     "tests": [
       "test/render/vol1_glow.test.js"
@@ -137,8 +137,8 @@
   {
     "name": "vol-shut-clears-the-wrong-image",
     "file": "src/render/airPass.js",
-    "old": "    if (!on) { quad(P.box, T.volOut); gl.clearColor(0, 0, 0, 1);",
-    "new": "    if (!on) { quad(P.box, T.vol); gl.clearColor(0, 0, 0, 1);",
+    "old": "      quad(P.box, T.volOut);",
+    "new": "      quad(P.box, T.vol);",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "bounce-back",
     "file": "src/render/enhancedLighting.js",
-    "old": "    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];\n",
-    "new": "    float att = sh * elAttenuation(d, uPointLights[i].w);\n    acc += att * (max(dot(n, Ln), 0.0) + spec) * uPointColors[i];\n    acc += 0.18 * elAttenuation(d, uPointLights[i].w) * (0.5 - 0.5 * n.y) * uPointColors[i];\n",
+    "old": "    if (wet > 0.0) {",
+    "new": "    acc += 0.18 * elAttenuation(d, uPointLights[i].w) * (0.5 - 0.5 * n.y) * uPointColors[i];\n    if (wet > 0.0) {",
     "tests": [
       "test/render/vol1_glow.test.js"
     ]

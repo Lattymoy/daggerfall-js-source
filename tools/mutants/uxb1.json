@@ -47,8 +47,8 @@
   {
     "name": "UXB1-E-an-online-page-reads-the-room-as-the-player",
     "file": "src/systems/online/onlineSync.js",
-    "old": "  if (isOnlinePage(search)) return null;",
-    "new": "",
+    "old": "  if (isOnlinePage(search)) return null;\n  /** @type {SyncRow[]} */",
+    "new": "  /** @type {SyncRow[]} */",
     "tests": [
       "test/systems/online/uxb1e_onlinesync.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "UXB1-H-the-exclusive-pairs-gate-is-skipped",
     "file": "src/systems/customClass.js",
-    "old": "        || cannotAdd(item, list, other)) { skipped.push(e); continue; }",
-    "new": "        ) { skipped.push(e); continue; }",
+    "old": "        (ONLY_ONE_KEYS.includes(primary) && list.some((x) => x.primary === primary)) ||\n        cannotAdd(item, list, other)",
+    "new": "        (ONLY_ONE_KEYS.includes(primary) && list.some((x) => x.primary === primary))",
     "tests": [
       "test/ui/enhanced/uxb1g_chargen.test.js"
     ]
@@ -101,7 +101,7 @@
   {
     "name": "UXB1-K-hours-read-as-days",
     "file": "src/systems/repairService.js",
-    "old": "  const span = c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;",
+    "old": "  const span =\n    c.minutesLeft >= MINUTES_PER_DAY ? `${days} day${days === 1 ? '' : 's'}` : `${hours} hour${hours === 1 ? '' : 's'}`;",
     "new": "  const span = `${days} day${days === 1 ? '' : 's'}`;",
     "tests": [
       "test/systems/uxb1k_shops.test.js"
@@ -119,8 +119,8 @@
   {
     "name": "UXB1-M-the-click-rows-sit-a-row-high-again",
     "file": "src/ui/talkWindow.js",
-    "old": "y0: ty - ROW_LEAD * s, y1: ty - ROW_LEAD * s + lineH });",
-    "new": "y0: ty - lineH, y1: ty });",
+    "old": "      if (i >= bodyCount)\n        this._hitRows.push({\n          code: optLines[i - bodyCount]?.code ?? null,\n          y0: ty - ROW_LEAD * s,\n          y1: ty - ROW_LEAD * s + lineH,\n        });",
+    "new": "      if (i >= bodyCount) this._hitRows.push({ code: optLines[i - bodyCount]?.code ?? null, y0: ty - lineH, y1: ty });",
     "tests": [
       "test/ui/uxb1m_privateproperty.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "UXB1-O-yesterdays-lid-stays-searched",
     "file": "src/systems/shopStock.js",
-    "old": "  && container.openedOn === container.stockedDate && !needsRestock(container, today);",
-    "new": "  && container.openedOn === container.stockedDate;",
+    "old": "  Number.isFinite(container?.openedOn) &&\n  container.openedOn > 0 &&\n  container.openedOn === container.stockedDate &&\n  !needsRestock(container, today);",
+    "new": "  Number.isFinite(container?.openedOn) && container.openedOn > 0 && container.openedOn === container.stockedDate;",
     "tests": [
       "test/systems/uxb1n_containerplaque.test.js"
     ]
@@ -266,8 +266,8 @@
   {
     "name": "UXB1-S-a-combo-clash-is-offered-as-a-share",
     "file": "src/systems/controlsConfig.js",
-    "old": "    && holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code);",
-    "new": "    && holders.every((h) => h.action !== action);",
+    "old": "  return (\n    code != null &&\n    holders.length > 0 &&\n    holders.every((h) => h.action !== action && (h.primary ? u.primary : u.secondary).get(h.action) === code)\n  );",
+    "new": "  return code != null && holders.length > 0 && holders.every((h) => h.action !== action);",
     "tests": [
       "test/ui/uxb1s_sharedkeys.test.js"
     ]
@@ -428,8 +428,8 @@
   {
     "name": "AUDIT-UXB1-F10-the-note-forgets-the-third-answer",
     "file": "src/systems/controlsConfig.js",
-    "old": "so this key already does both without ${SHARE_KEY_LABEL}. Answer No",
-    "new": "so this key already does both. Answer No",
+    "old": "  return `${f.name} already ${f.verb} while you swim or levitate, so this key already does both without ${SHARE_KEY_LABEL}. Answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;",
+    "new": "  return `${f.name} already ${f.verb} while you swim or levitate, so this key already does both. Answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;",
     "tests": [
       "test/ui/enhanced/enhancedControls.test.js"
     ]
@@ -437,8 +437,8 @@
   {
     "name": "AUDIT-UXB1-a-class-name-keeps-its-control-characters",
     "file": "src/systems/customClass.js",
-    "old": "doc.name.replace(/[\\p{Cc}\\p{Cf}]/gu, '').trim()",
-    "new": "doc.name.trim()",
+    "old": "  const name = typeof doc.name === 'string' ? doc.name.replace(/[\\p{Cc}\\p{Cf}]/gu, '').trim() : '';",
+    "new": "  const name = typeof doc.name === 'string' ? doc.name.trim() : '';",
     "tests": [
       "test/ui/enhanced/uxb1g_chargen.test.js"
     ]

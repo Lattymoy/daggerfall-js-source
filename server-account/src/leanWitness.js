@@ -48,8 +48,13 @@ export async function keyRows(/** @type {any} */ db, /** @type {string} */ kind,
   const statements = [];
   for (let i = 0; i < keys.length; i += LEAN_KEYS_A_STATEMENT) {
     const part = keys.slice(i, i + LEAN_KEYS_A_STATEMENT);
-    statements.push(db.prepare(`SELECT key, account, report, at FROM world_witness WHERE kind = ?1 AND key IN (${part.map((_, j) => `?${j + 2}`).join(', ')})`)
-      .bind(kind, ...part));
+    statements.push(
+      db
+        .prepare(
+          `SELECT key, account, report, at FROM world_witness WHERE kind = ?1 AND key IN (${part.map((_, j) => `?${j + 2}`).join(', ')})`,
+        )
+        .bind(kind, ...part),
+    );
   }
   const out = [];
   for (const r of await db.batch(statements)) for (const row of r?.results ?? []) out.push(witnessRow(row));
@@ -57,7 +62,12 @@ export async function keyRows(/** @type {any} */ db, /** @type {string} */ kind,
 }
 
 /** A row as the laws read it. */
-export const witnessRow = (/** @type {any} */ r) => ({ key: String(r.key), account: String(r.account), report: String(r.report), at: Number(r.at) });
+export const witnessRow = (/** @type {any} */ r) => ({
+  key: String(r.key),
+  account: String(r.account),
+  report: String(r.report),
+  at: Number(r.at),
+});
 
 /**
  * THE ROWS A LAW JUDGES BY: `lean` (a read of the rows that are not late) with every key an account `ignoredOf` ignores
@@ -72,7 +82,7 @@ export async function exactRows(db, kind, lean, ignoredOf) {
   const keys = [...new Set(lean.filter((r) => ignored.has(r.account)).map((r) => r.key))];
   if (!keys.length) return lean;
   const whole = new Set(keys);
-  return [...lean.filter((r) => !whole.has(r.key)), ...await keyRows(db, kind, keys)];
+  return [...lean.filter((r) => !whole.has(r.key)), ...(await keyRows(db, kind, keys))];
 }
 
 /**
@@ -92,7 +102,11 @@ export const strikeWitness = (db, kind, where, key) => [
 ];
 /** The count unmatchedRead asks, as SQL over `kind`, `account` and `since` (each SQL: a parameter or a column) - the
  *  region bump's too (npcHalls.js witnessHall: a late report whose town's confirmers may be ignored). */
-export const unmatchedSql = (/** @type {string} */ kind, /** @type {string} */ account, /** @type {string} */ since) => `SELECT COUNT(*) FROM world_witness u
+export const unmatchedSql = (
+  /** @type {string} */ kind,
+  /** @type {string} */ account,
+  /** @type {string} */ since,
+) => `SELECT COUNT(*) FROM world_witness u
   JOIN witness_confirmed c ON c.kind = u.kind AND c.key = u.key
   WHERE u.account = ${account} AND u.kind = ${kind} AND u.late = 0 AND u.report != c.report AND u.at > ${since}`;
 /**
@@ -102,9 +116,14 @@ export const unmatchedSql = (/** @type {string} */ kind, /** @type {string} */ a
  * the account's own rows (idx_world_witness_account), never a region's.
  * @param {any} db @param {string} kind @param {string} account @param {number} nowS
  */
-export const unmatchedRead = (db, kind, account, nowS) => db.prepare(`SELECT (${unmatchedSql('?1', '?2', '?3')}) AS n`)
-  .bind(kind, account, nowS - 2 * SEAT_WITNESS_IGNORED_S);
-export async function mayBeIgnored(/** @type {any} */ db, /** @type {string} */ kind, /** @type {string} */ account, /** @type {number} */ nowS) {
+export const unmatchedRead = (db, kind, account, nowS) =>
+  db.prepare(`SELECT (${unmatchedSql('?1', '?2', '?3')}) AS n`).bind(kind, account, nowS - 2 * SEAT_WITNESS_IGNORED_S);
+export async function mayBeIgnored(
+  /** @type {any} */ db,
+  /** @type {string} */ kind,
+  /** @type {string} */ account,
+  /** @type {number} */ nowS,
+) {
   const row = await unmatchedRead(db, kind, account, nowS).first();
   return Number(row?.n ?? 0) >= SEAT_WITNESS_UNMATCHED_MAX;
 }

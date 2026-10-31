@@ -79,9 +79,9 @@ the owner's to call.
 | LEGIBLE 1 | The ceiling counts logical lines, so it is blind to layout | shipped (below) |
 | LEGIBLE 1b | Testing.md's file table closed; the suite counts itself | shipped (below) |
 | LEGIBLE 2 | The syntax-tree comparison that proves a mechanical change, and the carrier that moves mutant records and cites through one | shipped (below) |
-| LEGIBLE 3 | The formatter: one pinned version and configuration, the whole tree formatted folder by folder with its pins carried, a `--check` in CI and `.git-blame-ignore-revs` | a new dev dependency; a quiet window per folder |
-| LEGIBLE 4 | Lint that holds the line: one statement per line, no comma sequences, a ratchet on new short names | - |
-| LEGIBLE 5 | The glossary (`Glossary.md`) and the renames, one abbreviation per slice (`dw`, `csa`, `wod`, `lpt`, ...), by the language service and carried like the formatter | a quiet window per rename |
+| LEGIBLE 3 | The formatter: one pinned version and configuration, the whole tree formatted folder by folder with its pins carried, a `--check` in CI and `.git-blame-ignore-revs` | the tool, the pilot and the rollout shipped (below); 548 files aside, a window for each |
+| LEGIBLE 4 | Lint that holds the line: one statement per line, no comma sequences, a ratchet on new short names | shipped (below; the short names with LEGIBLE 5's glossary) |
+| LEGIBLE 5 | The glossary (`Glossary.md`) and the renames, one abbreviation per slice (`dw`, `csa`, `wod`, `lpt`, ...), by the language service and carried like the formatter | the glossary and the short names' ratchet shipped (below); each rename a quiet window per abbreviation |
 | LEGIBLE 6 | Comments: a register of every tag and the page that records it, then tag-led comments rewritten as reasons, file by file | - |
 | LEGIBLE 7 | Shapes: typedefs for the objects that travel (a terrain pixel, a face, a foe, an item), `// @ts-check` as each file is done | - |
 | LEGIBLE 8 | Rewrites by hand, function by function, most-read files first (by commits touching them), held by the suite and the mutants | - |
@@ -242,3 +242,87 @@ that has code after it, which splits crowded lines as a formatter would - standi
 The carrier's first run on `world.js` was killed at 13 GB. A carried record's text was a slice of the transformed
 mutant, and in V8 a slice keeps the whole string it was cut from alive: 3,781 records held 3,781 copies of a 3 MB
 file. The records are copied out of their file now, and the same run peaks at 1.2 GB.
+
+## LEGIBLE 3 - the formatter, and its pilot folder (2026-10-30)
+
+Taken in the cleanup session of 2026-10-30, the owner: *"I want to take this all on. A full session and take
+autonomy"* - the two decisions this page left to the owner, the dependency and the window, taken for one folder.
+
+- **One version, one configuration.** Prettier 3.9.10, pinned exactly in `package.json`, with `.prettierrc.json`
+  (120 columns, single quotes, trailing commas, semicolons). `tools/format.mjs` is the carrier's transform: Prettier 3
+  answers asynchronously, so it runs on a worker and `transform` waits on a shared flag.
+- **The folders it owns.** `tools/formatted.json` lists them; `.prettierignore` is written from that list (`node
+  tools/format.mjs --ignore`), so an editor's format-on-save leaves every other file alone.
+- **The check.** `test/tooling/legible3_format.test.js` fails on a listed file the formatter would change, so CI's
+  suite is the `--check` (four mutants, all dead).
+- **The pilot, `src/poi/`.** 23 files, quiet that week. `node tools/carryPins.mjs --transform tools/format.mjs
+  src/poi/*.js --write` carried all 299 mutant records and 22 cites; `node tools/sameProgram.mjs --against HEAD` proved
+  all 23 files the same programs. The seventeen lists holding them, 578 records, all dead after the format. The
+  commit is in `.git-blame-ignore-revs`.
+
+The next folder is the same three commands, in a window the owner calls. A folder's tests that match source text by
+regular expression are not carried; the pilot's 19 test files passed unchanged.
+
+## LEGIBLE 3b - the rollout (2026-10-31)
+
+The owner, the same session: *"Finish the not done"*. The tree was formatted folder by folder, each in its own
+commit with its pins carried, and main merged in over it.
+
+- **Coverage.** 3,268 of 3,816 code files (`src/`, `server/src/`, `server-account/src/`, `tools/`, `scripts/`) are on
+  `tools/formatted.json`. A folder whose files did not all carry lists the ones that did, file by file.
+- **The proof.** Each commit ran `node tools/carryPins.mjs --transform tools/format.mjs <files> --write`, then
+  `node tools/sameProgram.mjs` against the pre-format copies: every file the same program.
+- **The text pins.** A test that reads a source's text by regular expression is not a mutant record.
+  `tools/carryTextPins.mjs` carries such a pin token by token. 139 files whose pins it could not carry were taken
+  back to their old text, with their records.
+
+**Set aside: 548 files.** 18 are the files with more than 400 mutant records each, `world.js` (3,941) the largest;
+`net/npcChapterLaw.js` (451) is the one that heavy which carried. A branch open across one of them stales most of its
+records, so each needs a quiet window on main of its own. A host's ceiling is in logical lines, so formatting moves no
+ceiling. 139 are the files taken back for their text pins. 318 the rollout's runner set aside: the carrier refused one
+of their records or cites, a test that quotes them failed after the format, or their chunk failed whole. 74 are files
+added since it began, in folders not yet on the list: 71 of main's, and three of the five modules moved out of
+`bootWorld`, kept in the host's own layout, which their pins read through `hostText`.
+
+**The relay.** 150 of the relay's 181 files are formatted, so its bytes changed though nothing it does did:
+world299, world298 until main's LITANY-STAND took it (`test/net/relayversion.test.js`). The 312 formatting commits are in `.git-blame-ignore-revs`.
+
+**The audit's tool findings** (2026-10-31, an independent read of the tools; each fixed with its tests and mutants,
+all dead). `.prettierignore` opened every file of a listed folder, so format-on-save rewrote two READMEs `--check`
+never reads: it opens only `.js` and `.mjs` now, and Prettier formats exactly the 3,268 listed files. A listed path
+gone named itself instead of crashing the check. The text-pin carrier's literal run could come from inside a group,
+an alternation, an escape or a counted repeat, or ignore the `i` flag, and skip a pin silently. `unreached.mjs` read
+a glob by its prefix and lost an import that followed a line with no semicolon. `shortNames.mjs` counts a class
+expression's name; an import's it leaves to the export, said in its header.
+
+## LEGIBLE 4 - lint that holds the line (2026-10-30)
+
+- **No comma sequence** in shipped code (`no-sequences` over `src/`, the two Workers, `tools/` and `scripts/`). The
+  tree held eight. Seven are now the statements they hid (`quickslots.js` twice, `dungeonContext.js` landOnRival,
+  `townTalk.js` askWork, `world.js` bayScan, `tamrielTrace.js`, `pixelBuildSweep.mjs`); their five text pins and four
+  mutant records were re-aimed, all dead. bayScan's two statements raised `bootWorld`'s ceiling by one, said beside it.
+  The eighth, `egFragLaw.js`, is in the relay's bundle: it rode the undeployed `world295`, re-hashed in place (the
+  live relay answered `world294`), and is `world298` since the merge of main.
+- **And in parentheses** (AUDIT, 2026-10-31). At its default the rule lets `(act(), answer)` pass, the form the
+  formatter writes, so the eight were the bare ones only: 49 parenthesized stood in 26 files. The rule is strict now,
+  and `eslint.config.js` holds those 26 files at their counts (`SEQUENCES_HELD`). `test/tooling/legible4_sequences.test.js`
+  fails a count that rises or falls without its number (four mutants, dead), so the list only shrinks.
+- **One statement a line** (`max-statements-per-line`, 1) in the folders the formatter owns. `eslint.config.js` reads
+  `tools/formatted.json`, so a folder takes the rule in the change that formats it. The rest of the tree held 37,500
+  crowded lines when this was written; they go folder by folder with LEGIBLE 3.
+- **The short names** are held with LEGIBLE 5's glossary (below).
+
+## LEGIBLE 5 - the glossary, and the short names held (2026-10-30)
+
+`Glossary.md` lists the short names code may use (loop counters, coordinates, `dt`, `px`/`py`, `id`, `e`, a
+comparator's `a`/`b`, the WebGL2 `gl`, English words used as words), the field's words, and the abbreviations being
+retired (`dw`, `csa`, `wod`, `lpt`, `hcc`, `mwv`). `tools/shortNames.mjs` reads it: a binding of one or two characters
+the glossary does not allow, or an abbreviation it retires, is counted per file. On the day it was written the tree held
+85,984 of them in 2,776 files - `p`, `r`, `s`, `c`, `t` and their kind. `test/tooling/legible5_shortnames.test.js`
+holds each file to `tools/shortNamesBaseline.json`, which only goes down (twelve mutants, all dead). A merge from a base
+without the law admits that base's own counts (`--seed REF`), as PLAIN-TEXT's does, and `tools/hostMove.mjs` carries
+a move's names to its new module (`carried`: never more than the host held).
+
+The renames are still one abbreviation a slice, by the language service, carried like the formatter, each in a window
+the owner calls.
+

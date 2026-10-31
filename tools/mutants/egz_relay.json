@@ -220,8 +220,8 @@
   {
     "name": "EGZQ-link-size-unread",
     "file": "src/net/eliteGates/egLink.js",
-    "old": "b.sz = t[17] > 0 ? t[17] / 1000 : 1;",
-    "new": "b.sz = 1;",
+    "old": "    b.sz = t[17] > 0 ? t[17] / 1000 : 1;",
+    "new": "    b.sz = 1;",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "EGZQ-screen-size-undrawn",
     "file": "src/scenes/eliteGates/egFight.js",
-    "old": "const scale = L.scale * (b.sz ?? 1) * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1)",
-    "new": "const scale = L.scale * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1)",
+    "old": "    const scale = L.scale * (b.sz ?? 1) * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1),",
+    "new": "    const scale = L.scale * ((b.fl & EG_FL.mirror) !== 0 ? 0.95 : 1),",
     "tests": [
       "test/net/eliteGates/egz_relay.test.js"
     ]

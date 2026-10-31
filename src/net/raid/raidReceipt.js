@@ -41,7 +41,15 @@ const dec = new TextDecoder();
  */
 export function raidReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
-  if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.d !== undefined || c.b !== undefined) return false;
+  if (
+    c.n !== undefined ||
+    c.k !== undefined ||
+    c.t !== undefined ||
+    c.o !== undefined ||
+    c.d !== undefined ||
+    c.b !== undefined
+  )
+    return false;
   if (typeof c.w !== 'string' || !RAID_KEY_RE.test(c.w)) return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
@@ -64,7 +72,9 @@ export async function mintRaidReceipt({ w, s, c, y }, privateKey, { subtle, nowS
   if (!raidReceiptValid(claims)) throw new TypeError('mintRaidReceipt refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${RAID_RECEIPT_V}.${body}.`;
-  const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${RAID_RECEIPT_V}.${body}`)));
+  const sig = new Uint8Array(
+    await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${RAID_RECEIPT_V}.${body}`)),
+  );
   return `${RAID_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
 }
 
@@ -80,7 +90,11 @@ export function readRaidReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return raidReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -104,10 +118,18 @@ export async function verifyRaidReceipt(r, publicKey, { subtle, nowS, skewS = SK
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!raidReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };

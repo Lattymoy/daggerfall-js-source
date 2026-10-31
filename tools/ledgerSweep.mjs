@@ -64,13 +64,20 @@ const ledger = readFileSync(LEDGER, 'utf8');
 // never slice(-1)'s "0 unstruck rows".
 const HEAD_C = '## C. DFU features not yet ported';
 const startC = ledger.indexOf(HEAD_C);
-if (startC < 0) { console.error(`"${HEAD_C}" is not in ${LEDGER}`); process.exit(2); }
+if (startC < 0) {
+  console.error(`"${HEAD_C}" is not in ${LEDGER}`);
+  process.exit(2);
+}
 const endC = ledger.indexOf('\n## ', startC + HEAD_C.length);
 const secC = ledger.slice(startC, endC < 0 ? undefined : endC);
-const rows = secC.split('\n')
+const rows = secC
+  .split('\n')
   .filter((l) => l.startsWith('|') && !l.startsWith('|---') && !l.startsWith('| Feature'))
   .map((l) => {
-    const c = l.split('|').slice(1, -1).map((x) => x.trim());
+    const c = l
+      .split('|')
+      .slice(1, -1)
+      .map((x) => x.trim());
     return { feature: c[0] ?? '', source: c[1] ?? '', target: c[2] ?? '' };
   });
 // A `Kept` or `Not planned` row is a DECISION, not a claim that
@@ -96,12 +103,39 @@ for (const f of bible) {
 }
 
 // Feature words worth comparing: lowercase, long enough to mean something.
-const STOPW = new Set(['interior', 'exterior', 'player', 'system', 'systems', 'shipped', 'closed',
-  'classic', 'verbatim', 'arc', 'until', 'their', 'these', 'those', 'which', 'where', 'still',
-  'audit', 'window', 'windows', 'effects', 'effect', 'quest', 'items', 'item']);
-const wordsOf = (s) => new Set((s.toLowerCase().match(/[a-z][a-z/-]{4,}/g) || [])
-  .flatMap((w) => w.split(/[/-]/))
-  .filter((w) => w.length >= 5 && !STOPW.has(w)));
+const STOPW = new Set([
+  'interior',
+  'exterior',
+  'player',
+  'system',
+  'systems',
+  'shipped',
+  'closed',
+  'classic',
+  'verbatim',
+  'arc',
+  'until',
+  'their',
+  'these',
+  'those',
+  'which',
+  'where',
+  'still',
+  'audit',
+  'window',
+  'windows',
+  'effects',
+  'effect',
+  'quest',
+  'items',
+  'item',
+]);
+const wordsOf = (s) =>
+  new Set(
+    (s.toLowerCase().match(/[a-z][a-z/-]{4,}/g) || [])
+      .flatMap((w) => w.split(/[/-]/))
+      .filter((w) => w.length >= 5 && !STOPW.has(w)),
+  );
 
 // ---- signal 2: DFU members in non-comment src/ ------------------------
 const files = [];
@@ -114,12 +148,26 @@ const files = [];
 })(join(ROOT, 'src'));
 const tree = files.map((f) => ({ path: f.slice(ROOT.length), src: readFileSync(f, 'utf8') }));
 
-const STOP = new Set(['Systems', 'Rendering', 'Player', 'Audio', 'Combat', 'Kept', 'Unity', 'DFU',
-  'Increased', 'Decreased', 'Interior', 'Exterior', 'Assets', 'Scripts']);
+const STOP = new Set([
+  'Systems',
+  'Rendering',
+  'Player',
+  'Audio',
+  'Combat',
+  'Kept',
+  'Unity',
+  'DFU',
+  'Increased',
+  'Decreased',
+  'Interior',
+  'Exterior',
+  'Assets',
+  'Scripts',
+]);
 // Two CamelCase humps minimum: `Increased` alone is a fragment of a
 // slashed compound and matches half the tree; `MakeHouseContainer` is a member.
-const membersOf = (s) => [...new Set((s.match(/\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b/g) || []))]
-  .filter((m) => !STOP.has(m) && m.length >= 8);
+const membersOf = (s) =>
+  [...new Set(s.match(/\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b/g) || [])].filter((m) => !STOP.has(m) && m.length >= 8);
 const isComment = (l) => /^\s*(\/\/|\*|\/\*)/.test(l);
 
 // ---- report -----------------------------------------------------------
@@ -134,10 +182,14 @@ for (const r of open) {
 
   const memberHits = [];
   for (const m of membersOf(r.source)) {
-    let code = 0; const where = new Set();
+    let code = 0;
+    const where = new Set();
     for (const f of tree) {
       for (const line of f.src.split('\n')) {
-        if (line.includes(m) && !isComment(line)) { code++; where.add(f.path); }
+        if (line.includes(m) && !isComment(line)) {
+          code++;
+          where.add(f.path);
+        }
       }
     }
     if (code) memberHits.push({ m, code, where: [...where].slice(0, 2) });

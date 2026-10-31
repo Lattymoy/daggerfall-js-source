@@ -1,29 +1,245 @@
 [
-  {"name": "PVP-LINGER-zone-and-fall-unread", "file": "src/net/wild/wildLinger.js", "old": "  if (!x || !x.zone || x.down) return 0;\n", "new": "  if (!x) return 0;\n", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-lock-unread", "file": "src/net/wild/wildLinger.js", "old": "  return end > now ? end : 0;\n", "new": "  return end;\n", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-max-unread", "file": "src/net/wild/wildLinger.js", "old": "if (!x || !x.zone || now - rec.at >= PVP_LINGER.maxMs) return true;", "new": "if (!x || !x.zone) return true;", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-fall-kept-standing", "file": "src/net/wild/wildLinger.js", "old": "  if (x.down) return now - x.downAt > WILD_REF.pickMs;\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-lock-end-unread", "file": "src/net/wild/wildLinger.js", "old": "  return now - Math.max(x.fightAt, x.struckAt) >= PVP_FLAG.lockMs;\n", "new": "  return false;\n", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-hold-unread", "file": "server/src/index.js", "old": "const lingers = wildLast && !last && await this._lingerHold(a, Date.now());", "new": "const lingers = false;", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-leave-said-at-close", "file": "server/src/index.js", "old": "    if (lingers) { /* PVP-LINGER: said when its body goes */ } else if (a.hid)", "new": "    if (a.hid)", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-gone-at-close", "file": "server/src/index.js", "old": "    if (wildLast && !lingers) { wildGone(", "new": "    if (wildLast) { wildGone(", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-target-by-socket-alone", "file": "server/src/index.js", "old": "const target = this._idFirst(d.to) ?? lingerTarget(this, d.to);", "new": "const target = this._idFirst(d.to);", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-beat-unread", "file": "server/src/index.js", "old": "    await lingerStep(this, now);   // PVP-LINGER: each body taken back, gone, or said again\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-hello-unread", "file": "server/src/index.js", "old": "    await lingerHello(this, ws, now);   // PVP-LINGER: my own body taken back, the others shown to me\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-end-stays-in-zone", "file": "server/src/pvpLinger.js", "old": "  if (room._wildRef) { wildGone(room._wildRef, sub, now); room._wildLeaveCarry(rec.att, now); }\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-taken-old-id-kept", "file": "server/src/pvpLinger.js", "old": "  if (rec.id !== b.id) room._fanBut(ws, JSON.stringify({ t: 'leave', id: rec.id }));\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-taken-id-unmoved", "file": "server/src/pvpLinger.js", "old": "  if (x) { x.id = b.id; x.lingerBack = true; }\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-pose-unsaid", "file": "server/src/pvpLinger.js", "old": "{ rec.saidAt = now; room._fanBut(null, JSON.stringify({ t: 'pose', id: rec.id, p: rec.att.pose })); }", "new": "{ rec.saidAt = now; }", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-elsewhere-unasked", "file": "server/src/pvpLinger.js", "old": "if (c && c.in === 1 && c.lr && c.lr !== rec.att.key && c.at > rec.at)", "new": "if (false)", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-own-room-read-as-another", "file": "server/src/pvpLinger.js", "old": "c.lr && c.lr !== rec.att.key && c.at > rec.at", "new": "c.lr && c.at > rec.at", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-body-unshown", "file": "server/src/pvpLinger.js", "old": "  for (const rec of room._lingers?.values() ?? []) room._send(ws,", "new": "  for (const rec of []) room._send(ws,", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-slain-unkept", "file": "server/src/index.js", "old": "    if (!target[0]) await lingerSlain(this, tb.sub, a, now);   // PVP-LINGER-RISE: a body slain while its player was away\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-word-unsaid", "file": "server/src/pvpLinger.js", "old": "  if (mine) room._send(mine[0], JSON.stringify(word));\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-said-twice", "file": "server/src/pvpLinger.js", "old": "  book.delete(sub);\n  room.state.storage.delete(LINGER_AWAY.prefix + sub).catch(() => {});\n", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-keep-unread", "file": "src/net/wild/wildLinger.js", "old": "if (!rec || !Number.isFinite(rec.at) || !(now - rec.at < LINGER_AWAY.keepMs)) return null;", "new": "if (!rec || !Number.isFinite(rec.at)) return null;", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-wait-unread", "file": "src/net/wild/wildLinger.js", "old": "Math.max(LINGER_AWAY.downMs, left)", "new": "LINGER_AWAY.downMs", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-wire-strips-away", "file": "src/net/wire.js", "old": "  const away = m.aw === 1 ? {", "new": "  const away = m.aw === 2 ? {", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-page-unnamed", "file": "src/systems/wild/wildRejoin.js", "old": "...(word.aw === 1 ? { away: true,", "new": "...(word.aw === 2 ? { away: true,", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-line-unsaid", "file": "src/systems/wild/wildZone.js", "old": "  if (d.away) return [WILD_TEXT.deathAway(d.killer), ...wildDeathLines({ ...d, away: false })];", "new": "", "tests": ["test/net/pvplinger_relay.test.js"]},
-  {"name": "PVP-LINGER-RISE-the-slain-head-twice", "file": "src/systems/wild/wildZone.js", "old": "(d && !d.away && (d.killer || d.kill) ?", "new": "(d && (d.killer || d.kill) ?", "tests": ["test/net/pvplinger_relay.test.js"]}
+  {
+    "name": "PVP-LINGER-zone-and-fall-unread",
+    "file": "src/net/wild/wildLinger.js",
+    "old": "  if (!x || !x.zone || x.down) return 0;",
+    "new": "  if (!x) return 0;",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-lock-unread",
+    "file": "src/net/wild/wildLinger.js",
+    "old": "  return end > now ? end : 0;",
+    "new": "  return end;",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-max-unread",
+    "file": "src/net/wild/wildLinger.js",
+    "old": "  if (!x || !x.zone || now - rec.at >= PVP_LINGER.maxMs) return true;",
+    "new": "  if (!x || !x.zone) return true;",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-fall-kept-standing",
+    "file": "src/net/wild/wildLinger.js",
+    "old": "  if (x.down) return now - x.downAt > WILD_REF.pickMs;\n  return now - Math.max(x.fightAt, x.struckAt) >= PVP_FLAG.lockMs;",
+    "new": "  return now - Math.max(x.fightAt, x.struckAt) >= PVP_FLAG.lockMs;",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-lock-end-unread",
+    "file": "src/net/wild/wildLinger.js",
+    "old": "  return now - Math.max(x.fightAt, x.struckAt) >= PVP_FLAG.lockMs;",
+    "new": "  return false;",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-hold-unread",
+    "file": "server/src/index.js",
+    "old": "const lingers = wildLast && !last && await this._lingerHold(a, Date.now());",
+    "new": "const lingers = false;",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-leave-said-at-close",
+    "file": "server/src/index.js",
+    "old": "    if (lingers) { /* PVP-LINGER: said when its body goes */ } else if (a.hid)",
+    "new": "    if (a.hid)",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-gone-at-close",
+    "file": "server/src/index.js",
+    "old": "    if (wildLast && !lingers) { wildGone(",
+    "new": "    if (wildLast) { wildGone(",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-target-by-socket-alone",
+    "file": "server/src/index.js",
+    "old": "const target = this._idFirst(d.to) ?? lingerTarget(this, d.to);",
+    "new": "const target = this._idFirst(d.to);",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-beat-unread",
+    "file": "server/src/index.js",
+    "old": "    await lingerStep(this, now);   // PVP-LINGER: each body taken back, gone, or said again\n",
+    "new": "",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-hello-unread",
+    "file": "server/src/index.js",
+    "old": "    await lingerHello(this, ws, now);   // PVP-LINGER: my own body taken back, the others shown to me\n",
+    "new": "",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-end-stays-in-zone",
+    "file": "server/src/pvpLinger.js",
+    "old": "  if (room._wildRef) {\n    wildGone(room._wildRef, sub, now);\n    room._wildLeaveCarry(rec.att, now);\n  }\n  room._fanBut(null, JSON.stringify({ t: 'leave', id: rec.id }));",
+    "new": "  room._fanBut(null, JSON.stringify({ t: 'leave', id: rec.id }));",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-taken-old-id-kept",
+    "file": "server/src/pvpLinger.js",
+    "old": "  if (rec.id !== b.id) room._fanBut(ws, JSON.stringify({ t: 'leave', id: rec.id }));\n}",
+    "new": "}",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-taken-id-unmoved",
+    "file": "server/src/pvpLinger.js",
+    "old": "  if (x) {\n    x.id = b.id;\n    x.lingerBack = true;\n  }\n  if (rec.id !== b.id) room._fanBut(ws, JSON.stringify({ t: 'leave', id: rec.id }));",
+    "new": "  if (rec.id !== b.id) room._fanBut(ws, JSON.stringify({ t: 'leave', id: rec.id }));",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-pose-unsaid",
+    "file": "server/src/pvpLinger.js",
+    "old": "      room._fanBut(null, JSON.stringify({ t: 'pose', id: rec.id, p: rec.att.pose }));\n    }",
+    "new": "    }",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-elsewhere-unasked",
+    "file": "server/src/pvpLinger.js",
+    "old": "      if (c && c.in === 1 && c.lr && c.lr !== rec.att.key && c.at > rec.at) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-own-room-read-as-another",
+    "file": "server/src/pvpLinger.js",
+    "old": "      if (c && c.in === 1 && c.lr && c.lr !== rec.att.key && c.at > rec.at) {",
+    "new": "      if (c && c.in === 1 && c.lr && c.at > rec.at) {",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-body-unshown",
+    "file": "server/src/pvpLinger.js",
+    "old": "  await lingerStep(room, now);\n  for (const rec of room._lingers?.values() ?? [])",
+    "new": "  await lingerStep(room, now);\n  for (const rec of [])",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-slain-unkept",
+    "file": "server/src/index.js",
+    "old": "    if (!target[0]) await lingerSlain(this, tb.sub, a, now);   // PVP-LINGER-RISE: a body slain while its player was away\n",
+    "new": "",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-word-unsaid",
+    "file": "server/src/pvpLinger.js",
+    "old": "  if (mine) room._send(mine[0], JSON.stringify(word));\n}",
+    "new": "}",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-said-twice",
+    "file": "server/src/pvpLinger.js",
+    "old": "  book.delete(sub);\n  room.state.storage.delete(LINGER_AWAY.prefix + sub).catch(() => {});\n  const word = lingerAwayWord(rec, x, now),",
+    "new": "  const word = lingerAwayWord(rec, x, now),",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-keep-unread",
+    "file": "src/net/wild/wildLinger.js",
+    "old": "  if (!rec || !Number.isFinite(rec.at) || !(now - rec.at < LINGER_AWAY.keepMs)) return null;",
+    "new": "  if (!rec || !Number.isFinite(rec.at)) return null;",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-wait-unread",
+    "file": "src/net/wild/wildLinger.js",
+    "old": "    ms: Math.min(WILD_REF.riseMs, Math.max(LINGER_AWAY.downMs, left)),",
+    "new": "    ms: Math.min(WILD_REF.riseMs, LINGER_AWAY.downMs),",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-wire-strips-away",
+    "file": "src/net/wire.js",
+    "old": "  const away = m.aw === 1 ? {",
+    "new": "  const away = m.aw === 2 ? {",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-page-unnamed",
+    "file": "src/systems/wild/wildRejoin.js",
+    "old": "        ...(word.aw === 1 ? { away: true, ...(typeof word.n === 'string' && word.n ? { killer: word.n } : {}) } : {}),",
+    "new": "        ...(word.aw === 2 ? { away: true, ...(typeof word.n === 'string' && word.n ? { killer: word.n } : {}) } : {}),",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-line-unsaid",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "  if (d.away) return [WILD_TEXT.deathAway(d.killer), ...wildDeathLines({ ...d, away: false })]; // PVP-LINGER-RISE: slain while I was away",
+    "new": "  // PVP-LINGER-RISE: slain while I was away",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  },
+  {
+    "name": "PVP-LINGER-RISE-the-slain-head-twice",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "export const wildDeathSlain = (d = _death) =>\n  d && !d.away && (d.killer || d.kill) ? WILD_TEXT.deathSlain(d.killer) : ''; // PVP-LINGER-RISE: away, its own line says it",
+    "new": "export const wildDeathSlain = (d = _death) => (d && (d.killer || d.kill) ? WILD_TEXT.deathSlain(d.killer) : ''); // PVP-LINGER-RISE: away, its own line says it",
+    "tests": [
+      "test/net/pvplinger_relay.test.js"
+    ]
+  }
 ]

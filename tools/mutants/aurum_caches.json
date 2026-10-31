@@ -129,8 +129,8 @@
   {
     "name": "AURUM-CACHES-the-route-no-progression-claim",
     "file": "server-account/src/progress.js",
-    "old": "  '/v1/aurum/cache': Object.freeze(['pass', false]),",
-    "new": "",
+    "old": "  '/v1/aurum/cache': Object.freeze(['pass', false]), // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
+    "new": "  // AURUM-CACHES: a cache claimed, asked of the seat as the Maul's day is (aurumCache.js)",
     "tests": [
       "test/server/aurum_cache_service.test.js"
     ]

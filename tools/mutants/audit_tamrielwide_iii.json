@@ -32,8 +32,8 @@
   {
     "name": "AUDIT-TW-III-P1-one-key-every-lane",
     "file": "src/scenes/superDungeon/sdCopy.js",
-    "old": "return lane ? `${SD_COPY_KEY}.${lane}` : SD_COPY_KEY;",
-    "new": "return SD_COPY_KEY;",
+    "old": "  return lane ? `${SD_COPY_KEY}.${lane}` : SD_COPY_KEY;",
+    "new": "  return SD_COPY_KEY;",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_iii.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-TW-III-T8-the-sea-again",
     "file": "src/ui/levelUp/pvp30Ask.js",
-    "old": "(Cyrodiil, the open {word} Ocean)",
-    "new": "(Cyrodiil and the sea)",
+    "old": "    'At level {n}, other players can attack and kill you in the PvP zones (Cyrodiil, the open {word} Ocean), even with your PvP flag off.',",
+    "new": "    'At level {n}, other players can attack and kill you in the PvP zones (Cyrodiil and the sea), even with your PvP flag off.',",
     "tests": [
       "test/world/worldWide/audit_tamrielwide_iii.test.js"
     ],

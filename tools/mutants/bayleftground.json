@@ -2,8 +2,8 @@
   {
     "name": "BAY-LEFT-GROUND-D2-pixel-left-out-of-the-query",
     "file": "src/systems/livingWorld/trouble.js",
-    "old": "world.foesOf({ climateIndex: world.climateAt(px, py), px, py, minute: t0, level, size, rolls: rng })",
-    "new": "world.foesOf({ climateIndex: world.climateAt(px, py), minute: t0, level, size, rolls: rng })",
+    "old": "    : (world.foesOf({ climateIndex: world.climateAt(px, py), px, py, minute: t0, level, size, rolls: rng }) ?? []); // BAY-LEFT-GROUND (D2): and the place, so the group is the land's own wild there - past the Bay its zone's",
+    "new": "    : (world.foesOf({ climateIndex: world.climateAt(px, py), minute: t0, level, size, rolls: rng }) ?? []); // BAY-LEFT-GROUND (D2): and the place, so the group is the land's own wild there - past the Bay its zone's",
     "tests": [
       "test/systems/livingWorld/bayleftground_trouble.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-ground-the-Bays-bound",
     "file": "src/scenes/snowGround.js",
-    "old": "      if (!inWorldGrid(px, py)) return null;",
-    "new": "      if (!inBay(px, py)) return null;",
+    "old": "      if (!inWorldGrid(px, py)) return null; // BAY-LEFT-GROUND: the world's grid, not the Bay's 1000 x 500",
+    "new": "      if (!inBay(px, py)) return null; // BAY-LEFT-GROUND: the world's grid, not the Bay's 1000 x 500",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-ground-the-Bays-roads-past-the-Bay",
     "file": "src/scenes/snowGround.js",
-    "old": "const net = !inBay(p.px, p.py) ? snowfallNetworkBeyond(p.px, p.py, p.paths) : raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;",
-    "new": "const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;",
+    "old": "      const net = !inBay(p.px, p.py)\n        ? snowfallNetworkBeyond(p.px, p.py, p.paths)\n        : raw?.source === 'basic-roads'\n          ? snowfallNetwork(raw, p.px, p.py)\n          : null;",
+    "new": "      const net = raw?.source === 'basic-roads' ? snowfallNetwork(raw, p.px, p.py) : null;",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-box-the-Bays-clamp",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    x0: onGrid(Math.min(a.x, b.x)), x1: onGrid(Math.max(a.x, b.x)),",
-    "new": "    x0: Math.max(0, Math.min(999, Math.min(a.x, b.x))), x1: Math.max(0, Math.min(999, Math.max(a.x, b.x))),",
+    "old": "    x0: onGrid(Math.min(a.x, b.x)),\n    x1: onGrid(Math.max(a.x, b.x)),",
+    "new": "    x0: Math.max(0, Math.min(999, Math.min(a.x, b.x))),\n    x1: Math.max(0, Math.min(999, Math.max(a.x, b.x))),",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-painted-word-unread",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    if (!painted[t]) return ROAD_KIND.none;\n",
-    "new": "",
+    "old": "    if (!painted[t]) return ROAD_KIND.none;\n    if (PAVED_RECORDS.includes(tile >> 2)) return ROAD_KIND.road;",
+    "new": "    if (PAVED_RECORDS.includes(tile >> 2)) return ROAD_KIND.road;",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-nothing-painted-a-network",
     "file": "src/scenes/snowfallHost.js",
-    "old": "  if (!painted) return null;\n  const road = ",
-    "new": "  const road = ",
+    "old": "  if (!painted) return null;\n  const road = byteAt('roads', x, y),",
+    "new": "  const road = byteAt('roads', x, y),",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-the-Bays-join-unread",
     "file": "src/scenes/snowfallHost.js",
-    "old": "    roads: at(net.roads, x) | joinAt(x, y), paths: at(net.tracks, x),",
-    "new": "    roads: at(net.roads, x), paths: at(net.tracks, x),",
+    "old": "    roads: at(net.roads, x) | joinAt(x, y),",
+    "new": "    roads: at(net.roads, x),",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-metres-the-Bays-x",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "  minX: -(WORLD_PIXEL_SPAN - 1) * 819.2, maxX: WORLD_PIXEL_SPAN * 819.2,",
-    "new": "  minX: 0, maxX: 819200,",
+    "old": "  minX: -(WORLD_PIXEL_SPAN - 1) * 819.2,\n  maxX: WORLD_PIXEL_SPAN * 819.2,",
+    "new": "  minX: 0,\n  maxX: 819200,",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-metres-the-Bays-z",
     "file": "src/systems/snowfallRuntime.js",
-    "old": "  minZ: (500 - WORLD_PIXEL_SPAN) * 819.2, maxZ: (499 + WORLD_PIXEL_SPAN) * 819.2,",
-    "new": "  minZ: 0, maxZ: 409600,",
+    "old": "  minZ: (500 - WORLD_PIXEL_SPAN) * 819.2,\n  maxZ: (499 + WORLD_PIXEL_SPAN) * 819.2,",
+    "new": "  minZ: 0,\n  maxZ: 409600,",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-kindAt-unread",
     "file": "src/systems/snowfall.js",
-    "old": "const k = net.kindAt ? (authored[i] ? ROAD_KIND.none : net.kindAt(x, z, this.tiles[i])) : classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
-    "new": "const k = classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
+    "old": "        const k = net.kindAt\n          ? authored[i]\n            ? ROAD_KIND.none\n            : net.kindAt(x, z, this.tiles[i])\n          : classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
+    "new": "        const k = classifyRoadTile(x, z, this.tiles[i], net, rect, authored[i]);",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "BAY-LEFT-GROUND-D3-kindAt-over-an-authored-tile",
     "file": "src/systems/snowfall.js",
-    "old": "net.kindAt ? (authored[i] ? ROAD_KIND.none : net.kindAt(x, z, this.tiles[i]))",
-    "new": "net.kindAt ? net.kindAt(x, z, this.tiles[i])",
+    "old": "          ? authored[i]\n            ? ROAD_KIND.none\n            : net.kindAt(x, z, this.tiles[i])",
+    "new": "          ? net.kindAt(x, z, this.tiles[i])",
     "tests": [
       "test/render/bayleftground_snow.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-places-shore-capitals-taken",
     "file": "src/world/pastBayRows.js",
-    "old": "if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
-    "new": "if (D.w * D.h > 1 || capitalCanalOpen(k) || !cap.plan) return;",
+    "old": "      if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law",
+    "new": "      if (D.w * D.h > 1 || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-places-capitals-over-several-pixels-taken",
     "file": "src/world/pastBayRows.js",
-    "old": "if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
-    "new": "if (cap.shore || capitalCanalOpen(k) || !cap.plan) return;",
+    "old": "      if (D.w * D.h > 1 || cap.shore || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law",
+    "new": "      if (cap.shore || capitalCanalOpen(k) || !cap.plan) return; // its own ground's law",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ],
@@ -410,8 +410,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-places-the-pinned-place-twice",
     "file": "src/world/pastBayRows.js",
-    "old": "    if (p.pinned && capitals) continue;   // a site already: it stands as its capital (above)\n",
-    "new": "",
+    "old": "    if (p.pinned && capitals) continue; // a site already: it stands as its capital (above)\n    const template = templateOf(p);",
+    "new": "    const template = templateOf(p);",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -446,8 +446,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-in-flight-book-dropped",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "    for (const k of host.inFlight.keys()) { const [x, y] = k.split(',').map(Number); if (reach.has(worldPixelKey(x, y))) stale.add(k); }\n",
-    "new": "",
+    "old": "    for (const k of host.inFlight.keys()) {\n      const [x, y] = k.split(',').map(Number);\n      if (reach.has(worldPixelKey(x, y))) stale.add(k);\n    }\n    if (again.length) host.swap.rebuild(again);",
+    "new": "    if (again.length) host.swap.rebuild(again);",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -455,8 +455,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-owed-built-twice",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "if (reach.has(worldPixelKey(p.px, p.py)) && !host.swap.owes(k)) again.push",
-    "new": "if (reach.has(worldPixelKey(p.px, p.py))) again.push",
+    "old": "    for (const [k, p] of host.built)\n      if (reach.has(worldPixelKey(p.px, p.py)) && !host.swap.owes(k)) again.push({ px: p.px, py: p.py });",
+    "new": "    for (const [k, p] of host.built) if (reach.has(worldPixelKey(p.px, p.py))) again.push({ px: p.px, py: p.py });",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -464,8 +464,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-generation-stuck",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "    generation++;\n",
-    "new": "",
+    "old": "    generation++;\n    terrainGen.setLandformBeyond(next);",
+    "new": "    terrainGen.setLandformBeyond(next);",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -473,8 +473,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-table-not-posted",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "    terrainGen.setLandformBeyond(next);\n",
-    "new": "",
+    "old": "    terrainGen.setLandformBeyond(next);\n    if (first) return true; // as the world mounts: no pixel stands yet (nor its book - the host's stream is made below it)",
+    "new": "    if (first) return true; // as the world mounts: no pixel stands yet (nor its book - the host's stream is made below it)",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -482,8 +482,8 @@
   {
     "name": "BAY-LEFT-GROUND-D1-host-the-row-off-ignored",
     "file": "src/scenes/landformSitesHost.js",
-    "old": "    if (!landform) return false;\n",
-    "new": "",
+    "old": "    if (!landform) return false;\n    const s = stampNow();",
+    "new": "    const s = stampNow();",
     "tests": [
       "test/world/terrain/bayleftground_sites.test.js"
     ]
@@ -547,8 +547,8 @@
   {
     "name": "BAY-LEFT-GROUND-GROUND-PRINT-past-the-Bay-without-its-sites",
     "file": "tools/groundPrint.mjs",
-    "old": "roads, sites, beyond, climates: null, landform: true }).samples);",
-    "new": "roads, sites, climates: null, landform: true }).samples);",
+    "old": "          beyond,\n          climates: null,",
+    "new": "          climates: null,",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ]
@@ -687,8 +687,8 @@
   {
     "name": "BAY-LEFT-GROUND-D5-scene-cache-drops-it",
     "file": "src/systems/sceneCache.js",
-    "old": "  groundFrame: d.groundFrame ?? null,\n",
-    "new": "",
+    "old": "  groundFrame: d.groundFrame ?? null,\n  // WD3: the layout of the town an interior was cached in (systems/layoutPins.js) - only where a layout mod changed the",
+    "new": "  // WD3: the layout of the town an interior was cached in (systems/layoutPins.js) - only where a layout mod changed the",
     "tests": [
       "test/world/terrain/bayleftground_frame.test.js"
     ]
@@ -741,7 +741,7 @@
   },
   {
     "name": "BAY-LEFT-GROUND-D5-world-deck-reader-blind",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "scaleOf(t.restore.terrainScale), t.restore.groundFrame)",
     "new": "scaleOf(t.restore.terrainScale))",
     "tests": [
@@ -786,7 +786,7 @@
   },
   {
     "name": "BAY-LEFT-GROUND-D5-world-deck-unstamped",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/shipBoardHost.js",
     "old": "yaw: cam.yaw, ...RECORD_GROUND_STAMP }",
     "new": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE }",
     "tests": [

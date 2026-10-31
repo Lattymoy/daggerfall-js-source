@@ -102,7 +102,7 @@ export const DRY_TICK = 2;
 export function mulberry32(seed) {
   let a = seed >>> 0;
   return () => {
-    a = (a + 0x6D2B79F5) >>> 0;
+    a = (a + 0x6d2b79f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
@@ -119,8 +119,9 @@ const smooth = (edge0, edge1, x) => {
 function wobble(rng, n = 12, amount = 0.2) {
   const tbl = Array.from({ length: n }, () => (rng() * 2 - 1) * amount);
   return (angle) => {
-    const f = ((angle / (Math.PI * 2)) % 1 + 1) % 1 * n;
-    const i = Math.floor(f), t = f - i;
+    const f = ((((angle / (Math.PI * 2)) % 1) + 1) % 1) * n;
+    const i = Math.floor(f),
+      t = f - i;
     return tbl[i % n] * (1 - t) + tbl[(i + 1) % n] * t;
   };
 }
@@ -156,19 +157,35 @@ export const NOISE_SIZE = 64;
  *  `fbm(x, y, octaves)` its fractal sum - one lattice for the sheet, a
  *  cell reads it at its own offset so no two cells share a grain. */
 export function bloodNoise(rng) {
-  const N = NOISE_SIZE, g = new Float32Array(N * N);
+  const N = NOISE_SIZE,
+    g = new Float32Array(N * N);
   for (let i = 0; i < g.length; i++) g[i] = rng() * 2 - 1;
   const n = (x, y) => {
-    const ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy;
-    const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
-    const x0 = ix & (N - 1), x1 = (ix + 1) & (N - 1), y0 = (iy & (N - 1)) * N, y1 = ((iy + 1) & (N - 1)) * N;
+    const ix = Math.floor(x),
+      iy = Math.floor(y),
+      fx = x - ix,
+      fy = y - iy;
+    const sx = fx * fx * (3 - 2 * fx),
+      sy = fy * fy * (3 - 2 * fy);
+    const x0 = ix & (N - 1),
+      x1 = (ix + 1) & (N - 1),
+      y0 = (iy & (N - 1)) * N,
+      y1 = ((iy + 1) & (N - 1)) * N;
     const a = g[y0 + x0] + (g[y0 + x1] - g[y0 + x0]) * sx;
     const b = g[y1 + x0] + (g[y1 + x1] - g[y1 + x0]) * sx;
     return a + (b - a) * sy;
   };
   const fbm = (x, y, octaves = 3) => {
-    let sum = 0, amp = 1, norm = 0, f = 1;
-    for (let o = 0; o < octaves; o++) { sum += n(x * f + o * 17.3, y * f - o * 9.1) * amp; norm += amp; amp *= 0.5; f *= 2.03; }
+    let sum = 0,
+      amp = 1,
+      norm = 0,
+      f = 1;
+    for (let o = 0; o < octaves; o++) {
+      sum += n(x * f + o * 17.3, y * f - o * 9.1) * amp;
+      norm += amp;
+      amp *= 0.5;
+      f *= 2.03;
+    }
     return sum / norm;
   };
   return { n, fbm };
@@ -177,7 +194,7 @@ export function bloodNoise(rng) {
 /** A smooth minimum: two distances melted together over `k`, which is
  *  what makes blobs that touch read as one pool rather than two. */
 export function smin(a, b, k) {
-  const h = Math.max(0, Math.min(1, 0.5 + 0.5 * (b - a) / k));
+  const h = Math.max(0, Math.min(1, 0.5 + (0.5 * (b - a)) / k));
   return b + (a - b) * h - k * h * (1 - h);
 }
 
@@ -185,7 +202,9 @@ export function smin(a, b, k) {
  *  at rb - a capsule whose ends differ, which is a tendril, a finger
  *  and a streak's body alike. */
 export function taperDist(x, y, ax, ay, ra, bx, by, rb) {
-  const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+  const dx = bx - ax,
+    dy = by - ay,
+    len2 = dx * dx + dy * dy;
   const t = len2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / len2)) : 0;
   return len(x - (ax + dx * t), y - (ay + dy * t)) - (ra + (rb - ra) * t);
 }
@@ -204,7 +223,7 @@ const EDGE_ROUGH = 0.07;
 /** Turn a field into the cell's `{ a, depth }`: coverage from the
  *  signed distance with a texel-wide soft edge, thickness from how far
  *  inside it is. `aa` is a texel and a half in cell units. */
-const FIELD = { a: 0, depth: 0 };   // one answer, rewritten per texel - the build reads it before the next
+const FIELD = { a: 0, depth: 0 }; // one answer, rewritten per texel - the build reads it before the next
 const fromField = (sdf, reach, aa) => {
   FIELD.a = sdf >= aa ? 0 : 1 - smooth(-aa, aa, sdf);
   FIELD.depth = sdf >= 0 ? 0 : Math.pow(Math.min(1, -sdf / reach), 0.8);
@@ -213,19 +232,27 @@ const fromField = (sdf, reach, aa) => {
 /** The edge's grain: the fractal at two scales, and the whole point
  *  warped by a third, so a rim is ragged at every size. */
 function roughen(noise, ox, oy) {
-  const out = { wx: 0, wy: 0, edge: 0 };   // rewritten per texel, read at once
+  const out = { wx: 0, wy: 0, edge: 0 }; // rewritten per texel, read at once
   return (x, y) => {
     const wx = x + 0.09 * noise.fbm(x * 2.1 + ox, y * 2.1 + oy, 2);
     const wy = y + 0.09 * noise.fbm(x * 2.1 + oy + 31.7, y * 2.1 + ox - 12.4, 2);
-    out.wx = wx; out.wy = wy; out.edge = EDGE_ROUGH * noise.fbm(wx * 4.3 + ox, wy * 4.3 + oy, 3);
+    out.wx = wx;
+    out.wy = wy;
+    out.edge = EDGE_ROUGH * noise.fbm(wx * 4.3 + ox, wy * 4.3 + oy, 3);
     return out;
   };
 }
 /** A run's bounding circle, so a texel far from it skips the run: a
  *  primitive further than a smooth minimum's `k` past the nearest so far
  *  cannot change it. */
-const bound = (t) => ({ ...t, cx: (t.ax + t.bx) / 2, cy: (t.ay + t.by) / 2, br: len(t.bx - t.ax, t.by - t.ay) / 2 + Math.max(t.ra, t.rb) });
-const meltRun = (d, x, y, t, k) => (len(x - t.cx, y - t.cy) - t.br > d + k ? d : smin(d, taperDist(x, y, t.ax, t.ay, t.ra, t.bx, t.by, t.rb), k));
+const bound = (t) => ({
+  ...t,
+  cx: (t.ax + t.bx) / 2,
+  cy: (t.ay + t.by) / 2,
+  br: len(t.bx - t.ax, t.by - t.ay) / 2 + Math.max(t.ra, t.rb),
+});
+const meltRun = (d, x, y, t, k) =>
+  len(x - t.cx, y - t.cy) - t.br > d + k ? d : smin(d, taperDist(x, y, t.ax, t.ay, t.ra, t.bx, t.by, t.rb), k);
 /** How far outside a shape's smooth body the warp and the edge noise
  *  can still reach (0.09 of warp, 0.07 of edge, and room): past it a
  *  texel is empty without asking the noise, which is most of a cell. */
@@ -236,24 +263,37 @@ const INSIDE = 0.86;
 const clampIn = (v, r) => Math.max(-INSIDE + r, Math.min(INSIDE - r, v));
 
 function poolField(rng, noise) {
-  const ox = rng() * 64, oy = rng() * 64;
+  const ox = rng() * 64,
+    oy = rng() * 64;
   const rough = roughen(noise, ox, oy);
   const main = { x: (rng() - 0.5) * 0.12, y: (rng() - 0.5) * 0.12, r: 0.38 + rng() * 0.1 };
   // the lobes it spread into - a pool finds the floor's low side
   const lobes = Array.from({ length: 2 + Math.floor(rng() * 4) }, () => {
-    const ang = rng() * TAU, d = 0.22 + rng() * 0.22, r = 0.14 + rng() * 0.15;
+    const ang = rng() * TAU,
+      d = 0.22 + rng() * 0.22,
+      r = 0.14 + rng() * 0.15;
     return { x: clampIn(main.x + Math.cos(ang) * d, r), y: clampIn(main.y + Math.sin(ang) * d, r), r };
   });
   // fingers where it ran, thinning to a point
   const fingers = Array.from({ length: Math.floor(rng() * 3) }, () => {
-    const ang = rng() * TAU, from = main.r * 0.7, to = main.r + 0.18 + rng() * 0.2;
-    return bound({ ax: main.x + Math.cos(ang) * from, ay: main.y + Math.sin(ang) * from, ra: 0.07 + rng() * 0.04,
-      bx: clampIn(main.x + Math.cos(ang) * to, 0.03), by: clampIn(main.y + Math.sin(ang) * to, 0.03), rb: 0.015 + rng() * 0.02 });
+    const ang = rng() * TAU,
+      from = main.r * 0.7,
+      to = main.r + 0.18 + rng() * 0.2;
+    return bound({
+      ax: main.x + Math.cos(ang) * from,
+      ay: main.y + Math.sin(ang) * from,
+      ra: 0.07 + rng() * 0.04,
+      bx: clampIn(main.x + Math.cos(ang) * to, 0.03),
+      by: clampIn(main.y + Math.sin(ang) * to, 0.03),
+      rb: 0.015 + rng() * 0.02,
+    });
   });
   // satellites where it splashed - clustered on one side
   const side = rng() * TAU;
   const sats = Array.from({ length: 3 + Math.floor(rng() * 8) }, () => {
-    const ang = side + gaussOf(rng(), rng()) * 0.9, d = 0.6 + rng() * 0.26, r = 0.015 + Math.pow(rng(), 2) * 0.05;
+    const ang = side + gaussOf(rng(), rng()) * 0.9,
+      d = 0.6 + rng() * 0.26,
+      r = 0.015 + Math.pow(rng(), 2) * 0.05;
     return { x: clampIn(Math.cos(ang) * d, r), y: clampIn(Math.sin(ang) * d, r), r };
   });
   const body = (wx, wy) => {
@@ -264,18 +304,24 @@ function poolField(rng, noise) {
   };
   return (x, y) => {
     let d = body(x, y);
-    if (d < ROUGH_REACH) { const { wx, wy, edge } = rough(x, y); d = body(wx, wy) + edge; }
+    if (d < ROUGH_REACH) {
+      const { wx, wy, edge } = rough(x, y);
+      d = body(wx, wy) + edge;
+    }
     for (const s of sats) d = Math.min(d, len(x - s.x, y - s.y) - s.r);
     return fromField(d, DEPTH_REACH.pool, 0.024);
   };
 }
 
 function spatterField(rng, noise) {
-  const ox = rng() * 64, oy = rng() * 64;
+  const ox = rng() * 64,
+    oy = rng() * 64;
   const rough = roughen(noise, ox, oy);
   const core = { x: (rng() - 0.5) * 0.1, y: (rng() - 0.5) * 0.1, r: 0.2 + rng() * 0.08 };
   const blobs = Array.from({ length: 1 + Math.floor(rng() * 3) }, () => {
-    const ang = rng() * TAU, d = core.r * (0.5 + rng() * 0.6), r = core.r * (0.4 + rng() * 0.4);
+    const ang = rng() * TAU,
+      d = core.r * (0.5 + rng() * 0.6),
+      r = core.r * (0.4 + rng() * 0.4);
     return { x: core.x + Math.cos(ang) * d, y: core.y + Math.sin(ang) * d, r };
   });
   // ONE OR TWO DIRECTIONS the impact threw it, and every tendril and
@@ -286,16 +332,26 @@ function spatterField(rng, noise) {
   const tendrils = Array.from({ length: 3 + Math.floor(rng() * 7) }, () => {
     const ang = aimAt() + gaussOf(rng(), rng()) * 0.5;
     const len = core.r + 0.18 + Math.pow(rng(), 0.7) * 0.45;
-    const bx = clampIn(core.x + Math.cos(ang) * len, 0.05), by = clampIn(core.y + Math.sin(ang) * len, 0.05);
+    const bx = clampIn(core.x + Math.cos(ang) * len, 0.05),
+      by = clampIn(core.y + Math.sin(ang) * len, 0.05);
     const bead = 0.025 + rng() * 0.045;
-    const gap = rng() < 0.4 ? 0.03 + rng() * 0.06 : 0;   // some beads broke off the end of their run
-    return bound({ ax: core.x + Math.cos(ang) * core.r * 0.5, ay: core.y + Math.sin(ang) * core.r * 0.5, ra: 0.05 + rng() * 0.04,
-      bx, by, rb: 0.008 + rng() * 0.012,
-      beadX: clampIn(bx + Math.cos(ang) * (bead + gap), bead), beadY: clampIn(by + Math.sin(ang) * (bead + gap), bead), bead });
+    const gap = rng() < 0.4 ? 0.03 + rng() * 0.06 : 0; // some beads broke off the end of their run
+    return bound({
+      ax: core.x + Math.cos(ang) * core.r * 0.5,
+      ay: core.y + Math.sin(ang) * core.r * 0.5,
+      ra: 0.05 + rng() * 0.04,
+      bx,
+      by,
+      rb: 0.008 + rng() * 0.012,
+      beadX: clampIn(bx + Math.cos(ang) * (bead + gap), bead),
+      beadY: clampIn(by + Math.sin(ang) * (bead + gap), bead),
+      bead,
+    });
   });
   const mist = Array.from({ length: 18 + Math.floor(rng() * 40) }, () => {
-    const ang = (rng() < 0.8 ? aimAt() + gaussOf(rng(), rng()) * 0.7 : rng() * TAU);
-    const d = core.r + 0.1 + Math.pow(rng(), 0.6) * 0.6, r = 0.009 + Math.pow(rng(), 2.5) * 0.03;
+    const ang = rng() < 0.8 ? aimAt() + gaussOf(rng(), rng()) * 0.7 : rng() * TAU;
+    const d = core.r + 0.1 + Math.pow(rng(), 0.6) * 0.6,
+      r = 0.009 + Math.pow(rng(), 2.5) * 0.03;
     return { x: clampIn(core.x + Math.cos(ang) * d, r), y: clampIn(core.y + Math.sin(ang) * d, r), r };
   });
   const body = (wx, wy) => {
@@ -306,34 +362,56 @@ function spatterField(rng, noise) {
   };
   return (x, y) => {
     let d = body(x, y);
-    if (d < ROUGH_REACH) { const { wx, wy, edge } = rough(x, y); d = body(wx, wy) + edge * 0.7; }
+    if (d < ROUGH_REACH) {
+      const { wx, wy, edge } = rough(x, y);
+      d = body(wx, wy) + edge * 0.7;
+    }
     for (const t of tendrils) d = Math.min(d, len(x - t.beadX, y - t.beadY) - t.bead);
-    for (const m of mist) { const dx = x - m.x, dy = y - m.y; if (dx * dx + dy * dy < 0.01) d = Math.min(d, len(dx, dy) - m.r); }
+    for (const m of mist) {
+      const dx = x - m.x,
+        dy = y - m.y;
+      if (dx * dx + dy * dy < 0.01) d = Math.min(d, len(dx, dy) - m.r);
+    }
     return fromField(d, DEPTH_REACH.spatter, 0.022);
   };
 }
 
 function streakField(rng, noise) {
-  const ox = rng() * 64, oy = rng() * 64;
+  const ox = rng() * 64,
+    oy = rng() * 64;
   const rough = roughen(noise, ox, oy);
   // the head at -u where the drop struck, the tail thinning toward +u
-  const hx = -0.55 + (rng() - 0.5) * 0.08, hr = 0.2 + rng() * 0.07;
-  const end = 0.5 + rng() * 0.3, bend = (rng() - 0.5) * 0.3;
-  const yAt = (t) => bend * t * t;   // it curves as it slows
+  const hx = -0.55 + (rng() - 0.5) * 0.08,
+    hr = 0.2 + rng() * 0.07;
+  const end = 0.5 + rng() * 0.3,
+    bend = (rng() - 0.5) * 0.3;
+  const yAt = (t) => bend * t * t; // it curves as it slows
   const SEG = 5;
   const body = Array.from({ length: SEG }, (_, k) => {
-    const t0 = k / SEG, t1 = (k + 1) / SEG;
-    const x0 = hx + (end - hx) * t0, x1 = hx + (end - hx) * t1;
-    return bound({ ax: x0, ay: yAt(t0), ra: hr * 0.8 * (1 - t0 * 0.9), bx: x1, by: yAt(t1), rb: hr * 0.8 * (1 - t1 * 0.9) });
+    const t0 = k / SEG,
+      t1 = (k + 1) / SEG;
+    const x0 = hx + (end - hx) * t0,
+      x1 = hx + (end - hx) * t1;
+    return bound({
+      ax: x0,
+      ay: yAt(t0),
+      ra: hr * 0.8 * (1 - t0 * 0.9),
+      bx: x1,
+      by: yAt(t1),
+      rb: hr * 0.8 * (1 - t1 * 0.9),
+    });
   });
   // the line of droplets it shed past its tail, each smaller
   const trail = Array.from({ length: 1 + Math.floor(rng() * 4) }, (_, k) => {
-    const t = 1.08 + k * (0.07 + rng() * 0.06), r = Math.max(0.01, 0.035 * (1 - k * 0.2) * (0.6 + rng() * 0.6));
+    const t = 1.08 + k * (0.07 + rng() * 0.06),
+      r = Math.max(0.01, 0.035 * (1 - k * 0.2) * (0.6 + rng() * 0.6));
     return { x: clampIn(hx + (end - hx) * t, r), y: clampIn(yAt(Math.min(1.4, t)) + (rng() - 0.5) * 0.04, r), r };
   });
   // and the crown behind the head, where the impact splashed back
   const crown = Array.from({ length: 2 + Math.floor(rng() * 5) }, () => {
-    const ang = Math.PI + gaussOf(rng(), rng()) * 0.8, d = hr + 0.03 + rng() * 0.12, r = 0.012 + rng() * 0.025;
+    const ang = Math.PI + gaussOf(rng(), rng()) * 0.8,
+      d = hr + 0.03 + rng() * 0.12,
+      r = 0.012 + rng() * 0.025;
     return { x: clampIn(hx + Math.cos(ang) * d, r), y: clampIn(Math.sin(ang) * d, r), r };
   });
   const run = (wx, wy) => {
@@ -343,7 +421,10 @@ function streakField(rng, noise) {
   };
   return (x, y) => {
     let d = run(x, y);
-    if (d < ROUGH_REACH) { const { wx, wy, edge } = rough(x, y); d = run(wx, wy) + edge * 0.6; }
+    if (d < ROUGH_REACH) {
+      const { wx, wy, edge } = rough(x, y);
+      d = run(wx, wy) + edge * 0.6;
+    }
     for (const t of trail) d = Math.min(d, len(x - t.x, y - t.y) - t.r);
     for (const c of crown) d = Math.min(d, len(x - c.x, y - c.y) - c.r);
     return fromField(d, DEPTH_REACH.streak, 0.022);
@@ -377,12 +458,16 @@ function shapeAt(kind, rng, noise) {
     // a boot: a heel disc at -u, a longer sole at +u, a waist between,
     // a little ragged so no two prints are the same stamp
     const w = wobble(rng, 10, 0.12);
-    const toeX = 0.32 + rng() * 0.12, heelX = -0.5 - rng() * 0.08;
+    const toeX = 0.32 + rng() * 0.12,
+      heelX = -0.5 - rng() * 0.08;
     return (x, y) => {
       const ang = Math.atan2(y, x);
       const heel = 1 - smooth(0.2, 0.28, len((x - heelX) * 1.1, y * 1.35) * (1 + w(ang)));
       const sole = 1 - smooth(0.3, 0.38, len((x - toeX) * 0.75, y * 1.15) * (1 + w(ang + 1)));
-      const waist = x > heelX && x < toeX ? 1 - smooth(0.16, 0.22, Math.abs(y) * (1 + 0.6 * Math.abs((x - (heelX + toeX) / 2) / ((toeX - heelX) / 2)))) : 0;
+      const waist =
+        x > heelX && x < toeX
+          ? 1 - smooth(0.16, 0.22, Math.abs(y) * (1 + 0.6 * Math.abs((x - (heelX + toeX) / 2) / ((toeX - heelX) / 2))))
+          : 0;
       return { a: Math.max(heel, sole, waist), depth: 1 - smooth(heelX, toeX, x) };
     };
   }
@@ -409,11 +494,11 @@ function shapeAt(kind, rng, noise) {
   //     the foot follows it, because that is where the blood ended up;
   //   A SECOND RUN, thinner and shorter, where the bead split.
   const w = wobble(rng, 6, 0.25);
-  const beadX = (rng() * 2 - 1) * 0.12;   // modest: the bead is the mark's deep end, and it stays near the cell's own centre line so the run has room to wander either way
+  const beadX = (rng() * 2 - 1) * 0.12; // modest: the bead is the mark's deep end, and it stays near the cell's own centre line so the run has room to wander either way
   const beadR = 0.22 + rng() * 0.14;
-  const ran = rng() > 0.32;                       // a third of them never ran
-  const runTo = ran ? -0.9 + rng() * 0.75 : 0.5;  // 0.5 == no run at all
-  const drift = (rng() * 2 - 1) * 0.22;           // where the run wanders to by its foot
+  const ran = rng() > 0.32; // a third of them never ran
+  const runTo = ran ? -0.9 + rng() * 0.75 : 0.5; // 0.5 == no run at all
+  const drift = (rng() * 2 - 1) * 0.22; // where the run wanders to by its foot
   const width = 0.06 + rng() * 0.06;
   const forked = ran && rng() < 0.35;
   const forkX = (rng() * 2 - 1) * 0.16;
@@ -423,7 +508,7 @@ function shapeAt(kind, rng, noise) {
   const trail = (x, y, fromX, toY, halfW, wob) => {
     if (!(y < 0.5 && y > toY)) return { a: 0, along: -1 };
     const along = (0.5 - y) / (0.5 - toY);
-    const cx = fromX + drift * along * along;     // squared: it wanders more as it slows
+    const cx = fromX + drift * along * along; // squared: it wanders more as it slows
     const half = halfW * (1 - 0.6 * along) * (1 + (wob ? w(along * Math.PI * 2) : 0)) + 0.015;
     return { a: 1 - smooth(half - 0.03, half + 0.02, Math.abs(x - cx)), along };
   };
@@ -450,8 +535,8 @@ function shapeAt(kind, rng, noise) {
     // every pixel of a no-run cell a thickness of ZERO - the deep end
     // inside out. The BLOOD3 depth pin caught it in one line.
     const dBead = 1 - smooth(beadR * 0.2, beadR + 0.02, rBead);
-    const dFoot = ran ? (1 - smooth(0.02, 0.1, rFoot)) * 0.45 : 0;   // gathered, so thicker than the run above it - but never the bead's equal
-    const dRun = main.a > 0 ? 1 - main.along : (fork.a > 0 ? (1 - fork.along) * 0.85 : 0);
+    const dFoot = ran ? (1 - smooth(0.02, 0.1, rFoot)) * 0.45 : 0; // gathered, so thicker than the run above it - but never the bead's equal
+    const dRun = main.a > 0 ? 1 - main.along : fork.a > 0 ? (1 - fork.along) * 0.85 : 0;
     return { a, depth: Math.max(0, Math.min(1, Math.max(dBead, dFoot, dRun))) };
   };
 }
@@ -484,11 +569,11 @@ export function buildBloodAtlas(opts = {}) {
  * picture to the byte however it was stepped. `step()` answers true
  * once the sheet is whole.
  */
-export function atlasBuilder({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed = 0x5EED, rng = null } = {}) {
+export function atlasBuilder({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed = 0x5eed, rng = null } = {}) {
   const roll = rng ?? mulberry32(seed);
-  const noise = bloodNoise(roll);   // BLOOD5: one lattice for the sheet
+  const noise = bloodNoise(roll); // BLOOD5: one lattice for the sheet
   const cell = size / cells;
-  const rows = ATLAS_KINDS.length;   // BLOOD2d: one row a kind - the sheet is `size` wide and `rows` cells tall
+  const rows = ATLAS_KINDS.length; // BLOOD2d: one row a kind - the sheet is `size` wide and `rows` cells tall
   const height = cell * rows;
   const colors = new Uint8ClampedArray(size * height * 4);
   const out = [];
@@ -498,21 +583,28 @@ export function atlasBuilder({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed = 0x
   const total = rows * cells;
   function step() {
     if (next >= total) return true;
-    const row = Math.floor(next / cells), col = next % cells;
+    const row = Math.floor(next / cells),
+      col = next % cells;
     next++;
     const kind = ATLAS_KINDS[row];
     {
       const at = shapeAt(kind, roll, noise);
       // BLOOD5: the grain is the noise's too - clotting, at two scales,
       // where it was a wobble around the cell's centre
-      const gx = roll() * 64, gy = roll() * 64;
-      const x0 = col * cell, y0 = row * cell;
+      const gx = roll() * 64,
+        gy = roll() * 64;
+      const x0 = col * cell,
+        y0 = row * cell;
       for (let py = 0; py < cell; py++) {
         for (let px = 0; px < cell; px++) {
           const inBorder = px < BORDER || py < BORDER || px >= cell - BORDER || py >= cell - BORDER;
-          const x = ((px + 0.5) / cell) * 2 - 1, y = ((py + 0.5) / cell) * 2 - 1;
+          const x = ((px + 0.5) / cell) * 2 - 1,
+            y = ((py + 0.5) / cell) * 2 - 1;
           const { a, depth } = inBorder ? EMPTY : at(x, y);
-          const g = inBorder || !(a > 0) ? 1 : 1 + 0.1 * noise.fbm(x * 7 + gx, y * 7 + gy, 2) + 0.05 * noise.n(x * 23 + gy, y * 23 + gx);
+          const g =
+            inBorder || !(a > 0)
+              ? 1
+              : 1 + 0.1 * noise.fbm(x * 7 + gx, y * 7 + gy, 2) + 0.05 * noise.n(x * 23 + gy, y * 23 + gx);
           const o = ((y0 + py) * size + (x0 + px)) * 4;
           // BLOOD AUDIT 4: white ink - the shape and its grain; the colour
           // is the tint's (see BLOOD_BASE).
@@ -526,14 +618,18 @@ export function atlasBuilder({ size = ATLAS_SIZE, cells = ATLAS_CELLS, seed = 0x
           // the one channel the sheet can spare.
           const thick = Math.max(0, Math.min(1, depth * g));
           const ink = Math.round(255 * (1 - INK_DEPTH * thick));
-          colors[o] = ink; colors[o + 1] = ink; colors[o + 2] = ink;
+          colors[o] = ink;
+          colors[o + 1] = ink;
+          colors[o + 2] = ink;
           colors[o + 3] = Math.round(255 * Math.max(0, Math.min(1, a)));
         }
       }
       out.push({
         kind,
-        u0: (x0 + 1) / size, v0: (y0 + 1) / height,
-        u1: (x0 + cell - 1) / size, v1: (y0 + cell - 1) / height,
+        u0: (x0 + 1) / size,
+        v0: (y0 + 1) / height,
+        u1: (x0 + cell - 1) / size,
+        v1: (y0 + cell - 1) / height,
       });
     }
     return next >= total;
@@ -573,8 +669,13 @@ export function prewarmBloodAtlas(idle = globalThis.requestIdleCallback) {
   _builder = atlasBuilder();
   const slice = (deadline) => {
     if (_atlas || !_builder) return;
-    do { if (_builder.step()) { _atlas = _builder.atlas; _builder = null; return; } }
-    while ((deadline?.timeRemaining?.() ?? 0) > 6);
+    do {
+      if (_builder.step()) {
+        _atlas = _builder.atlas;
+        _builder = null;
+        return;
+      }
+    } while ((deadline?.timeRemaining?.() ?? 0) > 6);
     idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });
   };
   idle(slice, { timeout: BLOOD_PREWARM_WAIT_MS });
@@ -593,14 +694,16 @@ export const DROP_ART_SIZE = 16;
 let _droplet = null;
 export function bloodDropletArt() {
   if (_droplet) return _droplet;
-  const N = DROP_ART_SIZE, colors = new Uint8ClampedArray(N * N * 4);
+  const N = DROP_ART_SIZE,
+    colors = new Uint8ClampedArray(N * N * 4);
   const base = BLOOD_BASE.map((c) => c * 255);
   for (let py = 0; py < N; py++) {
     for (let px = 0; px < N; px++) {
-      const x = ((px + 0.5) / N) * 2 - 1, y = ((py + 0.5) / N) * 2 - 1;   // y DOWN the image: py 0 is the top
+      const x = ((px + 0.5) / N) * 2 - 1,
+        y = ((py + 0.5) / N) * 2 - 1; // y DOWN the image: py 0 is the top
       // a bead in the lower two thirds and a tail narrowing up to a point
-      const bead = Math.sqrt(x * x / 0.36 + (y - 0.22) * (y - 0.22) / 0.42);
-      const tail = y < 0.22 ? Math.abs(x) / Math.max(0.001, 0.6 * (y + 0.85) / 1.07) : 99;
+      const bead = Math.sqrt((x * x) / 0.36 + ((y - 0.22) * (y - 0.22)) / 0.42);
+      const tail = y < 0.22 ? Math.abs(x) / Math.max(0.001, (0.6 * (y + 0.85)) / 1.07) : 99;
       const inside = bead <= 1 || (tail <= 1 && y > -0.85);
       const o = (py * N + px) * 4;
       if (!inside) continue;
@@ -692,7 +795,7 @@ export function bloodMarkKind({ pool = false, wall = false, print = false, stret
 /** BLOOD3: the per-channel gain toward a THIN film - red passes, green
  *  and blue are absorbed. At full thickness the gain is exactly 1, so
  *  this only ever brightens a rim; it never darkens what was there. */
-export const BLOOD_ABSORB = Object.freeze([0.50, 0.95, 0.95]);
+export const BLOOD_ABSORB = Object.freeze([0.5, 0.95, 0.95]);
 /** AUDIT BLOOD3 F3: the same film for the CLASSIC set, whose decal
  *  shader has no decode and no encode - it works in display space from
  *  end to end. A gain of G applied to an encoded value shows as G, not
@@ -766,7 +869,7 @@ export function wetGate(wet, thick) {
   if (!(wet > 0)) return 0;
   const t = Math.max(0, Math.min(1, thick));
   const x = Math.max(0, Math.min(1, (t - WET_THICK_LO) / Math.max(1e-6, WET_THICK_HI - WET_THICK_LO)));
-  return Math.max(0, Math.min(1, wet)) * (x * x * (3 - 2 * x));   // smoothstep, the shader's own
+  return Math.max(0, Math.min(1, wet)) * (x * x * (3 - 2 * x)); // smoothstep, the shader's own
 }
 
 /** AUDIT BLOOD3 F5: Schlick for a SPECULAR lobe, which is F(V.H) and
@@ -825,7 +928,7 @@ export function driedTint(fresh, stage) {
   const t = Math.max(0, Math.min(1, stage / DRY_STAGES));
   const k = freshShade(fresh);
   const end = [DRIED_TINT[0] * k, DRIED_TINT[1] * k, DRIED_TINT[2] * k];
-  if (t >= 1) return [end[0], end[1], end[2], fresh[3] ?? 1];   // dried is DRIED, to the bit - not a mix that lands a rounding error off it
+  if (t >= 1) return [end[0], end[1], end[2], fresh[3] ?? 1]; // dried is DRIED, to the bit - not a mix that lands a rounding error off it
   return [
     fresh[0] + (end[0] - fresh[0]) * t,
     fresh[1] + (end[1] - fresh[1]) * t,

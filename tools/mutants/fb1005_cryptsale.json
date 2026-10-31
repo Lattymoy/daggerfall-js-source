@@ -2,8 +2,8 @@
   {
     "name": "CRYPTSALE-gate-dropped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "  homeCandidate(bd) && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "old": "  bd.hasInterior !== false &&\n  !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  !(isActiveQuestBuilding?.(bd) ?? false);",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CRYPTSALE-unstamped-refused",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "  homeCandidate(bd) && bd.hasInterior === true && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "old": "  bd.hasInterior !== false &&",
+    "new": "  bd.hasInterior === true &&",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "CRYPTSALE-door-unstamped",
     "file": "src/systems/talk/talkTopics.js",
-    "old": ", modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub), ...footprintOf(sub) };",
-    "new": ", modelIdNum: model?.modelIdNum ?? null, ...footprintOf(sub) };",
+    "old": "    hasInterior: hasInteriorModels(sub),\n    ...footprintOf(sub),",
+    "new": "    ...footprintOf(sub),",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "CRYPTSALE-list-unstamped",
     "file": "src/systems/talk/talkTopics.js",
-    "old": "        hasInterior: hasInteriorModels(sub),   // FIELD BUGS 2026-10-05 CRYPT-SALE",
+    "old": "        hasInterior: hasInteriorModels(sub), // FIELD BUGS 2026-10-05 CRYPT-SALE",
     "new": "",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "CRYPTSALE-law-unknown-empty",
     "file": "src/world/interior/interiorLayout.js",
-    "old": "export const hasInteriorModels = (sub) => sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;",
-    "new": "export const hasInteriorModels = (sub) => sub?.interior?.made === true || (sub?.interior?.header?.num3dObjectRecords ?? 0) !== 0;",
+    "old": "  sub?.interior?.made === true || sub?.interior?.header?.num3dObjectRecords !== 0;",
+    "new": "  sub?.interior?.made === true || (sub?.interior?.header?.num3dObjectRecords ?? 0) !== 0;",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "CRYPTSALE-candidate-gated",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
-    "new": "  if (bd?.hasInterior === false) return false;\n  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
+    "old": "  return (",
+    "new": "  if (bd?.hasInterior === false) return false;\n  return (",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "CRYPTSALE-arena-move-unasked",
     "file": "src/systems/arena/arenaMove.js",
-    "old": "(s) => homeCandidate(s) && s.hasInterior !== false && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)))",
-    "new": "(s) => homeCandidate(s) && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)))",
+    "old": "      (s) =>\n        homeCandidate(s) &&\n        s.hasInterior !== false &&\n        !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),",
+    "new": "      (s) => homeCandidate(s) && !homeListedOff(o?.mapId, s.buildingKey, undefined, homeClaimLayout(o?.mapId)),",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "CRYPTSALE-summaries-unstamped",
     "file": "src/world/buildingSummaries.js",
-    "old": "        hasInterior: hasInteriorModels(sub),   // AUDIT FB1005 C2",
-    "new": "        // AUDIT FB1005 C2",
+    "old": "        hasInterior: hasInteriorModels(sub), // AUDIT FB1005 C2: a room that cannot be laid out (CRYPT-SALE's law)",
+    "new": "        // AUDIT FB1005 C2: a room that cannot be laid out (CRYPT-SALE's law)",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],

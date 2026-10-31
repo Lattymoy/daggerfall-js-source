@@ -19,26 +19,47 @@ let keptBy = new WeakMap();
 let era = 0;
 const rowKey = (/** @type {string} */ key) => (era ? `${era}:${key}` : key);
 /** Tests stand fresh services: nothing kept before counts. */
-export const _resetStaffKeptForTests = () => { keptBy = new WeakMap(); era++; };
+export const _resetStaffKeptForTests = () => {
+  keptBy = new WeakMap();
+  era++;
+};
 /** Tests stand another isolate: its memory empty, the rows every isolate reads as they stand. */
-export const _otherIsolateForTests = () => { keptBy = new WeakMap(); };
+export const _otherIsolateForTests = () => {
+  keptBy = new WeakMap();
+};
 /** @param {any} db */
-const mineOf = (db) => { const root = db?.[DB_ROOT] ?? db; let m = keptBy.get(root); if (!m) keptBy.set(root, m = new Map()); return m; };
+const mineOf = (db) => {
+  const root = db?.[DB_ROOT] ?? db;
+  let m = keptBy.get(root);
+  if (!m) keptBy.set(root, (m = new Map()));
+  return m;
+};
 
 /** The statement that keeps `value` under `key` - null for one past STAFF_KEPT_MAX_BYTES (made every time, never kept).
  *  A row made later than this one is never overwritten by it. @param {any} db @param {string} key @param {number} nowS @param {any} value */
 function storeStatement(db, key, nowS, value) {
   const body = JSON.stringify(value);
   if (typeof body !== 'string' || body.length > STAFF_KEPT_MAX_BYTES) return null;
-  try { return db.prepare(`INSERT INTO staff_kept (key, at, body, busy_until) VALUES (?1, ?2, ?3, 0)
-    ON CONFLICT (key) DO UPDATE SET at = excluded.at, body = excluded.body, busy_until = 0 WHERE excluded.at >= staff_kept.at`).bind(rowKey(key), nowS, body); } catch { return null; }   // a database that will not even take it (no table): never kept
+  try {
+    return db
+      .prepare(
+        `INSERT INTO staff_kept (key, at, body, busy_until) VALUES (?1, ?2, ?3, 0)
+    ON CONFLICT (key) DO UPDATE SET at = excluded.at, body = excluded.body, busy_until = 0 WHERE excluded.at >= staff_kept.at`,
+      )
+      .bind(rowKey(key), nowS, body);
+  } catch {
+    return null;
+  } // a database that will not even take it (no table): never kept
 }
 /** Run statements off the answer's path where the Worker lets it (`ctx.later`), else awaited; never throws.
  *  @param {any} ctx @param {any[]} list @param {string} what */
 async function writeOff(ctx, list, what) {
   if (!list.length) return;
-  const p = (list.length === 1 ? list[0].run() : ctx.db.batch(list)).catch((/** @type {any} */ e) => console.warn(`[staff-kept] ${what} kept`, e?.message ?? e));
-  if (typeof ctx.later === 'function') ctx.later(p); else await p;
+  const p = (list.length === 1 ? list[0].run() : ctx.db.batch(list)).catch((/** @type {any} */ e) =>
+    console.warn(`[staff-kept] ${what} kept`, e?.message ?? e),
+  );
+  if (typeof ctx.later === 'function') ctx.later(p);
+  else await p;
 }
 
 /**
@@ -54,9 +75,19 @@ export async function staffKeptAll(ctx, keys, fn) {
   const ask = [...new Set(keys)];
   if (ask.length) {
     try {
-      const got = (await db.prepare(`SELECT key, at, body, busy_until FROM staff_kept WHERE key IN (${ask.map((_, i) => `?${i + 1}`).join(', ')})`).bind(...ask.map(rowKey)).all())?.results ?? [];
+      const got =
+        (
+          await db
+            .prepare(
+              `SELECT key, at, body, busy_until FROM staff_kept WHERE key IN (${ask.map((_, i) => `?${i + 1}`).join(', ')})`,
+            )
+            .bind(...ask.map(rowKey))
+            .all()
+        )?.results ?? [];
       for (const k of ask) rows.set(k, got.find((r) => r.key === rowKey(k)) ?? null);
-    } catch { rows.clear(); }
+    } catch {
+      rows.clear();
+    }
   }
   /** @type {any[]} */
   const writes = [];
@@ -81,31 +112,47 @@ export async function staffKept(ctx, key, freshS, staleS, make) {
   /** @type {any} */
   let row = null;
   if (ctx.kept?.rows.has(key)) row = ctx.kept.rows.get(key);
-  else { try { row = await db.prepare('SELECT at, body, busy_until FROM staff_kept WHERE key = ?1').bind(rowKey(key)).first(); } catch { row = null; } }
+  else {
+    try {
+      row = await db.prepare('SELECT at, body, busy_until FROM staff_kept WHERE key = ?1').bind(rowKey(key)).first();
+    } catch {
+      row = null;
+    }
+  }
   const at = Number(row?.at);
   let value;
   if (row && Number.isFinite(at) && nowS >= at && nowS - at < staleS) {
-    try { value = JSON.parse(String(row.body)); } catch { row = null; }
+    try {
+      value = JSON.parse(String(row.body));
+    } catch {
+      row = null;
+    }
   } else row = null;
   if (row) {
     mine.set(key, { at, value });
     if (nowS - at < freshS) return value;
     // stale: answered now, made again after - by the one request whose claim lands
     const again = (async () => {
-      const claim = await db.prepare('UPDATE staff_kept SET busy_until = ?2 WHERE key = ?1 AND at = ?3 AND busy_until <= ?4')
-        .bind(rowKey(key), nowS + STAFF_KEPT_BUSY_S, at, nowS).run();
+      const claim = await db
+        .prepare('UPDATE staff_kept SET busy_until = ?2 WHERE key = ?1 AND at = ?3 AND busy_until <= ?4')
+        .bind(rowKey(key), nowS + STAFF_KEPT_BUSY_S, at, nowS)
+        .run();
       if (!claim?.meta?.changes) return;
       const fresh = await make();
       mine.set(key, { at: nowS, value: fresh });
       await storeStatement(db, key, nowS, fresh)?.run();
     })().catch((e) => console.warn(`[staff-kept] ${key} made again`, /** @type {any} */ (e)?.message ?? e));
-    if (typeof ctx.later === 'function') ctx.later(again); else await again;
+    if (typeof ctx.later === 'function') ctx.later(again);
+    else await again;
     return value;
   }
   value = await make();
   mine.set(key, { at: nowS, value });
   const st = storeStatement(db, key, nowS, value);
-  if (st) { if (ctx.kept) ctx.kept.writes.push(st); else await writeOff(ctx, [st], key); }
+  if (st) {
+    if (ctx.kept) ctx.kept.writes.push(st);
+    else await writeOff(ctx, [st], key);
+  }
   return value;
 }
 
@@ -114,5 +161,7 @@ export async function staffKept(ctx, key, freshS, staleS, make) {
 export function staffKeptForget(db, keys) {
   const mine = mineOf(db);
   for (const k of keys) mine.delete(k);
-  return db.prepare(`DELETE FROM staff_kept WHERE key IN (${keys.map((_, i) => `?${i + 1}`).join(', ')})`).bind(...keys.map(rowKey));
+  return db
+    .prepare(`DELETE FROM staff_kept WHERE key IN (${keys.map((_, i) => `?${i + 1}`).join(', ')})`)
+    .bind(...keys.map(rowKey));
 }

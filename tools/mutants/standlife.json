@@ -12,8 +12,8 @@
   {
     "name": "STAND-LIFE-glance-unturned",
     "file": "src/characters/residentWalker.js",
-    "old": "  get shownYaw() { return this.stir === 'glance' && !this.attending ? this.yaw + this._stirSide * IDLE_GLANCE_YAW : this.yaw; }",
-    "new": "  get shownYaw() { return this.yaw; }",
+    "old": "    return this.stir === 'glance' && !this.attending ? this.yaw + this._stirSide * IDLE_GLANCE_YAW : this.yaw;",
+    "new": "    return this.yaw;",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",
       "test/systems/livingWorld/lwlooks_town.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAND-LIFE-never-back",
     "file": "src/characters/residentWalker.js",
-    "old": "      if (this._stirT >= len) { this.stir = null; this._stirT = 0; this._stirNext = 0; }",
-    "new": "      if (false) { this.stir = null; this._stirT = 0; this._stirNext = 0; }",
+    "old": "      if (this._stirT >= len) {",
+    "new": "      if (false) {",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",
       "test/systems/livingWorld/lwlooks_town.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAND-LIFE-seed-unread",
     "file": "src/characters/residentWalker.js",
-    "old": "    if (this._talkSeed !== undefined && this._talkSeed !== this._stirOf) { this._stirOf = this._talkSeed; this._stirRng = (this._talkSeed ^ 0x57a11d) >>> 0; }",
-    "new": "    if (false) { this._stirOf = this._talkSeed; this._stirRng = (this._talkSeed ^ 0x57a11d) >>> 0; }",
+    "old": "    if (this._talkSeed !== undefined && this._talkSeed !== this._stirOf) {",
+    "new": "    if (false) {",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",
       "test/systems/livingWorld/lwlooks_town.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAND-LIFE-walk-keeps-stir",
     "file": "src/characters/residentWalker.js",
-    "old": "    if (st !== this.state) { this.state = st; this.frame = 0; this._timer = 0; this.stir = null; this._stirT = 0; this._stirNext = 0; }",
-    "new": "    if (st !== this.state) { this.state = st; this.frame = 0; this._timer = 0; }",
+    "old": "      this.stir = null;\n      this._stirT = 0;\n      this._stirNext = 0;\n    }",
+    "new": "    }",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",
       "test/systems/livingWorld/lwlooks_town.test.js"
@@ -92,7 +92,7 @@
   {
     "name": "STAND-LIFE-still-filter-off",
     "file": "src/systems/livingWorld/looks.js",
-    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'].filter(([a, r]) => MOVING_STILLS.has(`${a}.${r}`));",
+    "old": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'].filter(([a, r]) =>\n    MOVING_STILLS.has(`${a}.${r}`),\n  );",
     "new": "  const list = STILL_FLATS[role][res.sex === 'female' ? 'female' : 'male'];",
     "tests": [
       "test/systems/livingWorld/standlife_street.test.js",

@@ -357,7 +357,7 @@ test('WW5 THE HOST: every theatre\'s stars stand - the Bay\'s and a province\'s,
   assert.match(h, /scans: \(\) => \(host\.theatreScans !== undefined \? host\.theatreScans : keptTheatreScans\(\)\),/);
   assert.match(h, /const lanesOk = \(\) => !!session\(\)\?\.ww5Ok;/);
   assert.match(h, /for \(const \[lane, sc\] of theatres\.warmLanes\(\)\) out\.push\(\.\.\.laneSitesOf\(n, +\(lane\), sc\)\);/);
-  assert.match(h, /try \{ return findTheatreGateSite\(gateNumber\(day, lane\), sc\); \}/, 'a province\'s stars keep off its own gate');
+  assert.match(h, /try \{\n\s*return findTheatreGateSite\(gateNumber\(day, lane\), sc\);\n\s*\}/, 'a province\'s stars keep off its own gate');
   // every master the host and the client name is its star's coven's (a province's leader where a Bay coven's Coven Mother)
   for (const f of ['src/scenes/starfall/starfallHost.js', 'src/systems/starfall/starfallClient.js']) {
     const calls = src(f).match(/starMasterOf\((?:[^()]|\([^()]*\))*\)/g) ?? [];

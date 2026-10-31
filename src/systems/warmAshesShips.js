@@ -101,11 +101,14 @@ export const boardPending = () => _boardIn !== null;
  *   raidAshore(quest)      RAID-ASHORE: a raid thrown back where the player stands - its living foes withdrawn (scenes/raidAshore.js)
  */
 let _host = null;
-export function setWarmAshesHost(host) { _host = host ?? null; }
+export function setWarmAshesHost(host) {
+  _host = host ?? null;
+}
 const host = () => _host ?? {};
 const variant = (name, v) => (host().setBlockVariant ?? setBlockVariant)(name, v, ANY_LOCATION_KEY);
 /** UnityEngine.Random.Range(int, int): min inclusive, max exclusive. */
-const rangeInt = (min, maxExclusive, random) => (maxExclusive <= min ? min : min + Math.floor(random() * (maxExclusive - min)));
+const rangeInt = (min, maxExclusive, random) =>
+  maxExclusive <= min ? min : min + Math.floor(random() * (maxExclusive - min));
 
 /** WarmAshesShips.ResetShip [IL_03aa] - the static the quest action calls: both blocks back to `_base`. */
 export function resetShipVariants() {
@@ -119,14 +122,14 @@ export function resetShipVariants() {
  * TravelShip toggle. Answers what it did, for the pins.
  */
 export function onPreFastTravel({ oceanPixels = 0, travelShip = false } = {}) {
-  if (!(oceanPixels > 0)) return 'no-water';   // "WA High Seas: No Water Detected on Travel"
+  if (!(oceanPixels > 0)) return 'no-water'; // "WA High Seas: No Water Detected on Travel"
   const h = host();
   if (rangeInt(0, 100, h.random ?? Math.random) < WA_PEACEFUL_PERCENT || tempShip) return 'peace';
   // RAID-ASHORE (the port's own - bible/03-World/Naval-Refit.md): ONE RAID AT A TIME holds the fast travel too. The IL
   // arms its ambush whatever runs, and a voyage made while a raid's quest still ran started a second over the first
   // (raidAtSea and the sea fight's boarders already ask raidRefusal); its blocks are left as the running raid set them
   if (travelShip) return raidRefusal() === 'busy' ? 'busy' : armRaid();
-  for (const block of WA_SHIP_BLOCKS) variant(block, WA_VARIANT_BASE);   // "Player is not traveling by ship."
+  for (const block of WA_SHIP_BLOCKS) variant(block, WA_VARIANT_BASE); // "Player is not traveling by ship."
   return 'base';
 }
 
@@ -138,7 +141,7 @@ function armRaid() {
   hasTraveledbyShip = true;
   if (!owns) {
     tempShip = true;
-    h.assignShip?.(SHIP_TYPES.Large);   // "Temporary ship assigned."
+    h.assignShip?.(SHIP_TYPES.Large); // "Temporary ship assigned."
   }
   for (const block of WA_SHIP_BLOCKS) variant(block, WA_VARIANT_RAID);
   return owns ? 'raid' : 'raid-lent';
@@ -222,7 +225,9 @@ function transportToShip() {
 export class LeaveShip extends ActionTemplate {
   static typeName = 'LeaveShip';
   /** Pattern [IL_050c]: the literal, unanchored. */
-  get pattern() { return /Leave Ship/; }
+  get pattern() {
+    return /Leave Ship/;
+  }
   createNew(source, parentQuest) {
     if (!this.test(source)) return null;
     return new LeaveShip(parentQuest);
@@ -235,7 +240,10 @@ export class LeaveShip extends ActionTemplate {
     const h = host();
     const gate = h.leaveShipGate?.(this.parentQuest) ?? 'proceed';
     if (gate === 'wait') return;
-    if (gate === 'naval') { this.setComplete(); return; }
+    if (gate === 'naval') {
+      this.setComplete();
+      return;
+    }
     if (h.currentRegionIndex?.() === WA_SEA_REGION) {
       resetShipVariants();
       if (!h.ownsShip?.()) {
@@ -275,5 +283,9 @@ export function installWarmAshesShips() {
 
 /** Test seam. */
 export function _resetWarmAshesShips() {
-  hasTraveledbyShip = false; tempShip = false; _boardIn = null; _host = null; _installed = false;
+  hasTraveledbyShip = false;
+  tempShip = false;
+  _boardIn = null;
+  _host = null;
+  _installed = false;
 }

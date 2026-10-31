@@ -150,8 +150,8 @@
   {
     "name": "ASCEND-LIVE-live-is-permanent",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  liveStat({ stats: { [key]: permanent }, activeEffects: entity?.activeEffects, _mods: entity?._mods }, key);",
-    "new": "  permanent;",
+    "old": "export const liveAttribute = (entity, key, permanent) =>\n  liveStat({ stats: { [key]: permanent }, activeEffects: entity?.activeEffects, _mods: entity?._mods }, key);",
+    "new": "export const liveAttribute = (entity, key, permanent) => permanent;",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
     ]
@@ -195,7 +195,7 @@
   {
     "name": "ASCEND-LIVE-note-silent-when-capped",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  return row.capped ? t('levelup.live.capped', '{said} - a point here won\\'t show', { said }) : said;",
+    "old": "  return row.capped ? t('levelup.live.capped', \"{said} - a point here won't show\", { said }) : said;",
     "new": "  return said;",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
@@ -204,7 +204,7 @@
   {
     "name": "ASCEND-LIVE-note-lowered-as-bonus",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  const said = row.live > row.value ? t('levelup.live.boosted', '{live} with its bonus', { live: row.live }) : t('levelup.live.lowered', 'Lowered to {live} for now', { live: row.live });",
+    "old": "  const said =\n    row.live > row.value\n      ? t('levelup.live.boosted', '{live} with its bonus', { live: row.live })\n      : t('levelup.live.lowered', 'Lowered to {live} for now', { live: row.live });",
     "new": "  const said = t('levelup.live.boosted', '{live} with its bonus', { live: row.live });",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
@@ -276,8 +276,8 @@
   {
     "name": "ASCEND-LIVE-tint-lowered-never",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": ": row.live < row.value ? 'lowered' : '');",
-    "new": ": '');",
+    "old": "export const liveTint = (row) => (!row ? '' : row.live > row.value ? 'boosted' : row.live < row.value ? 'lowered' : '');",
+    "new": "export const liveTint = (row) => (!row ? '' : row.live > row.value ? 'boosted' : '');",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
     ]
@@ -285,7 +285,7 @@
   {
     "name": "ASCEND-LIVE-aria-own-value-dropped",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  const said = [row.live !== row.value ? t('levelup.star.permanent', '{name} {live} ({value} permanent)', { name: row.label, live: row.live, value: row.value })\n    : t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live })];",
+    "old": "  const said = [\n    row.live !== row.value\n      ? t('levelup.star.permanent', '{name} {live} ({value} permanent)', {\n          name: row.label,\n          live: row.live,\n          value: row.value,\n        })\n      : t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live }),\n  ];",
     "new": "  const said = [t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live })];",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
@@ -294,7 +294,7 @@
   {
     "name": "ASCEND-LIVE-aria-capped-dropped",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  if (row.capped) said.push(t('levelup.star.capped', 'a point here won\\'t show for now'));",
+    "old": "  if (row.capped) said.push(t('levelup.star.capped', \"a point here won't show for now\"));",
     "new": "",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
@@ -303,8 +303,8 @@
   {
     "name": "ASCEND-LIVE-folds-dropped",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "activeEffects: entity?.activeEffects, _mods: entity?._mods }, key);",
-    "new": "activeEffects: entity?.activeEffects }, key);",
+    "old": "  liveStat({ stats: { [key]: permanent }, activeEffects: entity?.activeEffects, _mods: entity?._mods }, key);",
+    "new": "  liveStat({ stats: { [key]: permanent }, activeEffects: entity?.activeEffects }, key);",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
     ]
@@ -339,8 +339,8 @@
   {
     "name": "ASCEND-LIVE-floor-said-as-bonus",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  return row.capped ? t('levelup.live.capped', '{said} - a point here won\\'t show', { said }) : said;",
-    "new": "  return row.capped ? t('levelup.live.capped', '{said} - a point here won\\'t show', { said: t('levelup.live.boosted', '{live} with its bonus', { live: row.live }) }) : said;",
+    "old": "  return row.capped ? t('levelup.live.capped', \"{said} - a point here won't show\", { said }) : said;",
+    "new": "  return row.capped\n    ? t('levelup.live.capped', \"{said} - a point here won't show\", {\n        said: t('levelup.live.boosted', '{live} with its bonus', { live: row.live }),\n      })\n    : said;",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
     ]
@@ -384,8 +384,8 @@
   {
     "name": "ASCEND-LIVE-luck-the-long-one-again",
     "file": "src/ui/levelUp/levelUpView.js",
-    "old": "  get luck() { return t('levelup.blurb.luck', 'Helps you hit and avoid hits, as Agility does, and improves your loot.'); },",
-    "new": "  get luck() { return t('levelup.blurb.luck', 'Helps you hit and avoid being hit, as Agility does, and improves all the loot you find.'); },",
+    "old": "    return t('levelup.blurb.luck', 'Helps you hit and avoid hits, as Agility does, and improves your loot.');",
+    "new": "    return t(\n      'levelup.blurb.luck',\n      'Helps you hit and avoid being hit, as Agility does, and improves all the loot you find.',\n    );",
     "tests": [
       "test/systems/disc28e_ascendlive.test.js"
     ]
@@ -474,8 +474,8 @@
   {
     "name": "SHIP-SAIL-warning-dropped",
     "file": "src/scenes/travelView.js",
-    "old": "  if (unwell) rows.push('You are diseased or poisoned.');\n  return rows;\n}",
-    "new": "  return rows;\n}",
+    "old": "  if (unwell) rows.push('You are diseased or poisoned.');\n  return rows;",
+    "new": "  return rows;",
     "tests": [
       "test/systems/travel/disc28e_shipport.test.js"
     ]
@@ -610,8 +610,8 @@
   {
     "name": "SHIP-SAIL-coins-words-dropped",
     "file": "src/systems/party/partyTravelLaw.js",
-    "old": "  if (!afford && coinsShort) return `You cannot afford the journey (${Math.max(0, Math.round(computed?.piecesCost ?? 0))} gold in coin for the inns).`;\n",
-    "new": "",
+    "old": "  if (!afford && coinsShort)\n    return `You cannot afford the journey (${Math.max(0, Math.round(computed?.piecesCost ?? 0))} gold in coin for the inns).`;\n  if (!afford) return `You cannot afford the journey (${total} gold).`;",
+    "new": "  if (!afford) return `You cannot afford the journey (${total} gold).`;",
     "tests": [
       "test/systems/travel/disc28e_shipport.test.js"
     ]
@@ -718,8 +718,8 @@
   {
     "name": "FPS-VSYNC-restart-said-live",
     "file": "src/ui/settings/settingsCopy.js",
-    "old": "restart: 'Takes effect the next time the app starts.',",
-    "new": "restart: 'This works now.',",
+    "old": "  restart: 'Takes effect the next time the app starts.', // FPS-VSYNC: the desktop shell reads it at launch",
+    "new": "  restart: 'This works now.', // FPS-VSYNC: the desktop shell reads it at launch",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -772,8 +772,8 @@
   {
     "name": "FPS-VSYNC-pacer-holds-its-own-frame",
     "file": "src/systems/frameCap.js",
-    "old": "    take(stamp);   // this frame is the slot: drawn, the next one booked\n",
-    "new": "",
+    "old": "    take(stamp); // this frame is the slot: drawn, the next one booked\n    const batch = [...queue.values()];",
+    "new": "    const batch = [...queue.values()];",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -799,8 +799,8 @@
   {
     "name": "FPS-VSYNC-pacer-one-ask-a-frame",
     "file": "src/systems/frameCap.js",
-    "old": "    const batch = [...queue.values()];\n    queue.clear();",
-    "new": "    const [first] = queue.keys();\n    const batch = first == null ? [] : [queue.get(first)];\n    queue.delete(first);",
+    "old": "    const batch = [...queue.values()];\n    queue.clear(); // a request made while the batch runs is the NEXT slot's",
+    "new": "    const [first] = queue.keys();\n    const batch = first == null ? [] : [queue.get(first)];\n    queue.delete(first); // a request made while the batch runs is the NEXT slot's",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -808,8 +808,8 @@
   {
     "name": "FPS-VSYNC-pacer-a-throw-stops-the-rest",
     "file": "src/systems/frameCap.js",
-    "old": "    for (const cb of batch) { try { cb(stamp); } catch (e) { report(e); } }",
-    "new": "    for (const cb of batch) cb(stamp);",
+    "old": "    for (const cb of batch) {\n      try {\n        cb(stamp);\n      } catch (e) {\n        report(e);\n      }\n    } // one callback's throw is not the others'",
+    "new": "    for (const cb of batch) cb(stamp); // one callback's throw is not the others'",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -817,8 +817,8 @@
   {
     "name": "FPS-VSYNC-pacer-cancel-lost",
     "file": "src/systems/frameCap.js",
-    "old": "    cancel(id) { if (!queue.delete(id)) caf(id); },",
-    "new": "    cancel(id) { caf(id); },",
+    "old": "      if (!queue.delete(id)) caf(id);",
+    "new": "      caf(id);",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -826,8 +826,8 @@
   {
     "name": "FPS-VSYNC-pacer-in-every-shell",
     "file": "src/systems/frameCap.js",
-    "old": "  if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame",
-    "new": "  if (!win?.daggerShell || typeof win.requestAnimationFrame",
+    "old": "  if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame !== 'function' || win.__framePacer)\n    return false;",
+    "new": "  if (!win?.daggerShell || typeof win.requestAnimationFrame !== 'function' || win.__framePacer) return false;",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]
@@ -835,8 +835,8 @@
   {
     "name": "FPS-VSYNC-take-books-from-the-stamp",
     "file": "src/systems/frameCap.js",
-    "old": "  state.due = state.due && stamp - state.due < interval ? state.due + interval : stamp + interval;\n}",
-    "new": "  state.due = stamp + interval;\n}",
+    "old": "  state.due = state.due && stamp - state.due < interval ? state.due + interval : stamp + interval;",
+    "new": "  state.due = stamp + interval;",
     "tests": [
       "test/ui/settings/disc28e_vsync.test.js"
     ]

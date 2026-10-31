@@ -2,8 +2,8 @@
   {
     "name": "TIER1-a-Hollow-read-as-its-other-flags",
     "file": "src/systems/dungeon/dungeonTier.js",
-    "old": "  if (loc.superTier === true) return 'super';\n",
-    "new": "",
+    "old": "  if (loc.superTier === true) return 'super';\n  return loc.elite === true ? 'elite' : 'regular';",
+    "new": "  return loc.elite === true ? 'elite' : 'regular';",
     "tests": [
       "test/world/tier1_dungeontiers.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "TIER1-the-phrase-drops-the-size",
     "file": "src/systems/dungeon/dungeonTier.js",
-    "old": "(label?.text ? `${label.text}${label.size ? `, ${label.size}` : ''}` : '')",
-    "new": "(label?.text ? label.text : '')",
+    "old": "export const tierPhrase = (label) => (label?.text ? `${label.text}${label.size ? `, ${label.size}` : ''}` : '');",
+    "new": "export const tierPhrase = (label) => (label?.text ? label.text : '');",
     "tests": [
       "test/world/tier1_dungeontiers.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "TIER1-the-label-made-every-frame",
     "file": "src/world/dungeon/dungeonLabel.js",
-    "old": "  if (kept) return kept;\n",
-    "new": "",
+    "old": "  if (kept) return kept;\n  const size = dungeonSizeOnline(loc);",
+    "new": "  const size = dungeonSizeOnline(loc);",
     "tests": [
       "test/world/tier1_dungeontiers.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "TIER1-the-plaque-takes-any-tier",
     "file": "src/systems/worldTooltips.js",
-    "old": "if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {",
-    "new": "if (kind === 'dungeonEntrance' && tier) {",
+    "old": "  if (kind === 'dungeonEntrance' && Object.hasOwn(DUNGEON_TIER_TEXT, tier ?? '')) {",
+    "new": "  if (kind === 'dungeonEntrance' && tier) {",
     "tests": [
       "test/world/tier1_dungeontiers.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "TIER1-the-plaque-loses-the-size",
     "file": "src/systems/worldTooltips.js",
-    "old": "    if (size) subs.push(String(size));\n",
-    "new": "",
+    "old": "    if (size) subs.push(String(size));\n    return { title: DUNGEON_TIER_TEXT[tier], subs };",
+    "new": "    return { title: DUNGEON_TIER_TEXT[tier], subs };",
     "tests": [
       "test/world/tier1_dungeontiers.test.js",
       "test/scenes/elitedungeons.test.js"

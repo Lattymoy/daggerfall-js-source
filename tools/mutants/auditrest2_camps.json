@@ -156,8 +156,8 @@
   {
     "name": "AUDITREST2-H5-a-tent-minted",
     "file": "src/systems/survival/camp.js",
-    "old": "  .filter((r) => r?.kind === CAMP_KIND.Fire)   // a fire alone",
-    "new": "  .filter((r) => !!r)   // a fire alone",
+    "old": "    .filter((r) => r?.kind === CAMP_KIND.Fire) // a fire alone, as packOwnFires; packCamp stamps out one with no fuel of its own",
+    "new": "    .filter((r) => !!r) // a fire alone, as packOwnFires; packCamp stamps out one with no fuel of its own",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDITREST2-H5-every-fire-stamped",
     "file": "src/systems/survival/camp.js",
-    "old": "  .map((r) => packCamp(r).item).filter(Boolean);",
-    "new": "  .map(() => null).filter(Boolean);",
+    "old": "    .map((r) => packCamp(r).item)",
+    "new": "    .map(() => null)",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDITREST2-H7-the-campfire-mended",
     "file": "src/systems/survival/items.js",
-    "old": "worldTextureRecord: TORCH?.worldTextureRecord ?? 17, isNotRepairable: true },",
-    "new": "worldTextureRecord: TORCH?.worldTextureRecord ?? 17 },",
+    "old": "    isNotRepairable: true,\n  },",
+    "new": "  },",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -183,8 +183,8 @@
   {
     "name": "AUDITREST2-H7-a-supply-recharged",
     "file": "src/systems/rest/restItemRows.js",
-    "old": "  isNotRepairable: !stackable,",
-    "new": "  isNotRepairable: false,",
+    "old": "    isNotRepairable: !stackable,",
+    "new": "    isNotRepairable: false,",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "AUDITREST2-H8-every-shelf-cc",
     "file": "src/systems/shopStock.js",
-    "old": "provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })",
-    "new": "provisionsStock(quality, rolls, { campfires: true })",
+    "old": "    if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: shelfIndex === 0 })) items.push(it);",
+    "new": "    if (survivalOn()) for (const it of provisionsStock(quality, rolls, { campfires: true })) items.push(it);",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -201,8 +201,8 @@
   {
     "name": "AUDITREST2-H8-every-shelf-online",
     "file": "src/systems/shopStock.js",
-    "old": "    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls))",
-    "new": "    else if (sharedClockOn()) for (const it of campfireStock(rolls))",
+    "old": "    else if (sharedClockOn() && shelfIndex === 0) for (const it of campfireStock(rolls)) items.push(it); // REST2: online the Campfire is the rest's, the arc on or off",
+    "new": "    else if (sharedClockOn()) for (const it of campfireStock(rolls)) items.push(it); // REST2: online the Campfire is the rest's, the arc on or off",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "AUDITREST2-H8-the-draw-skipped",
     "file": "src/systems/survival/items.js",
-    "old": "  const fires = n(2, 4);",
-    "new": "  const fires = campfires ? n(2, 4) : 0;",
+    "old": "  const fires = n(2, 4); // AUDIT REST II H8: drawn on every shelf, so each shelf's later draws stay its own; stood on one",
+    "new": "  const fires = campfires ? n(2, 4) : 0; // AUDIT REST II H8: drawn on every shelf, so each shelf's later draws stay its own; stood on one",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "AUDITREST2-H9-the-counter-unread",
     "file": "src/systems/realmCustoms.js",
-    "old": "...carriedItemLists(snap), ...(Array.isArray(snap.otherItems) ? [snap.otherItems] : [])])) {",
-    "new": "...carriedItemLists(snap)])) {",
+    "old": "    for (const list of new Set([\n      ...carriedItemLists(snap),\n      ...(Array.isArray(snap.otherItems) ? [snap.otherItems] : []),\n    ])) {",
+    "new": "    for (const list of new Set([...carriedItemLists(snap)])) {",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ],
@@ -247,8 +247,8 @@
   {
     "name": "AUDITREST2-H10-the-entity-dropped",
     "file": "src/systems/rest/restItems.js",
-    "old": "offlineUse((item, list, ctx) => useCandle(item, list, ctx?.entity))",
-    "new": "offlineUse((item, list) => useCandle(item, list))",
+    "old": "  offlineUse((item, list, ctx) => useCandle(item, list, ctx?.entity)),",
+    "new": "  offlineUse((item, list) => useCandle(item, list)),",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]

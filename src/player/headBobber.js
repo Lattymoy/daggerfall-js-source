@@ -27,7 +27,7 @@ import { WALK_STEP_INTERVAL } from '../systems/footsteps.js';
 export const BOB_SPEED = WALK_STEP_INTERVAL / 2;
 export const END_TIMER_MAX = 0.5;
 export const BOUNCE_MAX = 0.17;
-export const BOUNCE_TIMER_MAX = 0.10;
+export const BOUNCE_TIMER_MAX = 0.1;
 const DEG = Math.PI / 180;
 
 /** SetParamsForBobbingStyle (:73-108): [bobX, bobY, nodX, nodY]. */
@@ -53,7 +53,7 @@ const lerp = (a, b, t) => a + (b - a) * Math.min(Math.max(t, 0), 1);
 
 export class HeadBobber {
   constructor() {
-    this.timer = Math.PI / 2;   // the crest: a bob UP as the foot pushes off (:31)
+    this.timer = Math.PI / 2; // the crest: a bob UP as the foot pushes off (:31)
     this.beginTransitionTimer = 0;
     this.endTransitionTimer = 0;
     this.isStopping = false;
@@ -74,13 +74,25 @@ export class HeadBobber {
    * @param {{yaw:number, pitch:number}} cam
    * @param {object} s - the frame's state (see the destructure)
    */
-  update(dt, cam, {
-    enabled = getBool('Controls', 'HeadBobbing'),
-    health = 1, paused = false, climbing = false, grounded = true,
-    swimming = false, running = false, crouching = false, riding = false, levitating = false,
-    velocity = 0, moving = false,
-    out = null,
-  } = {}) {
+  update(
+    dt,
+    cam,
+    {
+      enabled = getBool('Controls', 'HeadBobbing'),
+      health = 1,
+      paused = false,
+      climbing = false,
+      grounded = true,
+      swimming = false,
+      running = false,
+      crouching = false,
+      riding = false,
+      levitating = false,
+      velocity = 0,
+      moving = false,
+      out = null,
+    } = {},
+  ) {
     // Take last frame's nod back off the look (Rotate is per-frame on
     // top of PlayerMouseLook's absolute write).
     cam.pitch += this.nod[0] * DEG;
@@ -93,13 +105,18 @@ export class HeadBobber {
     this.style = bobbingStyle({ swimming, running, crouching, riding });
     const [bobX, bobY, nodX, nodY] = BOB_STYLE[this.style];
     // getNewPos (:110-150); positions here are relative to rest.
-    let posX = 0, posY = 0;
-    let rotX = 0, rotY = 0;
+    let posX = 0,
+      posY = 0;
+    let rotX = 0,
+      rotY = 0;
     const timeIncrement = velocity * BOB_SPEED * dt;
     const plotPath = () => [Math.cos(this.timer) * bobX, Math.abs(Math.sin(this.timer) * bobY)];
     const plotRotation = () => [Math.abs(Math.sin(this.timer) * nodX), -Math.sin(this.timer) * nodY];
     if (moving) {
-      if (this.endTransitionTimer > 0) { this.endTransitionTimer = 0; this.timer = Math.PI; }
+      if (this.endTransitionTimer > 0) {
+        this.endTransitionTimer = 0;
+        this.timer = Math.PI;
+      }
       this.timer += timeIncrement;
       this.beginTransitionTimer += timeIncrement;
       [posX, posY] = plotPath();
@@ -107,7 +124,8 @@ export class HeadBobber {
       if (this.beginTransitionTimer <= Math.PI) {
         // InterpolateBeginTransition (:220-224): rest -> path over (timer % PI) / PI
         const t = (this.timer % Math.PI) / Math.PI;
-        posX = lerp(0, posX, t); posY = lerp(0, posY, t);
+        posX = lerp(0, posX, t);
+        posY = lerp(0, posY, t);
       }
       this.isStopping = true;
       this.endTransitionTimer = 0;
@@ -117,7 +135,8 @@ export class HeadBobber {
       this.endTransitionTimer += dt;
       // InterpolateEndTransition (:214-219): from where the camera IS to rest
       const t = this.endTransitionTimer / END_TIMER_MAX;
-      posX = lerp(this.offset[0], 0, t); posY = lerp(this.offset[1], 0, t);
+      posX = lerp(this.offset[0], 0, t);
+      posY = lerp(this.offset[1], 0, t);
       [rotX, rotY] = plotRotation();
     } else if (this.isStopping) {
       this.endTransitionTimer = 0;
@@ -139,8 +158,12 @@ export class HeadBobber {
    *  `newPosition.x - newPosition.x`). */
   _applySimpleBouncing(dt, posY, { grounded, swimming, climbing, levitating }) {
     if (climbing || levitating) return posY;
-    let upSpeed = 1, downSpeed = 1;
-    if (swimming) { upSpeed = 0.40; downSpeed = 0.1; }
+    let upSpeed = 1,
+      downSpeed = 1;
+    if (swimming) {
+      upSpeed = 0.4;
+      downSpeed = 0.1;
+    }
     if ((!grounded || swimming) && !this.readyToBounce) {
       this.readyToBounce = true;
       this.bounceTimerUp = 0;

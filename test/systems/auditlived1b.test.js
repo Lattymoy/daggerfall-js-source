@@ -36,6 +36,7 @@ import { RACES } from '../../src/systems/races.js';
 import { MERCHANTS_FACTION_ID } from '../../src/systems/guild/guilds.js';
 import { FACTION_TYPES } from '../../src/formats/factionFile.js';
 import { createRegionConditions } from '../../src/systems/region/regionConditions.js';
+import { hostText } from '../hostText.mjs';   // PIN MOVED (HOST-SPLIT TEST-PRESET): the world host whole
 
 afterEach(() => { setSharedClock(null); });
 
@@ -114,12 +115,12 @@ test('AUDIT LIVED1b K1 (K2): a collapse fired from inside a round walks its hour
   assert.equal(ticks, 2, 'the window in hand, then the hour\'s own walk');
   assert.equal(e.lastGameMinutes, Math.floor(ownMinutes()), 'walked this frame');
   // the hosts' guard, where the handler lives - AUDIT C&C N2/H1: in both lanes, as DFU's own (and exterior.js has it now)
-  assert.match(rd('src/scenes/world.js'), /function onExhaustedExterior\(\) \{\s*if \(_inExhaustion \|\| exhaustedShowing\(\)\) return;/);
+  assert.match(hostText('src/scenes/world.js'), /function onExhaustedExterior\(\) \{\s*if \(_inExhaustion \|\| exhaustedShowing\(\)\) return;/);
   assert.match(rd('src/scenes/exterior.js'), /function onExhaustedExterior\(\) \{\s*if \(_inExhaustion \|\| exhaustedShowing\(\)\) return;/);
-  assert.match(rd('src/scenes/world.js'), /_exhaustedBox = new ActionTextBox\(lines\);\s*townTalk\.pushOverlay\(_exhaustedBox\);/);
+  assert.match(hostText('src/scenes/world.js'), /_exhaustedBox = new ActionTextBox\(lines\);\s*townTalk\.pushOverlay\(_exhaustedBox\);/);
   assert.match(rd('src/scenes/worldModes.js'), /function onExhaustedInterior\(\) \{\s*if \(_inExhaustion \|\| exhaustedShowing\(\)\) return;/);
   assert.match(rd('src/scenes/worldModes.js'), /_exhaustedBox = new ActionTextBox\([^\n]*\);\s*mountInterior\(_exhaustedBox\);/);
-  assert.match(rd('src/scenes/world.js'), /const exhaustedShowing = \(\) => !!_exhaustedBox && !_exhaustedBox\.done && townTalk\.containsOverlay\(_exhaustedBox\);/, 'the box, while it stands');
+  assert.match(hostText('src/scenes/world.js'), /const exhaustedShowing = \(\) => !!_exhaustedBox && !_exhaustedBox\.done && townTalk\.containsOverlay\(_exhaustedBox\);/, 'the box, while it stands');
   assert.match(rd('src/scenes/worldModes.js'), /const exhaustedShowing = \(\) => !!_exhaustedBox && !_exhaustedBox\.done && interiorWindows\.containsWindow\(_exhaustedBox\);/);
 });
 
@@ -139,7 +140,7 @@ test('AUDIT LIVED1b S1 (F2, K2): an online checkpoint waits while a raise waits 
   assert.equal(ownWalkWaiting(e), false, 'offline, never: the host saves on its own, as before');
   // each gate by its own line - AUDIT C&C (the list's run): the zone's death checkpoint (WILD1) copied the gate, and one
   // pattern held either copy, so the realm checkpoint's could lose its walk under a pin that still passed
-  const world = rd('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   // PIN MOVED (FIELD BUGS 2026-10-25 SEAT-SAVES review): the two copies are one gate now (checkpointGateOpen), which carries the walk, asked at both doors
   assert.match(world, /const checkpointGateOpen = \(\) => checkpointAllowed\(\{ online: !!online, spawned: playerSpawned, seatOut: seatOut\(\), duel: !!duelMgr\?\.duel, walkWaiting: ownWalkWaiting\(playerEntity\), realm: !!realmSession \}\);/, 'the gate carries the walk');
   assert.match(world, /if \(!checkpointGateOpen\(\)\) return false;/, 'the host asks');
@@ -246,7 +247,7 @@ test('AUDIT LIVED1b P4: the absence is measured on the relay\'s clock - a machin
   let paid = 0;
   payAbsenceWhenHeard(left, () => { paid++; });
   assert.equal(paid, 1, 'a load after the welcome pays at once');
-  assert.match(rd('src/scenes/world.js'), /online\.onClock = \(offsetMs\) => \{[^\n]*onlineArrival\(\); hearSharedClock\(\); \};/, 'the host hears it');
+  assert.match(hostText('src/scenes/world.js'), /online\.onClock = \(offsetMs\) => \{[^\n]*onlineArrival\(\); hearSharedClock\(\); \};/, 'the host hears it');
 });
 
 test('AUDIT LIVED1b P2: a copy Bring online made joins fresh - its stamp is this machine\'s clock at the click, and an OS clock set a year back there buys no pardon', () => {
@@ -440,7 +441,7 @@ test('AUDIT LIVED1b A3: a backward step of the world\'s clock re-rolls no raid d
 });
 
 test('AUDIT LIVED1b P1: a party mirror\'s night walks the follower\'s own watch - a hated member is watched as asleep alone - and rolls no wanderer (the rester\'s roll is the party\'s)', () => {
-  const src = rd('src/scenes/world.js');
+  const src = hostText('src/scenes/world.js');
   const extract = (head) => {
     const at = src.indexOf(head);
     assert.ok(at >= 0, head);
@@ -500,7 +501,7 @@ test('AUDIT LIVED1b P1: a party mirror\'s night walks the follower\'s own watch 
 test('AUDIT LIVED1b R4: a character born online takes the skill check\'s stamp at the character\'s own clock, as DFU\'s AssignCharacter does at Now', () => {
   // each birth by its own lines - AUDIT C&C (the list's run): the legacy heir's (LEGACY1) copied the stamp, and one
   // pattern held either copy, so the wizard's could go under a pin that still passed
-  const world = rd('src/scenes/world.js');
+  const world = hostText('src/scenes/world.js');
   assert.match(world, /setLoadingAside\('window', false\);[^\n]*\n\s*finishChargen\(playerEntity, r, sbi\);\s*(?:\/\/[^\n]*\n\s*)*if \(sharedClockOn\(\)\) playerEntity\.lastSkillCheckTime = Math\.floor\(ownMinutes\(\)\);/, 'the wizard');
   assert.match(world, /if \(!r\) \{ legacyBirthFailed\([^\n]*\n\s*finishChargen\(playerEntity, r, sbi\);\s*if \(sharedClockOn\(\)\) playerEntity\.lastSkillCheckTime = Math\.floor\(ownMinutes\(\)\);/, 'the heir, as the wizard\'s');
 });
@@ -524,5 +525,5 @@ test('AUDIT LIVED1b U1-U8, D3: the words - two rows on the classic panel, one ro
   assert.match(rd('src/ui/enhanced/enhancedRest.js'), /const clockLine = el\('p', 'clock-line'\);/, 'U7');
   for (const s of ['src/ui/enhanced/enhancedPlusStyle.js', 'src/ui/enhanced/enhancedStyle.js']) assert.match(rd(s), /\.rest-shell \.clock-line:empty \{ display: none; \}/, s);
   assert.equal(OWN_TIME_ROOM_NOTE, '. Resting uses it; logging off does not.', 'U8');
-  assert.match(rd('src/scenes/world.js'), /LIVED1: the cure's minute is the character's own time/, 'D3');
+  assert.match(hostText('src/scenes/world.js'), /LIVED1: the cure's minute is the character's own time/, 'D3');
 });

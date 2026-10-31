@@ -38,17 +38,28 @@
 import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
-import { ListPickerWindow, listPickerArtLoaded, listPickerSmallFont, preloadListPickerSmallFont, SMALL_FONT_PICKER_ROWS } from './listPicker.js';
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js'; // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import {
+  ListPickerWindow,
+  listPickerArtLoaded,
+  listPickerSmallFont,
+  preloadListPickerSmallFont,
+  SMALL_FONT_PICKER_ROWS,
+} from './listPicker.js';
 import { makeIconDrawer, drawStackLabel, makeSlotToolTip } from './item/itemScroller.js';
 import { audio } from '../systems/audio.js';
-import { isEnchanted, addItem } from '../systems/inventory.js';   // F176: Refresh's !IsEnchanted (:148); AddItem is Refresh's merge (:149)
+import { isEnchanted, addItem } from '../systems/inventory.js'; // F176: Refresh's !IsEnchanted (:148); AddItem is Refresh's merge (:149)
 import { SOUND } from '../systems/soundClips.js';
 import {
-  CAULDRON_CAPACITY, cauldronAccepts, mixCauldron, consumeCauldron,
-  isIngredient, knownRecipes, gatherRecipe,
+  CAULDRON_CAPACITY,
+  cauldronAccepts,
+  mixCauldron,
+  consumeCauldron,
+  isIngredient,
+  knownRecipes,
+  gatherRecipe,
 } from '../systems/potions.js';
-import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText } from '../systems/textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** MASK00I0 is a full-screen background (:75-76), so the rects are
  *  screen-absolute rather than panel-relative. */
@@ -84,7 +95,8 @@ export const INGREDIENT_LIST_X = 11;
  *  up at (0,0,9,16) and down at (0, height-16, 9, 16) of the
  *  scroller's own rect (ItemListScroller.cs:27-28, :293-309). The
  *  cauldron's is scroll=false and has none. */
-export const INGREDIENT_ROWS = 4, INGREDIENT_COLS = 3;
+export const INGREDIENT_ROWS = 4,
+  INGREDIENT_COLS = 3;
 export const INGREDIENT_SCROLL_UP = Object.freeze([5, 30, 9, 16]);
 export const INGREDIENT_SCROLL_DOWN = Object.freeze([5, 30 + 142 - 16, 9, 16]);
 
@@ -104,10 +116,14 @@ export async function preloadPotionArt(deps) {
     _art = await loadImg(deps, 'MASK00I0.IMG');
     // AUDIT 58: the recipe picker is SmallFont, 12 rows (:113).
     await preloadListPickerSmallFont(deps);
-  } catch { console.warn('[potions] MASK00I0 unavailable; the potion maker stays closed'); }
+  } catch {
+    console.warn('[potions] MASK00I0 unavailable; the potion maker stays closed');
+  }
 }
 export const potionArtLoaded = () => !!_art;
-export function _setPotionArtForTests(art) { _art = art; }
+export function _setPotionArtForTests(art) {
+  _art = art;
+}
 
 const inRect = ([rx, ry, rw, rh], x, y) => x >= rx && y >= ry && x < rx + rw && y < ry + rh;
 
@@ -154,11 +170,13 @@ export class PotionMakerWindow {
     this.box = null;
     this.picker = null;
     this._icon = makeIconDrawer(hooks.icons, () => hooks.entity);
-    this._tip = makeSlotToolTip();   // D7: the window's shared ToolTip (:340)
+    this._tip = makeSlotToolTip(); // D7: the window's shared ToolTip (:340)
   }
 
   /** The rest clock DaggerfallBaseWindow's defaultToolTip runs. */
-  tick(dt) { this._tip.update(dt); }
+  tick(dt) {
+    this._tip.update(dt);
+  }
 
   /** The item under the cursor, on either list - the two grids the
    *  click path already reads, so the tip can never name a slot the
@@ -172,7 +190,11 @@ export class PotionMakerWindow {
     return this.ingredients()[this.scroll * INGREDIENT_COLS + is] ?? null;
   }
 
-  _close() { this.done = true; noticeRelease(this); this.hooks.onClose?.(); }
+  _close() {
+    this.done = true;
+    noticeRelease(this);
+    this.hooks.onClose?.();
+  }
 
   /** The carried ingredients, minus the UNITS already in the cauldron.
    *  AUDIT 26 F174/F176: DFU's Refresh collects `item.IsIngredient &&
@@ -222,7 +244,8 @@ export class PotionMakerWindow {
       addItem(merged, { ...it });
     }
     const out = [];
-    for (const it of [...merged, ...(this.hooks.storeItems?.() ?? [])]) {   // POTION-DOOR: the Stores' after what is carried
+    for (const it of [...merged, ...(this.hooks.storeItems?.() ?? [])]) {
+      // POTION-DOOR: the Stores' after what is carried
       const held = it.stackCount ?? 1;
       const take = Math.min(potted.get(at(it)) ?? 0, held);
       if (take > 0) potted.set(at(it), (potted.get(at(it)) ?? 0) - take);
@@ -235,7 +258,7 @@ export class PotionMakerWindow {
   /** AddToCauldron (:251-264) - a full pot simply refuses, with no
    *  message, and the name label clears on every change. */
   _addToCauldron(item) {
-    if (!cauldronAccepts(this.cauldron) || this._brewing) return;   // POTION-DOOR: the pot the service is brewing is not touched
+    if (!cauldronAccepts(this.cauldron) || this._brewing) return; // POTION-DOOR: the pot the service is brewing is not touched
     this.nameLabel = '';
     // SplitStack(item, 1) (:257-258): the pot holds ONE unit; the
     // remainder stays in the grid through ingredients()'s subtraction.
@@ -253,7 +276,7 @@ export class PotionMakerWindow {
 
   /** RemoveFromCauldron (:266-274). */
   _removeFromCauldron(slot) {
-    if (slot >= this.cauldron.length || this._brewing) return;   // POTION-DOOR: nor taken from
+    if (slot >= this.cauldron.length || this._brewing) return; // POTION-DOOR: nor taken from
     this.nameLabel = '';
     this.cauldron.splice(slot, 1);
   }
@@ -269,7 +292,10 @@ export class PotionMakerWindow {
     if (this.cauldron.length === 0 || this._brewing) return;
     const result = mixCauldron(this.cauldron.map((it) => it.templateIndex));
     const door = this.hooks.brew?.(result, this.cauldron) ?? null;
-    if (door && !door.classic) { this._throughDoor(door); return; }
+    if (door && !door.classic) {
+      this._throughDoor(door);
+      return;
+    }
     if (result.kind === 'failed') {
       this.box = this._failedBox();
     } else {
@@ -298,37 +324,66 @@ export class PotionMakerWindow {
    *  spent by the service and the book, never by this window's walk). A window closed while it is asked says nothing: the
    *  host mints the potions on the answer either way. */
   _throughDoor(door) {
-    if (!door.answer) { this.box = door.failed ? this._failedBox() : { rows: [{ text: door.text ?? '', center: true }] }; return; }
+    if (!door.answer) {
+      this.box = door.failed ? this._failedBox() : { rows: [{ text: door.text ?? '', center: true }] };
+      return;
+    }
     this._brewing = true;
     this.box = { rows: [{ text: door.wait ?? '', center: true }] };
-    Promise.resolve(door.answer).catch(() => null).then((r) => {
-      this._brewing = false;
-      if (this.done) return;
-      if (!r) { this.box = null; return; }
-      if (r?.ok) { this.cauldron = []; audio.playOneShot(SOUND.MakePotion, 1); }
-      this.box = r.ok ? this._mixedBox(r.text) : { rows: [{ text: r.text ?? '', center: true }] };
-    });
+    Promise.resolve(door.answer)
+      .catch(() => null)
+      .then((r) => {
+        this._brewing = false;
+        if (this.done) return;
+        if (!r) {
+          this.box = null;
+          return;
+        }
+        if (r?.ok) {
+          this.cauldron = [];
+          audio.playOneShot(SOUND.MakePotion, 1);
+        }
+        this.box = r.ok ? this._mixedBox(r.text) : { rows: [{ text: r.text ?? '', center: true }] };
+      });
   }
   /** "potionFailed" (:332), the box a mix no recipe answers says. */
-  _failedBox() { return { rows: [{ text: localizedText('potionFailed', POTION_FAILED), center: true }] }; }
+  _failedBox() {
+    return { rows: [{ text: localizedText('potionFailed', POTION_FAILED), center: true }] };
+  }
   /** "potionMixed" (:325), and POTION-DOOR's word beside it where one is said (the brew's answer, a classic mix's why). */
-  _mixedBox(word = '') { return { rows: [{ text: localizedText('potionMixed', POTION_MIXED), center: true }, ...(word ? [{ text: word, center: true }] : [])] }; }
+  _mixedBox(word = '') {
+    return {
+      rows: [
+        { text: localizedText('potionMixed', POTION_MIXED), center: true },
+        ...(word ? [{ text: word, center: true }] : []),
+      ],
+    };
+  }
 
   /** RecipesButton_OnMouseClick (:376-382): an empty list is a message
    *  box rather than an empty picker. */
   _recipes() {
     audio.playOneShot(SOUND.ButtonClick, 1);
     const known = knownRecipes(this.hooks.recipeKeys?.() ?? []);
-    if (!known.length) { this.box = { rows: [{ text: localizedText('noRecipes', NO_RECIPES), center: true }] }; return; }
+    if (!known.length) {
+      this.box = { rows: [{ text: localizedText('noRecipes', NO_RECIPES), center: true }] };
+      return;
+    }
     this.picker = new ListPickerWindow({
       // AUDIT 63 F42: the picker's rows are DisplayName (:171-172),
       // not the recipe's localization key - `name` is that key.
       items: known.map((r) => r.displayName),
-      onPick: (i) => { this._fillFrom(known[i]); this.picker = null; },
-      onCancel: () => { this.picker = null; },
+      onPick: (i) => {
+        this._fillFrom(known[i]);
+        this.picker = null;
+      },
+      onCancel: () => {
+        this.picker = null;
+      },
       // AUDIT 58: DaggerfallPotionMakerWindow.cs:113 builds this
       // picker with `(uiManager, this, DaggerfallUI.SmallFont, 12)`.
-      font: listPickerSmallFont(), rowsDisplayed: SMALL_FONT_PICKER_ROWS,
+      font: listPickerSmallFont(),
+      rowsDisplayed: SMALL_FONT_PICKER_ROWS,
     });
   }
 
@@ -338,9 +393,12 @@ export class PotionMakerWindow {
    *  ingredient goes in, and the name label takes the recipe's name
    *  (:302-308). */
   _fillFrom(recipe) {
-    if (this._brewing) return;   // POTION-DOOR: nor refilled while it brews
+    if (this._brewing) return; // POTION-DOOR: nor refilled while it brews
     const avail = this.ingredients();
-    const { found, missing } = gatherRecipe(recipe, avail.map((it) => it.templateIndex));
+    const { found, missing } = gatherRecipe(
+      recipe,
+      avail.map((it) => it.templateIndex),
+    );
     if (missing.length > 0) {
       this.box = { rows: [{ text: localizedText('reqIngredients', REQ_INGREDIENTS), center: true }] };
       return;
@@ -361,10 +419,23 @@ export class PotionMakerWindow {
   }
 
   input(code) {
-    if (this.picker) { this.picker.input(code); if (this.picker?.done) this.picker = null; return; }
-    if (this.box) { this.box = null; return; }
-    if (code === 'Escape' || code === 'KeyE') { this._close(); return; }
-    if (code === 'Enter' || code === 'KeyM') { this._mix(); return; }
+    if (this.picker) {
+      this.picker.input(code);
+      if (this.picker?.done) this.picker = null;
+      return;
+    }
+    if (this.box) {
+      this.box = null;
+      return;
+    }
+    if (code === 'Escape' || code === 'KeyE') {
+      this._close();
+      return;
+    }
+    if (code === 'Enter' || code === 'KeyM') {
+      this._mix();
+      return;
+    }
     if (code === 'KeyR') this._recipes();
   }
 
@@ -373,27 +444,62 @@ export class PotionMakerWindow {
    *  way a button's ToolTip does, and clears the moment it rests on
    *  nothing. */
   hover(vx, vy, e = null) {
-    if (this.picker) { this.picker.hover(vx, vy, e); this._tip.hide(); return; }
-    if (this.box || vx < 0 || vy < 0) { this._tip.hide(); return; }
+    if (this.picker) {
+      this.picker.hover(vx, vy, e);
+      this._tip.hide();
+      return;
+    }
+    if (this.box || vx < 0 || vy < 0) {
+      this._tip.hide();
+      return;
+    }
     this._tip.show(this._itemAt(vx, vy), vx, vy);
   }
 
   /** ROAD-E E1: the release edge, forwarded the way `hover` is - the
    *  picker's thumb latches on the press and this is what ends it. */
-  release() { this.picker?.release(); }
+  release() {
+    this.picker?.release();
+  }
 
   click(vx, vy) {
-    if (this.picker) { this.picker.click(vx, vy, this._font); if (this.picker?.done) this.picker = null; return true; }
-    if (this.box) { this.box = null; return true; }
+    if (this.picker) {
+      this.picker.click(vx, vy, this._font);
+      if (this.picker?.done) this.picker = null;
+      return true;
+    }
+    if (this.box) {
+      this.box = null;
+      return true;
+    }
     const R = POTION_RECTS;
-    if (inRect(R.exit, vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._close(); return true; }
-    if (inRect(R.mix, vx, vy)) { this._mix(); return true; }
-    if (inRect(R.recipes, vx, vy)) { this._recipes(); return true; }
+    if (inRect(R.exit, vx, vy)) {
+      audio.playOneShot(SOUND.ButtonClick, 1);
+      this._close();
+      return true;
+    }
+    if (inRect(R.mix, vx, vy)) {
+      this._mix();
+      return true;
+    }
+    if (inRect(R.recipes, vx, vy)) {
+      this._recipes();
+      return true;
+    }
 
-    if (inRect(INGREDIENT_SCROLL_UP, vx, vy)) { this._scrollIngredients(-1); return true; }
-    if (inRect(INGREDIENT_SCROLL_DOWN, vx, vy)) { this._scrollIngredients(1); return true; }
+    if (inRect(INGREDIENT_SCROLL_UP, vx, vy)) {
+      this._scrollIngredients(-1);
+      return true;
+    }
+    if (inRect(INGREDIENT_SCROLL_DOWN, vx, vy)) {
+      this._scrollIngredients(1);
+      return true;
+    }
     const cs = slotAt(R.cauldronList, CAULDRON_BUTTONS, vx, vy);
-    if (cs !== null) { this._removeFromCauldron(cs); return true; }
+    if (cs !== null) {
+      this._removeFromCauldron(cs);
+      return true;
+    }
     const is = slotAt(R.ingredientsList, INGREDIENT_BUTTONS, vx, vy, INGREDIENT_LIST_X);
     if (is !== null) {
       // "Convert scroller index to item based scroll index"
@@ -406,14 +512,20 @@ export class PotionMakerWindow {
   }
 
   draw(renderer, canvas, font) {
-    if (!_art) { this._close(); return; }
+    if (!_art) {
+      this._close();
+      return;
+    }
     this._font = font;
     const m = nativeMetrics(canvas);
     // ParentPanel is ScreenDimColor and the NATIVE panel carries its
     // own 60% black under the texture (:101-105) - both, in that order.
     drawScreenDimBackdrop(renderer, canvas);
     drawImg(renderer, _art, m, 0, 0);
-    if (this.picker && listPickerArtLoaded()) { this.picker.draw(renderer, canvas, font); return; }
+    if (this.picker && listPickerArtLoaded()) {
+      this.picker.draw(renderer, canvas, font);
+      return;
+    }
 
     const R = POTION_RECTS;
     this.ingredients()
@@ -435,6 +547,6 @@ export class PotionMakerWindow {
       this._boxLayout = layoutMessageBox(font, this.box.rows, []);
       drawMessageBox(renderer, m, font, this._boxLayout);
     } else this._boxLayout = null;
-    this._tip.draw(renderer, m, font);   // D7: drawn LAST, over everything (DFU's final-component order)
+    this._tip.draw(renderer, m, font); // D7: drawn LAST, over everything (DFU's final-component order)
   }
 }

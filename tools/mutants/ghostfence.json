@@ -11,8 +11,8 @@
   {
     "name": "GHOSTFENCE-the-ring-unwandered",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "wander: Object.freeze({ amp: 0.05,",
-    "new": "wander: Object.freeze({ amp: 0,",
+    "old": "  wander: Object.freeze({ amp: 0.05, radius: 1.3, seed: 41.7 }),",
+    "new": "  wander: Object.freeze({ amp: 0, radius: 1.3, seed: 41.7 }),",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GHOSTFENCE-the-wander-off-its-middle",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "uy * D.wander.radius + D.wander.seed) - 1));",
-    "new": "uy * D.wander.radius + D.wander.seed) - 1.5));",
+    "old": "    D.wander.amp * (2 * perlinNoise(ux * D.wander.radius + D.wander.seed, uy * D.wander.radius + D.wander.seed) - 1));",
+    "new": "    D.wander.amp * (2 * perlinNoise(ux * D.wander.radius + D.wander.seed, uy * D.wander.radius + D.wander.seed) - 1.5));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GHOSTFENCE-the-band-cuts-corners",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "    if (ax !== bx && ay !== by) { mark(ax, by); mark(bx, ay); }",
-    "new": "    if (ax !== bx && ay !== by) { mark(ax, by); }",
+    "old": "      mark(bx, ay);\n    } // a corner crossed: both its neighbours, so the line is 4-connected",
+    "new": "    } // a corner crossed: both its neighbours, so the line is 4-connected",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "GHOSTFENCE-the-gate-opens-wide",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (band.has(",
-    "new": "for (let dy = -3; dy <= 3; dy++) for (let dx = -3; dx <= 3; dx++) if (band.has(",
+    "old": "  for (let dy = -1; dy <= 1; dy++)\n    for (let dx = -1; dx <= 1; dx++) if (band.has(keyOf(gx + dx, gy + dy))) open.add(keyOf(gx + dx, gy + dy));",
+    "new": "  for (let dy = -3; dy <= 3; dy++)\n    for (let dx = -3; dx <= 3; dx++) if (band.has(keyOf(gx + dx, gy + dy))) open.add(keyOf(gx + dx, gy + dy));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "GHOSTFENCE-the-line-box-short",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "return !!f && px >= f.x0 && px <= f.x1",
-    "new": "return !!f && px > f.x0 && px <= f.x1",
+    "old": "  return !!f && px >= f.x0 && px <= f.x1 && py >= f.y0 && py <= f.y1 && f.band.has(keyOf(px, py));",
+    "new": "  return !!f && px > f.x0 && px <= f.x1 && py >= f.y0 && py <= f.y1 && f.band.has(keyOf(px, py));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GHOSTFENCE-the-roads-through-the-gate-shut",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "    if (f.open.has(k)) continue;\n",
-    "new": "",
+    "old": "    if (f.open.has(k)) continue;\n    const [x, y] = k.split(',').map(Number);",
+    "new": "    const [x, y] = k.split(',').map(Number);",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GHOSTFENCE-the-gate-runs-to-its-foot",
     "file": "src/world/tamriel/ghostfence.js",
-    "old": "const end = (k, side) => (k === f.gate ?",
-    "new": "const end = (k, side) => (k === -1 ?",
+    "old": "    k === f.gate",
+    "new": "    k === -1",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "GHOSTFENCE-the-ball-inward",
     "file": "src/world/tamriel/ghostfenceModel.js",
-    "old": "      tri(rec, a, b, d); tri(rec, b, e, d);",
-    "new": "      tri(rec, a, d, b); tri(rec, b, d, e);",
+    "old": "        tri(rec, a, b, d);\n        tri(rec, b, e, d); // out of the ball: the rows run down from its top, the columns round toward +z",
+    "new": "        tri(rec, a, d, b);\n        tri(rec, b, d, e); // out of the ball: the rows run down from its top, the columns round toward +z",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "GHOSTFENCE-a-face-inward",
     "file": "src/world/tamriel/ghostfenceModel.js",
-    "old": "if ((m[0] - inside[0]) * n[0] + (m[1] - inside[1]) * n[1] + (m[2] - inside[2]) * n[2] < 0)",
-    "new": "if ((m[0] - inside[0]) * n[0] + (m[1] - inside[1]) * n[1] + (m[2] - inside[2]) * n[2] > 0)",
+    "old": "    if ((m[0] - inside[0]) * n[0] + (m[1] - inside[1]) * n[1] + (m[2] - inside[2]) * n[2] < 0) {",
+    "new": "    if ((m[0] - inside[0]) * n[0] + (m[1] - inside[1]) * n[1] + (m[2] - inside[2]) * n[2] > 0) {",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "GHOSTFENCE-the-seat-its-lowest",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "    const y = groundAt(x, z), low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0]));",
-    "new": "    const low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0])), y = low;",
+    "old": "    const y = groundAt(x, z),\n      low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0]));",
+    "new": "    const low = lowestGroundUnder(samples, footprint(x, z, tx, tz, PYLON.plinth[0], PYLON.plinth[0])),\n      y = low;",
     "tests": [
       "test/world/ghostfence.test.js"
     ],
@@ -183,8 +183,8 @@
   {
     "name": "GHOSTFENCE-the-curtain-short",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "ax, hi + CURTAIN_SOLID_TOP, az);",
-    "new": "ax, hi + CURTAIN.to, az);",
+    "old": "        ax,\n        hi + CURTAIN_SOLID_TOP,",
+    "new": "        ax,\n        hi + CURTAIN.to,",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "GHOSTFENCE-the-feet-by-the-build-key",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "  noteFenceFeet(pkey, { frame: f,",
-    "new": "  noteFenceFeet(key, { frame: f,",
+    "old": "  noteFenceFeet(pkey, {",
+    "new": "  noteFenceFeet(key, {",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "GHOSTFENCE-a-built-foot-unread",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "    if (exact.has(i)) fine[i] = ",
-    "new": "    if (false && exact.has(i)) fine[i] = ",
+    "old": "      if (exact.has(i)) fine[i] = /** @type {number} */ (exact.get(i));",
+    "new": "      if (false && exact.has(i)) fine[i] = /** @type {number} */ (exact.get(i));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -219,8 +219,8 @@
   {
     "name": "GHOSTFENCE-the-middle-ring-uneased",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "    else if (m !== null) { fine[i] = m; kind[i] = 1; }",
-    "new": "    else if (m !== null) { fine[i] = m; kind[i] = 0; }",
+    "old": "        kind[i] = 1;",
+    "new": "        kind[i] = 0;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -228,8 +228,8 @@
   {
     "name": "GHOSTFENCE-a-built-foot-eased",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "  if (h.z > 0.5 && uMorph.z > 0.5) {",
-    "new": "  if (uMorph.z > 0.5) {",
+    "old": "  if (h.z > 0.5 && uMorph.z > 0.5) { vec2 d = abs(xz - uMorphFrom.xz); return mix(h.x, h.y, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))); }",
+    "new": "  if (uMorph.z > 0.5) { vec2 d = abs(xz - uMorphFrom.xz); return mix(h.x, h.y, smoothstep(uMorph.x, uMorph.y, max(d.x, d.y))); }",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -246,8 +246,8 @@
   {
     "name": "GHOSTFENCE-the-margin-thin",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "fade: Object.freeze([4000, 12000, 45000]), period: 40, reach: 60000, margin: 250,",
-    "new": "fade: Object.freeze([4000, 12000, 45000]), period: 40, reach: 60000, margin: 50,",
+    "old": "  margin: 250,",
+    "new": "  margin: 50,",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -255,8 +255,8 @@
   {
     "name": "GHOSTFENCE-the-middle-ring-mirrored",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "gz = ((mid.baseY + 1 - by) * TERRAIN_SIZE) / cell",
-    "new": "gz = ((by - mid.baseY) * TERRAIN_SIZE) / cell",
+    "old": "      gz = ((mid.baseY + 1 - by) * TERRAIN_SIZE) / cell + mid.radius * mid.sub;",
+    "new": "      gz = ((by - mid.baseY) * TERRAIN_SIZE) / cell + mid.radius * mid.sub;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -264,8 +264,8 @@
   {
     "name": "GHOSTFENCE-the-far-ring-off-its-centres",
     "file": "src/render/ghostfenceGlow.js",
-    "old": "const fi = bx - 0.5 - ring.baseX + ring.radius",
-    "new": "const fi = bx - ring.baseX + ring.radius",
+    "old": "    const fi = bx - 0.5 - ring.baseX + ring.radius,",
+    "new": "    const fi = bx - ring.baseX + ring.radius,",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -291,8 +291,8 @@
   {
     "name": "LAVA-CLEAR-the-bed-under-the-lava",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "const half = 0.5 * (T.halfTop",
-    "new": "const half = 0.4 * (T.halfTop",
+    "old": "      const half = 0.5 * (T.halfTop + (T.halfFoot - T.halfTop) * (along / len)),",
+    "new": "      const half = 0.4 * (T.halfTop + (T.halfFoot - T.halfTop) * (along / len)),",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -300,8 +300,8 @@
   {
     "name": "LAVA-CLEAR-the-run-the-whole-line",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "const p = line.pts, n = line.s.length, len = line.s[n - 1], run = len * T.lava;",
-    "new": "const p = line.pts, n = line.s.length, len = line.s[n - 1], run = len;",
+    "old": "      run = len * T.lava;",
+    "new": "      run = len;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "LAVA-CLEAR-the-pixels-unpadded",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "const pad = 0.5 * D.trough.halfFoot * k;",
-    "new": "const pad = 0;",
+    "old": "    const pad = 0.5 * D.trough.halfFoot * k;",
+    "new": "    const pad = 0;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -318,8 +318,8 @@
   {
     "name": "LAVA-CLEAR-the-crater-pixels-short",
     "file": "src/world/tamriel/redMountain.js",
-    "old": "mark(f.cx - D.floor * k, f.cy - D.floor * k, f.cx + D.floor * k, f.cy + D.floor * k);",
-    "new": "mark(f.cx - 0.4 * D.floor * k, f.cy - 0.4 * D.floor * k, f.cx + 0.4 * D.floor * k, f.cy + 0.4 * D.floor * k);",
+    "old": "    mark(f.cx - D.floor * k, f.cy - D.floor * k, f.cx + D.floor * k, f.cy + D.floor * k);",
+    "new": "    mark(f.cx - 0.4 * D.floor * k, f.cy - 0.4 * D.floor * k, f.cx + 0.4 * D.floor * k, f.cy + 0.4 * D.floor * k);",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "FENCE-CLEAR-no-reach",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "ghostfenceNear(gx, gy, FENCE_CLEAR + reach)",
-    "new": "ghostfenceNear(gx, gy, FENCE_CLEAR)",
+    "old": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
+    "new": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "FENCE-CLEAR-a-landmark's-reach-unread",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "const reach = landMeasures(LAND_KINDS[raw[i + 5]], raw[i + 6]).reach * raw[i + 4];",
-    "new": "const reach = 0;",
+    "old": "    const reach = landMeasures(LAND_KINDS[raw[i + 5]], raw[i + 6]).reach * raw[i + 4];",
+    "new": "    const reach = 0;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "LAVA-CLEAR-the-clearing-everywhere",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "  if (!lava && !fence) return null;\n",
-    "new": "  if (false) return null;\n",
+    "old": "  if (!lava && !fence) return null;",
+    "new": "  if (false) return null;",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "LAVA-CLEAR-the-clearing-blind-to-lava",
     "file": "src/scenes/ghostfenceBuild.js",
-    "old": "return (lava && redMountainLavaBed(gx, gy)) ||",
-    "new": "return false ||",
+    "old": "    return (lava && redMountainLavaBed(gx, gy)) || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
+    "new": "    return false || (fence && ghostfenceNear(gx, gy, FENCE_CLEAR + reach));",
     "tests": [
       "test/world/ghostfence.test.js"
     ]
@@ -435,8 +435,8 @@
   {
     "name": "FENCE-CLEAR-a-gate-on-the-line",
     "file": "src/systems/gate/theatreGateSite.js",
-    "old": "wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(",
-    "new": "wet(x, y) || spawnsDungeon(",
+    "old": "    if (near || wet(x, y) || onGhostfence(x, y) || redMountainLavaIn(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
+    "new": "    if (near || wet(x, y) || spawnsDungeon(spawnSalt, x, y)) return; // FENCE-CLEAR, LAVA-CLEAR: nor the fence's line or the lava",
     "tests": [
       "test/world/ghostfence.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "SHOT-grape-no-men",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "grape: Object.freeze({ speed: 0.82, spread: 2.4, sweep: 0.45, hull: 0.2, sail: 0.6, crew: 4,",
-    "new": "grape: Object.freeze({ speed: 0.82, spread: 2.4, sweep: 0.45, hull: 0.2, sail: 0.6, crew: 1,",
+    "old": "    crew: 4,",
+    "new": "    crew: 1,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "SHOT-sweep-unswept",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "radius: gun.radius + Math.max(0, a.sweep - o.sweep),",
-    "new": "radius: gun.radius,",
+    "old": "    radius: gun.radius + Math.max(0, a.sweep - o.sweep),",
+    "new": "    radius: gun.radius,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "SHOT-cycle-back-forward",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "(dir < 0 ? SHOT_ORDER.length - 1 : 1)",
-    "new": "1",
+    "old": "export const nextShot = (shot, dir = 1) =>\n  SHOT_ORDER[(SHOT_ORDER.indexOf(shotId(shot)) + (dir < 0 ? SHOT_ORDER.length - 1 : 1)) % SHOT_ORDER.length];",
+    "new": "export const nextShot = (shot, dir = 1) => SHOT_ORDER[(SHOT_ORDER.indexOf(shotId(shot)) + 1) % SHOT_ORDER.length];",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -74,7 +74,7 @@
   {
     "name": "SHOT-heated-cold",
     "file": "src/systems/naval/shotKinds.js",
-    "old": "  const c = shot == null ? fireChance : SHOT[shotId(shot)].fire ?? fireChance;",
+    "old": "  const c = shot == null ? fireChance : (SHOT[shotId(shot)].fire ?? fireChance);",
     "new": "  const c = fireChance;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "SHOT-solution-unsaid",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "barrel: false, shot: load, elevation,",
-    "new": "barrel: false, shot: null, elevation,",
+    "old": "    shot: load,",
+    "new": "    shot: null,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SHOT-one-broadside",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "      const sides = group === 'broadside' ? ['starboard', 'port'] : [group];\n      const armed",
-    "new": "      const sides = [side];\n      const armed",
+    "old": "      const sides = group === 'broadside' ? ['starboard', 'port'] : [group];",
+    "new": "      const sides = [side];",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "SHOT-switch-whole",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
-    "new": "        else { const t = now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
+    "old": "          const t = SHOT_SWITCH * now * scaleNow();",
+    "new": "          const t = now * scaleNow();",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SHOT-switch-free",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
-    "new": "        else { const t = 0; clocks[x] = t; length[x] = t || 1; }",
+    "old": "          const t = SHOT_SWITCH * now * scaleNow();",
+    "new": "          const t = 0;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "SHOT-switch-unscaled",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
-    "new": "        else { const t = SHOT_SWITCH * now; clocks[x] = t; length[x] = t || 1; }",
+    "old": "          const t = SHOT_SWITCH * now * scaleNow();",
+    "new": "          const t = SHOT_SWITCH * now;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "SHOT-reloading-unscaled",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "        if (clocks[x] > 0) { const k = now / (was || 1); clocks[x] *= k; length[x] *= k; }",
-    "new": "        if (clocks[x] > 0) { const k = 1; clocks[x] *= k; length[x] *= k; }",
+    "old": "          const k = now / (was || 1);",
+    "new": "          const k = 1;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -182,7 +182,7 @@
   {
     "name": "SHOT-barrels-loaded",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "      const armed = sides.filter((x) => { const b = batteryOf(hull, x); return b && b.gun !== 'barrel'; });",
+    "old": "      const armed = sides.filter((x) => {\n        const b = batteryOf(hull, x);\n        return b && b.gun !== 'barrel';\n      });",
     "new": "      const armed = sides.filter((x) => !!batteryOf(hull, x));",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -191,8 +191,8 @@
   {
     "name": "SHOT-ball-sweep-bore",
     "file": "src/systems/naval/navalShots.js",
-    "old": "    const radius = (b.radius ??= shotGun(b.gun, GUNS[b.gun], b.shot)?.radius ?? 0.1);",
-    "new": "    const radius = (b.radius ??= GUNS[b.gun]?.radius ?? 0.1);",
+    "old": "    const radius = (b.radius ??= shotGun(b.gun, GUNS[b.gun], b.shot)?.radius ?? 0.1); // AUDIT 2: read once a ball (shotGun makes its row)",
+    "new": "    const radius = (b.radius ??= GUNS[b.gun]?.radius ?? 0.1); // AUDIT 2: read once a ball (shotGun makes its row)",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "SHOT-hit-unsaid",
     "file": "src/systems/naval/navalShots.js",
-    "old": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t),",
-    "new": "target: ship.t.id, gun: b.gun, shot: null, t: flight(ship.e.t),",
+    "old": "        gun: b.gun,\n        shot: b.shot,\n        t: flight(ship.e.t),",
+    "new": "        gun: b.gun,\n        shot: null,\n        t: flight(ship.e.t),",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "SHOT-hit-untimed",
     "file": "src/systems/naval/navalShots.js",
-    "old": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t),",
-    "new": "target: ship.t.id, gun: b.gun, shot: b.shot, t: 0,",
+    "old": "        t: flight(ship.e.t),",
+    "new": "        t: 0,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "SHOT-ball-launch-unread",
     "file": "src/systems/naval/navalShots.js",
-    "old": "gun: l.gun, shot: l.shot ?? null,",
-    "new": "gun: l.gun, shot: null,",
+    "old": "        shot: l.shot ?? null,",
+    "new": "        shot: null,",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "SHOT-wire-unsaid",
     "file": "src/systems/naval/navalWire.js",
-    "old": "    if (vo.shot != null && SHOT_CODES[vo.shot] != null) o.push([vo.id >>> 0, SHOT_CODES[vo.shot]]);   // SHOT-KINDS",
-    "new": "",
+    "old": "    if (vo.shot != null && SHOT_CODES[vo.shot] != null) o.push([vo.id >>> 0, SHOT_CODES[vo.shot]]); // SHOT-KINDS\n  }",
+    "new": "  }",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -308,7 +308,7 @@
   {
     "name": "SHOT-wire-unread",
     "file": "src/systems/naval/navalWire.js",
-    "old": "  for (const vo of volleys) { const w = loaded.find((x) => x[0] === vo.id); if (w) vo.shot = SHOT_ORDER[w[1]]; }",
+    "old": "  for (const vo of volleys) {\n    const w = loaded.find((x) => x[0] === vo.id);\n    if (w) vo.shot = SHOT_ORDER[w[1]];\n  }",
     "new": "",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -317,8 +317,8 @@
   {
     "name": "SHOT-wire-door-open",
     "file": "src/systems/naval/navalWire.js",
-    "old": "!int(w[1], 0, SHOT_ORDER.length - 1)) return null;",
-    "new": "!int(w[1], 0, 9)) return null;",
+    "old": "    if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, U32) || !int(w[1], 0, SHOT_ORDER.length - 1)) return null;",
+    "new": "    if (!Array.isArray(w) || w.length !== 2 || !int(w[0], 0, U32) || !int(w[1], 0, 9)) return null;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "SHOT-loads-look-unread",
     "file": "src/scenes/naval/navalLoads.js",
-    "old": "    const group = look && gunSideOf(boat.hull, look) ? look : LOAD_GROUPS",
-    "new": "    const group = LOAD_GROUPS",
+    "old": "    const group =\n      look && gunSideOf(boat.hull, look) ? look : (LOAD_GROUPS.find((g) => gunSideOf(boat.hull, g)) ?? null);",
+    "new": "    const group = LOAD_GROUPS.find((g) => gunSideOf(boat.hull, g)) ?? null;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "SHOT-loads-wheel-one-way",
     "file": "src/scenes/naval/navalLoads.js",
-    "old": "if (quiet) cycle(deltaY > 0 ? 1 : -1);",
-    "new": "if (quiet) cycle(1);",
+    "old": "      if (quiet) cycle(deltaY > 0 ? 1 : -1);",
+    "new": "      if (quiet) cycle(1);",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -371,7 +371,7 @@
   {
     "name": "SHOT-loads-unsaid",
     "file": "src/scenes/naval/navalLoads.js",
-    "old": "    deps.say?.(t('naval.shot.loading', '{guns}: {shot} - loading', { guns: groupName(at.group), shot: shotName(shot) }), 1.6);",
+    "old": "    deps.say?.(\n      t('naval.shot.loading', '{guns}: {shot} - loading', { guns: groupName(at.group), shot: shotName(shot) }),\n      1.6,\n    );",
     "new": "",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -389,7 +389,7 @@
   {
     "name": "SHOT-ai-no-hysteresis",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const done = !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
+    "old": "  const done =\n    !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
     "new": "  const done = true;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
@@ -398,8 +398,8 @@
   {
     "name": "SHOT-ai-grape-held",
     "file": "src/systems/naval/navalAI.js",
-    "old": "{ broadsides: boarderBroadsides(ship) });",
-    "new": "{ broadsides: ship.mode !== 'board' });",
+    "old": "      broadsides: boarderBroadsides(ship),",
+    "new": "      broadsides: ship.mode !== 'board',",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "SHOT-ai-lay-unloaded",
     "file": "src/systems/naval/navalAI.js",
-    "old": "targetY: aimY, shot });",
-    "new": "targetY: aimY });",
+    "old": "        shot,\n      });",
+    "new": "      });",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "SHOT-hud-aim-unsaid",
     "file": "src/ui/naval/navalHud.js",
-    "old": "${a.shot ? `, ${shotLineWord(a.shot)}` : ''} - `,",
-    "new": " - `,",
+    "old": "          : `${SIDE_WORDS[a.side]} ${a.side === 'bow' || a.side === 'stern' ? 'chasers' : 'broadside'}${a.shot ? `, ${shotLineWord(a.shot)}` : ''} - `, // SHOT-KINDS: and its load",
+    "new": "          : `${SIDE_WORDS[a.side]} ${a.side === 'bow' || a.side === 'stern' ? 'chasers' : 'broadside'} - `, // SHOT-KINDS: and its load",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "SHOT-hud-chasers-chain",
     "file": "src/ui/naval/navalHud.js",
-    "old": "heavy: 'great guns', chain: 'chasers', barrel:",
-    "new": "heavy: 'great guns', chain: 'chain shot', barrel:",
+    "old": "  chain: 'chasers',",
+    "new": "  chain: 'chain shot',",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "SHOT-draw-grape-ball",
     "file": "src/render/navalRender.js",
-    "old": "  if (b.shot === 'grape') {\n    const open",
-    "new": "  if (false) {\n    const open",
+    "old": "  if (b.shot === 'grape') {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "SHOT-draw-chain-ball",
     "file": "src/render/navalRender.js",
-    "old": "  if (b.shot === 'chain') {\n    const u = across",
-    "new": "  if (false) {\n    const u = across",
+    "old": "  if (b.shot === 'chain') {",
+    "new": "  if (false) {",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "SHOT-draw-heated-untrailed",
     "file": "src/render/navalRender.js",
-    "old": "      ...[1, 2, 3].map((k) => glow(at(back, k * 0.7)",
-    "new": "      ...[].map((k) => glow(at(back, k * 0.7)",
+    "old": "      ...[1, 2, 3].map((k) => glow(at(back, k * 0.7), size * 2.6 * (1 - k * 0.2), [1, 0.38, 0.1, 0.5 / k])),",
+    "new": "      ...[].map((k) => glow(at(back, k * 0.7), size * 2.6 * (1 - k * 0.2), [1, 0.38, 0.1, 0.5 / k])),",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "SHOT-fx-grape-one-spout",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    if (shot === 'grape') {\n      for (let i = 0; i < 6; i++) {",
-    "new": "    if (shot === 'grape') {\n      for (let i = 0; i < 1; i++) {",
+    "old": "      for (let i = 0; i < 6; i++) {",
+    "new": "      for (let i = 0; i < 1; i++) {",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "SHOT-fx-chain-once",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    if (shot === 'chain') {\n      tear(pos, dir);",
-    "new": "    if (shot === 'chain') {\n      void 0;",
+    "old": "      tear(pos, dir);",
+    "new": "      void 0;",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "SHOT-fx-heated-no-embers",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "      for (let i = 0; i < 10; i++) push({ kind: 'ember'",
-    "new": "      for (let i = 0; i < 0; i++) push({ kind: 'ember'",
+    "old": "      for (let i = 0; i < 10; i++)",
+    "new": "      for (let i = 0; i < 0; i++)",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "SHOT-fx-heated-no-steam",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "    if (shot === 'heated') {\n      for (let i = 0; i < 4; i++) push({ kind: 'smoke'",
-    "new": "    if (false) {\n      for (let i = 0; i < 4; i++) push({ kind: 'smoke'",
+    "old": "    spout(pos, big, scale); // SPLASH-SPOUT: a ball's post of water - grape's bag of small balls throws none\n    if (shot === 'heated') {",
+    "new": "    spout(pos, big, scale); // SPLASH-SPOUT: a ball's post of water - grape's bag of small balls throws none\n    if (false) {",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "SHOT-helm-no-button",
     "file": "src/ui/enhanced/enhancedHelm.js",
-    "old": "  if (h.shot) out.push({ act: 'shot', label: h.shot, kind: 'hook' });",
-    "new": "",
+    "old": "  if (h.shot) out.push({ act: 'shot', label: h.shot, kind: 'hook' }); // SHOT-KINDS: her guns' load, stepped on (scenes/naval/navalLoads.js - its label)",
+    "new": "  // SHOT-KINDS: her guns' load, stepped on (scenes/naval/navalLoads.js - its label)",
     "tests": [
       "test/systems/naval/shotkinds.test.js"
     ]
@@ -569,7 +569,7 @@
   {
     "name": "SHOT-ai-opened-kept",
     "file": "src/systems/naval/navalAI.js",
-    "old": "  const done = !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
+    "old": "  const done =\n    !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
     "new": "  const done = !(ship.mode === 'engage' || ship.mode === 'board');",
     "tests": [
       "test/systems/naval/shotkinds.test.js"

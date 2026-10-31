@@ -49,7 +49,7 @@ export const EXTRA_DISTANCE = RMB_SIDE * 0.1;
  *  record 10 is Start). DaggerfallLocation.EnumerateStartMarkers
  *  (:289-301) is exactly this filter over the location's billboards. */
 import { EDITOR_FLATS_ARCHIVE } from './rmbFlats.js';
-export { EDITOR_FLATS_ARCHIVE };   // ONE home for archive 199 (rmbFlats), re-exported for the a3 pins
+export { EDITOR_FLATS_ARCHIVE }; // ONE home for archive 199 (rmbFlats), re-exported for the a3 pins
 export const START_MARKER_RECORD = 10;
 
 /** The four sides in Random.Range(0, 4) order, with the facing DFU's
@@ -108,15 +108,15 @@ export function pickLocationSide({ travelStart = null, worldPos = null, roll = M
   /** Random.Range(int, int) - the INT overload, [0, n). */
   const rnd = (n) => Math.min(n - 1, Math.floor(roll() * n));
   if (travelStart?.x == null || travelStart?.z == null || worldPos?.x == null || worldPos?.z == null) {
-    return rnd(4);   // :1483-1487 - "Randomly pick one side of location to spawn"
+    return rnd(4); // :1483-1487 - "Randomly pick one side of location to spawn"
   }
   // :1491-1492 - PlayerGPS's WorldX/WorldZ are ints
   const worldDeltaX = Math.trunc(worldPos.x) - Math.trunc(travelStart.x);
   const worldDeltaZ = Math.trunc(worldPos.z) - Math.trunc(travelStart.z);
-  if (worldDeltaX === 0 && worldDeltaZ === 0) return rnd(4);   // :1494-1495
+  if (worldDeltaX === 0 && worldDeltaZ === 0) return rnd(4); // :1494-1495
   const px = Math.abs(worldDeltaX);
   const pz = Math.abs(worldDeltaZ);
-  const random = rnd(px + pz);   // :1502
+  const random = rnd(px + pz); // :1502
   if (px > pz) {
     // :1503-1510 - mainly E-W; do we hit the square's front side?
     if (random < px) return worldDeltaX > 0 ? 3 : 2;
@@ -151,7 +151,8 @@ export function pickLocationSide({ travelStart = null, worldPos = null, roll = M
  *   roof refusal falls back to it, facing the way `yaw` already does).
  */
 export function positionPlayerToLocation({
-  mapWidth, mapHeight,
+  mapWidth,
+  mapHeight,
   origin = [0, 0, 0],
   startMarkers = [],
   useNearestStartMarker = false,
@@ -181,11 +182,15 @@ export function positionPlayerToLocation({
   // three dimensions (Vector3.Distance), and a location with no
   // markers keeps the outside point.
   if (useNearestStartMarker && startMarkers.length) {
-    let best = null, bestDist = Infinity;
+    let best = null,
+      bestDist = Infinity;
     for (const m of startMarkers) {
       const world = [m[0] + origin[0], m[1] + origin[1], m[2] + origin[2]];
       const d = Math.hypot(world[0] - out[0], world[1] - out[1], world[2] - out[2]);
-      if (d < bestDist) { bestDist = d; best = world; }
+      if (d < bestDist) {
+        bestDist = d;
+        best = world;
+      }
     }
     if (best) return { pos: [best[0], best[1], best[2]], yaw, side: side.name, usedStartMarker: true, edge: out };
   }
@@ -201,8 +206,7 @@ export const LOCATION_TYPE_HOME_YOUR_SHIPS = 14;
  *  location type before calling the overload (:1462-1464). */
 export function entranceOptionsForLocationType(locationType) {
   return {
-    useNearestStartMarker: locationType === LOCATION_TYPE_TOWN_CITY
-      || locationType === LOCATION_TYPE_HOME_YOUR_SHIPS,
+    useNearestStartMarker: locationType === LOCATION_TYPE_TOWN_CITY || locationType === LOCATION_TYPE_HOME_YOUR_SHIPS,
     grounded: locationType !== LOCATION_TYPE_HOME_YOUR_SHIPS,
   };
 }
@@ -232,9 +236,12 @@ export function entranceOptionsForLocationType(locationType) {
  * @returns {{pos:[number,number,number], yaw:number, side:string,
  *            usedStartMarker:boolean, grounded:boolean}|null}
  */
-export function locationArrivalLanding(dfLocation, { origin, startMarkers = [], travelStart = null, worldPos = null, roll } = {}) {
+export function locationArrivalLanding(
+  dfLocation,
+  { origin, startMarkers = [], travelStart = null, worldPos = null, roll } = {},
+) {
   const ext = dfLocation?.exterior?.exteriorData;
-  if (!ext) return null;   // :1441-1446 - no location object, no landing
+  if (!ext) return null; // :1441-1446 - no location object, no landing
   const opts = entranceOptionsForLocationType(dfLocation.mapTableData?.locationType ?? 0);
   const at = positionPlayerToLocation({
     mapWidth: ext.width,

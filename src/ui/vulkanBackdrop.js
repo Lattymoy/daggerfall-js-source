@@ -10,7 +10,8 @@
 export const VULKAN_BACKDROP_STYLE_ID = 'vk-backdrop-css';
 
 /** Every element, its pseudo-elements too. `!important` wins over each window's own rule and an inline style. */
-export const VULKAN_BACKDROP_CSS = '*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }';
+export const VULKAN_BACKDROP_CSS =
+  '*, *::before, *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }';
 
 /**
  * Whether this page's backdrop filters come out flipped: the desktop shell (`daggerShell`) drawing on ANGLE's Vulkan

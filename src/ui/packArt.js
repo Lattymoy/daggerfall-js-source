@@ -8,8 +8,8 @@
 // file must never cost a player a window.
 import { packImgUrl, packCifRciUrl, packColourUrl, packBytes } from '../systems/uiPack.js';
 
-const _byRenderer = new WeakMap();   // renderer -> Map<url, Promise<tex|null>>
-let _decode = null;                  // test seam: bytes -> { width, height, data }
+const _byRenderer = new WeakMap(); // renderer -> Map<url, Promise<tex|null>>
+let _decode = null; // test seam: bytes -> { width, height, data }
 
 /** The pack texture for `url` (null when there is none), uploaded once per renderer. */
 export function packTexture(renderer, url) {
@@ -23,14 +23,20 @@ export function packTexture(renderer, url) {
       const decode = _decode ?? (await import('../systems/textureReplacement.js')).decodePng;
       const px = toScreenOrder(await decode(await packBytes(url)));
       return renderer.uploadTexture('pack', url, px, { smooth: true, alpha: true });
-    })().catch((e) => { console.warn(`[ui pack] ${url} did not load - the classic art stands:`, e?.message ?? e); return null; });
+    })().catch((e) => {
+      console.warn(`[ui pack] ${url} did not load - the classic art stands:`, e?.message ?? e);
+      return null;
+    });
     cache.set(url, p);
   }
   return p;
 }
 /** The worn pack's texture for an IMG, a CIF/RCI record, or a save window colour texture - or null. */
 export const packImgTexture = (renderer, name) => packTexture(renderer, packImgUrl(name));
-export const packCifRciTexture = (renderer, file, record, frame = 0) => packTexture(renderer, packCifRciUrl(file, record, frame));
+export const packCifRciTexture = (renderer, file, record, frame = 0) =>
+  packTexture(renderer, packCifRciUrl(file, record, frame));
 export const packColourTexture = (renderer, name) => packTexture(renderer, packColourUrl(name));
 
-export function _setPackDecodeForTests(fn) { _decode = fn; }
+export function _setPackDecodeForTests(fn) {
+  _decode = fn;
+}

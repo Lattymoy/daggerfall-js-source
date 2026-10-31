@@ -1,193 +1,193 @@
 [
- {
-  "name": "BACK-SHIELD-under-the-weapon",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "tilt: 0, back: 0.24,",
-  "new": "tilt: 0, back: 0.1,",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "the weapon laid over the shield from behind"
- },
- {
-  "name": "BACK-SHIELD-aside-under",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "clear: 0.08, over:",
-  "new": "clear: 0.02, over:",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "from aside, the shield inside the weapon"
- },
- {
-  "name": "BACK-SHIELD-tilted",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "Object.freeze({ tilt: 0, back",
-  "new": "Object.freeze({ tilt: 0.3, back",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "the shield slung aslant like a sword"
- },
- {
-  "name": "BACK-SHIELD-no-squeeze",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "w: a.w * BACK_SHIELD_SQUEEZE[rec]",
-  "new": "w: a.w",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "from aside, the whole face"
- },
- {
-  "name": "BACK-SHIELD-inside-unturned",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "const X = flip ? P.width - 1 - x : x;",
-  "new": "const X = x;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "from before, the inside the face's way round"
- },
- {
-  "name": "BACK-SHIELD-upside-down",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "(H - 1 - row + (i + 0.5) / 3) * step",
-  "new": "(row + (i + 0.5) / 3) * step",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "the shield hung upside down"
- },
- {
-  "name": "BACK-SHIELD-one-face",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "    renderer.uploadTexture(a.archive, 1, { width: a.pic.width, height: a.pic.height, colors: a.pic.mirror });\n  };\n  return {\n    ensure(code, body)",
-  "new": "  };\n  return {\n    ensure(code, body)",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "from before, no picture"
- },
- {
-  "name": "BACK-SHIELD-never-again",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "        if (renderer.textures?.has && !renderer.textures.has(`${v.archive}_0`)) upload(renderer, v);\n",
-  "new": "",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "a shield the renderer let go, never drawn again"
- },
- {
-  "name": "BACK-SHIELD-retry-at-once",
-  "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
-  "old": "if (v && clock() - v.failedAt < HOLSTER_RETRY_MS) return null;",
-  "new": "if (false) return null;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "a shield with no picture asked for every frame"
- },
- {
-  "name": "BACK-SHIELD-arm-kept-sheathed",
-  "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
-  "old": " && !isBowCode(look?.weapon) && !look?.sheathed ? pieces.shield",
-  "new": " && !isBowCode(look?.weapon) ? pieces.shield",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "sheathed, the shield on the arm and the back at once"
- },
- {
-  "name": "BACK-SHIELD-hands-never-sheathed",
-  "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
-  "old": ", ...(s?.sheathed ? { sheathed: true } : {}) };",
-  "new": " };",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "my sheathed body keeps its shield on the arm"
- },
- {
-  "name": "BACK-SHIELD-walker-never-sheathed",
-  "file": "src/net/peer/peerRiders.js",
-  "old": ", ...(pose && !pose.wd ? { sheathed: true } : {}) };",
-  "new": " };",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "a sheathed walker keeps its shield on the arm"
- },
- {
-  "name": "BACK-SHIELD-mine-never",
-  "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-  "old": "      if (grow === 1) drawBackShield(camRight); else dropBackShield();",
-  "new": "      dropBackShield();",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "my sheathed shield nowhere"
- },
- {
-  "name": "BACK-SHIELD-mine-drawn-too",
-  "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-  "old": "!last.transformed && last.sheathed ? lookNow() : null;",
-  "new": "!last.transformed ? lookNow() : null;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "the shield on the back and the arm at once"
- },
- {
-  "name": "BACK-SHIELD-skins-given",
-  "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-  "old": "const lk = cfg.wornArmour && activeFlag &&",
-  "new": "const lk = activeFlag &&",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "a class skin's look carries no outfit (lookNow reads one only in the worn armour), so no shield code: the guard spares the look's read, it decides nothing",
-  "equivalent": true
- },
- {
-  "name": "BACK-SHIELD-never-listed",
-  "file": "src/player/eyeOfTheBeholder/eotbBody.js",
-  "old": "    backList.push(backShield);\n",
-  "new": "",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "an aura drawn over the shield"
- },
- {
-  "name": "BACK-SHIELD-walkers-never",
-  "file": "src/net/peer/peerRiders.js",
-  "old": "slingBackShield(r, peer, g > 1 || !worn ? null : pose, worn,",
-  "new": "slingBackShield(r, peer, null, worn,",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "the others' shields nowhere"
- },
- {
-  "name": "BACK-SHIELD-walker-slung-drawn",
-  "file": "src/net/peer/peerRiders.js",
-  "old": "const code = pose && !pose.wd ? outfitPieces(worn.outfit)?.shield : null;",
-  "new": "const code = pose ? outfitPieces(worn.outfit)?.shield : null;",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "a walker's shield on its back and its arm at once"
- },
- {
-  "name": "BACK-SHIELD-walker-left-behind",
-  "file": "src/net/peer/peerRiders.js",
-  "old": "    if (r?.backShield) dropSpriteHolster(r.backShield, renderer);   // BACK-SHIELD: and the shield on its back\n",
-  "new": "",
-  "tests": [
-   "test/player/eyeOfTheBeholder/backshield.test.js"
-  ],
-  "why": "a gone walker's shield left hanging"
- }
+  {
+    "name": "BACK-SHIELD-under-the-weapon",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "tilt: 0, back: 0.24,",
+    "new": "tilt: 0, back: 0.1,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "the weapon laid over the shield from behind"
+  },
+  {
+    "name": "BACK-SHIELD-aside-under",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "clear: 0.08, over:",
+    "new": "clear: 0.02, over:",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "from aside, the shield inside the weapon"
+  },
+  {
+    "name": "BACK-SHIELD-tilted",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "Object.freeze({ tilt: 0, back",
+    "new": "Object.freeze({ tilt: 0.3, back",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "the shield slung aslant like a sword"
+  },
+  {
+    "name": "BACK-SHIELD-no-squeeze",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "w: a.w * BACK_SHIELD_SQUEEZE[rec]",
+    "new": "w: a.w",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "from aside, the whole face"
+  },
+  {
+    "name": "BACK-SHIELD-inside-unturned",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "const X = flip ? P.width - 1 - x : x;",
+    "new": "const X = x;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "from before, the inside the face's way round"
+  },
+  {
+    "name": "BACK-SHIELD-upside-down",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "(H - 1 - row + (i + 0.5) / 3) * step",
+    "new": "(row + (i + 0.5) / 3) * step",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "the shield hung upside down"
+  },
+  {
+    "name": "BACK-SHIELD-one-face",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "    renderer.uploadTexture(a.archive, 1, { width: a.pic.width, height: a.pic.height, colors: a.pic.mirror });\n  };\n  return {\n    ensure(code, body)",
+    "new": "  };\n  return {\n    ensure(code, body)",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "from before, no picture"
+  },
+  {
+    "name": "BACK-SHIELD-never-again",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "        if (renderer.textures?.has && !renderer.textures.has(`${v.archive}_0`)) upload(renderer, v);\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "a shield the renderer let go, never drawn again"
+  },
+  {
+    "name": "BACK-SHIELD-retry-at-once",
+    "file": "src/player/eyeOfTheBeholder/eotbBackShield.js",
+    "old": "if (v && clock() - v.failedAt < HOLSTER_RETRY_MS) return null;",
+    "new": "if (false) return null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "a shield with no picture asked for every frame"
+  },
+  {
+    "name": "BACK-SHIELD-arm-kept-sheathed",
+    "file": "src/player/eyeOfTheBeholder/layeredArmor.js",
+    "old": "  const shield =\n    pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) && !look?.sheathed\n      ? pieces.shield\n      : null;",
+    "new": "  const shield = pieces.shield && record < 20 && !look?.offhand && !isBowCode(look?.weapon) ? pieces.shield : null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "sheathed, the shield on the arm and the back at once"
+  },
+  {
+    "name": "BACK-SHIELD-hands-never-sheathed",
+    "file": "src/player/eyeOfTheBeholder/layeredWeapon.js",
+    "old": ", ...(s?.sheathed ? { sheathed: true } : {}) };",
+    "new": " };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "my sheathed body keeps its shield on the arm"
+  },
+  {
+    "name": "BACK-SHIELD-walker-never-sheathed",
+    "file": "src/net/peer/peerRiders.js",
+    "old": ", ...(pose && !pose.wd ? { sheathed: true } : {}) };",
+    "new": " };",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "a sheathed walker keeps its shield on the arm"
+  },
+  {
+    "name": "BACK-SHIELD-mine-never",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "      if (grow === 1) drawBackShield(camRight); else dropBackShield();",
+    "new": "      dropBackShield();",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "my sheathed shield nowhere"
+  },
+  {
+    "name": "BACK-SHIELD-mine-drawn-too",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "!last.transformed && last.sheathed ? lookNow() : null;",
+    "new": "!last.transformed ? lookNow() : null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "the shield on the back and the arm at once"
+  },
+  {
+    "name": "BACK-SHIELD-skins-given",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "const lk = cfg.wornArmour && activeFlag &&",
+    "new": "const lk = activeFlag &&",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "a class skin's look carries no outfit (lookNow reads one only in the worn armour), so no shield code: the guard spares the look's read, it decides nothing",
+    "equivalent": true
+  },
+  {
+    "name": "BACK-SHIELD-never-listed",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
+    "old": "    backList.push(backShield);\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "an aura drawn over the shield"
+  },
+  {
+    "name": "BACK-SHIELD-walkers-never",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "slingBackShield(r, peer, g > 1 || !worn ? null : pose, worn,",
+    "new": "slingBackShield(r, peer, null, worn,",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "the others' shields nowhere"
+  },
+  {
+    "name": "BACK-SHIELD-walker-slung-drawn",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "const code = pose && !pose.wd ? outfitPieces(worn.outfit)?.shield : null;",
+    "new": "const code = pose ? outfitPieces(worn.outfit)?.shield : null;",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "a walker's shield on its back and its arm at once"
+  },
+  {
+    "name": "BACK-SHIELD-walker-left-behind",
+    "file": "src/net/peer/peerRiders.js",
+    "old": "    if (r?.backShield) dropSpriteHolster(r.backShield, renderer);   // BACK-SHIELD: and the shield on its back\n",
+    "new": "",
+    "tests": [
+      "test/player/eyeOfTheBeholder/backshield.test.js"
+    ],
+    "why": "a gone walker's shield left hanging"
+  }
 ]

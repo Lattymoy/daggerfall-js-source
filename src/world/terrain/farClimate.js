@@ -34,12 +34,16 @@ export const DRY = new Uint8Array(0);
  */
 export function midRingWet(px, py, sub = MID_SUB) {
   if (!tamrielTrace() || bayEdgeDistance(px, py) <= SEAM_PX + BLEND_PX) return DRY;
-  const w = sub + 1, out = new Uint8Array(w * w);
+  const w = sub + 1,
+    out = new Uint8Array(w * w);
   let any = false;
   for (let j = 0; j <= sub; j++) {
     for (let i = 0; i <= sub; i++) {
-      const at = waterAt(px + i / sub, py + 1 - j / sub);   // sample j north of the pixel's south edge (Bay y runs south)
-      if (at && (at.kind === 'river' || at.kind === 'lake')) { out[j * w + i] = 255; any = true; }
+      const at = waterAt(px + i / sub, py + 1 - j / sub); // sample j north of the pixel's south edge (Bay y runs south)
+      if (at && (at.kind === 'river' || at.kind === 'lake')) {
+        out[j * w + i] = 255;
+        any = true;
+      }
     }
   }
   return any ? out : DRY;

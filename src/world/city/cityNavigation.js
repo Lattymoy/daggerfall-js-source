@@ -13,8 +13,8 @@
 // rendered ground uses (probe-verified; DFU's own world-space
 // gymnastics differ only by its floating-origin bookkeeping).
 
-import { RMB_SIDE } from '../locationLayout.js';   // 4096 * scale = 102.4, the city block side
-import { WATER_MASK_TABLE } from '../water/waterCorners.js';   // WATER-NPC: the one water table the draw and the player's feet already share
+import { RMB_SIDE } from '../locationLayout.js'; // 4096 * scale = 102.4, the city block side
+import { WATER_MASK_TABLE } from '../water/waterCorners.js'; // WATER-NPC: the one water table the draw and the player's feet already share
 
 /**
  * WATER-NPC (2026-09-15, Mac from live play: "NPCs arent water aware and
@@ -45,15 +45,17 @@ import { WATER_MASK_TABLE } from '../water/waterCorners.js';   // WATER-NPC: the
  * disagree by construction). Now the pathing cannot disagree with them
  * either: wherever the enhanced pass draws water, an NPC will not walk.
  */
-export const WATER_RECORDS_ENHANCED = Object.freeze((() => {
-  const out = [];
-  for (let record = 0; record < 64; record++) {
-    let any = 0;
-    for (let t = 0; t < 4; t++) any |= WATER_MASK_TABLE[(record << 2) | t];
-    if (any) out.push(record);
-  }
-  return out;
-})());
+export const WATER_RECORDS_ENHANCED = Object.freeze(
+  (() => {
+    const out = [];
+    for (let record = 0; record < 64; record++) {
+      let any = 0;
+      for (let t = 0; t < 4; t++) any |= WATER_MASK_TABLE[(record << 2) | t];
+      if (any) out.push(record);
+    }
+    return out;
+  })(),
+);
 
 /** DFU's own seven, kept by name so the classic lane is readable as the
  *  verbatim thing it is (CityNavigation.cs TileTypes). */
@@ -64,7 +66,7 @@ export const WATER_RECORDS_CLASSIC = Object.freeze([0, 5, 6, 20, 21, 30, 31]);
 export const ROAD_WEIGHT = 15;
 
 export const NAV_CELLS_PER_BLOCK = 64;
-export const NAV_CELL = RMB_SIDE / NAV_CELLS_PER_BLOCK;   // 1.6
+export const NAV_CELL = RMB_SIDE / NAV_CELLS_PER_BLOCK; // 1.6
 export const HALF_CELL = NAV_CELL / 2;
 export const TILE_FLAG_OCCUPIED = 1;
 
@@ -75,13 +77,26 @@ export function tileWeight(tile, { enhancedWater = false } = {}) {
   // below stays the verbatim thing it has always been.
   if (enhancedWater && WATER_RECORDS_ENHANCED.includes(tile)) return 0;
   switch (tile) {
-    case 0: case 5: case 6: case 20: case 21: case 30: case 31:
-      return 0;    // the Water family - never walk
-    case 3: return 4;    // Stone hurts our feet, but walkable
-    case 1: return 6;    // Dirt is OK
-    case 2: return 12;   // Grass is nice!
-    case 46: case 47: case 55: return ROAD_WEIGHT;   // Roads are great!
-    default: return 7;   // Everything else is average
+    case 0:
+    case 5:
+    case 6:
+    case 20:
+    case 21:
+    case 30:
+    case 31:
+      return 0; // the Water family - never walk
+    case 3:
+      return 4; // Stone hurts our feet, but walkable
+    case 1:
+      return 6; // Dirt is OK
+    case 2:
+      return 12; // Grass is nice!
+    case 46:
+    case 47:
+    case 55:
+      return ROAD_WEIGHT; // Roads are great!
+    default:
+      return 7; // Everything else is average
   }
 }
 
@@ -105,22 +120,36 @@ export class CityNavigation {
     for (let y = 0; y < NAV_CELLS_PER_BLOCK; y++) {
       const worldRow = yBlock * NAV_CELLS_PER_BLOCK + (NAV_CELLS_PER_BLOCK - 1 - y);
       for (let x = 0; x < NAV_CELLS_PER_BLOCK; x++) {
-        if (autoMap[y * NAV_CELLS_PER_BLOCK + x] !== 0) continue;   // covered: stays 0
+        if (autoMap[y * NAV_CELLS_PER_BLOCK + x] !== 0) continue; // covered: stays 0
         const w = tileWeight(groundTile(x >> 2, y >> 2) & 0x3f, { enhancedWater });
         this.grid[worldRow * this.width + (xBlock * NAV_CELLS_PER_BLOCK + x)] = (w << 4) & 0xff;
       }
     }
   }
 
-  inBounds(gx, gy) { return gx >= 0 && gy >= 0 && gx < this.width && gy < this.height; }
-  weightAt(gx, gy) { return this.inBounds(gx, gy) ? this.grid[gy * this.width + gx] >> 4 : 0; }
-  occupied(gx, gy) { return this.inBounds(gx, gy) ? (this.grid[gy * this.width + gx] & TILE_FLAG_OCCUPIED) !== 0 : false; }
-  setOccupied(gx, gy) { if (this.inBounds(gx, gy)) this.grid[gy * this.width + gx] |= TILE_FLAG_OCCUPIED; }
-  clearOccupied(gx, gy) { if (this.inBounds(gx, gy)) this.grid[gy * this.width + gx] &= ~TILE_FLAG_OCCUPIED; }
+  inBounds(gx, gy) {
+    return gx >= 0 && gy >= 0 && gx < this.width && gy < this.height;
+  }
+  weightAt(gx, gy) {
+    return this.inBounds(gx, gy) ? this.grid[gy * this.width + gx] >> 4 : 0;
+  }
+  occupied(gx, gy) {
+    return this.inBounds(gx, gy) ? (this.grid[gy * this.width + gx] & TILE_FLAG_OCCUPIED) !== 0 : false;
+  }
+  setOccupied(gx, gy) {
+    if (this.inBounds(gx, gy)) this.grid[gy * this.width + gx] |= TILE_FLAG_OCCUPIED;
+  }
+  clearOccupied(gx, gy) {
+    if (this.inBounds(gx, gy)) this.grid[gy * this.width + gx] &= ~TILE_FLAG_OCCUPIED;
+  }
 
   /** Nav cell -> world xz (cell center). */
-  navToWorld(gx, gy) { return [gx * NAV_CELL + HALF_CELL, gy * NAV_CELL + HALF_CELL]; }
-  worldToNav(x, z) { return [Math.floor(x / NAV_CELL), Math.floor(z / NAV_CELL)]; }
+  navToWorld(gx, gy) {
+    return [gx * NAV_CELL + HALF_CELL, gy * NAV_CELL + HALF_CELL];
+  }
+  worldToNav(x, z) {
+    return [Math.floor(x / NAV_CELL), Math.floor(z / NAV_CELL)];
+  }
 
   /** GetRandomSpawnPosition, verbatim: up to maxAttempts uniform
    *  probes in the radius box; any weight > 0 cell wins. */

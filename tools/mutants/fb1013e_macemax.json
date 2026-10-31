@@ -2,8 +2,8 @@
   {
     "name": "MACE-MAX-the-max-mod-not-added",
     "file": "src/systems/artifactEffects.js",
-    "old": "        (st.statMaxMods ??= {}).strength = (st.statMaxMods.strength ?? 0) + strengthDrained;\n",
-    "new": "",
+    "old": "          (st.statMaxMods ??= {}).strength = (st.statMaxMods.strength ?? 0) + strengthDrained;\n          st.statMods.strength = (st.statMods.strength ?? 0) + strengthDrained;",
+    "new": "          st.statMods.strength = (st.statMods.strength ?? 0) + strengthDrained;",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "MACE-MAX-the-clamp-ignores-max-mods",
     "file": "src/systems/statMods.js",
-    "old": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE + maxMod);",
-    "new": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);",
+    "old": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE + maxMod); // MACE-MAX: GetLiveStatValue's maxValue, the max mods in it",
+    "new": "  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE); // MACE-MAX: GetLiveStatValue's maxValue, the max mods in it",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "MACE-MAX-an-ended-entry-keeps-its-max-mods",
     "file": "src/systems/statMods.js",
-    "old": "      if (a?.statMaxMods && !a.ended) maxMod += a.statMaxMods[statName] ?? 0;",
-    "new": "      if (a?.statMaxMods) maxMod += a.statMaxMods[statName] ?? 0;",
+    "old": "      if (a?.statMaxMods && !a.ended) maxMod += a.statMaxMods[statName] ?? 0; // MACE-MAX: every live effect's, whatever its kind",
+    "new": "      if (a?.statMaxMods) maxMod += a.statMaxMods[statName] ?? 0; // MACE-MAX: every live effect's, whatever its kind",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "MACE-MAX-the-immediate-max-magicka-raise-removed",
     "file": "src/systems/artifactEffects.js",
-    "old": "          entity.maxMagickaModifier = (entity.maxMagickaModifier ?? 0) + overflow;\n",
-    "new": "",
+    "old": "            entity.maxMagickaModifier = (entity.maxMagickaModifier ?? 0) + overflow;\n            st.maxMagickaIncrease += overflow;",
+    "new": "            st.maxMagickaIncrease += overflow;",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "MACE-MAX-the-decay-keeps-the-max-mod",
     "file": "src/systems/artifactEffects.js",
-    "old": "        st.statMaxMods = {};   // SetStatMaxMod(Strength, 0) (:75)\n",
-    "new": "",
+    "old": "          st.statMaxMods = {}; // SetStatMaxMod(Strength, 0) (:75)\n          st.statMods = {}; // SetStatMod(Strength, 0) (:76)",
+    "new": "          st.statMods = {}; // SetStatMod(Strength, 0) (:76)",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "MACE-MAX-the-unequip-ends-nothing",
     "file": "src/systems/artifactEffects.js",
-    "old": "      if (st) entity.activeEffects.splice(entity.activeEffects.indexOf(st), 1);",
-    "new": "      void st;",
+    "old": "        if (st) entity.activeEffects.splice(entity.activeEffects.indexOf(st), 1);",
+    "new": "        void st;",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "MACE-MAX-the-registry-row-takes-no-unequip",
     "file": "src/systems/enchantments.js",
-    "old": "    unequipped: artifactHook('unequipped'),",
-    "new": "",
+    "old": "      unequipped: artifactHook('unequipped'), // MACE-MAX: the Held bundle's removal (UnequipHeldItem) - ungated by the flags, as the dispatcher runs every row's",
+    "new": "      // MACE-MAX: the Held bundle's removal (UnequipHeldItem) - ungated by the flags, as the dispatcher runs every row's",
     "tests": [
       "test/systems/fb1013e_macemax.test.js"
     ]

@@ -16,52 +16,103 @@
 // it "stores text that was hard-coded in FALL.EXE" - so the display
 // text below IS classic's, by way of DFU's recovery of it, and the
 // keys are DFU's HardStrings members one for one.
-import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedStrings } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // ---- the two primary lists (:64-90), in DFU's order ----
 export const ADVANTAGE_KEYS = Object.freeze([
-  'acuteHearing', 'adrenalineRush', 'athleticism', 'bonusToHit',
-  'expertiseIn', 'immunity', 'increasedMagery', 'rapidHealing',
-  'regenerateHealth', 'resistance', 'spellAbsorption',
+  'acuteHearing',
+  'adrenalineRush',
+  'athleticism',
+  'bonusToHit',
+  'expertiseIn',
+  'immunity',
+  'increasedMagery',
+  'rapidHealing',
+  'regenerateHealth',
+  'resistance',
+  'spellAbsorption',
 ]);
 export const DISADVANTAGE_KEYS = Object.freeze([
-  'criticalWeakness', 'damage', 'darknessPoweredMagery',
-  'forbiddenArmorType', 'forbiddenMaterial', 'forbiddenShieldTypes',
-  'forbiddenWeaponry', 'inabilityToRegen', 'lightPoweredMagery',
-  'lowTolerance', 'phobia',
+  'criticalWeakness',
+  'damage',
+  'darknessPoweredMagery',
+  'forbiddenArmorType',
+  'forbiddenMaterial',
+  'forbiddenShieldTypes',
+  'forbiddenWeaponry',
+  'inabilityToRegen',
+  'lightPoweredMagery',
+  'lowTolerance',
+  'phobia',
 ]);
 
 // ---- the secondary lists (:91-178) ----
 const ENEMY_TYPES = Object.freeze(['animals', 'daedra', 'humanoid', 'undead']);
 const WEAPON_TYPES = Object.freeze(['axe', 'bluntWeapon', 'handToHand', 'longBlade', 'missileWeapon', 'shortBlade']);
 const EFFECT_TYPES = Object.freeze(['toDisease', 'toFire', 'toFrost', 'toMagic', 'toParalysis', 'toPoison', 'toShock']);
-const INCREASED_MAGERY = Object.freeze(['intInSpellPoints15', 'intInSpellPoints175', 'intInSpellPoints2', 'intInSpellPoints3', 'intInSpellPoints']);
+const INCREASED_MAGERY = Object.freeze([
+  'intInSpellPoints15',
+  'intInSpellPoints175',
+  'intInSpellPoints2',
+  'intInSpellPoints3',
+  'intInSpellPoints',
+]);
 const EFFECT_ENV = Object.freeze(['general', 'inDarkness', 'inLight']);
 const REGEN_HEALTH = Object.freeze(['general', 'inDarkness', 'inLight', 'whileImmersed']);
 const DAMAGE_ENV = Object.freeze(['fromHolyPlaces', 'fromSunlight']);
 const DARKNESS_POWERED = Object.freeze(['lowerMagicAbilityDaylight', 'unableToUseMagicInDaylight']);
 const LIGHT_POWERED = Object.freeze(['lowerMagicAbilityDarkness', 'unableToUseMagicInDarkness']);
 const ARMOR_TYPES = Object.freeze(['chain', 'leather', 'plate']);
-const MATERIALS = Object.freeze(['adamantium', 'daedric', 'dwarven', 'ebony', 'elven', 'iron', 'mithril', 'orcish', 'silver', 'steel']);
+const MATERIALS = Object.freeze([
+  'adamantium',
+  'daedric',
+  'dwarven',
+  'ebony',
+  'elven',
+  'iron',
+  'mithril',
+  'orcish',
+  'silver',
+  'steel',
+]);
 const SHIELD_TYPES = Object.freeze(['buckler', 'kiteShield', 'roundShield', 'towerShield']);
 
 /** PrimaryPicker_OnItemPicked's switch (:325-389). null means the pick
  *  lands with no secondary window at all. */
 export function secondaryListFor(primaryKey) {
   switch (primaryKey) {
-    case 'bonusToHit': case 'phobia': return ENEMY_TYPES;
-    case 'expertiseIn': case 'forbiddenWeaponry': return WEAPON_TYPES;
-    case 'immunity': case 'resistance': case 'criticalWeakness': case 'lowTolerance': return EFFECT_TYPES;
-    case 'increasedMagery': return INCREASED_MAGERY;
-    case 'rapidHealing': case 'spellAbsorption': return EFFECT_ENV;
-    case 'regenerateHealth': return REGEN_HEALTH;
-    case 'damage': return DAMAGE_ENV;
-    case 'darknessPoweredMagery': return DARKNESS_POWERED;
-    case 'lightPoweredMagery': return LIGHT_POWERED;
-    case 'forbiddenArmorType': return ARMOR_TYPES;
-    case 'forbiddenMaterial': return MATERIALS;
-    case 'forbiddenShieldTypes': return SHIELD_TYPES;
-    default: return null;
+    case 'bonusToHit':
+    case 'phobia':
+      return ENEMY_TYPES;
+    case 'expertiseIn':
+    case 'forbiddenWeaponry':
+      return WEAPON_TYPES;
+    case 'immunity':
+    case 'resistance':
+    case 'criticalWeakness':
+    case 'lowTolerance':
+      return EFFECT_TYPES;
+    case 'increasedMagery':
+      return INCREASED_MAGERY;
+    case 'rapidHealing':
+    case 'spellAbsorption':
+      return EFFECT_ENV;
+    case 'regenerateHealth':
+      return REGEN_HEALTH;
+    case 'damage':
+      return DAMAGE_ENV;
+    case 'darknessPoweredMagery':
+      return DARKNESS_POWERED;
+    case 'lightPoweredMagery':
+      return LIGHT_POWERED;
+    case 'forbiddenArmorType':
+      return ARMOR_TYPES;
+    case 'forbiddenMaterial':
+      return MATERIALS;
+    case 'forbiddenShieldTypes':
+      return SHIELD_TYPES;
+    default:
+      return null;
   }
 }
 
@@ -77,35 +128,77 @@ export const MAX_ITEMS = 7;
 // ---- the display text (Internal_Strings.csv; hard-coded in
 // FALL.EXE originally, which is why it is not in TEXT.RSC) ----
 export const LABELS = localizedStrings({
-  acuteHearing: 'Acute Hearing', adrenalineRush: 'Adrenaline Rush', athleticism: 'Athleticism',
-  bonusToHit: 'Bonus to hit', expertiseIn: 'Expertise in', immunity: 'Immunity',
-  increasedMagery: 'Increased Magery', rapidHealing: 'Rapid Healing',
-  regenerateHealth: 'Regenerate Health', resistance: 'Resistance', spellAbsorption: 'Spell Absorption',
-  criticalWeakness: 'Critical Weakness', damage: 'Damage',
-  darknessPoweredMagery: 'Darkness-Powered Magery', forbiddenArmorType: 'Forbidden Armor Type',
-  forbiddenMaterial: 'Forbidden Material', forbiddenShieldTypes: 'Forbidden Shield Types',
-  forbiddenWeaponry: 'Forbidden Weaponry', inabilityToRegen: 'Inability To Regen Spell Points',
-  lightPoweredMagery: 'Light-Powered Magery', lowTolerance: 'Low Tolerance', phobia: 'Phobia',
-  animals: 'Animals', daedra: 'Daedra', humanoid: 'Humanoid', undead: 'Undead',
-  axe: 'Axe', bluntWeapon: 'Blunt Weapon', handToHand: 'Hand-to-Hand',
-  longBlade: 'Long Blade', missileWeapon: 'Missile Weapon', shortBlade: 'Short Blade',
-  toDisease: 'To Disease', toFire: 'To Fire', toFrost: 'To Frost', toMagic: 'To Magic',
-  toParalysis: 'To Paralysis', toPoison: 'To Poison', toShock: 'To Shock',
-  intInSpellPoints15: '1.5X INT In Spell Points', intInSpellPoints175: '1.75X INT In Spell Points',
-  intInSpellPoints2: '2X INT In Spell Points', intInSpellPoints3: '3X INT In Spell Points',
+  acuteHearing: 'Acute Hearing',
+  adrenalineRush: 'Adrenaline Rush',
+  athleticism: 'Athleticism',
+  bonusToHit: 'Bonus to hit',
+  expertiseIn: 'Expertise in',
+  immunity: 'Immunity',
+  increasedMagery: 'Increased Magery',
+  rapidHealing: 'Rapid Healing',
+  regenerateHealth: 'Regenerate Health',
+  resistance: 'Resistance',
+  spellAbsorption: 'Spell Absorption',
+  criticalWeakness: 'Critical Weakness',
+  damage: 'Damage',
+  darknessPoweredMagery: 'Darkness-Powered Magery',
+  forbiddenArmorType: 'Forbidden Armor Type',
+  forbiddenMaterial: 'Forbidden Material',
+  forbiddenShieldTypes: 'Forbidden Shield Types',
+  forbiddenWeaponry: 'Forbidden Weaponry',
+  inabilityToRegen: 'Inability To Regen Spell Points',
+  lightPoweredMagery: 'Light-Powered Magery',
+  lowTolerance: 'Low Tolerance',
+  phobia: 'Phobia',
+  animals: 'Animals',
+  daedra: 'Daedra',
+  humanoid: 'Humanoid',
+  undead: 'Undead',
+  axe: 'Axe',
+  bluntWeapon: 'Blunt Weapon',
+  handToHand: 'Hand-to-Hand',
+  longBlade: 'Long Blade',
+  missileWeapon: 'Missile Weapon',
+  shortBlade: 'Short Blade',
+  toDisease: 'To Disease',
+  toFire: 'To Fire',
+  toFrost: 'To Frost',
+  toMagic: 'To Magic',
+  toParalysis: 'To Paralysis',
+  toPoison: 'To Poison',
+  toShock: 'To Shock',
+  intInSpellPoints15: '1.5X INT In Spell Points',
+  intInSpellPoints175: '1.75X INT In Spell Points',
+  intInSpellPoints2: '2X INT In Spell Points',
+  intInSpellPoints3: '3X INT In Spell Points',
   intInSpellPoints: 'INT In Spell Points',
-  general: 'General', inDarkness: 'In Darkness', inLight: 'In Light',
+  general: 'General',
+  inDarkness: 'In Darkness',
+  inLight: 'In Light',
   whileImmersed: 'While Immersed In Water',
-  fromHolyPlaces: 'From Holy Places', fromSunlight: 'From Sunlight',
+  fromHolyPlaces: 'From Holy Places',
+  fromSunlight: 'From Sunlight',
   lowerMagicAbilityDaylight: 'Lower Magic Ability In Daylight',
   unableToUseMagicInDaylight: 'Unable To Use Magic In Daylight',
   lowerMagicAbilityDarkness: 'Lower Magic Ability In Darkness',
   unableToUseMagicInDarkness: 'Unable To Use Magic In Darkness',
-  chain: 'Chain', leather: 'Leather', plate: 'Plate',
-  adamantium: 'Adamantium', daedric: 'Daedric', dwarven: 'Dwarven', ebony: 'Ebony',
-  elven: 'Elven', iron: 'Iron', mithril: 'Mithril', orcish: 'Orcish',
-  silver: 'Silver', steel: 'Steel',
-  buckler: 'Buckler', kiteShield: 'Kite Shield', roundShield: 'Round Shield', towerShield: 'Tower Shield',
+  chain: 'Chain',
+  leather: 'Leather',
+  plate: 'Plate',
+  adamantium: 'Adamantium',
+  daedric: 'Daedric',
+  dwarven: 'Dwarven',
+  ebony: 'Ebony',
+  elven: 'Elven',
+  iron: 'Iron',
+  mithril: 'Mithril',
+  orcish: 'Orcish',
+  silver: 'Silver',
+  steel: 'Steel',
+  buckler: 'Buckler',
+  kiteShield: 'Kite Shield',
+  roundShield: 'Round Shield',
+  towerShield: 'Tower Shield',
 });
 export const labelFor = (key) => LABELS[key] ?? '';
 
@@ -114,38 +207,72 @@ export const labelFor = (key) => LABELS[key] ?? '';
 // `primary + secondary` except for the eight
 // primaries whose secondary does not change the cost.
 export const DIFFICULTY = Object.freeze({
-  acuteHearing: 1, adrenalineRush: 4, athleticism: 4,
-  bonusToHitanimals: 6, bonusToHitdaedra: 3, bonusToHithumanoid: 6, bonusToHitundead: 6,
-  expertiseIn: 2, immunity: 10,
-  increasedMageryintInSpellPoints: 2, increasedMageryintInSpellPoints15: 4,
-  increasedMageryintInSpellPoints175: 6, increasedMageryintInSpellPoints2: 8,
+  acuteHearing: 1,
+  adrenalineRush: 4,
+  athleticism: 4,
+  bonusToHitanimals: 6,
+  bonusToHitdaedra: 3,
+  bonusToHithumanoid: 6,
+  bonusToHitundead: 6,
+  expertiseIn: 2,
+  immunity: 10,
+  increasedMageryintInSpellPoints: 2,
+  increasedMageryintInSpellPoints15: 4,
+  increasedMageryintInSpellPoints175: 6,
+  increasedMageryintInSpellPoints2: 8,
   increasedMageryintInSpellPoints3: 10,
-  rapidHealinggeneral: 4, rapidHealinginDarkness: 3, rapidHealinginLight: 2,
-  regenerateHealthgeneral: 14, regenerateHealthinDarkness: 10,
-  regenerateHealthinLight: 6, regenerateHealthwhileImmersed: 2,
+  rapidHealinggeneral: 4,
+  rapidHealinginDarkness: 3,
+  rapidHealinginLight: 2,
+  regenerateHealthgeneral: 14,
+  regenerateHealthinDarkness: 10,
+  regenerateHealthinLight: 6,
+  regenerateHealthwhileImmersed: 2,
   resistance: 5,
-  spellAbsorptiongeneral: 14, spellAbsorptioninDarkness: 12, spellAbsorptioninLight: 8,
+  spellAbsorptiongeneral: 14,
+  spellAbsorptioninDarkness: 12,
+  spellAbsorptioninLight: 8,
   criticalWeakness: -14,
-  damagefromHolyPlaces: -6, damagefromSunlight: -10,
+  damagefromHolyPlaces: -6,
+  damagefromSunlight: -10,
   darknessPoweredMagerylowerMagicAbilityDaylight: -7,
   darknessPoweredMageryunableToUseMagicInDaylight: -10,
-  forbiddenArmorTypechain: -2, forbiddenArmorTypeleather: -1, forbiddenArmorTypeplate: -5,
-  forbiddenMaterialadamantium: -5, forbiddenMaterialdaedric: -2, forbiddenMaterialdwarven: -7,
-  forbiddenMaterialebony: -5, forbiddenMaterialelven: -9, forbiddenMaterialiron: -1,
-  forbiddenMaterialmithril: -6, forbiddenMaterialorcish: -3, forbiddenMaterialsilver: -6,
+  forbiddenArmorTypechain: -2,
+  forbiddenArmorTypeleather: -1,
+  forbiddenArmorTypeplate: -5,
+  forbiddenMaterialadamantium: -5,
+  forbiddenMaterialdaedric: -2,
+  forbiddenMaterialdwarven: -7,
+  forbiddenMaterialebony: -5,
+  forbiddenMaterialelven: -9,
+  forbiddenMaterialiron: -1,
+  forbiddenMaterialmithril: -6,
+  forbiddenMaterialorcish: -3,
+  forbiddenMaterialsilver: -6,
   forbiddenMaterialsteel: -10,
-  forbiddenShieldTypes: -1, forbiddenWeaponry: -2, inabilityToRegen: -14,
+  forbiddenShieldTypes: -1,
+  forbiddenWeaponry: -2,
+  inabilityToRegen: -14,
   lightPoweredMagerylowerMagicAbilityDarkness: -10,
   lightPoweredMageryunableToUseMagicInDarkness: -14,
-  lowTolerance: -5, phobia: -4,
+  lowTolerance: -5,
+  phobia: -4,
 });
 
 /** GetAdvDisAdjustment (:479-497): eight primaries ignore their
  *  secondary entirely; the rest key on the CONCATENATION. */
-const SECONDARY_BLIND = Object.freeze(new Set([
-  'expertiseIn', 'immunity', 'resistance', 'criticalWeakness',
-  'forbiddenShieldTypes', 'forbiddenWeaponry', 'lowTolerance', 'phobia',
-]));
+const SECONDARY_BLIND = Object.freeze(
+  new Set([
+    'expertiseIn',
+    'immunity',
+    'resistance',
+    'criticalWeakness',
+    'forbiddenShieldTypes',
+    'forbiddenWeaponry',
+    'lowTolerance',
+    'phobia',
+  ]),
+);
 export function advDisAdjustment(primary, secondary = '') {
   return DIFFICULTY[SECONDARY_BLIND.has(primary) ? primary : primary + secondary] ?? 0;
 }
@@ -159,16 +286,21 @@ export const totalAdjust = (list) => list.reduce((a, s) => a + (s.difficulty ?? 
  *  are equal - so Immunity To Fire blocks Resistance To Fire but not
  *  Resistance To Frost. */
 function isMatchingAdvPair(str1, str2, candidate, incumbent) {
-  return ((candidate.primary === str1 && incumbent.primary === str2)
-       || (candidate.primary === str2 && incumbent.primary === str1))
-      && candidate.secondary === incumbent.secondary;
+  return (
+    ((candidate.primary === str1 && incumbent.primary === str2) ||
+      (candidate.primary === str2 && incumbent.primary === str1)) &&
+    candidate.secondary === incumbent.secondary
+  );
 }
 const EXCLUSIVE_PAIRS = Object.freeze([
   ['bonusToHit', 'phobia'],
   ['expertiseIn', 'forbiddenWeaponry'],
   // no immunity, resistance, low tolerance or critical weakness may co-exist
-  ['immunity', 'resistance'], ['immunity', 'criticalWeakness'], ['immunity', 'lowTolerance'],
-  ['resistance', 'lowTolerance'], ['resistance', 'criticalWeakness'],
+  ['immunity', 'resistance'],
+  ['immunity', 'criticalWeakness'],
+  ['immunity', 'lowTolerance'],
+  ['resistance', 'lowTolerance'],
+  ['resistance', 'criticalWeakness'],
   ['lowTolerance', 'criticalWeakness'],
 ]);
 
@@ -189,11 +321,22 @@ export function cannotAdd(candidate, advDisList, otherList = []) {
 
 /** DFCareer.EffectFlags (:398-412). */
 export const EFFECT_BITS = Object.freeze({
-  toParalysis: 1, toMagic: 2, toPoison: 4, toFire: 8, toFrost: 16, toShock: 32, toDisease: 64,
+  toParalysis: 1,
+  toMagic: 2,
+  toPoison: 4,
+  toFire: 8,
+  toFrost: 16,
+  toShock: 32,
+  toDisease: 64,
 });
 /** DFCareer.ProficiencyFlags (:313-322). */
 export const PROFICIENCY_BITS = Object.freeze({
-  shortBlade: 1, longBlade: 2, handToHand: 4, axe: 8, bluntWeapon: 16, missileWeapon: 32,
+  shortBlade: 1,
+  longBlade: 2,
+  handToHand: 4,
+  axe: 8,
+  bluntWeapon: 16,
+  missileWeapon: 32,
 });
 /** DFCareer.ArmorFlags (:302-308) and ShieldFlags (:290-296). */
 export const ARMOR_BITS = Object.freeze({ leather: 1, chain: 2, plate: 4 });
@@ -202,14 +345,26 @@ export const ARMOR_BITS_SHIFT = 6;
 export const SHIELD_BITS = Object.freeze({ buckler: 1, roundShield: 2, kiteShield: 4, towerShield: 8 });
 /** DFCareer.MaterialFlags (:272-284). */
 export const MATERIAL_BITS = Object.freeze({
-  iron: 1, steel: 2, silver: 4, elven: 8, dwarven: 16,
-  mithril: 32, adamantium: 64, ebony: 128, orcish: 256, daedric: 512,
+  iron: 1,
+  steel: 2,
+  silver: 4,
+  elven: 8,
+  dwarven: 16,
+  mithril: 32,
+  adamantium: 64,
+  ebony: 128,
+  orcish: 256,
+  daedric: 512,
 });
 /** DFCareer.SpecialAbilityFlags (:415-424) - the LOW byte of
  *  abilityFlagsAndSpellPointsBitfield. */
 export const SPECIAL_ABILITY_BITS = Object.freeze({
-  acuteHearing: 1, athleticism: 2, adrenalineRush: 4,
-  noRegenSpellPoints: 8, sunDamage: 16, holyDamage: 32,
+  acuteHearing: 1,
+  athleticism: 2,
+  adrenalineRush: 4,
+  noRegenSpellPoints: 8,
+  sunDamage: 16,
+  holyDamage: 32,
 });
 /** SpellAbsorptionFlags (:361-368) and RegenerationFlags (:373-381)
  *  and RapidHealingFlags (:386-393) - whole bytes of their own. */
@@ -218,19 +373,29 @@ export const REGENERATION_FLAGS = Object.freeze({ general: 8, inDarkness: 2, inL
 export const RAPID_HEALING_FLAGS = Object.freeze({ general: 4, inDarkness: 2, inLight: 1 });
 /** The attack-modifier byte's [bonus, phobia] bit per enemy group -
  *  the same table combat/formulas.js reads (GROUP_BITS). */
-const ATTACK_BITS = Object.freeze({ undead: [0x01, 0x10], daedra: [0x02, 0x20], humanoid: [0x04, 0x40], animals: [0x08, 0x80] });
+const ATTACK_BITS = Object.freeze({
+  undead: [0x01, 0x10],
+  daedra: [0x02, 0x20],
+  humanoid: [0x04, 0x40],
+  animals: [0x08, 0x80],
+});
 /** SpellPointMultipliers, at (bitfield & 0x1C00) >> 8 (DFCareer:782).
  *  DFU's SetMagery writes the enum AND its float; the port's career
  *  carries only the bitfield, and systems/chargen.js decodes it. */
 const MAGERY_MULT_BITS = Object.freeze({
-  intInSpellPoints: 16, intInSpellPoints15: 12, intInSpellPoints175: 8,
-  intInSpellPoints2: 4, intInSpellPoints3: 0,
+  intInSpellPoints: 16,
+  intInSpellPoints15: 12,
+  intInSpellPoints175: 8,
+  intInSpellPoints2: 4,
+  intInSpellPoints3: 0,
 });
 /** The default the builder starts from and the label click restores
  *  (defaultSpellPointMod, :45; AdvantageLabel_OnMouseClick :448-452). */
-export const DEFAULT_MAGERY_BITS = 20;   // Times_0_50
+export const DEFAULT_MAGERY_BITS = 20; // Times_0_50
 
-const setAbility = (career, bit) => { career.abilityFlagsAndSpellPointsBitfield |= bit; };
+const setAbility = (career, bit) => {
+  career.abilityFlagsAndSpellPointsBitfield |= bit;
+};
 
 /** ParseCareerData: fold a finished pick list onto a career, in place.
  *  Every arm is DFU's Set* helper written against the CFG bitfields
@@ -239,60 +404,93 @@ export function parseCareerData(career, list) {
   for (const { primary, secondary } of list) {
     switch (primary) {
       // SetAttackModifier (:598-620)
-      case 'bonusToHit': career.attackModifierFlags |= ATTACK_BITS[secondary]?.[0] ?? 0; break;
-      case 'phobia': career.attackModifierFlags |= ATTACK_BITS[secondary]?.[1] ?? 0; break;
+      case 'bonusToHit':
+        career.attackModifierFlags |= ATTACK_BITS[secondary]?.[0] ?? 0;
+        break;
+      case 'phobia':
+        career.attackModifierFlags |= ATTACK_BITS[secondary]?.[1] ?? 0;
+        break;
       // SetProficiency (:622-700) - the port's bitfield packs the
       // FORBIDDEN set at bits 0..5 and the EXPERT set at 16..21
       case 'expertiseIn':
-        career.weaponArmorShieldsBitfield |= (PROFICIENCY_BITS[secondary] ?? 0) << 16; break;
+        career.weaponArmorShieldsBitfield |= (PROFICIENCY_BITS[secondary] ?? 0) << 16;
+        break;
       case 'forbiddenWeaponry':
-        career.weaponArmorShieldsBitfield |= PROFICIENCY_BITS[secondary] ?? 0; break;
+        career.weaponArmorShieldsBitfield |= PROFICIENCY_BITS[secondary] ?? 0;
+        break;
       // SetTolerance (:714-745) - four separate EffectFlags bytes
-      case 'immunity': career.immunityFlags |= EFFECT_BITS[secondary] ?? 0; break;
-      case 'resistance': career.resistanceFlags |= EFFECT_BITS[secondary] ?? 0; break;
-      case 'criticalWeakness': career.criticalWeaknessFlags |= EFFECT_BITS[secondary] ?? 0; break;
-      case 'lowTolerance': career.lowToleranceFlags |= EFFECT_BITS[secondary] ?? 0; break;
+      case 'immunity':
+        career.immunityFlags |= EFFECT_BITS[secondary] ?? 0;
+        break;
+      case 'resistance':
+        career.resistanceFlags |= EFFECT_BITS[secondary] ?? 0;
+        break;
+      case 'criticalWeakness':
+        career.criticalWeaknessFlags |= EFFECT_BITS[secondary] ?? 0;
+        break;
+      case 'lowTolerance':
+        career.lowToleranceFlags |= EFFECT_BITS[secondary] ?? 0;
+        break;
       // SetMagery (:747-775) - the multiplier REPLACES, it does not or
       case 'increasedMagery': {
         const bits = MAGERY_MULT_BITS[secondary];
         if (bits != null) {
           career.abilityFlagsAndSpellPointsBitfield =
-            (career.abilityFlagsAndSpellPointsBitfield & ~0x1C00) | (bits << 8);
+            (career.abilityFlagsAndSpellPointsBitfield & ~0x1c00) | (bits << 8);
         }
         break;
       }
-      case 'rapidHealing': career.rapidHealing = RAPID_HEALING_FLAGS[secondary] ?? 0; break;
-      case 'spellAbsorption': career.spellAbsorptionFlags = ABSORPTION_FLAGS[secondary] ?? 0; break;
-      case 'regenerateHealth': career.regeneration = REGENERATION_FLAGS[secondary] ?? 0; break;
+      case 'rapidHealing':
+        career.rapidHealing = RAPID_HEALING_FLAGS[secondary] ?? 0;
+        break;
+      case 'spellAbsorption':
+        career.spellAbsorptionFlags = ABSORPTION_FLAGS[secondary] ?? 0;
+        break;
+      case 'regenerateHealth':
+        career.regeneration = REGENERATION_FLAGS[secondary] ?? 0;
+        break;
       // SetDamage (:938-951) - the two SpecialAbility bits
       case 'damage':
-        setAbility(career, secondary === 'fromSunlight' ? SPECIAL_ABILITY_BITS.sunDamage : SPECIAL_ABILITY_BITS.holyDamage);
+        setAbility(
+          career,
+          secondary === 'fromSunlight' ? SPECIAL_ABILITY_BITS.sunDamage : SPECIAL_ABILITY_BITS.holyDamage,
+        );
         break;
       // SetDarknessMagery (:830-845) at bits 8-9, SetLightMagery
       // (:923-936) at bits 6-7 (DFCareer:619-620)
       case 'darknessPoweredMagery': {
         const v = secondary === 'unableToUseMagicInDaylight' ? 1 : 2;
-        career.abilityFlagsAndSpellPointsBitfield =
-          (career.abilityFlagsAndSpellPointsBitfield & ~0x300) | (v << 8);
+        career.abilityFlagsAndSpellPointsBitfield = (career.abilityFlagsAndSpellPointsBitfield & ~0x300) | (v << 8);
         break;
       }
       case 'lightPoweredMagery': {
         const v = secondary === 'unableToUseMagicInDarkness' ? 1 : 2;
-        career.abilityFlagsAndSpellPointsBitfield =
-          (career.abilityFlagsAndSpellPointsBitfield & ~0x00C0) | (v << 6);
+        career.abilityFlagsAndSpellPointsBitfield = (career.abilityFlagsAndSpellPointsBitfield & ~0x00c0) | (v << 6);
         break;
       }
       case 'forbiddenArmorType':
-        career.weaponArmorShieldsBitfield |= (ARMOR_BITS[secondary] ?? 0) << ARMOR_BITS_SHIFT; break;
+        career.weaponArmorShieldsBitfield |= (ARMOR_BITS[secondary] ?? 0) << ARMOR_BITS_SHIFT;
+        break;
       case 'forbiddenShieldTypes':
-        career.weaponArmorShieldsBitfield |= (SHIELD_BITS[secondary] ?? 0) << 9; break;
+        career.weaponArmorShieldsBitfield |= (SHIELD_BITS[secondary] ?? 0) << 9;
+        break;
       case 'forbiddenMaterial':
-        career.forbiddenMaterialsFlags |= MATERIAL_BITS[secondary] ?? 0; break;
-      case 'inabilityToRegen': setAbility(career, SPECIAL_ABILITY_BITS.noRegenSpellPoints); break;
-      case 'acuteHearing': setAbility(career, SPECIAL_ABILITY_BITS.acuteHearing); break;
-      case 'athleticism': setAbility(career, SPECIAL_ABILITY_BITS.athleticism); break;
-      case 'adrenalineRush': setAbility(career, SPECIAL_ABILITY_BITS.adrenalineRush); break;
-      default: break;
+        career.forbiddenMaterialsFlags |= MATERIAL_BITS[secondary] ?? 0;
+        break;
+      case 'inabilityToRegen':
+        setAbility(career, SPECIAL_ABILITY_BITS.noRegenSpellPoints);
+        break;
+      case 'acuteHearing':
+        setAbility(career, SPECIAL_ABILITY_BITS.acuteHearing);
+        break;
+      case 'athleticism':
+        setAbility(career, SPECIAL_ABILITY_BITS.athleticism);
+        break;
+      case 'adrenalineRush':
+        setAbility(career, SPECIAL_ABILITY_BITS.adrenalineRush);
+        break;
+      default:
+        break;
     }
   }
   // the packed fields are u32/u16/u8 in the file; keep them unsigned
@@ -337,15 +535,24 @@ export function parseCareerData(career, list) {
  *  effect anyway, so the order only decides what a hand-edited or
  *  modded CFG shows. */
 const TOLERANCE_READ = Object.freeze([
-  ['resistanceFlags', 'resistance'], ['immunityFlags', 'immunity'],
-  ['lowToleranceFlags', 'lowTolerance'], ['criticalWeaknessFlags', 'criticalWeakness'],
+  ['resistanceFlags', 'resistance'],
+  ['immunityFlags', 'immunity'],
+  ['lowToleranceFlags', 'lowTolerance'],
+  ['criticalWeaknessFlags', 'criticalWeakness'],
 ]);
 /** EffectFlags' own declaration order (DFCareer.cs:398-408), which is
  *  the order the seven tolerance lines print in. */
 const EFFECT_ORDER = Object.freeze(['toParalysis', 'toMagic', 'toPoison', 'toFire', 'toFrost', 'toShock', 'toDisease']);
 /** ProficiencyFlags' order (:313-322). GetProficiency (:764-776)
  *  reads FORBIDDEN first, then EXPERT. */
-const PROFICIENCY_ORDER = Object.freeze(['shortBlade', 'longBlade', 'handToHand', 'axe', 'bluntWeapon', 'missileWeapon']);
+const PROFICIENCY_ORDER = Object.freeze([
+  'shortBlade',
+  'longBlade',
+  'handToHand',
+  'axe',
+  'bluntWeapon',
+  'missileWeapon',
+]);
 /** The four groups, in the order the sheet prints them (:520-537). */
 const ATTACK_ORDER = Object.freeze(['undead', 'daedra', 'humanoid', 'animals']);
 
@@ -425,7 +632,7 @@ export function classSpecials(career, race = null) {
   // Times_3_00 - the strongest magery in the game, announced on a
   // character who never picked it.
   if (c.abilityFlagsAndSpellPointsBitfield != null) {
-    const magery = (ability & 0x1C00) >> 8;
+    const magery = (ability & 0x1c00) >> 8;
     if (magery !== DEFAULT_MAGERY_BITS) {
       const key = keyForValue(MAGERY_MULT_BITS, magery);
       if (key) add('increasedMagery', key);
@@ -435,7 +642,8 @@ export function classSpecials(career, race = null) {
   const absorb = keyForValue(ABSORPTION_FLAGS, c.spellAbsorptionFlags ?? 0);
   if (absorb) add('spellAbsorption', absorb);
   // The four SpecialAbility talents (:642-654), in the sheet's order
-  if ((ability & SPECIAL_ABILITY_BITS.noRegenSpellPoints) === SPECIAL_ABILITY_BITS.noRegenSpellPoints) add('inabilityToRegen');
+  if ((ability & SPECIAL_ABILITY_BITS.noRegenSpellPoints) === SPECIAL_ABILITY_BITS.noRegenSpellPoints)
+    add('inabilityToRegen');
   if ((ability & SPECIAL_ABILITY_BITS.acuteHearing) === SPECIAL_ABILITY_BITS.acuteHearing) add('acuteHearing');
   if ((ability & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) add('athleticism');
   if ((ability & SPECIAL_ABILITY_BITS.adrenalineRush) === SPECIAL_ABILITY_BITS.adrenalineRush) add('adrenalineRush');
@@ -478,12 +686,18 @@ export function classSpecials(career, race = null) {
     // port writes the label the flag means; the slip is recorded
     // rather than copied, because copying it would be porting a
     // typo into a screen a player reads.
-    if ((abilities & SPECIAL_ABILITY_BITS.acuteHearing) === SPECIAL_ABILITY_BITS.acuteHearing) add('acuteHearing', '', 'race');
-    if ((abilities & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism) add('athleticism', '', 'race');
-    if ((abilities & SPECIAL_ABILITY_BITS.adrenalineRush) === SPECIAL_ABILITY_BITS.adrenalineRush) add('adrenalineRush', '', 'race');
-    if ((abilities & SPECIAL_ABILITY_BITS.noRegenSpellPoints) === SPECIAL_ABILITY_BITS.noRegenSpellPoints) add('inabilityToRegen', '', 'race');
-    if ((abilities & SPECIAL_ABILITY_BITS.sunDamage) === SPECIAL_ABILITY_BITS.sunDamage) add('damage', 'fromSunlight', 'race');
-    if ((abilities & SPECIAL_ABILITY_BITS.holyDamage) === SPECIAL_ABILITY_BITS.holyDamage) add('damage', 'fromHolyPlaces', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.acuteHearing) === SPECIAL_ABILITY_BITS.acuteHearing)
+      add('acuteHearing', '', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.athleticism) === SPECIAL_ABILITY_BITS.athleticism)
+      add('athleticism', '', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.adrenalineRush) === SPECIAL_ABILITY_BITS.adrenalineRush)
+      add('adrenalineRush', '', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.noRegenSpellPoints) === SPECIAL_ABILITY_BITS.noRegenSpellPoints)
+      add('inabilityToRegen', '', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.sunDamage) === SPECIAL_ABILITY_BITS.sunDamage)
+      add('damage', 'fromSunlight', 'race');
+    if ((abilities & SPECIAL_ABILITY_BITS.holyDamage) === SPECIAL_ABILITY_BITS.holyDamage)
+      add('damage', 'fromHolyPlaces', 'race');
   }
   return out;
 }

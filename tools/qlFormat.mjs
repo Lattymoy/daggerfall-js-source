@@ -17,11 +17,14 @@ export function formatFamily(data, key) {
   return `${head}${rows.length ? `{\n${rows.join(',\n')}\n  }` : '{}'}\n}\n`;
 }
 export function formatAll() {
-  for (const [dir, key] of [['sheets', 'sheets'], ['patches', 'patches']]) {
+  for (const [dir, key] of [
+    ['sheets', 'sheets'],
+    ['patches', 'patches'],
+  ]) {
     for (const f of readdirSync(join(ROOT, dir))) {
       if (!f.endsWith('.json')) continue;
       const p = join(ROOT, dir, f);
-    writeFileSync(p, formatFamily(JSON.parse(readFileSync(p, 'utf8')), key));
+      writeFileSync(p, formatFamily(JSON.parse(readFileSync(p, 'utf8')), key));
     }
   }
 }
@@ -32,5 +35,6 @@ export function formatFile(path) {
 }
 if (isMain(import.meta.url)) {
   const i = process.argv.indexOf('--file');
-  if (i >= 0) formatFile(process.argv[i + 1]); else formatAll();
+  if (i >= 0) formatFile(process.argv[i + 1]);
+  else formatAll();
 }

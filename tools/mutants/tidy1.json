@@ -11,8 +11,8 @@
   {
     "name": "TIDY1-a-page-url-taken-for-a-module",
     "file": "tools/moveModule.mjs",
-    "old": "/(\\bnew URL\\(\\s*)(['\"`])(\\.{1,2}(?:\\/(?:\\$\\{[^}\\n]*\\}|[^'\"`\\n])*)?|[\\w-](?:\\$\\{[^}\\n]*\\}|[^'\"`\\n:])*)\\2(?=\\s*,\\s*import\\.meta\\.url)/g,",
-    "new": "/(\\bnew URL\\(\\s*)(['\"`])(\\.{1,2}(?:\\/(?:\\$\\{[^}\\n]*\\}|[^'\"`\\n])*)?|[\\w-](?:\\$\\{[^}\\n]*\\}|[^'\"`\\n:])*)\\2/g,",
+    "old": "  /(\\bnew URL\\(\\s*)(['\"`])(\\.{1,2}(?:\\/(?:\\$\\{[^}\\n]*\\}|[^'\"`\\n])*)?|[\\w-](?:\\$\\{[^}\\n]*\\}|[^'\"`\\n:])*)\\2(?=\\s*,\\s*import\\.meta\\.url)/g,",
+    "new": "  /(\\bnew URL\\(\\s*)(['\"`])(\\.{1,2}(?:\\/(?:\\$\\{[^}\\n]*\\}|[^'\"`\\n])*)?|[\\w-](?:\\$\\{[^}\\n]*\\}|[^'\"`\\n:])*)\\2/g,",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "TIDY1-the-src-path-reaches-into-another-tree",
     "file": "tools/moveModule.mjs",
-    "old": "  text = text.replace(new RegExp(`(?<![\\\\w\\\\-./])(\\\\/|\\\\.\\\\/|(?:\\\\.\\\\.\\\\/)+)?(${alt(plain)})(?![\\\\w\\\\-])`, 'g'), (all, lead = '', key) => {",
-    "new": "  text = text.replace(new RegExp(`(\\\\/|\\\\.\\\\/|(?:\\\\.\\\\.\\\\/)+)?(${alt(plain)})(?![\\\\w\\\\-])`, 'g'), (all, lead = '', key) => {",
+    "old": "    new RegExp(`(?<![\\\\w\\\\-./])(\\\\/|\\\\.\\\\/|(?:\\\\.\\\\.\\\\/)+)?(${alt(plain)})(?![\\\\w\\\\-])`, 'g'),",
+    "new": "    new RegExp(`(\\\\/|\\\\.\\\\/|(?:\\\\.\\\\.\\\\/)+)?(${alt(plain)})(?![\\\\w\\\\-])`, 'g'),",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "TIDY1-a-recursing-sweep-called-blind",
     "file": "tools/moveModule.mjs",
-    "old": "if (/readdirSync\\(/.test(l) && named && !/recursive:\\s*true/.test(l))",
-    "new": "if (/readdirSync\\(/.test(l) && named)",
+    "old": "      if (/readdirSync\\(/.test(l) && named && !/recursive:\\s*true/.test(l))\n        out.push(`${file}:${i + 1}: sweeps ${d}/ without recursing`);",
+    "new": "      if (/readdirSync\\(/.test(l) && named) out.push(`${file}:${i + 1}: sweeps ${d}/ without recursing`);",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TIDY1-a-migration-rewritten",
     "file": "tools/moveModule.mjs",
-    "old": "    if (FROZEN.some((re) => re.test(file))) {\n      // a frozen file's text is a fixture",
-    "new": "    if (false) {\n      // a frozen file's text is a fixture",
+    "old": "    if (FROZEN.some((re) => re.test(file))) {",
+    "new": "    if (false) {",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TIDY1-a-moved-file-read-at-its-new-path",
     "file": "tools/moveModule.mjs",
-    "old": "relay.has(back.get(f) ?? f) && t !== texts.get(back.get(f) ?? f)",
-    "new": "relay.has(back.get(f) ?? f) && t !== texts.get(f)",
+    "old": "  return [...writes]\n    .filter(([f, t]) => relay.has(back.get(f) ?? f) && t !== texts.get(back.get(f) ?? f))\n    .map(([f]) => f);",
+    "new": "  return [...writes].filter(([f, t]) => relay.has(back.get(f) ?? f) && t !== texts.get(f)).map(([f]) => f);",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "TIDY1-a-broken-specifier-forgiven",
     "file": "tools/moveModule.mjs",
-    "old": "(a.length !== b.length || resolves(oldFile, a[i], was)) && !resolves(newFile, spec, now)",
-    "new": "(a.length !== b.length || resolves(oldFile, a[i], was)) && false",
+    "old": "    .filter((spec, i) => (a.length !== b.length || resolves(oldFile, a[i], was)) && !resolves(newFile, spec, now))",
+    "new": "    .filter((spec, i) => (a.length !== b.length || resolves(oldFile, a[i], was)) && false)",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "TIDY1-a-quoted-specifier-left",
     "file": "tools/moveModule.mjs",
-    "old": "  text = text.replace(new RegExp(`(?<![\\\\w\\\\-./])(\\\\/|\\\\.\\\\/|(?:\\\\.\\\\.\\\\/)+)?(${alt(plain)})(?![\\\\w\\\\-])`, 'g'), (all, lead = '', key) => {",
-    "new": "  text = text.replace(new RegExp(`(?<![\\\\w\\\\-./])(\\\\/)?(${alt(plain)})(?![\\\\w\\\\-])`, 'g'), (all, lead = '', key) => {",
+    "old": "  text = text.replace(\n    new RegExp(`(?<![\\\\w\\\\-./])(\\\\/|\\\\.\\\\/|(?:\\\\.\\\\.\\\\/)+)?(${alt(plain)})(?![\\\\w\\\\-])`, 'g'),\n    (all, lead = '', key) => {\n      const [to, own] = plain.get(key);\n      if (own && (lead === '/' || (lead && otherTree))) return all;\n      n++;\n      return lead + to;\n    },\n  );",
+    "new": "  text = text.replace(new RegExp(`(?<![\\\\w\\\\-./])(\\\\/)?(${alt(plain)})(?![\\\\w\\\\-])`, 'g'), (all, lead = '', key) => {\n    const [to, own] = plain.get(key);\n    if (own && (lead === '/' || (lead && otherTree))) return all;\n    n++;\n    return lead + to;\n  });",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "TIDY1-a-record-rewritten-two-ways-guessed",
     "file": "tools/moveModule.mjs",
-    "old": "if (b === null || keep.has(a) || !text.includes(a))",
-    "new": "if (!text.includes(a))",
+    "old": "    if (b === null || keep.has(a) || !text.includes(a)) {",
+    "new": "    if (!text.includes(a)) {",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TIDY1-a-sibling-quote-called-blind",
     "file": "tools/moveModule.mjs",
-    "old": "filter(([f, t]) => f !== file && posix.dirname(t) !== posix.dirname(file))",
-    "new": "filter(([f]) => f !== file)",
+    "old": "    .filter(([f, t]) => f !== file && posix.dirname(t) !== posix.dirname(file))",
+    "new": "    .filter(([f]) => f !== file)",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TIDY1-a-url-template-unnamed",
     "file": "tools/moveModule.mjs",
-    "old": "l.matchAll(/(?:import\\(|new URL\\()\\s*`([^`]*)`/g)",
-    "new": "l.matchAll(/(?:import\\()\\s*`([^`]*)`/g)",
+    "old": "      for (const m of l.matchAll(/(?:import\\(|new URL\\()\\s*`([^`]*)`/g)) {",
+    "new": "      for (const m of l.matchAll(/(?:import\\()\\s*`([^`]*)`/g)) {",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TIDY2-a-pattern-left-escaped",
     "file": "tools/moveModule.mjs",
-    "old": "    const [to, own] = esc2.get(key);\n    if (own && (lead === '\\\\/' || (lead && otherTree))) return all;",
-    "new": "    const [to, own] = esc2.get(key);\n    return all;",
+    "old": "      if (own && (lead === '\\\\/' || (lead && otherTree))) return all;",
+    "new": "      return all;",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TIDY2-a-twice-moved-file-led-halfway",
     "file": "tools/moveModule.mjs",
-    "old": "    for (const [k, v] of out) if (v === from) out.set(k, to);\n",
-    "new": "\n",
+    "old": "    for (const [k, v] of out) if (v === from) out.set(k, to);\n    if (!out.has(from)) out.set(from, to);",
+    "new": "    if (!out.has(from)) out.set(from, to);",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "TIDY5-a-concatenated-root-left",
     "file": "tools/moveModule.mjs",
-    "old": "      if (keep === dir) return all;",
-    "new": "      return all;",
+    "old": "        if (keep === dir) return all;",
+    "new": "        return all;",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "TIDY5-an-escaped-name-read-from-its-last-dot",
     "file": "tools/moveModule.mjs",
-    "old": "  for (const m of text.matchAll(new RegExp(`([\\\\w-]+(?:\\\\\\\\?\\\\.[\\\\w-]+)*)\\\\\\\\?\\\\.(${exts})(?![\\\\w-])`, 'g'))) out.add(`${m[1].replace(/\\\\/g, '')}.${m[2]}`);",
-    "new": "  for (const m of text.matchAll(new RegExp(`([\\\\w-]+(?:\\\\.[\\\\w-]+)*)\\\\\\\\?\\\\.(${exts})(?![\\\\w-])`, 'g'))) out.add(`${m[1].replace(/\\\\/g, '')}.${m[2]}`);",
+    "old": "  for (const m of text.matchAll(new RegExp(`([\\\\w-]+(?:\\\\\\\\?\\\\.[\\\\w-]+)*)\\\\\\\\?\\\\.(${exts})(?![\\\\w-])`, 'g')))",
+    "new": "  for (const m of text.matchAll(new RegExp(`([\\\\w-]+(?:\\\\.[\\\\w-]+)*)\\\\\\\\?\\\\.(${exts})(?![\\\\w-])`, 'g')))",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -227,7 +227,7 @@
   {
     "name": "TIDY5-a-variable-url-unnamed",
     "file": "tools/moveModule.mjs",
-    "old": "      if (home !== file && depth(home) !== depth(file) && /\\bnew URL\\(\\s*[A-Za-z_$][\\w$.]*\\s*,\\s*import\\.meta\\.url\\s*\\)/.test(t)) {",
+    "old": "      if (\n        home !== file &&\n        depth(home) !== depth(file) &&\n        /\\bnew URL\\(\\s*[A-Za-z_$][\\w$.]*\\s*,\\s*import\\.meta\\.url\\s*\\)/.test(t)\n      ) {",
     "new": "      if (false) {",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
@@ -236,8 +236,8 @@
   {
     "name": "TIDY5-a-quoting-template-left",
     "file": "tools/moveModule.mjs",
-    "old": "/(\\bnew URL\\(\\s*)(['\"`])(\\.{1,2}(?:\\/(?:\\$\\{[^}\\n]*\\}|[^'\"`\\n])*)?|[\\w-](?:\\$\\{[^}\\n]*\\}|[^'\"`\\n:])*)\\2(?=\\s*,\\s*import\\.meta\\.url)/g,",
-    "new": "/(\\bnew URL\\(\\s*)(['\"`])(\\.{1,2}(?:\\/[^'\"`\\n]*)?|[\\w-](?:\\$\\{[^}\\n]*\\}|[^'\"`\\n:])*)\\2(?=\\s*,\\s*import\\.meta\\.url)/g,",
+    "old": "  /(\\bnew URL\\(\\s*)(['\"`])(\\.{1,2}(?:\\/(?:\\$\\{[^}\\n]*\\}|[^'\"`\\n])*)?|[\\w-](?:\\$\\{[^}\\n]*\\}|[^'\"`\\n:])*)\\2(?=\\s*,\\s*import\\.meta\\.url)/g,",
+    "new": "  /(\\bnew URL\\(\\s*)(['\"`])(\\.{1,2}(?:\\/[^'\"`\\n]*)?|[\\w-](?:\\$\\{[^}\\n]*\\}|[^'\"`\\n:])*)\\2(?=\\s*,\\s*import\\.meta\\.url)/g,",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "AUDIT-TIDY-A1-a-left-glob-unnamed",
     "file": "tools/moveModule.mjs",
-    "old": "      if (lost.length) blind.push(`${file}: '${m[1]}' matched ${lost.length} moved file(s) where they stood and not where they go (${lost[0][1]}) - a glob, rewrite it by hand`);",
-    "new": "      if (false) blind.push(`${file}: '${m[1]}' matched ${lost.length} moved file(s) where they stood and not where they go (${lost[0][1]}) - a glob, rewrite it by hand`);",
+    "old": "      if (lost.length)",
+    "new": "      if (false)",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "AUDIT-TIDY-A1-a-star-crosses-folders",
     "file": "tools/moveModule.mjs",
-    "old": "    else if (c === '*') out += '[^/]*';",
-    "new": "    else if (c === '*') out += '.*';",
+    "old": "    } else if (c === '*') out += '[^/]*';",
+    "new": "    } else if (c === '*') out += '.*';",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AUDIT-TIDY-SRC1-a-glob-left",
     "file": "tools/moveModule.mjs",
-    "old": "      const out = folderFrom(file, dir, home) + pat.slice(dir.length);",
-    "new": "      const out = pat;",
+    "old": "        const out = folderFrom(file, dir, home) + pat.slice(dir.length);",
+    "new": "        const out = pat;",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-TIDY-SRC1-an-emptied-glob-unnamed",
     "file": "tools/moveModule.mjs",
-    "old": "        if (lost.length && home === file) blind.push(",
-    "new": "        if (false) blind.push(",
+    "old": "        if (lost.length && home === file)",
+    "new": "        if (false)",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "AUDIT-TIDY-SRC4-a-host-path-left",
     "file": "tools/moveModule.mjs",
-    "old": "    if (plain.get(key)[1]) return all;",
-    "new": "    return all;",
+    "old": "      if (plain.get(key)[1]) return all;",
+    "new": "      return all;",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -344,7 +344,7 @@
   {
     "name": "AUDIT-TIDY-TOOL7-broken-refusal-off",
     "file": "tools/moveModule.mjs",
-    "old": "  if (broken.length) { console.error('a rewritten specifier resolves to nothing - nothing written'); return 1; }",
+    "old": "  if (broken.length) {\n    console.error('a rewritten specifier resolves to nothing - nothing written');\n    return 1;\n  }",
     "new": "",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
@@ -362,8 +362,8 @@
   {
     "name": "AUDIT-TIDY-TOOL7-name-change-allowed",
     "file": "tools/moveModule.mjs",
-    "old": "    if (posix.basename(f) !== posix.basename(t)) { console.error(`a move keeps the name: ${f} -> ${t}`); return 1; }",
-    "new": "",
+    "old": "      if (posix.basename(f) !== posix.basename(t)) {\n        console.error(`a move keeps the name: ${f} -> ${t}`);\n        return 1;\n      }\n    }",
+    "new": "    }",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "AUDIT-TIDY-TOOL7-own-after-slash-rewritten",
     "file": "tools/moveModule.mjs",
-    "old": "    if (own && (lead === '/' || (lead && otherTree))) return all;",
-    "new": "    if (own && lead && otherTree) return all;",
+    "old": "      if (own && (lead === '/' || (lead && otherTree))) return all;",
+    "new": "      if (own && lead && otherTree) return all;",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "AUDIT-TIDY-TOOL7-escaped-own-after-slash-rewritten",
     "file": "tools/moveModule.mjs",
-    "old": "    if (own && (lead === '\\\\/' || (lead && otherTree))) return all;",
-    "new": "    if (own && lead && otherTree) return all;",
+    "old": "      if (own && (lead === '\\\\/' || (lead && otherTree))) return all;",
+    "new": "      if (own && lead && otherTree) return all;",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -389,7 +389,7 @@
   {
     "name": "AUDIT-TIDY-TOOL7-no-join-blind-off",
     "file": "tools/moveModule.mjs",
-    "old": "    if (!/\\bjoin\\b[^;\\n]*from 'node:path'/.test(text)) blind.push(`${file}: import.meta.dirname, and no join imported to raise it`);",
+    "old": "    if (!/\\bjoin\\b[^;\\n]*from 'node:path'/.test(text))\n      blind.push(`${file}: import.meta.dirname, and no join imported to raise it`);",
     "new": "",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
@@ -398,7 +398,7 @@
   {
     "name": "AUDIT-TIDY-TOOL7-moved-up-blind-off",
     "file": "tools/moveModule.mjs",
-    "old": "      if (depth(home) < depth(file) && OWN_DIR.test(t)) blind.push(`${home}: finds the tree from its own folder, and moved up`);",
+    "old": "      if (depth(home) < depth(file) && OWN_DIR.test(t))\n        blind.push(`${home}: finds the tree from its own folder, and moved up`);",
     "new": "",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
@@ -407,8 +407,8 @@
   {
     "name": "AUDIT-TIDY-TOOL7-concat-folder-slash-forced",
     "file": "tools/moveModule.mjs",
-    "old": "      const keep = dir.endsWith('/') ? out : out.replace(/\\/$/, '');",
-    "new": "      const keep = out;",
+    "old": "        const keep = dir.endsWith('/') ? out : out.replace(/\\/$/, '');",
+    "new": "        const keep = out;",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-TIDY-TOOL7-brokenBy-count-guard-off",
     "file": "tools/moveModule.mjs",
-    "old": "(a.length !== b.length || resolves(oldFile, a[i], was))",
-    "new": "(resolves(oldFile, a[i] ?? spec, was))",
+    "old": "    .filter((spec, i) => (a.length !== b.length || resolves(oldFile, a[i], was)) && !resolves(newFile, spec, now))",
+    "new": "    .filter((spec, i) => resolves(oldFile, a[i] ?? spec, was) && !resolves(newFile, spec, now))",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-TIDY-TOOL7-specifierChanges-count-guard-off",
     "file": "tools/moveModule.mjs",
-    "old": "  if (a.length !== b.length) return out;\n",
-    "new": "\n",
+    "old": "  if (a.length !== b.length) return out;",
+    "new": "",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-TIDY-TOOL7-sweep-second-spelling-off",
     "file": "tools/moveModule.mjs",
-    "old": " || new RegExp(`['\"\\`]${esc(d.replace(/^[a-z]+\\//, ''))}/?['\"\\`]`).test(l);",
-    "new": ";",
+    "old": "      const named =\n        new RegExp(`['\"\\`/]${esc(d)}/?['\"\\`]`).test(l) ||\n        new RegExp(`['\"\\`]${esc(d.replace(/^[a-z]+\\//, ''))}/?['\"\\`]`).test(l);",
+    "new": "      const named = new RegExp(`['\"\\`/]${esc(d)}/?['\"\\`]`).test(l);",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "AUDIT-TIDY-TOOL1-a-negative-pin-unnamed",
     "file": "tools/moveModule.mjs",
-    "old": "          if (hit) { blind.push(",
-    "new": "          if (false) { blind.push(",
+    "old": "          if (hit) {",
+    "new": "          if (false) {",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "AUDIT-TIDY-TOOL2-a-kept-spelling-ignored",
     "file": "tools/moveModule.mjs",
-    "old": "    for (const a of specs) if (plan.has(a)) for (const x of [a, escaped(a)]) plan.set(x, plan.get(x) === x ? x : null);",
-    "new": "",
+    "old": "    for (const a of specs) if (plan.has(a)) for (const x of [a, escaped(a)]) plan.set(x, plan.get(x) === x ? x : null);\n  }",
+    "new": "  }",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT-TIDY-TOOL3-a-frozen-fixture-rebased",
     "file": "tools/moveModule.mjs",
-    "old": "          if (!TOP.test(l)) return l;",
-    "new": "",
+    "old": "              if (!TOP.test(l)) return l;\n              const o = rebaseOwnDir(",
+    "new": "              const o = rebaseOwnDir(",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -479,7 +479,7 @@
   {
     "name": "AUDIT-TIDY-TOOL4-a-bare-name-rewritten",
     "file": "tools/moveModule.mjs",
-    "old": "    if (!f.includes('/')) continue;   // `main.js` alone is its name, which a move keeps (AUDIT TIDY TOOL-4)",
+    "old": "      if (!f.includes('/')) continue; // `main.js` alone is its name, which a move keeps (AUDIT TIDY TOOL-4)",
     "new": "",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
@@ -488,7 +488,7 @@
   {
     "name": "AUDIT-TIDY-TOOL5-a-fixed-extension-list",
     "file": "tools/moveModule.mjs",
-    "old": "    e = [...new Set([...names.keys()].map((n) => n.slice(n.lastIndexOf('.') + 1)).filter(Boolean))].map(esc).join('|') || 'js';",
+    "old": "    e =\n      [...new Set([...names.keys()].map((n) => n.slice(n.lastIndexOf('.') + 1)).filter(Boolean))].map(esc).join('|') ||\n      'js';",
     "new": "    e = 'm?js|cjs|json|md|html';",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
@@ -506,8 +506,8 @@
   {
     "name": "AUDIT-TIDY-TOOL6-import-meta-resolve-left",
     "file": "tools/moveModule.mjs",
-    "old": "  /(\\bimport\\.meta\\.resolve\\s*\\(\\s*)(['\"])(\\.{1,2}\\/[^'\"\\n]*)\\2/g,",
-    "new": "",
+    "old": "  /(\\bimport\\.meta\\.resolve\\s*\\(\\s*)(['\"])(\\.{1,2}\\/[^'\"\\n]*)\\2/g,\n];",
+    "new": "];",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "AUDIT-TIDY-TOOL8-colliding-moves-made",
     "file": "tools/moveModule.mjs",
-    "old": "    if (clash.length) { for (const c of clash) console.error(c); return 1; }",
-    "new": "",
+    "old": "    if (clash.length) {\n      for (const c of clash) console.error(c);\n      return 1;\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -551,8 +551,8 @@
   {
     "name": "AUDIT-TIDY-TOOL1-a-read-path-taken-for-a-spelling",
     "file": "tools/moveModule.mjs",
-    "old": "          if (m[2] !== undefined && /\\b(?:new URL|rd|read|src|readFileSync)\\(\\s*$/.test(l.slice(0, m.index))) continue;   // a path it reads, not a spelling",
-    "new": "",
+    "old": "          if (m[2] !== undefined && /\\b(?:new URL|rd|read|src|readFileSync)\\(\\s*$/.test(l.slice(0, m.index))) continue; // a path it reads, not a spelling\n          const q = m[2] ?? m[3].replace(/\\\\(.)/g, '$1');",
+    "new": "          const q = m[2] ?? m[3].replace(/\\\\(.)/g, '$1');",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]
@@ -560,8 +560,8 @@
   {
     "name": "AUDIT-TIDY-TOOL1-a-keyword-taken-for-a-name",
     "file": "tools/moveModule.mjs",
-    "old": "        const read = [...[...l.matchAll(READ)].map((m) => repoPath(m[1])), ...[...bound].filter(([v]) => new RegExp(`\\\\b${v}\\\\b(?!\\\\s*\\\\\\\\?['\"\\`])`).test(l)).map(([, p]) => p)];   // `from 'x'` is the keyword, not a name",
-    "new": "        const read = [...[...l.matchAll(READ)].map((m) => repoPath(m[1])), ...[...bound].filter(([v]) => new RegExp(`\\\\b${v}\\\\b`).test(l)).map(([, p]) => p)];   // `from 'x'` is the keyword, not a name",
+    "old": "          ...[...bound].filter(([v]) => new RegExp(`\\\\b${v}\\\\b(?!\\\\s*\\\\\\\\?['\"\\`])`).test(l)).map(([, p]) => p),",
+    "new": "          ...[...bound].filter(([v]) => new RegExp(`\\\\b${v}\\\\b`).test(l)).map(([, p]) => p),",
     "tests": [
       "test/tooling/tidy1_movetool.test.js"
     ]

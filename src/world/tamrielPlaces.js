@@ -51,7 +51,10 @@ export const BAY_MARGIN = 1;
 const SALT = 0x7a12;
 /** A made place's kind and the Daggerfall type its name is framed for. */
 /** @type {ReadonlyArray<readonly ['town' | 'village', number, number]>} */
-const MADE = Object.freeze([Object.freeze(/** @type {const} */ (['town', LOCATION_TYPES.TownHamlet, TOWN_SLOT])), Object.freeze(/** @type {const} */ (['village', LOCATION_TYPES.TownVillage, VILLAGE_SLOT]))]);
+const MADE = Object.freeze([
+  Object.freeze(/** @type {const} */ (['town', LOCATION_TYPES.TownHamlet, TOWN_SLOT])),
+  Object.freeze(/** @type {const} */ (['village', LOCATION_TYPES.TownVillage, VILLAGE_SLOT])),
+]);
 
 /** The land of one province on a trace, as a predicate over picture points - provinceKeyAt's own reading (the pixel under
  *  the point, nothing off the grid), over one mask made once a province.
@@ -61,7 +64,8 @@ export function provinceLand(trace, key) {
   const mask = new Uint8Array(w * h);
   for (let i = 0; i < mask.length; i++) if (land[i] && PROVINCE_OF_ID[province[i]] === key) mask[i] = 1;
   return (x, y) => {
-    const px = Math.floor(x), py = Math.floor(y);
+    const px = Math.floor(x),
+      py = Math.floor(y);
     return px >= 0 && py >= 0 && px < w && py < h && mask[py * w + px] === 1;
   };
 }
@@ -70,16 +74,20 @@ export function provinceLand(trace, key) {
  *  pixel of the province, SNAP_INSET inside its edges - or null. */
 export function snapToProvince(x, y, own, reach = SNAP_REACH) {
   if (own(x, y)) return { x, y, d: 0 };
-  let best = null, bd = reach + 1e-9;
-  const x0 = Math.max(0, Math.floor(x - reach)), x1 = Math.min(PICTURE_W - 1, Math.floor(x + reach));
-  const y0 = Math.max(0, Math.floor(y - reach)), y1 = Math.min(PICTURE_H - 1, Math.floor(y + reach));
+  let best = null,
+    bd = reach + 1e-9;
+  const x0 = Math.max(0, Math.floor(x - reach)),
+    x1 = Math.min(PICTURE_W - 1, Math.floor(x + reach));
+  const y0 = Math.max(0, Math.floor(y - reach)),
+    y1 = Math.min(PICTURE_H - 1, Math.floor(y + reach));
   for (let py = y0; py <= y1; py++) {
     for (let px = x0; px <= x1; px++) {
       const qx = Math.min(Math.max(x, px + SNAP_INSET), px + 1 - SNAP_INSET);
       const qy = Math.min(Math.max(y, py + SNAP_INSET), py + 1 - SNAP_INSET);
       const d = Math.hypot(qx - x, qy - y);
       if (d >= bd || !own(qx, qy)) continue;
-      bd = d; best = { x: qx, y: qy, d };
+      bd = d;
+      best = { x: qx, y: qy, d };
     }
   }
   return best;
@@ -92,7 +100,11 @@ export function provinceCells(own, bay = bayPictureRect()) {
   for (let y = 0; y < PICTURE_H; y++) {
     for (let x = 0; x < PICTURE_W; x++) {
       if (!own(x + 0.5, y + 0.5)) continue;
-      const inBay = x + 1 > bay.x0 - BAY_MARGIN && x < bay.x1 + BAY_MARGIN && y + 1 > bay.y0 - BAY_MARGIN && y < bay.y1 + BAY_MARGIN;
+      const inBay =
+        x + 1 > bay.x0 - BAY_MARGIN &&
+        x < bay.x1 + BAY_MARGIN &&
+        y + 1 > bay.y0 - BAY_MARGIN &&
+        y < bay.y1 + BAY_MARGIN;
       if (!inBay) cells.push([x, y]);
     }
   }
@@ -104,14 +116,19 @@ export function provinceCells(own, bay = bayPictureRect()) {
  *  @param {Array<[number, number]>} cells @param {Array<{ px: number, py: number }>} taken */
 export function madePoint(cells, taken, p, slot) {
   if (!cells.length) return null;
-  let best = null, bd = -1;
+  let best = null,
+    bd = -1;
   for (let t = 0; t < PLACE_TRIES; t++) {
     const [cx, cy] = cells[hash32(SALT, p, slot, t) % cells.length];
     const h = hash32(SALT ^ 0x55, p, slot, t);
-    const x = cx + 0.25 + 0.5 * ((h & 0xffff) / 0x10000), y = cy + 0.25 + 0.5 * ((h >>> 16) / 0x10000);
+    const x = cx + 0.25 + 0.5 * ((h & 0xffff) / 0x10000),
+      y = cy + 0.25 + 0.5 * ((h >>> 16) / 0x10000);
     let d = Infinity;
     for (const q of taken) d = Math.min(d, Math.hypot(q.px - x, q.py - y));
-    if (d > bd) { bd = d; best = { x, y }; }
+    if (d > bd) {
+      bd = d;
+      best = { x, y };
+    }
   }
   return best;
 }
@@ -133,16 +150,28 @@ export function madeName(type, bank, p, slot, used) {
  * @param {import('./tamriel/tamrielLand.js').TamrielTrace | null} trace
  */
 export function makeTamrielPlaces(trace, bay = bayPictureRect()) {
-  const provinces = [], places = [], lost = [];
+  const provinces = [],
+    places = [],
+    lost = [];
   if (!trace) return { provinces, places, lost };
   const used = new Set(CITIES.map((c) => c.name));
   PLACE_PROVINCES.forEach((key, p) => {
     const own = provinceLand(trace, key);
     const mine = [];
     CITIES.filter((c) => c.province === key).forEach((c, id) => {
-      const place = { province: key, provinceIndex: p, id, kind: 'city-state', name: c.name, ...(c.port ? { port: true } : {}) };
+      const place = {
+        province: key,
+        provinceIndex: p,
+        id,
+        kind: 'city-state',
+        name: c.name,
+        ...(c.port ? { port: true } : {}),
+      };
       const at = snapToProvince(c.at[0], c.at[1], own);
-      if (!at) { lost.push({ ...place, px: c.at[0], py: c.at[1] }); return; }
+      if (!at) {
+        lost.push({ ...place, px: c.at[0], py: c.at[1] });
+        return;
+      }
       mine.push({ ...place, px: at.x, py: at.y, snapped: at.d });
     });
     const cells = provinceCells(own, bay);
@@ -150,7 +179,8 @@ export function makeTamrielPlaces(trace, bay = bayPictureRect()) {
     const bank = provinceNameBank(key);
     for (const [kind, type, first] of MADE) {
       for (let i = 0; i < PLACE_COUNTS[kind]; i++) {
-        const slot = first + i, at = madePoint(cells, mine, p, slot);
+        const slot = first + i,
+          at = madePoint(cells, mine, p, slot);
         if (!at) break;
         const name = bank == null ? '' : madeName(type, bank, p, slot, used);
         if (!name) continue;

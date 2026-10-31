@@ -2,8 +2,8 @@
   {
     "name": "OC-wrap-dropped",
     "file": "src/net/ownerClock.js",
-    "old": "    tm() { return at == null ? null : ((Math.round(at) % OWNER_TM_MOD) + OWNER_TM_MOD) % OWNER_TM_MOD; },",
-    "new": "    tm() { return at == null ? null : Math.round(at); },",
+    "old": "      return at == null ? null : ((Math.round(at) % OWNER_TM_MOD) + OWNER_TM_MOD) % OWNER_TM_MOD;",
+    "new": "      return at == null ? null : Math.round(at);",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "OC-cap-unread",
     "file": "src/net/ownerClock.js",
-    "old": "    if (s.length <= max) return s;\n  }",
-    "new": "    return s;\n  }",
+    "old": "    if (s.length <= max) return s;",
+    "new": "    return s;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "OC-hand-kept",
     "file": "src/net/ownerClock.js",
-    "old": "  try { return apply(); } finally { _applying = was; }",
-    "new": "  try { return apply(); } finally { void was; }",
+    "old": "    _applying = was;",
+    "new": "    void was;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "OC-arrival-clock-kept",
     "file": "src/scenes/puppetLead.js",
-    "old": "    const dt = owned ? ownerTmDiffS(tm, L.tm) : nowS - L.at, dx = t[0] - L.x, dz = t[2] - L.z;",
-    "new": "    const dt = nowS - L.at, dx = t[0] - L.x, dz = t[2] - L.z;",
+    "old": "    const dt = owned ? ownerTmDiffS(tm, L.tm) : nowS - L.at,",
+    "new": "    const dt = nowS - L.at,",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "OC-reach-unscaled",
     "file": "src/scenes/puppetLead.js",
-    "old": "  const d = Math.hypot(ox, oz), far = LEAD_DIST_MAX * (L.cap / LEAD_MAX_S);",
-    "new": "  const d = Math.hypot(ox, oz), far = LEAD_DIST_MAX;",
+    "old": "    far = LEAD_DIST_MAX * (L.cap / LEAD_MAX_S); // OWNER-CLOCK: as far as the cap is long",
+    "new": "    far = LEAD_DIST_MAX; // OWNER-CLOCK: as far as the cap is long",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "OC-gap-taken-whole",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
-    "new": "      if (owned) L.gap = dt;",
+    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps",
+    "new": "      if (owned) L.gap = dt; // OWNER-CLOCK: the interval it keeps",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "OC-gap-never-forgets",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
-    "new": "      if (owned) L.gap = Math.max(dt, L.gap);",
+    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps",
+    "new": "      if (owned) L.gap = Math.max(dt, L.gap); // OWNER-CLOCK: the interval it keeps",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "OC-gap-off-the-arrival-clock",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
-    "new": "      L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
+    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps",
+    "new": "      L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "CU-step-size",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "{ n, dt: Math.min(FOE_MAX_FRAME_DT, foeDt / n) };",
-    "new": "{ n, dt: foeDt / n };",
+    "old": "  return n < 2 ? { n: 1, dt: foeDt } : { n, dt: Math.min(FOE_MAX_FRAME_DT, foeDt / n) };",
+    "new": "  return n < 2 ? { n: 1, dt: foeDt } : { n, dt: foeDt / n };",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "CU-afforded-unread",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "Math.ceil(foeDt / FOE_MAX_FRAME_DT - 1e-9), 1 + Math.max(0, Math.floor(extraMax) || 0));",
-    "new": "Math.ceil(foeDt / FOE_MAX_FRAME_DT - 1e-9));",
+    "old": "  const n = Math.min(\n    OWNER_CATCHUP_STEPS_MAX,\n    Math.ceil(foeDt / FOE_MAX_FRAME_DT - 1e-9),\n    1 + Math.max(0, Math.floor(extraMax) || 0),\n  );",
+    "new": "  const n = Math.min(OWNER_CATCHUP_STEPS_MAX, Math.ceil(foeDt / FOE_MAX_FRAME_DT - 1e-9));",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "CU-host-step-lost",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "  return n < 2 ? { n: 1, dt: foeDt } :",
-    "new": "  return n < 2 ? { n: 1, dt: Math.min(foeDt, FOE_MAX_FRAME_DT) } :",
+    "old": "  return n < 2 ? { n: 1, dt: foeDt } : { n, dt: Math.min(FOE_MAX_FRAME_DT, foeDt / n) };",
+    "new": "  return n < 2 ? { n: 1, dt: Math.min(foeDt, FOE_MAX_FRAME_DT) } : { n, dt: Math.min(FOE_MAX_FRAME_DT, foeDt / n) };",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "CU-brain-left-behind",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "if (i > 1 && want > ticked) { tick(want - ticked); ticked = want; }",
-    "new": "void want;",
+    "old": "        if (i > 1 && want > ticked) {\n          tick(want - ticked);\n          ticked = want;\n        } // each later call carries the brain to its end",
+    "new": "        void want; // each later call carries the brain to its end",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "CU-mark-dropped",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "      stepped.add(key);\n      mark(at);",
-    "new": "      stepped.add(key);",
+    "old": "      mark(at);\n      const plan = caught && mine && before.has(key) ? catchUpPlan(dt, extraMax) : { n: 1, dt };",
+    "new": "      const plan = caught && mine && before.has(key) ? catchUpPlan(dt, extraMax) : { n: 1, dt };",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "CU-share-unread",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "(rawMs * OWNER_CATCHUP_SHARE) / perCall",
-    "new": "(rawMs * 1) / perCall",
+    "old": "export const extrasAfforded = (rawMs, perCall) =>\n  rawMs <= FRAME_MS_MAX && perCall > 0 ? (rawMs * OWNER_CATCHUP_SHARE) / perCall : 0;",
+    "new": "export const extrasAfforded = (rawMs, perCall) => (rawMs <= FRAME_MS_MAX && perCall > 0 ? (rawMs * 1) / perCall : 0);",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "CU-cost-unread",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "(rawMs * OWNER_CATCHUP_SHARE) / perCall",
-    "new": "(rawMs * OWNER_CATCHUP_SHARE) / 1",
+    "old": "  rawMs <= FRAME_MS_MAX && perCall > 0 ? (rawMs * OWNER_CATCHUP_SHARE) / perCall : 0;",
+    "new": "  rawMs <= FRAME_MS_MAX && perCall > 0 ? (rawMs * OWNER_CATCHUP_SHARE) / 1 : 0;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CU-absence-read-as-a-frame",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "rawMs <= FRAME_MS_MAX && perCall > 0 ?",
-    "new": "perCall > 0 ?",
+    "old": "export const extrasAfforded = (rawMs, perCall) =>\n  rawMs <= FRAME_MS_MAX && perCall > 0 ? (rawMs * OWNER_CATCHUP_SHARE) / perCall : 0;",
+    "new": "export const extrasAfforded = (rawMs, perCall) => (perCall > 0 ? (rawMs * OWNER_CATCHUP_SHARE) / perCall : 0);",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "MS-answer-replaced",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "    return ran;\n  };",
-    "new": "    return true;\n  };",
+    "old": "    return ran;",
+    "new": "    return true;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -353,8 +353,8 @@
   {
     "name": "CU-wall-time-planned",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "const plan = caught && mine && before.has(key) ? catchUpPlan(dt, extraMax) : { n: 1, dt };",
-    "new": "const plan = caught && mine && before.has(key) ? catchUpPlan(Math.max(dt, Math.min(shareMs / 100, OWNER_CATCHUP_MAX_S)), extraMax) : { n: 1, dt };",
+    "old": "      const plan = caught && mine && before.has(key) ? catchUpPlan(dt, extraMax) : { n: 1, dt };",
+    "new": "      const plan =\n        caught && mine && before.has(key)\n          ? catchUpPlan(Math.max(dt, Math.min(shareMs / 100, OWNER_CATCHUP_MAX_S)), extraMax)\n          : { n: 1, dt };",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -362,8 +362,8 @@
   {
     "name": "CU-outruns-the-host",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "{ n, dt: Math.min(FOE_MAX_FRAME_DT, foeDt / n) };",
-    "new": "{ n, dt: FOE_MAX_FRAME_DT };",
+    "old": "  return n < 2 ? { n: 1, dt: foeDt } : { n, dt: Math.min(FOE_MAX_FRAME_DT, foeDt / n) };",
+    "new": "  return n < 2 ? { n: 1, dt: foeDt } : { n, dt: FOE_MAX_FRAME_DT };",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -371,8 +371,8 @@
   {
     "name": "CU-plan-guard-dropped",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "  if (!(foeDt > FOE_MAX_FRAME_DT)) return { n: 1, dt: foeDt };\n",
-    "new": "",
+    "old": "  if (!(foeDt > FOE_MAX_FRAME_DT)) return { n: 1, dt: foeDt };\n  const n = Math.min(",
+    "new": "  const n = Math.min(",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "CU-zero-price-free",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "rawMs <= FRAME_MS_MAX && perCall > 0 ?",
-    "new": "rawMs <= FRAME_MS_MAX && perCall >= 0 ?",
+    "old": "  rawMs <= FRAME_MS_MAX && perCall > 0 ? (rawMs * OWNER_CATCHUP_SHARE) / perCall : 0;",
+    "new": "  rawMs <= FRAME_MS_MAX && perCall >= 0 ? (rawMs * OWNER_CATCHUP_SHARE) / perCall : 0;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -398,8 +398,8 @@
   {
     "name": "CU-break-dropped",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "        else if (i > 2 && spent + clock() - extrasFrom >= shareMs) break;",
-    "new": "        else if (i > 2 && spent + clock() - extrasFrom >= Infinity) break;",
+    "old": "        else if (i > 2 && spent + clock() - extrasFrom >= shareMs) break; // the frame's extras have spent its share: the forecast was wrong",
+    "new": "        else if (i > 2 && spent + clock() - extrasFrom >= Infinity) break; // the frame's extras have spent its share: the forecast was wrong",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "CU-break-counts-the-host",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "      if (i === 2) { if (spent >= shareMs) break; extrasFrom = clock(); }",
-    "new": "      if (i === 2) { if (spent >= shareMs) break; extrasFrom = at; }",
+    "old": "          extrasFrom = clock();",
+    "new": "          extrasFrom = at;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "CU-ticked-zero",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "    ticked = foeFrameDt(dt);   // the host ticked",
-    "new": "    ticked = 0;   // the host ticked",
+    "old": "    ticked = foeFrameDt(dt); // the host ticked the brain the frame's capped step before any pool moved",
+    "new": "    ticked = 0; // the host ticked the brain the frame's capped step before any pool moved",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "CU-rest-dropped",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "(d) => update.call(p, d, ...rest)",
-    "new": "(d) => update.call(p, d)",
+    "old": "        p.update = (dt, ...rest) => catchUp.step(p, dt, (d) => update.call(p, d, ...rest)); // AUDIT HOST-CLOCK 5: a method's own `this`",
+    "new": "        p.update = (dt, ...rest) => catchUp.step(p, dt, (d) => update.call(p, d)); // AUDIT HOST-CLOCK 5: a method's own `this`",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "CU-mark-after",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "      stepped.add(key);\n      mark(at);",
-    "new": "      stepped.add(key);\n      mark(at - 1000);",
+    "old": "      mark(at);",
+    "new": "      mark(at - 1000);",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -452,8 +452,8 @@
   {
     "name": "CU-default-mark-dropped",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "tick = tickTactics, mark = (ms) => ownerClock.mark(ms) } = {}) {",
-    "new": "tick = tickTactics, mark = () => {} } = {}) {",
+    "old": "  mark = (ms) => ownerClock.mark(ms),",
+    "new": "  mark = () => {},",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -461,8 +461,8 @@
   {
     "name": "CU-default-tick-dropped",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "tick = tickTactics, mark = (ms) => ownerClock.mark(ms) } = {}) {",
-    "new": "tick = () => {}, mark = (ms) => ownerClock.mark(ms) } = {}) {",
+    "old": "  tick = tickTactics,",
+    "new": "  tick = () => {},",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "W-modal-unmarked",
     "file": "src/scenes/ownerCatchUp.js",
-    "old": "  markModalSteps(modes, { frame: () => ownerFoes.frame() });\n}",
-    "new": "  void markModalSteps;\n}",
+    "old": "  markModalSteps(modes, { frame: () => ownerFoes.frame() });",
+    "new": "  void markModalSteps;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "PL-frozen-clock-owned",
     "file": "src/scenes/puppetLead.js",
-    "old": "    const owned = tm != null && L.tm != null && tm !== L.tm;",
-    "new": "    const owned = tm != null && L.tm != null;",
+    "old": "    const owned = tm != null && L.tm != null && tm !== L.tm; // OWNER-CLOCK: both words say when - the owner's time between them; one moment twice (a clock that stopped) says nothing of it",
+    "new": "    const owned = tm != null && L.tm != null; // OWNER-CLOCK: both words say when - the owner's time between them; one moment twice (a clock that stopped) says nothing of it",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "PL-gap-outside-range",
     "file": "src/scenes/puppetLead.js",
-    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;   // OWNER-CLOCK: the interval it keeps\n    }",
-    "new": "    }\n      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
+    "old": "      if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE; // OWNER-CLOCK: the interval it keeps\n    }",
+    "new": "    }\n    if (owned) L.gap = dt >= L.gap ? dt : L.gap + (dt - L.gap) * LEAD_GAP_EASE;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "PL-tm-not-kept",
     "file": "src/scenes/puppetLead.js",
-    "old": "L.at = nowS; L.tm = tm;",
-    "new": "L.at = nowS; if (tm != null) L.tm = tm;",
+    "old": "    L.tm = tm;",
+    "new": "    if (tm != null) L.tm = tm;",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]
@@ -542,8 +542,8 @@
   {
     "name": "OC-stamp-skip-null",
     "file": "src/net/ownerClock.js",
-    "old": "  if (tm != null) {\n    const s = JSON.stringify({ t, data: { ...data, tm } });",
-    "new": "  {\n    const s = JSON.stringify({ t, data: { ...data, tm } });",
+    "old": "  if (tm != null) {",
+    "new": "  {",
     "tests": [
       "test/scenes/fb1021_ownerclock.test.js"
     ]

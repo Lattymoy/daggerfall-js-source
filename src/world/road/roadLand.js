@@ -29,14 +29,14 @@ import { DIR_DELTA, MAP_W as MAP_WIDTH } from './roadNetwork.js';
  * Sums, products and Math.sqrt alone - the same on every client.
  */
 export const VOYAGER_DIALS = Object.freeze({
-  gradeCost: 1 / 16,      // per (byte a pixel)^2: 4% doubles a step, 8% is five of it
-  highCost: 0.03,         // per byte above highAbove
-  highAbove: 40,          // the height a step starts to pay for being high
-  shoreCost: 0.85,        // a step onto land beside water
-  fordCost: 12,           // a step onto water a ford spans, on top of its length
-  smoothR: 2,             // the grade is read on the height averaged over (2r + 1)^2 pixels
-  grainCost: 2.5,         // the land's grain (landGrain): a step on a rough patch's heart costs this much more
-  widenAbove: 2,          // a route dearer than this many times its straight length asks the wider box (route)
+  gradeCost: 1 / 16, // per (byte a pixel)^2: 4% doubles a step, 8% is five of it
+  highCost: 0.03, // per byte above highAbove
+  highAbove: 40, // the height a step starts to pay for being high
+  shoreCost: 0.85, // a step onto land beside water
+  fordCost: 12, // a step onto water a ford spans, on top of its length
+  smoothR: 2, // the grade is read on the height averaged over (2r + 1)^2 pixels
+  grainCost: 2.5, // the land's grain (landGrain): a step on a rough patch's heart costs this much more
+  widenAbove: 2, // a route dearer than this many times its straight length asks the wider box (route)
 });
 /** VOYAGER1: the widest run of water a road crosses, pixels (a river; a lake's narrows). */
 export const FORD_SPAN = 2;
@@ -63,10 +63,20 @@ function grainHash(ix, iy) {
  * @param {number} x @param {number} y Bay pixels
  */
 export function landGrain(x, y) {
-  const fx = x / GRAIN_PX, fy = y / GRAIN_PX, ix = Math.floor(fx), iy = Math.floor(fy);
-  const tx = fx - ix, ty = fy - iy, sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
-  const a = grainHash(ix, iy), b = grainHash(ix + 1, iy), c = grainHash(ix, iy + 1), d = grainHash(ix + 1, iy + 1);
-  const v = (a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy - GRAIN_EDGE[0]) / (GRAIN_EDGE[1] - GRAIN_EDGE[0]);
+  const fx = x / GRAIN_PX,
+    fy = y / GRAIN_PX,
+    ix = Math.floor(fx),
+    iy = Math.floor(fy);
+  const tx = fx - ix,
+    ty = fy - iy,
+    sx = tx * tx * (3 - 2 * tx),
+    sy = ty * ty * (3 - 2 * ty);
+  const a = grainHash(ix, iy),
+    b = grainHash(ix + 1, iy),
+    c = grainHash(ix, iy + 1),
+    d = grainHash(ix + 1, iy + 1);
+  const v =
+    (a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy - GRAIN_EDGE[0]) / (GRAIN_EDGE[1] - GRAIN_EDGE[0]);
   const t = v < 0 ? 0 : v > 1 ? 1 : v;
   return t * t * (3 - 2 * t);
 }
@@ -92,13 +102,20 @@ export function landForRoutes(heights, water, keep, W, H, dials = VOYAGER_DIALS,
   const sum = new Float64Array((W + 1) * (H + 1));
   for (let y = 0; y < H; y++) {
     let row = 0;
-    for (let x = 0; x < W; x++) { row += heights[y * W + x]; sum[(y + 1) * (W + 1) + x + 1] = sum[y * (W + 1) + x + 1] + row; }
-  }
-  const height = new Float32Array(W * H), shore = new Uint8Array(W * H), ford = new Uint8Array(W * H);
-  for (let y = 0; y < H; y++) {
-    const y0 = Math.max(0, y - r), y1 = Math.min(H, y + r + 1);
     for (let x = 0; x < W; x++) {
-      const x0 = Math.max(0, x - r), x1 = Math.min(W, x + r + 1);
+      row += heights[y * W + x];
+      sum[(y + 1) * (W + 1) + x + 1] = sum[y * (W + 1) + x + 1] + row;
+    }
+  }
+  const height = new Float32Array(W * H),
+    shore = new Uint8Array(W * H),
+    ford = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++) {
+    const y0 = Math.max(0, y - r),
+      y1 = Math.min(H, y + r + 1);
+    for (let x = 0; x < W; x++) {
+      const x0 = Math.max(0, x - r),
+        x1 = Math.min(W, x + r + 1);
       const s = sum[y1 * (W + 1) + x1] - sum[y0 * (W + 1) + x1] - sum[y1 * (W + 1) + x0] + sum[y0 * (W + 1) + x0];
       height[y * W + x] = s / ((x1 - x0) * (y1 - y0));
     }
@@ -109,16 +126,29 @@ export function landForRoutes(heights, water, keep, W, H, dials = VOYAGER_DIALS,
     for (let x = 0; x < W; x++) {
       const i = y * W + x;
       if (!water[i]) {
-        for (const [, dx, dy] of DIR_DELTA) if (wet(x + dx, y + dy)) { shore[i] = 1; break; }
+        for (const [, dx, dy] of DIR_DELTA)
+          if (wet(x + dx, y + dy)) {
+            shore[i] = 1;
+            break;
+          }
         continue;
       }
-      if (!wet(x, y) || (still && still[i])) continue;   // ROAD-LOOK: a lake's water is never a ford's
+      if (!wet(x, y) || (still && still[i])) continue; // ROAD-LOOK: a lake's water is never a ford's
       // a ford: along some axis, the water through this pixel runs no more than FORD_SPAN with land at both ends
-      for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
-        let a = 1, b = 1;
+      for (const [dx, dy] of [
+        [1, 0],
+        [0, 1],
+        [1, 1],
+        [1, -1],
+      ]) {
+        let a = 1,
+          b = 1;
         while (a <= FORD_SPAN && wet(x - dx * a, y - dy * a)) a++;
         while (b <= FORD_SPAN && wet(x + dx * b, y + dy * b)) b++;
-        if (a + b - 1 <= FORD_SPAN && dry(x - dx * a, y - dy * a) && dry(x + dx * b, y + dy * b)) { ford[i] = 1; break; }
+        if (a + b - 1 <= FORD_SPAN && dry(x - dx * a, y - dy * a) && dry(x + dx * b, y + dy * b)) {
+          ford[i] = 1;
+          break;
+        }
       }
     }
   }
@@ -152,7 +182,9 @@ export function riverFords(raster) {
  * @param {{ height: Float32Array, shore: Uint8Array, ford: Uint8Array, grain?: ?Float32Array, river?: ?Float32Array, d: Record<keyof typeof VOYAGER_DIALS, number> }} t landForRoutes'
  */
 export function landStep(t, cx, cy, nx, ny, len) {
-  const D = t.d, i = ny * MAP_WIDTH + nx, hn = t.height[i];
+  const D = t.d,
+    i = ny * MAP_WIDTH + nx,
+    hn = t.height[i];
   const g = (hn - t.height[cy * MAP_WIDTH + cx]) / len;
   let c = len * (1 + D.gradeCost * g * g);
   if (hn > D.highAbove) c *= 1 + (hn - D.highAbove) * D.highCost;
@@ -160,6 +192,10 @@ export function landStep(t, cx, cy, nx, ny, len) {
   if (t.grain) c *= 1 + D.grainCost * t.grain[i];
   if (t.ford[i]) c += len * D.fordCost;
   // RIVER-FORDS: a carved channel crossed - onto its pixel, or through its corner between two of them
-  if (t.river) { const r = t.river[i] || (cx !== nx && cy !== ny ? Math.min(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx]) : 0); if (r) c += len * r; }
+  if (t.river) {
+    const r =
+      t.river[i] || (cx !== nx && cy !== ny ? Math.min(t.river[cy * MAP_WIDTH + nx], t.river[ny * MAP_WIDTH + cx]) : 0);
+    if (r) c += len * r;
+  }
   return c;
 }

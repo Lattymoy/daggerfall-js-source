@@ -1,286 +1,286 @@
 [
- {
-  "name": "ASO-decline-delete",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "if (declined?.meta?.changes) return { ok: true, declined: true };",
-  "new": "if (false) return { ok: true, declined: true };",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-decline-offeredby",
-  "file": "server-account/src/seatPolitics.js",
-  "old": "WHERE state = 'offered' AND offered_by = ?2\n",
-  "new": "WHERE state = 'offered' AND offered_by IS NOT NULL\n",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ],
-  "equivalent": true,
-  "why": "breakFealty withdraws the guild's own offer to that tag first and returns (offered_by = ?1 between the pair); an 'offered' row left between the two was offered by the other, so offered_by = ?2 is that row's only value - the clause states the decline's meaning, it never narrows the delete"
- },
- {
-  "name": "ASO-minutes-write",
-  "file": "server-account/src/seatSiege.js",
-  "old": "minutes: siegeMinutes(Number(b.starts_at), Number(c.i)) }),",
-  "new": "minutes: null }),",
-  "tests": [
-   "test/net/seats_finish.test.js",
-   "test/net/seat2a_siege_service.test.js"
-  ]
- },
- {
-  "name": "ASO-minutes-law",
-  "file": "src/net/townSeatLaw.js",
-  "old": "Math.max(1, Math.round((endS - startS) / 60))",
-  "new": "Math.max(0, Math.round((endS - startS) / 60))",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-minutes-order",
-  "file": "src/net/townSeatLaw.js",
-  "old": "Number.isFinite(endS) && endS >= startS ?",
-  "new": "Number.isFinite(endS) ?",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-countwords-tens",
-  "file": "src/net/townSeatLaw.js",
-  "old": "if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : '');",
-  "new": "if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? ` ${ONES[n % 10]}` : '');",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-countwords-teen",
-  "file": "src/net/townSeatLaw.js",
-  "old": "  if (n < 20) return ONES[n];\n",
-  "new": "  if (n < 10) return ONES[n];\n",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-taken-line",
-  "file": "src/net/townSeatLaw.js",
-  "old": "after ${countWords(d.minutes)} ${d.minutes === 1 ? 'minute' : 'minutes'}.`",
-  "new": "after ${countWords(d.minutes)} minutes.`",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-unguild-rb",
-  "file": "server/src/index.js",
-  "old": "delete b.gm; delete b.rb; return b; }",
-  "new": "delete b.gm; return b; }",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-online-mine-rb",
-  "file": "src/net/online.js",
-  "old": "        if (was !== gt) this.rb = null;\n",
-  "new": "",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-online-peer-rb",
-  "file": "src/net/online.js",
-  "old": "      if (p) { if ((p.gt ?? null) !== gt) p.rb = null; p.gt = gt; }",
-  "new": "      if (p) { p.gt = gt; }",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-trav-rb",
-  "file": "src/net/wire.js",
-  "old": "gt: readGuildTag(m), rb: readRibbon(m) };",
-  "new": "gt: readGuildTag(m) };",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-tv-ribbon-h",
-  "file": "src/ui/travel/travelViewHud.js",
-  "old": "const ribbonH = P.rb ? TRAVEL_VIEW_RIBBON.gap + TRAVEL_VIEW_RIBBON.band + TRAVEL_VIEW_RIBBON.edge : 0;",
-  "new": "const ribbonH = 0;",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-tv-badge-rb",
-  "file": "src/ui/travel/travelViewHud.js",
-  "old": "glyphs: glyphBadges(b), rb: ribbonColours(b?.rb), arms: badgeArms(b) };",
-  "new": "glyphs: glyphBadges(b), rb: null, arms: badgeArms(b) };",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-tv-badgekey",
-  "file": "src/ui/travel/travelViewHud.js",
-  "old": "|${(Array.isArray(b.rb) ? b.rb : []).join('/')}|${h ?",
-  "new": "|${h ?",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-tvbadgeof",
-  "file": "src/scenes/travelViewMarks.js",
-  "old": "gt: p.gt ?? null, rb: p.rb ?? null });",
-  "new": "gt: p.gt ?? null });",
-  "tests": [
-   "test/net/seats_finish.test.js",
-   "test/scenes/tv3_travellers.test.js"
-  ]
- },
- {
-  "name": "ASO-board-records",
-  "file": "src/ui/noticeWindow.js",
-  "old": "...(deps.seatRecords ? { readRecords: deps.seatRecords } : {})",
-  "new": "...{}",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-tab-records",
-  "file": "src/ui/seatTab.js",
-  "old": "      if (host.readRecords) {\n",
-  "new": "      if (false) {\n",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-tab-alt",
-  "file": "src/ui/seatTab.js",
-  "old": "for (const k of lever ? [r.act, r.alt] : []) {",
-  "new": "for (const k of lever ? [r.act] : []) {",
-  "tests": [
-   "test/net/crown2_client.test.js"
-  ]
- },
- {
-  "name": "ASO-acts-alt",
-  "file": "src/net/townSeatLaw.js",
-  "old": "act: 'pact-accept', alt: 'pact-decline', tag: c.with.tag });",
-  "new": "act: 'pact-accept', tag: c.with.tag });",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-book-decline",
-  "file": "src/net/townSeatBook.js",
-  "old": "(d) => (d.declined ? `The offer of fealty from <${tag}> is declined.` :",
-  "new": "(d) => (false ? `The offer of fealty from <${tag}> is declined.` :",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-castle-shelves",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "if (b.layout.castleBlock && isShopShelfModel(p.modelIdNum)) castleShelves.push({ aabb });",
-  "new": "if (isShopShelfModel(p.modelIdNum)) castleShelves.push({ aabb });",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-castle-press",
-  "file": "src/scenes/worldModes.js",
-  "old": "    if (key.startsWith('records:')) { openCastleRecords(); return true; }",
-  "new": "    if (key.startsWith('records:')) { return true; }",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-board-open",
-  "file": "src/scenes/world.js",
-  "old": "seatRecords: (st) => openRecordsFromBoard(st),",
-  "new": "seatRecords: (st) => false,",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-paid-actor",
-  "file": "server-account/src/seatTurning.js",
-  "old": "FROM marks_ledger WHERE actor = 'seats' AND rid = ?6`)",
-  "new": "FROM marks_ledger WHERE rid = ?6`)",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-paid-amount",
-  "file": "server-account/src/seatTurning.js",
-  "old": "json_set(?4, '$.marks', amount), ?5 FROM marks_ledger",
-  "new": "json_set(?4, '$.marks', 0), ?5 FROM marks_ledger",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-spoils-gem",
-  "file": "src/net/townSeatLaw.js",
-  "old": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:standard', 'gem:siege']);",
-  "new": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:standard']);",
-  "tests": [
-   "test/net/seat2a_siege_client.test.js"
-  ]
- },
- {
-  "name": "ASO-gem-mined",
-  "file": "src/net/professionLaw.js",
-  "old": "...STONES, ...GEMS, SIEGE_GEM, PEARL,",
-  "new": "...STONES, ...GEMS, PEARL,",
-  "tests": [
-   "test/net/audit30_service.test.js"
-  ]
- },
- {
-  "name": "ASO-gem-template",
-  "file": "src/systems/professions/profTemplates.js",
-  "old": "registerCustomTemplates([SIEGE_GEM_ROW]);",
-  "new": "",
-  "tests": [
-   "test/net/seats_finish.test.js"
-  ]
- },
- {
-  "name": "ASO-unyielded",
-  "file": "src/net/marketLaw.js",
-  "old": "export const UNYIELDED = Object.freeze([]);",
-  "new": "export const UNYIELDED = Object.freeze(['cloth:standard']);",
-  "tests": [
-   "test/net/audit30_laws.test.js",
-   "test/net/audit31_law.test.js"
-  ]
- },
- {
-  "name": "ASO-loom-note",
-  "file": "src/ui/professions/profPages.js",
-  "old": "if (r.cloth === STANDARD_SILK.key) box.append(",
-  "new": "if (r.cloth === 'nothing') box.append(",
-  "tests": [
-   "test/ui/audit32_pages.test.js"
-  ]
- }
+  {
+    "name": "ASO-decline-delete",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "if (declined?.meta?.changes) return { ok: true, declined: true };",
+    "new": "if (false) return { ok: true, declined: true };",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-decline-offeredby",
+    "file": "server-account/src/seatPolitics.js",
+    "old": "WHERE state = 'offered' AND offered_by = ?2\n",
+    "new": "WHERE state = 'offered' AND offered_by IS NOT NULL\n",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ],
+    "equivalent": true,
+    "why": "breakFealty withdraws the guild's own offer to that tag first and returns (offered_by = ?1 between the pair); an 'offered' row left between the two was offered by the other, so offered_by = ?2 is that row's only value - the clause states the decline's meaning, it never narrows the delete"
+  },
+  {
+    "name": "ASO-minutes-write",
+    "file": "server-account/src/seatSiege.js",
+    "old": "minutes: siegeMinutes(Number(b.starts_at), Number(c.i)) }),",
+    "new": "minutes: null }),",
+    "tests": [
+      "test/net/seats_finish.test.js",
+      "test/net/seat2a_siege_service.test.js"
+    ]
+  },
+  {
+    "name": "ASO-minutes-law",
+    "file": "src/net/townSeatLaw.js",
+    "old": "    ? Math.max(1, Math.round((endS - startS) / 60))",
+    "new": "    ? Math.max(0, Math.round((endS - startS) / 60))",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-minutes-order",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  Number.isFinite(startS) && Number.isFinite(endS) && endS >= startS\n    ? Math.max(1, Math.round((endS - startS) / 60))\n    : null;",
+    "new": "  Number.isFinite(startS) && Number.isFinite(endS) ? Math.max(1, Math.round((endS - startS) / 60)) : null;",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-countwords-tens",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : '');",
+    "new": "  if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? ` ${ONES[n % 10]}` : '');",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-countwords-teen",
+    "file": "src/net/townSeatLaw.js",
+    "old": "  if (n < 20) return ONES[n];",
+    "new": "  if (n < 10) return ONES[n];",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-taken-line",
+    "file": "src/net/townSeatLaw.js",
+    "old": "        ? `${when}, ${guildWords(d.guild)} stormed the gates of ${seat.name} and took its Charter from ${guildWords(d.from)} after ${countWords(d.minutes)} ${d.minutes === 1 ? 'minute' : 'minutes'}.`",
+    "new": "        ? `${when}, ${guildWords(d.guild)} stormed the gates of ${seat.name} and took its Charter from ${guildWords(d.from)} after ${countWords(d.minutes)} minutes.`",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-unguild-rb",
+    "file": "server/src/index.js",
+    "old": "delete b.gm; delete b.rb; return b; }",
+    "new": "delete b.gm; return b; }",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-online-mine-rb",
+    "file": "src/net/online.js",
+    "old": "        if (was !== gt) this.rb = null;\n",
+    "new": "",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-online-peer-rb",
+    "file": "src/net/online.js",
+    "old": "      if (p) { if ((p.gt ?? null) !== gt) p.rb = null; p.gt = gt; }",
+    "new": "      if (p) { p.gt = gt; }",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-trav-rb",
+    "file": "src/net/wire.js",
+    "old": "gt: readGuildTag(m), rb: readRibbon(m) };",
+    "new": "gt: readGuildTag(m) };",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-tv-ribbon-h",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "const ribbonH = P.rb ? TRAVEL_VIEW_RIBBON.gap + TRAVEL_VIEW_RIBBON.band + TRAVEL_VIEW_RIBBON.edge : 0;",
+    "new": "const ribbonH = 0;",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-tv-badge-rb",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "glyphs: glyphBadges(b), rb: ribbonColours(b?.rb), arms: badgeArms(b) };",
+    "new": "glyphs: glyphBadges(b), rb: null, arms: badgeArms(b) };",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-tv-badgekey",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "|${(Array.isArray(b.rb) ? b.rb : []).join('/')}|${h ?",
+    "new": "|${h ?",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-tvbadgeof",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "gt: p.gt ?? null, rb: p.rb ?? null });",
+    "new": "gt: p.gt ?? null });",
+    "tests": [
+      "test/net/seats_finish.test.js",
+      "test/scenes/tv3_travellers.test.js"
+    ]
+  },
+  {
+    "name": "ASO-board-records",
+    "file": "src/ui/noticeWindow.js",
+    "old": "          ...(deps.seatRecords ? { readRecords: deps.seatRecords } : {}),",
+    "new": "          ...{},",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-tab-records",
+    "file": "src/ui/seatTab.js",
+    "old": "        if (host.readRecords) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-tab-alt",
+    "file": "src/ui/seatTab.js",
+    "old": "      for (const k of lever ? [r.act, r.alt] : []) {",
+    "new": "      for (const k of lever ? [r.act] : []) {",
+    "tests": [
+      "test/net/crown2_client.test.js"
+    ]
+  },
+  {
+    "name": "ASO-acts-alt",
+    "file": "src/net/townSeatLaw.js",
+    "old": "        alt: 'pact-decline',\n        tag: c.with.tag,",
+    "new": "        tag: c.with.tag,",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-book-decline",
+    "file": "src/net/townSeatBook.js",
+    "old": "          d.declined",
+    "new": "          false",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-castle-shelves",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (b.layout.castleBlock && isShopShelfModel(p.modelIdNum)) castleShelves.push({ aabb });",
+    "new": "if (isShopShelfModel(p.modelIdNum)) castleShelves.push({ aabb });",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-castle-press",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (key.startsWith('records:')) { openCastleRecords(); return true; }",
+    "new": "    if (key.startsWith('records:')) { return true; }",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-board-open",
+    "file": "src/scenes/world.js",
+    "old": "seatRecords: (st) => openRecordsFromBoard(st),",
+    "new": "seatRecords: (st) => false,",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-paid-actor",
+    "file": "server-account/src/seatTurning.js",
+    "old": "FROM marks_ledger WHERE actor = 'seats' AND rid = ?6`)",
+    "new": "FROM marks_ledger WHERE rid = ?6`)",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-paid-amount",
+    "file": "server-account/src/seatTurning.js",
+    "old": "json_set(?4, '$.marks', amount), ?5 FROM marks_ledger",
+    "new": "json_set(?4, '$.marks', 0), ?5 FROM marks_ledger",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-spoils-gem",
+    "file": "src/net/townSeatLaw.js",
+    "old": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:standard', 'gem:siege']);",
+    "new": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:standard']);",
+    "tests": [
+      "test/net/seat2a_siege_client.test.js"
+    ]
+  },
+  {
+    "name": "ASO-gem-mined",
+    "file": "src/net/professionLaw.js",
+    "old": "    SIEGE_GEM,\n    PEARL,",
+    "new": "    PEARL,",
+    "tests": [
+      "test/net/audit30_service.test.js"
+    ]
+  },
+  {
+    "name": "ASO-gem-template",
+    "file": "src/systems/professions/profTemplates.js",
+    "old": "registerCustomTemplates([SIEGE_GEM_ROW]);\n",
+    "new": "",
+    "tests": [
+      "test/net/seats_finish.test.js"
+    ]
+  },
+  {
+    "name": "ASO-unyielded",
+    "file": "src/net/marketLaw.js",
+    "old": "export const UNYIELDED = Object.freeze([]);",
+    "new": "export const UNYIELDED = Object.freeze(['cloth:standard']);",
+    "tests": [
+      "test/net/audit30_laws.test.js",
+      "test/net/audit31_law.test.js"
+    ]
+  },
+  {
+    "name": "ASO-loom-note",
+    "file": "src/ui/professions/profPages.js",
+    "old": "if (r.cloth === STANDARD_SILK.key) box.append(",
+    "new": "if (r.cloth === 'nothing') box.append(",
+    "tests": [
+      "test/ui/audit32_pages.test.js"
+    ]
+  }
 ]

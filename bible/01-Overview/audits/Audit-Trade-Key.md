@@ -21,7 +21,7 @@ gets its own worktree.
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
 | A1 | MED | With Master Skills off, a trade out of the primaries named the wrong skill in the 95 lock's warning and its ask. | The words name the skill entering the primaries and the one leaving (`specGuide.js:"const fromPrimary = other === 'primary',"`). |
-| A2 | MED | Online, a swap or trade that raised the class's sum paid levels: both sums moved by the rise, and the online level reads the start (LEVEL-45). SKILL-SWAP's since LEVEL-45; the trade made it 100,000 gold, not 300,000. | Online the start moves so the climb's share stands, the level and its bar with it (`skillSwap.js:"export function startAfterRise(entity, held, now) {"`). A float could tip a level's exact edge (58 of 589,155 sums); the edge is walked back. |
+| A2 | MED | Online, a swap or trade that raised the class's sum paid levels: both sums moved by the rise, and the online level reads the start (LEVEL-45). SKILL-SWAP's since LEVEL-45; the trade made it 100,000 gold, not 300,000. | Online the start moves so the climb's share stands, the level and its bar with it (`skillSwap.js:"export function startAfterRise"`). A float could tip a level's exact edge (58 of 589,155 sums); the edge is walked back. |
 | A3 | LOW | After a trade both picks stayed, the reverse trade one Yes away. | A swap done resets both picks. |
 | C3 | MED | The lead's "that you have not mastered" attached to the group in English and seven languages. | "You can also take an unmastered class skill from another group." in all thirteen. |
 | C4 | MED | Indonesian said *grup* (a party) for a skill group. | *kelompok*, as the swap's lead says. |
@@ -34,7 +34,7 @@ gets its own worktree.
 
 | ID | Sev | Finding | Fix |
 |---|---|---|---|
-| B1 | HIGH | Bound to a letter, the flag toggled under any window: the game's text box (the map's Find, a note, an amount, a rename) typed a flag with every V. | The key and the mouse answer the world alone: no pausing window, no enhanced overlay, no window's control in focus (`pvpFlagHost.js:"const inGame = (el) =>"`). |
+| B1 | HIGH | Bound to a letter, the flag toggled under any window: the game's text box (the map's Find, a note, an amount, a rename) typed a flag with every V. | The key and the mouse answer the world alone: no pausing window, no enhanced overlay, no window's control in focus (`pvpFlagHost.js:"const inGame = (el)"`). |
 | B2, C1 | MED | A combo bound to the flag never answered, and its bare key answered under another action's combo. | The listener door, `eventActions` (`input.js:"export function eventActions(e) {"`). |
 | B3 | MED | A bound mouse button answered on any press: a window's button, the chat, and the PvP button twice. | The game's canvas alone. |
 | B5 | MED | PVP-FLAG's button kept the focus, and the next Space pressed it again (FB1020h HUD-FOCUS). | `neverTheFocus`. |

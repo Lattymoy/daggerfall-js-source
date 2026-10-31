@@ -21,14 +21,26 @@ import { isMain } from './lib/isMain.mjs';
 // Playlist export name -> the words a player would use. Only the
 // SHAPE is named here; the membership comes from the module.
 export const CONTEXT = {
-  DUNGEON_SONGS: 'dungeon', SUNNY_SONGS: 'outdoors, clear', CLOUDY_SONGS: 'outdoors, cloudy',
-  OVERCAST_SONGS: 'outdoors, overcast/fog', RAIN_SONGS: 'rain', SNOW_SONGS: 'snow',
-  SNEAKING_SONGS: 'sneaking', TEMPLE_GOOD_SONGS: 'temple (good)',
-  TEMPLE_NEUTRAL_SONGS: 'temple (neutral)', TEMPLE_BAD_SONGS: 'temple (bad)',
-  TAVERN_SONGS: 'tavern', NIGHT_SONGS: 'outdoors, night', DAY_SONGS: 'outdoors, day',
-  CASTLE_SONGS: 'castle', COURT_SONGS: 'court (arrested)', SHOP_SONGS: 'shop',
-  MAGES_GUILD_SONGS: 'mages guild', INTERIOR_SONGS: 'building interior',
-  KNIGHT_SONGS: 'knightly order', PALACE_SONGS: 'palace',
+  DUNGEON_SONGS: 'dungeon',
+  SUNNY_SONGS: 'outdoors, clear',
+  CLOUDY_SONGS: 'outdoors, cloudy',
+  OVERCAST_SONGS: 'outdoors, overcast/fog',
+  RAIN_SONGS: 'rain',
+  SNOW_SONGS: 'snow',
+  SNEAKING_SONGS: 'sneaking',
+  TEMPLE_GOOD_SONGS: 'temple (good)',
+  TEMPLE_NEUTRAL_SONGS: 'temple (neutral)',
+  TEMPLE_BAD_SONGS: 'temple (bad)',
+  TAVERN_SONGS: 'tavern',
+  NIGHT_SONGS: 'outdoors, night',
+  DAY_SONGS: 'outdoors, day',
+  CASTLE_SONGS: 'castle',
+  COURT_SONGS: 'court (arrested)',
+  SHOP_SONGS: 'shop',
+  MAGES_GUILD_SONGS: 'mages guild',
+  INTERIOR_SONGS: 'building interior',
+  KNIGHT_SONGS: 'knightly order',
+  PALACE_SONGS: 'palace',
 };
 
 /**
@@ -43,9 +55,7 @@ export const CONTEXT = {
  * pack author who supplies D1.ogg would hear nothing and have no way
  * to find out why.
  */
-const UNUSED_IN_DFU = new Set(
-  Array.from({ length: 10 }, (_, i) => [`D${i + 1}`, `D${i + 1}FM`]).flat(),
-);
+const UNUSED_IN_DFU = new Set(Array.from({ length: 10 }, (_, i) => [`D${i + 1}`, `D${i + 1}FM`]).flat());
 
 /**
  * Build the record -> contexts table. PURE, and separated from the CLI
@@ -66,12 +76,16 @@ export function songTable() {
     // A warning in a tool nobody runs is nothing, so this is fatal: an
     // unlabelled playlist would silently drop its songs out of the table
     // and a pack author would never learn those records exist.
-    if (!label) { console.error(`no label for ${m[1]} - add one to CONTEXT`); process.exit(3); }
+    if (!label) {
+      console.error(`no label for ${m[1]} - add one to CONTEXT`);
+      process.exit(3);
+    }
     for (const song of value) {
       if (!songs.has(song)) songs.set(song, { contexts: new Set(), fm: false, gm: false });
       const e = songs.get(song);
       e.contexts.add(label);
-      if (m[2]) e.fm = true; else e.gm = true;
+      if (m[2]) e.fm = true;
+      else e.gm = true;
     }
   }
 
@@ -83,15 +97,14 @@ export function songTable() {
 function main() {
   const rows = songTable();
   const dirArg = process.argv.indexOf('--check');
-  
 
   if (dirArg < 0) {
     console.log(`${rows.length} songs, from songManager.js's own playlists.`);
     console.log('A Daggerfall Unity music pack works as-is: its song_*.ogg names');
-  console.log('are already these records. Otherwise name files GDAY___D.ogg.\n');
+    console.log('are already these records. Otherwise name files GDAY___D.ogg.\n');
     console.log('RECORD        SET  PLAYS FOR');
     for (const [song, e] of rows) {
-      const set = e.fm && e.gm ? 'both' : (e.fm ? 'FM' : 'GM');
+      const set = e.fm && e.gm ? 'both' : e.fm ? 'FM' : 'GM';
       console.log(`${replacementKey(song).padEnd(13)} ${set.padEnd(4)} ${[...e.contexts].sort().join(' / ')}`);
     }
     console.log('\nSET: GM is the default; FM is the Adlib set behind Audio/AlternateMusic.');
@@ -101,7 +114,10 @@ function main() {
 
   // --check: what does this folder actually cover?
   const dir = process.argv[dirArg + 1];
-  if (!dir) { console.error('--check needs a directory'); process.exit(2); }
+  if (!dir) {
+    console.error('--check needs a directory');
+    process.exit(2);
+  }
   const have = new Map();
   for (const f of readdirSync(dir)) {
     const e = replacementEntry(f);

@@ -47,8 +47,8 @@
   {
     "name": "POI2-one-wrap-for-both-axes",
     "file": "src/render/meshAlpha.js",
-    "old": "wrapT: wrap(s?.wrapT)",
-    "new": "wrapT: wrap(s?.wrapS)",
+    "old": "  return { wrapS: wrap(s?.wrapS), wrapT: wrap(s?.wrapT), mag, min };",
+    "new": "  return { wrapS: wrap(s?.wrapS), wrapT: wrap(s?.wrapS), mag, min };",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "POI2-the-alpha-always-one",
     "file": "src/render/meshAlpha.js",
-    "old": "return uMeshAlpha > 0.0 ? a * uMeshAlpha : 1.0;",
-    "new": "return 1.0;",
+    "old": "float meshAlphaOf(float a) { return uMeshAlpha > 0.0 ? a * uMeshAlpha : 1.0; }`;",
+    "new": "float meshAlphaOf(float a) { return 1.0; }`;",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "POI2-the-share-unread",
     "file": "src/render/meshAlpha.js",
-    "old": "? a * uMeshAlpha : 1.0;",
-    "new": "? a : 1.0;",
+    "old": "float meshAlphaOf(float a) { return uMeshAlpha > 0.0 ? a * uMeshAlpha : 1.0; }`;",
+    "new": "float meshAlphaOf(float a) { return uMeshAlpha > 0.0 ? a : 1.0; }`;",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "POI2-the-rows-unturned",
     "file": "src/poi/poiRuntime.js",
-    "old": "to = (h - 1 - y) * w * 4;   // color32",
-    "new": "to = y * w * 4;   // color32",
+    "old": "      to = (h - 1 - y) * w * 4; // color32: row 0 the picture's bottom",
+    "new": "      to = y * w * 4; // color32: row 0 the picture's bottom",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "POI2-the-cutoff-a-half",
     "file": "src/poi/poiRuntime.js",
-    "old": "const cut = m.alpha === 'cutout' ? Math.min(Math.max(m.cutoff ?? 0.5, 0), 1) : null;",
-    "new": "const cut = m.alpha === 'cutout' ? 0.5 : null;",
+    "old": "  const cut = m.alpha === 'cutout' ? Math.min(Math.max(m.cutoff ?? 0.5, 0), 1) : null;",
+    "new": "  const cut = m.alpha === 'cutout' ? 0.5 : null;",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "POI2-the-tint-unread",
     "file": "src/poi/poiRuntime.js",
-    "old": "out[o] = Math.round(src[i] * cr);",
-    "new": "out[o] = src[i];",
+    "old": "      out[o] = Math.round(src[i] * cr);",
+    "new": "      out[o] = src[i];",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "POI2-v-unturned",
     "file": "src/poi/poiRuntime.js",
-    "old": "uvs[at * 2 + 1] = 1 - w;",
-    "new": "uvs[at * 2 + 1] = w;",
+    "old": "        uvs[at * 2 + 1] = 1 - w; // glTF's v (down from the top) to the renderer's (up from row 0, the picture's bottom)",
+    "new": "        uvs[at * 2 + 1] = w; // glTF's v (down from the top) to the renderer's (up from row 0, the picture's bottom)",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "POI2-the-back-faces-unwound",
     "file": "src/poi/poiRuntime.js",
-    "old": "if (back !== mirrored) { indices[ni]",
-    "new": "if (mirrored) { indices[ni]",
+    "old": "          if (back !== mirrored) {",
+    "new": "          if (mirrored) {",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "POI2-the-mirror-unwound",
     "file": "src/poi/poiRuntime.js",
-    "old": "if (back !== mirrored) { indices[ni]",
-    "new": "if (back) { indices[ni]",
+    "old": "          if (back !== mirrored) {",
+    "new": "          if (back) {",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "POI2-a-blend-drawn-opaque",
     "file": "src/poi/poiRuntime.js",
-    "old": "(m?.alpha === 'blend' ? groups.translucent : groups.opaque).push(i);",
-    "new": "groups.opaque.push(i);",
+    "old": "    (m?.alpha === 'blend' ? groups.translucent : groups.opaque).push(i);",
+    "new": "    groups.opaque.push(i);",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "POI2-the-version-not-sent",
     "file": "src/poi/poiFeed.js",
-    "old": "headers: etag ? { 'if-none-match': etag } : {}",
-    "new": "headers: {}",
+    "old": "    const res = await fetch(`${b}/v1/poi/live`, { headers: etag ? { 'if-none-match': etag } : {} });",
+    "new": "    const res = await fetch(`${b}/v1/poi/live`, { headers: {} });",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "POI2-the-law-unread",
     "file": "src/poi/poiFeed.js",
-    "old": "const problems = poiDocProblems(p.doc);",
-    "new": "const problems = [];",
+    "old": "      const problems = poiDocProblems(p.doc);",
+    "new": "      const problems = [];",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "POI2-the-kept-copy-unread",
     "file": "src/poi/poiFeed.js",
-    "old": "async start() { await readKept(); nextAsk = 0; }",
-    "new": "async start() { nextAsk = 0; }",
+    "old": "      await readKept();\n      nextAsk = 0;",
+    "new": "      nextAsk = 0;",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "POI2-the-hash-unchecked",
     "file": "src/poi/poiFeed.js",
-    "old": "const check = async (bytes) => bytes && hex(await subtle.digest('SHA-256', bytes)) === sha;",
-    "new": "const check = async (bytes) => !!bytes;",
+    "old": "        const check = async (bytes) => bytes && hex(await subtle.digest('SHA-256', bytes)) === sha;",
+    "new": "        const check = async (bytes) => !!bytes;",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "POI2-asked-twice-at-once",
     "file": "src/poi/poiFeed.js",
-    "old": "if (loading.has(sha)) return loading.get(sha);",
-    "new": "if (false) return loading.get(sha);",
+    "old": "      if (loading.has(sha)) return loading.get(sha);",
+    "new": "      if (false) return loading.get(sha);",
     "tests": [
       "test/poi/poi2_runtime.test.js"
     ]

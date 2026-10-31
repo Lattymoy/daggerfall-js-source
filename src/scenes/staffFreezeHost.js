@@ -17,16 +17,28 @@ import { appStorage } from '../systems/appStorage.js';
  * @param {any} log the ChatLog @param {() => any} hub @param {any} online @param {any} [prev]
  * @param {{ fetch?: (u: any, i: any) => Promise<any>, storage?: any, doc?: Document }} [io]
  */
-export function createStaffFreezeHost(log, hub, online, prev = null, { fetch = (u, i) => globalThis.fetch(u, i), storage = appStorage(), doc = document } = {}) {
+export function createStaffFreezeHost(
+  log,
+  hub,
+  online,
+  prev = null,
+  { fetch = (u, i) => globalThis.fetch(u, i), storage = appStorage(), doc = document } = {},
+) {
   prev?.destroy();
   const api = accountStaffChat({ fetch, storage });
   const screen = createFreezeScreen({ doc });
   const chat = createStaffChat({
-    log, me: () => String(online?.name ?? ''), read: api.read, send: api.send,
+    log,
+    me: () => String(online?.name ?? ''),
+    read: api.read,
+    send: api.send,
     nudge: (sl) => hub()?.sendChat(String(sl), { ch: STAFF_TAB }) ?? false,
-    onFrozen: (s) => { setStaffFrozen(s.until); screen.paint(s); },
+    onFrozen: (s) => {
+      setStaffFrozen(s.until);
+      screen.paint(s);
+    },
   });
-  const poll = setInterval(() => chat.tick(), STAFF_POLL_MS / 3);   // the slow read's clock, the host's own (no frame of the host's grows)
+  const poll = setInterval(() => chat.tick(), STAFF_POLL_MS / 3); // the slow read's clock, the host's own (no frame of the host's grows)
   const host = {
     ...chat,
     /** A session's relay words, wired: its `frozen`, and (the hub's alone) its nudge. @param {any} s */
@@ -43,7 +55,11 @@ export function createStaffFreezeHost(log, hub, online, prev = null, { fetch = (
       log.push(tabId, { text: frozenChatText(), system: true });
       return true;
     },
-    destroy() { clearInterval(poll); setStaffFrozen(0); screen.destroy(); },
+    destroy() {
+      clearInterval(poll);
+      setStaffFrozen(0);
+      screen.destroy();
+    },
   };
   host.wire(online);
   return host;

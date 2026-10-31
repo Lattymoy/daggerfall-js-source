@@ -37,8 +37,8 @@
   {
     "name": "MEND-THIRD-credit-fractional",
     "file": "src/systems/item/foundMark.js",
-    "old": "currentCondition: found + Math.trunc(own * MEND_SALE_SHARE)",
-    "new": "currentCondition: found + own * MEND_SALE_SHARE",
+    "old": "  return conditionPercentage({\n    currentCondition: found + Math.trunc(own * MEND_SALE_SHARE),\n    maxCondition: item.maxCondition,\n  });",
+    "new": "  return conditionPercentage({ currentCondition: found + own * MEND_SALE_SHARE, maxCondition: item.maxCondition });",
     "tests": [
       "test/systems/mend_third.test.js"
     ],
@@ -47,8 +47,8 @@
   {
     "name": "MEND-THIRD-rounded-up",
     "file": "src/systems/item/foundMark.js",
-    "old": "currentCondition: found + Math.trunc(own * MEND_SALE_SHARE)",
-    "new": "currentCondition: found + Math.ceil(own * MEND_SALE_SHARE)",
+    "old": "    currentCondition: found + Math.trunc(own * MEND_SALE_SHARE),",
+    "new": "    currentCondition: found + Math.ceil(own * MEND_SALE_SHARE),",
     "tests": [
       "test/systems/mend_third.test.js"
     ],
@@ -78,8 +78,8 @@
   {
     "name": "MEND-THIRD-kit-uncredited",
     "file": "src/systems/smithItems.js",
-    "old": "  creditOwnMend(it, was);   // MEND-THIRD: a kit is its owner's own mend - a third of it past a found piece's mark sells\n",
-    "new": "",
+    "old": "  creditOwnMend(it, was); // MEND-THIRD: a kit is its owner's own mend - a third of it past a found piece's mark sells\n  const i = items.indexOf(kit);",
+    "new": "  const i = items.indexOf(kit);",
     "tests": [
       "test/systems/mend_third.test.js"
     ],
@@ -88,8 +88,8 @@
   {
     "name": "MEND-THIRD-ring-uncredited",
     "file": "src/systems/enchantments.js",
-    "old": "      creditOwnMend(it, was);   // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells\n",
-    "new": "",
+    "old": "        creditOwnMend(it, was); // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells\n      },",
+    "new": "      },",
     "tests": [
       "test/systems/mend_third.test.js"
     ],
@@ -98,8 +98,8 @@
   {
     "name": "MEND-THIRD-stone-uncredited",
     "file": "src/systems/ayleidStones.js",
-    "old": "  pieces.forEach((it, i) => creditOwnMend(it, was[i]));",
-    "new": "",
+    "old": "  pieces.forEach((it, i) => creditOwnMend(it, was[i])); // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells",
+    "new": "  // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells",
     "tests": [
       "test/systems/mend_third.test.js"
     ],

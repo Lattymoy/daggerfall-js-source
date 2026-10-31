@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-SET-the-marks-never-asked",
     "file": "src/systems/loot/loot.js",
-    "old": "  if (!validSetMarks(out)) return null;   // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric\n",
-    "new": "",
+    "old": "  if (!validSetMarks(out)) return null; // AUDIT SET D6: and the marks agree with the item - a set's sigil, a blow, the Aetheric\n  if (!validGildedMarks(out)) return null; // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery",
+    "new": "  if (!validGildedMarks(out)) return null; // GILDED1: a Gilded piece as its record mints it - a static roll, one number off is a forgery",
     "tests": [
       "test/systems/auditset_c.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-SET-the-wrap-never-asked",
     "file": "src/ui/toolTip.js",
-    "old": "const rows = wrapFrom == null ? toolTipRows(text) : wrapToolTipRows(toolTipRows(text), (r) => measureText(font.fnt, r), TOOLTIP_WRAP_W, wrapFrom);",
-    "new": "const rows = toolTipRows(text);",
+    "old": "  const rows =\n    wrapFrom == null\n      ? toolTipRows(text)\n      : wrapToolTipRows(toolTipRows(text), (r) => measureText(font.fnt, r), TOOLTIP_WRAP_W, wrapFrom); // AUDIT SET U2: the port's own rows may wrap",
+    "new": "  const rows = toolTipRows(text); // AUDIT SET U2: the port's own rows may wrap",
     "tests": [
       "test/systems/auditset_c.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-SET-a-short-row-wrapped",
     "file": "src/ui/toolTip.js",
-    "old": "    if (i < from || !(measure(row) > maxW)) { out.push(row); continue; }\n",
-    "new": "",
+    "old": "    if (i < from || !(measure(row) > maxW)) {\n      out.push(row);\n      continue;\n    }\n    const lead = /^ */.exec(row)[0];",
+    "new": "    const lead = /^ */.exec(row)[0];",
     "tests": [
       "test/systems/auditset_c.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-SET-wrapped-past-the-width",
     "file": "src/ui/toolTip.js",
-    "old": "if (!line || measure(next) <= maxW) { line = next; continue; }",
-    "new": "if (!line || measure(next) <= maxW * 2) { line = next; continue; }",
+    "old": "      if (!line || measure(next) <= maxW) {",
+    "new": "      if (!line || measure(next) <= maxW * 2) {",
     "tests": [
       "test/systems/auditset_c.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-SET-the-name-wrapped",
     "file": "src/ui/toolTip.js",
-    "old": "    if (i < from || !(measure(row) > maxW)) { out.push(row); continue; }",
-    "new": "    if (!(measure(row) > maxW)) { out.push(row); continue; }",
+    "old": "    if (i < from || !(measure(row) > maxW)) {",
+    "new": "    if (!(measure(row) > maxW)) {",
     "tests": [
       "test/systems/auditset_c.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-SET-every-tooltip-wrapped",
     "file": "src/ui/toolTip.js",
-    "old": "    this.wrapFrom = wrapFrom;",
-    "new": "    this.wrapFrom = wrapFrom ?? 0;",
+    "old": "    this.wrapFrom = wrapFrom; // AUDIT SET U2: the first row of the port's own that may wrap (null: none - DFU's tooltip)",
+    "new": "    this.wrapFrom = wrapFrom ?? 0; // AUDIT SET U2: the first row of the port's own that may wrap (null: none - DFU's tooltip)",
     "tests": [
       "test/systems/auditset_c.test.js"
     ]

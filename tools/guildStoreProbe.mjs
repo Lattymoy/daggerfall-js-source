@@ -12,10 +12,15 @@ import { chromium } from 'playwright';
 
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5216, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
-page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', e.message); });
+page.on('pageerror', (e) => {
+  errors.push(e.message);
+  console.log('[pageerror]', e.message);
+});
 await page.goto('http://localhost:5216/play/?shot&play&exterior&time=12:00');
 await page.waitForFunction(() => window.__shotReady === true, null, { timeout: 180000 });
 
@@ -23,14 +28,17 @@ const waitFrames = async (n) => {
   const f = await page.evaluate(() => window.__frame);
   await page.waitForFunction(([f0, k]) => window.__frame > f0 + k, [f, n], { timeout: 60000 });
 };
-const trade = async () => JSON.parse(await page.evaluate(() => window.__tradeOverlay()) ?? 'null');
+const trade = async () => JSON.parse((await page.evaluate(() => window.__tradeOverlay())) ?? 'null');
 const open = async (dest) => {
   await page.evaluate(() => window.__closeOverlay?.());
   const faction = await page.evaluate((d) => window.__openGuildService(d), dest);
   await waitFrames(3);
   return { faction, win: await trade() };
 };
-const fail = (m) => { console.log('FAIL:', m); process.exit(1); };
+const fail = (m) => {
+  console.log('FAIL:', m);
+  process.exit(1);
+};
 
 const ENTERABLE = new Set([0, 2, 5, 6, 7, 8, 9, 12, 13, 15]);
 const doors = JSON.parse(await page.evaluate(() => JSON.stringify(window.__doors())));
@@ -39,11 +47,13 @@ for (let i = 0; i < doors.length && !inside; i++) {
   const b = JSON.parse(await page.evaluate((j) => window.__buildingAt(j), i));
   if (!b || !ENTERABLE.has(b.buildingType)) continue;
   const { pos, normal } = doors[i];
-  await page.evaluate(([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05),
-    [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])]);
-  if (!await page.evaluate(() => window.__enter())) continue;
+  await page.evaluate(
+    ([x, y, z, yaw]) => window.__pose(x, y, z, yaw, -0.05),
+    [pos[0] + normal[0] * 1.5, pos[1] - 1.2, pos[2] + normal[2] * 1.5, Math.atan2(-normal[0], -normal[2])],
+  );
+  if (!(await page.evaluate(() => window.__enter()))) continue;
   await waitFrames(10);
-  if (JSON.parse(await page.evaluate(() => window.__building()) ?? 'null')) inside = true;
+  if (JSON.parse((await page.evaluate(() => window.__building())) ?? 'null')) inside = true;
 }
 if (!inside) fail('could not get inside any building');
 console.log('inside:', await page.evaluate(() => window.__building()));
@@ -56,8 +66,15 @@ await page.evaluate(() => {
   else e.items.push({ group: 'Currency', name: 'Gold pieces', stackCount: 200000 });
   e.level = 6;
   // an UNidentified magic item and a plain one, for Identify/SellMagic
-  e.items.push({ group: 'Jewellery', templateIndex: 165, name: 'Ring', stackCount: 1,
-    enchantments: [{ type: 4, param: 1 }], isIdentified: false, value: 900 });
+  e.items.push({
+    group: 'Jewellery',
+    templateIndex: 165,
+    name: 'Ring',
+    stackCount: 1,
+    enchantments: [{ type: 4, param: 1 }],
+    isIdentified: false,
+    value: 900,
+  });
   e.items.push({ group: 'MensClothing', templateIndex: 19, name: 'Robe', stackCount: 1 });
 });
 
@@ -87,16 +104,22 @@ if (!magicItems.every((i) => i.value > 0)) {
 const spellbook = win.remote.filter((i) => i.soul === undefined && !i.name);
 if (spellbook.length !== 1) fail(`exactly one spellbook closes the magic run, got ${spellbook.length}`);
 console.log('spellbook on the shelf: yes');
-const shelfGems = win.remote.filter((i) => i.soul !== undefined).map((i) => i.soul ?? 'empty').join(',');
+const shelfGems = win.remote
+  .filter((i) => i.soul !== undefined)
+  .map((i) => i.soul ?? 'empty')
+  .join(',');
 console.log('gems riding along:', shelfGems);
 if (!shelfGems) fail('the gem run did not ride along - CanAccessService is not reaching the shelf');
 
 console.log('\n== BUY SOULGEMS: the SAME day, DIFFERENT gems ==');
 ({ win } = await open('guildServiceBuySoulgems'));
 if (!win?.trade) fail('the soulgem arm broke');
-const gemShelf = win.remote.filter((i) => i.soul !== undefined).map((i) => i.soul ?? 'empty').join(',');
+const gemShelf = win.remote
+  .filter((i) => i.soul !== undefined)
+  .map((i) => i.soul ?? 'empty')
+  .join(',');
 console.log('gem shelf:', gemShelf);
-if (win.priceCtx.guildFactionId !== faction) fail('X6\'s own arm should carry the id too now');
+if (win.priceCtx.guildFactionId !== faction) fail("X6's own arm should carry the id too now");
 if (!shelfGems) fail('a member should see the gems ride along on the magic shelf');
 if (shelfGems === gemShelf) fail('the magic run walks the stream first, so these must differ');
 
@@ -128,8 +151,10 @@ await waitFrames(3);
 ({ win } = await open('guildServiceBuyPotions'));
 console.log('priceCtx now:', JSON.stringify(win.priceCtx));
 if (win.priceCtx.holidayId !== 38) {
-  console.log(`NOTE: the host clock did not move to the holiday (got ${win.priceCtx.holidayId});`
-    + ' the halving is pinned in the unit suite either way');
+  console.log(
+    `NOTE: the host clock did not move to the holiday (got ${win.priceCtx.holidayId});` +
+      ' the halving is pinned in the unit suite either way',
+  );
 } else if (win.priceCtx.guildFactionId == null) {
   fail('the holiday landed but the faction id did not - the clause is still dead');
 } else {

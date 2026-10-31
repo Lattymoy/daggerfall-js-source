@@ -11,7 +11,7 @@
   {
     "name": "NAV-E-a-failure-thrown",
     "file": "src/systems/naval/navalSounds.js",
-    "old": "      try { if (await audio.registerSound(key, await load(file))) n++; } catch { /* the gun still fires, silently */ }",
+    "old": "      try {\n        if (await audio.registerSound(key, await load(file))) n++;\n      } catch {\n        /* the gun still fires, silently */\n      }",
     "new": "      if (await audio.registerSound(key, await load(file))) n++;",
     "tests": [
       "test/tooling/nav_e_sounds.test.js"

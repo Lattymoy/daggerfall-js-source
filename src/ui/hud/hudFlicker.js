@@ -34,7 +34,7 @@ export const WOUNDED_THRESHOLD = 0.2;
 const ALPHA_DIRECTION = Object.freeze({ None: 0, Decreasing: 1, Increasing: 2 });
 
 /** RandomlyReverseAlphaDirection's constants (HUDFlickerBase.cs). */
-const MIN_CHANCE = -0.01;   // "negative so it takes a little while before it can reverse at least"
+const MIN_CHANCE = -0.01; // "negative so it takes a little while before it can reverse at least"
 const CHANCE_STEP = 0.008;
 
 /**
@@ -91,8 +91,10 @@ export class HudFlicker {
   /** CheckReverseAlphaDirection, verbatim - the bound reversal first,
    *  else the random one while inside the band. */
   _checkReverse(dt, rolls) {
-    if ((this.alphaDirection === ALPHA_DIRECTION.Increasing && this.alphaValue >= this.alphaUpper)
-      || (this.alphaDirection === ALPHA_DIRECTION.Decreasing && this.alphaValue <= this.alphaLower)) {
+    if (
+      (this.alphaDirection === ALPHA_DIRECTION.Increasing && this.alphaValue >= this.alphaUpper) ||
+      (this.alphaDirection === ALPHA_DIRECTION.Decreasing && this.alphaValue <= this.alphaLower)
+    ) {
       this._reverse();
     } else if (this.alphaValue >= this.alphaLower && this.alphaValue <= this.alphaUpper) {
       this._randomlyReverse(dt, rolls);
@@ -103,7 +105,10 @@ export class HudFlicker {
    *  flicker is 0; else the alpha walks at alphaSpeed and clamps to
    *  [0, alphaUpper] - the LOWER bound is NOT the clamp floor. */
   _setAlpha(dt, overrideValue = -1) {
-    if (overrideValue !== -1) { this.alphaValue = overrideValue; return; }
+    if (overrideValue !== -1) {
+      this.alphaValue = overrideValue;
+      return;
+    }
     const timedOut = this.reversalCount >= this.reversalCountThreshold && this.reversalCountThreshold !== -1;
     if (timedOut || this.alphaDirection === ALPHA_DIRECTION.None) this.alphaValue = 0;
     else if (this.alphaDirection === ALPHA_DIRECTION.Decreasing) this.alphaValue -= this.alphaSpeed * dt;
@@ -114,7 +119,8 @@ export class HudFlicker {
   /** Cycle (:88-102). */
   cycle(dt, rolls = Math.random) {
     if (!this.isTimedOut) {
-      if (this.reversalCount >= this.reversalCountThreshold && this.reversalCountThreshold !== -1) this.isTimedOut = true;
+      if (this.reversalCount >= this.reversalCountThreshold && this.reversalCountThreshold !== -1)
+        this.isTimedOut = true;
       this._checkReverse(dt, rolls);
       this._setAlpha(dt);
     } else {
@@ -143,7 +149,7 @@ export class HudFlickerController {
   constructor() {
     this.fast = new HudFlicker('fast');
     this.slow = new HudFlicker('slow');
-    this.backColor = [0, 0, 0, 0];   // Parent.BackgroundColor - cleared by the default arm
+    this.backColor = [0, 0, 0, 0]; // Parent.BackgroundColor - cleared by the default arm
   }
 
   /**
@@ -152,7 +158,16 @@ export class HudFlickerController {
    *          enabled?:boolean, fadeInProgress?:boolean, parentAlpha?:number, rolls?:Function}} f
    * @returns {number[]|null} the colour written this frame, or null
    */
-  nextCycle({ health, maxHealth, healthLost = 0, dt, enabled = true, fadeInProgress = false, parentAlpha = 0, rolls = Math.random }) {
+  nextCycle({
+    health,
+    maxHealth,
+    healthLost = 0,
+    dt,
+    enabled = true,
+    fadeInProgress = false,
+    parentAlpha = 0,
+    rolls = Math.random,
+  }) {
     if (!enabled || fadeInProgress || parentAlpha > 0.9) return null;
     const condition = playerCondition(health, maxHealth);
     // HealthLost > 0 restarts a timed-out fast flicker; HealthGain > 0
@@ -174,7 +189,7 @@ export class HudFlickerController {
           : [this.fast.redValue, 0, 0, this.fast.alphaValue];
         break;
       default:
-        backColor = [0, 0, 0, 0];   // new Color()
+        backColor = [0, 0, 0, 0]; // new Color()
         break;
     }
     if (condition !== 'Dead' && !sameColor(backColor, this.backColor)) this.backColor = backColor;

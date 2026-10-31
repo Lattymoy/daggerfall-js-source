@@ -21,6 +21,11 @@ const seen = await page.evaluate(() => {
 });
 await browser.close();
 console.log(JSON.stringify(seen));
-const ok = !seen.includes('document-capture:JoystickButton4') && seen.includes('document-capture:JoystickButton5') && seen.includes('window:JoystickButton5');
-console.log(ok ? 'PASS: a window-targeted key never reaches a document listener; a document-targeted one reaches both' : 'FAIL');
+const ok =
+  !seen.includes('document-capture:JoystickButton4') &&
+  seen.includes('document-capture:JoystickButton5') &&
+  seen.includes('window:JoystickButton5');
+console.log(
+  ok ? 'PASS: a window-targeted key never reaches a document listener; a document-targeted one reaches both' : 'FAIL',
+);
 process.exit(ok ? 0 : 1);

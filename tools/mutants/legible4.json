@@ -1,0 +1,38 @@
+[
+  {
+    "name": "LEGIBLE4-the-strict-block-lenient",
+    "file": "eslint.config.js",
+    "old": "rules: { 'no-sequences': ['error', { allowInParentheses: false }] },",
+    "new": "rules: { 'no-sequences': ['error', { allowInParentheses: true }] },",
+    "tests": [
+      "test/tooling/legible4_sequences.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE4-a-held-file-read-strictly",
+    "file": "eslint.config.js",
+    "old": "rules: { 'no-sequences': ['error', { allowInParentheses: true }] },",
+    "new": "rules: { 'no-sequences': ['error', { allowInParentheses: false }] },",
+    "tests": [
+      "test/tooling/legible4_sequences.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE4-a-held-count-raised",
+    "file": "eslint.config.js",
+    "old": "  'src/ui/input.js': 19,",
+    "new": "  'src/ui/input.js': 20,",
+    "tests": [
+      "test/tooling/legible4_sequences.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE4-a-sequence-rewritten-its-count-kept",
+    "file": "src/ui/input.js",
+    "old": "case 'Rest': return ctx.toggleRest ? (ctx.toggleRest(), true) : false;",
+    "new": "case 'Rest': if (ctx.toggleRest) { ctx.toggleRest(); return true; } return false;",
+    "tests": [
+      "test/tooling/legible4_sequences.test.js"
+    ]
+  }
+]

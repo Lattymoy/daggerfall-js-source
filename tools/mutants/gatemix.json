@@ -132,8 +132,8 @@
   {
     "name": "GATE-MIX-sort-mutates",
     "file": "src/world/gate/gateBoss.js",
-    "old": "points.slice().sort(",
-    "new": "points.sort(",
+    "old": "  const order = Array.isArray(ear) ? points.slice().sort((p, q) => d2(p, ear) - d2(q, ear)) : points;",
+    "new": "  const order = Array.isArray(ear) ? points.sort((p, q) => d2(p, ear) - d2(q, ear)) : points;",
     "tests": [
       "test/net/gate/gatemix_targets.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "GATE-MIX-sprites-host-every-night",
     "file": "src/scenes/gate/gateSpriteWarm.js",
-    "old": "  if (P?.legion) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer])",
-    "new": "  if (true) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer])",
+    "old": "  if (P?.legion) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer]) m.add(hostLookOf(k, a).mobile);",
+    "new": "  if (true) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer]) m.add(hostLookOf(k, a).mobile);",
     "tests": [
       "test/net/gate/gatemix_sprites.test.js"
     ],

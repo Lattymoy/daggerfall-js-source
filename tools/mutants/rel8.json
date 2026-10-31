@@ -2,8 +2,8 @@
   {
     "name": "REL8-shallow-clone-counted",
     "file": "scripts/updateNumber.mjs",
-    "old": "    if (run(['rev-parse', '--is-shallow-repository']) === 'true') return null;",
-    "new": "    if (false) return null;",
+    "old": "    if (run(['rev-parse', '--is-shallow-repository']) === 'true') return null; // its count would start where the clone was cut",
+    "new": "    if (false) return null; // its count would start where the clone was cut",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "REL8-every-ancestor-counted",
     "file": "scripts/updateNumber.mjs",
-    "old": "const count = (rev) => Number(run(['rev-list', '--count', '--first-parent', rev]));",
-    "new": "const count = (rev) => Number(run(['rev-list', '--count', rev]));",
+    "old": "    const count = (rev) => Number(run(['rev-list', '--count', '--first-parent', rev]));",
+    "new": "    const count = (rev) => Number(run(['rev-list', '--count', rev]));",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "REL8-starts-at-zero",
     "file": "scripts/updateNumber.mjs",
-    "old": "const patch = count(at) - count(since) + 1;",
-    "new": "const patch = count(at) - count(since);",
+    "old": "    const patch = count(at) - count(since) + 1;",
+    "new": "    const patch = count(at) - count(since);",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REL8-any-edit-starts-the-line",
     "file": "scripts/updateNumber.mjs",
-    "old": "'--format=%H', `-G${UPDATE_LINE_DIFF_RE}`, at, '--', UPDATE_LINE_FILE]",
-    "new": "'--format=%H', at, '--', UPDATE_LINE_FILE]",
+    "old": "      `-G${UPDATE_LINE_DIFF_RE}`,\n      at,",
+    "new": "      at,",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "REL8-merge-patch-read-as-commit",
     "file": "scripts/updateNumber.mjs",
-    "old": "'--diff-merges=first-parent', '--no-patch', '-1',",
-    "new": "'--diff-merges=first-parent', '-1',",
+    "old": "      '--no-patch',\n      '-1',",
+    "new": "      '-1',",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "REL8-merge-diffed-against-both-parents",
     "file": "scripts/updateNumber.mjs",
-    "old": "'--diff-merges=first-parent', '--no-patch', '-1',",
-    "new": "'--no-patch', '-1',",
+    "old": "      '--diff-merges=first-parent',\n      '--no-patch',",
+    "new": "      '--no-patch',",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "REL8-since-any-output",
     "file": "scripts/updateNumber.mjs",
-    "old": "    if (!/^[0-9a-f]{40,64}$/.test(since)) return null;",
-    "new": "    if (!since) return null;",
+    "old": "    if (!/^[0-9a-f]{40,64}$/.test(since)) return null; // a commit's name, or nothing - never a line of some other output",
+    "new": "    if (!since) return null; // a commit's name, or nothing - never a line of some other output",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ],
@@ -96,8 +96,8 @@
   {
     "name": "REL8-stamp-without-the-number",
     "file": "scripts/buildTag.mjs",
-    "old": "\\nexport const UPDATE = ${update ? `'${update}'` : 'null'};\\n`",
-    "new": "\\n`",
+    "old": "export const tagSource = (sha, update) =>\n  `export const BUILD_TAG = '${sha}';\\nexport const UPDATE = ${update ? `'${update}'` : 'null'};\\n`;",
+    "new": "export const tagSource = (sha, update) => `export const BUILD_TAG = '${sha}';\\n`;",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "REL8-pause-line-the-commit-alone",
     "file": "src/ui/pauseWindow.js",
-    "old": "const ver = UPDATE ? `DFO Online ${UPDATE} (${BUILD_TAG})` : `DFO Online ${BUILD_TAG}`;",
-    "new": "const ver = `DFO Online ${BUILD_TAG}`;",
+    "old": "    const ver = UPDATE ? `DFO Online ${UPDATE} (${BUILD_TAG})` : `DFO Online ${BUILD_TAG}`; // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game",
+    "new": "    const ver = `DFO Online ${BUILD_TAG}`; // BR1: the PRODUCT's name here, not the working name - this line is the whole of the branding surface a player sees in game",
     "tests": [
       "test/tooling/rel8_updates.test.js"
     ],

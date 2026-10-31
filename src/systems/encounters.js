@@ -10,13 +10,13 @@
 // needs the exterior mobile-foe mount (the ledger row); the dungeon
 // REST arm is live through the alert state.
 
-import { mobileTeamOf } from '../characters/enemy/enemyTargets.js';   // MT-ii: :709's MobileEnemy.Team read
-import { wouldBeSpawnedInClassic } from '../characters/enemy/enemyMotor.js';   // AUDIT FB1025i D3: the classic spawn band, for fightNear
+import { mobileTeamOf } from '../characters/enemy/enemyTargets.js'; // MT-ii: :709's MobileEnemy.Team read
+import { wouldBeSpawnedInClassic } from '../characters/enemy/enemyMotor.js'; // AUDIT FB1025i D3: the classic spawn band, for fightNear
 import { CLIMATES } from '../formats/mapsFile.js';
 import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
-import { encounterTable } from '../characters/encounterTableDoor.js';   // DEX3: the table a mod's write left, DFU's otherwise
-import { readPlayerGps } from '../world/playerGps.js';   // DEX3: the player's reading raises PlayerGPS's events
-import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
+import { encounterTable } from '../characters/encounterTableDoor.js'; // DEX3: the table a mod's write left, DFU's otherwise
+import { readPlayerGps } from '../world/playerGps.js'; // DEX3: the player's reading raises PlayerGPS's events
+import { dice100 } from '../combat/formulas.js'; // Dice100.SuccessRoll, one home
 
 // AUDIT 24 (wave 23): this module used to carry its OWN copy of the
 // 45x20 table, character for character identical to the generated one
@@ -29,11 +29,14 @@ export { ENCOUNTER_TABLES };
 // The climate-band table indexes (ChooseRandomEnemy:1370-1467):
 // [inRect-night, wild-day, wild-night] per climate family.
 export const CLIMATE_TABLE = new Map([
-  [CLIMATES.Desert, [20, 21, 22]], [CLIMATES.Desert2, [20, 21, 22]],
+  [CLIMATES.Desert, [20, 21, 22]],
+  [CLIMATES.Desert2, [20, 21, 22]],
   [CLIMATES.Mountain, [23, 24, 25]],
   [CLIMATES.Rainforest, [26, 27, 28]],
   [CLIMATES.Subtropical, [29, 30, 31]],
-  [CLIMATES.Swamp, [32, 33, 34]], [CLIMATES.MountainWoods, [32, 33, 34]], [CLIMATES.Woodlands, [32, 33, 34]],
+  [CLIMATES.Swamp, [32, 33, 34]],
+  [CLIMATES.MountainWoods, [32, 33, 34]],
+  [CLIMATES.Woodlands, [32, 33, 34]],
   [CLIMATES.HauntedWoodlands, [35, 36, 37]],
 ]);
 // The building-type table indexes (:1351-1363). AUDIT 26 F081: the
@@ -43,7 +46,14 @@ export const CLIMATE_TABLE = new Map([
 // Library took the guild-hall list, the GuildHall the temple list,
 // the Tavern the palace list, and Temple and Palace fell to the
 // default 39. Latent until interior spawning wires ctx.buildingType.
-const BUILDING_TABLE = new Map([[11, 40], [14, 41], [16, 42], [17, 42], [18, 43], [19, 44]]);
+const BUILDING_TABLE = new Map([
+  [11, 40],
+  [14, 41],
+  [16, 42],
+  [17, 42],
+  [18, 43],
+  [19, 44],
+]);
 
 // PlayerEntity.IntermittentEnemySpawn:549-552 - minimum spawn
 // distances from the player by place.
@@ -94,7 +104,7 @@ export const SPAWNER_ARMS = Object.freeze({
 /** The 144-minute cadence (:559): a spawn WINDOW opens on the game
  *  minutes where (minutes/12) % 12 == 0 - twelve minutes in every
  *  144, exactly classic's integer arithmetic. */
-export const timeForSpawn = (gameMinutes) => (Math.trunc(gameMinutes / 12) % 12) === 0;
+export const timeForSpawn = (gameMinutes) => Math.trunc(gameMinutes / 12) % 12 === 0;
 
 // FormulaHelper.RollRandomSpawn_* (:1765-1813): 0 spawns, >0 does
 // not. The dungeon roll runs ONLY under an active enemy alert.
@@ -120,7 +130,7 @@ export function resolveEncounterTableIndex(ctx) {
   const band = ctx.fauna ?? CLIMATE_TABLE.get(ctx.climateIndex);
   if (!band) return null;
   if (ctx.inLocationRect) {
-    if (ctx.isDay) return null;   // a town by day spawns nothing
+    if (ctx.isDay) return null; // a town by day spawns nothing
     return band[0];
   }
   return ctx.isDay ? band[1] : band[2];
@@ -141,17 +151,34 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
   const table = ctx.table ?? encounterTable(idx, ctx, rolls);
 
   // the level band (:1471-1507) - "assume enemy lists of length 20"
-  const roll = Math.floor(rolls() * 100) + 1;   // Dice100.Roll 1..100
+  const roll = Math.floor(rolls() * 100) + 1; // Dice100.Roll 1..100
   const level = ctx.playerLevel ?? 1;
   let min, max;
   if (roll > 80) {
     if (roll > 95) {
-      if (level <= 5) { min = 0; max = level + 2; }
-      else { min = 0; max = 19; }
-    } else { min = 0; max = level + 1; }
-  } else { min = level - 3; max = level + 3; }
-  if (min < 0) { min = 0; max = 5; }
-  if (max > 19) { min = 14; max = 19; }
+      if (level <= 5) {
+        min = 0;
+        max = level + 2;
+      } else {
+        min = 0;
+        max = 19;
+      }
+    } else {
+      min = 0;
+      max = level + 1;
+    }
+  } else {
+    min = level - 3;
+    max = level + 3;
+  }
+  if (min < 0) {
+    min = 0;
+    max = 5;
+  }
+  if (max > 19) {
+    min = 14;
+    max = 19;
+  }
 
   if (!table) return -1;
   // DFU's short-list guard (not classic) survives for table edits
@@ -159,7 +186,7 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
     max = table.length - 1;
     min = max >= 5 ? max - 5 : Math.floor(rolls() * max);
   }
-  return table[min + Math.floor(rolls() * (max + 1 - min))];   // Range(min, max+1)
+  return table[min + Math.floor(rolls() * (max + 1 - min))]; // Range(min, max+1)
 }
 
 // ---- PreventEnemySpawns (PlayerEntity.cs:47/:145) -------------------
@@ -190,7 +217,11 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
 let _quiet = 0;
 export function quietNights(fn) {
   _quiet++;
-  try { return fn(); } finally { _quiet--; }
+  try {
+    return fn();
+  } finally {
+    _quiet--;
+  }
 }
 
 /** DEX3: A ROLL OF THE PLAYER'S OWN, where the player stands (this decision's, and the camps' - systems/campEncounters.js):
@@ -211,7 +242,7 @@ export function playerReading(ctx, gps = ctx) {
  *  PlayerEntity.Update. */
 export function intermittentEnemySpawn(ctx, rolls = Math.random) {
   ctx = playerReading(ctx);
-  if (_quiet > 0) return null;   // REST5: a night carried for a party member wakes to no ambush (quietNights)
+  if (_quiet > 0) return null; // REST5: a night carried for a party member wakes to no ambush (quietNights)
   // SURV4: a ROUGH rest (survival/rest.js - the window opened on bare ground, no bed and no fire) doubles the
   // minute's chance: the same decision asked twice, the first spawn taken. SURV-TIERS: how many asks a rest
   // costs is its kind priced by the player's tier at the open (scenes/shared.js createRestDeps stamps `restAsks` -
@@ -227,7 +258,7 @@ function intermittentEnemySpawnOnce(ctx, rolls) {
   if (!timeForSpawn(ctx.gameMinutes) || ctx.preventEnemySpawns) return null;
   // LIVED1: the cadence above is the minute the player lives (their own clock online); night and day are the SKY's -
   // `skyMinutes`, the world's clock, when the host hands it (offline the one clock, so the minute itself).
-  const timeOfDay = ((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440 + 1440) % 1440;
+  const timeOfDay = (((Number.isFinite(ctx.skyMinutes) ? ctx.skyMinutes : ctx.gameMinutes) % 1440) + 1440) % 1440;
   if (!ctx.inside) {
     if (ctx.inLocationRect) {
       if ((timeOfDay < 360 || timeOfDay > 1080) && rollLocationNight(rolls()) === 0) {
@@ -279,8 +310,8 @@ export const SEVERE_PUNISHMENT_EXECUTED = 2;
 export function passiveGuardSpawns({ legalRep = 0, severePunishmentFlags = 0 } = {}, rolls = Math.random) {
   let spawns = 0;
   if (legalRep < PASSIVE_GUARD_LEGAL_REP && dice100(PASSIVE_GUARD_LOW_REP_CHANCE, rolls())) spawns++;
-  if ((severePunishmentFlags & SEVERE_PUNISHMENT_BANISHED) !== 0
-    && dice100(PASSIVE_GUARD_BANISHED_CHANCE, rolls())) spawns++;
+  if ((severePunishmentFlags & SEVERE_PUNISHMENT_BANISHED) !== 0 && dice100(PASSIVE_GUARD_BANISHED_CHANCE, rolls()))
+    spawns++;
   return spawns;
 }
 
@@ -296,7 +327,7 @@ export function setEnemyAlert(entity, alert, gameMinutes = 0) {
   if (alert) entity.lastEnemyAlertTime = gameMinutes;
 }
 export function decayEnemyAlert(entity, gameMinutes) {
-  if (entity.enemyAlertActive && (gameMinutes - (entity.lastEnemyAlertTime ?? 0)) > ALERT_DECAY_MINUTES) {
+  if (entity.enemyAlertActive && gameMinutes - (entity.lastEnemyAlertTime ?? 0) > ALERT_DECAY_MINUTES) {
     setEnemyAlert(entity, false);
   }
 }
@@ -389,7 +420,9 @@ export function fightNear(foes, feet) {
   if (!feet) return false;
   for (const f of foes ?? []) {
     if (!foeHostile(f) || f.ai.unreachable || !f.ai.feet) continue;
-    const dx = f.ai.feet[0] - feet[0], dy = f.ai.feet[1] - feet[1], dz = f.ai.feet[2] - feet[2];
+    const dx = f.ai.feet[0] - feet[0],
+      dy = f.ai.feet[1] - feet[1],
+      dz = f.ai.feet[2] - feet[2];
     if (wouldBeSpawnedInClassic(Math.hypot(dx, dy, dz), dy, false, 0, false)) return true;
   }
   return false;

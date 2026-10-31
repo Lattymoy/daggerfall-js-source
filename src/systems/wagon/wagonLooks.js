@@ -38,17 +38,33 @@ const PART_FIELD = Object.freeze({ walls: 'w', floor: 'f', ceiling: 'c' });
 
 /** What each paint is called on the card and in the tab. */
 export const LOOK_NAMES = Object.freeze({
-  oak: 'Weathered oak', red: 'Red', blue: 'Blue', green: 'Green', black: 'Black', white: 'White', cream: 'Cream canvas',
-  ochre: 'Ochre', oxblood: 'Oxblood', whitewash: 'Whitewash', pine: 'Pine boards', dark: 'Dark boards',
-  redRug: 'Red rug', blueRug: 'Blue rug', checker: 'Checkered tiles', boards: 'Painted boards', night: 'Night sky',
+  oak: 'Weathered oak',
+  red: 'Red',
+  blue: 'Blue',
+  green: 'Green',
+  black: 'Black',
+  white: 'White',
+  cream: 'Cream canvas',
+  ochre: 'Ochre',
+  oxblood: 'Oxblood',
+  whitewash: 'Whitewash',
+  pine: 'Pine boards',
+  dark: 'Dark boards',
+  redRug: 'Red rug',
+  blueRug: 'Blue rug',
+  checker: 'Checkered tiles',
+  boards: 'Painted boards',
+  night: 'Night sky',
 });
 /** The words the card and the tab say. */
 export const LOOK_TEXT = Object.freeze({
   paint: 'Paint',
   outside: 'Outside',
-  walls: 'Walls', floor: 'Floor', ceiling: 'Ceiling',
+  walls: 'Walls',
+  floor: 'Floor',
+  ceiling: 'Ceiling',
   painted: (name) => `Your wagon is painted ${name.toLowerCase()}.`,
-  paintedInside: (part, name) => `The ${part} ${part === 'walls' ? 'are' : 'is'} now ${name.toLowerCase()}.`,   // FINAL AUDIT: "The floor are now" - the walls alone are many
+  paintedInside: (part, name) => `The ${part} ${part === 'walls' ? 'are' : 'is'} now ${name.toLowerCase()}.`, // FINAL AUDIT: "The floor are now" - the walls alone are many
   noWagon: 'You have no wagon to paint.',
   notCaravan: 'Only a caravan has an inside to paint.',
 });
@@ -63,16 +79,27 @@ export function readWagonLook(v) {
 /** A wagon item's look (its `wagonLook`, checked) - the wagon as built for anything else. */
 export const wagonLookOf = (item) => readWagonLook(isWagonItem(item) ? item.wagonLook : null);
 /** Whether a look is the wagon as built (no field needs keeping). */
-export const isBuiltLook = (look) => { const l = readWagonLook(look); return !l.o && !l.w && !l.f && !l.c; };
+export const isBuiltLook = (look) => {
+  const l = readWagonLook(look);
+  return !l.o && !l.w && !l.f && !l.c;
+};
 
 /** The look as the wire says it: one number, base LOOK_COUNT (`wl`). */
-export const wagonLookCode = (look) => { const l = readWagonLook(look); return l.o + LOOK_COUNT * (l.w + LOOK_COUNT * (l.f + LOOK_COUNT * l.c)); };
+export const wagonLookCode = (look) => {
+  const l = readWagonLook(look);
+  return l.o + LOOK_COUNT * (l.w + LOOK_COUNT * (l.f + LOOK_COUNT * l.c));
+};
 /** The highest code a look can be. */
 export const WAGON_LOOK_CODE_MAX = LOOK_COUNT ** 4 - 1;
 /** The look a wire code names - the wagon as built for anything the law does not know. */
 export function wagonLookOfCode(code) {
   if (!Number.isInteger(code) || code < 0 || code > WAGON_LOOK_CODE_MAX) return readWagonLook(null);
-  return readWagonLook({ o: code % LOOK_COUNT, w: Math.floor(code / LOOK_COUNT) % LOOK_COUNT, f: Math.floor(code / LOOK_COUNT ** 2) % LOOK_COUNT, c: Math.floor(code / LOOK_COUNT ** 3) });
+  return readWagonLook({
+    o: code % LOOK_COUNT,
+    w: Math.floor(code / LOOK_COUNT) % LOOK_COUNT,
+    f: Math.floor(code / LOOK_COUNT ** 2) % LOOK_COUNT,
+    c: Math.floor(code / LOOK_COUNT ** 3),
+  });
 }
 
 /** A kind's outside paints (the cart's for a kind the law does not know). */
@@ -113,12 +140,20 @@ export function paintDrivenWagon(items, part, i) {
   const look = wagonLookOf(painted);
   return part === 'outside'
     ? { ok: true, text: LOOK_TEXT.painted(outsideLookName(kind, look.o)) }
-    : { ok: true, text: LOOK_TEXT.paintedInside(LOOK_TEXT[part].toLowerCase(), insideLookName(part, look[PART_FIELD[part]])) };
+    : {
+        ok: true,
+        text: LOOK_TEXT.paintedInside(LOOK_TEXT[part].toLowerCase(), insideLookName(part, look[PART_FIELD[part]])),
+      };
 }
 /** The caravan's inside as the decorator's painter lists it: a row a part - its name, its paints' names, its paint now. */
 export const caravanPaintRows = (look) => {
   const l = readWagonLook(look);
-  return CARAVAN_INSIDE_PARTS.map((part) => ({ part, name: LOOK_TEXT[part], choices: CARAVAN_INSIDE_LOOKS[part].map((k) => LOOK_NAMES[k]), current: l[PART_FIELD[part]] }));
+  return CARAVAN_INSIDE_PARTS.map((part) => ({
+    part,
+    name: LOOK_TEXT[part],
+    choices: CARAVAN_INSIDE_LOOKS[part].map((k) => LOOK_NAMES[k]),
+    current: l[PART_FIELD[part]],
+  }));
 };
 /** The driven wagon's outside as the Stable lists it: its paints' names and its paint now (null with no wagon). */
 export const outsidePaintRow = (items) => {

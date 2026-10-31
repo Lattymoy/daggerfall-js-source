@@ -1,22 +1,22 @@
 [
- {
-  "name": "SHIPAUDIT-HUNT-the-mark-the-bays",
-  "file": "src/net/huntLaw.js",
-  "old": "  if (!worldPixelOk(px) || !worldPixelOk(py) || level < 1) return null;",
-  "new": "  if (px >= 1000 || py >= 500 || level < 1) return null;",
-  "tests": [
-   "test/server/huntersmark_service.test.js"
-  ],
-  "note": "a board past the Bay posts no named mark again"
- },
- {
-  "name": "SHIPAUDIT-HUNT-the-mark-unsigned",
-  "file": "src/net/huntLaw.js",
-  "old": "export const HUNT_MARK_ID_RE = /^m\\.(\\d{1,5})\\.(-?\\d{1,4})\\.(-?\\d{1,4})\\.(\\d{1,2})$/;",
-  "new": "export const HUNT_MARK_ID_RE = /^m\\.(\\d{1,5})\\.(\\d{1,4})\\.(\\d{1,4})\\.(\\d{1,2})$/;",
-  "tests": [
-   "test/server/huntersmark_service.test.js"
-  ],
-  "note": "a town west or north of the Bay (a negative pixel) has no mark"
- }
+  {
+    "name": "SHIPAUDIT-HUNT-the-mark-the-bays",
+    "file": "src/net/huntLaw.js",
+    "old": "  if (!worldPixelOk(px) || !worldPixelOk(py) || level < 1) return null;",
+    "new": "  if (px >= 1000 || py >= 500 || level < 1) return null;",
+    "tests": [
+      "test/server/huntersmark_service.test.js"
+    ],
+    "note": "a board past the Bay posts no named mark again"
+  },
+  {
+    "name": "SHIPAUDIT-HUNT-the-mark-unsigned",
+    "file": "src/net/huntLaw.js",
+    "old": "export const HUNT_MARK_ID_RE = /^m\\.(\\d{1,5})\\.(-?\\d{1,4})\\.(-?\\d{1,4})\\.(\\d{1,2})$/;",
+    "new": "export const HUNT_MARK_ID_RE = /^m\\.(\\d{1,5})\\.(\\d{1,4})\\.(\\d{1,4})\\.(\\d{1,2})$/;",
+    "tests": [
+      "test/server/huntersmark_service.test.js"
+    ],
+    "note": "a town west or north of the Bay (a negative pixel) has no mark"
+  }
 ]

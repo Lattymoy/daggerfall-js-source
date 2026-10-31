@@ -17,14 +17,22 @@
 import { playerBoutOf } from '../../characters/enemy/enemyTargets.js';
 import { hasActiveEffect, cureAllOfKind } from '../effects.js';
 import { ARENA_TEXT } from './arenaText.js';
-import { restartHeldEnchantments } from '../enchantments.js';   // AUDIT ARENA-LADDER 2: a held item's barred effect back after the bout
+import { restartHeldEnchantments } from '../enchantments.js'; // AUDIT ARENA-LADDER 2: a held item's barred effect back after the bout
 
 /** The classic effect types barred from the sand: Invisibility 13, Levitate 14, Chameleon 23, Shadow 24, Pacify 33 (the
  *  four Calms - AUDIT ARENA-LADDER 2: missed at first, and Calm Humanoid is a vampire's own spell), Charm 34, Teleport 43
  *  (Recall is its second half). */
 export const SAND_BARRED_EFFECTS = Object.freeze([13, 14, 23, 24, 33, 34, 43]);
 /** The live effects (systems/effects.js BUFF_KINDS' words) those leave on the player. */
-export const SAND_BARRED_KINDS = Object.freeze(['invisNormal', 'invisTrue', 'levitate', 'chameleonNormal', 'chameleonTrue', 'shadeNormal', 'shadeTrue']);
+export const SAND_BARRED_KINDS = Object.freeze([
+  'invisNormal',
+  'invisTrue',
+  'levitate',
+  'chameleonNormal',
+  'chameleonTrue',
+  'shadeNormal',
+  'shadeTrue',
+]);
 
 /** The ceiling over the sand, metres above the ring's centre (player/motor.js _keepInArena, scenes/arena/arenaBouts.js ring):
  *  over the highest honest jump (AcrobatMotor's jumpSpeed 4.5 at Jumping 100, the Jump spell and Athleticism - x2.3, 2.7 m)
@@ -35,7 +43,10 @@ export const onTheSand = () => playerBoutOf()?.kit === true;
 /** The refusal of a potion now, or null. */
 export const sandPotionRefusal = () => (onTheSand() ? ARENA_TEXT.refuse.potion : null);
 /** The refusal of this spell now, or null. */
-export const sandSpellRefusal = (sp) => (onTheSand() && (Array.isArray(sp?.effects) ? sp.effects : []).some((e) => e && SAND_BARRED_EFFECTS.includes(e.type)) ? ARENA_TEXT.refuse.magic : null);
+export const sandSpellRefusal = (sp) =>
+  onTheSand() && (Array.isArray(sp?.effects) ? sp.effects : []).some((e) => e && SAND_BARRED_EFFECTS.includes(e.type))
+    ? ARENA_TEXT.refuse.magic
+    : null;
 /** Take the barred effects off `entity`; answers how many kinds went. */
 export function stripSandBarred(entity) {
   let n = 0;
@@ -44,7 +55,8 @@ export function stripSandBarred(entity) {
     // AUDIT ARENA-LADDER 2: a held item's (a ring's Chameleon) never comes back by itself - the reroll re-pins only an
     // item whose bundle still stands - so it is marked, and restarted when the bout is over (restoreSandHeld)
     if (entity.activeEffects.some((a) => a.kind === k && a.heldItem)) entity._sandHeld = true;
-    cureAllOfKind(entity, k); n++;
+    cureAllOfKind(entity, k);
+    n++;
   }
   return n;
 }

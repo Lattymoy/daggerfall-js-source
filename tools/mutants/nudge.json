@@ -20,7 +20,7 @@
   {
     "name": "NUDGE-unbounded",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      const at = (v, d) => round(Math.min(DECOR_NUDGE_MAX, Math.max(-DECOR_NUDGE_MAX, v + (Number.isFinite(d) ? d : 0))), 3);",
+    "old": "      const at = (v, d) =>\n        round(Math.min(DECOR_NUDGE_MAX, Math.max(-DECOR_NUDGE_MAX, v + (Number.isFinite(d) ? d : 0))), 3);",
     "new": "      const at = (v, d) => round(v + (Number.isFinite(d) ? d : 0), 3);",
     "tests": [
       "test/systems/decor/nudge.test.js"
@@ -29,8 +29,8 @@
   {
     "name": "NUDGE-unapplied",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "      x = round(x + s.nudge[0], 3);   // NUDGE: the owner's push, after the wall's clearance - so it may clip\n      z = round(z + s.nudge[1], 3);\n",
-    "new": "",
+    "old": "      x = round(x + s.nudge[0], 3); // NUDGE: the owner's push, after the wall's clearance - so it may clip\n      z = round(z + s.nudge[1], 3);\n      return decorPieceOf({",
+    "new": "      return decorPieceOf({",
     "tests": [
       "test/systems/decor/nudge.test.js"
     ]
@@ -39,7 +39,7 @@
     "name": "NUDGE-before-the-wall",
     "file": "src/systems/decor/decorPlacer.js",
     "old": "        const out = decorWallOffset(reach(n), { door: entry.kind === 'door' });",
-    "new": "        const out = decorWallOffset(reach(n), { door: entry.kind === 'door' }) - (s.nudge[0] * n[0] + s.nudge[1] * n[1]);",
+    "new": "        const out =\n          decorWallOffset(reach(n), { door: entry.kind === 'door' }) - (s.nudge[0] * n[0] + s.nudge[1] * n[1]);",
     "tests": [
       "test/systems/decor/nudge.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "NUDGE-mount-off-the-wall",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": " + push[i] - n[i] * off);",
-    "new": " + push[i]);",
+    "old": "    p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);",
+    "new": "    p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i]);",
     "tests": [
       "test/systems/decor/nudge.test.js"
     ]

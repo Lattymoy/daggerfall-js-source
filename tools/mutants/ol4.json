@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-ALL-O1-buildingHoursState-defaults-offline",
     "file": "src/systems/buildingLocks.js",
-    "old": "  online = sharedClockOn(),   // AUDIT ALL O1",
-    "new": "  online = false,   // AUDIT ALL O1",
+    "old": "    online = sharedClockOn(), // AUDIT ALL O1: the clock, not the URL - a page that says ?online with no clock installed (the fixed city's dev door) is not the shared world",
+    "new": "    online = false, // AUDIT ALL O1: the clock, not the URL - a page that says ?online with no clock installed (the fixed city's dev door) is not the shared world",
     "tests": [
       "test/systems/lockpicking.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-ALL-O1-the-unlock-ladder-defaults-offline",
     "file": "src/systems/buildingLocks.js",
-    "old": "  hour = 12, holidayId = -1, online = sharedClockOn(),",
-    "new": "  hour = 12, holidayId = -1, online = false,",
+    "old": "    holidayId = -1,\n    online = sharedClockOn(),\n    isHouseOwned = null,",
+    "new": "    holidayId = -1,\n    online = false,\n    isHouseOwned = null,",
     "tests": [
       "test/systems/lockpicking.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "OL5-the-guild-hall-is-dropped-from-the-relief",
     "file": "src/systems/buildingLocks.js",
-    "old": "export const onlineReliefBuilding = (type) => isShop(type) || type === BUILDING_TYPES.GuildHall\n",
-    "new": "export const onlineReliefBuilding = (type) => isShop(type)\n",
+    "old": "  isShop(type) ||\n  type === BUILDING_TYPES.GuildHall ||\n  type === BUILDING_TYPES.Bank ||\n  type === BUILDING_TYPES.Library ||\n  type === BUILDING_TYPES.Palace;",
+    "new": "  isShop(type) || type === BUILDING_TYPES.Bank || type === BUILDING_TYPES.Library || type === BUILDING_TYPES.Palace;",
     "tests": [
       "test/systems/lockpicking.test.js"
     ]

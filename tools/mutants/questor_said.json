@@ -2,8 +2,8 @@
   {
     "name": "QUESTOR-SAID-the-guild-door-closes-bare",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return questorBusy(this.machine);\n",
-    "new": "    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return { kind: 'close' };\n",
+    "old": "    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return questorBusy(this.machine);",
+    "new": "    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return { kind: 'close' };",
     "tests": [
       "test/systems/quest/fb1019f_questorsaid.test.js",
       "test/systems/quest/questoffers.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "QUESTOR-SAID-the-coven-door-closes-bare",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "    if (this.machine.isLastNPCClickedAnActiveQuestor()) return questorBusy(this.machine);\n",
-    "new": "    if (this.machine.isLastNPCClickedAnActiveQuestor()) return { kind: 'close' };\n",
+    "old": "    if (this.machine.isLastNPCClickedAnActiveQuestor()) return questorBusy(this.machine);",
+    "new": "    if (this.machine.isLastNPCClickedAnActiveQuestor()) return { kind: 'close' };",
     "tests": [
       "test/systems/quest/fb1019f_questorsaid.test.js",
       "test/systems/quest/covenwindow.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "QUESTOR-SAID-the-close-gives-no-reason",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };\n",
-    "new": "  return { kind: 'close', quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };\n",
+    "old": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };",
+    "new": "  return { kind: 'close', quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };",
     "tests": [
       "test/systems/quest/fb1019f_questorsaid.test.js",
       "test/systems/quest/covenwindow.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "QUESTOR-SAID-the-close-names-no-quest",
     "file": "src/systems/quest/offerFlow.js",
-    "old": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };\n",
-    "new": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: null };\n",
+    "old": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };",
+    "new": "  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: null };",
     "tests": [
       "test/systems/quest/fb1019f_questorsaid.test.js",
       "test/systems/quest/covenwindow.test.js"
@@ -80,8 +80,8 @@
   {
     "name": "QUESTOR-SAID-the-scan-finds-nothing",
     "file": "src/systems/quest/machine.js",
-    "old": "        if (this.isNPCDataEqual(resource.questorData, clicked)) return { quest, person: resource };\n",
-    "new": "        if (this.isNPCDataEqual(resource.questorData, clicked)) return null;\n",
+    "old": "        if (this.isNPCDataEqual(resource.questorData, clicked)) return { quest, person: resource };",
+    "new": "        if (this.isNPCDataEqual(resource.questorData, clicked)) return null;",
     "tests": [
       "test/systems/quest/fb1019f_questorsaid.test.js",
       "test/systems/quest/questoffers.test.js",
@@ -91,8 +91,8 @@
   {
     "name": "QUESTOR-SAID-a-finished-quest-still-shuts-the-door",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (quest.questComplete) continue;\n      // QUEST-SHELF (Themicles' K'avar",
-    "new": "      // QUEST-SHELF (Themicles' K'avar",
+    "old": "      if (quest.questComplete) continue;\n      // QUEST-SHELF (Themicles' K'avar, the guild's door shut while a quest stood stuck): a quest set aside opens its",
+    "new": "      // QUEST-SHELF (Themicles' K'avar, the guild's door shut while a quest stood stuck): a quest set aside opens its",
     "tests": [
       "test/systems/quest/fb1019f_questorsaid.test.js",
       "test/systems/quest/questoffers.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "QUESTOR-SAID-a-quest-set-aside-still-shuts-the-door",
     "file": "src/systems/quest/machine.js",
-    "old": "      if (isShelved(quest)) continue;\n      for (const resource of quest.resources.values()) {\n        if (!resource.isPerson || !resource.isQuestor) continue;\n        if (this.isNPCDataEqual(resource.questorData, clicked)) return { quest, person: resource };",
-    "new": "      for (const resource of quest.resources.values()) {\n        if (!resource.isPerson || !resource.isQuestor) continue;\n        if (this.isNPCDataEqual(resource.questorData, clicked)) return { quest, person: resource };",
+    "old": "      if (isShelved(quest)) continue;\n      for (const resource of quest.resources.values()) {",
+    "new": "      for (const resource of quest.resources.values()) {",
     "tests": [
       "test/systems/quest/questshelf.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "QUESTOR-SAID-the-guild-not-lent",
     "file": "src/systems/quest/machine.js",
-    "old": "    if (mcp != null) hit.quest.externalMCP = mcp;\n",
-    "new": "",
+    "old": "    if (mcp != null) hit.quest.externalMCP = mcp;\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/systems/quest/questoffers.test.js"
     ]

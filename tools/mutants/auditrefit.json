@@ -2,8 +2,8 @@
   {
     "name": "AR-near-sphere-tight",
     "file": "src/systems/naval/navalShots.js",
-    "old": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M) continue;",
-    "new": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2])) continue;",
+    "old": "      if (segmentPointGap(a, next, t.box.c, upTo) > Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M)\n        continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)",
+    "new": "      if (segmentPointGap(a, next, t.box.c, upTo) > Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2])) continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AR-near-sphere-beam",
     "file": "src/systems/naval/navalShots.js",
-    "old": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M) continue;",
-    "new": "t.box.h[0] + NEAR_MISS_M) continue;",
+    "old": "      if (segmentPointGap(a, next, t.box.c, upTo) > Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M)\n        continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)",
+    "new": "      if (segmentPointGap(a, next, t.box.c, upTo) > t.box.h[0] + NEAR_MISS_M) continue; // AUDIT 2026-10-17: past her bounding sphere - no search (none kept: a piece that begins within NEAR_MISS_M of her begins inside it)",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "AR-near-sphere-past-its-end",
     "file": "src/systems/naval/navalShots.js",
-    "old": "  const u = dd > 0 ? Math.max(0, Math.min(Math.max(0, Math.min(1, upTo)), (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd)) : 0;",
+    "old": "  const u =\n    dd > 0 ? Math.max(0, Math.min(Math.max(0, Math.min(1, upTo)), (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd)) : 0;",
     "new": "  const u = dd > 0 ? (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd : 0;",
     "tests": [
       "test/systems/naval/auditrefit.test.js",
@@ -59,7 +59,7 @@
   {
     "name": "AR-flag-failure-forgotten",
     "file": "src/render/shipFlagPass.js",
-    "old": "    if (!canvas) { this.textures.set(key, { tex: null, seen: seconds, failed: seconds }); return null; }",
+    "old": "    if (!canvas) {\n      this.textures.set(key, { tex: null, seen: seconds, failed: seconds });\n      return null;\n    }",
     "new": "    if (!canvas) return null;",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
@@ -68,8 +68,8 @@
   {
     "name": "AR-flag-never-repainted",
     "file": "src/render/shipFlagPass.js",
-    "old": "if (had.tex || seconds - had.failed < FLAG_REPAINT_S) return had.tex;",
-    "new": "return had.tex;",
+    "old": "      if (had.tex || seconds - had.failed < FLAG_REPAINT_S) return had.tex;",
+    "new": "      return had.tex;",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
     ]
@@ -77,8 +77,8 @@
   {
     "name": "AR-flag-prune-a-failure",
     "file": "src/render/shipFlagPass.js",
-    "old": "{ if (t.tex) this.gl.deleteTexture(t.tex); this.textures.delete(key); }",
-    "new": "{ this.gl.deleteTexture(t.tex); this.textures.delete(key); }",
+    "old": "        if (t.tex) this.gl.deleteTexture(t.tex);",
+    "new": "        this.gl.deleteTexture(t.tex);",
     "tests": [
       "test/systems/naval/auditrefit.test.js"
     ]
@@ -104,7 +104,7 @@
   {
     "name": "AR-refit-whole-unmoved",
     "file": "src/systems/naval/navalDamage.js",
-    "old": "      s.maxHull = h; s.maxSail = sl;",
+    "old": "      s.maxHull = h;\n      s.maxSail = sl;",
     "new": "      s.maxSail = sl;",
     "tests": [
       "test/systems/naval/fleet.test.js"
@@ -113,8 +113,8 @@
   {
     "name": "AR-door-word-kept",
     "file": "src/ui/fleetPage.js",
-    "old": "if (ran === false && _said?.uid === s.uid) _said = null; ",
-    "new": "",
+    "old": "        if (ran === false && _said?.uid === s.uid) _said = null;\n        return ran;",
+    "new": "        return ran;",
     "tests": [
       "test/scenes/holddoor.test.js"
     ]

@@ -1362,7 +1362,7 @@ test('D5 the exterior BUTTON tooltips: Internal_Strings.csv:908-917 with its typ
     // right-edge shift is what places it
     assert.equal(shown.dst.h, 6 * 2 + 3);
     assert.ok(shown.dst.w > 320);
-    assert.equal(shown.dst.x, 320 - shown.dst.w, 'x -= (x + w) - NATIVE_W');
+    assert.equal(shown.dst.x, 320 - shown.dst.w, 'x -= x + w - NATIVE_W');
     // ...and unlike the PLATE tooltip these ride the window's shared
     // defaultToolTip, so EnableToolTips really does gate them
     // (DaggerfallBaseWindow.cs:50-56)

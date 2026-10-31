@@ -24,7 +24,20 @@
 // strike of the Remnant's or an Echo's own blow, or of the brass one leaves burning, carries its Ending's element (`el`).
 //
 // Not a DFU member. Ledger A (SUPER-DUNGEONS).
-import { SD_BLOW_BY_ID, SD_BLOWS, SD_RESET_PCT, SD_END_PCT, SD_ARENA_SLACK, pulsePctOf, blowShape, stompFrontAt, ringPassed, handSwept, behindPillar, inArena } from './sdRemnant.js';
+import {
+  SD_BLOW_BY_ID,
+  SD_BLOWS,
+  SD_RESET_PCT,
+  SD_END_PCT,
+  SD_ARENA_SLACK,
+  pulsePctOf,
+  blowShape,
+  stompFrontAt,
+  ringPassed,
+  handSwept,
+  behindPillar,
+  inArena,
+} from './sdRemnant.js';
 import { STRIKE_LATE_MS } from '../gate/gateStrike.js';
 
 /** A landing first seen later than this is not judged (the gate's). */
@@ -42,12 +55,15 @@ const dist = (ax, az, bx, bz) => Math.hypot(ax - bx, az - bz);
  */
 export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}, over = false) {
   const A = atk ? SD_BLOW_BY_ID[atk.a] : null;
-  const hits = [], out = { ...seen };
+  const hits = [],
+    out = { ...seen };
   if (!A) return { hits, seen: out, done: true };
-  const S = blowShape(atk), el = S.el ? { el: S.el } : null;   // SD18a: its own numbers and element
-  if (t1 < atk.at) return { hits, seen: out, done: false };   // still winding up
+  const S = blowShape(atk),
+    el = S.el ? { el: S.el } : null; // SD18a: its own numbers and element
+  if (t1 < atk.at) return { hits, seen: out, done: false }; // still winding up
   const late = t1 - atk.at > SD_STRIKE_LATE_MS;
-  const landing = (part) => {   // the landing's moment, judged once - never one first seen long after
+  const landing = (part) => {
+    // the landing's moment, judged once - never one first seen long after
     if (out[part]) return false;
     out[part] = true;
     return !late;
@@ -76,29 +92,37 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}, over = f
       return { hits, seen: out, done: t1 > end };
     }
     case 'sweep': {
-      if (!out.beam && !stale && t0 <= end && handSwept(atk, px, pz, Math.max(t0, atk.at), t1) && (over || !behindPillar(atk.x, atk.z, px, pz))) {
+      if (
+        !out.beam &&
+        !stale &&
+        t0 <= end &&
+        handSwept(atk, px, pz, Math.max(t0, atk.at), t1) &&
+        (over || !behindPillar(atk.x, atk.z, px, pz))
+      ) {
         out.beam = true;
         hits.push({ part: 'beam', pct: A.pct, base: A.base, ...el });
       }
       return { hits, seen: out, done: !!out.beam || t1 > end };
     }
     case 'disc': {
-      if (landing('discs') && (atk.tg ?? []).some((q) => dist(px, pz, q[0], q[1]) <= S.r)) hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });
+      if (landing('discs') && (atk.tg ?? []).some((q) => dist(px, pz, q[0], q[1]) <= S.r))
+        hits.push({ part: 'discs', pct: A.pct, base: A.base, ...el });
       return { hits, seen: out, done: true };
     }
     case 'all': {
-      const pct = A === SD_BLOWS.pulse ? pulsePctOf(atk) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT;   // SD18a: a Restless Pulse's own step
+      const pct = A === SD_BLOWS.pulse ? pulsePctOf(atk) : A === SD_BLOWS.reset ? SD_RESET_PCT : SD_END_PCT; // SD18a: a Restless Pulse's own step
       // AUDIT SD III (F3): THE WHOLE ARENA'S BLOWS ARE JUDGED HOWEVER LATE. Through the late law (above) a tab hidden
       // across a Pulse's landing first saw it past SD_STRIKE_LATE_MS and was never struck - Ctrl+Tab and back through 70%
       // of everyone's health, no save. A blow of the whole arena has no geometry a late frame could misjudge: a hidden page
       // does not move, so where I stand when I first see it is where I stood when it landed - and it lands then, once.
       if (!out.all) {
         out.all = true;
-        if (inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all', pct, base: A.base });   // AUDIT SD II (L4 C2): never the Steps
+        if (inArena(px, pz, SD_ARENA_SLACK)) hits.push({ part: 'all', pct, base: A.base }); // AUDIT SD II (L4 C2): never the Steps
       }
       return { hits, seen: out, done: true };
     }
-    default: return { hits, seen: out, done: true };
+    default:
+      return { hits, seen: out, done: true };
   }
 }
 
@@ -107,8 +131,18 @@ export function sdBlowVerdict(atk, px, pz, t0, t1, grounded, seen = {}, over = f
 export function sdVolleyPools(atk) {
   const A = SD_BLOWS.volley;
   if (!atk || atk.a !== A.id) return [];
-  const S = blowShape(atk), P = S.pool;
-  return (atk.tg ?? []).map((q) => ({ x: q[0], z: q[1], r: P.r, from: atk.at, until: atk.at + P.ms, pct: P.pct, base: P.base, ...(S.el ? { el: S.el } : {}) }));
+  const S = blowShape(atk),
+    P = S.pool;
+  return (atk.tg ?? []).map((q) => ({
+    x: q[0],
+    z: q[1],
+    r: P.r,
+    from: atk.at,
+    until: atk.at + P.ms,
+    pct: P.pct,
+    base: P.base,
+    ...(S.el ? { el: S.el } : {}),
+  }));
 }
 /** The pool I stand in at `now`, or null. Pure. */
 export function sdPoolUnder(pools, px, pz, now) {

@@ -38,8 +38,8 @@
   {
     "name": "contact-door-ignored",
     "file": "src/render/airPass.js",
-    "old": "  return pageParam('contact', search) !== 'off';",
-    "new": "  return true;",
+    "old": "  return pageParam('contact', search) !== 'off'; // PERF-URL",
+    "new": "  return true; // PERF-URL",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "contact-glsl-current-terms",
     "file": "src/render/airPass.js",
-    "old": "    float sceneDist = uPrevProjInfo.w / (z + uPrevProjInfo.z);\n    float behind = c.w - sceneDist;",
-    "new": "    float sceneDist = uPrevProjInfo.w / (z + uPrevProjInfo.z);\n    float behind = sceneDist - c.w;",
+    "old": "    float behind = c.w - sceneDist;   // c.w is the point's view distance under that projection",
+    "new": "    float behind = sceneDist - c.w;   // c.w is the point's view distance under that projection",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "frame-one-depth",
     "file": "src/render/airPass.js",
-    "old": "    f.depthIndex ^= 1;\n",
-    "new": "",
+    "old": "    f.depthIndex ^= 1;\n    f.depth = f.depths[f.depthIndex];",
+    "new": "    f.depth = f.depths[f.depthIndex];",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "frame-depth-not-attached",
     "file": "src/render/airPass.js",
-    "old": "    f.fbo = f.fbos[f.depthIndex];",
-    "new": "    f.fbo = f.fbos[f.depthIndex ^ 1];",
+    "old": "    f.fbo = f.fbos[f.depthIndex]; // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
+    "new": "    f.fbo = f.fbos[f.depthIndex ^ 1]; // LA-POST8: the framebuffer with this frame's depth - bound, not re-attached",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "prepare-no-prev",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame && !this._cut && !jumped; holdPrevRect(this.prevRect, this.rect, this.canvas); }\n",
-    "new": "",
+    "old": "    if (this.f) {\n      this.prevVP.set(this._vp);\n      this.prevProjInfo.set(this.projInfo);\n      this.prevValid = !!this.frame && !this._cut && !jumped;\n      holdPrevRect(this.prevRect, this.rect, this.canvas);\n    }\n    this._cut = false;",
+    "new": "    this._cut = false;",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "prepare-prev-is-current",
     "file": "src/render/airPass.js",
-    "old": "    if (this.f) { this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame && !this._cut && !jumped; holdPrevRect(this.prevRect, this.rect, this.canvas); }\n    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) { pe[0] = e[0]; pe[1] = e[1]; pe[2] = e[2]; }\n    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
-    "new": "    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) { pe[0] = e[0]; pe[1] = e[1]; pe[2] = e[2]; }\n    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp); this.prevProjInfo.set(this.projInfo); this.prevValid = !!this.frame;",
+    "old": "    if (this.f) {\n      this.prevVP.set(this._vp);\n      this.prevProjInfo.set(this.projInfo);\n      this.prevValid = !!this.frame && !this._cut && !jumped;\n      holdPrevRect(this.prevRect, this.rect, this.canvas);\n    }\n    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) {\n      pe[0] = e[0];\n      pe[1] = e[1];\n      pe[2] = e[2];\n    }\n    this.f = f;\n    this.fresh = true; // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);",
+    "new": "    this._cut = false;\n    this._prevEyeSet = !!e;\n    if (e) {\n      pe[0] = e[0];\n      pe[1] = e[1];\n      pe[2] = e[2];\n    }\n    this.f = f;\n    this.fresh = true; // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);\n    projInfo(f.proj, this.projInfo);\n    multiply(f.proj, f.view, this._vp);\n    this.prevVP.set(this._vp);\n    this.prevProjInfo.set(this.projInfo);\n    this.prevValid = !!this.frame;",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "upload-contact-current-depth",
     "file": "src/render/airPass.js",
-    "old": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.prevDepth : null);",
-    "new": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.depth : null);",
+    "old": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.prevDepth : null); // AUDIT 68 S16-air-dead-fields: bound on or off - `live` only flags the march (both arms of the old ternary bound this)",
+    "new": "    gl.bindTexture(gl.TEXTURE_2D, this.frame ? this.frame.depth : null); // AUDIT 68 S16-air-dead-fields: bound on or off - `live` only flags the march (both arms of the old ternary bound this)",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "perf-door",
     "file": "src/render/perfMeter.js",
-    "old": "  try { return /[?&]perf\\b/.test(search); } catch { return false; }",
-    "new": "  try { return /perf/.test(search); } catch { return false; }",
+    "old": "    return /[?&]perf\\b/.test(search);",
+    "new": "    return /perf/.test(search);",
     "tests": [
       "test/render/el8_contact.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "perf-every-frame",
     "file": "src/render/perfMeter.js",
-    "old": "    if (this.frames % PERF_EVERY !== 0) return null;\n",
-    "new": "",
+    "old": "    if (this.frames % PERF_EVERY !== 0) return null;\n    if (this.zones) {",
+    "new": "    if (this.zones) {",
     "tests": [
       "test/render/el8_contact.test.js"
     ]

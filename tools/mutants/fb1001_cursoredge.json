@@ -2,8 +2,8 @@
   {
     "name": "CURSOR-EDGE-the-pad-gauntlet-boxed-34-tall",
     "file": "src/ui/gamepadInput.js",
-    "old": "cursorEl.style.height = plusNow ? '32px'",
-    "new": "cursorEl.style.height = plusNow ? '34px'",
+    "old": "      cursorEl.style.height = plusNow ? '32px' : `${CURSOR_SIZE}px`;",
+    "new": "      cursorEl.style.height = plusNow ? '34px' : `${CURSOR_SIZE}px`;",
     "tests": [
       "test/ui/enhanced/fb1001_cursoredge.test.js"
     ]

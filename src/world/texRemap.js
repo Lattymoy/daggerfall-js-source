@@ -32,7 +32,7 @@ export function markRemapLaw(texRemap, law) {
 }
 /** @param {any} texRemap @returns {string|null} */
 export function remapLawOf(texRemap) {
-  return texRemap && typeof texRemap === 'object' ? remapLaws.get(texRemap) ?? null : null;
+  return texRemap && typeof texRemap === 'object' ? (remapLaws.get(texRemap) ?? null) : null;
 }
 
 /** AUDIT PRECIP HOST-7: A TABLE'S RECIPE - every mesh asked of it under a law that can turn (`lawKey`: a climate, whose
@@ -58,7 +58,8 @@ export const remapAsked = (texRemap) => (recipes.get(texRemap)?.size ?? 0) > 0;
  *   (reskinRemap) - the mesh is kept in the table's recipe under it; null (the default) for a table that never turns.
  */
 export async function remapSubMeshes(subMeshes, texRemap, remapArchive, { getTexture, uploadRecord }, lawKey = null) {
-  if (lawKey !== null && subMeshes) {   // AUDIT PRECIP HOST-7: the table's recipe - what was asked of it, by whose law
+  if (lawKey !== null && subMeshes) {
+    // AUDIT PRECIP HOST-7: the table's recipe - what was asked of it, by whose law
     let recipe = recipes.get(texRemap);
     if (!recipe) recipes.set(texRemap, (recipe = new Map()));
     let asked = recipe.get(lawKey);
@@ -72,7 +73,7 @@ export async function remapSubMeshes(subMeshes, texRemap, remapArchive, { getTex
     if (texRemap.has(key)) continue;
     const t = await getTexture(swapped);
     if (sm.textureRecord >= t.recordCount) continue;
-    uploadRecord(swapped, sm.textureRecord, { opaque: true });   // a mesh material: alphaIndex -1 (MaterialReader.cs:352)
+    uploadRecord(swapped, sm.textureRecord, { opaque: true }); // a mesh material: alphaIndex -1 (MaterialReader.cs:352)
     texRemap.set(key, `${swapped}_${sm.textureRecord}`);
   }
 }

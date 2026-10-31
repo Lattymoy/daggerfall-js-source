@@ -65,8 +65,8 @@
   {
     "name": "FH-turn-unbounded",
     "file": "server/src/foesHold.js",
-    "old": "  if (mine.length && turn + mine[0].length <= FOES_TURN_BYTES) { mine[0].seq = e.seq; hold.turn = { ws: e.ws, bytes: turn }; return; }",
-    "new": "  if (mine.length) { mine[0].seq = e.seq; hold.turn = { ws: e.ws, bytes: turn }; return; }",
+    "old": "  if (mine.length && turn + mine[0].length <= FOES_TURN_BYTES) {",
+    "new": "  if (mine.length) {",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "FH-turn-never-kept",
     "file": "server/src/foesHold.js",
-    "old": "  if (mine.length && turn + mine[0].length <= FOES_TURN_BYTES) { mine[0].seq = e.seq; hold.turn = { ws: e.ws, bytes: turn }; return; }",
-    "new": "  if (false) { mine[0].seq = e.seq; hold.turn = { ws: e.ws, bytes: turn }; return; }",
+    "old": "  if (mine.length && turn + mine[0].length <= FOES_TURN_BYTES) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "FH-a-hold-blob-dropped",
     "file": "server/src/relayScale.js",
-    "old": "String(c.held), String(c.heldSent), String(c.heldGone), String(Math.round(c.heldMs)), String(c.beats), String(level), String(c.cellMoves), String(c.cellBlocked)]",
-    "new": "String(c.held), String(c.heldSent), String(c.heldGone), String(Math.round(c.heldMs)), String(level), String(c.cellMoves), String(c.cellBlocked)]",
+    "old": "            String(c.beats),\n            String(level),",
+    "new": "            String(level),",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ],
@@ -309,8 +309,8 @@
   {
     "name": "FH-hold-blobs-out-of-order",
     "file": "server/src/relayScale.js",
-    "old": "String(c.held), String(c.heldSent), String(c.heldGone), String(Math.round(c.heldMs)), String(c.beats), String(level), String(c.cellMoves), String(c.cellBlocked)]",
-    "new": "String(c.heldSent), String(c.held), String(c.heldGone), String(Math.round(c.heldMs)), String(c.beats), String(level), String(c.cellMoves), String(c.cellBlocked)]",
+    "old": "            String(c.held),\n            String(c.heldSent),",
+    "new": "            String(c.heldSent),\n            String(c.held),",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ],
@@ -319,8 +319,8 @@
   {
     "name": "FH-hold-counts-unreset",
     "file": "server/src/relayScale.js",
-    "old": "fulls: 0, held: 0, heldSent: 0, heldGone: 0, heldMs: 0, beats: 0, cellMoves: 0, cellBlocked: 0 };",
-    "new": "fulls: 0, held: this.c?.held ?? 0, heldSent: 0, heldGone: 0, heldMs: 0, beats: 0, cellMoves: 0, cellBlocked: 0 };",
+    "old": "      held: 0,",
+    "new": "      held: this.c?.held ?? 0,",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]
@@ -355,8 +355,8 @@
   {
     "name": "FH-room-never-made",
     "file": "server/src/foesHold.js",
-    "old": "    for (const [s, b] of bytes) if (b > most) { top = s; most = b; }",
-    "new": "    for (const [s, b] of bytes) if (false && b > most) { top = s; most = b; }",
+    "old": "      if (b > most) {",
+    "new": "      if (false && b > most) {",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]
@@ -364,8 +364,8 @@
   {
     "name": "FH-room-from-the-first-not-the-most",
     "file": "server/src/foesHold.js",
-    "old": "    for (const [s, b] of bytes) if (b > most) { top = s; most = b; }",
-    "new": "    for (const [s, b] of bytes) if (b > most) { top = s; most = b; break; }",
+    "old": "      }",
+    "new": "        break;\n      }",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]
@@ -373,8 +373,8 @@
   {
     "name": "FH-room-past-the-taker",
     "file": "server/src/foesHold.js",
-    "old": "    let top = null, most = mine;",
-    "new": "    let top = null, most = 0;",
+    "old": "      most = mine;",
+    "new": "      most = 0;",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]
@@ -391,8 +391,8 @@
   {
     "name": "FH-room-taken-on-a-refusal",
     "file": "server/src/foesHold.js",
-    "old": "    taken.push(e);\n",
-    "new": "    taken.push(e);\n    unhold(hold, e);\n",
+    "old": "    bytes.set(top, most - e.length);",
+    "new": "    unhold(hold, e);\n    bytes.set(top, most - e.length);",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]
@@ -409,8 +409,8 @@
   {
     "name": "FH-room-cap-off-by-one",
     "file": "server/src/foesHold.js",
-    "old": "hold.bytes - out + frame.length - FOES_HELD_BYTES_MAX);",
-    "new": "hold.bytes - out + frame.length - FOES_HELD_BYTES_MAX + 1);",
+    "old": "  const gone = roomFor(hold, held, hold.bytes - out + frame.length - FOES_HELD_BYTES_MAX);",
+    "new": "  const gone = roomFor(hold, held, hold.bytes - out + frame.length - FOES_HELD_BYTES_MAX + 1);",
     "tests": [
       "test/net/fb1021b_foeshold.test.js"
     ]

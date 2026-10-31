@@ -47,8 +47,8 @@
   {
     "name": "HOMEOFFER-info-forgets-it-can-ask-again",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  if (mode === 'info') return 'offer';\n",
-    "new": "",
+    "old": "  if (mode === 'info') return 'offer';\n  return mode === 'steal' || declined ? null : 'offer';",
+    "new": "  return mode === 'steal' || declined ? null : 'offer';",
     "tests": [
       "test/systems/online/homeoffer.test.js"
     ]

@@ -11,8 +11,8 @@
   {
     "name": "A0928-O1-door-dropped",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null;",
-    "new": "    if (HULL_VARIANT_COUNTS[w[0]] < 0) return null;",
+    "old": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other",
+    "new": "    if (HULL_VARIANT_COUNTS[w[0]] < 0) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other",
     "tests": [
       "test/scenes/audit0928_online.test.js",
       "test/systems/comeSailAway/csa_online.test.js"
@@ -21,8 +21,8 @@
   {
     "name": "A0928-O1-door-off-by-one",
     "file": "src/systems/comeSailAway/comeSailAwayWire.js",
-    "old": "w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null;",
-    "new": "w[1] > HULL_VARIANT_COUNTS[w[0]]) return null;",
+    "old": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] >= HULL_VARIANT_COUNTS[w[0]]) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other",
+    "new": "    if (HULL_VARIANT_COUNTS[w[0]] > 0 && w[1] > HULL_VARIANT_COUNTS[w[0]]) return null; // AUDIT PRE-MERGE 0928 O1: a hull with variants names one of its own - SpawnBoat throws on any other",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -30,8 +30,8 @@
   {
     "name": "A0928-O1-build-uncontained",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "        if (boat) boat.figurehead = w.figurehead ?? 0;   // FIGUREHEAD: her carving, from her first word\n      } catch (e) { fail(owner, e); }",
-    "new": "        if (boat) boat.figurehead = w.figurehead ?? 0;   // FIGUREHEAD: her carving, from her first word\n      } catch (e) { throw e; }",
+    "old": "        if (boat) boat.figurehead = w.figurehead ?? 0; // FIGUREHEAD: her carving, from her first word\n      } catch (e) {\n        fail(owner, e);\n      }",
+    "new": "        if (boat) boat.figurehead = w.figurehead ?? 0; // FIGUREHEAD: her carving, from her first word\n      } catch (e) {\n        throw e;\n      }",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -39,7 +39,7 @@
   {
     "name": "A0928-O1-redress-uncontained",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      try { realign(owner, l); } catch (e) { fail(owner, e); }",
+    "old": "      try {\n        realign(owner, l);\n      } catch (e) {\n        fail(owner, e);\n      }",
     "new": "      realign(owner, l);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
@@ -57,8 +57,8 @@
   {
     "name": "A0928-O3-built-in-the-handler",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: true, age: 0 });\n    return true;",
-    "new": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: false, age: 0 });\n    realign(owner, live.get(owner)); buildOne();\n    return true;",
+    "old": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: true, age: 0 });",
+    "new": "    live.set(owner, { boats: r.boats, cabin: !!r.cabin, toScene, at: nowMs, dirty: false, age: 0 });\n    realign(owner, live.get(owner));\n    buildOne();",
     "tests": [
       "test/scenes/audit0928_online.test.js",
       "test/systems/comeSailAway/csa_online.test.js"
@@ -68,7 +68,7 @@
     "name": "A0928-O3-two-builds-a-frame",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
     "old": "    buildOne();\n    for (const [owner, l] of [...live]) {",
-    "new": "    buildOne(); buildOne();\n    for (const [owner, l] of [...live]) {",
+    "new": "    buildOne();\n    buildOne();\n    for (const [owner, l] of [...live]) {",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "A0928-O3-bucket-reset-by-a-refused-word",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "    if (!r) { live.delete(owner); drop(owner); return raw == null; }",
-    "new": "    if (!r) { live.delete(owner); drop(owner); buckets.delete(owner); return raw == null; }",
+    "old": "      return raw == null;",
+    "new": "      buckets.delete(owner);\n      return raw == null;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "A0928-O3-bucket-forgotten-owing",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "      if (b.tokens >= CSA_PEER_BUILD_BURST && !live.has(owner)) buckets.delete(owner);",
-    "new": "      if (!live.has(owner)) buckets.delete(owner);",
+    "old": "      if (b.tokens >= CSA_PEER_BUILD_BURST && !live.has(owner)) buckets.delete(owner); // owes nothing: a newcomer's own",
+    "new": "      if (!live.has(owner)) buckets.delete(owner); // owes nothing: a newcomer's own",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -103,8 +103,8 @@
   {
     "name": "A0928-O3-refill-fast",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "b.tokens + ms / CSA_PEER_BUILD_REFILL_MS);",
-    "new": "b.tokens + ms / 100);",
+    "old": "      b.tokens = Math.min(CSA_PEER_BUILD_BURST, b.tokens + ms / CSA_PEER_BUILD_REFILL_MS);",
+    "new": "      b.tokens = Math.min(CSA_PEER_BUILD_BURST, b.tokens + ms / 100);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "A0928-O3-reuse-by-slot-alone",
     "file": "src/scenes/comeSailAway/comeSailAwayPeers.js",
-    "old": "if (had[j].hull !== l.boats[i].hull) continue;",
-    "new": "if (had[j].hull !== l.boats[i].hull || had[j].slot !== i) continue;",
+    "old": "        if (had[j].hull !== l.boats[i].hull) continue;",
+    "new": "        if (had[j].hull !== l.boats[i].hull || had[j].slot !== i) continue;",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -274,8 +274,8 @@
   {
     "name": "A0928-R5-rotation-allocates",
     "file": "src/world/prefabNode.js",
-    "old": "mat4FromQuatPosScale(this.rotation, ZERO3, ONE3, _rotScratch)",
-    "new": "mat4FromQuatPosScale(this.rotation, ZERO3, ONE3)",
+    "old": "    const R = mat4FromQuatPosScale(this.rotation, ZERO3, ONE3, _rotScratch);",
+    "new": "    const R = mat4FromQuatPosScale(this.rotation, ZERO3, ONE3);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]
@@ -292,8 +292,8 @@
   {
     "name": "A0928-R5-quat-into-drifts",
     "file": "src/world/quat.js",
-    "old": "out[1] = 2 * (xy + wz);",
-    "new": "out[1] = 2 * (xy - wz);",
+    "old": "  out[1] = 2 * (xy + wz);",
+    "new": "  out[1] = 2 * (xy - wz);",
     "tests": [
       "test/scenes/audit0928_online.test.js"
     ]

@@ -7,7 +7,7 @@
 // nobody else: an exploit, a bug, or a hole in the accounts or the servers. Never chat, never the Notice Board, never a
 // letter - a dupe said where players can read it spreads before it is fixed. The words are bounded and cleaned the
 // same way on both ends, so the form refuses what the service would, and the service never trusts the form.
-import { visibleText } from './wire.js';   // AUDIT PRIVATE-REPORT SVC-2: the house's one law for a player's characters
+import { visibleText } from './wire.js'; // AUDIT PRIVATE-REPORT SVC-2: the house's one law for a player's characters
 
 /** What a report is about. `exploit` first: the reason this door exists. */
 export const REPORT_KINDS = Object.freeze(['exploit', 'bug', 'security']);
@@ -52,8 +52,15 @@ const LINE_BREAK = /\r\n|\r|\n|\u2028|\u2029/;
  *  steps are not chat) - line by line, since a newline is a control character to it, and a tab a space first (it is a
  *  control character too, and two words a tab apart are not one). The words keep their lines; each line's trailing space
  *  and the blank lines at either end go. A title is one line, its whitespace collapsed. */
-const cleanBody = (/** @type {string} */ s) => s.split(LINE_BREAK).map((l) => visibleText(l.replace(/\t/g, ' ')).trimEnd()).join('\n').replace(/^\n+|\n+$/g, '').trim();
-const cleanSubject = (/** @type {string} */ s) => visibleText(s.split(LINE_BREAK).join(' ').replace(/\t/g, ' ')).replace(/\s+/g, ' ').trim();
+const cleanBody = (/** @type {string} */ s) =>
+  s
+    .split(LINE_BREAK)
+    .map((l) => visibleText(l.replace(/\t/g, ' ')).trimEnd())
+    .join('\n')
+    .replace(/^\n+|\n+$/g, '')
+    .trim();
+const cleanSubject = (/** @type {string} */ s) =>
+  visibleText(s.split(LINE_BREAK).join(' ').replace(/\t/g, ' ')).replace(/\s+/g, ' ').trim();
 
 /**
  * A REPORT'S WORDS, cleaned and bounded - `{ kind, subject, body }`, or `{ error }` with the word for what is wrong:
@@ -81,8 +88,8 @@ export function reportContextOf(raw) {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   /** @type {{ update?: string, build?: string, app?: string }} */
   const out = {};
-  if (typeof raw.update === 'string' && /^[0-9A-Za-z.+-]{1,24}$/.test(raw.update)) out.update = raw.update;   // REL8's number
-  if (typeof raw.build === 'string' && /^[0-9a-f]{7,40}$/.test(raw.build)) out.build = raw.build;   // buildTag.js BUILD_TAG
+  if (typeof raw.update === 'string' && /^[0-9A-Za-z.+-]{1,24}$/.test(raw.update)) out.update = raw.update; // REL8's number
+  if (typeof raw.build === 'string' && /^[0-9a-f]{7,40}$/.test(raw.build)) out.build = raw.build; // buildTag.js BUILD_TAG
   if (raw.app === 'desktop' || raw.app === 'browser') out.app = raw.app;
   return Object.keys(out).length ? out : null;
 }
@@ -93,7 +100,13 @@ export function reportHead(p) {
   if (!p || typeof p !== 'object') return null;
   if (typeof p.id !== 'string' || !REPORT_ID_RE.test(p.id)) return null;
   if (!REPORT_KINDS.includes(p.kind) || !REPORT_STATES.includes(p.state)) return null;
-  if (typeof p.subject !== 'string' || !p.subject || charsOf(p.subject) > REPORT_SUBJECT_MAX || !Number.isSafeInteger(p.sentAt)) return null;
+  if (
+    typeof p.subject !== 'string' ||
+    !p.subject ||
+    charsOf(p.subject) > REPORT_SUBJECT_MAX ||
+    !Number.isSafeInteger(p.sentAt)
+  )
+    return null;
   return { id: p.id, kind: p.kind, subject: p.subject, sentAt: p.sentAt, read: p.read === true, state: p.state };
 }
 

@@ -29,8 +29,8 @@
   {
     "name": "restore-forgets-display-name",
     "file": "src/systems/quest/quest.js",
-    "old": "    this.displayName = data.displayName ?? null;",
-    "new": "    this.displayName = null;",
+    "old": "    this.displayName = data.displayName ?? null; // an older envelope has no field; C# deserialises to null",
+    "new": "    this.displayName = null; // an older envelope has no field; C# deserialises to null",
     "tests": [
       "test/systems/quest/auditquests_linkage.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "restore-forgets-tombstone-time",
     "file": "src/systems/quest/quest.js",
-    "old": "    this.questTombstoneTime = data.questTombstoneTime;\n",
-    "new": "",
+    "old": "    this.questTombstoneTime = data.questTombstoneTime;\n    this.smallerDungeonsState = data.smallerDungeonsState ?? 0; // AUDIT 28 W4: the frozen state, restored (NotSet on an older envelope)",
+    "new": "    this.smallerDungeonsState = data.smallerDungeonsState ?? 0; // AUDIT 28 W4: the frozen state, restored (NotSet on an older envelope)",
     "tests": [
       "test/systems/quest/auditquests_linkage.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "table-loads-the-disabled-row",
     "file": "src/systems/quest/table.js",
-    "old": "      if (text.startsWith('-')) continue;\n      if (!text) continue;\n      text = text.split(INLINE_COMMENT)[0];\n      if (/^schema:/i.test(text))",
-    "new": "      if (!text) continue;\n      text = text.split(INLINE_COMMENT)[0];\n      if (/^schema:/i.test(text))",
+    "old": "    for (let i = 0; i < lines.length; i++) {\n      let text = lines[i].trim();\n      if (text.startsWith('-')) continue;\n      if (!text) continue;\n      text = text.split(INLINE_COMMENT)[0];\n      if (/^schema:/i.test(text)) {",
+    "new": "    for (let i = 0; i < lines.length; i++) {\n      let text = lines[i].trim();\n      if (!text) continue;\n      text = text.split(INLINE_COMMENT)[0];\n      if (/^schema:/i.test(text)) {",
     "tests": [
       "test/systems/quest/auditquests_linkage.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "task-restore-forgets-dropped",
     "file": "src/systems/quest/task.js",
-    "old": "    this.dropped = data.dropped;\n",
-    "new": "",
+    "old": "    this.dropped = data.dropped;\n    this.globalVarName = data.globalVarName;",
+    "new": "    this.globalVarName = data.globalVarName;",
     "tests": [
       "test/systems/quest/auditquests_linkage.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "task-restore-forgets-prev-triggered",
     "file": "src/systems/quest/task.js",
-    "old": "    this.prevTriggered = data.prevTriggered;\n",
-    "new": "",
+    "old": "    this.prevTriggered = data.prevTriggered;\n    this.type = data.type;",
+    "new": "    this.type = data.type;",
     "tests": [
       "test/systems/quest/auditquests_linkage.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "log-step-time-not-saved",
     "file": "src/systems/quest/quest.js",
-    "old": "    this.activeLogMessages.set(stepID, { stepID, messageID, time: this.worldSeconds?.() ?? 0 });",
-    "new": "    this.activeLogMessages.set(stepID, { stepID, messageID });",
+    "old": "    this.activeLogMessages.set(stepID, { stepID, messageID, time: this.worldSeconds?.() ?? 0 }); // TIME3: the step's date, as the start's",
+    "new": "    this.activeLogMessages.set(stepID, { stepID, messageID }); // TIME3: the step's date, as the start's",
     "tests": [
       "test/systems/quest/auditquests_linkage.test.js"
     ],

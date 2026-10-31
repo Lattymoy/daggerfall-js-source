@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-WB14-LAW-1-the-stun-read-sundered",
     "file": "src/net/gate/gateBrain.js",
-    "old": "(!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1)",
-    "new": "(now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1)",
+    "old": "  const want = d * P.hitX * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1); // WB9c: a stunned Warden takes it heavier - AUDIT WB14 (LAW-1): whole (a kneeling Blade's stun is his alone: the Flame takes no more for it)",
+    "new": "  const want = d * P.hitX * (now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1); // WB9c: a stunned Warden takes it heavier - AUDIT WB14 (LAW-1): whole (a kneeling Blade's stun is his alone: the Flame takes no more for it)",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "AUDIT-WB14-LAW-3-a-blow-at-no-whole",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (!(f.max > 0)) return 0;   // AUDIT WB14 (LAW-3)",
-    "new": "  // AUDIT WB14 (LAW-3)",
+    "old": "  if (!(f.max > 0)) return 0; // AUDIT WB14 (LAW-3): every share out - nothing to strike (a half's pool is a share of a whole of none)",
+    "new": "  // AUDIT WB14 (LAW-3): every share out - nothing to strike (a half's pool is a share of a whole of none)",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "AUDIT-WB14-LAW-4-a-kneel-drops-the-wrath",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  if (B.atk?.a !== ATTACKS.wrath.id) B.atk = null;   // AUDIT WB14 (LAW-4)",
-    "new": "  B.atk = null;   // AUDIT WB14 (LAW-4)",
+    "old": "  if (B.atk?.a !== ATTACKS.wrath.id) B.atk = null; // AUDIT WB14 (LAW-4): the Wrath is the clock's - a Blade kneeling under its wind-up keeps it",
+    "new": "  B.atk = null; // AUDIT WB14 (LAW-4): the Wrath is the clock's - a Blade kneeling under its wind-up keeps it",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "AUDIT-WB14-LAW-2-the-imp-follows-his-court",
     "file": "src/net/gate/gateBrain.js",
-    "old": "if (now >= T.at + TITHE_LIFE_MS || ct !== (f.court | 0)) {",
-    "new": "if (now >= T.at + TITHE_LIFE_MS) {",
+    "old": "  if (now >= T.at + TITHE_LIFE_MS || ct !== (f.court | 0)) {",
+    "new": "  if (now >= T.at + TITHE_LIFE_MS) {",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-WB14-LAW-5-paid-only-by-a-beat",
     "file": "src/net/gate/gateBrain.js",
-    "old": "caughtAt: now }; payTithe(f, now, rng, out); }",
-    "new": "caughtAt: now }; }",
+    "old": "    payTithe(f, now, rng, out);\n  } // its tithe paid now, by the relay's dice (AUDIT WB14 LAW-5: without them, first thing the next beat)",
+    "new": "  } // its tithe paid now, by the relay's dice (AUDIT WB14 LAW-5: without them, first thing the next beat)",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-WB14-LAW-5-paid-behind-the-wrath",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  payTithe(f, now, rng, out);   // AUDIT WB14 (LAW-5)",
-    "new": "  // AUDIT WB14 (LAW-5)",
+    "old": "  payTithe(f, now, rng, out); // AUDIT WB14 (LAW-5): a tithe owed is paid before anything - the kill and the Wrath included",
+    "new": "  // AUDIT WB14 (LAW-5): a tithe owed is paid before anything - the kill and the Wrath included",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "AUDIT-WB14-LAW-6-the-kit-filtered-after",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    && (!ctx?.kit || ctx.kit.includes(a.key))   // AUDIT WB14 (LAW-6)",
-    "new": "    // AUDIT WB14 (LAW-6)",
+    "old": "      (!ctx?.kit || ctx.kit.includes(a.key)) && // AUDIT WB14 (LAW-6): a half's own kit (`kit`), before the run's law below",
+    "new": "      // AUDIT WB14 (LAW-6): a half's own kit (`kit`), before the run's law below",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-WB14-LAW-7-his-patience-never-echoed",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (P.echo && !was.echo && ATTACK_BY_ID[was.a] === ATTACKS.meteor) f.pending =",
-    "new": "    if (false) f.pending =",
+    "old": "    if (P.echo && !was.echo && ATTACK_BY_ID[was.a] === ATTACKS.meteor)\n      f.pending = { a: 'meteor', echo: true, who: was.who ?? null, point: was.tg?.[0] ?? null };",
+    "new": "    if (false) f.pending = { a: 'meteor', echo: true, who: was.who ?? null, point: was.tg?.[0] ?? null };",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "AUDIT-WB14-RECORD-9-the-word-at-its-first-moment-alone",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      if (!V.said) { V.said = true; out.push(",
-    "new": "      if (V.pat === V.first + VG_PATIENCE_MS) { V.said = true; out.push(",
+    "old": "      if (!V.said) {",
+    "new": "      if (V.pat === V.first + VG_PATIENCE_MS) {",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "AUDIT-WB14-LAW-8-sized-at-his-wake",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (!living.some((b) => inCourt(b.x, b.z, FLOOR.pen, POSE_SLACK))) return;\n    const n = bearerCountFor(living.length)",
-    "new": "    const n = bearerCountFor(living.length)",
+    "old": "    if (!living.some((b) => inCourt(b.x, b.z, FLOOR.pen, POSE_SLACK))) return;\n    const n = bearerCountFor(living.length),",
+    "new": "    const n = bearerCountFor(living.length),",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "AUDIT-WB14-FIX-1-a-gaoler-pulsing-at-its-rising",
     "file": "src/net/gate/gateBrain.js",
-    "old": "next: k === HOST.bearer || k === HOST.gaoler ?",
-    "new": "next: k === HOST.bearer ?",
+    "old": "      next:\n        k === HOST.bearer || k === HOST.gaoler ? now + BEARER_PULSE_FIRST_MS + a.length * BEARER_PULSE_STAGGER_MS : now,",
+    "new": "      next: k === HOST.bearer ? now + BEARER_PULSE_FIRST_MS + a.length * BEARER_PULSE_STAGGER_MS : now,",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "AUDIT-WB14-LAW-10-chains-begun-past-the-hold",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    && !(a === ATTACKS.chains && gap + P.bossR >= CHAIN_HOLD_M)",
-    "new": "    && true",
+    "old": "      !(a === ATTACKS.chains && gap + P.bossR >= CHAIN_HOLD_M) && // AUDIT WB14 (LAW-10): never at one the chain could not hold (Colossal's body is larger)",
+    "new": "      true && // AUDIT WB14 (LAW-10): never at one the chain could not hold (Colossal's body is larger)",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "AUDIT-WB14-LAW-11-the-echo-stamps-the-cooldown",
     "file": "src/net/gate/gateBrain.js",
-    "old": "(atk).cd && !echo) (f.used ??= {})[atk.key] = now;",
-    "new": "(atk).cd) (f.used ??= {})[atk.key] = now;",
+    "old": "  if (/** @type {GateAttack} */ (atk).cd && !echo) (f.used ??= {})[atk.key] = now; // WB14a: its cooldown from this word (AUDIT WB14 LAW-11: the first cast's - an echo is the same Unmaking)",
+    "new": "  if (/** @type {GateAttack} */ (atk).cd) (f.used ??= {})[atk.key] = now; // WB14a: its cooldown from this word (AUDIT WB14 LAW-11: the first cast's - an echo is the same Unmaking)",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "AUDIT-WB14-WIRE-3-the-rejoining-s-ward-left-to-the-next-state",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  out.push({ k: 'rj', at: now });\n  f.lastStateAt = -Infinity;",
-    "new": "  out.push({ k: 'rj', at: now });",
+    "old": "  out.push({ k: 'rj', at: now });\n  f.lastStateAt = -Infinity; // AUDIT WB14 (WIRE-3): and the state this beat - each half's ward is in it, never in the word",
+    "new": "  out.push({ k: 'rj', at: now }); // AUDIT WB14 (WIRE-3): and the state this beat - each half's ward is in it, never in the word",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "AUDIT-WB14-WIRE-5-the-mending-unsaid",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    if (H.mend !== was) f.lastStateAt = -Infinity;",
-    "new": "    void was;",
+    "old": "    if (H.mend !== was) f.lastStateAt = -Infinity; // AUDIT WB14 (WIRE-5): a half's mending begun or ended is said at once (the state's `lo`)",
+    "new": "    void was; // AUDIT WB14 (WIRE-5): a half's mending begun or ended is said at once (the state's `lo`)",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "AUDIT-WB14-RECORD-2-the-pair-window-halved",
     "file": "src/net/gate/gateBrain.js",
-    "old": "&& now >= (b ? S.fl : S.bl).kn + SUNDER_PAIR_MS) rise(f, b, now, out);",
-    "new": "&& now >= (b ? S.fl : S.bl).kn + SUNDER_PAIR_MS / 2) rise(f, b, now, out);",
+    "old": "      if ((b ? S.fl : S.bl).kn && now >= (b ? S.fl : S.bl).kn + SUNDER_PAIR_MS) rise(f, b, now, out);",
+    "new": "      if ((b ? S.fl : S.bl).kn && now >= (b ? S.fl : S.bl).kn + SUNDER_PAIR_MS / 2) rise(f, b, now, out);",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "AUDIT-WB14-RECORD-3-the-vanguard-cap-ignored",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const n = Math.min(vanguardCountFor(on.length), VG_STANDING_MAX - H.ads.length);",
-    "new": "const n = vanguardCountFor(on.length);",
+    "old": "  const n = Math.min(vanguardCountFor(on.length), VG_STANDING_MAX - H.ads.length);",
+    "new": "  const n = vanguardCountFor(on.length);",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "AUDIT-WB14-RECORD-4-the-sundering-at-the-page-s-30-8",
     "file": "src/net/gate/gateBrain.js",
-    "old": "windup: 2600, active: 300, recover: 600, shape: 'disc', r: 8, pct: 0.45, base: 12,",
-    "new": "windup: 2600, active: 300, recover: 600, shape: 'disc', r: 8, pct: 0.3, base: 8,",
+    "old": "    r: 8,\n    pct: 0.45,\n    base: 12,",
+    "new": "    r: 8,\n    pct: 0.3,\n    base: 8,",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "AUDIT-WB14-RECORD-4-the-rejoining-at-the-page-s-45-12",
     "file": "src/net/gate/gateBrain.js",
-    "old": "windup: 3200, active: 300, recover: 800, shape: 'disc', r: 9, pct: 0.5, base: 14,",
-    "new": "windup: 3200, active: 300, recover: 800, shape: 'disc', r: 9, pct: 0.45, base: 12,",
+    "old": "    pct: 0.5,\n    base: 14,",
+    "new": "    pct: 0.45,\n    base: 12,",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "AUDIT-WB14-RECORD-7a-the-split-counts-the-dead",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const two = bodies.filter((b) => !b.dead && f.players[b.sub]).length >= SUNDER_SPLIT_MIN;",
-    "new": "const two = bodies.filter((b) => f.players[b.sub]).length >= SUNDER_SPLIT_MIN;",
+    "old": "  const two = bodies.filter((b) => !b.dead && f.players[b.sub]).length >= SUNDER_SPLIT_MIN;",
+    "new": "  const two = bodies.filter((b) => f.players[b.sub]).length >= SUNDER_SPLIT_MIN;",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "AUDIT-WB14-RECORD-7b-the-tithe-during-the-vanguard",
     "file": "src/net/gate/gateBrain.js",
-    "old": "    const woke = openedAt(f);\n    if (!Number.isFinite(woke) || now < woke + OPENING_MS + f.ti",
-    "new": "    const woke = f.startedAt;\n    if (!Number.isFinite(woke) || now < woke + OPENING_MS + f.ti",
+    "old": "  if (!T.at) {\n    const woke = openedAt(f);",
+    "new": "  if (!T.at) {\n    const woke = f.startedAt;",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "AUDIT-WB14-RECORD-7c-the-tithe-while-rejoining",
     "file": "src/net/gate/gateBrain.js",
-    "old": "|| f.phase > 2 || !here.length || f.sd?.rj ||",
-    "new": "|| f.phase > 2 || !here.length ||",
+    "old": "      f.sd?.rj ||\n      f.atk?.a === ATTACKS.cross.id",
+    "new": "      f.atk?.a === ATTACKS.cross.id",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "AUDIT-WB14-RECORD-7d-the-brand-from-the-whole-room",
     "file": "src/net/gate/gateBrain.js",
-    "old": "{ now, used: f.used, n: here.length, woke:",
-    "new": "{ now, used: f.used, n: bodies.length, woke:",
+    "old": "        n: here.length,",
+    "new": "        n: bodies.length,",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "AUDIT-WB14-RECORD-7e-a-wave-sized-by-the-room",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const W = S.waves[V.w], n = vgRaise(f, W, C, on, now, rng, out);",
-    "new": "const W = S.waves[V.w], n = vgRaise(f, W, C, living, now, rng, out);",
+    "old": "        n = vgRaise(f, W, C, on, now, rng, out);",
+    "new": "        n = vgRaise(f, W, C, living, now, rng, out);",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AUDIT-WB14-RECORD-7f-his-patience-at-anyone",
     "file": "src/net/gate/gateBrain.js",
-    "old": "const out1 = V.first ? living.filter((b) => VG_STAGES.some((g) => inCourt(b.x, b.z, g.floor, POSE_SLACK))) : [];",
-    "new": "const out1 = V.first ? living : [];",
+    "old": "  const out1 = V.first ? living.filter((b) => VG_STAGES.some((g) => inCourt(b.x, b.z, g.floor, POSE_SLACK))) : [];",
+    "new": "  const out1 = V.first ? living : [];",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AUDIT-WB14-RECORD-8-the-cooldowns-from-the-birth",
     "file": "src/net/gate/gateBrain.js",
-    "old": "woke: Number.isFinite(openedAt(f)) ? openedAt(f) + OPENING_MS : -Infinity, kit: kitOf(f) }",
-    "new": "woke: f.startedAt + OPENING_MS, kit: kitOf(f) }",
+    "old": "        woke: Number.isFinite(openedAt(f)) ? openedAt(f) + OPENING_MS : -Infinity,",
+    "new": "        woke: f.startedAt + OPENING_MS,",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AUDIT-WB14-WIRE-6-the-fill-a-plain-receipt-s",
     "file": "server-account/src/budget.js",
-    "old": "SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0)))",
-    "new": "0",
+    "old": "    .bind(\n      playerId,\n      SPOILS_GRANT_BASE,\n      SPOILS_GRANT_PER_LEVEL,\n      SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0))),\n      ...binds,\n    ); // AUDIT WB14 (WIRE-6): and a portent's pieces",
+    "new": "    .bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL, 0, ...binds); // AUDIT WB14 (WIRE-6): and a portent's pieces",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AUDIT-WB14-WIRE-6-the-pieces-miscounted",
     "file": "server-account/src/budget.js",
-    "old": "[1, 2, 4].filter((b) => (/** @type {number} */ (p) & b) !== 0).length",
-    "new": "Math.min(3, /** @type {number} */ (p))",
+    "old": "  Number.isSafeInteger(p) && /** @type {number} */ (p) > 0\n    ? [1, 2, 4].filter((b) => /** @type {number} */ (p & b) !== 0).length\n    : 0;",
+    "new": "  Number.isSafeInteger(p) && /** @type {number} */ (p) > 0 ? Math.min(3, /** @type {number} */ (p)) : 0;",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -300,7 +300,7 @@
     "name": "AUDIT-WB14-PLAY-1-risen-whatever-the-other-holds",
     "file": "src/net/gate/gateBrain.js",
     "old": "  H.h = Math.min(SUNDER_RISE * S.m, Math.max(O.h, SUNDER_RISE_MIN * S.m));",
-    "new": "  H.h = SUNDER_RISE * S.m; void O;",
+    "new": "  H.h = SUNDER_RISE * S.m;\n  void O;",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "AUDIT-WB14-PLAY-3-the-torment-between-two",
     "file": "src/net/gate/gateBrain.js",
-    "old": "cd: 28_000, nMin: 3 }),   // AUDIT WB14 (PLAY-3)",
-    "new": "cd: 28_000, nMin: 2 }),   // AUDIT WB14 (PLAY-3)",
+    "old": "    nMin: 3,",
+    "new": "    nMin: 2,",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "AUDIT-WB14-PLAY-4-his-health-a-plain-night-s",
     "file": "src/net/gate/gateBrain.js",
-    "old": "profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1);",
-    "new": "profileOf(f).hpX;",
+    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1); // WB8b: Colossal - each share a quarter more; AUDIT WB14 (PLAY-4): a Vanguard night's less its Vanguard's",
+    "new": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX; // WB8b: Colossal - each share a quarter more; AUDIT WB14 (PLAY-4): a Vanguard night's less its Vanguard's",
     "tests": [
       "test/net/gate/audit_wb14.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "AUDIT-WB14-PLAY-5-the-chains-shortened-in-phase-three",
     "file": "src/net/gate/gateBrain.js",
-    "old": "&& atk.id !== ATTACKS.cross.id && atk.id !== ATTACKS.chains.id ? Math.round",
-    "new": "&& atk.id !== ATTACKS.cross.id ? Math.round",
+    "old": "  phase >= 3 &&\n  atk.id !== ATTACKS.wrath.id &&\n  atk.id !== ATTACKS.reckon.id &&\n  atk.id !== ATTACKS.cross.id &&\n  atk.id !== ATTACKS.chains.id",
+    "new": "  phase >= 3 && atk.id !== ATTACKS.wrath.id && atk.id !== ATTACKS.reckon.id && atk.id !== ATTACKS.cross.id",
     "tests": [
       "test/net/gate/wb14a_arsenal.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "AUDIT-WB14-PLAY-6-the-tithe-a-formality",
     "file": "src/net/gate/gateBrain.js",
-    "old": "export const TITHE_S = 10;",
-    "new": "export const TITHE_S = 4;",
+    "old": "export const TITHE_S = 10; // AUDIT WB14 (PLAY-6): ten seconds of a fighter's reference - a solo's chase about 12 s, four chasers' 5",
+    "new": "export const TITHE_S = 4; // AUDIT WB14 (PLAY-6): ten seconds of a fighter's reference - a solo's chase about 12 s, four chasers' 5",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "AUDIT-WB14-PLAY-6-the-tithe-at-its-old-pace",
     "file": "src/net/gate/gateBrain.js",
-    "old": "key: 'tithe', r: 0.65, h: 1.95, speed: 6.8 }),",
-    "new": "key: 'tithe', r: 0.65, h: 1.95, speed: 6.2 }),",
+    "old": "  Object.freeze({ id: 6, key: 'tithe', r: 0.65, h: 1.95, speed: 6.8 }), // AUDIT WB14 (PLAY-6): a chase - at 6.2 a lone chaser caught it in 5 s of its 22",
+    "new": "  Object.freeze({ id: 6, key: 'tithe', r: 0.65, h: 1.95, speed: 6.2 }), // AUDIT WB14 (PLAY-6): a chase - at 6.2 a lone chaser caught it in 5 s of its 22",
     "tests": [
       "test/net/gate/wb14e_tithe.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-5-the-watcher-told-to-look-away",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "s.fell || s.wrath != null || watching()) return null;",
-    "new": "s.fell || s.wrath != null) return null;",
+    "old": "    if (!A || !isMarkedBlow(A) || !mine || !Number.isFinite(atk.at) || s.fell || s.wrath != null || watching())\n      return null;",
+    "new": "    if (!A || !isMarkedBlow(A) || !mine || !Number.isFinite(atk.at) || s.fell || s.wrath != null) return null;",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-9-the-number-alone",
     "file": "src/scenes/gate/gateArsenal.js",
-    "old": "if (!A || !isMarkedBlow(A) || marked(judged, atk)) return;",
-    "new": "if (!A || !isMarkedBlow(A) || judged.i === atk.i) return;",
+    "old": "    if (!A || !isMarkedBlow(A) || marked(judged, atk)) return;",
+    "new": "    if (!A || !isMarkedBlow(A) || judged.i === atk.i) return;",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -434,8 +434,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-6-the-side-s-slack-past-the-tip",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  const slack = wheelSlack(d, A.len, half), phi",
-    "new": "  const slack = Math.asin(Math.min(1, half / d)), phi",
+    "old": "  const slack = wheelSlack(d, A.len, half),",
+    "new": "  const slack = Math.asin(Math.min(1, half / d)),",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -443,8 +443,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-6-his-body-s-ring",
     "file": "src/net/gate/gateStrike.js",
-    "old": "  if (d <= half) return true;   // AUDIT WB14 (SCREEN-6)",
-    "new": "  if (d <= Math.max(half, P.bossR)) return true;   // AUDIT WB14 (SCREEN-6)",
+    "old": "  if (d <= half) return true; // AUDIT WB14 (SCREEN-6): the blades' roots - his body no wider than they are drawn",
+    "new": "  if (d <= Math.max(half, P.bossR)) return true; // AUDIT WB14 (SCREEN-6): the blades' roots - his body no wider than they are drawn",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-12-shaking-nothing",
     "file": "src/world/gate/gateBoss.js",
-    "old": "LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]",
-    "new": "LAND_SHAKE[A?.key]",
+    "old": "  const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key];",
+    "new": "  const w = LAND_SHAKE[A?.key];",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "AUDIT-WB14-SCREEN-13-the-fill-to-its-reach",
     "file": "src/render/gate/gateTelegraph.js",
-    "old": "s: d / Math.min(sh.r, rimDist(sh.origin[0], sh.origin[1], rx / (d || 1), rz / (d || 1), C[0], C[1])) };",
-    "new": "s: d / sh.r + 0 * C[0] };",
+    "old": "        s: d / Math.min(sh.r, rimDist(sh.origin[0], sh.origin[1], rx / (d || 1), rz / (d || 1), C[0], C[1])),",
+    "new": "        s: d / sh.r + 0 * C[0],",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "AUDIT-WB14-TEXT-8-the-names-frozen",
     "file": "src/net/gate/gateBrain.js",
-    "old": "      el, get name() { return aspect.names[A.key] ?? A.name; },",
-    "new": "      el, name: aspect.names[A.key] ?? A.name,",
+    "old": "      get name() {\n        return aspect.names[A.key] ?? A.name;\n      }, // AUDIT WB14 (TEXT-8): read at each word - the new arsenal's in the player's language now, never the one the profile was made in",
+    "new": "      name: aspect.names[A.key] ?? A.name, // AUDIT WB14 (TEXT-8): read at each word - the new arsenal's in the player's language now, never the one the profile was made in",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "AUDIT-WB14-TEXT-8-the-rows-frozen",
     "file": "src/ui/gate/gateMarksView.js",
-    "old": "get name() { return p.name; }, get text() { return p.line; }, get tip() { return p.tip; } }",
-    "new": "name: p.name, text: p.line, tip: p.tip }",
+    "old": "        return Object.freeze({\n          kind: 'portent',\n          id,\n          get name() {\n            return p.name;\n          },\n          get text() {\n            return p.line;\n          },\n          get tip() {\n            return p.tip;\n          },\n        });",
+    "new": "        return Object.freeze({ kind: 'portent', id, name: p.name, text: p.line, tip: p.tip });",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -515,8 +515,8 @@
   {
     "name": "AUDIT-WB14-TEXT-9-the-phase-s-name-in-english",
     "file": "src/net/gate/gateBrain.js",
-    "old": "  1: { get: () => t('gate.phase.court', 'The Burning Court'), enumerable: true },",
-    "new": "  1: { value: 'The Burning Court', enumerable: true },",
+    "old": "    1: { get: () => t('gate.phase.court', 'The Burning Court'), enumerable: true },",
+    "new": "    1: { value: 'The Burning Court', enumerable: true },",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]
@@ -533,8 +533,8 @@
   {
     "name": "AUDIT-WB14-TEXT-15-a-wave-before-any",
     "file": "src/ui/gate/gateBossBar.js",
-    "old": "s.vg[0] < 2 ? (s.vg[1] > 0 ?",
-    "new": "s.vg[0] < 2 ? (true ?",
+    "old": "        ? s.vg[1] > 0",
+    "new": "        ? true",
     "tests": [
       "test/net/gate/audit_wb14_screen.test.js"
     ]

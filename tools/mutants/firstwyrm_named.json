@@ -20,7 +20,7 @@
   {
     "name": "FIRST-WYRM-guest-named",
     "file": "server-account/src/titles.js",
-    "old": "typeof player?.handle === 'string' && !!player.handle\n  && firstWyrmHandles(env).has(player.handle.toLowerCase());",
+    "old": "typeof player?.handle === 'string' && !!player.handle && firstWyrmHandles(env).has(player.handle.toLowerCase());",
     "new": "firstWyrmHandles(env).has(String(player?.handle ?? '').toLowerCase()) || player?.handle === null;",
     "tests": [
       "test/server/firstwyrm_named.test.js"

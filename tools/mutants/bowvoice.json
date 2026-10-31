@@ -2,8 +2,8 @@
   {
     "name": "BOWVOICE-the-instant-release-twangs-again-the-defect",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "      yield tick;\n      // BOW-VOICE: the IL's PlaySwingSound here is the loose's second voice - the machine's `bowSound` is its one\n",
-    "new": "      yield tick;\n      playSwingSound();\n",
+    "old": "      // BOW-VOICE: the IL's PlaySwingSound here is the loose's second voice - the machine's `bowSound` is its one",
+    "new": "      playSwingSound();",
     "tests": [
       "test/systems/bowvoice.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "BOWVOICE-the-drawn-release-twangs-again",
     "file": "src/combat/weapon/weaponWidget.js",
-    "old": "        changeWeaponState(S.StrikeDown); updateWeapon();\n        yield tick;\n",
-    "new": "        changeWeaponState(S.StrikeDown); updateWeapon();\n        playSwingSound();\n        yield tick;\n",
+    "old": "        updateWeapon();\n        yield tick;\n        while (machineStateIndex() === S.StrikeDown && w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) {",
+    "new": "        updateWeapon();\n        playSwingSound();\n        yield tick;\n        while (machineStateIndex() === S.StrikeDown && w.currentFrame < BOW_NUM_FRAMES.StrikeDown - 1) {",
     "tests": [
       "test/systems/bowvoice.test.js"
     ]

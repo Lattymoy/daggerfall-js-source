@@ -29,8 +29,8 @@
   {
     "name": "SUMMON-REPAIR-the-bit-not-asked",
     "file": "src/net/repairLaw.js",
-    "old": "  if ((was & flag) === 0) return 'repair-not-set';\n",
-    "new": "",
+    "old": "  if ((was & flag) === 0) return 'repair-not-set';\n  store.flags[at] = was & ~flag;",
+    "new": "  store.flags[at] = was & ~flag;",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "SUMMON-REPAIR-the-flag-read-as-decimal",
     "file": "src/net/repairLaw.js",
-    "old": "/^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 16)",
-    "new": "/^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 10)",
+    "old": "  const n = /^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 16) : /^[0-9]+$/.test(s) ? Number(s) : NaN;",
+    "new": "  const n = /^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 10) : /^[0-9]+$/.test(s) ? Number(s) : NaN;",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "SUMMON-REPAIR-no-finding",
     "file": "server-account/src/review.js",
-    "old": "    staffFinding(db, row, nowS, { act: 'repair', by, note, ticket: repair.ticket, faction: repair.faction, flag: repair.flag, was, gold: repair.gold, from: row.seq, to: seq }),\n",
-    "new": "",
+    "old": "      staffFinding(db, row, nowS, {\n        act: 'repair',\n        by,\n        note,\n        ticket: repair.ticket,\n        faction: repair.faction,\n        flag: repair.flag,\n        was,\n        gold: repair.gold,\n        from: row.seq,\n        to: seq,\n      }),\n      ...(repair.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), repair.gold)] : []),",
+    "new": "      ...(repair.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), repair.gold)] : []),",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "SUMMON-REPAIR-the-row-out-of-the-batch",
     "file": "server-account/src/review.js",
-    "old": "    db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')\n      .bind(row.id, repair.ticket, row.player, by, nowS, repair.faction, repair.flag, was, repair.gold, seq, note),\n",
-    "new": "",
+    "old": "      db\n        .prepare(\n          'INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',\n        )\n        .bind(row.id, repair.ticket, row.player, by, nowS, repair.faction, repair.flag, was, repair.gold, seq, note),\n      staffFinding(db, row, nowS, {",
+    "new": "      staffFinding(db, row, nowS, {",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "SUMMON-REPAIR-no-faucet",
     "file": "server-account/src/review.js",
-    "old": "    ...(repair.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), repair.gold)] : []),\n",
-    "new": "",
+    "old": "      ...(repair.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), repair.gold)] : []),\n    ],",
+    "new": "    ],",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "SUMMON-REPAIR-the-ticket-unread",
     "file": "server-account/src/review.js",
-    "old": "  if (had) return said(had, true);\n",
-    "new": "",
+    "old": "  if (had) return said(had, true);\n  const prep = await seizeRealmRecord({ ...ctx, bucket }, row.player, row.id, change, { escrow: false });",
+    "new": "  const prep = await seizeRealmRecord({ ...ctx, bucket }, row.player, row.id, change, { escrow: false });",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SUMMON-REPAIR-the-seat-kept",
     "file": "server-account/src/realm.js",
-    "old": "${seize ? ', lease = NULL' : ''}",
-    "new": "",
+    "old": "        `UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}${seize ? ', lease = NULL' : ''}",
+    "new": "        `UPDATE realm_characters SET seq = ?1, bytes = ?2, obj = ?3, prev = obj, updated_at = ?4, witnessed = witnessed + ?5, svc_seq = ?1${clean ? ', clean_obj = ?3, clean_seq = ?1' : ''}",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "SUMMON-REPAIR-the-gold-unwitnessed",
     "file": "server-account/src/realm.js",
-    "old": ".bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),",
-    "new": ".bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
+    "old": "      .bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),",
+    "new": "      .bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SUMMON-REPAIR-the-gold-unchecked-by-the-tool",
     "file": "tools/realmReview.mjs",
-    "old": "flag: repairFlagOf(flag), gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN",
-    "new": "flag: repairFlagOf(flag), gold: Number(gold)",
+    "old": "      flag: repairFlagOf(flag),\n      gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN,",
+    "new": "      flag: repairFlagOf(flag),\n      gold: Number(gold),",
     "tests": [
       "test/net/fb1014_summonrepair.test.js"
     ]

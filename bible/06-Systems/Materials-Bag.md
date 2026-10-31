@@ -391,13 +391,13 @@ the brew's unbruised count; the Stores page over a real carrying book) and `test
 Two reports from the Discord, read to their roots in `01-Overview/bugs/Field-Bugs-2026-10-20c.md`.
 
 **BAG-COOK** ("raw fish cant be cooked over fires"). A haul's Raw Fish is minted as C&C's own (template 535,
-`UselessItems2` - `profItems.js:"  if (key === 'food:fish') return fishTemplate(cc);"`), the food the fire cooks, and it
+`UselessItems2` - `profItems.js:"if (key === 'food:fish')"`), the food the fire cooks, and it
 goes into the bag first (section 3). The fire's Cook food read the pack alone, so a bag's owner was told "You have
 nothing to cook." with the fish in the bag; on the classic skin, which draws no bag, only Empty your bag into your pack
 reached them. Now the list is the pack's raw food, then the bag's, while the pack holds a bag
 (`camps.js:"    const bag = hasBag(items) ? (entity?.bagItems ?? []) : [];"`) - as DFU's own potion maker reads the
 wagon after the pack (`DaggerfallPotionMakerWindow.cs` Refresh, and section 6's port of it) - and the cooked food goes
-into the pack (`camp.js:"    (Array.isArray(into) ? into : list).push(cooked);   // FB1020c BAG-COOK: into the pack, never the bag"`):
+into the pack (`camp.js:"(Array.isArray(into) ? into : list)"`):
 a cooked food is no material, and the bag holds materials alone. A fish cooked out of the bag leaves it as one cooked
 out of the pack always did: the next carried request cuts the count to what is held (section 5). The fire's words on the
 Stores page say where gathered goods go and that a Raw Fish from the pack or the bag cooks there. Pinned by
@@ -413,7 +413,7 @@ checkpoint, then asks each in turn; a refused checkpoint gives every take back w
 unanswered put-in leaves the rest unasked and kept for the next settle (`deposit-kept`) - their takes are in the save
 that landed. `deposit` is a batch of one, with every guard and word it answered before; `ensureInStores` puts a craft's
 shortfalls in as one batch; the Stores page's Put in (the counted units, then the loose) and Put everything in hand the
-host one plan (`world.js:"        deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) =>"`).
+host one plan (`professionsHost.js:"        deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) =>"`).
 A press now waits on one checkpoint and its asks, however many materials it moves. The words a slow counting-house says
 have one home, the page's `BAG_PAGE_WORDS.kept`. Pinned by `test/systems/professions/fb1020c_onesave.test.js`;
 `tools/mutants/fb1020c_onesave.json`. Pins moved: `bag1_client.test.js` (D3, the refusal's source line, the providers),

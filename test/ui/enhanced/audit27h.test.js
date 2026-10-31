@@ -315,7 +315,7 @@ test('AUDIT 27h B1: a tile owns a press and ITS release - a press of the world\'
   const bar = rd('src/ui/enhanced/enhancedHotbar.js');
   assert.match(bar, /function onMouse\(e\) \{\n\s*hbTook = null;/);
   assert.match(bar, /node\.addEventListener\('mousedown', \(e\) => \{\n\s*if \(!editable\(\)\) return;\n\s*hbTook = \{ node, button: e\.button \};\n\s*e\.stopPropagation\(\);\n\s*\}\);/);
-  assert.match(bar, /node\.addEventListener\('mouseup', \(e\) => \{ if \(hbTook\?\.node === node && hbTook\.button === e\.button\) e\.stopPropagation\(\); \}\);/);
+  assert.match(bar, /node\.addEventListener\('mouseup', \(e\) => \{\n\s*if \(hbTook\?\.node === node && hbTook\.button === e\.button\) e\.stopPropagation\(\);\n\s*\}\);/);
   assert.match(bar, /window\.addEventListener\('mousedown', onMouse, true\);/, 'on the window\'s capture, so it runs first');
 });
 

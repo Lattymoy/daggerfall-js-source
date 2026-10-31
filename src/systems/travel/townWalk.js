@@ -34,7 +34,7 @@
 // paths. Ledger A row (OW-TOWN-WALK).
 // ═══════════════════════════════════════════════════════════════════
 import { townPathSearch } from '../livingWorld/townPaths.js';
-import { stepsDone } from '../../world/puddleMask.js';   // IC-STUTTER: OW-HITCH's runner, the one export
+import { stepsDone } from '../../world/puddleMask.js'; // IC-STUTTER: OW-HITCH's runner, the one export
 
 /** The fastest a journey runs while it walks a town's streets (the clock's rate - travelPace.js's dials run to x100 on
  *  a road). Five times a walk: a town of eight blocks crossed in under a minute, the streets' turns taken at a pace the
@@ -79,12 +79,16 @@ export function snapCell(nav, cell, radius = TOWN_SNAP_CELLS, ok = null) {
   const take = (x, y) => open(nav, x, y) && (!ok || ok(x, y));
   if (take(cx, cy)) return [cx, cy];
   for (let r = 1; r <= radius; r++) {
-    let best = null, bd = Infinity;
+    let best = null,
+      bd = Infinity;
     for (let dy = -r; dy <= r; dy++) {
       for (let dx = -r; dx <= r; dx++) {
         if (Math.max(Math.abs(dx), Math.abs(dy)) !== r || !take(cx + dx, cy + dy)) continue;
         const d = dx * dx + dy * dy;
-        if (d < bd) { bd = d; best = [cx + dx, cy + dy]; }
+        if (d < bd) {
+          bd = d;
+          best = [cx + dx, cy + dy];
+        }
       }
     }
     if (best) return best;
@@ -96,10 +100,19 @@ export function snapCell(nav, cell, radius = TOWN_SNAP_CELLS, ok = null) {
  *  `max`; `ok(x, y)` narrows them (a piece of the grid's). */
 export function exitCells(nav, toward, max = TOWN_EXIT_TRIES, ok = null) {
   const out = [];
-  const W = nav.width, H = nav.height;
-  const add = (x, y) => { if (open(nav, x, y) && (!ok || ok(x, y))) out.push([x, y, (x - toward[0]) ** 2 + (y - toward[1]) ** 2]); };
-  for (let x = 0; x < W; x++) { add(x, 0); if (H > 1) add(x, H - 1); }
-  for (let y = 1; y < H - 1; y++) { add(0, y); if (W > 1) add(W - 1, y); }
+  const W = nav.width,
+    H = nav.height;
+  const add = (x, y) => {
+    if (open(nav, x, y) && (!ok || ok(x, y))) out.push([x, y, (x - toward[0]) ** 2 + (y - toward[1]) ** 2]);
+  };
+  for (let x = 0; x < W; x++) {
+    add(x, 0);
+    if (H > 1) add(x, H - 1);
+  }
+  for (let y = 1; y < H - 1; y++) {
+    add(0, y);
+    if (W > 1) add(W - 1, y);
+  }
   out.sort((a, b) => a[2] - b[2] || a[1] - b[1] || a[0] - b[0]);
   return out.slice(0, Math.max(0, max)).map(([x, y]) => [x, y]);
 }
@@ -107,27 +120,52 @@ export function exitCells(nav, toward, max = TOWN_EXIT_TRIES, ok = null) {
 /** The distance from the segment a-b (cell centres) to the covered cell (cx, cy)'s square - one the segment never enters
  *  (its supercover is open): the nearer of the square's corners to the segment and the segment's ends to the square. */
 function squareGap(a, b, cx, cy) {
-  const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
-  const toSeg = (px, py) => { const u = l2 > 0 ? Math.max(0, Math.min(1, ((px - a[0]) * dx + (py - a[1]) * dy) / l2)) : 0; return Math.hypot(px - (a[0] + dx * u), py - (a[1] + dy * u)); };
+  const dx = b[0] - a[0],
+    dy = b[1] - a[1],
+    l2 = dx * dx + dy * dy;
+  const toSeg = (px, py) => {
+    const u = l2 > 0 ? Math.max(0, Math.min(1, ((px - a[0]) * dx + (py - a[1]) * dy) / l2)) : 0;
+    return Math.hypot(px - (a[0] + dx * u), py - (a[1] + dy * u));
+  };
   const toSq = (px, py) => Math.hypot(Math.max(0, Math.abs(px - cx) - 0.5), Math.max(0, Math.abs(py - cy) - 0.5));
-  return Math.min(toSeg(cx - 0.5, cy - 0.5), toSeg(cx + 0.5, cy - 0.5), toSeg(cx - 0.5, cy + 0.5), toSeg(cx + 0.5, cy + 0.5), toSq(a[0], a[1]), toSq(b[0], b[1]));
+  return Math.min(
+    toSeg(cx - 0.5, cy - 0.5),
+    toSeg(cx + 0.5, cy - 0.5),
+    toSeg(cx - 0.5, cy + 0.5),
+    toSeg(cx + 0.5, cy + 0.5),
+    toSq(a[0], a[1]),
+    toSq(b[0], b[1]),
+  );
 }
 /** Whether every cell the straight line from cell `a` to cell `b` passes through is a street - the line's whole
  *  supercover (each cell it touches, the corner cells of a diagonal step both), so a straight run never shaves a wall's
  *  corner - and (AUDIT OW-REVISITED L1-2) passes no covered cell beside it nearer than `margin` cells. */
 export function clearLine(nav, a, b, margin = 0) {
-  let x = a[0], y = a[1];
-  const dx = Math.abs(b[0] - x), dy = Math.abs(b[1] - y), sx = Math.sign(b[0] - x), sy = Math.sign(b[1] - y);
+  let x = a[0],
+    y = a[1];
+  const dx = Math.abs(b[0] - x),
+    dy = Math.abs(b[1] - y),
+    sx = Math.sign(b[0] - x),
+    sy = Math.sign(b[1] - y);
   if (!open(nav, x, y)) return false;
   const walked = margin > 0 ? [[x, y]] : null;
   let e = dx - dy;
   for (let n = dx + dy; n > 0; n--) {
     const e2 = 2 * e;
-    if (e2 > -dy && e2 < dx) {   // a diagonal step through a corner: both cells beside it walked too
+    if (e2 > -dy && e2 < dx) {
+      // a diagonal step through a corner: both cells beside it walked too
       if (!open(nav, x + sx, y) || !open(nav, x, y + sy)) return false;
-      x += sx; y += sy; e += dx - dy; n--;
-    } else if (e2 > -dy) { x += sx; e -= dy; }
-    else { y += sy; e += dx; }
+      x += sx;
+      y += sy;
+      e += dx - dy;
+      n--;
+    } else if (e2 > -dy) {
+      x += sx;
+      e -= dy;
+    } else {
+      y += sy;
+      e += dx;
+    }
     if (!open(nav, x, y)) return false;
     walked?.push([x, y]);
   }
@@ -190,23 +228,40 @@ export const componentsOf = (nav) => stepsDone(componentsSteps(nav));
 export function* componentsSteps(nav) {
   let label = piecesOf.get(nav);
   if (label && label.length === nav.width * nav.height) return label;
-  const W = nav.width, H = nav.height;
+  const W = nav.width,
+    H = nav.height;
   label = new Int32Array(W * H);
   const stack = new Int32Array(W * H);
-  let next = 0, seen = 0;
+  let next = 0,
+    seen = 0;
   for (let i = 0; i < W * H; i++) {
     if (++seen % PIECES_CELLS_A_STEP === 0) yield;
     if (label[i] || !open(nav, i % W, (i / W) | 0)) continue;
     next++;
     let top = 0;
-    stack[top++] = i; label[i] = next;
+    stack[top++] = i;
+    label[i] = next;
     while (top) {
       if (++seen % PIECES_CELLS_A_STEP === 0) yield;
-      const c = stack[--top], x = c % W, y = (c / W) | 0;
-      if (x + 1 < W && !label[c + 1] && open(nav, x + 1, y)) { label[c + 1] = next; stack[top++] = c + 1; }
-      if (x > 0 && !label[c - 1] && open(nav, x - 1, y)) { label[c - 1] = next; stack[top++] = c - 1; }
-      if (y + 1 < H && !label[c + W] && open(nav, x, y + 1)) { label[c + W] = next; stack[top++] = c + W; }
-      if (y > 0 && !label[c - W] && open(nav, x, y - 1)) { label[c - W] = next; stack[top++] = c - W; }
+      const c = stack[--top],
+        x = c % W,
+        y = (c / W) | 0;
+      if (x + 1 < W && !label[c + 1] && open(nav, x + 1, y)) {
+        label[c + 1] = next;
+        stack[top++] = c + 1;
+      }
+      if (x > 0 && !label[c - 1] && open(nav, x - 1, y)) {
+        label[c - 1] = next;
+        stack[top++] = c - 1;
+      }
+      if (y + 1 < H && !label[c + W] && open(nav, x, y + 1)) {
+        label[c + W] = next;
+        stack[top++] = c + W;
+      }
+      if (y > 0 && !label[c - W] && open(nav, x, y - 1)) {
+        label[c - W] = next;
+        stack[top++] = c - W;
+      }
     }
   }
   piecesOf.set(nav, label);
@@ -221,10 +276,18 @@ const edgesOf = new WeakMap();
 export function edgePieces(nav) {
   let got = edgesOf.get(nav);
   if (got) return got;
-  const label = componentsOf(nav), W = nav.width, H = nav.height;
+  const label = componentsOf(nav),
+    W = nav.width,
+    H = nav.height;
   const edge = new Set();
-  for (let x = 0; x < W; x++) { if (label[x]) edge.add(label[x]); if (label[(H - 1) * W + x]) edge.add(label[(H - 1) * W + x]); }
-  for (let y = 0; y < H; y++) { if (label[y * W]) edge.add(label[y * W]); if (label[y * W + W - 1]) edge.add(label[y * W + W - 1]); }
+  for (let x = 0; x < W; x++) {
+    if (label[x]) edge.add(label[x]);
+    if (label[(H - 1) * W + x]) edge.add(label[(H - 1) * W + x]);
+  }
+  for (let y = 0; y < H; y++) {
+    if (label[y * W]) edge.add(label[y * W]);
+    if (label[y * W + W - 1]) edge.add(label[y * W + W - 1]);
+  }
   let all = 0;
   for (let i = 0; i < label.length; i++) if (label[i] > all) all = label[i];
   got = { edge, all };
@@ -239,9 +302,21 @@ export function edgePieces(nav) {
  */
 export function gatePassage(nav, gate, reach = GATE_REACH_CELLS) {
   let best = null;
-  for (const [dx, dy] of [[1, 0], [0, 1]]) {
-    const end = (s) => { for (let k = 0; k <= reach; k++) { const x = gate[0] + dx * s * k, y = gate[1] + dy * s * k; if (!inb(nav, x, y)) return null; if (open(nav, x, y)) return k; } return null; };
-    const a = end(1), b = end(-1);
+  for (const [dx, dy] of [
+    [1, 0],
+    [0, 1],
+  ]) {
+    const end = (s) => {
+      for (let k = 0; k <= reach; k++) {
+        const x = gate[0] + dx * s * k,
+          y = gate[1] + dy * s * k;
+        if (!inb(nav, x, y)) return null;
+        if (open(nav, x, y)) return k;
+      }
+      return null;
+    };
+    const a = end(1),
+      b = end(-1);
     if (a == null || b == null || (a === 0 && b === 0)) continue;
     if (best && a + b >= best.span) continue;
     const cells = [];
@@ -259,23 +334,30 @@ export function gatePassage(nav, gate, reach = GATE_REACH_CELLS) {
 export function carveNav(nav, passages) {
   const cells = (passages ?? []).flat();
   if (!cells.length) return nav;
-  const W = nav.width, H = nav.height;
+  const W = nav.width,
+    H = nav.height;
   const grid = new Uint8Array(W * H);
   if (nav.grid instanceof Uint8Array && nav.grid.length === W * H) grid.set(nav.grid);
   else for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) grid[y * W + x] = (nav.weightAt(x, y) & 15) << 4;
   for (const [x, y] of cells) if (inb(nav, x, y)) grid[y * W + x] = 15 << 4;
-  for (let i = 0; i < W * H; i++) grid[i] &= 0xf0;   // the walkers' occupancy flags are the town's, never the journey's
+  for (let i = 0; i < W * H; i++) grid[i] &= 0xf0; // the walkers' occupancy flags are the town's, never the journey's
   return { width: W, height: H, grid, weightAt: (x, y) => (inb(nav, x, y) ? grid[y * W + x] >> 4 : 0) };
 }
 
 /** The street cell of piece `id` nearest `to` (cells, anywhere) - of any piece when `id` is 0 - the grid read once. */
 function nearestIn(nav, label, id, to) {
   const W = nav.width;
-  let best = null, bd = Infinity;
+  let best = null,
+    bd = Infinity;
   for (let i = 0; i < label.length; i++) {
     if (id ? label[i] !== id : !label[i]) continue;
-    const x = i % W, y = (i / W) | 0, d = (x - to[0]) ** 2 + (y - to[1]) ** 2;
-    if (d < bd) { bd = d; best = [x, y]; }
+    const x = i % W,
+      y = (i / W) | 0,
+      d = (x - to[0]) ** 2 + (y - to[1]) ** 2;
+    if (d < bd) {
+      bd = d;
+      best = [x, y];
+    }
   }
   return best;
 }
@@ -298,16 +380,29 @@ export const townWayCells = (nav, from, to, o = {}) => stepsDone(townWayCellsSte
  *  Imperial City is 512 cells a side, and a journey at x60 asked its way at every slice crossed, 10-200 ms of one task.
  *  @param {{ width: number, height: number, weightAt: (gx: number, gy: number) => number, grid?: Uint8Array }} nav
  *  @param {number[]} from @param {number[]} to @param {{ maxExpansions?: number, hWeight?: number, scratchKey?: object }} [o] */
-export function* townWayCellsSteps(nav, from, to, { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT, scratchKey = nav } = {}) {   // the whole grid's cells: a way in its piece is never given up on early (the greatest cities' pieces are 200,000 cells)
+export function* townWayCellsSteps(
+  nav,
+  from,
+  to,
+  { maxExpansions = nav.width * nav.height, hWeight = TOWN_WAY_H_WEIGHT, scratchKey = nav } = {},
+) {
+  // the whole grid's cells: a way in its piece is never given up on early (the greatest cities' pieces are 200,000 cells)
   const a = snapCell(nav, from);
   if (!a) return null;
-  const findTownPath = (/** @type {any} */ g, /** @type {number[]} */ p, /** @type {number[]} */ q, /** @type {any} */ opts) => searchSteps(townPathSearch(g, p, q, { ...opts, scratchKey }));
-  const label = yield* componentsSteps(nav), W = nav.width, id = label[a[1] * W + a[0]];
-  const mine = (x, y) => label[y * W + x] === id;   // the traveller's own piece - the only one a way can reach
+  const findTownPath = (
+    /** @type {any} */ g,
+    /** @type {number[]} */ p,
+    /** @type {number[]} */ q,
+    /** @type {any} */ opts,
+  ) => searchSteps(townPathSearch(g, p, q, { ...opts, scratchKey }));
+  const label = yield* componentsSteps(nav),
+    W = nav.width,
+    id = label[a[1] * W + a[0]];
+  const mine = (x, y) => label[y * W + x] === id; // the traveller's own piece - the only one a way can reach
   if (inb(nav, to[0], to[1])) {
-    const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, id, to);   // a point in another piece (a shut gate's far side): this piece's nearest
+    const b = snapCell(nav, to, TOWN_SNAP_CELLS, mine) ?? nearestIn(nav, label, id, to); // a point in another piece (a shut gate's far side): this piece's nearest
     const path = b ? yield* findTownPath(nav, a, b, { maxExpansions, hWeight }) : null;
-    const own = snapCell(nav, to) ?? nearestIn(nav, label, 0, to);   // the point's own street, of whichever piece: reached when it is the traveller's
+    const own = snapCell(nav, to) ?? nearestIn(nav, label, 0, to); // the point's own street, of whichever piece: reached when it is the traveller's
     return path ? { cells: simplifyWay(nav, path), inside: true, reached: !!own && mine(own[0], own[1]) } : null;
   }
   for (const exit of exitCells(nav, to, TOWN_EXIT_TRIES, mine)) {

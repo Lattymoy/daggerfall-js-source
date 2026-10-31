@@ -25,18 +25,31 @@ import { readUnityFs, readSerializedFile, CLASS_ID } from '../src/formats/unity/
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { MapsFile } from '../src/formats/mapsFile.js';
 import { blockToDfuJson, locationToDfuJson, diffJson, canonicalJson } from '../src/formats/worldData/worldDataJson.js';
-import { PACK_FORMAT, ROW_ENCODERS, runLength, openWorldDataPack, classicIndicesOf } from '../src/formats/worldData/worldDataPack.js';
+import {
+  PACK_FORMAT,
+  ROW_ENCODERS,
+  runLength,
+  openWorldDataPack,
+  classicIndicesOf,
+} from '../src/formats/worldData/worldDataPack.js';
 
 /** FullSerializer's string escapes that JSON lacks (fsJsonParser.UnescapeChar: `\0`, `\a`), rewritten, then parsed. */
 export function parseFullSerializerJson(text) {
   let out = '';
-  let start = 0, inStr = false;
+  let start = 0,
+    inStr = false;
   for (let i = 0; i < text.length; i++) {
     const c = text.charCodeAt(i);
-    if (!inStr) { if (c === 34) inStr = true; continue; }
+    if (!inStr) {
+      if (c === 34) inStr = true;
+      continue;
+    }
     if (c === 92) {
       const n = text[i + 1];
-      if (n === '0' || n === 'a') { out += text.slice(start, i) + (n === '0' ? '\\u0000' : '\\u0007'); start = i + 2; }
+      if (n === '0' || n === 'a') {
+        out += text.slice(start, i) + (n === '0' ? '\\u0000' : '\\u0007');
+        start = i + 2;
+      }
       i++;
       continue;
     }
@@ -66,20 +79,28 @@ export function bundleWorldData(bytes) {
   const sf = readSerializedFile(main, main.path);
   const byId = new Map(sf.objects.map((o) => [String(o.pathId), o]));
   const ab = sf.objects.find((o) => o.classId === CLASS_ID.AssetBundle).read();
-  const found = new Map(), ignored = [];
+  const found = new Map(),
+    ignored = [];
   let manifest = null;
   for (const p of ab.m_Container) {
     const path = p.first;
     const o = byId.get(String(p.second.asset.m_PathID));
     if (o?.classId !== CLASS_ID.TextAsset) continue;
-    if (/\.dfmod\.json$/i.test(path)) { manifest = new TextDecoder().decode(o.read().m_Script); continue; }
+    if (/\.dfmod\.json$/i.test(path)) {
+      manifest = new TextDecoder().decode(o.read().m_Script);
+      continue;
+    }
     if (!/\/worlddata\//i.test(path)) continue;
     const name = dfuWorldDataName(path);
     const text = new TextDecoder().decode(o.read().m_Script);
-    if (!name) { ignored.push(path); continue; }
+    if (!name) {
+      ignored.push(path);
+      continue;
+    }
     if (found.has(name)) {
-      if (found.get(name).text !== text) throw new Error(`${name}: two different TextAssets in one bundle (${found.get(name).path}, ${path})`);
-      continue;   // the same file twice (Beautiful Cities carries Beautiful Villages' farms under their own path)
+      if (found.get(name).text !== text)
+        throw new Error(`${name}: two different TextAssets in one bundle (${found.get(name).path}, ${path})`);
+      continue; // the same file twice (Beautiful Cities carries Beautiful Villages' farms under their own path)
     }
     found.set(name, { path, text });
   }
@@ -88,7 +109,14 @@ export function bundleWorldData(bytes) {
 
 // ---- the classic game's pieces, by content ------------------------------------------------------------------------
 
-const HALF_KEYS = ['Header', 'Block3dObjectRecords', 'BlockFlatObjectRecords', 'BlockSection3Records', 'BlockPeopleRecords', 'BlockDoorRecords'];
+const HALF_KEYS = [
+  'Header',
+  'Block3dObjectRecords',
+  'BlockFlatObjectRecords',
+  'BlockSection3Records',
+  'BlockPeopleRecords',
+  'BlockDoorRecords',
+];
 const isHalf = (o) => isObj(o) && HALF_KEYS.every((k) => Object.hasOwn(o, k));
 const isSubRecord = (o) => isObj(o) && isHalf(o.Exterior) && isHalf(o.Interior);
 
@@ -96,10 +124,13 @@ const isSubRecord = (o) => isObj(o) && isHalf(o.Exterior) && isHalf(o.Interior);
  *  instead of carrying), and the halves by record for the nearest-half search. */
 function classicIndex(blocks) {
   const byHash = new Map();
-  const halves = [];   // { ref, json, recs:Set }
-  const recordIndex = new Map();   // record hash -> [half ids]
+  const halves = []; // { ref, json, recs:Set }
+  const recordIndex = new Map(); // record hash -> [half ids]
   const blockJson = new Map();
-  const add = (v, ref) => { const h = sha256(canonicalJson(v)); if (!byHash.has(h)) byHash.set(h, ref); };
+  const add = (v, ref) => {
+    const h = sha256(canonicalJson(v));
+    if (!byHash.has(h)) byHash.set(h, ref);
+  };
   for (let i = 0; i < blocks.count; i++) {
     if (!blocks.getBlockName(i)?.endsWith('.RMB')) continue;
     const b = blocks.readClassicBlock(i);
@@ -113,9 +144,14 @@ function classicIndex(blocks) {
         const ref = [i, ['RmbBlock', 'SubRecords', k, half]];
         add(v, ref);
         const id = halves.length;
-        const recs = new Set([...v.Block3dObjectRecords, ...v.BlockFlatObjectRecords].map((r) => sha256(canonicalJson(r))));
+        const recs = new Set(
+          [...v.Block3dObjectRecords, ...v.BlockFlatObjectRecords].map((r) => sha256(canonicalJson(r))),
+        );
         halves.push({ ref, json: v, recs });
-        for (const r of recs) { if (!recordIndex.has(r)) recordIndex.set(r, []); recordIndex.get(r).push(id); }
+        for (const r of recs) {
+          if (!recordIndex.has(r)) recordIndex.set(r, []);
+          recordIndex.get(r).push(id);
+        }
       }
     });
   }
@@ -126,12 +162,15 @@ function classicIndex(blocks) {
 
 function createEncoder(classic) {
   const nodes = [];
-  const nodeOf = new Map();   // canonical hash -> node id
+  const nodeOf = new Map(); // canonical hash -> node id
   const memo = new WeakMap(); // object -> canonical string
   const canon = (v) => {
     if (v === null || typeof v !== 'object') return JSON.stringify(v);
     let s = memo.get(v);
-    if (s === undefined) { s = canonicalJson(v); memo.set(v, s); }
+    if (s === undefined) {
+      s = canonicalJson(v);
+      memo.set(v, s);
+    }
     return s;
   };
 
@@ -189,7 +228,8 @@ function createEncoder(classic) {
       if (near) {
         const edit = { $c: near.ref, $o: encodeOps(near.ops) };
         const whole = encodeFields(v);
-        if (size(edit) < size(whole) * 0.7) content = edit; else content = whole;
+        if (size(edit) < size(whole) * 0.7) content = edit;
+        else content = whole;
       }
     }
     content ??= encodeFields(v);
@@ -202,7 +242,8 @@ function createEncoder(classic) {
   function encodeFields(o) {
     const out = {};
     for (const [k, x] of Object.entries(o)) {
-      if (k.charCodeAt(0) === 36) throw new Error(`a world-data object has a key ${k} - the pack's references would read it`);
+      if (k.charCodeAt(0) === 36)
+        throw new Error(`a world-data object has a key ${k} - the pack's references would read it`);
       out[k] = encodeValue(x);
     }
     return out;
@@ -234,13 +275,20 @@ function createEncoder(classic) {
         const parent = op[1].slice(0, -1);
         const key = JSON.stringify(parent);
         let j = i + 1;
-        while (j < ops.length && ops[j][0] === 's' && typeof ops[j][1][ops[j][1].length - 1] === 'number'
-          && JSON.stringify(ops[j][1].slice(0, -1)) === key && (ops[j][2] === null || typeof ops[j][2] !== 'object')) j++;
+        while (
+          j < ops.length &&
+          ops[j][0] === 's' &&
+          typeof ops[j][1][ops[j][1].length - 1] === 'number' &&
+          JSON.stringify(ops[j][1].slice(0, -1)) === key &&
+          (ops[j][2] === null || typeof ops[j][2] !== 'object')
+        )
+          j++;
         if (j - i >= 3) {
           const runs = [];
           for (let k = i; k < j; k++) {
             const idx = ops[k][1][ops[k][1].length - 1];
-            if (runs.length && runs[runs.length - 2] + runs[runs.length - 1].length === idx) runs[runs.length - 1].push(ops[k][2]);
+            if (runs.length && runs[runs.length - 2] + runs[runs.length - 1].length === idx)
+              runs[runs.length - 1].push(ops[k][2]);
             else runs.push(idx, [ops[k][2]]);
           }
           out.push(['sr', parent, runs]);
@@ -284,7 +332,10 @@ function baseCandidates(name, blocks, packNames) {
   let stem = name.replace(/\.RMB$/, '');
   const names = new Set();
   for (const p of stem.split('.')) names.add(p);
-  if (/^DA[A-Z]{4}[A-Z0-9]{2}\d\d$/.test(stem)) { stem = stem.slice(2); names.add(stem); }   // the desert architecture's twin of a block
+  if (/^DA[A-Z]{4}[A-Z0-9]{2}\d\d$/.test(stem)) {
+    stem = stem.slice(2);
+    names.add(stem);
+  } // the desert architecture's twin of a block
   const out = [];
   for (const n of names) {
     if (packNames.has(`${n}.RMB.json`) && `${n}.RMB` !== name) out.push({ kind: 'f', name: `${n}.RMB.json` });
@@ -298,7 +349,8 @@ function baseCandidates(name, blocks, packNames) {
     const n = blocks.getBlockName(i);
     if (n?.endsWith('.RMB') && n.startsWith(head)) out.push({ kind: 'b', name: n, index: i });
   }
-  for (const p of packNames) if (p.startsWith(head) && p !== `${name}.json` && /\.RMB\.json$/.test(p)) out.push({ kind: 'f', name: p });
+  for (const p of packNames)
+    if (p.startsWith(head) && p !== `${name}.json` && /\.RMB\.json$/.test(p)) out.push({ kind: 'f', name: p });
   return out;
 }
 
@@ -306,19 +358,32 @@ function baseCandidates(name, blocks, packNames) {
  *  ground tiles and scenery, automap cells and the block's own models and flats that differ - counted in place, not
  *  diffed (a Myers script over a 4,096-cell automap for every candidate of 415 new blocks is an hour). */
 function baseCost(base, mod) {
-  const b = base.RmbBlock, m = mod.RmbBlock;
+  const b = base.RmbBlock,
+    m = mod.RmbBlock;
   if (!b?.FldHeader || !m?.FldHeader) return Infinity;
   let cost = 0;
-  const bt = b.FldHeader.GroundData?.GroundTiles ?? [], mt = m.FldHeader.GroundData?.GroundTiles ?? [];
-  for (let i = 0; i < mt.length; i++) if (bt[i]?.TileBitfield !== mt[i]?.TileBitfield || bt[i]?.TextureRecord !== mt[i]?.TextureRecord) cost += 30;
-  const bs = b.FldHeader.GroundData?.GroundScenery ?? [], ms = m.FldHeader.GroundData?.GroundScenery ?? [];
+  const bt = b.FldHeader.GroundData?.GroundTiles ?? [],
+    mt = m.FldHeader.GroundData?.GroundTiles ?? [];
+  for (let i = 0; i < mt.length; i++)
+    if (bt[i]?.TileBitfield !== mt[i]?.TileBitfield || bt[i]?.TextureRecord !== mt[i]?.TextureRecord) cost += 30;
+  const bs = b.FldHeader.GroundData?.GroundScenery ?? [],
+    ms = m.FldHeader.GroundData?.GroundScenery ?? [];
   for (let i = 0; i < ms.length; i++) if (bs[i]?.TextureRecord !== ms[i]?.TextureRecord) cost += 15;
-  const ba = b.FldHeader.AutoMapData ?? [], ma = m.FldHeader.AutoMapData ?? [];
+  const ba = b.FldHeader.AutoMapData ?? [],
+    ma = m.FldHeader.AutoMapData ?? [];
   for (let i = 0; i < ma.length; i++) if (ba[i] !== ma[i]) cost += 4;
   for (const key of ['Misc3dObjectRecords', 'MiscFlatObjectRecords']) {
     const have = new Map();
-    for (const r of b[key] ?? []) { const k = canonicalJson(r); have.set(k, (have.get(k) ?? 0) + 1); }
-    for (const r of m[key] ?? []) { const k = canonicalJson(r); const n = have.get(k) ?? 0; if (n) have.set(k, n - 1); else cost += 40; }
+    for (const r of b[key] ?? []) {
+      const k = canonicalJson(r);
+      have.set(k, (have.get(k) ?? 0) + 1);
+    }
+    for (const r of m[key] ?? []) {
+      const k = canonicalJson(r);
+      const n = have.get(k) ?? 0;
+      if (n) have.set(k, n - 1);
+      else cost += 40;
+    }
   }
   return cost;
 }
@@ -341,11 +406,21 @@ function nearestByGround(json, classic) {
 
 export function buildPack({ arena2, bundleBytes, vendor, mod = {}, log = () => {} }) {
   const blocks = new BlocksFile();
-  if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA'))))) throw new Error('BLOCKS.BSA did not load');
+  if (!blocks.load(new Uint8Array(readFileSync(join(arena2, 'BLOCKS.BSA')))))
+    throw new Error('BLOCKS.BSA did not load');
   const maps = new MapsFile();
-  if (!maps.load(new Uint8Array(readFileSync(join(arena2, 'MAPS.BSA'))), new Uint8Array(readFileSync(join(arena2, 'CLIMATE.PAK'))), new Uint8Array(readFileSync(join(arena2, 'POLITIC.PAK'))))) throw new Error('MAPS.BSA did not load');
+  if (
+    !maps.load(
+      new Uint8Array(readFileSync(join(arena2, 'MAPS.BSA'))),
+      new Uint8Array(readFileSync(join(arena2, 'CLIMATE.PAK'))),
+      new Uint8Array(readFileSync(join(arena2, 'POLITIC.PAK'))),
+    )
+  )
+    throw new Error('MAPS.BSA did not load');
   const { files, ignored, manifest } = bundleWorldData(bundleBytes);
-  log(`${vendor}: ${files.size} world-data files (${ignored.length} TextAssets no DFU name reaches: ${ignored.map((p) => p.split('/').pop()).join(', ') || 'none'})`);
+  log(
+    `${vendor}: ${files.size} world-data files (${ignored.length} TextAssets no DFU name reaches: ${ignored.map((p) => p.split('/').pop()).join(', ') || 'none'})`,
+  );
   const t0 = Date.now();
   const classic = classicIndex(blocks);
   log(`  classic index: ${classic.byHash.size} pieces, ${classic.halves.length} halves (${Date.now() - t0} ms)`);
@@ -369,24 +444,41 @@ export function buildPack({ arena2, bundleBytes, vendor, mod = {}, log = () => {
     }
     const blockName = name.replace(/\.json$/, '');
     const index = blocks.getBlockIndex(blockName);
-    if (index >= 0) { bases.set(name, { base: ['b', blockName, index], json: classic.blockJson.get(index) ?? blockToDfuJson(blocks.readClassicBlock(index)), depth: 0 }); continue; }
+    if (index >= 0) {
+      bases.set(name, {
+        base: ['b', blockName, index],
+        json: classic.blockJson.get(index) ?? blockToDfuJson(blocks.readClassicBlock(index)),
+        depth: 0,
+      });
+      continue;
+    }
     pending.push(name);
   }
-  pending.sort((a, b) => (a.split('.').length - b.split('.').length) || a.localeCompare(b));
+  pending.sort((a, b) => a.split('.').length - b.split('.').length || a.localeCompare(b));
   for (const name of pending) {
     const json = parsed.get(name);
     const blockName = name.replace(/\.json$/, '');
     let best = null;
     const candidates = baseCandidates(blockName, blocks, packNames);
     for (const c of candidates.length ? candidates : nearestByGround(json, classic)) {
-      let bj, depth = 0;
+      let bj,
+        depth = 0;
       if (c.kind === 'b') bj = classic.blockJson.get(c.index) ?? blockToDfuJson(blocks.readClassicBlock(c.index));
-      else { const settled = bases.get(c.name); if (!settled || settled.depth >= 2) continue; bj = parsed.get(c.name); depth = settled.depth + 1; }
+      else {
+        const settled = bases.get(c.name);
+        if (!settled || settled.depth >= 2) continue;
+        bj = parsed.get(c.name);
+        depth = settled.depth + 1;
+      }
       const s = baseCost(bj, json);
       if (!best || s < best.s) best = { c, s, bj, depth };
     }
     if (!best) throw new Error(`${name}: no base - neither BLOCKS.BSA nor the pack has a block like it`);
-    bases.set(name, { base: best.c.kind === 'b' ? ['b', best.c.name, best.c.index] : ['f', best.c.name], json: best.bj, depth: best.depth });
+    bases.set(name, {
+      base: best.c.kind === 'b' ? ['b', best.c.name, best.c.index] : ['f', best.c.name],
+      json: best.bj,
+      depth: best.depth,
+    });
   }
 
   const out = { format: PACK_FORMAT, vendor, mod, files: {}, nodes: enc.nodes };
@@ -396,7 +488,8 @@ export function buildPack({ arena2, bundleBytes, vendor, mod = {}, log = () => {
     const json = parsed.get(name);
     const { base, json: baseJson } = bases.get(name);
     const ops = enc.bestOps(baseJson, json, []);
-    if (ops.some((op) => op[1].length === 0)) throw new Error(`${name}: an op on the whole document - its base is no base`);
+    if (ops.some((op) => op[1].length === 0))
+      throw new Error(`${name}: an op on the whole document - its base is no base`);
     out.files[name] = [sha256(canonicalJson(json)), base, ops];
     if (++done % 1000 === 0) log(`  encoded ${done}/${order.length} (${enc.nodeCount()} nodes)`);
   }
@@ -409,33 +502,68 @@ export function buildPack({ arena2, bundleBytes, vendor, mod = {}, log = () => {
   const pack = openWorldDataPack(JSON.parse(shipped), { blocks });
   for (const name of order) {
     const back = pack.rebuild(name, maps);
-    if (sha256(canonicalJson(back)) !== out.files[name][0]) throw new Error(`${name}: the pack does not rebuild the author's file`);
+    if (sha256(canonicalJson(back)) !== out.files[name][0])
+      throw new Error(`${name}: the pack does not rebuild the author's file`);
   }
-  log(`  verified ${order.length} files rebuild the author's, ${enc.nodeCount()} nodes (${((Date.now() - t0) / 1000).toFixed(1)} s)`);
+  log(
+    `  verified ${order.length} files rebuild the author's, ${enc.nodeCount()} nodes (${((Date.now() - t0) / 1000).toFixed(1)} s)`,
+  );
   return { pack: out, shipped, ignored, manifest };
 }
 
 /** The pack as shipped: each file's entry and each node its own JSON text (read when first wanted), the files other
  *  files are based on named up front, the whole gzipped by the caller. */
 export function serialisePack(pack) {
-  const bases = [...new Set(Object.values(pack.files).filter(([, b]) => b?.[0] === 'f').map(([, b]) => b[1]))].sort();
+  const bases = [
+    ...new Set(
+      Object.values(pack.files)
+        .filter(([, b]) => b?.[0] === 'f')
+        .map(([, b]) => b[1]),
+    ),
+  ].sort();
   const files = {};
   for (const name of Object.keys(pack.files).sort()) files[name] = JSON.stringify(pack.files[name]);
-  return JSON.stringify({ format: pack.format, vendor: pack.vendor, mod: pack.mod, bases, ...(pack.classicNames ? { classicNames: pack.classicNames } : {}), files, nodes: pack.nodes.map((n) => JSON.stringify(n)) });
+  return JSON.stringify({
+    format: pack.format,
+    vendor: pack.vendor,
+    mod: pack.mod,
+    bases,
+    ...(pack.classicNames ? { classicNames: pack.classicNames } : {}),
+    files,
+    nodes: pack.nodes.map((n) => JSON.stringify(n)),
+  });
 }
 
 if (isMain(import.meta.url)) {
   const args = process.argv.slice(2);
-  const flag = (k) => { const i = args.indexOf(k); if (i < 0) return undefined; const v = args[i + 1]; args.splice(i, 2); return v; };
-  const title = flag('--title'), author = flag('--author'), version = flag('--version');
+  const flag = (k) => {
+    const i = args.indexOf(k);
+    if (i < 0) return undefined;
+    const v = args[i + 1];
+    args.splice(i, 2);
+    return v;
+  };
+  const title = flag('--title'),
+    author = flag('--author'),
+    version = flag('--version');
   const [arena2, bundle, vendor, outFile] = args;
   if (!arena2 || !bundle || !vendor || !outFile || !outFile.endsWith('.pack.json.gz')) {
-    console.error('usage: node tools/worldDataPackBuild.mjs <arena2> <bundle.dfmod> <vendor> <out.pack.json.gz> [--title T] [--author A] [--version V]');
+    console.error(
+      'usage: node tools/worldDataPackBuild.mjs <arena2> <bundle.dfmod> <vendor> <out.pack.json.gz> [--title T] [--author A] [--version V]',
+    );
     process.exit(1);
   }
-  const { pack, shipped } = buildPack({ arena2, bundleBytes: new Uint8Array(readFileSync(bundle)), vendor, mod: { title, author, version }, log: (s) => console.log(s) });
+  const { pack, shipped } = buildPack({
+    arena2,
+    bundleBytes: new Uint8Array(readFileSync(bundle)),
+    vendor,
+    mod: { title, author, version },
+    log: (s) => console.log(s),
+  });
   mkdirSync(dirname(outFile), { recursive: true });
   const gz = zlib.gzipSync(Buffer.from(shipped, 'utf8'), { level: 9 });
   writeFileSync(outFile, gz);
-  console.log(`wrote ${outFile}: ${(gz.length / 1e6).toFixed(2)} MB gzipped (${(shipped.length / 1e6).toFixed(2)} MB), ${Object.keys(pack.files).length} files, ${pack.nodes.length} nodes`);
+  console.log(
+    `wrote ${outFile}: ${(gz.length / 1e6).toFixed(2)} MB gzipped (${(shipped.length / 1e6).toFixed(2)} MB), ${Object.keys(pack.files).length} files, ${pack.nodes.length} nodes`,
+  );
 }

@@ -38,8 +38,8 @@
   {
     "name": "EG-MIGHT-the-mint-reads-none",
     "file": "server-account/src/realm.js",
-    "old": "    km: mightOk(row.might) ? /** @type {number} */ (row.might) : null,",
-    "new": "    km: null,",
+    "old": "    km: mightOk(row.might) ? /** @type {number} */ (row.might) : null, // EG-MIGHT: the kit's might, judged",
+    "new": "    km: null, // EG-MIGHT: the kit's might, judged",
     "tests": [
       "test/net/eliteGates/egmight.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "EG-MIGHT-signed-without-the-realm",
     "file": "src/net/identityToken.js",
-    "old": "  if (c.mg !== undefined && !(c.rc === 1 && mightIssuable(c.mg))) return false;",
-    "new": "  if (c.mg !== undefined && !mightIssuable(c.mg)) return false;",
+    "old": "  if (c.mg !== undefined && !(c.rc === 1 && mightIssuable(c.mg))) return false; // EG-MIGHT: the kit's might, beside the realm's yes alone",
+    "new": "  if (c.mg !== undefined && !mightIssuable(c.mg)) return false; // EG-MIGHT: the kit's might, beside the realm's yes alone",
     "tests": [
       "test/net/eliteGates/egmight.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "EG-MIGHT-the-verdict-writes-none",
     "file": "server-account/src/verdict.js",
-    "old": "    might: lawHolds > 0 ? null : judged.might,",
-    "new": "    might: null,",
+    "old": "    might: lawHolds > 0 ? null : judged.might, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it",
+    "new": "    might: null, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it",
     "tests": [
       "test/net/eliteGates/egmight.test.js"
     ]
@@ -479,8 +479,8 @@
   {
     "name": "EG-MIGHT-a-held-kit-signed",
     "file": "server-account/src/verdict.js",
-    "old": "    might: lawHolds > 0 ? null : judged.might,",
-    "new": "    might: judged.might,",
+    "old": "    might: lawHolds > 0 ? null : judged.might, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it",
+    "new": "    might: judged.might, // EG-MIGHT: the kit's might the mint signs (net/kitMight.js) - AUDIT POTION-MIGHT A2: none while the law holds it",
     "tests": [
       "test/net/eliteGates/egmight.test.js"
     ]
@@ -488,8 +488,8 @@
   {
     "name": "EG-MIGHT-the-verdict-skyless",
     "file": "server-account/src/verdict.js",
-    "old": "  const firm = firmOpen ? treeStats(",
-    "new": "  const firm = false ? treeStats(",
+    "old": "  const firm = firmOpen ? treeStats(unpackTree(typeof row.firm_tree === 'string' ? row.firm_tree : '')) : {};",
+    "new": "  const firm = false ? treeStats(unpackTree(typeof row.firm_tree === 'string' ? row.firm_tree : '')) : {};",
     "tests": [
       "test/net/eliteGates/egmight.test.js"
     ]
@@ -497,8 +497,8 @@
   {
     "name": "EG-MIGHT-the-checkpoint-reads-no-sky",
     "file": "server-account/src/realm.js",
-    "old": "realm_characters.id) AS firm_tree",
-    "new": "realm_characters.id) AS firm_tree_unread",
+    "old": "    (SELECT tree FROM firmament f WHERE f.player = realm_characters.player AND f.char_id = realm_characters.id) AS firm_tree",
+    "new": "    (SELECT tree FROM firmament f WHERE f.player = realm_characters.player AND f.char_id = realm_characters.id) AS firm_tree_unread",
     "tests": [
       "test/net/eliteGates/egmight.test.js"
     ]
@@ -506,8 +506,8 @@
   {
     "name": "EG-MIGHT-the-checkpoint-hands-no-switch",
     "file": "server-account/src/realm.js",
-    "old": "  const v = await verdictOn({ db, nowS, firmOpen },",
-    "new": "  const v = await verdictOn({ db, nowS },",
+    "old": "    { db, nowS, firmOpen },",
+    "new": "    { db, nowS },",
     "tests": [
       "test/net/eliteGates/egmight.test.js"
     ]
@@ -524,8 +524,8 @@
   {
     "name": "EG-MIGHT-the-rollback-keeps-it",
     "file": "server-account/src/review.js",
-    "old": "      + ' arms_top = NULL, arms_bow = NULL, might = NULL WHERE id = ?",
-    "new": "      + ' arms_top = arms_top WHERE id = ?",
+    "old": "          ' arms_top = NULL, arms_bow = NULL, might = NULL WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',",
+    "new": "          ' arms_top = arms_top WHERE id = ? AND clean_obj = ? AND seq = ? AND dead_at IS NULL',",
     "tests": [
       "test/net/eliteGates/egmight.test.js"
     ]

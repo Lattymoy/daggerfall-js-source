@@ -113,7 +113,7 @@ test('RVN5 THE PYRE\'S SHAPE: the brain\'s verdict a disc about its locked point
   assert.ok(blowField('pyre', 2.1, 8, 8).rim, 'its rim');
   assert.equal(BLOW_KIND.pyre, BLOW_KIND.slam);
   const tg = read('src/render/foeTelegraph.js');
-  assert.match(tg, /else if \(b\.kind === 'leap' \|\| b\.kind === 'pyre'\) gl\.uniform4f\(U\.uP, P\.r, b\.ahead \?\? 0, 0, 0\);/, 'the shader: its radius and its point');
+  assert.match(tg, /else if \(b\.kind === 'leap' \|\| b\.kind === 'pyre'\)\n\s*gl\.uniform4f\(U\.uP, P\.r, b\.ahead \?\? 0, 0, 0\);/, 'the shader: its radius and its point');
   assert.match(tg, /const P = BLOW\[b\.kind\]/, 'its own numbers');
   assert.ok(Math.abs(quadHalf('pyre', 8) - (8 + 2.2 + 0.6)) < 1e-9);
   assert.ok(Math.abs(quadHalf('pyre') - (12 + 2.2 + 0.6)) < 1e-9, 'unplaced: its farthest');
@@ -267,7 +267,7 @@ test('RVN5 ON THE REAL BRAIN: its signature ahead of every other blow - x2.0, it
   assert.equal(withRandom(0.99, () => firstWindup(brainFoe('slam'), [0, 0, 0], 3)), null, 'no roll, no signature');
   assert.equal(BLOW_CHANCE, 0.1);
   // the source: no feint on a signature, nor on a pyre
-  assert.match(read('src/ai/tactics.js'), /if \(chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS\.includes\(shape\)/);
+  assert.match(read('src/ai/tactics.js'), /if \(\n\s*chain === 0 &&\n\s*!sig &&\n\s*shape !== 'aimed' &&\n\s*shape !== 'pyre' &&\n\s*!GAP_CLOSERS\.includes\(shape\)/);
 });
 
 test('RVN5 THE PYRE on the REAL brain: wound up at my feet (locked, out to 12 m), iron from rank 3, no held swing; standing in it its blast is asked of the pool (`_blowPyre`, x2.0) and the foe waits - no swing; stepped off, nothing, and it overreaches (mutants: aimed at its own feet; unlocked; a swing held; the blast asked on a miss; no overreach)', () => {
@@ -310,7 +310,7 @@ test('RVN5 THE PYRE as a shooter\'s turn: a caster that fights at range winds it
   f.ai._tac.sigReady = T; f.ai._tac.blowReady = T;
   assert.equal(withRandom(0.05, () => firstWindup(f, player, 3))?.kind, 'pyre', 'past it, again');
   // with its token, as its shot goes (TACT's ranged token)
-  assert.match(read('src/ai/tactics.js'), /if \(has && sig\?\.kind === 'pyre' && _me && ai\.canAct !== false && now >= \(s\.blowReady \?\? 0\) && now >= \(s\.sigReady \?\? 0\)/);
+  assert.match(read('src/ai/tactics.js'), /if \(\n\s*has &&\n\s*sig\?\.kind === 'pyre' &&\n\s*_me &&\n\s*ai\.canAct !== false &&\n\s*now >= \(s\.blowReady \?\? 0\) &&\n\s*now >= \(s\.sigReady \?\? 0\)/);
   // the gates
   const ai = { inSight: true, _armedTargeting: false };
   assert.equal(signatureReaches(ai, {}, 'pyre', 12, false, 0, 12), true);
@@ -472,5 +472,5 @@ test('RVN5 the page: from rank 2 its signature - its name and what it does, "uns
   assert.ok(signatureWords(r).endsWith('(with Enhanced AI).'), 'the switch read by default');
   setPref('enhancedAI', true);
   assert.ok(!signatureWords(r).includes('Enhanced AI'));
-  assert.match(read('src/ui/revenant/revenantPage.js'), /const sig = fallen \? '' : signatureWords\(r\);   \/\/ RVN5\n\s*if \(sig\) text\.append\(el\('span', 'rvn-will', sig\)\);/);
+  assert.match(read('src/ui/revenant/revenantPage.js'), /const sig = fallen \? '' : signatureWords\(r\); \/\/ RVN5\n\s*if \(sig\) text\.append\(el\('span', 'rvn-will', sig\)\);/);
 });

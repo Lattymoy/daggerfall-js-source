@@ -159,9 +159,9 @@ test('AUDIT TELL B2/B3/B6/B7/B8/B9/B10/B11 by source: the run breaks as the wind
   assert.match(t, /if \(s\.state === 'dash'\) return dashTurn\(ai, s, now, skipped\);/);
   assert.match(t, /\/\/ AUDIT TELL B3: a leap lands on its disc only where its foe got to/);
   // PIN MOVED (RVN5: a signature and a pyre never feint either - bible/12-Enhanced-AI/Feud-Arc.md 16.1)
-  assert.match(t, /if \(chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS\.includes\(shape\) && feints\(/, 'B6: a charge and a leap never feint');
+  assert.match(t, /if \(\n\s*chain === 0 &&\n\s*!sig &&\n\s*shape !== 'aimed' &&\n\s*shape !== 'pyre' &&\n\s*!GAP_CLOSERS\.includes\(shape\) &&\n\s*feints\(/, 'B6: a charge and a leap never feint');
   assert.match(t, /\/\/ AUDIT TELL B7: aimed at its TARGET's feet/);
-  assert.match(t, /b\.key = targetKey\(ai\);   \/\/ AUDIT TELL B8/);
+  assert.match(t, /b\.key = targetKey\(ai\); \/\/ AUDIT TELL B8/);
   assert.match(t, /tf = ck === s\.chainKey \? targetFeet\(ai, ck\) : null;/, 'B8: the chain at its own target');
   assert.match(t, /if \(now < s\.chainAt \|\| \(ai\._blowVerdict != null && now < s\.chainAt \+ CHAIN_SPEND_MAX\)\)/, 'B9');
   assert.match(t, /const CHAIN_SPEND_MAX = 0\.6;/);
@@ -199,7 +199,7 @@ test('AUDIT TELL (3.2): a wind-up its poise broke SHATTERS - drawn BLOW_SHATTER 
   assert.match(P, /uniform float uShatter;/);
   assert.match(P, /gl\.uniform1f\(U\.uShatter, phase\.shatter > 0 \? phase\.shatter : 0\);/);
   assert.match(P, /if \(uShatter > 0\.0\) \{[^}]*oColor = telegraphStyle\(dist, inside \? 1\.0 : 0\.0, edge, 1\.0, 0\.0, 0\.0, vec3\(1\.0\), fogK\) \* \(uShatter \* shard\);/, 'white, whole-filled, cracked');
-  assert.match(rd('src/ai/puppetBlows.js'), /if \(r\.ws === 1\) shatterBlow\(ai, now\); else setLiveBlow\(ai, null\);/, 'a puppet its owner staggered shatters too');
+  assert.match(rd('src/ai/puppetBlows.js'), /if \(r\.ws === 1\) shatterBlow\(ai, now\);\n\s*else setLiveBlow\(ai, null\);/, 'a puppet its owner staggered shatters too');
 });
 
 // ── the landing on the player ───────────────────────────────────────

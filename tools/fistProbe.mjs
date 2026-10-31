@@ -12,10 +12,15 @@ import { createServer } from 'vite';
 import { chromium } from 'playwright';
 const server = await createServer({ root: '/home/user/project-dagger', server: { port: 5199, strictPort: true } });
 await server.listen();
-const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const browser = await chromium.launch({
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+});
 const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
 const errors = [];
-page.on('pageerror', (e) => { errors.push(e.message); console.log('[pageerror]', (e.stack ?? e.message).split('\n').slice(0, 3).join(' | ')); });
+page.on('pageerror', (e) => {
+  errors.push(e.message);
+  console.log('[pageerror]', (e.stack ?? e.message).split('\n').slice(0, 3).join(' | '));
+});
 // nofoes: the strike-frame site fires with nothing in reach, which is
 // exactly where the deref lived
 await page.goto('http://localhost:5199/play/?shot&class=16&nofoes');
@@ -30,17 +35,27 @@ const boot = await page.evaluate(async () => {
   return { hand: p.equip?.slots?.[EQUIP_SLOTS.RightHand]?.name ?? null };
 });
 console.log('right hand at boot:', JSON.stringify(boot.hand), '(null = bare hands, the default)');
-if (boot.hand !== null) { console.log('EXPECTED BARE HANDS AT BOOT'); process.exit(1); }
+if (boot.hand !== null) {
+  console.log('EXPECTED BARE HANDS AT BOOT');
+  process.exit(1);
+}
 // ready the fists and swing via the touch tap (ClickToAttack); the
 // machine reaches its strike frame within the wait
-await page.evaluate(() => { window.__combat.toggleSheath(); window.__combat.clickAttack(); });
+await page.evaluate(() => {
+  window.__combat.toggleSheath();
+  window.__combat.clickAttack();
+});
 await waitFrames(40);
 // and a second swing, for the state walk back through Idle
 await page.evaluate(() => window.__combat.clickAttack());
 await waitFrames(10);
-await page.screenshot({ path: '/home/claude/fist-swing.png' });   // eyeball: the WEAPON10 fists mid-swing
+await page.screenshot({ path: '/home/claude/fist-swing.png' }); // eyeball: the WEAPON10 fists mid-swing
 await waitFrames(30);
 console.log('fist swing errors:', errors.length);
-if (errors.length) { console.log('FIST SWING STILL THROWS'); process.exit(1); }
+if (errors.length) {
+  console.log('FIST SWING STILL THROWS');
+  process.exit(1);
+}
 console.log('FIST SWING OK');
-await browser.close(); await server.close();
+await browser.close();
+await server.close();

@@ -20,8 +20,8 @@
   {
     "name": "LEGACY-HOME-home-ignores-mark",
     "file": "src/systems/legacy/household.js",
-    "old": "  return houses.find((h) => sameHouse(h, family.home))\n    ?? ",
-    "new": "  return ",
+    "old": "  return (\n    houses.find((h) => sameHouse(h, family.home)) ??\n    (family.seat?.loc ? houses.find((h) => h.location === family.seat.loc) : null) ??\n    houses[0]\n  );",
+    "new": "  return (family.seat?.loc ? houses.find((h) => h.location === family.seat.loc) : null) ?? houses[0];",
     "tests": [
       "test/systems/legacyhome.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "LEGACY-HOME-sync-drops-others",
     "file": "src/systems/legacy/household.js",
-    "old": "    } else if (!took(h)) { if (!whole || holds(h)) next.push(h); }",
-    "new": "    } else if (false) { if (!whole || holds(h)) next.push(h); }",
+    "old": "    } else if (!took(h)) {",
+    "new": "    } else if (false) {",
     "tests": [
       "test/systems/legacyhome.test.js"
     ],
@@ -48,8 +48,8 @@
   {
     "name": "LEGACY-HOME-stranger-face",
     "file": "src/systems/legacy/household.js",
-    "old": "    portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },",
-    "new": "    portrait: null,",
+    "old": "    portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) }, // their own chargen head in the talk window (ui/native/nativeTalk.js setNpcPortrait)",
+    "new": "    portrait: null, // their own chargen head in the talk window (ui/native/nativeTalk.js setNpcPortrait)",
     "tests": [
       "test/systems/legacyhome.test.js"
     ]
@@ -134,7 +134,7 @@
   {
     "name": "LEGACY-HOME-record-drops-parked",
     "file": "src/systems/legacy/family.js",
-    "old": "    p.parked = raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0 ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 } : null;",
+    "old": "    p.parked =\n      raw.parked && Number.isInteger(raw.parked.mapId) && (raw.parked.buildingKey | 0) > 0\n        ? { mapId: raw.parked.mapId, buildingKey: raw.parked.buildingKey | 0 }\n        : null;",
     "new": "    p.parked = null;",
     "tests": [
       "test/systems/legacyhome.test.js"

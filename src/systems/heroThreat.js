@@ -51,7 +51,8 @@ export const HERO_THREAT = Object.freeze({
 });
 
 /** How many of a track's levels pay: `v` past `from`, never past `to` (a whole number; 0 for anything not a number). */
-const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.max(0, Math.min(to, Math.trunc(/** @type {number} */ (v))) - from) : 0);
+const stepsOf = (v, { from, to }) =>
+  Number.isFinite(v) ? Math.max(0, Math.min(to, Math.trunc(/** @type {number} */ (v))) - from) : 0;
 
 /**
  * The hero's threat at a Daggerfall level and a Renown (null offline, or not yet known): the factors a foe's blows and
@@ -61,11 +62,13 @@ const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.max(0, Math.min(
  * @returns {{ damage: number, health: number, level: number, renown: number }} `level` and `renown`: the steps paid
  */
 export function heroThreat(level, renown = null) {
-  const L = stepsOf(level, HERO_THREAT.level), R = stepsOf(renown, HERO_THREAT.renown);
+  const L = stepsOf(level, HERO_THREAT.level),
+    R = stepsOf(renown, HERO_THREAT.renown);
   return {
     damage: HERO_THREAT.level.damage ** L * HERO_THREAT.renown.damage ** R,
     health: HERO_THREAT.level.health ** L * HERO_THREAT.renown.health ** R,
-    level: L, renown: R,
+    level: L,
+    renown: R,
   };
 }
 

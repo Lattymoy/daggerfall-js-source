@@ -1,8 +1,20 @@
 [
-  { "name": "HORSE-POV-the-sprite-in-third-person", "file": "src/player/mwView.js",
-    "old": "  if (!eotbLane() && mwCamera.thirdPerson()) return { ...hides, horse: true };\n", "new": "",
-    "tests": ["test/player/horsepov.test.js"] },
-  { "name": "HORSE-POV-the-sprite-hidden-in-first-person", "file": "src/player/mwView.js",
-    "old": "  if (!eotbLane() && mwCamera.thirdPerson()) return { ...hides, horse: true };", "new": "  if (!eotbLane()) return { ...hides, horse: true };",
-    "tests": ["test/player/horsepov.test.js"] }
+  {
+    "name": "HORSE-POV-the-sprite-in-third-person",
+    "file": "src/player/mwView.js",
+    "old": "  if (!eotbLane() && mwCamera.thirdPerson()) return { ...hides, horse: true };\n  return benchSeated ? { ...hides, horse: true } : hides; // WAGONS3: on the bench the team is in the world, not on the screen",
+    "new": "  return benchSeated ? { ...hides, horse: true } : hides; // WAGONS3: on the bench the team is in the world, not on the screen",
+    "tests": [
+      "test/player/horsepov.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-POV-the-sprite-hidden-in-first-person",
+    "file": "src/player/mwView.js",
+    "old": "  if (!eotbLane() && mwCamera.thirdPerson()) return { ...hides, horse: true };",
+    "new": "  if (!eotbLane()) return { ...hides, horse: true };",
+    "tests": [
+      "test/player/horsepov.test.js"
+    ]
+  }
 ]

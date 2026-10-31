@@ -39,19 +39,19 @@
 // whenever basePower is not a multiple of four. That is a real,
 // observable off-by-one in the player's favour nowhere.
 
-import { doEnchantedPayloads, classicEnchantmentType } from './enchantments.js';   // SetEnchantments' created-payload callback (:1289-1300) and its ClassicType store (:1316-1320)
-import { unequipItem } from './equip.js';   // DaggerfallUnityItem.UnequipItem (:1183-1196)
+import { doEnchantedPayloads, classicEnchantmentType } from './enchantments.js'; // SetEnchantments' created-payload callback (:1289-1300) and its ClassicType store (:1316-1320)
+import { unequipItem } from './equip.js'; // DaggerfallUnityItem.UnequipItem (:1183-1196)
 import { templateByIndex } from './item/itemTemplates.js';
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { WEAPON_MATERIALS } from '../characters/weapons.js';
-import { customItemClass } from './roleplayRealismItems/rriItems.js';   // RRI1: GetEnchantmentPower is a virtual the armor classes answer
-import { localizedText, t } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
-import { enchantGold } from '../net/alchemyLaw.js';   // PROF12: Enchanting's layer - the gold with the rank's share off
-import { recipeById, jewelPoints } from '../net/recipeLaw.js';   // AUDIT PROF10 J1: the most a crafted piece's recipe mints
-import { enchantmentSettings } from './enchantmentCatalogue.js';   // AUDIT PROF10 J2: a crafted piece's own enchantments, costed as the maker costs a row
-import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // and their classic type back to the catalogue's key
-import { isAetheric } from './aetheric.js';   // AETHERIC-MAKER: an Aetheric piece is the port's own tier, never the maker's
-import { isCursed, lootRarityOn, RARE_FLAVOURS } from './loot/lootRarity.js';   // MAKER-RARE: a Rare's own rows - its flavour, a curse's drawback - and the ladder's switch
+import { customItemClass } from './roleplayRealismItems/rriItems.js'; // RRI1: GetEnchantmentPower is a virtual the armor classes answer
+import { localizedText, t } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
+import { enchantGold } from '../net/alchemyLaw.js'; // PROF12: Enchanting's layer - the gold with the rank's share off
+import { recipeById, jewelPoints } from '../net/recipeLaw.js'; // AUDIT PROF10 J1: the most a crafted piece's recipe mints
+import { enchantmentSettings } from './enchantmentCatalogue.js'; // AUDIT PROF10 J2: a crafted piece's own enchantments, costed as the maker costs a row
+import { ENCHANTMENT_TYPES } from '../formats/magicDef.js'; // and their classic type back to the catalogue's key
+import { isAetheric } from './aetheric.js'; // AETHERIC-MAKER: an Aetheric piece is the port's own tier, never the maker's
+import { isCursed, lootRarityOn, RARE_FLAVOURS } from './loot/lootRarity.js'; // MAKER-RARE: a Rare's own rows - its flavour, a curse's drawback - and the ladder's switch
 
 /** SetEnchantments' `maxEnchantments` (:1273) - and the same ten the
  *  two picker buttons test against (DaggerfallItemMakerWindow.cs:629,
@@ -105,10 +105,8 @@ export const ARMOR_ENCHANTMENT_MULTIPLIER = Object.freeze({
 /** Both switches fall through to their BASE case on anything they do
  *  not name - `default:` shares the Steel/Leather arm - so an unknown
  *  material is base power and never zero power. */
-export const weaponEnchantmentMultiplier = (material) =>
-  WEAPON_ENCHANTMENT_MULTIPLIER[material] ?? 0;
-export const armorEnchantmentMultiplier = (material) =>
-  ARMOR_ENCHANTMENT_MULTIPLIER[material] ?? 0;
+export const weaponEnchantmentMultiplier = (material) => WEAPON_ENCHANTMENT_MULTIPLIER[material] ?? 0;
+export const armorEnchantmentMultiplier = (material) => ARMOR_ENCHANTMENT_MULTIPLIER[material] ?? 0;
 
 /** GetItemEnchantmentPower (:2660-2678). The material multiplies only
  *  for WEAPONS and ARMOR; everything else (a ring, a robe) takes its
@@ -132,7 +130,8 @@ export function craftedJewelPoints(item) {
 /** AUDIT PROF10 J1: a CRAFTED piece of jewellery's recipe - DFU's Jewellery with the service's 16-hex provenance, its
  *  record a jeweller's (recipeLaw JEWELCRAFTING_RECIPES) of the very template it is - or null for every other item. */
 export function craftedJewelRecipe(item) {
-  if (item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string') return null;
+  if (item?.group !== 'Jewellery' || !/^[0-9a-f]{16}$/.test(item.provenance ?? '') || typeof item.recipe !== 'string')
+    return null;
   const r = recipeById(item.recipe);
   return r?.kind === 'jewel' && r.templateIndex === item.templateIndex ? r : null;
 }
@@ -158,7 +157,14 @@ export const makerLaid = (e) => e?.enchantCost !== undefined;
  * a Masterwork are DFU's off (AUDIT LOOT II A9) - online the lane forces the ladder on.
  */
 export function rareKeeps(item) {
-  if (!lootRarityOn() || item?.rarity !== 'rare' || item.magic === true || item.artifact === true || item.isIdentified !== true) return false;
+  if (
+    !lootRarityOn() ||
+    item?.rarity !== 'rare' ||
+    item.magic === true ||
+    item.artifact === true ||
+    item.isIdentified !== true
+  )
+    return false;
   // AUDIT MAKER-RARE C5: the ladder's rows, as the item law reads them (itemLaw.js tierFindings, enchantmentFindings) - its
   // flavour first, one of its group's, and a curse's drawback after it, the curse's own; a row its ladder never rolls is
   // no row this door keeps free
@@ -166,7 +172,9 @@ export function rareKeeps(item) {
   const flavours = RARE_FLAVOURS[item.group] ?? RARE_FLAVOURS.Jewellery;
   if (flavour && !flavours.some((f) => f.type === flavour.type && f.param === flavour.param)) return false;
   if (!rest.length) return true;
-  return rest.length === 1 && isCursed(item) && rest[0]?.type === item.cursed.type && rest[0]?.param === item.cursed.param;
+  return (
+    rest.length === 1 && isCursed(item) && rest[0]?.type === item.cursed.type && rest[0]?.param === item.cursed.param
+  );
 }
 /**
  * GILDED-MAKER (2026-10-29, #feature-feedback: "feels like gilded items are missing something ... making them enchantable
@@ -199,7 +207,7 @@ export const gildedKeepsNameText = () => t('enchant.gildedName', 'A Gilded piece
  * enchanted item (DFU's refusal) or a row the catalogue cannot cost.
  */
 export function keptEnchantments(item) {
-  if (item?.rarity === 'legendary') return null;   // MASTER-ART: a Master's work carries no rows, and is refused with every Legendary
+  if (item?.rarity === 'legendary') return null; // MASTER-ART: a Master's work carries no rows, and is refused with every Legendary
   const list = item?.enchantments ?? [];
   if (!list.length) return [];
   const jewel = craftedJewelRecipe(item) != null;
@@ -210,7 +218,7 @@ export function keptEnchantments(item) {
     const row = enchantmentSettings(TYPE_KEY[e?.type] ?? e?.type, e?.param, { parent });
     if (!row) return null;
     out.push({ ...row, kept: true });
-    if (!jewel && !makerLaid(e)) out[out.length - 1].enchantCost = 0;   // MAKER-RARE: the ladder's row rides free
+    if (!jewel && !makerLaid(e)) out[out.length - 1].enchantCost = 0; // MAKER-RARE: the ladder's row rides free
   }
   return out;
 }
@@ -220,7 +228,8 @@ export function itemEnchantmentPower(item, lookup = templateByIndex) {
   if (!item) throw new Error('itemEnchantmentPower: item is null');
   const basePower = craftedJewelPoints(item) ?? lookup(item.templateIndex)?.enchantmentPoints ?? 0;
   const cls = customItemClass(item.templateIndex);
-  if (cls?.enchantmentPower) return cls.enchantmentPower(item, { enchantmentPoints: basePower, armorEnchantmentMultiplier });
+  if (cls?.enchantmentPower)
+    return cls.enchantmentPower(item, { enchantmentPoints: basePower, armorEnchantmentMultiplier });
   let multiplier = 0;
   if (item.group === 'Weapons') multiplier = weaponEnchantmentMultiplier(item.material);
   else if (item.group === 'Armor') multiplier = armorEnchantmentMultiplier(item.material);
@@ -231,9 +240,7 @@ export function itemEnchantmentPower(item, lookup = templateByIndex) {
  *  enchantment - one a chosen effect dragged in, marked by a non-zero
  *  parentEnchantment - is skipped unless the caller asks for it. */
 export const enchantmentListCost = (list = [], { countForced = false } = {}) =>
-  list.reduce((sum, e) => (
-    (!countForced && (e.parentEnchantment ?? 0) !== 0) ? sum : sum + (e.enchantCost ?? 0)
-  ), 0);
+  list.reduce((sum, e) => (!countForced && (e.parentEnchantment ?? 0) !== 0 ? sum : sum + (e.enchantCost ?? 0)), 0);
 
 /** GetTotalEnchantmentCost (:229-232) - BOTH lists, forced excluded. */
 export const totalEnchantmentCost = (powers = [], sideEffects = []) =>
@@ -252,13 +259,13 @@ export const totalGoldCost = (powers = []) =>
  *  placed on the item." instead - the same refusal, differently
  *  worded. DFU's is the one this port speaks, as with M2's mixing
  *  lines (Ledger B). */
-export const NOT_ENOUGH_GOLD_TO_ENCHANT = 'You do not have the gold to properly pay the enchanter.';  // 1650
-export const BEYOND_ITEM_LIMIT = 'You cannot enchant this item beyond its limit.';                   // 1651
-export const ITEM_ENCHANTED = 'The item has been enchanted.';                                        // 1652
-export const ITEM_MUST_BE_SELECTED = 'An item must be selected to be enchanted.';                    // 1653
-export const NO_ENCHANTMENTS_PREPARED = 'You have not prepared enchantments for this item.';         // DFU's own
-export const CANNOT_ENCHANT_MORE_POWERS = 'You cannot enchant this item with any more powers.';      // 1657
-export const NO_MORE_SIDE_EFFECTS = 'No further side-effects may be enchanted in this item.';        // 1658
+export const NOT_ENOUGH_GOLD_TO_ENCHANT = 'You do not have the gold to properly pay the enchanter.'; // 1650
+export const BEYOND_ITEM_LIMIT = 'You cannot enchant this item beyond its limit.'; // 1651
+export const ITEM_ENCHANTED = 'The item has been enchanted.'; // 1652
+export const ITEM_MUST_BE_SELECTED = 'An item must be selected to be enchanted.'; // 1653
+export const NO_ENCHANTMENTS_PREPARED = 'You have not prepared enchantments for this item.'; // DFU's own
+export const CANNOT_ENCHANT_MORE_POWERS = 'You cannot enchant this item with any more powers.'; // 1657
+export const NO_MORE_SIDE_EFFECTS = 'No further side-effects may be enchanted in this item.'; // 1658
 
 /**
  * AETHERIC-MAKER (FIELD BUGS 2026-10-03b, Discord: "You can enchant Ruhn's gear"): THE PIECES THE MAKER REFUSES beyond
@@ -310,9 +317,9 @@ export function openPickerDecision(selectingPowers, { item = null, powers = [], 
  */
 export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0, discountPct = 0, souls = null } = {}) {
   if (!item) return { kind: 'noItem', text: ITEM_MUST_BE_SELECTED };
-  if (itemMakerRefuses(item)) return { kind: 'refused', text: AETHERIC_TAKES_NO_ENCHANTMENT };   // AETHERIC-MAKER
+  if (itemMakerRefuses(item)) return { kind: 'refused', text: AETHERIC_TAKES_NO_ENCHANTMENT }; // AETHERIC-MAKER
   if (powers.length === 0 && sideEffects.length === 0) {
-    return { kind: 'noEnchantments', text: localizedText('noEnchantments', NO_ENCHANTMENTS_PREPARED) };   // L10N3d: DaggerfallItemMakerWindow.cs:724
+    return { kind: 'noEnchantments', text: localizedText('noEnchantments', NO_ENCHANTMENTS_PREPARED) }; // L10N3d: DaggerfallItemMakerWindow.cs:724
   }
   // RPT1026-PROGRESS (a private report: one filled gem bound several items): A SOUL IS BOUND ONLY FROM A GEM IN HAND. DFU's
   // RemoveFilledTrap has no gem left to take for a soul already spent, and the bind goes ahead (SoulBound.cs:129-155) - with its
@@ -320,7 +327,8 @@ export function enchantDecision(item, powers = [], sideEffects = [], { gold = 0,
   // `_souls`); this is the law's own refusal, whatever list the rows came from. Port-Ledger A.
   if (souls !== null) {
     const held = new Set(souls);
-    if ([...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param))) return { kind: 'soulGone', text: t('enchant.soulGone', 'That soul is no longer in your pack.') };
+    if ([...powers, ...sideEffects].some((e) => e?.type === 'SoulBound' && !held.has(e.param)))
+      return { kind: 'soulGone', text: t('enchant.soulGone', 'That soul is no longer in your pack.') };
   }
   // AUDIT PROF10 J2: a kept piece's enchantments count against its points (GetTotalEnchantmentCost's own walk - a Rare's own
   // at nothing, MAKER-RARE), and cost no gold - they are on it already

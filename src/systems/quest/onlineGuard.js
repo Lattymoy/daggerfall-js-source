@@ -37,19 +37,24 @@ export const ONLINE_GUARD_WINDOWS = Object.freeze({
 export function guardWindowStep(s, here, now, win) {
   if (s.guardAnchor == null) {
     if (!here) return false;
-    s.guardAnchor = now;   // the arrival
+    s.guardAnchor = now; // the arrival
     s.guardAway = false;
   }
   const t = now - s.guardAnchor;
-  if (t < 0) {   // a clock behind the arrival (a load from another timeline): the watch starts over
+  if (t < 0) {
+    // a clock behind the arrival (a load from another timeline): the watch starts over
     s.guardAnchor = here ? now : null;
     s.guardAway = false;
     return false;
   }
-  if (t > win.delaySeconds + win.lengthSeconds) {   // closed
-    if (!here) { s.guardAway = true; return false; }
-    if (!s.guardAway) return false;   // still in the hall since it closed: shut, so the questor can pay
-    s.guardAnchor = now;   // back after it closed: a new watch
+  if (t > win.delaySeconds + win.lengthSeconds) {
+    // closed
+    if (!here) {
+      s.guardAway = true;
+      return false;
+    }
+    if (!s.guardAway) return false; // still in the hall since it closed: shut, so the questor can pay
+    s.guardAnchor = now; // back after it closed: a new watch
     s.guardAway = false;
     return false;
   }

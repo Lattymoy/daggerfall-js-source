@@ -35,38 +35,72 @@ const CELL = WORLD_CELL * PIXEL_UNITS;
 function run({ halos, start, dir, speedMps, seconds = 60, whole }) {
   const { FakeWS, sockets } = fakeSocketClass();
   let clock = 1_000_000;
-  const s = new OnlineSession({ url: 'wss://relay.test', name: 'Mac', id: 'mac-0001', secret: 'shh-shh-shh-0001', WebSocketImpl: FakeWS, now: () => clock });
+  const s = new OnlineSession({
+    url: 'wss://relay.test',
+    name: 'Mac',
+    id: 'mac-0001',
+    secret: 'shh-shh-shh-0001',
+    WebSocketImpl: FakeWS,
+    now: () => clock,
+  });
   const pose = { x: start[0], y: 0, z: start[1], yaw: 0, pitch: 0, mv: 1 };
   s.join(`world:${Math.floor(start[0] / CELL)},${Math.floor(start[1] / CELL)}`, pose);
   sockets[0].open();
   sockets[0].receive({ t: 'welcome', id: 'mac-0001', peers: [] });
   s.setHalo(halos);
-  for (let i = 1; i < sockets.length; i++) { sockets[i].open(); sockets[i].receive({ t: 'welcome', id: 'mac-0001', peers: [] }); }
+  for (let i = 1; i < sockets.length; i++) {
+    sockets[i].open();
+    sockets[i].receive({ t: 'welcome', id: 'mac-0001', peers: [] });
+  }
   s.haloWhole = whole;
   for (const ws of sockets) ws.sent.length = 0;
-  const step = speedMps * UNITS_PER_M / 60;
+  const step = (speedMps * UNITS_PER_M) / 60;
   for (let f = 0; f < seconds * 60; f++) {
     clock += 1000 / 60;
-    pose.x += dir[0] * step; pose.z += dir[1] * step;
+    pose.x += dir[0] * step;
+    pose.z += dir[1] * step;
     s.sendPose({ ...pose });
   }
   const poses = (ws) => ws.sent.filter((t) => t.startsWith('{"t":"pose"')).length;
   const primary = poses(sockets[0]);
   const halo = sockets.slice(1).reduce((a, ws) => a + poses(ws), 0);
-  return { sent: (primary + halo) / seconds, primary: primary / seconds, copies: (primary + halo) / seconds, perPose: (primary + halo) / Math.max(1, primary) };
+  return {
+    sent: (primary + halo) / seconds,
+    primary: primary / seconds,
+    copies: (primary + halo) / seconds,
+    perPose: (primary + halo) / Math.max(1, primary),
+  };
 }
 
 // a corner: the player in cell (1,1) 100 m from both of its low edges, holding the three cells round the corner; an
 // edge: 100 m inside cell (1,1)'s west edge, holding the one cell across it - each walking along the edge, so it stays
-const corner = { halos: ['world:0,1', 'world:1,0', 'world:0,0'], start: [CELL + 100 * UNITS_PER_M, CELL + 100 * UNITS_PER_M], dir: [0, 1] };
+const corner = {
+  halos: ['world:0,1', 'world:1,0', 'world:0,0'],
+  start: [CELL + 100 * UNITS_PER_M, CELL + 100 * UNITS_PER_M],
+  dir: [0, 1],
+};
 const edge = { halos: ['world:0,1'], start: [CELL + 100 * UNITS_PER_M, CELL + 5 * PIXEL_UNITS], dir: [0, 1] };
 
-console.log(`\nTHE HALO - a player walking past a cell's corner and along its edge (60 s each, its poses at up to ${POSE_HZ} a second)\n`);
+console.log(
+  `\nTHE HALO - a player walking past a cell's corner and along its edge (60 s each, its poses at up to ${POSE_HZ} a second)\n`,
+);
 console.log('place   pace          before: sent/s  copies per pose    after: sent/s  copies per pose');
-for (const [name, at] of [['corner', corner], ['edge', edge]]) {
-  for (const [pace, mps] of [['walk 4 m/s', 4], ['run 8 m/s', 8], ['ride 16 m/s', 16]]) {
-    const b = run({ ...at, speedMps: mps, whole: true }), a = run({ ...at, speedMps: mps, whole: false });
-    console.log(`${name.padEnd(7)} ${pace.padEnd(12)}  ${b.sent.toFixed(1).padStart(14)}  ${b.perPose.toFixed(2).padStart(15)}  ${a.sent.toFixed(1).padStart(14)}  ${a.perPose.toFixed(2).padStart(15)}`);
+for (const [name, at] of [
+  ['corner', corner],
+  ['edge', edge],
+]) {
+  for (const [pace, mps] of [
+    ['walk 4 m/s', 4],
+    ['run 8 m/s', 8],
+    ['ride 16 m/s', 16],
+  ]) {
+    const b = run({ ...at, speedMps: mps, whole: true }),
+      a = run({ ...at, speedMps: mps, whole: false });
+    console.log(
+      `${name.padEnd(7)} ${pace.padEnd(12)}  ${b.sent.toFixed(1).padStart(14)}  ${b.perPose.toFixed(2).padStart(15)}  ${a.sent.toFixed(1).padStart(14)}  ${a.perPose.toFixed(2).padStart(15)}`,
+    );
   }
 }
-console.log('\n(copies per pose: what a neighbour holding the same rooms receives for each pose it can use - one is enough)\n');
+console.log(
+  '\n(copies per pose: what a neighbour holding the same rooms receives for each pose it can use - one is enough)\n',
+);

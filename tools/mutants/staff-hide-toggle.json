@@ -52,8 +52,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-mint-reads-0159",
     "file": "server-account/src/staffHidden.js",
-    "old": "SELECT p.staff_hide_on, s.token_hash",
-    "new": "SELECT p.staff_hide AS staff_hide_on, s.token_hash",
+    "old": "const LIVE_SQL = `SELECT p.staff_hide_on, s.token_hash, s.key_id, k.cfg, k.pub FROM staff_sessions s JOIN players p ON p.id = s.player_id",
+    "new": "const LIVE_SQL = `SELECT p.staff_hide AS staff_hide_on, s.token_hash, s.key_id, k.cfg, k.pub FROM staff_sessions s JOIN players p ON p.id = s.player_id",
     "why": "the mint reads 0159's column, 1 on every row: every staff member hidden again",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-route-reads-0159",
     "file": "server-account/src/staffHidden.js",
-    "old": "return { hidden: me.staff_hide_on === 1 };",
-    "new": "return { hidden: me.staff_hide !== 0 };",
+    "old": "  if (body.on === undefined) return { hidden: me.staff_hide_on === 1 }; // STAFF-HIDE-TOGGLE: off until pressed (0165)",
+    "new": "  if (body.on === undefined) return { hidden: me.staff_hide !== 0 }; // STAFF-HIDE-TOGGLE: off until pressed (0165)",
     "why": "the panel told Hide me is on when it is off",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-press-to-0159",
     "file": "server-account/src/staffHidden.js",
-    "old": "db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2')",
-    "new": "db.prepare('UPDATE players SET staff_hide = ?1 WHERE id = ?2')",
+    "old": "    db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2').bind(on, me.id),",
+    "new": "    db.prepare('UPDATE players SET staff_hide = ?1 WHERE id = ?2').bind(on, me.id),",
     "why": "the press written to the column the mint no longer reads",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-lapse-off-the-log-alone",
     "file": "server-account/src/staffHidden.js",
-    "old": "WHERE (SELECT staff_hide_on FROM players WHERE id = ?1) = 1 AND NOT EXISTS (",
-    "new": "WHERE NOT EXISTS (",
+    "old": "  WHERE (SELECT staff_hide_on FROM players WHERE id = ?1) = 1 AND NOT EXISTS (SELECT 1 FROM staff_audit e WHERE e.actor = ?1 AND e.at >= h.at AND e.id > h.id",
+    "new": "  WHERE NOT EXISTS (SELECT 1 FROM staff_audit e WHERE e.actor = ?1 AND e.at >= h.at AND e.id > h.id",
     "why": "a game hidden before 0165 turned its switch off is minted no token at all once its session idles",
     "tests": [
       "test/server/staffpanel5hidden.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-door-word-unread",
     "file": "src/net/staffHook.js",
-    "old": "else if (m.dfoStaff === 'relink' && relink && !relinkWait) {",
-    "new": "else if (false) {",
+    "old": "    else if (m.dfoStaff === 'relink' && relink && !relinkWait) {",
+    "new": "    else if (false) {",
     "why": "the panel's relink ignored: Hide me waits for the game's next connection again",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-door-gap-unread",
     "file": "src/net/staffHook.js",
-    "old": "if (wait > 0) relinkWait = setTimer(relinkNow, wait); else relinkNow();",
-    "new": "relinkNow();",
+    "old": "      if (wait > 0) relinkWait = setTimer(relinkNow, wait);\n      else relinkNow();",
+    "new": "      relinkNow();",
     "why": "a relink storm from any page script",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-door-two-waiting",
     "file": "src/net/staffHook.js",
-    "old": "&& relink && !relinkWait) {",
-    "new": "&& relink) {",
+    "old": "    else if (m.dfoStaff === 'relink' && relink && !relinkWait) {",
+    "new": "    else if (m.dfoStaff === 'relink' && relink) {",
     "why": "every relink asked inside the gap queued",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-relink-presence-kept",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "  if (main?.room) main.leave();\n",
-    "new": "",
+    "old": "  if (main?.room) main.leave();\n  for (const link of links ?? []) {",
+    "new": "  for (const link of links ?? []) {",
     "why": "the presence room keeps its socket as it was until the player changes room",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-relink-left-not-opened",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "{ link.leave(); link.join(room); }",
-    "new": "{ link.leave(); }",
+    "old": "      link.join(room);\n    }",
+    "new": "    }",
     "why": "a chat link left and waiting for chatFrame's rejoin",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-relink-no-room-left",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "const room = link.room; if (room) {",
-    "new": "const room = link.room; if (true) {",
+    "old": "    if (room) {",
+    "new": "    if (true) {",
     "why": "a link out of the seat (or banned) left again: its word on screen overwritten",
     "tests": [
       "test/net/staffpanel5hook.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "STAFF-HIDE-TOGGLE-page-no-relink",
     "file": "src/scenes/staffFollowHost.js",
-    "old": "const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }), pilot: (m) => pilot.word(m), pull });",
-    "new": "const door = staffHookDoor(win, () => hook, { mapOf: () => map, placesOf: () => ({ maps: maps(), pixel: pixel() }), pilot: (m) => pilot.word(m), pull });",
+    "old": "    relink: relink\n      ? () => {\n          relink();\n          map.relink();\n        }\n      : relink,\n    mapOf: () => map,",
+    "new": "    mapOf: () => map,",
     "why": "the page's door handed no relink",
     "tests": [
       "test/net/staffpanel5hook.test.js"

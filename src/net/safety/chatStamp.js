@@ -67,12 +67,25 @@ const enc = new TextEncoder();
 
 /** The bytes a stamp signs - one byte string for one line.
  *  @param {{tab: string, sub: string, name: string, at: number, text: string}} line */
-export const stampBytes = ({ tab, sub, name, at, text }) => enc.encode(`${STAMP_V}\n${JSON.stringify([tab, sub, name, at, text])}`);
+export const stampBytes = ({ tab, sub, name, at, text }) =>
+  enc.encode(`${STAMP_V}\n${JSON.stringify([tab, sub, name, at, text])}`);
 
 /** Whether a line is one a stamp can be about: every field its type, the tab one of the tabs. */
 export function stampableLine(l) {
-  return !!l && typeof l === 'object' && STAMP_TABS.includes(l.tab) && typeof l.sub === 'string' && l.sub.length > 0 && l.sub.length <= 64
-    && typeof l.name === 'string' && l.name.length <= 64 && Number.isSafeInteger(l.at) && l.at > 0 && typeof l.text === 'string' && l.text.length <= 512;
+  return (
+    !!l &&
+    typeof l === 'object' &&
+    STAMP_TABS.includes(l.tab) &&
+    typeof l.sub === 'string' &&
+    l.sub.length > 0 &&
+    l.sub.length <= 64 &&
+    typeof l.name === 'string' &&
+    l.name.length <= 64 &&
+    Number.isSafeInteger(l.at) &&
+    l.at > 0 &&
+    typeof l.text === 'string' &&
+    l.text.length <= 512
+  );
 }
 
 /**
@@ -97,5 +110,9 @@ export async function verifyStamp(line, sg, publicKey, { subtle }) {
   if (!publicKey || typeof sg !== 'string' || !STAMP_RE.test(sg) || !stampableLine(line)) return false;
   const sig = _b64url.decode(sg);
   if (!sig || sig.length !== SIG_BYTES) return false;
-  try { return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, stampBytes(line)); } catch { return false; }
+  try {
+    return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, stampBytes(line));
+  } catch {
+    return false;
+  }
 }

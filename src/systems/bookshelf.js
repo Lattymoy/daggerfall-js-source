@@ -21,10 +21,10 @@
 //   allowed reader gets the title picker, and a pick opens the book
 //   reader on that id.
 
-import { getShelfBookID, bookTitle } from './books.js';   // WB12c: the shelf's draw - the port's own books among the classic ones
+import { getShelfBookID, bookTitle } from './books.js'; // WB12c: the shelf's draw - the port's own books among the classic ones
 import { canAccessLibrary } from './guild/guildServices.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { localizedText } from './textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language
 
 export const BOOKSHELF_CAPACITY = 10;
 
@@ -49,8 +49,10 @@ export function populateBookshelf(rolls = Math.random) {
  * one DFU member is the violation the bible names first, so the
  * predicate moved here beside the access rule it gates.
  */
-export const isBookshelfBuilding = (buildingType) => buildingType === BUILDING_TYPES.Library
-  || buildingType === BUILDING_TYPES.GuildHall || buildingType === BUILDING_TYPES.Temple;
+export const isBookshelfBuilding = (buildingType) =>
+  buildingType === BUILDING_TYPES.Library ||
+  buildingType === BUILDING_TYPES.GuildHall ||
+  buildingType === BUILDING_TYPES.Temple;
 
 /** ReadBook()'s gate (:68-80). `guild`/`membership` are the building
  *  faction's, resolved by the caller the way GetGuild(factionID)
@@ -62,7 +64,10 @@ export function bookshelfAccess({ buildingType, guild = null, membership = null 
     if (!guild || !canAccessLibrary(guild, membership)) {
       // Internal_Strings.csv, accessMembersOnly - VERBATIM from the
       // pinned clone's own CSV (the F116 convention).
-      return { allowed: false, text: localizedText('accessMembersOnly', 'You need to be a member of sufficient rank to access this.') };
+      return {
+        allowed: false,
+        text: localizedText('accessMembersOnly', 'You need to be a member of sufficient rank to access this.'),
+      };
     }
   }
   return { allowed: true };

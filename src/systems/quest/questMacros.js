@@ -32,43 +32,81 @@
 // registry's guard precedent.
 
 import { srand, randomRangeInclusive } from '../../formats/dfRandom.js';
-import { liveStat } from '../statMods.js';                       // M-X: %mad's MagicResist read
+import { liveStat } from '../statMods.js'; // M-X: %mad's MagicResist read
 import { permanentSkillValue, SKILL_NAMES } from '../skills.js'; // M-X: %ski
-import { entityMaxEncumbrance, damageModifier, toHitModifier, hitPointsModifier, healingRateModifier } from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength); ATTRMACRO1: and the four DERIVED modifiers
-import { surname, getRandomNameBank } from '../../characters/nameHelper.js';   // M-X: %ln (E-fix: GetRandomNameBank)
+import {
+  entityMaxEncumbrance,
+  damageModifier,
+  toHitModifier,
+  hitPointsModifier,
+  healingRateModifier,
+} from '../../combat/formulas.js'; // M-X: %enc (FormulaHelper.MaxEncumbrance over LiveStrength); ATTRMACRO1: and the four DERIVED modifiers
+import { surname, getRandomNameBank } from '../../characters/nameHelper.js'; // M-X: %ln (E-fix: GetRandomNameBank)
 import { GENDERS, getNameBankOfRegion, fullName, getNameBank } from '../../characters/nameHelper.js';
-import { personName, randomPersonName } from '../../characters/personNames.js';   // REGION-NAMES: %n %fn %mn, and AUDIT 58's GetRandomFullName draw
+import { personName, randomPersonName } from '../../characters/personNames.js'; // REGION-NAMES: %n %fn %mn, and AUDIT 58's GetRandomFullName draw
 
 // FactionRaces number -> race key (FactionFile.cs:609-624 through
 // RaceTemplate.GetRaceFromFactionRace; unmapped falls to Breton in
 // getNameBank's default arm, as C#'s None does).
 const FACTION_RACE_KEYS = Object.freeze({
-  0: 'Nord', 1: 'Khajiit', 2: 'Redguard', 3: 'Breton',
-  4: 'Argonian', 5: 'WoodElf', 6: 'HighElf', 7: 'DarkElf',
+  0: 'Nord',
+  1: 'Khajiit',
+  2: 'Redguard',
+  3: 'Breton',
+  4: 'Argonian',
+  5: 'WoodElf',
+  6: 'HighElf',
+  7: 'DarkElf',
 });
-import { dateFromSeconds, dateString, dayName, monthName, birthSignName, seasonName, CLASSIC_EPOCH_IN_SECONDS } from '../gameDate.js';
-import { skySecondsOfEvent } from '../skyCalendar.js';   // TIME3: a journal date (the event clock's) on the sky's calendar
+import {
+  dateFromSeconds,
+  dateString,
+  dayName,
+  monthName,
+  birthSignName,
+  seasonName,
+  CLASSIC_EPOCH_IN_SECONDS,
+} from '../gameDate.js';
+import { skySecondsOfEvent } from '../skyCalendar.js'; // TIME3: a journal date (the event clock's) on the sky's calendar
 import { REGION_TEMPLES, LOCATION_TYPES } from '../../formats/mapsFile.js';
-import { REGION_NAMES, isProvinceRegion } from '../../formats/mapsTables.js';   // BAY-LEFT-B: %lp past the Bay, the province's own name
+import { REGION_NAMES, isProvinceRegion } from '../../formats/mapsTables.js'; // BAY-LEFT-B: %lp past the Bay, the province's own name
 import { factionRaceFromRace } from '../../characters/staticNpc.js';
-import { rulerTitle } from '../../world/buildingNames.js';   // AUDIT 68 S30-ruler-divine-tables-dup: GetRulerTitle's one home
-import { localizedStrings, localizedTable, localizedText, getLocalizedLocationName, getLocalizedRegionName } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
-import { getLocalizedFactionName, processGrammar } from '../textManager.js';   // L10N3e: the faction names shown; L10N3g: the language's grammar over a finished message
-import { legalStandingWord } from '../legalBands.js';   // %ltn's fourteen bands, one home
+import { rulerTitle } from '../../world/buildingNames.js'; // AUDIT 68 S30-ruler-divine-tables-dup: GetRulerTitle's one home
+import {
+  localizedStrings,
+  localizedTable,
+  localizedText,
+  getLocalizedLocationName,
+  getLocalizedRegionName,
+} from '../textManager.js'; // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: the place names shown
+import { getLocalizedFactionName, processGrammar } from '../textManager.js'; // L10N3e: the faction names shown; L10N3g: the language's grammar over a finished message
+import { legalStandingWord } from '../legalBands.js'; // %ltn's fourteen bands, one home
 
 export const MACRO_TYPES = Object.freeze({
-  None: 0, NameMacro1: 1, NameMacro2: 2, NameMacro3: 3, NameMacro4: 4,
-  DetailsMacro: 5, FactionMacro: 6, ContextMacro: 7, BindingMacro: 8,
+  None: 0,
+  NameMacro1: 1,
+  NameMacro2: 2,
+  NameMacro3: 3,
+  NameMacro4: 4,
+  DetailsMacro: 5,
+  FactionMacro: 6,
+  ContextMacro: 7,
+  BindingMacro: 8,
 });
 
 // Internal_Strings en values the handlers speak.
 const EN = localizedStrings({
-  pronounHe: 'he', pronounShe: 'she',
-  pronounHim: 'him', pronounHer: 'her',
-  pronounHimself: 'himself', pronounHerself: 'herself',
-  pronounHis: 'his', pronounHer2: 'her',
-  pronounHis2: 'his', pronounHers: 'hers',
-  comma: ',  ',   // Internal_Strings id 424 is a comma and TWO spaces (AUDIT 24)
+  pronounHe: 'he',
+  pronounShe: 'she',
+  pronounHim: 'him',
+  pronounHer: 'her',
+  pronounHimself: 'himself',
+  pronounHerself: 'herself',
+  pronounHis: 'his',
+  pronounHer2: 'her',
+  pronounHis2: 'his',
+  pronounHers: 'hers',
+  comma: ',  ', // Internal_Strings id 424 is a comma and TWO spaces (AUDIT 24)
   // Internal_Strings id 425 - AUDIT 24: the en value is '...never mind...',
   // NOT the key name. This is what DFU prints when a place will not
   // resolve, and the port had been printing 'Resolving Error'.
@@ -78,8 +116,15 @@ const EN = localizedStrings({
 
 // GetRandomDivine (QuestMCP.cs): Range(0,9) over the enum NAMES.
 const DIVINES = Object.freeze([
-  'Arkay', 'Zen', 'Mara', 'Ebonarm', 'Akatosh', 'Julianos', 'Dibella',
-  'Stendarr', 'Kynareth',
+  'Arkay',
+  'Zen',
+  'Mara',
+  'Ebonarm',
+  'Akatosh',
+  'Julianos',
+  'Dibella',
+  'Stendarr',
+  'Kynareth',
 ]);
 
 // Temple.Divines (Temple.cs:49-59) - the enum's VALUE is the factionId,
@@ -89,10 +134,16 @@ const DIVINES = Object.freeze([
 // this arm is `GetLocalizedText(divine.ToString())` (QuestMCP.cs:242),
 // so the name is DFU's key; the random arm is not localized in DFU.
 const DIVINE_BY_FACTION = localizedTable({
-  21: ['Arkay', 'Arkay'], 22: ['Zenithar', 'Zenithar'], 24: ['Mara', 'Mara'], 26: ['Akatosh', 'Akatosh'],
-  27: ['Julianos', 'Julianos'], 29: ['Dibella', 'Dibella'], 33: ['Stendarr', 'Stendarr'], 35: ['Kynareth', 'Kynareth'],
+  21: ['Arkay', 'Arkay'],
+  22: ['Zenithar', 'Zenithar'],
+  24: ['Mara', 'Mara'],
+  26: ['Akatosh', 'Akatosh'],
+  27: ['Julianos', 'Julianos'],
+  29: ['Dibella', 'Dibella'],
+  33: ['Stendarr', 'Stendarr'],
+  35: ['Kynareth', 'Kynareth'],
 });
-const THE_FIGHTERS_GUILD = 41;   // FactionFile.FactionIDs (:90)
+const THE_FIGHTERS_GUILD = 41; // FactionFile.FactionIDs (:90)
 
 /** Temple.GetDivine (Temple.cs:306-321): the temple hall answers by its
  *  own factionId; a TEMPLAR ORDER answers by its faction record's
@@ -109,20 +160,25 @@ function templeDivine(w, factionId) {
  *  the token is the exact matched substring (prefix..suffix), so
  *  adjacent punctuation survives the replace. */
 const MACRO_PATTERN = new RegExp(
-  '(?<nm4>____[a-zA-Z0-9.]+_)'
-  + '|(?<nm3>___[a-zA-Z0-9.]+_)'
-  + '|(?<nm2>__[a-zA-Z0-9.]+_)'
-  + '|(?<nm1>_[a-zA-Z0-9.]+_)'
-  + '|(?<fac>==[a-zA-Z0-9.]+_)'
-  + '|(?<bind>=#[a-zA-Z0-9.]+_)'
-  + '|(?<det>=[a-zA-Z0-9.]+_)'
-  + '|(?<ctx>%\\w+)');
+  '(?<nm4>____[a-zA-Z0-9.]+_)' +
+    '|(?<nm3>___[a-zA-Z0-9.]+_)' +
+    '|(?<nm2>__[a-zA-Z0-9.]+_)' +
+    '|(?<nm1>_[a-zA-Z0-9.]+_)' +
+    '|(?<fac>==[a-zA-Z0-9.]+_)' +
+    '|(?<bind>=#[a-zA-Z0-9.]+_)' +
+    '|(?<det>=[a-zA-Z0-9.]+_)' +
+    '|(?<ctx>%\\w+)',
+);
 
 const GROUP_TYPES = [
-  ['nm4', MACRO_TYPES.NameMacro4, 4], ['nm3', MACRO_TYPES.NameMacro3, 3],
-  ['nm2', MACRO_TYPES.NameMacro2, 2], ['nm1', MACRO_TYPES.NameMacro1, 1],
-  ['fac', MACRO_TYPES.FactionMacro, 2], ['bind', MACRO_TYPES.BindingMacro, 2],
-  ['det', MACRO_TYPES.DetailsMacro, 1], ['ctx', MACRO_TYPES.ContextMacro, 1],
+  ['nm4', MACRO_TYPES.NameMacro4, 4],
+  ['nm3', MACRO_TYPES.NameMacro3, 3],
+  ['nm2', MACRO_TYPES.NameMacro2, 2],
+  ['nm1', MACRO_TYPES.NameMacro1, 1],
+  ['fac', MACRO_TYPES.FactionMacro, 2],
+  ['bind', MACRO_TYPES.BindingMacro, 2],
+  ['det', MACRO_TYPES.DetailsMacro, 1],
+  ['ctx', MACRO_TYPES.ContextMacro, 1],
 ];
 
 export function getMacro(word) {
@@ -131,9 +187,7 @@ export function getMacro(word) {
   for (const [group, type, prefixLen] of GROUP_TYPES) {
     const token = match.groups[group];
     if (token == null) continue;
-    const symbol = type === MACRO_TYPES.ContextMacro
-      ? token.slice(prefixLen)
-      : token.slice(prefixLen, -1);
+    const symbol = type === MACRO_TYPES.ContextMacro ? token.slice(prefixLen) : token.slice(prefixLen, -1);
     return { token, type, symbol };
   }
   return { token: '', type: MACRO_TYPES.None, symbol: '' };
@@ -186,7 +240,7 @@ export function expandMacroValues(text, values = {}, questLike = null) {
       // a wall in front of the world that could.
       if (v != null) return String(v);
     }
-    const declared = sym in vals;   // the caller named it and could not fill it
+    const declared = sym in vals; // the caller named it and could not fill it
     if (ctx && HANDLERS[token]) {
       // ...and a caller's own context keeps DFU's throws (a %god with no
       // Divine throws in MacroHelper too), but THE WORLD'S may not: it now
@@ -200,7 +254,13 @@ export function expandMacroValues(text, values = {}, questLike = null) {
       // world inventing a random name for it.
       let v;
       if (questLike) v = getContextValue(token, ctx, ctx.hooks);
-      else { try { v = getMacroValue(token, null, ctx.hooks, null); } catch { return token; } }
+      else {
+        try {
+          v = getMacroValue(token, null, ctx.hooks, null);
+        } catch {
+          return token;
+        }
+      }
       // MACRO-ONE: the WORLD'S fallback never prints an error shape. A
       // row the world cannot answer (a subject-bound %god, %fon, %n with
       // no provider) stays the token - the audit's gate names it - rather
@@ -220,9 +280,15 @@ export function expandMacroValues(text, values = {}, questLike = null) {
  *  to remember to hand it over. A throwing or absent provider is no
  *  context - a macro walk must never cost a frame. */
 let _macroWorld = null;
-export function setMacroWorld(fn) { _macroWorld = typeof fn === 'function' ? fn : null; }
+export function setMacroWorld(fn) {
+  _macroWorld = typeof fn === 'function' ? fn : null;
+}
 export function macroWorld() {
-  try { return _macroWorld?.() ?? null; } catch { return null; }
+  try {
+    return _macroWorld?.() ?? null;
+  } catch {
+    return null;
+  }
 }
 const isErrorShape = (v, token) => typeof v !== 'string' || v.startsWith(token + '[');
 
@@ -252,10 +318,11 @@ export function expandRowValues(rows, values = null, questLike = null) {
   // symbol it carries, exactly as `expandMacroValues` orders them.
   if (!Array.isArray(rows)) return rows;
   const hasValues = !!values && !!Object.keys(values).length;
-  if (!hasValues && !questLike && !macroWorld()) return rows;   // MACRO-ONE: the world's context is a source too
+  if (!hasValues && !questLike && !macroWorld()) return rows; // MACRO-ONE: the world's context is a source too
   const one = (t) => expandMacroValues(t ?? '', values ?? {}, questLike);
-  return rows.map((row) => (typeof row === 'string' ? one(row)
-    : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row));
+  return rows.map((row) =>
+    typeof row === 'string' ? one(row) : row && typeof row === 'object' ? { ...row, text: one(row.text ?? '') } : row,
+  );
 }
 
 // ---- the quest's macro data source (QuestMCP.cs) ----
@@ -266,7 +333,7 @@ export const NOT_IMPLEMENTED = Symbol('NotImplementedException');
 
 const pronounOf = (quest, male, female) => {
   const last = quest.lastResourceReferenced;
-  return (last?.gender === GENDERS.Female) ? female : male;
+  return last?.gender === GENDERS.Female ? female : male;
 };
 
 /** QuestMacroDataSource (QuestMCP.cs): the quest-context answers.
@@ -286,25 +353,122 @@ const pronounOf = (quest, male, female) => {
  *  `min(floor(v/10), 9)`. The eighty words are the reference's own list - NOT TEXT.RSC, which is why nothing in
  *  ARENA2 supplies them and they are written down here. */
 export const STAT_RATINGS = Object.freeze({
-  strength: ['pathetic', 'frail', 'weak', 'below average', 'about average', 'fairly strong', 'athletic', 'very strong', 'powerful', 'superhuman'],
-  intelligence: ['vegetable-like', 'idiotic', 'half-witted', 'dim', 'about average', 'cunning', 'fairly clever', 'very intelligent', 'brilliant', 'genius'],
-  willpower: ['inane', 'submissive', 'passive', 'distracted', 'unassertive', 'stable', 'confident', 'strong-willed', 'very focused', 'enlightened'],
-  agility: ['oafish', 'bumbling', 'clumsy', 'awkward', 'about average', 'spry', 'nimble', 'dexterous', 'very agile', 'acrobatic'],
-  endurance: ['sickly', 'pitiable', 'unsteady', 'erratic', 'about average', 'above average', 'very healthy', 'hardy', 'titanic', 'immortal'],
-  personality: ['abhorrent', 'unpopular', 'anonymous', 'unassuming', 'unremarkable', 'interesting', 'charming', 'arresting', 'authoritative', 'charismatic'],
-  speed: ['inactive', 'sluggish', 'very slow', 'slow', 'about average', 'above average', 'fast', 'fleet-footed', 'lightning-fast', 'meteoric'],
-  luck: ['cursed', 'hopeless', 'ill-favored', 'unfortunate', 'about average', 'fairly lucky', 'lucky', 'fortunate', 'very auspicious', 'divinely favored'],
+  strength: [
+    'pathetic',
+    'frail',
+    'weak',
+    'below average',
+    'about average',
+    'fairly strong',
+    'athletic',
+    'very strong',
+    'powerful',
+    'superhuman',
+  ],
+  intelligence: [
+    'vegetable-like',
+    'idiotic',
+    'half-witted',
+    'dim',
+    'about average',
+    'cunning',
+    'fairly clever',
+    'very intelligent',
+    'brilliant',
+    'genius',
+  ],
+  willpower: [
+    'inane',
+    'submissive',
+    'passive',
+    'distracted',
+    'unassertive',
+    'stable',
+    'confident',
+    'strong-willed',
+    'very focused',
+    'enlightened',
+  ],
+  agility: [
+    'oafish',
+    'bumbling',
+    'clumsy',
+    'awkward',
+    'about average',
+    'spry',
+    'nimble',
+    'dexterous',
+    'very agile',
+    'acrobatic',
+  ],
+  endurance: [
+    'sickly',
+    'pitiable',
+    'unsteady',
+    'erratic',
+    'about average',
+    'above average',
+    'very healthy',
+    'hardy',
+    'titanic',
+    'immortal',
+  ],
+  personality: [
+    'abhorrent',
+    'unpopular',
+    'anonymous',
+    'unassuming',
+    'unremarkable',
+    'interesting',
+    'charming',
+    'arresting',
+    'authoritative',
+    'charismatic',
+  ],
+  speed: [
+    'inactive',
+    'sluggish',
+    'very slow',
+    'slow',
+    'about average',
+    'above average',
+    'fast',
+    'fleet-footed',
+    'lightning-fast',
+    'meteoric',
+  ],
+  luck: [
+    'cursed',
+    'hopeless',
+    'ill-favored',
+    'unfortunate',
+    'about average',
+    'fairly lucky',
+    'lucky',
+    'fortunate',
+    'very auspicious',
+    'divinely favored',
+  ],
 });
 const STAT_RATING_THRESHOLDS = Object.freeze([10, 20, 30, 40, 50, 60, 70, 80, 90, 1000]);
 
 export function statsMacroSource(entity) {
-  let lastStat = 'strength', lastStatValue = 0;   // the reference's own defaults
-  const read = (key) => { lastStat = key; lastStatValue = liveStat(entity, key); return String(lastStatValue); };
+  let lastStat = 'strength',
+    lastStatValue = 0; // the reference's own defaults
+  const read = (key) => {
+    lastStat = key;
+    lastStatValue = liveStat(entity, key);
+    return String(lastStatValue);
+  };
   return {
-    str: () => read('strength'), int: () => read('intelligence'),
-    wil: () => read('willpower'), agi: () => read('agility'),
-    end: () => read('endurance'), per: () => read('personality'),
-    spd: () => read('speed'), luck: () => read('luck'),
+    str: () => read('strength'),
+    int: () => read('intelligence'),
+    wil: () => read('willpower'),
+    agi: () => read('agility'),
+    end: () => read('endurance'),
+    per: () => read('personality'),
+    spd: () => read('speed'),
+    luck: () => read('luck'),
     attributeRating() {
       let i = 0;
       while (i < STAT_RATING_THRESHOLDS.length && lastStatValue >= STAT_RATING_THRESHOLDS[i]) i++;
@@ -343,21 +507,34 @@ export function questMacroSource(quest) {
       const name = getLocalizedFactionName(quest.factionId, record.name);
       return name.startsWith('The ') ? name.slice(4) : name;
     },
-    pronoun() { return pronounOf(quest, EN.pronounHe, EN.pronounShe); },
-    pronoun2() { return pronounOf(quest, EN.pronounHim, EN.pronounHer); },
-    pronoun2self() { return pronounOf(quest, EN.pronounHimself, EN.pronounHerself); },
-    pronoun3() { return pronounOf(quest, EN.pronounHis, EN.pronounHer2); },
-    pronoun4() { return pronounOf(quest, EN.pronounHis2, EN.pronounHers); },
+    pronoun() {
+      return pronounOf(quest, EN.pronounHe, EN.pronounShe);
+    },
+    pronoun2() {
+      return pronounOf(quest, EN.pronounHim, EN.pronounHer);
+    },
+    pronoun2self() {
+      return pronounOf(quest, EN.pronounHimself, EN.pronounHerself);
+    },
+    pronoun3() {
+      return pronounOf(quest, EN.pronounHis, EN.pronounHer2);
+    },
+    pronoun4() {
+      return pronounOf(quest, EN.pronounHis2, EN.pronounHers);
+    },
     // %vcn - the last-referenced Person's vampire clan by HOME region
     vampireNpcClan() {
       const person = quest.lastResourceReferenced;
       if (!person?.isPerson) return null;
-      if (person.factionData?.type !== 6) return null;   // FactionTypes.VampireClan
+      if (person.factionData?.type !== 6) return null; // FactionTypes.VampireClan
       let regionIndex = person.homeRegionIndex ?? -1;
       if (regionIndex === -1) regionIndex = world()?.currentRegionIndex?.() ?? -1;
       // L10N3e: the person's faction record came off GetFactionData, its
       // name in the player's language (QuestMCP.cs:162) - by its id
-      return world()?.regionVampireClanName?.(regionIndex) ?? getLocalizedFactionName(person.factionData.id, person.factionData.name);
+      return (
+        world()?.regionVampireClanName?.(regionIndex) ??
+        getLocalizedFactionName(person.factionData.id, person.factionData.name)
+      );
     },
     // %qdt %qdat - the CURRENT log step's date (the journal sets
     // currentLogMessageId while rendering; -1 falls to quest start)
@@ -377,7 +554,7 @@ export function questMacroSource(quest) {
     // read whatever currentRegionRace() felt like - and then added all
     // three to 201 as if they were one numbering.
     oath() {
-      let race = -1;   // Races (EntityEnums), -1 = None
+      let race = -1; // Races (EntityEnums), -1 = None
       const questors = [...(quest.questors?.keys() ?? [])];
       if (questors.length > 0) race = quest.getPerson({ name: questors[0] })?.race ?? -1;
       else {
@@ -407,7 +584,8 @@ export function questMacroSource(quest) {
       const w = world();
       const inside = w?.playerInside?.();
       let factionId = 0;
-      if (inside?.building?.buildingType === 14) {   // Temple
+      if (inside?.building?.buildingType === 14) {
+        // Temple
         factionId = inside.building.factionId ?? 0;
       } else {
         // C# indexes the table directly and would throw out of range;
@@ -415,7 +593,7 @@ export function questMacroSource(quest) {
         factionId = REGION_TEMPLES[w?.currentRegionIndex?.()] ?? 0;
       }
       if (factionId === 0 || factionId === THE_FIGHTERS_GUILD) {
-        return DIVINES[Math.floor((quest.rolls ?? Math.random)() * 9)];   // Range(0,9) on the quest's rolls
+        return DIVINES[Math.floor((quest.rolls ?? Math.random)() * 9)]; // Range(0,9) on the quest's rolls
       }
       return templeDivine(w, factionId);
     },
@@ -444,8 +622,7 @@ export function questMacroSource(quest) {
         if (place.siteDetails?.locationName === w?.currentLocation?.()?.name) {
           return w?.buildingCompassDirection?.(place.siteDetails.buildingKey) ?? EN.resolvingError;
         }
-        return place.siteDetails?.locationName + EN.comma
-          + (w?.locationCompassDirection?.(place) ?? EN.resolvingError);
+        return place.siteDetails?.locationName + EN.comma + (w?.locationCompassDirection?.(place) ?? EN.resolvingError);
       }
       return EN.resolvingError;
     },
@@ -457,7 +634,7 @@ export function questMacroSource(quest) {
 const source = (mcp) => mcp?.source ?? null;
 const call = (mcp, method) => {
   const src = source(mcp);
-  if (!src) return null;                       // C#: handler's mcp-null arm
+  if (!src) return null; // C#: handler's mcp-null arm
   if (typeof src[method] !== 'function') return NOT_IMPLEMENTED;
   return src[method]();
 };
@@ -466,11 +643,17 @@ const capFirst = (s) => s.substring(0, 1).toUpperCase() + s.substring(1);
 // %reg's static region override (MacroHelper.idRegion; talk windows
 // set it around expansions).
 let idRegion = -1;
-export const setIdRegion = (v) => { idRegion = v; };
+export const setIdRegion = (v) => {
+  idRegion = v;
+};
 // M-X: SetFactionIdsAndRegionID's other two outs - the news pair
 // %fx1/%fx2 (and the lord/title reads over them) speak these.
-let idFaction1 = -1, idFaction2 = -1;
-export const setIdFactions = (f1, f2) => { idFaction1 = f1; idFaction2 = f2; };
+let idFaction1 = -1,
+  idFaction2 = -1;
+export const setIdFactions = (f1, f2) => {
+  idFaction1 = f1;
+  idFaction2 = f2;
+};
 
 /** CapFirst over a source method's answer, leaving a null/non-string
  *  miss alone - MacroHelper's *Cap handlers all read
@@ -529,11 +712,11 @@ const HANDLERS = {
   // (MacroHelper.cs:662-663) - by the child's id
   '%rn': (mcp, hooks) => {
     const w = hooks?.world;
-    const region = w?.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.());   // FactionTypes.Province
+    const region = w?.findFactionByTypeAndRegion?.(7, w.currentRegionIndex?.()); // FactionTypes.Province
     if (region?.children) {
       for (const childID of region.children) {
         const child = w.getFactionData?.(childID);
-        if (child?.type === 4) return getLocalizedFactionName(childID, child.name);   // Individual
+        if (child?.type === 4) return getLocalizedFactionName(childID, child.name); // Individual
       }
     }
     if (!w) return null;
@@ -581,7 +764,7 @@ const HANDLERS = {
       // L10N3e: GetFactionData's name, in the player's language (MacroHelper.cs:320-322)
       if (firstChild?.type === 4) return getLocalizedFactionName(fd.children[0], firstChild.name);
     }
-    const gender = ((fd?.ruler ?? 0) + 1) % 2;   // C#: (Genders)((ruler+1)%2) - even rulers are female
+    const gender = ((fd?.ruler ?? 0) + 1) % 2; // C#: (Genders)((ruler+1)%2) - even rulers are female
     srand((fd?.rulerNameSeed ?? 0) & 0xffff);
     return fullName(getNameBank(FACTION_RACE_KEYS[fd?.race ?? 0]), gender);
   },
@@ -614,9 +797,11 @@ const HANDLERS = {
   // own clock, so every non-quest context (the talk MCP above all)
   // answered [nullMCP] where DFU prints the date. It reads the same
   // clock the rest of the date/time block does now.
-  '%dat': (mcp, hooks) => { const d = nowDate(hooks); return d ? dateString(d) : null; },
-  '%pg3': (mcp, hooks) =>
-    (hooks?.playerGender?.() === 'female') ? EN.pronounHer2 : EN.pronounHis,
+  '%dat': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? dateString(d) : null;
+  },
+  '%pg3': (mcp, hooks) => (hooks?.playerGender?.() === 'female' ? EN.pronounHer2 : EN.pronounHis),
   // AUDIT 24 systems: MacroHelper.cs:240-245 registers ALL SIX
   // capitalized forms, each CapFirst over the same source method as
   // its lowercase twin (Pronoun3Cap :1355-1359 and friends). The port
@@ -681,7 +866,7 @@ const HANDLERS = {
   },
   '%mad': (mcp, hooks) => {
     const e = hooks?.playerEntity?.();
-    return e ? String(Math.floor(liveStat(e, 'willpower') / 10)) : null;   // PlayerEntity.MagicResist
+    return e ? String(Math.floor(liveStat(e, 'willpower') / 10)) : null; // PlayerEntity.MagicResist
   },
   // the four BIOGRAPHY-fed modifiers, in C#'s "+0;-0;0" signed format
   '%thd': (mcp, hooks) => signedOff(hooks, 'toHitModifier'),
@@ -704,32 +889,45 @@ const HANDLERS = {
   '%min': (mcp, hooks) => str(nowDate(hooks)?.minute),
   '%tim': (mcp, hooks) => {
     const d = nowDate(hooks);
-    return d ? `${String(d.hour).padStart(2, '0')}:${String(d.minute).padStart(2, '0')}` : null;   // MinTimeString
+    return d ? `${String(d.hour).padStart(2, '0')}:${String(d.minute).padStart(2, '0')}` : null; // MinTimeString
   },
-  '%day': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).day + 1),   // DayOfMonth is ONE-based (:626)
-  '%dayn': (mcp, hooks) => { const d = nowDate(hooks); return d ? dayName(d) : null; },
+  '%day': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).day + 1), // DayOfMonth is ONE-based (:626)
+  '%dayn': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? dayName(d) : null;
+  },
   '%days': (mcp, hooks) => {
     const d = nowDate(hooks);
-    return d ? `${d.day + 1}${daySuffix(d.day + 1)}` : null;   // DayOfMonthWithSuffix (:195-198)
+    return d ? `${d.day + 1}${daySuffix(d.day + 1)}` : null; // DayOfMonthWithSuffix (:195-198)
   },
-  '%mon': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).month + 1),   // MonthOfYear, one-based
-  '%monn': (mcp, hooks) => { const d = nowDate(hooks); return d ? monthName(d) : null; },
+  '%mon': (mcp, hooks) => str(nowDate(hooks) && nowDate(hooks).month + 1), // MonthOfYear, one-based
+  '%monn': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? monthName(d) : null;
+  },
   '%year': (mcp, hooks) => str(nowDate(hooks)?.year),
-  '%sea': (mcp, hooks) => { const d = nowDate(hooks); return d ? seasonName(d) : null; },
-  '%sign': (mcp, hooks) => { const d = nowDate(hooks); return d ? birthSignName(d) : null; },
+  '%sea': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? seasonName(d) : null;
+  },
+  '%sign': (mcp, hooks) => {
+    const d = nowDate(hooks);
+    return d ? birthSignName(d) : null;
+  },
 
   // the PLAYER IDENTITY block
-  '%pcl': (mcp, hooks) => {   // GetLastname: parts[1] or the whole name
+  '%pcl': (mcp, hooks) => {
+    // GetLastname: parts[1] or the whole name
     const name = hooks?.playerName?.();
     if (name == null) return null;
     const parts = name.split(' ');
     return parts.length > 1 ? parts[1] : name;
   },
-  '%pg': (mcp, hooks) => pgender(hooks) ? EN.pronounShe : EN.pronounHe,   // %pg and %pg1 share PlayerPronoun
-  '%pg1': (mcp, hooks) => pgender(hooks) ? EN.pronounShe : EN.pronounHe,
-  '%pg2': (mcp, hooks) => pgender(hooks) ? EN.pronounHer : EN.pronounHim,
-  '%pg2self': (mcp, hooks) => pgender(hooks) ? EN.pronounHerself : EN.pronounHimself,
-  '%pg4': (mcp, hooks) => pgender(hooks) ? EN.pronounHers : EN.pronounHis2,
+  '%pg': (mcp, hooks) => (pgender(hooks) ? EN.pronounShe : EN.pronounHe), // %pg and %pg1 share PlayerPronoun
+  '%pg1': (mcp, hooks) => (pgender(hooks) ? EN.pronounShe : EN.pronounHe),
+  '%pg2': (mcp, hooks) => (pgender(hooks) ? EN.pronounHer : EN.pronounHim),
+  '%pg2self': (mcp, hooks) => (pgender(hooks) ? EN.pronounHerself : EN.pronounHimself),
+  '%pg4': (mcp, hooks) => (pgender(hooks) ? EN.pronounHers : EN.pronounHis2),
 
   // RANDOM NAMES (the mcp-less %ln off a RANDOM race's bank; the
   // mcp-sourced pairs ride the biography/talk sources)
@@ -759,34 +957,42 @@ const HANDLERS = {
   '%ltn': (mcp, hooks) => {
     const rep = hooks?.world?.legalRepNow?.();
     if (rep == null) return null;
-    return legalStandingWord(rep);   // REP5: the ladder's one home (systems/legalBands.js), which the notices read too; L10N3d: in the player's language there
+    return legalStandingWord(rep); // REP5: the ladder's one home (systems/legalBands.js), which the notices read too; L10N3d: in the player's language there
   },
 
   // PLACE (globals over the world hook)
-  '%lp': (mcp, hooks) => {   // LocalProvince: Breton region -> High Rock, else Hammerfell
+  '%lp': (mcp, hooks) => {
+    // LocalProvince: Breton region -> High Rock, else Hammerfell
     // BAY-LEFT-B (B7): a province's region past the Bay (WW-R, 62..70) is its own province - Skyrim, Morrowind, Cyrodiil -
     // as shown (GetLocalizedRegionName, %reg's), where DFU's two answers said "Hammerfell" (or "High Rock") everywhere
     const r = hooks?.world?.currentRegionIndex?.();
     if (isProvinceRegion(r)) return getLocalizedRegionName(r, () => REGION_NAMES[r]);
     const race = hooks?.world?.currentRegionRace?.();
     if (race == null) return null;
-    return race === LOCAL_PROVINCE_BRETON ? localizedText('highRock', 'High Rock') : localizedText('hammerfell', 'Hammerfell');
+    return race === LOCAL_PROVINCE_BRETON
+      ? localizedText('highRock', 'High Rock')
+      : localizedText('hammerfell', 'Hammerfell');
   },
-  '%ct': (mcp, hooks) => {   // CityType's switch, verbatim strings
+  '%ct': (mcp, hooks) => {
+    // CityType's switch, verbatim strings
     const t = hooks?.world?.currentLocationType?.();
     if (t == null) return null;
     return CITY_TYPES[t] ?? LOCATION_TYPE_NAMES[t] ?? String(t);
   },
-  '%cn2': (mcp, hooks) => {   // the region's first OTHER TownCity
+  '%cn2': (mcp, hooks) => {
+    // the region's first OTHER TownCity
     const w = hooks?.world;
     const region = w?.maps?.getRegion?.(w.currentRegionIndex?.());
-    if (!region?.mapTable) return null;   // headless: no region was read at all
+    if (!region?.mapTable) return null; // headless: no region was read at all
     const here = w.currentLocationIndex?.() ?? -1;
     for (let i = 0; i < region.mapTable.length; i++) {
       // GetLocalizedLocationName(MapId, MapNames[i]) (:583) always
       // yields a string, so a found-but-unnamed row is not a miss either.
       if (i !== here && region.mapTable[i].locationType === TOWN_CITY_TYPE) {
-        return getLocalizedLocationName(region.mapTable[i].mapId, region.mapNames?.[i] ?? localizedText('daggerfall', CITY_NAME2_FALLBACK));
+        return getLocalizedLocationName(
+          region.mapTable[i].mapId,
+          region.mapNames?.[i] ?? localizedText('daggerfall', CITY_NAME2_FALLBACK),
+        );
       }
     }
     // MacroHelper.cs:585 `return GetLocalizedText("daggerfall")` -
@@ -795,7 +1001,8 @@ const HANDLERS = {
     // and it must not render the [nullMCP] sentinel.
     return localizedText('daggerfall', CITY_NAME2_FALLBACK);
   },
-  '%cbd': (mcp, hooks) => {   // CurrentBuilding: "[invalid]" outside
+  '%cbd': (mcp, hooks) => {
+    // CurrentBuilding: "[invalid]" outside
     const w = hooks?.world;
     if (!w) return null;
     return w.currentBuildingName?.() ?? '[invalid]';
@@ -863,7 +1070,7 @@ const HANDLERS = {
   '%clc': (mcp) => call(mcp, 'chancePerLevel'),
   '%cld': (mcp) => call(mcp, 'durationPerLevel'),
   '%clm': (mcp) => call(mcp, 'magnitudePerLevel'),
-  '%mpw': (mcp) => call(mcp, 'magicPowers'),   // token-level in C#; the string arm until the spell MCP lands (recorded)
+  '%mpw': (mcp) => call(mcp, 'magicPowers'), // token-level in C#; the string arm until the spell MCP lands (recorded)
 
   // ── E7 (2026-09-02): THE TABLE'S LAST THIRTY-SIX ROWS ──────────
   // M-X left thirty-seven of MacroHelper's rows RECORDED at their
@@ -948,9 +1155,9 @@ const HANDLERS = {
   // talkMacros.js's talkMacroHooks derives these seams from it; a
   // context with no TalkManager at all answers null -> [nullMCP],
   // the headless charter.
-  '%1com': (mcp, hooks) => hooks?.world?.talkPCGreetingOrFollowUpText?.() ?? null,   // GreetingOrFollowUpText :957-960
-  '%hnr': (mcp, hooks) => hooks?.world?.talkHonoric?.() ?? null,                     // Honorific :890-893
-  '%fcn': (mcp, hooks) => hooks?.world?.talkLocationOfRegionalBuilding?.() ?? null,  // LocationOfRegionalBuilding :1097-1100
+  '%1com': (mcp, hooks) => hooks?.world?.talkPCGreetingOrFollowUpText?.() ?? null, // GreetingOrFollowUpText :957-960
+  '%hnr': (mcp, hooks) => hooks?.world?.talkHonoric?.() ?? null, // Honorific :890-893
+  '%fcn': (mcp, hooks) => hooks?.world?.talkLocationOfRegionalBuilding?.() ?? null, // LocationOfRegionalBuilding :1097-1100
   /** DialogKeySubject (:1059-1083) - %key. The switch is on the
    *  key-subject TYPE, and four of its six arms answer the same
    *  field; Work goes through GetWorkString and QuestTopic prefers
@@ -999,10 +1206,10 @@ const HANDLERS = {
   // not open should say. (scenes/arrestFlow.js still answers the
   // court record's own %cri/%pen/%gtp/%dip through its VALUE MAP,
   // which resolves before the ladder is ever reached.)
-  '%cri': (mcp, hooks) => hooks?.world?.courtCrimeName?.() ?? null,          // Crime :665-704
-  '%pen': (mcp, hooks) => hooks?.world?.courtPenaltyText?.() ?? null,        // Penalty :706-719
-  '%gtp': (mcp, hooks) => str(hooks?.world?.courtFine?.()),                  // GoldToPay :721-724
-  '%dip': (mcp, hooks) => str(hooks?.world?.courtDaysInPrison?.()),          // DaysInPrison :726-729
+  '%cri': (mcp, hooks) => hooks?.world?.courtCrimeName?.() ?? null, // Crime :665-704
+  '%pen': (mcp, hooks) => hooks?.world?.courtPenaltyText?.() ?? null, // Penalty :706-719
+  '%gtp': (mcp, hooks) => str(hooks?.world?.courtFine?.()), // GoldToPay :721-724
+  '%dip': (mcp, hooks) => str(hooks?.world?.courtDaysInPrison?.()), // DaysInPrison :726-729
 };
 
 // M-X: the BIOGRAPHY %q block - Q1..Q12 with the a/b arms (C# has
@@ -1014,7 +1221,7 @@ for (let n = 1; n <= 12; n++) {
 
 // M-X helper laws
 const str = (v) => (v == null ? null : String(v));
-const signedFmt = (n) => (n > 0 ? `+${n}` : String(n));   // C#'s "+0;-0;0"
+const signedFmt = (n) => (n > 0 ? `+${n}` : String(n)); // C#'s "+0;-0;0"
 /** ATTRMACRO1 (2026-09-18, Mac: "none of the attribute explanations show actual values"): THESE ARE COMPUTED, NOT
  *  STORED. DaggerfallEntity declares all four as properties over the LIVE stat - DamageModifier is
  *  FormulaHelper.DamageModifier(stats.LiveStrength), ToHitModifier the same over LiveAgility, HitPointsModifier and
@@ -1043,7 +1250,8 @@ const nowDate = (hooks) => {
   return sec == null ? null : dateFromSeconds(CLASSIC_EPOCH_IN_SECONDS + sec);
 };
 /** GetSuffix (DaggerfallDateTime.cs:641-651), on the ONE-based day. */
-const daySuffix = (day) => (day === 1 || day === 21 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th');
+const daySuffix = (day) =>
+  day === 1 || day === 21 ? 'st' : day === 2 || day === 22 ? 'nd' : day === 3 || day === 23 ? 'rd' : 'th';
 /** RaceTemplate ID 1 = Breton (the bridge's currentRegionRace answers
  *  REGION_RACES + 1, RaceTemplate ids). */
 const LOCAL_PROVINCE_BRETON = 1;
@@ -1060,23 +1268,47 @@ const CITY_NAME2_FALLBACK = 'Daggerfall';
  *  ReligionTemple 5 temple, ReligionCult 9 shrine; everything else
  *  falls to the default:, Enum.ToString() - the member NAME. */
 const CITY_TYPES = localizedTable({
-  0: ['city', 'city'], 1: ['hamlet', 'hamlet'], 2: ['village', 'village'], 3: ['farm', 'farm'],
-  11: ['shack', 'shack'], 8: ['manor', 'manor'], 6: ['community', 'community'], 5: ['temple', 'temple'], 9: ['shrine', 'shrine'],
+  0: ['city', 'city'],
+  1: ['hamlet', 'hamlet'],
+  2: ['village', 'village'],
+  3: ['farm', 'farm'],
+  11: ['shack', 'shack'],
+  8: ['manor', 'manor'],
+  6: ['community', 'community'],
+  5: ['temple', 'temple'],
+  9: ['shrine', 'shrine'],
 });
 /** The default: arm, `gps.CurrentLocationType.ToString()`
  *  (MacroHelper.cs:617). On a DEFINED DFRegion.LocationTypes member
  *  C# stringifies the MEMBER NAME - "Graveyard", "Coven",
  *  "DungeonKeep" - not the number; only a value the enum does not
  *  define stringifies as its digits, which is the String(t) tail. */
-const LOCATION_TYPE_NAMES = Object.freeze(Object.fromEntries(
-  Object.entries(LOCATION_TYPES).map(([name, id]) => [id, name])));
-
+const LOCATION_TYPE_NAMES = Object.freeze(
+  Object.fromEntries(Object.entries(LOCATION_TYPES).map(([name, id]) => [id, name])),
+);
 
 // C#'s table carries these with a NULL handler - '[unhandled]'.
-const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef',
+const NULL_HANDLERS = new Set([
+  '%1hn',
+  '%2hn',
+  '%3hn',
+  '%cbl',
+  '%dts',
+  '%ef',
   // M-X: the rest of C#'s null rows - each renders [unhandled], verbatim
-  '%hol', '%hrg', '%htwn', '%key2', '%mit', '%on', '%pdg', '%plq', '%pnq',
-  '%ptm', '%qot', '%vn', '%wpn',
+  '%hol',
+  '%hrg',
+  '%htwn',
+  '%key2',
+  '%mit',
+  '%on',
+  '%pdg',
+  '%plq',
+  '%pnq',
+  '%ptm',
+  '%qot',
+  '%vn',
+  '%wpn',
   // E7: %tcn joins them. C#'s row IS null (MacroHelper.cs:221), so
   // the table's answer is [unhandled]; the travel window's own
   // `Replace("%tcn", name)` (DaggerfallTravelMapWindow.cs:1694, and
@@ -1084,7 +1316,8 @@ const NULL_HANDLERS = new Set(['%1hn', '%2hn', '%3hn', '%cbl', '%dts', '%ef',
   // 31 that never reaches this ladder. M-X had recorded it as a port
   // handler standing where C# has null, with a carve-out in the
   // coverage gate; there was never a handler to carve out.
-  '%tcn']);
+  '%tcn',
+]);
 
 /** M-X: the coverage gate's surface - the table's whole membership,
  *  so test/systems/quest/macrocoverage.test.js can diff it against MacroHelper.cs
@@ -1142,7 +1375,11 @@ export function sourceValues(source) {
   for (const token of Object.keys(HANDLERS)) {
     out[token.slice(1)] = () => {
       let v;
-      try { v = getMacroValue(token, mcp, null, null); } catch { return null; }
+      try {
+        v = getMacroValue(token, mcp, null, null);
+      } catch {
+        return null;
+      }
       return isErrorShape(v, token) ? null : v;
     };
   }

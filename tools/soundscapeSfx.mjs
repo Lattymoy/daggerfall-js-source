@@ -24,7 +24,27 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bake, writeWav8, DF_RATE } from './sndify.mjs';
-import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope, unit, knock, grit, modes, burst, groan, splash } from './sfxSynth.mjs';
+import {
+  RATE,
+  rng,
+  seconds,
+  buf,
+  decay,
+  attack,
+  biquad,
+  sweepLowpass,
+  noise,
+  mix,
+  softClip,
+  envelope,
+  unit,
+  knock,
+  grit,
+  modes,
+  burst,
+  groan,
+  splash,
+} from './sfxSynth.mjs';
 import { isMain } from './lib/isMain.mjs';
 
 const OUT = 'public/sfx';
@@ -40,7 +60,7 @@ function crash(seed, { len = 3.2, curl = 0.85, run = 1.1 } = {}) {
     const nc = seconds(curl + 0.1);
     const rise = noise(nc, rand);
     envelope(rise, (i) => Math.pow(Math.min(1, i / seconds(curl)), 1.8) * Math.min(1, (nc - i) / seconds(0.1)));
-    mix(out, unit(sweepLowpass(rise, 350, 2600, curl * 0.5)), 0, 0.55);   // the top opening out as it rises
+    mix(out, unit(sweepLowpass(rise, 350, 2600, curl * 0.5)), 0, 0.55); // the top opening out as it rises
     const nb = seconds(len - curl);
     const hit = noise(nb, rand);
     envelope(hit, (i) => attack(i, 15) * decay(i, run));
@@ -69,7 +89,9 @@ function hoot(rand, f, dur, { slide = 0.06, trem = 0, tremHz = 0 } = {}) {
     out[i] = (Math.sin(ph) + 0.08 * Math.sin(2 * ph)) * env * tr;
   }
   const breath = biquad(noise(n, rand), { type: 'bandpass', f0: f, q: 6 });
-  for (let i = 0; i < n; i++) out[i] += breath[i] * 0.6 * Math.min(1, i / seconds(0.035)) * Math.max(0, Math.min(1, (seconds(dur) - i) / seconds(0.09)));
+  for (let i = 0; i < n; i++)
+    out[i] +=
+      breath[i] * 0.6 * Math.min(1, i / seconds(0.035)) * Math.max(0, Math.min(1, (seconds(dur) - i) / seconds(0.09)));
   return unit(out);
 }
 
@@ -98,20 +120,31 @@ function owl(seed, kind) {
 function howl(seed, { lo = 360, hi = 640, end = 420, dur = 2.6, len = 3.8 } = {}) {
   return () => {
     const rand = rng(seed);
-    const n = seconds(dur), N = seconds(len);
+    const n = seconds(dur),
+      N = seconds(len);
     const voice = new Float32Array(N);
     let ph = 0;
     for (let i = 0; i < n; i++) {
       const u = i / n;
-      const glide = u < 0.22 ? lo + (hi - lo) * Math.sin((Math.PI / 2) * (u / 0.22)) : u < 0.7 ? hi : hi + (end - hi) * Math.pow((u - 0.7) / 0.3, 1.4);
+      const glide =
+        u < 0.22
+          ? lo + (hi - lo) * Math.sin((Math.PI / 2) * (u / 0.22))
+          : u < 0.7
+            ? hi
+            : hi + (end - hi) * Math.pow((u - 0.7) / 0.3, 1.4);
       const f = glide + 9 * Math.sin((2 * Math.PI * 5.2 * i) / RATE) * Math.min(1, u / 0.3);
       ph += (2 * Math.PI * f) / RATE;
       const env = Math.min(1, u / 0.08) * Math.min(1, (1 - u) / 0.18);
       voice[i] = (Math.sin(ph) + 0.28 * Math.sin(2 * ph) + 0.1 * Math.sin(3 * ph)) * env;
     }
     const breath = biquad(noise(N, rand), { type: 'bandpass', f0: 900, q: 1.4 });
-    for (let i = 0; i < n; i++) voice[i] += breath[i] * 0.25 * Math.min(1, i / (n * 0.08)) * Math.min(1, (n - i) / (n * 0.18));
-    const far = biquad(biquad(unit(voice), { type: 'lowpass', f0: 2200, q: 0.7 }), { type: 'lowpass', f0: 2200, q: 0.7 });
+    for (let i = 0; i < n; i++)
+      voice[i] += breath[i] * 0.25 * Math.min(1, i / (n * 0.08)) * Math.min(1, (n - i) / (n * 0.18));
+    const far = biquad(biquad(unit(voice), { type: 'lowpass', f0: 2200, q: 0.7 }), {
+      type: 'lowpass',
+      f0: 2200,
+      q: 0.7,
+    });
     const out = new Float32Array(N);
     mix(out, far, 0, 1);
     mix(out, biquad(far, { type: 'lowpass', f0: 1100, q: 0.7 }), 0.21, 0.32);
@@ -135,14 +168,15 @@ function bakeRaw(mono) {
   for (const v of mono) max = Math.max(max, Math.abs(v));
   const g = max > 0 ? 0.92 / max : 1;
   const out = new Uint8Array(mono.length);
-  for (let i = 0; i < mono.length; i++) out[i] = Math.max(0, Math.min(255, Math.round(Math.max(-1, Math.min(1, mono[i] * g)) * 127 + 128)));
+  for (let i = 0; i < mono.length; i++)
+    out[i] = Math.max(0, Math.min(255, Math.round(Math.max(-1, Math.min(1, mono[i] * g)) * 127 + 128)));
   return out;
 }
 
 if (isMain(import.meta.url)) {
   const rawDir = process.argv.find((a) => a.startsWith('--raw='))?.split('=')[1] ?? null;
   const measuring = process.argv.includes('--measure');
-  const { measure, measureLine } = measuring ? await import('./sfxBake.mjs') : {};   // the audition bench's four numbers
+  const { measure, measureLine } = measuring ? await import('./sfxBake.mjs') : {}; // the audition bench's four numbers
   mkdirSync(OUT, { recursive: true });
   if (rawDir) mkdirSync(rawDir, { recursive: true });
   for (const [name, make, peak] of CLIPS) {
@@ -151,6 +185,9 @@ if (isMain(import.meta.url)) {
     writeFileSync(join(OUT, `${name}.wav`), writeWav8(pcm));
     if (rawDir) writeFileSync(join(rawDir, `${name}-44k.wav`), writeWav8(bakeRaw(mono), RATE));
     if (measuring) console.log(measureLine(`${name}.wav`, measure(pcm)));
-    else console.log(`${name}.wav  ${DF_RATE}Hz 8-bit mono  ${pcm.length} samples  ${(pcm.length / DF_RATE).toFixed(3)}s  ${(44 + pcm.length)} bytes`);
+    else
+      console.log(
+        `${name}.wav  ${DF_RATE}Hz 8-bit mono  ${pcm.length} samples  ${(pcm.length / DF_RATE).toFixed(3)}s  ${44 + pcm.length} bytes`,
+      );
   }
 }

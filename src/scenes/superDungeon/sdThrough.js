@@ -47,17 +47,21 @@ const NONE = Object.freeze([]);
  * column-major, their place at 12-14.
  */
 export function sdVeilModelOf(eye, through, end) {
-  const b = end?.window?.model ?? end?.bay?.model ?? null, a = through?.window?.model ?? null;
+  const b = end?.window?.model ?? end?.bay?.model ?? null,
+    a = through?.window?.model ?? null;
   if (!a || !b || !eye) return a ?? b;
   return far2(a, eye) <= far2(b, eye) ? a : b;
 }
 /** How far a model's place stands from `eye`, squared. */
-function far2(m, eye) { return (m[12] - eye[0]) ** 2 + (m[13] - eye[1]) ** 2 + (m[14] - eye[2]) ** 2; }
+function far2(m, eye) {
+  return (m[12] - eye[0]) ** 2 + (m[13] - eye[1]) ** 2 + (m[14] - eye[2]) ** 2;
+}
 /** AUDIT SD-THROUGH (B8): THE TWO LOOKS FARTHER FIRST, for a pass that writes no depth - the nearer window drawn last,
  *  over the farther where they meet on the screen; one kept pair, filled (nothing made a frame). */
 export function sdRingsFarFirst(eye, through, end) {
   const nearIsThrough = !!through?.window?.model && sdVeilModelOf(eye, through, end) === through.window.model;
-  _pair[0] = nearIsThrough ? end : through; _pair[1] = nearIsThrough ? through : end;
+  _pair[0] = nearIsThrough ? end : through;
+  _pair[1] = nearIsThrough ? through : end;
   return _pair;
 }
 const _pair = [null, null];
@@ -70,39 +74,89 @@ const _pair = [null, null];
  * or null), `dynamicDraws` the level's.
  * @param {{ renderer?: any, audio?: any, now?: () => number, word?: () => any, look?: () => any, clock?: (() => number) | null, onStep?: () => (boolean|null|void), say?: (text: string) => void, probe?: any, riftOf?: () => any, dynamicDraws?: any[] | null }} [deps]
  */
-export function createSdThrough({ renderer = null, audio = null, now = () => performance.now(), word = () => null, look = () => null, clock = null, onStep = () => {}, say = () => {}, probe = null, riftOf = () => null, dynamicDraws = null } = {}) {
+export function createSdThrough({
+  renderer = null,
+  audio = null,
+  now = () => performance.now(),
+  word = () => null,
+  look = () => null,
+  clock = null,
+  onStep = () => {},
+  say = () => {},
+  probe = null,
+  riftOf = () => null,
+  dynamicDraws = null,
+} = {}) {
   // AUDIT SD-THROUGH: pressed alone (B1), its press yielding (B3), its plaque read as it is read (B10)
-  const end = createSdEnd({ renderer, audio, now, onRift: onStep, riftKey: SD_THROUGH_KEY, riftTitle: () => SD_THROUGH_TEXT.title, riftTo: () => SD_THROUGH_TEXT.to, riftCount: () => word()?.count ?? null, look, clock, walkIn: false, riftYields: true });
+  const end = createSdEnd({
+    renderer,
+    audio,
+    now,
+    onRift: onStep,
+    riftKey: SD_THROUGH_KEY,
+    riftTitle: () => SD_THROUGH_TEXT.title,
+    riftTo: () => SD_THROUGH_TEXT.to,
+    riftCount: () => word()?.count ?? null,
+    look,
+    clock,
+    walkIn: false,
+    riftYields: true,
+  });
   /** whether it stood this visit, whether it is decided out for it, when the word is next asked, and where I stood last
    *  (B9: its light let go far off) */
-  let stood = false, out = false, askAt = -Infinity;
+  let stood = false,
+    out = false,
+    askAt = -Infinity;
   const me = [0, 0, 0];
-  let hasMe = false, ringAt = null;
+  let hasMe = false,
+    ringAt = null;
   return {
     /** One frame: the word asked (once a second) - stood beside me, or taken out; then the ring's own frame (its press
      *  handed to `onStep`). `feet` mine (null: none this frame), `yaw` my heading, `eye` the reveal's. */
     frame(feet, yaw = 0, eye = null) {
       const t = now();
-      if (feet) { me[0] = feet[0]; me[1] = feet[1]; me[2] = feet[2]; hasMe = true; }
+      if (feet) {
+        me[0] = feet[0];
+        me[1] = feet[1];
+        me[2] = feet[2];
+        hasMe = true;
+      }
       if (!out && feet && t >= askAt) {
         askAt = t + SD_THROUGH_ASK_MS;
         const w = word();
-        if (stood) { if (w && !w.returns) { end.clear(); out = true; ringAt = null; } }   // the boss fell: out with the Return, for good
+        if (stood) {
+          if (w && !w.returns) {
+            end.clear();
+            out = true;
+            ringAt = null;
+          }
+        } // the boss fell: out with the Return, for good
         else if (w?.through && w.word == null && probe) {
           const at = riftOf()?.at;
           // AUDIT SD-THROUGH (B6): the Rift right there is not yet, never "none this visit" - a floor above it, or a walk
           // away from it, asks again; (B2, B5): nowhere it stands whole, or my feet off their floor, is not yet too
-          const near = !!at && Math.hypot(feet[0] - at[0], feet[2] - at[2]) < SD_THROUGH_NEAR_RIFT_M && Math.abs(feet[1] - at[1]) < SD_THROUGH_NEAR_RIFT_M;
+          const near =
+            !!at &&
+            Math.hypot(feet[0] - at[0], feet[2] - at[2]) < SD_THROUGH_NEAR_RIFT_M &&
+            Math.abs(feet[1] - at[1]) < SD_THROUGH_NEAR_RIFT_M;
           const place = near ? null : sdThroughPlace(feet, yaw, probe);
-          if (place && end.stand({ rift: place, retAt: null, dynamicDraws, probe })) { stood = true; ringAt = place.at; say(SD_THROUGH_TEXT.opens); }
+          if (place && end.stand({ rift: place, retAt: null, dynamicDraws, probe })) {
+            stood = true;
+            ringAt = place.at;
+            say(SD_THROUGH_TEXT.opens);
+          }
         }
       }
       return end.frame(feet, eye);
     },
     /** Whether it stands now. */
-    get stands() { return !!end.rift; },
+    get stands() {
+      return !!end.rift;
+    },
     /** Where it stands ({ at, size, face } or null - tests, the host's own questions). */
-    get rift() { return end.rift; },
+    get rift() {
+      return end.rift;
+    },
     targets: () => end.targets(),
     hoverName: (key) => end.hoverName(key),
     press: (key) => end.press(key),
@@ -110,10 +164,19 @@ export function createSdThrough({ renderer = null, audio = null, now = () => per
     halos: () => end.halos(),
     lights() {
       const r = ringAt;
-      if (r && hasMe && (r[0] - me[0]) ** 2 + (r[1] - me[1]) ** 2 + (r[2] - me[2]) ** 2 > SD_THROUGH_LIGHT_M * SD_THROUGH_LIGHT_M) return NONE;   // B9: its foot, kept - nothing made a frame
+      if (
+        r &&
+        hasMe &&
+        (r[0] - me[0]) ** 2 + (r[1] - me[1]) ** 2 + (r[2] - me[2]) ** 2 > SD_THROUGH_LIGHT_M * SD_THROUGH_LIGHT_M
+      )
+        return NONE; // B9: its foot, kept - nothing made a frame
       return end.lights();
     },
     /** Gone with the dungeon: its meshes and its bell. */
-    clear() { end.clear(); out = true; ringAt = null; },
+    clear() {
+      end.clear();
+      out = true;
+      ringAt = null;
+    },
   };
 }

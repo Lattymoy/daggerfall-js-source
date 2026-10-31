@@ -52,7 +52,19 @@ export const EG_RECEIPT_MAX = 640;
 export const EG_RECEIPT_KINDS = Object.freeze(['w', 'x', 'v']);
 // EG-E3: and the two the relay mints that the list lacked - a witness forsaking (net/eliteGates/egBrain.js egForsake) and THE SEAL
 // (section 13.3, a good end) - whose receipts mintEgReceipt refused, so a forsaken member's stake and end were never said
-export const EG_END_WHYS = Object.freeze(['fall', 'home', 'tear', 'wipe', 'last', 'empty', 'void', 'gone', 'rehearsal', 'forsake', 'seal']);
+export const EG_END_WHYS = Object.freeze([
+  'fall',
+  'home',
+  'tear',
+  'wipe',
+  'last',
+  'empty',
+  'void',
+  'gone',
+  'rehearsal',
+  'forsake',
+  'seal',
+]);
 /** EG-E3: the optional lists the mint may trim to keep a receipt inside EG_RECEIPT_MAX, in the order it trims them -
  *  each oldest first (a Vestige is appended as it is taken, a Reliquary as its Redoubt falls). */
 export const EG_RECEIPT_TRIMS = Object.freeze(['vs', 'rl']);
@@ -68,7 +80,9 @@ export const EG_MEASURES = 6;
 export const EG_MEASURE_MAX = 999_999;
 export const EG_CO_TAG_HEX = 12;
 const CO_TAG_RE = new RegExp(`^[0-9a-f]{${EG_CO_TAG_HEX}}$`);
-const FNV64_OFFSET = 0xcbf29ce484222325n, FNV64_PRIME = 0x100000001b3n, U64 = (1n << 64n) - 1n;
+const FNV64_OFFSET = 0xcbf29ce484222325n,
+  FNV64_PRIME = 0x100000001b3n,
+  U64 = (1n << 64n) - 1n;
 /**
  * EG-ZA: THE COMPANY ON A RECEIPT (`co`) - `[n, tag]`: how many accounts, and the first EG_CO_TAG_HEX hex of a 64-bit
  * FNV-1a over them sorted and comma-joined (UTF-8). The same company says the same tag whatever its order. Pure.
@@ -81,9 +95,11 @@ export function egCompanyTag(subs) {
   return [subs.length, h.toString(16).padStart(16, '0').slice(0, EG_CO_TAG_HEX)];
 }
 /** Is `co` a company a receipt may carry - one to eight accounts and a tag? */
-export const egCompanyValid = (/** @type {any} */ co) => Array.isArray(co) && co.length === 2 && int(co[0], 1, 8) && typeof co[1] === 'string' && CO_TAG_RE.test(co[1]);
+export const egCompanyValid = (/** @type {any} */ co) =>
+  Array.isArray(co) && co.length === 2 && int(co[0], 1, 8) && typeof co[1] === 'string' && CO_TAG_RE.test(co[1]);
 /** Is `m` a breach's measures a receipt may carry - EG_MEASURES whole numbers, each 0..EG_MEASURE_MAX? */
-export const egMeasuresValid = (/** @type {any} */ m) => Array.isArray(m) && m.length === EG_MEASURES && m.every((n) => int(n, 0, EG_MEASURE_MAX));
+export const egMeasuresValid = (/** @type {any} */ m) =>
+  Array.isArray(m) && m.length === EG_MEASURES && m.every((n) => int(n, 0, EG_MEASURE_MAX));
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 const BREACH_RE = /^[0-9a-f]{16}$/;
@@ -100,14 +116,32 @@ const signedLen = (n) => EG_RECEIPT_V.length + 1 + n + 1 + SIG64_LEN;
  */
 export function egReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
-  if (c.n0 !== undefined || c.k !== undefined || c.o !== undefined || c.d !== undefined || c.x !== undefined || c.r !== undefined || c.y !== undefined) return false;
+  if (
+    c.n0 !== undefined ||
+    c.k !== undefined ||
+    c.o !== undefined ||
+    c.d !== undefined ||
+    c.x !== undefined ||
+    c.r !== undefined ||
+    c.y !== undefined
+  )
+    return false;
   if (!EG_RECEIPT_KINDS.includes(c.q)) return false;
   if (typeof c.b !== 'string' || !BREACH_RE.test(c.b)) return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
   if (typeof c.z !== 'string' || !ZID_RE.test(c.z)) return false;
-  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e) || c.e <= c.i || c.e - c.i > EG_RECEIPT_TTL_S) return false;
+  if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e) || c.e <= c.i || c.e - c.i > EG_RECEIPT_TTL_S)
+    return false;
   if (c.q === 'v') return Object.keys(c).every((f) => ['q', 'b', 's', 'z', 'i', 'e'].includes(f));
-  if (!int(c.c, 0, 0xffffffff) || !int(c.h, 0, 99_999) || !int(c.t, 0, 7 * 24 * 3600) || !int(c.n, 0, 8) || !int(c.ew, 0, 999) || !int(c.l, 1, 999)) return false;
+  if (
+    !int(c.c, 0, 0xffffffff) ||
+    !int(c.h, 0, 99_999) ||
+    !int(c.t, 0, 7 * 24 * 3600) ||
+    !int(c.n, 0, 8) ||
+    !int(c.ew, 0, 999) ||
+    !int(c.l, 1, 999)
+  )
+    return false;
   if (c.rh !== undefined && c.rh !== 1) return false;
   // EG-E: a Redoubt's lord (`lk`) and its feats (`ft`, three bits - net/eliteGates/egFeats.js), where it says them
   if (c.lk !== undefined && (typeof c.lk !== 'string' || !/^[a-z]{1,16}$/.test(c.lk))) return false;
@@ -129,9 +163,21 @@ export function egReceiptValid(c) {
   // the falls, the Lone Beacon), and every other shape was taken
   if (c.fl !== undefined && !int(c.fl, 0, 2)) return false;
   if (c.lb !== undefined && (c.q !== 'w' || c.lb !== 1)) return false;
-  if (c.vs !== undefined && (c.q !== 'w' || !Array.isArray(c.vs) || c.vs.length > EG_RECEIPT_LIST_MAX || !c.vs.every((p) => Array.isArray(p) && p.length === 2 && int(p[0], 0, 99) && int(p[1], 1, 3)))) return false;
-  if (c.rl !== undefined && (c.q !== 'x' || !Array.isArray(c.rl) || c.rl.length > EG_RECEIPT_RELS_MAX || !c.rl.every((w) => int(w, 1, 19_999)))) return false;
-  if (c.wg !== undefined && (!Array.isArray(c.wg) || c.wg.length > 3 || !c.wg.every((d) => int(d, 0, 31)))) return false;
+  if (
+    c.vs !== undefined &&
+    (c.q !== 'w' ||
+      !Array.isArray(c.vs) ||
+      c.vs.length > EG_RECEIPT_LIST_MAX ||
+      !c.vs.every((p) => Array.isArray(p) && p.length === 2 && int(p[0], 0, 99) && int(p[1], 1, 3)))
+  )
+    return false;
+  if (
+    c.rl !== undefined &&
+    (c.q !== 'x' || !Array.isArray(c.rl) || c.rl.length > EG_RECEIPT_RELS_MAX || !c.rl.every((w) => int(w, 1, 19_999)))
+  )
+    return false;
+  if (c.wg !== undefined && (!Array.isArray(c.wg) || c.wg.length > 3 || !c.wg.every((d) => int(d, 0, 31))))
+    return false;
   if ((c.lk !== undefined || c.ft !== undefined) && c.q !== 'w') return false;
   if (c.q === 'w') return int(c.w, 1, 19_999) && c.why === undefined;
   return EG_END_WHYS.includes(c.why) && c.w === undefined;
@@ -156,7 +202,8 @@ export async function mintEgReceipt(what, privateKey, { subtle, nowS }) {
       body = _b64url.encode(enc.encode(JSON.stringify(claims)));
     }
   }
-  if (signedLen(body.length) > EG_RECEIPT_MAX) throw new TypeError('mintEgReceipt could not keep a receipt inside its bound');
+  if (signedLen(body.length) > EG_RECEIPT_MAX)
+    throw new TypeError('mintEgReceipt could not keep a receipt inside its bound');
   if (!privateKey) return `${EG_RECEIPT_V}.${body}.`;
   const sig = new Uint8Array(await subtle.sign({ name: 'Ed25519' }, privateKey, enc.encode(`${EG_RECEIPT_V}.${body}`)));
   return `${EG_RECEIPT_V}.${body}.${_b64url.encode(sig)}`;
@@ -174,7 +221,11 @@ export function readEgReceipt(r) {
   const raw = _b64url.decode(parts[1]);
   if (!raw) return null;
   let c;
-  try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
+  try {
+    c = JSON.parse(dec.decode(raw));
+  } catch {
+    return null;
+  }
   return egReceiptValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
 
@@ -198,10 +249,18 @@ export async function verifyEgReceipt(r, publicKey, { subtle, nowS, skewS = SKEW
   const raw = _b64url.decode(body);
   if (!raw) return { ok: false, why: 'body-shape' };
   let good = false;
-  try { good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`)); } catch { return { ok: false, why: 'verify-threw' }; }
+  try {
+    good = await subtle.verify({ name: 'Ed25519' }, publicKey, sig, enc.encode(`${v}.${body}`));
+  } catch {
+    return { ok: false, why: 'verify-threw' };
+  }
   if (!good) return { ok: false, why: 'signature' };
   let claims;
-  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }
+  try {
+    claims = JSON.parse(dec.decode(raw));
+  } catch {
+    return { ok: false, why: 'json' };
+  }
   if (!egReceiptValid(claims)) return { ok: false, why: 'claims' };
   if (!Number.isSafeInteger(nowS)) return { ok: false, why: 'clock' };
   if (nowS >= claims.e) return { ok: false, why: 'expired' };
