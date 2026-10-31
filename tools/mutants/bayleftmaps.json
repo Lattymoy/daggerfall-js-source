@@ -187,7 +187,7 @@
   {
     "name": "BLM-C10-past-the-table-0-as-before",
     "file": "src/world/road/pathData.js",
-    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "old": "  if (!onTable(mapPixelX, mapPixelY))\n    return pathType === PATH_ROADS || pathType === PATH_TRACKS\n      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff\n      : 0;",
     "new": "  if (!onTable(mapPixelX, mapPixelY)) return 0;",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
@@ -196,8 +196,8 @@
   {
     "name": "BLM-C10-the-tracks-read-as-the-roads",
     "file": "src/world/road/pathData.js",
-    "old": "roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
-    "new": "roadsPastTable('roads', mapPixelX, mapPixelY) & 0xff : 0;",
+    "old": "      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff",
+    "new": "      ? roadsPastTable('roads', mapPixelX, mapPixelY) & 0xff",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "BLM-C10-the-rivers-read-as-the-roads",
     "file": "src/world/road/pathData.js",
-    "old": "return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
-    "new": "return roadsPastTable(pathType === PATH_TRACKS ? 'tracks' : 'roads', mapPixelX, mapPixelY) & 0xff;",
+    "old": "    return pathType === PATH_ROADS || pathType === PATH_TRACKS\n      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff\n      : 0;",
+    "new": "    return roadsPastTable(pathType === PATH_TRACKS ? 'tracks' : 'roads', mapPixelX, mapPixelY) & 0xff;",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "BLM-C10-the-layer-read-on-the-table",
     "file": "src/world/road/pathData.js",
-    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType ===",
-    "new": "  if (true) return pathType ===",
+    "old": "  if (!net) return 0;\n  if (!onTable(mapPixelX, mapPixelY))",
+    "new": "  if (!net) return 0;\n  if (true)",
     "tests": [
       "test/systems/travel/bayleft_paths.test.js"
     ]

@@ -129,8 +129,8 @@
   {
     "name": "TESA5-the-verge-blind-to-it",
     "file": "src/world/road/roadBand.js",
-    "old": "const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my);",
-    "new": "const bits = pathsDataPoint(net, mx, my);",
+    "old": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my); // TESA5: and a crossing's join on it",
+    "new": "      const bits = pathsDataPoint(net, mx, my); // TESA5: and a crossing's join on it",
     "tests": [
       "test/tesa5_join.test.js"
     ]

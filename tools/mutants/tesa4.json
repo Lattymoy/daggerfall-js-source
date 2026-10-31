@@ -92,8 +92,8 @@
   {
     "name": "TESA4-the-verge-unasked",
     "file": "src/world/road/roadBand.js",
-    "old": "const r = arenaRoadByte('roads', mx, my), t = arenaRoadByte('tracks', mx, my);",
-    "new": "const r = 0, t = 0;",
+    "old": "        const r = arenaRoadByte('roads', mx, my),\n          t = arenaRoadByte('tracks', mx, my);",
+    "new": "        const r = 0,\n          t = 0;",
     "tests": [
       "test/tesa4_roads.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TESA4-the-verge-asks-the-bay-of-the-layer",
     "file": "src/world/road/roadBand.js",
-    "old": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my);",
-    "new": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) | arenaRoadByte('roads', mx, my);",
+    "old": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my); // TESA5: and a crossing's join on it",
+    "new": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) | arenaRoadByte('roads', mx, my); // TESA5: and a crossing's join on it",
     "tests": [
       "test/tesa4_roads.test.js"
     ]

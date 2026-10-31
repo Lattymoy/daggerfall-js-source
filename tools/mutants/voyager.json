@@ -2,8 +2,8 @@
   {
     "name": "VOYAGER2-the-control-the-chord",
     "file": "src/world/road/roadCurves.js",
-    "old": "out.push(Object.freeze([a[0], a[1], MID, MID, c[0], c[1]]))",
-    "new": "out.push(Object.freeze([a[0], a[1], (a[0] + c[0]) / 2, (a[1] + c[1]) / 2, c[0], c[1]]))",
+    "old": "    out.push(Object.freeze([a[0], a[1], MID, MID, c[0], c[1]]));",
+    "new": "    out.push(Object.freeze([a[0], a[1], (a[0] + c[0]) / 2, (a[1] + c[1]) / 2, c[0], c[1]]));",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "VOYAGER2-a-pair-two-points-apart",
     "file": "src/world/road/roadCurves.js",
-    "old": "if (sep >= 3) {",
-    "new": "if (sep >= 2) {",
+    "old": "        if (sep >= 3) {",
+    "new": "        if (sep >= 2) {",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "VOYAGER2-no-hub-at-three",
     "file": "src/world/road/roadCurves.js",
-    "old": "hub: ks.length > 2 })",
-    "new": "hub: ks.length > 3 })",
+    "old": "  hit = Object.freeze({ curves: Object.freeze(out), hub: ks.length > 2 });",
+    "new": "  hit = Object.freeze({ curves: Object.freeze(out), hub: ks.length > 3 });",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "VOYAGER2-an-end-drawn-none",
     "file": "src/world/road/roadCurves.js",
-    "old": "  if (ks.length === 1) end(ks[0]);\n",
-    "new": "  if (false) end(ks[0]);\n",
+    "old": "  if (ks.length === 1) end(ks[0]);",
+    "new": "  if (false) end(ks[0]);",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "VOYAGER2-the-prune-prunes-all",
     "file": "src/world/road/roadCurves.js",
-    "old": "if (bx * bx + by * by >= best * best) continue;",
-    "new": "if (bx * bx + by * by >= 0) continue;",
+    "old": "    if (bx * bx + by * by >= best * best) continue;",
+    "new": "    if (bx * bx + by * by >= 0) continue;",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "VOYAGER2-the-north-row-unflipped",
     "file": "src/world/road/roadCurves.js",
-    "old": "axis === LIE.EW ? oy > 0 :",
-    "new": "axis === LIE.EW ? oy < 0 :",
+    "old": "          ? oy > 0",
+    "new": "          ? oy < 0",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "VOYAGER2-water-paved",
     "file": "src/world/road/roadCurves.js",
-    "old": "roads.tiles[t] <= ROAD_HALF && tileData[i] !== WATER) {",
-    "new": "roads.tiles[t] <= ROAD_HALF) {",
+    "old": "      if (roads && roads.tiles[t] <= ROAD_HALF && tileData[i] !== WATER) {",
+    "new": "      if (roads && roads.tiles[t] <= ROAD_HALF) {",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "VOYAGER2-the-flank-other-side",
     "file": "src/world/road/roadCurves.js",
-    "old": "+ (nw ? 64 : 0) + (side ? 128 : 0);",
-    "new": "+ (nw ? 64 : 0) + (side ? 0 : 128);",
+    "old": "  return FLANK[ground > 3 ? 2 : ground] + (nw ? 64 : 0) + (side ? 128 : 0);",
+    "new": "  return FLANK[ground > 3 ? 2 : ground] + (nw ? 64 : 0) + (side ? 0 : 128);",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "VOYAGER2-north-the-neighbours-south",
     "file": "src/world/road/roadCurves.js",
-    "old": "const ox = dx * D, oy = -dy * D;",
-    "new": "const ox = dx * D, oy = dy * D;",
+    "old": "        oy = -dy * D; // the neighbour's frame in this one's: north (map y - 1) is +y",
+    "new": "        oy = dy * D; // the neighbour's frame in this one's: north (map y - 1) is +y",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "VOYAGER2-the-apex-the-centre",
     "file": "src/world/road/roadCurves.js",
-    "old": "return [0.25 * q[0] + 0.5 * MID + 0.25 * q[4], 0.25 * q[1] + 0.5 * MID + 0.25 * q[5]];",
-    "new": "return [MID, MID];",
+    "old": "    if (ends && q[2] === MID && q[3] === MID)\n      return [0.25 * q[0] + 0.5 * MID + 0.25 * q[4], 0.25 * q[1] + 0.5 * MID + 0.25 * q[5]];",
+    "new": "    if (ends && q[2] === MID && q[3] === MID) return [MID, MID];",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "VOYAGER2-the-verge-north-flipped",
     "file": "src/world/road/roadBand.js",
-    "old": "tz = (z - iz * PIXEL_M) / TILE_M;",
-    "new": "tz = (PIXEL_M - z + iz * PIXEL_M) / TILE_M;",
+    "old": "          tz = (z - iz * PIXEL_M) / TILE_M; // the point in that pixel's tile frame",
+    "new": "          tz = (PIXEL_M - z + iz * PIXEL_M) / TILE_M; // the point in that pixel's tile frame",
     "tests": [
       "test/world/road/voyager2_curves.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "VOYAGER1-the-grade-unsquared",
     "file": "src/world/road/roadLand.js",
-    "old": "let c = len * (1 + D.gradeCost * g * g);",
-    "new": "let c = len * (1 + D.gradeCost * g);",
+    "old": "  let c = len * (1 + D.gradeCost * g * g);",
+    "new": "  let c = len * (1 + D.gradeCost * g);",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -155,8 +155,8 @@
   {
     "name": "VOYAGER1-the-grade-a-climb-alone",
     "file": "src/world/road/roadLand.js",
-    "old": "const g = (hn - t.height[cy * MAP_WIDTH + cx]) / len;",
-    "new": "const g = Math.max(0, hn - t.height[cy * MAP_WIDTH + cx]) / len;",
+    "old": "  const g = (hn - t.height[cy * MAP_WIDTH + cx]) / len;",
+    "new": "  const g = Math.max(0, hn - t.height[cy * MAP_WIDTH + cx]) / len;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "VOYAGER1-the-height-free",
     "file": "src/world/road/roadLand.js",
-    "old": "  if (hn > D.highAbove) c *= 1 + (hn - D.highAbove) * D.highCost;\n",
-    "new": "",
+    "old": "  if (hn > D.highAbove) c *= 1 + (hn - D.highAbove) * D.highCost;\n  if (t.shore[i]) c *= D.shoreCost;",
+    "new": "  if (t.shore[i]) c *= D.shoreCost;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "VOYAGER1-the-shore-unpriced",
     "file": "src/world/road/roadLand.js",
-    "old": "  if (t.shore[i]) c *= D.shoreCost;\n",
-    "new": "",
+    "old": "  if (t.shore[i]) c *= D.shoreCost;\n  if (t.grain) c *= 1 + D.grainCost * t.grain[i];",
+    "new": "  if (t.grain) c *= 1 + D.grainCost * t.grain[i];",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "VOYAGER1-the-grain-unpriced",
     "file": "src/world/road/roadLand.js",
-    "old": "  if (t.grain) c *= 1 + D.grainCost * t.grain[i];\n",
-    "new": "",
+    "old": "  if (t.grain) c *= 1 + D.grainCost * t.grain[i];\n  if (t.ford[i]) c += len * D.fordCost;",
+    "new": "  if (t.ford[i]) c += len * D.fordCost;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "VOYAGER1-a-ford-free",
     "file": "src/world/road/roadLand.js",
-    "old": "  if (t.ford[i]) c += len * D.fordCost;\n",
-    "new": "",
+    "old": "  if (t.ford[i]) c += len * D.fordCost;\n  // RIVER-FORDS: a carved channel crossed - onto its pixel, or through its corner between two of them",
+    "new": "  // RIVER-FORDS: a carved channel crossed - onto its pixel, or through its corner between two of them",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "VOYAGER1-a-ford-three-wide",
     "file": "src/world/road/roadLand.js",
-    "old": "if (a + b - 1 <= FORD_SPAN && dry(",
-    "new": "if (a + b - 1 <= FORD_SPAN + 1 && dry(",
+    "old": "        if (a + b - 1 <= FORD_SPAN && dry(x - dx * a, y - dy * a) && dry(x + dx * b, y + dy * b)) {",
+    "new": "        if (a + b - 1 <= FORD_SPAN + 1 && dry(x - dx * a, y - dy * a) && dry(x + dx * b, y + dy * b)) {",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "VOYAGER1-the-near-bank-unasked",
     "file": "src/world/road/roadLand.js",
-    "old": "&& dry(x - dx * a, y - dy * a) && dry(x + dx * b, y + dy * b)) { ford[i] = 1; break; }",
-    "new": "&& dry(x + dx * b, y + dy * b)) { ford[i] = 1; break; }",
+    "old": "        if (a + b - 1 <= FORD_SPAN && dry(x - dx * a, y - dy * a) && dry(x + dx * b, y + dy * b)) {",
+    "new": "        if (a + b - 1 <= FORD_SPAN && dry(x + dx * b, y + dy * b)) {",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "VOYAGER1-the-kept-ground-water",
     "file": "src/world/road/roadLand.js",
-    "old": "water[y * W + x] === 1 && !(keep && keep[y * W + x]);",
-    "new": "water[y * W + x] === 1;",
+    "old": "  const wet = (x, y) => x >= 0 && y >= 0 && x < W && y < H && water[y * W + x] === 1 && !(keep && keep[y * W + x]);",
+    "new": "  const wet = (x, y) => x >= 0 && y >= 0 && x < W && y < H && water[y * W + x] === 1;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "VOYAGER1-the-box-a-pixel",
     "file": "src/world/road/roadLand.js",
-    "old": "const r = d.smoothR;",
-    "new": "const r = 1;",
+    "old": "  const r = d.smoothR;",
+    "new": "  const r = 1;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "VOYAGER1-the-grain-unhashed",
     "file": "src/world/road/roadLand.js",
-    "old": "let h = Math.imul(ix, 0x27d4eb2d) ^ Math.imul(iy, 0x165667b1) ^ 0x5bd1e995;",
-    "new": "let h = Math.imul(ix, 0x27d4eb2d) ^ 0x5bd1e995;",
+    "old": "  let h = Math.imul(ix, 0x27d4eb2d) ^ Math.imul(iy, 0x165667b1) ^ 0x5bd1e995;",
+    "new": "  let h = Math.imul(ix, 0x27d4eb2d) ^ 0x5bd1e995;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "VOYAGER1-the-grain-uneased",
     "file": "src/world/road/roadLand.js",
-    "old": "sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);",
-    "new": "sx = tx, sy = ty;",
+    "old": "    sx = tx * tx * (3 - 2 * tx),\n    sy = ty * ty * (3 - 2 * ty);",
+    "new": "    sx = tx,\n    sy = ty;",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -309,8 +309,8 @@
   {
     "name": "VOYAGER-CYRODIIL-a-stop-moved",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "stops: Object.freeze(['Skingrad', 'Kvatch', 'Anvil'])",
-    "new": "stops: Object.freeze(['Kvatch', 'Skingrad', 'Anvil'])",
+    "old": "  Object.freeze({ name: 'Gold Road', fromRing: true, stops: Object.freeze(['Skingrad', 'Kvatch', 'Anvil']) }),",
+    "new": "  Object.freeze({ name: 'Gold Road', fromRing: true, stops: Object.freeze(['Kvatch', 'Skingrad', 'Anvil']) }),",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-near-shore",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "if (wet(x, y)) { shore = Math.max(r0, r - RING_SHORE_GAP); break; }",
-    "new": "if (wet(x, y)) { shore = Math.max(r0, r - 1); break; }",
+    "old": "        shore = Math.max(r0, r - RING_SHORE_GAP);",
+    "new": "        shore = Math.max(r0, r - 1);",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-reach-short",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "for (let r = r0; r <= r0 + RING_REACH; r++) {",
-    "new": "for (let r = r0; r <= r0 + 4; r++) {",
+    "old": "    for (let r = r0; r <= r0 + RING_REACH; r++) {",
+    "new": "    for (let r = r0; r <= r0 + 4; r++) {",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "VOYAGER-CYRODIIL-a-bearing-turned",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "[[0, 1], [0.5, H3], [H3, 0.5],",
-    "new": "[[0, 1], [H3, 0.5], [0.5, H3],",
+    "old": "  [0.5, H3],\n  [H3, 0.5],",
+    "new": "  [H3, 0.5],\n  [0.5, H3],",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-cut-late",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "if (cheb(last, plan[k]) >= (LEG_MAX * 3) >> 2) cut(plan[k]);",
-    "new": "if (cheb(last, plan[k]) >= LEG_MAX * 2) cut(plan[k]);",
+    "old": "    for (let k = 1; k < plan.length - 1; k++) if (cheb(last, plan[k]) >= (LEG_MAX * 3) >> 2) cut(plan[k]);",
+    "new": "    for (let k = 1; k < plan.length - 1; k++) if (cheb(last, plan[k]) >= LEG_MAX * 2) cut(plan[k]);",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-chain-broken",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "    last = at;\n",
-    "new": "",
+    "old": "    last = at;\n  };",
+    "new": "  };",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "VOYAGER-CYRODIIL-no-gate",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "        if (near) legs.push(...courseLegs(g, near, { heightAt, walkable }));\n",
-    "new": "",
+    "old": "        if (near) legs.push(...courseLegs(g, near, { heightAt, walkable }));\n      }",
+    "new": "      }",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-bearing-crossed",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "const cos = (ax * bx + ay * by) / Math.sqrt",
-    "new": "const cos = (ax * by - ay * bx) / Math.sqrt",
+    "old": "        const cos = (ax * bx + ay * by) / Math.sqrt((ax * ax + ay * ay) * (bx * bx + by * by) || 1);",
+    "new": "        const cos = (ax * by - ay * bx) / Math.sqrt((ax * ax + ay * ay) * (bx * bx + by * by) || 1);",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -399,8 +399,8 @@
   {
     "name": "VOYAGER-CYRODIIL-a-ring-unguarded",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "if (r.ring ? !capital :",
-    "new": "if (r.ring ? false :",
+    "old": "    if (r.ring ? !capital : (r.fromRing && !capital) || stops.length < (r.fromRing ? 1 : 2)) continue;",
+    "new": "    if (r.ring ? false : (r.fromRing && !capital) || stops.length < (r.fromRing ? 1 : 2)) continue;",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -499,7 +499,7 @@
     "name": "VOYAGER1-the-step-the-bays",
     "file": "src/world/road/roadLand.js",
     "old": "  return { height, shore, ford, grain, river: /** @type {?Float32Array} */ (null), d, step: landStep };",
-    "new": "  return { height, shore, ford, grain, river: /** @type {?Float32Array} */ (null), d, step: (t, cx, cy, nx, ny, len) => len };",
+    "new": "  return {\n    height,\n    shore,\n    ford,\n    grain,\n    river: /** @type {?Float32Array} */ (null),\n    d,\n    step: (t, cx, cy, nx, ny, len) => len,\n  };",
     "tests": [
       "test/world/road/voyager1_land.test.js"
     ]
@@ -507,8 +507,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-clamp",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "shore = Math.max(r0, r - RING_SHORE_GAP);",
-    "new": "shore = r - RING_SHORE_GAP;",
+    "old": "        shore = Math.max(r0, r - RING_SHORE_GAP);",
+    "new": "        shore = r - RING_SHORE_GAP;",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -516,8 +516,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-shares-swapped",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "r = Math.round((rays[a].shore * db + rays[b].shore * da) / (da + db));",
-    "new": "r = Math.round((rays[a].shore * da + rays[b].shore * db) / (da + db));",
+    "old": "      r = Math.round((rays[a].shore * db + rays[b].shore * da) / (da + db));",
+    "new": "      r = Math.round((rays[a].shore * da + rays[b].shore * db) / (da + db));",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -525,8 +525,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-open-side-at-the-city",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "if (r < 0 && !any) r = r0;",
-    "new": "if (r < 0) r = r0;",
+    "old": "    if (r < 0 && !any) r = r0;",
+    "new": "    if (r < 0) r = r0;",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -534,8 +534,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-wider-box-unasked",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": " ?? coursePlan(a, b, heightAt, walkable, COARSE_MARGIN * 3);",
-    "new": ";",
+    "old": "  const plan =\n    coursePlan(a, b, heightAt, walkable, COARSE_MARGIN) ?? coursePlan(a, b, heightAt, walkable, COARSE_MARGIN * 3);",
+    "new": "  const plan = coursePlan(a, b, heightAt, walkable, COARSE_MARGIN);",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -543,8 +543,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-straight-uncut",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "    for (let k = 1; k < n; k++) cut(",
-    "new": "    for (let k = 1; k < 1; k++) cut(",
+    "old": "    for (let k = 1; k < n; k++)",
+    "new": "    for (let k = 1; k < 1; k++)",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]
@@ -552,8 +552,8 @@
   {
     "name": "VOYAGER-CYRODIIL-the-ring-unclosed",
     "file": "src/world/road/cyrodiilRoads.js",
-    "old": "for (let k = 0; k < onRing.length && onRing.length > 2; k++)",
-    "new": "for (let k = 0; k < onRing.length - 1 && onRing.length > 2; k++)",
+    "old": "      for (let k = 0; k < onRing.length && onRing.length > 2; k++)",
+    "new": "      for (let k = 0; k < onRing.length - 1 && onRing.length > 2; k++)",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]

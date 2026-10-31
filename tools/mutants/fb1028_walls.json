@@ -156,8 +156,8 @@
   {
     "name": "FB1028-the-ground-unread",
     "file": "src/world/road/gateRoads.js",
-    "old": "if (paths[i] && ground[i] && !inside[i] && isArmTile(tilemap, i))",
-    "new": "if (paths[i] && !inside[i] && isArmTile(tilemap, i))",
+    "old": "    if (paths[i] && ground[i] && !inside[i] && isArmTile(tilemap, i)) {",
+    "new": "    if (paths[i] && !inside[i] && isArmTile(tilemap, i)) {",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "FB1028-the-stub-left",
     "file": "src/world/road/gateRoads.js",
-    "old": "!cut[j] && paths[j] && ground[j] && inside[j] && isArmTile(tilemap, j)) { cut[j] = 1; stack.push(j); }",
-    "new": "!cut[j] && paths[j] && ground[j] && inside[j] && isArmTile(tilemap, j)) cut[j] = 0;",
+    "old": "      ) {\n        cut[j] = 1;\n        stack.push(j);\n      }",
+    "new": "      )\n        cut[j] = 0;",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]

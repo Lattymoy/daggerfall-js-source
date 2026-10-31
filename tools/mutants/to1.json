@@ -20,8 +20,8 @@
   {
     "name": "tile-size",
     "file": "src/world/road/pathData.js",
-    "old": "export const T_SIZE = MP_WORLD_UNITS / 128;",
-    "new": "export const T_SIZE = MP_WORLD_UNITS / 64;",
+    "old": "export const T_SIZE = MP_WORLD_UNITS / 128; // 256 - one terrain tile",
+    "new": "export const T_SIZE = MP_WORLD_UNITS / 64; // 256 - one terrain tile",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "path-width",
     "file": "src/world/road/pathData.js",
-    "old": "export const P_SIZE = T_SIZE * 2;",
-    "new": "export const P_SIZE = T_SIZE;",
+    "old": "export const P_SIZE = T_SIZE * 2; // 512 - a path's width",
+    "new": "export const P_SIZE = T_SIZE; // 512 - a path's width",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"
     ]
@@ -112,7 +112,7 @@
   {
     "name": "data-point-unchecked",
     "file": "src/world/road/pathData.js",
-    "old": "  if (!onTable(mapPixelX, mapPixelY)) return pathType === PATH_ROADS || pathType === PATH_TRACKS ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff : 0;",
+    "old": "  if (!onTable(mapPixelX, mapPixelY))\n    return pathType === PATH_ROADS || pathType === PATH_TRACKS\n      ? roadsPastTable(PATH_KEYS[pathType], mapPixelX, mapPixelY) & 0xff\n      : 0;",
     "new": "  if (false) return 0;",
     "tests": [
       "test/systems/travel/to1_travelOptions.test.js"

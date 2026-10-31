@@ -34,7 +34,7 @@
 // the same tiles on every client.
 // ═══════════════════════════════════════════════════════════════════
 import { DIR_DELTA } from './roadNetwork.js';
-import { RING } from '../townShape.js';   // TS9: a town's ring's codes (terrain/terrainTiles.js townRoadRing)
+import { RING } from '../townShape.js'; // TS9: a town's ring's codes (terrain/terrainTiles.js townRoadRing)
 
 /** A pixel's tiles a side. */
 export const CURVE_DIM = 128;
@@ -53,7 +53,9 @@ export const TRACK_HALF = 0.75;
 /** A junction's paving round its centre, tiles from the centre line's meeting: a small square, its corners rounded. */
 export const JUNCTION_R = 2.5;
 /** The ground's kinds (roadPainter.js TILE): a road is never paved over water - a ford, the bank either side. */
-const WATER = 0, DIRT = 1, GRASS = 2;
+const WATER = 0,
+  DIRT = 1,
+  GRASS = 2;
 const ROAD_TILE = 46;
 
 /** Each bit's edge point, tiles (x east, y north): the edge's middle for a cardinal, the corner for a diagonal. */
@@ -73,16 +75,28 @@ export function curvesOf(bits) {
   const ks = [];
   for (let k = 0; k < 8; k++) if (b & DIR_DELTA[k][0]) ks.push(k);
   const out = [];
-  const quad = (ka, kb) => { const a = EXIT.get(DIR_DELTA[ka][0]), c = EXIT.get(DIR_DELTA[kb][0]); out.push(Object.freeze([a[0], a[1], MID, MID, c[0], c[1]])); };
-  const end = (ka) => { const a = EXIT.get(DIR_DELTA[ka][0]); out.push(Object.freeze([a[0], a[1], (a[0] + MID) / 2, (a[1] + MID) / 2, MID, MID])); };
+  const quad = (ka, kb) => {
+    const a = EXIT.get(DIR_DELTA[ka][0]),
+      c = EXIT.get(DIR_DELTA[kb][0]);
+    out.push(Object.freeze([a[0], a[1], MID, MID, c[0], c[1]]));
+  };
+  const end = (ka) => {
+    const a = EXIT.get(DIR_DELTA[ka][0]);
+    out.push(Object.freeze([a[0], a[1], (a[0] + MID) / 2, (a[1] + MID) / 2, MID, MID]));
+  };
   if (ks.length === 1) end(ks[0]);
   else if (ks.length === 2) quad(ks[0], ks[1]);
   else if (ks.length > 2) {
     const paired = new Set();
     for (let i = 0; i < ks.length; i++) {
       for (let j = i + 1; j < ks.length; j++) {
-        const d = Math.abs(ks[i] - ks[j]), sep = Math.min(d, 8 - d);
-        if (sep >= 3) { quad(ks[i], ks[j]); paired.add(ks[i]); paired.add(ks[j]); }
+        const d = Math.abs(ks[i] - ks[j]),
+          sep = Math.min(d, 8 - d);
+        if (sep >= 3) {
+          quad(ks[i], ks[j]);
+          paired.add(ks[i]);
+          paired.add(ks[j]);
+        }
       }
     }
     for (const k of ks) if (!paired.has(k)) end(k);
@@ -101,7 +115,8 @@ export function curvePolyline(q) {
   if (p) return p;
   p = new Float64Array(2 * (CURVE_STEPS + 1));
   for (let s = 0; s <= CURVE_STEPS; s++) {
-    const t = s / CURVE_STEPS, u = 1 - t;
+    const t = s / CURVE_STEPS,
+      u = 1 - t;
     p[2 * s] = u * u * q[0] + 2 * u * t * q[2] + t * t * q[4];
     p[2 * s + 1] = u * u * q[1] + 2 * u * t * q[3] + t * t * q[5];
   }
@@ -111,10 +126,13 @@ export function curvePolyline(q) {
 
 /** The distance from (x, y) to the segment (ax, ay)-(bx, by). */
 function segDist(x, y, ax, ay, bx, by) {
-  const ex = bx - ax, ey = by - ay, L = ex * ex + ey * ey;
+  const ex = bx - ax,
+    ey = by - ay,
+    L = ex * ex + ey * ey;
   let t = L > 0 ? ((x - ax) * ex + (y - ay) * ey) / L : 0;
   t = t < 0 ? 0 : t > 1 ? 1 : t;
-  const dx = x - ax - t * ex, dy = y - ay - t * ey;
+  const dx = x - ax - t * ex,
+    dy = y - ay - t * ey;
   return Math.sqrt(dx * dx + dy * dy);
 }
 
@@ -138,7 +156,9 @@ export function curveDistance(bits, x, y) {
     }
   }
   if (hub) {
-    const dx = x - MID, dy = y - MID, d = Math.sqrt(dx * dx + dy * dy) - (JUNCTION_R - ROAD_HALF);
+    const dx = x - MID,
+      dy = y - MID,
+      d = Math.sqrt(dx * dx + dy * dy) - (JUNCTION_R - ROAD_HALF);
     if (d < best) best = Math.max(0, d);
   }
   return best;
@@ -162,18 +182,25 @@ export const LIE = Object.freeze({ EW: 0, NS: 1, NESW: 2, NWSE: 3, HUB: 4, SIDE:
  * @returns {{ tiles: Float32Array, corners: Float32Array, lie: Uint8Array } | null} null where no curve comes near
  */
 export function curveField(px, py, own, byteAt) {
-  const D = CURVE_DIM, C = D + 1;
+  const D = CURVE_DIM,
+    C = D + 1;
   let f = null;
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       const bits = dx === 0 && dy === 0 ? own : byteAt(px + dx, py + dy);
       if (!bits) continue;
       const { curves, hub } = curvesOf(bits);
-      const ox = dx * D, oy = -dy * D;   // the neighbour's frame in this one's: north (map y - 1) is +y
-      f ??= { tiles: new Float32Array(D * D).fill(Infinity), corners: new Float32Array(C * C).fill(Infinity), lie: new Uint8Array(D * D) };
+      const ox = dx * D,
+        oy = -dy * D; // the neighbour's frame in this one's: north (map y - 1) is +y
+      f ??= {
+        tiles: new Float32Array(D * D).fill(Infinity),
+        corners: new Float32Array(C * C).fill(Infinity),
+        lie: new Uint8Array(D * D),
+      };
       for (const q of curves) {
         const p = curvePolyline(q);
-        for (let s = 0; s < CURVE_STEPS; s++) stampSegment(f, ox + p[2 * s], oy + p[2 * s + 1], ox + p[2 * s + 2], oy + p[2 * s + 3], 0);
+        for (let s = 0; s < CURVE_STEPS; s++)
+          stampSegment(f, ox + p[2 * s], oy + p[2 * s + 1], ox + p[2 * s + 2], oy + p[2 * s + 3], 0);
       }
       if (hub) stampSegment(f, ox + MID, oy + MID, ox + MID, oy + MID, JUNCTION_R - ROAD_HALF);
     }
@@ -184,26 +211,54 @@ export function curveField(px, py, own, byteAt) {
 /** Lower the field's distances to one segment (less `grow`) over the tiles and corners within REACH + grow of it, each
  *  tile it is now nearest taking its lie. */
 function stampSegment(f, ax, ay, bx, by, grow) {
-  const D = CURVE_DIM, C = D + 1, r = REACH + grow;
-  const x0 = Math.max(0, Math.floor(Math.min(ax, bx) - r)), x1 = Math.min(D, Math.ceil(Math.max(ax, bx) + r));
-  const y0 = Math.max(0, Math.floor(Math.min(ay, by) - r)), y1 = Math.min(D, Math.ceil(Math.max(ay, by) + r));
+  const D = CURVE_DIM,
+    C = D + 1,
+    r = REACH + grow;
+  const x0 = Math.max(0, Math.floor(Math.min(ax, bx) - r)),
+    x1 = Math.min(D, Math.ceil(Math.max(ax, bx) + r));
+  const y0 = Math.max(0, Math.floor(Math.min(ay, by) - r)),
+    y1 = Math.min(D, Math.ceil(Math.max(ay, by) + r));
   if (x0 > x1 || y0 > y1) return;
-  const ex = bx - ax, ey = by - ay, aex = Math.abs(ex), aey = Math.abs(ey), L = ex * ex + ey * ey;
-  const axis = grow > 0 || L === 0 ? LIE.HUB : aey <= TAN_HALF_POINT * aex ? LIE.EW : aex <= TAN_HALF_POINT * aey ? LIE.NS : ex * ey > 0 ? LIE.NESW : LIE.NWSE;
+  const ex = bx - ax,
+    ey = by - ay,
+    aex = Math.abs(ex),
+    aey = Math.abs(ey),
+    L = ex * ex + ey * ey;
+  const axis =
+    grow > 0 || L === 0
+      ? LIE.HUB
+      : aey <= TAN_HALF_POINT * aex
+        ? LIE.EW
+        : aex <= TAN_HALF_POINT * aey
+          ? LIE.NS
+          : ex * ey > 0
+            ? LIE.NESW
+            : LIE.NWSE;
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
       const dc = Math.max(0, segDist(x, y, ax, ay, bx, by) - grow);
       if (dc < f.corners[x + y * C]) f.corners[x + y * C] = dc;
       if (x >= D || y >= D) continue;
-      const cx = x + 0.5, cy = y + 0.5;
+      const cx = x + 0.5,
+        cy = y + 0.5;
       const dt = Math.max(0, segDist(cx, cy, ax, ay, bx, by) - grow);
       if (!(dt < f.tiles[y * D + x])) continue;
       f.tiles[y * D + x] = dt;
       // the side: the tile's offset from the run's nearest point, across the axis
       let t = L > 0 ? ((cx - ax) * ex + (cy - ay) * ey) / L : 0;
       t = t < 0 ? 0 : t > 1 ? 1 : t;
-      const ox = cx - ax - t * ex, oy = cy - ay - t * ey;
-      const side = axis === LIE.EW ? oy > 0 : axis === LIE.NS ? ox > 0 : axis === LIE.NESW ? ox - oy > 0 : axis === LIE.NWSE ? ox + oy > 0 : false;
+      const ox = cx - ax - t * ex,
+        oy = cy - ay - t * ey;
+      const side =
+        axis === LIE.EW
+          ? oy > 0
+          : axis === LIE.NS
+            ? ox > 0
+            : axis === LIE.NESW
+              ? ox - oy > 0
+              : axis === LIE.NWSE
+                ? ox + oy > 0
+                : false;
       f.lie[y * D + x] = axis | (side ? LIE.SIDE : 0);
     }
   }
@@ -216,12 +271,18 @@ const FLANK = Object.freeze([47, 47, 55, 55]);
  *  lies toward that corner, as the mod's own flanks turn it (a NE-SW road's flank at x = y + 1, its road north and west:
  *  flip; at x + 1 = y, south and east: neither; a NW-SE road's, north and east: rotate; south and west: both). Its home is
  *  here, beside the flank it turns: Basic Roads' painter (roadPainter.js) and this one both lay it. */
-export const RING_HALF = Object.freeze({ [RING.NW]: [false, true], [RING.NE]: [true, false], [RING.SE]: [false, false], [RING.SW]: [true, true] });
+export const RING_HALF = Object.freeze({
+  [RING.NW]: [false, true],
+  [RING.NE]: [true, false],
+  [RING.SE]: [false, false],
+  [RING.SW]: [true, true],
+});
 /** A paved tile's byte by its lie and its distance off the line, Basic Roads' rotations and flips (roadPainter.js
  *  paintPath: an east-west run's tiles rotated, its north row flipped; a north-south run's east column flipped; a
  *  diagonal's tile on the line its inner, rotated on the north-west run, the two either side its flanks). */
 function pavedTile(lie, d, ground) {
-  const axis = lie & 7, side = (lie & LIE.SIDE) !== 0;
+  const axis = lie & 7,
+    side = (lie & LIE.SIDE) !== 0;
   if (axis === LIE.EW) return ROAD_TILE + 64 + (side ? 128 : 0);
   if (axis === LIE.NS) return ROAD_TILE + (side ? 128 : 0);
   if (axis === LIE.HUB) return ROAD_TILE;
@@ -244,25 +305,35 @@ function pavedTile(lie, d, ground) {
  * @param {{ px: number, py: number, road: number, track: number, byteAt: (kind: 'roads'|'tracks', x: number, y: number) => number,
  *   rect?: any, paths?: ?Uint8Array, tdDim?: number }} o
  */
-export function paintCurvedPaths(tileData, tilemap, { px, py, road, track, byteAt, rect = null, paths = null, tdDim = CURVE_DIM + 1 }) {
+export function paintCurvedPaths(
+  tileData,
+  tilemap,
+  { px, py, road, track, byteAt, rect = null, paths = null, tdDim = CURVE_DIM + 1 },
+) {
   const D = CURVE_DIM;
   const roads = curveField(px, py, road, (x, y) => byteAt('roads', x, y));
   const tracks = curveField(px, py, track, (x, y) => byteAt('tracks', x, y));
   if (!roads && !tracks) return 0;
   let paved = 0;
   const worn = new Uint8Array(tdDim * tdDim);
-  const wear = (i) => { if (tileData[i] === GRASS) tileData[i] = DIRT; worn[i] = 1; };
+  const wear = (i) => {
+    if (tileData[i] === GRASS) tileData[i] = DIRT;
+    worn[i] = 1;
+  };
   for (let y = 0; y < tdDim; y++) {
     for (let x = 0; x < tdDim; x++) {
-      const i = x + y * tdDim, c = x + y * (D + 1);
+      const i = x + y * tdDim,
+        c = x + y * (D + 1);
       if (tileData[i] === WATER) continue;
-      if (rect && x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax) continue;   // the town's own ground, to its edge
-      if ((roads && roads.corners[c] <= ROAD_HALF + ROAD_SHOULDER) || (tracks && tracks.corners[c] <= TRACK_HALF)) wear(i);
+      if (rect && x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax) continue; // the town's own ground, to its edge
+      if ((roads && roads.corners[c] <= ROAD_HALF + ROAD_SHOULDER) || (tracks && tracks.corners[c] <= TRACK_HALF))
+        wear(i);
     }
   }
   for (let y = 0; y < D; y++) {
     for (let x = 0; x < D; x++) {
-      const t = y * D + x, i = x + y * tdDim;
+      const t = y * D + x,
+        i = x + y * tdDim;
       if (tilemap[t] !== 0) continue;
       if (roads && roads.tiles[t] <= ROAD_HALF && tileData[i] !== WATER) {
         tilemap[t] = pavedTile(roads.lie[t], roads.tiles[t], tileData[i]);
@@ -280,10 +351,16 @@ export function paintCurvedPaths(tileData, tilemap, { px, py, road, track, byteA
   if (road && rect) {
     for (let y = 0; y < D; y++) {
       for (let x = 0; x < D; x++) {
-        const t = y * D + x, code = rect.ring ? rect.ring[t] : 0, half = code ? RING_HALF[code] : null;
-        if (tilemap[t] !== 0 || !(rect.ring ? code === RING.road || half : x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax)) continue;
+        const t = y * D + x,
+          code = rect.ring ? rect.ring[t] : 0,
+          half = code ? RING_HALF[code] : null;
+        if (
+          tilemap[t] !== 0 ||
+          !(rect.ring ? code === RING.road || half : x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax)
+        )
+          continue;
         const ground = tileData[x + y * tdDim];
-        if (ground === WATER) continue;   // AUDIT TESA III E1-1: never the sea a shore town keeps
+        if (ground === WATER) continue; // AUDIT TESA III E1-1: never the sea a shore town keeps
         tilemap[t] = half ? FLANK[ground > 3 ? 2 : ground] + (half[0] ? 64 : 0) + (half[1] ? 128 : 0) : ROAD_TILE;
         paved++;
         if (paths) paths[t] = 1;
@@ -300,11 +377,15 @@ export function paintCurvedPaths(tileData, tilemap, { px, py, road, track, byteA
  * @param {number} bits @param {number} inBit the edge it comes in by @param {number} outBit the edge it leaves by
  */
 export function curveApex(bits, inBit, outBit) {
-  const a = EXIT.get(inBit), b = EXIT.get(outBit);
+  const a = EXIT.get(inBit),
+    b = EXIT.get(outBit);
   if (!a || !b) return [MID, MID];
   for (const q of curvesOf(bits).curves) {
-    const ends = (q[0] === a[0] && q[1] === a[1] && q[4] === b[0] && q[5] === b[1]) || (q[0] === b[0] && q[1] === b[1] && q[4] === a[0] && q[5] === a[1]);
-    if (ends && q[2] === MID && q[3] === MID) return [0.25 * q[0] + 0.5 * MID + 0.25 * q[4], 0.25 * q[1] + 0.5 * MID + 0.25 * q[5]];
+    const ends =
+      (q[0] === a[0] && q[1] === a[1] && q[4] === b[0] && q[5] === b[1]) ||
+      (q[0] === b[0] && q[1] === b[1] && q[4] === a[0] && q[5] === a[1]);
+    if (ends && q[2] === MID && q[3] === MID)
+      return [0.25 * q[0] + 0.5 * MID + 0.25 * q[4], 0.25 * q[1] + 0.5 * MID + 0.25 * q[5]];
   }
   return [MID, MID];
 }

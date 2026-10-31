@@ -37,7 +37,7 @@ same at every site it changed (`AUDIT TESA III E1-<n>`).
 
 ### E1-1 - the road ring round a town's outline (MED, FIXED)
 
-`roadPainter.js:"&& !(locationRect && x > locationRect.xMin && x < locationRect.xMax && y > locationRect.yMin && y < locationRect.yMax)"`
+`roadPainter.js:"Math.abs(DIM - 1 - x - y)"`
 - the FAST-SUITE guard (2026-10-20) passes by every tile off the centre cross, the two diagonals and the rect, proven by
 `tools/roadGuardProof.mjs` against the rect's law. TS2 (2026-10-25) moved "Paint roads around locations" from the rect's
 padding to its outline's ring (`terrainTiles.js` townRoadRing: the tiles off the town's ground within 2.5 of it), and the
@@ -57,10 +57,10 @@ the rect and off the cross paved; a ring tile over water not; a ring tile's samp
 
 FIXED (2026-10-26, the roads' stream - KPbICA's VOYAGER, which did not supersede it: its curved painter runs past the Bay
 alone and paved its whole ring already) as proposed, the three clauses:
-`roadPainter.js:"&& !locationRect?.ring?.[i]) continue;"`, the ring's condition
-`roadPainter.js:"if (m && ctx.rect && T === ROAD_TILES && (ctx.rect.ring ? ctx.rect.ring[ctx.i] === RING.road && ctx.ground !== TILE.water"`
-and `roadPainter.js:"if (rect?.ring?.[y * tDim + x]) continue;"`; and the curved painter past the Bay keeps the same sea
-(`roadCurves.js:"if (ground === WATER) continue;   // AUDIT TESA III E1-1"`). Measured through the real kernel
+`roadPainter.js:"!locationRect?.ring?.[i]"`, the ring's condition
+`roadPainter.js:"AUDIT TESA III E1-1: never".."m &&"`
+and `roadPainter.js:"if (rect?.ring?.[y * tDim + x])"`; and the curved painter past the Bay keeps the same sea
+(`roadCurves.js:"if (ground === WATER)"`). Measured through the real kernel
 (`generatePixelTerrain` with Basic Roads' arrays, every 8th of the Bay's 2,043 towns on a road): the ring paved 15.6%
 before, 124,699 of 124,699 after, none of it over water in the sample. `tools/roadGuardProof.mjs` (its stale imports
 pointed back at `src/world/road/` now - the painter moved there) against the base painter (8df5233181): 103,487 real-map

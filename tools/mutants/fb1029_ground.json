@@ -25,8 +25,8 @@
   {
     "name": "ROAD-DRY-rotation-read",
     "file": "src/world/road/roadDry.js",
-    "old": "!PAVING.has(tilemap[i] & 0x3f)",
-    "new": "!PAVING.has(tilemap[i])",
+    "old": "      if (!paths[i] || !PAVING.has(tilemap[i] & 0x3f)) continue;",
+    "new": "      if (!paths[i] || !PAVING.has(tilemap[i])) continue;",
     "tests": [
       "test/world/fb1029_ground.test.js",
       "test/systems/travel/rpt1026_world_causeway.test.js"
@@ -36,8 +36,8 @@
   {
     "name": "ROAD-DRY-paths-unread",
     "file": "src/world/road/roadDry.js",
-    "old": "if (!paths[i] || !PAVING",
-    "new": "if (!PAVING",
+    "old": "      if (!paths[i] || !PAVING.has(tilemap[i] & 0x3f)) continue;",
+    "new": "      if (!PAVING.has(tilemap[i] & 0x3f)) continue;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -46,8 +46,8 @@
   {
     "name": "ROAD-DRY-rect-unread",
     "file": "src/world/road/roadDry.js",
-    "old": "      if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;\n",
-    "new": "",
+    "old": "      if (rect && x >= rect.xMin && x < rect.xMax && y >= rect.yMin && y < rect.yMax) continue;\n      if (rect?.ring?.[i]) continue;",
+    "new": "      if (rect?.ring?.[i]) continue;",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -56,8 +56,8 @@
   {
     "name": "ROAD-DRY-ring-unread",
     "file": "src/world/road/roadDry.js",
-    "old": "      if (rect?.ring?.[i]) continue;\n",
-    "new": "",
+    "old": "      if (rect?.ring?.[i]) continue;\n      for (const [cx, cy] of [",
+    "new": "      for (const [cx, cy] of [",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -66,8 +66,8 @@
   {
     "name": "ROAD-DRY-lowers",
     "file": "src/world/road/roadDry.js",
-    "old": "if (samples[k] < CAPITAL_LAND) { samples[k] = CAPITAL_LAND; n++; }",
-    "new": "{ samples[k] = CAPITAL_LAND; n++; }",
+    "old": "    if (samples[k] < CAPITAL_LAND) {",
+    "new": "    {",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "ROAD-DRY-edge-corners",
     "file": "src/world/road/roadDry.js",
-    "old": " if (cx > 0 && cy > 0 && cx < tDim && cy < tDim) lift(cx * hDim + cy);",
-    "new": " lift(cx * hDim + cy);",
+    "old": "        if (cx > 0 && cy > 0 && cx < tDim && cy < tDim) lift(cx * hDim + cy);",
+    "new": "        lift(cx * hDim + cy);",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -97,8 +97,8 @@
   {
     "name": "ROAD-DRY-one-sided",
     "file": "src/world/road/roadDry.js",
-    "old": " && !!(byteAt(px + dx, py + dy) & back)",
-    "new": "",
+    "old": "  const both = (dx, dy, bit, back) =>\n    onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
+    "new": "  const both = (dx, dy, bit, back) => onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit);",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],
@@ -107,8 +107,8 @@
   {
     "name": "ROAD-DRY-bay-unread",
     "file": "src/world/road/roadDry.js",
-    "old": "onBay(px + dx, py + dy) && ",
-    "new": "",
+    "old": "  const both = (dx, dy, bit, back) =>\n    onBay(px + dx, py + dy) && !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
+    "new": "  const both = (dx, dy, bit, back) => !!(byteAt(px, py) & bit) && !!(byteAt(px + dx, py + dy) & back);",
     "tests": [
       "test/world/fb1029_ground.test.js"
     ],

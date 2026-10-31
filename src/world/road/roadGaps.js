@@ -24,7 +24,9 @@ const BACK = new Map(DIR_DELTA.map(([bit, dx, dy]) => [bit, /** @type {number} *
 /** The offsets within LINK_GAP, nearest first (then reading order). */
 const OFFSETS = (() => {
   const out = [];
-  for (let dy = -LINK_GAP; dy <= LINK_GAP; dy++) for (let dx = -LINK_GAP; dx <= LINK_GAP; dx++) if (dx || dy) out.push([dx, dy, Math.max(Math.abs(dx), Math.abs(dy))]);
+  for (let dy = -LINK_GAP; dy <= LINK_GAP; dy++)
+    for (let dx = -LINK_GAP; dx <= LINK_GAP; dx++)
+      if (dx || dy) out.push([dx, dy, Math.max(Math.abs(dx), Math.abs(dy))]);
   return out.sort((a, b) => a[2] - b[2] || a[1] - b[1] || a[0] - b[0]);
 })();
 
@@ -37,18 +39,31 @@ const OFFSETS = (() => {
  * @returns {number} the links laid
  */
 export function linkGaps(net, W, H, { blocked, owns }) {
-  const n = W * H, root = new Int32Array(n).fill(-1);
+  const n = W * H,
+    root = new Int32Array(n).fill(-1);
   const path = (i) => net.roads[i] | net.tracks[i];
   for (let i = 0; i < n; i++) if (path(i)) root[i] = i;
-  const find = (i) => { while (root[i] !== i) { root[i] = root[root[i]]; i = root[i]; } return i; };
-  const join = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) root[ra] = rb; };
+  const find = (i) => {
+    while (root[i] !== i) {
+      root[i] = root[root[i]];
+      i = root[i];
+    }
+    return i;
+  };
+  const join = (a, b) => {
+    const ra = find(a),
+      rb = find(b);
+    if (ra !== rb) root[ra] = rb;
+  };
   for (let v = 0; v < H; v++) {
     for (let u = 0; u < W; u++) {
-      const i = v * W + u, b = path(i);
+      const i = v * W + u,
+        b = path(i);
       if (!b) continue;
       for (const [bit, dx, dy] of DIR_DELTA) {
         if (!(b & bit)) continue;
-        const x = u + dx, y = v + dy;
+        const x = u + dx,
+          y = v + dy;
         if (x < 0 || y < 0 || x >= W || y >= H) continue;
         const j = y * W + x;
         if (path(j) & /** @type {number} */ (BACK.get(bit))) join(i, j);
@@ -61,20 +76,30 @@ export function linkGaps(net, W, H, { blocked, owns }) {
       const i = v * W + u;
       if (root[i] < 0 || !owns(u, v)) continue;
       for (const [dx, dy] of OFFSETS) {
-        const x = u + dx, y = v + dy;
+        const x = u + dx,
+          y = v + dy;
         if (x < 0 || y < 0 || x >= W || y >= H) continue;
         const j = y * W + x;
         if (root[j] < 0 || find(i) === find(j)) continue;
         const way = straightWay(u, v, x, y);
-        if (way.slice(1, -1).some(([a, b]) => blocked(a, b) || root[b * W + a] >= 0) || way.some(([a, b]) => blocked(a, b))) continue;
+        if (
+          way.slice(1, -1).some(([a, b]) => blocked(a, b) || root[b * W + a] >= 0) ||
+          way.some(([a, b]) => blocked(a, b))
+        )
+          continue;
         const kind = net.roads[i] && net.roads[j] ? net.roads : net.tracks;
         for (let k = 1; k < way.length; k++) {
-          const [ax, ay] = way[k - 1], [bx, by] = way[k];
+          const [ax, ay] = way[k - 1],
+            [bx, by] = way[k];
           const bit = /** @type {number} */ (BIT_OF.get(`${bx - ax},${by - ay}`));
           kind[ay * W + ax] |= bit;
           kind[by * W + bx] |= /** @type {number} */ (BACK.get(bit));
         }
-        for (const [a, b] of way) { const k = b * W + a; if (root[k] < 0) root[k] = k; join(i, k); }
+        for (const [a, b] of way) {
+          const k = b * W + a;
+          if (root[k] < 0) root[k] = k;
+          join(i, k);
+        }
         links++;
         break;
       }
@@ -86,9 +111,11 @@ export function linkGaps(net, W, H, { blocked, owns }) {
 /** The compass steps from (ax, ay) to (bx, by): diagonal first, then straight - every pixel, both ends. */
 function straightWay(ax, ay, bx, by) {
   const out = [[ax, ay]];
-  let x = ax, y = ay;
+  let x = ax,
+    y = ay;
   while (x !== bx || y !== by) {
-    x += Math.sign(bx - x); y += Math.sign(by - y);
+    x += Math.sign(bx - x);
+    y += Math.sign(by - y);
     out.push([x, y]);
   }
   return out;

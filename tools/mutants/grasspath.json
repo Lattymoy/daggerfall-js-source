@@ -2,8 +2,8 @@
   {
     "name": "GRASS-PATH1-the-painter-writes-but-does-not-mark",
     "file": "src/world/road/roadPainter.js",
-    "old": "  if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1\n  return true;\n}",
-    "new": "  return true;\n}",
+    "old": "  if (ctx.paths) ctx.paths[ctx.i] = 1; // GRASS-PATH1\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/world/terrain/grasspath.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GRASS-PATH1-the-rect-fill-around-a-location-is-not-marked",
     "file": "src/world/road/roadPainter.js",
-    "old": "    ctx.tilemap[ctx.i] = 46;\n    if (ctx.paths) ctx.paths[ctx.i] = 1;   // GRASS-PATH1",
-    "new": "    ctx.tilemap[ctx.i] = 46;",
+    "old": "    if (ctx.paths) ctx.paths[ctx.i] = 1; // GRASS-PATH1\n    return true;",
+    "new": "    return true;",
     "tests": [
       "test/world/terrain/grasspath.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GRASS-PATH1-the-rivers-bare-water-join-is-not-marked",
     "file": "src/world/road/roadPainter.js",
-    "old": "  const water = () => { ctx.tilemap[ctx.i] = 0xff; if (ctx.paths) ctx.paths[ctx.i] = 1; };   // GRASS-PATH1",
-    "new": "  const water = () => { ctx.tilemap[ctx.i] = 0xff; };",
+    "old": "    if (ctx.paths) ctx.paths[ctx.i] = 1;\n  }; // GRASS-PATH1",
+    "new": "  };",
     "tests": [
       "test/world/terrain/grasspath.test.js"
     ],
@@ -31,8 +31,8 @@
   {
     "name": "GRASS-PATH1-every-tile-is-marked-whether-the-painter-wrote-it-or-not",
     "file": "src/world/road/roadPainter.js",
-    "old": "      ctx.i = i; ctx.x = x; ctx.y = y; ctx.ground = ground;",
-    "new": "      ctx.i = i; ctx.x = x; ctx.y = y; ctx.ground = ground;\n      if (paths) paths[i] = 1;",
+    "old": "      if (paintPath(ctx, ROAD_TILES, masks.road, corners.road)) {",
+    "new": "      if (paths) paths[i] = 1;\n      if (paintPath(ctx, ROAD_TILES, masks.road, corners.road)) {",
     "tests": [
       "test/world/terrain/grasspath.test.js"
     ]

@@ -2,8 +2,8 @@
   {
     "name": "GATE-ROADS-passage-uncarved",
     "file": "src/world/road/gateRoads.js",
-    "old": "            for (const k of run) if (k !== i) passage.add(k);\n",
-    "new": "",
+    "old": "            for (const k of run) if (k !== i) passage.add(k);\n            if (t < at) {",
+    "new": "            if (t < at) {",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "GATE-ROADS-a-house-crossed",
     "file": "src/world/road/gateRoads.js",
-    "old": "passage.has(i) || blocked[i] === GATE_BLOCK.hard || wet(tilemap, tileData, i) ? Infinity",
-    "new": "passage.has(i) || wet(tilemap, tileData, i) ? Infinity",
+    "old": "      passage.has(i) || blocked[i] === GATE_BLOCK.hard || wet(tilemap, tileData, i)",
+    "new": "      passage.has(i) || wet(tilemap, tileData, i)",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "GATE-ROADS-water-crossed",
     "file": "src/world/road/gateRoads.js",
-    "old": "passage.has(i) || blocked[i] === GATE_BLOCK.hard || wet(tilemap, tileData, i) ? Infinity",
-    "new": "passage.has(i) || blocked[i] === GATE_BLOCK.hard ? Infinity",
+    "old": "      passage.has(i) || blocked[i] === GATE_BLOCK.hard || wet(tilemap, tileData, i)",
+    "new": "      passage.has(i) || blocked[i] === GATE_BLOCK.hard",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "GATE-ROADS-the-paving-relaid",
     "file": "src/world/road/gateRoads.js",
-    "old": "      if (paving(i)) continue;   // a road there already",
-    "new": "      if (false) continue;   // a road there already",
+    "old": "      if (paving(i)) continue; // a road there already - the town's own paving, or the painter's - kept as it lies",
+    "new": "      if (false) continue; // a road there already - the town's own paving, or the painter's - kept as it lies",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "GATE-ROADS-the-paths-unmarked",
     "file": "src/world/road/gateRoads.js",
-    "old": "      tilemap[i] = TILE.road; paths[i] = 1;",
-    "new": "      tilemap[i] = TILE.road;",
+    "old": "      paths[i] = 1;\n    }",
+    "new": "    }",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "GATE-ROADS-the-pavings-cost",
     "file": "src/world/road/gateRoads.js",
-    "old": "paving(i) ? GATE_ROAD.paved : blocked[i] === GATE_BLOCK.soft",
-    "new": "blocked[i] === GATE_BLOCK.soft",
+    "old": "        : paving(i)\n          ? GATE_ROAD.paved\n          : blocked[i] === GATE_BLOCK.soft\n            ? GATE_ROAD.flat\n            : 1;",
+    "new": "        : blocked[i] === GATE_BLOCK.soft\n          ? GATE_ROAD.flat\n          : 1;",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "GATE-ROADS-a-flats-cost",
     "file": "src/world/road/gateRoads.js",
-    "old": "blocked[i] === GATE_BLOCK.soft ? GATE_ROAD.flat : 1);",
-    "new": "blocked[i] === GATE_BLOCK.soft ? 1 : 1);",
+    "old": "            ? GATE_ROAD.flat",
+    "new": "            ? 1",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "GATE-ROADS-the-turn-unread",
     "file": "src/world/road/gateRoads.js",
-    "old": " + (dir !== 8 && dir !== d ? GATE_ROAD.turn : 0);",
-    "new": ";",
+    "old": "      const nc = c + (d >= 4 ? Math.SQRT2 : 1) * w + (dir !== 8 && dir !== d ? GATE_ROAD.turn : 0);",
+    "new": "      const nc = c + (d >= 4 ? Math.SQRT2 : 1) * w;",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "GATE-ROADS-a-corner-cut",
     "file": "src/world/road/gateRoads.js",
-    "old": "      if (d >= 4 && !(open(nx + y * D) < Infinity && open(x + ny * D) < Infinity)) continue;   // no corner cut past a house\n",
-    "new": "",
+    "old": "      if (d >= 4 && !(open(nx + y * D) < Infinity && open(x + ny * D) < Infinity)) continue; // no corner cut past a house\n      const nc = c + (d >= 4 ? Math.SQRT2 : 1) * w + (dir !== 8 && dir !== d ? GATE_ROAD.turn : 0);",
+    "new": "      const nc = c + (d >= 4 ? Math.SQRT2 : 1) * w + (dir !== 8 && dir !== d ? GATE_ROAD.turn : 0);",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "GATE-ROADS-a-street-widened",
     "file": "src/world/road/gateRoads.js",
-    "old": "      if (paving(out[k])) continue;\n",
-    "new": "",
+    "old": "      if (paving(out[k])) continue;\n      const ax = out[k - 1] % D,",
+    "new": "      const ax = out[k - 1] % D,",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "GATE-ROADS-the-openings-width-unread",
     "file": "src/world/road/gateRoads.js",
-    "old": "T = GATE_ROAD.through, h = (g.half ?? 0) / 2;",
-    "new": "T = GATE_ROAD.through, h = 0;",
+    "old": "      h = (g.half ?? 0) / 2;",
+    "new": "      h = 0;",
     "tests": [
       "test/world/gateroads.test.js"
     ]

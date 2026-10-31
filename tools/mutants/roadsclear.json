@@ -65,8 +65,8 @@
   {
     "name": "ROADS-CLEAR-north-is-the-row-below",
     "file": "src/world/road/roadClearance.js",
-    "old": "pathsDataPoint(net, px + ix, py - iz)",
-    "new": "pathsDataPoint(net, px + ix, py + iz)",
+    "old": "      const bits = pathsDataPoint(net, px + ix, py - iz); // north (+z) is the row above: py - 1",
+    "new": "      const bits = pathsDataPoint(net, px + ix, py + iz); // north (+z) is the row above: py - 1",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ROADS-CLEAR-the-cave-is-a-rock-field",
     "file": "src/world/road/roadClearance.js",
-    "old": "/^WOD_(?:Rocks_(?!Cave)|Mountain_)/",
-    "new": "/^WOD_(?:Rocks_|Mountain_)/",
+    "old": "export const wodPiecewise = (prefabName) => /^WOD_(?:Rocks_(?!Cave)|Mountain_)/.test(String(prefabName ?? ''));",
+    "new": "export const wodPiecewise = (prefabName) => /^WOD_(?:Rocks_|Mountain_)/.test(String(prefabName ?? ''));",
     "tests": [
       "test/world/worldOfDaggerfall/roadsclear.test.js"
     ]

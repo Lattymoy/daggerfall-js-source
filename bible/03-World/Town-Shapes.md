@@ -96,7 +96,7 @@ DEPARTURE (named; Port-Ledger section A, TOWN-SHAPES): from `TerrainHelper.SetLo
   diagonals and the rect - proven against the rect's law alone - and the ring lies past the rect, so 82% of it was never
   paved (259,606 of 1,451,249 ring tiles over the Bay's 3,444 towns; a road's stubs where its arms cross it); and the ring
   paved the sea where TS2 keeps it (2,670 ring tiles over water). Now the guard passes no ring tile, the ring paves no
-  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"&& !locationRect?.ring?.[i]) continue;"`): the
+  water and `smoothRoadHeights` keeps off it (`roadPainter.js:"!locationRect?.ring?.[i]"`): the
   whole dry ring paved (the audit page's record).
 - Measured on the freeware: Daggerfall stands within its walls as before (its rect 11..116, its tiles' histogram
   unchanged, its ground 0.166139 for DFU's 0.166147 - its own land's mean); Antelibuton keeps its sea (thousands of water
@@ -732,7 +732,7 @@ main's walls):
   GATE_WAY.half to either side, clear of every house - `townHouses`, the town map's bytes, its ground flats aside - until
   two tiles of the town's paving, ROAD_RECORDS, under its middle). A road with no street near keeps its crossing; two that
   come to one street are one gate.
-- **Every gate on its road** (`gateRoads.js:"export function layGateRoads(tilemap, paths, tileData, town, ground = null) {"`):
+- **Every gate on its road** (`gateRoads.js:"export function layGateRoads"`):
   the terrain kernel lays each gate's road after the painter and its smoothing. Its passage runs across the opening's width (its
   middle's line and half its half width to either side - an opening on a tile's edge opens onto both tiles) from the
   middle out to the first open tile past the wall's half thickness, through the wall and its towers, never over water.
@@ -877,7 +877,7 @@ Daggerfall is one: it stands as every Bay city does with the packs off. Every co
   is cut at each tower it ends in, on the tower's middle line across the wall, its own side kept - the two meet on one
   plane inside the tower. The tower is grown across to 4.8 m / cos(half the turn) and TOWER_PROUD (0.1 m) more (wallPieces'
   `thick`; its cells with it): it holds the cut and stands out of the faces, low enough that a sliding body rides past.
-- **The arms taken up** (`gateRoads.js:"export function takeUpArms(tilemap, paths, inside, ground) {"`, joinArms): on a Bay
+- **The arms taken up** (`gateRoads.js:"export function takeUpArms"`, joinArms): on a Bay
   wall's ground the painter's road and track tiles outside the wall's inner face are taken up, and the stub inside joined
   to them (`townGates.js` insideWall hands the inside). Each gate's road is laid on to the ring round the ground; an arm
   cut where no ring runs (a pixel of tracks alone) is joined to the nearest gate's road. A river's tiles, the town's paving
@@ -891,7 +891,7 @@ two lengths of a gate onto the same street - two gates stand two lengths apart a
 a wall (55 walls) each run on to a gate: 95 a gate's road along the inner face, 17 the painter's. Gates 1,513 to 1,568 (55
 walls one more; Daggerfall 5, as it was; the nearest two 57.7 m apart).
 
-**Every yard where #1184 stood it** (the owner's decision; `gateRoads.js:"export function yardRoads(tilemap, paths, tileData, town) {"`,
+**Every yard where #1184 stood it** (the owner's decision; `gateRoads.js:"export function yardRoads"`,
 `townWalls.js:"export function townWallYardCellsOf(dfLocation) {"`). A yard's place reads the roads and the wall, and
 the new ones moved 310 of the 1,258 (220 cities; over 44 of them, 42 of 49 moves with the take-up). So the yards read
 what they read at #1184: the paths with no arm taken up and the roads of the gates that wall stood (`townGates.js` hands
