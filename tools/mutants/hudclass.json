@@ -42,8 +42,8 @@
   {
     "name": "HUD-CLASS-tile-kind-a-component",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "{ key: 'more', kind: 'more',",
-    "new": "{ key: 'more', kind: 'side',",
+    "old": "      kind: 'more',",
+    "new": "      kind: 'side',",
     "tests": [
       "test/ui/naval/hudclass_sheets.test.js"
     ],

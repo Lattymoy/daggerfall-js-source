@@ -246,8 +246,8 @@
   {
     "name": "TELL6e-hud-no-bleed",
     "file": "src/ui/hud/hudActiveSpells.js",
-    "old": "  if (bleed && bleed.left > 0) other.push(",
-    "new": "  if (false) other.push(",
+    "old": "  if (bleed && bleed.left > 0)",
+    "new": "  if (false)",
     "tests": [
       "test/scenes/tell6e_landing.test.js"
     ]

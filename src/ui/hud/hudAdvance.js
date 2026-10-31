@@ -35,12 +35,15 @@ export const FIRM_PAGE = 'firmament';
 /** The host's way to open a pause page by name - the world host's `modes.openPauseAt`, else its own pause (scenes/world.js
  *  hands it in). Null where no host gave one: the tile then says what it is and opens nothing. */
 let _pauseAt = null;
-export function setHudPauseAt(fn) { _pauseAt = typeof fn === 'function' ? fn : null; }
+export function setHudPauseAt(fn) {
+  _pauseAt = typeof fn === 'function' ? fn : null;
+}
 
 /** The words. */
 export const ADV_WORDS = Object.freeze({
   skillTitle: 'Skills ready',
-  skillLine: (n) => `${n === 1 ? 'One skill has' : `${n} skills have`} earned a rise. Rest or travel to raise ${n === 1 ? 'it' : 'them'}.`,
+  skillLine: (n) =>
+    `${n === 1 ? 'One skill has' : `${n} skills have`} earned a rise. Rest or travel to raise ${n === 1 ? 'it' : 'them'}.`,
   starsTitle: 'Firmament stars',
   starsLine: (stars, craft) => {
     const parts = [];
@@ -69,40 +72,71 @@ export function askBookWhenDue(book, level, now) {
   if (now - _askedAt < ASK_EVERY_MS) return false;
   const unread = book.state?.open == null && _askedLevel == null;
   const rose = level != null && _askedLevel != null && level > _askedLevel;
-  if (!unread && !rose) { if (_askedLevel == null && level != null) _askedLevel = level; return false; }
+  if (!unread && !rose) {
+    if (_askedLevel == null && level != null) _askedLevel = level;
+    return false;
+  }
   _askedAt = now;
   _askedLevel = level ?? _askedLevel ?? 0;
-  try { book.read()?.catch?.(() => {}); } catch { /* the book's own failure is its word */ }
+  try {
+    book.read()?.catch?.(() => {});
+  } catch {
+    /* the book's own failure is its word */
+  }
   return true;
 }
 /** For the pins: forget what was asked. */
-export function _resetAdvanceForTests() { _askedAt = -Infinity; _askedLevel = null; }
+export function _resetAdvanceForTests() {
+  _askedAt = -Infinity;
+  _askedLevel = null;
+}
 
 /** Bind the two tiles the HUD built (ui/enhanced/enhancedHud.js - the cells are the HUD's, their classes its own words):
  *  their presses, the stars' door and the hover cards. `parts` is `{ skill: { cell }, firm: { cell } }`; the counts the
  *  cards read are written on it by drawAdvanceTiles. */
 export function bindAdvanceTiles(parts) {
   const { skill, firm } = parts;
-  parts.stars = null; parts.skills = 0;
+  parts.stars = null;
+  parts.skills = 0;
   // a press on a tile is the tile's: the hosts swing from a WINDOW mousedown (BUFF-END's law), so it goes no further
   for (const t of [skill, firm]) {
-    t.cell.addEventListener?.('mousedown', (e) => { if (!hudArranging()) e.stopPropagation(); });
-    t.cell.addEventListener?.('mouseup', (e) => { if (!hudArranging()) e.stopPropagation(); });
+    t.cell.addEventListener?.('mousedown', (e) => {
+      if (!hudArranging()) e.stopPropagation();
+    });
+    t.cell.addEventListener?.('mouseup', (e) => {
+      if (!hudArranging()) e.stopPropagation();
+    });
   }
   firm.cell.addEventListener?.('click', (e) => {
-    if (hudArranging() || !_pauseAt) return;   // the editor's drag is no press
+    if (hudArranging() || !_pauseAt) return; // the editor's drag is no press
     e.stopPropagation();
     hideHudTip();
-    try { _pauseAt(FIRM_PAGE); } catch { /* the host's door, its own failure */ }
+    try {
+      _pauseAt(FIRM_PAGE);
+    } catch {
+      /* the host's door, its own failure */
+    }
   });
   const tipOf = (target) => {
     if (hudArranging()) return null;
     if (skill.cell.contains(target) && parts.skills > 0) {
-      return { node: skill.cell, key: 'adv:skill', tip: { title: ADV_WORDS.skillTitle, meta: 'Skills', lines: [ADV_WORDS.skillLine(parts.skills)] } };
+      return {
+        node: skill.cell,
+        key: 'adv:skill',
+        tip: { title: ADV_WORDS.skillTitle, meta: 'Skills', lines: [ADV_WORDS.skillLine(parts.skills)] },
+      };
     }
     if (firm.cell.contains(target) && parts.stars) {
-      return { node: firm.cell, key: 'adv:firm', tip: { title: ADV_WORDS.starsTitle, meta: 'Firmament',
-        lines: [ADV_WORDS.starsLine(parts.stars.stars, parts.stars.craft)], foot: _pauseAt ? ADV_WORDS.starsGo : ADV_WORDS.starsNoDoor } };
+      return {
+        node: firm.cell,
+        key: 'adv:firm',
+        tip: {
+          title: ADV_WORDS.starsTitle,
+          meta: 'Firmament',
+          lines: [ADV_WORDS.starsLine(parts.stars.stars, parts.stars.craft)],
+          foot: _pauseAt ? ADV_WORDS.starsGo : ADV_WORDS.starsNoDoor,
+        },
+      };
     }
     return null;
   };
@@ -134,9 +168,16 @@ function placeTiles(parts, row) {
   const b = hb?.getBoundingClientRect?.();
   const shown = b && b.width > 0 && b.height > 0 && globalThis.getComputedStyle?.(hb)?.visibility !== 'hidden';
   const reach = advanceReach(r, shown ? b : null, r.width / (row.offsetWidth || r.width));
-  const l = `${reach.left}px`, rt = `${reach.right}px`;
-  if (parts.reachL !== l) { parts.reachL = l; row.style.setProperty('--adv-left', l); }
-  if (parts.reachR !== rt) { parts.reachR = rt; row.style.setProperty('--adv-right', rt); }
+  const l = `${reach.left}px`,
+    rt = `${reach.right}px`;
+  if (parts.reachL !== l) {
+    parts.reachL = l;
+    row.style.setProperty('--adv-left', l);
+  }
+  if (parts.reachR !== rt) {
+    parts.reachR = rt;
+    row.style.setProperty('--adv-right', rt);
+  }
 }
 
 /**
@@ -147,11 +188,15 @@ function placeTiles(parts, row) {
  */
 export function drawAdvanceTiles(parts, { hidden = false, now = Date.now(), row = null } = {}) {
   if (!parts) return { skills: 0, stars: 0 };
-  if (!hidden) placeTiles(parts, row);   // CLEAR-HOTBAR
+  if (!hidden) placeTiles(parts, row); // CLEAR-HOTBAR
   let skills = 0;
   let stars = null;
   if (!hidden) {
-    try { skills = skillsImprovable() | 0; } catch { skills = 0; }
+    try {
+      skills = skillsImprovable() | 0;
+    } catch {
+      skills = 0;
+    }
     const book = firmamentBook();
     if (book) {
       askBookWhenDue(book, hudRenown()?.level ?? null, now);

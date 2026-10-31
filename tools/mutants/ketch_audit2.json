@@ -334,8 +334,8 @@
   {
     "name": "KT2-the-host-never-marked",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (went) markFoeStruck(hb);\n",
-    "new": "",
+    "old": "  if (went) markFoeStruck(hb);\n  return went;",
+    "new": "  return went;",
     "note": "A host body struck never takes the target bar.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -344,8 +344,8 @@
   {
     "name": "KT2-the-stand-ins-count-read",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "health: share != null ? share * max : Math.max(0, e.health ?? 0),",
-    "new": "health: Math.max(0, e.health ?? 0),",
+    "old": "    health: share != null ? share * max : Math.max(0, e.health ?? 0),",
+    "new": "    health: Math.max(0, e.health ?? 0),",
     "note": "The bar reads the stand-in's count nothing empties: always whole.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"
@@ -354,8 +354,8 @@
   {
     "name": "KT2-the-fallen-a-target",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (e.relayHealth && !(share > 0)) return null;\n",
-    "new": "",
+    "old": "  if (e.relayHealth && !(share > 0)) return null;\n  const max = e.maxHealth || e.health || 1;",
+    "new": "  const max = e.maxHealth || e.health || 1;",
     "note": "A fallen host body's bar stands empty after its fall.",
     "tests": [
       "test/scenes/ketch_audit2_page.test.js"

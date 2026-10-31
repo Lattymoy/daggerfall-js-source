@@ -128,7 +128,7 @@ the helm; left and right the time scale, held the trim), none of it a binding - 
 for the nine, and the prompt bar says what the d-pad does there. Aboard another player's boat (CSA-K) there is no
 key and no button: the helm is its owner's. It moves (HUD-HELM, 2026-10-15, Mac: "Yes, same branch" - the saddle
 panel's twin, below): the bar is a HUD-MOVE piece, "Helm panel"
-(`hudLayout.js:"{ id: 'helm', sel: '.helmpanel .helmpanel-bar'"`), placed where the player put it the moment it is
+(`hudLayout.js:"stands under the".."{"`), placed where the player put it the moment it is
 built, with a preview of itself ("At the helm (preview)", `buildHelmPreview`) while the editor is open and nobody is
 at a helm; the sea's target card stands under the bar wherever it is moved (`03-World/Naval-Combat.md`, Where the card
 stands).
@@ -225,7 +225,7 @@ Options' bar) hides it. It spends NO key of its own and adds no binding.
   panel with its cursor (PADPLUS1). The classic skin keeps the grip bar's breath and the keys.
 - **It moves** (HUD-SADDLE, FIELD BUGS 2026-10-14, Discord: "Riding Window is not able to be edited in the HUD Editor
   (Alt+U)" - `01-Overview/bugs/Field-Bugs-2026-10-14-riding-panel.md`): the bar is a HUD-MOVE piece, "Riding panel"
-  (`hudLayout.js:"{ id: 'saddle', sel: '.saddlepanel .saddlepanel-bar'"`) - Alt+U frames it, a drag moves it, its
+  (`hudLayout.js:"panel is built only".."{"`) - Alt+U frames it, a drag moves it, its
   corner sizes it, its X turns it off in play, and a double-click or Reset puts it back. A panel built at a mount stands
   where the player put it from its first frame (`ui/hud/hudPlacer.js` placeHudPieces, the notice stack's leaf), and while
   the editor is open and nobody rides it stands as a preview of itself ("Riding panel (preview)", `buildSaddlePreview`).

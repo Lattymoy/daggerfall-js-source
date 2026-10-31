@@ -74,8 +74,8 @@
   {
     "name": "MOVED-always",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  if (o && (o.x || o.y)) { if (!node.hasAttribute('data-hm-moved'))",
-    "new": "  if (true) { if (!node.hasAttribute('data-hm-moved'))",
+    "old": "  if (o && (o.x || o.y)) {",
+    "new": "  if (true) {",
     "tests": [
       "test/ui/enhanced/fb1003_movednotice.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "MOVED-by-scale",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  if (o && (o.x || o.y)) { if (!node.hasAttribute('data-hm-moved'))",
-    "new": "  if (o && (o.x || o.y || (o.s && o.s !== 1))) { if (!node.hasAttribute('data-hm-moved'))",
+    "old": "  if (o && (o.x || o.y)) {",
+    "new": "  if (o && (o.x || o.y || (o.s && o.s !== 1))) {",
     "tests": [
       "test/ui/enhanced/fb1003_movednotice.test.js"
     ]

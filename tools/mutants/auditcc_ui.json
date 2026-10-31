@@ -62,8 +62,8 @@
   {
     "name": "AUDITCC-UI-S3-no-piece-of-its-own",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature', inside: 'quick' },\n",
-    "new": "",
+    "old": "    { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature', inside: 'quick' },\n    // `dummy`: hidden until there is something to show (no foe targeted) - while unlocked it stands as a preview to move",
+    "new": "    // `dummy`: hidden until there is something to show (no foe targeted) - while unlocked it stands as a preview to move",
     "why": "the plate the quick block's: its X hides the plate, the plate has no X and no move of its own",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "AUDITCC-UI-S3-not-inside-the-quick-block",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "name: 'Temperature', inside: 'quick' }",
-    "new": "name: 'Temperature' }",
+    "old": "    { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature', inside: 'quick' },",
+    "new": "    { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature' },",
     "why": "the quick block's move and size not undone on the plate: it moves twice (UI-CALM: the corner's caption is its place)",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "AUDITCC-UI-S3-the-quick-block-off-takes-it",
     "file": "src/ui/hud/hudLayout.js",
-    "old": ".hud-quick[data-hm-off]:not([data-hm-edit]) .hud-temp[data-hm]:not([data-hm-off]) { visibility: visible !important; }",
-    "new": "",
+    "old": ".hud-quick[data-hm-off]:not([data-hm-edit]) .hud-temp[data-hm]:not([data-hm-off]) { visibility: visible !important; }   /* UI-CALM: the plate's outer piece is the quick block */",
+    "new": "   /* UI-CALM: the plate's outer piece is the quick block */",
     "why": "the quick block switched off hides the plate with it while the plate's own part stands on (UI-CALM: the plate's outer piece)",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -463,8 +463,8 @@
   {
     "name": "AUDITCC-UI-S14-the-tile-unsaid",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level), cost:",
-    "new": "say: null, cost:",
+    "old": "      say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level),",
+    "new": "      say: null,",
     "why": "a need's tile says no level",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -473,8 +473,8 @@
   {
     "name": "AUDITCC-UI-S14-a-boon-said-as-a-level",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level), cost:",
-    "new": "say: levelSaid(String(c.text ?? ''), c.level), cost:",
+    "old": "      say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level),",
+    "new": "      say: levelSaid(String(c.text ?? ''), c.level),",
     "why": "a boon's tile titled as a need",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -483,8 +483,8 @@
   {
     "name": "AUDITCC-UI-S14-no-cost-flag",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "cost: c.level === 'danger' });",
-    "new": "cost: false });",
+    "old": "      cost: c.level === 'danger',",
+    "new": "      cost: false,",
     "why": "a costing need's tile unmarked",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -573,8 +573,8 @@
   {
     "name": "AUDITCC-UI-D6-the-red-thermometer",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "r: '#b8ab8c', h: '#efe6cf'",
-    "new": "r: '#e0584a', h: '#ffb0a0'",
+    "old": "    pal: { g: '#cfd4dc', w: '#eef2f6', r: '#b8ab8c', h: '#efe6cf', t: '#a8b0bc' },",
+    "new": "    pal: { g: '#cfd4dc', w: '#eef2f6', r: '#e0584a', h: '#ffb0a0', t: '#a8b0bc' },",
     "why": "the comfortable reading's thermometer in the red of a cost",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -714,8 +714,8 @@
   {
     "name": "AUDITCC-UI-R-the-boon-tile-amber",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "kind: c.level === 'boon' ? 'buff' : c.level === 'danger'",
-    "new": "kind: c.level === 'boon' ? 'warn' : c.level === 'danger'",
+    "old": "      kind: c.level === 'boon' ? 'buff' : c.level === 'danger' ? 'danger' : 'warn',",
+    "new": "      kind: c.level === 'boon' ? 'warn' : c.level === 'danger' ? 'danger' : 'warn',",
     "tests": [
       "test/systems/auditcc_ui.test.js"
     ],
@@ -734,8 +734,8 @@
   {
     "name": "AUDITCC-UI-S-the-night-tile-named-rested",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "name: 'Next night', foot: `${rested.minutes}m`",
-    "new": "name: 'Rested', foot: `${rested.minutes}m`",
+    "old": "    tile({ key: 'rested', kind: 'buff', name: 'Next night', foot: `${rested.minutes}m`, glyph: 'rested' });",
+    "new": "    tile({ key: 'rested', kind: 'buff', name: 'Rested', foot: `${rested.minutes}m`, glyph: 'rested' });",
     "tests": [
       "test/systems/rest/rest1_act.test.js"
     ],

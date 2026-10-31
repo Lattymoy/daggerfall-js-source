@@ -622,8 +622,8 @@
   {
     "name": "EVENTS1-the-piece-the-plate",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "{ id: 'events', sel: '.evhud',",
-    "new": "{ id: 'events', sel: '.evboard',",
+    "old": "      sel: '.evhud',",
+    "new": "      sel: '.evboard',",
     "tests": [
       "test/ui/events1_board_ui.test.js"
     ]

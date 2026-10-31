@@ -18,7 +18,7 @@ with no frame at all.
 buildSaddlePreview.
 
 FOUND. HUD-MOVE finds every piece it moves by a selector in one list
-(`hudLayout.js:"export const HUD_PIECES = Object.freeze(["`) - "ONE SEAM, NO HOST EDITS": the modules that build the
+(`hudLayout.js:"export const HUD_PIECES"`) - "ONE SEAM, NO HOST EDITS": the modules that build the
 pieces tell it nothing, so a piece the list does not name is never marked, framed, moved, sized or turned off. The
 saddle panel (`ui/enhanced/enhancedSaddle.js`, `10-UI/Controls.md` THE SADDLE PANEL) shipped ten days after the list and was never
 given a row in it. It stands in a layer of its own over the whole screen (`.saddlepanel`, pointer-blind), its bar
@@ -28,7 +28,7 @@ was never wrong; it was simply not one of the pieces.
 
 FIXED.
 
-- **The bar is a piece**: `hudLayout.js:"{ id: 'saddle', sel: '.saddlepanel .saddlepanel-bar'"` - "Riding panel" over
+- **The bar is a piece**: `hudLayout.js:"only when there is a ride to show, and a window over the HUD covers".."{"` - "Riding panel" over
   its corner, moved by a drag, sized by its corner square, turned off and on by its X, put back by a double-click,
   saved with the rest of the layout and put back by Reset, as every piece is. The piece is the bar, not its layer - the
   layer is the whole screen. No `dummy`: the panel is built only when there is a ride to show, and a window over the HUD
@@ -45,7 +45,7 @@ FIXED.
   touches the live panel's slot. On a touch device it stands at a finger's place, where the hosts' own panel does
   (`isTouchDevice`, the very question `ui/touch/touch.js` attachTouch asks). Its stand-in is the layer and its piece the bar
   inside it, so HUD-MOVE's test for a stand-in reads a node's layer as well as the node
-  (`hudLayout.js:"const ghostOf = (n) =>"`): the whole stand-in leaves when a rider mounts or the HUD is locked, and the
+  (`hudLayout.js:"const ghostOf = (n)"`): the whole stand-in leaves when a rider mounts or the HUD is locked, and the
   next sweep never mistakes the preview's bar for a real panel.
 - **A fake that lied, told the truth** (`test/invdrag.mjs`, the pack's suites' document): its selector reader took an id
   and an attribute (`#fps-counter`, `[data-hm-ghost]`) for nothing at all, so either matched every node - and the
@@ -66,7 +66,7 @@ edited.
 THE HELM PANEL (HUD-HELM, 2026-10-15, Mac: "Yes, same branch"). The helm panel (`ui/enhanced/enhancedHelm.js`, CSA-L) is the
 saddle panel's twin - the same whole-screen layer, its bar at the same place under the compass - and stood outside
 HUD_PIECES as the saddle did. Recorded here as not changed, and Mac's word was to change it on this branch. It is the
-saddle's fix to the letter: the piece (`hudLayout.js:"{ id: 'helm', sel: '.helmpanel .helmpanel-bar'"`, "Helm panel"),
+saddle's fix to the letter: the piece (`hudLayout.js:"stands under the".."{"`, "Helm panel"),
 placed on build (`enhancedHelm.js:"placeHudPieces(doc)"`), and a preview while nobody is at a helm
 (`buildHelmPreview`, its own nodes AND its own holds - a trim held on the live panel is the live panel's). Its build and
 its painting split the saddle's way (`build`, `paintHelm`); the live panel's frame is the same frame. THE SEA'S TARGET

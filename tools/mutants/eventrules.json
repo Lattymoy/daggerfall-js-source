@@ -78,8 +78,8 @@
   {
     "name": "EVENT-RULES-the-tile-outside-a-level",
     "file": "src/ui/hud/statusTips.js",
-    "old": "  if (!level || !Object.hasOwn(MADE_LEVEL_PLACE, level)) return null;\n  return { level,",
-    "new": "  if (!level) return null;\n  return { level,",
+    "old": "  if (!level || !Object.hasOwn(MADE_LEVEL_PLACE, level)) return null;",
+    "new": "  if (!level) return null;",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -87,8 +87,8 @@
   {
     "name": "EVENT-RULES-the-foot-always",
     "file": "src/ui/hud/statusTips.js",
-    "old": "foot: pausedMs > 0 ? `${Math.ceil(pausedMs / 1000)}s` : null };",
-    "new": "foot: `${Math.ceil(pausedMs / 1000)}s` };",
+    "old": "    foot: pausedMs > 0 ? `${Math.ceil(pausedMs / 1000)}s` : null,",
+    "new": "    foot: `${Math.ceil(pausedMs / 1000)}s`,",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -96,8 +96,8 @@
   {
     "name": "EVENT-RULES-the-recall-said-in-the-court",
     "file": "src/ui/hud/statusTips.js",
-    "old": "out.push(r('recall') === 'refused' ? t(",
-    "new": "out.push(true ? t(",
+    "old": "      r('recall') === 'refused'",
+    "new": "      true",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -105,8 +105,8 @@
   {
     "name": "EVENT-RULES-the-potions-everywhere",
     "file": "src/ui/hud/statusTips.js",
-    "old": "  if (r('potions') === 'counted') out.push(",
-    "new": "  if (true) out.push(",
+    "old": "  if (r('potions') === 'counted')\n    out.push(t('madeRules.potions', '{n} restoring potions a hall.', { n: EG_POTIONS_PER_HALL }));",
+    "new": "  if (true) out.push(t('madeRules.potions', '{n} restoring potions a hall.', { n: EG_POTIONS_PER_HALL }));",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "EVENT-RULES-the-promise-kept",
     "file": "src/ui/hud/statusTips.js",
-    "old": "  regenerate: () => (regenHeldNow() ? t(",
-    "new": "  regenerate: () => (false ? t(",
+    "old": "    regenHeldNow()",
+    "new": "    false",
     "tests": [
       "test/ui/hud/eventrules_tile.test.js"
     ]

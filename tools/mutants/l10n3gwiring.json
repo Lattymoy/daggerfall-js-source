@@ -48,7 +48,7 @@
     "name": "L10N3g-ui-hudText-132-grammar",
     "file": "src/ui/hud/hudText.js",
     "old": "    const pgText = processGrammar(text);",
-    "new": "    const pgText = (text);",
+    "new": "    const pgText = text;",
     "tests": [
       "test/ui/l10n3g_wiring.test.js"
     ]

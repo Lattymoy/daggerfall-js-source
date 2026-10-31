@@ -35,8 +35,8 @@
   {
     "name": "DISEASE-UNWELL-the-tile-never-drawn",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "    } else if (!unwell && diseaseIncubating(a)) {\n",
-    "new": "    } else if (false) {\n",
+    "old": "    } else if (!unwell && diseaseIncubating(a)) {",
+    "new": "    } else if (false) {",
     "tests": [
       "test/ui/fb1019f_unwell.test.js",
       "test/ui/enhanced/ui3_status.test.js"
@@ -45,8 +45,8 @@
   {
     "name": "DISEASE-UNWELL-a-tile-a-disease",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "    } else if (!unwell && diseaseIncubating(a)) {\n",
-    "new": "    } else if (diseaseIncubating(a)) {\n",
+    "old": "    } else if (!unwell && diseaseIncubating(a)) {",
+    "new": "    } else if (diseaseIncubating(a)) {",
     "tests": [
       "test/ui/fb1019f_unwell.test.js",
       "test/ui/enhanced/ui3_status.test.js"
@@ -55,8 +55,8 @@
   {
     "name": "DISEASE-UNWELL-the-incubating-one-named",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'disease' });\n",
-    "new": "      out.push({ key: 'unwell', name: DISEASE_NAMES[a.disease], glyph: 'disease' });\n",
+    "old": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'disease' });",
+    "new": "      out.push({ key: 'unwell', name: DISEASE_NAMES[a.disease], glyph: 'disease' });",
     "tests": [
       "test/ui/fb1019f_unwell.test.js",
       "test/ui/enhanced/ui3_status.test.js"
@@ -65,8 +65,8 @@
   {
     "name": "DISEASE-UNWELL-another-picture",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'disease' });\n",
-    "new": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'poison' });\n",
+    "old": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'disease' });",
+    "new": "      out.push({ key: 'unwell', name: unwellTileText(), glyph: 'poison' });",
     "tests": [
       "test/ui/fb1019f_unwell.test.js",
       "test/ui/enhanced/ui3_status.test.js"
@@ -75,8 +75,8 @@
   {
     "name": "DISEASE-UNWELL-the-tile-at-the-end",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "  if (poisoned) out.unshift({ key: 'poison', name: 'Poisoned', glyph: 'poison' });\n",
-    "new": "  if (poisoned) out.unshift({ key: 'poison', name: 'Poisoned', glyph: 'poison' });\n  { const i = out.findIndex((r) => r.key === 'unwell'); if (i >= 0) out.push(...out.splice(i, 1)); }\n",
+    "old": "  // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 8.2): a sweep's BLEED (systems/blowEffects.js) - its ticks left at its foot,",
+    "new": "  {\n    const i = out.findIndex((r) => r.key === 'unwell');\n    if (i >= 0) out.push(...out.splice(i, 1));\n  }\n  // TELL9 (bible/12-Enhanced-AI/Feud-Arc.md 8.2): a sweep's BLEED (systems/blowEffects.js) - its ticks left at its foot,",
     "tests": [
       "test/ui/fb1019f_unwell.test.js",
       "test/ui/enhanced/ui3_status.test.js"
@@ -85,8 +85,8 @@
   {
     "name": "DISEASE-UNWELL-the-tile-a-literal",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "export const unwellTileText = () => t('hud.status.unwell', UNWELL_TILE_TEXT);\n",
-    "new": "export const unwellTileText = () => UNWELL_TILE_TEXT;\n",
+    "old": "export const unwellTileText = () => t('hud.status.unwell', UNWELL_TILE_TEXT);",
+    "new": "export const unwellTileText = () => UNWELL_TILE_TEXT;",
     "tests": [
       "test/ui/fb1019f_unwell.test.js"
     ]

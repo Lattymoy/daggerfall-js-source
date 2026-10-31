@@ -11,8 +11,12 @@ import { injectEnhancedFonts } from '../enhanced/enhancedStyle.js';
 import { hudArranging } from './hudLayout.js';
 
 export const TOWN_PANEL_TEXT = Object.freeze({
-  get notice() { return t('town.panel.notice', 'Notice Board'); },
-  get bounty() { return t('town.panel.bounty', 'Bounty Board'); },
+  get notice() {
+    return t('town.panel.notice', 'Notice Board');
+  },
+  get bounty() {
+    return t('town.panel.bounty', 'Bounty Board');
+  },
   /** AUDIT FB1029g P10: the Notice Board's count of new notes, '' for none. @param {number} n */
   unseen: (n) => (n > 0 ? t('town.panel.new', '{n, plural, one {# new} other {# new}}', { n }) : ''),
 });
@@ -68,7 +72,13 @@ function el(doc, tag, cls, text = null) {
  * is the panel's alone (the hosts swing from a window mousedown); the heading folds the panel to its name.
  * @param {{ doc?: any, onNotice?: () => void, onBounty?: () => void, folded?: boolean, onFold?: (folded: boolean) => void }} [o]
  */
-export function createTownPanel({ doc = globalThis.document, onNotice = () => {}, onBounty = () => {}, folded = false, onFold = () => {} } = {}) {
+export function createTownPanel({
+  doc = globalThis.document,
+  onNotice = () => {},
+  onBounty = () => {},
+  folded = false,
+  onFold = () => {},
+} = {}) {
   addSheet(doc, STYLE_ID, TOWN_PANEL_CSS);
   if (!isEnhancedPlus()) addSheet(doc, KIT_ID, townPanelKitCss());
   if (doc.head) injectEnhancedFonts(doc);
@@ -83,7 +93,8 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
   const acts = el(doc, 'div', 'dftown-acts');
   const notice = el(doc, 'button', 'dftown-btn primary');
   notice.type = 'button';
-  const noticeWord = el(doc, 'span', 'dftown-word', TOWN_PANEL_TEXT.notice), noticeNew = el(doc, 'span', 'dftown-new');
+  const noticeWord = el(doc, 'span', 'dftown-word', TOWN_PANEL_TEXT.notice),
+    noticeNew = el(doc, 'span', 'dftown-new');
   notice.append(noticeWord, noticeNew);
   const bounty = el(doc, 'button', 'dftown-btn', TOWN_PANEL_TEXT.bounty);
   bounty.type = 'button';
@@ -92,19 +103,44 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
   root.append(head, body);
   let measured = -1;
   /** AUDIT FB1029g P6: its height, for the quest card it would stand under on a narrow screen (enhancedStyle.js --qt-town). */
-  const measure = () => { const h = Math.round(root.offsetHeight || 0); if (h !== measured) { measured = h; doc.body?.style?.setProperty?.('--dftown-h', `${h}px`); } };
-  const fold = (f) => { folded = !!f; root.classList.toggle('folded', folded); head.setAttribute('aria-expanded', String(!folded)); measure(); };
+  const measure = () => {
+    const h = Math.round(root.offsetHeight || 0);
+    if (h !== measured) {
+      measured = h;
+      doc.body?.style?.setProperty?.('--dftown-h', `${h}px`);
+    }
+  };
+  const fold = (f) => {
+    folded = !!f;
+    root.classList.toggle('folded', folded);
+    head.setAttribute('aria-expanded', String(!folded));
+    measure();
+  };
   fold(folded);
   for (const n of [head, notice, bounty]) {
-    n.addEventListener('mousedown', (e) => { if (!hudArranging()) e.stopPropagation(); });
-    n.addEventListener('mouseup', (e) => { if (!hudArranging()) e.stopPropagation(); });
+    n.addEventListener('mousedown', (e) => {
+      if (!hudArranging()) e.stopPropagation();
+    });
+    n.addEventListener('mouseup', (e) => {
+      if (!hudArranging()) e.stopPropagation();
+    });
   }
   // AUDIT FB1029g P14: the press lets go of the focus - a button kept focused takes the next Space or Enter as a press
-  const press = (n, fn) => n.addEventListener('click', (e) => { if (hudArranging()) return; e.stopPropagation(); n.blur?.(); fn(); });
-  press(head, () => { fold(!folded); onFold(folded); });
+  const press = (n, fn) =>
+    n.addEventListener('click', (e) => {
+      if (hudArranging()) return;
+      e.stopPropagation();
+      n.blur?.();
+      fn();
+    });
+  press(head, () => {
+    fold(!folded);
+    onFold(folded);
+  });
   press(notice, () => onNotice());
   press(bounty, () => onBounty());
-  let drawn = '', anchored = '';
+  let drawn = '',
+    anchored = '';
   /** The panel rides the compass's column where the enhanced HUD stands, else stands on its own. AUDIT FB1029g P4: seated
    *  from its making, so the HUD's editor has it to preview before the first town. */
   const seat = () => {
@@ -116,13 +152,24 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
   seat();
   return {
     el: root,
-    get shown() { return root.classList.contains('on'); },
-    get folded() { return folded; },
+    get shown() {
+      return root.classList.contains('on');
+    },
+    get folded() {
+      return folded;
+    },
     /** @param {{ name: string, lines: string[], unseen?: number, bounty?: boolean }} view */
     show(view) {
       seat();
       const unseen = TOWN_PANEL_TEXT.unseen(view.unseen ?? 0);
-      const key = JSON.stringify([view.name, view.lines, unseen, !!view.bounty, TOWN_PANEL_TEXT.notice, TOWN_PANEL_TEXT.bounty]);
+      const key = JSON.stringify([
+        view.name,
+        view.lines,
+        unseen,
+        !!view.bounty,
+        TOWN_PANEL_TEXT.notice,
+        TOWN_PANEL_TEXT.bounty,
+      ]);
       if (key !== drawn) {
         drawn = key;
         name.textContent = view.name;
@@ -141,7 +188,11 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
     /** AUDIT FB1029g P4: out of town its heading is the editor's preview (hudLayout.js), never the last town's. */
     hide() {
       root.classList.remove('on');
-      if (drawn) { drawn = ''; name.textContent = ''; lines.replaceChildren(); }
+      if (drawn) {
+        drawn = '';
+        name.textContent = '';
+        lines.replaceChildren();
+      }
     },
     /** AUDIT FB1029g P6, P13: on the classic skin the panel stands on the compass (hud.js classicCompassAnchor: its right
      *  and bottom offsets), off the popup text it covered at the top; with no anchor, under the top edge.
@@ -155,6 +206,8 @@ export function createTownPanel({ doc = globalThis.document, onNotice = () => {}
       root.style.right = a ? `${anchor?.right}px` : '';
       root.style.bottom = a ? `${anchor?.bottom}px` : '';
     },
-    dispose() { root.remove(); },
+    dispose() {
+      root.remove();
+    },
   };
 }

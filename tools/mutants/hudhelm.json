@@ -2,8 +2,8 @@
   {
     "name": "HUD-HELM-no-piece",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  { id: 'helm', sel: '.helmpanel .helmpanel-bar', get name() { return t('menu.hud.piece.helm', 'Helm panel'); }, ghost: 'helm' },\n",
-    "new": "",
+    "old": "    {\n      id: 'helm',\n      sel: '.helmpanel .helmpanel-bar',\n      get name() {\n        return t('menu.hud.piece.helm', 'Helm panel');\n      },\n      ghost: 'helm',\n    },\n    { id: 'fps', sel: '#fps-counter', name: 'FPS counter' },",
+    "new": "    { id: 'fps', sel: '#fps-counter', name: 'FPS counter' },",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HUD-HELM-no-ghost",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  } else if (kind === 'helm') {\n    try { g = ghostDeps.buildHelmPreview?.(doc) ?? null; }",
-    "new": "  } else if (kind === 'helm-none') {\n    try { g = ghostDeps.buildHelmPreview?.(doc) ?? null; }",
+    "old": "  } else if (kind === 'helm') {",
+    "new": "  } else if (kind === 'helm-none') {",
     "tests": [
       "test/ui/enhanced/hudhelm.test.js"
     ]

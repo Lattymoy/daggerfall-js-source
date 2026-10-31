@@ -90,7 +90,7 @@ test('RETRO-UI the large HUD: docked under the pillarbox it is the picture\'s wi
   const hl = src('ui/hud/hudLarge.js');
   assert.match(hl, /const hit = largeHudClick\(largeHudBar\(\), \.\.\.toUiPoint\(px, py\), button\);/);
   assert.match(hl, /_overBar = !!largeHudPoint\(bar, \.\.\.toUiPoint\(/);
-  assert.match(src('ui/hud/hudActiveSpells.js'), /pointToNative\(nativeMetrics\(uiCanvas\(canvas\)\), \.\.\.toUiPoint\(/, 'the spell icons\' tooltip and right-click the same');
+  assert.match(src('ui/hud/hudActiveSpells.js'), /pointToNative\(\n\s*nativeMetrics\(uiCanvas\(canvas\)\),\n\s*\.\.\.toUiPoint\(/, 'the spell icons\' tooltip and right-click the same');
 });
 
 test('RETRO-UI the viewmodel and the horse: a right-aligned weapon\'s edge is the picture\'s (FPSWeapon\'s screenRect, CustomScreenRect), the rig and the mount lay out on the UI canvas and draw at its place, and the gun\'s muzzle is measured back on the real canvas (mutants: the rig on the canvas; the draw not bracketed; the muzzle in the layer\'s pixels)', () => {

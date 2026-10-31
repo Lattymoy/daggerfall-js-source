@@ -282,8 +282,8 @@
   {
     "name": "LOOT7-hud-unnamed",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "    name: String(titled(e, e.name ?? e.career?.name ?? 'Foe')),",
-    "new": "    name: String(e.name ?? e.career?.name ?? 'Foe'),",
+    "old": "    name: String(titled(e, e.name ?? e.career?.name ?? 'Foe')), // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name",
+    "new": "    name: String(e.name ?? e.career?.name ?? 'Foe'), // LOOT7: a champion's trait before its name; ELITE FOES: an elite's word; REVENANT: its own name",
     "tests": [
       "test/systems/loot7_champions.test.js"
     ]

@@ -73,7 +73,7 @@ Materials Bag tells the listeners as if it were new. So the pack is watched, not
   turn comes (zone remains the room gave to another player) never stands.
 - **Where.** The right edge, 60% down the window. When the notice stack is in the way the banners step under it, and
   never pass the window's foot - a band too short for every banner shows the newest (`bannerLayout`). The HUD-MOVE
-  layer moves the stack like any HUD piece (`hudLayout.js:"{ id: 'loot', sel: '.lootbanner-stack'"`, "Loot banners",
+  layer moves the stack like any HUD piece (`hudLayout.js:"{ id: 'loot', sel"`, "Loot banners",
   with a preview while the UI is unlocked); moved, it fades where it stands rather than sliding from the edge.
 - **The dress** is the pickup feed's - its veil, stone bevel and ring, tinted per Plus theme through the shared veil law
   (`enhancedFrame.js:"export const hudVeil"`, moved there from the pickup feed, its first reader). The tier

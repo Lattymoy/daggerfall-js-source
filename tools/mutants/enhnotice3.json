@@ -771,8 +771,8 @@
   {
     "name": "AUDIT4-A1-the-enhanced-arm-paints-both-faces",
     "file": "src/ui/hud/hudText.js",
-    "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);\n      return;",
-    "new": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "old": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);\n      return;\n    }",
+    "new": "      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);\n    }",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -798,8 +798,8 @@
   {
     "name": "AUDIT4-A6-the-next-pop-delay-never-reset",
     "file": "src/ui/hud/hudText.js",
-    "old": "      this.lines.shift();\n      this.nextPopDelay = HUD_TEXT_POP_DELAY;",
-    "new": "      this.lines.shift();",
+    "old": "      this.nextPopDelay = HUD_TEXT_POP_DELAY;\n    }",
+    "new": "    }",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]

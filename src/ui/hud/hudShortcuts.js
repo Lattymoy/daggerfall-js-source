@@ -42,7 +42,7 @@
 
 import { getBool, setValue } from '../../systems/settings/settings.js';
 import { hotkeyHit } from '../../systems/dialogShortcuts.js';
-import { toggleRetroPostprocessing } from '../../systems/retroMode.js';   // RETRO1: a systems leaf, as the rule above asks
+import { toggleRetroPostprocessing } from '../../systems/retroMode.js'; // RETRO1: a systems leaf, as the rule above asks
 
 // DaggerfallHUD.cs:47 `bool renderHUD = true;`
 let _renderHud = true;
@@ -58,7 +58,9 @@ export function toggleHudRender() {
 }
 
 /** Tests only: put the flag back where a fresh HUD starts (:47). */
-export function _resetHudRender() { _renderHud = true; }
+export function _resetHudRender() {
+  _renderHud = true;
+}
 
 /**
  * The three shortcut arms of DaggerfallHUD.Update, for one keydown.

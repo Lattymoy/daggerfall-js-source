@@ -263,8 +263,8 @@
   {
     "name": "LOOT-BANNER-no-hud-piece",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  { id: 'loot', sel: '.lootbanner-stack', name: 'Loot banners', dummy: true, ghost: 'loot' },   // LOOT-BANNER\n",
-    "new": "",
+    "old": "    { id: 'loot', sel: '.lootbanner-stack', name: 'Loot banners', dummy: true, ghost: 'loot' }, // LOOT-BANNER\n    // EVENTS1 (bible/10-UI/Event-Board.md): the event board, its news at its head - one piece; built when there is first an",
+    "new": "    // EVENTS1 (bible/10-UI/Event-Board.md): the event board, its news at its head - one piece; built when there is first an",
     "tests": [
       "test/systems/lootbanner.test.js"
     ]

@@ -74,8 +74,8 @@
   {
     "name": "AUDIT-1003-U3-the-bout-fighter-framed",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (bout && !bout.chained) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
-    "new": "  /* every blow framed */\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
+    "old": "  const bout = foe.entity.bout;\n  if (bout && !bout.chained) return;\n  _foe = foe;",
+    "new": "  const bout = foe.entity.bout;\n  /* every blow framed */\n  _foe = foe;",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ],
@@ -84,8 +84,8 @@
   {
     "name": "AUDIT-1003-U3-the-chained-beast-unframed",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (bout && !bout.chained) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
-    "new": "  if (bout) return;\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n  _sinceStruck = 0;",
+    "old": "  const bout = foe.entity.bout;\n  if (bout && !bout.chained) return;\n  _foe = foe;",
+    "new": "  const bout = foe.entity.bout;\n  if (bout) return;\n  _foe = foe;",
     "tests": [
       "test/systems/arena/audit1003_ui.test.js"
     ],

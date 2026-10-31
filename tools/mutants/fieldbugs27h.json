@@ -255,8 +255,8 @@
   {
     "name": "BUFF-END-tile-without-bundle",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "endable: !!e.endable && e.bundleId != null",
-    "new": "endable: !!e.endable",
+    "old": "      endable: !!e.endable && e.bundleId != null, // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)",
+    "new": "      endable: !!e.endable, // BUFF-END: a right-click ends it (ui/enhanced/enhancedHud.js)",
     "tests": [
       "test/ui/hud/buffend.test.js"
     ]

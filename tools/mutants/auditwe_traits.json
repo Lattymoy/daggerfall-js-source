@@ -229,8 +229,8 @@
   {
     "name": "AUDIT-WE-L5-12-the-word-twice",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "const titled = (e, base) => foeTitle(e, base, { traits: false });",
-    "new": "const titled = (e, base) => foeTitle(e, base);",
+    "old": "const titled = (e, base) => foeTitle(e, base, { traits: false }); // AUDIT WORLD-EVENTS L5-12: the traits are said on their own line below",
+    "new": "const titled = (e, base) => foeTitle(e, base); // AUDIT WORLD-EVENTS L5-12: the traits are said on their own line below",
     "tests": [
       "test/scenes/auditwe_traits.test.js"
     ]

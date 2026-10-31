@@ -170,8 +170,8 @@
   {
     "name": "AUDIT-STAR-S2-tile-tierless",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "set: c.set ?? null, tier: Number.isInteger(c.tier) ? c.tier : null });",
-    "new": "set: c.set ?? null, tier: null });",
+    "old": "      tier: Number.isInteger(c.tier) ? c.tier : null,",
+    "new": "      tier: null,",
     "tests": [
       "test/systems/starfall/auditstar.test.js"
     ]

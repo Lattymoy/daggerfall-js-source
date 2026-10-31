@@ -175,8 +175,8 @@
   {
     "name": "NOTICE-PANEL-the-bounty-offered-everywhere",
     "file": "src/ui/hud/townPanel.js",
-    "old": "bounty.hidden = !view.bounty;",
-    "new": "bounty.hidden = false;",
+    "old": "        bounty.hidden = !view.bounty;",
+    "new": "        bounty.hidden = false;",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -185,8 +185,8 @@
   {
     "name": "NOTICE-PANEL-a-press-reaching-the-world",
     "file": "src/ui/hud/townPanel.js",
-    "old": "    n.addEventListener('mousedown', (e) => { if (!hudArranging()) e.stopPropagation(); });\n",
-    "new": "",
+    "old": "    n.addEventListener('mousedown', (e) => {\n      if (!hudArranging()) e.stopPropagation();\n    });\n    n.addEventListener('mouseup', (e) => {",
+    "new": "    n.addEventListener('mouseup', (e) => {",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -286,8 +286,8 @@
   {
     "name": "NOTICE-PANEL-not-movable",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  { id: 'town', sel: '.hud .dftown-panel', get name() { return t('menu.hud.piece.town', 'Town panel'); }, dummy: true },\n",
-    "new": "",
+    "old": "    {\n      id: 'town',\n      sel: '.hud .dftown-panel',\n      get name() {\n        return t('menu.hud.piece.town', 'Town panel');\n      },\n      dummy: true,\n    },\n    // HUD-SADDLE (FIELD BUGS 2026-10-14, Discord: \"Riding Window is not able to be edited in the HUD Editor (Alt+U)\"): the",
+    "new": "    // HUD-SADDLE (FIELD BUGS 2026-10-14, Discord: \"Riding Window is not able to be edited in the HUD Editor (Alt+U)\"): the",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],

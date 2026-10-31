@@ -74,8 +74,8 @@
   {
     "name": "TELL9-yield-gone",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return;   // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)\n",
-    "new": "",
+    "old": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return; // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)\n  _foe = foe;",
+    "new": "  _foe = foe;",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "TELL9-yield-forever",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return;",
-    "new": "  if (_foe && _foe !== foe && !_foe.dead) return;",
+    "old": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return; // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)",
+    "new": "  if (_foe && _foe !== foe && !_foe.dead) return; // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "TELL9-struck-unstamped",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  _sinceStruck = 0;   // TELL9: a threat yields to it for THREAT_YIELD_S\n",
-    "new": "",
+    "old": "  _sinceStruck = 0; // TELL9: a threat yields to it for THREAT_YIELD_S\n}",
+    "new": "}",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -101,8 +101,8 @@
   {
     "name": "TELL9-since-frozen",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  _sinceStruck += dt;\n",
-    "new": "",
+    "old": "  _sinceStruck += dt;\n  if (!_foe) return;",
+    "new": "  if (!_foe) return;",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "TELL9-threat-no-refresh",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  _foe = foe;\n  _left = FOE_TARGET_SECONDS;\n}\n\n/** Per-frame decay",
-    "new": "  if (_foe !== foe) _left = FOE_TARGET_SECONDS;\n  _foe = foe;\n}\n\n/** Per-frame decay",
+    "old": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return; // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)\n  _foe = foe;\n  _left = FOE_TARGET_SECONDS;",
+    "new": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return; // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)\n  if (_foe !== foe) _left = FOE_TARGET_SECONDS;\n  _foe = foe;",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "TELL9-threat-bout",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  const bout = foe.entity.bout;\n  if (bout && !bout.chained) return;\n  if (_foe && _foe !== foe",
-    "new": "  if (_foe && _foe !== foe",
+    "old": "  const bout = foe.entity.bout;\n  if (bout && !bout.chained) return;\n  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return; // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)",
+    "new": "  if (_foe && _foe !== foe && !_foe.dead && (_sinceStruck < THREAT_YIELD_S || _foe.duel)) return; // AUDIT TELL U7: nor while my duel's opponent holds it (its health comes only as the duel's word does)",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "TELL9-threat-dead",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "  if (!foe?.entity || foe.dead) return;\n  const bout",
-    "new": "  if (!foe?.entity) return;\n  const bout",
+    "old": "  if (!foe?.entity || foe.dead) return;",
+    "new": "  if (!foe?.entity) return;",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "TELL9-poise-unread",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "    poise: _poiseOf ? _poiseOf(_foe) ?? null : null,",
-    "new": "    poise: null,",
+    "old": "    poise: _poiseOf ? (_poiseOf(_foe) ?? null) : null, // TELL9: the poise track under the health (null: none drawn)",
+    "new": "    poise: null, // TELL9: the poise track under the health (null: none drawn)",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -371,7 +371,7 @@
   {
     "name": "TELL9-bleed-tile-gone",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "  if (bleed && bleed.left > 0) out.push({ key: 'bleed', name: 'Bleeding', glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });",
+    "old": "  if (bleed && bleed.left > 0)\n    out.push({ key: 'bleed', name: 'Bleeding', glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });",
     "new": "",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
@@ -380,8 +380,8 @@
   {
     "name": "TELL9-bleed-tile-footless",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink });",
-    "new": "glyph: a.glyph });",
+    "old": "  for (const a of afflictions)\n    tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph, foot: a.foot ?? null, blink: !!a.blink }); // TELL9: a bleed's ticks",
+    "new": "  for (const a of afflictions) tile({ key: a.key, kind: 'debuff', name: a.name, glyph: a.glyph }); // TELL9: a bleed's ticks",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -389,8 +389,8 @@
   {
     "name": "TELL9-bleed-blink",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });",
-    "new": "glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 1 });",
+    "old": "    out.push({ key: 'bleed', name: 'Bleeding', glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 2 });",
+    "new": "    out.push({ key: 'bleed', name: 'Bleeding', glyph: 'bleed', foot: String(bleed.left), blink: bleed.left < 1 });",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -407,8 +407,8 @@
   {
     "name": "TELL9-glyph32-clear",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "      if (!ch || ch === '.') continue;\n      const hex",
-    "new": "      if (!ch) continue;\n      const hex = ch === '.' ? '#000000' : ch === 'k' ? OUTLINE : g.pal[ch];\n      const _h",
+    "old": "      if (!ch || ch === '.') continue;\n      const hex = ch === 'k' ? OUTLINE : g.pal[ch];",
+    "new": "      if (!ch) continue;\n      const hex = ch === '.' ? '#000000' : ch === 'k' ? OUTLINE : g.pal[ch];\n      const _h = ch === 'k' ? OUTLINE : g.pal[ch];",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -416,8 +416,8 @@
   {
     "name": "TELL9-classic-atlas",
     "file": "src/ui/hud/hudActiveSpells.js",
-    "old": "    if (icon.glyph) drawGlyphIcon(renderer, m, icon.glyph, icon.rect);   // TELL9: an icon of the port's own\n    else drawSpellIcon",
-    "new": "    drawSpellIcon",
+    "old": "    if (icon.glyph)\n      drawGlyphIcon(renderer, m, icon.glyph, icon.rect); // TELL9: an icon of the port's own\n    else drawSpellIcon(renderer, m, icon.iconIndex, icon.rect);",
+    "new": "    drawSpellIcon(renderer, m, icon.iconIndex, icon.rect);",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]
@@ -425,8 +425,8 @@
   {
     "name": "TELL9-classic-glyphless",
     "file": "src/ui/hud/hudActiveSpells.js",
-    "old": "{ iconIndex: BLEED_ICON, glyph: BLEED_GLYPH, displayName: 'Bleeding'",
-    "new": "{ iconIndex: BLEED_ICON, displayName: 'Bleeding'",
+    "old": "      glyph: BLEED_GLYPH,\n      displayName: 'Bleeding',",
+    "new": "      displayName: 'Bleeding',",
     "tests": [
       "test/ui/enhanced/tell9_screen.test.js"
     ]

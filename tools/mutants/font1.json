@@ -135,8 +135,8 @@
   {
     "name": "hudtext-enhanced-arm-dropped",
     "file": "src/ui/hud/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
-    "new": "    if (false && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {",
+    "new": "    if (false && typeof document !== 'undefined') {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -144,8 +144,8 @@
   {
     "name": "hudtext-enhanced-arm-taken-on-both-skins",
     "file": "src/ui/hud/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
-    "new": "    if (typeof document !== 'undefined') {\n      drawEnhancedToasts({ ...this.frame(), visible: !this.covered }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined') {",
+    "new": "    if (typeof document !== 'undefined') {",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]
@@ -171,7 +171,7 @@
   {
     "name": "hudtext-hide-door-a-no-op",
     "file": "src/ui/hud/hudText.js",
-    "old": "    if (isEnhanced() && typeof document !== 'undefined') drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
+    "old": "    if (isEnhanced() && typeof document !== 'undefined')\n      drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
     "new": "    if (false) drawEnhancedToasts({ rows: [], ids: [], slide: 0, visible: false }, undefined, this.key);",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
@@ -180,8 +180,8 @@
   {
     "name": "ENH-NOTICE3-toasts-keyed-by-index-not-row",
     "file": "src/ui/hud/hudText.js",
-    "old": "      ids: drawn.map((l) => l.id),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
-    "new": "      ids: drawn.map((l, i) => i),   // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
+    "old": "      ids: drawn.map((l) => l.id), // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
+    "new": "      ids: drawn.map((l, i) => i), // ENH-NOTICE3: beside the rows, so a toast keeps its row across frames",
     "tests": [
       "test/ui/enhanced/hudtext.test.js"
     ]

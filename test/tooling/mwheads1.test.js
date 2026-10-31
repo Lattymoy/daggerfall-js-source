@@ -342,7 +342,7 @@ test('MW-HEADS2: the port\'s own heads are a player\'s alone - the local player\
   assert.match(heads, /faceIndex: Number\.isInteger\(who\.faceIndex\) \? who\.faceIndex : 0,\n\s*ownHeads: !who\.npc,\n\s*px,\n\s*ph,/, 'a player-shaped face asks - an NPC\'s (`npc`) does not');
   assert.match(heads, /skin: o\.skin,\n\s*ownHeads: o\.ownHeads,\n\s*px,\n\s*ph,\n\s*\}\);/, 'a live player as its build');
   assert.doesNotMatch(heads.slice(heads.indexOf('export async function npcHeadImage(')), /ownHeads/, 'an NPC\'s talk-window face never asks');
-  assert.match(rd('src/ui/hud/hudEscortFaces.js'), /playerHeadImage\(\{ race, gender, faceIndex: face\.faceIndex \| 0, npc: true \}/, 'an escort is an NPC');
+  assert.match(rd('src/ui/hud/hudEscortFaces.js'), /playerHeadImage\(\n\s*\{ race, gender, faceIndex: face\.faceIndex \| 0, npc: true \}/, 'an escort is an NPC');
   const fp = rd('src/combat/fpArm.js');
   assert.match(fp, /const fkey = `\$\{gen\}:\$\{race\}:\$\{female \? 'f' : 'm'\}:\$\{faceIndex \| 0\}:\$\{fnv\(measured\)\}`;/, 'a player\'s and an escort\'s verdicts are two');
   assert.match(fp, /vampire: !!vampire, walk: npcFace, ownHeads: !!ownHeads \}\);/, 'the third-person body asks as the build was asked');

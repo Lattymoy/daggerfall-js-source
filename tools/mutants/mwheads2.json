@@ -72,8 +72,8 @@
   {
     "name": "MWHEADS2-an-escort-a-player",
     "file": "src/ui/hud/hudEscortFaces.js",
-    "old": "faceIndex: face.faceIndex | 0, npc: true },",
-    "new": "faceIndex: face.faceIndex | 0 },",
+    "old": "    { race, gender, faceIndex: face.faceIndex | 0, npc: true },",
+    "new": "    { race, gender, faceIndex: face.faceIndex | 0 },",
     "tests": [
       "test/tooling/mwheads1.test.js"
     ],

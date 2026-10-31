@@ -252,8 +252,8 @@
   {
     "name": "PORTRAIT3D-the-escort-a-breton",
     "file": "src/ui/hud/hudEscortFaces.js",
-    "old": "  const race = Object.keys(RACES).find((k) => RACES[k] === face.targetRace) ?? 'Breton';\n  return g ?",
-    "new": "  const race = 'Breton';\n  return g ?",
+    "old": "  const g = headDataStamp();\n  const race = Object.keys(RACES).find((k) => RACES[k] === face.targetRace) ?? 'Breton';",
+    "new": "  const g = headDataStamp();\n  const race = 'Breton';",
     "tests": [
       "test/ui/portrait3d.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "PORTRAIT3D-the-record-over-the-head",
     "file": "src/ui/hud/hudEscortFaces.js",
-    "old": "        if (!(head && _textures.has(head))) panel.img = _textures.get(key);",
-    "new": "        panel.img = _textures.get(key);",
+    "old": "          if (!(head && _textures.has(head))) panel.img = _textures.get(key);",
+    "new": "          panel.img = _textures.get(key);",
     "tests": [
       "test/ui/portrait3d.test.js"
     ],

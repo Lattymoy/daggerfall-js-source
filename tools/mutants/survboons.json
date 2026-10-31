@@ -707,8 +707,8 @@
   {
     "name": "SURVBOONS-buff-tile-amber",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "kind: c.level === 'boon' ? 'buff' : c.level",
-    "new": "kind: c.level === 'boon' ? 'warn' : c.level",
+    "old": "      kind: c.level === 'boon' ? 'buff' : c.level === 'danger' ? 'danger' : 'warn',",
+    "new": "      kind: c.level === 'boon' ? 'warn' : c.level === 'danger' ? 'danger' : 'warn',",
     "why": "a boon tile framed amber",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -717,8 +717,8 @@
   {
     "name": "SURVBOONS-glyph-ignored",
     "file": "src/ui/hud/hudStatus.js",
-    "old": "  if (typeof chip?.glyph === 'string') return Object.hasOwn(STATUS_GLYPHS, chip.glyph) ? chip.glyph : null;   // SURV-BOONS: a boon names its own\n",
-    "new": "",
+    "old": "  if (typeof chip?.glyph === 'string') return Object.hasOwn(STATUS_GLYPHS, chip.glyph) ? chip.glyph : null; // SURV-BOONS: a boon names its own\n  if (chip?.key === 'temp') {",
+    "new": "  if (chip?.key === 'temp') {",
     "why": "a boon tile without its glyph",
     "tests": [
       "test/systems/survival/survboons.test.js"

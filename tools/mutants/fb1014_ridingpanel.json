@@ -2,8 +2,8 @@
   {
     "name": "HUD-SADDLE-no-piece",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  { id: 'saddle', sel: '.saddlepanel .saddlepanel-bar', get name() { return t('menu.hud.piece.saddle', 'Riding panel'); }, ghost: 'saddle' },\n",
-    "new": "",
+    "old": "    {\n      id: 'saddle',\n      sel: '.saddlepanel .saddlepanel-bar',\n      get name() {\n        return t('menu.hud.piece.saddle', 'Riding panel');\n      },\n      ghost: 'saddle',\n    },\n    // HUD-HELM (2026-10-15, Mac: \"Yes, same branch\"): the helm panel's bar (ui/enhanced/enhancedHelm.js), the saddle's twin - its",
+    "new": "    // HUD-HELM (2026-10-15, Mac: \"Yes, same branch\"): the helm panel's bar (ui/enhanced/enhancedHelm.js), the saddle's twin - its",
     "tests": [
       "test/ui/enhanced/fb1014_ridingpanel.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "HUD-SADDLE-no-ghost",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "  } else if (kind === 'saddle') {\n    try { g = ghostDeps.buildSaddlePreview?.(doc) ?? null; }",
-    "new": "  } else if (kind === 'saddle-none') {\n    try { g = ghostDeps.buildSaddlePreview?.(doc) ?? null; }",
+    "old": "  } else if (kind === 'saddle') {",
+    "new": "  } else if (kind === 'saddle-none') {",
     "tests": [
       "test/ui/enhanced/fb1014_ridingpanel.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "HUD-SADDLE-the-stand-in-read-as-a-real-panel",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "const ghostOf = (n) => (n?.hasAttribute?.('data-hm-ghost') ? n : n?.closest?.('[data-hm-ghost]') ?? null);",
+    "old": "const ghostOf = (n) => (n?.hasAttribute?.('data-hm-ghost') ? n : (n?.closest?.('[data-hm-ghost]') ?? null));",
     "new": "const ghostOf = (n) => (n?.hasAttribute?.('data-hm-ghost') ? n : null);",
     "tests": [
       "test/ui/enhanced/fb1014_ridingpanel.test.js"
@@ -56,8 +56,8 @@
   {
     "name": "HUD-SADDLE-the-X-saving-nothing",
     "file": "src/ui/hud/hudLayout.js",
-    "old": "if (mode === 'off') { const nx = { ...o, off: !o.off }; paint(node, nx); saveLayout(id, nx); return; }",
-    "new": "if (mode === 'off') { const nx = { ...o, off: !o.off }; paint(node, nx); return; }",
+    "old": "    paint(node, nx);\n    saveLayout(id, nx);\n    return;\n  } // the X: a click, no drag",
+    "new": "    paint(node, nx);\n    return;\n  } // the X: a click, no drag",
     "tests": [
       "test/ui/enhanced/fb1014_ridingpanel.test.js"
     ]

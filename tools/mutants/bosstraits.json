@@ -243,8 +243,8 @@
   {
     "name": "BOSS-TRAITS-the-frame-blind",
     "file": "src/ui/hud/hudFoeTarget.js",
-    "old": "    traits: bossTraitWords(e),",
-    "new": "    traits: [],",
+    "old": "    traits: bossTraitWords(e), // BOSS-TRAITS: every trait's word (systems/bossTraits.js)",
+    "new": "    traits: [], // BOSS-TRAITS: every trait's word (systems/bossTraits.js)",
     "tests": [
       "test/scenes/bosstraits_hosts.test.js",
       "test/ui/enhanced/enhancedHud.test.js"

@@ -444,8 +444,8 @@
   {
     "name": "RETRO1-shift-f11-unbound",
     "file": "src/ui/hud/hudShortcuts.js",
-    "old": "  if (hotkeyHit('ToggleRetroPP', e.code, e, keys)) {\n    toggleRetroPostprocessing();\n    return true;\n  }\n",
-    "new": "",
+    "old": "  if (hotkeyHit('ToggleRetroPP', e.code, e, keys)) {\n    toggleRetroPostprocessing();\n    return true;\n  }\n  return false;",
+    "new": "  return false;",
     "tests": [
       "test/render/retro1.test.js"
     ]

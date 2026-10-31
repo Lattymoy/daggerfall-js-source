@@ -73,8 +73,8 @@
   {
     "name": "AFB-PANEL-P4-seated-late",
     "file": "src/ui/hud/townPanel.js",
-    "old": "    root.classList.toggle('fixed', !top);\n  };\n  seat();\n",
-    "new": "    root.classList.toggle('fixed', !top);\n  };\n",
+    "old": "  seat();\n  return {",
+    "new": "  return {",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "AFB-PANEL-P4-the-last-town-previewed",
     "file": "src/ui/hud/townPanel.js",
-    "old": "if (drawn) { drawn = ''; name.textContent = ''; lines.replaceChildren(); }",
-    "new": "",
+    "old": "      if (drawn) {\n        drawn = '';\n        name.textContent = '';\n        lines.replaceChildren();\n      }\n    },",
+    "new": "    },",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "AFB-PANEL-P6-anchor-unplaced",
     "file": "src/ui/hud/townPanel.js",
-    "old": "root.style.bottom = a ? `${anchor?.bottom}px` : '';",
-    "new": "",
+    "old": "      root.style.bottom = a ? `${anchor?.bottom}px` : '';\n    },",
+    "new": "    },",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],
@@ -163,8 +163,8 @@
   {
     "name": "AFB-PANEL-P10-the-count-in-english",
     "file": "src/ui/hud/townPanel.js",
-    "old": "unseen: (n) => (n > 0 ? t('town.panel.new', '{n, plural, one {# new} other {# new}}', { n }) : ''),",
-    "new": "unseen: (n) => (n > 0 ? `${n} new` : ''),",
+    "old": "  unseen: (n) => (n > 0 ? t('town.panel.new', '{n, plural, one {# new} other {# new}}', { n }) : ''),",
+    "new": "  unseen: (n) => (n > 0 ? `${n} new` : ''),",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js",
       "test/net/notice1.test.js"
@@ -174,8 +174,8 @@
   {
     "name": "AFB-PANEL-P14-focus-kept",
     "file": "src/ui/hud/townPanel.js",
-    "old": "e.stopPropagation(); n.blur?.(); fn();",
-    "new": "e.stopPropagation(); fn();",
+    "old": "      n.blur?.();\n      fn();",
+    "new": "      fn();",
     "tests": [
       "test/scenes/fb1029g_townpanel.test.js"
     ],

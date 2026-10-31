@@ -111,7 +111,7 @@
     "name": "L10N3e-shown-ui-hudActiveSpells-143-Spell",
     "file": "src/ui/hud/hudActiveSpells.js",
     "old": "      displayName: String(shownSpellName({ index: bundle.spellIndex, name: bundle.name }) ?? '').replace(/^!+/, ''),",
-    "new": "      displayName: String(({ index: bundle.spellIndex, name: bundle.name }).name ?? '').replace(/^!+/, ''),",
+    "new": "      displayName: String({ index: bundle.spellIndex, name: bundle.name }.name ?? '').replace(/^!+/, ''),",
     "tests": [
       "test/systems/l10n3e_things.test.js"
     ]
