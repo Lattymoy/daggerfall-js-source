@@ -5,6 +5,7 @@
 // nor moved without an explicit migration: the reconcile refuses. Legacy keys are their RMB records' and pass untouched.
 // Pure: the inputs are not changed. Not a DFU member.
 import { MINTED_KEY_MIN, MINTED_KEY_MAX } from './settlementContract.js';
+import { hash32 } from '../blockHash.js';
 
 /**
  * @typedef {import('./settlementContract.js').Building} Building
@@ -14,6 +15,23 @@ import { MINTED_KEY_MIN, MINTED_KEY_MAX } from './settlementContract.js';
 
 /** A place's ledger before its first plan. @param {number} place @returns {IdLedger} */
 export const emptyIdLedger = (place) => Object.freeze({ place, next: MINTED_KEY_MIN, keys: Object.freeze({}), retired: Object.freeze([]) });
+
+/**
+ * RMBC7 (RD-19): A GROWN TOWN'S LEDGER, ITS ANCHORS' OWN. Each anchor's key is a hash of its place and its name in the
+ * minted band, probed forward past a taken key in the anchors' sorted order - so a key depends on its anchor alone, a
+ * plot added or dropped moves no other, and every client agrees with no ledger shipped.
+ * @param {number} place @param {readonly string[]} anchors @returns {IdLedger}
+ */
+export function anchorLedger(place, anchors) {
+  const span = MINTED_KEY_MAX - MINTED_KEY_MIN + 1, taken = new Set(), keys = {};
+  let top = MINTED_KEY_MIN - 1;
+  for (const a of [...new Set(anchors)].sort()) {
+    let k = MINTED_KEY_MIN + (hash32(place >>> 0, 0x5eed, ...[...a].map((char) => char.charCodeAt(0))) % span);
+    while (taken.has(k)) k = k === MINTED_KEY_MAX ? MINTED_KEY_MIN : k + 1;
+    taken.add(k); keys[a] = k; top = Math.max(top, k);
+  }
+  return Object.freeze({ place, next: top + 1, keys: Object.freeze(keys), retired: Object.freeze([]) });
+}
 
 /** What a ledger must hold: next past every key it ever minted, each anchor's key in the band, none kept and retired. @param {IdLedger} l */
 export function ledgerProblems(l) {

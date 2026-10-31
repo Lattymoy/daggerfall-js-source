@@ -1,0 +1,210 @@
+[
+  {
+    "name": "RMBC6-types-short",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "export const GROWTH_TYPES = Object.freeze([0, 1, 2]);",
+    "new": "export const GROWTH_TYPES = Object.freeze([0, 1]);",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-capital-grows",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "if (!GROWTH_TYPES.includes(type) || location?.capital) return null;",
+    "new": "if (!GROWTH_TYPES.includes(type)) return null;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-core-gives",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "const give = (c) => (c.core ? 0 : c.raised ? 4 : 1);",
+    "new": "const give = (c) => (c.core ? 1 : c.raised ? 4 : 1);",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-datum-mean",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "const datum = core ? cm(core.y) :",
+    "new": "const datum = false ? cm(core.y) :",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-gate-gone",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "  if (L.core) gates.unshift({ id: 'gate-core',",
+    "new": "  if (false) gates.unshift({ id: 'gate-core',",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-well-in-core",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "if (cells.has('plaza') && !L.core) features.push(",
+    "new": "if (cells.has('plaza')) features.push(",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-bounds-unread",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  if (bounds && poly.some(([e, n]) => e < bounds.e0",
+    "new": "  if (false && poly.some(([e, n]) => e < bounds.e0",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-sweep-gone",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "if (insideRing(poly, e, n) && env.blockedAt(e, n)) return true;",
+    "new": "if (false) return true;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-road-free",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "if (paths?.[i] || mask?.[i] ||",
+    "new": "if (mask?.[i] ||",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-water-free",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "(tilemap && isOutdoorWaterTile(tilemap[i]))",
+    "new": "false",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-camps-free",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "return camps.some((camp) => x >= camp.xMin",
+    "new": "return false && camps.some((camp) => x >= camp.xMin",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-keep-gone",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "if (n < lo[1] - reach || n > hi[1] + reach || keep?.(e, n)) continue;",
+    "new": "if (n < lo[1] - reach || n > hi[1] + reach) continue;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-legacy-carved",
+    "file": "src/world/settlement/settlementGround.js",
+    "old": "if (on && (on.base === 'raised' || on.legacy)) return null;",
+    "new": "if (on && on.base === 'raised') return null;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-moved-units",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "moved[i] = (now - samples[i]) * MAX_TERRAIN_HEIGHT;",
+    "new": "moved[i] = (now - samples[i]) * UNIT_METRES;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-moved-metres",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "  return height * STREAMING_TERRAIN_SCALE;",
+    "new": "  return height;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-slot-unguarded",
+    "file": "src/scenes/settlementHost.js",
+    "old": "if (held.growth ? !(held.input && held.job && slot >= GROWTH_SLOT_FIRST) : !row) return null;",
+    "new": "if (held.growth ? !(held.input && held.job) : !row) return null;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-run-ordinal",
+    "file": "src/scenes/settlementHost.js",
+    "old": "run = held.growth ? slot : row.ordinal;",
+    "new": "run = held.growth ? 0 : row.ordinal;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-clearing-small",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "  if (!locationRect || !settlement?.growth) return locationRect;",
+    "new": "  if (!locationRect || settlement?.growth) return locationRect;",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-kernel-ungrown",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "const settlement = hasLocation ? (growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps }) : null)",
+    "new": "const settlement = hasLocation ? null",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js",
+      "test/net/fb1017f_groundgate.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-build-unasked",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      growth: growthJobAt(groundLocation, px, py),",
+    "new": "      growth: null,",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-frame-unread",
+    "file": "src/scenes/groundFrameHost.js",
+    "old": "if (liftRectAt(px, py)) return grownMovedAt(",
+    "new": "if (liftRectAt(px, py)) return 0 && grownMovedAt(",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-host-no-slot",
+    "file": "src/scenes/settlementHost.js",
+    "old": "standSettlement(p, blocksFile(), p.settlement.growth ? nextGrowthSlot() : -1)",
+    "new": "standSettlement(p, blocksFile(), -1)",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC6-deep-cuts-kept",
+    "file": "src/world/settlement/settlementLayout.js",
+    "old": "  if (core) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);",
+    "new": "  if (false) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);",
+    "tests": [
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  }
+]

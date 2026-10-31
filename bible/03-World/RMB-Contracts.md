@@ -87,6 +87,20 @@ Each is dated, says what was decided and why, and names what it costs.
   its footprint (`buildPlot`), in its style's walls and roof; its door is the fabric's door model on its front wall; its
   rooms are the fabric's generated interior, filed under its place and key. Nothing is written as an RMB block. Its door
   hands the game a record carrying its minted key. Cost: the fabric's kit shapes every settlement until its own exists.
+- **RD-18 (2026-10-31) Every town grows; its core stays.** The owner, 2026-10-31: "Every single thing needs to be
+  finished". Every city, town and village, the Bay's included, becomes a mixed plan (RD-1, RD-9). Its legacy core keeps
+  every block, building and key, at its own height. Outskirts ring it on the land its pixel leaves: no road, no ground of
+  the town's own, no camp, no water, nothing within 40 m of the pixel's edge. A departure from DFU, whose towns end at
+  their rect. Cost: a steep town grows little, and a city that fills its pixel grows nothing.
+- **RD-19 (2026-10-31, revised at RMBC7) A grown town's keys are its anchors' own.** Its outskirts are laid out on every
+  client from the town's map id, its rect and its ground. Each building's key is a hash of its place and its plot's
+  anchor in the minted band (`anchorLedger`), so no ledger ships for 15,000 towns and a plot added or dropped moves no
+  other key. RMBC6 minted them in plot order, which moved every later key. A protected key (RD-6) blocks a generator
+  change that would drop its anchor. Cost: a generator change asks the account service's protected keys first.
+- **RD-20 (2026-10-31) The plans ride the ground's law.** A door's room is keyed by its place and building key, and the
+  relay's ground gate already turns away a build on another ground in every room that rides it. So the ground's print
+  reads two dressed plans' prints (`Plans`), and a change to a door's key moves `GROUND_LAW` as a change to the ground
+  does. No plan law of its own, no new door on the relay. Cost: a dressing change costs a relay version.
 
 ## RMBC0 - what stands (AUDITED, 2026-10-31)
 
@@ -285,13 +299,58 @@ Corvel Keep (High Rock, a fort), Sahr Waters (Hammerfell, an oasis), Kolvar's Cu
 (Elsweyr), Hatchwater (Black Marsh, on stilts) and Corrol Ford (Cyrodiil). A seed the search tried laid a pad 3 cm
 past its footprint: the outline now keeps the farther of two near points, and a sweep of 2,400 plans keeps the contract.
 
+## RMBC6 - every town grows (BUILT, 2026-10-31)
+
+`townGrowth.js` (RD-18, RD-19): `townGrowthJob` takes a city, town or village (MAPS types 0 to 2, never a capital over
+several pixels); `pixelBuild.js` hands it to the terrain worker as `growth`, with its theatre's style and region
+(`townGrowthJob.js`). The layout's core mode rings the town's square: the square is the plaza's cell, `legacy`, fixed at
+the town's ground, and the terrace solve never moves it. A cell on barred ground (`growthBlocked`: a path tile, the
+town's ground mask, a water tile, a World of Daggerfall camp) or past the bounds is dropped; reach starts at the core,
+which carries the plan's gate. A cell whose cut would pass the archetype's limit is dropped, and what then reaches the
+core is kept. The `outskirts` archetype is one band, two round a city, with half its plots left open.
+
+The carve skips the core and the town's mask (`carveSettlementGround`'s `keep`), and a legacy pad asks nothing of its
+ground. The kernel returns the carve with the pixel (`moved`), and `groundFrameHost.js` `padsMovedAt` reads it on a
+grown town's pixel (`grownMovedAt`). The trees clear the town and its outskirts as one rect (`growthClearing`). The host
+dresses the outskirts from the input the worker handed back, in a model run taken in turn from 16 to 511, and holds
+their meshes through the pipeline's place hold. The ground's print reads a grown village (`Grown@440,300`): a lost carve
+moves it 14.1 m. `GROUND_LAW` 6 holds it, because law 6 has not shipped.
+
+Seen in the game (`tools/townGrowthProbe.mjs`, ARENA2): Arkbridge, a village of the Daggerfall region, stood 28 outskirts
+buildings with every mesh, no page error. From the air its core stands as it always did, and the ring wraps it where no
+road, water or town ground bars a cell. A ring round a square leaves about 5 m of street at the core's corners and about
+45 m at its sides, so the outskirts read as a crescent of rows more than as a town that grew. A layout that follows the
+roads out is the next shape (RD-11's third).
+
+## RMBC7 - publication and the online check (BUILT, 2026-10-31)
+
+The online check is the ground's (RD-20): `tools/groundPrint.mjs` reads Sahr Waters' plan and the grown village's, and a
+setback moved by 10 cm fails `fb1017f_groundgate.test.js` at `Plans`. A grown town dresses with `keys: 'anchored'`
+(RD-19). `settlementPublish.js` reads a town's protected keys from its homes' answer (`protectedOfTown`; the account
+service's `/v1/homes/town`, every home's and hall's key), a published row's revision through its ledger
+(`revisionConflicts`: a protected building removed or moved), and a grown town's (`protectedGone`).
+`tools/settlementRevise.mjs` lays every published row and every grown town a protected key names on the player's ground
+and exits 1 on a refusal; `--dump` and `--published` carry the plans across a generator change, and `--write` records the
+ledgers. It reads the archives' road network: a town Basic Roads' download crosses otherwise lays other cells in the game
+(Arkbridge: 28 buildings there, 32 in the tool), so the game's own check is the print.
+
+## RMBC8 - homes in a settlement (BUILT, 2026-10-31)
+
+A generated house's door record is read by the home law as a block's is: `homeCandidate` and `homePurchasable` take it,
+`homeOnlinePrice` prices it by its own ground (`footprintM2`) and its town's size (`townBlocks`: a grown town's blocks,
+`townGrowthJob`'s `blocks`), and the door asks its town's homes when hovered (`worldModes.js` `ensure(homeTownOf(bd))`).
+Every check the account service's claim makes passes for a minted key in a settlement's lane: the map id, the key, a
+province's region, no listing row, no arena cell.
+
+RMBC0's decoders were read again: a listing's cell, a yard's cell and
+the arena's all take a minted key without decoding a block from it; its yard cell is 32,768 or more, past every RMB cell.
+The host files each house's yard frame on its pixel's `homeFrames` (`fileHomeFrames`) and takes it back with the town;
+`pixelBuild.js` names a settlement pixel's homes by its place and its province's region (`settlementHomeTown`,
+`settlementHomeRegion`). Quest markers and an interior's people ask no minted key: no quest stands in a generated house.
+
 ## Next slices
 
-- **RMBC6 publication and the online check.** A plan's print said in the room's hello, so two clients that disagree are
-  told; the protected keys asked of the account service before a revision changes a published row.
-- **RMBC7 homes in a settlement.** A settlement's houses for sale once the decoders listed in RMBC0 ask
-  `rmbPartsOfKey` and read a minted key's building from its plan (yards, listings, quest markers).
-- **RMBC8 the editor's seam.** The WORLD 2.0 editor reads and writes a row's `params` and `fix`, and regenerates a
+- **RMBC9 the editor's seam.** The WORLD 2.0 editor reads and writes a row's `params` and `fix`, and regenerates a
   district by its anchors.
 
 ## THE FOUR HOSTS (Home.md)

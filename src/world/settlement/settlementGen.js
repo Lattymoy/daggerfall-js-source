@@ -9,7 +9,7 @@ import { dsin, dcos, datan2, dhypot } from './exactMath.js';
 import { BUILDING_TYPES, isResidence } from '../buildingNames.js';
 import { GUILD_FACTION_IDS, DIVINES } from '../../systems/guild/guildFactions.js';
 import { SETTLEMENT_CONTRACT_VERSION, validateSettlement } from './settlementContract.js';
-import { emptyIdLedger, reconcileBuildingIds } from './settlementIds.js';
+import { emptyIdLedger, reconcileBuildingIds, anchorLedger } from './settlementIds.js';
 import { SETTLEMENT_STYLES, SETTLEMENT_ARCHETYPES } from './settlementStyles.js';
 import { layoutSettlement, polarFrame, along, splits, cm, clampWithin, compassBearing, ringCentroid, TAU, GENERATOR_ID, SETTLEMENT_GENERATOR_VERSION, CUT_STEPS_MAX } from './settlementLayout.js';
 
@@ -124,7 +124,7 @@ export function dressSettlement(input, L) {
   });
 
   // G - the square's feature, the yards' trees, the walls and towers, the docks
-  if (cells.has('plaza')) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });
+  if (cells.has('plaza') && !L.core) features.push({ id: 'centre', kind: A.centreFeature, pad: 'plaza', at: frame.toW(uStart + 0.3, Math.min(inner * 0.7, inner - 2)) });   // RMBC6: a core is the town's own
   for (const c of cells.values()) {
     if (c.k < 1) continue;
     for (let t = 0; t < 3; t++) if (rng(13, c.k, c.j, t) < 0.5) features.push({ id: `t${c.id}.${t}`, kind: 'tree', pad: c.id, at: frame.toW(c.u0 + (c.u1 - c.u0) * (0.25 + t * 0.25), c.b - st.back / 2) });
@@ -148,13 +148,16 @@ export function dressSettlement(input, L) {
     }
   }
 
-  const ids = reconcileBuildingIds(input.ledger ?? emptyIdLedger(place), buildings, { protectedKeys: input.protectedKeys, published: input.published });
+  // RMBC7: a grown town's keys are its anchors' own (RD-19); a published settlement keeps its ledger
+  const ledger0 = input.keys === 'anchored' ? anchorLedger(place, buildings.map((b) => b.anchor)) : input.ledger ?? emptyIdLedger(place);
+  const ids = reconcileBuildingIds(ledger0, buildings, { protectedKeys: input.protectedKeys, published: input.published });
   const gates = gateSectors.filter((j) => cells.has(cellId(gateBand, j))).map((j, i) => {
     const c = cells.get(cellId(gateBand, j));
     const v = ring ? c.b - 1 : c.a + ws / 2;
     const u = ring ? c.u0 + inset(v, gap / 2 + wl / 2) : j === 0 ? c.u0 + inset(v, gap / 2 + 1) : c.u1 - inset(v, gap / 2 + 1);
     return { id: `gate${i}`, pad: c.id, at: frame.toW(u, v) };
   });
+  if (L.core) gates.unshift({ id: 'gate-core', pad: 'plaza', at: /** @type {Pt} */ ([cm(L.core.centre[0]), cm(L.core.centre[1])]) });   // RMBC6: the outskirts' way in is their town
   /** @type {SettlementPlan} */
   const plan = {
     contract: SETTLEMENT_CONTRACT_VERSION, place, source: 'procedural', generator: { id: GENERATOR_ID, version: SETTLEMENT_GENERATOR_VERSION, seed: seed >>> 0 }, revision: 0,

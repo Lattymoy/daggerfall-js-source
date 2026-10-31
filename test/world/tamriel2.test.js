@@ -320,5 +320,6 @@ test('TAMRIEL2-WORKER: every module the terrain worker reaches, at any depth, li
   // PIN MOVED (FOUNDATION F4): 77 - the land's rows (world/land/landLayer.js and its landEdits.json), asked by the ground, pure
   // PIN MOVED (RMB-CONTRACTS RMBC3): 86 - a settlement's layout on its pixel and its ground carved (world/settlement/: the
   // stand, the places and settlements.json, the layout, styles, limits, ground, geometry and exact maths), all pure
-  assert.ok(seen.size > 20 && seen.size < 87, `${seen.size} modules`);
+  // PIN MOVED (RMB-CONTRACTS RMBC6): 87 - a town's outskirts laid and carved on its pixel (world/settlement/townGrowth.js), pure
+  assert.ok(seen.size > 20 && seen.size < 88, `${seen.size} modules`);
 });

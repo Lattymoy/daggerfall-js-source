@@ -74,6 +74,7 @@ function outward(ring, i) {
 export function groundModel(plan, datum, cells) {
   const mb = new MeshBuilder(), Y = new Map(plan.pads.map((p) => [p.id, datum + p.y]));
   for (const pad of plan.pads) {
+    if (pad.legacy) continue;   // RMBC6: a core's ground is its town's own tiles
     const y = /** @type {number} */ (Y.get(pad.id)), raised = pad.base === 'raised', top = raised ? PLANK : PAVING;
     for (const [i, j, k] of earClip(pad.poly)) {
       const p = [pad.poly[i], pad.poly[j], pad.poly[k]];
@@ -146,11 +147,11 @@ export function buildingInterior(place, b, piece, blocksFile) {
 }
 
 /** A building as the game's doors, shops and talk read it (systems/talk/talkTopics.js buildingDataForDoor's shape).
- *  @param {{ place: number, name: string, regionIndex: number }} town @param {import('./settlementContract.js').Building} b @param {number} area */
+ *  @param {{ place: number, name: string, regionIndex: number, blocks?: number }} town @param {import('./settlementContract.js').Building} b @param {number} area */
 export function buildingRecord(town, b, area) {
   return Object.freeze({
     buildingType: b.type, factionId: b.factionId, quality: b.quality, nameSeed: b.nameSeed, buildingKey: b.key, hasInterior: true,
-    footprintM2: Math.round(area), regionIndex: town.regionIndex, townMapId: town.place >>> 0, townBlocks: 1, townName: town.name,
+    footprintM2: Math.round(area), regionIndex: town.regionIndex, townMapId: town.place >>> 0, townBlocks: town.blocks ?? 1, townName: town.name,
     name: generateBuildingName(b.nameSeed, b.type, { locationName: town.name, factionId: b.factionId }), settlement: true,
   });
 }

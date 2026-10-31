@@ -65,7 +65,7 @@
   {
     "name": "RMBC3-deck-carved",
     "file": "src/world/settlement/settlementGround.js",
-    "old": "  if (on && on.base === 'raised') return null;\n",
+    "old": "  if (on && (on.base === 'raised' || on.legacy)) return null;   // RMBC6: a legacy core's ground is its town's own\n",
     "new": "",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
@@ -110,8 +110,8 @@
   {
     "name": "RMBC3-stand-unasked",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const settlement = hasLocation ? null : standSettlementGround(px, py, samples);",
-    "new": "  const settlement = null;",
+    "old": "null) : standSettlementGround(px, py, samples);",
+    "new": "null) : null;",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "RMBC3-location-loses",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "  const settlement = hasLocation ? null : standSettlementGround(px, py, samples);",
-    "new": "  const settlement = standSettlementGround(px, py, samples);",
+    "old": "(growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps }) : null)",
+    "new": "standSettlementGround(px, py, samples)",
     "tests": [
       "test/world/settlement/rmbc3_ground.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "RMBC3-print-blind",
     "file": "src/world/terrain/terrainGen.js",
-    "old": "const settlement = hasLocation ? null : standSettlementGround(px, py, samples);",
-    "new": "const settlement = null;",
+    "old": "null) : standSettlementGround(px, py, samples);",
+    "new": "null) : null;",
     "tests": [
       "test/net/fb1017f_groundgate.test.js"
     ],

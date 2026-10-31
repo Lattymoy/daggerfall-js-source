@@ -123,6 +123,7 @@ import { lateSolidsOf } from '../player/lateSolid.js';   // ROCK-CLEAR: a pixel'
 import { standBridges } from '../world/road/bridgeModels.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
 import { meetsTown } from './townMeetsHost.js';   // ACROSS-EDGE: the towns a pixel's ground meets
 import { sightMarksOf } from '../world/signSolid.js';   // FIELD BUGS 2026-10-25i SIGN-PASS: a shop's sign stops a body where it stands, never where it hangs
+import { growthJobAt, settlementHomeTown, settlementHomeRegion } from '../world/settlement/townGrowthJob.js';   // RMB-CONTRACTS RMBC6, RMBC8
 
 /** WL1: the renderer's word on which pictures may hold glass, for a static batch's merge to measure their windows. */
 const windowKeys = (r) => (r?.wlGlassKey ? (a, rec) => r.wlGlassKey(a, rec) : null);
@@ -349,6 +350,7 @@ export function createPixelBuild(host) {
       jungle: jungle ? jungle.job(px, py, FOREST_HIDDEN_LOCATION_TYPES.has(groundLocation?.mapTableData?.locationType)) : null,
       landform,   // LANDFORM1-3: the shaped ground, cut along the kernel's own network
       about: townMeets?.about(px, py, meetsTown(groundLocation) ? locationRect?.shape : null) ?? null,   // ACROSS-EDGE: the towns of its 3 x 3 its ground meets
+      growth: growthJobAt(groundLocation, px, py),   // RMB-CONTRACTS RMBC6: a city, town or village grows its outskirts
     });
     const walkShut = dfLocation ? fabricWalkShut(townWalkShut(dfLocation, townGround, paths), dfLocation) : null;
     const yardShut = dfLocation ? yardWalkShut(fabricWalkShut(townWalkShut(dfLocation, yardGround ?? townGround, yardPaths ?? paths, true), dfLocation), walkShut, dfLocation) : null;   // FB1028 YARDS: the yards' ground as #1184 stood it   // TS6-TS7: its walkers' and its yards' ground the town's own, off its wall; TS10: the paths painted on it its roads; URBANIZER U3: and off its fences and dead ends' walls
@@ -1462,9 +1464,9 @@ export function createPixelBuild(host) {
       // (TravelOptionsMod.cs:541-551). Null for a pixel with no location.
       locationRect,
       _seasonsGen: seasonsGen,   // SIB1: the install this pixel's flats were built under (AUDIT 61: captured at the lookups)
-      homeTown, homeKeys: pixelHomeKeys, buildingKeys: pixelBuildingKeys,   // HOME-LOOK: the homes drawn on their own, and every building's key
+      homeTown: homeTown || settlementHomeTown(settlement), homeKeys: pixelHomeKeys, buildingKeys: pixelBuildingKeys,   // HOME-LOOK: the homes drawn on their own, and every building's key; RMBC8: a settlement's place where no location stands
       _lookV: homeLookRead,   // HOME-LOOK (AUDIT)
-      homeFrames: pixelHomeFrames, homeRegion: dfLocation?.regionIndex ?? 0,   // HOME-YARD: each building's frame, and the town's region (a yard's pieces are paid there)
+      homeFrames: pixelHomeFrames, homeRegion: dfLocation?.regionIndex ?? settlementHomeRegion(settlement, px, py),   // HOME-YARD: each building's frame, and the town's region (a yard's pieces are paid there)
       seatAnchors, festivalAnchors, festivalLanterns,   // SEAT1a (above); FESTIVAL-STAGE (above)
       witchHomes: witchDress?.homes ?? null, witchFloor,   // WITCH1: each home's Hearth Offering spot, and the street they stand on (scenes/witchesHost.js)
       chapterHalls: pixelChapterHalls,   // CHAP7b (above)

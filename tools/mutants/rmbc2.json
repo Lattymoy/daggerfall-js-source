@@ -191,8 +191,8 @@
   {
     "name": "RMBC2-ledger-unread",
     "file": "src/world/settlement/settlementGen.js",
-    "old": "reconcileBuildingIds(input.ledger ?? emptyIdLedger(place), buildings,",
-    "new": "reconcileBuildingIds(emptyIdLedger(place), buildings,",
+    "old": "input.ledger ?? emptyIdLedger(place);",
+    "new": "emptyIdLedger(place);",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"
     ]
@@ -263,7 +263,7 @@
   {
     "name": "RMBC2-keep-gone",
     "file": "src/world/settlement/settlementLayout.js",
-    "old": "if (A.keep && cells.has('plaza')) {",
+    "old": "if (A.keep && cells.has('plaza') && !core) {",
     "new": "if (false) {",
     "tests": [
       "test/world/settlement/rmbc2_gen.test.js"

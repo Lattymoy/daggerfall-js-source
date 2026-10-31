@@ -125,5 +125,5 @@ test('RMBC3 the frame\'s law: a record written before PADS_FRAME_LAW rides the c
   assert.equal(law.restandHeight(101, 0, 0, STREAMING_TERRAIN_SCALE, 6), 101);
   const host = readFileSync(new URL('../../../src/scenes/groundFrameHost.js', import.meta.url), 'utf8');
   assert.match(host, /moved = settlementMovedField\(host\.woods, px, py\);/);
-  assert.match(host, /liftRectAt\(px, py\)\) return 0;/, 'a pixel a location holds carves nothing');
+  assert.match(host, /if \(liftRectAt\(px, py\)\) return grownMovedAt\(built\.get\(`\$\{px\},\$\{py\}`\)\?\.settlement,/, 'PIN MOVED (RMBC6): a pixel a location holds rides its outskirts\' carve, as its build handed it back');
 });

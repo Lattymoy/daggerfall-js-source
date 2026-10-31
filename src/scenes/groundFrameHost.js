@@ -28,6 +28,7 @@ import { shapeBefore } from '../world/terrain/townBlendBefore.js';   // FB1028 T
 import { setLocationTiles } from '../world/terrain/terrainTiles.js';
 import { inWorldGrid } from '../world/worldWide/worldGrid.js';   // BAY-LEFT-GROUND: the lift on the world's grid
 import { inBay } from '../world/tamriel/tamrielFrame.js';
+import { grownMovedAt } from '../world/settlement/townGrowth.js';   // RMB-CONTRACTS RMBC6: a grown town's carve, as its build handed it back
 
 /** The map pixel under a scene point of the stream's frame (`state`: its origin and its compensation). */
 export function framePixelAt(state, x, z) {
@@ -239,7 +240,8 @@ export function createGroundFrame(host) {
   const _padsMoved = new Map();
   const padsMovedAt = (x, z) => {
     const [px, py] = framePixelAt(host.state, x, z);
-    if (!host.woods || !inWorldGrid(px, py) || liftRectAt(px, py)) return 0;
+    if (!host.woods || !inWorldGrid(px, py)) return 0;
+    if (liftRectAt(px, py)) return grownMovedAt(built.get(`${px},${py}`)?.settlement, host.state.pixelTranslation(px, py), x, z, heightCell);   // RMBC6
     const key = `${px},${py}`;
     let moved = _padsMoved.get(key);
     if (moved !== undefined) _padsMoved.delete(key);

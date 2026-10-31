@@ -25,6 +25,7 @@ import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSam
 import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
 import { reliefFlat, capitalReliefGround } from './capitalRelief.js';   // SOLITUDE-RELIEF: a capital on a relief of its own
 import { standSettlementGround } from '../settlement/settlementStand.js';   // RMB-CONTRACTS RMBC3: a settlement's pads carved in
+import { standTownGrowth, growthClearing } from '../settlement/townGrowth.js';   // RMB-CONTRACTS RMBC6: a town's outskirts
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
 import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
 import { townGroundMaskBefore } from './townBlendBefore.js';   // FB1028 YARDS Y2: the yards' ground as #1184 drew it
@@ -122,7 +123,7 @@ export const meetsOf = (meets, landforms) => (meets?.length ? meets.map((m) => (
  *  ACROSS-EDGE the meets they took, which its ghost rows take too - one place, so no grid job leaves them behind. */
 export const gridGround = (p) => ({ px: p.px, py: p.py, samples: p.samples, meets: p.meets ?? null });
 
-export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null, lands = null, about = null }) {
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, beyond = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null, lands = null, about = null, growth = null }) {
   // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
   // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
   // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
@@ -247,7 +248,9 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   if (classic && wodResult) applyPicks(classic, wod.picks);   // AUDIT LANDFORMS II H2: DFU's nature reads the ground a site levelled (above) - so the beach it asks is DFU's own samples levelled by the same picks
   // RMB-CONTRACTS RMBC3 (bible/03-World/RMB-Contracts.md): a pixel no location holds and a settlement does - laid out on its
   // ground as the roads and the sites left it, its pads carved in; the layout rides back for the host to dress and stand
-  const settlement = hasLocation ? null : standSettlementGround(px, py, samples);
+  // RMBC6: a town's outskirts round its core, on the land its roads, its own ground, its camps and its water leave
+  const camps = (wod?.picks ?? []).map(({ rect }) => ({ xMin: rect.x, xMax: rect.x + rect.width, yMin: rect.y, yMax: rect.y + rect.height }));
+  const settlement = hasLocation ? (growth && locationRect ? standTownGrowth(px, py, samples, growth, locationRect, { paths, tilemap, camps }) : null) : standSettlementGround(px, py, samples);
   const tilemapBytes = convertTilemap(tilemap);
   // PERF-EXT26: the one grid law, the restride's too; AUDIT WATER-NEXT P1: and the bed under its water, carved here
   const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null, meets: meetsOf(meets, landforms) });
@@ -268,7 +271,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
     // WOD2: the loader SETS MapData.locationRect to its site (:179/:208),
     // and the nature layout reads that field - so the trees keep their
     // clearance off a camp exactly as they keep it off a town.
-    locationRect: wodResult?.locationRect ?? locationRect ?? settlement?.rect ?? null,   // RMB-CONTRACTS RMBC3: and a settlement's clearing
+    locationRect: wodResult?.locationRect ?? growthClearing(locationRect, settlement) ?? settlement?.rect ?? null,   // RMB-CONTRACTS RMBC3: and a settlement's clearing; RMBC6: a grown town's, its outskirts with it
     // FOREST1: the places the woods close round or draw back from (placesFor, above), and the road painter's own track
     // mask, which a forest keeps off (AUDIT FOREST1 F8).
     forests: forests ? { archive: forests.archive, pois: placesFor(forests.hidden), paths } : null,

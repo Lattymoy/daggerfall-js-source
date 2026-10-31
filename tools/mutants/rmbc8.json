@@ -1,0 +1,92 @@
+[
+  {
+    "name": "RMBC8-town-blocks-one",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "const blocks = Math.max(1, (grid?.width ?? 1) * (grid?.height ?? 1));",
+    "new": "const blocks = 1;",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-record-blocks-one",
+    "file": "src/world/settlement/settlementModels.js",
+    "old": "townBlocks: town.blocks ?? 1,",
+    "new": "townBlocks: 1,",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-host-blocks-dropped",
+    "file": "src/scenes/settlementHost.js",
+    "old": "blocks: held.growth ? held.job.blocks ?? 1 : 1 };",
+    "new": "blocks: 1 };",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-frames-unfiled",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    fileHomeFrames(s, p.homeFrames);",
+    "new": "    void p;",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-frames-kept",
+    "file": "src/scenes/settlementHost.js",
+    "old": "    for (const k of s.homeKeys) s.homeFrames?.delete(k);",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-shop-filed",
+    "file": "src/scenes/settlementHost.js",
+    "old": "if (!isResidence(record.buildingType) || frames.has(record.buildingKey)) continue;",
+    "new": "if (frames.has(record.buildingKey)) continue;",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-frame-flat",
+    "file": "src/scenes/settlementHost.js",
+    "old": "box: [rect[0], floor, rect[1], rect[2], floor + HOUSE_HEIGHT, rect[3]]",
+    "new": "box: [rect[0], floor, rect[1], rect[2], floor, rect[3]]",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-home-town-unnamed",
+    "file": "src/world/settlement/townGrowthJob.js",
+    "old": "(settlement && !settlement.growth ? settlement.mapId >>> 0 : 0)",
+    "new": "0",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-home-region-bay",
+    "file": "src/world/settlement/townGrowthJob.js",
+    "old": "(settlement ? regionOfTheatre(theatreAt(px, py)) : 0)",
+    "new": "0",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  },
+  {
+    "name": "RMBC8-build-home-town",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "homeTown: homeTown || settlementHomeTown(settlement),",
+    "new": "homeTown,",
+    "tests": [
+      "test/world/settlement/rmbc8_homes.test.js"
+    ]
+  }
+]

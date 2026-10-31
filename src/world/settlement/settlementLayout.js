@@ -28,11 +28,11 @@ export const CUT_STEPS_MAX = 2.5;
 
 /**
  * @typedef {readonly [number, number]} Pt
- * @typedef {{ heightAt: (east: number, north: number) => number, waterAt?: (east: number, north: number) => boolean }} SiteEnv
+ * @typedef {{ heightAt: (east: number, north: number) => number, waterAt?: (east: number, north: number) => boolean, blockedAt?: (east: number, north: number) => boolean }} SiteEnv
  * @typedef {{ place: number, origin: { px: number, py: number, east: number, north: number }, seed: number, archetype: string, style: string,
- *   site: { east: number, north: number, radius: number }, env?: SiteEnv, roads?: number[], ledger?: any, protectedKeys?: number[],
+ *   site: { east: number, north: number, radius: number }, env?: SiteEnv, roads?: number[], ledger?: any, keys?: 'anchored', protectedKeys?: number[],
  *   published?: any[], params?: { size?: number, density?: number, bands?: number, sectors?: number, open?: number },
- *   fix?: { layout?: string, centre?: number[], shore?: { dir: number[], at: number } } }} SettlementInput
+ *   fix?: { layout?: string, centre?: number[], shore?: { dir: number[], at: number } }, core?: { centre: number[], half: number, y: number }, bounds?: { e0: number, e1: number, n0: number, n1: number } }} SettlementInput
  */
 
 export const TAU = Math.PI * 2;
@@ -103,7 +103,9 @@ export function splits(rng, n, total, salt) {
 
 /**
  * Stages A to C. roads: the bearings roads arrive from (degrees clockwise from north); params: the editor's controls -
- * size and density scale the town and its plots, bands and sectors its cells, open the share left open ground.
+ * size and density scale the town and its plots, bands and sectors its cells, open the share left open ground. RMBC6:
+ * core a legacy town's square (half its side, its ground's height) in the plaza's place; bounds where a cell may stand;
+ * env.blockedAt the ground no cell may take.
  * @param {SettlementInput} input @param {SiteEnv} env
  */
 export function layoutSettlement(input, env) {
@@ -119,7 +121,9 @@ export function layoutSettlement(input, env) {
   // a published settlement fixes what its ground chose when the toolchain laid it out (settlementPlaces.js `fix`)
   const fix = input.fix ?? {};
   const ground = readSite(env, site);
+  const core = input.core ?? null;   // RMBC6: a legacy town's square - the ring's middle, never moved
   let layout = fix.layout ?? A.frame, centre = A.centre;
+  if (core) [layout, centre] = ['ring', 'core'];
   if (fix.layout === 'ring') centre = fix.centre ? 'fixed' : 'site';
   if (fix.layout === 'row' && centre !== 'water') centre = 'contour';
   if (layout === 'auto') {
@@ -142,9 +146,9 @@ export function layoutSettlement(input, env) {
 
   let frame, inner, uStart, uSpan, vOut = 0;
   if (ring) {
-    const c = centre === 'fixed' ? fix.centre : centre === 'high' ? searchCentre(env, site, 'high') : centre === 'low' ? searchCentre(env, site, 'low') : [site.east, site.north];
+    const c = centre === 'core' ? /** @type {NonNullable<typeof core>} */ (core).centre : centre === 'fixed' ? fix.centre : centre === 'high' ? searchCentre(env, site, 'high') : centre === 'low' ? searchCentre(env, site, 'low') : [site.east, site.north];
     frame = polarFrame(c);
-    inner = A.plaza;
+    inner = core ? core.half * Math.SQRT2 + ws : A.plaza;   // a core's corners and a street round them
     uStart = rng(5) * TAU;
     uSpan = TAU;
   } else {
@@ -210,7 +214,11 @@ export function layoutSettlement(input, env) {
       cells.set(cellId(k, j), { id: cellId(k, j), k, j, a: ai, b: bi, u0, u1, poly: [...outer, ...innerArc] });
     }
   }
-  if (ring && inner > 0) {
+  if (core) {
+    const [midE, midN] = core.centre, side = core.half;
+    const square = [[midE - side, midN - side], [midE + side, midN - side], [midE + side, midN + side], [midE - side, midN + side]].map(([e, n]) => /** @type {Pt} */ ([cm(e), cm(n)]));
+    cells.set('plaza', { id: 'plaza', k: 0, j: -1, a: 0, b: side, poly: square, core: true });
+  } else if (ring && inner > 0) {
     const r = inner - gap / 2, us = [];
     for (const g of grids) for (const u of g) if (!us.length || u - us[us.length - 1] > 1e-9) us.push(u);
     cells.set('plaza', { id: 'plaza', k: 0, j: -1, a: 0, b: r, poly: us.filter((u) => u < uStart + uSpan - 1e-9).map((u) => frame.toW(u, r)) });   // a ring's span is the whole turn
@@ -219,6 +227,7 @@ export function layoutSettlement(input, env) {
   // natural ground under each cell; a cut cell under water is dropped
   const made = cells.size;
   for (const c of cells.values()) {
+    if (c.core) { c.natural = c.top = c.h = /** @type {NonNullable<typeof core>} */ (core).y; c.wet = 0; c.raised = false; continue; }
     const samples = c.poly.filter((_, i) => i % 2 === 0);
     samples.push(ringCentroid(c.poly));
     const hs = samples.map(([e, n]) => env.heightAt(e, n));
@@ -228,7 +237,7 @@ export function layoutSettlement(input, env) {
     c.raised = islands;
     c.h = islands ? c.top + deck : c.natural;
   }
-  for (const c of [...cells.values()]) if (!islands && c.wet > 0.25) cells.delete(c.id);
+  for (const c of [...cells.values()]) if (!c.core && ((!islands && c.wet > 0.25) || cellBarred(c.poly, env, input.bounds))) cells.delete(c.id);
   const gateBand = ring ? bands : 1;
   for (const j of gateSectors) {
     const g = cells.get(cellId(gateBand, j));
@@ -245,7 +254,7 @@ export function layoutSettlement(input, env) {
     }
   }
   const live = () => ways.filter((w) => cells.has(w.from) && cells.has(w.to));
-  const reach = new Set(), stack = gateSectors.map((j) => cellId(gateBand, j)).filter((id) => cells.has(id));
+  const reach = new Set(), stack = core ? ['plaza'] : gateSectors.map((j) => cellId(gateBand, j)).filter((id) => cells.has(id));   // a core's outskirts reach from the town
   while (stack.length) {
     const id = /** @type {string} */ (stack.pop());
     if (reach.has(id)) continue;
@@ -255,7 +264,7 @@ export function layoutSettlement(input, env) {
   for (const id of [...cells.keys()]) if (!reach.has(id)) cells.delete(id);
 
   // C - each way's link, and the terraces: neighbours pulled together until each step is climbable
-  const links = live().map((w) => {
+  let links = live().map((w) => {
     const f = cells.get(w.from), t = cells.get(w.to);
     let a, b;
     if (w.kind === 'along') {
@@ -274,7 +283,7 @@ export function layoutSettlement(input, env) {
     return { ...w, a, b, run, bridge, max: (f.raised || t.raised ? pitch : Math.min(st.terrace, pitch)) * 0.95 - 0.02, width: w.kind === 'along' ? ws : wl };
   });
   const keepHalf = 7;
-  if (A.keep && cells.has('plaza')) {
+  if (A.keep && cells.has('plaza') && !core) {
     const pz = cells.get('plaza'), r = keepHalf * Math.SQRT2 + 2.5, gb = gateSectors.length ? midOf(gateSectors[0]) : uStart;
     cells.set('mound', { id: 'mound', k: -1, j: -1, a: 0, b: r, poly: Array.from({ length: 16 }, (_, i) => frame.toW(gb + (i / 16) * TAU, r)), natural: pz.natural, top: pz.top, h: pz.h + 1.5, raised: pz.raised, gb });
     links.push({ from: 'plaza', to: 'mound', kind: 'plaza', a: frame.toW(gb, r + 1.6), b: frame.toW(gb, r - 1.6), run: 3.2, bridge: false, max: Math.min(st.terrace, PITCH_MAX.stairs * 3.2) * 0.95 - 0.02, width: 3 });
@@ -282,7 +291,7 @@ export function layoutSettlement(input, env) {
   // a deck never sinks within DECK_CLEAR of the ground under it, and raising every deck together always meets every
   // link; a deck moves four times as readily as cut ground, which costs earth where a deck costs a longer post
   const least = (c) => (c.raised ? c.top + DECK_CLEAR : -Infinity);
-  const give = (c) => (c.raised ? 4 : 1);
+  const give = (c) => (c.core ? 0 : c.raised ? 4 : 1);   // a core never moves: the town stands where it stands
   for (let it = 0; it < 2000; it++) {
     let worst = 0;
     for (const l of links) {
@@ -295,10 +304,11 @@ export function layoutSettlement(input, env) {
     }
     if (worst < 1e-4) break;
   }
+  if (core) links = dropDeepCuts(cells, links, CUT_STEPS_MAX * st.terrace);   // RMBC6: a cell its town's height would cut too deep is not built
   const kept = [...cells.values()].filter((c) => c.k >= 0);
-  const datum = kept.length ? cm(kept.reduce((s, c) => s + c.natural, 0) / kept.length) : 0;
+  const datum = core ? cm(core.y) : kept.length ? cm(kept.reduce((s, c) => s + c.natural, 0) / kept.length) : 0;
   /** @type {import('./settlementContract.js').Pad[]} */
-  const pads = [...cells.values()].map((c) => ({ id: c.id, poly: c.poly, y: cm(c.h - datum), rim: Math.abs(c.h - c.natural) > 1 ? 'wall' : 'grade', base: c.raised ? 'raised' : 'cut' }));
+  const pads = [...cells.values()].map((c) => ({ id: c.id, poly: c.poly, y: cm(c.h - datum), rim: Math.abs(c.h - c.natural) > 1 ? 'wall' : 'grade', base: c.raised ? 'raised' : 'cut', ...(c.core ? { legacy: true } : {}) }));
   const padY = new Map(pads.map((p) => [p.id, p.y]));
   /** @type {import('./settlementContract.js').Link[]} */
   const planLinks = links.map((l, i) => {
@@ -309,8 +319,47 @@ export function layoutSettlement(input, env) {
   return {
     version: SETTLEMENT_GENERATOR_VERSION, layout, c: frame.c, shore, ring, inner, uStart, uSpan, vOut, edges, radii, reachOf, grids, gateSectors, gateBand,
     islands, gap, ws, wl, plotDepth, bands, sectors, size, keepHalf, made, keptCount: kept.length, datum, pads, links: planLinks,
-    cells: [...cells.values()].map((c) => ({ id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, h: c.h, raised: c.raised, gb: c.gb })),
+    core: core ? { centre: core.centre, half: core.half } : null,
+    cells: [...cells.values()].map((c) => ({ id: c.id, k: c.k, j: c.j, a: c.a, b: c.b, u0: c.u0, u1: c.u1, poly: c.poly, natural: c.natural, h: c.h, raised: c.raised, gb: c.gb, ...(c.core ? { core: true } : {}) })),
   };
+}
+
+/** RMBC6: the cells round a fixed core whose cut passes `limit`, dropped, and what no longer reaches the core after them; the
+ *  links left. Dropping a cell only loosens its neighbours, so every link left still holds. */
+function dropDeepCuts(cells, links, limit) {
+  for (const cell of [...cells.values()]) if (!cell.core && !cell.raised && Math.abs(cell.h - cell.natural) > limit) cells.delete(cell.id);
+  let live = links.filter((link) => cells.has(link.from) && cells.has(link.to));
+  const reach = new Set(), stack = ['plaza'];
+  while (stack.length) {
+    const id = /** @type {string} */ (stack.pop());
+    if (reach.has(id)) continue;
+    reach.add(id);
+    for (const link of live) { if (link.from === id) stack.push(link.to); else if (link.to === id) stack.push(link.from); }
+  }
+  for (const id of [...cells.keys()]) if (!reach.has(id)) cells.delete(id);
+  live = live.filter((link) => cells.has(link.from) && cells.has(link.to));
+  return live;
+}
+
+/** RMBC6: a cell that may not stand - a corner past the bounds, or any 3 m point inside it on ground the env bars.
+ *  @param {readonly Pt[]} poly @param {SiteEnv} env @param {SettlementInput['bounds']} bounds */
+export function cellBarred(poly, env, bounds) {
+  if (bounds && poly.some(([e, n]) => e < bounds.e0 || e > bounds.e1 || n < bounds.n0 || n > bounds.n1)) return true;
+  if (!env.blockedAt) return false;
+  let west = Infinity, east = -Infinity, south = Infinity, north = -Infinity;
+  for (const [e, n] of poly) { west = Math.min(west, e); east = Math.max(east, e); south = Math.min(south, n); north = Math.max(north, n); }
+  for (let e = west + 1.5; e < east; e += 3) for (let n = south + 1.5; n < north; n += 3) if (insideRing(poly, e, n) && env.blockedAt(e, n)) return true;
+  return false;
+}
+
+/** Whether (e, n) is inside a ring (even-odd). @param {readonly Pt[]} ring @param {number} e @param {number} n */
+function insideRing(ring, e, n) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [eastI, northI] = ring[i], [eastJ, northJ] = ring[j];
+    if ((northI > n) !== (northJ > n) && e < ((eastJ - eastI) * (n - northI)) / (northJ - northI) + eastI) inside = !inside;
+  }
+  return inside;
 }
 
 /** @param {readonly Pt[]} ring */

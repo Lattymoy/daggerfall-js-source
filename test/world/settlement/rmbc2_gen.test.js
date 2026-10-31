@@ -26,13 +26,13 @@ test('RMBC2 the data: a style for every theatre (the Bay and the nine provinces)
   assert.equal(styleOfTheatre(0), SETTLEMENT_STYLES.IliacBay);
   assert.equal(styleOfTheatre(2), SETTLEMENT_STYLES.Hammerfell);
   assert.equal(styleOfTheatre(99), SETTLEMENT_STYLES.IliacBay);
-  assert.deepEqual(Object.keys(SETTLEMENT_ARCHETYPES), ['oasis', 'mining', 'fort', 'river', 'wetland', 'village']);
+  assert.deepEqual(Object.keys(SETTLEMENT_ARCHETYPES), ['oasis', 'mining', 'fort', 'river', 'wetland', 'village', 'outskirts']);   // PIN MOVED (RMBC6): a town's outskirts, laid round its core (rmbc6_growth.test.js)
   assert.throws(() => gen('castle', 'Skyrim'), RangeError);
   assert.throws(() => gen('fort', 'Akavir'), RangeError);
 });
 
 test('RMBC2 every archetype in every style, on ground that suits it, keeps the contract and stands enough buildings (mutants: the relaxation, the sags, a link\'s run)', () => {
-  for (const archetype of Object.keys(SETTLEMENT_ARCHETYPES)) {
+  for (const archetype of Object.keys(SETTLEMENT_ARCHETYPES).filter((k) => !SETTLEMENT_ARCHETYPES[k].core)) {   // PIN MOVED (RMBC6): those that stand alone
     for (const style of Object.keys(SETTLEMENT_STYLES)) {
       const { plan, report } = gen(archetype, style);
       assert.deepEqual(report.problems, [], `${archetype} in ${style}`);
@@ -104,7 +104,7 @@ test('RMBC2 regenerated: with its ledger the same plan keeps every key; denser p
 });
 
 test('RMBC2 services: each archetype keeps its own; a temple serves its style\'s divine, a guild hall its guild; the fort\'s keep stands on its mound in the square (mutants: the service pass, the temple\'s divine)', () => {
-  for (const [name, a] of Object.entries(SETTLEMENT_ARCHETYPES)) {
+  for (const [name, a] of Object.entries(SETTLEMENT_ARCHETYPES).filter(([, x]) => !x.core)) {   // PIN MOVED (RMBC6): those that stand alone
     const { plan } = gen(name, 'Skyrim');
     const types = plan.buildings.map((b) => b.type);
     for (const s of a.services) assert.ok(types.includes(T[s.type]), `${name} keeps a ${s.type}`);

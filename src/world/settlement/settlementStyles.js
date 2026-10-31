@@ -37,7 +37,7 @@ export const styleOfTheatre = (theatre) => SETTLEMENT_STYLES[/** @type {keyof ty
  *   by its BUILDING_TYPES name, and where it wants to stand
  * @typedef {{ frame: 'ring'|'row'|'auto', centre: 'high'|'low'|'site'|'contour'|'water', size: readonly [number, number],
  *   bands: number, sectors: readonly [number, number], plaza: number, gates: number, islands: boolean, wall: boolean,
- *   keep: boolean, docks: boolean, wealth: number, services: readonly Service[], centreFeature: string }} Archetype
+ *   keep: boolean, docks: boolean, wealth: number, services: readonly Service[], centreFeature: string, core?: boolean }} Archetype
  *   size: a ring's radius or a row's length, metres; bands: rings or rows of plots; islands: decks of their own, bridged
  */
 const archetype = (/** @type {Archetype} */ a) => Object.freeze(a);
@@ -58,4 +58,7 @@ export const SETTLEMENT_ARCHETYPES = Object.freeze({
     services: [S('Tavern', 'plaza'), S('GeneralStore', 'plaza'), S('Temple')], centreFeature: 'market' }),
   village: archetype({ frame: 'auto', centre: 'site', size: [48, 64], bands: 2, sectors: [6, 8], plaza: 14, gates: 2, islands: false, wall: false, keep: false, docks: false, wealth: 0.4,
     services: [S('Tavern', 'gate'), S('GeneralStore', 'plaza')], centreFeature: 'well' }),
+  // RMB-CONTRACTS RMBC6: a town's outskirts - rings round its legacy core (the plaza's place, `core`), never alone
+  outskirts: archetype({ frame: 'ring', centre: 'site', size: [0, 0], bands: 3, sectors: [10, 14], plaza: 0, gates: 0, islands: false, wall: false, keep: false, docks: false, wealth: 0.35,
+    services: [S('Tavern', 'plaza')], centreFeature: 'none', core: true }),
 });

@@ -1,0 +1,103 @@
+[
+  {
+    "name": "RMBC7-hash-placeless",
+    "file": "src/world/settlement/settlementIds.js",
+    "old": "hash32(place >>> 0, 0x5eed, ...[...a]",
+    "new": "hash32(0, 0x5eed, ...[...a]",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-probe-gone",
+    "file": "src/world/settlement/settlementIds.js",
+    "old": "while (taken.has(k)) k = k === MINTED_KEY_MAX ? MINTED_KEY_MIN : k + 1;",
+    "new": "",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-order-unsorted",
+    "file": "src/world/settlement/settlementIds.js",
+    "old": "for (const a of [...new Set(anchors)].sort()) {",
+    "new": "for (const a of [...new Set(anchors)]) {",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-keys-law-unread",
+    "file": "src/world/settlement/settlementGen.js",
+    "old": "const ledger0 = input.keys === 'anchored' ?",
+    "new": "const ledger0 = false ?",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-growth-ledgered",
+    "file": "src/world/settlement/townGrowth.js",
+    "old": "roads: [], keys: /** @type {'anchored'} */ ('anchored'),",
+    "new": "roads: [],",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js",
+      "test/world/settlement/rmbc6_growth.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-home-dropped",
+    "file": "src/world/settlement/settlementPublish.js",
+    "old": "/** @type {number} */ (home.buildingKey) > 0) keys.add(home.buildingKey);",
+    "new": "/** @type {number} */ (home.buildingKey) > 600) keys.add(home.buildingKey);",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-protected-unread",
+    "file": "src/world/settlement/settlementPublish.js",
+    "old": "return dressSettlement({ ...input, protectedKeys, published }, layout).report.conflicts;",
+    "new": "return dressSettlement({ ...input, protectedKeys: [], published }, layout).report.conflicts;",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-published-unread",
+    "file": "src/world/settlement/settlementPublish.js",
+    "old": "return dressSettlement({ ...input, protectedKeys, published }, layout).report.conflicts;",
+    "new": "return dressSettlement({ ...input, protectedKeys }, layout).report.conflicts;",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-band-unread",
+    "file": "src/world/settlement/settlementPublish.js",
+    "old": "return protectedKeys.filter((k) => keyBandOf(k) === 'minted' && !held.has(k));",
+    "new": "return protectedKeys.filter((k) => !held.has(k));",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-plans-unprinted",
+    "file": "tools/groundPrint.mjs",
+    "old": "cells.Plans = [settled.settlement, grownSettlement].map(",
+    "new": "cells.Unprinted = [settled.settlement, grownSettlement].map(",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js",
+      "test/net/fb1017f_groundgate.test.js"
+    ]
+  },
+  {
+    "name": "RMBC7-file-unfiltered",
+    "file": "tools/settlementRevise.mjs",
+    "old": "out.set(Number(k) >>> 0, v.filter((x) => Number.isSafeInteger(x)));",
+    "new": "out.set(Number(k) >>> 0, v);",
+    "tests": [
+      "test/world/settlement/rmbc7_publish.test.js"
+    ]
+  }
+]

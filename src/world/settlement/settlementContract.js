@@ -15,7 +15,7 @@ export { padAt };
 export const SETTLEMENT_CONTRACT_VERSION = 1;
 /**
  * @typedef {readonly [number, number]} Pt - [east, north], metres from the plan's origin
- * @typedef {{ id: string, poly: Pt[], y: number, rim?: 'grade'|'wall', base?: 'cut'|'raised' }} Pad - flat ground y metres over the datum
+ * @typedef {{ id: string, poly: Pt[], y: number, rim?: 'grade'|'wall', base?: 'cut'|'raised', legacy?: boolean }} Pad - flat ground y metres over the datum
  * @typedef {{ id: string, kind: 'grade'|'stairs'|'ramp'|'bridge', from: string, to: string, a: Pt, b: Pt, width: number }} Link
  * @typedef {{ id: string, rank: string, width: number, pad: string, path: Pt[] }} Street
  * @typedef {{ id: string, purpose: string, poly: Pt[] }} District

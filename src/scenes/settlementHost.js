@@ -17,6 +17,7 @@ import { townLookBase } from '../world/urban/townLook.js';
 import { INTERIOR_SEASON } from '../world/climateSwaps.js';
 import { trs } from '../world/mat4.js';
 import { pageHas } from '../systems/pageQuery.js';
+import { isResidence } from '../world/buildingNames.js';
 
 /** The models the family answers, by id: made when a settlement is stood, dropped when it goes. */
 const _models = new Map();
@@ -29,25 +30,52 @@ export function installSettlementModels() {
   registerCustomModelFamily({ owns: isSettlementModelId, build: (id) => _models.get(id) ?? null, keep: 4096, climateFree: true });
 }
 
+/** RMBC8: each house's yard frame (scenes/pixelBuild.js homeFrames' shape: its place, its box and its footprint's rect,
+ *  pixel-local), filed on its pixel's own map so the yards stand round it. @param {any} town @param {any} frames */
+export function fileHomeFrames(town, frames) {
+  if (!(frames instanceof Map)) return;
+  town.homeFrames = frames;
+  for (const [i, x] of town.pieces.entries()) {
+    const b = town.plan.buildings[i], record = x.record;
+    if (!isResidence(record.buildingType) || frames.has(record.buildingKey)) continue;
+    const easts = b.footprint.map((point) => point[0]), norths = b.footprint.map((point) => point[1]), floor = x.piece.frame[13];
+    const rect = [Math.min(...easts), Math.min(...norths), Math.max(...easts), Math.max(...norths)];
+    frames.set(record.buildingKey, { at: [b.at[0], floor, b.at[1]], box: [rect[0], floor, rect[1], rect[2], floor + HOUSE_HEIGHT, rect[3]], rects: [rect], grounds: [], type: record.buildingType, faction: record.factionId ?? 0, parts: [], terraced: false });
+    town.homeKeys.push(record.buildingKey);
+  }
+}
+/** RMBC8: how high a house's yard box reaches over its floor, metres - two storeys and a roof. */
+export const HOUSE_HEIGHT = 9;
+
+/** RMBC6: the model runs a grown town takes, in turn - the published rows keep their ordinals' runs below the first. */
+export const GROWTH_SLOT_FIRST = 16;
+export const GROWTH_SLOTS = 512 - GROWTH_SLOT_FIRST;
+let _nextSlot = 0;
+/** The next run a grown town takes; a run comes round again only after GROWTH_SLOTS others, long after its meshes went. */
+export const nextGrowthSlot = () => GROWTH_SLOT_FIRST + (_nextSlot++ % GROWTH_SLOTS);
+
 /**
  * A settlement on its built pixel, dressed: its plan, its pieces and its doors, pixel-local. Pure but for the model map.
- * @param {{ px: number, py: number, settlement: { ordinal: number, layout: any } }} p @param {any} blocksFile
+ * RMBC6: a grown town's outskirts carry their own input and job (world/settlement/townGrowth.js), and take `slot`'s run.
+ * @param {{ px: number, py: number, settlement: { ordinal: number, layout: any, growth?: boolean, input?: any, job?: any } }} p
+ * @param {any} blocksFile @param {number} [slot]
  */
-export function standSettlement(p, blocksFile) {
-  const row = SETTLEMENT_ROWS[p.settlement.ordinal];
-  if (!row) return null;
-  const input = settlementInput(row, p.px, p.py), L = p.settlement.layout;
+export function standSettlement(p, blocksFile, slot = -1) {
+  const held = p.settlement, row = held.growth ? null : SETTLEMENT_ROWS[held.ordinal];
+  if (held.growth ? !(held.input && held.job && slot >= GROWTH_SLOT_FIRST) : !row) return null;
+  const input = held.growth ? held.input : settlementInput(row, p.px, p.py), L = held.layout;
+  const name = held.growth ? held.job.name : row.name, style = held.growth ? held.job.style : row.style, run = held.growth ? slot : row.ordinal;
   const { plan } = dressSettlement(input, L);
-  const town = { place: input.place, name: row.name, regionIndex: regionOfTheatre(theatreAt(p.px, p.py)) };
+  const town = { place: input.place, name, regionIndex: held.growth ? held.job.regionIndex : regionOfTheatre(theatreAt(p.px, p.py)), blocks: held.growth ? held.job.blocks ?? 1 : 1 };
   const floorOf = new Map(plan.pads.map((d) => [d.id, L.datum + d.y]));
   const pieces = plan.buildings.map((b, i) => {
-    const piece = buildingPiece(plan, b, /** @type {number} */ (floorOf.get(b.pad)) + (b.lift ?? 0), row.style);
+    const piece = buildingPiece(plan, b, /** @type {number} */ (floorOf.get(b.pad)) + (b.lift ?? 0), style);
     const record = buildingRecord(town, b, piece.area);
     let interior = null;
     const dfBlock = { name: `SETTLE${input.place}.${b.key}`, index: -1, rmbBlock: { subRecords: [{ get interior() { return (interior ??= buildingInterior(input.place, b, piece, blocksFile)); } }] } };
-    return { id: buildingModelId(row.ordinal, i), piece, record, dfBlock };
+    return { id: buildingModelId(run, i), piece, record, dfBlock };
   });
-  return { row, plan, town, datum: L.datum, groundId: groundModelId(row.ordinal), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c]))), pieces, climateBase: townLookBase(row.style) ?? 300 };
+  return { row, name, plan, town, datum: L.datum, groundId: groundModelId(run), ground: groundModel(plan, L.datum, new Map(L.cells.map((c) => [c.id, c]))), pieces, climateBase: townLookBase(style) ?? 300 };
 }
 
 /**
@@ -59,22 +87,28 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
   /** @type {Map<string, any>} */ const stood = new Map();
   const t = [0, 0, 0];
   const mesh = (s, id) => {
-    if (s.meshes.has(id) || !pipeline?.getGpuMesh) return;
+    const src = s.hold ?? pipeline;
+    if (s.meshes.has(id) || !src?.getGpuMesh) return;
     s.meshes.set(id, null);
-    Promise.resolve(pipeline.getGpuMesh(id)).then((g) => { if (stood.get(s.key) === s) s.meshes.set(id, g ?? null); }, () => {});
+    Promise.resolve(src.getGpuMesh(id)).then((g) => { if (stood.get(s.key) === s) s.meshes.set(id, g ?? null); }, () => {});
   };
   function stand(p, key) {
-    const made = standSettlement(p, blocksFile());
+    const made = standSettlement(p, blocksFile(), p.settlement.growth ? nextGrowthSlot() : -1);
     if (!made) return;
     _models.set(made.groundId, made.ground);
     for (const x of made.pieces) _models.set(x.id, x.piece.model);
-    const s = { key, px: p.px, py: p.py, ...made, meshes: new Map(), colAt: null, scene: null };
+    // PLACE-LRU: its meshes held through its own hold, let go as it goes (scenes/dataPipeline.js holdPlace)
+    const hold = pipeline?.holdPlace?.('settlement', key) ?? null;
+    const s = { key, px: p.px, py: p.py, ...made, hold, meshes: new Map(), colAt: null, scene: null, homeFrames: null, homeKeys: [] };
+    fileHomeFrames(s, p.homeFrames);   // RMBC8: its houses' yards (scenes/homeYards.js reads a built pixel's homeFrames)
     stood.set(key, s);
     mesh(s, s.groundId);
     for (const x of s.pieces) { mesh(s, x.id); mesh(s, x.piece.doorId); }
   }
   function takeDown(s) {
     stood.delete(s.key);
+    s.hold?.release?.();
+    for (const k of s.homeKeys) s.homeFrames?.delete(k);
     collider()?.removeBucket?.(`settlement:${s.key}`);
     _models.delete(s.groundId);
     for (const x of s.pieces) _models.delete(x.id);
@@ -108,7 +142,7 @@ export function createSettlementHost({ renderer = null, pipeline = null, collide
     /** @type {any} */ (window).__settlementView = () => [...stood.values()].map((s) => {
       const sc = scene(s), c = s.plan.pads.find((p) => p.id === 'plaza') ?? s.plan.pads[0];
       const mid = c.poly.reduce((a, p) => [a[0] + p[0] / c.poly.length, a[1] + p[1] / c.poly.length], [0, 0]);
-      return { key: s.key, name: s.row.name, buildings: s.plan.buildings.length, ready: [...s.meshes.values()].filter(Boolean).length, meshes: s.meshes.size,
+      return { key: s.key, name: s.name, buildings: s.plan.buildings.length, ready: [...s.meshes.values()].filter(Boolean).length, meshes: s.meshes.size,
         mid: [sc.t[0] + mid[0], sc.t[1] + s.datum + c.y, sc.t[2] + mid[1]],
         doors: sc.doors.slice(0, 3).map((d) => ({ at: [d.door.matrix[12], d.door.matrix[13], d.door.matrix[14]], facing: s.plan.buildings.find((b) => b.key === d.settlement.buildingKey)?.entrances[0].facing, type: d.settlement.buildingType })) };
     });
