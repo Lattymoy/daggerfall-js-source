@@ -1550,6 +1550,9 @@
 !/src/ui/gate/gateVeil.js
 !/src/ui/gfxPrepBar.js
 !/src/ui/glyphFace.js
+!/src/ui/growth/
+/src/ui/growth/*
+!/src/ui/growth/growthPages.js
 !/src/ui/guild/
 /src/ui/guild/*/
 !/src/ui/guildServiceWindow.js
