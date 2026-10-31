@@ -121,7 +121,9 @@ const out = await page.evaluate(async ({ W, H, CLOSE, SETS, ONLY }) => {
           const back = fwd[0] * right[0] + fwd[2] * right[2] < 0 ? mk.flank.hi - ap.ARM_PX.half * mk.art : mk.flank.lo + ap.ARM_PX.half * mk.art;
           y = pose.flank.y; want = colOf(along(back, y)); tol = 1.5;
         }
-        if (name === 'heart' && o === 0 && mk?.chest != null) { y = yOf('chest'); want = colOf(along(mk.chest, y)); }
+        // CHEST-CENTRE: the heart from the front and the three-quarters, the sigil from those and from behind - on the
+        // picture's chest from every view it shows
+        if (((name === 'heart' && [0, 1, 7].includes(o)) || (name === 'sigil' && [0, 1, 3, 4, 5, 7].includes(o))) && mk?.chest != null) { y = yOf('chest'); want = colOf(along(mk.chest, y)); }
         if (name === 'greaves' && mk?.legs) { y = (yOf('knL') + yOf('ftL')) / 2; want = colOf(along((mk.legs.knee[0] + mk.legs.knee[1] + mk.legs.ankle[0] + mk.legs.ankle[1]) / 4, y)); tol = o % 4 === 2 ? 3 : 1.8; }
         const unit = pxAt(y);
         // the arms' pieces, each arm (armSide): none over an arm the picture hides (from behind, its line where it would

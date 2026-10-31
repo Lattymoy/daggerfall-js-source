@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { glslFunctions, GlslDiscard } from '../glsl.mjs';
 import { armClip, armoryDraws, armoryPrograms, ArmoryRenderer, ARMORY_PIECE_INDEX } from '../../src/render/armoryPass.js';
-import { newPose } from '../../src/render/armoryPose.js';
+import { newPose, POSE_AT } from '../../src/render/armoryPose.js';
 
 const kept = (/** @type {number[]} */ c, /** @type {number[]} */ p) => c[0] * p[0] + c[1] * p[1] + c[2] * p[2] + c[3] >= 0;
 const towardEye = (/** @type {number[]} */ p, /** @type {number[]} */ eye, /** @type {number} */ t) => p.map((v, i) => v + (eye[i] - v) * t);
@@ -65,4 +65,29 @@ test('ARM-BEHIND the shader RUN and the pass: a fragment on the cut side discard
   calls.length = 0;
   pass.draw([{ kit: '00a00', at: [0, 0, 0], yaw: 0, pose: newPose(), kindle: 1, torn: -1, _d: 3 }], I, I, [0, 1.4, 3], 2, null, true);
   assert.ok(clips().length > 0 && clips().every((c) => c.every((v) => v === 0)), 'a rig\'s: nought');
+});
+
+test('CHEST-CENTRE (2026-10-31, the owner: "The aura armory chest piece also isnt centwrwd at some angles"): on a card the chest piece stands on the eye\'s line through the picture\'s chest from every side - the heart before the card from the front and behind it from behind, the Sigil\'s back the other way round; a rig\'s stays its chest\'s face (mutants: the depth along the facing again; the Sigil\'s back 0.24 m behind the card)', () => {
+  const card = newPose();
+  Object.assign(card, { card: true, limbs: 'upper' });
+  const ci = POSE_AT.chest;
+  card.dx[ci / 3] = 0.07;   // the picture's chest a little off the card's middle
+  const at = [1, 0, -2], right = [1, 0, 0], w = { at, yaw: 0, pose: card, seed: 0.37, kindle: 1, torn: -1, mounted: false, _d: 3 };
+  const onPic = [at[0] + 0.07, card.pts[ci + 1], at[2]];   // the picture's chest on the card
+  const line = (/** @type {number[]} */ p, /** @type {number[]} */ eye) => {   // how far p stands off the eye's line through the picture's chest
+    const d = [onPic[0] - eye[0], onPic[1] - eye[1], onPic[2] - eye[2]], q = [p[0] - eye[0], p[1] - eye[1], p[2] - eye[2]];
+    const c = [d[1] * q[2] - d[2] * q[1], d[2] * q[0] - d[0] * q[2], d[0] * q[1] - d[1] * q[0]];
+    return Math.hypot(...c) / Math.hypot(...d);
+  };
+  const near = (/** @type {number[]} */ p, /** @type {number[]} */ eye) => Math.hypot(p[0] - eye[0], p[1] - eye[1], p[2] - eye[2]) < Math.hypot(onPic[0] - eye[0], onPic[1] - eye[1], onPic[2] - eye[2]);
+  for (const deg of [0, 45, 135, 180, 225, 315]) {
+    const a = (deg * Math.PI) / 180, eye = [at[0] + 3 * Math.sin(a), 1.5, at[2] + 3 * Math.cos(a)], front = Math.cos(a) > 0;
+    const heart = armoryDraws('emberheart', w, eye, true, right).find((d) => d.mesh === 2);
+    const sigil = armoryDraws('eternalsigil', w, eye, true, right).filter((d) => d.mesh === 2);
+    for (const d of [heart, ...sigil]) assert.ok(d && line(d.A, eye) < 1e-9, `${deg}: on the eye's line through the picture's chest (${d && line(d.A, eye)})`);
+    assert.equal(near(heart.A, eye), front, `${deg}: the heart before the card from the front, behind it from behind`);
+    assert.equal(near(sigil[1].A, eye), !front, `${deg}: the Sigil's back before the card from behind`);
+  }
+  const rig = armoryDraws('emberheart', { ...w, pose: newPose() }, [1, 1.5, 1], true, right).find((d) => d.mesh === 2);
+  assert.ok(rig && Math.abs(rig.A[2] - (at[2] + newPose().pts[ci + 2])) < 1e-9, 'a rig\'s on its chest\'s face');
 });

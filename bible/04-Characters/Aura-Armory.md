@@ -164,6 +164,12 @@ THE CARD LAW: on a sprite every point is lifted toward the eye (`ARMORY_LIFT_M`)
 side and what stands behind the body is hidden by the card's own depth. A chest piece weighs how squarely it faces the
 eye; the Eternal Sigil also burns on the back, clear of a rig's torso.
 
+**The chest from every side** (CHEST-CENTRE, the owner, 2026-10-31: *"The aura armory chest piece also isnt centwrwd at
+some angles"*). On a card the chest's face stood 0.1 m before the card and the Sigil's back 0.24 m behind it, along the
+body's facing, so at a three-quarter both slid 13 to 23 px off the painted chest. A card's depth is now laid on the
+eye's line through the picture's chest (`armoryPass.js` onCard): the piece stays on that column from every side, still
+before the card from its own side and behind it from the other. A rig keeps its chest's face.
+
 **The card's right** (ARMORY-MIRROR, `01-Overview/bugs/Field-Bugs-2026-10-30e.md`). A sprite's points move across its
 card along the billboard's own right (`render/armoryPass.js` cardRightOf). Under the world's mirrored lens that is the
 view's first row turned round; under the stage's plain lens, the row itself. Read off the row in the world, every
@@ -270,8 +276,9 @@ peer's name lifts only over a head piece drawn in that frame, and a sprite's Cin
   the drawn head, a try-on and a press, and close-ups of each line's set. `tools/spriteArmsSheet.mjs` - every sprite's
   pose on its picture.
 - `test/render/armbehind.test.js` - section 6's cut at the body's edge: its law, the draws it rides on, the shader's
-  discard, the pass's upload; `tools/mutants/armbehind.json` mutates them. `tools/armorySpriteProbe.mjs` (SETS=1) reads
-  nothing between the two arms' inner edges on every Layered Gearing body.
+  discard, the pass's upload; and section 7's chest from every side. `tools/mutants/armbehind.json` mutates them. `tools/armorySpriteProbe.mjs` (SETS=1) reads
+  nothing between the two arms' inner edges on every Layered Gearing body, and the Heart and the Sigil on the painted
+  chest from every view they show.
 - `test/render/aurapixel.test.js` - section 13's texel and levels run in the shader's own code, both passes' `main()`
   with the law on, the switch, and the rider's cards; `tools/mutants/aurapixel.json` mutates them. `tools/auraProbe.mjs`
   and `tools/armoryProbe.mjs` read every look and kit with the law on, beside the designs read per pixel.

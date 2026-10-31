@@ -638,11 +638,14 @@ export function armoryDraws(key, w, eye, near, right = null) {
     cards(1, 1, add(c, fwd, r), c, axis, [r, 0], 0.075 * s, 1, 1, true);
     cards(2, 8, c, c, axis, [r, 0]);
   } else if (key === 'emberheart' || key === 'eternalsigil') {
-    const chest = pt('chest'), f = facing(chest, fwd);
+    // CHEST-CENTRE: on a card a depth along the facing is laid on the eye's line through the picture's chest, so it never
+    // slides across the picture as the eye goes round (the chest's face and the Sigil's back stood 0.1 m and 0.24 m off it)
+    const cz = pose.pts[POSE_AT.chest + 2], onCard = (/** @type {number} */ z) => { const c = add(pt('chest'), fwd, -cz), e = unit(sub(/** @type {any} */ (eye), c)); return add(c, e, z * (fwd[0] * e[0] + fwd[2] * e[2])); };
+    const chest = pose.card ? onCard(cz) : pt('chest'), f = facing(chest, fwd);
     decal(0, chest, fwd, (key === 'emberheart' ? 0.14 : 0.12) * s, f);
     cards(1, 1, chest, chest, UP, [0, 0], (key === 'emberheart' ? 0.3 : 0.2) * s, f, 1, true);
     if (key === 'emberheart') cards(2, 8, chest, chest, UP, [0, 0], 0, f);
-    else { const back = add(chest, fwd, -(pose.back > 0 ? pose.back : (pose.card ? 0.24 : 0.27) * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
+    else { const back = pose.card ? onCard(cz - 0.24 * s) : add(chest, fwd, -(pose.back > 0 ? pose.back : 0.27 * s)), nb = [-fwd[0], 0, -fwd[2]]; decal(0, back, nb, 0.13 * s, facing(back, nb)); }   // AUDIT ARMORY: a rig's back clear of its torso - a Morrowind body's back stands about 0.22 m behind its chest's face (WOLF-KIT: the wolf's its pose's `back`)
   } else if (key === 'ashbound' || key === 'eternalarmlets') {
     for (const arm of /** @type {const} */ (['left', 'right'])) {
       const u = upperArm(arm, key === 'ashbound' ? 0.06 : 0.064), from = out.length;
