@@ -4,10 +4,10 @@
 // point. Plants grow in groves (a slow field at the species' cluster scale), not in an even sprinkle; a tree keeps its
 // spacing from every tree placed before it, the taller kinds first. Pure in the point and the bake: the same rectangle
 // grows the same plants on every machine, and `plantProblems` says which need a plant breaks (none, for any it placed).
-import { rand01, noise2, seedOf, smoothstep } from './exact.js';
-import { BIOMES, SOILS, species as speciesOf } from './tables.js';
-import { PIXEL_M } from './regionSampler.js';
-import { WATER } from './hydrology.js';
+import { rand01, noise2, seedOf, smoothExact } from './exact.js';
+import { BIOME_TABLE, SOILS, species as speciesOf } from './tables.js';
+import { TERRAIN_SIZE as PIXEL_M } from './../terrain/terrainSampler.js';   // a world pixel's metres
+import { WATER_KIND } from './hydrology.js';
 
 /** The kinds in the order they claim ground. */
 const KIND_ORDER = Object.freeze(['tree', 'fungus', 'shrub', 'reed', 'grass']);
@@ -17,9 +17,9 @@ export const GROUND_WATER_MM = 700;
 /** The environment a plant reads at a world point. @param {import('./regionSampler.js').RegionSampler} s @param {number} x @param {number} y */
 export function plantSite(s, x, y) {
   const e = /** @type {any} */ (s.env(x, y));
-  const wet = e.water & (WATER.wetland | WATER.floodplain) ? GROUND_WATER_MM : 0;
+  const wet = e.water & (WATER_KIND.wetland | WATER_KIND.floodplain) ? GROUND_WATER_MM : 0;
   return { temp: e.temp, precip: e.precip + wet, soil: SOILS[e.soil].key, slope: s.slopeAt(x, y), elev: s.heightAt(x, y), solar: e.solar,
-    biome: BIOMES[e.biome].key, water: (reach) => s.waterNear(x, y, reach), inWater: !!s.waterAt(x, y) };
+    biome: BIOME_TABLE[e.biome].key, water: (reach) => s.waterNear(x, y, reach), inWater: !!s.waterAt(x, y) };
 }
 
 /** Which of a species' needs the site breaks: none, where it may grow. @param {import('./tables.js').Species} sp @param {ReturnType<typeof plantSite>} site */
@@ -47,7 +47,7 @@ export function plantsIn(s, r, o = {}) {
   const kinds = new Set();
   for (let y = Math.floor(r.y); y < r.y + r.h; y++) for (let x = Math.floor(r.x); x < r.x + r.w; x++) {
     if (!s.owns(x + 0.5, y + 0.5)) continue;
-    for (const b of [BIOMES[/** @type {any} */ (s.env(x + 0.5, y + 0.5)).biome], BIOMES[/** @type {any} */ (s.env(x, y)).biome]]) for (const k of b.species) kinds.add(k);
+    for (const b of [BIOME_TABLE[/** @type {any} */ (s.env(x + 0.5, y + 0.5)).biome], BIOME_TABLE[/** @type {any} */ (s.env(x, y)).biome]]) for (const k of b.species) kinds.add(k);
   }
   const list = [...kinds].map(speciesOf).sort((a, b) => KIND_ORDER.indexOf(a.kind) - KIND_ORDER.indexOf(b.kind) || b.spacing - a.spacing || (a.key < b.key ? -1 : 1));
   /** @type {Map<number, { x: number, y: number, sp: number }[]>} the trees placed, filed by 20 m square */
@@ -65,9 +65,9 @@ export function plantsIn(s, r, o = {}) {
     for (let j = j0; j < j1 && out.length < cap; j++) for (let i = i0; i < i1; i++) {
       const x = (i + rand01(seed, si, i, j, 1)) * step, y = (j + rand01(seed, si, i, j, 2)) * step;
       if (x < r.x || y < r.y || x >= r.x + r.w || y >= r.y + r.h || !s.owns(x, y)) continue;
-      const grove = smoothstep(-0.15, 0.45, noise2(seed + si * 131, (x * PIXEL_M) / sp.cluster, (y * PIXEL_M) / sp.cluster));
+      const grove = smoothExact(-0.15, 0.45, noise2(seed + si * 131, (x * PIXEL_M) / sp.cluster, (y * PIXEL_M) / sp.cluster));
       if (rand01(seed, si, i, j, 3) >= chance * grove) continue;
-      const biome = BIOMES[/** @type {any} */ (s.env(x, y)).biome];
+      const biome = BIOME_TABLE[/** @type {any} */ (s.env(x, y)).biome];
       if (!biome.species.includes(sp.key)) continue;
       const site = plantSite(s, x, y);
       if (speciesProblems(sp, site).length) continue;

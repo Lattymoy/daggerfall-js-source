@@ -8,7 +8,7 @@ import { bakeRegion } from '../../../src/world/gen2/regionBake.js';
 import { encodeBake, decodeBake, bakePrint } from '../../../src/world/gen2/bakeCodec.js';
 import { canonGrid, geology } from '../../../src/world/gen2/geology.js';
 import { worldManifest } from '../../../src/world/gen2/manifest.js';
-import { BIOMES } from '../../../src/world/gen2/tables.js';
+import { BIOME_TABLE } from '../../../src/world/gen2/tables.js';
 import { SHORE_BYTE } from '../../../src/world/tamriel/tamrielGround.js';
 import { canonReady } from '../../../src/world/gen2/canon.js';
 
@@ -48,13 +48,13 @@ for (const spec of [HAMMERFELL, SKYRIM]) {
 
 test('WG2 GROUND\'S READERS (both regions): every pixel past the sea stands at or over the shore byte and wears a biome\'s Daggerfall climate; Skyrim\'s air is colder than the Hammerfell desert\'s and its ground no desert (mutants: the byte\'s law, the climate\'s vote, the lapse)', () => {
   for (const spec of [HAMMERFELL, SKYRIM]) {
-    const b = bake(spec), climates = new Set(BIOMES.map((x) => x.climate));
+    const b = bake(spec), climates = new Set(BIOME_TABLE.map((x) => x.climate));
     for (const v of b.bytes) assert.ok(v >= SHORE_BYTE, `${spec.id} byte ${v}`);
     for (const c of b.climates) assert.ok(climates.has(c), `${spec.id} climate ${c}`);
   }
   const mean = (f) => f.data.reduce((a, v) => a + v, 0) / f.data.length;
   assert.ok(mean(bake(SKYRIM).fields.temp) < mean(bake(HAMMERFELL).fields.temp) - 5);
-  const desert = new Set(['dunes', 'rockDesert', 'saltFlat'].map((k) => BIOMES.findIndex((x) => x.key === k)));
+  const desert = new Set(['dunes', 'rockDesert', 'saltFlat'].map((k) => BIOME_TABLE.findIndex((x) => x.key === k)));
   assert.ok([...bake(SKYRIM).fields.biome.data].every((v) => !desert.has(v)), 'no desert in Skyrim');
   assert.ok([...bake(HAMMERFELL).fields.biome.data].filter((v) => desert.has(v)).length > 0.3 * 1600, 'Hammerfell is dry');
 });

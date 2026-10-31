@@ -2,9 +2,9 @@
 // soil, water and height - not from a province's name (data/biomes.json). Each biome names the Daggerfall climate
 // its ground and nature are drawn with, so the game's textures and flats read it as they read CLIMATE.PAK. A spring
 // in a dry land greens the ground about it: an oasis. Sand under a dry wind is raised into dunes across the wind.
-import { WATER } from './hydrology.js';
-import { ridged, fbm, seedOf, smoothstep, clamp } from './exact.js';
-import { ROCKS, BIOMES, SOILS, biome as biomeOf, provinceProfile } from './tables.js';
+import { WATER_KIND } from './hydrology.js';
+import { ridgedExact, fbmExact, seedOf, smoothExact, clampExact } from './exact.js';
+import { ROCKS, BIOME_TABLE, SOILS, biome as biomeOf, provinceProfile } from './tables.js';
 
 /** Mean air C under which the ground is a snowfield; and the alpine's air over ALPINE_M. */
 export const SNOW_C = -5;
@@ -31,20 +31,20 @@ export function biomes(spec, elev, rock, theatre, air, soil, hyd) {
     const soilKey = SOILS[soil.soil.data[k]].key, rk = ROCKS[rock.data[k]].key;
     let b;
     if (th === 0) b = 'lake';
-    else if (wf & WATER.playa) b = 'saltFlat';
-    else if (wf & WATER.lake) b = 'lake';
+    else if (wf & WATER_KIND.playa) b = 'saltFlat';
+    else if (wf & WATER_KIND.lake) b = 'lake';
     else if ((rk === 'basalt' || rk === 'tuff') && th === 4 && t > 0) b = 'ashland';
     else if (t < SNOW_C) b = 'snowfield';
     else if (t < ALPINE_C && e > ALPINE_M) b = 'alpine';
     else if (t < -1) b = 'tundra';
-    else if (wf & WATER.wetland) b = t > 16 ? 'swamp' : 'marsh';
-    else if ((wf & (WATER.river | WATER.floodplain)) && p < 650) b = 'riparian';
+    else if (wf & WATER_KIND.wetland) b = t > 16 ? 'swamp' : 'marsh';
+    else if ((wf & (WATER_KIND.river | WATER_KIND.floodplain)) && p < 650) b = 'riparian';
     else if (p < 250) b = SAND.has(soilKey) ? 'dunes' : 'rockDesert';
     else if (p < 500) b = t > 20 ? 'savanna' : 'steppe';
     else if (p < 850 && t > 21) b = 'savanna';
     else if (t >= 20 && p >= 1600) b = 'tropicalJungle';
     else if (t >= 15 && p >= 1300) b = 'temperateJungle';
-    else if (wf & WATER.floodplain) b = 'riparian';
+    else if (wf & WATER_KIND.floodplain) b = 'riparian';
     else if (t >= 5) b = 'temperateForest';
     else b = 'borealForest';
     out.data[k] = B(b);
@@ -64,9 +64,9 @@ export function biomes(spec, elev, rock, theatre, air, soil, hyd) {
     if (out.data[k] !== sand) continue;
     const i = k % elev.w, j = (k / elev.w) | 0, x = elev.x0 + (i + 0.5) / elev.res, y = elev.y0 + (j + 0.5) / elev.res;
     const [wx, wy] = provinceProfile(theatre.data[k]).wind, wl = Math.sqrt(wx * wx + wy * wy) || 1;
-    const along = (x * wx + y * wy) / wl / DUNE_PX + 0.6 * fbm(seed, x / 9, y / 9, 2), across = (-x * wy + y * wx) / wl / (DUNE_PX * 5);
-    const edge = smoothstep(0, 3, sandRun(out, i, j, sand));
-    raised.data[k] += DUNE_M * edge * clamp(ridged(seed + 1, along, across, 2), 0, 1);
+    const along = (x * wx + y * wy) / wl / DUNE_PX + 0.6 * fbmExact(seed, x / 9, y / 9, 2), across = (-x * wy + y * wx) / wl / (DUNE_PX * 5);
+    const edge = smoothExact(0, 3, sandRun(out, i, j, sand));
+    raised.data[k] += DUNE_M * edge * clampExact(ridgedExact(seed + 1, along, across, 2), 0, 1);
   }
   return { biome: out, elev: raised };
 }
@@ -89,7 +89,7 @@ export function pixelClimates(biome, res) {
   for (let py = 0; py < ph; py++) for (let px = 0; px < pw; px++) {
     const count = new Map();
     for (let j = 0; j < res; j++) for (let i = 0; i < res; i++) {
-      const c = BIOMES[biome.data[(py * res + j) * biome.w + px * res + i]].climate;
+      const c = BIOME_TABLE[biome.data[(py * res + j) * biome.w + px * res + i]].climate;
       count.set(c, (count.get(c) ?? 0) + 1);
     }
     let best = 0, bc = 255;

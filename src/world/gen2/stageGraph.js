@@ -6,7 +6,7 @@
 
 /** Each stage: what it reads, its law's version (raised when its output changes for the same inputs), and how far past
  *  a changed input its own output can move, in world pixels. */
-export const STAGES = Object.freeze({
+export const STAGE_GRAPH = Object.freeze({
   canon: { reads: [], version: 1, reach: 0 },
   geology: { reads: ['canon'], version: 1, reach: 2 },
   climate: { reads: ['canon', 'geology'], version: 1, reach: 24 },
@@ -20,7 +20,7 @@ export const STAGES = Object.freeze({
   settlements: { reads: ['suitability'], version: 1, reach: 0 },
 });
 /** @type {readonly StageId[]} the order the stages run in - every stage after all it reads */
-export const STAGE_ORDER = Object.freeze(/** @type {StageId[]} */ (Object.keys(STAGES)));
+export const STAGE_ORDER = Object.freeze(/** @type {StageId[]} */ (Object.keys(STAGE_GRAPH)));
 /** @typedef {'canon'|'geology'|'climate'|'erosion'|'hydrology'|'soil'|'biome'|'vegetation'|'resources'|'suitability'|'settlements'} StageId */
 /** @typedef {{ x: number, y: number, w: number, h: number }} Rect world pixels, x and y the north-west corner */
 
@@ -53,12 +53,12 @@ export function staleAfter(stage, rect, bounds, o = {}) {
   for (const s of STAGE_ORDER) {
     if (s === stage) continue;
     let r = null;
-    for (const input of STAGES[s].reads) {
+    for (const input of STAGE_GRAPH[s].reads) {
       const c = changed.get(/** @type {StageId} */ (input));
       if (c) r = r ? union(r, c) : c;
     }
     if (!r) continue;
-    const reach = STAGES[s].reach;
+    const reach = STAGE_GRAPH[s].reach;
     const grown = reach < 0 ? (o.basinOf ? union(r, o.basinOf(r)) : bounds) : grow(r, reach);
     const clipped = intersect(grown, bounds);
     if (!clipped) continue;
@@ -70,4 +70,4 @@ export function staleAfter(stage, rect, bounds, o = {}) {
 
 /** A stage's key for one tile of a region: its law's version, the manifest's versions it reads, and the prints of its
  *  inputs - the same key, the same bytes. @param {StageId} stage @param {string} inputsPrint @param {{ generatorVersion: string, worldSeed: number }} m */
-export const stageKey = (stage, inputsPrint, m) => `${stage}.${STAGES[stage].version}:${m.generatorVersion}:${m.worldSeed}:${inputsPrint}`;
+export const stageKey = (stage, inputsPrint, m) => `${stage}.${STAGE_GRAPH[stage].version}:${m.generatorVersion}:${m.worldSeed}:${inputsPrint}`;

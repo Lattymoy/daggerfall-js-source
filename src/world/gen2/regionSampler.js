@@ -3,18 +3,15 @@
 // ground's height anywhere in it, its water, its byte and climate a pixel, and the environment a plant or a town asks
 // for. Runtime and worker-safe: exact arithmetic over the bake's planes (WG-2), nothing worked out that the bake did
 // not already hold except the surface's grain and the rivers' channels, both pure in the point.
-import { fbm, ridged, seedOf, smoothstep } from './exact.js';
+import { fbmExact, ridgedExact, seedOf, smoothExact } from './exact.js';
 import { Field } from './field.js';
 import { worldPixelKey } from '../worldWide/worldGrid.js';
 import { nearCourse, ROAD_SHOULDER_M } from './riverLaw.js';
 import { padAt, padReach } from './padLaw.js';
-import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
-
-/** Metres a world pixel. */
-export const PIXEL_M = 819.2;
+import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE, TERRAIN_SIZE as PIXEL_M } from '../terrain/terrainSampler.js';   // PIXEL_M: a world pixel's metres, the terrain's own
 /** The band inside a lone region's edge over which its ground eases in from the world's, world pixels (a tile's band is
  *  twice its tiling's overlap, tiling.js). */
-export const BLEND_PX = 8;
+export const REGION_BLEND_PX = 8;
 /** The grain each biome's surface carries, metres (data/biomes.json's order), and the steep ground's extra a unit of slope. */
 const GRAIN_M = [0, 1.5, 4, 2.5, 2, 3, 4, 3, 3, 0.5, 0.6, 9, 6, 5, 1.5, 1, 1.2, 0.2, 3];
 const GRAIN_SLOPE_M = 14;
@@ -90,9 +87,9 @@ export function regionSampler(bake, o = {}) {
   const land = (x, y) => {
     let h = elev.cubicAt(x, y);
     const g = grain.at(x, y);
-    if (g > 0.05) h += g * fbm(seed, x * 24, y * 24, 3);
+    if (g > 0.05) h += g * fbmExact(seed, x * 24, y * 24, 3);
     const dune = dunes.at(x, y);
-    if (dune > 0) h += 5 * dune * ridged(seed + 1, x * 6, y * 1.5, 2);
+    if (dune > 0) h += 5 * dune * ridgedExact(seed + 1, x * 6, y * 1.5, 2);
     return h;
   };
   // the towns' pads (padLaw.js), filed by every world pixel they reach
@@ -112,7 +109,7 @@ export function regionSampler(bake, o = {}) {
   const eased = (x, y, h) => {
     for (const rd of roads) {
       const n = nearCourse(rd.pts, x, y), half = rd.width / 2, d = n ? n.d * PIXEL_M : Infinity;
-      if (n && d < half + ROAD_SHOULDER_M) return n.z + (h - n.z) * smoothstep(half, half + ROAD_SHOULDER_M, d);
+      if (n && d < half + ROAD_SHOULDER_M) return n.z + (h - n.z) * smoothExact(half, half + ROAD_SHOULDER_M, d);
     }
     return h;
   };
@@ -120,12 +117,12 @@ export function regionSampler(bake, o = {}) {
     id: header.id, rect, print: bake.print, header, fields, towns: header.towns ?? [], tiling: header.tiling ?? null,
     /** Is a world point in the region? */
     owns: inside,
-    /** The share of the region's ground at a point: 0 at its edge and outside, 1 past BLEND_PX inside. */
+    /** The share of the region's ground at a point: 0 at its edge and outside, 1 past REGION_BLEND_PX inside. */
     weight(x, y) {
       if (!inside(x, y)) return 0;
       // a product of the two axes' eases over 2 x `blend` from the edge: tiles of one tiling sum to 1 where they overlap
-      const band = 2 * (header.blend ?? BLEND_PX / 2);
-      return smoothstep(0, band, Math.min(x - rect.x, rect.x + rect.w - x)) * smoothstep(0, band, Math.min(y - rect.y, rect.y + rect.h - y));
+      const band = 2 * (header.blend ?? REGION_BLEND_PX / 2);
+      return smoothExact(0, band, Math.min(x - rect.x, rect.x + rect.w - x)) * smoothExact(0, band, Math.min(y - rect.y, rect.y + rect.h - y));
     },
     /** The ground's height at a world point, metres over the sea: the land, carved by any channel it lies in. */
     heightAt(x, y) {
@@ -135,7 +132,7 @@ export function regionSampler(bake, o = {}) {
       if (!c) return h;
       if (c.d < c.half) { const u = c.d / c.half; return Math.min(h, c.surface - c.depth * (1 - u * u)); }
       const bankTop = Math.max(h, c.surface + 0.4);
-      return c.surface + 0.4 + (bankTop - c.surface - 0.4) * smoothstep(c.half, c.half + c.bank, c.d);
+      return c.surface + 0.4 + (bankTop - c.surface - 0.4) * smoothExact(c.half, c.half + c.bank, c.d);
     },
     /** The water at a world point: a river's channel or a lake, with its surface (metres), or null. */
     waterAt(x, y) {

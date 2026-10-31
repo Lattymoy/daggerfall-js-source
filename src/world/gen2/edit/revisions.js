@@ -5,10 +5,10 @@
 // only approved by someone else; staging to published only when its staging checks passed and no protected property
 // stands in its way (propertyGuard.js). Publication is atomic - every region's new print in one record - and a
 // rollback is a new revision that publishes the one before. History is never rewritten.
-import { canonicalJson } from '../manifest.js';
+import { canonicalJson } from '../../../formats/worldData/worldDataJson.js';
 import { fnv1a } from '../../../formats/fnv1a.js';
 
-export const STATES = Object.freeze(['draft', 'review', 'staging', 'published', 'retired']);
+export const REVISION_STATES = Object.freeze(['draft', 'review', 'staging', 'published', 'retired']);
 const NEXT = Object.freeze({ draft: 'review', review: 'staging', staging: 'published' });
 
 /** A document's print. @param {any} doc */
@@ -29,7 +29,7 @@ export function saveDraft(h, doc, who) {
  * bool), property (propertyGuard's conflicts). Answers the new history or the reasons it may not move.
  * @param {{ revisions: any[] }} h @param {number} n @param {{ by: string, at: string, problems?: string[], staged?: boolean, conflicts?: any[] }} step
  */
-export function advance(h, n, step) {
+export function advanceRevision(h, n, step) {
   const rev = h.revisions.find((r) => r.n === n);
   if (!rev) return { refused: ['no such revision'] };
   const to = NEXT[rev.state], why = [];

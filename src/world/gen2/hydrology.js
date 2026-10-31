@@ -3,8 +3,8 @@
 // where its evaporation meets its inflow - brimful and spilling in a wet land, a terminal lake or a salt flat in a
 // dry one. A river's surface never rises downstream (each cell's is at most every donor's), and its bed sits under it.
 import { Field, D8X, D8Y } from './field.js';
-import { route, hollowsOf } from './drainage.js';
-import { clamp } from './exact.js';
+import { routeFlow, hollowsOf } from './drainage.js';
+import { clampExact } from './exact.js';
 import { riverWidth, riverDepth, riverCourse } from './riverLaw.js';
 
 export { riverWidth, riverDepth, riverCourse };
@@ -30,10 +30,10 @@ export const FLOOD_CELLS = 3;
 export const RIVER_KM2 = 20;
 
 /** Water flags a cell carries (the `water` field). */
-export const WATER = Object.freeze({ river: 1, lake: 2, wetland: 4, floodplain: 8, spring: 16, playa: 32, fall: 64 });
+export const WATER_KIND = Object.freeze({ river: 1, lake: 2, wetland: 4, floodplain: 8, spring: 16, playa: 32, fall: 64 });
 
 /** Evaporation from open water and the land's own (potential), metres a year, from the mean air. @param {number} t */
-export const evaporation = (t) => clamp(0.35 + 0.075 * t, 0.2, 2.6);
+export const evaporation = (t) => clampExact(0.35 + 0.075 * t, 0.2, 2.6);
 /** The rain that runs off, metres a year, for rain `p` and the warmth's evaporation `e` (both metres a year): p^3 / (p^2 +
  *  e^2) - a dry land sheds a few hundredths of its storms, a wet one most of its rain (Budyko's shape, exact). */
 export const runoff = (p, e) => (p * p * p) / (p * p + e * e);
@@ -46,7 +46,7 @@ export const runoff = (p, e) => (p * p * p) / (p * p + e * e);
  */
 export function hydrology(spec, elev, air, cellM, o = {}) {
   const { w, h: H } = elev, n = w * H, area = cellM * cellM, isSea = o.isSea ?? (() => false);
-  const rt = route(elev, cellM, isSea);
+  const rt = routeFlow(elev, cellM, isSea);
   // the water each cell gives: the rain that runs off, springs, and what flows in past the region's edge
   const own = new Float64Array(n);
   for (let k = 0; k < n; k++) own[k] = (runoff(air.precip.data[k] / 1000, evaporation(air.temp.data[k])) * area) / YEAR_S + (o.inflow?.[k] ?? 0);
@@ -99,9 +99,9 @@ export function hydrology(spec, elev, air, cellM, o = {}) {
   const isRiver = (k) => k < n && !lakeId.data[k] && ((Q[k] >= RIVER_Q && drained[k] >= RIVER_KM2) || (!!forced && forced[k] === 1 && Q[k] > 0));
   for (const k of up) {
     if (k >= n) continue;
-    if (lakeId.data[k]) water.data[k] |= lakes[lakeId.data[k] - 1].kind === 'playa' ? WATER.playa : WATER.lake;
+    if (lakeId.data[k]) water.data[k] |= lakes[lakeId.data[k] - 1].kind === 'playa' ? WATER_KIND.playa : WATER_KIND.lake;
     if (!isRiver(k)) continue;
-    water.data[k] |= WATER.river;
+    water.data[k] |= WATER_KIND.river;
     S[k] = Math.min(S[k], elev.data[k]);
     if (!order[k]) order[k] = 1;
     const r = net.rcv[k];
@@ -110,25 +110,25 @@ export function hydrology(spec, elev, air, cellM, o = {}) {
       order[r] = order[r] === order[k] ? order[k] + 1 : Math.max(order[r], order[k]);
     }
   }
-  for (const s of springs) water.data[s.cell] |= WATER.spring;
+  for (const s of springs) water.data[s.cell] |= WATER_KIND.spring;
   const rivers = traceRivers(elev, net, Q, S, order, isRiver, lakeId, lakeOf);
   const falls = [];
   for (let k = 0; k < n; k++) {
     const r = net.rcv[k];
-    if (!(water.data[k] & WATER.river) || r < 0 || r >= n || !(S[r] < Infinity)) continue;
+    if (!(water.data[k] & WATER_KIND.river) || r < 0 || r >= n || !(S[r] < Infinity)) continue;
     const drop = S[k] - S[r], slope = drop / net.dist[k];
-    if (drop >= FALL_DROP && slope >= FALL_SLOPE) { water.data[k] |= WATER.fall; falls.push({ x: cx(elev, k, r), y: cy(elev, k, r), drop, q: Q[k], kind: 'fall' }); }
+    if (drop >= FALL_DROP && slope >= FALL_SLOPE) { water.data[k] |= WATER_KIND.fall; falls.push({ x: cx(elev, k, r), y: cy(elev, k, r), drop, q: Q[k], kind: 'fall' }); }
     else if (drop >= RAPIDS_DROP && slope >= FALL_SLOPE * 0.3) falls.push({ x: cx(elev, k, r), y: cy(elev, k, r), drop, q: Q[k], kind: 'rapids' });
   }
   // the valley floor under a river stands at its water (the channel itself is carved by the vector river, WG-6)
   const carved = elev.clone();
-  for (let k = 0; k < n; k++) if (water.data[k] & WATER.river) carved.data[k] = Math.min(carved.data[k], S[k] + 0.5);
+  for (let k = 0; k < n; k++) if (water.data[k] & WATER_KIND.river) carved.data[k] = Math.min(carved.data[k], S[k] + 0.5);
   // height above the nearest water down the network, and that water's depth (for the flood plain), downstream first
   const hand = elev.like(), chanH = new Float64Array(m), chanD = new Float64Array(m), chanN = new Int32Array(m);
   for (let o2 = up.length - 1; o2 >= 0; o2--) {
     const k = up[o2], r = net.rcv[k], lk = k < n ? lakeId.data[k] : 0;
     if (k >= n) { chanH[k] = lakes[lakeOf[k - n] - 1].level; chanD[k] = 0; chanN[k] = 0; continue; }
-    if (water.data[k] & WATER.river) { chanH[k] = S[k]; chanD[k] = riverDepth(Q[k]); chanN[k] = 0; }
+    if (water.data[k] & WATER_KIND.river) { chanH[k] = S[k]; chanD[k] = riverDepth(Q[k]); chanN[k] = 0; }
     else if (lk) { chanH[k] = lakes[lk - 1].level; chanD[k] = 0; chanN[k] = 0; }
     else if (r >= 0) { chanH[k] = chanH[r]; chanD[k] = chanD[r]; chanN[k] = chanN[r] + 1; }
     else { chanH[k] = carved.data[k]; chanD[k] = 0; chanN[k] = 0; }
@@ -138,11 +138,11 @@ export function hydrology(spec, elev, air, cellM, o = {}) {
   for (let k = 0; k < n; k++) {
     discharge.data[k] = Q[k];
     const p = air.precip.data[k], slope = slopeAtCell(carved, k, cellM), wet = o.wet?.data[k] ?? 0.2;
-    const flood = chanD[k] > 0 && chanN[k] <= FLOOD_CELLS * elev.res && hand.data[k] <= 1 + 2 * chanD[k] && slope < 0.04 && !(water.data[k] & (WATER.river | WATER.lake));
-    if (flood) water.data[k] |= WATER.floodplain;
-    const soggy = slope < 0.025 && !(water.data[k] & WATER.lake) && (hand.data[k] < 1.2 * (0.5 + wet) * (p / 600) || (wet >= 0.5 && hand.data[k] < 3 * wet));
-    if (soggy && p > 500) water.data[k] |= WATER.wetland;
-    table.data[k] = water.data[k] & (WATER.wetland | WATER.lake | WATER.river) ? 0 : clamp(hand.data[k] * (p < DRY_MM ? 1 : 0.55), 0, 80);
+    const flood = chanD[k] > 0 && chanN[k] <= FLOOD_CELLS * elev.res && hand.data[k] <= 1 + 2 * chanD[k] && slope < 0.04 && !(water.data[k] & (WATER_KIND.river | WATER_KIND.lake));
+    if (flood) water.data[k] |= WATER_KIND.floodplain;
+    const soggy = slope < 0.025 && !(water.data[k] & WATER_KIND.lake) && (hand.data[k] < 1.2 * (0.5 + wet) * (p / 600) || (wet >= 0.5 && hand.data[k] < 3 * wet));
+    if (soggy && p > 500) water.data[k] |= WATER_KIND.wetland;
+    table.data[k] = water.data[k] & (WATER_KIND.wetland | WATER_KIND.lake | WATER_KIND.river) ? 0 : clampExact(hand.data[k] * (p < DRY_MM ? 1 : 0.55), 0, 80);
   }
   return { elev: carved, water, lakeId, lakes, rivers, falls, springs, discharge, hand, table, surface: S };
 }

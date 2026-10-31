@@ -35,7 +35,7 @@ queue (`gridOps.js` `CellHeap`) pops equal keys lowest index first.
 `stageGraph.js` orders them: canon, geology, climate, erosion, hydrology, soil, biome, vegetation, resources,
 suitability, settlements. A stage reads only those its `reads` names. A change marks the stages downstream of it stale
 over its rectangle grown by each one's reach; hydrology's reach is the changed water's basin. A stage's law changes its
-`version`; a change to any law that moves a bake raises `GENERATOR_VERSION` (`regionBake.js`).
+`version`; a change to any law that moves a bake raises `BAKE_GENERATOR` (`regionBake.js`).
 
 ## Data
 
@@ -68,7 +68,7 @@ and 0.59 MB gzipped each, a third of that lean.
 
 `gen2Ground.js` holds the installed bakes, fetched under the app's root (`scenes/gen2Host.js` `bakeUrl`). `tamrielHeightByte` asks `gen2Byte` before the land rows,
 `tamrielClimateAt` asks `gen2Climate` after them, the shaper's `landAt` takes `gen2Units`, and `terrainGen.js` paints
-`paintGen2Waters`. A region eases into the world's ground over `BLEND_PX` (8) inside its edge. The bakes ride the
+`paintGen2Waters`. A region eases into the world's ground over `REGION_BLEND_PX` (8) inside its edge. The bakes ride the
 `tamriel` message to the terrain, roads and deep-water workers. A bake made on another fit is refused. With none
 installed every hook answers undefined. The kept roads past the Bay are keyed by `gen2Stamp`.
 
@@ -126,7 +126,7 @@ An editor document is frozen data: layers of operations (`editLayers.js` `opProb
 the ground to its smoothed level across its width and shoulder; a hand-drawn river cuts a channel under a surface that
 never rises, and a bake with the document stands it as a river whatever it carries. Its ground
 changes are patches filed by 16-pixel tile. History is a stack of documents. A revision goes draft, review, staging,
-published (`revisions.js`); each gate is in `advance`. A publication retires the last; a rollback publishes the one
+published (`revisions.js`); each gate is in `advanceRevision`. A publication retires the last; a rollback publishes the one
 before. `propertyGuard.js` refuses a change over a protected record. Packages carry a print and the bake they edit.
 
 ## Compatibility rules

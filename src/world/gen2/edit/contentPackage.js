@@ -3,7 +3,8 @@
 // on - the manifest's versions it was made under, its region and the bake it edits, its layers - with a print over the
 // lot, so a package that was changed on the way, or made against another bake or generator, is refused on import with
 // the reason.
-import { canonicalJson, worldManifest, GENERATORS } from '../manifest.js';
+import { worldManifest, GENERATORS } from '../manifest.js';
+import { canonicalJson } from '../../../formats/worldData/worldDataJson.js';
 import { opProblems } from './editLayers.js';
 import { fnv1a } from '../../../formats/fnv1a.js';
 

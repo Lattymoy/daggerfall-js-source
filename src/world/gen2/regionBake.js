@@ -10,15 +10,15 @@ import { soils } from './soil.js';
 import { biomes, pixelClimates } from './biome.js';
 import { resourceSites } from './resources.js';
 import { provinceProfile } from './tables.js';
-import { STAGES } from './stageGraph.js';
+import { STAGE_GRAPH } from './stageGraph.js';
 import { canonPrint } from './canon.js';
 import { regionInflow } from './continent.js';
-import { groundPatches, authoredCourses, TILE_PX } from './edit/editLayers.js';
+import { groundPatches, authoredCourses, PATCH_TILE_PX } from './edit/editLayers.js';
 import { docPrint } from './edit/revisions.js';
 
 /** The generator's law (the manifest's `generatorVersion` names it). A change that moves any bake's bytes for the same
  *  spec raises it, and the old law is kept beside the new one while a published region was baked by it (WG-5). */
-export const GENERATOR_VERSION = 'wg2-1';
+export const BAKE_GENERATOR = 'wg2-1';
 
 /** The WOODS byte whose far-view height (landforms.js nodeGround) is nearest `m` metres - the byte the kernel and the
  *  far rings read for a pixel of a published region. 0 under the sea. */
@@ -70,7 +70,7 @@ export function bakeRegion(spec, o = {}) {
   const climates = pixelClimates(bio.biome, spec.res);
   const resources = resourceSites(spec, { elev, rock: geo.rock, biome: bio.biome, soil, hyd, air });
   return {
-    spec, generator: GENERATOR_VERSION, canon: canonPrint(), stages: Object.fromEntries(Object.entries(STAGES).map(([k, v]) => [k, v.version])),
+    spec, generator: BAKE_GENERATOR, canon: canonPrint(), stages: Object.fromEntries(Object.entries(STAGE_GRAPH).map(([k, v]) => [k, v.version])),
     fields: {
       elev, rock: geo.rock, soil: soil.soil, soilDepth: soil.depth, fertility: soil.fertility, moisture: soil.moisture, biome: bio.biome,
       water: hyd.water, lake: hyd.lakeId, discharge: hyd.discharge, table: hyd.table, temp: air.temp, precip: air.precip,
@@ -89,7 +89,7 @@ export function bakeRegion(spec, o = {}) {
  * @param {import('./geology.js').RegionSpec} spec @param {any} doc @param {import('./field.js').Field} elev
  */
 export function applyGroundEdits(spec, doc, elev) {
-  const res = elev.res, side = TILE_PX * res, patches = groundPatches(doc, /** @type {any} */ ({ fields: { elev }, header: { seed: spec.seed } }));
+  const res = elev.res, side = PATCH_TILE_PX * res, patches = groundPatches(doc, /** @type {any} */ ({ fields: { elev }, header: { seed: spec.seed } }));
   for (const p of patches.values()) for (let j = 0; j < side; j++) for (let i = 0; i < side; i++) {
     const ci = p.tx * side + i, cj = p.ty * side + j;
     if (ci < elev.w && cj < elev.h) elev.data[cj * elev.w + ci] += p.data[j * side + i];

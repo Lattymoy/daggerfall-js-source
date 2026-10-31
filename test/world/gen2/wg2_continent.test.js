@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { canonReady } from '../../../src/world/gen2/canon.js';
 import { continent, regionInflow, downstreamOf, continentCell, cellWorld } from '../../../src/world/gen2/continent.js';
 import { basinNet } from '../../../src/world/gen2/hydrology.js';
-import { route, hollowsOf } from '../../../src/world/gen2/drainage.js';
+import { routeFlow, hollowsOf } from '../../../src/world/gen2/drainage.js';
 import { Field } from '../../../src/world/gen2/field.js';
 import { staleAfter } from '../../../src/world/gen2/stageGraph.js';
 import { TEST_REGIONS, testRegion } from '../../../src/world/gen2/testRegions.js';
@@ -52,7 +52,7 @@ test('WG2 BASINS: inside a closed basin each cell drains down the real ground to
   // a bowl: the floor at its middle, a spill on its east rim
   const f = new Field(21, 21, { x0: 0, y0: 0, res: 1 });
   for (let j = 0; j < 21; j++) for (let i = 0; i < 21; i++) f.set(i, j, i >= 17 && j === 10 ? 62 - (i - 17) * 3 : 50 + ((i - 10) * (i - 10) + (j - 10) * (j - 10)) * 0.5);
-  const rt = route(f, 100), hollows = hollowsOf(rt, f).filter((h) => h.deep > 1), net = basinNet(rt, f, hollows, 100);
+  const rt = routeFlow(f, 100), hollows = hollowsOf(rt, f).filter((h) => h.deep > 1), net = basinNet(rt, f, hollows, 100);
   assert.equal(hollows.length, 1);
   const floor = 10 * 21 + 10;
   assert.equal(net.rcv[floor], f.data.length, 'the floor drains to the lake node');

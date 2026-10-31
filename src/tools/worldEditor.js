@@ -4,15 +4,16 @@
 // property must pass, the road from draft to published, and packages in and out. Every change is data in the
 // document (world/gen2/edit/); the bake is never written. Nothing runs until the page boots it.
 import { decodeBake } from '../world/gen2/bakeCodec.js';
-import { regionSampler, kernelUnits, PIXEL_M } from '../world/gen2/regionSampler.js';
+import { regionSampler, kernelUnits } from '../world/gen2/regionSampler.js';
+const PIXEL_M = TERRAIN_SIZE;   // a world pixel's metres
 import { TEST_REGIONS } from '../world/gen2/testRegions.js';
-import { BIOMES, SOILS, ROCKS } from '../world/gen2/tables.js';
+import { BIOME_TABLE, SOILS, ROCKS } from '../world/gen2/tables.js';
 import { newDoc, addOp, addLayer, withLayer, editedSampler, docStale } from '../world/gen2/edit/editLayers.js';
-import { historyOf, commit, undo, redo } from '../world/gen2/edit/editHistory.js';
-import { newHistory, saveDraft, advance, rollback, docDiff, published } from '../world/gen2/edit/revisions.js';
+import { historyOf, commitEdit, undo, redo } from '../world/gen2/edit/editHistory.js';
+import { newHistory, saveDraft, advanceRevision, rollback, docDiff, published } from '../world/gen2/edit/revisions.js';
 import { propertyConflicts } from '../world/gen2/edit/propertyGuard.js';
 import { exportPackage, importPackage } from '../world/gen2/edit/contentPackage.js';
-import { generateSettlement, STYLES, SETTLEMENT_TYPES } from '../world/gen2/settle/settlementGen.js';
+import { generateSettlement, STYLES, SETTLEMENT_KINDS } from '../world/gen2/settle/settlementGen.js';
 import { settlementProblems } from '../world/gen2/settle/settlementValidate.js';
 import { mintIds, settlementMapId } from '../world/gen2/settle/buildingRecord.js';
 import { gunzipped, bakeUrl } from '../scenes/gen2Host.js';
@@ -31,8 +32,8 @@ export async function bootWorldEditor(doc) {
   const $ = (id) => /** @type {any} */ (doc.getElementById(id));
   const st = { bakes: new Map(), region: null, S: null, E: null, hist: null, revs: newHistory(), layer: 0, tool: 'look', towns: new Map(), books: new Map(), pick: null, course: [] };
   for (const r of TEST_REGIONS) $('region').append(new globalThis.Option(r.id, r.id));
-  for (const b of BIOMES) $('biome').append(new globalThis.Option(b.name, String(b.id)));
-  for (const t of SETTLEMENT_TYPES) $('stype').append(new globalThis.Option(t.name, t.key));
+  for (const b of BIOME_TABLE) $('biome').append(new globalThis.Option(b.name, String(b.id)));
+  for (const t of SETTLEMENT_KINDS) $('stype').append(new globalThis.Option(t.name, t.key));
   for (const s of STYLES) $('sstyle').append(new globalThis.Option(s.name, s.key));
   for (const t of TOOLS) { const b = doc.createElement('button'); b.textContent = t; b.onclick = () => { st.tool = t; drawTools(); }; $('tools').append(b); }
   const drawTools = () => { st.course = []; [...$('tools').children].forEach((b) => b.classList.toggle('on', b.textContent === st.tool)); };
@@ -48,7 +49,7 @@ export async function bootWorldEditor(doc) {
     refresh();
   }
   const docNow = () => st.hist.now;
-  function change(next) { st.hist = commit(st.hist, next); refresh(); }
+  function change(next) { st.hist = commitEdit(st.hist, next); refresh(); }
   function refresh() {
     st.E = editedSampler(st.S, docNow());
     st.towns.clear();
@@ -67,7 +68,7 @@ export async function bootWorldEditor(doc) {
       const e = st.E.heightAt(x, y), shade = 0.75 + 0.25 * Math.max(-1, Math.min(1, (st.E.heightAt(x - 0.4, y - 0.4) - e) / 40));
       let c;
       const env = /** @type {any} */ (st.E.env(x, y));
-      if (show === 'biome') c = BIOMES[env.biome].color;
+      if (show === 'biome') c = BIOME_TABLE[env.biome].color;
       else if (show === 'soil') c = SOILS[f.soil.data[k]].color;
       else if (show === 'rock') c = ROCKS[f.rock.data[k]].color;
       else if (show === 'precip') { const v = Math.min(1, f.precip.data[k] / 2500); c = [255 * (1 - v), 200 * v + 40, 255 * v]; }
@@ -202,7 +203,7 @@ export async function bootWorldEditor(doc) {
   $('advance').onclick = () => {
     const last = st.revs.revisions[st.revs.revisions.length - 1];
     if (!last) return;
-    const got = advance(st.revs, last.n, { by: $('who').value, at: at(), problems: check(), staged: true, conflicts: propertyConflicts(last.doc, []) });
+    const got = advanceRevision(st.revs, last.n, { by: $('who').value, at: at(), problems: check(), staged: true, conflicts: propertyConflicts(last.doc, []) });
     if (got.refused) $('out').textContent = `Refused:\n${got.refused.join('\n')}`; else { st.revs = got.history; drawRevs(); }
   };
   $('rollback').onclick = () => { const got = rollback(st.revs, { by: $('who').value, at: at() }); if (got.refused) $('out').textContent = got.refused.join('\n'); else { st.revs = got.history; drawRevs(); } };
@@ -216,7 +217,7 @@ export async function bootWorldEditor(doc) {
   const view3d = $('view3d');
   view3d.getContext('webgl2', { antialias: false });
   const renderer = new Renderer(view3d);
-  const layers = BIOMES.map((b) => { const colors = new Uint8Array(64 * 64 * 4); for (let i = 0; i < 64 * 64; i++) colors.set([...b.color, 255], i * 4); return { width: 64, height: 64, colors }; });
+  const layers = BIOME_TABLE.map((b) => { const colors = new Uint8Array(64 * 64 * 4); for (let i = 0; i < 64 * 64; i++) colors.set([...b.color, 255], i * 4); return { width: 64, height: 64, colors }; });
   while (layers.length < 64) layers.push(layers[0]);
   renderer.uploadTileArray(900, layers);
   let surface = null, tilemapTex = null, spin = 0, centreY = 0;

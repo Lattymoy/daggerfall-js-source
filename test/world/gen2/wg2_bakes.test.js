@@ -9,12 +9,12 @@ import { decodeBake, bakePrint } from '../../../src/world/gen2/bakeCodec.js';
 import { regionSampler } from '../../../src/world/gen2/regionSampler.js';
 import { plantsIn, plantProblems } from '../../../src/world/gen2/vegetation.js';
 import { TEST_REGIONS, testRegion } from '../../../src/world/gen2/testRegions.js';
-import { WATER } from '../../../src/world/gen2/hydrology.js';
-import { BIOMES } from '../../../src/world/gen2/tables.js';
+import { WATER_KIND } from '../../../src/world/gen2/hydrology.js';
+import { BIOME_TABLE } from '../../../src/world/gen2/tables.js';
 import { slopeOf } from '../../../src/world/gen2/gridOps.js';
 
 const file = (id) => `${BAKE_DIR}/${id}.wg2.gz`;
-const share = (f, keys) => { const ids = new Set(keys.map((k) => BIOMES.findIndex((b) => b.key === k))); let n = 0; for (const v of f.data) if (ids.has(v)) n++; return n / f.data.length; };
+const share = (f, keys) => { const ids = new Set(keys.map((k) => BIOME_TABLE.findIndex((b) => b.key === k))); let n = 0; for (const v of f.data) if (ids.has(v)) n++; return n / f.data.length; };
 const H = decodeBake(readBake(file('hammerfell-test'))), M = decodeBake(readBake(file('blackmarsh-test')));
 const hs = regionSampler(H), ms = regionSampler(M);
 
@@ -58,7 +58,7 @@ test('WG2 OASIS: Tava Wells is a pool in the desert - water at its heart, the oa
   assert.ok(share(H.fields.biome, ['oasis']) > 0);
   const near = plantsIn(hs, { x: sp.x - 0.5, y: sp.y - 0.5, w: 1, h: 1 });
   assert.ok(near.some((p) => p.species === 'datePalm'), 'palms by the water');
-  const dunes = BIOMES.findIndex((b) => b.key === 'dunes');
+  const dunes = BIOME_TABLE.findIndex((b) => b.key === 'dunes');
   let at = null;
   for (let k = 0; k < H.fields.biome.data.length && !at; k++) if (H.fields.biome.data[k] === dunes && H.fields.biome.get((k % H.fields.biome.w) + 2, ((k / H.fields.biome.w) | 0) + 2) === dunes) at = [H.header.rect.x + ((k % H.fields.biome.w) + 1.5) / 2, H.header.rect.y + (((k / H.fields.biome.w) | 0) + 1.5) / 2];
   const sand = plantsIn(hs, { x: at[0], y: at[1], w: 0.5, h: 0.5 });
@@ -78,7 +78,7 @@ test('WG2 PLANTS: every plant placed meets every need its species declares - war
 
 test('WG2 BLACK MARSH: a wetland - most of its ground waterlogged, scores of pools and lakes, the land all but flat, swamp over a third of it (mutants: the wet hollows, the wetland test, the swamp)', () => {
   let wet = 0;
-  for (const v of M.fields.water.data) if (v & WATER.wetland) wet++;
+  for (const v of M.fields.water.data) if (v & WATER_KIND.wetland) wet++;
   assert.ok(wet / M.fields.water.data.length > 0.25, `wetland ${wet}`);
   assert.ok(M.header.lakes.filter((l) => l.kind !== 'playa').length >= 20);
   const slope = slopeOf(M.fields.elev, 819.2 / M.header.res).data.slice().sort((a, b) => a - b);
@@ -87,7 +87,7 @@ test('WG2 BLACK MARSH: a wetland - most of its ground waterlogged, scores of poo
 });
 
 test('WG2 NO CELL EDGES: the ground is read between cells - a dune field ends without a step - and a lake\'s water reaches wherever its ground is under the level beside it, its shore never a cell\'s edge (mutants: the dunes by the nearest cell, the lake by the nearest cell)', () => {
-  const DUNE = BIOMES.findIndex((b) => b.key === 'dunes'), e = H.fields.elev, bio = H.fields.biome, eps = 1e-7;
+  const DUNE = BIOME_TABLE.findIndex((b) => b.key === 'dunes'), e = H.fields.elev, bio = H.fields.biome, eps = 1e-7;
   let edges = 0, worst = 0;
   for (let j = 0; j < e.h; j += 3) for (let i = 1; i < e.w; i++) {
     if ((bio.get(i - 1, j) === DUNE) === (bio.get(i, j) === DUNE)) continue;

@@ -5,7 +5,7 @@
 // (systems/layoutPins.js - a pack's layout gives a key to another building, so the stamp is part of the name). Nothing is
 // moved, renamed or re-keyed: the record points back at the block and the record it stands for, and the game's doors,
 // interiors, homes and quests keep reading the block as they always have.
-import { legacyBuildingId, roleOfType, ROLES } from './buildingRecord.js';
+import { legacyBuildingId, roleOfType, BUILDING_ROLES } from './buildingRecord.js';
 
 /**
  * A town's buildings as records. `summaries` are buildingSummaries' rows for the town (its layout as served).
@@ -20,7 +20,7 @@ export function legacyBuildings(town, summaries) {
       id: legacyBuildingId(town.mapId, s.buildingKey, layout), settlement, role, type: s.buildingType, prefab: 'rmb',
       legacy: { mapId: town.mapId >>> 0, key: s.buildingKey, layout },
       local: { blockX: s.blockX, blockY: s.blockY, recordIndex: s.recordIndex, position: s.position, rotationY: s.rotationY },
-      doors: [], services: ROLES[role].services, access: s.isResidence ? 'private' : ROLES[role].access,
+      doors: [], services: BUILDING_ROLES[role].services, access: s.isResidence ? 'private' : BUILDING_ROLES[role].access,
       interior: s.hasInterior ? { kind: 'rmb', ref: { blockX: s.blockX, blockY: s.blockY, recordIndex: s.recordIndex } } : { kind: 'none' },
       name: s.name, factionId: s.factionId, quality: s.quality,
     });

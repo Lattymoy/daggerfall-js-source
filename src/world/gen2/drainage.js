@@ -14,7 +14,7 @@ export const EPSILON = 0.001;
  * (-1 at an outlet: the region's edge or the sea), `dist` the metres to it, `order` the cells downstream first.
  * @param {Field} h metres @param {number} cellM @param {(k: number) => boolean} [isSea]
  */
-export function route(h, cellM, isSea = () => false) {
+export function routeFlow(h, cellM, isSea = () => false) {
   const { w, h: H } = h, n = w * H, heap = new CellHeap(n);
   const filled = new Float64Array(n), seen = new Uint8Array(n), order = new Int32Array(n), rcv = new Int32Array(n).fill(-1), dist = new Float64Array(n);
   for (let k = 0; k < n; k++) {

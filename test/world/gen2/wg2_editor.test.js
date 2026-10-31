@@ -8,8 +8,8 @@ import { readBake, BAKE_DIR } from '../../../tools/wg2Bake.mjs';
 import { decodeBake } from '../../../src/world/gen2/bakeCodec.js';
 import { regionSampler } from '../../../src/world/gen2/regionSampler.js';
 import { newDoc, addOp, addLayer, withLayer, editedSampler, docStale, opProblems } from '../../../src/world/gen2/edit/editLayers.js';
-import { historyOf, commit, undo, redo } from '../../../src/world/gen2/edit/editHistory.js';
-import { newHistory, saveDraft, advance, published, rollback, docDiff } from '../../../src/world/gen2/edit/revisions.js';
+import { historyOf, commitEdit, undo, redo } from '../../../src/world/gen2/edit/editHistory.js';
+import { newHistory, saveDraft, advanceRevision, published, rollback, docDiff } from '../../../src/world/gen2/edit/revisions.js';
 import { propertyConflicts } from '../../../src/world/gen2/edit/propertyGuard.js';
 import { exportPackage, importPackage } from '../../../src/world/gen2/edit/contentPackage.js';
 import { prefabProblems, gltfProblems } from '../../../src/world/gen2/edit/prefabCheck.js';
@@ -38,10 +38,10 @@ test('WG2 EDIT: a brush is data over the bake - it raises its circle by its stre
 
 test('WG2 EDIT: undo and redo walk frozen documents; a change after an undo drops the steps undone; what an edit makes stale is its stages downstream - a biome\'s paint never re-erodes (mutants: the redo drop, the stale stages)', () => {
   const a = newDoc('r', 'p'), b = addOp(a, 0, { kind: 'raise', x: P[0], y: P[1], r: 100, strength: 1 }), c = addOp(b, 0, { kind: 'lower', x: P[0], y: P[1], r: 100, strength: 1 });
-  let h = commit(commit(historyOf(a), b), c);
+  let h = commitEdit(commitEdit(historyOf(a), b), c);
   h = undo(h); assert.equal(h.now, b); h = undo(h); assert.equal(h.now, a); h = redo(h); assert.equal(h.now, b);
   const d = addOp(b, 0, { kind: 'noise', x: P[0], y: P[1], r: 100, strength: 1 });
-  h = commit(h, d); assert.equal(h.now, d); assert.deepEqual(h.future, []); assert.equal(redo(h), h);
+  h = commitEdit(h, d); assert.equal(h.now, d); assert.deepEqual(h.future, []); assert.equal(redo(h), h);
   assert.ok(Object.isFrozen(c) && Object.isFrozen(c.layers[0].ops));
   const stale = docStale(b, R);
   assert.ok(stale.has('erosion') && stale.has('hydrology') && stale.has('biome') && !stale.has('geology'));
@@ -52,16 +52,16 @@ test('WG2 EDIT: undo and redo walk frozen documents; a change after an undo drop
 test('WG2 PUBLISHING: draft, review, staging, published - each gate holds (clean, another\'s approval, staged, no protected property in the way); a publication retires the last; a rollback publishes the one before; a diff names what changed (mutants: each gate, the retire, the rollback)', () => {
   const a = addOp(newDoc('r', 'p'), 0, { kind: 'raise', x: 1, y: 1, r: 10, strength: 1 }), b = addOp(a, 0, { kind: 'lower', x: 2, y: 2, r: 10, strength: 1 });
   let h = saveDraft(newHistory(), a, { author: 'ana', note: 'a hill', at: '2026-10-31' });
-  assert.deepEqual(advance(h, 1, { by: 'ana', at: 't', problems: ['road 2 is cut off'] }).refused, ['invalid: road 2 is cut off']);
-  h = advance(h, 1, { by: 'ana', at: 't', problems: [] }).history;
-  assert.deepEqual(advance(h, 1, { by: 'ana', at: 't' }).refused, ['a revision is approved by someone other than its author']);
-  h = advance(h, 1, { by: 'bo', at: 't' }).history;
-  assert.deepEqual(advance(h, 1, { by: 'bo', at: 't', staged: false }).refused, ['its staging checks have not passed']);
-  assert.deepEqual(advance(h, 1, { by: 'bo', at: 't', staged: true, conflicts: [{ why: 'home of Cy stands under a raise' }] }).refused, ['protected: home of Cy stands under a raise']);
-  h = advance(h, 1, { by: 'bo', at: 't', staged: true, conflicts: [] }).history;
+  assert.deepEqual(advanceRevision(h, 1, { by: 'ana', at: 't', problems: ['road 2 is cut off'] }).refused, ['invalid: road 2 is cut off']);
+  h = advanceRevision(h, 1, { by: 'ana', at: 't', problems: [] }).history;
+  assert.deepEqual(advanceRevision(h, 1, { by: 'ana', at: 't' }).refused, ['a revision is approved by someone other than its author']);
+  h = advanceRevision(h, 1, { by: 'bo', at: 't' }).history;
+  assert.deepEqual(advanceRevision(h, 1, { by: 'bo', at: 't', staged: false }).refused, ['its staging checks have not passed']);
+  assert.deepEqual(advanceRevision(h, 1, { by: 'bo', at: 't', staged: true, conflicts: [{ why: 'home of Cy stands under a raise' }] }).refused, ['protected: home of Cy stands under a raise']);
+  h = advanceRevision(h, 1, { by: 'bo', at: 't', staged: true, conflicts: [] }).history;
   assert.equal(published(h).n, 1);
   h = saveDraft(h, b, { author: 'ana', note: 'a dale', at: 't' });
-  for (const step of [{ by: 'ana', problems: [] }, { by: 'bo' }, { by: 'bo', staged: true }]) h = advance(h, 2, { at: 't', ...step }).history;
+  for (const step of [{ by: 'ana', problems: [] }, { by: 'bo' }, { by: 'bo', staged: true }]) h = advanceRevision(h, 2, { at: 't', ...step }).history;
   assert.equal(published(h).n, 2); assert.equal(h.revisions[0].state, 'retired');
   h = rollback(h, { by: 'bo', at: 't' }).history;
   assert.equal(published(h).n, 3); assert.equal(published(h).print, h.revisions[0].print, 'the first one\'s ground again');

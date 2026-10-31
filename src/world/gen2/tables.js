@@ -16,12 +16,12 @@ import { CLIMATES } from '../../formats/mapsTables.js';
 
 export const ROCKS = /** @type {readonly Rock[]} */ (Object.freeze(ROCKS_JSON.rocks));
 export const SOILS = /** @type {readonly Soil[]} */ (Object.freeze(SOILS_JSON.soils));
-export const BIOMES = /** @type {readonly Biome[]} */ (Object.freeze(BIOMES_JSON.biomes));
+export const BIOME_TABLE = /** @type {readonly Biome[]} */ (Object.freeze(BIOMES_JSON.biomes));
 export const SPECIES = /** @type {readonly Species[]} */ (Object.freeze(SPECIES_JSON.species));
 export const PROFILES = /** @type {readonly Province[]} */ (Object.freeze(PROVINCES_JSON.provinces));
 
 const byKey = (rows) => new Map(rows.map((r) => [r.key, r]));
-const ROCK_BY_KEY = byKey(ROCKS), SOIL_BY_KEY = byKey(SOILS), BIOME_BY_KEY = byKey(BIOMES), SPECIES_BY_KEY = byKey(SPECIES);
+const ROCK_BY_KEY = byKey(ROCKS), SOIL_BY_KEY = byKey(SOILS), BIOME_BY_KEY = byKey(BIOME_TABLE), SPECIES_BY_KEY = byKey(SPECIES);
 /** @param {string} k @returns {Rock} */ export const rock = (k) => /** @type {Rock} */ (ROCK_BY_KEY.get(k));
 /** @param {string} k @returns {Soil} */ export const soil = (k) => /** @type {Soil} */ (SOIL_BY_KEY.get(k));
 /** @param {string} k @returns {Biome} */ export const biome = (k) => /** @type {Biome} */ (BIOME_BY_KEY.get(k));
@@ -33,10 +33,10 @@ export const provinceProfile = (t) => PROFILES[t] ?? PROFILES[0];
 export function tableProblems() {
   const out = [];
   const ids = (rows, name) => rows.forEach((r, i) => { if (r.id !== i) out.push(`${name} ${r.key}: id ${r.id} at ${i}`); });
-  ids(ROCKS, 'rock'); ids(SOILS, 'soil'); ids(BIOMES, 'biome');
+  ids(ROCKS, 'rock'); ids(SOILS, 'soil'); ids(BIOME_TABLE, 'biome');
   const climates = new Set(Object.values(CLIMATES));
   for (const r of ROCKS) if (!SOIL_BY_KEY.has(r.soil)) out.push(`rock ${r.key}: soil ${r.soil}`);
-  for (const b of BIOMES) {
+  for (const b of BIOME_TABLE) {
     if (!climates.has(b.climate)) out.push(`biome ${b.key}: climate ${b.climate}`);
     for (const s of b.species) if (!SPECIES_BY_KEY.has(s)) out.push(`biome ${b.key}: species ${s}`);
   }

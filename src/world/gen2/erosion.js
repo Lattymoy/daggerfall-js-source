@@ -4,7 +4,7 @@
 // gathers and its slope, softer rock faster; what it cuts is carried down and laid where the slope can no longer carry
 // it (fans and flood plains); a slope steeper than its rock can stand slides (thermal erosion). The region's edge holds
 // its height. Every pass walks the drainage order, so the result is the same on any machine.
-import { route, hollowsOf } from './drainage.js';
+import { routeFlow, hollowsOf } from './drainage.js';
 import { ROCKS } from './tables.js';
 import { D8X, D8Y, D8L } from './field.js';
 
@@ -15,7 +15,7 @@ export const K_BASE = 3.2e-6;
 /** The land's rise where the uplift is whole, metres a year. */
 export const UPLIFT_RATE = 1.5e-4;
 /** What a stream can carry, as a share of what it could cut on the same slope. */
-export const CARRY = 1.2;
+export const SEDIMENT_CARRY = 1.2;
 /** Thermal passes a step, and the share of a slope's excess moved a pass. */
 export const SLIDE_PASSES = 2;
 export const SLIDE_SHARE = 0.2;
@@ -50,7 +50,7 @@ export function erode(elev, rock, uplift, precip, cellM, o = {}) {
   const surf = { w, h: H, data: h };
   const Q = new Float64Array(n), qs = new Float64Array(n), eroded = new Float64Array(n), delta = new Float64Array(n);
   for (let s = 0; s < steps; s++) {
-    const rt = route(/** @type {any} */ (surf), cellM, isSea);
+    const rt = routeFlow(/** @type {any} */ (surf), cellM, isSea);
     // the rain gathered, upstream first
     Q.set(rain);
     for (let o2 = n - 1; o2 >= 0; o2--) { const k = rt.order[o2], r = rt.rcv[k]; if (r >= 0) Q[r] += Q[k]; }
@@ -78,7 +78,7 @@ export function erode(elev, rock, uplift, precip, cellM, o = {}) {
       if (r < 0) continue;
       if (poolOf[k] >= 0) { held[poolOf[k]] += qs[k]; qs[k] = 0; continue; }
       const slope = Math.max(0, h[k] - h[r]) / rt.dist[k];
-      const carry = CARRY * DT * K[k] * Math.sqrt(Q[k]) * slope * area;
+      const carry = SEDIMENT_CARRY * DT * K[k] * Math.sqrt(Q[k]) * slope * area;
       if (qs[k] > carry) {
         const lay = Math.min((qs[k] - carry) * 0.5 / area, LAY_MAX);
         h[k] += lay; deposit[k] += lay; qs[k] -= lay * area;

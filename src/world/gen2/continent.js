@@ -4,7 +4,7 @@
 // its edge (`regionInflow`), and an edit knows how far downstream its water can reach (`downstreamOf`, the stages' basin).
 // Made once from the canon alone (the authored land and ranges, the owner's relief, the profiles), exact arithmetic.
 import { Field } from './field.js';
-import { route } from './drainage.js';
+import { routeFlow } from './drainage.js';
 import { canonTheatre, canonRelief, canonRange, pictureToWorld, worldToPicture } from './canon.js';
 import { byteMetres } from './geology.js';
 import { runoff, evaporation } from './hydrology.js';
@@ -37,7 +37,7 @@ export function continent(fit) {
     const temp = prof.temp - LAPSE * e, precip = Math.max(40, prof.precip) / 1000;
     own[k] = (runoff(precip, evaporation(temp)) * cellM * cellM) / YEAR_S;
   }
-  const rt = route(elev, cellM, (k) => theatre[k] === 0);
+  const rt = routeFlow(elev, cellM, (k) => theatre[k] === 0);
   const Q = Float64Array.from(own);
   for (let o = n - 1; o >= 0; o--) { const k = rt.order[o], r = rt.rcv[k]; if (r >= 0) Q[r] += Q[k]; }
   const made = { W, H, cellM, fit, rcv: rt.rcv, Q, elev, theatre };

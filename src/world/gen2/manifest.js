@@ -6,6 +6,7 @@
 // fails a set that moved without the law (so an older build is turned away by the relay's ground gate, not let in).
 import MANIFEST from './worldManifest.json' with { type: 'json' };
 import { fnv1a } from '../../formats/fnv1a.js';
+import { canonicalJson } from '../../formats/worldData/worldDataJson.js';
 
 /** The generators whose bakes this build can read (the newest last). A published region names one. */
 export const GENERATORS = Object.freeze(['wg2-1']);
@@ -56,12 +57,6 @@ const overlap = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h 
 /** A migration over the Bay's ground is the owner's word, quoted and dated (Phase 6: never the default). */
 const migrationOk = (g) => !!g && typeof g.by === 'string' && g.by.length > 0 && typeof g.quote === 'string' && g.quote.length > 8 && /^\d{4}-\d{2}-\d{2}$/.test(g.date ?? '');
 
-/** A JSON text with every object's keys sorted, so equal data prints alike. @param {any} v */
-export function canonicalJson(v) {
-  if (Array.isArray(v)) return `[${v.map(canonicalJson).join(',')}]`;
-  if (v && typeof v === 'object') return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canonicalJson(v[k])}`).join(',')}}`;
-  return JSON.stringify(v);
-}
 const print = (s) => fnv1a(new TextEncoder().encode(s)).toString(16).padStart(8, '0');
 /** The manifest's whole print. @param {Manifest} m */
 export const manifestPrint = (m) => print(canonicalJson(m));

@@ -6,7 +6,7 @@ import { Field } from './field.js';
 import { blur, prominence } from './gridOps.js';
 import { canonTheatre, canonRelief, worldToPicture } from './canon.js';
 import { regionGrid, byteMetres } from './geology.js';
-import { clamp } from './exact.js';
+import { clampExact } from './exact.js';
 import { provinceProfile } from './tables.js';
 
 /** C lost a metre up. */
@@ -18,7 +18,7 @@ export const FETCH_STEPS = 24;
 export const FETCH_PX = 2;
 /** Rain gained a kilometre of rise into the wind, and the rain shadow's strength a kilometre of ridge upwind. */
 export const OROGRAPHIC = 2.4;
-export const SHADOW = 1.1;
+export const RAIN_SHADOW = 1.1;
 
 /** Each province's middle row on the picture (for the latitude terms). */
 const _mid = new Map();
@@ -70,22 +70,22 @@ export function climate(spec, canon, elev) {
       if (!seaNear && sea(qx, qy)) seaNear = 1 - (s - 1) / FETCH_STEPS;
     }
     const shadow = Math.max(0, ridge - e) / 1000;
-    const p = P0.data[k] * (1 + OROGRAPHIC * rise / 1000 + 0.25 * seaNear) / (1 + SHADOW * shadow);
-    precip.data[k] = clamp(p, 20, 5000);
+    const p = P0.data[k] * (1 + OROGRAPHIC * rise / 1000 + 0.25 * seaNear) / (1 + RAIN_SHADOW * shadow);
+    precip.data[k] = clampExact(p, 20, 5000);
     temp.data[k] = T0.data[k] - LAPSE * e + 1.5 * seaNear;
     season.data[k] = S0.data[k] * (1 - 0.35 * seaNear);
-    humidity.data[k] = clamp(precip.data[k] / 2200 + 0.25 * seaNear, 0, 1);
+    humidity.data[k] = clampExact(precip.data[k] / 2200 + 0.25 * seaNear, 0, 1);
   }
   // the wind on a slope: how a cell stands over its neighbourhood, and its height
   const prom = prominence(elev, Math.max(2, 3 * spec.res)), exposure = elev.like(), solar = elev.like();
   const cell = g.cellM;
   for (let k = 0; k < n; k++) {
     const i = k % g.w, j = (k / g.w) | 0;
-    exposure.data[k] = clamp(0.5 + prom.data[k] / 400 + Math.max(0, elev.data[k]) / 6000, 0, 1);
+    exposure.data[k] = clampExact(0.5 + prom.data[k] / 400 + Math.max(0, elev.data[k]) / 6000, 0, 1);
     // the sun from the south, 45 degrees up (y runs south): a normal's share of it, 1 on flat ground, more facing south
     const gx = (elev.get(i + 1, j) - elev.get(i - 1, j)) / (2 * cell), gy = (elev.get(i, j + 1) - elev.get(i, j - 1)) / (2 * cell);
     const nl = Math.sqrt(gx * gx + gy * gy + 1);
-    solar.data[k] = clamp((1 - gy) / nl, 0, 1.5);
+    solar.data[k] = clampExact((1 - gy) / nl, 0, 1.5);
   }
   return { temp, precip, humidity, exposure, solar, season };
 }

@@ -7,6 +7,7 @@
 import { worldManifest } from '../world/gen2/manifest.js';
 import { testRegion } from '../world/gen2/testRegions.js';
 import { APP_ROOT } from '../systems/appRoot.js';
+import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the one parse of the page's query
 
 /** A bake's address under the app's root (systems/appRoot.js): the page is /play/, the bakes are served from the root.
  *  @param {string} file */
@@ -23,7 +24,7 @@ export function gen2Bakes(search = globalThis.location?.search ?? '') {
 /** The files to load: the manifest's published bakes and the asked test regions'. @param {string} search */
 export function gen2Files(search) {
   const files = worldManifest().published.map((r) => r.bake);
-  for (const id of (new URLSearchParams(search).get('wg2') ?? '').split(',').filter(Boolean)) if (testRegion(id)) files.push(`${id}.wg2`);
+  for (const id of (pageParam('wg2', search) ?? '').split(',').filter(Boolean)) if (testRegion(id)) files.push(`${id}.wg2`);
   return [...new Set(files)];
 }
 

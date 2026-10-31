@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import { readBake, BAKE_DIR } from '../../../tools/wg2Bake.mjs';
 import { gen2Install, gen2Byte, gen2Climate, gen2Units, gen2Stamp, gen2Regions, paintGen2Waters, gen2Shipped } from '../../../src/world/gen2/gen2Ground.js';
 import { decodeBake } from '../../../src/world/gen2/bakeCodec.js';
-import { kernelUnits, BLEND_PX } from '../../../src/world/gen2/regionSampler.js';
+import { kernelUnits, REGION_BLEND_PX } from '../../../src/world/gen2/regionSampler.js';
 import { worldManifest } from '../../../src/world/gen2/manifest.js';
 import { tamrielHeightByte, tamrielClimateAt, dropGroundCache } from '../../../src/world/tamriel/tamrielGround.js';
 import { setTamrielFit } from '../../../src/world/tamriel/tamrielFrame.js';
@@ -42,7 +42,7 @@ test('WG2 SEAM: a region installed on its own fit stands its bytes, climate and 
   assert.notEqual(own, lawIn, 'and not the law\'s');
   assert.equal(tamrielClimateAt(...inner), decoded.climates[(inner[1] - R.y) * R.w + inner[0] - R.x]);
   assert.equal(tamrielClimateAt(...other), decoded.climates[(other[1] - R.y) * R.w + other[0] - R.x], 'the bake\'s climate, not the zone\'s');
-  const ease = (t) => t * t * (3 - 2 * t), ownEdge = decoded.bytes[(edge[1] - R.y) * R.w], w = ease(0.5 / BLEND_PX);
+  const ease = (t) => t * t * (3 - 2 * t), ownEdge = decoded.bytes[(edge[1] - R.y) * R.w], w = ease(0.5 / REGION_BLEND_PX);
   assert.equal(tamrielHeightByte(...edge), Math.round(lawEdge + (ownEdge - lawEdge) * w), 'the edge pixel eased from the world\'s');
   assert.equal(tamrielHeightByte(...out), lawOut, 'outside: the world\'s own');
   assert.equal(tamrielClimateAt(...out), climOut);

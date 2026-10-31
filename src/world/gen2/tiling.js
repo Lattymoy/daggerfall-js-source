@@ -7,7 +7,7 @@
 import { canonTheatre, worldToPicture, pictureToWorld } from './canon.js';
 
 /** A tile's side and the overlap each way by default, world pixels; the tiles' grain, cells a pixel. */
-export const TILE = 128;
+export const TILE_SPAN = 128;
 export const OVERLAP = 12;
 export const TILE_RES = 2;
 
@@ -19,7 +19,7 @@ export const TILE_RES = 2;
  * @param {{ tile?: number, overlap?: number, res?: number, seed: number, steps?: number }} o
  */
 export function provinceTiles(fit, theatre, key, o) {
-  const tile = o.tile ?? TILE, overlap = o.overlap ?? OVERLAP, res = o.res ?? TILE_RES;
+  const tile = o.tile ?? TILE_SPAN, overlap = o.overlap ?? OVERLAP, res = o.res ?? TILE_RES;
   // the province's bounds: its land on the picture's grid, in world pixels
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (let py = 0; py < 200; py += 0.5) for (let px = 0; px < 320; px += 0.5) {

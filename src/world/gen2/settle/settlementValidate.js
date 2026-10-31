@@ -5,8 +5,8 @@
 // no building standing on another or in the water, and all of it within the one map pixel the streamed world stands.
 // Answers the problems as words a designer can act on; none for a sound town.
 import { buildingProblems } from './buildingRecord.js';
-import { rectOf, overlaps, polyDist, spanPoints, PLINTH_M, TERRACE_M } from './settlementGen.js';
-import { PIXEL_M } from '../regionSampler.js';
+import { townRectOf, overlaps, polyDist, spanPoints, PLINTH_M, TERRACE_M } from './settlementGen.js';
+import { TERRAIN_SIZE as PIXEL_M } from '../../terrain/terrainSampler.js';   // a world pixel's metres
 import { padAt } from '../padLaw.js';
 
 /** How far a door may stand from a street's edge (m), and how far a plinth may stand over its lowest corner. */
@@ -37,7 +37,7 @@ export function settlementProblems(S, t, o = {}) {
   for (const b of t.buildings) {
     const name = `${b.id ?? b.genKey} (${b.role})`;
     if (o.minted) for (const p of buildingProblems(b)) out.push(`${name}: ${p}`);
-    const c = L(b.at.x, b.at.y), rect = rectOf(c, b.at.dir, b.footprint, -0.05), ground = rectOf(c, b.at.dir, b.footprint, 0);
+    const c = L(b.at.x, b.at.y), rect = townRectOf(c, b.at.dir, b.footprint, -0.05), ground = townRectOf(c, b.at.dir, b.footprint, 0);
     if (rects.some((r) => overlaps(r, rect))) out.push(`${name}: stands on another building`);
     rects.push(rect);
     // its ground: nowhere under the floor by more than its plinth may hide, nowhere over it (buried) past a step
@@ -55,7 +55,7 @@ export function settlementProblems(S, t, o = {}) {
   }
   // the streamed world stands a town as one map pixel's location: every building and road inside the centre's pixel
   const px = Math.floor(cx), py = Math.floor(cy), inPixel = (x, y) => x >= px && y >= py && x < px + 1 && y < py + 1;
-  for (const b of t.buildings) if (!rectOf(L(b.at.x, b.at.y), b.at.dir, b.footprint, 0).corners.every(([x, y]) => inPixel(cx + x / PIXEL_M, cy + y / PIXEL_M))) out.push(`${b.id ?? b.genKey}: outside the town's pixel`);
+  for (const b of t.buildings) if (!townRectOf(L(b.at.x, b.at.y), b.at.dir, b.footprint, 0).corners.every(([x, y]) => inPixel(cx + x / PIXEL_M, cy + y / PIXEL_M))) out.push(`${b.id ?? b.genKey}: outside the town's pixel`);
   for (const r of t.roads) if (!r.pts.every(([x, y]) => inPixel(x, y))) { out.push(`a ${r.kind} leaves the town's pixel`); break; }
   const roles = new Set(t.buildings.map((b) => b.role));
   for (const f of t.features) if (f.kind === 'well') roles.add('well');

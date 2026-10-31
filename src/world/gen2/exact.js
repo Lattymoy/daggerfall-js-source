@@ -20,11 +20,11 @@ export function seedOf(seed, salt) {
   return h;
 }
 
-export const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
-export const lerp = (a, b, t) => a + (b - a) * t;
+export const clampExact = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+export const lerpExact = (a, b, t) => a + (b - a) * t;
 /** 0 below `a`, 1 above `b`, the cubic step between. */
-export function smoothstep(a, b, v) {
-  const t = clamp((v - a) / (b - a), 0, 1);
+export function smoothExact(a, b, v) {
+  const t = clampExact((v - a) / (b - a), 0, 1);
   return t * t * (3 - 2 * t);
 }
 
@@ -44,13 +44,13 @@ export function noise2(seed, x, y) {
     return GX[g] * (fx - i) + GY[g] * (fy - j);
   };
   const u = fade(fx), v = fade(fy);
-  const a = lerp(dot(0, 0), dot(1, 0), u), b = lerp(dot(0, 1), dot(1, 1), u);
-  return lerp(a, b, v) * 1.4142135623730951;
+  const a = lerpExact(dot(0, 0), dot(1, 0), u), b = lerpExact(dot(0, 1), dot(1, 1), u);
+  return lerpExact(a, b, v) * 1.4142135623730951;
 }
 
 /** Fractal sum of `octaves` noise layers, each twice the frequency and `gain` the weight, normalised to about [-1, 1].
  *  @param {number} seed @param {number} x @param {number} y @param {number} octaves @param {number} [gain] */
-export function fbm(seed, x, y, octaves, gain = 0.5) {
+export function fbmExact(seed, x, y, octaves, gain = 0.5) {
   let sum = 0, amp = 1, norm = 0, f = 1;
   for (let o = 0; o < octaves; o++) {
     sum += amp * noise2(seed + o * 7919, x * f, y * f);
@@ -63,12 +63,12 @@ export function fbm(seed, x, y, octaves, gain = 0.5) {
 
 /** Ridged fractal noise in [0, 1]: sharp crests where the noise crosses zero, the shape of a ridge's spine.
  *  @param {number} seed @param {number} x @param {number} y @param {number} octaves */
-export function ridged(seed, x, y, octaves) {
+export function ridgedExact(seed, x, y, octaves) {
   let sum = 0, amp = 1, norm = 0, f = 1, weight = 1;
   for (let o = 0; o < octaves; o++) {
     let n = 1 - Math.abs(noise2(seed + o * 104729, x * f, y * f));
     n *= n * weight;
-    weight = clamp(n * 2, 0, 1);
+    weight = clampExact(n * 2, 0, 1);
     sum += amp * n;
     norm += amp;
     amp *= 0.5;
@@ -79,7 +79,7 @@ export function ridged(seed, x, y, octaves) {
 
 /** A value kept to `bits` fractional bits - a field's store is exact, and a float32 field reads the same on every
  *  machine because the quantisation is. @param {number} v @param {number} bits */
-export const quantize = (v, bits) => {
+export const quantizeExact = (v, bits) => {
   const s = 1 << bits;
   return Math.round(v * s) / s;
 };

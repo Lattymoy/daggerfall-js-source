@@ -4,13 +4,13 @@
 // held to the budgets (data/prefabs.json `budgets`), with its licence and provenance required. A model of the player's
 // own ARENA2 (`arch3d`) is named by id and never shipped (Port-Doctrine).
 import { PREFAB_BUDGETS } from '../settle/settlementGen.js';
-import { ROLES } from '../settle/buildingRecord.js';
+import { BUILDING_ROLES } from '../settle/buildingRecord.js';
 
 /** A prefab record's problems, as words. @param {any} p */
 export function prefabProblems(p) {
   const out = [];
   if (!/^[a-z0-9-]+$/.test(p?.id ?? '')) out.push('id');
-  if (!ROLES[p?.role]) out.push('role');
+  if (!BUILDING_ROLES[p?.role]) out.push('role');
   if (!(Array.isArray(p?.footprint) && p.footprint.length === 2 && p.footprint.every((v) => v > 0 && v <= PREFAB_BUDGETS.footprintMax))) out.push('footprint');
   if (!Array.isArray(p?.styles) || !p.styles.length) out.push('styles');
   const kind = p?.source?.kind;

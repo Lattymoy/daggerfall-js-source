@@ -4,12 +4,12 @@
 // 16-pixel tile, so an edit costs what it touches. Every operation says the rectangle it moves, and the stages it
 // makes stale downstream (stageGraph.js staleAfter) are the ones the editor bakes again.
 import { worldPixelKey } from '../../worldWide/worldGrid.js';
-import { smoothstep, fbm, seedOf } from '../exact.js';
+import { smoothExact, fbmExact, seedOf } from '../exact.js';
 import { staleAfter } from '../stageGraph.js';
-import { PIXEL_M } from '../regionSampler.js';
+import { TERRAIN_SIZE as PIXEL_M } from '../../terrain/terrainSampler.js';   // a world pixel's metres
 import { nearCourse, ROAD_SHOULDER_M } from '../riverLaw.js';
 
-export const TILE_PX = 16;
+export const PATCH_TILE_PX = 16;
 /** The operations and the stage each changes. */
 export const OP_STAGE = Object.freeze({ raise: 'erosion', lower: 'erosion', smooth: 'erosion', flatten: 'erosion', noise: 'erosion', river: 'erosion', biome: 'biome', material: 'biome', road: 'settlements', settlement: 'settlements', building: 'settlements', exclude: 'suitability' });
 const BRUSHES = new Set(['raise', 'lower', 'smooth', 'flatten', 'noise']);
@@ -72,7 +72,7 @@ function falloffAt(op, d) {
   if (t >= 1) return 0;
   if (op.falloff === 'flat') return 1;
   if (op.falloff === 'linear') return 1 - t;
-  return 1 - smoothstep(0, 1, t);
+  return 1 - smoothExact(0, 1, t);
 }
 
 /**
@@ -82,14 +82,14 @@ function falloffAt(op, d) {
  * @param {EditDoc} doc @param {import('../regionSampler.js').RegionSampler} S
  */
 export function groundPatches(doc, S) {
-  const e = S.fields.elev, res = e.res, side = TILE_PX * res, patches = new Map(), seed = seedOf(S.header.seed, 'brush');
+  const e = S.fields.elev, res = e.res, side = PATCH_TILE_PX * res, patches = new Map(), seed = seedOf(S.header.seed, 'brush');
   const tileOf = (i, j) => {
-    const tx = Math.floor(i / side), ty = Math.floor(j / side), k = worldPixelKey(e.x0 + tx * TILE_PX, e.y0 + ty * TILE_PX);
+    const tx = Math.floor(i / side), ty = Math.floor(j / side), k = worldPixelKey(e.x0 + tx * PATCH_TILE_PX, e.y0 + ty * PATCH_TILE_PX);
     let p = patches.get(k);
     if (!p) patches.set(k, (p = { tx, ty, data: new Float32Array(side * side) }));
     return p;
   };
-  const delta = (i, j) => { const p = patches.get(worldPixelKey(e.x0 + Math.floor(i / side) * TILE_PX, e.y0 + Math.floor(j / side) * TILE_PX)); return p ? p.data[(j % side) * side + (i % side)] : 0; };
+  const delta = (i, j) => { const p = patches.get(worldPixelKey(e.x0 + Math.floor(i / side) * PATCH_TILE_PX, e.y0 + Math.floor(j / side) * PATCH_TILE_PX)); return p ? p.data[(j % side) * side + (i % side)] : 0; };
   for (const L of doc.layers) {
     if (!L.visible) continue;
     for (const op of L.ops) {
@@ -107,7 +107,7 @@ export function groundPatches(doc, S) {
         if (op.kind === 'raise') return s * w;
         if (op.kind === 'lower') return -s * w;
         if (op.kind === 'flatten') return (/** @type {number} */ (op.level) - now(i, j)) * w;
-        if (op.kind === 'noise') return s * w * fbm(seed, (e.x0 + i / res) * 3, (e.y0 + j / res) * 3, 3);
+        if (op.kind === 'noise') return s * w * fbmExact(seed, (e.x0 + i / res) * 3, (e.y0 + j / res) * 3, 3);
         let sum = 0;
         for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) sum += now(i + a, j + b);
         return (sum / 9 - now(i, j)) * Math.min(1, w * s / 10);
@@ -124,10 +124,10 @@ export function groundPatches(doc, S) {
  * @param {import('../regionSampler.js').RegionSampler} S @param {EditDoc} doc
  */
 export function editedSampler(S, doc) {
-  const patches = groundPatches(doc, S), e = S.fields.elev, res = e.res, side = TILE_PX * res;
+  const patches = groundPatches(doc, S), e = S.fields.elev, res = e.res, side = PATCH_TILE_PX * res;
   const cellDelta = (i, j) => {
     i = i < 0 ? 0 : i >= e.w ? e.w - 1 : i; j = j < 0 ? 0 : j >= e.h ? e.h - 1 : j;
-    const p = patches.get(worldPixelKey(e.x0 + Math.floor(i / side) * TILE_PX, e.y0 + Math.floor(j / side) * TILE_PX));
+    const p = patches.get(worldPixelKey(e.x0 + Math.floor(i / side) * PATCH_TILE_PX, e.y0 + Math.floor(j / side) * PATCH_TILE_PX));
     return p ? p.data[(j % side) * side + (i % side)] : 0;
   };
   const deltaAt = (x, y) => {
@@ -217,12 +217,12 @@ export function onCourses(ways, x, y, h) {
     if (!n || n.d >= half + BANK_M) continue;
     if (n.d < half) { const u = n.d / half; return Math.min(h, n.z - rv.depth * (1 - u * u)); }
     const top = Math.max(h, n.z + 0.4);
-    return n.z + 0.4 + (top - n.z - 0.4) * smoothstep(half, half + BANK_M, n.d);
+    return n.z + 0.4 + (top - n.z - 0.4) * smoothExact(half, half + BANK_M, n.d);
   }
   for (const rd of ways.roads) {
     const n = nearM(rd.pts, x, y), half = rd.width / 2;
     if (!n || n.d >= half + ROAD_SHOULDER_M) continue;
-    return n.z + (h - n.z) * smoothstep(half, half + ROAD_SHOULDER_M, n.d);
+    return n.z + (h - n.z) * smoothExact(half, half + ROAD_SHOULDER_M, n.d);
   }
   return h;
 }

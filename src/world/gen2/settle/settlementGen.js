@@ -8,20 +8,20 @@
 import STYLES_JSON from '../data/styles.json' with { type: 'json' };
 import TYPES_JSON from '../data/settlementTypes.json' with { type: 'json' };
 import PREFABS_JSON from '../data/prefabs.json' with { type: 'json' };
-import { rand01, seedOf, noise2, smoothstep } from '../exact.js';
+import { rand01, seedOf, noise2, smoothExact } from '../exact.js';
 import { CellHeap } from '../gridOps.js';
-import { WATER } from '../hydrology.js';
-import { ROLES } from './buildingRecord.js';
-import { PIXEL_M } from '../regionSampler.js';
+import { WATER_KIND } from '../hydrology.js';
+import { BUILDING_ROLES } from './buildingRecord.js';
+import { TERRAIN_SIZE as PIXEL_M } from '../../terrain/terrainSampler.js';   // a world pixel's metres
 import { worldPixelKey } from '../../worldWide/worldGrid.js';
 import { padAt, PAD_MARGIN_M } from '../padLaw.js';
 
 export const STYLES = Object.freeze(STYLES_JSON.styles);
-export const SETTLEMENT_TYPES = Object.freeze(TYPES_JSON.types);
+export const SETTLEMENT_KINDS = Object.freeze(TYPES_JSON.types);
 export const PREFABS = Object.freeze(PREFABS_JSON.prefabs);
 export const PREFAB_BUDGETS = Object.freeze(PREFABS_JSON.budgets);
-export const styleOf = (k) => STYLES.find((s) => s.key === k) ?? null;
-export const typeOf = (k) => SETTLEMENT_TYPES.find((t) => t.key === k) ?? null;
+export const townStyleOf = (k) => STYLES.find((s) => s.key === k) ?? null;
+export const typeOf = (k) => SETTLEMENT_KINDS.find((t) => t.key === k) ?? null;
 
 /** The rays a footprint is cast along: 48 unit vectors, made by turning one by 7.5 degrees (its cosine and sine as
  *  literals: exact, WG-2). */
@@ -53,14 +53,14 @@ export const STILTS_M = 2.5;
  * @param {import('../regionSampler.js').RegionSampler} S @param {SettlementSpec} spec
  */
 export function generateSettlement(S, spec) {
-  const type = typeOf(spec.type), style = styleOf(spec.style);
+  const type = typeOf(spec.type), style = townStyleOf(spec.style);
   if (!type || !style) throw new Error(`settlement ${spec.id}: type ${spec.type} or style ${spec.style} unknown`);
   const seed = seedOf(spec.seed, spec.id), cx = spec.x, cy = spec.y;
   const W = (lx, ly) => [cx + lx / PIXEL_M, cy + ly / PIXEL_M];
   // the ground with every pad laid so far: a later building stands on what the earlier ones left (padLaw.js)
   const pads = [];
   const ground = (lx, ly) => { const [x, y] = W(lx, ly); let h = S.heightAt(x, y); for (const p of pads) h = padAt(p, x, y, h); return h; };
-  const wetAt = (lx, ly) => { const e = /** @type {any} */ (S.env(...W(lx, ly))); return !!(e.water & WATER.wetland); };
+  const wetAt = (lx, ly) => { const e = /** @type {any} */ (S.env(...W(lx, ly))); return !!(e.water & WATER_KIND.wetland); };
   const waterAt = (lx, ly) => !!S.waterAt(...W(lx, ly));
   /** Water, or a channel's bank (a ray's step must not jump a narrow river). */
   const shoreAt = (lx, ly) => { if (waterAt(lx, ly)) return true; const c = S.channel(...W(lx, ly)); return !!c && c.d < c.half + RAY_STEP / 2; };
@@ -170,7 +170,7 @@ export function generateSettlement(S, spec) {
       if (gl > 1e-6 && style.bend > 0) {
         let tx = -g[1] / gl, ty = g[0] / gl;
         if (tx * dx + ty * dy < 0) { tx = -tx; ty = -ty; }
-        const b = style.bend * smoothstep(0.02, 0.12, gl);
+        const b = style.bend * smoothExact(0.02, 0.12, gl);
         dx += (tx - dx) * b; dy += (ty - dy) * b;
         const l = Math.sqrt(dx * dx + dy * dy); dx /= l; dy /= l;
       }
@@ -210,7 +210,7 @@ export function generateSettlement(S, spec) {
   }
 
   // ── E, F: THE PLOTS AND THEIR BUILDINGS - along every road and street, both sides, each plot standing on its ground
-  const placed = keep ? keep.buildings.filter((b) => !regen.has(b.district)).map((b) => ({ ...b, rect: rectOf(toLocal(b.at.x, b.at.y), b.at.dir, b.footprint, 0) })) : [];
+  const placed = keep ? keep.buildings.filter((b) => !regen.has(b.district)).map((b) => ({ ...b, rect: townRectOf(toLocal(b.at.x, b.at.y), b.at.dir, b.footprint, 0) })) : [];
   const features = keep ? keep.features.filter((f) => !regen.has(f.district)) : [];
   const ops = keep ? keep.terrainOps.filter((o) => !regen.has(o.district)) : [];
   pads.push(...ops.filter((o) => o.kind === 'pad'));
@@ -227,7 +227,7 @@ export function generateSettlement(S, spec) {
         const dist = districtOf(...c);
         if (keep && !regen.has(dist.key)) continue;
         if (Math.sqrt(c[0] * c[0] + c[1] * c[1]) < plaza.r + d / 2 || !inside(...c, -2)) continue;
-        const rect = rectOf(c, dir, [w, d], 1), bare = rectOf(c, dir, [w, d], 0);
+        const rect = townRectOf(c, dir, [w, d], 1), bare = townRectOf(c, dir, [w, d], 0);
         if (!plotOk(rect)) continue;
         if (edgePoints(bare).some(([x, y]) => allRoads().some((r) => polyDist(r.pts, x, y) < r.width / 2 + 0.2))) continue;
         if (!standOn(bare)) continue;   // a plot that cannot stand any building
@@ -268,7 +268,7 @@ export function generateSettlement(S, spec) {
   for (const svc of want) {
     if (svc === 'well') continue;
     const role = svc === 'store' ? 'shop' : svc;
-    if (!ROLES[role]) continue;
+    if (!BUILDING_ROLES[role]) continue;
     let best = null, bv = -Infinity;
     for (const m of made) { if (roleOf.has(m)) continue; const v = (roleScore[svc] ?? roleScore.tavern)(m); if (v > bv) { bv = v; best = m; } }
     if (best) roleOf.set(best, role);
@@ -282,16 +282,16 @@ export function generateSettlement(S, spec) {
     if (!prefab) return;
     const fp = /** @type {[number, number]} */ ([prefab.footprint[0], prefab.footprint[1]]);
     // the building stands on its own ground, sampled as the validator samples it (spanPoints)
-    const stand = standOn(rectOf(m.c, m.dir, fp, 0));
+    const stand = standOn(townRectOf(m.c, m.dir, fp, 0));
     if (!stand) return;
     m.stand = stand;
     const level = stand.level, front = [m.c[0] + m.dir[0] * fp[1] / 2, m.c[1] + m.dir[1] * fp[1] / 2];
     const [x, y] = W(...m.c), [fx, fy] = W(...front);
     buildings.push({
       settlement: spec.id, district: m.district.key, genKey: m.genKey, role: prefab.role === 'house' && role !== 'house' ? role : prefab.role,
-      type: ROLES[role].type, prefab: prefab.id, at: { x, y, z: level, dir: m.dir }, footprint: fp,
+      type: BUILDING_ROLES[role].type, prefab: prefab.id, at: { x, y, z: level, dir: m.dir }, footprint: fp,
       storeys: Math.max(style.storeys[0], Math.min(style.storeys[1], prefab.storeys || 1)),
-      doors: prefab.doors.length ? [{ x: fx, y: fy, z: level, dir: m.dir }] : [], services: ROLES[role].services, access: ROLES[role].access,
+      doors: prefab.doors.length ? [{ x: fx, y: fy, z: level, dir: m.dir }] : [], services: BUILDING_ROLES[role].services, access: BUILDING_ROLES[role].access,
       interior: { kind: role === 'well' ? 'none' : 'generated', ref: { prefab: prefab.id, seed: rand01(seed, 23, i) } },
       ground: { kind: m.stand.kind, level },
     });
@@ -360,7 +360,7 @@ export function choosePrefab(role, style, w, d, u) {
 }
 
 /** An oriented rectangle (local metres): its centre, its door's facing, [width, depth], grown by `pad`. */
-export function rectOf(c, dir, [w, d], pad) {
+export function townRectOf(c, dir, [w, d], pad) {
   const ax = [-dir[1], dir[0]], hw = w / 2 + pad, hd = d / 2 + pad;
   const corners = [[1, 1], [1, -1], [-1, -1], [-1, 1]].map(([a, b]) => [c[0] + ax[0] * hw * a + dir[0] * hd * b, c[1] + ax[1] * hw * a + dir[1] * hd * b]);
   return { c, axes: [ax, dir], half: [hw, hd], corners };

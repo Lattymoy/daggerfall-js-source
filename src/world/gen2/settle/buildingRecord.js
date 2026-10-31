@@ -8,6 +8,7 @@
 import { BUILDING_TYPES } from '../../buildingNames.js';
 import { HOME_KEY_MAX } from '../../../net/homeLaw.js';
 import { makeBuildingKey } from '../../../systems/talk/talkTopics.js';
+import { BLOCK_M } from '../../blockHash.js';
 
 /** The lane of World 2.0's settlements' map ids (world/capitalLane.js holds 0x341, the capitals'). */
 export const WG2_SETTLEMENT_LANE = 0x342;
@@ -17,7 +18,7 @@ export const settlementMapId = (n) => ((WG2_SETTLEMENT_LANE << 20) | 0x80000 | n
 export const SETTLEMENT_ORDINAL_MAX = 0x7ffff;
 
 /** Roles and what Daggerfall's game reads them as (formats' building type), with their services. */
-export const ROLES = Object.freeze({
+export const BUILDING_ROLES = Object.freeze({
   house: { type: BUILDING_TYPES.House2, services: [], access: 'private' },
   tavern: { type: BUILDING_TYPES.Tavern, services: ['rooms', 'drink', 'rumours'], access: 'public' },
   shop: { type: BUILDING_TYPES.GeneralStore, services: ['buy', 'sell'], access: 'public' },
@@ -78,8 +79,8 @@ export function buildingProblems(b) {
   if (parsed.legacy) {
     if (!b.legacy || b.legacy.mapId !== parsed.mapId || b.legacy.key !== parsed.key || (b.legacy.layout || 'classic') !== parsed.layout) out.push('legacy');
   } else if (b.legacy) out.push('legacy on a new building');
-  if (!ROLES[b.role]) out.push('role');
-  else if (parsed.legacy ? !LEGACY_TYPES.has(b.type) : b.type !== ROLES[b.role].type) out.push('type');
+  if (!BUILDING_ROLES[b.role]) out.push('role');
+  else if (parsed.legacy ? !LEGACY_TYPES.has(b.type) : b.type !== BUILDING_ROLES[b.role].type) out.push('type');
   if (!ACCESS.includes(b.access)) out.push('access');
   // a legacy building stands where its block and record put it, its doors on its model (rmbAdapter.js `local`)
   if (parsed.legacy ? !(b.local && Number.isInteger(b.local.recordIndex)) : !placeOk(b.at)) out.push('at');
@@ -96,8 +97,6 @@ function placeOk(p) {
   return l2 > 0.999 && l2 < 1.001;
 }
 
-/** A block's side in metres, and the blocks a pixel holds each way (locationLayout.js: 4096 x 0.025, eight a pixel). */
-export const BLOCK_M = 102.4;
 /** The block a building stands in within its pixel's location: x east, y counted from the south (the layout's rows).
  *  @param {{ x: number, y: number }} at */
 export function blockOf(at) {

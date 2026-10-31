@@ -9,9 +9,9 @@ import { canonTheatre, canonRelief, canonRange, worldToPicture, segmentD2 } from
 import { nodeGround } from '../landforms.js';
 import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE } from '../terrain/terrainSampler.js';
 import { MOUNTAIN_RANGES } from '../tamriel/tamrielGeography.js';
-import { fbm, ridged, noise2, rand01, seedOf, smoothstep, clamp } from './exact.js';
+import { fbmExact, ridgedExact, noise2, rand01, seedOf, smoothExact, clampExact } from './exact.js';
 import { ROCKS, rock as rockOf, provinceProfile } from './tables.js';
-import { route, hollowsOf } from './drainage.js';
+import { routeFlow, hollowsOf } from './drainage.js';
 
 /** @typedef {import('./canon.js').Fit} Fit */
 /** @typedef {{ name: string, w: number, gain: number, pts: number[][] }} AuthoredRange world pixels: half-width w, spine pts */
@@ -109,7 +109,7 @@ export function geology(spec, canon) {
   for (let j = 0; j < g.h; j++) for (let i = 0; i < g.w; i++) {
     const [x, y] = g.centre(i, j), k = j * g.w + i, t = canon.theatre.data[k];
     // the terrane: the nearest seed to the point moved by a slow warp, so the rocks' edges wander
-    const wx = x + 0.35 * TERRANE_PX * fbm(seed + 1, x / 40, y / 40, 3), wy = y + 0.35 * TERRANE_PX * fbm(seed + 2, x / 40, y / 40, 3);
+    const wx = x + 0.35 * TERRANE_PX * fbmExact(seed + 1, x / 40, y / 40, 3), wy = y + 0.35 * TERRANE_PX * fbmExact(seed + 2, x / 40, y / 40, 3);
     const a0 = Math.floor(wx / TERRANE_PX), b0 = Math.floor(wy / TERRANE_PX);
     let best = Infinity, r = 0;
     for (let b = b0 - 1; b <= b0 + 1; b++) for (let a = a0 - 1; a <= a0 + 1; a++) {
@@ -122,24 +122,24 @@ export function geology(spec, canon) {
     const dx = canon.dirX.data[k], dy = canon.dirY.data[k];
     // a range: ridges that run with the spine (stretched 2.5 to 1 along it, the frame warped so they wander and branch)
     // over isotropic crests for the spurs between them
-    const wu = 1.6 * fbm(seed + 7, x / 22, y / 22, 2), wv = 1.6 * fbm(seed + 8, x / 22, y / 22, 2);
+    const wu = 1.6 * fbmExact(seed + 7, x / 22, y / 22, 2), wv = 1.6 * fbmExact(seed + 8, x / 22, y / 22, 2);
     const u = (x * dx + y * dy) / 15 + wu, v = (-x * dy + y * dx) / 6 + wv;
-    const crest = 0.65 * ridged(seed + 3, u, v, 4) + 0.35 * ridged(seed + 9, x / 7, y / 7, 3);
-    const rangeM = L > 0 ? prof.range * L * (0.45 + 0.55 * crest) * smoothstep(0, 0.35, L) : 0;
-    const upland = smoothstep(UPLAND_M * 0.6, UPLAND_M * 1.4, base);
+    const crest = 0.65 * ridgedExact(seed + 3, u, v, 4) + 0.35 * ridgedExact(seed + 9, x / 7, y / 7, 3);
+    const rangeM = L > 0 ? prof.range * L * (0.45 + 0.55 * crest) * smoothExact(0, 0.35, L) : 0;
+    const upland = smoothExact(UPLAND_M * 0.6, UPLAND_M * 1.4, base);
     const amp = prof.rugged * (40 + 110 * upland + 160 * L) * (0.45 + 0.55 * rk.hardness);
-    let e = base + rangeM + amp * fbm(seed + 4, x / 9, y / 9, 5);
+    let e = base + rangeM + amp * fbmExact(seed + 4, x / 9, y / 9, 5);
     // benches and mesas: flat-bedded rock in a dry land stands in steps where a slow mask says so
     if (rk.terrace && prof.precip < 600) {
-      const mask = smoothstep(0.1, 0.45, fbm(seed + 5, x / 50, y / 50, 2));
+      const mask = smoothExact(0.1, 0.45, fbmExact(seed + 5, x / 50, y / 50, 2));
       if (mask > 0) {
         const step = 45 + 25 * rk.hardness, q = e / step, f = q - Math.floor(q);
-        const stepped = (Math.floor(q) + smoothstep(0.72, 0.95, f)) * step;
+        const stepped = (Math.floor(q) + smoothExact(0.72, 0.95, f)) * step;
         e += (stepped - e) * mask;
       }
     }
     elev.data[k] = e;
-    uplift.data[k] = clamp(0.75 * L + 0.25 * upland, 0, 1);
+    uplift.data[k] = clampExact(0.75 * L + 0.25 * upland, 0, 1);
   }
   infillCanon(spec, canon, elev);
   return { rock, uplift, elev };
@@ -157,8 +157,8 @@ export function wetHollows(spec, canon, elev) {
   for (let k = 0; k < elev.data.length; k++) {
     const prof = provinceProfile(canon.theatre.data[k]);
     if (prof.wet < 0.5 || !canon.theatre.data[k]) continue;
-    const [x, y] = g.centre(k % g.w, (k / g.w) | 0), upland = smoothstep(UPLAND_M * 0.6, UPLAND_M * 1.4, canon.relief.data[k]);
-    elev.data[k] -= prof.wet * 7 * clamp(noise2(seed + 6, x * 1.3, y * 1.3), 0, 1) * (1 - upland);
+    const [x, y] = g.centre(k % g.w, (k / g.w) | 0), upland = smoothExact(UPLAND_M * 0.6, UPLAND_M * 1.4, canon.relief.data[k]);
+    elev.data[k] -= prof.wet * 7 * clampExact(noise2(seed + 6, x * 1.3, y * 1.3), 0, 1) * (1 - upland);
   }
 }
 
@@ -171,7 +171,7 @@ export const ARID_MM = 500;
 /** Fill the hollows of `elev` in place, graded toward the spill so the water finds its way across.
  *  @param {Field} elev @param {number} cellM @param {(k: number) => boolean} isSea @param {(k: number) => boolean} arid */
 export function infill(elev, cellM, isSea, arid, seed = 0) {
-  const rt = route(elev, cellM, isSea), cellKm2 = (cellM * cellM) / 1e6, w = elev.w;
+  const rt = routeFlow(elev, cellM, isSea), cellKm2 = (cellM * cellM) / 1e6, w = elev.w;
   const steps = new Int32Array(elev.data.length).fill(-1);
   for (const hw of hollowsOf(rt, elev)) {
     if (hw.deep >= BASIN_DEPTH && hw.cells.length * cellKm2 >= BASIN_KM2 && arid(hw.outlet)) continue;
@@ -189,7 +189,7 @@ export function infill(elev, cellM, isSea, arid, seed = 0) {
     const far = steps[q[q.length - 1]] || 1, level = rt.filled[hw.outlet];
     for (const c of hw.cells) {
       const x = elev.x0 + ((c % w) + 0.5) / elev.res, y = elev.y0 + (((c / w) | 0) + 0.5) / elev.res;
-      elev.data[c] = level + FLAT_RISE * (steps[c] / far) + FLAT_GRAIN * fbm(seed + 11, x / 3, y / 3, 3);
+      elev.data[c] = level + FLAT_RISE * (steps[c] / far) + FLAT_GRAIN * fbmExact(seed + 11, x / 3, y / 3, 3);
     }
   }
 }

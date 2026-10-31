@@ -93,7 +93,7 @@
   {
     "name": "WG2-edge-unblended",
     "file": "src/world/gen2/regionSampler.js",
-    "old": "      return smoothstep(0, band, Math.min(x - rect.x, rect.x + rect.w - x)) * smoothstep(0, band, Math.min(y - rect.y, rect.y + rect.h - y));",
+    "old": "      return smoothExact(0, band, Math.min(x - rect.x, rect.x + rect.w - x)) * smoothExact(0, band, Math.min(y - rect.y, rect.y + rect.h - y));",
     "new": "      return 1;",
     "tests": [
       "test/world/gen2/wg2_seam.test.js"
@@ -283,8 +283,8 @@
   {
     "name": "WG2-tiles-not-partitioned",
     "file": "src/world/gen2/regionSampler.js",
-    "old": "      const band = 2 * (header.blend ?? BLEND_PX / 2);",
-    "new": "      const band = 3 * (header.blend ?? BLEND_PX / 2);",
+    "old": "      const band = 2 * (header.blend ?? REGION_BLEND_PX / 2);",
+    "new": "      const band = 3 * (header.blend ?? REGION_BLEND_PX / 2);",
     "tests": [
       "test/world/gen2/wg2_tiles.test.js",
       "test/world/gen2/wg2_seam.test.js"
@@ -338,7 +338,7 @@
   {
     "name": "WG2-road-uneased",
     "file": "src/world/gen2/edit/editLayers.js",
-    "old": "    return n.z + (h - n.z) * smoothstep(half, half + ROAD_SHOULDER_M, n.d);",
+    "old": "    return n.z + (h - n.z) * smoothExact(half, half + ROAD_SHOULDER_M, n.d);",
     "new": "    return h;",
     "tests": [
       "test/world/gen2/wg2_editor.test.js"
