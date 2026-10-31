@@ -96,11 +96,7 @@
         "NSDesktopFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded.",
         "NSDocumentsFolderUsageDescription": "DFO Online looks here for the Daggerfall game files you unpacked, only when it found none elsewhere. Nothing is copied or uploaded."
       }
-    },
-    "asarUnpack": [
-      "**/node_modules/workerd/**",
-      "**/node_modules/@cloudflare/workerd-*/**"
-    ]
+    }
   },
   "dependencies": {
     "electron-updater": "^6.8.9",

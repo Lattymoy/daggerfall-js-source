@@ -34,9 +34,9 @@ test('DA11 the built site is packed into app.asar, never shipped beside it as lo
   // PIN MOVED: AUDIT BR5 - and the product's logo beside it, the game's own file, which the launcher wears
   assert.deepEqual(sets, [{ from: '../src/ui/menu', to: 'launcher', filter: ['menuPad.js'] }, { from: '../src/assets/branding', to: 'launcher', filter: ['dfo-online.png'] }, { from: '../dist', to: 'dist' }], 'dist/ rides the app\'s own files - into the archive');
   assert.notEqual(b.asar, false, 'the archive is what makes it one file');
-  // the one exception: the local runtime a private server runs in (app/lib/privateHost.mjs) is a native binary, which
-  // cannot run from inside the archive - its two packages alone, never the site
-  assert.ok((b.asarUnpack ?? []).every((g) => /node_modules\/(?:@cloudflare\/)?workerd/.test(g)), 'and nothing but the runtime binary is unpacked back out beside it');
+  // the local runtime a private server runs in (app/lib/privateHost.mjs) is a native binary: electron-builder unpacks it
+  // on its own, and an asarUnpack list beside the files taken from ../src fails the package outright
+  assert.equal(b.asarUnpack, undefined, 'no asarUnpack list');
   const extra = [b.extraResources, b.extraFiles, b.win?.extraResources, b.linux?.extraResources, b.mac?.extraResources]
     .flat().filter(Boolean);
   assert.ok(!extra.some((e) => /dist/.test(typeof e === 'string' ? e : `${e.from} ${e.to}`)),
