@@ -45,6 +45,11 @@ const PUBLIC_ALLOWLIST = new Map([
   // skin's own colour tokens (a block-letter D over a seeded star
   // field) - no ARENA2 pixel, no screenshot, nothing derived. Re-run
   // the script and the same bytes come out.
+  // WG2 (2026-10-31, bible/03-World/World-2-Canon.md, the bake): the prototype regions' bakes - made by tools/wg2Bake.mjs from
+  // the repository's own authored geography, the owner's relief and the tables; no ARENA2 data and no raster of the
+  // player's picture (WG-3). test/world/gen2/wg2_bakes.test.js makes each again and matches its print.
+  ['public/worldgen2/hammerfell-test.wg2.gz', "WG2: the Dragontails prototype region's bake, the repository's own data"],
+  ['public/worldgen2/blackmarsh-test.wg2.gz', "WG2: the Black Marsh prototype region's bake, the repository's own data"],
   ['public/manifest.webmanifest', 'TI2: the web app manifest - text, the port\'s own'],
   ['public/icons/icon-192.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],
   ['public/icons/icon-512.png', 'TI2: home-screen icon, drawn by scripts/makeIcons.mjs from the skin\'s tokens'],

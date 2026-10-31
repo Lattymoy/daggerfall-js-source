@@ -1,0 +1,14 @@
+{
+  "worldId": "tamriel-main",
+  "schemaVersion": 2,
+  "geographyVersion": "geo-1",
+  "generatorVersion": "wg2-1",
+  "environmentVersion": "env-1",
+  "authoredRevision": "edit-0",
+  "settlementRevision": "settle-0",
+  "worldSeed": 1529170801,
+  "fit": { "ox": 589, "oy": 883.5, "ppu": 15.5 },
+  "groundLaw": 5,
+  "published": [],
+  "groundPrints": { "5": "" }
+}

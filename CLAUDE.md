@@ -16,6 +16,10 @@ change) and read `bible/01-Overview/Port-Doctrine.md` before touching code.
   `inBay` with a `BAY-OWN:` comment saying why. Pin a case past the Bay beside the Bay's, and probe in a province, not
   only in Daggerfall. `test/tooling/tamrielwide.test.js` holds the tree to `tools/tamrielWideBaseline.json`, which
   only goes down.
+- **World 2.0 reads its canon first** (WG2, the owner, 2026-10-31: "This is a big arc and we need to do this correctly
+  with no band aids"): before touching `src/world/gen2/`, the ground's seam, `public/worldgen2/` or the World Editor, read
+  `bible/03-World/World-2-Canon.md`. Gameplay fields use exact arithmetic only; a law that moves a bake re-bakes with
+  `node tools/wg2Bake.mjs all`; publishing a region raises `GROUND_LAW` and is the owner's call.
 - **ARENA2 is freeware - fetch it, never report it missing** (the owner, 2026-10-18: "Why not install the freeware.
   Im tired of having to ask you to do this"): `sh tools/fetch-data.sh` puts Daggerfall's own data at
   `/home/claude/dfdata/arena2` (~150 MB, never in the repo). Run it before any work that reads the map, the game's

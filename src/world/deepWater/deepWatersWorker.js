@@ -44,6 +44,7 @@ import { TamrielWatersBake } from '../tamrielWatersBake.js';   // TAMRIEL-DEEP
 import { groundWoods, dropGroundCache } from '../tamriel/tamrielGround.js';
 import { setTamrielTrace } from '../tamriel/tamrielLand.js';
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
+import { gen2Install } from '../gen2/gen2Ground.js';   // WG2: the published regions (bible/03-World/World-2-Canon.md)
 
 
 let bake = null;            // this thread's DeepWatersBake, once built
@@ -59,6 +60,7 @@ async function handle(m) {
     if (!bake) { if (!failed) waiting.push(m); return; }
     setTamrielTrace(m.trace ?? null);
     setTamrielFit(m.fit ?? null);
+    gen2Install(m.wg2 ?? [], m.fit ?? null);   // WG2: the published regions with the trace
     dropGroundCache();
     return bake.setTamriel?.(m.trace ? new TamrielWatersBake({ woods: groundWoods(reader), bay: bake.bay }) : null);
   }

@@ -25,7 +25,7 @@ import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSam
 import { CAPITAL_SEA_FLAT, capitalSeaGround } from './capitalSea.js';   // RUMARE-WATER: a capital at the sea, its water the sea's
 import { reliefFlat, capitalReliefGround } from './capitalRelief.js';   // SOLITUDE-RELIEF: a capital on a relief of its own
 import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
-import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing } from './terrainTiles.js';
+import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData, townGroundMask, unstampOffShape, townRoadRing, WATER } from './terrainTiles.js';
 import { townGroundMaskBefore } from './townBlendBefore.js';   // FB1028 YARDS Y2: the yards' ground as #1184 drew it
 import { layoutNature, layoutLandProps } from './terrainNature.js';
 import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
@@ -40,6 +40,7 @@ import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD
 import { createLandforms } from '../landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
 import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
 import { paintTamrielWaters } from '../tamriel/tamrielWaters.js';   // CYRODIIL-WATERS: the rivers and lakes past the Bay laid in as water
+import { paintGen2Waters } from '../gen2/gen2Ground.js';   // WG2: a published region's waters laid in as water (bible/03-World/World-2-Canon.md)
 import { landsNine } from '../tamriel/tamrielLands.js';   // TESA-LANDS: the zones' own flats past the Bay
 import { bridgesOf, unpaveBridges } from '../road/roadBridges.js';   // ROAD-LOOK: a road over a river wider than a ford crosses on a bridge
 import { layGateRoads, yardRoads } from '../road/gateRoads.js';   // GATE-ROADS: a walled town's gates on their roads
@@ -228,6 +229,7 @@ export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locat
   // CYRODIIL-WATERS: past the Bay the rivers' channels and the lakes the landforms carved are water to the squares (never
   // a location's own rect) - their shore laid by assignTiles, their sheet on the level ground (world/tamriel/tamrielWaters.js)
   if (landforms && !inBay(px, py)) paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);   // RIVER-FORDS: a road's tiles kept
+  if (landforms && !inBay(px, py)) paintGen2Waters(tileData, px, py, hasLocation ? locationRect : null, HEIGHTMAP_DIMENSION, paths, WATER);   // WG2: a published region's rivers and lakes
   // JUNGLE-TRAILS: the jungle's own trails worn into its corners before the squares run - dirt they blend, every tile
   // they touch kept as a track's is (world/jungle/jungleTrails.js); the heights never moved
   if (jungle) paths = paintJungleTrails(tileData, tilemap, paths, { px, py, nine: jungle.nine, whole: jungleWhole(jungle.nine), rect: hasLocation ? locationRect : null });

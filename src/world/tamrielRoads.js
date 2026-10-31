@@ -40,6 +40,7 @@ import { lairStandsAt, lairPlanned, lairBlockCount } from './tamrielDungeons.js'
 import { BIOMES_VERSION } from './tamriel/tamrielBiomes.js';   // AUDIT TESA-BIOME Z3: the zones' law decides each pixel's climate, so its places
 import { ghostfenceRoadBlocks } from './tamriel/ghostfence.js';   // GHOSTFENCE: its line no road's but at Ghostgate
 import { landLayer } from './land/landLayer.js';   // FOUNDATION F4: the land's rows, in a region's key
+import { gen2Stamp } from './gen2/gen2Ground.js';   // WG2: the published regions move the kept roads' key
 
 /** The regions' law's version - its cache's key moves with it. */
 export const TAMRIEL_ROADS_VERSION = 8;   // ROAD-LOOK: the carved lakes water no route crosses; EXACT-PIECES: a region's land's pieces in its answer; ROAD-GAPS: a region's networks linked where they meet; RIVER-FORDS (AUDIT RELEASE R1-3): the carved rivers crossed as fords; TESA15: a region's places in its answer, Arena's dungeons routed round; AUDIT TESA II R7 and R9: a gate stepped by every region that routes onto it, the crossings' runs held; VOYAGER1: the land's law (the grade, the height, the shore, the fords), VOYAGER-CYRODIIL: the named roads' legs
@@ -286,7 +287,7 @@ const INTERIOR = Object.freeze({ blockName: 'N0000000.RDB' });
  * so a region's entries under another print are found to let go.
  * @param {{ region: { i: number, j: number }, inputs: string }} o the inputs' print (inputsPrint)
  */
-export const regionKey = ({ region, inputs }) => `${regionPrefix(region)}${landLayer().stamp ? `land${landLayer().stamp}:` : ''}v${TAMRIEL_ROADS_VERSION}:g${GENERATOR_VERSION}:l${GROUND_ROLL_VERSION}:${inputs}`;   // FOUNDATION F4: and the land's rows
+export const regionKey = ({ region, inputs }) => `${regionPrefix(region)}${landLayer().stamp ? `land${landLayer().stamp}:` : ''}${gen2Stamp() ? `wg2${gen2Stamp()}:` : ''}v${TAMRIEL_ROADS_VERSION}:g${GENERATOR_VERSION}:l${GROUND_ROLL_VERSION}:${inputs}`;   // FOUNDATION F4: and the land's rows; WG2: and the published regions
 /** AUDIT TESA II R10: what every key of one region begins with, whatever its print. */
 export const regionPrefix = (region) => `tamriel-roads:${region.i},${region.j}:`;
 /** AUDIT TESA II R10: the keys TESA14 and TESA15 wrote (`tamriel-roads:v2:...`) - none is read again. */

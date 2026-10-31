@@ -224,6 +224,7 @@ export default defineConfig({
         spire: 'spire.html', // EG-G2: an Elite Breach's circle in its band's dress, made in code (src/tools/spireLab.js) - tools/spireLabProbe.mjs
         cards: 'cards.html', // CARDS3: the card table lab (src/tools/cardsLab.js) - tools/cardsProbe.mjs
         delve: 'delve.html', // DLV5: the curated blocks' lab - its front page (src/tools/delveLabPage.js), the bench's `?dungeon=lab` its floor (src/tools/delveLab.js)
+        worldEditor: 'worldeditor.html', // WG2: the World Editor (src/tools/worldEditor.js) - bible/03-World/World-2-Canon.md, Editing
         // MW-D: the Morrowind data inspector. Reads a player's own
         // archives and reports what is IN them; it draws nothing, stores
         // nothing and is wired to nothing the game runs. It exists

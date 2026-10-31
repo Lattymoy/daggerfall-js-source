@@ -425,6 +425,9 @@ wiring in `src/scenes/`. A feature with one or two modules in a layer keeps them
 | `src/world/arena/` | The Arena's place: the city, the floor, the undercroft, the plaques and the model. |
 | `src/world/atlas/` | The world's places entity-major (`03-World/Foundation-Arc.md`, FOUNDATION): a place's bundle - its identity, grid, dungeon plan, buildings and doors - over a vocabulary of blocks, every name resolved as the layout serves it (`atlas.js`, `atlasServed.js`). |
 | `src/world/land/` | The land as data (`03-World/Foundation-Arc.md` F4): a shoreline or a hill fixed by a row of `landEdits.json`, written into the Bay's served files and asked by the ground past it (`landLayer.js`). |
+| `src/world/gen2/` | World 2.0 (`03-World/World-2-Canon.md`): the exact kit, fields, stages, manifest, canon, the generator's stages (geology, climate, erosion, drainage, hydrology, soil, biome, resources, vegetation), the bake and its codec, the runtime sampler and the seam (`gen2Ground.js`); its tables under `data/`. |
+| `src/world/gen2/settle/` | Settlement System 2.0: the building record and its ids, the RMB adapter, site selection, the generator and its validator, the prototype towns. |
+| `src/world/gen2/edit/` | The World Editor's model: layers of edits, undo, revisions and publishing, protected property, packages, the prefab checks. |
 | `src/world/card/` | The card table in the world: the tables, the scene, the regulars, a hand and its motion. |
 | `src/world/city/` | A city's gates, lights and navigation - its models and assembly. |
 | `src/world/deepWater/` | Deep Waters in the world: the sea floor and its bathymetry, the surface, swimming, the look and the bake. |

@@ -294,6 +294,7 @@ import { landformsOn, tamrielLandOn, tamrielTraceOn, etherSeaOn, etherCrossOutOn
 import { preloadTamrielTrace } from '../ui/tamrielTrace.js';   // TAMRIEL3: Daggerfall's own map of Tamriel, off the player's two files
 import { tamrielLandVersion } from '../world/tamriel/tamrielLand.js';   // WW2: which picture a theatre's gate scan read
 import { keptBayFit } from '../world/tamriel/bayFitKept.js';   // TAMRIEL3: where the Bay stands on it; FIRST-VISIT: kept across launches
+import { gen2Bakes } from './gen2Host.js';   // WG2: the published regions' bakes (bible/03-World/World-2-Canon.md)
 import { arenaPlaces, arenaPixels, setArenaStanding, pastBayLakeAt } from '../world/arenaPlaces.js';   // TESA1: the places on it (TESA12: the port's own); TESA2: the pixels they stand on
 import { arenaRoadsLayer, setArenaRoads } from '../world/arenaRoads.js';   // TESA4: the roads past the Bay's layer
 import { arenaTemplates, ARENA_LOAD_WAIT_MS } from '../world/arenaLocations.js';   // TESA2: the places stood, each a Daggerfall town or dungeon cloned
@@ -6525,7 +6526,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       if (!trace) { console.warn('[tamriel] the picture traced to nothing; the authored continent stands'); return; }
       const fit = await keptBayFit({ bayLand: (x, y) => !isWaterPixel(filedClimate(x, y, maps.getClimateIndex(x, y)), filedHeight(x, y, woods.getHeightMapValue(x, y))), trace });   // AUDIT FOUNDATION II L1: the Bay as it came
       const fitPx = fit ? { ox: fit.ox * fit.ppu, oy: fit.oy * fit.ppu, ppu: fit.ppu } : null;
-      terrainGen.setTamriel({ trace, fit: fitPx });
+      terrainGen.setTamriel({ trace, fit: fitPx, wg2: await gen2Bakes() });   // WG2: the published regions (scenes/gen2Host.js)
       StreamingWorldState.frame = tamrielLand ? tamrielFrameInBay() : null;
       console.log(`[tamriel] the picture traced: ${trace.land.reduce((n, v) => n + v, 0)} land pixels; the Bay fitted at picture (${fit?.ox}, ${fit?.oy}) x${fit?.ppu}, ${fit ? Math.round((100 * fit.score) / fit.cells) : 0}% of its cells and ${fit ? Math.round((100 * fit.seam) / fit.edge) : 0}% of its edge agreeing`);   // TAMRIEL4: the seam the fit is made for
       arenaWarm();   // TESA1: the places onto the trace that just landed

@@ -16,6 +16,7 @@
 import { packNature, natureBuffers } from './natureWire.js';   // AUDIT BANTHA1 PERF-2
 import { WoodsFile } from '../../formats/woodsFile.js';
 import { groundWoods, dropGroundCache } from '../tamriel/tamrielGround.js';   // TAMRIEL2: the ground beyond the Bay
+import { gen2Install } from '../gen2/gen2Ground.js';   // WG2: the published regions (bible/03-World/World-2-Canon.md)
 import { etherWoods } from '../ethericSea.js';   // ETHER-SEA: the Eltheric Ocean's ground
 import { setTamrielTrace } from '../tamriel/tamrielLand.js';   // TAMRIEL3: the picture's own land
 import { setTamrielFit } from '../tamriel/tamrielFrame.js';
@@ -77,7 +78,7 @@ function handle(m) {
     // BAY-LEFT-GROUND: the sites past the Bay - made again whenever the places past the Bay move; every job after it reads it
     if (m.t === 'landform-beyond') { beyond = m.beyond ?? null; return; }
     // TAMRIEL3: the picture's own land and the Bay's fit, as the host's modules hold them
-    if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); dropGroundCache(); return; }
+    if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); gen2Install(m.wg2 ?? [], m.fit ?? null); dropGroundCache(); return; }   // WG2: the published regions with them
     // MAP-WATERS: the held map's rivers and lakes - the law this worker compiles for its carve anyway, packed and moved
     if (m.t === 'waters') { const { ink, transfer } = lawWatersInk(); globalThis.postMessage({ t: 'watersInk', ink }, transfer); return; }
     // ROADS 3: the network arrives ONCE, after init, and rides every job

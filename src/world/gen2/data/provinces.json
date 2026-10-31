@@ -1,0 +1,25 @@
+{
+  "note": "WG2 province profiles, one a theatre (world/worldWide/worldGrid.js: 0 the Iliac Bay, 1..9 the provinces by tamrielLand.js PROVINCE_OF_ID). temp: sea-level mean air C; precip: mm a year on flat ground; wind: the way the wet wind blows (x east, y south); southWet: mm more a year for each picture unit south of the province's middle; season: the summer-to-winter swing C; rocks: each setting's suite and weights; rugged: the hills' scale; range: metres a range's spine stands over its land; wet: the share of low flat ground that holds water; style: the building culture (data/styles.json).",
+  "provinces": [
+    { "theatre": 0, "key": "IliacBay", "temp": 13, "precip": 900, "wind": [1, -0.15], "southWet": 0, "season": 12, "rugged": 1, "range": 900, "wet": 0.25, "style": "breton",
+      "rocks": { "lowland": { "limestone": 3, "shale": 2, "sandstone": 1, "alluvium": 1 }, "upland": { "granite": 2, "slate": 2, "schist": 1 }, "range": { "granite": 3, "schist": 2 } } },
+    { "theatre": 1, "key": "HighRock", "temp": 11, "precip": 1100, "wind": [1, 0], "southWet": 0, "season": 13, "rugged": 1.1, "range": 1100, "wet": 0.3, "style": "breton",
+      "rocks": { "lowland": { "limestone": 3, "slate": 2, "shale": 2 }, "upland": { "slate": 3, "granite": 2 }, "range": { "granite": 3, "schist": 2, "slate": 1 } } },
+    { "theatre": 2, "key": "Hammerfell", "temp": 22, "precip": 280, "wind": [0.7, -0.7], "southWet": 4, "season": 14, "rugged": 1.2, "range": 1250, "wet": 0.05, "style": "redguard",
+      "rocks": { "lowland": { "sandstone": 4, "shale": 2, "alluvium": 1 }, "upland": { "sandstone": 3, "limestone": 2, "quartzite": 1 }, "range": { "granite": 3, "quartzite": 2, "schist": 2 } } },
+    { "theatre": 3, "key": "Skyrim", "temp": 2, "precip": 650, "wind": [1, 0.2], "southWet": 0, "season": 20, "rugged": 1.4, "range": 1500, "wet": 0.2, "style": "nord",
+      "rocks": { "lowland": { "schist": 2, "granite": 2, "alluvium": 1 }, "upland": { "granite": 3, "schist": 2 }, "range": { "granite": 3, "schist": 2, "quartzite": 1 } } },
+    { "theatre": 4, "key": "Morrowind", "temp": 14, "precip": 640, "wind": [1, 0], "southWet": 6, "season": 12, "rugged": 1.2, "range": 1300, "wet": 0.3, "style": "dunmer",
+      "rocks": { "lowland": { "basalt": 3, "tuff": 2, "limestone": 1 }, "upland": { "basalt": 3, "tuff": 2 }, "range": { "basalt": 4, "tuff": 1 } } },
+    { "theatre": 5, "key": "Sumurset", "temp": 19, "precip": 1000, "wind": [1, 0.3], "southWet": 0, "season": 8, "rugged": 0.9, "range": 900, "wet": 0.15, "style": "altmer",
+      "rocks": { "lowland": { "marble": 2, "limestone": 3 }, "upland": { "marble": 3, "quartzite": 1 }, "range": { "marble": 2, "quartzite": 2, "granite": 1 } } },
+    { "theatre": 6, "key": "Valenwood", "temp": 22, "precip": 1900, "wind": [1, 0.2], "southWet": 8, "season": 6, "rugged": 0.8, "range": 700, "wet": 0.35, "style": "bosmer",
+      "rocks": { "lowland": { "limestone": 2, "shale": 2, "alluvium": 2 }, "upland": { "limestone": 3, "sandstone": 1 }, "range": { "granite": 2, "limestone": 2 } } },
+    { "theatre": 7, "key": "Elsweyr", "temp": 21, "precip": 420, "wind": [0.6, -0.8], "southWet": 40, "season": 12, "rugged": 1.1, "range": 700, "wet": 0.1, "style": "khajiit",
+      "rocks": { "lowland": { "sandstone": 3, "shale": 2, "limestone": 1 }, "upland": { "sandstone": 3, "limestone": 2 }, "range": { "sandstone": 2, "granite": 2 } } },
+    { "theatre": 8, "key": "BlackMarsh", "temp": 21, "precip": 2100, "wind": [-0.6, -0.8], "southWet": 6, "season": 7, "rugged": 0.5, "range": 500, "wet": 0.8, "style": "argonian",
+      "rocks": { "lowland": { "mudstone": 3, "alluvium": 3, "limestone": 1 }, "upland": { "limestone": 2, "mudstone": 1 }, "range": { "limestone": 2, "granite": 1 } } },
+    { "theatre": 9, "key": "Imperial", "temp": 15, "precip": 950, "wind": [1, 0], "southWet": 6, "season": 14, "rugged": 1, "range": 1200, "wet": 0.25, "style": "imperial",
+      "rocks": { "lowland": { "limestone": 3, "alluvium": 2, "shale": 1 }, "upland": { "limestone": 2, "granite": 2 }, "range": { "granite": 3, "schist": 2 } } }
+  ]
+}

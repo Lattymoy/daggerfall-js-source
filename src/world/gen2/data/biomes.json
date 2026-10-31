@@ -1,0 +1,24 @@
+{
+  "note": "WG2 biomes. climate: the Daggerfall climate byte the ground's textures and nature read (formats/mapsTables.js CLIMATES). materials: the ground's surface shares before slope, height and wet move them. species: the plants that may grow (data/species.json keys).",
+  "biomes": [
+    { "id": 0, "key": "lake", "name": "Open water", "climate": 223, "color": [52, 92, 140], "materials": { "mud": 1 }, "species": [] },
+    { "id": 1, "key": "dunes", "name": "Sand desert", "climate": 225, "color": [226, 196, 130], "materials": { "sand": 0.9, "gravel": 0.1 }, "species": ["duneGrass", "saltbush"] },
+    { "id": 2, "key": "rockDesert", "name": "Rock desert", "climate": 224, "color": [196, 154, 108], "materials": { "gravel": 0.5, "rock": 0.3, "sand": 0.2 }, "species": ["saltbush", "thornbush", "acacia"] },
+    { "id": 3, "key": "steppe", "name": "Steppe", "climate": 229, "color": [176, 168, 98], "materials": { "dryGrass": 0.7, "dirt": 0.2, "gravel": 0.1 }, "species": ["grass", "thornbush", "acacia", "juniper"] },
+    { "id": 4, "key": "savanna", "name": "Savanna", "climate": 229, "color": [184, 170, 84], "materials": { "dryGrass": 0.8, "dirt": 0.2 }, "species": ["grass", "acacia", "thornbush"] },
+    { "id": 5, "key": "temperateForest", "name": "Temperate forest", "climate": 231, "color": [70, 120, 56], "materials": { "grass": 0.6, "dirt": 0.3, "leaves": 0.1 }, "species": ["oak", "beech", "birch", "pine", "grass", "heather"] },
+    { "id": 6, "key": "borealForest", "name": "Boreal forest", "climate": 230, "color": [50, 96, 72], "materials": { "grass": 0.4, "needles": 0.4, "rock": 0.2 }, "species": ["spruce", "pine", "birch", "juniper"] },
+    { "id": 7, "key": "temperateJungle", "name": "Temperate jungle", "climate": 227, "color": [40, 116, 52], "materials": { "leaves": 0.5, "mud": 0.2, "grass": 0.3 }, "species": ["grahtOak", "beech", "fern", "willow"] },
+    { "id": 8, "key": "tropicalJungle", "name": "Tropical jungle", "climate": 227, "color": [30, 104, 44], "materials": { "leaves": 0.5, "mud": 0.4, "grass": 0.1 }, "species": ["junglePalm", "fern", "cypress", "grahtOak"] },
+    { "id": 9, "key": "marsh", "name": "Marsh", "climate": 228, "color": [96, 120, 80], "materials": { "mud": 0.5, "grass": 0.3, "water": 0.2 }, "species": ["reed", "willow", "grass"] },
+    { "id": 10, "key": "swamp", "name": "Swamp", "climate": 228, "color": [62, 92, 60], "materials": { "mud": 0.6, "water": 0.3, "leaves": 0.1 }, "species": ["cypress", "reed", "fern", "willow"] },
+    { "id": 11, "key": "alpine", "name": "Alpine", "climate": 226, "color": [150, 150, 140], "materials": { "rock": 0.5, "grass": 0.3, "scree": 0.2 }, "species": ["juniper", "heather", "grass"] },
+    { "id": 12, "key": "snowfield", "name": "Snowfield", "climate": 226, "color": [236, 238, 242], "materials": { "snow": 0.8, "rock": 0.2 }, "species": ["lichen"] },
+    { "id": 13, "key": "ashland", "name": "Ashland", "climate": 226, "color": [100, 92, 90], "materials": { "ash": 0.7, "rock": 0.3 }, "species": ["ashShrub", "parasol"] },
+    { "id": 14, "key": "coast", "name": "Coast", "climate": 231, "color": [214, 204, 160], "materials": { "sand": 0.6, "grass": 0.3, "rock": 0.1 }, "species": ["duneGrass", "palm", "pine"] },
+    { "id": 15, "key": "oasis", "name": "Oasis", "climate": 229, "color": [96, 156, 84], "materials": { "grass": 0.5, "mud": 0.2, "sand": 0.3 }, "species": ["datePalm", "reed", "grass"] },
+    { "id": 16, "key": "riparian", "name": "River corridor", "climate": 231, "color": [80, 140, 76], "materials": { "grass": 0.5, "mud": 0.3, "gravel": 0.2 }, "species": ["willow", "reed", "datePalm", "oak", "grass"] },
+    { "id": 17, "key": "saltFlat", "name": "Salt flat", "climate": 224, "color": [232, 228, 214], "materials": { "salt": 0.9, "mud": 0.1 }, "species": [] },
+    { "id": 18, "key": "tundra", "name": "Tundra", "climate": 226, "color": [150, 156, 130], "materials": { "grass": 0.4, "rock": 0.3, "snow": 0.3 }, "species": ["lichen", "juniper", "birch"] }
+  ]
+}

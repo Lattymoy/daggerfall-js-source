@@ -32,6 +32,7 @@ import { regionOf, tamrielRegionSteps, rollTypeAt } from './tamrielRoads.js';
 import { planTrunkLegs } from './road/cyrodiilRoads.js';   // VOYAGER-CYRODIIL: the named roads' legs
 import { inBay } from './tamriel/tamrielFrame.js';
 import { WATER_BYTE } from './roadsProducer.js';
+import { gen2Install } from './gen2/gen2Ground.js';   // WG2: the published regions (bible/03-World/World-2-Canon.md)
 
 /** The worker's state over its messages - a function, so node drives it without a worker. */
 export function createRoadsWorkerState() {
@@ -66,6 +67,7 @@ export function createRoadsWorkerState() {
         if (!m.inThread) {
           setTamrielTrace(m.trace ?? null);
           setTamrielFit(m.fit ?? null);
+          gen2Install(m.wg2 ?? [], m.fit ?? null);   // WG2: the published regions with the trace
           dropGroundCache();
         }
         ground = groundWoods(w);

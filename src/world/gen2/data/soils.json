@@ -1,0 +1,21 @@
+{
+  "note": "WG2 soils. depth metres; retention, fertility, drainage, erodibility 0..1; rock: how much bare rock shows. color for the editor's map.",
+  "soils": [
+    { "id": 0, "key": "rock", "name": "Bare rock", "depth": 0, "retention": 0, "fertility": 0, "drainage": 1, "erodibility": 0.05, "rock": 1, "color": [150, 146, 140] },
+    { "id": 1, "key": "scree", "name": "Scree", "depth": 0.3, "retention": 0.1, "fertility": 0.05, "drainage": 1, "erodibility": 0.6, "rock": 0.8, "color": [128, 124, 118] },
+    { "id": 2, "key": "thin", "name": "Thin mountain soil", "depth": 0.4, "retention": 0.3, "fertility": 0.25, "drainage": 0.8, "erodibility": 0.4, "rock": 0.4, "color": [118, 108, 86] },
+    { "id": 3, "key": "loam", "name": "Loam", "depth": 1.5, "retention": 0.6, "fertility": 0.8, "drainage": 0.6, "erodibility": 0.35, "rock": 0, "color": [104, 86, 58] },
+    { "id": 4, "key": "clay", "name": "Clay", "depth": 1.8, "retention": 0.85, "fertility": 0.55, "drainage": 0.2, "erodibility": 0.25, "rock": 0, "color": [140, 98, 70] },
+    { "id": 5, "key": "alluvium", "name": "Alluvial soil", "depth": 3, "retention": 0.7, "fertility": 1, "drainage": 0.5, "erodibility": 0.5, "rock": 0, "color": [92, 78, 54] },
+    { "id": 6, "key": "sand", "name": "Sand", "depth": 4, "retention": 0.1, "fertility": 0.1, "drainage": 1, "erodibility": 0.9, "rock": 0, "color": [222, 196, 140] },
+    { "id": 7, "key": "aridisol", "name": "Desert pavement", "depth": 0.6, "retention": 0.2, "fertility": 0.15, "drainage": 0.8, "erodibility": 0.3, "rock": 0.3, "color": [184, 150, 110] },
+    { "id": 8, "key": "peat", "name": "Peat", "depth": 2.5, "retention": 1, "fertility": 0.35, "drainage": 0.05, "erodibility": 0.2, "rock": 0, "color": [60, 52, 40] },
+    { "id": 9, "key": "mire", "name": "Waterlogged mire", "depth": 2, "retention": 0.95, "fertility": 0.45, "drainage": 0.05, "erodibility": 0.3, "rock": 0, "color": [70, 74, 52] },
+    { "id": 10, "key": "tundra", "name": "Tundra soil", "depth": 0.5, "retention": 0.6, "fertility": 0.15, "drainage": 0.3, "erodibility": 0.2, "rock": 0.2, "color": [120, 116, 100] },
+    { "id": 11, "key": "andisol", "name": "Volcanic ash soil", "depth": 1.2, "retention": 0.55, "fertility": 0.6, "drainage": 0.7, "erodibility": 0.55, "rock": 0.1, "color": [84, 78, 74] },
+    { "id": 12, "key": "podzol", "name": "Podzol", "depth": 0.9, "retention": 0.4, "fertility": 0.35, "drainage": 0.7, "erodibility": 0.3, "rock": 0.1, "color": [100, 92, 80] },
+    { "id": 13, "key": "laterite", "name": "Laterite", "depth": 2.5, "retention": 0.5, "fertility": 0.45, "drainage": 0.6, "erodibility": 0.4, "rock": 0, "color": [150, 82, 50] },
+    { "id": 14, "key": "beach", "name": "Beach sand", "depth": 2, "retention": 0.05, "fertility": 0.05, "drainage": 1, "erodibility": 0.9, "rock": 0, "color": [230, 214, 170] },
+    { "id": 15, "key": "salt", "name": "Salt flat", "depth": 0.5, "retention": 0.3, "fertility": 0, "drainage": 0.1, "erodibility": 0.2, "rock": 0, "color": [236, 232, 220] }
+  ]
+}

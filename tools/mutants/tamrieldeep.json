@@ -92,7 +92,7 @@
   {
     "name": "TDEEP-worker-untold",
     "file": "src/world/deepWater/deepWatersClient.js",
-    "old": "        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }); } catch { /* the main thread's bake answers */ }",
+    "old": "        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, wg2: gen2Shipped() }); } catch { /* the main thread's bake answers */ }",
     "new": "        void t;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"

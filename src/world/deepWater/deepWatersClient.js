@@ -27,6 +27,7 @@ import { worldBakes } from '../etherWatersBake.js';   // ETHER-DEEP: the Eltheri
 import { etherWoods } from '../ethericSea.js';
 import { TamrielWatersBake } from '../tamrielWatersBake.js';   // TAMRIEL-DEEP: the continent's bake, set when its trace lands
 import { groundWoods } from '../tamriel/tamrielGround.js';
+import { gen2Shipped } from '../gen2/gen2Ground.js';   // WG2: the published regions, posted with the trace
 
 function defaultWorkerFactory() {
   return new Worker(new URL('./deepWatersWorker.js', import.meta.url), { type: 'module' });
@@ -185,7 +186,7 @@ export function openDeepWaters({ woods, woodsBytes = null, rects = [], ether = n
       if (!continent || disposed) return;
       if (worker) {
         const t = trace ? { w: trace.w, h: trace.h, land: trace.land.slice(), province: trace.province.slice(), relief: trace.relief ? trace.relief.slice() : null } : null;
-        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null }); } catch { /* the main thread's bake answers */ }
+        try { worker.postMessage({ t: 'tamriel', trace: t, fit: fit ? { ox: fit.ox, oy: fit.oy, ppu: fit.ppu } : null, wg2: gen2Shipped() }); } catch { /* the main thread's bake answers */ }   // WG2: the published regions
       }
       void ready.then((b) => { if (b && !disposed) b.setTamriel?.(trace ? new TamrielWatersBake({ woods: woods.isTamrielGround ? woods : groundWoods(woods), bay: b.bay }) : null); });
     },

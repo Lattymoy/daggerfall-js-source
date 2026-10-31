@@ -469,8 +469,8 @@
   {
     "name": "F4-climate-unread",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "  return landLayer().climateAt(x, y) ?? tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
-    "new": "  return tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
+    "old": "  return landLayer().climateAt(x, y) ?? gen2Climate(x, y) ?? tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
+    "new": "  return gen2Climate(x, y) ?? tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
     "tests": [
       "test/world/land/f4_landlayer.test.js"
     ]

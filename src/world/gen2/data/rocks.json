@@ -1,0 +1,17 @@
+{
+  "note": "WG2 rock types. k: erodibility against the stream (1 = shale's), talus: the steepest stable slope (rise over run), hardness 0..1 (how much relief the rock keeps), soil: the soil it weathers to, terrace: whether it stands as mesas and benches, ores: the deposits it carries and their weight.",
+  "rocks": [
+    { "id": 0, "key": "granite", "name": "Granite", "k": 0.35, "talus": 1.2, "hardness": 0.95, "soil": "thin", "terrace": false, "color": [168, 160, 156], "ores": { "iron": 2, "silver": 2, "gold": 1, "mithril": 0.4, "stone": 3 } },
+    { "id": 1, "key": "schist", "name": "Schist", "k": 0.55, "talus": 1.0, "hardness": 0.75, "soil": "thin", "terrace": false, "color": [132, 128, 120], "ores": { "iron": 2, "silver": 1, "adamantium": 0.2, "moonstone": 0.5 } },
+    { "id": 2, "key": "limestone", "name": "Limestone", "k": 0.6, "talus": 0.95, "hardness": 0.6, "soil": "loam", "terrace": true, "color": [196, 190, 170], "ores": { "lead": 1, "stone": 3, "clay": 1 } },
+    { "id": 3, "key": "sandstone", "name": "Sandstone", "k": 0.75, "talus": 0.85, "hardness": 0.5, "soil": "sand", "terrace": true, "color": [196, 150, 104], "ores": { "iron": 1, "copper": 1, "salt": 0.5, "stone": 2 } },
+    { "id": 4, "key": "shale", "name": "Shale", "k": 1.0, "talus": 0.55, "hardness": 0.3, "soil": "clay", "terrace": false, "color": [112, 104, 96], "ores": { "clay": 2, "salt": 0.5 } },
+    { "id": 5, "key": "basalt", "name": "Basalt", "k": 0.45, "talus": 1.1, "hardness": 0.85, "soil": "andisol", "terrace": true, "color": [72, 70, 74], "ores": { "ebony": 0.6, "iron": 1.5, "glass": 0.6 } },
+    { "id": 6, "key": "tuff", "name": "Tuff", "k": 1.1, "talus": 0.6, "hardness": 0.25, "soil": "andisol", "terrace": false, "color": [120, 108, 100], "ores": { "glass": 0.8, "ebony": 0.3 } },
+    { "id": 7, "key": "marble", "name": "Marble", "k": 0.5, "talus": 1.0, "hardness": 0.7, "soil": "loam", "terrace": false, "color": [226, 222, 214], "ores": { "moonstone": 1, "stone": 3, "silver": 1 } },
+    { "id": 8, "key": "alluvium", "name": "Alluvium", "k": 1.6, "talus": 0.4, "hardness": 0.05, "soil": "alluvium", "terrace": false, "color": [140, 120, 88], "ores": { "clay": 3, "gold": 0.3 } },
+    { "id": 9, "key": "slate", "name": "Slate", "k": 0.65, "talus": 1.05, "hardness": 0.7, "soil": "thin", "terrace": false, "color": [90, 96, 104], "ores": { "iron": 1.5, "silver": 1, "stone": 2 } },
+    { "id": 10, "key": "quartzite", "name": "Quartzite", "k": 0.3, "talus": 1.25, "hardness": 1.0, "soil": "thin", "terrace": false, "color": [210, 200, 190], "ores": { "gold": 1, "silver": 1, "orichalcum": 0.4 } },
+    { "id": 11, "key": "mudstone", "name": "Mudstone", "k": 1.3, "talus": 0.45, "hardness": 0.15, "soil": "mire", "terrace": false, "color": [92, 88, 70], "ores": { "clay": 3 } }
+  ]
+}

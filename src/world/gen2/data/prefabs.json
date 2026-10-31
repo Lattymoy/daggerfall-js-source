@@ -1,0 +1,22 @@
+{
+  "note": "WG2 prefabs. A prefab is a building or a structure an artist or a generator places: its role, its ground (footprint w x d, metres) and storeys, the styles that use it, its geometry's source - 'massing' (made from its numbers: a box and a roof) until an artist's asset replaces it, or 'arch3d' (a model of the player's own ARENA2 by id, read at run time, never shipped) or 'gltf' (an artist's file under public/, with its licence) - its doors and sockets (local metres, door facing +y toward the street), its collision and its licence. tools/wg2Prefab.mjs checks an artist's file against the budgets before it is added.",
+  "budgets": { "triangles": 6000, "materials": 4, "textureSide": 1024, "footprintMax": 60 },
+  "prefabs": [
+    { "id": "house-small", "role": "house", "footprint": [8, 9], "storeys": 1, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 4.5, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "house-large", "role": "house", "footprint": [12, 12], "storeys": 2, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 6, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "courtyard-house", "role": "house", "footprint": [16, 16], "storeys": 1, "styles": ["redguard", "khajiit", "altmer"], "source": { "kind": "massing", "courtyard": 7 }, "doors": [[0, 8, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "stilt-hut", "role": "house", "footprint": [8, 8], "storeys": 1, "styles": ["argonian", "bosmer"], "source": { "kind": "massing", "stilts": 2.5 }, "doors": [[0, 4, 2.5]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "shop", "role": "shop", "footprint": [10, 12], "storeys": 2, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 6, 0]], "sockets": [["sign", 0, 6.2, 3]], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "tavern", "role": "tavern", "footprint": [14, 16], "storeys": 2, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 8, 0]], "sockets": [["sign", 0, 8.2, 3.2]], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "temple", "role": "temple", "footprint": [16, 24], "storeys": 3, "styles": ["*"], "source": { "kind": "massing", "roof": "spire" }, "doors": [[0, 12, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "smithy", "role": "smith", "footprint": [10, 10], "storeys": 1, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 5, 0]], "sockets": [["forge", 2, 0, 0]], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "guildhall", "role": "guild", "footprint": [16, 18], "storeys": 3, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 9, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "bank", "role": "bank", "footprint": [12, 14], "storeys": 2, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 7, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "barracks", "role": "barracks", "footprint": [14, 20], "storeys": 2, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 10, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "warehouse", "role": "warehouse", "footprint": [14, 20], "storeys": 2, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 10, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "minehead", "role": "mine", "footprint": [10, 12], "storeys": 1, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 6, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "barn", "role": "barn", "footprint": [12, 16], "storeys": 1, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 8, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "harbourmaster", "role": "harbour", "footprint": [10, 12], "storeys": 2, "styles": ["*"], "source": { "kind": "massing" }, "doors": [[0, 6, 0]], "sockets": [], "collision": "footprint", "licence": "DFO, generated" },
+    { "id": "well", "role": "well", "footprint": [3, 3], "storeys": 0, "styles": ["*"], "source": { "kind": "massing" }, "doors": [], "sockets": [], "collision": "footprint", "licence": "DFO, generated" }
+  ]
+}

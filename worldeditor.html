@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>World Editor</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #101214; color: #e9e4d9; font: 12px system-ui, sans-serif; }
+    #app { display: grid; grid-template-columns: 290px 1fr 360px; height: 100vh; }
+    aside { overflow: auto; padding: 8px; border-right: 1px solid #2b323b; }
+    aside.right { border-right: 0; border-left: 1px solid #2b323b; }
+    h2 { font-size: 12px; margin: 10px 0 4px; color: #c08a3e; text-transform: uppercase; letter-spacing: 0.06em; }
+    label { display: grid; grid-template-columns: 90px 1fr; gap: 6px; align-items: center; margin: 3px 0; }
+    button, select, input { background: #1b2026; color: #e9e4d9; border: 1px solid #2b323b; padding: 3px 6px; font: inherit; }
+    button.on { border-color: #c08a3e; }
+    #map { width: 100%; height: 100%; cursor: crosshair; image-rendering: pixelated; background: #000; }
+    #view3d { width: 100%; height: 260px; background: #000; display: block; }
+    #out, #revs { white-space: pre-wrap; font: 11px ui-monospace, monospace; background: #0b0d0f; padding: 6px; max-height: 220px; overflow: auto; }
+    .row { display: flex; gap: 4px; flex-wrap: wrap; margin: 4px 0; }
+    #layers div { display: flex; gap: 4px; align-items: center; padding: 2px; }
+    #layers div.active { background: #22303a; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <aside>
+      <h2>Region</h2>
+      <label>Bake <select id="region"></select></label>
+      <label>Show <select id="show"><option>relief</option><option>biome</option><option>soil</option><option>rock</option><option>precip</option><option>temp</option></select></label>
+      <h2>Tool</h2>
+      <div class="row" id="tools"></div>
+      <label>Radius m <input id="radius" type="number" value="1600" min="100" step="100" /></label>
+      <label>Strength m <input id="strength" type="number" value="20" min="1" step="1" /></label>
+      <label>Level m <input id="level" type="number" value="600" step="10" /></label>
+      <label>Biome <select id="biome"></select></label>
+      <label>Type <select id="stype"></select></label>
+      <label>Style <select id="sstyle"></select></label>
+      <label>Seed <input id="seed" type="number" value="1529170801" /></label>
+      <h2>Layers</h2>
+      <div id="layers"></div>
+      <div class="row"><button id="addLayer">Add layer</button><button id="undo">Undo</button><button id="redo">Redo</button></div>
+      <h2>Package</h2>
+      <div class="row"><button id="export">Export</button><input id="import" type="file" accept=".json" /></div>
+    </aside>
+    <main><canvas id="map"></canvas></main>
+    <aside class="right">
+      <h2>3D view of the pixel under the last click</h2>
+      <canvas id="view3d"></canvas>
+      <h2>Checks</h2>
+      <div id="out"></div>
+      <h2>Publishing</h2>
+      <label>You <input id="who" value="designer" /></label>
+      <label>Note <input id="note" value="" /></label>
+      <div class="row"><button id="draft">Save draft</button><button id="advance">Advance last</button><button id="rollback">Roll back</button></div>
+      <div id="revs"></div>
+    </aside>
+  </div>
+  <script type="module" src="/src/tools/worldEditor.js"></script>
+</body>
+</html>

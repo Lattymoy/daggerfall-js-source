@@ -408,12 +408,13 @@ test('TAMRIEL3 worker: setTamriel sets the trace and the fit on the host\'s modu
   assert.equal(last.m.trace.dist, undefined, 'the field is remade on the far side');
   c.setTamriel({ trace: null, fit: null });
   assert.equal(tamrielTrace(), null); assert.equal(tamrielFit().ppu, PIXELS_PER_PICTURE_UNIT);
-  assert.deepEqual(posted[posted.length - 2], { m: { t: 'tamriel', trace: null, fit: null }, t: [] });
+  // PIN MOVED (WG2, bible/03-World/World-2-Canon.md the seam): the published regions' bakes ride the message (none here)
+  assert.deepEqual(posted[posted.length - 2], { m: { t: 'tamriel', trace: null, fit: null, wg2: [] }, t: [] });
   const bare = new TerrainGenClient({ woods: { getHeightMapValue: () => 0 }, woodsBytes: null });
   bare.setTamriel({ trace, fit: { ox: 1, oy: 2, ppu: 18 } });
   assert.equal(tamrielFit().ox, 1, 'the fallback kernel\'s own state, no worker');
   const worker = read('src/world/terrain/terrainGenWorker.js');
-  assert.match(worker, /if \(m\.t === 'tamriel'\) \{ setTamrielTrace\(m\.trace \?\? null\); setTamrielFit\(m\.fit \?\? null\); dropGroundCache\(\); return; \}/);
+  assert.match(worker, /if \(m\.t === 'tamriel'\) \{ setTamrielTrace\(m\.trace \?\? null\); setTamrielFit\(m\.fit \?\? null\); gen2Install\(m\.wg2 \?\? \[\], m\.fit \?\? null\); dropGroundCache\(\); return; \}/);   // PIN MOVED (WG2): the regions installed with the trace
   const land = read('src/world/tamriel/tamrielLand.js');
   for (const bad of ['document', 'globalThis.', 'fetch(', 'localStorage', 'getPref', 'ImgFile']) assert.ok(!land.includes(bad), `pure: no ${bad}`);
 });
@@ -440,7 +441,7 @@ test('TAMRIEL3 host: the world host traces the two files after the travel art, f
   assert.match(block, /if \(!trace\) \{ console\.warn\(/, 'a trace of nothing stands down');
   assert.match(block, /const fit = await keptBayFit\(\{ bayLand: \(x, y\) => !isWaterPixel\(filedClimate\(x, y, maps\.getClimateIndex\(x, y\)\), filedHeight\(x, y, woods\.getHeightMapValue\(x, y\)\)\), trace \}\);/, 'the Bay\'s land by the one water law');   // PIN MOVED (AUDIT FOUNDATION II L1): the files as they came
   assert.match(block, /const fitPx = fit \? \{ ox: fit\.ox \* fit\.ppu, oy: fit\.oy \* fit\.ppu, ppu: fit\.ppu \} : null;/, 'picture units to Tamriel pixels');
-  assert.match(block, /terrainGen\.setTamriel\(\{ trace, fit: fitPx \}\);/);
+  assert.match(block, /terrainGen\.setTamriel\(\{ trace, fit: fitPx, wg2: await gen2Bakes\(\) \}\);/);   // PIN MOVED (WG2): the published regions' bakes with them (scenes/gen2Host.js)
   assert.match(block, /StreamingWorldState\.frame = tamrielLand \? tamrielFrameInBay\(\) : null;/, 'the stream\'s frame at the new fit');
   assert.match(block, /\.catch\(\(e\) => console\.warn\('\[tamriel\] TMAP00I0\/TAMRIEL2 unavailable; the authored continent stands:'/);
   assert.equal((src.match(/tamrielTraceOn\(\)/g) ?? []).length, 1, 'the door read once');

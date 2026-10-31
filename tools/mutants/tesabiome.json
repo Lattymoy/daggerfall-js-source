@@ -182,8 +182,8 @@
   {
     "name": "TESA-BIOME-21-ground-province",
     "file": "src/world/tamriel/tamrielGround.js",
-    "old": "landLayer().climateAt(x, y) ?? tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
-    "new": "landLayer().climateAt(x, y) ?? (tamrielBiomeAt(x, y) ? CLIMATES.Woodlands : CLIMATES.Ocean);",
+    "old": "landLayer().climateAt(x, y) ?? gen2Climate(x, y) ?? tamrielBiomeAt(x, y)?.climate ?? CLIMATES.Ocean;",
+    "new": "landLayer().climateAt(x, y) ?? gen2Climate(x, y) ?? (tamrielBiomeAt(x, y) ? CLIMATES.Woodlands : CLIMATES.Ocean);",
     "tests": [
       "test/world/tesabiome_biomes.test.js"
     ]

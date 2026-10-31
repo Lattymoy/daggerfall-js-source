@@ -271,7 +271,6 @@
       "test/world/tamriel3.test.js"
     ]
   },
-  
   {
     "name": "TAMRIEL3-the-southern-border-edge-is-dropped",
     "file": "src/world/tamriel/tamrielLines.js",
@@ -282,7 +281,6 @@
       "test/world/smoothland.test.js"
     ]
   },
-  
   {
     "name": "TAMRIEL3-a-label-for-a-province-with-no-land",
     "file": "src/ui/tamrielInk.js",
@@ -349,8 +347,8 @@
   {
     "name": "TAMRIEL3-the-client-keeps-the-cache",
     "file": "src/world/terrain/terrainGenClient.js",
-    "old": "    setTamrielFit(fit);\n    dropGroundCache();",
-    "new": "    setTamrielFit(fit);",
+    "old": "    gen2Install(wg2, fit);   // WG2: the published regions' bakes, read against this fit (bible/03-World/World-2-Canon.md)\n    dropGroundCache();",
+    "new": "    gen2Install(wg2, fit);   // WG2: the published regions' bakes, read against this fit (bible/03-World/World-2-Canon.md)",
     "tests": [
       "test/world/tamriel3.test.js"
     ]
@@ -368,8 +366,8 @@
   {
     "name": "TAMRIEL3-the-worker-keeps-its-cache",
     "file": "src/world/terrain/terrainGenWorker.js",
-    "old": "if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); dropGroundCache(); return; }",
-    "new": "if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); return; }",
+    "old": "if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); gen2Install(m.wg2 ?? [], m.fit ?? null); dropGroundCache(); return; }",
+    "new": "if (m.t === 'tamriel') { setTamrielTrace(m.trace ?? null); setTamrielFit(m.fit ?? null); gen2Install(m.wg2 ?? [], m.fit ?? null); return; }",
     "tests": [
       "test/world/tamriel3.test.js"
     ]

@@ -1,0 +1,237 @@
+[
+  {
+    "name": "WG2-exact-pow-let-in",
+    "file": "src/world/gen2/exact.js",
+    "old": "'Math.log10', 'Math.pow', 'Math.hypot'",
+    "new": "'Math.log10', 'Math.hypot'",
+    "tests": [
+      "test/world/gen2/wg2_foundation.test.js"
+    ]
+  },
+  {
+    "name": "WG2-noise-fade",
+    "file": "src/world/gen2/exact.js",
+    "old": "const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);",
+    "new": "const fade = (t) => t * t * (3 - 2 * t);",
+    "tests": [
+      "test/world/gen2/wg2_foundation.test.js"
+    ]
+  },
+  {
+    "name": "WG2-bay-reach",
+    "file": "src/world/gen2/manifest.js",
+    "old": "export const BAY_REACH = 14;",
+    "new": "export const BAY_REACH = 13;",
+    "tests": [
+      "test/world/gen2/wg2_foundation.test.js"
+    ]
+  },
+  {
+    "name": "WG2-ground-print-blind-to-rebake",
+    "file": "src/world/gen2/manifest.js",
+    "old": "({ id: r.id, rect: r.rect, print: r.print, generator: r.generator })",
+    "new": "({ id: r.id, rect: r.rect, generator: r.generator })",
+    "tests": [
+      "test/world/gen2/wg2_foundation.test.js"
+    ]
+  },
+  {
+    "name": "WG2-basin-ignored",
+    "file": "src/world/gen2/stageGraph.js",
+    "old": "reach < 0 ? (o.basinOf ? union(r, o.basinOf(r)) : bounds) : grow(r, reach)",
+    "new": "reach < 0 ? bounds : grow(r, reach)",
+    "tests": [
+      "test/world/gen2/wg2_foundation.test.js"
+    ]
+  },
+  {
+    "name": "WG2-resources-reach",
+    "file": "src/world/gen2/stageGraph.js",
+    "old": "resources: { reads: ['geology', 'vegetation', 'hydrology', 'soil'], version: 1, reach: 2 },",
+    "new": "resources: { reads: ['geology', 'vegetation', 'hydrology', 'soil'], version: 1, reach: 3 },",
+    "tests": [
+      "test/world/gen2/wg2_foundation.test.js"
+    ]
+  },
+  {
+    "name": "WG2-terminal-lake-spills",
+    "file": "src/world/gen2/hydrology.js",
+    "old": "        Q[k] = 0;\n",
+    "new": "        Q[k] = inflowYr / YEAR_S;\n",
+    "tests": [
+      "test/world/gen2/wg2_terrain.test.js",
+      "test/world/gen2/wg2_bakes.test.js"
+    ]
+  },
+  {
+    "name": "WG2-oasis-unpainted",
+    "file": "src/world/gen2/biome.js",
+    "old": "air.precip.data[k] < 600 && out.data[k] !== B('lake')",
+    "new": "air.precip.data[k] < 0 && out.data[k] !== B('lake')",
+    "tests": [
+      "test/world/gen2/wg2_bakes.test.js"
+    ]
+  },
+  {
+    "name": "WG2-dunes-flat",
+    "file": "src/world/gen2/biome.js",
+    "old": "export const DUNE_M = 26;",
+    "new": "export const DUNE_M = 0;",
+    "tests": [
+      "test/world/gen2/wg2_bakes.test.js"
+    ]
+  },
+  {
+    "name": "WG2-orographic-none",
+    "file": "src/world/gen2/climate.js",
+    "old": "export const OROGRAPHIC = 2.4;",
+    "new": "export const OROGRAPHIC = 0;",
+    "tests": [
+      "test/world/gen2/wg2_bakes.test.js"
+    ]
+  },
+  {
+    "name": "WG2-edge-unblended",
+    "file": "src/world/gen2/regionSampler.js",
+    "old": "      return smoothstep(0, BLEND_PX, e);",
+    "new": "      return e > 0 ? 1 : 0;",
+    "tests": [
+      "test/world/gen2/wg2_seam.test.js"
+    ]
+  },
+  {
+    "name": "WG2-any-fit-taken",
+    "file": "src/world/gen2/gen2Ground.js",
+    "old": "if (!fit || f.ox !== fit.ox || f.oy !== fit.oy || f.ppu !== fit.ppu) {",
+    "new": "if (!fit) {",
+    "tests": [
+      "test/world/gen2/wg2_seam.test.js"
+    ]
+  },
+  {
+    "name": "WG2-climate-never",
+    "file": "src/world/gen2/gen2Ground.js",
+    "old": "r.weight(px + 0.5, py + 0.5) >= 0.5 ? r.climateAt(px, py) : undefined;",
+    "new": "r.weight(px + 0.5, py + 0.5) > 1 ? r.climateAt(px, py) : undefined;",
+    "tests": [
+      "test/world/gen2/wg2_seam.test.js"
+    ]
+  },
+  {
+    "name": "WG2-byte-hook-unasked",
+    "file": "src/world/tamriel/tamrielGround.js",
+    "old": "  byte = gen2Byte(x, y, byte) ?? byte;   // WG2 (bible/03-World/World-2-Canon.md): a published region's ground over the law\n",
+    "new": "",
+    "tests": [
+      "test/world/gen2/wg2_seam.test.js"
+    ]
+  },
+  {
+    "name": "WG2-plinth-buried",
+    "file": "src/world/gen2/settle/settlementGen.js",
+    "old": "if (hi - lo <= PLINTH_M) return { kind: 'plinth', level: hi + 0.2, lo };",
+    "new": "if (hi - lo <= PLINTH_M) return { kind: 'plinth', level: lo, lo };",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-no-dock",
+    "file": "src/world/gen2/settle/settlementGen.js",
+    "old": "    if (bk >= 0) docks.push(",
+    "new": "    if (bk < 0) docks.push(",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-legacy-id-blind-to-layout",
+    "file": "src/world/gen2/settle/buildingRecord.js",
+    "old": "`rmb:${mapId >>> 0}:${key}@${layout || 'classic'}`",
+    "new": "`rmb:${mapId >>> 0}:${key}@classic`",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-tavern-read-as-shop",
+    "file": "src/world/gen2/settle/buildingRecord.js",
+    "old": "  if (type === T.Tavern) return 'tavern';",
+    "new": "  if (type === T.Tavern) return 'shop';",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-ids-never-kept",
+    "file": "src/world/gen2/settle/buildingRecord.js",
+    "old": "    const same = was && !used.has(was.id) && Math.abs(was.x - b.at.x) * 819.2 < 2 && Math.abs(was.y - b.at.y) * 819.2 < 2;",
+    "new": "    const same = false;",
+    "tests": [
+      "test/world/gen2/wg2_settlements.test.js"
+    ]
+  },
+  {
+    "name": "WG2-self-approval",
+    "file": "src/world/gen2/edit/revisions.js",
+    "old": "  if (rev.state === 'review' && step.by === rev.author) why.push('a revision is approved by someone other than its author');\n",
+    "new": "",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-staging-skipped",
+    "file": "src/world/gen2/edit/revisions.js",
+    "old": "  if (rev.state === 'staging' && !step.staged) why.push('its staging checks have not passed');\n",
+    "new": "",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-home-unguarded",
+    "file": "src/world/gen2/edit/propertyGuard.js",
+    "old": "* 819.2 <= op.r + GUARD_PX * 819.2;",
+    "new": "* 819.2 <= 0;",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-package-print-unread",
+    "file": "src/world/gen2/edit/contentPackage.js",
+    "old": "  if (print(body) !== p) why.push('its print does not match: changed on the way');\n",
+    "new": "",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-triangle-budget-doubled",
+    "file": "src/world/gen2/edit/prefabCheck.js",
+    "old": "  if (n.triangles > PREFAB_BUDGETS.triangles) out.push",
+    "new": "  if (n.triangles > PREFAB_BUDGETS.triangles * 2) out.push",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-hidden-layer-applied",
+    "file": "src/world/gen2/edit/editLayers.js",
+    "old": "  for (const L of doc.layers) {\n    if (!L.visible) continue;\n    for (const op of L.ops) {\n      if (!BRUSHES.has(op.kind)) continue;",
+    "new": "  for (const L of doc.layers) {\n    for (const op of L.ops) {\n      if (!BRUSHES.has(op.kind)) continue;",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  },
+  {
+    "name": "WG2-redo-kept-after-change",
+    "file": "src/world/gen2/edit/editHistory.js",
+    "old": ".slice(-LIMIT), now: doc, future: [] });",
+    "new": ".slice(-LIMIT), now: doc, future: h.future });",
+    "tests": [
+      "test/world/gen2/wg2_editor.test.js"
+    ]
+  }
+]
