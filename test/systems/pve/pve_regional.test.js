@@ -90,3 +90,15 @@ test('no zone is left with nothing to meet in any band, day or night', () => {
     assert.ok(p.pool.length > 0, `${k} ${band} ${met}`);
   }
 });
+
+test('an Enemy Expansion creature drops as a template creature: its level the tier, a creature\'s gear share, its rank\'s pieces', async () => {
+  const { templateGearKinds, templateDropSource } = await import('../../../src/systems/pve/pveDrops.js');
+  const troll = { pveTemplate: 'troll-elder', pveCategory: 'strong', mobileType: SPECIES_BY_KEY.get('troll').body, level: 37 };
+  assert.equal(templateDropSource(troll, { tier: 1 }).tier, 37);
+  let gear = 0, n = 2000, i = 0;
+  const seq = () => ((i = (i * 1103515245 + 12345) % 2147483648) / 2147483648);
+  for (let k = 0; k < n; k++) if (templateGearKinds({ ...troll, pveCategory: 'normal' }, seq).some((x) => x === 'weapon' || x === 'armor')) gear++;
+  assert.ok(gear / n > 0.2 && gear / n < 0.4, String(gear / n));   // DROP_CREATURE_GEAR 0.3: read as a creature, not a person
+  assert.ok(!templateGearKinds({ ...troll, pveCategory: 'normal' }, () => 0).includes('cloth'), 'a creature wears no clothing');
+  assert.ok(templateGearKinds(troll, seq).length >= 1, 'a strong one carries its rank\'s piece');
+});

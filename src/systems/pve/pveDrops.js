@@ -5,7 +5,7 @@
 // foe may carry jewellery, a caster most often; a creature may carry a weapon or a piece of armour it took; a ranked foe
 // carries more. Daggerfall's tables give no creature gear and no foe jewellery. Ledger A (FIXED-PVE).
 import { spellRanked } from './pveSpellRank.js';
-import { SPECIES } from './pveSpecies.js';
+import { SPECIES_BY_BODY } from './pveSpecies.js';
 
 /** The share of template foes that carry a piece of jewellery: a body that casts, and any other. */
 export const DROP_JEWEL = Object.freeze({ caster: 0.5, other: 0.15 });
@@ -17,7 +17,7 @@ export const DROP_CLOTH = Object.freeze({ people: 0.3, cloak: 0.25 });
 /** The pieces of any kind a ranked foe carries past those, by its category. */
 export const DROP_RANK_PIECES = Object.freeze({ normal: 0, strong: 1, elite: 2, champion: 2, boss: 3, raidBoss: 5 });
 
-const bodyOf = (mobileType) => SPECIES.find((s) => s.body === mobileType) ?? null;
+const bodyOf = (mobileType) => SPECIES_BY_BODY.get(mobileType) ?? null;   // REGIONAL-PVE: Enemy Expansion's bodies too
 
 /** A template foe's corpse source over `base` (lootRarity.js corpseSource's): its own level the tier, its rank the boss
  *  ladder. Any other foe keeps `base`. @param {any} entity @param {any} base */
