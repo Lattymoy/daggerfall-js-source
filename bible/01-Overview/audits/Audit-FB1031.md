@@ -1,0 +1,69 @@
+# AUDIT FB1031 - FIELD FEEDBACK 2026-10-31 read cold, 2026-10-31
+
+The owner: *"Audit this"*, of FIELD FEEDBACK 2026-10-31 (`../bugs/Field-Bugs-2026-10-31.md`). Cold lanes read each
+slice in a frozen worktree, given its commits and the players' words, never its authors' conclusions. Every finding was
+reproduced with a probe on the real code and the freeware's data before it was reported, and its fix was pinned by a
+test that fails on the code as it stood. Each fix in code carries an `AUDIT FB1031 <id>` comment. Mutants:
+`tools/mutants/fb1031_benchstores.json`, `fb1031_craftbound.json`, `fb1031_light.json`, `fb1031_yard.json`,
+`fb1031_foes.json`, all dead.
+
+| Lane | Read | Found |
+|---|---|---|
+| PACK | STORES-AT-BENCH and PACK-SORT: every station, every store a Sort is offered on, every list whose order is state | 5 |
+| LIGHT | WINDOW-NIGHT and RED-MOUNTAIN-SEEN: both lighting lanes, every fog row and Land View | 4 |
+| YARD | YARD-WALLS: every house in BLOCKS.BSA, the service, mixed versions | 8 |
+| FOES | TRUNK-FOES and BAND-NEAR: every nature record, every flight, the band's stand | 7 |
+| CRAFT | SMITH-RRI, BUTCHER-STORES, DAEDRIC-RARE: the made pieces, mixed builds, every Daedric source | 4 |
+| BOUND | BOUND-DESTROY: every Aetheric set by its producer, the service route, both skins | 5 |
+
+## PACK
+
+**P1.** A forge's press lands on the Anvil, the second station worked there; the bar's own put-in repainted it over the
+Forge, out of view. The landing is kept (`profPages.js` `_stores.benchAt`). **P2.** A reset left the bench's last
+answer, and one that came while the player followed Your Stores read on neither page; it is the Stores page's too.
+**P3.** STORES-AT-BENCH had no mutant record. **P4.** The ridden horse is the pack's first, and Sort ordered priced
+Stable horses by value, so it changed the horse ridden; horses now tie (`packSort.js`). **P5.** The new strings were not
+in the catalog; they are, drafted in the thirteen complete languages.
+
+## LIGHT
+
+**L1.** A pane's glow fell to the night's gain in one capture at 17:49, eleven minutes before the room's own night; Day
+only went out whole. Both ease over the sun's first 0.15 of height (`windowLight.js` wlDayShare). **L2.** Under weather
+the far views stood wholly in fog, a seam at a near Land View (54% of the ground still seen at Land View 1 in a
+sprinkle); they fog by the weather's own law (`horizonHaze.js`). **L3.** The record overclaimed: at night in rain the
+fog is the sky's colour and the cone is not seen. **L4.** The fog colour flipped to grey at the rain's density; it
+eases in (Port-Ledger, THE GREY EASES IN). OPEN: DFU's grey at night in snow and ash, the owner's call.
+
+## YARD
+
+**Y1.** Above 4 m a piece had to stand on or against its house, but the law read the house's box: open ground inside it
+took a free piece to the roof in 4,309 of 6,016 houses. It reads the house's ground, roofs and faces; 44 remain, each
+under a roof or against a face. **Y2.** A Duplicate of a lantern on a -z wall, and a flipped picture moved onto a wall,
+hung upside down. **Y3.** The catalog (with P5). **Y4, OPEN.** The service knows no lots, so a crafted client can
+stand a free piece to 8 m. **Y5.** Imperial City courts keep 4 m: each stands 0.3 m off its house. **Y6.** The service
+stored a crafted hung tree; neither end takes one (acct234). **Y7, Y8.** The record's mixed versions and measures.
+
+## FOES
+
+**F1.** A ray opened a cover proxy whole when a struck body stood in it, and the clamps leave bodies inside wide
+flats' cover (35 nature records) and young trees' crowns: a foe pressed behind a rock was shot through it, and the
+player was hit behind one. A ray with an end in a proxy now meets it at its middle (`cover.js`): in front is struck,
+behind is hidden both ways. **F2, F3.** Each flight lists only what it may strike, duels and companions included.
+**F4.** A foe on a trunk's middle line stood there for good; it steps round. **F5.** A record named a navmesh the
+street has not. **F6.** Three unpinned laws. **B1.** A band met head-on stood mid-screen; it stands outside the view.
+
+## CRAFT
+
+**C1.** A Stores-butchery row asked again by an older build named the meat, which that build mints: Stores and bag
+both. The repeat names it none. **C2, OPEN.** The gate Warden's Ruhn's Regalia (Daedric) falls on a sixth of its kills,
+now the largest Daedric source; the owner's call. **C3.** A sworn revenant refused a made Light Flail or Archer's Axe.
+**C4.** FIRST-BUDGET's figures. Unconfirmed: an older build cannot mint a new recipe bought at the market, as for any
+recipe ever added.
+
+## BOUND
+
+**D1.** A lost let-go kept its id for good: five cakes found again and destroyed replayed it, said Destroyed, and moved
+nothing. A count heard since makes a new ask. **D2.** The catalog (with P5). **D3.** The let-go's hourly budget
+pinned. **D4.** The record: the classic wagon takes gear. **D5.** A priced ware the realm locked still dismantled for
+Embers, which AUTO-HOLD had shut for salvage; it is refused, and destroyed for nothing. The account deploy's path filter
+names `itemBound.js` since.
