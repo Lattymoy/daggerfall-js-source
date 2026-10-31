@@ -55,8 +55,9 @@ step indoors never leaves the picture white.
 **The sound.** The neigh is Daggerfall's own (DAGGER.SND `AnimalHorse`), pitched down. The boom is made at runtime
 (`newEraBoomSamples`) under Daggerfall's thunder (`LightningThunder`, `ThunderRoll`) pitched down. The rumble, the
 four engines' loop, each bomb's whistle, the cracking, the shards' tearing and the voice's deep hum are made at
-runtime too. The voice is the browser's own speech, as deep and slow as it goes, at the game's Sound Volume; where a
-browser has none, the words are still on the canvas.
+runtime too. The voice is the browser's own speech in the player's language (a voice of that language, the deepest
+first), as deep and slow as it goes, at the game's Sound Volume; where a browser has none, the words are still on the
+canvas. Every line is translated in each language's table, as the game's other lines are.
 
 **The shake** (`newEraShake`) goes through the camera's one shaker, Better Ambience's `weaponKick`, under the player's
 own Camera Shake setting.
