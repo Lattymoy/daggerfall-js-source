@@ -63,8 +63,16 @@ export class ClassFile {
     const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     let o = 0;
     const u8 = () => v.getUint8(o++);
-    const u16 = () => { const x = v.getUint16(o, true); o += 2; return x; };
-    const u32 = () => { const x = v.getUint32(o, true); o += 4; return x; };
+    const u16 = () => {
+      const x = v.getUint16(o, true);
+      o += 2;
+      return x;
+    };
+    const u32 = () => {
+      const x = v.getUint32(o, true);
+      o += 4;
+      return x;
+    };
     const c = /** @type {ClassCareer} */ ({});
     c.resistanceFlags = u8();
     c.immunityFlags = u8();
@@ -77,7 +85,9 @@ export class ClassFile {
     c.spellAbsorptionFlags = u8();
     c.attackModifierFlags = u8();
     c.forbiddenMaterialsFlags = u16();
-    const a = u8(), b = u8(), cc = u8();
+    const a = u8(),
+      b = u8(),
+      cc = u8();
     c.weaponArmorShieldsBitfield = ((a << 16) | (cc << 8) | b) >>> 0;
     c.primarySkills = [u8(), u8(), u8()];
     c.majorSkills = [u8(), u8(), u8()];
@@ -85,7 +95,7 @@ export class ClassFile {
     let name = '';
     for (let i = 0; i < 16; i++) name += String.fromCharCode(u8());
     c.name = name.split('\0')[0];
-    o += 8;   // Unknown2
+    o += 8; // Unknown2
     c.hitPointsPerLevel = u16();
     // 16.16 fixed-point, then DFU rounds to two decimals via string
     // format (DFCareer.StructureData:585-588) - stored CONVERTED;

@@ -101,8 +101,8 @@
   {
     "name": "CSA-A-tiled-scroll-sign",
     "file": "src/formats/derivedTexture.js",
-    "old": "const row = ((y + scroll) % h + h) % h;",
-    "new": "const row = ((y - scroll) % h + h) % h;",
+    "old": "    const row = (((y + scroll) % h) + h) % h;",
+    "new": "    const row = (((y - scroll) % h) + h) % h;",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "CSA-A-tiled-phase-dropped",
     "file": "src/formats/derivedTexture.js",
-    "old": "    const sy = ((y + py) % src.height + src.height) % src.height;\n    const row",
-    "new": "    const sy = ((y) % src.height + src.height) % src.height;\n    const row",
+    "old": "  for (let y = 0; y < h; y++) {\n    const sy = (((y + py) % src.height) + src.height) % src.height;\n    const row = (((y + scroll) % h) + h) % h;",
+    "new": "  for (let y = 0; y < h; y++) {\n    const sy = ((y % src.height) + src.height) % src.height;\n    const row = (((y + scroll) % h) + h) % h;",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -119,8 +119,8 @@
   {
     "name": "CSA-A-tiled-key-keeps-alpha",
     "file": "src/formats/derivedTexture.js",
-    "old": "data[d] = src.data[s]; data[d + 1] = src.data[s + 1]; data[d + 2] = src.data[s + 2]; data[d + 3] = 255;\n    }\n  }\n  return { width: w, height: h, data };\n}",
-    "new": "data[d] = src.data[s]; data[d + 1] = src.data[s + 1]; data[d + 2] = src.data[s + 2];\n    }\n  }\n  return { width: w, height: h, data };\n}",
+    "old": "      data[d + 3] = 255;\n    }",
+    "new": "    }",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]
@@ -128,8 +128,8 @@
   {
     "name": "CSA-A-derive-key-guard-dropped",
     "file": "src/formats/derivedTexture.js",
-    "old": "      if (p[i] === k[0] && p[i + 1] === k[1] && p[i + 2] === k[2] && p[i + 3] === k[3]) throw new Error(`derived texture: the picture holds the key colour ${key} itself at ${x},${y}`);\n",
-    "new": "",
+    "old": "      if (p[i] === k[0] && p[i + 1] === k[1] && p[i + 2] === k[2] && p[i + 3] === k[3])\n        throw new Error(`derived texture: the picture holds the key colour ${key} itself at ${x},${y}`);\n      const s = (sy * src.width + ((((x + px) % src.width) + src.width) % src.width)) * 4;",
+    "new": "      const s = (sy * src.width + ((((x + px) % src.width) + src.width) % src.width)) * 4;",
     "tests": [
       "test/formats/csa_textures.test.js"
     ]

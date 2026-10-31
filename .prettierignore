@@ -280,6 +280,15 @@
 !/src/formats/bookFile.js
 !/src/formats/bsaFile.js
 !/src/formats/bssFile.js
+!/src/formats/cfaFile.js
+!/src/formats/characterRecord.js
+!/src/formats/cifRciFile.js
+!/src/formats/classFile.js
+!/src/formats/color32Order.js
+!/src/formats/crunch.js
+!/src/formats/derivedTexture.js
+!/src/formats/dfRandom.js
+!/src/formats/dotnetResources.js
 !/src/formats/imgFile.js
 !/src/formats/lz4.js
 !/src/formats/magicDef.js
