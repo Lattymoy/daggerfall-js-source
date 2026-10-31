@@ -67,8 +67,8 @@
   {
     "name": "SURVTENT-3-the-tent-art-is-not-registered-at-all",
     "file": "src/systems/survival/items.js",
-    "old": "    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, false)),",
-    "new": "",
+    "old": "  return addVendorTextures([\n    ...VENDOR_ICON_FILES.map((f) => vendorEntry(f, load, true)),\n    ...VENDOR_TENT_FILES.map((f) => vendorEntry(f, load, false)),\n  ]);",
+    "new": "  return addVendorTextures([...VENDOR_ICON_FILES.map((f) => vendorEntry(f, load, true))]);",
     "tests": [
       "test/systems/survart_icons.test.js",
       "test/systems/surv2_items.test.js"

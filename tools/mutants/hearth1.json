@@ -56,8 +56,8 @@
   {
     "name": "HEARTH1-the-reach-bound-opens-so-a-fire-exactly-at-it-is-out-where-a-camps-is-in",
     "file": "src/systems/survival/hearth.js",
-    "old": "    if (d <= bestD) { best = h; bestD = d; }",
-    "new": "    if (d < bestD) { best = h; bestD = d; }",
+    "old": "    if (d <= bestD) {",
+    "new": "    if (d < bestD) {",
     "tests": [
       "test/systems/survival/hearth1_worldfires.test.js"
     ]
@@ -229,8 +229,8 @@
   {
     "name": "AUDIT-HEARTH1-F2-hearthNear-cannot-stop-early-so-the-saving-is-given-back",
     "file": "src/systems/survival/hearth.js",
-    "old": "    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;\n  }\n  return false;",
-    "new": "  }\n  for (let i = 0; i < len; i++) {\n    const h = hearths[i];\n    const dx = h.x - pos[0], dy = h.y - pos[1], dz = h.z - pos[2];\n    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;\n  }\n  return false;",
+    "old": "    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;",
+    "new": "  }\n  for (let i = 0; i < len; i++) {\n    const h = hearths[i];\n    const dx = h.x - pos[0],\n      dy = h.y - pos[1],\n      dz = h.z - pos[2];\n    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;",
     "tests": [
       "test/systems/survival/hearth1_worldfires.test.js"
     ]

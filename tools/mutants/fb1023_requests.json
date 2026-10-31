@@ -102,8 +102,8 @@
   {
     "name": "HEARTY-MEAL-ungranted",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  heartyMeal(s, end);",
-    "new": "",
+    "old": "  heartyMeal(s, end); // HEARTY-MEAL (needs.js): fed, quenched, and held so for a while - the meal served whole, never one wasted",
+    "new": "  // HEARTY-MEAL (needs.js): fed, quenched, and held so for a while - the meal served whole, never one wasted",
     "tests": [
       "test/systems/survival/hearty_meal.test.js"
     ],

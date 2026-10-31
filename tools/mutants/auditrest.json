@@ -105,8 +105,8 @@
   {
     "name": "AUDITREST-F8-a-worn-tent-stokes",
     "file": "src/systems/survival/camp.js",
-    "old": "  if ((camp.wear | 0) <= 0) return false;   // REST2: no fuel, no fire",
-    "new": "  if (camp.kind === CAMP_KIND.Fire && (camp.wear | 0) <= 0) return false;   // REST2: no fuel, no fire",
+    "old": "  if ((camp.wear | 0) <= 0) return false; // REST2: no fuel, no fire - AUDIT REST F8: and a worn-through tent's neither",
+    "new": "  if (camp.kind === CAMP_KIND.Fire && (camp.wear | 0) <= 0) return false; // REST2: no fuel, no fire - AUDIT REST F8: and a worn-through tent's neither",
     "tests": [
       "test/systems/survival/auditrest.test.js",
       "test/systems/survival/surv3_camps.test.js"
@@ -142,8 +142,8 @@
   {
     "name": "AUDITREST-F12-the-old-kit-fire-stands",
     "file": "src/systems/survival/camp.js",
-    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now);",
-    "new": "export const campExpired = (camp, now) => !!camp?.jar && !fireLit(camp, now);",
+    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now); // REST6: a fire with no fuel of its own - an Ember Jar's, AUDIT REST F12: an old save's kit fire - goes with its embers",
+    "new": "export const campExpired = (camp, now) => !!camp?.jar && !fireLit(camp, now); // REST6: a fire with no fuel of its own - an Ember Jar's, AUDIT REST F12: an old save's kit fire - goes with its embers",
     "tests": [
       "test/systems/survival/auditrest.test.js",
       "test/systems/survival/surv3_camps.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "AUDITREST-F12-a-campfire-without-its-mark",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (kind === CAMP_KIND.Fire) camp.fuel = true;",
-    "new": "  if (false) camp.fuel = true;",
+    "old": "  if (kind === CAMP_KIND.Fire) camp.fuel = true; // AUDIT REST F12: a Campfire's own fuel - cold, it stands (an old save's kit fire, none, is swept)",
+    "new": "  if (false) camp.fuel = true; // AUDIT REST F12: a Campfire's own fuel - cold, it stands (an old save's kit fire, none, is swept)",
     "tests": [
       "test/systems/survival/auditrest.test.js",
       "test/systems/survival/rest6_consumables.test.js",

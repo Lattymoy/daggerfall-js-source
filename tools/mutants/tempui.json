@@ -32,8 +32,8 @@
   {
     "name": "TEMPUI-resistance-unsaid",
     "file": "src/systems/survival/temperature.js",
-    "old": "worldResist: natTemp - air,",
-    "new": "worldResist: 0,",
+    "old": "    worldResist: natTemp - air,",
+    "new": "    worldResist: 0,",
     "why": "the resistance missing from the sum",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "TEMPUI-the-ground-unsaid",
     "file": "src/systems/survival/temperature.js",
-    "old": "dungeon: air - natural,",
-    "new": "dungeon: 0,",
+    "old": "    dungeon: air - natural,",
+    "new": "    dungeon: 0,",
     "why": "the dungeon's correction missing from the sum",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "TEMPUI-the-drink-unsaid",
     "file": "src/systems/survival/temperature.js",
-    "old": "waterCools: watered - unwatered,",
-    "new": "waterCools: 0,",
+    "old": "    waterCools: watered - unwatered,",
+    "new": "    waterCools: 0,",
     "why": "the drink to hand missing from the sum",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "TEMPUI-the-garment-unsaid",
     "file": "src/systems/survival/temperature.js",
-    "old": "degrees: felt - watered,",
-    "new": "degrees: 0,",
+    "old": "    degrees: felt - watered,",
+    "new": "    degrees: 0,",
     "why": "a Legendary's degrees missing from the sum",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "TEMPUI-mountains-misnamed",
     "file": "src/systems/survival/temperature.js",
-    "old": "[CLIMATES.Mountain]: 'Mountains',",
-    "new": "[CLIMATES.Mountain]: 'Mountain',",
+    "old": "  [CLIMATES.Mountain]: 'Mountains',",
+    "new": "  [CLIMATES.Mountain]: 'Mountain',",
     "why": "the land named otherwise",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "TEMPUI-no-dry-note",
     "file": "src/systems/survival/temperature.js",
-    "old": "temp.clothesDry > temp.clothes && temp.wet > 0 ? `${signedDegrees(temp.clothesDry)} dry` : null",
-    "new": "null",
+    "old": "  add(\n    'clothes',\n    'Clothing',\n    temp.clothes,\n    temp.clothesDry > temp.clothes && temp.wet > 0 ? `${signedDegrees(temp.clothesDry)} dry` : null,\n  );",
+    "new": "  add('clothes', 'Clothing', temp.clothes, null);",
     "why": "the clothing's dry warmth unsaid",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "TEMPUI-no-metal-note",
     "file": "src/systems/survival/temperature.js",
-    "old": "temp.metal > 0 ? 'hot metal' : temp.metal < 0 ? 'cold metal' : null",
-    "new": "null",
+    "old": "  add('armour', 'Armour', temp.armour, temp.metal > 0 ? 'hot metal' : temp.metal < 0 ? 'cold metal' : null); // `metal` is the heat the law laid on: the sun's, uncovered, or the cold's",
+    "new": "  add('armour', 'Armour', temp.armour, null); // `metal` is the heat the law laid on: the sun's, uncovered, or the cold's",
     "why": "the armour's metal unsaid",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "TEMPUI-no-plus-sign",
     "file": "src/systems/survival/temperature.js",
-    "old": "return `${v > 0 ? '+' : v < 0 ? '-' : ''}${Math.abs(v)}\\u00b0`;",
-    "new": "return `${v < 0 ? '-' : ''}${Math.abs(v)}\\u00b0`;",
+    "old": "  return `${v > 0 ? '+' : v < 0 ? '-' : ''}${Math.abs(v)}\\u00b0`;",
+    "new": "  return `${v < 0 ? '-' : ''}${Math.abs(v)}\\u00b0`;",
     "why": "a warm reading unsigned",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -152,8 +152,8 @@
   {
     "name": "TEMPUI-E8-the-drink-drops-to-nothing",
     "file": "src/systems/survival/temperature.js",
-    "old": "felt = Math.max(felt - WATER_COOLS, 9);",
-    "new": "felt = Math.max(felt - WATER_COOLS, 0);",
+    "old": "  if (felt > 9 && ctx.hasWater && !ctx.vampire) felt = Math.max(felt - WATER_COOLS, 9); // AUDIT TEMP-UI E8: never under where the cooling starts - a reading of 10 fell to 0 and 19 to 9, a warmer day reading cooler",
+    "new": "  if (felt > 9 && ctx.hasWater && !ctx.vampire) felt = Math.max(felt - WATER_COOLS, 0); // AUDIT TEMP-UI E8: never under where the cooling starts - a reading of 10 fell to 0 and 19 to 9, a warmer day reading cooler",
     "why": "AUDIT TEMP-UI E8: a warmer day read cooler",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -254,8 +254,8 @@
   {
     "name": "TEMPUI-the-page-without-the-number",
     "file": "src/systems/survival/status.js",
-    "old": "STATUS_TEXT.temp(word), STATUS_TEXT.felt(s.felt)); }",
-    "new": "STATUS_TEXT.temp(word)); }",
+    "old": "    lines.push(warmedBy(s, word) ? STATUS_TEXT.warmedByFire : STATUS_TEXT.temp(word), STATUS_TEXT.felt(s.felt));",
+    "new": "    lines.push(warmedBy(s, word) ? STATUS_TEXT.warmedByFire : STATUS_TEXT.temp(word));",
     "why": "the status page says no number",
     "tests": [
       "test/systems/survival/tempui.test.js"
@@ -264,8 +264,8 @@
   {
     "name": "TEMPUI-the-degree-sign-on-the-page",
     "file": "src/systems/survival/status.js",
-    "old": "${signedDegrees(felt).replace('\\u00b0', '')} (comfortable",
-    "new": "${signedDegrees(felt)} (comfortable",
+    "old": "  felt: (felt) => `Felt temperature: ${signedDegrees(felt).replace('\\u00b0', '')} (comfortable from -10 to +10).`,",
+    "new": "  felt: (felt) => `Felt temperature: ${signedDegrees(felt)} (comfortable from -10 to +10).`,",
     "why": "a degree sign the classic faces cannot draw",
     "tests": [
       "test/systems/survival/tempui.test.js"

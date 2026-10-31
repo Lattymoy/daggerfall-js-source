@@ -149,8 +149,8 @@
   {
     "name": "REST6-the-jar-picked-up",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push",
-    "new": "  if (mine && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push",
+    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel))",
+    "new": "  if (mine && (camp.kind === CAMP_KIND.Tent || !!camp.fuel))",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
     ],
@@ -160,8 +160,8 @@
   {
     "name": "REST6-the-jar-never-swept",
     "file": "src/systems/survival/camp.js",
-    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now);",
-    "new": "export const campExpired = () => false;",
+    "old": "export const campExpired = (camp, now) => camp?.kind === CAMP_KIND.Fire && !camp.fuel && !fireLit(camp, now); // REST6: a fire with no fuel of its own - an Ember Jar's, AUDIT REST F12: an old save's kit fire - goes with its embers",
+    "new": "export const campExpired = () => false; // REST6: a fire with no fuel of its own - an Ember Jar's, AUDIT REST F12: an old save's kit fire - goes with its embers",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
     ],
@@ -170,8 +170,8 @@
   {
     "name": "REST6-the-jar-burns-a-day",
     "file": "src/systems/survival/camp.js",
-    "old": "camp.jar = true; camp.litUntil = now + EMBER_JAR_MINUTES;",
-    "new": "camp.jar = true;",
+    "old": "    camp.litUntil = now + EMBER_JAR_MINUTES;\n    if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;",
+    "new": "    if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;",
     "tests": [
       "test/systems/survival/rest6_consumables.test.js"
     ]

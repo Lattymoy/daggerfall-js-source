@@ -20,8 +20,8 @@
   {
     "name": "AUDIT-LOOT-II-A2-the-degrees-on-the-resistance",
     "file": "src/systems/survival/temperature.js",
-    "old": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0,",
-    "new": "    frostResist: (ctx?.frostResist ?? 0) + (Number(mods.coldDegrees) || 0), fireResist: (ctx?.fireResist ?? 0) + (Number(mods.heatDegrees) || 0),",
+    "old": "    coldDegrees: Number(mods.coldDegrees) || 0,\n    heatDegrees: Number(mods.heatDegrees) || 0,",
+    "new": "    frostResist: (ctx?.frostResist ?? 0) + (Number(mods.coldDegrees) || 0),\n    fireResist: (ctx?.fireResist ?? 0) + (Number(mods.heatDegrees) || 0),",
     "tests": [
       "test/systems/auditloot2.test.js",
       "test/systems/loot15_garments.test.js",

@@ -738,8 +738,8 @@
   {
     "name": "PROF7-slowrot-every-day",
     "file": "src/systems/survival/food.js",
-    "old": "if (kept % 2 === 1) continue; ",
-    "new": "",
+    "old": "        if (kept % 2 === 1) continue;\n        if (rotRoll(item, Math.floor(kept / 2), rolls)) n++;",
+    "new": "        if (rotRoll(item, Math.floor(kept / 2), rolls)) n++;",
     "tests": [
       "test/net/prof7_law.test.js"
     ]

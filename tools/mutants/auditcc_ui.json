@@ -152,8 +152,8 @@
   {
     "name": "AUDITCC-UI-S5-hungry-red",
     "file": "src/systems/survival/status.js",
-    "old": "if (key === 'hunger') return tires && stage === 'starving' ? 'danger' : 'warn';",
-    "new": "if (key === 'hunger') return tires && stage !== 'peckish' ? 'danger' : 'warn';",
+    "old": "  if (key === 'hunger') return tires && stage === 'starving' ? 'danger' : 'warn';",
+    "new": "  if (key === 'hunger') return tires && stage !== 'peckish' ? 'danger' : 'warn';",
     "why": "a Hungry chip red where Hungry charges nothing",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -162,8 +162,8 @@
   {
     "name": "AUDITCC-UI-S5-parched-amber",
     "file": "src/systems/survival/status.js",
-    "old": "(stage === 'parched' || stage === 'dehydrated')",
-    "new": "stage === 'dehydrated'",
+    "old": "  if (key === 'thirst') return tires && (stage === 'parched' || stage === 'dehydrated') ? 'danger' : 'warn';",
+    "new": "  if (key === 'thirst') return tires && stage === 'dehydrated' ? 'danger' : 'warn';",
     "why": "a costing Parched amber",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -172,8 +172,8 @@
   {
     "name": "AUDITCC-UI-S5-hard-tired-amber",
     "file": "src/systems/survival/status.js",
-    "old": "if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
-    "new": "if (key === 'sleep') return !held && (tires && stage === 'exhausted') ? 'danger' : 'warn';",
+    "old": "  if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
+    "new": "  if (key === 'sleep') return !held && tires && stage === 'exhausted' ? 'danger' : 'warn';",
     "why": "Hard's Tired and Drowsy amber while they take the attributes (the audit's S5)",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -182,8 +182,8 @@
   {
     "name": "AUDITCC-UI-S5-the-heat-s-edge-amber",
     "file": "src/systems/survival/status.js",
-    "old": "felt >= r.stamina.hotFrom",
-    "new": "felt > r.stamina.hotFrom",
+    "old": "    return tires && !warmed && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
+    "new": "    return tires && !warmed && (felt > r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
     "why": "a Warm of 20 in Hard amber while it charges",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -192,8 +192,8 @@
   {
     "name": "AUDITCC-UI-S5-the-cold-s-edge-amber",
     "file": "src/systems/survival/status.js",
-    "old": "felt <= r.stamina.coldFrom",
-    "new": "felt < r.stamina.coldFrom",
+    "old": "    return tires && !warmed && (felt >= r.stamina.hotFrom || felt <= r.stamina.coldFrom) ? 'danger' : 'warn';",
+    "new": "    return tires && !warmed && (felt >= r.stamina.hotFrom || felt < r.stamina.coldFrom) ? 'danger' : 'warn';",
     "why": "a Cold of -20 in Hard amber while it charges",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -202,8 +202,8 @@
   {
     "name": "AUDITCC-UI-S5-hard-stiff-amber",
     "file": "src/systems/survival/status.js",
-    "old": "if (key === 'stiff') return takes ? 'danger' : 'warn';",
-    "new": "if (key === 'stiff') return 'warn';",
+    "old": "  if (key === 'stiff') return takes ? 'danger' : 'warn';",
+    "new": "  if (key === 'stiff') return 'warn';",
     "why": "Hard's stiff morning amber while it takes the attributes",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -212,8 +212,8 @@
   {
     "name": "AUDITCC-UI-S5-the-stiff-chip-the-table-s",
     "file": "src/systems/survival/status.js",
-    "old": "out.push({ key: 'stiff', text: 'Stiff', level: needLevel('stiff', 'stiff', { rules: tier }) });",
-    "new": "out.push({ key: 'stiff', text: 'Stiff', level: 'warn' });",
+    "old": "  if (isStiff(s, now)) out.push({ key: 'stiff', text: 'Stiff', level: needLevel('stiff', 'stiff', { rules: tier }) });",
+    "new": "  if (isStiff(s, now)) out.push({ key: 'stiff', text: 'Stiff', level: 'warn' });",
     "why": "the strip's Stiff amber in every tier",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -222,8 +222,8 @@
   {
     "name": "AUDITCC-UI-S5-no-tier-is-hard",
     "file": "src/systems/survival/status.js",
-    "old": "const r = rules ?? SURVIVAL_RULES[SURVIVAL_DEFAULT];",
-    "new": "const r = rules ?? SURVIVAL_RULES.hard;",
+    "old": "  const r = rules ?? SURVIVAL_RULES[SURVIVAL_DEFAULT];",
+    "new": "  const r = rules ?? SURVIVAL_RULES.hard;",
     "why": "a reader that hands no tier read by Hard's, not the default's",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -292,8 +292,8 @@
   {
     "name": "AUDITCC-UI-S9-the-strip-s-fire-the-record-s",
     "file": "src/systems/survival/status.js",
-    "old": "warmed: live ? warmedByFire(tier, live.env, felt) : warmedBy(s, word) });",
-    "new": "warmed: warmedBy(s, word) });",
+    "old": "    push('temp', HUD_NEED_WORDS.temp, word, {\n      felt,\n      warmed: live ? warmedByFire(tier, live.env, felt) : warmedBy(s, word),\n    });",
+    "new": "    push('temp', HUD_NEED_WORDS.temp, word, { felt, warmed: warmedBy(s, word) });",
     "why": "a step to a fire: the chip red until the minute turns, the plate amber",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -342,8 +342,8 @@
   {
     "name": "AUDITCC-UI-S11-the-lines-read-the-record",
     "file": "src/systems/survival/status.js",
-    "old": "const kept = !!tierOf(s, rules).boons;",
-    "new": "const kept = Array.isArray(s.boons);",
+    "old": "  const kept = !!tierOf(s, rules).boons;",
+    "new": "  const kept = Array.isArray(s.boons);",
     "why": "the page's boons kept by the record, not the tier handed in",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -443,8 +443,8 @@
   {
     "name": "AUDITCC-UI-S14-the-cost-unsaid",
     "file": "src/systems/survival/status.js",
-    "old": "danger: 'it costs you'",
-    "new": "danger: 'red'",
+    "old": "export const LEVEL_WORDS = Object.freeze({ danger: 'it costs you', warn: 'no cost to you yet' });",
+    "new": "export const LEVEL_WORDS = Object.freeze({ danger: 'red', warn: 'no cost to you yet' });",
     "why": "the level said as its colour",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "AUDITCC-UI-S14-a-comfort-said",
     "file": "src/systems/survival/status.js",
-    "old": "(Object.hasOwn(LEVEL_WORDS, level) ? ",
-    "new": "(level ? ",
+    "old": "export const levelSaid = (word, level) =>\n  Object.hasOwn(LEVEL_WORDS, level) ? `${word} - ${LEVEL_WORDS[level]}` : word;",
+    "new": "export const levelSaid = (word, level) => (level ? `${word} - ${LEVEL_WORDS[level]}` : word);",
     "why": "a comfortable reading says \"undefined\"",
     "tests": [
       "test/systems/auditcc_ui.test.js"
@@ -583,8 +583,8 @@
   {
     "name": "AUDITCC-UI-R11-the-campfire-for-the-hearth",
     "file": "src/systems/survival/status.js",
-    "old": "own for the need it rewards, a flame for the hearth (its own - REST1's Next night is the campfire), a sparkle for",
-    "new": "own for the need it rewards, the campfire for the hearth, a sparkle for",
+    "old": " * own for the need it rewards, a flame for the hearth (its own - REST1's Next night is the campfire), a sparkle for",
+    "new": " * own for the need it rewards, the campfire for the hearth, a sparkle for",
     "why": "the code names the hearth's glyph wrong",
     "note": "AUDIT C&C (lens S): re-aimed by content - REST1's tile is Next night now.",
     "tests": [
@@ -695,7 +695,7 @@
     "name": "AUDITCC-UI-S5-the-salts-hold-nothing",
     "file": "src/systems/survival/status.js",
     "old": "  if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
-    "new": "  if (key === 'sleep') return (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
+    "new": "  if (key === 'sleep') return takes || (tires && stage === 'exhausted') ? 'danger' : 'warn';",
     "tests": [
       "test/systems/auditcc_ui.test.js"
     ],
@@ -704,8 +704,8 @@
   {
     "name": "AUDITCC-UI-S5-the-strip-hears-no-salts",
     "file": "src/systems/survival/status.js",
-    "old": "sleepStage(s.sleepDebt), { held: wakingHeld(s, now) });",
-    "new": "sleepStage(s.sleepDebt));",
+    "old": "  if (!vampire) push('sleep', HUD_NEED_WORDS.sleep, sleepStage(s.sleepDebt), { held: wakingHeld(s, now) });",
+    "new": "  if (!vampire) push('sleep', HUD_NEED_WORDS.sleep, sleepStage(s.sleepDebt));",
     "tests": [
       "test/systems/auditcc_ui.test.js"
     ],
@@ -724,8 +724,8 @@
   {
     "name": "AUDITCC-UI-S-the-bank-s-line-runs-wide",
     "file": "src/systems/survival/status.js",
-    "old": "`Rested for another ${restedLeft(s)}.`",
-    "new": "`Well rested (${restedLeft(s)} left): +5 Intelligence, +5 Willpower.`",
+    "old": "  restedFor: (s) => (restedLeft(s) ? `Rested for another ${restedLeft(s)}.` : null),",
+    "new": "  restedFor: (s) => (restedLeft(s) ? `Well rested (${restedLeft(s)} left): +5 Intelligence, +5 Willpower.` : null),",
     "tests": [
       "test/systems/auditcc_ui.test.js"
     ],

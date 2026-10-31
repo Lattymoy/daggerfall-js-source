@@ -217,7 +217,7 @@ your Stores"), so a wolf mapped to the nearest fur would say it skinned a bear. 
 2, as the furs of the Bear and the Bat; the Mudcrab Chitin tier 1, as the Rat Pelt (the mudcrab is level 2). The two furs
 carry the Big Tooth one body in four, as the Bear's and the Tiger's do, and cut Large and Small Skins (PELTS); the chitin
 carries no part and cuts none. All three give Raw Meat (C&C gives every body of Animal affinity its meat,
-`survival/loot.js:"export const isAnimal = (entity) =>"`) and cure to Cured Leather (4.4, tiers 1-3). Templates 681-683
+`survival/loot.js:"export const isAnimal"`) and cure to Cured Leather (4.4, tiers 1-3). Templates 681-683
 were free in the registry and in 4.8's table and sit after Arcane Essence (680); they take the pictures the ten borrow
 (a pelt is Nymph Hair's lock, a chitin Fairy Dragon's Scales'). The cures now stand by tier
 (`professionLaw.js:"HIDES.filter((h) => h.cures)"`), since a chain plans a leather's cures

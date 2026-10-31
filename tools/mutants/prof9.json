@@ -813,8 +813,8 @@
   {
     "name": "PROF9-cc-provisioner-rots",
     "file": "src/systems/survival/food.js",
-    "old": "    if (item.noRot === true) continue;\n",
-    "new": "",
+    "old": "      if (item.noRot === true) continue;\n      // PROF7: a Butcher's meat spoils half as fast (PROF0 3.3) - the same days at half the pace: rolled every other day,",
+    "new": "      // PROF7: a Butcher's meat spoils half as fast (PROF0 3.3) - the same days at half the pace: rolled every other day,",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -822,8 +822,8 @@
   {
     "name": "PROF9-cc-dishes-no-food",
     "file": "src/systems/survival/food.js",
-    "old": "(FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex)) != null",
-    "new": "FOOD[item.templateIndex] != null",
+    "old": "  !!item &&\n  (FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex)) != null &&\n  (item.group == null || item.group === SURVIVAL_GROUP);",
+    "new": "  !!item && FOOD[item.templateIndex] != null && (item.group == null || item.group === SURVIVAL_GROUP);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -831,8 +831,8 @@
   {
     "name": "PROF9-cc-dishes-unnamed",
     "file": "src/systems/survival/food.js",
-    "old": "export const foodOf = (item) => (item ? FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex) ?? null : null);",
-    "new": "export const foodOf = (item) => (item ? FOOD[item.templateIndex] ?? null : null);",
+    "old": "export const foodOf = (item) => (item ? (FOOD[item.templateIndex] ?? MORE_FOOD.get(item.templateIndex) ?? null) : null);",
+    "new": "export const foodOf = (item) => (item ? (FOOD[item.templateIndex] ?? null) : null);",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]
@@ -860,8 +860,8 @@
   {
     "name": "PROF9-field-cook-perk-unread",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (fieldCook && fieldCookKeeps(camp)) return",
-    "new": "  if (false && fieldCookKeeps(camp)) return",
+    "old": "  if (fieldCook && fieldCookKeeps(camp)) return { spent: false, empty: false, kept: true };",
+    "new": "  if (false && fieldCookKeeps(camp)) return { spent: false, empty: false, kept: true };",
     "tests": [
       "test/systems/prof9_client.test.js"
     ],
@@ -880,8 +880,8 @@
   {
     "name": "PROF9-field-cook-keeps-a-jar",
     "file": "src/systems/survival/camp.js",
-    "old": "camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
-    "new": "camp?.kind === CAMP_KIND.Fire && !!camp.fuel;",
+    "old": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
+    "new": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !!camp.fuel;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ],
@@ -892,8 +892,8 @@
   {
     "name": "PROF9-field-cook-keeps-a-kit-fire",
     "file": "src/systems/survival/camp.js",
-    "old": "camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
-    "new": "camp?.kind === CAMP_KIND.Fire && !camp.jar;",
+    "old": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !!camp.fuel && !camp.jar;",
+    "new": "export const fieldCookKeeps = (camp) => camp?.kind === CAMP_KIND.Fire && !camp.jar;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ],
@@ -1218,8 +1218,8 @@
   {
     "name": "AUDIT-PROF9-K1-slow-rot-first",
     "file": "src/systems/survival/food.js",
-    "old": "    if (item.noRot === true) continue;\n",
-    "new": "    if (item.noRot === true && item.slowRot !== true) continue;\n",
+    "old": "      if (item.noRot === true) continue;",
+    "new": "      if (item.noRot === true && item.slowRot !== true) continue;",
     "tests": [
       "test/systems/prof9_client.test.js"
     ]

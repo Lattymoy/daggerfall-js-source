@@ -397,7 +397,7 @@ nothing to cook." with the fish in the bag; on the classic skin, which draws no 
 reached them. Now the list is the pack's raw food, then the bag's, while the pack holds a bag
 (`camps.js:"    const bag = hasBag(items) ? (entity?.bagItems ?? []) : [];"`) - as DFU's own potion maker reads the
 wagon after the pack (`DaggerfallPotionMakerWindow.cs` Refresh, and section 6's port of it) - and the cooked food goes
-into the pack (`camp.js:"    (Array.isArray(into) ? into : list).push(cooked);   // FB1020c BAG-COOK: into the pack, never the bag"`):
+into the pack (`camp.js:"(Array.isArray(into) ? into : list)"`):
 a cooked food is no material, and the bag holds materials alone. A fish cooked out of the bag leaves it as one cooked
 out of the pack always did: the next carried request cuts the count to what is held (section 5). The fire's words on the
 Stores page say where gathered goods go and that a Raw Fish from the pack or the bag cooks there. Pinned by

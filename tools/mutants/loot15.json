@@ -317,8 +317,8 @@
   {
     "name": "LOOT15-the-frost-spell-dropped",
     "file": "src/systems/survival/temperature.js",
-    "old": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0,",
-    "new": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0, frostResist: Number(mods.coldDegrees) || 0,",
+    "old": "    heatDegrees: Number(mods.heatDegrees) || 0,\n  };",
+    "new": "    heatDegrees: Number(mods.heatDegrees) || 0,\n    frostResist: Number(mods.coldDegrees) || 0,\n  };",
     "tests": [
       "test/systems/loot15_garments.test.js"
     ],
@@ -327,8 +327,8 @@
   {
     "name": "LOOT15-the-fire-spell-dropped",
     "file": "src/systems/survival/temperature.js",
-    "old": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0,",
-    "new": "    coldDegrees: Number(mods.coldDegrees) || 0, heatDegrees: Number(mods.heatDegrees) || 0, fireResist: Number(mods.heatDegrees) || 0,",
+    "old": "    heatDegrees: Number(mods.heatDegrees) || 0,\n  };",
+    "new": "    heatDegrees: Number(mods.heatDegrees) || 0,\n    fireResist: Number(mods.heatDegrees) || 0,\n  };",
     "tests": [
       "test/systems/loot15_garments.test.js"
     ],

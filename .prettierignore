@@ -1344,6 +1344,17 @@
 /src/systems/studioArt/*/
 !/src/systems/superDungeon/
 /src/systems/superDungeon/*/
+!/src/systems/survival/
+/src/systems/survival/*
+!/src/systems/survival/camp.js
+!/src/systems/survival/food.js
+!/src/systems/survival/hearth.js
+!/src/systems/survival/items.js
+!/src/systems/survival/loot.js
+!/src/systems/survival/status.js
+!/src/systems/survival/switch.js
+!/src/systems/survival/tavernMenu.js
+!/src/systems/survival/temperature.js
 !/src/systems/tamrielFauna.js
 !/src/systems/tavern.js
 !/src/systems/teleportAnchor.js

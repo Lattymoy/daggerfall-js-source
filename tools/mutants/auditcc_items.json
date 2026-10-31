@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-CC-I5-the-pack-rots-undressed",
     "file": "src/systems/survival/food.js",
-    "old": "  dressFood(item);   // AUDIT C&C I5: the mod's RotFood, which names the food as it turns it (shortName = GetFoodStatus() + name)\n",
-    "new": "",
+    "old": "  dressFood(item); // AUDIT C&C I5: the mod's RotFood, which names the food as it turns it (shortName = GetFoodStatus() + name)\n  return true;",
+    "new": "  return true;",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "AUDIT-CC-I5-the-name-left-fresh",
     "file": "src/systems/survival/food.js",
-    "old": "  item.name = foodName(item);\n  const s = foodStage(item);\n",
-    "new": "  const s = foodStage(item);\n",
+    "old": "  item.name = foodName(item);\n  const s = foodStage(item);",
+    "new": "  const s = foodStage(item);",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "AUDIT-CC-I5-the-mouldy-picture-a-stage-late",
     "file": "src/systems/survival/food.js",
-    "old": "  if (s >= FOOD_STAGE.Mouldy && VENDOR_ICON_FILES.includes(",
-    "new": "  if (s > FOOD_STAGE.Mouldy && VENDOR_ICON_FILES.includes(",
+    "old": "    s >= FOOD_STAGE.Mouldy &&",
+    "new": "    s > FOOD_STAGE.Mouldy &&",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "AUDIT-CC-I5-the-icon-list-loses-a-picture",
     "file": "src/systems/survival/food.js",
-    "old": "'534_0-0', '534_1-0', ",
-    "new": "'534_0-0', ",
+    "old": "  '534_1-0',\n  '535_0-0',",
+    "new": "  '535_0-0',",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "AUDIT-CC-I7-the-cloak-hood-down",
     "file": "src/systems/survival/items.js",
-    "old": "female ? START_CLOAK.female : START_CLOAK.male, 1),",
-    "new": "female ? START_CLOAK.female : START_CLOAK.male, 0),",
+    "old": "    wornStartClothing(female, female ? START_CLOAK.female : START_CLOAK.male, 1), // cloak.CurrentVariant = 1: its hood up (temperature.js HOODED_CLOAK_VARIANTS)",
+    "new": "    wornStartClothing(female, female ? START_CLOAK.female : START_CLOAK.male, 0), // cloak.CurrentVariant = 1: its hood up (temperature.js HOODED_CLOAK_VARIANTS)",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "AUDIT-CC-I7-the-clothes-at-half",
     "file": "src/systems/survival/items.js",
-    "old": "item.currentCondition = Math.trunc(item.currentCondition / 4);",
-    "new": "item.currentCondition = Math.trunc(item.currentCondition / 2);",
+    "old": "  item.currentCondition = Math.trunc(item.currentCondition / 4);",
+    "new": "  item.currentCondition = Math.trunc(item.currentCondition / 2);",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "AUDIT-CC-I7-a-man-s-wardrobe-for-everyone",
     "file": "src/systems/survival/items.js",
-    "old": "  const female = entity?.gender === 'female';\n  return [\n    createSurvivalItem(TEMPLATE.Rations, { stackCount: 2 }),",
-    "new": "  const female = false;\n  return [\n    createSurvivalItem(TEMPLATE.Rations, { stackCount: 2 }),",
+    "old": "  const female = entity?.gender === 'female';",
+    "new": "  const female = false;",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT-CC-I7-the-shoes-before-the-cloak",
     "file": "src/systems/survival/items.js",
-    "old": "    wornStartClothing(female, female ? START_CLOAK.female : START_CLOAK.male, 1),   // cloak.CurrentVariant = 1: its hood up (temperature.js HOODED_CLOAK_VARIANTS)\n    wornStartClothing(female, female ? START_SHOES.female : START_SHOES.male, 0),   // Range(0, variants): the Shoes have none, so 0\n",
-    "new": "    wornStartClothing(female, female ? START_SHOES.female : START_SHOES.male, 0),   // Range(0, variants): the Shoes have none, so 0\n    wornStartClothing(female, female ? START_CLOAK.female : START_CLOAK.male, 1),   // cloak.CurrentVariant = 1: its hood up (temperature.js HOODED_CLOAK_VARIANTS)\n",
+    "old": "    wornStartClothing(female, female ? START_CLOAK.female : START_CLOAK.male, 1), // cloak.CurrentVariant = 1: its hood up (temperature.js HOODED_CLOAK_VARIANTS)\n    wornStartClothing(female, female ? START_SHOES.female : START_SHOES.male, 0), // Range(0, variants): the Shoes have none, so 0",
+    "new": "    wornStartClothing(female, female ? START_SHOES.female : START_SHOES.male, 0), // Range(0, variants): the Shoes have none, so 0\n    wornStartClothing(female, female ? START_CLOAK.female : START_CLOAK.male, 1), // cloak.CurrentVariant = 1: its hood up (temperature.js HOODED_CLOAK_VARIANTS)",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT-CC-I7-the-other-wardrobe-s-group",
     "file": "src/systems/survival/items.js",
-    "old": "group: female ? 'WomensClothing' : 'MensClothing', templateIndex, variant, dye: DYE_COLORS.Blue",
-    "new": "group: female ? 'MensClothing' : 'WomensClothing', templateIndex, variant, dye: DYE_COLORS.Blue",
+    "old": "    setItemFields({ group: female ? 'WomensClothing' : 'MensClothing', templateIndex, variant, dye: DYE_COLORS.Blue }),",
+    "new": "    setItemFields({ group: female ? 'MensClothing' : 'WomensClothing', templateIndex, variant, dye: DYE_COLORS.Blue }),",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT-CC-I7-a-dyed-start",
     "file": "src/systems/survival/items.js",
-    "old": "templateIndex, variant, dye: DYE_COLORS.Blue }));",
-    "new": "templateIndex, variant, dye: DYE_COLORS.Grey }));",
+    "old": "    setItemFields({ group: female ? 'WomensClothing' : 'MensClothing', templateIndex, variant, dye: DYE_COLORS.Blue }),",
+    "new": "    setItemFields({ group: female ? 'WomensClothing' : 'MensClothing', templateIndex, variant, dye: DYE_COLORS.Grey }),",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "AUDIT-CC-I7-the-shipwreck-s-gear",
     "file": "src/systems/survival/items.js",
-    "old": "createSurvivalItem(TEMPLATE.CampingEquipment, { condition: Math.trunc(CAMPING_USES / 2) }),",
-    "new": "createSurvivalItem(TEMPLATE.CampingEquipment, { condition: 3 }),",
+    "old": "    createSurvivalItem(TEMPLATE.CampingEquipment, { condition: Math.trunc(CAMPING_USES / 2) }),",
+    "new": "    createSurvivalItem(TEMPLATE.CampingEquipment, { condition: 3 }),",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "AUDIT-CC-I10-a-price-moved-undeclared",
     "file": "src/systems/survival/items.js",
-    "old": "name: 'Cooked Fish', baseWeight: 0.5, hitPoints: 80, basePrice: 6,",
-    "new": "name: 'Cooked Fish', baseWeight: 0.5, hitPoints: 80, basePrice: 7,",
+    "old": "    basePrice: 6,",
+    "new": "    basePrice: 7,",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "AUDIT-CC-I11-the-shelf-s-skin-named-by-its-template",
     "file": "src/systems/survival/items.js",
-    "old": "where a skin drunk dry reads \"Empty Waterskin\"\n    item.name = waterskinName(item);",
-    "new": "where a skin drunk dry reads \"Empty Waterskin\"\n    item.name = item.name;",
+    "old": "    // \"Waterskin\" until its first fill, where a skin drunk dry reads \"Empty Waterskin\"\n    item.name = waterskinName(item);",
+    "new": "    // \"Waterskin\" until its first fill, where a skin drunk dry reads \"Empty Waterskin\"\n    item.name = item.name;",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -262,8 +262,8 @@
   {
     "name": "AUDIT-CC-I1-a-worn-tent-stokable",
     "file": "src/systems/survival/camp.js",
-    "old": "!fireLit(camp, now) && (camp.wear | 0) > 0\n  && (camp.kind",
-    "new": "!fireLit(camp, now)\n  && (camp.kind",
+    "old": "  (camp.wear | 0) > 0 &&\n  (camp.kind === CAMP_KIND.Tent || camp.kind === CAMP_KIND.Fire);",
+    "new": "  (camp.kind === CAMP_KIND.Tent || camp.kind === CAMP_KIND.Fire);",
     "tests": [
       "test/systems/survival/auditcc_items.test.js",
       "test/systems/auditrest2_camps.test.js",
@@ -274,8 +274,8 @@
   {
     "name": "AUDIT-CC-I1-a-jar-relit",
     "file": "src/systems/survival/camp.js",
-    "old": "export const canStoke = (camp, now, mine) => !!camp && !!mine && !camp.jar && ",
-    "new": "export const canStoke = (camp, now, mine) => !!camp && !!mine && ",
+    "old": "  !camp.jar &&\n  !fireLit(camp, now) &&",
+    "new": "  !fireLit(camp, now) &&",
     "tests": [
       "test/systems/survival/auditcc_items.test.js",
       "test/systems/survival/rest6_consumables.test.js"
@@ -285,8 +285,8 @@
   {
     "name": "AUDIT-CC-I1-a-friend-s-camp-stoked",
     "file": "src/systems/survival/camp.js",
-    "old": "export const canStoke = (camp, now, mine) => !!camp && !!mine && ",
-    "new": "export const canStoke = (camp, now, mine) => !!camp && ",
+    "old": "  !!mine &&\n  !camp.jar &&",
+    "new": "  !camp.jar &&",
     "tests": [
       "test/systems/survival/auditcc_items.test.js",
       "test/systems/auditrest2_camps.test.js",
@@ -307,8 +307,8 @@
   {
     "name": "AUDIT-CC-I2-the-law-hears-no-tent",
     "file": "src/systems/survival/temperature.js",
-    "old": "insideDungeon: env.insideDungeon, sheltered: !!env.sheltered, fall:",
-    "new": "insideDungeon: env.insideDungeon, fall:",
+    "old": "        sheltered: !!env.sheltered,\n        fall: env.falling?.level ?? 1,",
+    "new": "        fall: env.falling?.level ?? 1,",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -347,8 +347,8 @@
   {
     "name": "AUDIT-CC-I2-a-campfire-is-a-roof",
     "file": "src/systems/survival/camp.js",
-    "old": "(camps ?? []).some((c) => c?.kind === CAMP_KIND.Tent\n",
-    "new": "(camps ?? []).some((c) => !!c\n",
+    "old": "  (camps ?? []).some(\n    (c) => c?.kind === CAMP_KIND.Tent && Math.hypot(c.pos[0] - pos[0], c.pos[1] - pos[1], c.pos[2] - pos[2]) <= reach,\n  );",
+    "new": "  (camps ?? []).some((c) => !!c && Math.hypot(c.pos[0] - pos[0], c.pos[1] - pos[1], c.pos[2] - pos[2]) <= reach);",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],
@@ -357,8 +357,8 @@
   {
     "name": "AUDIT-CC-I2-sun-under-canvas",
     "file": "src/systems/survival/temperature.js",
-    "old": "!insideDungeon && !sheltered && h >= DAWN_HOUR",
-    "new": "!insideDungeon && h >= DAWN_HOUR",
+    "old": "    !sheltered &&\n    h >= DAWN_HOUR &&",
+    "new": "    h >= DAWN_HOUR &&",
     "tests": [
       "test/systems/survival/auditcc_items.test.js"
     ],

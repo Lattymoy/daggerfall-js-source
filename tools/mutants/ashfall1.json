@@ -245,8 +245,8 @@
   {
     "name": "ASH-the-body-chilled",
     "file": "src/systems/survival/temperature.js",
-    "old": "sandstorm: 5, ashfall: -5,",
-    "new": "sandstorm: 5, ashfall: -10,",
+    "old": "  ashfall: -5,",
+    "new": "  ashfall: -10,",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

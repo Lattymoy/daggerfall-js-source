@@ -2,8 +2,8 @@
   {
     "name": "ROOF-SHELTER-the-roof-ignores-the-street-again",
     "file": "src/systems/survival/temperature.js",
-    "old": "return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0;",
-    "new": "return roofed;",
+    "old": "    return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0; // AUDIT C&C T4: the street's own reading, softened to the roof's size - never across nought (and nought, never -0)",
+    "new": "    return roofed; // AUDIT C&C T4: the street's own reading, softened to the roof's size - never across nought (and nought, never -0)",
     "tests": [
       "test/systems/survival/fb0930_cc_roof.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ROOF-SHELTER-the-street-always",
     "file": "src/systems/survival/temperature.js",
-    "old": "return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0;",
-    "new": "return street;",
+    "old": "    return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0; // AUDIT C&C T4: the street's own reading, softened to the roof's size - never across nought (and nought, never -0)",
+    "new": "    return street; // AUDIT C&C T4: the street's own reading, softened to the roof's size - never across nought (and nought, never -0)",
     "tests": [
       "test/systems/survival/fb0930_cc_roof.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ROOF-SHELTER-the-milder-by-size-across-nought",
     "file": "src/systems/survival/temperature.js",
-    "old": "return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0;",
-    "new": "return Math.abs(street) < Math.abs(roofed) ? street : roofed;",
+    "old": "    return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0; // AUDIT C&C T4: the street's own reading, softened to the roof's size - never across nought (and nought, never -0)",
+    "new": "    return Math.abs(street) < Math.abs(roofed) ? street : roofed; // AUDIT C&C T4: the street's own reading, softened to the roof's size - never across nought (and nought, never -0)",
     "tests": [
       "test/systems/survival/fb0930_cc_roof.test.js"
     ],
@@ -30,8 +30,8 @@
   {
     "name": "ROOF-SHELTER-the-milder-by-value-not-by-size",
     "file": "src/systems/survival/temperature.js",
-    "old": "return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0;",
-    "new": "return street < roofed ? street : roofed;",
+    "old": "    return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0; // AUDIT C&C T4: the street's own reading, softened to the roof's size - never across nought (and nought, never -0)",
+    "new": "    return street < roofed ? street : roofed; // AUDIT C&C T4: the street's own reading, softened to the roof's size - never across nought (and nought, never -0)",
     "tests": [
       "test/systems/survival/fb0930_cc_roof.test.js"
     ]

@@ -575,8 +575,8 @@
   {
     "name": "SURVBOONS-red-in-boons",
     "file": "src/systems/survival/status.js",
-    "old": "const tires = r.stamina.floor < 1, takes = !!r.attributes;",
-    "new": "const tires = r.stamina.floor <= 1, takes = !!r.attributes;",
+    "old": "  const tires = r.stamina.floor < 1,",
+    "new": "  const tires = r.stamina.floor <= 1,",
     "why": "a need is red in Boons",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -585,8 +585,8 @@
   {
     "name": "SURVBOONS-the-drink-lost-in-boons",
     "file": "src/systems/survival/status.js",
-    "old": "    if (drunk) out.push(drunk);\n    if (mealChip) out.push(mealChip);\n    for (const id",
-    "new": "    if (mealChip) out.push(mealChip);\n    for (const id",
+    "old": "  if (tier.boons) {\n    if (drunk) out.push(drunk);\n    if (mealChip) out.push(mealChip);",
+    "new": "  if (tier.boons) {\n    if (mealChip) out.push(mealChip);",
     "why": "AUDIT SURV-BOONS C6: the drink's chip gone in Boons",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -595,8 +595,8 @@
   {
     "name": "SURVBOONS-boon-chip-amber",
     "file": "src/systems/survival/status.js",
-    "old": "const chip = { key: `boon:${id}`, text: w[0], level: 'boon', glyph: w[1] };",
-    "new": "const chip = { key: `boon:${id}`, text: w[0], level: 'warn', glyph: w[1] };",
+    "old": "      const chip = { key: `boon:${id}`, text: w[0], level: 'boon', glyph: w[1] };",
+    "new": "      const chip = { key: `boon:${id}`, text: w[0], level: 'warn', glyph: w[1] };",
     "why": "a boon framed as a need",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -605,8 +605,8 @@
   {
     "name": "SURVBOONS-no-rested-foot",
     "file": "src/systems/survival/status.js",
-    "old": "      if (id === 'rested' && s.wellRested > 0) chip.foot = `${Math.ceil(s.wellRested / 60)}h`;   // the bank's hours left\n",
-    "new": "",
+    "old": "      if (id === 'rested' && s.wellRested > 0) chip.foot = `${Math.ceil(s.wellRested / 60)}h`; // the bank's hours left\n      out.push(chip);",
+    "new": "      out.push(chip);",
     "why": "Well rested says no hours",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "SURVBOONS-foot-rounds",
     "file": "src/systems/survival/status.js",
-    "old": "chip.foot = `${Math.ceil(s.wellRested / 60)}h`;",
-    "new": "chip.foot = `${Math.round(s.wellRested / 60)}h`;",
+    "old": "      if (id === 'rested' && s.wellRested > 0) chip.foot = `${Math.ceil(s.wellRested / 60)}h`; // the bank's hours left",
+    "new": "      if (id === 'rested' && s.wellRested > 0) chip.foot = `${Math.round(s.wellRested / 60)}h`; // the bank's hours left",
     "why": "AUDIT SURV-BOONS D7: 61 minutes said one hour",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -625,8 +625,8 @@
   {
     "name": "SURVBOONS-foot-on-every-boon",
     "file": "src/systems/survival/status.js",
-    "old": "      if (id === 'rested' && s.wellRested > 0) chip.foot",
-    "new": "      if (s.wellRested > 0) chip.foot",
+    "old": "      if (id === 'rested' && s.wellRested > 0) chip.foot = `${Math.ceil(s.wellRested / 60)}h`; // the bank's hours left",
+    "new": "      if (s.wellRested > 0) chip.foot = `${Math.ceil(s.wellRested / 60)}h`; // the bank's hours left",
     "why": "AUDIT SURV-BOONS D7: every boon footed with the bank",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -635,8 +635,8 @@
   {
     "name": "SURVBOONS-page-silent",
     "file": "src/systems/survival/status.js",
-    "old": "  for (const id of boons) lines.push(STATUS_TEXT.boon(id), id === 'rested' ? STATUS_TEXT.restedFor(s) : null);",
-    "new": "",
+    "old": "  for (const id of boons) lines.push(STATUS_TEXT.boon(id), id === 'rested' ? STATUS_TEXT.restedFor(s) : null); // SURV-BOONS: what the body has earned - AUDIT C&C: the bank's hours after it",
+    "new": "  // SURV-BOONS: what the body has earned - AUDIT C&C: the bank's hours after it",
     "why": "the page says no boon",
     "note": "AUDIT C&C (lens S): re-aimed by content - the bank's hours are a line of their own (STATUS_TEXT.restedFor), pushed after the boon's.",
     "tests": [
@@ -657,8 +657,8 @@
   {
     "name": "SURVBOONS-well-rested-without-a-bank",
     "file": "src/systems/survival/status.js",
-    "old": "lines.push(sleep === 'rested' && kept && !boons.includes('rested') ? STATUS_TEXT.notTired : STATUS_TEXT.sleep[sleep]);",
-    "new": "lines.push(STATUS_TEXT.sleep[sleep]);",
+    "old": "    lines.push(\n      sleep === 'rested' && kept && !boons.includes('rested') ? STATUS_TEXT.notTired : STATUS_TEXT.sleep[sleep],\n    ); // AUDIT SURV-BOONS C5/D12",
+    "new": "    lines.push(STATUS_TEXT.sleep[sleep]); // AUDIT SURV-BOONS C5/D12",
     "why": "AUDIT SURV-BOONS C5/D12: 'well rested' beside a strip with no Well rested",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -667,8 +667,8 @@
   {
     "name": "SURVBOONS-hours-plural-at-one",
     "file": "src/systems/survival/status.js",
-    "old": "${h === 1 ? 'hour' : 'hours'}",
-    "new": "${'hours'}",
+    "old": "  return h > 0 ? `${h} ${h === 1 ? 'hour' : 'hours'}` : '';",
+    "new": "  return h > 0 ? `${h} ${'hours'}` : '';",
     "why": "AUDIT SURV-BOONS C10: '1 hours left'",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -677,8 +677,8 @@
   {
     "name": "SURVBOONS-attributes-lower-case",
     "file": "src/systems/survival/status.js",
-    "old": "`+${BOON[id][k]} ${k[0].toUpperCase()}${k.slice(1)}`",
-    "new": "`+${BOON[id][k]} ${k}`",
+    "old": "        .map((k) => `+${BOON[id][k]} ${k[0].toUpperCase()}${k.slice(1)}`)",
+    "new": "        .map((k) => `+${BOON[id][k]} ${k}`)",
     "why": "AUDIT SURV-BOONS C11: '+5 strength'",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -687,8 +687,8 @@
   {
     "name": "SURVBOONS-hearth-page-text",
     "file": "src/systems/survival/status.js",
-    "old": "if (id === 'hearth') return 'The fire\\'s warmth restores your stamina.';",
-    "new": "if (id === 'hearth') return 'The fire restores your stamina.';",
+    "old": "    if (id === 'hearth') return \"The fire's warmth restores your stamina.\";",
+    "new": "    if (id === 'hearth') return 'The fire restores your stamina.';",
     "why": "the hearth's page line, pinned as words",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -697,8 +697,8 @@
   {
     "name": "SURVBOONS-hearth-on-the-campfire",
     "file": "src/systems/survival/status.js",
-    "old": "hearth: Object.freeze(['Hearth', 'hearth'])",
-    "new": "hearth: Object.freeze(['Hearth', 'rested'])",
+    "old": "  hearth: Object.freeze(['Hearth', 'hearth']), // AUDIT SURV-BOONS C7: its own flame - REST1's Next night is the campfire, and the two stood side by side",
+    "new": "  hearth: Object.freeze(['Hearth', 'rested']), // AUDIT SURV-BOONS C7: its own flame - REST1's Next night is the campfire, and the two stood side by side",
     "why": "AUDIT SURV-BOONS C7: the hearth on REST1's campfire",
     "tests": [
       "test/systems/survival/survboons.test.js"
@@ -789,8 +789,8 @@
   {
     "name": "BOONS-DEFAULT-a-record-no-boons-wrote-reads-as-the-default",
     "file": "src/systems/survival/status.js",
-    "old": "SURVIVAL_RULES.boons : SURVIVAL_RULES.casual);",
-    "new": "SURVIVAL_RULES.boons : SURVIVAL_RULES[SURVIVAL_DEFAULT]);",
+    "old": "const tierOf = (s, rules) => rules ?? (Array.isArray(s.boons) ? SURVIVAL_RULES.boons : SURVIVAL_RULES.casual);",
+    "new": "const tierOf = (s, rules) =>\n  rules ?? (Array.isArray(s.boons) ? SURVIVAL_RULES.boons : SURVIVAL_RULES[SURVIVAL_DEFAULT]);",
     "why": "BOONS-DEFAULT: a record no rewarding tier wrote (no `boons`) read as the default - Boons now - so Casual's page lost its word and its chips their red",
     "tests": [
       "test/systems/survival/survboons.test.js",

@@ -156,8 +156,8 @@
   {
     "name": "AUDITREST2-H5-a-tent-minted",
     "file": "src/systems/survival/camp.js",
-    "old": "  .filter((r) => r?.kind === CAMP_KIND.Fire)   // a fire alone",
-    "new": "  .filter((r) => !!r)   // a fire alone",
+    "old": "    .filter((r) => r?.kind === CAMP_KIND.Fire) // a fire alone, as packOwnFires; packCamp stamps out one with no fuel of its own",
+    "new": "    .filter((r) => !!r) // a fire alone, as packOwnFires; packCamp stamps out one with no fuel of its own",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -165,8 +165,8 @@
   {
     "name": "AUDITREST2-H5-every-fire-stamped",
     "file": "src/systems/survival/camp.js",
-    "old": "  .map((r) => packCamp(r).item).filter(Boolean);",
-    "new": "  .map(() => null).filter(Boolean);",
+    "old": "    .map((r) => packCamp(r).item)",
+    "new": "    .map(() => null)",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -174,8 +174,8 @@
   {
     "name": "AUDITREST2-H7-the-campfire-mended",
     "file": "src/systems/survival/items.js",
-    "old": "worldTextureRecord: TORCH?.worldTextureRecord ?? 17, isNotRepairable: true },",
-    "new": "worldTextureRecord: TORCH?.worldTextureRecord ?? 17 },",
+    "old": "    isNotRepairable: true,\n  },",
+    "new": "  },",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]
@@ -210,8 +210,8 @@
   {
     "name": "AUDITREST2-H8-the-draw-skipped",
     "file": "src/systems/survival/items.js",
-    "old": "  const fires = n(2, 4);",
-    "new": "  const fires = campfires ? n(2, 4) : 0;",
+    "old": "  const fires = n(2, 4); // AUDIT REST II H8: drawn on every shelf, so each shelf's later draws stay its own; stood on one",
+    "new": "  const fires = campfires ? n(2, 4) : 0; // AUDIT REST II H8: drawn on every shelf, so each shelf's later draws stay its own; stood on one",
     "tests": [
       "test/systems/auditrest2_camps.test.js"
     ]

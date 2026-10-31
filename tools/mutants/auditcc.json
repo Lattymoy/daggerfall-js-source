@@ -2,8 +2,8 @@
   {
     "name": "AUDIT-CC-E4-the-sea-a-beach-again",
     "file": "src/systems/survival/temperature.js",
-    "old": "  [CLIMATES.Ocean]: 0, [CLIMATES.Desert]: 40,",
-    "new": "  [CLIMATES.Ocean]: 20, [CLIMATES.Desert]: 40,",
+    "old": "  [CLIMATES.Ocean]: 0,",
+    "new": "  [CLIMATES.Ocean]: 20,",
     "tests": [
       "test/systems/auditcc.test.js"
     ],
@@ -157,8 +157,8 @@
   {
     "name": "AUDIT-CC-T2-rain-and-snow-swapped",
     "file": "src/systems/survival/temperature.js",
-    "old": "  rain: [3, 1, 0], thunder: [5, 2, 1], snow: [1, 0, 0], fog: [1, 0, 0],",
-    "new": "  rain: [1, 0, 0], thunder: [5, 2, 1], snow: [3, 1, 0], fog: [1, 0, 0],",
+    "old": "  rain: [3, 1, 0],\n  thunder: [5, 2, 1],\n  snow: [1, 0, 0],",
+    "new": "  rain: [1, 0, 0],\n  thunder: [5, 2, 1],\n  snow: [3, 1, 0],",
     "tests": [
       "test/systems/survival/surv1_model.test.js",
       "test/systems/survival/fb0930_cc_said.test.js"
@@ -168,8 +168,8 @@
   {
     "name": "AUDIT-CC-T5-the-shade-whole-at-31",
     "file": "src/systems/survival/temperature.js",
-    "old": "Math.min(HOOD_SHADE, natural - 30)",
-    "new": "HOOD_SHADE",
+    "old": "  const shade = natural > 30 && inSunlight && hood ? Math.min(HOOD_SHADE, natural - 30) : 0;",
+    "new": "  const shade = natural > 30 && inSunlight && hood ? HOOD_SHADE : 0;",
     "tests": [
       "test/systems/auditcc.test.js"
     ],
@@ -178,8 +178,8 @@
   {
     "name": "AUDIT-CC-T5-the-shade-after-the-wet",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n  const pure = Math.max(0, warmth);   // AUDIT SURV D: never below nothing, as the law says\n  warmth = Math.max(0, pure - Math.min(wet, WET_MAX));\n",
-    "new": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2), warmth - (natural - CLOTHES_BREATHE_ABOVE));\n  const pure = Math.max(0, warmth);   // AUDIT SURV D: never below nothing, as the law says\n  warmth = Math.max(0, pure - Math.min(wet, WET_MAX) - shade);\n",
+    "old": "    warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n  const pure = Math.max(0, warmth); // AUDIT SURV D: never below nothing, as the law says\n  warmth = Math.max(0, pure - Math.min(wet, WET_MAX));",
+    "new": "    warmth = Math.max(Math.trunc(warmth / 2), warmth - (natural - CLOTHES_BREATHE_ABOVE));\n  const pure = Math.max(0, warmth); // AUDIT SURV D: never below nothing, as the law says\n  warmth = Math.max(0, pure - Math.min(wet, WET_MAX) - shade);",
     "tests": [
       "test/systems/auditcc.test.js"
     ],
@@ -198,8 +198,8 @@
   {
     "name": "AUDIT-CC-T8-bare-skin-again",
     "file": "src/systems/survival/temperature.js",
-    "old": "add('skin', 'Heat loss', temp.naked);",
-    "new": "add('skin', 'Bare skin', temp.naked);",
+    "old": "  add('skin', 'Heat loss', temp.naked); // AUDIT C&C T8: the mod's own offset, every body's - not \"Bare skin\" on a body dressed head to foot",
+    "new": "  add('skin', 'Bare skin', temp.naked); // AUDIT C&C T8: the mod's own offset, every body's - not \"Bare skin\" on a body dressed head to foot",
     "tests": [
       "test/systems/survival/tempui.test.js"
     ],
@@ -208,8 +208,8 @@
   {
     "name": "AUDIT-CC-T11-the-colder-side",
     "file": "src/systems/survival/temperature.js",
-    "old": "heat = Math.trunc((metalTemp + 1) / 2);",
-    "new": "heat = Math.trunc((metalTemp - 1) / 2);",
+    "old": "  else if (metalTemp < 0) heat = Math.trunc((metalTemp + 1) / 2); // AUDIT C&C T11: the mod's own (Climates.cs Armor(), toward nought) - it chilled a degree colder than the mod at every reading",
+    "new": "  else if (metalTemp < 0) heat = Math.trunc((metalTemp - 1) / 2); // AUDIT C&C T11: the mod's own (Climates.cs Armor(), toward nought) - it chilled a degree colder than the mod at every reading",
     "tests": [
       "test/systems/survival/surv1_model.test.js"
     ],
@@ -674,8 +674,8 @@
   {
     "name": "AUDIT-CC-CASTLE-the-label-ignores-the-castle",
     "file": "src/systems/survival/temperature.js",
-    "old": "  add('ground', env.castle ? 'Castle walls' : 'Underground', temp.dungeon);",
-    "new": "  add('ground', 'Underground', temp.dungeon);",
+    "old": "  add('ground', env.castle ? 'Castle walls' : 'Underground', temp.dungeon); // AUDIT C&C (lens T): the mod's Dungeon() corrects a castle's halls as a dungeon's, and a palace is not underground",
+    "new": "  add('ground', 'Underground', temp.dungeon); // AUDIT C&C (lens T): the mod's Dungeon() corrects a castle's halls as a dungeon's, and a palace is not underground",
     "tests": [
       "test/systems/auditcc.test.js"
     ],

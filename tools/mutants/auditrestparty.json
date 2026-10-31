@@ -267,8 +267,8 @@
   {
     "name": "AUDITRESTPARTY-B5-a-kit-fire-picked-up",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push",
-    "new": "  if (mine && !camp.jar) rows.push",
+    "old": "  if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel))",
+    "new": "  if (mine && !camp.jar)",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
     ]
@@ -276,8 +276,8 @@
   {
     "name": "AUDITRESTPARTY-B5-a-kit-fire-minted",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (!tent && (camp?.kind !== CAMP_KIND.Fire || !camp.fuel)) return",
-    "new": "  if (!tent && camp?.kind !== CAMP_KIND.Fire) return",
+    "old": "  if (!tent && (camp?.kind !== CAMP_KIND.Fire || !camp.fuel)) return { item: null, text: CAMP_TEXT.stamped }; // AUDIT REST-PARTY B5: a fire with no fuel of its own (a kit's, an Ember Jar's) is stamped out, never minted into a Campfire",
+    "new": "  if (!tent && camp?.kind !== CAMP_KIND.Fire) return { item: null, text: CAMP_TEXT.stamped }; // AUDIT REST-PARTY B5: a fire with no fuel of its own (a kit's, an Ember Jar's) is stamped out, never minted into a Campfire",
     "tests": [
       "test/systems/survival/auditrestparty_camps.test.js"
     ]

@@ -102,8 +102,8 @@
   {
     "name": "AUDIT625-L4-the-jar-unsent",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (camp.jar === true) out.j = 1;",
-    "new": "",
+    "old": "  if (camp.jar === true) out.j = 1; // AUDIT 625 L4: an Ember Jar's fire says so - a peer's copy is the jar, never a plain campfire",
+    "new": "  // AUDIT 625 L4: an Ember Jar's fire says so - a peer's copy is the jar, never a plain campfire",
     "why": "an Ember Jar's fire sent as a campfire",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "AUDIT625-L4-the-jar-unread",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (r.j === 1 && camp.kind === CAMP_KIND.Fire) camp.jar = true;",
-    "new": "",
+    "old": "  if (r.j === 1 && camp.kind === CAMP_KIND.Fire) camp.jar = true; // AUDIT 625 L4: an Ember Jar's fire is a jar on every copy",
+    "new": "  // AUDIT 625 L4: an Ember Jar's fire is a jar on every copy",
     "why": "a peer's copy of a jar a plain campfire",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -122,8 +122,8 @@
   {
     "name": "AUDIT625-L4-the-jar-unprojected",
     "file": "src/systems/survival/camp.js",
-    "old": ", ...(r.j === 1 ? { j: 1 } : {}) };",
-    "new": " };",
+    "old": "  return {\n    i: r.i,\n    k: r.k,\n    p: [r.p[0], r.p[1], r.p[2]],\n    y: wrapAngle(r.y),\n    u: r.u,\n    w: r.w,\n    ...(d ? { d } : {}),\n    ...(r.j === 1 ? { j: 1 } : {}),\n  };",
+    "new": "  return { i: r.i, k: r.k, p: [r.p[0], r.p[1], r.p[2]], y: wrapAngle(r.y), u: r.u, w: r.w, ...(d ? { d } : {}) };",
     "why": "the jar dropped by the record's projection",
     "tests": [
       "test/systems/audit625_loot.test.js"
@@ -132,8 +132,8 @@
   {
     "name": "AUDIT625-L4-the-jar-unchecked",
     "file": "src/systems/survival/camp.js",
-    "old": "  if (r.j !== undefined && r.j !== 1) return null;",
-    "new": "",
+    "old": "  if (r.j !== undefined && r.j !== 1) return null; // AUDIT 625 L4: an Ember Jar's fire, 1 or nothing",
+    "new": "  // AUDIT 625 L4: an Ember Jar's fire, 1 or nothing",
     "why": "a jar's field outside its law taken",
     "tests": [
       "test/systems/audit625_loot.test.js"
