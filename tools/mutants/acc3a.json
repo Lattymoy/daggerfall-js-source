@@ -12,8 +12,8 @@
   {
     "name": "ACC3a-2-the-cutoff-turned-exclusive",
     "file": "server-account/src/titles.js",
-    "old": "firstPlayed(player) <= FOUNDER_UNTIL",
-    "new": "firstPlayed(player) < FOUNDER_UNTIL",
+    "old": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
+    "new": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) < FOUNDER_UNTIL) held.push('founder');",
     "tests": [
       "test/server/acc3titles.test.js"
     ],
@@ -42,7 +42,7 @@
   {
     "name": "ACC3a-5-the-developer-list-believed-case-sensitively",
     "file": "server-account/src/titles.js",
-    "old": "  return new Set(raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));",
+    "old": "  return new Set(\n    raw\n      .split(',')\n      .map((h) => h.trim().toLowerCase())\n      .filter(Boolean),\n  );",
     "new": "  return new Set(raw.split(',').filter(Boolean));",
     "tests": [
       "test/server/acc3titles.test.js"

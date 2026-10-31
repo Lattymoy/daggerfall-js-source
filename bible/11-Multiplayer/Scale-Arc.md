@@ -2215,7 +2215,7 @@ properly", then "Do it". Read off D1's own query insights and the service's metr
 
 ### Built
 
-- **The kept read is a replica's.** `server-account/src/townSeats.js:"export const SEAT_ROWS_FROM = 'first-unconstrained';"`:
+- **The kept read is a replica's.** `server-account/src/townSeats.js:"export const SEAT_ROWS_FROM"`:
   seatRowsOf reads on a D1 session of its own (service.js `replicaDb`, counted on the request's point as the binding's
   statements are) - the first any instance's, each one after a kept read from the bookmark that one ended at, so a
   replica behind what this isolate already read never answers it; and the read after this isolate's own write (a
@@ -2309,7 +2309,7 @@ The owner's "1, 2 and 3", the first of them: one read of the seats' rows a minut
 
 ### Built
 
-- **The clock keeps the facts.** `server-account/src/townSeats.js:"export async function keepSeatFacts("` - a minute's
+- **The clock keeps the facts.** `server-account/src/townSeats.js:"export async function keepSeatFacts"` - a minute's
   job (`cron.js` `seat-facts`, while the seats are not `off`) reads every seat row on the binding and keeps what they
   say in `seat_facts_kept`'s one row (migration 0112): the seats that stand (a disputed one too) by key, state and
   report, and the accounts ignored - two statements a minute, where every isolate read the rows.

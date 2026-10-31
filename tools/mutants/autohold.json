@@ -121,8 +121,8 @@
   {
     "name": "AUTOHOLD-the-timed-unwritten",
     "file": "server-account/src/verdict.js",
-    "old": "    s.held_until ?? null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);",
-    "new": "    null, s.law_holds ?? 0, s.law_at ?? null, s.law_v ?? null);",
+    "old": "      s.held_until ?? null,",
+    "new": "      null,",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -265,8 +265,8 @@
   {
     "name": "AUTOHOLD-AUDIT-a-strike-inside-the-hold",
     "file": "server-account/src/verdict.js",
-    "old": "  const struck = (faded ? 0 : row.strikes ?? 0) + (rising && standing == null ? 1 : 0);",
-    "new": "  const struck = (faded ? 0 : row.strikes ?? 0) + (rising ? 1 : 0);",
+    "old": "  const struck = (faded ? 0 : (row.strikes ?? 0)) + (rising && standing == null ? 1 : 0);",
+    "new": "  const struck = (faded ? 0 : (row.strikes ?? 0)) + (rising ? 1 : 0);",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -562,8 +562,8 @@
   {
     "name": "AUTOHOLD-AUDIT-a-planted-key-strikes",
     "file": "server-account/src/verdict.js",
-    "old": "  const rising = lawHolds > 0 && lawFindings.some((f) => f.code !== 'uid') && (",
-    "new": "  const rising = lawHolds > 0 && (",
+    "old": "  const rising =\n    lawHolds > 0 &&\n    lawFindings.some((f) => f.code !== 'uid') &&\n    (row.law_sig == null || lawExcused(row.law_excused, row.law_sig, row.law_v));",
+    "new": "  const rising = lawHolds > 0 && (row.law_sig == null || lawExcused(row.law_excused, row.law_sig, row.law_v));",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -571,8 +571,8 @@
   {
     "name": "AUTOHOLD-AUDIT-a-finding-beside-it-unstruck",
     "file": "server-account/src/verdict.js",
-    "old": "lawFindings.some((f) => f.code !== 'uid')",
-    "new": "lawFindings.every((f) => f.code !== 'uid')",
+    "old": "    lawFindings.some((f) => f.code !== 'uid') &&",
+    "new": "    lawFindings.every((f) => f.code !== 'uid') &&",
     "tests": [
       "test/server/autohold.test.js"
     ]
@@ -580,8 +580,8 @@
   {
     "name": "AUTOHOLD-AUDIT-the-planted-piece-unnamed",
     "file": "server-account/src/verdict.js",
-    "old": "({ code: 'uid', at: k, t: templateOfKey(k) })",
-    "new": "({ code: 'uid', at: k })",
+    "old": "    ...ledger.forged.map((k) => ({ code: 'uid', at: k, t: templateOfKey(k) })),",
+    "new": "    ...ledger.forged.map((k) => ({ code: 'uid', at: k })),",
     "tests": [
       "test/server/autohold.test.js"
     ]

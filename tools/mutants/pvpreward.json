@@ -88,7 +88,7 @@
   {
     "name": "PVP-REWARD-the-old-pick-read",
     "file": "server-account/src/wild.js",
-    "old": "  w = roll && 'w' in roll ? roll.w : -1; wt = null;",
+    "old": "  w = roll && 'w' in roll ? roll.w : -1;\n  wt = null;",
     "new": "  w = w >= 0 ? w : roll && 'w' in roll ? roll.w : -1;",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
@@ -115,8 +115,8 @@
   {
     "name": "PVP-REWARD-the-gold-hers-to-watch",
     "file": "server-account/src/wild.js",
-    "old": "  if (escrow && pvpPolicyGoldOf(parse(escrow.rec))) escrow = null;",
-    "new": "",
+    "old": "  if (escrow && pvpPolicyGoldOf(parse(escrow.rec))) escrow = null; // PVP-REWARD: a policy's gold is never the fallen's to watch or take back",
+    "new": "  // PVP-REWARD: a policy's gold is never the fallen's to watch or take back",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -124,8 +124,8 @@
   {
     "name": "PVP-REWARD-the-gold-hers-to-take-back",
     "file": "server-account/src/wild.js",
-    "old": " || row.char_id !== side.at.id || pvpPolicyGoldOf(parse(row.rec))) return { error: 'no-escrow' };",
-    "new": " || row.char_id !== side.at.id) return { error: 'no-escrow' };",
+    "old": "  if (!row || row.player !== player.id || row.char_id !== side.at.id || pvpPolicyGoldOf(parse(row.rec)))\n    return { error: 'no-escrow' }; // PVP-REWARD: a policy's gold was never the fallen's",
+    "new": "  if (!row || row.player !== player.id || row.char_id !== side.at.id) return { error: 'no-escrow' }; // PVP-REWARD: a policy's gold was never the fallen's",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -133,8 +133,8 @@
   {
     "name": "PVP-REWARD-the-gold-listed-for-her",
     "file": "server-account/src/wild.js",
-    "old": "  return { escrows: results.filter((e) => !pvpPolicyGoldOf(parse(e.rec))).map(escrowView) };",
-    "new": "  return { escrows: results.map(escrowView) };",
+    "old": "  return { escrows: results.filter((e) => !pvpPolicyGoldOf(parse(e.rec))).map(escrowView) }; // PVP-REWARD: a policy's gold is not the fallen's",
+    "new": "  return { escrows: results.map(escrowView) }; // PVP-REWARD: a policy's gold is not the fallen's",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -170,8 +170,8 @@
   {
     "name": "PVP-REWARD-the-villain-insured",
     "file": "server-account/src/wild.js",
-    "old": "{ villain: isVillain(Number(row.villainy)), among: stored.items }",
-    "new": "{ villain: false, among: stored.items }",
+    "old": "    { villain: isVillain(Number(row.villainy)), among: stored.items },",
+    "new": "    { villain: false, among: stored.items },",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]

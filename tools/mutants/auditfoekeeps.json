@@ -408,8 +408,8 @@
   {
     "name": "AFK-LT-the-answers-letters-unsaid",
     "file": "server-account/src/wild.js",
-    "old": "cart: tk?.gold?.cart ?? 0, ...packs, ...letters },",
-    "new": "cart: tk?.gold?.cart ?? 0, ...packs },",
+    "old": "    gold: { purse: tk?.gold?.purse ?? 0, cart: tk?.gold?.cart ?? 0, ...packs, ...letters },",
+    "new": "    gold: { purse: tk?.gold?.purse ?? 0, cart: tk?.gold?.cart ?? 0, ...packs },",
     "tests": [
       "test/systems/wild/auditfoekeeps.test.js"
     ]

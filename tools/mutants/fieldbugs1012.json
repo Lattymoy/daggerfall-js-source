@@ -3,7 +3,7 @@
     "name": "RING-HOLD-the-end-unsaid",
     "file": "server-account/src/verdict.js",
     "note": "AUTO-HOLD (PIN MOVED): re-aimed by content and renamed (it was -the-review-unsaid) - the third hold says its end, `until`, where it said staff's review",
-    "old": "  const why = held !== 'law' ? null : count.until != null ? { code: 'until', t: found?.t ?? null, until: count.until } : found;",
+    "old": "  const why =\n    held !== 'law' ? null : count.until != null ? { code: 'until', t: found?.t ?? null, until: count.until } : found;",
     "new": "  const why = held !== 'law' ? null : found;",
     "tests": [
       "test/systems/item/ringhold.test.js"

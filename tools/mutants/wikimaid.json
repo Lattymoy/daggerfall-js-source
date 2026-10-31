@@ -215,8 +215,8 @@
   {
     "name": "WIKIMAID-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
-    "new": "crystalfist: 'crystalfist', wikimaid: 'crystalfist' });",
+    "old": "  wikimaid: 'wikimaid',\n  nirnrootsage: 'nirnrootsage',",
+    "new": "  wikimaid: 'crystalfist',",
     "tests": [
       "test/net/wikimaid.test.js"
     ],
@@ -225,8 +225,8 @@
   {
     "name": "WIKIMAID-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "crystalfist: 'resonance' });",
+    "old": "  wikimaid: 'lilacwarren',\n  nirnrootsage: 'sagesmoke',\n}); // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed\"): the Holo Shadow Cloak",
+    "new": "}); // NIRNROOT-SAGE: Sage's Smoke; WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: \"I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed\"): the Holo Shadow Cloak",
     "tests": [
       "test/net/wikimaid.test.js"
     ],

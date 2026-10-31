@@ -72,8 +72,8 @@
   {
     "name": "YARD-CELL-the-version-compare",
     "file": "server-account/src/yardCells.js",
-    "old": "Number(state.ver) > Number(state.have)",
-    "new": "Number(state.ver) >= Number(state.have)",
+    "old": "    const moved = state.ver != null ? Number(state.ver) > Number(state.have) : !!state.orphan;",
+    "new": "    const moved = state.ver != null ? Number(state.ver) >= Number(state.have) : !!state.orphan;",
     "tests": [
       "test/server/yard_cells.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "YARD-CELL-the-shared-read",
     "file": "server-account/src/yardCells.js",
-    "old": "  if (flights.size) await Promise.allSettled([...flights].map((flight) => flight.done));\n",
-    "new": "",
+    "old": "  if (flights.size) await Promise.allSettled([...flights].map((flight) => flight.done));\n  /** @type {Map<number, CellAnswer>} */",
+    "new": "  /** @type {Map<number, CellAnswer>} */",
     "tests": [
       "test/server/yard_cells.test.js"
     ],

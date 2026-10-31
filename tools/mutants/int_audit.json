@@ -114,7 +114,7 @@
   {
     "name": "INTA-strike-a-checkpoint",
     "file": "server-account/src/verdict.js",
-    "old": "  const rising = lawHolds > 0 && lawFindings.some((f) => f.code !== 'uid') && (row.law_sig == null || lawExcused(row.law_excused, row.law_sig, row.law_v));",
+    "old": "  const rising =\n    lawHolds > 0 &&\n    lawFindings.some((f) => f.code !== 'uid') &&\n    (row.law_sig == null || lawExcused(row.law_excused, row.law_sig, row.law_v));",
     "new": "  const rising = lawHolds > 0 && lawFindings.some((f) => f.code !== 'uid');",
     "tests": [
       "test/server/int2_judge.test.js"
@@ -141,8 +141,8 @@
   {
     "name": "INTA-the-rev-unguarded",
     "file": "server-account/src/verdict.js",
-    "old": "    + ' WHERE id = ?1 AND judge_rev = ?16',",
-    "new": "    + ' WHERE id = ?1 AND ?16 IS NOT NULL',",
+    "old": "        ' WHERE id = ?1 AND judge_rev = ?16',",
+    "new": "        ' WHERE id = ?1 AND ?16 IS NOT NULL',",
     "tests": [
       "test/server/int2_judge.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "INTA-the-grant-lost",
     "file": "server-account/src/verdict.js",
-    "old": "THEN ?9 ELSE ?9 + (allowance - ?8) END,'",
-    "new": "THEN ?9 ELSE ?9 + 0 * (allowance - ?8) END,'",
+    "old": "        ' allowance = CASE WHEN ?8 IS NULL OR allowance IS NULL THEN ?9 ELSE ?9 + (allowance - ?8) END,' +",
+    "new": "        ' allowance = CASE WHEN ?8 IS NULL OR allowance IS NULL THEN ?9 ELSE ?9 + 0 * (allowance - ?8) END,' +",
     "tests": [
       "test/server/int5_budget.test.js"
     ]
@@ -168,8 +168,8 @@
   {
     "name": "INTA-the-craft-a-find",
     "file": "server-account/src/verdict.js",
-    "old": "  const gain = judged.wealth - base - (first || rebased ? 0 : row.witnessed ?? 0) - arrivedWorth;",
-    "new": "  const gain = judged.wealth - base - (first || rebased ? 0 : row.witnessed ?? 0);",
+    "old": "  const gain = judged.wealth - base - (first || rebased ? 0 : (row.witnessed ?? 0)) - arrivedWorth;",
+    "new": "  const gain = judged.wealth - base - (first || rebased ? 0 : (row.witnessed ?? 0));",
     "tests": [
       "test/server/int5_budget.test.js"
     ]
@@ -177,8 +177,8 @@
   {
     "name": "INTA-the-craft-twice",
     "file": "server-account/src/verdict.js",
-    "old": "    after.push(db.prepare(`UPDATE products SET credited = 1 WHERE owner",
-    "new": "    after.push(db.prepare(`UPDATE products SET credited = 0 WHERE owner",
+    "old": "          `UPDATE products SET credited = 1 WHERE owner = ?1 AND provenance IN (${part.map((_, k) => `?${k + 2}`).join(', ')})`,",
+    "new": "          `UPDATE products SET credited = 0 WHERE owner = ?1 AND provenance IN (${part.map((_, k) => `?${k + 2}`).join(', ')})`,",
     "tests": [
       "test/server/int5_budget.test.js"
     ]

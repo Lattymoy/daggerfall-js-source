@@ -162,8 +162,8 @@
   {
     "name": "PRIMARCH-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
-    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "old": "  primarch: 'primarch',",
+    "new": "  primarch: 'aegis',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -172,8 +172,8 @@
   {
     "name": "PRIMARCH-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  primarch: 'radiance',\n  shadowfang: 'shadowcloak',",
+    "new": "  shadowfang: 'shadowcloak',",
     "tests": [
       "test/net/primarch.test.js"
     ],
@@ -182,8 +182,8 @@
   {
     "name": "PRIMARCH-the-ward-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  primarch: 'radiance',",
+    "new": "  primarch: 'oblivionward',",
     "tests": [
       "test/net/primarch.test.js"
     ],

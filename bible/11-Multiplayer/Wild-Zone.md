@@ -234,7 +234,7 @@ the fallen keeps the bag, the cart, the companions' packs and every worn piece, 
 purse at the rise, as a death outside the zone does (DEATH-PENALTY; `world.js:"wildKilled = wildDeathKill()"`).
 The first dead frame asks no drop (`world.js:"const wildDeathBegin"`), the fallen's tab asks one only against the
 relay's signed fall (`wildDropHost.js:"const key = readWildReceipt(rc)?.r;"`), and the account service refuses a foe's fall,
-nothing moved (`foe`, `server-account/src/wild.js:"return { error: 'foe' }"`) - so a tab from before the word takes
+nothing moved (`foe`, `server-account/src/wild.js:"if (body?.receipt === undefined)"`) - so a tab from before the word takes
 nothing either - and, its own rise skipping the usual tenth at any death in the zone, pays nothing until it reloads
 (AUDIT FOE-KEEPS L2, H3, P5, E4: left - a deploy's window, the gain the player's); a foe's fall the service took before the
 word is answered as it was taken. The death screen says so
@@ -417,7 +417,7 @@ both ends read (`src/systems/wild/wildInsureLaw.js`):
 - IN FORCE `WILD_INSURE_SETTLE_S` (120 s) AFTER IT IS WRITTEN, against the fall's own signing (the receipt's `i`): the
   killer has `WILD_REF.pickMs` to pick and the fall is signed after it, so a policy written on the death screen keeps from
   nothing (`wildPolicyInForce`). The game writes one only outside the zone (`insureInZone`), where the walk in is longer.
-- AT A KILL (`server-account/src/wild.js:"const insured = pvpInsuredFor(live.map((p) => String(p.key)),"`; PVP-REWARD since, `PvP-Rework.md`):
+- AT A KILL (`server-account/src/wild.js:"const insured = pvpInsuredFor"`; PVP-REWARD since, `PvP-Rework.md`):
   a piece under a policy in force is kept as a piece the ledger bars is - never taken by the killer's pick, never
   dropped, never asked of the ledger - and (AUDIT PVP-EASE L1-3, L2-2, the owner: "Only when it saved the piece") A
   POLICY IS SPENT ONLY WHEN IT SAVED ITS PIECE: the worn piece the killer picked, or a bag piece the drop would have
@@ -457,7 +457,7 @@ checkpoint carries it to the record. No ledger reads it: `ledgerKeyOf` answers n
 carries, so the judge, the wealth and the trade lock see the record as before (`insureall.test.js` judges it both ways).
 
 A FORGED OR COPIED ID BUYS NOTHING MORE THAN THE PLAYER'S OWN PIECE. Policies are the character's own rows. The service
-refuses a key two pieces in the pack carry (`server-account/src/wildInsure.js:"const piece = named.length === 1 ? named[0] : null;"`),
+refuses a key two pieces in the pack carry (`server-account/src/wildInsure.js:"const piece = named.length"`),
 and at a fall a key two of the fallen's pieces carry keeps neither (`wildInsuredBy`'s `among`). Every reader that names
 a policy's piece reads this key: the book's card, the service's insure, the fall's keep and spend
 (`takeWildDeath`'s `saved`, through the predicate's own `keyOf`), the kill's roll and its policy pick
@@ -481,7 +481,7 @@ AN HOUR TAKES NOTHING. A fall whose killer felled the same character within `WIL
 wrote - so a killer camping a rise keeps the shield up for as long as they camp) - measured between the KILLS, each
 fall's receipt signing (`ki`, AUDIT PVP-EASE L1-1), on either side: by when each was carried, a killer who held a second
 kill's receipt (good for an hour) until the first's row was half an hour old took it whole - takes no worn piece, no bag and no
-gold, spends no policy and moves no record (`server-account/src/wild.js:"async function wildShielded("`); it is written as a
+gold, spends no policy and moves no record (`server-account/src/wild.js:"async function wildShielded"`); it is written as a
 fall all the same (`tk.shield`, its sea kill's bounties with it - a bounty is its setter's gold, never the fallen's) and
 answered `shield`, so the death screen says it (`WILD_TEXT.deathShield`). Another hand takes as ever. Read by migration
 0181's `idx_wild_falls_pair` (`char_id`, `killer`, `ki`). A fall carried before `ki` (and a foe's) shields nothing.

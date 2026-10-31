@@ -73,8 +73,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC4-limit",
     "file": "server-account/src/townEcon.js",
-    "old": "WHERE kind = ?1 AND key = ?2 ORDER BY at, account')\n    .bind(TOWN_WITNESS_KIND, key).all();",
-    "new": "WHERE kind = ?1 AND key = ?2 ORDER BY at, account LIMIT 2')\n    .bind(TOWN_WITNESS_KIND, key).all();",
+    "old": "    .prepare('SELECT account, report, at FROM world_witness WHERE kind = ?1 AND key = ?2 ORDER BY at, account')",
+    "new": "    .prepare('SELECT account, report, at FROM world_witness WHERE kind = ?1 AND key = ?2 ORDER BY at, account LIMIT 2')",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -103,8 +103,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC5-full-unsaid",
     "file": "server-account/src/townEcon.js",
-    "old": "    if (src === 'watch' && day === today && counts.get(k) === TOWN_ECON_CAPS.watch) full.add(`${c.x},${c.y}`);\n",
-    "new": "",
+    "old": "    if (src === 'watch' && day === today && counts.get(k) === TOWN_ECON_CAPS.watch) full.add(`${c.x},${c.y}`);\n  };",
+    "new": "  };",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC9-skew",
     "file": "server-account/src/townEcon.js",
-    "old": "    const day = Math.min(utcDay(c.i), today);\n    if (today - day >= TOWN_ECON_DAYS) { tally('old'); continue; }",
-    "new": "    const day = utcDay(c.i);\n    if (day > today || today - day >= TOWN_ECON_DAYS) { tally('old'); continue; }",
+    "old": "    const day = Math.min(utcDay(c.i), today);\n    if (today - day >= TOWN_ECON_DAYS) {",
+    "new": "    const day = utcDay(c.i);\n    if (day > today || today - day >= TOWN_ECON_DAYS) {",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC3-days-read",
     "file": "server-account/src/townEcon.js",
-    "old": "  let towns = null;\n  try { towns = row ? JSON.parse(String(row.towns)) : null; } catch { towns = null; }",
-    "new": "  let towns = null;",
+    "old": "  try {\n    towns = row ? JSON.parse(String(row.towns)) : null;\n  } catch {\n    towns = null;\n  }\n  if (!Array.isArray(towns)) towns = await countTownShares(db, nowS);",
+    "new": "  if (!Array.isArray(towns)) towns = await countTownShares(db, nowS);",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC3-counted-fresh",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (row && nowS - Number(row.at) < TOWN_ECON_KEPT_S) { _keptAt = Number(row.at); return 0; }\n",
-    "new": "",
+    "old": "  if (row && nowS - Number(row.at) < TOWN_ECON_KEPT_S) {\n    _keptAt = Number(row.at);\n    return 0;\n  }\n  const towns = await countTownShares(db, nowS);",
+    "new": "  const towns = await countTownShares(db, nowS);",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -173,7 +173,7 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-unwalked",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (!v.ok || v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py) return { error: 'town-unwalked' };",
+    "old": "  if (!v.ok || v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py)\n    return { error: 'town-unwalked' };",
     "new": "  if (receipt == null) return { error: 'town-unwalked' };",
     "tests": [
       "test/server/townecon_service.test.js"
@@ -183,8 +183,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-another-pixel",
     "file": "server-account/src/townEcon.js",
-    "old": "v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py) return",
-    "new": "v.claims.s !== player.id) return",
+    "old": "  if (!v.ok || v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py)\n    return { error: 'town-unwalked' };",
+    "new": "  if (!v.ok || v.claims.s !== player.id) return { error: 'town-unwalked' };",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-strike-kept",
     "file": "server-account/src/townEcon.js",
-    "old": "    db.prepare('DELETE FROM town_econ_towns WHERE map = ?1').bind(map),\n",
-    "new": "",
+    "old": "    db.prepare('DELETE FROM town_econ_towns WHERE map = ?1').bind(map),\n    db.prepare('DELETE FROM town_econ_acts WHERE map = ?1').bind(map),",
+    "new": "    db.prepare('DELETE FROM town_econ_acts WHERE map = ?1').bind(map),",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-struck-again",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (known?.struck) return { ok: true, counted: false, why: 'struck' };\n",
-    "new": "",
+    "old": "  if (known?.struck) return { ok: true, counted: false, why: 'struck' };\n  const key = townWitnessKey(t.map);",
+    "new": "  const key = townWitnessKey(t.map);",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -213,8 +213,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC1-strike-anyone",
     "file": "server-account/src/townEcon.js",
-    "old": "export async function strikeTown({ db, nowS }, dev, env, { map } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
-    "new": "export async function strikeTown({ db, nowS }, dev, env, { map } = {}) {",
+    "old": "  if (!isDeveloper(dev, env)) return { error: 'not-developer' };\n  if (!Number.isSafeInteger(map) || map < 1 || map > 0xffffffff) return { error: 'bad-town' };",
+    "new": "  if (!Number.isSafeInteger(map) || map < 1 || map > 0xffffffff) return { error: 'bad-town' };",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -223,7 +223,7 @@
   {
     "name": "TOWNECON-AUDIT2-SVC7-switch",
     "file": "server-account/src/townEcon.js",
-    "old": "export const townsOpen = (env) => String(env?.TOWNS_OPEN ?? 'on').trim().toLowerCase() !== 'off';",
+    "old": "export const townsOpen = (env) =>\n  String(env?.TOWNS_OPEN ?? 'on')\n    .trim()\n    .toLowerCase() !== 'off';",
     "new": "export const townsOpen = (env) => !!env || true;",
     "tests": [
       "test/server/townecon_service.test.js"
@@ -597,8 +597,8 @@
   {
     "name": "TOWNECON-AUDIT2-SVC3-kept-read-each-minute",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (nowS - _keptAt < TOWN_ECON_KEPT_S) return 0;   // kept here a moment ago: the quiet world's minute asks nothing (AUDIT SCALE D7)\n",
-    "new": "",
+    "old": "  if (nowS - _keptAt < TOWN_ECON_KEPT_S) return 0; // kept here a moment ago: the quiet world's minute asks nothing (AUDIT SCALE D7)\n  const row = await db.prepare('SELECT at FROM town_econ_kept WHERE id = 1').first();",
+    "new": "  const row = await db.prepare('SELECT at FROM town_econ_kept WHERE id = 1').first();",
     "tests": [
       "test/net/auditscale.test.js"
     ],

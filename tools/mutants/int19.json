@@ -105,8 +105,8 @@
   {
     "name": "INT19-the-fill-unguarded",
     "file": "server-account/src/writs.js",
-    "old": "    mustChange(db),   // INT19: no fill, no piece out of the record - the record's step rolls back with it\n",
-    "new": "",
+    "old": "    mustChange(db), // INT19: no fill, no piece out of the record - the record's step rolls back with it\n    // the piece the poster's, on its way to them at once (a delivery, PROF5's) - RPT1026-LEDGERLAW: the craft's record its",
+    "new": "    // the piece the poster's, on its way to them at once (a delivery, PROF5's) - RPT1026-LEDGERLAW: the craft's record its",
     "tests": [
       "test/server/int19_crafted_record.test.js"
     ]
@@ -114,8 +114,8 @@
   {
     "name": "INT19-the-fill-worn-by-the-tab",
     "file": "server-account/src/writs.js",
-    "old": "(moved) => (wearOf(moved) === WEAR_WHOLE ? null : 'commission-worn')",
-    "new": "() => null",
+    "old": "  const prep = await prepareCraftedPiece(ctx, me, at, provenance, false, (moved) =>\n    wearOf(moved) === WEAR_WHOLE ? null : 'commission-worn',\n  );",
+    "new": "  const prep = await prepareCraftedPiece(ctx, me, at, provenance, false, () => null);",
     "tests": [
       "test/server/int19_crafted_record.test.js"
     ]
@@ -123,8 +123,8 @@
   {
     "name": "INT19-the-fill-asks-no-record",
     "file": "server-account/src/writs.js",
-    "old": "  if (!side.at) return { error: 'realm-needed' };   // a crafted piece is handed on out of a realm record alone\n",
-    "new": "",
+    "old": "  if (!side.at) return { error: 'realm-needed' }; // a crafted piece is handed on out of a realm record alone\n  const at = side.at;",
+    "new": "  const at = side.at;",
     "tests": [
       "test/server/int19_crafted_record.test.js"
     ]
@@ -150,8 +150,8 @@
   {
     "name": "INT19-coming-back-filled",
     "file": "server-account/src/writs.js",
-    "old": "  if (await pieceComingBack(db, me, provenance)) return 'market-uncollected';   // INT19: back as its record, still to collect\n",
-    "new": "",
+    "old": "  if (await pieceComingBack(db, me, provenance)) return 'market-uncollected'; // INT19: back as its record, still to collect\n  if (await db.prepare(\"SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?1\").bind(provenance).first())",
+    "new": "  if (await db.prepare(\"SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = ?1\").bind(provenance).first())",
     "tests": [
       "test/net/audit31_service.test.js"
     ]

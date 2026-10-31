@@ -335,8 +335,8 @@
   {
     "name": "FB1025I-KEEP-IGNORED",
     "file": "server-account/src/staffRealm.js",
-    "old": "const keep = body.keep === true;",
-    "new": "const keep = false;",
+    "old": "    const keep = body.keep === true; // COPY-LIFT",
+    "new": "    const keep = false; // COPY-LIFT",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ],
@@ -345,8 +345,8 @@
   {
     "name": "FB1025I-KEEP-NONE-KEPT",
     "file": "server-account/src/staffRealm.js",
-    "old": "        const kept = keep ? keptOf(k, e.all) : null;   // COPY-LIFT: one of each stays\n",
-    "new": "        const kept = null;\n",
+    "old": "          const kept = keep ? keptOf(k, e.all) : null; // COPY-LIFT: one of each stays",
+    "new": "          const kept = null;",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ],
@@ -355,8 +355,8 @@
   {
     "name": "FB1025I-KEEP-LEDGER-ROWS-GONE",
     "file": "server-account/src/staffRealm.js",
-    "old": "i < keys.length && !keep; i += 80",
-    "new": "i < keys.length; i += 80",
+    "old": "    for (let i = 0; i < keys.length && !keep; i += 80) {",
+    "new": "    for (let i = 0; i < keys.length; i += 80) {",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ],
@@ -365,8 +365,8 @@
   {
     "name": "FB1025I-KEEP-CHEST-OF-NONE",
     "file": "server-account/src/staffRealm.js",
-    "old": "const binKeys = keep ? lifts : keys;",
-    "new": "const binKeys = keys;",
+    "old": "    const binKeys = keep ? lifts : keys; // AUDIT FB1025i F5: a keep empties the chests of a piece it lifts alone",
+    "new": "    const binKeys = keys; // AUDIT FB1025i F5: a keep empties the chests of a piece it lifts alone",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ],
@@ -375,8 +375,8 @@
   {
     "name": "FB1025I-KEEP-EXTRA-MISCOUNTED",
     "file": "server-account/src/staffRealm.js",
-    "old": "const extra = held - found.size;",
-    "new": "const extra = held;",
+    "old": "    const extra = held - found.size; // COPY-LIFT: what a keep destroys of the record's",
+    "new": "    const extra = held; // COPY-LIFT: what a keep destroys of the record's",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ],
@@ -385,8 +385,8 @@
   {
     "name": "FB1025I-KEEP-SEIZES-FOR-NOTHING",
     "file": "server-account/src/staffRealm.js",
-    "old": "if (!keys.length || (keep && !extra && !bins && !lifts.length))",
-    "new": "if (!keys.length)",
+    "old": "    if (!keys.length || (keep && !extra && !bins && !lifts.length))\n      return said(act, row.player, detail, { error: 'no-dupes' });",
+    "new": "    if (!keys.length) return said(act, row.player, detail, { error: 'no-dupes' });",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ]
@@ -394,8 +394,8 @@
   {
     "name": "FB1025I-KEEP-LIFT-ONLY-REFUSED",
     "file": "server-account/src/staffRealm.js",
-    "old": " && !lifts.length))",
-    "new": "))",
+    "old": "    if (!keys.length || (keep && !extra && !bins && !lifts.length))\n      return said(act, row.player, detail, { error: 'no-dupes' });",
+    "new": "    if (!keys.length || (keep && !extra && !bins)) return said(act, row.player, detail, { error: 'no-dupes' });",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "FB1025I-KEEP-LIFT-UNWIRED",
     "file": "server-account/src/staffRealm.js",
-    "old": "    steps.push(...ownCopyLiftSteps(db, row.id, lifts, nowS));   // COPY-LIFT: lifted with the act that left one\n",
-    "new": "",
+    "old": "    steps.push(...ownCopyLiftSteps(db, row.id, lifts, nowS)); // COPY-LIFT: lifted with the act that left one\n    steps.push(",
+    "new": "    steps.push(",
     "tests": [
       "test/server/staffpanel3realm.test.js"
     ]
@@ -413,8 +413,8 @@
   {
     "name": "LF-KEEP-HOLDS-LAST-PRINT",
     "file": "server-account/src/staffRealm.js",
-    "old": "all.find((it) => ledgerPrintOf(it) === prints.get(k)) ?? all[0];",
-    "new": "all.findLast((it) => ledgerPrintOf(it) === prints.get(k)) ?? all.at(-1);",
+    "old": "      all.find((it) => ledgerPrintOf(it) === prints.get(k)) ?? all[0];",
+    "new": "      all.findLast((it) => ledgerPrintOf(it) === prints.get(k)) ?? all.at(-1);",
     "why": "the keep keeps the LAST copy - the chest's stale one, the pack's destroyed (AUDIT FB1025i lane F's survivor: the lift once asked the last copy's print while the keep kept the first; one keptOf answers both now)",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -457,8 +457,8 @@
   {
     "name": "LF-KEEP-SEQ-UNGUARDED",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (body.seq !== row.seq) return said(act, row.player, detail, { error: 'seq' });\n    const seized = await seizeRealmRecord(c, row.player, row.id, (s) => {\n      const doomed = [];",
-    "new": "    const seized = await seizeRealmRecord(c, row.player, row.id, (s) => {\n      const doomed = [];",
+    "old": "    if (body.seq !== row.seq) return said(act, row.player, detail, { error: 'seq' });\n    const seized = await seizeRealmRecord(",
+    "new": "    const seized = await seizeRealmRecord(",
     "why": "the purge acts on a record that moved since staff looked",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -468,8 +468,8 @@
   {
     "name": "LF-BIN-ANY-HOME",
     "file": "server-account/src/staffRealm.js",
-    "old": "h.building_key = decor_bin.building_key AND h.player = ?1)`).bind(row.player, ...part));",
-    "new": "h.building_key = decor_bin.building_key AND (h.player = ?1 OR 1))`).bind(row.player, ...part));",
+    "old": "            `DELETE FROM decor_bin WHERE uid IN (${m}) AND EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_bin.map_id AND h.building_key = decor_bin.building_key AND h.player = ?1)`,",
+    "new": "            `DELETE FROM decor_bin WHERE uid IN (${m}) AND EXISTS (SELECT 1 FROM homes h WHERE h.map_id = decor_bin.map_id AND h.building_key = decor_bin.building_key AND (h.player = ?1 OR 1))`,",
     "why": "a chest in a home this account does not own loses its copy",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -490,8 +490,8 @@
   {
     "name": "LF-F1-WALK-LISTS-ONLY",
     "file": "server-account/src/staffRealm.js",
-    "old": "  if (save && typeof save === 'object') walk(save);\n",
-    "new": "",
+    "old": "  if (save && typeof save === 'object') walk(save);\n  return out;",
+    "new": "  return out;",
     "why": "AUDIT FB1025i F1: the keep reads the record's lists alone - a copy in a deserter's take or on the ground waits out the lift and comes back live",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -501,8 +501,8 @@
   {
     "name": "LF-F1-LIFT-UNDESTROYED",
     "file": "server-account/src/staffRealm.js",
-    "old": "const asked = [...found].filter(([k, e]) => e.all.length > 1 || (inBins.get(k) ?? 0) > 0 || taken.has(k));",
-    "new": "const asked = [...found];",
+    "old": "    const asked = [...found].filter(([k, e]) => e.all.length > 1 || (inBins.get(k) ?? 0) > 0 || taken.has(k));",
+    "new": "    const asked = [...found];",
     "why": "AUDIT FB1025i F1: a lift on the save's word that it shows the piece once - the copy sold at a counter freed the other",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -512,8 +512,8 @@
   {
     "name": "LF-F1-LIFT-BINS-IGNORED",
     "file": "server-account/src/staffRealm.js",
-    "old": " || (inBins.get(k) ?? 0) > 0 || taken.has(k));",
-    "new": " || taken.has(k));",
+    "old": "    const asked = [...found].filter(([k, e]) => e.all.length > 1 || (inBins.get(k) ?? 0) > 0 || taken.has(k));",
+    "new": "    const asked = [...found].filter(([k, e]) => e.all.length > 1 || taken.has(k));",
     "why": "AUDIT FB1025i F1: a pair whose copy lies in the account's chest is never lifted though the act destroys it",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -523,8 +523,8 @@
   {
     "name": "LF-F1-LIFT-EVIDENCE-IGNORED",
     "file": "server-account/src/staffRealm.js",
-    "old": " || taken.has(k));",
-    "new": ");",
+    "old": "    const asked = [...found].filter(([k, e]) => e.all.length > 1 || (inBins.get(k) ?? 0) > 0 || taken.has(k));",
+    "new": "    const asked = [...found].filter(([k, e]) => e.all.length > 1 || (inBins.get(k) ?? 0) > 0);",
     "why": "AUDIT FB1025i F1: a pair one copy of which staff took could never be lifted",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -534,8 +534,8 @@
   {
     "name": "LF-F1-EVIDENCE-RETURNED",
     "file": "server-account/src/staffRealm.js",
-    "old": "AND kind = 'player' AND state = 'kept' AND key IN",
-    "new": "AND kind = 'player' AND key IN",
+    "old": "        `SELECT DISTINCT key FROM staff_evidence WHERE char_id = ?1 AND kind = 'player' AND state = 'kept' AND key IN (${marksFrom(part.length, 2)})`,",
+    "new": "        `SELECT DISTINCT key FROM staff_evidence WHERE char_id = ?1 AND kind = 'player' AND key IN (${marksFrom(part.length, 2)})`,",
     "why": "AUDIT FB1025i F1: a copy staff put back counted as one they keep - the lift on a piece the player let go since",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -545,8 +545,8 @@
   {
     "name": "LF-F1-EVIDENCE-ANOTHERS",
     "file": "server-account/src/staffRealm.js",
-    "old": "SELECT DISTINCT key FROM staff_evidence WHERE char_id = ?1 AND kind = 'player'",
-    "new": "SELECT DISTINCT key FROM staff_evidence WHERE (char_id = ?1 OR 1) AND kind = 'player'",
+    "old": "        `SELECT DISTINCT key FROM staff_evidence WHERE char_id = ?1 AND kind = 'player' AND state = 'kept' AND key IN (${marksFrom(part.length, 2)})`,",
+    "new": "        `SELECT DISTINCT key FROM staff_evidence WHERE (char_id = ?1 OR 1) AND kind = 'player' AND state = 'kept' AND key IN (${marksFrom(part.length, 2)})`,",
     "why": "AUDIT FB1025i F1: a copy staff took off ANOTHER character counted as this one's",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -556,8 +556,8 @@
   {
     "name": "LF-F1-HIDDEN-MISCOUNTED",
     "file": "server-account/src/staffRealm.js",
-    "old": "const hidden = held - listed;",
-    "new": "const hidden = 0;",
+    "old": "    const hidden = held - listed; // AUDIT FB1025i F1: where the record lists nothing - destroyed with the rest",
+    "new": "    const hidden = 0; // AUDIT FB1025i F1: where the record lists nothing - destroyed with the rest",
     "why": "AUDIT FB1025i F1: the copies the record lists nowhere not said",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -567,8 +567,8 @@
   {
     "name": "LF-F1-LISTED-UNCOUNTED",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (inList) e.listed++;\n",
-    "new": "",
+    "old": "    if (inList) e.listed++;\n    out.set(k, e);",
+    "new": "    out.set(k, e);",
     "why": "AUDIT FB1025i F1: every copy said hidden, the record's own lists' among them",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -588,8 +588,8 @@
   {
     "name": "LF-F5-BINS-OF-EVERY-KEPT",
     "file": "server-account/src/staffRealm.js",
-    "old": "const binKeys = keep ? lifts : keys;",
-    "new": "const binKeys = keep ? [...found.keys()] : keys;",
+    "old": "    const binKeys = keep ? lifts : keys; // AUDIT FB1025i F5: a keep empties the chests of a piece it lifts alone",
+    "new": "    const binKeys = keep ? [...found.keys()] : keys; // AUDIT FB1025i F5: a keep empties the chests of a piece it lifts alone",
     "why": "AUDIT FB1025i F5: a keep empties the chests of every piece it keeps - a claim's holder's real piece, deposited there, destroyed beside the record's copy",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -599,8 +599,8 @@
   {
     "name": "LF-F3-UNGUARDED",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (seized.seq !== row.seq + 1) { await dropObjects(c.bucket, [seized.key]); return said(act, row.player, detail, { error: 'seq' }); }\n",
-    "new": "",
+    "old": "    if (seized.seq !== row.seq + 1) {\n      await dropObjects(c.bucket, [seized.key]);\n      return said(act, row.player, detail, { error: 'seq' });\n    }\n    const steps = [...seized.steps];",
+    "new": "    const steps = [...seized.steps];",
     "why": "AUDIT FB1025i F3: a checkpoint landed between the read and the seizure, and the purge seized the record it never counted",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -610,8 +610,8 @@
   {
     "name": "LF-F3-OBJECT-KEPT",
     "file": "server-account/src/staffRealm.js",
-    "old": "{ await dropObjects(c.bucket, [seized.key]); return said(act, row.player, detail, { error: 'seq' }); }",
-    "new": "{ return said(act, row.player, detail, { error: 'seq' }); }",
+    "old": "      await dropObjects(c.bucket, [seized.key]);\n      return said(act, row.player, detail, { error: 'seq' });",
+    "new": "      return said(act, row.player, detail, { error: 'seq' });",
     "why": "AUDIT FB1025i F3: the refused seizure's object left in the bucket, named by no row",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -621,8 +621,8 @@
   {
     "name": "LF-F2-LIFTED-ASKED",
     "file": "server-account/src/staffRealm.js",
-    "old": "const lifted = keep ? await liftedOf(db, row.id, lifts) : [];",
-    "new": "const lifted = lifts;",
+    "old": "    const lifted = keep ? await liftedOf(db, row.id, lifts) : []; // AUDIT FB1025i F2: what the batch lifted, read after it",
+    "new": "    const lifted = lifts; // AUDIT FB1025i F2: what the batch lifted, read after it",
     "why": "AUDIT FB1025i F2: the answer says lifted what the law asked, not what the batch lifted",
     "tests": [
       "test/server/staffpanel3realm.test.js",
@@ -654,8 +654,8 @@
   {
     "name": "LF-F6-FIRST-WHATEVER-PRINT",
     "file": "server-account/src/staffRealm.js",
-    "old": "all.find((it) => ledgerPrintOf(it) === prints.get(k)) ?? all[0];",
-    "new": "all[0];",
+    "old": "    const keptOf = (/** @type {string} */ k, /** @type {any[]} */ all) =>\n      all.find((it) => ledgerPrintOf(it) === prints.get(k)) ?? all[0];",
+    "new": "    const keptOf = (/** @type {string} */ k, /** @type {any[]} */ all) => all[0];",
     "why": "AUDIT FB1025i F6: the first copy kept whatever it is - a key shown first on another piece keeps that one, destroys the ledger's own, and its lift is refused",
     "tests": [
       "test/server/staffpanel3realm.test.js",

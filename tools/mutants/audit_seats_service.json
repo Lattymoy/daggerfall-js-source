@@ -318,8 +318,8 @@
   {
     "name": "AUDIT-SEATS-S4-edict",
     "file": "server-account/src/townSeats.js",
-    "old": "\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed'\"",
-    "new": "\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed' AND 0\"",
+    "old": "    db.prepare(\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed'\").bind(key),",
+    "new": "    db.prepare(\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed' AND 0\").bind(key),",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -327,8 +327,8 @@
   {
     "name": "AUDIT-SEATS-S4-battle",
     "file": "server-account/src/townSeats.js",
-    "old": "\"UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled'\"",
-    "new": "\"UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled' AND 0\"",
+    "old": "      .prepare(\"UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled'\")",
+    "new": "      .prepare(\"UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled' AND 0\")",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -336,8 +336,8 @@
   {
     "name": "AUDIT-SEATS-S4-refund",
     "file": "server-account/src/townSeats.js",
-    "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS",
-    "new": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND 0 AND EXISTS",
+    "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)",
+    "new": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND 0 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -345,8 +345,8 @@
   {
     "name": "AUDIT-SEATS-S4-season",
     "file": "server-account/src/townSeats.js",
-    "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS",
-    "new": "      WHERE h.key = ?1 AND h.since_week >= ?5 - 100 AND EXISTS",
+    "old": "      WHERE h.key = ?1 AND h.since_week >= ?5 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)",
+    "new": "      WHERE h.key = ?1 AND h.since_week >= ?5 - 100 AND EXISTS (SELECT 1 FROM guilds WHERE id = h.guild_id)",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -354,8 +354,8 @@
   {
     "name": "AUDIT-SEATS-S4-room",
     "file": "server-account/src/townSeats.js",
-    "old": "MIN(l.amount, ${MARKS_MAX} - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0))",
-    "new": "l.amount",
+    "old": "      SELECT 'mint', NULL, 'guild', h.guild_id, 'seat-strike-refund', MIN(l.amount, ${MARKS_MAX} - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0)),",
+    "new": "      SELECT 'mint', NULL, 'guild', h.guild_id, 'seat-strike-refund', l.amount,",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -363,8 +363,8 @@
   {
     "name": "AUDIT-SEATS-S4-claim-rid",
     "file": "server-account/src/townSeats.js",
-    "old": "('claim-' || (h.since_week - 1) || '-' || h.key, 'tourney-'",
-    "new": "('claim-' || h.since_week || '-' || h.key, 'tourney-'",
+    "old": "        AND l.rid IN ('claim-' || (h.since_week - 1) || '-' || h.key, 'tourney-' || h.since_week || '-' || h.key)",
+    "new": "        AND l.rid IN ('claim-' || h.since_week || '-' || h.key, 'tourney-' || h.since_week || '-' || h.key)",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "AUDIT-SEATS-S4-tourney-rid",
     "file": "server-account/src/townSeats.js",
-    "old": "'tourney-' || h.since_week || '-' || h.key)",
-    "new": "'tourney-' || (h.since_week - 1) || '-' || h.key)",
+    "old": "        AND l.rid IN ('claim-' || (h.since_week - 1) || '-' || h.key, 'tourney-' || h.since_week || '-' || h.key)",
+    "new": "        AND l.rid IN ('claim-' || (h.since_week - 1) || '-' || h.key, 'tourney-' || (h.since_week - 1) || '-' || h.key)",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -392,8 +392,8 @@
   {
     "name": "AUDIT-SEATS-S4-history",
     "file": "server-account/src/townSeats.js",
-    "old": "...(h ? { guild: { name: h.name ?? '', tag: h.tag ?? '' } } : {})",
-    "new": "...{}",
+    "old": "      .bind(\n        key,\n        week,\n        JSON.stringify({ by: dev.handle ?? null, ...(h ? { guild: { name: h.name ?? '', tag: h.tag ?? '' } } : {}) }),\n        nowS,\n        rid,\n      ),",
+    "new": "      .bind(key, week, JSON.stringify({ by: dev.handle ?? null, ...{} }), nowS, rid),",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -401,8 +401,8 @@
   {
     "name": "AUDIT-SEATS-S4-refund-row",
     "file": "server-account/src/townSeats.js",
-    "old": "json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0))",
-    "new": "json_set(?3, '$.refund', 0)",
+    "old": "      SELECT ?1, ?2, 'strike', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`,",
+    "new": "      SELECT ?1, ?2, 'strike', json_set(?3, '$.refund', 0), ?4`,",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]
@@ -764,8 +764,8 @@
   {
     "name": "AUDIT-SEATS-T2-disputed",
     "file": "server-account/src/townSeats.js",
-    "old": " || s.fact.state === 'disputed';",
-    "new": ";",
+    "old": "  for (const s of out)\n    s.audit = (factConfirmed(s.fact) && s.agreeing.length === SEAT_WITNESSES_AUDIT) || s.fact.state === 'disputed';",
+    "new": "  for (const s of out) s.audit = factConfirmed(s.fact) && s.agreeing.length === SEAT_WITNESSES_AUDIT;",
     "tests": [
       "test/net/audit_seats_service.test.js"
     ]

@@ -372,8 +372,8 @@
   {
     "name": "WWAUDIT-B8-a-list-outside-the-vocabulary",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'SHADOW_FANG_HANDLES'",
-    "new": "shadowfangs: 'SHADOW_FANG_HANDLES'",
+    "old": "  shadowfang: 'SHADOW_FANG_HANDLES',",
+    "new": "  shadowfangs: 'SHADOW_FANG_HANDLES',",
     "tests": [
       "test/net/titlen.test.js"
     ],

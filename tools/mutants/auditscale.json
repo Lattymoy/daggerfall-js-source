@@ -125,8 +125,8 @@
   {
     "name": "AUDIT-SCALE-LANED-commission-decline-unprobed",
     "file": "server-account/src/writs.js",
-    "old": "\n      OR EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND crafter IS NULL) AS due",
-    "new": " AS due",
+    "old": "      `SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2)\n      OR EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND crafter IS NULL) AS due`,",
+    "new": "      `SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2) AS due`,",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"
@@ -136,8 +136,8 @@
   {
     "name": "AUDIT-SCALE-LANED-commission-crafter-unprobed",
     "file": "server-account/src/writs.js",
-    "old": "SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2)",
-    "new": "SELECT EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2)",
+    "old": "      `SELECT EXISTS (SELECT 1 FROM commissions WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2)",
+    "new": "      `SELECT EXISTS (SELECT 1 FROM commissions WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2)",
     "tests": [
       "test/net/auditscale.test.js",
       "test/server/scale4b.test.js"

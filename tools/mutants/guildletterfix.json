@@ -92,8 +92,8 @@
   {
     "name": "GUILD-LETTER-FIX-route-unlisted",
     "file": "server-account/src/staffRealm.js",
-    "old": "'/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains', '/v1/staff/market/pull',\n",
-    "new": "'/v1/staff/fix/bank', '/v1/staff/gains', '/v1/staff/market/pull',\n",
+    "old": "  '/v1/staff/fix/letter',\n  '/v1/staff/gains',",
+    "new": "  '/v1/staff/gains',",
     "tests": [
       "test/server/staffguildletter.test.js"
     ],

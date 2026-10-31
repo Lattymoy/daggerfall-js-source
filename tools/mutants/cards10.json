@@ -408,8 +408,8 @@
   {
     "name": "CARDS10-service-title-held",
     "file": "server-account/src/titles.js",
-    "old": "  if (player?.iliac?.champion === true) held.push('iliacchampion');",
-    "new": "",
+    "old": "  if (player?.iliac?.champion === true) held.push('iliacchampion'); // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top",
+    "new": "  // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top",
     "tests": [
       "test/net/iliac/cards10_service.test.js"
     ]

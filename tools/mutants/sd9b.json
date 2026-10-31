@@ -92,7 +92,7 @@
   {
     "name": "SD9B-the-title-on-a-guest-row",
     "file": "server-account/src/titles.js",
-    "old": "  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_TITLE)\n    held.push('hourbreaker');",
     "new": "  if (Number(player?.sd_honours) & SD_HONOUR_TITLE) held.push('hourbreaker');",
     "tests": [
       "test/server/sd9b_claim.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "SD9B-the-aura-read-as-the-title",
     "file": "server-account/src/titles.js",
-    "old": "(Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');",
-    "new": "(Number(player?.sd_honours) & 3)) held.push('hourbreaker');",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_TITLE)\n    held.push('hourbreaker');",
+    "new": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & 3) held.push('hourbreaker');",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]
@@ -110,8 +110,8 @@
   {
     "name": "SD9B-never-held",
     "file": "server-account/src/titles.js",
-    "old": "  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');\n",
-    "new": "",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_TITLE)\n    held.push('hourbreaker');\n  if (isHoursFirst(player, env)) held.push('hoursfirst'); // HOURS-FIRST: by name",
+    "new": "  if (isHoursFirst(player, env)) held.push('hoursfirst'); // HOURS-FIRST: by name",
     "tests": [
       "test/server/sd9b_claim.test.js"
     ]

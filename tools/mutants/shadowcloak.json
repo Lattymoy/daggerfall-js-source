@@ -48,8 +48,8 @@
   {
     "name": "SHADOWCLOAK-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "primarch: 'radiance', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  shadowfang: 'shadowcloak',\n  crystalfist: 'resonance',",
+    "new": "  crystalfist: 'resonance',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],
@@ -58,8 +58,8 @@
   {
     "name": "SHADOWCLOAK-granted-to-another-list",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "primarch: 'radiance', penitent: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  shadowfang: 'shadowcloak',",
+    "new": "  penitent: 'shadowcloak',",
     "tests": [
       "test/net/shadowcloak.test.js"
     ],

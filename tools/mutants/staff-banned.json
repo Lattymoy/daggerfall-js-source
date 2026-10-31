@@ -2,8 +2,8 @@
   {
     "name": "STAFF-BANNED-players-default-all",
     "file": "server-account/src/staffPlayers.js",
-    "old": "const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'not-banned';",
-    "new": "const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'all';",
+    "old": "    const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'not-banned';",
+    "new": "    const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'all';",
     "why": "the banned stay in the Players list unless filtered out",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-BANNED-players-filter-ignored",
     "file": "server-account/src/staffPlayers.js",
-    "old": "const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'not-banned';",
-    "new": "const ban = 'not-banned';",
+    "old": "    const ban = BAN_FILTERS.includes(body.ban) ? body.ban : 'not-banned';",
+    "new": "    const ban = 'not-banned';",
     "why": "the filter's Banned and All never answered",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-BANNED-players-never-banned-hidden",
     "file": "server-account/src/staffPlayers.js",
-    "old": "`AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) `",
-    "new": "`AND (banned_until <= ?${args.push(nowS)}) `",
+    "old": "          ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) `",
+    "new": "          ? `AND (banned_until <= ?${args.push(nowS)}) `",
     "why": "an account never banned falls out of the default list",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -32,8 +32,8 @@
   {
     "name": "STAFF-BANNED-players-lapsed-hidden",
     "file": "server-account/src/staffPlayers.js",
-    "old": "OR banned_until <= ?${args.push(nowS)}) `",
-    "new": "OR banned_until <= ?${args.push(nowS)} - 1000) `",
+    "old": "          ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) `",
+    "new": "          ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)} - 1000) `",
     "why": "an account whose ban lapsed is left out as if banned",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-BANNED-players-lapsed-banned",
     "file": "server-account/src/staffPlayers.js",
-    "old": "WHERE banned_until > ?${args.push(nowS)}) `",
-    "new": "WHERE banned_until > ?${args.push(nowS)} - 1000) `",
+    "old": "        ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `",
+    "new": "        ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)} - 1000) `",
     "why": "a lapsed ban listed under Banned",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -52,8 +52,8 @@
   {
     "name": "STAFF-BANNED-players-banned-unindexed",
     "file": "server-account/src/staffPlayers.js",
-    "old": "`AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `",
-    "new": "`AND banned_until > ?${args.push(nowS)} `",
+    "old": "        ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `",
+    "new": "        ? `AND banned_until > ?${args.push(nowS)} `",
     "why": "the Banned filter beside the handle's range: every handle walked for the few banned",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -62,8 +62,8 @@
   {
     "name": "STAFF-BANNED-players-clock-order",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    const banSql = ban === 'banned' ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `\n      : ban === 'not-banned' ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) ` : '';\n    if (online) args.push(nowS - PLAY_GRACE_S);\n",
-    "new": "    if (online) args.push(nowS - PLAY_GRACE_S);\n    const banSql = ban === 'banned' ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `\n      : ban === 'not-banned' ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) ` : '';\n",
+    "old": "    const banSql =\n      ban === 'banned'\n        ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `\n        : ban === 'not-banned'\n          ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) `\n          : '';\n    if (online) args.push(nowS - PLAY_GRACE_S);",
+    "new": "    if (online) args.push(nowS - PLAY_GRACE_S);\n    const banSql =\n      ban === 'banned'\n        ? `AND id IN (SELECT id FROM players WHERE banned_until > ?${args.push(nowS)}) `\n        : ban === 'not-banned'\n          ? `AND (banned_until IS NULL OR banned_until <= ?${args.push(nowS)}) `\n          : '';",
     "why": "the online filter's clock bound before the ban's: the online clause reads the ban's clock",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -72,8 +72,8 @@
   {
     "name": "STAFF-BANNED-players-status-lapsed",
     "file": "server-account/src/staffPlayers.js",
-    "old": "bannedUntil: isBanned(r, nowS) ? r.banned_until : 0,",
-    "new": "bannedUntil: r.banned_until ?? 0,",
+    "old": "        bannedUntil: isBanned(r, nowS) ? r.banned_until : 0,",
+    "new": "        bannedUntil: r.banned_until ?? 0,",
     "why": "a lapsed ban shown as a ban",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -82,8 +82,8 @@
   {
     "name": "STAFF-BANNED-players-forever",
     "file": "server-account/src/staffPlayers.js",
-    "old": "isBanned(r, nowS) && r.banned_until >= BAN_FOREVER,",
-    "new": "isBanned(r, nowS) && r.banned_until > BAN_FOREVER,",
+    "old": "        banForever: isBanned(r, nowS) && r.banned_until >= BAN_FOREVER, // STAFF-BANNED: the ban status",
+    "new": "        banForever: isBanned(r, nowS) && r.banned_until > BAN_FOREVER, // STAFF-BANNED: the ban status",
     "why": "a ban for good not said to be",
     "tests": [
       "test/server/staffbanned.test.js"
@@ -92,8 +92,8 @@
   {
     "name": "STAFF-BANNED-players-view",
     "file": "server-account/src/staffPlayers.js",
-    "old": "{ q, online, ban }, { onceIn: READ_ONCE_S }",
-    "new": "{ q, online }, { onceIn: READ_ONCE_S }",
+    "old": "      audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S }),",
+    "new": "      audit('players-search', null, { q, online }, { onceIn: READ_ONCE_S }),",
     "why": "the Banned view of the list unwritten within ten minutes of the default one",
     "tests": [
       "test/server/staffbanned.test.js"

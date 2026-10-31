@@ -170,7 +170,7 @@
   {
     "name": "AUDIT31-svc-member-takes-early",
     "file": "server-account/src/writs.js",
-    "old": "  if (kind === 'withdraw' && !guildTakeMay(rank, units, await ownDeposit(db, g, key, me, character))) return { error: 'guild-stores-mine' };",
+    "old": "  if (kind === 'withdraw' && !guildTakeMay(rank, units, await ownDeposit(db, g, key, me, character)))\n    return { error: 'guild-stores-mine' };",
     "new": "  if (kind === 'withdraw' && rank > 1 && false) return { error: 'guild-stores-mine' };",
     "tests": [
       "test/net/audit31_service.test.js",
@@ -180,8 +180,8 @@
   {
     "name": "AUDIT31-svc-member-takes-decision",
     "file": "server-account/src/writs.js",
-    "old": "        AND (?9 IN (${TAKERS_SQL})\n          OR COALESCE(",
-    "new": "        AND (?9 = ?9\n          OR COALESCE(",
+    "old": "        AND (?9 IN (${TAKERS_SQL})",
+    "new": "        AND (?9 = ?9",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -189,8 +189,8 @@
   {
     "name": "AUDIT31-svc-writ-room",
     "file": "server-account/src/writs.js",
-    "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)",
-    "new": "        AND (?19 IS NOT NULL OR (?18 = ?18 AND ?9 = ?9))",
+    "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)   -- SEAT2b: a seat writ fills no guild Stores",
+    "new": "        AND (?19 IS NOT NULL OR (?18 = ?18 AND ?9 = ?9))   -- SEAT2b: a seat writ fills no guild Stores",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "AUDIT31-svc-writ-reserve-ignored",
     "file": "server-account/src/writs.js",
-    "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)",
-    "new": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ?9 <= ?18)",
+    "old": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ${reservedSql('?4', '?8', '?12')} + ?9 <= ?18)   -- SEAT2b: a seat writ fills no guild Stores",
+    "new": "        AND (?19 IS NOT NULL OR ${guildHeldSql('?4', '?8')} + ?9 <= ?18)   -- SEAT2b: a seat writ fills no guild Stores",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "AUDIT31-svc-crafter-unsettled",
     "file": "server-account/src/writs.js",
-    "old": "WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`)",
-    "new": "WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2`)",
+    "old": "          `UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`,",
+    "new": "          `UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE poster = ?1 AND state = 'open' AND expires_at <= ?2`,",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "AUDIT31-svc-crafter-yours-filled-only",
     "file": "server-account/src/writs.js",
-    "old": "      OR (c.crafter = ?1 AND (c.state = 'open' OR c.closed_at > ?2))",
-    "new": "      OR (c.crafter = ?1 AND (c.state = 'open' OR (c.state = 'filled' AND c.closed_at > ?2)))",
+    "old": "      OR (c.crafter = ?1 AND (c.state = 'open' OR c.closed_at > ?2))   -- AUDIT 31 L1: a week of those closed, as the poster's",
+    "new": "      OR (c.crafter = ?1 AND (c.state = 'open' OR (c.state = 'filled' AND c.closed_at > ?2)))   -- AUDIT 31 L1: a week of those closed, as the poster's",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -243,7 +243,7 @@
   {
     "name": "AUDIT31-svc-unyielded-word",
     "file": "server-account/src/writs.js",
-    "old": "  if (!commissionable(recipe)) return { error: pieceListable(recipe) && commissionUnyielded(recipe) ? 'commission-unyielded' : 'commission-recipe' };",
+    "old": "  if (!commissionable(recipe))\n    return {\n      error: pieceListable(recipe) && commissionUnyielded(recipe) ? 'commission-unyielded' : 'commission-recipe',\n    };",
     "new": "  if (!commissionable(recipe)) return { error: 'commission-recipe' };",
     "tests": [
       "test/net/audit31_service.test.js"
@@ -253,8 +253,8 @@
     "name": "AUDIT31-svc-fulfil-uncollected",
     "file": "server-account/src/writs.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - the fill's words for a held piece are pieceBusy's, asked before the record moves and after a refused decision",
-    "old": "  if (await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()) return 'market-uncollected';\n",
-    "new": "",
+    "old": "  if (\n    await db.prepare('SELECT 1 FROM market_deliveries WHERE provenance = ?1 AND collected = 0').bind(provenance).first()\n  )\n    return 'market-uncollected';\n  if (await pieceComingBack(db, me, provenance)) return 'market-uncollected'; // INT19: back as its record, still to collect",
+    "new": "  if (await pieceComingBack(db, me, provenance)) return 'market-uncollected'; // INT19: back as its record, still to collect",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -271,8 +271,8 @@
   {
     "name": "AUDIT31-svc-eligible-order",
     "file": "server-account/src/writs.js",
-    "old": "ORDER BY p.quality, p.provenance LIMIT",
-    "new": "ORDER BY p.quality DESC, p.provenance LIMIT",
+    "old": "    ORDER BY p.quality, p.provenance LIMIT ${WRIT_SHOWN * 4}`,",
+    "new": "    ORDER BY p.quality DESC, p.provenance LIMIT ${WRIT_SHOWN * 4}`,",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -289,8 +289,8 @@
   {
     "name": "AUDIT31-svc-writs-open-said",
     "file": "server-account/src/writs.js",
-    "old": "    writsOpen: true, me: displayName(player),",
-    "new": "    writsOpen: false, me: displayName(player),",
+    "old": "    writsOpen: true,",
+    "new": "    writsOpen: false,",
     "tests": [
       "test/net/audit31_service.test.js"
     ]
@@ -298,8 +298,8 @@
   {
     "name": "AUDIT31-svc-writ-unyielded-word",
     "file": "server-account/src/writs.js",
-    "old": "material(key) && UNYIELDED.includes(key) ? 'market-unyielded' : 'bad-material'",
-    "new": "'bad-material'",
+    "old": "  if (!writMaterialOk(key))\n    return { error: material(key) && UNYIELDED.includes(key) ? 'market-unyielded' : 'bad-material' };",
+    "new": "  if (!writMaterialOk(key)) return { error: 'bad-material' };",
     "tests": [
       "test/net/prof6_service.test.js"
     ],
@@ -309,8 +309,8 @@
   {
     "name": "AUDIT31-svc-commission-elsewhere",
     "file": "server-account/src/writs.js",
-    "old": "  if (Number(c.region) !== region) return { error: 'commission-elsewhere' };",
-    "new": "  if (Number(c.region) !== region) return { error: 'writ-elsewhere' };",
+    "old": "  if (Number(c.region) !== region) return { error: 'commission-elsewhere' }; // AUDIT 31 L6: a commission's own word",
+    "new": "  if (Number(c.region) !== region) return { error: 'writ-elsewhere' }; // AUDIT 31 L6: a commission's own word",
     "tests": [
       "test/net/prof6_service.test.js"
     ]

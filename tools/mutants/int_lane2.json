@@ -204,8 +204,8 @@
   {
     "name": "INT9-SVC-THE-GRACE-UNREAD",
     "file": "server-account/src/wild.js",
-    "old": "      if (ctx.nowS < c.i + wildFallGraceS(c)) return { error: 'grace' };\n",
-    "new": "",
+    "old": "      if (ctx.nowS < c.i + wildFallGraceS(c)) return { error: 'grace' };\n      seize = true;",
+    "new": "      seize = true;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -213,8 +213,8 @@
   {
     "name": "INT9-SVC-A-STRANGERS-CARRY",
     "file": "server-account/src/wild.js",
-    "old": "    if (player.id !== c.f && player.id !== c.k) return { error: 'not-yours' };\n",
-    "new": "",
+    "old": "    if (player.id !== c.f && player.id !== c.k) return { error: 'not-yours' };\n    if (!c.c) return { error: 'no-realm-character' };",
+    "new": "    if (!c.c) return { error: 'no-realm-character' };",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -222,7 +222,7 @@
   {
     "name": "INT9-SVC-THE-LEDGER-UNREAD",
     "file": "server-account/src/wild.js",
-    "old": "  const keep = (/** @type {any} */ it) => { const k = ledgerKeyOf(it); return k != null && barred.has(k); };",
+    "old": "  const keep = (/** @type {any} */ it) => {\n    const k = ledgerKeyOf(it);\n    return k != null && barred.has(k);\n  };",
     "new": "  const keep = (/** @type {any} */ _it) => false;",
     "tests": [
       "test/net/int9_wild_ref.test.js"
@@ -567,8 +567,8 @@
   {
     "name": "INT9-AUDIT-SVC-A-FRESH-ORDER-EACH-ASKING",
     "file": "server-account/src/wild.js",
-    "old": "    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing, { subtle: ctx.subtle, nowS: oi });",
-    "new": "    order = await mintRemainsOrder({ s: fallen, wr: r, wh, wn: records.length, wm, ...(killerFirst && killer ? { wk: killer, wi: 0, ...(escrow ? { we: 1 } : {}) } : {}), ...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing, { subtle: ctx.subtle, nowS: ctx.nowS });",
+    "old": "      { subtle: ctx.subtle, nowS: oi },",
+    "new": "      { subtle: ctx.subtle, nowS: ctx.nowS },",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ],
@@ -595,8 +595,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-ASKERS-ROOM",
     "file": "server-account/src/wild.js",
-    "old": "records: list(had.items), kept: list(had.kept), burnt: had.burnt === 1, killerFirst: had.wi === 0, wm: had.wm,",
-    "new": "records: list(had.items), kept: list(had.kept), burnt: had.burnt === 1, killerFirst: had.wi === 0, wm: room,",
+    "old": "      wm: had.wm,",
+    "new": "      wm: room,",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -613,8 +613,8 @@
   {
     "name": "INT9-AUDIT-SVC-NO-COPY-WRITTEN",
     "file": "server-account/src/wild.js",
-    "old": "    ...knownCopySteps(ctx.db, charId, dropped, ctx.nowS),\n",
-    "new": "",
+    "old": "    ...knownCopySteps(ctx.db, charId, dropped, ctx.nowS),\n    ctx.db",
+    "new": "    ctx.db",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -622,8 +622,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-FITTED-FEW-ASKED",
     "file": "server-account/src/wild.js",
-    "old": "  const barred = await piecesBarred(ctx.db, charId, [...wornOffer(stored.items).filter((it) => !insured(it)), ...wildDropCandidates(stored, -1, null, { insured })].map(ledgerKeyOf).filter((k) => k != null));",
-    "new": "  const barred = await piecesBarred(ctx.db, charId, takeWildDeath(JSON.parse(JSON.stringify(stored)), -1, () => false, null, { insured }).taken.map(ledgerKeyOf).filter((k) => k != null));",
+    "old": "    [...wornOffer(stored.items).filter((it) => !insured(it)), ...wildDropCandidates(stored, -1, null, { insured })]\n      .map(ledgerKeyOf)",
+    "new": "    takeWildDeath(JSON.parse(JSON.stringify(stored)), -1, () => false, null, { insured })\n      .taken.map(ledgerKeyOf)",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -631,8 +631,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-SEQ-UNTOLD",
     "file": "server-account/src/wild.js",
-    "old": "      if (now && now.lease === at.lease) seq = now.seq;",
-    "new": "",
+    "old": "      if (now && now.lease === at.lease) seq = now.seq;\n    }",
+    "new": "    }",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -640,8 +640,8 @@
   {
     "name": "INT9-AUDIT-SVC-THE-TOOK-UNSAID",
     "file": "server-account/src/wild.js",
-    "old": "  const tk = { took: wildTookOf(drop.taken, drop.from), gold: drop.gold, ...(spent.length ? { insured: spent } : {}), ...(lastGold > 0 ? { last: 1 } : {}) };",
-    "new": "  const tk = { took: [], gold: { purse: 0, cart: 0 }, ...(spent.length ? { insured: spent } : {}), ...(lastGold > 0 ? { last: 1 } : {}) };",
+    "old": "    took: wildTookOf(drop.taken, drop.from),\n    gold: drop.gold,",
+    "new": "    took: [],\n    gold: { purse: 0, cart: 0 },",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]
@@ -898,8 +898,8 @@
   {
     "name": "INT7-AUDIT-VERDICT-THE-ARMS-UNWRITTEN",
     "file": "server-account/src/verdict.js",
-    "old": "    arms_top: judged.arms[0],\n",
-    "new": "    arms_top: null,\n",
+    "old": "    arms_top: judged.arms[0],",
+    "new": "    arms_top: null,",
     "tests": [
       "test/net/arena/int7_arms.test.js"
     ]

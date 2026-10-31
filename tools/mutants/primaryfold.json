@@ -59,8 +59,8 @@
   {
     "name": "PRIMARYFOLD-week-never-kept",
     "file": "server-account/src/weekKept.js",
-    "old": "  m.set(name, week);\n",
-    "new": "",
+    "old": "  m.set(name, week);\n}",
+    "new": "}",
     "tests": [
       "test/server/primaryfold.test.js"
     ]
@@ -68,8 +68,8 @@
   {
     "name": "PRIMARYFOLD-week-kept-past-its-week",
     "file": "server-account/src/weekKept.js",
-    "old": "return !!k && kept.get(k)?.get(name) === week;",
-    "new": "return !!k && kept.get(k)?.get(name) !== undefined;",
+    "old": "  return !!k && kept.get(k)?.get(name) === week;",
+    "new": "  return !!k && kept.get(k)?.get(name) !== undefined;",
     "tests": [
       "test/server/primaryfold.test.js"
     ]
@@ -280,8 +280,8 @@
   {
     "name": "PRIMARYFOLD-week-kept-by-the-proxy",
     "file": "server-account/src/weekKept.js",
-    "old": "db[DB_ROOT] ?? db",
-    "new": "db",
+    "old": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? (db[DB_ROOT] ?? db) : null);",
+    "new": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db : null);",
     "tests": [
       "test/server/primaryfold.test.js"
     ],

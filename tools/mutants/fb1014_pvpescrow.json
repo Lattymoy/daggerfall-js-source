@@ -65,7 +65,7 @@
   {
     "name": "ESCROW-the-second-collect-committed-again",
     "file": "server-account/src/wild.js",
-    "old": "  if (row.state === 'collected') return row.to_char === side.at.id ? { r: row.r, item: parse(row.rec), again: true } : { error: 'escrow-collected' };",
+    "old": "  if (row.state === 'collected')\n    return row.to_char === side.at.id ? { r: row.r, item: parse(row.rec), again: true } : { error: 'escrow-collected' };",
     "new": "  if (row.state === 'collected' && row.to_char !== side.at.id) return { error: 'escrow-collected' };",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
@@ -101,8 +101,8 @@
   {
     "name": "ESCROW-a-failed-batch-read-as-landed",
     "file": "server-account/src/wild.js",
-    "old": "    if (await dropIfUnnamed(ctx.db, ctx.bucket, playerId, at.id, prep.key)) return { r: row.r, item, realm: { seq: prep.seq } };   // landed, its answer lost",
-    "new": "    if ((await dropIfUnnamed(ctx.db, ctx.bucket, playerId, at.id, prep.key)) || true) return { r: row.r, item, realm: { seq: prep.seq } };   // landed, its answer lost",
+    "old": "    if (await dropIfUnnamed(ctx.db, ctx.bucket, playerId, at.id, prep.key))",
+    "new": "    if ((await dropIfUnnamed(ctx.db, ctx.bucket, playerId, at.id, prep.key)) || true)",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
     ]
@@ -110,7 +110,7 @@
   {
     "name": "ESCROW-the-escrows-never-listed",
     "file": "server-account/src/wild.js",
-    "old": "  return { escrows: results.filter((e) => !pvpPolicyGoldOf(parse(e.rec))).map(escrowView) };   // PVP-REWARD: a policy's gold is not the fallen's",
+    "old": "  return { escrows: results.filter((e) => !pvpPolicyGoldOf(parse(e.rec))).map(escrowView) }; // PVP-REWARD: a policy's gold is not the fallen's",
     "new": "  return { escrows: [] };",
     "tests": [
       "test/systems/fb1014_pvpescrow.test.js"
@@ -129,8 +129,8 @@
   {
     "name": "ESCROW-the-held-records-piece-taken",
     "file": "server-account/src/wild.js",
-    "old": "  const roll = burnt ? null : pvpRewardRoll(",
-    "new": "  const roll = false ? null : pvpRewardRoll(",
+    "old": "  const roll = burnt ? null : pvpRewardRoll(stored.items, { insured, keep, pick: (n) => pvpRollIndex(ctx.rand, n) });",
+    "new": "  const roll = false ? null : pvpRewardRoll(stored.items, { insured, keep, pick: (n) => pvpRollIndex(ctx.rand, n) });",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

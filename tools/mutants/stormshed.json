@@ -182,8 +182,8 @@
   {
     "name": "STORM-SHED-seat-rows-unkept",
     "file": "server-account/src/townSeats.js",
-    "old": "if (kept && nowS - kept.at < SEAT_ROWS_KEPT_S) return kept.rows;",
-    "new": "if (kept && nowS - kept.at < 0) return kept.rows;",
+    "old": "  if (kept && nowS - kept.at < SEAT_ROWS_KEPT_S) return kept.rows;",
+    "new": "  if (kept && nowS - kept.at < 0) return kept.rows;",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -192,8 +192,8 @@
   {
     "name": "STORM-SHED-seat-rows-unshared",
     "file": "server-account/src/townSeats.js",
-    "old": "  if (asking) return asking;\n  const gen = seatRowWrites",
-    "new": "  if (asking && false) return asking;\n  const gen = seatRowWrites",
+    "old": "  if (asking) return asking;",
+    "new": "  if (asking && false) return asking;",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "STORM-SHED-developer-kept",
     "file": "server-account/src/townSeats.js",
-    "old": "dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS)",
-    "new": "await keptSeatFacts(db, nowS)",
+    "old": "  const { seats, ignored } = dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
+    "new": "  const { seats, ignored } = await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -222,8 +222,8 @@
   {
     "name": "STORM-SHED-report-unforgotten",
     "file": "server-account/src/townSeats.js",
-    "old": "  if (Number(put?.meta?.changes) !== 0) forgetSeatRows(db, nowS);\n",
-    "new": "",
+    "old": "  if (Number(put?.meta?.changes) !== 0) forgetSeatRows(db, nowS);\n  return { ok: true, counted: true };",
+    "new": "  return { ok: true, counted: true };",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -232,8 +232,8 @@
   {
     "name": "STORM-SHED-strike-unforgotten",
     "file": "server-account/src/townSeats.js",
-    "old": "  forgetSeatRows(db, nowS);   // STORM-SHED: the struck seat's reports are gone - asked afresh here\n",
-    "new": "",
+    "old": "  forgetSeatRows(db, nowS); // STORM-SHED: the struck seat's reports are gone - asked afresh here\n  return { ok: true, key, reports: Number(late?.meta?.changes ?? 0) + Number(rest?.meta?.changes ?? 0) };",
+    "new": "  return { ok: true, key, reports: Number(late?.meta?.changes ?? 0) + Number(rest?.meta?.changes ?? 0) };",
     "tests": [
       "test/net/stormshed.test.js"
     ],
@@ -242,8 +242,8 @@
   {
     "name": "STORM-SHED-write-unasked",
     "file": "server-account/src/townSeats.js",
-    "old": "    if ((seatRowWrites.get(root) ?? 0) === gen) {",
-    "new": "    if (true) {",
+    "old": "        if ((seatRowWrites.get(root) ?? 0) === gen) {",
+    "new": "        if (true) {",
     "tests": [
       "test/net/stormshed.test.js"
     ],

@@ -2,8 +2,8 @@
   {
     "name": "CRAFTSET-eligible-decor-scanned",
     "file": "server-account/src/writs.js",
-    "old": "AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +p.provenance)",
-    "new": "AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = p.provenance)",
+    "old": "      AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = +p.provenance)   -- DECOR-SEEK: ` +",
+    "new": "      AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = p.provenance)   -- DECOR-SEEK: ` +",
     "tests": [
       "test/server/craft_set.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "CRAFTSET-eligible-crafts-a-piece",
     "file": "server-account/src/writs.js",
-    "old": "AND p.provenance IN ${craftedBySql('?1')}",
-    "new": "AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))",
+    "old": "      AND p.provenance IN ${craftedBySql('?1')}   -- CRAFT-SET: the crafts read once, never once a piece",
+    "new": "      AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND (provenance = p.provenance OR provenance2 = p.provenance))   -- CRAFT-SET: the crafts read once, never once a piece",
     "tests": [
       "test/server/craft_set.test.js"
     ],

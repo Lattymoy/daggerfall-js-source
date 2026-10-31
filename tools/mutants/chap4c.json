@@ -213,8 +213,8 @@
   {
     "name": "CHAP4C-WARDROBE",
     "file": "server-account/src/titles.js",
-    "old": "  if (Array.isArray(player?.chapterTitles)) for (const t of player.chapterTitles) if (CHAPTER_TITLES.includes(t) && !held.includes(t)) held.push(t);\n",
-    "new": "",
+    "old": "  if (Array.isArray(player?.chapterTitles))\n    for (const t of player.chapterTitles) if (CHAPTER_TITLES.includes(t) && !held.includes(t)) held.push(t);\n  // ARENA4 (2026-10-02, Mac: \"Being a top rank PvE fighter comes with it's own title. Being the #1 pvp arena player comes",
+    "new": "  // ARENA4 (2026-10-02, Mac: \"Being a top rank PvE fighter comes with it's own title. Being the #1 pvp arena player comes",
     "tests": [
       "test/net/chap4c_titles.test.js"
     ]

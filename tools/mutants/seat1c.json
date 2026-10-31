@@ -503,7 +503,7 @@
   {
     "name": "SEAT1c-wardrobe-no-seat-titles",
     "file": "server-account/src/titles.js",
-    "old": "  if (Array.isArray(player?.seatTitles)) for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);",
+    "old": "  if (Array.isArray(player?.seatTitles))\n    for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);",
     "new": "",
     "tests": [
       "test/net/seat1c_titles.test.js"

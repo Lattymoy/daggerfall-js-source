@@ -82,8 +82,8 @@
   {
     "name": "TOWNECON2-witness-young",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };\n",
-    "new": "",
+    "old": "  if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };\n  const v = /** @type {any} */ (await verifyWatchReceipt(receipt, publicKey, { subtle, nowS }));",
+    "new": "  const v = /** @type {any} */ (await verifyWatchReceipt(receipt, publicKey, { subtle, nowS }));",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "TOWNECON2-witness-known",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (known?.known) return { ok: true, counted: false, why: 'known' };\n",
-    "new": "",
+    "old": "  if (known?.known) return { ok: true, counted: false, why: 'known' };\n  if (known?.struck) return { ok: true, counted: false, why: 'struck' };",
+    "new": "  if (known?.struck) return { ok: true, counted: false, why: 'struck' };",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "TOWNECON2-watch-cap",
     "file": "server-account/src/townEcon.js",
-    "old": "ON CONFLICT (account, map, day, src) DO UPDATE SET n = town_econ_acts.n + 1 WHERE town_econ_acts.n < ?5`)",
-    "new": "ON CONFLICT (account, map, day, src) DO UPDATE SET n = town_econ_acts.n + 1 WHERE true`)",
+    "old": "      ON CONFLICT (account, map, day, src) DO UPDATE SET n = town_econ_acts.n + 1 WHERE town_econ_acts.n < ?5`,",
+    "new": "      ON CONFLICT (account, map, day, src) DO UPDATE SET n = town_econ_acts.n + 1 WHERE true`,",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "TOWNECON2-watch-yours",
     "file": "server-account/src/townEcon.js",
-    "old": "    if (c.s !== player.id) { tally('not-yours'); continue; }\n",
-    "new": "",
+    "old": "    if (c.s !== player.id) {\n      tally('not-yours');\n      continue;\n    }\n    // AUDIT TOWN-ECON 2 SVC-9: a tick the relay minted a moment past the service's midnight (its clock the few seconds",
+    "new": "    // AUDIT TOWN-ECON 2 SVC-9: a tick the relay minted a moment past the service's midnight (its clock the few seconds",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "TOWNECON2-watch-young",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (!witnessOf(player, nowS)) return { ok: true, counted: 0, sea: 0, why: { young: receipts.length }, full: [] };\n",
-    "new": "",
+    "old": "  if (!witnessOf(player, nowS)) return { ok: true, counted: 0, sea: 0, why: { young: receipts.length }, full: [] };\n  const today = utcDay(nowS);",
+    "new": "  const today = utcDay(nowS);",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "TOWNECON2-days-uncounted",
     "file": "server-account/src/townEcon.js",
-    "old": "INSERT INTO town_econ_days (map, day, src, n) SELECT ?1, ?2, ?3, 1 WHERE changes() > 0",
-    "new": "INSERT INTO town_econ_days (map, day, src, n) SELECT ?1, ?2, ?3, 1 WHERE true",
+    "old": "        `INSERT INTO town_econ_days (map, day, src, n) SELECT ?1, ?2, ?3, 1 WHERE changes() > 0",
+    "new": "        `INSERT INTO town_econ_days (map, day, src, n) SELECT ?1, ?2, ?3, 1 WHERE true",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "TOWNECON2-read-unkept",
     "file": "server-account/src/townEcon.js",
-    "old": "  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns };\n",
-    "new": "",
+    "old": "  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns };\n  const row = await db.prepare('SELECT towns FROM town_econ_kept WHERE id = 1').first();",
+    "new": "  const row = await db.prepare('SELECT towns FROM town_econ_kept WHERE id = 1').first();",
     "tests": [
       "test/server/townecon_service.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "TOWNECON2-raid-cap",
     "file": "server-account/src/townEcon.js",
-    "old": "WHERE town_econ_acts.n < ?7`)",
-    "new": "WHERE true`)",
+    "old": "      ON CONFLICT (account, map, day, src) DO UPDATE SET n = town_econ_acts.n + 1 WHERE town_econ_acts.n < ?7`,",
+    "new": "      ON CONFLICT (account, map, day, src) DO UPDATE SET n = town_econ_acts.n + 1 WHERE true`,",
     "tests": [
       "test/server/townecon_service.test.js"
     ],

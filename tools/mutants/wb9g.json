@@ -157,8 +157,8 @@
   {
     "name": "WB9g-the-title-bought-not-held",
     "file": "server-account/src/titles.js",
-    "old": "  for (const t of insigniaKeys(player?.insignia, 'title')) if (!held.includes(t)) held.push(t);\n",
-    "new": "",
+    "old": "  for (const t of insigniaKeys(player?.insignia, 'title')) if (!held.includes(t)) held.push(t);\n  // SEAT1c (Seats-Arc 7.4): AND A CHARTER'S - \"Warden of <Town>\", \"Protector of <Kingdom>\" - derived from the seats the",
+    "new": "  // SEAT1c (Seats-Arc 7.4): AND A CHARTER'S - \"Warden of <Town>\", \"Protector of <Kingdom>\" - derived from the seats the",
     "tests": [
       "test/net/wb9g_insignia.test.js"
     ]

@@ -292,8 +292,8 @@
   {
     "name": "KG6-A-title-held",
     "file": "server-account/src/titles.js",
-    "old": "  if (player?.gambit?.champion === true) held.push('grandmaster');",
-    "new": "  // the Grandmaster",
+    "old": "  if (player?.gambit?.champion === true) held.push('grandmaster'); // KG6: The King's Gambit's season #1 (gambit.js), while they hold the top",
+    "new": "  // the Grandmaster   // KG6: The King's Gambit's season #1 (gambit.js), while they hold the top",
     "tests": [
       "test/net/gambit/kg6_season.test.js"
     ]

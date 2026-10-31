@@ -2,8 +2,8 @@
   {
     "name": "PVP-NO-TENTH-tenth-every-kill",
     "file": "server-account/src/wild.js",
-    "old": "drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });",
-    "new": "drop = takeWildDeath(save, w, keep, wt, { insured, bag: false });",
+    "old": "    drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });",
+    "new": "    drop = takeWildDeath(save, w, keep, wt, { insured, bag: false });",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "PVP-NO-TENTH-last-roll-past-a-piece",
     "file": "server-account/src/wild.js",
-    "old": "const lastRoll = !burnt && collect && roll === null;",
-    "new": "const lastRoll = !burnt && collect;",
+    "old": "  const lastRoll = !burnt && collect && roll === null;",
+    "new": "  const lastRoll = !burnt && collect;",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "PVP-NO-TENTH-no-collect-still-taking",
     "file": "server-account/src/wild.js",
-    "old": "const lastRoll = !burnt && collect && roll === null;",
-    "new": "const lastRoll = !burnt && roll === null;",
+    "old": "  const lastRoll = !burnt && collect && roll === null;",
+    "new": "  const lastRoll = !burnt && roll === null;",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "PVP-NO-TENTH-held-record-taking",
     "file": "server-account/src/wild.js",
-    "old": "const lastRoll = !burnt && collect && roll === null;",
-    "new": "const lastRoll = collect && roll === null;",
+    "old": "  const lastRoll = !burnt && collect && roll === null;",
+    "new": "  const lastRoll = collect && roll === null;",
     "tests": [
       "test/systems/fb1018b_burntsaid.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "PVP-NO-TENTH-gold-unescrowed",
     "file": "server-account/src/wild.js",
-    "old": "const killerGold = policyGold ?? lastPile,",
-    "new": "const killerGold = policyGold,",
+    "old": "  const killerGold = policyGold ?? lastPile,",
+    "new": "  const killerGold = policyGold,",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "PVP-NO-TENTH-collect-unsaid",
     "file": "server-account/src/wild.js",
-    "old": "return parse(fall?.tk)?.last ? { ...paid, last: true } : paid;",
-    "new": "return paid;",
+    "old": "  return parse(fall?.tk)?.last ? { ...paid, last: true } : paid;",
+    "new": "  return paid;",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "PVP-NO-TENTH-fall-unsaid",
     "file": "server-account/src/wild.js",
-    "old": "const last = tk?.last ? { last: true } : {};",
-    "new": "const last = {};",
+    "old": "  const last = tk?.last ? { last: true } : {}; // PVP-NO-TENTH: the gold its killer took is the last roll's",
+    "new": "  const last = {}; // PVP-NO-TENTH: the gold its killer took is the last roll's",
     "tests": [
       "test/systems/wild/wildinsure.test.js",
       "test/systems/fb1018b_burntsaid.test.js"

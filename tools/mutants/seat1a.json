@@ -142,8 +142,8 @@
   {
     "name": "SEAT1a-young-witness",
     "file": "server-account/src/townSeats.js",
-    "old": "player.registered_at <= nowS - WITNESS.ageS;",
-    "new": "player.registered_at <= nowS;",
+    "old": "export const witnessOf = (player, nowS) =>\n  Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS - WITNESS.ageS;",
+    "new": "export const witnessOf = (player, nowS) => Number.isSafeInteger(player?.registered_at) && player.registered_at <= nowS;",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -151,8 +151,8 @@
   {
     "name": "SEAT1a-ignored-still-counted",
     "file": "server-account/src/townSeats.js",
-    "old": "  if (ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };\n",
-    "new": "",
+    "old": "  if (ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };\n  const put = await db",
+    "new": "  const put = await db",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -160,8 +160,8 @@
   {
     "name": "SEAT1a-list-unconfirmed",
     "file": "server-account/src/townSeats.js",
-    "old": "    seats: seats.filter((s) => factConfirmed(s.fact)).map(view)",
-    "new": "    seats: seats.filter((s) => s.fact.seat).map(view)",
+    "old": "      .filter((s) => factConfirmed(s.fact))",
+    "new": "      .filter((s) => s.fact.seat)",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -169,8 +169,8 @@
   {
     "name": "SEAT1a-struck-witnessed-again",
     "file": "server-account/src/townSeats.js",
-    "old": "  if (await struck(db, s.key)) return { error: 'seat-struck' };\n",
-    "new": "",
+    "old": "  if (await struck(db, s.key)) return { error: 'seat-struck' };\n  if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };",
+    "new": "  if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -178,8 +178,8 @@
   {
     "name": "SEAT1a-strike-anyones",
     "file": "server-account/src/townSeats.js",
-    "old": "  if (!isDeveloper(dev, env)) return { error: 'not-developer' };\n  if (!seatKeyOk(key))",
-    "new": "  if (!seatKeyOk(key))",
+    "old": "  if (!isDeveloper(dev, env)) return { error: 'not-developer' };\n  if (!seatKeyOk(key)) return { error: 'bad-seat' };",
+    "new": "  if (!seatKeyOk(key)) return { error: 'bad-seat' };",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -187,8 +187,8 @@
   {
     "name": "SEAT1a-strike-unrecorded",
     "file": "server-account/src/townSeats.js",
-    "old": "SELECT ?1, ?2, 'strike', json_set(",
-    "new": "SELECT ?1, ?2, 'struck', json_set(",
+    "old": "      SELECT ?1, ?2, 'strike', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`,",
+    "new": "      SELECT ?1, ?2, 'struck', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`,",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -196,8 +196,8 @@
   {
     "name": "SEAT1a-audit-any-count",
     "file": "server-account/src/townSeats.js",
-    "old": "s.agreeing.length === SEAT_WITNESSES_AUDIT) ||",
-    "new": "s.agreeing.length >= SEAT_WITNESSES_AUDIT) ||",
+    "old": "    s.audit = (factConfirmed(s.fact) && s.agreeing.length === SEAT_WITNESSES_AUDIT) || s.fact.state === 'disputed';",
+    "new": "    s.audit = (factConfirmed(s.fact) && s.agreeing.length >= SEAT_WITNESSES_AUDIT) || s.fact.state === 'disputed';",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -205,8 +205,8 @@
   {
     "name": "SEAT1a-list-switch-unasked",
     "file": "server-account/src/townSeats.js",
-    "old": "export async function listSeats({ db, nowS }, player, env) {\n  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n",
-    "new": "export async function listSeats({ db, nowS }, player, env) {\n",
+    "old": "  if (!seatsOpenFor(player, env)) return { error: 'seats-closed' };\n  const dev = isDeveloper(player, env);",
+    "new": "  const dev = isDeveloper(player, env);",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -214,8 +214,8 @@
   {
     "name": "SEAT1a-witness-rate-one-more",
     "file": "server-account/src/townSeats.js",
-    "old": "SEAT_WITNESS_REPORTS_HOUR, 3600)",
-    "new": "SEAT_WITNESS_REPORTS_HOUR + 1, 3600)",
+    "old": "  if (await overRate({ db, nowS }, `seat-witness:${player.id}`, SEAT_WITNESS_REPORTS_HOUR, 3600))",
+    "new": "  if (await overRate({ db, nowS }, `seat-witness:${player.id}`, SEAT_WITNESS_REPORTS_HOUR + 1, 3600))",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]
@@ -223,8 +223,8 @@
   {
     "name": "SEAT1a-first-answer-replaced",
     "file": "server-account/src/townSeats.js",
-    "old": "\"INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)\"",
-    "new": "\"INSERT OR REPLACE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)\"",
+    "old": "      \"INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)\",",
+    "new": "      \"INSERT OR REPLACE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)\",",
     "tests": [
       "test/net/seat1a_service.test.js"
     ]

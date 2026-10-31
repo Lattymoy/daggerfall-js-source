@@ -221,7 +221,7 @@ PVP-VILLAIN-KEEP, below, keeps the meter on the character and lowers it. A depar
 
 The meter lived in the relay's memory alone, so a new relay instance forgot it. Now the character keeps it
 (`realm_characters.villainy`, migration 0192). The account service adds a fall's signed `vp` to the killer's character in
-the fall's own batch (`server-account/src/villainy.js:"export function villainFallSteps(db, claims) {"`, wired in `wildFall` and in
+the fall's own batch (`server-account/src/villainy.js:"export function villainFallSteps"`, wired in `wildFall` and in
 REPEAT-SHIELD's `wildShielded`: a shielded kill is still a kill the killer chose). The batch writes the fall's remains id,
 so a fall asked twice adds once. The meter is held to 10,000.
 
@@ -232,10 +232,10 @@ on the socket (`wildRef.js:"export const wildTokenAtt"`) and the referee takes t
 first step into the zone. The hello's token body is 928 now: a house beside every other claim and `vl` is 899.
 
 What lowers it. A raid's claim takes 500, once by its own row, none while red
-(`server-account/src/villainy.js:"export function villainRaidStep(db, playerId, character, raid, nonce) {"`). A monster at or above my level
+(`server-account/src/villainy.js:"export function villainRaidStep"`). A monster at or above my level
 less 1 takes 1 and a quest done 200: the page adds them to its next Renown report as `vd`
 (`renownTracker.js:"const vd = Math.min"`). The service takes no more than the XP that report credited, the
-hour's progress bound, and never below 0 (`server-account/src/villainy.js:"export function villainReportDown("`). The monster's level and the
+hour's progress bound, and never below 0 (`server-account/src/villainy.js:"export function villainReportDown"`). The monster's level and the
 quest are the page's word, as the Renown they pay is. A departure: DFU has no PvP.
 
 ## PVP-RULES: a flagged fighter's limits
@@ -324,7 +324,7 @@ and the fallen player's own client rises only on its party's call. A departure: 
 "they only get a piece that isnt insured", "random roll on uninsure peices": a kill in the open zone gives its killer one
 worn piece, rolled by the account service on the fallen's record, never chosen and never rolled on a game
 (`pvpReward.js:"export function pvpRewardRoll"`, called at
-`server-account/src/wild.js:"const roll = burnt ? null : pvpRewardRoll(stored.items, { insured, keep, pick: (n) => pvpRollIndex(ctx.rand, n) });"`).
+`server-account/src/wild.js:"const roll = burnt"`).
 The roll skips a piece a policy in force or a ledger hold keeps. The pick and the worn offer are gone: the relay signs
 a fall after `wildRef.js:"pickMs: 10_000,"`, so the fallen's first dead frame lays its body first, and the service reads
 no `w`. The piece reaches the killer through the escrow and the collect. A hall's kill rolls too.
@@ -337,10 +337,10 @@ coin where it fits, else a letter of credit for the whole - the trade window's o
 (`pvpReward.js:"export const pvpGoldPaid"`). A tab that says no weight gets the letter.
 
 "get rid of the bag drop": no bag piece drops at a kill
-(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The purse's
+(`server-account/src/wild.js:"drop = takeWildDeath"`). The purse's
 tenth and the letters' tenth went to the remains until PVP-NO-TENTH, below; the cart and the packs stay storage. A villain has no insurance:
 `pvpReward.js:"export const pvpInsuredFor"` takes `villain`: "villian lose insurance" - a fallen whose kept meter is red holds no policy
-(`wild.js:"{ villain: isVillain(Number(row.villainy)), among: stored.items }"`). "Insurance cost 20%": a
+(`wild.js:"{ villain: isVillain"`). "Insurance cost 20%": a
 premium stays a fifth of `itemWorth` (`wildInsureLaw.js:"export const WILD_INSURE_DIVISOR"`), which counts the
 piece's price and its lines' worth - and, since INSURE-ALL (`Wild-Zone.md` 4b), the item maker's gold, on every piece of
 gear. The service is acct214 (acct211 on its branch). A departure: DFU has no PvP.
@@ -371,16 +371,16 @@ still lies the minute. Relay world293. A departure: DFU rises after its three se
 
 "No gold dropped on death pvp detached gives gold as a last roll if no item or insurance", "No only the insurance": a
 player kill takes no tenth of the purse and lowers no letter, and nothing lies in the remains for anyone
-(`server-account/src/wild.js:"drop = takeWildDeath(save, w, keep, wt, { insured, bag: false, purse: false });"`). The roll
+(`server-account/src/wild.js:"drop = takeWildDeath"`). The roll
 is a worn piece, else one policy's gold, else THE LAST ROLL - only with no worn piece to take and no policy to pay
-(`wild.js:"const lastRoll = !burnt && collect && roll === null;"`). "Only give them some of their total or letter of
+(`wild.js:"const lastRoll ="`). "Only give them some of their total or letter of
 credit or gold what ever =10%", "Letter only pay out 10% if they have not enough gold": a tenth of the coin and the
 letters together, the purse first, the letters (bag order) paying only what it cannot
 (`wildDropLaw.js:"export function takeWildLastRoll"`).
 
 The gold goes to the killer the way a policy's gold does: escrowed, his alone in the remains, never the fallen's to take
 back, collected as coin where it fits his free weight, else one letter of credit for the whole. The collect says it is
-the last roll (`wild.js:"return parse(fall?.tk)?.last ? { ...paid, last: true } : paid;"`), and so does each side's text
+the last roll (`wild.js:"return parse(fall?.tk)"`), and so does each side's text
 (`wildZone.js:"lastGold: (n) =>"`, `wildZone.js:"deathLast: (name, gold)"`). A held record, a REPEAT-SHIELD kill
 and a room that signs no collect take nothing. A foe's death keeps everything, as FOE-KEEPS says. The service is
 acct215. A departure: DFU has no PvP.

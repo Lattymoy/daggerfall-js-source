@@ -2,8 +2,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-fall-step-unwired",
     "file": "server-account/src/wild.js",
-    "old": "    ...villainFallSteps(ctx.db, sea),   // PVP-VILLAIN-KEEP: the kill's points on its killer, once with the fall\n",
-    "new": "",
+    "old": "    ...villainFallSteps(ctx.db, sea), // PVP-VILLAIN-KEEP: the kill's points on its killer, once with the fall\n    // WILD-INSURE: each policy that kept its piece, spent in the batch that kept it",
+    "new": "    // WILD-INSURE: each policy that kept its piece, spent in the batch that kept it",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-shields-fall-uncounted",
     "file": "server-account/src/wild.js",
-    "old": "      ...villainFallSteps(ctx.db, sea),   // PVP-VILLAIN-KEEP: a shielded kill is still a kill its killer chose\n",
-    "new": "",
+    "old": "      ...villainFallSteps(ctx.db, sea), // PVP-VILLAIN-KEEP: a shielded kill is still a kill its killer chose\n    ]);",
+    "new": "    ]);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-top-unheld",
     "file": "server-account/src/villainy.js",
-    "old": "SET villainy = MIN(?3, villainy + ?4)",
-    "new": "SET villainy = villainy + ?4 + 0 * ?3",
+    "old": "      .prepare('UPDATE realm_characters SET villainy = MIN(?3, villainy + ?4) WHERE id = ?1 AND player = ?2')",
+    "new": "      .prepare('UPDATE realm_characters SET villainy = villainy + ?4 + 0 * ?3 WHERE id = ?1 AND player = ?2')",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-killers-account-unasked",
     "file": "server-account/src/villainy.js",
-    "old": "villainy + ?4) WHERE id = ?1 AND player = ?2'",
-    "new": "villainy + ?4) WHERE id = ?1 AND ?2 IS NOT NULL'",
+    "old": "      .prepare('UPDATE realm_characters SET villainy = MIN(?3, villainy + ?4) WHERE id = ?1 AND player = ?2')",
+    "new": "      .prepare('UPDATE realm_characters SET villainy = MIN(?3, villainy + ?4) WHERE id = ?1 AND ?2 IS NOT NULL')",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-a-red-raid-counted",
     "file": "server-account/src/villainy.js",
-    "old": " AND villainy > 0 AND villainy < ?6'",
-    "new": " AND villainy > 0 AND ?6 > 0'",
+    "old": "      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?5) WHERE id = ?2 AND player = ?1 AND villainy > 0 AND villainy < ?6' +",
+    "new": "      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?5) WHERE id = ?2 AND player = ?1 AND villainy > 0 AND ?6 > 0' +",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-raids-floor-gone",
     "file": "server-account/src/villainy.js",
-    "old": "SET villainy = MAX(0, villainy - ?5)",
-    "new": "SET villainy = villainy - ?5",
+    "old": "      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?5) WHERE id = ?2 AND player = ?1 AND villainy > 0 AND villainy < ?6' +",
+    "new": "      'UPDATE realm_characters SET villainy = villainy - ?5 WHERE id = ?2 AND player = ?1 AND villainy > 0 AND villainy < ?6' +",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-raid-once-unasked",
     "file": "server-account/src/villainy.js",
-    "old": "    + ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)')",
-    "new": "    + ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND ?4 IS NOT NULL)')",
+    "old": "        ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)',",
+    "new": "        ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND ?4 IS NOT NULL)',",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-credit-unbounded",
     "file": "server-account/src/villainy.js",
-    "old": "Math.min(/** @type {number} */ (vd), Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX)",
-    "new": "Math.min(/** @type {number} */ (vd), VILLAIN_REPORT_DOWN_MAX)",
+    "old": "  return Math.min(/** @type {number} */ (vd), Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX);",
+    "new": "  return Math.min(/** @type {number} */ (vd), VILLAIN_REPORT_DOWN_MAX);",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-reports-top-gone",
     "file": "server-account/src/villainy.js",
-    "old": "Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX)",
-    "new": "Math.trunc(r.credited))",
+    "old": "  return Math.min(/** @type {number} */ (vd), Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX);",
+    "new": "  return Math.min(/** @type {number} */ (vd), Math.trunc(r.credited));",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "PVP-VILLAIN-KEEP-the-floor-gone",
     "file": "server-account/src/villainy.js",
-    "old": "SET villainy = MAX(0, villainy - ?3)",
-    "new": "SET villainy = villainy - ?3",
+    "old": "    .prepare(\n      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?3) WHERE id = ?1 AND player = ?2 AND villainy > 0',\n    )",
+    "new": "    .prepare('UPDATE realm_characters SET villainy = villainy - ?3 WHERE id = ?1 AND player = ?2 AND villainy > 0')",
     "tests": [
       "test/net/pvpvillainkeep.test.js"
     ]

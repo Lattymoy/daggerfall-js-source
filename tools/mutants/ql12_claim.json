@@ -223,8 +223,8 @@
   {
     "name": "QL12-titles-held-by-a-guest",
     "file": "server-account/src/titles.js",
-    "old": "  if (typeof player?.handle === 'string' && player.handle) for (const t of QL_TITLES) if",
-    "new": "  for (const t of QL_TITLES) if",
+    "old": "  if (typeof player?.handle === 'string' && player.handle)\n    for (const t of QL_TITLES) if (Number(player?.ql_titles) & qlTitleBit(t)) held.push(t);",
+    "new": "  for (const t of QL_TITLES) if (Number(player?.ql_titles) & qlTitleBit(t)) held.push(t);",
     "tests": [
       "test/server/ql12_claim.test.js"
     ]

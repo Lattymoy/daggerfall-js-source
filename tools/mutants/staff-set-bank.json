@@ -262,8 +262,8 @@
   {
     "name": "STAFF-SET-BANK-the-audit-as-the-body",
     "file": "server-account/src/staffRealm.js",
-    "old": "    return said(`fix-${act}`, row.player, { ...detail, ...landed }, r.error",
-    "new": "    return said(`fix-${act}`, row.player, detail, r.error",
+    "old": "    return said(`fix-${act}`, row.player, { ...detail, ...landed }, r.error ? r : { ...r, playing: playing(row) });",
+    "new": "    return said(`fix-${act}`, row.player, detail, r.error ? r : { ...r, playing: playing(row) });",
     "why": "REVIEW: a ticket asked again with other values is written as the set its row holds, never the body's values as done",
     "tests": [
       "test/server/staffsetbank.test.js",
@@ -273,8 +273,8 @@
   {
     "name": "STAFF-SET-BANK-the-audit-no-repeat",
     "file": "server-account/src/staffRealm.js",
-    "old": " : { was: r.was }), repeat: r.repeat };",
-    "new": " : { was: r.was }) };",
+    "old": "      : {\n          gold: r.gold,\n          ...(act === 'repair' ? { faction: r.faction, flag: r.flag } : { was: r.was }),\n          repeat: r.repeat,\n        };",
+    "new": "      : { gold: r.gold, ...(act === 'repair' ? { faction: r.faction, flag: r.flag } : { was: r.was }) };",
     "why": "REVIEW: the audit row says whether the fix was a repeat that moved nothing",
     "tests": [
       "test/server/staffsetbank.test.js",
@@ -284,8 +284,8 @@
   {
     "name": "STAFF-SET-BANK-the-route-unlisted",
     "file": "server-account/src/staffRealm.js",
-    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/fix/letter', '/v1/staff/gains',",
-    "new": "'/v1/staff/fix/mend', '/v1/staff/fix/letter', '/v1/staff/gains',",
+    "old": "  '/v1/staff/fix/bank',\n  '/v1/staff/fix/letter',",
+    "new": "  '/v1/staff/fix/letter',",
     "why": "the panel's bank door is the realm doors'",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -294,8 +294,8 @@
   {
     "name": "STAFF-SET-BANK-the-route-unmatched",
     "file": "server-account/src/staffRealm.js",
-    "old": " || path === '/v1/staff/fix/bank') {",
-    "new": ") {",
+    "old": "  if (path === '/v1/staff/fix/repair' || path === '/v1/staff/fix/mend' || path === '/v1/staff/fix/bank') {",
+    "new": "  if (path === '/v1/staff/fix/repair' || path === '/v1/staff/fix/mend') {",
     "why": "the bank door reaches the fix",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -304,8 +304,8 @@
   {
     "name": "STAFF-SET-BANK-the-route-as-a-mend",
     "file": "server-account/src/staffRealm.js",
-    "old": "path === '/v1/staff/fix/mend' ? 'mend' : 'bank';",
-    "new": "'mend';",
+    "old": "    const act = path === '/v1/staff/fix/repair' ? 'repair' : path === '/v1/staff/fix/mend' ? 'mend' : 'bank';",
+    "new": "    const act = path === '/v1/staff/fix/repair' ? 'repair' : 'mend';",
     "why": "the bank door runs the bank act, never the mend",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -314,8 +314,8 @@
   {
     "name": "STAFF-SET-BANK-the-note-unasked",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (!note) return said(`fix-${act}`, row.player, ch, { error: 'staff-note' });\n",
-    "new": "",
+    "old": "    if (!note) return said(`fix-${act}`, row.player, ch, { error: 'staff-note' });\n    const { ticket, faction, flag, gold, was } = body;",
+    "new": "    const { ticket, faction, flag, gold, was } = body;",
     "why": "Fix account asks a note",
     "tests": [
       "test/server/staffsetbank.test.js"
@@ -354,8 +354,8 @@
   {
     "name": "STAFF-SET-BANK-the-profile-sum",
     "file": "server-account/src/staffPlayers.js",
-    "old": "    banks: bankTotalOf(save),",
-    "new": "    banks: arrayOf(save.bankAccounts).reduce((s, a) => s + Math.max(0, num(a?.accountGold) ?? 0), 0),",
+    "old": "    banks: bankTotalOf(save), // STAFF-SET-BANK: the sum a bank set is checked against (net/repairLaw.js), one with it",
+    "new": "    banks: arrayOf(save.bankAccounts).reduce((s, a) => s + Math.max(0, num(a?.accountGold) ?? 0), 0), // STAFF-SET-BANK: the sum a bank set is checked against (net/repairLaw.js), one with it",
     "why": "the profile says the total a set is checked against: one sum",
     "tests": [
       "test/server/staffsetbank.test.js"

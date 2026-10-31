@@ -299,8 +299,8 @@
   {
     "name": "SERAPHWINGS-the-grant-dropped",
     "file": "server-account/src/titles.js",
-    "old": "  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n",
-    "new": "",
+    "old": "  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js",
+    "new": "  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js",
     "tests": [
       "test/net/seraphwings.test.js"
     ]

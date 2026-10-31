@@ -514,7 +514,7 @@ only spares), the Renown order (signed again), the silver's answer (struck in th
 claim id (`stars_held.cid`, migration 0141), so a retry of an answer lost after the commit - a 5xx past the batch, a
 dropped line - is answered `claimed` with `own: true` where the row is that device's, and with what the lost answer
 said: the count and the Renown the row credited its character
-(`server-account/src/stars.js:"if (!thanks || had.cid !== cid) return { recorded: false, why: 'claimed', held, spoils };"`).
+(`server-account/src/stars.js:"if (!thanks || had.cid !== cid)"`).
 The device marks a kept receipt whose attempt went unanswered (`lost`: no answer, and no refusal the service made) and,
 on such a `claimed`, finishes it once - the act owed, the line said, the Renown adopted by the character that held it -
 the mark cleared as it finishes, so an answer heard is never finished twice and another device's row never at all

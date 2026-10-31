@@ -119,8 +119,8 @@
   {
     "name": "INT5-a-stand-still-found",
     "file": "server-account/src/verdict.js",
-    "old": "  if (budget.over > 0 && gain > 0) finding(",
-    "new": "  if (budget.over > 0) finding(",
+    "old": "  if (budget.over > 0 && gain > 0)",
+    "new": "  if (budget.over > 0)",
     "tests": [
       "test/server/int5_budget.test.js"
     ]

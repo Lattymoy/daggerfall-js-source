@@ -43,8 +43,8 @@
   {
     "name": "AUDIT-RPT1026-C2-every-excuse-ended",
     "file": "server-account/src/verdict.js",
-    "old": " AND instr(law_excused, '|') > 0",
-    "new": "",
+    "old": "        \" law_excused = CASE WHEN ?15 IS NULL AND instr(law_excused, '|') > 0 THEN NULL ELSE law_excused END\" +",
+    "new": "        ' law_excused = CASE WHEN ?15 IS NULL THEN NULL ELSE law_excused END' +",
     "tests": [
       "test/server/audit_rpt1026_ledgerlaw.test.js"
     ],
@@ -93,8 +93,8 @@
   {
     "name": "AUDIT-RPT1026-C5-mark-unread",
     "file": "server-account/src/verdict.js",
-    "old": "\n  && !(values ?? '').includes(LAW_VALUES_CUT);",
-    "new": ";",
+    "old": "  excused != null && sig != null && excused === lawExcuseOf(sig, values) && !(values ?? '').includes(LAW_VALUES_CUT); // AUDIT RPT1026 C5: a state cut is no state an excuse names (judge.js LAW_VALUES_CUT)",
+    "new": "  excused != null && sig != null && excused === lawExcuseOf(sig, values); // AUDIT RPT1026 C5: a state cut is no state an excuse names (judge.js LAW_VALUES_CUT)",
     "tests": [
       "test/server/audit_rpt1026_ledgerlaw.test.js"
     ],

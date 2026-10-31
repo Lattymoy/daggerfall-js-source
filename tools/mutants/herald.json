@@ -62,8 +62,8 @@
   {
     "name": "HERALD-the-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
-    "new": "herald: 'penitent', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "old": "  herald: 'herald',",
+    "new": "  herald: 'penitent',",
     "tests": [
       "test/net/herald.test.js"
     ],

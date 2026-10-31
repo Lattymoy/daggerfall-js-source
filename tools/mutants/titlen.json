@@ -86,8 +86,8 @@
     "tests": [
       "test/net/titlen.test.js"
     ],
-    "old": "  for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) held.push(t);   // TITLE-N\n",
-    "new": ""
+    "old": "  for (const t of Object.keys(TIER_LISTS)) if (holdsTier(t, player, env)) held.push(t); // TITLE-N\n  // WB9g: AND THE BROKER'S - a title bought with Sigil Stones, held because the sale is recorded on the row (0037). A",
+    "new": "  // WB9g: AND THE BROKER'S - a title bought with Sigil Stones, held because the sale is recorded on the row (0037). A"
   },
   {
     "name": "TN-a-guest-granted",
@@ -95,8 +95,8 @@
     "tests": [
       "test/net/titlen.test.js"
     ],
-    "old": "  typeof player?.handle === 'string' && !!player.handle && Object.hasOwn(TIER_LISTS, title)",
-    "new": "  Object.hasOwn(TIER_LISTS, title)"
+    "old": "  typeof player?.handle === 'string' &&\n  !!player.handle &&\n  Object.hasOwn(TIER_LISTS, title) &&",
+    "new": "  Object.hasOwn(TIER_LISTS, title) &&"
   },
   {
     "name": "TN-the-dungeon-master-not-orange",

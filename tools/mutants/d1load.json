@@ -66,8 +66,8 @@
   {
     "name": "D1LOAD-seats-default-kept",
     "file": "server-account/src/townSeats.js",
-    "old": "fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS)",
-    "new": "fresh || true ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS)",
+    "old": "  const { seats } = fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
+    "new": "  const { seats } = fresh || true ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS); // SEAT-FACTS: the service's kept facts",
     "tests": [
       "test/server/d1load.test.js"
     ]

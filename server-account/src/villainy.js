@@ -18,7 +18,11 @@ export const VILLAIN_REPORT_DOWN_MAX = 5_000;
 export function villainFallSteps(db, claims) {
   const { k, kc, vp } = claims ?? {};
   if (!k || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc) || !Number.isSafeInteger(vp) || vp <= 0) return [];
-  return [db.prepare('UPDATE realm_characters SET villainy = MIN(?3, villainy + ?4) WHERE id = ?1 AND player = ?2').bind(kc, k, VILLAIN.max, Math.min(vp, VILLAIN.max))];
+  return [
+    db
+      .prepare('UPDATE realm_characters SET villainy = MIN(?3, villainy + ?4) WHERE id = ?1 AND player = ?2')
+      .bind(kc, k, VILLAIN.max, Math.min(vp, VILLAIN.max)),
+  ];
 }
 
 /**
@@ -27,14 +31,18 @@ export function villainFallSteps(db, claims) {
  * @param {any} db @param {string} playerId @param {string} character @param {string} raid @param {string} nonce
  */
 export function villainRaidStep(db, playerId, character, raid, nonce) {
-  return db.prepare('UPDATE realm_characters SET villainy = MAX(0, villainy - ?5) WHERE id = ?2 AND player = ?1 AND villainy > 0 AND villainy < ?6'
-    + ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)').bind(playerId, character, raid, nonce, VILLAIN.raid, VILLAIN.red);
+  return db
+    .prepare(
+      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?5) WHERE id = ?2 AND player = ?1 AND villainy > 0 AND villainy < ?6' +
+        ' AND EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)',
+    )
+    .bind(playerId, character, raid, nonce, VILLAIN.raid, VILLAIN.red);
 }
 
 /** What a Renown report may take off: its tab's word `vd` (a monster at its level 1, a quest 200), never more than the
  *  XP the report credited - the hour's progress bound - nor VILLAIN_REPORT_DOWN_MAX. 0 for a repeat (it credits none) or a bad word. */
 export function villainReportDown(/** @type {unknown} */ vd, /** @type {any} */ r) {
-  if (!Number.isSafeInteger(vd) || /** @type {number} */ (vd) <= 0 || !(r?.credited > 0)) return 0;   // a repeat credits 0
+  if (!Number.isSafeInteger(vd) || /** @type {number} */ (vd) <= 0 || !(r?.credited > 0)) return 0; // a repeat credits 0
   return Math.min(/** @type {number} */ (vd), Math.trunc(r.credited), VILLAIN_REPORT_DOWN_MAX);
 }
 
@@ -44,5 +52,10 @@ export function villainReportDown(/** @type {unknown} */ vd, /** @type {any} */ 
  */
 export async function lowerVillainy({ db }, playerId, character, down) {
   if (!(down > 0) || typeof character !== 'string' || !REALM_CHARACTER_RE.test(character)) return;
-  await db.prepare('UPDATE realm_characters SET villainy = MAX(0, villainy - ?3) WHERE id = ?1 AND player = ?2 AND villainy > 0').bind(character, playerId, down).run();
+  await db
+    .prepare(
+      'UPDATE realm_characters SET villainy = MAX(0, villainy - ?3) WHERE id = ?1 AND player = ?2 AND villainy > 0',
+    )
+    .bind(character, playerId, down)
+    .run();
 }

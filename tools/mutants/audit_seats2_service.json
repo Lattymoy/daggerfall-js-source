@@ -209,8 +209,8 @@
   {
     "name": "AS2-S5-strike-fall",
     "file": "server-account/src/townSeats.js",
-    "old": "    ...fortsLapsedStatements(db, key, nowS),",
-    "new": "",
+    "old": "    ...fortsLapsedStatements(db, key, nowS), // AUDIT SEATS-2 S5: a building project falls with the Charter",
+    "new": "    // AUDIT SEATS-2 S5: a building project falls with the Charter",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "AS2-S6-pledge-week",
     "file": "server-account/src/writs.js",
-    "old": "WHERE week = ? AND key = ? AND guild_id = ?').bind(seatWeek(nowS), Number(w.seat), w.guild_id)",
-    "new": "WHERE week <= ? AND key = ? AND guild_id = ?').bind(seatWeek(nowS), Number(w.seat), w.guild_id)",
+    "old": "    const pledged = await db\n      .prepare('SELECT 1 FROM town_seat_pledges WHERE week = ? AND key = ? AND guild_id = ?')",
+    "new": "    const pledged = await db\n      .prepare('SELECT 1 FROM town_seat_pledges WHERE week <= ? AND key = ? AND guild_id = ?')",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "AS2-S6-write-holder",
     "file": "server-account/src/writs.js",
-    "old": "OR (w.camp = 0 AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = w.seat AND guild_id = w.guild_id))",
-    "new": "OR (w.camp = 0)",
+    "old": "          OR (w.camp = 0 AND EXISTS (SELECT 1 FROM town_seat_holds WHERE key = w.seat AND guild_id = w.guild_id))",
+    "new": "          OR (w.camp = 0)",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "AS2-S6-write-pledge",
     "file": "server-account/src/writs.js",
-    "old": "OR (w.camp = 1 AND EXISTS (SELECT 1 FROM town_seat_pledges WHERE week = ${week} AND key = w.seat AND guild_id = w.guild_id)))",
-    "new": "OR (w.camp = 1))",
+    "old": "          OR (w.camp = 1 AND EXISTS (SELECT 1 FROM town_seat_pledges WHERE week = ${week} AND key = w.seat AND guild_id = w.guild_id)))`;",
+    "new": "          OR (w.camp = 1))`;",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -272,8 +272,8 @@
   {
     "name": "AS2-S6-write-week",
     "file": "server-account/src/writs.js",
-    "old": "AND ${SEAT_WRIT_LIVE_SQL('?15')}",
-    "new": "AND ${SEAT_WRIT_LIVE_SQL('?15 - 1')}",
+    "old": "        AND ${SEAT_WRIT_LIVE_SQL('?15')}   -- AUDIT SEATS-2 S6: a seat writ's seat still its guild's to feed",
+    "new": "        AND ${SEAT_WRIT_LIVE_SQL('?15 - 1')}   -- AUDIT SEATS-2 S6: a seat writ's seat still its guild's to feed",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "AS2-S6-word-after",
     "file": "server-account/src/writs.js",
-    "old": "  const lost = await seatWritLost(db, w, nowS);   // AUDIT SEATS-2 S6: the seat no longer its guild's to feed\n  if (lost) return lost;\n",
-    "new": "",
+    "old": "  const lost = await seatWritLost(db, w, nowS); // AUDIT SEATS-2 S6: the seat no longer its guild's to feed\n  if (lost) return lost;\n  const held = await storeOf(db, me, character, w.material);",
+    "new": "  const held = await storeOf(db, me, character, w.material);",
     "tests": [
       "test/net/audit_seats2_service.test.js"
     ]

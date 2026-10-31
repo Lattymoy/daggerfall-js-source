@@ -152,8 +152,8 @@
   {
     "name": "NIRNROOT-SAGE-glyph-word",
     "file": "server-account/src/titles.js",
-    "old": "nirnrootsage: 'nirnrootsage' });",
-    "new": "nirnrootsage: 'wikimaid' });",
+    "old": "  nirnrootsage: 'nirnrootsage',",
+    "new": "  nirnrootsage: 'wikimaid',",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],
@@ -162,8 +162,8 @@
   {
     "name": "NIRNROOT-SAGE-aura-grant",
     "file": "server-account/src/titles.js",
-    "old": "nirnrootsage: 'sagesmoke' });",
-    "new": "nirnrootsage: 'lilacwarren' });",
+    "old": "  nirnrootsage: 'sagesmoke',",
+    "new": "  nirnrootsage: 'lilacwarren',",
     "tests": [
       "test/net/nirnrootsage.test.js"
     ],

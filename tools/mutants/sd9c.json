@@ -137,8 +137,8 @@
   {
     "name": "SD9C-held-off-any-grant",
     "file": "server-account/src/titles.js",
-    "old": "(Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');",
-    "new": "(Number(player?.sd_honours) & 3)) held.push('turninghour');",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_AURA)\n    held.push('turninghour');",
+    "new": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & 3) held.push('turninghour');",
     "tests": [
       "test/server/sd9c_turning.test.js"
     ]
@@ -146,7 +146,7 @@
   {
     "name": "SD9C-held-by-a-guest",
     "file": "server-account/src/titles.js",
-    "old": "  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_AURA)\n    held.push('turninghour');",
     "new": "  if (Number(player?.sd_honours) & SD_HONOUR_AURA) held.push('turninghour');",
     "tests": [
       "test/server/sd9c_turning.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "SD9C-never-held",
     "file": "server-account/src/titles.js",
-    "old": "  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n",
-    "new": "",
+    "old": "  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_AURA)\n    held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA); // HOURS-FIRST: with the title, by name",
+    "new": "  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA); // HOURS-FIRST: with the title, by name",
     "tests": [
       "test/server/sd9c_turning.test.js"
     ]

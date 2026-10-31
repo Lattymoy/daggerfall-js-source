@@ -293,8 +293,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-net-moderator",
     "file": "server-account/src/staffNet.js",
-    "old": "  if (who.role !== 'admin') { await audit",
-    "new": "  if (who.role === 'nobody') { await audit",
+    "old": "  if (who.role !== 'admin') {",
+    "new": "  if (who.role === 'nobody') {",
     "why": "a Moderator reads Network bursts",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -303,8 +303,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-net-watch-moderator",
     "file": "server-account/src/staffNet.js",
-    "old": "if (who?.role !== 'admin') return { items: [], high: 0, total: 0 };",
-    "new": "if (who?.role === 'nobody') return { items: [], high: 0, total: 0 };",
+    "old": "    if (who?.role !== 'admin') return { items: [], high: 0, total: 0 };",
+    "new": "    if (who?.role === 'nobody') return { items: [], high: 0, total: 0 };",
     "why": "a Moderator's home shows packet bursts",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -313,8 +313,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-net-once",
     "file": "server-account/src/staffNet.js",
-    "old": "if (await db.prepare('SELECT 1 AS y FROM staff_net_batches WHERE id = ?1').bind(b.id).first()) return { ok: true, read: false };",
-    "new": "if (false) return { ok: true, read: false };",
+    "old": "  if (await db.prepare('SELECT 1 AS y FROM staff_net_batches WHERE id = ?1').bind(b.id).first())\n    return { ok: true, read: false };",
+    "new": "  if (false) return { ok: true, read: false };",
     "why": "a resent batch kept twice",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -323,8 +323,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-net-wave-whole",
     "file": "server-account/src/staffNet.js",
-    "old": "if (p.at - r.at > NET_WAVE_S) continue;",
-    "new": "if (false) continue;",
+    "old": "    if (p.at - r.at > NET_WAVE_S) continue; // an older window of the same player's",
+    "new": "    if (false) continue; // an older window of the same player's",
     "why": "a player's older window summed into its newest",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -333,8 +333,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-net-kind-unfiltered",
     "file": "server-account/src/staffNet.js",
-    "old": "(p.kinds[kind] ?? 0) > 0",
-    "new": "(p.kinds[kind] ?? 0) >= 0",
+    "old": "    .filter((p) => kind === 'all' || (p.kinds[kind] ?? 0) > 0)",
+    "new": "    .filter((p) => kind === 'all' || (p.kinds[kind] ?? 0) >= 0)",
     "why": "a player who sent none of a kind listed under it",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -343,8 +343,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-net-urgent-reversed",
     "file": "server-account/src/staffNet.js",
-    "old": "lvl(b) - lvl(a) || b.closes - a.closes",
-    "new": "lvl(a) - lvl(b) || b.closes - a.closes",
+    "old": "          lvl(b) - lvl(a) ||",
+    "new": "          lvl(a) - lvl(b) ||",
     "why": "the quietest first",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-monsters-moderator",
     "file": "server-account/src/staffMonsters.js",
-    "old": "  if (who.role !== 'admin') { await audit",
-    "new": "  if (who.role === 'nobody') { await audit",
+    "old": "  if (who.role !== 'admin') {",
+    "new": "  if (who.role === 'nobody') {",
     "why": "a Moderator reads Monster watch",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -363,8 +363,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-monsters-always-measured",
     "file": "server-account/src/staffMonsters.js",
-    "old": "b.ms === 1 ? 'measured' : 'not measured'",
-    "new": "'measured'",
+    "old": "  const monsters = !b?.n ? 'no report' : b.ms === 1 ? 'measured' : 'not measured';",
+    "new": "  const monsters = !b?.n ? 'no report' : 'measured';",
     "why": "\"not measured\" never said",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -373,8 +373,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-relay-reader-counted",
     "file": "server-account/src/staffMonsters.js",
-    "old": "AND reader != ?2 AND",
-    "new": "AND ?2 = ?2 AND",
+    "old": "      WHERE sender IN (${marks(c.length, 3 + GRANT_CASE_REASONS.length)}) AND at > ?1 AND reader != ?2 AND reason IN (${marks(GRANT_CASE_REASONS.length, 3)}) GROUP BY sender`,",
+    "new": "      WHERE sender IN (${marks(c.length, 3 + GRANT_CASE_REASONS.length)}) AND at > ?1 AND ?2 = ?2 AND reason IN (${marks(GRANT_CASE_REASONS.length, 3)}) GROUP BY sender`,",
     "why": "the relay's own refusals read as another game's",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -383,8 +383,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-budget-no-rate",
     "file": "server-account/src/staffMonsters.js",
-    "old": "Math.ceil(law.cap + law.rate * MONSTER_ASK_S)",
-    "new": "Math.ceil(law.cap)",
+    "old": "  return law ? Math.ceil(law.cap + law.rate * MONSTER_ASK_S) : 0;",
+    "new": "  return law ? Math.ceil(law.cap) : 0;",
     "why": "a kind's budget without its hour's rate",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -393,8 +393,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-asks-never-high",
     "file": "server-account/src/staffMonsters.js",
-    "old": "a.asks >= GRANT_ASK_CASE_TIMES * a.budget ? 2 : 1",
-    "new": "a.asks >= GRANT_ASK_CASE_TIMES * a.budget ? 1 : 1",
+    "old": "      raise(a.asks >= GRANT_ASK_CASE_TIMES * a.budget ? 2 : 1, `${a.asks} ${a.kind} asks an hour, budget ${a.budget}`);",
+    "new": "      raise(a.asks >= GRANT_ASK_CASE_TIMES * a.budget ? 1 : 1, `${a.asks} ${a.kind} asks an hour, budget ${a.budget}`);",
     "why": "asks four times the budget only medium",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -403,8 +403,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-host-owns",
     "file": "server-account/src/staffMonsters.js",
-    "old": "if (p.live && p.live.owned >= FOE_HOT.own)",
-    "new": "if (p.live && p.live.owned + p.hosted >= FOE_HOT.own)",
+    "old": "  if (p.live && p.live.owned >= FOE_HOT.own)",
+    "new": "  if (p.live && p.live.owned + p.hosted >= FOE_HOT.own)",
     "why": "a dungeon host counted as an owner",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -413,8 +413,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-flag-source-unread",
     "file": "server-account/src/staffMonsters.js",
-    "old": "openCaseFor(ctx, env, row.id, 'review', 'spawn')",
-    "new": "openCaseFor(ctx, env, row.id, 'report', 'spawn')",
+    "old": "    const caseId = await openCaseFor(ctx, env, row.id, 'review', 'spawn'); // STAFF-PANEL2-FIX: a spawn case, an Admin's, never a chat report's - or the one open already",
+    "new": "    const caseId = await openCaseFor(ctx, env, row.id, 'report', 'spawn'); // STAFF-PANEL2-FIX: a spawn case, an Admin's, never a chat report's - or the one open already",
     "why": "a Flag's case opened as a report's (STAFF-PANEL5-FEEDS-FIX: the Flag opens its case itself now, so its source is written)",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -423,8 +423,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-flag-failed-as-ok",
     "file": "server-account/src/staffMonsters.js",
-    "old": "{ outcome: 'failed' }).run();\n    return { error: 'flag-failed' };",
-    "new": "{}).run();\n    return { error: 'flag-failed' };",
+    "old": "      { outcome: 'failed' },",
+    "new": "      {},",
     "why": "a failed Flag audited ok",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -433,8 +433,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-reactions-moderator",
     "file": "server-account/src/staffReactions.js",
-    "old": "  if (who.role !== 'admin') { await audit",
-    "new": "  if (who.role === 'nobody') { await audit",
+    "old": "  if (who.role !== 'admin') {",
+    "new": "  if (who.role === 'nobody') {",
     "why": "a Moderator reads a player's Reactions",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -443,8 +443,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-struck-at-swing",
     "file": "server-account/src/staffReactions.js",
-    "old": "(r.ac === undefined || r.hu < r.ac)",
-    "new": "(r.ac === undefined || r.hu <= r.ac)",
+    "old": "  row.struck = r.hu !== undefined && (r.ac === undefined || r.hu < r.ac) ? 1 : 0;",
+    "new": "  row.struck = r.hu !== undefined && (r.ac === undefined || r.hu <= r.ac) ? 1 : 0;",
     "why": "a blow at the swing counted struck first",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -453,8 +453,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-roll-early",
     "file": "server-account/src/staffReactions.js",
-    "old": "b.rows.length > REACT_ROWS_HOUR",
-    "new": "b.rows.length >= REACT_ROWS_HOUR",
+    "old": "  const rolled = Number(seen?.count ?? 0) + b.rows.length > REACT_ROWS_HOUR;",
+    "new": "  const rolled = Number(seen?.count ?? 0) + b.rows.length >= REACT_ROWS_HOUR;",
     "why": "the hour's last own row rolled up",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -463,8 +463,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-roll-window-stuck",
     "file": "server-account/src/staffReactions.js",
-    "old": "THEN rate_limits.count + excluded.count ELSE excluded.count END",
-    "new": "THEN rate_limits.count + excluded.count ELSE rate_limits.count + excluded.count END",
+    "old": "      ON CONFLICT(key) DO UPDATE SET count = CASE WHEN rate_limits.window_start >= excluded.window_start THEN rate_limits.count + excluded.count ELSE excluded.count END,",
+    "new": "      ON CONFLICT(key) DO UPDATE SET count = CASE WHEN rate_limits.window_start >= excluded.window_start THEN rate_limits.count + excluded.count ELSE rate_limits.count + excluded.count END,",
     "why": "a new hour's count not started again",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -473,8 +473,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-roll-not-summed",
     "file": "server-account/src/staffReactions.js",
-    "old": "`${c} = ${c} + excluded.${c}`",
-    "new": "`${c} = excluded.${c}`",
+    "old": "      ON CONFLICT(id) DO UPDATE SET ${SUM_COLS.map((c) => `${c} = ${c} + excluded.${c}`).join(', ')}`,",
+    "new": "      ON CONFLICT(id) DO UPDATE SET ${SUM_COLS.map((c) => `${c} = excluded.${c}`).join(', ')}`,",
     "why": "a player-hour's row holds only its last episode",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -483,8 +483,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-react-once",
     "file": "server-account/src/staffReactions.js",
-    "old": "if (seen?.kept) return { ok: true, read: false, rows: 0 };",
-    "new": "if (false) return { ok: true, read: false, rows: 0 };",
+    "old": "  if (seen?.kept) return { ok: true, read: false, rows: 0 };",
+    "new": "  if (false) return { ok: true, read: false, rows: 0 };",
     "why": "a resent batch summed twice",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -493,8 +493,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-pop-uncached",
     "file": "server-account/src/staffReactions.js",
-    "old": "if (popCache && nowS - popCache.at < REACT_POP_CACHE_S)",
-    "new": "if (false && popCache)",
+    "old": "  if (popCache && nowS - popCache.at < REACT_POP_CACHE_S) return popCache.value;",
+    "new": "  if (false && popCache) return popCache.value;",
     "why": "the population's numbers read at every look",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -503,8 +503,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-keep-never-let-go",
     "file": "server-account/src/staffReactions.js",
-    "old": "const until = keep ? nowS + REACT_EVIDENCE_S : null;",
-    "new": "const until = nowS + REACT_EVIDENCE_S;",
+    "old": "    const until = keep ? nowS + REACT_EVIDENCE_S : null;",
+    "new": "    const until = nowS + REACT_EVIDENCE_S;",
     "why": "rows kept as evidence for ever",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -513,8 +513,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-read-unaudited",
     "file": "server-account/src/staffReactions.js",
-    "old": "    audit('reactions-read', row.id, { name }, { onceIn: 10 * 60 }).run(),",
-    "new": "    void name,",
+    "old": "    audit('reactions-read', row.id, { name }, { onceIn: 10 * 60 }).run(), // STAFF-PANEL-SPEED: the audit row with the reads, one trip",
+    "new": "    void name, // STAFF-PANEL-SPEED: the audit row with the reads, one trip",
     "why": "a Reactions read not in the audit log",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -523,8 +523,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-renown-any-stream",
     "file": "server-account/src/staffReactions.js",
-    "old": "AND stream = 'renown' AND",
-    "new": "AND",
+    "old": "        \"SELECT COALESCE(SUM(amount), 0) AS renown, COALESCE(SUM(played_s), 0) AS played FROM progress_hours WHERE player = ?1 AND stream = 'renown' AND hour > ?2\",",
+    "new": "        'SELECT COALESCE(SUM(amount), 0) AS renown, COALESCE(SUM(played_s), 0) AS played FROM progress_hours WHERE player = ?1 AND hour > ?2',",
     "why": "every stream read as Renown",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -573,8 +573,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-flag-chat-case",
     "file": "server-account/src/staffMonsters.js",
-    "old": "openCaseFor(ctx, env, row.id, 'review', 'spawn')",
-    "new": "openCaseFor(ctx, env, row.id, 'review')",
+    "old": "    const caseId = await openCaseFor(ctx, env, row.id, 'review', 'spawn'); // STAFF-PANEL2-FIX: a spawn case, an Admin's, never a chat report's - or the one open already",
+    "new": "    const caseId = await openCaseFor(ctx, env, row.id, 'review'); // STAFF-PANEL2-FIX: a spawn case, an Admin's, never a chat report's - or the one open already",
     "why": "a Flag answered with a chat case beside the spawn case its line went to",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -673,8 +673,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-FIX-react-id-alone",
     "file": "server-account/src/staffReactions.js",
-    "old": "  await db.batch([\n    db.prepare('INSERT INTO reaction_batches (id, at) VALUES (?1, ?2)').bind(b.id, nowS),",
-    "new": "  await db.prepare('INSERT INTO reaction_batches (id, at) VALUES (?1, ?2)').bind(b.id, nowS).run();\n  await db.batch([",
+    "old": "  await db.batch([\n    db.prepare('INSERT INTO reaction_batches (id, at) VALUES (?1, ?2)').bind(b.id, nowS), // never OR IGNORE: two at once, the second's whole batch fails, and its resend reads it kept",
+    "new": "  await db.prepare('INSERT INTO reaction_batches (id, at) VALUES (?1, ?2)').bind(b.id, nowS).run();\n  await db.batch([\n    // never OR IGNORE: two at once, the second's whole batch fails, and its resend reads it kept",
     "why": "a reaction batch's id kept before its rows, alone: the resend after a failed rows write is read as kept (finding 11)",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -683,8 +683,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-FIX-react-count-alone",
     "file": "server-account/src/staffReactions.js",
-    "old": "window_start = MAX(rate_limits.window_start, excluded.window_start)`).bind(hour, b.rows.length),",
-    "new": "window_start = MAX(rate_limits.window_start, excluded.window_start)`).bind(hour, b.rows.length).run() && db.prepare('SELECT 1'),",
+    "old": "      .bind(hour, b.rows.length),",
+    "new": "      .bind(hour, b.rows.length)\n      .run() && db.prepare('SELECT 1'),",
     "why": "the hour's count kept before the rows, alone: a failed rows write counted (finding 11)",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -693,8 +693,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-FIX-net-id-alone",
     "file": "server-account/src/staffNet.js",
-    "old": ".bind(b.id, nowS, b.q, Math.max(1, Math.round((b.at - b.from) / 1000)), b.ms),",
-    "new": ".bind(b.id, nowS, b.q, Math.max(1, Math.round((b.at - b.from) / 1000)), b.ms).run() && db.prepare('SELECT 1'),",
+    "old": "      .bind(b.id, nowS, b.q, Math.max(1, Math.round((b.at - b.from) / 1000)), b.ms), // never OR IGNORE: two at once, the second's whole batch fails",
+    "new": "      .bind(b.id, nowS, b.q, Math.max(1, Math.round((b.at - b.from) / 1000)), b.ms)\n      .run() && db.prepare('SELECT 1'), // never OR IGNORE: two at once, the second's whole batch fails",
     "why": "a net batch's id kept before its rows, alone (finding 11)",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -703,8 +703,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-FIX-flag-window-rule",
     "file": "server-account/src/staffMonsters.js",
-    "old": "if (!(await keepCaseLines(db, caseId, [{ tab: GRANT_CASE_TAB",
-    "new": "if (await db.prepare('SELECT 1 AS y FROM mod_case_lines WHERE case_id = ?1 AND tab = ?2 AND at > ?3').bind(caseId, GRANT_CASE_TAB, nowS - 600).first()) {} else if (!(await keepCaseLines(db, caseId, [{ tab: GRANT_CASE_TAB",
+    "old": "      !(await keepCaseLines(",
+    "new": "      await db\n        .prepare('SELECT 1 AS y FROM mod_case_lines WHERE case_id = ?1 AND tab = ?2 AND at > ?3')\n        .bind(caseId, GRANT_CASE_TAB, nowS - 600)\n        .first()\n    ) {\n    } else if (\n      !(await keepCaseLines(",
     "why": "a Flag held to the automatic findings' one line a window: inside one it writes nothing (finding 13)",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -713,8 +713,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-FIX-flag-collision-silent",
     "file": "server-account/src/staffMonsters.js",
-    "old": "throw new Error('a line this second already: flag again');",
-    "new": "{}",
+    "old": "    )\n      throw new Error('a line this second already: flag again');",
+    "new": "    ) {\n    }",
     "why": "a Flag whose line this second is held already answers ok, its note dropped (finding 13)",
     "tests": [
       "test/server/staffpanel5feeds.test.js"
@@ -723,8 +723,8 @@
   {
     "name": "STAFF-PANEL5-FEEDS-FIX-flag-case-untouched",
     "file": "server-account/src/staffMonsters.js",
-    "old": "UPDATE mod_cases SET updated_at = ?2,",
-    "new": "UPDATE mod_cases SET updated_at = updated_at,",
+    "old": "        \"UPDATE mod_cases SET updated_at = ?2, discord_state = CASE WHEN ?3 = 1 THEN 'due' ELSE discord_state END WHERE id = ?1\",",
+    "new": "        \"UPDATE mod_cases SET updated_at = updated_at, discord_state = CASE WHEN ?3 = 1 THEN 'due' ELSE discord_state END WHERE id = ?1\",",
     "why": "a Flag's case not touched: never risen in the queue (finding 13)",
     "tests": [
       "test/server/staffpanel5feeds.test.js"

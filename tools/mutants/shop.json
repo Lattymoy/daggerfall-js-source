@@ -47,8 +47,8 @@
   {
     "name": "SHOP-handle-guard-dropped",
     "file": "server-account/src/titles.js",
-    "old": "(typeof player?.handle === 'string' && player.handle ? shopKeysOf(player?.shop_wares, kind) : [])",
-    "new": "shopKeysOf(player?.shop_wares, kind)",
+    "old": "export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) =>\n  typeof player?.handle === 'string' && player.handle ? shopKeysOf(player?.shop_wares, kind) : [];",
+    "new": "export const shopKeys = (/** @type {any} */ player, /** @type {string} */ kind) => shopKeysOf(player?.shop_wares, kind);",
     "tests": [
       "test/server/shop_service.test.js"
     ]

@@ -102,8 +102,8 @@
   {
     "name": "AEGIS-the-ward-without-the-list",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "export const TIER_AURA = Object.freeze({ primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  aegis: 'oblivionward',\n  primarch: 'radiance',",
+    "new": "  primarch: 'radiance',",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "AEGIS-the-brokers-first",
     "file": "server-account/src/titles.js",
-    "old": "  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle) for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);\n  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);",
-    "new": "  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);\n  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle) for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
+    "old": "  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_AURA)\n    held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA); // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle)\n    for (const [t, a] of Object.entries(EG_HONOUR_AURA))\n      if (Number(player?.eg_honours) & EG_HONOUR[t] && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);\n  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);",
+    "new": "  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);\n  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && Number(player?.sd_honours) & SD_HONOUR_AURA)\n    held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA); // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle)\n    for (const [t, a] of Object.entries(EG_HONOUR_AURA))\n      if (Number(player?.eg_honours) & EG_HONOUR[t] && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
     "tests": [
       "test/net/aegis.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "AEGIS-the-wardrobe-without-the-config",
     "file": "server-account/src/titles.js",
-    "old": "  auras: aurasHeld(player, env),   // AEGIS:",
-    "new": "  auras: aurasHeld(player),   // AEGIS:",
+    "old": "  auras: aurasHeld(player, env), // AEGIS: a list's aura beside the Broker's",
+    "new": "  auras: aurasHeld(player), // AEGIS: a list's aura beside the Broker's",
     "tests": [
       "test/net/aegis.test.js"
     ],

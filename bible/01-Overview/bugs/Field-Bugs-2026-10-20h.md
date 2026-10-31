@@ -803,7 +803,7 @@ Item law 8 took only DFU's ranges (`itemLaw.js:"const soulLawful = "`: 0-42 and 
 fifty was a `soul` finding (`itemLaw.js:"&& soulLawful(item.trappedSoulType))) out.add('soul');"`). The account service
 judges every realm checkpoint headless with that law
 (`judge.js:"for (const code of findingsOf(it))"`), the
-verdict holds the character and adds a strike (`verdict.js:"  if (law > 0 || (until != null && until > nowS)) return 'law';"`),
+verdict holds the character and adds a strike (`verdict.js:"if (law > 0 || (until != null && until > nowS))"`),
 and the client announces the hold (`realmHoldHost.js:"session.onTradeHeld"`) by the template's name
 (`itemIds.js:"const name = now"`). Reproduced word for word through
 the real Worker: "The realm is reviewing this character: it carries a Soul Trap the game could not have made. Trading is

@@ -52,8 +52,8 @@
   {
     "name": "MOD1-6-the-shield-for-everyone-who-can-moderate",
     "file": "server-account/src/titles.js",
-    "old": "  if (isModerator(player, env)) on.push('mod');",
-    "new": "  if (canModerate(player, env)) on.push('mod');",
+    "old": "  if (isModerator(player, env)) on.push('mod'); // MOD1: the blue shield",
+    "new": "  if (canModerate(player, env)) on.push('mod'); // MOD1: the blue shield",
     "tests": [
       "test/net/mod1.test.js"
     ],

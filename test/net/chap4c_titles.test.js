@@ -141,5 +141,5 @@ test('CHAP4c the wiring: the relay\'s version is a new one with its law; the tom
   assert.match(ix, /const withSeatTitles = async \(ctx, player, env\) => withChapterTitles\(ctx, /);
   assert.match(ix, /\) worn = await withChapterTitles\(ctx, worn, env\);/);   // PIN MOVED (MINT-TITLE-GATE): read for a chapter or mastery title worn (test/server/mint_title_gate.test.js)
   assert.match(ix, /\.find\(\(t\) => t\.title === wornT\) \?\? null : null;/);
-  assert.match(rd('server-account/src/titles.js'), /if \(Array\.isArray\(player\?\.chapterTitles\)\) for \(const t of player\.chapterTitles\) if \(CHAPTER_TITLES\.includes\(t\) && !held\.includes\(t\)\) held\.push\(t\);/);
+  assert.match(rd('server-account/src/titles.js'), /if \(Array\.isArray\(player\?\.chapterTitles\)\)\n\s*for \(const t of player\.chapterTitles\) if \(CHAPTER_TITLES\.includes\(t\) && !held\.includes\(t\)\) held\.push\(t\);/);
 });

@@ -312,8 +312,8 @@
   {
     "name": "STAFF-PANEL5-FREEZE-fall-names-frozen",
     "file": "server-account/src/wild.js",
-    "old": "if (fallen !== player.id && isFrozen(",
-    "new": "if (false && isFrozen(",
+    "old": "    fallen !== player.id &&",
+    "new": "    false &&",
     "why": "a frozen player robbed by a filed fall",
     "tests": [
       "test/server/staffpanel5_freeze.test.js"

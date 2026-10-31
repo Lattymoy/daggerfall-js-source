@@ -2,8 +2,8 @@
   {
     "name": "HOURSFIRST-the-list-not-folded",
     "file": "server-account/src/titles.js",
-    "old": "&& hoursFirstHandles(env).has(player.handle.toLowerCase());",
-    "new": "&& hoursFirstHandles(env).has(player.handle);",
+    "old": "  typeof player?.handle === 'string' && !!player.handle && hoursFirstHandles(env).has(player.handle.toLowerCase());",
+    "new": "  typeof player?.handle === 'string' && !!player.handle && hoursFirstHandles(env).has(player.handle);",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HOURSFIRST-a-guest-by-its-name",
     "file": "server-account/src/titles.js",
-    "old": "export const isHoursFirst = (player, env) =>\n  typeof player?.handle === 'string' && !!player.handle\n  && hoursFirstHandles(env).has(player.handle.toLowerCase());",
-    "new": "export const isHoursFirst = (player, env) => hoursFirstHandles(env).has(String(player?.handle ?? player?.guest_name ?? '').toLowerCase());",
+    "old": "  typeof player?.handle === 'string' && !!player.handle && hoursFirstHandles(env).has(player.handle.toLowerCase());",
+    "new": "  hoursFirstHandles(env).has(String(player?.handle ?? player?.guest_name ?? '').toLowerCase());",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "HOURSFIRST-the-aura-without-the-list",
     "file": "server-account/src/titles.js",
-    "old": "if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);",
-    "new": "if (!held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);",
+    "old": "  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA); // HOURS-FIRST: with the title, by name",
+    "new": "  if (!held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA); // HOURS-FIRST: with the title, by name",
     "tests": [
       "test/net/hoursfirst.test.js"
     ],

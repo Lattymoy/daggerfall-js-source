@@ -32,8 +32,8 @@
   {
     "name": "PL-pledge-not-read",
     "file": "server-account/src/titles.js",
-    "old": "  && (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()) || patreonTitlesOf(player, env).includes(title));",
-    "new": "  && (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()));",
+    "old": "  (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()) ||\n    patreonTitlesOf(player, env).includes(title));",
+    "new": "  handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase());",
     "tests": [
       "test/server/patreon_link.test.js"
     ],

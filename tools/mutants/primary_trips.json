@@ -22,8 +22,8 @@
   {
     "name": "YARDS-REPLICA-binding",
     "file": "server-account/src/yardCells.js",
-    "old": "try { db = replicaDb(typeof ctx.db?.withSession === 'function' ? ctx.db : root, from); } catch",
-    "new": "try { db = ctx.db; } catch",
+    "old": "      db = replicaDb(typeof ctx.db?.withSession === 'function' ? ctx.db : root, from);",
+    "new": "      db = ctx.db;",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "YARDS-REPLICA-write-unmarked",
     "file": "server-account/src/yardCells.js",
-    "old": "  reading.get(key)?.stale.add(key);\n  keep(key, { ...WRITTEN });",
-    "new": "  reading.get(key)?.stale.add(key);",
+    "old": "  keep(key, { ...WRITTEN });\n}",
+    "new": "}",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
@@ -122,8 +122,8 @@
   {
     "name": "PRIMARY-TRIPS-AUDIT-floor-unkept",
     "file": "server-account/src/yardCells.js",
-    "old": "    if (oldest.mark && (floor == null || oldest.mark > floor)) floor = oldest.mark;\n",
-    "new": "",
+    "old": "    if (oldest.mark && (floor == null || oldest.mark > floor)) floor = oldest.mark;\n    keptBytes -= oldest.bytes;",
+    "new": "    keptBytes -= oldest.bytes;",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "PRIMARY-TRIPS-AUDIT-floor-oldest",
     "file": "server-account/src/yardCells.js",
-    "old": "(floor == null || oldest.mark > floor)",
-    "new": "(floor == null || oldest.mark < floor)",
+    "old": "    if (oldest.mark && (floor == null || oldest.mark > floor)) floor = oldest.mark;",
+    "new": "    if (oldest.mark && (floor == null || oldest.mark < floor)) floor = oldest.mark;",
     "tests": [
       "test/server/primary_trips.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "PRIMARY-TRIPS-AUDIT-floor-refused-kept",
     "file": "server-account/src/yardCells.js",
-    "old": "      if (floor === from) floor = null;   // a read that failed from a bookmark: the next starts from none\n",
-    "new": "",
+    "old": "      if (floor === from) floor = null; // a read that failed from a bookmark: the next starts from none\n      throw e;",
+    "new": "      throw e;",
     "tests": [
       "test/server/primary_trips.test.js"
     ],

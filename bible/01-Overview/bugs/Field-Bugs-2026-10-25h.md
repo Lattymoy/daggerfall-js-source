@@ -80,7 +80,7 @@ THE CHANGE:
   is still laid once a fall, the second carrier's deposit answered by the first (`laid-already` in the log).
 - THE REMAINS NAMED FOR THE FALLEN. The service's remains order carries the name the fallen wears, `wnm` - its token's,
   by the same law: the account's name, or the realm character's where the player chose it
-  (`wild.js:"async function fallenNameOf("` over `accounts.js:"export async function wornNameOf"`, checked as the wire keeps a name -
+  (`wild.js:"async function fallenNameOf"` over `accounts.js:"export async function wornNameOf"`, checked as the wire keeps a name -
   `identityToken.js:"&& !(typeof c.wnm === 'string' && c.wnm === sanitizeName(c.wnm))"`), and the room names the remains with it whoever carries the order
   (`server/src/index.js:"nm: c.wnm ?? (a.sub === c.s"`). A game reads a remains as its own by the fallen's account where
   the room names one, by the peer that laid it only where it names none, or as the remains its own deposit laid

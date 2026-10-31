@@ -103,8 +103,8 @@
   {
     "name": "WITCH1-hearthkeeper-one-late",
     "file": "server-account/src/titles.js",
-    "old": "if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
-    "new": "if (Number(player?.fest_given) > HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
+    "old": "    if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
+    "new": "    if (Number(player?.fest_given) > HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],
@@ -113,8 +113,8 @@
   {
     "name": "WITCH1-soulcake-one-late",
     "file": "server-account/src/titles.js",
-    "old": "if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
-    "new": "if (Number(player?.fest_taken) > SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
+    "old": "  if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
+    "new": "  if (Number(player?.fest_taken) > SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);",
     "tests": [
       "test/server/witch1_festival.test.js"
     ],

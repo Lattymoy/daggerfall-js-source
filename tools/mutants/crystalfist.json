@@ -133,8 +133,8 @@
   {
     "name": "CRYSTALFIST-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
-    "new": "primarch: 'primarch', crystalfist: 'disciple', wikimaid: 'wikimaid', nirnrootsage: 'nirnrootsage' });",
+    "old": "  crystalfist: 'crystalfist',",
+    "new": "  crystalfist: 'disciple',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -143,8 +143,8 @@
   {
     "name": "CRYSTALFIST-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "shadowfang: 'shadowcloak', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  crystalfist: 'resonance',\n  wikimaid: 'lilacwarren',",
+    "new": "  wikimaid: 'lilacwarren',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],
@@ -153,8 +153,8 @@
   {
     "name": "CRYSTALFIST-the-wrong-aura-granted",
     "file": "server-account/src/titles.js",
-    "old": "shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
-    "new": "shadowfang: 'shadowcloak', crystalfist: 'oblivionward', wikimaid: 'lilacwarren', nirnrootsage: 'sagesmoke' });",
+    "old": "  crystalfist: 'resonance',",
+    "new": "  crystalfist: 'oblivionward',",
     "tests": [
       "test/net/crystalfist.test.js"
     ],

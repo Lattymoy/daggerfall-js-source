@@ -895,8 +895,8 @@
   {
     "name": "SEA-BOUNTY-fall-no-kill",
     "file": "server-account/src/wild.js",
-    "old": "    // batch that writes the fall, or neither lands\n    ...seaKillSteps(ctx.db, sea, ctx.nowS),\n",
-    "new": "    // batch that writes the fall, or neither lands\n",
+    "old": "    ...seaKillSteps(ctx.db, sea, ctx.nowS),\n    ...villainFallSteps(ctx.db, sea), // PVP-VILLAIN-KEEP: the kill's points on its killer, once with the fall",
+    "new": "    ...villainFallSteps(ctx.db, sea), // PVP-VILLAIN-KEEP: the kill's points on its killer, once with the fall",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]
@@ -904,8 +904,8 @@
   {
     "name": "SEA-BOUNTY-fall-sea-unread",
     "file": "server-account/src/wild.js",
-    "old": "    sea = c;   // SEA-BOUNTY",
-    "new": "    // sea = c;   // SEA-BOUNTY",
+    "old": "    sea = c; // SEA-BOUNTY: the room it fell in and its killer's character - a kill at sea, written with the fall",
+    "new": "    // sea = c;   // SEA-BOUNTY: the room it fell in and its killer's character - a kill at sea, written with the fall",
     "tests": [
       "test/systems/sea/seabounty.test.js"
     ]

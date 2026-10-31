@@ -176,8 +176,8 @@
   {
     "name": "SILVER-WAYS-svc-contract-budget-unshared",
     "file": "server-account/src/writs.js",
-    "old": "\n  + COALESCE((SELECT SUM(deeds * pay) FROM guild_contracts WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0))`;",
-    "new": "\n  + 0)`;",
+    "old": "  + COALESCE((SELECT SUM(deeds * pay) FROM guild_contracts WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0))`;",
+    "new": "  + 0)`;",
     "tests": [
       "test/net/silverways_service.test.js"
     ]

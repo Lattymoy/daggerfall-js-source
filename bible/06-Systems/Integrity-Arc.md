@@ -553,7 +553,7 @@ record: staff give one back fresh, Add an item, on the player's word). Such a pa
 `keep: true`: one of each kept - of the record's own lists first (its pack before a room's chest), the first of the print
 its ledger row holds - and every other copy destroyed wherever the save holds it, the places the checkpoint never reads
 with them: a deserter revenant's take, a pile on the ground, a shop's shelf, a dungeon's chest
-(`staffRealm.js:"export function copiesOfKeys(save, keySet) {"`, said as `hidden`), and of a piece it lifts, the
+(`staffRealm.js:"export function copiesOfKeys"`, said as `hidden`), and of a piece it lifts, the
 account's chests'. A `twice` copy is lifted in the same batch only where the act itself leaves the record one - its
 batch destroys a copy of it, or staff's Remove took one off the character and keeps it - its row the record's own, held
 and unclaimed and of the piece kept, no other record's copy known, and no trail check or one that found it innocent

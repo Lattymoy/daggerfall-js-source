@@ -61,8 +61,8 @@
   {
     "name": "ARMORY-a-piece-not-held-worn",
     "file": "server-account/src/titles.js",
-    "old": "return armoryHeld(player, env).includes(p.key) ? null : 'armory-not-held';",
-    "new": "return null;",
+    "old": "  return armoryHeld(player, env).includes(p.key) ? null : 'armory-not-held';",
+    "new": "  return null;",
     "tests": [
       "test/server/armory_service.test.js"
     ]
@@ -70,8 +70,8 @@
   {
     "name": "ARMORY-a-piece-in-another-slot-worn",
     "file": "server-account/src/titles.js",
-    "old": "if (!p || p.slot !== slot) return 'no-piece';",
-    "new": "if (!p) return 'no-piece';",
+    "old": "  if (!p || p.slot !== slot) return 'no-piece';",
+    "new": "  if (!p) return 'no-piece';",
     "tests": [
       "test/server/armory_service.test.js"
     ]
@@ -296,8 +296,8 @@
   {
     "name": "ARMORY-a-broker-piece-never-held",
     "file": "server-account/src/titles.js",
-    "old": "insigniaKeys(player?.insignia, 'armory')",
-    "new": "insigniaKeys(player?.insignia, 'aura')",
+    "old": "    ...insigniaKeys(player?.insignia, 'armory'),",
+    "new": "    ...insigniaKeys(player?.insignia, 'aura'),",
     "tests": [
       "test/server/armory_service.test.js"
     ]

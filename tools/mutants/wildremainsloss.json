@@ -11,8 +11,8 @@
   {
     "name": "WILD-REMAINS-LOSS-the-order-without-the-name",
     "file": "server-account/src/wild.js",
-    "old": "...(wg ? { wg } : {}), ...(wnm ? { wnm } : {}) }, signing,",
-    "new": "...(wg ? { wg } : {}) }, signing,",
+    "old": "        ...(wnm ? { wnm } : {}),\n      },",
+    "new": "      },",
     "tests": [
       "test/net/wildremainsloss.test.js"
     ]

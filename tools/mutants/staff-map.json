@@ -152,8 +152,8 @@
   {
     "name": "INV-HOVER-maker-rows-kept",
     "file": "server-account/src/staffPlayers.js",
-    "old": "e && typeof e === 'object' && e.enchantCost === undefined && Number.isSafeInteger(e.type)",
-    "new": "e && typeof e === 'object' && Number.isSafeInteger(e.type)",
+    "old": "    .filter(\n      (/** @type {any} */ e) =>\n        e && typeof e === 'object' && e.enchantCost === undefined && Number.isSafeInteger(e.type) && e.type >= 0,\n    )",
+    "new": "    .filter((/** @type {any} */ e) => e && typeof e === 'object' && Number.isSafeInteger(e.type) && e.type >= 0)",
     "why": "the item maker's cost rows read as enchantments the piece has",
     "tests": [
       "test/server/staffpanel3players.test.js"
@@ -162,7 +162,7 @@
   {
     "name": "INV-HOVER-condition-unread",
     "file": "server-account/src/staffPlayers.js",
-    "old": "...(cur != null && max != null && max > 0 ? { cond: [cur, max] } : {}),",
+    "old": "    ...(cur != null && max != null && max > 0 ? { cond: [cur, max] } : {}),",
     "new": "",
     "why": "a hover never says a piece's condition",
     "tests": [

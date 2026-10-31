@@ -103,8 +103,8 @@
   {
     "name": "COMPANION-DROP-the-services-shares-unsaid",
     "file": "server-account/src/wild.js",
-    "old": "  const packs = tk?.gold?.packs && typeof tk.gold.packs === 'object' ? { packs: tk.gold.packs } : {};",
-    "new": "  const packs = {};",
+    "old": "  const packs = tk?.gold?.packs && typeof tk.gold.packs === 'object' ? { packs: tk.gold.packs } : {}; // COMPANION-DROP: each pack's coin share, by its word",
+    "new": "  const packs = {}; // COMPANION-DROP: each pack's coin share, by its word",
     "tests": [
       "test/systems/fb1019f_companiondrop.test.js"
     ]

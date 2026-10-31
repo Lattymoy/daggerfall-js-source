@@ -234,7 +234,7 @@ saved room never stands; the next visit gives them back to the pack, said
 (`worldModes.js:"if (!(interiorHome || _seatHallVisit)) returnUnstood(interiorDecor, placed, decorPackGive, say);"`).
 COPY-LIFT: a record's own `twice` copy is lifted only by staff's purge with `keep: true`, and (AUDIT FB1025i lane F)
 only where the act itself leaves the record one: the keep finds every copy the save holds wherever it lies - a
-deserter's take, the ground, a shop's shelf (`staffRealm.js:"export function copiesOfKeys(save, keySet) {"`, said as
+deserter's take, the ground, a shop's shelf (`staffRealm.js:"export function copiesOfKeys"`, said as
 `hidden`) - keeps the ledger's own piece (the first of its row's print) and destroys the rest, and lifts where its batch
 destroyed a copy or staff's Remove keeps one; its row the record's own, held and unclaimed and of the piece kept, no
 other record's copy, no trail check or one found innocent - never `unclear`

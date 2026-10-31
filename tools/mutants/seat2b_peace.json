@@ -348,8 +348,8 @@
   {
     "name": "SEAT2b2-camp-no-ram-kits",
     "file": "server-account/src/writs.js",
-    "old": "if (!fortMaterialOk(key) && key !== RAM_KIT_KEY) return { error: 'bad-material' };",
-    "new": "if (!fortMaterialOk(key)) return { error: 'bad-material' };",
+    "old": "    if (!fortMaterialOk(key) && key !== RAM_KIT_KEY) return { error: 'bad-material' };",
+    "new": "    if (!fortMaterialOk(key)) return { error: 'bad-material' };",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -357,8 +357,8 @@
   {
     "name": "SEAT2b2-stockpile-asks-ram-kits",
     "file": "server-account/src/writs.js",
-    "old": "    if (key === RAM_KIT_KEY && !camp) return { error: 'bad-material' };\n",
-    "new": "",
+    "old": "    if (key === RAM_KIT_KEY && !camp) return { error: 'bad-material' };\n  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' }; // SEAT2b part two: nor the guild Stores' (a kit leaves the Stores by a camp's writ alone)",
+    "new": "  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' }; // SEAT2b part two: nor the guild Stores' (a kit leaves the Stores by a camp's writ alone)",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]
@@ -366,8 +366,8 @@
   {
     "name": "SEAT2b2-guild-stores-ask-ram-kits",
     "file": "server-account/src/writs.js",
-    "old": "  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' };",
-    "new": "  }",
+    "old": "  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' }; // SEAT2b part two: nor the guild Stores' (a kit leaves the Stores by a camp's writ alone)",
+    "new": "  } // SEAT2b part two: nor the guild Stores' (a kit leaves the Stores by a camp's writ alone)",
     "tests": [
       "test/net/seat2b_peace_service.test.js"
     ]

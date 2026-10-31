@@ -92,8 +92,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-hour-overwritten",
     "file": "server-account/src/verdict.js",
-    "old": "tally = COALESCE(excluded.tally, tally)",
-    "new": "tally = excluded.tally",
+    "old": "          ' played_s = played_s + excluded.played_s, checkpoints = checkpoints + 1, tally = COALESCE(excluded.tally, tally)',",
+    "new": "          ' played_s = played_s + excluded.played_s, checkpoints = checkpoints + 1, tally = excluded.tally',",
     "why": "an unchanged checkpoint wipes the hour's tally",
     "tests": [
       "test/server/staffpanel4census.test.js"
@@ -102,8 +102,8 @@
   {
     "name": "STAFF-PANEL4-CENSUS-latest-unwritten",
     "file": "server-account/src/verdict.js",
-    "old": "dPlayed, census.tally), ...census.steps);",
-    "new": "dPlayed, census.tally));",
+    "old": "    ...census.steps,\n  );",
+    "new": "  );",
     "why": "the latest tally never written",
     "tests": [
       "test/server/staffpanel4census.test.js"

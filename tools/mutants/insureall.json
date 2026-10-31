@@ -103,8 +103,8 @@
   {
     "name": "INSURE-ALL-the-fall-reads-no-among",
     "file": "server-account/src/wild.js",
-    "old": "{ villain: isVillain(Number(row.villainy)), among: stored.items }",
-    "new": "{ villain: isVillain(Number(row.villainy)) }",
+    "old": "    { villain: isVillain(Number(row.villainy)), among: stored.items },",
+    "new": "    { villain: isVillain(Number(row.villainy)) },",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]
@@ -157,8 +157,8 @@
   {
     "name": "INSURE-ALL-the-service-finds-by-the-ledger-key",
     "file": "server-account/src/wildInsure.js",
-    "old": "      const named = pack.filter((it) => insureKeyOf(it) === k);",
-    "new": "      const named = pack.filter((it) => insureKeyOf(it) === k && it.uid !== k);",
+    "old": "      const named = pack.filter((it) => insureKeyOf(it) === k); // INSURE-ALL: a plain piece by its own id; a key two carry, none",
+    "new": "      const named = pack.filter((it) => insureKeyOf(it) === k && it.uid !== k); // INSURE-ALL: a plain piece by its own id; a key two carry, none",
     "tests": [
       "test/systems/wild/insureall.test.js"
     ]

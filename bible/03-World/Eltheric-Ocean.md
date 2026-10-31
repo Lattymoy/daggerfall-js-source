@@ -1055,7 +1055,7 @@ the box, and harmless so: the relay referees no fall there.
 **THE SERVICE** (`server-account/src/seaBounty.js`; tables `migrations/0146_sea_bounty.sql`; the law both ends read,
 `src/net/sea/seaBountyLaw.js`):
 
-- THE KILL is written in the fall's OWN batch (`server-account/src/wild.js:"// SEA-BOUNTY (seaBounty.js): a fall at sea at another's hand - the bounties on the fallen claimed for its killer, in the"` - and REPEAT-SHIELD's, a fall that takes nothing, writes it too):
+- THE KILL is written in the fall's OWN batch (`server-account/src/wild.js:"SEA-BOUNTY (seaBounty.js)"` - and REPEAT-SHIELD's, a fall that takes nothing, writes it too):
   `sea_kills` once by the remains' id; every bounty standing on the fallen character claimed by that fall (guarded by
   no kill of it written yet, so two tabs racing one fall claim once); their sum OWED to the killer's character
   (`sea_bounty_owed`). A fall asked again answers from its first row and writes nothing.

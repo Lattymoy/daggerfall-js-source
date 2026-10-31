@@ -1811,8 +1811,8 @@
   {
     "name": "ARENA4-TITLE-GRAND-THE-ROW",
     "file": "server-account/src/titles.js",
-    "old": "if (player?.arena?.grand === true) held.push('grandchampion');",
-    "new": "if (player?.arena?.grand !== false) held.push('grandchampion');",
+    "old": "  if (player?.arena?.grand === true) held.push('grandchampion');",
+    "new": "  if (player?.arena?.grand !== false) held.push('grandchampion');",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -1820,8 +1820,8 @@
   {
     "name": "ARENA4-TITLE-ARENACHAMPION",
     "file": "server-account/src/titles.js",
-    "old": "  if (player?.arena?.champion === true) held.push('arenachampion');\n",
-    "new": "",
+    "old": "  if (player?.arena?.champion === true) held.push('arenachampion');\n  if (player?.iliac?.champion === true) held.push('iliacchampion'); // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top",
+    "new": "  if (player?.iliac?.champion === true) held.push('iliacchampion'); // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]
@@ -1829,8 +1829,8 @@
   {
     "name": "ARENA4-GLYPH-LAUREL",
     "file": "server-account/src/titles.js",
-    "old": "  if (player?.arena?.champion === true) on.push('laurel');",
-    "new": "  if (false) on.push('laurel');",
+    "old": "  if (player?.arena?.champion === true) on.push('laurel'); // ARENA4: the laurel, true of the season's #1 while they hold it",
+    "new": "  if (false) on.push('laurel'); // ARENA4: the laurel, true of the season's #1 while they hold it",
     "tests": [
       "test/net/arena/arena4_service.test.js"
     ]

@@ -76,8 +76,8 @@
   {
     "name": "WILD-INSURE-the-policies-unread",
     "file": "server-account/src/wild.js",
-    "old": "const insured = pvpInsuredFor(live.map((p) => String(p.key)),",
-    "new": "const insured = pvpInsuredFor([],",
+    "old": "  const insured = pvpInsuredFor(\n    live.map((p) => String(p.key)),\n    { villain: isVillain(Number(row.villainy)), among: stored.items },\n  ); // the owner: \"villian lose insurance\"; INSURE-ALL: a key two pieces carry keeps neither",
+    "new": "  const insured = pvpInsuredFor([], { villain: isVillain(Number(row.villainy)), among: stored.items }); // the owner: \"villian lose insurance\"; INSURE-ALL: a key two pieces carry keeps neither",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -85,8 +85,8 @@
   {
     "name": "WILD-INSURE-the-settle-unread-at-the-fall",
     "file": "server-account/src/wild.js",
-    "old": "policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt))",
-    "new": "policies.filter((p) => Number(p.at) > 0)",
+    "old": "  const live = policies.filter((p) => wildPolicyInForce(Number(p.at), fallAt));",
+    "new": "  const live = policies.filter((p) => Number(p.at) > 0);",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -94,8 +94,8 @@
   {
     "name": "WILD-INSURE-spent-unread",
     "file": "server-account/src/wild.js",
-    "old": "    ...spent.map((k) => ctx.db.prepare(",
-    "new": "    ...spent.slice(0, 0).map((k) => ctx.db.prepare(",
+    "old": "    ...spent.map((k) =>\n      ctx.db\n        .prepare(\n          \"UPDATE wild_insurance SET state = 'spent', spent_r = ?3, spent_at = ?4 WHERE char_id = ?1 AND key = ?2 AND state = 'active'\",\n        )\n        .bind(charId, k, r, ctx.nowS),\n    ),",
+    "new": "    ...spent\n      .slice(0, 0)\n      .map((k) =>\n        ctx.db\n          .prepare(\n            \"UPDATE wild_insurance SET state = 'spent', spent_r = ?3, spent_at = ?4 WHERE char_id = ?1 AND key = ?2 AND state = 'active'\",\n          )\n          .bind(charId, k, r, ctx.nowS),\n      ),",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -112,8 +112,8 @@
   {
     "name": "WILD-INSURE-a-second-policy-on-one-piece",
     "file": "server-account/src/wildInsure.js",
-    "old": "  if (keys.some((k) => held.has(k))) return { error: 'insure-held' };\n",
-    "new": "",
+    "old": "  if (keys.some((k) => held.has(k))) return { error: 'insure-held' };\n  const region = Number.isSafeInteger(body?.region) ? body.region : null;",
+    "new": "  const region = Number.isSafeInteger(body?.region) ? body.region : null;",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -175,8 +175,8 @@
   {
     "name": "REPEAT-SHIELD-the-shield-unread",
     "file": "server-account/src/wild.js",
-    "old": "  if (repeat) return wildShielded(",
-    "new": "  if (repeat && false) return wildShielded(",
+    "old": "  if (repeat)",
+    "new": "  if (repeat && false)",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -184,8 +184,8 @@
   {
     "name": "REPEAT-SHIELD-the-window-unread",
     "file": "server-account/src/wild.js",
-    "old": ".bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S).first();",
-    "new": ".bind(charId, killer, 0, Number.MAX_SAFE_INTEGER).first();",
+    "old": "    .bind(charId, killer, fallAt - WILD_REPEAT_S, fallAt + WILD_REPEAT_S)",
+    "new": "    .bind(charId, killer, 0, Number.MAX_SAFE_INTEGER)",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]
@@ -193,8 +193,8 @@
   {
     "name": "REPEAT-SHIELD-the-killer-unread",
     "file": "server-account/src/wild.js",
-    "old": "WHERE char_id = ?1 AND killer = ?2 AND ki > ?3 AND ki < ?4 LIMIT 1",
-    "new": "WHERE char_id = ?1 AND (killer = ?2 OR killer IS NOT NULL) AND ki > ?3 AND ki < ?4 LIMIT 1",
+    "old": "    .prepare('SELECT 1 AS x FROM wild_falls WHERE char_id = ?1 AND killer = ?2 AND ki > ?3 AND ki < ?4 LIMIT 1')",
+    "new": "    .prepare(\n      'SELECT 1 AS x FROM wild_falls WHERE char_id = ?1 AND (killer = ?2 OR killer IS NOT NULL) AND ki > ?3 AND ki < ?4 LIMIT 1',\n    )",
     "tests": [
       "test/systems/wild/wildinsure.test.js"
     ]

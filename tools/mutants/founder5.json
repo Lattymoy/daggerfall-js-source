@@ -22,8 +22,8 @@
   {
     "name": "FOUNDER5-the-cutoff-exclusive",
     "file": "server-account/src/titles.js",
-    "old": "firstPlayed(player) <= FOUNDER_UNTIL",
-    "new": "firstPlayed(player) < FOUNDER_UNTIL",
+    "old": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) <= FOUNDER_UNTIL) held.push('founder');",
+    "new": "  if (Number.isFinite(player?.registered_at) && firstPlayed(player) < FOUNDER_UNTIL) held.push('founder');",
     "tests": [
       "test/server/founder5.test.js"
     ],
@@ -32,7 +32,7 @@
   {
     "name": "FOUNDER5-the-list-ignored",
     "file": "server-account/src/titles.js",
-    "old": "  if (!held.includes('founder') && isNamedFounder(player, env)) held.push('founder');   // FOUNDER5: or by name",
+    "old": "  if (!held.includes('founder') && isNamedFounder(player, env)) held.push('founder'); // FOUNDER5: or by name",
     "new": "",
     "tests": [
       "test/server/founder5.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "FOUNDER5-the-list-held-twice",
     "file": "server-account/src/titles.js",
-    "old": "  if (!held.includes('founder') && isNamedFounder(player, env)) held.push('founder');   // FOUNDER5: or by name",
-    "new": "  if (isNamedFounder(player, env)) held.push('founder');   // FOUNDER5: or by name",
+    "old": "  if (!held.includes('founder') && isNamedFounder(player, env)) held.push('founder'); // FOUNDER5: or by name",
+    "new": "  if (isNamedFounder(player, env)) held.push('founder'); // FOUNDER5: or by name",
     "tests": [
       "test/server/founder5.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "FOUNDER5-the-list-grants-guests",
     "file": "server-account/src/titles.js",
-    "old": "export const isNamedFounder = (player, env) =>\n  typeof player?.handle === 'string' && !!player.handle\n  && founderHandles(env).has(player.handle.toLowerCase());",
-    "new": "export const isNamedFounder = (player, env) =>\n  founderHandles(env).has(String(player?.handle ?? '').toLowerCase());",
+    "old": "export const isNamedFounder = (player, env) =>\n  typeof player?.handle === 'string' && !!player.handle && founderHandles(env).has(player.handle.toLowerCase());",
+    "new": "export const isNamedFounder = (player, env) => founderHandles(env).has(String(player?.handle ?? '').toLowerCase());",
     "tests": [
       "test/server/founder5.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "FOUNDER5-the-list-case-blind",
     "file": "server-account/src/titles.js",
-    "old": "  && founderHandles(env).has(player.handle.toLowerCase());",
-    "new": "  && founderHandles(env).has(player.handle);",
+    "old": "  typeof player?.handle === 'string' && !!player.handle && founderHandles(env).has(player.handle.toLowerCase());",
+    "new": "  typeof player?.handle === 'string' && !!player.handle && founderHandles(env).has(player.handle);",
     "tests": [
       "test/server/founder5.test.js"
     ],

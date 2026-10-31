@@ -546,8 +546,8 @@
   {
     "name": "SEAT2b-writ-any-material",
     "file": "server-account/src/writs.js",
-    "old": "    if (!fortMaterialOk(key) && key !== RAM_KIT_KEY) return { error: 'bad-material' };\n",
-    "new": "",
+    "old": "    if (!fortMaterialOk(key) && key !== RAM_KIT_KEY) return { error: 'bad-material' };\n    const holds = await db",
+    "new": "    const holds = await db",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -555,8 +555,8 @@
   {
     "name": "SEAT2b-writ-unpledged-camp",
     "file": "server-account/src/writs.js",
-    "old": "      if (!pledged) return { error: 'seat-not-pledged' };\n",
-    "new": "",
+    "old": "      if (!pledged) return { error: 'seat-not-pledged' };\n      camp = 1;",
+    "new": "      camp = 1;",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -573,8 +573,8 @@
   {
     "name": "SEAT2b-writ-not-supplied",
     "file": "server-account/src/writs.js",
-    "old": "      if (Number(w.camp) !== 1) await supplyForts(db, Number(w.seat), nowS);",
-    "new": "",
+    "old": "      if (Number(w.camp) !== 1) await supplyForts(db, Number(w.seat), nowS); // SEAT2b: into the seat's projects",
+    "new": "      // SEAT2b: into the seat's projects",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -582,8 +582,8 @@
   {
     "name": "SEAT2b-writ-seat-to-stores",
     "file": "server-account/src/writs.js",
-    "old": "  AND expires_at > ${now} AND seat IS NULL), 0)`;",
-    "new": "  AND expires_at > ${now}), 0)`;",
+    "old": "  AND expires_at > ${now} AND seat IS NULL), 0)`; // SEAT2b: a seat writ's units go to the seat, never the guild Stores",
+    "new": "  AND expires_at > ${now}), 0)`; // SEAT2b: a seat writ's units go to the seat, never the guild Stores",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -746,8 +746,8 @@
   {
     "name": "SEAT2b-writ-influence-uncredited",
     "file": "server-account/src/writs.js",
-    "old": "      await creditSeatWrit(ctx, player, env, { character, key: Number(w.seat),",
-    "new": "      if (0) await creditSeatWrit(ctx, player, env, { character, key: Number(w.seat),",
+    "old": "      await creditSeatWrit(ctx, player, env, {\n        character,\n        key: Number(w.seat),\n        region: Number(w.region),\n        guild: w.guild_id,\n        own: units - boughtSpent,\n        bought: boughtSpent,\n        value: material(w.material)?.value ?? 0,\n        ref: `fill:${me}:${rid}`,\n      });",
+    "new": "      if (0)\n        await creditSeatWrit(ctx, player, env, {\n          character,\n          key: Number(w.seat),\n          region: Number(w.region),\n          guild: w.guild_id,\n          own: units - boughtSpent,\n          bought: boughtSpent,\n          value: material(w.material)?.value ?? 0,\n          ref: `fill:${me}:${rid}`,\n        });",
     "tests": [
       "test/server/seat2b_service.test.js"
     ]
@@ -755,7 +755,7 @@
   {
     "name": "SEAT2b-writ-influence-bought-unspent",
     "file": "server-account/src/writs.js",
-    "old": "  const boughtSpent = w.seat != null ? Math.min(units, Math.max(0, Number((await storeOf(db, me, character, w.material)).bought ?? 0))) : 0;",
+    "old": "  const boughtSpent =\n    w.seat != null\n      ? Math.min(units, Math.max(0, Number((await storeOf(db, me, character, w.material)).bought ?? 0)))\n      : 0;",
     "new": "  const boughtSpent = 0;",
     "tests": [
       "test/server/seat2b_service.test.js"

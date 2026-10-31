@@ -2,8 +2,8 @@
   {
     "name": "STAFF-GIVE-the-law-unread",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (g.findings.length) return said('item-give', row.player, { ...detail, findings: g.findings }, { error: 'staff-item-unlawful' });\n",
-    "new": "",
+    "old": "    if (g.findings.length)\n      return said('item-give', row.player, { ...detail, findings: g.findings }, { error: 'staff-item-unlawful' });\n    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });",
+    "new": "    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });",
     "why": "a gift the item law finds would be given, and the player's trading held for staff's own act",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -12,8 +12,8 @@
   {
     "name": "STAFF-GIVE-seq-unread",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });\n",
-    "new": "",
+    "old": "    if (body.seq !== row.seq) return said('item-give', row.player, detail, { error: 'seq' });\n    const prep = await seizeRealmRecord(",
+    "new": "    const prep = await seizeRealmRecord(",
     "why": "a gift confirmed on a record that moved since staff looked",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -22,8 +22,8 @@
   {
     "name": "STAFF-GIVE-reason-unread",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (!reason) return said('item-give', row.player, detail, { error: 'staff-reason' });\n",
-    "new": "",
+    "old": "    if (!reason) return said('item-give', row.player, detail, { error: 'staff-reason' });\n    if (!note) return said('item-give', row.player, detail, { error: 'staff-note' });",
+    "new": "    if (!note) return said('item-give', row.player, detail, { error: 'staff-note' });",
     "why": "every gift names why (mob: a reason and a note like Remove)",
     "tests": [
       "test/server/staffpanel3realm.test.js"
@@ -42,8 +42,8 @@
   {
     "name": "STAFF-GIVE-preview-gives",
     "file": "server-account/src/staffRealm.js",
-    "old": "    if (body.confirm !== true) {\n      await audit('give-check'",
-    "new": "    if (body.confirm === 'never') {\n      await audit('give-check'",
+    "old": "    if ('error' in g) return refusedEarly(/** @type {string} */ (g.error));\n    if (body.confirm !== true) {",
+    "new": "    if ('error' in g) return refusedEarly(/** @type {string} */ (g.error));\n    if (body.confirm === 'never') {",
     "why": "a preview moves nothing",
     "tests": [
       "test/server/staffpanel3realm.test.js"

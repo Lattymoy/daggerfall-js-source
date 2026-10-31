@@ -333,8 +333,8 @@
   {
     "name": "STAFF-PANEL2-FIX-dev-while-cut",
     "file": "server-account/src/titles.js",
-    "old": "!!player.handle && !staffSuspended(player)\n  && developerHandles",
-    "new": "!!player.handle\n  && developerHandles",
+    "old": "  typeof player?.handle === 'string' &&\n  !!player.handle &&\n  !staffSuspended(player) &&\n  developerHandles(env).has(player.handle.toLowerCase());",
+    "new": "  typeof player?.handle === 'string' && !!player.handle && developerHandles(env).has(player.handle.toLowerCase());",
     "why": "an Admin cut off is still a developer",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -343,8 +343,8 @@
   {
     "name": "STAFF-PANEL2-FIX-mod-while-cut",
     "file": "server-account/src/titles.js",
-    "old": "!!player.handle && !staffSuspended(player)\n  && (moderatorHandles",
-    "new": "!!player.handle\n  && (moderatorHandles",
+    "old": "  !staffSuspended(player) &&\n  (moderatorHandles(env).has(player.handle.toLowerCase()) || player.staff_mod === 1);",
+    "new": "  (moderatorHandles(env).has(player.handle.toLowerCase()) || player.staff_mod === 1);",
     "why": "a Moderator cut off still moderates",
     "tests": [
       "test/server/staffpanel2fix.test.js"
@@ -353,8 +353,8 @@
   {
     "name": "STAFF-PANEL2-FIX-tier-while-cut",
     "file": "server-account/src/titles.js",
-    "old": "  && !(staffSuspended(player) && STAFF_GLYPHS.includes(TIER_GLYPH[/** @type {keyof typeof TIER_GLYPH} */ (title)]))\n",
-    "new": "",
+    "old": "  !(staffSuspended(player) && STAFF_GLYPHS.includes(TIER_GLYPH[/** @type {keyof typeof TIER_GLYPH} */ (title)])) &&\n  (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()) ||",
+    "new": "  (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()) ||",
     "why": "the title that moderates held while cut off",
     "tests": [
       "test/server/staffpanel2fix.test.js"

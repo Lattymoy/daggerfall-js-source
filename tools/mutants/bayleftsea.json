@@ -191,8 +191,8 @@
   {
     "name": "BLS-audit-by-location-again",
     "file": "server-account/src/townEcon.js",
-    "old": "ORDER BY ${AUDIT_ORDER_SQL} LIMIT ?2 OFFSET ?3`)",
-    "new": "ORDER BY location LIMIT ?2 OFFSET ?3`)",
+    "old": "      `SELECT map, px, py, location, at FROM town_econ_towns WHERE region = ?1 ORDER BY ${AUDIT_ORDER_SQL} LIMIT ?2 OFFSET ?3`,",
+    "new": "      `SELECT map, px, py, location, at FROM town_econ_towns WHERE region = ?1 ORDER BY location LIMIT ?2 OFFSET ?3`,",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "BLS-audit-bay-unranked",
     "file": "server-account/src/townEcon.js",
-    "old": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN",
-    "new": "const AUDIT_ORDER_SQL = `CASE WHEN",
+    "old": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;",
+    "new": "const AUDIT_ORDER_SQL = `CASE WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "BLS-audit-capital-lane-unread",
     "file": "server-account/src/townEcon.js",
-    "old": "= ${TOWN_AUDIT_CAPITAL_LANE} THEN 1",
-    "new": "= -1 THEN 1",
+    "old": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;",
+    "new": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = -1 THEN 1 ELSE 2 END, ABS(location), map`;",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "BLS-audit-index-size-unread",
     "file": "server-account/src/townEcon.js",
-    "old": "ELSE 2 END, ABS(location), map`;",
-    "new": "ELSE 2 END, map`;",
+    "old": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, ABS(location), map`;",
+    "new": "const AUDIT_ORDER_SQL = `CASE WHEN location >= 0 THEN 0 WHEN ((map >> 20) & 4095) = ${TOWN_AUDIT_CAPITAL_LANE} THEN 1 ELSE 2 END, map`;",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "BLS-audit-page-unread",
     "file": "server-account/src/townEcon.js",
-    "old": "    .bind(region, TOWN_AUDIT_PAGE + 1, page * TOWN_AUDIT_PAGE).all();",
-    "new": "    .bind(region, TOWN_AUDIT_PAGE + 1, 0).all();",
+    "old": "    .bind(region, TOWN_AUDIT_PAGE + 1, page * TOWN_AUDIT_PAGE)",
+    "new": "    .bind(region, TOWN_AUDIT_PAGE + 1, 0)",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "BLS-audit-more-unsaid",
     "file": "server-account/src/townEcon.js",
-    "old": "  const more = rows.length > TOWN_AUDIT_PAGE, towns = rows.slice(0, TOWN_AUDIT_PAGE);",
-    "new": "  const more = false, towns = rows.slice(0, TOWN_AUDIT_PAGE);",
+    "old": "  const more = rows.length > TOWN_AUDIT_PAGE,",
+    "new": "  const more = false,",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "BLS-audit-page-unbounded",
     "file": "server-account/src/townEcon.js",
-    "old": "!Number.isSafeInteger(page) || page < 0 || page > 9999)",
-    "new": "!Number.isSafeInteger(page) || page < 0)",
+    "old": "  if (!seatRegionOk(region) || !Number.isSafeInteger(page) || page < 0 || page > 9999) return { error: 'bad-town' }; // WW7-5: any region's town, the provinces' too",
+    "new": "  if (!seatRegionOk(region) || !Number.isSafeInteger(page) || page < 0) return { error: 'bad-town' }; // WW7-5: any region's town, the provinces' too",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "BLS-audit-witnesses-region-first",
     "file": "server-account/src/townEcon.js",
-    "old": "    WHERE w.kind = ?1 AND w.key IN (SELECT '1:' || value FROM json_each(?2)) ORDER BY w.at LIMIT 4000`).bind(TOWN_WITNESS_KIND, JSON.stringify(towns.map((r) => Number(r.map)))).all();",
-    "new": "    JOIN town_econ_towns t ON w.key = '1:' || t.map WHERE w.kind = ?1 AND t.region = ?2 ORDER BY w.at LIMIT 4000`).bind(TOWN_WITNESS_KIND, region).all();",
+    "old": "    WHERE w.kind = ?1 AND w.key IN (SELECT '1:' || value FROM json_each(?2)) ORDER BY w.at LIMIT 4000`,\n    )\n    .bind(TOWN_WITNESS_KIND, JSON.stringify(towns.map((r) => Number(r.map))))",
+    "new": "    JOIN town_econ_towns t ON w.key = '1:' || t.map WHERE w.kind = ?1 AND t.region = ?2 ORDER BY w.at LIMIT 4000`,\n    )\n    .bind(TOWN_WITNESS_KIND, region)",
     "tests": [
       "test/server/bayleftsea_townaudit.test.js"
     ]

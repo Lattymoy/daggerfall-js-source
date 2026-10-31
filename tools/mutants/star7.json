@@ -20,8 +20,8 @@
   {
     "name": "STAR7-the-day-the-claims",
     "file": "server-account/src/stars.js",
-    "old": "const day = starDayOf(n, k);",
-    "new": "const day = Math.floor(nowS / 86400);",
+    "old": "  const day = starDayOf(n, k);",
+    "new": "  const day = Math.floor(nowS / 86400);",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "STAR7-the-account-unchecked",
     "file": "server-account/src/stars.js",
-    "old": "if (c.s !== player.id) return { error: 'not-yours' };\n  const [n, k] = c.sf;",
-    "new": "const [n, k] = c.sf;",
+    "old": "  if (c.s !== player.id) return { error: 'not-yours' };\n  const [n, k] = c.sf;",
+    "new": "  const [n, k] = c.sf;",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "STAR7-a-guest-counted",
     "file": "server-account/src/stars.js",
-    "old": "if (!player.handle) {   // a guest",
-    "new": "if (false) {   // a guest",
+    "old": "  if (!player.handle) {",
+    "new": "  if (false) {",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "STAR7-the-spoils-unkeyed",
     "file": "server-account/src/stars.js",
-    "old": "const spoils = thanks ? spoilsAnswer(res[8], cid) : false;",
-    "new": "const spoils = thanks;",
+    "old": "  const spoils = thanks ? spoilsAnswer(res[8], cid) : false;",
+    "new": "  const spoils = thanks;",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "STAR7-the-day-bound-dropped",
     "file": "server-account/src/stars.js",
-    "old": "WHERE (SELECT COUNT(*) FROM stars_held WHERE account = ?2 AND day = ?3) < ?8",
-    "new": "WHERE (SELECT COUNT(*) FROM stars_held WHERE account = ?2 AND day = ?3) < ?8 + 1",
+    "old": "       WHERE (SELECT COUNT(*) FROM stars_held WHERE account = ?2 AND day = ?3) < ?8",
+    "new": "       WHERE (SELECT COUNT(*) FROM stars_held WHERE account = ?2 AND day = ?3) < ?8 + 1",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ]
@@ -470,8 +470,8 @@
   {
     "name": "B3-the-fill-out-of-the-batch",
     "file": "server-account/src/stars.js",
-    "old": "    spoilsGrantStatement(db, player.id, 0, `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`, key, nonce),\n",
-    "new": "",
+    "old": "    spoilsGrantStatement(\n      db,\n      player.id,\n      0,\n      `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`,\n      key,\n      nonce,\n    ),\n  ]);",
+    "new": "  ]);",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ],
@@ -480,8 +480,8 @@
   {
     "name": "B3-the-fill-unguarded",
     "file": "server-account/src/stars.js",
-    "old": "`EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`, key, nonce)",
-    "new": "`EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6) OR 1`, key, nonce)",
+    "old": "      `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6)`,",
+    "new": "      `EXISTS (SELECT 1 FROM stars_held WHERE star = ?5 AND account = ?1 AND nonce = ?6) OR 1`,",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ],
@@ -490,8 +490,8 @@
   {
     "name": "B3-own-for-every-device",
     "file": "server-account/src/stars.js",
-    "old": "if (!thanks || had.cid !== cid) return",
-    "new": "if (!thanks) return",
+    "old": "    if (!thanks || had.cid !== cid) return { recorded: false, why: 'claimed', held, spoils };",
+    "new": "    if (!thanks) return { recorded: false, why: 'claimed', held, spoils };",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ],
@@ -500,8 +500,8 @@
   {
     "name": "B3-the-row-unstamped",
     "file": "server-account/src/stars.js",
-    "old": "nowS, STAR_CLAIMS_DAY_MAX, thanks ? cid : null),",
-    "new": "nowS, STAR_CLAIMS_DAY_MAX, null),",
+    "old": "      .bind(key, player.id, day, character, xp, nonce, nowS, STAR_CLAIMS_DAY_MAX, thanks ? cid : null),",
+    "new": "      .bind(key, player.id, day, character, xp, nonce, nowS, STAR_CLAIMS_DAY_MAX, null),",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ],
@@ -510,8 +510,8 @@
   {
     "name": "B3-the-snapshot-unsaid",
     "file": "server-account/src/stars.js",
-    "old": "level: renownForXp(now.xp), credited: paid,",
-    "new": "level: renownForXp(now.xp), credited: 0,",
+    "old": "            credited: paid,",
+    "new": "            credited: 0,",
     "tests": [
       "test/net/starfall/star7_service.test.js"
     ],

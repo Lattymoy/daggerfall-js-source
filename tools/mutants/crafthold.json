@@ -23,8 +23,8 @@
     "name": "CRAFT-HOLD-fill-unheld",
     "file": "server-account/src/writs.js",
     "note": "INT19 (PIN MOVED): re-aimed by content - the craft's hold retired for the acting record's own; the fill's own record's hold (prepareRealmRecord's outbound one stands behind it, so its pin asks the word before the record moves)",
-    "old": "  const held = await realmHoldOf(db, me, character);\n  if (held) return held;\n  if (!commissionFilledBy(",
-    "new": "  if (!commissionFilledBy(",
+    "old": "  const held = await realmHoldOf(db, me, character);\n  if (held) return held;\n  if (",
+    "new": "  if (",
     "tests": [
       "test/server/crafthold.test.js"
     ],
@@ -107,8 +107,8 @@
   {
     "name": "AUDIT-CRAFT-HOLD-deposit-unheld",
     "file": "server-account/src/writs.js",
-    "old": "  if (kind === 'deposit') { const held = await realmHoldOf(db, me, character); if (held) return held; }\n",
-    "new": "",
+    "old": "  if (kind === 'deposit') {\n    const held = await realmHoldOf(db, me, character);\n    if (held) return held;\n  }\n  if (await acting(ctx, player)) return { error: 'writ-rate' };",
+    "new": "  if (await acting(ctx, player)) return { error: 'writ-rate' };",
     "tests": [
       "test/server/crafthold.test.js"
     ]

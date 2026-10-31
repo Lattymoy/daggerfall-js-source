@@ -363,8 +363,8 @@
   {
     "name": "EGECO2-spire-titles-a-guests",
     "file": "server-account/src/titles.js",
-    "old": "  if (typeof player?.handle === 'string' && player.handle) for (const t of EG_HONOUR_TITLES)",
-    "new": "  for (const t of EG_HONOUR_TITLES)",
+    "old": "  if (typeof player?.handle === 'string' && player.handle)\n    for (const t of EG_HONOUR_TITLES) if (Number(player?.eg_honours) & EG_HONOUR[t]) held.push(t);",
+    "new": "  for (const t of EG_HONOUR_TITLES) if (Number(player?.eg_honours) & EG_HONOUR[t]) held.push(t);",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]
@@ -372,8 +372,8 @@
   {
     "name": "EGECO2-spire-aura-without-its-bit",
     "file": "server-account/src/titles.js",
-    "old": "for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);",
-    "new": "for (const [, a] of Object.entries(EG_HONOUR_AURA)) if (!held.includes(a)) held.push(a);",
+    "old": "    for (const [t, a] of Object.entries(EG_HONOUR_AURA))\n      if (Number(player?.eg_honours) & EG_HONOUR[t] && !held.includes(a)) held.push(a);",
+    "new": "    for (const [, a] of Object.entries(EG_HONOUR_AURA)) if (!held.includes(a)) held.push(a);",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]
@@ -381,8 +381,8 @@
   {
     "name": "EGECO2-spire-first-case-kept",
     "file": "server-account/src/titles.js",
-    "old": "  && egFirstHandles(env).has(player.handle.toLowerCase());",
-    "new": "  && egFirstHandles(env).has(player.handle);",
+    "old": "  typeof player?.handle === 'string' && !!player.handle && egFirstHandles(env).has(player.handle.toLowerCase());",
+    "new": "  typeof player?.handle === 'string' && !!player.handle && egFirstHandles(env).has(player.handle);",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]
@@ -390,8 +390,8 @@
   {
     "name": "EGECO2-spire-first-aura-without-the-list",
     "file": "server-account/src/titles.js",
-    "old": "if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
-    "new": "if (!held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
+    "old": "  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
+    "new": "  if (!held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
     "tests": [
       "test/net/eliteGates/egeco_honours.test.js"
     ]

@@ -33,8 +33,8 @@
   {
     "name": "FOE-KEEPS-service-foe-taken",
     "file": "server-account/src/wild.js",
-    "old": "  if (body?.receipt === undefined) return { error: 'foe' };\n",
-    "new": "",
+    "old": "  if (body?.receipt === undefined) return { error: 'foe' };\n  // REPEAT-SHIELD: the same hand inside WILD_REPEAT_S takes nothing - the fall written, the record untouched. AUDIT",
+    "new": "  // REPEAT-SHIELD: the same hand inside WILD_REPEAT_S takes nothing - the fall written, the record untouched. AUDIT",
     "tests": [
       "test/net/int9_wild_ref.test.js",
       "test/systems/wild/foekeeps.test.js"
@@ -43,8 +43,8 @@
   {
     "name": "FOE-KEEPS-service-refused-before-the-fall-taken",
     "file": "server-account/src/wild.js",
-    "old": "  r ??= await foeFallId(ctx.subtle, charId, body.n);\n",
-    "new": "  if (body?.receipt === undefined) return { error: 'foe' };\n  r ??= await foeFallId(ctx.subtle, charId, body.n);\n",
+    "old": "  r ??= await foeFallId(ctx.subtle, charId, body.n);",
+    "new": "  if (body?.receipt === undefined) return { error: 'foe' };\n  r ??= await foeFallId(ctx.subtle, charId, body.n);",
     "tests": [
       "test/net/int9_wild_ref.test.js"
     ]

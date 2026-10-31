@@ -32,8 +32,8 @@
   {
     "name": "DISPLAYREPLICA-request-session",
     "file": "server-account/src/townSeats.js",
-    "old": "const opener = typeof db?.withSession === 'function' ? db : root;",
-    "new": "const opener = db;",
+    "old": "  const opener = typeof db?.withSession === 'function' ? db : root;",
+    "new": "  const opener = db;",
     "tests": [
       "test/server/display_replica.test.js"
     ],
