@@ -29,8 +29,8 @@
   {
     "name": "WAGONS3-the-hips-height-unread",
     "file": "src/world/wagonModels.js",
-    "old": "feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT - LIFT, b.z])",
-    "new": "feet: Object.freeze([0, b.y - LIFT, b.z])",
+    "old": "  return Object.freeze({\n    feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT - LIFT, b.z]),\n    yaw: 0,\n    top: DRIVER_HANDS_TOP,\n  });",
+    "new": "  return Object.freeze({ feet: Object.freeze([0, b.y - LIFT, b.z]), yaw: 0, top: DRIVER_HANDS_TOP });",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WAGONS3-the-bench-height-unread",
     "file": "src/world/wagonModels.js",
-    "old": "bench: Object.freeze({ y: 1.54, z: 5.28 })",
-    "new": "bench: Object.freeze({ y: 1.0, z: 5.28 })",
+    "old": "    bench: Object.freeze({ y: 1.54, z: 5.28 }),",
+    "new": "    bench: Object.freeze({ y: 1.0, z: 5.28 }),",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WAGONS3-the-lift-dropped",
     "file": "src/world/wagonModels.js",
-    "old": "feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT - LIFT, b.z])",
-    "new": "feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT, b.z])",
+    "old": "  return Object.freeze({\n    feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT - LIFT, b.z]),\n    yaw: 0,\n    top: DRIVER_HANDS_TOP,\n  });",
+    "new": "  return Object.freeze({ feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT, b.z]), yaw: 0, top: DRIVER_HANDS_TOP });",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "WAGONS3-the-pair-on-the-pole",
     "file": "src/world/wagonModels.js",
-    "old": "(WAGON_KINDS[kind]?.horses === 2 ? [-TEAM.side, TEAM.side] : [0])",
-    "new": "(WAGON_KINDS[kind]?.horses === 2 ? [0, 0] : [0])",
+    "old": "export const teamSidesOf = (kind) => (WAGON_KINDS[kind]?.horses === 2 ? [-TEAM.side, TEAM.side] : [0]);",
+    "new": "export const teamSidesOf = (kind) => (WAGON_KINDS[kind]?.horses === 2 ? [0, 0] : [0]);",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WAGONS3-a-horses-traces-on-the-others-tree",
     "file": "src/world/wagonModels.js",
-    "old": "out.push(Object.freeze([i, s, Object.freeze([hx + s * t.half,",
-    "new": "out.push(Object.freeze([i, s, Object.freeze([-hx + s * t.half,",
+    "old": "      out.push(Object.freeze([i, s, Object.freeze([hx + s * t.half, t.y - LIFT, hitch - t.back - 0.04]), true]));",
+    "new": "      out.push(Object.freeze([i, s, Object.freeze([-hx + s * t.half, t.y - LIFT, hitch - t.back - 0.04]), true]));",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "WAGONS3-the-carts-roots-off-its-body",
     "file": "src/world/wagonModels.js",
-    "old": "Object.freeze(fromLevel(kind, [s * x, y - LIFT, z]))",
-    "new": "Object.freeze([s * x, y - LIFT, z])",
+    "old": "    for (const s of [-1, 1])\n      out.push(Object.freeze([0, s, Object.freeze(fromLevel(kind, [s * x, y - LIFT, z])), false]));",
+    "new": "    for (const s of [-1, 1]) out.push(Object.freeze([0, s, Object.freeze([s * x, y - LIFT, z]), false]));",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "WAGONS3-the-pole-short-of-the-pair",
     "file": "src/world/wagonModels.js",
-    "old": "const tip = [0, TEAM.yokeY, hitch + TEAM.poleTip]",
-    "new": "const tip = [0, TEAM.yokeY, hitch - 1.25]",
+    "old": "  const tip = [0, TEAM.yokeY, hitch + TEAM.poleTip],",
+    "new": "  const tip = [0, TEAM.yokeY, hitch - 1.25],",
     "tests": [
       "test/player/wagons3.test.js",
       "test/systems/horse/wagons2_wheels.test.js"
@@ -93,8 +93,8 @@
   {
     "name": "WAGONS3-the-pole-in-the-bounds",
     "file": "src/world/wagonModels.js",
-    "old": "  if (geo.bogie?.reach) take([...geo.bogie.reach.min, ...geo.bogie.reach.max], [0, 0, 0]);\n",
-    "new": "  if (geo.bogie) take(geo.bogie.geometry.positions, [0, 0, 0]);\n",
+    "old": "  if (geo.bogie?.reach) take([...geo.bogie.reach.min, ...geo.bogie.reach.max], [0, 0, 0]);",
+    "new": "  if (geo.bogie) take(geo.bogie.geometry.positions, [0, 0, 0]);",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]
@@ -102,8 +102,8 @@
   {
     "name": "WAGONS3-the-travellers-grow-kept",
     "file": "src/world/wagonModels.js",
-    "old": "(g > 1 ? Math.max(1, g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch))) : 1)",
-    "new": "(g > 1 ? Math.max(1, g) : 1)",
+    "old": "export const rigGrowOf = (g, kind, hitch = null) =>\n  g > 1 ? Math.max(1, g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch))) : 1;",
+    "new": "export const rigGrowOf = (g, kind, hitch = null) => (g > 1 ? Math.max(1, g) : 1);",
     "tests": [
       "test/player/wagons3.test.js",
       "test/systems/horse/wagonhitch.test.js"
@@ -112,8 +112,8 @@
   {
     "name": "WAGONS3-the-floor-at-one-dropped",
     "file": "src/world/wagonModels.js",
-    "old": "(g > 1 ? Math.max(1, g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch))) : 1)",
-    "new": "(g > 1 ? g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch)) : 1)",
+    "old": "  g > 1 ? Math.max(1, g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch))) : 1;",
+    "new": "  g > 1 ? g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch)) : 1;",
     "tests": [
       "test/player/wagons3.test.js"
     ]
@@ -121,8 +121,8 @@
   {
     "name": "WAGONS3-the-classic-hitch-unread",
     "file": "src/world/wagonModels.js",
-    "old": "return (Number.isFinite(hitch) && hitch > 0 ? hitch : WAGON_KINDS[k].hitch) + 1.3",
-    "new": "return WAGON_KINDS[k].hitch + 1.3",
+    "old": "  return (Number.isFinite(hitch) && hitch > 0 ? hitch : WAGON_KINDS[k].hitch) + 1.3 + (k === 'cart' ? 0.57 : 0.8);",
+    "new": "  return WAGON_KINDS[k].hitch + 1.3 + (k === 'cart' ? 0.57 : 0.8);",
     "tests": [
       "test/player/wagons3.test.js",
       "test/systems/horse/wagonhitch.test.js"

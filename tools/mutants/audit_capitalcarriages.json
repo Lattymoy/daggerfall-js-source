@@ -126,8 +126,8 @@
   {
     "name": "AUDIT-CC-L2-the-carrier-unread",
     "file": "src/world/townGates.js",
-    "old": "const ci = wall && carrier ? blocksFile.getBlockIndex(carrier) : -1",
-    "new": "const ci = -1",
+    "old": "  const ci = wall && carrier ? blocksFile.getBlockIndex(carrier) : -1,",
+    "new": "  const ci = -1,",
     "tests": [
       "test/world/capitalcarriages.test.js"
     ],

@@ -991,8 +991,8 @@
   {
     "name": "NAVP-idle-system-asked",
     "file": "src/world/unityParticles.js",
-    "old": "  if (!ps.playing && !ps.particles.length) return;\n",
-    "new": "",
+    "old": "  if (!ps.playing && !ps.particles.length) return;\n  if (!ps.node.activeInHierarchy || dt <= 0) return;",
+    "new": "  if (!ps.node.activeInHierarchy || dt <= 0) return;",
     "tests": [
       "test/systems/naval/navaudit_presentation.test.js"
     ]

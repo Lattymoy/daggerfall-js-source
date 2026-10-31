@@ -133,8 +133,8 @@
   {
     "name": "FB1028-CROP-the-half-range-unread",
     "file": "src/world/townShape.js",
-    "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
-    "new": "        const hx = f.noise * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
+    "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS,",
+    "new": "        const hx = f.noise * UNITS,",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js"
     ]
@@ -142,8 +142,8 @@
   {
     "name": "FB1028-CROP-the-rows-unflipped",
     "file": "src/world/townShape.js",
-    "old": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = r.zPos + 4096;",
-    "new": "        const hx = (Math.trunc(f.rangeX / 2) + f.noise) * UNITS, hz = (Math.trunc(f.rangeZ / 2) + f.noise) * UNITS, z = -r.zPos;",
+    "old": "          z = r.zPos + 4096;",
+    "new": "          z = -r.zPos;",
     "tests": [
       "test/world/terrain/fb1028_townground.test.js"
     ]

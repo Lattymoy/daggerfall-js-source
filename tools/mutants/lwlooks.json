@@ -281,8 +281,8 @@
   {
     "name": "LW-LOOKS-sprites-talk",
     "file": "src/world/travellerSprites.js",
-    "old": "      const person = talk ? { nameNPC: res.name,",
-    "new": "      const person = true ? { nameNPC: res.name,",
+    "old": "      const person = talk",
+    "new": "      const person = true",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -290,8 +290,8 @@
   {
     "name": "LW-LOOKS-sprites-still-talk",
     "file": "src/world/travellerSprites.js",
-    "old": "      const person = talk ? { nameNPC: res.name,",
-    "new": "      const person = false ? { nameNPC: res.name,",
+    "old": "      const person = talk",
+    "new": "      const person = false",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "LW-LOOKS-sprites-clock",
     "file": "src/world/travellerSprites.js",
-    "old": "anim: new FlatAnim(flat.archive, Math.max(1, tex.getFrameCount?.(flat.record) ?? 1))",
-    "new": "anim: null",
+    "old": "        anim: new FlatAnim(flat.archive, Math.max(1, tex.getFrameCount?.(flat.record) ?? 1)),",
+    "new": "        anim: null,",
     "tests": [
       "test/systems/livingWorld/lwlooks_town.test.js"
     ]

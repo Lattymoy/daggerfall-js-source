@@ -500,7 +500,7 @@
   {
     "name": "LW4-strike-dropped",
     "file": "src/world/travellerSprites.js",
-    "old": "        out = b.unit.update(dt, { moving: !!m.moving, striking: !!m.striking }, m.yaw, f, eye && eye.length === 3 ? eye : f);",
+    "old": "        out = b.unit.update(\n          dt,\n          { moving: !!m.moving, striking: !!m.striking },\n          m.yaw,\n          f,\n          eye && eye.length === 3 ? eye : f,\n        );",
     "new": "        out = b.unit.update(dt, { moving: !!m.moving }, m.yaw, f, eye && eye.length === 3 ? eye : f);",
     "tests": [
       "test/systems/livingWorld/lw4_trouble.test.js"

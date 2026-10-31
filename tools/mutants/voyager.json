@@ -435,8 +435,8 @@
   {
     "name": "VOYAGER-CYRODIIL-a-capital-walked",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": " && !held.has(`${x},${y}`);",
-    "new": ";",
+    "old": "        const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE && !held.has(`${x},${y}`);",
+    "new": "        const walkable = (x, y) => !inBay(x, y) && heightAt(x, y) > WATER_BYTE;",
     "tests": [
       "test/world/road/voyager_cyrodiil.test.js"
     ]

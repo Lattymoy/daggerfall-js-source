@@ -155,8 +155,8 @@
   {
     "name": "MWNPC10c-sprites-no-offer",
     "file": "src/world/travellerSprites.js",
-    "old": "        bodiesLane.offer(rosterActor(b, { id: b.id,",
-    "new": "        void (rosterActor(b, { id: b.id,",
+    "old": "        bodiesLane.offer(\n          rosterActor(b, {\n            id: b.id,\n            look: b.look,\n            feet: b.batch.origin,\n            yaw: b.yaw,\n            moving: b.moving,\n            swingKey: b.swings || null,\n            dead: b.flat && !b.talk ? b.roll : 0,\n            drawn: !!b.unit,\n          }),\n          b.batch,\n        );",
+    "new": "        void (rosterActor(b, {\n          id: b.id,\n          look: b.look,\n          feet: b.batch.origin,\n          yaw: b.yaw,\n          moving: b.moving,\n          swingKey: b.swings || null,\n          dead: b.flat && !b.talk ? b.roll : 0,\n          drawn: !!b.unit,\n        }),\n        b.batch);",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -164,8 +164,8 @@
   {
     "name": "MWNPC10c-sprites-overworld",
     "file": "src/world/travellerSprites.js",
-    "old": "    if (_ground) {\n      for (const b of shown) {",
-    "new": "    if (true) {\n      for (const b of shown) {",
+    "old": "    if (_ground) {",
+    "new": "    if (true) {",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "MWNPC10c-sprites-unmatched-offered",
     "file": "src/world/travellerSprites.js",
-    "old": "        if (!b.look) continue;\n        bodiesLane.offer(",
-    "new": "        if (b.look === 0) continue;\n        bodiesLane.offer(",
+    "old": "        if (!b.look) continue;",
+    "new": "        if (b.look === 0) continue;",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "MWNPC10c-sprites-blow-each-frame",
     "file": "src/world/travellerSprites.js",
-    "old": "      if (m.striking && !b.striking) b.swings++;",
-    "new": "      if (m.striking) b.swings++;",
+    "old": "      if (m.striking && !b.striking) b.swings++; // MWNPC10c: each strike begun, one blow",
+    "new": "      if (m.striking) b.swings++; // MWNPC10c: each strike begun, one blow",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "MWNPC10c-sprites-no-blows",
     "file": "src/world/travellerSprites.js",
-    "old": "swingKey: b.swings || null,",
-    "new": "swingKey: null,",
+    "old": "            swingKey: b.swings || null,",
+    "new": "            swingKey: null,",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "MWNPC10c-sprites-undying",
     "file": "src/world/travellerSprites.js",
-    "old": "dead: b.flat && !b.talk ? b.roll : 0,",
-    "new": "dead: 0,",
+    "old": "            dead: b.flat && !b.talk ? b.roll : 0,",
+    "new": "            dead: 0,",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -209,8 +209,8 @@
   {
     "name": "MWNPC10c-sprites-court-dead",
     "file": "src/world/travellerSprites.js",
-    "old": "dead: b.flat && !b.talk ? b.roll : 0,",
-    "new": "dead: b.flat ? b.roll : 0,",
+    "old": "            dead: b.flat && !b.talk ? b.roll : 0,",
+    "new": "            dead: b.flat ? b.roll : 0,",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "MWNPC10c-sprites-armed-sheathed",
     "file": "src/world/travellerSprites.js",
-    "old": "drawn: !!b.unit }), b.batch);",
-    "new": "drawn: false }), b.batch);",
+    "old": "            drawn: !!b.unit,",
+    "new": "            drawn: false,",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -227,8 +227,8 @@
   {
     "name": "MWNPC10c-sprites-still-plain",
     "file": "src/world/travellerSprites.js",
-    "old": "{ still: !!b.flat && b.talk }",
-    "new": "{ still: false }",
+    "old": "        if (b.look === undefined) b.look = residentLook(b, b.res, { still: !!b.flat && b.talk });",
+    "new": "        if (b.look === undefined) b.look = residentLook(b, b.res, { still: false });",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -236,8 +236,8 @@
   {
     "name": "MWNPC10c-sprites-standing-still",
     "file": "src/world/travellerSprites.js",
-    "old": "yaw: b.yaw, moving: b.moving,",
-    "new": "yaw: b.yaw, moving: false,",
+    "old": "            moving: b.moving,",
+    "new": "            moving: false,",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "MWNPC10c-sprites-one-id",
     "file": "src/world/travellerSprites.js",
-    "old": "id: `${laneName}:${++_ids}`,",
-    "new": "id: `${laneName}:${m.key}`,",
+    "old": "          id: `${laneName}:${++_ids}`,",
+    "new": "          id: `${laneName}:${m.key}`,",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "MWNPC10c-sprites-lane-kept",
     "file": "src/world/travellerSprites.js",
-    "old": "shown.length = 0; bodiesLane.destroy(); },",
-    "new": "shown.length = 0; },",
+    "old": "      bodiesLane.destroy();\n    }, // MWNPC10c: and their bodies",
+    "new": "    }, // MWNPC10c: and their bodies",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "MWNPC10c-sprites-origin-left",
     "file": "src/world/travellerSprites.js",
-    "old": "    offsetBodies(o) { bodiesLane.offsetAll(o); },",
-    "new": "    offsetBodies(o) { void o; },",
+    "old": "      bodiesLane.offsetAll(o);",
+    "new": "      void o;",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]

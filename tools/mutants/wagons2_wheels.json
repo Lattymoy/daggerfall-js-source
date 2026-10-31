@@ -2,8 +2,8 @@
   {
     "name": "WAGONS2-the-chord-ignored",
     "file": "src/world/wagonModels.js",
-    "old": "const c = lo[1] > pivot[1] ? Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2) : R;",
-    "new": "const c = R;",
+    "old": "      const c = lo[1] > pivot[1] ? Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2) : R;",
+    "new": "      const c = R;",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "WAGONS2-the-kingpin-offset-ignored",
     "file": "src/world/wagonModels.js",
-    "old": "for (const [reach, side] of [[c + dz, 1], [c - dz, -1]]) {",
-    "new": "for (const [reach, side] of [[c, 1], [c, -1]]) {",
+    "old": "        [c + dz, 1],\n        [c - dz, -1],",
+    "new": "        [c, 1],\n        [c, -1],",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "WAGONS2-the-wall-s-run-unread",
     "file": "src/world/wagonModels.js",
-    "old": "if (z >= lo[2] && z <= hi[2]) lock = Math.min(lock, (a * 180) / Math.PI);",
-    "new": "lock = Math.min(lock, (a * 180) / Math.PI + 0 * z);",
+    "old": "        if (z >= lo[2] && z <= hi[2]) lock = Math.min(lock, (a * 180) / Math.PI);",
+    "new": "        lock = Math.min(lock, (a * 180) / Math.PI + 0 * z);",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "WAGONS2-the-whole-radius-never-met",
     "file": "src/world/wagonModels.js",
-    "old": "const c = lo[1] > pivot[1] ? Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2) : R;",
-    "new": "const c = Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2);",
+    "old": "      const c = lo[1] > pivot[1] ? Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2) : R;",
+    "new": "      const c = Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2);",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "WAGONS2-a-wheel-s-radius-dropped",
     "file": "src/world/wagonModels.js",
-    "old": "pivot: w.pivot, radius: w.radius, front:",
-    "new": "pivot: w.pivot, front:",
+    "old": "    radius: w.radius,\n    front: !!geo.bogie && w.role.startsWith('wheelFront'),",
+    "new": "    front: !!geo.bogie && w.role.startsWith('wheelFront'),",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "WAGONS2-every-wheel-a-front-one",
     "file": "src/world/wagonModels.js",
-    "old": "front: !!geo.bogie && w.role.startsWith('wheelFront') }));",
-    "new": "front: !!geo.bogie }));",
+    "old": "    front: !!geo.bogie && w.role.startsWith('wheelFront'),",
+    "new": "    front: !!geo.bogie,",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "WAGONS2-the-bogie-out-of-the-bounds",
     "file": "src/world/wagonModels.js",
-    "old": "  if (geo.bogie?.reach) take([...geo.bogie.reach.min, ...geo.bogie.reach.max], [0, 0, 0]);\n",
-    "new": "",
+    "old": "  if (geo.bogie?.reach) take([...geo.bogie.reach.min, ...geo.bogie.reach.max], [0, 0, 0]);\n  for (const w of geo.wheels) take(w.geometry.positions, w.pivot);",
+    "new": "  for (const w of geo.wheels) take(w.geometry.positions, w.pivot);",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ],
@@ -76,8 +76,8 @@
   {
     "name": "WAGONS2-the-bogie-out-of-the-icon",
     "file": "src/world/wagonModels.js",
-    "old": "const parts = [geo.statics, ...(geo.bogie ? [geo.bogie.geometry] : []), ...geo.wheels",
-    "new": "const parts = [geo.statics, ...geo.wheels",
+    "old": "    ...(geo.bogie ? [geo.bogie.geometry] : []),\n    ...geo.wheels.map((w) => ({ ...w.geometry, positions: w.geometry.positions.map((v, i) => v + w.pivot[i % 3]) })),",
+    "new": "    ...geo.wheels.map((w) => ({ ...w.geometry, positions: w.geometry.positions.map((v, i) => v + w.pivot[i % 3]) })),",
     "tests": [
       "test/systems/horse/wagons2_wheels.test.js"
     ]

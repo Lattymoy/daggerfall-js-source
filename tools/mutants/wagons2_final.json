@@ -353,8 +353,8 @@
   {
     "name": "WAGONS2-FINAL-the-cloud-unread",
     "file": "src/world/worldClock.js",
-    "old": "sun: sunScale(minute) * w * c };",
-    "new": "sun: sunScale(minute) * w };",
+    "old": "  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };",
+    "new": "  return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w };",
     "tests": [
       "test/systems/wagons2_final.test.js"
     ]

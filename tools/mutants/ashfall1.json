@@ -2,8 +2,8 @@
   {
     "name": "ASH-the-haze",
     "file": "src/world/weather.js",
-    "old": "  ashfall: { mode: 'exp', density: 0.006,",
-    "new": "  ashfall: { mode: 'exp', density: 0.003,",
+    "old": "  ashfall: { mode: 'exp', density: 0.006, start: 0, end: 0, excludeSky: true }, // ASHFALL1: the port's own row - a haze of ash, thicker than the snow's (half a kilometre to the fog's colour), the pall over it seen",
+    "new": "  ashfall: { mode: 'exp', density: 0.003, start: 0, end: 0, excludeSky: true }, // ASHFALL1: the port's own row - a haze of ash, thicker than the snow's (half a kilometre to the fog's colour), the pall over it seen",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "ASH-the-sun",
     "file": "src/world/weather.js",
-    "old": "  else if (weather === 'ashfall') scale = 0.4;",
-    "new": "  else if (weather === 'ashfall') scale = 1;",
+    "old": "  else if (weather === 'ashfall') scale = 0.4; // ASHFALL1: the port's own - the pall a shade darker than a rain's deck",
+    "new": "  else if (weather === 'ashfall') scale = 1; // ASHFALL1: the port's own - the pall a shade darker than a rain's deck",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ASH-not-overcast",
     "file": "src/world/weather.js",
-    "old": " || weather === 'sandstorm' || weather === 'ashfall',",
-    "new": " || weather === 'sandstorm',",
+    "old": "      weather === 'sandstorm' ||\n      weather === 'ashfall',",
+    "new": "      weather === 'sandstorm',",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ASH-no-fall",
     "file": "src/world/weather.js",
-    "old": "  if (weather === 'ashfall') return 'ash';   // ASHFALL1",
-    "new": "  if (weather === 'ashfall') return null;   // ASHFALL1",
+    "old": "  if (weather === 'ashfall') return 'ash'; // ASHFALL1: the ash and its embers (render/dryFall.js), not the rain program",
+    "new": "  if (weather === 'ashfall') return null; // ASHFALL1: the ash and its embers (render/dryFall.js), not the rain program",
     "tests": [
       "test/systems/weather/ashfall1.test.js"
     ]

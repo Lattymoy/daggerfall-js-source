@@ -38,8 +38,8 @@
   {
     "name": "WAGONS2-the-glass-left-opaque",
     "file": "src/world/wagonArt.js",
-    "old": "const glass = (img, x, y, rgb) => { put(img, x, y, rgb); img.data[(y * img.width + x) * 4 + 3] = 0; };",
-    "new": "const glass = (img, x, y, rgb) => { put(img, x, y, rgb); };",
+    "old": "  img.data[(y * img.width + x) * 4 + 3] = 0;\n};",
+    "new": "};",
     "tests": [
       "test/systems/wagon/wagons2.test.js"
     ]

@@ -277,8 +277,8 @@
   {
     "name": "RW-BAKE-the-span's-class-the-bound's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "c = (rumareSlice(px, py) ? this._cityBits(px, py, 'cls') : null) ?? classifyPixel(this.woods, px, py);",
-    "new": "c = classifyPixel(this.woods, px, py);",
+    "old": "      c = (rumareSlice(px, py) ? this._cityBits(px, py, 'cls') : null) ?? classifyPixel(this.woods, px, py);",
+    "new": "      c = classifyPixel(this.woods, px, py);",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -286,8 +286,8 @@
   {
     "name": "RW-BAKE-the-fine-water-the-plain-sampler's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "fineAt: (px, py) => (rumareSlice(px, py) ? cityBits(px, py, 'fine') : fineMaskBits(pixelWaterSampler(woods, px, py, null))) });",
-    "new": "fineAt: (px, py) => fineMaskBits(pixelWaterSampler(woods, px, py, null)) });",
+    "old": "    super({\n      woods,\n      global: null,\n      frame,\n      fineAt: (px, py) =>\n        rumareSlice(px, py) ? cityBits(px, py, 'fine') : fineMaskBits(pixelWaterSampler(woods, px, py, null)),\n    }); // RUMARE-WATER: the city's fine water its ground's",
+    "new": "    super({ woods, global: null, frame, fineAt: (px, py) => fineMaskBits(pixelWaterSampler(woods, px, py, null)) }); // RUMARE-WATER: the city's fine water its ground's",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -295,8 +295,8 @@
   {
     "name": "RW-BAKE-the-coarse-water-the-plain-sampler's",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "(x, y) => (rumareSlice(x0 + x, y0 + y) ? this._cityBits(x0 + x, y0 + y, 'coarse') : coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null))), seed);",
-    "new": "(x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)), seed);",
+    "old": "      (x, y) =>\n        rumareSlice(x0 + x, y0 + y)\n          ? this._cityBits(x0 + x, y0 + y, 'coarse')\n          : coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)),",
+    "new": "      (x, y) => coarseCandidateBits(pixelWaterSampler(this.woods, x0 + x, y0 + y, null)),",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -304,8 +304,8 @@
   {
     "name": "RW-BAKE-the-city's-sea-unseeded",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA) || rumareSeaPixel(X, Y);",
-    "new": "      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA);",
+    "old": "      return (pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA) || rumareSeaPixel(X, Y); // RUMARE-WATER: the city's lake the sea's, through its mouth and the canal",
+    "new": "      return pictureOpenSeaAt(X, Y) && cls(X, Y) === PIXEL_SEA; // RUMARE-WATER: the city's lake the sea's, through its mouth and the canal",
     "tests": [
       "test/world/rumarewater.test.js"
     ]
@@ -387,7 +387,7 @@
   {
     "name": "RW-F1-the-span-all-mixed",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "  return wet === 0 ? { cls: PIXEL_LAND, grid: null } : wet === sea.length ? { cls: PIXEL_SEA, grid: null } : { cls: PIXEL_MIXED, grid: sea };",
+    "old": "  return wet === 0\n    ? { cls: PIXEL_LAND, grid: null }\n    : wet === sea.length\n      ? { cls: PIXEL_SEA, grid: null }\n      : { cls: PIXEL_MIXED, grid: sea };",
     "new": "  return { cls: PIXEL_MIXED, grid: sea };",
     "tests": [
       "test/world/rumarewater.test.js"
@@ -405,8 +405,8 @@
   {
     "name": "RW-F1-the-all-land-test-unread",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "  if (!rimOf(rect) && rumareSliceAllLand(px, py)) return { cls: PIXEL_LAND, grid: null };",
-    "new": "  if (false) return { cls: PIXEL_LAND, grid: null };",
+    "old": "  if (!rimOf(rect) && rumareSliceAllLand(px, py)) return { cls: PIXEL_LAND, grid: null }; // the isle's streets and the far shore: no vertex to ask",
+    "new": "  if (false) return { cls: PIXEL_LAND, grid: null }; // the isle's streets and the far shore: no vertex to ask",
     "tests": [
       "test/world/rumarewater.test.js"
     ],
@@ -436,8 +436,8 @@
   {
     "name": "RW-F1-the-bits-made-again",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "      if (!m[kind]) {\n        const sampler = rumareWaterSampler(",
-    "new": "      if (true) {\n        const sampler = rumareWaterSampler(",
+    "old": "      if (!m[kind]) {",
+    "new": "      if (true) {",
     "tests": [
       "test/world/rumarewater.test.js"
     ]

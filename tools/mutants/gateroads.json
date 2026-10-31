@@ -173,8 +173,8 @@
   {
     "name": "GATE-ROADS-the-turn-unread-gates",
     "file": "src/world/townGates.js",
-    "old": "const f = ((s.yRotation ?? 0) * Math.PI) / 1024,",
-    "new": "const f = 0,",
+    "old": "          const f = ((s.yRotation ?? 0) * Math.PI) / 1024,",
+    "new": "          const f = 0,",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -182,8 +182,8 @@
   {
     "name": "GATE-ROADS-the-origin-unshifted",
     "file": "src/world/townGates.js",
-    "old": "({ x: o.x + g.at[0] / TILE_M, y: o.y + g.at[1] / TILE_M,",
-    "new": "({ x: g.at[0] / TILE_M, y: g.at[1] / TILE_M,",
+    "old": "    x: o.x + g.at[0] / TILE_M,\n    y: o.y + g.at[1] / TILE_M,",
+    "new": "    x: g.at[0] / TILE_M,\n    y: g.at[1] / TILE_M,",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -191,8 +191,8 @@
   {
     "name": "GATE-ROADS-the-houses-unmarked",
     "file": "src/world/townGates.js",
-    "old": "    if (houses[i] || walls?.[i]) mark(",
-    "new": "    if (walls?.[i]) mark(",
+    "old": "      if (houses[i] || walls?.[i]) mark(o.x + Math.floor(cx / C), o.y + Math.floor(cy / C), GATE_BLOCK.hard);",
+    "new": "      if (walls?.[i]) mark(o.x + Math.floor(cx / C), o.y + Math.floor(cy / C), GATE_BLOCK.hard);",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -200,8 +200,8 @@
   {
     "name": "GATE-ROADS-the-flats-hard",
     "file": "src/world/townGates.js",
-    "old": "o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.soft);",
-    "new": "o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.hard);",
+    "old": "  for (const r of records) mark(o.x + Math.floor(r[0] / TILE_M), o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.soft);",
+    "new": "  for (const r of records) mark(o.x + Math.floor(r[0] / TILE_M), o.y + Math.floor(r[1] / TILE_M), GATE_BLOCK.hard);",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -218,8 +218,8 @@
   {
     "name": "GATE-ROADS-the-walls-cells-unmarked",
     "file": "src/world/townGates.js",
-    "old": "walls = wall ? townWallCells(wall, w, h) : null;",
-    "new": "walls = null;",
+    "old": "    walls = wall ? townWallCells(wall, w, h) : null;",
+    "new": "    walls = null;",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "GATE-ROADS-the-models-own-turn-unread",
     "file": "src/world/townGates.js",
-    "old": "F = f + ((o.yRotation ?? 0) * Math.PI) / 1024;",
-    "new": "F = f;",
+    "old": "            F = f + ((o.yRotation ?? 0) * Math.PI) / 1024;",
+    "new": "            F = f;",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -326,8 +326,8 @@
   {
     "name": "GATE-ROADS-the-kept-rings-opening-unread",
     "file": "src/world/townGates.js",
-    "old": "        out.push(gateOpening({ at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-Math.sin(F), Math.cos(F)] }));",
-    "new": "        out.push({ at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-Math.sin(F), Math.cos(F)] });",
+    "old": "          out.push(\n            gateOpening({ at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-Math.sin(F), Math.cos(F)] }),\n          );",
+    "new": "          out.push({ at: [sx + lx * cos - lz * sin, sz + lx * sin + lz * cos], out: [-Math.sin(F), Math.cos(F)] });",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -335,8 +335,8 @@
   {
     "name": "GATE-ROADS-the-walls-openings-unread",
     "file": "src/world/townGates.js",
-    "old": "wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening) : blockGates(w, h, rmbAt);",
-    "new": "wall.pieces.filter((p) => p.model === WALL_MODELS.gate) : blockGates(w, h, rmbAt);",
+    "old": "  const at = wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate).map(gateOpening) : blockGates(w, h, rmbAt);",
+    "new": "  const at = wall ? wall.pieces.filter((p) => p.model === WALL_MODELS.gate) : blockGates(w, h, rmbAt);",
     "tests": [
       "test/world/gateroads.test.js"
     ]
@@ -344,8 +344,8 @@
   {
     "name": "GATE-ROADS-the-half-unhanded",
     "file": "src/world/townGates.js",
-    "old": "half: GATE_OPENING.half / TILE_M }));",
-    "new": "half: 0 }));",
+    "old": "    half: GATE_OPENING.half / TILE_M,",
+    "new": "    half: 0,",
     "tests": [
       "test/world/gateroads.test.js"
     ]

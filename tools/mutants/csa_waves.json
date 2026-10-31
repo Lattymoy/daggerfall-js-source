@@ -920,8 +920,8 @@
   {
     "name": "CSA-F-curve-out-slope-dropped",
     "file": "src/world/unityParticles.js",
-    "old": "tuples = keys.map((k) => [k.time, k.value, k.inSlope, k.outSlope]);",
-    "new": "tuples = keys.map((k) => [k.time, k.value, k.inSlope, 0]);",
+    "old": "    tuples = keys.map((k) => [k.time, k.value, k.inSlope, k.outSlope]);",
+    "new": "    tuples = keys.map((k) => [k.time, k.value, k.inSlope, 0]);",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -929,8 +929,8 @@
   {
     "name": "CSA-F-curve-empty-one",
     "file": "src/world/unityParticles.js",
-    "old": "  if (!keys?.length) return 0;\n  let tuples",
-    "new": "  if (!keys?.length) return 1;\n  let tuples",
+    "old": "  if (!keys?.length) return 0;",
+    "new": "  if (!keys?.length) return 1;",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -938,8 +938,8 @@
   {
     "name": "CSA-F-minmax-two-high",
     "file": "src/world/unityParticles.js",
-    "old": "    case 3: return c.minScalar + (c.scalar - c.minScalar) * r;",
-    "new": "    case 3: return c.scalar;",
+    "old": "      return c.minScalar + (c.scalar - c.minScalar) * r;",
+    "new": "      return c.scalar;",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -956,8 +956,8 @@
   {
     "name": "CSA-F-play-subemitters",
     "file": "src/world/unityParticles.js",
-    "old": "    if (s && (s === ps || !s.isSubEmitter)) out.push(s);",
-    "new": "    if (s) out.push(s);",
+    "old": "      if (s && (s === ps || !s.isSubEmitter)) out.push(s);",
+    "new": "      if (s) out.push(s);",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -965,8 +965,8 @@
   {
     "name": "CSA-F-sub-unmarked",
     "file": "src/world/unityParticles.js",
-    "old": "      sys.isSubEmitter = true;\n",
-    "new": "",
+    "old": "      sys.isSubEmitter = true;\n      ps.subEmitters.push({ system: sys, type: e.type, probability: e.emitProbability ?? 1 });",
+    "new": "      ps.subEmitters.push({ system: sys, type: e.type, probability: e.emitProbability ?? 1 });",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -974,8 +974,8 @@
   {
     "name": "CSA-F-planes-unlinked",
     "file": "src/world/unityParticles.js",
-    "old": "    for (let i = 0; i < 6; i++) { const n = resolveNodePointer(ps.node, sim.collision[`plane${i}`]); if (n) ps.planes.push(n); }",
-    "new": "",
+    "old": "    for (let i = 0; i < 6; i++) {\n      const n = resolveNodePointer(ps.node, sim.collision[`plane${i}`]);\n      if (n) ps.planes.push(n);\n    }\n  }",
+    "new": "  }",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -992,8 +992,8 @@
   {
     "name": "CSA-F-box-back",
     "file": "src/world/unityParticles.js",
-    "old": "      d = [0, 0, 1];\n    } else if (sh.type === SHAPE.Cone) {",
-    "new": "      d = [0, 0, -1];\n    } else if (sh.type === SHAPE.Cone) {",
+    "old": "      d = [0, 0, 1];",
+    "new": "      d = [0, 0, -1];",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -1010,8 +1010,8 @@
   {
     "name": "CSA-F-advance-velocity-late",
     "file": "src/world/unityParticles.js",
-    "old": "  const a = forceOf(ps, part);\n  if (a) part.velocity = add(part.velocity, scale(a, dt));\n  part.position = add(part.position, scale(part.velocity, dt));",
-    "new": "  const a = forceOf(ps, part);\n  part.position = add(part.position, scale(part.velocity, dt));\n  if (a) part.velocity = add(part.velocity, scale(a, dt));",
+    "old": "  if (a) part.velocity = add(part.velocity, scale(a, dt));\n  part.position = add(part.position, scale(part.velocity, dt));",
+    "new": "  part.position = add(part.position, scale(part.velocity, dt));\n  if (a) part.velocity = add(part.velocity, scale(a, dt));",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -1019,7 +1019,7 @@
   {
     "name": "CSA-F-plane-no-radius",
     "file": "src/world/unityParticles.js",
-    "old": "  const radius = (sizeOf(ps, part)[0] * s) / 2 * (sim.collision.radiusScale ?? 1);",
+    "old": "  const radius = ((sizeOf(ps, part)[0] * s) / 2) * (sim.collision.radiusScale ?? 1);",
     "new": "  const radius = 0;",
     "tests": [
       "test/world/csa_particles.test.js"
@@ -1037,8 +1037,8 @@
   {
     "name": "CSA-F-sub-no-fire",
     "file": "src/world/unityParticles.js",
-    "old": "        fireSubEmitters(ps, SUB_EMITTER.Collision, hit, random);\n",
-    "new": "",
+    "old": "        fireSubEmitters(ps, SUB_EMITTER.Collision, hit, random);\n        if (part.remainingLifetime <= 0) continue;",
+    "new": "        if (part.remainingLifetime <= 0) continue;",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -1046,8 +1046,8 @@
   {
     "name": "CSA-F-bursts-once-ever",
     "file": "src/world/unityParticles.js",
-    "old": "      if (!this.playing) { this.time = 0; this._accTime = 0; this._accDistance = 0; this._firedBursts = new Set(); this._delay = Math.max(0, evaluateMinMax(this.main.startDelay, 0, random())); }",
-    "new": "      if (!this.playing) { this.time = 0; this._accTime = 0; this._accDistance = 0; this._delay = Math.max(0, evaluateMinMax(this.main.startDelay, 0, random())); }",
+    "old": "        this._firedBursts = new Set();\n        this._delay = Math.max(0, evaluateMinMax(this.main.startDelay, 0, random()));",
+    "new": "        this._delay = Math.max(0, evaluateMinMax(this.main.startDelay, 0, random()));",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -1073,8 +1073,8 @@
   {
     "name": "CSA-F-no-loop-emits-on",
     "file": "src/world/unityParticles.js",
-    "old": "    else { t1 = sim.duration; ps.emitting = false; }",
-    "new": "    else { t1 = sim.duration; }",
+    "old": "      ps.emitting = false;\n    }",
+    "new": "    }",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -1082,8 +1082,8 @@
   {
     "name": "CSA-F-never-stops-playing",
     "file": "src/world/unityParticles.js",
-    "old": "  if (!ps.emitting && !ps.particles.length) ps.playing = false;",
-    "new": "",
+    "old": "  if (!ps.emitting && !ps.particles.length) ps.playing = false;\n}",
+    "new": "}",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -1091,7 +1091,7 @@
   {
     "name": "CSA-F-render-unscaled",
     "file": "src/world/unityParticles.js",
-    "old": "    out.push({ position: worldPosition(ps, part), size: [sz[0] * s[0], sz[1] * s[1], sz[2] * s[2]], rotation: part.rotation, systemRotation: rot });",
+    "old": "    out.push({\n      position: worldPosition(ps, part),\n      size: [sz[0] * s[0], sz[1] * s[1], sz[2] * s[2]],\n      rotation: part.rotation,\n      systemRotation: rot,\n    });",
     "new": "    out.push({ position: worldPosition(ps, part), size: sz, rotation: part.rotation, systemRotation: rot });",
     "tests": [
       "test/world/csa_particles.test.js"
@@ -1100,8 +1100,8 @@
   {
     "name": "CSA-F-size-y-as-x",
     "file": "src/world/unityParticles.js",
-    "old": "  if (sz.separateAxes) return [part.startSize[0] * evaluateMinMax(sz.curve, t, 0.5), part.startSize[1] * evaluateMinMax(sz.y, t, 0.5), part.startSize[2] * evaluateMinMax(sz.z, t, 0.5)];",
-    "new": "  if (sz.separateAxes) return [part.startSize[0] * evaluateMinMax(sz.curve, t, 0.5), part.startSize[1] * evaluateMinMax(sz.curve, t, 0.5), part.startSize[2] * evaluateMinMax(sz.z, t, 0.5)];",
+    "old": "      part.startSize[1] * evaluateMinMax(sz.y, t, 0.5),",
+    "new": "      part.startSize[1] * evaluateMinMax(sz.curve, t, 0.5),",
     "tests": [
       "test/world/csa_particles.test.js"
     ]
@@ -1127,8 +1127,8 @@
   {
     "name": "CSA-F-stop-no-emit-kept",
     "file": "src/world/unityParticles.js",
-    "old": "    _stopOne() { this.emitting = false; },",
-    "new": "    _stopOne() { },",
+    "old": "    _stopOne() {\n      this.emitting = false;\n    },",
+    "new": "    _stopOne() {},",
     "tests": [
       "test/world/csa_particles.test.js"
     ]

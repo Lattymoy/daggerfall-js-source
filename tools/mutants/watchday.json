@@ -272,8 +272,8 @@
   {
     "name": "WATCH-DAY-room-uniform",
     "file": "src/world/travellerSprites.js",
-    "old": "      const archive = flat ? flat.archive : look ? look.archive : (m.res.civvies ?? m.res.archive);",
-    "new": "      const archive = flat ? flat.archive : look ? look.archive : m.res.archive;",
+    "old": "      const archive = flat ? flat.archive : look ? look.archive : (m.res.civvies ?? m.res.archive); // WATCH-DAY: a watchman off duty in his own clothes",
+    "new": "      const archive = flat ? flat.archive : look ? look.archive : m.res.archive; // WATCH-DAY: a watchman off duty in his own clothes",
     "tests": [
       "test/systems/livingWorld/watchday_watch.test.js"
     ]

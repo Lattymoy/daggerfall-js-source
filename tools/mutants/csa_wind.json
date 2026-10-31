@@ -911,7 +911,7 @@
   {
     "name": "CSA-E-anim-flat-shortcut",
     "file": "src/world/unityAnimator.js",
-    "old": "    if (a === 0 && b === 0 && c === 0) return d;   // a flat segment (Unity's sentinel at -infinity among them)",
+    "old": "    if (a === 0 && b === 0 && c === 0) return d; // a flat segment (Unity's sentinel at -infinity among them)",
     "new": "    if (a === 0 && b === 0) return d;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
@@ -929,8 +929,8 @@
   {
     "name": "CSA-E-anim-search-first",
     "file": "src/world/unityAnimator.js",
-    "old": "    while (lo <= hi) { const mid = (lo + hi) >> 1; if (keys[mid][0] <= t) { k = mid; lo = mid + 1; } else hi = mid - 1; }",
-    "new": "    while (lo <= hi) { const mid = (lo + hi) >> 1; if (keys[mid][0] < t) { k = mid; lo = mid + 1; } else hi = mid - 1; }",
+    "old": "      if (keys[mid][0] <= t) {",
+    "new": "      if (keys[mid][0] < t) {",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -956,8 +956,8 @@
   {
     "name": "CSA-E-anim-euler-order",
     "file": "src/world/unityAnimator.js",
-    "old": "  return quatMultiply(quatAngleAxis(y, [0, 1, 0]), quatMultiply(quatAngleAxis(x, [1, 0, 0]), quatAngleAxis(z, [0, 0, 1])));",
-    "new": "  return quatMultiply(quatAngleAxis(z, [0, 0, 1]), quatMultiply(quatAngleAxis(x, [1, 0, 0]), quatAngleAxis(y, [0, 1, 0])));",
+    "old": "    quatAngleAxis(y, [0, 1, 0]),\n    quatMultiply(quatAngleAxis(x, [1, 0, 0]), quatAngleAxis(z, [0, 0, 1])),",
+    "new": "    quatAngleAxis(z, [0, 0, 1]),\n    quatMultiply(quatAngleAxis(x, [1, 0, 0]), quatAngleAxis(y, [0, 1, 0])),",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -965,7 +965,7 @@
   {
     "name": "CSA-E-anim-hemisphere-ignored",
     "file": "src/world/unityAnimator.js",
-    "old": "        const s = (ref[0] * q[0] + ref[1] * q[1] + ref[2] * q[2] + ref[3] * q[3]) < 0 ? -wt : wt;",
+    "old": "        const s = ref[0] * q[0] + ref[1] * q[1] + ref[2] * q[2] + ref[3] * q[3] < 0 ? -wt : wt;",
     "new": "        const s = wt;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
@@ -974,8 +974,8 @@
   {
     "name": "CSA-E-anim-1d-clamp-low",
     "file": "src/world/unityAnimator.js",
-    "old": "  if (n === 1 || v <= thresholds[0]) { w[0] = 1; return w; }",
-    "new": "  if (n === 1) { w[0] = 1; return w; }",
+    "old": "  if (n === 1 || v <= thresholds[0]) {",
+    "new": "  if (n === 1) {",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -983,8 +983,8 @@
   {
     "name": "CSA-E-anim-1d-reversed",
     "file": "src/world/unityAnimator.js",
-    "old": "      w[i] = 1 - u; w[i + 1] = u;",
-    "new": "      w[i] = u; w[i + 1] = 1 - u;",
+    "old": "      w[i] = 1 - u;\n      w[i + 1] = u;",
+    "new": "      w[i] = u;\n      w[i + 1] = 1 - u;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -992,8 +992,8 @@
   {
     "name": "CSA-E-anim-2d-centre-share",
     "file": "src/world/unityAnimator.js",
-    "old": "  w[A.i] = a; w[B.i] = b; w[centre] = 1 - sum;",
-    "new": "  w[A.i] = a / (sum || 1); w[B.i] = b / (sum || 1);",
+    "old": "  w[A.i] = a;\n  w[B.i] = b;\n  w[centre] = 1 - sum;",
+    "new": "  w[A.i] = a / (sum || 1);\n  w[B.i] = b / (sum || 1);",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -1001,8 +1001,8 @@
   {
     "name": "CSA-E-anim-2d-outside",
     "file": "src/world/unityAnimator.js",
-    "old": "  if (sum > 1 || centre < 0) { w[A.i] = a / (sum || 1); w[B.i] = b / (sum || 1); return w; }",
-    "new": "  if (centre < 0) { w[A.i] = a / (sum || 1); w[B.i] = b / (sum || 1); return w; }",
+    "old": "  if (sum > 1 || centre < 0) {",
+    "new": "  if (centre < 0) {",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -1010,8 +1010,8 @@
   {
     "name": "CSA-E-anim-override-ignored",
     "file": "src/world/unityAnimator.js",
-    "old": "  const clipOf = (name) => (name == null ? null : animation.clips?.[swap.get(name) ?? name] ?? null);",
-    "new": "  const clipOf = (name) => (name == null ? null : animation.clips?.[name] ?? null);",
+    "old": "  const clipOf = (name) => (name == null ? null : (animation.clips?.[swap.get(name) ?? name] ?? null));",
+    "new": "  const clipOf = (name) => (name == null ? null : (animation.clips?.[name] ?? null));",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -1019,8 +1019,8 @@
   {
     "name": "CSA-E-anim-bind-first-only",
     "file": "src/world/unityAnimator.js",
-    "old": "        if (propIndex.has(key)) continue;\n        propIndex.set(key, props.length);",
-    "new": "        if (props.length > 0) continue;\n        propIndex.set(key, props.length);",
+    "old": "        if (propIndex.has(key)) continue;",
+    "new": "        if (props.length > 0) continue;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -1037,8 +1037,8 @@
   {
     "name": "CSA-E-anim-crossfade-dest-length",
     "file": "src/world/unityAnimator.js",
-    "old": "      const srcLen = I.motionLength(a.current.state);\n      const snapshot",
-    "new": "      const srcLen = I.motionLength(state);\n      const snapshot",
+    "old": "    else if (state !== playing) {\n      const srcLen = I.motionLength(a.current.state);",
+    "new": "    else if (state !== playing) {\n      const srcLen = I.motionLength(state);",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -1073,8 +1073,8 @@
   {
     "name": "CSA-E-anim-conditions-ignored",
     "file": "src/world/unityAnimator.js",
-    "old": "      if (!I.conditionsHold(t)) continue;\n      if (t.hasExitTime",
-    "new": "      if (t.hasExitTime",
+    "old": "      if (!I.conditionsHold(t)) continue;\n      if (t.hasExitTime && !I.exitCrossed(t.exitTime, before, a.current.time)) continue;",
+    "new": "      if (t.hasExitTime && !I.exitCrossed(t.exitTime, before, a.current.time)) continue;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -1092,7 +1092,7 @@
     "name": "CSA-E-anim-speed-param-ignored",
     "file": "src/world/unityAnimator.js",
     "old": "  const speedOf = (state) => (state.speed ?? 1) * (state.speedParam ? a.GetFloat(state.speedParam) : 1);",
-    "new": "  const speedOf = (state) => (state.speed ?? 1);",
+    "new": "  const speedOf = (state) => state.speed ?? 1;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -1100,7 +1100,7 @@
   {
     "name": "CSA-E-anim-enable-no-reset",
     "file": "src/world/unityAnimator.js",
-    "old": "    a.current = def ? { state: def, time: 0, fresh: true } : null;\n    a.next = null; a.transition = null;\n    if (a.lastPose) I.resetParams();",
+    "old": "    a.current = def ? { state: def, time: 0, fresh: true } : null;\n    a.next = null;\n    a.transition = null;\n    if (a.lastPose) I.resetParams();",
     "new": "    if (!a.current) a.current = def ? { state: def, time: 0, fresh: true } : null;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
@@ -1109,8 +1109,8 @@
   {
     "name": "CSA-E-anim-disabled-keeps-fade",
     "file": "src/world/unityAnimator.js",
-    "old": "  if (!on) { a.wasEnabled = false; a.pending = null; return; }",
-    "new": "  if (!on) { a.wasEnabled = false; return; }",
+    "old": "    a.pending = null;\n    return;",
+    "new": "    return;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]
@@ -1127,8 +1127,8 @@
   {
     "name": "CSA-E-anim-param-missing-written",
     "file": "src/world/unityAnimator.js",
-    "old": "    SetBool(name, v) { const p = params.get(name); if (p) p.value = !!v; },",
-    "new": "    SetBool(name, v) { const p = params.get(name) ?? { type: 'Bool' }; params.set(name, p); p.value = !!v; },",
+    "old": "      const p = params.get(name);\n      if (p) p.value = !!v;",
+    "new": "      const p = params.get(name) ?? { type: 'Bool' };\n      params.set(name, p);\n      p.value = !!v;",
     "tests": [
       "test/systems/comeSailAway/csa_animator.test.js"
     ]

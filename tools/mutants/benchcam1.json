@@ -2,8 +2,8 @@
   {
     "name": "BENCH-CAM-the-tilt-no-shell",
     "file": "src/world/wagonModels.js",
-    "old": "if (part.role === 'body' && MEASURED[kind]?.bench) shellBox = boxOfPoints(pointsOf(part));",
-    "new": "if (part.role === 'body' && WAGON_KINDS[kind].enterable) shellBox = boxOfPoints(pointsOf(part));",
+    "old": "      if (part.role === 'body' && MEASURED[kind]?.bench) shellBox = boxOfPoints(pointsOf(part));",
+    "new": "      if (part.role === 'body' && WAGON_KINDS[kind].enterable) shellBox = boxOfPoints(pointsOf(part));",
     "tests": [
       "test/player/benchcam1.test.js",
       "test/player/wagons3.test.js"

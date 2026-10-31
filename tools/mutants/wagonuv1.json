@@ -42,8 +42,8 @@
   {
     "name": "WAGONUV1-5-the-half-texel-dropped",
     "file": "src/world/wagonModels.js",
-    "old": "+ 0.5 + CARAVAN_SIDE_WINDOW_U;",
-    "new": "+ 0.5 + 0.5;",
+    "old": "  return planarUv([p[0], p[1], p[2] - mid], n, [tile, 1])[0] + 0.5 + CARAVAN_SIDE_WINDOW_U;",
+    "new": "  return planarUv([p[0], p[1], p[2] - mid], n, [tile, 1])[0] + 0.5 + 0.5;",
     "tests": [
       "test/world/wagonuv1.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "WAGONUV1-7-the-window-back-under-the-cornice",
     "file": "src/world/wagonArt.js",
-    "old": "  y0: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y + 0.84) / 2), y1: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y - 0.84) / 2), x0: 22, x1: 42,",
-    "new": "  y0: sideRow(2.62), y1: sideRow(1.78), x0: 22, x1: 42,",
+    "old": "  y0: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y + 0.84) / 2),\n  y1: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y - 0.84) / 2),",
+    "new": "  y0: sideRow(2.62),\n  y1: sideRow(1.78),",
     "tests": [
       "test/world/wagonuv1.test.js"
     ],

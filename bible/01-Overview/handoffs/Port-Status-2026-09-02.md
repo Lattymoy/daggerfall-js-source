@@ -840,7 +840,7 @@ that was a claim once and is a pointer at a stranger now.
 **Recorded by AUDIT WAGONS3 (2026-10-10).** WAGONS3's own limits, written in `06-Systems/Wagons.md` and nowhere in
 `src/`, so the list never carried them; the audit stood each at its line.
 
-- **`src/world/wagonModels.js:"FLAGGED: the Small Cart has no bench"`** - the Small Cart's driver in the saddle.
+- **`src/world/wagonModels.js:"FLAGGED: the Small"`** - the Small Cart's driver in the saddle.
   *Mac's choice: the cart has no bench, so RIDE-POV keeps the Morrowind body in the head on it. The day it has one,
   the sentence goes.*
 - **`src/player/mwView.js:"FLAGGED: Eye Of The"`** - the sprite lane's driver standing.

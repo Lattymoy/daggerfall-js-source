@@ -284,8 +284,8 @@
   {
     "name": "STUDIO1-the-icon-painted",
     "file": "src/world/wagonModels.js",
-    "old": "paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32",
-    "new": "toColor32",
+    "old": "  const pics = new Map(\n    wagonArt().map(([rec, pic]) => [\n      rec,\n      paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec))),\n    ]),\n  );",
+    "new": "  const pics = new Map(wagonArt().map(([rec, pic]) => [rec, toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))]));",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]
@@ -761,8 +761,8 @@
   {
     "name": "STUDIO1-icon-before-the-studio",
     "file": "src/world/wagonModels.js",
-    "old": "  await studioLanded();   // STUDIO1: the icon is drawn once - in the studio's pictures where an artist drew them\n",
-    "new": "  void studioLanded;\n",
+    "old": "  await studioLanded(); // STUDIO1: the icon is drawn once - in the studio's pictures where an artist drew them",
+    "new": "  void studioLanded;",
     "tests": [
       "test/systems/studioArt/studio1_door.test.js"
     ]

@@ -100,7 +100,7 @@ non-ARENA2 pin as well).
 ### R1-3 - the roads past the Bay and the carved rivers (MED, FIXED by RIVER-FORDS - `03-World/Roads.md`)
 
 `terrainGen.js:"if (landforms && !inBay(px, py)) paintTamrielWaters(tileData, px, py, hasLocation ? locationRect : null, undefined, paths);"`,
-`tamrielRoadsWorker.js:"const wet = (x, y) => !inBay(x, y) && heightAt(x, y) <= WATER_BYTE;"`. CYRODIIL-WATERS carves
+`tamrielRoadsWorker.js:"const wet = (x, y)"`. CYRODIIL-WATERS carves
 ten rivers inside the kernel, narrower than a pixel, and paints their channels water after the roads are painted; the
 roads' worker routes on the pixels' bytes, which carry no channel (VOYAGER's own record, `03-World/Roads.md` OPEN (3)).
 Measured at 367cf11766, before SMOOTH-LAND moved the land (GROUND_ROLL_VERSION 4 lays every road again; nothing in it

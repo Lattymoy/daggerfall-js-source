@@ -2,8 +2,8 @@
   {
     "name": "HILLSHAPES-catalogue-mound",
     "file": "src/world/townStandIns.js",
-    "old": "[id, () => hillMesh(RMBRP_HILL_SHAPES[id], surface)]",
-    "new": "[id, () => hillMesh({ ...RMBRP_HILL_SHAPES[id], top: 1.6, reach: RMBRP_HILL_SHAPES[id].reach.map(() => 10), rings: RMBRP_HILL_SHAPES[id].rings.map((r) => r.map((h, j) => (j === r.length - 1 ? h : 1.6 * (1 - j / r.length)))) }, surface)]",
+    "old": "    Object.entries(RMBRP_HILLS).map(([id, surface]) => [id, () => hillMesh(RMBRP_HILL_SHAPES[id], surface)]),",
+    "new": "    Object.entries(RMBRP_HILLS).map(([id, surface]) => [\n      id,\n      () =>\n        hillMesh(\n          {\n            ...RMBRP_HILL_SHAPES[id],\n            top: 1.6,\n            reach: RMBRP_HILL_SHAPES[id].reach.map(() => 10),\n            rings: RMBRP_HILL_SHAPES[id].rings.map((r) =>\n              r.map((h, j) => (j === r.length - 1 ? h : 1.6 * (1 - j / r.length))),\n            ),\n          },\n          surface,\n        ),\n    ]),",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "HILLSHAPES-reach-halved",
     "file": "src/world/townStandIns.js",
-    "old": "    const b = k % K, a = (b / K) * Math.PI * 2, r = (shape.reach[b] * j) / N;",
-    "new": "    const b = k % K, a = (b / K) * Math.PI * 2, r = (shape.reach[b] * j) / N / 2;",
+    "old": "      r = (shape.reach[b] * j) / N;",
+    "new": "      r = (shape.reach[b] * j) / N / 2;",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],
@@ -53,8 +53,8 @@
   {
     "name": "HILLSHAPES-faces-down",
     "file": "src/world/townStandIns.js",
-    "old": "l = Math.hypot(...n) || 1, sgn = n[1] < 0 ? -1 : 1;",
-    "new": "l = Math.hypot(...n) || 1, sgn = n[1] < 0 ? 1 : -1;",
+    "old": "      sgn = n[1] < 0 ? -1 : 1;",
+    "new": "      sgn = n[1] < 0 ? 1 : -1;",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],
@@ -63,8 +63,8 @@
   {
     "name": "HILLSHAPES-cell-one-triangle",
     "file": "src/world/townStandIns.js",
-    "old": "    else { face(a, b, c); face(a, c, d); }",
-    "new": "    else { face(a, b, c); }",
+    "old": "        face(a, c, d);\n      }",
+    "new": "      }",
     "tests": [
       "test/formats/worldData/fb1005_hills.test.js"
     ],

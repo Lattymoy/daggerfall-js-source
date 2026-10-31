@@ -183,8 +183,8 @@
   {
     "name": "WITCH1-no-door-pair",
     "file": "src/world/witchesDecor.js",
-    "old": "    pair(front, kit.door);\n",
-    "new": "",
+    "old": "    pair(front, kit.door);\n    // the Wyrd Sister on her side (the house's own roll), the show on the other - each tried on the far side if refused",
+    "new": "    // the Wyrd Sister on her side (the house's own roll), the show on the other - each tried on the far side if refused",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -193,8 +193,8 @@
   {
     "name": "WITCH1-through-the-wall",
     "file": "src/world/witchesDecor.js",
-    "old": "    for (const h of S.rayHeights) if (blocked(",
-    "new": "    for (const h of S.rayHeights) if (false && blocked(",
+    "old": "      if (blocked([from[0], fromY + h, from[1]], [xz[0] + (dx / l) * r, fy + h, xz[1] + (dz / l) * r])) return false;",
+    "new": "      if (false && blocked([from[0], fromY + h, from[1]], [xz[0] + (dx / l) * r, fy + h, xz[1] + (dz / l) * r]))\n        return false;",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -203,8 +203,8 @@
   {
     "name": "WITCH1-the-offering-on-the-steps-side",
     "file": "src/world/witchesDecor.js",
-    "old": "const side = witchStepSide(mapId, key) * (far ? 1 : -1);",
-    "new": "const side = witchStepSide(mapId, key);",
+    "old": "  const side = witchStepSide(mapId, key) * (far ? 1 : -1);",
+    "new": "  const side = witchStepSide(mapId, key);",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -494,8 +494,8 @@
   {
     "name": "WITCH1-AUDIT-water-stood",
     "file": "src/world/witchesDecor.js",
-    "old": "    if (!ground(xz[0], xz[1])) return false;\n",
-    "new": "",
+    "old": "    if (!ground(xz[0], xz[1])) return false;\n    const gx = Math.floor(xz[0] / GRID_M),",
+    "new": "    const gx = Math.floor(xz[0] / GRID_M),",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -504,8 +504,8 @@
   {
     "name": "WITCH1-AUDIT-dressing-holds-the-frame",
     "file": "src/world/witchesDecor.js",
-    "old": "  while (!r.done) { await breathe(); r = steps.next(); }",
-    "new": "  while (!r.done) { r = steps.next(); }",
+    "old": "    await breathe();\n    r = steps.next();",
+    "new": "    r = steps.next();",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -514,8 +514,8 @@
   {
     "name": "WITCH1-AUDIT-hammerfell-fen",
     "file": "src/world/witchesDecor.js",
-    "old": "  if (climateIndex === CLIMATES.Swamp) return 'fen';\n",
-    "new": "  if (climateIndex === CLIMATES.Swamp || climateIndex === CLIMATES.Subtropical) return 'fen';\n",
+    "old": "  if (climateIndex === CLIMATES.Swamp) return 'fen';",
+    "new": "  if (climateIndex === CLIMATES.Swamp || climateIndex === CLIMATES.Subtropical) return 'fen';",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -605,7 +605,7 @@
   {
     "name": "WITCH1-AUDIT-G1-no-look-down",
     "file": "src/world/witchesDecor.js",
-    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
+    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]])\n      if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
     "new": "    for (const [x, z] of []) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
     "tests": [
       "test/world/witch1_decor.test.js"
@@ -615,8 +615,8 @@
   {
     "name": "WITCH1-AUDIT-G1-middle-only",
     "file": "src/world/witchesDecor.js",
-    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]]) if (",
-    "new": "    for (const [x, z] of [xz]) if (",
+    "old": "    for (const [x, z] of [xz, [xz[0] + (tx / tl) * r, xz[1] + (tz / tl) * r]])\n      if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
+    "new": "    for (const [x, z] of [xz]) if (blocked([x, floor(x, z) + S.downFrom, z], [x, floor(x, z) + S.lip, z])) return false;",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],
@@ -625,8 +625,8 @@
   {
     "name": "WITCH1-AUDIT-G1-lip-at-the-street",
     "file": "src/world/witchesDecor.js",
-    "old": "downFrom: 1.2, lip: 0.08,",
-    "new": "downFrom: 1.2, lip: -0.01,",
+    "old": "  lip: 0.08,",
+    "new": "  lip: -0.01,",
     "tests": [
       "test/world/witch1_decor.test.js"
     ],

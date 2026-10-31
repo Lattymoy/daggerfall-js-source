@@ -73,8 +73,8 @@
   {
     "name": "BED-TURN-not-registered",
     "file": "src/world/townStandIns.js",
-    "old": "remap: bedRemap(colour), turn: TOWN_BED_TURN }",
-    "new": "remap: bedRemap(colour) }",
+    "old": "    registerModelAlias(TOWN_BED_FIRST + k, { model, remap: bedRemap(colour), turn: TOWN_BED_TURN }, isOn);",
+    "new": "    registerModelAlias(TOWN_BED_FIRST + k, { model, remap: bedRemap(colour) }, isOn);",
     "tests": [
       "test/scenes/builtin_mods.test.js"
     ],

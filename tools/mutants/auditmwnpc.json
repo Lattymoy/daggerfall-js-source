@@ -148,8 +148,8 @@
   {
     "name": "AUDITMWNPC-C3-overworld-cast-only-kept",
     "file": "src/world/travellerSprites.js",
-    "old": "      for (const b of shown) if (b.batch) b.batch.castOnly = false;\n",
-    "new": "",
+    "old": "      for (const b of shown) if (b.batch) b.batch.castOnly = false;\n    }",
+    "new": "    }",
     "tests": [
       "test/characters/mwnpc10c_roads.test.js"
     ]

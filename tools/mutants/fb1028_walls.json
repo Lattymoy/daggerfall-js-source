@@ -201,7 +201,7 @@
   {
     "name": "FB1028-inside-never-handed",
     "file": "src/world/townGates.js",
-    "old": "  return dfLocation.outline?.bay ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) } : { ...town, yard };",
+    "old": "  return dfLocation.outline?.bay\n    ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) }\n    : { ...town, yard };",
     "new": "  return { ...town, yard };",
     "tests": [
       "test/world/fb1028_walls.test.js"
@@ -210,8 +210,8 @@
   {
     "name": "FB1028-inside-past-the-bay",
     "file": "src/world/townGates.js",
-    "old": "  return dfLocation.outline?.bay ? { ...town, yard, inside",
-    "new": "  return true ? { ...town, yard, inside",
+    "old": "  return dfLocation.outline?.bay\n    ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) }\n    : { ...town, yard };",
+    "new": "  return true ? { ...town, yard, inside: insideWall(wall, walls, w * S_SIDE, o) } : { ...town, yard };",
     "tests": [
       "test/world/fb1028_walls.test.js"
     ]

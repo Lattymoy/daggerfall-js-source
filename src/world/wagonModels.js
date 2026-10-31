@@ -29,8 +29,8 @@
 // whole on their pictures - the cart's on its LEVEL frame (`cartLevel`), the caravan's sides from their middle
 // (`caravanSideU`). Not a DFU member. Ledger A (WAGONS1).
 import { WAGON_ARCHIVE, TEX, WAGON_TILE, BANDS, wagonArt, CARAVAN_SIDE_WINDOW_U } from './wagonArt.js';
-import { dfLook, lookSeed } from './dfLook.js';   // DF-LOOK: the icon's wagon in the colours the world's wears
-import { paintedReplacement, studioLanded } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones
+import { dfLook, lookSeed } from './dfLook.js'; // DF-LOOK: the icon's wagon in the colours the world's wears
+import { paintedReplacement, studioLanded } from '../systems/studioArt/studioArt.js'; // STUDIO1: the studio's pictures over the painted ones
 import { toColor32 } from '../formats/color32Order.js';
 import { MeshBench, prism, box, planarUv, sub, add, dot } from './ships/galleonMesh.js';
 import { benchPart } from './ships/galleonModel.js';
@@ -39,10 +39,10 @@ import { quatAngleAxis, quatRotate, quatMultiply } from './quat.js';
 import { NORMAL_GROUND_OFFSET } from '../systems/horse/horseCartLaw.js';
 import { CARGO_DEFINITIONS } from '../systems/wagon/wagon41214.js';
 import { WAGON_KINDS, activeWagonKind, activeWagonItem } from '../systems/wagon/wagonKinds.js';
-import { wagonLookOf } from '../systems/wagon/wagonLooks.js';   // WAGONS2: the driven wagon's paint
-import { riddenHorseLook } from '../systems/horse/horseCoats.js';   // COATS1: the ridden horse's look
-import { mwViewHorseRig } from '../player/mwView.js';   // COATS3D: the 3D horse rig, on the Morrowind lane
-import { SEATED_HIP_HEIGHT } from '../player/seatPose.js';   // WAGONS3: the seated hips' height over the feet, the measured biped's
+import { wagonLookOf } from '../systems/wagon/wagonLooks.js'; // WAGONS2: the driven wagon's paint
+import { riddenHorseLook } from '../systems/horse/horseCoats.js'; // COATS1: the ridden horse's look
+import { mwViewHorseRig } from '../player/mwView.js'; // COATS3D: the 3D horse rig, on the Morrowind lane
+import { SEATED_HIP_HEIGHT } from '../player/seatPose.js'; // WAGONS3: the seated hips' height over the feet, the measured biped's
 
 /** Where each wagon's bake is (fetched at the load, as the ships' are - systems/comeSailAway/comeSailAwayModels.js). */
 export const WAGON_MODEL_URLS = Object.freeze({
@@ -58,9 +58,38 @@ export const LIFT = NORMAL_GROUND_OFFSET;
  *  there (test/systems/item/wagons1.test.js). `floorY` the bed's (or the caravan's) floor, `sideX` the body's half width outside,
  *  `innerX` inside, `bedZ` the bed's run (back to front), `frontZ` the wagon's foremost point. */
 export const MEASURED = Object.freeze({
-  cart: Object.freeze({ axleY: 0.5445, floorY: 0.69, innerX: 1.0543, sideX: 1.1589, bedZ: Object.freeze([-0.37, 2.2]), frontZ: 3.14, bottomFront: Object.freeze([0.1452, 2.1778]), bottomBack: Object.freeze([0.6201, -0.4852]) }),
-  openWagon: Object.freeze({ axleY: 0.7811, floorY: 1.0142, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.6, 5.0]), frontZ: 5.65, frontAxle: Object.freeze([0, 0.824, 3.8659]), bench: Object.freeze({ y: 1.54, z: 5.28 }) }),
-  caravan: Object.freeze({ axleY: 0.7811, floorY: 0.9425, innerX: 1.2, sideX: 1.36, bedZ: Object.freeze([-0.7077, 5.1164]), frontZ: 6.25, frontAxle: Object.freeze([0, 0.824, 3.8659]), rearZ: -0.7077, endTopY: 3.5166, bench: Object.freeze({ y: 2.476, z: 5.49 }) }),
+  cart: Object.freeze({
+    axleY: 0.5445,
+    floorY: 0.69,
+    innerX: 1.0543,
+    sideX: 1.1589,
+    bedZ: Object.freeze([-0.37, 2.2]),
+    frontZ: 3.14,
+    bottomFront: Object.freeze([0.1452, 2.1778]),
+    bottomBack: Object.freeze([0.6201, -0.4852]),
+  }),
+  openWagon: Object.freeze({
+    axleY: 0.7811,
+    floorY: 1.0142,
+    innerX: 1.2,
+    sideX: 1.36,
+    bedZ: Object.freeze([-0.6, 5.0]),
+    frontZ: 5.65,
+    frontAxle: Object.freeze([0, 0.824, 3.8659]),
+    bench: Object.freeze({ y: 1.54, z: 5.28 }),
+  }),
+  caravan: Object.freeze({
+    axleY: 0.7811,
+    floorY: 0.9425,
+    innerX: 1.2,
+    sideX: 1.36,
+    bedZ: Object.freeze([-0.7077, 5.1164]),
+    frontZ: 6.25,
+    frontAxle: Object.freeze([0, 0.824, 3.8659]),
+    rearZ: -0.7077,
+    endTopY: 3.5166,
+    bench: Object.freeze({ y: 2.476, z: 5.49 }),
+  }),
 });
 /** WAGONS3: `bench` above - where the driver's hips sit on a front bench (metres, the bake's frame): `y` the bench's top
  *  under them, `z` their run - a thigh's length or less behind the bench's front edge, so the knees stand at its lip,
@@ -97,7 +126,8 @@ export function cartLevel(p, about = MEASURED.cart.axleY) {
  *  middle (CARAVAN_SIDE_WINDOW_U), so each window stands in the middle of its half of the side, 0.99 m from its end -
  *  on both sides (planarUv's run turns with the side). `p` the side's point (the bake's frame), `n` its outward normal. */
 export function caravanSideU(p, n, tile = WAGON_TILE.caravanSide[0]) {
-  const m = MEASURED.caravan, mid = (m.rearZ + m.bedZ[1]) / 2;
+  const m = MEASURED.caravan,
+    mid = (m.rearZ + m.bedZ[1]) / 2;
   return planarUv([p[0], p[1], p[2] - mid], n, [tile, 1])[0] + 0.5 + CARAVAN_SIDE_WINDOW_U;
 }
 
@@ -129,30 +159,37 @@ export function wagonFaceSkin(kind, role, n, c, pivot = null, R = 1) {
 /** wagonFaceSkin's law, on the frame the face is handed in. */
 function layFace(kind, role, n, c, pivot = null, R = 1) {
   const tiled = (rec, key = keyOf(rec)) => ({ rec, uv: (p) => planarUv(p, n, WAGON_TILE[key]) });
-  const banded = (name) => ({ band: BANDS[name], u: name === 'caravanSide' ? (p) => caravanSideU(p, n) : (p) => planarUv(p, n, [WAGON_TILE[name][0], 1])[0] });
-  const up = n[1] > 0.7, down = n[1] < -0.7, side = Math.abs(n[0]) > 0.7, end = Math.abs(n[2]) > 0.7;
+  const banded = (name) => ({
+    band: BANDS[name],
+    u: name === 'caravanSide' ? (p) => caravanSideU(p, n) : (p) => planarUv(p, n, [WAGON_TILE[name][0], 1])[0],
+  });
+  const up = n[1] > 0.7,
+    down = n[1] < -0.7,
+    side = Math.abs(n[0]) > 0.7,
+    end = Math.abs(n[2]) > 0.7;
   if (role.startsWith('wheel')) return side ? { rec: TEX.wheel, uv: wheelUv(pivot ?? c, R) } : tiled(TEX.tyre);
   if (role.startsWith('axle') || role.startsWith('shaft')) return tiled(TEX.beam);
   if (role === 'bench' || role === 'step') return tiled(up ? TEX.bench : TEX.beam);
   const m = MEASURED[kind];
-  const inward = side && dot(n, sub([0, c[1], c[2]], c)) > 0;   // a side wall's face looking into the wagon
+  const inward = side && dot(n, sub([0, c[1], c[2]], c)) > 0; // a side wall's face looking into the wagon
   if (kind === 'cart') {
     if (down) return tiled(TEX.beam);
-    if (up && c[1] < 1) return tiled(TEX.floor);   // the bed (it falls 10 degrees forward, as drawn: `up` still)
-    if (up) return tiled(TEX.beam);                // the walls' top rail
+    if (up && c[1] < 1) return tiled(TEX.floor); // the bed (it falls 10 degrees forward, as drawn: `up` still)
+    if (up) return tiled(TEX.beam); // the walls' top rail
     return tiled(inward || (end && c[2] < 0 && n[2] > 0) ? TEX.inner : TEX.side);
   }
   if (kind === 'openWagon') {
-    if (down && c[1] < m.floorY + 0.1) return tiled(TEX.beam);    // the bed's underside
-    if (up && c[1] < m.floorY + 0.1) return tiled(TEX.floor);     // the bed
-    if (Math.abs(n[0]) > 0.95 && !inward && c[1] < 2.6) return banded('openSide');   // the side: its box, its tilt
+    if (down && c[1] < m.floorY + 0.1) return tiled(TEX.beam); // the bed's underside
+    if (up && c[1] < m.floorY + 0.1) return tiled(TEX.floor); // the bed
+    if (Math.abs(n[0]) > 0.95 && !inward && c[1] < 2.6) return banded('openSide'); // the side: its box, its tilt
     if (inward || down || (side && c[1] >= 2.6)) return tiled(c[1] < 1.62 && inward ? TEX.inner : TEX.tiltInner);
-    if (end) return tiled(c[1] < 2.6 ? TEX.side : TEX.tilt);       // the box's and the tilt's edges at its ends
-    return tiled(TEX.tilt);                                        // the tilt over the roof
+    if (end) return tiled(c[1] < 2.6 ? TEX.side : TEX.tilt); // the box's and the tilt's edges at its ends
+    return tiled(TEX.tilt); // the tilt over the roof
   }
   // the caravan
   if (down) return tiled(TEX.beam);
-  if (end && c[1] > m.floorY) return { rec: n[2] > 0 ? TEX.caravanFront : TEX.caravanRear, uv: endUv(n[2] > 0 ? -1 : 1) };
+  if (end && c[1] > m.floorY)
+    return { rec: n[2] > 0 ? TEX.caravanFront : TEX.caravanRear, uv: endUv(n[2] > 0 ? -1 : 1) };
   if (Math.abs(n[0]) > 0.95) return banded('caravanSide');
   return tiled(TEX.caravanRoof);
 }
@@ -162,7 +199,12 @@ function layFace(kind, role, n, c, pivot = null, R = 1) {
 /** The renderer's model of a bench's geometry (createMesh's shape: each sub-mesh its texture). */
 export function rendererModelOf(g, name = 'Wagon') {
   if (!g) return null;
-  const subMeshes = g.subMeshes.map((sm, k) => ({ textureArchive: g.slots[k].archive, textureRecord: g.slots[k].record, startIndex: sm.startIndex, primitiveCount: sm.primitiveCount }));
+  const subMeshes = g.subMeshes.map((sm, k) => ({
+    textureArchive: g.slots[k].archive,
+    textureRecord: g.slots[k].record,
+    startIndex: sm.startIndex,
+    primitiveCount: sm.primitiveCount,
+  }));
   return { name, positions: g.positions, normals: g.normals, uvs: g.uvs, indices: g.indices, subMeshes, doors: [] };
 }
 /** A finished geometry moved down the lift (its box with it). */
@@ -179,14 +221,23 @@ function lifted(g, dy = -LIFT) {
  *  past the hitch) with the neck yoke across its tip, and the doubletree across it behind their hocks, a singletree at
  *  each end where that horse's traces meet it (`TEAM.tree`). */
 function poleGeometry(bench, kind) {
-  const ax = MEASURED[kind].frontAxle, hitch = WAGON_KINDS[kind].hitch;
-  const tip = [0, TEAM.yokeY, hitch + TEAM.poleTip], tree = TEAM.tree, tz = hitch - tree.back;
+  const ax = MEASURED[kind].frontAxle,
+    hitch = WAGON_KINDS[kind].hitch;
+  const tip = [0, TEAM.yokeY, hitch + TEAM.poleTip],
+    tree = TEAM.tree,
+    tz = hitch - tree.back;
   prism(bench, TEX.beam, [0, ax[1], ax[2]], tip, 0.07, 0.05, 6, { tileV: WAGON_TILE.beam[1] });
-  box(bench, TEX.beam, [0, tip[1], tip[2]], [TEAM.side - TEAM.collar[0] - 0.05, 0.025, 0.025], { tile: WAGON_TILE.beam });   // the neck yoke, between the collars (box's sizes are halves)
-  box(bench, TEX.beam, [0, tree.y, tz], [TEAM.side, 0.03, 0.03], { tile: WAGON_TILE.beam });   // the doubletree, its ends at each horse's middle
-  for (const s of [-1, 1]) box(bench, TEX.beam, [s * TEAM.side, tree.y, tz - 0.04], [tree.half, 0.025, 0.025], { tile: WAGON_TILE.beam });   // a singletree each, its ends at that horse's traces
-  for (const s of [-1, 1]) prism(bench, TEX.beam, [s * 0.7, ax[1], ax[2] - 0.05], [0, 0.88, ax[2] + 1.0], 0.035, 0.035, 5, { tileV: WAGON_TILE.beam[1] });
-  prism(bench, TEX.iron, [0, tip[1], tip[2]], [0, tip[1], tip[2] + 0.2], 0.04, 0.025, 6);   // its iron
+  box(bench, TEX.beam, [0, tip[1], tip[2]], [TEAM.side - TEAM.collar[0] - 0.05, 0.025, 0.025], {
+    tile: WAGON_TILE.beam,
+  }); // the neck yoke, between the collars (box's sizes are halves)
+  box(bench, TEX.beam, [0, tree.y, tz], [TEAM.side, 0.03, 0.03], { tile: WAGON_TILE.beam }); // the doubletree, its ends at each horse's middle
+  for (const s of [-1, 1])
+    box(bench, TEX.beam, [s * TEAM.side, tree.y, tz - 0.04], [tree.half, 0.025, 0.025], { tile: WAGON_TILE.beam }); // a singletree each, its ends at that horse's traces
+  for (const s of [-1, 1])
+    prism(bench, TEX.beam, [s * 0.7, ax[1], ax[2] - 0.05], [0, 0.88, ax[2] + 1.0], 0.035, 0.035, 5, {
+      tileV: WAGON_TILE.beam[1],
+    });
+  prism(bench, TEX.iron, [0, tip[1], tip[2]], [0, tip[1], tip[2] + 0.2], 0.04, 0.025, 6); // its iron
 }
 
 /**
@@ -206,7 +257,8 @@ export const TEAM = Object.freeze({
   bit: Object.freeze([0, 1.7, 1.3]),
   tree: Object.freeze({ back: 1.55, y: 0.92, half: 0.3 }),
   cartTrace: Object.freeze([0.57, 0.62, 2.2]),
-  poleTip: 0.5, yokeY: 1.15,
+  poleTip: 0.5,
+  yokeY: 1.15,
 });
 /** WAGONS3: where each horse of a kind's team stands across its hitch - its x in the wagon's frame (the pole's line):
  *  the Small Cart's one on it, a pair either side. */
@@ -221,7 +273,11 @@ export const teamSidesOf = (kind) => (WAGON_KINDS[kind]?.horses === 2 ? [-TEAM.s
 export function driverSeatFor(kind) {
   const b = MEASURED[kind]?.bench;
   if (!b) return null;
-  return Object.freeze({ feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT - LIFT, b.z]), yaw: 0, top: DRIVER_HANDS_TOP });
+  return Object.freeze({
+    feet: Object.freeze([0, b.y - SEATED_HIP_HEIGHT - LIFT, b.z]),
+    yaw: 0,
+    top: DRIVER_HANDS_TOP,
+  });
 }
 /** WAGONS3: the reins' hands over the seated feet - a hand's breadth over the lap (SEATED_HIP_HEIGHT), not a card
  *  table's SEAT_TOP_DEFAULT. */
@@ -239,16 +295,25 @@ export function traceRootsOf(kind) {
   const out = [];
   if (kind === 'cart') {
     const [x, y, z] = TEAM.cartTrace;
-    for (const s of [-1, 1]) out.push(Object.freeze([0, s, Object.freeze(fromLevel(kind, [s * x, y - LIFT, z])), false]));
+    for (const s of [-1, 1])
+      out.push(Object.freeze([0, s, Object.freeze(fromLevel(kind, [s * x, y - LIFT, z])), false]));
     return out;
   }
-  const hitch = WAGON_KINDS[kind].hitch, t = TEAM.tree;
-  teamSidesOf(kind).forEach((hx, i) => { for (const s of [-1, 1]) out.push(Object.freeze([i, s, Object.freeze([hx + s * t.half, t.y - LIFT, hitch - t.back - 0.04]), true])); });
+  const hitch = WAGON_KINDS[kind].hitch,
+    t = TEAM.tree;
+  teamSidesOf(kind).forEach((hx, i) => {
+    for (const s of [-1, 1])
+      out.push(Object.freeze([i, s, Object.freeze([hx + s * t.half, t.y - LIFT, hitch - t.back - 0.04]), true]));
+  });
   return out;
 }
 
 /** The radius a wheel rolls on: its pivot over the ground (its lowest corner - the bake's frame stands it there). */
-const rollRadius = (part, pivot) => { let lo = Infinity; for (let i = 1; i < part.positions.length; i += 3) lo = Math.min(lo, part.positions[i]); return pivot[1] - lo; };
+const rollRadius = (part, pivot) => {
+  let lo = Infinity;
+  for (let i = 1; i < part.positions.length; i += 3) lo = Math.min(lo, part.positions[i]);
+  return pivot[1] - lo;
+};
 
 /** WAGONS2: the bake's parts that turn with a four-wheeler's front wheels on its kingpin (with the pole drawn here). */
 export const BOGIE_ROLES = Object.freeze(['axleFront']);
@@ -267,16 +332,24 @@ export const BOGIE_ROLES = Object.freeze(['axleFront']);
  * @param {any} bake @param {number[]} kingpin the bake frame's
  */
 export function steerLimitOf(bake, kingpin) {
-  const walls = bake.parts.filter((p) => !p.role.startsWith('wheel') && !BOGIE_ROLES.includes(p.role)).map((p) => boxOfPoints(pointsOf(p)));
+  const walls = bake.parts
+    .filter((p) => !p.role.startsWith('wheel') && !BOGIE_ROLES.includes(p.role))
+    .map((p) => boxOfPoints(pointsOf(p)));
   let lock = 90;
   for (const wheel of bake.parts.filter((p) => p.role.startsWith('wheelFront'))) {
-    const pivot = wheel.origin, R = rollRadius(wheel, pivot), dz = pivot[2] - kingpin[2];
+    const pivot = wheel.origin,
+      R = rollRadius(wheel, pivot),
+      dz = pivot[2] - kingpin[2];
     const inner = Math.min(...pointsOf(wheel).map((q) => Math.abs(q[0])));
     for (const { min: lo, max: hi } of walls) {
       const wall = Math.max(Math.abs(lo[0]), Math.abs(hi[0]));
-      if (wall >= inner || lo[1] >= pivot[1] + R) continue;   // not beside the wheel: across its face, or over its top
+      if (wall >= inner || lo[1] >= pivot[1] + R) continue; // not beside the wheel: across its face, or over its top
       const c = lo[1] > pivot[1] ? Math.sqrt(R * R - (lo[1] - pivot[1]) ** 2) : R;
-      for (const [reach, side] of [[c + dz, 1], [c - dz, -1]]) {   // the chord's front end turning in, and its back end
+      for (const [reach, side] of [
+        [c + dz, 1],
+        [c - dz, -1],
+      ]) {
+        // the chord's front end turning in, and its back end
         const a = Math.acos(wall / Math.hypot(inner, reach)) - Math.atan2(reach, inner);
         const z = kingpin[2] + side * (inner * Math.sin(a) + reach * Math.cos(a));
         if (z >= lo[2] && z <= hi[2]) lock = Math.min(lock, (a * 180) / Math.PI);
@@ -297,23 +370,52 @@ export function wagonGeometry(bake) {
   const kind = bake?.wagon;
   if (!WAGON_KINDS[kind] || !Array.isArray(bake.parts)) throw new Error(`no wagon's bake (${kind})`);
   const statics = new MeshBench(WAGON_ARCHIVE);
-  const front = kind !== 'cart' ? new MeshBench(WAGON_ARCHIVE) : null;   // WAGONS2: the bogie
+  const front = kind !== 'cart' ? new MeshBench(WAGON_ARCHIVE) : null; // WAGONS2: the bogie
   const wheels = [];
-  let radius = 0, rear = 0, rearZ = 0, kingpin = null, axleBox = null, shellBox = null;
+  let radius = 0,
+    rear = 0,
+    rearZ = 0,
+    kingpin = null,
+    axleBox = null,
+    shellBox = null;
   for (const part of bake.parts) {
     if (part.role.startsWith('wheel')) {
       const pivot = part.origin;
       const R = rollRadius(part, pivot);
       const bench = new MeshBench(WAGON_ARCHIVE);
-      benchPart(bench, part, { offset: pivot, role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c, pivot, R) });
-      wheels.push({ role: part.role, geometry: bench.finish(), pivot: [pivot[0], pivot[1] - LIFT, pivot[2]], radius: R });
-      if (part.role.startsWith('wheelRear')) { radius += R; rear++; rearZ += pivot[2] / 2; }
+      benchPart(bench, part, {
+        offset: pivot,
+        role: part.role,
+        keep: null,
+        skin: (role, n, c) => wagonFaceSkin(kind, role, n, c, pivot, R),
+      });
+      wheels.push({
+        role: part.role,
+        geometry: bench.finish(),
+        pivot: [pivot[0], pivot[1] - LIFT, pivot[2]],
+        radius: R,
+      });
+      if (part.role.startsWith('wheelRear')) {
+        radius += R;
+        rear++;
+        rearZ += pivot[2] / 2;
+      }
     } else if (front && BOGIE_ROLES.includes(part.role)) {
-      benchPart(front, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
+      benchPart(front, part, {
+        offset: [0, 0, 0],
+        role: part.role,
+        keep: null,
+        skin: (role, n, c) => wagonFaceSkin(kind, role, n, c),
+      });
       kingpin = part.origin;
-      axleBox = boxOfPoints(pointsOf(part));   // WAGONS3: the front axle's own reach - the parked box's, the pole's left out
+      axleBox = boxOfPoints(pointsOf(part)); // WAGONS3: the front axle's own reach - the parked box's, the pole's left out
     } else {
-      benchPart(statics, part, { offset: [0, 0, 0], role: part.role, keep: null, skin: (role, n, c) => wagonFaceSkin(kind, role, n, c) });
+      benchPart(statics, part, {
+        offset: [0, 0, 0],
+        role: part.role,
+        keep: null,
+        skin: (role, n, c) => wagonFaceSkin(kind, role, n, c),
+      });
       // WAGONS3: the body's own box - a third-person camera's wall. AUDIT WAGONS3 B1 had it the caravan's alone (the
       // open wagon's hoops stood 5.6 cm behind its bench, and every cast back from the driver's head met them at once).
       // BENCH-CAM: every bench wagon's (`MEASURED[kind].bench`), the caravan's room and the open wagon's tilt alike - the
@@ -324,9 +426,27 @@ export function wagonGeometry(bake) {
   if (rear !== 2) throw new Error(`the ${kind} has ${rear} rear wheels`);
   if (front && !kingpin) throw new Error(`the ${kind} has no front axle`);
   if (front) poleGeometry(front, kind);
-  const reach = axleBox ? { min: [axleBox.min[0], axleBox.min[1] - LIFT, axleBox.min[2]], max: [axleBox.max[0], axleBox.max[1] - LIFT, axleBox.max[2]] } : null;
-  const bogie = front ? { geometry: lifted(front.finish()), kingpin: [kingpin[0], kingpin[1] - LIFT, kingpin[2]], wheelbase: kingpin[2] - rearZ, steerLimit: steerLimitOf(bake, kingpin), reach } : null;
-  const shell = shellBox ? { min: [shellBox.min[0], shellBox.min[1] - LIFT, shellBox.min[2]], max: [shellBox.max[0], shellBox.max[1] - LIFT, shellBox.max[2]] } : null;
+  const reach = axleBox
+    ? {
+        min: [axleBox.min[0], axleBox.min[1] - LIFT, axleBox.min[2]],
+        max: [axleBox.max[0], axleBox.max[1] - LIFT, axleBox.max[2]],
+      }
+    : null;
+  const bogie = front
+    ? {
+        geometry: lifted(front.finish()),
+        kingpin: [kingpin[0], kingpin[1] - LIFT, kingpin[2]],
+        wheelbase: kingpin[2] - rearZ,
+        steerLimit: steerLimitOf(bake, kingpin),
+        reach,
+      }
+    : null;
+  const shell = shellBox
+    ? {
+        min: [shellBox.min[0], shellBox.min[1] - LIFT, shellBox.min[2]],
+        max: [shellBox.max[0], shellBox.max[1] - LIFT, shellBox.max[2]],
+      }
+    : null;
   return { kind, statics: lifted(statics.finish()), wheels, wheelRadius: radius / 2, bogie, shell };
 }
 
@@ -335,8 +455,16 @@ export function wagonGeometry(bake) {
  *  WAGONS3 (Mac: "Spawning the wagon can trap you under the wagon"): its front axle, never its pole - a pair's pole runs
  *  on between the two horses to their collars, and a box to its tip stood round the team and the player beside it. */
 function boundsOf(geo) {
-  const min = [Infinity, Infinity, Infinity], max = [-Infinity, -Infinity, -Infinity];
-  const take = (p, at) => { for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) { const v = p[i + k] + at[k]; if (v < min[k]) min[k] = v; if (v > max[k]) max[k] = v; } };
+  const min = [Infinity, Infinity, Infinity],
+    max = [-Infinity, -Infinity, -Infinity];
+  const take = (p, at) => {
+    for (let i = 0; i < p.length; i += 3)
+      for (let k = 0; k < 3; k++) {
+        const v = p[i + k] + at[k];
+        if (v < min[k]) min[k] = v;
+        if (v > max[k]) max[k] = v;
+      }
+  };
   take(geo.statics.positions, [0, 0, 0]);
   if (geo.bogie?.reach) take([...geo.bogie.reach.min, ...geo.bogie.reach.max], [0, 0, 0]);
   for (const w of geo.wheels) take(w.geometry.positions, w.pivot);
@@ -348,7 +476,7 @@ function boundsOf(geo) {
 function fromLevel(kind, p) {
   if (kind !== 'cart') return p;
   const pivotY = MEASURED.cart.axleY - LIFT;
-  const q = quatAngleAxis(CART_REST_PITCH_DEG, [1, 0, 0]);   // nose down by the rest's fall (Unity: +x turns +z down)
+  const q = quatAngleAxis(CART_REST_PITCH_DEG, [1, 0, 0]); // nose down by the rest's fall (Unity: +x turns +z down)
   const r = quatRotate(q, [p[0], p[1] - pivotY, p[2]]);
   return [r[0], r[1] + pivotY, r[2]];
 }
@@ -360,15 +488,26 @@ function fromLevel(kind, p) {
 export function cargoFor(kind) {
   if (kind === 'caravan') return [];
   const m = MEASURED[kind];
-  const floor = m.floorY - LIFT, classicMid = -0.79, classicFloor = -0.0175;
+  const floor = m.floorY - LIFT,
+    classicMid = -0.79,
+    classicFloor = -0.0175;
   const [z0, z1] = kind === 'openWagon' ? [2.1, 4.6] : m.bedZ;
-  const mid = (z0 + z1) / 2, stretch = kind === 'openWagon' ? 1.6 : 1.3;
+  const mid = (z0 + z1) / 2,
+    stretch = kind === 'openWagon' ? 1.6 : 1.3;
   const tilt = kind === 'cart' ? quatAngleAxis(CART_REST_PITCH_DEG, [1, 0, 0]) : null;
-  return CARGO_DEFINITIONS.map((d) => Object.freeze({
-    threshold: d.threshold, modelId: d.modelId, scale: d.scale,
-    position: fromLevel(kind, [d.position[0] * (m.innerX / 0.95), floor + (d.position[1] - classicFloor), mid + (d.position[2] - classicMid) * stretch]),
-    rotation: tilt ? quatMultiply(tilt, d.rotation) : d.rotation,
-  }));
+  return CARGO_DEFINITIONS.map((d) =>
+    Object.freeze({
+      threshold: d.threshold,
+      modelId: d.modelId,
+      scale: d.scale,
+      position: fromLevel(kind, [
+        d.position[0] * (m.innerX / 0.95),
+        floor + (d.position[1] - classicFloor),
+        mid + (d.position[2] - classicMid) * stretch,
+      ]),
+      rotation: tilt ? quatMultiply(tilt, d.rotation) : d.rotation,
+    }),
+  );
 }
 
 /** Where a passenger sits in the open wagon's bed (the lifted frame): `feet` on its floor, `yaw` (degrees, the
@@ -376,8 +515,15 @@ export function cargoFor(kind) {
 export function seatsFor(kind) {
   const n = WAGON_KINDS[kind]?.seats ?? 0;
   if (!n) return [];
-  const m = MEASURED[kind], y = m.floorY - LIFT, x = m.innerX - 0.38;
-  const at = [[-x, 0.1, 90], [x, 0.1, -90], [-x, 1.2, 90], [x, 1.2, -90]];
+  const m = MEASURED[kind],
+    y = m.floorY - LIFT,
+    x = m.innerX - 0.38;
+  const at = [
+    [-x, 0.1, 90],
+    [x, 0.1, -90],
+    [-x, 1.2, 90],
+    [x, 1.2, -90],
+  ];
   return at.slice(0, n).map(([sx, z, yaw]) => Object.freeze({ feet: Object.freeze([sx, y, z]), yaw }));
 }
 
@@ -401,9 +547,13 @@ export function doorFor(kind) {
 export const RIG_READ_M = 4;
 /** WAGONS3: a kind's driven rig, end to end (m): its hitch (`hitch` - the pool's, the classic wagon's 3.1 where it
  *  stands for the kind), a horse's half ahead of it (HORSE_BOX_SIZE's 2.6 m), its rear wheels' radius behind the axle. */
-export const rigLengthOf = (kind, hitch = null) => { const k = WAGON_KINDS[kind] ? kind : 'cart'; return (Number.isFinite(hitch) && hitch > 0 ? hitch : WAGON_KINDS[k].hitch) + 1.3 + (k === 'cart' ? 0.57 : 0.8); };
+export const rigLengthOf = (kind, hitch = null) => {
+  const k = WAGON_KINDS[kind] ? kind : 'cart';
+  return (Number.isFinite(hitch) && hitch > 0 ? hitch : WAGON_KINDS[k].hitch) + 1.3 + (k === 'cart' ? 0.57 : 0.8);
+};
 /** WAGONS3: how many times a driven rig of `kind` (hitched `hitch` m ahead) is drawn under a traveller grown `g` times. */
-export const rigGrowOf = (g, kind, hitch = null) => (g > 1 ? Math.max(1, g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch))) : 1);
+export const rigGrowOf = (g, kind, hitch = null) =>
+  g > 1 ? Math.max(1, g * Math.min(1, RIG_READ_M / rigLengthOf(kind, hitch))) : 1;
 
 /**
  * The parts the cart's presentation draws, from a wagon's geometry (`wagonGeometry`): `make(geometry, name)` turns
@@ -413,53 +563,103 @@ export const rigGrowOf = (g, kind, hitch = null) => (g > 1 ? Math.max(1, g * Mat
  */
 export function buildBakedWagonParts(geo, make = rendererModelOf) {
   // WAGONS2: each wheel rolls on its own radius, and a four-wheeler's front pair turns with its bogie
-  const wheels = geo.wheels.map((w) => ({ role: w.role, model: make(w.geometry, `Wagon_${w.role}`), pivot: w.pivot, radius: w.radius, front: !!geo.bogie && w.role.startsWith('wheelFront') }));
-  const rearLeft = wheels.find((w) => w.role === 'wheelRearLeft'), rearRight = wheels.find((w) => w.role === 'wheelRearRight');
+  const wheels = geo.wheels.map((w) => ({
+    role: w.role,
+    model: make(w.geometry, `Wagon_${w.role}`),
+    pivot: w.pivot,
+    radius: w.radius,
+    front: !!geo.bogie && w.role.startsWith('wheelFront'),
+  }));
+  const rearLeft = wheels.find((w) => w.role === 'wheelRearLeft'),
+    rearRight = wheels.find((w) => w.role === 'wheelRearRight');
   return {
     kind: geo.kind,
-    body: make(geo.statics, `Wagon_${geo.kind}`), shaftLeft: null, shaftRight: null,
-    wheelLeft: rearLeft.model, wheelRight: rearRight.model,
-    wheelLeftPivot: rearLeft.pivot, wheelRightPivot: rearRight.pivot,
-    wheels, wheelRadius: geo.wheelRadius,
+    body: make(geo.statics, `Wagon_${geo.kind}`),
+    shaftLeft: null,
+    shaftRight: null,
+    wheelLeft: rearLeft.model,
+    wheelRight: rearRight.model,
+    wheelLeftPivot: rearLeft.pivot,
+    wheelRightPivot: rearRight.pivot,
+    wheels,
+    wheelRadius: geo.wheelRadius,
     bounds: boundsOf(geo),
     hitchPitch: geo.kind === 'cart' ? CART_REST_PITCH_DEG : 0,
     axlePivot: [0, (rearLeft.pivot[1] + rearRight.pivot[1]) / 2, (rearLeft.pivot[2] + rearRight.pivot[2]) / 2],
-    cargo: cargoFor(geo.kind), seats: seatsFor(geo.kind), door: doorFor(geo.kind), driver: driverSeatFor(geo.kind), traces: traceRootsOf(geo.kind), shell: geo.shell ?? null,   // WAGONS3: the bench's driver, the traces' roots, the body's box (BENCH-CAM: a bench wagon's, the camera's wall and the roof its pivot rises over)
-    bogie: geo.bogie ? { model: make(geo.bogie.geometry, `Wagon_${geo.kind}_bogie`), kingpin: geo.bogie.kingpin, wheelbase: geo.bogie.wheelbase, steerLimit: geo.bogie.steerLimit } : null,   // WAGONS2
+    cargo: cargoFor(geo.kind),
+    seats: seatsFor(geo.kind),
+    door: doorFor(geo.kind),
+    driver: driverSeatFor(geo.kind),
+    traces: traceRootsOf(geo.kind),
+    shell: geo.shell ?? null, // WAGONS3: the bench's driver, the traces' roots, the body's box (BENCH-CAM: a bench wagon's, the camera's wall and the roof its pivot rises over)
+    bogie: geo.bogie
+      ? {
+          model: make(geo.bogie.geometry, `Wagon_${geo.kind}_bogie`),
+          kingpin: geo.bogie.kingpin,
+          wheelbase: geo.bogie.wheelbase,
+          steerLimit: geo.bogie.steerLimit,
+        }
+      : null, // WAGONS2
   };
 }
 
 /** The whole wagon as one model, its wheels in place: the item's picture (ui/modelIcon.js's port door). */
 export function wagonIconModel(geo) {
-  const parts = [geo.statics, ...(geo.bogie ? [geo.bogie.geometry] : []), ...geo.wheels.map((w) => ({ ...w.geometry, positions: w.geometry.positions.map((v, i) => v + w.pivot[i % 3]) }))];
+  const parts = [
+    geo.statics,
+    ...(geo.bogie ? [geo.bogie.geometry] : []),
+    ...geo.wheels.map((w) => ({ ...w.geometry, positions: w.geometry.positions.map((v, i) => v + w.pivot[i % 3]) })),
+  ];
   const groups = new Map();
-  for (const g of parts) g.subMeshes.forEach((sm, k) => {
-    const rec = g.slots[k].record;
-    const out = groups.get(rec) ?? { p: [], n: [], uv: [] };
-    for (let i = sm.startIndex; i < sm.startIndex + sm.primitiveCount * 3; i++) {
-      const v = g.indices[i];
-      out.p.push(g.positions[v * 3], g.positions[v * 3 + 1], g.positions[v * 3 + 2]);
-      out.n.push(g.normals[v * 3], g.normals[v * 3 + 1], g.normals[v * 3 + 2]);
-      out.uv.push(g.uvs[v * 2], g.uvs[v * 2 + 1]);
-    }
-    groups.set(rec, out);
-  });
+  for (const g of parts)
+    g.subMeshes.forEach((sm, k) => {
+      const rec = g.slots[k].record;
+      const out = groups.get(rec) ?? { p: [], n: [], uv: [] };
+      for (let i = sm.startIndex; i < sm.startIndex + sm.primitiveCount * 3; i++) {
+        const v = g.indices[i];
+        out.p.push(g.positions[v * 3], g.positions[v * 3 + 1], g.positions[v * 3 + 2]);
+        out.n.push(g.normals[v * 3], g.normals[v * 3 + 1], g.normals[v * 3 + 2]);
+        out.uv.push(g.uvs[v * 2], g.uvs[v * 2 + 1]);
+      }
+      groups.set(rec, out);
+    });
   const recs = [...groups.keys()].sort((a, b) => a - b);
-  const positions = [], normals = [], uvs = [], indices = [], subMeshes = [];
+  const positions = [],
+    normals = [],
+    uvs = [],
+    indices = [],
+    subMeshes = [];
   for (const rec of recs) {
-    const g = groups.get(rec), start = indices.length, base = positions.length / 3;
-    positions.push(...g.p); normals.push(...g.n); uvs.push(...g.uv);
+    const g = groups.get(rec),
+      start = indices.length,
+      base = positions.length / 3;
+    positions.push(...g.p);
+    normals.push(...g.n);
+    uvs.push(...g.uv);
     for (let i = 0; i < g.p.length / 3; i++) indices.push(base + i);
-    subMeshes.push({ textureArchive: WAGON_ARCHIVE, textureRecord: rec, startIndex: start, primitiveCount: (indices.length - start) / 3 });
+    subMeshes.push({
+      textureArchive: WAGON_ARCHIVE,
+      textureRecord: rec,
+      startIndex: start,
+      primitiveCount: (indices.length - start) / 3,
+    });
   }
-  return { positions: Float32Array.from(positions), normals: Float32Array.from(normals), uvs: Float32Array.from(uvs), indices: Uint32Array.from(indices), subMeshes, doors: [] };
+  return {
+    positions: Float32Array.from(positions),
+    normals: Float32Array.from(normals),
+    uvs: Float32Array.from(uvs),
+    indices: Uint32Array.from(indices),
+    subMeshes,
+    doors: [],
+  };
 }
 
 /** A built wagon's static mesh as a world point: `p` in the lifted frame under the cart's hitched tilt (`pitch`
  *  degrees nose up about its axle, 0 for any other) - what a seat or a door is drawn and stood at. */
 export function pitchedPoint(parts, p, pitch) {
   if (!pitch) return p;
-  const a = parts.axlePivot, q = quatAngleAxis(-pitch, [1, 0, 0]);
+  const a = parts.axlePivot,
+    q = quatAngleAxis(-pitch, [1, 0, 0]);
   const r = quatRotate(q, sub(p, a));
   return add(r, a);
 }
@@ -472,11 +672,18 @@ export function wagonPoolDeps(items, fetchFn = (u) => globalThis.fetch(u)) {
   const loads = new Map();
   return {
     wagonKind: () => activeWagonKind(items()) ?? 'cart',
-    wagonLook: () => wagonLookOf(activeWagonItem(items())),   // WAGONS2: the driven wagon's paint
-    horseLook: () => riddenHorseLook(items()),   // COATS1: and the horse's look
-    horses3d: () => mwViewHorseRig(),   // COATS3D: on the Morrowind lane, every horse the pool stands is the 3D horse
+    wagonLook: () => wagonLookOf(activeWagonItem(items())), // WAGONS2: the driven wagon's paint
+    horseLook: () => riddenHorseLook(items()), // COATS1: and the horse's look
+    horses3d: () => mwViewHorseRig(), // COATS3D: on the Morrowind lane, every horse the pool stands is the 3D horse
     bakedWagon: (kind) => {
-      if (!loads.has(kind)) loads.set(kind, Promise.resolve(fetchFn(WAGON_MODEL_URLS[kind])).then((r) => { if (!r?.ok) throw new Error(`HTTP ${r?.status}`); return r.json(); }));
+      if (!loads.has(kind))
+        loads.set(
+          kind,
+          Promise.resolve(fetchFn(WAGON_MODEL_URLS[kind])).then((r) => {
+            if (!r?.ok) throw new Error(`HTTP ${r?.status}`);
+            return r.json();
+          }),
+        );
       return loads.get(kind);
     },
   };
@@ -489,7 +696,12 @@ export async function wagonIconSource(kind, fetchFn = (u) => globalThis.fetch(u)
   const r = await fetchFn(WAGON_MODEL_URLS[kind]);
   if (!r?.ok) throw new Error(`the ${kind}'s model: HTTP ${r?.status}`);
   const model = wagonIconModel(wagonGeometry(await r.json()));
-  await studioLanded();   // STUDIO1: the icon is drawn once - in the studio's pictures where an artist drew them
-  const pics = new Map(wagonArt().map(([rec, pic]) => [rec, paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))]));
-  return { model, texels: (arc, rec) => (arc === WAGON_ARCHIVE ? pics.get(rec) ?? null : null) };
+  await studioLanded(); // STUDIO1: the icon is drawn once - in the studio's pictures where an artist drew them
+  const pics = new Map(
+    wagonArt().map(([rec, pic]) => [
+      rec,
+      paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec))),
+    ]),
+  );
+  return { model, texels: (arc, rec) => (arc === WAGON_ARCHIVE ? (pics.get(rec) ?? null) : null) };
 }

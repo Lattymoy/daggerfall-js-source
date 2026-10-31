@@ -690,8 +690,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-meanwhile-never-asked",
     "file": "src/world/texRemap.js",
-    "old": "        if (had?.has(subMeshes)) continue;\n        owed = true;",
-    "new": "        if (next || had?.has(subMeshes)) continue;\n        owed = true;",
+    "old": "        if (had?.has(subMeshes)) continue;",
+    "new": "        if (next || had?.has(subMeshes)) continue;",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]
@@ -699,8 +699,8 @@
   {
     "name": "AUDIT-PRECIP-HOST-7-the-recipe-unkept",
     "file": "src/world/texRemap.js",
-    "old": "    asked.add(subMeshes);",
-    "new": "",
+    "old": "    asked.add(subMeshes);\n  }",
+    "new": "  }",
     "tests": [
       "test/scenes/audit_precip_host7.test.js"
     ]

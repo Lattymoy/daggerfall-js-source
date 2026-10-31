@@ -71,7 +71,9 @@ let activeLightCurve = LIGHT_CURVE;
 export function setLightCurve(keys) {
   activeLightCurve = keys && keys.length ? keys : LIGHT_CURVE;
 }
-export function activeLightCurveKeys() { return activeLightCurve; }
+export function activeLightCurveKeys() {
+  return activeLightCurve;
+}
 
 /** Unity AnimationCurve.Evaluate: cubic Hermite between keys, clamped. */
 export function evaluateCurve(keys, t) {
@@ -227,8 +229,7 @@ export class CityLightAnimator {
             if (this.ranges[i] >= this._targets[i]) this._stepping[i] = 0;
           }
         } else {
-          this._targets[i] =
-            this._starts[i] - this.variance + this._rng.nextFloat() * this.variance;
+          this._targets[i] = this._starts[i] - this.variance + this._rng.nextFloat() * this.variance;
           this._stepping[i] = 1;
         }
       }
@@ -243,6 +244,7 @@ export class CityLightAnimator {
  *  a clear sun against the weather-dimmed one the street was kept at, brightened the air with no minute gone. Both
  *  terms 1 on a clear day; the moon's ambient is the host's (withMoonAmbient). */
 export function viewOutLight(minute, nightScale, weatherSun = 1, sunFactor = 1) {
-  const w = Number.isFinite(weatherSun) ? Math.max(0, weatherSun) : 1, c = Number.isFinite(sunFactor) ? Math.max(0, sunFactor) : 1;
+  const w = Number.isFinite(weatherSun) ? Math.max(0, weatherSun) : 1,
+    c = Number.isFinite(sunFactor) ? Math.max(0, sunFactor) : 1;
   return { ambient: exteriorAmbient(minute, nightScale, w), sun: sunScale(minute) * w * c };
 }

@@ -83,7 +83,7 @@
   {
     "name": "MWNPC13-roads-veiled-unforwarded",
     "file": "src/world/travellerSprites.js",
-    "old": "    drawVeiledBodies() { bodiesLane.drawVeiled(); },",
+    "old": "    drawVeiledBodies() {\n      bodiesLane.drawVeiled();\n    },",
     "new": "    drawVeiledBodies() {},",
     "tests": [
       "test/characters/mwnpc13_spectral.test.js"

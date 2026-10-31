@@ -254,8 +254,8 @@
   {
     "name": "CSA-G-events-zero-weight",
     "file": "src/world/unityAnimator.js",
-    "old": "    node0.children.forEach((c, k) => { if (tw[k] > 0) leafClips(m, c, w * tw[k], out); });",
-    "new": "    node0.children.forEach((c, k) => { leafClips(m, c, w * tw[k], out); });",
+    "old": "      if (tw[k] > 0) leafClips(m, c, w * tw[k], out);",
+    "new": "      leafClips(m, c, w * tw[k], out);",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]
@@ -281,8 +281,8 @@
   {
     "name": "CSA-G-events-first-receiver",
     "file": "src/world/unityAnimator.js",
-    "old": "    for (const { ev } of crossed) for (const comp of a.node.components ?? []) if (typeof comp?.[ev.functionName] === 'function') comp[ev.functionName](ev);",
-    "new": "    for (const { ev } of crossed) { const comp = (a.node.components ?? []).find((c) => typeof c?.[ev.functionName] === 'function'); comp?.[ev.functionName](ev); }",
+    "old": "    for (const { ev } of crossed)\n      for (const comp of a.node.components ?? [])\n        if (typeof comp?.[ev.functionName] === 'function') comp[ev.functionName](ev);",
+    "new": "    for (const { ev } of crossed) {\n      const comp = (a.node.components ?? []).find((c) => typeof c?.[ev.functionName] === 'function');\n      comp?.[ev.functionName](ev);\n    }",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]
@@ -299,8 +299,8 @@
   {
     "name": "CSA-G-events-fresh-kept",
     "file": "src/world/unityAnimator.js",
-    "old": "    entry.fresh = false;\n",
-    "new": "",
+    "old": "    entry.fresh = false;\n    for (const { ev } of crossed)",
+    "new": "    for (const { ev } of crossed)",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "CSA-G-delay-unread",
     "file": "src/world/unityParticles.js",
-    "old": "this._delay = Math.max(0, evaluateMinMax(this.main.startDelay, 0, random())); }",
-    "new": "this._delay = 0; }",
+    "old": "        this._delay = Math.max(0, evaluateMinMax(this.main.startDelay, 0, random()));",
+    "new": "        this._delay = 0;",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]
@@ -317,8 +317,8 @@
   {
     "name": "CSA-G-delay-clock-runs",
     "file": "src/world/unityParticles.js",
-    "old": "    ps._delay -= waited;\n    dt -= waited;",
-    "new": "    ps._delay -= waited;",
+    "old": "    dt -= waited;\n    if (!(dt > 0)) {",
+    "new": "    if (!(dt > 0)) {",
     "tests": [
       "test/systems/comeSailAway/csa_time_audio.test.js"
     ]

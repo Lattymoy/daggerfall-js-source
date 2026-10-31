@@ -274,8 +274,8 @@
   {
     "name": "SR-FESTIVAL-one-floor",
     "file": "src/world/witchesDecor.js",
-    "old": "floor = floorAt ?? (() => floorY)",
-    "new": "floor = (() => floorY)",
+    "old": "  const floor = floorAt ?? (() => floorY);",
+    "new": "  const floor = () => floorY;",
     "tests": [
       "test/world/solitude_relief.test.js"
     ]

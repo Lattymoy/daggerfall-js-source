@@ -110,8 +110,8 @@
   {
     "name": "DFLOOK-the-hangings-painted",
     "file": "src/world/townPictures.js",
-    "old": "    build: async () => dfLook(await p.draw(), lookSeed(TOWN_PICTURE_ARCHIVE, record)),",
-    "new": "    build: async () => (void dfLook, void lookSeed, p.draw()),",
+    "old": "    build: async () => dfLook(await p.draw(), lookSeed(TOWN_PICTURE_ARCHIVE, record)), // DF-LOOK: in Daggerfall's colours",
+    "new": "    build: async () => (void dfLook, void lookSeed, p.draw()), // DF-LOOK: in Daggerfall's colours",
     "tests": [
       "test/world/dflook.test.js"
     ]
@@ -146,8 +146,8 @@
   {
     "name": "DFLOOK-the-icon-painted",
     "file": "src/world/wagonModels.js",
-    "old": "toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec)))",
-    "new": "toColor32((void dfLook, void lookSeed, pic))",
+    "old": "      paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec))),",
+    "new": "      paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32((void dfLook, void lookSeed, pic)),",
     "tests": [
       "test/world/dflook.test.js"
     ]

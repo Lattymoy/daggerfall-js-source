@@ -2,8 +2,8 @@
   {
     "name": "STALL-SHAPE-counter-low",
     "file": "src/world/townStandIns.js",
-    "old": "z: Object.freeze([-1.792, 1.708]), top: 1.388 }),",
-    "new": "z: Object.freeze([-1.792, 1.708]), top: 1.0 }),",
+    "old": "  counter: Object.freeze({ x: Object.freeze([-1.07, 0.4]), z: Object.freeze([-1.792, 1.708]), top: 1.388 }),",
+    "new": "  counter: Object.freeze({ x: Object.freeze([-1.07, 0.4]), z: Object.freeze([-1.792, 1.708]), top: 1.0 }),",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],
@@ -12,8 +12,8 @@
   {
     "name": "STALL-SHAPE-counter-narrow",
     "file": "src/world/townStandIns.js",
-    "old": "counter: Object.freeze({ x: Object.freeze([-1.07, 0.4]),",
-    "new": "counter: Object.freeze({ x: Object.freeze([-0.25, 0.4]),",
+    "old": "  counter: Object.freeze({ x: Object.freeze([-1.07, 0.4]), z: Object.freeze([-1.792, 1.708]), top: 1.388 }),",
+    "new": "  counter: Object.freeze({ x: Object.freeze([-0.25, 0.4]), z: Object.freeze([-1.792, 1.708]), top: 1.388 }),",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],
@@ -22,8 +22,8 @@
   {
     "name": "STALL-SHAPE-the-bench-back",
     "file": "src/world/townStandIns.js",
-    "old": "  if (!open) block(STALL_WOOD, F.counter.x, [0, F.counter.top], F.counter.z);",
-    "new": "  if (!open) block(STALL_WOOD, F.counter.x, [0, F.counter.top], F.counter.z);\n  block(STALL_WOOD, [-2.65, -1.85], [0, 0.7], [-2.28, 2.2]);",
+    "old": "  const built = m.build();",
+    "new": "  block(STALL_WOOD, [-2.65, -1.85], [0, 0.7], [-2.28, 2.2]);\n  const built = m.build();",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "STALL-SHAPE-every-stall-a-counter",
     "file": "src/world/townStandIns.js",
-    "old": "() => stall(cloth, Number(id) >= RMBRP_STALL_OPEN_FIRST)",
-    "new": "() => stall(cloth, false)",
+    "old": "  ...Object.fromEntries(\n    Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth, Number(id) >= RMBRP_STALL_OPEN_FIRST)]),\n  ), // STALL-SHAPE: the pack's two meshes",
+    "new": "  ...Object.fromEntries(Object.entries(RMBRP_STALLS).map(([id, cloth]) => [id, () => stall(cloth, false)])), // STALL-SHAPE: the pack's two meshes",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "STALL-SHAPE-the-open-stall-a-counter",
     "file": "src/world/townStandIns.js",
-    "old": "  if (!open) block(STALL_WOOD, F.counter.x",
-    "new": "  if (open || !open) block(STALL_WOOD, F.counter.x",
+    "old": "  if (!open) block(STALL_WOOD, F.counter.x, [0, F.counter.top], F.counter.z);",
+    "new": "  if (open || !open) block(STALL_WOOD, F.counter.x, [0, F.counter.top], F.counter.z);",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "STALL-SHAPE-the-front-posts-low",
     "file": "src/world/townStandIns.js",
-    "old": "tops: Object.freeze([4.4, 3.638]),",
-    "new": "tops: Object.freeze([4.4, 2.5]),",
+    "old": "  tops: Object.freeze([4.4, 3.638]),",
+    "new": "  tops: Object.freeze([4.4, 2.5]),",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "STALL-SHAPE-the-lintel-low",
     "file": "src/world/townStandIns.js",
-    "old": "lintel: Object.freeze([3.01, 3.388]), valance: 0.5,",
-    "new": "lintel: Object.freeze([2.45, 3.388]), valance: 0.5,",
+    "old": "  lintel: Object.freeze([3.01, 3.388]),",
+    "new": "  lintel: Object.freeze([2.45, 3.388]),",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "STALL-SHAPE-the-valance-deep",
     "file": "src/world/townStandIns.js",
-    "old": "lintel: Object.freeze([3.01, 3.388]), valance: 0.5,",
-    "new": "lintel: Object.freeze([3.01, 3.388]), valance: 1.2,",
+    "old": "  valance: 0.5,",
+    "new": "  valance: 1.2,",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "STALL-SHAPE-the-awning-low",
     "file": "src/world/townStandIns.js",
-    "old": "Y(F.beam[1]), Y(F.lintel[1])], run = Math.hypot(fx - bx, fy - by);",
-    "new": "Y(F.beam[1]), Y(F.lintel[0])], run = Math.hypot(fx - bx, fy - by);",
+    "old": "  const [bx, fx, by, fy] = [X(F.back[1]), X(F.front[0]), Y(F.beam[1]), Y(F.lintel[1])],",
+    "new": "  const [bx, fx, by, fy] = [X(F.back[1]), X(F.front[0]), Y(F.beam[1]), Y(F.lintel[0])],",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ],

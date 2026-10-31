@@ -742,7 +742,7 @@ main's walls):
 - **What it lays.** A tile already a road - the painter's, the town's paving - is kept as it lies; every tile laid is the
   road's record and the paths hold it (GRASS-PATH1: the grass, the woods and a town's yards keep off it; its walkers take it
   as a road, TS10).
-- **The gates handed on** (`townGates.js:"export function townGateRoads(dfLocation, mapsFile, blocksFile) {"`): the
+- **The gates handed on** (`townGates.js:"export function townGateRoads"`): the
   pixel's build gives the kernel each gate's opening in the pixel's tiles with its outward normal and its half width, and
   the tiles a road may not cross - a wall on its outline its own gates and cells, a kept ring its blocks' gate models
   (WALL_MODELS.gate, turned by their subrecord and their own turn). A capital lays its own approaches (ROAD-FOLLOW); a wall

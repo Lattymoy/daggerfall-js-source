@@ -115,7 +115,7 @@
     "name": "AWD3-FOUNDATION-CENTRED",
     "file": "src/world/townStandIns.js",
     "old": "const foundation = rmbrpBlock(53170, [317, 0]);",
-    "new": "const foundation = () => { const m = new MeshBuilder(); m.box([317, 0], [0, -2.4, 0], [16, 8, 16], 0.5); return m.build(); };",
+    "new": "const foundation = () => {\n  const m = new MeshBuilder();\n  m.box([317, 0], [0, -2.4, 0], [16, 8, 16], 0.5);\n  return m.build();\n};",
     "tests": [
       "test/world/wd3_standins.test.js"
     ],

@@ -114,8 +114,8 @@
   {
     "name": "TESA15-the-places-unposted",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": "layer, places: placed, land, stats: out.stats",
-    "new": "layer, land, stats: out.stats",
+    "old": "        msg: {\n          t: 'region',\n          id: m.id,\n          i: m.i,\n          j: m.j,\n          layer,\n          places: placed,\n          land,\n          stats: out.stats,\n          ms: Date.now() - t0,\n        },",
+    "new": "        msg: { t: 'region', id: m.id, i: m.i, j: m.j, layer, land, stats: out.stats, ms: Date.now() - t0 },",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -124,8 +124,8 @@
   {
     "name": "TESA15-the-worker-blind-to-the-held",
     "file": "src/world/tamrielRoadsWorker.js",
-    "old": "held: inputs.held ?? [],",
-    "new": "held: [],",
+    "old": "        held: inputs.held ?? [],",
+    "new": "        held: [],",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -134,8 +134,8 @@
   {
     "name": "TESA15-the-cache-s-places-dropped",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "{ cached: true }, unpackPastBayPlaces(hit.places), hit.land ?? null);",
-    "new": "{ cached: true }, [], hit.land ?? null);",
+    "old": "      live.onRegion(\n        region,\n        unpackArenaRoads(hit.layer),\n        { cached: true },\n        unpackPastBayPlaces(hit.places),\n        hit.land ?? null,\n      );",
+    "new": "      live.onRegion(region, unpackArenaRoads(hit.layer), { cached: true }, [], hit.land ?? null);",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"
@@ -144,8 +144,8 @@
   {
     "name": "TESA15-the-answer-s-places-dropped",
     "file": "src/world/tamrielRoadsClient.js",
-    "old": "places = unpackPastBayPlaces(m.places);",
-    "new": "places = [];",
+    "old": "      places = unpackPastBayPlaces(m.places);",
+    "new": "      places = [];",
     "tests": [
       "test/tesa15_mapfidelity.test.js",
       "test/tesa14_roads.test.js"

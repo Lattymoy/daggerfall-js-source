@@ -29,8 +29,8 @@
   {
     "name": "TDEEP-bay-its-own",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "  inFrame(px, py) { return inFrame(this.frame, px, py) && !inBay(px, py); }",
-    "new": "  inFrame(px, py) { return inFrame(this.frame, px, py); }",
+    "old": "    return inFrame(this.frame, px, py) && !inBay(px, py);",
+    "new": "    return inFrame(this.frame, px, py);",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "TDEEP-class-kept-off-frame",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "    const cls = (x, y) => (this.inFrame(x, y) ? this._class(this._index(x, y), x, y) : classifyPixel(this.woods, x, y));",
-    "new": "    const cls = (x, y) => this._class(this._index(x, y), x, y);",
+    "old": "    const cls = (x, y) => (this.inFrame(x, y) ? this._class(this._index(x, y), x, y) : classifyPixel(this.woods, x, y)); // past the frame or on the Bay: asked, never kept by another pixel's slot",
+    "new": "    const cls = (x, y) => this._class(this._index(x, y), x, y); // past the frame or on the Bay: asked, never kept by another pixel's slot",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "TDEEP-bay-sea-its-own",
     "file": "src/world/tamrielWatersBake.js",
-    "old": "    if (inBay(px, py)) return this.bay?.seaBits(px, py) ?? null;\n",
-    "new": "",
+    "old": "    if (inBay(px, py)) return this.bay?.seaBits(px, py) ?? null;\n    if (!this.inFrame(px, py)) return null;",
+    "new": "    if (!this.inFrame(px, py)) return null;",
     "tests": [
       "test/world/deepWater/tamriel_deep.test.js"
     ]
