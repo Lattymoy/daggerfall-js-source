@@ -26,7 +26,7 @@ export function gen2Install(bakes, fit) {
         console.warn(`[wg2] ${d.header.id} was baked on another fit; the world's own ground stands there`);
         continue;
       }
-      if (_regions.some((r) => overlaps(r.rect, d.header.rect))) { console.warn(`[wg2] ${d.header.id} overlaps a region; left out`); continue; }
+      if (_regions.some((r) => overlaps(r.rect, d.header.rect) && !(r.tiling && r.tiling === d.header.tiling && overlaps(r.header.core, d.header.core) === false))) { console.warn(`[wg2] ${d.header.id} overlaps a region; left out`); continue; }   // tiles of one tiling overlap in their bands alone
       _regions.push(regionSampler(d));
       _bytes.push(b);
     } catch (e) { console.warn('[wg2] a bake failed to read:', /** @type {Error} */ (e)?.message ?? e); }
@@ -42,41 +42,51 @@ export const gen2Shipped = () => _bytes.map((b) => b.slice());
 /** What the installed regions are, for a cache's key: '' for none. */
 export const gen2Stamp = () => _stamp;
 
-/** The region whose rectangle holds a world point, or null. @param {number} x @param {number} y */
+/** The region whose rectangle holds a world point and whose share there is the greatest, or null. @param {number} x @param {number} y */
 export function gen2At(x, y) {
-  for (let i = 0; i < _regions.length; i++) if (_regions[i].owns(x, y)) return _regions[i];
-  return null;
+  let best = null, bw = 0;
+  for (let i = 0; i < _regions.length; i++) { const r = _regions[i]; if (!r.owns(x, y)) continue; const w = r.weight(x, y); if (!best || w > bw) { best = r; bw = w; } }
+  return best;
 }
 /** Does any region reach a world pixel (its square)? @param {number} px @param {number} py */
 export function gen2Touches(px, py) {
   for (const r of _regions) if (overlaps(r.rect, { x: px, y: py, w: 1, h: 1 })) return true;
   return false;
 }
+/** The world's own `law` with every region's value `of(r)` laid over it by its share - a lone region eased in across its
+ *  band, tiles of one tiling crossfaded where they overlap (their shares sum to 1 there). undefined where none reaches. */
+function blended(x, y, law, of) {
+  let sum = 0, share = 0;
+  for (let i = 0; i < _regions.length; i++) {
+    const r = _regions[i];
+    if (!r.owns(x, y)) continue;
+    const w = r.weight(x, y);
+    if (w > 0) { sum += w * of(r); share += w; }
+  }
+  if (share <= 0) return undefined;
+  return share >= 1 ? sum / share : law * (1 - share) + sum;
+}
 
-/** A pixel's WOODS byte: the region's, eased from the world's own (`law`) across its edge band; undefined outside.
+/** A pixel's WOODS byte: the regions', eased from the world's own (`law`) across their bands; undefined outside.
  *  @param {number} px @param {number} py @param {number} law */
 export function gen2Byte(px, py, law) {
   if (!_regions.length) return undefined;
-  const r = gen2At(px + 0.5, py + 0.5);
-  if (!r) return undefined;
-  const b = /** @type {number} */ (r.byteAt(px, py)), w = r.weight(px + 0.5, py + 0.5);
-  return w >= 1 ? b : Math.round(law + (b - law) * w);
+  const v = blended(px + 0.5, py + 0.5, law, (r) => /** @type {number} */ (r.byteAt(px, py)));
+  return v === undefined ? undefined : Math.round(v);
 }
-/** A pixel's climate where the region holds at least half of it; undefined else. @param {number} px @param {number} py */
+/** The regions' summed share of the ground at a world point. @param {number} x @param {number} y */
+const shareAt = (x, y) => { let s = 0; for (const r of _regions) if (r.owns(x, y)) s += r.weight(x, y); return s; };
+/** A pixel's climate where the regions hold at least half of it (the greatest share's); undefined else. @param {number} px @param {number} py */
 export function gen2Climate(px, py) {
   if (!_regions.length) return undefined;
   const r = gen2At(px + 0.5, py + 0.5);
-  return r && r.weight(px + 0.5, py + 0.5) >= 0.5 ? r.climateAt(px, py) : undefined;
+  return r && shareAt(px + 0.5, py + 0.5) >= 0.5 ? r.climateAt(px, py) : undefined;
 }
-/** The kernel's height (its units) at a world point, eased from the world's own `law` across the edge band; undefined
- *  outside every region. @param {number} x @param {number} y @param {number} law */
+/** The kernel's height (its units) at a world point, eased from the world's own `law`; undefined outside every region.
+ *  @param {number} x @param {number} y @param {number} law */
 export function gen2Units(x, y, law) {
-  const r = gen2At(x, y);
-  if (!r) return undefined;
-  const w = r.weight(x, y);
-  if (w <= 0) return undefined;
-  const g = kernelUnits(r.heightAt(x, y));
-  return w >= 1 ? g : law + (g - law) * w;
+  if (!_regions.length) return undefined;
+  return blended(x, y, law, (r) => kernelUnits(r.heightAt(x, y)));
 }
 
 /**
@@ -94,7 +104,7 @@ export function paintGen2Waters(tileData, px, py, rect, tdDim, paths, water) {
     if (rect && x > rect.xMin && x < rect.xMax && y > rect.yMin && y < rect.yMax) continue;
     if (paths && pathAt(paths, x, y, span)) continue;
     const wx = px + x / span, wy = py + 1 - y / span, r = gen2At(wx, wy);
-    if (!r || r.weight(wx, wy) < 1 || !r.waterAt(wx, wy)) continue;
+    if (!r || r.weight(wx, wy) < 0.5 || shareAt(wx, wy) < 0.999 || !r.waterAt(wx, wy)) continue;   // the greatest share's water, where the regions hold the whole ground
     tileData[y * tdDim + x] = water; n++;
   }
   return n;

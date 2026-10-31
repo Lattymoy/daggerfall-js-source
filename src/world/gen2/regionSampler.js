@@ -12,7 +12,8 @@ import { SCALED_OCEAN_ELEVATION, STREAMING_TERRAIN_SCALE } from '../terrain/terr
 
 /** Metres a world pixel. */
 export const PIXEL_M = 819.2;
-/** The band inside a region's edge over which its ground eases in from the world's, world pixels. */
+/** The band inside a lone region's edge over which its ground eases in from the world's, world pixels (a tile's band is
+ *  twice its tiling's overlap, tiling.js). */
 export const BLEND_PX = 8;
 /** The grain each biome's surface carries, metres (data/biomes.json's order), and the steep ground's extra a unit of slope. */
 const GRAIN_M = [0, 1.5, 4, 2.5, 2, 3, 4, 3, 3, 0.5, 0.6, 9, 6, 5, 1.5, 1, 1.2, 0.2, 3];
@@ -112,14 +113,15 @@ export function regionSampler(bake, o = {}) {
     return h;
   };
   const api = {
-    id: header.id, rect, print: bake.print, header, fields, towns: header.towns ?? [],
+    id: header.id, rect, print: bake.print, header, fields, towns: header.towns ?? [], tiling: header.tiling ?? null,
     /** Is a world point in the region? */
     owns: inside,
     /** The share of the region's ground at a point: 0 at its edge and outside, 1 past BLEND_PX inside. */
     weight(x, y) {
       if (!inside(x, y)) return 0;
-      const e = Math.min(x - rect.x, y - rect.y, rect.x + rect.w - x, rect.y + rect.h - y);
-      return smoothstep(0, BLEND_PX, e);
+      // a product of the two axes' eases over 2 x `blend` from the edge: tiles of one tiling sum to 1 where they overlap
+      const band = 2 * (header.blend ?? BLEND_PX / 2);
+      return smoothstep(0, band, Math.min(x - rect.x, rect.x + rect.w - x)) * smoothstep(0, band, Math.min(y - rect.y, rect.y + rect.h - y));
     },
     /** The ground's height at a world point, metres over the sea: the land, carved by any channel it lies in. */
     heightAt(x, y) {

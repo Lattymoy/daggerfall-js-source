@@ -40,6 +40,7 @@ export function encodeBake(bake) {
   const { spec } = bake, w = spec.rect.w * spec.res, h = spec.rect.h * spec.res;
   const header = {
     format: BAKE_FORMAT, id: spec.id, rect: spec.rect, res: spec.res, seed: spec.seed, fit: spec.fit, generator: bake.generator, stages: bake.stages,
+    ...(spec.tiling ? { tiling: spec.tiling, blend: spec.blend, core: spec.core } : {}),
     canon: bake.canon ?? null, planes: PLANES.map((p) => p.name),
     rivers: bake.rivers.map((r) => ({ id: r.id, order: r.order, into: r.into, raw: r.raw.map((p) => [q(p.x, 1024), q(p.y, 1024), q(p.q, 1000), q(p.s, 100)]) })),
     lakes: bake.lakes.map((l) => ({ id: l.id, kind: l.kind, level: q(l.level, 100), cells: l.cells, x: q(l.x, 64), y: q(l.y, 64), inflow: q(l.inflow, 1000) })),

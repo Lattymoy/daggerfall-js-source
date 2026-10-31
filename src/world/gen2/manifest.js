@@ -14,7 +14,7 @@ export const BAY_REACH = 14;
 const VERSION = /^[a-z]+\d*-\d+$/;
 
 /** @typedef {{ id: string, rect: { x: number, y: number, w: number, h: number }, bake: string, print: string, generator: string,
- *   revision: number, migration?: { by: string, quote: string, date: string } }} PublishedRegion */
+ *   revision: number, migration?: { by: string, quote: string, date: string }, tiling?: string, core?: { x: number, y: number, w: number, h: number } }} PublishedRegion */
 /** @typedef {typeof MANIFEST & { published: PublishedRegion[] }} Manifest */
 
 /** The game's manifest. @returns {Manifest} */
@@ -41,7 +41,9 @@ export function manifestProblems(m) {
     if (!GENERATORS.includes(r?.generator)) out.push(`${at}: generator`);
     if (!(Number.isSafeInteger(r?.revision) && r.revision >= 1)) out.push(`${at}: revision`);
     if (typeof r?.bake !== 'string' || !/^[a-z0-9-]+\.wg2$/.test(r.bake)) out.push(`${at}: bake`);
-    pub.slice(0, i).forEach((o) => { if (o?.rect && R && overlap(o.rect, R)) out.push(`${at}: overlaps ${o.id}`); });
+    if (r?.tiling !== undefined && !(typeof r.tiling === 'string' && r.core && [r.core.x, r.core.y, r.core.w, r.core.h].every(Number.isSafeInteger))) out.push(`${at}: tiling`);
+    // tiles of one tiling overlap in their bands alone; anything else overlapping is refused
+    pub.slice(0, i).forEach((o) => { if (o?.rect && R && overlap(o.rect, R) && !(o.tiling && o.tiling === r.tiling && !overlap(o.core, r.core))) out.push(`${at}: overlaps ${o.id}`); });
   });
   return out;
 }
