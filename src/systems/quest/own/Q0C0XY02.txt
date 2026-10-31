@@ -1,0 +1,158 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C0XY02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0X
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: Q0C0XY02
+DisplayName: A Treacherous Gift
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You want to help ==qgiver_, %pcf? Plenty
+<ce> of folk take our help, then turn on us
+<ce> once they have it. Will you punish one
+<ce> such traitor for the sisterhood?
+
+RefuseQuest:  [1001]
+<ce> Not even that? %oth. By ==daedra_,
+<ce> better no promise than a broken
+<ce> one, I suppose. Still, I am hurt.
+
+AcceptQuest:  [1002]
+<ce> Do this and a fine _mitem_ is yours.
+<ce> Find that faithless =man_, _man_, in
+<ce> __tavern_. Give %g2 this _jewelry_ from
+<ce> an old lover. It makes %g3 face match
+<ce> %g3 heart. Return in =queston_ days to
+<ce> ==qgiver_, with ==daedra_'s blessing.
+
+QuestComplete:  [1004]
+<ce> Your promise to ==qgiver_ is kept,
+<ce> %pcf. Here is your _mitem_. Poor
+<ce> _man_. Whoever finds %g2 now will
+<ce> not be kind, and %g knows it.
+
+RumorsDuringQuest:  [1005]
+_man_ is the kind of =man_ who thinks the world owes him.
+<--->
+Cross ==qgiver_ and you will regret it. They never forget.
+
+RumorsPostfailure:  [1006]
+_man_ boasts that %g fooled ==qgiver_ and got away with it.
+<--->
+_man_ is gone from __tavern_, and
+%g left a lot of debts behind.
+
+RumorsPostsuccess:  [1007]
+Did you hear? At _tavern_, _man_
+grew claws in the middle of supper.
+<--->
+%oth! Whatever _man_ did, nobody
+deserves to end up like that.
+
+QuestorPostsuccess:  [1008]
+Does the _mitem_ serve you well, %pcf?
+
+QuestorPostfailure:  [1009]
+<ce> Our revenge on _man_ is not
+<ce> finished! Get out, or %g3
+<ce> fate becomes yours, %pcf.
+
+Message:  1011
+<ce> _man_ takes the _jewelry_ gladly. %G
+<ce> puts it on as you tell %g2 who sent
+<ce> it. %G3 face goes white at the name
+<ce> ==qgiver_. Then the pain begins.
+
+Message:  1012
+<ce> You killed _man_? You were to
+<ce> give %g2 the _jewelry_, nothing
+<ce> more! Fool! %G3 suffering was the
+<ce> point. ==daedra_ curse you, %pcf.
+
+Message:  1020
+%qdt:
+ ==qgiver_ of %reg sent me to give
+ a _jewelry_ to _man_, a =man_ in
+ __tavern_. I must hurry, for it
+ will make %g3 face as ugly as %g3
+ heart. Then back to ==qgiver_
+ within =queston_ days.
+
+
+QBN:
+Item _jewelry_ trinket
+Item _mitem_ magic_item
+
+Person _qgiver_ group Questor
+Person _daedra_ face 1 factiontype Daedra remote
+Person _man_ faction Dancers male remote
+--Group 7.0 wouldn't work, needed a local site. Dancers is sufficient for the quest
+
+Place _tavern_ remote tavern
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _zombie_ is Zombie
+Foe _harpy_ is Harpy
+Foe _daedroth_ is Daedroth
+Foe _giant_ is Giant
+
+--	Quest start-up:
+	dialog link for person _daedra_ 
+	start timer _queston_ 
+	log 1020 step 0 
+	get item _jewelry_ 
+	place npc _man_ at _tavern_ 
+
+_queston_ task:
+	end quest 
+
+_S.01_ task:
+	toting _jewelry_ and _man_ clicked 
+	pick one of _S.04_ _S.02_ _S.03_ _S.05_ 
+	hide npc _man_ 
+	say 1011 
+
+_S.02_ task:
+	place foe _giant_ at _tavern_ 
+
+_S.03_ task:
+	place foe _harpy_ at _tavern_ 
+
+_S.04_ task:
+	place foe _daedroth_ at _tavern_ 
+
+_S.05_ task:
+	place foe _zombie_ at _tavern_ 
+
+_S.06_ task:
+	killed 1 _giant_ 
+	killed 1 _harpy_ 
+	killed 1 _zombie_ 
+	killed 1 _daedroth_ 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_S.08_ task:
+	when _qgclicked_ and _S.06_ 
+	say 1012
+	--this was 1020, could not be correct. changed to 1012.
+	change repute with _man_ by -15 
+	make pc ill with Witches'_Pox 
+	end quest 
+
+_reward_ task:
+	when _qgclicked_ and _S.01_ and not _S.06_ 
+	give pc _mitem_ 
+	end quest 
+
+_S.10_ task:
+	when _qgclicked_ and not _S.01_ 
+	clear _qgclicked_ _S.10_

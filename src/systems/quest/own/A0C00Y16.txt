@@ -1,0 +1,291 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C00Y16.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 16
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 55
+Quest: A0C00Y16
+DisplayName: Missing Person Case
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _questgiver_, and my friend is
+<ce> missing. Will you look for them?
+<ce> _gold_ gold is all I can pay.
+<--->
+<ce> _missingperson_ has vanished, and I
+<ce> fear %g is hurt. Please, will you help?
+<ce> Find %g2 and I will pay _gold_ gold.
+
+RefuseQuest:  [1001]
+<ce> Good day to you, %ra. I
+<ce> will ask someone else.
+<--->
+<ce> Will nobody help me?
+<--->
+<ce> My apologies. I took you for a hero.
+
+AcceptQuest:  [1002]
+<ce> My prayers are answered. Nobody has seen
+<ce> _missingperson_ in four days, and I fear
+<ce> for %g2. %G has been keeping company
+<ce> with _friend1_ and _friend2_, so start
+<ce> there. If two days pass without finding
+<ce> _missingperson_, stop looking.
+
+QuestComplete:  [1004]
+<ce> Your _gold_ gold, as agreed. Thank you.
+
+RumorsDuringQuest:  [1005]
+<ce> _questgiver_ is turning the town upside
+<ce> down looking for _missingperson_.
+
+RumorsPostfailure:  [1006]
+<ce> Nobody has seen _missingperson_ for
+<ce> days. %G is given up for dead, and
+<ce> _questgiver_ is sick with grief.
+
+RumorsPostsuccess:  [1007]
+<ce> Say, are you not the %ra who helped
+<ce> _questgiver_ track down _missingperson_?
+
+QuestorPostsuccess:  [1008]
+<ce> How could I refuse the %ra who
+<ce> found _missingperson_ for me?
+
+QuestorPostfailure:  [1009]
+<ce> You did your best for _missingperson_,
+<ce> and I know it. In the end they found
+<ce> %g2 dead in a gutter.
+
+QuestLogEntry:  [1010]
+On %qdt,
+ _questgiver_ asked me to find
+ _missingperson_, who has been gone
+ four days. %G was last seen with
+ _friend2_ and _friend1_. If I fail
+ within two days, I am not paid.
+
+Message:  1021
+<ce> Looking for _missingperson_? %G is
+<ce> hiding at _hidingplace_. Do not tell
+<ce> _questgiver_, though. _missingperson_
+<ce> swore never to speak to _questgiver_
+<ce> again, and do not ask me why.
+
+Message:  1022
+<ce> Have I seen _missingperson_? I
+<ce> have. The guards caught %g2
+<ce> robbing a temple. _questgiver_
+<ce> will be furious when %g hears.
+
+Message:  1023
+<ce> Did _questgiver_ send you? Of course.
+<ce> %oth, %g had a terrible row with
+<ce> _missingperson_ a few days back.
+<ce> _missingperson_ left town that night.
+<ce> Where %g went, I cannot tell you.
+
+Message:  1024
+<ce> _missingperson_? Oh, I can tell you
+<ce> what became of %g2. %G is dead. Smiley
+<ce> asked %g2 nicely for %g3 gold, and %g
+<ce> would not hand it over. Meet Smiley
+<ce> and the boys. Get the %ra, Smiley!
+
+Message:  1031
+<ce> _missingperson_? No. I have not
+<ce> seen %g2 in a couple of days.
+<ce> Ask _friend3_. %G may know.
+
+Message:  1032
+<ce> %oth. I last saw _missingperson_ two
+<ce> days ago. Try _friend4_, or else
+<ce> _friend1_. One of them may know more.
+
+Message:  1033
+<ce> _friend1_ thinks I know something about
+<ce> _missingperson_? Not really. Last night
+<ce> %g went out drinking, that is all. I
+<ce> hope nothing has happened to %g2.
+
+Message:  1034
+<ce> Sorry, I have not seen _missingperson_
+<ce> for some time. I cannot think why
+<ce> _friend2_ sent you here. Try _friend1_.
+
+Message:  1040
+<ce> Who are you? I am done with _questgiver_
+<ce> for good. Hey! Let go of me! You have no
+<ce> right to haul me back to %g2!
+
+Message:  1050
+<ce> _missingperson_! I never thought
+<ce> you would really bring %g2 back,
+<ce> %pcn. _missingperson_, I was so
+<ce> worried! Where were you? %pcf, I
+<ce> will take it from here.
+
+Message:  1051
+<ce> So _missingperson_ is hiding,
+<ce> is it? I will drag that rascal
+<ce> out of %g3 hole myself. You
+<ce> have been a great help, %pcn.
+
+Message:  1052
+<ce> In jail? I must go at once. Perhaps
+<ce> the magistrate will take a bribe.
+
+Message:  1053
+<ce> _missingperson_ ran off? %G had no need
+<ce> to run. I would have forgiven %g2.
+
+Message:  1054
+<ce> Dead? No, it cannot be. Tell me
+<ce> that Smiley suffered for it,
+<ce> %pcn. This is a black day for me.
+
+
+QBN:
+Item _gold_ gold
+
+Person _questgiver_ group Questor
+Person _missingperson_ face 1 group Group_6.0 local
+Person _friend1_ group Local_3.1 local
+Person _friend2_ group Local_3.1 local
+Person _friend3_ group Local_3.1 local
+Person _friend4_ group Local_4.1 local
+
+Place _hidingplace_ local random
+
+Clock _S.16_ 2.00:00
+--removed flags to make exact two days
+
+Clock _delay_ 00:00
+
+Foe _F.00_ is 3 Barbarian
+
+--	Quest start-up:
+	dialog link for person _friend4_ 
+	dialog link for person _missingperson_ 
+	dialog link for location _hidingplace_ person _friend3_ 
+	start timer _S.16_ 
+	log 1010 step 0 
+	pick one of _S.00_ _S.02_ _S.03_ _S.01_ 
+	create npc _friend4_ 
+	create npc _friend2_ 
+	create npc _friend3_ 
+	create npc _friend1_ 
+	
+_S.00_ task:
+	place npc _missingperson_ at _hidingplace_ 
+
+variable _S.01_
+variable _S.02_
+variable _S.03_
+_S.04_ task:
+	clicked npc _friend1_ 
+
+_S.05_ task:
+	clicked npc _friend2_ 
+
+_S.06_ task:
+	clicked npc _friend3_ 
+
+_S.07_ task:
+	clicked npc _friend4_ 
+
+_S.08_ task:
+	when _S.00_ and _S.04_ 
+	add dialog for location _hidingplace_
+	say 1021 
+
+_S.09_ task:
+	when _S.02_ and _S.05_ 
+	say 1022 
+
+_S.10_ task:
+	when _S.03_ and _S.06_ 
+	say 1023 
+
+_S.11_ task:
+	when _S.01_ and _S.07_ 
+	create foe _F.00_ every 1 minutes 1 times with 100% success 
+	say 1024 
+
+_S.12_ task:
+	when not _S.00_ and _S.04_ 
+	add dialog for person _friend3_
+	say 1031 
+
+_S.13_ task:
+	when not _S.02_ and _S.05_ 
+	add dialog for person _friend4_
+	say 1032 
+
+_S.14_ task:
+	when not _S.03_ and _S.06_ 
+	say 1033 
+
+_S.15_ task:
+	when not _S.01_ and _S.07_ 
+	say 1034 
+
+_S.16_ task:
+	end quest 
+
+_S.17_ task:
+	killed 1 _F.00_ 
+	hide npc _friend4_ 
+
+_S.18_ task:
+	clicked npc _questgiver_ 
+
+_clearclick_ task:
+	when not _yes_ and _S.18_ 
+	clear _S.18_ _clearclick_
+
+_yes_ task:
+	when _S.08_ or _S.09_ or _S.10_ or _S.11_ or _S.22_
+
+_givereward_ task:
+	when _yes_ and _S.18_ 
+	start timer _delay_
+
+_delay_ task:
+	give pc _gold_ 
+	end quest 
+
+_S.22_ task:
+	clicked npc _missingperson_ 
+	add _missingperson_ face saying 1040 
+	hide npc _missingperson_ 
+
+_S.23_ task:
+	when _S.22_ and _S.18_ 
+	drop _missingperson_ face 
+
+_S.24_ task:
+	when _S.18_ and _S.08_ and not _S.22_ 
+	say 1051 
+
+_S.25_ task:
+	when _S.18_ and _S.09_ 
+	say 1052 
+
+_S.26_ task:
+	when _S.18_ and _S.10_ 
+	say 1053 
+
+_S.27_ task:
+	when _S.18_ and _S.11_ 
+	say 1054 
+
+_S.28_ task:
+	when _S.18_ and _S.22_ 
+	say 1050 
+--removed unnecessary check. quest can remained "unsolved" after unexpectedly finding the quarry and returning to QG.

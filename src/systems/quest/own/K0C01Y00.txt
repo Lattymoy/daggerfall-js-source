@@ -1,0 +1,215 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C01Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 01
+-- QuestId: 0
+Messages: 21
+Quest: K0C01Y00
+DisplayName: To Assist the Fate
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Picture my joy when my cheating lover
+<ce> was kidnapped. Picture my despair when
+<ce> the =victim_ turned out to be alive.
+<ce> Now %g3 cousin means to pay the
+<ce> ransom! Will you make sure it fails?
+
+RefuseQuest:  [1001]
+<ce> %oth, so prim. Your conscience
+<ce> will get you killed one day.
+
+AcceptQuest:  [1002]
+<ce> %oth, %oth and %oth. Kill _victim_ before the
+<ce> ransom is due, if you can find %g. Kill %g3
+<ce> cousin, =cousin_, in ___mondung2_. Or steal the
+<ce> ransom _gem_ from =cousin_. Back in =queston1_
+<ce> days, and _gold_ gold is yours, %ra.
+
+QuestComplete:  [1004]
+<ce> So _victim_ will not be coming
+<ce> home? Lovely work. Here is your
+<ce> _gold_ gold. Worth every coin.
+
+RumorsDuringQuest:  [1005]
+Poor _qgiver_, so stricken with grief. Strange how %g glows.
+<--->
+=cousin_ thinks _qgiver_ wants nothing
+less than to see _victim_ again.
+
+RumorsPostfailure:  [1006]
+_qgiver_ is in a fury with some %ra called %pcn.
+
+RumorsPostsuccess:  [1007]
+_victim_ will never see ___qgiver_ again, it seems.
+<--->
+_qgiver_ wears black for _victim_ now. Very touching.
+
+QuestorPostsuccess:  [1008]
+You rid me of that fat toad _victim_,
+%pcf. I remember my friends.
+
+QuestorPostfailure:  [1009]
+<ce> One task. Three ways. And you
+<ce> failed at all of them. Why would I
+<ce> speak to you, you bucket of dung?
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_ in ___qgiver_, _qgiver_
+ wants %g3 lover's ransom stopped. I can
+ kill _victim_, wherever %g is, or %g3
+ cousin =cousin_ at ___mondung2_, or rob
+ %g2 of the _gem_ %g would pay with.
+ Back to _qgiver_ in =queston1_ days.
+
+Message:  1011
+<ce> _victim_ sees a %ra sellsword
+<ce> and drops dead of fright.
+<--->
+<ce> "Farewell, cruel world," sighs
+<ce> _victim_, and drinks poison. "Wait
+<ce> for me, my true love _qgiver_!"
+<--->
+<ce> "Murder! Murder!" screams _victim_,
+<ce> and dies of fright on the spot.
+
+Message:  1013
+%pcf,
+ 
+     _victim_ is held in
+ ___mondung_. Do as you please.
+ 
+     The kidnappers are freelancers,
+ and we owe them nothing.
+ 
+ 
+<ce> The Thieves Guild
+
+Message:  1015
+<ce> A plain-looking man presses a note
+<ce> into your palm, winks, and walks off.
+
+Message:  1017
+%qdt:
+ The Thieves Guild wrote to me. The
+ kidnappers are not Guild members, so
+ the Guild has no objection to telling
+ me where they are, ___mondung_. That
+ is where I can end _victim_'s life.
+
+Message:  1018
+<ce> Ow! You filthy %ra, that hurt!
+<--->
+<ce> Think that hurt me, do you?
+
+Message:  1019
+<ce> The cousin of _victim_,
+<ce> %g3 last hope, falls dead.
+<--->
+<ce> =cousin_ will pay no ransoms now.
+
+Message:  1020
+<ce> Here is the _gem_ =cousin_
+<ce> meant to ransom _victim_ with.
+
+
+QBN:
+Item _letter15_ letter used 1013
+Item _gold_ gold
+Item _gem_ gem
+
+Person _qgiver_ group Questor
+Person _victim_ face 1 group Group_7.0
+Person _tg_ faction The_Thieves_Guild local
+
+Place _mondung_ remote dungeon
+Place _mondung2_ remote dungeon2
+
+Clock _queston1_ 00:00 0 flag 17 range 0 2
+Clock _S.05_ 08:20 3.11:20
+
+Foe _cousin_ is Knight
+
+--	Quest start-up:
+	place item _gem_ at _mondung2_ 
+	dialog link for location _mondung_ person _victim_ 
+	dialog link for person _tg_ 
+	start timer _queston1_ 
+	reveal _mondung2_ 
+	log 1010 step 0 
+	repute with _tg_ exceeds 10 do _S.03_ 
+	place foe _cousin_ at _mondung2_ 
+	place npc _victim_ at _mondung_ 
+
+_queston1_ task:
+	have _gem_ set _S.15_ 
+	end quest 
+
+variable _queston2_
+variable _S.02_
+_S.03_ task:
+	start timer _S.05_ 
+
+variable _S.04_
+_S.05_ task:
+	_letter15_ used do _S.06_ 
+	get item _letter15_ 
+	say 1015 
+
+_S.06_ task:
+	reveal _mondung_ readmap
+	log 1017 step 2 
+
+variable _S.07_
+_S.08_ task:
+	clicked npc _victim_ 
+	hide npc _victim_ 
+	say 1011 
+
+_S.09_ task:
+	injured _cousin_ 
+	say 1018 
+
+_S.10_ task:
+	killed 1 _cousin_ 
+	say 1019 
+	start task _victory_
+
+variable _victory_
+_S.11_ task:
+	clicked item _gem_ 
+	say 1020 
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _victory_ 
+	give pc _gold_ 
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _victory_
+	clear _clearclick_ _qgclicked_
+
+_S.13_ task:
+	toting _gem_ and _qgiver_ clicked 
+	give pc _gold_
+	end quest 
+--added victory condition here, per message block 1002
+
+_S.14_ task:
+	when _S.10_ or _S.08_
+-or _S.13_ 
+-
+-until _S.14_ performed:
+-	clear _qgclicked_ 
+
+_S.15_ task:
+	make _gem_ permanent 
+
+variable _S.16_

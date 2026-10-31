@@ -1,0 +1,328 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000002.Qbn.
+-- Main story quest.
+-- QuestId: 2
+Messages: 51
+Quest: S0000002
+DisplayName: Prince Helseth's Blackmail
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I need a courier, %pcf, and no flabby,
+<ce> empty-headed sellsword will do. A letter must
+<ce> reach a well-guarded dignitary. You will have
+<ce> a _magicitem_, my good word with the king and
+<ce> queen, and secrets of Daggerfall. Agreed?
+
+RefuseQuest:  [1001]
+<ce> Then you are duller than you look,
+<ce> and you have wasted my afternoon.
+
+AcceptQuest:  [1002]
+<ce> Good. Come back at this hour tomorrow.
+<ce> You will have the letter then, with the
+<ce> name and the house of the one it is for.
+
+QuestFail:  [1003]
+<ce> The letter is still
+<ce> undelivered, %pcf. Fix that.
+
+QuestComplete:  [1004]
+<ce> Your _magicitem_. I keep my bargains.
+<ce> Now, Daggerfall. On the eve of Cryngaine
+<ce> Field, Wayrest sent advisors to make
+<ce> peace between Lysandus and Camaron. They
+<ce> reported Gortwog's orcs delayed them.
+<ce> Yet I hear some reached Lysandus' tent.
+
+RumorsDuringQuest:  [1005]
+Lord Castellian is on holiday in
+__castfort_ and will see no one.
+<--->
+Lord Castellian can think of nothing
+but who will inherit the throne.
+
+RumorsPostfailure:  [1006]
+Lord Castellian leans toward Princess
+Elysana for the throne, they say.
+<--->
+The Elder Council will likely keep the
+old law of succession as it stands.
+
+RumorsPostsuccess:  [1007]
+Since his holiday, Lord Castellian
+never leaves Prince Helseth's side.
+<--->
+The Elder Council talks seriously now of
+doing away with the law of succession.
+
+QuestorPostsuccess:  [1008]
+%pcf. Our fortunes rise together,
+it seems. What do you want?
+
+QuestorPostfailure:  [1009]
+<ce> I gave you an errand, %pcf. Lord
+<ce> Castellian, if you recall. It is
+<ce> too late now, and my patience is
+<ce> short. Leave before it runs out.
+
+QuestLogEntry:  [1010]
+My Dear Lord Castellian,
+ 
+      Your sister, Lady Pasipha, showed me your
+ letters. "My sweet, my soul is yours," one says.
+ The court, and her jealous husband, could read
+ that badly. Find me at Castle Wayrest soon.
+ 
+<ce> Helseth,
+<ce> Prince of Wayrest
+
+Message:  1011
+<ce> Well handled, %pcn. You may yet earn your
+<ce> name. Lord Castellian will bend to me now.
+
+Message:  1012
+<ce> You were too slow, %pcf. Elysana is
+<ce> betrothed now, so my sister no longer stands
+<ce> in my way, and the letter was never needed.
+<ce> No matter. I will find a use for it.
+
+Message:  1014
+<ce> That scheming little weasel!
+<ce> You were right to bring this to
+<ce> me, %pcf. You have my thanks.
+
+Message:  1017
+<ce> A page in Wayrest's colors, a pale
+<ce> yellow rose on his chest, appears at
+<ce> your side without a sound. He gives you
+<ce> a letter and slips away as quietly.
+
+Message:  1018
+<ce> A breathless courier thrusts a leather pouch at
+<ce> you. Inside you find a letter and some gold.
+
+Message:  1019
+%qdt:
+ Prince Helseth needs a
+ courier. I am to meet him
+ at the castle tomorrow,
+ when he will tell me more.
+
+Message:  1020
+%qdt:
+ I am carrying a letter from Prince Helseth
+ to Lord Castellian, head of Wayrest's Elder
+ Council. He is on holiday at _castfort_ in
+ __castfort_. Within =1stparton_ days I must
+ deliver it and return.
+
+Message:  1024
+Prince Helseth,
+    Thank you for your concern.
+ I will call on you whenever it
+ suits you, and soon.
+ 
+<ce> Lord Castellian
+
+Message:  1025
+<ce> Lord Castellian wants you
+<ce> dead. You know too much, he
+<ce> says, and he wanted you told.
+
+Message:  1026
+My Dear Lord Castellian,
+ 
+      Lady Pasipha, your sister, dresses beyond
+ her husband's means. I am told you pay from the
+ royal treasury, and the books seem to agree. Mend
+ them before Eadwyre looks. Reply by this courier.
+ 
+<ce> Helseth
+
+Message:  1027
+<ce> The letter, %pcf. It goes to Lord
+<ce> Castellian at _castfort_ in __castfort_. Be
+<ce> back within =1stparton_ days. He guards his
+<ce> privacy, so expect a fight at _castfort_.
+<ce> Do not read it, or any leak is your fault.
+
+Message:  1028
+<ce> Lord Castellian reads the letter and
+<ce> goes white. His hand trembles. "I
+<ce> see. Wait here while I answer Prince
+<ce> Helseth." His reply takes him a
+<ce> minute, and he puts it in your hand.
+
+Message:  1030
+<ce> The seal is broken. A courier
+<ce> carries letters, %pcn. A
+<ce> courier does not read them.
+
+Message:  1031
+<ce> So you read your betters' mail. Do not
+<ce> expect my trust again any time soon.
+
+Message:  1040
+Dear %pcn,
+ 
+ My sister Elysana has married, so Lord
+ Castellian no longer needs my letter. You
+ have served me honorably. The courier has
+ 100 gold pieces for you, for your trouble.
+ 
+<ce> Helseth
+<ce> Prince of Wayrest
+
+Message:  1050
+No one on Wayrest's council carries
+more weight than Lord Castellian.
+<--->
+Lord Castellian has enough friends to
+stop Prince Helseth's war, I hear.
+
+
+QBN:
+Item letter39 letter used 1010
+Item _magicitem_ magic_item
+Item letter41 letter used 1024
+Item letter42 letter used 1026
+Item letter43 letter used 1040
+Item _I.06_ gold range 100 to 100
+
+Person _helseth_ named Prince_Helseth atHome
+Person Castellian face 1 named Lord_Castellian anyInfo 1050
+Person Eadwyre face 80 named King_Eadwyre atHome
+
+Place _castfort_ remote house1
+
+Clock _S.00_ 1.00:00 0 flag 1 range 0 1
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+Clock _S.15_ 3.00:00 7.00:00
+
+Foe _F.00_ is Knight
+Foe _battlemage_ is Battle_mage
+
+--	Quest start-up:
+	start timer _S.00_ 
+	log 1019 step 0 
+	prompt QuestorOffer yes yes no _no_ 
+	pick one of _S.13_ _S.24_ 
+
+_S.00_ task:
+	create npc at _castfort_ 
+	place npc Castellian at _castfort_ 
+
+_S.01_ task:
+	clicked npc _helseth_ 
+
+_S.02_ task:
+	toting letter42 and Castellian clicked 
+	toting letter39 and Castellian clicked 
+
+_S.03_ task:
+	when _S.01_ and _S.00_ 
+	add dialog for person Castellian 
+	start timer _1stparton_ 
+	log 1020 step 1 
+	remove log step 0 
+	say 1027 
+
+_S.04_ task:
+	toting letter41 and _helseth_ clicked 
+	give pc _magicitem_ 
+	change repute with _helseth_ by +10 
+	drop Eadwyre as questor 
+	drop _helseth_ as questor 
+
+_S.05_ task:
+	toting letter42 and Eadwyre clicked 
+	toting letter39 and Eadwyre clicked 
+	say 1014 
+	change repute with Eadwyre by +5 
+
+ElysannaSatisfied _S.06_
+	start timer _S.15_ 
+
+variable _S.07_
+_S.08_ task:
+	injured _F.00_ saying 1025 
+	injured _battlemage_ saying 1025 
+
+_clearclick_ task:
+	when _S.01_ and not _S.03_ 
+	clear _S.01_ _clearclick_ 
+
+yes task:
+	dialog link for person Castellian 
+	say AcceptQuest 
+	add _helseth_ as questor 
+	add Eadwyre as questor 
+
+_no_ task:
+	say RefuseQuest 
+	end quest 
+
+_S.12_ task:
+	when _S.03_ and _S.13_ 
+	letter39 used do _S.07_ 
+	get item letter39 
+
+variable _S.13_
+_S.14_ task:
+	when _S.03_ and _S.24_ 
+	letter42 used do _S.07_ 
+	get item letter42 
+
+_S.15_ task:
+	get item letter43 
+	get item _I.06_ 
+	say 1018 
+	make letter43 permanent 
+	make _I.06_ permanent 
+	drop Eadwyre as questor 
+	drop _helseth_ as questor 
+	end quest 
+
+_1stparton_ task:
+	drop Eadwyre as questor 
+	drop _helseth_ as questor 
+	end quest 
+
+_S.17_ task:
+	when _S.04_ and _S.06_ 
+	say 1012 
+
+_S.18_ task:
+	when _S.04_ and not _S.06_ 
+	say 1011 
+
+_S.19_ task:
+	when _S.02_ and _S.07_ 
+	create foe _F.00_ every 4 minutes 6 times with 100% success 
+	create foe _battlemage_ every 7 minutes 2 times with 100% success 
+	say 1030 
+	change repute with Castellian by -10 
+
+_S.20_ task:
+	when _S.02_ and not _S.07_ 
+	letter41 used do _S.21_ 
+	get item letter41 
+	say 1028 
+
+variable _S.21_
+_S.22_ task:
+	when _S.04_ and _S.21_ 
+	say 1031 
+	change repute with _helseth_ by -25 
+
+_S.23_ task:
+	when _S.04_ and not _S.21_ 
+	start quest 11 11 
+
+variable _S.24_
+_S.25_ task:
+	when _S.22_ or _S.23_ 
+	end quest

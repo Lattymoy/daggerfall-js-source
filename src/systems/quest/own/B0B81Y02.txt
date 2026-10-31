@@ -1,0 +1,305 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B81Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 81
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 43
+Quest: B0B81Y02
+DisplayName: The Lost Artifact
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _qgiver_ of this order, and I have
+<ce> a deadly quest, %pcf. Few could survive
+<ce> it. A lich is building an army out of
+<ce> corpses. Will you go in and stop it?
+
+RefuseQuest:  [1001]
+<ce> Fair enough, %pcn. This one may be
+<ce> beyond even you. I will try the few
+<ce> other heroes who might manage it.
+
+AcceptQuest:  [1002]
+<ce> Brave words. The lich has taken
+<ce> ___dungeon_ for its den. Find it and
+<ce> destroy it. If =2dung_ days pass with no
+<ce> word from you, another knight goes in.
+
+QuestComplete:  [1004]
+<ce> Hail %pcn! Well fought. The
+<ce> histories will remember you.
+
+RumorsDuringQuest:  [1005]
+All of %reg is waiting for the lich to strike.
+<--->
+Everyone in %reg prays ==qgiver_ can kill that lich.
+
+RumorsPostfailure:  [1006]
+The lich has left ___dungeon_. For now.
+<--->
+Mark me, that lich will be back
+in ___dungeon_ before long.
+
+RumorsPostsuccess:  [1007]
+%reg still stands, and we owe it to ==qgiver_.
+<--->
+A %ra knight of ==qgiver_ brought down that lich.
+
+QuestorPostsuccess:  [1008]
+Help the one who saved %reg? Gladly.
+
+QuestorPostfailure:  [1009]
+Be glad that lich did not lay all of %reg waste, %pcf.
+<--->
+That lich nearly ruined %reg, and you could not be bothered.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At ___qgiver_, _qgiver_ of
+ ==qgiver_ set me against the
+ lich of ___dungeon_. I must
+ destroy it within =2dung_ days.
+
+Message:  1011
+<ce> The lich is destroyed. Without
+<ce> its magic, the dead it raised
+<ce> sink back into their graves.
+
+Message:  1020
+...found it! I dare not write
+the name of the artifact it
+points to. My time has run out.
+I will die here in ___dungeon2_,
+lost in the dark. First I hide
+the clue. If I cannot...
+
+Message:  1028
+<ce> Sorry, %pcn. You were gone so
+<ce> long we took you for dead.
+<ce> Another member has the quest now.
+
+Message:  1030
+<ce> You walked this far to see me,
+<ce> and now you will not go on?
+<ce> Unbelievable! Out of my sight!
+
+Message:  1031
+<ce> A pox on you for waking me, %pcn. And
+<ce> yes, %oth, I know your name. No, you
+<ce> will not get mine. You want
+<ce> Chrysamere, though you never knew its
+<ce> name. Do me a favor first. Agreed?
+
+Message:  1032
+<ce> A pox on you for waking me, %pcn. And
+<ce> yes, %oth, I know your name. Wizards
+<ce> know things. You want the Necromancer's
+<ce> Amulet, though you never knew its name.
+<ce> Do me a favor first. Agreed?
+
+Message:  1033
+<ce> A pox on you for waking me, %pcn. And
+<ce> yes, %oth, I know your name. Wizards
+<ce> know things. You are after the Staff
+<ce> of Magnus, though you never knew its
+<ce> name. Do me a favor first. Agreed?
+
+Message:  1034
+<ce> A pox on you for waking me, %pcn. And
+<ce> yes, %oth, I know your name. Wizards
+<ce> know things. You want the Warlock's
+<ce> Ring, though you never knew its name.
+<ce> Do me a favor first. Agreed?
+
+Message:  1035
+<ce> I do not know where it is. My
+<ce> great-grandfather found it, and
+<ce> the Mages Guild took it. Carry
+<ce> this lock of my hair when you lay
+<ce> his ghost to rest. Then he may
+<ce> talk. He haunts ___dungeon3_.
+
+Message:  1040
+<ce> You carry hair of my own line. For long
+<ce> years I have walked these halls, waiting
+<ce> for this sign. Seek the _mageguild_ in
+<ce> __mageguild_. What I lost waits there.
+
+Message:  1041
+%qdt:
+ I found _wizard_ in ___dungeon2_. Now
+ I must find %g3 great-grandfather in
+ ___dungeon3_, who may know where the
+ artifact is. _wizard_ also handed me
+ some of %g3 hair. With it I can lay
+ the ghost to rest.
+
+Message:  1042
+%qdt:
+ The ghost of the great-grandfather
+ of _wizard_ says the artifact is
+ at _mageguild_ in __mageguild_.
+
+
+QBN:
+Item _I.01_ artifact Warlocks_Ring
+Item _I.02_ artifact Necromancers_Amulet
+Item _I.03_ artifact Chrysamere
+Item _I.04_ artifact Staff_of_Magnus
+Item _map_ letter used 1020
+Item _I.06_ item class 17 subclass 13
+
+Person _qgiver_ group Questor
+Person _wizard_ face 1 group Spellcaster remote
+
+Place _dungeon_ remote dungeon
+Place _dungeon2_ remote dungeon
+Place _mageguild_ remote magery
+Place _dungeon3_ remote dungeon0
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+Clock _S.30_ 180.13:20 0 flag 1 range 0 1
+
+Foe _F.00_ is Ancient_lich
+Foe _F.01_ is Lich
+Foe _ghost_ is Wraith
+Foe _battlemage_ is Battle_mage
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	pick one of _ancientlich_ _lich_ _lich_ 
+	pick one of _artifact1_ _artifact2_ _artifact3_ _artifact4_ 
+
+variable _2dung_
+_S.01_ task:
+	killed 1 _F.01_ saying 1011 
+	killed 1 _F.00_ saying 1011 
+	_map_ used do _readmap_ 
+
+_S.02_ task:
+	clicked npc _qgiver_ 
+
+_success_ task:
+	when _S.02_ and _S.01_ 
+	give pc nothing 
+	remove log step 0 
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_ 
+	clear _S.02_ _clearclick_ 
+
+variable _S.04_
+variable _S.05_
+_ancientlich_ task:
+	give item _map_ to _F.00_ 
+	place foe _F.00_ at _dungeon_ 
+
+_lich_ task:
+	give item _map_ to _F.01_ 
+	place foe _F.01_ at _dungeon_ 
+
+_artifact1_ task:
+	place item _I.03_ at _mageguild_ 
+
+_artifact2_ task:
+	place item _I.02_ at _mageguild_ 
+
+_artifact3_ task:
+	place item _I.04_ at _mageguild_ 
+
+_artifact4_ task:
+	place item _I.01_ at _mageguild_ 
+
+_readmap_ task:
+	start timer _S.30_ 
+	reveal _dungeon2_ readmap
+	place npc _wizard_ at _dungeon2_ 
+
+_S.13_ task:
+	clicked npc _wizard_ 
+
+_S.14_ task:
+	when _artifact1_ and _S.13_ 
+	prompt 1031 yes yes no _no_ 
+
+_S.15_ task:
+	when _artifact2_ and _S.13_ 
+	prompt 1032 yes yes no _no_ 
+
+_S.16_ task:
+	when _artifact3_ and _S.13_ 
+	prompt 1033 yes yes no _no_ 
+
+_potion_ task:
+	when _artifact4_ and _S.13_ 
+	prompt 1034 yes yes no _no_ 
+
+_S.18_ task:
+	clicked item _I.02_ 
+	clicked item _I.03_ 
+	clicked item _I.01_ 
+	clicked item _I.04_ 
+
+_S.19_ task:
+	when _S.13_ and _S.20_ 
+	clear _S.13_ _S.19_ 
+
+variable _S.20_
+yes task:
+	pc at _mageguild_ set _S.25_ 
+	reveal _dungeon3_
+	say 1035 
+	log 1041 step 1 
+	get item _I.06_ 
+	place foe _ghost_ at _dungeon3_ 
+
+_no_ task:
+	say 1030 
+
+totemReward2 task:
+	killed 1 _ghost_ 
+	have _I.06_ set _S.24_ 
+
+_S.24_ task:
+	log 1042 step 2 
+	say 1040 
+
+_S.25_ task:
+	create foe _battlemage_ every 5 minutes 5 times with 50% success 
+
+_S.26_ task:
+	when _artifact1_ and _S.18_ 
+	make _I.03_ permanent 
+
+_S.27_ task:
+	when _artifact2_ and _S.18_ 
+	make _I.02_ permanent 
+
+_S.28_ task:
+	when _artifact3_ and _S.18_ 
+	make _I.04_ permanent 
+
+_S.29_ task:
+	when _artifact4_ and _S.18_ 
+	make _I.01_ permanent 
+
+_S.30_ task:
+	end quest 
+
+_questdone_ task:
+	when _2dung_ and not _readmap_ 
+	end quest 
+
+_S.32_ task:
+	when _clearclick_ and _2dung_ 
+	say 1028 
+
+_S.33_ task:
+	when _S.26_ or _S.27_ or _S.28_ or _S.29_ 
+	end quest

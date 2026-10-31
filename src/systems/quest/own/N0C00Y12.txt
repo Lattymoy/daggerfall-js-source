@@ -1,0 +1,125 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0C00Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 12
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: N0C00Y12
+DisplayName: The Loose Pet Imp
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Call me _qgiver_. Members get the paid
+<ce> work, but a student of mine has a
+<ce> quiet problem: an escaped experiment.
+<ce> I cannot pay you to catch it, but the
+<ce> guild will hear your name. Will you?
+
+RefuseQuest:  [1001]
+<ce> Then why ask me for work? I will
+<ce> never understand adventurers.
+
+AcceptQuest:  [1002]
+<ce> Good. The experiment is my student's
+<ce> pet imp, and it got loose. Imps are not
+<ce> very dangerous, but this one could
+<ce> embarrass my student badly. Our scrying
+<ce> puts it in ___mondung_. Kill it, and
+<ce> report to me within =1stparton_ days.
+
+QuestFail:  [1003]
+<ce> I looked in the scrying glass
+<ce> this morning. The imp is alive
+<ce> and well. So why are you here?
+
+QuestComplete:  [1004]
+<ce> Thank goodness. I owe you one,
+<ce> %pcn, and the Mages Guild
+<ce> thinks better of you now.
+
+RumorsDuringQuest:  [1005]
+They say some creature got loose
+from the Mages Guild's workrooms.
+<--->
+%oth, something small ran past
+my window last night, giggling.
+
+RumorsPostfailure:  [1006]
+People are asking how the Mages
+Guild keeps losing its experiments.
+<--->
+The Mages Guild has lost another one, I hear.
+
+RumorsPostsuccess:  [1007]
+They say the Mages Guild does terrible
+things to imps in its laboratories.
+<--->
+<ce> Imps hold a grudge. %nam chased one with a broom,
+<ce> and the next day the house was full of mice.
+<--->
+<ce> They say the Mages Guild let an imp familiar escape.
+<ce> A wizard without a familiar is easy prey for rivals.
+
+QuestorPostsuccess:  [1008]
+Hello, %pcf. I have kept every window shut since that imp.
+
+QuestorPostfailure:  [1009]
+<ce> I sent you after that imp,
+<ce> remember? You did not catch it. I
+<ce> have nothing more to say to you.
+
+QuestLogEntry:  [1010]
+<ce> "Not the laboratory! Anything
+<ce> but the laboratory!"
+
+Message:  1020
+%qdt:
+ The Mages Guild in ___qgiver_ wants an
+ escaped imp dead. It is hiding in
+ ___mondung_. Within =1stparton_ days I must
+ kill it and report back in ___qgiver_.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _imp_ is Imp
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	place foe _imp_ at _mondung_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc nothing 
+	end quest 
+
+variable _queston_
+_mondead_ task:
+	killed 1 _imp_ 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_clearclick_ task:
+    when _qgclicked_ and not _mondead_
+	say 1003
+    clear _qgclicked_ _clearclick_
+--merged unused _clearclick_ variable into this _reset_ task and renamed it.
+
+_1stparton_ task:
+	end quest 
+
+_S.06_ task:
+	injured _imp_ saying 1010

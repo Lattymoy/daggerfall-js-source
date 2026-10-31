@@ -1,0 +1,131 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000018.Qbn.
+-- Main story quest.
+-- QuestId: 18
+Messages: 31
+Quest: S0000018
+DisplayName: Dust of Restful Death
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> So the Dust of Restful Death is what
+<ce> Medora wants? For King Lysandus'
+<ce> memory, I will help. The Dust lies
+<ce> on her own island, in ___crypt_. My
+<ce> price is her support for my claim to
+<ce> Tiber's heart. She will understand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Medora appeared to me in a vision. There
+ is a way to soothe Lysandus' ghost, and
+ Gortwog, the orc Warlord in Orsinium,
+ knows where it is. I must persuade him.
+
+Message:  1011
+%qdt:
+ Gortwog says the Dust of Restful
+ Death is hidden in ___crypt_. That is
+ on the Isle of Balfiera. In return
+ Medora must back his claim to Tiber
+ Septim's heart, whatever that means.
+
+Message:  1015
+<ce> The world dims, and Medora's face appears.
+<ce>
+ "%pcf, a powder can soothe my Lysandus'
+ ghost. Gortwog has it in Orsinium. Win it
+ from him and bring it to Direnni Tower."
+<ce>
+<ce> The vision clears. Sorceresses
+<ce> never just write letters.
+
+Message:  1016
+A small packet of powder,
+black as midnight.
+
+Message:  1020
+<ce> The powder's wrapper, partly unreadable:
+<ce>
+ Lady Med...
+ 
+ ...mean to kill him. My warri...
+ will stop them. If the Empire hears
+ I attacked Wayrest's advisors, my
+ people will never earn respect. With
+ you, I c... be the Empire's hero.
+ 
+<ce> Gortwog
+<ce> Warl...
+
+Message:  1030
+Yes, the Dust of Restful Death. Gortwog's
+letter was meant for me, and never came. His
+orcs died trying to stop the assassins. Why
+would Eadwyre risk treason? I will learn,
+then take revenge. Return in a month for it.
+
+
+QBN:
+Item _spider_ lich_dust used 1016
+Item _letter_ letter used 1020
+
+Person _medora_ named Medora atHome
+Person _gortwog_ named Gortwog atHome
+
+Place _orsinium_ permanent OrsiniumCastle2
+Place _crypt_ remote dungeon0
+
+Clock _delay_ 00:02 0 flag 1 range 0 1
+Clock _S.01_ 00:02 0 flag 1 range 0 1
+Clock _S.06_ 30.00:00 0 flag 1 range 0 1
+
+Foe _mummy_ is Mummy
+
+--	Quest start-up:
+	dialog link for item _spider_ 
+	dialog link for item _letter_ 
+	start timer _S.06_ 
+	reveal _crypt_ 
+
+_delay_ task:
+	start timer _S.01_ 
+	log 1010 step 0 
+	reveal _orsinium_ in province 26 at 146892 
+	say 1015 
+
+_S.01_ task:
+	drop _medora_ face 
+
+_S.02_ task:
+	clicked npc _gortwog_ 
+	log 1011 step 1 
+	give item _letter_ to _mummy_ 
+	give item _spider_ to _mummy_ 
+	say QuestorOffer 
+	place foe _mummy_ at _crypt_ 
+
+_S.03_ task:
+	toting _spider_ and _medora_ clicked 
+	start quest 22 22 
+	say 1030 
+	change repute with _gortwog_ by +10 
+	change repute with _medora_ by +15 
+	end quest 
+
+variable _S.04_
+_S.05_ task:
+	repute with _medora_ exceeds 0 do _S.04_ 
+	level 10 completed 
+
+variable _S.06_
+_S.07_ task:
+	when _S.06_ and _S.04_ and _S.05_ 
+	start timer _delay_ 
+	add _medora_ face 
+
+until _S.07_ performed:
+	mute npc _medora_ 
+	mute npc _gortwog_

@@ -1,0 +1,134 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\H0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Mara
+-- Repute: 0
+-- QuestId: 0
+Messages: 21
+Quest: H0B00Y00
+DisplayName: A Powerful Spirit
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The Benevolence of Mara teaches us never
+<ce> to harm a living thing by choice. Yet
+<ce> something now forces our hand. An unclean
+<ce> spirit haunts one of our holy shrines.
+<ce> Will you destroy it for _reward_ gold?
+
+RefuseQuest:  [1001]
+<ce> It is dangerous work, I know.
+<ce> Still, I had hoped you would
+<ce> at least think about it.
+
+AcceptQuest:  [1002]
+<ce> The old temple of ___mondung_, near here,
+<ce> has been holy to us for centuries. We
+<ce> keep evil out, but this spirit is too
+<ce> strong for us. After =1stparton_ days our
+<ce> knights go in, and the reward is lost.
+
+QuestFail:  [1003]
+<ce> Why are you still here, %pcf? That
+<ce> spirit still fouls our temple.
+
+QuestComplete:  [1004]
+<ce> The Benevolence of Mara owes
+<ce> you much, %pcf. Here is your
+<ce> _reward_ gold. Go in peace.
+
+RumorsDuringQuest:  [1005]
+My uncle saw a light moving in ___mondung_
+at midnight. He has not slept since.
+<--->
+Why poke a ghost? It never bothered anyone in town.
+
+RumorsPostfailure:  [1006]
+They should have let ___mondung_ be.
+Now the thing walks our roads instead.
+<--->
+Typical. Chase a ghost out of its hole,
+and it comes to haunt the living.
+
+RumorsPostsuccess:  [1007]
+They say ___mondung_ is clean now.
+I will let someone else check.
+<--->
+The priests of Mara walked to ___mondung_
+singing. First time in years.
+
+QuestorPostsuccess:  [1008]
+You braved ___mondung_ for us. You are always welcome here.
+
+QuestorPostfailure:  [1009]
+___mondung_ is still full of restless
+spirits, and that is on you, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ in ___questgiver_
+ asked me to drive a spirit out
+ of ___mondung_, a holy place
+ of the Benevolence of Mara. I
+ have =1stparton_ days.
+
+Message:  1020
+<ce> "At last, I can rest."
+<ce> ___mondung_ is clean again.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon4
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _wraith_ is Wraith
+Foe _ghost_ is Ghost
+Foe _zombie_ is Zombie
+Foe _mummy_ is Mummy
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+_mondead_ task:
+	killed 1 _mummy_ saying 1020 
+	killed 1 _ghost_ saying 1020 
+	killed 1 _wraith_ saying 1020 
+	killed 1 _zombie_ saying 1020 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+_S.05_ task:
+	place foe _ghost_ at _mondung_ 
+
+_S.06_ task:
+	place foe _mummy_ at _mondung_ 
+
+_S.07_ task:
+	place foe _zombie_ at _mondung_ 
+
+_S.08_ task:
+	place foe _wraith_ at _mondung_

@@ -1,0 +1,136 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0A01L00.Qbn.
+-- StartsBy: letter
+-- Questee: initiate
+-- Questor: vampire
+-- Repute: 01
+-- QuestId: 0
+Messages: 31
+Quest: P0A01L00
+DisplayName: The Rite of Acceptance
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+%pcn,
+ 
+ We have watched you since the blood took you,
+ and we are pleased. Prove yourself to %vam. Kill
+ =monster_, a lesser blood, in ___mondung_. Then
+ find me, a =questgiver_, at __questgiver_ in
+ ___questgiver_. I wait =1stparton_ days, %pcf.
+ 
+<ce> _questgiver_
+
+RefuseQuest:  [1001]
+Quest text 1001 should
+never be shown.
+
+AcceptQuest:  [1002]
+Quest text 1002 should
+never be shown.
+
+QuestFail:  [1003]
+<ce> Forgive me, I am expecting
+<ce> someone. Go away.
+
+QuestComplete:  [1004]
+<ce> Well done, %pcf. You will do well in
+<ce> %vam. Welcome to the family. My name is
+<ce> _questgiver_. We will keep watching, and
+<ce> send word when the family needs you.
+<ce> Take this ring. It marks you as ours.
+
+RumorsDuringQuest:  [1005]
+Something has moved into ___mondung_ again. Or someone.
+<--->
+There is a strange =questgiver_ hanging about __questgiver_.
+
+RumorsPostfailure:  [1006]
+%god be thanked, that strange
+=questgiver_ is gone from __questgiver_.
+<--->
+Looks like ___mondung_ is empty again.
+
+RumorsPostsuccess:  [1007]
+People keep asking what could kill a _monster_.
+<--->
+Whatever killed that _monster_ must be worse than it was.
+
+QuestorPostsuccess:  [1008]
+Quest text 1008 should never be shown.
+
+QuestorPostfailure:  [1009]
+Quest text 1009 should never be shown.
+
+QuestLogEntry:  [1010]
+_questgiver_? I do not know %g2. Is %g from around here?
+
+Message:  1011
+That =questgiver_ is a teacher among %vam.
+<--->
+_questgiver_ stands high among %vam, and has earned it.
+
+Message:  1015
+%qdt:
+ My new family has written. I must
+ kill a vampire of a lesser line,
+ not of %vam, in ___mondung_. Then
+ I must seek out _questgiver_, a
+ =questgiver_, at __questgiver_ in
+ ___questgiver_. %G leaves in
+ =1stparton_ days.
+
+Message:  1020
+<ce> A hollow-cheeked child presses
+<ce> a letter on you and is gone.
+
+Message:  1030
+<ce> The vampire =monster_ is dead.
+
+
+QBN:
+Item _reward_ ring
+Item _letter_ letter used QuestorOffer
+
+Person _questgiver_ factiontype Vampire_Clan remote anyInfo 1010 rumors 1011
+
+Place _mondung_ remote dungeon0
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Vampire
+
+--	Quest start-up:
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.06_ 
+	give pc _letter_ notify 1020 
+	place foe _monster_ at _mondung_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+_mondead_ task:
+	killed 1 _monster_ 
+	say 1030 
+	create npc _questgiver_ 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+_readletter_ task:
+	reveal _mondung_ readmap
+	log 1015 step 0 
+
+_S.06_ task:
+	start timer _1stparton_

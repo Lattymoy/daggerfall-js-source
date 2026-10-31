@@ -1,0 +1,128 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B20Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 20
+-- QuestId: 5
+Messages: 41
+Quest: N0B20Y05
+DisplayName: A Dangerous Wizard
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The mad wizard _wizard_ is so powerful
+<ce> that %rt %rn has waited to strike. No
+<ce> longer. The %t wants %g3 death, and %g
+<ce> will not go quietly. Will you see to
+<ce> it, for a magic _reward_?
+<--->
+<ce> Every farmer in %reg has written
+<ce> to complain about the mad wizard,
+<ce> and now the Archmagister wants it
+<ce> ended. It is strange work for
+<ce> scholars. Would you visit this
+<ce> wizard and cut the problem short?
+
+RefuseQuest:  [1001]
+<ce> Blast. Then I must find someone braver.
+
+AcceptQuest:  [1002]
+<ce> Excellent, %pcf. _wizard_ works in
+<ce> %g3 laboratory at ___mondung_, and
+<ce> will move on within =1stparton_ days.
+<ce> The %t wants word of the death by
+<ce> then, so do not linger. Good luck.
+
+QuestFail:  [1003]
+<ce> Should you not be off dealing
+<ce> with that matter we discussed?
+
+QuestComplete:  [1004]
+<ce> You surprise me again, %pcf. I shall
+<ce> tell the %t myself, and gladly. This
+<ce> _reward_ is yours, as agreed.
+
+RumorsDuringQuest:  [1005]
+Somebody from the Mages Guild rode out toward
+___mondung_ this morning, armed to the teeth.
+<--->
+Nobody sleeps well. We are all waiting
+to see what that wizard does next.
+
+RumorsPostfailure:  [1006]
+Even the Mages Guild could not stop that mad sorcerer.
+<--->
+Nobody knows where _wizard_ went, and
+nobody is safe until %g1 is dead.
+
+RumorsPostsuccess:  [1007]
+Lights no longer burn in ___mondung_.
+They say the wizard is dead.
+<--->
+It is almost dull, with no mad wizard to worry about.
+
+QuestorPostsuccess:  [1008]
+Hello, %pcf. All your limbs still
+attached after that wizard?
+
+QuestorPostfailure:  [1009]
+<ce> You came back, and the wizard
+<ce> of ___mondung_ is still alive.
+<ce> I expected better, %pcf.
+
+Message:  1030
+%qdt:
+ The Mages Guild in ___questgiver_ has
+ hired me against a mad wizard, whose lair
+ is in ___mondung_. It must be done within
+ =1stparton_ days, or there is no reward.
+
+Message:  1040
+<ce> _wizard_ falls, and
+<ce> ___mondung_ has no master now.
+
+
+QBN:
+Item _reward_ magic_item
+
+Person _questgiver_ group Questor
+Person _wizard_ face 249 faction The_Mages_Guild remote
+
+Place _mondung_ remote dungeon9
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Mage
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1030 step 0 
+	place foe _monster_ at _mondung_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	unset _qgclicked_ 
+	end quest 
+
+variable _queston_
+_mondead_ task:
+	killed 1 _monster_ 
+	say 1040 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+--added full clearclick action. was mere variable previously.

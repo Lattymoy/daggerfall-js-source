@@ -1,0 +1,146 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C11Y19.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 19
+Messages: 22
+Quest: R0C11Y19
+DisplayName: The Emperor's Gift
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am in a delicate position, %pcf. If
+<ce> I can rely on your care and your
+<ce> silence, you can earn _reward_ gold
+<ce> from my misfortune. Does that appeal?
+
+RefuseQuest:  [1001]
+<ce> %oth! %oth and blast it! I am surrounded
+<ce> by idlers. No offense to you, %pcf.
+
+AcceptQuest:  [1002]
+<ce> I once pawned the Emperor's own gift, a
+<ce> ring. His agents are near, and I must have
+<ce> it back. _contact_ holds it at __contact_
+<ce> in ___contact_ for =1stparton_ more days.
+<ce> This gold redeems it. %god speed you.
+
+QuestFail:  [1003]
+<ce> My ring, %pcf? The ring I sent you
+<ce> for, %god help me? If you have lost
+<ce> it, I will have your %ra hide!
+
+QuestComplete:  [1004]
+<ce> The ring! Oh, thank you, %pcf. Your
+<ce> _reward_ gold, as I promised. A
+<ce> costly errand, and worth every coin.
+
+RumorsDuringQuest:  [1005]
+The Emperor's men travel quietly,
+they say. No banners, no trumpets.
+<--->
+The Emperor's agents could be in this
+very room, and we would never know.
+
+RumorsPostfailure:  [1006]
+_questgiver_'s meeting with the
+Imperials went badly, I hear.
+<--->
+_questgiver_ has lost the Emperor's
+favor, and nobody knows why.
+
+RumorsPostsuccess:  [1007]
+_questgiver_ entertained the Imperial envoys in grand style.
+<--->
+The Imperial envoys left very pleased with their visit.
+
+QuestorPostsuccess:  [1008]
+Ah, the ring-bearer. How may I help you?
+<--->
+You kept me in the Empire's good graces. What do you need?
+
+QuestorPostfailure:  [1009]
+<ce> The Imperial envoys never
+<ce> noticed the ring was missing,
+<ce> %god be thanked. Still, you are
+<ce> not in my good graces, %pcf.
+
+QuestLogEntry:  [1010]
+<ce> You must be %pcf. Just in time. I nearly
+<ce> sold the ring to an eager buyer. If
+<ce> _questgiver_ needs it before the
+<ce> Imperials arrive, go now. Time is short.
+
+Message:  1015
+%qdt:
+ _questgiver_ of ___questgiver_
+ pawned a ring, and _contact_ holds
+ it at __contact_ in ___contact_. I
+ must buy it back with _questgiver_'s
+ gold and return it to __questgiver_
+ within =1stparton_ days.
+
+Message:  1020
+<ce> Give us the ring. This can be easy or
+<ce> hard, as you choose. Either way, the
+<ce> ring is ours. Will you hand it over?
+
+Message:  1021
+<ce> Fool. Did you think we would leave
+<ce> a witness alive? Now you die.
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ gold_bar
+Item _item2_ ring
+
+Person _questgiver_ face 72 group Questor
+Person _contact_ face 80 group Pawnbroker remote
+
+
+Clock _1stparton_ 00:00 0 flag 17 range 1 4
+
+Foe _F.00_ is 2 Knight
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1015 step 0 
+	get item _item1_ 
+
+_pcgetsgold_ task:
+	toting _item2_ and _questgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+variable _queston_
+variable _qgclicked_
+variable _npcclicked_
+_1stparton_ task:
+	make _item2_ permanent 
+	make _item1_ permanent 
+	change repute with _questgiver_ by -50 
+	end quest 
+
+variable _pchasitem1_
+_pchasitem2_ task:
+	toting _item1_ and _contact_ clicked 
+	create foe _F.00_ every 5 minutes 3 times with 35% success
+	get item _item2_ 
+	say 1010 
+
+yes task:
+	have _item2_ set _S.09_ 
+
+variable _no_
+_S.09_ task:
+	give item _item2_ to _F.00_
+	say 1021 
+--moved "saying 1021" to its own line, wouldn't work otherwise
+
+_S.10_ task:
+	injured _F.00_ 
+	prompt 1020 yes yes no _no_ 

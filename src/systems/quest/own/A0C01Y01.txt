@@ -1,0 +1,122 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+Quest: A0C01Y01
+DisplayName: The Bodyguard
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, my life is in danger. Will you
+<ce> guard me? I would not sell my land,
+<ce> so _villains_s have sworn to kill me
+<ce> tonight. The job pays _gold_ gold.
+<--->
+<ce> You find me in a bad way, my dear %ra.
+<ce> Some %cn thugs have warned me they will
+<ce> ransack my house tonight. Would you care
+<ce> to rearrange a few of their faces for me?
+
+RefuseQuest:  [1001]
+<ce> Do not worry about me, %pcn. Someone
+<ce> else will stand guard for me, somehow.
+
+AcceptQuest:  [1002]
+<ce> Bless you! They will come to _qgiverhome_
+<ce> late tonight, some time after nine and
+<ce> before midnight. Wait there with me. Once
+<ce> they are beaten, I will be safe again.
+
+QuestComplete:  [1004]
+<ce> You saved my life, %pcf. Here is
+<ce> the sum we agreed on, and gladly.
+
+RumorsDuringQuest:  [1005]
+<ce> _qgiver_ has crossed the Thieves Guild.
+<ce> They mean to give %g2 a beating, I hear.
+
+RumorsPostfailure:  [1006]
+<ce> I saw _qgiver_ the other day,
+<ce> bruised all over. %G had a
+<ce> run-in with some thugs.
+
+RumorsPostsuccess:  [1007]
+<ce> Are you the %ra who ran off the
+<ce> thugs that went after _qgiver_?
+
+QuestorPostsuccess:  [1008]
+<ce> I still think of that night,
+<ce> %pcf. You drove off those
+<ce> thugs, and I am in your debt.
+
+QuestorPostfailure:  [1009]
+<ce> I still carry the scars from those
+<ce> thugs. You took my money to keep me
+<ce> safe, and you failed. Get away from me.
+
+QuestLogEntry:  [1010]
+On %qdt,
+ _qgiver_ of ___qgiver_ hired me to
+ keep %g2 safe. _villains_s have
+ sworn to attack %g2 at _qgiverhome_
+ between nine and midnight.
+
+Message:  1011
+<ce> This is no business of yours,
+<ce> stranger. _qgiver_ is ours.
+<ce> Walk away, or you bleed too!
+
+Message:  1013
+<ce> This must be the house. It
+<ce> matches what _qgiver_ told you.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ face 1 group Questor
+
+Place _qgiverhome_ local house2
+
+Clock _timer_ 1.03:00
+--removed flags to make time limit exact
+
+Foe _villains_ is 2 Assassin
+
+--	Quest start-up:
+	start timer _timer_ 
+	log 1010 step 0 
+	pc at _qgiverhome_ set _inside_
+	---removed "saying" as unacceptable argument. moved to S.05
+
+_timer_ task:
+	end quest 
+
+_nighttime_ task:
+	daily from 21:00 to 23:59
+	--changed 24:00 to 23:59. 24:00 shouldn't exist.
+	place npc _qgiver_ at _qgiverhome_ 
+
+_slain_ task:
+	killed 2 _villains_ 
+
+_questdone_ task:
+	when _clickqgiver_ and _slain_ 
+	give pc _gold_ 
+
+_clickqgiver_ task:
+	clicked npc _qgiver_ 
+
+_inside_ task:
+	say 1013
+
+_inj_ task:
+	injured _villains_ saying 1011 
+
+_clearclick_ task:
+	when not _slain_ and _clickqgiver_ 
+	clear _clickqgiver_ _clearclick_ 
+
+_spawnenemy_ task:
+	when _inside_ and _nighttime_
+	create foe _villains_ every 10 minutes 1 times with 100% success 
+-- even with the previous fix, people are still suffering from impossible quest.
+-- making it 100% spawn chance, no delayed nonsense.

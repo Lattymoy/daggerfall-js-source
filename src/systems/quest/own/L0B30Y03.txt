@@ -1,0 +1,139 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B30Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 30
+-- QuestId: 3
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: L0B30Y03
+DisplayName: Contract on a Mage
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I know that look, %pcf. You are growing
+<ce> proud, vain and full of yourself.
+<ce> Lovely to see. Now practice some
+<ce> humility on a contract with dangerous
+<ce> politics. The target sits high in the
+<ce> Mages Guild. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> Then wipe that silly grin off your
+<ce> face until you find some courage.
+
+AcceptQuest:  [1002]
+<ce> You never disappoint, %pcf. This wizard
+<ce> is no hedge mage, and never leaves the
+<ce> Mages Guild in ___mondung_. Expect a few
+<ce> dozen of the deadliest casters around.
+<ce> The wizard dies, and you return, within
+<ce> =1stparton_ days. Mephala guide you.
+
+QuestFail:  [1003]
+<ce> The sorcerer still breathes, %pcf. This
+<ce> is one contract you must not fail.
+
+QuestComplete:  [1004]
+<ce> So the wizard is dead and you are
+<ce> not. Now you have something to be
+<ce> proud of, %pcf. Here is _reward_
+<ce> gold. Go on, keep the grin.
+
+RumorsDuringQuest:  [1005]
+All quiet at the Mages Guild. Too quiet, if you ask me.
+<--->
+One day someone will deal with that wicked sorcerer. I hope.
+
+RumorsPostfailure:  [1006]
+<ce> The mage has left the Mages Guild,
+<ce> but that rogue will turn up again.
+<--->
+<ce> That wizard leaving gave the Mages Guild
+<ce> more excitement than it has had in years.
+
+RumorsPostsuccess:  [1007]
+The Mages Guild seems as glad as the
+rest of us that the mage is dead.
+<--->
+That wizard was bad for the Mages
+Guild anyway, if you ask me.
+
+QuestorPostsuccess:  [1008]
+__mondung_ must have been a nasty
+place, %pcf. How delightful.
+
+QuestorPostfailure:  [1009]
+<ce> That mage still lives, yet you
+<ce> want my time? You are full of
+<ce> yourself indeed, %pcf.
+
+Message:  1020
+%qdt:
+ The Dark Brotherhood has given me a wizard
+ of the Mages Guild in __mondung_ to kill.
+ Within =1stparton_ days the wizard must
+ die, and I must be back in ___questgiver_.
+
+Message:  1011
+<ce> The mage is dead. You have
+<ce> made the Brotherhood proud.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _mondung_ remote magery
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _monster1_ is Sorceror
+Foe _monster2_ is Battle_mage
+Foe _monster3_ is Mage
+Foe _monster4_ is Spellsword
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1020 step 0 
+	pick one of _week_ _plot_ _time_ _vend_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc _reward_ 
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_S.02_ task:
+	killed 1 _monster1_ 
+	killed 1 _monster3_ 
+	killed 1 _monster2_ 
+	killed 1 _monster4_ 
+	say 1011 
+
+variable _queston_
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_week_ task:
+	place foe _monster4_ at _mondung_ 
+
+_plot_ task:
+	place foe _monster3_ at _mondung_ 
+
+_time_ task:
+	place foe _monster2_ at _mondung_ 
+
+_vend_ task:
+	place foe _monster1_ at _mondung_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_ 
+	say 1003
+	clear _qgclicked_ _clearclick_

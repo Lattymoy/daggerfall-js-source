@@ -1,0 +1,144 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B70Y14.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 70
+-- QuestId: 14
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0B70Y14
+DisplayName: Invasion from Oblivion
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, the Mages Guild has found a tear
+<ce> between Oblivion and Mundus, and Daedra
+<ce> are coming through. The guild will close
+<ce> it. Those already here are ours to kill.
+<ce> Will you go, for glory and not for gold?
+<--->
+<ce> The prophets may be right at last,
+<ce> %pct. The wall between Mundus and
+<ce> Oblivion is cracking. The Mages Guild
+<ce> will mend it, but we must kill what
+<ce> came through. Will you stand with us?
+
+RefuseQuest:  [1001]
+<ce> The world hangs by a thread and you
+<ce> think of yourself. It shames me that
+<ce> you call yourself one of the ==qgiver_.
+
+AcceptQuest:  [1002]
+<ce> Then hurry to ___dungeon_. Nobody
+<ce> knows how many Daedra walk its halls.
+<ce> Kill every one you meet. The Mages
+<ce> Guild will reach you by spell when the
+<ce> last is gone. Wait more than =2dung_
+<ce> days and nothing can be saved.
+
+QuestComplete:  [1004]
+<ce> You killed the Daedra? This is
+<ce> awkward. A rogue mage fooled us.
+<ce> She summoned one she could not
+<ce> master, then lied so we would kill
+<ce> it for free. We do not pay members,
+<ce> but take these _gold_ gold pieces.
+
+RumorsDuringQuest:  [1005]
+The Mages Guild knows something. If %reg learned
+it, there would be riots in the streets.
+
+RumorsPostfailure:  [1006]
+Tamriel came close to its end,
+and the %kno did nothing to help.
+
+RumorsPostsuccess:  [1007]
+They say the Mages Guild is in debt to
+the %kno over that mess in ___dungeon_.
+
+QuestorPostsuccess:  [1008]
+Well, %pcf, you more or less saved
+the world. What do you need?
+
+QuestorPostfailure:  [1009]
+Tamriel almost ended, %pcf. I am
+a little cross with you about it.
+<--->
+After your last disaster, I trust you
+about as far as I can throw a horse.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At ___qgiver_, _qgiver_ of
+ ==qgiver_ told me Daedra
+ pour through a rift. My task
+ is to kill every one of them
+ in ___dungeon_. A spell will
+ tell me when the last is
+ dead. I have =2dung_ days.
+
+Message:  1011
+<ce> A voice from far away
+<ce> speaks inside your head.
+<ce>
+<ce> "The last Daedra is dead. Tamriel
+<ce> is safe again. Wait, who let you
+<ce> in? Release me! I am a guild
+<ce> mage! Do not snuff that..."
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon7
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _fire_ is Fire_daedra
+Foe _frost_ is Frost_daedra
+Foe _lesser_ is Daedroth
+Foe _lord_ is Daedra_lord
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	pick one of _daedra1_ _daedra2_ _daedra3_ _daedra4_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _frost_ 
+	killed 1 _fire_ 
+	killed 1 _lord_ 
+	killed 1 _lesser_ 
+	say 1011 
+
+_S.02_ task:
+	clicked npc _qgiver_ 
+
+_success_ task:
+	when _S.02_ and _S.01_ 
+	give pc _gold_ 
+	end quest 
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_ 
+	clear _S.02_ _clearclick_ 
+
+_daedra1_ task:
+	place foe _lord_ at _dungeon_ 
+
+_daedra2_ task:
+	place foe _lesser_ at _dungeon_ 
+
+_daedra3_ task:
+	place foe _frost_ at _dungeon_ 
+
+_daedra4_ task:
+	place foe _fire_ at _dungeon_

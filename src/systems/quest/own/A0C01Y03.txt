@@ -1,0 +1,175 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C01Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 01
+-- QuestId: 3
+Messages: 18
+Quest: A0C01Y03
+DisplayName: The Riddle
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> My name is _qgiver_. I need a tracker. I
+<ce> love _spouse_, but %g will not marry me
+<ce> until I answer a riddle. %G3 mentor
+<ce> _hermit_ set it, then %g vanished. Find %g2
+<ce> and %g3 answer for _gold_ gold. Will you?
+
+RefuseQuest:  [1001]
+<ce> I will keep looking for someone to
+<ce> take this on. If you meet anyone
+<ce> willing, send them to _qgiver_.
+
+AcceptQuest:  [1002]
+<ce> To find _hermit_, you will need
+<ce> _spouse_. %G lives in ___spouse_. These
+<ce> flowers are %g3 favorites and may win
+<ce> %g2 over. This letter holds _hermit_'s
+<ce> riddle. If three months pass without
+<ce> word, I will know you failed.
+
+QuestComplete:  [1004]
+<ce> _qgiver_ tears open _hermit_'s letter.
+<ce> "Kindness! Of course. Now I know why
+<ce> _spouse_ set me this task. Loving %g2 is
+<ce> not enough. I must be kind to %g2 too.
+<ce> Thank you, %pcf. Here is your gold."
+
+RumorsDuringQuest:  [1005]
+<ce> _qgiver_ is lovesick. For ages %g has
+<ce> begged _spouse_ to accept a proposal.
+
+RumorsPostfailure:  [1006]
+<ce> I hear _spouse_ of ___spouse_
+<ce> has married. _qgiver_ will be
+<ce> crushed when %g hears.
+
+RumorsPostsuccess:  [1007]
+<ce> Have you heard? _spouse_
+<ce> finally said yes to _qgiver_.
+<ce> They married not long ago.
+
+QuestorPostsuccess:  [1008]
+<ce> Anything for the %ra who solved my
+<ce> riddle. You know I married _spouse_?
+
+QuestorPostfailure:  [1009]
+<ce> You are the %ra who failed to
+<ce> bring me the hermit's answer.
+<ce> Heroes who fail are no use to me.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ___qgiver_ sent me to
+ find _hermit_, who is said to know
+ the answer to a riddle. My one clue:
+ %g and _spouse_ of ___spouse_ once
+ worked together. I have three months.
+
+Message:  1011
+<ce> The _flowers_ were kind, but you need
+<ce> not have brought them. _hermit_ went
+<ce> to study under the famous _teacher_
+<ce> in __school_. Give %g2 this book and
+<ce> %g may look kindly on you.
+
+Message:  1012
+<ce> _hermit_ asked me to hide %g3
+<ce> whereabouts from strangers. But you
+<ce> bring _book_ from _spouse_, so you are
+<ce> no stranger. _hermit_ shut %g2self away
+<ce> in a dungeon, alone with old magic. It
+<ce> is on your map now. Good luck, %pcn.
+
+Message:  1013
+<ce> I hate being disturbed! If the answer
+<ce> to that idiot riddle will make you
+<ce> leave, then have it. Out, before I call
+<ce> up a fire daedra to throw you out.
+
+Message:  1014
+Leave love and hate aside,
+ and answer me this. What gift
+ could you give me that I
+ could never buy for myself?
+
+Message:  1015
+On %qdt, I found
+ _spouse_. %G says _hermit_
+ is now studying under
+ _teacher_ in __school_.
+
+Message:  1016
+On %qdt, _hermit_'s
+ old teacher, _teacher_,
+ received me at __school_. %G
+ says _hermit_ has shut
+ %g2self away in ___dungeon_.
+
+Message:  1017
+Leave love and hate aside,
+ and answer me this. What gift
+ could you give me that I
+ could never buy for myself?
+ 
+ 'KINDNESS, you dolt.
+ What else could it be?'
+
+
+QBN:
+Item _book_ book
+Item _letter_ letter used 1014
+Item _flowers_ yellow_flowers
+Item _answer_ letter used 1017
+Item _gold_ gold
+
+Person _hermit_ face 1 group Group_7.2 remote
+Person _qgiver_ group Questor
+Person _spouse_ group Group_7.1 remote
+Person _teacher_ face 1 faction The_Academics remote
+
+Place _dungeon_ remote dungeon
+Place _school_ remote library
+
+Clock _S.01_ 90.00:00
+--removed flags to make timer exactly 90 days
+
+
+--	Quest start-up:
+	dialog link for location _school_ person _teacher_ 
+	dialog link for location _dungeon_ person _hermit_ 
+	start timer _S.01_ 
+	log 1010 step 0 
+	get item _flowers_ 
+	get item _letter_ 
+	create npc _spouse_ 
+	place npc _hermit_ at _dungeon_ 
+	place npc _teacher_ at _school_ 
+
+variable _questdone_
+_S.01_ task:
+	end quest 
+
+_S.02_ task:
+	toting _flowers_ and _spouse_ clicked saying 1011 
+	add dialog for location _school_ person _teacher_ 
+	log 1015 step 1 
+	get item _book_ 
+
+_S.03_ task:
+	toting _book_ and _teacher_ clicked saying 1012 
+	add dialog for person _hermit_ 
+	reveal _dungeon_ 
+	log 1016 step 2 
+
+_S.04_ task:
+	toting _letter_ and _hermit_ clicked saying 1013 
+	get item _answer_ 
+
+_S.05_ task:
+	toting _answer_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 

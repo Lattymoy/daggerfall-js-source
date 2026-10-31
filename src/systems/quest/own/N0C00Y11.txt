@@ -1,0 +1,187 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0C00Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 11
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 81
+Quest: N0C00Y11
+DisplayName: Grab an Ingredient
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> My name is _qgiver_. We pay members
+<ce> only, but I have a small task. Do
+<ce> it for nothing, and I will speak up
+<ce> for you with the guild. Will you?
+<--->
+<ce> I am _qgiver_. Guild work is for
+<ce> members, but this job nobody wants.
+<ce> One of our odder masters demands a
+<ce> sample of _ingredient_, and we have
+<ce> none left. Fetch some, and the
+<ce> guild will remember. Will you?
+
+RefuseQuest:  [1001]
+<ce> I thought as much. Good day, %pcn.
+
+AcceptQuest:  [1002]
+<ce> Good, %pcf. The only _ingredient_
+<ce> I know of right now lies in
+<ce> ___dungeon_. Fetch it, and be
+<ce> back here in =traveltime_ days.
+
+QuestComplete:  [1004]
+<ce> I have seen fresher. Was it in
+<ce> your boot all the way back? Well,
+<ce> it will do. The guild halls will
+<ce> hear good things of you.
+
+RumorsDuringQuest:  [1005]
+That mad old master at the guild swears ___dungeon_
+grows the finest _ingredient_ in the land.
+
+RumorsPostfailure:  [1006]
+My knee has ached all week. That means
+rain, and my knee is never wrong.
+<--->
+A man spent the whole morning
+telling me about his cousin's goats.
+<--->
+Nothing ever happens around here, and I like it that way.
+<--->
+Either %cn gets colder every
+winter or I get older. Maybe both.
+<--->
+The bread at market was stale again.
+That is three times this month.
+<--->
+My sister went two provinces away to see a
+healer. She writes that the food is awful.
+<--->
+The lamplighter forgot our street again last night.
+<--->
+The square needs a fountain.
+Something big, with a horse on it.
+<--->
+Young people and their spells. %oth,
+what was wrong with a good lamp?
+<--->
+I dreamed I was a fish last night. A very worried fish.
+<--->
+Want to hear something funny? %jok
+<--->
+%jok That one always gets a laugh at the tavern.
+<--->
+%jok I never did understand that one.
+<--->
+Say what you like about the laws of
+%reg. At least somebody wrote them down.
+
+RumorsPostsuccess:  [1007]
+My knee has ached all week. That means
+rain, and my knee is never wrong.
+<--->
+A man spent the whole morning
+telling me about his cousin's goats.
+<--->
+Nothing ever happens around here, and I like it that way.
+<--->
+Either %cn gets colder every
+winter or I get older. Maybe both.
+<--->
+The bread at market was stale again.
+That is three times this month.
+<--->
+My sister went two provinces away to see a
+healer. She writes that the food is awful.
+<--->
+The lamplighter forgot our street again last night.
+<--->
+The square needs a fountain.
+Something big, with a horse on it.
+<--->
+Young people and their spells. %oth,
+what was wrong with a good lamp?
+<--->
+I dreamed I was a fish last night. A very worried fish.
+<--->
+Want to hear something funny? %jok
+<--->
+%jok That one always gets a laugh at the tavern.
+<--->
+%jok I never did understand that one.
+<--->
+Say what you like about the laws of
+%reg. At least somebody wrote them down.
+
+QuestorPostsuccess:  [1008]
+Hello, %pcf. You are the %ra who
+brought the _ingredient_. I remember.
+
+QuestorPostfailure:  [1009]
+<ce> One simple job, %pcf. A little
+<ce> _ingredient_, and you could not
+<ce> manage it. We are done talking.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ at the Mages Guild in
+ ___qgiver_ wants _ingredient_
+ from ___dungeon_. If I deliver it
+ to %g2 within =traveltime_ days,
+ the guild will hear well of me.
+
+Message:  1040
+<ce> Here is the _ingredient_
+<ce> that _qgiver_ sent you for.
+
+Message:  1080
+<ce> The guild thanks you with
+<ce> this map of ___newdung_. Your
+<ce> sort likes maps, I am told.
+
+
+QBN:
+Item _ingredient_ organs
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+Place _newdung_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+Clock _end_ 00:00
+
+
+--	Quest start-up:
+	place item _ingredient_ at _dungeon_ 
+	start timer _traveltime_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	pick one of _map_ _nomap_ _nomap_ 
+
+_traveltime_ task:
+	end quest 
+
+_giveingredient_ task:
+	toting _ingredient_ and _qgiver_ clicked 
+	give pc nothing 
+                start timer _end_
+
+_end_ task:
+	end quest 
+
+_dummymage_ task:
+	clicked item _ingredient_ 
+	say 1040 
+
+variable _map_
+variable _nomap_
+_S.05_ task:
+	when _map_ and _giveingredient_ 
+	reveal _newdung_ readmap
+    say 1080

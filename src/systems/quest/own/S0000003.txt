@@ -1,0 +1,154 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000003.Qbn.
+-- Main story quest.
+-- QuestId: 3
+Messages: 21
+Quest: S0000003
+DisplayName: Freeing Medora
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Welcome, %pcf. I am Medora Direnni,
+<ce> once sorceress at Daggerfall's court.
+<ce> I want Lysandus' spirit at rest too,
+<ce> but I am trapped here. Run an errand
+<ce> to another sorceress, and I can free
+<ce> Direnni Tower of its curse. Will you?
+
+RefuseQuest:  [1001]
+<ce> Then I stay a prisoner, %pcf.
+<ce> Sleep well, if you can.
+
+AcceptQuest:  [1002]
+<ce> Bless you, %pcf. Nulfaga, Lysandus'
+<ce> mother, may be mad with grief. I
+<ce> need a Great Unicorn's horn to
+<ce> break my curse. If she cannot help,
+<ce> search her castle for it. Return
+<ce> within =2shedungent_ days.
+
+QuestFail:  [1003]
+<ce> I can do nothing for you
+<ce> without the horn, %pcf.
+
+QuestComplete:  [1004]
+<ce> You have done something dangerous, %pcf,
+<ce> and harder trials are coming. With the
+<ce> horn I can break the Queen Dowager's
+<ce> curse on my tower. I hope to call on you
+<ce> again. Take this _magicitem_.
+
+RumorsDuringQuest:  [1005]
+Since the Queen of Oblivion came to the
+Isle of Balfiera, nobody goes there.
+<--->
+The rich used to holiday on Balfiera.
+Now only the dead live there.
+
+RumorsPostfailure:  [1006]
+They say the fairy lady's own wicked
+magic is what trapped her there.
+<--->
+The old Witch of Daggerfall is damned
+to Balfiera forever, cursed by %god.
+
+RumorsPostsuccess:  [1007]
+A hero broke a wicked queen's curse
+and freed the Lady of Balfiera.
+<--->
+Some %ra freed the Lady of Balfiera from
+her curse, and the island is healing.
+
+QuestorPostsuccess:  [1008]
+<ce> Hush, hush, the candles are listening. My
+<ce> boy rode out to war and an arrow found his
+<ce> throat. I told him. I told him! Nobody
+<ce> listens to an old woman. Ruin, ruin, ruin.
+<--->
+<ce> Write it in the worst words. Burn the page
+<ce> before anyone reads it. Curse the heavens!
+<ce> Curse Oblivion! My boy is dead, and Tamriel
+<ce> will shake until he and I have peace.
+<--->
+<ce> Which god sent the arrow into my Lysandus'
+<ce> throat? Did they mourn him? Are my little birds
+<ce> all gray now? I look in every world, over and
+<ce> under and between, and my son is in none.
+<--->
+<ce> The dead are walls. Shout and nothing shouts
+<ce> back. How did my Lysandus die? In fog. Has
+<ce> Oblivion come yet? I could set the whole world
+<ce> on fire. And my pillow is full of porcupines.
+
+QuestorPostfailure:  [1009]
+<ce> Medora wants the Great Unicorn's
+<ce> horn? Then of course she shall have
+<ce> it. My Lysandus loved her well.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Medora is sending me into the
+ Wrothgarian Mountains, to Shedungent.
+ Nulfaga, Lysandus' mother, lives there.
+ I need the Great Unicorn's horn, from
+ her or from her castle. I must be back
+ at Direnni Tower in =2shedungent_ days.
+
+Message:  1020
+<ce> The horn twists in a fine spiral to
+<ce> a wicked point. You always heard
+<ce> unicorn horn was white as ivory.
+<ce> This one looks more like silver.
+
+
+QBN:
+Item horn horn used 1020
+Item _magicitem_ magic_item
+
+Person _medora_ named Medora atHome
+Person _nulfaga_ named Nulfaga atHome
+
+Place _huntstart_ permanent Shedungent4
+
+Clock _2shedungent_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	prompt QuestorOffer yes yes no _no_ 
+
+_2shedungent_ task:
+	end quest 
+
+_S.01_ task:
+	clicked npc _nulfaga_ 
+
+variable _S.02_
+variable _S.03_
+variable _S.04_
+_S.05_ task:
+	when _S.01_ and not _S.09_ 
+	say QuestorPostsuccess 
+	clear _S.01_ _S.05_ 
+
+variable _S.06_
+yes task:
+	place item horn at _huntstart_ marker 1
+	start timer _2shedungent_ 
+	log 1010 step 0 
+	reveal _huntstart_ in province 16 at 50966 
+	say AcceptQuest 
+
+_no_ task:
+	say RefuseQuest 
+	end quest 
+
+LiftedCurse _S.09_
+MedoraGotHorn _S.10_
+	toting horn and _medora_ clicked 
+	give pc _magicitem_ 
+	start quest 18 18 
+	change repute with _medora_ by +10 
+	mute npc _medora_ 
+	end quest

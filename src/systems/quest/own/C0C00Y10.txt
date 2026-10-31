@@ -1,0 +1,190 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0C00Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 10
+Messages: 26
+Quest: C0C00Y10
+DisplayName: The Healing
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Healing someone is the surest way
+<ce> into the temple's good graces,
+<ce> %pcn. I know of a sick person who
+<ce> needs help. Will you try?
+<--->
+<ce> I am _giver_. You stand low in
+<ce> __giver_. Cure someone I know,
+<ce> and I could speak well of you.
+
+RefuseQuest:  [1001]
+<ce> If a simple healing is beyond
+<ce> you, I cannot put your name
+<ce> to the temple's leaders.
+
+AcceptQuest:  [1002]
+<ce> _cousin_ in ___cousin_ has a strange
+<ce> illness. I was about to send a cleric
+<ce> to treat %g2, but I can hold off a
+<ce> day or so. A cure would raise you in
+<ce> __giver_. You have =questtime_ days.
+
+QuestFail:  [1003]
+%qdt:
+ At __giver_ in ___giver_, _giver_ asked
+ me to cure _cousin_ in ___cousin_. If I
+ cannot heal %g2 within =questtime_
+ days, someone else gets the job.
+
+QuestComplete:  [1004]
+<ce> The color is back in _cousin_'s
+<ce> face. %G is well again.
+
+RumorsDuringQuest:  [1005]
+Poor _cousin_. I have never
+seen a =cousin_ so ill.
+
+RumorsPostfailure:  [1006]
+Some %ra failed _giver_ of __giver_,
+and now there is shouting.
+
+RumorsPostsuccess:  [1007]
+The sick one, _cousin_, turned out to
+be a cousin of _giver_ at __giver_.
+
+QuestorPostsuccess:  [1008]
+%god bless you, %pcf. _cousin_
+is well again. What do you need?
+
+QuestorPostfailure:  [1009]
+_cousin_ is dead, %pcf,
+and I hold you to blame.
+
+Message:  1025
+<ce> I will be watching. The patient is
+<ce> _cousin_, and %g lives in ___cousin_.
+<ce> Prove yourself within =questtime_ days.
+
+QuestLogEntry:  [1010]
+<ce> I am so weak. I have no idea what ails
+<ce> me. Are you here to help? Do you have
+<ce> a cure? Then use it on me, please.
+
+Message:  1011
+<ce> Will you do it?
+
+Message:  1012
+I heard about %g3 illness. They say
+_healer_ in ___healer_ can cure it.
+<--->
+Something is wrong with %g2, some disease. Someone
+named _healer_ in ___healer_ may have a cure.
+
+Message:  1013
+<ce> Yes, I know of _cousin_ in
+<ce> ___cousin_ and %g3 trouble. It is
+<ce> Swamp Rot, though people often take
+<ce> it for something milder. I have
+<ce> root tendrils that will cure it,
+<ce> enough for one dose. Twenty gold.
+
+Message:  1014
+<ce> Will you buy the root
+<ce> tendrils for twenty gold?
+
+Message:  1015
+<ce> You do not have twenty
+<ce> gold. No coin, no root.
+
+Message:  1016
+<ce> Thank you, %pcn. I will take the root now.
+<ce> I cannot thank you enough. Travel safely.
+
+Message:  1017
+%qdt:
+ I bought root tendrils from
+ _healer_ of ___healer_. They cure
+ the Swamp Rot that ails _cousin_.
+
+Message:  1018
+%qdt:
+ I gave _cousin_ the root tendrils,
+ and the Swamp Rot left %g2. __giver_
+ should think better of me now.
+
+Message:  1019
+<ce> The root tendrils crumble
+<ce> away as you use them.
+
+
+QBN:
+Item _talisman_ root_tendrils
+-added underscores to talisman
+
+Person _giver_ group Questor
+Person _cousin_ group Local_3.0 remote anyInfo 1012 rumors 1012
+Person _healer_ face 64 group Chemist remote
+
+
+Clock _questtime_ 00:00 0 flag 1 range 3 5
+
+--	Quest start-up:
+	start timer _questtime_ 
+	prompt 1011 yes _S.01_ no _S.02_ 
+	pick one of _S.06_ _S.07_ 
+	_talisman_ used do _S.08_ 
+
+_questtime_ task:
+	end quest 
+
+_S.01_ task:
+	log 1003 step 0 
+	say 1025 
+
+_S.02_ task:
+	say 1005
+	end quest
+-removed illogical "saying RumorsPostfailure" from this task. replaced with 1005.
+
+_S.03_ task:
+	clicked npc _cousin_ 
+	say 1010 
+
+_S.04_ task:
+	when _S.03_ and _S.06_ 
+	make pc ill with Swamp_Rot 
+
+variable _S.05_
+variable _S.06_
+variable _S.07_
+_S.08_ task:
+	take _talisman_ from pc saying 1019 
+	cure Swamp_Rot 
+
+_S.09_ task:
+	toting _talisman_ and _cousin_ clicked 
+	log 1018 step 2 
+	say 1016 
+	give pc nothing 
+	end quest 
+--removed unnecessary delay
+--moved "give pc nothing" to end of task, more sensible for dialogue
+
+_S.10_ task:
+	clicked npc _healer_ say 1013 
+	prompt 1014 yes _S.11_ no _no_ 
+
+_no_ task:
+	clear _S.10_ 
+
+_S.11_ task:
+	clicked _healer_ and at least 20 gold otherwise do _S.12_ 
+	log 1017 step 1 
+	get item _talisman_ 
+
+_S.12_ task:
+	say 1015

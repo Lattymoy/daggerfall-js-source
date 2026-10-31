@@ -1,0 +1,351 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C11Y26.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 26
+Messages: 51
+Quest: R0C11Y26
+DisplayName: The Mad Ripper
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, a madman called the ____qgiver_ Ripper
+<ce> is terrorizing ___qgiver_, and my guards
+<ce> have not one clue who it is. I hear you keep
+<ce> unusual friends. Will you help, for the good
+<ce> of ____qgiver_ and a large purse?
+
+RefuseQuest:  [1001]
+<ce> That is a common answer. Then I
+<ce> must call on less savory friends,
+<ce> which I had hoped to avoid.
+
+AcceptQuest:  [1002]
+<ce> Thank you, %pcf. ____qgiver_ grows restless,
+<ce> and within =total_ days I fear a mob. A
+<ce> scholar, _contact_, is studying the Ripper's
+<ce> letters for me. Find %g2 at _bookstore_ and
+<ce> hear %g3 progress. %god be with us.
+
+QuestFail:  [1003]
+<ce> The ____qgiver_ Ripper is
+<ce> still free. I have no time
+<ce> to chat, and neither do you.
+
+QuestComplete:  [1004]
+<ce> Thanks to you, %pcf, ___qgiver_ sleeps
+<ce> soundly again. Here is the _reward_
+<ce> gold, given gladly for the end of that
+<ce> butcher. %god sent you to ____qgiver_.
+
+RumorsDuringQuest:  [1005]
+Nobody walks the streets of ___qgiver_ at night
+now, not with the ____qgiver_ Ripper about.
+<--->
+Some say the ____qgiver_ Ripper is a
+daedra, sent to punish us for our sins.
+<--->
+They found the ____qgiver_ Ripper's last
+victim in a dozen places across ___qgiver_.
+<--->
+People wonder whether the ____qgiver_
+Ripper is a vampire, or a werewolf.
+
+RumorsPostfailure:  [1006]
+The killings stopped before any mob
+formed. The Ripper must have moved on.
+<--->
+_qgiver_ was lucky the ____qgiver_ Ripper
+left. The city was close to panic.
+
+RumorsPostsuccess:  [1007]
+So _rippername_ was the ____qgiver_ Ripper. They
+say %g wants the house burned to the ground.
+<--->
+%oth, they dug up a heap of skulls
+under _rippername_'s floor.
+<--->
+_rippername_ was a loner, they
+say. Nobody ever knew %g2 well.
+
+QuestorPostsuccess:  [1008]
+My door is open to the %ra who caught the
+____qgiver_ Ripper. What is it, %pcf?
+<--->
+The ____qgiver_ Ripper is gone
+because of you. How can I help?
+
+QuestorPostfailure:  [1009]
+<ce> You are lucky the ____qgiver_ Ripper
+<ce> moved on, or I would be angry. In
+<ce> truth, I am angry. Get out, %pcf.
+
+QuestLogEntry:  [1010]
+<ce> Good timing, %pcf. A letter
+<ce> _qgiver_ received had one name
+<ce> scratched out: _hooker_, a =hooker_
+<ce> at _hookerhouse_. If the Ripper
+<ce> meant to write to _hooker_, %g may
+<ce> know who the Ripper is. Take this
+<ce> letter to _hookerhouse_ and ask.
+
+Message:  1011
+<ce> _qgiver_,
+The last one was SWEET, I took a bite.
+Your whole family smells sweet too.
+Maybe the Ripper calls on YOU next. Rip,
+rip, and one more RIP to make us even.
+<ce> Yours graciously,
+ The ____qgiver_ Ripper
+
+Message:  1012
+_qgiver_,
+ 
+You will never CATCH me. Do you love your
+____qgiver_ now that its streets run RED?
+ 
+Your dear friend,
+<ce> The ____qgiver_ Ripper
+
+Message:  1013
+_contact_,
+ 
+Yes, I will see you, here or at
+your place, about the strange one
+who keeps after me. I have a letter
+from that one you should read.
+ 
+<ce> With thanks, _hooker_
+
+Message:  1014
+_hooker_,
+ 
+You promised to be my friend.
+Then I saw you in the street, and
+you looked straight through me.
+ 
+Do not make me angry again.
+You would not like that.
+ 
+_rippername_
+
+Message:  1015
+<ce> You work with _contact_, %pcf? %G
+<ce> wanted this letter. _rippername_ of
+<ce> _ripperhouse_ was a client, a strange
+<ce> one. I pitied %g2, and feared %g2 more.
+<ce> %G must be the ____qgiver_ Ripper. Tell
+<ce> your employer, and let %g2 act.
+
+Message:  1016
+_hooker_ sells company to anyone who pays. Try %di of here.
+<--->
+_hooker_? Cheap company, %di of
+here, if that is what you want.
+
+Message:  1017
+_hooker_ used to keep company with
+an odd one named _rippername_.
+<--->
+Ask _hooker_ about %g3 old client
+_rippername_. A nasty piece of work.
+
+Message:  1020
+%qdat:
+ In ___qgiver_ I met _qgiver_ about the
+ ____qgiver_ Ripper. %G needs the killer
+ caught within =total_ days, before the
+ city turns into a mob. My one lead is
+ _contact_, a scholar at _bookstore_ who
+ has the Ripper's letters.
+
+Message:  1021
+%qdat:
+ On _contact_'s word I am off to
+ _hookerhouse_ to see _hooker_, a prostitute
+ who may know something about the Ripper.
+
+Message:  1022
+%qdat:
+ I found a letter at __contact_ from _hooker_,
+ asking to meet _contact_ about a strange
+ admirer. The ____qgiver_ Ripper reached
+ _contact_ before I did. I must find that
+ letter writer, and be quicker this time.
+
+Message:  1023
+%qdat:
+ _hooker_ told me of a client %g once had, mad
+ enough to be the Ripper. The name is
+ _rippername_, and the house is _ripperhouse_.
+ I hope this is not my last entry.
+
+Message:  1024
+%qdat:
+ The Ripper found _hooker_ first, and
+ nothing could save %g2. In the house
+ was a letter from someone called
+ _rippername_, jumpy enough to be our
+ Ripper. I should look into it.
+
+Message:  1025
+_contact_ is a learned scholar at _bookstore_, %di of here.
+<--->
+_contact_ sometimes advises _qgiver_
+on the workings of the mind.
+
+Message:  1026
+_contact_ is an old fool. Chasing the Ripper will end badly.
+<--->
+_contact_ is a sage at _bookstore_, and
+far too deep in this Ripper business.
+
+Message:  1040
+_rippername_? Try _ripperhouse_.
+You will likely find %g2 there.
+<--->
+_rippername_? I know nothing much. A quiet one.
+<--->
+_rippername_ is that pleasant young man from _ripperhouse_.
+
+Message:  1041
+<ce> He seems ordinary enough, but some of the
+<ce> stories about him would make you wonder.
+<--->
+<ce> Nice enough, but odd. You do wonder
+<ce> sometimes what goes on in that head.
+
+Message:  1050
+<ce> I saw you with my sweetheart! You want each
+<ce> other? Then you can be Ripped side by side!
+
+
+QBN:
+Item _I.00_ letter used 1011
+Item _I.01_ letter used 1012
+Item _I.02_ letter used 1013
+Item _I.03_ letter used 1014
+Item _I.04_ dead_body
+Item _I.05_ dead_body
+Item _reward_ gold
+
+Person _qgiver_ group Questor
+Person _contact_ face 1 group Librarian local anyInfo 1025 rumors 1026
+Person _hooker_ face 1 faction The_Prostitutes local
+Person _rippername_ face 101 group Group_6.0 male local anyInfo 1040 rumors 1041
+
+Place _bookstore_ local house2
+Place _hookerhouse_ local house4
+Place _ripperhouse_ local house1
+
+Clock _1stparton_ 00:05 02:00
+Clock _2ndparton_ 00:20 12:00
+Clock _S.03_ 01:40 1.00:00
+Clock _total_ 2.00:00 0 flag 1 range 0 1
+
+Foe _murder_ is Nightblade
+
+--	Quest start-up:
+	add dialog for location _bookstore_ person _contact_ 
+	dialog link for location _ripperhouse_ person _rippername_ 
+	dialog link for location _hookerhouse_ person _hooker_ 
+	start timer _total_ 
+	start timer _1stparton_ 
+	log 1020 step 0 
+	say AcceptQuest 
+	place npc _contact_ at _bookstore_ 
+	place npc _rippername_ at _ripperhouse_ 
+	place npc _hooker_ at _hookerhouse_ 
+	have _I.04_ set _deadbody_
+	have _I.05_ set _deadbody2_
+
+_S.00_ task:
+	killed 1 _murder_ 
+
+_1stparton_ task:
+	start timer _2ndparton_ 
+
+_2ndparton_ task:
+	start timer _S.03_ 
+	start task _S.06_ 
+
+_S.03_ task:
+	start task _S.07_ 
+
+variable _S.04_
+variable _S.05_
+_S.06_ task:
+	_I.02_ used do _S.14_ 
+	place item _I.04_ at _bookstore_ 
+	place item _I.02_ at _bookstore_ 
+	place item _I.01_ at _bookstore_ 
+	place item _I.00_ at _bookstore_ 
+	hide npc _contact_ 
+
+_S.07_ task:
+	_I.03_ used do _S.11_ 
+	place item _I.05_ at _hookerhouse_ 
+	place item _I.03_ at _hookerhouse_ 
+	hide npc _hooker_ 
+
+_deadbody_ task:
+	take _I.04_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_deadbody2_ task:
+	take _I.05_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.00_
+	clear _qgclicked_ _clearclick_
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.00_ 
+	give pc _reward_ 
+	unset _qgclicked_ 
+	end quest 
+
+variable _S.10_
+_S.11_ task:
+	add dialog for person _rippername_ 
+	log 1024 step 2 
+
+_S.12_ task:
+	clicked npc _hooker_ 
+	add dialog for location _ripperhouse_ 
+	log 1023 step 2 
+	get item _I.03_ 
+	say 1015 
+
+_S.13_ task:
+	clicked npc _contact_ 
+	add dialog for location _hookerhouse_ person _hooker_ 
+	log 1021 step 1 
+	get item _I.02_ 
+	say 1010 
+
+_S.14_ task:
+	add dialog for person _hooker_ 
+	log 1022 step 1 
+
+variable _S.15_
+_S.16_ task:
+	hide npc _rippername_ 
+	place foe _murder_ at _ripperhouse_ 
+
+_S.17_ task:
+	pc at _ripperhouse_ set _S.16_ 
+	when _S.12_ or _S.11_ 
+
+_S.18_ task:
+	injured _murder_ saying 1050 
+
+_total_ task:
+	end quest 

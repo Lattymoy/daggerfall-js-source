@@ -1,0 +1,242 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000009.Qbn.
+-- Main story quest.
+-- QuestId: 9
+Messages: 22
+Quest: S0000009
+DisplayName: Elysana's Betrayal
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Lord Woodborne said you were dashing.
+<ce> He undersold you! You are after some
+<ce> old thing, %pcf. A totem pole, was it?
+<ce> A delightful =contact_ I know has
+<ce> something for you. Just see my cousin
+<ce> _foil_ to _contact_. One teensy favor?
+
+RefuseQuest:  [1001]
+<ce> No? How awful! My poor cousin will
+<ce> be heartbroken. Lord Woodborne
+<ce> said you were much more fun.
+
+AcceptQuest:  [1002]
+<ce> How thrilling! _foil_ adores travel
+<ce> and longs to see _contact_. Go to
+<ce> __contact_ in ___contact_,
+<ce> ____contact_. %G has =reward_ gold
+<ce> pieces for you when you bring %g2
+<ce> _foil_. I do love a dangerous mission!
+
+QuestFail:  [1003]
+<ce> I have nothing more to say to you.
+
+QuestComplete:  [1004]
+<ce> %pcf! You are alive? I mean, how
+<ce> lovely! And _foil_, safe and sound.
+<ce> Here is your gold. An object? A
+<ce> totem? No idea. Must dash!
+
+RumorsDuringQuest:  [1005]
+Some rough-looking types came by
+earlier, asking after a %ra sellsword.
+<--->
+Princess Elysana rides out into the
+wilds of Wayrest a lot these days.
+
+RumorsPostfailure:  [1006]
+A gang jumped some %ra on the road.
+Something smells wrong about it.
+<--->
+The men who ambushed that %ra were
+strangers here. Hired killers, I would bet.
+
+RumorsPostsuccess:  [1007]
+A man nobody knows is paying
+killers to murder a certain %ra.
+<--->
+_contact_ was furious. Odd, since %g
+got %g3 cousin back safe and sound.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Princess Elysana wants me to take her
+ cousin _foil_ to _contact_ in ___contact_
+ of ____contact_. %G owes me =reward_ gold
+ for it, and something to do with the Totem.
+
+Message:  1011
+<ce> _foil_ bolts without warning.
+<ce> %g3 feet make no sound as %g
+<ce> melts into the shadows.
+
+Message:  1012
+<ce> %pcf, it was not my fault! A
+<ce> gray-cloaked man gave me _reward_ gold
+<ce> to set you up. _foil_ was a hired whore.
+<ce> These _bribe_ gold pieces are so heavy.
+<ce> Take them too, and I will be off.
+
+Message:  1013
+%pcn is learning too much.
+ Kill %pcn, by any means.
+<ce>
+<ce> -- W.
+
+Message:  1015
+<ce> A street child runs up shouting,
+<ce> "Note for %pcn! The gray man sent
+<ce> it!" and is gone before you can catch
+<ce> him. You are left holding a note.
+
+Message:  1016
+%pcn,
+ 
+ Lord Woodborne, a dear friend, tells
+ me you are a hero one can trust. Do
+ come and chat. Perhaps you could
+ even do me a small kindness. You
+ would make me ever so happy!
+ 
+<ce> Princess Elysana
+<ce> Castle Wayrest
+
+Message:  1018
+%pcf,
+ 
+ Stop asking questions now, or
+ you will be as dead as Lysandus.
+ Is a dead man worth your life?
+  We are watching you.
+
+Message:  1019
+%pcn dies. I will hear no excuses.
+<ce>
+<ce> -- W.
+
+Message:  1020
+<ce> "Who were those savages?" cries _foil_.
+<ce> "They nearly killed you! Maybe you
+<ce> should leave Lysandus' ghost alone."
+
+Message:  1021
+<ce> "Elysana said you would be easy," _foil_
+<ce> says. "You are much tougher than that."
+
+
+QBN:
+Item _note_ letter used 1013
+Item _reward_ gold
+Item _letter45_ letter used 1018
+Item _letter46_ letter used 1016
+Item _letter47_ letter used 1019
+Item _bribe_ gold
+
+Person _elysana_ named Princess_Elysana atHome
+Person _foil_ face 115 faction The_Prostitutes female remote
+Person _contact_ group Local_3.3 remote
+Person Woodborne face 1 named Lord_Woodborne
+
+Clock _giveLetter_ 7.00:00 14.00:00
+Clock _S.14_ 2.00:00 0 flag 1 range 0 1
+
+Foe _barbarians_ is Barbarian
+Foe _knights_ is Knight
+
+--	Quest start-up:
+	start timer _giveLetter_ 
+	give pc _letter45_ notify 1015 
+	add _elysana_ as questor 
+
+_npcclicked_ task:
+	clicked npc _contact_ 
+	start timer _S.14_ 
+	hide npc _contact_ 
+
+_S.01_ task:
+	when not _foilGone_ and _npcclicked_ 
+	give pc _reward_ 
+	drop _foil_ face 
+
+_S.02_ task:
+	when _foilGone_ and _npcclicked_ 
+	get item _reward_ 
+	get item _bribe_ 
+	say 1012 
+	drop _foil_ face 
+
+_yes_ task:
+	log 1010 step 0 
+	say AcceptQuest 
+	add _foil_ face 
+	change repute with _elysana_ by -25 
+	unset _clickedElysana_ 
+	start task _spawnBarbarians_
+	start task _spawnKnights_
+
+_no_ task:
+	say RefuseQuest 
+	end quest 
+
+_S.05_ task:
+	injured _barbarians_ 
+	give item _note_ to _barbarians_ 
+
+_S.06_ task:
+	injured _knights_ 
+	give item _letter47_ to _knights_ 
+-- this was previously letter45, which was the one you get at the start of the quest.
+-- letter47 is a new addition with text 1019. enemy soldiers should not be carrying
+-- the letter you received previously.
+
+_S.07_ task:
+	killed 3 _barbarians_ 
+	unset _spawnBarbarians_
+
+_slainBarbarians_ task:
+	when _S.07_ and _yes_
+	say 1020 
+	
+_spawnBarbarians_ task:
+	send _barbarians_ every 70 minutes 10 times with 10% success 
+
+_S.08_ task:
+	killed 2 _knights_ 
+	unset _spawnKnights_
+
+_slainKnights_ task:
+	when _S.08_ and _yes_
+	say 1021 
+
+_spawnKnights_ task:
+	send _knights_ every 91 minutes 10 times with 10% success 
+
+_foilGone_ task:
+	when _slainKnights_ and _slainBarbarians_ and not _daytime_ 
+	say 1011 
+	drop _foil_ face 
+
+_daytime_ task:
+	daily from 06:00 to 18:00 
+
+_giveLetter_ task:
+	give pc _letter46_ silently 
+
+_clickedElysana_ task:
+	clicked npc _elysana_ 
+
+_S.13_ task:
+	when _clickedElysana_ and _giveLetter_ 
+	prompt QuestorOffer yes _yes_ no _no_ 
+
+_clearclick_ task:
+	when _clickedElysana_ and not _giveLetter_
+	clear _clickedElysana_ _clearclick_ 
+
+_S.14_ task:
+	end quest 
+
+FinishedMantellanCrux _S.15_
+	end quest

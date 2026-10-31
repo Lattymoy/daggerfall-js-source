@@ -1,0 +1,183 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C20Y22.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 20
+-- QuestId: 22
+Messages: 31
+Quest: R0C20Y22
+DisplayName: Business with Orcs
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ah, %pcf, good. If you are for hire, I
+<ce> need a special _item_ carried to an
+<ce> acquaintance. The pay is generous, since
+<ce> the road may be dangerous. Interested?
+
+RefuseQuest:  [1001]
+<ce> No? Then I will look elsewhere.
+
+AcceptQuest:  [1002]
+<ce> Splendid. Here is the _item_. _contact_ must have
+<ce> it in ___contact_ within =queston_ days, ample
+<ce> time. You will know _contact_ as the =contact_ at
+<ce> __contact_. Orcs may try to stop this shipment. I
+<ce> trust you can handle their kind.
+
+QuestFail:  [1003]
+<ce> Hurry, %pcf. Orcs have been
+<ce> seen around ___questgiver_ at
+<ce> night, and they grow bolder.
+
+QuestComplete:  [1004]
+<ce> Here you are, %pcf, with the _item_.
+<ce> Well done. This red stone is yours
+<ce> for the trouble. Look after yourself.
+
+RumorsDuringQuest:  [1005]
+_questgiver_ still smuggles, if you believe the talk.
+<--->
+<ce> The guards chased two orcs out of town
+<ce> last night. What would bring orcs here?
+
+RumorsPostfailure:  [1006]
+A lovely _item_ was found near here not long ago.
+<--->
+_questgiver_ is in a fury with some %ra courier.
+
+RumorsPostsuccess:  [1007]
+Some =contact_ has been flaunting a _item_ around here.
+<--->
+A jeweler is missing a large ruby, I hear.
+
+QuestorPostsuccess:  [1008]
+Your errand went well, I hear, %pcf. Good. Very good.
+<--->
+I was glad to hear the delivery went well. How can I help?
+
+QuestorPostfailure:  [1009]
+<ce> You are the courier who failed
+<ce> me, yes? Why should I spend more
+<ce> words on you? Do not answer that.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ hired me to take a _item_
+ to _contact_ in ___contact_. We meet at
+ __contact_ within =queston_ days, and
+ %g pays me then, if the orcs who want
+ the _item_ do not cut me down first.
+
+Message:  1012
+Stay away from that orc-lover in ___orsinium_.
+<--->
+_orsinium_ of ___orsinium_? I hear
+%g sits and drinks with orcs.
+
+Message:  1013
+Everyone in ___orsinium_ knows
+_orsinium_ is a friend to orcs.
+<--->
+<ce> _orsinium_ loves orcs, I tell you. I saw %g2 meet the brutes
+<ce> outside ___orsinium_. %G should be driven out of town.
+
+Message:  1015
+_questgiver_ denies it, but %g smuggles, they say.
+<--->
+<ce> _questgiver_ runs a smuggling ring, they
+<ce> say, selling loot taken from old Orsinium.
+
+Message:  1016
+<ce> These Orsinium spoils of _questgiver_'s will
+<ce> draw the orcs on us all. _orsinium_ has accused
+<ce> _questgiver_ openly, and nothing has been done.
+<--->
+<ce> Where does _questgiver_ find such things? I have seen fine
+<ce> old jewelry on %g2 lately, Orsinium work by the look of it.
+
+Message:  1020
+<ce> I am glad you came, %pcn. The _item_ you carry
+<ce> was stolen from Orsinium, the old orc capital.
+<ce> _questgiver_ scorns orcs, so they fight for
+<ce> it. Give me the _item_, and it goes home.
+
+Message:  1021
+<ce> Will you give up the _item_?
+
+Message:  1022
+<ce> I knew I judged you rightly. Thank you,
+<ce> %pcf. My people will remember this.
+
+Message:  1023
+<ce> A pity. Everyone has reasons, I
+<ce> suppose. I hope yours let you sleep.
+
+Message:  1030
+<ce> The orc falls, and with its last breath it
+<ce> rasps, "_orsinium_... find... _orsinium_..."
+
+
+QBN:
+Item _reward_ ruby
+Item _item_ trinket
+
+Person _questgiver_ group Questor anyInfo 1015 rumors 1016
+Person _contact_ group Local_3.0 remote
+Person _orsinium_ face 184 faction Orsinium remote anyInfo 1012 rumors 1013
+
+Place orcCastle permanent OrsiniumCastle3
+
+--changed flags on timer, was giving very short time limits before
+Clock _queston_ 00:00 0 flag 3 range 3 5
+
+Foe _note_ is 3 Orc
+Foe _F.01_ is Orc_sergeant
+
+--	Quest start-up:
+	dialog link for location orcCastle person _orsinium_ 
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _item_ 
+	create npc _orsinium_ 
+	create npc _contact_ 
+
+variable _pcgetsgold_
+variable _pchasitem_
+_queston_ task:
+	make _item_ permanent 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+_npcclicked_ task:
+	toting _item_ and _contact_ clicked 
+	give pc _reward_ 
+	end quest 
+
+_S.04_ task:
+	clicked npc _orsinium_ 
+	say 1020 
+
+_S.05_ task:
+	say 1022 
+	change repute with _orsinium_ by +30 
+
+until _S.05_ performed:
+	create foe _note_ every 5 minutes 12 times with 35% success 
+	create foe _F.01_ every 10 minutes 12 times with 35% success 
+
+_bookstore_ task:
+	get item _item_ 
+	say 1023 
+	change repute with _orsinium_ by -10 
+
+_S.07_ task:
+	killed 1 _F.01_ 
+	add dialog for person _orsinium_ 
+	say 1030 
+
+_S.08_ task:
+	toting _item_ and _orsinium_ clicked 
+	prompt 1021 yes _S.05_ no _bookstore_ 

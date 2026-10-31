@@ -1,0 +1,211 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0A0AL00.Qbn.
+-- StartsBy: letter
+-- Questee: initiate
+-- Questor: thief
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 31
+Quest: O0A0AL00
+DisplayName: The Qualifying Examination
+-- Message panels
+QRC:
+
+QuestComplete:  [1004]
+<ce> A mage's _clothing_ again. You are one
+<ce> of us now. In any town you will know
+<ce> where our buildings are. Rules say I
+<ce> pay for that rag: one gold piece.
+<ce>
+<ce> And ___dungeon_ is now marked on your map.
+
+RumorsDuringQuest:  [1005]
+I had a cough all last week. It went away on its own.
+<--->
+My neighbor talked at me about rain
+for three hours. I never said a word.
+<--->
+The weather is about what you would expect, really.
+<--->
+%cn is cold for the season, if you ask me.
+<--->
+Warmer today than this day last
+year. Or colder. I forget which.
+<--->
+My aunt went two provinces away
+to see a healer about her feet.
+<--->
+The evenings get dark earlier and
+earlier. Nobody can tell me why.
+<--->
+This square needs a statue. Somebody on a horse, maybe.
+<--->
+Children and their magic these
+days. %oth, what comes next?
+<--->
+I dreamed about fish last night. Big ones, with opinions.
+<--->
+Here is one I heard at the tavern. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I never understood that one. Do you?
+<--->
+The courts in %reg are fair,
+mostly. It depends on the judge.
+
+RumorsPostfailure:  [1006]
+I had a cough all last week. It went away on its own.
+<--->
+My neighbor talked at me about rain
+for three hours. I never said a word.
+<--->
+The weather is about what you would expect, really.
+<--->
+%cn is cold for the season, if you ask me.
+<--->
+Warmer today than this day last
+year. Or colder. I forget which.
+<--->
+My aunt went two provinces away
+to see a healer about her feet.
+<--->
+The evenings get dark earlier and
+earlier. Nobody can tell me why.
+<--->
+This square needs a statue. Somebody on a horse, maybe.
+<--->
+Children and their magic these
+days. %oth, what comes next?
+<--->
+I dreamed about fish last night. Big ones, with opinions.
+<--->
+Here is one I heard at the tavern. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I never understood that one. Do you?
+<--->
+The courts in %reg are fair,
+mostly. It depends on the judge.
+
+RumorsPostsuccess:  [1007]
+I had a cough all last week. It went away on its own.
+<--->
+My neighbor talked at me about rain
+for three hours. I never said a word.
+<--->
+The weather is about what you would expect, really.
+<--->
+%cn is cold for the season, if you ask me.
+<--->
+Warmer today than this day last
+year. Or colder. I forget which.
+<--->
+My aunt went two provinces away
+to see a healer about her feet.
+<--->
+The evenings get dark earlier and
+earlier. Nobody can tell me why.
+<--->
+This square needs a statue. Somebody on a horse, maybe.
+<--->
+Children and their magic these
+days. %oth, what comes next?
+<--->
+I dreamed about fish last night. Big ones, with opinions.
+<--->
+Here is one I heard at the tavern. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I never understood that one. Do you?
+<--->
+The courts in %reg are fair,
+mostly. It depends on the judge.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A beggar gave me a note from the Thieves
+ Guild. They saw me steal without their leave.
+ I can join them or have them as enemies.
+
+Message:  1020
+<ce> A beggar with one eye pushes a
+<ce> letter at you. "From a lady dressed
+<ce> in gray," he says. "She paid me
+<ce> already, so do not bother."
+
+Message:  1018
+<ce> Paper crackles as you lift
+<ce> the _clothing_. Someone has
+<ce> hidden a note inside it.
+
+Message:  1019
+<ce> Bring it to _thiefmember_
+<ce> ___endbuilding_
+
+Message:  1024
+%pcn,
+    You were seen stealing, so
+ do not deny it. Thieves here
+ work with the guild or answer
+ to it. To join us, get into
+ _mansion_ in ___mansion_ and
+ steal its _clothing_.
+  You have =traveltime_ days.
+
+Message:  1030
+<ce> A thief, in my own house? You
+<ce> picked the wrong wizard to rob.
+
+
+QBN:
+Item _clothing_ womens_clothing
+Item _letter_ letter used 1024
+Item _note_ letter used 1019
+Item _gold_ gold range 1 to 1
+
+Person _thiefmember_ face 88 faction The_Thieves_Guild remote
+Person _npc_ face 218 group Group_6.0 female remote
+
+Place _mansion_ remote house1
+Place _dungeon_ remote dungeon
+-- Added to allow joining while quest system is still being finished:
+Place _endbuilding_ remote random
+
+Clock _traveltime_ 90.00:01 0 flag 1 range 0 1
+
+Foe _F.00_ is Mage
+
+--	Quest start-up:
+	place item _clothing_ at _mansion_ 
+	_letter_ used do _readletter_ 
+	give pc _letter_ notify 1020 
+                place npc _thiefmember_ at _endbuilding_
+
+_traveltime_ task:
+	end quest 
+
+_questdone_ task:
+	toting _clothing_ and _thiefmember_ clicked 
+	give pc _gold_ 
+	reveal _dungeon_ readmap
+	end quest 
+
+_S.02_ task:
+	create foe _F.00_ every 3 minutes 3 times with 25% success 
+
+_S.03_ task:
+	clicked item _clothing_ say 1018 
+	get item _note_ 
+
+_readletter_ task:
+	pc at _mansion_ set _S.02_ 
+	start timer _traveltime_ 
+	log 1010 step 0 
+
+_S.05_ task:
+	injured _F.00_ 
+	say 1030

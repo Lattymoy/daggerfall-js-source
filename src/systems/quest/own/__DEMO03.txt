@@ -1,0 +1,81 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+- This is for testing log action + journal ui
+
+Quest: __DEMO02
+
+QRC:
+
+QuestLogEntry: [1010]
+%qdt:
+ The Dark Brotherhood's _qgiver_, in __qgiver_,
+ ___qgiver_, wants a rival assassin, =assassin_,
+ dealt with. %G is working a contract in
+ ___mondung_. Whoever hired =assassin_ dies too, if
+ I can find out who it was. I have =queston_ days.
+
+Message:	1012
+%qdt:
+ The Fighters Guild in ___qgiver_
+ wants a wild animal killed. It
+ got into _house_, and it must be
+ dead by the end of the day.
+
+Message:	1013
+%qdt:
+ _qgiver_ in ___qgiver_ wants a
+ bear or a tiger killed. It is
+ loose in _house_ in __house_.
+ The pay is _gold_ gold if I
+ return within =2dung_ days.
+
+Message:	1014
+On %qdt,
+ _agent_ of ___agent_ told me of a client of
+ %g3 who wants daedric _ingredient_. %G says
+ it lies in ___dungeon_. If I find it, the
+ _artifact_ is mine. A _qgiver_ will wait for
+ me at _meetingplace_ in __meetingplace_.
+
+Message:	1015
+%qdt:
+ _qgiver_ of ___qgiver_ met me in secret and gave
+ me a forged letter. I must sneak it in place of
+ the real one at the _inn_ in __inn_. I have
+ =traveltime_ days. If I am caught, I stand alone.
+
+Message:	1016
+%qdt
+ _giver_ of ___giver_ wants
+ %g3 book, _book_, found, and
+ will pay _gold_ gold for it.
+
+Message:	1017
+%qdt:
+ _qgiver_, of ==qgiver_ in
+ ___qgiver_, tells me Daedra are
+ coming through a rift between
+ worlds. Every one of them in
+ ___dungeon_ must die. A spell
+ will tell me when the last is
+ dead. I have =2dung_ days.
+
+Message:	1018
+%qdt:
+ _qgiver_ of __qgiver_, in ___qgiver_,
+ says %g3 god is angry. For a rite of
+ atonement %g needs pure _ingredient_
+ from ___dungeon_, delivered to _qgiver_
+ at __qgiver_ within =traveltime_ days.
+
+
+QBN:
+
+- Headless entry point with custom action
+log 1010 step 0
+log 1012 step 1
+log 1013 step 2
+log 1014 step 3
+log 1015 step 4
+log 1016 step 5
+log 1017 step 6
+log 1018 step 7

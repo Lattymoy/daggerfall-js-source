@@ -1,0 +1,134 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\E0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Arkay
+-- Repute: 0
+-- QuestId: 0
+Messages: 21
+Quest: E0B00Y00
+DisplayName: The Desecrated Temple
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Near here stands a fallen temple,
+<ce> ___mondung_. Evil has lived there for
+<ce> years, and we let it be, since it weighed
+<ce> against other forces. Now the balance is
+<ce> broken. Will you help us set it right?
+<--->
+<ce> Something new has come into ___mondung_ and
+<ce> tipped the Balance there. It threatens the
+<ce> peace we work for in %reg. We need a champion
+<ce> to put things right. Will you be ours?
+
+RefuseQuest:  [1001]
+<ce> Then Arkay will send someone else.
+
+AcceptQuest:  [1002]
+<ce> Excellent, %pcf. A powerful lycanthrope has
+<ce> made its lair in that cursed ___mondung_, and
+<ce> it blocks our order's work in the area. Kill
+<ce> it. After =1stparton_ days we move against it
+<ce> ourselves, and the reward is lost. Go well.
+<--->
+<ce> %oth, good, %pcf. We can give you
+<ce> =1stparton_ days to restore the Balance.
+<ce> The quickest way is to kill the
+<ce> lycanthrope nesting deep in ___mondung_.
+<ce> Hurry. After that, the reward is gone.
+
+QuestFail:  [1003]
+<ce> Why are you here, %pcf? The
+<ce> werebeast lives, and your
+<ce> =1stparton_ days are running out.
+
+QuestComplete:  [1004]
+<ce> The Temple of Arkay will not forget this,
+<ce> %pcf. Your _reward_ gold is well deserved.
+
+RumorsDuringQuest:  [1005]
+Something like a werewolf is loose around here, they say.
+<--->
+That wereboar has a den in ___mondung_, I hear.
+<--->
+Did you hear the howling last night? That was no dog.
+
+RumorsPostfailure:  [1006]
+That were-thing has moved on south, or so I hear.
+<--->
+My cousin saw the wereboar down south. Good riddance to it.
+
+RumorsPostsuccess:  [1007]
+Turns out the werewolf was the baker's
+brother-in-law. Nobody is surprised.
+<--->
+I sleep better now that the wereboar is dead.
+<--->
+Some %ra hunted down that werebeast. Good for them.
+
+QuestorPostsuccess:  [1008]
+Welcome, friend. Since you cleansed ___mondung_,
+this temple's door is always open to you.
+
+QuestorPostfailure:  [1009]
+That lycanthrope still lives,
+%pcf. You have grieved me deeply.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At the Temple of Arkay, _questgiver_
+ will pay me _reward_ gold to kill a
+ werebeast in ___mondung_, a fallen
+ temple. I must do it and return to
+ ___questgiver_ within =1stparton_
+ days.
+
+Message:  1020
+<ce> The beast of ___mondung_ is dead.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon4
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _wolf_ is Werewolf
+Foe boar is Wereboar
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	pick one of _wereboar_ _werewolf_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+_mondead_ task:
+	killed 1 _wolf_ saying 1020 
+	killed 1 boar saying 1020 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003 
+	clear _qgclicked_ _clearclick_ 
+
+_werewolf_ task:
+	place foe _wolf_ at _mondung_ 
+
+_wereboar_ task:
+	place foe boar at _mondung_

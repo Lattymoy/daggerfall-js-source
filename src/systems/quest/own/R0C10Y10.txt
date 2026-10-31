@@ -1,0 +1,106 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 10
+Messages: 11
+Quest: R0C10Y10
+DisplayName: Weapon Supply
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> _reward_ gold to carry one small
+<ce> parcel to someone who works for
+<ce> me. Interested? Then say so now.
+<--->
+<ce> I need someone of fair skill and better
+<ce> discretion who will play a humble courier
+<ce> for _reward_ gold. Are you that someone?
+
+RefuseQuest:  [1001]
+<ce> Too busy? Your loss, then.
+
+AcceptQuest:  [1002]
+<ce> Good. Here is the _weapon_. _contact_ must
+<ce> have it in ___contact_ within =queston_
+<ce> days, which should be just enough. _contact_
+<ce> is easy to know. Look for a =contact_.
+
+QuestFail:  [1003]
+<ce> One small delivery was too much for you,
+<ce> %pcf? Do not expect to be paid for it.
+
+QuestComplete:  [1004]
+<ce> Ah, %pcf, with the _weapon_.
+<ce> Good. Here is the _reward_ gold
+<ce> promised you by _questgiver_.
+
+RumorsDuringQuest:  [1005]
+Folk say _questgiver_ never really left smuggling.
+<--->
+Smugglers are everywhere this year.
+
+RumorsPostfailure:  [1006]
+A fine _weapon_ turned up around here not long ago.
+<--->
+_questgiver_ is in a temper over some %ra courier.
+
+RumorsPostsuccess:  [1007]
+Someone called _contact_ keeps showing off a _weapon_.
+<--->
+Smuggling holy relics is the
+fashionable crime now, they say.
+
+QuestorPostsuccess:  [1008]
+My old courier. How charming. What do you need?
+<--->
+I know your face. You carried
+something for me once, did you not?
+
+QuestorPostfailure:  [1009]
+<ce> You look very like a %ra who
+<ce> failed me once. Odd. Leave.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ of __questgiver_ in
+ ___questgiver_ gave me a _weapon_
+ for an ally called _contact_, who
+ must have it within =queston_ days.
+ _contact_ is a =contact_ and keeps
+ to __contact_ in ___contact_.
+
+
+QBN:
+Item _weapon_ weapon
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _contact_ group Local_3.0 remote
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 2
+
+
+--	Quest start-up:
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _weapon_ 
+	create npc _contact_ 
+
+_pcgetsgold_ task:
+	toting _weapon_ and _contact_ clicked 
+	give pc _reward_ 
+	end quest 
+
+variable _pchasitem_
+variable _npcclicked_
+_queston_ task:
+	make _weapon_ permanent 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+variable _1stparton_

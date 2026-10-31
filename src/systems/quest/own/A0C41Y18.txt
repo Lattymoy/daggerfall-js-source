@@ -1,0 +1,223 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C41Y18.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 41
+-- QuestId: 18
+Quest: A0C41Y18
+DisplayName: The Mummy's Finger
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I need something delivered, and I will
+<ce> pay well. _gold1_ gold now, and _gold2_
+<ce> more on delivery. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> %oth, I will never be free of this
+<ce> thing! Why will nobody help me?
+
+AcceptQuest:  [1002]
+<ce> Thank %god! You cannot know what
+<ce> this means to me. Here is your
+<ce> gold. This goes to _dummy_ in
+<ce> ___dummy_, and %g will pay the
+<ce> rest. I must go now. Thank you!
+
+QuestComplete:   [1004]
+<ce> _giver_ presses a small object
+<ce> into your hands, a letter wrapped
+<ce> about it, and hurries off.
+
+RumorsDuringQuest:  [1005]
+<ce> The pirates have been bold this year.
+
+RumorsPostfailure:  [1006]
+<ce> Have you heard the tale of
+<ce> the cursed mummy's finger?
+<ce> Oh. Sorry. I did not know...
+
+RumorsPostsuccess:  [1007]
+<ce> A brave %ra went down into
+<ce> ___dungeon_, I hear. The poor fool.
+
+QuestorPostsuccess:  [1008]
+<ce> The loons are coming back
+<ce> early this year, I think.
+
+QuestorPostfailure:  [1009]
+<ce> Do you think I am fat? Everyone
+<ce> says so, but I do not see it.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A stranger paid me _gold1_ gold to
+ deliver something to a _dummy_ of
+ ___dummy_, with _gold2_ more on
+ delivery. No time was set, but my
+ employer was very eager to see me go.
+
+Message:  1011
+%qdt:
+ I was tricked. The
+ delivery for _dummy_ was
+ a cursed mummy's finger.
+
+Message:  1012
+%qdt:
+ The mummy whose curse I carry lies
+ in ___dungeon_. I must destroy its
+ true form, or its spirit will
+ haunt me for 1001 nights.
+
+Message:  1013
+<ce> A package? From _giver_? No, %g1
+<ce> would have told me first. You are
+<ce> mistaken. Why not read what came
+<ce> with it, and see who it is for?
+
+Message:  1015
+<ce> I know nothing of that. Ask at a temple.
+<--->
+<ce> _sage_ is the one to ask. Go and see %g2.
+<--->
+<ce> Try asking at __sage_, in ___sage_.
+<--->
+<ce> Someone in ___sage_ may know about that, I hear.
+<--->
+<ce> They say _sage_ knows more about such things than anyone.
+<--->
+<ce> Perhaps the sage at __sage_ could tell you.
+
+Message:  1016
+<ce> Whoever stole my _finger_ must die!
+<--->
+<ce> My _finger_. I have come for it.
+<--->
+<ce> Lay down your weapon and accept your doom.
+<--->
+<ce> My _finger_... my _finger_...
+<--->
+<ce> You have my _finger_, and
+<ce> without it I cannot rest.
+<--->
+<ce> Destroy me tonight if you can. I will return.
+<--->
+<ce> I will rise again, and again, for my _finger_.
+
+Message:  1020
+<ce> All who defile my tomb will be destroyed!
+
+Message:  1025
+<ce> Show me the _finger_. Ah, yes. It
+<ce> carries the curse of =realmummy_.
+<ce> Whoever holds this _finger_ is
+<ce> visited by the spirit of =realmummy_
+<ce> at midnight, for 1001 nights. To
+<ce> break the curse, destroy =realmummy_
+<ce> in its tomb at ___dungeon_.
+
+Message:  1026
+<ce> That sounds like a mummy's curse. Without the
+<ce> _finger_ itself, that is all I can say. Bring
+<ce> it here, and I may learn where it came from.
+
+Message:  1030
+<ce> =realmummy_ is destroyed, and you know
+<ce> %g3 curse is lifted from you for good.
+
+Message:  1040
+Dear Stranger,
+ 
+ Forgive me. This finger is cursed, and its mummy
+ has come for me every night. A sage said I could
+ be free only by finding its tomb or giving the
+ finger away. You seemed brave enough.
+
+Message:  1050
+<ce> _sage_ of ___sage_ is a famous scholar.
+<--->
+<ce> _sage_ lives in __sage_, in ___sage_.
+
+
+QBN:
+Item _finger_ finger anyInfo 1015
+Item _letter_ letter used 1040
+Item _gold1_ gold
+Item _gold2_ gold
+--changed msg 1030 %g2 to %g3
+
+Person _sage_ group Cleric remote anyInfo 1050 rumors 1050
+Person _giver_ group Questor
+Person _dummy_ group Innkeeper remote
+
+Place _dungeon_ remote dungeon0
+
+Clock _S.10_ 1001.00:00 0 flag 1 range 0 1
+
+Foe _F.00_ is Mummy
+Foe _realmummy_ is Mummy
+
+--	Quest start-up:
+	dialog link for person _sage_ item _finger_ 
+	start timer _S.10_ 
+	log 1010 step 0 
+	get item _letter_ 
+	get item _finger_ 
+	get item _gold1_ 
+	start task _S.03_ 
+	give pc nothing
+--changed "say 1045" to "give pc nothing." This ensures faction increase for completing this quest.
+	_letter_ used do _readletter_ 
+	place foe _realmummy_ at _dungeon_ 
+	destroy _giver_ 
+
+variable _S.00_
+_S.01_ task:
+	daily from 00:00 to 01:00 
+	create foe _F.00_ every 35 minutes 1001 times with 100% success 
+
+_S.02_ task:
+	injured _F.00_ saying 1016 
+	unset _S.02_ 
+
+_dummytalk_ task:
+	clicked npc _dummy_
+	say 1013
+
+variable _S.03_
+_S.04_ task:
+	clicked npc _sage_ 
+	have _finger_ set _S.07_ 
+
+_S.05_ task:
+	killed 1 _realmummy_ 
+	say 1030 
+	make _gold1_ permanent 
+	end quest 
+
+_S.06_ task:
+	when _S.04_ and _S.07_ 
+	reveal _dungeon_ 
+	log 1012 step 2 
+	say 1025 
+	unset _S.06_ _S.08_ _S.04_ _S.07_ 
+
+variable _S.07_
+_S.08_ task:
+	when _S.04_ and not _S.07_ 
+	say 1026 
+
+_S.09_ task:
+	injured _realmummy_ 
+	say 1020 
+
+_S.10_ task:
+	make _gold1_ permanent 
+	end quest 
+
+_readletter_ task:
+	add dialog for item _finger_ 
+	log 1011 step 1 

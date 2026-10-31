@@ -1,0 +1,138 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B40Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 40
+-- QuestId: 4
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 22
+Quest: L0B40Y04
+DisplayName: Concerns of a Noble
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> This outing is not for everyone, but
+<ce> I think you will enjoy the challenge.
+<ce> A client wants to settle accounts
+<ce> with a royal of ___mondung_. I
+<ce> thought of you at once. Interested?
+
+RefuseQuest:  [1001]
+<ce> Oh, well. Wise, perhaps. It does look
+<ce> a little like cowardice, though.
+
+AcceptQuest:  [1002]
+<ce> Be warned: _knight_ is no soft little
+<ce> prince. Our client, also royal, fears
+<ce> %g will scheme for the throne, and %g
+<ce> has the means. Kill %g2 and report
+<ce> back within =1stparton_ days. Go with
+<ce> Mephala, %pcf.
+
+QuestFail:  [1003]
+<ce> That was not _knight_, whoever
+<ce> it was. Back to the palace, and
+<ce> finish what we were paid for.
+
+QuestComplete:  [1004]
+<ce> Beautiful work, %pcf. Clean, quiet,
+<ce> and nobody knows a thing. I may have
+<ce> to compose a song about it. Take your
+<ce> _reward_ gold before I start singing.
+
+RumorsDuringQuest:  [1005]
+Mark my words. _knight_ will be our next ruler.
+<--->
+One day _knight_ will rule us, and
+then we will learn what tyranny is.
+
+RumorsPostfailure:  [1006]
+_knight_ has left the court for now,
+but %g will be back. Count on it.
+<--->
+The royal farce goes on. Why did
+_knight_ leave court, I wonder?
+
+RumorsPostsuccess:  [1007]
+Let all %reg celebrate. _knight_ is dead, and good riddance.
+<--->
+_knight_ dying so suddenly? Too convenient, if you ask me.
+
+QuestorPostsuccess:  [1008]
+I still think about that royal job, %pcf. A thing of beauty.
+
+QuestorPostfailure:  [1009]
+<ce> It was a hard contract. Nearly
+<ce> impossible, I grant you. But you
+<ce> failed, and I do not forgive failure.
+
+Message:  1020
+%qdt:
+ In ___questgiver_ the Dark Brotherhood
+ gave me a royal mark: _knight_, who
+ lives at _mondung_ in ___mondung_. He
+ must die within =1stparton_ days.
+
+Message:  1021
+<ce> "The throne... was mine..."
+<ce> _knight_ breathes, and says no
+<ce> more. The contract is fulfilled.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _knight_ face 5 faction The_Host_of_the_Horn male remote
+
+Place _mondung_ remote palace
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _F.00_ is Spellsword
+Foe _F.01_ is Knight
+Foe _F.02_ is Warrior
+Foe _F.03_ is Nightblade
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1020 step 0 
+	pick one of _S.06_ _S.07_ _S.08_ _onehour_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc _reward_ 
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_S.02_ task:
+	killed 1 _F.01_ saying 1021 
+	killed 1 _F.02_ saying 1021 
+	killed 1 _F.03_ saying 1021 
+	killed 1 _F.00_ saying 1021 
+
+variable _queston_
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_S.06_ task:
+	place foe _F.00_ at _mondung_ 
+
+_S.07_ task:
+	place foe _F.01_ at _mondung_ 
+
+_S.08_ task:
+	place foe _F.02_ at _mondung_ 
+
+_onehour_ task:
+	place foe _F.03_ at _mondung_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_ 
+	say 1003
+	clear _qgclicked_ _clearclick_

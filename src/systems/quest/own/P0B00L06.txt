@@ -1,0 +1,256 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0B00L06.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 0
+-- QuestId: 6
+Messages: 24
+Quest: P0B00L06
+DisplayName: Deadly Knowledge
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Quest text 1000 should
+never be shown.
+
+RefuseQuest:  [1001]
+Quest text 1001 should
+never be shown.
+
+AcceptQuest:  [1002]
+Quest text 1002 should
+never be shown.
+
+QuestFail:  [1003]
+Quest text 1003 should
+never be shown.
+
+QuestComplete:  [1004]
+<ce> Lovely. You read it, of course. What
+<ce> rot. Another mage held views like these
+<ce> about our kind once. I forget his name.
+<ce> You did well, young one. Very well.
+
+RumorsDuringQuest:  [1005]
+_mage_ is doing very important work
+down in ___mondung_, they say.
+<--->
+___mondung_ is a grim hole, but _mage_
+gets %g3 work done in peace there.
+
+RumorsPostfailure:  [1006]
+The Mages Guild itself is looking
+at the vampire work of that =mage_.
+<--->
+Even the guild's Archmagister is reading what _mage_ wrote.
+
+RumorsPostsuccess:  [1007]
+Nobody will ever know what poor _mage_ was working on.
+<--->
+Somebody murdered _mage_. They say %g
+was making a charm against the Daedra.
+
+QuestorPostsuccess:  [1008]
+Quest text 1008 should
+never be shown.
+
+QuestorPostfailure:  [1009]
+Quest text 1009 should
+never be shown.
+
+QuestLogEntry:  [1010]
+                     __vamp_
+                      ___vamp_
+ 
+ %pcn,
+ 
+      The Mages Guild fools are at another
+ pointless study. By accident, they may
+ yet expose %vam. Unlikely, but we must be
+ ready. Come to me, here, at once.
+ 
+                    Yours in the dark,
+ 
+                    _vamp_
+
+Message:  1011
+%qdt:
+ _vamp_ of %vam has written
+ to me from ___vamp_. I must
+ see %g2 at __vamp_ soon.
+
+Message:  1012
+<ce> Evening, kin. The Mages Guild fools
+<ce> have stumbled on a few facts. Their
+<ce> chief, _mage_, had the sense to
+<ce> hide in ___mondung_. Nobody in %reg
+<ce> hides from %vam. The notes are on
+<ce> %g3 body. Bring them to me, %pcf.
+
+Message:  1013
+ My dear %pcn,
+ 
+      Should your travels bring you near
+ ___mg_, your presence at __mg_ would be
+ most propitious. I offer, in return, a
+ pleasing pecuniary reward and the joy
+ of aiding your Mages Guild colleagues.
+ 
+                    Yours, et cetera,
+ 
+                    _mg_
+
+Message:  1014
+<ce> A courier in deep blue robes bows,
+<ce> hands you a letter and is gone.
+
+Message:  1015
+<ce> %pcn, is it? Oh, %oth! I hear you
+<ce> are, ah, sufficiently stalwart to
+<ce> help _mage_, a sorcerer who fears
+<ce> %g3 research has drawn vampires.
+<ce> Overwork, surely. Fetch the notes
+<ce> from ___mondung_, would you? Mind
+<ce> _mage_, though. %G is, ah, agitated.
+
+Message:  1016
+<ce> %oth! My notes! Get back, bloodsucker!
+
+Message:  1017
+<ce> Wait! Are you the %ra who was
+<ce> sent to collect the notes?
+
+Message:  1018
+<ce> Forgive me, %pcn. My nerves are in
+<ce> tatters. Here are the notes. Trust
+<ce> nobody. Anyone could belong to %vam.
+
+Message:  1019
+%qdt:
+ At __mg_ in ___mg_, _mg_ asked
+ me for the work of _mage_. It is
+ in ___mondung_, and I must bring
+ it back safe. _mage_ expects me,
+ but %g3 nerves are bad, and %g
+ may think anyone a vampire.
+
+Message:  1020
+%vam rule the vampires of %reg. Cure?
+Kill the eldest of one's line. =vamp_ of
+___vamp_ asks about my work. The %t, one
+of them? Ask _mg_ for funds, for %god's
+sake. Every test I run comes to nothing.
+
+Message:  1021
+%qdt:
+ A sorcerer, _mage_, has learned
+ too much about %vam. The notes are
+ in a laboratory at ___mondung_,
+ and _vamp_ wants them. _mage_
+ keeps them on %g3 person, I
+ expect. That will not save them.
+
+Message:  1022
+<ce> So this is what _mage_ guarded? The
+<ce> ramblings of a madman. Not your fault,
+<ce> I suppose. Here are _mggold_ gold
+<ce> pieces for your timely conveyance.
+
+Message:  1023
+<ce> A pale little boy hands over a letter,
+<ce> then scurries away like a rat.
+
+
+QBN:
+Item _letter_ letter used 1010
+Item letter37 letter used 1013
+Item research1 letter used 1020
+Item _mggold_ gold
+
+Person _vamp_ factiontype Vampire_Clan local
+Person _mg_ faction The_Mages_Guild local
+Person _mage_ face 1 group Group_5.1 remote
+
+Place _mondung_ remote dungeon9
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+Clock _2ndparton_ 00:10 00:30 flag 9 range 0 0
+
+Foe _sorceror_ is Sorceror
+
+--	Quest start-up:
+	dialog link for person _vamp_ 
+	dialog link for location _mondung_ person _mg_ 
+	repute with _mg_ exceeds 15 do _S.04_ 
+	give item research1 to _sorceror_ 
+	letter37 used do _S.14_ 
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.15_ 
+	give pc _letter_ notify 1023 
+	place foe _sorceror_ at _mondung_ 
+
+_queston_ task:
+	change repute with _vamp_ by -10 
+	end quest 
+
+_vampclicked_ task:
+	clicked npc _vamp_ 
+	reveal _mondung_ 
+	log 1021 step 2 
+	say 1012 
+
+variable _S.02_
+_2ndparton_ task:
+	give pc letter37 notify 1014 
+
+_S.04_ task:
+	start timer _2ndparton_ 
+
+_S.05_ task:
+	clicked npc _mg_ 
+	reveal _mondung_ 
+	log 1019 step 3 
+	say 1015 
+
+_contact_ task:
+	injured _sorceror_ 
+
+variable _S.07_
+_S.08_ task:
+	when _contact_ and _S.05_ 
+	prompt 1017 yes _S.09_ no _S.10_ 
+
+_S.09_ task:
+	get item research1 
+	say 1018 
+	restrain foe _sorceror_ 
+
+_S.10_ task:
+	when _contact_ and not _S.05_ 
+	say 1016 
+
+_S.11_ task:
+	toting research1 and _mg_ clicked 
+	get item _mggold_ 
+	say 1022 
+	make _mggold_ permanent 
+	change repute with _vamp_ by -20 
+	change repute with _mg_ by +10 
+	end quest 
+
+_S.12_ task:
+	toting research1 and _vamp_ clicked 
+	give pc nothing 
+	end quest 
+
+_readletter_ task:
+	add dialog for person _vamp_ 
+	log 1011 step 0 
+
+_S.14_ task:
+	add dialog for person _mg_ 
+
+_S.15_ task:
+	start timer _queston_

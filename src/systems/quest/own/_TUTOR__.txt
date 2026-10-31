@@ -1,0 +1,342 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the classic start's tutorial. It runs in Privateer's Hold, sends the player to Daggerfall (1042), and its rumors (1006) name the Bay's courts.
+-- Quest: C:\QUESTS\WORKING\_TUTOR__.Qbn.
+-- StartsBy: letter
+-- Questee: anyone
+-- Repute: 0
+-- QuestId: 0
+Messages: 57
+Quest: _TUTOR__
+DisplayName: Tutorial
+-- Message panels
+QRC:
+
+RumorsPostfailure:  [1006]
+A word of advice, %ra. Anyone serious
+about magic joins the Mages Guild.
+<--->
+Keep your gold in the bank of %reg and carry letters
+of credit instead. They weigh next to nothing.
+<--->
+For anything unusual, try the specialty shops.
+<--->
+There is a new law against vagrants. Nobody may
+sleep in the streets, and the guards patrol even
+outside the walls. You will need a room at an inn.
+<--->
+Everyone ought to join a temple. Which god
+suits you best? Visit them all and see.
+<--->
+Things are getting lively in the city of
+Daggerfall. If it is adventure you want, go there.
+<--->
+The royals of Wayrest are stirring things
+up, I hear. Anyone with the nerve to seek
+work from the king or queen could do well.
+<--->
+Sentinel is the place for quick gold and a
+little adventure, they say. The royal family
+there pays heroes to do dangerous work.
+
+QuestLogEntry:  [1010]
+<ce> This tutorial teaches the basics
+<ce> of play. Take notes on what it
+<ce> shows you. Do you want to use it?
+
+Message:  1012
+<ce> Page 1
+<ce>
+<ce> Press Escape, then Controls. Learn movement (WASD)
+<ce> and Swing Weapon, by default the right mouse
+<ce> button. Attacks use a click, a hold, or a hold
+<ce> while moving the mouse. Pick one under Advanced.
+<ce>
+<ce> (Next page in 10 seconds.)
+
+Message:  1013
+<ce> Page 2
+<ce>
+<ce> Press F6 for your inventory. Equip armor and your best
+<ce> weapon: one you are skilled with, or of strong metal
+<ce> like Elven or Dwarven. Otherwise you will rarely hit.
+<ce>
+<ce> (Next page in 15 seconds. No ends the tutorial.)
+
+Message:  1015
+<ce> Page 3
+<ce>
+<ce> Equipping a weapon takes a moment. When ready,
+<ce> press Z to draw it. Fists work too, with a high
+<ce> Hand-to-Hand skill. Practice with Swing Weapon.
+<ce>
+<ce> (Next page in 10 seconds. No ends the tutorial.)
+
+Message:  1020
+<ce> Page 4
+<ce>
+<ce> To regain health, fatigue or magicka, press R to
+<ce> rest. Their bars are at the bottom left of the
+<ce> screen. You need not rest now, but remember it.
+<ce>
+<ce> (Next page in 5 seconds. No ends the tutorial.)
+
+Message:  1025
+<ce> Page 5
+<ce>
+<ce> Backspace opens a caster's spellbook.
+<ce> Double-click a spell. Enemies often resist. Aim
+<ce> targeted spells with the left mouse button. The
+<ce> rest work on you. Q recasts the last spell.
+<ce>
+<ce> (Next page in 10 seconds. No ends the tutorial.)
+
+Message:  1030
+<ce> Page 6
+<ce>
+<ce> Save now, if you have not. Press Escape and click Save
+<ce> Game. A Quicksave key works too. Set it under Controls,
+<ce> then Advanced, near the bottom of that screen.
+<ce>
+<ce> (Next page in 10 seconds. No ends the tutorial.)
+
+Message:  1031
+<ce> Page 7
+<ce>
+<ce> Take the hallway opposite the campfire. Past the turn,
+<ce> click the brick-like door. On the altar beyond, click the
+<ce> treasure pile, choose Remove, and click items to take them.
+<ce>
+<ce> (Next page in 45 seconds. No ends the tutorial.)
+
+Message:  1035
+<ce> Page 8
+<ce>
+<ce> Fight or flee as you go on. Some monsters need better
+<ce> metal. Iron cannot hurt the imp ahead. Use steel or
+<ce> better, or fists with a high Hand-to-Hand skill.
+<ce>
+<ce> (Next page in 5 seconds. No ends the tutorial.)
+
+Message:  1040
+<ce> Page 9
+<ce>
+<ce> You will meet monsters stronger than you. Running costs
+<ce> nothing, so flee a foe that troubles you. You grow by
+<ce> using your skills, not by killing hard enemies.
+<ce>
+<ce> (Next page in 5 seconds. No ends the tutorial.)
+
+Message:  1041
+<ce> Page 10
+<ce>
+<ce> Click the throne's lever in the main hall to
+<ce> raise it. The exit is a dark stone archway
+<ce> in a wall, your height. Click it to leave.
+<ce>
+<ce> (Next page when you leave the
+<ce> dungeon. No ends the tutorial.)
+
+Message:  1042
+<ce> Page 11
+<ce>
+<ce> Press V for the travel map. Your region shows in
+<ce> red. Click it, click FIND, and type DAGGERFALL.
+<ce> Travel CAUTIOUSLY and by INNS to arrive in daylight.
+<ce>
+<ce> (Next page when you reach a city. No ends the tutorial.)
+
+Message:  1045
+<ce> Page 12
+<ce>
+<ce> Press F4 for Dialogue mode, then click a townsperson.
+<ce> Ask for directions. If they cannot help, try another.
+<ce> Keep asking, and they will mark it on your map.
+<ce>
+<ce> (Next page in 45 seconds. No ends the tutorial.)
+
+Message:  1047
+<ce> Page 13
+<ce>
+<ce> The conversation window can also find people and
+<ce> ask for news, and local quests under "Work". Its
+<ce> topics are listed at the top left of the window.
+<ce>
+<ce> (Next page in 15 seconds. No ends the tutorial.)
+
+Message:  1048
+<ce> Page 14
+<ce>
+<ce> Sell treasure at a pawn shop. In Info mode (F3),
+<ce> click a building to learn what it is. Shops open
+<ce> from 6 AM. Until then, use Rest to loiter.
+<ce>
+<ce> (Next page in 10 seconds. No ends the tutorial.)
+
+Message:  1050
+<ce> Page 15
+<ce>
+<ce> Train a guild's skills and do its quests to rise. Casters
+<ce> join the Mages Guild, fighters the Fighters Guild. You
+<ce> may serve one temple and a single knightly order.
+<ce>
+<ce> (Next page in 10 seconds. No ends the tutorial.)
+
+Message:  1055
+<ce> Page 16
+<ce>
+<ce> Last, find a quest. Guild quests pay best: ask
+<ce> inside your guild with "Get Quest". Refusing one
+<ce> costs nothing, unless it is part of the main story.
+<ce>
+<ce> (The next page follows at once. No ends the tutorial.)
+
+Message:  1056
+<ce> Page 17
+<ce>
+<ce> Quests often lead to other towns. Click a quest's
+<ce> entry in your logbook (L) to plan the trip. Ask tavern
+<ce> folk, or shopkeepers through "Talk", for "Any work?"
+<ce>
+<ce> (Next page in 10 seconds. No ends the tutorial.)
+
+Message:  1057
+<ce> The tutorial ends here. The game has many unique mechanics,
+<ce> so learn its quirks from other players. Once you know the
+<ce> basics, you can add mods too. Your new obsession awaits...
+
+
+QBN:
+
+Place pirateerHold permanent PirateerHold2
+
+Clock _page1_ 00:02
+Clock _page2_ 00:03
+Clock _page3_ 00:02
+Clock _page4_ 00:01
+Clock _page5_ 00:02
+Clock _page6_ 00:03
+Clock _page6a_ 00:09
+Clock _page7_ 00:01
+Clock _page8_ 00:01
+Clock _page11_ 00:09
+Clock _page12_ 00:03
+Clock _page13_ 00:02
+Clock _page14_ 00:02
+Clock _page15_ 00:02
+
+
+--	Quest start-up:
+	prompt 1010 yes _yes_ no _no_ 
+
+variable _exitstarter_
+_yes_ task:
+	pc at pirateerHold set _exitstarter_ 
+	start timer _page1_ 
+	say 1012
+--no prompt on this one because it is shown immediately after game begin.
+--the purpose of these prompts is to prevent a player from clicking out
+--of a tutorial window when they didn't intend to. This is not a risk
+--on the first window.
+
+_page1_ task:
+	prompt 1013 yes _yes1_ no _no_ 
+
+_yes1_ task:
+	start timer _page2_ 
+
+_page2_ task:
+	prompt 1015 yes _yes2_ no _no_ 
+
+_yes2_ task:
+	start timer _page3_ 
+
+_page3_ task:
+	prompt 1020 yes _yes3_ no _no_ 
+
+_yes3_ task:
+	start timer _page4_ 
+
+_page4_ task:
+	prompt 1025 yes _yes4_ no _no_
+
+_yes4_ task:
+	start timer _page5_
+
+_page5_ task:
+	prompt 1030 yes _yes5_ no _no_ 
+
+_yes5_ task:
+	start timer _page6_ 
+
+_page6_ task:
+	prompt 1031 yes _yes6_ no _no_ 
+
+_yes6_ task:
+	start timer _page6a_ 
+
+_page6a_ task:
+	prompt 1035 yes _yes6a_ no _no_ 
+
+_yes6a_ task:
+	start timer _page7_ 
+
+_page7_ task:
+	prompt 1040 yes _yes7_ no _no_ 
+
+_yes7_ task:
+	start timer _page8_ 
+
+_page8_ task:
+	prompt 1041 yes _yes8_ no _no_ 
+
+variable _yes8_
+
+_escape_ task:
+	when _yes8_ and not _exitstarter_
+	prompt 1042 yes _yes9_ no _no_ 
+
+variable _yes9_
+_arrival_ task:
+	when pc enters city
+	start task _page10_
+
+_page10_ task:
+	prompt 1045 yes _yes10_ no _no_ 
+
+_yes10_ task:
+	start timer _page11_ 
+
+_page11_ task:
+	prompt 1047 yes _yes11_ no _no_ 
+
+_yes11_ task:
+	start timer _page12_ 
+
+_page12_ task:
+	prompt 1048 yes _yes12_ no _no_ 
+
+_yes12_ task:
+	start timer _page13_ 
+
+_page13_ task:
+	prompt 1050 yes _yes13_ no _no_ 
+
+_yes13_ task:
+	start timer _page14_ 
+
+_page14_ task:
+	prompt 1055 yes _yes14_ no _no_ 
+
+_yes14_ task:
+	prompt 1056 yes _yes15_ no _no_
+
+_yes15_ task:
+	start timer _page15_ 
+
+_page15_ task:
+	say 1057
+	start task _no_
+
+_no_ task:
+	start quest 977 977 
+	end quest 

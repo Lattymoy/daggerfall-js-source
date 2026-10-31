@@ -1,0 +1,143 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0B00Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 0
+-- QuestId: 12
+Messages: 36
+Quest: O0B00Y12
+DisplayName: Drugs Delivery
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, I have work if you want it.
+<ce> A small package needs to reach
+<ce> ___contact1_. Will you carry it?
+
+RefuseQuest:  [1001]
+<ce> Do not strain yourself on my account.
+
+AcceptQuest:  [1002]
+<ce> Good. Here is the package, some _drugs_,
+<ce> and it must reach ___contact1_ quickly.
+<ce> _contact1_ will meet you at __contact1_.
+<ce> Keep it quiet. Some freelance smugglers
+<ce> think they own %reg, and they will come
+<ce> for it if word gets out.
+
+QuestFail:  [1003]
+<ce> Quickly, I said. Why are you still here?
+
+QuestComplete:  [1004]
+<ce> You made it. Those amateurs never
+<ce> stood a chance against us. Here is
+<ce> _gold_ gold for the trip. Good work.
+
+RumorsDuringQuest:  [1005]
+<ce> The Thieves Guild has trouble, they say. A
+<ce> new smuggling ring is moving in on them.
+
+RumorsPostfailure:  [1006]
+<ce> The Thieves Guild may have to share the
+<ce> smuggling trade in %reg from now on.
+
+RumorsPostsuccess:  [1007]
+<ce> The Thieves Guild has put a stop to
+<ce> those rival smugglers, from what I hear.
+
+QuestorPostsuccess:  [1008]
+<ce> Good old %pcn, my most reliable
+<ce> courier. Of course I remember you.
+
+QuestorPostfailure:  [1009]
+<ce> The smuggler who cannot deliver is
+<ce> back. What do you want this time?
+
+Message:  1020
+%qdt:
+ I am taking some _drugs_ to
+ _contact1_ in ___contact1_,
+ and we meet at __contact1_.
+ A rival smuggling ring may
+ send its thugs after me.
+
+Message:  1021
+%qdt:
+ A note came from _contact1_. %g
+ could not wait for me in
+ ___contact1_. Now I am to take the
+ shipment to ___contact2_ and give
+ it to a =contact2_ at __contact2_.
+
+Message:  1030
+%pcn,
+ 
+ I could not wait for you in ___contact1_.
+ The guards were getting too close. The
+ drop is now in ___contact2_. A =contact2_
+ will be waiting for you at __contact2_.
+ 
+<ce> Keep your eyes open,
+<ce>
+<ce> _contact1_
+
+Message:  1031
+<ce> A grubby little boy tugs at your
+<ce> sleeve. He pushes a scrap of paper
+<ce> at you and runs off into an alley.
+
+Message:  1035
+<ce> When will you guild thugs learn? We run
+<ce> the _drugs_ trade in %reg, not you.
+
+
+QBN:
+Item _drugs_ drug
+Item _note_ letter used 1030
+Item _gold_ gold
+
+Person _contact1_ group Group_5.1 remote
+Person _questgiver_ group Questor
+Person _contact2_ group Local_3.0 remote
+
+
+Clock _qtime_ 00:00 0 flag 1 range 3 5
+Clock _S.01_ 1.00:00 2.18:40
+
+Foe _enemy_ is Assassin
+
+--	Quest start-up:
+	start timer _S.01_ 
+	start timer _qtime_ 
+	log 1020 step 0 
+	get item _drugs_ 
+
+_qtime_ task:
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+	say 1003
+
+_S.01_ task:
+	_note_ used do _readnote_ 
+	create foe _enemy_ every 10 minutes 10 times with 10% success 
+	hide npc _contact1_ 
+	give pc _note_ notify 1031 
+
+_readnote_ task:
+	log 1021 step 1 
+
+variable _S.03_
+_success_ task:
+	toting _drugs_ and _contact1_ clicked 
+	toting _drugs_ and _contact2_ clicked 
+	give pc _gold_ 
+	end quest 
+--removed unnecessary delay
+
+_S.06_ task:
+	injured _enemy_ 
+	say 1035

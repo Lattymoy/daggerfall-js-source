@@ -1,0 +1,129 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B30Y09.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 30
+-- QuestId: 9
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 22
+Quest: L0B30Y09
+DisplayName: An Anonymous Job
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> This job comes with no name. Now
+<ce> and then a client pays for a death
+<ce> and never says why, or hides
+<ce> behind a go-between. Either way,
+<ce> the work is yours for the asking.
+
+RefuseQuest:  [1001]
+<ce> You would rather stay out
+<ce> of this one? I understand.
+
+AcceptQuest:  [1002]
+<ce> Go to _mondung_ in ___mondung_. All
+<ce> we know of the mark: a scar runs
+<ce> down the left cheek. Return for your
+<ce> pay within =1stparton_ days. May
+<ce> Mephala keep your blade sharp, %pcn.
+
+QuestFail:  [1003]
+<ce> Whoever you killed, it was not
+<ce> our mark. Get back to _mondung_
+<ce> and finish the contract.
+
+QuestComplete:  [1004]
+<ce> Beautiful work, %pcf. Clean, quiet,
+<ce> and nobody knows a thing. I may have
+<ce> to compose a song about it. Take your
+<ce> _reward_ gold before I start singing.
+
+RumorsDuringQuest:  [1005]
+Nice day, is it not?
+
+RumorsPostfailure:  [1006]
+People say the king has a mistress.
+People say a lot of things.
+
+RumorsPostsuccess:  [1007]
+Taxes are too high, if you
+ask me. Not that anyone does.
+
+QuestorPostsuccess:  [1008]
+That nameless job
+went well. Good work.
+
+QuestorPostfailure:  [1009]
+A pity about that nameless job.
+It is a stain on your record.
+
+Message:  1020
+%qdt:
+ The Dark Brotherhood in ___questgiver_ gave me
+ a contract with no name: a mark at _mondung_,
+ in ___mondung_. The only sign is a scar on the
+ target's left cheek. I have =1stparton_ days.
+
+Message:  1021
+<ce> There it is: a fresh scar
+<ce> across the left cheek.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _mondung_ remote palace
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _F.00_ is Healer
+Foe _F.01_ is Rogue
+Foe _F.02_ is Burglar
+Foe _F.03_ is Daedra_seducer
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	pick one of _S.06_ _S.07_ _S.08_ _onehour_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc _reward_ 
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_S.02_ task:
+	killed 1 _F.03_ saying 1021 
+	killed 1 _F.02_ saying 1021 
+	killed 1 _F.01_ saying 1021 
+	killed 1 _F.00_ saying 1021 
+
+variable _queston_
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_S.06_ task:
+	place foe _F.00_ at _mondung_ 
+
+_S.07_ task:
+	place foe _F.01_ at _mondung_ 
+
+_S.08_ task:
+	place foe _F.02_ at _mondung_ 
+
+_onehour_ task:
+	place foe _F.03_ at _mondung_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_ 
+	say 1003
+	clear _qgclicked_ _clearclick_

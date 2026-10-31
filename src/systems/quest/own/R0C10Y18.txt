@@ -1,0 +1,165 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y18.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 18
+Messages: 22
+Quest: R0C10Y18
+DisplayName: An Item on Loan
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Can you spare a few days, %pcf? I
+<ce> need something I borrowed returned
+<ce> to its owner. It is easy work, and
+<ce> worth _reward_ gold. Tempted?
+
+RefuseQuest:  [1001]
+<ce> A shame. I will find someone else, then.
+
+AcceptQuest:  [1002]
+<ce> %oth, good! I borrowed this _item1_
+<ce> from my dear friend _npc1_, a priest
+<ce> at __npc1_ in ___npc1_. %G wants it
+<ce> back within =1stparton_ days, so take
+<ce> it to %g2 quickly. Thank you, %pcf.
+
+QuestFail:  [1003]
+<ce> I asked you to hurry, %pcf. Did I not?
+
+QuestComplete:  [1004]
+<ce> Ah. The _item2_ is as fine as they
+<ce> promised. Neat work, %pcf. Here is
+<ce> _reward_ gold. You were quick and you
+<ce> kept quiet, which is what I pay for.
+
+RumorsDuringQuest:  [1005]
+People keep coming and going at __npc1_. Something is afoot.
+<--->
+_npc1_ is hunting for %g3 lost _item1_.
+I never knew %g cared for such things.
+
+RumorsPostfailure:  [1006]
+So __npc1_ was a smugglers' drop all along. What a scandal.
+<--->
+They hid the gems inside _item1_s. It looks so obvious now.
+
+RumorsPostsuccess:  [1007]
+Some _item1_s went to __npc1_, and
+something about them seemed wrong.
+<--->
+They say ___npc2_ is thick with
+_item2_ smugglers, all well hidden.
+
+QuestorPostsuccess:  [1008]
+Look who is back. You see why I could
+not tell you about the gem, yes?
+<--->
+%pcf! You handled that gem business very well, my friend.
+
+QuestorPostfailure:  [1009]
+<ce> You failed me in no small matter, %pcf.
+<ce> In time I may forgive you. Perhaps.
+
+QuestLogEntry:  [1010]
+<ce> My _item1_, back again. Thank you,
+<ce> %pcf. But something is caught inside. A
+<ce> stone? Would you take it to
+<ce> _questgiver_'s friend _npc2_ at __npc2_
+<ce> in ___npc2_? %G holds your gold, and
+<ce> will not wait past =2ndparton_ days.
+
+Message:  1015
+%qdt:
+ _questgiver_ of ___questgiver_
+ wants a _item1_ returned to a
+ priest, _npc1_, a =npc1_ at
+ __npc1_ in ___npc1_. I must be
+ there within =1stparton_ days.
+
+Message:  1016
+%qdt:
+ A _item2_ was hidden inside the
+ _item1_. To earn my _reward_ gold, I
+ must carry it to _npc2_ at __npc2_
+ in ___npc2_ within =2ndparton_ days.
+
+Message:  1020
+<ce> In %reg, nobody smuggles but the
+<ce> Thieves Guild. _questgiver_ thought %g
+<ce> was above that rule. %G was wrong. Give
+<ce> me the _item2_ so _questgiver_ learns a
+<ce> lesson, and you live. Will you?
+
+Message:  1021
+<ce> Tell everyone you meet that nobody
+<ce> crosses the Thieves Guild. Now go.
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ religious
+Item _item2_ gem
+
+Person _questgiver_ face 140 group Questor
+Person _npc1_ group Cleric remote
+Person _npc2_ face 254 group Local_3.0 female remote
+Person _dummythief_ faction The_Thieves_Guild remote
+
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+Foe _thief_ is Rogue
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1015 step 0 
+	get item _item1_ 
+
+_pcgetsgold_ task:
+	toting _item2_ and _npc2_ clicked 
+	give pc _reward_ 
+	change repute with _dummythief_ by -20 
+	end quest 
+
+variable _pchasitem1_
+variable _pchasitem2_
+_S.03_ task:
+	toting _item1_ and _npc1_ clicked 
+	create foe _thief_ every 1 minutes 5 times with 20% success 
+	start timer _2ndparton_ 
+	log 1016 step 1 
+	get item _item2_ 
+	say 1010 
+	create npc _npc2_ 
+
+variable _S.04_
+_queston_ task:
+	when _1stparton_ and not _S.03_ 
+	make _item1_ permanent 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+variable _1stparton_
+_2ndparton_ task:
+	make _item2_ permanent 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+yes task:
+	have _item2_ set _S.10_ 
+
+variable _no_
+_S.10_ task:
+	give item _item2_ to _thief_
+	say 1021 
+	restrain foe _thief_ 
+--moved "saying 1021" to its own line, wouldn't work as was
+
+_S.11_ task:
+	injured _thief_ 
+	prompt 1020 yes yes no _no_ 

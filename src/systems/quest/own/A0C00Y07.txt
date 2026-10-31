@@ -1,0 +1,164 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C00Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 11
+Quest: A0C00Y07
+DisplayName: The Exterminator
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _qgiver_, and I am desperate.
+<ce> _house_ is crawling with monsters.
+<ce> Will you go in and kill them all?
+<ce> I can pay _gold_ gold.
+
+RefuseQuest:  [1001]
+<ce> Will nobody help me? Anybody?
+
+AcceptQuest:  [1002]
+<ce> Oh, thank you! If those things are still
+<ce> there this time tomorrow, I am ruined.
+
+QuestComplete:  [1004]
+<ce> They are gone? Thank the gods. I hate
+<ce> those things. Here is your _gold_
+<ce> gold, %pcn, and you earned every coin.
+
+RumorsDuringQuest:  [1005]
+<ce> Have you heard? _qgiver_'s _house_
+<ce> is full of giant bugs! I have not
+<ce> laughed so hard in years.
+<--->
+<ce> Poor _qgiver_. %G3 _house_ is
+<ce> overrun by rats twelve feet long,
+<ce> with poison stingers. They say one
+<ce> look from them turns a man to stone!
+
+RumorsPostfailure:  [1006]
+<ce> _qgiver_ has had to sell
+<ce> _house_, and cheap.
+<--->
+<ce> They say a man from the Fighters
+<ce> Guild died clearing the vermin
+<ce> out of _qgiver_'s _house_.
+
+RumorsPostsuccess:  [1007]
+<ce> Are you the %ra who helped
+<ce> _qgiver_? I heard you cleared
+<ce> every beast out of %g3 _house_.
+<--->
+<ce> _qgiver_ paid someone to kill
+<ce> the creatures in %g3 _house_,
+<ce> I hear. Every last one.
+
+QuestorPostsuccess:  [1008]
+<ce> %pcf! I still owe you for clearing
+<ce> those monsters out of my _house_.
+<--->
+<ce> Listen, everyone! This is my friend %pcn,
+<ce> the best vermin killer alive. %G cleared
+<ce> three dozen monsters out of my _house_!
+
+QuestorPostfailure:  [1009]
+<ce> You! I lost _house_ because
+<ce> of you. A few monsters, and
+<ce> you could not deal with them.
+<--->
+<ce> You are the %ra who failed me. I paid
+<ce> you to clear the monsters out of my
+<ce> _house_, and you could not. Go away.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I met _qgiver_ in ___qgiver_.
+ Monsters have overrun _house_
+ in __house_, and %g wants
+ them dead. I have one day.
+
+Message:  1011
+<ce> That should be the last of them.
+
+Message:  1012
+<ce> Something scratches inside the walls. Whatever
+<ce> lives here will not like you walking in.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _house_ local random
+
+--time set to 24 strict hours. if it carries flags in DFU, time becomes variable
+Clock _oneday_ 1.00:00
+
+Foe _spiders_ is Spider
+Foe _rats_ is Giant_rat
+Foe _scorpions_ is Giant_scorpion
+Foe _bats_ is Giant_bat
+
+--	Quest start-up:
+	start timer _oneday_ 
+	log 1010 step 0 
+	pc at _house_ set _S.01_ 
+	create npc at _house_ 
+
+_oneday_ task:
+	end quest 
+
+--instant reward glitch fixed.
+_questdone_ task:
+	clicked npc _qgiver_
+
+_S.01_ task:
+	say 1012
+	start task _pickspawn_
+--preventing multiple spawns by using static pick
+
+_pickspawn_ task:
+	pick one of _S.04_ _S.05_ _S.06_ _S.07_ 
+
+--this quest had a rare case of no victory message
+_S.03_ task:
+	killed 6 _bats_ 
+	killed 3 _spiders_ 
+	killed 7 _rats_ 
+	killed 3 _scorpions_
+	say 1011
+
+variable _S.04_
+_spawn1_ task:
+	when _S.01_ and _S.04_ and not _S.03_
+	create foe _bats_ every 2 minutes indefinitely with 100% success 
+
+variable _S.05_
+_spawn2_ task:
+	when _S.01_ and _S.05_ and not _S.03_
+	create foe _rats_ every 2 minutes indefinitely with 100% success 
+
+variable _S.06_
+_spawn3_ task:
+	when _S.01_ and _S.06_ and not _S.03_
+	create foe _scorpions_ every 3 minutes indefinitely with 100% success 
+
+variable _S.07_
+_spawn4_ task:
+	when _S.01_ and _S.07_ and not _S.03_
+	create foe _spiders_ every 3 minutes indefinitely with 100% success 
+
+_clearclick_ task:
+	when not _S.03_ and _questdone_ 
+	clear _questdone_ _clearclick_ 
+
+
+_pcgetsgold_ task:
+	when _questdone_ and _S.03_
+	give pc _gold_ 
+	end quest

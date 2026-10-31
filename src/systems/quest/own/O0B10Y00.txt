@@ -1,0 +1,160 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0B10Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 10
+-- QuestId: 0
+Messages: 21
+Quest: O0B10Y00
+DisplayName: A Stolen Gem
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Listen, %pcf. One of the family is
+<ce> in trouble, and I need somebody
+<ce> quick. Can you spare a couple of
+<ce> days for one of our own?
+
+RefuseQuest:  [1001]
+<ce> Fine. I hope you never land
+<ce> in a fix yourself, then.
+
+AcceptQuest:  [1002]
+<ce> Good, %ra. _contact_, our best cat
+<ce> burglar, hides at __contact_ in
+<ce> ___contact_. %g was seen with a palace
+<ce> stone on %g3 person. Guards go in after
+<ce> =1stparton_ days. Give %g2 this _metal_
+<ce> for the _gems_ and bring it here.
+
+QuestFail:  [1003]
+<ce> Nice to see you, %pcf, but
+<ce> where is the _gems_? You were
+<ce> meant to come back with it.
+
+QuestComplete:  [1004]
+<ce> Nice work, %pcf. _contact_ showed
+<ce> the guards a lump of _metal_ they
+<ce> had taken for a _gems_. They felt
+<ce> so bad they bought %g2 a drink.
+<ce> Here is your share: _reward_ gold.
+
+RumorsDuringQuest:  [1005]
+Everybody knows _contact_ took that
+jewel. So why has nobody arrested %g2?
+<--->
+Guards are not welcome at __contact_.
+The regulars make sure of that.
+
+RumorsPostfailure:  [1006]
+The guards finally caught _contact_.
+%g could not hold them off forever.
+<--->
+The %t's _gems_ turned up on that
+=contact_, just as everyone said.
+
+RumorsPostsuccess:  [1007]
+The guards let _contact_ go. It
+seems %g was innocent all along.
+<--->
+The guards took _metal_ for a _gems_. They
+are both rocks, I suppose, but really.
+
+QuestorPostsuccess:  [1008]
+Back again, %pcf? You miss
+that _gems_ already, I expect.
+
+QuestorPostfailure:  [1009]
+<ce> %oth, it was not difficult. You were
+<ce> to give _contact_ the _metal_ and take
+<ce> the _gems_ from %g2. That was all.
+
+QuestLogEntry:  [1010]
+<ce> %oth, %pcf, you saved my neck. One
+<ce> look at my _gems_, and they decided
+<ce> it was the stolen one. This _metal_
+<ce> is my way out. Get back to
+<ce> _questgiver_ within =1stparton_ days.
+
+Message:  1015
+%qdt:
+ _questgiver_ in ___questgiver_ has
+ a guild job for me. I am to find
+ _contact_ at __contact_ in
+ ___contact_ and trade this _metal_
+ for the stone %g carries. There
+ are =1stparton_ days to do it.
+
+Message:  1020
+<ce> You carry the _gems_ from _contact_,
+<ce> and we know it. Hand it over and you
+<ce> walk away unhurt. Will you give it up?
+
+
+QBN:
+Item _reward_ gold
+Item _metal_ element
+Item _gems_ gem
+
+Person _questgiver_ face 72 group Questor
+Person _contact_ face 80 group Innkeeper remote
+
+
+Clock _1stparton_ 00:00 0 flag 18 range 1 4
+
+Foe _guards_ is Knight
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1015 step 0 
+	get item _metal_ 
+
+_qgclicked_ task:
+	toting _gems_ and _questgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+_qgtalk_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgtalk_ and not _qgclicked_
+	say 1003
+	clear _clearclick_ _qgtalk_
+--added _qgtalk_ and _clearclick_
+
+_npcclicked_ task:
+	toting _metal_ and _contact_ clicked 
+	create foe _guards_ every 173 minutes 3 times with 25% success 
+	get item _gems_ 
+	say 1010 
+
+_1stparton_ task:
+	have _metal_ set _keptmetal_ 
+	have _gems_ set _keptgems_ 
+	end quest 
+--removed unnecessary delay
+
+_greklith_ task:
+	injured _guards_ 
+	prompt 1020 yes _S.05_ no _S.06_ 
+
+_S.05_ task:
+	take _gems_ from pc 
+	change repute with _questgiver_ by -40 
+	restrain foe _guards_ 
+	end quest 
+--removed unnecessary delay
+
+variable _S.06_
+_keptmetal_ task:
+	make _metal_ permanent 
+
+_keptgems_ task:
+	make _gems_ permanent 
+
+_S.09_ task:
+	when _npcclicked_ and _1stparton_ 
+	change repute with _questgiver_ by -20

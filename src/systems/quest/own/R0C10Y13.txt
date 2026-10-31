@@ -1,0 +1,113 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y13.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 13
+Messages: 21
+Quest: R0C10Y13
+DisplayName: A Peace Offering
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I have an errand of some diplomatic
+<ce> weight. A gift of peace must change
+<ce> hands. As a favor to me, will you
+<ce> carry it to my friend _contact_?
+
+RefuseQuest:  [1001]
+<ce> Is it the pay, the bother or the
+<ce> humble nature of the work that offends
+<ce> you, %pcf? No matter. Some other %ra
+<ce> will want the favor of my house.
+
+AcceptQuest:  [1002]
+<ce> Bring this _item_ to the palace at __palace_
+<ce> and seek out a =contact_. That is _contact_. %G
+<ce> is expecting you and will likely pay you for
+<ce> the trouble. Go now, %pcf, and do not fail me.
+
+QuestFail:  [1003]
+<ce> Go, quickly! This is no time to chat.
+
+QuestComplete:  [1004]
+<ce> What a lovely _item_. And it comes
+<ce> from _questgiver_? Then perhaps it
+<ce> was all a misunderstanding. Take
+<ce> _reward_ gold for the trouble, %pcf.
+
+RumorsDuringQuest:  [1005]
+_contact_ may break with _questgiver_, I hear.
+<--->
+_questgiver_ had better mend
+fences with _contact_, and soon.
+
+RumorsPostfailure:  [1006]
+_questgiver_ and _contact_ are further apart than ever.
+<--->
+_contact_ may cut all ties with _questgiver_ any day now.
+
+RumorsPostsuccess:  [1007]
+_contact_ is delighted with the
+gift from _questgiver_, they say.
+<--->
+That _item_ from _questgiver_ calmed _contact_
+down. %god be thanked, it could have turned ugly.
+
+QuestorPostsuccess:  [1008]
+My envoy of peace! How are you, my friend?
+<--->
+%oth, my favorite courier. How do you fare?
+
+QuestorPostfailure:  [1009]
+<ce> You never brought _contact_ that
+<ce> _item_, and my peace is harder
+<ce> to make for it, %pcf. Leave me.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ hinted at a reward
+ if I carry a _item_ to
+ _contact_ at the palace in
+ __palace_, as a peace offering.
+ I have =queston_ days at most.
+
+Message:  1020
+<ce> Did _questgiver_ send nothing
+<ce> for me? Curse it, if this is
+<ce> another of %g3 games...
+
+
+QBN:
+Item _reward_ gold
+Item _item_ trinket
+
+Person _questgiver_ group Questor
+Person _contact_ face 1 group Local_3.0 remote
+
+Place _palace_ remote palace
+
+Clock _queston_ 00:00 0 flag 1 range 0 2
+
+--	Quest start-up:
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _item_ 
+	place npc _contact_ at _palace_ 
+
+_pcgetsgold_ task:
+	toting _item_ and _contact_ clicked 
+	give pc _reward_ 
+	change repute with _questgiver_ by +20 
+	end quest 
+--removed unnecessary delay
+
+_queston_ task:
+	make _item_ permanent 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+_npcclicked_ task:
+	clicked npc _contact_ say 1020 

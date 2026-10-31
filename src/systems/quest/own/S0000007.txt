@@ -1,0 +1,523 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000007.Qbn.
+-- Main story quest.
+-- QuestId: 7
+Messages: 37
+Quest: S0000007
+DisplayName: The Werebeast
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Say, %pcf, what if I knew a thing or
+<ce> two about milady's letter? Thought so.
+<ce> It ain't free, though. You scratch my
+<ce> back first, then I scratch yours. Deal?
+
+RefuseQuest:  [1001]
+<ce> Course not. Too grand for the likes
+<ce> of Cyndassa, eh? Only kings for you.
+<ce> Well, %oth, I don't care neither.
+
+AcceptQuest:  [1002]
+<ce> Name's Cyndassa, of Daggerfall. Maid to her
+<ce> highness, nothing more. Nothing's free, %pcn. Kill
+<ce> me a werewolf. It lairs in Tristore Laboratory,
+<ce> some %god forsaken hole off the coast near Betony.
+<ce> Don't ask why. I'll wait =2mondung_ days.
+
+QuestFail:  [1003]
+<ce> Think I'm stupid, %pcn? That loup's
+<ce> still breathing, and I know it.
+
+QuestComplete:  [1004]
+<ce> Dead, is it? Poor thing. He was my brother,
+<ce> once. Now, that letter, %pcf. I took it to
+<ce> her majesty. She rips it open, says "This
+<ce> is for Mynisera," and goes white. Says
+<ce> she'll see the Queen Mother gets it.
+
+RumorsDuringQuest:  [1005]
+For weeks now, Betony has lived in fear
+of the werewolf in Tristore Laboratory.
+<--->
+Only the folk who live next to Tristore
+Laboratory worry about its werewolf.
+<--->
+Queen Aubk-i's maid tells the wildest
+stories about her. Poor woman.
+
+RumorsPostfailure:  [1006]
+The werewolf has left Tristore
+Laboratory. They never stay in one place.
+<--->
+That loup lasted longer in Tristore
+Laboratory than anyone thought it would.
+<--->
+The Shapeshifters made short work
+of some %ra out there, I hear.
+
+RumorsPostsuccess:  [1007]
+A %ra drove the werewolf of Tristore
+Laboratory clean out of Betony.
+<--->
+With the loup gone, the farmers near
+Tristore Laboratory sleep easy.
+<--->
+A %ra saved one of the Shapeshifters'
+own, and they are grateful.
+
+QuestLogEntry:  [1010]
+<ce> As you watch, the dead werewolf changes.
+<ce> Minutes later a young man lies there,
+<ce> and he looks a great deal like Cyndassa.
+
+Message:  1011
+<ce> You got him out of that trap,
+<ce> %pcf. Thank you. I will settle
+<ce> things with the Beldama myself.
+
+Message:  1012
+<ce> Cyndassa talks when she drinks. The one letter
+<ce> from the Emperor she ever saw, the Queen
+<ce> opened and cried, "This is for Mynisera!"
+<ce> Cyndassa thought she had blundered. Aubk-i
+<ce> calmly promised it to the Queen Mother.
+
+Message:  1013
+<ce> Keep the _relic_, if you want it.
+
+Message:  1014
+<ce> My old lover's diary, %pcf! Cyndassa, the
+<ce> spiteful cat, had two loups bite him. The
+<ce> Beldama can only hold it back a few weeks.
+<ce> Tame him with this _relic_, bring him to
+<ce> me, and I'll tell you something useful.
+
+Message:  1015
+%qdt:
+ _barmaid_ was once the lover of
+ Cyndassa's brother. If I can use
+ this _relic_ to bring him back to
+ her, she has news for me. She will
+ wait at _tavern_ in __tavern_.
+
+Message:  1016
+%qdt:
+ A diary page of Cyndassa's
+ brother says she paid to have him
+ made a lycanthrope, out of spite.
+
+Message:  1017
+A scrawled diary page:
+ 
+"...Cyndassa, so spiteful, because I
+left her friend _barmaid_! We parted
+well, and I never liked ___barmaid_
+anyway. Paying the Shapeshifters to
+take me? She learned that from the
+nobles at the Daggerfall court..."
+
+Message:  1018
+A diary page, neatly written:
+ 
+"...I do not remember coming here. Who would
+kidnap me? We have no money, and the court barely
+puts up with Cyndassa. The last thing I remember
+is the moon rising over Castle Daggerfall..."
+
+Message:  1019
+That Cyndassa and her friends are always plotting something.
+<--->
+Queen Aubk-i lets her maid run about
+with ==barmaid_, of all people.
+<--->
+The Queen's own maid, friends with
+==barmaid_. I would not allow it.
+<--->
+Cyndassa and _barmaid_ are up to
+no good again, mark my words.
+
+Message:  1020
+_wereBrother_ broke her heart. Now
+she sells herself at _tavern_.
+<--->
+A young rascal broke her heart.
+She sulks over at __tavern_ now.
+<--->
+She plies her trade in __tavern_, if you take my meaning.
+<--->
+When Cyndassa's brother jilted her, she had
+Cyndassa make a werewolf of him. So they say.
+
+Message:  1021
+Stay back, %ra. I know what you are. A killer.
+<--->
+Murderer! The guards will have you, %ra!
+<--->
+You dare come near me, you were-hunting butcher?
+<--->
+Get your were-killing hide away from me, %ra!
+
+Message:  1022
+Stay away, %ra. You hunt weres for a fool's pay.
+<--->
+Fool! A simple maid lied to you, and you believed her?
+<--->
+Cyndassa lied, %ra, and you swallowed every word.
+<--->
+After what you did, %ra, I ought to
+set the Shapeshifters after you.
+
+Message:  1023
+%qdt:
+ Cyndassa, Queen Aubk-i's maid, needs a
+ werewolf at Tristore Laboratory in Betony
+ dead. She will not say why. She will pay
+ me in news of the Emperor's letter, if I
+ finish within =2mondung_ days.
+
+Message:  1024
+<ce> The werewolf's body shifts and
+<ce> shrinks. Soon a young man,
+<ce> _wereBrother_, lies senseless at
+<ce> your feet. You lift him carefully.
+
+Message:  1025
+Cyndassa waits on the Queen now, and her
+whole family has gotten above itself.
+<--->
+Brothers and sisters are at each
+other's throats in ___wereBrother_.
+<--->
+The young will do anything to be noticed.
+
+Message:  1026
+This belongs to the
+Shapeshifters' Guild.
+
+Message:  1027
+The _relic_ vanishes, and your stomach lurches.
+
+Message:  1028
+<ce> Are you mad, %pct? I would have
+<ce> helped you. Then you attacked
+<ce> _wereBrother_. Crawl back to
+<ce> Cyndassa, you worthless %ra.
+
+Message:  1029
+<ce> Wait, %pct. I'll come with you,
+<ce> and I'll carry the _relic_. It
+<ce> takes some skill to use.
+
+Message:  1030
+%qdt:
+ _barmaid_ says Cyndassa gave
+ Queen Aubk-i a letter meant for
+ Mynisera. Aubk-i promised to hand
+ it to the Queen Mother at once.
+
+Message:  1031
+%qdt:
+ _barmaid_ and _wereBrother_ need
+ my escort home to Daggerfall, to
+ their Coven on the Bluff.
+
+Message:  1032
+<ce> The werewolf stiffens and goes still.
+<ce> "Well done, %pcf," says _barmaid_. "Now
+<ce> for what I know about your letter."
+
+Message:  1033
+<ce> One more favor. Take us both to the
+<ce> Sisters of the Bluff and their Beldama. It
+<ce> is on your map, in Daggerfall province.
+
+Message:  1034
+<ce> The Coven owes you a great deal,
+<ce> %pcf. Our door is open to you.
+
+Message:  1035
+<ce> _barmaid_ glares at you. "What is
+<ce> this, %ra, a kidnapping?" She gathers
+<ce> up _wereBrother_ and vanishes.
+
+Message:  1036
+<ce> _barmaid_ whispers, "Here is
+<ce> the plan, %pcf. We split up and
+<ce> meet at __mondung_. You keep
+<ce> him busy, and I cast the spell
+<ce> that tames the beast in him."
+
+
+QBN:
+Item _letter_ letter used 1018
+Item _I.01_ letter used 1017
+Item _relic_ magic_item used 1026
+
+Person _cyndassa_ named Cyndassa atHome anyInfo 1019
+Person courtier face 89 faction Court_of_Daggerfall remote
+Person _barmaid_ face 115 faction The_Daggerfall_Witches anyInfo 1020
+Person _P.03_ faction The_Sisters_of_the_Bluff female
+Person _wereBrother_ face 13 faction The_Mages_Guild anyInfo 1025 male
+Person _P.05_ named Br'itsa
+
+Place _mondung_ permanent Tristore_Laboratory4
+Place _L.01_ permanent Tristore_Laboratory2
+Place _L.02_ permanent Tristore_Laboratory1
+Place _tavern_ remote tavern
+Place _npc2_ local dungeon
+Place glenmorilCoven permanent BluffCoven
+
+Clock _2mondung_ 00:00 0 flag 17 range 0 2
+Clock _2ndparton_ 00:00 0 flag 17 range 0 2
+Clock _delay_ 02:12 1.00:17
+Clock _S.27_ 00:01 00:01
+Clock _S.32_ 00:01 00:01
+--Reduced time before quest success displays after player arrives at coven
+
+Foe _brother_ is Werewolf
+Foe talisman is 2 Werewolf
+Foe boar is Wereboar
+
+--	Quest start-up:
+	dialog link for person _wereBrother_ 
+	dialog link for person _P.05_ 
+	dialog link for item _relic_ 
+	dialog link for person _barmaid_ 
+	start timer _2mondung_ 
+	prompt QuestorOffer yes yes no _no_ 
+	repute with _P.05_ exceeds 4 do _S.11_ 
+	repute with _P.03_ exceeds 4 do _S.11_ 
+	repute with _barmaid_ exceeds 4 do _S.11_ 
+	pc at glenmorilCoven set _S.30_ 
+	pc at _mondung_ set _S.14_ 
+	_I.01_ used do _S.34_ 
+
+_2mondung_ task:
+	drop _cyndassa_ as questor 
+	end quest 
+
+variable _2ndparton_
+_S.02_ task:
+	when _2ndparton_ and _S.29_ 
+	say 1035 
+
+_S.03_ task:
+	when _2ndparton_ 
+	drop _barmaid_ face 
+	drop _wereBrother_ face 
+	drop _cyndassa_ as questor 
+	end quest 
+
+_delay_ task:
+	drop _cyndassa_ as questor 
+	end quest 
+
+_S.05_ task:
+	when _S.06_ and _mondead_ 
+	give pc nothing 
+	start quest 12 12 
+	start timer _delay_ 
+	change repute with courtier by +10 
+	change repute with _cyndassa_ by +15 
+	end quest
+
+_S.06_ task:
+	clicked npc _cyndassa_ 
+
+_mondead_ task:
+	killed 1 _brother_ saying 1010 
+
+_S.08_ task:
+	clicked npc _barmaid_ 
+
+yes task:
+	place item _I.01_ at _L.02_ questmarker 0
+	place item _letter_ at _L.01_ marker 0
+	log 1023 step 0 
+	reveal _mondung_ in province 19 at 255132 
+	pick one of _S.13_ _S.12_ _S.13_ _S.12_ 
+	say AcceptQuest 
+	add _cyndassa_ as questor 
+	place foe _brother_ at _mondung_ marker 1
+
+_no_ task:
+	say RefuseQuest 
+	end quest 
+
+variable _S.11_
+variable _S.12_
+variable _S.13_
+variable _S.14_
+variable _S.15_
+_S.16_ task:
+	when _S.12_ and not _S.11_ 
+
+_S.17_ task:
+	injured _brother_ 
+	have _relic_ set _S.15_ 
+
+_S.18_ task:
+	when _S.22_ and _S.17_ 
+
+_S.19_ task:
+	when _S.15_ or _S.18_ 
+
+_S.20_ task:
+	when _S.14_ and _S.16_ 
+	place foe boar at _L.02_ marker 0
+
+_S.21_ task:
+	when _S.17_ and _S.16_ 
+	cast Heal spell on _brother_ 
+	cast Spider_Touch spell on _brother_ 
+
+_S.22_ task:
+	when _S.14_ and _S.37_ 
+	restore _barmaid_ 
+	say 1036 
+	drop _barmaid_ face 
+	place npc _barmaid_ at _mondung_ 
+
+_S.23_ task:
+	when _S.19_ and not _mondead_ 
+	cast Heal spell on _brother_ 
+	have _relic_ set _S.25_ 
+
+_S.24_ task:
+	when _S.18_ and _S.23_ and not _S.27_ 
+	play sound spell_ball_lightning every 1 minutes 100 times 
+
+_S.25_ task:
+	play sound spell_ball_lightning every 1 minutes 100 times 
+
+_S.26_ task:
+	when _S.19_ and not _mondead_ 
+	start timer _S.27_ 
+	restrain foe _brother_ 
+
+_S.27_ task:
+	clear _S.25_ _S.23_ _S.24_ 
+
+_mmap_ task:
+	when _S.27_ and not _S.37_ and not _mondead_ and _S.11_ and not _S.32_
+	say 1024 
+	add _wereBrother_ face 
+	place foe _brother_ at _npc2_
+    place npc _barmaid_ at _tavern_
+    --Need to move _barmaid_ to tavern mentioned in quest for final reunion
+    clear _S.08_
+    --Clear click on _barmaid_ or ending will fire too soon
+
+_S.29_ task:
+	when _S.27_ and not _S.37_ and not _mondead_ and not _S.11_
+	log 1030 step 0 
+	log 1031 step 1 
+	reveal glenmorilCoven in province 17 at 191097 
+	give item _relic_ to _brother_ 
+	hide npc _barmaid_
+    say 1032 
+	say 1012 
+	say 1033 
+	add _wereBrother_ face 
+	add _barmaid_ face 
+	place foe _brother_ at _npc2_ 
+
+variable _S.30_
+_S.31_ task:
+	when _S.30_ and _S.29_ 
+	start timer _S.32_ 
+
+_S.32_ task:
+	start quest 12 12 
+	start timer _delay_ 
+	stop timer _2ndparton_ 
+	say 1034 
+	drop _barmaid_ face 
+	drop _wereBrother_ face 
+	change repute with courtier by +10 
+	change repute with _barmaid_ by +12 
+	change repute with _P.05_ by +15 
+
+_S.33_ task:
+	when _S.06_ and yes and not _mondead_ 
+	say QuestFail 
+
+_S.34_ task:
+	add dialog for person _barmaid_ 
+	start timer _2ndparton_ 
+	stop timer _2mondung_ 
+	log 1016 step 1 
+	place npc _barmaid_ at _tavern_ 
+
+_S.35_ task:
+	when _S.08_ and not _mondead_ and not _S.17_ 
+	add dialog for person _wereBrother_ 
+	add dialog for item _relic_ 
+	say 1014 
+
+_S.36_ task:
+	when _S.08_ and not _mondead_ and not _S.17_ and _S.11_ 
+	location _tavern_ 100 27000 
+--not known what this intends to do
+	log 1015 step 1 
+	get item _relic_
+
+_S.37_ task:
+	when _S.08_ and not _mondead_ and not _S.17_ and not _S.11_ 
+	hide npc _barmaid_ 
+	say 1029 
+	add _barmaid_ face 
+
+_S.38_ task:
+	when _S.08_ and _mondead_ and _S.17_ and not _S.19_ 
+	--_barmaid_ previously berates player when werewolf injured, even though that is how quest is supposed to be played
+    --Changed this to only happen when player kills werewolf, which seems to be the intent
+	add dialog for person _wereBrother_ 
+	say 1028 
+	change repute with _barmaid_ by -5 
+
+_S.39_ task:
+	when _S.08_ and _mondead_ 
+	pick one of _S.41_ _S.41_ _S.40_ _S.41_ 
+	change repute with _barmaid_ by -10 
+
+_S.40_ task:
+	say 1022 
+
+_S.41_ task:
+	create foe talisman every 5 minutes 10 times with 75% success 
+	give item _relic_ to _brother_ 
+	say 1021 
+
+_S.42_ task:
+	when _S.08_ and not _mondead_ and _S.19_ and not _S.14_
+    say 1011
+	say 1012 
+    say 1013
+	make _relic_ permanent 
+	drop _wereBrother_ face 
+
+_S.43_ task:
+	when _S.42_ 
+	start quest 12 12 
+	start timer _delay_ 
+	stop timer _2ndparton_ 
+	change repute with _barmaid_ by +12 
+	change repute with _P.05_ by +15 
+	change repute with courtier by +10 
+
+_S.44_ task:
+	_relic_ used do _S.45_ 
+
+_S.45_ task:
+	give item _relic_ to talisman 
+	make pc ill with Caliron's_Curse saying 1027 
+	unset _S.06_ _S.33_ 
+	unset _S.08_ _delay_ 
+
+_clearclick_ task:
+	when _S.06_ and not _mondead_
+	clear _S.06_ _clearclick_

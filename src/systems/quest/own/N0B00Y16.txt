@@ -1,0 +1,207 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B00Y16.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 16
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 52
+Quest: N0B00Y16
+DisplayName: Open a Chest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ah, %pct. You can cast Open
+<ce> by now, surely? I have a
+<ce> small job that needs it.
+
+RefuseQuest:  [1001]
+<ce> No? Then go and study. Nobody rises
+<ce> in this guild without the basics.
+
+AcceptQuest:  [1002]
+<ce> Good. No locksmith in __shop_ can open
+<ce> _merchant_'s old chest, so %g came to us,
+<ce> and we want %g3 custom. It is a trick box
+<ce> by _mage_. %G made them so only plain
+<ce> Open works, to vex %g3 friends.
+
+QuestFail:  [1003]
+<ce> Not now, %pct. You have a chest
+<ce> to open, if memory serves, and
+<ce> I have a book to finish.
+
+QuestComplete:  [1004]
+<ce> Hm? Oh, the trick box. No trouble,
+<ce> I trust. It is good for the guild's
+<ce> name, and all that. Splendid.
+
+RumorsDuringQuest:  [1005]
+<ce> _merchant_ paid good money for a chest %g cannot open!
+<ce> %G is furious, and the whole street is laughing.
+
+RumorsPostfailure:  [1006]
+<ce> _merchant_ gave up on that magic
+<ce> chest and sold it to some other fool.
+
+RumorsPostsuccess:  [1007]
+<ce> The Mages Guild finally opened _merchant_'s chest,
+<ce> and all %g3 trouble was for a joke, I hear.
+
+QuestorPostsuccess:  [1008]
+<ce> Hello, %pcn. If I remember right,
+<ce> you opened _mage_'s box for us.
+
+QuestorPostfailure:  [1009]
+<ce> What now? You are the one who could
+<ce> not open a box for _merchant_. A box!
+
+Message:  1020
+%qdt:
+ At the Mages Guild in
+ ___questgiver_, _questgiver_ sent
+ me to _merchant_, a local trader,
+ who owns a chest nobody can open.
+ _questgiver_ thinks only a plain
+ Open spell will work on it. Then
+ I report back to %g2.
+
+Message:  1030
+<ce> The guild sent you? Good.
+<ce> _questgiver_ never lets me down. Here
+<ce> is the chest. I hope you know what to
+<ce> do with it, because I do not.
+
+Message:  1040
+<ce> You cast Open, and the lid
+<ce> flies up. An imp leaps out.
+<ce>
+<ce> "Many happy returns, =mage2_,
+<ce> you old goat!" it shouts, in a
+<ce> voice far too deep for its size.
+
+Message:  1041
+<ce> The lock clicks as your spell takes
+<ce> hold. Inside lies a wand with a note:
+<ce> "To =mage3_, on turning 110. One wave
+<ce> and you will feel every year of it."
+
+Message:  1042
+<ce> Smoke rolls out of the chest
+<ce> as your spell lands. The lid
+<ce> pops up on an engraved card:
+<ce>
+ =mage4_,
+ 
+ Enjoy the new house. Did you
+ have the cellar cleared before
+ you moved in? I hear it squeaks.
+ 
+ Ever yours, _mage_
+
+Message:  1043
+<ce> The lid springs up. The chest holds
+<ce> nothing but a little stale confetti.
+
+Message:  1050
+<ce> Do thank _questgiver_ for me. It
+<ce> was kind of %g2 to send you, I
+<ce> suppose. Had I known what was
+<ce> inside, I would have left it shut.
+
+Message:  1051
+<ce> You cannot open it either? Then keep
+<ce> the wretched thing. I am done with it.
+
+
+QBN:
+Item _crn_ item class 1 subclass 8
+--changed %crn to _crn_. variables should have underscores
+Item _I.01_ wand
+
+Person _questgiver_ face 86 group Questor
+Person _merchant_ face 87 group Pawnbroker female
+Person _mage_ face 1 group Spellcaster remote
+
+Place _shop_ local pawnshop
+
+Clock _qtime_ 2.00:00 0 flag 1 range 0 1
+
+Foe _mage2_ is Battle_mage
+Foe _mage3_ is Sorceror
+Foe _imp_ is Imp
+Foe _rats_ is Giant_rat
+Foe _bats_ is Giant_bat
+Foe _mage4_ is Mage
+Foe _skeleton_ is Skeletal_warrior
+
+--	Quest start-up:
+	start timer _qtime_ 
+	log 1020 step 0 
+	place npc _merchant_ at _shop_ 
+
+_qtime_ task:
+	end quest 
+
+_clickqgiver_ task:
+	clicked npc _questgiver_ 
+
+_S.10_ task:
+	toting _crn_ and _merchant_ clicked 
+
+_S.02_ task:
+	clicked npc _merchant_ 
+	cast Open spell do _S.07_ 
+	get item _crn_ 
+	say 1030 
+
+_a3_ task:
+	create foe _imp_ every 0 minutes 1 times with 100% success 
+	say 1040 
+
+_a4_ task:
+	_I.01_ used do _S.09_ 
+	get item _I.01_ 
+	say 1041 
+
+_a5_ task:
+	create foe _rats_ every 0 minutes 1 times with 100% success 
+	create foe _bats_ every 0 minutes 1 times with 100% success 
+	say 1042 
+
+_a6_ task:
+	say 1043 
+
+_S.07_ task:
+	have _crn_ set _S.08_
+
+_S.08_ task:
+	pick one of _a3_ _a4_ _a5_ _a6_ 
+
+_S.09_ task:
+	create foe _skeleton_ every 0 minutes 1 times with 100% success 
+	make _I.01_ permanent 
+
+_S.11_ task:
+	when _S.08_ and _S.10_ 
+	say 1050 
+
+_success_ task:
+	when _S.11_ and _clickqgiver_ 
+	give pc nothing 
+	unset _clickqgiver_ 
+	end quest 
+
+_clearclick_ task:
+	when _clickqgiver_ and not _S.11_
+	say 1003
+	clear _clearclick_ _clickqgiver_
+
+_S.13_ task:
+	when _S.10_ and not _S.08_ 
+	get item _crn_ 
+	say 1051 
+	clear _S.10_
+	clear _S.13_

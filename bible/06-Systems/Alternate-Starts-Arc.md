@@ -126,12 +126,13 @@ already holding `_BRISIEN` keeps the start-up it was saved with (`task.js` `rest
 so nothing an old game showed changes.
 
 AUDIT STARTS Q3: and the two places the script tells the wreck as the player's own go too - its journal's first entry
-(1010, logged where `_BRISIEN` starts, in Daggerfall's streets now) loses its last paragraph ("Before landing in
-Daggerfall, a sudden storm capsized the ship. I barely made it into this cave."; the start's own journal has told the
-way here), and Lady Brisienna's first letter (1020) opens "Word has reached me that you are in the Iliac Bay at last, and
-alive and well" where it had "I heard about your accident at sea" - true of every start, and of a save from before the
-starts (a translation pack's own `-LOC` words for the two are the pack's, L10N3c, as for every patch over DFU's text). Its Quests page (`mainQuest.json`) has no cave's escape (Q2): `_BRISIEN` begins in Daggerfall's streets, where
-that objective read as done at its first look, the herald's news of a cave the player was never in.
+(1010, logged where `_BRISIEN` starts, in Daggerfall's streets now) and Lady Brisienna's first letter (1020), whose
+"I heard about your accident at sea" is untrue of every start but the Bay's. Two more patches over DFU's text said them
+without the wreck. Since OWN-WORDS2 (`06-Systems/Own-Words.md`) our own file `systems/quest/own/_BRISIEN.txt` says
+them so ("I hear you have reached the Iliac Bay, safe and well"), and the patch keeps only the `say 1025`. A
+translation pack's own `-LOC` words for the two are the pack's (L10N3c). Its Quests page (`mainQuest.json`) has no
+cave's escape (Q2): `_BRISIEN` begins in Daggerfall's streets, where that objective read as done at its first look, the
+herald's news of a cave the player was never in.
 
 ## 5. The hosts, online, saves
 

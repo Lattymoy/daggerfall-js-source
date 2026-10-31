@@ -1,0 +1,158 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 4
+Messages: 21
+Quest: R0C10Y04
+DisplayName: The Evil Wizard
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> My tenants near ___mondung_ have whined
+<ce> for years about black magic in that
+<ce> dungeon. This time they are right. I
+<ce> want the sorcerer there dead, and I
+<ce> will pay _reward_ gold. Will you go?
+
+RefuseQuest:  [1001]
+<ce> Really? I took this for your
+<ce> kind of work. How tiresome.
+
+AcceptQuest:  [1002]
+<ce> %oth, splendid. I want this wizard gone within
+<ce> =1stparton_ days, so leave at once. Good
+<ce> hunting, %pcf, and show the wizard no quarter.
+
+QuestFail:  [1003]
+<ce> Do not come back until that sorcerer is dead.
+
+QuestComplete:  [1004]
+<ce> Our hero returns! My farmers are rejoicing
+<ce> that the black magic is gone, and so am I.
+<ce> Take the _reward_ gold, %pcf, with my thanks.
+
+RumorsDuringQuest:  [1005]
+The air feels heavy, as if something foul were gathering.
+<--->
+A sorcerer has sworn to turn _questgiver_'s land to rubble.
+
+RumorsPostfailure:  [1006]
+The sorcerer in ___mondung_ seems to have moved on.
+<--->
+Some adventurer frightened the
+sorcerer out of ___mondung_, they say.
+
+RumorsPostsuccess:  [1007]
+A brave %ra killed the mad wizard of ___mondung_, I hear.
+<--->
+If that sorcerer had lived, _questgiver_
+would be in real trouble now.
+
+QuestorPostsuccess:  [1008]
+Ah, the wizard-slayer is back. How do you fare, my friend?
+<--->
+Welcome, killer of mad wizards.
+
+QuestorPostfailure:  [1009]
+<ce> I hope you do not expect payment
+<ce> for letting that wizard live. Be
+<ce> glad I do not have you whipped.
+<--->
+<ce> So the %ra is back. No doubt
+<ce> the wizard you spared will
+<ce> be back too. Off with you.
+
+Message:  1011
+<ce> Ask _questgiver_ about the
+<ce> sorcerer _fakename_, and watch
+<ce> the noble's face go dark.
+<--->
+<ce> For years _questgiver_ has been troubled
+<ce> by a sorcerer called _fakename_.
+
+Message:  1012
+The wizard _fakename_
+is dead at last.
+
+Message:  1015
+%qdt:
+ _questgiver_ of __questgiver_ in
+ ___questgiver_ wants a mad wizard
+ killed in ___mondung_. If I do it
+ and return to %g2 within
+ =1stparton_ days, I earn my gold.
+
+Message:  1020
+<ce> So _questgiver_ has sent another
+<ce> fool after me? Your bones can
+<ce> lie with the rest on my floor!
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor anyInfo 1011 rumors 1011
+Person _fakename_ group Local_4.0 female remote
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Sorceror
+Foe _battlemage_ is Battle_mage
+Foe _F.02_ is Orc_shaman
+Foe _mage_ is Mage
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1015 step 0 
+	pick one of _week_ _plot_ _time_ _vend_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc _reward_ 
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_S.02_ task:
+	killed 1 _battlemage_ 
+	killed 1 _F.02_ 
+	killed 1 _F.00_ 
+	killed 1 _mage_ 
+	say 1012 
+	change repute with _fakename_ by -20 
+
+variable _queston_
+_1stparton_ task:
+	change repute with _questgiver_ by -15 
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_ 
+	clear _qgclicked_ _clearclick_ 
+
+_week_ task:
+	place foe _battlemage_ at _mondung_ 
+
+_plot_ task:
+	place foe _mage_ at _mondung_ 
+
+_time_ task:
+	place foe _F.02_ at _mondung_ 
+
+_vend_ task:
+	place foe _F.00_ at _mondung_ 
+
+_dummy_ task:
+	injured _mage_ 
+	injured _battlemage_ 
+	injured _F.00_ 
+	injured _F.02_ 
+	say 1020 

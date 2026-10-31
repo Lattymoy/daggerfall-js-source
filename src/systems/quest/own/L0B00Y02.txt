@@ -1,0 +1,162 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B00Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 0
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 16
+Quest: L0B00Y02
+DisplayName: Disagreeable Competition
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A rival band of assassins is taking
+<ce> root in %reg, and it must be cut
+<ce> down before it grows. Kill their
+<ce> assassin, then the one who hired
+<ce> them. Can you spare the time?
+<--->
+<ce> Since the Second Era, the Dark
+<ce> Brotherhood has been Tamriel's only
+<ce> guild of assassins. A freelancer has
+<ce> mocked us long enough, and =assassin_'s
+<ce> luck is over. Teach %g2 a final lesson,
+<ce> then %g3 employer. Will you?
+
+RefuseQuest:  [1001]
+<ce> No? How strange. And how troubling.
+
+AcceptQuest:  [1002]
+<ce> Good. =assassin_ has followed %g3
+<ce> target into ___mondung_. Kill the
+<ce> freelancer there. If you find a
+<ce> clue to the employer, kill that one
+<ce> too. Both would please me, but one
+<ce> will do. You have =queston_ days.
+
+QuestComplete:  [1004]
+<ce> Excellent, %pct. =assassin_'s death
+<ce> would have been enough. Now =boss_'s
+<ce> friends will learn how the Dark
+<ce> Brotherhood treats amateur rivals.
+
+RumorsDuringQuest:  [1005]
+=assassin_ has worked freelance in %reg for years now.
+<--->
+=assassin_ is not the best in the trade,
+but %g makes up for it with zeal.
+
+RumorsPostfailure:  [1006]
+=assassin_ shows you can work
+outside the Brotherhood and live.
+<--->
+The Brotherhood cannot stop every
+freelancer in Tamriel, it seems.
+
+RumorsPostsuccess:  [1007]
+=boss_ thought %g could save some
+gold by hiring =assassin_. Fool.
+<--->
+Hire anyone but the Brotherhood
+and you pay for it. Ask =boss_.
+
+QuestorPostsuccess:  [1008]
+And how is the one who killed
+that rogue _assassin_?
+
+QuestorPostfailure:  [1009]
+<ce> You are the useless thug who
+<ce> could not kill a bungler like
+<ce> =assassin_. Do not waste my time.
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___qgiver_, _qgiver_ sent me after =assassin_, a
+ rival assassin. %g is finishing a contract in
+ ___mondung_. Should I learn who the employer is, that
+ one dies too. All of it must be done in =queston_ days.
+
+Message:  1011
+Once %n is dead, come to
+___stronghold_ in the wilds
+of %reg for your pay.
+ 
+ 
+ =boss_
+
+Message:  1012
+%qdt:
+ =assassin_ carried a note. It names
+ %g3 employer, =boss_, who waits at
+ %g3 stronghold, ___stronghold_.
+
+Message:  1013
+<ce> =assassin_ is dead. The
+<ce> Brotherhood will be pleased.
+
+Message:  1014
+<ce> =boss_ has followed %g3 hireling into
+<ce> death. The Brotherhood will be pleased.
+
+Message:  1015
+<ce> We would rather the employer had died
+<ce> too. Still, =assassin_ competes with
+<ce> us no longer, and that is enough.
+
+
+QBN:
+Item _letter_ letter used 1011
+
+Person _qgiver_ face 110 group Questor
+
+Place _mondung_ remote dungeon
+Place _stronghold_ remote dungeon2
+
+Clock _queston_ 00:00 0 flag 17 range 0 5
+
+Foe _assassin_ is Assassin
+Foe _boss_ is Knight
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	give item _letter_ to _assassin_ 
+	_letter_ used do _S.05_ 
+	place foe _boss_ at _stronghold_ 
+	place foe _assassin_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+variable _reward_
+_S.03_ task:
+	killed 1 _assassin_ 
+	say 1013 
+
+_S.04_ task:
+	killed 1 _boss_ 
+	say 1014 
+
+_S.05_ task:
+	reveal _stronghold_ readmap
+	log 1012 step 1 
+
+_S.06_ task:
+	when _S.03_ and not _S.04_ and _qgclicked_ 
+	say 1015 
+
+_S.07_ task:
+	when _S.03_ and _S.04_ and _qgclicked_ 
+	give pc nothing 
+	end quest 
+
+_S.08_ task:
+	when not _S.03_ and not _S.04_ and _qgclicked_ 
+	clear _qgclicked_ _S.08_

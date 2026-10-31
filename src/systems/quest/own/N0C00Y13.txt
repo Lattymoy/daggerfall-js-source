@@ -1,0 +1,213 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0C00Y13.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 13
+Messages: 46
+Quest: N0C00Y13
+DisplayName: An Ancient Scroll
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Hmph. Not a member. Still, I have a job
+<ce> the guild must not hear about. Do it
+<ce> for free, and I will tell people you
+<ce> are a %ra worth knowing. Agreed, %pcf?
+
+RefuseQuest:  [1001]
+<ce> Go away. You are tiresome.
+<--->
+<ce> Ungrateful.
+
+AcceptQuest:  [1002]
+<ce> I am _questgiver_. An ancient text is
+<ce> said to lie hidden in ___dungeon_.
+<ce> Have it in my hands within
+<ce> =traveltime_ days, and we are square.
+
+QuestComplete:  [1004]
+<ce> Excellent. I did warn you not to read it aloud,
+<ce> did I not? Say "vethra" with a hard v and you
+<ce> may lose a finger. Thank you, %pcn. Keep this
+<ce> up and the guild may ask you to join.
+
+RumorsDuringQuest:  [1005]
+My knee has ached all week. That means
+rain, and my knee is never wrong.
+<--->
+A man spent the whole morning
+telling me about his cousin's goats.
+<--->
+Nothing ever happens around here, and I like it that way.
+<--->
+Either %cn gets colder every
+winter or I get older. Maybe both.
+<--->
+The bread at market was stale again.
+That is three times this month.
+<--->
+My sister went two provinces away to see a
+healer. She writes that the food is awful.
+<--->
+The lamplighter forgot our street again last night.
+<--->
+The square needs a fountain.
+Something big, with a horse on it.
+<--->
+Young people and their spells. %oth,
+what was wrong with a good lamp?
+<--->
+I dreamed I was a fish last night. A very worried fish.
+<--->
+Want to hear something funny? %jok
+<--->
+%jok That one always gets a laugh at the tavern.
+<--->
+%jok I never did understand that one.
+<--->
+Say what you like about the laws of
+%reg. At least somebody wrote them down.
+
+RumorsPostfailure:  [1006]
+My knee has ached all week. That means
+rain, and my knee is never wrong.
+<--->
+A man spent the whole morning
+telling me about his cousin's goats.
+<--->
+Nothing ever happens around here, and I like it that way.
+<--->
+Either %cn gets colder every
+winter or I get older. Maybe both.
+<--->
+The bread at market was stale again.
+That is three times this month.
+<--->
+My sister went two provinces away to see a
+healer. She writes that the food is awful.
+<--->
+The lamplighter forgot our street again last night.
+<--->
+The square needs a fountain.
+Something big, with a horse on it.
+<--->
+Young people and their spells. %oth,
+what was wrong with a good lamp?
+<--->
+I dreamed I was a fish last night. A very worried fish.
+<--->
+Want to hear something funny? %jok
+<--->
+%jok That one always gets a laugh at the tavern.
+<--->
+%jok I never did understand that one.
+<--->
+Say what you like about the laws of
+%reg. At least somebody wrote them down.
+
+RumorsPostsuccess:  [1007]
+My knee has ached all week. That means
+rain, and my knee is never wrong.
+<--->
+A man spent the whole morning
+telling me about his cousin's goats.
+<--->
+Nothing ever happens around here, and I like it that way.
+<--->
+Either %cn gets colder every
+winter or I get older. Maybe both.
+<--->
+The bread at market was stale again.
+That is three times this month.
+<--->
+My sister went two provinces away to see a
+healer. She writes that the food is awful.
+<--->
+The lamplighter forgot our street again last night.
+<--->
+The square needs a fountain.
+Something big, with a horse on it.
+<--->
+Young people and their spells. %oth,
+what was wrong with a good lamp?
+<--->
+I dreamed I was a fish last night. A very worried fish.
+<--->
+Want to hear something funny? %jok
+<--->
+%jok That one always gets a laugh at the tavern.
+<--->
+%jok I never did understand that one.
+<--->
+Say what you like about the laws of
+%reg. At least somebody wrote them down.
+
+QuestorPostsuccess:  [1008]
+Ah, %pcf. Have all your fingers?
+Good. You did not read it, then.
+
+QuestorPostfailure:  [1009]
+<ce> One old scroll. That was the whole
+<ce> job, and you came back without it.
+<ce> I see no reason to keep talking.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ at the Mages Guild in
+ ___questgiver_ wants an ancient
+ text from ___dungeon_, and I am to
+ bring it to %g2 within =traveltime_
+ days. The guild is not to know.
+
+Message:  1020
+Ulmar vethra n' oskai. Thul
+ vethra osk ka. Ossin ulmar ne'
+ vethra, essath dun qiral. Morva
+ qel n' vethra. Ulmar sethi ka.
+
+Message:  1040
+<ce> This old parchment must be
+<ce> what _questgiver_ wants.
+
+QuestTimeLapse:  [1045]
+<ce> You speak the last word, and an icy wind
+<ce> nearly tears the page from your hands.
+
+
+QBN:
+Item _ingredient_ letter used 1020
+
+Person _questgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _atronach_ is Ice_atronach
+
+--	Quest start-up:
+	place item _ingredient_ at _dungeon_ 
+	start timer _traveltime_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	toting _ingredient_ and _questgiver_ clicked 
+	give pc nothing 
+	end quest 
+
+_S.02_ task:
+	clicked item _ingredient_ 
+	_ingredient_ used do _S.03_ 
+	--moved "saying 1045" from used do, not a valid argument, to S.03.
+	say 1040 
+
+_S.03_ task:
+	say 1045
+	create foe _atronach_ every 1 minutes 1 times with 100% success

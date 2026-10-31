@@ -317,8 +317,8 @@ function diAfterLoad(name, who, msg, roll) {
 }
 
 test('QA3 C2: %di with nothing referenced reads a remote contact\'s home - V0C00Y00\'s "If you go %di of here in __contact_" and P0B01L02\'s rumor name the way; a questor is never read (they are where the player is) (mutants: the dialog place, the questor test)', () => {
-  assert.match(diAfterLoad('V0C00Y00', 'contact', 1012, 0.99), /^If you go northeast of here in The Wily Fox/);
-  assert.match(diAfterLoad('P0B01L02', 'vampire', 1010, 0), /is northeast of here in The Wily Fox/);
+  assert.match(diAfterLoad('V0C00Y00', 'contact', 1012, 0.99), /^Go northeast to The Wily Fox/);   // PIN MOVED (OWN-WORDS2): DFU's "If you go %di of here in", now our words
+  assert.match(diAfterLoad('P0B01L02', 'vampire', 1010, 0), /lodges northeast of here, at The Wily Fox/);   // PIN MOVED (OWN-WORDS2): DFU's "is %di of here in", now our words
   const sited = (locationName) => ({ scope: 'remote', siteDetails: { locationName, buildingKey: 0 } });
   const q = {
     uid: 1, lastPlaceReferenced: null,

@@ -1,0 +1,112 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B50Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 50
+-- QuestId: 11
+Messages: 12
+Quest: B0B50Y11
+DisplayName: The Exorcism
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _qgiver_. A local noble,
+<ce> _nobleman_, just bought an old empty
+<ce> estate and only then learned it is
+<ce> haunted. %G needs the ghost driven
+<ce> out. Will you take this quest?
+
+RefuseQuest:  [1001]
+<ce> Ghosts are the temple's
+<ce> business, really. Perhaps I
+<ce> will hand this one to them.
+
+AcceptQuest:  [1002]
+<ce> _nobleman_ wants the builders in
+<ce> within =2dung_ days. %G holds
+<ce> the deed to ___dungeon_, and
+<ce> that is where the spirit walks.
+
+QuestComplete:  [1004]
+<ce> _nobleman_ will be delighted.
+<ce> %G even talks of raising a
+<ce> fountain in your name.
+
+RumorsDuringQuest:  [1005]
+_nobleman_ took the deed to ___dungeon_ without
+asking why it was cheap. Mad, or a fool.
+
+RumorsPostfailure:  [1006]
+_nobleman_ begged the %kno to clear the
+ghost from ___dungeon_. They could not.
+
+RumorsPostsuccess:  [1007]
+Thanks to the %kno, ___dungeon_ could
+be a warehouse now, or a summer house.
+
+QuestorPostsuccess:  [1008]
+Hello, %pcf. The order owes you for
+_nobleman_. Name what you need.
+
+QuestorPostfailure:  [1009]
+When you let _nobleman_ down, you let
+the %kno down. That stings, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ==qgiver_ in
+ ___qgiver_ begged me to
+ drive a ghost out of
+ ___dungeon_. The rebuilding
+ starts in =2dung_ days.
+
+Message:  1011
+<ce> The ghost is at rest. _nobleman_
+<ce> can rebuild ___dungeon_ now.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _nobleman_ face 182 factiontype Province remote
+Person _local_ face 77 group Resident2 male local
+
+Place _dungeon_ remote dungeon11
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _ghost_ is Ghost
+Foe _wraith_ is Wraith
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	pick one of _S.04_ _S.05_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _wraith_ saying 1011 
+	killed 1 _ghost_ saying 1011 
+
+_S.02_ task:
+	clicked npc _qgiver_ 
+	give pc nothing 
+	change repute with _local_ by +4 
+	change repute with _nobleman_ by +10 
+	end quest 
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_ 
+	clear _S.02_ _clearclick_ 
+
+_S.04_ task:
+	place foe _wraith_ at _dungeon_ 
+
+_S.05_ task:
+	place foe _ghost_ at _dungeon_

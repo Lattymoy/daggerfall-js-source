@@ -1,0 +1,144 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0B10Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 10
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 11
+Quest: O0B10Y05
+DisplayName: Valuable Artwork
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Well met, %pcf! It is me,
+<ce> _qgiver_. Remember? Today there
+<ce> is a guild job that suits you
+<ce> down to the ground. Interested?
+
+RefuseQuest:  [1001]
+<ce> Another time, then.
+
+AcceptQuest:  [1002]
+<ce> A rich collector just bought a painting
+<ce> worth a good deal. It is hidden in
+<ce> __townhouse_, at _townhouse_. The guild
+<ce> pays _gold_ gold if I have it in
+<ce> =traveltime_ days.
+
+QuestComplete:  [1004]
+<ce> Hardly a scratch on it. About the
+<ce> guardian, I am sorry. We had no idea the
+<ce> owner had hired one. Here is your pay.
+
+RumorsDuringQuest:  [1005]
+_townhouse_ has more paintings
+than most galleries.
+
+RumorsPostfailure:  [1006]
+I had a cough all last week. It went away on its own.
+<--->
+My neighbor talked at me about rain
+for three hours. I never said a word.
+<--->
+The weather is about what you would expect, really.
+<--->
+%cn is cold for the season, if you ask me.
+<--->
+Warmer today than this day last
+year. Or colder. I forget which.
+<--->
+My aunt went two provinces away
+to see a healer about her feet.
+<--->
+The evenings get dark earlier and
+earlier. Nobody can tell me why.
+<--->
+This square needs a statue. Somebody on a horse, maybe.
+<--->
+Children and their magic these
+days. %oth, what comes next?
+<--->
+I dreamed about fish last night. Big ones, with opinions.
+<--->
+Here is one I heard at the tavern. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I never understood that one. Do you?
+<--->
+The courts in %reg are fair,
+mostly. It depends on the judge.
+
+RumorsPostsuccess:  [1007]
+_townhouse_ was robbed, guardian and all.
+<--->
+Whoever robbed _townhouse_ knew the work well.
+
+QuestorPostsuccess:  [1008]
+That painting sold for a fine price,
+%pcf. The buyers did not ask questions.
+
+QuestorPostfailure:  [1009]
+<ce> I see you. I do not see the painting.
+<ce> Why did I bother explaining the job?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ wants a painting stolen.
+ It hangs in __townhouse_, at
+ _townhouse_. Within =traveltime_
+ days it must reach the Thieves
+ Guild in ___qgiver_.
+
+
+QBN:
+Item _painting_ painting
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _townhouse_ remote house4
+--reverted to house4 as original
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Barbarian
+Foe _F.01_ is Giant_bat
+Foe _F.02_ is Spider
+Foe _F.03_ is Sabretooth_tiger
+
+--	Quest start-up:
+	place item _painting_ at _townhouse_ 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pc at _townhouse_ set _S.01_ 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	start task _S.01a_
+
+_S.01a_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_ 
+--set this apart to a permanent task, previous setup would randomly pick again upon re-entering the house
+
+_questdone_ task:
+	toting _painting_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success 
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success 
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success 
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success

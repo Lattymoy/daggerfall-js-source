@@ -13,6 +13,7 @@ import { PREF_DEFAULTS, setPref } from '../src/systems/uiPrefs.js';
 import { mountEnhancedInventory } from '../src/ui/enhanced/enhancedInventory.js';
 import { _resetForTests } from '../src/systems/settings/settings.js';
 import { withDom } from './invdrag.mjs';
+import { QUEST_FILES } from './qlSources.mjs';   // PIN MOVED (OWN-WORDS2): the pack as the game reads it - our words where we have them
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const rd = (p) => readFileSync(join(ROOT, p), 'utf8').replace(/^﻿/, '');
@@ -33,7 +34,7 @@ export function examination() {
   const popups = [], given = [];
   const m = new QuestMachine({
     nowSeconds: () => now.s, isPlayerInTown: () => true,
-    getQuestSourceLines: (n) => rd(`vendor/dfu-quests/Quests/${n}.txt`).split(/\r?\n/).filter((l) => !/^\s*(place npc|place item|create npc at)/.test(l)),
+    getQuestSourceLines: (n) => readFileSync(QUEST_FILES.get(n.toUpperCase()).path, 'utf8').replace(/^﻿/, '').split(/\r?\n/).filter((l) => !/^\s*(place npc|place item|create npc at)/.test(l)),
     showPopup: (_q, tokens) => popups.push(words(tokens)),
     giveItemToPlayer: (it) => given.push(it),
   });
@@ -45,7 +46,7 @@ export function examination() {
   return { m, q, robes, note, popups, given, step, getQuest: (uid) => m.getQuest(uid) };
 }
 /** Whether the robes' note reached the player: message 1018 said and `_note_` given. */
-export const noteCame = (e) => e.popups.some((p) => /As you pick up the/.test(p) && /note is tucked/.test(p)) && e.given.includes(e.note);
+export const noteCame = (e) => e.popups.some((p) => /Paper crackles as you lift the/.test(p) && /hidden a note inside/.test(p)) && e.given.includes(e.note);   // PIN MOVED (OWN-WORDS2): O0A0AL00's 1018 in our words
 
 /** The feature with its switch on and its state clean, restored after (test/systems/quickloot.test.js's own). */
 export function withQuickLoot(fn) {

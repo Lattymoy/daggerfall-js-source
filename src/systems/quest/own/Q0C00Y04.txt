@@ -1,0 +1,163 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C00Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 4
+Messages: 18
+Quest: Q0C00Y04
+DisplayName: A Special Mixture
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The Mages Guild has asked ==qgiver_
+<ce> for a rare and holy potion, much
+<ce> sought in %reg. They will pay
+<ce> _gold_ gold, and the gold is yours.
+<ce> We want only the guild's good will.
+<ce> The road will be hard. Interested?
+
+RefuseQuest:  [1001]
+<ce> Then I will find another
+<ce> courier. No hard feelings.
+
+AcceptQuest:  [1002]
+<ce> Thank you, %pcf. Take the potion. By
+<ce> day you are safe, since those who want
+<ce> it travel only at night. The Mages
+<ce> Guild in ___mguild_ expects it within
+<ce> =queston_ days. Ask for _mage_.
+
+QuestComplete:  [1004]
+<ce> So this is the formula. Here
+<ce> is your _gold_ gold, and we
+<ce> got the better of the deal.
+
+RumorsDuringQuest:  [1005]
+The Mages Guild and ==qgiver_ at peace? Strange days.
+<--->
+Mages and witches getting along. Give it a month.
+
+RumorsPostfailure:  [1006]
+==qgiver_ broke its word to the Mages Guild.
+<--->
+The Mages Guild wants nothing more to do with ==qgiver_.
+
+RumorsPostsuccess:  [1007]
+The mages say the potion from ==qgiver_ can cure vampirism.
+<--->
+The mages say the potion from
+==qgiver_ can cure lycanthropy.
+
+QuestorPostsuccess:  [1008]
+Word came from the Mages Guild. They have their
+potion, and we have their thanks. So do you, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> We worked hard to win over the Mages
+<ce> Guild, and you threw it away by losing
+<ce> that potion, %pcf. Get out of my sight.
+
+QuestLogEntry:  [1010]
+%qdt:
+ ==qgiver_ sent me with a strange
+ potion to the Mages Guild in
+ ___mguild_. Those who want it
+ come out at night. A mage named
+ _mage_ will pay me _gold_ gold
+ for it, within =queston_ days.
+
+Message:  1012
+<ce> Something pale steps out of the
+<ce> dark. "Give me the potion," it
+<ce> whispers, "and I may let you live."
+<--->
+<ce> "I can smell it on you," hisses
+<ce> a voice. "The potion. Now."
+<--->
+<ce> Someone is screaming for the potion,
+<ce> over and over, like a starving thing.
+
+Message:  1013
+<ce> A wolf howls nearby.
+<--->
+<ce> Something growls in the
+<ce> dark, full of longing.
+<--->
+<ce> Far off, a wolf howls. It sounds
+<ce> less hungry than heartbroken.
+
+Message:  1014
+<ce> A boar squeals somewhere close.
+<--->
+<ce> You hear a boar grunting,
+<ce> low and desperate.
+<--->
+<ce> An angry boar screams, and
+<ce> the quiet night breaks apart.
+
+Message:  1015
+<ce> A strange feeling washes over you.
+
+Message:  1016
+This message is never shown.
+
+Message:  1017
+<ce> What is this? Someone has tampered
+<ce> with the formula! You could not do
+<ce> even this one small thing.
+
+
+QBN:
+Item _potion_ Pure_water
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _mage_ face 105 faction The_Mages_Guild remote
+
+Place _mguild_ remote magery
+
+Clock _queston_ 00:00 0 flag 1 range 0 2
+
+Foe _vampire_ is Vampire
+Foe _werewolf_ is Werewolf
+Foe _wereboar_ is Wereboar
+
+--	Quest start-up:
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _potion_ 
+	_potion_ used do _S.03_ 
+	place npc _mage_ at _mguild_ 
+
+_queston_ task:
+	make _potion_ permanent 
+	end quest 
+
+_S.01_ task:
+	daily from 06:40 to 17:20 
+
+until _S.01_ performed:
+	create foe _werewolf_ every 19 minutes 12 times with 50% success msg 1013 
+	create foe _wereboar_ every 11 minutes 10 times with 40% success msg 1014 
+	create foe _vampire_ every 15 minutes 7 times with 70% success msg 1012 
+
+_S.02_ task:
+	toting _potion_ and _mage_ clicked 
+
+_S.03_ task:
+	say 1015 
+	cure vampirism 
+	cure lycanthropy 
+
+_S.04_ task:
+	when _S.02_ and _S.03_ 
+	say 1017 
+	end quest 
+
+_reward_ task:
+	when _S.02_ and not _S.03_ 
+	give pc _gold_ 
+	end quest

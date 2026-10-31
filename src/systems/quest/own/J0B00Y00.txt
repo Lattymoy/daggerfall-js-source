@@ -1,0 +1,136 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\J0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Zenithar
+-- Repute: 0
+-- QuestId: 0
+Messages: 31
+Quest: J0B00Y00
+DisplayName: The Bounty
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> If you want work, I have an ugly bit of
+<ce> business. A thief needs punishing, and the
+<ce> job pays _reward_ gold. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> Pity. Someone else will want the gold.
+
+AcceptQuest:  [1002]
+<ce> We rarely take the law into our own
+<ce> hands. This thief, though, robbed
+<ce> one of our caravans and now charges
+<ce> us a toll on the road. The nerve!
+<ce> Find the thug in ___mondung_, and
+<ce> be back within =1stparton_ days.
+
+QuestFail:  [1003]
+<ce> Why are you here, %pcf? That
+<ce> crook still robs our wagons, and
+<ce> =1stparton_ days is all you get.
+
+QuestComplete:  [1004]
+<ce> Fine work, %pcf. That should make
+<ce> other highwaymen think twice. Here is
+<ce> your _reward_ gold, with our thanks.
+
+RumorsDuringQuest:  [1005]
+That footpad is bleeding the merchants dry, all alone.
+<--->
+Everyone says that highwayman is a common thief.
+I hear the crook fights like a trained blade.
+
+RumorsPostfailure:  [1006]
+The robber found a new hideout, and the roads are no safer.
+<--->
+Why can the guards not catch one
+highwayman? It cannot be that hard.
+
+RumorsPostsuccess:  [1007]
+The merchants are thrilled. Somebody finally got that thief.
+<--->
+One robber is dead. There are a hundred more
+out there, so I still travel with a sword.
+
+QuestorPostsuccess:  [1008]
+Always glad to talk, %pcf. I have
+not forgotten those highwaymen.
+
+QuestorPostfailure:  [1009]
+The Resolution keeps losing gold
+on the roads. I am not amused.
+
+Message:  1020
+<ce> You smell of the Resolution.
+<ce> Bounty hunter, is it? Then die!
+
+Message:  1030
+%qdt:
+ The Resolution of Zenithar wants a thief dead
+ for robbing its caravans. The crook hides in
+ ___mondung_. I must kill the thief and return
+ to ___questgiver_ within =1stparton_ days.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _monster1_ is Nightblade
+Foe _monster2_ is Assassin
+Foe _monster3_ is Thief
+Foe _monster4_ is Spellsword
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1030 step 0 
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+_mondead_ task:
+	killed 1 _monster4_ 
+	killed 1 _monster2_ 
+	killed 1 _monster1_ 
+	killed 1 _monster3_ 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_
+	say 1003 
+	clear _qgclicked_ _clearclick_ 
+
+_S.05_ task:
+	place foe _monster1_ at _mondung_ 
+
+_S.06_ task:
+	place foe _monster2_ at _mondung_ 
+
+_S.07_ task:
+	place foe _monster3_ at _mondung_ 
+
+_S.08_ task:
+	place foe _monster4_ at _mondung_ 
+
+_S.09_ task:
+	injured _monster4_ saying 1020 
+	injured _monster3_ saying 1020 
+	injured _monster2_ saying 1020 
+	injured _monster1_ saying 1020

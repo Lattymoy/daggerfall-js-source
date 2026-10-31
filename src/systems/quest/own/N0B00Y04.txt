@@ -1,0 +1,173 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B00Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 4
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 46
+Quest: N0B00Y04
+DisplayName: Retrieve an Ingredient
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A rare ingredient sits in a dungeon
+<ce> not far from here, and the guild wants
+<ce> it. Bring it back and the finder's fee
+<ce> is _gold_ gold. Will you go?
+<--->
+<ce> One of our cleverer students will
+<ce> not stop talking about _ingredient_.
+<ce> We never needed it before, and now
+<ce> nobody can work for the noise. Would
+<ce> you go and fetch some?
+
+RefuseQuest:  [1001]
+<ce> I see. Perhaps the next member through
+<ce> that door will be of some use.
+
+AcceptQuest:  [1002]
+<ce> Good, %pcf. You want _ingredient_, and
+<ce> you will find it in ___dungeon_. Have
+<ce> it back here within =traveltime_ days.
+
+QuestComplete:  [1004]
+<ce> It will do, I suppose, though it looks
+<ce> as if it spent a month in somebody's
+<ce> pocket. Here is your fee, %pcf.
+
+RumorsDuringQuest:  [1005]
+My knee has ached all week. That means
+rain, and my knee is never wrong.
+<--->
+A man spent the whole morning
+telling me about his cousin's goats.
+<--->
+Nothing ever happens around here, and I like it that way.
+<--->
+Either %cn gets colder every
+winter or I get older. Maybe both.
+<--->
+The bread at market was stale again.
+That is three times this month.
+<--->
+My sister went two provinces away to see a
+healer. She writes that the food is awful.
+<--->
+The lamplighter forgot our street again last night.
+<--->
+The square needs a fountain.
+Something big, with a horse on it.
+<--->
+Young people and their spells. %oth,
+what was wrong with a good lamp?
+<--->
+I dreamed I was a fish last night. A very worried fish.
+<--->
+Want to hear something funny? %jok
+<--->
+%jok That one always gets a laugh at the tavern.
+<--->
+%jok I never did understand that one.
+<--->
+Say what you like about the laws of
+%reg. At least somebody wrote them down.
+
+RumorsPostfailure:  [1006]
+_qgiver_ says the guild takes in anyone
+now, and none of them can find anything.
+
+RumorsPostsuccess:  [1007]
+My knee has ached all week. That means
+rain, and my knee is never wrong.
+<--->
+A man spent the whole morning
+telling me about his cousin's goats.
+<--->
+Nothing ever happens around here, and I like it that way.
+<--->
+Either %cn gets colder every
+winter or I get older. Maybe both.
+<--->
+The bread at market was stale again.
+That is three times this month.
+<--->
+My sister went two provinces away to see a
+healer. She writes that the food is awful.
+<--->
+The lamplighter forgot our street again last night.
+<--->
+The square needs a fountain.
+Something big, with a horse on it.
+<--->
+Young people and their spells. %oth,
+what was wrong with a good lamp?
+<--->
+I dreamed I was a fish last night. A very worried fish.
+<--->
+Want to hear something funny? %jok
+<--->
+%jok That one always gets a laugh at the tavern.
+<--->
+%jok I never did understand that one.
+<--->
+Say what you like about the laws of
+%reg. At least somebody wrote them down.
+
+QuestorPostsuccess:  [1008]
+Ah, the one who found the _ingredient_. Come in, come in.
+
+QuestorPostfailure:  [1009]
+<ce> We needed that _ingredient_. The next
+<ce> job that matters goes to somebody else.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Mages Guild's _qgiver_ in
+ ___qgiver_ wants a sample of
+ _ingredient_ from ___dungeon_,
+ and I am to give it to %g2
+ within =traveltime_ days.
+
+Message:  1040
+<ce> This must be the _ingredient_
+<ce> that _qgiver_ asked for.
+
+QuestTimeLapse:  [1045]
+<ce> Today was the last day to bring
+<ce> _qgiver_ the _ingredient_. %G
+<ce> will not be pleased.
+
+
+QBN:
+Item _ingredient_ organs
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	place item _ingredient_ at _dungeon_ 
+	start timer _traveltime_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+
+_traveltime_ task:
+	make _ingredient_ permanent
+                say 1045 
+	end quest 
+
+_S.01_ task:
+	clicked item _ingredient_ 
+	say 1040 
+
+_questdone_ task:
+	toting _ingredient_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest

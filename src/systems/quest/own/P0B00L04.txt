@@ -1,0 +1,221 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0B00L04.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 0
+-- QuestId: 4
+Messages: 17
+Quest: P0B00L04
+DisplayName: An Old Enemy
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Quest text 1000 should
+never be shown.
+
+RefuseQuest:  [1001]
+Quest text 1001 should
+never be shown.
+
+AcceptQuest:  [1002]
+Quest text 1002 should
+never be shown.
+
+QuestComplete:  [1004]
+<ce> Is that sorrow on your face, %pcf? I
+<ce> understand. I have killed my own
+<ce> offspring more than once. Rise above
+<ce> this soft mortal feeling. Chill your
+<ce> blood if you would truly be of %vam.
+<ce> Tonight you came closer.
+
+RumorsDuringQuest:  [1005]
+Somebody dug up the grave of =vampire_. It is all torn open.
+<--->
+There are comings and goings at
+___mondung_ lately. Always at night.
+
+RumorsPostfailure:  [1006]
+I had a boil last week. It went away.
+<--->
+I spent three hours talking about the weather today.
+<--->
+The weather is about what you
+would expect this time of year.
+<--->
+A bit cold in %cn for the season, is it not?
+<--->
+Warmer today than this day last year, I am sure of it.
+<--->
+My great aunt is off to see a healer in another province.
+<--->
+Funny how early it gets dark around here.
+<--->
+This town needs a statue of a war hero.
+<--->
+Children and their magic these
+days. %oth, I do not understand it.
+<--->
+I had the strangest dream last night.
+<--->
+Here is a good joke. %jok
+<--->
+%jok Now that is a joke.
+<--->
+%jok What does that mean, do you think?
+<--->
+The law in %reg has its good sides and its bad.
+
+RumorsPostsuccess:  [1007]
+I had a boil last week. It went away.
+<--->
+I spent three hours talking about the weather today.
+<--->
+The weather is about what you
+would expect this time of year.
+<--->
+A bit cold in %cn for the season, is it not?
+<--->
+Warmer today than this day last year, I am sure of it.
+<--->
+My great aunt is off to see a healer in another province.
+<--->
+Funny how early it gets dark around here.
+<--->
+This town needs a statue of a war hero.
+<--->
+Children and their magic these
+days. %oth, I do not understand it.
+<--->
+I had the strangest dream last night.
+<--->
+Here is a good joke. %jok
+<--->
+%jok Now that is a joke.
+<--->
+%jok What does that mean, do you think?
+<--->
+The law in %reg has its good sides and its bad.
+
+QuestorPostsuccess:  [1008]
+Quest text 1008 should
+never be shown.
+
+QuestorPostfailure:  [1009]
+Quest text 1009 should
+never be shown.
+
+QuestLogEntry:  [1010]
+                     __vamp_
+                      ___vamp_
+ 
+ %pcn,
+ 
+      You may recall a warrior you
+ once drank from, =vampire_. Thin
+ blood, but a memorable meal. Well, %g
+ has risen from the grave, and %vam
+ are not pleased. Come and see me.
+ 
+                    Cold as ever,
+ 
+                    _vamp_
+
+Message:  1011
+<ce> A pale boy gives you a letter
+<ce> and is gone, quick as a rat.
+
+Message:  1012
+%qdt:
+ _vamp_ of %vam has written,
+ asking me to come at once
+ to __vamp_ in ___vamp_.
+
+Message:  1013
+<ce> Blood of my blood, =vampire_ has left
+<ce> the grave. You fed on %g2 once. We
+<ce> watched %g2, as we watched you, and %g
+<ce> has failed. Each drop only sharpens
+<ce> %g3 thirst. Kill your child in
+<ce> ___mondung_ within =queston_ nights.
+
+Message:  1014
+%qdt:
+ _vamp_ sends me to ___mondung_
+ to kill =vampire_, a vampire
+ of my own making. Within
+ =queston_ nights I must do it
+ and report back in ___vamp_.
+
+Message:  1015
+<ce> Is that how you discipline
+<ce> your children, parent? Harder!
+<--->
+<ce> I know you. Yours was the last
+<ce> face I saw, red with my blood.
+<ce> Come, maker. Let us embrace.
+<--->
+<ce> You are the face in my nightmares, %pcn.
+<ce> You cursed me to this life, did you not?
+
+Message:  1016
+<ce> =vampire_ dies a true death at last.
+<ce> Go back and tell _vamp_ it is done.
+
+
+QBN:
+Item _letter_ letter used 1010
+
+Person _vamp_ factiontype Vampire_Clan local
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+Clock _S.05_ 00:00 0 flag 17 range 1 4
+
+Foe _vampire_ is Vampire
+
+--	Quest start-up:
+	dialog link for location _mondung_ person _vamp_ 
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.08_ 
+	give pc _letter_ notify 1011 
+	place foe _vampire_ at _mondung_ 
+
+_vampclicked_ task:
+	clicked npc _vamp_ 
+
+_S.07_ task:
+	when _vampclicked_ 
+	reveal _mondung_ 
+	log 1014 step 1 
+	say 1013 
+
+_S.01_ task:
+	killed 1 _vampire_ 
+	say 1016 
+
+until _S.01_ performed:
+	clear _vampclicked_ 
+
+_queston_ task:
+	end quest 
+
+_S.03_ task:
+	injured _vampire_ 
+	say 1015 
+
+_reward_ task:
+	when _vampclicked_ and _S.01_ 
+	give pc nothing 
+	end quest 
+
+variable _S.05_
+_readletter_ task:
+	add dialog for person _vamp_ 
+	log 1012 step 0 
+
+_S.08_ task:
+	start timer _queston_

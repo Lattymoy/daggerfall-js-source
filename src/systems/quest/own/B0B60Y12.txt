@@ -1,0 +1,128 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B60Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 60
+-- QuestId: 12
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0B60Y12
+DisplayName: Eternal Rest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Here is a good one. _nobleman_ read
+<ce> of an old family curse, and now %g is
+<ce> frightened out of %g3 wits. %G wants
+<ce> %g3 great-great-great-grandmother
+<ce> destroyed, sure she walks among the
+<ce> undead. Interested, %pct?
+<--->
+<ce> It may be nothing but a walk through a
+<ce> tomb. _nobleman_ dreamed that %g3
+<ce> great-great-great-grandmother rose and
+<ce> would leave the family mound in =2dung_
+<ce> days, and now %g cannot sleep. Maybe
+<ce> nonsense. Will you look into it, %pct?
+
+RefuseQuest:  [1001]
+<ce> If you meet a knight who will
+<ce> take this job, send them my way.
+
+AcceptQuest:  [1002]
+<ce> The ancestor of _nobleman_ lies in
+<ce> ___dungeon_, a tomb built against
+<ce> grave robbers. Most likely she is
+<ce> only a corpse, so burn it on a proper
+<ce> pyre. Return within =2dung_ days, or
+<ce> _nobleman_ swears the curse wakes.
+
+QuestComplete:  [1004]
+<ce> Well, I never. The ancestor of
+<ce> _nobleman_ really had risen! You have
+<ce> spared the people here a world of grief.
+
+RumorsDuringQuest:  [1005]
+_nobleman_ jumps at shadows, but %g3
+great-grandmother was a strange old woman, they say.
+<--->
+That family of _nobleman_ is odd. Maybe
+%g3 great-grandmother really is a zombie.
+
+RumorsPostfailure:  [1006]
+The %kno looked into the tale of _nobleman_
+and called it a hoax, I suppose.
+
+RumorsPostsuccess:  [1007]
+The old grandmother of _nobleman_ was
+undead after all! Who would have guessed?
+
+QuestorPostsuccess:  [1008]
+You saved %reg from undead we never knew
+were there. Ask, and the order will help.
+
+QuestorPostfailure:  [1009]
+I know for a fact the story of
+_nobleman_ was true, you slug!
+<--->
+There was a real horror in ___dungeon_,
+and you left it there, you lazy hound!
+<--->
+The %kno shares the shame of what
+happened to _nobleman_, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ==qgiver_ in
+ ___qgiver_ wants me to burn
+ the corpse of an ancestor of
+ _nobleman_ in ___dungeon_.
+ If it has risen as one of
+ the undead, I must put it
+ down. I have =2dung_ days.
+
+Message:  1011
+<ce> The _monster_ is at rest, and
+<ce> _nobleman_ can stop fearing the curse.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _nobleman_ group Resident1 remote
+Person _local_ face 1 group Resident2 local
+
+Place _dungeon_ remote dungeon0
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Mummy
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	place foe _monster_ at _dungeon_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011 
+
+_S.02_ task:
+	clicked npc _qgiver_ 
+
+_success_ task:
+	when _S.02_ and _S.01_ 
+	give pc nothing 
+	change repute with _local_ by +4 
+	change repute with _nobleman_ by +10 
+	end quest 
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_ 
+	clear _S.02_ _clearclick_

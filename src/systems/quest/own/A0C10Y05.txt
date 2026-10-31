@@ -1,0 +1,177 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C10Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 10
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Quest: A0C10Y05
+DisplayName: The Matchmaker
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am promised to _betrothed_, but _ruler_
+<ce> wants _betrothed_ for other ends. My one
+<ce> hope is to bring %g2 to the temple and
+<ce> marry before _ruler_ can catch us. Will
+<ce> you guard me? I can pay _gold_ gold.
+<--->
+<ce> My darling _betrothed_ waits for me in
+<ce> __betrothedhome_, suffering under the
+<ce> cruel _ruler_. While _betrothed_ is a
+<ce> prisoner I have no rest, but _ruler_'s
+<ce> agents keep us apart. Will you come with
+<ce> me to __betrothedhome_ and guard me?
+
+RefuseQuest:  [1001]
+<ce> Then I must find another to guard my
+<ce> beloved _betrothed_ from _ruler_.
+
+AcceptQuest:  [1002]
+<ce> I will be grateful forever, %pcn.
+<ce> Quickly, now. We must free
+<ce> _betrothed_. They are holding %g2 at
+<ce> _betrothedhome_ in __betrothedhome_.
+
+QuestComplete:  [1004]
+<ce> %pcf, we owe you everything. The ceremony
+<ce> has begun, and _ruler_ cannot stop it
+<ce> now. Take the _gold_ gold, as promised.
+
+RumorsDuringQuest:  [1005]
+<ce> _ruler_ must be gathering a
+<ce> harem. I hear %g has sent %g3
+<ce> guards to bring in _betrothed_.
+
+RumorsPostfailure:  [1006]
+<ce> They say _betrothed_ has joined
+<ce> _ruler_'s harem. If you ask me,
+<ce> that is kidnapping by another name.
+
+RumorsPostsuccess:  [1007]
+<ce> _qgiver_ and _betrothed_ are
+<ce> married! Is that not wonderful news?
+
+QuestorPostsuccess:  [1008]
+<ce> _betrothed_ and I are grateful. Without
+<ce> you, %g would have had to marry _ruler_.
+
+QuestorPostfailure:  [1009]
+<ce> I have lost my _betrothed_ for
+<ce> good! %G was made to marry _ruler_.
+<ce> And now you want my help? Get out!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _betrothed_ is promised to
+ _qgiver_ of ___qgiver_, but
+ _ruler_ would kill _qgiver_ to
+ stop the wedding. I am to
+ escort %g2 to __betrothedhome_,
+ then to _temple_ in __temple_,
+ where they will marry.
+
+Message:  1011
+<ce> My love, _betrothed_! %pcn has sworn
+<ce> to protect us from _ruler_. Quick,
+<ce> %pcn, get us to _temple_ in __temple_.
+
+Message:  1012
+<ce> Our orders come from _ruler_. There
+<ce> will be no wedding. Let _betrothed_
+<ce> come quietly, and nobody bleeds.
+
+Message:  1013
+<ce> Well, _qgiver_, you hired a little
+<ce> runt to guard you? _ruler_ will not
+<ce> like that you fought back. Stand aside
+<ce> and give us _betrothed_. Resist, and
+<ce> it only gets worse for you.
+
+Message:  1014
+<ce> _qgiver_ whispers, "Yes! This is where
+<ce> _ruler_'s thugs keep my beloved. Hurry!"
+
+Message:  1015
+<ce> "%oth," cries _qgiver_, "it is _temple_!
+<ce> Once _priest_ marries us, _betrothed_
+<ce> will be safe from _ruler_ forever!"
+
+Message:  1020
+<ce> _qgiver_ turns from you in disgust.
+<ce> Nothing you say will reach %g2 now.
+<ce> "I will have to save _betrothed_
+<ce> myself. You let me down, %pcf."
+
+
+QBN:
+Item _gold_ gold
+
+Person _betrothed_ face 1 group Group_7.0 remote
+Person _qgiver_ group Questor
+Person _priest_ face 201 factiontype Temple remote
+Person _ruler_ factiontype Province remote
+
+Place _betrothedhome_ remote house2
+Place _temple_ remote temple
+
+Clock _traveltime_ 00:00 0 flag 1 range 0 5
+
+Foe _F.00_ is 3 Burglar
+Foe _F.01_ is 2 Warrior
+
+--	Quest start-up:
+	start timer _traveltime_ 
+	--this odd location marker has no use
+	log 1010 step 0 
+	pc at _temple_ set _S.03_ saying 1015 
+	pc at _betrothedhome_ set _S.02_ saying 1014 
+	hide npc _qgiver_ 
+	add _qgiver_ face 
+	place npc _betrothed_ at _betrothedhome_ 
+	place npc _priest_ at _temple_ 
+
+_traveltime_ task:
+	restore _qgiver_ 
+	say 1020 
+	drop _betrothed_ face 
+	drop _qgiver_ face 
+	end quest 
+
+_S.01_ task:
+	clicked npc _betrothed_ say 1011 
+	hide npc _betrothed_ 
+	add _betrothed_ face 
+
+_S.02_ task:
+	create foe _F.00_ every 1 minutes 1 times with 15% success 
+
+_S.03_ task:
+	create foe _F.01_ every 2 minutes 1 times with 50% success 
+
+_dummy_ task:
+	injured _F.01_ saying 1012 
+	injured _F.00_ saying 1013 
+
+_S.05_ task:
+	clicked npc _priest_
+
+_success_ task:
+    when _S.01_ and _S.05_
+	give pc _gold_ 
+	drop _qgiver_ face 
+	drop _betrothed_ face 
+	change repute with _ruler_ by -20 
+	place npc _qgiver_ at _temple_ 
+	place npc _betrothed_ at _temple_ 
+
+_clearclick_ task:
+	when not _S.01_ and _S.05_ 
+	clear _S.05_ _clearclick_ 
+
+_questdone_ task:
+	when _success_ and not _S.03_
+	restore _qgiver_ 
+	end quest 

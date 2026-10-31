@@ -1,0 +1,127 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\I0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Stendarr
+-- Repute: 0
+-- QuestId: 0
+Messages: 31
+Quest: I0B00Y00
+DisplayName: A Special Plant
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Our healer needs a rare plant,
+<ce> _item_, for the temple's potions. I
+<ce> cannot pay much, but bring us some
+<ce> and the Temple of Stendarr will give
+<ce> you its holy symbol. Will you help?
+
+RefuseQuest:  [1001]
+<ce> I hear that answer often. We have no
+<ce> piles of gold to tempt anyone. Still,
+<ce> I expected better of you, %pcf.
+
+AcceptQuest:  [1002]
+<ce> You have a kind heart, %pcf. Look for
+<ce> the _item_ in ___chemist_, at
+<ce> __chemist_. _chemist_, a =chemist_
+<ce> there, will give it to us freely if you
+<ce> arrive within =1stparton_ days. Please
+<ce> hurry. Many wounded wait for healing.
+
+QuestFail:  [1003]
+<ce> I am always glad to see you, %pcf, but
+<ce> the sick are waiting on that _item_.
+
+QuestComplete:  [1004]
+<ce> Is that the _item_, %pcf?
+<ce> Stendarr be thanked! Please take
+<ce> this symbol of our order. It is a
+<ce> humble gift, but given with love.
+
+RumorsDuringQuest:  [1005]
+The Temple of Stendarr helps anyone in
+need and asks nothing back. Rare, that.
+<--->
+My mother is very sick. The Temple of
+Stendarr's healer is her only hope.
+
+RumorsPostfailure:  [1006]
+My brother died waiting for the Temple of Stendarr's healer.
+<--->
+The temple healer never got the herbs in time, I hear.
+
+RumorsPostsuccess:  [1007]
+It was close at the Temple. More
+wounded came in than anyone had seen.
+<--->
+Stendarr was watching over that temple. No doubt of it.
+
+QuestorPostsuccess:  [1008]
+%pcf, you brought us the _item_ when it
+mattered. This door is always open to you.
+
+QuestorPostfailure:  [1009]
+Patience is a virtue, %pcf, and you
+are testing mine. Where is the _item_?
+<--->
+Go and tell the families why the _item_ never came.
+
+QuestLogEntry:  [1010]
+<ce> The temple sent you? Take the
+<ce> _item_, %pcf, and do not stop
+<ce> for anything on the way back.
+
+Message:  1030
+%qdt:
+ In ___questgiver_, the Temple of
+ Stendarr will give me the symbol of
+ its order for some _item_, delivered
+ within =1stparton_ days. _chemist_
+ in ___chemist_ will hand it over at
+ __chemist_ if I get there in time.
+
+
+QBN:
+Item _reward_ common_symbol
+Item _item_ large_plant
+
+Person _questgiver_ face 112 group Questor
+Person _chemist_ group Chemist remote
+
+
+Clock _1stparton_ 00:00 0 flag 17 range 1 4
+
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1030 step 0 
+
+_1stparton_ task:
+	end quest 
+
+variable _pcgetsgold_
+_npcclicked_ task:
+	clicked npc _chemist_ say 1010 
+	get item _item_ 
+
+_qgclicked_ task:
+	toting _item_ and _questgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+_qgclick2_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgclick2_ and not _qgclicked_
+	say 1003
+	clear _clearclick_ _qgclick2_
+
+variable _queston_
+variable _S.05_
+_S.06_ task:
+	when _npcclicked_ and _1stparton_ 
+	make _item_ permanent

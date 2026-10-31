@@ -335,17 +335,19 @@ test('START1 the old saves: a game begun before START1 holds _BRISIEN and no sta
 
 // ── the patch over _BRISIEN ──────────────────────────────────────
 
-test('START1 the patch: _BRISIEN as the pack reads it is DFU\'s script with its start-up\'s `say 1025` out and (AUDIT STARTS Q3) the wreck it told as every player\'s said true of every start - its journal\'s cave gone, its letter\'s accident at sea - and nothing else; the vendored file is untouched; message 1025 itself stays (mutants: the patch dropped; the wreck kept)', () => {
+test('START1 the patch: _BRISIEN as the pack reads it is our own file (OWN-WORDS2) with its start-up\'s `say 1025` out and nothing else; the wreck (AUDIT STARTS Q3) is told as no player\'s own - its journal has no cave, its letter no accident at sea - in our words themselves, so the patch keeps only its QBN half; the vendored file is untouched; message 1025 itself stays (mutants: the patch dropped; the wreck kept)', () => {
   assert.equal(typeof QUEST_PATCHES._BRISIEN, 'function');
-  const patched = applyQuestPatches('_BRISIEN', BRISIEN_DFU);
+  const own = rd('src/systems/quest/own/_BRISIEN.txt');
+  const patched = applyQuestPatches('_BRISIEN', own);
   assert.match(BRISIEN_DFU, /\tpc at PiratesHold set _exitstarter_ \n\tsay 1025 \n/, 'DFU\'s, verbatim (vendor/dfu-quests/README.md)');
+  assert.match(own, /\tpc at PiratesHold set _exitstarter_ \n\tsay 1025 \n/, 'our file keeps DFU\'s QBN byte for byte');
   assert.doesNotMatch(patched, /^\s*say 1025\b/m);
-  assert.doesNotMatch(patched, /accident at sea|capsized the ship|into this cave\./, 'no wreck told as every player\'s');
-  assert.match(patched, /Word has reached me that you are in the Iliac Bay\n at last, and alive and well\./, 'her letter true of every start');
-  assert.equal(patched, BRISIEN_DFU.replace('\tsay 1025 \n', '')
-    .replace(' most appreciative.\n    Before landing in Daggerfall, a sudden storm\n capsized the ship. I barely made it into this cave.\n', ' most appreciative.\n')
-    .replace("     I heard about your accident at sea, and feared the\n worst. Now that I've heard you're alive and well, I\n would like the opportunity to meet with you and discuss\n our beloved Emperor's mission in the Iliac Bay.\n",
-      "     Word has reached me that you are in the Iliac Bay\n at last, and alive and well. I would like the\n opportunity to meet with you and discuss our beloved\n Emperor's mission here.\n"), 'those three and nothing else');
+  assert.equal(patched, own.replace('\tsay 1025 \n', ''), 'that line and nothing else');
+  assert.equal(applyQuestPatches('_BRISIEN', BRISIEN_DFU), BRISIEN_DFU.replace('\tsay 1025 \n', ''), 'and on DFU\'s file, the same line alone');
+  const message = (from, to) => patched.slice(patched.indexOf(from), patched.indexOf(to));
+  const entry = message('QuestLogEntry:  [1010]', 'Message:  1011'), letter = message('Message:  1020', 'Message:  1021');
+  assert.doesNotMatch(entry + letter, /storm|ship|cave|accident|\bsea\b/i, 'no wreck told as every player\'s');
+  assert.match(letter, /I hear you have reached the Iliac Bay,\n safe and well\./, 'her letter true of every start');   // PIN MOVED (OWN-WORDS2): our words for AUDIT STARTS Q3's
   assert.match(patched, /^Message:\s+1025$/m, 'its words kept: nothing else reads them');
   assert.deepEqual(questSource('_BRISIEN'), patched.split(/\r?\n/), 'and the node twin of the pack reads it so');
 });

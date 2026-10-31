@@ -1,0 +1,196 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C00Y12.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 12
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 36
+Quest: A0C00Y12
+DisplayName: The First Printing
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Excuse me. Do you know _book_? I had
+<ce> a first printing of it, until someone
+<ce> stole it. Whoever brings it back gets
+<ce> _gold_ gold. Will you find it for me?
+
+RefuseQuest:  [1001]
+<ce> A pity. I must have that book back.
+
+AcceptQuest:  [1002]
+<ce> Wonderful! A first printing means a
+<ce> great deal to me. Sadly, the thief
+<ce> left no name behind. Ask around town.
+
+QuestComplete:  [1004]
+<ce> My _book_, at last! Splendid work, %pcn.
+<ce> The _gold_ gold is yours, as promised.
+
+RumorsDuringQuest:  [1005]
+<ce> _giver_ is frantic to find some smelly
+<ce> old book. Who would bother stealing it?
+
+RumorsPostfailure:  [1006]
+<ce> _giver_ gave up on that precious book and
+<ce> bought another copy, I hear. And %g had
+<ce> paid someone to look for it! What a fool.
+
+RumorsPostsuccess:  [1007]
+<ce> So you are the %ra who found
+<ce> _giver_'s book. %G tells everyone
+<ce> you did it for %g2. You would
+<ce> think you had saved the king.
+
+QuestorPostsuccess:  [1008]
+<ce> For my friend %pcf, anything.
+<ce> You brought my precious book
+<ce> home, and I am very grateful.
+
+QuestorPostfailure:  [1009]
+<ce> Hmph. I paid you to find my book,
+<ce> you failed, and I had to buy
+<ce> another copy. We are done talking.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _giver_ of ___giver_ wants %g3
+ stolen book, _book_, found.
+ The reward is _gold_ gold.
+
+Message:  1014
+<ce> Try _informant_ at _informant1_. %G knows
+<ce> everything that happens in __informant1_.
+<--->
+<ce> Ask at the inns. Nobody
+<ce> gossips like an innkeeper.
+<--->
+<ce> Try _informant1_. People
+<ce> there always talk.
+<--->
+<ce> Someone stole it from _giver_.
+<--->
+<ce> _giver_ has been asking
+<ce> everyone about it.
+<--->
+<ce> I liked that book very
+<ce> much when I read it.
+<--->
+<ce> A library would be your best bet.
+
+Message:  1015
+<ce> This must be the book someone stole from _giver_.
+
+Message:  1025
+<ce> %pcn, is it? You have been asking about me.
+<ce> All the news in __informant1_ comes to me.
+<ce> As for _giver_'s loss, look for _thief_. %G
+<ce> has long wanted a first printing of _book_.
+<ce> And %g takes without asking.
+
+Message:  1035
+%qdt:
+ _informant_ told me about the missing
+ _book_. %G thinks _thief_ is mixed up
+ in it. Now I only have to find %g2.
+
+Message:  1027
+Look for _thief_ at home, at _house_ in __house_.
+<--->
+_thief_ has a house in __house_.
+<--->
+Most nights, _thief_ sleeps in %g3 bed at _house_.
+<--->
+_thief_ keeps %g3 home in __house_. %G is often there.
+<--->
+_thief_ buys and sells a good deal at _store_.
+<--->
+Shop at _store_ for a while. _thief_ does.
+<--->
+Stolen goods change hands at _store_,
+and _thief_ has plenty to sell.
+<--->
+Someone saw _thief_ at _store_ not long ago.
+<--->
+Half the thieves in town drink at _inn_.
+<--->
+You will find _thief_ drinking at _inn_ most evenings.
+<--->
+_thief_ never drinks anywhere but _inn_.
+<--->
+_thief_ eats most meals at _inn_. The cook there is good.
+
+Message:  1030
+<ce> You want the book? You do not frighten
+<ce> me. Come and take it, if you can!
+
+
+QBN:
+Item _book_ book2 anyInfo 1014 used 1015
+Item _gold_ gold
+
+Person _informant_ face 241 group Cleric local
+Person _giver_ group Questor
+Person _thief_ face 97 faction The_Thieves_Guild local anyInfo 1027 rumors 1027
+
+Place _inn_ local tavern
+Place _store_ local generalstore
+Place _house_ local house2
+Place _informant1_ local tavern
+
+Clock _S.01_ 10.00:00 0 flag 9 range 0 1
+
+Foe _thiefFoe_ is Thief
+
+--	Quest start-up:
+	dialog link for location _house_ person _informant_ 
+	dialog link for location _inn_ 
+	dialog link for location _store_ person _thief_ 
+	start timer _S.01_ 
+	log 1010 step 0 
+	place npc _informant_ at _informant1_ 
+
+variable _S.00_
+_S.01_ task:
+	end quest 
+
+_S.02_ task:
+	daily from 00:00 to 08:00 
+	pc at _house_ set _S.09_ 
+
+_S.03_ task:
+	daily from 16:02 to 23:59 
+	pc at _inn_ set _S.10_ 
+
+_S.04_ task:
+	daily from 08:01 to 16:01 
+	pc at _store_ set _S.11_
+--unneeded underscore removed
+
+_S.05_ task:
+	clicked npc _informant_ say 1025 
+	add dialog for person _thief_ 
+	log 1035 step 1 
+
+_S.06_ task:
+	toting _book_ and _giver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+variable _S.07_
+_S.08_ task:
+	injured _thiefFoe_ 
+	give item _book_ to _thiefFoe_ 
+	say 1030 
+
+_S.09_ task:
+	place foe _thiefFoe_ at _house_
+
+_S.10_ task:
+	place foe _thiefFoe_ at _inn_ 
+
+_S.11_ task: 
+	place foe _thiefFoe_ at _store_ 

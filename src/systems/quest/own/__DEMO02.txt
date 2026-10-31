@@ -1,0 +1,23 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+- This quest is for testing early task condition support
+
+Quest: __DEMO02
+
+QRC:
+
+Message: 1010
+You wear the hat and the shades.
+
+
+QBN:
+
+variable hat
+variable shades
+
+- Entry point
+setvar hat
+setvar shades
+
+_HatAndShades_ task:
+when hat and shades
+say 1010

@@ -1,0 +1,45 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+---- Example quest to demonstrate direction hints for dungeon locations
+
+Quest: __DEMO19
+
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Would you like to test your sense of direction?
+
+RefuseQuest:  [1001]
+<ce> Then I suppose you would only get lost anyway.
+
+AcceptQuest:  [1002]
+<ce> Good! Find ___lostdung_ by yourself. I will give you one tip
+<ce> and no more: ask the common folk where ___lostdung_ lies.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I must find ___lostdung_ by
+ myself. My only help is a tip: ask
+ the common folk which way it lies.
+
+Message:  1011
+All I know of ___lostdung_ is that it is dangerous.
+<--->
+Try looking %di of here.
+<--->
+___lostdung_? Head %di from here.
+
+Message:  1012
+At last, this is ___lostdung_!
+
+
+QBN:
+
+Place _lostdung_ remote dungeon anyInfo 1011
+
+--	Quest start-up:
+	log 1010 step 0
+	pc at _lostdung_ set _S.00_
+
+_S.00_ task:
+	say 1012
+	end quest

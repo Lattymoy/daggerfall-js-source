@@ -1,0 +1,135 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 1
+Messages: 22
+Quest: R0C10Y01
+DisplayName: Contraband Trade
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> If you want work, I need a special
+<ce> _item_ carried to a friend of mine. The
+<ce> pay will be generous. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> Too busy? I am sorry to hear it.
+
+AcceptQuest:  [1002]
+<ce> Splendid. Here is the _item_.
+<ce> _contact_ must have it in
+<ce> ___contact_ within =queston_ days,
+<ce> which should be time enough. Go to
+<ce> __contact_, find the =contact_
+<ce> there, and you have found _contact_.
+
+QuestFail:  [1003]
+<ce> %pcf, our little arrangement will
+<ce> not keep itself. Get moving.
+
+QuestComplete:  [1004]
+<ce> Ah, %pcf, and the _item_ as well.
+<ce> Lovely. Take this little trinket for
+<ce> your pains. I hope red suits you.
+
+RumorsDuringQuest:  [1005]
+_questgiver_ has not given up smuggling, so I hear.
+<--->
+There is more smuggling about than anyone can remember.
+
+RumorsPostfailure:  [1006]
+Someone around here has turned up a very pretty _item_.
+<--->
+_questgiver_ is in a fury over some %ra courier.
+
+RumorsPostsuccess:  [1007]
+Some =contact_ came through here, showing off a _item_.
+<--->
+A jeweler says a large ruby went missing from the shop.
+
+QuestorPostsuccess:  [1008]
+Ah, %pcf. Keep that ruby somewhere safe, my friend.
+<--->
+Good day to you again.
+
+QuestorPostfailure:  [1009]
+<ce> You have come to apologize
+<ce> for that bungled delivery,
+<ce> I suppose. I do not accept.
+<--->
+<ce> You are the %ra who could not
+<ce> carry one stone across town.
+<ce> Why waste words on you?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ gave me a _item_ for a contact
+ called _contact_ in ___contact_. I must
+ bring the _item_ to %g2 at __contact_
+ within =queston_ days, or I lose my reward.
+
+Message:  1020
+<ce> The guild says you carry a gem.
+<ce> Give it here, or I kill you
+<ce> slow. You going to give it?
+
+Message:  1021
+<ce> Pretty. Now go, while I still feel kind.
+
+
+QBN:
+Item _reward_ ruby
+Item _item_ ruby
+
+Person _questgiver_ group Questor
+Person _contact_ group Local_3.0 remote
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 4
+Clock _delay_ 00:30
+--removed flags from _delay_
+
+Foe _thief_ is Nightblade
+
+--	Quest start-up:
+	create foe _thief_ every 5 minutes 5 times with 25% success 
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _item_ 
+	create npc _contact_ 
+
+variable _pcgetsgold_
+variable _pchasitem_
+_queston_ task:
+	change repute with _questgiver_ by -20 
+	end quest 
+
+_npcclicked_ task:
+	toting _item_ and _contact_ clicked 
+	give pc _reward_ 
+	start timer _delay_ 
+
+yes task:
+	have _item_ set _S.07_ 
+
+variable _no_
+_S.06_ task:
+	injured _thief_ 
+	prompt 1020 yes yes no _no_ 
+
+_S.07_ task:
+	give item _item_ to _thief_
+	say 1021
+--moved "saying 1021" to new line. bad argument 
+	restrain foe _thief_ 
+
+_delay_ task:
+	end quest 
+
+_S.09_ task:
+	when _queston_ or _delay_ 
+	make _item_ permanent 

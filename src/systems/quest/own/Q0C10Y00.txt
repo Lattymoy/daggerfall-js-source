@@ -1,0 +1,201 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C10Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 10
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 24
+Quest: Q0C10Y00
+DisplayName: A Great Errand
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You want help from ==qgiver_? Then help
+<ce> us first. Will you bring us the three
+<ce> ingredients our brew still lacks?
+
+RefuseQuest:  [1001]
+<ce> Then off our ground. Those
+<ce> who want everything for
+<ce> nothing earn only bad luck.
+
+AcceptQuest:  [1002]
+<ce> Our brew for weaving weather lacks
+<ce> three things. Bring a perfect _item1_
+<ce> from ___dungeon1_. In ___dungeon2_,
+<ce> find _item2_ for the thunder. From
+<ce> ___dungeon3_ bring the strongest
+<ce> _item3_. You have =queston_ days,
+<ce> before the pot cools.
+
+QuestFail:  [1003]
+<ce> Where are the _item1_, the
+<ce> _item2_ and the _item3_, %pcn?
+<ce> Talk will not fill the pot.
+
+QuestComplete:  [1004]
+<ce> Sister, the pot! This %ra brought the
+<ce> _item1_, the _item2_ and the _item3_.
+<ce> In they go. For you, %pcn, three
+<ce> pretty stones we never use. Thank you.
+
+RumorsDuringQuest:  [1005]
+No storms in weeks. Either the
+witches are busy, or they are bored.
+<--->
+The baker will not sell to witches.
+He says their coin smells of sulfur.
+
+RumorsPostfailure:  [1006]
+The witches once cursed our %t. Now they cannot curse a cow.
+<--->
+They say ==qgiver_ has lost its touch.
+
+RumorsPostsuccess:  [1007]
+The air feels tight, like a storm about to break.
+<--->
+Anyone who says ==qgiver_ has lost
+its touch is asking for lightning.
+
+QuestorPostsuccess:  [1008]
+You brought the _item1_, the _item2_ and
+the _item3_. Ask what you will, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Three ingredients, that was all, and
+<ce> you failed ==qgiver_. Out of my sight.
+
+Message:  1011
+One of the ==qgiver_. Be polite.
+<--->
+A great seer of ==qgiver_, they say.
+
+Message:  1015
+%qdt:
+ To win over _qgiver_, I must bring
+ three things to ==qgiver_ for %g2
+ within =queston_ days. They are
+ _item1_ from ___dungeon1_, _item2_
+ from ___dungeon2_ and _item3_ from
+ ___dungeon3_. A busy few days.
+
+Message:  1021
+<ce> This is the _item1_ _qgiver_ wants.
+
+Message:  1022
+<ce> At last, the _item2_ for _qgiver_.
+
+Message:  1023
+<ce> The _item3_! _qgiver_
+<ce> will be glad of it.
+
+Message:  1024
+<ce> You hand over the _item1_.
+
+Message:  1025
+<ce> You hand over the _item2_.
+
+Message:  1026
+<ce> You hand over the _item3_.
+
+
+QBN:
+Item _item1_ mythic
+Item _item2_ mineral
+Item _item3_ organs
+Item _reward1_ malachite
+Item _reward2_ turquoise
+Item _reward3_ jade
+--added messages 1024, 1025 and 1026 and their handling in the quest. previously you had to click the witch 3 times and turn in the items with no confirmation.
+
+Person _qgiver_ group Questor anyInfo 1011
+
+Place _dungeon1_ remote dungeon6
+Place _dungeon2_ remote dungeon12
+Place _dungeon3_ remote dungeon10
+
+Clock _queston_ 6.22:40 10.10:00 flag 17 range 0 5
+
+Foe _F.00_ is Gargoyle
+Foe _wereboar_ is Wereboar
+Foe _spriggan_ is Spriggan
+Foe _mummy_ is Mummy
+Foe _zombie_ is Zombie
+Foe _skeleton_ is Skeletal_warrior
+
+--	Quest start-up:
+	place item _item3_ at _dungeon3_ 
+	place item _item2_ at _dungeon2_ 
+	place item _item1_ at _dungeon1_ 
+	start timer _queston_ 
+	reveal _dungeon3_ 
+	reveal _dungeon2_ 
+	reveal _dungeon1_ 
+	log 1015 step 0 
+	pc at _dungeon1_ set _S.10_ 
+	pc at _dungeon2_ set _S.14_ 
+
+_pchasitem1_ task:
+	toting _item1_ and _qgiver_ clicked
+	say 1024
+
+_pchasitem2_ task:
+	toting _item2_ and _qgiver_ clicked 
+	say 1025
+
+_pchasitem3_ task:
+	toting _item3_ and _qgiver_ clicked 
+	say 1026
+
+_queston_ task:
+	end quest 
+
+_a1_ task:
+	create foe _zombie_ every 15 minutes 5 times with 5% success 
+	place foe _zombie_ at _dungeon1_ 
+
+_a2_ task:
+	create foe _mummy_ every 10 minutes 5 times with 5% success 
+	place foe _mummy_ at _dungeon1_ 
+
+_a3_ task:
+	create foe _skeleton_ every 12 minutes 5 times with 5% success 
+	place foe _skeleton_ at _dungeon1_ 
+
+_a4_ task:
+	create foe _F.00_ every 10 minutes 5 times with 5% success 
+	place foe _F.00_ at _dungeon2_ 
+
+_a5_ task:
+	create foe _spriggan_ every 15 minutes 5 times with 5% success 
+	place foe _spriggan_ at _dungeon2_ 
+
+_a6_ task:
+	create foe _wereboar_ every 12 minutes 5 times with 5% success 
+	place foe _wereboar_ at _dungeon2_ 
+
+_S.10_ task:
+	pick one of _a1_ _a2_ _a3_ _a1_ 
+
+_batty_ task:
+	clicked item _item1_ say 1021 
+
+_S.12_ task:
+	clicked item _item2_ say 1022
+
+_S.13_ task:
+	clicked item _item3_ say 1023 
+
+_S.14_ task:
+	pick one of _a4_ _a5_ _a6_ _a4_ 
+
+_S.15_ task:
+	when _pchasitem1_ and _pchasitem2_ and _pchasitem3_ 
+	give pc _reward1_
+	give pc _reward2_
+	give pc _reward3_ 
+	end quest 
+--changed to multi-line give pc reward, as I know this implementation works fine. --JayH

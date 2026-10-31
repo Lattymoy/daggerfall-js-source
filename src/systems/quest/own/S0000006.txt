@@ -1,0 +1,232 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000006.Qbn.
+-- Main story quest.
+-- QuestId: 6
+Messages: 31
+Quest: S0000006
+DisplayName: Elysana's Robe
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Hello, %pcf! I am Elysana, heir to
+<ce> Wayrest. How silly of me: I
+<ce> borrowed Lord Castellian's cloak,
+<ce> and now he is off on holiday. Would
+<ce> you take it to him in ___casfort_?
+<ce> A lovely _jewelry_ says thank you.
+
+RefuseQuest:  [1001]
+<ce> No? Oh, %oth. How tiresome.
+
+AcceptQuest:  [1002]
+<ce> How frightfully kind of you! Here
+<ce> is the robe. He must have it soon.
+<ce> Lord Castellian is at _casfort_ in
+<ce> ___casfort_. Just ask anyone. There
+<ce> and back should take =queston_
+<ce> days, %pcf. I shall see you then!
+
+QuestFail:  [1003]
+<ce> Lord Castellian still has no robe,
+<ce> I hear. He does hate to wait.
+
+QuestComplete:  [1004]
+<ce> Marvelous! Your _jewelry_. I put such work
+<ce> into that robe. Something else, %pcf: Father
+<ce> wants a relic, the Totem of Tiber Septim.
+<ce> When his spies find it, he will need someone
+<ce> to fetch it. I shall give him your name.
+
+RumorsDuringQuest:  [1005]
+Lord Castellian is pushing a law
+to make Prince Helseth the heir.
+<--->
+Princess Elysana has lost the Elder
+Council's leader as a friend.
+
+RumorsPostfailure:  [1006]
+Lord Castellian has come back from _casfort_
+to Castle Wayrest. So much for his holiday.
+<--->
+Princess Elysana scowled when Lord
+Castellian came home from his holiday.
+
+RumorsPostsuccess:  [1007]
+Lord Castellian went on holiday to
+_casfort_ and has not been seen since.
+<--->
+King Eadwyre thinks someone made Lord
+Castellian disappear on purpose.
+
+QuestorPostsuccess:  [1008]
+A fine robe. You see nothing odd about it.
+<--->
+Lovely work. Someone spent hours on the embroidery.
+
+QuestorPostfailure:  [1009]
+The embroidery is a daedric spell, stitched into the cloth.
+<--->
+Sewn into this robe is a ritual to summon daedra.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Princess Elysana wants me to take a
+ robe to Lord Castellian of the Wayrest
+ Elder Council. His manor, _casfort_,
+ is in ___casfort_. Castle Wayrest
+ expects me back within =queston_ days.
+
+Message:  1020
+<ce> Oh, you poor fool. Someone gave
+<ce> you a robe that calls me to kill
+<ce> whoever carries it. How delicious.
+
+Message:  1021
+<ce> You murdered Lord
+<ce> Castellian! Die, traitor!
+<--->
+<ce> My lord is dead because
+<ce> of you. You will pay.
+<--->
+<ce> Assassin! There was no better
+<ce> man than Lord Castellian, and
+<ce> you will die for him.
+
+Message:  1022
+<ce> "Lady Elysana sent this? My thanks,
+<ce> %pcn. It fits perfectly." Then you
+<ce> hear something tear, as if the
+<ce> world itself were splitting open.
+
+Message:  1023
+<ce> Go away, little %ra. Lord Castellian
+<ce> is ours. You brought the shroud that
+<ce> called us. Your part is done.
+
+Message:  1030
+Lord Castellian holds more power than
+anyone else on Wayrest's council.
+<--->
+Princess Elysana cannot stand Lord Castellian, people say.
+<--->
+Lord Castellian wants to marry Princess
+Elysana, and he tells everyone so.
+
+
+QBN:
+Item _I.00_ Formal_cloak anyInfo QuestorPostsuccess used QuestorPostfailure
+Item _jewelry_ trinket
+Item _I.04_ dead_body
+
+Person _elysana_ named Princess_Elysana atHome
+Person Castellian face 1 named Lord_Castellian anyInfo 1030
+
+Place _casfort_ remote house1
+
+Clock _S.04_ 04:00 01:40
+Clock _queston_ 00:00 0 flag 17 range 0 2
+Clock _S.16_ 1.00:00 0 flag 1 range 0 1
+
+Foe _F.00_ is Daedra_seducer
+Foe _F.01_ is 2 Knight
+Foe _F.02_ is 2 Spellsword
+Foe _F.03_ is Daedra_seducer
+Foe _F.04_ is Daedroth
+Foe _F.05_ is Daedroth
+
+--	Quest start-up:
+	prompt QuestorOffer yes yes no _no_ 
+	have _I.04_ set _deadbody_
+
+_pcgetsgold_ task:
+	when _S.01_ and _S.03_ 
+	give pc _jewelry_ 
+	start task _S.07_ 
+	change repute with _elysana_ by +10 
+	drop _elysana_ as questor 
+
+_S.01_ task:
+	clicked npc _elysana_ 
+
+variable _S.02_
+_S.03_ task:
+	toting _I.00_ and Castellian clicked saying 1022 
+	pc at _casfort_ set _S.12_ 
+	place item _I.04_ at _casfort_
+	start timer _S.04_ 
+	hide npc Castellian 
+
+_S.04_ task:
+	create foe _F.02_ every 53 minutes 20 times with 15% success 
+
+_queston_ task:
+	when _S.15_ and _S.02_ 
+	drop _elysana_ as questor 
+	end quest 
+
+_deadbody_ task:
+	take _I.04_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+UnknownElysanna _S.06_
+ElysannaSatisfied _S.07_
+	end quest 
+
+yes task:
+	_I.00_ used do _S.02_ 
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _I.00_ 
+	say AcceptQuest 
+	add _elysana_ as questor 
+	create npc at _casfort_ 
+	place npc Castellian at _casfort_ 
+
+_no_ task:
+	say RefuseQuest 
+	end quest 
+
+_S.10_ task:
+	injured _F.03_ saying 1020 
+	injured _F.04_ 
+	say 1020 
+
+_clearclick_ task:
+	when _S.01_ and not _S.03_ 
+	clear _S.01_ _clearclick_ 
+
+_S.12_ task:
+	create foe _F.01_ every 2 minutes 4 times with 50% success 
+
+_S.13_ task:
+	injured _F.00_ 
+	injured _F.05_ 
+	say 1023 
+	restrain foe _F.00_ 
+
+_greklith_ task:
+	injured _F.01_ saying 1021 
+	injured _F.02_ saying 1021 
+
+_S.15_ task:
+	killed 3 _F.03_ 
+
+variable _S.16_
+UnknownHelseth _S.17_
+_S.18_ task:
+	when not _S.17_ and _S.02_ 
+	create foe _F.03_ every 1 minutes 3 times with 20% success 
+
+_S.19_ task:
+	when _S.17_ and _S.02_ 
+	create foe _F.04_ every 1 minutes 3 times with 20% success 
+
+_S.20_ task:
+	when not _S.17_ and _S.12_ 
+	create foe _F.00_ every 1 minutes 3 times with 50% success 
+
+_S.21_ task:
+	when _S.17_ and _S.12_ 
+	create foe _F.05_ every 1 minutes 32768 times with 100% success

@@ -1,0 +1,116 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 6
+Messages: 12
+Quest: R0C10Y06
+DisplayName: The Heirloom
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> An orc gang has stolen a _item_ that
+<ce> has been in my family for generations,
+<ce> and they want a ransom. They will not
+<ce> get it. Steal it back and the ransom
+<ce> is yours: _reward_ gold. Will you?
+
+RefuseQuest:  [1001]
+<ce> %oth! You refuse me? Then the
+<ce> orcs get their ransom after all.
+<ce> I expected better of you, %pcf.
+
+AcceptQuest:  [1002]
+<ce> Good. The orcs hide in the old ruin of
+<ce> ___itemdung_, and my _item_ will be
+<ce> there. Be back within =1stparton_ days,
+<ce> or I pay the orcs their ransom with
+<ce> your reward. Do not fail me, %pcf.
+
+QuestFail:  [1003]
+<ce> I am not here to chat,
+<ce> %pcf. Bring me my _item_.
+
+QuestComplete:  [1004]
+<ce> I knew you would find my _item_, %pcf.
+<ce> The gold I put aside for the ransom is
+<ce> yours, and gladly. Thank you.
+
+RumorsDuringQuest:  [1005]
+A gang of orcs has moved into ___itemdung_.
+<--->
+The orcs in ___itemdung_ expect
+to get rich off _questgiver_.
+
+RumorsPostfailure:  [1006]
+The orcs left ___itemdung_ once _questgiver_ paid them.
+<--->
+_questgiver_ is in a rage over some %ra adventurer.
+
+RumorsPostsuccess:  [1007]
+<ce> Some orcs are grumbling that
+<ce> _questgiver_ stole a treasure from them.
+<--->
+<ce> ___itemdung_ is not as safe a
+<ce> hideout as its orcs believed.
+
+QuestorPostsuccess:  [1008]
+<ce> Welcome back, my friend. I still
+<ce> think of that business with the orcs.
+<--->
+I trust you have not spent all that gold already.
+
+QuestorPostfailure:  [1009]
+<ce> Away with you, %pcf. I have not
+<ce> forgotten how you failed me.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ of __questgiver_ in
+ ___questgiver_ sent me to
+ ___itemdung_ for a family heirloom,
+ a _item_ that orcs stole. If
+ _questgiver_ does not have it
+ within =1stparton_ days, %g pays
+ the ransom and my reward is gone.
+
+Message:  1011
+Here is the _item_ the orcs took.
+
+
+QBN:
+Item _item_ trinket
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _itemdung_ remote dungeon1
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	place item _item_ at _itemdung_ 
+	start timer _1stparton_ 
+	reveal _itemdung_ 
+	log 1010 step 0 
+
+_pcgetsgold_ task:
+	toting _item_ and _questgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+variable _queston_
+_pchasitem_ task:
+	clicked item _item_ say 1011 
+
+_1stparton_ task:
+	make _item_ permanent 
+	change repute with _questgiver_ by -5 
+	end quest 
+
+variable _qgclicked_
+variable _clearclick_

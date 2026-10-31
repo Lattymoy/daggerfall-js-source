@@ -1,0 +1,174 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0B00Y14.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 14
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 62
+Quest: C0B00Y14
+DisplayName: Hunt for Undead
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, this task is dangerous. It means
+<ce> killing a strong undead creature. Will
+<ce> you still take it on for __questgiver_?
+
+RefuseQuest:  [1001]
+<ce> Sensible. I would not go
+<ce> near the thing myself.
+
+AcceptQuest:  [1002]
+<ce> Brave of you, %pcf. ___mondung_ was
+<ce> once our temple, and now something
+<ce> undead walks its halls. Kill it, then
+<ce> sprinkle its body with this holy water.
+<ce> After =qtime_ days, I light incense for
+<ce> your soul. %god go with you.
+
+QuestFail:  [1003]
+<ce> Back already, %pct? The dead
+<ce> still walk in ___mondung_.
+
+QuestComplete:  [1004]
+<ce> %god be praised, you are back! Our
+<ce> seers saw the evil leave ___mondung_.
+<ce> __questgiver_ thanks you.
+
+RumorsDuringQuest:  [1005]
+__questgiver_ means to make ___mondung_ a holy place again.
+
+RumorsPostfailure:  [1006]
+<ce> __questgiver_ has given up on
+<ce> ___mondung_. The evil there won.
+
+RumorsPostsuccess:  [1007]
+<ce> Someone from __questgiver_ has
+<ce> started to cleanse ___mondung_.
+
+QuestorPostsuccess:  [1008]
+<ce> Welcome, %pcf. What you did in
+<ce> ___mondung_ helped us greatly.
+
+QuestorPostfailure:  [1009]
+<ce> You want my help? You left the
+<ce> spirit of ___mondung_ where it was.
+
+Message:  1020
+%qdt:
+ At __questgiver_ in ___questgiver_,
+ _questgiver_ sent me to destroy an
+ undead creature in ___mondung_. %G
+ gave me holy water for its body, so
+ its spirit cannot return. Back to
+ _questgiver_ in =qtime_ days, or %g
+ sends another.
+
+Message:  1021
+%qdt:
+ At __questgiver_ in ___questgiver_,
+ _questgiver_ sent me to destroy an
+ undead creature in ___mondung_.
+ _priest_ at __priest_ in ___priest_
+ must first bless the holy water for
+ its body. Back to _questgiver_ in
+ =qtime_ days, or %g sends another.
+
+Message:  1050
+<ce> Wait, I nearly forgot! The holy
+<ce> water must go to _priest_ at
+<ce> __priest_ in ___priest_ first. %G
+<ce> must give it the final blessing.
+
+Message:  1051
+<ce> _priest_ takes the vial in silence and
+<ce> blesses it, and then you. %G gives it
+<ce> back and turns again to %g3 prayers.
+
+Message:  1060
+<ce> "I am =monster1_! Break this body
+<ce> if you can. ___mondung_ is my home,
+<ce> and I will always come back!"
+
+Message:  1061
+<ce> The holy water falls on what is left of
+<ce> =monster1_. A long, hopeless cry runs
+<ce> through ___mondung_ and dies away.
+
+
+QBN:
+Item _I.00_ item class 10 subclass 4
+
+Person _questgiver_ group Questor
+Person _priest_ group Cleric remote
+
+Place _mondung_ remote dungeon4
+
+Clock _qtime_ 00:00 0 flag 17 range 1 5
+
+Foe _monster1_ is Zombie
+Foe _monster2_ is Mummy
+Foe _monster3_ is Ghost
+
+--	Quest start-up:
+	start timer _qtime_ 
+	reveal _mondung_ 
+	get item _I.00_ 
+	pick one of _S.05_ _S.05_ _S.04_ 
+	pick one of _S.00_ _S.01_ _S.02_ 
+
+_S.00_ task:
+	place foe _monster1_ at _mondung_ 
+
+_S.01_ task:
+	place foe _monster2_ at _mondung_ 
+
+_S.02_ task:
+	place foe _monster3_ at _mondung_ 
+
+_qtime_ task:
+	end quest 
+
+_S.04_ task:
+	log 1021 step 0 
+	say 1050 
+
+_S.05_ task:
+	log 1020 step 0 
+
+_mondead_ task:
+	killed 1 _monster1_ 
+	killed 1 _monster2_ 
+	killed 1 _monster3_ 
+	say 1060 
+	have _I.00_ set _S.09_ 
+
+_S.07_ task:
+	when _mondead_ and _S.09_ and not _S.10_ 
+	take _I.00_ from pc 
+	say 1061 
+
+_S.08_ task:
+	toting _I.00_ and _priest_ clicked 
+	get item _I.00_ 
+	say 1051 
+
+variable _S.09_
+_S.10_ task:
+	when _S.09_ and not _S.08_ and _S.04_ 
+
+_clickqgiver_ task:
+	clicked npc _questgiver_ 
+
+_success_ task:
+	when _clickqgiver_ and _S.07_ 
+	give pc nothing 
+	end quest 
+
+_clearclick_ task:
+	when not _S.07_ and _clickqgiver_ 
+	say 1003
+	clear _clickqgiver_ _clearclick_

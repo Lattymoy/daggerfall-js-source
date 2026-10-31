@@ -1,0 +1,171 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B40Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 40
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 61
+Quest: N0B40Y07
+DisplayName: Banish Daedra
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Perhaps you can help me, %pcf,
+<ce> perhaps not. I need a mage who
+<ce> can cast Banish Daedra and be
+<ce> nearly sure of it. Can you?
+<--->
+<ce> Few standard spells demand more
+<ce> skill or magicka than Banish Daedra.
+<ce> Can you cast it, by any chance?
+<--->
+<ce> Funny thing. Calling a daedra up is
+<ce> easy. Sending one home is the hard
+<ce> part. Can you cast Banish Daedra?
+
+RefuseQuest:  [1001]
+<ce> Oh, well. I shall keep looking.
+
+AcceptQuest:  [1002]
+<ce> Good. Do not kill it. I may need
+<ce> it later. Use the standard Banish
+<ce> Daedra, not one you made yourself.
+<ce> Wound it, then read this scroll to
+<ce> bind it. It is in ___mondung_.
+<ce> Back in =queston_ days, %pct.
+
+QuestComplete:  [1004]
+<ce> It is gone, then. Thank you, %pct. I
+<ce> am short of gold, so take this book
+<ce> instead. It kept me up all night.
+
+RumorsDuringQuest:  [1005]
+Daedra keep turning up in ___mondung_.
+Something about the place draws them.
+<--->
+<ce> _qgiver_ is always calling things up
+<ce> and then needing someone to rescue %g2.
+
+RumorsPostfailure:  [1006]
+The stars burned a strange red last night.
+My grandmother says that means daedra.
+
+RumorsPostsuccess:  [1007]
+Somebody sent _qgiver_'s daedra
+packing. They always come back, though.
+<--->
+___mondung_ is clean of daedra, for the moment at least.
+
+QuestorPostsuccess:  [1008]
+Have you finished that book yet,
+%pcf? I could not put it down.
+
+QuestorPostfailure:  [1009]
+<ce> If you could not cast Banish Daedra,
+<ce> why did you say you could? Leave me.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ at the Mages Guild in ___qgiver_ wants a
+ daedra in ___mondung_ sent home with the spell Banish
+ Daedra. The scroll _qgiver_ gave me binds it, but
+ only after I draw its blood. I have =queston_ days.
+
+Message:  1030
+Ahn vosk =daedra_.
+  Ahn vosk ==dummydaedra_.
+  Tiral uth men.
+
+Message:  1040
+<ce> You clumsy fool. =daedra_ was to be
+<ce> banished, and you killed it. Now I
+<ce> must learn another daedra's true
+<ce> name. Get out of my sight, %pcf.
+
+Message:  1050
+<ce> The scroll bursts into flame
+<ce> as you speak its last word.
+
+Message:  1051
+<ce> I am =firedaedra_. Who dares
+<ce> call me out of Oblivion?
+
+Message:  1060
+<ce> =daedra_ is banished, sent back
+<ce> to Oblivion where it belongs.
+
+
+QBN:
+Item _book_ book
+Item _spellScroll_ letter used 1030
+--added underscores to spellScroll
+
+Person _qgiver_ group Questor
+Person _dummydaedra_ face 249 factiontype Daedra remote
+
+Place _mondung_ remote dungeon9
+Place aide remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _daedra_ is Frost_daedra
+Foe _firedaedra_ is Fire_daedra
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	get item _spellScroll_ 
+	place foe _daedra_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_reward_ task:
+	when _qgclicked_ and _S.10_ and not _S.06_ 
+	give pc _book_ 
+	unset _qgclicked_ 
+	end quest 
+
+_out_ task:
+	remove foe _daedra_
+	--changed faulty "place enemy at other dungeon" task with simple "remove" for reliability
+
+variable _S.03_
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_S.05_ task:
+	take _spellScroll_ from pc 
+	--changed "place item spellScroll at aide" to this "take from pc" action. 
+	say 1050
+	--"say 1050" transferred from middle of "until _S.07_ performed," had faulty placing and this is a better ordering
+	create foe _firedaedra_ every 1 minutes 1 times with 100% success
+	say 1051 
+	--transferred "msg 1051" from previous line to this one, not known to be a valid argument
+
+_S.06_ task:
+	killed 1 _daedra_ 
+
+_S.07_ task:
+	injured _daedra_ 
+	_spellScroll_ used do _S.08_ 
+
+until _S.07_ performed:
+	_spellScroll_ used do _S.05_ 
+	
+_S.08_ task:
+	cast Banish_Daedra spell do _out_ 
+	restrain foe _daedra_ 
+
+_S.09_ task:
+	when _qgclicked_ and _S.06_ 
+	say 1040 
+	end quest 
+
+_S.10_ task:
+	when _out_ and not _S.06_ 
+	say 1060

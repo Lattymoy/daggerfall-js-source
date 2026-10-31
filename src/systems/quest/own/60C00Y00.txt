@@ -1,0 +1,144 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\60C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Sheogorath
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 31
+Quest: 60C00Y00
+DisplayName: Sheogorath's Quest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Surprise! My unbrothers are slow
+<ce> today, so you get me instead. Quick
+<ce> now, I have elsewhere to be yesterday.
+<ce> The %ra wants power? I have heaps,
+<ce> enough to rain blood on Tamriel. Will
+<ce> you invite someone to tea for me?
+
+RefuseQuest:  [1001]
+<ce> Refused by a lousy %ra! Sheogorath
+<ce> has never sunk so high. I shall
+<ce> ask for a raise. Toodle-oo, %pct.
+
+AcceptQuest:  [1002]
+<ce> Tea! Go to ___mondung_, where my
+<ce> darling wears blackberry crowns.
+<ce> No, wait, do not invite =monster_
+<ce> to tea. Kill %g2, very dead. Then
+<ce> see my =qgfriend_ _qgfriend_ in the
+<ce> madhouse ___contactdung_. %G holds
+<ce> _artifact_ for =1stparton_ days.
+
+QuestFail:  [1003]
+<ce> You do not know this, but I am
+<ce> completely mad. Go away, or I
+<ce> will be sick on your boots.
+
+QuestComplete:  [1004]
+<ce> Thank you for unlocking my cell,
+<ce> jailer. Sheogorath wanted =monster_ at
+<ce> tea after all, but %g is dead, which is
+<ce> better. More cake for the rest. Here is
+<ce> _artifact_. Do not point it at me.
+
+RumorsDuringQuest:  [1005]
+Folk near ___mondung_ lock their doors.
+There is a mad battlemage about.
+
+RumorsPostfailure:  [1006]
+<ce> =monster_ has left ___mondung_ in
+<ce> peace, but %g will be back. Mark me.
+
+RumorsPostsuccess:  [1007]
+=monster_ of ___mondung_ is dead.
+%G was madder than a hatter's hare.
+<--->
+Someone finally killed the mad battlemage
+of ___mondung_. %god be thanked.
+
+Message:  1011
+_qgfriend_ is that drooling, raving
+=qgfriend_ who lives in ___contactdung_.
+<--->
+<ce> _qgfriend_ is the mad =qgfriend_
+<ce> who turned up here a while ago.
+ They say %g lives in ___contactdung_.
+
+Message:  1012
+Sheogorath is the Prince of Madness. Do not count on him.
+<--->
+The Mad God loves chaos above all things.
+
+Message:  1013
+_artifact_ is ancient, and nobody
+knows what it will do next.
+<--->
+_artifact_ turns whatever it
+strikes into some other creature.
+
+Message:  1014
+_qgfriend_ is among the most loyal servants of Sheogorath.
+<--->
+That =qgfriend_, _qgfriend_, belongs
+to Sheogorath, heart and wits.
+
+Message:  1020
+%qdt:
+ Sheogorath promised me _artifact_ if I kill
+ =monster_, a battlemage in ___mondung_. Then
+ I meet the Prince's contact, _qgfriend_, in
+ ___contactdung_, all within =1stparton_ days.
+
+Message:  1030
+<ce> =monster_ has left this world. Now,
+<ce> does Sheogorath remember your bargain?
+
+
+QBN:
+Item _artifact_ artifact Wabbajack anyInfo 1013
+
+Person _questgiver_ face 112 named Sheogorath anyInfo 1012
+Person _qgfriend_ face 1 group Innkeeper remote anyInfo 1011 rumors 1014
+
+Place _mondung_ remote dungeon
+Place _contactdung_ remote dungeon3
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Battle_mage
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _contactdung_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	place foe _monster_ at _mondung_ 
+	place npc _qgfriend_ at _contactdung_ 
+
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_ 
+	give pc _artifact_ 
+	end quest 
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_ 
+	say 1030 
+
+_npcclicked_ task:
+	clicked npc _qgfriend_ 
+
+--defining clearclick to prevent out-of-place victory condition
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_
+	say 1003
+	clear _npcclicked_ _clearclick_

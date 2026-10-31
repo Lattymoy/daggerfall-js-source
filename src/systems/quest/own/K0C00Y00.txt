@@ -1,0 +1,198 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 17
+Quest: K0C00Y00
+DisplayName: An Object Lesson
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A rival stole a contract out from under me and
+<ce> runs it on crooked terms. I want _competitor_
+<ce> taught a lesson, and someone may get hurt in
+<ce> the teaching. Is _reward_ gold enough for you?
+
+RefuseQuest:  [1001]
+<ce> %oth. Fine, keep your clean hands, then.
+
+AcceptQuest:  [1002]
+<ce> Good. _competitor_ has a shop, _storehouse_ in
+<ce> __storehouse_, with a _mitem_ inside. Take it,
+<ce> and leave this note anywhere in the shop. In
+<ce> =2storehouse_ days the thing goes somewhere
+<ce> safer, and so does your pay. Expect guards.
+
+QuestFail:  [1003]
+<ce> I am not paying you to stand
+<ce> here, %pcf. Go and get it.
+
+QuestComplete:  [1004]
+<ce> Lovely. That is the _mitem_, %pcf,
+<ce> the very one _competitor_'s partner
+<ce> handed to %g2 as a pledge. Here is
+<ce> your _reward_ gold, and well earned.
+
+RumorsDuringQuest:  [1005]
+Trade has turned ugly this season. Even
+the spice sellers are hiring muscle.
+<--->
+_qgiver_ and _competitor_ hate each
+other more than any two kings ever did.
+
+RumorsPostfailure:  [1006]
+_competitor_ won, and the whole market
+knows how _qgiver_ lost %g3 best contract.
+<--->
+Nobody beats _competitor_ at business. Just ask _qgiver_.
+
+RumorsPostsuccess:  [1007]
+_competitor_ lost the contract, and all %g got
+for the trouble was a laugh from _qgiver_.
+<--->
+_qgiver_ has %g3 contract back and
+has not stopped smiling all week.
+
+QuestorPostsuccess:  [1008]
+You brought me that _mitem_. My door
+is open to you. What do you need?
+
+QuestorPostfailure:  [1009]
+I do not talk business with
+_competitor_'s errand runners.
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___qgiver_, _qgiver_ hired me to take
+ a _mitem_ from _storehouse_ in
+ __storehouse_ and leave a note there. If
+ I bring it back to __qgiver_ within
+ =2storehouse_ days, I earn _reward_ gold.
+
+Message:  1011
+
+ _competitor_,
+ 
+ 
+ Next time, buy a better lock.
+ 
+ 
+ 
+<ce> A well-wisher
+
+Message:  1012
+                                 __competitor_
+                                  ___competitor_
+ 
+ 
+ %pcn,
+ 
+      Your note made me laugh. Bring me the
+ _mitem_ and I will pay you a _gem_ for it. Take
+ it to your employer and you make an enemy of me.
+ 
+ 
+<ce> _competitor_
+
+Message:  1013
+<ce> A street boy shoves a letter at you and
+<ce> darts off before you can say a word.
+
+Message:  1014
+<ce> Trade the _mitem_ to
+<ce> _competitor_ for the _gem_?
+
+Message:  1015
+<ce> Good choice, %pcf. You and I could do well
+<ce> together. I would not say the same for _qgiver_.
+
+Message:  1016
+<ce> Then why did you come?
+<ce> Get out of my shop, %pcf.
+
+
+QBN:
+Item _letter_ letter used 1011
+Item _mitem_ magic_item
+Item _reward_ gold
+Item _letter10_ letter used 1012
+Item _gem_ gem
+
+Person _qgiver_ group Questor
+Person _competitor_ group Group_5.0 remote
+
+Place _storehouse_ remote generalstore
+
+Clock _2storehouse_ 00:00 0 flag 17 range 0 2
+Clock _S.05_ 16:40 1.09:20
+
+Foe _F.00_ is 2 Warrior
+Foe _knight_ is Knight
+Foe _battlemage_ is Battle_mage
+Foe _F.03_ is 2 Rogue
+
+--	Quest start-up:
+	place item _mitem_ at _storehouse_ 
+	log 1010 step 0 
+	get item _letter_ 
+	pc at _storehouse_ set _S.04_ 
+	start timer _2storehouse_
+	--added timer start 2storehouse
+
+_pcgetsgold_ task:
+	toting _mitem_ and _qgiver_ clicked 
+	give pc _reward_ 
+	change repute with _qgiver_ by +10 
+	change repute with _competitor_ by -10 
+	end quest 
+
+variable _qgclicked_
+_S.02_ task:
+	dropped _letter_ at _storehouse_ 
+	start timer _S.05_ 
+	stop timer _2storehouse_
+	--added timer stop 2storehouse
+
+_2storehouse_ task:
+	make _mitem_ permanent 
+	end quest 
+
+_S.04_ task:
+	create foe _knight_ every 8 minutes 2 times with 10% success 
+	create foe _battlemage_ every 7 minutes 2 times with 10% success 
+	create foe _F.00_ every 10 minutes 1 times with 10% success 
+	create foe _F.03_ every 9 minutes 1 times with 10% success 
+
+_S.05_ task:
+	--removed unnecessary "say nothing"
+	give pc _letter10_ notify 1013 
+
+variable _S.06_
+_S.07_ task:
+	toting _mitem_ and _competitor_ clicked 
+	prompt 1014 yes _S.09_ no _gimme_ 
+
+_gimme_ task:
+	get item _mitem_ 
+	say 1016 
+
+_S.09_ task:
+	get item _gem_ 
+	say 1015 
+	make _gem_ permanent 
+	change repute with _competitor_ by +5 
+	change repute with _qgiver_ by -5 
+	end quest 
+
+_qgclick2_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclick2_ and not _pcgetsgold_
+	say 1003
+	clear _clearclick_ _qgclick2_

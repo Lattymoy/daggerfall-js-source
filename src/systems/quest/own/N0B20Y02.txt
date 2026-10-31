@@ -1,0 +1,188 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 20
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 31
+Quest: N0B20Y02
+DisplayName: Protect an Honored Mage
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _qgiver_, servant of the great
+<ce> _sleepingmage_. %G enters a spell
+<ce> trance soon, and %g3 rivals may try
+<ce> to kill %g2 while %g lies helpless.
+<ce> Keep watch, and you will have an
+<ce> enchanted _magicitem_. Will you?
+<--->
+<ce> What an honor for you, %pcf. The famous
+<ce> _sleepingmage_ asked for you by name.
+<ce> %G wants you to guard %g2 during %g3
+<ce> trance. A mage that powerful has many
+<ce> jealous rivals. You accept, of course?
+
+RefuseQuest:  [1001]
+<ce> Hm. I shall tell _sleepingmage_
+<ce> how eager the guild's members
+<ce> are these days.
+
+AcceptQuest:  [1002]
+<ce> I knew you would. _sleepingmage_
+<ce> begins a three-hour trance now.
+<ce> Guard _magesguild_ for those
+<ce> hours. When the trance ends, our
+<ce> master goes to Aetherius, and a
+<ce> courier brings your reward.
+
+QuestComplete:  [1004]
+<ce> A woman in the blue robes of
+<ce> a guild courier bows to you.
+<ce>
+ "The guild thanks you for your work.
+ _sleepingmage_ is in your debt. %G
+ sends this _magicitem_, as promised."
+
+RumorsDuringQuest:  [1005]
+In ___sleepingmage_, they still
+tell stories about _sleepingmage_.
+<--->
+_sleepingmage_ is resting after a great working of magic.
+
+RumorsPostfailure:  [1006]
+Something happened to _sleepingmage_ during that
+trance. Some say %g is dead, and some say %g is worse.
+<--->
+_sleepingmage_ is gone. Nobody knows if %g still lives.
+
+RumorsPostsuccess:  [1007]
+_sleepingmage_ woke from %g3 long
+sleep feeling better than ever.
+<--->
+Killers came for _sleepingmage_ while %g
+slept, but a guard was waiting for them.
+
+QuestorPostsuccess:  [1008]
+_sleepingmage_ speaks well of you.
+That is rare. How may I help?
+
+QuestorPostfailure:  [1009]
+<ce> _sleepingmage_ is gone, and %pcf,
+<ce> you were meant to guard %g2. I
+<ce> have nothing kind to say to you.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I am guarding _sleepingmage_ at
+ _magesguild_ while %g lies in a
+ trance. I must protect %g2 for
+ three hours, starting now.
+
+Message:  1011
+<ce> Out of the way, apprentice! We are
+<ce> here for _sleepingmage_, before the
+<ce> trance ends. Move, or you die first.
+
+Message:  1012
+<ce> Fool! Nobody wakes a mage who is
+<ce> deep in a trance. You will pay for
+<ce> this. Get out of this hall, and
+<ce> expect to answer to the Circle.
+
+Message:  1013
+<ce> Kill me and the guild will cast you
+<ce> out! Leave now, while you still can.
+
+Message:  1014
+<ce> You broke your oath to the Mages
+<ce> Guild, and _sleepingmage_ is dead.
+<ce> There is a price on your head.
+
+Message:  1030
+<ce> Fetch the Archmagister! This %ra
+<ce> has murdered _sleepingmage_! Bar
+<ce> the doors and take up arms!
+
+
+QBN:
+Item _magicitem_ magic_item
+
+Person _sleepingmage_ face 5 faction The_Mages_Guild male local
+Person _qgiver_ group Questor
+
+Place _magesguild_ local magery
+
+Clock _oneday_ 1.03:00
+Clock _S.09_ 7.00:00
+Clock _S.12_ 03:00
+--precise timers set due to quest time constraints
+
+Foe _F.00_ is 3 Nightblade
+Foe _mage_ is Mage
+Foe _F.02_ is 2 Assassin
+Foe _F.03_ is Knight
+Foe _F.04_ is Battle_mage
+
+--	Quest start-up:
+	start timer _oneday_ 
+	start timer _S.12_ 
+	log 1010 step 0 
+	create npc at _magesguild_ 
+	place npc _sleepingmage_ at _magesguild_ 
+
+variable _oneday_
+_S.01_ task:
+	create foe _F.00_ every 55 minutes 1 times with 100% success 
+
+_S.02_ task:
+	injured _F.00_ saying 1011 
+
+_S.03_ task:
+	killed 3 _F.00_ 
+
+_S.04_ task:
+	clicked npc _sleepingmage_ say 1012 
+	hide npc _sleepingmage_ 
+	change repute with _sleepingmage_ by -10 
+	cast Spell_Shield spell on _mage_ 
+	cast Spell_Absorption spell on _mage_ 
+	place foe _mage_ at _magesguild_ 
+
+_S.05_ task:
+	when not _S.12_ and not _S.04_ 
+
+_questdone_ task:
+	when _S.03_ and _S.12_ and not _S.04_ 
+	give pc _magicitem_ 
+	end quest 
+
+_S.07_ task:
+	killed 1 _mage_ 
+	create foe _F.03_ every 30 minutes 10 times with 10% success 
+	create foe _F.04_ every 2 minutes 5 times with 50% success 
+	create foe _F.02_ every 25 minutes 10 times with 10% success 
+	start timer _S.09_ 
+	change repute with _sleepingmage_ by -50 
+
+_S.08_ task:
+	injured _mage_ saying 1013 
+
+variable _S.09_
+_S.10_ task:
+	injured _F.02_ saying 1014 
+	injured _F.03_ saying 1014 
+	injured _F.04_ saying 1030 
+
+_talisman_ task:
+	when _S.07_ and _S.09_ 
+	end quest 
+
+_S.12_ task:
+	hide npc _sleepingmage_ 
+
+until _S.12_ performed:
+	pc at _magesguild_ set _S.01_

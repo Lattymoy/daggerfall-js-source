@@ -1,0 +1,210 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C00Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 11
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 42
+Quest: A0C00Y11
+DisplayName: The Cure
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Pardon me. Are you a healer, or
+<ce> do you know any healing magic?
+<ce> My cousin needs help badly.
+<--->
+<ce> My cousin is dying! Will you help me?
+
+RefuseQuest:  [1001]
+<ce> Curse it. I could have used you.
+<--->
+<ce> That is my luck. Thank you all the same.
+<--->
+<ce> Forgive me for troubling you.
+
+AcceptQuest:  [1002]
+<ce> Bless you! I am _giver_. Word has
+<ce> come from ___cousin_ that my cousin
+<ce> _cousin_ is gravely ill and may die
+<ce> within =questtime_ days. Take this
+<ce> _gold1_ gold now. Cure %g2 and I
+<ce> will pay _gold2_ gold more.
+
+QuestComplete:  [1004]
+<ce> You have the Talisman! Bless you,
+<ce> %pcn. My cousin promised you more
+<ce> gold, and here it is. I cannot
+<ce> thank you enough. Safe travels.
+
+RumorsDuringQuest:  [1005]
+<ce> A shame about _giver_'s cousin. They
+<ce> say nobody survives that sickness.
+
+RumorsPostfailure:  [1006]
+<ce> Wizard Bane killed _cousin_
+<ce> of ___cousin_. Some fear a
+<ce> plague will start there now.
+<--->
+<ce> _giver_ is lost in grief. %G3 cousin
+<ce> died not long ago, over in ___cousin_.
+
+RumorsPostsuccess:  [1007]
+<ce> Have you heard? They are calling
+<ce> it a miracle in ___cousin_. A
+<ce> dying soul got well!
+<--->
+<ce> _giver_ gave the temple a fat purse
+<ce> of gold. %G3 cousin recovered
+<ce> against all hope, they say.
+<--->
+<ce> You are the %ra who saved that poor
+<ce> soul in ___cousin_, are you not?
+
+QuestorPostsuccess:  [1008]
+<ce> Bless you, %pcf. _cousin_ and I owe you
+<ce> more than we can say. %G is well again,
+<ce> with no trace of the Wizard Bane.
+
+QuestorPostfailure:  [1009]
+<ce> %pcn! Your very breath fouls the air. My
+<ce> cousin is dead because of you. Get out!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _giver_ of ___giver_ paid me to
+ cure %g3 cousin _cousin_, who lies
+ sick in ___cousin_. %G may die
+ within =questtime_ days. If I save
+ %g2, I earn another _gold2_ gold.
+
+Message:  1011
+%qdt:
+ I have seen _cousin_, and %g3
+ sickness is worse than _giver_
+ said. _cousin_ thinks _healer_
+ of ___healer_ may have a cure.
+
+Message:  1012
+<ce> I heard about %g3 sickness. None of
+<ce> the healers here have found a cure.
+<--->
+<ce> Yes, I heard something of %g2. A
+<ce> strange, deadly illness. A sad business.
+<--->
+<ce> I know the story. If you
+<ce> ask me, it is Wizard Bane.
+<--->
+<ce> Nobody knows what ails %g2. I
+<ce> hear %g has only days left.
+<--->
+<ce> A sad case. Nobody can say what ails %g2.
+<ce> Try a healer called _healer_, who knows
+<ce> more about rare diseases than anyone.
+<--->
+<ce> Ah, the poor soul with the wasting fever.
+
+Message:  1013
+<ce> Yes, I know the case. _cousin_ of
+<ce> ___cousin_ has Wizard Bane, and %g3 cure
+<ce> is my Talisman. It works only once. It
+<ce> is yours for 20 gold. There. My thanks.
+
+Message:  1015
+<ce> Yes, I know the case. _cousin_ of
+<ce> ___cousin_ has Wizard Bane, and %g3 cure is
+<ce> my Talisman. It works only once. It costs
+<ce> 20 gold, and you do not have that much.
+
+Message:  1017
+%qdt:
+ _healer_ of ___healer_ sold me a
+ Talisman. It cures Wizard Bane, the
+ sickness that is killing _cousin_.
+
+Message:  1019
+<ce> The Talisman does its work,
+<ce> then fades away into nothing.
+
+Message:  1030
+<ce> I am so weak, and nobody can tell me
+<ce> why. My cousin _giver_ sent you? Oh,
+<ce> thank you! I hear a healer called
+<ce> _healer_ in ___healer_ may help. Go to
+<ce> %g2, quickly, and bring me the cure!
+
+Message:  1040
+<ce> They say _healer_ knows
+<ce> the rarest diseases best.
+<--->
+<ce> _healer_? Lives in ___healer_, I think.
+
+Message:  1041
+<ce> _healer_ is the finest healer anywhere,
+<ce> they say. You will find %g2 in ___healer_.
+<--->
+<ce> _healer_ of ___healer_? %G is famous
+<ce> for curing the hardest cases.
+
+
+QBN:
+Item _gold1_ gold range 5 to 25
+Item _gold2_ gold range 10 to 50
+Item talisman talisman
+
+Person _giver_ group Questor
+Person _cousin_ group Resident4 remote anyInfo 1012 rumors 1012
+Person _healer_ face 64 group Chemist remote anyInfo 1040 rumors 1041
+
+Clock _questtime_ 00:00 0 flag 1 range 3 5
+
+--	Quest start-up:
+	dialog link for person _healer_ item talisman 
+	start timer _questtime_ 
+	log 1010 step 0 
+	get item _gold1_ 
+	pick one of _S.04_ _S.05_ 
+	make _gold1_ permanent 
+	talisman used do _S.06_ 
+	create npc _healer_ 
+	create npc _cousin_ 
+
+_questtime_ task:
+	end quest 
+
+_S.01_ task:
+	clicked npc _cousin_ say 1030 
+	log 1011 step 1 
+
+_S.02_ task:
+	when _S.01_ and _S.04_ 
+	make pc ill with Wizard_Fever 
+
+variable _S.03_
+variable _S.04_
+variable _S.05_
+_S.06_ task:
+	take talisman from pc saying 1019 
+	cure Wizard_Fever 
+
+_S.07_ task:
+	toting talisman and _cousin_ clicked 
+	give pc _gold2_
+	end quest 
+--removed unnecessary delay
+
+_S.08_ task:
+	clicked npc _healer_ 
+
+_S.09_ task:
+	clicked _healer_ and at least 20 gold otherwise do _S.10_ 
+	log 1017 step 2 
+	get item talisman 
+	say 1013 
+
+_S.10_ task:
+	say 1015 
+	clear _S.08_ _S.09_ _S.10_

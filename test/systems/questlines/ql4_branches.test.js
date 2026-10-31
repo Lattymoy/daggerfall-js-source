@@ -166,7 +166,7 @@ test('QL4 BRANCH-5 / REWARD-4 the knights\' hand-ins: "take it" gives the gold i
 });
 
 test('QL4 BRANCH-6 a refusal whose DFU box was the story says the story in its own words (19xx), in the quest\'s voice (mutants: a refusal\'s `say 1903` dropped)', () => {
-  for (const [name, words] of [['L0A01L00', /full member of the Dark Brotherhood/], ['P0A01L00', /Welcome to the family/], ['B0B70Y14', /duped by a rogue mage/], ['A0C01Y03', /Kindness! Of course/], ['B0B70Y16', /dragonslayer/], ['B0B50Y11', /A well it shall be/]]) {
+  for (const [name, words] of [['L0A01L00', /You are one of us, and in any town/], ['P0A01L00', /Welcome to the family/], ['B0B70Y14', /duped by a rogue mage/], ['A0C01Y03', /Kindness\. So that is why/], ['B0B70Y16', /dragonslayer/], ['B0B50Y11', /A well it shall be/]]) {   // PIN MOVED (OWN-WORDS2): L0A01L00's 1903 echoes our 1004   // PIN MOVED (OWN-WORDS2 sweep): A0C01Y03's 1903 had DFU's words, now ours
     const { quest, rec } = answer(name, 1);
     assert.ok(quest.questSuccess, `${name}: a success`);
     assert.ok(rec.popups.some((p) => words.test(p)), `${name}: ${words} said - ${JSON.stringify(rec.popups)}`);

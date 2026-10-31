@@ -1,0 +1,161 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C00Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 8
+Messages: 13
+Quest: K0C00Y08
+DisplayName: A Rare Book
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Have you heard of _book_? Hardly anyone
+<ce> has seen a copy, but I know of one, lost
+<ce> in a %reg dungeon. _upfront_ gold now, and
+<ce> _gold_ more when the book is mine. Agreed?
+<--->
+<ce> I want a certain book that no shop sells, not for
+<ce> any sane price. A copy has turned up in a dungeon
+<ce> not far from here. Fetch it, for _upfront_ gold
+<ce> now and _gold_ when you return. Deal, %pcf?
+
+RefuseQuest:  [1001]
+<ce> As you like. Another
+<ce> sellsword will want the gold.
+
+AcceptQuest:  [1002]
+<ce> Good. The book is called _book_, and it
+<ce> lies in ___mondung_. You have =queston_
+<ce> days to bring it here, or the _gold_
+<ce> gold is off. Good luck, %pcf.
+
+QuestComplete:  [1004]
+<ce> Wonderful. Your _gold_ gold,
+<ce> as promised. My thanks, %pcf.
+
+RumorsDuringQuest:  [1005]
+My knee aches, so rain is coming. It is always right.
+<--->
+I spent the whole morning talking
+about the weather. I regret nothing.
+<--->
+Same weather as always for this time of year.
+<--->
+It is chilly for the season here in %cn.
+<--->
+Warmer than last year at this time, I would say.
+<--->
+My aunt is off to see a healer in
+another province. Her feet, apparently.
+<--->
+Have you noticed how early it gets dark lately?
+<--->
+This town needs a statue. Of anyone.
+<--->
+Young people and their spells. %oth, what next?
+<--->
+I dreamed about turnips again last night. Do not ask.
+<--->
+Here is a good one. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I do not understand it either.
+<--->
+The law in %reg is fair, mostly, when it is awake.
+
+RumorsPostfailure:  [1006]
+My knee aches, so rain is coming. It is always right.
+<--->
+I spent the whole morning talking
+about the weather. I regret nothing.
+<--->
+Same weather as always for this time of year.
+<--->
+It is chilly for the season here in %cn.
+<--->
+Warmer than last year at this time, I would say.
+<--->
+My aunt is off to see a healer in
+another province. Her feet, apparently.
+<--->
+Have you noticed how early it gets dark lately?
+<--->
+This town needs a statue. Of anyone.
+<--->
+Young people and their spells. %oth, what next?
+<--->
+I dreamed about turnips again last night. Do not ask.
+<--->
+Here is a good one. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I do not understand it either.
+<--->
+The law in %reg is fair, mostly, when it is awake.
+
+RumorsPostsuccess:  [1007]
+_qgiver_ is delighted with %g3 rare new book.
+
+QuestorPostsuccess:  [1008]
+Ah, the %ra who found me _book_. What do you need?
+
+QuestorPostfailure:  [1009]
+<ce> _book_ is lost again, and you have
+<ce> the nerve to visit me? Get out.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_ in ___qgiver_, _qgiver_ hired
+ me to bring back _book_, a rare book, from
+ ___mondung_. If I return within =queston_
+ days, I earn _gold_ gold.
+
+Message:  1011
+<ce> You have found _book_.
+
+Message:  1012
+<ce> _qgiver_ will be furious. You were
+<ce> meant to bring %g2 the book by now.
+
+
+QBN:
+Item _gold_ gold
+Item _upfront_ gold range 5 to 50
+Item _book_ book2
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	place item _book_ at _mondung_ 
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	get item _upfront_ 
+	make _upfront_ permanent 
+
+_queston_ task:
+	have _book_ set _S.03_ 
+	end quest 
+
+_S.01_ task:
+	clicked item _book_ 
+	say 1011 
+
+_S.02_ task:
+	toting _book_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_S.03_ task:
+	say 1012 
+	make _book_ permanent 

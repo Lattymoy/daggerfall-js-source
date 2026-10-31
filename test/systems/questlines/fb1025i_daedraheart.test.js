@@ -150,7 +150,7 @@ test('FIELD BUGS 2026-10-25i: Q0C4XY04 runs to its end - the four come in waves 
   r.tick(2, 1);
   assert.equal(r.take(fire, held[0]), null, 'taken');
   r.tick(2, 1);
-  assert.ok(r.rec.popups.some((p) => /pluck a perfect heart/.test(p)), '`clicked item _heart_ say 1040`');
+  assert.ok(r.rec.popups.some((p) => /heart comes free in your hand/.test(p)), '`clicked item _heart_ say 1040`');   // PIN MOVED (OWN-WORDS2): 1040 in our words (quest/own/Q0C4XY04.txt)
   r.leave();
   r.tick(2);
   r.quest.getPerson({ name: 'questgiver' }).setPlayerClicked();   // Elyzabyth clicked (machine.setLastNPCClicked's sweep)
@@ -226,7 +226,7 @@ test('FIELD BUGS 2026-10-25i HEART-TAKEN: a press on the quest\'s heart that tak
     } else sendQuestItemClick(heart, r.getQuest);   // the right click's menu: the quest's click first (WHERE-ROBES), and nothing taken
     r.tick(2, 1);
     assert.equal(r.quest.getTask({ name: 'S.01' }).getTriggerValue(), true, `${look}: DFU's click fired (its popup 1040 said)`);
-    assert.ok(r.rec.popups.some((p) => /pluck a perfect heart/.test(p)));
+    assert.ok(r.rec.popups.some((p) => /heart comes free in your hand/.test(p)));   // PIN MOVED (OWN-WORDS2): 1040 in our words
     assert.ok(fire.entity.items.includes(heart), `${look}: the heart is on the body still`);
     assert.deepEqual(r.objectives(), { heart: 'open' }, `${look}: not "taken", and nothing to bring`);
     if (look === 'menu') continue;

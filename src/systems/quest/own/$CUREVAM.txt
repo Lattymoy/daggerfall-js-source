@@ -1,0 +1,277 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\$CUREVAM.Qbn.
+-- StartsBy: letter
+-- Questee: anyone
+-- Questor: hunter
+-- QuestId: 0
+Messages: 53
+Quest: $CUREVAM
+DisplayName: Cure for Vampirism
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Error: message 1000
+is never called.
+
+RefuseQuest:  [1001]
+Error: message 1001
+is never called.
+
+AcceptQuest:  [1002]
+Error: message 1002
+is never called.
+
+QuestFail:  [1003]
+<ce> Error: message 1003 is never called.
+
+QuestComplete:  [1004]
+<ce> As =bloodfather_ dies, the
+<ce> curse lifts from your soul.
+<ce> You are a vampire no longer.
+
+RumorsDuringQuest:  [1005]
+<ce> _hunter_ will soon lead a new crusade against
+<ce> the vampires of %reg. Perhaps then we can
+<ce> walk the streets at night without fear.
+
+RumorsPostfailure:  [1006]
+<ce> _hunter_ and %g3 men killed many vampires
+<ce> in %reg. Not every last one, I would wager.
+<--->
+<ce> _hunter_ should have let things be. %G3 crusades
+<ce> only send the vampires underground. Once %g is
+<ce> gone, they return stronger than before.
+
+RumorsPostsuccess:  [1007]
+<ce> _hunter_ and %g3 men killed many vampires
+<ce> in %reg. Not every last one, I would wager.
+<--->
+<ce> _hunter_ should have let things be. %G3 crusades
+<ce> only send the vampires underground. Once %g is
+<ce> gone, they return stronger than before.
+
+QuestorPostsuccess:  [1008]
+Error: message 1008
+is never called.
+
+QuestorPostfailure:  [1009]
+Error: message 1009
+is never called.
+
+Message:  1011
+From one end of Tamriel to the other,
+_hunter_ hunts vampires and kills them.
+<--->
+_hunter_ has given %g3 whole life to hunting vampires.
+
+Message:  1012
+<ce> They say vampires killed _hunter_'s own father. That
+<ce> is what drove %g2 to %g3 burning hatred of them.
+<--->
+<ce> _hunter_ killed %g3 own father once he became
+<ce> a vampire. Now there is a true zealot!
+
+Message:  1020
+                       %qdt
+ 
+ Dear %pcn of %vam,
+ 
+    I am _hunter_, vampire hunter, and not yet your
+ enemy. Vampirism can be cured. Kill your bloodfather.
+ _vamp1_ of ___vamp1_ knows where. In =huntstart_ days
+ I hunt the vampires of %reg, you among them.
+ 
+<ce> _hunter_
+
+Message:  1021
+<ce> Will you let _vamp1_ read
+<ce> what _hunter_ wrote?
+
+Message:  1022
+<ce> You did well to bring me this, %pcn.
+<ce> _hunter_ has plagued %vam for years, and
+<ce> this warning will save many of our kin. Do
+<ce> not take %g3 threat lightly, %pcf. %G
+<ce> knows your name. Go carefully in the dark.
+
+Message:  1023
+<ce> %vam speaks well of you, %pcn. Your bloodfather
+<ce> is =elder_ of ___wrongdung_ or =bloodfather_ of
+<ce> ___fatherdung_. Elders hate visitors. Ask _vamp2_
+<ce> of ___vamp2_, Keeper of the Bloodline. Show %g2
+<ce> this bracelet, and %g will know who sent you.
+
+Message:  1024
+<ce> Hmph. You are young for such knowledge. But you
+<ce> carry _vamp1_'s token, so I will tell you. Your
+<ce> bloodfather is =bloodfather_, whose lair is in
+<ce> ___fatherdung_. The elders want no visitors at
+<ce> this season. Disturb =bloodfather_ at your peril.
+
+Message:  1025
+<ce> Bloodtraitor! Your treachery is
+<ce> known. =bloodfather_ is beyond your
+<ce> reach. But do not fear, your days in
+<ce> %vam are over. We will finish you
+<ce> before _hunter_ ever has the chance.
+
+Message:  1030
+<ce> Pup, do not break my meditation! Go,
+<ce> before my hunger makes me kill you!
+
+Message:  1031
+<ce> You have slain =elder_,
+<ce> an Elder of %vam.
+
+Message:  1032
+<ce> %pcn, I know your blood, for it is mine.
+<ce> Would you raise your hand against your
+<ce> own father? %vam punishes the killing of
+<ce> a father with death. Do not make me
+<ce> carry out the sentence. Run, my child!
+
+Message:  1040
+<ce> _hunter_ told me you would be
+<ce> here. Die, creature of the night!
+
+QuestTimeLapse:  [1045]
+<ce> You notice something in your pack
+<ce> that was not there before. A letter,
+<ce> with your name on it in a fine,
+<ce> flowing hand. How did it get there?
+
+Message:  1050
+%qdt:
+ _hunter_ the vampire hunter will kill me
+ unless I cure myself by slaying my
+ bloodfather. %G does not know who that
+ is, but thinks _vamp1_ of ___vamp1_ may.
+ The hunt begins in =huntstart_ days.
+
+Message:  1051
+%qdt:
+ _vamp1_ thinks my bloodfather
+ lives in ___wrongdung_ or
+ ___fatherdung_. With %g3 bracelet,
+ I am to see _vamp2_ of __vamp2_,
+ ___vamp2_, who knows which.
+
+Message:  1052
+%qdt:
+ According to _vamp2_, my
+ bloodfather is =bloodfather_,
+ whose lair is in ___fatherdung_.
+
+
+QBN:
+Item _letter_ letter used 1020
+Item _token_ bracelet
+
+Person _vamp1_ face 40 factiontype Vampire_Clan remote
+Person _vamp2_ face 4 factiontype Vampire_Clan male remote
+Person _hunter_ face 1 factiontype Knightly_Guard remote anyInfo 1011 rumors 1012
+
+Place _fatherdung_ remote dungeon8
+Place _wrongdung_ remote dungeon5
+
+Clock _S.10_ 1.00:00 2.22:00
+Clock _S.13_ 7.00:00 27.23:40
+Clock _huntstart_ 00:00 0 flag 1 range 3 5
+
+Foe _bloodfather_ is Ancient_vampire
+Foe _vampire_ is Vampire
+Foe _F.02_ is Knight
+Foe _elder_ is Ancient_vampire
+
+--	Quest start-up:
+	dialog link for person _vamp2_ 
+	dialog link for location _fatherdung_ person _vamp1_ 
+	dialog link for person _hunter_ 
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.19_ 
+	give pc _letter_ notify 1045 
+	place foe _bloodfather_ at _fatherdung_ 
+	create npc _vamp1_ 
+	place foe _elder_ at _wrongdung_ 
+
+_S.00_ task:
+	killed 1 _bloodfather_ 
+	give pc nothing 
+	cure vampirism 
+	change repute with _vamp1_ by -20 
+	end quest 
+
+_S.01_ task:
+	clicked npc _vamp1_ 
+	have _letter_ set _S.06_ 
+
+variable _S.02_
+_readletter_ task:
+	add dialog for person _hunter_ 
+	add dialog for person _vamp1_ 
+	log 1050 step 0 
+
+_S.04_ task:
+	daily from 06:00 to 18:00 
+	clear _S.17_ 
+
+variable _S.05_
+variable _S.06_
+_S.07_ task:
+	when _S.06_ and _S.01_ 
+	prompt 1021 yes _S.08_ no _S.09_ 
+
+_S.08_ task:
+	hide npc _vamp2_ 
+	hide npc _vamp1_ 
+	say 1022 
+
+_S.09_ task:
+	add dialog for person _vamp2_ 
+	start timer _S.10_ 
+	reveal _fatherdung_ 
+	reveal _wrongdung_ 
+	log 1051 step 1 
+	get item _token_ 
+	say 1023 
+
+_S.10_ task:
+	hide npc _vamp1_ 
+	hide npc _vamp2_ 
+	change repute with _vamp1_ by -15 
+
+_S.11_ task:
+	injured _bloodfather_ saying 1032 
+	injured _elder_ saying 1030 
+
+_S.12_ task:
+	killed 1 _elder_ saying 1031 
+	change repute with _vamp1_ by -20 
+
+_S.13_ task:
+	end quest 
+
+_huntstart_ task:
+	create foe _F.02_ every 60 minutes 30 times with 20% success 
+	start timer _S.13_ 
+	hide npc _vamp2_ 
+	hide npc _vamp1_ 
+
+_S.15_ task:
+	injured _F.02_ saying 1040 
+
+_givetoken_ task:
+	toting _token_ and _vamp2_ clicked 
+	log 1052 step 2 
+	say 1024 
+
+_S.17_ task:
+	when _S.10_ and not _S.04_ and not _givetoken_ 
+	create foe _vampire_ every 60 minutes 10 times with 25% success 
+
+_S.18_ task:
+	injured _vampire_ saying 1025 
+
+_S.19_ task:
+	start timer _huntstart_ 

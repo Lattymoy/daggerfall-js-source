@@ -1,0 +1,882 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C00Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 6
+Messages: 101
+Quest: K0C00Y06
+DisplayName: A Mix-Up
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %oth. You have the look of that %ra
+<ce> they call %pcn. Would you be %pcf?
+<--->
+<ce> Tell me, would your name be %pcn?
+<--->
+<ce> Hold on. Are you %pcn, by any chance?
+
+RefuseQuest:  [1001]
+<ce> Oh. My mistake, then.
+<--->
+<ce> Good. Forget I asked.
+
+AcceptQuest:  [1002]
+<ce> "Thief! You took my _gem_! _guard_, kill!"
+<ce> The charge is false. You may have lifted the
+<ce> odd gem in your time, but never this one.
+<--->
+<ce> "You dare come back after stealing my _gem_?
+<ce> =guard_ will deal with you." Something is
+<ce> wrong. You have never wronged this person.
+
+QuestComplete:  [1004]
+<ce> "So you never took my _gem_. %oth,
+<ce> forgive me. I will tell the %cn guards
+<ce> this %ra is innocent. Take this _reward_
+<ce> as my apology." Whatever _qgiver_ says,
+<ce> your name will never be quite clean.
+
+RumorsDuringQuest:  [1005]
+For good gossip, try _inn_ in __inn_.
+<--->
+Nobody hears more than the regulars at _inn_ in __inn_.
+<--->
+When they catch that %ra thief, half
+the town will come to the hanging.
+<--->
+Poor _qgiver_. That %ra will pay double
+for the _gem_, one way or another.
+
+RumorsPostfailure:  [1006]
+Everything points to %pcn as the thief of ___qgiver_.
+<--->
+_qgiver_ is still hunting that
+%ra and talks of nothing else.
+
+RumorsPostsuccess:  [1007]
+So %pcn never robbed anyone in ___qgiver_ after all.
+<--->
+The %ra sellsword they blamed for the
+___qgiver_ robbery was innocent all along.
+
+QuestorPostsuccess:  [1008]
+I am still sorry I called you a thief, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> Thief! Out, or I call the guard!
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_, a =qgiver_ at __qgiver_
+ in ___qgiver_, says I stole %g3
+ _gem_. I did not, but unless I
+ prove it, I am finished in %reg.
+
+Message:  1011
+_qgiver_ lost %g3 _gem_ to a thief. Someone
+saw a %ra much like you at __qgiver_.
+<--->
+_qgiver_ is still looking for the %ra who took that gem.
+
+Message:  1012
+_merchant_ runs an honest shop in
+__merchanthome_. Mostly honest.
+<--->
+_merchant_ overcharges no more than any other trader.
+<--->
+_merchant_? At this hour you will find
+%g2 at _merchanthome_ in __merchanthome_.
+<--->
+To hear _priest_ tell it, _merchant_ is the ruin of %reg.
+<--->
+_merchant_ gets on with nearly everyone,
+though %g cannot stand _thief_.
+
+Message:  1013
+_noble_ comes from the ruling line of __noblehome_.
+%oth, %g3 people have held it forever.
+<--->
+_noble_ is like the rest of %g3
+class. Proud, cruel and spoiled.
+<--->
+_noble_ spends %g3 afternoons
+at _noblehome_ in __noblehome_.
+<--->
+_thief_ has no love for _noble_, but most people do.
+<--->
+_noble_ has always despised
+==priest_, and _priest_ most of all.
+
+Message:  1014
+_priest_ serves ==priest_, and with more zeal than most.
+<--->
+_priest_ has lived down the scandals
+of %g3 first years in ==priest_.
+<--->
+At this hour _priest_ is usually at
+prayer in _priesthome_, __priesthome_.
+<--->
+Except for _noble_, everyone in
+__priesthome_ respects _priest_.
+<--->
+_priest_ likes nearly everyone. The one
+exception is that =merchant_, _merchant_.
+
+Message:  1015
+_thief_ stole jewels for years.
+%G says %g has retired. Mostly.
+<--->
+In __thiefhome_, _thief_ was once
+the best jewel thief around.
+<--->
+_thief_ is at _thiefhome_ most days around this time.
+<--->
+_merchant_ says _thief_ has not changed %g3 ways one bit.
+<--->
+_thief_ cannot stand _noble_, for
+all the =noble_'s fine blood.
+
+Message:  1016
+_witness_ is the =witness_ who saw the robbery at __qgiver_.
+<--->
+_witness_? An ordinary =witness_. Look
+for %g2 at __witness_ in ___witness_.
+
+Message:  1017
+<ce> A ragged boy pushes a letter into your hands
+<ce> and is gone before you can ask him a thing.
+
+Message:  1018
+%pcn,
+ 
+     Our enemies have soiled your almost spotless
+ name. Speak with _witness_, a =witness_ who idles at
+ _inn_. Expect no warmth from %g2, since %g claims to
+ have seen you take the _gem_ from __qgiver_.
+<ce> The Necromancers
+
+Message:  1019
+%pcf,
+ 
+      We know false blame well. Your accuser is
+ _witness_, who claims %g saw you rob __qgiver_.
+ _witness_ may serve your enemies, or ours.
+ Speak to %g2 in public, at _inn_ in __inn_.
+ 
+<ce> The Agents
+
+Message:  1020
+%pcf,
+ 
+      Your friends know you did not lift the
+ _gem_ from __qgiver_. You would never have been
+ caught. A =witness_, _witness_, swears %g saw a
+ %ra like you do it. Ask at _inn_ in __inn_.
+ 
+<ce> The Thieves Guild
+
+Message:  1021
+Friend,
+ 
+      You no more robbed __qgiver_ of that
+ _gem_ than I did. Look at a =priest_ in
+ __priesthome_, who enjoys framing
+ strangers as much as I enjoy cold ale. No
+ proof, but look into %g2. Name's _priest_.
+ 
+<ce> A Friend
+
+Message:  1022
+%pcn,
+ 
+     We never met. I worked for a
+ =merchant_ named _merchant_. %G got
+ caught with %g3 hand in the till and
+ blamed me. I did the jail time. My bet
+ is %g did the job at __qgiver_ too.
+ 
+<ce> A Friend
+
+Message:  1023
+%pcn,
+ 
+     Forgive the intrusion. You must
+ prove you did not rob __qgiver_. A
+ =noble_ may have planned the theft.
+ The name is _noble_. %G lives in
+ __noblehome_, and %g3 friends are
+ powerful. Do not meet %g2 unready.
+ 
+<ce> A Friend
+
+Message:  1024
+%pcn,
+ 
+      Two people in __thiefhome_ know
+ you are innocent. Me, and _thief_, who
+ did it. %oth, that =thief_ once went to
+ jail for robbing jewelers. If %g did
+ not do this, %g knows who did. Ask %g2.
+<ce> A Friend
+
+Message:  1025
+<ce> "It is you! Thief of __qgiver_!
+<ce> Guards!" _witness_ runs, pressing
+<ce> a note into your hand as %g goes.
+<--->
+<ce> "Help! The %ra who robbed
+<ce> __qgiver_!" _witness_ flees, but
+<ce> slips you a note before %g goes.
+
+Message:  1026
+%qdt:
+ The Necromancers wrote about a
+ =witness_ who claims to have seen me
+ take the _gem_ at __qgiver_. The name
+ is _witness_, and %g is often at _inn_.
+
+Message:  1027
+%qdt:
+ The Agents of the Underking named the
+ =witness_ who swears %g saw my double,
+ a %ra, rob __qgiver_ of the _gem_. Is
+ _witness_ a pawn or an enemy? I will
+ ask %g2 at _inn_ in __inn_.
+
+Message:  1028
+%qdt:
+ The Thieves Guild wrote to say they
+ know I am innocent. They named the
+ =witness_ who claims %g saw me take
+ the _gem_. _witness_ drinks at
+ _inn_. Time I paid a visit.
+
+Message:  1029
+%qdt:
+ An unsigned letter says _priest_,
+ a =priest_, may be the one who had
+ the _gem_ stolen and framed me.
+
+Message:  1030
+%qdt:
+ Someone wrote to me about _merchant_,
+ a =merchant_ who would happily steal
+ a _gem_ and let me hang for it.
+
+Message:  1031
+%qdt:
+ An unsigned letter says _noble_, a
+ noble of __noblehome_, knows a good
+ deal about what happened at __qgiver_.
+
+Message:  1032
+%qdt:
+ An unsigned letter names _thief_ of
+ __thiefhome_ as a famous jewel thief.
+ Even if %g did not rob __qgiver_, a
+ talk may tell me who did.
+
+Message:  1033
+%pcn,
+ 
+     Come to _withouse_
+ in __withouse_. Alone.
+ 
+<ce> _witness_
+
+Message:  1034
+%qdt:
+ When I spoke to _witness_, %g
+ cried for the guards, but slipped
+ me a note first. %G wants me to
+ meet %g2 at _withouse_.
+
+Message:  1035
+<ce> Thank %god you came. I did see a %ra who
+<ce> looks like you steal the _gem_ at
+<ce> __qgiver_, but a =merchant_, _merchant_,
+<ce> hired your double. The gem is in
+<ce> ___mondung_. Proof may be at
+<ce> _thiefhouse_, _merchant_'s haunt. Now go.
+
+Message:  1036
+<ce> A %ra who looks just like you did take
+<ce> the _gem_. Then I met _noble_'s cousin
+<ce> in __noblehome_. Same face. _noble_
+<ce> just sent %g3 cousin to ___mondung_, a
+<ce> fine place to hide a _gem_. Or try
+<ce> _thiefhouse_, where _noble_ sleeps.
+
+Message:  1037
+<ce> Someone like you did take the _gem_
+<ce> from __qgiver_. Later I saw that %ra at
+<ce> _priesthome_, whispering with _priest_
+<ce> about ___mondung_. No one will take our
+<ce> word against _priest_. Find proof in
+<ce> ___mondung_ or _thiefhouse_. Good luck.
+
+Message:  1038
+<ce> %pcf, I did see your double take the _gem_
+<ce> from __qgiver_. It was _thief_, a master of
+<ce> disguise. Later, outside _thiefhouse_, I
+<ce> heard of a stash in ___mondung_. %G is
+<ce> respected now, so you need proof to hang %g2.
+
+Message:  1039
+<ce> Quickly, %pcf. I know you never robbed
+<ce> __qgiver_, but if we are seen, I am dead. I work
+<ce> for _merchant_, and %g all but runs
+<ce> __merchanthome_. Search %g3 house, _thiefhouse_,
+<ce> for proof on %g2, or %g3 hoard in ___mondung_.
+
+Message:  1040
+<ce> %pcf, I saw the theft at __qgiver_. Naming the
+<ce> real thief would hang me, so I named a
+<ce> stranger. You. It was _noble_, of %reg's ruling
+<ce> family. Seek proof at ___mondung_, %g3 weekend
+<ce> haunt, or _thiefhouse_ at night. Sorry.
+
+Message:  1041
+<ce> %pcf, I robbed __qgiver_ myself. _priest_ of
+<ce> ==priest_ paid me for the job, and to blame
+<ce> a stranger. The _gem_ is in ___mondung_, but
+<ce> alone it proves nothing. Search _thiefhouse_
+<ce> for something on %g2. I will deny this.
+
+Message:  1042
+<ce> It was _thief_, a =thief_, %pcf. Folk in
+<ce> __thiefhouse_ think %g has retired. %G has
+<ce> not. %G blames a stranger for each job.
+<ce> Search _thiefhouse_, where %g sleeps, or %g3
+<ce> old hideout in ___mondung_. Catch %g2 for me.
+
+Message:  1043
+%qdt:
+ _witness_ says _merchant_ is behind
+ the theft, but no one will believe it
+ without proof. I may need to search
+ both _thiefhouse_ and ___mondung_.
+
+Message:  1044
+%qdt:
+ According to _witness_, the noble _noble_
+ planned the theft. %G is above suspicion,
+ so I need proof, from _thiefhouse_, where
+ _noble_ spends nights, or ___mondung_.
+
+Message:  1045
+%qdt:
+ _witness_ admits %g knew all along that I
+ was not the thief. _priest_ planned it, and
+ will be hard to convict. Proof may be at
+ _thiefhouse_ or ___mondung_, says _witness_.
+
+Message:  1046
+%qdt:
+ _witness_ says %g saw the real thief,
+ _thief_, a jewel thief everyone thinks
+ retired. _thief_ is so respected now that
+ only hard proof will convict %g2. It may be
+ at _thiefhouse_, at ___mondung_, or both.
+
+Message:  1047
+<ce> Here it is, the _gem_
+<ce> taken from __qgiver_.
+
+Message:  1048
+_merchant_
+ __merchanthome_
+ 
+ _merchant_,
+ 
+      You want a lower fee, since the _gem_ is
+ flawed and you have a scapegoat ready. Agreed,
+ if this %ra is the fool you say. Keep that
+ =priest_, _priest_, away. %G could ruin us.
+<ce> -- %n
+
+Message:  1049
+_noble_
+ __noblehome_
+ 
+ My darling _noble_,
+ 
+     Robbing poor _qgiver_ for me, you wicked
+ thing! You should have paid for the _gem_. If it
+ leaves ___mondung_ and is traced to me, I will
+ name you. Beware _thief_. %G adores blackmail.
+<ce> Love,
+<ce> %n
+
+Message:  1050
+_priest_
+ __priesthome_
+ 
+ _priest_,
+ 
+      Forget my praise for your gift to
+ ==priest_. The _gem_ was stolen from _qgiver_.
+ Our name in %reg would suffer, and _noble_
+ would use %g3 sway at court. Expect a penance.
+ 
+<ce> With regret,
+<ce> %n
+<ce> ==priest_
+
+Message:  1051
+_thief_
+ __thiefhome_
+ 
+ _thief_,
+ 
+    The job at __qgiver_ takes me back. You framed
+ this %ra just as you framed me at _merchant_'s.
+ Not blackmail, of course. Tell me where in
+ ___mondung_ the _gem_ is, and I may forget.
+ 
+<ce> %n
+
+Message:  1052
+<ce> This letter would damn someone. Show
+<ce> it to a friend of _qgiver_, who may
+<ce> coax %g2 back into the open.
+
+Message:  1053
+<ce> So _noble_ did it. Well, well. I will talk to
+<ce> %g3 family, who will want this hushed up. You
+<ce> bring _qgiver_ the _gem_ at __qgiver_, so %g
+<ce> is happy. Amateurs like _noble_ never learn.
+
+Message:  1054
+<ce> So _thief_ nearly ruined my business,
+<ce> and now %g frames you? I will see the
+<ce> guard, and this old friend of %g3. Take
+<ce> _qgiver_ the _gem_ at __qgiver_. That
+<ce> clears you and wins you favor with %g2.
+
+Message:  1055
+<ce> By %god, this is genuine, and _merchant_ is
+<ce> right to fear me. ==priest_ shall hand
+<ce> _merchant_ to the law. But you must not look
+<ce> like an accomplice. Bring the _gem_ to _qgiver_
+<ce> and earn %g3 goodwill. Hurry to __qgiver_, %pcf.
+
+Message:  1056
+<ce> You took this from _priest_'s room at
+<ce> _thiefhouse_? %oth, it is priceless!
+<ce> Quick, %pcf, take the _gem_ to
+<ce> _qgiver_. I will tell all of __qgiver_
+<ce> that the thief serves ==priest_.
+
+Message:  1057
+<ce> _witness_ told everyone
+<ce> about you, thief! Guards!
+<--->
+<ce> Guards! Here is the %ra
+<ce> that _witness_ named!
+<--->
+<ce> I do not speak with jewel
+<ce> thieves. _witness_ told me
+<ce> what you are. Guards! Guards!
+
+Message:  1058
+<ce> You fool of a %ra! You were meant to
+<ce> take the blame quietly. _guard4_!
+<--->
+<ce> You should have left %reg
+<ce> while you could, %ra. %oth,
+<ce> now you will wish you had.
+
+Message:  1059
+%qdt:
+ The real thief will answer for
+ it. First, _qgiver_ must have
+ the _gem_ back, at __qgiver_.
+
+Message:  1060
+<ce> It is too late. Your name in
+<ce> ___qgiver_ is ruined for now. Stay
+<ce> away from the place for a good while.
+
+Message:  1061
+%qdt:
+ I hear that someone called
+ _witness_ has been telling
+ people I stole the _gem_.
+ I should find this person.
+
+Message:  1091
+%qdt:
+ _witness_ told me _merchant_ is behind
+ the theft of the _gem_. %G sleeps at
+ _thiefhouse_ in ___thiefhouse_, and
+ %g3 stash is in ___mondung_. There is
+ hope for me yet.
+
+Message:  1092
+%qdt:
+ _witness_ told me _noble_ is behind
+ the theft of the _gem_. %G sleeps
+ at _thiefhouse_ in ___thiefhouse_,
+ and %g3 stash is in ___mondung_.
+ There is hope for me yet.
+
+Message:  1093
+%qdt:
+ _witness_ told me _priest_ is behind
+ the theft of the _gem_. %G sleeps at
+ _thiefhouse_ in ___thiefhouse_, and
+ %g3 stash is in ___mondung_. There
+ is hope for me yet.
+
+Message:  1094
+%qdt:
+ _witness_ told me _thief_ is behind
+ the theft of the _gem_. %G sleeps
+ at _thiefhouse_ in ___thiefhouse_,
+ and %g3 stash is in ___mondung_.
+ There is hope for me yet.
+
+Message:  1100
+<ce> You see _qgiver_ slip
+<ce> out through the door.
+
+
+QBN:
+Item _necromancerletter_ letter used 1018
+Item _underkingletter_ letter used 1019
+Item _thievesguildletter_ letter used 1020
+Item _antipriestletter_ letter used 1021
+Item _antimerchantletter_ letter used 1022
+Item _antinobleletter_ letter used 1023
+Item _antithiefletter_ letter used 1024
+Item _gem_ gem
+Item _almightyletter_ letter used 1033
+Item _thiefevidenceletter_ letter used 1051
+Item _merchantevidenceletter_ letter used 1048
+Item _priestevidenceletter_ letter used 1050
+Item _nobleevidenceletter_ letter used 1049
+Item _reward_ trinket
+
+Person _qgiver_ group Questor anyInfo 1011
+Person _priest_ factiontype Temple local anyInfo 1014
+Person _noble_ face 174 factiontype Knightly_Guard female local anyInfo 1013
+Person _merchant_ face 86 faction The_Merchants female local anyInfo 1012
+Person _thief_ face 190 faction The_Thieves_Guild female local anyInfo 1015
+Person _witness_ face 1 group Innkeeper local anyInfo 1016
+Person necromancer faction The_Necromancers remote
+Person underking faction Agents_of_The_Underking remote
+Person _tg_ faction The_Thieves_Guild remote
+
+Place _mondung_ remote dungeon
+Place _thiefhouse_ local house2
+Place _withouse_ local generalstore
+Place _inn_ local tavern
+Place _merchanthome_ remote generalstore
+Place _noblehome_ remote house1
+Place _priesthome_ remote temple
+Place _thiefhome_ remote tavern
+
+Clock _letterarrivaltime_ 00:25 00:50
+Clock _questtimelimit_ 00:00 0 flag 17 range 0 5
+Clock _delay_ 00:01 0 flag 1 range 0 1
+
+Foe _guard_ is Warrior
+Foe _guard2_ is Knight
+Foe _guard3_ is Rogue
+Foe _guard4_ is Spellsword
+
+--	Quest start-up:
+	place item _gem_ at _mondung_ 
+	create foe _guard_ every 1 minutes 1 times with 100% success 
+	dialog link for person necromancer 
+	dialog link for person _tg_ 
+	dialog link for person _thief_ 
+	dialog link for location _withouse_ person _witness_ 
+	dialog link for person underking 
+	dialog link for location _thiefhouse_ person _merchant_ 
+	dialog link for person _priest_ 
+	dialog link for person _noble_ 
+	start timer _questtimelimit_ 
+	start timer _delay_ 
+	start timer _letterarrivaltime_ 
+	log 1010 step 0 
+	pick one of _merchantguilty_ _nobleguilty_ _priestguilty_ _thiefguilty_ 
+	_almightyletter_ used do _havereadwitnessletter_ 
+	legal repute -15 
+	place npc _noble_ at _noblehome_ 
+	place npc _merchant_ at _merchanthome_ 
+	place npc _witness_ at _inn_ 
+	place npc _priest_ at _priesthome_ 
+	place npc _thief_ at _thiefhome_ 
+
+variable _priestguilty_
+variable _merchantguilty_
+variable _nobleguilty_
+variable _thiefguilty_
+
+_delay_ task:
+	hide npc _qgiver_ 
+	say 1100 
+
+_latenight_ task:
+	daily from 00:00 to 02:00 
+
+_priestnight_ task:
+	when _priestguilty_ and _latenight_ and _secondwitnessdiscussion_
+	place npc _priest_ at _thiefhouse_
+	restore _priest_
+
+_priestdayletter_ task:
+	when _priestguilty_ and not _latenight_ and _secondwitnessdiscussion_
+	place item _priestevidenceletter_ at _thiefhouse_ 
+	hide npc _priest_ 
+
+_merchantnight_ task:
+	when _merchantguilty_ and _latenight_ and _secondwitnessdiscussion_
+	place npc _merchant_ at _thiefhouse_ 
+	restore _merchant_
+
+_merchantdayletter_ task:
+	when _merchantguilty_ and not _latenight_ and _secondwitnessdiscussion_
+	place item _merchantevidenceletter_ at _thiefhouse_ 
+	hide npc _merchant_ 
+
+_noblenight_ task:
+	when _nobleguilty_ and _latenight_ and _secondwitnessdiscussion_
+	place npc _noble_ at _thiefhouse_
+	restore _noble_
+
+_nobledayletter_ task:
+	when _nobleguilty_ and not _latenight_ and _secondwitnessdiscussion_
+	place item _nobleevidenceletter_ at _thiefhouse_ 
+	hide npc _noble_ 
+
+_thiefdayletter_ task:
+	when _thiefguilty_ and not _latenight_ and _secondwitnessdiscussion_
+	place item _thiefevidenceletter_ at _thiefhouse_ 
+	hide npc _thief_ 
+
+_thiefnight_ task:
+	when _thiefguilty_ and _latenight_ and _secondwitnessdiscussion_
+	place npc _thief_ at _thiefhouse_ 
+	restore _thief_
+
+_letterarrivaltime_ task:
+	repute with _tg_ exceeds 10 do _friendofthievesguild_ 
+	repute with necromancer exceeds 10 do _friendofnecros_ 
+	repute with underking exceeds 10 do _friendofunderking_
+
+_friendofthievesguild_ task:
+	_thievesguildletter_ used do _havereadthievesguildletter_ 
+	give pc _thievesguildletter_ notify 1017 
+	clear _friendofnecros_ _friendofunderking_ 
+
+_havereadthievesguildletter_ task:
+	log 1028 step 1 
+
+_friendofnecros_ task:
+	_necromancerletter_ used do _havereadnecromancerletter_ 
+	give pc _necromancerletter_ notify 1017 
+	clear _friendofunderking_ 
+
+_havereadnecromancerletter_ task:
+	log 1026 step 1 
+
+_friendofunderking_ task:
+	_underkingletter_ used do _havereadunderkingletter_ 
+	give pc _underkingletter_ notify 1017 
+
+_havereadunderkingletter_ task:
+	log 1027 step 1 
+
+_nobodyismyfriend_ task:
+	when not _friendofnecros_ and not _friendofunderking_ and not _friendofthievesguild_ 
+
+_makehelpfulletterarrive_ task:
+	when _nobodyismyfriend_ and _letterarrivaltime_ 
+
+_clickonwitness_ task:
+	clicked npc _witness_ 
+
+_firstwitnessdiscussion_ task:
+	when _clickonwitness_ and not _havereadwitnessletter_ 
+	create foe _guard2_ every 1 minutes 1 times with 100% success 
+	get item _almightyletter_ 
+	say 1025 
+	place npc _witness_ at _withouse_ 
+	clear _clickonwitness_ 
+
+_havereadwitnessletter_ task:
+	log 1034 step 3 
+
+_secondwitnessdiscussion_ task:
+	when _clickonwitness_ and _havereadwitnessletter_
+	reveal _mondung_ 
+	pick one of _honestmistake_ _annoyingwitness_ 
+	hide npc _witness_ 
+
+_giveantipriestletter_ task:
+	when _priestguilty_ and _makehelpfulletterarrive_ 
+	_antipriestletter_ used do _antipriestlog_ 
+	give pc _antipriestletter_ notify 1017 
+
+_antipriestlog_ task:
+	log 1029 step 2 
+
+_giveantimerchantletter_ task:
+	when _merchantguilty_ and _makehelpfulletterarrive_ 
+	_antimerchantletter_ used do _antimerchantlog_ 
+	give pc _antimerchantletter_ notify 1017 
+
+_antimerchantlog_ task:
+	log 1030 step 2 
+
+_giveantinobleletter_ task:
+	when _nobleguilty_ and _makehelpfulletterarrive_ 
+	_antinobleletter_ used do _antinoblelog_ 
+	give pc _antinobleletter_ notify 1017 
+
+_antinoblelog_ task:
+	log 1031 step 2 
+
+_giveantithiefletter_ task:
+	when _thiefguilty_ and _makehelpfulletterarrive_ 
+	_antithiefletter_ used do _antithieflog_ 
+	give pc _antithiefletter_ notify 1017 
+
+_antithieflog_ task:
+	log 1032 step 2 
+
+variable _annoyingwitness_
+variable _honestmistake_
+_revealthiefhonestmistake_ task:
+	when _honestmistake_ and _thiefguilty_ 
+	log 1046 step 4 
+	say 1038 
+
+_revealnoblehonestmistake_ task:
+	when _honestmistake_ and _nobleguilty_ 
+	log 1044 step 4 
+	say 1036 
+
+_revealmerchanthonestmistake_ task:
+	when _honestmistake_ and _merchantguilty_ 
+	log 1043 step 4 
+	say 1035 
+
+_revealpriesthonestmistake_ task:
+	when _honestmistake_ and _priestguilty_ 
+	log 1045 step 4 
+	say 1037 
+
+_revealthiefannoyingwitness_ task:
+	when _thiefguilty_ and _annoyingwitness_ 
+	log 1094 step 4 
+	say 1042 
+
+_revealpriestannoyingwitness_ task:
+	when _priestguilty_ and _annoyingwitness_ 
+	log 1093 step 4 
+	say 1041 
+
+_revealmerchantannoyingwitness_ task:
+	when _merchantguilty_ and _annoyingwitness_ 
+	log 1091 step 4 
+	say 1039 
+
+_revealnobleannoyingwitness_ task:
+	when _nobleguilty_ and _annoyingwitness_ 
+	log 1092 step 4 
+	say 1040 
+
+_retrievegem_ task:
+	clicked item _gem_ 
+	say 1047 
+
+_readincriminatingletter_ task:
+	clicked item _priestevidenceletter_ 
+	clicked item _thiefevidenceletter_ 
+	clicked item _merchantevidenceletter_ 
+	clicked item _nobleevidenceletter_ 
+	say 1052 
+
+_makevictimreturn_ task:
+	when _deliverlettertomerchant_ or _deliverlettertonoble_ or _deliverlettertopriest_ or _deliverlettertothief_ 
+	log 1059 step 5 
+	restore _qgiver_ 
+
+_deliverlettertothief_ task:
+	toting _nobleevidenceletter_ and _thief_ clicked 
+	say 1053 
+
+_deliverlettertomerchant_ task:
+	toting _thiefevidenceletter_ and _merchant_ clicked 
+	say 1054 
+
+_deliverlettertopriest_ task:
+	toting _merchantevidenceletter_ and _priest_ clicked 
+	say 1055 
+
+_deliverlettertonoble_ task:
+	toting _priestevidenceletter_ and _noble_ clicked 
+	say 1056 
+
+_noevidenceconfrontation_ task:
+	when _clickanyone_ and not _makevictimreturn_ 
+	create foe _guard3_ every 1 minutes 1 times with 100% success 
+	say 1057 
+	clear _clickmerchant_ _clicknoble_ _clickpriest_ _clickthief_ 
+	start task _reminderwitness_
+
+_reminderwitness_ task:
+	log 1061 step 2
+
+_victory_ task:
+	toting _gem_ and _qgiver_ clicked 
+	legal repute -200
+	give pc _reward_ 
+	change repute with _qgiver_ by +10 
+	legal repute +105
+	end quest 
+--changing to -200/+105 again. Criminal conspiracy charges during the quest
+--can lower the player's legal rep more than intended.
+
+_clickmerchant_ task:
+	clicked npc _merchant_ 
+
+_clicknoble_ task:
+	clicked npc _noble_ 
+
+_clickpriest_ task:
+	clicked npc _priest_ 
+
+_clickthief_ task:
+	clicked npc _thief_ 
+
+_clickanyone_ task:
+	when _clickmerchant_ or _clicknoble_ or _clickpriest_ or _clickthief_ 
+
+_revenge_ task:
+	when _clicknoble_ and _deliverlettertothief_ 
+	when _clickpriest_ and _deliverlettertonoble_ 
+	when _clickmerchant_ and _deliverlettertopriest_ 
+	when _clickthief_ and _deliverlettertomerchant_ 
+	create foe _guard4_ every 1 minutes 1 times with 100% success 
+	say 1058 
+
+_questtimelimit_ task:
+	have _gem_ set _illkeepthatgem_ 
+
+_illkeepthatgem_ task:
+	make _gem_ permanent 
+
+_youhavefailed_ task:
+	when _questtimelimit_ and not _victory_ 
+	say 1060 
+	restore _qgiver_ 
+	end quest 

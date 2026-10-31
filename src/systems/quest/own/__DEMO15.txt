@@ -1,0 +1,24 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+---- Example quest to demonstrate dialog linked resources
+---- one resource is revealed when mentioned in message of
+---- other resource given as answer by npc (via tell me about)
+
+Quest: __DEMO15
+
+QRC:
+
+Message:  1011
+_someperson_ once owned _someitem_.
+
+Message:  1012
+People say _someitem_ is magical.
+
+
+QBN:
+
+Person _someperson_ face 81 faction The_Thieves_Guild anyInfo 1011
+Item _someitem_ trinket anyInfo 1012
+
+--	Quest start-up:
+	dialog link for person _someperson_ item _someitem_
+	add dialog for person _someperson_

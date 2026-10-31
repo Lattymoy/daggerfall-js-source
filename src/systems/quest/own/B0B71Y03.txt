@@ -1,0 +1,386 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B71Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 71
+-- QuestId: 3
+Messages: 53
+Quest: B0B71Y03
+DisplayName: The Artifact
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Word has surfaced of where an
+<ce> ancient artifact of power may lie.
+<ce> A chance like this comes once in a
+<ce> life. Will you chase it, %pct?
+
+RefuseQuest:  [1001]
+<ce> No ambition, then? Another knight
+<ce> will snatch this up soon enough.
+
+AcceptQuest:  [1002]
+<ce> I thought I saw some hunger in your
+<ce> eyes, %pcf. They say a witch deep
+<ce> in ___dungeon1_ has found a clue to
+<ce> where it lies. Begin with her.
+
+QuestComplete:  [1004]
+<ce> Your quest is done.
+
+RumorsDuringQuest:  [1005]
+I had a boil last week. It went away.
+<--->
+I spent three hours talking about the weather today.
+<--->
+The weather is about what you
+would expect this time of year.
+<--->
+A bit cold in %cn for the season, is it not?
+<--->
+Warmer today than this day last year, I am sure of it.
+<--->
+My great aunt is off to see a healer in another province.
+<--->
+Funny how early it gets dark around here.
+<--->
+This town needs a statue of a war hero.
+<--->
+Children and their magic these
+days. %oth, I do not understand it.
+<--->
+I had the strangest dream last night.
+<--->
+Here is a good joke. %jok
+<--->
+%jok Now that is a joke.
+<--->
+%jok What does that mean, do you think?
+<--->
+The law in %reg has its good sides and its bad.
+
+RumorsPostfailure:  [1006]
+I had a boil last week. It went away.
+<--->
+I spent three hours talking about the weather today.
+<--->
+The weather is about what you
+would expect this time of year.
+<--->
+A bit cold in %cn for the season, is it not?
+<--->
+Warmer today than this day last year, I am sure of it.
+<--->
+My great aunt is off to see a healer in another province.
+<--->
+Funny how early it gets dark around here.
+<--->
+This town needs a statue of a war hero.
+<--->
+Children and their magic these
+days. %oth, I do not understand it.
+<--->
+I had the strangest dream last night.
+<--->
+Here is a good joke. %jok
+<--->
+%jok Now that is a joke.
+<--->
+%jok What does that mean, do you think?
+<--->
+The law in %reg has its good sides and its bad.
+
+RumorsPostsuccess:  [1007]
+I had a boil last week. It went away.
+<--->
+I spent three hours talking about the weather today.
+<--->
+The weather is about what you
+would expect this time of year.
+<--->
+A bit cold in %cn for the season, is it not?
+<--->
+Warmer today than this day last year, I am sure of it.
+<--->
+My great aunt is off to see a healer in another province.
+<--->
+Funny how early it gets dark around here.
+<--->
+This town needs a statue of a war hero.
+<--->
+Children and their magic these
+days. %oth, I do not understand it.
+<--->
+I had the strangest dream last night.
+<--->
+Here is a good joke. %jok
+<--->
+%jok Now that is a joke.
+<--->
+%jok What does that mean, do you think?
+<--->
+The law in %reg has its good sides and its bad.
+
+QuestorPostsuccess:  [1008]
+You found what you went looking for. What do you want now?
+
+QuestorPostfailure:  [1009]
+You will get no more words from me, %pcf.
+<--->
+Talking to you was a waste
+of breath the first time.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I have set out to find a fabled artifact
+ of power. _questgiver_ of __questgiver_
+ had one clue to give. A witch living
+ alone in ___dungeon1_ may know of it.
+
+Message:  1011
+%qdt:
+ _witch_, a witch in ___dungeon1_,
+ wants an heir. I must take _child_,
+ the witch's great-granddaughter,
+ from _palace_ in __palace_. Only
+ then will I learn of _aurielsbow_.
+
+Message:  1012
+%qdt:
+ _witch_, a witch in ___dungeon1_,
+ wants an heir. I must take _child_,
+ the witch's great-granddaughter,
+ from _palace_ in __palace_. Only
+ then will I learn of _aurielshield_.
+
+Message:  1013
+%qdt:
+ _witch_, a witch in ___dungeon1_,
+ wants an heir. I must take _child_,
+ the witch's great-granddaughter,
+ from _palace_ in __palace_. Only
+ then will I learn of _lordsmail_.
+
+Message:  1021
+<ce> I am _witch_, and I know of _aurielshield_. My
+<ce> power fades, so my price is an heir. Bring me my
+<ce> great-granddaughter, _child_, within
+<ce> =finddaughter_ days. Her parents know nothing and
+<ce> will fight you. Find her at _palace_ in __palace_.
+
+Message:  1020
+<ce> I am _witch_, and I know of _aurielsbow_. My power
+<ce> fades, so my price is an heir. Bring me my
+<ce> great-granddaughter, _child_, within
+<ce> =finddaughter_ days. Her parents know nothing and
+<ce> will fight you. Find her at _palace_ in __palace_.
+
+Message:  1022
+<ce> I am _witch_, and I know of _lordsmail_. My power
+<ce> fades, so my price is an heir. Bring me my
+<ce> great-granddaughter, _child_, within
+<ce> =finddaughter_ days. Her parents know nothing and
+<ce> will fight you. Find her at _palace_ in __palace_.
+
+Message:  1025
+<ce> What are you doing? I will not go
+<ce> with you! Mother! Father! Help!
+
+Message:  1026
+<ce> Guards! A stranger in the palace!
+
+Message:  1027
+<ce> Put _child_ down, or I will kill you
+<ce> where you stand. Will you let her go?
+
+Message:  1032
+<ce> My heir at last. What did you call
+<ce> it? _child_? Yes, %g will serve.
+<ce> %pcn, you have earned your chance at
+<ce> _aurielshield_. The stars say the
+<ce> way to _aurielshield_ runs through
+<ce> ___dungeon2_. I know no more.
+
+Message:  1031
+<ce> My heir at last. What did you call
+<ce> it? _child_? Yes, %g will serve.
+<ce> %pcn, you have earned your chance
+<ce> at _aurielsbow_. The stars say the
+<ce> way to _aurielsbow_ runs through
+<ce> ___dungeon2_. I know no more.
+
+Message:  1033
+<ce> My heir at last. What did you call
+<ce> it? _child_? Yes, %g will serve.
+<ce> %pcn, you have earned your chance
+<ce> at _lordsmail_. The stars say the
+<ce> way to _lordsmail_ runs through
+<ce> ___dungeon2_. I know no more.
+
+Message:  1051
+%qdt:
+ _witch_ says the way
+ to _aurielshield_ runs
+ through ___dungeon2_.
+
+Message:  1050
+%qdt:
+ _witch_ says the way
+ to _aurielsbow_ runs
+ through ___dungeon2_.
+
+Message:  1052
+%qdt:
+ _witch_ says the way
+ to _lordsmail_ runs
+ through ___dungeon2_.
+
+
+QBN:
+Item _aurielshield_ artifact Auriels_Shield
+Item _aurielsbow_ artifact Auriels_Bow
+Item _lordsmail_ artifact Lords_Mail
+
+Person _witch_ face 1 faction The_Glenmoril_Witches remote
+Person _child_ face 211 faction Children female remote
+Person _ruler_ group Noble remote
+Person _local_ face 33 group Resident2 local
+Person _questgiver_ face 67 group Questor
+
+Place _dungeon1_ remote dungeon
+Place _palace_ remote palace
+Place _dungeon2_ remote dungeon
+
+Clock _finddaughter_ 00:00 0 flag 17 range 1 2
+
+Foe _F.00_ is 2 Knight
+Foe _battlemage_ is Battle_mage
+Foe _warrior_ is Warrior
+
+--	Quest start-up:
+	start timer _finddaughter_ 
+	reveal _dungeon1_ 
+	log 1010 step 0 
+	pick one of _artifact1_ _artifact2_ _artifact3_ 
+	pc at _palace_ set _S.10_ 
+	place npc _child_ at _palace_ 
+	place npc _witch_ at _dungeon1_ 
+
+_S.00_ task:
+	clicked npc _witch_ 
+
+_S.01_ task:
+	clicked npc _child_ say 1025 
+	create foe _F.00_ every 3 minutes 5 times with 30% success 
+	create foe _battlemage_ every 4 minutes 5 times with 25% success 
+	hide npc _child_ 
+	add _child_ face 
+	clear _S.00_
+--added this clear task. otherwise witch would talk in palace re success
+
+-_clearclick_ task:
+-	when _S.00_ and not _S.01_ 
+-	clear _S.00_ _clearclick_ 
+--removed this clearclick. prevented quest from working
+variable _finddaughter_
+variable _artifact1_
+variable _artifact2_
+variable _artifact3_
+_how1_ task:
+	when _S.16_ and _artifact1_ 
+	log 1011 step 1 
+
+_how2_ task:
+	when _S.16_ and _artifact2_ 
+	log 1012 step 1 
+
+_fire_ task:
+	when _S.16_ and _artifact3_ 
+	log 1013 step 1 
+
+_S.10_ task:
+	create foe _warrior_ every 5 minutes 5 times with 50% success 
+
+_greklith_ task:
+	injured _warrior_ saying 1026 
+
+_S.12_ task:
+	injured _battlemage_ 
+	injured _F.00_ 
+	prompt 1027 yes _S.13_ no _S.14_ 
+
+_S.13_ task:
+	drop _child_ face 
+	change repute with _local_ by +6 
+	change repute with _witch_ by -10 
+	end quest 
+--reputation drop should be with witch, not child. changed to _witch_
+
+_S.14_ task:
+	change repute with _ruler_ by -50 
+
+_S.15_ task:
+	when _S.01_ and not _S.13_ and _S.00_ 
+	reveal _dungeon2_
+
+_S.16_ task:
+	when _S.00_ and not _S.01_ 
+
+_S.17_ task:
+	when _artifact1_ and _S.15_ 
+	place item _aurielsbow_ at _dungeon2_ 
+	log 1050 step 2 
+	say 1031 
+	drop _child_ face
+--moved "drop face" here, was not cooperating in S.15
+
+_S.18_ task:
+	when _artifact2_ and _S.15_ 
+	place item _aurielshield_ at _dungeon2_ 
+	log 1051 step 2 
+	say 1032 
+	drop _child_ face
+--moved "drop face" here, was not cooperating in S.15
+
+_S.19_ task:
+	when _artifact3_ and _S.15_ 
+	place item _lordsmail_ at _dungeon2_ 
+	log 1052 step 2 
+	say 1033 
+	drop _child_ face
+--moved "drop face" here, was not cooperating in S.15
+
+_S.20_ task:
+	clicked item _aurielsbow_ 
+	make _aurielsbow_ permanent 
+--	Discovered a new op-code:
+	_0x3c_ 19
+
+_S.21_ task:
+	clicked item _aurielshield_ 
+	make _aurielshield_ permanent 
+
+_S.22_ task:
+	clicked item _lordsmail_ 
+	make _lordsmail_ permanent 
+
+_S.23_ task:
+	when _S.20_ or _S.22_ or _S.21_ 
+	give pc nothing 
+	end quest 
+
+_S.24_ task:
+	when _S.00_ and _artifact1_
+	say 1020 
+
+_S.25_ task:
+	when _S.00_ and _artifact2_
+	say 1021 
+
+_S.26_ task:
+	when _S.00_ and _artifact3_
+	say 1022 
+
+variable _love_

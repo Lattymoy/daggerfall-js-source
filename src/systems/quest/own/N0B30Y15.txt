@@ -1,0 +1,142 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B30Y15.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 30
+-- QuestId: 15
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 11
+Quest: N0B30Y15
+DisplayName: Rogue Imp
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _questgiver_. The guild needs
+<ce> a rogue imp killed, and the job
+<ce> pays _gold_ gold. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> Shame.
+<--->
+<ce> As you like.
+<--->
+<ce> Then do not waste my time, %pcn.
+
+AcceptQuest:  [1002]
+<ce> Good, %pcn. The imp was a senior mage's
+<ce> familiar until it fell into an
+<ce> experimental spell. Now it casts spells,
+<ce> sits in _palace_ in __palace_, and
+<ce> thinks it is royalty. If you are gone
+<ce> =traveltime_ days, we count you dead.
+
+QuestComplete:  [1004]
+<ce> Hard to kill, was it? Imps usually are.
+<ce> Here is your pay, and well earned.
+
+RumorsDuringQuest:  [1005]
+Strange things are going on in _palace_
+of __palace_, and nobody will say what.
+<--->
+All of __palace_ is whispering about
+the lights in _palace_ at night.
+
+RumorsPostfailure:  [1006]
+Something with wings flew out of
+_palace_ in __palace_ and headed south.
+
+RumorsPostsuccess:  [1007]
+%god bless that %ra who killed the imp in __palace_.
+<--->
+That imp would have wrecked __palace_
+if a %ra had not stepped in.
+
+QuestorPostsuccess:  [1008]
+%pcf! The %ra who killed our runaway imp. I remember.
+
+QuestorPostfailure:  [1009]
+<ce> That imp nearly wrecked
+<ce> __palace_, and you did nothing.
+<ce> I am ashamed of you, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Mages Guild's _questgiver_
+ in ___questgiver_ is paying me
+ to kill a rogue imp. It is
+ hiding in _palace_ in __palace_.
+ I have =traveltime_ days.
+
+
+QBN:
+Item _gold_ gold
+
+Person _questgiver_ face 8 group Questor
+
+Place _palace_ remote palace
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+Clock _S.02_ 00:04 00:20
+Clock _Gothryd_ 00:04
+--timer Gothryd given underscores
+Clock _S.08_ 00:04
+Clock _S.09_ 00:04
+--flags removed to make timers precise
+
+Foe _imp_ is Imp
+
+--	Quest start-up:
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pc at _palace_ set _S.01_ 
+	place foe _imp_ at _palace_ 
+	create npc at _palace_ 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	start timer _S.02_ 
+	cast Spell_Shield spell on _imp_ 
+	cast Troll's_Blood spell on _imp_ 
+	cast Shield spell on _imp_ 
+	cast Shield spell on _imp_ 
+	cast Invisibility spell on _imp_ 
+
+_S.02_ task:
+	start timer _Gothryd_ 
+	cast Shield spell on _imp_ 
+	cast Troll's_Blood spell on _imp_ 
+	cast Spell_Shield spell on _imp_ 
+	cast Invisibility spell on _imp_ 
+
+_S.03_ task:
+	killed 1 _imp_ 
+
+_S.04_ task:
+	clicked npc _questgiver_ 
+
+_clearclick_ task:
+	when _S.04_ and not _S.03_ 
+	clear _S.04_ _clearclick_ 
+
+_S.06_ task:
+	when _S.04_ and _S.03_ 
+	give pc _gold_ 
+	end quest 
+
+_Gothryd_ task:
+	start timer _S.08_ 
+	cast Invisibility spell on _imp_ 
+	cast Spell_Shield spell on _imp_ 
+	cast Troll's_Blood spell on _imp_ 
+
+_S.08_ task:
+	cast Spell_Shield spell on _imp_ 
+	cast Troll's_Blood spell on _imp_ 
+	cast Shield spell on _imp_ 
+	cast Invisibility spell on _imp_ 
+
+variable _S.09_

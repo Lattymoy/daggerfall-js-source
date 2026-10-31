@@ -1,0 +1,184 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0C00Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 10
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 41
+Quest: N0C00Y10
+DisplayName: Missing Book
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _giver_. Guild work goes to guild
+<ce> members. Still, I have a small errand.
+<ce> One of our books has gone missing.
+<ce> Find it, and I will make sure the
+<ce> whole guild hears of it. Agreed?
+
+RefuseQuest:  [1001]
+<ce> Then you do not care what the
+<ce> Mages Guild thinks of you. Noted.
+
+AcceptQuest:  [1002]
+<ce> We have no leads yet. The book
+<ce> is _book_. Ask around town and
+<ce> listen for gossip. If it turns
+<ce> up, bring it straight here.
+
+QuestFail:  [1003]
+%qdt:
+ The Mages Guild in ___giver_ has lost
+ a book, _book_, and I have said I will
+ find it. If I bring it to _giver_, %g
+ will speak well of me to the guild.
+
+QuestComplete:  [1004]
+<ce> _book_! Back where it belongs. The
+<ce> guild owes you a kindness, %pcf.
+
+RumorsDuringQuest:  [1005]
+The Mages Guild had a rare copy of _book_. Had, mind you.
+<--->
+Any copy of _book_ is rare. The guild's was rarer still.
+
+RumorsPostfailure:  [1006]
+The guild lost its special copy of
+_book_. A sad day for scholars.
+<--->
+The guild library has a gap on the
+shelf where _book_ used to be.
+
+RumorsPostsuccess:  [1007]
+_book_ is back on the guild's shelves,
+and the scholars are happy again.
+
+QuestorPostsuccess:  [1008]
+Did you read _book_ while you
+had it? It is a wonderful book.
+
+QuestorPostfailure:  [1009]
+<ce> I gave you your chance, %pcf.
+<ce> Had you found _book_, we would
+<ce> be friends. As it is, good day.
+
+QuestLogEntry:  [1010]
+<ce> Try _informant_ at _informant1_.
+<ce> %G hears everything that happens
+<ce> in __informant1_.
+<--->
+<ce> Ask at the inns. Nobody
+<ce> gossips like a tavern crowd.
+<--->
+<ce> Try _informant1_. People
+<ce> there talk all night.
+<--->
+<ce> Somebody stole it from _giver_.
+<--->
+<ce> _giver_ has been asking
+<ce> everyone about it.
+<--->
+<ce> I read it once. Lovely book.
+<--->
+<ce> Have you tried a library?
+
+Message:  1011
+<ce> The guild's mark from __giver_ is inside
+<ce> the cover. This is the missing book.
+
+Message:  1025
+<ce> Hello, %pcn. Every scrap of news in
+<ce> __informant1_ passes through me, so I know
+<ce> about _giver_'s loss. Look for _thief_. %G
+<ce> has hunted for an early copy of _book_ for
+<ce> years, and %g does not always pay.
+
+Message:  1027
+You will find _thief_'s home at _house_, in __house_.
+<--->
+_house_ is where _thief_ sleeps.
+<--->
+Late at night, _thief_ goes home to %g3 rooms at _house_.
+<--->
+Want _thief_? %G sleeps at _house_. Go after dark.
+<--->
+_thief_ trades a lot at _store_.
+<--->
+Shop at _store_ long enough and you will meet _thief_.
+<--->
+_store_ buys stolen goods, and _thief_ has plenty to sell.
+<--->
+I saw _thief_ at _store_ the other day.
+<--->
+Half the thieves in town drink at _inn_.
+<--->
+_thief_ drinks at _inn_ most evenings.
+<--->
+_inn_ is _thief_'s favorite tavern.
+<--->
+_thief_ never misses supper at _inn_.
+
+Message:  1040
+<ce> Everyone wants _thief_ today.
+<ce> Congratulations, you found
+<ce> %g2. Your prize is a beating.
+
+
+QBN:
+Item _book_ book1 anyInfo 1010 used 1011
+
+Person _informant_ face 245 group Group_6.0 male local
+Person _giver_ group Questor
+Person _thief_ face 99 group Chemist female local anyInfo 1027 rumors 1027
+
+Place _inn_ local tavern
+Place _store_ local weaponstore
+Place _house_ local house2
+Place _informant1_ local tavern
+
+Clock _S.00_ 00:00 0 flag 9 range 0 0
+Clock _S.01_ 10.00:00 0 flag 9 range 0 1
+
+Foe _thiefFoe_ is Thief
+-added underscores to thiefFoe
+
+--	Quest start-up:
+	dialog link for person _thief_ 
+	dialog link for location _house_ person _informant_ 
+	start timer _S.01_ 
+	log 1003 step 0 
+	give item _book_ to _thiefFoe_ 
+	place npc _informant_ at _informant1_ 
+
+variable _S.00_
+_S.01_ task:
+	end quest 
+
+_S.02_ task:
+	daily from 00:00 to 08:00 
+	place foe _thiefFoe_ at _house_ 
+
+_S.03_ task:
+	daily from 16:02 to 23:59 
+--changed 24:00 to 23:59, 24:00 is not a valid time
+	place foe _thiefFoe_ at _inn_ 
+
+_S.04_ task:
+	daily from 08:01 to 16:01 
+	place foe _thiefFoe_ at _store_ 
+
+_S.05_ task:
+	clicked npc _informant_ say 1025 
+	add dialog for person _thief_ 
+
+_S.06_ task:
+	toting _book_ and _giver_ clicked 
+	give pc nothing 
+	end quest 
+
+variable _S.07_
+_S.08_ task:
+	injured _thiefFoe_ saying 1040

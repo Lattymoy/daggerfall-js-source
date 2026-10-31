@@ -1,0 +1,147 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000021.Qbn.
+-- Main story quest.
+-- QuestId: 21
+Messages: 13
+Quest: S0000021
+DisplayName: Lich's Soul
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ah, %pcf. I trust my messenger was
+<ce> gentle. You serve less faithfully
+<ce> than my dead, but far more cleverly.
+<ce> My need lies in the depths of Castle
+<ce> Sentinel. The pay is knowledge only
+<ce> the dead hold. Will you go?
+
+RefuseQuest:  [1001]
+<ce> Fond of Queen Akorithi, are we? A pity.
+
+AcceptQuest:  [1002]
+<ce> How amusing. Only the dead can answer my
+<ce> question. Prince Karolis, King Camaron's
+<ce> great-grandfather, is a lich beneath
+<ce> Castle Sentinel. Destroy him with this
+<ce> _scarab_ near and it takes his soul.
+<ce> Bring it, and hear a rare tale.
+
+QuestComplete:  [1004]
+<ce> Well done, %pcf. The prince will talk
+<ce> now. Take this _magicitem_, and a secret.
+<ce> Tiber Septim betrayed his battlemage,
+<ce> Zurin Arctus. Through Numidium, somehow,
+<ce> Zurin's soul clung on as the Underking.
+<ce> Should he regain his body, Tamriel burns.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The King of Worms will tell me dark
+ secrets for a lich's spirit. The
+ lich is Prince Karolis of Sentinel,
+ deep under the royal castle. If I
+ destroy him while I carry a
+ _scarab_, it will trap his soul.
+
+Message:  1011
+<ce> Words are stitched into
+<ce> the zombie's rotting skin.
+<ce>
+ %pcn,
+ 
+ Visit me in my domain. A small task
+ suits you. My servants will test you.
+ Destroy them freely. I can raise more.
+ 
+<ce> The King of Worms,
+<ce> Lord of Scourg Barrow
+
+Message:  1012
+<ce> The King of Worms gave you this scarab.
+
+
+QBN:
+Item _scarab_ scarab used 1012
+Item _magicitem_ magic_item
+
+Person _kingoworms_ named King_of_Worms atHome
+Person _lichface_ face 169 named Lord_Darkworth
+Person _fakekow_ face 1 named King_of_Worms
+
+Place _sentinel_ permanent SentinelCastle
+
+
+Foe _zombie_ is Zombie
+Foe _lich_ is Lich
+
+--	Quest start-up:
+	dialog link for item _magicitem_ 
+	dialog link for item _scarab_ 
+	repute with _kingoworms_ exceeds 0 do _S.01_ 
+
+_S.00_ task:
+	level 7 completed 
+
+variable _S.01_
+_S.02_ task:
+	clicked npc _kingoworms_ 
+
+_S.03_ task:
+	when _S.02_ and _S.15_ 
+	prompt QuestorOffer yes yes no _no_ 
+
+until _killmon_ performed:
+	clear _S.02_ 
+
+yes task:
+	log 1010 step 0 
+	get item _scarab_ 
+	say AcceptQuest 
+	place foe _lich_ at _sentinel_ marker 0
+
+_no_ task:
+	say RefuseQuest 
+	end quest 
+
+_S.06_ task:
+	when _S.00_ and _S.01_ 
+	send _zombie_ every 1410 minutes with 100% success 
+
+until _S.06_ performed:
+	mute npc _kingoworms_ 
+
+_S.07_ task:
+	injured _zombie_ 
+
+_S.08_ task:
+	killed 1 _lich_ 
+	setvar _killmon_
+	add _lichface_ face 
+
+variable _killmon_
+_S.10_ task:
+	when _S.02_ and _killmon_
+
+_S.11_ task:
+	when not _S.08_ and _S.10_ 
+	get item _scarab_ 
+
+_givereward_ task:
+	when _S.10_ and _S.08_ 
+	give pc _magicitem_ 
+	start task _S.14_ 
+	drop _lichface_ face 
+	change repute with _kingoworms_ by +15 
+	end quest 
+
+KingOfWormsGotTotem _S.13_
+KingOfWormsSatisfied _S.14_
+_S.15_ task:
+	killed 1 _zombie_ 
+	say 1011 
+	unset _S.06_ 
+
+variable _S.16_
+variable _delay_

@@ -1,0 +1,277 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B11Y18.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 11
+-- QuestId: 18
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 64
+Quest: N0B11Y18
+DisplayName: Former Student Part I
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, I need someone whose loyalty to
+<ce> the guild is beyond question. Is yours?
+
+RefuseQuest:  [1001]
+<ce> I see. I misjudged you, then.
+
+AcceptQuest:  [1002]
+<ce> Good. A rebel mage named _rebel_ has to
+<ce> die. I taught that one myself. Bright, but
+<ce> no respect for the old ways. Now %g works
+<ce> on forbidden research in ___rebelhouse_,
+<ce> without a care. You have =qtime_ days.
+
+QuestFail:  [1003]
+<ce> Out, %pcn.
+
+QuestComplete:  [1004]
+<ce> The guild is grateful, and so am I. This
+<ce> _reward_ came from my own workbench.
+
+Message:  1020
+%qdt:
+ I must find and kill a rebel mage
+ in ___rebelhouse_ named _rebel_.
+ Then I report to _questgiver_ at
+ the Mages Guild in ___questgiver_.
+ I have =qtime_ days.
+
+Message:  1021
+%qdt:
+ I let _rebel_ live. I am to tell
+ _questgiver_ that ___rebelhouse_
+ was empty except for a letter.
+ The letter is from _rebel_.
+
+Message:  1030
+<ce> So _questgiver_ sends another of %g3
+<ce> errand runners. The old guard risks
+<ce> nothing and learns nothing. I broke
+<ce> their rules, never their bones, and
+<ce> for that they want me dead. Why kill
+<ce> for them? Will you join me?
+
+Message:  1031
+<ce> Marvelous! Give old _questgiver_ this
+<ce> letter, and say I was gone when you came.
+<ce> It is for %g2 alone. I must go now, but I
+<ce> will find you when I have cooked up
+<ce> something truly exciting. Farewell!
+
+Message:  1032
+<ce> Then I must persuade you the
+<ce> hard way. On guard, little mage!
+
+Message:  1040
+Dear _questgiver_,
+ 
+   Sorry I missed you. Once I learned at your
+ feet. =mage1_ and Archmagister =mage3_ made this
+ guild worth respect. Now it only stamps out new
+ ideas. Send more hounds, and I will bite.
+ 
+<ce> Your devoted pupil,
+<ce> _rebel_
+
+Message:  1041
+<ce> The insolence! This is why _rebel_ has
+<ce> to be stopped, before the rot spreads.
+<ce> A pity you missed the wretch. We will
+<ce> pick up the trail again soon.
+
+Message:  1042
+<ce> Good work, %pct. Our rules are
+<ce> hard, but a guild that does
+<ce> not keep them does not last.
+
+Message:  1050
+<ce> Enough of this! Why fight
+<ce> me, when you could join me?
+
+Message:  1051
+<ce> Surely you see my point by now? Think of
+<ce> the fun we could have! Will you join me?
+
+Message:  1052
+<ce> _questgiver_ taught you to be
+<ce> stubborn, at least. Why stay a
+<ce> slave to dusty rules? Will you
+<ce> come and break them with me?
+
+Message:  1053
+<ce> My patience is running thin. One last
+<ce> chance. Put down your weapon, and we
+<ce> will forget this ever happened. Agreed?
+
+Message:  1060
+<ce> Not in here. Come and find me.
+
+Message:  1061
+<ce> Over here, slowpoke!
+
+Message:  1062
+<ce> Did _questgiver_ not mention my
+<ce> skill with magicka, while %g was
+<ce> going on about my disloyalty?
+
+Message:  1063
+<ce> Missed again, little guild drone.
+<ce> Do your masters teach you nothing?
+
+
+QBN:
+Item _letter_ letter used 1040
+Item _reward_ magic_item
+
+Person _rebel_ named Baltham_Greyman
+Person _questgiver_ group Questor
+
+Place aide remote dungeon
+Place _rebelhouse_ remote house1
+
+Clock _qtime_ 00:00 0 flag 17 range 0 2
+Clock _S.04_ 00:01 00:05
+Clock _S.05_ 00:01 00:10
+Clock _S.06_ 00:01 00:14
+Clock _healer_ 00:02 00:18
+
+Foe _mage1_ is Mage
+Foe _mage2_ is Mage
+Foe _mage3_ is Mage
+Foe _mage4_ is Mage
+Foe _F.04_ is Mage
+
+--	Quest start-up:
+	start timer _qtime_
+	log 1020 step 0 
+	place npc _rebel_ at _rebelhouse_ 
+
+_qtime_ task:
+	end quest 
+
+_S.01_ task:
+	clicked npc _rebel_ 
+	prompt 1030 yes _S.02_ no _S.03_ 
+	hide npc _rebel_
+	--changed "place npc _rebel_ at aide" to "hide" action. Classic would transfer the NPC away, hiding is far easier
+
+_qgclicked_ task:
+  clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+_S.02_ task:
+	start quest 502 502 
+	log 1021 step 1 
+	get item _letter_ 
+	say 1031 
+	remove foe _mage2_
+	remove foe _F.04_
+	remove foe _mage1_
+	remove foe _mage4_
+	remove foe _mage3_
+	--changed "place foe _mage2_ at aide" etc to "remove foe," same as with hide npc reason
+
+_S.03_ task:
+	start timer _S.04_ 
+	--S.14 timer was nonexistent. changed to S.04
+	say 1032 
+    hide npc _rebel_
+	place foe _mage1_ at _rebelhouse_ 
+	cast Spell_Reflection spell on _mage1_ 
+
+_S.04_ task:
+	pc at _rebelhouse_ set _S.19_ 
+	remove foe _mage1_
+	say 1060 
+--"place foe" not known to support "say ###." moved to its own line.
+--changed "place foe at false dungeon" to "remove foe"
+
+_S.05_ task:
+	create foe _mage3_ every 1 minutes 1 times with 100% success
+	say 1061 
+	start timer _S.06_ 
+	remove foe _mage2_
+--"create foe" not known to support "say ###." moved to its own line.
+--changed "place foe at false dungeon" to "remove foe"
+
+_S.06_ task:
+	create foe _mage4_ every 1 minutes 1 times with 100% success
+	say 1062 
+	start timer _healer_ 
+	remove foe _mage3_
+	--"create foe" not known to support "say ###." moved to its own line.
+	--changed "place foe at false dungeon" to "remove foe"
+
+_healer_ task:
+	create foe _F.04_ every 1 minutes 1 times with 100% success
+	say 1063 
+	remove foe _mage4_
+	--"create foe" not known to support "say ###." moved to its own line.
+	--changed "place foe at false dungeon" to "remove foe"
+
+_S.08_ task:
+	killed 1 _mage2_ 
+	killed 1 _F.04_ 
+	killed 1 _mage4_ 
+	killed 1 _mage3_ 
+	killed 1 _mage1_ 
+
+_S.09_ task:
+	when _S.08_ or _S.02_ 
+	stop timer _healer_ 
+	stop timer _S.06_ 
+	stop timer _S.05_ 
+	stop timer _S.04_ 
+
+_S.10_ task:
+	injured _mage1_ 
+	cast Heal spell on _mage1_ 
+
+_S.11_ task:
+	injured _mage2_ 
+	prompt 1050 yes _S.02_ no _S.03_ 
+	cast Heal spell on _mage2_ 
+
+_S.12_ task:
+	injured _mage3_ 
+	prompt 1051 yes _S.02_ no _S.03_ 
+	cast Heal spell on _mage3_ 
+
+_S.13_ task:
+--boar task renamed to _S.13_. Variables should have underscores
+	injured _mage4_ 
+	prompt 1052 yes _S.02_ no _S.03_ 
+
+
+_S.14_ task:
+	injured _F.04_ 
+	prompt 1053 yes _S.02_ no _S.03_ 
+
+_S.15_ task:
+	toting _letter_ and _questgiver_ clicked 
+	say 1041 
+
+_success_ task:
+	when _qgclicked_ and _S.08_ 
+	say 1042 
+
+_pcgetsgold_ task:
+	when _S.15_ or _success_ 
+	give pc _reward_ 
+	end quest 
+
+variable _S.19_
+_S.20_ task:
+	when _S.04_ and not _S.19_ and not _S.08_ 
+	create foe _mage2_ every 1 minutes 1 times with 100% success 
+	start timer _S.05_ 
+	cast Spell_Reflection spell on _mage2_

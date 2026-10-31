@@ -1,0 +1,197 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Edited for Daggerfall Unity by Jay_H
+Quest: K0C00Y03
+DisplayName: Smuggling
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Would you carry some goods past the
+<ce> guard for me, %pcf? There is some
+<ce> risk, but the profit is certain.
+<ce> Your share is _gold_ gold. Yes?
+<--->
+<ce> I would not call it smuggling.
+<ce> Some goods need to reach people
+<ce> who want them, past people who do
+<ce> not, such as the law. Interested?
+
+RefuseQuest:  [1001]
+<ce> Then we never spoke,
+<ce> %pcf. Keep it that way.
+<--->
+<ce> Then I have never seen
+<ce> you before in my life.
+
+AcceptQuest:  [1002]
+<ce> Good, %pcf. My usual runners are
+<ce> watched. Take this _item_ to
+<ce> _conhouse_ in __conhouse_, where
+<ce> _contact_ will pay you _gold_ gold.
+<ce> Avoid the %t's guard and arrive
+<ce> within =queston_ days, or I ruin your
+<ce> name everywhere. Make _qgiver_ proud.
+
+QuestComplete:  [1004]
+<ce> My nerves, %pcf. I have been
+<ce> sitting here for hours. The _item_?
+<ce> Good stuff. Here is your _gold_
+<ce> gold. My regards to _qgiver_.
+
+RumorsDuringQuest:  [1005]
+All of %reg knows about the _item_ that moves
+from ___qgiver_ to __conhouse_. It is a scandal.
+<--->
+The %t has sworn to stamp out the _item_ trade.
+
+RumorsPostsuccess:  [1007]
+Nobody will stop the _item_ trade
+in %reg. Too many people want it.
+<--->
+%rt %rn has made _qgiver_ the crown's
+hunter of smugglers. Of all people.
+
+QuestorPostsuccess:  [1008]
+_contact_ says you made it there safely. Thank you for that.
+
+QuestorPostfailure:  [1009]
+<ce> Either you sold me out or you are a
+<ce> poor smuggler. Either way, get lost.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ___qgiver_ gave me _item_ to
+ carry into __conhouse_ past the guards.
+ My contact is _contact_, and %g expects
+ me at _conhouse_. I have =queston_ days.
+
+Message:  1011
+%pcf,
+ 
+      It is a trap. You will not
+ find _contact_ at _conhouse_. A
+ knight called =guard_ waits there
+ for you instead. If you want the
+ _item_ off your hands, come and see
+ me at __contact2_ in ___contact2_.
+ 
+ 
+ _contact2_
+
+Message:  1012
+<ce> Someone in the crowd presses
+<ce> a letter on you and is gone.
+
+Message:  1013
+%qdt:
+ A letter from _contact2_ says
+ _conhouse_ is an ambush. I may give
+ the _item_ to _contact2_ instead, at
+ %g3 inn, __contact2_ in ___contact2_.
+
+Message:  1014
+<ce> You got my letter, then. Lucky you,
+<ce> that deal was about to go sour. I will
+<ce> take the _item_ as my fee for keeping
+<ce> you out of it. You are welcome.
+
+Message:  1015
+<ce> Hold, hold. Our business is not with
+<ce> you. We want _qgiver_ and the _item_.
+<ce> Give it to me and walk away. Deal?
+<--->
+<ce> Look, nothing personal. Give
+<ce> me the _item_ and I tell my
+<ce> captain you got away. Deal?
+
+Message:  1016
+<ce> Smart choice. Go, before
+<ce> I think better of it.
+
+Message:  1017
+<ce> _qgiver_ will be angry that you kept
+<ce> the _item_. It is too late to deliver
+<ce> it now. Perhaps someone would buy it.
+
+
+QBN:
+Item _gold_ gold
+Item _item_ drug
+Item _letter_ letter used 1011
+
+Person _qgiver_ group Questor
+Person _contact_ face 1 group Innkeeper remote
+Person _contact2_ group Innkeeper remote
+
+Place _conhouse_ remote house2
+
+Clock _2letter_ 03:20 06:40
+Clock _queston_ 00:00 0 flag 1 range 2 5
+
+Foe _guard_ is Knight
+
+--	Quest start-up:
+	dialog link for person _contact_ 
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _item_ 
+	pick one of _whip_ _S.02_ 
+	legal repute -10
+	place npc _contact_ at _conhouse_ 
+--legal repute set to - and + 10 only. 100 for mere smuggling is ridiculous.
+
+variable _traveltime_
+_whip_ task:
+	pc at _conhouse_ set _S.04_ 
+	start timer _2letter_ 
+
+variable _S.02_
+variable _S.03_
+_S.04_ task:
+	hide npc _contact_ 
+	place foe _guard_ at _conhouse_ 
+
+_S.05_ task:
+	injured _guard_ 
+	prompt 1015 yes _deed_ no _no_ 
+
+_deed_ task:
+	take _item_ from pc
+	--classic would transfer the item from pc to guard. DFU requires a take item action.
+	give item _item_ to _guard_ 
+	say 1016 
+	restrain foe _guard_ 
+
+_2letter_ task:
+	_letter_ used do _S.08_ 
+	give pc _letter_ notify 1012 
+
+_S.08_ task:
+	log 1013 step 1 
+
+_reward_ task:
+	toting _item_ and _contact_ clicked 
+	give pc _gold_ 
+	legal repute +10
+	end quest 
+
+_S.10_ task:
+	toting _item_ and _contact2_ clicked 
+
+_S.11_ task:
+	when _S.10_ and _whip_ 
+	say 1014 
+	legal repute +10
+	end quest 
+
+_S.12_ task:
+	when _queston_ and _S.14_ 
+	say 1017 
+	make _item_ permanent 
+
+_queston_ task:
+	have _item_ set _S.14_ 
+	end quest 
+
+variable _S.14_
+variable _no_

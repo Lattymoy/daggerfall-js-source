@@ -123,7 +123,8 @@ Pinned by `test/systems/quest/questaudit3_life.test.js`; `tools/mutants/questaud
   "...never mind...". This retires Quest-Guide-Arc's open bullet.
 - **DUEL-TOWN.** This was Quest-Audit-II's "Recorded, not changed". A0C00Y10's journal sent the duel to "_inn_ in
   ___giver_", the questor's town, where the inn may be the nearest town's (NEAR-SITE). It is patched to `___inn_`
-  (`src/systems/quest/questPatches.js`).
+  (`src/systems/quest/questPatches.js`). OWN-WORDS2 moved the fixed words into the quest's own file
+  (`src/systems/quest/own/A0C00Y10.txt`), and the patch is gone.
 - **C0C00Y10's healer.** This was FIELD BUGS 2026-10-13e's owner's call, now taken. `_no_ task: clear _S.10_` meant
   the healer to ask again, and Prompt.cs's allowRearm kept the prompt spent, so the talisman was never bought.
   NO-ASKS-AGAIN now reads a No that only clears its click-asked task as that ask-again (`src/systems/quest/noAsksAgain.js`

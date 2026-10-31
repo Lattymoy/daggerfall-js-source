@@ -1,0 +1,243 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B50Y11.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 50
+-- QuestId: 11
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 32
+Quest: L0B50Y11
+DisplayName: Taking on the Thieves Guild
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> We have an unusual contract: a
+<ce> high member of the Thieves Guild.
+<ce> It will be hard. Do you want it?
+
+RefuseQuest:  [1001]
+<ce> This work is not for the timid.
+<--->
+<ce> I understand. Come back
+<ce> when you want real work.
+
+AcceptQuest:  [1002]
+<ce> You are sharp. The mark is _marknpc_,
+<ce> here in ___questgiver_. He moves about
+<ce> and keeps bodyguards near, so take care.
+<ce> The job has seven days. Afterward, ask
+<ce> for _questgiver_. %G pays _gold_ gold.
+
+QuestComplete:  [1004]
+<ce> Well done, %pcn. Not a scratch on
+<ce> you, I see. Here is the guild's fee.
+
+RumorsDuringQuest:  [1005]
+_marknpc_ has made a lot of enemies.
+%g will pay for it one day.
+<--->
+_marknpc_ is headed for a bloody grave.
+
+RumorsPostfailure:  [1006]
+_marknpc_ slipped away from %reg.
+Do not think %g is gone for good.
+
+RumorsPostsuccess:  [1007]
+_marknpc_ made one mistake too many, and %g paid for it.
+<--->
+Nobody is surprised _marknpc_ is
+dead. %g was trouble from the start.
+
+QuestorPostsuccess:  [1008]
+What you did to _marknpc_ is remembered here, %pcf. Kindly.
+
+QuestorPostfailure:  [1009]
+<ce> _marknpc_ is still alive, %pcf. There is
+<ce> no honor in that, and I am not amused.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I took a Dark Brotherhood
+ contract on _marknpc_ of
+ ___questgiver_. He moves around
+ often, my contact _questgiver_
+ says. I have seven days.
+
+Message:  1015
+<ce> _marknpc_ still lives. Do not play
+<ce> games, %pcn. The Brotherhood has no
+<ce> sense of humor. I hear _fakeplace_
+<ce> is a false lead, so skip it. Find
+<ce> out where %g really goes.
+
+Message:  1020
+<ce> _marknpc_ visits me now and then, but
+<ce> %g never stays. %G only comes for %g3
+<ce> own pleasure. For 50 gold I will
+<ce> gladly sell %g2 out. Will you pay?
+
+Message:  1021
+<ce> _marknpc_! Wake up! Someone
+<ce> has come to kill you!
+
+Message:  1022
+<ce> _marknpc_ is dead! Spare me, please. I
+<ce> saw nothing, and I will say nothing.
+
+Message:  1023
+<ce> _marknpc_ comes every day at about six
+<ce> in the evening. %G sends %g3 bodyguards
+<ce> off and stays an hour, perhaps less.
+
+Message:  1030
+<ce> A rotten thief, that _marknpc_.
+<--->
+<ce> People think _marknpc_ spends time
+<ce> at _fakeplace_. %g never goes there.
+<--->
+<ce> Most evenings _marknpc_ drinks at _inn_.
+<--->
+<ce> _marknpc_ sleeps at home through the morning.
+<--->
+<ce> The house of _marknpc_ is _house_. %g is rarely home.
+<--->
+<ce> Afternoons, you will find _marknpc_ at _guildhall_.
+<--->
+<ce> They say _guildhall_ is where the
+<ce> Thieves Guild meets. Try there.
+<--->
+<ce> _marknpc_ keeps a mistress.
+<--->
+<ce> The mistress of _marknpc_ lives at _mistresshome_.
+<--->
+<ce> _marknpc_ never goes anywhere without bodyguards.
+<--->
+<ce> The bodyguards stay behind whenever _marknpc_
+<ce> goes to %g3 mistress. %g wants no witnesses.
+<--->
+<ce> Nobody sane picks a fight with _marknpc_'s bodyguards.
+<--->
+<ce> _marknpc_ is guarded by spells, they say.
+
+Message:  1031
+<ce> _marknpc_ crumples and lies
+<ce> still. The contract is done.
+
+
+QBN:
+Item _gold_ gold
+Item _bribe3_ gold range 50 to 50
+
+Person _mistress_ face 3 group Group_7.2 female local
+Person _questgiver_ face 1 group Questor
+Person _marknpc_ face 5 faction The_Thieves_Guild male local anyInfo 1030
+
+Place _house_ local house2
+Place _inn_ local tavern
+Place _guildhall_ local random
+Place _mistresshome_ local house2
+Place _fakeplace_ local random
+
+Clock _S.00_ 7.00:00 0 flag 1 range 0 1
+
+Foe _home_ is Thief
+Foe _F.01_ is Sorceror
+Foe _F.02_ is Knight
+Foe _F.03_ is Rogue
+
+--	Quest start-up:
+	dialog link for location _mistresshome_ person _mistress_ 
+	dialog link for location _house_ 
+	dialog link for location _guildhall_ 
+	dialog link for location _fakeplace_ 
+	start timer _S.00_ 
+	log 1010 step 0 
+	pc at _fakeplace_ set _S.11_ 
+	place npc _mistress_ at _mistresshome_ 
+	place npc _marknpc_ at _fakeplace_ 
+
+_S.00_ task:
+	end quest 
+
+_S.01_ task:
+	daily from 00:00 to 10:00 
+	pc at _house_ set _S.05_ 
+	cast Shield spell on _home_ 
+	place foe _home_ at _house_ 
+
+_S.02_ task:
+	daily from 19:01 to 23:59 
+	pc at _inn_ set _S.05_ 
+	cast Shield spell on _home_ 
+	place foe _home_ at _inn_ 
+
+_S.03_ task:
+	daily from 10:01 to 18:00 
+	pc at _guildhall_ set _S.05_ 
+	cast Shield spell on _home_ 
+	place foe _home_ at _guildhall_ 
+
+_S.04_ task:
+	daily from 18:01 to 19:00 
+	pc at _mistresshome_ set _S.06_ 
+	place foe _home_ at _mistresshome_ 
+
+_S.05_ task:
+	create foe _F.03_ every 2 minutes 5 times with 50% success 
+	create foe _F.02_ every 4 minutes 5 times with 50% success 
+	create foe _F.01_ every 3 minutes 5 times with 50% success 
+
+variable _S.06_
+_S.07_ task:
+	killed 1 _home_ saying 1031 
+
+_S.08_ task:
+	clicked npc _mistress_ 
+
+_clearclick_ task:
+	when not _S.07_ and _S.21_ 
+	say 1015 
+	clear _S.21_ _clearclick_ 
+
+_vamp3_ task:
+	when _S.07_ and _S.21_ 
+	give pc _gold_ 
+	end quest 
+
+_S.11_ task:
+	hide npc _marknpc_ 
+
+until _S.11_ performed:
+	restore _marknpc_ 
+
+_S.12_ task:
+	when _S.04_ and _S.08_ and not _S.07_ 
+	say 1021 
+
+_S.13_ task:
+	when _S.04_ and _S.08_ and _S.07_ 
+	say 1022 
+
+_S.14_ task:
+	when not _S.04_ and _S.08_ and not _S.07_ 
+	prompt 1020 yes _yes_ no _no_ 
+
+variable _yes_
+variable _no_
+_S.17_ task:
+	clicked _mistress_ and at least 50 gold otherwise do _S.18_ 
+
+variable _S.18_
+_S.19_ task:
+	when _S.17_ and _no_ 
+	get item _bribe3_ 
+
+_S.20_ task:
+	when _S.17_ and _yes_ 
+	say 1023 
+	unset _S.08_ 
+
+_S.21_ task:
+	clicked npc _questgiver_

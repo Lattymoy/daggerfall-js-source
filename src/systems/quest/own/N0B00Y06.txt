@@ -1,0 +1,148 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B00Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 6
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: N0B00Y06
+DisplayName: Mummy Wrappings
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %oth, my mummy wrappings have gone green. The
+<ce> recipe wants them fresh, and the guild's stock
+<ce> is no better than mine. I know a mummy with
+<ce> plenty to spare. Would you fetch me some?
+<--->
+<ce> This recipe asks for a good piece of =mummy_,
+<ce> %pct. It took me a week to learn what that
+<ce> was. =mummy_ is a mummy, and it lies here in
+<ce> %reg. Will you cut me a piece for _gold_ gold?
+
+RefuseQuest:  [1001]
+<ce> %oth. And here I took you
+<ce> for the adventurous sort.
+
+AcceptQuest:  [1002]
+<ce> Splendid, %pct. That is _gold_ gold when
+<ce> you get back. The tomb is ___mondung_,
+<ce> close enough to manage in =queston_
+<ce> days. Cut the cloth from the body, so it
+<ce> is fresh. Take a sword, young %ra.
+
+QuestComplete:  [1004]
+<ce> Oh, that is lovely wrapping,
+<ce> and barely moldy at all. Your
+<ce> _gold_ gold, as we agreed.
+
+RumorsDuringQuest:  [1005]
+They say =mummy_ in ___mondung_ was
+a %t of %reg, a very long time ago.
+<--->
+My grandmother said =mummy_ ruled as %t of %reg,
+and was so cruel that death refused the job.
+
+RumorsPostfailure:  [1006]
+My knee has ached all week. That means
+rain, and my knee is never wrong.
+<--->
+A man spent the whole morning
+telling me about his cousin's goats.
+<--->
+Nothing ever happens around here, and I like it that way.
+<--->
+Either %cn gets colder every
+winter or I get older. Maybe both.
+<--->
+The bread at market was stale again.
+That is three times this month.
+<--->
+My sister went two provinces away to see a
+healer. She writes that the food is awful.
+<--->
+The lamplighter forgot our street again last night.
+<--->
+The square needs a fountain.
+Something big, with a horse on it.
+<--->
+Young people and their spells. %oth,
+what was wrong with a good lamp?
+<--->
+I dreamed I was a fish last night. A very worried fish.
+<--->
+Want to hear something funny? %jok
+<--->
+%jok That one always gets a laugh at the tavern.
+<--->
+%jok I never did understand that one.
+<--->
+Say what you like about the laws of
+%reg. At least somebody wrote them down.
+
+RumorsPostsuccess:  [1007]
+=mummy_ ruled in %reg before the First Era
+began. Somebody has finally ended that reign.
+<--->
+_qgiver_ can finish %g3 potion at
+last, thanks to a piece of =mummy_.
+
+QuestorPostsuccess:  [1008]
+%pcf, good to see you. Do tell
+me if anything starts to itch.
+
+QuestorPostfailure:  [1009]
+<ce> No wrappings, %pcf? Then my potion stays
+<ce> half made on the bench, and it smells.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ at the Mages Guild in
+ ___qgiver_ wants fresh wrappings from
+ =mummy_, a mummy in ___mondung_. The
+ job must be done in =queston_ days.
+
+Message:  1011
+<ce> These are the wrappings
+<ce> _qgiver_ wanted from =mummy_.
+
+
+QBN:
+Item _wrappings_ mummy_wrappings
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon0
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _mummy_ is Mummy
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	place foe _mummy_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_reward_ task:
+	toting _wrappings_ and _qgiver_ clicked 
+	give pc _gold_ 
+	take _wrappings_ from pc
+	end quest 
+--forums discussion, failsafe to ensure removal of wrappings
+
+variable _qgclicked_
+_S.03_ task:
+	clicked item _wrappings_ 
+	say 1011 
+
+_S.04_ task:
+	injured _mummy_ 
+	give item _wrappings_ to _mummy_

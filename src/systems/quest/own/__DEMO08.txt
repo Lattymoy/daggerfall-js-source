@@ -1,0 +1,146 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+---- Example quest based on M0B00Y16 (kill a giant, rescue NPC)
+---- Have modified as only testing specific parts of this quest
+
+Quest: __DEMO08
+
+
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf! A giant needs killing, and
+<ce> it will take a few days. You
+<ce> came to mind first. Interested?
+
+RefuseQuest:  [1001]
+<ce> Too busy? In my day we always had time
+<ce> for a giant or two. Young people.
+
+AcceptQuest:  [1002]
+<ce> A giant has moved into ___mondung_ and is
+<ce> eating _dummy_'s sheep, and a villager or
+<ce> two besides. %G wants it dead within =qtime_
+<ce> days and will pay _gold_ gold. Off you go.
+
+QuestFail:  [1003]
+<ce> Back so soon, %pcf? That giant
+<ce> is not going to kill itself.
+
+QuestComplete:  [1004]
+<ce> Look at you, not a bone broken. Your
+<ce> _gold_ gold, and a drink on me later.
+
+RumorsDuringQuest:  [1005]
+<ce> The giant in ___mondung_ keeps taking people,
+<ce> and all _dummy_ talks about is sheep.
+<--->
+<ce> Nobody goes near ___mondung_ now. The
+<ce> giant has eaten three people this month.
+
+RumorsPostfailure:  [1006]
+<ce> The giant has left ___mondung_.
+<ce> Maybe it ran out of villagers.
+
+RumorsPostsuccess:  [1007]
+<ce> %god be praised, the giant in ___mondung_ is dead. _dummy_
+<ce> only paid for it once it started on the sheep %g owns.
+
+QuestorPostsuccess:  [1008]
+<ce> Well, if it is not
+<ce> %pcf the giant-killer!
+
+QuestorPostfailure:  [1009]
+<ce> In my day the guild threw you out for
+<ce> losing to one giant. Soft times now.
+
+Message:  1020
+%qdt:
+ At the Fighters Guild in
+ ___questgiver_, _questgiver_ wants the
+ giant in ___mondung_ dead. If I am back
+ within =qtime_ days, I get _gold_ gold.
+
+Message:  1021
+%qdt:
+ I found a merchant the giant
+ had kept alive for later.
+ _villager_ wants me to see %g2
+ safely to _store_ in __store_.
+
+Message:  1030
+<ce> The giant bellows in pain. Heavy feet
+<ce> are coming this way. It has friends.
+
+Message:  1040
+<ce> %god be thanked! The giant took me on
+<ce> the road to market, with four others. It
+<ce> ate them. Will you help me out of here?
+
+Message:  1041
+<ce> You saved my life. My name is _villager_,
+<ce> from ___villager_. Take me to _store_ in
+<ce> __store_ and I will owe you forever.
+
+Message:  1042
+<ce> You have been kind, but
+<ce> I will go on alone now.
+
+Message:  1043
+<ce> You would leave me here? Heartless.
+
+Message:  1044
+<ce> Home at last. My family will
+<ce> hear your name, %pcf, every
+<ce> day for the rest of my life.
+
+Message:  1080
+<ce> One of the lads found a map to
+<ce> ___newdung_. Ten years ago, you and I
+<ce> would have cleared it together. Take it.
+
+
+QBN:
+Item _gold_ gold
+
+Person _villager_ face 8 group Shopkeeper
+
+Place _mondung_ permanent PirateerHold1
+Place _store_ remote generalstore
+
+Foe _giant_ is Giant
+Foe _F.01_ is Giant
+
+--	Quest start-up:
+	log 1020 step 0 
+	start task _victim_
+	place foe _giant_ at _mondung_ 
+
+_victim_ task:
+	place npc _villager_ at _mondung_ 
+
+_S.09_ task:
+	hide npc _villager_ 
+
+_S.10_ task:
+	clicked npc _villager_ 
+	prompt 1040 yes yes no _no_ 
+
+yes task:
+	pc at _store_ set _S.13_ 
+	log 1021 step 1 
+	hide npc _villager_ 
+	say 1041 
+	add _villager_ face
+
+_no_ task:
+	say 1043 
+	-change repute with _villager_ by -10 
+
+_S.13_ task:
+	say 1044 
+	drop _villager_ face 
+	-change repute with _villager_ by +15 
+	place npc _villager_ at _store_ 
+
+_S.14_ task:
+	when yes and not _S.13_

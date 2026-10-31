@@ -1,0 +1,167 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0B20L09.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 20
+-- QuestId: 9
+Messages: 22
+Quest: P0B20L09
+DisplayName: The Vanguard
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Quest text 1000 should
+never be shown.
+
+RefuseQuest:  [1001]
+Quest text 1001 should
+never be shown.
+
+AcceptQuest:  [1002]
+Quest text 1002 should
+never be shown.
+
+QuestFail:  [1003]
+Quest text 1003 should
+never be shown.
+
+QuestComplete:  [1004]
+<ce> My compliments, werebeast-killer.
+<ce> Your bloodfather will be glad to
+<ce> hear how cleanly you did it. Keep
+<ce> the tusk of =wereboar_. Among
+<ce> %vam it is a mark of honor.
+
+RumorsDuringQuest:  [1005]
+Of all the dungeons around,
+___mondung_ is the one to stay out of.
+
+RumorsPostfailure:  [1006]
+Something was howling in ___mondung_ the
+other night. It sounded pleased with itself.
+
+RumorsPostsuccess:  [1007]
+___mondung_ is quiet again. Quiet as a grave.
+
+QuestorPostsuccess:  [1008]
+Quest text 1008 should
+never be shown.
+
+QuestorPostfailure:  [1009]
+Quest text 1009 should
+never be shown.
+
+QuestLogEntry:  [1010]
+                     __vamp_
+                      ___vamp_
+ 
+ %pcn,
+ 
+      You are wanted by
+ %vam. Come at once.
+ 
+                    From
+ the shadows,
+ 
+                    _vamp_
+
+Message:  1011
+<ce> Good evening, %pcn. The ancients of %vam
+<ce> meet soon in %reg, at ___mondung_, and
+<ce> werebeasts have moved in there. Kill as
+<ce> many as you can, and their wereboar leader.
+<ce> Bring me its tusk within =queston_ nights.
+
+Message:  1012
+%qdt:
+ _vamp_ of %vam has written.
+ I am wanted at __vamp_ in
+ ___vamp_ without delay.
+
+Message:  1013
+%qdt:
+ _vamp_ sends me to ___mondung_, where
+ werebeasts have dared to settle on the
+ ground of %vam. I must teach them their
+ error and bring _vamp_ the tusk of
+ their leader within =queston_ nights.
+
+Message:  1017
+<ce> A pale boy with wild eyes gives you a
+<ce> letter and slips off into the night.
+
+Message:  1020
+<ce> =wereboar_, leader of the werebeasts,
+<ce> is dead. The rest will think twice
+<ce> before trespassing on %vam again.
+
+Message:  1021
+<ce> Bloodsucker, do not make me kill you.
+<ce> Run home to %vam and say =wereboar_
+<ce> sent you back for playing rough.
+
+
+QBN:
+Item _letter_ letter used 1010
+Item _I.01_ tusk
+
+Person _vamp_ factiontype Vampire_Clan local
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Werewolf
+Foe _wereboar_ is Wereboar
+
+--	Quest start-up:
+	dialog link for person _vamp_ 
+	pc at _mondung_ set _S.07_ 
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.09_ 
+	give pc _letter_ notify 1017 
+	place foe _wereboar_ at _mondung_ 
+
+_queston_ task:
+	change repute with _vamp_ by -5 
+	end quest 
+
+_vampclicked_ task:
+	clicked npc _vamp_ 
+
+_S.06_ task:
+	when _vampclicked_ 
+	reveal _mondung_ 
+	log 1013 step 1 
+	say 1011 
+
+_nononono_ task:
+	when _vampclicked_ and not _S.04_ 
+	clear _vampclicked_ _nononono_ 
+
+_reward_ task:
+	toting _I.01_ and _vamp_ clicked 
+	give pc _I.01_ 
+	end quest 
+
+_S.04_ task:
+	killed 1 _wereboar_ 
+	say 1020 
+
+_readletter_ task:
+	add dialog for person _vamp_ 
+	log 1012 step 0 
+	create npc _vamp_ 
+
+_S.07_ task:
+	create foe _F.00_ every 12 minutes 30 times with 50% success 
+
+_S.08_ task:
+	injured _wereboar_ 
+	give item _I.01_ to _wereboar_ 
+	say 1021 
+
+_S.09_ task:
+	start timer _queston_

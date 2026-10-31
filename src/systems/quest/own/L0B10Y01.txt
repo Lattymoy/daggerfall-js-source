@@ -1,0 +1,121 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B10Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 10
+-- QuestId: 1
+Messages: 21
+Quest: L0B10Y01
+DisplayName: A Fateful Song
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A bad bard sings rude verses about
+<ce> old patrons. %G3 knowledge of family
+<ce> trees was poor, so %g sang about a
+<ce> duke who bedded his own kin, to %g3
+<ce> new patron, that duke's daughter.
+<ce> Settle the bard for _reward_ gold?
+
+RefuseQuest:  [1001]
+<ce> Did you say no? A pity. When else
+<ce> will you get to kill a musician
+<ce> and call it a public service?
+
+AcceptQuest:  [1002]
+<ce> The bard knows about the contract
+<ce> and hides in a miserable hole called
+<ce> ___mondung_. It should be a small
+<ce> fight, but stay alert. A cornered
+<ce> singer can surprise you. Be back in
+<ce> =1stparton_ days for your fee.
+
+QuestFail:  [1003]
+<ce> That bard is still singing
+<ce> somewhere, I would bet. Yet
+<ce> here you are. Odd, is it not?
+
+QuestComplete:  [1004]
+<ce> Did you wait for the last note? Here
+<ce> is your share for playing the bard's
+<ce> funeral march: _reward_ gold.
+
+RumorsDuringQuest:  [1005]
+Did that duke really carry on with
+his own daughter? I keep wondering.
+<--->
+That poor _monster_ could not hold a tune anyway.
+
+RumorsPostfailure:  [1006]
+We never got rid of =monster_. Worse,
+%g3 songs are still stuck in my head.
+<--->
+The duchess is furious that the bard got away, I hear.
+
+RumorsPostsuccess:  [1007]
+On windy nights you can still hear
+=monster_'s rude songs, they say.
+<--->
+I am glad =monster_ is dead. %g was a terrible bore.
+
+QuestorPostsuccess:  [1008]
+Ah, %pcf. A sight as sweet as music.
+
+QuestorPostfailure:  [1009]
+<ce> How should I greet you, %pcf?
+<ce> The bard still lives. That is
+<ce> a sour note on your record.
+
+QuestLogEntry:  [1010]
+<ce> =monster_ will sing no more.
+
+Message:  1020
+%qdt:
+ The Dark Brotherhood wants a bard named
+ =monster_ dead. Within =1stparton_ days
+ the job must be done, and I must report to
+ _questgiver_ in ___questgiver_. The bard
+ hides in a dungeon called ___mondung_.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+Clock _2ndparton_ 2.18:40 4.04:00 flag 2 range 0 0
+
+Foe _monster_ is Bard
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	place foe _monster_ at _mondung_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc _reward_ 
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_S.02_ task:
+	killed 1 _monster_ 
+	say 1010 
+
+variable _queston_
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_ 
+	say 1003
+	clear _qgclicked_ _clearclick_

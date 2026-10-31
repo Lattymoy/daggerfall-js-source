@@ -1,0 +1,134 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000013.Qbn.
+-- Main story quest.
+-- QuestId: 13
+Messages: 21
+Quest: S0000013
+DisplayName: Mynisera's Letters
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, this is hard to say. Swear
+<ce> by your ancestors' honor to help
+<ce> me, and never tell anyone what you
+<ce> hear or see. Will you swear it?
+
+RefuseQuest:  [1001]
+<ce> Better no oath than a broken
+<ce> one, I suppose. Still, I
+<ce> hoped you were more gallant.
+
+AcceptQuest:  [1002]
+<ce> Then I trust you, %pcf. Mynisera, my
+<ce> mother-in-law, pays for a fortress called
+<ce> ___myndung_ and a troop of soldiers. Twice
+<ce> now she has carried parcels of letters
+<ce> there. Find them, or anything else, before
+<ce> she returns in =2myndung_ days.
+
+QuestFail:  [1003]
+<ce> I need proof within
+<ce> =2myndung_ days, %pcf.
+
+QuestComplete:  [1004]
+<ce> How sad. Poor Mynisera hides what the
+<ce> whole court knows: Lysandus loved
+<ce> another woman. And those orc children!
+<ce> No wonder she hid that her father
+<ce> ordered it. Thank you for your courage
+<ce> and silence, %pcf. %god bless you.
+
+QuestorPostfailure:  [1009]
+<ce> The letters are badly
+<ce> charred. A few words survive.
+
+QuestLogEntry:  [1010]
+<ce> ...too long from thee... she suspects...
+<ce> curse thy hollow crown... thy Medora, ever...
+<ce>
+<ce> ...Prince Klaius had the orc children
+<ce> killed... your father, my lady...
+<ce>
+<ce> ...crush them at Cryngaine, put Betony behind...
+<ce> then, thought dead, give up the crown...
+
+Message:  1011
+%qdt:
+ Queen Aubk-i wants to know what Mynisera, the
+ dowager queen, carries to her fortress, ___myndung_.
+ I must bring back the parcels of letters within
+ =2myndung_ days. Aubk-i will tell me more in return.
+
+Message:  1015
+<ce> A sturdy young woman in Daggerfall's
+<ce> livery hands you a letter, wheels
+<ce> her horse about, and rides off.
+
+Message:  1020
+Dear %pcn,
+ 
+ I need your help again. You were brave and discreet
+ when you went to Nulfaga for me. Please come to me
+ at Castle Daggerfall when you are next nearby.
+ 
+<ce> Aubk-i
+<ce> Queen of Daggerfall
+
+
+QBN:
+Item _treasure_ letter used 1010
+Item _gold_ gold
+Item letter48 letter used 1020
+
+Person _aubki_ named Queen_Aubk-i atHome
+Person _mynisera_ face 184 named Mynisera
+
+Place _myndung_ permanent Castle_Necromoghan
+
+Clock _2myndung_ 00:00 0 flag 17 range 0 2
+Clock _S.04_ 10.00:00 20.00:00
+
+
+--	Quest start-up:
+	start timer _S.04_ 
+	add _aubki_ as questor 
+
+_2myndung_ task:
+	drop _aubki_ as questor 
+	end quest 
+
+_pcgetsgold_ task:
+	toting _treasure_ and _aubki_ clicked 
+	give pc _gold_ 
+	drop _aubki_ as questor 
+	end quest 
+
+_S.02_ task:
+	clicked npc _aubki_ 
+	prompt QuestorOffer yes yes no _no_ 
+
+variable _S.03_
+_S.04_ task:
+	hide npc _mynisera_ 
+	give pc letter48 notify 1015 
+
+until _S.04_ performed:
+	clear _S.02_ 
+
+yes task:
+	place item _treasure_ at _myndung_ anymarker
+	start timer _2myndung_ 
+	reveal _myndung_ 
+	log 1011 step 0 
+	say AcceptQuest 
+
+_no_ task:
+	say RefuseQuest 
+	drop _aubki_ as questor 
+	end quest 
+
+_dummy_ task:
+	clicked item _treasure_ say QuestorPostfailure 
+	_treasure_ used do _S.03_

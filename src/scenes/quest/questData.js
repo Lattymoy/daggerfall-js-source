@@ -17,7 +17,9 @@ import { applyQuestPatches, QUEST_PATCHES } from '../../systems/quest/questPatch
 import { questlineLines } from '../../systems/questlines/qlPatches.js';   // QL4: a flagship quest's branch, patched in while the questlines' switch is on (bible/06-Systems/Questlines-Arc.md 2.3)
 
 const tableFiles = import.meta.glob('../../../vendor/dfu-quests/Tables/*.txt', { query: '?raw', import: 'default' });
-const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });
+// OWN-WORDS2: DFU's quest files the pack still reads - those with no message to rewrite (tools/bethesdaWords.mjs at 0);
+// every other quest is ours, so no DFU message is bundled
+const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/__DEMO01.txt', { query: '?raw', import: 'default' });
 // OWN-WORDS1 (bible/06-Systems/Own-Words.md): a DFU quest in DFO's own words - DFU's QBN, our messages - is read in
 // place of DFU's file of its name. tools/ownQuestCheck.mjs holds each one to DFU's logic.
 const ownQuestFiles = import.meta.glob('../../systems/quest/own/*.txt', { query: '?raw', import: 'default' });
@@ -65,10 +67,9 @@ export async function loadQuestPack() {
     }));
     const quests = new Map();
     const patchable = new Map();   // SHAM-TRAIL: a DFU quest the port patches, kept as shipped and patched as it is read
-    const own = new Map(Object.entries(ownQuestFiles).map(([path, load]) => [baseName(path), load]));
-    await Promise.all(Object.entries(questFiles).map(async ([path, load]) => {
+    await Promise.all(Object.entries({ ...questFiles, ...ownQuestFiles }).map(async ([path, load]) => {
       const name = baseName(path);
-      const text = stripBom(await (own.get(name) ?? load)());   // OWN-WORDS1: ours where we have it, patched as DFU's would be
+      const text = stripBom(await load());   // OWN-WORDS1: ours, patched as DFU's would be
       if (QUEST_PATCHES[name]) patchable.set(name, text);
       quests.set(name, text.split(/\r?\n/));
     }));

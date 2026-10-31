@@ -1,0 +1,139 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\T0C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Lady Azura
+-- Repute: 0
+-- QuestId: 0
+Messages: 31
+Quest: T0C00Y00
+DisplayName: Lady Azura's Quest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You call on Azura, Queen of Dusk and
+<ce> Dawn, and beg for power? I doubt you
+<ce> are worthy. Here is a small test. A
+<ce> priest has said very rude things about
+<ce> me. Would you kill this priest for me?
+
+RefuseQuest:  [1001]
+<ce> No? You were meant to say yes! "Yes,
+<ce> lovely Azura, I would kill at a flick of
+<ce> your ivory fingers." Boor! Lout! Leave
+<ce> my sight, before I forget I am a lady.
+
+AcceptQuest:  [1002]
+<ce> You would! This dreadful priest is a
+<ce> Healer. =monster_ hides in ___mondung_,
+<ce> purifying something. Pop over and put a
+<ce> sword in %g2. Then run to ___qgfriend_,
+<ce> where darling _qgfriend_ has my Star for
+<ce> you. You have =1stparton_ days, %pcf.
+
+QuestFail:  [1003]
+<ce> Hmm? What? Have we met?
+
+QuestComplete:  [1004]
+<ce> Oh! %pcn! Forgive me, I was dreaming of
+<ce> my Lady Azura. That candle has the glow
+<ce> of her eyes. Here is _artifact_. She
+<ce> gives it to very few. Do not let it go
+<ce> to your head. She was mine first.
+
+RumorsDuringQuest:  [1005]
+=monster_ preached against vanity when %g passed
+through. Half the town hid their mirrors.
+<--->
+Talk to =monster_ and you will
+learn that pride is the worst sin.
+
+RumorsPostfailure:  [1006]
+=monster_ has gone, but %g3 sermons on humility linger.
+<--->
+=monster_ has left %reg, preaching
+%g3 sermons on vanity elsewhere.
+
+RumorsPostsuccess:  [1007]
+No great loss, =monster_. %G was a terrible goody-goody.
+<--->
+<ce> I am not glad =monster_ is dead,
+<ce> but %g3 sermons went a bit far,
+ did they not?
+
+Message:  1011
+_qgfriend_? The =qgfriend_ I saw
+dreaming at __qgfriend_, %di of here.
+<--->
+_qgfriend_ is the drowsy =qgfriend_
+at __qgfriend_, to the %di.
+
+Message:  1012
+_qgfriend_ loves Lady Azura, and works for her in %reg.
+<--->
+Lady Azura has bewitched that
+=qgfriend_, _qgfriend_, into a slave.
+
+Message:  1013
+Azura rules a sphere of Oblivion. Her own beauty, mostly.
+<--->
+Dusk, dawn and her own reflection.
+Those are what Lady Azura rules.
+
+Message:  1014
+_artifact_ can turn living creatures into statues, for good.
+
+Message:  1020
+%qdt:
+ The Daedra Prince Azura and I have
+ a deal. I kill a monk who lives in
+ the empty temple of ___mondung_,
+ then find _qgfriend_, her contact
+ in ___qgfriend_, within =1stparton_
+ days. My reward is _artifact_.
+
+Message:  1030
+<ce> The _monster_ =monster_
+<ce> is dead, as Azura wished.
+
+
+QBN:
+Item _artifact_ artifact Azuras_Star anyInfo 1014
+
+Person _questgiver_ face 112 named Azura anyInfo 1013
+Person _qgfriend_ group Librarian anyInfo 1011 rumors 1012
+
+Place _mondung_ remote dungeon4
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Healer
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	place foe _monster_ at _mondung_ 
+
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_ 
+	give pc _artifact_ 
+	end quest 
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_ 
+	say 1030 
+
+_npcclicked_ task:
+	clicked npc _qgfriend_ 
+
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_ 
+	say 1003
+	clear _npcclicked_ _clearclick_ 

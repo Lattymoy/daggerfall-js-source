@@ -1,0 +1,301 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000001.Qbn.
+-- Main story quest.
+-- QuestId: 1
+Messages: 41
+Quest: S0000001
+DisplayName: Missing Prince
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You came, %pcf. Welcome to Sentinel. I know something
+<ce> about Lysandus, and maybe why his ghost walks in
+<ce> Daggerfall. But first, I need your help. Will you?
+
+RefuseQuest:  [1001]
+<ce> %oth, %pcf. Everyone said you were
+<ce> a hero. Everyone was wrong, then.
+
+AcceptQuest:  [1002]
+<ce> You will? Thank %god. I had a brother, _brother_, ten
+<ce> years older than me. Some say a fever killed him,
+<ce> some say the Underking took him. Bring me proof, and
+<ce> you'll hear everything I know about King Lysandus.
+
+QuestFail:  [1003]
+<ce> That isn't proof, %pcf.
+<ce> I need something real.
+
+QuestComplete:  [1004]
+<ce> Poor _brother_. I feared as much. Lysandus
+<ce> loved his sorceress, Medora Direnni, so
+<ce> Mynisera banished her. Mynisera is Queen
+<ce> Mother at Castle Daggerfall. Medora's tower
+<ce> is on the Isle of Balfiera, and a curse
+<ce> holds her there. Take this _magicitem_.
+
+RumorsDuringQuest:  [1005]
+Prince Lhotun has gone dark and quiet
+again. Greklith was never like that.
+<--->
+Queen Akorithi is at her wit's end
+with Prince Lhotun and his gloom.
+
+RumorsPostfailure:  [1006]
+Prince Lhotun's dark spells always pass
+in the end. Odd, in a boy so young.
+<--->
+Prince Lhotun is gloomier than ever
+these days. He is a strange boy.
+
+RumorsPostsuccess:  [1007]
+Prince Lhotun is in better spirits.
+He is quiet, but he was always quiet.
+<--->
+Queen Akorithi says her youngest son is
+cheerful again, and she is glad of it.
+
+QuestorPostsuccess:  [1008]
+Oh, %pct. Forgive me. I keep
+thinking about my brother's journal.
+
+QuestorPostfailure:  [1009]
+<ce> Nothing to tell me? Nothing at all?
+<ce> Then maybe my mother pays you, or
+<ce> one of her nobles does. Please go.
+
+QuestLogEntry:  [1010]
+___ukcrypt_, 23 Morning Star 3E 400
+ 
+ My sickness shamed Father. He named my brothers Greklith,
+ Strong King, and Lhotun, Second Boy. Strangers took me as
+ my nursemaid watched, and left me here to die.
+ 
+  _brother_,
+  Prince of Sentinel
+
+Message:  1011
+<ce> A gaunt, thin woman hands you a note. Whatever
+<ce> you ask her, her face gives nothing back.
+
+Message:  1012
+The Underking kept a crypt near here,
+___ukcrypt_. It lies %di of town.
+<--->
+Since ___ukcrypt_ was left empty,
+the Underking has kept quiet.
+<--->
+It was King Camaron who threw the
+Underking's people out of ___ukcrypt_.
+
+Message:  1013
+They say the Underking has lived for centuries.
+<--->
+The king? A fool, if you ask me. Oh, the
+UNDERking. Sorry. I know nothing about him.
+<--->
+A mighty lich, people say. I would not know.
+<--->
+Didn't he carry off Prince _brother_?
+<--->
+Old Camaron said the Underking killed Prince
+_brother_. That never sat right with me.
+<--->
+Some say the Underking is Tiber
+Septim himself, who never truly died.
+<--->
+Him? A tale to scare children, like Jagar Tharn.
+<--->
+The Underking is a story for children.
+<--->
+Underking? Who is that?
+
+Message:  1014
+                                       Castle Sentinel
+ 
+ Dear %pcn,
+ 
+     We have never met, but I know who you are, and that
+ you hunt King Lysandus' ghost. Help me and I'll help you.
+ Come to Samaruik, which people call Castle Sentinel.
+ 
+<ce> Lhotun,
+<ce> Prince of Sentinel
+
+Message:  1015
+___ukcrypt_ was the Underking's crypt
+once. Sentinel uses it as a prison now.
+<--->
+You'll find ___ukcrypt_ %di of here.
+Some swear the Underking still keeps it.
+
+Message:  1016
+___ukcrypt_ lies due %di of here. The
+Underking buried his dead there once.
+<--->
+Nobody is kept in ___ukcrypt_
+these days, prisoner or corpse.
+
+Message:  1018
+<ce> What is this, blackmail? You worthless
+<ce> forger. A fever took Prince _brother_
+<ce> years ago, as everyone knows. Let the
+<ce> dead boy rest, or I will have you beaten.
+
+Message:  1019
+%qdt:
+ Prince Lhotun of Sentinel wants
+ to know how his brother _brother_
+ died. The story goes that the
+ Underking took him, years ago.
+
+Message:  1020
+<ce> You pick up the last letter
+<ce> of someone who died here.
+
+Message:  1030
+_brother_? A prince of Sentinel, long dead.
+<--->
+A fever took _brother_ in the end.
+<--->
+He was the bookish one, wasn't he?
+<--->
+_brother_ read books and never touched
+a sword. King Camaron hated that.
+<--->
+Every other prince got a public funeral. He never had one.
+
+Message:  1031
+<ce> King Camaron, rest his soul, never cared for _brother_.
+ He wanted Greklith for his heir.
+<--->
+_brother_'s old nursemaid went off to
+Skyrim with a chest of gold, they say.
+<--->
+When _brother_ died, King Camaron hardly looked sad.
+<--->
+A fever killed him, I heard.
+<--->
+Something was wrong about _brother_. The
+King would not let the temple see the body.
+
+Message:  1032
+Dear %pcf,
+ 
+ If you want the truth about Prince
+ _brother_, come to _agentplace_ in
+ __agentplace_, in Sentinel.
+ 
+<ce> (unsigned)
+
+Message:  1035
+<ce> %pcn? Quiet. Do not be seen with me. The
+<ce> Underking is blamed for taking Prince
+<ce> _brother_, and wrongly. Look in ___ukcrypt_
+<ce> before you judge. Your map will show it. I
+<ce> am only a loyal servant. Now go.
+
+Message:  1040
+%qdt:
+ An agent of the Underking met me in secret.
+ The agent swears the Underking did not take
+ _brother_, and told me to search ___ukcrypt_.
+
+
+QBN:
+Item deathCertificate letter used 1010
+Item letter38 letter used 1032
+Item _magicitem_ magic_item
+
+Person _lhotun_ named Prince_Lhotun atHome
+Person _akorithi_ named Queen_Akorithi atHome
+Person _greklith_ face 88 named Prince_Greklith atHome
+Person Vhosek face 88 named Lord_Vhosek atHome
+Person _brother_ face 5 faction Children male remote anyInfo 1030 rumors 1031
+Person _agentuk_ face 1 faction Agents_of_The_Underking remote
+Person _underking_ face 1 named The_Underking anyInfo 1013
+
+Place _ukcrypt_ randompermanent Castle_Faallem,Fortress_Fhojum anyInfo 1015 rumors 1016
+Place _dirennitower_ permanent DirenniTowerEntry
+Place _agentplace_ remote tavern
+
+Clock _S.13_ 3.00:00 7.00:00
+
+--	Quest start-up:
+	dialog link for location _ukcrypt_ 
+	dialog link for location _dirennitower_ 
+	prompt QuestorOffer yes yes no _no_ 
+	place npc _agentuk_ at _agentplace_ 
+
+_S.00_ task:
+	toting deathCertificate and _lhotun_ clicked 
+	give pc _magicitem_ 
+	add dialog for location _dirennitower_ 
+	remove log step 0 
+	remove log step 1
+--added additional remove log. directions would linger in journal.
+	reveal _dirennitower_ in province 9 at 204718 
+	repute with _akorithi_ exceeds 0 do _S.16_ 
+	change repute with _lhotun_ by +15 
+	change repute with _agentuk_ by +25 
+	mute npc _lhotun_ 
+	mute npc _greklith_ 
+	mute npc _akorithi_ 
+	mute npc Vhosek 
+	drop _lhotun_ as questor 
+
+variable _S.01_
+variable _S.02_
+variable _queston_
+variable _S.04_
+_S.05_ task:
+	toting deathCertificate and _akorithi_ clicked 
+	toting deathCertificate and Vhosek clicked 
+	toting deathCertificate and _greklith_ clicked 
+	say 1018 
+	change repute with _akorithi_ by -20 
+	legal repute -20 
+	end quest 
+
+variable _S.06_
+variable _S.07_
+variable _S.08_
+variable _S.09_
+_S.10_ task:
+	clicked item deathCertificate say 1020 
+
+yes task:
+	place item deathCertificate at _ukcrypt_ 
+	start timer _S.13_ 
+	log 1019 step 0 
+	say AcceptQuest 
+	add _lhotun_ as questor 
+
+_no_ task:
+	say RefuseQuest 
+	drop _lhotun_ as questor 
+	end quest 
+
+_S.13_ task:
+	give pc letter38 notify 1011 
+
+_S.14_ task:
+	clicked npc _agentuk_ 
+	add dialog for location _ukcrypt_ 
+	reveal _ukcrypt_ 
+	log 1040 step 1 
+	say 1035 
+
+_S.15_ task:
+	level 7 completed 
+
+variable _S.16_
+_S.17_ task:
+	when _S.16_ and _S.15_ 
+	start quest 17 17 
+	end quest 
+
+variable _S.18_
+variable Castellian

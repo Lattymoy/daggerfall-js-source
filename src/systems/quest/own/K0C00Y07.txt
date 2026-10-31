@@ -1,0 +1,272 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C00Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 100
+Quest: K0C00Y07
+DisplayName: The Ransom
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The Thieves Guild has carried off my
+<ce> darling _victim_. Will you help me?
+<--->
+<ce> The Thieves Guild took my dear _victim_
+<ce> and wants a ransom paid. Bring my love
+<ce> home to me, by any means. Will you?
+
+RefuseQuest:  [1001]
+<ce> Cold, %pcf. Then I will
+<ce> face the kidnappers alone.
+<--->
+<ce> Then someone else will do it, %pcn.
+
+AcceptQuest:  [1002]
+<ce> %pcf, this _gem_ is the ransom. Give it to
+<ce> _kidnapper_, a =kidnapper_ at __kidnapper_ in
+<ce> ___kidnapper_, within =2ransom_ days. Save
+<ce> _victim_ without paying if you can. My last
+<ce> _gold_ gold is your pay. %god bless you.
+<--->
+<ce> Thank %god. Take the _gem_. Save _victim_ without
+<ce> it if you can. My last _gold_ gold is your pay.
+<ce> The agent is _kidnapper_, a =kidnapper_ at
+<ce> __kidnapper_ in ___kidnapper_. After =2ransom_
+<ce> days %g has %g3 friends kill _victim_. Save %g2!
+
+Message:  1099
+<ce> _victim_! Thank %god, alive! And
+<ce> you kept the ransom _gem_, %pcf.
+<ce> Your _gold_ gold, as I promised.
+<ce> It is not nearly enough.
+
+QuestComplete:  [1004]
+<ce> Keep it, friend. You earned it.
+
+RumorsDuringQuest:  [1005]
+_qgiver_ can barely pay the ransom for _victim_.
+<--->
+Since _victim_ was taken, all of ___qgiver_ is afraid.
+
+RumorsPostfailure:  [1006]
+The thieves who took _victim_
+will never hang, mark my words.
+
+RumorsPostsuccess:  [1007]
+Some %ra sellsword snatched _victim_ back from the thieves.
+
+QuestorPostsuccess:  [1008]
+Whatever you need, %pcf. You saved _victim_.
+
+QuestorPostfailure:  [1009]
+<ce> Leave me alone. I do not want
+<ce> to talk to anyone right now.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Thieves Guild holds _victim_,
+ and the ransom is due within
+ =2ransom_ days. I carry the _gem_
+ to _kidnapper_, their agent at
+ __kidnapper_ in ___kidnapper_.
+ _qgiver_ of __qgiver_ in
+ ___qgiver_ hopes I can free %g3
+ lover without paying.
+
+Message:  1011
+<ce> Hand the _gem_ to _kidnapper_?
+
+Message:  1012
+<ce> You are %pcf, yes? The Guild likes
+<ce> you, friend. %oth, I see it now.
+<ce> _qgiver_ sent you to see that %g
+<ce> pays us fair and square. Right?
+
+Message:  1013
+<ce> _victim_ pays for this! %oth, %g
+<ce> will be dead within =queston_
+<ce> days! =thug_, tear this %ra apart!
+<--->
+<ce> =thug_, kill this fool of a
+<ce> %ra. I will see to _victim_.
+
+Message:  1014
+<ce> _qgiver_ sent you? %oth, %god
+<ce> be thanked! Get me out of here!
+
+Message:  1015
+=thug_,
+ 
+      The Guild needs your muscle for a
+ simple kidnapping. The mark is _victim_.
+ Take %g2 from %g3 home at __qgiver_ in
+ ___qgiver_ to ___mondung_. Directions to
+ ___mondung_ are below. Try not to get lost.
+ 
+<ce> _kidnapper_
+
+Message:  1016
+<ce> %pcf, are you sure about this?
+<ce> I am glad of my _gem_, but not
+<ce> if it costs me _victim_. If %g
+<ce> dies, I will not thank you.
+
+Message:  1017
+<ce> _victim_! Thank %god you are safe!
+<ce> I wish the ransom had not been
+<ce> paid, %pcf, but you are home, love,
+<ce> and nothing else matters. Take the
+<ce> _gold_ gold, as I promised.
+
+Message:  1018
+<ce> The Guild was right about you, %pcf.
+<ce> Keep the gem. Go and see _qgiver_,
+<ce> and assure %g2 that _victim_ is on
+<ce> the way home. A pleasure.
+
+Message:  1019
+<ce> Good. Tell _qgiver_ that %g3
+<ce> _victim_ will be back in
+<ce> ___qgiver_ soon. Off you go.
+
+Message:  1020
+<ce> _victim_ came home just before you
+<ce> did, %pcf. You faced that awful
+<ce> _kidnapper_ for me, and I am
+<ce> grateful. Take your _gold_ gold.
+
+Message:  1021
+<ce> _victim_ thanks you, says %g
+<ce> knows the way home to %g3 lover,
+<ce> _qgiver_, and is off at a run.
+
+Message:  1022
+<ce> _victim_ must be dead by now.
+
+
+QBN:
+Item _gem_ gem
+Item _gold_ gold range 5 to 25
+Item _map_ letter used 1015
+
+Person _qgiver_ group Questor
+Person _victim_ face 1 group Group_7.0 local
+Person _kidnapper_ face 36 faction The_Thieves_Guild male remote
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+Clock _2ransom_ 00:00 0 flag 17 range 1 2
+
+Foe _thug_ is Rogue
+
+--	Quest start-up:
+	start timer _2ransom_ 
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _gem_ 
+	_map_ used do _S.08_ 
+	place npc _victim_ at _mondung_ 
+
+_queston_ task:
+	have _gem_ set _S.20_ 
+	end quest 
+
+variable _2ransom_
+_S.02_ task:
+	toting _gem_ and _kidnapper_ clicked 
+	repute with _kidnapper_ exceeds 10 do _S.05_ 
+
+_S.03_ task:
+	say 1019 
+
+_S.04_ task:
+	create foe _thug_ every 1 minutes 1 times with 100% success 
+	get item _gem_ 
+	give item _map_ to _thug_ 
+	hide npc _kidnapper_ 
+	say 1013 
+
+_S.05_ task:
+	prompt 1012 yes _S.07_ no _S.04_ 
+
+_S.06_ task:
+	when _S.02_ and not _S.05_ 
+	prompt 1011 yes _S.03_ no _S.04_ 
+
+_S.07_ task:
+	get item _gem_ 
+	say 1018 
+
+_S.08_ task:
+	reveal _mondung_
+
+_S.09_ task:
+	clicked npc _victim_ 
+	hide npc _victim_ 
+	say 1014 
+	add _victim_ face 
+
+_reward_ task:
+	when _S.11_ and _S.09_ 
+	say 1099 
+	change repute with _qgiver_ by +15 
+	change repute with _kidnapper_ by -10 
+
+_S.11_ task:
+	toting _gem_ and _qgiver_ clicked 
+	clear _qgclicked_ 
+
+_S.12_ task:
+	when _S.11_ and not _S.09_ and not _S.04_ 
+	get item _gem_ 
+
+_S.13_ task:
+	when _S.11_ and not _S.09_ and _S.04_ 
+	say 1016 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+	have _gem_ set _S.15_ 
+
+variable _S.15_
+_S.16_ task:
+	when _qgclicked_ and not _S.15_ and _S.09_ 
+	say 1017 
+	change repute with _qgiver_ by +8 
+
+_S.17_ task:
+	when _qgclicked_ and _S.07_ 
+	when _qgclicked_ and _S.03_ 
+	say 1020 
+
+_S.18_ task:
+	when not _S.15_ or not _S.09_ or not _S.03_ or not _S.07_ 
+	clear _qgclicked_ 
+
+_S.19_ task:
+	when _queston_ and _S.09_ and not _qgclicked_ 
+	say 1021 
+
+_S.20_ task:
+	make _gem_ permanent 
+
+_S.21_ task:
+	when _queston_ and not _S.09_ and not _S.07_ and not _S.17_ 
+	say 1022 
+	change repute with _qgiver_ by -5 
+
+_S.22_ task:
+	when not _S.09_ and _S.11_ 
+	get item _gem_ 
+	clear _S.11_ 
+
+_givereward_ task:
+	when _reward_ or _S.16_ or _S.17_ 
+	give pc _gold_ 
+	end quest 

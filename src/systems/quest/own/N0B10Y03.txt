@@ -1,0 +1,175 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B10Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 10
+-- QuestId: 3
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 14
+Quest: N0B10Y03
+DisplayName: Guard the Guild
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The guild needs someone to watch
+<ce> over its _treasure_ tonight. Can
+<ce> you do it? You will have a
+<ce> _potion_ for your trouble.
+<--->
+<ce> We have a small problem with visitors.
+<ce> The kind who come in through the
+<ce> windows. I name no names. %pct, we
+<ce> need a guard tonight. Will you do it?
+
+RefuseQuest:  [1001]
+<ce> That is fine. Someone
+<ce> else will want the work.
+
+AcceptQuest:  [1002]
+<ce> Come to the Mages Guild before
+<ce> midnight, and stay on watch
+<ce> until three in the morning.
+
+QuestComplete:  [1004]
+<ce> Not one thief got past you, %pcf. This
+<ce> _potion_ is yours, and well earned.
+
+RumorsDuringQuest:  [1005]
+The Thieves Guild must think that _treasure_
+at the Mages Guild is worth a fortune.
+<--->
+Thieves have been boasting that they
+will steal the Mages Guild's _treasure_.
+
+RumorsPostfailure:  [1006]
+So the thieves got that _treasure_ in the end.
+<--->
+The Mages Guild should hire real guards.
+Then they would still have their _treasure_.
+
+RumorsPostsuccess:  [1007]
+I doubt those thieves will try for that _treasure_ again.
+<--->
+The thieves who came for that _treasure_
+met a real guard, and they did not like it.
+
+QuestorPostsuccess:  [1008]
+Hello, %pcf. Still carrying that _potion_ around?
+
+QuestorPostfailure:  [1009]
+<ce> We lost the _treasure_ on your
+<ce> watch, %pcn. Do not come here again.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Mages Guild in ___qgiver_
+ needs a guard for its _treasure_.
+ I keep watch from midnight until
+ three in the morning.
+
+Message:  1011
+%qdt:
+ I could not help myself. The
+ _treasure_ in my pack is the
+ one I should have guarded.
+ They will come after me.
+
+Message:  1012
+<ce> Look, lads, a guard. I am shaking
+<ce> in my boots. Let us nail this one
+<ce> to the door, so the whole town
+<ce> knows who runs it. At it!
+
+Message:  1013
+<ce> In the name of the Mages Guild,
+<ce> you are a thief and a traitor, and
+<ce> there is a price on your head.
+
+
+QBN:
+Item _treasure_ magic_item
+Item _potion_ gem
+
+Person _qgiver_ group Questor
+
+Place _magesguild_ local magery
+
+Clock _oneday_ 1.03:00
+Clock _S.10_ 3.00:00
+
+Foe _F.00_ is Thief
+Foe _F.01_ is 4 Knight
+
+--	Quest start-up:
+	place item _treasure_ at _magesguild_ 
+	start timer _oneday_ 
+	log 1010 step 0
+	create npc at _magesguild_ 
+
+variable _oneday_
+
+_timeout_ task:
+	when _oneday_ and not _S.07_ 
+	end quest 
+
+_clickonqgiver_ task:
+	clicked npc _qgiver_ 
+
+_S.02_ task:
+	daily from 00:00 to 03:00 
+	pc at _magesguild_ set _S.03_ 
+
+_S.03_ task:
+	create foe _F.00_ every 3 minutes 1 times with 100% success 
+	create foe _F.00_ every 3 minutes 1 times with 100% success 
+	create foe _F.00_ every 3 minutes 1 times with 100% success 
+	create foe _F.00_ every 3 minutes 1 times with 100% success 
+	--spawn times reduced. leaving them at classic values would be very disjointed; one thief would arrive nearly half an hour later. classic tended to spawn all at once
+
+_S.04_ task:
+	injured _F.00_ saying 1012 
+
+_S.05_ task:
+	killed 2 _F.00_ 
+
+_S.06_ task:
+	clicked item _treasure_ 
+	clear _dropped_
+
+_dropped_ task:
+	dropped _treasure_ at _magesguild_ 
+	clear _S.06_
+
+_S.07_ task:
+	when _S.06_ and not _S.02_ 
+	create foe _F.01_ every 60 minutes 5 times with 10% success 
+	start timer _S.10_ 
+	log 1011 step 1 
+	change repute with _qgiver_ by -30 
+
+_S.08_ task:
+	injured _F.01_ saying 1013 
+
+_questdone_ task:
+	when _S.10_ and _S.07_ 
+	make _treasure_ permanent 
+	end quest 
+
+variable _S.10_
+
+_pcgetsgold_ task:
+	when _clickonqgiver_ and _S.05_ and not _S.07_ and not _S.02_ 
+	give pc _potion_ 
+	end quest 
+
+_clearclick_ task:
+               when _clickonqgiver_ and not _S.05_
+               clear _clearclick_ _clickonqgiver_
+
+_clearclick2_ task:
+               when _clickonqgiver_ and _S.02_
+               clear _clearclick2_ _clickonqgiver_
+
+variable _S.13_

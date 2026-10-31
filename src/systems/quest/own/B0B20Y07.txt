@@ -1,0 +1,113 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B20Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 20
+-- QuestId: 7
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0B20Y07
+DisplayName: More Trouble with Orcs
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _qgiver_ of ==qgiver_. A band
+<ce> of orc bandits has dug in near here,
+<ce> and %reg will honor whoever clears
+<ce> them out. Will you do it, %pcf?
+<--->
+<ce> Orcs are pushing into %reg and
+<ce> fouling the land wherever they go.
+<ce> Will you help us drive them out?
+
+RefuseQuest:  [1001]
+<ce> That makes four refusals today.
+<ce> Nobody wants to fight orcs anymore.
+
+AcceptQuest:  [1002]
+<ce> You need not kill every orc in the
+<ce> band. Thin them out, and make sure
+<ce> their leader, =monster_, dies.
+<ce> Their den is __dungeon_. Take
+<ce> longer than =2dung_ days and I will
+<ce> give a fine speech at your funeral.
+
+QuestComplete:  [1004]
+<ce> Well fought! The merchants are
+<ce> already thanking me for the quiet
+<ce> roads. You do the order credit.
+
+RumorsDuringQuest:  [1005]
+Those orcs from __dungeon_ have
+nearly shut down the caravan roads.
+<--->
+The __dungeon_ orcs used to keep to themselves. Not anymore.
+
+RumorsPostfailure:  [1006]
+The orcs packed up and left by themselves.
+Mark my words, they will come back.
+
+RumorsPostsuccess:  [1007]
+The %kno rid %reg of the __dungeon_
+orcs. A %ra knight led the way.
+
+QuestorPostsuccess:  [1008]
+Ask what you like, Bane of Orcs.
+
+QuestorPostfailure:  [1009]
+Ah, %pct. I would be gladder to
+see you if those orcs were gone.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At ___qgiver_, _qgiver_ of
+ ==qgiver_ sent me to wipe
+ out the orcs of __dungeon_.
+ Above all I must kill their
+ leader, a _monster_. I must
+ find %g2 and be back within
+ =2dung_ days, or %g wins.
+
+Message:  1011
+<ce> =monster_ is dead. With no leader,
+<ce> these orcs are only a nuisance now.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _local_ face 1 group Resident2 local
+
+Place _dungeon_ remote dungeon1
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Orc_sergeant
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	place foe _monster_ at _dungeon_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011 
+
+_S.02_ task:
+	clicked npc _qgiver_ 
+
+_success_ task:
+	when _S.02_ and _S.01_ 
+	give pc nothing 
+	change repute with _local_ by +4 
+	end quest 
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_ 
+	clear _S.02_ _clearclick_
+	--ensures repeated clearclick

@@ -1,0 +1,177 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 0
+-- QuestId: 0
+Messages: 16
+Quest: B0B00Y00
+DisplayName: The Princess
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, Princess _lady_ was taken while
+<ce> in our care, and the order must bring
+<ce> her back. Our knights are all at the
+<ce> war. Will you go and free her from
+<ce> the _monster_ that holds her?
+<--->
+<ce> The war in %reg has taken every
+<ce> knight we have, and nobody is left
+<ce> to guard its noble ladies. Princess
+<ce> _lady_ was seized two days ago. Are
+<ce> you free to bring her home?
+
+RefuseQuest:  [1001]
+<ce> Then I was wrong about you. An
+<ce> order that will not guard the
+<ce> helpless is no order at all.
+
+AcceptQuest:  [1002]
+<ce> Good. A _monster_ is a hard foe, so
+<ce> prepare well. The princess matters, not
+<ce> the kill. Return within =2mondung_ days,
+<ce> or another knight takes your place and
+<ce> your honor. %god keep you in ___mondung_.
+
+QuestFail:  [1003]
+<ce> The princess is still waiting,
+<ce> %pcf. You have =2mondung_ days
+<ce> left to bring her out.
+
+QuestComplete:  [1004]
+<ce> Princess _lady_, meet %pcn, who carried
+<ce> you out of that place. The order does
+<ce> not forget a deed like this, my friend.
+
+RumorsDuringQuest:  [1005]
+They say Princess _lady_ was taken. Her father is
+riding to ___qgiver_, and he will not be calm about it.
+<--->
+_qgiver_ gave Princess _lady_'s father a
+knight's word. So much for the word of a knight.
+
+RumorsPostfailure:  [1006]
+The princess got herself out of ___mondung_ with
+no help from any knight. Fine knights they are.
+<--->
+The princess walked into ___qgiver_ on her
+own, white as milk and weak from lost blood.
+
+RumorsPostsuccess:  [1007]
+The knights are drinking to a %ra who
+brought _lady_ home from the dark.
+<--->
+Lady _lady_ writes poems now, and every
+one is about the %ra who saved her.
+
+QuestorPostsuccess:  [1008]
+Good to see you, %pct. Lady _lady_
+is well, and she asks after you.
+
+QuestorPostfailure:  [1009]
+The business with Lady _lady_ went
+badly. We need not speak of it again.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_ in ___qgiver_, _qgiver_ gave me a
+ quest. I am to free Lady _lady_ from
+ ___mondung_, where a _monster_ keeps her. I have
+ =2mondung_ days before another knight is sent.
+
+Message:  1011
+<ce> A thin, pale boy hisses at you,
+<ce> pushes a note into your fingers and
+<ce> is gone before you can look twice.
+
+Message:  1012
+<ce> The _monster_ is dead. It will
+<ce> not trouble _lady_'s sleep again.
+
+Message:  1013
+<ce> Lady _lady_ will not wait any
+<ce> longer. She sets off for home alone.
+
+Message:  1014
+%pcf,
+ 
+ Fear nothing from the _monster_s of %reg for spoiling
+ one of their own. =monster_ is worth less to us than
+ old spilled blood. Enjoy yourself, and enjoy _lady_.
+ 
+<ce> Fondly,
+<ce> The Oldest Power in %reg
+
+Message:  1015
+<ce> You must be %pcf. %god be thanked! I am
+<ce> Lady _lady_. Take me home, and quickly.
+
+
+QBN:
+Item letter31 letter used 1014
+
+Person _qgiver_ group Questor
+Person _lady_ face 2 group Noble female local
+Person _vamp_ face 40 factiontype Vampire_Clan local
+
+Place _mondung_ remote dungeon8
+
+Clock _2mondung_ 00:00 0 flag 17 range 0 2
+Clock _S.07_ 10:00 1.16:00
+
+Foe _monster_ is Vampire
+Foe imp0 is Giant_rat
+
+--	Quest start-up:
+	dialog link for person _vamp_ 
+	start timer _2mondung_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	repute with _vamp_ exceeds 20 do _S.05_ 
+	pc at _mondung_ set _S.03_ 
+	place foe _monster_ at _mondung_ 
+	place npc _lady_ at _mondung_ 
+
+_2mondung_ task:
+	end quest 
+
+_S.01_ task:
+	when _qgclicked_ and _S.04_ 
+	give pc nothing 
+	end quest 
+
+_S.02_ task:
+	killed 1 _monster_ 
+	say 1012 
+
+_S.03_ task:
+	create foe imp0 every 40 minutes 100 times with 15% success 
+
+_S.04_ task:
+	clicked npc _lady_ 
+	hide npc _lady_ 
+	say 1015 
+	add _lady_ face 
+
+_S.05_ task:
+	start timer _S.07_ 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_S.07_ task:
+	get item letter31 
+	say 1011 
+
+variable _S.08_
+_S.09_ task:
+	when _S.04_ and _2mondung_ 
+	say 1013 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.04_
+	say 1003 
+	clear _qgclicked_ _clearclick_

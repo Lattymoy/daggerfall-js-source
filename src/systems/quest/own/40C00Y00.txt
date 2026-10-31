@@ -1,0 +1,419 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\40C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Nocturnal
+-- Repute: 0
+-- QuestId: 0
+Messages: 51
+Quest: 40C00Y00
+DisplayName: Nocturnal's Quest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You want power, %pcn, so you may strike
+<ce> at shadows and hope to hit. I can give
+<ce> you that hope. What will you give me?
+<ce> Will you destroy one who pains me?
+
+RefuseQuest:  [1001]
+<ce> No heart at all, as I thought. Then
+<ce> there is no pact between us. I
+<ce> return to my cold halls, where the
+<ce> souls are no kinder, but they obey.
+
+AcceptQuest:  [1002]
+<ce> Go to ___mondung_, lair of the _monster_
+<ce> =monster_, and end %g2. For that, %pcf,
+<ce> my servant _qgfriend_ will give you my
+<ce> _artifact_. Afterward, find %g2 at
+<ce> __qgfriend_ in ___qgfriend_. Look for a
+<ce> =qgfriend_. I return to my cold palace.
+
+QuestFail:  [1003]
+<ce> No, you want some other
+<ce> =qgfriend_. I am not _qgfriend_.
+
+QuestComplete:  [1004]
+<ce> You are %pcn? I am _qgfriend_. I
+<ce> wondered what sort of %ra could slip
+<ce> into a _monster_'s keep, kill its
+<ce> master and stroll out again. Nocturnal
+<ce> is curious too. Her gift is
+<ce> _artifact_. Mind how you use it, %pcf.
+
+RumorsDuringQuest:  [1005]
+=monster_ is a sly one. %G puts the
+whole Mages Guild under a cloud.
+<--->
+With =monster_ in the Mages Guild, who there can you trust?
+<--->
+According to the mages, =monster_ ran from
+the wrath of Oblivion to ___fakedung_.
+<--->
+The mages are gathering to search
+___fakedung_ for that snake =monster_.
+<--->
+A crowd of mages went out toward ___fakedung_ today.
+<--->
+That traitor =monster_ has gone to
+ground in ___fakedung_, I hear.
+
+RumorsPostfailure:  [1006]
+=monster_ was in trouble, I knew
+it. %G left in such a hurry.
+<--->
+The Mages Guild decided =monster_ was bad for its good name.
+
+RumorsPostsuccess:  [1007]
+=monster_ had it coming. %G3 old sins found %g2 at last.
+<--->
+Even the Archmagister does not mourn =monster_.
+
+Message:  1011
+_qgfriend_ drinks at __qgfriend_ most days. Head %di.
+<--->
+_qgfriend_? A =qgfriend_ you will
+find at __qgfriend_, to the %di.
+
+Message:  1012
+_qgfriend_ does Nocturnal's work
+from __qgfriend_, to the %di.
+<--->
+_qgfriend_ belongs to Nocturnal,
+Lady of the Night, body and shadow.
+
+Message:  1013
+Nocturnal is the Lady of the Night,
+and no one knows her purposes.
+<--->
+Nocturnal rules a corner of Oblivion
+made of darkness and secrets.
+
+Message:  1014
+No lock can keep
+out the _artifact_.
+
+Message:  1015
+Word is that =monster_ fled the
+wrath of Oblivion to ___fakedung_.
+<--->
+Mages from all over are combing ___fakedung_ for =monster_.
+<--->
+I watched a band of mages ride out to ___fakedung_.
+<--->
+=monster_ the traitor is said
+to be holed up at ___fakedung_.
+
+Message:  1016
+<ce> %oth! =monster_, Oblivion's hound is on
+<ce> our trail. I have taken the best
+<ce> reagents to ___fakedung_. Meet me there
+<ce> once you have dealt with that %ra.
+<ce>
+<ce> N.
+
+Message:  1017
+<ce> A voice whispers in your ear.
+<ce> "=monster_ ... safe ... the
+<ce> special place ... word soon ..."
+
+Message:  1018
+%qdt:
+ At ___mondung_, a whisper
+ spoke of a 'special
+ place' somewhere inside.
+
+Message:  1019
+%qdt:
+ A note to =monster_ says %g is awaited at
+ ___fakedung_ once I am bribed or beaten.
+
+Message:  1020
+%qdt:
+ Nocturnal and I have a pact. I am to kill the
+ _monster_ =monster_ in %g3 keep, ___mondung_,
+ and meet her agent _qgfriend_ at __qgfriend_ in
+ ___qgfriend_ within =1stparton_ days. My reward
+ is the _artifact_. Failing her may cost more.
+
+Message:  1021
+%qdt:
+ =monster_ bought %g3 life with
+ _bow_, and I took the deal. %G
+ says it lies in ___bowdung_. I
+ have betrayed Nocturnal already,
+ so I may as well find it.
+
+Message:  1022
+%qdt:
+ =monster_ bought %g3 life
+ with the _ring_, and I took
+ the deal. %G says it lies
+ in ___ringdung_. I have
+ betrayed Nocturnal already,
+ so I may as well find it.
+
+Message:  1023
+%qdt:
+ =monster_ bought %g3 life
+ with the _staff_, and I took
+ the deal. %G says it lies in
+ ___staffdung_. I have
+ betrayed Nocturnal already,
+ so I may as well find it.
+
+Message:  1030
+<ce> Wait! Nocturnal sent you, and promised
+<ce> you the _artifact_. I can offer more.
+<ce> Stop, and I will tell you where _bow_
+<ce> lies. Do we have a bargain?
+
+Message:  1031
+<ce> Wait! Nocturnal sent you, and promised
+<ce> you the _artifact_. I can offer more.
+<ce> Stop, and I will tell you where the
+<ce> _ring_ lies. Do we have a bargain?
+
+Message:  1032
+<ce> Wait! Nocturnal sent you, and promised
+<ce> you the _artifact_. I can offer more.
+<ce> Stop, and I will tell you where the
+<ce> _staff_ lies. Do we have a bargain?
+
+Message:  1035
+<ce> =monster_ is dead. Nocturnal
+<ce> will sleep easier.
+
+Message:  1040
+<ce> Wise. I knew you had a sellsword's
+<ce> heart. _bow_ lies in ___bowdung_.
+<ce> Claim it, and the world will fear
+<ce> you. And now I go, before that heart
+<ce> wants _bow_ and the _artifact_ both.
+
+Message:  1041
+<ce> Wise. I knew you had a sellsword's
+<ce> heart. The _ring_ lies in ___ringdung_.
+<ce> Claim it, and the world will fear you.
+<ce> And now I go, before that heart wants
+<ce> the _ring_ and the _artifact_ both.
+
+Message:  1042
+<ce> Wise. I knew you had a sellsword's
+<ce> heart. The _staff_ lies in
+<ce> ___staffdung_. Claim it, and the
+<ce> world will fear you. And now I go,
+<ce> before that heart wants the
+<ce> _staff_ and the _artifact_ both.
+
+Message:  1045
+<ce> Laughter rings in your head. "You
+<ce> trusted me, %pcn? Take this shadow
+<ce> of power, and rage at those who
+<ce> hold the real thing. Like me. I
+<ce> hope dear Nocturnal forgives you."
+<ce> _bow_ turns to dust in your hand.
+
+Message:  1046
+<ce> Laughter rings in your head. "You
+<ce> trusted me, %pcn? Take this shadow
+<ce> of power, and rage at those who hold
+<ce> the real thing. Like me. I hope dear
+<ce> Nocturnal forgives you." The _ring_
+<ce> turns to dust in your hand.
+
+Message:  1047
+<ce> Laughter rings in your head. "You
+<ce> trusted me, %pcn? Take this shadow
+<ce> of power, and rage at those who hold
+<ce> the real thing. Like me. I hope dear
+<ce> Nocturnal forgives you." The _staff_
+<ce> turns to dust in your hand.
+
+Message:  1050
+<ce> Nocturnal admired your nerve,
+<ce> %pcn. Such bold treachery earns a
+<ce> reward, she says. A quick death.
+
+
+QBN:
+Item _artifact_ artifact Skeletons_Key anyInfo 1014
+Item _bow_ artifact Auriels_Bow
+Item _ring_ artifact Warlocks_Ring
+Item _staff_ artifact Staff_of_Magnus
+Item _letter_ letter used 1016
+
+Person _questgiver_ face 112 named Nocturnal anyInfo 1013
+Person _qgfriend_ group Librarian anyInfo 1011 rumors 1012
+
+Place _mondung_ remote dungeon
+Place _bowdung_ remote dungeon
+Place _ringdung_ remote dungeon
+Place _staffdung_ remote dungeon
+Place _fakedung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+Clock _bonk_ 01:00 0 flag 1 range 0 1
+Clock _S.22_ 1.00:00 2.18:40
+Clock _betrayQuestor_ 00:02 00:30
+
+Foe _monster_ is Mage
+Foe _monster1_ is Mage
+Foe _daedra_ is Frost_daedra
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	pick one of _S.08_ _S.09_ _S.33_ 
+	pc at _mondung_ set _S.00_ 
+	_letter_ used do _S.02_ 
+	place foe _monster_ at _mondung_ 
+
+variable _S.00_
+_S.01_ task:
+	when _S.00_ and not _S.05_ and not _S.17_ 
+	log 1018 step 1 
+	say 1017 
+
+_S.02_ task:
+	reveal _fakedung_ 
+	log 1019 step 1 
+
+_1stparton_ task:
+	end quest 
+
+_S.04_ task:
+	clicked npc _qgfriend_ 
+
+_S.05_ task:
+	killed 1 _monster_ 
+	killed 1 _monster1_
+	say 1035 
+
+_S.06_ task:
+	when _S.04_ and _S.05_ 
+	give pc _artifact_ 
+	start timer _bonk_ 
+	unset _S.04_ 
+
+_clearclick_ task:
+	when _S.04_ and not _S.05_
+	say 1003
+	clear _S.04_ _clearclick_
+
+_S.07_ task:
+	injured _monster_ 
+	place item _letter_ at _mondung_ 
+
+variable _S.08_
+variable _S.09_
+variable _betrayQuestor_
+_S.11_ task:
+	clicked item _bow_ 
+	clear _S.08_ 
+
+_S.12_ task:
+	clicked item _ring_ 
+	clear _S.09_ 
+
+_S.13_ task:
+	clicked item _staff_ 
+	clear _S.33_ 
+
+_S.14_ task:
+	when _S.17_ and _S.19_ 
+	place item _bow_ at _bowdung_ 
+	reveal _bowdung_ 
+	log 1021 step 2 
+	say 1040 
+
+_S.15_ task:
+	when _S.17_ and _S.20_ 
+	place item _ring_ at _ringdung_ 
+	reveal _ringdung_ 
+	log 1022 step 2 
+	say 1041 
+
+_S.16_ task:
+	when _S.17_ and _S.21_ 
+	place item _staff_ at _staffdung_ 
+	reveal _staffdung_ 
+	log 1023 step 2 
+	say 1042 
+
+_S.17_ task:
+	place item _letter_ at _mondung_ 
+	dialog link for location _fakedung_ 
+	start timer _S.22_ 
+	rumor mill 1015 
+	change repute with _questgiver_ by -20 
+	remove foe _monster_
+	place foe _monster1_ at _fakedung_
+--replaced faulty action "place foe _monster_ at _fakedung_" with remove foe, otherwise foe would not disappear. added new monster1 variable
+
+
+variable _S.18_
+_S.19_ task:
+	when _S.07_ and _S.08_ 
+	prompt 1030 yes _S.17_ no _S.18_ 
+
+_S.20_ task:
+	when _S.07_ and _S.09_ 
+	prompt 1031 yes _S.17_ no _S.18_ 
+
+_S.21_ task:
+	when _S.07_ and _S.33_ 
+	prompt 1032 yes _S.17_ no _S.18_ 
+
+_S.22_ task:
+	create foe _daedra_ every 3 minutes 4 times with 100% success 
+
+_S.23_ task:
+	injured _daedra_ 
+	say 1050 
+
+_S.24_ task:
+	when _betrayQuestor_ and _S.14_ 
+	place item _bow_ at _fakedung_ 
+	say 1045 
+
+_S.25_ task:
+	when _betrayQuestor_ and _S.15_ 
+	place item _ring_ at _fakedung_ 
+	say 1046 
+
+_S.26_ task:
+	when _betrayQuestor_ and _S.16_ 
+	place item _staff_ at _fakedung_ 
+	say 1047 
+
+_S.27_ task:
+	when _S.11_ and not _S.05_ 
+	start timer _betrayQuestor_ 
+
+_S.28_ task:
+	when _S.12_ and not _S.05_ 
+	start timer _betrayQuestor_ 
+
+_S.29_ task:
+	when _S.13_ and not _S.05_ 
+	start timer _betrayQuestor_ 
+
+_S.30_ task:
+	when _S.11_ and _S.05_ 
+	make _bow_ permanent 
+
+_S.31_ task:
+	when _S.12_ and _S.05_ 
+	make _ring_ permanent 
+
+_S.32_ task:
+	when _S.13_ and _S.05_ 
+	make _staff_ permanent 
+
+variable _S.33_
+_bonk_ task:
+	end quest 

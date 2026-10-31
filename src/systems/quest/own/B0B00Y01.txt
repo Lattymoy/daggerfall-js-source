@@ -1,0 +1,117 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B00Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 0
+-- QuestId: 1
+Messages: 12
+Quest: B0B00Y01
+DisplayName: Retribution
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, we have a traitor at __qgiver_.
+<ce> A _monster_ has turned against %g3
+<ce> own brothers in arms, and the good
+<ce> name of the order is on the line.
+<ce> Will you help us answer it?
+<--->
+<ce> __qgiver_ has been sold out
+<ce> by a _monster_ with no honor
+<ce> at all. Will you help us run
+<ce> the coward down and kill %g2?
+
+RefuseQuest:  [1001]
+<ce> A poor answer. I hoped
+<ce> for more from you.
+
+AcceptQuest:  [1002]
+<ce> Good. Our traitor is a _monster_ called
+<ce> =monster_, hiding in ___mondun_ to the
+<ce> %di. Come back within =queston_ days,
+<ce> or your honor is lost and someone else
+<ce> takes the task. Do not fail us, %pcf.
+
+QuestFail:  [1003]
+<ce> I can see in your face that
+<ce> the _monster_ still lives.
+
+QuestComplete:  [1004]
+<ce> That was well done. Hold your head high.
+
+RumorsDuringQuest:  [1005]
+That _monster_ fled to ___mondun_ as if
+the hounds of Oblivion were on the trail.
+<--->
+_qgiver_ will never let =monster_
+walk free. %G shamed the whole %kno.
+
+RumorsPostfailure:  [1006]
+=monster_ was harder to kill than
+_qgiver_ expected. Quite an escape, that.
+<--->
+They say =monster_ went north, but
+the order still smarts at %g3 name.
+
+RumorsPostsuccess:  [1007]
+Look at what happened to =monster_.
+Nobody crosses the %kno and lives.
+<--->
+I thought the order would go
+easier on a fool like =monster_.
+
+QuestorPostsuccess:  [1008]
+You did well in the matter of =monster_.
+What can the order do for you?
+
+QuestorPostfailure:  [1009]
+__qgiver_ is still red in the face
+over =monster_. What is it you want?
+
+QuestLogEntry:  [1010]
+%qdt:
+ The %kno in ___qgiver_ sent me after
+ a _monster_ named =monster_, who
+ hides in %g3 den at ___mondun_. The
+ job must be done in =queston_ days.
+
+Message:  1011
+<ce> =monster_ the _monster_ is dead.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondun_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Nightblade
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondun_ 
+	log 1010 step 0 
+	place foe _monster_ at _mondun_ 
+
+_queston_ task:
+	end quest 
+
+_pcgetsgold_ task:
+	when _mondead_ and _qgclicked_ 
+	give pc nothing 
+	end quest 
+
+_mondead_ task:
+	killed 1 _monster_ saying 1011 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_clearclick_ task:
+	when not _mondead_ and _qgclicked_
+	say 1003 
+	clear _qgclicked_ _clearclick_

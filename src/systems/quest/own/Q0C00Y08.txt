@@ -1,0 +1,132 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C00Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 8
+Messages: 14
+Quest: Q0C00Y08
+DisplayName: A Rare Tome
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Yes, %pcf, you could help us. We are
+<ce> a lonely coven, and the world outside
+<ce> fears us. A rare book waits for us in
+<ce> ___contact_. Fetch it, and you will
+<ce> have a _mitem_ made for you alone.
+
+RefuseQuest:  [1001]
+<ce> Then we wait for the next traveler.
+<ce> We are in no great hurry.
+
+AcceptQuest:  [1002]
+<ce> The book is the rare _book_. Our
+<ce> friend _contact_, a =contact_ in
+<ce> ___contact_, stole a copy. Meet %g2 at
+<ce> __contact_ and %g will hand it over.
+<ce> Return within =queston_ days or not at
+<ce> all. ==daedra_ guard your road.
+
+QuestComplete:  [1004]
+<ce> The book, at last! Did you peek
+<ce> inside, %pcf? Most who do regret
+<ce> it. Your _mitem_, as promised.
+
+RumorsDuringQuest:  [1005]
+People are watching _contact_. They
+say %g keeps company with witches.
+<--->
+_contact_ brews odd teas and talks to cats. A witch, surely.
+
+RumorsPostfailure:  [1006]
+They burned _contact_ for a
+witch-friend. Nobody spoke up for %g2.
+<--->
+_contact_ hanged this morning. The guards
+found %g3 cellar full of stolen books.
+
+RumorsPostsuccess:  [1007]
+The guards searched every corner of
+_contact_'s house for _book_. Nothing.
+<--->
+_contact_ swears %g never touched _book_. Just
+another =contact_ in the wrong place, %g says.
+
+QuestorPostsuccess:  [1008]
+Welcome, %pcf. Your _book_ has
+kept me up three nights running.
+
+QuestorPostfailure:  [1009]
+<ce> _book_ is lost, maybe for good.
+<ce> This is no time for talk. Leave
+<ce> ==qgiver_. You are not wanted here.
+
+QuestLogEntry:  [1010]
+%qdt:
+ ==qgiver_ wants me to meet
+ _contact_, a =contact_, at
+ __contact_ in ___contact_ about a
+ rare book. I must bring it back to
+ ==qgiver_ within =queston_ days.
+
+Message:  1011
+<ce> Here it is, %pcf. Watch yourself.
+<ce> Half the guards in ___contact_
+<ce> are hunting for this thing.
+
+Message:  1012
+<ce> There is the thief! Get them!
+
+Message:  1013
+<ce> Too late. The witches needed the
+<ce> book today, and today is gone.
+
+
+QBN:
+Item _mitem_ magic_item
+Item _book_ book2
+
+Person _qgiver_ group Questor
+Person _daedra_ face 1 factiontype Daedra remote
+Person _contact_ face 68 group Innkeeper male remote
+
+
+Clock _queston_ 00:00 0 flag 17 range 1 2
+
+Foe _guard_ is Knight
+
+--	Quest start-up:
+	hide npc _daedra_
+	start timer _queston_ 
+	log 1010 step 0 
+-- hide NPC added to ensure this dummy character won't appear in the wild somewhere.
+-- this NPC is never used in the game world, only as a name drop.
+
+variable _queston_
+_S.01_ task:
+	when _queston_ and _S.05_ 
+	say 1013 
+	make _book_ permanent 
+	end quest 
+
+_S.02_ task:
+	when _queston_ and not _S.05_ 
+	end quest 
+
+_qgclicked_ task:
+	toting _book_ and _qgiver_ clicked 
+	give pc _mitem_ 
+	end quest 
+
+_S.04_ task:
+	clicked npc _contact_ 
+	get item _book_ 
+	say 1011 
+	have _book_ set _S.05_ 
+
+_S.05_ task:
+	create foe _guard_ every 20 minutes 20 times with 50% success msg 1012 
+	legal repute -30

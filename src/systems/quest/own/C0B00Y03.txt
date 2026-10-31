@@ -1,0 +1,127 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0B00Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 3
+Messages: 13
+Quest: C0B00Y03
+DisplayName: The Missing Scholar
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, one of our clerics is
+<ce> missing. _cleric_, a =cleric_, went
+<ce> digging in old ruins and never came
+<ce> back. Will you find %g2?
+<--->
+<ce> Our finest scholar, _cleric_, went
+<ce> to study a ruined temple and has
+<ce> not returned. Will you find %g2?
+
+RefuseQuest:  [1001]
+<ce> Cold of you, %pcf. Very cold.
+
+AcceptQuest:  [1002]
+<ce> Good. _cleric_ left for ___mondung_
+<ce> nearly two weeks ago to dig. Perhaps
+<ce> all is well. Perhaps not. Go there and
+<ce> bring _cleric_ home within =queston_
+<ce> days. %god guard your steps, %pct.
+
+QuestComplete:  [1004]
+<ce> %pct, and _cleric_ with you!
+<ce> Welcome back to __qgiver_. I had
+<ce> begun to write the funeral prayers.
+
+RumorsDuringQuest:  [1005]
+_cleric_ went into ___mondung_ with
+nothing but a shovel. Brave, or foolish.
+<--->
+What is a bookish =cleric_ like _cleric_
+doing in ___mondung_? Digging a grave, maybe.
+
+RumorsPostfailure:  [1006]
+Nobody expects to see _cleric_ alive again.
+<--->
+__qgiver_ still mourns for _cleric_.
+
+RumorsPostsuccess:  [1007]
+_cleric_ is home, thanks to some %ra, and
+will not stop talking about ___mondung_.
+<--->
+Bringing _cleric_ home won you friends at __qgiver_.
+
+QuestorPostsuccess:  [1008]
+After what you did for _cleric_,
+how could I refuse you, %pcf?
+
+QuestorPostfailure:  [1009]
+I pray for _cleric_ every
+night, %pcf. Go away.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_, _qgiver_ asked me
+ to find _cleric_, a =cleric_ lost
+ in ___mondung_. Within =queston_
+ days, the cleric must be back at
+ __qgiver_ in ___qgiver_.
+
+Message:  1011
+<ce> Oh! A %ra, down here? You gave me a
+<ce> fright. I lost track of the days
+<ce> among these old stones. Lead me back
+<ce> to the temple, would you, %pcf?
+<--->
+<ce> %god be thanked! I have looked for the
+<ce> way out for almost a week. Lead on,
+<ce> and I will follow you to the temple.
+
+Message:  1012
+<ce> "I know these roads now, thank you,"
+<ce> _cleric_ says, and wanders off.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _cleric_ face 105 factiontype Temple
+
+Place _mondung_ remote dungeon4
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	place npc _cleric_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_S.01_ task:
+	clicked npc _cleric_ 
+	hide npc _cleric_ 
+	say 1011 
+	add _cleric_ face 
+
+_reward_ task:
+	when _qgclicked_ and _S.01_ 
+	give pc nothing 
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_S.04_ task:
+	when _qgclicked_ and not _S.01_ 
+	clear _qgclicked_ _S.04_ 
+
+_cick_ task:
+	when _S.01_ and _queston_ 
+	say 1012

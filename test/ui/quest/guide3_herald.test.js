@@ -520,6 +520,6 @@ test('GUIDE3 THE OPENING over the corpus - every message a quest of the 265 LOGS
     }
   }
   assert.deepEqual(empty, [], 'every logged entry has words to open with');
-  assert.deepEqual({ logged, headed, cut }, { logged: 408, headed: 395, cut: 53 },   // AUDIT GUIDE W4: a stop inside a closing quote ends a sentence (P0A01L00:1015); PIN MOVED (OWN-WORDS1: 55 in DFU's words - ours open shorter)
-    'the 408 entries the pack logs: 395 open on the %qdt header, and 53 first sentences run past OPENING_MAX (at 100 it was 159)');
+  assert.deepEqual({ logged, headed, cut }, { logged: 408, headed: 395, cut: 1 },   // AUDIT GUIDE W4: a stop inside a closing quote ends a sentence (P0A01L00:1015); PIN MOVED (OWN-WORDS1: 55 in DFU's words - ours open shorter); PIN MOVED (OWN-WORDS2 batch 1: -8, its 9 cut logs are 1 in ours); PIN MOVED (OWN-WORDS2 batch 9: -8, its 8 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 2: -2, C0B00Y01's 2 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 7: -3, R0C10Y00's, R0C10Y18's and R0C11Y28's cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 8: -7, the main quest's 7 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 5: -11, the merchants' and Daedra's 11 cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batch 6: -4, A0C01Y01's, $CUREVAM's two and $CUREWER's cut logs are 0 in ours); PIN MOVED (OWN-WORDS2 batches 3 and 4: -6 and -3, their cut logs are 0 in ours)
+    'the 408 entries the pack logs: 395 open on the %qdt header, and 1 first sentence runs past OPENING_MAX (at 100 it was 159)');
 });

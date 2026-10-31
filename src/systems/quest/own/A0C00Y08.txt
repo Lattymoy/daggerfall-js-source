@@ -1,0 +1,182 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C00Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 8
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 34
+Quest: A0C00Y08
+DisplayName: The Assassin
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Never mind my name. I need someone who
+<ce> does not mind a little blood, and I will
+<ce> pay _gold_ gold for it. If that is not
+<ce> you, say so now. Will you take the job?
+<--->
+<ce> Quiet! Keep your voice down. First
+<ce> tell me this. Would a %ra like you
+<ce> kill for money? Say, for _gold_ gold?
+<--->
+<ce> I need someone with a strong stomach for
+<ce> blood, and I do not mean a beast's.
+<ce> Would you kill a person for _gold_ gold?
+
+RefuseQuest:  [1001]
+<ce> We never spoke.
+<--->
+<ce> Go away. Nobody can see us talking.
+<--->
+<ce> Suit yourself.
+
+AcceptQuest:  [1002]
+<ce> I want _darkb_ dead. The Dark Brotherhood
+<ce> refuses, over some favor they owe, so I need an
+<ce> outsider. Do it within a week and the _gold_
+<ce> gold is yours. Ask for _questgiver_ here.
+
+QuestComplete:  [1004]
+<ce> Revenge at last! And you had better leave
+<ce> town. Word is the Brotherhood has heard
+<ce> about this. Here is your money, %pcf.
+
+RumorsDuringQuest:  [1005]
+<ce> Word is _questgiver_ cannot stand _darkb_.
+<--->
+<ce> _darkb_ has friends in the Dark Brotherhood.
+
+RumorsPostsuccess:  [1007]
+<ce> Someone killed _darkb_, and in plain sight!
+<--->
+<ce> Did you hear? An assassin murdered _darkb_.
+<--->
+<ce> I never liked _darkb_, and I am
+<ce> glad somebody finally got %g2. They
+<ce> say the Dark Brotherhood did it.
+
+QuestorPostsuccess:  [1008]
+<ce> Not so loud. I owe you for _darkb_, and I know
+<ce> it. But nobody can think I had a hand in it.
+
+QuestorPostfailure:  [1009]
+<ce> I paid you to kill _darkb_, one job, and
+<ce> you failed. The Dark Brotherhood is hunting
+<ce> me now, and it is too late. Leave me alone.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I took a contract to kill _darkb_. When
+ it is done, I report to _questgiver_ of
+ ___questgiver_, within a week.
+
+Message:  1015
+<ce> _darkb_ is still breathing!
+<ce> Am I a fool to you, %pcf?
+
+Message:  1021
+<ce> Murder! Help! Somebody help!
+
+Message:  1022
+<ce> Dog! What sort of assassin are
+<ce> you? Guards! To arms, all of you!
+
+Message:  1023
+<ce> They got me! %oth.
+
+Message:  1024
+<ce> Coward! You attack me for no reason at all.
+
+Message:  1030
+<ce> _questgiver_? I hardly know %g2.
+<ce> Keeps to %g2self, that one.
+
+Message:  1031
+<ce> They say _questgiver_ keeps some shady
+<ce> company. You did not hear that from me.
+
+Message:  1032
+<ce> An upstanding citizen. Ask anybody.
+
+Message:  1033
+<ce> You can usually find _darkb_ at _place_.
+<ce> I would stay out of %g3 business,
+<ce> though. Take that as friendly advice.
+
+
+QBN:
+Item _gold_ gold
+
+Person _questgiver_ group Questor anyInfo 1030 rumors 1031
+Person _darkb_ face 1 faction The_Dark_Brotherhood remote anyInfo 1032 rumors 1033
+
+Place _place_ local random
+
+Clock _S.00_ 7.00:00 0 flag 1 range 0 1
+
+Foe _bard_ is Bard
+Foe _rogue_ is Rogue
+Foe _archer_ is Archer
+Foe _spellsword_ is Spellsword
+
+--	Quest start-up:
+	start timer _S.00_ 
+	log 1010 step 0 
+	pc at _place_ set _S.11_ 
+	place npc _darkb_ at _place_ 
+
+_S.00_ task:
+	end quest 
+
+_S.01_ task:
+	restrain foe _archer_ 
+	place foe _archer_ at _place_ 
+
+_S.02_ task:
+	restrain foe _bard_ 
+	place foe _bard_ at _place_ 
+
+_S.03_ task:
+	restrain foe _rogue_ 
+	place foe _rogue_ at _place_ 
+
+_S.04_ task:
+	restrain foe _spellsword_ 
+	place foe _spellsword_ at _place_ 
+
+variable _S.05_
+_S.06_ task:
+	injured _rogue_ saying 1023 
+	injured _archer_ saying 1021 
+	injured _bard_ saying 1022 
+	injured _spellsword_ saying 1024 
+
+_S.07_ task:
+	killed 1 _archer_ 
+	killed 1 _bard_ 
+	killed 1 _rogue_ 
+	killed 1 _spellsword_ 
+	change repute with _darkb_ by -20 
+	legal repute -20
+--nerfed legal repute, not fair for normal gameplay
+
+_S.08_ task:
+	clicked npc _questgiver_ 
+
+_clearclick_ task:
+	when _S.08_ and not _S.07_ 
+	say 1015 
+	clear _S.08_ _clearclick_
+--added an additional clear clearclick here. Otherwise this clearing function would stop working after the first click.
+
+_S.10_ task:
+	when _S.08_ and _S.07_ 
+	give pc _gold_ 
+	end quest 
+
+_S.11_ task:
+	pick one of _S.01_ _S.02_ _S.03_ _S.04_ 
+	hide npc _darkb_ 

@@ -1,0 +1,147 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0B01L02.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 01
+-- QuestId: 2
+Messages: 31
+Quest: P0B01L02
+DisplayName: The Vampire Relic
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+%pcf,
+ 
+ Prove yourself. The Mages Guild of __itemdung_
+ holds a _vamprelic_ of ours, and moves it in
+ =1stparton_ days. Free it before then. Bring it
+ to me, a =vampire_, at __vampire_ in ___vampire_.
+ 
+<ce> _vampire_ of %vam
+
+RefuseQuest:  [1001]
+Quest text 1001 should
+never be shown.
+
+AcceptQuest:  [1002]
+Quest text 1002 should
+never be shown.
+
+QuestComplete:  [1004]
+<ce> At last we meet, %pcf. I am _vampire_,
+<ce> of course. %vam will take proper care
+<ce> of the _vamprelic_. Do not expect
+<ce> payment. Serving %vam is its own honor.
+
+RumorsDuringQuest:  [1005]
+They say the Mages Guild is
+clearing out a lot of old rubbish.
+<--->
+Every Mages Guild is shipping its
+old junk to the same dump, I hear.
+
+RumorsPostfailure:  [1006]
+All those guards at the Mages Guild. There
+must be something worth stealing in there.
+<--->
+The Mages Guild finally carted
+off that load of dusty old junk.
+
+RumorsPostsuccess:  [1007]
+The three stars of Locanda shone last night.
+That means unholy alliances, you know.
+<--->
+The Mages Guild is baffled by the
+break-in. Who steals a thing like that?
+
+QuestorPostsuccess:  [1008]
+Good evening, %pcn. My thanks
+again for the _vamprelic_.
+
+QuestorPostfailure:  [1009]
+<ce> %pcf, do not test my patience
+<ce> tonight. My letter said to bring
+<ce> the _vamprelic_. Where is it? A
+<ce> poor showing, %pcf. Very poor.
+
+QuestLogEntry:  [1010]
+A sinister sort of that name
+lodges %di of here, at __vampire_.
+<--->
+There is a strange =vampire_ called _vampire_
+staying at __vampire_. Go %di from here.
+
+Message:  1011
+_vampire_ belongs to %vam and teaches its young ones.
+<--->
+_vampire_ is young for %vam, but proud, and strong with it.
+
+Message:  1013
+Only a _vamprelic_. Ugly thing.
+<--->
+A strange-looking _vamprelic_.
+
+Message:  1015
+They say this _vamprelic_ belongs
+to the elder circle of %vam.
+<--->
+Masters of %vam use a _vamprelic_
+like this in their secret rites.
+
+Message:  1020
+%qdt:
+ _vampire_ of ___vampire_ wrote to me. Within
+ =1stparton_ nights I must steal a _vamprelic_
+ that the guild mages of __itemdung_ keep
+ locked away, then bring it to __vampire_.
+
+Message:  1030
+<ce> A rolled letter lies on the ground.
+<ce> Looking closer, you see with
+<ce> surprise that it bears your name.
+
+
+QBN:
+Item _vamprelic_ religious anyInfo 1013 used 1015
+Item _letter_ letter used QuestorOffer
+
+Person _vampire_ factiontype Vampire_Clan remote anyInfo 1011 rumors 1010
+
+Place _itemdung_ remote magery
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _mages_ is Mage
+Foe _battlemage_ is Battle_mage
+
+--	Quest start-up:
+	place item _vamprelic_ at _itemdung_ 
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.06_ 
+	give pc _letter_ notify 1030 
+
+variable _pcgetsgold_
+_vampclicked_ task:
+	toting _vamprelic_ and _vampire_ clicked 
+	give pc nothing 
+	change repute with _vampire_ by +5 
+	end quest 
+
+_pchasitem_ task:
+	clicked item _vamprelic_ 
+	create foe _mages_ every 2 minutes 2 times with 25% success 
+	create foe _battlemage_ every 1 minutes 4 times with 25% success 
+
+_1stparton_ task:
+	make _vamprelic_ permanent 
+	change repute with _vampire_ by -5 
+	end quest 
+
+variable _clearclick_
+_readletter_ task:
+	log 1020 step 0 
+
+_S.06_ task:
+	start timer _1stparton_

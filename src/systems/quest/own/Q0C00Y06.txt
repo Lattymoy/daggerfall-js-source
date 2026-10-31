@@ -1,0 +1,135 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C00Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 6
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: Q0C00Y06
+DisplayName: Problems with Vampires
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> We may have trouble, %pcf. An ancient
+<ce> vampire who hates witches has moved
+<ce> into an empty castle on our land.
+<ce> That cannot stand. Do you agree?
+
+RefuseQuest:  [1001]
+<ce> I understand. Nobody hunts an ancient
+<ce> vampire on a whim, and nobody should.
+
+AcceptQuest:  [1002]
+<ce> You will? Then prepare well, for an
+<ce> ancient vampire is no weak foe. It
+<ce> calls itself =vamprival_, and it has
+<ce> taken ___mondung_ in ____mondung_.
+<ce> Come back within =1stparton_ nights.
+<ce> Try not to die, %pcf.
+
+QuestFail:  [1003]
+<ce> Waiting for =vamprival_ to die of
+<ce> old age? That could take centuries.
+<ce> Go and end %g3 nights yourself.
+
+QuestComplete:  [1004]
+<ce> The dark feels lighter tonight, %pcf.
+<ce> Every witch in the coven owes you.
+
+RumorsDuringQuest:  [1005]
+Lights at ___mondung_, and nobody has lived there for years.
+<--->
+=vamprival_ is a real noble. %G says %g means
+to clean up ___mondung_, and %reg with it.
+
+RumorsPostfailure:  [1006]
+___mondung_ is empty again. =vamprival_
+found finer rooms, they say.
+<--->
+=vamprival_ left ___mondung_, and now
+%g is a regular guest at the palace.
+
+RumorsPostsuccess:  [1007]
+That charming =vamprival_ was a vampire all along? Who knew!
+<--->
+Some %ra cleaned the vampire out
+of ___mondung_. %god be thanked.
+
+QuestorPostsuccess:  [1008]
+We remember what you did to
+=vamprival_, %pcf. Ask what you need.
+
+QuestorPostfailure:  [1009]
+<ce> =vamprival_ still hunts at night and
+<ce> feeds on our sisters. You should
+<ce> have told us you could not do it.
+<ce> Leave. We have nothing more to say.
+
+Message:  1011
+_witch_ is a clever =witch_ at __witch_. Kind, too.
+<--->
+Look for _witch_, a pleasant
+=witch_ at __witch_, %di of here.
+
+Message:  1012
+_witch_ is one of the
+witches of ___witch_.
+<--->
+_witch_? That =witch_ is
+a witch from ___witch_.
+
+Message:  1015
+%qdt:
+ _witch_ of ___witch_ wants me to kill
+ an ancient vampire sworn to destroy
+ the witches of %reg. The creature
+ lives in ___mondung_. Within
+ =1stparton_ days it must be dead and
+ I must be back in ___witch_.
+
+Message:  1020
+<ce> =vamprival_ falls, and
+<ce> does not rise again.
+
+
+QBN:
+Item _reward_ magic_item
+
+Person _witch_ face 44 group Questor anyInfo 1011 rumors 1012
+
+Place _mondung_ remote dungeon8
+--removed extraneous underscore from __mondung_.
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _vamprival_ is Ancient_vampire
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1015 step 0 
+	place foe _vamprival_ at _mondung_ 
+
+falseAide0 task:
+	when _vampclicked_ and _S.01_ 
+	give pc _reward_ 
+	end quest 
+
+_S.01_ task:
+	killed 1 _vamprival_ 
+	say 1020 
+
+_vampclicked_ task:
+	clicked npc _witch_ 
+
+_clearclick_ task:
+	when _vampclicked_ and not _S.01_ 
+	say 1003
+	clear _vampclicked_ _clearclick_
+	--replaced "until _vampclicked_ performed" action with _clearclick_. this is more flexible, allowing 1003 message.
+
+_1stparton_ task:
+	end quest

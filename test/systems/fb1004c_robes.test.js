@@ -29,7 +29,7 @@ test('WHERE-ROBES: the examination as DFU runs it - a click on the robes says 10
   assert.equal(noteCame(e), false, 'unclicked, nothing comes');
   assert.equal(sendQuestItemClick(e.robes, e.getQuest), true, 'the one home clicks the quest\'s Item');
   e.step();
-  assert.equal(noteCame(e), true, '"As you pick up the ... A note is tucked inside" - and the note');
+  assert.equal(noteCame(e), true, '"Paper crackles as you lift the ... hidden a note inside" - and the note');   // PIN MOVED (OWN-WORDS2): 1018 in our words
 });
 
 test('WHERE-ROBES: the one home answers nothing for what is not a live quest item - a plain item, a quest gone, no resolver - and never throws (C# NREs on a missing symbol)', () => {

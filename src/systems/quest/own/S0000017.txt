@@ -1,0 +1,142 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000017.Qbn.
+-- Main story quest.
+-- QuestId: 17
+Messages: 23
+Quest: S0000017
+DisplayName: Wayrest Painting
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn. Welcome to Sentinel. My son
+<ce> Lhotun calls you a %ra to be trusted,
+<ce> and I have use for one. Slip into
+<ce> Castle Wayrest and fetch me a
+<ce> keepsake of the late King Lysandus. I
+<ce> pay _gold_ gold. Will you?
+
+RefuseQuest:  [1001]
+<ce> Then I must reconsider
+<ce> your place at this court.
+
+AcceptQuest:  [1002]
+<ce> Splendid. It is a painting, hidden
+<ce> somewhere in Castle Wayrest. Why I
+<ce> want it is not your concern. Bring
+<ce> it to me for _gold_ gold.
+
+QuestComplete:  [1004]
+<ce> Your _gold_ gold, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Queen Akorithi wants a painting from
+ the dungeons of Castle Wayrest. I am
+ to sneak in and find it. Delivered
+ to her, it earns me _gold_ gold.
+
+Message:  1011
+Dear %pcn,
+ 
+ Prince Lhotun speaks highly of
+ you. Come to our court before
+ next season ends. I expect you.
+ 
+<ce> Akorithi
+<ce> Queen of Sentinel
+
+Message:  1012
+<ce> A page girl wearing Sentinel's crest holds
+<ce> out a crisp envelope. She ignores your
+<ce> questions, turns smartly, and leaves.
+
+Message:  1013
+<ce> The longer you look, the more the
+<ce> painting seems to move. You look
+<ce> away before something worse happens.
+
+Message:  1015
+<ce> The painting shifts. You see a tent,
+<ce> and Wayrest men in hot debate with a
+<ce> man wearing Daggerfall's arms. One
+<ce> of them steps behind him, draws a
+<ce> dagger, and drives it between his
+<ce> ribs. He dies, and the image fades.
+
+Message:  1020
+<ce> Did you try to use the painting?
+
+Message:  1021
+<ce> Good. Its powers are not for
+<ce> those without royal blood. You
+<ce> are loyal, and obedient too.
+
+Message:  1022
+<ce> You presume, %pcn. Common eyes were
+<ce> never meant to see that. Royal
+<ce> matters are for royals to settle.
+
+
+QBN:
+Item _letter_ letter used 1011
+Item _item_ Lysandus_death used 1013
+Item _gold_ gold
+
+Person _Akorithi_ named Queen_Akorithi atHome
+
+Place _wayrest_ permanent WayrestCastle
+
+Clock _2letter_ 7.00:00 14.00:00
+
+
+--	Quest start-up:
+	dialog link for item _item_ 
+	start timer _2letter_ 
+	add _Akorithi_ as questor 
+
+_2letter_ task:
+	give pc _letter_ notify 1012 
+
+yes task:
+	_item_ used do _S.05_ 
+	place item _item_ at _wayrest_ marker 0
+	add dialog for item _item_ 
+	log 1010 step 0 
+	say AcceptQuest 
+
+_no_ task:
+	say RefuseQuest 
+	drop _Akorithi_ as questor 
+	end quest 
+
+_S.03_ task:
+	clicked npc _Akorithi_ 
+
+_S.04_ task:
+	when _S.03_ and _2letter_ 
+	prompt QuestorOffer yes yes no _no_ 
+
+_clearclick_ task:
+	when _S.03_ and not _2letter_ 
+	clear _S.03_ _clearclick_ 
+
+_S.05_ task:
+	say 1015 
+
+_S.06_ task:
+	toting _item_ and _Akorithi_ clicked 
+	give pc _gold_ 
+	start quest 10 10 
+	prompt 1020 yes _S.07_ no _S.08_ 
+	drop _Akorithi_ as questor 
+	end quest 
+
+_S.07_ task:
+	say 1022 
+	change repute with _Akorithi_ by +10 
+
+_S.08_ task:
+	say 1021 
+	change repute with _Akorithi_ by +15

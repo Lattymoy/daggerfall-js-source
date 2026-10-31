@@ -1,0 +1,200 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000004.Qbn.
+-- Main story quest.
+-- QuestId: 4
+Messages: 16
+Quest: S0000004
+DisplayName: Morgiah's Wedding
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You are hunting the Emperor's lost
+<ce> letter, aren't you? Hardly a scandal
+<ce> in the Bay escapes me. What I know
+<ce> has a price. I need someone unafraid
+<ce> of Oblivion's fire. Interested?
+
+RefuseQuest:  [1001]
+<ce> Pity. Someone else will help
+<ce> me. I wonder who will help you.
+
+AcceptQuest:  [1002]
+<ce> %oth, what a relief. No questions. Take
+<ce> this letter to a sorcerer at Scourg
+<ce> Barrow, the Necromancers' crypt in the
+<ce> Dragontail Mountains. If you see the
+<ce> rift, you have gone too far. Bring
+<ce> _necs_'s answer within a month, %pcf.
+
+QuestFail:  [1003]
+<ce> Where is _necs_'s answer, %pcf?
+
+QuestComplete:  [1004]
+<ce> Done! I shall be queen of Firsthold! Now, your
+<ce> letter. Gortwog, Warlord of the Orcs, has it. He
+<ce> bought it from Daggerfall's Thieves Guild, who
+<ce> stole it from Queen Aubk-i. Win over Mynisera,
+<ce> the Queen Mother, but start lower down.
+
+RumorsDuringQuest:  [1005]
+Wayrest would gladly take Helseth, if his
+sister Morgiah were not so notorious.
+<--->
+Crown Helseth? With that schemer
+Morgiah for a sister? Never.
+
+RumorsPostfailure:  [1006]
+Princess Morgiah is in a fouler mood than
+ever, and nobody's temper is fouler.
+<--->
+Princess Morgiah ought to marry. Who would have her, though?
+
+RumorsPostsuccess:  [1007]
+The King of Firsthold is to marry
+Princess Morgiah. %god works wonders.
+<--->
+Why in all Tamriel would the King of
+Firsthold ask Morgiah to marry him?
+<--->
+A three-year engagement, Morgiah has! Royalty is odd.
+
+QuestorPostfailure:  [1009]
+<ce> A month, %pcf. I gave you one month to bring
+<ce> _necs_'s answer, and you crawl back now? Get out.
+
+QuestLogEntry:  [1010]
+_necs_,
+<ce>
+<ce> I accept. You shall have my first. Use
+<ce> your hold on the King of Firsthold in
+<ce> Sumurset Isle. You alone can let him
+<ce> speak to his dead son, and for that he
+<ce> would wed even Nulfaga.
+<ce>
+<ce> -- M
+
+Message:  1011
+Princess,
+<ce>
+ It is done.
+<ce>
+<ce> -- _necs_
+
+Message:  1012
+%qdt:
+ Princess Morgiah of Wayrest wants a
+ letter carried to _necs_ at Scourg
+ Barrow, the Necromancers' crypt in
+ the Dragontail Mountains. I must
+ keep away from the rift. She wants
+ the answer within a month.
+
+Message:  1013
+Princess Morgiah has sailed for Sumurset
+Isle and her King of Firsthold.
+<--->
+A royal marriage binds Wayrest to
+the High Elves of Firsthold now.
+<--->
+Wayrest is one princess short,
+and Firsthold one queen richer.
+<--->
+Queen of Firsthold, wife to
+Karoodil. Morgiah must be pleased.
+<--->
+Firsthold has never had a queen who was
+not a High Elf. Morgiah will be the first.
+
+Message:  1014
+<ce> Rejoice!
+<ce> Their Majesties Eadwyre and Barenziah,
+<ce> King and Queen of Wayrest,
+<ce> announce the betrothal
+<ce> of their daughter, Princess Morgiah,
+<ce> to Karoodil,
+<ce> King of Firsthold, Sumurset Isle.
+
+Message:  1015
+<ce> A boy wearing the Rose of Wayrest on
+<ce> his surcoat gives you an engraved card.
+<ce> He is gone before you can thank him.
+
+Message:  1016
+<ce> Excellent. Should my faithful dead not
+<ce> kill you on the way out, give Princess
+<ce> Morgiah this note. Do try to live.
+
+
+QBN:
+Item letter44 letter used 1010
+Item letter13 letter used 1011
+Item _reward_ trinket
+Item engagement letter used 1014
+
+Person _morgiah_ named Princess_Morgiah
+Person _necs_ named King_of_Worms atHome
+
+Place _scourgbarrow_ permanent ScourgBarrow1
+
+Clock _2ndgo_ 30.00:00 0 flag 1 range 0 1
+Clock _S.01_ 7.00:00 14.00:00
+Clock _letterdelay_ 1.00:00
+
+--	Quest start-up:
+	prompt QuestorOffer yes yes no _no_ 
+
+_2ndgo_ task:
+	drop _morgiah_ as questor 
+	end quest 
+
+_S.01_ task:
+	repute with _morgiah_ exceeds 10 do _S.07_ 
+	rumor mill 1013 
+
+_S.07_ task:
+	have engagement set _S.10_ 
+	give pc engagement notify 1015 
+
+_S.02_ task:
+	toting letter13 and _morgiah_ clicked 
+	give pc _reward_ 
+	start timer _S.01_ 
+	stop timer _2ndgo_ 
+	remove log step 0 
+	start task _S.08_ 
+	change repute with _morgiah_ by +10 
+	drop _morgiah_ as questor 
+
+_S.03_ task:
+	toting letter44 and _necs_ clicked saying 1016 
+	get item letter13 
+	change repute with _necs_ by +10 
+
+variable _S.04_
+yes task:
+	start timer _2ndgo_ 
+	log 1012 step 0 
+	get item letter44 
+	reveal _scourgbarrow_ in province 1 at 450958 
+	say AcceptQuest 
+	add _morgiah_ as questor 
+
+_no_ task:
+	say RefuseQuest 
+	end quest 
+
+MorgiahSatisfied _S.08_
+_S.09_ task:
+	when _S.01_ and not _S.07_
+	start quest 21 21 
+	end quest 
+
+_S.10_ task:
+	start timer _letterdelay_
+--adding 24-hour delay to allow to read letter. this is a very common bug report
+
+_letterdelay_ task:
+	start quest 21 21 
+	end quest

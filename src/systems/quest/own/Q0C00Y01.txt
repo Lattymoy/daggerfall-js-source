@@ -1,0 +1,119 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C00Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 1
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 14
+Quest: Q0C00Y01
+DisplayName: The Libel
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Our enemies have spread a document full
+<ce> of lies to crush our coven. I know
+<ce> where they keep it. We need someone to
+<ce> fight its guard and bring it to us.
+<ce> Will you do this for ==qgiver_?
+
+RefuseQuest:  [1001]
+<ce> No? %oth. Then ask no
+<ce> favors of ==qgiver_.
+
+AcceptQuest:  [1002]
+<ce> Then the coven owes you. The document is
+<ce> in a temple in __temple_, here in %reg.
+<ce> _temple_ keeps it guarded by a powerful
+<ce> _guardian_. Bring it within =queston_
+<ce> days for a _mitem_ of our making.
+
+QuestComplete:  [1004]
+<ce> The cursed document. You have served
+<ce> our sisterhood well, %pct. Here is
+<ce> your _mitem_, as promised. The thanks
+<ce> of ==qgiver_ are yours as well.
+
+RumorsDuringQuest:  [1005]
+Someone is passing around a nasty little
+History of ==qgiver_. Have you seen it?
+
+RumorsPostfailure:  [1006]
+Printers in the Imperial City are making
+copies of that History of ==qgiver_.
+
+RumorsPostsuccess:  [1007]
+The History of ==qgiver_ is gone, they
+say. Only a handful ever read it.
+
+QuestorPostsuccess:  [1008]
+Does the _mitem_ please you, %pcf? You earned it.
+
+QuestorPostfailure:  [1009]
+<ce> The cursed document is in the
+<ce> Imperial City now, copied for
+<ce> every fool who can read, %pcf.
+<ce> You failed ==qgiver_. Leave us.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I agreed to bring ==qgiver_ a
+ document from _temple_ in
+ __temple_ within =queston_ days.
+ A _guardian_ probably guards it.
+
+Message:  1011
+<ce> This must be the document
+<ce> ==qgiver_ wants.
+
+Message:  1012
+Of all the vile rites of ==qgiver_, the worst
+honors ==daedra_. At each new moon the
+witches drown a black cat and read its bones.
+If they fall well, ==daedra_ grants any wish:
+a prince's death, famine, plague or war.
+
+Message:  1013
+<ce> You fight for ==qgiver_? Then
+<ce> you are damned with them, and
+<ce> %god will see to it!
+
+
+QBN:
+Item _document_ letter used 1012
+--added underscores to document
+Item _mitem_ magic_item
+
+Person _qgiver_ group Questor
+Person _daedra_ face 80 factiontype Daedra remote
+
+Place _temple_ remote temple
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _guardian_ is Spellsword
+
+--	Quest start-up:
+	place item _document_ at _temple_ 
+	dialog link for person _daedra_ 
+	start timer _queston_ 
+	log 1010 step 0 
+
+_queston_ task:
+	end quest 
+
+_S.01_ task:
+	clicked item _document_ 
+	create foe _guardian_ every 1 minutes 1 times with 100% success 
+	say 1011 
+
+_S.02_ task:
+	injured _guardian_ 
+	say 1013 
+
+_reward_ task:
+	toting _document_ and _qgiver_ clicked 
+	give pc _mitem_ 
+	end quest

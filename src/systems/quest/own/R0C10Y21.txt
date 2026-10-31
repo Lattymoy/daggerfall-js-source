@@ -1,0 +1,125 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y21.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 21
+Messages: 16
+Quest: R0C10Y21
+DisplayName: The Temple of the Orcs
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> My cousin _qgfriend_ asks my help with
+<ce> an ugly business. The orcs are founding
+<ce> a temple, if their rites deserve the
+<ce> word. We must crush it early. I will
+<ce> pay _reward_ gold. Will you help, %pcf?
+
+RefuseQuest:  [1001]
+<ce> You side with the orcs? %oth, get out!
+
+AcceptQuest:  [1002]
+<ce> Thank you, %pcf. Slip into ___mondung_ and kill
+<ce> their so-called shaman. We attack in =1stparton_
+<ce> days, and that goes easier with the shaman dead.
+<ce> Afterward, go to the palace in ___qgfriend_. My
+<ce> cousin pays you, and %g is generous.
+
+QuestFail:  [1003]
+<ce> Off to ___mondung_ with you, %pcf.
+<ce> The plan is moving, and it needs you.
+
+QuestComplete:  [1004]
+<ce> Greetings, %pcf. Fine work on that
+<ce> filthy shaman. Imagine them building one
+<ce> of their temples on my land! Without a
+<ce> leader, the rest will scatter. Here is
+<ce> your _reward_ gold. Enjoy it.
+
+RumorsDuringQuest:  [1005]
+The orcs gathering in ___mondung_
+have been troubling _qgfriend_.
+<--->
+Long ago ___mondung_ was an orc temple, they
+say. Now the orcs are bringing it back.
+
+RumorsPostfailure:  [1006]
+The orcs caught wind of _qgfriend_ and moved on.
+<--->
+_qgfriend_ never got revenge on the
+orcs of ___mondung_, more's the pity.
+
+RumorsPostsuccess:  [1007]
+That will teach the orcs to settle in %reg.
+<--->
+%god be thanked, the orc shaman is dead. Credit _qgfriend_,
+_questgiver_ and some %ra soldier nobody can name.
+
+QuestorPostsuccess:  [1008]
+Know any good orc jokes? My cousin
+tells me you did fine work.
+<--->
+My cousin still talks about how
+you dealt with that orc shaman.
+
+QuestorPostfailure:  [1009]
+<ce> My cousin says the orc shaman still
+<ce> lives. I will not discuss it further.
+
+Message:  1011
+The =qgfriend_? A cousin of
+_questgiver_, with an orc problem.
+<--->
+_qgfriend_ hates orcs, and hates them violently.
+
+Message:  1012
+<ce> The orc shaman is dead.
+
+Message:  1015
+%qdt:
+ Within =1stparton_ days I must kill an orc
+ shaman in ___mondung_, then find _qgfriend_
+ at the palace in ___qgfriend_. For the
+ shaman's death %G will pay me _reward_ gold.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _qgfriend_ group Noble remote anyInfo 1011
+Person _dummyorc_ faction Orsinium remote
+
+Place _mondung_ remote dungeon4
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _monster_ is Orc_shaman
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1015 step 0 
+	place foe _monster_ at _mondung_ 
+
+_1stparton_ task:
+	end quest 
+
+_pcgetsgold_ task:
+	when _mondead_ and _npcclicked_ 
+	give pc _reward_ 
+	change repute with _qgfriend_ by +20 
+	end quest 
+
+variable _queston_
+_mondead_ task:
+	killed 1 _monster_ 
+	say 1012 
+	change repute with _dummyorc_ by -30 
+	create npc _qgfriend_ 
+
+_npcclicked_ task:
+	clicked npc _qgfriend_ 

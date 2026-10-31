@@ -1,0 +1,281 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B00Y09.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 9
+Messages: 23
+Quest: N0B00Y09
+DisplayName: Research Notes
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The Mages Guild pays scholars all over Tamriel
+<ce> for their learning. One of the best, _scholar_,
+<ce> has offered us %g3 research, if we send someone
+<ce> to collect it. It is not far. Will you go?
+<--->
+<ce> The guild in ___qgiver_ has a rare chance.
+<ce> The great _scholar_ will give us %g3
+<ce> research, and %G asks only for a courier
+<ce> to ___scholar_. %G fears the Necromancers,
+<ce> and %g is right to. Will you go, %pct?
+
+RefuseQuest:  [1001]
+<ce> A pity, %pct. If my knees still worked,
+<ce> I would run to meet _scholar_ myself.
+
+AcceptQuest:  [1002]
+<ce> Capital. _scholar_ is staying in
+<ce> ___scholar_, at __scholar_, but only for
+<ce> a few days. Watch for Necromancers. They
+<ce> want %g3 work as badly as we do. After
+<ce> =queston_ days, I send someone else.
+
+QuestComplete:  [1004]
+<ce> Oh, this is wonderful material. I
+<ce> gather the Necromancers gave you no
+<ce> real trouble. First-rate work, %pct.
+
+RumorsDuringQuest:  [1005]
+The whole town wants a look at _scholar_. I saw %g at
+the baker's. Looks like any other =scholar_ to me.
+<--->
+___scholar_ has gone mad over the visit. It is not
+every day that someone like _scholar_ comes to %reg.
+
+RumorsPostfailure:  [1006]
+Give it a few years, and the Necromancers
+will rule every school of magic in Tamriel.
+<--->
+The Mages Guild cannot even keep its own
+visitors safe from the Necromancers.
+
+RumorsPostsuccess:  [1007]
+The guild is very pleased with
+the research _scholar_ gave them.
+<--->
+They say the Necromancers never got
+near _scholar_. I would not bet on it.
+
+QuestorPostsuccess:  [1008]
+Ah, my %ra courier. That manuscript has
+kept six apprentices busy for a month.
+
+QuestorPostfailure:  [1009]
+<ce> You promised me that manuscript, and
+<ce> you come back without it. Good day.
+
+QuestLogEntry:  [1010]
+%qdt:
+ My guild hall in ___qgiver_ is sending
+ me to ___scholar_ to meet the scholar
+ _scholar_ at __scholar_. Necromancer
+ agents may try to stop me. I must
+ collect the research from %g2 and be
+ back within =queston_ days.
+
+Message:  1011
+                                __db_
+                                 ___db_
+ 
+%pcf,
+ 
+     Nicely done. _scholar_ would never
+ give %g3 notes to us, but %g hands them
+ gladly to a Mages Guild courier. Bring
+ them to ___db_, and your gold is waiting.
+ 
+                               Yours,
+ 
+                               _db_
+
+Message:  1012
+%pcn,
+ 
+     Make a friend of the Brotherhood, not an
+ enemy. Bring _scholar_'s research to me at __db_
+ in ___db_. Fail, and Mephala will learn your name.
+ 
+                             _db_
+
+Message:  1013
+<ce> You must be the %ra from the guild.
+<ce> How nice. Here is the wretched thing,
+<ce> my dear. I wish you better luck with
+<ce> the Necromancers than I had.
+
+Message:  1014
+<ce> You carry the research of
+<ce> _scholar_. Will you hand it
+<ce> over to the Brotherhood's _db_?
+
+Message:  1015
+Suppose two essences are pressed
+together until they push without moving.
+ The push rises with the fourth power
+ of their heat. The old school calls
+ the rest the quiet fraction. I call
+ it the part we do not understand yet.
+
+Message:  1016
+Pass white light through hot gas under pressure,
+and the magicka in it folds over on itself.
+ Five forces come out of the fold.
+ Galerion named four of them. Nobody
+ has yet agreed on the fifth.
+
+Message:  1017
+People come from all over Tamriel
+just to argue with _scholar_.
+<--->
+_scholar_ is a =scholar_ by trade, and a famous one.
+<--->
+_scholar_ will not stay long in
+%reg. Great minds keep moving.
+<--->
+They say it is the finest mind of the age. I would not know.
+<--->
+Ask _scholar_ yourself. %G will
+tell you all about the genius part.
+<--->
+_scholar_ can read nine dead languages
+and still cannot find the door.
+<--->
+_scholar_ is clever, and %g3 head has grown to match.
+<--->
+Go and see _db_ in ___db_. %G
+was asking about _scholar_ too.
+<--->
+A =db_ from __db_ came by, wanting
+to know where _scholar_ was staying.
+
+Message:  1018
+<ce> What a kind gift. I hope your
+<ce> friends at the guild do not miss
+<ce> it too much. They would only have
+<ce> shelved it. Here is _dbgold_ gold.
+<ce> Spend it on something pretty.
+
+Message:  1019
+<ce> Thank you. The Brotherhood pays
+<ce> _dbgold_ gold for this. Take this copy
+<ce> too. I wrote it last night, and it will
+<ce> satisfy _qgiver_. Guild scholars never
+<ce> test what they read. They only file it.
+
+Message:  1020
+%qdt:
+ A letter came from _db_, who
+ speaks for the Dark Brotherhood.
+ It says to take _scholar_'s
+ research to __db_ in ___db_, and
+ not to the Mages Guild.
+
+Message:  1021
+%qdt:
+ _db_ of the Brotherhood wrote to
+ praise my cunning. %G waits at __db_
+ in ___db_ with gold, if I bring the
+ research to %g2 and not to the guild.
+
+Message:  1022
+<ce> A boy with hard eyes gives you a
+<ce> letter, then runs off down an alley.
+
+
+QBN:
+Item research1 letter used 1015
+Item letter34 letter used 1011
+Item letter35 letter used 1012
+Item research2 letter used 1016
+Item _dbgold_ gold
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _db_ face 78 faction The_Dark_Brotherhood female local
+Person _scholar_ factiontype Temple remote anyInfo 1017
+
+
+Clock _queston_ 00:00 0 flag 17 range 1 2
+Clock _S.02_ 01:40 13:20
+Clock _S.05_ 06:40 23:20
+
+Foe _hunter_ is Orc_shaman
+
+--	Quest start-up:
+	start timer _queston_ 
+	log 1010 step 0 
+	pick one of _letter_ _letter_ _S.04_ _S.04_ 
+	repute with _db_ exceeds 10 do _S.00_ 
+	letter34 used do _S.15_ 
+	letter35 used do _S.16_ 
+
+_S.00_ task:
+	start timer _S.02_ 
+	clear _letter_ 
+
+until _S.00_ performed:
+	dialog link for person _db_ 
+
+_queston_ task:
+	end quest 
+
+_S.02_ task:
+	give pc letter34 notify 1022 
+
+_letter_ task:
+	start timer _S.05_ 
+
+variable _S.04_
+_S.05_ task:
+	give pc letter35 notify 1022 
+
+_S.06_ task:
+	clicked npc _scholar_ 
+	get item research1 
+	say 1013 
+
+_S.07_ task:
+	toting research1 and _db_ clicked 
+	prompt 1014 yes _S.08_ no _nononono_ 
+
+_S.08_ task:
+	pick one of _S.10_ _S.11_ 
+	change repute with _db_ by +10 
+
+_nononono_ task:
+	get item research1 
+
+_S.10_ task:
+	get item research2 
+	get item _dbgold_ 
+	say 1019 
+	make _dbgold_ permanent 
+
+_S.11_ task:
+	get item _dbgold_ 
+	say 1018 
+	make _dbgold_ permanent 
+	end quest 
+
+_S.12_ task:
+	toting research1 and _qgiver_ clicked 
+
+_S.13_ task:
+	toting research2 and _qgiver_ clicked 
+
+_reward_ task:
+	when _S.12_ or _S.13_ 
+	give pc _gold_ 
+	end quest 
+
+_S.15_ task:
+	add dialog for person _db_ 
+	log 1021 step 1 
+
+_S.16_ task:
+	add dialog for person _db_ 
+	log 1020 step 1

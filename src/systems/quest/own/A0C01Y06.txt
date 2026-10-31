@@ -1,0 +1,201 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C01Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 01
+-- QuestId: 6
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 36
+Quest: A0C01Y06
+DisplayName: An Unexpected Journey Part II
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _qgiver_. My master is
+<ce> looking for someone brave, for
+<ce> work that is dangerous. I may say
+<ce> only this. Whoever succeeds earns
+<ce> _gold_ gold. Are you interested?
+<--->
+<ce> They call me _qgiver_. Someone I
+<ce> know has work you may like. It pays
+<ce> _gold_ gold to whoever can do it.
+
+RefuseQuest:  [1001]
+<ce> Then I will look elsewhere for
+<ce> a hero to serve my master.
+
+AcceptQuest:  [1002]
+<ce> Go to _meetingplace_. My master,
+<ce> _master_, will be waiting.
+<--->
+<ce> Ask for _master_ at _meetingplace_.
+<ce> %G has a job for you.
+
+QuestComplete:  [1004]
+<ce> So much for =mmaster_. Your
+<ce> enemies will think hard before
+<ce> they try a trick like that again.
+
+RumorsDuringQuest:  [1005]
+<ce> Someone saw an orc in town today.
+<ce> I hope the guards catch it.
+
+RumorsPostfailure:  [1006]
+<ce> Have you heard about the %ra who
+<ce> got sent by magic down into a
+<ce> dungeon? It is so funny! Oh. Sorry.
+
+RumorsPostsuccess:  [1007]
+<ce> Hey! You are the %ra who killed
+<ce> that orc witch doctor! Good work!
+
+QuestorPostsuccess:  [1008]
+<ce> All right, all right. That business with the
+<ce> orc shaman left me in your debt. Its spell
+<ce> made it look like anyone else in town.
+
+QuestorPostfailure:  [1009]
+<ce> Stay away from me! I never meant for
+<ce> anyone to get hurt. That orc used magic
+<ce> to look like an ordinary person. It is
+<ce> not my fault it sent you into a dungeon.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ___qgiver_ says %g3
+ master, _master_, will pay _gold_
+ gold for a dangerous task. I know
+ nothing else about it. %G1 is
+ staying at _meetingplace_ in
+ __meetingplace_.
+
+Message:  1011
+%qdt:
+ The traitor =mmaster_, in the shape
+ of _master_, sent me by magic to
+ ___dungeon_. If I get out, %g will
+ be sorry we meet again.
+
+Message:  1012
+<ce> Now see me as I truly am. I am
+<ce> =mmaster_, your enemy until death! I
+<ce> have something special planned for you.
+
+Message:  1013
+<ce> Do not hurt me, %pcn! I never knew
+<ce> what _master_ had planned. %G paid me
+<ce> to point you at %g2, and that is all,
+<ce> I swear. It is %g2 you want, not me.
+<ce> I hear %g is at __hidingplace_ now.
+
+Message:  1014
+<ce> You got out of ___dungeon_,
+<ce> %pcf? However you did it, it
+<ce> will not save you. Now die!
+
+Message:  1020
+<ce> _master_? No, I do not think
+<ce> %g is from these parts.
+<--->
+<ce> _master_ is new in town. Where
+<ce> %g comes from, I could not say.
+
+Message:  1021
+<ce> _master_ has been asking
+<ce> questions about some %ra.
+<--->
+<ce> _master_ is staying in town, and %g has
+<ce> been asking all about a %ra. You are a
+<ce> %ra. Could %g have been looking for you?
+
+Message:  1030
+%qdt:
+ I hear that =mmaster_ has gone
+ to ground in __hidingplace_.
+
+Message:  1035
+The orc shaman chants
+louder and louder.
+
+
+QBN:
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _master_ face 1 group Group_6.0 local anyInfo 1020 rumors 1021
+
+Place _dungeon_ remote dungeon
+Place _meetingplace_ local tavern
+Place _hidingplace_ remote house1
+
+Clock _escapetime_ 00:00 0 flag 1 range 0 5
+Clock _shortdelay_ 00:01
+--flags extend the timer greatly
+Clock _S.13_ 1.00:00 0 flag 1 range 0 1
+
+Foe _mmaster_ is Orc_shaman
+
+--	Quest start-up:
+	dialog link for location _hidingplace_ 
+	start timer _escapetime_ 
+	log 1010 step 0 
+	place npc _master_ at _meetingplace_ 
+
+_escapetime_ task:
+	end quest 
+
+variable _shortdelay_
+_clickonenemy_ task:
+	clicked npc _master_ say 1012 
+	start timer _shortdelay_ 
+	hide npc _master_ 
+	cast Shield spell on _mmaster_ 
+	cast Spell_Reflection spell on _mmaster_ 
+	cast Free_Action spell on _mmaster_ 
+	place foe _mmaster_ at _meetingplace_ 
+
+_traitordead_ task:
+	killed 1 _mmaster_ 
+	give pc nothing 
+	start timer _S.13_ 
+
+_teleportpc_ task:
+	pc at _hidingplace_ set _S.12_ 
+	when not _traitordead_ and _shortdelay_ 
+	reveal _dungeon_ 
+	log 1011 step 1 
+	say 1035 
+	place foe _mmaster_ at _hidingplace_ 
+	place npc _master_ at _hidingplace_ 
+	teleport pc to _dungeon_ 
+
+_hittraitor_ task:
+	injured _mmaster_ 
+
+variable _revenge_
+_foundme_ task:
+	when _S.12_ and _hittraitor_ and _teleportpc_ 
+	say 1014 
+
+variable _questdone_
+_clickqgiver_ task:
+	clicked npc _qgiver_ 
+
+_findtraitor_ task:
+	when _clickqgiver_ and _teleportpc_ 
+	log 1030 step 2 
+	say 1013 
+
+_clearclick_ task:
+	when _clickqgiver_ and not _teleportpc_ 
+	clear _clickqgiver_ _clearclick_ 
+	clear _clickqgiver_ 
+
+_S.12_ task:
+	hide npc _master_ 
+
+_S.13_ task:
+	end quest 

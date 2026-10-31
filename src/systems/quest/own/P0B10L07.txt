@@ -1,0 +1,179 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0B10L07.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 10
+-- QuestId: 7
+Messages: 18
+Quest: P0B10L07
+DisplayName: Intimidation
+-- Message panels
+QRC:
+
+RefuseQuest:  [1001]
+Quest text 1001 should
+never be shown.
+
+AcceptQuest:  [1002]
+Quest text 1002 should
+never be shown.
+
+QuestComplete:  [1004]
+<ce> _knight_ is nearly out of %g3 wits,
+<ce> %pcf. You are a terror. %vam think
+<ce> you have earned this _jewelry_ for
+<ce> your loyalty, and your rare...
+<ce> restraint. Well done, tribesman.
+
+RumorsDuringQuest:  [1005]
+If _knight_ is not careful, those
+vampires will come for %g2.
+<--->
+_knight_ thinks %g knows all
+about vampires. %G knows nothing.
+
+RumorsPostfailure:  [1006]
+_knight_ has gone off to another province,
+but %g still watches for vampires.
+<--->
+_knight_ fears no vampire. Killed
+a thousand of them, so he says.
+
+RumorsPostsuccess:  [1007]
+_knight_ learned the lesson of %g3
+life. Never pick a fight with vampires.
+<--->
+_knight_ was a meddling fool. Leave the vampires be, I say.
+
+QuestorPostsuccess:  [1008]
+Quest text 1008 should
+never be shown.
+
+QuestorPostfailure:  [1009]
+Quest text 1009 should
+never be shown.
+
+QuestLogEntry:  [1010]
+                     __vamp_
+                      ___vamp_
+ 
+ %pcn,
+ 
+      %vam want you
+ here. Come at once.
+ 
+                    In the dark,
+ 
+                    _vamp_
+
+Message:  1011
+<ce> A local warlord wages war on %vam,
+<ce> deaf to our polite threats. _knight_
+<ce> would be useful to us in %reg, but
+<ce> %g must learn obedience. Frighten
+<ce> %g2 in ___mondung_, but do not kill
+<ce> %g2. Return in =queston_ days.
+
+Message:  1012
+%qdt:
+ _vamp_ of %vam, in ___vamp_,
+ has sent for me. I must go
+ to __vamp_ quickly.
+
+Message:  1013
+%qdt:
+ _vamp_ sends me to ___mondung_
+ to rough up _knight_, a knight
+ who will not bow to %vam. I
+ must not kill %g2, only
+ frighten %g2. I report back in
+ ___vamp_ within =queston_ days.
+
+Message:  1014
+<ce> %god help me, tell %vam I will do
+<ce> anything! Only do not kill me!
+<--->
+<ce> %oth, I yield! Whatever
+<ce> they want, I will do it. In
+<ce> the name of %god, spare me!
+
+Message:  1015
+<ce> _knight_ is dead, and
+<ce> _vamp_ will not like it.
+
+Message:  1016
+<ce> I have heard, %pcf. You killed
+<ce> _knight_ when I told you to frighten
+<ce> %g2. %oth, you are nothing but a thug.
+<ce> %vam and I are most disappointed.
+
+Message:  1017
+<ce> A pale boy slips you a letter and
+<ce> is away, more nimble than he looks.
+
+
+QBN:
+Item _letter_ letter used 1010
+Item _jewelry_ trinket
+
+Person _vamp_ factiontype Vampire_Clan local
+Person _knight_ face 69 factiontype Knightly_Guard male remote
+
+Place _mondung_ remote dungeon2
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Knight
+
+--	Quest start-up:
+	dialog link for person _vamp_ 
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.09_ 
+	give pc _letter_ notify 1017 
+	place foe _F.00_ at _mondung_ 
+
+variable _S.00_
+_queston_ task:
+	change repute with _vamp_ by -5 
+	end quest 
+
+_vampclicked_ task:
+	clicked npc _vamp_ 
+	reveal _mondung_ 
+	log 1013 step 1 
+	say 1011 
+
+_S.03_ task:
+	when _vampclicked_ and not _S.05_ and not _S.04_ 
+	clear _vampclicked_ _S.03_ 
+
+_S.04_ task:
+	injured _F.00_ 
+	say 1014 
+	restrain foe _F.00_
+--task _S.04_ 
+--This was appended to the restrain foe action, not sure why
+
+_S.05_ task:
+	killed 1 _F.00_ 
+	say 1015 
+
+_reward_ task:
+	when _vampclicked_ and _S.04_ and not _S.05_ 
+	give pc _jewelry_ 
+	end quest 
+
+_S.07_ task:
+	when _vampclicked_ and _S.05_ 
+	say 1016 
+	change repute with _vamp_ by -5 
+	end quest 
+
+_readletter_ task:
+	add dialog for location _mondung_ person _vamp_ 
+	log 1012 step 0 
+	create npc _vamp_ 
+
+_S.09_ task:
+	start timer _queston_

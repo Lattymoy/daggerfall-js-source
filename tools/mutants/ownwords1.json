@@ -192,12 +192,12 @@
   {
     "name": "OWN-WORDS1-pack-reads-dfu",
     "file": "src/scenes/quest/questData.js",
-    "old": "      const text = stripBom(await (own.get(name) ?? load)());",
-    "new": "      const text = stripBom(await load());",
+    "old": "const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/__DEMO01.txt', { query: '?raw', import: 'default' });",
+    "new": "const questFiles = import.meta.glob('../../../vendor/dfu-quests/Quests/*.txt', { query: '?raw', import: 'default' });",
     "tests": [
       "test/tooling/ownquestcheck.test.js"
     ],
-    "why": "the browser's pack reads DFU's words"
+    "why": "the browser's pack bundles DFU's words again"
   },
   {
     "name": "OWN-WORDS1-twin-reads-dfu",
@@ -269,5 +269,15 @@
       "test/systems/quest/ownwords1_play.test.js"
     ],
     "why": "the played quest's kill box is not the one the pins read"
+  },
+  {
+    "name": "OWN-WORDS2-carried-fix-unread",
+    "file": "tools/ownQuestCheck.mjs",
+    "old": "  return CARRIED_FIXES[name] ? applyTextPatches('OWN-CARRIED', name, CARRIED_FIXES[name], text) : text;",
+    "new": "  return text;",
+    "tests": [
+      "test/tooling/ownquestcheck.test.js"
+    ],
+    "why": "an own file that carries a port fix of DFU's words fails on the macro the fix moved"
   }
 ]

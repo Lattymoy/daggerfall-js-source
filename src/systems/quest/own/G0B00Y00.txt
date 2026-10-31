@@ -1,0 +1,131 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\G0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Kynaran
+-- Repute: 0
+-- QuestId: 0
+Messages: 21
+Quest: G0B00Y00
+DisplayName: The Arm of Fury
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A member of our order has turned traitor,
+<ce> and the order wants vengeance. Will you
+<ce> be the hand that delivers it, %pcf?
+<--->
+<ce> Kynareth has spoken through our
+<ce> auguries. She wants the blood of
+<ce> the wretch who shamed her name.
+<ce> Will you help us calm her anger?
+
+RefuseQuest:  [1001]
+<ce> A poor answer. I hoped
+<ce> for more from you.
+
+AcceptQuest:  [1002]
+<ce> Good. We seek a killer, now hiding in
+<ce> ___mondun_, which lies %di of here.
+<ce> Return within =queston_ days, or your
+<ce> honor is lost and another takes your
+<ce> place. Kynareth is watching, %pcf.
+
+QuestFail:  [1003]
+<ce> The traitor still breathes.
+<ce> Do not tell me otherwise.
+
+QuestComplete:  [1004]
+<ce> It is done, then. Kynareth
+<ce> is pleased, and so am I.
+
+RumorsDuringQuest:  [1005]
+That coward ran for ___mondun_
+as if wolves were at the door.
+<--->
+<ce> After what that wretch did to the Kynaran Order,
+<ce> _qgiver_ cannot let it go, and %g will not.
+
+RumorsPostfailure:  [1006]
+The traitor was tougher than
+_qgiver_ thought. Got clean away.
+<--->
+The renegade went north, I hear,
+but the order has not forgotten.
+
+RumorsPostsuccess:  [1007]
+Cross the Kynaran Order and this is
+what happens. Let that be a lesson.
+<--->
+I thought the order would show that fool some mercy.
+
+QuestorPostsuccess:  [1008]
+The traitor's killer. You are always welcome in this hall.
+
+QuestorPostfailure:  [1009]
+You let that traitor walk. Do not speak to me.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Kynaran Order in ___qgiver_ wants
+ a traitor dead. The traitor hides in
+ ___mondun_. My time is =queston_ days.
+
+Message:  1020
+<ce> "Tell the Kynaran Order... I would do
+<ce> it... again..." The traitor is dead.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondun_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _nightblade_ is Nightblade
+Foe _assassin_ is Assassin
+Foe _spellsword_ is Spellsword
+Foe _knight_ is Knight
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondun_ 
+	log 1010 step 0 
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_ 
+
+_queston_ task:
+	end quest 
+
+_pcgetsgold_ task:
+	when _mondead_ and _qgclicked_ 
+	give pc nothing 
+	end quest 
+
+_mondead_ task:
+	killed 1 _assassin_ saying 1020 
+	killed 1 _knight_ saying 1020 
+	killed 1 _spellsword_ saying 1020 
+	killed 1 _nightblade_ saying 1020 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+_S.05_ task:
+	place foe _assassin_ at _mondun_ 
+
+_S.06_ task:
+	place foe _knight_ at _mondun_ 
+
+_S.07_ task:
+	place foe _spellsword_ at _mondun_ 
+
+_S.08_ task:
+	place foe _nightblade_ at _mondun_

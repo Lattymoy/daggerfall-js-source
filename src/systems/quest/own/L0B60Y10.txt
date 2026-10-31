@@ -1,0 +1,140 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B60Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 60
+-- QuestId: 10
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 24
+Quest: L0B60Y10
+DisplayName: The Veteran
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> This could be hard even for you,
+<ce> %pcf. Few fighters in %reg can match
+<ce> this mark. Are you sure you want it?
+
+RefuseQuest:  [1001]
+<ce> I do not blame you. This
+<ce> one could be too dangerous.
+
+AcceptQuest:  [1002]
+<ce> Your funeral, then. The mark is no arena fighter but
+<ce> a war veteran who killed nine men, they say. Go to
+<ce> _mondung_ in ___mondung_. A spear in the knee left a
+<ce> limp, so look for it. Back in =1stparton_ days.
+
+QuestFail:  [1003]
+<ce> That was not the mark, whoever
+<ce> it was. Return to ___mondung_
+<ce> and finish the contract.
+
+QuestComplete:  [1004]
+<ce> The whole town is talking about that
+<ce> fight, and you only just got back.
+<ce> Here is your _reward_ gold, %pcf.
+
+RumorsDuringQuest:  [1005]
+Such a shame, what is
+happening up north these days.
+
+RumorsPostfailure:  [1006]
+The queen is expecting, or so the market women claim.
+
+RumorsPostsuccess:  [1007]
+That old war hero died in a duel, did you hear? A sad end.
+
+QuestorPostsuccess:  [1008]
+People still tell of your fight
+with that war hero, %pcn.
+
+QuestorPostfailure:  [1009]
+You failed the contract on the war hero. Failure
+stays on the Brotherhood's books for a long time.
+
+Message:  1020
+%qdt:
+ In ___questgiver_ the Dark Brotherhood
+ gave me a war hero to kill, found at
+ _mondung_ in ___mondung_. It must be
+ done within =1stparton_ days.
+
+Message:  1021
+<ce> "You did... what a whole
+<ce> war... could not..."
+<ce>
+<ce> The contract is fulfilled.
+
+Message:  1022
+<ce> "A limp does not make me a cripple.
+<ce> Come closer and find out!"
+
+Message:  1023
+<ce> This is no veteran! It is a vampire!
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+
+Place _mondung_ remote weaponstore
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _F.00_ is Ancient_vampire
+Foe _F.01_ is Ranger
+Foe _F.02_ is Monk
+Foe _F.03_ is Barbarian
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1020 step 0 
+	pick one of _S.06_ _S.07_ _S.08_ _onehour_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc _reward_ 
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+--removed duplicate clearclick here
+
+_S.02_ task:
+	killed 1 _F.00_ saying 1021 
+	killed 1 _F.03_ saying 1021 
+	killed 1 _F.02_ saying 1021 
+	killed 1 _F.01_ saying 1021 
+
+variable _queston_
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_S.06_ task:
+	place foe _F.00_ at _mondung_ 
+
+_S.07_ task:
+	place foe _F.01_ at _mondung_ 
+
+_S.08_ task:
+	place foe _F.02_ at _mondung_ 
+
+_onehour_ task:
+	place foe _F.03_ at _mondung_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003 
+	clear _qgclicked_ _clearclick_ 
+
+_S.11_ task:
+	injured _F.03_ saying 1022 
+	injured _F.02_ saying 1022 
+	injured _F.01_ saying 1022 
+	injured _F.00_ saying 1023

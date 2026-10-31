@@ -12,7 +12,7 @@ import { fileURLToPath } from 'node:url';
 import { loadQuestTables, staticMessagesTable } from '../src/systems/quest/tables.js';
 import { Parser, splitField } from '../src/systems/quest/parser.js';
 import { getMacro, MACRO_TYPES } from '../src/systems/quest/questMacros.js';
-import { applyQuestPatches, QUEST_PATCHES } from '../src/systems/quest/questPatches.js';
+import { applyQuestPatches, applyTextPatches, QUEST_PATCHES } from '../src/systems/quest/questPatches.js';
 import { applyQuestlinePatches, hasQuestlinePatch } from '../src/systems/questlines/qlPatches.js';
 import { stringBreach } from './plainText.mjs';
 import { isMain } from './lib/isMain.mjs';
@@ -51,7 +51,10 @@ export function splitQuest(text) {
   const qrc = lines.findIndex((l) => /^qrc:/i.test(l.trim()));
   const qbn = lines.findIndex((l) => /^qbn:/i.test(l.trim()));
   if (qrc < 0 || qbn < qrc) return null;
-  return { header: lines.slice(0, qrc), qrc: lines.slice(qrc + 1, qbn), qbn: lines.slice(qbn).join('\n').replace(/\s+$/, '') };
+  // `qbn` is compared trimmed; `qbnRaw` is written back as it stands - a questline patch may anchor on DFU's last line's
+  // trailing space (patches/nobility.json, R0C11Y16's `\tend quest `)
+  const tail = lines.slice(qbn).join('\n');
+  return { header: lines.slice(0, qrc), qrc: lines.slice(qrc + 1, qbn), qbn: tail.replace(/\s+$/, ''), qbnRaw: tail.endsWith('\n') ? tail : `${tail}\n` };
 }
 
 /** The QRC's messages as written, by the parser's own rules (parser.js _parseQRC): header line, id and body lines. */
@@ -145,6 +148,14 @@ function dfuRuns() {
   return _dfuRuns;
 }
 
+/** OWN-WORDS2: the runs of SHARED_RUN words `text` shares with DFU's quest messages (and ARENA2's QRC files, where
+ *  ARENA2_PATH is set) - the questline patches' own messages are held to it beside the own files. */
+export function sharedRunsIn(text) {
+  const runs = dfuRuns(), words = text.split(/\s+/).map(normWord).filter(Boolean), out = [];
+  for (let i = 0; i + SHARED_RUN <= words.length; i++) { const r = words.slice(i, i + SHARED_RUN).join(' '); if (runs.has(r)) out.push(r); }
+  return out;
+}
+
 const parse = (text) => { ensureTables(); return new Parser().parse(norm(text).split('\n'), 0, { rolls: () => 0.5 }); };
 
 /**
@@ -229,17 +240,30 @@ export function ownQuestNames(root = ROOT) {
   return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.txt')).map((f) => f.slice(0, -4)).sort() : [];
 }
 
+/** OWN-WORDS2: a port fix of DFU's words that an own file carries itself, its patch gone from questPatches.js
+ *  (Own-Words.md, "The next batches"). DFU's file is read with the fix, so the rewrite keeps the fixed macro. */
+export const CARRIED_FIXES = Object.freeze({
+  // QUEST-AUDIT III DUEL-TOWN: the duel's journal (1003) names the inn's own town, not the questor's
+  A0C00Y10: [{ old: ' _inn_ in ___giver_ in six hours.', new: ' _inn_ in ___inn_ in six hours.', count: 1 }],
+});
+
+/** DFU's file of the quest `name` as its own file answers to it: with its carried fix, where it has one. */
+export function dfuSource(name, root = ROOT) {
+  const text = read(join(root, DFU_DIR, `${name}.txt`));
+  return CARRIED_FIXES[name] ? applyTextPatches('OWN-CARRIED', name, CARRIED_FIXES[name], text) : text;
+}
+
 /** Problems with the own quest `name` (none when it holds); a name DFU's pack does not have is one. */
 export function checkOwnQuest(name, root = ROOT) {
   const dfuPath = join(root, DFU_DIR, `${name}.txt`);
   if (!existsSync(dfuPath)) return [`${name}: DFU's pack has no quest of this name - an own file replaces one of DFU's`];
-  return checkText(name, read(join(root, OWN_DIR, `${name}.txt`)), read(dfuPath));
+  return checkText(name, read(join(root, OWN_DIR, `${name}.txt`)), dfuSource(name, root));
 }
 
 /** A starting file for DFU's quest `name`: the credit, DFU's header and QBN, and for each message its header and a TODO
  *  line naming the macros it must keep (each variant its own). */
 export function scaffold(name, root = ROOT) {
-  const dfuText = read(join(root, DFU_DIR, `${name}.txt`));
+  const dfuText = dfuSource(name, root);
   const dfu = splitQuest(dfuText);
   const quest = parse(dfuText);
   const out = [OWN_CREDIT, ...dfu.header, 'QRC:', ''];
@@ -255,7 +279,7 @@ export function scaffold(name, root = ROOT) {
     });
     out.push('');
   }
-  return `${[...out, '', dfu.qbn].join('\n')}\n`;
+  return `${[...out, ''].join('\n')}\n${dfu.qbnRaw}`;
 }
 
 /** A message's body wrapped to `width`. Lines of one kind flow together: `<ce>` lines, lines with no lead, lines led by
@@ -310,7 +334,7 @@ export function wrapped(name, root = ROOT) {
   const widths = new Map(rawMessages(splitQuest(read(join(root, DFU_DIR, `${name}.txt`))).qrc).map((m) => [m.id, widthOf(m.body)]));
   const qrc = [...own.qrc];
   for (const m of rawMessages(own.qrc).reverse()) qrc.splice(m.start + 1, m.body.length, ...wrapBody(m.body, widths.get(m.id) ?? WIDTH.max));
-  return `${[...own.header, text.split('\n').find((l) => /^qrc:/i.test(l.trim())), ...qrc, own.qbn].join('\n')}\n`;
+  return `${[...own.header, text.split('\n').find((l) => /^qrc:/i.test(l.trim())), ...qrc].join('\n')}\n${own.qbnRaw}`;
 }
 
 if (isMain(import.meta.url)) {

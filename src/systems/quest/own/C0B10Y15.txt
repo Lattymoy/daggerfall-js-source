@@ -1,0 +1,159 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0B10Y15.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 10
+-- QuestId: 15
+Messages: 41
+Quest: C0B10Y15
+DisplayName: The Relic
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pct, __questgiver_ has dangerous
+<ce> work. A holy _item_ of %god was
+<ce> lost long ago, and it must come
+<ce> home. Its maker betrayed the temple
+<ce> and became a lich. The lich =lich_
+<ce> still guards it. Will you go?
+
+RefuseQuest:  [1001]
+<ce> A lich is a terrible foe for
+<ce> someone so young. When you are
+<ce> older, come back. %god keep you.
+
+AcceptQuest:  [1002]
+<ce> I fear for you, brave one. =lich_ keeps
+<ce> the _item_ of %god in ___mondung_. You
+<ce> need not kill the lich. Take the _item_
+<ce> and bring it to __questgiver_. After
+<ce> =qtime_ days, we sing for the dead.
+<ce> %god bless you, %pcn.
+
+QuestFail:  [1003]
+<ce> Waiting will not make the
+<ce> lich any weaker, %pcf.
+
+QuestComplete:  [1004]
+<ce> Praise %god! I did not dare hope you
+<ce> would come back with it. %god will
+<ce> remember this. Take this enchanted
+<ce> _reward_ with the temple's thanks.
+
+RumorsDuringQuest:  [1005]
+<ce> __questgiver_ wants its lost _item_ back. Who
+<ce> would go up against the lich =lich_ for it?
+
+RumorsPostfailure:  [1006]
+<ce> Now __questgiver_ claims ___mondung_
+<ce> never held the _item_ at all. Convenient.
+
+RumorsPostsuccess:  [1007]
+<ce> A %ra walked out of ___mondung_ with the
+<ce> lost _item_ of __questgiver_. Imagine that.
+
+QuestorPostsuccess:  [1008]
+<ce> You faced a lich for us, %pcf.
+<ce> You are welcome here any time.
+
+QuestorPostfailure:  [1009]
+<ce> Failing to bring the _item_ out of
+<ce> ___mondung_ is no crime. Taking a task
+<ce> you could not finish disappoints me.
+
+Message:  1015
+<ce> A cold voice speaks out of the air:
+<ce>
+<ce> "This _item_ is not yours, nor the
+<ce> property of those soft fools at
+<ce> __questgiver_. I take back what I made."
+<ce>
+<ce> The _item_ is gone.
+
+Message:  1020
+%qdt:
+ __questgiver_ in ___questgiver_
+ wants a holy _item_ brought back
+ from ___mondung_. A lich, =lich_,
+ guards it. I do not have to kill
+ =lich_, only take the _item_ to
+ _questgiver_ within =qtime_ days.
+
+Message:  1030
+<ce> This must be the _item_ that
+<ce> __questgiver_ lost long ago.
+
+Message:  1035
+<ce> You brought back the holy _item_ and
+<ce> destroyed =lich_ too? %god has marked
+<ce> you. You will go far in our order.
+
+Message:  1040
+<ce> =lich_ shrieks with rage:
+<ce>
+<ce> "Curs of __questgiver_! The _item_
+<ce> is mine. I made it, and not even
+<ce> death will part me from it."
+
+
+QBN:
+Item _item_ talisman
+Item _reward_ magic_item
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _qtime_ 00:00 0 flag 17 range 0 2
+Clock _shortdelay_ 00:02 0 flag 1 range 0 1
+
+Foe _lich_ is Lich
+
+--	Quest start-up:
+	place item _item_ at _mondung_ 
+	start timer _qtime_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	place foe _lich_ at _mondung_ 
+
+_qtime_ task:
+	have _item_ set _S.07_ 
+
+_S.01_ task:
+	toting _item_ and _questgiver_ clicked 
+	give pc _reward_ 
+
+_qgclicked_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.01_
+	say 1003
+	clear _qgclicked_ _clearclick_
+
+_S.02_ task:
+	killed 1 _lich_ 
+
+_S.03_ task:
+	when _S.01_ and _S.02_ 
+	say 1035 
+	change repute with _questgiver_ by +7 
+
+_pickupitem_ task:
+	clicked item _item_ 
+	start timer _shortdelay_ 
+	say 1030 
+
+variable _shortdelay_
+_S.06_ task:
+	when _shortdelay_ and not _S.02_ 
+	say 1040 
+
+_S.07_ task:
+	say 1015 
+
+_S.08_ task:
+    when _S.01_ or _qtime_
+    end quest

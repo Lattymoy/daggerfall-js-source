@@ -1,0 +1,174 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C11Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 3
+Messages: 21
+Quest: R0C11Y03
+DisplayName: The Heartless Daedra
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> An alchemist I know, _chemist_, works on a
+<ce> project of mine, and %g needs a daedra's
+<ce> heart for it. The daedra want that heart
+<ce> back, and some may come for you. Will you
+<ce> risk it, for a generous fee?
+
+RefuseQuest:  [1001]
+<ce> I am disappointed, but I
+<ce> understand. Few %ra adventurers
+<ce> have the nerve to cross the daedra.
+
+AcceptQuest:  [1002]
+<ce> You will? Here is the heart, then. If my
+<ce> friend _chemist_ does not have it within
+<ce> =1stparton_ days, it spoils past use.
+<ce> Deliver it, then come back for your
+<ce> reward. Safe travels to ___chemist_.
+
+QuestFail:  [1003]
+<ce> Do you think I do not know the heart never
+<ce> reached my alchemist? Expect no reward.
+<ce> Without a fresh heart, the project is
+<ce> delayed again. Curse it all to Oblivion!
+
+QuestComplete:  [1004]
+<ce> Excellent work, %pcf. I knew a few daedra
+<ce> would not stop you. I will remember your
+<ce> skill. The =reward_ gold we agreed is yours.
+
+RumorsDuringQuest:  [1005]
+The stargazers read dark omens.
+The daedric stars burn bright.
+<--->
+The Mages Guild says the daedra are stirring tonight.
+
+RumorsPostfailure:  [1006]
+By every sign in the sky, the daedra are quiet again.
+<--->
+I thought I smelled brimstone
+in the air, but it is gone now.
+
+RumorsPostsuccess:  [1007]
+_chemist_'s shop is busy day and night.
+Some great experiment, people say.
+<--->
+_questgiver_ has found a %ra hireling
+who actually delivers, and is delighted.
+
+QuestorPostsuccess:  [1008]
+And how may I serve my brave young %ra?
+<--->
+Hail, hero. Do those daedra still
+bear you a grudge, do you think?
+
+QuestorPostfailure:  [1009]
+<ce> You failed to deliver that heart. I
+<ce> suppose you thought I had forgotten.
+<ce> I can see no other reason for you to
+<ce> show your face at court.
+
+QuestLogEntry:  [1010]
+<ce> Marvelous. A daedra's heart, and barely
+<ce> spoiled at all. Now hurry back to
+<ce> _questgiver_, %pcf. %G has a great deal
+<ce> on %g3 mind. Be back within =2ndparton_
+<ce> days, or %g may forget you exist.
+
+Message:  1011
+_chemist_, the =chemist_? %G lives %di of here, I think.
+<--->
+An alchemist called _chemist_ serves
+_questgiver_, who lives %di of here.
+
+Message:  1012
+_questgiver_? A noble. %G has been
+dabbling with daedra of late.
+<--->
+You will find _questgiver_, a noble, %di of here.
+<--->
+_questgiver_ keeps a dozen schemes
+on the boil, as nobles do.
+<--->
+_questgiver_ trusts alchemists more than physicians.
+
+Message:  1013
+A daedra's heart. Alchemists prize
+it most when it is newly cut.
+<--->
+The heart of a daedra. Its kin
+will want it out of mortal hands.
+
+Message:  1015
+%qdt:
+ _questgiver_ of ___questgiver_
+ wants a daedra's heart taken to
+ %g3 alchemist, _chemist_, a
+ =chemist_ at __chemist_ in
+ ___chemist_. If I reach %g2
+ within =1stparton_ days, despite
+ the daedra, _questgiver_ rewards
+ me on my return to __questgiver_.
+
+Message:  1020
+<ce> The daedra hisses, "%pcn. Yes, we
+<ce> know your name now. You meddle in
+<ce> what you cannot understand. We
+<ce> will not rest until our brother's
+<ce> heart is ours again."
+
+
+QBN:
+Item _reward_ gold
+Item _item_ daedra_heart anyInfo 1013
+
+Person _questgiver_ face 112 group Questor anyInfo 1012
+Person _chemist_ group Chemist remote anyInfo 1011
+Person _dummydaedra_ face 102 factiontype Daedra female remote
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+Clock _2ndparton_ 00:00 0 flag 1 range 2 5
+--reverted timer names and removed chaining. works this way, and better.
+
+Foe _daedra_ is Daedroth
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1015 step 0 
+	get item _item_
+
+variable _1stparton_
+_2ndparton_ task:
+	change repute with _questgiver_ by -30 
+	end quest 
+
+_pcgetsgold_ task:
+	when _S.06_ and _npcclicked_ 
+	give pc _reward_ 
+	end quest 
+
+_npcclicked_ task:
+	toting _item_ and _chemist_ clicked 
+	start timer _2ndparton_ 
+	say 1010 
+	change repute with _dummydaedra_ by -20 
+
+until _npcclicked_ performed:
+	create foe _daedra_ every 5 minutes 10 times with 33% success 
+
+variable _qgclicked_
+_queston_ task:
+	when _1stparton_ and not _npcclicked_ 
+	make _item_ permanent 
+	change repute with _questgiver_ by -30 
+	end quest 
+
+_S.06_ task:
+	clicked npc _questgiver_ 
+
+_S.07_ task:
+	injured _daedra_ saying 1020 

@@ -1,0 +1,134 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\D0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Akatosh
+-- Repute: 0
+-- QuestId: 0
+Messages: 31
+Quest: D0B00Y00
+DisplayName: Avenge the Dragons
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Looking for work? I have a job
+<ce> worth _reward_ gold. There will
+<ce> be fighting, but you look as if
+<ce> you can handle it. Interested?
+
+RefuseQuest:  [1001]
+<ce> Ah. That is a pity.
+
+AcceptQuest:  [1002]
+<ce> Good. Dragons are holy to Akatosh.
+<ce> One of our own knightly order has
+<ce> gone mad and kills them in our sacred
+<ce> grove. Stop this dragonslayer in
+<ce> ___mondung_ within =1stparton_ days,
+<ce> or the Order of the Hour will do it.
+
+QuestFail:  [1003]
+<ce> Get moving, %pcf. Time is short,
+<ce> and that dragonslayer still lives.
+
+QuestComplete:  [1004]
+<ce> Welcome back, %pcf, and well
+<ce> done. Your _reward_ gold, as
+<ce> promised. The Chantry thanks you.
+
+RumorsDuringQuest:  [1005]
+The Akatosh Chantry is furious. One
+of its own has been killing dragons.
+<--->
+If you ask me, that dragon killer is
+doing us all a favor. Dragons eat cattle.
+
+RumorsPostfailure:  [1006]
+Good. The dragonslayer got away.
+<--->
+More dragons will die now, mark my words.
+<--->
+The Chantry's knights are chasing
+the dragonslayer all over %reg.
+
+RumorsPostsuccess:  [1007]
+Will the Chantry go after every
+dragon hunter in the land now?
+<--->
+A person cannot even kill a dragon in peace these days.
+
+QuestorPostsuccess:  [1008]
+Ah, %pcf, friend of the dragons.
+How may the Chantry help you?
+
+QuestorPostfailure:  [1009]
+I trusted you with that dragonslayer,
+%pcf. I will not make that mistake twice.
+
+Message:  1020
+<ce> "Free... the dragons... should be
+<ce> free..." The dragonslayer dies.
+
+Message:  1030
+%qdt:
+ Someone is killing the dragons in the
+ Akatosh Chantry's sacred grove. I must go
+ to ___mondung_, kill this dragonslayer,
+ and report to the Chantry in
+ ___questgiver_ within =1stparton_ days.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _archer_ is Archer
+Foe _spellsword_ is Spellsword
+Foe _knight_ is Knight
+Foe _ranger_ is Ranger
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1030 step 0 
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+_mondead_ task:
+	killed 1 _spellsword_ saying 1020 
+	killed 1 _ranger_ saying 1020 
+	killed 1 _knight_ saying 1020 
+	killed 1 _archer_ saying 1020 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+_S.05_ task:
+	place foe _spellsword_ at _mondung_ 
+
+_S.06_ task:
+	place foe _ranger_ at _mondung_ 
+
+_S.07_ task:
+	place foe _knight_ at _mondung_ 
+
+_S.08_ task:
+	place foe _archer_ at _mondung_

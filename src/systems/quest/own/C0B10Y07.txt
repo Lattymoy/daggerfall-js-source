@@ -1,0 +1,123 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0B10Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 10
+-- QuestId: 7
+Messages: 12
+Quest: C0B10Y07
+DisplayName: A Delivery
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Blessings, %pcn. __qgiver_ needs an
+<ce> errand run. This _religitem_ must reach
+<ce> ___priest_ within =traveltime_ days. The
+<ce> fee is _gold_ gold. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> Pity. The bell-ringer will
+<ce> have to go, then, and he
+<ce> gets lost in his own temple.
+
+AcceptQuest:  [1002]
+<ce> Here is the _religitem_. Give it to
+<ce> _priest_ at __priest_ in
+<ce> ___priest_. One more thing. A rival
+<ce> temple may send thugs after you.
+
+QuestComplete:  [1004]
+<ce> %god smile on you, %pcn. We have
+<ce> needed this _religitem_ badly. I
+<ce> am told your fee is _gold_ gold.
+
+RumorsDuringQuest:  [1005]
+My knee has ached for a week. Rain coming, maybe.
+<--->
+My neighbor talked about his turnips for an hour. An hour!
+<--->
+Nothing much happens around here. I like it that way.
+<--->
+%cn has been cold for the season, has it not?
+<--->
+Warm today. Last year at this time we had frost.
+<--->
+My cousin went to see a healer in another
+province. Came back with a new cough.
+<--->
+The days are getting shorter. Or I am getting slower.
+<--->
+This town needs a statue of somebody. Anybody.
+<--->
+Young people and their spells. %oth, I give up.
+<--->
+I dreamed of fish last night. Hundreds of them.
+<--->
+Here is one I heard. %jok
+<--->
+%jok That is a joke, you see.
+<--->
+%jok I never understood that one.
+<--->
+The courts of %reg are fair enough, mostly.
+
+RumorsPostfailure:  [1006]
+They curse the name %pcn
+at __qgiver_ these days.
+
+RumorsPostsuccess:  [1007]
+_priest_ shows %g3 new gift
+from __qgiver_ to everyone.
+
+QuestorPostsuccess:  [1008]
+_priest_ sends %g3 thanks, %pcf. How can I help you?
+
+QuestorPostfailure:  [1009]
+_priest_ waited for that
+delivery for nothing. Go away.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_, _qgiver_ gave me the
+ _religitem_ to carry to _priest_ at
+ __priest_ in ___priest_. It must
+ arrive within =traveltime_ days.
+
+Message:  1011
+<ce> Hand over the _religitem_! __priest_
+<ce> gets nothing from us but your corpse.
+
+
+QBN:
+Item _religitem_ religious
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _priest_ group Group_5.0 remote
+Person _enemy_ face 176 group Local_4.0 remote
+
+Clock _traveltime_ 00:00 0 flag 1 range 1 2
+
+Foe _thief_ is Thief
+Foe _spellsword_ is Spellsword
+
+--	Quest start-up:
+	create foe _thief_ every 12 minutes 2 times with 5% success 
+	create foe _spellsword_ every 12 minutes 2 times with 5% success 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	get item _religitem_ 
+
+_traveltime_ task:
+	end quest 
+
+_questdone_ task:
+	toting _religitem_ and _priest_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_S.02_ task:
+	injured _thief_ saying 1011 
+	injured _spellsword_ saying 1011

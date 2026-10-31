@@ -1,0 +1,110 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0C00Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: knight
+-- Repute: 0
+-- QuestId: 10
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0C00Y10
+DisplayName: Trouble with Orcs
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The name is _qgiver_. Outsiders like
+<ce> you have not earned our trust. Kill
+<ce> the leader of the orc bandits who
+<ce> plague these parts, and we may think
+<ce> again. Have you the stomach for it?
+
+RefuseQuest:  [1001]
+<ce> Somehow that does not surprise me. Come
+<ce> back when you mean to earn our respect.
+
+AcceptQuest:  [1002]
+<ce> Kill all the orcs you like, but their
+<ce> leader, =monster_, must die. The band
+<ce> hides out in ___dungeon_. If =2dung_
+<ce> days go by without you, I shall take
+<ce> you for the coward they say you are.
+
+QuestComplete:  [1004]
+<ce> Hmm. Perhaps you are worth a
+<ce> place in the order after all.
+<ce> That was good work, %pcn.
+
+RumorsDuringQuest:  [1005]
+The knights have been chasing that orc
+tribe for months and never caught it.
+<--->
+Take away that orc tribe's leader
+and the rest would scatter.
+
+RumorsPostfailure:  [1006]
+The orcs will come again. Their
+leader is alive and well.
+
+RumorsPostsuccess:  [1007]
+A %ra turned up from nowhere,
+killed the orc leader and rode off.
+
+QuestorPostsuccess:  [1008]
+Ask, orc slayer. I am listening.
+
+QuestorPostfailure:  [1009]
+I have no time for an orc fancier.
+<--->
+Why should I talk to someone
+who loves orcs so much?
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___qgiver_, a knight named
+ _qgiver_ sent me to break up the
+ orc band in ___dungeon_. Their
+ leader is called =monster_. I
+ must kill %g2 within =2dung_
+ days, or %g goes free.
+
+Message:  1011
+<ce> =monster_ is dead. With no one to lead
+<ce> them, the orcs are only a nuisance now.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _local_ face 1 group Resident2 local
+
+Place _dungeon_ remote dungeon1
+
+Clock _2dung_ 00:00 0 flag 17 range 0 2
+
+Foe _monster_ is Orc_sergeant
+
+--	Quest start-up:
+	start timer _2dung_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	place foe _monster_ at _dungeon_ 
+
+_2dung_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _monster_ saying 1011 
+
+_S.02_ task:
+	clicked npc _qgiver_ 
+
+_success_ task:
+	when _S.02_ and _S.01_ 
+	give pc nothing 
+	change repute with _local_ by +4 
+	end quest 
+
+_clearclick_ task:
+	when _S.02_ and not _S.01_ 
+	clear _S.02_ _clearclick_

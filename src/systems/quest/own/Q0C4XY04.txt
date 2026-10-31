@@ -1,0 +1,163 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C4XY04.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 4X
+-- QuestId: 4
+Messages: 41
+Quest: Q0C4XY04
+DisplayName: The Daedra's Heart
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> ==questgiver_ needs your strength
+<ce> again. Our spellcraft calls for a
+<ce> daedra's heart, fresh and taken by
+<ce> your own hand. Will you kill a daedra
+<ce> for the old women who adore you?
+
+RefuseQuest:  [1001]
+<ce> No? Oh, what a gloomy night this is.
+
+AcceptQuest:  [1002]
+<ce> The Goddess favors us, %pcn. A
+<ce> dungeon nearby crawls with daedra.
+<ce> Any heart will do, except a daedra
+<ce> lord's, which is full of worms. Go
+<ce> to ___mondung_, kill one, and bring
+<ce> the heart within =1stparton_ days.
+
+QuestFail:  [1003]
+<ce> The heart is in ___mondung_,
+<ce> %pcn, inside a daedra. You
+<ce> will not find it here.
+
+QuestComplete:  [1004]
+<ce> Still warm, and still beating!
+<ce> Quick, into the pot before it cools.
+<ce> Here, %pcn, take this _reward_. We
+<ce> old witches will not forget it.
+
+RumorsDuringQuest:  [1005]
+The daedra are gathering at ___mondung_. So many of them!
+<--->
+Why would daedra come to ___mondung_
+unless %god is angry with us?
+
+RumorsPostfailure:  [1006]
+%god heard us at last. ___mondung_ is quiet again.
+<--->
+One morning the daedra in ___mondung_
+were all gone. Nobody misses them.
+
+RumorsPostsuccess:  [1007]
+The stars went dark for a moment last
+night. Some say that means a daedra died.
+<--->
+Someone was singing and banging pots out in
+the hills all night. Witches, if you ask me.
+
+QuestorPostsuccess:  [1008]
+Is the _reward_ still bright, friend?
+==questgiver_ remembers you fondly.
+
+QuestorPostfailure:  [1009]
+<ce> Our pot sat waiting for a heart,
+<ce> %pcf, and none came. A word would
+<ce> have saved us the trouble. Friend
+<ce> or not, we are cross with you.
+
+Message:  1011
+Ask for _questgiver_, the =questgiver_.
+One of ==questgiver_, that one.
+<--->
+A witch. They keep to the wild parts of %reg.
+
+Message:  1012
+They say vampires nest in ___mondung_.
+<--->
+Things that hate the sun live in ___mondung_.
+<--->
+___mondung_? Orcs hold it, last I heard.
+<--->
+The dead walk in ___mondung_. Keep away.
+
+Message:  1015
+%qdt:
+ _questgiver_ of ==questgiver_ sent
+ me to ___mondung_ for a daedra's
+ heart. Fire daedra, frost daedra,
+ seducers and daedroths all have one.
+ I must bring it to ___questgiver_
+ within =1stparton_ days.
+
+Message:  1040
+<ce> The daedra's heart comes free in
+<ce> your hand, whole and still beating.
+
+
+QBN:
+Item _reward_ malachite
+Item _heart_ daedra_heart
+
+Person _questgiver_ group Questor anyInfo 1011
+
+Place _mondung_ remote dungeon8 anyInfo 1012
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _seducer_ is Daedra_seducer
+Foe _daedroth_ is Daedroth
+Foe _firedaedra_ is Fire_daedra
+Foe _F.03_ is Frost_daedra
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1015 step 0 
+	pc at _mondung_ set _exitstarter_ 
+
+_pcgetsgold_ task:
+	toting _heart_ and _questgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+_S.01_ task:
+	clicked item _heart_ say 1040 
+
+variable _S.02_
+variable _qgclicked_
+variable _queston_
+_1stparton_ task:
+	end quest 
+
+_S.06_ task:
+	injured _firedaedra_ 
+	give item _heart_ to _firedaedra_ 
+
+_S.07_ task:
+	injured _F.03_ 
+	give item _heart_ to _F.03_ 
+
+_S.08_ task:
+	injured _seducer_ 
+	give item _heart_ to _seducer_ 
+
+_S.09_ task:
+	injured _daedroth_ 
+	give item _heart_ to _daedroth_ 
+
+_S.10_ task:
+	when not _S.11_ and _exitstarter_ 
+	create foe _seducer_ every 15 minutes 7 times with 10% success 
+	create foe _F.03_ every 20 minutes 6 times with 30% success 
+	create foe _firedaedra_ every 18 minutes 5 times with 25% success 
+	create foe _daedroth_ every 12 minutes 5 times with 20% success 
+
+_S.11_ task:
+	when _S.06_ or _S.07_ or _S.09_ or _S.08_ 
+	clear _S.10_ 
+
+variable _exitstarter_

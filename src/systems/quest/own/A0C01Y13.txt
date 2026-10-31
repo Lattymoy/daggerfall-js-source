@@ -1,0 +1,242 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C01Y13.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 01
+-- QuestId: 13
+Quest: A0C01Y13
+DisplayName: Defamation
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Good day. I am _giver_. Perhaps you have
+<ce> heard of me lately. Someone is filling
+<ce> the streets with vile lies about my
+<ce> private life. I will pay _gold_ gold to
+<ce> whoever stops them. Will you?
+<--->
+<ce> These spiteful, slanderous rumors
+<ce> about me must stop at once. I need
+<ce> a stranger to trace them to their
+<ce> wretched source. Would _gold_ gold
+<ce> buy your skills as an investigator?
+
+RefuseQuest:  [1001]
+<ce> So someone told you I break
+<ce> my promises. Lies, all of it!
+
+AcceptQuest:  [1002]
+<ce> You will? Good. Come back with proof of
+<ce> who is behind these vile rumors, and I
+<ce> will pay you then. A month without word
+<ce> from you, and I will count it a failure.
+
+QuestFail:  [1003]
+%qdt:
+ Someone in ___giver_ is spreading
+ rumors about _giver_. %G will pay
+ me _gold_ gold to stop them. I have
+ one month to bring back proof.
+
+QuestComplete:  [1004]
+<ce> You have acted with honor, %pcn. This
+<ce> _magicsword_ is the finest thing I own, and it is
+<ce> yours. You deserve no less. I am in your debt. As
+<ce> for _giver_ and _sister_, leave them to me.
+
+RumorsDuringQuest:  [1005]
+<ce> They say _giver_ keeps slaves!
+<--->
+<ce> _giver_ beats %g3 spouse, I hear.
+
+RumorsPostfailure:  [1006]
+<ce> _giver_ is an outcast now.
+<ce> Nobody in town will go near %g2.
+<ce> Have you heard what %g did?
+
+RumorsPostsuccess:  [1007]
+<ce> _lover_ was saved from ___dungeon_
+<ce> by some %ra. Wait, are you that %ra?
+
+QuestorPostsuccess:  [1008]
+<ce> You must think me a monster. My
+<ce> sister's lover, _lover_, nearly died
+<ce> because of me. Let me make amends.
+
+QuestorPostfailure:  [1009]
+<ce> You failed me! My sister will not
+<ce> speak to me now, and it is your fault.
+
+QuestLogEntry:  [1010]
+ %qdt:
+ The innkeeper says _giver_ and %g3
+ sister, _sister_, plotted to kidnap
+ her lover, _lover_. A letter to
+ _giver_ lays out the plan.
+
+Message:  1015
+_giver_,
+ I will be brief. You are right. _lover_ has
+ grown tiresome, and a scare may cure him. I
+ leave on a journey tonight, so take him at
+ sunset tomorrow. I will write. A week should do.
+<ce> -_sister_
+
+Message:  1017
+<ce> _giver_? Keep your voice down. %G3 sister
+<ce> _sister_ had trouble with her lover,
+<ce> _lover_. _giver_ and %g3 sister agreed to
+<ce> have him seen to. A lad I know carried a
+<ce> letter about it from _sister_ to _giver_.
+
+Message:  1018
+%qdt:
+ I showed _giver_ the letter about the
+ plot against _lover_. _giver_
+ confessed that %g paid bandits to lock
+ him in ___dungeon_. %G begged for
+ mercy and asked me to rescue _lover_.
+
+Message:  1020
+<ce> Lies, every word! I hate
+<ce> those street rumors. Please,
+<ce> hurry and put an end to them!
+
+Message:  1021
+<ce> What is this? Please, do not kill me! My sister
+<ce> wanted him frightened, so I paid bandits to lock
+<ce> him in ___dungeon_. He never came back. Rescue
+<ce> him before she returns, or she will kill me!
+
+Message:  1022
+<ce> Everyone is talking about _giver_ these days.
+<--->
+<ce> _giver_ is staying at _givershouse_.
+<--->
+<ce> The lover of _giver_'s sister has gone missing.
+<--->
+<ce> _giver_ is usually at __giver_.
+<--->
+<ce> _giver_? Look for %g2 at __giver_,
+<ce> or at home in _givershouse_.
+<--->
+<ce> People in ___giver_ like _giver_ well enough.
+<--->
+<ce> Go to _inn_ if you want gossip. They have plenty.
+<--->
+<ce> _giver_ goes shopping with %g3
+<ce> sister, _sister_, most days.
+<--->
+<ce> I hear _giver_ has been robbing _inn_.
+<ce> Or maybe that was someone else.
+<--->
+<ce> They say _giver_ killed %g3 own sister.
+<--->
+<ce> _giver_'s father grew up among orcs, they say.
+<--->
+<ce> _giver_ is in love with an orc!
+<--->
+<ce> _giver_ robs the temples, I hear.
+<--->
+<ce> _giver_ works with the orcs, in secret.
+<--->
+<ce> Nobody in ___giver_ is gossiped
+<ce> about more than _giver_ this week.
+<--->
+<ce> _giver_ agreed to have %g3 sister's lover carried off.
+<--->
+<ce> People here talk and talk, and say nothing.
+<--->
+<ce> _giver_ breaks %g3 promises.
+<--->
+<ce> _giver_ is hiding something.
+<--->
+<ce> Everyone here has a story of their own.
+<--->
+<ce> People always talk at _inn_.
+
+Message:  1030
+<ce> _lover_ courts _sister_. Come to think
+<ce> of it, I have not seen him for a while.
+<--->
+<ce> Nobody has seen _lover_ in town for days.
+<ce> I would wager _giver_ has a hand in it.
+
+Message:  2000
+<ce> Thank %god, someone found me! I have wandered these
+<ce> passages for days. What? _sister_ and _giver_ did this?
+<ce> Get me to _sistershouse_ in __sistershouse_ and I will
+<ce> reward you well. Then I will deal with those two!
+
+Message:  2001
+%qdt:
+ _lover_ is alive. I am to see him safely
+ to _sistershouse_ in __sistershouse_.
+
+Message:  2005
+<ce> _lover_ says, "You have done
+<ce> enough, %pcn. I will walk
+<ce> the rest of the way alone."
+
+
+QBN:
+Item _letter_ letter used 1015
+Item _gold_ gold
+Item _magicsword_ magic_item
+
+Person _giver_ group Questor anyInfo 1022 rumors 1022
+Person _teller_ face 1 group Innkeeper local
+Person _sister_ face 19 group Group_6.0 female local
+Person _lover_ face 117 group Group_6.0 male local anyInfo 1030 rumors 1030
+
+Place _givershouse_ local house2
+Place _sistershouse_ local house2
+Place _dungeon_ remote dungeon
+Place _inn_ local tavern
+
+Clock _S.00_ 30.00:00 0 flag 9 range 0 1
+
+
+--	Quest start-up:
+	place item _letter_ at _givershouse_ 
+	dialog link for location _givershouse_ person _teller_ 
+	dialog link for location _sistershouse_ person _lover_ item _letter_ 
+	dialog link for location _dungeon_ person _sister_ item _gold_ 
+	start timer _S.00_ 
+	log 1003 step 0 
+	clicked npc _giver_ say 1020 
+	place npc _teller_ at _inn_ 
+	place npc _lover_ at _dungeon_ 
+
+_S.00_ task:
+	end quest 
+
+_S.01_ task:
+	clicked npc _teller_ say 1017 
+	log 1010 step 1 
+
+variable _S.02_
+variable _S.03_
+_S.04_ task:
+	toting _letter_ and _giver_ clicked saying 1021 
+	reveal _dungeon_ 
+	log 1018 step 2 
+
+_S.05_ task:
+	give pc _magicsword_ 
+	drop _lover_ face 
+	end quest 
+
+_S.06_ task:
+	clicked npc _lover_ say 2000 
+	pc at _sistershouse_ set _S.05_ 
+	log 2001 step 3 
+	hide npc _lover_ 
+	add _lover_ face 
+
+_S.07_ task:
+	when _S.00_ and _S.06_ and not _S.05_ 
+	say 2005 
+	drop _lover_ face 

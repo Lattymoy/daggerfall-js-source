@@ -1,0 +1,106 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0B20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 20
+-- QuestId: 2
+Messages: 11
+Quest: O0B20Y02
+DisplayName: A Prized Item
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Quietly, now. My name is... call me
+<ce> _qgiver_. There is a guild job for you
+<ce> at the usual pay. Still listening?
+
+RefuseQuest:  [1001]
+<ce> Good thing I told you nothing. Now go.
+
+AcceptQuest:  [1002]
+<ce> Steal the _magicitem_ kept at _mansion_.
+<ce> That is in __mansion_. After
+<ce> =traveltime_ days the deal is off. Oh,
+<ce> and there are guards. I meant to say so.
+
+QuestComplete:  [1004]
+<ce> You have it? Good. The usual
+<ce> pay is _gold_ gold. Try not
+<ce> to drink it all tonight.
+
+RumorsDuringQuest:  [1005]
+Whoever owns _mansion_ collects odd magical
+things. Half of __mansion_ has seen them.
+
+RumorsPostfailure:  [1006]
+The _magicitem_ is gone from _mansion_.
+They moved it somewhere safer.
+
+RumorsPostsuccess:  [1007]
+Someone stole the _magicitem_
+from _mansion_. What a scandal.
+
+QuestorPostsuccess:  [1008]
+Did you think I had run off with
+the _magicitem_, %pcf? Not me.
+
+QuestorPostfailure:  [1009]
+<ce> The _magicitem_ has left _mansion_,
+<ce> %pcf. That means you failed. Go away.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A guild member hired me. The name
+ given was _qgiver_, though I doubt
+ %g told me the truth. I must steal
+ the _magicitem_ at _mansion_, in
+ __mansion_, and bring it to %g2 at
+ __qgiver_ in ___qgiver_ within
+ =traveltime_ days.
+
+
+QBN:
+Item _magicitem_ magic_item
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _mansion_ remote house1
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is 2 Spellsword
+Foe _F.01_ is Gargoyle
+Foe _F.02_ is Flesh_atronach
+Foe _F.03_ is Ghost
+
+--	Quest start-up:
+	place item _magicitem_ at _mansion_ 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pc at _mansion_ set _S.01_ 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_ 
+
+_questdone_ task:
+	toting _magicitem_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success 
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success 
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success 
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success

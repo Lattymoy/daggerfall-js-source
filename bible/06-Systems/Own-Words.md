@@ -98,13 +98,19 @@ The first set is the Fighters Guild's twenty quests in `QuestList-Classic.txt`: 
   `Internal_Strings.csv`, the `Quests-*.txt` tables and `dfu-books/books.txt` (titles). Names are proper nouns of the
   setting, and keeping or replacing them is the owner's separate decision. OWN-WORDS1 does not change them.
 - **What stays DFU's in an own file:** its `DisplayName`, its header comments and its QBN.
-- **The build** still bundles DFU's file of every quest, ours included, until `vendor/dfu-quests/Quests/` retires.
+- **The build** no longer needs DFU's quest files: every quest has an own file. DFU's stay in `vendor/` as the checker's
+  reference and the tests' fixture.
 
-## The next batches
+## OWN-WORDS2: every quest (2026-10-31, the owner: "finish this in bulk")
 
-Each batch writes about 25 quests by these rules. Three quests carry a port patch on DFU's own words
-(`questPatches.js`): `_BRISIEN` (two of its three), `A0C00Y10` and `C0B00Y02`. Their own file carries the patched words
-itself, and the patch keeps only its QBN half. The main quest is set in the Bay and says so with `-- BAY-OWN:`.
+Nine batches wrote the other 244 quests by these rules, the table below. Every one of DFU's 264 quests with messages
+now has an own file, and `tools/bethesdaWordsBaseline.json` holds 0 quests and 0 messages. Of the three port patches on
+DFU's words, `_BRISIEN`'s two and `A0C00Y10`'s live in the own files and are gone from `questPatches.js`.
+`C0B00Y02`'s journal entry stays a patch, now anchored on the `QBN:` line, so it applies to both files and keeps its
+translations. The main quest, `_TUTOR__`, `$CUREWER` and `K0C01Y10` say why they are set in the Bay with
+`-- BAY-OWN:`. The 40-word limit cut the long letters and books hard: each keeps its plot facts and clues. The
+questline patches' own messages were swept for six-word runs of DFU's and ARENA2's quest text too
+(`test/tooling/ownquestcheck.test.js`).
 
 | batch | family | quests |
 |---|---|---|

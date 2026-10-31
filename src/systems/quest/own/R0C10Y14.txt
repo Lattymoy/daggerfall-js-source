@@ -1,0 +1,108 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y14.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 14
+Messages: 11
+Quest: R0C10Y14
+DisplayName: Forgotten Equipment
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Are you free for a small task?
+<ce> It will take hardly any time and
+<ce> leave you _reward_ gold richer.
+
+RefuseQuest:  [1001]
+<ce> Then never mind.
+
+AcceptQuest:  [1002]
+<ce> %oth, good. A dim friend of mine left
+<ce> without %g3 _item_. Rush it to
+<ce> _contact_, a =contact_ at __contact_ in
+<ce> ___contact_. %G pays _reward_ gold when
+<ce> you give %g2 the _item_. In =queston_
+<ce> days %g leaves, with it or without.
+
+QuestFail:  [1003]
+<ce> You have the _item_ and you know where
+<ce> it goes. What else is there to say?
+
+QuestComplete:  [1004]
+<ce> From _questgiver_? %oth, my _item_,
+<ce> and not before time! I nearly left
+<ce> without it. I have to pay for my
+<ce> own _item_? Fine, if that is what
+<ce> _questgiver_ says. Now I must go.
+
+RumorsDuringQuest:  [1005]
+That =contact_ in __contact_ looks desperate
+for a _item_. I would sell one, if I had it.
+<--->
+Some sulking =contact_ has haunted __contact_ all week.
+
+RumorsPostfailure:  [1006]
+Poor _contact_ waited for a delivery that
+never came, and %g left without %g3 things.
+<--->
+What was _contact_ waiting for, anyway? A miracle?
+
+RumorsPostsuccess:  [1007]
+_contact_ left __contact_ in fine spirits.
+%G must have got what was needed.
+<--->
+_questgiver_ keeps praising a %ra hireling %g found.
+
+QuestorPostsuccess:  [1008]
+My dear friend, how kind of you to call. How are things?
+<--->
+I hear your errand went well. You have my thanks.
+
+QuestorPostfailure:  [1009]
+<ce> You never reached my contact, and
+<ce> still you come back to me. Strange.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ sent me to
+ ___contact_ with a _item_ for
+ _contact_. _contact_ is a
+ =contact_ waiting at __contact_
+ and leaves in =queston_ days,
+ with the _item_ or without it.
+ I must hurry.
+
+
+QBN:
+Item _reward_ gold
+Item _item_ magic_item
+
+Person _questgiver_ group Questor
+Person _contact_ group Local_3.0 remote
+--removed "female" parameter. UESP says it could be either.
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 4
+
+
+--	Quest start-up:
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _item_ 
+	create npc _contact_ 
+
+_pcgetsgold_ task:
+	toting _item_ and _contact_ clicked 
+	give pc _reward_ 
+	end quest 
+
+variable _pchasitem_
+_queston_ task:
+	make _item_ permanent 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+variable _npcclicked_

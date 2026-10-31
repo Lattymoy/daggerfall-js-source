@@ -1,0 +1,162 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 0
+Messages: 22
+Quest: R0C10Y00
+DisplayName: Jewel Smuggling
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I need someone reliable for a quiet
+<ce> errand. It will take some days, and I pay
+<ce> well for discretion. Are you interested?
+
+RefuseQuest:  [1001]
+<ce> A pity. I had hoped you
+<ce> would have the time.
+
+AcceptQuest:  [1002]
+<ce> Good. This emerald goes to _npc1_, a friend
+<ce> of mine in ___npc1_. %G will wait for you in
+<ce> __npc1_. It must be there within =1stparton_
+<ce> days, and _npc1_ will tell you the rest. Be
+<ce> discreet, %pcf. You will be watched.
+
+QuestFail:  [1003]
+<ce> We have nothing more to say
+<ce> to each other at present.
+<--->
+<ce> Have we met?
+
+QuestComplete:  [1004]
+<ce> There you are, %pcf, and the _item2_ with you.
+<ce> Good. Here is _reward_ gold for the trip, and for a
+<ce> closed mouth. People in my trade will remember you.
+
+RumorsDuringQuest:  [1005]
+<ce> They say _questgiver_ has gone back to smuggling.
+<--->
+<ce> The smugglers are busier than ever this season.
+
+RumorsPostfailure:  [1006]
+<ce> _questgiver_ is furious with some %ra courier, I hear.
+
+RumorsPostsuccess:  [1007]
+<ce> Somebody runs _item2_ through this
+<ce> town, and nobody can say who.
+
+QuestorPostsuccess:  [1008]
+<ce> My discreet courier. How can I help?
+<--->
+<ce> Welcome back. I have nothing to send just now.
+
+QuestorPostfailure:  [1009]
+<ce> If you came to apologize for
+<ce> that errand, you are too late.
+<--->
+<ce> You are the %ra who lost my
+<ce> delivery. Leave my sight.
+
+QuestLogEntry:  [1010]
+<ce> So you found me. The last courier
+<ce> _questgiver_ sent got lost, and we had
+<ce> to hunt for the fool. Take this _item2_
+<ce> to _npc2_, a =npc2_ in ___npc2_, within
+<ce> =2ndparton_ days. Safe roads, %pcf.
+
+Message:  1011
+%qdt:
+ _questgiver_ of __questgiver_ in ___questgiver_
+ wants an emerald carried to _npc1_ at __npc1_
+ in ___npc1_. I have =1stparton_ days. _npc1_
+ will tell me what comes next.
+
+Message:  1012
+%qdt:
+ _npc1_ gave me a _item2_ for
+ _npc2_, a =npc2_ at __npc2_ in
+ ___npc2_. If I reach %g2 within
+ =2ndparton_ days, I get my reward.
+
+Message:  1020
+<ce> The Thieves Guild hears you carry
+<ce> a fine gemstone. Give it to me
+<ce> and walk away whole. Agreed?
+
+Message:  1021
+<ce> Easier than robbing a beggar.
+<ce> Now run along, courier.
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ emerald
+Item _item2_ drug
+
+Person _questgiver_ face 136 group Questor
+Person _npc1_ group Local_3.0 remote
+Person _npc2_ face 248 group Shopkeeper remote
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+Foe _thief_ is Thief
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1011 step 0 
+	get item _item1_ 
+	create npc _npc1_ 
+
+variable _pcgetsgold_
+variable _pchasitem1_
+variable _pchasitem2_
+_S.03_ task:
+	toting _item1_ and _npc1_ clicked 
+	start timer _2ndparton_ 
+	log 1012 step 1 
+	get item _item2_ 
+	say 1010 
+	create npc _npc2_ 
+
+until _S.03_ performed:
+	create foe _thief_ every 10 minutes 5 times with 50% success 
+
+_S.04_ task:
+	toting _item2_ and _npc2_ clicked 
+	give pc _reward_ 
+	end quest 
+--removed unnecessary delay
+
+_queston_ task:
+	when _1stparton_ and not _S.03_ 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+variable _1stparton_
+_2ndparton_ task:
+	change repute with _questgiver_ by -20 
+	end quest 
+
+_S.08_ task:
+	injured _thief_ 
+	prompt 1020 yes _yes_ no _no_ 
+
+_yes_ task:
+	have _item1_ set _S.11_ 
+
+variable _no_
+_S.11_ task:
+	give item _item1_ to _thief_ 
+	say 1021 
+	restrain foe _thief_ 
+
+_S.13_ task:
+	when _queston_ or _2ndparton_ 
+	make _item2_ permanent 
+	make _item1_ permanent 

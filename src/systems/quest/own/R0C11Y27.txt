@@ -1,0 +1,136 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C11Y27.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 27
+Messages: 13
+Quest: R0C11Y27
+DisplayName: A Special Substance
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Might you do me a small favor? A friend
+<ce> of mine needs a certain substance,
+<ce> delivered on time and with no questions.
+<ce> Would _reward_ gold make you available?
+
+RefuseQuest:  [1001]
+<ce> I am disappointed. I expected more
+<ce> spirit. These are lazy times, I suppose.
+
+AcceptQuest:  [1002]
+<ce> Grand. Here is a _item1_ for an
+<ce> alchemist I know, _npc1_. Look for
+<ce> %g2 at __npc1_, in ___npc1_. %G
+<ce> should then give you something for my
+<ce> friend _npc2_. _npc1_ says %g needs
+<ce> the _item1_ within =1stparton_ days.
+
+QuestFail:  [1003]
+<ce> We can talk at length
+<ce> once the job is done.
+
+QuestComplete:  [1004]
+<ce> %oth, at last. You are %pcf? I am _npc2_,
+<ce> and that must be my _item2_. Try it some
+<ce> time. It is heavenly. Here is your
+<ce> _reward_ gold. I owe you my life, %pcf.
+
+RumorsDuringQuest:  [1005]
+Folk say _npc2_ cannot live without
+_item2_, but nobody has proof.
+<--->
+Brewing good _item2_ takes years of study, they say.
+
+RumorsPostfailure:  [1006]
+So _npc2_ did crave _item2_ after all.
+The guards caught %g2 buying some.
+<--->
+Who sold _npc1_ the ingredients %g needed, I wonder?
+
+RumorsPostsuccess:  [1007]
+_npc2_ finally got the shipment %g was
+waiting for, and is in fine spirits.
+<--->
+_questgiver_ is very pleased with some
+%ra hireling, and will not say why.
+
+QuestorPostsuccess:  [1008]
+That was a fine delivery, my friend. How can I help?
+<--->
+%oth, %pcf! You handled that little matter very well.
+
+QuestorPostfailure:  [1009]
+<ce> You failed the last task I gave
+<ce> you. I see no reason to talk now.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I am taking a _item1_ to _npc1_ of
+ __npc1_ in ___npc1_, in trade for
+ something _questgiver_ wants sent on
+ to someone else. This first part must
+ be done within =1stparton_ days.
+
+Message:  1011
+%qdt:
+ _npc1_ gave me some _item2_ for
+ the third party, _npc2_ of
+ ___npc2_. I will know %g2 as the
+ =npc2_ at __npc2_. I must get
+ there within =2ndparton_ days.
+
+Message:  1012
+<ce> Thank you, %pcf. This _item2_ is
+<ce> for _npc2_ at __npc2_ in ___npc2_.
+<ce> No dawdling, %pct. _npc2_ must
+<ce> have it within =2ndparton_ days.
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ misc
+Item _item2_ drug
+
+Person _questgiver_ face 136 group Questor
+Person _npc1_ group Chemist female
+Person _npc2_ face 248 group Local_3.0
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1010 step 0 
+	get item _item1_ 
+
+_pcgetsgold_ task:
+	toting _item2_ and _npc2_ clicked 
+	give pc _reward_ 
+	end quest 
+--removed unnecessary delay
+
+variable _pchasitem1_
+variable _pchasitem2_
+_S.03_ task:
+	toting _item1_ and _npc1_ clicked 
+	start timer _2ndparton_ 
+	log 1011 step 1 
+	get item _item2_ 
+	say 1012 
+
+variable _S.04_
+_queston_ task:
+	when _1stparton_ and not _S.03_ 
+	make _item1_ permanent 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+variable _1stparton_
+_2ndparton_ task:
+	make _item2_ permanent 
+	change repute with _questgiver_ by -2 
+	end quest 

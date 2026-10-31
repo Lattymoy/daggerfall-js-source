@@ -1,0 +1,54 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: a demo of the main quest's opening words (Lady Brisienna, King Lysandus), which are set in the Iliac Bay.
+- This quest is for testing early text macro support
+
+Quest: __DEMO04
+
+
+QRC:
+
+Message: 1010
+<ce> A red-faced courier runs up shouting,
+<ce> "%pcn! Are you %pcn? Good, take it. I
+<ce> have ten more of these before supper."
+
+Message: 1020
+<ce> Thank you for coming, %pcf. I am
+<ce> Lady Brisienna. King Lysandus' ghost
+<ce> walks Daggerfall by night, saying
+<ce> only "Vengeance". Do not walk there
+<ce> after dark. His ghosts attack.
+
+Message: 1030
+%qdt:
+ Lady Brisienna met me in a room at the
+ tavern. The Iliac Bay has three great powers,
+ she says: Daggerfall, Wayrest and Sentinel.
+ To learn why Lysandus' ghost walks, I should
+ begin with their royal families.
+
+Message: 1040
+Lady Brisienna has a room at _dirtypit_ in __dirtypit_.
+
+Message: 1050
+<ce> A word of advice, %ra. Anyone serious
+<ce> about magic joins the Mages Guild.
+
+Message: 1060
+<ce> Here is a tip. Keep your gold in the
+<ce> bank of %reg and carry letters of credit
+<ce> instead. They weigh next to nothing.
+
+Message: 1070
+<ce> This tutorial goes on in a big city. Daggerfall
+<ce> would do. The lessons start again in =2dagger_
+<ce> days, which is time enough to get there.
+
+
+QBN:
+
+Clock _2dagger_ 6.22:40 0 flag 1 range 0 1
+Place _dirtypit_ remote tavern
+
+- Entry point
+say 1040

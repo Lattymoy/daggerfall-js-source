@@ -1,0 +1,400 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C11Y28.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 11
+-- QuestId: 28
+Messages: 51
+Quest: R0C11Y28
+DisplayName: The Mad Slayer
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A killer, the ___bookstore_ Slayer,
+<ce> stalks the streets. Man or beast?
+<ce> Nobody knows. My sage _contact_ studies
+<ce> the bodies, but %g has had threats and
+<ce> fears for %g3 life. Will you end the
+<ce> Slayer for _reward_ gold, %pcf?
+
+RefuseQuest:  [1001]
+<ce> Many say the same. Then I must turn to
+<ce> people I would rather not deal with.
+
+AcceptQuest:  [1002]
+<ce> %god be thanked. %reg grows
+<ce> restless, and I fear a mob within
+<ce> =total_ days. _contact_ works from
+<ce> _bookstore_, and I told %g2 to
+<ce> expect you. Take care, %pcf. No one
+<ce> in ___bookstore_ is safe after dark.
+
+QuestFail:  [1003]
+<ce> The ___bookstore_ Slayer still walks
+<ce> free. Neither of us has time for talk.
+
+QuestComplete:  [1004]
+<ce> %reg can breathe again, %pcf, and I thank you.
+<ce> The _reward_ gold is yours, gladly paid for
+<ce> that maniac's end and for your discretion.
+<ce> %god was kind to send you to %reg.
+
+RumorsDuringQuest:  [1005]
+After dark, ___bookstore_ belongs
+to the ___bookstore_ Slayer.
+<--->
+My aunt swears the Slayer is a daedra,
+come to pay us back for our sins.
+<--->
+The ___bookstore_ Slayer's latest victim
+was spread across half of ___bookstore_.
+<--->
+Is the Slayer a vampire, or a werewolf? People cannot agree.
+
+RumorsPostfailure:  [1006]
+The killings stopped, and no mob was
+needed. The Slayer must have gone.
+<--->
+_qgiver_ is lucky the Slayer left
+___bookstore_ before the panic spread.
+<--->
+_qgiver_ still frets. You would think
+the Slayer's going would calm %g2.
+<--->
+The ___bookstore_ Slayer left as
+suddenly as the killing began.
+<--->
+Some think the Slayer only sleeps,
+and will wake when the stars turn.
+
+RumorsPostsuccess:  [1007]
+Even with the Slayer dead, I will not
+walk ___bookstore_ alone at night.
+<--->
+The ___bookstore_ Slayer was a poor
+madman after all. Nothing grand about it.
+<--->
+Now they say the ___bookstore_ Slayer was no
+vampire at all, only a madman who wished to be one.
+
+QuestorPostsuccess:  [1008]
+I have not forgotten your discretion in the
+matter of the ___bookstore_ Slayer, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> You failed me over the ___bookstore_
+<ce> Slayer, %pcf. I have no reason to
+<ce> think you would not fail me again.
+
+QuestLogEntry:  [1010]
+<ce> Welcome, %pcf, my dear %ra. The threats
+<ce> keep me shut indoors, but an old
+<ce> colleague, _vamp_, may help me. Take these
+<ce> notes to the =vamp_ at _hookerhouse_. If I
+<ce> die, you and _vamp_ carry on.
+
+Message:  1011
+_contact_,
+ 
+Leave the victims of the %reg Slayer alone, or
+lose your life. You walk blind into a fire.
+ 
+Go on, and you will die before you finish.
+ 
+<ce> A Well-Wisher
+
+Message:  1012
+_contact_,
+ 
+Bar every door and darken every window
+of _bookstore_. We will still know you
+cut up the dead. Do not make us show
+our power. We will show it once.
+ 
+<ce> A Well-Wisher
+
+Message:  1013
+_contact_,
+ 
+Your studies of the Slayer's victims
+fascinate me, and I have done such
+work myself. Shall we meet? I lodge
+at _hookerhouse_, but _bookstore_
+would let me see the bodies.
+ 
+<ce> With admiration,
+ 
+<ce> _vamp_
+
+Message:  1014
+Report on %fn:
+ 
+Throat torn out. Death at once, no
+struggle. Did the victim know the killer?
+Ask _qgiver_ for the guards who found her.
+ 
+Report on %mn:
+ 
+Same wounds. Bruised arms, gripped
+by great strength. Check his past.
+
+Message:  1015
+<ce> This is all _contact_ found? %god,
+<ce> %g is weeks from the truth. For
+<ce> _qgiver_'s sake, carry this flower
+<ce> to _widow_ at _widowhouse_. %mn,
+<ce> %g3 brother, was a victim. This
+<ce> leads to the ___bookstore_ Slayer
+<ce> faster than _contact_ could, %pcf.
+
+Message:  1016
+_vamp_? The =vamp_ I met at _hookerhouse_.
+Pleasant enough, yet unsettling.
+<--->
+_vamp_ is the =vamp_ lodging at _hookerhouse_.
+
+Message:  1017
+_vamp_ belongs to the %vcn. They want the
+mad Slayer of ___bookstore_ put down.
+<--->
+_vamp_ is of the %vcn bloodline, here
+because the Slayer endangers %g3 kind.
+
+Message:  1018
+Poor _widow_ has hidden in _widowhouse_
+since the Slayer killed %g3 brother.
+<--->
+_widow_ lost a brother to the %reg Slayer,
+and %g never leaves _widowhouse_ now.
+
+Message:  1019
+<ce> A red poppy? Then you are
+<ce> _rippername_, my brother's friend,
+<ce> who asked me to visit _ripperhouse_.
+<ce>
+<ce> You are not _rippername_? Forgive
+<ce> me. I know nothing useful. But you
+<ce> will find my brother's killer?
+
+Message:  1020
+%qdat:
+ I am hunting the ___bookstore_ Slayer.
+ The %rt wants the killer caught within
+ =total_ days, before the murders start a
+ riot. _qgiver_'s scientist, _contact_,
+ studies the bodies and now gets death
+ threats. %G works at _bookstore_.
+
+Message:  1021
+%qdat:
+ _contact_ wants me at _hookerhouse_
+ to meet an old colleague, _vamp_,
+ who may help with the research.
+
+Message:  1022
+%qdat:
+ I reached _bookstore_ too late. The threats
+ against _contact_ were real. Among the letters
+ was one from a colleague who wanted to meet
+ _contact_: _vamp_, staying at _hookerhouse_.
+
+Message:  1023
+%qdat:
+ I met _vamp_, who scorns %g3
+ colleague's work. It seems
+ _contact_ learned nothing from the
+ %reg Slayer's victims. _vamp_ told
+ me to take a red poppy to _widow_,
+ whose brother the Slayer killed. I
+ will know more at _widowhouse_.
+
+Message:  1024
+%qdat:
+ _contact_'s colleague and killer are
+ the same: _vamp_, a vampire. %G
+ claims the %reg Slayer is another,
+ _rippername_ of _ripperhouse_. If I
+ kill that one, _vamp_ promises a
+ reward on top of what _qgiver_ pays.
+
+Message:  1025
+%qdat:
+ _vamp_ sent me to _widow_, a =widow_,
+ who took me for someone called
+ _rippername_. This _rippername_ sent
+ red poppies and asked _widow_ to
+ visit _ripperhouse_. I think the
+ Slayer has set a trap for %g2.
+
+Message:  1026
+<ce> I wrote the letters, %pcn. _contact_ would not
+<ce> stop, so I lured %g2 to _bookstore_ as %g3
+<ce> friend, and %g died. The Slayer is _rippername_,
+<ce> gone mad. %G lives at _ripperhouse_. Kill %g2
+<ce> for a reward. Follow _contact_ and die.
+
+Message:  1027
+You want _contact_? Try _bookstore_,
+%di of here. Clever, that one.
+<--->
+_contact_ is the =contact_ who keeps to _bookstore_.
+
+Message:  1028
+_contact_ cuts up the Slayer's
+victims, and somebody hates it.
+<--->
+_contact_ studies at _bookstore_
+and has been getting threats.
+
+Message:  1029
+<ce> The Mad Slayer is dead.
+
+Message:  1050
+<ce> With _rippername_ dead, you have served
+<ce> %reg and me. Take this _reward2_. You
+<ce> interest me, %pcn. Perhaps we will meet
+<ce> again. Walk safely in the dark.
+
+
+QBN:
+Item _I.00_ letter used 1011
+Item _I.01_ letter used 1012
+Item letter31 letter used 1013
+Item _I.03_ letter used 1014
+-Item _I.04_ dead_body
+Item _reward_ gold
+Item _reward2_ trinket
+-Item _I.08_ item class 26 subclass 3
+Item _I.09_ item class 15 subclass 13
+
+Person _qgiver_ group Questor
+Person _contact_ face 1 group Librarian local anyInfo 1027 rumors 1028
+Person _vamp_ face 1 factiontype Vampire_Clan local anyInfo 1016 rumors 1017
+Person _widow_ face 82 group Resident2 female local anyInfo 1018
+Person _rippername_ face 5 group Group_6.0 male local
+
+Place _bookstore_ local house2
+Place _hookerhouse_ local tavern
+Place _ripperhouse_ local house1
+Place _widowhouse_ local temple
+
+Clock _1stparton_ 00:30 03:00
+Clock _2ndparton_ 00:30 06:00
+Clock _total_ 3.00:00 0 flag 1 range 0 1
+
+Foe _murder_ is Vampire
+
+--	Quest start-up:
+-	place item _I.08_ at _bookstore_ 
+	dialog link for location _ripperhouse_ person _rippername_ 
+	dialog link for person _widow_ 
+	dialog link for person _vamp_ 
+	start timer _total_ 
+	start timer _1stparton_ 
+	log 1020 step 0 
+	place npc _contact_ at _bookstore_ 
+	place npc _vamp_ at _hookerhouse_ 
+	place npc _widow_ at _widowhouse_ 
+-	have _I.04_ set _deadbody_
+--removing everything related to the dead body. It's out of place for
+--the quest, has no relevance and no function. Also had a sprite change
+--since last checked? In any case, not useful.
+
+_S.00_ task:
+	killed 1 _murder_ 
+	say 1029
+
+_1stparton_ task:
+	start timer _2ndparton_ 
+
+variable _2ndparton_
+_S.03_ task:
+	when _2ndparton_ and not _S.13_ 
+	letter31 used do _S.11_ 
+	place item _I.01_ at _bookstore_ 
+	place item _I.00_ at _bookstore_ 
+	place item letter31 at _bookstore_ 
+-	place item _I.04_ at _bookstore_ 
+	hide npc _contact_ 
+
+_vampclicked_ task:
+	clicked npc _vamp_ 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_qgclearclick_ task:
+	when not _S.00_ and _qgclicked_ 
+	clear _qgclicked_ _qgclearclick_
+
+_pcgetsgold_ task:
+	when _S.00_ and _qgclicked_ 
+	give pc _reward_ 
+	unset _qgclicked_ 
+	end quest 
+
+-_deadbody_ task:
+-	take _I.04_ from pc
+--added deadbody task. otherwise body would clog inventory
+
+_S.07_ task:
+	when _S.17_ and not _S.00_ 
+	place foe _murder_ at _ripperhouse_ 
+
+_S.08_ task:
+	when _vampclicked_ and _S.11_ 
+	add dialog for location _ripperhouse_ 
+	log 1024 step 4 
+	say 1026 
+
+_S.09_ task:
+	when _hasletter_ and _vampclicked_
+	add dialog for person _widow_ 
+	log 1023 step 3 
+	get item _I.09_ 
+	say 1015 
+
+variable _hasletter_
+_S.10_ task:
+	clicked npc _contact_ 
+	add dialog for person _vamp_ 
+	log 1021 step 1 
+	get item _I.03_
+	setvar _hasletter_
+	say 1010
+
+_vampclearclick_ task:
+	when _vampclicked_ and not _S.00_
+	clear _vampclicked_ _vampclearclick_
+
+_S.11_ task:
+	add dialog for person _vamp_ 
+	log 1022 step 2 
+
+variable _S.12_
+_S.13_ task:
+	daily from 06:00 to 18:00 
+
+_S.14_ task:
+	when not _S.13_ and not _S.00_ 
+	create foe _murder_ every 15 minutes 1 times with 15% success 
+
+_S.15_ task:
+	toting _I.09_ and _widow_ clicked 
+	add dialog for location _ripperhouse_ 
+	log 1025 step 5 
+	say 1019 
+
+_S.16_ task:
+	when _vampclicked_ and _S.00_ 
+	get item _reward2_ saying 1050 
+	make _reward2_ permanent 
+	unset _vampclicked_ 
+
+_S.17_ task:
+	when _S.15_ or _S.08_ 
+
+_total_ task:
+	end quest 

@@ -1,0 +1,156 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0B10Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: knight
+-- Repute: 10
+-- QuestId: 4
+Messages: 18
+Quest: B0B10Y04
+DisplayName: The Crazed Mercenary
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Welcome, %pcn. I am _qgiver_. Word
+<ce> has come to the order of a mad orc
+<ce> sellsword who must be stopped.
+<ce> Will you take this quest?
+
+RefuseQuest:  [1001]
+<ce> There is no shame in knowing
+<ce> your limits, %pcf. Come back
+<ce> when your nerve is stronger.
+
+AcceptQuest:  [1002]
+<ce> Good. Down in ___mondung_, a cursed pit, an
+<ce> _soldier_ by the name of =soldier_ plots
+<ce> with renegade mages to ruin %reg. Maybe the
+<ce> %t once wronged the orc. Stop this, %pcf.
+<ce> In =2mondung_ days we knights go ourselves.
+
+QuestFail:  [1003]
+<ce> Why are you here and not
+<ce> in ___mondung_, %pcf?
+
+QuestComplete:  [1004]
+<ce> Good work, %pcf. The orcs are leaving
+<ce> ___mondung_, so you must have
+<ce> succeeded. The order is proud of you.
+
+RumorsDuringQuest:  [1005]
+Nobody goes near ___mondung_. That
+is why the orcs gather there.
+<--->
+The orcs and those renegade mages mean %reg some great harm.
+
+RumorsPostfailure:  [1006]
+The mages have cursed the land. Expect war,
+or plague, or famine. Maybe all three.
+<--->
+Orc and mage stood together, and nobody could stop them.
+
+RumorsPostsuccess:  [1007]
+The orcs left ___mondung_ all at once.
+People say their chief fell sick, or died.
+<--->
+%reg owes its safety to one brave %ra sellsword.
+
+QuestorPostsuccess:  [1008]
+Hello, %pct. How is the orc-slayer today?
+
+QuestorPostfailure:  [1009]
+A shame about those orcs and
+their mages. These things happen.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_ in ___qgiver_, _qgiver_
+ asked me to stop an _soldier_ who
+ wants to ruin %reg. The orc and its
+ troops hold ___mondung_. The task
+ must be done, and I must be back at
+ __qgiver_, within =2mondung_ days.
+
+Message:  1013
+<ce> A grubby little boy hands you a smudged
+<ce> note. He is no courier by trade, but he
+<ce> runs off faster than most.
+
+Message:  1014
+<ce> The _soldier_ is dead.
+
+Message:  1015
+<ce> That hair. So she is still alive. I
+<ce> must tell Skullsplitter his love
+<ce> never left %reg. Thank you, %pcf.
+<ce> Had my master laid %reg waste, he
+<ce> might have killed the one woman he
+<ce> values above any revenge on the %t.
+
+Message:  1017
+<ce> They say you is a godsend, %pct. %god
+<ce> keep you. I got nothing to give but this.
+<ce> A lady gave it me. It was too pretty to
+<ce> sell, even hungry. Take it, please.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon1
+Place tavern local tavern
+
+Clock _2mondung_ 00:00 0 flag 17 range 0 2
+Clock _2letter_ 00:50 2.18:40
+
+Foe _soldier_ is Orc_warlord
+Foe _note_ is 2 Orc
+Foe _F.02_ is Orc_sergeant
+Foe _hunter_ is Orc_shaman
+
+--	Quest start-up:
+	start timer _2mondung_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+
+_2mondung_ task:
+	end quest 
+
+variable _2letter_
+_S.02_ task:
+	when _qgclicked_ and _questdone_ 
+	give pc nothing 
+	change repute with _qgiver_ by +10 
+	end quest 
+
+variable _S.03_
+variable _S.04_
+until _S.04_ performed:
+	pc at _mondung_ set _S.07_ 
+
+_S.05_ task:
+	killed 1 _soldier_ 
+	say 1014 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_S.07_ task:
+	create foe _note_ every 100 minutes 100 times with 12% success 
+	create foe _F.02_ every 107 minutes 50 times with 10% success 
+	create foe _hunter_ every 113 minutes 20 times with 8% success 
+	place foe _soldier_ at _mondung_ 
+
+_questdone_ task:
+	when _S.05_ or _S.04_ 
+
+_S.09_ task:
+	when _2mondung_ and not _questdone_ 
+
+variable _S.10_
+_clearclick_ task:
+	when _qgclicked_ and not _questdone_
+	say 1003 
+	clear _qgclicked_ _clearclick_

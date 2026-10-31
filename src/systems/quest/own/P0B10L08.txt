@@ -1,0 +1,203 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0B10L08.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 10
+-- QuestId: 8
+Messages: 22
+Quest: P0B10L08
+DisplayName: A Test of Determination
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Quest text 1000 should
+never be shown.
+
+RefuseQuest:  [1001]
+Quest text 1001 should
+never be shown.
+
+AcceptQuest:  [1002]
+Quest text 1002 should
+never be shown.
+
+QuestFail:  [1003]
+Quest text 1003 should
+never be shown.
+
+QuestComplete:  [1004]
+<ce> You have honored %vam tonight, %pcf.
+<ce> ==daedra_ now respects us, and you, as
+<ce> no other tribe ever earned. Your
+<ce> bloodfather sends this _gem_. It marks
+<ce> your place in %vam for all time.
+
+RumorsDuringQuest:  [1005]
+Odd things are happening in
+___mondung_. Odder than usual, I mean.
+
+RumorsPostfailure:  [1006]
+___mondung_ has gone quiet. The Daedra
+stars still burn at night, though.
+
+RumorsPostsuccess:  [1007]
+___mondung_ is quiet now. Even the
+Daedra stars burned lower last night.
+
+QuestorPostsuccess:  [1008]
+Quest text 1008 should
+never be shown.
+
+QuestorPostfailure:  [1009]
+Quest text 1009 should
+never be shown.
+
+QuestLogEntry:  [1010]
+                     __vamp_
+                      ___vamp_
+ 
+ %pcn,
+ 
+      %vam require you.
+ Come without delay.
+ 
+                    Ever patient,
+ 
+                    _vamp_
+
+Message:  1011
+<ce> Ah, %pcf. Your bloodfather found this
+<ce> note pinned by a knife in his
+<ce> sanctuary. Someone strong is testing
+<ce> %vam. Go to ___mondung_, find this
+<ce> _daedra_, and teach %g2 respect. Return
+<ce> within =queston_ days. Do not fail us.
+
+Message:  1012
+%qdt:
+ In ___vamp_, _vamp_ gave me a
+ letter from a _daedra_ of
+ ___mondung_ that insults %vam. I
+ must go there and make the _daedra_
+ take back %g3 words, then return to
+ __vamp_ within =queston_ days.
+
+Message:  1013
+Blood Sponge,
+ 
+ My coven says your blood-snorting rabble
+ rules %reg by terror, so my children
+ feared %vam. They are punished. Answer me,
+ if %vam have any power. This is _daedra_,
+ who leads The Coven of ==daedra_.
+  I wait in ___mondung_.
+
+Message:  1014
+%qdt:
+ _vamp_ of %vam has written.
+ I am wanted at once at
+ __vamp_ in ___vamp_.
+
+Message:  1015
+<ce> Welcome to ___mondung_, %pcn. Have you
+<ce> come for %vam to grant that %reg now
+<ce> belongs to The Coven of ==daedra_?
+
+Message:  1016
+<ce> A coward, as I expected, though I hoped
+<ce> for more. Run home to _vamp_, child.
+
+Message:  1017
+<ce> Undead worm, you defy ==daedra_ to
+<ce> my face? =daedroth_ will grind your
+<ce> bones to powder! Show me one of
+<ce> %vam who fights as well as boasts!
+
+Message:  1018
+<ce> The voice of ==daedra_ fills your head.
+<ce> %vam have earned my respect. Go and
+<ce> tell _vamp_ %reg belongs to you. You
+<ce> interest me, %pcn. We will meet again.
+
+Message:  1019
+<ce> You have failed %vam, %pcf. When
+<ce> The Coven of ==daedra_ threw
+<ce> down its challenge, you shamed
+<ce> us all. A night of disgrace.
+
+Message:  1021
+<ce> A wild-eyed, deathly pale boy gives you
+<ce> a letter and vanishes into the dark.
+
+
+QBN:
+Item _letter_ letter used 1010
+Item _letter2_ letter used 1013
+Item _gem_ gem
+
+Person _vamp_ factiontype Vampire_Clan local
+Person _daedra_ face 1 factiontype Daedra remote
+
+Place _mondung_ remote dungeon7
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _daedroth_ is Daedroth
+
+--	Quest start-up:
+	dialog link for person _vamp_ 
+	start timer _queston_ 
+	_letter_ used do _readletter_ 
+	give pc _letter_ notify 1021 
+
+_queston_ task:
+	end quest 
+
+_vampclicked_ task:
+	clicked npc _vamp_ 
+	reveal _mondung_ 
+	log 1012 step 1 
+	get item _letter2_ 
+	say 1011 
+	place npc _daedra_ at _mondung_ 
+
+_failure_ task:
+	say 1016 
+	change repute with _vamp_ by -5 
+	change repute with _daedra_ by -10 
+	destroy _daedra_ 
+
+_success_ task:
+	killed 1 _daedroth_ 
+	say 1018 
+	change repute with _daedra_ by +10 
+
+_nononono_ task:
+	when _vampclicked_ and not _failure_ and not _success_ 
+	clear _vampclicked_ 
+
+_daedclicked_ task:
+	clicked npc _daedra_ 
+	prompt 1015 yes _failure_ no _challenge_ 
+
+_challenge_ task:
+	create foe _daedroth_ every 1 minutes 1 times with 100% success 
+	hide npc _daedra_ 
+	say 1017 
+
+_badpcn_ task:
+	when _vampclicked_ and _failure_ 
+	say 1019 
+	end quest 
+
+_reward_ task:
+	when _vampclicked_ and _success_ 
+	give pc _gem_ 
+	make _gem_ permanent 
+	end quest 
+
+_readletter_ task:
+	add dialog for person _vamp_ 
+	log 1014 step 0

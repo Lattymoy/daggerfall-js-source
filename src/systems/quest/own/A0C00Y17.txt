@@ -1,0 +1,236 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C00Y17.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 17
+Messages: 51
+Quest: A0C00Y17
+DisplayName: The Escort
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I am _questgiver_, and I need someone to
+<ce> guard me on the road to __destination_.
+<ce> It is less than =traveltime_ days away.
+<ce> Will you protect me?
+<--->
+<ce> I am _questgiver_, and I must leave
+<ce> ___questgiver_ at once. Will you guard
+<ce> me on the road to __destination_? I
+<ce> can pay _gold_ gold.
+<--->
+<ce> You must help me! I am _questgiver_.
+<ce> In =traveltime_ days I must be in
+<ce> __destination_, and I cannot go
+<ce> alone. Will you escort me?
+
+RefuseQuest:  [1001]
+<ce> Then I must find someone else
+<ce> to keep me safe on the road.
+<--->
+<ce> Heartless brute!
+
+AcceptQuest:  [1002]
+<ce> Bless you, %pcn. My bags are few, so I
+<ce> can leave now. I know you do not work for
+<ce> nothing. Once we reach _destination_ in
+<ce> __destination_, the _gold_ gold is yours.
+
+QuestComplete:  [1004]
+<ce> Ah, _destination_ at last!
+<ce> You did all you promised.
+<ce> The gold I owe you is here.
+
+RumorsDuringQuest:  [1005]
+<ce> The guards are after _questgiver_,
+<ce> I hear. %G had to run for it.
+<--->
+<ce> Have you not heard? The Thieves Guild
+<ce> wants _questgiver_ dead. Or the Dark
+<ce> Brotherhood, maybe. I forget which.
+<--->
+<ce> They say _questgiver_ has to marry.
+<ce> %G must reach __destination_ before
+<ce> the baby starts to show.
+
+RumorsPostfailure:  [1006]
+<ce> They caught _questgiver_.
+<ce> %G goes on trial next week.
+
+RumorsPostsuccess:  [1007]
+<ce> Did you hear? Some %ra slipped
+<ce> _questgiver_ past the gates
+<ce> just in time. Otherwise the
+<ce> headsman would have had %g2.
+
+QuestorPostsuccess:  [1008]
+<ce> I would be dead if I had stayed in
+<ce> that town, %pcf. Thank you. I have
+<ce> told several friends about you.
+
+QuestorPostfailure:  [1009]
+<ce> You! You would not help me out
+<ce> of town, and now the Thieves
+<ce> Guild has my shop. Go away.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ of ___questgiver_ hired me
+ as an escort. I am to see %g2 safely to
+ _destination_ in __destination_. %G has
+ only =traveltime_ days to get there.
+
+Message:  1019
+<ce> _questgiver_ says, "Ha! Did I pay a
+<ce> %ra to guard me for nothing? %pcn,
+<ce> are you going to hand me over?"
+
+Message:  1020
+<ce> Halt! In the name of %reg, I hold
+<ce> a warrant for _questgiver_. We
+<ce> have no business with you, only
+<ce> %g2. Hand %g2 over and you may go.
+
+Message:  1021
+<ce> We need not fight. It is
+<ce> _questgiver_ we want, and the Mages
+<ce> Guild does not forgive betrayal.
+<ce> Give %g2 to us and go your way.
+
+Message:  1022
+<ce> Move aside, %ra. _questgiver_ is ours,
+<ce> and you cannot stop us. Hand %g2 over.
+<ce> Well, _questgiver_, nobody cheats the
+<ce> Thieves Guild and lives. Did you forget?
+
+Message:  1023
+<ce> Stand aside, %ra. The Dark Brotherhood
+<ce> has a contract on _questgiver_. You are
+<ce> not fool enough to protect %g2, are you?
+
+Message:  1030
+<ce> _questgiver_ is cut
+<ce> down in front of you.
+
+Message:  1040
+<ce> As you wish. Kill them both!
+
+Message:  1050
+<ce> Lost, are you, %pcn? Then I will get
+<ce> to __destination_ without you. Thanks
+<ce> for nothing, you useless wretch.
+
+
+QBN:
+Item _gold_ gold
+
+Person _questgiver_ group Questor
+Person _mage_ faction The_Mages_Guild remote
+Person _thief_ faction The_Thieves_Guild remote
+Person _darkb_ faction The_Dark_Brotherhood remote
+
+Place _destination_ remote random
+
+Clock _traveltime_ 00:00 0 flag 1 range 0 2
+Clock _extratime_ 03:00 0 flag 1 range 0 1
+
+Foe _mages_ is 2 Mage
+Foe _F.01_ is 2 Thief
+Foe _guards_ is 2 Warrior
+Foe _F.03_ is 2 Assassin
+
+--	Quest start-up:
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pick one of _S.01_ _S.02_ _S.14_ _S.03_ 
+	hide npc _questgiver_ 
+	add _questgiver_ face 
+	create npc at _destination_ 
+
+variable _traveltime_
+_S.01_ task:
+	create foe _guards_ every 5 minutes 5 times with 20% success 
+
+_S.02_ task:
+	create foe _mages_ every 5 minutes 3 times with 25% success 
+
+_S.03_ task:
+	create foe _F.01_ every 5 minutes 3 times with 25% success 
+
+variable _S.04_
+_S.05_ task:
+	injured _mages_ saying 1021 
+	injured _guards_ saying 1020 
+	injured _F.03_ saying 1023 
+	injured _F.01_ saying 1022 
+	prompt 1019 yes _yes_ no _no_ 
+--added underscores to yes
+
+_S.06_ task:
+	give pc _gold_ 
+	drop _questgiver_ face 
+	place npc _questgiver_ at _destination_ 
+	end quest 
+
+_extratime_ task:
+	end quest 
+
+_yes_ task:
+	start timer _extratime_ 
+	say 1030 
+	drop _questgiver_ face 
+
+until _yes_ performed:
+	pc at _destination_ set _S.06_ 
+
+_no_ task:
+	say 1040 
+
+variable _S.10_
+_S.11_ task:
+	when _yes_ and _S.01_ 
+	legal repute +10 
+	restrain foe _guards_ 
+
+_S.12_ task:
+	when _yes_ and _S.02_ 
+	change repute with _mage_ by +10 
+	restrain foe _mages_ 
+
+_S.13_ task:
+	when _yes_ and _S.03_ 
+	change repute with _thief_ by +10 
+	restrain foe _F.01_ 
+
+_S.14_ task:
+	create foe _F.03_ every 5 minutes 3 times with 25% success 
+
+_S.15_ task:
+	when _yes_ and _S.14_ 
+	change repute with _darkb_ by +10 
+	restrain foe _F.03_ 
+
+_S.16_ task:
+	when _no_ and _S.03_ 
+	change repute with _thief_ by -20 
+
+_S.17_ task:
+	when _no_ and _S.01_ 
+	legal repute -20 
+
+_S.18_ task:
+	when _no_ and _S.02_ 
+	change repute with _mage_ by -20 
+
+_S.19_ task:
+	when _no_ and _S.14_ 
+	change repute with _darkb_ by -20 
+
+_S.20_ task:
+	when _traveltime_ and not _S.06_ 
+	say 1050 
+	drop _questgiver_ face 
+	end quest 

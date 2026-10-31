@@ -1,0 +1,116 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0B2XY09.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 2X
+-- QuestId: 9
+Messages: 11
+Quest: O0B2XY09
+DisplayName: The Rich Merchant
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Call me _qgiver_. Some swine of a
+<ce> merchant has just bought a load
+<ce> of _coastal_, and I want it. Lift
+<ce> it, bring it here, and _gold_
+<ce> gold is yours. Interested?
+
+RefuseQuest:  [1001]
+<ce> Move along, %pcn. I want a
+<ce> thief who deserves the word.
+
+AcceptQuest:  [1002]
+<ce> The merchant's shop is _mansion_ in
+<ce> __mansion_. The _coastal_ should
+<ce> not be hard to find there. You have
+<ce> =traveltime_ days, and the pay
+<ce> comes after. Questions? No? Good.
+
+QuestComplete:  [1004]
+<ce> Oh ho! This load is better than I
+<ce> hoped. Here is _gold_ gold, %pcn.
+<ce> Try to spend some of it on bread.
+
+RumorsDuringQuest:  [1005]
+A load of _coastal_ came into __mansion_
+lately. Nobody knows where it went.
+
+RumorsPostfailure:  [1006]
+Someone found the _coastal_ hidden in
+__mansion_, so now it is being shipped away.
+
+RumorsPostsuccess:  [1007]
+Thieves broke in where that _coastal_
+was kept. Nobody saw a thing.
+
+QuestorPostsuccess:  [1008]
+You are not spending that gold on
+drink and dice, are you, %pcf?
+
+QuestorPostfailure:  [1009]
+<ce> What now? I told you where the _coastal_
+<ce> was, and you dawdled until it was gone.
+<ce> Out, %pcf. You give me a headache.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ wants the _coastal_ a
+ merchant keeps at _mansion_ in
+ __mansion_. I get paid if it
+ reaches __qgiver_ in ___qgiver_
+ within =traveltime_ days.
+
+
+QBN:
+Item _coastal_ mineral
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _mansion_ remote generalstore
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Battle_mage
+Foe _F.01_ is Iron_atronach
+Foe _F.02_ is Daedra_seducer
+Foe _F.03_ is Werewolf
+
+--	Quest start-up:
+	place item _coastal_ at _mansion_ 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pc at _mansion_ set _S.01_ 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_ 
+
+_questdone_ task:
+	toting _coastal_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_guard1_ task:
+	create foe _F.00_ every 2 minutes 1 times with 10% success 
+
+_guard2_ task:
+	create foe _F.01_ every 2 minutes 1 times with 10% success 
+
+_guard3_ task:
+	create foe _F.02_ every 2 minutes 1 times with 10% success 
+
+_guard4_ task:
+	create foe _F.03_ every 2 minutes 1 times with 10% success 
+
+_S.07_ task:
+	clicked item _coastal_ 
+
+_S.08_ task:
+	when _S.07_ and _traveltime_ 
+	make _coastal_ permanent

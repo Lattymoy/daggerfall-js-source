@@ -1,0 +1,184 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0A01L00.Qbn.
+-- StartsBy: letter
+-- Questee: initiate
+-- Questor: Brotherhood
+-- Repute: 01
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 21
+Quest: L0A01L00
+DisplayName: The Acceptance Test
+-- Message panels
+QRC:
+
+QuestComplete:  [1004]
+<ce> Well done, %pcn. _npc_'s heart
+<ce> stopped. You can kill without a blade.
+<ce> You are one of us, and in any town you
+<ce> will know our buildings. Custom pays a
+<ce> novice one gold coin, the price of
+<ce> %pg3 first sanctioned kill.
+
+RumorsDuringQuest:  [1005]
+_npc_ should watch %g3 back. %G
+has more enemies than friends.
+
+RumorsPostfailure:  [1006]
+Those who ignore the Dark Brotherhood do not do it for long.
+
+RumorsPostsuccess:  [1007]
+Poor _npc_. %g made one enemy too many.
+<--->
+Something was wrong with _npc_'s
+wine. Wine goes bad, I suppose.
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___apothecary_, _apothecary_ of the
+ Dark Brotherhood gave me some _poison_
+ to put in _npc_'s wine, at _mansion_ in
+ __mansion_. To join, I must then find
+ _darkbmember_ in ___darkbmember_ within
+ =traveltime_ days, or I have failed.
+
+Message:  1011
+<ce> A street boy pushes a letter into
+<ce> your hand. When you question him,
+<ce> you find he can neither hear nor
+<ce> speak. You give up and send him off.
+<--->
+<ce> A letter is slipped into your hand,
+<ce> and quick footsteps run away. Of
+<ce> the courier there is no other sign.
+
+Message:  1012
+%qdt:
+ A street urchin gave me a
+ letter. What it says I
+ will not write down here.
+
+Message:  1014
+<ce> You failed, %pcn. _npc_ is still
+<ce> breathing. Our rule is that once a
+<ce> contract is taken, someone dies.
+<ce> If it is not _npc_, it is you.
+
+Message:  1015
+<ce> So you are %pcn. We have watched you
+<ce> kill, and we allow no rogue killers. Join
+<ce> us or die. Put this _poison_ in _npc_'s
+<ce> wine at _mansion_ in __mansion_, then see
+<ce> _darkbmember_ in ___darkbmember_ within
+<ce> =traveltime_ days. Mephala keep you.
+
+Message:  1019
+<ce> The wine turns cloudy as the _poison_
+<ce> goes in, then clears in a moment. Now
+<ce> put the decanter back where it was.
+
+Message:  1020
+%pcn,
+ 
+    The Dark Brotherhood has seen you
+ kill, again and again, without our leave.
+ Join us, or be our enemy. Go to ___apo_
+ in ____apo_ and find _apothecary_, who
+ will say more. You have =S.01_ days.
+ 
+<ce> A Brother
+
+
+QBN:
+Item _letter_ letter used 1020
+Item _decanter_ decanter
+Item _poison_ snake_venom
+Item _gold_ gold range 1 to 1
+
+Person _darkbmember_ faction The_Dark_Brotherhood remote
+Person _apothecary_ face 144 group Chemist remote
+Person _npc_ face 1 group Resident1 remote
+
+Place _mansion_ remote house1
+Place _apo_ remote apothecary
+--added _apo_ place due to spawning problem for chemist
+
+Clock _traveltime_ 0:00 0 flag 1 range 2 5
+--changed 14.00:00 to 0:00. specified time limit was too short for some cases.
+Clock _S.01_ 30.00:00 0 flag 1 range 1 4
+
+Foe _F.00_ is 2 Assassin
+Foe _guards_ is Spellsword
+Foe _F.02_ is 2 Nightblade
+
+--	Quest start-up:
+	start timer _S.01_ 
+	log 1012 step 0 
+	get item _letter_ 
+	say 1011
+	place npc _apothecary_ at _apo_
+--added place npc command
+
+_traveltime_ task:
+	change repute with _darkbmember_ by -35 
+	end quest 
+
+variable _S.01_
+_S.02_ task:
+	clicked npc _apothecary_ 
+	pc at _mansion_ set _S.08_ 
+	place item _decanter_ at _mansion_ 
+	add dialog for location _mansion_ person _darkbmember_ 
+	start timer _traveltime_
+    stop timer _S.01_
+	log 1010 step 1 
+	get item _poison_ 
+	say 1015 
+
+_S.03_ task:
+    when _hasDecanter_ and _hasPoison_
+	give item _poison_ to _F.00_ 
+	say 1019 
+	take _poison_ from pc
+    --added take item action. poison would linger in inventory.
+
+variable _hasDecanter_
+variable _hasPoison_
+
+_S.04_ task:
+	clicked item _decanter_
+--	have decanter and _poison_ do _S.03_
+    have _decanter_ set _hasDecanter_
+    have _poison_ set _hasPoison_
+	clear _S.11_ 
+
+_S.05_ task:
+	clicked npc _darkbmember_ 
+
+_S.06_ task:
+	when _S.11_ and _S.05_ 
+--removed " and _S.03_." superfluous when decanter has been dropped
+	give pc _gold_ 
+	end quest 
+--removed unnecessary delay
+
+_S.07_ task:
+	when _S.01_ and not _S.02_ 
+	change repute with _darkbmember_ by -25 
+	end quest 
+
+_S.08_ task:
+	create foe _guards_ every 3 minutes 3 times with 25% success 
+
+_S.09_ task:
+	when not _S.11_ and not _S.03_ and _S.05_ 
+	create foe _F.00_ every 1 minutes 1 times with 100% success 
+	create foe _F.02_ every 1 minutes 1 times with 100% success 
+	say 1014 
+	change repute with _darkbmember_ by -50 
+	change repute with _darkbmember_ by -100 
+
+variable _S.10_
+_S.11_ task:
+	dropped _decanter_ at _mansion_ 
+	clear _S.04_

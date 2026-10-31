@@ -1,0 +1,205 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\80C0XY00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Malacath
+-- Repute: 0X
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 54
+Quest: 80C0XY00
+DisplayName: Malacath's Quest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Another wanted power once, a little
+<ce> creature of Oblivion. It begged me
+<ce> for beauty. I gave it, and it turned
+<ce> on me, its own maker. If I made you
+<ce> strong, would you honor the gift?
+
+RefuseQuest:  [1001]
+<ce> Witless %ra. You cannot even
+<ce> lie? Spare me your feeble wants.
+
+AcceptQuest:  [1002]
+<ce> I believe you, %pcn. Kill the seducer
+<ce> who betrayed me, and _artifact_ is
+<ce> yours. She hides in ___mondung_. Then
+<ce> meet my loyal _qgfriend_. I will send
+<ce> %g2 to the palace of ___qgfriend_.
+<ce> Take no more than =1stparton_ days.
+
+QuestFail:  [1003]
+<ce> Get lost, you drooling %ra. I am
+<ce> waiting for someone who matters.
+
+QuestComplete:  [1004]
+<ce> So you are %pcn. Malacath described you
+<ce> well. Nice work on =monster_. She never
+<ce> could keep her mouth shut. Here is the
+<ce> _artifact_. Who knows, one day you may swing
+<ce> it at Malacath himself. A joke, of course.
+
+RumorsDuringQuest:  [1005]
+They found _murder_ dead in %g3 own palace in ___ruler_.
+<--->
+The seducer in ___mondung_ sits
+and waits. For what, nobody knows.
+
+RumorsPostfailure:  [1006]
+I keep thinking of that woman's
+laugh, coming down out of the sky.
+<--->
+Plenty of folk saw her flying over
+the rooftops a few nights back.
+
+RumorsPostsuccess:  [1007]
+They say the seducer fell in love, and
+her master's agents killed her for it.
+<--->
+That seducer sitting in her hole,
+waiting, gave me the shivers.
+
+Message:  1011
+_qgfriend_ is a noble. They whisper
+of a secret affair with a dark lady.
+<--->
+_qgfriend_, a noble with many quiet loyalties.
+
+Message:  1012
+Malacath, Prince of the spurned,
+deals in lies and false faces.
+<--->
+Malacath grows lies the way a carcass grows maggots.
+
+Message:  1013
+<ce> The _artifact_ is a mighty war hammer that
+<ce> drains the strength of those it strikes.
+
+Message:  1015
+=monster_ is no more.
+
+Message:  1020
+%qdt:
+ Malacath will give me the _artifact_ if I kill
+ =monster_, a daedra seducer who betrayed him
+ and hides in ___mondung_. A =qgfriend_ named
+ _qgfriend_ will hand it to me in the palace at
+ ___qgfriend_ before =1stparton_ days pass.
+
+Message:  1030
+=monster_,
+ 
+      Malacath wants _murder_ dead. %G3 agents
+ know too much, and %g threatens our plans for
+ %reg. Seek %g2 at the palace of ___ruler_,
+ and make sure %g3 death leaves no trail. Then
+ wait in ___mondung_ for your pay.
+ 
+<ce> _qgfriend_
+
+Message:  1040
+<ce> %oth! _qgfriend_ was behind the
+<ce> murder of _murder_, and a Daedric
+<ce> plot too? Without you, %pcn, we
+<ce> might never have known. The %rt
+<ce> will remember your loyalty.
+
+Message:  1041
+<ce> Show _qgfriend_'s note to _ruler_?
+
+Message:  1050
+<ce> Nobody knows who killed _murder_. _ruler_ is in
+<ce> charge of the inquiry, and has found nothing.
+<--->
+<ce> I am sure _murder_ was killed for %g3
+<ce> digging into the corruption in %reg.
+
+Message:  1051
+<ce> _murder_ was looking into a plot against %rt %rn
+<ce> when %g died, very conveniently. _ruler_ is hunting
+<ce> the killer, but %g will never find the truth.
+<--->
+<ce> _murder_ died at ___ruler_'s palace, and %g3
+<ce> notes on high treason were stolen. _ruler_
+<ce> is on the case, but %g is getting nowhere.
+
+Message:  1052
+<ce> _ruler_ leads the inquiry into the
+<ce> death of _murder_, so far with no luck.
+<--->
+<ce> _ruler_ is looking into how _murder_
+<ce> died, at the palace of ___ruler_.
+
+Message:  1053
+<ce> _ruler_ is hunting whoever killed _murder_,
+<ce> and %g deserves justice. Fat chance.
+<--->
+<ce> _ruler_ was sent after the killer
+<ce> of _murder_, with nothing to go on.
+
+
+QBN:
+Item _artifact_ artifact Volendrung anyInfo 1013
+Item _note_ letter used 1030
+
+Person _questgiver_ face 112 named Malacath anyInfo 1012
+Person _qgfriend_ group Noble male remote anyInfo 1011
+Person _murder_ face 1 factiontype Province remote anyInfo 1050 rumors 1051
+Person _ruler_ group Noble remote anyInfo 1052 rumors 1053
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 18 range 2 5
+
+Foe _monster_ is Daedra_seducer
+
+--	Quest start-up:
+	dialog link for person _ruler_ 
+	dialog link for person _murder_ 
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	give item _note_ to _monster_ 
+	_note_ used do _readnote_ 
+	place foe _monster_ at _mondung_ 
+
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_ 
+	give pc _artifact_ 
+	end quest 
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_ 
+	say 1015 
+	create npc _qgfriend_ 
+
+_npcclicked_ task:
+	clicked npc _qgfriend_ 
+
+--defining clearclick to prevent out-of-place victory condition
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_
+	say 1003
+	clear _npcclicked_ _clearclick_
+
+_readnote_ task:
+	add dialog for person _murder_ 
+
+_rulerclicked_ task:
+	toting _note_ and _ruler_ clicked 
+	prompt 1041 yes _S.09_ no _school_ 
+
+_S.09_ task:
+	say 1040 
+	change repute with _murder_ by +15 
+
+_school_ task:
+	get item _note_ 

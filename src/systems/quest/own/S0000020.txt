@@ -1,0 +1,138 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000020.Qbn.
+-- Main story quest.
+-- QuestId: 20
+Messages: 41
+Quest: S0000020
+DisplayName: Orcish Treaty
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Gortwog has the Emperor's letter,
+<ce> says Morgiah? How interesting. I know
+<ce> how to make him part with it. Will
+<ce> you go down into Orsinium for it?
+
+RefuseQuest:  [1001]
+<ce> So your loyalty to the Empire is
+<ce> thinner than I thought. Leave.
+
+AcceptQuest:  [1002]
+<ce> Gortwog wants the Empire to recognize
+<ce> his people, which would be the start of
+<ce> peace between orcs and the rest. Give
+<ce> him this letter. It may win him over.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Mynisera, King Gothryd's mother,
+ wants back the stolen letter the
+ Emperor sent her. I must take her
+ own letter to Gortwog, the orc
+ warlord, in the hall of Orsinium.
+
+Message:  1015
+Mynisera flatters me? Bah! Her old
+letter means nothing to me now. She may
+have it. But my people do not love a
+%ra in their halls. Live through them
+and find it, and you are a worthy %ra.
+
+Message:  1020
+Lord Gortwog,
+ 
+    Your people want the Empire's
+ recognition, and my late husband
+ Lysandus backed your claim. I will too.
+ Send back the Emperor's lost letter with
+ my servant, and I can press your case.
+ 
+  Mynisera,
+  Queen Mother of Daggerfall
+
+Message:  1021
+Queen Mynisera,
+ 
+    Grave news. Tiber Septim's Totem has
+ been found. Lord Woodborne of Wayrest
+ has it, and will soon "lose" it. Win it
+ for yourself or Lady Brisienna, through
+ your friends in Wayrest.
+ 
+  Uriel Septim
+  Emperor of Tamriel
+
+Message:  1030
+<ce> This letter is dangerous, %pcf.
+<ce> Gortwog has surely sold copies from
+<ce> Wayrest to the Underking, for a war
+<ce> over the Totem profits him. Go now.
+<ce> The Totem will find you. Remember:
+<ce> only the Emperor is its safe master.
+
+Message:  1040
+<ce> Come back once you have learned
+<ce> where the Emperor's letter lies.
+
+
+QBN:
+Item EmperorsLetter letter used 1021
+Item GortwogsLetter letter used 1020
+
+Person _Mynisera_ named Mynisera atHome
+Person _gortwog_ face 88 named Gortwog atHome
+
+Place _Orsinium_ permanent OrsiniumCastle1
+
+
+
+--	Quest start-up:
+	add _Mynisera_ as questor 
+	add _gortwog_ as questor 
+
+_S.00_ task:
+	clicked npc _Mynisera_ 
+
+MorgiahSatisfied _S.01_
+_S.02_ task:
+	when _S.00_ and _S.09_ 
+	prompt QuestorOffer yes yes no _no_ 
+
+until _S.02_ performed:
+	clear _S.00_ _S.10_ 
+
+yes task:
+	log 1010 step 0 
+	get item GortwogsLetter 
+	reveal _Orsinium_ in province 26 at 146892 
+	say AcceptQuest 
+
+_no_ task:
+	say RefuseQuest 
+
+_S.05_ task:
+	toting GortwogsLetter and _gortwog_ clicked 
+	place item EmperorsLetter at _Orsinium_ marker 0
+	say 1015 
+
+_S.06_ task:
+	toting EmperorsLetter and _Mynisera_ clicked 
+	start quest 988 988 
+	start task _S.07_ 
+	say 1030 
+	change repute with _Mynisera_ by +15 
+	change repute with _gortwog_ by +10 
+	drop _gortwog_ as questor 
+	drop _Mynisera_ as questor 
+	end quest 
+
+MyniseraSatisfied _S.07_
+BarenziahSatisfied _S.08_
+_S.09_ task:
+	when _S.08_ or _S.01_ 
+
+_S.10_ task:
+	when _S.00_ and not _S.09_ 
+	say 1040

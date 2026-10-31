@@ -5,11 +5,12 @@
 // each rule is pinned on made-up data, so a rewrite can never break a quest.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 import {
   ROOT, OWN_DIR, DFU_DIR, OWN_CREDIT, SHARED_RUN, WIDTH, checkText, checkOwnQuest, ownQuestNames, scaffold, wrapBody, splitQuest,
+  CARRIED_FIXES, dfuSource,
 } from '../../tools/ownQuestCheck.mjs';
 import { QUEST_FILES } from '../qlSources.mjs';
 import { applyQuestPatches } from '../../src/systems/quest/questPatches.js';
@@ -29,13 +30,23 @@ test('OWN-WORDS1 every own quest holds: DFU\'s logic, our words, and every rule 
 test('OWN-WORDS1 the loader reads our file in place of DFU\'s - the browser\'s pack and its node twin (mutants: the glob dropped; DFU\'s text read first)', () => {
   const pack = read('src/scenes/quest/questData.js');
   assert.match(pack, /import\.meta\.glob\('\.\.\/\.\.\/systems\/quest\/own\/\*\.txt'/);
-  assert.match(pack, /stripBom\(await \(own\.get\(name\) \?\? load\)\(\)\)/, 'ours before DFU\'s, and patched as DFU\'s would be');
+  // PIN MOVED (OWN-WORDS2): every quest with messages is ours, so the pack globs DFU's files by name - only those with
+  // nothing to rewrite - and no DFU message is bundled; a DFU quest is ours or on that list, never dropped
+  const left = [...pack.matchAll(/vendor\/dfu-quests\/Quests\/([^'*]+)\.txt'/g)].map((m) => m[1]);
+  assert.deepEqual(left, ['__DEMO01'], 'the DFU files the pack still reads');
+  assert.doesNotMatch(pack, /vendor\/dfu-quests\/Quests\/\*\.txt/, 'DFU\'s quest text is not bundled');
+  const own = new Set(ownQuestNames());
+  for (const f of readdirSync(join(ROOT, DFU_DIR)).filter((n) => n.endsWith('.txt'))) {
+    const n = f.slice(0, -4);
+    assert.ok(own.has(n) || left.includes(n), `${n}: an own file, or on the pack's list of DFU's`);
+  }
   for (const n of ownQuestNames()) {
     const f = QUEST_FILES.get(n.toUpperCase());
     assert.equal(f.dir, 'dfu', `${n} stays DFU's quest`);
     assert.equal(f.path.replace(/\\/g, '/').endsWith(`${OWN_DIR}/${n}.txt`), true, `${n} is read from ${OWN_DIR}`);
   }
-  assert.equal(QUEST_FILES.get('N0B00Y06').path.replace(/\\/g, '/').endsWith(`${DFU_DIR}/N0B00Y06.txt`), true, 'a quest with no own file is DFU\'s');
+  // PIN MOVED (OWN-WORDS2): N0B00Y06 has our words now; __DEMO01 has no messages, so it never gets an own file
+  assert.equal(QUEST_FILES.get('__DEMO01').path.replace(/\\/g, '/').endsWith(`${DFU_DIR}/__DEMO01.txt`), true, 'a quest with no own file is DFU\'s');
 });
 
 test('OWN-WORDS1 the port\'s patches still find their text in ours: M0B11Y18\'s QBN patch, the three Fighters Guild branches; a patch on DFU\'s words is caught (mutants: the patch layers unread)', () => {
@@ -45,8 +56,21 @@ test('OWN-WORDS1 the port\'s patches still find their text in ours: M0B11Y18\'s 
     assert.ok(QL_PATCHES.has(n), `${n} carries a branch`);
     assert.ok(applyQuestlinePatches(n, read(`${OWN_DIR}/${n}.txt`)).includes('Message:  1900'), `${n}'s branch applies to our file`);
   }
-  // C0B00Y02's SHAM-TRAIL patch is anchored on DFU's own last message: an own file that loses it is told so
-  assert.ok(checkText('C0B00Y02', scaffold('C0B00Y02'), read(`${DFU_DIR}/C0B00Y02.txt`)).some((p) => /^QUEST-PATCH: C0B00Y02 holds/.test(p)));
+  // PIN MOVED (OWN-WORDS2): C0B00Y02's SHAM-TRAIL patch reads none of DFU's messages now (its entry goes in before
+  // `QBN:`), and it applies to our file; an own file that moves the reveal's lines its QBN half reads is told so
+  assert.ok(applyQuestPatches('C0B00Y02', read(`${OWN_DIR}/C0B00Y02.txt`)).includes('Message:  1027'), 'SHAM-TRAIL\'s entry in our file');
+  const moved = scaffold('C0B00Y02').replace('\tplace npc _hooker_ at _tavern_ \n', '\tplace npc _hooker_ at _tavern_\n');
+  assert.ok(checkText('C0B00Y02', moved, read(`${DFU_DIR}/C0B00Y02.txt`)).some((p) => /^QUEST-PATCH: C0B00Y02 holds/.test(p)));
+});
+
+test('OWN-WORDS2 a port fix our file carries: A0C00Y10\'s journal names the inn\'s own town and its patch is gone, so DFU\'s file is read with the fix, and DFU\'s `___giver_` back in ours fails (mutants: the carried fix unread)', () => {
+  assert.deepEqual(Object.keys(CARRIED_FIXES), ['A0C00Y10']);
+  const own = read(`${OWN_DIR}/A0C00Y10.txt`);
+  assert.match(dfuSource('A0C00Y10'), / _inn_ in ___inn_ in six hours\./, 'DFU\'s words, with QUEST-AUDIT III DUEL-TOWN\'s fix');
+  assert.deepEqual(checkText('A0C00Y10', own, dfuSource('A0C00Y10')), []);
+  const back = checkText('A0C00Y10', own.replace(' in ___inn_,', ' in ___giver_,'), dfuSource('A0C00Y10'));
+  assert.ok(back.some((p) => /^message 1003: macros dropped ___inn_, added ___giver_$/.test(p)), back.join('\n'));
+  assert.ok(checkText('A0C00Y10', own, read(`${DFU_DIR}/A0C00Y10.txt`)).some((p) => /^message 1003: macros/.test(p)), 'not DFU\'s file as shipped');
 });
 
 test('OWN-WORDS1 a scaffold is DFU\'s quest with every message a TODO naming what it keeps - it fails on the TODOs alone', () => {
@@ -125,4 +149,17 @@ test('OWN-WORDS1 the wrap: one kind of line flows together, as even as the width
   assert.deepEqual(wrapBody(['Dear %pcn,', ' ', ' a b c d e f', '    g h'], 10), ['Dear %pcn,', ' ', ' a b c', ' d e f', '    g h']);
   assert.deepEqual(wrapBody(['bare words that flow on', 'and on'], 14), ['bare words', 'that flow', 'on and on'], 'greedy would leave "and on" for last');
   assert.deepEqual(wrapBody(['<ce> a b', '        <--->', '<ce> c'], 40), ['<ce> a b', '<--->', '<ce> c']);
+});
+
+test('OWN-WORDS2 the questline patches\' own messages share no six-word run with DFU\'s quest text (mutants: a Bethesda sentence back)', async () => {
+  const { sharedRunsIn } = await import('../../tools/ownQuestCheck.mjs');
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const dir = new URL('../../src/systems/questlines/patches/', import.meta.url);
+  const strings = (o, out = []) => { if (typeof o === 'string') out.push(o); else if (o && typeof o === 'object') for (const v of Object.values(o)) strings(v, out); return out; };
+  const found = [];
+  for (const f of readdirSync(dir).filter((n) => n.endsWith('.json'))) {
+    for (const s of strings(JSON.parse(readFileSync(new URL(f, dir), 'utf8')))) for (const r of sharedRunsIn(s)) found.push(`${f}: "${r}"`);
+  }
+  assert.deepEqual(found, []);
+  assert.deepEqual(sharedRunsIn('As you pick up the _clothing_ you hear the soft rustle of paper.'), ['as you pick up the _clothing_', 'you pick up the _clothing_ you', 'pick up the _clothing_ you hear', 'up the _clothing_ you hear the', 'the _clothing_ you hear the soft', '_clothing_ you hear the soft rustle', 'you hear the soft rustle of', 'hear the soft rustle of paper'], 'a Bethesda sentence is found');
 });

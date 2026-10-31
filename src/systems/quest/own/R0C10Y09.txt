@@ -1,0 +1,140 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y09.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 9
+Messages: 21
+Quest: R0C10Y09
+DisplayName: The Procurer
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> There is work here for an able %ra. A
+<ce> small errand, nothing grand, but worth
+<ce> _reward_ gold to you. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> %oth, did you expect _reward_ gold for doing
+<ce> nothing? Or were you after something grander?
+<ce> That must wait for another day, %pcf.
+
+AcceptQuest:  [1002]
+<ce> Good. My procurer, a =spy_ named _spy_, found
+<ce> me a rare _item_, but its former owners have
+<ce> %g2 cornered in __hidingplace_. Find _spy_
+<ce> there and bring me the _item_ within
+<ce> =1stparton_ days, or forfeit the _reward_ gold.
+
+QuestFail:  [1003]
+<ce> Back so soon, %pcf, and with
+<ce> no _item_. Is the task beyond
+<ce> you? Go and fetch my _item_.
+
+QuestComplete:  [1004]
+<ce> Marvelous. My _item_, back
+<ce> quickly and with little fuss.
+<ce> Here is your _reward_ gold.
+
+RumorsDuringQuest:  [1005]
+Men are searching every corner of
+__hidingplace_ for a stolen _item_.
+<--->
+Someone stole a rare _item_ from
+a private collection, they say.
+
+RumorsPostfailure:  [1006]
+They found that jewelry, and the
+thief was hanged on the spot.
+<--->
+That missing jewelry turned up in the end.
+
+RumorsPostsuccess:  [1007]
+Nobody ever found that jewelry.
+The guards have stopped looking.
+<--->
+<ce> They say a rare gem was hidden inside that stolen jewelry.
+
+QuestorPostsuccess:  [1008]
+My young champion. Still selling your sword, I see. Good.
+<--->
+%pcf. I remember your service. How can I help?
+
+QuestorPostfailure:  [1009]
+You failed me, and I see no
+reason to help you. Still, go on.
+<--->
+<ce> You lose my property and then come back?
+<ce> That is bold of you. I dislike boldness.
+
+QuestLogEntry:  [1010]
+<ce> _questgiver_ sent you? %oth, I thought they
+<ce> had found me at last. Here is the _item_,
+<ce> %pcf. Get it to _questgiver_ fast, because %g
+<ce> needs it soon. Watch yourself. The owner's
+<ce> agents are searching all of __hidingplace_.
+
+Message:  1011
+A =spy_, you say? Try %di of here, near _hidingplace_.
+<--->
+A jumpy =spy_? I saw %g2 near _hidingplace_ not long ago.
+
+Message:  1015
+%qdt:
+ _questgiver_ of __questgiver_ in
+ ___questgiver_ wants a special _item_
+ from _spy_, who is hiding in
+ __hidingplace_. Its real owners may try
+ to stop me. If _questgiver_ has it within
+ =1stparton_ days, I earn _reward_ gold.
+
+Message:  1020
+<ce> Thank you, %ra. We knew you would lead us
+<ce> to the _item_. Here is your wage. Death!
+
+
+QBN:
+Item _reward_ gold
+Item _item_ trinket
+
+Person _questgiver_ face 112 group Questor
+Person _spy_ face 1 group Local_3.0 remote anyInfo 1011
+
+Place _hidingplace_ remote random
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _F.00_ is Assassin
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1015 step 0 
+	pc at _hidingplace_ set _S.06_ 
+	create npc at _hidingplace_ 
+	place npc _spy_ at _hidingplace_ 
+
+_pcgetsgold_ task:
+	toting _item_ and _questgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+variable _queston_
+_pchasitem_ task:
+	clicked npc _spy_ 
+	get item _item_ 
+	say 1010 
+
+variable _npcclicked_
+variable _qgclicked_
+_1stparton_ task:
+	make _item_ permanent 
+	change repute with _questgiver_ by -10 
+	end quest 
+
+_S.06_ task:
+	create foe _F.00_ every 2 minutes 4 times with 30% success 
+
+_S.07_ task:
+	injured _F.00_ saying 1020 

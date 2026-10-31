@@ -1,0 +1,229 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000501.Qbn.
+-- Main story quest.
+-- QuestId: 501
+Messages: 62
+Quest: S0000501
+DisplayName: Lord K'avar Quest Part III
+-- Message panels
+QRC:
+
+QuestComplete:  [1004]
+<ce> I knew you would not fail me, %pcn.
+<ce> The friendship of Sentinel's queen
+<ce> ought to be reward enough, but here
+<ce> is something you can hold.
+
+RumorsDuringQuest:  [1005]
+<ce> I hear _traitor_ broke out of Castle Sentinel's
+<ce> dungeons. They were days from hanging him for treason.
+
+RumorsPostsuccess:  [1007]
+<ce> _traitor_ went to Wayrest to win support for his claim
+<ce> on Sentinel's throne. _queen_'s agents found him first.
+<ce> Nobody knows his fate, but I would bet on a grave.
+
+Message:  1020
+%qdt:
+ _queen_ of Sentinel writes that
+ _traitor_ has escaped. She wants to
+ see me about hunting him down again.
+
+Message:  1021
+%qdt:
+ _queen_'s spies have found _traitor_
+ in Wayrest, working against
+ Sentinel. He hides somewhere in the
+ dungeons of Castle Wayrest. I have
+ =time2_ days to bring him back to
+ Sentinel to be executed.
+
+Message:  1022
+%qdt:
+ I have taken _traitor_ prisoner.
+ Now I must get him to Sentinel
+ and hand him to _queen_.
+
+Message:  1030
+Dear %pcn,
+ 
+ Your service to Sentinel has come
+ undone. _traitor_ still has friends, and
+ they freed him from the dungeon days
+ before his hanging. Help me end this for
+ good. Come to me within =patsy_ days.
+ 
+<ce> _queen_ of Sentinel
+
+Message:  1031
+<ce> A thickset knight in Sentinel's
+<ce> colors stops and salutes you.
+<ce>
+<ce> "%pcn? This is for you,
+<ce> from _queen_ herself."
+
+Message:  1040
+<ce> Good, %pcn. My spies have found _traitor_
+<ce> hiding in Castle Wayrest, begging for support
+<ce> for his claim to my throne. Bring him back,
+<ce> and do not lose him again. Alive is better.
+<ce> Dead will do. You have =time2_ days.
+
+Message:  1041
+<ce> You! %oth, can I never be rid
+<ce> of you? This time I finish it.
+
+Message:  1042
+<ce> "Enough! I yield! Spare me!"
+<ce>
+<ce> Will you take _traitor_ prisoner?
+
+Message:  1043
+<ce> _traitor_ lies dead at your feet.
+
+Message:  1044
+<ce> _traitor_ lets his weapon fall. You
+<ce> tie his hands and cover his eyes,
+<ce> so he can try no more tricks. Now
+<ce> you must get out of Wayrest.
+
+QuestTimeLapse:  [1045]
+<ce> So be it. By %god, we go down together!
+
+Message:  1050
+<ce> My loyal _traitor_, home again. Did you
+<ce> truly think you could outrun me? Guards,
+<ce> take him below and hang him now.
+
+Message:  1051
+<ce> _traitor_ earned his death. I wanted him hanged in
+<ce> the square, as a lesson to the rest of his kind.
+<ce> Still, I am glad this ugly business is over.
+
+Message:  1060
+<ce> You thought _traitor_ would be
+<ce> easy to be rid of? Cross a lord
+<ce> of Sentinel, and you pay for it.
+
+Message:  1061
+<ce> A knight in Sentinel's colors
+<ce> steps up. "I will take charge
+<ce> of the traitor _traitor_ now."
+
+
+QBN:
+Item _letter_ letter used 1030
+Item _reward1_ item class 4 subclass 26
+Item _reward2_ gold
+
+Person _queen_ face 224 named Queen_Akorithi atHome
+Person _traitor_ face 217 named Lord_K'avar
+
+Place _wayrest_ permanent WayrestCastle2
+Place aide remote dungeon
+
+Clock _S.00_ 12.06:00 23.18:00
+--shortened timer drastically. getting attacked by Kavar minions for months is annoying
+Clock _patsy_ 30.00:00 0 flag 1 range 0 1
+Clock _time2_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is 3 Archer
+Foe _mtraitor_ is Ranger
+
+--	Quest start-up:
+	create foe _F.00_ every 2000 minutes 5 times with 100% success 
+	start timer _S.00_ 
+	have _letter_ set _startpatsy_
+-- reduced spawning trio from 20 to 5 times
+
+_startpatsy_ task:
+	start timer _patsy_ 
+
+_S.00_ task:
+	_letter_ used do _readletter_ 
+	give pc _letter_ notify 1031 
+	place npc _traitor_ at _wayrest_ marker 3
+
+variable _patsy_
+_time2_ task:
+	end quest 
+
+_readletter_ task:
+	log 1020 step 0 
+
+_S.04_ task:
+	clicked npc _queen_ 
+
+_S.05_ task:
+	clicked npc _traitor_ 
+	hide npc _traitor_ 
+	say 1041 
+	place foe _mtraitor_ at _wayrest_ marker 3
+
+_hittraitor_ task:
+	injured _mtraitor_ 
+
+_S.07_ task:
+	killed 1 _mtraitor_ 
+	say 1043 
+
+_S.08_ task:
+	when _hittraitor_ and not _S.07_ 
+	prompt 1042 yes _yes_ no _no_ 
+
+_S.09_ task:
+	when _S.04_ and _S.00_ 
+	stop timer _patsy_
+	start timer _time2_ 
+	log 1021 step 1 
+	say 1040 
+	remove log step 0
+	start task _stagger_
+
+_notyet_ task:
+	when _S.04_ and not _S.00_
+	clear _S.04_ _notyet_
+
+variable _stagger_
+_clearclick_ task:
+	when _stagger_ and _S.04_ and not _hittraitor_
+	clear _S.04_ _clearclick_
+
+_S.10_ task:
+	when _yes_ and _S.04_ 
+	say 1050 
+	drop _traitor_ face 
+
+_traitordead_ task:
+	when _S.07_ and _S.04_ 
+	say 1051 
+	unset _S.04_ 
+
+_yes_ task:
+	log 1022 step 2 
+	say 1044 
+	add _traitor_ face 
+	place foe _mtraitor_ at aide 
+
+_no_ task:
+	say 1045 
+
+_S.14_ task:
+	when _S.10_ or _traitordead_ 
+	give pc _reward1_
+	give pc _reward2_ 
+	end quest 
+
+_S.15_ task:
+	when _patsy_ and not _S.09_ 
+	end quest 
+
+_S.16_ task:
+	when _yes_ and _time2_ 
+	say 1061 
+	end quest 
+
+_S.17_ task:
+	injured _F.00_ 
+	say 1060

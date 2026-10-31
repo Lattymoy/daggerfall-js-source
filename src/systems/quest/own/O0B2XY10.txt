@@ -1,0 +1,115 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0B2XY10.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 2X
+-- QuestId: 10
+Messages: 11
+Quest: O0B2XY10
+DisplayName: A Treasured Potion
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, the name is _qgiver_. I know
+<ce> where to find a _potion_, and I
+<ce> need it lifted. There is _gold_
+<ce> gold in it for you. Yes or no?
+
+RefuseQuest:  [1001]
+<ce> Come back when you want real work, %pcn.
+
+AcceptQuest:  [1002]
+<ce> The _potion_ sits on a shelf at
+<ce> _alchemyshop_ in __alchemyshop_. Lift
+<ce> it and have it here within =traveltime_
+<ce> days for your pay. Not so hard, is it?
+
+QuestComplete:  [1004]
+<ce> Clean work, %pcn. That
+<ce> makes _gold_ gold for you.
+
+RumorsDuringQuest:  [1005]
+For ingredients, nobody in
+__alchemyshop_ beats _alchemyshop_.
+<--->
+_alchemyshop_ sells nearly everything.
+Ask anyone in __alchemyshop_.
+
+RumorsPostfailure:  [1006]
+_alchemyshop_ had a rare _potion_ once.
+It is locked away somewhere safer now.
+
+RumorsPostsuccess:  [1007]
+Someone walked out of _alchemyshop_ with
+a _potion_ and never paid. The nerve!
+
+QuestorPostsuccess:  [1008]
+Of course I remember, %pcf. The _potion_ job.
+
+QuestorPostfailure:  [1009]
+<ce> Where is my _potion_? Did the
+<ce> keeper of _alchemyshop_ catch you,
+<ce> or did you sell it on the way back?
+<ce> %oth, I should have gone myself.
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___qgiver_, _qgiver_ hired me
+ to lift a _potion_. The shop is
+ _alchemyshop_, in __alchemyshop_.
+ Within =traveltime_ days I must
+ hand it to %g2.
+
+
+QBN:
+Item _potion_ Elixir_vitae
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _alchemyshop_ remote apothecary
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Battle_mage
+Foe _F.01_ is Iron_atronach
+Foe _F.02_ is Daedra_seducer
+Foe _F.03_ is Werewolf
+
+--	Quest start-up:
+	place item _potion_ at _alchemyshop_ 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pc at _alchemyshop_ set _S.01_ 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_ 
+
+_questdone_ task:
+	toting _potion_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success 
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success 
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success 
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success 
+
+_S.07_ task:
+	clicked item _potion_ 
+
+_S.08_ task:
+	when _traveltime_ and _S.07_ 
+	make _potion_ permanent

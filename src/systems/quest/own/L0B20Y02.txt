@@ -1,0 +1,140 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 20
+-- QuestId: 2
+Messages: 22
+Quest: L0B20Y02
+DisplayName: A Knight Without Honor
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You have a soft heart, %pcf, so this
+<ce> one is yours. A knight has dishonored a
+<ce> young lady and will not fight anyone
+<ce> who defends her. She did the one thing
+<ce> left to her and came to us. Interested?
+
+RefuseQuest:  [1001]
+<ce> No? I thought this would cheer you.
+<ce> Well, we have plenty of others with
+<ce> a soft heart for wronged maidens.
+
+AcceptQuest:  [1002]
+<ce> I thought so. The knight does not know
+<ce> of the contract yet, and sits behind the
+<ce> walls of a fortress called ___mondung_.
+<ce> The contract wants it done, and you back
+<ce> here, within =1stparton_ days. Go, %pcf.
+<ce> Defend the lady's honor.
+
+QuestFail:  [1003]
+<ce> Our client has not thanked us
+<ce> yet, so the knight must still
+<ce> be alive. Fix that soon, %pcf.
+
+QuestComplete:  [1004]
+<ce> So the knight has gone to the next
+<ce> world? Perhaps there the fool will
+<ce> keep that sword in its sheath.
+<ce> Well done as always, %pcf.
+
+RumorsDuringQuest:  [1005]
+That soldier is a mangy dog with no honor at all.
+<--->
+They say the lady tried to win the knight
+and failed. That is why she is so angry.
+
+RumorsPostfailure:  [1006]
+That warrior has gone off to trouble
+the young women of some other land.
+<--->
+The soldier swept out of ____questgiver_
+like a storm and left broken hearts behind.
+
+RumorsPostsuccess:  [1007]
+That soldier got exactly what was
+coming to %g2. A cad to the end.
+<--->
+Good that someone still stands up for a wronged
+lady. What a scoundrel that knight was.
+
+QuestorPostsuccess:  [1008]
+Anything for the one who slew that knight. Just ask.
+
+QuestorPostfailure:  [1009]
+<ce> A %ra who cannot kill one wretched
+<ce> knight wants to talk? Out of my sight.
+
+Message:  1020
+%qdt:
+ In ___questgiver_, _questgiver_ of the
+ Dark Brotherhood gave me a knight to
+ kill. The knight hides in ___mondung_,
+ and I have =1stparton_ days.
+
+Message:  1021
+<ce> "_damsel_... is the talk... of every
+<ce> tavern in %reg..." the knight gasps,
+<ce> and dies. The contract is fulfilled.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _damsel_ face 2 group Group_6.0 female local
+
+Place _mondung_ remote dungeon2
+
+Clock _1stparton_ 00:00 0 flag 18 range 0 2
+
+Foe _monster1_ is Knight
+Foe _monster2_ is Warrior
+Foe _monster3_ is Spellsword
+Foe _monster4_ is Nightblade
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	pick one of _S.06_ _S.07_ _S.08_ _S.09_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc _reward_ 
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_S.02_ task:
+	killed 1 _monster4_ saying 1021 
+	killed 1 _monster3_ saying 1021 
+	killed 1 _monster2_ saying 1021 
+	killed 1 _monster1_ saying 1021 
+
+variable _queston_
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_S.06_ task:
+	place foe _monster1_ at _mondung_ 
+
+_S.07_ task:
+	place foe _monster2_ at _mondung_ 
+
+_S.08_ task:
+	place foe _monster3_ at _mondung_ 
+
+_S.09_ task:
+	place foe _monster4_ at _mondung_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_ 
+	say 1003
+	clear _qgclicked_ _clearclick_

@@ -1,0 +1,148 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C00Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 3
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 14
+Quest: Q0C00Y03
+DisplayName: Public Relation
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> ==qgiver_ needs your help with
+<ce> something both silly and serious.
+<ce> You know the witches of %reg are
+<ce> hated. A trap is being laid for us,
+<ce> and we need someone to undo it.
+<ce> Your pay is a _gem_. Interested?
+
+RefuseQuest:  [1001]
+<ce> No? %oth. Our friends always
+<ce> find somewhere else to be.
+<ce> ==qgiver_ is not surprised.
+
+AcceptQuest:  [1002]
+<ce> This is _child_. %G was left here so
+<ce> our enemies could call us
+<ce> child-stealers, or worse. %G says %g3
+<ce> family is at _home_ in __home_. Take
+<ce> %g2 home, and watch your back. Return
+<ce> in =queston_ days for your _gem_.
+
+QuestComplete:  [1004]
+<ce> _child_ is home, then. Perhaps one
+<ce> kind act by ==qgiver_ will kill a
+<ce> few of the old stories about us.
+<ce> Here is your _gem_, %pcf. Thank you.
+
+RumorsDuringQuest:  [1005]
+They whisper that ==qgiver_
+does worse than steal children.
+<--->
+They say _child_ was taken. Folk are
+gathering torches for ==qgiver_.
+
+RumorsPostfailure:  [1006]
+Everyone knows ==qgiver_ took that
+=child_. Nobody can prove it, mind.
+<--->
+==qgiver_ cannot clear its name.
+The missing child saw to that.
+
+RumorsPostsuccess:  [1007]
+==qgiver_ never took _child_. %G
+told everyone so with %g3 own mouth.
+<--->
+According to _child_, %g ate better
+with ==qgiver_ than at home.
+
+QuestorPostsuccess:  [1008]
+You were kind to _child_ and to ==qgiver_. Sit and talk.
+
+QuestorPostfailure:  [1009]
+<ce> We asked you to take little _child_ to
+<ce> %g3 home, and you failed. That was no
+<ce> small request, and this is no small
+<ce> anger. Leave ==qgiver_, cursed %ra.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I am taking home a child left with
+ the coven of the =qgiver_. _child_
+ lives at _home_ in __home_.
+ Enemies of the witches may try to
+ kill us both. After, my reward
+ waits with _qgiver_ in ___qgiver_.
+
+Message:  1011
+<ce> "Mama! Papa!" _child_ hugs you hard
+<ce> and runs for the door. "Bye, %pcf!"
+
+Message:  1012
+<ce> "There goes the brat of _daedra_, and
+<ce> the witch's dog with it!" a voice yells.
+<--->
+<ce> "Death to ==daedra_ and to ==qgiver_
+<ce> and all their brood!" someone screams.
+<--->
+<ce> "%god, guide my blade against the
+<ce> servants of ==qgiver_!" a voice cries.
+
+Message:  1013
+<ce> "I can walk the rest myself,"
+<ce> says the child, and slips off
+<ce> quicker than you can follow.
+
+
+QBN:
+Item _gem_ gem
+
+Person _qgiver_ group Questor
+Person _child_ face 105 faction Children
+Person _daedra_ face 69 factiontype Daedra male remote
+
+Place _home_ remote house2
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _warrior_ is Warrior
+
+--	Quest start-up:
+	create foe _warrior_ every 15 minutes 40 times with 100% success msg 1012 
+	start timer _queston_ 
+	log 1010 step 0 
+	pc at _home_ set _S.01_ 
+	add _child_ face 
+
+_queston_ task:
+	end quest 
+
+_S.01_ task:
+	say 1011 
+	drop _child_ face
+	start task _S.07_
+--added start task S.07. 07 was turning off when S.01 deactivated.
+
+_reward_ task:
+	when _S.03_ and _S.07_ 
+	give pc _gem_ 
+	end quest 
+
+_S.03_ task:
+	clicked npc _qgiver_ 
+
+_S.04_ task:
+	when _S.03_ and not _S.07_ 
+	clear _S.03_ _S.04_ 
+
+_S.05_ task:
+	when _queston_ and not _S.07_ 
+	say 1013 
+
+variable _S.06_
+variable _S.07_
+--changed S.07 to empty variable instead of "when S.01"

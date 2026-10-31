@@ -13,7 +13,7 @@
 // - RESTART-WORDS: a questline step the journal restarted is not a stall (questlines/qlLineRunner.js look, ended).
 // - NO-ASKS-AGAIN's clearing No (quest/noAsksAgain.js clearingNo): C0C00Y10's healer itself is fb1013e_noasks.test.js's;
 //   here the No's refusals and the law's own order, on a script of the healer's shape.
-// - DUEL-TOWN: A0C00Y10's journal names the inn's own town (quest/questPatches.js).
+// - DUEL-TOWN: A0C00Y10's journal names the inn's own town (quest/own/A0C00Y10.txt, OWN-WORDS2; a patch before).
 //
 // Every quest here is a script through the real parser and machine - none needs ARENA2: its places are none, its
 // asking a click on an Item, its answers through the box's own callback, its saves through the machine's own envelope.
@@ -472,12 +472,13 @@ test('NO-ASKS-AGAIN\'s clearing No, in play: after each No the next click - and 
   assert.equal(more.m.seen.boxes.length, 1, 'a No that does more: DFU\'s, asked once');
 });
 
-test('DUEL-TOWN: A0C00Y10\'s journal names the inn\'s own town - its duel at the nearest town\'s inn is sent there, not to the questor\'s town; the patch moves that one word and nothing else (mutants: the patch\'s words)', () => {
+// PIN MOVED (OWN-WORDS2): the journal's words are our own file's (quest/own/A0C00Y10.txt), which names `___inn_` itself.
+// The patch had no QBN half, so it is gone, and the pin reads the words the player is shown.
+test('DUEL-TOWN: A0C00Y10\'s journal names the inn\'s own town - its duel at the nearest town\'s inn is sent there, not to the questor\'s town; our own words carry it, and no patch is left (mutants: our words name the questor\'s town)', () => {
   const raw = read(join(VENDOR, 'Quests', 'A0C00Y10.txt'));
-  const patched = applyQuestPatches('A0C00Y10', raw);
-  assert.deepEqual(QUEST_PATCHES.A0C00Y10().map((p) => p.count), [1]);
-  const norm = (s) => s.replace(/\r\n?/g, '\n');
-  assert.equal(norm(patched), norm(raw).replace(' _inn_ in ___giver_ in six hours.', ' _inn_ in ___inn_ in six hours.'), 'one word moved');
+  const own = src('src/systems/quest/own/A0C00Y10.txt');
+  assert.equal(QUEST_PATCHES.A0C00Y10, undefined, 'the fix is in our file, not a patch');
+  assert.equal(applyQuestPatches('A0C00Y10', own), own, 'read as written');
   /** The QuestFail entry (1003) as the journal says it, the inn at Moriribia and the questor of Glaghton Court. */
   const entry = (text) => {
     const lines = text.split(/\r?\n/);
@@ -490,8 +491,8 @@ test('DUEL-TOWN: A0C00Y10\'s journal names the inn\'s own town - its duel at the
     return tokens.map((t) => t.text).join(' ');
   };
   assert.match(entry(raw), /The Rusty Mug in Glaghton Court in six hours\./, 'the fixture: DFU\'s words name the questor\'s town');
-  const said = entry(patched);
-  assert.match(said, /I have agreed to duel with Aldo at/);
-  assert.match(said, /The Rusty Mug in Moriribia in six hours\./, 'the inn\'s own town');
+  const said = entry(own);
+  assert.match(said, /Aldo challenged me to a duel/);
+  assert.match(said, /The Rusty Mug\s+in Moriribia, six hours from now\./, 'the inn\'s own town');
   assert.doesNotMatch(said, /Glaghton Court/);
 });

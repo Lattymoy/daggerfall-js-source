@@ -1,0 +1,212 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C0XY01.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0X
+-- QuestId: 1
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 100
+Quest: K0C0XY01
+DisplayName: The Harpies' Nest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Harpies have nested in an old property of mine.
+<ce> Our wise %rt fines any owner who does not clear
+<ce> them out. The last sellsword I sent never came
+<ce> back. Would _reward_ gold tempt you?
+
+RefuseQuest:  [1001]
+<ce> %oth. I do not blame you. I cannot
+<ce> stand the smell of harpies either.
+
+AcceptQuest:  [1002]
+<ce> Splendid. I need proof of a real effort at
+<ce> ___mondung_ within =2mondung_ days. _contact_,
+<ce> the Fighters Guild sellsword I hired first, did
+<ce> not manage it. The harpies' clan leaders wear
+<ce> dyed feathers. Bring me one in time, %pcf.
+
+QuestFail:  [1003]
+<ce> %oth. You call that an effort?
+
+QuestComplete:  [1004]
+<ce> Well done, %pcf. Now the %rt can see
+<ce> I did my civic duty, or tried to.
+<ce> Your _reward_ gold, well earned.
+
+RumorsDuringQuest:  [1005]
+The %rt wants proof that the
+harpies are dead. Feathers, I hear.
+<--->
+_qgiver_ has let ___mondung_ rot.
+It is no use as a storehouse now.
+<--->
+_qgiver_ should just pull down
+___mondung_ and be done with it.
+
+RumorsPostfailure:  [1006]
+The %rt has fined _qgiver_ so
+often that %g may never recover.
+<--->
+_qgiver_ cannot find a harpy hunter who comes back alive.
+
+RumorsPostsuccess:  [1007]
+The %rt is pleased that _qgiver_ finally
+did something about ___mondung_.
+<--->
+_qgiver_ has made %g3 first real
+try at cleaning out ___mondung_.
+
+QuestorPostsuccess:  [1008]
+You dealt with my harpies, %pcf. What do you need?
+
+QuestorPostfailure:  [1009]
+I do not talk to a %ra who cannot fetch one feather.
+
+Message:  1030
+A big white feather, dyed an ugly red.
+
+Message:  1031
+A gray feather stained a sick green.
+
+Message:  1032
+A big white feather,
+dyed black as pitch.
+
+Message:  1033
+A gray feather in faded blue dye.
+
+Message:  1011
+<ce> My thanks, %pcf. From here
+<ce> I know the road home.
+
+Message:  1012
+__qgiver_, ___qgiver_
+ %pcn,
+ 
+      A Fighters Guild caller asked after
+ _contact_, my first sellsword at ___mondung_. I
+ promised to ask you to look. %G should stand out
+ there, a =contact_ among harpies. Promise kept.
+ 
+<ce> Yours,
+<ce> _qgiver_
+
+Message:  1013
+<ce> _qgiver_ sent you? Thank %god,
+<ce> %pcf. Mind if I come along? Take
+<ce> this _jewelry_ for your trouble.
+
+Message:  1014
+<ce> A young runner gives you a letter
+<ce> and leaves without a word.
+
+Message:  1020
+%qdt:
+ _qgiver_, a merchant in ___qgiver_, hired me to thin
+ the harpies in %g3 old property, ___mondung_. I need
+ not kill them all. A leader's clan feather, back
+ here within =2mondung_ days, earns me _reward_ gold.
+
+Message:  1050
+One harpy killed.
+
+Message:  1051
+Two harpies killed.
+
+Message:  1052
+Three harpies killed.
+
+Message:  1053
+Four harpies killed.
+
+Message:  1040
+<ce> No proof, no pay.
+
+Message:  1099
+<ce> This is one of the clan feathers.
+
+
+QBN:
+Item _item_ book2
+Item _reward_ gold
+Item _clanfeather1_ harpy_feather
+-- feather "dialogue" was weird and out of place. Removed from quest since they contribute nothing
+Item _letter26_ letter used 1012
+Item _jewelry_ trinket
+
+Person _qgiver_ group Questor
+Person _contact_ face 1 faction The_Fighters_Guild remote
+
+Place _mondung_ remote dungeon10
+
+Clock _2mondung_ 00:00 0 flag 17 range 0 2
+Clock _S.05_ 16:40 1.09:20
+Clock _S.06_ 05:00 10:00
+
+Foe _F.00_ is Harpy
+Foe _F.01_ is Harpy
+
+--	Quest start-up:
+	start timer _2mondung_ 
+	start timer _S.05_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	give item _clanfeather1_ to _F.01_ 
+	pc at _mondung_ set _S.08_ 
+	_letter26_ used do _S.15_ 
+	place foe _F.01_ at _mondung_
+	have _clanfeather1_ set _S.14_
+
+_2mondung_ task:
+	end quest 
+
+variable _pcgetsgold_
+_S.02_ task:
+	toting _clanfeather1_ and _qgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+_S.03_ task:
+	clicked npc _contact_ 
+	start timer _S.06_ 
+	get item _jewelry_ 
+	hide npc _contact_ 
+	say 1013 
+	make _jewelry_ permanent 
+	add _contact_ face 
+	change repute with _contact_ by +10 
+
+_S.04_ task:
+	clicked npc _qgiver_ 
+
+_S.05_ task:
+	give pc _letter26_ notify 1014 
+
+_S.06_ task:
+	say 1011 
+	drop _contact_ face 
+
+variable _S.07_
+_S.08_ task:
+	create foe _F.00_ every 21 minutes 15 times with 25% success 
+
+_clearclick_ task:
+	when _S.04_ and not _S.02_ 
+	clear _S.04_ _clearclick_
+	say 1003
+	say 1040 
+
+variable _S.10_
+variable _S.11_
+variable _S.12_
+variable _S.13_
+_S.14_ task:
+	say 1099 
+--changed "clicked item clanfeather1 say 1099" to "have item do this" since feather is on enemy body
+
+_S.15_ task:
+	place npc _contact_ at _mondung_ 

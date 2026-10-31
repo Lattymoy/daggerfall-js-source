@@ -1,0 +1,160 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 8
+Messages: 21
+Quest: R0C10Y08
+DisplayName: Theft from a Temple
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I need help from someone who is not a
+<ce> complete fool, %pcf. My last hireling
+<ce> let bandits steal a small parcel meant
+<ce> for a temple. At least the idiot saw
+<ce> where they went. Will you get it back?
+
+RefuseQuest:  [1001]
+<ce> %oth, I feared you would say so. Still,
+<ce> a refusal is better than a botched job.
+
+AcceptQuest:  [1002]
+<ce> Good, %pcf. The bandits passed the _item_ to
+<ce> _itemplace_, a temple in __itemplace_. Steal
+<ce> it and give it to _transporter_ within
+<ce> =1stparton_ days. Seek %g2 at _inn_ in
+<ce> __inn_, then return within =2ndparton_ days.
+
+QuestFail:  [1003]
+<ce> Yes? Surely you expect no reward
+<ce> before you have done anything, %pcf.
+
+QuestComplete:  [1004]
+<ce> %oth, %pcf, welcome back. Why I ever hired
+<ce> that dolt, I cannot say. Here is your
+<ce> _reward_ gold. You have earned every coin.
+
+RumorsDuringQuest:  [1005]
+_itemplace_ has posted more guards
+lately, and nobody knows why.
+<--->
+The priests of _itemplace_ are fretting
+about thieves for some reason.
+
+RumorsPostfailure:  [1006]
+_itemplace_ got back a stolen _item_, I hear.
+<--->
+_itemplace_ has its _item_ back,
+and keeps it somewhere safer now.
+
+RumorsPostsuccess:  [1007]
+Thieves took a valuable _item_ from _itemplace_.
+<--->
+Now even the temples are being robbed. What next?
+
+QuestorPostsuccess:  [1008]
+A great pleasure to see you. How may I serve?
+<--->
+You are the %ra from that business
+at the temple, are you not?
+
+QuestorPostfailure:  [1009]
+<ce> %oth, you. If you came to apologize for
+<ce> that sloppy work, save it. I am busy.
+
+QuestLogEntry:  [1010]
+<ce> %god be thanked, you came, %pcf. Now
+<ce> hurry back to _questgiver_. If you
+<ce> are not there within =2ndparton_
+<ce> days, %g will forget you exist and
+<ce> pay you nothing. I know %g3 habits.
+
+Message:  1011
+<ce> _transporter_ is a nervous =transporter_
+<ce> who does business with _questgiver_.
+<--->
+The =transporter_? %G stays at
+__transporter_, %di of here.
+
+Message:  1012
+<ce> You take the _item_. Now
+<ce> it goes to _transporter_.
+
+Message:  1015
+%qdt:
+ _questgiver_ wants me to steal a _item_
+ from _itemplace_ in __itemplace_ and
+ get it to _transporter_ at _inn_ in
+ __inn_ within =1stparton_ days. After
+ that, =2ndparton_ days remain to get
+ from __inn_ to _questgiver_ at
+ __questgiver_ in ___questgiver_.
+
+Message:  1020
+<ce> Thief! You defile our holy _item_! Stop!
+
+
+QBN:
+Item _reward_ gold
+Item _item_ religious
+
+Person _questgiver_ face 112 group Questor
+Person _transporter_ face 1 group Local_3.0 remote anyInfo 1011
+Person _dummypriest_ factiontype Temple remote
+
+Place _itemplace_ remote temple
+Place _inn_ remote tavern
+
+Clock _1stparton_ 00:00 0 flag 1 range 0 5
+Clock _2ndparton_ 00:00 0 flag 1 range 2 3
+
+Foe _F.00_ is Monk
+
+--	Quest start-up:
+	place item _item_ at _itemplace_ 
+	start timer _1stparton_ 
+	reveal _inn_ 
+	log 1015 step 0 
+	place npc _transporter_ at _inn_ 
+
+_pcgetsgold_ task:
+	when _S.05_ and _qgclicked_ 
+	give pc _reward_ 
+	end quest 
+
+_pchasitem_ task:
+	clicked item _item_ 
+	pc at _itemplace_ set _S.09_ 
+	say 1012 
+	change repute with _dummypriest_ by -10 
+
+_queston_ task:
+	when _2ndparton_ 
+	when _1stparton_ and not _S.05_ 
+	make _item_ permanent 
+	end quest 
+
+variable _npcclicked_
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_S.05_ task:
+	toting _item_ and _transporter_ clicked 
+	start timer _2ndparton_ 
+	say 1010 
+
+variable _1stparton_
+variable _2ndparton_
+_clearclick_ task:
+	when _qgclicked_ and not _S.05_ 
+	clear _qgclicked_ _clearclick_ 
+
+_S.09_ task:
+	create foe _F.00_ every 3 minutes 4 times with 50% success 
+
+totemLetter5 task:
+	injured _F.00_ saying 1020 

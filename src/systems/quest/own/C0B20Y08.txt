@@ -1,0 +1,99 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0B20Y08.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 20
+-- QuestId: 8
+Messages: 12
+Quest: C0B20Y08
+DisplayName: The Rite of Atonement
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You have served the temple well, so
+<ce> I will be plain. %god is displeased
+<ce> with us, and the reasons are ours
+<ce> to carry. A rite of atonement needs
+<ce> _ingredient_, and there is some in
+<ce> ___dungeon_. Will you get it?
+
+RefuseQuest:  [1001]
+<ce> So much for your loyalty, %pcn.
+
+AcceptQuest:  [1002]
+<ce> The rite is in =traveltime_ days. You
+<ce> will have _gold_ gold for this. The
+<ce> _ingredient_ must be clean, untouched
+<ce> by any taint. %god's blessing will
+<ce> show you which is right.
+
+QuestComplete:  [1004]
+<ce> _ingredient_, and clean! %god
+<ce> will be at peace with us again.
+<ce> You have earned your reward.
+
+RumorsDuringQuest:  [1005]
+Nobody at __qgiver_ smiles these days.
+<--->
+The bells at __qgiver_ have been silent for a week.
+<--->
+Some say the priests of __qgiver_
+forgot a feast day of %god.
+
+RumorsPostfailure:  [1006]
+__qgiver_ is still in disgrace with its god.
+
+RumorsPostsuccess:  [1007]
+Whatever __qgiver_ did,
+its god has let it go.
+
+QuestorPostsuccess:  [1008]
+You made peace with %god for us, %pct. Name what you need.
+
+QuestorPostfailure:  [1009]
+%god scorns __qgiver_ still, and I scorn you, %pct.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ at __qgiver_ in ___qgiver_
+ says %g3 god is displeased. %G
+ needs clean _ingredient_ for a rite
+ of atonement. There is some in
+ ___dungeon_, and _qgiver_ must have
+ it within =traveltime_ days.
+
+Message:  1011
+<ce> Here it is, clean and whole.
+<ce> This _ingredient_ will do.
+<ce> _qgiver_ is waiting.
+
+
+QBN:
+Item _ingredient_ organs
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+
+--	Quest start-up:
+	place item _ingredient_ at _dungeon_ 
+	start timer _traveltime_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+
+_traveltime_ task:
+	end quest 
+
+_questdone_ task:
+	toting _ingredient_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_S.02_ task:
+	clicked item _ingredient_ say 1011

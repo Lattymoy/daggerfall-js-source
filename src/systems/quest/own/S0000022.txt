@@ -1,0 +1,76 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000022.Qbn.
+-- Main story quest.
+-- QuestId: 22
+Messages: 12
+Quest: S0000022
+DisplayName: Lysandus' Revelation
+-- Message panels
+QRC:
+
+RefuseQuest:  [1001]
+<ce> I told you: one month. The powder
+<ce> needs more time. Come back later.
+
+AcceptQuest:  [1002]
+<ce> The powder is ready. Scatter it on his
+<ce> true body. It only calms his shade, so
+<ce> he can speak. The rest is his choice.
+<ce> He lies I know not where, but not at
+<ce> Cryngaine. Tell him I love him still.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Medora must spend a month preparing
+ the Dust. After that, I should go
+ back to her at Direnni Tower.
+
+Message:  1011
+%qdt:
+ Medora has given me the powder. It
+ will calm Lysandus' spirit, though not
+ lay it to rest. It must be used at his
+ tomb, which I have yet to find.
+
+
+QBN:
+Item _spider_ lich_dust
+
+Person _medora_ named Medora atHome
+
+
+Clock _S.00_ 30.00:00 0 flag 1 range 0 1
+
+
+--	Quest start-up:
+	start timer _S.00_ 
+	log 1010 step 0 
+
+variable _S.00_
+_S.01_ task:
+	clicked npc _medora_ 
+
+_S.02_ task:
+	when _S.01_ and _S.00_ 
+	log 1011 step 1 
+	get item _spider_ 
+	say AcceptQuest 
+
+_S.03_ task:
+	when not _S.00_ and _S.01_ 
+	say RefuseQuest 
+	clear _S.01_ _S.03_ 
+
+LysandusSatisfied _S.04_
+	have _spider_ set _S.05_ 
+
+_S.05_ task:
+	start quest 15 15 
+	take _spider_ from pc 
+	play video 5 
+	end quest 
+
+_S.06_ task:
+	when _S.04_ and not _S.05_ 
+	clear _S.04_ _S.06_

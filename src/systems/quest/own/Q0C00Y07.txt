@@ -1,0 +1,133 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C00Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 0
+-- QuestId: 7
+Messages: 14
+Quest: Q0C00Y07
+DisplayName: The Imprisoned Witch
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Our sister _witch_ is in chains. We need
+<ce> someone like you to free her. Will you?
+
+RefuseQuest:  [1001]
+<ce> Cold as winter, %pcf. Shame on you.
+
+AcceptQuest:  [1002]
+<ce> Then we owe you. She is held in
+<ce> ___mondung_. Give her these
+<ce> clothes as a disguise. Bring her
+<ce> back here within =queston_ days.
+
+QuestComplete:  [1004]
+<ce> _witch_, home and whole! I was afraid
+<ce> I would never see you again. %pcf,
+<ce> ==qgiver_ will not forget this.
+
+RumorsDuringQuest:  [1005]
+Once they are done asking _witch_ questions, she burns.
+<--->
+They are building a pyre for _witch_. Soon, they say.
+
+RumorsPostfailure:  [1006]
+They burned _witch_ in the square.
+People brought their children.
+<--->
+Not even magic saved _witch_ from the fire.
+
+RumorsPostsuccess:  [1007]
+_witch_ escaped. People blame ==qgiver_.
+<--->
+_witch_ walked free before they
+could even question her properly.
+
+QuestorPostsuccess:  [1008]
+_witch_ is mending well, %pcf. I
+thought you would like to know.
+
+QuestorPostfailure:  [1009]
+<ce> Our sister _witch_ burned alive. Maybe
+<ce> you could have saved her, maybe not.
+<ce> Either way, you are not welcome here,
+<ce> and will not be for a long time.
+
+QuestLogEntry:  [1010]
+%qdt:
+ ==qgiver_ sent me to
+ ___mondung_, where their sister
+ _witch_ is held. She needs a
+ _clothes_ as a disguise, and I
+ must bring her back to ==qgiver_
+ within =queston_ days.
+
+Message:  1011
+<ce> You come from ==qgiver_? ==daedra_
+<ce> heard me after all! Give me that
+<ce> _clothes_, and we can sneak out.
+
+Message:  1012
+<ce> "The prisoner! _witch_ is
+<ce> loose! Stop that witch!"
+<--->
+<ce> "Back to your cell, _witch_?
+<ce> No. The pyre, this time!"
+<--->
+<ce> "Stop right there! That is _witch_!"
+
+Message:  1013
+<ce> "This is far enough. ==qgiver_ is
+<ce> not far now," says _witch_, and
+<ce> with a quick thanks she is gone.
+
+
+QBN:
+Item _clothes_ womens_robe
+
+Person _qgiver_ group Questor
+Person _witch_ face 1 faction The_Prostitutes female remote
+Person _daedra_ face 105 factiontype Daedra
+
+Place _mondung_ remote dungeon3
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _guard_ is Warrior
+
+--	Quest start-up:
+	dialog link for person _daedra_ 
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	get item _clothes_ 
+	place npc _witch_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_S.01_ task:
+	toting _clothes_ and _witch_ clicked 
+	create foe _guard_ every 2 minutes 30 times with 50% success msg 1012 
+	hide npc _witch_ 
+	say 1011 
+	add _witch_ face 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_S.03_ task:
+	when _qgclicked_ and not _S.01_ 
+	clear _qgclicked_ _S.03_ 
+
+_reward_ task:
+	when _qgclicked_ and _S.01_ 
+	give pc nothing 
+	end quest 
+
+_S.05_ task:
+	when _queston_ and _S.01_ 
+	say 1013

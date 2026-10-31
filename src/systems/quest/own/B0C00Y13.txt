@@ -1,0 +1,131 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\B0C00Y13.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: knight
+-- Repute: 0
+-- QuestId: 13
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 12
+Quest: B0C00Y13
+DisplayName: The Infested House
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Trust you, %pcn? You are no knight of
+<ce> ours, so you get nothing that matters.
+<ce> A small test, then. Vermin have overrun
+<ce> a building of mine. Clear it, and I may
+<ce> put in a word for you. Will you?
+
+RefuseQuest:  [1001]
+<ce> So I must do it myself. You are
+<ce> worth even less than I guessed.
+
+AcceptQuest:  [1002]
+<ce> You get one day to clear out _house_.
+<ce> After that I clear it myself, and the
+<ce> whole town hears what a coward you are.
+
+QuestComplete:  [1004]
+<ce> That will do, %pcn. The order will
+<ce> hear good things of you from me.
+
+RumorsDuringQuest:  [1005]
+Odd noises come out of _house_ at all hours.
+<--->
+The house of _qgiver_ is crawling
+with things. Nobody goes in.
+
+RumorsPostfailure:  [1006]
+_qgiver_ had to pay a rat-catcher in the end.
+<--->
+Clearing that house will cost
+_qgiver_ a pretty penny.
+
+RumorsPostsuccess:  [1007]
+_house_ is quiet at last.
+<--->
+The vermin are gone from _house_, finally.
+
+QuestorPostsuccess:  [1008]
+You did clear out my house. What is it you need?
+
+QuestorPostfailure:  [1009]
+A few vermin beat you. Do not waste my time.
+<--->
+I will not waste words on a bootlicker.
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___qgiver_ I met _qgiver_, a
+ knight. If I clear the vermin out
+ of _house_ in __house_ for %g2, the
+ knights may think better of me.
+
+Message:  1011
+<ce> The house of _qgiver_ is clear.
+
+Message:  1012
+<ce> Something scratches inside the walls. Whatever
+<ce> lives here will not like you walking in.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _house_ local house
+
+Clock _oneday_ 1.00:00 0 flag 1 range 0 1
+
+Foe _spiders_ is Spider
+Foe _rats_ is Giant_rat
+Foe _scorpions_ is Giant_scorpion
+Foe _bats_ is Giant_bat
+
+--	Quest start-up:
+	start timer _oneday_ 
+	log 1010 step 0 
+	--location action removed. not defined and not needed.
+	pc at _house_ set _S.01_ 
+
+_oneday_ task:
+	end quest 
+
+_S.01_ task:
+	say 1012
+	pick one of _S.04_ _S.05_ _S.06_ _S.07_ 
+
+_questdone_ task:
+	clicked npc _qgiver_ 
+
+_success_ task:
+	when _S.03_ and _questdone_ 
+	give pc nothing 
+	end quest 
+
+_S.03_ task:
+	killed 6 _bats_ 
+	killed 7 _rats_ 
+	killed 3 _scorpions_ 
+	killed 3 _spiders_ 
+	say 1011 
+
+_S.04_ task:
+	create foe _bats_ every 2 minutes 8 times with 100% success 
+
+_S.05_ task:
+	create foe _rats_ every 2 minutes 10 times with 100% success 
+
+_S.06_ task:
+	create foe _scorpions_ every 3 minutes 4 times with 100% success 
+
+_S.07_ task:
+	create foe _spiders_ every 3 minutes 4 times with 100% success
+--slowed enemy spawn due to feedback 
+
+_clearclick_ task:
+	when not _S.03_ and _questdone_ 
+	clear _questdone_ _clearclick_

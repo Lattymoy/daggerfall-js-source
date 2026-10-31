@@ -1,0 +1,128 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0B10Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 10
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 13
+Quest: C0B10Y05
+DisplayName: The Cursed Weapon
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, this task is dangerous. The temple
+<ce> holds an evil weapon the orcs badly
+<ce> want, and they have attacked us twice
+<ce> for it. It must go somewhere safe. Will
+<ce> you carry it for _gold_ gold?
+
+RefuseQuest:  [1001]
+<ce> Disappointing, but given the
+<ce> danger, I understand. I will
+<ce> not hold it against you.
+
+AcceptQuest:  [1002]
+<ce> Take this _evilitem_ to ___dungeon_.
+<ce> _custodian_, who has served the
+<ce> temple for years, waits there. %G
+<ce> will keep it from the orcs. Our
+<ce> spells shield you from its evil, but
+<ce> they fade in =traveltime_ days.
+
+QuestComplete:  [1004]
+<ce> So this is the cursed _evilitem_.
+<ce> It stays here, behind strong wards.
+<ce> _qgiver_ told me to pay you _gold_
+<ce> gold for bringing it safely.
+
+RumorsDuringQuest:  [1005]
+Orcs keep raiding caravans bound for __qgiver_.
+
+RumorsPostfailure:  [1006]
+So the orcs got their
+_evilitem_ in the end.
+
+RumorsPostsuccess:  [1007]
+The orcs will never lay a
+hand on that _evilitem_ now.
+
+QuestorPostsuccess:  [1008]
+You saw that _evilitem_ safely away. Now, how can I help?
+
+QuestorPostfailure:  [1009]
+The orcs have the _evilitem_ now.
+I should never have trusted you.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_ in ___qgiver_,
+ _qgiver_ handed me an evil
+ _evilitem_ to carry to
+ ___dungeon_, out of the
+ orcs' reach. I must deliver
+ it within =traveltime_ days.
+
+Message:  1011
+<ce> The human carries our war-god's blade!
+<ce> Kill it! The _evilitem_ is ours!
+
+Message:  1012
+<ce> The _evilitem_ crackles and falls to
+<ce> dust. A wave of sickness washes over you.
+
+
+QBN:
+Item _evilitem_ weapon
+Item _gold_ gold
+
+Person _qgiver_ face 1 group Questor
+Person _custodian_ face 1 group Group_5.0 remote
+
+Place _dungeon_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 1 range 0 2
+
+Foe _orc1_ is Orc_shaman
+Foe _orc2_ is Orc_warlord
+Foe _orc3_ is 2 Orc_sergeant
+Foe _orc4_ is 3 Orc
+
+--	Quest start-up:
+	start timer _traveltime_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+	get item _evilitem_ 
+	place npc _custodian_ at _dungeon_ 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	toting _evilitem_ and _custodian_ clicked 
+	give pc _gold_ 
+	end quest 
+
+until _S.01_ performed:
+	create foe _orc2_ every 21 minutes 20 times with 5% success 
+	create foe _orc4_ every 41 minutes 20 times with 5% success 
+	create foe _orc1_ every 21 minutes 20 times with 5% success 
+	create foe _orc3_ every 31 minutes 20 times with 5% success 
+
+variable _gem1_
+variable _bear_
+variable _gem3_
+variable _gem4_
+_S.06_ task:
+	injured _orc2_ saying 1011 
+	injured _orc4_ saying 1011 
+	injured _orc3_ saying 1011 
+	injured _orc1_ saying 1011 
+
+_S.07_ task:
+	when _traveltime_ and not _S.01_ 
+	make pc ill with Witches'_Pox
+	say 1012 
+	--moved saying 1012 to its own line

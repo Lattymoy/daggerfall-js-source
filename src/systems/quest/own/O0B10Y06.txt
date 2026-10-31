@@ -1,0 +1,115 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0B10Y06.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 10
+-- QuestId: 6
+Messages: 11
+Quest: O0B10Y06
+DisplayName: The Jewel Heist
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A jewelry job is in the works,
+<ce> just your kind of thing. The usual
+<ce> guild pay of _gold_ gold. Want in?
+
+RefuseQuest:  [1001]
+<ce> Fine. I will find a member
+<ce> who wants the work.
+
+AcceptQuest:  [1002]
+<ce> %oth, splendid. The _jewelry_ is
+<ce> somewhere in __mansion_, at
+<ce> _mansion_. Find it and bring it
+<ce> here. Watch yourself, because the
+<ce> place is said to keep a guardian.
+
+QuestComplete:  [1004]
+<ce> Nice work, %pcn. Your
+<ce> guild fee, as promised.
+
+RumorsDuringQuest:  [1005]
+People say nobody can
+get into _mansion_.
+
+RumorsPostfailure:  [1006]
+Someone tried to get into _mansion_ and failed.
+
+RumorsPostsuccess:  [1007]
+_mansion_ was robbed. I can hardly believe it.
+<--->
+If _mansion_ can be robbed,
+nobody's house is safe.
+
+QuestorPostsuccess:  [1008]
+How are you, %pcf? Not spent the
+_gold_ gold already, I hope?
+
+QuestorPostfailure:  [1009]
+<ce> %oth, you again. The owner of
+<ce> _mansion_ has moved the _jewelry_,
+<ce> so the job is dead. Thank you so
+<ce> much for all your hard work.
+
+QuestLogEntry:  [1010]
+%qdt:
+ For _qgiver_ in ___qgiver_, I am to
+ slip into ___mansion_ and take the
+ _jewelry_ from _mansion_. I must bring
+ it to %g2 within =traveltime_ days.
+
+
+QBN:
+Item _jewelry_ trinket
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _mansion_ remote house1
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Grizzley_bear
+Foe _F.01_ is Giant_scorpion
+Foe _F.02_ is Ranger
+Foe _F.03_ is Thief
+
+--	Quest start-up:
+	place item _jewelry_ at _mansion_ 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pc at _mansion_ set _S.01_ 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_ 
+
+_questdone_ task:
+	toting _jewelry_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success 
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success 
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success 
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success 
+
+wizard0 task:
+	clicked item _jewelry_ 
+
+_S.08_ task:
+	when wizard0 and _traveltime_ 
+	make _jewelry_ permanent 
+	change repute with _qgiver_ by -20

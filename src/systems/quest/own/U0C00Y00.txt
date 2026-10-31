@@ -1,0 +1,186 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\U0C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: Boethiah
+-- Repute: 0
+-- QuestId: 0
+Messages: 43
+Quest: U0C00Y00
+DisplayName: Boethiah's Quest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Power? Would a %ra who crawls about
+<ce> Mundus know what to do with it? You
+<ce> want to push a few mortals around.
+<ce> Fine. Show me you have the nerve to
+<ce> use what I give. Will you kill for it?
+
+RefuseQuest:  [1001]
+<ce> Pah. You sicken me. Call me again, %pcf,
+<ce> when you have a spine or want a fight.
+
+AcceptQuest:  [1002]
+<ce> Kill =monster_, a sweet, charitable spellsword
+<ce> who bores me. %G fights better than %g3
+<ce> manners suggest. Find %g2 at ___mondung_. Then
+<ce> my agent _qgfriend_, a =qgfriend_ at
+<ce> __qgfriend_ in ___qgfriend_, expects you. Keep
+<ce> %g2 waiting no more than =1stparton_ days.
+
+QuestFail:  [1003]
+<ce> Keep walking, %ra. We
+<ce> have nothing to say.
+
+QuestComplete:  [1004]
+<ce> So you are %pcn. Less puny than
+<ce> Boethiah said. Take that as praise,
+<ce> and take this too, _artifact_, made
+<ce> by her own hand. She is interested
+<ce> in you. I could tell from how she
+<ce> smiled when she said 'puny.'
+
+RumorsDuringQuest:  [1005]
+Next time we choose a mayor, I vote for =monster_.
+<--->
+=monster_ gives to every beggar in %reg. A saint, truly.
+
+RumorsPostfailure:  [1006]
+Who would want =monster_ dead? Thank %god %g is unhurt.
+<--->
+An assassin went after =monster_. Lucky
+for us, the assassin was useless.
+
+RumorsPostsuccess:  [1007]
+All of %reg mourns. What beast would kill =monster_?
+<--->
+%oth, =monster_ dead. What a terrible waste.
+
+Message:  1011
+_qgfriend_? That loud-mouthed =qgfriend_ at __qgfriend_.
+<--->
+That is the bully at __qgfriend_, %di of here.
+
+Message:  1012
+_qgfriend_ works in Tamriel for Boethiah, the Daedra Prince.
+<--->
+_qgfriend_ is a nasty bully in the pay of Boethiah.
+
+Message:  1013
+Cruelty and torment are Boethiah's
+to command. Keep clear of her.
+<--->
+A Prince of Oblivion, and a born killer, that Boethiah.
+
+Message:  1014
+_artifact_ shields its wearer from many harms.
+Fire and life-draining are the best known.
+
+Message:  1010
+%qdt:
+ Boethiah wants the spellsword =monster_ dead,
+ in %g3 fortress of ___mondung_, and offers
+ _artifact_. Within =1stparton_ days I must
+ kill the spellsword and meet her contact,
+ _qgfriend_, at __qgfriend_ in ___qgfriend_.
+
+Message:  1030
+<ce> =monster_ is dead.
+<ce> Boethiah has her bargain.
+
+Message:  1040
+=monster_,
+ 
+ Leave ___mondung_ at once! Boethiah has
+ paid to have you killed. Hide in the
+ usual spot. I will come for you myself,
+ once a road out of %reg is ready.
+ 
+<ce> Watch your back,
+<ce>
+<ce> _mfriend_
+<ce> ___mfriend_
+
+Message:  1041
+<ce> You got in here? %oth! =monster_ was
+<ce> always going to get me killed. If %g
+<ce> leaves my letters lying about, %g is
+<ce> not worth saving. You will find %g2
+<ce> in ___hideout_. I am done with %g2.
+
+Message:  1042
+%qdt:
+ =monster_ slipped away
+ from ___mondung_, but %g
+ hides now in ___hideout_.
+ %G will not escape twice.
+
+
+QBN:
+Item _artifact_ artifact Ebony_Mail anyInfo 1014
+Item _letter_ letter used 1040
+
+Person _questgiver_ face 112 named Boethiah anyInfo 1013
+Person _qgfriend_ group Librarian anyInfo 1011 rumors 1012
+Person _mfriend_ group Local_4.0 remote
+
+Place _mondung_ remote dungeon2
+Place _hideout_ remote dungeon6
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+Clock _escapetime_ 00:00 0 flag 1 range 2 3
+
+Foe _monster_ is Spellsword
+Foe _monster1_ is Spellsword
+
+--	Quest start-up:
+	dialog link for person _mfriend_ 
+	start timer _escapetime_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	_letter_ used do _readletter_ 
+	place foe _monster_ at _mondung_ 
+
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_ 
+	give pc _artifact_ 
+	end quest 
+--removed unnecessary delay
+
+_mondead_ task:
+	killed 1 _monster_ 
+	killed 1 _monster1_
+	say 1030 
+
+_npcclicked_ task:
+	clicked npc _qgfriend_ 
+
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_
+	say 1003 
+	clear _npcclicked_ _clearclick_ 
+
+_escapetime_ task:
+	start timer _1stparton_ 
+
+_S.08_ task:
+	when _escapetime_ and not _mondead_ 
+	place item _letter_ at _mondung_ 
+	remove foe _monster_
+	place foe _monster1_ at _hideout_ 
+--added monster1 due to duplicate monster issue
+
+_S.09_ task:
+	clicked npc _mfriend_ 
+	reveal _hideout_ 
+	log 1042 step 1 
+	say 1041 
+
+_readletter_ task:
+	add dialog for person _mfriend_ 

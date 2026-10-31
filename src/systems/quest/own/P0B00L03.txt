@@ -1,0 +1,177 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0B00L03.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 0
+-- QuestId: 3
+Messages: 27
+Quest: P0B00L03
+DisplayName: Territorial Battles
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Would a dangerous task for the
+<ce> glory of %vam interest you?
+
+RefuseQuest:  [1001]
+<ce> You would leave the honor to
+<ce> some other of %vam? As you like.
+<ce> Your meekness disappoints me.
+
+AcceptQuest:  [1002]
+<ce> You obey beautifully, %pcf. A rival
+<ce> ancient has moved onto my ground. Lesser
+<ce> blood than %vam, but no weakling. He is
+<ce> _vampname_, and %g3 lair is ___mondung_.
+<ce> Bring me the _vampproof_ he made of
+<ce> human skin. You have =1stparton_ nights.
+
+QuestFail:  [1003]
+<ce> Did you hope _vampname_ would
+<ce> end %g3 own existence? He will
+<ce> not. You must be %g3 death.
+
+QuestComplete:  [1004]
+<ce> Welcome back, %pcf, my child.
+<ce> Strange. I was worried for you. A
+<ce> sentimental vampire of %vam, how
+<ce> absurd! The elders of %vam send their
+<ce> praise, and this _reward_. It is no
+<ce> wage. It is a gift from your family.
+
+RumorsDuringQuest:  [1005]
+Someone is busy at ___mondung_, and
+nobody has lived there for years.
+<--->
+That _vampname_ is a real aristocrat. %G says
+he will clean up ___mondung_, and %reg with it.
+
+RumorsPostfailure:  [1006]
+_vampname_ has left ___mondung_ at
+last. No place for a lord, that.
+<--->
+Since _vampname_ left ___mondung_, %g
+spends a lot of time at the palace.
+
+RumorsPostsuccess:  [1007]
+That charming _vampname_ was a vampire! Who knew?
+<--->
+%god bless that %ra sellsword for
+killing the vampire in ___mondung_.
+
+QuestorPostsuccess:  [1008]
+Good evening, %pcf. Is the _reward_ to your liking?
+
+QuestorPostfailure:  [1009]
+<ce> _vampname_ is still out hunting,
+<ce> %pcf. You handled this badly,
+<ce> and %vam will remember it.
+
+Message:  1020
+%pcn,
+ %vam may have a problem. Come to me
+ in ___vampire_ as soon as you can.
+
+From beyond the grave,
+<ce> _vampire_
+
+Message:  1011
+%G is a clever, pleasant =vampire_ staying at __vampire_.
+<--->
+Look for _vampire_, a pleasant =vampire_,
+at __vampire_. It lies %di of here.
+
+Message:  1012
+_vampire_ comes of %vam blood.
+<--->
+_vampire_ is young for %vam, and
+teaches vampires younger still.
+
+Message:  1013
+_vampname_ wears _vampproof_ of a strange pale leather.
+
+Message:  1015
+Message 1015 should
+never be shown.
+
+Message:  1021
+Someone slips you a letter.
+
+Message:  1022
+<ce> I came back from death once. I
+<ce> will again. Then I will find you,
+<ce> and _vampire_ too, you pale worms!
+
+Message:  1025
+%qdt:
+ _vampire_ of ___vampire_
+ wants me at __vampire_
+ on business for %vam.
+
+Message:  1026
+%qdt:
+ _vampire_ sends me to ___mondung_ to
+ kill an ancient vampire named
+ _vampname_. I must bring back his
+ _vampproof_ as proof and return to
+ __vampire_ within =1stparton_ nights.
+
+
+QBN:
+Item _reward_ magic_item
+Item _vampproof_ boots anyInfo 1013
+Item _letter_ letter used 1020
+
+Person _vampire_ face 40 factiontype Vampire_Clan local anyInfo 1011 rumors 1012
+Person _vampname_ face 4 factiontype Vampire_Clan male remote
+
+Place _mondung_ remote dungeon8
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+
+Foe _vamprival_ is Ancient_vampire
+
+--	Quest start-up:
+	dialog link for person _vampire_ item _vampproof_ 
+	pc at _mondung_ set _S.10_ 
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.12_ 
+	give pc _letter_ notify 1021 
+	create npc _vampire_ 
+
+_falseAide0_ task:
+-added underscores to falseaide0
+	toting _vampproof_ and _vampire_ clicked 
+	give pc _reward_ 
+	end quest 
+
+variable _queston_
+_S.02_ task:
+	killed 1 _vamprival_ saying 1022 
+
+_vampclicked_ task:
+	clicked npc _vampire_ say AcceptQuest 
+	reveal _mondung_
+	log 1026 step 1 
+
+_1stparton_ task:
+	make _vampproof_ permanent 
+	end quest  
+
+_S.06_ task:
+	when _S.07_ and not _vampclicked_ 
+
+variable _S.07_
+_readletter_ task:
+	add dialog for person _vampire_ 
+	log 1025 step 0 
+
+variable _S.09_
+_S.10_ task:
+	give item _vampproof_ to _vamprival_ 
+	place foe _vamprival_ at _mondung_ 
+
+_S.12_ task:
+	start timer _1stparton_

@@ -1,0 +1,276 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 0
+-- QuestId: 0
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 32
+Quest: A0C00Y00
+DisplayName: The Postman
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The name is _qgiver_. My work needs a quiet
+<ce> hand and a shut mouth. It pays _gold_ gold
+<ce> for =traveltime_ days, and the risk is small.
+<ce> Say yes and I will tell you the rest. Well?
+<--->
+<ce> You there, young %ra. Care to earn _gold_
+<ce> gold with what the sellswords call the
+<ce> old switch? It is easier than it sounds.
+
+RefuseQuest:  [1001]
+<ce> Then it is good I told you nothing. Nobody
+<ce> can sell a secret they never heard.
+<--->
+<ce> As you like. Without ambition you
+<ce> will never get far, my young friend.
+
+AcceptQuest:  [1002]
+<ce> Go to _inn_ in __inn_. A courier there carries
+<ce> a letter. Swap it for this forgery. Touch
+<ce> nothing else, or he will know and my plans are
+<ce> ruined. If you are caught, we never met.
+
+QuestFail:  [1003]
+<ce> Was there not a letter you were
+<ce> meant to 'deliver' for me?
+<--->
+<ce> Come back when the job is done, %pcf.
+
+QuestComplete:  [1004]
+<ce> There it is. Well done, %pcf, and here
+<ce> is your pay. Speak of this to no one.
+<ce> If anyone asks, I have never seen you.
+
+RumorsDuringQuest:  [1005]
+<ce> They say this year's
+<ce> harvest will be a good one.
+
+RumorsPostfailure:  [1006]
+<ce> _qgiver_ has come on hard times of late.
+
+RumorsPostsuccess:  [1007]
+<ce> Luck has been kind to _qgiver_ lately.
+
+QuestorPostsuccess:  [1008]
+<ce> Quiet. Yes, I remember the letter you swapped
+<ce> for me. I would rather nobody else did.
+
+QuestorPostfailure:  [1009]
+<ce> You again! One letter to swap, that
+<ce> was all, and you failed. Get out.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ___qgiver_ gave me a forged letter
+ in secret. A courier at _inn_ in __inn_ has the
+ real one. I have =traveltime_ days to swap them
+ unseen. If I am caught, I answer for it alone.
+
+Message:  1011
+_npc1_,
+    I was a fool to love so spiteful a man. You
+ saw me with _npc2_ on the balcony. Yes, we are
+ lovers. %G gives me all you cannot. Your gold
+ only disgusted me. Stay away from my door.
+ 
+                       _npc3_
+
+Message:  1012
+Dearest _npc1_,
+    You are hurt, I know. On the balcony I
+ had drunk too much, and _npc2_ stole a kiss.
+ %G was flogged for it and is gone from my
+ house. Forgive me. My heart is yours alone.
+ 
+                       _npc3_
+
+Message:  1013
+<ce> The tavern looks like any other. Tonight, though,
+<ce> a quiet step will serve you better than a strong
+<ce> arm. Now, where has the courier put that letter?
+
+Message:  1014
+<ce> Thief! I will teach you to rob an honest courier!
+
+Message:  1015
+<ce> The lying letter leaves your
+<ce> hand. Half the work is done.
+
+Message:  1016
+Baron _npc1_,
+    Count _npc2_ has hidden %g3
+ soldiers in the pass to ambush
+ you. Do not walk into the trap.
+                     _npc3_
+
+Message:  1017
+_npc1_,
+    Your offer is an insult.
+ Any other merchant in ___npc1_
+ will sell to me at half that
+ price, and one of them will.
+                  _npc2_
+
+Message:  1018
+Honorable _npc1_,
+    When the guild votes for its
+ treasurer, my vote is yours. In
+ return I will want good
+ treatment from you, and soon.
+                   _npc2_
+
+Message:  1019
+Baron _npc1_,
+    Count _npc2_ will meet you
+ in the pass. %G3 offer of a
+ truce is fair and honest.
+                  _npc3_
+
+Message:  1020
+_npc1_,
+    Your price is fair. This
+ letter is my promise of
+ payment for the goods. Show
+ it to my factor on delivery.
+                  _npc2_
+
+Message:  1021
+Honorable _npc1_,
+    At the next guild meeting
+ I will vote for _npc3_. %G
+ has shown the guild %g3
+ loyalty time and again.
+                  _npc2_
+
+Message:  1022
+<ce> You were seen, and you know
+<ce> it. Out of my sight, %ra.
+
+Message:  1030
+<ce> _qgiver_ is a weasel, plain and simple.
+
+Message:  1031
+<ce> _qgiver_ is pleasant enough. I still
+<ce> would not play cards with %g2.
+
+
+QBN:
+Item _letter3a_ letter used 1012
+Item _falseletter1_ letter used 1011
+Item _gold_ gold
+Item _treasure_ trinket
+Item _falseletter2_ letter used 1016
+Item _falseletter3_ letter used 1017
+Item _falseletter4_ letter used 1018
+Item _letter4a_ letter used 1019
+Item _letter5_ letter used 1020
+Item _letter6_ letter used 1021
+
+Person _qgiver_ face 1 group Questor anyInfo 1030 rumors 1031
+Person _npc1_ face 4 group Local_4.0 male remote
+Person _npc2_ face 4 group Local_3.0 male remote
+Person _npc3_ face 2 group Group_6.0 female remote
+
+Place _inn_ remote tavern
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _ranger_ is Ranger
+Foe _spellsword_ is Spellsword
+Foe _knight_ is Knight
+Foe _monk_ is Monk
+
+--	Quest start-up:
+	place item _treasure_ at _inn_ 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pick one of _letter1_ _letter2_ _letter3_ _letter4_ 
+	pc at _inn_ set _S.00_ saying 1013 
+
+variable _S.00_
+_questdone_ task:
+	when _S.02_ and _S.03_ and not _traveltime_ and not _S.04_ 
+	give pc _gold_ 
+	end quest 
+
+_badend_ task:
+	when _S.02_ and _S.04_
+	say 1022
+	end quest
+--added badend task and msg 1022. Previously if the PC grabbed the treasure and completed the quest, the questgiver would ignore entirely.
+
+_S.02_ task:
+	toting _letter6_ and _qgiver_ clicked 
+	toting _letter4a_ and _qgiver_ clicked 
+	toting _letter3a_ and _qgiver_ clicked 
+	toting _letter5_ and _qgiver_ clicked 
+
+_S.03_ task:
+	dropped _falseletter3_ at _inn_ saying 1015 
+	dropped _falseletter1_ at _inn_ saying 1015 
+	dropped _falseletter4_ at _inn_ saying 1015 
+	dropped _falseletter2_ at _inn_ saying 1015 
+    clear _S.15_
+
+_S.04_ task:
+	clicked item _treasure_ 
+	pick one of _S.11_ _S.12_ _S.13_ _S.14_ 
+
+_traveltime_ task:
+	end quest 
+
+_S.06_ task:
+	injured _spellsword_ 
+	injured _knight_ 
+	injured _monk_ 
+	injured _ranger_ 
+	say 1014 
+
+_letter1_ task:
+	place item _letter3a_ at _inn_ 
+	get item _falseletter1_ 
+
+_letter2_ task:
+	place item _letter4a_ at _inn_ 
+	get item _falseletter2_ 
+
+_letter3_ task:
+	place item _letter5_ at _inn_ 
+	get item _falseletter3_ 
+
+_letter4_ task:
+	place item _letter6_ at _inn_ 
+	get item _falseletter4_ 
+
+_S.11_ task:
+	create foe _knight_ every 1 minutes 1 times with 100% success 
+
+_S.12_ task:
+	create foe _monk_ every 1 minutes 1 times with 100% success 
+
+_S.13_ task:
+	create foe _spellsword_ every 1 minutes 1 times with 100% success 
+
+_S.14_ task:
+	create foe _ranger_ every 1 minutes 1 times with 100% success 
+--increased spawn rate to 100% in S13 and S14. Doesn't seem to make much sense for the enemy to follow you off to another town and spawn there.
+
+_S.15_ task:
+	clicked item _falseletter4_ 
+	clicked item _falseletter1_ 
+	clicked item _falseletter2_ 
+	clicked item _falseletter3_ 
+	clear _S.03_
+
+_qgclicked_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_
+	say 1003
+	clear _clearclick_ _qgclicked_

@@ -1,0 +1,98 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0C00Y13.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 13
+Messages: 12
+Quest: C0C00Y13
+DisplayName: An Errand
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Blessings, %pcn, heathen though
+<ce> you are. I am _qgiver_. You want
+<ce> the good will of __qgiver_? Then
+<ce> ___priest_ needs this _religitem_
+<ce> within =traveltime_ days. Carry it
+<ce> there, and I will speak for you.
+
+RefuseQuest:  [1001]
+<ce> Your loss, %pcn. Do not
+<ce> look for favors here soon.
+
+AcceptQuest:  [1002]
+<ce> Take this _religitem_ to _priest_ at
+<ce> __priest_ in ___priest_. Be warned.
+<ce> Another temple wants it too, and may
+<ce> send ruffians to stop you.
+
+QuestComplete:  [1004]
+<ce> The gods smile on you, %pcn.
+<ce> We have needed this
+<ce> _religitem_ for a long while.
+
+RumorsDuringQuest:  [1005]
+Two temples are racing each
+other for one _religitem_.
+
+RumorsPostfailure:  [1006]
+_priest_ is still waiting for %g3
+_religitem_. _qgiver_ is not pleased.
+
+RumorsPostsuccess:  [1007]
+Thanks to a brave %ra, _priest_ has
+the _religitem_ __qgiver_ sent.
+
+QuestorPostsuccess:  [1008]
+%pcf! %god keep you. Sit, and tell me how you have been.
+
+QuestorPostfailure:  [1009]
+The _religitem_ never reached
+_priest_. We are done talking.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ at __qgiver_ trusted me with the
+ _religitem_. It must reach _priest_ at __priest_
+ in ___priest_ before =traveltime_ days pass.
+
+Message:  1011
+<ce> __priest_ will never see
+<ce> that _religitem_. All they
+<ce> get is your head in a sack!
+
+
+QBN:
+Item _religitem_ religious
+
+Person _qgiver_ group Questor
+Person _priest_ group Group_5.0 remote
+Person _enemy_ face 176 group Local_4.0 remote
+
+Clock _traveltime_ 00:00 0 flag 1 range 1 2
+
+Foe _thief_ is Thief
+Foe _spellsword_ is Spellsword
+
+--	Quest start-up:
+	create foe _thief_ every 12 minutes 2 times with 5% success 
+	create foe _spellsword_ every 12 minutes 2 times with 5% success 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	get item _religitem_ 
+
+_traveltime_ task:
+	change repute with _qgiver_ by -5 
+	end quest 
+
+_questdone_ task:
+	toting _religitem_ and _priest_ clicked 
+	give pc nothing 
+	end quest 
+
+_S.02_ task:
+	injured _spellsword_ saying 1011 
+	injured _thief_ saying 1011

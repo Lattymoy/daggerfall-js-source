@@ -1,0 +1,109 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+---- Custom quest to slay zombies and skeletons until a necromancer comes out of hiding.
+
+Quest: CUSTOM01
+DisplayName: From Dusk Till Dead
+
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Does the dark frighten you, %pcn? A
+<ce> necromancer is raising zombies and
+<ce> skeletons by the score at ___graveyard_.
+<ce> We hold a contract to kill this villain
+<ce> and end the evil. You will be paid
+<ce> _reward_ gold. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> A necromancer is no easy kill, %pcn.
+<ce> I cannot blame you for saying no.
+
+AcceptQuest:  [1002]
+<ce> Good. Go to ___graveyard_ after nightfall. In
+<ce> the graveyard, cut down its skeletons and
+<ce> zombies until the necromancer is angry enough to
+<ce> come out and face you. Return within =timeLimit_
+<ce> days. Your _reward_ gold will be waiting.
+
+QuestFail:  [1003]
+<ce> You let me down, %pcn. Now the contract
+<ce> goes to someone I can rely on.
+
+QuestComplete:  [1004]
+<ce> Well done, hero. Many innocent
+<ce> people are alive because of you.
+
+Message:  1020
+<ce> The undead falls, and the ground shakes
+<ce> under your feet. The necromancer has come!
+
+Message:  1030
+<ce> "You... will pay... with your
+<ce> soul!" With that, the necromancer
+<ce> falls dead. Without a master, the
+<ce> undead will scatter and trouble
+<ce> the villages no more.
+
+Message:  1040
+%qdt:
+ The Fighters Guild of ___questgiver_ wants a
+ necromancer dead at ___graveyard_. I must
+ kill its skeletons and zombies there by
+ night until it comes out. I have =timeLimit_
+ days to finish and collect my pay.
+
+
+QBN:
+
+Item _reward_ gold
+
+Person _questgiver_ group Questor male
+
+Place _graveyard_ remote graveyard
+
+Clock _timeLimit_ 00:00 0 flag 17 range 0 2
+
+Foe _zombie_ is Zombie
+Foe _skeleton_ is Skeletal_warrior
+Foe _necromancer_ is Battle_mage
+
+--	Quest start-up:
+	start timer _timeLimit_
+	reveal _graveyard_
+	pc at _graveyard_ set _onsite_
+	log 1040 step 0
+
+_timeLimit_ task:
+	end quest 
+
+variable _onsite_
+_daytime_ task:
+	daily from 05:00 to 18:00
+
+_attackPlayer_ task:
+	when _onsite_ and not _daytime_ and not _necromancerDead_
+	create foe _zombie_ every 5 minutes indefinitely with 60% success
+	create foe _skeleton_ every 5 minutes indefinitely with 60% success
+
+_summonNecromancer_ task:
+	killed 4 _zombie_
+	killed 4 _skeleton_
+	say 1020
+	create foe _necromancer_ every 1 minutes 1 times with 100% success
+
+_necromancerDead_ task:
+	killed _necromancer_
+	say 1030
+
+_questorClicked_ task:
+	clicked npc _questgiver_
+
+_clearclick_ task:
+	when _questorClicked_ and not _necromancerDead_
+	say 1003
+	clear _questorClicked_ _clearclick_
+
+_rewardPlayer_ task:
+	when _questorClicked_ and _necromancerDead_
+	give pc _reward_
+	end quest

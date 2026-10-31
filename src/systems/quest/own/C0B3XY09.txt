@@ -1,0 +1,147 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0B3XY09.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 3X
+-- QuestId: 9
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 13
+Quest: C0B3XY09
+DisplayName: The Great Evil
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcn, I am _qgiver_. %god has
+<ce> shown us an evil growing deep
+<ce> in a dungeon near here. It must
+<ce> be destroyed. Will you do it?
+
+RefuseQuest:  [1001]
+<ce> Then I must find someone
+<ce> else, and quickly.
+
+AcceptQuest:  [1002]
+<ce> Go at once to ___dungeon_. The
+<ce> _evilfocus_ is there. Destroy it before
+<ce> =traveltime_ days are out. A sign will
+<ce> show in the temple when it is done. Then
+<ce> come back for your pay. It is generous.
+
+QuestComplete:  [1004]
+<ce> %pcn, the whole clergy thanks
+<ce> you. The evil is gone. Here is
+<ce> _gold_ gold, as I promised.
+
+RumorsDuringQuest:  [1005]
+Why is __qgiver_ so curious about
+___dungeon_ all of a sudden?
+
+RumorsPostfailure:  [1006]
+The evil in ___dungeon_ lives on. It only took a new shape.
+
+RumorsPostsuccess:  [1007]
+Few knew ___dungeon_ held an evil until __qgiver_ ended it.
+
+QuestorPostsuccess:  [1008]
+Ah, the one who broke the _evilfocus_. Come in.
+
+QuestorPostfailure:  [1009]
+The _evilfocus_ still lives, thanks to you. Leave.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_ in ___qgiver_,
+ _qgiver_ asked me to destroy the
+ evil _evilfocus_ in ___dungeon_
+ before =traveltime_ days pass.
+ If I fail, the evil gets loose,
+ and I get the blame.
+
+Message:  1011
+<ce> The _evilfocus_ turns into a
+<ce> lovely woman as you reach for it.
+<ce>
+<ce> "Why break it, sweet mortal?
+<ce> Take this _magicitem_ and tell
+<ce> the temple you found nothing.
+<ce> They cannot blame you. Agreed?"
+
+Message:  1012
+<ce> "Pious to the end? Then die that way!"
+
+Message:  1013
+<ce> The curse breaks. _qgiver_
+<ce> will want to hear of this.
+
+Message:  1014
+<ce> __qgiver_ will not soon
+<ce> forgive this betrayal.
+
+
+QBN:
+Item _evilfocus_ religious
+Item _gold_ gold
+Item _magicitem_ magic_item
+
+Person _qgiver_ group Questor
+
+Place _dungeon_ remote dungeon
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _guardian_ is Daedra_seducer
+Foe _spiders_ is 6 Spider
+Foe _F.02_ is Gargoyle
+Foe _F.03_ is Harpy
+Foe _lesserdaedra_ is Daedroth
+
+--	Quest start-up:
+	place item _evilfocus_ at _dungeon_ 
+	start timer _traveltime_ 
+	reveal _dungeon_ 
+	log 1010 step 0 
+
+_traveltime_ task:
+	end quest 
+
+_S.01_ task:
+	clicked item _evilfocus_ 
+	place foe _guardian_ at _dungeon_ 
+	prompt 1011 yes _yes_ no _no_ 
+	take _evilfocus_ from pc
+
+_yes_ task:
+	remove foe _guardian_
+--better to just remove the daedra and avoid confusion
+	get item _magicitem_ 
+	make _magicitem_ permanent 
+	change repute with _qgiver_ by -10 
+	say 1014
+	end quest 
+
+_no_ task:
+	create foe _F.02_ every 5 minutes 1 times with 100% success 
+	create foe _spiders_ every 9 minutes 1 times with 100% success 
+	create foe _lesserdaedra_ every 7 minutes 1 times with 100% success 
+	create foe _F.03_ every 3 minutes 1 times with 100% success 
+	say 1012 
+
+_S.04_ task:
+	killed 1 _guardian_ 
+	say 1013
+--added a victory message. original quest was confusing up to this point.
+
+_questdone_ task:
+	clicked npc _qgiver_ 
+
+_success_ task:
+	when _questdone_ and _S.04_
+	give pc _gold_ 
+	end quest 
+
+_clearclick_ task:
+	when _questdone_ and not _S.04_ 
+	clear _questdone_ _clearclick_
+--permits repeated clearclick

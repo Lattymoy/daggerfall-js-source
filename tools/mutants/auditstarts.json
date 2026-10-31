@@ -466,9 +466,9 @@
   },
   {
     "name": "AUDIT-STARTS-Q3-the-letter-at-sea",
-    "file": "src/systems/quest/questPatches.js",
-    "old": "    { old: ' most appreciative.\\n    Before landing in Daggerfall, a sudden storm\\n capsized the ship. I barely made it into this cave.\\n', new: ' most appreciative.\\n', count: 1 },\n",
-    "new": "",
+    "file": "src/systems/quest/own/_BRISIEN.txt",
+    "old": "     I hear you have reached the Iliac Bay,\n safe and well.",
+    "new": "     I heard about your accident at sea,\n and feared the worst.",
     "tests": [
       "test/systems/starts/start1_bay.test.js"
     ]

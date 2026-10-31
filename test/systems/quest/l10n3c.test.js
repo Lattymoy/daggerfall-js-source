@@ -14,6 +14,7 @@ import * as tm from '../../../src/systems/textManager.js';
 import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { parseLocalizedQuest, parseLocalizedQuestText, localizedQuestDisplayName, localizedQuestMessage, QUEST_DOCUMENT } from '../../../src/systems/quest/localizedQuest.js';
+import { baseText } from '../../qlSources.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const rd = (p) => readFileSync(join(ROOT, p), 'utf8');
@@ -21,7 +22,8 @@ const V = join(ROOT, 'vendor/dfu-quests/Tables');
 const tables = {};
 for (const f of readdirSync(V)) if (f.endsWith('.txt')) tables[f.replace('.txt', '')] = readFileSync(join(V, f), 'utf8').replace(/^﻿/, '');
 loadQuestTables(tables);
-const questLines = (name) => rd(`vendor/dfu-quests/Quests/${name}.txt`).replace(/^﻿/, '').split(/\r?\n/);
+// PIN MOVED (OWN-WORDS2): the quest as the pack reads it - S0000977 speaks our own words now (test/qlSources.mjs)
+const questLines = (name) => baseText(name).split(/\r?\n/);
 
 beforeEach(() => tm._resetTextManagerForTests());
 
@@ -67,7 +69,7 @@ test('L10N3c the quest in French: GetMessage reads the -LOC message into the sam
   const english = new QuestMachine({ nowSeconds: () => 0, showPopup: () => {} }).scheduleQuest(questLines('S0000977'), 0, { rolls: () => 0 });
   const enRumor = english.getMessage(1005).getTextTokens(0, false).map((t) => t.text).join('|');
   assert.equal(english.displayName, 'Curse of Daggerfall');
-  assert.match(enRumor, /Ghosts are haunting the streets of Daggerfall/);
+  assert.match(enRumor, /The dead walk in Daggerfall's streets after dark\./);   // PIN MOVED (OWN-WORDS2): our words
   tm.setLocaleDocuments('fr', [[`${QUEST_DOCUMENT}:S0000977`, LOC]]);
   tm.patchLocaleTable('fr', 'Internal_Quests', [['S0000977.1008', 'Le spectre est tombé. (une ligne du tableau)']]);
   tm.setLocale('fr');

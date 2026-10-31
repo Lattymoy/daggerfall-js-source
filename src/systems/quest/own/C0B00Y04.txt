@@ -1,0 +1,134 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\C0B00Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: temple
+-- Repute: 0
+-- QuestId: 4
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 13
+Quest: C0B00Y04
+DisplayName: The Insane Priest
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Our work touches deep mysteries,
+<ce> and sometimes a priest's mind
+<ce> cannot bear them. One of ours has
+<ce> gone quite mad. Will you help bring
+<ce> the poor soul back to __qgiver_?
+<--->
+<ce> Old =priest_ has run off again.
+<ce> Last time %g claimed to be king
+<ce> of __qgiver_'s bell tower. Will
+<ce> you help bring the old fool home?
+
+RefuseQuest:  [1001]
+<ce> %oth, %pct. I hope someone is kinder
+<ce> to you when your own mind goes.
+
+AcceptQuest:  [1002]
+<ce> Thank you, %pct. =priest_ has fled to
+<ce> ___mondung_. %G is not wicked, only
+<ce> lost, so go gently. A light tap on
+<ce> the head should do. Then carry %g2
+<ce> home. I will wait =queston_ days.
+
+QuestComplete:  [1004]
+<ce> Welcome back, %pct. Leave =priest_
+<ce> with us now. We will look after %g2.
+
+RumorsDuringQuest:  [1005]
+Mad old =priest_ is hiding in ___mondung_.
+Anyone who follows is madder still.
+<--->
+_priest_ will not last a week in
+___mondung_. Sane folk barely do.
+
+RumorsPostfailure:  [1006]
+=priest_ is gone for good, they say.
+<--->
+=priest_ still wanders ___mondung_, out of %g3 head.
+
+RumorsPostsuccess:  [1007]
+Some %ra brought mad =priest_ home. Whether
+%g3 wits came back too is another matter.
+<--->
+=priest_ is back at the temple, preaching to the pigeons.
+
+QuestorPostsuccess:  [1008]
+You brought =priest_ home gently. Ask what you need.
+
+QuestorPostfailure:  [1009]
+=priest_ is still out there because of you. Leave me be.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A priest of __qgiver_ in
+ ___qgiver_, =priest_, has gone
+ mad and fled to ___mondung_.
+ Within =queston_ days I must
+ find the poor fool and take
+ the priest back to _qgiver_.
+
+Message:  1011
+<ce> "Ow! %oth!" =priest_ sags to the floor.
+<ce> You heave %g2 onto your shoulder.
+<--->
+<ce> With a sigh, =priest_ stops fighting. %G
+<ce> slumps against you, %g3 eyes still wild.
+
+Message:  1012
+<ce> =priest_ wriggles free with
+<ce> a shriek of laughter and is
+<ce> gone before you can turn.
+<--->
+<ce> "The dukes of the moon need
+<ce> me!" cries =priest_, who slips
+<ce> out of your grip and runs.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon
+--removed fake dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _priest_ is Monk
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	place foe _priest_ at _mondung_ 
+
+variable _reward_
+_bonk_ task:
+	injured _priest_ 
+	say 1011 
+	add foe _priest_ face 
+	remove foe _priest_
+	--changed "place foe in fake dungeon" to remove foe action.
+
+_queston_ task:
+	end quest 
+
+_cick_ task:
+	when _bonk_ and _queston_ 
+	say 1012 
+
+_S.04_ task:
+	clicked npc _qgiver_ 
+
+_success_ task:
+	when _S.04_ and _bonk_ 
+	give pc nothing 
+	end quest 
+
+_nope_ task:
+	when _S.04_ and not _bonk_ 
+	clear _S.04_ _nope_

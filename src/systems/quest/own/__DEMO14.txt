@@ -1,0 +1,37 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+---- Example quest to demonstrate dialog linked resources and
+---- add dialog to reveals anyinfo message
+---- anyInfo message for person is available from start since no dialog link was established
+---- so player can ask about where person can be found (via tell me about)
+---- anyInfo message for item is hidden because dialog link was established
+---- will be revealed once player clicked npc via add dialog
+
+Quest: __DEMO14
+
+QRC:
+
+Message:  1011
+Look for _someperson_ at _tavern_.
+
+Message:  1012
+Here is a short anyInfo message for the item.
+
+Message:  1013
+Ask people about _someitem_.
+
+
+QBN:
+
+Person _someperson_ face 81 faction The_Thieves_Guild anyInfo 1011
+Item _someitem_ trinket anyInfo 1012
+Place _tavern_ local tavern
+
+--	Quest start-up:
+	dialog link for item _someitem_
+	create npc _someperson_ 
+	place npc _someperson_ at _tavern_
+
+_S.00_ task:
+	clicked npc _someperson_
+	say 1013
+	add dialog for item _someitem_

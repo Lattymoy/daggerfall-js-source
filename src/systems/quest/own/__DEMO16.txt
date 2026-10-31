@@ -1,0 +1,59 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+---- Example quest to demonstrate rumors property of resource and dialog link
+---- get information after (and only after) hearing the correct rumor
+---- once an npc talked about the correct rumor the linked dialog option
+---- will be available in the tell me about section
+---- only one of the two rumors will reveal the chat topic about the person
+---- rumors is using message 1020 here
+---- (you have to switch dialog option and then it will show up in the
+---- tell me about section)
+---- you can then ask peasants for the correct place where the person
+---- can be found
+---- one (and only one) of the three possible answers is revealing the correct place
+
+Quest: __DEMO16
+
+QRC:
+
+QuestorOffer:  [1000]
+<ce> People keep talking about a stranger in town.
+<ce> Will you find out what the rumors are about?
+
+RefuseQuest:  [1001]
+<ce> A pity. I understand, but
+<ce> I hoped you would say yes.
+
+AcceptQuest:  [1002]
+<ce> Good. Ask people what news and rumors they have heard.
+
+QuestLogEntry:  [1010]
+%qdt:
+ I am to ask people for news and
+ rumors of a stranger nobody can name.
+
+Message:  1011
+They call _thief_ a master thief.
+<--->
+_thief_ runs the Thieves Guild's errands.
+<--->
+_thief_? That is the =thief_
+who drinks at _tavern_.
+
+Message:  1020
+_thief_ is in town. You ought to meet %g2. Ask
+around, and someone will know where _thief_ is.
+<--->
+Folk talk of a stranger in town,
+but nobody can give me a name.
+
+
+QBN:
+
+Person _thief_ face 81 faction The_Thieves_Guild anyInfo 1011 rumors 1020
+Place _tavern_ local tavern
+
+--	Quest start-up:
+	dialog link for person _thief_ 
+	log 1010 step 0  
+	create npc _thief_ 
+	place npc _thief_ at _tavern_

@@ -1,0 +1,142 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\O0B10Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: thief
+-- Repute: 10
+-- QuestId: 3
+Messages: 11
+Quest: O0B10Y03
+DisplayName: A Temple Visit
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The name is _qgiver_, and I have a
+<ce> guild job if you want it. A client
+<ce> wants the _religiousitem_ taken
+<ce> from _temple_. Will you do it?
+
+RefuseQuest:  [1001]
+<ce> Suit yourself, %pcn. I will keep you
+<ce> in mind for something more exciting.
+
+AcceptQuest:  [1002]
+<ce> Here is how it goes. The
+<ce> _religiousitem_ is kept at _temple_ in
+<ce> __temple_. Lift it and put it in my
+<ce> hands. The usual guild fee is _gold_
+<ce> gold. You have =traveltime_ days.
+
+QuestComplete:  [1004]
+<ce> Odd client. Who pays a thief for
+<ce> something they could pick up
+<ce> themselves? There was a guardian?
+<ce> A nasty one? Well, that explains
+<ce> it. Here is your fee, %pcf.
+
+RumorsDuringQuest:  [1005]
+I had a cough all last week. It went away on its own.
+<--->
+My neighbor talked at me about rain
+for three hours. I never said a word.
+<--->
+The weather is about what you would expect, really.
+<--->
+%cn is cold for the season, if you ask me.
+<--->
+Warmer today than this day last
+year. Or colder. I forget which.
+<--->
+My aunt went two provinces away
+to see a healer about her feet.
+<--->
+The evenings get dark earlier and
+earlier. Nobody can tell me why.
+<--->
+This square needs a statue. Somebody on a horse, maybe.
+<--->
+Children and their magic these
+days. %oth, what comes next?
+<--->
+I dreamed about fish last night. Big ones, with opinions.
+<--->
+Here is one I heard at the tavern. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I never understood that one. Do you?
+<--->
+The courts in %reg are fair,
+mostly. It depends on the judge.
+
+RumorsPostfailure:  [1006]
+_temple_ keeps a close watch for thieves, it seems.
+
+RumorsPostsuccess:  [1007]
+They say whoever runs _temple_ paid thieves
+to break into it. Strange business.
+
+QuestorPostsuccess:  [1008]
+How are you, %pcf? Our client has still not been in touch.
+
+QuestorPostfailure:  [1009]
+<ce> A Daedra Prince could have guarded that
+<ce> temple, %pcf, and I would still not
+<ce> care. Nobody fails the Thieves Guild.
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___qgiver_, _qgiver_ gave
+ me a guild job. I am to lift
+ the _religiousitem_ from
+ _temple_ in __temple_, then
+ bring it to %g2 within
+ =traveltime_ days for my fee.
+
+
+QBN:
+Item _religiousitem_ religious
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+
+Place _temple_ remote temple
+
+Clock _traveltime_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is 2 Knight
+Foe _F.01_ is Giant_scorpion
+Foe _F.02_ is Monk
+Foe _F.03_ is Zombie
+
+--	Quest start-up:
+	place item _religiousitem_ at _temple_ 
+	start timer _traveltime_ 
+	log 1010 step 0 
+	pc at _temple_ set _S.01_ 
+
+_traveltime_ task:
+	make _religiousitem_ permanent 
+	change repute with _qgiver_ by -5 
+	end quest 
+
+_S.01_ task:
+	pick one of _guard1_ _guard2_ _guard3_ _guard4_ 
+
+_questdone_ task:
+	toting _religiousitem_ and _qgiver_ clicked 
+	give pc _gold_ 
+	end quest 
+
+_guard1_ task:
+	create foe _F.00_ every 4 minutes 1 times with 10% success 
+
+_guard2_ task:
+	create foe _F.01_ every 4 minutes 1 times with 10% success 
+
+_guard3_ task:
+	create foe _F.02_ every 4 minutes 1 times with 10% success 
+
+_guard4_ task:
+	create foe _F.03_ every 4 minutes 1 times with 10% success

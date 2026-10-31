@@ -1,0 +1,146 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B10Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 10
+-- QuestId: 3
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 15
+Quest: L0B10Y03
+DisplayName: Unauthorized Absence
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> We know where every Brother is,
+<ce> always. I could name where you stood
+<ce> last Tirdas. Yet one has vanished on
+<ce> a contract. Find =target_. Unless %g
+<ce> can explain %g3 absence, settle %g2.
+<ce> Can you spare the time?
+<--->
+<ce> No one leaves the Dark Brotherhood, as
+<ce> you know. A Brother has vanished on a
+<ce> contract, and we must learn whether
+<ce> =target_ lives. The task is yours.
+
+RefuseQuest:  [1001]
+<ce> Truly? Well, I suppose a refusal
+<ce> now and then is your right.
+
+AcceptQuest:  [1002]
+<ce> Good. =target_'s cousin lives in
+<ce> ___contact_: _contact_, a =contact_
+<ce> who spends most days at __contact_.
+<ce> Press %g2 hard and learn where %g3
+<ce> cousin went. You have =queston_
+<ce> days to finish and return.
+
+QuestComplete:  [1004]
+<ce> =target_ was a vampire? That explains
+<ce> a good deal. Get yourself to a temple
+<ce> and be cured, or you may join
+<ce> =target_'s family of bloodsuckers.
+
+RumorsDuringQuest:  [1005]
+Nobody crosses the Dark Brotherhood. Nobody.
+<--->
+=target_ went after some baron in
+%reg, they say, and then %g vanished.
+
+RumorsPostfailure:  [1006]
+Some say =target_ is dead. Others
+have seen %g2, but only after dark.
+
+RumorsPostsuccess:  [1007]
+Odd, the Brotherhood killing a bloodsucker.
+You would think they were friends.
+<--->
+=target_'s last mark was more than %g bargained for.
+
+QuestorPostsuccess:  [1008]
+Hello, %pcf. I hope a priest has looked
+at you since that fight with the vampire.
+
+QuestorPostfailure:  [1009]
+<ce> Those who fail their contracts
+<ce> earn only my scorn. Go, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___qgiver_, _qgiver_ wants a
+ missing Brother found, and settled
+ unless there is a good excuse.
+ =target_'s cousin, _contact_, is a
+ =contact_ in ___contact_. Within
+ =queston_ days I must find the
+ Brother and return to __qgiver_.
+
+Message:  1011
+<ce> No word from =target_ since %g went
+<ce> after that baron in ___mondung_.
+<ce> Strange baron. Never seen by day. Small
+<ce> surprise somebody paid to kill him.
+<ce> Still, I never thought a thin, pale
+<ce> baron would end my cousin's career.
+
+Message:  1012
+%qdt:
+ _contact_ says =target_ went to
+ ___mondung_ to settle a strange
+ baron. That is where I go next.
+
+Message:  1013
+<ce> "The baron made me what I am," =target_
+<ce> hisses. "Let me make you the same."
+
+Message:  1014
+<ce> =target_ is dead, and
+<ce> stays dead this time.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _contact_ face 176 group Innkeeper
+
+Place _mondung_ remote dungeon8
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _target_ is Vampire
+
+--	Quest start-up:
+	start timer _queston_ 
+	log 1010 step 0 
+	place foe _target_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_reward_ task:
+    when _qgclicked_ and _S.04_
+    give pc nothing 
+	end quest 
+
+_S.02_ task:
+	clicked npc _contact_ 
+	reveal _mondung_ 
+	log 1012 step 1 
+	say 1011 
+
+_S.03_ task:
+	injured _target_ saying 1013 
+
+_S.04_ task:
+	killed 1 _target_ saying 1014 
+
+variable _S.06_
+--unused variables
+_clearclick_ task:
+	when _qgclicked_ and not _S.04_ 
+	clear _qgclicked_ _clearclick_

@@ -1,0 +1,53 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: a demo of the Person resource that names Daggerfall's own King Gothryd and Queen Aubk-i.
+---- Example quest used to test Person resource
+---- Send player on a hunt to click both the King and Queen of Daggerfall
+
+Quest: __DEMO07
+
+
+QRC:
+
+QuestLogEntry:  [1010]
+%qdt
+    Find _king_ at _dirtypit_, an
+ inn in __dirtypit_. Then call on
+ _queen_ at Castle Daggerfall.
+
+Message: 1030
+%pcn, your click found _king_.
+
+Message: 1035
+%pcn, your click found _queen_.
+
+Message: 1040
+Good work, %pcn. You have clicked both
+the King and the Queen of Daggerfall.
+
+
+QBN:
+
+Place _dirtypit_ local tavern
+
+Person _king_ named King_Gothryd
+Person _queen_ named Queen_Aubk-i atHome
+
+
+---- Quest startup
+log 1010 step 0
+create npc at _dirtypit_
+place npc _king_ at _dirtypit_
+
+_clickedKing_ task:
+clicked npc _king_
+say 1030
+
+_clickedQueen_ task:
+clicked npc _queen_
+say 1035
+
+_clickedBoth_ task:
+when _clickedKing_ and _clickedQueen_
+say 1040
+remove log step 0
+end quest

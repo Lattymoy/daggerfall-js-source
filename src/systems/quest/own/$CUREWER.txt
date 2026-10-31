@@ -1,0 +1,351 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the Glenmoril Coven is the script's one fixed place (reveal glenmorilCoven in province 60), in the Ilessan Hills, and its map (1060) names it there. The rest runs in any province.
+-- Quest: C:\QUESTS\WORKING\$CUREWER.Qbn.
+-- StartsBy: letter
+-- Questee: anyone
+-- Questor: hunter
+-- QuestId: 0
+Messages: 62
+Quest: $CUREWER
+DisplayName: Cure for Lycanthropy
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Error: message 1000
+is never called.
+
+RefuseQuest:  [1001]
+Error: message 1001
+is never called.
+
+AcceptQuest:  [1002]
+Error: message 1002
+is never called.
+
+QuestFail:  [1003]
+<ce> Error: message 1003 is never called.
+
+QuestComplete:  [1004]
+<ce> As _child_ drinks your blood, your
+<ce> mind clears for the first time
+<ce> since the lycanthropy took you.
+<ce> But _child_ screams in agony, and
+<ce> %g changes shape in front of you.
+
+RumorsDuringQuest:  [1005]
+<ce> _hunter_ will soon be in %reg, rooting out the
+<ce> werebeasts. Perhaps then the night will be safe again.
+
+RumorsPostfailure:  [1006]
+<ce> _hunter_ and %g3 men killed plenty of loups in
+<ce> %reg. But hang me if they got every last one.
+<--->
+<ce> _hunter_ should have let things be. %G3
+<ce> crusades only make the werecreatures angrier.
+
+RumorsPostsuccess:  [1007]
+<ce> _hunter_ and %g3 men killed plenty of loups in
+<ce> %reg. But hang me if they got every last one.
+<--->
+<ce> _hunter_ should have let things be. %G3
+<ce> crusades only make the lycanthropes angrier.
+
+QuestorPostsuccess:  [1008]
+Error: message 1008
+is never called.
+
+QuestorPostfailure:  [1009]
+Error: message 1009
+is never called.
+
+Message:  1011
+From one end of Tamriel to the other,
+_hunter_ hunts lycanthropes and kills them.
+<--->
+_hunter_ has given %g3 whole life to hunting lycanthropes.
+
+Message:  1012
+<ce> They say a werewolf killed _hunter_'s own mother.
+<ce> That is what drove %g2 to %g3 burning hatred of them.
+<--->
+<ce> _hunter_ killed %g3 own mother once she became
+<ce> a werewolf. Now there is a true zealot!
+
+Message:  1013
+_father_? I know the name, but I cannot say I know him.
+<--->
+_father_? Dead these many years, I think.
+Or did he move away? I am not sure.
+<--->
+<ce> _father_ came from a noble house of ___local_, once a great
+<ce> one, and he was its last. He died some years ago, sadly.
+<--->
+<ce> I think he is the one who died two or three
+<ce> years back and left his only child an
+<ce> orphan. _local_ at __local_ would know more.
+<--->
+<ce> _father_ left ___local_ years ago, and I do not know what
+<ce> became of him. But _local_ was his friend and may know more.
+<--->
+<ce> _father_ moved to ___father_ long ago.
+<ce> Unless it was _father_ who died so sadly?
+
+Message:  1014
+<ce> _father_ died some years ago. A family from __childhouse_
+<ce> took in his only child, I believe. Ask there for _child_.
+<--->
+<ce> Were you a friend of his? I am sorry. He has
+<ce> been dead a year now. A family from
+<ce> __childhouse_ took in his only child, _child_.
+
+Message:  1020
+                       %qdt
+ 
+ Dear %pcn,
+ 
+    Or is it =wereboar_, as they call you in
+ ____childhouse_? I know what you are. Be cured, or be
+ hunted. Seek out _priest_ of __priest_ in ___priest_,
+ for %g may help you. You have =huntstart_ days.
+ 
+<ce> _hunter_
+
+Message:  1021
+<ce> So you are %pcn. _hunter_ said you might
+<ce> come, though %g doubted you would heed %g3
+<ce> warning. The cure is dark. Pass your curse
+<ce> to one whose blood already carries it, and
+<ce> it leaves you. I know such a bloodline.
+
+Message:  1022
+<ce> I cannot blame you for wanting to live. Your
+<ce> man is _father_ of ___local_, last of a
+<ce> doomed line. He must drink your blood.
+<ce> _alchemist_ of ___alchemist_ will prepare it,
+<ce> and %g asks no questions. May %god guide you.
+
+Message:  1023
+<ce> I am almost glad you refuse. The Beast does
+<ce> not rule you yet. Legend tells of a coven
+<ce> that can cure you. Seek the old History of
+<ce> the Daedric Sects, lost when ___hintdung_
+<ce> was sacked. May %god guide you.
+
+Message:  1024
+<ce> Another one from _priest_, eh? I know
+<ce> what you want, and it is not cheap. 1000
+<ce> gold, paid first. Right, hold still.
+<ce> There, that did not hurt. Now get out
+<ce> before my honest customers see you.
+
+Message:  1025
+<ce> Another one from _priest_, eh? I know
+<ce> what you want, and it is not cheap. 1000
+<ce> gold, paid first. You do not have it,
+<ce> friend. Go, before I call the guards.
+
+Message:  1026
+<ce> _father_? He took his own life three years
+<ce> ago, though few know it. His note begged
+<ce> that _child_ never learn why. _child_ is his
+<ce> only child. %G went to live with a family in
+<ce> __childhouse_ when %g3 father died.
+
+Message:  1027
+<ce> Hello. Are you a healer? I have felt
+<ce> ill all day. Is that medicine for me?
+
+Message:  1028
+<ce> Will you let _child_ drink the blood?
+
+Message:  1030
+<ce> Will you find a victim, and so
+<ce> be cured of your lycanthropy?
+
+Message:  1040
+<ce> _hunter_ told me you would
+<ce> be here. Die, =wereboar_!
+
+QuestTimeLapse:  [1045]
+<ce> You notice something in your pack
+<ce> that was not there before. A letter,
+<ce> with your name on it in a fine,
+<ce> flowing hand. How did it get there?
+
+Message:  1050
+%qdt:
+ _hunter_, a hunter of lycanthropes,
+ wrote to me. Unless I cure myself,
+ %g will hunt me down. %G names
+ _priest_ of __priest_, ___priest_,
+ as one who can help. The hunt
+ begins in =huntstart_ days.
+
+Message:  1051
+%qdt:
+ _priest_ says my only cure is to make _father_
+ of ___local_, last of a family with the latent
+ curse, drink my blood. The disease will pass
+ wholly to him. _alchemist_, an alchemist in
+ ___alchemist_, can prepare the vial.
+
+Message:  1052
+%qdt:
+ I refused _priest_'s cure, which would
+ curse another in my place. %G3 only
+ other advice was to find a book that may
+ lead to a coven with a cure. It was last
+ seen in ___hintdung_, so I start there.
+
+Message:  1053
+%qdt:
+ A page from the book says the
+ library of ___mapdung_ holds
+ more on the "Glenmoril Coven".
+
+Message:  1054
+%qdt:
+ _father_ is already dead.
+ But there is still hope. His
+ child _child_ is alive, and
+ lives in __childhouse_ now.
+
+Message:  1060
+<ce> A map. It marks the place
+<ce> of the Glenmoril Coven,
+<ce> deep in the Ilessan Hills.
+
+Message:  1061
+Someone tore this page out of a book:
+ 
+ "...The Glenmoril Coven, or Circle of Seven, is
+ older than any record of it. Legend says the coven
+ can cure lycanthropy. The library of ___mapdung_
+ holds the full account. Another of..."
+
+
+QBN:
+Item _letter_ letter used 1020
+Item _blood_ werewolf_blood
+Item _map_ letter used 1060
+Item map2 letter used 1061
+
+Person _priest_ face 40 group Cleric remote
+Person _child_ face 1 faction Children remote
+Person _hunter_ face 1 factiontype Temple remote anyInfo 1011 rumors 1012
+Person _alchemist_ group Chemist remote
+Person _father_ face 5 group Noble male remote anyInfo 1013 rumors 1014
+Person _local_ group Resident1 remote
+
+Place _mapdung_ remote dungeon4
+Place glenmorilCoven permanent GlenmorilCoven
+Place _childhouse_ remote house2
+Place _hintdung_ remote dungeon11
+
+Clock _S.05_ 7.00:00 27.23:40
+Clock _huntstart_ 60.00:00 0
+
+Foe _F.00_ is Knight
+Foe _wereboar_ is Wereboar
+
+--	Quest start-up:
+	place item _map_ at _mapdung_ 
+	place item map2 at _hintdung_ 
+	dialog link for location glenmorilCoven person _hunter_ 
+	dialog link for location _mapdung_ person _priest_ 
+	dialog link for person _local_ 
+	dialog link for location _hintdung_ person _alchemist_ 
+	dialog link for person _father_ 
+	dialog link for person _child_ 
+	_letter_ used do _readletter_ 
+	_map_ used do _S.10_ 
+	map2 used do _S.16_ 
+	have _letter_ set _S.09_ 
+	give pc _letter_ notify 1045 
+	create npc at _childhouse_ 
+	place npc _child_ at _childhouse_ 
+
+_S.00_ task:
+	clicked npc _priest_ 
+	prompt 1030 yes _S.03_ no _S.04_ 
+	say 1021 
+
+_readletter_ task:
+	add dialog for person _hunter_ 
+	add dialog for person _priest_ 
+	log 1050 step 0 
+
+variable _S.02_
+_S.03_ task:
+	add dialog for person _father_ 
+	add dialog for person _alchemist_ 
+	log 1051 step 1 
+	say 1022 
+
+_S.04_ task:
+	reveal _hintdung_ 
+	log 1052 step 1 
+	say 1023 
+
+_S.05_ task:
+	make _map_ permanent 
+	end quest 
+
+_huntstart_ task:
+	start timer _S.05_ 
+
+_S.07_ task:
+	injured _F.00_ saying 1040 
+
+_S.08_ task:
+	toting _blood_ and _child_ clicked 
+	prompt 1028 yes _S.14_ no _S.15_ 
+	say 1027 
+
+_S.09_ task:
+	start timer _huntstart_ 
+
+_S.10_ task:
+	reveal glenmorilCoven in province 60 at 81312 
+
+_npc_ task:
+	clicked _alchemist_ and at least 1000 gold otherwise do _S.12_ 
+	get item _blood_ 
+	say 1024 
+
+_S.12_ task:
+	say 1025 
+	clear _S.12_ _npc_ 
+
+_S.13_ task:
+	clicked npc _local_ 
+	add dialog for person _child_ 
+	log 1054 step 2 
+	say 1026 
+
+_S.14_ task:
+	give pc nothing 
+	hide npc _child_ 
+	cure lycanthropy 
+	legal repute -10 
+	place foe _wereboar_ at _childhouse_ 
+
+_S.15_ task:
+	get item _blood_ 
+
+_S.16_ task:
+	reveal _mapdung_ 
+	log 1053 step 2 
+
+_S.17_ task:
+	killed 1 _wereboar_ 
+	legal repute -20 
+
+_S.18_ task:
+	when _huntstart_ 
+	create foe _F.00_ every 79 minutes 30 times with 20% success 
+
+_S.19_ task:
+	when _S.14_ 
+	clear _S.18_ 

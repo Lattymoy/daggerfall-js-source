@@ -1,0 +1,62 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000100.Qbn.
+-- Main story quest.
+-- QuestId: 100
+Messages: 16
+Quest: S0000100
+-- Message panels
+QRC:
+
+Message:  1015
+<ce> Queen Akorithi wants the Totem, and
+<ce> she sent us to take it off your
+<ce> hands. You should have kept her
+<ce> friendship. She wants you dead as
+<ce> well, with nobody left to tell it.
+<--->
+<ce> Nothing personal, %pcn. We
+<ce> came for the Totem, and the
+<ce> only way to it is through you.
+
+
+QBN:
+
+
+
+Clock _S.01_ 01:15 0 flag 1 range 0 1
+Clock _S.02_ 444.10:40 0 flag 1 range 0 1
+
+Foe _F.00_ is 3 Battle_mage
+
+--	Quest start-up:
+	create foe _F.00_ every 100 minutes 30 times with 5% success 
+	start timer _S.02_ 
+
+_S.00_ task:
+	injured _F.00_ 
+	start timer _S.01_ 
+	say 1015 
+
+_S.01_ task:
+	clear _S.01_ _S.00_ 
+
+_S.02_ task:
+	end quest 
+
+GothrydGotTotem _S.03_
+KingOfWormsGotTotem _S.04_
+GortwogGotTotem _S.05_
+AkorithiGotTotem _S.06_
+UnderkingGotTotem _S.07_
+EadwyreGotTotem _S.08_
+BrisiennaGotTotem _S.09_
+_S.10_ task:
+	when _S.03_ or _S.04_ or _S.05_ or _S.06_ 
+
+_S.11_ task:
+	when _S.07_ or _S.08_ or _S.09_ 
+
+_S.12_ task:
+	when _S.10_ or _S.11_ 
+	start task _S.02_

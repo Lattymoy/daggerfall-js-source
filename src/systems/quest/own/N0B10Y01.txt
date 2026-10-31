@@ -1,0 +1,141 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B10Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 10
+-- QuestId: 1
+Messages: 21
+Quest: N0B10Y01
+DisplayName: Atronach Hunting
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> This is awkward. An experiment got out of our
+<ce> laboratory hungry, and it is in a foul mood. It
+<ce> is only an atronach, but a rampage would shame
+<ce> the guild. Will you end it for _reward_ gold?
+<--->
+<ce> We have had some excitement here at last. A class
+<ce> on atronachs went wrong. What matters is that an
+<ce> atronach is loose in %reg, and everyone knows
+<ce> where it came from. Can you end this quietly?
+
+RefuseQuest:  [1001]
+<ce> A pity. Some other bold soul
+<ce> will come along, I expect.
+
+AcceptQuest:  [1002]
+<ce> %oth, thank you. The poor thing has made
+<ce> its home in a filthy hole called
+<ce> ___mondung_. This must be quick and quiet.
+<ce> If it still lives after =1stparton_ days,
+<ce> do not come back for the gold.
+
+QuestFail:  [1003]
+<ce> The atronach is still alive. I can
+<ce> tell, because the town is still
+<ce> screaming. Come back when it stops.
+
+QuestComplete:  [1004]
+<ce> Our hunter is back! You have spared
+<ce> the guild a great deal of shame.
+<ce> Take your gold, and my thanks.
+
+RumorsDuringQuest:  [1005]
+Something got out of the Mages Guild
+laboratory the other night, they say.
+<--->
+%oth, I saw something moving in the dark that very night.
+
+RumorsPostfailure:  [1006]
+The Mages Guild is in trouble over that
+thing that got out of its laboratory.
+<--->
+The Mages Guild has lost another experiment, it seems.
+
+RumorsPostsuccess:  [1007]
+Word is the %t had a cousin who went missing about the
+time that atronach was made. Make of that what you will.
+<--->
+People sleep better now that the atronach is dead.
+<--->
+A %ra put down the guild's runaway. The
+tavern has a song about it already.
+
+QuestorPostsuccess:  [1008]
+Yes, yes, the atronach. I have not forgotten what you did.
+
+QuestorPostfailure:  [1009]
+<ce> You were to stop that atronach, %pcf,
+<ce> and you did not. Leave me to my gloom.
+
+QuestLogEntry:  [1010]
+<ce> "Better this than the laboratory." The
+<ce> light goes out of the atronach's eyes.
+
+Message:  1020
+%qdt:
+ The Mages Guild in ___questgiver_ wants
+ me to kill an atronach that got out of
+ its laboratory. It lives in ___mondung_
+ now. I must kill it and return to
+ ___questgiver_ within =1stparton_ days.
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is Iron_atronach
+Foe _F.01_ is Ice_atronach
+Foe _F.02_ is Fire_atronach
+Foe _F.03_ is Flesh_atronach
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1020 step 0 
+	pick one of _fire_ _flesh_ _ice_ _iron_ 
+
+_pcgetsgold_ task:
+	when _qgclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+variable _queston_
+_mondead_ task:
+	killed 1 _F.02_ saying 1010 
+	killed 1 _F.03_ saying 1010 
+	killed 1 _F.01_ saying 1010 
+	killed 1 _F.00_ saying 1010 
+
+_qgclicked_ task:
+	clicked npc _questgiver_ 
+
+_1stparton_ task:
+	end quest 
+
+variable _2ndparton_
+_fire_ task:
+	place foe _F.02_ at _mondung_ 
+
+_iron_ task:
+	place foe _F.00_ at _mondung_ 
+
+_flesh_ task:
+	place foe _F.03_ at _mondung_ 
+
+_ice_ task:
+	place foe _F.01_ at _mondung_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_

@@ -1,0 +1,199 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C00Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 2
+Messages: 16
+Quest: K0C00Y02
+DisplayName: Counterfeit Gold
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, I am in trouble. Someone sold me
+<ce> false gold, foscarium painted yellow,
+<ce> and I paid four friends in it. Bring
+<ce> the bars back within =2mondung_ days.
+<ce> I pay _reward1_ gold a bar. Agreed?
+
+RefuseQuest:  [1001]
+<ce> No? Then I will find someone with
+<ce> fewer scruples. It will not take long.
+
+AcceptQuest:  [1002]
+<ce> %oth, good. The bars are at _depository_, a
+<ce> bank in __depository_, in ___mondung_, at the
+<ce> palace in __palace_ and at _mansion_ in
+<ce> __mansion_. You have =2mondung_ days. One in
+<ce> time beats four too late. %god keep you, %pcf.
+
+QuestFail:  [1003]
+<ce> By %god, hurry! Every day counts.
+
+QuestComplete:  [1004]
+<ce> So the trouble of _qgiver_
+<ce> is over, for now.
+
+RumorsDuringQuest:  [1005]
+A stranger asked me the way to _depository_
+today. Bankers do not carry that many knives.
+<--->
+<ce> Something is stirring at ___mondung_.
+ Lights every night, and new faces.
+<--->
+_palace_ has doubled its guard.
+Word is that thieves are about.
+<--->
+The cook at _mansion_ says someone
+has been watching the house for days.
+
+RumorsPostfailure:  [1006]
+%t %rn believes _qgiver_ runs the whole smuggling ring.
+<--->
+Turns out _qgiver_ paid friends in
+painted foscarium. Some friend.
+<--->
+_palace_ wants nothing more to do with _qgiver_.
+<--->
+The folk at ___mondung_ mean to ruin
+_qgiver_, and they are good at it.
+
+RumorsPostsuccess:  [1007]
+_qgiver_ quietly paid back every coin
+%g3 friends lost to the thieves.
+<--->
+The great merchant houses of %reg think
+the world of _qgiver_ these days.
+
+QuestorPostsuccess:  [1008]
+Hello again, my expert in false gold.
+
+QuestorPostfailure:  [1009]
+I trusted you with my whole fortune once,
+%pcf. I remember, even if you do not.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ___qgiver_ wants back the four
+ false gold bars %g paid %g3 friends, within
+ =2mondung_ days. They are at _palace_ in
+ __palace_, in ___mondung_, at _mansion_ in
+ __mansion_ and at _depository_ in
+ __depository_. Each pays _reward1_ gold.
+
+Message:  1015
+<ce> %oth, well done, %pcf. I feared
+<ce> I had not given you time enough.
+<ce> Here is real gold for the false.
+
+
+QBN:
+Item _goldBrick1_ gold_bar
+Item _goldBrick2_ gold_bar
+Item _goldBrick3_ gold_bar
+Item _goldBrick4_ gold_bar
+Item _reward1_ gold
+Item _reward2_ gold
+Item _reward3_ gold
+Item _I.07_ gold
+
+Person _qgiver_ group Questor
+
+Place _depository_ remote bank
+Place _mondung_ remote dungeon2
+Place _palace_ remote palace
+Place _mansion_ remote house1
+
+Clock _2mondung_ 00:00 0 flag 17 range 0 2
+
+Foe _F.00_ is 2 Knight
+Foe _F.01_ is 2 Battle_mage
+Foe _F.02_ is 2 Spellsword
+
+--	Quest start-up:
+	place item _goldBrick1_ at _depository_ 
+	place item _goldBrick2_ at _mansion_ 
+	place item _goldBrick3_ at _mondung_ 
+	place item _goldBrick4_ at _palace_ 
+	start timer _2mondung_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	pc at _depository_ set _letter2_ 
+	pc at _mansion_ set _S.10_ 
+	pc at _palace_ set _S.08_ 
+
+variable _S.00_
+variable _S.01_
+variable _2mondung_
+variable _2palace_
+_S.04_ task:
+	toting _goldBrick1_ and _qgiver_ clicked 
+	get item _reward1_ 
+	say 1015 
+	make _reward1_ permanent 
+
+_S.05_ task:
+	toting _goldBrick2_ and _qgiver_ clicked 
+	get item _reward2_ 
+	say 1015 
+	make _reward2_ permanent 
+
+_S.06_ task:
+	toting _goldBrick3_ and _qgiver_ clicked 
+	get item _reward3_ 
+	say 1015 
+	make _reward3_ permanent 
+
+_S.07_ task:
+	toting _goldBrick4_ and _qgiver_ clicked 
+	get item _I.07_ 
+	say 1015 
+	make _I.07_ permanent 
+
+_qgclick2_ task:
+	clicked npc _qgiver_
+
+_clearclick_ task:
+	when _qgclick2_ and not _S.04_ and not _S.05_ and not _S.06_ and not _S.07_
+	say 1003
+	clear _clearclick_ _qgclick2_
+
+_S.08_ task:
+	create foe _F.00_ every 10 minutes 10 times with 20% success 
+
+_letter2_ task:
+	create foe _F.01_ every 10 minutes 10 times with 20% success 
+
+_S.10_ task:
+	create foe _F.02_ every 10 minutes 10 times with 20% success 
+
+variable _S.11_
+_mggold_ task:
+	when _S.04_ or _S.05_ or _S.06_ or _S.07_ 
+
+_lesser_ task:
+	when _S.04_ and _S.05_ and _S.06_ and _S.07_ 
+
+_S.14_ task:
+	when _lesser_ 
+	give pc nothing 
+	end quest 
+
+_success_ task:
+	when _2mondung_ and _mggold_ 
+	give pc nothing 
+	make _goldBrick1_ permanent 
+	make _goldBrick2_ permanent 
+	make _goldBrick3_ permanent 
+	make _goldBrick4_ permanent 
+	end quest 
+
+_S.16_ task:
+	when _2mondung_ and not _mggold_ 
+	make _goldBrick1_ permanent 
+	make _goldBrick2_ permanent 
+	make _goldBrick3_ permanent 
+	make _goldBrick4_ permanent 
+	end quest 

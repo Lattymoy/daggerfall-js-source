@@ -1,0 +1,158 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000005.Qbn.
+-- Main story quest.
+-- QuestId: 5
+Messages: 12
+Quest: S0000005
+DisplayName: Concern for Nulfaga
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> My husband's grandmother, Nulfaga, is
+<ce> said to be failing, her mind nearly
+<ce> gone. She hides in her Wrothgarian
+<ce> castle, working reckless magic. Few
+<ce> dare visit. Learn how she is, and
+<ce> this _magicitem_ is yours. Will you?
+
+RefuseQuest:  [1001]
+<ce> Most people say the same.
+<ce> I hoped you would not.
+
+AcceptQuest:  [1002]
+<ce> %oth, thank you. Her castle is called
+<ce> Shedungent. You should be there and back within
+<ce> =2shedungent_ days. If she has gone mad, it
+<ce> will be dangerous. Kynareth and Mara keep you.
+
+QuestFail:  [1003]
+<ce> Speak with Nulfaga
+<ce> first. Then we can talk.
+
+QuestComplete:  [1004]
+<ce> I truly feared you would not come back.
+<ce> Nulfaga is alive, then. Thank you for
+<ce> that. This _magicitem_ is yours.
+
+RumorsDuringQuest:  [1005]
+Since when does the Queen care
+so much about mad old Nulfaga?
+<--->
+Nulfaga is a mad witch. Why should
+Queen Aubk-i mind whether she lives?
+
+RumorsPostfailure:  [1006]
+That %ra never found Nulfaga, so
+the Queen has hired someone new.
+<--->
+Queen Aubk-i gave up waiting on that
+%ra and sent another sellsword.
+
+RumorsPostsuccess:  [1007]
+Queen Aubk-i is smiling at last, and a lovely smile it is.
+<--->
+Queen Aubk-i looks happy lately.
+No, more than happy. Relieved.
+
+QuestorPostsuccess:  [1008]
+I still thank you for going all the
+way to Shedungent to see Nulfaga.
+
+QuestorPostfailure:  [1009]
+%pcn. You are the %ra who would not
+visit my husband's grandmother.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Queen Aubk-i of Daggerfall is worried about
+ Nulfaga, her husband's grandmother. I am to
+ visit Nulfaga at Shedungent in Wrothgaria
+ and see how she is. Within =2shedungent_
+ days I must report back for my reward.
+
+Message:  1011
+<ce> Hush, hush, the candles are listening. My boy
+<ce> rode out to war and an arrow found his throat.
+<ce> I told him! Nobody listens to an old woman.
+<ce> Shut up, door of my soul. Shut up! Ruin, ruin.
+<--->
+<ce> Write it in the worst words. Burn the
+<ce> page before anyone reads it. Curse
+<ce> the heavens! Curse Oblivion! My boy
+<ce> is dead. Shut up his tomb's door, and
+<ce> mine, until he and I have peace.
+<--->
+<ce> Which god sent the arrow into my
+<ce> Lysandus' throat? Did they mourn him? Are
+<ce> my birds all gray? I look in every world,
+<ce> over and under and between, and my son is
+<ce> in none. Door of my heart, shut up!
+<--->
+<ce> The dead are walls with no echo. How did
+<ce> my Lysandus die? In fog. Has Oblivion
+<ce> come? Shut up, my door, and keep its gray
+<ce> sky out. My pillow is full of porcupines.
+
+
+QBN:
+Item _magicitem_ magic_item
+
+Person _nulfaga_ named Nulfaga atHome
+Person _aubki_ named Queen_Aubk-i atHome
+
+Place _huntstart_ permanent Shedungent2
+
+Clock _2shedungent_ 150.00:00 0 flag 1 range 0 1
+
+
+--	Quest start-up:
+	start timer _2shedungent_ 
+	log 1010 step 0 
+	prompt QuestorOffer yes yes no _no_ 
+
+_2shedungent_ task:
+	drop _aubki_ as questor 
+	end quest 
+
+_S.01_ task:
+	clicked npc _nulfaga_ 
+	say 1011 
+
+_pcgetsgold_ task:
+	when _S.03_ and _S.01_ 
+	give pc _magicitem_ 
+	start quest 107 107 
+	stop timer _2shedungent_ 
+	repute with _aubki_ exceeds 15 do _S.11_ 
+	change repute with _aubki_ by +10 
+	mute npc _aubki_ 
+	drop _aubki_ as questor 
+
+_S.03_ task:
+	clicked npc _aubki_ 
+
+variable _2letter_
+variable _S.05_
+variable _S.06_
+variable _S.07_
+yes task:
+	reveal _huntstart_ in province 16 at 50966 
+	say AcceptQuest 
+	add _aubki_ as questor 
+
+_no_ task:
+	say RefuseQuest 
+	drop _aubki_ as questor 
+	end quest 
+
+_clearclick_ task:
+	when _S.03_ and not _S.01_ 
+	clear _S.03_ _clearclick_ 
+
+variable _S.11_
+_S.12_ task:
+	when _S.11_ and _pcgetsgold_ 
+	start quest 13 13 
+	end quest

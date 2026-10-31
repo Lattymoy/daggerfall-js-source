@@ -1,0 +1,163 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 5
+Messages: 31
+Quest: R0C10Y05
+DisplayName: Deadly Diplomacy
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You may have heard that _qgfriend_
+<ce> and I are becoming allies. To seal
+<ce> the bond, I promised to rid %g2 of a
+<ce> monster that lairs in ___mondung_.
+<ce> %G will pay its killer _reward_
+<ce> gold. Does that suit you, %pcn?
+
+RefuseQuest:  [1001]
+<ce> How thoughtless of you. You
+<ce> leave me in an awkward position.
+
+AcceptQuest:  [1002]
+<ce> You know a good bargain. I told
+<ce> _qgfriend_ the monster would be
+<ce> dead within =1stparton_ days, or %g
+<ce> could hire someone else. Kill it,
+<ce> then travel to ___qgfriend_ and see
+<ce> %g2 while there is still time.
+
+QuestFail:  [1003]
+<ce> Time is short, %pcf. Be on the road.
+
+QuestComplete:  [1004]
+<ce> Word has already reached me that our _giant_
+<ce> plague is over. Wherever _questgiver_ found
+<ce> you, I am glad %g did. Here is your _reward_
+<ce> gold, %pcf, with my thanks.
+
+RumorsDuringQuest:  [1005]
+A monster in ___mondung_ has been plaguing _qgfriend_.
+<--->
+They say the monster in ___mondung_
+keeps a swarm of rats and bats.
+
+RumorsPostfailure:  [1006]
+=giant_ knows its lair was found, so the monster has left.
+<--->
+<ce> =giant_ has left ___mondung_, but the
+<ce> monster still troubles _qgfriend_.
+
+RumorsPostsuccess:  [1007]
+%reg is free of =giant_ at last.
+<--->
+A %ra warrior has killed =giant_, the scourge of the land.
+
+QuestorPostsuccess:  [1008]
+My friend, the bane of =giant_! How can I serve you?
+<--->
+<ce> You helped me build my alliances,
+<ce> %pcf. How may I help you in turn?
+
+QuestorPostfailure:  [1009]
+<ce> Your failure with that monster tangled
+<ce> my affairs badly. Do not waste my time.
+
+Message:  1011
+<ce> The =qgfriend_? A would-be ally
+<ce> of _questgiver_, with a monster
+<ce> problem in ___mondung_.
+<--->
+_qgfriend_ and =giant_ are sworn enemies.
+
+Message:  1012
+=giant_ is dead by your hand.
+
+Message:  1015
+%qdt:
+ _questgiver_ of ___questgiver_ hired me
+ for an ally, _qgfriend_ of ___qgfriend_.
+ A monster called =giant_ terrorizes the
+ land around ___mondung_. If it is dead
+ and I reach _qgfriend_ within
+ =1stparton_ days, I earn my reward.
+
+Message:  1021
+<ce> One more thing. I do not know
+<ce> what haunts ___mondung_, but
+<ce> people whisper the name =giant_.
+
+Message:  1030
+<ce> =giant_ the Terrible does not
+<ce> forgive those who break into %g3
+<ce> lair. Your skull goes on my wall!
+
+
+QBN:
+Item _reward_ gold
+
+Person _questgiver_ face 112 group Questor
+Person _qgfriend_ group Local_3.0 remote anyInfo 1011 rumors 1011
+
+Place _mondung_ remote dungeon
+
+Clock _1stparton_ 00:00 0 flag 17 range 0 2
+
+Foe _vampire_ is Vampire
+Foe _wereboar_ is Wereboar
+Foe _mage_ is Battle_mage
+Foe _giant_ is Giant
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _mondung_ 
+	log 1015 step 0 
+	pick one of _S.06_ _S.07_ _orsinium_ _S.09_ 
+	say 1021 
+
+_1stparton_ task:
+	end quest 
+
+_pcgetsgold_ task:
+	when _npcclicked_ and _mondead_ 
+	give pc _reward_ 
+	end quest 
+
+variable _queston_
+_mondead_ task:
+	killed 1 _giant_ 
+	killed 1 _wereboar_ 
+	killed 1 _vampire_ 
+	killed 1 _mage_ 
+	say 1012 
+	create npc _qgfriend_ 
+
+_npcclicked_ task:
+	clicked npc _qgfriend_ 
+
+_clearclick_ task:
+	when _npcclicked_ and not _mondead_ 
+	clear _npcclicked_ _clearclick_ 
+
+_S.06_ task:
+	place foe _giant_ at _mondung_ 
+
+_S.07_ task:
+	place foe _mage_ at _mondung_ 
+
+_orsinium_ task:
+	place foe _wereboar_ at _mondung_ 
+
+_S.09_ task:
+	place foe _vampire_ at _mondung_ 
+
+_S.10_ task:
+	injured _wereboar_ 
+	injured _vampire_ 
+	injured _mage_ 
+	injured _giant_ 
+	say 1030 

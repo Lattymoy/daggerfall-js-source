@@ -1,0 +1,163 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C10Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 10
+-- QuestId: 2
+Messages: 31
+Quest: R0C10Y02
+DisplayName: Gold Smuggling
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Someone I know in ___contact_ is waiting
+<ce> for a parcel. Take it there, and you will
+<ce> be given something in return. Bring that
+<ce> back to me for _reward_ gold. Agreed?
+
+RefuseQuest:  [1001]
+<ce> No? A shame. I meant to be generous.
+
+AcceptQuest:  [1002]
+<ce> Good. Here is a bar of gold for _contact_,
+<ce> a =contact_, at __contact_ in ___contact_.
+<ce> Be at __contact_ within =1stparton_ days,
+<ce> or _contact_ will leave, and you will
+<ce> regret it most. Luck, %pcf.
+
+QuestFail:  [1003]
+<ce> Either you have not started, %pcf,
+<ce> or you have come to confess. I am
+<ce> disappointed. Go, %pcf, and go now.
+
+QuestComplete:  [1004]
+<ce> %pcf, you are back with my _item2_, as you
+<ce> promised. You have done bravely. I expect
+<ce> we will want you again before long.
+
+RumorsDuringQuest:  [1005]
+<ce> A =contact_ came by asking whether I had seen a %ra.
+<--->
+<ce> Some =contact_ was here a while ago,
+<ce> asking after a %ra with a _item1_.
+
+RumorsPostfailure:  [1006]
+<ce> _questgiver_ is furious with
+<ce> some %ra hireling, they say.
+<--->
+<ce> _questgiver_ keeps hiring swords,
+<ce> and I hear %g got burned this time.
+
+RumorsPostsuccess:  [1007]
+<ce> _questgiver_ finally has the
+<ce> _item2_ %g wanted, I hear.
+<--->
+<ce> _questgiver_ cannot stop praising some %ra hireling.
+
+QuestorPostsuccess:  [1008]
+Welcome back. I still remember the service you did me.
+<--->
+%pcf. Always a pleasure.
+
+QuestorPostfailure:  [1009]
+<ce> The clumsy %ra. You are bold
+<ce> to show your face here.
+<--->
+<ce> The courier who failed
+<ce> me. Crawl off, why not?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ of ___questgiver_ gave
+ me a bar of gold for _contact_ of
+ ___contact_, a =contact_ found at
+ __contact_. The gold must be in %g3
+ hands within =1stparton_ days, or I
+ am not paid.
+
+Message:  1011
+%qdt:
+ I gave the gold to _contact_.
+ In return I have a _item2_ to
+ carry back to _questgiver_.
+
+Message:  1020
+<ce> A gold bar is heavy to carry. I will
+<ce> gladly take the weight off you. Give
+<ce> it to me and you may go. Will you?
+
+Message:  1021
+<ce> What a brave little courier. My friends
+<ce> will love to hear how obliging you are.
+
+Message:  1030
+<ce> You must be the courier. Good, good. Now take
+<ce> this _item2_ straight back to _questgiver_, and
+<ce> %g will pay you as promised. A pleasure, %pcf!
+
+
+QBN:
+Item _reward_ gold
+Item _item1_ gold_bar
+Item _item2_ magic_item
+
+Person _questgiver_ face 76 group Questor
+Person _contact_ face 80 group Local_3.0 remote
+
+
+Clock _1stparton_ 00:00 0 flag 1 range 1 4
+Clock _2ndparton_ 00:00 0 flag 1 range 1 4
+
+Foe _thief_ is Spellsword
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1010 step 0 
+	get item _item1_ 
+	create npc _contact_ 
+
+_pcgetsgold_ task:
+	toting _item2_ and _questgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+_queston_ task:
+	when _1stparton_ and not _npcclicked_ 
+	when _2ndparton_ 
+	change repute with _questgiver_ by -20 
+	end quest 
+
+variable _qgclicked_
+_npcclicked_ task:
+	toting _item1_ and _contact_ clicked 
+	start timer _2ndparton_ 
+	log 1011 step 1 
+	get item _item2_ saying 1030 
+
+until _npcclicked_ performed:
+	create foe _thief_ every 5 minutes 5 times with 25% success 
+
+variable _1stparton_
+variable _pchasitem1_
+variable _pchasitem2_
+yes task:
+	have _item1_ set _S.09_ 
+
+variable _no_
+_S.09_ task:
+	give item _item1_ to _thief_
+	say 1021
+--moved "saying 1021" to new line. bad argument 
+	restrain foe _thief_ 
+
+_S.10_ task:
+	injured _thief_ 
+	prompt 1020 yes yes no _no_ 
+
+variable _2ndparton_
+_S.12_ task:
+	when _queston_ or _pcgetsgold_ 
+	make _item2_ permanent 
+	make _item1_ permanent 

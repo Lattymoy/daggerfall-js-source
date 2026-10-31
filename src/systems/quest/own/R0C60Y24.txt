@@ -1,0 +1,201 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C60Y24.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 60
+-- QuestId: 24
+Messages: 41
+Quest: R0C60Y24
+DisplayName: Business with Vampires
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> %pcf, my friend, welcome, and doubly so
+<ce> when I need help. This _item_ must reach
+<ce> my contact in ___contact_, but a vampire
+<ce> clan means to stop my courier. You are the
+<ce> one who could get through. Will you try?
+
+RefuseQuest:  [1001]
+<ce> No time? That is a pity.
+
+AcceptQuest:  [1002]
+<ce> Marvelous. Here is the _item_. _contact_
+<ce> must have it at __contact_ within =queston_
+<ce> days. Ask for a =contact_, and you will be
+<ce> shown to %g2. And do try to stay alive.
+
+QuestFail:  [1003]
+<ce> You are wasting time, %pcf. Take
+<ce> the road to ___contact_ now.
+
+QuestComplete:  [1004]
+<ce> Welcome, %pcf, and the _item_ too.
+<ce> Good. Those creatures of the night were
+<ce> right to fear it in my hands. Take some
+<ce> gold for the trouble. Go carefully.
+
+RumorsDuringQuest:  [1005]
+They are studying vampire lore at __contact_, I hear.
+<--->
+_contact_, a famous vampire hunter, has joined __contact_.
+
+RumorsPostfailure:  [1006]
+Somebody found a beautiful _item_ around here.
+<--->
+_questgiver_ is raging at a %ra adventurer, people say.
+
+RumorsPostsuccess:  [1007]
+The streets of %reg feel safer lately.
+<--->
+There are fewer vampire attacks
+now. It is still too soon to relax.
+
+QuestorPostsuccess:  [1008]
+The bloodsuckers learned their lesson, %pcf. How can I help?
+<--->
+The delivery got through, I hear. That did not surprise me.
+
+QuestorPostfailure:  [1009]
+<ce> Were the vampires too much,
+<ce> %pcf? No shame in that. They are
+<ce> strong. But I cannot talk now.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ wants a _item_ brought to a
+ contact of %g3, the priest _contact_ at
+ __contact_ in ___contact_. The local vampires
+ want to stop me, and the _item_ must reach
+ ___contact_ within =queston_ days.
+
+Message:  1011
+<ce> You are the bold %pcn. When =vampleader_
+<ce> failed, I hoped you would call. I am
+<ce> _vampire_ of the ==vampire_. Give the
+<ce> _item_ to me, not that butcher _contact_,
+<ce> and the ==vampire_ pay _vampreward_ gold
+<ce> and a magic _vampitem_. Agreed?
+
+Message:  1012
+<ce> Marvelous. A rising %ra adventurer who
+<ce> knows when to change sides. _questgiver_
+<ce> will be unhappy, but %g must get used to
+<ce> disappointment. A pleasure. Perhaps we will
+<ce> meet again, somewhere more... private.
+
+Message:  1013
+<ce> Loyal to _questgiver_. Touching, and
+<ce> a pity for us both. See yourself
+<ce> out, %pcf. And sleep lightly. The
+<ce> ==vampire_ always pay what they owe.
+
+Message:  1015
+_contact_ leads the hunt for every vampire in %reg.
+<--->
+<ce> _contact_ has burned so many at the stake. Were
+<ce> they all vampires? I find it hard to believe.
+
+Message:  1030
+<ce> The parchment marks Kykos Coven, in
+<ce> Dak'fron. You copy it onto your map.
+
+Message:  1040
+=vampleader_,
+ 
+_questgiver_ has the _item_ %g sought, and
+sends it to _contact_. The ==vampire_ must
+prevent it. _questgiver_ fears we will rob %g2,
+so %g hired a %ra, %pcn. Beware %pcf. Bring the
+_item_ to _vamphouse_ in __vamphouse_.
+ 
+_vampire_
+
+
+QBN:
+Item _reward_ gold
+Item _item_ Holy_relic
+Item _map_ letter used 1030
+Item _note_ letter used 1040
+Item _vampreward_ gold
+Item _vampitem_ magic_item
+
+Person _questgiver_ group Questor
+Person _contact_ group Cleric remote anyInfo 1015 rumors 1015
+Person _vampire_ face 1 factiontype Vampire_Clan remote
+
+Place kykosCoven permanent KykosCoven
+Place _vamphouse_ remote house1
+
+Clock _queston_ 00:00 0 flag 1 range 1 4
+
+Foe _vampires_ is Vampire
+Foe _vampleader_ is Ancient_vampire
+
+--	Quest start-up:
+	dialog link for location _vamphouse_ person _vampire_ 
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _item_ 
+	pick one of _yesmap_ _nomap_ _nomap_ _nomap_ 
+
+_queston_ task:
+	change repute with _questgiver_ by -20 
+	end quest 
+
+_npcclicked_ task:
+	toting _item_ and _contact_ clicked 
+	give pc _reward_ 
+	end quest 
+
+_vampclicked_ task:
+	toting _item_ and _vampire_ clicked 
+	prompt 1011 yes _thankyou_ no _gimme_ 
+
+_thankyou_ task:
+	get item _vampreward_ 
+	get item _vampitem_ 
+	say 1012 
+	make _vampitem_ permanent 
+	make _vampreward_ permanent 
+	change repute with _vampire_ by +10 
+	end quest
+--eliminates long wait for quest to end. quest is impossible with this choice
+
+_gimme_ task:
+	get item _item_ 
+	say 1013 
+	change repute with _vampire_ by -5 
+
+_S.07_ task:
+	daily from 05:50 to 17:30 
+
+_S.08_ task:
+	injured _vampires_ 
+
+_readmap_ task:
+	reveal kykosCoven in province 11 at 484567 
+
+variable _yesmap_
+variable _nomap_
+_placemap_ task:
+	when _yesmap_ and _S.08_ 
+	_map_ used do _readmap_ 
+	give item _map_ to _vampires_ 
+
+_S.13_ task:
+	injured _vampleader_ 
+	_note_ used do _readnote_ 
+	give item _note_ to _vampleader_ 
+
+_readnote_ task:
+	add dialog for location _vamphouse_ 
+	create npc at _vamphouse_ 
+	place npc _vampire_ at _vamphouse_ 
+
+_conhouse_ task:
+	when not _S.07_ and not _thankyou_ 
+	create foe _vampires_ every 10 minutes 8 times with 25% success 
+	create foe _vampleader_ every 20 minutes 1 times with 100% success 

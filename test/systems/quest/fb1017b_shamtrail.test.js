@@ -27,7 +27,7 @@ import { loadTables, questScript, mark, rmbBlock, town, worldOf, SPAWN, ITEM } f
 
 loadTables();
 const rd = (p) => readFileSync(new URL(`../../../${p}`, import.meta.url), 'utf8');
-const SOURCE = rd('vendor/dfu-quests/Quests/C0B00Y02.txt');
+const SOURCE = rd('src/systems/quest/own/C0B00Y02.txt');   // PIN MOVED (OWN-WORDS2): the file the game reads - DFU's QBN, our words
 const patched = () => applyQuestPatches('C0B00Y02', SOURCE).split('\n');
 
 /** MONSTER.BSA holding one career, ENEMY027.CFG - the Daedroth's (test/ai/nav/fb1016b_indoorwatch.test.js's rig). */
@@ -134,12 +134,12 @@ test('SHAM-TRAIL, the report: the sham reveal stands no Daedroth - by the script
   const q = possessedChild({ pick: 0.1, lines: SOURCE.split(/\r?\n/) });
   assert.ok(q.triggered('sham') && !q.triggered('real'), 'the start\'s draw: the sham');
   const said = q.toTheChild();
-  assert.match(said[0], /I'll keep this .+ for protection\. Goodbye!$/, 'say 1016: the child keeps the relic - "giving the child the scarab"');
+  assert.match(said[0], /I will hold on to this .+, just in case\. Goodbye!$/, 'say 1016: the child keeps the relic - "giving the child the scarab"');   // PIN MOVED (OWN-WORDS2)
   assert.ok(q.triggered('revealsham') && !q.triggered('exorcise'));
   assert.equal(q.spawns.length, 0, 'no Daedroth: only `_exorcise_` places the foe');
   assert.equal(q.carried.size, 0, '`take _item_ from pc`');
   // the priest's word, which the sham shares
-  assert.match(q.text(1019), /When the exorcism is complete, it will leave .+ and appear elsewhere in .+\. Be ready for a battle/);
+  assert.match(q.text(1019), /It is a strong Daedroth, and once it leaves .+, it will appear in .+\. Be ready\./);   // PIN MOVED (OWN-WORDS2)
   // nothing filed: the journal's last word is the priest's house
   assert.deepEqual(q.entries(), [[0, 1010], [2, 1014], [3, 1020]], 'the reveal files no entry in DFU\'s script');
   assert.equal(entryTarget(q.latest()).symbol, 'house3', 'the guidance sends the player back to the priest');
@@ -174,7 +174,7 @@ test('SHAM-TRAIL, the fix: the reveal files 1027 at step 4 - what the player saw
   assert.ok(q.triggered('hookerconfess'));
   assert.deepEqual(q.entries().at(-1), [6, 1026], 'and the script\'s own entry, 1026, after the patch\'s');
   q.enter('house2');
-  assert.match(q.click('guardian')[0], /^"Don't hurt me!" .+ hands you the .+ and flees\.$/, 'say 1025: the relic back');
+  assert.match(q.click('guardian')[0], /^"Mercy! Take it!" .+ shoves the .+ at you and runs\.$/, 'say 1025: the relic back');   // PIN MOVED (OWN-WORDS2)
   assert.equal(q.carried.size, 1);
   q.leave();
   q.click('qgiver');
@@ -185,7 +185,7 @@ test('SHAM-TRAIL, the real branch (not the report\'s - read and run): the exorci
   const q = possessedChild({ pick: 0.55 });
   assert.ok(q.triggered('real') && !q.triggered('sham'), 'the start\'s draw: the real');
   const said = q.toTheChild();
-  assert.match(said[0], /is out of me \.\.\. but \.\.\. it's still here\." .+ runs away\./, 'say 1015');
+  assert.match(said[0], /has let go of me \.\.\. but it is not gone\." .+ runs off\./, 'say 1015');   // PIN MOVED (OWN-WORDS2)
   assert.ok(q.triggered('exorcise'));
   assert.equal(q.spawns.length, 1, '`place foe _daedra_ at _house_`: one foe, hot-placed (Place.AssignQuestResource\'s isPlayerHere tail)');
   const [f] = await Promise.all(q.spawns);
@@ -208,7 +208,7 @@ test('SHAM-TRAIL, the patch law: each patch finds its text in the vendored sourc
     for (const p of patchesOf()) assert.equal(raw.replace(/\r\n?/g, '\n').split(p.old).length - 1, p.count, `${name}: ${p.old.trim().slice(0, 40)}`);
     assert.equal(applyQuestPatches(name, raw.replace(/\r?\n/g, '\r\n')), applyQuestPatches(name, raw), `${name}: CRLF`);
   }
-  assert.deepEqual(Object.keys(QUEST_PATCHES), ['_BRISIEN', 'A0C00Y10', 'M0B11Y18', 'C0B00Y02']);   // PIN MOVED: QUEST-AUDIT III DUEL-TOWN's (questaudit3_life.test.js); AUDIT QA3 C3: K'avar's archers; START1: _BRISIEN's waking (test/systems/starts/start1_bay.test.js)
+  assert.deepEqual(Object.keys(QUEST_PATCHES), ['_BRISIEN', 'M0B11Y18', 'C0B00Y02']);   // AUDIT QA3 C3: K'avar's archers; START1: _BRISIEN's waking (test/systems/starts/start1_bay.test.js). PIN MOVED (OWN-WORDS2): QUEST-AUDIT III DUEL-TOWN's A0C00Y10 patch is gone - its own file carries the inn's town (questaudit3_life.test.js)
   const other = rd('vendor/dfu-quests/Quests/S0000021.txt');
   assert.equal(applyQuestPatches('S0000021', other), other, 'a quest the table does not name loads as shipped');
   assert.throws(() => applyQuestPatches('C0B00Y02', SOURCE.replace('\tplace npc _hooker_ at _tavern_ \n', '\tplace npc _hooker_ at _tavern_\n')),

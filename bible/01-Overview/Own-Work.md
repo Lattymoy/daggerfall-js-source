@@ -78,8 +78,9 @@ cooked fish.
   messages are Daggerfall's quest text (eight runs of 68 to 77 bytes match the QRC files byte for byte). Its
   `dfu-text/Internal_RSC.csv` is TEXT.RSC's strings (954 bytes matched, runs up to 161). The owner chose our own
   words over reading ARENA2: "We plan on moving away from arena so whatever works for future proofing". OWN-WORDS1
-  rewrote the Fighters Guild's 20 quests; 244 quests (3,506 messages) and Internal_RSC's 1,448 rows remain, counted
-  by `tools/bethesdaWordsBaseline.json`, which only goes down (`06-Systems/Own-Words.md`).
+  and OWN-WORDS2 rewrote all 264 quests with messages, and the build no longer bundles DFU's quest text
+  (`06-Systems/Own-Words.md`). Internal_RSC's 1,448 rows remain, counted by `tools/bethesdaWordsBaseline.json`,
+  which only goes down.
 - **The rest of Diverse Weapons' hands.** 687 sprites draw between 10% and 60% of a classic WEAPON CIF frame
   exactly, under NO-BETHESDA2's line. Wave 3 replaces the mod's art.
 - **The exceptions themselves.** Vanilla Enhanced, Sands of the Alik'r, Snowfall and the class skins are outside

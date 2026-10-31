@@ -46,7 +46,7 @@ const rd = (p) => readFileSync(new URL(p, ROOT), 'utf8').replace(/^﻿/, '');
   for (const f of readdirSync(new URL('vendor/dfu-quests/Tables/', ROOT))) if (f.endsWith('.txt')) sources[f.replace('.txt', '')] = rd(`vendor/dfu-quests/Tables/${f}`);
   loadQuestTables(sources);
 }
-const SCRIPT = rd('vendor/dfu-quests/Quests/O0A0AL00.txt').split(/\r?\n/);
+const SCRIPT = rd('src/systems/quest/own/O0A0AL00.txt').split(/\r?\n/);   // PIN MOVED (OWN-WORDS2): the quest as the game reads it, DFU's QBN in our words
 const PRIEST_ROBES = 164, PRIESTESS_ROBES = 201;   // MensClothing / WomensClothing, itemTemplates.json
 
 // ---- Beautiful Villages' Moorham Manor, out of the vendored pack ----
@@ -197,7 +197,7 @@ test('QUEST-ITEM-NAMED, the trace: O0A0AL00 stands its robes at the Moorham Mano
   assert.equal(given[0], clothing.daggerfallUnityItem, 'the quest\'s own record goes to the pack');
   assert.ok(given[0].questItem && given[0].questUID === quest.uid);
   assert.ok(taskTriggered(quest, 'S.03'), '`clicked item _clothing_` fired');
-  assert.match(popups.at(-1), /^As you pick up the Priestess Robes you hear the soft rustle of paper\. A note is tucked inside the Priestess Robes\.$/, 'say 1018');
+  assert.match(popups.at(-1), /^Paper crackles as you lift the Priestess Robes\. Someone has hidden a note inside it\.$/, 'say 1018');   // PIN MOVED (OWN-WORDS2): our words
   const note = quest.getResource({ name: 'note' }).daggerfallUnityItem;
   assert.equal(given[1], note, '`get item _note_` - the second letter the report waited for');
   assert.equal(given.length, 2);

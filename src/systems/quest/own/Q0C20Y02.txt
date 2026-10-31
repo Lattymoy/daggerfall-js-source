@@ -1,0 +1,127 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\Q0C20Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: witch
+-- Repute: 20
+-- QuestId: 2
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 26
+Quest: Q0C20Y02
+DisplayName: An Expensive Purchase
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> We know you are a friend of
+<ce> ==questgiver_. To help you, we
+<ce> must weave a spell that destroys
+<ce> before it creates. Will you bring
+<ce> a _magicitem_ for the brew?
+
+RefuseQuest:  [1001]
+<ce> Too busy, even for this? A pity for
+<ce> ==questgiver_, %pcn, and a pity for you.
+
+AcceptQuest:  [1002]
+<ce> The _magicitem_ we need belongs to ==other_.
+<ce> We must have it before =1stparton_ dawns
+<ce> have passed. Go to ___other_ and ask for
+<ce> _other_. The spirits guide your feet, %pcf.
+
+QuestFail:  [1003]
+<ce> The _magicitem_, %pcf.
+<ce> Did it slip your mind?
+
+QuestComplete:  [1004]
+<ce> The _magicitem_! Quick, sisters, tear
+<ce> it apart and into the pot with it.
+<ce> For you, %pcn, a lump of _reward_,
+<ce> for your speed and your nerve.
+
+RumorsDuringQuest:  [1005]
+The witches gave our last %t a
+beard of moss. It never came off.
+<--->
+Never cross ==questgiver_. My uncle did, once. Once.
+
+RumorsPostfailure:  [1006]
+All night something howled out past
+the fields. The witches are in a mood.
+<--->
+The milk soured in every house on the
+street. ==questgiver_ must be angry.
+
+RumorsPostsuccess:  [1007]
+==questgiver_ has been celebrating
+something. Best not to ask what.
+<--->
+The air smells sweet as mead. Happy witches, I suppose.
+
+QuestorPostsuccess:  [1008]
+Wear that _reward_ well, %pcf. It brings out your eyes.
+
+QuestorPostfailure:  [1009]
+<ce> No _magicitem_, and no time left. %oth.
+<ce> The spell is lost, and ==questgiver_
+<ce> will remember who lost it, %pcf.
+
+QuestLogEntry:  [1010]
+<ce> The _magicitem_? A thousand
+<ce> gold. Done. Here it is.
+
+Message:  1011
+One of the wisest of ==questgiver_.
+<--->
+Do not play games with anyone from ==questgiver_.
+
+Message:  1020
+<ce> This _magicitem_ costs a thousand
+<ce> gold, not a coin less. And I only
+<ce> sell it because ==questgiver_ asked.
+
+Message:  1025
+%qdt:
+ _questgiver_ of ==questgiver_
+ wants a _magicitem_ that
+ ==other_ holds. I must find
+ _other_, a =other_ in ___other_,
+ and be back in ___questgiver_
+ within =1stparton_ days.
+
+
+QBN:
+Item _reward_ gem
+Item _magicitem_ magic_item
+
+Person _questgiver_ face 112 group Questor anyInfo 1011
+Person _other_ factiontype Knightly_Guard remote
+
+Clock _1stparton_ 00:00 0 flag 17 range 1 4
+
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	log 1025 step 0 
+	create npc _other_ 
+
+_pcgetsgold_ task:
+	toting _magicitem_ and _questgiver_ clicked 
+	give pc _reward_ 
+	end quest 
+
+_pchasitem_ task:
+	clicked _other_ and at least 1000 gold otherwise do _S.07_ 
+	get item _magicitem_ 
+	say 1010 
+
+variable _npcclicked_
+variable _qgclicked_
+_1stparton_ task:
+	make _magicitem_ permanent 
+	end quest 
+
+variable _2ndparton_
+variable _queston_
+_S.07_ task:
+	say 1020

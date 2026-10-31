@@ -1,0 +1,113 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B00Y03.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 0
+-- QuestId: 3
+Messages: 12
+Quest: L0B00Y03
+DisplayName: A Renegade Mage
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The Mages Guild has brought us
+<ce> some business too dirty for their
+<ce> own hands. A renegade mage must
+<ce> be settled, and soon. Interested?
+<--->
+<ce> The Mages Guild is our client
+<ce> again. One of their own has
+<ce> breathed too many fumes and gone
+<ce> wild. Does that interest you, %pct?
+
+RefuseQuest:  [1001]
+<ce> A pity.
+
+AcceptQuest:  [1002]
+<ce> Good. The mage is =mage_, who ran off with a
+<ce> bag of enchanted trinkets. Keep whatever %g
+<ce> took. The guild only wants %g2 dead. Look in
+<ce> ___mondung_, and be back within =queston_
+<ce> days. Mephala guide your hand, %pct.
+
+QuestComplete:  [1004]
+<ce> That mage will cast no more sparks,
+<ce> %pcf. Mephala smiles on you today,
+<ce> and her children with her.
+
+RumorsDuringQuest:  [1005]
+The Mages Guild swears =mage_ is
+under control. Nobody believes it.
+<--->
+Those proper Lamp knights will
+never dirty their hands on =mage_.
+
+RumorsPostfailure:  [1006]
+=mage_ has fled far away. Who knows what %g3 plans are now?
+
+RumorsPostsuccess:  [1007]
+Folk say the Order of the Lamp did away with =mage_.
+<--->
+Imagine if that _mage_ had been
+left alive. I would rather not.
+
+QuestorPostsuccess:  [1008]
+Greetings to the slayer of mages.
+What would you have of =qgiver_?
+
+QuestorPostfailure:  [1009]
+<ce> You failed your contract with us,
+<ce> and so we failed the Mages Guild.
+<ce> You have earned only my scorn, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_ in ___qgiver_,
+ _qgiver_ gave me a Dark Brotherhood
+ contract: a renegade of the Mages
+ Guild, hiding in ___mondung_. It
+ must end within =queston_ days.
+
+Message:  1011
+<ce> =mage_ will cast no more spells.
+<ce> Both the Brotherhood and its client,
+<ce> the Mages Guild, will be glad.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _mage_ is Mage
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	place foe _mage_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _mage_ 
+	say 1011 
+
+_S.02_ task:
+	clicked npc _qgiver_ 
+
+variable _ma1_
+_S.04_ task:
+	when _S.02_ and not _S.01_ 
+	clear _S.02_ _S.04_ 
+
+_reward_ task:
+	when _S.02_ and _S.01_ 
+	give pc nothing 
+	end quest

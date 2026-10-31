@@ -1,0 +1,121 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\R0C20Y07.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: royalty
+-- Repute: 20
+-- QuestId: 7
+Messages: 12
+Quest: R0C20Y07
+DisplayName: The Lost Sapphire
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> A friend of mine, and a possible ally,
+<ce> needs quiet help with a salvage job. My
+<ce> friend will pay very well, and I would
+<ce> be grateful. It must be done within
+<ce> =1stparton_ days. Shall I explain?
+
+RefuseQuest:  [1001]
+<ce> No, then. Honest, at least.
+<ce> My disappointment will pass.
+
+AcceptQuest:  [1002]
+<ce> My friend _qgfriend_ of ___qgfriend_ lost a sapphire %g
+<ce> had borrowed. My spies traced it to ___itemdung_. It
+<ce> must be in %g3 hands within =1stparton_ days, or there
+<ce> will be trouble. Its holders leave soon. Go now, %pcf.
+
+QuestFail:  [1003]
+<ce> %oth, %pcf! Where is the sapphire?
+
+QuestComplete:  [1004]
+<ce> %pcf, you found the sapphire! I
+<ce> cannot tell you how relieved I am.
+<ce> Please take this _reward_, the best
+<ce> I have, with my deepest thanks.
+
+RumorsDuringQuest:  [1005]
+The thieves in ___itemdung_ keep some very strong guards.
+<--->
+_qgfriend_ has been on edge for days.
+
+RumorsPostfailure:  [1006]
+Some powerful wizard has a grudge
+against _qgfriend_, they say.
+<--->
+_questgiver_ moans that there
+are no good %ra hirelings left.
+
+RumorsPostsuccess:  [1007]
+So _qgfriend_ never stole that gem. It turned up.
+<--->
+They called _qgfriend_ a thief, but the gem
+%g was said to have stolen has been found.
+
+QuestorPostsuccess:  [1008]
+My friend says you recovered the
+sapphire. How may I help you?
+<--->
+Welcome back. My friend still
+treasures that little blue gift.
+
+QuestorPostfailure:  [1009]
+<ce> You failed to bring back the
+<ce> sapphire, %pcn, and still you
+<ce> come here. I admire your nerve.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _questgiver_ of ___questgiver_ wants a
+ stolen sapphire returned to %g3 friend
+ _qgfriend_ of __qgfriend_ in ___qgfriend_.
+ Within =1stparton_ days the sapphire must
+ go from ___itemdung_ to __qgfriend_.
+
+Message:  1011
+This is the lost sapphire.
+
+
+QBN:
+Item _reward_ magic_item
+Item _item_ sapphire
+
+Person _questgiver_ face 112 group Questor
+Person _qgfriend_ group Local_3.0 remote
+
+Place _itemdung_ remote dungeon13
+
+Clock _1stparton_ 00:00 0 flag 1 range 2 5
+--changed flags on timer, was giving very short time limits before
+Clock _2ndparton_ 00:00 0 flag 3 range 1 2
+
+Foe _giant_ is Giant
+
+--	Quest start-up:
+	start timer _1stparton_ 
+	reveal _itemdung_ 
+	log 1010 step 0 
+	give item _item_ to _giant_ 
+	place foe _giant_ at _itemdung_ 
+
+_pcgetsgold_ task:
+	toting _item_ and _qgfriend_ clicked 
+	give pc _reward_ 
+	end quest 
+--removed unnecessary delay
+
+variable _queston_
+_pchasitem_ task:
+	clicked item _item_ 
+	say 1011 
+	create npc _qgfriend_ 
+
+_1stparton_ task:
+	make _item_ permanent 
+	change repute with _qgfriend_ by -10 
+	end quest 
+
+variable _2ndparton_

@@ -1,0 +1,197 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C00Y04.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 4
+Messages: 17
+Quest: K0C00Y04
+DisplayName: Two Cowards
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Love is expensive. _lover_ and I have
+<ce> an arrangement, and %g3 other lover
+<ce> objects. Now I face a duel. My rival,
+<ce> _competitor_, has never seen my face.
+<ce> Fight in my place for _gold_ gold?
+<--->
+<ce> Some =competitor_ in %cn has challenged
+<ce> me to a duel, over %g3 lover, _lover_.
+<ce> Half of %reg courted _lover_ before I
+<ce> did, but never mind. You would fight as
+<ce> me. Is _gold_ gold enough?
+
+RefuseQuest:  [1001]
+<ce> No? A pity. You do not
+<ce> look much like me anyway.
+
+AcceptQuest:  [1002]
+<ce> Splendid, %pcf. Take my answer to
+<ce> _competitor_. You will find %g2 at
+<ce> __competitor_. Come back in =queston_
+<ce> days, the winner, and I will pay you.
+
+QuestComplete:  [1004]
+<ce> Honor is saved, my brave %ra. Here is
+<ce> your _gold_ gold. Now I go to tell
+<ce> _lover_ how bravely I fought for %g2.
+
+RumorsDuringQuest:  [1005]
+Duels over _lover_ have killed
+more people than the last fever.
+<--->
+_lover_'s last sweetheart died in %g3 bed.
+Of exhaustion, they say, and smiling.
+<--->
+If _lover_ hears that two fools mean to
+duel over %g2, %oth, there will be trouble.
+
+RumorsPostfailure:  [1006]
+_lover_ has thrown over both _competitor_ and _qgiver_.
+<--->
+_lover_ wants nothing more to do
+with _competitor_ or _qgiver_.
+
+RumorsPostsuccess:  [1007]
+_lover_ has gone back to _qgiver_. Sweet, is it not?
+<--->
+_qgiver_ killed a =competitor_ in a duel over _lover_.
+
+QuestorPostsuccess:  [1008]
+Always glad to help you, %pcf. Honor
+is something we understand, you and I.
+
+QuestorPostfailure:  [1009]
+You were meant to be me, you fool. Did you forget?
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of ___qgiver_ hired me to
+ fight a duel as %g2. I take %g3 answer
+ to _competitor_ at __competitor_ in
+ ___competitor_, fight, and return to
+ __qgiver_ for my pay. All for _lover_.
+
+Message:  1011
+<ce> I, _qgiver_ of ___qgiver_,
+<ce> accept your challenge.
+<ce>
+<ce> By the rules of combat the
+<ce> ground is mine to name. It is
+<ce> here, and the hour is now.
+<ce>
+<ce> Back out without apology
+<ce> and lose your honor.
+<ce>
+<ce> _qgiver_ of ___qgiver_
+
+Message:  1012
+<ce> You are _qgiver_? Then you want the
+<ce> other _competitor_. A big _duelist_,
+<ce> that one. You can find %g2 at
+<ce> _arena_. Good luck to you, _qgiver_.
+<--->
+<ce> _qgiver_? Oh. %oth. Meet me at _arena_,
+<ce> then. I just need to change into my,
+<ce> er, _duelist_ clothes. Back soon!
+
+Message:  1013
+<ce> This is _arena_, where _competitor_
+<ce> promised %g would be waiting.
+
+Message:  1014
+<ce> Dressed as _qgiver_, you have
+<ce> killed a _duelist_ dressed as
+<ce> _competitor_. Go back to your
+<ce> employer. Honor is satisfied.
+
+Message:  1015
+<ce> Ridiculous! _competitor_ is a brute
+<ce> to issue the challenge, and _qgiver_
+<ce> is a coward to send you in %g3 place.
+<ce> Neither of them will have me now.
+<ce> Take _lovgold_ gold for your trouble.
+<--->
+<ce> How romantic! _competitor_ and _qgiver_
+<ce> ready to kill each other over me. %oth, I
+<ce> cannot allow it. I will leave ___lover_ for
+<ce> good. Here is _lovgold_ gold, in place of
+<ce> what _qgiver_ promised you. Farewell, %pcf.
+<--->
+<ce> So _competitor_ is jealous and
+<ce> challenged _qgiver_, and _qgiver_ hired
+<ce> you to stand in for %g2? No wonder I
+<ce> love neither of them. There will be no
+<ce> duel. Take _lovgold_ gold for your time.
+
+Message:  1016
+%qdt:
+ I handed _competitor_ the answer
+ to %g3 challenge. That sent %g2
+ running. The fight will still
+ take place at _arena_ in
+ __arena_, one way or another.
+
+
+QBN:
+Item _gold_ gold
+Item _dueler_ letter used 1011
+--added underscores to dueler
+Item _lovgold_ gold
+
+Person _qgiver_ group Questor
+Person _lover_ group Group_7.0 local
+Person _competitor_ group Group_7.1 local
+--UESP suggests any gender is possible
+
+Place _arena_ local house2
+Place _loverhome_ local house
+--lover wouldn't appear in any local place
+
+Clock _queston_ 3.01:20 5.23:20
+
+Foe _duelist_ is Spellsword
+
+--	Quest start-up:
+	start timer _queston_ 
+	log 1010 step 0 
+	get item _dueler_ 
+	place npc _lover_ at _loverhome_
+
+_queston_ task:
+	end quest 
+
+_S.01_ task:
+	killed 1 _duelist_ 
+	say 1014 
+
+_S.02_ task:
+	toting _dueler_ and _competitor_ clicked 
+	pc at _arena_ set _S.04_ 
+	log 1016 step 1 
+	say 1012 
+	place foe _duelist_ at _arena_ 
+
+_S.03_ task:
+	toting _dueler_ and _lover_ clicked 
+	get item _lovgold_ 
+	say 1015 
+	make _lovgold_ permanent 
+	end quest 
+
+_S.04_ task:
+	say 1013 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_reward_ task:
+	when _qgclicked_ and _S.01_ 
+	give pc _gold_ 
+	end quest 
+
+until _reward_ performed:
+	clear _qgclicked_ 

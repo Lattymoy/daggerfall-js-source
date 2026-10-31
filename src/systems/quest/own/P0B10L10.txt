@@ -1,0 +1,167 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\P0B10L10.Qbn.
+-- StartsBy: letter
+-- Questee: member
+-- Questor: vampire
+-- Repute: 10
+-- QuestId: 10
+Messages: 18
+Quest: P0B10L10
+DisplayName: The Chaperone
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Quest text 1000 should
+never be shown.
+
+RefuseQuest:  [1001]
+Quest text 1001 should
+never be shown.
+
+AcceptQuest:  [1002]
+Quest text 1002 should
+never be shown.
+
+QuestComplete:  [1004]
+<ce> Travel is hard for our kind. With _vamp_
+<ce> to carry as well, I can only guess what
+<ce> it cost you. Add the venom of =mage_,
+<ce> and I see why %vam praise you so, %pcf.
+
+RumorsDuringQuest:  [1005]
+Some say =mage_ is the last
+vampire-hunter in %reg worth the name.
+<--->
+Most vampires would lose a fight with =mage_.
+
+RumorsPostfailure:  [1006]
+A =vamp2_ at __vamp2_ was asking after a %ra called %pcn.
+
+RumorsPostsuccess:  [1007]
+=mage_ is not half the hunter %g says, it seems.
+<--->
+=mage_ was meant to be a great
+vampire-hunter. %G was not, as it turned out.
+
+QuestorPostsuccess:  [1008]
+Quest text 1008 should
+never be shown.
+
+QuestorPostfailure:  [1009]
+Quest text 1009 should
+never be shown.
+
+QuestLogEntry:  [1010]
+                     __vamp_
+                      ___vamp_
+ 
+ %pcn,
+ 
+      %vam call for
+ you. Come quickly.
+ 
+                    Until
+ nightfall,
+ 
+                    _vamp_
+
+Message:  1011
+%qdt:
+ _vamp_, a vampire of %vam,
+ has written. I am needed at
+ once at __vamp_ in ___vamp_.
+
+Message:  1012
+<ce> Thanks for coming quickly. The mage
+<ce> =mage_ hunts our tribe in %reg. I
+<ce> met %g2 once, and barely lived. I
+<ce> am too weak to reach _vamp2_ alone.
+<ce> Take me to __vamp2_ in ___vamp2_.
+<ce> We have =queston_ nights, %pcf.
+
+Message:  1013
+<ce> A bloodsucker with some fight left
+<ce> in it. Good. This will be fun!
+
+Message:  1014
+%qdt:
+ I am taking _vamp_ to _vamp2_
+ in ___vamp2_. We must reach
+ __vamp2_ before the mage on
+ our trail can call for help.
+
+Message:  1015
+<ce> "%pcf!" cries _vamp_. "You have
+<ce> killed =mage_, the scourge of %vam!"
+
+Message:  1016
+<ce> "Too slow," says _vamp_, who
+<ce> stumbles away under %g3 own power.
+
+Message:  1017
+<ce> A fierce-eyed, pale boy passes you a
+<ce> letter and melts into the shadows.
+
+
+QBN:
+Item _letter_ letter used 1010
+
+Person _vamp_ factiontype Vampire_Clan local
+Person _vamp2_ factiontype Vampire_Clan remote
+
+
+Clock _queston_ 00:00 0 flag 1 range 1 2
+
+Foe _mage_ is Mage
+
+--	Quest start-up:
+	dialog link for person _vamp2_ 
+	dialog link for person _vamp_ 
+	_letter_ used do _readletter_ 
+	have _letter_ set _S.10_ 
+	give pc _letter_ notify 1017 
+
+_queston_ task:
+	end quest 
+
+_vampclicked_ task:
+	clicked npc _vamp_ 
+	log 1014 step 1 
+	hide npc _vamp_ 
+	say 1012 
+	add _vamp_ face 
+	create npc _vamp2_ 
+
+variable _S.02_
+_S.03_ task:
+	when _vampclicked_ and not _S.04_ 
+	create foe _mage_ every 15 minutes 5 times with 50% success 
+
+_S.04_ task:
+	injured _mage_ 
+	say 1013 
+
+variable _reward_
+_S.06_ task:
+	killed 1 _mage_ 
+	say 1015 
+
+_S.07_ task:
+	clicked npc _vamp2_ 
+	give pc nothing 
+	change repute with _vamp_ by +5 
+	end quest 
+
+_S.08_ task:
+	when _queston_ and not _S.07_ 
+	say 1016 
+	change repute with _vamp_ by -10 
+
+_readletter_ task:
+	add dialog for person _vamp_ 
+	log 1011 step 0 
+	create npc _vamp_ 
+
+_S.10_ task:
+	start timer _queston_

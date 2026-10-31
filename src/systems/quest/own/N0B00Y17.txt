@@ -1,0 +1,327 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\N0B00Y17.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: mage
+-- Repute: 0
+-- QuestId: 17
+Messages: 61
+Quest: N0B00Y17
+DisplayName: Azimuthal Vectors
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Ah, %pct. My research has me
+<ce> stumped. Could you lend a hand?
+<--->
+<ce> ...and if the vectors bend back on
+<ce> themselves at the third node,
+<ce> then... Oh! %pct, I did not see you
+<ce> there. How lucky. My research needs
+<ce> a pair of legs. Are you free?
+
+RefuseQuest:  [1001]
+<ce> Pity. Now, where was I? The third
+<ce> node. Yes. If it bends back...
+
+AcceptQuest:  [1002]
+<ce> Splendid! I must study the _item_ that _maker_
+<ce> made. My figures say it is beyond %g2. Try the
+<ce> old catalog in ___hintdung_, or ask _scholar_.
+<ce> %G is in ___scholardung_, where %g likes the
+<ce> damp. Report back in =time1_ days.
+
+QuestFail:  [1003]
+<ce> The third node again. Every sum
+<ce> I try comes out as soup. Perhaps
+<ce> if I turn it upside down...
+
+QuestComplete:  [1004]
+<ce> Who are you? Ah, yes! The _item_ by
+<ce> _maker_! While you were away I solved
+<ce> the whole thing another way, so I do not
+<ce> need it now. Keep it. You did the work.
+
+RumorsDuringQuest:  [1005]
+<ce> I saw _questgiver_ in the street last night,
+<ce> talking to %g3 own shadow. Mad as a bag of cats.
+
+RumorsPostfailure:  [1006]
+<ce> Poor _questgiver_ looks even gloomier than usual.
+
+RumorsPostsuccess:  [1007]
+<ce> _questgiver_ bought a round for the whole tavern
+<ce> and drank to the %ra who found %g3 lost treasure.
+
+QuestorPostsuccess:  [1008]
+<ce> Eh? Ah, %pcf, my friend! You turned
+<ce> %reg upside down for that _item_.
+
+QuestorPostfailure:  [1009]
+<ce> Hm? Do I know you?
+
+Message:  1020
+%qdt:
+ The Mages Guild's _questgiver_ in
+ ___questgiver_ wants a magic
+ _item_ made by _maker_. I can
+ look for an old catalog in
+ ___hintdung_, or ask _scholar_,
+ who is working in
+ ___scholardung_. I report to
+ _questgiver_ within =time1_ days.
+
+Message:  1021
+%qdt:
+ _scholar_ was in ___scholardung_,
+ but %g knows nothing of where
+ _maker_'s _item_ might be.
+
+Message:  1022
+%qdt:
+ _scholar_ thinks _maker_'s
+ _item_ may be in ___itemdung_.
+
+Message:  1023
+%qdt:
+ The old catalog in ___hintdung_
+ gave me a lead. The _item_ was
+ once kept in ___itemdung_.
+
+Message:  1024
+%qdt:
+ Part of the old catalog was in
+ ___hintdung_, but it says nothing
+ of where _maker_'s _item_ is now.
+
+Message:  1025
+%qdt:
+ I met _scholar_ in ___scholardung_. %G
+ knows nothing of the _item_. I said I
+ would fetch ingredients for %g2 from
+ _contact_, who works at __contact_ in
+ ___contact_, within =time2_ days.
+
+Message:  1030
+No. 212-C.
+ 
+ Type: _item_. Maker: _maker_ of ___maker_.
+ 
+ A lesser work than %g3 famous wands.
+ Still, it has every mark of %g3 hand:
+ brass fittings, %g3 stamp, and the
+ amber glow %g gave the flow lines.
+ 
+ (Lent by ___itemdung_)
+
+Message:  1031
+No. 212-C.
+ 
+ Type: _item_. Maker: _maker_ of ___maker_.
+ 
+ A lesser work than %g3 famous wands. It
+ vanished after %g3 death and is likely
+ in private hands. Records praise the
+ amber glow %g gave its flow lines.
+ 
+ (Not on display)
+
+Message:  1032
+_contact_,
+ 
+ Send me the following:
+   2 doz. dried newt tongues
+   1 _ingredient_ (and not a rotten one, by %god)
+   A jar of basilisk eyes
+ 
+ Put it on my account.
+ 
+<ce> _scholar_
+
+Message:  1040
+<ce> The _item_? Yes, a note on that crossed my
+<ce> desk a few days ago. Now where... here.
+<ce> "An amber glow along the flow lines." That
+<ce> is _maker_'s work, no doubt. It was in
+<ce> ___itemdung_ when this was written.
+
+Message:  1041
+<ce> Good morning! Has _contact_ sent
+<ce> my supplies? No? _questgiver_ sent
+<ce> you about _maker_'s _item_? I am
+<ce> sorry. It vanished soon after %g3
+<ce> death. Since you are here, would
+<ce> you run an errand for me?
+
+Message:  1042
+<ce> Wonderful. Here is my list.
+<ce> _contact_ keeps a shop, __contact_,
+<ce> in ___contact_. Take it there. %G
+<ce> is the only one who gets my orders
+<ce> right. Be back within =time2_ days,
+<ce> and do not dawdle.
+
+Message:  1043
+<ce> Busy? Well, it was nice to
+<ce> talk. You can find the way out
+<ce> yourself, I am sure. Good day!
+
+Message:  1044
+<ce> Another list from _scholar_? "Put it on my
+<ce> account," ha! %G owes me for the last six.
+<ce> I will give you the _ingredient_, but
+<ce> nothing else ships to %g2 until %g pays.
+
+QuestTimeLapse:  [1045]
+<ce> What, _contact_ sent only the _ingredient_?
+<ce> I will have words with %g2. Still after the
+<ce> _item_? A catalog of _maker_'s works is in
+<ce> ___hintdung_. I can send you there by
+<ce> spell, but you must walk out. Shall I?
+
+Message:  1046
+<ce> Hold still! First, this _scholarreward_
+<ce> is yours, for bringing the _ingredient_.
+<ce> Thank you. Now, to ___hintdung_!
+
+Message:  1047
+<ce> As you like. Here, this _scholarreward_
+<ce> is yours, for bringing the _ingredient_.
+<ce> I do hope you find the _item_.
+
+Message:  1050
+<ce> No question. _maker_ made this _item_.
+
+Message:  1060
+<ce> Hello, %pcn. Any luck with the _item_
+<ce> by _maker_? No? Well, I shall find a
+<ce> way around it. You did your best.
+<ce> Here is _gold_ gold for the trouble.
+
+
+QBN:
+Item _item_ magic_item
+Item _ingredient_ organs
+Item _map2_ letter used 1030
+Item _I.03_ letter used 1031
+Item _I.04_ letter used 1032
+Item _scholarreward_ magic_item
+Item _gold_ gold
+
+Person _questgiver_ face 8 group Questor
+Person _scholar_ group Chemist local
+Person _maker_ face 1 group Spellcaster remote
+Person _contact_ face 14 group Chemist female remote
+
+Place _scholardung_ remote dungeon
+Place _hintdung_ remote dungeon
+Place _itemdung_ remote dungeon
+
+Clock _time1_ 00:00 0 flag 17 range 0 5
+Clock _time2_ 00:00 0 flag 17 range 1 2
+
+
+--	Quest start-up:
+	place item _item_ at _itemdung_ 
+	start timer _time1_ 
+	reveal _hintdung_ 
+	reveal _scholardung_ 
+	log 1020 step 0 
+	pick one of _S.02_ _cousin_ _cousin_ _S.03_ 
+	_map2_ used do _S.15_ 
+	--added underscores to map2
+	_I.03_ used do _S.16_ 
+	place npc _scholar_ at _scholardung_
+	
+
+_time1_ task:
+	end quest 
+
+_cousin_ task:
+	place item _map2_ at _hintdung_ 
+
+_S.02_ task:
+	place item _I.03_ at _hintdung_ 
+
+_S.03_ task:
+	place item _I.03_ at _hintdung_ 
+
+_success_ task:
+	toting _item_ and _questgiver_ clicked 
+	give pc _item_ 
+	end quest 
+
+_S.05_ task:
+	clicked npc _scholar_ 
+
+_S.06_ task:
+	toting _I.04_ and _contact_ clicked 
+	get item _ingredient_ 
+	say 1044 
+
+_S.07_ task:
+	toting _ingredient_ and _scholar_ clicked 
+	get item _scholarreward_ 
+	prompt 1045 yes _S.08_ no _S.09_ 
+	make _scholarreward_ permanent 
+
+_S.08_ task:
+	say 1046 
+	teleport pc to _hintdung_ 
+
+_S.09_ task:
+	say 1047 
+
+_S.10_ task:
+	start timer _time2_ 
+	log 1025 step 1 
+	get item _I.04_ 
+	say 1042 
+
+_S.11_ task:
+	log 1021 step 1 
+	say 1043 
+
+_S.12_ task:
+	when _S.05_ and _S.02_ 
+	reveal _itemdung_ 
+	log 1022 step 1 
+	say 1040 
+
+_S.13_ task:
+	when _S.03_ or _cousin_ 
+
+_S.14_ task:
+	when _S.13_ and _S.05_ 
+	prompt 1041 yes _S.10_ no _S.11_ 
+
+_S.15_ task:
+	reveal _itemdung_ readmap
+	log 1023 step 2 
+
+_S.16_ task:
+	log 1024 step 2 
+
+_dummymage_ task:
+	clicked item _item_ say 1050 
+
+_clickqgiver_ task:
+	clicked npc _questgiver_ 
+
+_S.19_ task:
+	when _S.03_ and _S.05_ and _S.16_ and _clickqgiver_ 
+	get item _gold_ 
+	say 1060 
+	make _gold_ permanent 
+	change repute with _questgiver_ by +5 
+	unset _clickqgiver_ 
+	end quest 
+
+_clearclick_ task:
+	when _clickqgiver_ and not _S.19_ and not _S.07_
+	say 1003
+	clear _clearclick_ _clickqgiver_
+
+_time2_ task:
+	hide npc _scholar_

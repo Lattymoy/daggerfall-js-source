@@ -1,0 +1,334 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000999.Qbn.
+-- Main story quest.
+-- QuestId: 999
+Messages: 42
+Quest: S0000999
+DisplayName: Main Quest Backbone
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+Error: MAIN.Q asked for text
+1000, which it never shows.
+
+RefuseQuest:  [1001]
+Error: MAIN.Q asked for text
+1001, which it never shows.
+
+AcceptQuest:  [1002]
+Error: MAIN.Q asked for text
+1002, which it never shows.
+
+QuestFail:  [1003]
+Error: MAIN.Q asked for text
+1003, which it never shows.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Emperor himself has sent me to lay
+ the ghost of King Lysandus to rest. It
+ haunts the city of Daggerfall.
+    He also wants to learn the fate of
+ his letter to the Queen of Daggerfall.
+
+Message:  1011
+%qdt:
+ Lady Brisienna met me in a room at the
+ tavern. The Iliac Bay has three great powers,
+ she says: Daggerfall, Wayrest and Sentinel.
+ To learn why Lysandus' ghost walks, I should
+ begin with their royal families.
+
+Message:  1026
+<ce> A young page knows you on sight. He hands you a
+<ce> letter without asking your name, and he answers
+<ce> every question with a smile and nothing else.
+<--->
+<ce> Someone pushes a letter into your palm. You turn in
+<ce> time to see a flash of livery vanish into the crowd.
+<--->
+<ce> A page calls out, "%pcn? This is
+<ce> for you," and gives you a note.
+<--->
+<ce> "You match the description I was given," says a courier,
+<ce> handing you a letter. Then the courier hurries off.
+<--->
+<ce> You dig in your pack for food and find
+<ce> a note. You did not put it there.
+<--->
+<ce> A red-faced courier runs up shouting, "%pcn! Are you %pcn?
+<ce> Good, take it. I have ten more of these before supper."
+
+Message:  1031
+<ce> There is a special task I would give
+<ce> you, %pcn, but I am not sure of you. I
+<ce> will see how you treat my family and my
+<ce> court, and learn your character from it.
+<--->
+<ce> No one doubts your courage or your skill.
+<ce> Trust is another matter. Earn mine, and I
+<ce> have a delicate errand for you.
+
+Message:  1032
+<ce> %pcn, I have a task that suits you well, but
+<ce> today it would kill you. Come back when your
+<ce> skills have grown, and we will speak of it.
+<--->
+<ce> A pity, %pcf. I trust you, and I have work
+<ce> that needs someone I trust. It also needs more
+<ce> skill than you have. Train, then come back.
+
+Message:  1033
+<ce> Could be you're the one to help me,
+<ce> %pcn. Could be not. I don't know ya well
+<ce> enough to trust ya. Let me hear you're a
+<ce> decent %ra, then come ask again.
+
+Message:  1034
+<ce> I could use yer help, %pcn, but what
+<ce> I need done would eat ya alive. Get
+<ce> tougher, then come see me.
+
+Message:  1035
+<ce> There is delicate work I might give you,
+<ce> once I know you are worthy of it. Earn
+<ce> my trust, and my patronage will follow.
+
+Message:  1036
+<ce> I trust you. I will not pretend you are
+<ce> skilled. Become more dangerous, and I
+<ce> may have very interesting work for you.
+
+Message:  1040
+%pcn,
+ 
+    I am told the haunting of Daggerfall
+ interests you. King Lysandus was a friend of
+ my father. Come and see me. Perhaps I can
+ explain some of what has happened to him.
+ 
+ Prince Lhotun, Castle Sentinel
+
+Message:  1041
+Dear %pcf,
+ 
+    My spies say you want news of a certain
+ letter. Emperors should take better care of
+ their mail, and so should queens. Visit me at
+ Castle Wayrest. I have news you will enjoy.
+ 
+<ce> Morgiah, Princess of Wayrest
+
+
+QBN:
+Item _I.00_ letter used 1040
+Item _I.01_ letter used 1041
+
+
+
+Clock mainquestclock 00:00 0 flag 9 range 0 0
+
+
+--	Quest start-up:
+	log 1010 step 0 
+
+_S.00_ task:
+	when Prince_Lhotun is available 
+
+_S.01_ task:
+	when Prince_Helseth is available 
+
+_S.02_ task:
+	when Medora is available 
+
+_S.03_ task:
+	when Princess_Morgiah is available 
+
+_S.04_ task:
+	when Queen_Aubk-i is available 
+
+_S.05_ task:
+	when Princess_Elysana is available 
+
+_S.06_ task:
+	when Cyndassa is available 
+
+_S.07_ task:
+	when _S.47_ and _S.48_ 
+	end quest 
+
+_S.08_ task:
+	when repute with Cyndassa is at least 0 
+
+_S.09_ task:
+	when repute with Princess_Elysana is at least 0 
+
+_S.10_ task:
+	when repute with Queen_Aubk-i is at least 0 
+
+_S.11_ task:
+	when repute with Princess_Morgiah is at least 0 
+
+_S.12_ task:
+	when repute with Medora is at least 0 
+
+_S.13_ task:
+	when repute with Prince_Helseth is at least 0 
+
+_S.14_ task:
+	when repute with Prince_Lhotun is at least 0 
+
+_S.15_ task:
+	level 5 completed 
+
+_S.16_ task:
+	level 4 completed 
+
+_S.17_ task:
+	level 8 completed 
+
+_S.18_ task:
+	level 3 completed 
+
+_S.19_ task:
+	level 3 completed 
+
+_S.20_ task:
+	level 6 completed 
+
+_S.21_ task:
+	level 5 completed 
+
+_S.22_ task:
+	when _S.04_ and _S.10_ and not _S.19_ 
+	say 1032 
+
+_S.23_ task:
+	when _S.06_ and _S.08_ and not _S.21_ 
+	say 1034 
+
+_S.24_ task:
+	when _S.05_ and _S.09_ and not _S.20_ 
+	say 1032 
+
+_S.25_ task:
+	when _S.01_ and _S.13_ and not _S.16_ 
+	say 1032 
+
+_S.26_ task:
+	when _S.00_ and _S.14_ and not _S.15_ 
+	say 1032 
+
+_S.27_ task:
+	when _S.02_ and _S.12_ and not _S.17_ 
+	say 1036 
+
+_S.28_ task:
+	when _S.03_ and _S.11_ and not _S.18_ 
+	say 1032 
+
+_S.29_ task:
+	when _S.04_ and not _S.10_ 
+	say 1031 
+
+_S.30_ task:
+	when _S.06_ and not _S.08_ 
+	say 1033 
+
+_S.31_ task:
+	when _S.05_ and not _S.09_ 
+	say 1031 
+
+_S.32_ task:
+	when _S.01_ and not _S.13_ 
+	say 1031 
+
+_S.33_ task:
+	when _S.00_ and not _S.14_ 
+	say 1031 
+
+_S.34_ task:
+	when _S.02_ and not _S.12_ 
+	say 1035 
+
+_S.35_ task:
+	when _S.03_ and not _S.11_ 
+	say 1031 
+
+_S.36_ task:
+	when _S.10_ and _S.19_ and _S.04_ 
+	start quest 5 5 
+	unset _S.04_ 
+
+_S.37_ task:
+	when _S.06_ and _S.08_ and _S.21_ 
+	start quest 7 7 
+	unset _S.30_ _S.23_ _S.06_ 
+
+_S.38_ task:
+	when _S.05_ and _S.09_ and _S.20_ and not _S.47_ 
+	start quest 6 6 
+	unset _S.05_ 
+
+_S.39_ task:
+	when _S.01_ and _S.13_ and _S.16_ and not _S.43_ 
+	start quest 2 2 
+	unset _S.01_ 
+
+_S.40_ task:
+	when _S.00_ and _S.14_ and _S.15_ 
+	start quest 1 1 
+	unset _S.00_ 
+
+_S.41_ task:
+	when _S.02_ and _S.12_ and _S.17_ 
+	start quest 3 3 
+	unset _S.34_ _S.27_ _S.02_ 
+
+_S.42_ task:
+	when _S.03_ and _S.11_ and _S.18_ 
+	start quest 4 4 
+	unset _S.03_ 
+
+ElysannaSatisfied _S.43_
+MetLadyBrisienna _S.44_
+	log 1011 step 1 
+
+_S.45_ task:
+	when _S.14_ and _S.15_ 
+	give pc _I.00_ notify 1026 
+
+_S.46_ task:
+	when _S.11_ and _S.18_ 
+	give pc _I.01_ notify 1026 
+
+MyniseraSatisfied _S.47_
+LiftedCurse _S.48_
+variable mainquestclock
+TookTheCure _S.50_
+variable _S.51_
+variable _S.52_
+variable _S.53_
+_S.54_ task:
+	when _S.51_ 
+	start quest 997 997 
+	clear _S.50_ 
+
+_S.55_ task:
+	when _S.52_ 
+	start quest 998 998 
+	clear _S.50_ 
+
+_S.56_ task:
+	when _S.53_ 
+	start quest 998 998 
+	clear _S.50_ 
+
+_S.57_ task:
+	when _S.50_ 
+	clear _S.52_ _S.51_ _S.54_ _S.55_ 
+	clear _S.50_ _S.57_ _S.53_ _S.56_ 
+
+OpenedShapeshifters _S.58_

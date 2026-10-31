@@ -1,0 +1,138 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\A0C10Y02.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: peasant
+-- Repute: 10
+-- QuestId: 2
+Quest: A0C10Y02
+DisplayName: The Abducted Child
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> Please help me. The Dark Brotherhood
+<ce> holds my child, _child_. Unless I
+<ce> pay, they will kill %g2. I cannot
+<ce> afford %g3 ransom. Set %g2 free, and
+<ce> _money_ gold is yours. Will you?
+<--->
+<ce> They took my poor _child_. The Dark
+<ce> Brotherhood stole my child for %god
+<ce> knows what foul purpose. Help me, %pcf.
+<ce> Bring my child home, and you will have
+<ce> all I own, _money_ gold. Will you?
+
+RefuseQuest:  [1001]
+<ce> This is a black day. The Dark
+<ce> Brotherhood will kill _child_, and may
+<ce> %g3 ghost haunt you all your days!
+
+AcceptQuest:  [1002]
+<ce> You will save us! I am _qgiver_. Hurry, for
+<ce> in =timeforq_ days they will kill _child_.
+<ce> %G is held at _dbguild_ in __dbguild_.
+
+QuestFail:  [1003]
+<ce> Where is _child_? Why is %g
+<ce> not with you? Go now and bring
+<ce> %g2 home, or %g3 life is lost!
+
+QuestComplete:  [1004]
+<ce> _child_! You are safe and well!
+<ce> %pcf, I can never repay you. This
+<ce> small reward is all I can give.
+
+RumorsDuringQuest:  [1005]
+<ce> Stealing _qgiver_'s child? The
+<ce> Dark Brotherhood went too far this
+<ce> time. Nobody can forgive that.
+
+RumorsPostfailure:  [1006]
+<ce> I fear _qgiver_ will not see the season out, and %g may
+<ce> end %g3 own life. Did you hear? The Dark Brotherhood
+<ce> took %g3 child, _child_, and killed the poor thing.
+
+RumorsPostsuccess:  [1007]
+<ce> You are the %ra who saved
+<ce> little _child_! A true hero.
+
+QuestorPostsuccess:  [1008]
+<ce> Here is the one who saved my child!
+<ce> You have my thanks, and _child_
+<ce> owes you %g3 life. Bless you, %pcf.
+
+QuestorPostfailure:  [1009]
+<ce> My _child_ is dead, and it is your
+<ce> fault! Never come to my door again.
+
+QuestLogEntry:  [1010]
+<ce> Have you come to rescue me? I am
+<ce> _child_. These people frighten me.
+<ce> Will you take me home to my family?
+
+Message:  1011
+<ce> _dbguild_ is dark and full of menace.
+<ce> Enemies will be waiting in every shadow.
+
+Message:  1012
+On %qdt, _qgiver_
+ told me the Dark Brotherhood has
+ kidnapped %g3 child _child_. I swore to
+ bring %g2 out of _dbguild_ in __dbguild_.
+ For =timeforq_ days, %g3 family will wait
+ for me at __qgiver_ in ___qgiver_.
+
+Message:  1020
+<ce> Nobody crosses the Dark
+<ce> Brotherhood and lives!
+
+
+QBN:
+Item _money_ gold
+
+Person _child_ face 1 faction Children remote
+Person _qgiver_ face 121 group Questor
+Person _dummydarkb_ face 169 faction The_Dark_Brotherhood remote
+
+Place _dbguild_ remote house1
+
+Clock _timeforq_ 00:00 0 flag 17 range 1 4
+
+Foe _darkb_ is Assassin
+
+--	Quest start-up:
+	dialog link for person _child_ 
+	start timer _timeforq_ 
+	log 1012 step 0 
+	pc at _dbguild_ set _S.01_ saying 1011 
+	place npc _child_ at _dbguild_ 
+
+_timeforq_ task:
+	end quest 
+
+_S.01_ task:
+	create foe _darkb_ every 2 minutes 4 times with 30% success 
+
+_S.02_ task:
+	clicked npc _child_ say 1010 
+	hide npc _child_ 
+	add _child_ face 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_vamp1_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc _money_ 
+	change repute with _dummydarkb_ by -15 
+	end quest 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.02_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+_S.06_ task:
+	injured _darkb_ 
+	say 1020 

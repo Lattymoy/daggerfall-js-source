@@ -1,0 +1,139 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B00Y01.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 0
+-- QuestId: 1
+Messages: 14
+Quest: L0B00Y01
+DisplayName: No Escape
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> The Dark Brotherhood does not forgive
+<ce> failure, %pct, as you know. Those who
+<ce> fail us are called to account. Find
+<ce> one such former brother and correct
+<ce> the error. Will you?
+<--->
+<ce> Calling to account an agent who
+<ce> failed us is a grave duty, and
+<ce> not an unpleasant one. You are
+<ce> free for such work, I trust?
+
+RefuseQuest:  [1001]
+<ce> Did I hear you rightly, %pct?
+<ce> It grieves me when a brother
+<ce> will not help the family.
+
+AcceptQuest:  [1002]
+<ce> Good, %pct. =target_ learned from %g3
+<ce> years with us and has hidden %g2self
+<ce> well. But at __snitch_ we have a
+<ce> wretched =snitch_ called _snitch_. Ask
+<ce> %g2 where =target_ is. Return in
+<ce> =queston_ days with the account settled.
+
+QuestComplete:  [1004]
+<ce> Well done, %pct. Let it be a lesson
+<ce> to anyone who would fail us.
+
+RumorsDuringQuest:  [1005]
+=target_ is hiding out in %reg,
+trembling at every sound, I would bet.
+<--->
+=target_ was a fair assassin. Not fair enough, it seems.
+
+RumorsPostfailure:  [1006]
+So the Brotherhood can be beaten
+after all. Look at =target_.
+<--->
+=target_ walks free, and %g3 old
+brothers can do nothing about it.
+
+RumorsPostsuccess:  [1007]
+=target_ failed the Brotherhood once,
+they say, and %g paid with %g3 life.
+<--->
+The Dark Brotherhood forgives no failure.
+Ask poor =target_. Oh, you cannot.
+
+QuestorPostsuccess:  [1008]
+Hello, %pcn. You settled our errant
+brother. How may I help you?
+
+QuestorPostfailure:  [1009]
+<ce> Let me be sure I have this right.
+<ce> I sent you to settle an _target_
+<ce> who failed us, and you failed
+<ce> too. Now you want to talk.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The Dark Brotherhood in ___qgiver_
+ sent me after a brother who failed a
+ contract. An informer named _snitch_,
+ at __snitch_ in ___snitch_, knows
+ where =target_ has gone.
+
+Message:  1011
+<ce> %pcn? The name is _snitch_. The
+<ce> one you want ran off to
+<ce> ___mondung_ and lives there like
+<ce> a lord. Careful, %ra. =target_
+<ce> can fight, and %g is frightened.
+
+Message:  1012
+%qdt:
+ According to _snitch_, =target_
+ is hiding in ___mondung_.
+
+Message:  1013
+<ce> =target_ is dead. The
+<ce> Brotherhood will be pleased.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+Person _snitch_ factiontype Temple local
+
+Place _mondung_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _target_ is Assassin
+
+--	Quest start-up:
+	dialog link for location _mondung_ 
+	start timer _queston_ 
+	log 1010 step 0 
+	place foe _target_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_reward_ task:
+	when _qgclicked_ and _S.02_ 
+	give pc nothing 
+	end quest 
+
+_S.02_ task:
+	killed 1 _target_ 
+	say 1013 
+
+_S.03_ task:
+	clicked npc _snitch_ 
+	add dialog for location _mondung_ 
+	reveal _mondung_ 
+	log 1012 step 1 
+	say 1011 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_S.05_ task:
+	when _qgclicked_ and not _S.02_ 
+	clear _qgclicked_ _S.05_

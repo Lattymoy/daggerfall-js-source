@@ -17,13 +17,15 @@ import { loadQuestTables } from '../../../src/systems/quest/tables.js';
 import { QuestMachine } from '../../../src/systems/quest/machine.js';
 import { Message } from '../../../src/systems/quest/message.js';
 import { QUEST_DOCUMENT } from '../../../src/systems/quest/localizedQuest.js';
+import { baseText } from '../../qlSources.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const V = join(ROOT, 'vendor/dfu-quests/Tables');
 const tables = {};
 for (const f of readdirSync(V)) if (f.endsWith('.txt')) tables[f.replace('.txt', '')] = readFileSync(join(V, f), 'utf8').replace(/^﻿/, '');
 loadQuestTables(tables);
-const questLines = (name) => readFileSync(join(ROOT, `vendor/dfu-quests/Quests/${name}.txt`), 'utf8').replace(/^﻿/, '').split(/\r?\n/);
+// PIN MOVED (OWN-WORDS2): the quest as the pack reads it - S0000977 speaks our own words now (test/qlSources.mjs)
+const questLines = (name) => baseText(name).split(/\r?\n/);
 
 const LOC = ['Quest: S0000977', 'DisplayName: La Malédiction de Daggerfall', 'QRC:', '',
   'RumorsDuringQuest:  [1005]', 'Des spectres errent dans les rues de Daggerfall.', '<--->', '<ce>   Le roi Lysandus hante sa capitale la nuit.', ''].join('\n');
@@ -75,7 +77,7 @@ test('L10N5 a quest saved in French loads in each language\'s words: its own Dis
   quest.localizeDisplayName('');
   assert.equal(quest.displayName, 'Curse of Daggerfall', 'no translated name: its own');
   quest.localizeDisplayName('La Malédiction de Daggerfall');
-  assert.match(saved.messages.find((x) => x.id === 1005).lines.join('\n'), /Ghosts are haunting the streets of Daggerfall/, 'its own words in the save');
+  assert.match(saved.messages.find((x) => x.id === 1005).lines.join('\n'), /The dead walk in Daggerfall's streets after dark\./, 'its own words in the save');   // PIN MOVED (OWN-WORDS2)
   assert.doesNotMatch(JSON.stringify(saved), /spectres|Malédiction/, 'no French anywhere in the quest\'s save');
 
   const restoreIn = (code) => {
@@ -86,7 +88,7 @@ test('L10N5 a quest saved in French loads in each language\'s words: its own Dis
   };
   const en = restoreIn('en');
   assert.equal(en.displayName, 'Curse of Daggerfall');
-  assert.match(text(en.getMessage(1005)), /Ghosts are haunting/);
+  assert.match(text(en.getMessage(1005)), /The dead walk in Daggerfall/);   // PIN MOVED (OWN-WORDS2)
   const fr = restoreIn('fr');
   assert.equal(fr.displayName, 'La Malédiction de Daggerfall', 'loaded in French: named in French again');
   assert.match(text(fr.getMessage(1005)), /Des spectres errent/);

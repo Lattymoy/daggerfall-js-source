@@ -1,0 +1,193 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the questor answers the main quest's opening, the storm that wrecked the player on the way to the Iliac Bay.
+-- Quest: C:\QUESTS\WORKING\K0C01Y10.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 01
+-- QuestId: 10
+Messages: 16
+Quest: K0C01Y10
+DisplayName: Background Information
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> You are %pcn, the one who washed
+<ce> ashore after the shipwreck?
+
+RefuseQuest:  [1001]
+<ce> Odd. You are the picture
+<ce> of %pcn. Never mind.
+
+AcceptQuest:  [1002]
+<ce> I thought so. The storm that sank you was
+<ce> no natural squall. Bring me a scroll from
+<ce> ___mondung_ within =queston_ days, and what
+<ce> I know of the storm is yours. Daedra guard
+<ce> it. It can call more out of Oblivion.
+
+QuestComplete:  [1004]
+<ce> The Bothdorjii Scroll. Your flagless
+<ce> ship from the Imperial City fooled
+<ce> no one. Someone persuaded Nulfaga,
+<ce> witch of the Wrothgarian peaks and
+<ce> grandmother of Daggerfall's king,
+<ce> that it carried the man who killed
+<ce> her son, King Lysandus. No more.
+
+RumorsDuringQuest:  [1005]
+My knee aches, so rain is coming. It is always right.
+<--->
+I spent the whole morning talking
+about the weather. I regret nothing.
+<--->
+Same weather as always for this time of year.
+<--->
+It is chilly for the season here in %cn.
+<--->
+Warmer than last year at this time, I would say.
+<--->
+My aunt is off to see a healer in
+another province. Her feet, apparently.
+<--->
+Have you noticed how early it gets dark lately?
+<--->
+This town needs a statue. Of anyone.
+<--->
+Young people and their spells. %oth, what next?
+<--->
+I dreamed about turnips again last night. Do not ask.
+<--->
+Here is a good one. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I do not understand it either.
+<--->
+The law in %reg is fair, mostly, when it is awake.
+
+RumorsPostfailure:  [1006]
+My knee aches, so rain is coming. It is always right.
+<--->
+I spent the whole morning talking
+about the weather. I regret nothing.
+<--->
+Same weather as always for this time of year.
+<--->
+It is chilly for the season here in %cn.
+<--->
+Warmer than last year at this time, I would say.
+<--->
+My aunt is off to see a healer in
+another province. Her feet, apparently.
+<--->
+Have you noticed how early it gets dark lately?
+<--->
+This town needs a statue. Of anyone.
+<--->
+Young people and their spells. %oth, what next?
+<--->
+I dreamed about turnips again last night. Do not ask.
+<--->
+Here is a good one. %jok
+<--->
+%jok That is a joke, by the way.
+<--->
+%jok I do not understand it either.
+<--->
+The law in %reg is fair, mostly, when it is awake.
+
+RumorsPostsuccess:  [1007]
+The stars of the Daedra burned
+cold and bright last night.
+<--->
+I have seen dark signs. The
+Daedra are walking in Mundus.
+
+QuestorPostsuccess:  [1008]
+The Bothdorjii Scroll came to me
+through you, %pcf. I remember.
+
+QuestorPostfailure:  [1009]
+<ce> No scroll, no talk, %pcf.
+
+QuestLogEntry:  [1010]
+%qdt:
+ _qgiver_ of __qgiver_ in ___qgiver_ knows
+ who raised the storm that wrecked my ship
+ off the Iliac Bay. %G will say, for a
+ scroll from ___mondung_ brought back within
+ =queston_ days. Daedra may guard it.
+
+Message:  1011
+<ce> The Bothdorjii Scroll
+<ce>
+  Smoke on the veil, and the veil gives way.
+  Wake, sleepless Princes.
+  When frost burns and fire freezes,
+  When a winged boy curses the land,
+  The Day of Oblivion has come.
+  Dark ones, obey me.
+
+Message:  1012
+<ce> This is the scroll _qgiver_ is after.
+
+Message:  1013
+<ce> A puff of foul smoke, and the
+<ce> scroll _qgiver_ wanted is gone.
+
+Message:  1014
+<ce> You called me, %pcf. Why
+<ce> do you push me away?
+
+Message:  1015
+<ce> Fire bursts out of the scroll and
+<ce> takes the shape of a burning creature.
+
+
+QBN:
+Item _bothdorjii_ letter used 1011
+--added underscores to bothdorjii
+
+Person _qgiver_ group Questor
+
+Place _mondung_ remote dungeon4
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _guardian_ is Daedroth
+Foe _F.01_ is Fire_atronach
+
+--	Quest start-up:
+	place item _bothdorjii_ at _mondung_ 
+	start timer _queston_ 
+	reveal _mondung_ 
+	log 1010 step 0 
+	place foe _guardian_ at _mondung_ 
+
+_queston_ task:
+	end quest 
+
+_S.01_ task:
+	clicked item _bothdorjii_ 
+	_bothdorjii_ used do _S.02_ 
+	--"saying 1015" was illegal argument here
+	say 1012 
+
+_S.02_ task:
+	say 1015
+	create foe _F.01_ every 1 minutes 1 times with 100% success 
+
+_S.03_ task:
+	when _queston_ and _S.01_ 
+	say 1013 
+
+_S.04_ task:
+	toting _bothdorjii_ and _qgiver_ clicked 
+	give pc nothing 
+	end quest 
+
+_S.05_ task:
+	injured _F.01_ 
+	say 1014 

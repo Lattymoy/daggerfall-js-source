@@ -1,0 +1,235 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000015.Qbn.
+-- Main story quest.
+-- QuestId: 15
+Messages: 46
+Quest: S0000015
+DisplayName: Lysandus' Revenge
+-- Message panels
+QRC:
+
+RumorsDuringQuest:  [1005]
+Some strangers came through asking after a %ra called %pcn.
+<--->
+Those thugs gave me the shivers.
+%god be thanked, they are gone.
+
+RumorsPostfailure:  [1006]
+The stars speak of dreams that will never come to pass.
+<--->
+The oracles of %reg have seen dark signs.
+
+RumorsPostsuccess:  [1007]
+Things are turning ugly in Wayrest, I hear.
+<--->
+They found King Lysandus' body, did you hear?
+
+QuestLogEntry:  [1010]
+That is Lord Woodborne's own
+journal, by the look of it.
+<--->
+Lord Woodborne's journal. Private, clearly.
+
+Message:  1011
+Page 7
+ 
+ ...betrothed to Elysana, the heiress, I
+ will be king when Eadwyre dies. Barenziah
+ distrusts me. I will deal with her as with
+ Lysandus, whom Gortwog's orcs nearly saved.
+ Gothryd will back me. I need gold to raise
+
+Message:  1018
+%qdt:
+ In Woodborne Hall I found two pages
+ that damn Lord Woodborne. He would be
+ furious to know who holds them now.
+
+Message:  1019
+%qdt:
+ Lysandus' ghost came to me. His soul will
+ rest only when his murderer, Lord
+ Woodborne, is dead or disgraced. Woodborne,
+ a Wayrest noble betrothed to Princess
+ Elysana, has a castle in Wayrest's wilds.
+
+Message:  1021
+Lord Woodborne lost his head for treason, I hear.
+<--->
+Lord Woodborne was taken and tried as a traitor.
+
+Message:  1022
+A swarm of Daedra came down on Lord
+Woodborne and took him away, they say.
+<--->
+The dead climbed out of their
+graves and stormed Woodborne Hall!
+<--->
+Lord Woodborne swindled the Mages
+Guild, and they sent demons after him.
+
+Message:  1024
+Lord Woodborne is to wed Princess Elysana, I hear.
+<--->
+Lord Woodborne can do no wrong at Castle Wayrest these days.
+
+Message:  1030
+<ce> This is rubbish, fit for the fire.
+<ce> Woodborne and Gothryd, plotting
+<ce> Lysandus' death? Please. Go away.
+
+Message:  1031
+<ce> Monstrous! We nearly gave Elysana and the
+<ce> throne of Wayrest to that swine Woodborne.
+<ce> You did right, %pcf. He will die a traitor's
+<ce> death, his name and fortune forfeit. Take
+<ce> _reward_ gold pieces of it as your share.
+
+Message:  1032
+<ce> So Lord Woodborne killed my Lysandus.
+<ce> Justice will come, and it will come from
+<ce> my own hand. Keep away from Woodborne
+<ce> Hall and Wayrest for a while, %pcn.
+
+Message:  1033
+<ce> This is worth a great deal, %pcf.
+<ce> Have _gold_ gold for it. It will
+<ce> serve me well in the war to come.
+
+Message:  1034
+<ce> You were right to bring this to me,
+<ce> and to no one else. It could have hurt
+<ce> Lord Woodborne. Guards! Kill this %ra!
+
+Message:  1040
+<ce> You! The %ra, %pcn. You have plagued me
+<ce> long enough. A wiser %ra would let dead
+<ce> kings lie, after the trouble I took
+<ce> killing them. Yes, %pcf, King Lysandus
+<ce> died by my hand. Now I kill you. En garde!
+
+QuestTimeLapse:  [1045]
+<ce> "Finished... It falls to...
+<ce> Gothryd now. Rot in Oblivion,
+<ce> %pcn... as I surely will..."
+<ce>
+<ce> Lord Woodborne is dead.
+
+
+QBN:
+Item WoodborneDiary letter used 1011
+--removed an AnyInfo entry here, which would make
+--peasants describe Woodborne's journal for no reason.
+--had no place in this quest to begin with.
+--added a grabdiary action below as what
+--the original developers meant to do.
+Item _reward_ gold range 10000 to 20000
+Item _gold_ gold
+
+Person Barenziah face 8 named Queen_Barenziah atHome
+Person Eadwyre named King_Eadwyre atHome
+Person _medora_ named Medora atHome
+Person _helseth_ named Prince_Helseth atHome
+Person Gothryd face 152 named King_Gothryd atHome
+Person _aubki_ named Queen_Aubk-i atHome
+Person _akorithi_ named Queen_Akorithi atHome
+Person KingOfWorms0 named King_of_Worms atHome
+Person _gortwog_ named Gortwog atHome
+Person _mynisera_ named Mynisera atHome
+Person _nulfaga_ named Nulfaga atHome
+
+Place WoodbourneHall2 permanent WoodbourneHall4
+Place WoodbourneHall1 permanent WoodbourneHall5
+
+
+Foe Woodborne is Knight
+Foe _F.01_ is Spellsword
+
+--	Quest start-up:
+	place item WoodborneDiary at WoodbourneHall2 marker 1
+	log 1019 step 2 
+	reveal WoodbourneHall1 in province 23 at 194859 
+	WoodborneDiary used do _S.01_ 
+	place foe Woodborne at WoodbourneHall1 marker 2
+
+_grabdiary_ task:
+	clicked item WoodborneDiary
+	say 1010
+
+_S.00_ task:
+	killed 1 Woodborne 
+	say 1045 
+
+_S.01_ task:
+	log 1018 step 3 
+
+_S.02_ task:
+	injured Woodborne 
+	say 1040 
+	cast Spell_Reflection spell on Woodborne 
+	cast Heal spell on Woodborne 
+	cast Shield spell on Woodborne 
+
+_S.03_ task:
+	toting WoodborneDiary and Eadwyre clicked 
+	toting WoodborneDiary and _helseth_ clicked 
+	toting WoodborneDiary and Barenziah clicked 
+	get item _reward_ 
+	rumor mill 1021 
+	say 1031 
+	make _reward_ permanent 
+	change repute with Eadwyre by +50 
+
+_S.04_ task:
+	toting WoodborneDiary and _nulfaga_ clicked 
+	toting WoodborneDiary and _medora_ clicked 
+	toting WoodborneDiary and _mynisera_ clicked 
+	rumor mill 1022 
+	say 1032 
+	change repute with _nulfaga_ by +25 
+	change repute with _medora_ by +25 
+
+_S.05_ task:
+	toting WoodborneDiary and _akorithi_ clicked 
+	say 1030 
+
+_S.06_ task:
+	toting WoodborneDiary and _aubki_ clicked 
+	toting WoodborneDiary and Gothryd clicked 
+	create foe _F.01_ every 1 minutes 5 times with 100% success 
+	say 1034 
+	change repute with Gothryd by -40 
+	change repute with Eadwyre by -40 
+	legal repute -50 
+
+_S.07_ task:
+	toting WoodborneDiary and _gortwog_ clicked 
+	toting WoodborneDiary and KingOfWorms0 clicked 
+	get item _gold_ 
+	say 1033 
+	make _gold_ permanent 
+	change repute with _gortwog_ by +20 
+	change repute with KingOfWorms0 by +20
+
+LiftedCurse _S.08_
+	when _S.03_ or _S.04_ or _S.00_ 
+	play video 13
+	remove log step 2
+	remove log step 3
+--added these remove log actions.
+--these logs would stay in the journal after catching Woodborne, which is confusing.
+
+_S.09_ task:
+	when _S.05_ or _S.07_ or _S.06_ 
+	end quest 
+
+MyniseraSatisfied _S.10_
+GothrydGotTotem _S.11_
+
+_S.13_ task:
+	when _S.08_ and _S.10_ and _S.12_ 
+	start quest 8 8 
+	end quest 
+
+KingOfWormsSatisfied _S.12_

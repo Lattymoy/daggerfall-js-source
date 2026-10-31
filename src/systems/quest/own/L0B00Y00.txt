@@ -1,0 +1,130 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\L0B00Y00.Qbn.
+-- StartsBy: NPC
+-- Questee: member
+-- Questor: Brotherhood
+-- Repute: 0
+-- QuestId: 0
+Messages: 22
+Quest: L0B00Y00
+DisplayName: A Renegade Member
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> One of our own has turned traitor. You
+<ce> will settle that account, will you not?
+<--->
+<ce> Now and then the Brotherhood must
+<ce> balance its own books. One of our order
+<ce> has betrayed us and must be settled. The
+<ce> honor falls to you. Will you take it?
+
+RefuseQuest:  [1001]
+<ce> A poor answer. I expected better of you.
+
+AcceptQuest:  [1002]
+<ce> Good. The traitor hides in ___mondun_,
+<ce> to the %di. Come back within =queston_
+<ce> days, or your honor is lost and someone
+<ce> else is sent. We expect success, %pcf.
+
+QuestFail:  [1003]
+<ce> The traitor still lives. Do not
+<ce> insult me by pretending otherwise.
+
+QuestComplete:  [1004]
+<ce> Well done. You may be proud of this.
+
+RumorsDuringQuest:  [1005]
+That assassin fled to ___mondun_ as
+if all of Oblivion were close behind.
+<--->
+_qgiver_ will not let that traitor
+go. %g takes the betrayal personally.
+
+RumorsPostfailure:  [1006]
+The traitor was tougher than _qgiver_
+thought. Some escape that was.
+<--->
+<ce> The traitor went north, I hear.
+ The Brotherhood still has not forgotten.
+
+RumorsPostsuccess:  [1007]
+That traitor shows what happens to
+anyone who crosses the Brotherhood.
+<--->
+The Brotherhood showed that traitor
+no mercy. I never expected any.
+
+QuestorPostsuccess:  [1008]
+What do you need, killer of traitors?
+
+QuestorPostfailure:  [1009]
+<ce> I do not like talking to you. I trusted
+<ce> you to settle that traitor, did I not?
+
+QuestLogEntry:  [1010]
+%qdt:
+ In ___qgiver_ the Dark Brotherhood gave me
+ a traitor to kill within =queston_ days.
+ The rogue assassin hides in ___mondun_.
+
+Message:  1021
+<ce> "You have... the wrong... The one
+<ce> you want is..." The words stop
+<ce> there. The contract is done.
+
+
+QBN:
+
+Person _qgiver_ group Questor
+
+Place _mondun_ remote dungeon
+
+Clock _queston_ 00:00 0 flag 17 range 0 2
+
+Foe _assassin_ is Assassin
+Foe _nightblade_ is Nightblade
+Foe _acrobat_ is Acrobat
+Foe _battlemage_ is Battle_mage
+
+--	Quest start-up:
+	start timer _queston_ 
+	reveal _mondun_ 
+	log 1010 step 0 
+	pick one of _S.05_ _S.06_ _S.07_ _S.08_ 
+
+_queston_ task:
+	end quest 
+
+_pcgetsgold_ task:
+	when _mondead_ and _qgclicked_ 
+	give pc nothing 
+	end quest 
+
+_mondead_ task:
+	killed 1 _nightblade_ saying 1021 
+	killed 1 _battlemage_ saying 1021 
+	killed 1 _acrobat_ saying 1021 
+	killed 1 _assassin_ saying 1021 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_clearclick_ task:
+	when _qgclicked_ and not _mondead_ 
+	say 1003
+	clear _qgclicked_ _clearclick_ 
+
+_S.05_ task:
+	place foe _nightblade_ at _mondun_ 
+
+_S.06_ task:
+	place foe _battlemage_ at _mondun_ 
+
+_S.07_ task:
+	place foe _acrobat_ at _mondun_ 
+
+_S.08_ task:
+	place foe _assassin_ at _mondun_

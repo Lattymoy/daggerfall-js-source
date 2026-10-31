@@ -1,0 +1,186 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- BAY-OWN: the main quest is the Iliac Bay's own story: its courts, its kings and Lysandus' ghost are there.
+-- Quest: C:\QUESTS\WORKING\S0000500.Qbn.
+-- Main story quest.
+-- QuestId: 500
+Messages: 71
+Quest: S0000500
+DisplayName: Lord K'avar Quest Part II
+-- Message panels
+QRC:
+
+QuestComplete:  [1004]
+<ce> My so-called friends left me to
+<ce> hang, %pcf. You came. I am poorer
+<ce> than I was, but take this _gold_
+<ce> gold. I owe you far more than that.
+
+RumorsDuringQuest:  [1005]
+<ce> _queen_ has one of her own high lords in
+<ce> chains for treason. His friends beg for mercy,
+<ce> but the day of his hanging is already set.
+
+RumorsPostsuccess:  [1007]
+<ce> _traitor_ is out of the dungeon of Castle Sentinel, and
+<ce> _queen_'s guards never saw him go. She must be in a fury.
+
+Message:  1020
+%qdt:
+ _contact1_ has written to me. I
+ am to find %g2 in __tavern_,
+ ____tavern_, at _tavern_. It
+ concerns _traitor_ of Sentinel.
+
+Message:  1021
+%qdt:
+ _contact1_ says _traitor_ lies in the
+ dungeons of Sentinel, to be hanged in
+ =executiondelay_ days. _contact1_ begs
+ me to get _traitor_ out before then.
+
+Message:  1022
+%qdt:
+ _traitor_ is free of Castle
+ Sentinel's dungeon. He wants
+ to reach __safehouse_,
+ ____safehouse_. A friend of
+ his, _contact2_, will meet
+ us at _safehouse_.
+
+Message:  1030
+Dear %pcn,
+ 
+ If _traitor_ was ever your friend, come
+ to _tavern_ in __tavern_, ____tavern_, as
+ fast as you can. His life depends on it.
+ I can wait =firsttimer_ days, no longer.
+ 
+<ce> _contact1_
+
+Message:  1040
+<ce> %pcn? Thank the gods. _traitor_'s friends all
+<ce> ran when that tyrant _queen_ had him arrested
+<ce> on false charges of treason. He waits for the
+<ce> hangman in Castle Sentinel's dungeons. Save
+<ce> him. In =executiondelay_ days they hang him.
+
+Message:  1041
+<ce> %oth, at last! Get me out before the alarm,
+<ce> then to __safehouse_ in ____safehouse_. A
+<ce> friend at _safehouse_ will help me take
+<ce> Sentinel. When I am king, you will be its
+<ce> richest lord, %pcn. We have =escapetime_ days.
+
+Message:  1050
+<ce> Alarm! _traitor_ is
+<ce> loose! =guards_, to me!
+
+Message:  1051
+<ce> _traitor_ takes your
+<ce> hand in both of his.
+<ce>
+<ce> "You pulled me out of that
+<ce> pit, and I will not forget
+<ce> it. But here our roads part."
+
+Message:  1060
+<ce> They hanged _traitor_ of Sentinel for treason, in the square
+<ce> before _queen_'s castle. Half the city came to watch.
+<--->
+<ce> _traitor_ of Sentinel went to the gallows for treason.
+<ce> They say he begged for his life all the way up the steps.
+
+Message:  1070
+<ce> Someone calls for you to wait. A
+<ce> courier runs up. "%pcn? This is
+<ce> yours." Then the courier is off again.
+
+
+QBN:
+Item _letter_ letter used 1030
+Item _gold_ gold
+
+Person _traitor_ face 1 named Lord_K'avar
+Person _contact1_ face 15 group Banker female remote
+Person _queen_ named Queen_Akorithi atHome
+Person _contact2_ face 1 group Local_3.0 remote
+
+Place _tavern_ remote tavern
+Place _sentinel_ permanent SentinelCastle4
+Place _safehouse_ remote house4
+
+Clock _S.00_ 31.06:00 93.18:00
+Clock _firsttimer_ 7.00:00 14.00:00
+--varied timer, to prevent same number on all timers
+Clock _executiondelay_ 00:00 0 flag 17 range 0 2
+Clock _escapetime_ 00:00 0 flag 17 range 0 2
+
+Foe _guards_ is Spellsword
+Foe _F.01_ is Spellsword
+
+--	Quest start-up:
+	start timer _S.00_ 
+	have _letter_ set _goclock_
+
+_goclock_ task:
+	start timer _firsttimer_
+
+_S.00_ task:
+	_letter_ used do _readletter_ 
+	give pc _letter_ notify 1070 
+	place foe _guards_ at _sentinel_ 
+	place npc _contact1_ at _tavern_ 
+	place npc _traitor_ at _sentinel_ 
+
+variable _executiondelay_
+variable _firsttimer_
+_S.02_ task:
+	clicked npc _contact1_ 
+	log 1021 step 1 
+	say 1040 
+	start timer _executiondelay_ 
+	stop timer _firsttimer_
+
+_S.03_ task:
+	clicked npc _traitor_ 
+	start timer _escapetime_ 
+	log 1022 step 2 
+	hide npc _traitor_ 
+	hide npc _contact1_ 
+	say 1041 
+	add _traitor_ face 
+	change repute with _queen_ by -20
+	place npc _contact2_ at _safehouse_ 
+	stop timer _executiondelay_
+
+_greklith_ task:
+	injured _guards_ 
+	create foe _F.01_ every 2 minutes 5 times with 50% success 
+	say 1050 
+
+_S.05_ task:
+	clicked npc _contact2_ 
+
+_S.06_ task:
+	when _S.03_ and _S.05_ 
+	give pc _gold_ 
+	drop _traitor_ face 
+	end quest 
+--removed unnecessary delay
+
+_S.08_ task:
+	when _executiondelay_ and not _S.03_ 
+	rumor mill 1060 
+	end quest 
+
+_S.08a_ task:
+	when _firsttimer_ and not _S.03_ 
+	rumor mill 1060 
+	end quest 
+
+_escapetime_ task:
+	say 1051 
+	end quest 
+
+_readletter_ task:
+	log 1020 step 0

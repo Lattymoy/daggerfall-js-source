@@ -1,0 +1,246 @@
+-- OWN-WORDS: the QBN is Daggerfall Unity's (MIT, Interkarma and contributors), verbatim. The messages are DFO Online's own words.
+-- Quest: C:\QUESTS\WORKING\K0C00Y05.Qbn.
+-- StartsBy: NPC
+-- Questee: anyone
+-- Questor: merchant
+-- Repute: 0
+-- QuestId: 5
+-- Edited for Daggerfall Unity by Jay_H
+Messages: 20
+Quest: K0C00Y05
+DisplayName: The Lost Child
+-- Message panels
+QRC:
+
+QuestorOffer:  [1000]
+<ce> I went to the Fighters Guild. They
+<ce> are too busy rescuing the well-born
+<ce> to look for a poor family's child.
+<ce> But _child_ is all I have. You will
+<ce> find %g2 for me, will you not?
+<--->
+<ce> Orcs took my little cousin, and the
+<ce> Fighters Guild just laughed at me. To
+<ce> them _child_ is only a =child_, but %g is
+<ce> all I have. Will you help me, good %ra?
+
+RefuseQuest:  [1001]
+<ce> You have a heart of stone,
+<ce> like the guild. What is one
+<ce> poor child worth to anyone?
+
+AcceptQuest:  [1002]
+<ce> _gold_ gold is all I have, and it is
+<ce> yours for _child_. The orcs who took
+<ce> %g2 are camped in ___mondung_. Bring
+<ce> me news in =queston_ days, or I find
+<ce> someone else. %god keep you, %pcn.
+
+QuestComplete:  [1004]
+<ce> _child_! Thank %god. %oth,
+<ce> %pcn, you have saved us both.
+<ce> Here, take your _gold_ gold.
+
+RumorsDuringQuest:  [1005]
+_qgiver_ has not slept since _child_ went missing.
+
+RumorsPostfailure:  [1006]
+_qgiver_ has stopped hoping that
+_child_ will ever come home.
+
+RumorsPostsuccess:  [1007]
+_qgiver_ has _child_ home again,
+thanks to some %ra sellsword.
+
+QuestorPostsuccess:  [1008]
+You brought _child_ home, %pcf. Ask me for anything.
+
+QuestorPostfailure:  [1009]
+<ce> Do you not know me, %pcf? I am
+<ce> _qgiver_. You promised me _child_ and
+<ce> came back with nothing. Go to Oblivion.
+
+QuestLogEntry:  [1010]
+%qdt:
+ At __qgiver_ in ___qgiver_, _qgiver_
+ asked me to find %g3 little cousin,
+ _child_. Orcs hold %g in
+ ___mondung_, it seems. The child
+ must be found within =queston_ days.
+
+Message:  1011
+                             __knight_
+                              ___knight_
+ 
+ %pcn,
+ 
+      No orcs took _child_. %G is safe
+ with us, away from _qgiver_, who drinks
+ more than any three sailors. Come to
+ __knight_ and see for yourself.
+ 
+                            With respect,
+ 
+                            _knight_
+
+Message:  1012
+<ce> A courier wearing the colors
+<ce> of the Fighters Guild steps
+<ce> up beside you, gives you a
+<ce> letter and leaves in a hurry.
+
+Message:  1013
+%qdt:
+ _knight_ of the Fighters Guild
+ writes that %g has the child I was
+ sent to save from ___mondung_. The
+ guild took _child_ from _qgiver_, a
+ =qgiver_ who drinks. I can see for
+ myself at __knight_ in ___knight_.
+
+Message:  1014
+<ce> My letter found you, %pcf. _child_ is
+<ce> _qgiver_'s cousin, yes, but the =child_
+<ce> is also heir to the family fortune. For
+<ce> %g3 safety we moved %g2 to _childlocale_
+<ce> in __childlocale_. Leave _child_ there
+<ce> and the guild will remember it.
+
+Message:  1015
+<ce> I am _child_. I am
+<ce> seven. How old are you?
+<--->
+<ce> I am _child_. I know a joke. %jok.
+<--->
+<ce> My grandfather is richer than the king.
+<--->
+<ce> I am not meant to talk to
+<ce> strangers. But everyone here
+<ce> is a stranger. I am _child_.
+<--->
+<ce> Are you a %ra? Me too! I am _child_.
+
+Message:  1016
+<ce> _child_ is gone the moment
+<ce> you take your eyes off %g2.
+
+Message:  1017
+<ce> Take _child_ with you?
+
+Message:  1018
+<ce> The warrior wears the colors
+<ce> of the Fighters Guild.
+
+Message:  1019
+%qdt:
+ I met _knight_, the guild knight.
+ %G says _child_ is safe at
+ _childlocale_ in __childlocale_.
+
+
+QBN:
+Item _letter11_ letter used 1011
+-added underscores to letter11
+Item _gold_ gold
+
+Person _qgiver_ group Questor
+Person _knight_ face 216 faction The_Fighters_Guild remote
+Person _child_ faction Children female
+
+Place _mondung_ remote dungeon1
+Place _childlocale_ local house2
+
+Clock _queston_ 00:00 0 flag 17 range 0 5
+Clock _S.04_ 01:40 06:40
+
+Foe _warrior_ is Knight
+
+--	Quest start-up:
+	dialog link for location _childlocale_ person _child_ 
+	start timer _queston_ 
+	reveal _mondung_ 
+	--moved injured warrior say 1018 to new task S.10
+	log 1010 step 0 
+	pick one of _metal_ _S.01_ 
+
+_queston_ task:
+	end quest 
+--removed unnecessary delay 
+
+_S.01_ task:
+	place npc _child_ at _mondung_ 
+
+_metal_ task:
+	repute with _knight_ exceeds 10 do _S.03_ 
+	place npc _child_ at _childlocale_ 
+
+_S.03_ task:
+	start timer _S.04_ 
+
+_altsafe_ task:
+	when _metal_ and not _S.03_
+	start task _S.01_
+--if FG rep not met, reverts to normal path
+
+_S.04_ task:
+	_letter11_ used do _S.05_ 
+	--removed say nothing
+	give pc _letter11_ notify 1012 
+
+_S.05_ task:
+	log 1013 step 1 
+
+_S.06_ task:
+	clicked npc _knight_ 
+	add dialog for location _childlocale_ 
+	log 1019 step 2 
+	say 1014 
+
+_S.07_ task:
+	clicked npc _child_ 
+	prompt 1017 yes _S.09_ no _no_ 
+
+_S.08_ task:
+	when _S.09_ and _S.04_ 
+	create foe _warrior_ every 21 minutes 10 times with 20% success 
+	change repute with _knight_ by -15 
+--changed _metal_ here to _s.04_ to prevent false knight spawning
+
+_S.09_ task:
+	hide npc _child_ 
+	say 1015 
+	add _child_ face 
+
+_S.10_ task:
+	injured _warrior_
+	say 1018 
+
+_qgclicked_ task:
+	clicked npc _qgiver_ 
+
+_reward_ task:
+	when _qgclicked_ and _S.09_ 
+	give pc _gold_ 
+	drop _child_ face
+	end quest 
+--removed unnecessary delay
+-added drop child face. child would remain on HUD until delay finished.
+
+_S.13_ task:
+	when _S.01_ and _reward_ 
+	change repute with _knight_ by +5 
+	change repute with _qgiver_ by +15 
+
+_S.14_ task:
+	when _queston_ and _S.06_ and not _S.08_ 
+	change repute with _knight_ by +20 
+
+_S.15_ task:
+	when _queston_ and _S.09_ 
+	say 1016 
+
+_clearclick_ task:
+	when _qgclicked_ and not _S.09_ 
+	clear _qgclicked_ _clearclick_ 
+
+variable _no_
