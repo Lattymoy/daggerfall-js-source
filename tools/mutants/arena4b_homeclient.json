@@ -11,8 +11,8 @@
   {
     "name": "ARENA4B-EMPTY-OUTSIDE-ACT",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (d?.to) { m = moveOf(d); empty(m, d.repeat !== true); } },",
-    "new": "if (d?.to) { m = moveOf(d); } },",
+    "old": "              empty(m, d.repeat !== true);\n            }",
+    "new": "            }",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "ARENA4B-REPEAT-CREDIT",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (d?.to) { m = moveOf(d); empty(m, d.repeat !== true); } },",
-    "new": "if (d?.to) { m = moveOf(d); empty(m, true); } },",
+    "old": "              empty(m, d.repeat !== true);",
+    "new": "              empty(m, true);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -29,8 +29,8 @@
   {
     "name": "ARENA4B-OTHER-CHARACTER",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "((h.mine && h.character === character) || (h.hall && h.keeper))",
-    "new": "(h.mine || (h.hall && h.keeper))",
+    "old": "    (h) => homeInArenaCell(mapId, h.buildingKey) && ((h.mine && h.character === character) || (h.hall && h.keeper)),",
+    "new": "    (h) => homeInArenaCell(mapId, h.buildingKey) && (h.mine || (h.hall && h.keeper)),",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "ARENA4B-UNREAD-CREDIT",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    empty(m, false);\n",
-    "new": "    empty(m, true);\n",
+    "old": "    empty(m, false);",
+    "new": "    empty(m, true);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "ARENA4B-HALL-CREDIT",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (credit && !m.hall && m.refund > 0) hooks.credit?.(m.refund);",
-    "new": "if (credit && m.refund > 0) hooks.credit?.(m.refund);",
+    "old": "    if (credit && !m.hall && m.refund > 0) hooks.credit?.(m.refund);",
+    "new": "    if (credit && m.refund > 0) hooks.credit?.(m.refund);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "ARENA4B-HALL-RESIDENCE",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "hooks.discover?.(m.to, m.hall);",
-    "new": "hooks.discover?.(m.to, false);",
+    "old": "    hooks.discover?.(m.to, m.hall); // a hall is its guild's, never discovered as anyone's residence",
+    "new": "    hooks.discover?.(m.to, false); // a hall is its guild's, never discovered as anyone's residence",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "ARENA4B-TAKEN-UNHELD",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "      held.add(to.buildingKey);\n",
-    "new": "\n",
+    "old": "      held.add(to.buildingKey);",
+    "new": "",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -74,8 +74,8 @@
   {
     "name": "ARENA4B-LETTER-UNSAID",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    hooks.notice?.(m.hall ? ARENA_TEXT.homeMove.hallMoved : ARENA_TEXT.deedMoved);\n",
-    "new": "\n",
+    "old": "    hooks.notice?.(m.hall ? ARENA_TEXT.homeMove.hallMoved : ARENA_TEXT.deedMoved);",
+    "new": "",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -83,8 +83,8 @@
   {
     "name": "ARENA4B-SEEN-UNASKED",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
-    "new": "checkpointLanded(await hooks.checkpoint?.())) void m;",
+    "old": "    if (checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
+    "new": "    if (checkpointLanded(await hooks.checkpoint?.())) void m;",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]
@@ -92,8 +92,8 @@
   {
     "name": "ARENA4B-SEEN-UNSAVED",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
-    "new": "await hooks.checkpoint?.(); await api.arenaSeen(mapId, m.from);",
+    "old": "    if (checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
+    "new": "    await hooks.checkpoint?.();\n    await api.arenaSeen(mapId, m.from);",
     "tests": [
       "test/systems/arena/arena4b_homeclient.test.js"
     ]

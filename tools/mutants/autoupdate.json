@@ -32,8 +32,8 @@
   {
     "name": "AUTO-UPDATE-not-the-players-own-online",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'autoUpdates',      // AUTO-UPDATE: whether THIS player's game restarts itself onto a new version\n",
-    "new": "",
+    "old": "  'autoUpdates', // AUTO-UPDATE: whether THIS player's game restarts itself onto a new version\n  'skipStartVideo', // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room",
+    "new": "  'skipStartVideo', // UXB1-A: whether THIS player sits through the opening film - read at the front door, before any room",
     "tests": [
       "test/ui/updatescreen.test.js",
       "test/systems/rf4_featuredecl.test.js"

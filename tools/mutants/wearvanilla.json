@@ -32,8 +32,8 @@
   {
     "name": "WEAR-VANILLA-room-armour-x5-on",
     "file": "src/systems/online/onlineLane.js",
-    "old": "classicStrengthDamageBonus: false, equipDamage: false, encumbranceEffects: true,",
-    "new": "classicStrengthDamageBonus: false, equipDamage: true, encumbranceEffects: true,",
+    "old": "    equipDamage: false,",
+    "new": "    equipDamage: true,",
     "tests": [
       "test/systems/wear_vanilla.test.js",
       "test/systems/modsonline.test.js"

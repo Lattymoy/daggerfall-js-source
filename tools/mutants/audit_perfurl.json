@@ -48,8 +48,8 @@
   {
     "name": "AUDIT-PERFURL-A5-latched-key-published",
     "file": "src/systems/online/onlineLane.js",
-    "old": "export const BOOT_DOOR_KEYS = Object.freeze(['load', 'online',",
-    "new": "export const BOOT_DOOR_KEYS = Object.freeze(['renderscale', 'load', 'online',",
+    "old": "  'load',",
+    "new": "  'renderscale',\n  'load',",
     "tests": [
       "test/systems/perfurl_doors.test.js"
     ]

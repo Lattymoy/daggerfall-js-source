@@ -101,8 +101,8 @@
   {
     "name": "SEAT-SAVES-seat-loss-before-the-world-stands",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "      if (!stands()) return;   // the first standing frame's checkpoint is due at once, and hears the lease then\n",
-    "new": "",
+    "old": "      if (!stands()) return; // the first standing frame's checkpoint is due at once, and hears the lease then\n      if (!session || session.lost) return;",
+    "new": "      if (!session || session.lost) return;",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
@@ -137,8 +137,8 @@
   {
     "name": "SAVES-SAID-put-out-not-waited",
     "file": "src/systems/online/realmUnsavedNotice.js",
-    "old": "    if (session.busy && !failing) return;",
-    "new": "",
+    "old": "    if (session.busy && !failing) return; // a put is out: its answer decides",
+    "new": "    // a put is out: its answer decides",
     "tests": [
       "test/systems/online/realmUnsavedNotice.test.js"
     ]
@@ -173,8 +173,8 @@
   {
     "name": "SAVES-SAID-frame-never-asks",
     "file": "src/systems/online/onlineCheckpointClock.js",
-    "old": "      unsaved?.tick();\n",
-    "new": "",
+    "old": "      unsaved?.tick();\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/online/onlineCheckpointClock.test.js"
     ]
@@ -245,8 +245,8 @@
   {
     "name": "STRANDED-way-back-keeps-the-copy",
     "file": "src/systems/online/strandedCopy.js",
-    "old": "  forgetStranded(storage, id);\n  const written",
-    "new": "  const written",
+    "old": "  forgetStranded(storage, id);\n  const written = saveSlot(offline.name || name, REALM_COPY_SAVE_NAME, offline, { storage });",
+    "new": "  const written = saveSlot(offline.name || name, REALM_COPY_SAVE_NAME, offline, { storage });",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
@@ -254,8 +254,8 @@
   {
     "name": "STRANDED-way-back-same-id",
     "file": "src/systems/online/strandedCopy.js",
-    "old": "  offline.characterId = mintCharacterId();\n",
-    "new": "",
+    "old": "  offline.characterId = mintCharacterId();\n  const strandedText = storage.getItem(strandedTextKey(id));",
+    "new": "  const strandedText = storage.getItem(strandedTextKey(id));",
     "tests": [
       "test/server/rescuesave.test.js"
     ]
@@ -263,8 +263,8 @@
   {
     "name": "STRANDED-way-back-no-room-loses-it",
     "file": "src/systems/online/strandedCopy.js",
-    "old": "    storage.setItem(strandedTextKey(id), strandedText);",
-    "new": "",
+    "old": "    storage.setItem(strandedTextKey(id), strandedText);\n    storage.setItem(strandedRecordKey(id), strandedRecord);",
+    "new": "    storage.setItem(strandedRecordKey(id), strandedRecord);",
     "tests": [
       "test/server/rescuesave.test.js"
     ]

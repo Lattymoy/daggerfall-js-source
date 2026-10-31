@@ -47,8 +47,8 @@
   {
     "name": "UXB1-E-an-online-page-reads-the-room-as-the-player",
     "file": "src/systems/online/onlineSync.js",
-    "old": "  if (isOnlinePage(search)) return null;",
-    "new": "",
+    "old": "  if (isOnlinePage(search)) return null;\n  /** @type {SyncRow[]} */",
+    "new": "  /** @type {SyncRow[]} */",
     "tests": [
       "test/systems/online/uxb1e_onlinesync.test.js"
     ]

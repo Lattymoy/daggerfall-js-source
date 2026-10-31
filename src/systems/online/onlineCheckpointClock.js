@@ -19,7 +19,14 @@ import { watchRealmUnsaved } from './realmUnsavedNotice.js';
  *   `session` the realm session (null for a slot save), `checkpoint` the host's gated online checkpoint, `lastAt` when
  *   it last ran, `say` a HUD line, `now` the session's clock, `stands` whether the boot's start is done.
  */
-export function createOnlineCheckpointClock({ session, checkpoint, lastAt, say, now = () => Date.now(), stands = () => true }) {
+export function createOnlineCheckpointClock({
+  session,
+  checkpoint,
+  lastAt,
+  say,
+  now = () => Date.now(),
+  stands = () => true,
+}) {
   const unsaved = session ? watchRealmUnsaved(session, { say, now }) : null;
   return {
     /** A frame of play, alive: the periodic checkpoint if it is due, then the word if the realm holds nothing new. */
@@ -29,7 +36,7 @@ export function createOnlineCheckpointClock({ session, checkpoint, lastAt, say, 
     },
     /** The tab just lost the seat: a realm character is saved at once, so a lease another device took is heard now. */
     seatLost() {
-      if (!stands()) return;   // the first standing frame's checkpoint is due at once, and hears the lease then
+      if (!stands()) return; // the first standing frame's checkpoint is due at once, and hears the lease then
       if (!session || session.lost) return;
       checkpoint();
     },

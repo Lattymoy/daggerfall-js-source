@@ -117,10 +117,10 @@ questions disagreed (THE ONE CONSTRUCTION SEAM):
 - the door asks the ACCOUNT (`mine`: `homes.js:"      const mine = h.player === player.id;"` on the service,
   `homeLaw.js:"if (home.mine) return"`);
 - the stations asked THIS CHARACTER (`own`: `onlineHomes.js` homeAt's `row.mine && typeof me === 'string' && row.character === me` - since
-  ACCOUNT-HOMES, `onlineHomes.js:"    const own = row.mine && !row.deed;"`, the account's too),
+  ACCOUNT-HOMES, `onlineHomes.js:"const own = row.mine"`, the account's too),
   through decorOwnerHere at the press and the seven station questions.
 
-FIXED. `onlineHomes.js:"export const homeStationsServe = (home) => home?.mine === true;"`, wired by the host's one line
+FIXED. `onlineHomes.js:"export const homeStationsServe"`, wired by the host's one line
 `worldModes.js:"  const stationOwnerHere = () => decorOwnerHere() || (!privateVisitRoom && homeStationsServe(interiorHome));"`
 at the press and all seven questions (forge, workbench, loom, mason's bench, jeweller's bench, alchemy, enchanting).
 decorOwnerHere is unchanged, so the storage, the bed, the decorator and the sale stay the buying character's: the

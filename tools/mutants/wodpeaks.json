@@ -29,8 +29,8 @@
   {
     "name": "WODPEAKS-room-leaves-it",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'world-of-daggerfall': Object.freeze({ Enabled: true, Mountains: false }),",
-    "new": "  'world-of-daggerfall': Object.freeze({ Enabled: true }),",
+    "old": "  'world-of-daggerfall': Object.freeze({ Enabled: true, Mountains: false }), // WOD-PEAKS: and its spires the room's too - they level the ground and stand rock",
+    "new": "  'world-of-daggerfall': Object.freeze({ Enabled: true }), // WOD-PEAKS: and its spires the room's too - they level the ground and stand rock",
     "tests": [
       "test/systems/wod1_vendor.test.js",
       "test/systems/modsonline.test.js",

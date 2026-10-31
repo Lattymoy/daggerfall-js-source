@@ -376,8 +376,8 @@
   {
     "name": "AUDIT-STARTS-W8-online-keeps-start",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'region', 'loc', 'seat', 'start']);",
-    "new": "'region', 'loc', 'seat']);",
+    "old": "  'start',\n]); // BAY-LEFT-B: a birth's seat by its map id   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): a waiting house's birth, decided by the Online page   // REALM P1.3: the realm character's id, and a character born online",
+    "new": "]); // BAY-LEFT-B: a birth's seat by its map id   // HOUSE-WAITS (FIELD BUGS 2026-10-09f): a waiting house's birth, decided by the Online page   // REALM P1.3: the realm character's id, and a character born online",
     "tests": [
       "test/systems/starts/auditstarts.test.js"
     ]

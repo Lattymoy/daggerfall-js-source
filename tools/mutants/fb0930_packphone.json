@@ -218,8 +218,8 @@
   {
     "name": "PACK-PHONE-the-lane-never-told",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'packPhoneDoll',    // PACK-PHONE",
-    "new": "  //    // PACK-PHONE",
+    "old": "  'packPhoneDoll', // PACK-PHONE: whether THIS phone's pack draws the body - what this screen draws",
+    "new": "  //    // PACK-PHONE: whether THIS phone's pack draws the body - what this screen draws",
     "tests": [
       "test/systems/fb0930_packphone.test.js",
       "test/systems/onlinelane.test.js"

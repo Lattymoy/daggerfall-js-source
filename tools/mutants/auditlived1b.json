@@ -78,8 +78,8 @@
   {
     "name": "AUDITLIVED1B-S1-checkpoint-ignores-the-walk",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "return !!online && !!spawned && seatAllows && !duel && !walkWaiting;",
-    "new": "return !!online && !!spawned && seatAllows && !duel;",
+    "old": "  return !!online && !!spawned && seatAllows && !duel && !walkWaiting;",
+    "new": "  return !!online && !!spawned && seatAllows && !duel;",
     "tests": [
       "test/systems/auditlived1b.test.js"
     ]

@@ -47,8 +47,8 @@
   {
     "name": "REST-OPT-switch-not-the-players",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'restWithParty',   // REST-OPT: whether I rest with my party or alone - my own say\n",
-    "new": "",
+    "old": "  'restWithParty', // REST-OPT: whether I rest with my party or alone - my own say\n  'gentleActs', // PROF1: Gentle acts - an accessibility choice; every act plain is never an edge over another player",
+    "new": "  'gentleActs', // PROF1: Gentle acts - an accessibility choice; every act plain is never an edge over another player",
     "tests": [
       "test/systems/party/restopt.test.js"
     ]

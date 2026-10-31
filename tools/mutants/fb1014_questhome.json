@@ -11,8 +11,8 @@
   {
     "name": "QUEST-HOME-the-boots-word-not-kept",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    everyTown = next;\n",
-    "new": "",
+    "old": "    everyTown = next;\n    everyTownHeard = true;",
+    "new": "    everyTownHeard = true;",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]
@@ -20,7 +20,7 @@
   {
     "name": "QUEST-HOME-homeStands-asks-the-asked-towns-alone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
+    "old": "  const homeStands = (mapId, buildingKey) =>\n    !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "new": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey);",
     "tests": [
       "test/net/fb1014_questhome.test.js"
@@ -29,7 +29,7 @@
   {
     "name": "QUEST-HOME-the-towns-asked-unheard",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  const homeStands = (mapId, buildingKey) => !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
+    "old": "  const homeStands = (mapId, buildingKey) =>\n    !!towns.get(idOf(mapId))?.homes.has(buildingKey) || !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "new": "  const homeStands = (mapId, buildingKey) => !!everyTown.get(idOf(mapId))?.has(buildingKey);",
     "tests": [
       "test/net/fb1014_questhome.test.js"
@@ -155,8 +155,8 @@
   {
     "name": "QUEST-HOME-the-word-not-taken",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (homeBuildingKeyOk(k) && !keys.has(k)) { keys.add(k); became = true; }",
-    "new": "if (homeBuildingKeyOk(k) && !keys.has(k)) { became = true; }",
+    "old": "          keys.add(k);\n          became = true;",
+    "new": "          became = true;",
     "tests": [
       "test/net/fb1014_questhome.test.js"
     ]

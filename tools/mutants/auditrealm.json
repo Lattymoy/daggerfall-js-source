@@ -298,8 +298,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-sale-client-share",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "        sold = { refund: Math.max(0, Number(res.refund) || 0),",
-    "new": "        sold = { refund: homeRefund(res.price),",
+    "old": "          refund: Math.max(0, Number(res.refund) || 0),",
+    "new": "          refund: homeRefund(res.price),",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -307,8 +307,8 @@
   {
     "name": "AUDIT-REALM-L1F3-the-sale-refund-dropped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "...(r.data?.refund != null ? { refund: n(r.data.refund) } : {}), ",
-    "new": "",
+    "old": "        ...(r.data?.refund != null ? { refund: n(r.data.refund) } : {}),\n        ...(r.data?.rent != null ? { rent: n(r.data.rent) } : {}),",
+    "new": "        ...(r.data?.rent != null ? { rent: n(r.data.rent) } : {}),",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]
@@ -316,8 +316,8 @@
   {
     "name": "AUDIT-REALM-a-repeated-claim-paid-twice",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "        apply: (/** @type {any} */ res) => { if (res?.repeat) paid.back(); },\n",
-    "new": "",
+    "old": "        apply: (/** @type {any} */ res) => {\n          if (res?.repeat) paid.back();\n        },\n        call: (/** @type {any} */ at) => homes.claim({ mapId, buildingKey, region, price, realm: at, layout, ground }),",
+    "new": "        call: (/** @type {any} */ at) => homes.claim({ mapId, buildingKey, region, price, realm: at, layout, ground }),",
     "tests": [
       "test/systems/auditrealm.test.js"
     ]

@@ -366,8 +366,8 @@
   {
     "name": "AUDIT1003-O10-READ-ON-THE-HANDOVER",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (checkpointLanded(await hooks.checkpoint?.())) await",
-    "new": "if (hooks.checkpoint?.() !== false) await",
+    "old": "    if (checkpointLanded(await hooks.checkpoint?.())) await api.arenaSeen(mapId, m.from);",
+    "new": "    if (hooks.checkpoint?.() !== false) await api.arenaSeen(mapId, m.from);",
     "tests": [
       "test/systems/arena/audit1003_online.test.js"
     ]

@@ -198,7 +198,7 @@
   {
     "name": "ACCOUNT-HOMES-sweep-held-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "old": "    if (\n      !at ||\n      keep.has(`${at.mapId}:${at.buildingKey}`) ||\n      homeInArenaCell(at.mapId, at.buildingKey) ||\n      ownNow(at.mapId, at.buildingKey)\n    )\n      continue;",
     "new": "    if (!at || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
     "tests": [
       "test/server/account_homes.test.js"
@@ -208,7 +208,7 @@
   {
     "name": "ACCOUNT-HOMES-sweep-arena-unskipped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "old": "    if (\n      !at ||\n      keep.has(`${at.mapId}:${at.buildingKey}`) ||\n      homeInArenaCell(at.mapId, at.buildingKey) ||\n      ownNow(at.mapId, at.buildingKey)\n    )\n      continue;",
     "new": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || ownNow(at.mapId, at.buildingKey)) continue;",
     "tests": [
       "test/server/account_homes.test.js"
@@ -218,7 +218,7 @@
   {
     "name": "ACCOUNT-HOMES-sweep-ownNow-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey) || ownNow(at.mapId, at.buildingKey)) continue;",
+    "old": "    if (\n      !at ||\n      keep.has(`${at.mapId}:${at.buildingKey}`) ||\n      homeInArenaCell(at.mapId, at.buildingKey) ||\n      ownNow(at.mapId, at.buildingKey)\n    )\n      continue;",
     "new": "    if (!at || keep.has(`${at.mapId}:${at.buildingKey}`) || homeInArenaCell(at.mapId, at.buildingKey)) continue;",
     "tests": [
       "test/server/account_homes.test.js"
@@ -228,8 +228,8 @@
   {
     "name": "ACCOUNT-HOMES-sweep-mark-kept",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  for (const name of gone) removePermanentScene(cache, name);\n",
-    "new": "",
+    "old": "  for (const name of gone) removePermanentScene(cache, name);\n  return { own, gone: [...gone] };",
+    "new": "  return { own, gone: [...gone] };",
     "tests": [
       "test/server/account_homes.test.js"
     ],

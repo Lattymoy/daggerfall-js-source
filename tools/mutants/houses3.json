@@ -202,8 +202,8 @@
   {
     "name": "HOUSES3-held-the-slots-alone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "export const realmDeedsOf = (houses) => (Array.isArray(houses) ? houses : []).flatMap((_, region) => regionDeedsOf(houses, region).flatMap((slot) => {",
-    "new": "export const realmDeedsOf = (houses) => (Array.isArray(houses) ? houses : []).flatMap((_, region) => regionDeedsOf(houses, region).slice(0, 1).flatMap((slot) => {",
+    "old": "    regionDeedsOf(houses, region).flatMap((slot) => {\n      const mapId = Number(slot.mapId) >>> 0;\n      return realmDeedAt(houses, region, mapId, slot.buildingKey)\n        ? [{ region, mapId, buildingKey: slot.buildingKey }]\n        : [];\n    }),",
+    "new": "    regionDeedsOf(houses, region)\n      .slice(0, 1)\n      .flatMap((slot) => {\n        const mapId = Number(slot.mapId) >>> 0;\n        return realmDeedAt(houses, region, mapId, slot.buildingKey)\n          ? [{ region, mapId, buildingKey: slot.buildingKey }]\n          : [];\n      }),",
     "tests": [
       "test/systems/houses3.test.js"
     ]

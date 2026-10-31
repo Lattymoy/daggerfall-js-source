@@ -189,8 +189,8 @@
   {
     "name": "HOME-PRICE-the-height-for-depth",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale * scale;",
-    "new": "const m2 = (size?.x ?? 0) * (size?.y ?? 0) * scale * scale;",
+    "old": "  const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale * scale;",
+    "new": "  const m2 = (size?.x ?? 0) * (size?.y ?? 0) * scale * scale;",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -198,8 +198,8 @@
   {
     "name": "HOME-PRICE-the-scale-once",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale * scale;",
-    "new": "const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale;",
+    "old": "  const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale * scale;",
+    "new": "  const m2 = (size?.x ?? 0) * (size?.z ?? 0) * scale;",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -207,8 +207,8 @@
   {
     "name": "HOME-PRICE-the-town-width-alone",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "const n = (ext?.width ?? 0) * (ext?.height ?? 0);",
-    "new": "const n = (ext?.width ?? 0);",
+    "old": "  const n = (ext?.width ?? 0) * (ext?.height ?? 0);",
+    "new": "  const n = ext?.width ?? 0;",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -216,8 +216,8 @@
   {
     "name": "HOME-PRICE-the-registry-drops-the-refund",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null,",
-    "new": "refund: null,",
+    "old": "              refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null, // HOME-PRICE: mine, what its sale pays back",
+    "new": "              refund: null, // HOME-PRICE: mine, what its sale pays back",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -225,8 +225,8 @@
   {
     "name": "AUDIT-HOME-PRICE-D6-the-registry-drops-nothing",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null,",
-    "new": "refund: Number.isSafeInteger(h.refund) && h.refund > 0 ? h.refund : null,",
+    "old": "              refund: Number.isSafeInteger(h.refund) && h.refund >= 0 ? h.refund : null, // HOME-PRICE: mine, what its sale pays back",
+    "new": "              refund: Number.isSafeInteger(h.refund) && h.refund > 0 ? h.refund : null, // HOME-PRICE: mine, what its sale pays back",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -234,8 +234,8 @@
   {
     "name": "AUDIT-HOME-PRICE-C3-the-registry-drops-the-rent",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "rentDue: Number.isSafeInteger(h.rentDue) && h.rentDue > 0 ? h.rentDue : 0,",
-    "new": "rentDue: 0,",
+    "old": "              rentDue: Number.isSafeInteger(h.rentDue) && h.rentDue > 0 ? h.rentDue : 0, // AUDIT HOME-PRICE C3: and the rent held on it",
+    "new": "              rentDue: 0, // AUDIT HOME-PRICE C3: and the rent held on it",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -243,8 +243,8 @@
   {
     "name": "AUDIT-HOME-PRICE-C2-crossed-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "      const crossed = r.data?.crossed === true;\n",
-    "new": "      const crossed = false;\n",
+    "old": "      const crossed = r.data?.crossed === true;",
+    "new": "      const crossed = false;",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -252,8 +252,8 @@
   {
     "name": "HOME-PRICE-the-claims-answer-unread",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "const refund = crossed ? null : Number.isSafeInteger(r.data?.refund) && r.data.refund >= 0 ? r.data.refund : homeRefund(price);",
-    "new": "const refund = crossed ? null : homeRefund(price);",
+    "old": "      const refund = crossed\n        ? null\n        : Number.isSafeInteger(r.data?.refund) && r.data.refund >= 0\n          ? r.data.refund\n          : homeRefund(price);",
+    "new": "      const refund = crossed ? null : homeRefund(price);",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -261,8 +261,8 @@
   {
     "name": "HOME-PRICE-the-offer-off-the-price",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "(Number.isSafeInteger(home?.refund) && home.refund >= 0 ? home.refund : homeRefund(price))",
-    "new": "homeRefund(price)",
+    "old": "export const homeSaleOffer = (home, price) =>\n  Number.isSafeInteger(home?.refund) && home.refund >= 0 ? home.refund : homeRefund(price);",
+    "new": "export const homeSaleOffer = (home, price) => homeRefund(price);",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -270,8 +270,8 @@
   {
     "name": "AUDIT-HOME-PRICE-D6-the-offer-drops-nothing",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "(Number.isSafeInteger(home?.refund) && home.refund >= 0 ? home.refund : homeRefund(price))",
-    "new": "(Number.isSafeInteger(home?.refund) && home.refund > 0 ? home.refund : homeRefund(price))",
+    "old": "  Number.isSafeInteger(home?.refund) && home.refund >= 0 ? home.refund : homeRefund(price);",
+    "new": "  Number.isSafeInteger(home?.refund) && home.refund > 0 ? home.refund : homeRefund(price);",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -279,8 +279,8 @@
   {
     "name": "AUDIT-HOME-PRICE-C3-the-sale-box-rent-unsaid",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "rentDue > 0 ? `Sell your home for ${gold(refund)} gold, and the ${gold(rentDue)} gold of rent you have not collected?` : `Sell",
-    "new": "false ? `Sell your home for ${gold(refund)} gold, and the ${gold(rentDue)} gold of rent you have not collected?` : `Sell",
+    "old": "  rentDue > 0",
+    "new": "  false",
     "tests": [
       "test/systems/homeprice.test.js"
     ]
@@ -454,8 +454,8 @@
   {
     "name": "AUDIT-HOME-PRICE-D3-the-rent-clause-bare",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "rent > 0 ? `${gold(rent)} of it rent",
-    "new": "rent > 0 ? `${rent} of it rent",
+    "old": "    rent > 0 ? `${gold(rent)} of it rent you had not collected` : null,",
+    "new": "    rent > 0 ? `${rent} of it rent you had not collected` : null,",
     "tests": [
       "test/systems/homeprice.test.js"
     ]

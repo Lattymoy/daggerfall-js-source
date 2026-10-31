@@ -32,8 +32,8 @@
     "tests": [
       "test/systems/settings/disc22a_magic_repairs.test.js"
     ],
-    "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search)",
-    "new": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key)"
+    "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search)\n    ? ONLINE_FORCED_SETTINGS[section][key]\n    : undefined;",
+    "new": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) ? ONLINE_FORCED_SETTINGS[section][key] : undefined;"
   },
   {
     "name": "D22A-row-not-locked",

@@ -18966,7 +18966,7 @@ with a room over the freeware's blocks and both town packs.
 
 DFU names every residence "Residence" (PlayerGPS.cs:1306-1309)
 and the mod prints it (.cs:719-728), so the port does now, whatever the verbs
-(`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`), and a nameless building of no
+(`online/onlineHomes.js:"export const homeDoorName"`), and a nameless building of no
 house type (a ship's deck) says its place. And a door of a NEIGHBOURING location (the Imperial City's next slice, a town
 across a pixel's edge) was named and discovered in the player's own town's book: the host's record now carries the
 door's own town (`scenes/townTalk.js:"const doorTownOf = (place, data) =>"`, from `scenes/world.js:"...townTalk.doorTownOf(dfLoc, d) };"`), and the plaque, the press

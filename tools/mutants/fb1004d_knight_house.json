@@ -42,8 +42,8 @@
   {
     "name": "KNIGHT-HOUSE-sleeping-deed-counted",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "return !!slot && deedStands(slot);",
-    "new": "return !!slot;",
+    "old": "  return !!slot && deedStands(slot);",
+    "new": "  return !!slot;",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "KNIGHT-HOUSE-own-deed-an-online-home",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (row.mine && row.deed && typeof me === 'string' && row.character === me) return null;\n",
-    "new": "",
+    "old": "    if (row.mine && row.deed && typeof me === 'string' && row.character === me) return null;\n    const own = row.mine && !row.deed;",
+    "new": "    const own = row.mine && !row.deed;",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js",
       "test/server/home1.test.js"
@@ -63,8 +63,8 @@
   {
     "name": "KNIGHT-HOUSE-client-blind-to-deed",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "deed: h.deed === true,",
-    "new": "deed: false,",
+    "old": "              deed: h.deed === true, // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the service holds for its knight, never bought",
+    "new": "              deed: false, // FIELD BUGS 2026-10-04d KNIGHT-HOUSE: a deed the service holds for its knight, never bought",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -73,8 +73,8 @@
   {
     "name": "KNIGHT-HOUSE-no-deed-listed",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "? [{ region, mapId, buildingKey: slot.buildingKey }] : [];",
-    "new": "? [] : [];",
+    "old": "      return realmDeedAt(houses, region, mapId, slot.buildingKey)\n        ? [{ region, mapId, buildingKey: slot.buildingKey }]\n        : [];",
+    "new": "      return realmDeedAt(houses, region, mapId, slot.buildingKey) ? [] : [];",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],
@@ -83,8 +83,8 @@
   {
     "name": "KNIGHT-HOUSE-hold-repeat-unsaid",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "if (r?.ok) return { ok: true, repeat: r.data?.repeat === true };",
-    "new": "if (r?.ok) return { ok: true, repeat: false };",
+    "old": "    if (r?.ok) return { ok: true, repeat: r.data?.repeat === true };",
+    "new": "    if (r?.ok) return { ok: true, repeat: false };",
     "tests": [
       "test/systems/fb1004d_knight_house.test.js"
     ],

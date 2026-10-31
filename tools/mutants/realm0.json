@@ -2,8 +2,8 @@
   {
     "name": "REALM0-flags-kept-online",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  if (!params?.has?.('online')) return [];\n  const dropped = ONLINE_REFUSED_FLAGS",
-    "new": "  return [];\n  const dropped = ONLINE_REFUSED_FLAGS",
+    "old": "  if (!params?.has?.('online')) return [];",
+    "new": "  return [];",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "REALM0-shot-not-refused",
     "file": "src/systems/online/onlineLane.js",
-    "old": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly',",
-    "new": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['fly',",
+    "old": "  'shot',\n  'fly',",
+    "new": "  'fly',",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -38,8 +38,8 @@
   {
     "name": "REALM0-cosmetic-forced",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']),",
-    "new": "  'roleplay-realism': Object.freeze([]),",
+    "old": "  'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']), // who stands behind a counter and in a house: looks",
+    "new": "  'roleplay-realism': Object.freeze([]), // who stands behind a counter and in a house: looks",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -47,8 +47,8 @@
   {
     "name": "REALM0-leveling-choice-forced",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'oblivion-remaster-leveling': Object.freeze(['Enabled']),",
-    "new": "  'oblivion-remaster-leveling': Object.freeze([]),",
+    "old": "  'oblivion-remaster-leveling': Object.freeze(['Enabled']), // which leveling a character uses stays its own; the dials are the room's",
+    "new": "  'oblivion-remaster-leveling': Object.freeze([]), // which leveling a character uses stays its own; the dials are the room's",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -65,8 +65,8 @@
   {
     "name": "REALM0-sync-skips-whole",
     "file": "src/systems/online/onlineSync.js",
-    "old": "  for (const vendor of Object.keys(ONLINE_WHOLE_MODS)) {\n",
-    "new": "  for (const vendor of []) {\n",
+    "old": "  for (const vendor of Object.keys(ONLINE_WHOLE_MODS)) {",
+    "new": "  for (const vendor of []) {",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -412,8 +412,8 @@
   {
     "name": "REALM0-checkpoint-due-late",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "nowMs - lastMs >= ONLINE_CHECKPOINT_MS",
-    "new": "nowMs - lastMs > ONLINE_CHECKPOINT_MS",
+    "old": "  Number.isFinite(nowMs) && nowMs - lastMs >= ONLINE_CHECKPOINT_MS;",
+    "new": "  Number.isFinite(nowMs) && nowMs - lastMs > ONLINE_CHECKPOINT_MS;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -430,8 +430,8 @@
   {
     "name": "REALM0-take-unwritten",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "      if (handle) checkpoint('trade');\n",
-    "new": "",
+    "old": "      if (handle) checkpoint('trade');\n      return handle;",
+    "new": "      return handle;",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -439,8 +439,8 @@
   {
     "name": "REALM0-restore-unwritten",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "    restore(/** @type {any} */ handle) { pack.restore(handle); checkpoint('trade'); },",
-    "new": "    restore(/** @type {any} */ handle) { pack.restore(handle); },",
+    "old": "      pack.restore(handle);\n      checkpoint('trade');\n    },",
+    "new": "      pack.restore(handle);\n    },",
     "tests": [
       "test/systems/realm0.test.js"
     ]
@@ -448,8 +448,8 @@
   {
     "name": "REALM0-give-unwritten",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "    give(/** @type {any} */ received, /** @type {number} */ gold) { pack.give(received, gold); checkpoint('trade'); },",
-    "new": "    give(/** @type {any} */ received, /** @type {number} */ gold) { pack.give(received, gold); },",
+    "old": "      pack.give(received, gold);\n      checkpoint('trade');\n    },",
+    "new": "      pack.give(received, gold);\n    },",
     "tests": [
       "test/systems/realm0.test.js"
     ]

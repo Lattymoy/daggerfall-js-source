@@ -11,8 +11,8 @@
   {
     "name": "PERF-ON4-the-online-lane-needle-moved",
     "file": "src/systems/online/onlineLane.js",
-    "old": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['shot', 'fly',",
-    "new": "export const ONLINE_REFUSED_FLAGS = Object.freeze(['fly', 'shot',",
+    "old": "  'shot',\n  'fly',",
+    "new": "  'fly',\n  'shot',",
     "tests": [
       "test/tooling/perfon4_probes.test.js"
     ]

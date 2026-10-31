@@ -20,8 +20,8 @@
   {
     "name": "PERFURL-online-door-parses-again",
     "file": "src/systems/online/onlineLane.js",
-    "old": "=> pageHas('online', search);",
-    "new": "=> new URLSearchParams(search).has('online');",
+    "old": "export const isOnlinePage = (search = globalThis.location?.search ?? '') => pageHas('online', search); // PERF-URL: parsed once a search (systems/pageQuery.js)",
+    "new": "export const isOnlinePage = (search = globalThis.location?.search ?? '') => new URLSearchParams(search).has('online'); // PERF-URL: parsed once a search (systems/pageQuery.js)",
     "tests": [
       "test/systems/perfurl_doors.test.js"
     ]

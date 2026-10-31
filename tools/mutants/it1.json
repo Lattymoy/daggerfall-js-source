@@ -228,8 +228,8 @@
   {
     "name": "IT1-23-online-mod-the-players",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'immersive-travel': Object.freeze({\n    Enabled: true,\n",
-    "new": "  'immersive-travel': Object.freeze({\n",
+    "old": "    Enabled: true,\n    'General.DisableNormalTravel': false,",
+    "new": "    'General.DisableNormalTravel': false,",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/modsonline.test.js"
@@ -250,8 +250,8 @@
   {
     "name": "IT1-25-online-fares-the-players",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'immersive-travel': Object.freeze(['General.ClearerMapDots',",
-    "new": "  'immersive-travel-x': Object.freeze(['General.ClearerMapDots',",
+    "old": "  'immersive-travel': Object.freeze([",
+    "new": "  'immersive-travel-x': Object.freeze([",
     "tests": [
       "test/systems/guild/it1_immersivetravel.test.js",
       "test/systems/realm0.test.js"

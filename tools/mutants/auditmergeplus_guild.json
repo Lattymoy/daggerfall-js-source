@@ -2,8 +2,8 @@
   {
     "name": "A1-a-second-press-claims-again",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  if (out.has(key)) return { ok: false, error: HOME_BUY_BUSY };\n",
-    "new": "",
+    "old": "  if (out.has(key)) return { ok: false, error: HOME_BUY_BUSY };\n  out.add(key);",
+    "new": "  out.add(key);",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "A1-the-hold-never-let-go",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  } finally {\n    out.delete(key);\n  }",
-    "new": "  } finally {\n  }",
+    "old": "    out.delete(key);\n  }",
+    "new": "  }",
     "tests": [
       "test/net/auditmergeplus_guild.test.js"
     ]

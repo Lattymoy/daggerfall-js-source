@@ -11,8 +11,8 @@
   {
     "name": "SEACAP-the-room-forces-128",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'General.MaxLiveEnemies': 32,",
-    "new": "'General.MaxLiveEnemies': 128,",
+    "old": "    'General.MaxLiveEnemies': 32, // SEA-CAP: the port's default (modSettings.js), the room's too",
+    "new": "    'General.MaxLiveEnemies': 128, // SEA-CAP: the port's default (modSettings.js), the room's too",
     "tests": [
       "test/systems/seacap.test.js",
       "test/systems/modsonline.test.js"

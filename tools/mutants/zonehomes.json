@@ -12,7 +12,7 @@
     "name": "ZH-an-isle-town-refused",
     "file": "src/systems/online/onlineHomes.js",
     "old": "  homeCandidate(bd) && bd.hasInterior !== false && !(isActiveQuestBuilding?.(bd) ?? false);",
-    "new": "  homeCandidate(bd) && bd.hasInterior !== false && !(((bd.townMapId ?? 0) >>> 20) === 0xe7) && !(isActiveQuestBuilding?.(bd) ?? false);",
+    "new": "  homeCandidate(bd) &&\n  bd.hasInterior !== false &&\n  !((bd.townMapId ?? 0) >>> 20 === 0xe7) &&\n  !(isActiveQuestBuilding?.(bd) ?? false);",
     "tests": [
       "test/systems/wild/zonehomes.test.js"
     ]

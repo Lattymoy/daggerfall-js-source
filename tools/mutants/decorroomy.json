@@ -193,8 +193,8 @@
   {
     "name": "DECORROOMY-registry-drops",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "...(ground ? { ground: ground[0], townBlocks: ground[1] } : {})",
-    "new": "...{}",
+    "old": "      ...(ground ? { ground: ground[0], townBlocks: ground[1] } : {}),",
+    "new": "      ...{},",
     "tests": [
       "test/systems/decor/decorroomy.test.js"
     ]

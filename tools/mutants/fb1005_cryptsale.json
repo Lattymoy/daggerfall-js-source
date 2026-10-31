@@ -52,8 +52,8 @@
   {
     "name": "CRYPTSALE-candidate-gated",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
-    "new": "  if (bd?.hasInterior === false) return false;\n  return t === BUILDING_TYPES.HouseForSale || isResidence(t) || t === BUILDING_TYPES.House5 || t === BUILDING_TYPES.House6;",
+    "old": "  return (",
+    "new": "  if (bd?.hasInterior === false) return false;\n  return (",
     "tests": [
       "test/systems/talk/fb1005_cryptsale.test.js"
     ],

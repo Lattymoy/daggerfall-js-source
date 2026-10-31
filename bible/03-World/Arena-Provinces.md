@@ -2649,7 +2649,7 @@ issue. They have no logical placements"*, and *"No band aids or half assed work"
   (`imperialYards.js:"const FX = TX * TILE_CELLS, FZ = TZ * TILE_CELLS + TILE_CELLS;"`). Every slice hands the yards'
   law its share (`merchantYards/townYards.js:"export function townYardsOf"`, from `scenes/world.js`
   townPlacesFor) and the law places none by itself on any slice.
-- EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName = (name, hasVerbs, type = null) =>"`):
+- EVERY HOUSE DOOR A "RESIDENCE" (`online/onlineHomes.js:"export const homeDoorName"`):
   a House1 to House6 with no name of its own is named as DFU discovers it - DFU's own `residence` text, no new string -
   whatever its verbs; a quest's home, a player's home and a guild's hall keep theirs. A building of no house type with no
   name (a ship's deck) says the place it stands in (`worldTooltips.js:": displayName ||"` - the mod

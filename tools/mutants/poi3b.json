@@ -92,8 +92,8 @@
   {
     "name": "POI3B-refused-online-no-more",
     "file": "src/systems/online/onlineLane.js",
-    "old": "'wseed', 'season', 'editor']);",
-    "new": "'wseed', 'season']);",
+    "old": "  'editor',\n]); // POI-3: the POI editor's free eye and its map jump are powers too - a builder edits offline",
+    "new": "]); // POI-3: the POI editor's free eye and its map jump are powers too - a builder edits offline",
     "tests": [
       "test/poi/poi3b_panel.test.js"
     ]

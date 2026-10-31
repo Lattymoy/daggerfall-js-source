@@ -65,7 +65,7 @@
   {
     "name": "HOME-PLAQUE-the-word-dropped",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "export const homeDoorName = (name, hasVerbs, type = null) => name || (hasVerbs || isHouseType(type) ? localizedText('residence', 'Residence') : '');",
+    "old": "export const homeDoorName = (name, hasVerbs, type = null) =>\n  name || (hasVerbs || isHouseType(type) ? localizedText('residence', 'Residence') : '');",
     "new": "export const homeDoorName = (name, hasVerbs, type = null) => name || (hasVerbs || isHouseType(type) ? '' : '');",
     "note": "Re-aimed by content (IC-PROPS): the word is DFU's localized residence now, for a house by its type as well as for verbs; the mutant still drops it.",
     "tests": [

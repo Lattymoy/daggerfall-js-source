@@ -129,8 +129,8 @@
   {
     "name": "PARTY-LOOT-room-scope-never-raised",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  if (_roomRoll > 0) return true;   // PARTY-LOOT: while a room's base rolls, every mod is the room's whole (asTheRoom, below)\n",
-    "new": "",
+    "old": "  if (_roomRoll > 0) return true; // PARTY-LOOT: while a room's base rolls, every mod is the room's whole (asTheRoom, below)\n  const whole = Object.hasOwn(ONLINE_WHOLE_MODS, vendor) ? ONLINE_WHOLE_MODS[vendor] : null;",
+    "new": "  const whole = Object.hasOwn(ONLINE_WHOLE_MODS, vendor) ? ONLINE_WHOLE_MODS[vendor] : null;",
     "tests": [
       "test/systems/partyloot.test.js"
     ]

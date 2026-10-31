@@ -200,8 +200,8 @@
   {
     "name": "CSA-A-lane-forced",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'come-sail-away',         // CSA-A:",
-    "new": "  // 'come-sail-away',         // CSA-A:",
+    "old": "  'come-sail-away', // CSA-A: a boat is a possession in my save, placed and sailed by me - HCC's wagon's shape: whose boat stands where is the player's own, and a peer only SEES me move (my pose); its wind is my machine's own roll (ComeSailAway.UpdateWind, UnityEngine.Random), as it is each DFU player's",
+    "new": "  // 'come-sail-away',         // CSA-A: a boat is a possession in my save, placed and sailed by me - HCC's wagon's shape: whose boat stands where is the player's own, and a peer only SEES me move (my pose); its wind is my machine's own roll (ComeSailAway.UpdateWind, UnityEngine.Random), as it is each DFU player's",
     "tests": [
       "test/systems/csa_registration.test.js"
     ]

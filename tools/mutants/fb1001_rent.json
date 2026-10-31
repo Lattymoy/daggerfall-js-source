@@ -255,7 +255,7 @@
   {
     "name": "HOMES-FORCE-answered-by-the-flight",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "    if (flying) return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
+    "old": "    if (flying)\n      return !force || (forcedFlight.has(id) && askedAt.get(id) === writesTo(id)) ? flying : afterFlight(id, flying);",
     "new": "    if (flying) return flying;",
     "tests": [
       "test/net/fb1001_look.test.js",

@@ -344,8 +344,8 @@
   {
     "name": "RAID2-lane-the-players-own",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  'world-events-raiding-parties': Object.freeze({ Enabled: true }),\n",
-    "new": "",
+    "old": "  'world-events-raiding-parties': Object.freeze({ Enabled: true }),\n  // TRAVEL-ONLINE (2026-10-03, Mac: \"Remove instant travel online\"; and TO-ONLINE's own words, 2026-09-19: \"travel",
+    "new": "  // TRAVEL-ONLINE (2026-10-03, Mac: \"Remove instant travel online\"; and TO-ONLINE's own words, 2026-09-19: \"travel",
     "tests": [
       "test/systems/raid2_raidsOnline.test.js",
       "test/systems/modsonline.test.js"

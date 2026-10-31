@@ -38,8 +38,8 @@
   {
     "name": "MARKET-AUDIT2-claim-repeat-refund",
     "file": "src/systems/online/onlineHomes.js",
-    "old": "        apply: (/** @type {any} */ res) => { if (res?.repeat) paid.back(); },",
-    "new": "        apply: (/** @type {any} */ res) => { if (res?.repeat) refund?.(price); },",
+    "old": "          if (res?.repeat) paid.back();",
+    "new": "          if (res?.repeat) refund?.(price);",
     "tests": [
       "test/systems/marketaudit2.test.js"
     ]

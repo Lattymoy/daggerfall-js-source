@@ -830,8 +830,8 @@
   {
     "name": "WORLD-HOVER-online-forces-the-readout-on",
     "file": "src/systems/online/onlineLane.js",
-    "old": "  // AUDIT-WH R8: a readout is the player's - it stands nothing, rolls\n  // nothing, writes nothing and is not on the wire.\n  'world-tooltips',\n",
-    "new": "",
+    "old": "  // AUDIT-WH R8: a readout is the player's - it stands nothing, rolls\n  // nothing, writes nothing and is not on the wire.\n  'world-tooltips',\n  // MODS-ONLINE (2026-09-22): what draws on your own screen and nowhere else.",
+    "new": "  // MODS-ONLINE (2026-09-22): what draws on your own screen and nowhere else.",
     "tests": [
       "test/systems/onlinelane.test.js",
       "test/systems/worldhover.test.js",

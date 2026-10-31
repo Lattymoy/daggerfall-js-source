@@ -21,8 +21,8 @@
   {
     "name": "AUDIT-RPT1026-G2-the-rooms-rule-not-forced",
     "file": "src/systems/online/onlineLane.js",
-    "old": "Controls: Object.freeze({ AllowMagicRepairs: 'True' }),",
-    "new": "Controls: Object.freeze({}),",
+    "old": "  Controls: Object.freeze({ AllowMagicRepairs: 'True' }),",
+    "new": "  Controls: Object.freeze({}),",
     "tests": [
       "test/systems/audit_rpt1026_items_kept.test.js"
     ]

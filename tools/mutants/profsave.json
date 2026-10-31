@@ -2,8 +2,8 @@
   {
     "name": "PROF-SAVE-a-checkpoint-a-change",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "  const ask = () => { if (!queued) { queued = true; schedule(run); } };",
-    "new": "  const ask = () => { queued = true; schedule(run); };",
+    "old": "    if (!queued) {\n      queued = true;\n      schedule(run);\n    }",
+    "new": "    queued = true;\n    schedule(run);",
     "tests": [
       "test/systems/online/profsave.test.js"
     ]
@@ -11,8 +11,8 @@
   {
     "name": "PROF-SAVE-saved-inside-the-act",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "    changed() { due = true; ask(); },",
-    "new": "    changed() { due = true; if (save) { due = false; save(); } ask(); },",
+    "old": "      ask();",
+    "new": "      if (save) {\n        due = false;\n        save();\n      }\n      ask();",
     "tests": [
       "test/systems/online/profsave.test.js"
     ]
@@ -20,8 +20,8 @@
   {
     "name": "PROF-SAVE-the-early-change-lost",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "    ready(/** @type {() => unknown} */ fn) { save = fn; if (due) ask(); },",
-    "new": "    ready(/** @type {() => unknown} */ fn) { save = fn; },",
+    "old": "      if (due) ask();\n    },",
+    "new": "    },",
     "tests": [
       "test/systems/online/profsave.test.js"
     ]
@@ -29,7 +29,7 @@
   {
     "name": "PROF-SAVE-the-early-change-dropped",
     "file": "src/systems/online/onlineCheckpoint.js",
-    "old": "    if (!save) return;   // no checkpoint yet: the change waits for `ready`\n    due = false;",
+    "old": "    if (!save) return; // no checkpoint yet: the change waits for `ready`\n    due = false;",
     "new": "    due = false;\n    if (!save) return;",
     "tests": [
       "test/systems/online/profsave.test.js"
