@@ -1442,11 +1442,7 @@
 !/src/tools/delveLabPage.js
 !/src/tools/depthCopyCheck.js
 !/src/tools/enhanced/
-/src/tools/enhanced/*
-!/src/tools/enhanced/enhancedChargen.js
-!/src/tools/enhanced/enhancedMenu.js
-!/src/tools/enhanced/enhancedUI.js
-!/src/tools/enhanced/enhancedVisuals.js
+/src/tools/enhanced/*/
 !/src/tools/firmamentLab.js
 !/src/tools/growthLab.js
 !/src/tools/gunLab.js
