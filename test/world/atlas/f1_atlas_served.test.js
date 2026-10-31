@@ -20,6 +20,7 @@ test('F1 with ARENA2, the served world: the Bay\'s 15,251 and the 909 listed pas
   try { got = await loadWorldAtlas(/** @type {string} */ (ARENA2), { served: true }); } finally { console.log = log; }
   const { atlas, filled, places, tamriel } = got;
   assert.deepEqual(filled.unlocated, []);
+  assert.equal(filled.planned.length, 9, 'RMB-CONTRACTS: the settlements stand by their plans, one a province past the Bay - listed, never located');
   const c = atlas.counts();
   assert.deepEqual([c.places, c.dungeons, c.regions], [16160, 4239, 54]);
   assert.deepEqual(atlas.problems(), [], 'every block the served world names resolves, past the Bay too');

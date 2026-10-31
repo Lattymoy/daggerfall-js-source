@@ -142,5 +142,15 @@
     "tests": [
       "test/world/settlement/rmbc4_stand.test.js"
     ]
+  },
+  {
+    "name": "RMBC5-atlas-asks-settlement",
+    "file": "src/world/atlas/atlas.js",
+    "old": "    if (p.source === SETTLEMENTS_SOURCE) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/world/atlas/f1_atlas.test.js"
+    ],
+    "why": "a settlement asked of locate and bundled as a location it does not have"
   }
 ]

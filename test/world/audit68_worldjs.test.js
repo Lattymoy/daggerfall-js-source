@@ -150,7 +150,7 @@ test('AUDIT 68 S22-door-repeated-block-identity: the second instance of a shared
   }));
   // the host's own three closures, lifted: shiftedDoor, doorTargets, buildingDataForDoor
   const shifted = lift(WORLD, '  const shiftedDoor = (entry) => {', '\n  };');
-  const targets = lift(WORLD, '    doorTargets: () => buildingDoors.map((e) => ({', '\n    })),');
+  const targets = lift(WORLD, '    doorTargets: () => [...buildingDoors.map((e) => ({', '\n    })), ...(settlements?.doorTargets() ?? [])],');   // PIN MOVED (RMB-CONTRACTS RMBC4): and the settlements' doors (none here)
   const resolve = lift(WORLD, '    buildingDataForDoor: (hit) => {', '\n    },');
   // ARENA1: the door's location and exit group are arenaDoorTarget's (the pixel's town, or the arena's undercroft) - lifted too
   const arenaTarget = lift(WORLD, '  function arenaDoorTarget(e) {', '\n  }');
@@ -162,11 +162,11 @@ test('AUDIT 68 S22-door-repeated-block-identity: the second instance of a shared
   const { townBookOf } = await import('../../src/systems/discovery.js');
   const askedTown = [];
   const doorTownOf = (place, data) => { askedTown.push([place, data.buildingKey]); return { name: '', townBook: townBookOf(place), townName: place?.name ?? '' }; };
-  const host = new Function('buildingDoors', 'state', 'locationIndex', 'built', 'setLastLocationKeyTo', 'buildingDataForDoor', 'townTalk', 'isUndercroftDoor', 'DOOR_TYPE', 'standsArena', 'undercroftLocation', '_undercrofts', 'homeTownBlocks', 'townBookOf',
+  const host = new Function('buildingDoors', 'state', 'locationIndex', 'built', 'setLastLocationKeyTo', 'buildingDataForDoor', 'townTalk', 'isUndercroftDoor', 'DOOR_TYPE', 'standsArena', 'undercroftLocation', '_undercrofts', 'homeTownBlocks', 'townBookOf', 'settlements',
     `${shifted}\n${arenaTarget}\nreturn ({\n${targets}\n${resolve}\n});`)(
     buildingDoors, { pixelTranslation: () => [500, 0, -300] }, new Map([['4,4', dfLoc]]),
     new Map([['4,4', { locBlocks: loc.blocks, locOrigin }]]), () => {}, talk.buildingDataForDoor, { directory: [], doorTownOf },
-    () => false, { DUNGEON_ENTRANCE: 2 }, () => false, () => null, new WeakMap(), homeTownBlocks, townBookOf);
+    () => false, { DUNGEON_ENTRANCE: 2 }, () => false, () => null, new WeakMap(), homeTownBlocks, townBookOf, null);
   const [first, second] = host.doorTargets();
   assert.notEqual(second.door.matrix[12], at(RMB_SIDE + 10)[12], 'a door hit is world-frame');
   assert.equal(host.buildingDataForDoor(first).buildingKey, talk.makeBuildingKey(0, 0, 0));

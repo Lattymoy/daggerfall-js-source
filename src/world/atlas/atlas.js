@@ -7,6 +7,8 @@
 // Identity is the registry's (world/worldWide/worldPlaces.js), so the atlas answers for every province. Pure: plain
 // records in, answers out. Not a DFU member (DFU has MapsFile and BlocksFile, no join). Ledger A (FOUNDATION).
 
+import { SETTLEMENTS_SOURCE } from '../settlement/settlementPlaces.js'; // RMB-CONTRACTS: the settlements' list
+
 export const ATLAS_VERSION = 1;   // the surface's version: raised when a part's shape changes, so a consumer can check it
 
 /** The closed set of part kinds. A bundle is a place, its exterior, its dungeon, its buildings and its doors; the
@@ -165,20 +167,26 @@ export function createAtlas({ resolveBlock = (n) => n } = {}) {
 
 /**
  * The places of a registry into an atlas: each listed place with the location `locate` answers for it. A place no
- * location answers is counted, not bundled.
+ * location answers is counted, not bundled. RMB-CONTRACTS: a settlement stands by its plan and has no location, so it
+ * is listed as `planned`, never asked.
  * @param {Atlas} atlas @param {Iterable<WorldPlace>} places @param {(place: WorldPlace) => any} locate
- * @returns {{ added: number, unlocated: number[] }}
+ * @returns {{ added: number, unlocated: number[], planned: number[] }}
  */
 export function fillAtlas(atlas, places, locate) {
   let added = 0;
   /** @type {number[]} */ const unlocated = [];
+  /** @type {number[]} */ const planned = [];
   for (const p of places) {
+    if (p.source === SETTLEMENTS_SOURCE) {
+      planned.push(p.mapId);
+      continue;
+    }
     const loc = locate(p);
     if (!loc) { unlocated.push(p.mapId); continue; }
     atlas.add(p, loc);
     added++;
   }
-  return { added, unlocated };
+  return { added, unlocated, planned };
 }
 
 /**

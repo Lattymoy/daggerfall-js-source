@@ -18,6 +18,7 @@ test('F1 with ARENA2, the town packs on: the same 16,160 places, every block the
   try { got = await loadWorldAtlas(/** @type {string} */ (ARENA2), { packs: true }); } finally { console.log = log; }
   const { atlas, filled } = got;
   assert.deepEqual(filled.unlocated, []);
+  assert.equal(filled.planned.length, 9, 'RMB-CONTRACTS: the settlements stand by their plans, one a province past the Bay - listed, never located');
   assert.deepEqual(atlas.problems(), [], 'every block a pack\'s town names is served');
   const c = atlas.counts();
   assert.deepEqual([c.places, c.exteriorSlots, c.doors], [16160, 100192, 195762]);

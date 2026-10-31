@@ -24,6 +24,7 @@ import { roomKeyFor } from '../../src/net/online.js';
 import { discoverLocation, hasDiscoveredLocationId, restoreDiscovery, snapshotDiscovery, discoveryKeyOf } from '../../src/systems/discovery.js';
 import { hasDock, nearDock, DOCK_PIXEL_IDS } from '../../src/systems/immersiveTravel.js';
 import { hostText } from '../hostText.mjs';
+import { settlementOnPixel } from '../../src/world/settlement/settlementPlaces.js';
 
 const rd = (p) => readFileSync(new URL(`../../${p}`, import.meta.url), 'utf8');
 
@@ -114,7 +115,8 @@ function stand({ places = new Set(), online = true } = {}) {
   const src = rd('src/scenes/spawnStandHost.js');
   const lift = (head, close) => { const i = src.indexOf(head); assert.ok(i > 0, head); return src.slice(i, src.indexOf(close, i) + close.length); };
   const d = { index: new Map(), ledger: createSpawnLedger(), now: 0, inside: null, gen: 0, roads: { roads: new Uint8Array(1000 * 500), tracks: new Uint8Array(1000 * 500) } };
-  const make = new Function('d', 'places', 'online', 'cloneAt', 'pathFreePixel', 'spawnsDungeon', 'CLIMATES', `
+  // PIN MOVED (RMB-CONTRACTS RMBC5): the spawn asks a settlement's pixel first - the real one, handed in
+  const make = new Function('d', 'places', 'online', 'cloneAt', 'pathFreePixel', 'spawnsDungeon', 'CLIMATES', 'settlementOnPixel', `
     const params = { has: (k) => k === 'online' && online }, _spawnSalt = 1, maps = { getClimateIndex: () => 231 }, _spawnGround = () => true;
     const terrainGen = { roads: () => d.roads }, _spawnUnroaded = new Set(), _spawnLedger = d.ledger, _insideSpawn = (k) => k === d.inside, locationIndex = d.index;
     const cyrodiilMask = () => null, wildInside = () => false, zoneHalls = { standOf: () => null, standIn: () => null };
@@ -128,7 +130,7 @@ function stand({ places = new Set(), online = true } = {}) {
     ${lift('  function _locationToBuild(px, py) {', '\n  }\n')}
     ${lift('  function spawnPastBayAt(px, py) {', '\n  }\n')}
     return { _locationToBuild, spawnedDungeonAt };`);
-  return { d, ...make(d, places, online, cloneAt, pathFreePixel, spawnsDungeon, CLIMATES) };
+  return { d, ...make(d, places, online, cloneAt, pathFreePixel, spawnsDungeon, CLIMATES, settlementOnPixel) };
 }
 
 test('SPAWN-WORLD the stand past the Bay (scenes/spawnStandHost.js, run): online the spawner stands last, after every place; kept in the index; its clocks the Bay\'s (gone past its time, never while the player is in it); a road landing on a provisional one takes it back - the index and its clocks; offline none (mutants: the spawner\'s tail, the clocks past the Bay, the roads\' take-back, the place gate)', () => {
