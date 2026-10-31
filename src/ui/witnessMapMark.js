@@ -1,6 +1,6 @@
 // @ts-check
 // WITNESS-MAP (2026-10-31, Discord #feature-feedback, Sammy: "Display on the world map 'witnessed areas' for stuff like
-// ores and pearls."; bible/06-Systems/Professions-Arc.md section 61): THE HELD MAP'S WITNESSED GROUND. A pixel three
+// ores and pearls."): THE HELD MAP'S WITNESSED GROUND. A pixel three
 // accounts have vouched for (net/nodeLaw.js witnessedFact) stands the veins past UNCONFIRMED_VEIN_TIER, its region's own
 // ore, the gems, the heartwood and the sea's pearls. The map washes each such pixel in view in copper; ORE-MAP's card
 // still says what one holds. AUDIT FB1031: the ground is read in the day's tiles (net/witnessTileLaw.js, the book's
@@ -10,7 +10,7 @@ import { WITNESS_TILE, tileRange } from '../net/witnessTileLaw.js';
 
 /** The wash over a witnessed pixel - copper, the ore's own colour, apart from every ring's ink and the parchment. */
 export const WITNESS_TINT_CSS = 'rgba(184, 98, 36, 0.42)';
-/** AUDIT FB1031 W2: the same wash as one texel of the kept bitmap (its alpha of 255). */
+/** The same wash as one texel of the kept bitmap (its alpha of 255). */
 export const WITNESS_TINT_RGBA = Object.freeze([184, 98, 36, Math.round(0.42 * 255)]);
 /** The legend's swatch: the same copper, whole. */
 export const WITNESS_SWATCH_CSS = '#b86224';
@@ -20,12 +20,12 @@ export const witnessLegendText = () => t('prof.witness.legend', WITNESS_LEGEND_T
 export const witnessKeyText = () => t('prof.witness.key', 'Ground');
 export const witnessTipText = (on) => (on ? t('prof.witness.hide', 'Hide witnessed ground') : t('prof.witness.show', 'Show witnessed ground, where every vein, gem and pearl can appear'));
 export const witnessFarText = () => t('prof.witness.far', 'Witnessed ground - zoom in to see');
-/** AUDIT FB1031 W2: the tiles past each side of the view a read hands on - its range held while the view stays inside
+/** The tiles past each side of the view a read hands on - its range held while the view stays inside
  *  it, so a pan builds the wash's bitmap again only past them, and a pan between two polls stays washed. */
 export const WITNESS_WASH_MARGIN = 2;
 
 /**
- * AUDIT FB1031 W1: EVERY TILE A VIEW TOUCHES, nearest its middle first - the box in world pixels, a province's or the
+ * EVERY TILE A VIEW TOUCHES, nearest its middle first - the box in world pixels, a province's or the
  * sea's past the Bay as the Bay's. The regions' sample asked six of up to 35 regions in view.
  * @param {{ x0: number, y0: number, x1: number, y1: number }} box
  */
@@ -58,7 +58,7 @@ export function witnessMapReader(book) {
     open: () => book?.state?.open === true,
     read(box) {
       if (book?.state?.open !== true || !box) return NONE;
-      // AUDIT FB1031 II T2: the view first, then the ring the wash holds past it, so an ask fills ahead of a pan
+      // The view first, then the ring the wash holds past it, so an ask fills ahead of a pan
       const v = tileRange(box), m = WITNESS_WASH_MARGIN * WITNESS_TILE;
       const inView = (t) => t[0] >= v.tx0 && t[0] <= v.tx1 && t[1] >= v.ty0 && t[1] <= v.ty1;
       const ring = tilesInView({ x0: box.x0 - m, y0: box.y0 - m, x1: box.x1 + m, y1: box.y1 + m }).filter((t) => !inView(t));
@@ -81,7 +81,7 @@ export function witnessMapReader(book) {
 }
 
 /**
- * AUDIT FB1031 W2: THE WASH KEPT - a read's pixels as texels of `canvas`, one a map pixel over the read's box, painted
+ * THE WASH KEPT - a read's pixels as texels of `canvas`, one a map pixel over the read's box, painted
  * again only when the read's key moves (the overlay painted every pixel's square each pulse and pan frame: 6,000 pixels
  * some 15 ms, 49,000 some 90). Answers the layer, or null with no 2D context or image data (the caller paints squares).
  * @param {any} prev @param {WitnessRead|null} read @param {any} canvas
@@ -110,7 +110,7 @@ export function syncWashLayer(prev, read, canvas) {
   return { canvas, img, key: read.key, x0: read.x0, y0: read.y0, w, h };
 }
 
-/** AUDIT FB1031 W2: the kept wash on the paper - one drawImage, each texel a square of the view's scale (smoothing off,
+/** The kept wash on the paper - one drawImage, each texel a square of the view's scale (smoothing off,
  *  so a pixel's edge stays a pixel's). `ctx` in paper pixels. */
 export function blitWashLayer(ctx, layer, view) {
   const s = view.scale;

@@ -655,7 +655,7 @@ import { brewItems, brewedText } from '../systems/alchemyItems.js';   // PROF12:
 import { COOK_FIRE } from '../net/professionLaw.js';   // PROF9: the fire Cooking is done at - any lit one, no fee
 import { SURVEYOR } from '../net/professionLaw.js';   // MINE-PERKS: Mining 100's Surveyor, whose own word witnesses the ground
 import { lodeMapMarks } from '../ui/lodeMapMark.js';   // MINE-PERKS: a Motherlode Sense's day's Motherlodes, on both maps and the Overworld
-import { witnessMapReader } from '../ui/witnessMapMark.js';   // WITNESS-MAP: the witnessed ground of the regions in view, on the held map
+import { witnessMapReader } from '../ui/witnessMapMark.js';   // the witnessed ground of the regions in view, on the held map
 import { seatEventBoard, eventNotice } from '../systems/eventNotices.js';   // EVENTS1: the event board's source, seated where it is made, and the one door an event's line goes through (never the chat)
 import { EVENT_SOON_MS } from '../systems/eventBoard.js';   // AUDIT EVENTS1 A4: the board's horizon, the raids' look ahead
 import { localWhenText, gateEventId as gateLineId } from '../systems/eventTimers.js';   // AUDIT MINE-PERKS: a Motherlode's hour as the timers say a moment - this machine's clock, its weekday where it is not today
@@ -15663,7 +15663,7 @@ export async function bootWorld(canvas, renderer, params, status) { handHeroGend
       // MINE-PERKS (Professions-Arc 43): a Motherlode Sense's day's Motherlodes - each on its pixel from the day's start,
       // its ore and its hour (ui/lodeMapMark.js); none without the Sense, nor with the professions shut
       lodes: () => lodeMapMarksNow(),
-      witnessed: profBook ? witnessMapReader(profBook) : null,   // WITNESS-MAP (ui/witnessMapMark.js): the witnessed tiles in view - online, the professions open (AUDIT FB1031 W1: no region)
+      witnessed: profBook ? witnessMapReader(profBook) : null,   // the witnessed tiles in view, online with the professions open; tiles, never a region at a time
       pois: () => poiMapMarks(poiHost?.marks() ?? []),   // POI-2: the approved POIs that ask to be marked
       // HOME-VENDOR: the trader's waypoint - its town's pixel, the house's owner and the town, on both maps (ui/vendor/vendorMapMark.js)
       vendor: () => { const wp = vendorWaypoint(); const t = wp ? _townOfMapId.get(wp.map) : null; return t ? { px: t.px, py: t.py, label: `Trader: ${wp.owner || 'a'}'s house`, town: t.name } : null; },
@@ -29324,7 +29324,7 @@ const _pixelOrder = [];   // NEAR-FIRST: the frame's pixel walk, nearest first -
     const minDistance = Math.max(BAND_STAND_MIN_M, dist - PACK_SPACING), maxDistance = Math.max(BAND_STAND_MIN_M, dist) + PACK_SPACING;
     for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {
       const stood = _standCampEncounter({ kind: 'band', mobileTypes: mk.mobileTypes, spacing: PACK_SPACING, alertRadius: PACK_ALERT_RADIUS,
-        minDistance, maxDistance, ...bandStandBearing(yaw + turn, cam.yaw, fieldOfView() * 180 / Math.PI, !!travelView?.active, largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), minDistance, PACK_SPACING, Math.hypot(renderer._camPos[0] - fx[0], renderer._camPos[2] - fx[2])) }, fx);   // AUDIT FB1031 B1: never stood in the view (II K6: its width, the pack's spread; III W1: from the eye drawn, behind the feet)
+        minDistance, maxDistance, ...bandStandBearing(yaw + turn, cam.yaw, fieldOfView() * 180 / Math.PI, !!travelView?.active, largeHudWorldAspect(canvas.clientWidth, canvas.clientHeight), minDistance, PACK_SPACING, Math.hypot(renderer._camPos[0] - fx[0], renderer._camPos[2] - fx[2])) }, fx);   // never stood in the view: the edge widened by the pack's spread and turned out from the eye drawn, behind the feet
       if (!stood) continue;
       // AUDIT-F2: A BAND THAT CAUGHT ME STANDS ON ME - it chased me: each member alerted (never the gate's) and come for me,
       // as a noticed foe comes (exteriorFoes.js noticedPlayer). Stood unaware, the gate held them off me and the keys'

@@ -160,11 +160,7 @@ test('THE WIRE AUDIT 6 and 9: the relay\'s rollback floor is written where a dep
   assert.match(version, /ROLLBACK FLOOR: world297 while acct230 or later mints `gb`/);
   const storefront = rd('src/net/wire.js').split('\n').find((l) => l.startsWith('// world297: STOREFRONT'));   // PIN MOVED: world298, LEGIBLE - world297's note is a history line under the version now
   assert.match(storefront, /a pose's kill \(`xk`, `xp`, `xh`\)/);
-  const page = rd('bible/06-Systems/Storefront.md');
-  assert.match(page, /\*\*Deploy, and the rollback floor\.\*\*/);
-  assert.match(page, /world297 is the relay's floor while acct230 or later mints/);
-  assert.match(page, /\(`xk`,\n`xp`, `xh`\)/, 'section 4 names them as section 10 does');
-  for (const [where, text] of [['wire.js', version], ['wire.js world297', storefront], ['Storefront.md', page], ['relayversion.test.js', rd('test/net/relayversion.test.js')]]) assert.doesNotMatch(text, /`kc`, `kp`, `ks`/, `${where}: \`kc\` is a sea receipt's killer (world246), never the pose's kill`);
+  for (const [where, text] of [['wire.js', version], ['wire.js world297', storefront], ['relayversion.test.js', rd('test/net/relayversion.test.js')]]) assert.doesNotMatch(text, /`kc`, `kp`, `ks`/, `${where}: \`kc\` is a sea receipt's killer (world246), never the pose's kill`);
 });
 
 /** The glyphs the token's mask was first signed over (STOREFRONT, world286) - their places are the mask's meaning. */

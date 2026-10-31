@@ -169,8 +169,8 @@
   {
     "name": "ATACT-D4-dead-blocks",
     "file": "src/ai/foeBlows.js",
-    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // TELL5: a cut feint is no wind-up",
-    "new": "    if (ai === except || b.cut != null) continue; // TELL5: a cut feint is no wind-up",
+    "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue; // A cut feint is no wind-up",
+    "new": "    if (ai === except || b.cut != null) continue; // A cut feint is no wind-up",
     "tests": [
       "test/scenes/audittact.test.js"
     ]

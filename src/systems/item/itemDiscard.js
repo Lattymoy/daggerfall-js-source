@@ -34,7 +34,7 @@ export function discardRefusal(item) {
   if (!countedKind(item)) {
     if (templateByIndex(item.templateIndex)?.bound === true) return 'kept';
     if (item.bound !== true) return 'not';
-    if (dismantleStones(item) > 0 && !isRealmLocked(item)) return 'dismantle';   // AUDIT FB1031 D5: a realm-locked copy is destroyed, never paid for
+    if (dismantleStones(item) > 0 && !isRealmLocked(item)) return 'dismantle';   // A realm-locked copy is destroyed, never paid for
   }
   if (item.questItem) return 'quest';
   if (isEquipped(item)) return 'worn';

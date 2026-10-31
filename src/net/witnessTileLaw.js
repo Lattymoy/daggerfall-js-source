@@ -1,5 +1,5 @@
 // @ts-check
-// AUDIT FB1031 W1 W3 W4 (2026-10-31, WITNESS-MAP's audit; bible/06-Systems/Professions-Arc.md section 61): THE WITNESSED
+// AUDIT FB1031 W1 W3 W4 (2026-10-31, WITNESS-MAP's audit): THE WITNESSED
 // GROUND IN TILES - the shape both ends read. The map asked a region's ground, and a region is no unit of ground: a
 // province is one region (Morrowind's 2.03M pixels), the sea past the Bay is region 0, and every ask scanned the region's
 // witness rows. A TILE is WITNESS_TILE map pixels a side, keyed by the world pixel alone (no region, no Bay bound: the

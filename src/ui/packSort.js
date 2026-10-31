@@ -24,7 +24,7 @@ const rowName = (it) => itemNameParts(it).name || it?.name || '';
 function keyOf(it, at, nameOf) {
   if (!it) return { it, hole: true, quest: false, page: 0, rank: 0, name: '', value: 0, at };
   const value = itemValueOf(it);
-  // AUDIT FB1031 P4: the horses' order is which one is ridden (horseCoats.js activeHorseItem, the first) - they tie
+  // The horses' order is which one is ridden (horseCoats.js activeHorseItem, the first) - they tie
   const horse = isHorseItem(it);
   return {
     it, hole: false, quest: !!it.questItem, at,
@@ -52,7 +52,7 @@ function compareKeys(a, b) {
 export function sortedItems(items, { nameOf = rowName } = {}) {
   const keyed = (items ?? []).map((it, at) => keyOf(it, at, nameOf));
   keyed.sort(compareKeys);
-  // AUDIT FB1031 III I3: each quickslot kind's records dealt back, in their old order, into the places the sort gave them
+  // Each quickslot kind's records dealt back, in their old order, into the places the sort gave them
   const kinds = new Map();
   keyed.forEach((k, i) => { const q = k.hole ? null : quickslotKey(k.it); if (q != null) { if (!kinds.has(q)) kinds.set(q, []); kinds.get(q).push(i); } });
   for (const places of kinds.values()) {

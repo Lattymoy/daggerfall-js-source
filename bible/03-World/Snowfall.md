@@ -1,285 +1,74 @@
-# Snowfall - snow that falls, lies and is walked through (SNOWFALL1, 2026-10-08)
+# Snowfall
 
-**The owner's call (2026-10-08), handing over four archives: "We have
-permission to use and implement everything into the codebase. These should
-be on by default and integrate into our enhanced environments seamlessly."**
-demifiend000's **Snowfall 1.0.5** for Daggerfall Unity (Nexus 1401). Ledger
-row SNOWFALL1; the registry row and the permission line (Mac's word recorded,
-the author's own still to come - `RECORD OPEN`) are `vendor/snowfall/`'s. Its
-siblings from the same message: `07-Rendering/Heat-Haze.md`,
-`07-Rendering/Windfall.md`, `07-Rendering/Sands-Of-The-Alikr.md`.
+A port of demifiend000's **Snowfall 1.0.5** for Daggerfall Unity (Nexus 1401). In winter, outside the desert, real
+snow lies on the ground: it deepens while it snows and melts in clear weather, takes the tracks of the player, foes and
+townsfolk and a body's hollow, keeps them in the save, and fills them back over the hours. The mod's winter ground
+textures dress the winter tile archives. The player meets it outdoors in any snowy province on the enhanced sky.
 
-## The winter ground
+## How it works
 
-The mod's bundle packages 168 winter ground records - TEXTURE.103, .303 and
-.403, Daggerfall's winter tiles under the author's snow - with its snow albedo
-and three surface masks (`snow_surface_masks_<archive>.bytes`, a byte a tile
-corner saying where snow may lie). They ship under `public/art/snowfall/`
-(mip 0 of each texture written losslessly), under Port-Doctrine's SECOND
-EXCEPTION, written and checked by `tools/environmentModsExtract.mjs`. The
-records are a SHIPPED MOD in the texture door, registered beside Vanilla
-Enhanced's by `systems/vanillaEnhanced/vanillaEnhancedPack.js` (`ENVIRONMENT_PACK_MODS`), ON BY
-DEFAULT and a switch of its own on the Replacement packs card. They carry each
-archive's record 0, so they decide the winter archives' ground as a whole -
-and the index names Vanilla Enhanced's Base as an optional dependency, so the
-load order puts them after the Base and their winter ground stands over the
-Base's (Ledger A: the mod's manifest names no dependency).
+- **Winter ground.** The bundle's 168 winter ground records (TEXTURE.103, .303 and .403), snow albedo and surface masks
+  ship under `public/art/snowfall/`, written and checked by `tools/environmentModsExtract.mjs`. They are a bundled mod
+  in the texture door, registered beside Vanilla Enhanced (`src/systems/vanillaEnhanced/vanillaEnhancedPack.js`
+  `ENVIRONMENT_PACK_MODS`), on by default with a switch on the Replacement packs card, loaded after Vanilla Enhanced's
+  Base.
+- **The model.** `src/systems/snowfall.js` is the mod's model whole, read off its assembly (`vendor/snowfall/il/`):
+  settings, snowpack and depth rules, coverage masks, the persistent track field and its save, corpse impressions and
+  the Basic Roads classifier, in the C#'s own single or double precision and dictionary order.
+- **The runtime.** `src/systems/snowfallRuntime.js` is the controller's frame: the local window round the player, the
+  middle ring, the per-tile blanket, the far track mask, the stamps, the refill, the snowpack's clock, the floating
+  origin and the save. `src/render/snowfallGlsl.js` splices the snow into the ground's own fragment program;
+  `src/render/snowfallSurface.js` uploads and draws the tiers.
+- **The host.** `src/scenes/snowfallHost.js` `createSnowfallHost` builds the runtime over the ground both exterior hosts
+  draw (`src/scenes/snowGround.js` in the world host). Interiors and dungeons stand no snow. Indoors it keeps the snowpack and refill and hides the surfaces.
+  It is drawn with the opaque world before the ground under it.
+- **On the ground as drawn.** Every height and normal is the drawn surface's, at the stride it is drawn. The carved sea
+  floor stays bare. A pixel built again rebuilds its blanket and the nearer tiers.
+- **Who walks it.** The player, street foes and the watch, and townsfolk. A body is its corpse marker's ground.
+- **Roads.** On the Bay the classifier reads the Basic Roads mod's network. Past the Bay it reads the land's own roads
+  by the road painter's record of the tiles it wrote (`snowfallNetworkBeyond`). Pixels are keyed by `worldPixelKey`
+  and the context box and metres are clamped to the world's grid (`SNOW_WORLD_METRES`), so tracks, berms and hollows
+  stand in every province.
 
-## The snow that lies (the mod's assembly)
+## Rules
 
-The bundle's `DynamicSnow.dll` is the mod: in winter, outside the desert, real
-snow lies on the ground, deepens while it snows and melts in clear weather,
-takes the player's, the foes' and the townsfolk's tracks and a body's hollow,
-keeps them in the save and fills them back over the hours. Read off the
-assembly (ilspycmd's C# and `vendor/snowfall/il/DynamicSnow.il.txt`) and its
-one shader's DXBC (`vendor/snowfall/shaders/DynamicSnow.glsl`):
+- The four archives the owner handed over are on by default and integrate seamlessly into the enhanced environments
+  (the owner; permission recorded in `vendor/snowfall/`).
+- Built under the enhanced sky only. The mod's `Enabled` switch (on by default) and `?snowfall=off` stand beside it.
+  Off, the surfaces hide and the snowpack keeps its clock.
+- Lit by the ground's own program: sun and shadow map, moon, cloud shadow, lanterns and fog. It casts nothing. It sits
+  over the ground by the mod's 8 mm offset and a polygon offset in the sea's layer stack (`SNOW_LAYER`).
+- The clocks: the snowpack and refill run on the event clock's game time; winter is the sky's season; build budgets
+  are real seconds (`SNOW_FRAME_BUDGET_MS`, 2 ms a frame). Where the build worker is up, the window and ring build
+  there.
+- A teleport's re-anchor carries the tiers and their tracks, so the old place's tracks stay there.
+- Snowless climates: a climate whose winter set Vanilla Enhanced's Snowless Swamps and Jungles decides gets no snow, and
+  a desert tile is always bare (`winterGroundSnowless`).
+- Online the mod is the player's own (`src/systems/online/onlineLane.js`).
 
-SNOWLESS1 (FIELD BUGS 2026-10-09 #1, `01-Overview/bugs/Field-Bugs-2026-10-09.md`) - two departures from the mod. Its
-"outside the desert" asks the climate type alone, so under Vanilla Enhanced's Snowless Swamps and Jungles it laid its
-snow over the add-on's green swamp ground, bare only on the roads its own 403 masks leave (DFU's two mods clash the
-same way). A climate whose winter set the add-on decides is the desert's case now: no tier stands while the player is
-in it, and its tiles are bare from a neighbour (`scenes/snowfallHost.js`, through `systems/dfmodTextures.js`
-winterGroundSnowless). And the mod counts ground with no mask as snowed, so standing in a snowy climate it laid snow
-over a desert pixel next door; a desert's tile is bare now.
+## Daggerfall Unity
 
-| type | what it does |
-|---|---|
-| `DynamicSnowMod` | the mod: its settings (eleven sections, ReadSettings' clamps), the session (BeginSession / CompleteSession round a load), the save record (`DynamicSnowSaveData`), the console's `snow_status` |
-| `DynamicSnowController` | the frame: the environment's eligibility (winter, not the desert, or the override), the snowpack's clock, the refill, the LOCAL WINDOW round the player (a 161 x 161 grid over 88 m - the snow radius and a 12 m guard band - with its 256 x 256 track mask and 161 x 161 static and context masks, recentred every 6 m by progressive budgets), the player's and the NPCs' stamps, the corpses' projection, and the handoff to the ring and the blanket |
-| `SnowpackState`, `SnowDepthRules` | the two depths (Daggerfall's locations', the wild's) and the phase in double; a context's depth (its settlement weight between the two, a road's berm, the authored cap, a path's) |
-| `SnowCoverageData`, `SnowContactRamp` | the three winter archives' surface masks (56 records of 64 x 64 bytes; the road records' distance fields); the static mask's soft contact edge |
-| `PersistentTrackField` | the world's tracks: 0.5 m cells in global metres, 65,536 at most (the oldest written go first), 64 x 64 buckets, the refill; saved as 9 bytes a cell, deflated and base64 (2,097,152 characters at most) |
-| `CorpseImpressions` | a body's hollow, kept at its global place until its loot is gone and it has filled back |
-| `MidDetailSnowRing` | the MIDDLE RING: 257 x 257 over 320 m snapped to 10 m, rebuilt at 20 m, a 641 x 641 track history at 0.5 m; it stands for the window within 32 m of its centre and morphs onto the blanket over its outer band (104-128 m) |
-| `StreamedSnowBlanketPrototype`, `BlanketSurfaceSamples` | the BLANKET: a 65 x 65 mesh and a 128 x 128 static mask a loaded terrain tile, its hole round the nearer tier |
-| `FarTrackMask` | the tracks out to 320 m at 1 m (641 x 641, recentred at 48 m), shading the ring and the blanket |
-| `BasicRoadsBridge`, `BasicRoadsClassifier`, `BasicRoadsTerrain`, `BasicRoadsContextCache` | Basic Roads' network read for a pixel; each painted road tile classified as the network's road or track (not the location's own paving); a track's soft edge, a road's berm |
-| `LocationLoaderBridge` | Location Loader's authored footprints (its cap) |
+The mod is `DynamicSnow.dll`. Departures:
 
-## The port
+- The save's deflate writes one fixed-Huffman block (`src/formats/rawDeflate.js`); either reader reads either stream.
+- Global metres are exact (the stream's own origin), not PlayerGPS's whole units.
+- Location Loader is not in the port, so its authored cap never applies.
+- Far pixels' tiers read the surface at its drawn stride.
+- The travel view draws no snow and hands the controller no player while it is up.
+- A save repacks the track field only when it changed; a clean tier is not swept by the refill.
+- The progressive builds stop for the frame at the port's budget.
+- A body is registered the frame its marker first lies.
+- Past the Bay the snow's roads are the land's own, classified by the painter's record.
 
-| module | what it is |
-|---|---|
-| `systems/snowfall.js` | the model whole: the settings, SnowpackState, SnowDepthRules, SnowCoverageData, SnowContactRamp, PersistentTrackField and its save, the rasterizers, CorpseImpressions, the statics' encodings, the location rectangle and Basic Roads' classifier - single (and, where the mod keeps it, double) precision as the C# runs it; C#'s Dictionary order kept by a slot map, so the save's cells and the evictions fall as the mod's do |
-| `formats/rawDeflate.js` | DeflateStream's raw stream both ways, in step (a save is written in step) |
-| `systems/snowfallRuntime.js` | DynamicSnowController's frame over the port's world: the window, the ring, the blanket, the far mask, the stamps, the refill, the snowpack's clock, the floating origin, the session, the save |
-| `render/snowfallGlsl.js` | the shader: the vertex law, and the fragment's snow spliced into the ground's own fragment program |
-| `render/snowfallSurface.js` | the tiers on the GPU, uploaded as they change, drawn through the renderer's `drawSnow` |
-| `scenes/snowfallHost.js` | the runtime both exterior hosts build over the ground they draw: its tiles, a rebuilt tile replacing the old, the bodies, the save record, `snow_status` |
-| `world/terrain/terrainSurface.js` `surfaceNormalFromSamples`, `gridValueAt` | the drawn ground's normal off a pixel's samples at its stride; a grid's value (WATER-NEXT's bed) on the drawn triangle |
+## Code and tests
 
-PINNED AGAINST THE ASSEMBLY ITSELF: the session's C# reference compiles the
-mod's own sources (SnowpackState, SnowDepthRules, SnowCoverageData,
-SnowContactRamp, PersistentTrackField, the rasterizers, CorpseImpressions'
-rasterizer, the statics, BasicRoadsClassifier and BasicRoadsTerrain) under
-.NET 8 and runs nine scenarios off one LCG; `test/systems/snowfall1_model.test.js`
-runs the same through the port, and every section's trace - float and double
-bits, mask hashes, the save's cells in the dictionary's order - hashes to the
-reference's (`5ce5e363...` the snowpack, `e1e83e50...` Resolve, `b4789563...`
-the coverage, `2d1e2404...` the ramp, `5c9a238d...` the field, `f14bfe09...`
-the rasterizers, `fa48dcc6...` the statics, `e4c9678b...` Basic Roads,
-`65e9db6d...` the ceiling).
+- `src/systems/snowfall.js`, `src/systems/snowfallRuntime.js` - the model and the runtime
+- `src/render/snowfallGlsl.js`, `src/render/snowfallSurface.js` - the shader and the GPU tiers
+- `src/scenes/snowfallHost.js`, `src/scenes/snowGround.js` - the host and the world host's snow ground
+- `test/systems/snowfall1_model.test.js` - the model against traces of the mod's own C# compiled under .NET
+- `test/render/snowfall1_runtime.test.js` - the runtime
+- `test/render/bayleftground_snow.test.js` - the snow past the Bay
+- `test/systems/audit_environs.test.js` - cost and integration
+- `test/scenes/fb1009_travelperf.test.js` - the travel view's hold, the save and refill savings
+- `tools/mutants/snowfall1.json` - the mutants
 
-## Enhanced environments, seamlessly
-
-- **THE ENHANCED OUTDOORS'.** The hosts build the runtime under the enhanced
-  sky only (`sky.enhanced`); the mod's own switch (`Enabled` - the Features
-  row, on by default) and `?snowfall=off` stand beside it, read every frame.
-  Off, the surfaces are hidden and the snowpack keeps its clock.
-- **LIT AS THE GROUND IS.** The mod's surface shader takes Unity's forward
-  light and the terrain's ambient (ApplyTerrainAmbientLighting) and receives
-  shadows; here the snow is the GROUND'S OWN fragment program with its tile
-  decode swapped for the mod's snow (`snowTerrainFs`), on whichever lane is
-  installed - so it takes the sun and its shadow map, the moon, the clouds'
-  shadow, the lanterns, the indirect light and the fog exactly as the ground
-  under it does, and casts nothing (the mod's ShadowCastingMode.Off).
-- **ON THE GROUND AS IT IS DRAWN.** Every height and normal the tiers read is
-  the drawn surface's: a pixel's samples on surfaceHeightAt's triangles at the
-  stride it is drawn at (the far rings' coarser grid too), the grass's own
-  normals where it keeps them, the bed WATER-NEXT carves under a shore, the
-  floor Iliac Puddle No More carves (its sea BARE - no snow on the seabed);
-  the TileMap is the cap's where Deep Waters patched one. A pixel published or
-  built again is DaggerfallTerrain.OnPromoteTerrainData's: its blanket is made
-  again and the nearer tiers over it rebuild.
-- **BASIC ROADS' OWN ROADS.** BasicRoadsBridge reads the Basic Roads MOD, so
-  the classification reads Hazelnut's network or none (the rule World of
-  Daggerfall's loader keeps): the port's generated fallback is not his mod.
-  Past the Bay the land's own roads, by the painter's word (BAY-LEFT-GROUND, below). A
-  tier's context reads the roads of the map pixels its own box touches
-  (SnowContextData.Prepare's scan; AUDIT ENVIRONS S1 - not the player's).
-  The authored ground is the location's blocks' (BlocksFile.CheckName's
-  names, as the ground stamped under it).
-- **WHO WALKS IT.** The player (the fly camera stands the tiers round the eye
-  and stamps nothing), the street's foes and its watch (an EnemyMotor's
-  CharacterController - `BODY_CAPSULE_RADIUS` its radius) and the town's
-  people (MobilePersonNPC: citizens); a body is its corpse marker's ground.
-- **THE CLOCKS.** The snowpack and the refill are a meter of the world's time:
-  the EVENT clock's game seconds (`worldMinutes()`, TIME1's census); winter is
-  the sky's season (`season`, the ground's own); the tiers' budgets and
-  retries are real seconds. A load restores the record at the clock's nought
-  and completes its session on the next frame - the LOADED game's clock (AUDIT
-  ENVIRONS S2: the hosts restore the mods' records before the save's clock).
-  Online the mod is the player's own (`systems/online/onlineLane.js`).
-- **A TELEPORT'S NEW FRAME.** `state.init`'s re-anchor (a load, a fast travel,
-  a respawn) carries the tiers, their tracks and the last stamp by its move
-  (`initOffset`) as a recentre does, so the old place's tracks stay on the old
-  place and the arrival's first stamp is no trench (AUDIT ENVIRONS I2).
-- **WHAT IT COSTS** (AUDIT ENVIRONS P1-P8, `01-Overview/audits/Audit-Environs.md`).
-  The ring's rebuild copies the last build's samples where its points fall on
-  the same place of the same tile over the same roads and settlements, each
-  copy spending the sample budget a sample does (P3); the window's uploads wait
-  for a frame that draws it (P2); the tiers draw in one pass that sets the
-  state they share once (P1); the samplers, the track field's walks, a blanket
-  tile's context and the contact ramp make no garbage and read nothing twice
-  (P4-P7). Every byte the GPU is handed and every draw's state is the one the
-  plain way made - pinned against a twin that never copies, and measured over
-  whole rides.
-
-## THE FOUR HOSTS
-
-`scenes/world.js` and `scenes/exterior.js` build the runtime
-(`createSnowfallHost`) over the ground they draw, tick it on their indoor
-branch (`inside: true` - the surfaces hidden, the snowpack and the refill
-kept) and outdoors (the player, the walkers, the bodies - its uploads before
-the world frame opens, behind the renderer's seam), and draw it with the
-opaque world BEFORE the ground under it (AUDIT ENVIRONS G7: GROUND-LAST's own
-law a layer up - a ground fragment under the snow fails the depth test before
-it shades, the picture the same); the next host a boot builds lets the last
-one's surfaces go (a claimed loop never draws again). The world host tells it
-each pixel published, carries it across the floating origin and a teleport's
-re-anchor, and culls its blanket's tiles to the frame's frustum by their
-bounds (G6: each tile's renderer in the mod is culled by its own). The town host stands its one city in its map pixel's 128 x 128 where
-the streamed world lays it (GetLocationTerrainTileOrigin), bare past the
-town's tiles (it draws no ground there). `scenes/worldModes.js` (the
-interiors) and `scenes/dungeonContext.js` (the dungeons) are FLAGGED, not
-wired: their frames run inside the exterior hosts' indoor branch, which ticks
-the mod indoors, and no snow lies there.
-
-SNOW-TELL (`01-Overview/bugs/Field-Bugs-2026-10-11d.md`): what stands on the ground
-must stand on the snow too. A foe's telegraph is fitted to the bare ground (the
-colliders know no snow) and lay 0.06 m over it, under this surface; the renderer
-keeps the frame's snow height (`render/snowfallGlsl.js` snowSurfaceRise, each
-tier `drawSnow` draws) and the foes' ground pass lies its marks over it.
-
-## Departures (Port-Ledger A, SNOWFALL1)
-
-- **THE SAVE'S BYTES.** The port's deflate writes one fixed-Huffman block;
-  .NET's writer picks its own, so a record packs to different bytes. Either
-  reader reads either stream, and the cells are the mod's, in its order.
-- **GLOBAL METRES ARE THE PORT'S OWN.** The mod reckons a global point off
-  PlayerGPS's whole-unit WorldX/WorldZ and the transforms' difference; the
-  port's are exact (the stream's own origin and compensation).
-- **LOCATION LOADER IS NOT THE PORT'S.** No authored footprint stands, so the
-  loader's cap never applies (World of Daggerfall's sites keep their own
-  ground).
-- **LIT BY THE GROUND'S PROGRAM** (above). It stands over the ground by the
-  mod's own 8 mm surface offset and its pass's own `Offset -0.25, -0.25`
-  (`SNOW_LAYER`, a layer of the sea's stack - over the ground, under the film;
-  AUDIT ENVIRONS G2 withdrew SNOWFALL1's departure, which left the snow at the
-  ground's own height fighting it), its back faces culled as the pass culls
-  them (G5).
-- **THE RIDE OF THE STRIDE.** The far pixels' tiers read the surface drawn at
-  their stride (Unity's Terrain.SampleHeight reads its full heightmap).
-- **THE TRAVEL VIEW** draws no snow - its eye is the traveller's, raised over
-  the land, the tiers the walker's. TV-SNOW (FIELD BUGS 2026-10-09, Shabalako:
-  "after traveling for a while I get low framerates"): and while it is up the
-  host hands the controller no player (`overworld`, scenes/snowfallHost.js -
-  the switch's own law: the tiers stand down, the snowpack and the refill keep
-  the event clock frame by frame) and holds the GPU's share until the view is
-  down. The window, the ring and the blanket were sampled, committed and
-  uploaded round a traveller crossing the land at the journey's x60, for a
-  picture nobody saw. Held to the frame in play's every clock by
-  `test/scenes/fb1009_travelperf.test.js`.
-- **A SAVE PACKS ONCE A CHANGE** (TV-SAVE, the port's own). The track field's
-  record (`PersistentTrackField.writeSaveData`) is packed again only when the
-  field has changed since the last one (`revision`: a cell made or deepened,
-  a refill) and otherwise writes that record's text again, character for
-  character. A full field (65,536 cells - a winter town's walkers fill it in
-  minutes) packed in 80-90 ms on the page's thread, on every save: online, the
-  checkpoint every two minutes.
-- **A CLEAN TIER IS NOT REFILLED** (TV-REFILL, the port's own). ProcessRefill
-  sweeps the window's mask (and marks it for a whole upload) and the far mask
-  twice a second whenever any tier holds a track; here the window's is swept
-  only under its own HasDeformation (every write of its red raises it) and the
-  far mask's only under a flag of the port's (`far.deformed`: raised by every
-  write of its red, kept through a scroll, lowered by a clear or a sweep that
-  finds nothing). The pixels are the mod's either way; a track the field keeps
-  behind a far walker cost a 256 x 256 and a 641 x 641 sweep and a full upload
-  twice a second.
-- **THE PORT'S PACE.** The progressive builds - the window's recentre, the
-  ring's, a blanket tile's - stop for the frame once the frame's snow has
-  spent `SNOW_FRAME_BUDGET_MS` (2), under the mod's own sample counts: those
-  cost a C# frame a millisecond or two and a JavaScript one up to ten. A
-  build a frame late is a frame the tier before it still stands. A whole
-  window the player outran goes again at the mod's own pace, its sample
-  counts alone (AUDIT ENVIRONS P8): a machine that makes fewer samples in the
-  two milliseconds than a ride asks would otherwise never stand it, nor the
-  ring and the blanket, which wait on it. SNOW-THREAD (2026-10-26,
-  `07-Rendering/Performance-Exterior.md`): where the build worker is up, the window and the ring are built whole on it,
-  the same bytes; `?snowthread=off` and a ground it cannot copy keep the pace above.
-- **A BODY ON FIRST SIGHT.** HandleEnemyDeath and the scan are one law here:
-  a body is registered the frame its marker first lies, whatever the player's
-  side of a door.
-
-## BAY-LEFT-GROUND - the snow past the Bay (2026-10-26)
-
-The audit "no system left behind in the Bay" (2026-10-26, `01-Overview/audits/Audit-Left-In-The-Bay.md`), its item 10
-(D3); the owner: *"Every single thing here
-needs to be addressed. No exceptions."* Skyrim's winter laid the snow cover and the peaks' caps (the ground's own) but
-none of the mod's: no deep snow to wade, no footprint or track, no corpse's hollow and no berm anywhere past the Bay.
-Four Bay-shaped laws held it there, each moved, the Bay's own answer unchanged:
-
-- **THE GROUND.** The world host's snow ground (`scenes/snowGround.js` createSnowGround - SNOWFALL1's adapter, moved out
-  of `bootWorld` verbatim first by `tools/hostMove.mjs`) stood no pixel off the Bay's 1000 x 500 (`pixelOn`'s bound),
-  and keyed one by `px * 1000 + py` - one key for two pixels past the Bay. Every pixel of the world's grid now
-  (`inWorldGrid`), by its `worldPixelKey`.
-- **PREPARE'S BOX.** SnowContextData.Prepare's map pixels (`scenes/snowfallHost.js` snowPixelBox) were clamped to
-  0..999 x 0..499, so a box past the Bay answered the Bay's corner pixel alone. Clamped to the world's grid now: at
-  Solitude, Torval or west of the Bay the box is their own pixels; the Bay's 400 boxes the pins read are DFU's own.
-- **ITS METRES.** Prepare's global box (`systems/snowfallRuntime.js` SnowContext.prepare) was clamped to DFU's map, the
-  Bay's 0..819,200 x 0..409,600 m; now to the world's (SNOW_WORLD_METRES, the grid's pixels either way of the Bay's
-  corner at 819.2 m a pixel). On the Bay away from its edge, the same box.
-- **ITS ROADS.** BasicRoadsBridge reads the Basic Roads mod's 1000 x 500 bytes, the Bay's alone. Past the Bay the land's
-  own roads stand in their place (`world/arenaRoads.js` arenaRoadByte, TESA14's roads at the Bay's own law and scale -
-  the reader Travel Options' paths read past the table too), and they are drawn as CURVES (VOYAGER2,
-  `world/road/roadCurves.js`) whose tiles no Basic Roads arm predicts - so a tile is classified by the painter's own
-  word (`snowfallNetworkBeyond`, over the build's GRASS-PATH1 record of the tiles it wrote, through BasicRoadsTerrain's
-  new `kindAt`): a paved tile (Basic Roads' road and its diagonal flanks, records 46, 47 and 55 - TS9's ring halves
-  among them since AUDIT BAY-LEFT F2) a road's, a worn one within a track's reach of its curve (curveField, the
-  painter's own field; TRACK_HALF and half a tile's diagonal) a track's, a road's worn shoulder neither (the berm lies
-  over it), an authored tile none as on the Bay. On the Bay it is Basic Roads' own bytes, with a crossing's join (TESA5:
-  the road past the Bay carried straight to the Bay's edge, which the ground paints there - `world/terrain/terrainGen.js`)
-  on its road bits, so the snow knows the road the ground draws; where no join stands, the Bay's own byte for byte.
-
-MEASURED. The real runtime over the world host's own snow ground, at Whiterun and west of the Bay, stands what it
-stands on the Bay - the local window, the middle tier, the blanket's 49 overlays, a track the player leaves and a
-corpse's hollow - where before none of them stood anywhere past the Bay; with ARENA2, on Whiterun's own kernel ground.
-Lane D's probe (the audit's p4), a 400 m box round the player: at Solitude (1569, -430) it was the Bay's north-east
-corner pixel, (999, 0), at Torval (1922, 1705) its south-east, (999, 499); now each is its own pixel, and Daggerfall's
-(207, 213) the same as it was.
-
-THE FOUR HOSTS. `scenes/world.js` WIRED (its snow ground, `scenes/snowGround.js`). `scenes/exterior.js` FLAGGED - the
-Bay's fixed city stands one Bay pixel far from the Bay's edge, and the shared box and metres answer it as before.
-`scenes/worldModes.js` and `scenes/dungeonContext.js` FLAGGED, as SNOWFALL1's: no snow lies inside.
-
-DEPARTURE (Port-Ledger A, BAY-LEFT-GROUND): past the Bay the snow's roads are the land's own, classified by the
-painter's word, where the mod reads Basic Roads' network; on the Bay the crossings' joins ride Basic Roads' road bits.
-
-Pins: `test/render/bayleftground_snow.test.js` (7: the box at Solitude, Torval and west of the Bay, the Bay's DFU's own;
-Prepare's box unclamped; the ground's world key, an alias pair; the real runtime over the real ground past the Bay equal
-to the Bay's; the curves' classes and the host's handing of them; the join; with ARENA2 Whiterun's own kernel ground).
-PIN MOVED: `test/render/snowfall1_runtime.test.js`'s roads line. Mutants: `tools/mutants/bayleftground.json`'s D3 (14),
-all dead; `snowfall1.json`'s carved-sea record retargeted by the move.
-
-## Pins
-
-`test/systems/environs_texturePacks.test.js` (4); `tools/mutants/alikr1.json` (7, all
-dead); `test/tooling/doctrine.test.js` holds `public/art/snowfall/` to Port-Doctrine's
-second exception. The dynamic snow: `test/systems/snowfall1_model.test.js` (12) and
-`test/render/snowfall1_runtime.test.js` (15); `tools/mutants/snowfall1.json` (42, all
-dead). The shader's variants compile and draw in Chromium's WebGL2 on both
-lanes (a synthetic hill through the real renderer, the mod's masks and
-albedo: the snow on the ground, the track in it, no GL error). AUDIT ENVIRONS
-(`01-Overview/audits/Audit-Environs.md`): `test/systems/audit_environs.test.js` (21),
-`tools/mutants/audit_environs.json`. TV-SNOW, TV-SAVE and TV-REFILL (FIELD BUGS
-2026-10-09): `test/scenes/fb1009_travelperf.test.js`, `tools/mutants/fb1009_travelperf.json`.

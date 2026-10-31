@@ -47,8 +47,8 @@
   {
     "name": "AUDIT-FB1031-II-T3-the-fill-dropped",
     "file": "src/ui/witnessMapMark.js",
-    "old": "if (img === prev?.img) d.fill(0);",
-    "new": "",
+    "old": "  if (img === prev?.img) d.fill(0);",
+    "new": "  ",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ]
@@ -56,8 +56,8 @@
   {
     "name": "AUDIT-FB1031-II-T3-the-size-unchecked",
     "file": "src/ui/witnessMapMark.js",
-    "old": "prev.w === w && prev.h === h",
-    "new": "true",
+    "old": "  const img = prev?.canvas === canvas && prev.w === w && prev.h === h && prev.img ? prev.img : lctx.createImageData?.(w, h);",
+    "new": "  const img = prev?.canvas === canvas && true && prev.img ? prev.img : lctx.createImageData?.(w, h);",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ]

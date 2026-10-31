@@ -22,8 +22,8 @@
   {
     "name": "BOUND-DESTROY-dismantle-not-preferred",
     "file": "src/systems/item/itemDiscard.js",
-    "old": "    if (dismantleStones(item) > 0 && !isRealmLocked(item)) return 'dismantle';",
-    "new": "    if (false) return 'dismantle';",
+    "old": "    if (dismantleStones(item) > 0 && !isRealmLocked(item)) return 'dismantle';   // A realm-locked copy is destroyed, never paid for",
+    "new": "    if (false) return 'dismantle';   // A realm-locked copy is destroyed, never paid for",
     "tests": [
       "test/systems/item/bound_destroy.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "BOUND-DESTROY-face-any-group",
     "file": "src/systems/item/itemDiscard.js",
-    "old": "(item?.group === 'UselessItems2' && Object.hasOwn(COUNTED_FACES, item?.templateIndex)",
-    "new": "(Object.hasOwn(COUNTED_FACES, item?.templateIndex)",
+    "old": "export const countedKind = (/** @type {any} */ item) => (item?.group === 'UselessItems2' && Object.hasOwn(COUNTED_FACES, item?.templateIndex)",
+    "new": "export const countedKind = (/** @type {any} */ item) => (Object.hasOwn(COUNTED_FACES, item?.templateIndex)",
     "tests": [
       "test/systems/item/bound_destroy.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "BOUND-DESTROY-face-lock-asks-service",
     "file": "src/systems/item/itemDiscard.js",
-    "old": "  const why = discardRefusal(item);\n  if (why) return { ok: false, reason: why };\n  if (!_counted)",
-    "new": "  if (!_counted)",
+    "old": "  const why = discardRefusal(item);\n  if (why) return { ok: false, reason: why };\n  if (!_counted) return { ok: false, reason: 'offline', text: festivalRefusalText('offline') };",
+    "new": "  if (!_counted) return { ok: false, reason: 'offline', text: festivalRefusalText('offline') };",
     "tests": [
       "test/systems/item/bound_destroy.test.js"
     ],

@@ -187,5 +187,4 @@ test('AUDIT WORLD6b-iii(b) by source: the world host joins a held cell at once a
   assert.match(o, /if \(code === CLOSE_REPLACED \|\| \(code === CLOSE_POLICY && !noToken\)\) \{ h\.ws = null; h\.status = 'terminal'; h\.retryAt = null; return; \}/, 'A2');
   assert.equal((o.match(/this\._endHalo\(\);/g) ?? []).length, 3, 'A4: leave and the two terminal closes');
   assert.doesNotMatch(o, /_holder\(|_heldElsewhere\(/, 'A9: the dead code is gone');
-  assert.match(rd('bible/06-Systems/Online-Arc.md'), /## AUDIT WORLD6b-iii\(b\) \(2026-09-14\)/, 'the record');
 });

@@ -1,5 +1,5 @@
 // @ts-check
-// AUDIT FB1031 W1 W3 W4 (2026-10-31; bible/06-Systems/Professions-Arc.md section 61, Scale-Arc.md WITNESS-TILES): THE
+// AUDIT FB1031 W1 W3 W4 (2026-10-31;, WITNESS-TILES): THE
 // HELD MAP'S WITNESSED GROUND, LAID ONCE A UTC DAY IN TILES. WITNESS-MAP read a region's ground through the writ board's
 // ten-minute keep, so most asks scanned the region's witness rows, and a province or the sea past the Bay was cut at
 // 8,192 pixels. The map never scans world_witness now: the day's Motherlodes pick already reads every pixel confirmed

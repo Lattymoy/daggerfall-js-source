@@ -83,7 +83,7 @@
   {
     "name": "PROP-BODIES-a-body-filed-as-cover",
     "file": "src/ai/cover.js",
-    "old": "      if (it.body) {\n        fileBody(set, it);\n        continue;\n      } // PROP-BODIES: a body, never cover\n      const i = set.n++;",
+    "old": "      if (it.body) {\n        fileBody(set, it);\n        continue;\n      } // A body, never cover\n      const i = set.n++;",
     "new": "      const i = set.n++;",
     "tests": [
       "test/player/propbodies.test.js"

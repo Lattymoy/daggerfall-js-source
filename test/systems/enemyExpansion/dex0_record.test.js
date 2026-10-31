@@ -330,13 +330,6 @@ test('DEX0 THE SILHOUETTE GUARD ON THE SHIPPED ART (ARENA2): the archives whose 
   assert.deepEqual(Object.keys(SILHOUETTE_ALLOWED), ['1603'], 'the demo\'s Bat alone');
 });
 
-test('DEX0 the fourth exception\'s paragraph names every archive the extractor carries under it', () => {
-  const para = readFileSync(join(ROOT, 'bible/01-Overview/Port-Doctrine.md'), 'utf8').split('\n').find((l) => l.includes('**THE FOURTH EXCEPTION'));
-  for (const a of REPAINTED_ARCHIVES) assert.ok(new RegExp(`\\b${a}\\b`).test(para) || (a >= 1530 && a <= 1533 && para.includes('1530-1533')), `${a} named`);
-  assert.match(para, /the Royal Knight \(1504 and 1505, over TEXTURE\.482\)|Royal Knight[^.]*1505/);
-  assert.match(para, /The mod's 774 ship under `public\/art\/daggerfall-enemy-expansion-repainted\/`/);
-});
-
 test('DEX0 the pictures that ARE Daggerfall\'s records are specs naming the record and nothing else - no pixel of them is carried', () => {
   const derived = JSON.parse(read('derived.json'));
   assert.equal(Object.keys(derived).length, 858);

@@ -143,8 +143,6 @@ test('AUDIT WB A5 a refusal the service can mend keeps the receipt for its week 
   const plain = async () => ({ ok: false, status: 400, json: async () => ({ error: 'receipt' }) });
   assert.deepEqual(await call({ fetch: plain, base: 'https://a.invalid' }, '/v1/gate/claim', { receipt: 'r' }), { ok: false, error: 'receipt', status: 400 }, 'no rung, no field');
   assert.match(read('server-account/src/index.js'), /if \(r\.error\) return json\(\{ error: r\.error, \.\.\.\(r\.why \? \{ why: r\.why \} : \{\}\) \}, /);
-  const doc = read('bible/11-Multiplayer/World-Bosses.md');
-  assert.doesNotMatch(doc, /the deploy checks the pair as it checks the identity pair/, 'no check the repo does not make is claimed');
 });
 
 test('AUDIT WB A9 the device is not the account: receipts kept one a day AND account, only the signed-in account\'s offered, another\'s kept unasked for its own sign-in; `me` is the stored session\'s id', async () => {

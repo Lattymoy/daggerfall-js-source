@@ -1,5 +1,5 @@
 // @ts-check
-// TACT1 - COVER (bible/12-Enhanced-AI/Tactics-Arc.md; Mac, 2026-10-02: "Proper line of sight with billboard props";
+// TACT1 - COVER (Mac, 2026-10-02: "Proper line of sight with billboard props";
 // his call: billboards block "Sight and missiles" - real cover, both ways).
 //
 // DFU's flats are billboards: a sprite with no collider, so a foe sees through a tree, a crate or a statue and an arrow
@@ -31,7 +31,7 @@ export const COVER_HEIGHT_FRAC = 0.9;
 export const NOT_COVER_ARCHIVES = Object.freeze(new Set([199, 201, 210, 216]));
 /** The broad phase's cell, metres. */
 export const COVER_CELL = 4;
-/** AUDIT BANTHA1 TREE-1: a proxy wider than a cell (a jungle tree's crown, up to 15 m) is filed ONCE, under its centre's
+/** A proxy wider than a cell (a jungle tree's crown, up to 15 m) is filed ONCE, under its centre's
  *  cell of this wide grid, beside the fine one - filed in every 4 m cell it touched, a jungle pixel's 10,500 proxies
  *  were 148,000 references in 43,000 cells, 26-99 ms of the main thread and 11 MB a pixel - and a ray searches the wide
  *  cells within its set's widest such radius of it. Metres. */
@@ -47,7 +47,7 @@ export function isCoverFlat(archive, record, size) {
 
 /** The proxy of one flat: `base` its [x, y, z] (the billboard's BASE, bottom-anchored), by reference. */
 export function coverProxy(base, size) {
-  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)
+  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 }; // Born with the index's mark (fileIn, below)
 }
 /** AUDIT TACT B2: a TREE is its trunk and its crown, not one fat column - the design's "a tree: its trunk's width to
  *  its crown's height". The trunk a body's width (COVER_TRUNK_R) up to where the crown starts, the crown the drawn
@@ -73,17 +73,14 @@ export function coverProxies(base, size, { tree = false } = {}) {
 export function rayCylinder(o, d, cyl, maxDist, endAt = null) {
   return rayUpright(o, d, cyl.c, cyl.r, cyl.h, cyl.lift ?? 0, maxDist, endAt);
 }
-/** AUDIT FB1031 F1: A PROXY'S MIDDLE - where a ray passes nearest its axis, where the flat's picture stands. A body in a
- *  proxy on the far side of its middle from another, the line between them crossing the middle inside it, is behind it
- *  both ways (unseen and blind, unshot and shooting nothing); else it sees and is seen both ways - a line under a crown's
- *  floor at the middle too (AUDIT FB1031 II K1). A hold opened the whole proxy, and a clamp leaves a body inside a wide
- *  flat's cover or a low crown: one pressed behind a rock or a young tree's trunk was shot through it. Within this of
- *  the middle (a body's own radius, motor.js CAPSULE_RADIUS) a body is at it: the near side for both. */
+/** A proxy's middle is where a ray passes nearest its axis, where the flat's picture stands. Two bodies on opposite
+ *  sides of it, the line between them crossing the middle inside the proxy, neither see nor shoot each other; a line
+ *  under a crown's floor at the middle counts too. Otherwise both see and are seen. Within this of the middle (a
+ *  body's own radius, motor.js CAPSULE_RADIUS) a body is at it: the near side for both. */
 export const COVER_MIDDLE_GRACE = 0.35;
-/** COVER-COMPACT: rayCylinder over a proxy's own numbers - the index's columns ask it with no object a proxy. TRUNK-FOES:
- *  `holds` the points (flat x, y, z, in the cylinder's frame) of the bodies a missile's line strikes - a proxy holding one
- *  in front of its middle (AUDIT FB1031 F1) is not in front of it, and one past it is an end in it (II K1), as the sight
- *  law sees. */
+/** rayCylinder over a proxy's own numbers - the index's columns ask it with no object a proxy. `holds` lists the points
+ *  (flat x, y, z, in the cylinder's frame) of the bodies a missile's line strikes: a proxy holding one in front of its
+ *  middle does not stop the line, and one past the middle ends it inside, as the sight law sees. */
 function rayUpright(o, d, c0, r, h, lift, maxDist, endAt, holds = null, nHolds = 0) {
   if (FELLED.has(c0) || c0.noCover) return Infinity;
   const cx = c0[0],
@@ -94,8 +91,8 @@ function rayUpright(o, d, c0, r, h, lift, maxDist, endAt, holds = null, nHolds =
   const ox = o[0] - cx,
     oz = o[2] - cz;
   const a = d[0] * d[0] + d[2] * d[2];
-  const mid = a > 1e-12 ? -(ox * d[0] + oz * d[2]) / a : Infinity; // AUDIT FB1031 F1: its middle (a ray straight up or down crosses none)
-  let endIn = false; // AUDIT FB1031 II K1: an end in it past its middle - read as a start in it is
+  const mid = a > 1e-12 ? -(ox * d[0] + oz * d[2]) / a : Infinity; // Its middle (a ray straight up or down crosses none)
+  let endIn = false; // An end in it past its middle - read as a start in it is
   if (endAt != null) {
     // the sight ray's own end (its target's eye), however short the search has been cut
     const ex = ox + d[0] * endAt,
@@ -115,7 +112,7 @@ function rayUpright(o, d, c0, r, h, lift, maxDist, endAt, holds = null, nHolds =
       endIn = true;
     }
   }
-  // AUDIT FB1031 II K1: an end in it - either end, alike - hides only where the line crosses the middle inside it. One
+  // An end in it - either end, alike - hides only where the line crosses the middle inside it. One
   // from outside had stopped at its side whatever the middle, so under a crown's floor a foe in the crown saw and shot a
   // crouched player whose shot back was lost. A line to a body past the middle stops a grace short of it at the latest:
   // at the middle a foe's contact reach (0.45 m, past the grace) struck one whose own shot out was lost.
@@ -163,15 +160,15 @@ const ZERO3 = Object.freeze([0, 0, 0]);
  *  arrays carry no extra member a reader could trip on, and a tree regrown with the day is cover again. */
 export const FELLED = new WeakSet();
 const _lo = [0, 0, 0]; // AUDIT TACT D11: the ray in a set's frame - one scratch, not one a call
-const _holds = []; // TRUNK-FOES: a missile's struck points in a set's frame
+const _holds = []; // A missile's struck points in a set's frame
 /** AUDIT TACT D11: a broad-phase cell's key as a number (no string a cell a ray); cells within +-32768 of the frame's
  *  origin - 131 km at 4 m, past any pixel or room. */
 const cellKey = (gx, gz) => (gx + 32768) * 65536 + (gz + 32768);
-/** MEM-AUDIT (2026-10-23): a cell below this many proxies was held at its size, copied one longer a proxy. COVER-COMPACT
+/** A cell below this many proxies was held at its size, copied one longer a proxy. COVER-COMPACT
  *  (below) holds no cell as an array any more; the constant stays for what imports it. */
 export const CELL_EXACT = 16;
 
-// COVER-COMPACT (2026-10-26, bible/07-Rendering/Performance-Priority.md): A SET IS COLUMNS. The index was the largest thing a
+// A SET IS COLUMNS. The index was the largest thing a
 // streamed world kept (237 MB of ~735 MB live at 121 pixels), a Map entry and a small array a cell. A set holds its cover
 // by proxy index: the base array by reference (FELLED and `noCover` key on it), radius, height and lift as Float64
 // (Float32 would move an answer), a ray's mark as Int32. A grid is three sorted typed lists: cell keys, where each
@@ -279,7 +276,7 @@ function nextStamp(set, stampKey, markKey) {
   return ++set[stampKey];
 }
 
-/** TACT1: cover is read with the Enhanced AI switch on - this module is the switch's one reader for it, so a host
+/** Cover is read with the Enhanced AI switch on - this module is the switch's one reader for it, so a host
  *  stands its index without seeing the switch (enhancedAI4's AUDIT 55 holds who may). */
 export const coverSwitchOn = () => getPref('enhancedAI') === true;
 
@@ -295,7 +292,7 @@ export const coverSwitchOn = () => getPref('enhancedAI') === true;
 export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   /** @type {Map<any, CoverSet>} */
   const sets = new Map();
-  /** IC-SWAP-BEHIND (scenes/swapBehind.js): the keys whose sets are HELD - filled but in no query - and those sets, until
+  /** The keys whose sets are HELD - filled but in no query - and those sets, until
    *  `wake` puts them in under their pixel's own key. @type {Set<any>} */
   const holding = new Set();
   /** @type {Map<any, any>} */
@@ -341,7 +338,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
       if (it.body) {
         fileBody(set, it);
         continue;
-      } // PROP-BODIES: a body, never cover
+      } // A body, never cover
       const i = set.n++;
       if (i >= set.r.length) {
         const room = Math.max(16, i + (i >> 1));
@@ -361,7 +358,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
       set.min[2] = Math.min(set.min[2], z - it.r);
       set.max[2] = Math.max(set.max[2], z + it.r);
       if (it.r > COVER_CELL) {
-        // TREE-1: a wide proxy, once, under its centre
+        // A wide proxy, once, under its centre
         fileIn(set.wide, cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)), i);
         if (it.r > set.wideR) set.wideR = it.r;
         continue;
@@ -375,7 +372,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     return set.n;
   }
 
-  /** PROP-BODIES: a body into its set's own grid - every cell its foot circle touches, so a query reaching the circle
+  /** A body into its set's own grid - every cell its foot circle touches, so a query reaching the circle
    *  meets one of them. */
   function fileBody(set, it) {
     const [x, , z] = it.c;
@@ -392,11 +389,11 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     }
   }
 
-  /** COVER-COMPACT: the references a set holds waiting for its next build, and those built. */
+  /** The references a set holds waiting for its next build, and those built. */
   const waiting = (set) => set.grid.pk.length + set.wide.pk.length + set.bodyCells.pk.length;
   const built = (set) => set.grid.idx.length + set.wide.idx.length + set.bodyCells.idx.length;
 
-  /** COVER-COMPACT: a set filled since its last build, made readable - its columns cut to their length, its grids'
+  /** A set filled since its last build, made readable - its columns cut to their length, its grids'
    *  lists built, its marks one a proxy. */
   function seal(set) {
     set.dirty = false;
@@ -415,7 +412,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
     buildCells(set.bodyCells);
   }
 
-  /** PROP-BODIES: every body whose foot circle, widened by `reach`, holds the point `p` (x and z), handed to `visit`
+  /** Every body whose foot circle, widened by `reach`, holds the point `p` (x and z), handed to `visit`
    *  with its foot in the world's frame (x, the bottom of its span, z) - once each; a felled tree's and a person's none. */
   function near(p, reach, visit) {
     for (const set of sets.values()) {
@@ -424,7 +421,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
       const t = set.t(),
         x = p[0] - t[0],
         z = p[2] - t[2];
-      const box = set.bodyBox; // TRUNK-FOES: each foe asks every set a frame - one nowhere near is passed
+      const box = set.bodyBox; // Each foe asks every set a frame - one nowhere near is passed
       if (x + reach < box[0] || x - reach > box[2] || z + reach < box[1] || z - reach > box[3]) continue;
       const stamp = nextStamp(set, 'bodyStamp', 'bodyMark'),
         mark = set.bodyMark;
@@ -454,25 +451,25 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
   function remove(key) {
     sets.delete(key);
     held.delete(key);
-  } // IC-SWAP-BEHIND: a held set too
+  } // A held set too
   /** AUDIT PRECIP HOST-7: a set built aside (`staged`, filled a slice at a time with `fill`) put in for `key` in one
    *  step, whatever it held before - a pixel re-skinned in place trades its cover as it trades its flats, never a frame
    *  with neither or both. */
   function place(key, set) {
     setsOf(key).set(key, set);
   }
-  /** IC-SWAP-BEHIND: every set put in under `key` from now is held - in no query - until `wake`. */
+  /** Every set put in under `key` from now is held - in no query - until `wake`. */
   function hold(key) {
     holding.add(key);
   }
-  /** IC-SWAP-BEHIND: the held set under `from` (if one was filled) answers as `to`'s from now, in one step. */
+  /** The held set under `from` (if one was filled) answers as `to`'s from now, in one step. */
   function wake(from, to) {
     holding.delete(from);
     const set = held.get(from);
     held.delete(from);
     if (set) sets.set(to, set);
   }
-  /** IC-SWAP-BEHIND: a held key let go, its set with it (a build behind that failed). */
+  /** A held key let go, its set with it (a build behind that failed). */
   function unhold(key) {
     holding.delete(key);
     held.delete(key);
@@ -538,7 +535,7 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
         }
       }
       if (set.wideR > 0) {
-        // TREE-1: the wide proxies whose centre stands within the widest radius of the ray's box
+        // The wide proxies whose centre stands within the widest radius of the ray's box
         const R = set.wideR,
           wide = set.wide;
         const wx0 = Math.floor((Math.min(lo[0], ex) - R) / COVER_WIDE),
@@ -595,14 +592,14 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
       for (const s of sets.values()) n += s.n;
       return n;
     },
-    /** AUDIT BANTHA1 TREE-1: how many references the grids hold, over every set (tests, probes) - a wide proxy is one. */
+    /** How many references the grids hold, over every set (tests, probes) - a wide proxy is one. */
     refs: () => {
       let n = 0;
       for (const s of sets.values()) for (const g of [s.grid, s.wide]) n += g.idx.length + g.pk.length;
       return n;
     },
     has: (key) => sets.has(key),
-    /** PROP-BODIES: how many bodies, over every set (tests, probes). */
+    /** How many bodies, over every set (tests, probes). */
     bodies: () => {
       let n = 0;
       for (const s of sets.values()) n += s.bodyN;
@@ -633,7 +630,7 @@ export function coverDistance(collider, origin, dir, maxDist, sight = false, hol
  * and { advance } - the share of the step to take (1: all of it).
  */
 export function coverStep(cov, wall, reach, radius, stepLen, swept = false) {
-  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // WALL-SHAFT: a swept shaft meets a wall by touch too
+  if (swept) return coverStep(Math.min(cov, wall), Infinity, reach, radius, stepLen); // A swept shaft meets a wall by touch too
   if (Number.isFinite(wall) && wall <= reach && !(cov < wall)) return { stop: wall, advance: 1 };
   if (!(cov <= reach)) return { stop: Number.isFinite(wall) && wall <= reach ? wall : Infinity, advance: 1 };
   if (cov <= radius + 1e-6) return { stop: cov, advance: 1 };

@@ -1,157 +1,60 @@
-# Unleveled Loot - the mod, 1:1 (UL1, 2026-09-12)
+# Unleveled Loot
 
-Mac: "Heres the next mod unleveled loot. Again 1:1" - handing over
-`Unleveled_Loot-135-1-1-2-1747562418.zip`.
+A port of Ralzar's Unleveled Loot v1.1.2 for Daggerfall Unity (MIT; Nexus mod 135): weapon and armour materials in loot,
+shops and foe loadouts follow the place and the player's Luck, not the player's level. Players meet it as Orcish gear
+near Orsinium and Orc Strongholds, better metal in deadlier dungeons, and Daedric or Orcish drops from Daedra and Orcs.
+It is on by default; its switches and `Enabled` are in the Mods pane. It is ported 1:1 apart from the departures below.
 
-**Unleveled Loot v1.1.2** for Daggerfall Unity 1.1.1, by Ralzar (MIT,
-per the source header; Nexus mod 135 - the manifest's ContactInfo;
-source at github.com/Ralzar81/Unleveled-Loot, master = 1.1.1). "Makes
-loot and shop stock materials not scale to your level." Its data is
-vendored under `vendor/unleveledLoot/` (the manifest, the shipped
-modsettings, a README), it is credited on the About screen, and it is
-ported as `src/systems/unleveledLoot.js`. Its ten switches and
-`Enabled` live in the Mods pane; off by default, as DFU without the mod
-listed, until MO1 (2026-09-12, Mac: "All mods should be enabled by
-default") turned it on - and with it the mod's arms decline without a
-player to read (no world yet: DFU's own roll stands). Since 2026-10-19 it is 1:1 save for the moves named under
-Departures, below.
+## How it works
 
-## The source the port reads
+`installUnleveledLoot` (`src/systems/worldTick.js`, after every mod it overrides) registers three things:
 
-The shipped `unleveled loot.dfmod` is a UnityFS bundle: a compiled
-`Unleveled Loot.dll` (11,264 bytes), the manifest and modsettings.
-Unpacked (UnityPy) and the DLL decompiled (ILSpy 8.2), read beside the
-repository's `UnleveledLoot.cs` (1.1.1). The 1.1.2 DLL is the law where
-the two differ: the armour drop is built as a NEW item over
-CreateRandomArmor's template with ApplyArmorSettings(daedric or
-orcish, variant 0), and its condition is 30-75% of the RANDOM piece's
-maxCondition (`val2.maxCondition`), not the new piece's; 1.1.1 applied
-the material to the random piece itself. Both add at AddPosition.Back.
-The shipped modsettings is byte for byte the repository's.
+- **RandomMaterial and RandomArmorMaterial overrides.** `unleveledRandomMaterial` rolls `Range(0, 92)` plus Luck's
+  tenth and picks a material by place: a shop's shelf by its quality (Orsinium may stock Orcish), a dungeon by its
+  quality, the wild by a small random. Armour (`armMatSelector`) uses the same roll for plate, chain or leather. Every
+  loot pile, shop shelf and enemy loadout reads them through `src/combat/enemyEquipment.js`.
+- **The death handler** (`unlevelDroppedLoot`, `addDaedric`, `addOrcish`). A Daedra's or an Orc's corpse may take a
+  Daedric or Orcish weapon or piece at 30-75% condition, and its gold is scaled by Luck. It is raised through
+  `raiseEnemyDeath` at every kill.
+- **`ModifyFoundLootItems`** (`unleveledGoldLootPiles`). Registered under DFU's name, which nothing reads, so it never
+  runs, as in DFU.
 
-## What the mod is, and where each part landed
+The place the mod asks about (an open shop, its quality, the dungeon's type, the region) is published by
+`src/scenes/worldModes.js` through `setUnleveledLootWorld`. The ten material switches are the mod's MultipleChoiceKeys
+in the Mods pane.
 
-| the mod's | does | lives here as |
-| --- | --- | --- |
-| `Init` | reads the ten MaterialSwitching MultipleChoiceKeys into `matSwitchList` (index -> WeaponMaterialTypes); `orcishDrops` = Orcish still 8, `daedricDrops` = Daedric still 9 | `matSwitchList`, `orcishDrops`, `daedricDrops`, read live off the Mods pane |
-| `Awake` | RegisterOverride("ModifyFoundLootItems"), OnEnemyDeath, OnPreTransition, OnTransitionExterior, RegisterOverride("RandomMaterial"), RegisterOverride("RandomArmorMaterial") | `installUnleveledLoot` (systems/worldTick.js): the two rolls on formulas' registry, consulted by `combat/enemyEquipment.js`'s `randomMaterial` / `randomArmorMaterial` (every loot pile, shop shelf and enemy loadout); `raiseEnemyDeath` (scenes/corpseMarker.js) raised at the three kills; the two transition arms called from scenes/worldModes.js |
-| the RandomMaterial override | `luckMod = LiveLuck / 10; matRoll = Range(0, 92) + luckMod; WpnMatSelector()` (the level ignored) | `unleveledRandomMaterial` |
-| the RandomArmorMaterial override | the same roll, `ArmMatSelector()` | `unleveledRandomArmorMaterial` |
-| `WpnMatSelector` / `RandomMat` / `ShopMat` / `RandomHighTier` / `ShopLevel` / `dungeonQuality` / `MaterialSwitch` | a shop's shelf (-35 + level x 8; Orsinium over 70 may stock Orcish; 99/97/94/88/80/70, under 10 Iron) or the world (a dungeon's quality less 15, else -Range(10, 20); luck's double lifts by luck x 4 or, in Orsinium or an Orc Stronghold on luck, Orcish; 90 -> Dwarven or, on luck x 3, the high tier; 83/75/35); then the switch | the same names, over the shared `matRoll` and `luckMod` statics |
-| `ArmMatSelector` | Range(1, 91) + luck, the shop's quality x 6 or the dungeon's quality; over 80 plate of WpnMatSelector's material (the SAME matRoll), over 50 chain, else leather | `armMatSelector` |
-| `SetDungeon_OnPreTransition` / `ClearData_OnTransitionExterior` | `region = CurrentRegionIndex; dungeon = CurrentLocation.MapTableData.DungeonType` at every transition; `dungeon = -1` on a BUILDING exit | `unleveledLootPreTransition` at DFU's five OnPreTransition doors (tryEnter, tryExit, tryEnterDungeon, exitDungeonNow, the teleport's forceExitToExterior), `unleveledLootExteriorTransition` at tryExit alone |
-| `UnlevelDroppedLoot_OnEnemyDeath` / `AddDaedric` / `AddOrcish` | a Daedra's (MobileAffinity.Daedra) or an Orc's (MobileTeams.Orcs) corpse may take a daedric or orcish weapon (Range(Dagger, Long_Bow + 1), 30-75%) or piece; every gold stack / level (never under 1) x Range(1, luck's tenth + 1) | `unlevelDroppedLoot`, `addDaedric`, `addOrcish`, over the corpse's items (the entity's) - with METAL-RAMP, ASF-DEATH and the armour's condition cap (Departures, below) |
-| `UnleveledGoldLootPiles` | books worn to 20-75%, currency / level - the ModifyFoundLootItems override | `unleveledGoldLootPiles`, registered under the same name, READ BY NOTHING - see below |
+## Rules
 
-The world the mod asks of PlayerEnterExit, PlayerGPS and the player -
-IsPlayerInsideOpenShop, Interior.BuildingData.Quality,
-IsPlayerInsideDungeon, CurrentRegionIndex, CurrentLocation's
-DungeonType, the level, LiveLuck - is published live by
-scenes/worldModes.js (`setUnleveledLootWorld`); the two hosts hand it
-`currentRegionIndex` and `currentLocation`.
+- All mods are on by default (Mac). The mod's arms do nothing without a player in a world: DFU's own roll stands.
+- Kept bug for bug: the dungeon exit does not clear the remembered dungeon type; region and dungeon start at 0 until
+  the first door; the Seducer always drops a weapon.
+- **METAL-RAMP** (Mac: "Level ramp"): a Daedric or Orcish drop below level 20 is that metal only on a draw of
+  `Range(0, 20)` under the killer's level, else the level's middle metal (`rampMetal`: Elven, Dwarven, Mithril,
+  Adamantium, Ebony as the level rises). The level and Luck are the raiser's, so a room's clients roll alike.
+- **Daedric is rare**: a granted Daedra drop that would be Daedric keeps it on a draw under `DAEDRIC_KEEP` (a tenth),
+  at any level and after METAL-RAMP's draw, and is Ebony otherwise, through the Mods pane's Ebony switch
+  (`daedricKept`). Whether a Daedra drops at all, and every Orcish drop, stay the mod's.
+- A death drop records its rolled condition as `foundCondition`, so online a mended drop sells as it fell
+  (`bible/06-Systems/Economy-Arc.md`).
+- A dropped armour piece's condition is never above its own maximum.
 
-## What is kept bug for bug
+## Daggerfall Unity
 
-- **`ModifyFoundLootItems` is dead.** The mod registers it on
-  FormulaHelper; DFU 1.1.1's FormulaHelper, LootTables and
-  DaggerfallLoot read no such name (nor master's). So the "unleveled
-  gold in loot piles, worn books" arm never runs in DFU - loot piles
-  keep their levelled gold. The port registers the same name, which
-  nothing consults; the function is exported and pinned so the day DFU
-  grows the hook the port can grow the read.
-- **The dungeon exit does not clear `dungeon`.** The mod subscribes
-  OnTransitionExterior (a building's exit) and not
-  OnTransitionDungeonExterior, so after leaving an Orc Stronghold the
-  `dungeon == OrcStronghold` arm keeps lifting Orcish outdoors until the
-  player leaves a building; the dungeon exit's OnPreTransition re-reads
-  the dungeon's own type first.
-- **`region` and `dungeon` start at 0** - Alik'r and a Crypt - and
-  change only at a transition, so a game loaded inside a dungeon reads
-  quality 12 whatever the dungeon is, until its next door.
-- **The armour drop's condition** is 30-75% of the RANDOM piece's max
-  (leather more often than not), written onto the daedric piece.
-- **The Seducer always drops a weapon**; a Daedroth needs over 80 where
-  the Fire and Frost Daedra do too and the Lord over 70, the Seducer
-  over 75.
-- **The manifest requires roleplayrealism and roleplayrealism-items**;
-  nothing in the code reads either - the dependency orders the mod
-  after Roleplay Realism so its two overrides register last. The port
-  has no Roleplay Realism yet; when it lands, its RandomMaterial must
-  register before this one (worldTick installs this mod last).
+The mod overrides DFU's `FormulaHelper` RandomMaterial and RandomArmorMaterial and handles `EnemyDeath`. The 1.1.2
+DLL is the law where it differs from the repository's 1.1.1 source. Departures: METAL-RAMP and `foundCondition` (both
+because a new character could farm Orcish gear outside), the armour condition cap, and `DAEDRIC_KEEP`. Online the mod
+is on, shops never stock Daedric and random pieces almost never roll it, so the mod's Daedra drop is the game's main
+Daedric source. Without the keep, every granted drop from level 20 would be Daedric.
 
-## Port-side decisions, recorded
+## Code and tests
 
-- **`Enabled` off by default** (the precedent). ~~Off~~ ON since MO1
-  (2026-09-12), and `installUnleveledLoot`'s `on` requires the world's
-  player as well as the switch - a shelf minted before any world, a foe
-  spawned in a host without the reader, read Luck off null otherwise.
-- **The ten switches are MultipleChoiceKeys** - the Mods pane grew the
-  type (`isChoiceKey`: `options`, the value its index, clamped) and
-  steps through the names.
-- **OnEnemyDeath is a registry** (`registerEnemyDeathHandler` /
-  `raiseEnemyDeath` in corpseMarker.js, the one home of
-  EnemyDeath.CompleteDeath), raised at the kill in exteriorFoes,
-  cityGuards and dungeonContext - not at a load's rewind of a dead foe,
-  which DFU does not raise either. The corpse's collection is the
-  entity's items, as DFU's TransferAll leaves it.
-- **The rolls are the caller's `rolls`**, so a test drives every
-  Range and Dice100.
+- `src/systems/unleveledLoot.js` - the overrides, the selectors, the death handler, `rampMetal`
+- `vendor/unleveledLoot/` - the manifest, modsettings and README
+- `test/systems/unleveledLoot.test.js` - the tables, the transitions, the corpse drops, the dead hook, the seams
+- `test/systems/daedricrare.test.js` - the Daedric keep and its Ebony
 
-## Pinned (`test/systems/unleveledLoot.test.js`, 8)
+## Open
 
-Unity's Range forms; the tables (dungeonQuality, ShopLevel,
-RandomHighTier's thresholds, MaterialSwitch through the ten keys and
-their defaults); the transitions (both statics 0 until a door, region
-and type at a pre-transition, the building exit clearing, the dungeon
-exit not, the five and the one call sites); RandomMat through the
-wilderness, Orsinium, a remembered Orc Stronghold, the low end and a
-Coven; ShopMat's ladder, Orsinium's shelf, ArmMatSelector's three
-answers over the shared roll; the corpse (a Lord's dagger at 30% of
-its own max, the 1.1.2 armour drop with the leather max's condition,
-the Seducer's weapon, a Daedroth at exactly 80, the Warlord's orcish, a
-rat's gold, daedricDrops off); the dead ModifyFoundLootItems (worn
-books and divided gold in the function, no reader in the port); and
-the seams - the registry declining and answering, the level ignored,
-OnEnemyDeath through the seam and at the three kills, the pane's
-choice keys against the shipped modsettings and their clamp, the
-credit, the vendor, the boot order, the world reader and the hosts'
-hand-off. Not run here: a game.
-
-## Departures (2026-10-19, `01-Overview/bugs/Field-Bugs-2026-10-19b.md`)
-
-The mod stood 1:1 until the Discord's "Weapon/Armor Materials" thread ("any new character can wander outside, kill some
-easy orcs on the overworld, and get orcish gear right from the get-go"); SCOPE1 makes it ours to move, and the moves are
-named here and in Port-Ledger A.
-
-- **METAL-RAMP** (Mac: "Level ramp"). AddOrcish and AddDaedric read the killer's level: a drop the mod's roll grants is
-  its race's metal on a draw of `Range(0, 20)` under the level, else the level's middle metal (`rampMetal`: Elven 1-4,
-  Dwarven 5-8, Mithril 9-12, Adamantium 13-16, Ebony 17-19; plate of it for the armour arm). At 20 and up the ramp
-  draws nothing. `unlevelDroppedLoot` reads the level once, the raiser's (a room's base the room's) or the
-  player's, for the drop and the gold alike - a kill's the player's, not a mentor's lowered one, as the mod's gold does
-  (AUDIT SUGGESTIONS-1019 L1-5, recorded). For the whole raise the mod's own Luck and level are the raiser's, so an
-  armour drop's CreateRandomArmor, which reaches the RandomArmorMaterial override, rolls the same on every client of a
-  room (AUDIT L1-1, a fault older than the departures). The middle metal goes through the Mods pane's material switches
-  as the race's does (AUDIT L1-4).
-- **DAEDRIC-RARE** (2026-10-31, Sammy on Discord: "Daedric is way too common, I think it should drop but very rarely").
-  Online the mod is on, and its AddDaedric was the game's main Daedric: random pieces almost never roll it and shops
-  never stock it, but a Daedra's granted drop was Daedric always from level 20. Now a granted drop that would be Daedric
-  keeps it on a draw under `DAEDRIC_KEEP` (a tenth), at any level and after the ramp's draw, and is Ebony otherwise,
-  through the Mods pane's Ebony switch. Whether a Daedra drops (its threshold and Luck) and the Orcs are unchanged. The
-  ocean abyss's UpgradeLoot still steps Orcish to Daedric: only an Orcish piece reaches it, and those are rare. The
-  Sigil Broker sells, so it is not a drop. Pinned by `test/systems/daedricrare.test.js`, `tools/mutants/daedricrare.json`.
-- **OPEN (AUDIT FB1031 C2): the gate Warden.** At level 20 a Lord's kill now gives Daedric 3 times in 100, where it gave
-  about 30. The Oblivion Gate's spoils (`gate/gateSpoils.js` rollSpoils) are not this mod's: a Warden kill gives each
-  fighter Ruhn's Regalia, Daedric make, on a sixth of kills, and the Dragonfire Oath (Daedric) on 1 in 250. AUDIT FB1031
-  III X1: the same kill's three ordinary pieces roll DFU's material table, Daedric on 10.5% of kills at level 20, 20% at
-  30 and 29% at 40; main's Delve vault (DELVE-VAULT) holds a Daedric piece in 3-10% of vaults over the same levels.
-  DAEDRIC-RARE reaches none of them. The gate is built round its spoils, so they are kept until the owner says otherwise.
-- **ASF-DEATH**. Both death drops leave the condition they roll as `foundCondition`, SELL-AS-FOUND's mark, so online a
-  drop mended at a smith sells as it fell, and its owner's own mends a third more (MEND-THIRD, `Economy-Arc.md`). The
-  rolls and the draws are the mod's.
-- **The armour's condition, capped** (AUDIT SUGGESTIONS-1019 L1-2). 1.1.2 reads the armour drop's condition off a
-  RANDOM piece's maximum; under the ramp that piece can be heavier plate than the drop, so the drop could stand at up to
-  135% of its own maximum - an online sale over whole. It is never over its own piece's maximum now: the one change to
-  the mod's condition roll.
-
-What stays the mod's: whether a corpse drops at all (the thresholds and Luck), the weapon-or-armour roll, the Seducer's
-weapon, the condition rolls (save the cap above), the gold's division, the world and shop material rolls, the Mods pane.
+- The Oblivion Gate Warden's spoils (`src/systems/gate/gateSpoils.js` `rollSpoils`: Ruhn's Regalia and the kill's
+  ordinary pieces) and the Delve vault (`src/systems/delve/delveVault.js`) roll Daedric outside this mod, so
+  `DAEDRIC_KEEP` does not reach them. They stand until the owner decides.

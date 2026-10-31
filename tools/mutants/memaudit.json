@@ -182,8 +182,8 @@
   {
     "name": "MA-a-proxy-born-without-its-mark",
     "file": "src/ai/cover.js",
-    "old": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)",
-    "new": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)",
+    "old": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 }; // Born with the index's mark (fileIn, below)",
+    "new": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 }; // Born with the index's mark (fileIn, below)",
     "tests": [
       "test/systems/memaudit.test.js"
     ]
@@ -380,8 +380,8 @@
   {
     "name": "MA-C2-the-mark-born-first",
     "file": "src/ai/cover.js",
-    "old": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)",
-    "new": "  return { _mark: 0, c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 }; // MEM-AUDIT: born with the index's mark (fileIn, below)",
+    "old": "  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 }; // Born with the index's mark (fileIn, below)",
+    "new": "  return { _mark: 0, c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 }; // Born with the index's mark (fileIn, below)",
     "tests": [
       "test/systems/memaudit.test.js"
     ]

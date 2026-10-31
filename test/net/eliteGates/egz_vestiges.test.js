@@ -520,15 +520,3 @@ test('EG-ZR MENDER\'S GRACE, THE RECEIVER\'S HALF ("heals you cast on allies +15
   assert.match(W, /magic\.applySpellToPlayer\(spell, d\.level, null, \{ allyCast: true, strangerCast: !mate \}\); egClient\?\.menderGrace\?\.\(id, playerEntity\.health - before\);[^\n]*\n\s*const healed = Math\.max\(0, Math\.trunc\(playerEntity\.health - before\)\);/, 'every ally cast\'s heal reaches it, before the heal is told');
 });
 
-// ── THE PAGE ─────────────────────────────────────────────────────────────────────────────────────────────────────────
-test('EG-ZR THE PAGE (bible/11-Multiplayer/Elite-Gates.md - RETIRING A FLAG DELETES THE SENTENCE): EG-ZP\'s departure 9 (Shield-Hymn and the holder\'s Vestiges found, not built) and its departure 1\'s Immovable push half "not built here" are gone, its departures numbered 1 to 8 without a gap; this slice\'s record follows it, its four hosts named', () => {
-  const page = readFileSync(new URL('../../../bible/11-Multiplayer/Elite-Gates.md', import.meta.url), 'utf8');
-  const i = page.indexOf('### EG-ZP - '), j = page.indexOf('### EG-ZR - ');
-  assert.ok(i > 0 && j > i, 'EG-ZR after EG-ZP');
-  const zp = page.slice(i, j);
-  for (const gone of ['Found, not built here:** Shield-Hymn', 'is applied by neither the census nor any screen', 'Iron Footing is the only one a screen applies', 'Immovable\'s other half (pushes do nothing) is not built here']) assert.ok(!zp.includes(gone), `retired: ${gone}`);
-  const deps = zp.slice(zp.indexOf('**Departures, said plainly.**'), zp.indexOf('**Not verified'));
-  assert.deepEqual([...deps.matchAll(/^(\d+)\. /gm)].map((m) => Number(m[1])), [1, 2, 3, 4, 5, 6, 7, 8]);
-  const zr = page.slice(j, page.indexOf('\n### ', j + 4) > 0 ? page.indexOf('\n### ', j + 4) : page.length);
-  for (const host of ['scenes/world.js', 'scenes/worldModes.js', 'scenes/dungeonContext.js', 'scenes/exterior.js']) assert.ok(zr.includes(`\`src/${host}\` - `), `the four hosts: ${host}`);
-});

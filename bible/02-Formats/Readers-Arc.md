@@ -1,110 +1,102 @@
-# Readers-Arc (COMPLETE)
+# Format readers
 
-Goal: JS readers for every Daggerfall binary format we need, each validated against real ARENA2 data before the next begins. Nothing else in the project starts until its formats read clean.
+The readers turn the files in the player's own ARENA2 folder into JavaScript structures: archives, palettes, images,
+meshes, blocks, maps, sounds, music, text and classic saves. Each one translates a Daggerfall Unity reader class. The
+player never sees a reader. Every town, sprite, sound and imported save starts from one.
 
-Reference source: Daggerfall Unity `DaggerfallConnect` namespace (C#), plus dfworkshop.net format docs. Translate, keep constants byte-exact.
+## How it works
 
-## Order
+A reader takes the file's bytes (a `Uint8Array`), never a path. The runtime reads immutable buffers, so DFU's disk
+plumbing (`FileProxy` streams, `RewriteRecord` write-back, extension checks) is not ported. Each file's header comment
+names its DFU source and lists every departure from it.
 
-| # | Reader | Source files | Status |
-|---|--------|-------------|--------|
-| 1 | BSA container | ARCH3D.BSA, BLOCKS.BSA, MAPS.BSA | **complete** (`src/formats/bsaFile.js`) |
-| 2 | Palettes | PAL files, colormaps | **complete** (`src/formats/dfPalette.js`) |
-| 3 | TEXTURE.??? | texture archives | **complete** (`src/formats/textureFile.js` + `baseImageFile.js`) |
-| 4 | IMG / CIF | UI art, paperdoll art (reference for voxel outfits) | **complete** (`src/formats/imgFile.js`, `cifRciFile.js`) |
-| 5 | ARCH3D | 3D model records | **complete** (`src/formats/arch3dFile.js`, `faceUVTool.js`, `arch3dPatch.js`) |
-| 6 | BLOCKS | RMB (exterior) + RDB (dungeon) blocks | **complete** (`src/formats/blocksFile.js`) |
-| 7 | MAPS | regions, locations | **complete** (`src/formats/mapsFile.js`, `pakFile.js`) |
-| 8 | SND / music | audio containers | **complete** for SFX (`src/formats/sndFile.js`); music (HMI/XMI) routed to Audio arc (approved, Port-Ledger A) |
+| Reader | Files | DFU source |
+|---|---|---|
+| `src/formats/bsaFile.js` `BsaFile` | ARCH3D.BSA, BLOCKS.BSA, MAPS.BSA, DAGGER.SND, MIDI.BSA | `BsaFile.cs` |
+| `src/formats/dfPalette.js` `DFPalette` | .PAL and .COL palettes | `DFPalette.cs` |
+| `src/formats/textureFile.js`, `src/formats/baseImageFile.js` | TEXTURE.??? | `TextureFile.cs`, `BaseImageFile.cs` |
+| `src/formats/imgFile.js`, `src/formats/cifRciFile.js` | IMG, CIF, RCI | `ImgFile.cs`, `CifRciFile.cs` |
+| `src/formats/cfaFile.js`, `src/formats/gfxFile.js`, `src/formats/bssFile.js` | CFA (mount sprites), GFX (chargen scrolls), BSS | `CfaFile.cs`, `GfxFile.cs`, `BssFile.cs` |
+| `src/formats/flcFile.js`, `src/formats/vidFile.js` | FLIC (.CEL), VID movies | `FlcFile.cs`, `VidFile.cs` |
+| `src/formats/skyFile.js` | SKY??.DAT | `SkyFile.cs` |
+| `src/formats/arch3dFile.js`, `src/formats/faceUVTool.js`, `src/formats/arch3dPatch.js` | ARCH3D.BSA meshes | `Arch3dFile.cs`, `FaceUVTool.cs`, `Arch3dPatch.cs` |
+| `src/formats/blocksFile.js` `BlocksFile` | RMB, RDB, RDI blocks | `BlocksFile.cs`, `DFBlock.cs` |
+| `src/formats/mapsFile.js` `MapsFile`, `src/formats/pakFile.js`, `src/formats/mapsTables.js` | MAPS.BSA, CLIMATE.PAK, POLITIC.PAK, FALL.EXE tables | `MapsFile.cs`, `PakFile.cs` |
+| `src/formats/woodsFile.js` | WOODS.WLD heightmap | `WoodsFile.cs` |
+| `src/formats/sndFile.js` | DAGGER.SND | `SndFile.cs` |
+| `src/formats/hmiFile.js` | MIDI.BSA songs | none (see below) |
+| `src/formats/flatsFile.js` | FLATS.CFG | `FlatsFile.cs` |
+| `src/formats/textRsc.js`, `src/formats/fntFile.js`, `src/formats/bookFile.js` | TEXT.RSC, FNT fonts, BOK books | `TextFile.cs`, `FntFile.cs`, `BookFile.cs` |
+| `src/formats/factionFile.js`, `src/formats/classFile.js`, `src/formats/biogFile.js` | FACTION.TXT, CLASS*.CFG, BIOG*.TXT | `FactionFile.cs`, `ClassFile.cs`, `BiogFile.cs` |
+| `src/formats/spellsStd.js`, `src/formats/magicDef.js`, `src/formats/paintFile.js` | SPELLS.STD, MAGIC.DEF, PAINT.DAT | `DaggerfallSpellReader.cs`, `MagicItemsFile.cs`, `PaintFile.cs` |
+| `src/formats/save/saveTreeFile.js`, `src/formats/save/saveVarsFile.js`, `src/formats/save/saveImageFile.js`, `src/formats/save/saveGames.js`, `src/formats/characterRecord.js`, `src/formats/bioFile.js`, `src/formats/rumorFile.js` | a classic SAVE0-SAVE5 set | DFU `API/Save` |
 
-Post-close additions, each with a gate of its own (the arc is COMPLETE for
-the eight it was scoped to; a slice that needs a new format adds it here):
+`src/formats/fileProxy.js` holds the one `ReadCString` rule the classic records share. The spell record of a save
+parses through `src/formats/spellsStd.js` `readSpellRecord`. The conversion of a classic save into a character is not
+a reader: it is `src/systems/classicSave.js`.
 
-| # | Reader | Source files | Status |
-|---|---|---|---|
-| 9 | SKY | painted skies | **complete** (`src/formats/skyFile.js`, R4) |
-| 10 | GFX | the chargen scroll frames | **complete** (`src/formats/gfxFile.js`, U18) |
-| 11 | FLIC | .CEL/.FLC animations - Daggerfall's flats are Autodesk FLICs, a different format from the .VID movies | **complete** (`src/formats/flcFile.js`, F1) |
-| 12 | FLATS.CFG | per-billboard caption + TFAC00I0.RCI face index | **complete** (`src/formats/flatsFile.js`, NPC1) |
-| 13 | CFA | the mount sprites the player rides - MRED00I0 (horse) and MRED01I0 (cart), four frames each | **complete** (`src/formats/cfaFile.js`, TR2) |
+MapsFile and BlocksFile ask the world-data door (`src/formats/worldData/worldDataDoor.js` `worldDataDoor`) before
+they read a region, location or block, so a mod's world data can replace them (`02-Formats/World-Data-Patches.md`).
+`BlocksFile.readClassicBlock` and `MapsFile.readClassicLocation` read past the door.
 
-## Validation gate (every reader)
+## Rules
 
-- Node test file per reader in `test/`, run against real ARENA2 data via a local uncommitted `data/` path (env var `ARENA2_PATH`).
-- Assert record counts, known-record byte signatures, and round-trip of at least one full record against documented values.
-- Tests skip cleanly (not fail) when `ARENA2_PATH` is absent, so CI stays green without game data.
-- Synthetic in-memory fixtures exercise parsing logic even without game data.
+- **Readers stay exact** (Port-Doctrine): logic and constants are DFU's. A departure is measured, kept small and
+  written in the reader's header.
+- **Game data never enters the repo.** `tools/fetch-data.sh` puts the freeware ARENA2 at `/home/claude/dfdata/arena2`
+  (the owner). Set `ARENA2_PATH` to it before work that reads the game's files.
+- **Every reader has a test.** Real-data tests run when `ARENA2_PATH` points at ARENA2 and skip, not fail, when it does
+  not. Synthetic in-memory fixtures exercise the parse without game data.
+- **Corpus pins** (held by the reader tests with ARENA2): ARCH3D.BSA 10251 records from id 44005, 797433 vertices,
+  388475 triangles, 31922 submeshes. BLOCKS.BSA 1295 records: 920 RMB, 187 RDB, 187 RDI, and the junk record `FOO`
+  rejected. RDB objects 39468 = 22962 models + 12238 flats + 4268 lights. MAPS.BSA 62 regions, 45 populated, 15251
+  locations, 4232 dungeons. TEXTURE 472 archives, 469 load, 6713 records, 11211 frames. IMG 263 files, 260 load. CIF/RCI
+  76 files, 1172 records, 1610 frames. DAGGER.SND 459 sounds.
+- **BSA structural closure** is the parser's proof: records fill `[4, directoryStart)` exactly and `directoryStart +
+  entrySize * count` is the file length.
+- **The CIF weapon bound** (`src/formats/cifRciFile.js` `MAX_WEAPON_RECORDS` = 64): DFU's fixed 64-slot array is the
+  weapon loop's only bound. A record with a total size of 0 never moves the read head, so without the bound the loop
+  never ends. A 65th record fails the load, as it does in DFU.
+- **ARCH3D patches** apply to each record's private copy, never to the caller's buffer.
+- **TAMRIEL-WIDE:** MAPS.BSA, WOODS.WLD and the PAK files hold the Iliac Bay only. MapsFile's 1000 x 500 pixel grid and
+  its regions 0..61 are the Bay's own data, marked `BAY-OWN:` in the code. Regions 62..70 are the provinces past the
+  Bay (`src/formats/mapsTables.js` `PROVINCE_REGION_NAMES`): `getRegionName` and `getRegionIndex` answer them, and
+  they hold no MAPS.BSA location. A place past the Bay is found through `src/world/worldWide/worldPlaces.js` and keyed
+  by `src/world/worldWide/worldGrid.js` `worldPixelKey`.
 
-## Blockers
+## Daggerfall Unity
 
-- (none)
+The departures, each recorded in its file:
 
-## Decisions log
+- `BsaFile`: the directory name scan stops at the 14-byte name field, where DFU's is unbounded.
+- `TextureFile`: DFU loads ART_PAL.COL from the same folder. The browser has no folder, so the caller gives the
+  palette.
+- `CifRciFile` and others grow plain arrays where DFU sizes fixed ones, except the weapon bound above.
+- `FaceUVTool`: JavaScript doubles replace the C# float and double mix. `(Int32)` casts stay as `Math.trunc`, and the
+  ARCH3D corpus pins guard the output.
+- `MapsFile`: `getRegion`, `getLocation` and their by-name forms answer `null` where C# answers a default struct.
+  `loadRegion` memoizes. The terminator scan of `_readCStringSkip` stops at the record end. `readLocationIdFast`
+  drops an early return that cannot fire here. Members with no port consumer (`WorldCoordToLongitudeLatitude`, the PAK
+  writes, `LoadRegion(string)` and others) are listed in the header and not ported.
+- `hmiFile.js` has no DFU source: DFU never reads MIDI.BSA and plays pre-converted `.mid` files. The port reads the
+  game's own songs.
+- `CfaFile` keeps DFU's run length, measured in compressed widths while rows are read uncompressed-wide. Where the
+  two widths differ, the tail of the image stays zero, as in DFU.
 
-- ARENA2 data sourced from the official DFU DaggerfallGameFiles.zip (Interkarma's Google Drive link from the DFU install wiki). `tools/fetch-data.sh` re-fetches per session to `/home/claude/dfdata/arena2`. Run real-data tests with `ARENA2_PATH=/home/claude/dfdata/arena2 npm test`.
-- BSA structural closure invariant adopted as the core parser proof: records must fill `[4, directoryStart)` exactly and `directoryStart + entrySize * count == fileLength`. Holds on all three shipped BSAs.
-- Observed + pinned: ARCH3D.BSA 10251 number records (first id 44005), BLOCKS.BSA 1295 name records, MAPS.BSA 248 name records (62 regions x 4 types).
-- Original BLOCKS.BSA ships a junk record at index 669 literally named "FOO". Tests document it explicitly.
-- DFU's `RewriteRecord` write-back and path-extension checks were not ported (read-only byte-buffer runtime). Noted in bsaFile.js header.
-- Palettes: 1:1 DFPalette.cs translation. All 8 shipped palettes load (PAL.PAL + 3 raw .PALs + 4 .COLs). MAP.PAL x4 six-bit expansion verified cross-file: OLDMAP.PAL raw (63,0,63) lands as MAP.PAL (252,0,252). PAL.PAL index 1 is the magenta transparency sentinel. `readEmbedded` ported for TextureFile's in-stream palettes (next reader).
-- TEXTURE: 1:1 TextureFile.cs + BaseImageFile.cs. Full-corpus gate: all 472 archives, 469 load (215/217/436 correctly rejected as DFU documents), 6713 records, 11211 frames, every frame decodes to width*height. Byte-sum checksums pinned per decode path (uncompressed stride-256, multi-frame transparent-run, RecordRle 0x1108, ImageRle 0x0108). Wild compression values 0x900/0x101/0x100 exist in real data and fall through to the uncompressed path exactly as DFU's switch default does. getColor32 keeps DFU's vertical flip; spectral/firewall emission helpers routed to the Rendering arc (Unity material code; approved, see Port-Ledger A).
-- IMG/CIF/RCI: 1:1 ImgFile.cs + CifRciFile.cs. IMG corpus 263 files, 260 load (FMAP0I00/01/16 correctly rejected), 72 headerless via exact-length table, all 6 palettized files detected with embedded x4 palette (TITL00I0 pinned). CIF/RCI corpus 76 files, 1172 records, 1610 frames, zero failures. FACES.CIF routes through the RCI path; WEAPON09.CIF (bow) has no wield record; TFAC00I0.RCI reads exactly 503 records, the count DFU hardcodes its array for. ImgFile reads raw bytes regardless of header compression field, verbatim DFU. Structural simplification: dynamic record arrays instead of DFU's fixed 64/503 pre-sizing - but NOT structural-only, which is what this line used to claim. AUDIT 39 found the 64 load-bearing: CifRciFile.cs:33's `new Record[64]` is the weapon loop's only bound, because the loop's stride is a file-supplied TotalSize and a TotalSize of 0 never moves the read head. DFU's 65th write throws IndexOutOfRange, Read()'s catch swallows it and Load returns false; without the bound the port's plain array SPINS FOREVER. `MAX_WEAPON_RECORDS = 64` restores the refusal, pinned in audit39_formats.test.js.
-- ARCH3D: 1:1 Arch3dFile.cs + FaceUVTool.cs + mechanically-extracted Arch3dPatch table (905 byte fixes, model comments preserved). Full corpus: all 10251 records decompose, zero failures, ~0.9s. Pinned totals: 797433 verts, 388475 tris, 31922 submeshes. Model 456 pinned to the point level. Quirks kept: bounding min/max seeded at 0 so Size spans origin, UVunpack only for first 3 points of records with id < 905, v2.5 offset x3, fixed decomposition buffer sizes throw-on-overflow exactly where C# would. Patch applies to each record's private copy, never the caller's buffer (AUDIT 68: no whole-archive copy). Numeric departure documented in faceUVTool.js: JS doubles replace the C# float/double mix, (Int32) casts preserved as Math.trunc; corpus pins guard the output.
-- BLOCKS: 1:1 BlocksFile.cs + DFBlock structures. Full corpus: 920 RMB + 187 RDB + 187 RDI decompose, junk FOO record rejected as unknown type, zero failures, ~0.3s. Resource closure: 39468 RDB objects = 22962 models + 12238 flats + 4268 lights exactly; 423 linked action chains. All 8 FixRdbData dungeon repairs (994, 945/946, 958, 975, 1025, 1034, 1036) ported verbatim and pinned - W0000009's wall lands at model slot 0 because the raw file holds non-numeric "REF_CUBE" there, and `UInt32.TryParse` yields 0. (Exactness note: C#'s no-style overload is NumberStyles.Integer, so it would also accept surrounding whitespace and a leading sign; no classic record exercises that, measured over all 140,250 modelId fields, so the port's /^\d+$/ is corpus-equivalent rather than semantics-equivalent.). 179 RDBs carry the DAGR signature, 8 carry 0xff padding (which the fixed-length `FileProxy.ReadCString` UTF-8-decodes to four U+FFFD - that variant skips the terminator scan and only TrimEnd('\0')s, so embedded NULs survive in `fldHeader.name`/`otherNames`). DFU's WorldDataReplacement mod-injection hooks not ported (Unity AssetInjection, no equivalent runtime).
-- MAPS: 1:1 MapsFile.cs + PakFile.cs (CLIMATE.PAK/POLITIC.PAK RLE expansion) + FALL.EXE tables (62 region names/races/temples, 45 block prefixes). Full corpus: 62 regions, exactly the 17 empty regions rejected (45 populated, matching classic), 15251 locations all decode, 4232 dungeons. Quirks verified live: both 32-byte-no-terminator names truncate where DFU documents them (Porcupine Hostel/Bhoriane, Feather and Barbarian/Kambria); letter2 (byte)(2*char)>>6 truncation pinned; map-table uint wraparound decode; Orsinium 50015 Z=-2 hack. Daggerfall city pinned (8x8, 316 buildings, politic 145, WALLAA02.RMB) and Privateer's Hold (5 blocks, S0000999.RDB start). Not ported: WorldDataReplacement hooks, smaller-dungeon generation and PatchRegionIndex (quest/save systems - Systems arcs), plus - added on road/maps-record 2026-09-03, when a MAPS.BSA sweep went looking for absent MEMBERS rather than for wrong values - GetMapPixelIDFromLongitudeLatitude (its eight DFU callers are all PlayerGPS discovery, and the port's `systems/discovery.js` keys by `mapId & 0xfffff`, which equals it for all 15251 locations), WorldCoordToLongitudeLatitude, SetClimateIndex/SetPoliticIndex (PAK writes; this runtime is read-only), DefaultClimateSettings, the ResolveRmbBlockName(dfLocation,x,y) overload, LoadRegion(string) and the world-coord/min-map-pixel constants; none has a port consumer. Four measured DEPARTURES are now recorded in the file header rather than left implied: null-on-failure from getRegion/getLocation/getRegionByName/getLocationByName where C# returns a default struct, loadRegion's memoization, _readCStringSkip's terminator scan clamped at the record end (C#'s is unbounded and would throw EndOfStreamException, discarding the whole region - the clamp never fires on classic data), and readLocationIdFast's dropped WorldDataReplacement early return (unreachable: _readMapTable hard-codes locationId 0). BsaFile's directory name scan is likewise bounded at the 14-byte name field where DFU's is unbounded; no MAPS.BSA name fills that field. All pinned in `test/ui/travel/road_maps_record.test.js`. GetNameBankOfRegion SHIPPED with the Characters arc (C2) as `characters/nameHelper.js` getNameBankOfRegion over the REGION_RACES table exported here, and is live in `scenes/townTalk.js`.
-- SND: 1:1 SndFile.cs. DAGGER.SND is a number-record BSA of raw unsigned 8-bit mono PCM at 11025 Hz with a synthesized 44-byte RIFF header, byte-exact against the reference. Corpus: 459 sounds, 7658090 PCM bytes, header consistency everywhere, record index 5 ships zero-length (real quirk, pinned). Music (MIDI.BSA HMI/XMI) is NOT part of DFU's DaggerfallConnect readers - DFU plays music through Unity-side synthesis. Routed to the Audio arc (approved, see Port-Ledger A) where the playback strategy gets decided.
+## Code and tests
 
-## Arc close-out
+- `src/formats/` - the readers in the table above.
+- `test/formats/bsa.test.js`, `palette.test.js`, `texture.test.js`, `imgcif.test.js`, `arch3d.test.js`,
+  `blocks.test.js`, `maps.test.js` - the core readers and their corpus pins.
+- `test/ui/snd.test.js`, `test/ui/flc.test.js`, `test/ui/vid.test.js`, `test/ui/fnt.test.js`,
+  `test/ui/classquestions.test.js`, `test/render/sky.test.js`, `test/formats/bss.test.js`,
+  `test/formats/flats.test.js`, `test/systems/tr2_riding.test.js` - the other readers.
+- `test/formats/morrowind/audit39_formats.test.js` - the CIF weapon bound.
+- `test/ui/travel/road_maps_record.test.js` - MapsFile's departures and unported members.
+- `test/systems/classicsave.test.js` - the classic save readers and the import conversion.
 
-All 8 readers complete, translated 1:1 from DaggerfallConnect with real-data corpus gates:
-BSA containers, 8 palettes, 472 texture archives / 11211 frames, 260 IMG + 76 CIF/RCI files,
-10251 meshes, 1295 blocks, 15251 locations across 45 regions, 459 sounds.
-Suite: 52 tests, all green with and without ARENA2_PATH. Next per Port-Doctrine phase plan: World-Arc.
+## Open
 
-Post-close addition: SKY??.DAT reader (`src/formats/skyFile.js`) shipped
-under Rendering-Arc R4 with its own corpus gate - see
-07-Rendering/Rendering-Arc.md.
-
-Post-close addition: GFX reader (`src/formats/gfxFile.js`, GfxFile.cs
-verbatim) shipped under UI-Arc U18 with its own corpus gate. The only
-GFX files in the game are SCRL00I0/SCRL01I0 - 8 parchment frames each,
-320x80, TEXTURE-style RLE rows behind a per-row offset table - used
-exclusively by the class-questions screen. See 10-UI/UI-Arc.md.
-
-Post-close addition: THE CLASSIC `.SAV` READER (SAV1 2026-08-27) - the
-fourteenth reader, all 13 DFU API/Save files: `formats/save/saveTreeFile.js`
-(SAVETREE.DAT - header, building records, the 71-byte record root, the
-typed item/character/spell/guild/disease/container/soul records),
-`formats/characterRecord.js`, `formats/save/saveVarsFile.js` (SAVEVARS.DAT
-with the region and faction tables), `formats/save/saveImageFile.js`
-(IMAGE.RAW), `formats/bioFile.js` (BIO.DAT), `formats/save/saveGames.js`
-(the SAVE0-SAVE5 set: SAVENAME.TXT, MAPSAVE.SAV discovery walk, rumor
-and bio wiring). The spell-record parse single-sources into
-spellsStd.js (`readSpellRecord` = DaggerfallSpellReader.ReadSpellData);
-the character-document conversion sits in `systems/classicSave.js`.
-Quirks preserved and pinned in `test/systems/classicsave.test.js` (22 tests, 12
-mutation-checked): the 0x126 version throw, the Light record's x39
-length, the `>=` exactly-at-EOF record rejection, duplicate-RecordID
-drop-and-count, the reputation READ order, the DUPLICATE climateWeathers
-block, ship-price sentinels, the ReadCString trailing-trim law. The
-validation-gate caveat is real and recorded: NO classic save exists in
-this container, so the corpus test (real SAVE0-5 beside ARENA2) skips -
-the reader ships on synthetic byte-exact fixtures, and the corpus gate
-is armed for the first machine that has real saves. The IMPORT half
-(DaggerfallLoadClassicGameWindow, feeding game state) is not this
-reader and stays on Port-Ledger section C's row.
-
-- CFA (TR2): 1:1 CfaFile.cs. One record, N frames of one size, a
-  14-byte header and a single RLE run behind it, decoded through
-  BaseImageFile's existing `readRleData` - the same decoder CIF and
-  TEXTURE use. NO CORPUS GATE: this container has no ARENA2, and the
-  only CFAs the port wants are the two mount sprites, so the pins are
-  hand-built files exercising the header, the per-frame slice and the
-  out-of-range guards. One arithmetic quirk is carried verbatim and
-  pinned as such: ReadImageData measures the run length in COMPRESSED
-  widths (`widthCompressed * height * frameCount`) while the buffer is
-  UNCOMPRESSED-sized and GetDFBitmap reads uncompressed-wide rows, so
-  where the two widths differ DFU stops short and the tail stays zero.
-  The shipped files agree; "fixing" it would be a guess about art that
-  cannot be opened here. FLAGGED for the first session with ARENA2:
-  decode MRED00I0/MRED01I0 and confirm the two widths match.
+- The classic save readers are pinned on synthetic byte-exact fixtures only. No real SAVE0-SAVE5 set is at hand, so
+  the corpus test in `test/systems/classicsave.test.js` skips until a machine with real saves runs it.
+- CFA has no corpus test. Decode MRED00I0.CFA and MRED01I0.CFA on real data and confirm the two widths match.

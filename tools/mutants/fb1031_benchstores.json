@@ -4,69 +4,89 @@
     "file": "src/ui/professions/profPages.js",
     "old": "  const at = landed ?? worked.find((d) => d.id === _stores.benchAt) ?? worked[0];",
     "new": "  const at = landed ?? worked[0];",
-    "tests": ["test/ui/professions/fb1029_benchstores.test.js"]
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-P1-the-landing-unkept",
     "file": "src/ui/professions/profPages.js",
     "old": "  if (landed) _stores.benchAt = landed.id;",
     "new": "",
-    "tests": ["test/ui/professions/fb1029_benchstores.test.js"]
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-P2-the-answer-the-bench-s-alone",
     "file": "src/ui/professions/profPages.js",
     "old": "    _stores[wordKey] = _stores.word = BAG_PAGE_WORDS.allInDone(moved, refused, stop);",
     "new": "    _stores[wordKey] = BAG_PAGE_WORDS.allInDone(moved, refused, stop);",
-    "tests": ["test/ui/professions/fb1029_benchstores.test.js"]
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-P2-a-reset-keeps-the-bench-s-line",
     "file": "src/ui/professions/profPages.js",
     "old": "_stores.word = null; _stores.benchWord = null; _stores.benchAt = null;",
     "new": "_stores.word = null; _stores.benchAt = null;",
-    "tests": ["test/ui/professions/fb1029_benchstores.test.js"]
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
   },
   {
     "name": "STORES-AT-BENCH-a-new-press-keeps-the-old-line",
     "file": "src/ui/professions/profPages.js",
     "old": "  if (land) _stores.benchWord = null;   // a new press: the last put-in's line is spent",
     "new": "",
-    "tests": ["test/ui/professions/fb1029_benchstores.test.js"]
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
   },
   {
     "name": "STORES-AT-BENCH-the-answer-line-never-drawn",
     "file": "src/ui/professions/profPages.js",
     "old": "  if (_stores.benchWord) out.append(el('p', 'prof-word', _stores.benchWord));",
     "new": "",
-    "tests": ["test/ui/professions/fb1029_benchstores.test.js"]
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
   },
   {
     "name": "STORES-AT-BENCH-the-bar-on-the-stores-page-too",
     "file": "src/ui/professions/profPages.js",
     "old": "  drawStations(detail, rerender, kit, { benchStores: true });",
     "new": "  drawStations(detail, rerender, kit, {});",
-    "tests": ["test/ui/professions/fb1029_benchstores.test.js"]
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
   },
   {
     "name": "STORES-AT-BENCH-the-press-never-lands",
     "file": "src/ui/professions/profPages.js",
     "old": "  if (land) globalThis.requestAnimationFrame?.(() => globalThis.document?.getElementById('prof-bench-stores')?.scrollIntoView?.({ block: 'start' }));",
     "new": "",
-    "tests": ["test/ui/professions/fb1029_benchstores.test.js"]
+    "tests": [
+      "test/ui/professions/fb1029_benchstores.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-P4-a-horse-keyed-by-its-value",
     "file": "src/ui/packSort.js",
     "old": "    value: horse || !Number.isFinite(value) ? 0 : value,",
     "new": "    value: !Number.isFinite(value) ? 0 : value,",
-    "tests": ["test/ui/packsort.test.js"]
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
   },
   {
     "name": "AUDIT-FB1031-P4-a-horse-keyed-by-its-name",
     "file": "src/ui/packSort.js",
     "old": "    name: horse ? '' : String(nameOf(it) ?? ''),",
     "new": "    name: String(it.value ?? ''),",
-    "tests": ["test/ui/packsort.test.js"]
+    "tests": [
+      "test/ui/packsort.test.js"
+    ]
   }
 ]

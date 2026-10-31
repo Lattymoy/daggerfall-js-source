@@ -22,8 +22,8 @@
   {
     "name": "FB1031W-laid-day-scanned",
     "file": "server-account/src/witnessTiles.js",
-    "old": "  if (await db.prepare('SELECT 1 FROM witness_tile_days WHERE day = ?1').bind(day).first()) return 0;\n",
-    "new": "",
+    "old": "  if (await db.prepare('SELECT 1 FROM witness_tile_days WHERE day = ?1').bind(day).first()) return 0;\n  const { statements, tiles } = witnessTileStatements(db, day, await scan(), mintId(rand));",
+    "new": "  const { statements, tiles } = witnessTileStatements(db, day, await scan(), mintId(rand));",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -32,8 +32,8 @@
   {
     "name": "FB1031W-grid-unbounded-laid",
     "file": "server-account/src/witnessTiles.js",
-    "old": "    if (!pixelOk(p?.x, p?.y)) continue;\n",
-    "new": "",
+    "old": "    if (!pixelOk(p?.x, p?.y)) continue;\n    const [tx, ty] = tileOf(p.x, p.y);",
+    "new": "    const [tx, ty] = tileOf(p.x, p.y);",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -42,8 +42,8 @@
   {
     "name": "FB1031W-bay-only",
     "file": "server-account/src/witnessTiles.js",
-    "old": "    if (!pixelOk(p?.x, p?.y)) continue;\n",
-    "new": "    if (!pixelOk(p?.x, p?.y) || p.x < 0 || p.y < 0) continue;\n",
+    "old": "    if (!pixelOk(p?.x, p?.y)) continue;",
+    "new": "    if (!pixelOk(p?.x, p?.y) || p.x < 0 || p.y < 0) continue;",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -52,8 +52,8 @@
   {
     "name": "FB1031W-yesterday-kept",
     "file": "server-account/src/witnessTiles.js",
-    "old": "    db.prepare(`DELETE FROM witness_tiles WHERE day < ?1 AND ${laid}`).bind(day, n),\n",
-    "new": "",
+    "old": "    db.prepare(`DELETE FROM witness_tiles WHERE day < ?1 AND ${laid}`).bind(day, n),\n    db.prepare(`DELETE FROM witness_tile_days WHERE day < ?1 AND ${laid}`).bind(day, n),",
+    "new": "    db.prepare(`DELETE FROM witness_tile_days WHERE day < ?1 AND ${laid}`).bind(day, n),",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -62,8 +62,8 @@
   {
     "name": "FB1031W-mark-yesterday-kept",
     "file": "server-account/src/witnessTiles.js",
-    "old": "    db.prepare(`DELETE FROM witness_tile_days WHERE day < ?1 AND ${laid}`).bind(day, n),\n",
-    "new": "",
+    "old": "    db.prepare(`DELETE FROM witness_tile_days WHERE day < ?1 AND ${laid}`).bind(day, n),\n  ];",
+    "new": "  ];",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -72,8 +72,8 @@
   {
     "name": "FB1031W-laying-unguarded",
     "file": "server-account/src/witnessTiles.js",
-    "old": "FROM json_each(?3) AS j WHERE ${laid}`)",
-    "new": "FROM json_each(?3) AS j`)",
+    "old": "      SELECT ?1, json_extract(j.value, '$[0]'), json_extract(j.value, '$[1]'), json_extract(j.value, '$[2]') FROM json_each(?3) AS j WHERE ${laid}`)",
+    "new": "      SELECT ?1, json_extract(j.value, '$[0]'), json_extract(j.value, '$[1]'), json_extract(j.value, '$[2]') FROM json_each(?3) AS j`)",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -82,8 +82,8 @@
   {
     "name": "FB1031W-statement-unbounded",
     "file": "server-account/src/witnessTiles.js",
-    "old": "    if (chunk.length && chars + r[2].length > TILES_LAID_CHARS) {",
-    "new": "    if (false) {",
+    "old": "    if (chunk.length && chars + r[2].length > TILES_LAID_CHARS) { chunks.push(chunk); chunk = []; chars = 0; }",
+    "new": "    if (false) { chunks.push(chunk); chunk = []; chars = 0; }",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -92,8 +92,8 @@
   {
     "name": "FB1031W-laid-unsaid",
     "file": "server-account/src/witnessTiles.js",
-    "old": "  if (!mark.length) return { day, laid: false };\n",
-    "new": "",
+    "old": "  if (!mark.length) return { day, laid: false };\n  return { day, laid: true, tiles: rows.map((r) => [Number(r.tx), Number(r.ty), String(r.px)]) };",
+    "new": "  return { day, laid: true, tiles: rows.map((r) => [Number(r.tx), Number(r.ty), String(r.px)]) };",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -102,8 +102,8 @@
   {
     "name": "FB1031W-read-scans",
     "file": "server-account/src/witnessTiles.js",
-    "old": "db.prepare('SELECT 1 AS laid FROM witness_tile_days WHERE day = ?1').bind(day),",
-    "new": "db.prepare('SELECT 1 AS laid FROM witness_tile_days WHERE day = ?1 AND EXISTS (SELECT 1 FROM world_witness)').bind(day),",
+    "old": "    db.prepare('SELECT 1 AS laid FROM witness_tile_days WHERE day = ?1').bind(day),",
+    "new": "    db.prepare('SELECT 1 AS laid FROM witness_tile_days WHERE day = ?1 AND EXISTS (SELECT 1 FROM world_witness)').bind(day),",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -112,8 +112,8 @@
   {
     "name": "FB1031W-plan-a-scan",
     "file": "server-account/src/witnessTiles.js",
-    "old": "AND t.tx = json_extract(j.value, '$[0]') AND t.ty",
-    "new": "AND +t.tx = json_extract(j.value, '$[0]') AND +t.ty",
+    "old": "      WHERE t.day = ?1 AND t.tx = json_extract(j.value, '$[0]') AND t.ty = json_extract(j.value, '$[1]')`).bind(day, JSON.stringify(asked)),",
+    "new": "      WHERE t.day = ?1 AND +t.tx = json_extract(j.value, '$[0]') AND +t.ty = json_extract(j.value, '$[1]')`).bind(day, JSON.stringify(asked)),",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -132,8 +132,8 @@
   {
     "name": "FB1031W-grid-unbounded-asked",
     "file": "server-account/src/witnessTiles.js",
-    "old": "if (!Array.isArray(t) || t.length !== 2 || !tileOk(t[0], t[1])) return null;",
-    "new": "if (!Array.isArray(t) || t.length !== 2) return null;",
+    "old": "    if (!Array.isArray(t) || t.length !== 2 || !tileOk(t[0], t[1])) return null;",
+    "new": "    if (!Array.isArray(t) || t.length !== 2) return null;",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -142,8 +142,8 @@
   {
     "name": "FB1031W-ask-unbounded",
     "file": "server-account/src/witnessTiles.js",
-    "old": "tiles.length > WITNESS_TILES_ASK) return null;",
-    "new": "tiles.length > 4 * WITNESS_TILES_ASK) return null;",
+    "old": "  if (!Array.isArray(tiles) || tiles.length < 1 || tiles.length > WITNESS_TILES_ASK) return null;",
+    "new": "  if (!Array.isArray(tiles) || tiles.length < 1 || tiles.length > 4 * WITNESS_TILES_ASK) return null;",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -152,8 +152,8 @@
   {
     "name": "FB1031W-switch-unasked",
     "file": "server-account/src/witnessTiles.js",
-    "old": "  const refused = profAsks(player, { character, needRid: false }) ?? profShut(player, env);\n  if (refused) return refused;\n  const asked",
-    "new": "  const refused = profAsks(player, { character, needRid: false });\n  if (refused) return refused;\n  const asked",
+    "old": "  const refused = profAsks(player, { character, needRid: false }) ?? profShut(player, env);",
+    "new": "  const refused = profAsks(player, { character, needRid: false });",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -184,8 +184,8 @@
   {
     "name": "FB1031W-pack-order",
     "file": "src/net/witnessTileLaw.js",
-    "old": ".sort((a, b) => (DIGIT_OF.get(a[0]) - DIGIT_OF.get(b[0])) || (DIGIT_OF.get(a[1]) - DIGIT_OF.get(b[1]))).join('');",
-    "new": ".sort().join('');",
+    "old": "  return [...cells].sort((a, b) => (DIGIT_OF.get(a[0]) - DIGIT_OF.get(b[0])) || (DIGIT_OF.get(a[1]) - DIGIT_OF.get(b[1]))).join('');",
+    "new": "  return [...cells].sort().join('');",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -194,8 +194,8 @@
   {
     "name": "FB1031W-pack-off-tile",
     "file": "src/net/witnessTileLaw.js",
-    "old": "if (r >= 0 && r < WITNESS_TILE && c >= 0 && c < WITNESS_TILE) cells.add(",
-    "new": "if (r >= 0 && c >= 0) cells.add(",
+    "old": "    if (r >= 0 && r < WITNESS_TILE && c >= 0 && c < WITNESS_TILE) cells.add(DIGITS[r] + DIGITS[c]);",
+    "new": "    if (r >= 0 && c >= 0) cells.add(DIGITS[r] + DIGITS[c]);",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -204,8 +204,8 @@
   {
     "name": "FB1031W-unpack-lax",
     "file": "src/net/witnessTileLaw.js",
-    "old": "    if (r === undefined || c === undefined) return null;\n",
-    "new": "",
+    "old": "    if (r === undefined || c === undefined) return null;\n    out.push([x0 + c, y0 + r]);",
+    "new": "    out.push([x0 + c, y0 + r]);",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -344,8 +344,8 @@
   {
     "name": "FB1031W-margin-dropped",
     "file": "src/ui/witnessMapMark.js",
-    "old": "range = tileRange(box, WITNESS_WASH_MARGIN);",
-    "new": "range = tileRange(box);",
+    "old": "      if (!range || v.tx0 < range.tx0 || v.ty0 < range.ty0 || v.tx1 > range.tx1 || v.ty1 > range.ty1) range = tileRange(box, WITNESS_WASH_MARGIN);",
+    "new": "      if (!range || v.tx0 < range.tx0 || v.ty0 < range.ty0 || v.tx1 > range.tx1 || v.ty1 > range.ty1) range = tileRange(box);",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -354,8 +354,8 @@
   {
     "name": "FB1031W-range-never-held",
     "file": "src/ui/witnessMapMark.js",
-    "old": "if (!range || v.tx0 < range.tx0 ||",
-    "new": "if (true || v.tx0 < range.tx0 ||",
+    "old": "      if (!range || v.tx0 < range.tx0 || v.ty0 < range.ty0 || v.tx1 > range.tx1 || v.ty1 > range.ty1) range = tileRange(box, WITNESS_WASH_MARGIN);",
+    "new": "      if (true || v.tx0 < range.tx0 || v.ty0 < range.ty0 || v.tx1 > range.tx1 || v.ty1 > range.ty1) range = tileRange(box, WITNESS_WASH_MARGIN);",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -374,8 +374,8 @@
   {
     "name": "FB1031W-built-every-frame",
     "file": "src/ui/witnessMapMark.js",
-    "old": "  if (prev && prev.key === read.key && prev.canvas === canvas) return prev;\n",
-    "new": "",
+    "old": "  if (prev && prev.key === read.key && prev.canvas === canvas) return prev;\n  const lctx = canvas?.getContext?.('2d');",
+    "new": "  const lctx = canvas?.getContext?.('2d');",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -394,8 +394,8 @@
   {
     "name": "FB1031W-blit-off-box",
     "file": "src/ui/witnessMapMark.js",
-    "old": "layer.w * s, layer.h * s);",
-    "new": "layer.w, layer.h);",
+    "old": "  ctx.drawImage(layer.canvas, (layer.x0 - view.ox) * s, (layer.y0 - view.oy) * s, layer.w * s, layer.h * s);",
+    "new": "  ctx.drawImage(layer.canvas, (layer.x0 - view.ox) * s, (layer.y0 - view.oy) * s, layer.w, layer.h);",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],
@@ -404,8 +404,8 @@
   {
     "name": "FB1031W-smoothing-on",
     "file": "src/ui/witnessMapMark.js",
-    "old": "  ctx.imageSmoothingEnabled = false;\n  ctx.drawImage(layer.canvas,",
-    "new": "  ctx.drawImage(layer.canvas,",
+    "old": "  ctx.imageSmoothingEnabled = false;\n  ctx.drawImage(layer.canvas, (layer.x0 - view.ox) * s, (layer.y0 - view.oy) * s, layer.w * s, layer.h * s);",
+    "new": "  ctx.drawImage(layer.canvas, (layer.x0 - view.ox) * s, (layer.y0 - view.oy) * s, layer.w * s, layer.h * s);",
     "tests": [
       "test/ui/fb1031_witness.test.js"
     ],

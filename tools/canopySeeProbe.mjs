@@ -1,11 +1,11 @@
-// CANOPY-SEE (bible/06-Systems/Travel-View.md) - THE WINDOW THROUGH THE TREES, IN A REAL BROWSER. The node pins run the
+// THE WINDOW THROUGH THE TREES, IN A REAL BROWSER. The node pins run the
 // shader's text in JS; this compiles both lanes' billboard programs in a real WebGL2 (SwiftShader) and draws, on a
 // synthetic scene (no ARENA2): a red traveller under a 3D crown on the trees' slot, seen from the travel view's default
 // eye. It counts the traveller's red pixels with no focus (hidden) and with the focus (seen through the crown), and a
 // second crown off the sight line, which must stay whole.
 //
-//   node tools/canopySeeProbe.mjs        (OUT=/tmp/canopysee for the PNGs - synthetic, no game data; CHROMIUM a browser
-//                                          other than the pinned Playwright's, /opt/pw-browsers/chromium)
+//  node tools/canopySeeProbe.mjs        (OUT=/tmp/canopysee for the PNGs - synthetic, no game data; CHROMIUM a browser
+//                                         other than the pinned Playwright's, /opt/pw-browsers/chromium)
 import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { mkdirSync, writeFileSync } from 'node:fs';

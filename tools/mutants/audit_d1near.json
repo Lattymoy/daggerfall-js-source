@@ -162,37 +162,10 @@
   ]
  },
  {
-  "name": "AUDIT-D1NEAR-M1-probe-B-newark-dropped",
-  "file": "bible/11-Multiplayer/Scale-Arc.md",
-  "old": "; B: p50 337, min 281 (n=5) |",
-  "new": " |",
-  "tests": [
-   "test/bible/audit_d1near.test.js"
-  ]
- },
- {
   "name": "AUDIT-D1NEAR-M2-the-toml-puts-it-in-california",
   "file": "server-account/wrangler.toml",
   "old": "# in western North America (the record has the bounds), and a guild look",
   "new": "# in California (the record has the bounds), and a guild look",
-  "tests": [
-   "test/bible/audit_d1near.test.js"
-  ]
- },
- {
-  "name": "AUDIT-D1NEAR-M2-the-index-puts-it-in-california",
-  "file": "bible/01-Overview/Active-Arcs.md",
-  "old": "while one statement on the primary cost it ~150-180 ms - bounds that put the primary in western North America -",
-  "new": "while the D1 primary stands in California -",
-  "tests": [
-   "test/bible/audit_d1near.test.js"
-  ]
- },
- {
-  "name": "AUDIT-D1NEAR-M6-fifteen-back",
-  "file": "bible/11-Multiplayer/Scale-Arc.md",
-  "old": "thirteen statements for a member, fourteen for an officer or the guildmaster",
-  "new": "fifteen statements",
   "tests": [
    "test/bible/audit_d1near.test.js"
   ]

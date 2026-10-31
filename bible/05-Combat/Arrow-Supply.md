@@ -1,169 +1,49 @@
-# ARROW-SUPPLY - arrows that stay where they strike, come back from foes, are made and are sold (2026-10-11)
+# Arrow Supply
 
-Mac, in one message: *"So 3 things - 1. allow arrows to stick in walls/ground wherever shot and be retrieved. 2. Allow
-arrows to sometimes be retrieved from enemies 3. Allow crafting of arrows 4. Buff the shop's stock of arrows"*.
+Four ways an archer keeps a quiver full: a shaft that misses sticks where it struck and can be taken back; a shaft that
+hits a foe sometimes lodges in its pack; wood can be fletched into arrows; and every shop that sells weapons keeps a
+quiver on its counter. The player meets them when shooting, looting, using wood and shopping.
 
-Four slices, one record: STUCK-ARROWS, ARROW-LODGE, FLETCH and SHOP-ARROWS. Every one is a departure from Daggerfall
-Unity, whose bow loses a shaft that misses, keeps every one that strikes, crafts none and shelves twenty at most. The
-departures are Ledger A's (`01-Overview/Port-Ledger.md`, ARROW-SUPPLY). Pins: `test/systems/arrowsupply.test.js`. Mutants:
-`tools/mutants/arrowsupply.json`.
+## How it works
 
-## 1. STUCK-ARROWS - a shaft that meets the world stays there, and is taken back
+- **Stuck arrows** (`src/combat/arrowFlight.js`, and the dungeon's own missile lane in `src/scenes/dungeonContext.js`).
+  The player's shaft that meets a wall, floor, tree or ground stays there, a quarter of its length in the surface
+  (`STUCK_ARROW_EMBED`), drawn as the 99800 arrow mesh along its line. It is a one-Arrow pile in the host's
+  dropped-loot pool (`seedPile`, `src/scenes/droppedLoot.js`), so every host's press, quick loot and Detect Treasure
+  take it. It is not saved and outlives no scene; it stores nothing. At most `STUCK_ARROWS_MAX` (40) a pool, the
+  oldest going first.
+- **What never sticks** (`stickable`): an enemy's shaft, a peer's drawn echo, a gun's Pellet, a conjured round, a shaft
+  loosed in an arena bout (the healers refund those).
+- **Conjured rounds.** `spendAmmoFor` reports a summoned shot (`shot.summoned`) and every loose carries it, so a
+  conjured shaft neither sticks nor lodges, as DFU's `isArrowSummoned` skips recovery.
+- **Lodged arrows.** A real shaft that strikes a foe lodges in its pack half the time (`ARROW_LODGE_CHANCE`), rolled
+  last on the blow's stream so the damage rolls are unchanged. Arrows are ammunition, not loot: they ride past the
+  three-item foe cap (`isQuiverArrow`, `src/systems/foeLootCap.js`).
+- **Fletching** (`src/systems/fletching.js`). In the inventory's Use mode, a piece of wood becomes its own weight in
+  arrows over the classic Arrow's 0.25 kg (`fletchYield`): Twigs 2, a Pine Branch 4, a Wood Bundle 10. Each Use takes
+  one piece; the arrows go into the pack and join the quiver.
+- **Shop arrows** (`src/systems/shopStock.js`). Every shop that sells weapons carries a counter quiver, drawn from no
+  roll after DFU's own draws (`shopAmmoStack`, at most `SHOP_ARROWS_MAX` 100), scaled by shop kind and quality: a
+  Weapon Smith 50 to 100, an Armorer 14 to 29, a Pawn Shop 7 to 14. A General Store's counter quiver is always a full
+  100, and a purchase puts back what it took, offline and online.
 
-FOUND. `combat/arrowFlight.js` (the flight of world.js, exterior.js and worldModes.js's interiors) and
-`scenes/dungeonContext.js` (the dungeon's own missile lane) both kept DFU's law for a shaft that meets geometry: it is
-LOST (DaggerfallMissile.DoCollision destroys it). A miss cost the arrow.
+## Rules
 
-THE LAW. The player's shaft that meets a wall, a floor, a tree's cover or the bare ground stays where it struck. It is
-drawn as the 99800 shaft along the line it flew (`arrowMatrix`), with a quarter of its length in the surface
-(`STUCK_ARROW_EMBED`). The tip is the front of the mesh's own bounding sphere along +Z, and the length is the
-sphere's diameter (`stuckArrowSetBack`). No measurement of the model is carried, so the embed follows the data that is
-loaded. The shaft is a container of one Arrow (`bowDamageArrow`, the one minter) in the host's own dropped-loot pool
-(`scenes/droppedLoot.js` `seedPile`):
+- Arrows stick and can be retrieved, are sometimes retrieved from enemies, can be crafted, and shops stock more (Mac).
+- General stores always have arrows players cannot exhaust (the owner). Only what a purchase took is put back:
+  stolen arrows stay gone.
+- The fletching yield reads the classic Arrow's weight, never a mod's patched one.
+- Online, Carpentry's workbench recipe (twenty arrows) stays the better trade, and arrows list on no market.
 
-- **pressed as a pile.** Every host already presses its piles. The ray's target is the pool's `droppedLoot:<id>` key,
-  quick loot takes it in one press, the plaque names it "Arrow" (`labelFor`), and Detect Treasure finds it. No host
-  learned a new key. The pile's box (0.6 tall) is centred on the shaft (`STUCK_ARROW_LIFT`). The reach is the
-  treasure's, so a shaft high on a wall is out of reach, as a pile on a shelf is.
-- **drawn by the flight** (`drawn: false`, DW-E5's door). `ArrowFlight.draw` draws each standing shaft with the 99800
-  mesh, fetched once, after the first shaft stands. The dungeon's list of meshes is its `dynamicDraws`, so a stuck
-  shaft is an entry there for as long as its pile stands (`syncStuckArrowDraws`, run before `updateMissiles`'s
-  no-missile return). The pile is read live, so a recentre (`offsetAll`) or the ground's move carries the shaft.
-- **unsaved.** WOD5's LoadID-0 container rides no save and no scene cache. `snapshotWorld` already filtered it;
-  `snapshotScene` (the interiors' cache) and the dungeon's save now filter it too. A stuck shaft outlives no scene. In
-  the open world it lies on the player's map pixel at the loose (`pixelKeyAt`) and dies with it (`collectPixel`).
-- **storing nothing.** WILD1's `noStore` door means the inventory window puts nothing on a stuck shaft
-  (`STUCK_ARROW_NO_STORE`). An invisible, unsaved pile holding a sword would have been a lost sword.
-- **forty to a pool** (`STUCK_ARROWS_MAX`). The oldest goes when another sticks. A taken shaft's pile is freed on the
-  next frame (`pruneStuckArrows`): a scene-built container is only ever deactivated, and nothing re-mints a stuck shaft.
+## Daggerfall Unity
 
-WHAT NEVER STICKS (`stickable`):
+DFU's bow loses a shaft that misses (`DaggerfallMissile.DoCollision` destroys it), keeps every one that strikes in the
+foe's pack, crafts none, and shelves at most twenty a stack. All four are departures, each named above.
 
-- an enemy's shaft;
-- a peer's drawn echo (`visual`), which the player who loosed it holds;
-- the gun's spent Dwemer Pellet (`orbArchiveFor`, FIELD-GUN14's leaf);
-- a CONJURED round (below);
-- a shaft loosed in an arena bout (`shotTallyOpen`). The healers refund the bout's shots (ARENA-ARROWS), so the sand
-  keeps the LOST law and the refund stays the whole account. A shaft stuck on the sand would have been an arrow paid
-  twice.
+## Code and tests
 
-THE CONJURED ROUND. DFU carries `isArrowSummoned` from WeaponManager's loose (WeaponManager.cs:404-407) to the
-missile, where it skips the target's recovery (WeaponManager.cs:554-559). The port never carried it. `inventory.js`'s `spendArrow`
-note said so: it "lands with the recovery rule it exists to qualify", and that note is retired here. `spendAmmoFor`
-answers it now (`shot.summoned`, its boolean return unchanged), and every loose hands it to the shaft:
-
-- the three ArrowFlight loose sites;
-- the dungeon's `fireArrow` `extra`;
-- the four technique doors (`techniques.js`): Piercing Shot's one round, and each Volley shaft its own.
-
-So a conjured shaft is neither stuck nor recovered from a foe. Before this slice, a foe struck by one carried a real
-Arrow.
-
-THE FOUR HOSTS:
-
-- **world.js:** its flight takes its pool and its pixel.
-- **exterior.js:** its flight takes its pool.
-- **worldModes.js:** the interiors' flight takes the building's pool (`interiorDropped`).
-- **dungeonContext.js:** sticks at its wall seam (`impact`, the ray's own point) and draws in `dynamicDraws`. The
-  dungeon has no bare ground; its floors are meshes.
-
-## 2. ARROW-LODGE - a shaft sometimes comes back from the foe it struck
-
-FOUND. BowDamage put every player shaft that struck into the foe's pack (`playerArrowHitFoe`), so DFU's recovery stood.
-But FOE-CAP (`systems/foeLootCap.js`) caps a plain foe's body at three items at its death. An arrow stack is the
-cheapest Common thing on a body, so the cap threw it away FIRST. A plain foe already at its three pieces (most of them,
-at LOOT-EASE's rates) gave back none of the arrows it was shot with. That is the "sometimes" Mac could not find.
-
-THE LAW:
-
-- **AN ARROW IS NO FIND** (`capLootList`'s `isQuiverArrow`). The player's shafts in a body, and an archer's own
-  quiver, are ammunition, not the body's loot. They ride past the cap, kept and uncounted, and never take a piece's
-  place. FOE-CAP's "never more than three" still holds for everything a body drops but arrows (DECIDED, the record's
-  call under Mac's words; the PR says so).
-- **SOMETIMES.** A real shaft that strikes a foe survives to lodge in its pack `ARROW_LODGE_CHANCE` (one in two) of the
-  time. The roll is the blow's own stream, drawn LAST, so every roll the damage draws is drawn as before. A conjured
-  one never lodges. The ARENA-ARROWS tally takes back only a shaft that lodged.
-
-NAMED, not changed: a shaft into ANOTHER player's foe (a puppet, WORLD6b-iii(e)) lodges in the owner's copy at that
-copy's own law (`ar: 1`, HIT_ARROWS_MAX a body). The roll is this client's, and the owner's door adds what the wire
-says.
-
-## 3. FLETCH - arrows whittled from wood the player carries
-
-FOUND. Online, arrows are Carpentry's: twenty at a workbench (`net/recipeLaw.js`, `06-Systems/Professions-Arc.md`
-9.3, 25 and 29), decided by the account service. Offline nothing made one.
-
-THE LAW (`systems/fletching.js`). In the inventory's Use mode, a piece of wood becomes ITS OWN WEIGHT IN ARROWS. DFU's
-UseItem asks a registered handler first (ItemHelper.RegisterItemUseHandler, `systems/item/itemTemplates.js`), and
-`useItem.js` loads this module:
-
-| Wood | Weight | Arrows |
-|---|---|---|
-| Twigs (PlantIngredients1/2, 8) | 0.5 kg | 2 |
-| Pine Branch (14) | 1 kg | 4 |
-| Wood Bundle (Foraging's 1604, a Wood-Axe's chop) | 2.5 kg | 10 |
-
-The counts are the templates' weights over the Arrow's 0.25 kg (`fletchYield`), never a table - the CLASSIC Arrow's
-(`ITEM_TEMPLATES`), never a mod's patch (BENCH-ARROWS, `01-Overview/bugs/Field-Bugs-2026-10-15c.md`: Roleplay & Realism:
-Items' 0.1 kg Arrow, on by default and forced online, had made a Twig five arrows - four Twigs the workbench's twenty
-without its plank and its ingot). Each Use takes one
-piece, as a potion is one bottle. The arrows are CreateWeapon's (the shelf's, the corpse's, the workbench's), go into
-the PACK (`localItems`, so wood used off a pile fletches into the pack), and join the quiver as one stack. The window
-says "You fletch 2 arrows from the Twigs." in its own box. A quest's piece keeps the ladder's answer. Online and
-offline alike: the arrows list on no market (`marketLaw.js`, "never arrows"), and the workbench's twenty stay the
-better trade.
-
-## 4. SHOP-ARROWS - a quiver on the counter
-
-FOUND. DFU's stock law shelves arrows as any weapon: a Weapons-chance draw per shelf at rarity 1, one stack of
-Range(1, 21) (`enemyEquipment.js` createWeapon's arrow arm). A Weapon Smith's counter held twenty at most, 70% of the
-time, and a General Store's one day in five.
-
-THE LAW (`systems/shopStock.js`). Every shop that sells weapons also carries a quiver on its counter's shelf
-(shelfIndex 0). It is drawn from NO roll, after every draw of DFU's and before the pellets. It is SHOP-PELLETS' own
-law, one export now (`shopAmmoStack`), at `SHOP_ARROWS_MAX` 100:
-
-| Shop | Quality 1 | Quality 10 | Quality 20 |
-|---|---|---|---|
-| Weapon Smith | 50 | 74 | 100 |
-| Armorer | 14 | 21 | 29 |
-| General Store (ENDLESS-ARROWS, 2026-10-23) | 100 | 100 | 100 |
-| Pawn Shop | 7 | 11 | 14 |
-
-The quiver is minted as the shelf mints arrows, its stack roll answered by a constant, so it merges with DFU's own
-draw when there is one. ENDLESS-ARROWS (2026-10-23, the owner: "give general stores always arrows for each player to
-buy they cant exhaust"; Port-Ledger A): a General Store's counter quiver is a whole one at any quality, and a purchase
-puts back what it took of it, up to the whole, offline and online - every other storefront's sells out until the day's
-restock. AUDIT UPDATE E1/E2 (`01-Overview/audits/Audit-Update-2026-10-25.md`): only what a purchase took, so arrows
-stolen stay gone, and on the counter's shelf alone. Pins moved, each marked PIN MOVED (SHOP-ARROWS):
-
-- `test/systems/shopstock.test.js`: the counter's list;
-- `test/systems/roada2_itemseconomy.test.js`: DFU's Range(1, 21) read off a shelf behind the counter;
-- `test/systems/shoppellets.test.js` (RETIRED by PELLETS-SCARCE): the Weapon Smith's counter is the next shelf plus the shot AND the quiver.
-- (PELLETS-SCARCE, 2026-10-24: `shoppellets.test.js` is retired - no shelf sells the shot - and the counter's law
-  is the quiver's alone; `SHOP_ARROWS_MAX` sizes it, and `arrowsupply.test.js` pins it.)
-
-## 5. The process laws, applied
-
-- **THE FOUR HOSTS RULE:** named in section 1.
-- **ONE DFU MEMBER, ONE EXPORT:** one arrow mint (`createWeapon`'s arm, `bowDamageArrow`) and one counter law
-  (`shopAmmoStack`). The stuck shaft's matrix is `arrowMatrix`.
-- **A PIN MUST FAIL:** `tools/mutants/arrowsupply.json`, every record dead (`node tools/mutate.mjs`).
-- **TEST THE SHAPE THE PRODUCER MINTS:** the suite flies real shafts through `ArrowFlight` into a real
-  `createDroppedLoot` pool, stocks real shelves, and fletches real templates.
-- **EVERY ALLOCATION HAS AN OWNER:** a stuck shaft owns no GPU allocation. Its pile is a plain record, and the mesh is
-  the pipeline's cached 99800, the one the flying shafts wear.
-- **A SLICE CLOSES ITS LEDGER ROW:** Ledger A's ARROW-SUPPLY row. Section C names no arrow-recovery or arrow-crafting
-  member.
-- **PINS MOVED** (each marked PIN MOVED in its file, with what moved it):
-  - ARROW-LODGE: a recovery pin now hands the blow a roll under the chance - `test/systems/arrowflight.test.js`,
-    `test/scenes/audit39_worldmodes.test.js`, `test/systems/audit58_combat.test.js`, `test/systems/arena/fb1004e_arena.test.js`.
-  - STUCK-ARROWS: the hosts' source pins read the flights' pool and the loose's word - `test/systems/arrowflight.test.js`,
-    `test/scenes/audit39_worldmodes.test.js`, `test/systems/thunderlock.test.js`, `test/systems/audit23.test.js` (the dungeon's save).
-  - FLETCH: the Wood Bundle's one Use is the fletching's - `test/systems/forage2_tools.test.js`.
-  - SHOP-ARROWS: the three in section 4, and `test/systems/audit18_systems_items.test.js` (the Armorer's counter).
-  - Mutant records re-aimed by content: `fieldgun14.json` (6, 7), `tech1.json` (a shaft untallied, the shot at plain
-    speed), `shoppellets.json` (the two that read the counter's law).
-  - PELLETS-SCARCE (2026-10-24): `shoppellets.json` retired; its three records that read the counter's law (the weight
-    of weapons, the quality, a shop without weapons) live in `arrowsupply.json` now, killed by the quiver's pins, and
-    `SHOP-ARROWS-the-pellets-max` is `SHOP-ARROWS-the-counters-max-halved`.
+- `src/combat/arrowFlight.js` - stuck and lodged arrows
+- `src/systems/foeLootCap.js` - arrows past the foe cap
+- `src/systems/fletching.js` - fletching
+- `src/systems/shopStock.js` - the counter quiver
+- `test/systems/arrowsupply.test.js` - all four

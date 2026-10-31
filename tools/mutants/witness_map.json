@@ -53,8 +53,8 @@
   {
     "name": "WM-square-off-pixel",
     "file": "src/ui/witnessMapMark.js",
-    "old": "ctx.rect((x - view.ox) * s, (y - view.oy) * s, s, s);",
-    "new": "ctx.rect((x - view.ox) * s, (y - view.oy) * s, 1, 1);",
+    "old": "    for (const [x, y] of tile.pixels) if (visible(x + 0.5, y + 0.5, 1)) ctx.rect((x - view.ox) * s, (y - view.oy) * s, s, s);",
+    "new": "    for (const [x, y] of tile.pixels) if (visible(x + 0.5, y + 0.5, 1)) ctx.rect((x - view.ox) * s, (y - view.oy) * s, 1, 1);",
     "tests": [
       "test/ui/witness_map.test.js",
       "test/ui/fb1031_witness.test.js"
