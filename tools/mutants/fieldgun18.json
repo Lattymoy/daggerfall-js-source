@@ -84,8 +84,8 @@
   {
     "name": "FIELD-GUN18-10-the-pellet-icon-goes-back-to-16",
     "file": "tools/gunPaperdoll.mjs",
-    "old": "  const ammo = bake('gun-ammo-src.png', num('ammo', 12), { out: 'gun-ammo.png' });",
-    "new": "  const ammo = bake('gun-ammo-src.png', num('ammo', 16), { out: 'gun-ammo.png' });",
+    "old": "const ammo = bake('gun-ammo-src.png', num('ammo', 12), { out: 'gun-ammo.png' });",
+    "new": "const ammo = bake('gun-ammo-src.png', num('ammo', 16), { out: 'gun-ammo.png' });",
     "tests": [
       "test/combat/weapon/gunLab.test.js"
     ]

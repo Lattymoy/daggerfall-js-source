@@ -225,10 +225,11 @@ export const DECOR_LAMP_FLAME = Object.freeze({ 7: 0.45, 10: 0.61, 12: 0.32, 16:
 
 /** Where a lit piece's light hangs above its base: a TEXTURE.210 light at its flame (DECOR_LAMP_FLAME, else where the
  *  room's own light of that record hangs - interiorLights.js), scaled with the piece; any other flat at its middle, a
- *  model at its origin. */
+ *  model at its origin. YARD-WALLS: a hung picture's place is its middle, so its light is taken from there. */
 export function decorLightLift(piece, size) {
   if (!piece.flat) return 0;
   if (!size) return null;
+  if (decorIsMount(piece)) return decorLightLift({ ...piece, item: null, hung: false }, size) - size.h / 2;
   if (piece.flat[0] !== LIGHTS_ARCHIVE) return size.h / 2;
   const flame = DECOR_LAMP_FLAME[piece.flat[1]];
   if (flame != null) return size.h * flame;

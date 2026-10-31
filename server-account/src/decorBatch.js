@@ -18,7 +18,7 @@ import {
 } from './realm.js';
 import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
 
-const placeJson = ({ pos, rot, scale, light, storage, paid, station, name }) => JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}) });
+const placeJson = ({ pos, rot, scale, light, storage, paid, station, name, hung }) => JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}), ...(name ? { name } : {}), ...(hung ? { hung } : {}) });
 
 /** Ids in `save` whose storage still holds something. The record is the authority, not the client's word. */
 export function decorHeldBlocks(save, ids) {

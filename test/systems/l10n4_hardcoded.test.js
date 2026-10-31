@@ -148,7 +148,7 @@ const HARDCODED = {
   'src/net/raid/raidClaims.js': 5,
   'src/net/realm/realmGoldLaw.js': 1,
   'src/net/realm/realmTradeLaw.js': 20,   // RPT1026-MARKET HOLD-SAID: -1, the law's named hold's words through t() (realm.held.lawNamed)
-  'src/net/recipeLaw.js': 109,
+  'src/net/recipeLaw.js': 110,   // SMITH-RRI: the Light Flail's name - a recipe's canonical product name, as the Battle Axe's and the War Axe's are
   'src/net/relayCfg.js': 3,
   'src/net/renown.js': 2,
   'src/net/royalLink.js': 10,
@@ -738,7 +738,7 @@ const HARDCODED = {
   'src/ui/plus/plusPad.js': 18,
   'src/ui/plus/plusPadBinds.js': 31,   // TECH-KEY2: +1, the signature key's bind row, beside the technique's
   'src/ui/prisonScreen.js': 1,
-  'src/ui/professions/profPages.js': 28,   // FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t(); STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
+  'src/ui/professions/profPages.js': 26,   // AUDIT FB1031 III I2: the bench bar's Put everything in and its answer line through t(); FB1020c ONE-SAVE: the kept words, moved here from the world host; REFORGE-REPLACE: the Reforge with Essence's two words through t(); STOREFRONT: 1 fewer - class lists with a name built in them (`a-b a-${k}`), which the scan now reads as CSS
   'src/ui/profileBadge.js': 4,
   'src/ui/profileIcons.js': 4,   // WITCH1: the four profile icons' names (ICON_TEXT) - the badge's words, as playerBadge.js's titles and auras
   'src/ui/profileWindow.js': 14,

@@ -58,12 +58,23 @@ The weather list keeps DFU's seven words at their enum values and appends two (`
   compiled at boot, built at the first ashfall). Every reader of weather flags hears overcast; the music plays
   overcast's songs; it falls without a sound.
 
+### The fog's colour (`src/scenes/shared.js` `outdoorFogColor`)
+
+DFU's law (`DaggerfallSky.SetSkyFogColor`): an exp fog past the rain's density (`RAINY_FOG_DENSITY`, 0.003) is grey, a
+thinner one the sky's colour. A thinned snow or ash passes between DFU's rows, so between the rain's density and the
+snow's (`GRAY_FOG_FULL_DENSITY`, 0.005) the colour eases from the sky's to the grey on a smoothstep. Each of DFU's rows
+keeps DFU's colour. The rain is the sky's, and the snow, the heavy fog, the ash and the sandstorm are grey. Both lanes
+take it. Every far view stands in this colour (`03-World/Red-Mountain.md`), so it never flips in a frame. Under Dynamic
+Skies the fog is the mod's own colour.
+
 ### Night fog (`src/systems/weather/nightFog.js`)
 
 On the enhanced lane a fog is never darker than the open air's light: half of the exterior ambient plus the moons,
 leaned cool (`NIGHT_AIR`), applied on luminance so a fog keeps its hue. The sky controller hands this colour to every
 host (`src/scenes/shared.js` `fogColorFor`), so land, far ring, water, sky haze and jungle haze close into one lit air.
 By day nothing changes. Under a closed canopy the canopy's own dimming still applies. `?nightfog=off` turns it off.
+DFU's grey stands at night, being brighter than the night's air. A darker snow or ash at night would change the whole
+frame's fog: open, the owner's call.
 
 ## Rules
 
@@ -82,7 +93,8 @@ By day nothing changes. Under a closed canopy the canopy's own dimming still app
 DFU's weather is a zone's word rolled once a day (`WeatherManager`, the Chronicles' table, six zones), applied to the
 whole sky. We keep that on the classic lane. Departures, enhanced lane only: weather systems on a field; rain worn as
 half the table's day; two appended words; night fog lit by the air instead of `DaggerfallSky.SetSkyFogColor`'s sky
-colour or Dynamic Skies' black (DFU's grey heavy fog stands, being brighter); interiors keep DFU's black `SetFog`.
+colour or Dynamic Skies' black (DFU's grey heavy fog stands, being brighter); interiors keep DFU's black `SetFog`. On
+both lanes, DFU's grey eases in between the rain's density and the snow's, where DFU has no row.
 
 ## Code and tests
 
@@ -95,3 +107,4 @@ colour or Dynamic Skies' black (DFU's grey heavy fog stands, being brighter); in
 - `test/systems/weather/rainhours.test.js` - `WET_HOURS` against the Chronicles' digits
 - `test/systems/weather/ashfall1.test.js`, `test/systems/weather/nightfog.test.js`,
   `test/systems/weather/bayleftsea_seaweather.test.js`, `test/systems/rainleak.test.js`
+- `test/render/fb1031_light.test.js` - the grey eased in

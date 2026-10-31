@@ -32,6 +32,13 @@ climbing is `Parkour-Arc.md`.
   of trees, rocks and barrels by their bodies (`src/player/bodyClamp.js`, `src/world/propBodies.js`). A hanging sign
   stops a body only where it stands, a fence rail is no floor where no body stands, and a lift with no room is never
   taken. A body stuck in a mountain's rock is lifted out; a dungeon has a void failsafe.
+- **Foes out of trees** (`src/characters/foeSpacing.js` `keepFoesOffBodies`). Every foe pool's spacing pass (`spaceFoes`:
+  the street's and a building's pool, the watch, the dungeon) puts a foe whose feet stand in a nature body (a trunk, a
+  rock, a landmark past the Bay) at its edge in one frame, a lone foe too, by the player's clamp law. Where that push
+  meets the foe's way head on, it also steps along the edge, so the foe walks round the trunk. It moves through the
+  collider and never off an edge. A made thing's body (a barrel, a statue, a cart) holds no foe: no foe's steering reads
+  a body, so one pushed off a barrel in a corner would stand there. What a foe in a crown sees and is shot by is cover's
+  law (`12-Enhanced-AI/Tactics-Arc.md`).
 
 ## Rules
 
@@ -44,8 +51,8 @@ climbing is `Parkour-Arc.md`.
 
 The modules port `PlayerMotor`, `PlayerSpeedChanger`, `AcrobatMotor`, `PlayerActivate`, `PlayerEnterExit`,
 `DaggerfallStaticDoors` and `ClimbingMotor`. The collider is the port's own engine-side stand-in for Unity's
-CharacterController, holding to its contract. Departures: the body guards above, which DFU does not have (its movers
-and late objects can trap a body), and Walk mode as a latched Sneak.
+CharacterController, holding to its contract. Departures: the body guards and the foes' clamp above, which DFU does not
+have (its movers and late objects can trap a body), and Walk mode as a latched Sneak.
 
 ## Code and tests
 
@@ -58,3 +65,4 @@ and late objects can trap a body), and Walk mode as a latched Sneak.
 - `test/player/climbing.test.js` - the classic climb
 - `test/player/propbodies.test.js`, `test/player/unstuckout.test.js`, `test/player/fb1025i_railhang.test.js` - the
   body guards
+- `src/characters/foeSpacing.js`, `test/characters/trunkfoes.test.js` - foes kept out of trees

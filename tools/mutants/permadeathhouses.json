@@ -22,8 +22,8 @@
   {
     "name": "PERMADEATH-HOUSES-due-the-dead-carry",
     "file": "src/systems/legacy/household.js",
-    "old": "  if (!family || !p || !isAlive(p)) return [];",
-    "new": "  if (!family || !p) return [];",
+    "old": "  if (!family || !p || !isAlive(p)) return [];\n  const taken",
+    "new": "  if (!family || !p) return [];\n  const taken",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]
@@ -192,8 +192,8 @@
   {
     "name": "PERMADEATH-HOUSES-graft-not-permanent",
     "file": "src/systems/sceneCache.js",
-    "old": "    cache.permanent.add(name);\n    n++;",
-    "new": "    n++;",
+    "old": "    cache.scenes.set(name, d);\n    cache.permanent.add(name);",
+    "new": "    cache.scenes.set(name, d);",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ],
@@ -202,8 +202,8 @@
   {
     "name": "PERMADEATH-HOUSES-graft-shares",
     "file": "src/systems/sceneCache.js",
-    "old": "    const d = copySceneEntry(e);",
-    "new": "    const d = e;",
+    "old": "    const d = copySceneEntry(e);\n    d.lootContainers",
+    "new": "    const d = e;\n    d.lootContainers",
     "tests": [
       "test/systems/legacy/permadeath_houses.test.js"
     ]

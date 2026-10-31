@@ -87,12 +87,15 @@ const realmLockedOnly = (/** @type {any} */ item) => !!item && isRealmLocked(ite
  *  piece the realm locked (`item`), the realm lock's (AUDIT AUTO-HOLD). */
 export const boundText = (/** @type {string} */ name, /** @type {any} */ item = null) =>
   realmLockedOnly(item)
-    ? t(
-        'realm.locked.refusal',
-        '{name} is locked by the realm because the same piece was found somewhere else too. It stays with you and cannot be dropped, traded, sold or stored where others can take it.',
-        { name },
-      )
+    ? realmLockedText(name)
     : `${name || 'That'} is bound to you. It cannot be dropped, traded or sold.`;
+/** The realm lock's own refusal (AUDIT AUTO-HOLD); AUDIT FB1031 D5: a dismantle's too, whatever binds the piece. */
+export const realmLockedText = (/** @type {string} */ name) =>
+  t(
+    'realm.locked.refusal',
+    '{name} is locked by the realm because the same piece was found somewhere else too. It stays with you and cannot be dropped, traded, sold or stored where others can take it.',
+    { name },
+  );
 
 /** The card's line for a bound piece. */
 export const BOUND_LINE = 'Bound. It cannot be dropped, traded or sold.';

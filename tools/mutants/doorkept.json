@@ -29,8 +29,8 @@
   {
     "name": "DOORKEPT-doors-unstood",
     "file": "src/scenes/decor/decorBase.js",
-    "old": "  base.roomDoors?.apply?.(list);\n}",
-    "new": "}",
+    "old": "  base.roomDoors?.apply?.(list);\n",
+    "new": "",
     "tests": [
       "test/server/basehide.test.js"
     ]

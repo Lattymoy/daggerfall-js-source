@@ -127,8 +127,8 @@
   {
     "name": "CRAFT-HOLD-account-version-unmoved",
     "file": "server-account/src/service.js",
-    "old": "export const ACCOUNT_VERSION = 'acct235'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
-    "new": "export const ACCOUNT_VERSION = 'acct123'; // acct235: CACHE-SPREAD (2026-10-31, acct234 on its branch, renumbered past EG-MIGHT's acct234 at the merge of main; Mac: \"no daily cap ... value finds from 5 to 10\"; bible/06-Systems/Aurum.md section 3a) - POST /v1/aurum/cache pays a cache its own 5 to 10 Aurum (net/aurumCacheLaw.js aurumCacheAurumOf) and holds no day's bound; `cache-capped` gone. No migration.",
+    "old": "export const ACCOUNT_VERSION = 'acct241'; // acct241: AUDIT FB1031 W1 W3 W4 (acct236 then acct238 on its branch, renumbered past MUSIC-BOX acct231, PORTAL-BOOK acct232, DRAGON-EACH acct233, EG-MIGHT acct234 and CACHE-SPREAD acct235 at the merges of main; 2026-10-31, WITNESS-MAP's audit; bible/06-Systems/Professions-Arc.md section 61, bible/11-Multiplayer/Scale-Arc.md WITNESS-TILES) - the held map's witnessed ground laid once a UTC day as 64-pixel tiles keyed by the world pixel (witnessTiles.js; migration 0207, witness_tiles and witness_tile_days), by the Motherlodes pick's own scan, or by the minute's job on a day picked before them; POST /v1/prof/ground { character, tiles } answers up to 64 tiles by their keys - two primary-key reads, a replica route and a busy read, never a scan of world_witness - or `laid: false` before the day is laid. The writ board's kept ground is as it was before acct240. Deploy the account service before the site: an older one answers the site's ask 404 or `bad-region`, and the map waits and asks again.",
+    "new": "export const ACCOUNT_VERSION = 'acct123'; // acct241: AUDIT FB1031 W1 W3 W4 (acct236 then acct238 on its branch, renumbered past MUSIC-BOX acct231, PORTAL-BOOK acct232, DRAGON-EACH acct233, EG-MIGHT acct234 and CACHE-SPREAD acct235 at the merges of main; 2026-10-31, WITNESS-MAP's audit; bible/06-Systems/Professions-Arc.md section 61, bible/11-Multiplayer/Scale-Arc.md WITNESS-TILES) - the held map's witnessed ground laid once a UTC day as 64-pixel tiles keyed by the world pixel (witnessTiles.js; migration 0207, witness_tiles and witness_tile_days), by the Motherlodes pick's own scan, or by the minute's job on a day picked before them; POST /v1/prof/ground { character, tiles } answers up to 64 tiles by their keys - two primary-key reads, a replica route and a busy read, never a scan of world_witness - or `laid: false` before the day is laid. The writ board's kept ground is as it was before acct240. Deploy the account service before the site: an older one answers the site's ask 404 or `bad-region`, and the map waits and asks again.",
     "tests": [
       "test/server/legacy7_service.test.js",
       "test/server/founder5.test.js"
@@ -138,7 +138,7 @@
   {
     "name": "CRAFT-HOLD-wrangler-version-unmoved",
     "file": "server-account/wrangler.toml",
-    "old": "ACCOUNT_VERSION = \"acct235\"\n",
+    "old": "ACCOUNT_VERSION = \"acct241\"\n",
     "new": "ACCOUNT_VERSION = \"acct123\"\n",
     "tests": [
       "test/server/realm1.test.js",

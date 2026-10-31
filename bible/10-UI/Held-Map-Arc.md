@@ -34,6 +34,15 @@ shared with the Overworld, `playersOnMaps`) hides other players. Kinds the curre
 **On the sheet:** the party, travelers in their kin's color, raids and the gate with hover cards
 (`src/ui/eventMapMarks.js`), carriage towns, a town's economy card on hover, and online an ore card on bare ground.
 
+**Witnessed ground.** Online, while the professions are open, the world sheet washes each confirmed pixel in view in
+copper, over the ink and under every ring (`src/ui/witnessMapMark.js`, the host's `witnessed`). It asks every 64-pixel
+tile the view touches by its key, nearest the middle first, so a province and the sea past the Bay read as the Bay does
+(the service's side: `bible/11-Multiplayer/Scale-Arc.md`). The wash is a kept bitmap on the kept layer: a pulse frame
+paints none of it, and a pan frame blits it. The legend names it, and the key's Ground row hides it (`filterWitnessed`,
+kept in the save). The far band draws none and dims the switch. Ground confirmed today shows the next UTC day, but a
+pixel this page hears confirmed shows at once. The classic travel map draws none: its marks overwrite its place dots,
+so a wash would hide them.
+
 **Tamriel.** The world sheet zooms out past the Bay onto the whole continent (`src/ui/tamrielInk.js`, Features
 `tamriel-map`, `tamrielMapOn`). Every mark reader reads one box (`_marksBox`: the continent's frame when shown, else
 the Bay's). Waypoints stand anywhere on the world grid. Ports past the Bay carry their anchor, and the Ports filter
@@ -82,6 +91,7 @@ Travel Options' additions. The classic skin keeps DFU's window and Travel Option
 - `src/ui/heldMap.js` - the window, key, marks and Find me
 - `src/ui/ink/inkMap.js` - the world ink and bands
 - `src/ui/tamrielInk.js` - the continent
+- `src/ui/witnessMapMark.js`, `src/net/witnessTileLaw.js` - the witnessed ground's wash and its tiles
 - `src/ui/map/mapSkin.js`, `src/ui/map/mapScale.js` - the switch and the scale
 - `src/combat/heldPose.js`, `src/ui/quadMap.js` - the Morrowind arms
 - `test/ui/heldmap.test.js` - the window
@@ -91,6 +101,7 @@ Travel Options' additions. The classic skin keeps DFU's window and Travel Option
 - `test/ui/mappan.test.js` - the marks layer
 - `test/ui/bayleft_marks.test.js`, `test/ui/bayleft_find.test.js` - marks, waypoints and Find past the Bay
 - `test/ui/findfound.test.js` - found places past the Bay in the Find box, and their order
+- `test/ui/witness_map.test.js`, `test/ui/fb1031_witness.test.js` - the witnessed ground, its tiles and its wash
 - `test/combat/map3_heldpose.test.js` - the held pose and weapon gate
 - `test/ui/rpt1026_client_capture.test.js` - pointer capture
 - `tools/heldMapProbe.mjs`, `tools/heldMapArtProbe.mjs` - Chromium probe and the sprite's measurements

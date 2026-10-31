@@ -59,6 +59,14 @@ a day; the owner can take it in any time, even after the festival. Offerings sta
 on a stool under a lantern, lit at dusk (`src/scenes/witchesHost.js`). Every move is one database batch decided against
 the rows as they stand.
 
+**Letting go.** The pack's Destroy, asked first, lets bound festival goods go (`src/systems/item/itemDiscard.js`). A
+Raiment piece goes from the pack alone. Soul Cakes and Hearth Offerings are the service's counts, so the service lets
+them go: `POST /v1/festival/discard { kind, n, rid }` (`server-account/src/festival.js` `discardFestival`) lowers the
+count once a request id, kept in `fest_discards` (`server-account/migrations/0206_fest_discards.sql`), and answers
+`repeat` to an id asked again. It works on any day and under any switch, never for a guest. The client asks an
+unanswered let-go again by the same id until a count heard since settles it, and restacks the pack from the answer
+(`src/systems/festival/festivalClient.js` `discardFaces`).
+
 **The towns dressed** (`src/world/witchesDecor.js` `WITCH_KITS`). Five kits by climate and people: Breton (turnip
 lanterns, straw effigies), Redguard (standing candles, bowls of fire), Highland (pole torches, bonfires, horned skulls),
 Fen (ward-staves) and Haunted (skull candles, bones). Daggerfall's own light and bone flats stand beside three painted
@@ -85,9 +93,11 @@ DFU's own "mysterious woman" flat (FLATS.CFG 179.2), and the decor uses DFU's li
 ## Code and tests
 
 - `src/net/festivalLaw.js` - the days, nights, caps and words both ends read
-- `server-account/src/festival.js` - finds, sales, offerings
+- `server-account/src/festival.js` - finds, sales, offerings, let-gos
 - `src/systems/festival/` - the client: finds, sales, the two items, foes
 - `src/scenes/witchesHost.js`, `src/world/witchesDecor.js`, `src/world/festivalArt.js` - streets and dressing
 - `src/ui/wyrdWindow.js`, `src/ui/profileIcons.js` - the window and icons
 - `test/server/witch1_festival.test.js`, `test/systems/festival/witch1_client.test.js`,
   `test/world/witch1_decor.test.js`, `test/scenes/witch1_host.test.js`
+- `test/server/bound_destroy_service.test.js`, `test/systems/item/bound_destroy.test.js` - the let-go, the service and
+  the pack
