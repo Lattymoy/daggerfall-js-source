@@ -1,16 +1,16 @@
 // @ts-check
 // SKILL-LEAN (bible/05-Combat/Fixed-PvE.md section 14): A FIXED-PVE FOE'S DROP LEANS TO ITS KILLER'S BEST SKILLS. Its
 // weapons, armour, jewellery and clothing take their first skill lines on the roller's highest skills. Other lines roll
-// as ever, and an Imbue stays random (the owner: "its a random"). The switch off, nothing leans. A leaf, no import.
+// as ever, and an Imbue stays random. The switch off, nothing leans. A leaf, no import.
 
-/** [below this foe level, lines that lean]: a band ahead, so a band's drops make the next band's gear (the owner,
- *  2026-10-31) - one to 11, two to 27, three from 28. */
+/** [below this foe level, lines that lean]: a band ahead, so a band's drops make the next band's gear (2026-10-31)
+ *  - one to 11, two to 27, three from 28. */
 export const SKILL_LEAN_STEPS = Object.freeze([Object.freeze([12, 1]), Object.freeze([28, 2]), Object.freeze([Infinity, 3])]);
-/** LEAN-CHANCE (the owner, 2026-10-31: "seem little hgard", "maybe lean less for doubl tim to grind"): each leaning line
+/** LEAN-CHANCE (2026-10-31, leaning eased so farming takes longer): each leaning line
  *  lands on a best skill this share of the time, else it rolls as ever - farming to top gear takes about twice as long. */
 export const SKILL_LEAN_CHANCE = 0.25;
 /** The groups whose skill lines lean. */
-export const SKILL_LEAN_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing']);   // clothing: the owner, 2026-10-31
+export const SKILL_LEAN_GROUPS = Object.freeze(['Weapons', 'Armor', 'Jewellery', 'MensClothing', 'WomensClothing']);   // clothing: 2026-10-31
 
 /** Lines that lean on a foe of `level`. @param {number} level */
 export const leanLinesAt = (level) => (SKILL_LEAN_STEPS.find(([below]) => (Number(level) || 1) < below) ?? SKILL_LEAN_STEPS[2])[1];

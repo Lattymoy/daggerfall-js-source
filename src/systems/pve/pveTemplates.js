@@ -179,7 +179,7 @@ export const GROUP_TEMPLATES = Object.freeze(/** @type {GroupTemplate[]} */ ([
 
 export const TEMPLATE_BY_KEY = new Map(MOB_TEMPLATES.map((t) => [t.key, t]));
 
-/** RAID-AREAS (the owner, 2026-10-31: "need a raid boss for each region"): the Bay and the nine provinces, one boss each. */
+/** RAID-AREAS (2026-10-31, a raid boss for each region): the Bay and the nine provinces, one boss each. */
 export const RAID_AREAS = Object.freeze(['IliacBay', ...PROVINCES.map((p) => p.key)]);
 /** The raid boss of `area`, or null. @param {string} area */
 export const raidBossOf = (area) => MOB_TEMPLATES.find((t) => t.category === 'raidBoss' && t.area === area) ?? null;

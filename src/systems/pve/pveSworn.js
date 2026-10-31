@@ -1,8 +1,8 @@
 // @ts-check
-// FIXED-PVE SWORN-BOOST (bible/05-Combat/Fixed-PvE.md section 18; the owner, 2026-10-31: "we need them to be hlepful
-// but not op", "more a booster"): with fixed PvE on, a sworn revenant stands on the reference player at the player's
+// FIXED-PVE SWORN-BOOST (bible/05-Combat/Fixed-PvE.md section 18, 2026-10-31: helpful but not overpowered, a
+// booster): with fixed PvE on, a sworn revenant stands on the reference player at the player's
 // level, not on its kind's Daggerfall numbers. A fresh one lands a fifth of a player's blow and has three fifths of a
-// player's health; its rank, stars, devotion and the weapon the player gave it ("u can give them gewr aswell") grow
+// player's health; its rank, stars, devotion and the weapon the player gave it grow
 // them, to at most SWORN_BLOW.most and SWORN_HEALTH.most. It always hits for less than the player and never outlasts
 // them; its armour still guards it as Daggerfall's does. Ledger A (FIXED-PVE).
 import { referencePlayer, DAMAGE_SPREAD } from './pveCategories.js';

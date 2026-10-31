@@ -44,7 +44,7 @@ export function castLevels(caster, school, { on = fixedPveOn() } = {}) {
 /** The most skill takes off a cast's cost (at skill 100), and the skill the classic price is read at. */
 export const CAST_COST_DISCOUNT = 0.25;
 export const CAST_COST_PRICE_SKILL = 50;
-/** The share of that price a cast pays (the owner, 2026-10-30: half cost, beside a pool that grows - spell/skillPool.js). */
+/** The share of that price a cast pays (2026-10-30: half cost, beside a pool that grows - spell/skillPool.js). */
 export const CAST_COST_SHARE = 0.5;
 const discount = (skill) => 1 - (CAST_COST_DISCOUNT * Math.min(Math.max(0, skill), 100)) / 100;
 
@@ -93,7 +93,7 @@ export function budgetEffect(e) {
 /** The damage an effect does, by what it takes: health, fatigue or magicka (Damage and Continuous Damage alike). */
 export const damageKind = (e) => (isSpellDamage(e) && !e.key ? ['health', 'fatigue', 'magicka'][e.subType & 0xff] ?? null : null);
 
-/** ONE DAMAGE OF A KIND (the owner, 2026-10-30): a spell does one damage to health, one to fatigue and one to magicka at
+/** ONE DAMAGE OF A KIND (2026-10-30): a spell does one damage to health, one to fatigue and one to magicka at
  *  most - each landing has its own hold, so three of a kind struck three times. A later effect of a kind already done
  *  is left out of the cast and its price (type -1, as an empty slot). */
 export function oneDamagePerKind(effects) {

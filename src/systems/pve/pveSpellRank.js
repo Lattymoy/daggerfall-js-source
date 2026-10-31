@@ -1,5 +1,5 @@
 // @ts-check
-// FIXED-PVE SPELL-RANK (bible/05-Combat/Fixed-PvE.md section 17; the owner, 2026-10-31: "Normals only"): a kill or a
+// FIXED-PVE SPELL-RANK (bible/05-Combat/Fixed-PvE.md section 17, 2026-10-31: Normals only): a kill or a
 // hold from a spell lands on a Normal template foe as Daggerfall has it. A ranked one - Strong, Elite, Champion, an
 // elite, a boss - is immune to all of them: Disintegrate, a drained stat, Dispel, Paralyze, Pacify and Charm. A
 // Dispel kills a Normal template foe, so it drops its loot. Any other target keeps Daggerfall's law.

@@ -136,20 +136,17 @@ composition. Daggerfall Unity has one player and none of this. The tests: `test/
 ## 9. Stage 7: zones, spawn tables and the population manager (2026-10-30)
 
 Still behind the switch. A zone (`pveZones.js` `pveZoneAt`) is one of six fixed bands, 1-8 up to 36-45, each
-overlapping the next. CENTER-HARDEST (the owner, 2026-10-30: "every area has a starting area", "center is hardest",
-"look where people spawn"): each of the ten areas is lowest where its new characters wake (`starts.js` STARTS: a
+overlapping the next. CENTER-HARDEST (2026-10-30: every area has a starting area where players spawn, hardest at the center): each of the ten areas is lowest where its new characters wake (`starts.js` STARTS: a
 province's start near its capital; the Bay, High Rock and Hammerfell at Privateer's Hold) and climbs toward the Imperial
 City. A place's progress is its distance from the start over that plus its distance to the center, cut into six even
 bands, so the back country stands mid-way and the center at the top. Cyrodiil, whose start is the center, reads its
 distance against the others' mean reach and stands high throughout.
 
-SAFE-ROAD ("make the road safe out of the pvp
-zone", "enemys avoid roads"): the Imperial start wakes at the center, so Cyrodiil's roads hold no hostile population
+SAFE-ROAD (roads out of the PvP zone are safe and foes avoid them): the Imperial start wakes at the center, so Cyrodiil's roads hold no hostile population
 and foes keep off them; a new character is under the PvP zone's level 30 and walks out on them.
 
-REGION-HOTSPOT (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region";
-2026-10-31: "needs to have hot spot of 45 that circles out to 30-34, 20-10, 10-1", "only need 3 spots in total, region
-need to be a lot more free for lower level to travel"): each of the ten areas has three hot spots (`pveZones.js`
+REGION-HOTSPOT (2026-10-30 and 10-31: every region has foes for every level, around three hot
+spots of level 45 that ring out to the low bands, leaving most of the land free for low levels to travel): each of the ten areas has three hot spots (`pveZones.js`
 `areaHotspots`). The first stands as far from the area's start as its land allows, each next as far from the start
 and the ones before; the heart's first is the Imperial City. On the Bay they may stand on a region's heart, its land
 farthest from its edge and the sea (`pveHotspots.js`, measured from MAPS.BSA by `tools/pveHotspots.mjs`); past the
@@ -239,49 +236,48 @@ record. Gold stays the classic price, the same at every skill. The simulator pay
 
 ## 14. A template foe's drop leans to its killer (SKILL-LEAN, 2026-10-30)
 
-The owner: "as they are higher tier area they have better leaning skill gear", "to their highest skills", "for all
-weapons armor jewelry"; 2026-10-31: "clothing need to lean as well". A template foe's body and kit roll inside
+Higher tier areas drop gear that leans to the player's highest skills, for weapons, armour and
+jewellery, and from 2026-10-31 clothing too. A template foe's body and kit roll inside
 `withSkillLean` (`loot/lootSkillLean.js`) at the foe's own level: the first skill lines of each weapon, armour piece,
 piece of jewellery and garment take the roller's best trained skills in order (`lootPowers.js` `bestSkills`). One line
 leans to level 11, two to 27, three from 28. The other lines and the values roll as ever. With the switch off no foe
 carries a template, so nothing leans. Daggerfall Unity's items have no lines. The tests:
 `test/systems/loot/skilllean.test.js`.
 
-The steps sit a band ahead (the owner: "adjust lean so player start farming gear for the nest area tto pushj up").
-Players craft gear to about 30 ("we want them to make gear for say 30"), then better it with leaned drops from harder
-zones and honing. Only drops lean: an Imbue stays random (the owner: "its a random"). Each leaning line lands a quarter of the time,
-else it rolls as ever (`SKILL_LEAN_CHANCE`; the owner: "maybe lean less for doubl tim to grind"), which about doubles
+The steps sit a band ahead (so a player farms gear for the next area up).
+Players craft gear to about 30, then better it with leaned drops from harder
+zones and honing. Only drops lean: an Imbue stays random. Each leaning line lands a quarter of the time,
+else it rolls as ever (`SKILL_LEAN_CHANCE`), which about doubles
 the farming from the base kit to level 45 gear. The reference gear skill
-(`pveBuilds.js` `TIERS`) is the plain enchanted base kit, +375, at 30 ("base kit need tuned fro lvl 30"), +650 at 40 and
-+800 at 45, close to best gear's +875 ("45 shoud need almost top gear").
+(`pveBuilds.js` `TIERS`) is the plain enchanted base kit, +375, at 30, +650 at 40 and
++800 at 45, close to best gear's +875, so level 45 needs near top gear.
 
 ## 15. A template foe's metal follows its level (FOE-METAL, 2026-10-30)
 
-The owner: "material also need to follow a scale", "around 20-30 daedric need to be 7% drop like vanilla". A template
+Metal follows a scale, with Daedric at about 7% around levels 20-30 as in vanilla. A template
 foe's whole loot chain (`hostCombat.js` `spawnEnemyLoot`) runs inside `withFoeMaterialLevel` (`combat/enemyEquipment.js`)
 at the foe's fixed level. Every material roll under it reads Daggerfall Unity's own `RandomMaterial` and
 `RandomArmorMaterial` at that level, and Unleveled Loot is passed by, so the metal climbs with the zone. The curve's
-Daedric is set aside: "smaller weapon roll, more armor" - a weapon and an armour piece are each Daedric at 0.47% a level
+Daedric is set aside for a smaller weapon roll and more armour: a weapon and an armour piece are each Daedric at 0.47% a level
 past 10 (`foeDaedricChance`): none to 10, about 4.7% at 20, 7% at 25, 9.3% at 30 and 16% at 45. Other foes keep
 Unleveled Loot. The tests: `test/systems/loot/foemetal.test.js`.
 
 ## 16. Groups are one player's pack, and the heart is for parties (GROUP-SOLO, GROUP-PARTY, 2026-10-30)
 
-The owner: "make sure a lvl 45 can grind groups in the 45 area", "lower need to be able to grind groups", "we need an
-area above that for group", "that way each band can be grinded by a lower group if needed". A camp's members stand as a
+A level 45 can grind groups in the level 45 area, lower levels can grind groups too, and an area
+above that is for parties, so each band can be ground by a lower party. A camp's members stand as a
 pack (`pveGrant.js` `grantTemplateFoe`): their health and blow are cut by `packShare` so the whole group weighs
 `GROUP_SOLO_WEIGHT`, one and a half Normal foes of its level. In the simulator every build alone beats every group at
 its own level 75-100% of the time, in 4-13 seconds, so a lower party can grind a band above it. Members keep their
 level, and an encounter is no pack.
 
 The heart's inner ring (`pveZones.js` `PARTY_ZONE_FROM`, 0.9 of the road to the Imperial City, wild and dungeons) is the
-party zone: the owner, "they need to grind lvl 50 monsters in group as 45", "an area they have to group", "groups need
-to be able to do high packs". Every foe there stands whole at level 50 (`PARTY_FOE`: a level 45's health half again, its
+party zone, where level 45 parties grind level 50 packs and have to group. Every foe there stands whole at level 50 (`PARTY_FOE`: a level 45's health half again, its
 blow a quarter more) and the zone warns. Four level 45 players grind any group there, three sometimes, two never. Daggerfall Unity has no groups. The tests: `pve_grant.test.js`, `pve_population.test.js`.
 
 ## 17. A killing or holding spell lands on Normals only (SPELL-RANK, 2026-10-31)
 
-The owner: "we need to get all custom spells ready", naming "disentigrate", then "Normals only". Daggerfall's
+Custom spells such as Disintegrate land on Normals only. Daggerfall's
 Disintegrate, a stat drained to zero and Dispel Undead or Daedra end any foe whole, and Paralyze, Pacify and Charm
 hold any foe, so a custom spell could skip a boss. On a template foe (`pve/pveSpellRank.js`) a Normal keeps
 Daggerfall's law. A ranked one (Strong, Elite, Champion, an elite or a boss) is immune to all six. A Dispel kills a
@@ -290,17 +286,17 @@ tests: `pve_spellrank.test.js`.
 
 ## 18. A sworn revenant is a booster (SWORN-BOOST, 2026-10-31)
 
-The owner: "we need them to be hlepful but not op", "more a booster". A sworn revenant kept its kind's Daggerfall
+A sworn revenant helps without being overpowered, more a booster. A sworn revenant kept its kind's Daggerfall
 numbers, so past the low levels it did next to nothing to a template foe. With fixed PvE on, `applySwornStrength` stands it on the reference player at the player's level
 (`pve/pveSworn.js`): a fresh one lands a fifth of the player's blow and has three fifths of the player's health. Its
-rank, stars and devotion grow both, and the weapon the player gave it ("u can give them gewr aswell") grows its blow 3%
+rank, stars and devotion grow both, and the weapon the player gave it grows its blow 3%
 a step of metal and 10% a tier. Both stop at 35% of the blow and the player's whole health, so it always hits for less
 than the player and never outlasts them. Its armour guards it as Daggerfall's does. Daggerfall Unity has no sworn foes. The tests:
 `revenant_companions.test.js`.
 
 ## 19. A raid boss for each area (RAID-AREAS, 2026-10-31)
 
-The owner: "need a raid boss for each region". The first pass had one raid boss. Now each area has one, on a body the game already draws (`pve/pveTemplates.js` `RAID_AREAS`,
+Each region has a raid boss. The first pass had one raid boss. Now each area has one, on a body the game already draws (`pve/pveTemplates.js` `RAID_AREAS`,
 `raidBossOf`): the Warchief in the Bay, an Ancient Vampire in High Rock, a Scorpion Queen in
 Hammerfell, a Frost Giant King in Skyrim, an Ancient Lich in Morrowind, an Archmage in the Summerset Isles, a Spriggan
 in Valenwood, a Sabrecat in Elsweyr, a Dragonling in Black Marsh and a Daedra Lord in Cyrodiil. All are level 45. A
@@ -311,7 +307,7 @@ All ten land within the report's edge. Where a raid stands in the world comes wi
 
 ## 20. A template foe's drop reads the foe (TEMPLATE-DROPS, 2026-10-31)
 
-The owner: "jewelery armor weapons", "that need fixed". A template foe's drop read its old body: its Daggerfall kind's
+Jewellery, armour and weapon drops needed fixing. A template foe's drop read its old body: its Daggerfall kind's
 level set the tier, so a level 40 rat rolled as a level 1 one, and a kind of level 18 or more rolled the boss ladder.
 Daggerfall gives a creature no gear and no foe jewellery.
 
@@ -320,9 +316,9 @@ A Normal is a plain foe, capped at three pieces. A template foe carries jeweller
 50%. A creature carries a weapon or armour 30% of the time. A ranked foe carries more: one piece for Strong, two for
 Elite, three for a boss, five for a raid boss. The corpse's roll ladders all of it. The tests: `pve_drops.test.js`.
 
-OVER-GEAR (the owner's pick, 2026-10-31: "Cut gear past 10 levels over"): a template foe 10 or more levels under the
+OVER-GEAR (2026-10-31, no gear past 10 levels over): a template foe 10 or more levels under the
 character it rolls for drops no gear, only its gold and supplies, so a high character gains nothing farming a starter
 zone (`pveDropGear.js` `stripOverGear`). The gate is the character's real level, Mentor Mode's or not.
 
-CLOTH-DROPS (the owner, 2026-10-31: "cloaks", "that works"): a person (a class body) carries a piece of clothing 30% of
+CLOTH-DROPS (2026-10-31, cloaks included): a person (a class body) carries a piece of clothing 30% of
 the time, of any kind, and one in four of them is a cloak. A ranked foe's extra pieces may be clothing too.

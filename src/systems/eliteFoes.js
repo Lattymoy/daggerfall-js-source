@@ -395,8 +395,7 @@ export const staffBossHit = (damage, maxHealth, fighters) =>
 /** Is this entity a staff event's mini boss? */
 export const isStaffBoss = (entity) => !!entity?.staffBoss;
 
-// ═══ RAID-BOSS-LOOK (2026-10-31, the owner asked for raid bosses as large as a staff event's mini boss, with a glow of
-// their own): a PvE raid boss (systems/pve/pveTemplates.js category raidBoss - pve/pveGrant.js standTemplate marks the
+// ═══ RAID-BOSS-LOOK (2026-10-31, raid bosses as large as a staff event's mini boss, with a glow of their own): a PvE raid boss (systems/pve/pveTemplates.js category raidBoss - pve/pveGrant.js standTemplate marks the
 // entity, a puppet's too) is drawn at a mini boss's default size and outlined in its own colour (systems/hitFlash.js
 // RAID_BOSS_RIM), the pulse past RAID_BOSS_GLOW. Looks alone: its numbers stay its template's.
 /** The glow's offset that says a raid boss to the shaders: a living one's pulse 4.55..5, its corpse's -4.05..-5. */

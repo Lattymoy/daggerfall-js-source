@@ -1,6 +1,6 @@
 // @ts-check
-// FIXED-PVE TEMPLATE-DROPS (bible/05-Combat/Fixed-PvE.md section 20; the owner, 2026-10-31: "jewelery armor weapons",
-// "that need fixed"): a template foe's drop reads the foe, not its old body. Its tier is its own level, so a zone's foe
+// FIXED-PVE TEMPLATE-DROPS (bible/05-Combat/Fixed-PvE.md section 20, 2026-10-31: jewellery, armour and weapon drops
+// fixed): a template foe's drop reads the foe, not its old body. Its tier is its own level, so a zone's foe
 // rolls the zone's odds. The boss ladder is its rank's (Strong and up), not a Daggerfall level of 18. Every template
 // foe may carry jewellery, a caster most often; a creature may carry a weapon or a piece of armour it took; a ranked foe
 // carries more. Daggerfall's tables give no creature gear and no foe jewellery. Ledger A (FIXED-PVE).
@@ -11,7 +11,7 @@ import { SPECIES_BY_BODY } from './pveSpecies.js';
 export const DROP_JEWEL = Object.freeze({ caster: 0.5, other: 0.15 });
 /** The share of creature template foes, and of people who cast no spell (FIGHTER-GEAR), that carry a weapon or a piece of armour. */
 export const DROP_CREATURE_GEAR = 0.3;
-/** CLOTH-DROPS (the owner, 2026-10-31: "cloaks", "that works"): the share of people (a class body) that carry a piece of
+/** CLOTH-DROPS (2026-10-31, cloaks included): the share of people (a class body) that carry a piece of
  *  clothing, and the share of a clothing piece that is a cloak. */
 export const DROP_CLOTH = Object.freeze({ people: 0.3, cloak: 0.25 });
 /** The pieces of any kind a ranked foe carries past those, by its category. */
@@ -33,7 +33,7 @@ export function templateGearKinds(entity, rolls = Math.random) {
   if (!entity?.pveTemplate) return [];
   const body = bodyOf(entity.mobileType), out = [];
   if (rolls() < (body?.casts ? DROP_JEWEL.caster : DROP_JEWEL.other)) out.push('jewel');
-  // FIGHTER-GEAR (2026-10-31, the owner asked for warriors to drop weapons and armour too): a person that casts no spell
+  // FIGHTER-GEAR (2026-10-31, warriors drop weapons and armour too): a person that casts no spell
   // rolls the creature's extra weapon or armour beside the kit it wore
   if ((body?.kind !== 'class' || !body?.casts) && rolls() < DROP_CREATURE_GEAR) out.push(rolls() < 0.5 ? 'weapon' : 'armor');
   const cloth = () => (rolls() < DROP_CLOTH.cloak ? 'cloak' : 'cloth');
@@ -46,6 +46,6 @@ export function templateGearKinds(entity, rolls = Math.random) {
   return out;
 }
 
-/** OVER-GEAR (the owner, 2026-10-31, "Cut gear past 10 levels over"): a template foe this many levels or more below its
+/** OVER-GEAR (2026-10-31, no gear past 10 levels over): a template foe this many levels or more below its
  *  roller drops no gear - its gold and supplies only - so a high character gains nothing farming a starter zone. */
 export const OVER_GEAR_LEVELS = 10;

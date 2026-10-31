@@ -97,8 +97,8 @@ export const shieldProtectedBodyParts = (templateIndex) => SHIELD_PARTS[template
 
 // ---- ItemBuilder.materialsByModifier + FormulaHelper.RandomMaterial ----
 export const MATERIALS_BY_MODIFIER = Object.freeze([64, 128, 10, 21, 13, 8, 5, 3, 2, 5]);
-/** FOE-METAL (bible/05-Combat/Fixed-PvE.md section 15; the owner, 2026-10-30: "material also need to follow a scale",
- *  "around 20-30 daedric need to be 7% drop like vanilla"): a template foe's kit and loot roll DFU's own material curve
+/** FOE-METAL (bible/05-Combat/Fixed-PvE.md section 15, 2026-10-30: metal follows a scale, Daedric about 7%
+ *  around levels 20-30 as in vanilla): a template foe's kit and loot roll DFU's own material curve
  *  at the FOE's fixed level, Unleveled Loot passed by, so a zone's metal climbs with its band. Null outside the scope. */
 let _foeLevel = null;
 /** Run `fn` with every material roll under it at foe level `level` (synchronous; nests). */
@@ -112,7 +112,7 @@ export function withFoeMaterialLevel(level, fn) {
   }
 }
 export const foeMaterialLevel = () => _foeLevel;
-/** FOE-METAL (the owner: "smaller weapon roll, more armor"): inside the scope a weapon and a piece of armour are each
+/** FOE-METAL (a smaller weapon roll, more armour): inside the scope a weapon and a piece of armour are each
  *  Daedric at this chance a level past 10 - 7% at 25 - in place of the curve's own (16% of weapons at 30, 2% of plate). */
 export const FOE_DAEDRIC_PER_LEVEL = 0.07 / 15;
 export const foeDaedricChance = (level) => Math.max(0, (level - 10) * FOE_DAEDRIC_PER_LEVEL);

@@ -1,4 +1,4 @@
-// FIXED-PVE SPELL-RANK (bible/05-Combat/Fixed-PvE.md section 17; the owner, 2026-10-31: "Normals only"): a killing or
+// FIXED-PVE SPELL-RANK (bible/05-Combat/Fixed-PvE.md section 17, 2026-10-31: Normals only): a killing or
 // holding spell lands on a Normal template foe as Daggerfall has it; a ranked one is immune to every one of them.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

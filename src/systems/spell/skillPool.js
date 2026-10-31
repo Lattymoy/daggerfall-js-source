@@ -1,6 +1,6 @@
 // @ts-check
-// SPELL-SKILL POOL (bible/05-Combat/Fixed-PvE.md section 13; the owner, 2026-10-30, "half cost, pool grows with
-// skill/2"): A MAGE'S POOL GROWS WITH THE SCHOOL. Under fixed PvE a spell's Magicka grows with its power, and a pool of
+// SPELL-SKILL POOL (bible/05-Combat/Fixed-PvE.md section 13, 2026-10-30: half cost, a pool that grows with
+// skill/2): A MAGE'S POOL GROWS WITH THE SCHOOL. Under fixed PvE a spell's Magicka grows with its power, and a pool of
 // Intelligence x the class multiplier alone held 3 to 9 casts. My pool gains half a per cent of Daggerfall's own
 // maximum for each point of my best magic school's live skill, through the folds' magicka channel (entityMods.js,
 // renownLayer.js foldMpOf) - online, never saved. Off with fixed PvE. Ledger A (FIXED-PVE).

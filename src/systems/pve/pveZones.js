@@ -19,8 +19,7 @@ import { combatScore } from './pveProfile.js';
 export const ZONE_BANDS = Object.freeze([[1, 8], [6, 15], [12, 22], [20, 30], [28, 38], [36, 45]].map((b) => Object.freeze(b)));
 const TOP = ZONE_BANDS.length - 1;
 
-/** CENTER-HARDEST (the owner, 2026-10-30: "every area has a starting area so we need it to scale to the center",
- *  "center is hardest", "look where people spawn"): each area - the Bay and the nine provinces - is lowest where a new
+/** CENTER-HARDEST (2026-10-30, every area scales from where players spawn to the center, the hardest): each area - the Bay and the nine provinces - is lowest where a new
  *  character wakes (systems/starts/starts.js STARTS: a province's start near its capital, else the Bay's Privateer's
  *  Hold) and climbs band by band toward the Imperial City, the top. Cyrodiil is the heart: its start is the center
  *  itself, so it reads its distance against the other areas' mean reach and all of it stands high. */
@@ -70,9 +69,8 @@ export function zoneProgress(px, py, area) {
 /** The base band at (`px`, `py`) in `area`: its progress cut into six even steps, the center the top. */
 export const zoneBaseTier = (px, py, area) => Math.min(TOP, Math.floor(zoneProgress(px, py, area) * ZONE_BANDS.length));
 
-/** REGION-HOTSPOT (the owner, 2026-10-30: "every region need to have enemy to fight for all leveling in that region";
- *  2026-10-31: "needs to have hot spot of 45 that circles out to 30-34, 20-10, 10-1", "only need 3 spots in total,
- *  region need to be a lot more free for lower level to travel"): EACH AREA HAS THREE HOT SPOTS, each as far from the
+/** REGION-HOTSPOT (2026-10-30 and 10-31, foes for every level in each region, around three level 45 hot spots that
+ *  ring out to the low bands, leaving most land free for low levels): EACH AREA HAS THREE HOT SPOTS, each as far from the
  *  start and from the others as its land allows (the heart's first is the center). A place's rung is 1 on a hot spot
  *  and 0 at its reach: 36-45 there, a band lower each sixth out, and 1-8 everywhere outside. Toward the center the rings
  *  widen. Daggerfall Unity has no zones: it scales every foe to the player. */
@@ -123,12 +121,11 @@ export function zoneBase(px, py, region) {
   return hots.length ? ladderTier(hotspotRung(px, py, hots), zoneProgress(px, py, area)) : zoneBaseTier(px, py, area);
 }
 
-/** SAFE-ROAD (the owner, 2026-10-30: "have them spawn there make the road safe out of the pvp zone", "enemys avoid
- *  roads"): the Imperial start wakes at the center, so Cyrodiil's roads are safe - no hostile population, and a foe
+/** SAFE-ROAD (2026-10-30, roads out of the PvP zone are safe and foes avoid them): the Imperial start wakes at the center, so Cyrodiil's roads are safe - no hostile population, and a foe
  *  keeps off them - and a new character walks out of the heart on them. Its wild is the PvP zone's and stands high. */
 export const SAFE_ROAD_AREAS = Object.freeze(['Imperial']);
 
-/** GROUP-PARTY (the owner, 2026-10-30: "we need an area above that", "for group"): the heart's inner ring - this far
+/** GROUP-PARTY (2026-10-30, an area above the top band for parties): the heart's inner ring - this far
  *  on the road to the Imperial City and more, on the top band - is the party zone: its groups stand whole (pveGrant.js packShare passed
  *  by), weighing a party of their level, where everywhere else a group is one player's pack. */
 export const PARTY_ZONE_FROM = 0.9;

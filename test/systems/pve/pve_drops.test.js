@@ -1,5 +1,5 @@
-// FIXED-PVE TEMPLATE-DROPS (bible/05-Combat/Fixed-PvE.md section 20; the owner, 2026-10-31: "jewelery armor weapons",
-// "that need fixed"): a template foe's drop reads its own level and rank, and every kind of foe may carry gear.
+// FIXED-PVE TEMPLATE-DROPS (bible/05-Combat/Fixed-PvE.md section 20, 2026-10-31: jewellery, armour and weapon drops
+// fixed): a template foe's drop reads its own level and rank, and every kind of foe may carry gear.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { templateDropSource, templateGearKinds, DROP_JEWEL, DROP_CREATURE_GEAR, DROP_RANK_PIECES, OVER_GEAR_LEVELS, DROP_CLOTH } from '../../../src/systems/pve/pveDrops.js';

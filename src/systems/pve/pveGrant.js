@@ -56,15 +56,13 @@ export function grantTemplateKey(gr, i, table) {
 /** A camp grant's group: the seed's draw from the table's groups. */
 const campGroup = (gr, table) => GROUP_TEMPLATES.find((x) => x.key === drawByShare(table.lists.group, 1, grantRng(gr.s, 'group'))[0]) ?? null;
 
-/** GROUP-SOLO (the owner, 2026-10-30: "make sure a lvl 45 can grind groups in the 45 area", "lower need to be able to
- *  grind groups"): a camp's members stand as a pack whose whole weighs this many Normal foes of its level - one
+/** GROUP-SOLO (2026-10-30, a level 45 grinds groups in the level 45 area, and lower levels grind groups too): a camp's members stand as a pack whose whole weighs this many Normal foes of its level - one
  *  player grinds it (the simulator: 75-100% of every build at every group's level). A party zone keeps groups whole. */
 export const GROUP_SOLO_WEIGHT = 1.5;
 /** The pack share of group `g`: its members' health and blow over their template's, 1 where it already weighs no more. @param {any} g */
 export const packShare = (g) => Math.min(1, GROUP_SOLO_WEIGHT / Math.max(1e-9, groupWeight(g)));
 
-/** GROUP-PARTY (the owner: "they need to grind lvl 50 monsters in group as 45", "so they have an area they have to
- *  group", "groups need to be able to do high packs"): in the party zone every foe stands whole at level 50 - a level
+/** GROUP-PARTY (level 45 parties grind level 50 packs in an area they have to group for): in the party zone every foe stands whole at level 50 - a level
  *  45's health half again and its blow a quarter more. The simulator: four level 45 players grind any group there,
  *  three sometimes, two never. */
 export const PARTY_FOE = Object.freeze({ level: 50, health: 1.5, damage: 1.25 });
