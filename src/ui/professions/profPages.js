@@ -286,7 +286,7 @@ let _armedFree = false;
 /** The Professions page's last refusal, said under the cards. */
 let _profWord = null;
 /** The Stores page's filter, search, sort, the material chosen and the quantity to withdraw. */
-const _stores = { family: null, query: '', sort: 'tier', picked: null, qty: 1, word: null, benchWord: null, busy: false, settledAt: -Infinity, awayPick: null };   // MENU-ORDER: the away station whose words are shown
+const _stores = { family: null, query: '', sort: 'tier', picked: null, qty: 1, word: null, benchWord: null, benchAt: null, busy: false, settledAt: -Infinity, awayPick: null };   // MENU-ORDER: the away station whose words are shown
 /** BAG1: the Stores page's own words for a carrying book. */
 export const BAG_PAGE_WORDS = Object.freeze({
   noBag: 'You have no Materials Bag: what you gather goes into your pack. Every General Store sells one.',
@@ -498,7 +498,8 @@ export function setDownProfAct() {
 export const profActUnderWay = () => !!(_anvil.act || _bench.act || _loom.act || _mason.act || _cook.act || _jewel.act);   // PROF11: the chisel; PROF9: the pan; PROF10: the facet
 /** A fresh visit starts plain (the menu calls it with its own reset). */
 export function resetProfPages() {
-  _armed = null; _profWord = null; _stores.word = null; _stores.picked = null; _stores.qty = 1; _forge.word = null; _forge.counts = {};
+  _armed = null; _profWord = null; _stores.word = null; _stores.benchWord = null; _stores.benchAt = null; _stores.picked = null;   // AUDIT FB1031 P2: and the bench bar's
+  _stores.qty = 1; _forge.word = null; _forge.counts = {};
   endHeat(); _anvil.word = null; _anvil.picked = null; _anvil.heartwood = false;
   _bench.act?.cancel(); _bench.act = null; _bench.actRecipe = null; _bench.word = null; _bench.picked = null; _bench.counts = {}; _bench.heartwood = false;   // PROF4
   endStitch(); _loom.word = null; _loom.picked = null; _loom.counts = {}; _loom.dye = null;   // PROF7
@@ -1245,8 +1246,11 @@ function drawStationTiles(detail, rerender, kit, opts, list) {
   const worked = drawn.filter((d) => d.here);
   // STORES-AT-BENCH: the bench's Stores bar stands over the station the press landed on (else the first worked here)
   const landed = focus ? worked.find((d) => holdsHead(d.box, `prof-station-${focus}`)) : null;
+  // AUDIT FB1031 P1: the press spends the focus on its first draw - a repaint (the bar's own put-in) keeps its station
+  if (landed) _stores.benchAt = landed.id;
+  const at = landed ?? worked.find((d) => d.id === _stores.benchAt) ?? worked[0];
   const bar = opts.benchStores && worked.length ? benchStoresBar(kit, rerender, !!landed) : null;
-  for (const d of worked) { if (bar && d === (landed ?? worked[0])) detail.append(bar); detail.append(d.box); }
+  for (const d of worked) { if (bar && d === at) detail.append(bar); detail.append(d.box); }
 }
 /** STORES-AT-BENCH (2026-10-29, its_WiKeD: "when you open up a bench you need to scroll all the way down, click stores,
  *  then scroll all the way up top just to store stuff"): at a station the Crafting page offers Put everything in and the
@@ -1320,7 +1324,8 @@ function putAllButton(kit, rerender, wordKey = 'word') {
       else if (!said.has(plan[i].material)) { said.add(plan[i].material); refused.push({ name: plan[i].name, text: res?.text ?? null }); }
     }
     _stores.busy = false;
-    _stores[wordKey] = BAG_PAGE_WORDS.allInDone(moved, refused, stop);
+    // AUDIT FB1031 P2: the bench's answer is the Stores page's too, so one followed there mid-flight still reads it
+    _stores[wordKey] = _stores.word = BAG_PAGE_WORDS.allInDone(moved, refused, stop);
     rerender();
   };
   return allIn;

@@ -9,6 +9,7 @@ import { PAGE_IDS, pageOf } from './packPages.js';
 import { RARITY_ORDER, rarityOf } from '../systems/loot/lootRarity.js';
 import { itemNameParts } from '../systems/item/itemInfo.js';
 import { itemValueOf } from '../systems/item/itemTemplates.js';
+import { isHorseItem } from '../systems/horse/horseCoats.js';
 
 /** The side window's lists a Sort is offered on: the player's own wagon, Materials Bag and storage (enhancedInventory.js
  *  remoteModel's kinds). Never a container, the ground or a reward tray - those are not the player's to arrange. */
@@ -21,12 +22,14 @@ const rowName = (it) => itemNameParts(it).name || it?.name || '';
 function keyOf(it, at, nameOf) {
   if (!it) return { it, hole: true, quest: false, page: 0, rank: 0, name: '', value: 0, at };
   const value = itemValueOf(it);
+  // AUDIT FB1031 P4: the horses' order is which one is ridden (horseCoats.js activeHorseItem, the first) - they tie
+  const horse = isHorseItem(it);
   return {
     it, hole: false, quest: !!it.questItem, at,
     page: PAGE_IDS.indexOf(pageOf(it)),
-    rank: RARITY_ORDER.indexOf(rarityOf(it)),
-    name: String(nameOf(it) ?? ''),
-    value: Number.isFinite(value) ? value : 0,
+    rank: horse ? 0 : RARITY_ORDER.indexOf(rarityOf(it)),
+    name: horse ? '' : String(nameOf(it) ?? ''),
+    value: horse || !Number.isFinite(value) ? 0 : value,
   };
 }
 

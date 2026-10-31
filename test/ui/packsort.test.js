@@ -242,3 +242,22 @@ test('PACK-SORT on a phone: the sheet moves the pack\'s Sort from the header to 
   assert.equal(css.lastIndexOf('@media', desk) < css.lastIndexOf('}\n', desk), true, 'in no media block');
   assert.match(css, /\n\.loot-win \.remoteacts \.sortbtn \{ min-width: 0;/, 'a wagon\'s Leave wagon, Take all and Sort keep one row');
 });
+
+// AUDIT FB1031 P4: the ridden horse is the pack's first (horseCoats.js activeHorseItem; the Stable's "Ride this one",
+// steedCare.js chooseRiddenHorse, moves it there). Priced Stable horses differ in value, so a Sort by value swapped it.
+test('AUDIT FB1031 P4: Sort never changes the ridden horse - horses keep their order among themselves (mutant: a horse keyed by its value)', async () => {
+  const { stableHorses } = await import('../../src/systems/merchantYards.js');
+  const { activeHorseItem } = await import('../../src/systems/horse/horseCoats.js');
+  const { chooseRiddenHorse, horsesIn, steedStats } = await import('../../src/systems/steedCare.js');
+  const pack = stableHorses(17, 300, { priced: true }).filter(Boolean);
+  assert.ok(pack.length >= 2 && new Set(pack.map((h) => h.value)).size > 1, 'priced horses that differ in value');
+  const cheapest = pack.reduce((m, h) => (h.value < m.value ? h : m));
+  chooseRiddenHorse(pack, horsesIn(pack).indexOf(cheapest));
+  assert.equal(activeHorseItem(pack), cheapest);
+  const before = pack.slice();
+  pack.push(weapon('Dagger', 0));
+  sortInPlace(pack);
+  assert.equal(activeHorseItem(pack), cheapest, 'the chosen horse is still the one ridden');
+  assert.deepEqual(pack.filter((h) => before.includes(h)), before, 'the horses in their own order');
+  assert.ok(steedStats(activeHorseItem(pack), 0));
+});
