@@ -253,7 +253,7 @@ test('PR-WW1 the local body: the lycan sprite is the LIVE form\'s - a wereboar s
     assert.ok(r.uploads.includes(`${archive}:${STATE_TABLES.MoveLycan.base + 2}-3`), `form ${form}: the preload re-run for its own archive`);
   }
   // PIN MOVED (LAYERED-GEAR): and, with the layered gearing skin chosen, the armor worn in the body chosen - the lycan tables never read it
-  assert.match(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /const lookNow = \(\) => \(\{ \.\.\.cfg, lycanthropyType: last\.lycanthropyType, horse: last\.horseLook \?\? 0(?:, \.\.\.\(cfg\.wornArmour \? \{ \.\.\.wornOutfit\(layeredGenderOf\(cfg\.layeredChoice, playerEntity\?\.gender\)\), \.\.\.layeredHands\(last\) \} : \{\}\))? \}\);/);   // PIN MOVED (LAYERED-GEAR-ON): the own body read as the character is now; LAYERED-WEAPONS: and the weapon it holds (LAYERED-DUAL: or the pair)
+  assert.match(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /const lookNow = \(\) => \(\{ \.\.\.cfg, lycanthropyType: last\.lycanthropyType, horse: last\.horseLook \?\? 0(?:, \.\.\.\(cfg\.wornArmour \? \{ \.\.\.wornOutfit\(layeredGenderOf\(cfg\.layeredChoice, playerEntity\?\.gender\)\), \.\.\.\(isAnimating\?\.hands \?\? layeredHands\(last\)\) \} : \{\}\))? \}\);/);   // PIN MOVED (LAYERED-GEAR-ON): the own body read as the character is now; LAYERED-WEAPONS: and the weapon it holds (LAYERED-DUAL: or the pair; AUDIT: a clip's, as it started)
   assert.doesNotMatch(rd('src/player/eyeOfTheBeholder/eotbBody.js'), /spriteFor\([^)]*, cfg[,)]/, 'no spriteFor on the settings alone');
 });
 

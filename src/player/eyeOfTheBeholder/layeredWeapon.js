@@ -49,10 +49,11 @@ export const isBowCode = (code) => typeof code === 'string' && BOWS.has(code.sli
 
 /** What the sprite of one table shows in the hands: '0' nothing (the hammer taken out), a weapon code, or null - the art
  *  as drawn (the loose's own bow). Sheathed, a readied spell and bare hands show nothing; the bow's tables show the bow.
- *  SPELL-BURST: a cast beside a one-handed weapon (`spellHand`, combat/twoHands/spellHand.js) keeps it in hand. */
+ *  SPELL-BURST: a spell beside a one-handed weapon (`spellHand`, combat/twoHands/spellHand.js) keeps it in hand - readied
+ *  (the Spell stance) and cast. */
 export function weaponShownFor(table, held, spellHand = false) {
   switch (table) {
-    case 'AttackSpell': return spellHand && held && !isBowCode(held) ? held : '0';
+    case 'AttackSpell': case 'IdleSpell': case 'MoveSpell': return spellHand && held && !isBowCode(held) ? held : '0';
     case 'AttackRanged': return null;
     case 'IdleRanged': case 'MoveRanged': return isBowCode(held) ? held : '0';
     case 'IdleMelee': case 'MoveMelee': case 'AttackMelee': return held && !isBowCode(held) ? held : '0';
@@ -241,18 +242,24 @@ const opaqueAt = (img, x, y) => {
   const X = Math.round(x), Y = Math.round(y);
   return X >= 0 && Y >= 0 && X < img.width && Y < img.height && img.colors[(Y * img.width + X) * 4 + 3] > 127;
 };
-/** The longest run of `on` that is off, with on before and after it: [first, past], or null. */
-function longestGap(on) {
-  let best = null;
+/** The runs of `on` that are off, with on before and after each: [first, past] each. */
+function gapsOf(on) {
+  const out = [];
   for (let i = 0; i < on.length;) {
     if (on[i]) { i++; continue; }
     let j = i;
     while (j < on.length && !on[j]) j++;
-    if (i > 0 && j < on.length && (!best || j - i > best[1] - best[0])) best = [i, j];
+    if (i > 0 && j < on.length) out.push([i, j]);
     i = j;
   }
-  return best;
+  return out;
 }
+/** The longest run of `on` that is off, with on before and after it: [first, past], or null. */
+function longestGap(on) {
+  return gapsOf(on).reduce((best, g) => (!best || g[1] - g[0] > best[1] - best[0] ? g : best), null);
+}
+/** The longest notch in a haft between the hand and the head that is filled (heldPicture), in picture px. */
+const HAFT_NOTCH = 6;
 
 /** A blade whose handle the picture cuts off (a tanto): the guard, the widest run across, as a gap of no length at its
  *  outer side - the end of the picture it is nearer. [i, i] or null. */
@@ -301,7 +308,17 @@ export function heldPicture(img) {
   }
   if (heavy < 0) { rx = -rx; ry = -ry; }
   const bridge = gap[1] > gap[0] ? bridgeGap(img, ax, lx, ly, gap, up) : null;
-  return { img, gx, gy, ux, uy, rx, ry, from: from - 1, to: to + 1, half: half + 1, bridge };
+  // AUDIT: a notch in the haft past the hand (a war axe's short of its head, a flail's of its cap) is filled with the
+  // haft: drawn small, it opened into a gap between the haft and the head
+  let pic = img;
+  for (const g of gapsOf(on)) {
+    if (g[1] - g[0] > HAFT_NOTCH || (up ? g[0] < gap[1] : g[1] > gap[0])) continue;
+    const b = bridgeGap(img, ax, lx, ly, g, up);
+    if (!b) continue;
+    if (pic === img) pic = { ...img, colors: Uint8Array.from(img.colors) };
+    for (let i = 3; i < b.colors.length; i += 4) if (b.colors[i] > 127 && pic.colors[i] <= 127) pic.colors.set(b.colors.subarray(i - 3, i + 1), i - 3);
+  }
+  return { img: pic, gx, gy, ux, uy, rx, ry, from: from - 1, to: to + 1, half: half + 1, bridge };
 }
 
 /** The handle carried across the doll's hand gap (steps gap[0]..gap[1] along the axis): the handle side's edge (away
@@ -564,11 +581,11 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
   const face = shape === 'fl' || shape === 'lf' ? (ny >= 0 ? 1 : -1) : side;
   if (pic) {
     const L = { qx, qy, ux, uy, nx, ny, along: /** @type {number} */ (art.cm) * f, across: /** @type {number} */ (art.cm), side: face };
+    const was = d.slice();
     // the doll's hand gap: its handle, where no fist of the art's covers it
     if (pic.bridge) drawPicture(out, pic, L, (a, proj) => !a && shown(a, proj), pic.bridge);
-    if (!pic.chain) return drawPicture(out, pic, L, shown);
-    drawPicture(out, pic, L, shown, pic.handle);
-    return drawChain(out, pic, L, shown, chainWay(fr.cv, L, !!art.swing));
+    dropSpecks(drawPicture(out, pic, L, shown, pic.chain ? pic.handle : pic.img), was);
+    return pic.chain ? drawChain(out, pic, L, shown, chainWay(fr.cv, L, !!art.swing, art.frame ?? null)) : out;
   }
   const parts = SHAPES[shape];
   if (!parts) return;
@@ -608,6 +625,53 @@ export function drawWeapon(out, fr, code, len, view = 2, art = {}) {
     }
     return o;
   }
+}
+
+/** AUDIT: the loose's own bow (records 20-24 draw the art's, which no rig takes out): its limbs and string, the px with
+ *  few opaque within BOW_THIN_R of them, in pieces of BOW_PIECE px or more - a toe's or an elbow's corner is fewer. A
+ *  weapon mask (composeStrip `held`), so its glow stands round the bow. Pure. @param {{width:number,height:number,data:Uint8Array}} img */
+export function artBowPx(img) {
+  const { width: w, height: h, data: d } = img, thin = new Uint8Array(w * h), out = new Uint8Array(w * h);
+  const on = (x, y) => x >= 0 && y >= 0 && x < w && y < h && d[(y * w + x) * 4 + 3] > 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!on(x, y)) continue;
+    let n = 0;
+    for (let dy = -BOW_THIN_R; dy <= BOW_THIN_R; dy++) for (let dx = -BOW_THIN_R; dx <= BOW_THIN_R; dx++) if (on(x + dx, y + dy)) n++;
+    if (n <= BOW_THIN_N) thin[y * w + x] = 1;
+  }
+  const seen = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) {
+    if (!thin[i] || seen[i]) continue;
+    const piece = [i], st = [i];
+    seen[i] = 1;
+    while (st.length) {
+      const j = /** @type {number} */ (st.pop()), x = j % w, y = (j / w) | 0;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const X = x + dx, Y = y + dy, k = Y * w + X;
+        if (X >= 0 && Y >= 0 && X < w && Y < h && thin[k] && !seen[k]) { seen[k] = 1; st.push(k); piece.push(k); }
+      }
+    }
+    if (piece.length >= BOW_PIECE) for (const k of piece) out[k] = 1;
+  }
+  return out;
+}
+const BOW_THIN_R = 3, BOW_THIN_N = 16, BOW_PIECE = 6;
+
+/** AUDIT: a px of a held picture alone in the air - none of the picture beside it, nor the body - is a speck its
+ *  sampling left off a guard's tip or an axe's edge, and is put back as it `was`. A px between the fingers stays. */
+export function dropSpecks(out, was) {
+  const w = out.width, h = out.height, d = out.data, put = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) { const k = i * 4; put[i] = d[k] !== was[k] || d[k + 1] !== was[k + 1] || d[k + 2] !== was[k + 2] || d[k + 3] !== was[k + 3] ? 1 : 0; }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (!put[y * w + x]) continue;
+    let near = false;
+    for (let dy = -1; dy <= 1 && !near; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const X = x + dx, Y = y + dy, j = Y * w + X;
+      if ((dx || dy) && X >= 0 && Y >= 0 && X < w && Y < h && (put[j] || was[j * 4 + 3])) { near = true; break; }
+    }
+    if (!near) { const k = (y * w + x) * 4; d.set(was.subarray(k, k + 4), k); }
+  }
+  return out;
 }
 
 /** Sample a held picture over one px: the mean colour of its opaque samples where a third of them are, else null.
@@ -659,9 +723,17 @@ function drawPicture(out, P, L, shown, img = P.img) {
  *  CHAIN_TILT radians; in a swing it is flung out along the handle (FLING), trails the blow (1) and sags (SAG). */
 const CHAIN_LAG = 0.07, CHAIN_TILT = 0.55, CHAIN_FLING = 1, CHAIN_SAG = 0.35;
 /** Which way a flail's chain lies on screen, a unit [x, y]: down, lagging the head's move since the frame before (`cv`,
- *  the rig's - a walk swings it); in a swing, flung out along the handle and trailing the blow. */
-export function chainWay(cv, L, swing) {
+ *  the rig's - a walk swings it); in a swing, flung out along the handle and trailing the blow while the hands speed up
+ *  (the raise, frames 0, 1 and 5). From the blow on (`frame` 2-4) the ball leads: out along the handle at the strike,
+ *  carried on past it and falling through, then hanging as the arms come back. */
+export function chainWay(cv, L, swing, frame = null) {
   const [vx, vy] = Array.isArray(cv) ? cv : [0, 0], sp = Math.hypot(vx, vy);
+  if (swing && frame != null && frame >= 2 && frame <= 4) {
+    const [mx, my] = sp ? [vx / sp, vy / sp] : [0, 0];
+    const [x, y] = frame === 2 ? [L.ux, L.uy + CHAIN_SAG] : frame === 3 ? [L.ux / 2 + mx, L.uy / 2 + my + 2 * CHAIN_SAG] : [mx * CHAIN_SAG, 1];
+    const n = Math.hypot(x, y);
+    return n ? [x / n, y / n, frame === 2 ? 1 : 0] : [0, 1];   // at the strike it lies along the handle, as foreshortened
+  }
   if (!sp) return [0, 1];   // at rest: plumb
   if (swing) {
     const x = L.ux * CHAIN_FLING - vx / sp, y = L.uy * CHAIN_FLING - vy / sp + CHAIN_SAG, n = Math.hypot(x, y) || 1;
@@ -672,23 +744,25 @@ export function chainWay(cv, L, swing) {
 }
 
 /** A flail's chain (heldChain) from its handle's head end the way `g` says (chainWay), as drawPicture laid the handle:
- *  unshortened, at the head end's depth. */
+ *  unshortened, but as foreshortened as the handle where it lies along it (`g[2]`, the strike's); at the head end's
+ *  depth. */
 function drawChain(out, P, L, shown, g = [0, 1]) {
   const C = P.chain, w = out.width, h = out.height, d = out.data, k = L.across, sg = L.side >= 0 ? 1 : -1;
   const rs = (C.x - P.gx) * P.ux + (C.y - P.gy) * P.uy, rr = ((C.x - P.gx) * P.rx + (C.y - P.gy) * P.ry) * sg;
   const hx = L.qx + L.ux * rs * L.along + L.nx * rr * k, hy = L.qy + L.uy * rs * L.along + L.ny * rr * k, proj = rs * L.along;
-  const wide = C.half * k + 1, reach = C.len * k;
-  let [gx, gy] = g;   // the ball stays in the picture: the chain turns back toward the plumb till it does
+  const wide = C.half * k + 1, kAlong = (gx, gy) => k * (1 - (g[2] ?? 0) * Math.abs(gx * L.ux + gy * L.uy) * (1 - L.along / L.across));
+  let [gx, gy] = g, reach = C.len * kAlong(gx, gy);
+  // the ball stays in the picture: the chain turns back toward the plumb till it does
   for (let t = 0; t < 8 && (hx + gx * reach < wide || hx + gx * reach > w - wide || hy + gy * reach < wide); t++) {
     const x = gx * 0.7, y = gy * 0.7 + 0.3, n = Math.hypot(x, y) || 1;
-    gx = x / n; gy = y / n;
+    gx = x / n; gy = y / n; reach = C.len * kAlong(gx, gy);
   }
-  const ex = hx + gx * reach, ey = hy + gy * reach;
+  const ex = hx + gx * reach, ey = hy + gy * reach, ka = reach / C.len;
   const x0 = Math.max(0, Math.floor(Math.min(hx, ex) - wide)), x1 = Math.min(w - 1, Math.ceil(Math.max(hx, ex) + wide));
   const y0 = Math.max(0, Math.floor(Math.min(hy, ey) - wide)), y1 = Math.min(h - 1, Math.ceil(Math.max(hy, ey) + wide));
-  const n = Math.max(3, Math.min(12, Math.ceil(2 / k)));
+  const n = Math.max(3, Math.min(12, Math.ceil(2 / Math.min(k, ka))));
   const at = (x, y) => {
-    const c = ((x - hx) * gx + (y - hy) * gy) / k, v = ((x - hx) * gy - (y - hy) * gx) / k;
+    const c = ((x - hx) * gx + (y - hy) * gy) / ka, v = ((x - hx) * gy - (y - hy) * gx) / k;
     return [C.x + C.dx * c - C.dy * v, C.y + C.dy * c + C.dx * v];
   };
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {

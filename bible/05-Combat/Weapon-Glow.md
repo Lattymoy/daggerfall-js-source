@@ -221,8 +221,13 @@ Layered-Gearing.md`), so the compose keeps the weapon's pixels (`layeredArmor.js
 the iron warhammer's, the art's own). The stores keep them sparse with the picture (`heldOf`: its rows, its mirror),
 and the glow uploads them once as the weapon's own picture, the sprite's size, under the sprite's record and `#w`
 (`heldGlowRecord`). The outline stands round that picture on the body's quad. A frame that hides the weapon (a back
-view's blade) glows not at all. Bare hands and the Hand Wraps keep the whole sprite. The weapon's picture goes with
-the body's (`releaseOutfits`, the peers' `sweep`).
+view's blade) glows not at all.
+
+**Which px** (AUDIT, 2026-10-31). Empty hands glow not at all: a held mask of none. The iron warhammer
+keeps its code, so its glow is the art's hammer. The loose's own bow, which no rig takes out, is its thin px (`artBowPx`:
+the limbs and string, in pieces of six or more). A pair's second weapon is its own picture (`2` in the mask, `#o`), and
+each glows its own hand's item (`s.pair` says which hand is on the line). Hand Wraps keep the whole sprite. The weapon's
+pictures go with the body's (`releaseOutfits`, the peers' `sweep`, `evictHeld` both).
 
 ## Online
 

@@ -299,8 +299,8 @@
   {
     "name": "GLOW-P-the-hand-in-use-ignored",
     "file": "src/net/peer/peerRiders.js",
-    "old": "const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
-    "new": "const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, false), peer.ak ?? null);",
+    "old": "holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
+    "new": "holsterItemOfLook(peer.look?.items, false), peer.ak ?? null);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]
@@ -308,8 +308,8 @@
   {
     "name": "GLOW-P-the-kit-ignored",
     "file": "src/net/peer/peerRiders.js",
-    "old": "const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
-    "new": "const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), null);",
+    "old": "holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);",
+    "new": "holsterItemOfLook(peer.look?.items, !!pose.lh), null);",
     "tests": [
       "test/player/eyeOfTheBeholder/spriteglow.test.js"
     ]

@@ -6,14 +6,15 @@ import { readFileSync, existsSync } from 'node:fs';
 import {
   layeredWeaponOf, weaponShownFor, weaponRigOf, WEAPON_SHAPES, BARE_TWINS, ARMED_TWINS, GUN_FIRE_FRAME, isGunCode, removeWeapon,
   maskTile, fillFrom, weaponLen, WEAPON_SPAN, heldPicture, heldBow, heldImage, drawWeapon, chainWay, heldChain, layeredHands, offRigOf,
-  SWING_CUTS, swingCutOf, thrustRigOf,
+  SWING_CUTS, swingCutOf, thrustRigOf, artBowPx, dropSpecks,
 } from '../../../src/player/eyeOfTheBeholder/layeredWeapon.js';
+import { heldOf, heldGlowRecord, evictHeld, HELD_SUFFIX, OFF_SUFFIX } from '../../../src/player/eyeOfTheBeholder/eotbGlow.js';
 import { inventoryItemImage } from '../../../src/systems/item/itemTemplates.js';
 import { layeredSprite, outfitPieces, outfitCombo, decodeLayered } from '../../../src/player/eyeOfTheBeholder/layeredArmor.js';
 import { SPELL_COLOURS } from '../../../src/player/eyeOfTheBeholder/layeredSpell.js';
 import { ALL_LOOKS, APPEARANCE_KINDS } from '../../../src/net/appearanceLaw.js';
 import { bodyState } from '../../../src/player/eyeOfTheBeholder/eotbBody.js';
-import { walkerWeapon, walkerHeld } from '../../../src/net/peer/peerRiders.js';
+import { walkerWeapon, walkerHeld, spriteLookOf } from '../../../src/net/peer/peerRiders.js';
 import { GATHER_POSE_ACTS } from '../../../src/net/peer/peerGather.js';
 import { WEAPONS } from '../../../src/characters/weapons.js';
 import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../../../src/characters/thunderlockIds.js';
@@ -68,7 +69,7 @@ test('the sprite\'s key carries what the hands show; an iron warhammer is the ar
   const look = (w, gender = 'male') => ({ outfit: 'lll', gender, weapon: w });
   assert.match(layeredSprite('Move', 2, 0, 4, look('ls7'), false).key, /:2-0:lll@0$/);
   assert.match(layeredSprite('MoveMelee', 2, 0, 2, look('ls7'), false).key, /:2-0:lll@ls7$/);
-  assert.match(layeredSprite('IdleMelee', 2, 0, 1, look('wh0'), false).key, /:17-0:lll$/);
+  assert.match(layeredSprite('IdleMelee', 2, 0, 1, look('wh0'), false).key, /:17-0:lll@wh0$/, 'AUDIT: its code kept - the art as drawn, its glow round the hammer');
   assert.match(layeredSprite('IdleMelee', 2, 0, 1, look('wh7'), false).key, /:17-0:lll@wh7$/);
   assert.match(layeredSprite('AttackRanged', 2, 0, 4, look('lb0'), false).key, /:22-0:lll$/, 'the loose keeps its own bow');
   assert.match(layeredSprite('IdleRanged', 2, 0, 1, look('lb0'), false).key, /:17-0:lll@lb0$/);
@@ -196,8 +197,10 @@ test('composed: empty hands lose the hammer and nothing else; a weapon adds itse
     assert.ok(left < n * 0.25, `${body} ${rf}: ${left} of the hammer's ${n} px still the hammer's`);
     assert.ok(drawn > 15, `${body} ${rf}: the longsword drew ${drawn} px`);
   }
+  // the iron warhammer is the art's own hammer: drawn as the art is, its code kept for its glow (AUDIT)
   const iron = layeredSprite('IdleMelee', 2, 0, 1, { outfit: 'lll', gender: 'male', weapon: 'wh0' }, false);
-  assert.ok(!iron.key.includes('@'));
+  const ironArt = await decodeLayered(iron.key, decodePng, opts), asDrawn = await decodeLayered(iron.key.replace('@wh0', ''), decodePng, opts);
+  assert.deepEqual([...ironArt.data], [...asDrawn.data], 'the art as drawn');
 });
 
 test('composed: the chest a swing crossed is the body\'s own px, copied from where the rig says', { skip: !PNG && 'no pngjs' }, async () => {
@@ -294,7 +297,8 @@ test('the body reads the held weapon off the rig, and its look carries the code'
   const rigSrc = readFileSync(new URL('../../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
   assert.match(rigSrc, /heldWeapon: playerWeapon\.weapon \?\? null,/);
   const bodySrc = readFileSync(new URL('../../../src/player/eyeOfTheBeholder/eotbBody.js', import.meta.url), 'utf8');
-  assert.match(bodySrc, /\.\.\.layeredHands\(last\)/);   // PIN MOVED (LAYERED-DUAL): the hand in use's weapon, or the pair
+  assert.match(bodySrc, /\.\.\.\(isAnimating\?\.hands \?\? layeredHands\(last\)\)/);   // PIN MOVED (LAYERED-DUAL): the hand in use's weapon, or the pair; (AUDIT) a clip's, as it started
+  assert.match(bodySrc, /hands: cfg\.wornArmour \? layeredHands\(last\) : null/, 'AUDIT: a clip keeps the hands it started with');
   assert.deepEqual(layeredHands({ heldWeapon: sword }), { weapon: 'sa5' });
 });
 
@@ -407,7 +411,8 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
   for (let x = 0; x < 30; x++) if (x < 4 || x > 7) colors.set([...BLUE, 255], (20 * W + x) * 4);
   for (let y = 21; y < 38; y++) colors.set([...RED, 255], (y * W + 29) * 4);
   // the handle's head end is 21 picture px past the grip (x 8): the chain runs from there the way chainWay says - a walk's
-  // hanging, lagging the hand's move since the last frame; a swing's flung out along the handle, trailing the blow
+  // hanging, lagging the hand's move since the last frame; a swing's flung out along the handle, trailing the raise
+  // (AUDIT) and leading from the blow on
   for (const frame of ['2-0', '1-1', '0-0', '15-0', '7-1', '5-1', '6-3']) {
     const flail = await decodeLayered(`LA:male:leather_leather_leather:${frame}:lll@fl1`, decodePng, { ...opts, heldArt: async () => ({ width: W, height: H, colors }) });
     const fr = weaponRigOf('male', frame), [qx, qy, tx, ty] = fr.w ?? [...fr.q, ...fr.t], D = Math.hypot(tx - qx, ty - qy), ux = (tx - qx) / D, uy = (ty - qy) / D;
@@ -417,7 +422,7 @@ test('a flail\'s chain hangs; a katana is held as its flat picture, not the pack
       if (flail.data[i * 4] > 200 && flail.data[i * 4 + 2] < 60 && flail.data[i * 4 + 1] < 60) red.push([(i % flail.width) + 0.5, ((i / flail.width) | 0) + 0.5]);
     }
     assert.ok(red.length > 3, `${frame}: the chain drawn (${red.length} px)`);
-    const [gx, gy] = chainWay(fr.cv, { ux, uy }, Number(frame.split('-')[0]) >= 5 && Number(frame.split('-')[0]) <= 9);
+    const [gx, gy] = chainWay(fr.cv, { ux, uy }, Number(frame.split('-')[0]) >= 5 && Number(frame.split('-')[0]) <= 9, Number(frame.split('-')[1]));
     assert.ok(red.every(([x, y]) => Math.abs((x - hx) * gy - (y - hy) * gx) <= 1.6 && (x - hx) * gx + (y - hy) * gy > 0), `${frame}: the chain runs from the head end along (${gx.toFixed(2)}, ${gy.toFixed(2)})`);
     if (!fr.cv) assert.deepEqual([gx, gy], [0, 1], `${frame}: at rest it hangs plumb`);
   }  const kt = { group: 'Weapons', templateIndex: WEAPONS.Katana, material: 0 }, ls = { group: 'Weapons', templateIndex: WEAPONS.Longsword, material: 0 };
@@ -548,7 +553,7 @@ test('LAYERED-GLOW the compose keeps the weapon\'s own px: those its drawing cha
   for (const [body, rf, outfit] of [['male', '2-1', 'lll'], ['female', '17-0', 'p0p0p0~2']]) {
     const plain = `LA:${body}:${outfitCombo(outfitPieces(outfit))}:${rf}:${outfit}`;
     const bare = await decodeLayered(`${plain}@0`, decodePng, opts), armed = await decodeLayered(`${plain}@ls1`, decodePng, opts);
-    assert.equal(bare.held, undefined, 'bare hands: no weapon of its own');
+    assert.ok(bare.held.length === bare.width * bare.height && bare.held.every((v) => v === 0), 'bare hands: no weapon px - no glow, never the whole body (PIN MOVED, AUDIT)');
     let n = 0;
     for (let i = 0; i < armed.held.length; i++) {
       const changed = [0, 1, 2, 3].some((c) => armed.data[i * 4 + c] !== bare.data[i * 4 + c]);
@@ -786,4 +791,116 @@ test('SPELL-BURST (2026-10-30, the owner, of a concept sheet\'s "Wrath of Sithis
   assert.deepEqual([...withDagger.held], [...noSpell.held], 'the held px the dagger\'s alone');
   const rigSrc = readFileSync(new URL('../../../src/combat/weapon/weaponRig.js', import.meta.url), 'utf8');
   assert.match(rigSrc, /castElement: castPlaying\(\) \? cast\.element : null, spellHand: !!spellHandNow\(\)/);
+});
+
+// ── AUDIT (2026-10-31, the owner: "Lets do a comprehensive audit on everything and ensure all placements are absolutely
+// perfect along with functionality") ─────────────────────────────────────────────────────────────────────────────────
+test('AUDIT the hands: a spell hand keeps its weapon readied too; a shot is the striking hand\'s gun; a flinch at the loose keeps the bow; a left blow turns over from as it stands; a clip keeps the hands it started with', () => {
+  const L = (o) => ({ outfit: 'lll', gender: 'male', ...o });
+  const code = (t, off, f, n, o, m = false) => layeredSprite(t, off, f, n, L(o), m).key.split(':').slice(3).join(':');
+  for (const t of ['IdleSpell', 'MoveSpell']) {
+    assert.equal(weaponShownFor(t, 'ls7', true), 'ls7', `${t}: the weapon beside the readied spell`);
+    assert.equal(weaponShownFor(t, 'ls7', false), '0', `${t}: a readied spell alone, hands empty`);
+    assert.equal(weaponShownFor(t, 'lb3', true), '0', `${t}: never a bow`);
+  }
+  // a gun in the right, a blade in the left that strikes: the blade's cut (a slash run backwards), never the shot
+  const blade = [0, 1, 2, 3, 4, 5].map((f) => code('AttackMelee', 2, f, 6, { weapon: 'pt0', offhand: 'ls7', strike: 'L' }));
+  assert.deepEqual(blade.map((k) => k.split(':')[0]), [...SWING_CUTS.slash].reverse().map((f) => `7-${f}`));
+  assert.ok(blade.every((k) => k.endsWith('@ls7+pt0')), 'the blade on the line');
+  // a blade in the right, a gun in the left that fires: the shot, the gun on the line
+  const shot = [0, 1, 2, 3, 4, 5].map((f) => code('AttackMelee', 2, f, 6, { weapon: 'ls7', offhand: 'pt0', strike: 'L' }));
+  assert.ok(shot.every((k) => k === `7-${GUN_FIRE_FRAME}:lll@pt0+ls7`), `the shot: ${shot}`);
+  // a flinch while loosing: the bow as the ranged stance holds it - never the art's hammer
+  assert.match(code('Death', 2, 0, 1, { weapon: 'lb3', armedTable: 'AttackRanged' }), /@lb3$/);
+  // the iron warhammer: its own frames, never an armed twin's (the art's 0-2 holds its own hammer)
+  assert.equal(code('MoveMelee', 0, 2, 4, { weapon: 'wh0' }), '0-2:lll@wh0');
+  // a left blow from the front is the right's turned over - from as the picture stands (a visible first-person body's)
+  const s0 = layeredSprite('AttackMelee', 0, 2, 6, L({ weapon: 'ls7', offhand: 'dg3', strike: 'L' }), false);
+  const s1 = layeredSprite('AttackMelee', 0, 2, 6, L({ weapon: 'ls7', offhand: 'dg3', strike: 'L' }), true);
+  assert.equal(s0.mirror, true); assert.equal(s1.mirror, false);
+  assert.equal(s0.pair, 'L', 'the left\'s weapon on the line');
+  assert.equal(layeredSprite('MoveMelee', 1, 0, 4, L({ weapon: 'ls7', offhand: 'dg3' }), false).pair, 'R');
+  assert.equal(layeredSprite('MoveMelee', 1, 0, 4, L({ weapon: 'ls7' }), false).pair, null);
+  // the hands as a clip starts, for all of it - mine and a walker's
+  const peerSrc = readFileSync(new URL('../../../src/net/peer/peerRiders.js', import.meta.url), 'utf8');
+  assert.match(peerSrc, /i: 0, hands: walkerHeld\(peer\.look, pose\) \}/);
+  assert.match(peerSrc, /\.\.\.\(r\.shot\?\.hands \?\? walkerHeld\(peer\.look, pose\)\)/);
+  // a walker's cast is the same look as its stance: its pictures go together
+  assert.equal(spriteLookOf({ key: 'LA:male:c:7-2:lll@0!3' }), spriteLookOf({ key: 'LA:male:c:2-0:lll@0' }));
+});
+
+test('AUDIT the glow: none in empty hands, round the loose\'s own bow, round the iron warhammer; a pair\'s two weapons each in their own hand\'s colours; the art\'s own speck gone', { skip: !PNG && 'no pngjs' }, async () => {
+  // the loose's own bow: its limbs and string, the thin px in pieces - a lone thin corner is not
+  const W = 30, H = 30, img = { width: W, height: H, data: new Uint8Array(W * H * 4) }, on = (x, y) => img.data.set([90, 60, 30, 255], (y * W + x) * 4);
+  for (let y = 2; y < 14; y++) on(3, y);   // a limb, a px wide
+  for (let y = 10; y < 26; y++) for (let x = 12; x < 24; x++) on(x, y);   // the body
+  on(27, 2); on(28, 2);   // a corner's two px
+  const bow = artBowPx(img);
+  for (let y = 2; y < 14; y++) assert.equal(bow[y * W + 3], 1, `the limb at ${y}`);
+  assert.equal(bow[2 * W + 27] + bow[2 * W + 28], 0, 'a piece of two: no bow');
+  assert.equal(bow[18 * W + 18], 0, 'the body: no bow');
+  // the art's own speck in the air goes where the code holds the hands (female 9-2's, at 121,44)
+  const speck = await picture('female/leather_leather_leather/9-2');
+  assert.equal(speck.data[(44 * speck.width + 121) * 4 + 3], 255, 'the art has it');
+  for (const code of ['lll@0', 'lll@ls1']) {
+    const f = await decodeLayered(`LA:female:leather_leather_leather:9-2:${code}`, decodePng, opts);
+    assert.equal(f.data[(44 * f.width + 121) * 4 + 3], 0, `${code}: the speck gone`);
+  }
+  const loose = await decodeLayered('LA:male:leather_leather_leather:22-1:lll', decodePng, opts);
+  const n = loose.held.reduce((t, v) => t + v, 0);
+  assert.ok(n > 30, `the loose's bow: ${n} px`);
+  // a pair's second weapon's px are 2: its glow is its own hand's
+  const pair = await decodeLayered('LA:male:leather_leather_leather:2-1:lll@ls1+dg3', decodePng, opts);
+  const one = await decodeLayered('LA:male:leather_leather_leather:2-1:lll@ls1', decodePng, opts);
+  let off = 0;
+  for (let i = 0; i < pair.held.length; i++) {
+    if (pair.held[i] !== 2) continue;
+    off++;
+    assert.ok([0, 1, 2, 3].some((c) => pair.data[i * 4 + c] !== one.data[i * 4 + c]), 'a 2 is the second weapon\'s');
+  }
+  assert.ok(off > 5 && pair.held.some((v) => v === 1), `both weapons: ${off} px the second's`);
+  const w = pair.width, h = pair.height, colors = new Uint32Array(w * h).fill(7);
+  const main = heldOf(colors, pair.held, w, h), second = heldOf(colors, pair.held, w, h, false, 2);
+  assert.equal(second.idx.length, off);
+  assert.equal(main.idx.length + second.idx.length, pair.held.filter((v) => v > 0).length);
+  const up = new Map(), renderer = { textures: up, uploadTexture: (a, r) => up.set(`${a}_${r}`, 1), evictTexture: (k) => up.delete(k) };
+  assert.equal(heldGlowRecord(renderer, 9, 'x', main, w, h), `x${HELD_SUFFIX}`);
+  assert.equal(heldGlowRecord(renderer, 9, 'x', second, w, h, OFF_SUFFIX), `x${OFF_SUFFIX}`);
+  evictHeld(renderer, '9_x');
+  assert.equal(up.size, 0, 'both go with the sprite');
+  // the body and the walkers glow each weapon by its own hand's item
+  const bodySrc = readFileSync(new URL('../../../src/player/eyeOfTheBeholder/eotbBody.js', import.meta.url), 'utf8');
+  assert.match(bodySrc, /const lineItem = batchPair === 'L' \? last\.pairLeft : batchPair === 'R' \? last\.pairRight : handItemNow\(\);/);
+  assert.match(bodySrc, /glowNow\(batchPair === 'L' \? last\.pairRight : last\.pairLeft\)/);
+  const peerSrc = readFileSync(new URL('../../../src/net/peer/peerRiders.js', import.meta.url), 'utf8');
+  assert.match(peerSrc, /peerWeaponGlow\(h \? \(r\.pair === 'L' \? h\.left : h\.right\)/);
+  assert.match(peerSrc, /peerWeaponGlow\(r\.pair === 'L' \? h\.right : h\.left, null\)/);
+});
+
+test('AUDIT the pictures: a notch in the haft past the hand is filled (a war axe\'s head, a flail\'s cap); a px alone in the air is a speck; a flail\'s ball leads from the blow on', () => {
+  // a haft along row 10: the hand's gap (x 10-15), a 3-px notch (x 30-32) short of the head, the head a block
+  const W = 50, H = 21, colors = new Uint8Array(W * H * 4), put = (x, y) => colors.set([...BLUE, 255], (y * W + x) * 4);
+  for (let x = 2; x < 40; x++) if ((x < 10 || x > 15) && (x < 30 || x > 32)) put(x, 10);
+  for (let y = 4; y < 17; y++) for (let x = 40; x < 48; x++) put(x, y);
+  const P = heldPicture({ width: W, height: H, colors });
+  for (let x = 30; x <= 32; x++) assert.ok(P.img.colors[(10 * W + x) * 4 + 3] > 127, `the notch filled at ${x}`);
+  for (let x = 11; x <= 14; x++) assert.equal(P.img.colors[(10 * W + x) * 4 + 3], 0, `the hand's gap left at ${x}`);
+  // a speck: drawn alone in the air goes; beside the picture or the body stays
+  const w = 8, out = { width: w, height: 8, data: new Uint8Array(w * 8 * 4) }, was = out.data.slice();
+  out.data.set([1, 2, 3, 255], (1 * w + 1) * 4);   // alone
+  out.data.set([1, 2, 3, 255], (5 * w + 5) * 4); out.data.set([1, 2, 3, 255], (5 * w + 6) * 4);   // a pair
+  was.set([9, 9, 9, 255], (2 * w + 6) * 4); out.data.set([9, 9, 9, 255], (2 * w + 6) * 4); out.data.set([1, 2, 3, 255], (2 * w + 5) * 4);   // beside the body
+  dropSpecks(out, was);
+  assert.equal(out.data[(1 * w + 1) * 4 + 3], 0, 'the speck goes');
+  assert.equal(out.data[(5 * w + 5) * 4 + 3], 255); assert.equal(out.data[(2 * w + 5) * 4 + 3], 255);
+  // the ball: out along the handle at the strike (foreshortened as it is), carried on through, hanging as the arms come back
+  const Lh = { ux: -1, uy: 0 };
+  const [x2, y2, a2] = chainWay([-10, 10], Lh, true, 2);
+  assert.ok(x2 < -0.8 && y2 > 0 && a2 === 1, `the strike: along the handle (${x2.toFixed(2)}, ${y2.toFixed(2)})`);
+  const [x3, y3] = chainWay([0, 10], Lh, true, 3);
+  assert.ok(y3 > 0.8, `through: on with the blow, falling (${x3.toFixed(2)}, ${y3.toFixed(2)})`);
+  const [x4, y4] = chainWay([10, -10], Lh, true, 4);
+  assert.ok(y4 > 0.9 && x4 > 0, `back: hanging, a little ahead (${x4.toFixed(2)}, ${y4.toFixed(2)})`);
+  const [x1, y1] = chainWay([0, -10], { ux: 0, uy: -1 }, true, 1);
+  assert.ok(y1 > 0.3 && Math.abs(x1) < 0.1, `the raise: trailing (${x1.toFixed(2)}, ${y1.toFixed(2)})`);
 });

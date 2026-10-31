@@ -69,7 +69,7 @@ import {
   createSpriteHolster, createHolsterArt, loadHolsterPicture, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, HOLSTER_HAND_SLOT, SELF_OWNER,
 } from './eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on the sprite's back, one home - this body's and the peers'
 import { equipTableOf } from '../../systems/equip.js';   // BACK-HOLSTER: the weapon in the hand
-import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
+import { myWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld, OFF_SUFFIX } from './eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on its back and in the hand
 
 /** PlayerHeightChanger's controllerStandingHeight, the capsule the
  *  billboard's parent sits at the centre of - the fallback when a
@@ -297,6 +297,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   let batchSize = null, batchPx = 0, batchPxW = 0, batchArt = 1;   // AUDIT 3 (SERAPH-WINGS): and the frame's own pixels tall - the figure's metres a pixel; BACK-HOLSTER GLOW: its art scale
   let batchMarks = null;   // ARMORY: where the body stands in that picture (render/armoryPose.js spriteMarks), read at its upload
   let batchHeld = null;   // LAYERED-GLOW: the weapon's own px in that picture (eotbGlow.js heldOf), null for none of its own
+  let batchHeldOff = null, batchPair = null;   // AUDIT: a pair's second weapon's px, and the hand on the line ('R'/'L')
   let figure = null;   // SERAPH-WINGS: the frame last drawn, as an aura reads it - its base over the feet (m), its metres a pixel and its form (AUDIT 3)
   let facingDrawn = null;   // SPRITE-FACE: the frame last drawn's facing, as an aura reads it - { yaw, turn } (facing(), below)
   /** The one sprite that decides whether this lane may open at all. See `ready()`. */
@@ -318,7 +319,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
   /** The weapon in the hand in use - the rig's, else the equip table's right hand (the pins hand theirs in). */
   const handItemNow = () => (holsterItem ? holsterItem() : last.handItem !== undefined ? last.handItem : handWeapon());
   // BACK-HOLSTER GLOW: the glows this body drew this frame - its back's weapon and, drawn, the whole sprite (eotbGlow.js)
-  const glowList = [], backGlow = createSpriteGlow(SELF_OWNER), handGlow = createSpriteGlow(SELF_OWNER);
+  const glowList = [], backGlow = createSpriteGlow(SELF_OWNER), handGlow = createSpriteGlow(SELF_OWNER), offGlow = createSpriteGlow(SELF_OWNER);
   const glowNow = (item, wraps = null) => myWeaponGlow(item, glowOn ?? undefined, wraps);
   /** Draw the weapon on the sprite's back: alive, in your own form, sheathed, a weapon that rides the back, its picture
    *  up and the body drawn this frame - on foot and in third person, where alone `figure` stands. After the body, so the
@@ -436,7 +437,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // is its own pixels under its own key (`s.rec`, EOTB5)
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, img.held, width, height, s.mirror) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, img.held, width, height, s.mirror), heldOff: heldOf(px, img.held, width, height, s.mirror, 2) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px (AUDIT: a pair's second, its own)
     })();
     tex.set(cacheKey(s), p);
     p.then((r) => { if (tex.get(cacheKey(s)) !== p) return; tex.set(cacheKey(s), r); firstUp = true; },
@@ -484,7 +485,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
    *  spriteFor here asked for the werewolf, and a wereboar saw the wolf
    *  on themselves while the others (net/peer/peerRiders.js, off the pose's
    *  `wb`) draw the boar. The look is the settings plus the live form. */
-  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0, ...(cfg.wornArmour ? { ...wornOutfit(layeredGenderOf(cfg.layeredChoice, playerEntity?.gender)), ...layeredHands(last) } : {}) });   // LAYERED-GEAR-ON: the own body read as the character is now   // COATS1: and the horse's look, off the rig's record
+  const lookNow = () => ({ ...cfg, lycanthropyType: last.lycanthropyType, horse: last.horseLook ?? 0, ...(cfg.wornArmour ? { ...wornOutfit(layeredGenderOf(cfg.layeredChoice, playerEntity?.gender)), ...(isAnimating?.hands ?? layeredHands(last)) } : {}) });   // LAYERED-GEAR-ON: the own body read as the character is now   // COATS1: and the horse's look, off the rig's record
   /** PR-WW1: the form the lycan tables were last fetched for */
   let preloadedForm = null;
   /** COATS1: the look the mounted tables were last fetched in */
@@ -577,7 +578,9 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
    *  first yield at once, so the first frame paints in the same
    *  LateUpdate. */
   function startClip(table, frames, interval, { freeze = false, kind = 'forward' } = {}) {
-    isAnimating = { table, frames, interval, freeze, kind, i: 0, timer: 0, phase: kind === 'hold' ? 'draw' : 'run' };
+    // AUDIT: the hands as the clip starts, for all of it - the cast's element and spell hand outlast the rig's cast, and
+    // a pair's next blow begins before this one's last frame
+    isAnimating = { table, frames, interval, freeze, kind, i: 0, timer: 0, phase: kind === 'hold' ? 'draw' : 'run', hands: cfg.wornArmour ? layeredHands(last) : null };
     if (kind === 'hold') {
       // IL_5fa5-IL_5fcb: animFrameCurrent = n - 1, then the loop
       // decrements before it paints - `frames` is that draw order
@@ -1085,6 +1088,7 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
           batchRec = key;
         }
         batchSize = size; batchPx = up.h; batchPxW = up.w; batchArt = spriteArtScale(s.archive, s.record); batchMarks = up.marks ?? null; batchHeld = up.held ?? null;
+        batchHeldOff = up.heldOff ?? null; batchPair = s.pair ?? null;   // AUDIT: a pair's second weapon, and whose is on the line
       }
       if (!batch) return false;                 // nothing up yet: the last sprite stays until one is
       const c = place();
@@ -1116,10 +1120,15 @@ export function createEotbBody({ count = spriteCount, urlFor = eotbSpriteUrl, de
       // BACK-HOLSTER GLOW: drawn, the weapon's glow - in third person, on foot, alive, in your own form; LAYERED-GLOW:
       // round a worn-armour body's weapon alone, else the whole sprite
       const drawn = grow === 1 && !FP && !last.sheathed && !last.riding && !last.transformed && !died && !last.died && !material();
-      const look = drawn ? glowNow(handItemNow(), last.handWraps) : null;
+      // AUDIT: a pair glows each weapon in its own hand's colours - the line's (`batchPair`) and the other
+      const lineItem = batchPair === 'L' ? last.pairLeft : batchPair === 'R' ? last.pairRight : handItemNow();
+      const look = drawn ? glowNow(lineItem, last.handWraps) : null;
       // AUDIT BACK-HOLSTER A5: the picture STANDING - a frame still decoding draws the last one, and so does its glow
       const held = look ? heldGlowRecord(renderer, batch.archive, batch.record, batchHeld, batchPxW, batchPx) : null;
       if (look && held !== '') glowList.push(setSpriteGlow(handGlow, batch.archive, held ?? batch.record, look, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));
+      const offLook = drawn && batchPair ? glowNow(batchPair === 'L' ? last.pairRight : last.pairLeft) : null;
+      const off = offLook ? heldGlowRecord(renderer, batch.archive, batch.record, batchHeldOff, batchPxW, batchPx, OFF_SUFFIX) : null;
+      if (off) glowList.push(setSpriteGlow(offGlow, batch.archive, off, offLook, batch.origin, camRight, bbUp, batchSize.w, batchSize.h, batchPxW / batchArt, batchPx / batchArt));
       return true;
     },
 

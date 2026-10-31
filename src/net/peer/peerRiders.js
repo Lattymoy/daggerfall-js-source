@@ -41,7 +41,7 @@ import {
 import {
   createHolsterArt, loadHolsterPicture, createSpriteHolster, hangSpriteHolster, mintSpriteHolster, dropSpriteHolster, holstersOnBack, holsterItemOfLook,
 } from '../../player/eyeOfTheBeholder/eotbHolster.js';   // BACK-HOLSTER: the sheathed weapon on every EOTB sprite's back, one home
-import { peerWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld } from '../../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on the back and in the hand
+import { peerWeaponGlow, createSpriteGlow, setSpriteGlow, heldOf, heldGlowRecord, evictHeld, OFF_SUFFIX } from '../../player/eyeOfTheBeholder/eotbGlow.js';   // BACK-HOLSTER GLOW: its glow, on the back and in the hand
 import { quadHalfDiagonal } from '../../render/bounds.js';   // AUDIT FLICKER R1: a sprite's reach, as the batch was made with
 import { stepPeerPace } from './peerPace.js';   // HT-WAIST-BACK: the pace off the drawn pose, MWBODY1's law
 import { peerBodyYaw, peerMoving } from './peerClimb.js';   // CLIMB5: a walker on the wall faces it and takes no stride
@@ -74,7 +74,7 @@ export function spriteLookOf(s) {
   if (s?.horse) return s.horse;
   if (!isLayeredKey(s?.key)) return null;
   const p = /** @type {string} */ (s.key).split(':');
-  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p[4]}` : null;   // a flipped bow's picture (`:m`) is the same look
+  return p.length >= 5 ? `${p[0]}:${p[1]}:${p[2]}:${p[4].replace(/!\d$/, '')}` : null;   // a flipped bow's picture (`:m`), a cast's (`!k`) the same look
 }
 
 async function decodeUrl(url) {
@@ -150,7 +150,7 @@ export function createEotbArt({ renderer = null, urlFor = eotbSpriteUrl, decode 
       const { width, height, colors } = lookedPixels(s, raw);   // COATS1: a rider's mount in its look
       const px = s.mirror ? flipRows(colors, width, height) : colors;
       renderer.uploadTexture(s.archive, s.rec, { width, height, colors: px });
-      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, raw.held, width, height, s.mirror) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
+      return { w: width, h: height, marks: spriteMarks(px, width, height, { arms: spriteArmsSeen(s.view), art: spriteArtScale(s.archive, s.record) }), held: heldOf(px, raw.held, width, height, s.mirror), heldOff: heldOf(px, raw.held, width, height, s.mirror, 2) };   // ARMORY: the body's place in the picture, read once; LAYERED-GLOW: the weapon's own px
     });
     tex.set(k, p);
     p.then((r) => { if (tex.get(k) === p) tex.set(k, r); }, () => { if (tex.get(k) === p) tex.set(k, { failedAt: clock() }); });
@@ -200,7 +200,7 @@ function figureLayer(art) {
         if (r.batch.bounds) r.batch.bounds[3] = quadHalfDiagonal(size);
         r.batchKey = key;
       }
-      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null; r.pxW = up.w; r.held = up.held ?? null; r.artScale = spriteArtScale(s.archive, s.record);   // AUDIT 3 (SERAPH-WINGS): its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture
+      r.size = size; r.xml = xml; r.mirror = s.mirror; r.g = g; r.px = up.h; r.form = mode?.riding ? 'rider' : mode?.transformed ? 'beast' : 'walker'; r.marks = up.marks ?? null; r.pxW = up.w; r.held = up.held ?? null; r.heldOff = up.heldOff ?? null; r.pair = s.pair ?? null; r.artScale = spriteArtScale(s.archive, s.record);   // AUDIT 3 (SERAPH-WINGS): its pixels tall and its form - an aura's figure (figureOf); ARMORY: and where the body stands in its picture
       if (r.batch) r.batch.noShadow = g > 1;
     }
     if (r.batch && r.xml) {
@@ -498,7 +498,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
         for (const o of WALK_ONE_SHOTS) {
           if ((pose[o.field] | 0) !== r.last[o.field]) {
             const frames = o.frames(pose[o.field] | 0);
-            if (frames.length) { r.shot = { table: o.table, tick: o.tick(frames), frames, i: 0 }; r.table = o.table; r.frame = frames[0]; r.clock = 0; }
+            if (frames.length) { r.shot = { table: o.table, tick: o.tick(frames), frames, i: 0, hands: walkerHeld(peer.look, pose) }; r.table = o.table; r.frame = frames[0]; r.clock = 0; }   // AUDIT: its hands as it starts
           }
         }
       }
@@ -536,7 +536,7 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
       // LAYERED-GEAR: such a walker wears what its look says it wears - the helmet, chest and legs pieces (and a cloak's
       // dye) its own client sent (net/wire.js look items) - in the body it chose (LAYERED-PEERS: or its own); leather
       // where it wears none
-      const worn = lgBody ? { wornArmour: true, outfit: outfitOfItems(peer.look?.items), gender: lgBody, ...walkerHeld(peer.look, pose) } : null;
+      const worn = lgBody ? { wornArmour: true, outfit: outfitOfItems(peer.look?.items), gender: lgBody, ...(r.shot?.hands ?? walkerHeld(peer.look, pose)) } : null;
       const s = spriteFor(flinch ? 'Death' : r.table, view, flinch ? 0 : r.frame, worn ? { onFoot: set ?? 0, ...worn, ...(flinch ? { armedTable: r.table } : {}) } : { onFoot: set });   // LAYERED-WEAPONS: a flinch keeps the weapon
       if (!s) continue;
       faceDrawn(r, view, yaw, feet, eye);   // SPRITE-FACE: the way it is drawn facing, for an aura on it
@@ -604,11 +604,14 @@ export function createPeerWalkers({ renderer = null, urlFor = eotbSpriteUrl, dec
    *  LAYERED-GLOW: a worn-armour walker's round its weapon alone (eotbGlow.js heldGlowRecord). */
   function glowInHand(r, peer, pose, right) {
     if (!pose.wd || gatherActOf(pose) || r.veil || !r.batch || !r.size || r.form !== 'walker' || !(r.px > 0)) return;
-    const look = peerWeaponGlow(holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);
-    if (!look) return;
-    const art = r.artScale > 0 ? r.artScale : 1, held = heldGlowRecord(store.renderer, r.batch.archive, r.batch.record, r.held, r.pxW, r.px);
-    if (held === '') return;
-    glows.push(setSpriteGlow(r.glowHand ??= createSpriteGlow(peer.id), r.batch.archive, held ?? r.batch.record, look, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));
+    // AUDIT: a pair glows each weapon in its own hand's colours - the line's (`r.pair`) and the other
+    const h = r.pair ? peerHandsOf(peer.look, pose) : null, art = r.artScale > 0 ? r.artScale : 1;
+    const look = peerWeaponGlow(h ? (r.pair === 'L' ? h.left : h.right) : holsterItemOfLook(peer.look?.items, !!pose.lh), peer.ak ?? null);
+    const held = look ? heldGlowRecord(store.renderer, r.batch.archive, r.batch.record, r.held, r.pxW, r.px) : '';
+    if (held !== '') glows.push(setSpriteGlow(r.glowHand ??= createSpriteGlow(peer.id), r.batch.archive, held ?? r.batch.record, look, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));
+    const offLook = h ? peerWeaponGlow(r.pair === 'L' ? h.right : h.left, null) : null;
+    const off = offLook ? heldGlowRecord(store.renderer, r.batch.archive, r.batch.record, r.heldOff, r.pxW, r.px, OFF_SUFFIX) : null;
+    if (off) glows.push(setSpriteGlow(r.glowOff ??= createSpriteGlow(peer.id), r.batch.archive, off, offLook, r.batch.origin, right, UP, r.size.w, r.size.h, r.pxW / art, r.px / art));
   }
 
   /** HT-WAIST-BACK: draw this frame's lanterns, each on its own tilted basis - the hosts call it beside the bodies

@@ -145,8 +145,12 @@ picture. A thin handle keeps a pixel's width.
 
 **Its chain and its grip** (the owner, 2026-10-30: "We need to animate the flail"). A flail's chain and ball are split
 off the handle (`heldChain`) and run from its head end the way `chainWay` says. In a walk they hang and lag the hand's
-move since the frame before (the rig's `cv`), at most 31 degrees off the plumb; in a swing they are flung out along the
-handle and trail the blow; at rest they hang plumb. The ball stays in the picture. The doll's hand gap is bridged with the handle's own core
+move since the frame before (the rig's `cv`), at most 31 degrees off the plumb; at rest they hang plumb. In a swing they
+trail the hands while they speed up (the raise: frames 0, 1, 5); at the strike (2) they are flung out along the handle,
+foreshortened as it is; then the ball carries on past it and falls (3) and hangs as the arms come back (4). The ball
+stays in the picture.
+
+**The hand gap.** The doll's hand gap is bridged with the handle's own core
 (`bridgeGap`, never a guard's breadth), drawn only into open air: where the art lost the fist with the hammer (the side
 flinch), the pommel stays joined to the guard, and a fist the art keeps covers it.
 
@@ -205,6 +209,17 @@ Thrown, it flies the way the body faces from the throw's fists; from behind it i
 most of it clears the back. A one-handed weapon beside the spell (`spellHand`) stays in hand; else the hands are empty.
 My cast's element is the rig's (`layeredCast`); a walker's is its pose's `ce`. The weapon's glow is not the spell's.
 
+**The audit** (2026-10-31, the owner: "Lets do a comprehensive audit on everything and ensure all placements are
+absolutely perfect along with functionality"). Every body, table, view, frame, flip and weapon was composed and checked
+for floating pieces and grips off the fist. A notch in a haft past the hand (the war axe's short of its head, the flail's
+of its cap) is filled with the haft (`HAFT_NOTCH`). A picture's px alone in the air is dropped (`dropSpecks`), but not
+one beside the body. The art's own specks go where the code holds the hands (`dropLoneArt`: female 9-2, male 8-4).
+
+**What the audit fixed in the hands.** A clip keeps the hands it started with (`isAnimating.hands`, a walker's
+`r.shot.hands`): the cast's element outlives the rig's cast, and a pair's next blow cannot turn this one. A weapon beside
+a readied spell stays in hand. A pair's shot is the striking hand's gun. A flinch at the loose takes the bow's stance. A
+left blow turns over from the picture as it stands. A walker's cast is the same look as its stance (`spriteLookOf`).
+
 **Whose hands.** My body reads the item in the hand in use (`combat/weapon/weaponRig.js` eotbState `heldWeapon`,
 `eotbBody.js` lookNow). A walker holds the tool of its gathering act, else the weapon in the hand its pose says it uses
 (`net/peer/peerRiders.js` walkerWeapon, `peerBodies.js` peerWeaponOf): nothing new on the wire. The outfit code carries
@@ -216,10 +231,14 @@ motion needs new frames in every outfit. An attack frame whose hammer points
 at the camera draws the weapon short. Each outfit's helmet and legs draw the hammer's rim their own way, so a pixel or
 two of it can stay, and a fill can borrow a patch of another piece's colour. Male 5-1 keeps the thumb laid up the
 shaft. The female's back-view flinch (14-0) keeps its raised hand two pixels off the wrist,
-and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body. A weapon's glow stands round the
+and with empty hands her back-3/4 swing (8-2) its hand, whose arm is behind the body.
+
+**Known limits of the hands.** A flinch at the loose shows empty
+hands: the hurt frames have no free hand for the bow. Where the art hides a pair's free hand (aside), the second weapon
+fans off the first. A weapon's glow stands round the
 weapon alone (LAYERED-GLOW, `05-Combat/Weapon-Glow.md` "Round the weapon"). Verified by
 `test/player/eyeOfTheBeholder/layered_weapons.test.js`, `spriteglow.test.js` and `tools/mutants/layered_weapons.json`
-(108 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
+(133 mutants, all dead); the peer-art pins moved to the new codes (`test/net/peer/fb1022d_peerart.test.js`).
 
 ## The art - the doctrine's third exception
 

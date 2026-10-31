@@ -44,15 +44,17 @@ export function setSpriteGlow(g, archive, record, glow, origin, right, up, w, h,
 }
 
 /** LAYERED-GLOW (2026-10-30, the owner: "ensure all third person weapons get the glow on equip (a prior change kinda
- *  did this but for the whole body)"): the renderer record suffix of a worn-armour sprite's weapon picture. */
-export const HELD_SUFFIX = '#w';
+ *  did this but for the whole body)"): the renderer record suffix of a worn-armour sprite's weapon picture; a pair's
+ *  second weapon's its own (OFF_SUFFIX), glowing its own hand's colours. */
+export const HELD_SUFFIX = '#w', OFF_SUFFIX = '#o';
 
-/** LAYERED-GLOW: a worn-armour picture's weapon px as uploaded - `held` the compose's mask (top row first), `colors` the
- *  upload (row 0 the bottom, mirrored as `mirror` says): { idx, col }, or null for a picture with no weapon of its own. */
-export function heldOf(colors, held, w, h, mirror = false) {
+/** LAYERED-GLOW: a worn-armour picture's weapon px as uploaded - `held` the compose's mask (top row first; `part` 1 the
+ *  line's weapon, 2 a pair's second), `colors` the upload (row 0 the bottom, mirrored as `mirror` says): { idx, col }, or
+ *  null for a picture with no weapon of its own. */
+export function heldOf(colors, held, w, h, mirror = false, part = 1) {
   if (!held || held.length !== w * h) return null;
   const idx = [];
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (held[y * w + x]) idx.push((h - 1 - y) * w + (mirror ? w - 1 - x : x));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (held[y * w + x] === part) idx.push((h - 1 - y) * w + (mirror ? w - 1 - x : x));
   const at = Uint32Array.from(idx);
   return { idx: at, col: Uint32Array.from(at, (i) => colors[i]), of: /** @type {any} */ (null), rec: '', key: '' };
 }
@@ -60,10 +62,10 @@ export function heldOf(colors, held, w, h, mirror = false) {
 /** LAYERED-GLOW: the record a hand glow outlines - the weapon's own picture (`held`, heldOf), uploaded once under the
  *  sprite's record and HELD_SUFFIX; '' where this frame shows none of it (no glow); null where the picture has no
  *  weapon of its own (a skin, a bare hand: the whole sprite). */
-export function heldGlowRecord(renderer, archive, rec, held, w, h) {
+export function heldGlowRecord(renderer, archive, rec, held, w, h, suffix = HELD_SUFFIX) {
   if (!held) return null;
   if (!held.idx.length) return '';
-  if (held.of !== rec) { held.of = rec; held.rec = `${rec}${HELD_SUFFIX}`; held.key = `${archive}_${held.rec}`; }   // once: the draw path allocates nothing
+  if (held.of !== rec) { held.of = rec; held.rec = `${rec}${suffix}`; held.key = `${archive}_${held.rec}`; }   // once: the draw path allocates nothing
   if (renderer?.uploadTexture && !renderer.textures?.has?.(held.key)) {
     const colors = new Uint32Array(w * h);
     for (let i = 0; i < held.idx.length; i++) colors[held.idx[i]] = held.col[i];
@@ -74,8 +76,7 @@ export function heldGlowRecord(renderer, archive, rec, held, w, h) {
 
 /** LAYERED-GLOW: let a sprite's weapon picture go with the sprite's (`key` its renderer key), where one was uploaded. */
 export function evictHeld(renderer, key) {
-  const k = `${key}${HELD_SUFFIX}`;
-  if (renderer?.textures?.has?.(k)) renderer.evictTexture?.(k);
+  for (const k of [`${key}${HELD_SUFFIX}`, `${key}${OFF_SUFFIX}`]) if (renderer?.textures?.has?.(k)) renderer.evictTexture?.(k);
 }
 
 /** Draw the frame's sprite glows in `lists` (eotbBody and the walkers' glowsDrawn) whose owner `keep` takes (null: all).
