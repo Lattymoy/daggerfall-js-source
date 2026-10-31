@@ -164,12 +164,12 @@
   {
     "name": "DECOR1e-the-placer-from-nothing",
     "file": "src/systems/decor/decorPlacer.js",
-    "old": "  const s = { yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };",
+    "old": "  const s = { yaw: from ? wrapTurn((mount || (hangs && from.hung) ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };",
     "new": "  const s = { yaw: 0, raise: 0, scale: 1, snap: false, nudge: [0, 0] };",
     "tests": [
       "test/systems/online/decor1e.test.js"
     ],
-    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew."
+    "note": "FIELD BUGS 2026-10-29f (PIN MOVED): re-aimed by content - the line it names moved or grew. Re-aimed (YARD-WALLS, bible/06-Systems/Online-Arc.md): the same law, the line it stands in grown."
   },
   {
     "name": "DECOR1e-a-move-a-new-piece",

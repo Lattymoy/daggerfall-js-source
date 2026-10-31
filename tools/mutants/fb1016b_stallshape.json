@@ -242,8 +242,8 @@
   {
     "name": "YARD-RESEAT-AUDIT-sunk-past-the-bound",
     "file": "tools/yardReseat.mjs",
-    "old": "round(clamp(place.pos[1] + d[1], -B, DECOR_YARD_HIGH), 3)",
-    "new": "round(Math.min(DECOR_YARD_HIGH, place.pos[1] + d[1]), 3)",
+    "old": "round(clamp(place.pos[1] + d[1], -B, YARD_RESEAT_HIGH), 3)",
+    "new": "round(Math.min(YARD_RESEAT_HIGH, place.pos[1] + d[1]), 3)",
     "tests": [
       "test/world/fb1016b_stallshape.test.js"
     ]

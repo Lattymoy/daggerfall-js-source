@@ -50,6 +50,7 @@
 import { trs } from '../../world/mat4.js';
 import { transformedAabb } from '../../render/frustum.js';
 import { decorPieceOf, decorPrice, decorMountFrame, decorIsFigure, DECOR_SCALE_MIN, DECOR_SCALE_MAX, DECOR_MOUNT_LIFT } from '../../net/decorLaw.js';   // DECOR-FIGURE: a person stands at its own size
+import { isNatureArchive } from '../../world/rmbFlats.js';   // YARD-WALLS: a tree or a plant never hangs
 
 export const DECOR_TURN_STEP = 15;
 export const DECOR_TURN_FINE = 1;
@@ -102,6 +103,24 @@ const DEG = 180 / Math.PI;
  *  C3: by the archive alone, as the room draws one and the service writes one - the catalogue's kind, which neither of
  *  them reads, was a second law. The placer's and the bar's buttons' (scenes/decor/decorTool.js) one question. */
 export const decorEntrySized = (entry) => !decorIsFigure(entry);
+/** YARD-WALLS: whether a catalogue entry hangs flat on a yard's wall it is set on - a picture, never one's own item, a
+ *  person (who stands) or a tree or a plant (which grow there, in the yard's season). */
+export const decorHangs = (entry) => entry?.model == null && Array.isArray(entry?.flat) && !entry.item && !entry.mount && entry.kind !== 'own' && !decorIsFigure(entry) && !isNatureArchive(entry.flat[0]);
+/** HOME-YARD: a catalogue entry as a yard places it - nothing held, no light of its own, no craft; YARD-WALLS: a picture
+ *  hung on a wall where it can be (decorHangs). */
+export const decorYardEntry = (entry) => ({ ...entry, storage: false, light: null, station: null, ...(decorHangs(entry) ? { hangs: true } : {}) });
+/** YARD-WALLS: the ground a hung picture covers, as offsets [dx, dz] from where it hangs - its quad seen from above (on a
+ *  wall, a line along it). `size` its picture's { w, h } at scale 1, else a square of the measured `radius`'s diagonal. */
+export function decorHungFoot(piece, size, radius = 0, k = 1) {
+  const { right, up } = decorMountFrame(piece.rot);
+  const hw = ((size?.w ?? (radius ?? 0) * Math.SQRT2) * k) / 2, hh = ((size?.h ?? (radius ?? 0) * Math.SQRT2) * k) / 2;
+  const out = [];
+  for (const [a, b] of [[-1, -1], [-1, 1], [1, 1], [1, -1]]) {
+    const q = [right[0] * a * hw + up[0] * b * hh, right[2] * a * hw + up[2] * b * hh];
+    if (!out.some((o) => Math.hypot(o[0] - q[0], o[1] - q[1]) < 1e-3)) out.push(q);
+  }
+  return out;
+}
 
 /**
  * THE TOOL for one catalogue `entry`. `radius` its measured radius in metres (null: unmeasured), `box` a model's local
@@ -114,7 +133,8 @@ export const decorEntrySized = (entry) => !decorIsFigure(entry);
 export function createDecorPlacer(entry, { radius = null, box = null, from = null, free = false, flat = null } = {}) {
   let measured = radius;   // the scan's, or what a copy was priced at - filled in once the scan reaches it
   const mount = !!entry.mount;
-  const s = { yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };
+  const hangs = !mount && !!entry.hangs && entry.model == null;   // YARD-WALLS: a picture hung flat on a wall it is set on
+  const s = { yaw: from ? wrapTurn((mount || (hangs && from.hung) ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false, nudge: [0, 0] };
   // DECOR-FIGURE: one of Daggerfall's people takes no size step - placed or moved, it stands at scale 1, one grown before
   // brought back to its own size
   const figure = !decorEntrySized(entry);
@@ -141,8 +161,9 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     return Math.max(0, Math.max(-n[0] * b[0], -n[0] * b[3]) + Math.max(-n[1] * b[2], -n[1] * b[5]));
   }
 
-  /** DECOR2c: THE MOUNT for a surface point and its `normal` (the eye's hit's, facing the eye), or null with no surface. */
-  function mountAt(hit, origin, id, normal, camYaw, paid) {
+  /** DECOR2c: THE MOUNT for a surface point and its `normal` (the eye's hit's, facing the eye), or null with no surface.
+   *  YARD-WALLS: `hung` - a catalogue picture, which says so in its place (net/decorLaw.js decorIsMount). */
+  function mountAt(hit, origin, id, normal, camYaw, paid, hung = false) {
     const len = normal ? Math.hypot(normal[0], normal[1], normal[2]) : 0;
     if (!(len > 0)) return null;
     const n = [normal[0] / len, normal[1] / len, normal[2] / len];
@@ -162,7 +183,7 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
     p = [0, 1, 2].map((i) => p[i] + up[i] * s.raise + n[i] * DECOR_MOUNT_LIFT + push[i] - n[i] * off);
     return decorPieceOf({
       id, model: null, flat: [entry.flat[0], entry.flat[1]], item: entry.item ?? null, pos: p, rot, scale: s.scale,
-      light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null, storage: false, paid,
+      light: entry.light ? { ...entry.light, color: [...entry.light.color] } : null, storage: false, paid, ...(hung ? { hung } : {}),
     });
   }
 
@@ -225,6 +246,7 @@ export function createDecorPlacer(entry, { radius = null, box = null, from = nul
       // WALL-CLEAR: a face within DECOR_HANG_NY of level is a wall - the piece stands clear of it, snapped along it
       const hl = nl > 0 ? Math.hypot(normal[0], normal[2]) : 0;
       const wall = !hang && hl > 0 && Math.abs(normal[1] / nl) < DECOR_HANG_NY;
+      if (wall && hangs) return mountAt(hit, origin, id, normal, camYaw, paid, true);   // YARD-WALLS: flat on the wall, not stood off it
       if (wall) {
         const n = [normal[0] / hl, normal[2] / hl];
         if (s.snap) {   // along the wall, never into it

@@ -1,0 +1,282 @@
+[
+  {
+    "name": "YARD-WALLS-free-bound-raised",
+    "file": "src/scenes/homeYards.js",
+    "old": "export const YARD_FREE_HIGH = 4;",
+    "new": "export const YARD_FREE_HIGH = 8;",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a tower free of its house"
+  },
+  {
+    "name": "YARD-WALLS-free-law-unasked",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if (pos[1] > YARD_FREE_HIGH && !yardByHouse(",
+    "new": "  if (false && !yardByHouse(",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "the yard's 8 m everywhere"
+  },
+  {
+    "name": "YARD-WALLS-top-unread",
+    "file": "src/scenes/homeYards.js",
+    "old": "  if (!(bottom <= (lot.top ?? -Infinity) + YARD_DECK_SLACK)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a stack over the roof"
+  },
+  {
+    "name": "YARD-WALLS-box-unasked",
+    "file": "src/scenes/homeYards.js",
+    "old": "  return inRect(x, z, lot.house, YARD_EDGE_PAD) || yardFootMeets(ground, lot.house, -YARD_EDGE_PAD);",
+    "new": "  return true;",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "anywhere on the lot is by the house"
+  },
+  {
+    "name": "YARD-WALLS-touch-uncounted",
+    "file": "src/scenes/homeYards.js",
+    "old": "yardFootMeets(ground, lot.house, -YARD_EDGE_PAD);",
+    "new": "yardFootMeets(ground, lot.house, YARD_EDGE_PAD);",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a piece touching the wall is free of it"
+  },
+  {
+    "name": "YARD-WALLS-the-lots-top-its-foot",
+    "file": "src/scenes/homeYards.js",
+    "old": "y: box[1] - origin[1], top: box[4] - origin[1] };",
+    "new": "y: box[1] - origin[1], top: box[1] - origin[1] };",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "every roof over the house's top"
+  },
+  {
+    "name": "YARD-WALLS-origin-read-as-foot",
+    "file": "src/scenes/homeYards.js",
+    "old": "!yardByHouse(lot, x, z, ground, pos[1] + (/** @type {any} */ (foot)?.bottom ?? 0))) return yardTooHighFree();",
+    "new": "!yardByHouse(lot, x, z, ground, pos[1])) return yardTooHighFree();",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a model on the roof refused by its origin"
+  },
+  {
+    "name": "YARD-WALLS-yards-pictures-undrawn",
+    "file": "src/scenes/homeYards.js",
+    "old": "      for (const y of yards.values()) if (nearEye(y, eye)) y.pool.drawMounts(r);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a yard's hung picture never drawn"
+  },
+  {
+    "name": "YARD-WALLS-mount-unread",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (!it) return piece.hung === true;",
+    "new": "  if (!it) return false;",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a hung picture drawn as a billboard"
+  },
+  {
+    "name": "YARD-WALLS-flag-dropped",
+    "file": "src/net/decorLaw.js",
+    "old": "...(name ? { name } : {}), ...(hung ? { hung } : {}) };",
+    "new": "...(name ? { name } : {}) };",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "the place forgets it hangs"
+  },
+  {
+    "name": "YARD-WALLS-any-value-taken",
+    "file": "src/net/decorLaw.js",
+    "old": "if (typeof storage !== 'boolean' || typeof hung !== 'boolean') return null;",
+    "new": "if (typeof storage !== 'boolean') return null;",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a hung of any value"
+  },
+  {
+    "name": "YARD-WALLS-a-model-hung",
+    "file": "src/net/decorLaw.js",
+    "old": "  if (place.hung && (what.model != null || what.item || isNpcFlat(what.flat[0]))) return null;",
+    "new": "  if (place.hung && (what.item || isNpcFlat(what.flat?.[0]))) return null;",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a model said hung"
+  },
+  {
+    "name": "YARD-WALLS-trophy-throws",
+    "file": "src/net/decorLaw.js",
+    "old": "decorIsMount(piece) && piece.item?.t === TROPHY_TEMPLATE",
+    "new": "decorIsMount(piece) && piece.item.t === TROPHY_TEMPLATE",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a hung picture asked whether it is a trophy throws"
+  },
+  {
+    "name": "YARD-WALLS-wall-unhung",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "      if (wall && hangs) return mountAt(hit, origin, id, normal, camYaw, paid, true);",
+    "new": "",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "the picture stands off the wall as a billboard"
+  },
+  {
+    "name": "YARD-WALLS-flag-unset",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "storage: false, paid, ...(hung ? { hung } : {}),",
+    "new": "storage: false, paid,",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "set on the wall, it never says so"
+  },
+  {
+    "name": "YARD-WALLS-spin-lost",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "(mount || (hangs && from.hung) ? from.rot?.[2] : from.rot?.[0])",
+    "new": "(mount ? from.rot?.[2] : from.rot?.[0])",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a hung picture moved loses its spin"
+  },
+  {
+    "name": "YARD-WALLS-line-length",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "const q = [right[0] * a * hw + up[0] * b * hh, right[2] * a * hw + up[2] * b * hh];",
+    "new": "const q = [right[0] * a * hh + up[0] * b * hh, right[2] * a * hh + up[2] * b * hh];",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "its line its height long"
+  },
+  {
+    "name": "YARD-WALLS-a-plant-hangs",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": " && !decorIsFigure(entry) && !isNatureArchive(entry.flat[0]);",
+    "new": " && !decorIsFigure(entry);",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a yard's plant hung on a wall"
+  },
+  {
+    "name": "YARD-WALLS-yard-entry-unhung",
+    "file": "src/systems/decor/decorPlacer.js",
+    "old": "station: null, ...(decorHangs(entry) ? { hangs: true } : {}) });",
+    "new": "station: null });",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "no picture hangs in a yard"
+  },
+  {
+    "name": "YARD-WALLS-ghost-a-billboard",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "placing.piece && placing.batch && !placing.piece.hung ?",
+    "new": "placing.piece && placing.batch ?",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "the billboard ghost beside the hung one"
+  },
+  {
+    "name": "YARD-WALLS-hung-ghost-unwritten",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const quad = p.piece && (p.entry.mount || p.piece.hung) ? decorMountQuad(",
+    "new": "const quad = p.piece && p.entry.mount ? decorMountQuad(",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "the hung ghost never drawn"
+  },
+  {
+    "name": "YARD-WALLS-ghost-unasked",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (entry.hangs) askGhostArt(p);   // YARD-WALLS: and the picture it hangs as on a wall\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "no picture for the hung ghost"
+  },
+  {
+    "name": "YARD-WALLS-tool-entry-plain",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "const entry = yard ? decorYardEntry(entry0) : entry0;",
+    "new": "const entry = yard ? { ...entry0, storage: false, light: null, station: null } : entry0;",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "the decorator never hangs one"
+  },
+  {
+    "name": "YARD-WALLS-lot-asks-a-circle",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (decorIsMount(piece)) return decorHungFoot(piece, p.art, p.radius, s);   // YARD-WALLS: a hung picture's, along its wall\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a hung picture refused as in the house"
+  },
+  {
+    "name": "YARD-WALLS-move-unhung",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "  const placeOf = (piece) => decorPlaceOf(piece);",
+    "new": "  const placeOf = (piece) => ({ pos: piece.pos, rot: piece.rot, scale: piece.scale, light: piece.light, storage: piece.storage, paid: piece.paid });",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a move forgets it hangs"
+  },
+  {
+    "name": "YARD-WALLS-light-from-its-foot",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (decorIsMount(piece)) return decorLightLift({ ...piece, item: null, hung: false }, size) - size.h / 2;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a hung lantern's light half its height high"
+  },
+  {
+    "name": "YARD-WALLS-never-stored",
+    "file": "server-account/src/decor.js",
+    "old": "...(name ? { name } : {}), ...(hung ? { hung } : {}) });   // HOME-STATIONS",
+    "new": "...(name ? { name } : {}) });   // HOME-STATIONS",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a placed picture stored unhung"
+  },
+  {
+    "name": "YARD-WALLS-confirm-never-stores",
+    "file": "server-account/src/decorBatch.js",
+    "old": "...(name ? { name } : {}), ...(hung ? { hung } : {}) });",
+    "new": "...(name ? { name } : {}) });",
+    "tests": [
+      "test/scenes/yardwalls.test.js"
+    ],
+    "note": "a Confirm stores it unhung"
+  }
+]

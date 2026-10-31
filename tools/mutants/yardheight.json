@@ -2,7 +2,7 @@
   {
     "name": "YARD-HEIGHT-bound",
     "file": "src/net/decorLaw.js",
-    "old": "export const DECOR_YARD_HIGH = 4;",
+    "old": "export const DECOR_YARD_HIGH = 8;",
     "new": "export const DECOR_YARD_HIGH = 48;",
     "tests": [
       "test/net/yardheight.test.js"
